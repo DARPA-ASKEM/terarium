@@ -10,9 +10,7 @@
 		</template>
 		<tera-progress-spinner v-if="inProgressSimulationId" :font-size="2" is-centered style="height: 100%" />
 		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
-		<tera-operator-placeholder v-else :operation-type="node.operationType">
-			Connect a model configuration
-		</tera-operator-placeholder>
+		<tera-operator-placeholder v-else :node="node"> Connect a model configuration </tera-operator-placeholder>
 	</main>
 </template>
 
@@ -149,7 +147,7 @@ const preparedCharts = computed(() => {
 	Object.keys(pyciemssMap).forEach((key) => {
 		reverseMap[`${pyciemssMap[key]}_mean`] = key;
 	});
-	const xAxisTitle = model.value?.semantics?.ode.time.units?.expression;
+	const xAxisTitle = model.value?.semantics?.ode.time?.units?.expression ?? 'time';
 
 	return props.node.state.chartConfigs.map((config) =>
 		createForecastChart(

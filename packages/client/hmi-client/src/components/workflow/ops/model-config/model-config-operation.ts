@@ -1,5 +1,7 @@
-import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
+import { WorkflowOperationTypes } from '@/types/workflow';
+import type { Operation, BaseState } from '@/types/workflow';
 import type { ModelConfiguration } from '@/types/Types';
+import configureModel from '@assets/svg/operator-images/configure-model.svg';
 
 export const name = 'ModelConfigOperation';
 
@@ -14,10 +16,22 @@ export interface ModelConfigOperationState extends BaseState {
 	hasCodeBeenRun: boolean;
 }
 
+export const blankModelConfig: ModelConfiguration = {
+	id: '',
+	modelId: '',
+	name: '',
+	description: '',
+	simulationId: '',
+	observableSemanticList: [],
+	parameterSemanticList: [],
+	initialSemanticList: []
+};
+
 export const ModelConfigOperation: Operation = {
 	name: WorkflowOperationTypes.MODEL_CONFIG,
 	displayName: 'Configure model',
 	description: 'Create model configurations.',
+	imageUrl: configureModel,
 	isRunnable: true,
 	inputs: [
 		{ type: 'modelId', label: 'Model' },
@@ -26,20 +40,11 @@ export const ModelConfigOperation: Operation = {
 	],
 	outputs: [{ type: 'modelConfigId', label: 'Model configuration' }],
 	action: async () => ({}),
-
 	initState: () => {
 		const init: ModelConfigOperationState = {
 			modelEditCodeHistory: [],
 			hasCodeBeenRun: false,
-			transientModelConfig: {
-				name: '',
-				description: '',
-				modelId: '',
-				calibrationRunId: '',
-				observableSemanticList: [],
-				parameterSemanticList: [],
-				initialSemanticList: []
-			}
+			transientModelConfig: blankModelConfig
 		};
 		return init;
 	}

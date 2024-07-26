@@ -1,6 +1,10 @@
 <template>
 	<main>
-		<template v-if="!inProgressCalibrationId && runResult && csvAsset && runResultPre">
+		<template
+			v-if="
+				!inProgressCalibrationId && runResult && csvAsset && runResultPre && props.node.state.chartConfigs[0]?.length
+			"
+		>
 			<vega-chart
 				v-for="(_config, index) of props.node.state.chartConfigs"
 				:key="index"
@@ -8,11 +12,14 @@
 				:visualization-spec="preparedCharts[index]"
 			/>
 		</template>
+		<div v-else ref="drilldownLossPlot" class="loss-chart" />
 
-		<tera-progress-spinner v-if="inProgressCalibrationId" :font-size="2" is-centered style="height: 100%" />
+		<tera-progress-spinner v-if="inProgressCalibrationId" :font-size="2" is-centered style="height: 100%">
+			<div>{{ props.node.state.currentProgress }}%</div>
+		</tera-progress-spinner>
 
 		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
-		<tera-operator-placeholder v-else :operation-type="node.operationType">
+		<tera-operator-placeholder v-else :node="node">
 			Connect a model configuration and dataset
 		</tera-operator-placeholder>
 	</main>
@@ -21,7 +28,7 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { csvParse, autoType } from 'd3';
-import { computed, watch, ref, shallowRef } from 'vue';
+import { computed, watch, ref, shallowRef, onMounted } from 'vue';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
@@ -33,13 +40,14 @@ import {
 	parsePyCiemssMap,
 	DataArray
 } from '@/services/models/simulation-service';
+import { getModelConfigurationById, createModelConfiguration } from '@/services/model-configurations';
 import { getModelByModelConfigurationId } from '@/services/model';
-import { setupDatasetInput } from '@/services/calibrate-workflow';
+import { renderLossGraph, setupDatasetInput } from '@/services/calibrate-workflow';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';
-import type { CsvAsset, SimulationRequest, Model } from '@/types/Types';
+import { CsvAsset, Simulation, SimulationRequest, Model, ModelConfiguration } from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
@@ -58,11 +66,38 @@ const runResult = ref<DataArray>([]);
 const runResultPre = ref<DataArray>([]);
 const runResultSummary = ref<DataArray>([]);
 const runResultSummaryPre = ref<DataArray>([]);
+const drilldownLossPlot = ref<HTMLElement>();
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const areInputsFilled = computed(() => props.node.inputs[0].value && props.node.inputs[1].value);
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
+
+let lossValues: { [key: string]: number }[] = [];
+
+function drawLossGraph() {
+	if (drilldownLossPlot.value) {
+		renderLossGraph(drilldownLossPlot.value, lossValues, {
+			width: 200,
+			height: 120
+		});
+	}
+}
+
+async function updateLossChartWithSimulation() {
+	if (props.node.active) {
+		const simulationObj = await getSimulation(props.node.state.calibrationId);
+		if (simulationObj?.updates) {
+			lossValues = simulationObj?.updates.map((d, i) => ({
+				iter: i,
+				loss: d.data.loss
+			}));
+			drawLossGraph();
+		}
+	}
+}
+
+onMounted(async () => updateLossChartWithSimulation());
 
 let pyciemssMap: Record<string, string> = {};
 
@@ -107,7 +142,7 @@ const preparedCharts = computed(() => {
 			}
 		});
 
-		const xAxisTitle = model.value?.semantics?.ode.time.units?.expression;
+		const xAxisTitle = model.value?.semantics?.ode.time?.units?.expression ?? 'time';
 
 		return createForecastChart(
 			{
@@ -143,9 +178,27 @@ const preparedCharts = computed(() => {
 const poller = new Poller();
 const pollResult = async (runId: string) => {
 	poller
-		.setInterval(4000)
+		.setInterval(3000)
 		.setThreshold(350)
-		.setPollAction(async () => pollAction(runId));
+		.setPollAction(async () => pollAction(runId))
+		.setProgressAction((data: Simulation) => {
+			if (data?.updates?.length) {
+				lossValues = data?.updates.map((d, i) => ({
+					iter: i,
+					loss: d.data.loss
+				}));
+				drawLossGraph();
+			}
+			if (runId === props.node.state.inProgressCalibrationId && data.updates.length > 0) {
+				const checkpoint = _.first(data.updates);
+				if (checkpoint) {
+					const state = _.cloneDeep(props.node.state);
+					state.currentProgress = checkpoint.data.progress;
+					emit('update-state', state);
+				}
+			}
+		});
+
 	const pollerResults = await poller.start();
 	let state = _.cloneDeep(props.node.state);
 	state.errorMessage = { name: '', value: '', traceback: '' };
@@ -248,7 +301,9 @@ watch(
 
 		if (doneProcess) {
 			const state = _.cloneDeep(props.node.state);
-			state.chartConfigs = [[]];
+			if (state.chartConfigs.length === 0) {
+				state.chartConfigs = [[]];
+			}
 			state.forecastId = state.inProgressForecastId;
 			state.preForecastId = state.inProgressPreForecastId;
 
@@ -273,11 +328,25 @@ watch(
 			`;
 			const summaryResponse = await createLLMSummary(prompt);
 
-			const portLabel = props.node.inputs[0].label;
+			const baseConfig = await getModelConfigurationById(modelConfigId.value as string);
+
+			const calibratedModelConfig: ModelConfiguration = {
+				name: `Calibrated: ${baseConfig.name}`,
+				description: `Calibrated: ${baseConfig.description}`,
+				simulationId: state.calibrationId,
+				modelId: baseConfig.modelId,
+				observableSemanticList: [],
+				parameterSemanticList: [],
+				initialSemanticList: []
+			};
+
+			const modelConfigResponse = await createModelConfiguration(calibratedModelConfig);
+
+			// const portLabel = props.node.inputs[0].label;
 			emit('append-output', {
-				type: 'calibrateSimulationId',
-				label: nodeOutputLabel(props.node, `${portLabel} Result`),
-				value: [state.calibrationId],
+				type: 'modelConfigId',
+				label: nodeOutputLabel(props.node, `Calibration Result`),
+				value: [modelConfigResponse.id],
 				state: {
 					calibrationId: state.calibrationId,
 					forecastId: state.forecastId,

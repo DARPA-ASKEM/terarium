@@ -58,6 +58,7 @@ export interface Operation {
 	description: string;
 	displayName: string; // Human-readable name for each node.
 	documentationUrl?: string;
+	imageUrl?: string;
 
 	// The operation is self-runnable, that is, given just the inputs we can derive the outputs
 	isRunnable: boolean;
@@ -107,6 +108,7 @@ export interface WorkflowNode<S> {
 	workflowId: string;
 	operationType: WorkflowOperationTypes;
 	documentationUrl?: string;
+	imageUrl?: string;
 
 	// Position on canvas
 	x: number;

@@ -1,27 +1,25 @@
 <template>
-	<Teleport to="body">
-		<tera-modal
-			v-if="isVisible"
-			class="save-as-dialog"
-			@modal-mask-clicked="closeModal"
-			@on-modal-open="initializeAsset"
-			@modal-enter-press="save"
-		>
-			<template #header>
-				<h4>{{ title }}</h4>
-			</template>
-			<template #default>
-				<form @submit.prevent>
-					<label for="new-name">What would you like to call it?</label>
-					<InputText id="new-name" type="text" v-model="newName" placeholder="Enter a unique name" />
-				</form>
-			</template>
-			<template #footer>
-				<Button label="Save" size="large" @click="save" />
-				<Button label="Close" class="p-button-secondary" size="large" outlined @click="closeModal" />
-			</template>
-		</tera-modal>
-	</Teleport>
+	<tera-modal
+		v-if="isVisible"
+		class="w-4"
+		@modal-mask-clicked="closeModal"
+		@on-modal-open="initializeAsset"
+		@modal-enter-press="save"
+	>
+		<template #header>
+			<h4>{{ title }}</h4>
+		</template>
+		<template #default>
+			<form @submit.prevent>
+				<label for="new-name">What would you like to call it?</label>
+				<InputText id="new-name" type="text" v-model="newName" placeholder="Enter a unique name" />
+			</form>
+		</template>
+		<template #footer>
+			<Button label="Save" size="large" @click="save" />
+			<Button label="Close" class="p-button-secondary" size="large" outlined @click="closeModal" />
+		</template>
+	</tera-modal>
 </template>
 
 <script setup lang="ts">
@@ -150,10 +148,6 @@ function initializeAsset() {
 </script>
 
 <style scoped>
-.save-as-dialog:deep(section) {
-	width: 40rem;
-}
-
 form {
 	margin-top: var(--gap);
 }

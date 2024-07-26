@@ -6,17 +6,15 @@
 		@open-matrix="(id: string) => (matrixModalId = id)"
 		@update-item="emit('update-parameter', $event)"
 	/>
-	<teleport to="body">
-		<tera-stratified-matrix-modal
-			v-if="matrixModalId"
-			:id="matrixModalId"
-			:mmt="mmt"
-			:mmt-params="mmtParams"
-			:stratified-matrix-type="StratifiedMatrix.Parameters"
-			is-read-only
-			@close-modal="matrixModalId = ''"
-		/>
-	</teleport>
+	<tera-stratified-matrix-modal
+		v-if="matrixModalId"
+		:id="matrixModalId"
+		:mmt="mmt"
+		:mmt-params="mmtParams"
+		:stratified-matrix-type="StratifiedMatrix.Parameters"
+		is-read-only
+		@close-modal="matrixModalId = ''"
+	/>
 </template>
 
 <script setup lang="ts">

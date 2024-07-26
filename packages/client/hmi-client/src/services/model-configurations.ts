@@ -5,6 +5,7 @@ import type {
 	ModelConfiguration,
 	ModelDistribution,
 	ObservableSemantic,
+	SemanticOtherValues,
 	ParameterSemantic
 } from '@/types/Types';
 import { isEmpty } from 'lodash';
@@ -178,7 +179,7 @@ export function getObservables(config: ModelConfiguration): ObservableSemantic[]
 }
 
 export function getOtherValues(configs: ModelConfiguration[], id: string, key: string, otherValueList: string) {
-	let otherValues: object[] = [];
+	let otherValues: SemanticOtherValues[] = [];
 
 	const modelConfigTableData = configs.map((modelConfig) => ({
 		name: modelConfig.name ?? '',
@@ -188,7 +189,7 @@ export function getOtherValues(configs: ModelConfiguration[], id: string, key: s
 	modelConfigTableData.forEach((modelConfig) => {
 		const config: ParameterSemantic[] | InitialSemantic[] = modelConfig.list.filter((item) => item[key] === id)[0];
 		if (config && modelConfig.name) {
-			const data: object = { name: modelConfig.name, ...config };
+			const data: SemanticOtherValues = { name: modelConfig.name, ...config };
 			otherValues = [...otherValues, data];
 		}
 	});

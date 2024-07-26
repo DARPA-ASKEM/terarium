@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<tera-operator-placeholder v-if="!node.inputs[0].value" :operation-type="node.operationType">
+		<tera-operator-placeholder v-if="!node.inputs[0].value" :node="node">
 			Attach a decapode model
 		</tera-operator-placeholder>
 		<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />

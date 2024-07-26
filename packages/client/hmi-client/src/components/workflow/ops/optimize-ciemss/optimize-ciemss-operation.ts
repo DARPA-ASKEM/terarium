@@ -2,7 +2,8 @@ import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import { Intervention, InterventionSemanticType, InterventionPolicy } from '@/types/Types';
 import { getRunResult, getSimulation } from '@/services/models/simulation-service';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
-import { createInterventionPolicy } from '@/services/intervention-policy';
+import { createInterventionPolicy, blankIntervention } from '@/services/intervention-policy';
+import optimizeModel from '@assets/svg/operator-images/optimize-model.svg';
 
 const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L747';
 
@@ -68,7 +69,7 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	inProgressPostForecastId: string;
 	postForecastRunId: string;
 	optimizationRunId: string;
-	optimizedInterventionPolicy: InterventionPolicy | null;
+	optimizedInterventionPolicyId: string;
 	optimizeErrorMessage: { name: string; value: string; traceback: string };
 	simulateErrorMessage: { name: string; value: string; traceback: string };
 }
@@ -89,14 +90,6 @@ export const OBJECTIVE_FUNCTION_MAP = [
 	{ label: 'lower bound', value: InterventionObjectiveFunctions.lowerBound },
 	{ label: 'upper bound', value: InterventionObjectiveFunctions.upperbound }
 ];
-
-export const blankIntervention: Intervention = {
-	name: 'New Intervention',
-	appliedTo: '',
-	type: InterventionSemanticType.Parameter,
-	staticInterventions: [{ timestep: Number.NaN, value: Number.NaN }],
-	dynamicInterventions: []
-};
 
 export const blankInterventionPolicyGroup: InterventionPolicyGroupForm = {
 	startTime: 0,
@@ -126,6 +119,7 @@ export const OptimizeCiemssOperation: Operation = {
 	displayName: 'Optimize intervention policy',
 	description: 'Optimize intervention policy',
 	documentationUrl: DOCUMENTATION_URL,
+	imageUrl: optimizeModel,
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },
 		{
@@ -161,7 +155,7 @@ export const OptimizeCiemssOperation: Operation = {
 			preForecastRunId: '',
 			postForecastRunId: '',
 			optimizationRunId: '',
-			optimizedInterventionPolicy: null,
+			optimizedInterventionPolicyId: '',
 			optimizeErrorMessage: { name: '', value: '', traceback: '' },
 			simulateErrorMessage: { name: '', value: '', traceback: '' }
 		};

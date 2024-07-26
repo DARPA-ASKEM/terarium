@@ -63,7 +63,9 @@
 							/>
 						</div>
 					</div>
+					<!-- FIXME: show sampled values ???
 					<div v-if="inferredParameters">Using inferred parameters from calibration: {{ inferredParameters[0] }}</div>
+					-->
 				</div>
 			</tera-drilldown-section>
 		</section>
@@ -161,7 +163,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
-import type { CsvAsset, SimulationRequest, TimeSpan, Model } from '@/types/Types';
+import type { CsvAsset, SimulationRequest, TimeSpan } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import {
 	getRunResultCSV,
@@ -170,7 +172,7 @@ import {
 	convertToCsvAsset,
 	DataArray
 } from '@/services/models/simulation-service';
-import { getModelByModelConfigurationId } from '@/services/model';
+import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
 import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
@@ -193,6 +195,7 @@ import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { CiemssMethodOptions, CiemssPresetTypes, DrilldownTabs } from '@/types/common';
+import { getModelConfigurationById } from '@/services/model-configurations';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import TeraChartControl from '../../tera-chart-control.vue';
 
@@ -201,12 +204,11 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['update-state', 'select-output', 'close']);
 
-const model = ref<Model | null>(null);
+const modelVarUnits = ref<{ [key: string]: string }>({});
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
 
-const inferredParameters = computed(() => props.node.inputs[1].value);
-const policyInterventionId = computed(() => props.node.inputs[2].value);
+const policyInterventionId = computed(() => props.node.inputs[1].value);
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
 const llmThoughts = ref<any[]>([]);
@@ -328,8 +330,6 @@ const preparedCharts = computed(() => {
 	Object.keys(pyciemssMap).forEach((key) => {
 		reverseMap[`${pyciemssMap[key]}_mean`] = key;
 	});
-
-	const xAxisTitle = model.value?.semantics?.ode.time.units?.expression;
 	return props.node.state.chartConfigs.map((config) =>
 		createForecastChart(
 			{
@@ -351,8 +351,8 @@ const preparedCharts = computed(() => {
 				height: chartSize.value.height,
 				legend: true,
 				translationMap: reverseMap,
-				xAxisTitle,
-				yAxisTitle: `${config.join(',')}`
+				xAxisTitle: modelVarUnits.value._time || 'Time',
+				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
 			}
 		)
 	);
@@ -391,9 +391,11 @@ const makeForecastRequest = async () => {
 		engine: 'ciemss'
 	};
 
-	if (inferredParameters.value?.[0]) {
-		payload.extra.inferred_parameters = inferredParameters.value[0];
+	const modelConfig = await getModelConfigurationById(modelConfigId);
+	if (modelConfig.simulationId) {
+		payload.extra.inferred_parameters = modelConfig.simulationId;
 	}
+
 	if (policyInterventionId.value?.[0]) {
 		payload.policyInterventionId = policyInterventionId.value[0];
 	}
@@ -486,7 +488,8 @@ watch(
 		if (!input.value) return;
 
 		const id = input.value[0];
-		model.value = await getModelByModelConfigurationId(id);
+		const model = await getModelByModelConfigurationId(id);
+		if (model) modelVarUnits.value = getUnitsFromModelParts(model);
 	},
 	{ immediate: true }
 );

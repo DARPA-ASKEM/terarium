@@ -71,6 +71,7 @@ export const addNode = (
 		operationType: op.name,
 		displayName: op.displayName,
 		documentationUrl: op.documentationUrl,
+		imageUrl: op.imageUrl,
 		x: pos.x,
 		y: pos.y,
 		state: options.state ?? {},
@@ -167,8 +168,8 @@ export const addEdge = (
 	if (existingEdge) return;
 
 	// Check if type is compatible
-	const outputTypes = sourceOutputPort.type.split('|');
-	const allowedInputTypes = targetInputPort.type.split('|');
+	const outputTypes = sourceOutputPort.type.split('|').map((d) => d.trim());
+	const allowedInputTypes = targetInputPort.type.split('|').map((d) => d.trim());
 	const intersectionTypes = _.intersection(outputTypes, allowedInputTypes);
 
 	// Not supported if there are more than one match
@@ -295,7 +296,7 @@ export function getPortLabel({ label, type, isOptional }: WorkflowPort) {
 	}
 	// Create name if there are multiple types
 	else if (type.includes('|')) {
-		const types = type.split('|');
+		const types = type.split('|').map((d) => d.trim());
 		portLabel = types.map((t) => defaultPortLabels[t] ?? t).join(' or ');
 	}
 

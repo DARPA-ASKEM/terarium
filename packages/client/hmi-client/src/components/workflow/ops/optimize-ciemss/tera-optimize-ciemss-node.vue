@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<tera-operator-placeholder v-if="!showSpinner && !runResults" :operation-type="node.operationType">
+		<tera-operator-placeholder v-if="!showSpinner" :node="node">
 			<template v-if="!node.inputs[0].value"> Attach a model configuration </template>
 		</tera-operator-placeholder>
 		<template v-if="node.inputs[0].value">
@@ -36,7 +36,8 @@ import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { SimulationRequest, InterventionPolicy } from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import { createOptimizeForecastChart } from '@/services/charts';
+import { createForecastChart } from '@/services/charts';
+import { mergeResults, renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
 import {
 	OptimizeCiemssOperationState,
 	OptimizeCiemssOperation,
@@ -116,19 +117,38 @@ const preparedCharts = computed(() => {
 	const preResultSummary = runResultsSummary.value[preForecastRunId];
 	const postResult = runResults.value[postForecastRunId];
 	const postResultSummary = runResultsSummary.value[postForecastRunId];
+
+	if (!postResult || !postResultSummary || !preResultSummary || !preResult) return [];
+	// Merge before/after for chart
+	const { result, resultSummary } = mergeResults(preResult, postResult, preResultSummary, postResultSummary);
 	return selectedSimulationVariables.map((variable) =>
-		createOptimizeForecastChart(preResult, preResultSummary, postResult, postResultSummary, [], {
-			width: 180,
-			height: 120,
-			variables: [pyciemssMap[variable]],
-			statisticalVariables: [`${pyciemssMap[variable]}_mean`],
-			legend: true,
-			groupField: 'sample_id',
-			timeField: 'timepoint_id',
-			xAxisTitle: 'Time',
-			yAxisTitle: variable,
-			title: variable
-		})
+		createForecastChart(
+			{
+				dataset: result,
+				variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
+				timeField: 'timepoint_id',
+				groupField: 'sample_id'
+			},
+			{
+				dataset: resultSummary,
+				variables: [`${pyciemssMap[variable]}_mean:pre`, `${pyciemssMap[variable]}_mean`],
+				timeField: 'timepoint_id'
+			},
+			null,
+			{
+				width: 180,
+				height: 120,
+				legend: true,
+				xAxisTitle: 'Time',
+				yAxisTitle: variable,
+				translationMap: {
+					[`${pyciemssMap[variable]}_mean:pre`]: `${variable} before optimization`,
+					[`${pyciemssMap[variable]}_mean`]: `${variable} after optimization`
+				},
+				title: variable,
+				colorscheme: ['#AAB3C6', '#1B8073']
+			}
+		)
 	);
 });
 
@@ -152,7 +172,7 @@ watch(
 			state.optimizationRunId = optId;
 			state.inProgressPreForecastId = preForecastId;
 			state.inProgressPostForecastId = postForecastId;
-			state.optimizedInterventionPolicy = newInterventionResponse;
+			state.optimizedInterventionPolicyId = newInterventionResponse.id ?? '';
 			emit('update-state', state);
 		}
 	},
@@ -217,14 +237,14 @@ watch(
 		const preForecastRunId = state.preForecastRunId;
 		const postForecastRunId = state.postForecastRunId;
 
-		const preResult = await getRunResultCSV(preForecastRunId, 'result.csv');
+		const preResult = await getRunResultCSV(preForecastRunId, 'result.csv', renameFnGenerator('pre'));
 		const postResult = await getRunResultCSV(postForecastRunId, 'result.csv');
 		pyciemssMap = parsePyCiemssMap(postResult[0]);
 
 		runResults.value[preForecastRunId] = preResult;
 		runResults.value[postForecastRunId] = postResult;
 
-		const preResultSummary = await getRunResultCSV(preForecastRunId, 'result_summary.csv');
+		const preResultSummary = await getRunResultCSV(preForecastRunId, 'result_summary.csv', renameFnGenerator('pre'));
 		const postResultSummary = await getRunResultCSV(postForecastRunId, 'result_summary.csv');
 
 		runResultsSummary.value[preForecastRunId] = preResultSummary;
