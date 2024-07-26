@@ -51,18 +51,16 @@
 		</AccordionTab>
 	</Accordion>
 
-	<Teleport to="body">
-		<tera-stratified-matrix-modal
-			v-if="matrixModalId && isStratified"
-			:id="matrixModalId"
-			:mmt="mmt"
-			:mmt-params="mmtParams"
-			:stratified-matrix-type="StratifiedMatrix.Initials"
-			:open-value-config="!!matrixModalId"
-			@close-modal="matrixModalId = ''"
-			@update-cell-value="emit('update-expression', { id: $event.variableName, value: $event.newValue })"
-		/>
-	</Teleport>
+	<tera-stratified-matrix-modal
+		v-if="matrixModalId && isStratified"
+		:id="matrixModalId"
+		:mmt="mmt"
+		:mmt-params="mmtParams"
+		:stratified-matrix-type="StratifiedMatrix.Initials"
+		:open-value-config="!!matrixModalId"
+		@close-modal="matrixModalId = ''"
+		@update-cell-value="emit('update-expression', { id: $event.variableName, value: $event.newValue })"
+	/>
 </template>
 
 <script setup lang="ts">

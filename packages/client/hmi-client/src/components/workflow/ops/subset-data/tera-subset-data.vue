@@ -157,8 +157,7 @@
 	<!--FIXME: Consider moving this to the modal composable for other dataset drilldowns to use-->
 	<!--This modal also causes warnings to popup since the entire component isn't wrapped by something, something to do with emit passing-->
 	<!--FIXME: Worry about naming subset later-->
-	<!-- <Teleport to="body">
-		<tera-modal
+	<!--<tera-modal
 			v-if="showSaveDatasetModal"
 			@modal-mask-clicked="showSaveDatasetModal = false"
 			@modal-enter-press="showSaveDatasetModal = false"
@@ -177,8 +176,7 @@
 					@click="showSaveDatasetModal = false"
 				/>
 			</template>
-		</tera-modal>
-	</Teleport> -->
+		</tera-modal>-->
 </template>
 
 <script setup lang="ts">

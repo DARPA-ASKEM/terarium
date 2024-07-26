@@ -181,28 +181,26 @@
 		</tera-drilldown-section>
 	</tera-drilldown>
 
-	<Teleport to="body">
-		<tera-modal v-if="sanityCheckErrors.length > 0">
-			<template #header>
-				<h4>Warning, these settings may cause errors</h4>
-			</template>
-			<template #default>
-				<section style="max-height: 22rem; overflow-y: scroll">
-					<div v-for="(errString, idx) of sanityCheckErrors" :key="idx">
-						{{ errString }}
-					</div>
-				</section>
-			</template>
-			<template #footer>
-				<Button label="Ok" class="p-button-primary" @click="sanityCheckErrors = []" />
-				<Button
-					label="Ignore warnings and use configuration"
-					class="p-button-secondary"
-					@click="() => createConfiguration()"
-				/>
-			</template>
-		</tera-modal>
-	</Teleport>
+	<tera-modal v-if="sanityCheckErrors.length > 0">
+		<template #header>
+			<h4>Warning, these settings may cause errors</h4>
+		</template>
+		<template #default>
+			<section style="max-height: 22rem; overflow-y: scroll">
+				<div v-for="(errString, idx) of sanityCheckErrors" :key="idx">
+					{{ errString }}
+				</div>
+			</section>
+		</template>
+		<template #footer>
+			<Button label="Ok" class="p-button-primary" @click="sanityCheckErrors = []" />
+			<Button
+				label="Ignore warnings and use configuration"
+				class="p-button-secondary"
+				@click="() => createConfiguration()"
+			/>
+		</template>
+	</tera-modal>
 
 	<!-- Matrix effect easter egg  -->
 	<canvas id="matrix-canvas" />

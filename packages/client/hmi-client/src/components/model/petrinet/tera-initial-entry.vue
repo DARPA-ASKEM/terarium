@@ -30,19 +30,17 @@
 			/>
 		</footer>
 	</div>
-	<Teleport to="body">
-		<tera-initial-other-value-modal
-			v-if="showOtherConfigValueModal"
-			:id="initialId"
-			:updateEvent="'update-expression'"
-			:otherValueList="otherValueList"
-			:otherValuesInputTypes="DistributionType.Constant"
-			@modal-mask-clicked="showOtherConfigValueModal = false"
-			@update-expression="emit('update-expression', $event)"
-			@update-source="emit('update-source', $event)"
-			@close-modal="showOtherConfigValueModal = false"
-		/>
-	</Teleport>
+	<tera-initial-other-value-modal
+		v-if="showOtherConfigValueModal"
+		:id="initialId"
+		:updateEvent="'update-expression'"
+		:otherValueList="otherValueList"
+		:otherValuesInputTypes="DistributionType.Constant"
+		@modal-mask-clicked="showOtherConfigValueModal = false"
+		@update-expression="emit('update-expression', $event)"
+		@update-source="emit('update-source', $event)"
+		@close-modal="showOtherConfigValueModal = false"
+	/>
 </template>
 
 <script setup lang="ts">

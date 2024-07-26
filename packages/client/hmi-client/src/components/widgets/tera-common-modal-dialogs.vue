@@ -1,14 +1,12 @@
 <template>
-	<Teleport to="body">
-		<tera-project-configuration-modal
-			id="project-configuration-modal"
-			v-if="isProjectConfigDialogVisible"
-			:confirm-text="menuProject ? 'Update' : 'Create'"
-			:modal-title="menuProject ? 'Edit project' : 'Create project'"
-			:project="menuProject"
-			@close-modal="isProjectConfigDialogVisible = false"
-		/>
-	</Teleport>
+	<tera-project-configuration-modal
+		id="project-configuration-modal"
+		v-if="isProjectConfigDialogVisible"
+		:confirm-text="menuProject ? 'Update' : 'Create'"
+		:modal-title="menuProject ? 'Edit project' : 'Create project'"
+		:project="menuProject"
+		@close-modal="isProjectConfigDialogVisible = false"
+	/>
 	<Dialog modal :header="`Delete ${projectName}?`" v-model:visible="isRemoveDialogVisible" style="max-width: 640px">
 		<p style="margin-bottom: 0.5rem">
 			This action is irreversible and will permanently remove
