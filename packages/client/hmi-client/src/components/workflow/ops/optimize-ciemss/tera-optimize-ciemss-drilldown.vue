@@ -713,9 +713,7 @@ const runOptimize = async () => {
 	};
 
 	// InferredParameters is to link a calibration run to this optimize call.
-	if (modelConfiguration.value) {
-		optimizePayload.extra.inferredParameters = modelConfiguration.value.simulationId;
-	}
+	optimizePayload.extra.inferredParameters = modelConfiguration.value.simulationId;
 
 	const optResult = await makeOptimizeJobCiemss(optimizePayload, nodeMetadata(props.node));
 	const state = _.cloneDeep(props.node.state);
