@@ -236,14 +236,15 @@ import {
 	subscribeToUpdateMessages,
 	unsubscribeToUpdateMessages,
 	parsePyCiemssMap,
-	DataArray
+	DataArray,
+	CiemssMethodOptions
 } from '@/services/models/simulation-service';
 
 import type { WorkflowNode } from '@/types/workflow';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
-import { CiemssMethodOptions, CiemssPresetTypes, DrilldownTabs } from '@/types/common';
+import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults } from './calibrate-utils';
@@ -344,6 +345,7 @@ interface BasicKnobs {
 	endTime: number;
 	stepSize: number;
 	learningRate: number;
+	method: string;
 }
 
 const knobs = ref<BasicKnobs>({
@@ -351,7 +353,8 @@ const knobs = ref<BasicKnobs>({
 	numSamples: props.node.state.numSamples ?? 100,
 	endTime: props.node.state.endTime ?? 100,
 	stepSize: props.node.state.stepSize ?? 1,
-	learningRate: props.node.state.learningRate ?? 0.1
+	learningRate: props.node.state.learningRate ?? 0.1,
+	method: props.node.state.method ?? CiemssMethodOptions.dopri5
 });
 
 const setPresetValues = (data: CiemssPresetTypes) => {
@@ -483,10 +486,10 @@ const runCalibrate = async () => {
 			mappings: formattedMap
 		},
 		extra: {
-			num_iterations: state.numIterations,
-			method: state.method,
-			step_size: state.stepSize,
-			learning_rate: state.learningRate
+			num_iterations: knobs.value.numIterations,
+			method: knobs.value.method,
+			step_size: knobs.value.stepSize,
+			learning_rate: knobs.value.learningRate
 		},
 		timespan: getTimespan({ dataset: csvAsset.value, mapping: mapping.value }),
 		engine: 'ciemss'

@@ -22,6 +22,11 @@ import { subscribe, unsubscribe } from '@/services/ClientEventService';
 
 export type DataArray = Record<string, any>[];
 
+export enum CiemssMethodOptions {
+	dopri5 = 'dopri5',
+	euler = 'euler'
+}
+
 export async function cancelCiemssJob(runId: String) {
 	try {
 		const resp = await API.get(`simulation-request/ciemss/cancel/${runId}`);

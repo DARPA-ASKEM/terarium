@@ -56,7 +56,6 @@
 						<div class="label-and-input">
 							<label for="5">Method</label>
 							<Dropdown
-								id="5"
 								v-model="method"
 								:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
 								@update:model-value="updateState"
@@ -170,7 +169,8 @@ import {
 	parsePyCiemssMap,
 	makeForecastJobCiemss as makeForecastJob,
 	convertToCsvAsset,
-	DataArray
+	DataArray,
+	CiemssMethodOptions
 } from '@/services/models/simulation-service';
 import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
 import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
@@ -194,7 +194,7 @@ import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import { CiemssMethodOptions, CiemssPresetTypes, DrilldownTabs } from '@/types/common';
+import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import TeraChartControl from '../../tera-chart-control.vue';
