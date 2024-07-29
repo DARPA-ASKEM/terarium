@@ -41,7 +41,7 @@ import {
 	DataArray
 } from '@/services/models/simulation-service';
 import { getModelConfigurationById, createModelConfiguration } from '@/services/model-configurations';
-import { getModelByModelConfigurationId } from '@/services/model';
+import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
 import { renderLossGraph, setupDatasetInput } from '@/services/calibrate-workflow';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
@@ -62,6 +62,8 @@ const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0].value?.[0]);
 
 const model = ref<Model | null>(null);
+const modelVarUnits = ref<{ [key: string]: string }>({});
+
 const runResult = ref<DataArray>([]);
 const runResultPre = ref<DataArray>([]);
 const runResultSummary = ref<DataArray>([]);
@@ -142,8 +144,6 @@ const preparedCharts = computed(() => {
 			}
 		});
 
-		const xAxisTitle = model.value?.semantics?.ode.time?.units?.expression ?? 'time';
-
 		return createForecastChart(
 			{
 				dataset: result,
@@ -162,13 +162,13 @@ const preparedCharts = computed(() => {
 				timeField: datasetTimeField as string
 			},
 			{
-				title: `${config.join(',')}`,
+				title: '',
 				width: 180,
 				height: 120,
 				legend: true,
 				translationMap: reverseMap,
-				xAxisTitle,
-				yAxisTitle: `${config.join(',')}`,
+				xAxisTitle: modelVarUnits.value._time || 'Time',
+				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || '',
 				colorscheme: ['#AAB3C6', '#1B8073']
 			}
 		);
@@ -237,6 +237,7 @@ watch(
 
 		const id = input.value[0];
 		model.value = await getModelByModelConfigurationId(id);
+		modelVarUnits.value = getUnitsFromModelParts(model.value as Model);
 	},
 	{ immediate: true }
 );

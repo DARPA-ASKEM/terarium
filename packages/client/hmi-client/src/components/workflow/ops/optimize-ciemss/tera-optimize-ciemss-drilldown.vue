@@ -894,7 +894,10 @@ const preparedForecastCharts = computed(() => {
 
 	// intervention chart spec
 	charts.interventionCharts = knobs.value.selectedInterventionVariables.map((variable) => {
-		chartOptions.translationMap = translationMap(variable);
+		const options = _.cloneDeep(chartOptions);
+		options.translationMap = translationMap(variable);
+		options.yAxisTitle = getUnit(variable);
+
 		const forecastChart = createForecastChart(
 			{
 				dataset: result,
@@ -908,7 +911,7 @@ const preparedForecastCharts = computed(() => {
 				timeField: 'timepoint_id'
 			},
 			null,
-			chartOptions
+			options
 		);
 		// add intervention annotations (rules and text)
 		forecastChart.layer.push(...createInterventionChartMarkers(preProcessedInterventionsData.value[variable]));
@@ -917,7 +920,10 @@ const preparedForecastCharts = computed(() => {
 
 	// simulation chart spec
 	charts.simulationCharts = knobs.value.selectedSimulationVariables.map((variable) => {
-		chartOptions.translationMap = translationMap(variable);
+		const options = _.cloneDeep(chartOptions);
+		options.translationMap = translationMap(variable);
+		options.yAxisTitle = getUnit(variable);
+
 		return createForecastChart(
 			{
 				dataset: result,
@@ -931,7 +937,7 @@ const preparedForecastCharts = computed(() => {
 				timeField: 'timepoint_id'
 			},
 			null,
-			chartOptions
+			options
 		);
 	});
 	return charts;

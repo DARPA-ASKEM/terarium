@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<tera-operator-placeholder v-if="!showSpinner" :node="node">
+		<tera-operator-placeholder v-if="!showSpinner && !runResults[node.state.postForecastRunId]" :node="node">
 			<template v-if="!node.inputs[0].value"> Attach a model configuration </template>
 		</tera-operator-placeholder>
 		<template v-if="node.inputs[0].value">
@@ -38,7 +38,9 @@ import { createLLMSummary } from '@/services/summary-service';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { createForecastChart } from '@/services/charts';
 import { mergeResults, renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
+import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
+
 import {
 	OptimizeCiemssOperationState,
 	OptimizeCiemssOperation,
@@ -54,6 +56,8 @@ const props = defineProps<{
 const runResults = ref<any>({});
 const runResultsSummary = ref<any>({});
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
+
+const modelVarUnits = ref<{ [key: string]: string }>({});
 
 let pyciemssMap: Record<string, string> = {};
 
@@ -142,13 +146,16 @@ const preparedCharts = computed(() => {
 				width: 180,
 				height: 120,
 				legend: true,
-				xAxisTitle: 'Time',
-				yAxisTitle: variable,
+				xAxisTitle: modelVarUnits.value._time || 'Time',
+				yAxisTitle:
+					_.uniq(modelVarUnits.value[variable])
+						.filter((v) => !!v)
+						.join(',') || '',
 				translationMap: {
 					[`${pyciemssMap[variable]}_mean:pre`]: `${variable} before optimization`,
 					[`${pyciemssMap[variable]}_mean`]: `${variable} after optimization`
 				},
-				title: variable,
+				title: '',
 				colorscheme: ['#AAB3C6', '#1B8073']
 			}
 		)
@@ -236,6 +243,11 @@ watch(
 		const state = props.node.state;
 		if (!active) return;
 		if (!state.postForecastRunId || !state.preForecastRunId) return;
+
+		const model = await getModelByModelConfigurationId(modelConfigId.value as string);
+		if (model) {
+			modelVarUnits.value = getUnitsFromModelParts(model);
+		}
 
 		const preForecastRunId = state.preForecastRunId;
 		const postForecastRunId = state.postForecastRunId;
