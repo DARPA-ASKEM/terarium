@@ -23,6 +23,14 @@ public class SimulationRequest implements Serializable {
 
 	private JsonNode extra;
 
+	@TSOptional
+	@JsonAlias("solver_method")
+	private String solverMethod;
+
+	@TSOptional
+	@JsonAlias("solver_options")
+	private JsonNode solverOptions;
+
 	private String engine;
 
 	@TSOptional
