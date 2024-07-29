@@ -34,8 +34,8 @@ public class CalibrationRequestCiemss implements Serializable {
 	private String solverMethod;
 
 	@TSOptional
-	@JsonAlias("solver_options")
-	private JsonNode solverOptions;
+	@JsonAlias("solver_step_size")
+	private Double solverStepSize;
 
 	@TSOptional
 	@JsonAlias("policy_intervention_id")
