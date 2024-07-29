@@ -1,34 +1,42 @@
 <template>
 	<section>
 		<h6>{{ symbol }}</h6>
-		<tera-input
-			title="Name"
-			placeholder="Add a name"
-			:model-value="item.name ?? ''"
-			:feature-config="featureConfig"
-			@update:model-value="$emit('update-item', { key: 'name', value: $event })"
-			:disabled="disabledInputs?.includes('name')"
-		/>
-		<div v-if="item.input && item.output" label="Unit">
-			<span><label>Input:</label> {{ item.input }}</span>
-			<span><label>Output:</label> {{ item.output }}</span>
-		</div>
-		<!--amr_to_mmt doesn't like unit expressions with spaces, removing them here before they are saved to the amr-->
-		<tera-input
-			v-else
-			label="Unit"
-			placeholder="Add a unit"
-			:model-value="item.unitExpression ?? ''"
-			:feature-config="featureConfig"
-			@update:model-value="
-				($event) => {
-					const value = $event.replace(/[\s.]+/g, '');
-					$emit('update-item', { key: 'unitExpression', value });
-				}
-			"
-			:disabled="disabledInputs?.includes('unitExpression')"
-			@focusout="($event) => ($event.target.value = $event.target.value.replace(/[\s.]+/g, ''))"
-		/>
+		<span class="name">
+			<template v-if="featureConfig.isPreview">{{ item.name }}</template>
+			<tera-input
+				v-else
+				placeholder="Add a name"
+				:model-value="item.name ?? ''"
+				:feature-config="featureConfig"
+				@update:model-value="$emit('update-item', { key: 'name', value: $event })"
+				:disabled="disabledInputs?.includes('name')"
+			/>
+		</span>
+		<span class="unit">
+			<template v-if="item.input && item.output">
+				<span><label>Input:</label> {{ item.input }}</span>
+				<span><label>Output:</label> {{ item.output }}</span>
+			</template>
+			<!--amr_to_mmt doesn't like unit expressions with spaces, removing them here before they are saved to the amr-->
+			<template v-else-if="showUnit">
+				<template v-if="featureConfig.isPreview"><label>Unit</label>{{ item.unitExpression }}</template>
+				<tera-input
+					v-else
+					label="Unit"
+					placeholder="Add a unit"
+					:model-value="item.unitExpression ?? ''"
+					:feature-config="featureConfig"
+					@update:model-value="
+						($event) => {
+							const value = $event.replace(/[\s.]+/g, '');
+							$emit('update-item', { key: 'unitExpression', value });
+						}
+					"
+					:disabled="disabledInputs?.includes('unitExpression')"
+					@focusout="($event) => ($event.target.value = $event.target.value.replace(/[\s.]+/g, ''))"
+				/>
+			</template>
+		</span>
 		<span v-if="showConcept" class="concept">
 			<label>Concept</label>
 			<template v-if="featureConfig.isPreview">{{ query }}</template>
@@ -49,14 +57,17 @@
 			:expression="item.expression && stringToLatexExpression(item.expression)"
 			:throw-on-error="false"
 		/>
-		<tera-input
-			title="Description"
-			placeholder="Add a description"
-			:model-value="item.description ?? ''"
-			:feature-config="featureConfig"
-			@update:model-value="$emit('update-item', { key: 'description', value: $event })"
-			:disabled="disabledInputs?.includes('description')"
-		/>
+		<span class="description">
+			<template v-if="featureConfig.isPreview">{{ item.description }}</template>
+			<tera-input
+				v-else
+				placeholder="Add a description"
+				:model-value="item.description ?? ''"
+				:feature-config="featureConfig"
+				@update:model-value="$emit('update-item', { key: 'description', value: $event })"
+				:disabled="disabledInputs?.includes('description')"
+			/>
+		</span>
 	</section>
 </template>
 
@@ -84,6 +95,7 @@ const results = ref<DKG[]>([]);
 const symbol = computed(() => (props.item.templateId ? `${props.item.templateId}, ${props.item.id}` : props.item.id));
 
 // If we are in preview mode and there is no content, show nothing
+const showUnit = computed(() => !(props.featureConfig.isPreview && !props.item.unitExpression));
 const showConcept = computed(() => !(props.featureConfig.isPreview && !query.value));
 
 watch(
@@ -106,6 +118,14 @@ section {
 	gap: var(--gap-2);
 	align-items: center;
 	font-size: var(--font-caption);
+
+	& > *:empty {
+		display: none;
+	}
+}
+
+label {
+	color: var(--text-color-subdued);
 }
 
 h6 {
@@ -118,29 +138,28 @@ h6 {
 	}
 }
 
-div {
-	display: flex;
-	gap: var(--gap-2);
-}
-
-:deep([title='Name']) {
+.name {
 	grid-area: name;
 }
 
-:deep([title='Description']) {
+.description {
 	grid-area: description;
 }
 
-:deep([title='Unit']) {
+.unit {
 	grid-area: unit;
 }
 
-label {
-	color: var(--text-color-subdued);
+.expression {
+	grid-area: expression;
 }
 
 .concept {
 	grid-area: concept;
+}
+
+.unit,
+.concept {
 	display: flex;
 	align-items: center;
 	gap: var(--gap-1);
@@ -148,9 +167,5 @@ label {
 
 :deep(.p-autocomplete-input) {
 	padding: var(--gap-1) var(--gap-2);
-}
-
-.expression {
-	grid-area: expression;
 }
 </style>

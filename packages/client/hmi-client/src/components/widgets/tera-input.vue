@@ -1,5 +1,5 @@
 <template>
-	<div class="flex" :title="label ?? title">
+	<div class="flex">
 		<label @click.self.stop="focusInput">{{ label }}</label>
 		<main :class="{ error: getErrorMessage }" @click.self.stop="focusInput">
 			<i v-if="icon" :class="icon" />
