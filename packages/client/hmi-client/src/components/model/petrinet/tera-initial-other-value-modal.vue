@@ -71,8 +71,7 @@
 						<template #footer>
 							<section class="inline-flex gap-1">
 								<span class="custom-input-label">Constant</span>
-								<tera-input
-									type="nist"
+								<tera-input-number
 									placeholder="Constant"
 									v-model="customConstant"
 									@update:modelValue="onCustomSelectionChange"
@@ -92,7 +91,7 @@
 
 <script setup lang="ts">
 import { numberToNist } from '@/utils/number';
-import TeraInput from '@/components/widgets/tera-input.vue';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { DistributionType } from '@/services/distribution';
 import { ref } from 'vue';
 import Button from 'primevue/button';

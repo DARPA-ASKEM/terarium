@@ -17,18 +17,19 @@
 
 		<div class="w-2">
 			<label>Number input</label>
-			<tera-input label="Label" v-model="numberstring" type="number" />
+			<tera-input-number label="Label" v-model="numberstring" />
 		</div>
 
 		<div class="w-2">
 			<label>sci input</label>
-			<tera-input v-model="scistring" label="Label" type="nist" @update:model-value="console.log(scistring)" />
+			<tera-input-number v-model="scistring" label="Label" @update:model-value="console.log(scistring)" />
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
 import teraInput from '@/components/widgets/tera-input.vue';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { ref } from 'vue';
 
 const teststring = ref<string>('');

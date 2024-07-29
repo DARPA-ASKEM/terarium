@@ -63,11 +63,11 @@
 					<div class="input-row">
 						<div class="label-and-input">
 							<label>Start time</label>
-							<tera-input disabled type="number" model-value="0" />
+							<tera-input-number disabled model-value="0" />
 						</div>
 						<div class="label-and-input">
 							<label>End time</label>
-							<tera-input type="number" v-model="knobs.endTime" />
+							<tera-input-number v-model="knobs.endTime" />
 						</div>
 					</div>
 					<div>
@@ -89,7 +89,7 @@
 							<div class="label-and-input">
 								<label>Number of samples to simulate model</label>
 								<div>
-									<tera-input type="number" v-model="knobs.numSamples" />
+									<tera-input-number v-model="knobs.numSamples" />
 								</div>
 							</div>
 							<div class="label-and-input">
@@ -367,6 +367,7 @@ import { createSuccessCriteriaChart, createForecastChart, createInterventionChar
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import MultiSelect from 'primevue/multiselect';
 import { mergeResults, renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import teraOptimizeCriterionGroupForm from './tera-optimize-criterion-group-form.vue';
 import TeraStaticInterventionPolicyGroup from './tera-static-intervention-policy-group.vue';
 import TeraDynamicInterventionPolicyGroup from './tera-dynamic-intervention-policy-group.vue';

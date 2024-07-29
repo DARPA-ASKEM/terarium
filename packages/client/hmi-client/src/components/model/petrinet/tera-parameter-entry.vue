@@ -33,10 +33,9 @@
 				/>
 
 				<!-- Constant -->
-				<tera-input
+				<tera-input-number
 					v-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Constant"
 					label="Constant"
-					type="nist"
 					:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.value"
 					@update:model-value="
 						emit('update-parameter', {
@@ -47,9 +46,8 @@
 				/>
 				<!-- Uniform Distribution -->
 				<template v-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Uniform">
-					<tera-input
+					<tera-input-number
 						label="Min"
-						type="nist"
 						:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.minimum"
 						@update:model-value="
 							emit('update-parameter', {
@@ -58,9 +56,8 @@
 							})
 						"
 					/>
-					<tera-input
+					<tera-input-number
 						label="Max"
-						type="nist"
 						:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.maximum"
 						@update:model-value="
 							emit('update-parameter', {
@@ -98,7 +95,7 @@
 <script setup lang="ts">
 import { Model, ModelConfiguration } from '@/types/Types';
 import { getParameterSource, getParameterDistribution, getOtherValues } from '@/services/model-configurations';
-import TeraInput from '@/components/widgets/tera-input.vue';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { computed, ref } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
