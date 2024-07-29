@@ -38,6 +38,7 @@ import { createLLMSummary } from '@/services/summary-service';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { createForecastChart } from '@/services/charts';
 import { mergeResults, renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
+import { getModelConfigurationById } from '@/services/model-configurations';
 import {
 	OptimizeCiemssOperationState,
 	OptimizeCiemssOperation,
@@ -56,7 +57,6 @@ const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.v
 
 let pyciemssMap: Record<string, string> = {};
 
-const inferredParameters = computed(() => props.node.inputs[1].value);
 const showSpinner = computed<boolean>(
 	() =>
 		props.node.state.inProgressOptimizeId !== '' ||
@@ -104,9 +104,12 @@ const startForecast = async (optimizedInterventions?: InterventionPolicy) => {
 		const inputIntervention = props.node.inputs[2].value?.[0];
 		simulationPayload.policyInterventionId = inputIntervention;
 	}
-	if (inferredParameters.value) {
-		simulationPayload.extra.inferred_parameters = inferredParameters.value[0];
+
+	const modelConfig = await getModelConfigurationById(modelConfigId.value as string);
+	if (modelConfig.simulationId) {
+		simulationPayload.extra.inferred_parameters = modelConfig.simulationId;
 	}
+
 	return makeForecastJobCiemss(simulationPayload, nodeMetadata(props.node));
 };
 
