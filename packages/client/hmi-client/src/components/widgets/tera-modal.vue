@@ -41,13 +41,17 @@
 
 import { onMounted, ref, nextTick } from 'vue';
 
-const emit = defineEmits(['modal-mask-clicked', 'modal-enter-press', 'on-modal-open']);
-
-const modalRef = ref<HTMLElement | null>(null);
+defineOptions({
+	inheritAttrs: false
+});
 
 defineProps<{
 	zIndex?: number;
 }>();
+
+const emit = defineEmits(['modal-mask-clicked', 'modal-enter-press', 'on-modal-open']);
+
+const modalRef = ref<HTMLElement | null>(null);
 
 onMounted(async () => {
 	await nextTick();

@@ -37,7 +37,6 @@
 					<!-- Unstratified -->
 					<tera-initial-entry
 						v-else
-						class="pl-5"
 						:model="model"
 						:model-configuration="modelConfiguration"
 						:modelConfigurations="modelConfigurations"

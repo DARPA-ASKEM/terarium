@@ -214,7 +214,7 @@ import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { useClientEvent } from '@/composables/useClientEvent';
@@ -628,10 +628,6 @@ const resetConfiguration = () => {
 	});
 };
 
-onMounted(async () => {
-	await initialize();
-});
-
 watch(
 	() => model.value,
 	async () => {
@@ -655,10 +651,10 @@ watch(
 
 watch(
 	() => props.node.active,
-	async () => {
+	() => {
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
-			await initialize();
+			initialize();
 		}
 	},
 	{ immediate: true }

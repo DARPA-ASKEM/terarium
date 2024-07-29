@@ -33,7 +33,7 @@
 		<section class="project-page">
 			<tera-model v-if="pageType === AssetType.Model" :asset-id="assetId" />
 			<tera-code :asset-id="assetId" v-else-if="pageType === AssetType.Code" />
-			<tera-project-overview v-else-if="pageType === ProjectPages.OVERVIEW" @open-new-asset="openNewAsset" />
+			<tera-project-overview v-else-if="pageType === ProjectPages.OVERVIEW" />
 			<tera-workflow v-else-if="pageType === AssetType.Workflow" :asset-id="assetId" />
 			<!--Add new process/asset views here-->
 			<template v-else-if="assetId">
