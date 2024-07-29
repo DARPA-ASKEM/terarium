@@ -447,7 +447,7 @@ const contextMenuItems: MenuItem[] = [
 			{
 				label: ModelOp.operation.displayName,
 				command: addOperatorToWorkflow(ModelOp)
-			},``
+			},
 			{
 				label: ModelFromDocumentOp.operation.displayName,
 				command: addOperatorToWorkflow(ModelFromDocumentOp)
