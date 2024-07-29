@@ -306,7 +306,7 @@ const preparedCharts = computed(() => {
 				groupField: 'sample_id'
 			},
 			{
-				title: `${config.join(',')}`,
+				title: '',
 				width: chartSize.value.width,
 				height: chartSize.value.height,
 				legend: true,

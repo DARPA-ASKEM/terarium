@@ -348,7 +348,7 @@ const preparedCharts = computed(() => {
 			null,
 			// options
 			{
-				title: `${config.join(',')}`,
+				title: '',
 				width: chartSize.value.width,
 				height: chartSize.value.height,
 				legend: true,
