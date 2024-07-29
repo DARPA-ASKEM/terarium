@@ -117,6 +117,7 @@ export const createErrorChart = (dataset: Record<string, any>[], options: ErrorC
 		data: { values: dataset },
 		transform: [
 			{ fold: variables, as: ['variable', '_value'] },
+			{ extent: '_value', param: '_valueExtent' },
 			{
 				lookup: 'variable',
 				from: { data: { values: variablesOptions }, key: 'field', fields: ['label'] },
@@ -141,13 +142,14 @@ export const createErrorChart = (dataset: Record<string, any>[], options: ErrorC
 			},
 			layer: [
 				{
-					transform: [{ density: '_value' }],
+					transform: [{ density: '_value', as: ['val', 'density'], extent: { signal: '_valueExtent' } }],
 					mark: {
-						type: 'area'
+						type: 'area',
+						tooltip: true
 					},
 					encoding: {
 						x: {
-							field: 'value',
+							field: 'val',
 							type: 'quantitative'
 						},
 						y: {
