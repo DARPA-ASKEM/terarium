@@ -14,7 +14,7 @@
 						<h6>{{ base.id }}</h6>
 					</span>
 					<!--N/A if it's a transition-->
-					<template v-if="!children[0].input || !children[0].output">
+					<template v-if="!featureConfig.isPreview && (!children[0].input || !children[0].output)">
 						<Button
 							v-if="!parentEditingState[index].isEditingChildrenUnits"
 							@click="parentEditingState[index].isEditingChildrenUnits = true"
@@ -46,54 +46,56 @@
 						</span>
 					</template>
 					<Button v-if="showMatrix" label="Open matrix" text size="small" @click="$emit('open-matrix', base.id)" />
-					<Button
-						v-if="!parentEditingState[index].isEditingChildrenConcepts"
-						@click="parentEditingState[index].isEditingChildrenConcepts = true"
-						label="Add concept to all children"
-						text
-						size="small"
-					/>
-					<span v-else>
-						<span class="concept">
-							<label>Concept</label>
-							<AutoComplete
-								label="Concept"
+					<template v-if="!featureConfig.isPreview">
+						<Button
+							v-if="!parentEditingState[index].isEditingChildrenConcepts"
+							@click="parentEditingState[index].isEditingChildrenConcepts = true"
+							label="Add concept to all children"
+							text
+							size="small"
+						/>
+						<span v-else>
+							<span class="concept">
+								<label>Concept</label>
+								<AutoComplete
+									label="Concept"
+									size="small"
+									placeholder="Search concepts"
+									v-model="parentEditingState[index].childrenConcepts.name"
+									:suggestions="results"
+									optionLabel="name"
+									@complete="
+										async () => (results = await searchCuriesEntities(parentEditingState[index].childrenConcepts.name))
+									"
+									@item-select="
+										($event) => {
+											const { name, curie } = $event.value;
+											parentEditingState[index].childrenConcepts = { name, curie };
+										}
+									"
+								/>
+							</span>
+							<Button
+								icon="pi pi-check"
+								text
+								rounded
 								size="small"
-								placeholder="Search concepts"
-								v-model="parentEditingState[index].childrenConcepts.name"
-								:suggestions="results"
-								optionLabel="name"
-								@complete="
-									async () => (results = await searchCuriesEntities(parentEditingState[index].childrenConcepts.name))
-								"
-								@item-select="
-									($event) => {
-										const { name, curie } = $event.value;
-										parentEditingState[index].childrenConcepts = { name, curie };
+								@click="
+									() => {
+										updateAllChildren(base.id, 'concept', parentEditingState[index].childrenConcepts.curie);
+										parentEditingState[index].isEditingChildrenConcepts = false;
 									}
 								"
 							/>
+							<Button
+								icon="pi pi-times"
+								text
+								rounded
+								size="small"
+								@click="parentEditingState[index].isEditingChildrenConcepts = false"
+							/>
 						</span>
-						<Button
-							icon="pi pi-check"
-							text
-							rounded
-							size="small"
-							@click="
-								() => {
-									updateAllChildren(base.id, 'concept', parentEditingState[index].childrenConcepts.curie);
-									parentEditingState[index].isEditingChildrenConcepts = false;
-								}
-							"
-						/>
-						<Button
-							icon="pi pi-times"
-							text
-							rounded
-							size="small"
-							@click="parentEditingState[index].isEditingChildrenConcepts = false"
-						/>
-					</span>
+					</template>
 				</section>
 				<ul v-show="parentEditingState[index].showChildren" class="stratified">
 					<li v-for="(child, index) in children" :key="index">

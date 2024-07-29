@@ -1,7 +1,8 @@
 <template>
-	<div class="flex" :label="label" :title="title">
+	<div class="flex" :title="label ?? title">
 		<label v-if="label" @click.self.stop="focusInput">{{ label }}</label>
-		<main :class="{ error: getErrorMessage }" @click.self.stop="focusInput">
+		<component v-if="featureConfig?.isPreview" :is="previewTag ?? 'span'">{{ modelValue }}</component>
+		<main v-else :class="{ error: getErrorMessage }" @click.self.stop="focusInput">
 			<i v-if="icon" :class="icon" />
 			<input
 				ref="inputField"
@@ -24,6 +25,7 @@
 import { isString } from 'lodash';
 import { nistToNumber, nistToString, numberToNist, scrubAndParse } from '@/utils/number';
 import { CSSProperties, InputTypeHTMLAttribute, computed, onMounted, ref, watch } from 'vue';
+import type { FeatureConfig } from '@/types/common';
 
 const props = defineProps<{
 	modelValue: string | number | undefined;
@@ -35,6 +37,8 @@ const props = defineProps<{
 	type?: InputTypeHTMLAttribute | 'nist';
 	placeholder?: string;
 	autoWidth?: boolean;
+	featureConfig?: FeatureConfig;
+	previewTag?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span';
 }>();
 
 const emit = defineEmits(['update:model-value', 'focusout']);

@@ -7,12 +7,13 @@
 			title="Name"
 			placeholder="Add a name"
 			:model-value="item.name ?? ''"
+			:feature-config="featureConfig"
 			@update:model-value="$emit('update-item', { key: 'name', value: $event })"
 			:disabled="disabledInputs?.includes('name')"
 		/>
 		<div v-if="item.input && item.output" label="Unit">
-			<span><span>Input:</span> {{ item.input }}</span>
-			<span><span>Output:</span> {{ item.output }}</span>
+			<span><label>Input:</label> {{ item.input }}</span>
+			<span><label>Output:</label> {{ item.output }}</span>
 		</div>
 		<!--amr_to_mmt doesn't like unit expressions with spaces, removing them here before they are saved to the amr-->
 		<tera-input
@@ -20,6 +21,7 @@
 			label="Unit"
 			placeholder="Add a unit"
 			:model-value="item.unitExpression ?? ''"
+			:feature-config="featureConfig"
 			@update:model-value="
 				($event) => {
 					const value = $event.replace(/[\s.]+/g, '');
@@ -31,7 +33,9 @@
 		/>
 		<span class="concept">
 			<label>Concept</label>
+			<template v-if="featureConfig.isPreview">{{ query }}</template>
 			<AutoComplete
+				v-else
 				label="Concept"
 				size="small"
 				placeholder="Search concepts"
@@ -45,14 +49,14 @@
 		</span>
 		<katex-element
 			class="expression"
-			v-if="item.expression"
-			:expression="stringToLatexExpression(item.expression)"
+			:expression="item.expression && stringToLatexExpression(item.expression)"
 			:throw-on-error="false"
 		/>
 		<tera-input
 			title="Description"
 			placeholder="Add a description"
 			:model-value="item.description ?? ''"
+			:feature-config="featureConfig"
 			@update:model-value="$emit('update-item', { key: 'description', value: $event })"
 			:disabled="disabledInputs?.includes('description')"
 		/>
@@ -99,6 +103,7 @@ section {
 	grid-template-columns: max-content max-content max-content auto max-content;
 	gap: var(--gap-2);
 	align-items: center;
+	font-size: var(--font-caption);
 }
 
 h6 {
@@ -114,10 +119,6 @@ h6 {
 div {
 	display: flex;
 	gap: var(--gap-2);
-	font-size: var(--font-caption);
-	& > span > span {
-		color: var(--text-color-subdued);
-	}
 }
 
 :deep([title='Name']) {
@@ -128,16 +129,18 @@ div {
 	grid-area: description;
 }
 
-:deep([label='Unit']) {
+:deep([title='Unit']) {
 	grid-area: unit;
+}
+
+label {
+	color: var(--text-color-subdued);
 }
 
 .concept {
 	grid-area: concept;
 	display: flex;
 	align-items: center;
-	color: var(--text-color-subdued);
-	font-size: var(--font-caption);
 	gap: var(--gap-1);
 }
 
