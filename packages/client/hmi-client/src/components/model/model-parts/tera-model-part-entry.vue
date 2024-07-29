@@ -1,8 +1,6 @@
 <template>
 	<section>
-		<h6>
-			<template v-if="item.templateId">{{ item.templateId }},</template> {{ item.id }}
-		</h6>
+		<h6>{{ symbol }}</h6>
 		<tera-input
 			title="Name"
 			placeholder="Add a name"
@@ -82,6 +80,8 @@ defineEmits(['update-item']);
 
 const query = ref('');
 const results = ref<DKG[]>([]);
+
+const symbol = computed(() => (props.item.templateId ? `${props.item.templateId}, ${props.item.id}` : props.item.id));
 
 // If we are in preview mode and there is no content, show nothing
 const showConcept = computed(() => !(props.featureConfig.isPreview && !query.value));
