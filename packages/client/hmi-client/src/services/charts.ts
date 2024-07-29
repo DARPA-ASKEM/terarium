@@ -33,7 +33,6 @@ export interface HistogramChartOptions extends BaseChartOptions {
 }
 
 export interface ErrorChartOptions extends Omit<BaseChartOptions, 'height' | 'yAxisTitle' | 'legend'> {
-	maxBins?: number;
 	height?: number;
 	areaChartHeight?: number;
 	boxPlotHeight?: number;
@@ -63,7 +62,6 @@ export const createErrorChart = (dataset: Record<string, any>[], options: ErrorC
 	const variablesOptions = options.variables.map(({ field, label }) => ({ field, label: label ?? field }));
 
 	const variables = variablesOptions.map((v) => v.field);
-	const maxbins = options.maxBins ?? 30;
 
 	const titleObj = options.title
 		? {
@@ -143,31 +141,23 @@ export const createErrorChart = (dataset: Record<string, any>[], options: ErrorC
 			},
 			layer: [
 				{
-					transform: [
-						{ bin: { maxbins }, field: '_value', as: ['binnedValueStart', 'binnedValueEnd'] },
-						{ calculate: '(datum.binnedValueStart + datum.binnedValueEnd) / 2', as: 'binnedValueCenter' }
-					],
+					transform: [{ density: '_value' }],
 					mark: {
-						type: 'area',
-						tooltip: true,
-						interpolate: 'monotone'
+						type: 'area'
 					},
 					encoding: {
 						x: {
-							field: 'binnedValueCenter'
+							field: 'value',
+							type: 'quantitative'
 						},
 						y: {
-							aggregate: 'count',
+							field: 'density',
 							type: 'quantitative',
 							scale: { range: areaChartRange }
 						},
 						color: {
 							value: areaChartColor
-						},
-						tooltip: [
-							{ bin: { maxbins }, field: '_value', title: 'Error' },
-							{ aggregate: 'count', type: 'quantitative', title: 'Count' }
-						]
+						}
 					}
 				},
 				{
