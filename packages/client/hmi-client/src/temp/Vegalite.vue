@@ -3,7 +3,6 @@
 		<vega-chart
 			:interval-selection-signal-names="['brush']"
 			:visualization-spec="spec"
-			:config="unchartedVegaTheme"
 			@chart-click="handleChartClick($event)"
 			@update-interval-selection="debounceHandleIntervalSelect"
 		/>
@@ -17,7 +16,7 @@
 import { debounce } from 'lodash';
 import { ref, onMounted } from 'vue';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import unchartedVegaTheme from './vega-theme';
+// import unchartedVegaTheme from './vega-theme';
 import { createForecastChart, createHistogramChart, createErrorChart } from '@/services/charts';
 // import { createLLMSummary, getSummaries } from '@/services/summary-service';
 
@@ -80,8 +79,9 @@ const makeLineChart = (data: any[]) => {
 
 const spec = ref<any>(
 	createErrorChart(dataChart1, {
+		title: '',
 		width: 500,
-		variables: [{ field: 'error' }, { field: 'error2' }],
+		variables: [{ field: 'error' }, { field: 'error2', label: 'e2' }],
 		xAxisTitle: 'Error'
 	})
 );

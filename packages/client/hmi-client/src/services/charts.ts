@@ -46,17 +46,23 @@ export const createErrorChart = (dataset: Record<string, any>[], options: ErrorC
 	const labelFontWeight = 'normal';
 	const globalFont = 'Figtree';
 
+	const areaChartColor = '#1B8073';
+	const dotColor = '#67B5AC';
+	const boxPlotColor = '#000';
+
 	const width = options.width;
 	const height = options.height ?? 100;
-	const boxPlotHeight = options.boxPlotHeight ?? 20;
-	const areaChartHeight = options.areaChartHeight ?? 50;
+	const boxPlotHeight = options.boxPlotHeight ?? 16;
+	const areaChartHeight = options.areaChartHeight ?? 44;
 	const gap = 15;
 
 	const areaChartRange = [areaChartHeight, 0];
 	const dotChartRange = [areaChartHeight + gap, areaChartHeight + gap + boxPlotHeight];
 	const boxPlotYPosition = (dotChartRange[0] + dotChartRange[1]) / 2;
 
-	const variables = options.variables.map((v) => v.field);
+	const variablesOptions = options.variables.map(({ field, label }) => ({ field, label: label ?? field }));
+
+	const variables = variablesOptions.map((v) => v.field);
 	const maxbins = options.maxBins ?? 30;
 
 	const titleObj = options.title
@@ -70,21 +76,21 @@ export const createErrorChart = (dataset: Record<string, any>[], options: ErrorC
 
 	const brushParamName = 'brush';
 
-	const areaChartColor = '#1B8073';
-	const dotColor = '#67B5AC';
-
 	const config = {
-		padding: 0,
 		facet: { spacing: 2 },
 		font: globalFont,
 		mark: { opacity: 1 },
-		// view: { stroke: "transparent" },
+		view: { stroke: 'transparent' },
 		axis: {
+			tickCount: 5,
+			ticks: false,
+			grid: false,
+			domain: false,
+			gridDash: [2, 3],
 			domainColor: axisColor,
 			tickColor: { value: axisColor },
 			labelColor: { value: labelColor },
 			labelFontWeight,
-			gridOpacity: 0,
 			labels: false
 		},
 		area: {
@@ -97,11 +103,10 @@ export const createErrorChart = (dataset: Record<string, any>[], options: ErrorC
 		},
 		boxplot: {
 			size: boxPlotHeight,
-			median: { color: 'black' },
-			outliers: false,
+			median: { color: boxPlotColor },
 			box: {
 				fill: 'transparent',
-				stroke: 'black',
+				stroke: boxPlotColor,
 				strokeWidth: 1
 			}
 		}
@@ -112,22 +117,25 @@ export const createErrorChart = (dataset: Record<string, any>[], options: ErrorC
 		config,
 		title: titleObj,
 		data: { values: dataset },
-		transform: [{ fold: variables, as: ['_variable', '_value'] }],
-		facet: { row: { field: '_variable' } },
+		transform: [
+			{ fold: variables, as: ['variable', '_value'] },
+			{
+				lookup: 'variable',
+				from: { data: { values: variablesOptions }, key: 'field', fields: ['label'] },
+				as: 'Variable Label'
+			}
+		],
+		facet: { row: { field: 'variable', title: '', header: { labels: null } } },
 		resolve: { scale: { y: 'independent' } },
 		spec: {
 			width,
 			height,
-			transform: [
-				{ calculate: 'random()', as: 'jitter' },
-				{ calculate: '0', as: 'zero' }
-			],
 			encoding: {
 				x: {
 					field: '_value',
 					type: 'quantitative',
 					title: options.xAxisTitle,
-					axis: { labels: true, stroke: 'black' }
+					axis: { labels: true, domain: true, ticks: true }
 				},
 				y: {
 					title: ''
@@ -141,6 +149,7 @@ export const createErrorChart = (dataset: Record<string, any>[], options: ErrorC
 					],
 					mark: {
 						type: 'area',
+						tooltip: true,
 						interpolate: 'monotone'
 					},
 					encoding: {
@@ -154,6 +163,22 @@ export const createErrorChart = (dataset: Record<string, any>[], options: ErrorC
 						},
 						color: {
 							value: areaChartColor
+						},
+						tooltip: [
+							{ bin: { maxbins }, field: '_value', title: 'Error' },
+							{ aggregate: 'count', type: 'quantitative', title: 'Count' }
+						]
+					}
+				},
+				{
+					mark: {
+						type: 'boxplot'
+					},
+					encoding: {
+						y: {
+							field: 'Variable Label',
+							scale: { range: [boxPlotYPosition, boxPlotYPosition] },
+							axis: { grid: true, labels: true, orient: 'left', offset: 5 }
 						}
 					}
 				},
@@ -161,6 +186,7 @@ export const createErrorChart = (dataset: Record<string, any>[], options: ErrorC
 					mark: {
 						type: 'point'
 					},
+					transform: [{ calculate: 'random()', as: 'jitter' }],
 					encoding: {
 						y: {
 							field: 'jitter',
@@ -170,25 +196,15 @@ export const createErrorChart = (dataset: Record<string, any>[], options: ErrorC
 						color: {
 							condition: { param: brushParamName },
 							value: 'lightgray'
-						}
+						},
+						tooltip: [{ field: '_value', title: 'Error' }]
 					},
 					params: [
 						{
 							name: brushParamName,
-							select: { type: 'interval', encodings: ['_variable', 'x'], resolve: 'global' }
+							select: { type: 'interval', encodings: ['x'], resolve: 'global' }
 						}
 					]
-				},
-				{
-					mark: {
-						type: 'boxplot'
-					},
-					encoding: {
-						y: {
-							field: 'zero',
-							scale: { range: [boxPlotYPosition, boxPlotYPosition] }
-						}
-					}
 				}
 			]
 		}
