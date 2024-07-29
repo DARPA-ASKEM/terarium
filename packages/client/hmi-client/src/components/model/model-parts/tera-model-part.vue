@@ -102,7 +102,6 @@
 						<tera-model-part-entry
 							:item="child"
 							:feature-config="featureConfig"
-							:disabled-inputs="disabledInputs"
 							@update-item="$emit('update-item', { id: child.id, ...$event })"
 						/>
 					</li>
@@ -112,7 +111,6 @@
 				v-else
 				:item="base"
 				:feature-config="featureConfig"
-				:disabled-inputs="disabledInputs"
 				@update-item="$emit('update-item', { id: base.id, ...$event })"
 			/>
 		</li>
@@ -139,7 +137,6 @@ const props = defineProps<{
 	}[];
 	featureConfig: FeatureConfig;
 	collapsedItems?: Map<string, string[]>;
-	disabledInputs?: string[];
 	showMatrix?: boolean;
 }>();
 

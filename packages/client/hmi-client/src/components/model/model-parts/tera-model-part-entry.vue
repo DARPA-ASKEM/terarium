@@ -9,7 +9,6 @@
 				:model-value="item.name ?? ''"
 				:feature-config="featureConfig"
 				@update:model-value="$emit('update-item', { key: 'name', value: $event })"
-				:disabled="disabledInputs?.includes('name')"
 			/>
 		</span>
 		<span class="unit">
@@ -32,7 +31,6 @@
 							$emit('update-item', { key: 'unitExpression', value });
 						}
 					"
-					:disabled="disabledInputs?.includes('unitExpression')"
 					@focusout="($event) => ($event.target.value = $event.target.value.replace(/[\s.]+/g, ''))"
 				/>
 			</template>
@@ -47,7 +45,6 @@
 				v-model="query"
 				:suggestions="results"
 				optionLabel="name"
-				:disabled="disabledInputs?.includes('concept')"
 				@complete="async () => (results = await searchCuriesEntities(query))"
 				@item-select="$emit('update-item', { key: 'concept', value: $event.value.curie })"
 			/>
@@ -65,7 +62,6 @@
 				:model-value="item.description ?? ''"
 				:feature-config="featureConfig"
 				@update:model-value="$emit('update-item', { key: 'description', value: $event })"
-				:disabled="disabledInputs?.includes('description')"
 			/>
 		</span>
 	</section>
@@ -84,7 +80,6 @@ import type { FeatureConfig } from '@/types/common';
 const props = defineProps<{
 	item: ModelPartItem;
 	featureConfig: FeatureConfig;
-	disabledInputs?: string[];
 }>();
 
 defineEmits(['update-item']);
