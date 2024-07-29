@@ -180,8 +180,15 @@ function updateAllChildren(base: string, key: string, value: string) {
 </script>
 
 <style scoped>
+ul {
+	display: flex;
+	flex-direction: column;
+	list-style: none;
+	gap: var(--gap-2);
+}
+
 li {
-	padding-bottom: var(--gap-small);
+	padding-bottom: var(--gap-2);
 	border-bottom: 1px solid var(--surface-border);
 }
 
@@ -193,8 +200,7 @@ li {
 }
 
 .stratified {
-	gap: var(--gap-xsmall);
-	margin: var(--gap-small) 0 0 var(--gap-medium);
+	margin: var(--gap-2) 0 0 var(--gap-6);
 
 	& > li {
 		border-left: 2px solid var(--primary-color-dark);
