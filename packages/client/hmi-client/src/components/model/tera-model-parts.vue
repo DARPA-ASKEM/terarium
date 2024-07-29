@@ -18,9 +18,9 @@
 import { cloneDeep } from 'lodash';
 import { computed, ref, onMounted, watch, PropType } from 'vue';
 import type { Model } from '@/types/Types';
-import TeraPetrinetTables from '@/components/model/petrinet/tera-petrinet-tables.vue';
-import TeraRegnetTables from '@/components/model/regnet/tera-regnet-tables.vue';
-import TeraStockflowTables from '@/components/model/stockflow/tera-stockflow-tables.vue';
+import TeraPetrinetParts from '@/components/model/petrinet/tera-petrinet-parts.vue';
+import TeraRegnetParts from '@/components/model/regnet/tera-regnet-parts.vue';
+import TeraStockflowParts from '@/components/model/stockflow/tera-stockflow-parts.vue';
 import { AMRSchemaNames } from '@/types/common';
 import { getModelType, getMMT } from '@/services/model';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
@@ -56,13 +56,13 @@ const modelType = computed(() => getModelType(props.model));
 const partsComponent = computed(() => {
 	switch (modelType.value) {
 		case AMRSchemaNames.PETRINET:
-			return TeraPetrinetTables;
+			return TeraPetrinetParts;
 		case AMRSchemaNames.REGNET:
-			return TeraRegnetTables;
+			return TeraRegnetParts;
 		case AMRSchemaNames.STOCKFLOW:
-			return TeraStockflowTables;
+			return TeraStockflowParts;
 		default:
-			return TeraPetrinetTables;
+			return TeraPetrinetParts;
 	}
 });
 
