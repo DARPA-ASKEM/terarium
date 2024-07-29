@@ -1,8 +1,6 @@
 <template>
 	<div v-if="show" class="flex" :title="label ?? title">
-		<label v-if="label" @click.self.stop="focusInput">
-			{{ label }}
-		</label>
+		<label @click.self.stop="focusInput">{{ label }}</label>
 		<component v-if="featureConfig?.isPreview" :is="previewTag ?? 'span'">
 			{{ modelValue }}
 		</component>
@@ -26,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import { isString, isEmpty } from 'lodash';
+import { isString } from 'lodash';
 import { nistToNumber, nistToString, numberToNist, scrubAndParse } from '@/utils/number';
 import { CSSProperties, InputTypeHTMLAttribute, computed, onMounted, ref, watch } from 'vue';
 import type { FeatureConfig } from '@/types/common';
@@ -59,7 +57,7 @@ const focusInput = () => {
 };
 
 // If we are in preview mode and there is no content, show nothing
-const show = computed(() => !(props.featureConfig?.isPreview && isEmpty(props.modelValue)));
+const show = computed(() => !(props.featureConfig?.isPreview && !props.modelValue));
 
 // Computed property to dynamically adjust the input's style based on the autoWidth prop
 const inputStyle = computed(() => {
@@ -181,6 +179,10 @@ label {
 	cursor: text;
 	padding-right: var(--gap-1-5);
 	font-size: var(--font-caption);
+	align-self: center;
+	&:empty {
+		display: none;
+	}
 }
 
 input {
@@ -205,9 +207,5 @@ aside {
 	i {
 		margin-right: var(--gap-2);
 	}
-}
-
-label {
-	align-self: center;
 }
 </style>

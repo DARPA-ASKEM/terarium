@@ -31,12 +31,11 @@
 			:disabled="disabledInputs?.includes('unitExpression')"
 			@focusout="($event) => ($event.target.value = $event.target.value.replace(/[\s.]+/g, ''))"
 		/>
-		<span class="concept">
+		<span v-if="showConcept" class="concept">
 			<label>Concept</label>
 			<template v-if="featureConfig.isPreview">{{ query }}</template>
 			<AutoComplete
 				v-else
-				label="Concept"
 				size="small"
 				placeholder="Search concepts"
 				v-model="query"
@@ -64,7 +63,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import AutoComplete from 'primevue/autocomplete';
 import type { ModelPartItem } from '@/types/Model';
@@ -83,6 +82,9 @@ defineEmits(['update-item']);
 
 const query = ref('');
 const results = ref<DKG[]>([]);
+
+// If we are in preview mode and there is no content, show nothing
+const showConcept = computed(() => !(props.featureConfig.isPreview && !query.value));
 
 watch(
 	() => props.item.grounding?.identifiers,
