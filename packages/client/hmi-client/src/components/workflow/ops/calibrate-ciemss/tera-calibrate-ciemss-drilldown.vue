@@ -130,7 +130,7 @@
 							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.endTime" />
 						</div>
 						<div class="label-and-input">
-							<label for="learning-rate">Step size</label>
+							<label for="learning-rate">Learning rate</label>
 							<InputNumber
 								class="p-inputtext-sm"
 								inputId="numberonly"

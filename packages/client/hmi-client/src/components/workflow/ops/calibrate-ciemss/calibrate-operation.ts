@@ -66,7 +66,7 @@ export const CalibrationOperationCiemss: Operation = {
 			numSamples: 100,
 			endTime: 100,
 			stepSize: 1,
-			learningRate: 0.1
+			learningRate: 0.03
 		};
 		return init;
 	}
