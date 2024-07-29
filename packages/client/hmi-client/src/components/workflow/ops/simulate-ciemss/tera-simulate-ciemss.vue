@@ -384,9 +384,9 @@ const makeForecastRequest = async () => {
 			start: state.currentTimespan.start,
 			end: state.currentTimespan.end
 		},
+		solverMethod: state.method,
 		extra: {
-			num_samples: state.numSamples,
-			method: state.method
+			num_samples: state.numSamples
 		},
 		engine: 'ciemss'
 	};

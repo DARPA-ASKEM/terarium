@@ -485,11 +485,11 @@ const runCalibrate = async () => {
 			filename: currentDatasetFileName.value,
 			mappings: formattedMap
 		},
+		learningRate: knobs.value.learningRate,
+		solverMethod: knobs.value.method,
+		solverStepSize: knobs.value.stepSize,
 		extra: {
-			num_iterations: knobs.value.numIterations,
-			method: knobs.value.method,
-			step_size: knobs.value.stepSize,
-			learning_rate: knobs.value.learningRate
+			num_iterations: knobs.value.numIterations
 		},
 		timespan: getTimespan({ dataset: csvAsset.value, mapping: mapping.value }),
 		engine: 'ciemss'
