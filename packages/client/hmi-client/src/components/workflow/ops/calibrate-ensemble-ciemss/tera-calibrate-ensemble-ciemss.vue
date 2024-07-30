@@ -29,7 +29,7 @@
 												{{ id }}
 											</td>
 											<td>
-												<tera-input v-model="knobs.ensembleConfigs[i].weight" type="number" />
+												<tera-input-number v-model="knobs.ensembleConfigs[i].weight" />
 											</td>
 										</tr>
 									</tbody>
@@ -179,7 +179,7 @@ import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
-import TeraInput from '@/components/widgets/tera-input.vue';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import Dropdown from 'primevue/dropdown';
 import { useProjects } from '@/composables/project';

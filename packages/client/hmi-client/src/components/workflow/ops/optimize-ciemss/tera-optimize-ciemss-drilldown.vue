@@ -63,11 +63,11 @@
 					<div class="input-row">
 						<div class="label-and-input">
 							<label>Start time</label>
-							<tera-input disabled type="number" model-value="0" />
+							<tera-input-number disabled :model-value="0" />
 						</div>
 						<div class="label-and-input">
 							<label>End time</label>
-							<tera-input type="number" v-model="knobs.endTime" />
+							<tera-input-number v-model="knobs.endTime" />
 						</div>
 					</div>
 					<div>
@@ -100,7 +100,7 @@
 							<div class="label-and-input">
 								<label>Number of samples to simulate model</label>
 								<div>
-									<tera-input type="number" v-model="knobs.numSamples" />
+									<tera-input-number v-model="knobs.numSamples" />
 								</div>
 							</div>
 							<div class="label-and-input">
@@ -119,19 +119,19 @@
 						<div class="input-row">
 							<div class="label-and-input">
 								<label>Algorithm</label>
-								<tera-input disabled model-value="basinhopping" />
+								<tera-input-text disabled model-value="basinhopping" />
 							</div>
 							<div class="label-and-input">
 								<label>Minimizer method</label>
-								<tera-input disabled model-value="COBYLA" />
+								<tera-input-text disabled model-value="COBYLA" />
 							</div>
 							<div class="label-and-input">
 								<label>Maxiter</label>
-								<tera-input v-model="knobs.maxiter" />
+								<tera-input-number v-model="knobs.maxiter" />
 							</div>
 							<div class="label-and-input">
 								<label>Maxfeval</label>
-								<tera-input v-model="knobs.maxfeval" />
+								<tera-input-number v-model="knobs.maxfeval" />
 							</div>
 						</div>
 					</div>
@@ -311,11 +311,11 @@
 	<Dialog v-model:visible="showModelModal" modal header="Save as new model configuration" class="save-dialog w-4">
 		<div class="label-and-input">
 			<label> Model config name</label>
-			<tera-input v-model="modelConfigName" />
+			<tera-input-text v-model="modelConfigName" />
 		</div>
 		<div class="label-and-input">
 			<label> Model config description</label>
-			<tera-input v-model="modelConfigDesc" />
+			<tera-input-text v-model="modelConfigDesc" />
 		</div>
 		<Button
 			:disabled="modelConfigName === ''"
@@ -331,7 +331,7 @@ import _, { cloneDeep, Dictionary } from 'lodash';
 import { computed, onMounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
-import teraInput from '@/components/widgets/tera-input.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import SelectButton from 'primevue/selectbutton';
 import Dialog from 'primevue/dialog';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
@@ -378,6 +378,7 @@ import { createSuccessCriteriaChart, createForecastChart, createInterventionChar
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import MultiSelect from 'primevue/multiselect';
 import { mergeResults, renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import teraOptimizeCriterionGroupForm from './tera-optimize-criterion-group-form.vue';
 import TeraStaticInterventionPolicyGroup from './tera-static-intervention-policy-group.vue';

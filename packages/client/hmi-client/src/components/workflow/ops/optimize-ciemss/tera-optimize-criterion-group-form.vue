@@ -2,7 +2,7 @@
 	<div class="container">
 		<div class="form-header">
 			<div>
-				<tera-input
+				<tera-input-text
 					v-if="isEditing"
 					v-model="config.name"
 					placeholder="Criterion"
@@ -41,7 +41,7 @@
 				@update:model-value="emit('update-self', config)"
 			/>
 			a threshold of
-			<tera-input v-model="config.threshold" @update:model-value="emit('update-self', config)" />
+			<tera-input-number v-model="config.threshold" @update:model-value="emit('update-self', config)" />
 			at
 			<Dropdown
 				class="p-inputtext-sm"
@@ -55,8 +55,8 @@
 				@update:model-value="emit('update-self', config)"
 			/>
 			in
-			<tera-input v-model="config.riskTolerance" @update:model-value="emit('update-self', config)" />% of simulated
-			outcomes
+			<tera-input-number v-model="config.riskTolerance" @update:model-value="emit('update-self', config)" />% of
+			simulated outcomes
 		</div>
 		<div v-else class="section-row">
 			Ensure <b>{{ config.targetVariable }}</b> is <b>{{ config.isMinimized ? 'below' : 'above' }}</b> a threshold of
@@ -70,7 +70,8 @@
 import _ from 'lodash';
 import { ref } from 'vue';
 import Dropdown from 'primevue/dropdown';
-import teraInput from '@/components/widgets/tera-input.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import InputSwitch from 'primevue/inputswitch';
 import { Criterion, ContextMethods } from './optimize-ciemss-operation';
 
