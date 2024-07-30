@@ -102,7 +102,9 @@ function getCurieFromGroundingIdentifier(identifier: Object | undefined): string
 	return '';
 }
 
-function parseCurie(curie: string) {
+function parseCurie(curie: string | undefined): { [key: string]: string } {
+	if (!curie) return {};
+
 	const key = curie.split(':')[0];
 	const value = curie.split(':')[1];
 	return { [key]: value };

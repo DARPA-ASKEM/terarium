@@ -5,7 +5,7 @@
 		@update-state="(state: any) => emit('update-state', state)"
 		@update:selection="onSelection"
 	>
-		<section :tabName="CalibrateTabs.Wizard" class="ml-4 mr-2 pt-3">
+		<section :tabName="DrilldownTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
 				<template #header-controls-right>
 					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
@@ -63,26 +63,98 @@
 					</div>
 				</div>
 
-				<div class="form-section mt-4">
-					<h5>Calibration settings</h5>
+				<section class="form-section">
+					<h5>
+						Calibration settings
+						<i v-tooltip="calibrationSettingsToolTip" class="pi pi-info-circle" />
+					</h5>
+					<div class="label-and-input">
+						<label for="4">Preset (optional)</label>
+						<Dropdown
+							v-model="presetType"
+							placeholder="Select an option"
+							:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
+							@update:model-value="setPresetValues"
+						/>
+					</div>
+					<h5>
+						Number of Samples
+						<i v-tooltip="numberOfSamplesTooltip" class="pi pi-info-circle" />
+					</h5>
 					<div class="input-row">
 						<div class="label-and-input">
-							<label for="num-samples">Number of samples</label>
-							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.numSamples" />
+							<InputNumber
+								class="p-inputtext-sm"
+								inputId="integeronly"
+								v-model="numSamples"
+								:min="1"
+								@update:model-value="updateState"
+							/>
+						</div>
+					</div>
+					<h5>
+						ODE solver options
+						<i v-tooltip="odeSolverOptionsTooltip" class="pi pi-info-circle" />
+					</h5>
+					<div class="input-row">
+						<div class="label-and-input">
+							<label for="5">Method</label>
+							<Dropdown
+								id="5"
+								v-model="method"
+								:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
+								@update:model-value="updateState"
+							/>
 						</div>
 						<div class="label-and-input">
+							<label for="num-steps">Step size</label>
+							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.stepSize" />
+						</div>
+					</div>
+					<h5>
+						Inference Options
+						<i v-tooltip="inferenceOptionsTooltip" class="pi pi-info-circle" />
+					</h5>
+					<div class="input-row">
+						<div class="label-and-input">
 							<label for="num-iterations">Number of solver iterations</label>
-							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.numIterations" />
+							<InputNumber
+								class="p-inputtext-sm"
+								inputId="integeronly"
+								v-model="numIterations"
+								@update:model-value="updateState"
+							/>
 						</div>
 						<div class="label-and-input">
 							<label for="num-samples">End time for forecast</label>
 							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.endTime" />
 						</div>
+						<div class="label-and-input">
+							<label for="learning-rate">Learning rate</label>
+							<InputNumber
+								class="p-inputtext-sm"
+								inputId="numberonly"
+								v-model="learningRate"
+								@update:model-value="updateState"
+							/>
+						</div>
+						<div class="label-and-input">
+							<label>Inference algorithm</label>
+							<tera-input disabled model-value="SVI" />
+						</div>
+						<div class="label-and-input">
+							<label>Loss function</label>
+							<tera-input disabled model-value="ELBO" />
+						</div>
+						<div class="label-and-input">
+							<label>Optimizer method</label>
+							<tera-input disabled model-value="ADAM" />
+						</div>
 					</div>
-				</div>
+				</section>
 			</tera-drilldown-section>
 		</section>
-		<section :tabName="CalibrateTabs.Notebook">
+		<section :tabName="DrilldownTabs.Notebook">
 			<h5>Notebook</h5>
 		</section>
 
@@ -164,13 +236,16 @@ import {
 	subscribeToUpdateMessages,
 	unsubscribeToUpdateMessages,
 	parsePyCiemssMap,
-	DataArray
+	DataArray,
+	CiemssMethodOptions
 } from '@/services/models/simulation-service';
 
 import type { WorkflowNode } from '@/types/workflow';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
+import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
+import TeraInput from '@/components/widgets/tera-input.vue';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults } from './calibrate-utils';
 
@@ -180,10 +255,40 @@ const props = defineProps<{
 const emit = defineEmits(['close', 'select-output', 'update-state']);
 const toast = useToastService();
 
-enum CalibrateTabs {
-	Wizard = 'Wizard',
-	Notebook = 'Notebook'
-}
+const presetType = computed(() => {
+	if (numSamples.value === speedValues.numSamples && method.value === speedValues.method) {
+		return CiemssPresetTypes.Fast;
+	}
+	if (numSamples.value === qualityValues.numSamples && method.value === qualityValues.method) {
+		return CiemssPresetTypes.Normal;
+	}
+
+	return '';
+});
+
+const speedValues = Object.freeze({
+	numSamples: 1,
+	method: CiemssMethodOptions.euler,
+	numIterations: 10,
+	learningRate: 0.1
+});
+
+const qualityValues = Object.freeze({
+	numSamples: 100,
+	method: CiemssMethodOptions.dopri5,
+	numIterations: 1000,
+	learningRate: 0.03
+});
+
+const numSamples = ref<number>(props.node.state.numSamples);
+const method = ref<string>(props.node.state.method);
+const numIterations = ref<number>(props.node.state.numIterations);
+const learningRate = ref<number>(props.node.state.learningRate);
+
+const calibrationSettingsToolTip: string = 'TODO';
+const numberOfSamplesTooltip: string = 'TODO';
+const inferenceOptionsTooltip: string = 'TODO';
+const odeSolverOptionsTooltip: string = 'TODO';
 
 // Model variables checked in the model configuration will be options in the mapping dropdown
 const modelStateOptions = ref<any[] | undefined>();
@@ -225,17 +330,47 @@ const mappingDropdownPlaceholder = computed(() => {
 	return 'Please wait...';
 });
 
+const updateState = () => {
+	const state = _.cloneDeep(props.node.state);
+	state.numSamples = numSamples.value;
+	state.method = method.value;
+	state.numIterations = numIterations.value;
+	state.learningRate = learningRate.value;
+	emit('update-state', state);
+};
+
 interface BasicKnobs {
 	numIterations: number;
 	numSamples: number;
 	endTime: number;
+	stepSize: number;
+	learningRate: number;
+	method: string;
 }
 
 const knobs = ref<BasicKnobs>({
 	numIterations: props.node.state.numIterations ?? 1000,
 	numSamples: props.node.state.numSamples ?? 100,
-	endTime: props.node.state.endTime ?? 100
+	endTime: props.node.state.endTime ?? 100,
+	stepSize: props.node.state.stepSize ?? 1,
+	learningRate: props.node.state.learningRate ?? 0.1,
+	method: props.node.state.method ?? CiemssMethodOptions.dopri5
 });
+
+const setPresetValues = (data: CiemssPresetTypes) => {
+	if (data === CiemssPresetTypes.Normal) {
+		numSamples.value = qualityValues.numSamples;
+		method.value = qualityValues.method;
+		numIterations.value = qualityValues.numIterations;
+		learningRate.value = qualityValues.learningRate;
+	}
+	if (data === CiemssPresetTypes.Fast) {
+		numSamples.value = speedValues.numSamples;
+		method.value = speedValues.method;
+		numIterations.value = speedValues.numIterations;
+		learningRate.value = speedValues.learningRate;
+	}
+};
 
 const disableRunButton = computed(
 	() => !currentDatasetFileName.value || !csvAsset.value || !modelConfigId.value || !datasetId.value
@@ -340,6 +475,8 @@ const runCalibrate = async () => {
 	// Reset loss buffer
 	lossValues = [];
 
+	const state = _.cloneDeep(props.node.state);
+
 	// Create request
 	const calibrationRequest: CalibrationRequestCiemss = {
 		modelConfigId: modelConfigId.value,
@@ -349,6 +486,9 @@ const runCalibrate = async () => {
 			mappings: formattedMap
 		},
 		extra: {
+			solver_method: knobs.value.method,
+			solver_step_size: knobs.value.stepSize,
+			lr: knobs.value.learningRate,
 			num_iterations: knobs.value.numIterations
 		},
 		timespan: getTimespan({ dataset: csvAsset.value, mapping: mapping.value }),
@@ -362,7 +502,6 @@ const runCalibrate = async () => {
 	const response = await makeCalibrateJobCiemss(calibrationRequest, nodeMetadata(props.node));
 
 	if (response?.simulationId) {
-		const state = _.cloneDeep(props.node.state);
 		state.inProgressCalibrationId = response?.simulationId;
 		state.currentProgress = 0;
 		state.inProgressForecastId = '';
@@ -561,7 +700,18 @@ img {
 	width: 20%;
 }
 
-.form-section,
+.form-section {
+	background-color: var(--surface-50);
+	border-radius: var(--border-radius-medium);
+	box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.25) inset;
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+	gap: var(--gap-1);
+	margin: 0 var(--gap) var(--gap) var(--gap);
+	padding: var(--gap);
+}
+
 .label-and-input {
 	display: flex;
 	flex-direction: column;
