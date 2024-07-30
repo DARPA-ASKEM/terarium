@@ -52,9 +52,7 @@ const inputStyle = computed(() => {
 	const value = displayValue()?.toString();
 	if (props.autoWidth) {
 		const textToMeasure = value || props.placeholder;
-		// Estimate the width based on the length of the value. Adjust the multiplier as needed for your font.
-		// Use the length of the text to measure as the width in ch units
-		// Estimate the width based on the length of the text to measure. Adjust the multiplier as needed for your font.
+		// Estimate the width based on the length of the text to measure.
 		const width = (textToMeasure?.length || 1) * 8 + 4; // 8px per character + 4px padding
 		style.width = `${width}px`; // Dynamically set the width
 		style['min-width'] = '20px'; // Ensure a minimum width
