@@ -47,10 +47,19 @@ import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';
-import { CsvAsset, Simulation, SimulationRequest, Model, ModelConfiguration } from '@/types/Types';
+import {
+	CsvAsset,
+	Simulation,
+	SimulationRequest,
+	Model,
+	ModelConfiguration,
+	ParameterSemantic,
+	SemanticType
+} from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
+import * as stats from '@/utils/stats';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults } from './calibrate-utils';
 
@@ -328,8 +337,60 @@ watch(
 		Provide a summary in 100 words or less.
 			`;
 			const summaryResponse = await createLLMSummary(prompt);
-
 			const baseConfig = await getModelConfigurationById(modelConfigId.value as string);
+
+			// Computed sampled model parameters from the forecast
+			// FIXME: this is highly dependent on the number of samples, we may want to compute
+			// the mean/stddev metrics independently of the forecsts directly querying the dill file
+			const sampledData = await getRunResultCSV(state.forecastId, 'result.csv');
+			const translationMap = parsePyCiemssMap(sampledData[0]);
+
+			const timeId = sampledData[0].timepoint_id;
+			const parameterIds = model.value?.semantics?.ode.parameters?.map((d) => d.id) as string[];
+			const parameterTable: { [key: string]: number[] } = {};
+			parameterIds.forEach((parameterId) => {
+				parameterTable[parameterId] = [];
+			});
+
+			sampledData.forEach((point) => {
+				if (point.timepoint_id === timeId) {
+					parameterIds.forEach((parameterId) => {
+						let dataKey = translationMap[parameterId];
+
+						// "initials", need a different translation
+						if (!dataKey) {
+							const surrogateKey = model.value?.semantics?.ode.initials?.find(
+								(d) => d.expression === parameterId
+							)?.target;
+							if (!surrogateKey) return;
+
+							dataKey = translationMap[surrogateKey];
+							if (!dataKey) return;
+						}
+						parameterTable[parameterId].push(point[dataKey]);
+					});
+				}
+			});
+
+			const inferredParameters: ParameterSemantic[] = [];
+			Object.keys(parameterTable).forEach((parameterId) => {
+				const mean = stats.mean(parameterTable[parameterId]);
+				const stddev = stats.stddev(parameterTable[parameterId]);
+
+				inferredParameters.push({
+					source: 'calibration',
+					type: SemanticType.Parameter,
+					referenceId: parameterId,
+					default: false,
+					distribution: {
+						type: 'inferred',
+						parameters: {
+							mean,
+							stddev
+						}
+					}
+				});
+			});
 
 			const calibratedModelConfig: ModelConfiguration = {
 				name: `Calibrated: ${baseConfig.name}`,
@@ -338,9 +399,9 @@ watch(
 				modelId: baseConfig.modelId,
 				observableSemanticList: [],
 				parameterSemanticList: [],
-				initialSemanticList: []
+				initialSemanticList: [],
+				inferredParameterList: inferredParameters
 			};
-
 			const modelConfigResponse = await createModelConfiguration(calibratedModelConfig);
 
 			// const portLabel = props.node.inputs[0].label;
