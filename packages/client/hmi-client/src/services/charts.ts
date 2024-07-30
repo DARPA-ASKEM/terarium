@@ -35,6 +35,177 @@ export interface HistogramChartOptions extends BaseChartOptions {
 	variables: { field: string; label?: string; width: number; color: string }[];
 }
 
+export interface ErrorChartOptions extends Omit<BaseChartOptions, 'height' | 'yAxisTitle' | 'legend'> {
+	height?: number;
+	areaChartHeight?: number;
+	boxPlotHeight?: number;
+	variables: { field: string; label?: string }[];
+}
+
+export const createErrorChart = (dataset: Record<string, any>[], options: ErrorChartOptions) => {
+	const axisColor = '#EEE';
+	const labelColor = '#667085';
+	const labelFontWeight = 'normal';
+	const globalFont = 'Figtree';
+
+	const areaChartColor = '#1B8073';
+	const dotColor = '#67B5AC';
+	const boxPlotColor = '#000';
+
+	const width = options.width;
+	const height = options.height ?? 100;
+	const boxPlotHeight = options.boxPlotHeight ?? 16;
+	const areaChartHeight = options.areaChartHeight ?? 44;
+	const gap = 15;
+
+	const areaChartRange = [areaChartHeight, 0];
+	const dotChartRange = [areaChartHeight + gap, areaChartHeight + gap + boxPlotHeight];
+	const boxPlotYPosition = (dotChartRange[0] + dotChartRange[1]) / 2;
+
+	const variablesOptions = options.variables.map(({ field, label }) => ({ field, label: label ?? field }));
+
+	const variables = variablesOptions.map((v) => v.field);
+
+	const titleObj = options.title
+		? {
+				text: options.title,
+				anchor: 'start',
+				subtitle: ' ',
+				subtitlePadding: 4
+			}
+		: null;
+
+	const brushParamName = 'brush';
+
+	const config = {
+		facet: { spacing: 2 },
+		font: globalFont,
+		mark: { opacity: 1 },
+		view: { stroke: 'transparent' },
+		axis: {
+			tickCount: 5,
+			ticks: false,
+			grid: false,
+			domain: false,
+			gridDash: [2, 3],
+			domainColor: axisColor,
+			tickColor: { value: axisColor },
+			labelColor: { value: labelColor },
+			labelFontWeight,
+			labels: false
+		},
+		area: {
+			line: true,
+			fillOpacity: 0.33
+		},
+		point: {
+			color: dotColor,
+			filled: true
+		},
+		boxplot: {
+			size: boxPlotHeight,
+			median: { color: boxPlotColor },
+			box: {
+				fill: 'transparent',
+				stroke: boxPlotColor,
+				strokeWidth: 1
+			}
+		}
+	};
+
+	return {
+		$schema: VEGALITE_SCHEMA,
+		config,
+		title: titleObj,
+		data: { values: dataset },
+		transform: [
+			{ fold: variables, as: ['variable', '_value'] },
+			{ extent: '_value', param: '_valueExtent' },
+			{
+				lookup: 'variable',
+				from: { data: { values: variablesOptions }, key: 'field', fields: ['label'] },
+				as: 'Variable Label'
+			}
+		],
+		facet: { row: { field: 'variable', title: '', header: { labels: null } } },
+		resolve: { scale: { y: 'independent' } },
+		spec: {
+			width,
+			height,
+			encoding: {
+				x: {
+					field: '_value',
+					type: 'quantitative',
+					title: options.xAxisTitle,
+					axis: { labels: true, domain: true, ticks: true }
+				},
+				y: {
+					title: ''
+				}
+			},
+			layer: [
+				{
+					transform: [{ density: '_value', as: ['val', 'density'], extent: { signal: '_valueExtent' } }],
+					mark: {
+						type: 'area',
+						tooltip: true
+					},
+					encoding: {
+						x: {
+							field: 'val',
+							type: 'quantitative'
+						},
+						y: {
+							field: 'density',
+							type: 'quantitative',
+							scale: { range: areaChartRange }
+						},
+						color: {
+							value: areaChartColor
+						}
+					}
+				},
+				{
+					mark: {
+						type: 'boxplot'
+					},
+					encoding: {
+						y: {
+							field: 'Variable Label',
+							scale: { range: [boxPlotYPosition, boxPlotYPosition] },
+							axis: { grid: true, labels: true, orient: 'left', offset: 5 }
+						}
+					}
+				},
+				{
+					mark: {
+						type: 'point'
+					},
+					transform: [{ calculate: 'random()', as: 'jitter' }],
+					encoding: {
+						y: {
+							field: 'jitter',
+							type: 'quantitative',
+							scale: { range: dotChartRange }
+						},
+						color: {
+							condition: { param: brushParamName },
+							value: 'lightgray'
+						},
+						tooltip: [{ field: '_value', title: options.xAxisTitle }]
+					},
+					params: [
+						{
+							name: brushParamName,
+							select: { type: 'interval', encodings: ['x'], resolve: 'global' }
+						}
+					]
+				}
+			]
+		}
+	};
+};
+
 export const createHistogramChart = (dataset: Record<string, any>[], options: HistogramChartOptions) => {
 	const maxBins = options.maxBins ?? 10;
 	const axisColor = '#EEE';
@@ -107,7 +278,7 @@ export const createHistogramChart = (dataset: Record<string, any>[], options: Hi
 	};
 
 	const spec = {
-		$schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+		$schema: VEGALITE_SCHEMA,
 		title: titleObj,
 		width: options.width,
 		height: options.height,
