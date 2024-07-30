@@ -97,6 +97,10 @@
 					top: `${currentPortPosition.y}px`,
 					left: `${currentPortPosition.x}px`
 				}"
+				@mouseenter="() => (isMenufocused = true)"
+				@mouseleave="() => (isMenufocused = false)"
+				@focus="() => (isMenufocused = true)"
+				@blur="() => (isMenufocused = false)"
 			/>
 		</template>
 		<!-- background -->
@@ -282,6 +286,7 @@ const optionsMenuItems = ref([
 	}
 ]);
 
+const isMenufocused = ref<boolean>(false);
 const isOutputMenuShown = ref<boolean>(false);
 const nodeWithOpenedMenu = ref<WorkflowNode<any> | null>(null);
 
@@ -628,6 +633,7 @@ function saveTransform(newTransform: { k: number; x: number; y: number }) {
 const isCreatingNewEdge = computed(() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2);
 
 function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direction: WorkflowDirection) {
+	hideMenuButton();
 	if (!isCreatingNewEdge.value) {
 		newEdge.value = {
 			id: 'new edge',
@@ -690,6 +696,13 @@ function removeEdges(portId: string) {
 function onCanvasClick() {
 	if (isCreatingNewEdge.value) {
 		cancelNewEdge();
+	}
+	hideMenuButton();
+}
+
+function hideMenuButton() {
+	if (!isMenufocused.value) {
+		isOutputMenuShown.value = false;
 	}
 }
 

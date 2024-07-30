@@ -1,6 +1,5 @@
 <template>
 	<section ref="operatorMenu" :style="style">
-		{{ console.log(style) }}
 		<Button
 			v-if="node"
 			ref="openMenuButton"
@@ -46,8 +45,6 @@ const menuItems = ref([
 ]);
 
 function showMenu(event) {
-	console.log('click', event);
-	// contextMenu.value.show(event);
 	menu.value.toggle(event);
 	isMenuShowing.value = true;
 }
