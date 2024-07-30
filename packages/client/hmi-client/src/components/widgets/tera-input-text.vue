@@ -49,10 +49,9 @@ const focusInput = () => {
 // Computed property to dynamically adjust the input's style based on the autoWidth prop
 const inputStyle = computed(() => {
 	const style: CSSProperties = {};
-
-	const value = props.modelValue?.toString();
-	if (props.autoWidth && value) {
-		const textToMeasure = value.length > 0 ? value : props.placeholder;
+	const value = displayValue()?.toString();
+	if (props.autoWidth) {
+		const textToMeasure = value || props.placeholder;
 		// Estimate the width based on the length of the value. Adjust the multiplier as needed for your font.
 		// Use the length of the text to measure as the width in ch units
 		// Estimate the width based on the length of the text to measure. Adjust the multiplier as needed for your font.

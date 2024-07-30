@@ -7,10 +7,11 @@
 				@click.stop
 				ref="inputField"
 				:disabled="getDisabled"
-				:value="maskedValue"
+				:value="displayValue()"
 				@input="updateValue"
 				:style="inputStyle"
-				@blur="unmask"
+				@blur="onBlur"
+				@focus="isFocused = true"
 				@focusout="$emit('focusout', $event)"
 				type="text"
 				:placeholder="placeholder"
@@ -21,8 +22,9 @@
 </template>
 
 <script setup lang="ts">
-import { nistToNumber, numberToNist, scrubAndParse } from '@/utils/number';
-import { CSSProperties, computed, onMounted, ref, watch } from 'vue';
+import { numberToNist } from '@/utils/number';
+import { isNaN, toNumber } from 'lodash';
+import { CSSProperties, computed, ref, watch } from 'vue';
 
 const props = defineProps<{
 	modelValue: number | undefined;
@@ -38,6 +40,7 @@ const emit = defineEmits(['update:model-value', 'focusout']);
 const inputField = ref<HTMLInputElement | null>(null);
 const error = ref('');
 const maskedValue = ref('');
+const isFocused = ref(false);
 const getDisabled = props.disabled ?? false;
 const focusInput = () => {
 	inputField.value?.focus();
@@ -45,8 +48,9 @@ const focusInput = () => {
 // Computed property to dynamically adjust the input's style based on the autoWidth prop
 const inputStyle = computed(() => {
 	const style: CSSProperties = {};
+	const value = displayValue()?.toString();
 	if (props.autoWidth) {
-		const textToMeasure = maskedValue.value?.length > 0 ? maskedValue.value : props.placeholder;
+		const textToMeasure = value || props.placeholder;
 		// Estimate the width based on the length of the value. Adjust the multiplier as needed for your font.
 		// Use the length of the text to measure as the width in ch units
 		// Estimate the width based on the length of the text to measure. Adjust the multiplier as needed for your font.
@@ -61,29 +65,50 @@ const updateValue = (event: Event) => {
 	const target = event.target as HTMLInputElement;
 	const value = target.value;
 	maskedValue.value = value;
-	if (scrubAndParse(maskedValue.value)) {
+	if (!isNaN(toNumber(maskedValue.value))) {
 		// update the model value only when the value is a valid nist
 		error.value = '';
-		maskedValue.value = numberToNist(maskedValue.value);
 	} else {
 		error.value = 'Invalid number';
 	}
 };
+
+function displayValue() {
+	// only format value if input is focused
+	if (isFocused.value) {
+		return maskedValue.value;
+	}
+	return formatValue(maskedValue.value);
+}
+
+function formatValue(value: string | undefined) {
+	// format as number if value is a number
+	if (!getErrorMessage.value) {
+		return numberToNist(value?.toString() ?? '');
+	}
+	return value;
+}
+
+const onBlur = () => {
+	// convert back to a number when finished
+	if (!getErrorMessage.value && !isNaN(toNumber(maskedValue.value))) {
+		if (maskedValue.value === '') {
+			emit('update:model-value', Number.NaN);
+		} else {
+			emit('update:model-value', toNumber(maskedValue.value));
+		}
+	}
+	isFocused.value = false;
+};
+
 watch(
 	() => props.modelValue,
 	(newValue) => {
-		maskedValue.value = numberToNist(newValue?.toString() ?? '');
-	}
+		if (isNaN(newValue)) return;
+		maskedValue.value = newValue?.toString() ?? '';
+	},
+	{ immediate: true }
 );
-onMounted(() => {
-	maskedValue.value = numberToNist(props.modelValue?.toString() ?? '');
-});
-const unmask = () => {
-	// convert back to a number when finished
-	if (!getErrorMessage.value) {
-		emit('update:model-value', nistToNumber(maskedValue.value));
-	}
-};
 </script>
 
 <style scoped>
