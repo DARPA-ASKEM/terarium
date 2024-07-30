@@ -225,15 +225,15 @@ enum OutputView {
 	Data = 'Data'
 }
 
-const speedValues = {
+const speedValues = Object.freeze({
 	numSamples: 10,
 	method: CiemssMethodOptions.euler
-};
+});
 
-const qualityValues = {
+const qualityValues = Object.freeze({
 	numSamples: 100,
 	method: CiemssMethodOptions.dopri5
-};
+});
 
 const updateLlmQuery = (query: string) => {
 	llmThoughts.value = [];
