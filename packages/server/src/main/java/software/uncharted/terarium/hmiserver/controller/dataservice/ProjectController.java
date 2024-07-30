@@ -171,7 +171,6 @@ public class ProjectController {
 
 		projects.forEach(project -> {
 			final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
-			projectService.checkPermissionCanRead(currentUserService.get().getId(), project.getId());
 
 			// Set the user permission for the project. If we are unable to get the user
 			// permission, we remove the project.
@@ -230,8 +229,9 @@ public class ProjectController {
 	 * Gets the project by id
 	 *
 	 * @param id the UUID for a project
-	 * @return The project wrapped in a response entity, a 404 if missing or a 500 if there is a rebac permissions
-	 *     issue.
+	 * @return The project wrapped in a response entity, a 404 if missing or a 500
+	 *         if there is a rebac permissions
+	 *         issue.
 	 */
 	@Operation(summary = "Gets a project by ID")
 	@ApiResponses(
@@ -477,6 +477,71 @@ public class ProjectController {
 		return ResponseEntity.ok(updatedProject.get());
 	}
 
+	@Operation(summary = "Copy a project")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "The project copy",
+				content = {
+					@Content(
+						mediaType = "application/json",
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Project.class)
+					)
+				}
+			),
+			@ApiResponse(
+				responseCode = "403",
+				description = "The current user does not have read privileges to this project",
+				content = @Content
+			),
+			@ApiResponse(responseCode = "404", description = "Project could not be found", content = @Content),
+			@ApiResponse(
+				responseCode = "503",
+				description = "An error occurred when trying to communicate with either the postgres or spicedb" + " databases",
+				content = @Content
+			)
+		}
+	)
+	@PostMapping("/clone/{id}")
+	@Secured(Roles.USER)
+	public ResponseEntity<Project> copyProject(@PathVariable("id") final UUID id) {
+		projectService.checkPermissionCanRead(currentUserService.get().getId(), id);
+
+		final String userId = currentUserService.get().getId();
+		final String userName = userService.getById(userId).getName();
+
+		Project project;
+		try {
+			final ProjectExport export = cloneService.exportProject(id);
+			export.getProject().setName("Copy of " + export.getProject().getName());
+
+			project = cloneService.importProject(userId, userName, export);
+		} catch (final Exception e) {
+			log.error("Error exporting project", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
+
+		try {
+			final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
+			final RebacGroup rebacAskemAdminGroup = new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService);
+			final RebacUser rebacUser = new RebacUser(userId, reBACService);
+
+			rebacUser.createCreatorRelationship(rebacProject);
+			rebacAskemAdminGroup.createWriterRelationship(rebacProject);
+		} catch (final Exception e) {
+			log.error("Error setting user's permissions for project", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+		} catch (final RelationshipAlreadyExistsException e) {
+			log.error("Error the user is already the creator of this project", e);
+			throw new ResponseStatusException(
+				HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("rebac.relationship-already-exists")
+			);
+		}
+		return ResponseEntity.status(HttpStatus.CREATED).body(project);
+	}
+
 	@Operation(summary = "Export a project")
 	@ApiResponses(
 		value = {
@@ -576,13 +641,6 @@ public class ProjectController {
 			project = cloneService.importProject(userId, userName, projectExport);
 		} catch (final Exception e) {
 			log.error("Error importing project", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
-		}
-
-		try {
-			project = projectService.createProject(project);
-		} catch (final Exception e) {
-			log.error("Error creating project", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 
