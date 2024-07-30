@@ -122,7 +122,7 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 
 					files.put(resultFile, fileExport);
 				} catch (final NoSuchKeyException e) {
-					log.error("Failed to export fileName {}, no object found, excluding from exported asset", e);
+					log.error("Failed to export simulation result file {}, no object found, excluding from exported asset", e);
 					continue;
 				}
 			}
