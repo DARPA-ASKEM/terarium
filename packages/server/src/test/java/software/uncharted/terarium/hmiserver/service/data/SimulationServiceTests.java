@@ -189,15 +189,22 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 			final String jsonString = "{\"key\":\"value\"}";
 			final JsonNode data = objectMapper.readTree(jsonString);
 
-			final SimulationUpdate update0 = createSimulationUpdate(data);
-			simulationService.appendUpdateToSimulation(after.getId(), update0, ASSUME_WRITE_PERMISSION);
+			SimulationUpdate update0 = createSimulationUpdate(data);
+			update0 = simulationService.appendUpdateToSimulation(after.getId(), update0, ASSUME_WRITE_PERMISSION);
+			Assertions.assertNotNull(update0.getCreatedOn());
+			Assertions.assertNotNull(update0.getUpdatedOn());
 
-			final SimulationUpdate update1 = createSimulationUpdate(data);
-			simulationService.appendUpdateToSimulation(after.getId(), update1, ASSUME_WRITE_PERMISSION);
+			SimulationUpdate update1 = createSimulationUpdate(data);
+			update1 = simulationService.appendUpdateToSimulation(after.getId(), update1, ASSUME_WRITE_PERMISSION);
+			Assertions.assertNotNull(update1.getCreatedOn());
+			Assertions.assertNotNull(update1.getUpdatedOn());
 
 			after = simulationService.getAsset(after.getId(), ASSUME_WRITE_PERMISSION).orElseThrow();
 
 			Assertions.assertEquals(2, after.getUpdates().size());
+
+			final Simulation again = simulationService.getAsset(after.getId(), ASSUME_WRITE_PERMISSION).get();
+			Assertions.assertEquals(2, again.getUpdates().size());
 		} catch (final Exception e) {
 			Assertions.fail(e);
 		}

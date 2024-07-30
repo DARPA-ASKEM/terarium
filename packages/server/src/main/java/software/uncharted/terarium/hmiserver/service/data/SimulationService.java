@@ -22,10 +22,10 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 	/**
 	 * Constructor for SimulationService
 	 *
-	 * @param config application config
+	 * @param config              application config
 	 * @param projectAssetService project asset service
-	 * @param repository simulation repository
-	 * @param s3ClientService S3 client service
+	 * @param repository          simulation repository
+	 * @param s3ClientService     S3 client service
 	 */
 	public SimulationService(
 		final ObjectMapper objectMapper,
@@ -60,12 +60,14 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 	) {
 		final Simulation simulation = getAsset(simulationId, hasReadPermission).orElseThrow();
 
-		update.setSimulation(simulation);
-		final SimulationUpdate created = simulationUpdateRepository.save(update);
+		final SimulationUpdate updated = simulationUpdateRepository.save(update);
 
-		simulation.getUpdates().add(created);
+		updated.setSimulation(simulation);
+		simulation.getUpdates().add(updated);
 
-		return created;
+		repository.save(simulation);
+
+		return updated;
 	}
 
 	@Observed(name = "function_profile")

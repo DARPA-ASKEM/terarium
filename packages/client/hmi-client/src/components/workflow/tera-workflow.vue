@@ -194,7 +194,6 @@ import * as StratifyMiraOp from '@/components/workflow/ops/stratify-mira/mod';
 import * as DatasetOp from '@/components/workflow/ops/dataset/mod';
 import * as FunmanOp from '@/components/workflow/ops/funman/mod';
 import * as SimulateEnsembleCiemssOp from '@/components/workflow/ops/simulate-ensemble-ciemss/mod';
-import * as ModelFromCodeOp from '@/components/workflow/ops/model-from-code/mod';
 import * as ModelOp from '@/components/workflow/ops/model/mod';
 import * as ModelEditOp from '@/components/workflow/ops/model-edit/mod';
 import * as ModelConfigOp from '@/components/workflow/ops/model-config/mod';
@@ -215,7 +214,6 @@ const WORKFLOW_SAVE_INTERVAL = 8000;
 const registry = new workflowService.WorkflowRegistry();
 registry.registerOp(SimulateCiemssOp);
 registry.registerOp(StratifyMiraOp);
-registry.registerOp(ModelFromCodeOp);
 registry.registerOp(SimulateEnsembleCiemssOp);
 registry.registerOp(DatasetOp);
 registry.registerOp(FunmanOp);
@@ -449,10 +447,6 @@ const contextMenuItems: MenuItem[] = [
 			{
 				label: ModelOp.operation.displayName,
 				command: addOperatorToWorkflow(ModelOp)
-			},
-			{
-				label: ModelFromCodeOp.operation.displayName,
-				command: addOperatorToWorkflow(ModelFromCodeOp)
 			},
 			{
 				label: ModelFromDocumentOp.operation.displayName,

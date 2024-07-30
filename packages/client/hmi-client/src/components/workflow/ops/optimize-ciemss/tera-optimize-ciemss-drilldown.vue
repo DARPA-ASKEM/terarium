@@ -439,7 +439,6 @@ const showSaveDataDialog = ref<boolean>(false);
 
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
-const inferredParameters = computed(() => props.node.inputs[1].value);
 const cancelRunId = computed(() => props.node.state.inProgressPostForecastId || props.node.state.inProgressOptimizeId);
 
 const isSaveDisabled = computed<boolean>(() =>
@@ -584,7 +583,7 @@ const initialize = async () => {
 	modelConfiguration.value = results[0];
 	model.value = results[1];
 
-	const policyId = props.node.inputs[2]?.value?.[0];
+	const policyId = props.node.inputs[1]?.value?.[0];
 	if (policyId) {
 		// FIXME: This should be done in the node this should not be done in the drill down.
 		getInterventionPolicyById(policyId).then((interventionPolicy) => setInterventionPolicyGroups(interventionPolicy));
@@ -715,9 +714,7 @@ const runOptimize = async () => {
 	};
 
 	// InferredParameters is to link a calibration run to this optimize call.
-	if (inferredParameters.value) {
-		optimizePayload.extra.inferredParameters = inferredParameters.value[0];
-	}
+	optimizePayload.extra.inferredParameters = modelConfiguration.value.simulationId;
 
 	const optResult = await makeOptimizeJobCiemss(optimizePayload, nodeMetadata(props.node));
 	const state = _.cloneDeep(props.node.state);
@@ -898,7 +895,10 @@ const preparedForecastCharts = computed(() => {
 
 	// intervention chart spec
 	charts.interventionCharts = knobs.value.selectedInterventionVariables.map((variable) => {
-		chartOptions.translationMap = translationMap(variable);
+		const options = _.cloneDeep(chartOptions);
+		options.translationMap = translationMap(variable);
+		options.yAxisTitle = getUnit(variable);
+
 		const forecastChart = createForecastChart(
 			{
 				dataset: result,
@@ -912,7 +912,7 @@ const preparedForecastCharts = computed(() => {
 				timeField: 'timepoint_id'
 			},
 			null,
-			chartOptions
+			options
 		);
 		// add intervention annotations (rules and text)
 		forecastChart.layer.push(...createInterventionChartMarkers(preProcessedInterventionsData.value[variable]));
@@ -921,7 +921,10 @@ const preparedForecastCharts = computed(() => {
 
 	// simulation chart spec
 	charts.simulationCharts = knobs.value.selectedSimulationVariables.map((variable) => {
-		chartOptions.translationMap = translationMap(variable);
+		const options = _.cloneDeep(chartOptions);
+		options.translationMap = translationMap(variable);
+		options.yAxisTitle = getUnit(variable);
+
 		return createForecastChart(
 			{
 				dataset: result,
@@ -935,7 +938,7 @@ const preparedForecastCharts = computed(() => {
 				timeField: 'timepoint_id'
 			},
 			null,
-			chartOptions
+			options
 		);
 	});
 	return charts;
@@ -984,7 +987,8 @@ watch(
 .result-message-grid {
 	display: flex;
 	flex-direction: column;
-	gap: var(--gap-0-5); /* Adjust the gap between rows as needed */
+	gap: var(--gap-0-5);
+	/* Adjust the gap between rows as needed */
 	font-size: var(--font-caption);
 	background-color: var(--surface-glass);
 	border: solid 1px var(--surface-border-light);
@@ -1001,8 +1005,10 @@ watch(
 
 .label {
 	font-weight: bold;
-	width: 210px; /* Adjust the width of the label column as needed */
+	width: 210px;
+	/* Adjust the width of the label column as needed */
 }
+
 .value {
 	flex-grow: 1;
 }
@@ -1045,6 +1051,7 @@ watch(
 	align-items: center;
 	gap: var(--gap-2);
 	padding-top: var(--gap);
+
 	& > * {
 		flex: 1;
 	}

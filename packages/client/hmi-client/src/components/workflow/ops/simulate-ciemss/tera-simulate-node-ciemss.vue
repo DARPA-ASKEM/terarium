@@ -27,7 +27,7 @@ import {
 	parsePyCiemssMap,
 	DataArray
 } from '@/services/models/simulation-service';
-import { getModelByModelConfigurationId } from '@/services/model';
+import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
 import { chartActionsProxy, nodeOutputLabel } from '@/components/workflow/util';
@@ -45,6 +45,8 @@ const props = defineProps<{
 
 const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
 const model = ref<Model | null>(null);
+const modelVarUnits = ref<{ [key: string]: string }>({});
+
 const runResults = ref<{ [runId: string]: DataArray }>({});
 const runResultsSummary = ref<{ [runId: string]: DataArray }>({});
 
@@ -147,7 +149,6 @@ const preparedCharts = computed(() => {
 	Object.keys(pyciemssMap).forEach((key) => {
 		reverseMap[`${pyciemssMap[key]}_mean`] = key;
 	});
-	const xAxisTitle = model.value?.semantics?.ode.time?.units?.expression ?? 'time';
 
 	return props.node.state.chartConfigs.map((config) =>
 		createForecastChart(
@@ -165,13 +166,13 @@ const preparedCharts = computed(() => {
 			null,
 			// options
 			{
-				title: `${config.join(',')}`,
+				title: '',
 				width: 180,
 				height: 120,
 				legend: true,
 				translationMap: reverseMap,
-				xAxisTitle,
-				yAxisTitle: `${config.join(',')}`
+				xAxisTitle: modelVarUnits.value._time || 'Time',
+				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
 			}
 		)
 	);
@@ -185,6 +186,7 @@ watch(
 
 		const id = input.value[0];
 		model.value = await getModelByModelConfigurationId(id);
+		modelVarUnits.value = getUnitsFromModelParts(model.value as Model);
 	},
 	{ immediate: true }
 );
