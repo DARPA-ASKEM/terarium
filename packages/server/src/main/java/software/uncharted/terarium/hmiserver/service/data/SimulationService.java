@@ -3,6 +3,8 @@ package software.uncharted.terarium.hmiserver.service.data;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
@@ -91,6 +93,33 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 					.getS3Service()
 					.copyObject(config.getFileStorageS3BucketName(), srcPath, config.getFileStorageS3BucketName(), destPath);
 			}
+		}
+	}
+
+	@Observed(name = "function_profile")
+	public void copyAssetFiles(
+		final Simulation newAsset,
+		final Simulation oldAsset,
+		final Schema.Permission hasWritePermission
+	) throws IOException {
+		super.copyAssetFiles(newAsset, oldAsset, hasWritePermission);
+
+		final String bucket = config.getFileStorageS3BucketName();
+		final List<String> validResults = new ArrayList<>();
+		if (oldAsset.getResultFiles() != null) {
+			for (final String resultFile : oldAsset.getResultFiles()) {
+				final String filename = S3Service.parseFilename(resultFile);
+				final String srcKey = getResultsPath(oldAsset.getId(), filename);
+				final String dstKey = getResultsPath(newAsset.getId(), filename);
+				try {
+					s3ClientService.getS3Service().copyObject(bucket, srcKey, bucket, dstKey);
+					validResults.add(filename);
+				} catch (final NoSuchKeyException e) {
+					log.error("Failed to copy simulation result file {}, no object found, excluding from exported asset", e);
+					continue;
+				}
+			}
+			newAsset.setResultFiles(validResults);
 		}
 	}
 

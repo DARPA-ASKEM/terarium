@@ -343,7 +343,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 					s3ClientService.getS3Service().copyObject(bucket, srcKey, bucket, dstKey);
 					validFileNames.add(fileName);
 				} catch (final NoSuchKeyException e) {
-					log.error("Failed to export fileName {}, no object found, excluding from exported asset", e);
+					log.error("Failed to copy fileName {}, no object found, excluding from copied asset", e);
 					continue;
 				}
 			}
@@ -383,7 +383,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 		return files;
 	}
 
-	private String getPath(final UUID id, final String filename) {
+	protected String getPath(final UUID id, final String filename) {
 		return String.join("/", getAssetPath(), id.toString(), filename);
 	}
 }
