@@ -614,19 +614,19 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 	}
 };
 
-const speedValues = {
+const speedValues = Object.freeze({
 	numSamplesToSimModel: 1,
 	method: CiemssMethodOptions.euler,
 	maxiter: 0,
 	maxfeval: 1
-};
+});
 
-const qualityValues = {
+const qualityValues = Object.freeze({
 	numSamplesToSimModel: 100,
 	method: CiemssMethodOptions.dopri5,
 	maxiter: 5,
 	maxfeval: 25
-};
+});
 
 const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
