@@ -5,14 +5,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { useProjects } from '@/composables/project';
+import { useProjectMenu } from '@/composables/project-menu';
+import { RouteName } from '@/router/routes';
+import { ProjectPages } from '@/types/Project';
+import { Project } from '@/types/Types';
+import { isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
-import { useProjects } from '@/composables/project';
-import { isEmpty } from 'lodash';
-import { useProjectMenu } from '@/composables/project-menu';
-import { Project } from '@/types/Types';
+import { computed, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
+const router = useRouter();
 const props = defineProps<{ project: Project | null }>();
 
 const emit = defineEmits(['forked-project']);
@@ -50,6 +54,10 @@ const forkMenuItem = {
 	command: async () => {
 		if (props.project) {
 			const cloned = await useProjects().clone(props.project.id);
+			if (!cloned) {
+				return;
+			}
+			router.push({ name: RouteName.Project, params: { projectId: cloned?.id, pageType: ProjectPages.OVERVIEW } });
 			emit('forked-project', cloned);
 		}
 	}

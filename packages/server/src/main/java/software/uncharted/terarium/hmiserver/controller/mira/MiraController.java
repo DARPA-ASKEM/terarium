@@ -305,11 +305,15 @@ public class MiraController {
 	@GetMapping("/currie/{curies}")
 	@Secured(Roles.USER)
 	public ResponseEntity<List<DKG>> searchConcept(@PathVariable("curies") final String curies) {
+		if (curies == null || curies.isEmpty()) {
+			return ResponseEntity.noContent().build();
+		}
+
 		final ResponseEntity<List<DKG>> response;
 		try {
 			response = proxy.getEntities(curies);
 		} catch (final FeignException e) {
-			throw handleMiraFeignException(e, "concepts", "curies", curies, "mira.concepts.bad-curies");
+			throw handleMiraFeignException(e, "concepts", "curies", curies, "mira.concept.bad-curies");
 		}
 
 		return new ResponseEntity(response.getBody(), response.getStatusCode());
@@ -326,7 +330,7 @@ public class MiraController {
 		try {
 			response = proxy.search(q, limit, offset);
 		} catch (final FeignException e) {
-			throw handleMiraFeignException(e, "concepts", "query", q, "mira.concepts.bad-query");
+			throw handleMiraFeignException(e, "concepts", "query", q, "mira.concept.bad-query");
 		}
 
 		return new ResponseEntity(response.getBody(), response.getStatusCode());
