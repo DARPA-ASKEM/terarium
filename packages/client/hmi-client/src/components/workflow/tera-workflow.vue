@@ -56,6 +56,21 @@
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" style="white-space: nowrap; width: auto" />
 			<tera-canvas-item
+				v-for="annotation in wf.annotations"
+				:key="annotation.id"
+				:style="{ width: `300px`, top: `${annotation.y}px`, left: `${annotation.x}px` }"
+				@dragging="(event) => updateAnnotationPosition(annotation, event)"
+			>
+				<Inplace :closable="true" close-icon="pi pi-check" class="inplace">
+					<template #display>
+						{{ annotation.text || 'Click to edit' }}
+					</template>
+					<template #content>
+						<InputText v-model="annotation.text" autofocus class="annotation-input" />
+					</template>
+				</Inplace>
+			</tera-canvas-item>
+			<tera-canvas-item
 				v-for="node in wf.nodes"
 				:key="node.id"
 				:style="{
@@ -165,7 +180,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import TeraCanvasItem from '@/components/widgets/tera-canvas-item.vue';
 import type { Position } from '@/types/common';
-import type { Operation, Workflow, WorkflowEdge, WorkflowNode, WorkflowOutput, WorkflowPort } from '@/types/workflow';
+import type { Operation, Workflow, WorkflowAnnotation, WorkflowEdge, WorkflowNode, WorkflowOutput, WorkflowPort } from '@/types/workflow';
 import { WorkflowDirection, WorkflowPortStatus, OperatorStatus } from '@/types/workflow';
 // Operation imports
 import TeraOperator from '@/components/operator/tera-operator.vue';
@@ -179,8 +194,8 @@ import * as d3 from 'd3';
 import { AssetType, EventType } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 import { v4 as uuidv4 } from 'uuid';
+import Inplace from 'primevue/inplace';
 import { getLocalStorageTransform, setLocalStorageTransform } from '@/utils/localStorage';
-
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
 import { logger } from '@/utils/logger';
@@ -430,6 +445,11 @@ const cloneNoteBookSessions = async () => {
 	}
 };
 
+const addAnnotationToWorkflow = () => {
+	workflowService.addAnnotation(wf.value, newNodePosition);
+	workflowDirty = true;
+};
+
 const addOperatorToWorkflow: Function =
 	(operator: OperatorImport, nodeSize: OperatorNodeSize = OperatorNodeSize.medium) =>
 	() => {
@@ -537,6 +557,17 @@ const contextMenuItems: MenuItem[] = [
 			{
 				label: OptimizeCiemssOp.operation.displayName,
 				command: addOperatorToWorkflow(OptimizeCiemssOp)
+			}
+		]
+	},
+	{
+		label: 'Misc',
+		items: [
+			{
+				label: 'Annotate canvas',
+				command: () => {
+					addAnnotationToWorkflow();
+				}
 			}
 		]
 	}
@@ -797,6 +828,13 @@ function updateEdgePositions(node: WorkflowNode<any>, { x, y }) {
 	});
 }
 
+const updateAnnotationPosition = (annotation: WorkflowAnnotation, { x, y }) => {
+	if (!isMouseOverCanvas) return;
+	annotation.x += x / canvasTransform.k;
+	annotation.y += y / canvasTransform.k;
+	workflowDirty = true;
+};
+
 const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
 	const teraNode = teraOperatorRefs.value.find((operatorNode) => operatorNode.id === node.id);
 	if (teraNode.isEditing ?? false) {
@@ -917,6 +955,11 @@ onUnmounted(() => {
 	align-items: center;
 	flex-direction: row;
 	gap: var(--gap-small);
+}
+
+.inplace:deep(.p-button.p-button-icon-only) {
+	color: var(--surface-0);
+	border: solid 1px var(--primary-color);
 }
 
 .rename-workflow {
