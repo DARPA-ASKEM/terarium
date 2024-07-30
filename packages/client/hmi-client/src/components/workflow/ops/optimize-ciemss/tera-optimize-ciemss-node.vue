@@ -147,10 +147,7 @@ const preparedCharts = computed(() => {
 				height: 120,
 				legend: true,
 				xAxisTitle: modelVarUnits.value._time || 'Time',
-				yAxisTitle:
-					_.uniq(modelVarUnits.value[variable])
-						.filter((v) => !!v)
-						.join(',') || '',
+				yAxisTitle: modelVarUnits.value[variable] || '',
 				translationMap: {
 					[`${pyciemssMap[variable]}_mean:pre`]: `${variable} before optimization`,
 					[`${pyciemssMap[variable]}_mean`]: `${variable} after optimization`
