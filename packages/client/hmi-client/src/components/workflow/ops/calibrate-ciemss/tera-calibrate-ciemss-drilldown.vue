@@ -485,10 +485,10 @@ const runCalibrate = async () => {
 			filename: currentDatasetFileName.value,
 			mappings: formattedMap
 		},
-		learningRate: knobs.value.learningRate,
-		solverMethod: knobs.value.method,
-		solverStepSize: knobs.value.stepSize,
 		extra: {
+			solver_method: knobs.value.method,
+			solver_step_size: knobs.value.stepSize,
+			lr: knobs.value.learningRate,
 			num_iterations: knobs.value.numIterations
 		},
 		timespan: getTimespan({ dataset: csvAsset.value, mapping: mapping.value }),

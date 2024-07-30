@@ -1,7 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.simulationservice;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.databind.JsonNode;
 import java.io.Serializable;
 import java.util.UUID;
 import lombok.Data;
@@ -24,18 +23,6 @@ public class CalibrationRequestCiemss implements Serializable {
 
 	@TSOptional
 	private TimeSpan timespan;
-
-	@TSOptional
-	@JsonAlias("learning_rate")
-	private Double learningRate;
-
-	@TSOptional
-	@JsonAlias("solver_method")
-	private String solverMethod;
-
-	@TSOptional
-	@JsonAlias("solver_step_size")
-	private Double solverStepSize;
 
 	@TSOptional
 	@JsonAlias("policy_intervention_id")

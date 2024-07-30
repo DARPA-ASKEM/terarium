@@ -668,9 +668,6 @@ export interface CalibrationRequestCiemss {
     modelConfigId: string;
     extra: any;
     timespan?: TimeSpan;
-    learningRate?: number;
-    solverMethod?: string;
-    solverStepSize?: number;
     policyInterventionId?: string;
     dataset: DatasetLocation;
     engine: string;
@@ -732,8 +729,6 @@ export interface SimulationRequest {
     modelConfigId: string;
     timespan: TimeSpan;
     extra: any;
-    solverMethod?: string;
-    solverStepSize?: number;
     engine: string;
     policyInterventionId?: string;
 }
