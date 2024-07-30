@@ -13,7 +13,7 @@ public class FileExport {
 	@JsonDeserialize(using = ContentTypeDeserializer.class)
 	ContentType contentType;
 
-	String fullpath;
+	String pathPrefix;
 
 	@JsonIgnore
 	byte[] bytes;
