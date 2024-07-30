@@ -2,9 +2,17 @@ package software.uncharted.terarium.hmiserver.service.data;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
+import java.io.IOException;
+import java.util.Map;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.http.entity.ContentType;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.uncharted.terarium.hmiserver.configuration.Config;
+import software.uncharted.terarium.hmiserver.models.dataservice.FileExport;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationUpdate;
@@ -15,6 +23,7 @@ import software.uncharted.terarium.hmiserver.service.s3.S3Service;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
+@Slf4j
 public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulation, SimulationRepository> {
 
 	private final SimulationUpdateRepository simulationUpdateRepository;
@@ -83,5 +92,42 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 					.copyObject(config.getFileStorageS3BucketName(), srcPath, config.getFileStorageS3BucketName(), destPath);
 			}
 		}
+	}
+
+	@Observed(name = "function_profile")
+	public Map<String, FileExport> exportAssetFiles(final UUID simId, final Schema.Permission hasReadPermission)
+		throws IOException {
+		final Map<String, FileExport> files = super.exportAssetFiles(simId, hasReadPermission);
+
+		// we also need to export the result files
+
+		final Simulation simulation = getAsset(simId, Schema.Permission.WRITE).orElseThrow();
+		if (simulation.getResultFiles() != null) {
+			for (final String resultFile : simulation.getResultFiles()) {
+				final String filename = S3Service.parseFilename(resultFile);
+				final String key = getResultsPath(simId, filename);
+
+				try {
+					final ResponseInputStream<GetObjectResponse> stream = s3ClientService
+						.getS3Service()
+						.getObject(config.getFileStorageS3BucketName(), key);
+					final byte[] bytes = stream.readAllBytes();
+
+					final String contentType = stream.response().contentType();
+
+					final FileExport fileExport = new FileExport();
+					fileExport.setBytes(bytes);
+					fileExport.setContentType(ContentType.parse(contentType));
+					fileExport.setFullpath(key);
+
+					files.put(resultFile, fileExport);
+				} catch (final NoSuchKeyException e) {
+					log.error("Failed to export fileName {}, no object found, excluding from exported asset", e);
+					continue;
+				}
+			}
+		}
+
+		return files;
 	}
 }

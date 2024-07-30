@@ -49,6 +49,23 @@ public class Simulation extends TerariumAsset {
 	@Column(columnDefinition = "json")
 	private List<String> resultFiles;
 
+	@Override
+	public List<String> getFileNames() {
+		if (this.fileNames == null) {
+			this.fileNames = new ArrayList<>();
+		}
+
+		// ensure these are included in filenames
+		if (this.resultFiles != null) {
+			for (final String resultFile : resultFiles) {
+				if (!this.fileNames.contains(resultFile)) {
+					this.fileNames.add(resultFile);
+				}
+			}
+		}
+		return this.fileNames;
+	}
+
 	@Enumerated(EnumType.STRING)
 	private SimulationType type;
 
