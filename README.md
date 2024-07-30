@@ -49,7 +49,7 @@ brew tap homebrew/cask-versions
 brew install openjdk@17
 brew install gradle
 brew install node
-brew install yarnb
+brew install yarn
 brew install ansible
 ```
 
