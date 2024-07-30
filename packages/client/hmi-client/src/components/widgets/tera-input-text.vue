@@ -23,11 +23,11 @@
 
 <script setup lang="ts">
 import { numberToNist } from '@/utils/number';
-import { isNumber, isString, toNumber, isNaN } from 'lodash';
+import { isString, toNumber, isNaN } from 'lodash';
 import { CSSProperties, computed, ref } from 'vue';
 
 const props = defineProps<{
-	modelValue: string | number | undefined;
+	modelValue: string | undefined;
 	label?: string;
 	title?: string;
 	icon?: string;
@@ -76,7 +76,7 @@ function displayValue() {
 
 function formatValue(value: string | number | undefined) {
 	// format as number if value is a number
-	if (isNumber(value) || (isString(value) && !isNaN(toNumber(value)))) {
+	if (isString(value) && !isNaN(toNumber(value))) {
 		return numberToNist(value?.toString() ?? '');
 	}
 	return value;

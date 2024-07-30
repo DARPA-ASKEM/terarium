@@ -38,8 +38,8 @@ import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { ref } from 'vue';
 
 const teststring = ref<string>('');
-const numberstring = ref<string>('');
-const scistring = ref<string>('1234.12345');
+const numberstring = ref<number>();
+const scistring = ref<number>(1234.12345);
 const errorstring = ref<string>('Error message error message');
 const errormessage = ref<string>('Error message error message');
 

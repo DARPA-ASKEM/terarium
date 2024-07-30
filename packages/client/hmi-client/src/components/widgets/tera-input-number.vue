@@ -25,7 +25,7 @@ import { nistToNumber, numberToNist, scrubAndParse } from '@/utils/number';
 import { CSSProperties, computed, onMounted, ref, watch } from 'vue';
 
 const props = defineProps<{
-	modelValue: string | number | undefined;
+	modelValue: number | undefined;
 	label?: string;
 	title?: string;
 	icon?: string;

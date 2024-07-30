@@ -63,7 +63,7 @@
 					<div class="input-row">
 						<div class="label-and-input">
 							<label>Start time</label>
-							<tera-input-number disabled model-value="0" />
+							<tera-input-number disabled :model-value="0" />
 						</div>
 						<div class="label-and-input">
 							<label>End time</label>
@@ -117,11 +117,11 @@
 							</div>
 							<div class="label-and-input">
 								<label>Maxiter</label>
-								<tera-input-text v-model="knobs.maxiter" />
+								<tera-input-number v-model="knobs.maxiter" />
 							</div>
 							<div class="label-and-input">
 								<label>Maxfeval</label>
-								<tera-input-text v-model="knobs.maxfeval" />
+								<tera-input-number v-model="knobs.maxfeval" />
 							</div>
 						</div>
 					</div>
