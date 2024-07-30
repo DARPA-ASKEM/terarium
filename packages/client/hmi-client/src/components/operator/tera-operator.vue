@@ -101,7 +101,7 @@ function mouseoverPort(event: MouseEvent, portType: PortType) {
 		x: nodePosition.x + w + portElement.offsetWidth * 0.5,
 		y: nodePosition.y + totalOffsetY
 	};
-	emit('port-mouseover', portPosition);
+	emit('port-mouseover', portPosition, portType);
 }
 
 function resizeHandler() {

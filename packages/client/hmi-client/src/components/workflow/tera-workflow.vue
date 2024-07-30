@@ -70,7 +70,7 @@
 					:node="node"
 					@resize="resizeHandler"
 					@port-selected="(port: WorkflowPort, direction: WorkflowDirection) => createNewEdge(node, port, direction)"
-					@port-mouseover="(event) => onPortMouseover(event, node)"
+					@port-mouseover="(event, type) => onPortMouseover(event, type, node)"
 					@port-mouseleave="onPortMouseleave"
 					@remove-operator="(event) => removeNode(event)"
 					@duplicate-branch="duplicateBranch(node.id)"
@@ -710,12 +710,13 @@ function cancelNewEdge() {
 	newEdge.value = undefined;
 }
 
-function onPortMouseover(position: Position, node: WorkflowNode<any>) {
+function onPortMouseover(position: Position, type: any, node: WorkflowNode<any>) {
 	currentPortPosition = position;
 	isMouseOverPort = true;
-
-	isOutputMenuShown.value = true;
-	nodeWithOpenedMenu.value = node;
+	if (type) {
+		isOutputMenuShown.value = true;
+		nodeWithOpenedMenu.value = node;
+	}
 }
 
 function onPortMouseleave() {
