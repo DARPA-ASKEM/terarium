@@ -2,7 +2,7 @@
 	<main>
 		<template v-if="dataset">
 			<tera-operator-title>{{ dataset.name }}</tera-operator-title>
-			<tera-operator-placeholder :operation-type="node.operationType" />
+			<tera-operator-placeholder :node="node" />
 			<!--
 			  -- Hide the section for the moment as this is taking too much memory in the hmi-server
 			<section v-if="csvContent">
@@ -53,7 +53,7 @@
 				placeholder="Select a dataset"
 				@update:model-value="onDatasetChange"
 			/>
-			<tera-operator-placeholder :operation-type="node.operationType" />
+			<tera-operator-placeholder :node="node" />
 		</template>
 	</main>
 </template>

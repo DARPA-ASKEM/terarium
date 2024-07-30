@@ -94,42 +94,40 @@
 			<!-- TODO: show entire file tree for github -->
 			<a v-if="repoUrl" :href="repoUrl" target="_blank" rel="noreferrer noopener">{{ repoUrl }}</a>
 		</div>
-		<Teleport to="body">
-			<tera-modal
-				v-if="isDynamicsModalVisible"
-				@modal-mask-clicked="isDynamicsModalVisible = false"
-				@modal-enter-press="isDynamicsModalVisible = false"
-			>
-				<template #header>
-					<h4>Save this code block</h4>
-					<p>
-						Enter a name for the code block you are saving. Choose a name that reflects its purpose or functionality
-						within the model.
-					</p>
-				</template>
-				<template #default>
-					<form @submit.prevent>
-						<label class="text-sm mb-1" for="model-name">Name</label>
-						<InputText id="model-name" type="text" v-model="newDynamicsName" />
-						<label class="text-sm mb-1" for="model-description">Description (optional)</label>
-						<Textarea v-model="newDynamicsDescription" />
-					</form>
-				</template>
-				<template #footer>
-					<Button
-						label="Save"
-						size="large"
-						@click="
-							() => {
-								isDynamicsModalVisible = false;
-								addDynamic();
-							}
-						"
-					/>
-					<Button label="Cancel" severity="secondary" size="large" outlined @click="isDynamicsModalVisible = false" />
-				</template>
-			</tera-modal>
-		</Teleport>
+		<tera-modal
+			v-if="isDynamicsModalVisible"
+			@modal-mask-clicked="isDynamicsModalVisible = false"
+			@modal-enter-press="isDynamicsModalVisible = false"
+		>
+			<template #header>
+				<h4>Save this code block</h4>
+				<p>
+					Enter a name for the code block you are saving. Choose a name that reflects its purpose or functionality
+					within the model.
+				</p>
+			</template>
+			<template #default>
+				<form @submit.prevent>
+					<label class="text-sm mb-1" for="model-name">Name</label>
+					<InputText id="model-name" type="text" v-model="newDynamicsName" />
+					<label class="text-sm mb-1" for="model-description">Description (optional)</label>
+					<Textarea v-model="newDynamicsDescription" />
+				</form>
+			</template>
+			<template #footer>
+				<Button
+					label="Save"
+					size="large"
+					@click="
+						() => {
+							isDynamicsModalVisible = false;
+							addDynamic();
+						}
+					"
+				/>
+				<Button label="Cancel" severity="secondary" size="large" outlined @click="isDynamicsModalVisible = false" />
+			</template>
+		</tera-modal>
 		<tera-save-asset-modal
 			v-if="codeText"
 			:is-visible="showSaveAssetModal"

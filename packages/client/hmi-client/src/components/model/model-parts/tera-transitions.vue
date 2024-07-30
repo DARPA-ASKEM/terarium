@@ -1,22 +1,20 @@
 <template>
 	<tera-model-part
 		:items="transitionsList"
-		:disabled-inputs="['concept']"
+		:collapsed-items="collapsedTemplates"
 		show-matrix
 		@open-matrix="(id: string) => (matrixModalId = id)"
 		@update-item="$emit('update-transition', $event)"
 	/>
-	<teleport to="body">
-		<tera-stratified-matrix-modal
-			v-if="matrixModalId"
-			:id="matrixModalId"
-			:mmt="mmt"
-			:mmt-params="mmtParams"
-			:stratified-matrix-type="StratifiedMatrix.Rates"
-			is-read-only
-			@close-modal="matrixModalId = ''"
-		/>
-	</teleport>
+	<tera-stratified-matrix-modal
+		v-if="matrixModalId"
+		:id="matrixModalId"
+		:mmt="mmt"
+		:mmt-params="mmtParams"
+		:stratified-matrix-type="StratifiedMatrix.Rates"
+		is-read-only
+		@close-modal="matrixModalId = ''"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -37,7 +35,17 @@ const props = defineProps<{
 
 defineEmits(['update-transition']);
 
-const collapsedTemplates = computed(() => collapseTemplates(props.mmt));
+// Convert templateId: string => templates: MiraTemplate[] map to templateId: string => childIds: string[] map
+const collapsedTemplates = computed(() => {
+	const templateMap = new Map<string, string[]>();
+	Array.from(collapseTemplates(props.mmt).matrixMap.keys()).forEach((templateId) => {
+		templateMap.set(
+			templateId,
+			Array.from(collapseTemplates(props.mmt).matrixMap.get(templateId) ?? []).map(({ name }) => name)
+		);
+	});
+	return templateMap;
+});
 
 const transitionsList = computed<
 	{
@@ -46,12 +54,12 @@ const transitionsList = computed<
 		isParent: boolean;
 	}[]
 >(() =>
-	Array.from(collapsedTemplates.value.matrixMap.keys()).map((templateId) => {
-		const referencedTransitions = collapsedTemplates.value.matrixMap.get(templateId) ?? [];
-		const isParent = referencedTransitions.length > 1;
-		const children = referencedTransitions
-			.map((referencedTransition) => {
-				const t = props.transitions.find((transition) => transition.id === referencedTransition.name);
+	Array.from(collapsedTemplates.value.keys()).map((templateId) => {
+		const childIds = collapsedTemplates.value.get(templateId) ?? [];
+		const isParent = childIds.length > 1;
+		const children = childIds
+			.map((childId) => {
+				const t = props.transitions.find((transition) => transition.id === childId);
 				if (!t) return null;
 				return {
 					id: t.id,
@@ -65,7 +73,8 @@ const transitionsList = computed<
 			})
 			.filter(Boolean) as ModelPartItem[];
 
-		const baseTransition = props.transitions.find((t) => t.id === referencedTransitions[0].name);
+		// There is only one "child" if there is no parent in the UI it's displayed like: template-X, transitionId
+		const baseTransition = props.transitions.find((t) => t.id === childIds[0]);
 		const base: ModelPartItem =
 			isParent || !baseTransition
 				? { id: templateId }

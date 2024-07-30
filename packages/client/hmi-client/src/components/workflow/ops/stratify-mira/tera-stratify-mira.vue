@@ -29,7 +29,13 @@
 								@click="resetModel"
 								class="mr-2"
 							/>
-							<Button label="Stratify" size="small" icon="pi pi-play" @click="stratifyModel" />
+							<Button
+								:disabled="isStratifyButtonDisabled"
+								:label="stratifyButtonLabel"
+								size="small"
+								icon="pi pi-play"
+								@click="stratifyModel"
+							/>
 						</section>
 					</header>
 					<tera-stratification-group-form
@@ -88,7 +94,7 @@
 						<tera-model-parts :model="stratifiedAmr" :is-editable="false" />
 					</template>
 					<div v-else class="flex flex-column h-full justify-content-center">
-						<tera-operator-placeholder :operation-type="node.operationType" />
+						<tera-operator-placeholder :node="node" />
 					</div>
 				</div>
 			</tera-drilldown-preview>
@@ -167,6 +173,9 @@ const executeResponse = ref({
 });
 const modelNodeOptions = ref<string[]>([]);
 const showSaveModelModal = ref(false);
+const isStratifyButtonDisabled = ref(false);
+
+const stratifyButtonLabel = computed(() => (isStratifyButtonDisabled.value ? 'Loading...' : 'Stratify'));
 
 const selectedOutputId = ref<string>();
 
@@ -195,6 +204,7 @@ const updateStratifyGroupForm = (config: StratifyGroup) => {
 };
 
 const stratifyModel = () => {
+	isStratifyButtonDisabled.value = true;
 	stratifyRequest();
 };
 
@@ -266,6 +276,7 @@ const handleStratifyResponse = (data: any) => {
 
 const handleModelPreview = async (data: any) => {
 	stratifiedAmr.value = data.content['application/json'];
+	isStratifyButtonDisabled.value = false;
 	if (!stratifiedAmr.value) {
 		logger.error('Error getting updated model from beaker');
 		return;
@@ -499,9 +510,5 @@ onUnmounted(() => {
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap-small);
-}
-
-.save-as-dialog:deep(section) {
-	width: 40rem;
 }
 </style>

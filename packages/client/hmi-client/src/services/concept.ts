@@ -18,6 +18,8 @@ interface EntityMap {
 	target: string;
 }
 
+const curieNameCache = new Map<string, string>();
+
 /**
  * Get DKG entities, either single ones or multiple at a time
  */
@@ -83,11 +85,13 @@ async function getEntitySimilarity(
 	}
 }
 
-const getNameOfCurieCached = (cache: Map<string, string>, curie: string): string => {
-	if (!cache.has(curie)) {
-		getCuriesEntities([curie]).then((response) => cache.set(curie, response?.[0].name ?? ''));
+const getNameOfCurieCached = async (curie: string): Promise<string> => {
+	if (isEmpty(curie)) return '';
+	if (!curieNameCache.has(curie)) {
+		const response = await getCuriesEntities([curie]);
+		curieNameCache.set(curie, response?.[0].name ?? '');
 	}
-	return cache.get(curie) ?? '';
+	return curieNameCache.get(curie) ?? '';
 };
 
 function getCurieFromGroundingIdentifier(identifier: Object | undefined): string {
@@ -98,7 +102,9 @@ function getCurieFromGroundingIdentifier(identifier: Object | undefined): string
 	return '';
 }
 
-function parseCurie(curie: string) {
+function parseCurie(curie: string | undefined): { [key: string]: string } {
+	if (!curie) return {};
+
 	const key = curie.split(':')[0];
 	const value = curie.split(':')[1];
 	return { [key]: value };

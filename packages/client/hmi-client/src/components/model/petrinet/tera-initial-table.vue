@@ -3,7 +3,7 @@
 		<AccordionTab>
 			<template #header>
 				Initials <span class="artifact-amount">({{ numInitials }})</span>
-				<tera-input v-model="filterText" placeholder="Filter" />
+				<tera-input-text v-model="filterText" placeholder="Filter" />
 			</template>
 
 			<ul>
@@ -37,7 +37,6 @@
 					<!-- Unstratified -->
 					<tera-initial-entry
 						v-else
-						class="pl-5"
 						:model="model"
 						:model-configuration="modelConfiguration"
 						:modelConfigurations="modelConfigurations"
@@ -51,18 +50,16 @@
 		</AccordionTab>
 	</Accordion>
 
-	<Teleport to="body">
-		<tera-stratified-matrix-modal
-			v-if="matrixModalId && isStratified"
-			:id="matrixModalId"
-			:mmt="mmt"
-			:mmt-params="mmtParams"
-			:stratified-matrix-type="StratifiedMatrix.Initials"
-			:open-value-config="!!matrixModalId"
-			@close-modal="matrixModalId = ''"
-			@update-cell-value="emit('update-expression', { id: $event.variableName, value: $event.newValue })"
-		/>
-	</Teleport>
+	<tera-stratified-matrix-modal
+		v-if="matrixModalId && isStratified"
+		:id="matrixModalId"
+		:mmt="mmt"
+		:mmt-params="mmtParams"
+		:stratified-matrix-type="StratifiedMatrix.Initials"
+		:open-value-config="!!matrixModalId"
+		@close-modal="matrixModalId = ''"
+		@update-cell-value="emit('update-expression', { id: $event.variableName, value: $event.newValue })"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -76,7 +73,7 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import Divider from 'primevue/divider';
-import TeraInput from '@/components/widgets/tera-input.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraStratifiedMatrixModal from './model-configurations/tera-stratified-matrix-modal.vue';
 import TeraInitialEntry from './tera-initial-entry.vue';
 

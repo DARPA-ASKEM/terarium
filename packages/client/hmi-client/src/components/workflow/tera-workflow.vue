@@ -209,8 +209,6 @@ import * as StratifyMiraOp from '@/components/workflow/ops/stratify-mira/mod';
 import * as DatasetOp from '@/components/workflow/ops/dataset/mod';
 import * as FunmanOp from '@/components/workflow/ops/funman/mod';
 import * as SimulateEnsembleCiemssOp from '@/components/workflow/ops/simulate-ensemble-ciemss/mod';
-import * as ModelFromCodeOp from '@/components/workflow/ops/model-from-code/mod';
-import * as SimulateJuliaOp from '@/components/workflow/ops/simulate-julia/mod';
 import * as ModelOp from '@/components/workflow/ops/model/mod';
 import * as ModelEditOp from '@/components/workflow/ops/model-edit/mod';
 import * as ModelConfigOp from '@/components/workflow/ops/model-config/mod';
@@ -218,7 +216,6 @@ import * as CalibrateCiemssOp from '@/components/workflow/ops/calibrate-ciemss/m
 import * as CalibrateEnsembleCiemssOp from '@/components/workflow/ops/calibrate-ensemble-ciemss/mod';
 import * as DatasetTransformerOp from '@/components/workflow/ops/dataset-transformer/mod';
 import * as SubsetDataOp from '@/components/workflow/ops/subset-data/mod';
-import * as CalibrateJuliaOp from '@/components/workflow/ops/calibrate-julia/mod';
 import * as CodeAssetOp from '@/components/workflow/ops/code-asset/mod';
 import * as OptimizeCiemssOp from '@/components/workflow/ops/optimize-ciemss/mod';
 import * as DocumentOp from '@/components/workflow/ops/document/mod';
@@ -230,10 +227,8 @@ import * as InterventionPolicyOp from '@/components/workflow/ops/intervention-po
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
 const registry = new workflowService.WorkflowRegistry();
-registry.registerOp(SimulateJuliaOp);
 registry.registerOp(SimulateCiemssOp);
 registry.registerOp(StratifyMiraOp);
-registry.registerOp(ModelFromCodeOp);
 registry.registerOp(SimulateEnsembleCiemssOp);
 registry.registerOp(DatasetOp);
 registry.registerOp(FunmanOp);
@@ -245,7 +240,6 @@ registry.registerOp(CalibrateCiemssOp);
 registry.registerOp(DatasetTransformerOp);
 registry.registerOp(CodeAssetOp);
 registry.registerOp(SubsetDataOp);
-registry.registerOp(CalibrateJuliaOp);
 registry.registerOp(OptimizeCiemssOp);
 registry.registerOp(DocumentOp);
 registry.registerOp(ModelFromDocumentOp);
@@ -475,10 +469,6 @@ const contextMenuItems: MenuItem[] = [
 				command: addOperatorToWorkflow(ModelOp)
 			},
 			{
-				label: ModelFromCodeOp.operation.displayName,
-				command: addOperatorToWorkflow(ModelFromCodeOp)
-			},
-			{
 				label: ModelFromDocumentOp.operation.displayName,
 				command: addOperatorToWorkflow(ModelFromDocumentOp)
 			},
@@ -556,15 +546,6 @@ const contextMenuItems: MenuItem[] = [
 	{
 		label: 'Run model',
 		items: [
-			{
-				label: SimulateJuliaOp.operation.displayName,
-				command: addOperatorToWorkflow(SimulateJuliaOp)
-			},
-			{
-				label: CalibrateJuliaOp.operation.displayName,
-				command: addOperatorToWorkflow(CalibrateJuliaOp)
-			},
-			{ separator: true },
 			{
 				label: SimulateCiemssOp.operation.displayName,
 				command: addOperatorToWorkflow(SimulateCiemssOp)

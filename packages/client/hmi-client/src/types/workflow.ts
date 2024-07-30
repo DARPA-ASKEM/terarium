@@ -49,7 +49,7 @@ export interface OperationData {
 	type: string;
 	label?: string;
 	isOptional?: boolean;
-	acceptMultiple?: boolean;
+	acceptMultiple?: boolean; // @deprecated
 }
 
 // Defines a function: eg: model, simulate, calibrate
@@ -58,6 +58,7 @@ export interface Operation {
 	description: string;
 	displayName: string; // Human-readable name for each node.
 	documentationUrl?: string;
+	imageUrl?: string;
 
 	// The operation is self-runnable, that is, given just the inputs we can derive the outputs
 	isRunnable: boolean;
@@ -81,7 +82,7 @@ export interface WorkflowPort {
 	label?: string;
 	value?: any[] | null;
 	isOptional: boolean;
-	acceptMultiple?: boolean;
+	acceptMultiple?: boolean; // @deprecated
 }
 
 // Operator Output needs more information than a standard operator port.
@@ -107,6 +108,7 @@ export interface WorkflowNode<S> {
 	workflowId: string;
 	operationType: WorkflowOperationTypes;
 	documentationUrl?: string;
+	imageUrl?: string;
 
 	// Position on canvas
 	x: number;

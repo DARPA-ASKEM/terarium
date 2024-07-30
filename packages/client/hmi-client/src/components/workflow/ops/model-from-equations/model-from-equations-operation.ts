@@ -1,5 +1,6 @@
 import type { DocumentExtraction } from '@/types/Types';
 import { AssetBlock, Operation, WorkflowOperationTypes } from '@/types/workflow';
+import createModelFromEquations from '@assets/svg/operator-images/create-model-from-equation.svg';
 
 const DOCUMENTATION_URL =
 	'https://github.com/DARPA-ASKEM/model-service/blob/07ae21cae2d5465f9ac5b5bbbe6c7b28b7259f04/src/ModelService.jl#L54';
@@ -31,6 +32,7 @@ export const ModelFromEquationsOperation: Operation = {
 	description: 'Create model from equations',
 	displayName: 'Create model from equations',
 	documentationUrl: DOCUMENTATION_URL,
+	imageUrl: createModelFromEquations,
 	isRunnable: true,
 	inputs: [{ type: 'documentId', label: 'Document' }],
 	outputs: [{ type: 'modelId', label: 'Model' }],

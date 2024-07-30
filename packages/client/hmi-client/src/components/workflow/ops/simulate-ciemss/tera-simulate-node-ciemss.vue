@@ -10,9 +10,7 @@
 		</template>
 		<tera-progress-spinner v-if="inProgressSimulationId" :font-size="2" is-centered style="height: 100%" />
 		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
-		<tera-operator-placeholder v-else :operation-type="node.operationType">
-			Connect a model configuration
-		</tera-operator-placeholder>
+		<tera-operator-placeholder v-else :node="node"> Connect a model configuration </tera-operator-placeholder>
 	</main>
 </template>
 
@@ -22,7 +20,14 @@ import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import { getRunResultCSV, pollAction, getSimulation, parsePyCiemssMap } from '@/services/models/simulation-service';
+import {
+	getRunResultCSV,
+	pollAction,
+	getSimulation,
+	parsePyCiemssMap,
+	DataArray
+} from '@/services/models/simulation-service';
+import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
 import { chartActionsProxy, nodeOutputLabel } from '@/components/workflow/util';
@@ -31,6 +36,7 @@ import type { WorkflowNode } from '@/types/workflow';
 import { createLLMSummary } from '@/services/summary-service';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
+import type { Model } from '@/types/Types';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
 
 const props = defineProps<{
@@ -38,8 +44,11 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
-const runResults = ref<{ [runId: string]: any }>({});
-const runResultsSummary = ref<{ [runId: string]: any }>({});
+const model = ref<Model | null>(null);
+const modelVarUnits = ref<{ [key: string]: string }>({});
+
+const runResults = ref<{ [runId: string]: DataArray }>({});
+const runResultsSummary = ref<{ [runId: string]: DataArray }>({});
 
 const selectedRunId = ref<string>();
 const inProgressSimulationId = computed(() => props.node.state.inProgressSimulationId);
@@ -141,36 +150,46 @@ const preparedCharts = computed(() => {
 		reverseMap[`${pyciemssMap[key]}_mean`] = key;
 	});
 
-	const fields = {
-		timeField: 'timepoint_id',
-		groupField: 'sample_id'
-	};
-
 	return props.node.state.chartConfigs.map((config) =>
 		createForecastChart(
 			{
 				dataset: result,
 				variables: config.map((d) => pyciemssMap[d]),
-				...fields
+				timeField: 'timepoint_id',
+				groupField: 'sample_id'
 			},
 			{
 				dataset: resultSummary,
 				variables: config.map((d) => `${pyciemssMap[d]}_mean`),
-				...fields
+				timeField: 'timepoint_id'
 			},
 			null,
 			// options
 			{
+				title: '',
 				width: 180,
 				height: 120,
-				legend: false,
+				legend: true,
 				translationMap: reverseMap,
-				xAxisTitle: '',
-				yAxisTitle: ''
+				xAxisTitle: modelVarUnits.value._time || 'Time',
+				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
 			}
 		)
 	);
 });
+
+watch(
+	() => props.node.inputs[0].value,
+	async () => {
+		const input = props.node.inputs[0];
+		if (!input.value) return;
+
+		const id = input.value[0];
+		model.value = await getModelByModelConfigurationId(id);
+		modelVarUnits.value = getUnitsFromModelParts(model.value as Model);
+	},
+	{ immediate: true }
+);
 
 watch(
 	() => props.node.state.inProgressSimulationId,

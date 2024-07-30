@@ -19,6 +19,14 @@ import { RunResults } from '@/types/SimulateConfig';
 import * as EventService from '@/services/event';
 import { useProjects } from '@/composables/project';
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
+import { FIFOCache } from '@/utils/FifoCache';
+
+export type DataArray = Record<string, any>[];
+
+export enum CiemssMethodOptions {
+	dopri5 = 'dopri5',
+	euler = 'euler'
+}
 
 export async function cancelCiemssJob(runId: String) {
 	try {
@@ -118,23 +126,37 @@ export async function getRunResult(runId: string, filename: string) {
 	}
 }
 
-export async function getRunResultCSV(runId: string, filename: string) {
+const dataArrayCache = new FIFOCache<Promise<string>>(100);
+export async function getRunResultCSV(
+	runId: string,
+	filename: string,
+	renameFn?: (s: string) => string
+): Promise<DataArray> {
 	try {
-		const resp = await API.get(`simulations/${runId}/result`, {
-			params: { filename }
-		});
-		const output = csvParse(resp.data, autoType);
+		const cacheKey = `${runId}:${filename}`;
 
-		// FIXME: summary need to have time
-		if (filename === 'result_summary.csv') {
-			output.forEach((d: any, idx) => {
-				d.timepoint_id = idx;
-			});
+		let promise = dataArrayCache.get(cacheKey);
+		if (!promise) {
+			promise = API.get(`simulations/${runId}/result`, {
+				params: { filename }
+			}).then((res) => res.data);
+
+			dataArrayCache.set(cacheKey, promise);
 		}
+
+		// If a rename function is defined, loop over the first row
+		let dataStr = await promise;
+		if (renameFn) {
+			const lines = dataStr.split(/\n/);
+			const line0 = lines[0].split(/,/).map(renameFn).join(',');
+			lines[0] = line0;
+			dataStr = lines.join('\n');
+		}
+		const output = csvParse(dataStr, autoType);
 		return output;
 	} catch (err) {
 		logger.error(err);
-		return [{}];
+		return [];
 	}
 }
 
@@ -322,7 +344,7 @@ export async function pollAction(id: string) {
 
 	if ([ProgressState.Queued, ProgressState.Running].includes(simResponse.status)) {
 		// TODO: untangle progress
-		return { data: null, progress: null, error: null };
+		return { data: null, progress: simResponse, error: null };
 	}
 
 	if ([ProgressState.Error, ProgressState.Failed].includes(simResponse.status)) {

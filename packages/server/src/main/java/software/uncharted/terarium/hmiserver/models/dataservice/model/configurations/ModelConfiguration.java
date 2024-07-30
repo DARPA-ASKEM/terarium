@@ -22,9 +22,6 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 @Entity
 public class ModelConfiguration extends TerariumAsset {
 
-	@TSOptional
-	private UUID calibrationRunId;
-
 	private UUID modelId;
 
 	/** This is "simulation" in the sense of our POJO. It actually corresponds to a pyciemss calibration */
@@ -42,6 +39,26 @@ public class ModelConfiguration extends TerariumAsset {
 	@OneToMany(mappedBy = "modelConfiguration", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JsonManagedReference
 	private List<InitialSemantic> initialSemanticList = new ArrayList<>();
+
+	/**
+	 * This field is only populated if simulationId is not null, it is meant as a sampling of the
+	 * configured space, but not necessarily the true distributions. It will set once and should
+	 * be readonly afterward.
+	 *
+	 * We will designated a dummy distribution type
+	 * {
+	 *   type: 'inferred',
+	 *   parameters: {
+	 *	   mean: <number>
+	 *	   stddev: <number>
+	 *   }
+	 * }
+	 *
+	 **/
+	@TSOptional
+	@OneToMany(mappedBy = "modelConfiguration", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JsonManagedReference
+	private List<ParameterSemantic> inferredParameterList = new ArrayList<>();
 
 	@Override
 	public ModelConfiguration clone() {
@@ -61,6 +78,13 @@ public class ModelConfiguration extends TerariumAsset {
 			clone.setParameterSemanticList(new ArrayList<>());
 			for (final ParameterSemantic semantic : parameterSemanticList) {
 				clone.getParameterSemanticList().add(semantic.clone());
+			}
+		}
+
+		if (this.inferredParameterList != null) {
+			clone.setInferredParameterList(new ArrayList<>());
+			for (final ParameterSemantic semantic : inferredParameterList) {
+				clone.getInferredParameterList().add(semantic.clone());
 			}
 		}
 

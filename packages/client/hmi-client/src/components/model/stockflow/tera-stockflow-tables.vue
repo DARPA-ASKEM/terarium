@@ -46,7 +46,11 @@
 				<Column field="downstream_stock" header="Downstream stock" />
 				<Column field="rate_expression" header="Rate expression">
 					<template #body="{ data }">
-						<katex-element v-if="data.rate_expression" :expression="data.rate_expression" :throw-on-error="false" />
+						<katex-element
+							v-if="data.rate_expression"
+							:expression="stringToLatexExpression(data.rate_expression)"
+							:throw-on-error="false"
+						/>
 						<template v-else>--</template>
 					</template>
 				</Column>
@@ -122,6 +126,7 @@ import AccordionTab from 'primevue/accordiontab';
 import { computed } from 'vue';
 import { Dictionary } from 'vue-gtag';
 import { getCurieUrl } from '@/services/concept';
+import { stringToLatexExpression } from '@/services/model';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import type { MiraModel, MiraTemplateParams, ObservableSummary } from '@/model-representation/mira/mira-common';

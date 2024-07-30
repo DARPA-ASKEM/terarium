@@ -27,7 +27,7 @@
 											{{ id }}
 										</td>
 										<td>
-											<tera-input type="nist" v-model="ensembleConfigs[i].weight" />
+											<tera-input-number v-model="ensembleConfigs[i].weight" />
 										</td>
 									</tr>
 								</tbody>
@@ -192,7 +192,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
-import TeraInput from '@/components/widgets/tera-input.vue';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';

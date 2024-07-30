@@ -33,10 +33,9 @@
 				/>
 
 				<!-- Constant -->
-				<tera-input
+				<tera-input-number
 					v-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Constant"
 					label="Constant"
-					type="nist"
 					:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.value"
 					@update:model-value="
 						emit('update-parameter', {
@@ -47,9 +46,8 @@
 				/>
 				<!-- Uniform Distribution -->
 				<template v-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Uniform">
-					<tera-input
+					<tera-input-number
 						label="Min"
-						type="nist"
 						:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.minimum"
 						@update:model-value="
 							emit('update-parameter', {
@@ -58,9 +56,8 @@
 							})
 						"
 					/>
-					<tera-input
+					<tera-input-number
 						label="Max"
-						type="nist"
 						:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.maximum"
 						@update:model-value="
 							emit('update-parameter', {
@@ -76,37 +73,36 @@
 				<Button :label="getOtherValuesLabel" text size="small" @click="showOtherConfigValueModal = true" />
 			</section>
 		</main>
-		<footer v-if="isSourceOpen">
-			<tera-input
+		<footer v-if="isSourceOpen" class="mb-2">
+			<tera-input-text
 				placeholder="Add a source"
 				:model-value="getParameterSource(modelConfiguration, parameterId)"
 				@update:model-value="emit('update-source', { id: parameterId, value: $event })"
 			/>
 		</footer>
 	</div>
-	<Teleport to="body">
-		<tera-paramenter-other-value-modal
-			v-if="showOtherConfigValueModal"
-			:id="parameterId"
-			:otherValueList="otherValueList"
-			@modal-mask-clicked="showOtherConfigValueModal = false"
-			@update-parameter="emit('update-parameter', $event)"
-			@update-source="emit('update-source', $event)"
-			@close-modal="showOtherConfigValueModal = false"
-		/>
-	</Teleport>
+	<tera-parameter-other-value-modal
+		v-if="showOtherConfigValueModal"
+		:id="parameterId"
+		:otherValueList="otherValueList"
+		@modal-mask-clicked="showOtherConfigValueModal = false"
+		@update-parameter="emit('update-parameter', $event)"
+		@update-source="emit('update-source', $event)"
+		@close-modal="showOtherConfigValueModal = false"
+	/>
 </template>
 
 <script setup lang="ts">
 import { Model, ModelConfiguration } from '@/types/Types';
 import { getParameterSource, getParameterDistribution, getOtherValues } from '@/services/model-configurations';
-import TeraInput from '@/components/widgets/tera-input.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { computed, ref } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { DistributionType, distributionTypeOptions } from '@/services/distribution';
 import { getParameter } from '@/model-representation/service';
-import TeraParamenterOtherValueModal from '@/components/model/petrinet/tera-parameter-other-value-modal.vue';
+import TeraParameterOtherValueModal from '@/components/model/petrinet/tera-parameter-other-value-modal.vue';
 
 const props = defineProps<{
 	model: Model;
@@ -125,7 +121,7 @@ const concept = getParameter(props.model, props.parameterId)?.grounding?.identif
 const isSourceOpen = ref(false);
 const showOtherConfigValueModal = ref(false);
 
-const otherValueList = ref(
+const otherValueList = computed(() =>
 	getOtherValues(props.modelConfigurations, props.parameterId, 'referenceId', 'parameterSemanticList')
 );
 

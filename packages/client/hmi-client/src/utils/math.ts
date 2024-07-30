@@ -252,3 +252,20 @@ export const extractUniqueParameterStrings = (a: string[], b: string[]): string[
 
 	return aUnique.filter((element) => !b.includes(element) && !b.some((item) => item.includes(element)));
 };
+
+// given an array of numbers and a percentile number (0-100), returns the percentile value
+export function percentile(values: number[], q: number): number {
+	if (q < 0 || q > 100) throw new Error('Percentile must be between 0 and 100');
+
+	values.sort((a, b) => a - b);
+	const index = (q / 100) * (values.length - 1);
+	const lowerIndex = Math.floor(index);
+	const upperIndex = Math.ceil(index);
+
+	if (lowerIndex === upperIndex) {
+		return values[lowerIndex];
+	}
+	const lowerValue = values[lowerIndex];
+	const upperValue = values[upperIndex];
+	return lowerValue + (upperValue - lowerValue) * (index - lowerIndex);
+}

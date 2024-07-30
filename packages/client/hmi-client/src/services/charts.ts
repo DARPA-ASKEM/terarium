@@ -1,20 +1,26 @@
-import { mean, isEmpty } from 'lodash';
+import { percentile } from '@/utils/math';
+import { isEmpty } from 'lodash';
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
-export const CATEGORICAL_SCHEME = ['#5F9E3E', '#4375B0', '#8F69B9', '#D67DBF', '#E18547', '#D2C446', '#84594D'];
+export const CATEGORICAL_SCHEME = ['#1B8073', '#6495E8', '#8F69B9', '#D67DBF', '#E18547', '#D2C446', '#84594D'];
 
-export interface ForecastChartOptions {
-	legend: boolean;
-	translationMap?: Record<string, string>;
-	colorscheme?: string[];
+export const NUMBER_FORMAT = '.3~s';
+export const LABEL_EXPR = `
+datum.value > -1 && datum.value < 1 ? format(datum.value, '.3~f') : format(datum.value, '${NUMBER_FORMAT}')
+`;
 
+interface BaseChartOptions {
 	title?: string;
-	xAxisTitle: string;
-	yAxisTitle: string;
-
 	width: number;
 	height: number;
+	xAxisTitle: string;
+	yAxisTitle: string;
+	legend?: boolean;
+}
+export interface ForecastChartOptions extends BaseChartOptions {
+	translationMap?: Record<string, string>;
+	colorscheme?: string[];
 }
 
 export interface ForecastChartLayer {
@@ -23,6 +29,268 @@ export interface ForecastChartLayer {
 	timeField: string;
 	groupField?: string;
 }
+
+export interface HistogramChartOptions extends BaseChartOptions {
+	maxBins?: number;
+	variables: { field: string; label?: string; width: number; color: string }[];
+}
+
+export interface ErrorChartOptions extends Omit<BaseChartOptions, 'height' | 'yAxisTitle' | 'legend'> {
+	height?: number;
+	areaChartHeight?: number;
+	boxPlotHeight?: number;
+	variables: { field: string; label?: string }[];
+}
+
+export const createErrorChart = (dataset: Record<string, any>[], options: ErrorChartOptions) => {
+	const axisColor = '#EEE';
+	const labelColor = '#667085';
+	const labelFontWeight = 'normal';
+	const globalFont = 'Figtree';
+
+	const areaChartColor = '#1B8073';
+	const dotColor = '#67B5AC';
+	const boxPlotColor = '#000';
+
+	const width = options.width;
+	const height = options.height ?? 100;
+	const boxPlotHeight = options.boxPlotHeight ?? 16;
+	const areaChartHeight = options.areaChartHeight ?? 44;
+	const gap = 15;
+
+	const areaChartRange = [areaChartHeight, 0];
+	const dotChartRange = [areaChartHeight + gap, areaChartHeight + gap + boxPlotHeight];
+	const boxPlotYPosition = (dotChartRange[0] + dotChartRange[1]) / 2;
+
+	const variablesOptions = options.variables.map(({ field, label }) => ({ field, label: label ?? field }));
+
+	const variables = variablesOptions.map((v) => v.field);
+
+	const titleObj = options.title
+		? {
+				text: options.title,
+				anchor: 'start',
+				subtitle: ' ',
+				subtitlePadding: 4
+			}
+		: null;
+
+	const brushParamName = 'brush';
+
+	const config = {
+		facet: { spacing: 2 },
+		font: globalFont,
+		mark: { opacity: 1 },
+		view: { stroke: 'transparent' },
+		axis: {
+			tickCount: 5,
+			ticks: false,
+			grid: false,
+			domain: false,
+			gridDash: [2, 3],
+			domainColor: axisColor,
+			tickColor: { value: axisColor },
+			labelColor: { value: labelColor },
+			labelFontWeight,
+			labels: false
+		},
+		area: {
+			line: true,
+			fillOpacity: 0.33
+		},
+		point: {
+			color: dotColor,
+			filled: true
+		},
+		boxplot: {
+			size: boxPlotHeight,
+			median: { color: boxPlotColor },
+			box: {
+				fill: 'transparent',
+				stroke: boxPlotColor,
+				strokeWidth: 1
+			}
+		}
+	};
+
+	return {
+		$schema: VEGALITE_SCHEMA,
+		config,
+		title: titleObj,
+		data: { values: dataset },
+		transform: [
+			{ fold: variables, as: ['variable', '_value'] },
+			{ extent: '_value', param: '_valueExtent' },
+			{
+				lookup: 'variable',
+				from: { data: { values: variablesOptions }, key: 'field', fields: ['label'] },
+				as: 'Variable Label'
+			}
+		],
+		facet: { row: { field: 'variable', title: '', header: { labels: null } } },
+		resolve: { scale: { y: 'independent' } },
+		spec: {
+			width,
+			height,
+			encoding: {
+				x: {
+					field: '_value',
+					type: 'quantitative',
+					title: options.xAxisTitle,
+					axis: { labels: true, domain: true, ticks: true }
+				},
+				y: {
+					title: ''
+				}
+			},
+			layer: [
+				{
+					transform: [{ density: '_value', as: ['val', 'density'], extent: { signal: '_valueExtent' } }],
+					mark: {
+						type: 'area',
+						tooltip: true
+					},
+					encoding: {
+						x: {
+							field: 'val',
+							type: 'quantitative'
+						},
+						y: {
+							field: 'density',
+							type: 'quantitative',
+							scale: { range: areaChartRange }
+						},
+						color: {
+							value: areaChartColor
+						}
+					}
+				},
+				{
+					mark: {
+						type: 'boxplot'
+					},
+					encoding: {
+						y: {
+							field: 'Variable Label',
+							scale: { range: [boxPlotYPosition, boxPlotYPosition] },
+							axis: { grid: true, labels: true, orient: 'left', offset: 5 }
+						}
+					}
+				},
+				{
+					mark: {
+						type: 'point'
+					},
+					transform: [{ calculate: 'random()', as: 'jitter' }],
+					encoding: {
+						y: {
+							field: 'jitter',
+							type: 'quantitative',
+							scale: { range: dotChartRange }
+						},
+						color: {
+							condition: { param: brushParamName },
+							value: 'lightgray'
+						},
+						tooltip: [{ field: '_value', title: options.xAxisTitle }]
+					},
+					params: [
+						{
+							name: brushParamName,
+							select: { type: 'interval', encodings: ['x'], resolve: 'global' }
+						}
+					]
+				}
+			]
+		}
+	};
+};
+
+export const createHistogramChart = (dataset: Record<string, any>[], options: HistogramChartOptions) => {
+	const maxBins = options.maxBins ?? 10;
+	const axisColor = '#EEE';
+	const labelColor = '#667085';
+	const labelFontWeight = 'normal';
+	const globalFont = 'Figtree';
+	const titleObj = options.title
+		? {
+				text: options.title,
+				anchor: 'start',
+				subtitle: ' ',
+				subtitlePadding: 4
+			}
+		: null;
+
+	const barMinGapWidth = 4;
+	const xDiff = 32; // Diff between inner chart content width and the outer box width
+	const maxBarWidth = Math.max(...options.variables.map((v) => v.width));
+	const reaminingXSpace = options.width - xDiff - maxBins * (maxBarWidth + barMinGapWidth);
+	const xPadding = reaminingXSpace < 0 ? barMinGapWidth : reaminingXSpace / 2;
+
+	const xaxis = {
+		domainColor: axisColor,
+		tickColor: { value: axisColor },
+		labelColor: { value: labelColor },
+		labelFontWeight,
+		title: options.xAxisTitle,
+		gridColor: '#EEE',
+		gridOpacity: 1.0
+	};
+	const yaxis = structuredClone(xaxis);
+	yaxis.title = options.yAxisTitle || '';
+
+	const legendProperties = {
+		title: null,
+		padding: { value: 0 },
+		strokeColor: null,
+		orient: 'top',
+		direction: 'horizontal',
+		symbolStrokeWidth: 4,
+		symbolSize: 200,
+		labelFontSize: 12,
+		labelOffset: 4
+	};
+
+	const createLayers = (opts) => {
+		const colorScale = {
+			domain: opts.variables.map((v) => v.label ?? v.field),
+			range: opts.variables.map((v) => v.color)
+		};
+		const bin = { maxbins: maxBins };
+		const aggregate = 'count';
+		return opts.variables.map((varOption) => ({
+			mark: { type: 'bar', width: varOption.width, tooltip: true },
+			encoding: {
+				x: { bin, field: varOption.field, axis: xaxis, scale: { padding: xPadding } },
+				y: { aggregate, axis: yaxis },
+				color: {
+					legend: { ...legendProperties },
+					type: 'nominal',
+					datum: varOption.label ?? varOption.field,
+					scale: colorScale
+				},
+				tooltip: [
+					{ bin, field: varOption.field, title: varOption.field },
+					{ aggregate, type: 'quantitative', title: yaxis.title }
+				]
+			}
+		}));
+	};
+
+	const spec = {
+		$schema: VEGALITE_SCHEMA,
+		title: titleObj,
+		width: options.width,
+		height: options.height,
+		autosize: { type: 'fit' },
+		data: { values: dataset },
+		layer: createLayers(options),
+		config: {
+			font: globalFont
+		}
+	};
+	return spec;
+};
 
 /**
  * Generate Vegalite specs for simulation/forecast charts. The chart can contain:
@@ -62,7 +330,7 @@ export const createForecastChart = (
 			}
 		: null;
 
-	const xaxis = {
+	const xaxis: any = {
 		domainColor: axisColor,
 		tickColor: { value: axisColor },
 		labelColor: { value: labelColor },
@@ -73,6 +341,7 @@ export const createForecastChart = (
 	};
 	const yaxis = structuredClone(xaxis);
 	yaxis.title = options.yAxisTitle;
+	yaxis.labelExpr = LABEL_EXPR;
 
 	const translationMap = options.translationMap;
 	let labelExpr = '';
@@ -83,6 +352,23 @@ export const createForecastChart = (
 		labelExpr += " 'other'";
 	}
 
+	const isCompact = options.width < 200;
+
+	const legendProperties = {
+		title: null,
+		padding: { value: 0 },
+		strokeColor: null,
+		orient: 'top',
+		direction: isCompact ? 'vertical' : 'horizontal',
+		columns: Math.floor(options.width / 100),
+		symbolStrokeWidth: isCompact ? 2 : 4,
+		symbolSize: 200,
+		labelFontSize: isCompact ? 8 : 12,
+		labelOffset: isCompact ? 2 : 4,
+		labelLimit: isCompact ? 50 : 150
+	};
+
+	// Start building
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
 		title: titleObj,
@@ -90,7 +376,7 @@ export const createForecastChart = (
 		width: options.width,
 		height: options.height,
 		autosize: {
-			type: 'fit'
+			type: 'fit-x'
 		},
 		config: {
 			font: globalFont
@@ -161,16 +447,7 @@ export const createForecastChart = (
 
 		if (options.legend === true) {
 			layerSpec.encoding.color.legend = {
-				title: null,
-				padding: { value: 0 },
-				strokeColor: null,
-				orient: 'top',
-				direction: 'horizontal',
-				columns: Math.floor(options.width / 100),
-				symbolStrokeWidth: 4,
-				symbolSize: 200,
-				labelFontSize: 12,
-				labelOffset: 4
+				...legendProperties
 			};
 
 			if (labelExpr.length > 0) {
@@ -185,21 +462,12 @@ export const createForecastChart = (
 		const layerSpec = newLayer(groundTruthLayer, 'point');
 
 		// FIXME: variables not aligned, set unique color for now
-		layerSpec.encoding.color.scale.range = ['#333'];
-		/* layerSpec.encoding.color.scale.range = options.colorscheme || CATEGORICAL_SCHEME; // This works until it doesn't */
+		layerSpec.encoding.color.scale.range = ['#1B8073'];
+		// layerSpec.encoding.color.scale.range = options.colorscheme || CATEGORICAL_SCHEME;
 
 		if (options.legend === true) {
 			layerSpec.encoding.color.legend = {
-				title: null,
-				padding: { value: 0 },
-				strokeColor: null,
-				orient: 'top',
-				direction: 'horizontal',
-				columns: Math.floor(options.width / 100),
-				symbolStrokeWidth: 4,
-				symbolSize: 200,
-				labelFontSize: 12,
-				labelOffset: 4
+				...legendProperties
 			};
 
 			if (labelExpr.length > 0) {
@@ -215,8 +483,7 @@ export const createForecastChart = (
 		const tooltipContent = statisticsLayer.variables?.map((d) => {
 			const tip: any = {
 				field: d,
-				type: 'quantitative',
-				format: '.4f'
+				type: 'quantitative'
 			};
 
 			if (options.translationMap && options.translationMap[d]) {
@@ -228,7 +495,7 @@ export const createForecastChart = (
 
 		const layerSpec = newLayer(statisticsLayer, 'line');
 		Object.assign(layerSpec.encoding, {
-			opacity: { value: 0 },
+			opacity: { value: 0.00000001 },
 			strokeWidth: { value: 16 },
 			tooltip: [{ field: statisticsLayer.timeField, type: 'quantitative' }, ...(tooltipContent || [])]
 		});
@@ -239,151 +506,116 @@ export const createForecastChart = (
 };
 
 /// /////////////////////////////////////////////////////////////////////////////
+// Optimize charts
 /// /////////////////////////////////////////////////////////////////////////////
 
-export interface OptimizeChartOptions {
-	variables?: string[];
-	statisticalVariables?: string[];
-	groundTruthVariables?: string[];
-
-	legend: boolean;
-
-	translationMap?: Record<string, string>;
-
-	colorscheme?: string[];
-	timeField: string;
-	groupField: string;
-
-	title?: string;
-	xAxisTitle: string;
-	yAxisTitle: string;
-
-	width: number;
-	height: number;
-}
-
-const binCount = 5;
-
-function formatSuccessChartData(riskResults: any, targetVariable: string, threshold: number, isMinimized: boolean) {
-	const targetState = `${targetVariable}_state`;
-	const data = riskResults[targetState]?.qoi || [];
-
-	const minValue = Math.min(...data);
-	const maxValue = Math.max(...data);
-	const stepSize = (maxValue - minValue) / binCount;
-	const bins: { range: string; count: number; tag: 'in' | 'out' }[] = [];
-	for (let i = binCount; i > 0; i--) {
-		let rangeStart = minValue + stepSize * (i - 1);
-		let rangeEnd = minValue + stepSize * i;
-
-		// Handle edge case where stepSize is 0, and give the range a thickness so it can be seen
-		if (stepSize === 0) {
-			rangeStart = minValue - 1;
-			rangeEnd = maxValue + 1;
-		}
-
-		let tag;
-		if (isMinimized) {
-			tag = rangeEnd < threshold ? 'in' : 'out';
-		} else {
-			tag = rangeStart > threshold ? 'in' : 'out';
-		}
-
-		bins.push({
-			range: `${rangeStart.toFixed(4)}-${rangeEnd.toFixed(4)}`,
-			count: 0,
-			tag
-		});
-	}
-
-	const toBinIndex = (value: number) => {
-		if (value < minValue || value > maxValue) return -1;
-		// return first bin in cases where the max value is the same as the incoming value or when the min and max data values are the same (stepsize = 0)
-		if (stepSize === 0 || value === maxValue) return 0;
-		const index = binCount - 1 - Math.abs(Math.floor((value - minValue) / stepSize));
-		return index;
-	};
-
-	const avgArray: number[] = [];
-
-	// Fill bins:
-	data.forEach((ele) => {
-		const index = toBinIndex(ele);
-		if (index !== -1) {
-			bins[index].count += 1;
-			if (bins[index].tag === 'out') {
-				avgArray.push(ele);
-			}
-		}
-	});
-
-	const avg = mean(avgArray);
-
-	return { data: bins, avg };
-}
-
-export function createOptimizeChart(
+export function createSuccessCriteriaChart(
 	riskResults: any,
 	targetVariable: string,
 	threshold: number,
-	isMinimized: boolean
+	isMinimized: boolean,
+	alpha: number,
+	options: BaseChartOptions
 ): any {
-	const { data } = formatSuccessChartData(riskResults, targetVariable, threshold, isMinimized);
+	const targetState = `${targetVariable}_state`;
+	const data = riskResults[targetState]?.qoi || [];
+	const risk = riskResults[targetState]?.risk?.[0] || 0;
+	const binCount = Math.floor(Math.sqrt(data.length)) ?? 1;
+	const alphaPercentile = percentile(data, alpha);
+
+	const determineTag = () => {
+		if (isMinimized) {
+			// If target variable is below
+			// Colour those whose lower y-coordinates are above the threshold to be dark orange or red and label them as "Fail"
+			// Colour the horizontal bars whose upper y-coordinates are below the alpha-percentile to be green and label them as "Best <alpha*100>%"
+			// Colour those whose lower y-coordinates are above the alpha-percentile to be yellow/orange and label them as "Pass"
+			return `datum.binned_value > ${+threshold} ? "fail" : datum.binned_value_end < ${alphaPercentile} ? "best" : "pass"`;
+		}
+		// If target variable is above
+		// Colour those whose upper y-coordinates are below the threshold to be dark orange or red and label them as "Fail"
+		// Colour the horizontal bars whose lower y-coordinates are above the alpha-percentile to be green and label them as "Best <alpha*100>%"
+		// Colour those whose upper y-coordinates are below the alpha-percentile to be yellow/orange and label them as "Pass"
+		return `datum.binned_value_end < ${+threshold} ? "fail" : datum.binned_value > ${alphaPercentile} ? "best" : "pass"`;
+	};
+
+	const xaxis: any = {
+		title: options.xAxisTitle,
+		gridColor: '#EEE',
+		gridOpacity: 1.0
+	};
+	const yaxis = structuredClone(xaxis);
+	yaxis.title = options.yAxisTitle;
+	yaxis.labelExpr = LABEL_EXPR;
 
 	return {
 		$schema: VEGALITE_SCHEMA,
-		width: 400,
-		height: 400,
+		width: options.width,
+		height: options.height,
+		autosize: {
+			type: 'fit-x'
+		},
 		data: {
 			values: data
 		},
 		transform: [
 			{
-				calculate: 'split(datum.range, "-")[0]',
-				as: 'start'
+				calculate: 'datum.data',
+				as: 'value'
 			},
 			{
-				calculate: 'split(datum.range, "-")[1]',
-				as: 'end'
+				bin: { maxbins: binCount },
+				field: 'value',
+				as: 'binned_value'
+			},
+			{
+				calculate: determineTag(),
+				as: 'tag'
 			}
 		],
 		layer: [
 			{
 				mark: {
 					type: 'bar',
-					stroke: 'black',
-					tooltip: true,
-					interpolate: 'linear'
+					tooltip: true
 				},
 				encoding: {
 					y: {
-						field: 'start',
-						type: 'quantitative',
-						title: 'Min value at all times'
+						bin: { binned: true },
+						field: 'binned_value',
+						title: yaxis.title,
+						axis: yaxis
 					},
-					y2: { field: 'end' },
+					y2: { field: 'binned_value_end' },
 					x: {
-						aggregate: 'sum',
-						field: 'count',
-						type: 'quantitative',
-						title: 'Count'
+						aggregate: 'count',
+						axis: xaxis
 					},
 					color: {
 						field: 'tag',
 						type: 'nominal',
 						scale: {
-							domain: ['out', 'in'],
-							range: ['#FFAB00', '#1B8073']
-						}
+							domain: ['fail', 'pass', 'best'],
+							range: ['#B00020', '#FFAB00', '#1B8073']
+						},
+						legend: options.legend
+							? {
+									title: null,
+									orient: 'top',
+									direction: 'horizontal',
+									labelExpr: `datum.label === "fail" ? "Failing" : datum.label === "pass" ? "Passing" : "Best ${alpha}%"`
+								}
+							: null
 					}
 				}
 			},
+			// Threshold line
 			{
 				mark: { type: 'rule', strokeDash: [4, 4], color: 'black' },
 				encoding: {
 					y: { datum: +threshold }
 				}
 			},
+			// Threshold label
 			{
 				mark: {
 					type: 'text',
@@ -394,189 +626,81 @@ export function createOptimizeChart(
 				encoding: {
 					y: { datum: +threshold }
 				}
+			},
+			// Average of worst line
+			{
+				mark: { type: 'rule', strokeDash: [4, 4], color: 'black' },
+				encoding: {
+					y: { datum: +risk }
+				}
+			},
+			// Average of worst label
+			{
+				mark: {
+					type: 'text',
+					align: 'left',
+					text: `Average of worst ${100 - alpha}% = ${risk.toFixed(4)}`,
+					baseline: 'line-bottom'
+				},
+				encoding: {
+					y: { datum: +risk }
+				}
 			}
-		],
-		config: {
-			legend: { title: null, orient: 'top', direction: 'horizontal' }
-		}
+		]
 	};
 }
 
-function createInterventionChartMarkers(data: { name: string; value: number; time: number }[]) {
-	return data.map((ele) => ({
-		data: [{}], // Dummy data to ensure the layer is rendered
+export function createInterventionChartMarkers(data: { name: string; value: number; time: number }[]): any[] {
+	const markerSpec = {
+		data: { values: data },
 		mark: { type: 'rule', strokeDash: [4, 4], color: 'black' },
 		encoding: {
-			x: { datum: ele.time }
+			x: { field: 'time', type: 'quantitative' }
 		}
-	}));
-}
+	};
 
-function createStatisticLayer(
-	data: Record<string, any>[],
-	xaxis,
-	yaxis,
-	options: OptimizeChartOptions,
-	isPreStatistic: boolean
-) {
-	const statisticalVariables = options.statisticalVariables?.map((d) => d);
-	const tooltipContent = statisticalVariables?.map((d) => ({
-		field: d,
-		type: 'quantitative',
-		format: '.4f'
-	}));
-
-	const layerSpec: any = {
-		mark: { type: 'line' },
+	const labelSpec = {
 		data: { values: data },
-		transform: [
-			{
-				fold: statisticalVariables,
-				as: ['stat_variable', 'stat_value']
-			}
-		],
+		mark: {
+			type: 'text',
+			align: 'left',
+			angle: 90,
+			dx: 5,
+			dy: -10
+		},
 		encoding: {
-			x: { field: options.timeField, type: 'quantitative', axis: xaxis },
-			y: { field: 'stat_value', type: 'quantitative', axis: yaxis },
-			color: {
-				field: 'stat_variable',
-				type: 'nominal',
-				scale: {
-					domain: statisticalVariables,
-					range: [isPreStatistic ? '#AAB3C6' : '#1B8073']
-				},
-				legend: options.legend
-					? {
-							title: null,
-							orient: 'top',
-							direction: 'horizontal',
-							labelExpr: isPreStatistic
-								? 'datum.value ? "Before Optimization" : ""'
-								: 'datum.value ? "After Optimization" : ""'
-						}
-					: null
-			},
-			opacity: { value: 1.0 },
-			strokeWidth: { value: 3.5 },
-			tooltip: [{ field: options.timeField, type: 'quantitative' }, ...(tooltipContent || [])]
+			x: { field: 'time', type: 'quantitative' },
+			y: { field: 'value', type: 'quantitative' },
+			text: { field: 'name', type: 'nominal' }
 		}
 	};
 
-	return layerSpec;
+	return [markerSpec, labelSpec];
 }
 
-function createSampleLayer(
-	data: Record<string, any>[],
-	xaxis,
-	yaxis,
-	options: OptimizeChartOptions,
-	isPreSample: boolean
-) {
-	const sampleVariables = options.variables?.map((d) => d);
-
-	return {
-		mark: { type: 'line' },
-		data: { values: data },
-		transform: [
-			{
-				fold: sampleVariables,
-				as: ['sample_variable', 'sample_value']
-			}
-		],
-		encoding: {
-			x: { field: options.timeField, type: 'quantitative', axis: xaxis },
-			y: { field: 'sample_value', type: 'quantitative', axis: yaxis },
-			color: {
-				field: 'sample_variable',
-				type: 'nominal',
-				scale: {
-					domain: sampleVariables,
-					range: [isPreSample ? '#AAB3C6' : '#1B8073']
-				},
-				legend: false // No legend for sampling-layer, too noisy
-			},
-			detail: { field: options.groupField, type: 'nominal' },
-			strokeWidth: { value: 1 },
-			opacity: { value: 0.1 }
-		}
-	};
-}
-export const createOptimizeForecastChart = (
-	preSampleRunData: Record<string, any>[],
-	preStatisticData: Record<string, any>[],
-	postSampleRunData: Record<string, any>[],
-	postStatisticData: Record<string, any>[],
-	interventionsData: { name: string; value: number; time: number }[],
-	options: OptimizeChartOptions
-) => {
-	const axisColor = '#EEE';
-	const labelColor = '#667085';
-	const labelFontWeight = 'normal'; // Adjust font weight here
-	const titleObj = options.title
-		? {
-				text: options.title,
-				anchor: 'start',
-				subtitle: ' ',
-				subtitlePadding: 4
-			}
-		: null;
-
-	const xaxis = {
-		domainColor: axisColor,
-		tickColor: { value: axisColor },
-		labelColor: { value: labelColor },
-		labelFontWeight,
-		title: options.xAxisTitle,
-		gridColor: '#EEE',
-		gridOpacity: 1.0
-	};
-	const yaxis = structuredClone(xaxis);
-	yaxis.title = options.yAxisTitle;
-
+export const createInterventionChart = (interventionsData: { name: string; value: number; time: number }[]) => {
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
-		title: titleObj,
-		description: '',
-		width: options.width,
-		height: options.height,
+		width: 400,
 		autosize: {
-			type: 'fit'
+			type: 'fit-x'
 		},
-
-		// layers
-		layer: [],
-
-		// Make layers independent
-		resolve: {
-			legend: { color: 'independent' },
-			scale: { color: 'independent' }
-		}
+		layer: []
 	};
-
-	// Build pre sample layer
-	if (preSampleRunData && preSampleRunData.length > 0) {
-		spec.layer.push(createSampleLayer(preSampleRunData, xaxis, yaxis, options, true));
-	}
-
-	// Build post sample layer
-	if (postSampleRunData && postSampleRunData.length > 0) {
-		spec.layer.push(createSampleLayer(postSampleRunData, xaxis, yaxis, options, false));
-	}
-
-	// Build pre statistical layer
-	if (preStatisticData && preStatisticData.length > 0) {
-		spec.layer.push(createStatisticLayer(preStatisticData, xaxis, yaxis, options, true));
-	}
-
-	if (postStatisticData && postStatisticData.length > 0) {
-		spec.layer.push(createStatisticLayer(postStatisticData, xaxis, yaxis, options, false));
-	}
-
 	if (interventionsData && interventionsData.length > 0) {
+		// markers
 		createInterventionChartMarkers(interventionsData).forEach((marker) => {
 			spec.layer.push(marker);
 		});
+		// chart
+		spec.layer.push({
+			data: { values: interventionsData },
+			mark: 'point',
+			encoding: {
+				x: { field: 'time', type: 'quantitative' },
+				y: { field: 'value', type: 'quantitative' }
+			}
+		});
 	}
-
 	return spec;
 };

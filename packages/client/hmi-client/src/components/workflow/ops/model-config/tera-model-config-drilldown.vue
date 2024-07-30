@@ -45,7 +45,7 @@
 								></Dropdown>
 							</span>
 
-							<tera-input v-model="filterModelConfigurationsText" placeholder="Filter" />
+							<tera-input-text v-model="filterModelConfigurationsText" placeholder="Filter" />
 						</div>
 						<ul v-if="!isLoading && model?.id">
 							<li v-for="configuration in filteredModelConfigurations" :key="configuration.id">
@@ -111,7 +111,6 @@
 				@update-expression="setInitialExpression(knobs.transientModelConfig, $event.id, $event.value)"
 				@update-source="setInitialSource(knobs.transientModelConfig, $event.id, $event.value)"
 			/>
-
 			<tera-parameter-table
 				v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.parameters) && model"
 				:model="model"
@@ -182,28 +181,26 @@
 		</tera-drilldown-section>
 	</tera-drilldown>
 
-	<Teleport to="body">
-		<tera-modal v-if="sanityCheckErrors.length > 0">
-			<template #header>
-				<h4>Warning, these settings may cause errors</h4>
-			</template>
-			<template #default>
-				<section style="max-height: 22rem; overflow-y: scroll">
-					<div v-for="(errString, idx) of sanityCheckErrors" :key="idx">
-						{{ errString }}
-					</div>
-				</section>
-			</template>
-			<template #footer>
-				<Button label="Ok" class="p-button-primary" @click="sanityCheckErrors = []" />
-				<Button
-					label="Ignore warnings and use configuration"
-					class="p-button-secondary"
-					@click="() => createConfiguration()"
-				/>
-			</template>
-		</tera-modal>
-	</Teleport>
+	<tera-modal v-if="sanityCheckErrors.length > 0">
+		<template #header>
+			<h4>Warning, these settings may cause errors</h4>
+		</template>
+		<template #default>
+			<section style="max-height: 22rem; overflow-y: scroll">
+				<div v-for="(errString, idx) of sanityCheckErrors" :key="idx">
+					{{ errString }}
+				</div>
+			</section>
+		</template>
+		<template #footer>
+			<Button label="Ok" class="p-button-primary" @click="sanityCheckErrors = []" />
+			<Button
+				label="Ignore warnings and use configuration"
+				class="p-button-secondary"
+				@click="() => createConfiguration()"
+			/>
+		</template>
+	</tera-modal>
 
 	<!-- Matrix effect easter egg  -->
 	<canvas id="matrix-canvas" />
@@ -217,7 +214,7 @@ import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { useClientEvent } from '@/composables/useClientEvent';
@@ -239,16 +236,15 @@ import { configureModelFromDatasets, configureModelFromDocument } from '@/servic
 import { KernelSessionManager } from '@/services/jupyter';
 import { getMMT, getModel, getModelConfigurationsForModel } from '@/services/model';
 import {
-	amrToModelConfiguration,
 	createModelConfiguration,
-	getAsConfiguredModel,
-	setInitialExpression,
 	setInitialSource,
+	setInitialExpression,
+	setParameterSource,
 	setParameterDistributions,
-	setParameterSource
+	getAsConfiguredModel
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { ClientEvent, Model, ModelConfiguration, TaskResponse } from '@/types/Types';
+import type { Model, ModelConfiguration, TaskResponse, ClientEvent } from '@/types/Types';
 import { ClientEventType, TaskStatus } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
@@ -258,12 +254,11 @@ import Message from 'primevue/message';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { useConfirm } from 'primevue/useconfirm';
-import TeraInput from '@/components/widgets/tera-input.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Dropdown from 'primevue/dropdown';
 import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
-import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
-import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
+import { ModelConfigOperation, ModelConfigOperationState, blankModelConfig } from './model-config-operation';
 
 enum ConfigTabs {
 	Wizard = 'Wizard',
@@ -296,15 +291,7 @@ interface BasicKnobs {
 }
 
 const knobs = ref<BasicKnobs>({
-	transientModelConfig: {
-		name: '',
-		description: '',
-		modelId: '',
-		calibrationRunId: '',
-		observableSemanticList: [],
-		parameterSemanticList: [],
-		initialSemanticList: []
-	}
+	transientModelConfig: blankModelConfig
 });
 
 const sanityCheckErrors = ref<string[]>([]);
@@ -319,7 +306,7 @@ const buildJupyterContext = () => {
 		return null;
 	}
 	return {
-		context: 'mira_config_edit',
+		context: 'model_configuration',
 		language: 'python3',
 		context_info: {
 			id: contextId
@@ -335,7 +322,11 @@ const executeResponse = ref({
 	value: '',
 	traceback: ''
 });
-const sampleAgentQuestions = ['What are the current parameters values?', 'update the parameters {gamma: 0.13}'];
+const sampleAgentQuestions = [
+	'What are the current parameters values?',
+	'Update parameter gamma to constant 0.13',
+	'Update parameter beta to a uniform distribution with max 0.5 and min 0.2'
+];
 const contextLanguage = ref<string>('python3');
 
 const appendCode = (data: any, property: string, runUpdatedCode = false) => {
@@ -381,9 +372,9 @@ const runFromCode = () => {
 		.register('stream', (data) => {
 			notebookResponse.value = data.content.text;
 		})
-		.register('model_preview', (data) => {
+		.register('model_configuration_preview', (data) => {
 			if (!data.content) return;
-			handleModelPreview(data);
+			knobs.value.transientModelConfig = data.content;
 
 			if (executedCode) {
 				saveCodeToState(executedCode, true);
@@ -463,18 +454,11 @@ const configModelEventHandler = async (event: ClientEvent<TaskResponse>) => {
 useClientEvent(ClientEventType.TaskGollmConfigureModel, configModelEventHandler);
 useClientEvent(ClientEventType.TaskGollmConfigureFromDataset, configModelEventHandler);
 
-const handleModelPreview = async (data: any) => {
-	if (!model.value) return;
-	// Only update the keys provided in the model preview (not ID, temporary ect)
-	Object.assign(model.value, cloneDeep(data.content['application/json']));
-	knobs.value.transientModelConfig = await amrToModelConfiguration(model.value);
-};
-
 const selectedOutputId = ref<string>('');
-const selectedConfigId = computed(() => props.node.outputs?.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
+const selectedConfigId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
 
-const documentId = computed(() => props.node.inputs?.[1]?.value?.[0]?.documentId);
-const datasetIds = computed(() => props.node.inputs?.[2]?.value);
+const documentId = computed(() => props.node.inputs[1]?.value?.[0]?.documentId);
+const datasetIds = computed(() => props.node.inputs[2]?.value);
 
 const suggestedConfigurationContext = ref<{
 	isOpen: boolean;
@@ -523,6 +507,8 @@ const createConfiguration = async () => {
 		return;
 	}
 
+	knobs.value.transientModelConfig = cloneDeep(data);
+	state.transientModelConfig = knobs.value.transientModelConfig;
 	useToastService().success('', 'Created model configuration');
 	emit('append-output', {
 		type: ModelConfigOperation.outputs[0].type,
@@ -538,11 +524,9 @@ const onSelection = (id: string) => {
 };
 
 const fetchConfigurations = async (modelId: string) => {
-	if (modelId) {
-		isFetching.value = true;
-		suggestedConfigurationContext.value.tableData = await getModelConfigurationsForModel(modelId);
-		isFetching.value = false;
-	}
+	isFetching.value = true;
+	suggestedConfigurationContext.value.tableData = await getModelConfigurationsForModel(modelId);
+	isFetching.value = false;
 };
 
 // Fill the form with the config data
@@ -555,7 +539,7 @@ const initialize = async () => {
 	model.value = await getModel(modelId);
 
 	if (!state.transientModelConfig.id) {
-		// apply a configuration if one hasn't been applied yet
+		// Apply a configuration if one hasn't been applied yet
 		applyConfigValues(suggestedConfigurationContext.value.tableData[0]);
 	} else {
 		knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
@@ -576,12 +560,12 @@ const initialize = async () => {
 	}
 };
 
-const onSelectConfiguration = (configuration: ModelConfiguration) => {
+const onSelectConfiguration = (config: ModelConfiguration) => {
 	confirm.require({
 		header: 'Are you sure you want to select this configuration?',
-		message: `This will apply the configuration "${configuration.name}" to the model.  All current values will be replaced.`,
+		message: `This will apply the configuration "${config.name}" to the model.  All current values will be replaced.`,
 		accept: () => {
-			applyConfigValues(configuration);
+			applyConfigValues(config);
 		},
 		acceptLabel: 'Confirm',
 		rejectLabel: 'Cancel'
@@ -644,10 +628,6 @@ const resetConfiguration = () => {
 	});
 };
 
-onMounted(async () => {
-	await initialize();
-});
-
 watch(
 	() => model.value,
 	async () => {
@@ -671,10 +651,10 @@ watch(
 
 watch(
 	() => props.node.active,
-	async () => {
+	() => {
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
-			await initialize();
+			initialize();
 		}
 	},
 	{ immediate: true }

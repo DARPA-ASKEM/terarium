@@ -13,7 +13,7 @@
 		</header>
 		<main>
 			<span class="expression">
-				<tera-input
+				<tera-input-text
 					label="Expression"
 					:model-value="getInitialExpression(modelConfiguration, initialId)"
 					@update:model-value="emit('update-expression', { id: initialId, value: $event })"
@@ -23,33 +23,31 @@
 			<Button :label="getOtherValuesLabel" text size="small" @click="showOtherConfigValueModal = true" />
 		</main>
 		<footer v-if="sourceOpen">
-			<tera-input
+			<tera-input-text
 				placeholder="Add a source"
 				:model-value="getInitialSource(modelConfiguration, initialId)"
 				@update:model-value="emit('update-source', { id: initialId, value: $event })"
 			/>
 		</footer>
 	</div>
-	<Teleport to="body">
-		<tera-initial-other-value-modal
-			v-if="showOtherConfigValueModal"
-			:id="initialId"
-			:updateEvent="'update-expression'"
-			:otherValueList="otherValueList"
-			:otherValuesInputTypes="DistributionType.Constant"
-			@modal-mask-clicked="showOtherConfigValueModal = false"
-			@update-expression="emit('update-expression', $event)"
-			@update-source="emit('update-source', $event)"
-			@close-modal="showOtherConfigValueModal = false"
-		/>
-	</Teleport>
+	<tera-initial-other-value-modal
+		v-if="showOtherConfigValueModal"
+		:id="initialId"
+		:updateEvent="'update-expression'"
+		:otherValueList="otherValueList"
+		:otherValuesInputTypes="DistributionType.Constant"
+		@modal-mask-clicked="showOtherConfigValueModal = false"
+		@update-expression="emit('update-expression', $event)"
+		@update-source="emit('update-source', $event)"
+		@close-modal="showOtherConfigValueModal = false"
+	/>
 </template>
 
 <script setup lang="ts">
 import { DistributionType } from '@/services/distribution';
 import { Model, ModelConfiguration } from '@/types/Types';
 import { getInitialExpression, getInitialSource, getOtherValues } from '@/services/model-configurations';
-import TeraInput from '@/components/widgets/tera-input.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraInitialOtherValueModal from '@/components/model/petrinet/tera-initial-other-value-modal.vue';
 import { computed, ref } from 'vue';
 import Button from 'primevue/button';
@@ -62,7 +60,9 @@ const props = defineProps<{
 	modelConfigurations: ModelConfiguration[];
 }>();
 
-const otherValueList = ref(getOtherValues(props.modelConfigurations, props.initialId, 'target', 'initialSemanticList'));
+const otherValueList = computed(() =>
+	getOtherValues(props.modelConfigurations, props.initialId, 'target', 'initialSemanticList')
+);
 
 const emit = defineEmits(['update-expression', 'update-source']);
 

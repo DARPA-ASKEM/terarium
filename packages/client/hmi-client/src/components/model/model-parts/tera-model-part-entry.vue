@@ -3,7 +3,7 @@
 		<h6>
 			<template v-if="item.templateId">{{ item.templateId }},</template> {{ item.id }}
 		</h6>
-		<tera-input
+		<tera-input-text
 			title="Name"
 			placeholder="Add a name"
 			:model-value="item.name ?? ''"
@@ -15,7 +15,7 @@
 			<span><span>Output:</span> {{ item.output }}</span>
 		</div>
 		<!--amr_to_mmt doesn't like unit expressions with spaces, removing them here before they are saved to the amr-->
-		<tera-input
+		<tera-input-text
 			v-else
 			label="Unit"
 			placeholder="Add a unit"
@@ -29,16 +29,27 @@
 			:disabled="disabledInputs?.includes('unitExpression')"
 			@focusout="($event) => ($event.target.value = $event.target.value.replace(/[\s.]+/g, ''))"
 		/>
-		<!--TODO: Add support for editing concepts-->
-		<tera-input
-			label="Concept"
-			placeholder="Select a concept"
-			icon="pi pi-search"
-			:disabled="disabledInputs?.includes('concept')"
-			:model-value="''"
+		<span class="concept">
+			<label>Concept</label>
+			<AutoComplete
+				label="Concept"
+				size="small"
+				placeholder="Search concepts"
+				v-model="query"
+				:suggestions="results"
+				optionLabel="name"
+				:disabled="disabledInputs?.includes('concept')"
+				@complete="async () => (results = await searchCuriesEntities(query))"
+				@item-select="$emit('update-item', { key: 'concept', value: $event.value.curie })"
+			/>
+		</span>
+		<katex-element
+			class="expression"
+			v-if="item.expression"
+			:expression="stringToLatexExpression(item.expression)"
+			:throw-on-error="false"
 		/>
-		<katex-element class="expression" v-if="item.expression" :expression="item.expression" :throw-on-error="false" />
-		<tera-input
+		<tera-input-text
 			title="Description"
 			placeholder="Add a description"
 			:model-value="item.description ?? ''"
@@ -49,21 +60,31 @@
 </template>
 
 <script setup lang="ts">
-import TeraInput from '@/components/widgets/tera-input.vue';
+import { ref, watch } from 'vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import AutoComplete from 'primevue/autocomplete';
 import type { ModelPartItem } from '@/types/Model';
+import { stringToLatexExpression } from '@/services/model';
+import type { DKG } from '@/types/Types';
+import { getCurieFromGroundingIdentifier, getNameOfCurieCached, searchCuriesEntities } from '@/services/concept';
 
-// import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
-// getNameOfCurieCached(
-// 		new Map<string, string>(),
-// 		getCurieFromGroundingIdentifier(grounding.identifiers)
-// 	)
-
-defineProps<{
+const props = defineProps<{
 	item: ModelPartItem;
 	disabledInputs?: string[];
 }>();
 
 defineEmits(['update-item']);
+
+const query = ref('');
+const results = ref<DKG[]>([]);
+
+watch(
+	() => props.item.grounding?.identifiers,
+	async (identifiers) => {
+		if (identifiers) query.value = await getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
@@ -109,8 +130,17 @@ div {
 	grid-area: unit;
 }
 
-:deep([label='Concept']) {
+.concept {
 	grid-area: concept;
+	display: flex;
+	align-items: center;
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
+	gap: var(--gap-1);
+}
+
+:deep(.p-autocomplete-input) {
+	padding: var(--gap-1) var(--gap-2);
 }
 
 .expression {

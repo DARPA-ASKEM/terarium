@@ -6,16 +6,18 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
-		<section :tabName="SimulateTabs.Wizard" class="ml-4 mr-2 pt-3">
+		<section :tabName="DrilldownTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
-				<template #header-controls-left>
-					<h5>Set simulation parameters</h5>
-				</template>
 				<template #header-controls-right>
 					<Button label="Run" icon="pi pi-play" @click="run" :disabled="showSpinner" />
 					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 				</template>
 				<div class="form-section">
+					<h5>
+						Simulation settings
+						<i v-tooltip="simulationSettingsToolTip" class="pi pi-info-circle" />
+					</h5>
+
 					<!-- Start & End -->
 					<div class="input-row">
 						<div class="label-and-input">
@@ -26,6 +28,17 @@
 							<label for="3">End time</label>
 							<InputNumber id="3" v-model="timespan.end" inputId="integeronly" @update:model-value="updateState" />
 						</div>
+					</div>
+
+					<!-- Presets -->
+					<div class="label-and-input">
+						<label for="4">Preset (optional)</label>
+						<Dropdown
+							v-model="presetType"
+							placeholder="Select an option"
+							:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
+							@update:model-value="setPresetValues"
+						/>
 					</div>
 
 					<!-- Number of Samples & Method -->
@@ -42,14 +55,20 @@
 						</div>
 						<div class="label-and-input">
 							<label for="5">Method</label>
-							<Dropdown id="5" v-model="method" :options="ciemssMethodOptions" @update:model-value="updateState" />
+							<Dropdown
+								v-model="method"
+								:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
+								@update:model-value="updateState"
+							/>
 						</div>
 					</div>
+					<!-- FIXME: show sampled values ???
 					<div v-if="inferredParameters">Using inferred parameters from calibration: {{ inferredParameters[0] }}</div>
+					-->
 				</div>
 			</tera-drilldown-section>
 		</section>
-		<tera-drilldown-section :tabName="SimulateTabs.Notebook" class="notebook-section">
+		<tera-drilldown-section :tabName="DrilldownTabs.Notebook" class="notebook-section">
 			<div class="toolbar">
 				<tera-notebook-jupyter-input
 					:kernel-manager="kernelManager"
@@ -58,7 +77,8 @@
 					@llm-thought-output="(data: any) => llmThoughts.push(data)"
 					@question-asked="updateLlmQuery"
 				>
-					<template #toolbar-right-side>
+					<template #toolbar-right-side
+						>t
 						<Button label="Run" size="small" icon="pi pi-play" @click="runCode" />
 					</template>
 				</tera-notebook-jupyter-input>
@@ -103,23 +123,18 @@
 				<tera-notebook-error v-bind="node.state.errorMessage" />
 				<template v-if="runResults[selectedRunId]">
 					<div v-if="view === OutputView.Charts" ref="outputPanel">
-						<template v-for="(cfg, index) of props.node.state.chartConfigs" :key="index">
+						<template v-for="(cfg, index) of node.state.chartConfigs" :key="index">
 							<tera-chart-control
-								:variables="Object.keys(pyciemssMap)"
-								:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
+								:chart-config="{ selectedRun: selectedRunId, selectedVariable: cfg }"
+								:multi-select="true"
 								:show-remove-button="true"
+								:variables="Object.keys(pyciemssMap)"
 								@configuration-change="chartProxy.configurationChange(index, $event)"
 								@remove="chartProxy.removeChart(index)"
 							/>
 							<vega-chart :are-embed-actions-visible="true" :visualization-spec="preparedCharts[index]" />
 						</template>
-
-						<Button
-							class="p-button-sm p-button-text"
-							@click="chartProxy.addChart()"
-							label="Add chart"
-							icon="pi pi-plus"
-						/>
+						<Button size="small" text @click="chartProxy.addChart()" label="Add chart" icon="pi pi-plus" />
 					</div>
 					<div v-else-if="view === OutputView.Data">
 						<tera-dataset-datatable
@@ -153,8 +168,11 @@ import {
 	getRunResultCSV,
 	parsePyCiemssMap,
 	makeForecastJobCiemss as makeForecastJob,
-	convertToCsvAsset
+	convertToCsvAsset,
+	DataArray,
+	CiemssMethodOptions
 } from '@/services/models/simulation-service';
+import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
 import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
@@ -176,6 +194,8 @@ import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
+import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
+import { getModelConfigurationById } from '@/services/model-configurations';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import TeraChartControl from '../../tera-chart-control.vue';
 
@@ -184,11 +204,11 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['update-state', 'select-output', 'close']);
 
+const modelVarUnits = ref<{ [key: string]: string }>({});
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
 
-const inferredParameters = computed(() => props.node.inputs[1].value);
-const policyInterventionId = computed(() => props.node.inputs[2].value);
+const policyInterventionId = computed(() => props.node.inputs[1].value);
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
 const llmThoughts = ref<any[]>([]);
@@ -197,17 +217,23 @@ const llmQuery = ref('');
 // extras
 const numSamples = ref<number>(props.node.state.numSamples);
 const method = ref(props.node.state.method);
-const ciemssMethodOptions = ref(['dopri5', 'euler']);
 
-enum SimulateTabs {
-	Wizard = 'Wizard',
-	Notebook = 'Notebook'
-}
+const simulationSettingsToolTip: string = 'TODO';
 
 enum OutputView {
 	Charts = 'Charts',
 	Data = 'Data'
 }
+
+const speedValues = Object.freeze({
+	numSamples: 10,
+	method: CiemssMethodOptions.euler
+});
+
+const qualityValues = Object.freeze({
+	numSamples: 100,
+	method: CiemssMethodOptions.dopri5
+});
 
 const updateLlmQuery = (query: string) => {
 	llmThoughts.value = [];
@@ -241,9 +267,9 @@ const menuItems = computed(() => [
 ]);
 
 const showSpinner = ref(false);
-const runResults = ref<{ [runId: string]: any }>({});
-const runResultsSummary = ref<{ [runId: string]: any }>({});
-const rawContent = ref<{ [runId: string]: CsvAsset | null }>({});
+const runResults = ref<{ [runId: string]: DataArray }>({});
+const runResultsSummary = ref<{ [runId: string]: DataArray }>({});
+const rawContent = ref<{ [runId: string]: CsvAsset }>({});
 
 let pyciemssMap: Record<string, string> = {};
 
@@ -260,6 +286,18 @@ const outputs = computed(() => {
 	}
 	return [];
 });
+
+const presetType = computed(() => {
+	if (numSamples.value === speedValues.numSamples && method.value === speedValues.method) {
+		return CiemssPresetTypes.Fast;
+	}
+	if (numSamples.value === qualityValues.numSamples && method.value === qualityValues.method) {
+		return CiemssPresetTypes.Normal;
+	}
+
+	return '';
+});
+
 const selectedOutputId = ref<string>();
 const selectedRunId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
 
@@ -271,6 +309,17 @@ const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperation
 	emit('update-state', state);
 });
 
+const setPresetValues = (data: CiemssPresetTypes) => {
+	if (data === CiemssPresetTypes.Normal) {
+		numSamples.value = qualityValues.numSamples;
+		method.value = qualityValues.method;
+	}
+	if (data === CiemssPresetTypes.Fast) {
+		numSamples.value = speedValues.numSamples;
+		method.value = speedValues.method;
+	}
+};
+
 const preparedCharts = computed(() => {
 	if (!selectedRunId.value) return [];
 
@@ -281,7 +330,6 @@ const preparedCharts = computed(() => {
 	Object.keys(pyciemssMap).forEach((key) => {
 		reverseMap[`${pyciemssMap[key]}_mean`] = key;
 	});
-
 	return props.node.state.chartConfigs.map((config) =>
 		createForecastChart(
 			{
@@ -298,12 +346,13 @@ const preparedCharts = computed(() => {
 			null,
 			// options
 			{
+				title: '',
 				width: chartSize.value.width,
 				height: chartSize.value.height,
 				legend: true,
 				translationMap: reverseMap,
-				xAxisTitle: 'Time',
-				yAxisTitle: 'Units' /* TODO: 'Units' should be replaced with selected variable concepts */
+				xAxisTitle: modelVarUnits.value._time || 'Time',
+				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
 			}
 		)
 	);
@@ -336,15 +385,18 @@ const makeForecastRequest = async () => {
 			end: state.currentTimespan.end
 		},
 		extra: {
-			num_samples: state.numSamples,
-			method: state.method
+			solver_method: state.method,
+			solver_step_size: 1,
+			num_samples: state.numSamples
 		},
 		engine: 'ciemss'
 	};
 
-	if (inferredParameters.value?.[0]) {
-		payload.extra.inferred_parameters = inferredParameters.value[0];
+	const modelConfig = await getModelConfigurationById(modelConfigId);
+	if (modelConfig.simulationId) {
+		payload.extra.inferred_parameters = modelConfig.simulationId;
 	}
+
 	if (policyInterventionId.value?.[0]) {
 		payload.policyInterventionId = policyInterventionId.value[0];
 	}
@@ -431,6 +483,19 @@ const initializeAceEditor = (editorInstance: any) => {
 };
 
 watch(
+	() => props.node.inputs[0].value,
+	async () => {
+		const input = props.node.inputs[0];
+		if (!input.value) return;
+
+		const id = input.value[0];
+		const model = await getModelByModelConfigurationId(id);
+		if (model) modelVarUnits.value = getUnitsFromModelParts(model);
+	},
+	{ immediate: true }
+);
+
+watch(
 	() => props.node.state.inProgressSimulationId,
 	(id) => {
 		if (id === '') showSpinner.value = false;
@@ -472,9 +537,15 @@ onUnmounted(() => kernelManager.shutdown());
 }
 
 .form-section {
+	background-color: var(--surface-50);
+	border-radius: var(--border-radius-medium);
+	box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.25) inset;
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
+	flex-grow: 1;
+	gap: var(--gap-1);
+	margin: 0 var(--gap) var(--gap) var(--gap);
+	padding: var(--gap);
 }
 
 .label-and-input {

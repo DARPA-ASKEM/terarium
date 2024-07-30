@@ -52,16 +52,14 @@
 				class="graph-element preview"
 				:style="!isEditable && { pointerEvents: 'none' }"
 			/>
-			<Teleport to="body">
-				<tera-stratified-matrix-modal
-					v-if="selectedTransitionId"
-					:id="selectedTransitionId"
-					:mmt="mmt"
-					:mmt-params="mmtParams"
-					:stratified-matrix-type="StratifiedMatrix.Rates"
-					@close-modal="selectedTransitionId = ''"
-				/>
-			</Teleport>
+			<tera-stratified-matrix-modal
+				v-if="selectedTransitionId"
+				:id="selectedTransitionId"
+				:mmt="mmt"
+				:mmt-params="mmtParams"
+				:stratified-matrix-type="StratifiedMatrix.Rates"
+				@close-modal="selectedTransitionId = ''"
+			/>
 		</main>
 		<template #tooltip-content v-if="isStratified && !isEmpty(hoveredTransitionId)">
 			<div ref="tooltipContentRef">

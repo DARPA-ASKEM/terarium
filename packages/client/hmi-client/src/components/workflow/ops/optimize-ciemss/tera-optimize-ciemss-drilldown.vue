@@ -6,7 +6,7 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
-		<section :tabName="OptimizeTabs.Wizard" class="ml-4 mr-2 pt-3">
+		<section :tabName="DrilldownTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
 				<template #header-controls-left>
 					The model configuration will be optimized with the following settings
@@ -41,7 +41,7 @@
 					<template v-for="(cfg, idx) in props.node.state.interventionPolicyGroups">
 						<tera-static-intervention-policy-group
 							v-if="cfg.intervention?.staticInterventions && cfg.intervention?.staticInterventions.length > 0"
-							:key="idx"
+							:key="cfg.id || '' + idx"
 							:config="cfg"
 							@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
 						/>
@@ -63,11 +63,11 @@
 					<div class="input-row">
 						<div class="label-and-input">
 							<label>Start time</label>
-							<tera-input disabled type="number" model-value="0" />
+							<tera-input-number disabled :model-value="0" />
 						</div>
 						<div class="label-and-input">
 							<label>End time</label>
-							<tera-input type="number" v-model="knobs.endTime" />
+							<tera-input-number v-model="knobs.endTime" />
 						</div>
 					</div>
 					<div>
@@ -87,17 +87,27 @@
 					<div v-if="showAdditionalOptions">
 						<div class="input-row">
 							<div class="label-and-input">
+								<label>Preset (optional)</label>
+								<Dropdown
+									v-model="presetType"
+									placeholder="Select an option"
+									:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
+									@update:model-value="setPresetValues"
+								/>
+							</div>
+						</div>
+						<div class="input-row">
+							<div class="label-and-input">
 								<label>Number of samples to simulate model</label>
 								<div>
-									<tera-input type="number" v-model="knobs.numSamples" />
+									<tera-input-number v-model="knobs.numSamples" />
 								</div>
 							</div>
 							<div class="label-and-input">
 								<label>Solver method</label>
 								<Dropdown
 									class="p-inputtext-sm"
-									disabled
-									:options="['dopri5', 'euler']"
+									:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
 									v-model="knobs.solverMethod"
 									placeholder="Select"
 								/>
@@ -109,19 +119,19 @@
 						<div class="input-row">
 							<div class="label-and-input">
 								<label>Algorithm</label>
-								<tera-input disabled model-value="basinhopping" />
+								<tera-input-text disabled model-value="basinhopping" />
 							</div>
 							<div class="label-and-input">
 								<label>Minimizer method</label>
-								<tera-input disabled model-value="COBYLA" />
+								<tera-input-text disabled model-value="COBYLA" />
 							</div>
 							<div class="label-and-input">
 								<label>Maxiter</label>
-								<tera-input v-model="knobs.maxiter" />
+								<tera-input-number v-model="knobs.maxiter" />
 							</div>
 							<div class="label-and-input">
 								<label>Maxfeval</label>
-								<tera-input v-model="knobs.maxfeval" />
+								<tera-input-number v-model="knobs.maxfeval" />
 							</div>
 						</div>
 					</div>
@@ -196,8 +206,14 @@
 				</section>
 			</tera-drilldown-section>
 		</section>
-		<section :tabName="OptimizeTabs.Notebook" class="ml-4 mr-2 pt-3">
+		<section :tabName="DrilldownTabs.Notebook" class="ml-4 mr-2 pt-3">
 			<p>Under construction. Use the wizard for now.</p>
+			<div class="result-message-grid">
+				<div v-for="(value, key) in optimizeRequestPayload" :key="key" class="result-message-row">
+					<div class="label">{{ key }}:</div>
+					<div class="value">{{ formatJsonValue(value) }}</div>
+				</div>
+			</div>
 		</section>
 		<template #preview>
 			<tera-drilldown-preview
@@ -207,7 +223,7 @@
 				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
-				:class="{ 'failed-run': optimizationResult.success === 'False' }"
+				:class="{ 'failed-run': optimizationResult.success === 'False' ?? 'successful-run' }"
 			>
 				<tera-operator-output-summary v-if="node.state.summaryId && !showSpinner" :summary-id="node.state.summaryId" />
 
@@ -247,33 +263,28 @@
 						<Accordion multiple :active-index="[0, 1, 2]">
 							<AccordionTab header="Success criteria">
 								<ul>
-									<li v-for="(constraint, i) in node.state.constraintGroups" :key="i">
-										<h5>{{ constraint.name }}</h5>
-										<vega-chart
-											v-if="riskResults[knobs.postForecastRunId]"
-											:visualization-spec="
-												createOptimizeChart(
-													riskResults[knobs.postForecastRunId],
-													constraint.targetVariable,
-													constraint.threshold,
-													constraint.isMinimized
-												)
-											"
-										/>
+									<li v-for="(_constraint, key) in node.state.constraintGroups" :key="key">
+										<vega-chart are-embed-actions-visible :visualization-spec="preparedSuccessCriteriaCharts[key]" />
 									</li>
 								</ul>
 							</AccordionTab>
 							<AccordionTab header="Interventions">
 								<ul>
-									<li v-for="(_, key) of knobs.selectedInterventionVariables" :key="`intervention_${key}`">
-										<vega-chart are-embed-actions-visible :visualization-spec="preparedInterventionsCharts[key]" />
+									<li v-for="(_, key) of knobs.selectedInterventionVariables" :key="key">
+										<vega-chart
+											are-embed-actions-visible
+											:visualization-spec="preparedForecastCharts.interventionCharts[key]"
+										/>
 									</li>
 								</ul>
 							</AccordionTab>
 							<AccordionTab header="Simulation plots">
 								<ul>
-									<li v-for="(_, key) of knobs.selectedSimulationVariables" :key="`simulation_${key}`">
-										<vega-chart are-embed-actions-visible :visualization-spec="preparedCharts[key]" />
+									<li v-for="(_, key) of knobs.selectedSimulationVariables" :key="key">
+										<vega-chart
+											are-embed-actions-visible
+											:visualization-spec="preparedForecastCharts.simulationCharts[key]"
+										/>
 									</li>
 								</ul>
 							</AccordionTab>
@@ -300,11 +311,11 @@
 	<Dialog v-model:visible="showModelModal" modal header="Save as new model configuration" class="save-dialog w-4">
 		<div class="label-and-input">
 			<label> Model config name</label>
-			<tera-input v-model="modelConfigName" />
+			<tera-input-text v-model="modelConfigName" />
 		</div>
 		<div class="label-and-input">
 			<label> Model config description</label>
-			<tera-input v-model="modelConfigDesc" />
+			<tera-input-text v-model="modelConfigDesc" />
 		</div>
 		<Button
 			:disabled="modelConfigName === ''"
@@ -316,11 +327,11 @@
 </template>
 
 <script setup lang="ts">
-import _, { cloneDeep, Dictionary, groupBy } from 'lodash';
+import _, { cloneDeep, Dictionary } from 'lodash';
 import { computed, onMounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
-import teraInput from '@/components/widgets/tera-input.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import SelectButton from 'primevue/selectbutton';
 import Dialog from 'primevue/dialog';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
@@ -330,23 +341,23 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
-import {
-	createModelConfiguration,
-	getAsConfiguredModel,
-	getModelConfigurationById
-} from '@/services/model-configurations';
+import { getUnitsFromModelParts, getModelByModelConfigurationId } from '@/services/model';
+import { createModelConfiguration, getModelConfigurationById } from '@/services/model-configurations';
 import {
 	convertToCsvAsset,
 	getRunResult,
 	getRunResultCSV,
 	makeOptimizeJobCiemss,
-	parsePyCiemssMap
+	parsePyCiemssMap,
+	getSimulation,
+	CiemssMethodOptions
 } from '@/services/models/simulation-service';
 import {
 	CsvAsset,
 	Intervention,
 	InterventionPolicy,
 	ModelConfiguration,
+	Model,
 	OptimizeInterventions,
 	OptimizeQoi,
 	OptimizeRequestCiemss
@@ -363,9 +374,12 @@ import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import Divider from 'primevue/divider';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { createOptimizeChart, createOptimizeForecastChart } from '@/services/charts';
+import { createSuccessCriteriaChart, createForecastChart, createInterventionChartMarkers } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import MultiSelect from 'primevue/multiselect';
+import { mergeResults, renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
+import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import teraOptimizeCriterionGroupForm from './tera-optimize-criterion-group-form.vue';
 import TeraStaticInterventionPolicyGroup from './tera-static-intervention-policy-group.vue';
 import TeraDynamicInterventionPolicyGroup from './tera-dynamic-intervention-policy-group.vue';
@@ -383,11 +397,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['update-state', 'close', 'select-output']);
-
-enum OptimizeTabs {
-	Wizard = 'Wizard',
-	Notebook = 'Notebook'
-}
 
 enum OutputView {
 	Charts = 'Charts',
@@ -410,7 +419,7 @@ interface BasicKnobs {
 const knobs = ref<BasicKnobs>({
 	endTime: props.node.state.endTime ?? 1,
 	numSamples: props.node.state.numSamples ?? 0,
-	solverMethod: props.node.state.solverMethod ?? '', // Currently not used.
+	solverMethod: props.node.state.solverMethod ?? CiemssMethodOptions.dopri5,
 	maxiter: props.node.state.maxiter ?? 5,
 	maxfeval: props.node.state.maxfeval ?? 25,
 	preForecastRunId: props.node.state.preForecastRunId ?? '',
@@ -437,7 +446,6 @@ const showSaveDataDialog = ref<boolean>(false);
 
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
-const inferredParameters = computed(() => props.node.inputs[1].value);
 const cancelRunId = computed(() => props.node.state.inProgressPostForecastId || props.node.state.inProgressOptimizeId);
 
 const isSaveDisabled = computed<boolean>(() =>
@@ -494,6 +502,26 @@ const isRunDisabled = computed(
 		activePolicyGroups.value.length <= 0
 );
 
+const presetType = computed(() => {
+	if (
+		knobs.value.numSamples === speedValues.numSamplesToSimModel &&
+		knobs.value.solverMethod === speedValues.method &&
+		knobs.value.maxiter === speedValues.maxiter &&
+		knobs.value.maxfeval === speedValues.maxfeval
+	) {
+		return CiemssPresetTypes.Fast;
+	}
+	if (
+		knobs.value.numSamples === qualityValues.numSamplesToSimModel &&
+		knobs.value.solverMethod === qualityValues.method &&
+		knobs.value.maxiter === qualityValues.maxiter &&
+		knobs.value.maxfeval === qualityValues.maxfeval
+	) {
+		return CiemssPresetTypes.Normal;
+	}
+	return '';
+});
+
 const selectedOutputId = ref<string>();
 
 const outputViewSelection = ref(OutputView.Charts);
@@ -506,14 +534,24 @@ const runResultsSummary = ref<{ [runId: string]: any }>({});
 const riskResults = ref<{ [runId: string]: any }>({});
 const simulationRawContent = ref<{ [runId: string]: CsvAsset | null }>({});
 const optimizationResult = ref<any>('');
+const optimizeRequestPayload = ref<any>('');
+const optimizedInterventionPolicy = ref<InterventionPolicy | null>(null);
 
-const modelParameterOptions = ref<string[]>([]);
+const model = ref<Model | null>(null);
+const modelParameterOptions = computed<string[]>(() =>
+	(model.value?.semantics?.ode?.parameters ?? []).map((p) => p.id)
+);
 const modelStateAndObsOptions = ref<string[]>([]);
 
 const simulationChartOptions = computed(() => [...modelParameterOptions.value, ...modelStateAndObsOptions.value]);
 const modelConfiguration = ref<ModelConfiguration>();
 
 const showAdditionalOptions = ref(true);
+
+const getUnit = (paramId: string) => {
+	if (!model.value) return '';
+	return getUnitsFromModelParts(model.value)[paramId] || '';
+};
 
 const onSelection = (id: string) => {
 	emit('select-output', id);
@@ -562,19 +600,57 @@ const formatJsonValue = (value) => {
 	return value;
 };
 
+const setPresetValues = (data: CiemssPresetTypes) => {
+	if (data === CiemssPresetTypes.Normal) {
+		knobs.value.numSamples = qualityValues.numSamplesToSimModel;
+		knobs.value.solverMethod = qualityValues.method;
+		knobs.value.maxiter = qualityValues.maxiter;
+		knobs.value.maxfeval = qualityValues.maxfeval;
+	}
+	if (data === CiemssPresetTypes.Fast) {
+		knobs.value.numSamples = speedValues.numSamplesToSimModel;
+		knobs.value.solverMethod = speedValues.method;
+		knobs.value.maxiter = speedValues.maxiter;
+		knobs.value.maxfeval = speedValues.maxfeval;
+	}
+};
+
+const speedValues = Object.freeze({
+	numSamplesToSimModel: 1,
+	method: CiemssMethodOptions.euler,
+	maxiter: 0,
+	maxfeval: 1
+});
+
+const qualityValues = Object.freeze({
+	numSamplesToSimModel: 100,
+	method: CiemssMethodOptions.dopri5,
+	maxiter: 5,
+	maxfeval: 25
+});
+
 const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
-	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
-	const model = await getAsConfiguredModel(modelConfiguration.value);
+	const results = await Promise.all([
+		getModelConfigurationById(modelConfigurationId),
+		getModelByModelConfigurationId(modelConfigurationId)
+	]);
+	modelConfiguration.value = results[0];
+	model.value = results[1];
 
-	const policyId = props.node.inputs[2]?.value?.[0];
+	const policyId = props.node.inputs[1]?.value?.[0];
 	if (policyId) {
+		// FIXME: This should be done in the node this should not be done in the drill down.
 		getInterventionPolicyById(policyId).then((interventionPolicy) => setInterventionPolicyGroups(interventionPolicy));
 	}
 
-	modelParameterOptions.value = model?.semantics?.ode.parameters?.map((ele) => ele.id) ?? [];
-	modelStateAndObsOptions.value = model?.model.states.map((state: any) => state.id);
+	const optimizedPolicyId = props.node.state.optimizedInterventionPolicyId;
+	if (optimizedPolicyId) {
+		optimizedInterventionPolicy.value = await getInterventionPolicyById(optimizedPolicyId);
+	}
+
+	modelStateAndObsOptions.value = model.value?.model.states.map((state: any) => state.id);
 
 	/** Until supported by pyciemss-service, do not show observables.
 	if (model?.semantics?.ode.observables) {
@@ -586,7 +662,7 @@ const initialize = async () => {
 const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => {
 	const state = _.cloneDeep(props.node.state);
 	// If already set + not changed since set, do not reset.
-	if (state.interventionPolicyId === interventionPolicy.id) {
+	if (state.interventionPolicyGroups.length > 0 && state.interventionPolicyGroups[0].id === interventionPolicy.id) {
 		return;
 	}
 	state.interventionPolicyId = interventionPolicy.id ?? '';
@@ -595,10 +671,11 @@ const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => 
 		interventionPolicy.interventions.forEach((intervention) => {
 			const isNotActive = intervention.dynamicInterventions?.length > 0 || intervention.staticInterventions?.length > 1;
 			const newIntervention = _.cloneDeep(blankInterventionPolicyGroup);
+			newIntervention.id = interventionPolicy.id;
 			newIntervention.intervention = intervention;
 			newIntervention.isActive = !isNotActive;
-			newIntervention.startTimeGuess = intervention.staticInterventions[0].timestep;
-			newIntervention.initialGuessValue = intervention.staticInterventions[0].value;
+			newIntervention.startTimeGuess = intervention.staticInterventions[0]?.timestep;
+			newIntervention.initialGuessValue = intervention.staticInterventions[0]?.value;
 			state.interventionPolicyGroups.push(newIntervention);
 		});
 	}
@@ -610,6 +687,8 @@ const runOptimize = async () => {
 		logger.error('no model config id provided');
 		return;
 	}
+
+	setOutputSettingDefaults();
 
 	const paramNames: string[] = [];
 	const paramValues: number[] = [];
@@ -686,14 +765,13 @@ const runOptimize = async () => {
 			maxiter: knobs.value.maxiter,
 			maxfeval: knobs.value.maxfeval,
 			alpha: props.node.state.constraintGroups[0].riskTolerance / 100, // riskTolerance to get alpha and divide by 100 to turn into a percent for pyciemss-service.
-			solverMethod: knobs.value.solverMethod
+			solverMethod: knobs.value.solverMethod,
+			solverStepSize: 1
 		}
 	};
 
 	// InferredParameters is to link a calibration run to this optimize call.
-	if (inferredParameters.value) {
-		optimizePayload.extra.inferredParameters = inferredParameters.value[0];
-	}
+	optimizePayload.extra.inferredParameters = modelConfiguration.value.simulationId;
 
 	const optResult = await makeOptimizeJobCiemss(optimizePayload, nodeMetadata(props.node));
 	const state = _.cloneDeep(props.node.state);
@@ -701,6 +779,29 @@ const runOptimize = async () => {
 	state.optimizationRunId = '';
 	state.inProgressPostForecastId = '';
 	emit('update-state', state);
+};
+
+const setOutputSettingDefaults = () => {
+	const selectedInterventionVariables: Array<string> = [];
+	const selectedSimulationVariables: Array<string> = [];
+
+	if (!knobs.value.selectedInterventionVariables.length) {
+		props.node.state.interventionPolicyGroups.forEach((intervention) =>
+			selectedInterventionVariables.push(intervention.intervention.appliedTo)
+		);
+		knobs.value.selectedInterventionVariables = [...new Set(selectedInterventionVariables)];
+	}
+
+	if (!knobs.value.selectedSimulationVariables.length) {
+		props.node.state.constraintGroups.forEach((constraint) => {
+			if (constraint.targetVariable) {
+				selectedSimulationVariables.push(constraint.targetVariable);
+			}
+		});
+		if (selectedSimulationVariables.length) {
+			knobs.value.selectedSimulationVariables = [...new Set(selectedSimulationVariables)];
+		}
+	}
 };
 
 const saveModelConfiguration = async () => {
@@ -734,7 +835,7 @@ const setOutputValues = async () => {
 
 	riskResults.value[knobs.value.postForecastRunId] = await getRunResult(knobs.value.postForecastRunId, 'risk.json');
 
-	const preResult = await getRunResultCSV(preForecastRunId, 'result.csv');
+	const preResult = await getRunResultCSV(preForecastRunId, 'result.csv', renameFnGenerator('pre'));
 	const postResult = await getRunResultCSV(postForecastRunId, 'result.csv');
 	pyciemssMap = parsePyCiemssMap(postResult[0]);
 
@@ -743,88 +844,161 @@ const setOutputValues = async () => {
 	runResults.value[preForecastRunId] = preResult;
 	runResults.value[postForecastRunId] = postResult;
 
-	const preResultSummary = await getRunResultCSV(preForecastRunId, 'result_summary.csv');
+	const preResultSummary = await getRunResultCSV(preForecastRunId, 'result_summary.csv', renameFnGenerator('pre'));
 	const postResultSummary = await getRunResultCSV(postForecastRunId, 'result_summary.csv');
 
 	runResultsSummary.value[preForecastRunId] = preResultSummary;
 	runResultsSummary.value[postForecastRunId] = postResultSummary;
 
 	optimizationResult.value = await getRunResult(knobs.value.optimizationRunId, 'optimize_results.json');
+	optimizeRequestPayload.value = (await getSimulation(knobs.value.optimizationRunId))?.executionPayload || '';
 };
 
 const preProcessedInterventionsData = computed<Dictionary<{ name: string; value: number; time: number }[]>>(() => {
 	const state = _.cloneDeep(props.node.state);
 
-	const data = state.interventionPolicyGroups.flatMap((ele) =>
-		ele.intervention.staticInterventions.map((intervention) => ({
-			name: ele.intervention.appliedTo,
-			value: intervention.value,
-			time: intervention.timestep
+	// Combine before and after interventions
+	const combinedInterventions = [
+		...state.interventionPolicyGroups.flatMap((group) =>
+			group.intervention.staticInterventions.map((intervention) => ({
+				appliedTo: group.intervention.appliedTo,
+				name: group.intervention.name,
+				value: intervention.value,
+				time: intervention.timestep
+			}))
+		),
+		...(optimizedInterventionPolicy.value?.interventions.flatMap((intervention) =>
+			intervention.staticInterventions.map((staticIntervention) => ({
+				appliedTo: intervention.appliedTo,
+				name: intervention.name,
+				value: staticIntervention.value,
+				time: staticIntervention.timestep
+			}))
+		) || [])
+	];
+
+	// Group by appliedTo and map to exclude 'appliedTo' from final objects
+	const groupedAndMapped = _.mapValues(_.groupBy(combinedInterventions, 'appliedTo'), (interventions) =>
+		interventions.map(({ name, value, time }) => ({
+			name,
+			value,
+			time
 		}))
 	);
 
-	return groupBy(data, 'name');
+	return groupedAndMapped;
 });
 
 onMounted(async () => {
 	initialize();
 });
 
-const preparedInterventionsCharts = computed(() => {
-	const preForecastRunId = knobs.value.preForecastRunId;
-	const postForecastRunId = knobs.value.postForecastRunId;
-	if (!postForecastRunId || !preForecastRunId) return [];
-	const preResult = runResults.value[preForecastRunId];
-	const preResultSummary = runResultsSummary.value[preForecastRunId];
-	const postResult = runResults.value[postForecastRunId];
-	const postResultSummary = runResultsSummary.value[postForecastRunId];
+const preparedSuccessCriteriaCharts = computed(() => {
+	const postForecastRunId = props.node.state.postForecastRunId;
 
-	return knobs.value.selectedInterventionVariables.map((variable) =>
-		createOptimizeForecastChart(
-			preResult,
-			preResultSummary,
-			postResult,
-			postResultSummary,
-			preProcessedInterventionsData.value[variable],
+	return props.node.state.constraintGroups.map((constraint) =>
+		createSuccessCriteriaChart(
+			riskResults.value[postForecastRunId],
+			constraint.targetVariable,
+			constraint.threshold,
+			constraint.isMinimized,
+			constraint.riskTolerance,
 			{
+				title: constraint.name,
 				width: chartSize.value.width,
 				height: chartSize.value.height,
-				variables: [pyciemssMap[variable]],
-				statisticalVariables: [`${pyciemssMap[variable]}_mean`],
-				legend: true,
-				groupField: 'sample_id',
-				timeField: 'timepoint_id',
-				xAxisTitle: 'Time',
-				yAxisTitle: variable,
-				title: variable
+				xAxisTitle: 'Number of samples',
+				yAxisTitle: `${constraint.isMinimized ? 'Max' : 'Min'} value of ${constraint.targetVariable} at all timepoints`,
+				legend: true
 			}
 		)
 	);
 });
 
-const preparedCharts = computed(() => {
+// Creates forecast charts for interventions and simulation charts, based on the selected variables
+const preparedForecastCharts = computed(() => {
+	const charts: { interventionCharts: any[]; simulationCharts: any[] } = {
+		interventionCharts: [],
+		simulationCharts: []
+	};
 	const preForecastRunId = knobs.value.preForecastRunId;
 	const postForecastRunId = knobs.value.postForecastRunId;
-	if (!postForecastRunId || !preForecastRunId) return [];
+	if (!postForecastRunId || !preForecastRunId) return charts;
 	const preResult = runResults.value[preForecastRunId];
 	const preResultSummary = runResultsSummary.value[preForecastRunId];
 	const postResult = runResults.value[postForecastRunId];
 	const postResultSummary = runResultsSummary.value[postForecastRunId];
 
-	return knobs.value.selectedSimulationVariables.map((variable) =>
-		createOptimizeForecastChart(preResult, preResultSummary, postResult, postResultSummary, [], {
-			width: chartSize.value.width,
-			height: chartSize.value.height,
-			variables: [pyciemssMap[variable]],
-			statisticalVariables: [`${pyciemssMap[variable]}_mean`],
-			legend: true,
-			groupField: 'sample_id',
-			timeField: 'timepoint_id',
-			xAxisTitle: 'Time',
-			yAxisTitle: variable,
-			title: variable
-		})
-	);
+	if (!postResult || !postResultSummary || !preResultSummary || !preResult) return charts;
+
+	// Merge before/after for chart
+	const { result, resultSummary } = mergeResults(postResult, preResult, postResultSummary, preResultSummary);
+
+	const chartOptions = {
+		width: chartSize.value.width,
+		height: chartSize.value.height,
+		legend: true,
+		xAxisTitle: getUnit('_time') || 'Time',
+		yAxisTitle: getUnit('') || '',
+		title: '',
+		colorscheme: ['#AAB3C6', '#1B8073'],
+		translationMap: {}
+	};
+
+	const translationMap = (variable: string) => ({
+		[`${pyciemssMap[variable]}_mean:pre`]: `${variable} before optimization`,
+		[`${pyciemssMap[variable]}_mean`]: `${variable} after optimization`
+	});
+
+	// intervention chart spec
+	charts.interventionCharts = knobs.value.selectedInterventionVariables.map((variable) => {
+		const options = _.cloneDeep(chartOptions);
+		options.translationMap = translationMap(variable);
+		options.yAxisTitle = getUnit(variable);
+
+		const forecastChart = createForecastChart(
+			{
+				dataset: result,
+				variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
+				timeField: 'timepoint_id',
+				groupField: 'sample_id'
+			},
+			{
+				dataset: resultSummary,
+				variables: [`${pyciemssMap[variable]}_mean:pre`, `${pyciemssMap[variable]}_mean`],
+				timeField: 'timepoint_id'
+			},
+			null,
+			options
+		);
+		// add intervention annotations (rules and text)
+		forecastChart.layer.push(...createInterventionChartMarkers(preProcessedInterventionsData.value[variable]));
+		return forecastChart;
+	});
+
+	// simulation chart spec
+	charts.simulationCharts = knobs.value.selectedSimulationVariables.map((variable) => {
+		const options = _.cloneDeep(chartOptions);
+		options.translationMap = translationMap(variable);
+		options.yAxisTitle = getUnit(variable);
+
+		return createForecastChart(
+			{
+				dataset: result,
+				variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
+				timeField: 'timepoint_id',
+				groupField: 'sample_id'
+			},
+			{
+				dataset: resultSummary,
+				variables: [`${pyciemssMap[variable]}_mean:pre`, `${pyciemssMap[variable]}_mean`],
+				timeField: 'timepoint_id'
+			},
+			null,
+			options
+		);
+	});
+	return charts;
 });
 
 watch(
@@ -870,7 +1044,8 @@ watch(
 .result-message-grid {
 	display: flex;
 	flex-direction: column;
-	gap: var(--gap-0-5); /* Adjust the gap between rows as needed */
+	gap: var(--gap-0-5);
+	/* Adjust the gap between rows as needed */
 	font-size: var(--font-caption);
 	background-color: var(--surface-glass);
 	border: solid 1px var(--surface-border-light);
@@ -882,20 +1057,29 @@ watch(
 	display: flex;
 	flex-direction: row;
 	gap: var(--gap-small);
+	overflow: auto;
 }
 
 .label {
 	font-weight: bold;
-	width: 150px; /* Adjust the width of the label column as needed */
+	width: 210px;
+	/* Adjust the width of the label column as needed */
 }
+
 .value {
 	flex-grow: 1;
 }
 
-.failed-run {
+:deep(.failed-run main .content-container) {
 	border: 2px solid var(--error-color);
 	border-radius: var(--border-radius-big);
 	color: var(--error-color-text);
+}
+
+.successful-run {
+	border: none;
+	border-radius: none;
+	color: none;
 }
 
 .form-section {
@@ -924,6 +1108,7 @@ watch(
 	align-items: center;
 	gap: var(--gap-2);
 	padding-top: var(--gap);
+
 	& > * {
 		flex: 1;
 	}

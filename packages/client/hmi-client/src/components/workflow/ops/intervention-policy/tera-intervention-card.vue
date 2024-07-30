@@ -50,16 +50,14 @@
 					to
 					<template v-if="intervention.staticInterventions.length > 1">...</template>
 					<template v-else-if="intervention.staticInterventions.length === 1">
-						<tera-input
-							type="nist"
+						<tera-input-number
 							auto-width
 							:model-value="intervention.staticInterventions[0].value"
 							@update:model-value="(val) => onUpdateValue(val, 0)"
 							placeholder="value"
 						/>
 						starting at
-						<tera-input
-							type="nist"
+						<tera-input-number
 							auto-width
 							:model-value="intervention.staticInterventions[0].timestep"
 							@update:model-value="(val) => onUpdateThreshold(val, 0)"
@@ -71,16 +69,14 @@
 					<ul v-if="intervention.staticInterventions.length > 1" class="w-full">
 						<li v-for="(i, index) in intervention.staticInterventions" class="flex-1" :key="index">
 							<div class="flex align-items-center pt-2 pb-2 gap-2">
-								<tera-input
-									type="nist"
+								<tera-input-number
 									auto-width
 									:model-value="i.value"
 									@update:model-value="(val) => onUpdateValue(val, index)"
 									placeholder="value"
 								/>
 								starting at
-								<tera-input
-									type="nist"
+								<tera-input-number
 									auto-width
 									:model-value="i.timestep"
 									@update:model-value="(val) => onUpdateThreshold(val, index)"
@@ -97,8 +93,7 @@
 				<!-- Dynamic -->
 				<template v-else>
 					to
-					<tera-input
-						type="nist"
+					<tera-input-number
 						auto-width
 						:model-value="intervention.dynamicInterventions[0].value"
 						@update:model-value="(val) => onUpdateValue(val, 0)"
@@ -120,8 +115,7 @@
 						option-label="label"
 						option-value="value"
 					/>
-					<tera-input
-						type="nist"
+					<tera-input-number
 						auto-width
 						:model-value="intervention.dynamicInterventions[0].threshold"
 						@update:model-value="(val) => onUpdateThreshold(val, 0)"
@@ -151,7 +145,7 @@ import RadioButton from 'primevue/radiobutton';
 import { computed } from 'vue';
 import { Intervention, InterventionSemanticType } from '@/types/Types';
 import Dropdown, { DropdownChangeEvent } from 'primevue/dropdown';
-import TeraInput from '@/components/widgets/tera-input.vue';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { cloneDeep, uniqueId } from 'lodash';
 import Divider from 'primevue/divider';
 
@@ -297,7 +291,10 @@ const onSemanticChange = (event: DropdownChangeEvent) => {
 .intervention-card {
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-medium);
-	padding: var(--gap);
+	padding: var(--gap-2) var(--gap);
+	gap: var(--gap-2);
+	display: flex;
+	flex-direction: column;
 }
 
 ul {
