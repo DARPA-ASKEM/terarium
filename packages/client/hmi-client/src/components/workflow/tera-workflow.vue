@@ -70,7 +70,7 @@
 					:node="node"
 					@resize="resizeHandler"
 					@port-selected="(port: WorkflowPort, direction: WorkflowDirection) => createNewEdge(node, port, direction)"
-					@port-mouseover="onPortMouseover"
+					@port-mouseover="(event) => onPortMouseover(event, node)"
 					@port-mouseleave="onPortMouseleave"
 					@remove-operator="(event) => removeNode(event)"
 					@duplicate-branch="duplicateBranch(node.id)"
@@ -89,6 +89,15 @@
 					</template>
 				</tera-operator>
 			</tera-canvas-item>
+			<tera-operator-menu
+				v-if="nodeWithOpenedMenu && isOutputMenuShown"
+				:node="nodeWithOpenedMenu"
+				:currentPortPosition="currentPortPosition"
+				:style="{
+					top: `${currentPortPosition.y}px`,
+					left: `${currentPortPosition.x}px`
+				}"
+			/>
 		</template>
 		<!-- background -->
 		<template #backgroundDefs>
@@ -164,6 +173,7 @@ import { cloneDeep, isArray, isEmpty } from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import TeraCanvasItem from '@/components/widgets/tera-canvas-item.vue';
+import TeraOperatorMenu from '@/components/operator/tera-operator-menu.vue';
 import type { Position } from '@/types/common';
 import type { Operation, Workflow, WorkflowEdge, WorkflowNode, WorkflowOutput, WorkflowPort } from '@/types/workflow';
 import { WorkflowDirection, WorkflowPortStatus, OperatorStatus } from '@/types/workflow';
@@ -271,6 +281,9 @@ const optionsMenuItems = ref([
 		}
 	}
 ]);
+
+const isOutputMenuShown = ref<boolean>(false);
+const nodeWithOpenedMenu = ref<WorkflowNode<any> | null>(null);
 
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
@@ -684,9 +697,12 @@ function cancelNewEdge() {
 	newEdge.value = undefined;
 }
 
-function onPortMouseover(position: Position) {
+function onPortMouseover(position: Position, node: WorkflowNode<any>) {
 	currentPortPosition = position;
 	isMouseOverPort = true;
+
+	isOutputMenuShown.value = true;
+	nodeWithOpenedMenu.value = node;
 }
 
 function onPortMouseleave() {
