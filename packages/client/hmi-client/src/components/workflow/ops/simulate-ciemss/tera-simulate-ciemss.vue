@@ -6,26 +6,17 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
-		<section :tabName="SimulateTabs.Wizard" class="ml-4 mr-2 pt-3">
+		<section :tabName="DrilldownTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
-				<template #header-controls-left>
-					<h5>Set simulation parameters</h5>
-				</template>
 				<template #header-controls-right>
 					<Button label="Run" icon="pi pi-play" @click="run" :disabled="showSpinner" />
 					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 				</template>
 				<div class="form-section">
-					<!-- Presets -->
-					<div class="label-and-input">
-						<label for="4">Preset (optional)</label>
-						<Dropdown
-							v-model="presetType"
-							placeholder="Select an option"
-							:options="[PresetTypes.Fast, PresetTypes.Normal]"
-							@update:model-value="setPresetValues"
-						/>
-					</div>
+					<h5>
+						Simulation settings
+						<i v-tooltip="simulationSettingsToolTip" class="pi pi-info-circle" />
+					</h5>
 
 					<!-- Start & End -->
 					<div class="input-row">
@@ -37,6 +28,17 @@
 							<label for="3">End time</label>
 							<InputNumber id="3" v-model="timespan.end" inputId="integeronly" @update:model-value="updateState" />
 						</div>
+					</div>
+
+					<!-- Presets -->
+					<div class="label-and-input">
+						<label for="4">Preset (optional)</label>
+						<Dropdown
+							v-model="presetType"
+							placeholder="Select an option"
+							:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
+							@update:model-value="setPresetValues"
+						/>
 					</div>
 
 					<!-- Number of Samples & Method -->
@@ -53,7 +55,11 @@
 						</div>
 						<div class="label-and-input">
 							<label for="5">Method</label>
-							<Dropdown id="5" v-model="method" :options="ciemssMethodOptions" @update:model-value="updateState" />
+							<Dropdown
+								v-model="method"
+								:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
+								@update:model-value="updateState"
+							/>
 						</div>
 					</div>
 					<!-- FIXME: show sampled values ???
@@ -62,7 +68,7 @@
 				</div>
 			</tera-drilldown-section>
 		</section>
-		<tera-drilldown-section :tabName="SimulateTabs.Notebook" class="notebook-section">
+		<tera-drilldown-section :tabName="DrilldownTabs.Notebook" class="notebook-section">
 			<div class="toolbar">
 				<tera-notebook-jupyter-input
 					:kernel-manager="kernelManager"
@@ -163,7 +169,8 @@ import {
 	parsePyCiemssMap,
 	makeForecastJobCiemss as makeForecastJob,
 	convertToCsvAsset,
-	DataArray
+	DataArray,
+	CiemssMethodOptions
 } from '@/services/models/simulation-service';
 import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
 import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
@@ -187,6 +194,7 @@ import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
+import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import TeraChartControl from '../../tera-chart-control.vue';
@@ -209,31 +217,22 @@ const llmQuery = ref('');
 // extras
 const numSamples = ref<number>(props.node.state.numSamples);
 const method = ref(props.node.state.method);
-const ciemssMethodOptions = ref(['dopri5', 'euler']);
 
-enum SimulateTabs {
-	Wizard = 'Wizard',
-	Notebook = 'Notebook'
-}
+const simulationSettingsToolTip: string = 'TODO';
 
 enum OutputView {
 	Charts = 'Charts',
 	Data = 'Data'
 }
 
-enum PresetTypes {
-	Fast = 'Fast',
-	Normal = 'Normal'
-}
-
 const speedValues = {
 	numSamples: 10,
-	method: ciemssMethodOptions.value[1]
+	method: CiemssMethodOptions.euler
 };
 
 const qualityValues = {
 	numSamples: 100,
-	method: ciemssMethodOptions.value[0]
+	method: CiemssMethodOptions.dopri5
 };
 
 const updateLlmQuery = (query: string) => {
@@ -290,10 +289,10 @@ const outputs = computed(() => {
 
 const presetType = computed(() => {
 	if (numSamples.value === speedValues.numSamples && method.value === speedValues.method) {
-		return PresetTypes.Fast;
+		return CiemssPresetTypes.Fast;
 	}
 	if (numSamples.value === qualityValues.numSamples && method.value === qualityValues.method) {
-		return PresetTypes.Normal;
+		return CiemssPresetTypes.Normal;
 	}
 
 	return '';
@@ -310,13 +309,12 @@ const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperation
 	emit('update-state', state);
 });
 
-const setPresetValues = (data: PresetTypes) => {
-	console.log(data);
-	if (data === PresetTypes.Normal) {
+const setPresetValues = (data: CiemssPresetTypes) => {
+	if (data === CiemssPresetTypes.Normal) {
 		numSamples.value = qualityValues.numSamples;
 		method.value = qualityValues.method;
 	}
-	if (data === PresetTypes.Fast) {
+	if (data === CiemssPresetTypes.Fast) {
 		numSamples.value = speedValues.numSamples;
 		method.value = speedValues.method;
 	}
@@ -387,8 +385,9 @@ const makeForecastRequest = async () => {
 			end: state.currentTimespan.end
 		},
 		extra: {
-			num_samples: state.numSamples,
-			method: state.method
+			solver_method: state.method,
+			solver_step_size: 1,
+			num_samples: state.numSamples
 		},
 		engine: 'ciemss'
 	};
@@ -538,9 +537,15 @@ onUnmounted(() => kernelManager.shutdown());
 }
 
 .form-section {
+	background-color: var(--surface-50);
+	border-radius: var(--border-radius-medium);
+	box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.25) inset;
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
+	flex-grow: 1;
+	gap: var(--gap-1);
+	margin: 0 var(--gap) var(--gap) var(--gap);
+	padding: var(--gap);
 }
 
 .label-and-input {
