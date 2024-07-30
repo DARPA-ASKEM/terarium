@@ -147,7 +147,7 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 					final FileExport fileExport = new FileExport();
 					fileExport.setBytes(bytes);
 					fileExport.setContentType(ContentType.parse(contentType));
-					fileExport.setFullpath(key);
+					fileExport.setPathPrefix(config.getResultsPath());
 
 					files.put(resultFile, fileExport);
 				} catch (final NoSuchKeyException e) {
