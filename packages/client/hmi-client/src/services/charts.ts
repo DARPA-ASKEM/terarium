@@ -189,7 +189,7 @@ export const createErrorChart = (dataset: Record<string, any>[], options: ErrorC
 							condition: { param: brushParamName },
 							value: 'lightgray'
 						},
-						tooltip: [{ field: '_value', title: 'Error' }]
+						tooltip: [{ field: '_value', title: options.xAxisTitle }]
 					},
 					params: [
 						{
