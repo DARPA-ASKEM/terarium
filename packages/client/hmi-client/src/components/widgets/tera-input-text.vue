@@ -39,7 +39,6 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:model-value', 'focusout']);
 const inputField = ref<HTMLInputElement | null>(null);
-const error = ref('');
 const getDisabled = props.disabled ?? false;
 const isFocused = ref(false);
 
@@ -65,7 +64,7 @@ const inputStyle = computed(() => {
 	return style; // Return the combined style object
 });
 
-const getErrorMessage = computed(() => props.errorMessage || error.value);
+const getErrorMessage = computed(() => props.errorMessage);
 
 function displayValue() {
 	// only format value if input is focused
