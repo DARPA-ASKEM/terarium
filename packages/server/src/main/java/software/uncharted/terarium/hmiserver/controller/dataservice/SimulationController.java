@@ -13,8 +13,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -285,7 +287,12 @@ public class SimulationController {
 	) {
 		try {
 			final Optional<String> results = simulationService.fetchFileAsString(id, filename);
-			return results.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+
+			if (results.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			final CacheControl cacheControl = CacheControl.maxAge(24, TimeUnit.HOURS).cachePublic();
+			return ResponseEntity.ok().cacheControl(cacheControl).body(results.get());
 		} catch (final Exception e) {
 			final String error = String.format("Failed to get result of simulation %s", id);
 			log.error(error, e);
@@ -294,9 +301,10 @@ public class SimulationController {
 	}
 
 	/**
-	 * Creates a new dataset from a simulation result, then add it to a project as a Dataset.
+	 * Creates a new dataset from a simulation result, then add it to a project as a
+	 * Dataset.
 	 *
-	 * @param id ID of the simulation to create a dataset from
+	 * @param id        ID of the simulation to create a dataset from
 	 * @param projectId ID of the project to add the dataset to
 	 * @return Dataset the new dataset created
 	 */

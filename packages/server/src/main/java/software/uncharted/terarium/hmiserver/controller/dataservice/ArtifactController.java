@@ -10,12 +10,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -352,7 +354,12 @@ public class ArtifactController {
 
 		try {
 			final Optional<byte[]> bytes = artifactService.fetchFileAsBytes(artifactId, filename);
-			return bytes.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+
+			if (bytes.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			final CacheControl cacheControl = CacheControl.maxAge(24, TimeUnit.HOURS).cachePublic();
+			return ResponseEntity.ok().cacheControl(cacheControl).body(bytes.get());
 		} catch (final Exception e) {
 			log.error("Unable to GET artifact data", e);
 			throw new ResponseStatusException(
@@ -390,7 +397,10 @@ public class ArtifactController {
 		return uploadArtifactHelper(artifactId, filename, fileEntity);
 	}
 
-	/** Downloads a file from GitHub given the path and owner name, then uploads it to the project. */
+	/**
+	 * Downloads a file from GitHub given the path and owner name, then uploads it
+	 * to the project.
+	 */
 	@PutMapping("/{id}/upload-artifact-from-github")
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a file from GitHub to the artifact")
@@ -428,8 +438,8 @@ public class ArtifactController {
 	/**
 	 * Uploads an artifact inside the entity to TDS via a presigned URL
 	 *
-	 * @param artifactId The ID of the artifact to upload to
-	 * @param fileName The name of the file to upload
+	 * @param artifactId         The ID of the artifact to upload to
+	 * @param fileName           The name of the file to upload
 	 * @param artifactHttpEntity The entity containing the artifact to upload
 	 * @return A response containing the status of the upload
 	 */
