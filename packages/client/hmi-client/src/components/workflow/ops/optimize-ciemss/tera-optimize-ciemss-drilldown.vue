@@ -709,7 +709,8 @@ const runOptimize = async () => {
 			maxiter: knobs.value.maxiter,
 			maxfeval: knobs.value.maxfeval,
 			alpha: props.node.state.constraintGroups[0].riskTolerance / 100, // riskTolerance to get alpha and divide by 100 to turn into a percent for pyciemss-service.
-			solverMethod: knobs.value.solverMethod
+			solverMethod: knobs.value.solverMethod,
+			solverStepSize: 1
 		}
 	};
 
