@@ -46,12 +46,7 @@
 					</template>
 				</section>
 			</TeraResizablePanel>
-			<div
-				v-else-if="model"
-				ref="graphElement"
-				class="graph-element preview"
-				:style="!isEditable && { pointerEvents: 'none' }"
-			/>
+			<div v-else-if="model" ref="graphElement" class="graph-element preview" :style="{ pointerEvents: 'none' }" />
 			<tera-stratified-matrix-modal
 				v-if="selectedTransitionId"
 				:id="selectedTransitionId"
@@ -85,7 +80,6 @@ import { getModelType, getMMT } from '@/services/model';
 import type { Model } from '@/types/Types';
 import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
 import TeraTooltip from '@/components/widgets/tera-tooltip.vue';
-
 import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
 import { StratifiedMatrix } from '@/types/Model';
 import { AMRSchemaNames } from '@/types/common';
@@ -98,7 +92,6 @@ import TeraStratifiedMatrixPreview from '../model-configurations/tera-stratified
 
 const props = defineProps<{
 	model: Model;
-	isEditable: boolean;
 	isPreview?: boolean;
 }>();
 

@@ -31,7 +31,7 @@
 							<tr>
 								<td class="field">Diagram</td>
 								<td v-for="(model, index) in modelsToCompare" :key="index">
-									<tera-model-diagram :model="model" :is-editable="false" is-preview class="diagram" />
+									<tera-model-diagram :model="model" class="diagram" />
 								</td>
 							</tr>
 							<template v-for="field in fields" :key="field">
@@ -200,7 +200,6 @@ const modelCardsToCompare = computed(() => modelsToCompare.value.map(({ metadata
 const fields = computed(
 	() => [...new Set(modelCardsToCompare.value.reduce((acc, card) => acc.concat(Object.keys(card)), []))] as string[]
 );
-const cellWidth = computed(() => `${85 / modelsToCompare.value.length}vw`);
 
 const initializeAceEditor = (editorInstance: any) => {
 	editor = editorInstance;
@@ -350,12 +349,14 @@ onUnmounted(() => {
 
 <style scoped>
 table {
+	table-layout: fixed;
+	width: 100%;
+
 	& td,
 	th {
 		vertical-align: top;
 		text-align: left;
-		padding: 0 var(--gap) var(--gap) var(--gap-small);
-		max-width: v-bind('cellWidth');
+		padding: var(--gap-2);
 		overflow: auto;
 		text-overflow: ellipsis;
 	}
@@ -364,8 +365,9 @@ table {
 		border-top: 1px solid var(--surface-border-light);
 	}
 
-	& td:first-child {
-		width: 10%;
+	& th:first-child,
+	td:first-child {
+		width: 8%;
 		padding: var(--gap-small) 0;
 		font-weight: 600;
 	}

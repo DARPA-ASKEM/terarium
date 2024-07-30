@@ -1,9 +1,13 @@
 <template>
 	<section>
-		<tera-operator-placeholder v-if="!node.inputs[0].value || !node.inputs[1].value" :node="node">
-			Attach models to compare
-		</tera-operator-placeholder>
-		<Button v-else label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
+		<tera-operator-placeholder :node="node"> Attach models to compare </tera-operator-placeholder>
+		<Button
+			v-if="node.inputs[0].value || node.inputs[1].value"
+			label="Open"
+			@click="emit('open-drilldown')"
+			severity="secondary"
+			outlined
+		/>
 	</section>
 </template>
 
