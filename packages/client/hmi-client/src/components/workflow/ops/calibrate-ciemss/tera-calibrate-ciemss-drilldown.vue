@@ -266,19 +266,19 @@ const presetType = computed(() => {
 	return '';
 });
 
-const speedValues = {
+const speedValues = Object.freeze({
 	numSamples: 1,
 	method: CiemssMethodOptions.euler,
 	numIterations: 10,
 	learningRate: 0.1
-};
+});
 
-const qualityValues = {
+const qualityValues = Object.freeze({
 	numSamples: 100,
 	method: CiemssMethodOptions.dopri5,
 	numIterations: 1000,
 	learningRate: 0.03
-};
+});
 
 const numSamples = ref<number>(props.node.state.numSamples);
 const method = ref<string>(props.node.state.method);
