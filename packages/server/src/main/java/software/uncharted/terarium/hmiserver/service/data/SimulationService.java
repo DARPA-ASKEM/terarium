@@ -69,14 +69,14 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 	) {
 		final Simulation simulation = getAsset(simulationId, hasReadPermission).orElseThrow();
 
-		final SimulationUpdate updated = simulationUpdateRepository.save(update);
+		update.setSimulation(simulation);
+		final SimulationUpdate created = simulationUpdateRepository.save(update);
 
-		updated.setSimulation(simulation);
-		simulation.getUpdates().add(updated);
+		simulation.getUpdates().add(created);
 
 		repository.save(simulation);
 
-		return updated;
+		return created;
 	}
 
 	@Observed(name = "function_profile")
