@@ -61,16 +61,12 @@ const inputStyle = computed(() => {
 	return style; // Return the combined style object
 });
 const getErrorMessage = computed(() => props.errorMessage || error.value);
+
 const updateValue = (event: Event) => {
-	const target = event.target as HTMLInputElement;
-	const value = target.value;
+	const value = (event.target as HTMLInputElement).value;
 	maskedValue.value = value;
-	if (!isNaN(toNumber(maskedValue.value))) {
-		// update the model value only when the value is a valid nist
-		error.value = '';
-	} else {
-		error.value = 'Invalid number';
-	}
+	const numValue = toNumber(value);
+	error.value = isNaN(numValue) ? 'Invalid number' : '';
 };
 
 function displayValue() {
@@ -90,13 +86,9 @@ function formatValue(value: string | undefined) {
 }
 
 const onBlur = () => {
-	// convert back to a number when finished
-	if (!getErrorMessage.value && !isNaN(toNumber(maskedValue.value))) {
-		if (maskedValue.value === '') {
-			emit('update:model-value', Number.NaN);
-		} else {
-			emit('update:model-value', toNumber(maskedValue.value));
-		}
+	const numValue = toNumber(maskedValue.value);
+	if (!getErrorMessage.value && !isNaN(numValue)) {
+		emit('update:model-value', maskedValue.value === '' ? Number.NaN : numValue);
 	}
 	isFocused.value = false;
 };
