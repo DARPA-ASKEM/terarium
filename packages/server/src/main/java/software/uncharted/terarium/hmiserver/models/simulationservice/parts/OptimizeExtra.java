@@ -36,4 +36,8 @@ public class OptimizeExtra implements Serializable {
 	@JsonAlias("solver_method")
 	@TSOptional
 	private String solverMethod;
+
+	@JsonAlias("solver_step_size")
+	@TSOptional
+	private Double solverStepSize;
 }
