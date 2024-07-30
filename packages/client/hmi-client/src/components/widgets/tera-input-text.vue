@@ -4,16 +4,17 @@
 		<main :class="{ error: getErrorMessage }" @click.self.stop="focusInput">
 			<i v-if="icon" :class="icon" />
 			<input
-				@click.stop
 				ref="inputField"
 				:disabled="getDisabled"
-				:value="maskedValue"
-				@input="updateValue"
-				:style="inputStyle"
-				@blur="unmask"
-				@focusout="$emit('focusout', $event)"
-				type="text"
 				:placeholder="placeholder"
+				:style="inputStyle"
+				type="text"
+				:value="displayValue()"
+				@click.stop
+				@focus="isFocused = true"
+				@focusout="$emit('focusout', $event)"
+				@blur="onBlur"
+				@input="updateValue"
 			/>
 		</main>
 	</div>
@@ -21,8 +22,9 @@
 </template>
 
 <script setup lang="ts">
-import { nistToNumber, numberToNist, scrubAndParse } from '@/utils/number';
-import { CSSProperties, computed, onMounted, ref, watch } from 'vue';
+import { numberToNist } from '@/utils/number';
+import { isNumber, isString, toNumber, isNaN } from 'lodash';
+import { CSSProperties, computed, ref } from 'vue';
 
 const props = defineProps<{
 	modelValue: string | number | undefined;
@@ -34,19 +36,24 @@ const props = defineProps<{
 	placeholder?: string;
 	autoWidth?: boolean;
 }>();
+
 const emit = defineEmits(['update:model-value', 'focusout']);
 const inputField = ref<HTMLInputElement | null>(null);
 const error = ref('');
-const maskedValue = ref('');
 const getDisabled = props.disabled ?? false;
+const isFocused = ref(false);
+
 const focusInput = () => {
 	inputField.value?.focus();
 };
+
 // Computed property to dynamically adjust the input's style based on the autoWidth prop
 const inputStyle = computed(() => {
 	const style: CSSProperties = {};
-	if (props.autoWidth) {
-		const textToMeasure = maskedValue.value?.length > 0 ? maskedValue.value : props.placeholder;
+
+	const value = props.modelValue?.toString();
+	if (props.autoWidth && value) {
+		const textToMeasure = value.length > 0 ? value : props.placeholder;
 		// Estimate the width based on the length of the value. Adjust the multiplier as needed for your font.
 		// Use the length of the text to measure as the width in ch units
 		// Estimate the width based on the length of the text to measure. Adjust the multiplier as needed for your font.
@@ -54,40 +61,37 @@ const inputStyle = computed(() => {
 		style.width = `${width}px`; // Dynamically set the width
 		style['min-width'] = '20px'; // Ensure a minimum width
 	}
+
 	return style; // Return the combined style object
 });
+
 const getErrorMessage = computed(() => props.errorMessage || error.value);
+
+function displayValue() {
+	// only format value if input is focused
+	if (isFocused.value) {
+		return props.modelValue;
+	}
+	return formatValue(props.modelValue);
+}
+
+function formatValue(value: string | number | undefined) {
+	// format as number if value is a number
+	if (isNumber(value) || (isString(value) && !isNaN(toNumber(value)))) {
+		return numberToNist(value?.toString() ?? '');
+	}
+	return value;
+}
+
 const updateValue = (event: Event) => {
 	const target = event.target as HTMLInputElement;
 	const value = target.value;
-	maskedValue.value = value;
-	if (scrubAndParse(maskedValue.value)) {
-		// update the model value only when the value is a valid nist
-		error.value = '';
-		maskedValue.value = numberToNist(maskedValue.value);
-	} else {
-		error.value = 'Invalid number';
-	}
+
+	console.log(value);
+	emit('update:model-value', value);
 };
-watch(
-	() => props.modelValue,
-	(newValue) => {
-		maskedValue.value = numberToNist(newValue?.toString() ?? '');
-	}
-);
-onMounted(() => {
-	maskedValue.value = numberToNist(props.modelValue?.toString() ?? '');
-});
-const unmask = () => {
-	// convert back to a number when finished
-	if (!getErrorMessage.value) {
-		emit('update:model-value', nistToNumber(maskedValue.value));
-	}
+
+const onBlur = () => {
+	isFocused.value = false;
 };
 </script>
-
-<style scoped>
-input {
-	text-align: right;
-}
-</style>

@@ -74,7 +74,7 @@
 			</section>
 		</main>
 		<footer v-if="isSourceOpen" class="mb-2">
-			<tera-input
+			<tera-input-text
 				placeholder="Add a source"
 				:model-value="getParameterSource(modelConfiguration, parameterId)"
 				@update:model-value="emit('update-source', { id: parameterId, value: $event })"
@@ -95,6 +95,7 @@
 <script setup lang="ts">
 import { Model, ModelConfiguration } from '@/types/Types';
 import { getParameterSource, getParameterDistribution, getOtherValues } from '@/services/model-configurations';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { computed, ref } from 'vue';
 import Button from 'primevue/button';

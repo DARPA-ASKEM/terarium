@@ -82,7 +82,7 @@
 						</Column>
 						<Column :colspan="2">
 							<template #footer>
-								<tera-input
+								<tera-input-text
 									placeholder="Add a source"
 									v-model="customSource"
 									@update:modelValue="onCustomSelectionChange"
@@ -130,6 +130,7 @@ import { extent } from 'd3';
 import { DistributionType } from '@/services/distribution';
 import { SemanticOtherValues } from '@/services/model-configurations';
 import Dropdown from 'primevue/dropdown';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { ref } from 'vue';
 import Button from 'primevue/button';

@@ -2,7 +2,7 @@
 	<div class="container">
 		<div class="form-header">
 			<div>
-				<tera-input
+				<tera-input-text
 					v-if="isEditing"
 					v-model="config.name"
 					placeholder="Criterion"
@@ -70,7 +70,7 @@
 import _ from 'lodash';
 import { ref } from 'vue';
 import Dropdown from 'primevue/dropdown';
-import teraInput from '@/components/widgets/tera-input.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import InputSwitch from 'primevue/inputswitch';
 import { Criterion, ContextMethods } from './optimize-ciemss-operation';

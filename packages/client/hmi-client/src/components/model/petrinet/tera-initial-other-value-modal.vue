@@ -60,7 +60,7 @@
 					</Column>
 					<Column :colspan="2">
 						<template #footer>
-							<tera-input
+							<tera-input-text
 								placeholder="Add a source"
 								v-model="customSource"
 								@update:modelValue="onCustomSelectionChange"
@@ -91,6 +91,7 @@
 
 <script setup lang="ts">
 import { numberToNist } from '@/utils/number';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { DistributionType } from '@/services/distribution';
 import { ref } from 'vue';
