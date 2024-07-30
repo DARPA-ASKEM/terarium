@@ -111,7 +111,7 @@ export const createErrorChart = (dataset: Record<string, any>[], options: ErrorC
 	};
 
 	return {
-		$schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+		$schema: VEGALITE_SCHEMA,
 		config,
 		title: titleObj,
 		data: { values: dataset },
@@ -275,7 +275,7 @@ export const createHistogramChart = (dataset: Record<string, any>[], options: Hi
 	};
 
 	const spec = {
-		$schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+		$schema: VEGALITE_SCHEMA,
 		title: titleObj,
 		width: options.width,
 		height: options.height,
