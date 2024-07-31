@@ -17,9 +17,6 @@ import { ref } from 'vue';
 import Menu from 'primevue/menu';
 import Button from 'primevue/button';
 
-defineProps<{
-	style: { top: string; left: string };
-}>();
 const isMenuShowing = ref<boolean>(false);
 
 const menu = ref();
