@@ -27,7 +27,7 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 7. Press the `Stratify` button
 8. __Expected Result:__ The original model should appear in the right panel
 9. Add a new stratification variable named `Age`
-   1. select all parameters to stratify
+   1. select all variables to stratify
    2. add `young`, `middle`, and `old` age groups
    3. ensure that `Create new transitions between strata` and `Allow existing interactions to involve multiple strata` are NOT checked
 10. Press the `Stratify` button
