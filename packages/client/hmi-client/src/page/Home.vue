@@ -51,7 +51,12 @@
 					<TabPanel v-for="(tab, i) in projectsTabs" :header="tab.title" :key="i">
 						<section class="filter-and-sort">
 							<div>
-								<tera-input-text v-model="searchProjects" placeholder="Search for projects" id="searchProject" />
+								<tera-input-text
+									class="w-17rem"
+									v-model="searchProjects"
+									placeholder="Search for projects"
+									id="searchProject"
+								/>
 							</div>
 							<div>
 								<span v-if="view === ProjectsView.Cards">
@@ -369,10 +374,6 @@ header > section > button {
 	display: flex;
 	align-items: center;
 	padding-left: 0.5rem;
-}
-
-.tera-input {
-	min-width: 17rem;
 }
 
 .filter-and-sort {
