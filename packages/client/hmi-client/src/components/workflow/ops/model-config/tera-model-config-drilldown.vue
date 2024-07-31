@@ -172,7 +172,7 @@
 	>
 		<tera-drilldown-section class="p-2">
 			<!-- Redo this to show model configs-->
-			<tera-model-parts v-if="model" readonly :model="model" />
+			<tera-model-parts v-if="model" :model="model" :feature-config="{ isPreview: true }" />
 		</tera-drilldown-section>
 	</tera-drilldown>
 

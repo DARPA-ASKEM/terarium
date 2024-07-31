@@ -5,9 +5,9 @@
 		:name="model?.header.name"
 		:feature-config="featureConfig"
 		:is-naming-asset="isNaming"
-		@close-preview="emit('close-preview')"
 		:is-loading="isModelLoading"
 		show-table-of-contents
+		@close-preview="emit('close-preview')"
 	>
 		<template #name-input>
 			<tera-input-text
@@ -42,8 +42,8 @@
 				ref="teraModelPartsRef"
 				class="mt-0"
 				:model="model"
+				:feature-config="featureConfig"
 				@update-model="updateModelContent"
-				:readonly="featureConfig?.isPreview"
 			/>
 		</section>
 	</tera-asset>
@@ -67,7 +67,7 @@ import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
 import { getModel, updateModel } from '@/services/model';
-import { FeatureConfig } from '@/types/common';
+import type { FeatureConfig } from '@/types/common';
 import { AssetType, type Model } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
