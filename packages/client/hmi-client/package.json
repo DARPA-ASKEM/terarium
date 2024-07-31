@@ -88,7 +88,7 @@
 		"@types/node": "18.19.3",
 		"@vitejs/plugin-vue": "4.6.2",
 		"@vitest/coverage-c8": "0.24.5",
-		"jsdom": "24.1.0",
+		"jsdom": "24.1.1",
 		"typescript": "5.4.5",
 		"vite": "5.2.13",
 		"vite-svg-loader": "4.0.0",
