@@ -15,12 +15,10 @@
 </template>
 <script setup lang="ts">
 import { ref } from 'vue';
-import type { WorkflowNode } from '@/types/workflow';
 import Menu from 'primevue/menu';
 import Button from 'primevue/button';
 
 defineProps<{
-	node: WorkflowNode<any> | null;
 	style: { top: string; left: string };
 }>();
 const isMenuShowing = ref<boolean>(false);

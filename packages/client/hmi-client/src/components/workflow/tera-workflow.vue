@@ -72,7 +72,6 @@
 					@port-selected="(port: WorkflowPort, direction: WorkflowDirection) => createNewEdge(node, port, direction)"
 					@port-mouseover="onPortMouseover"
 					@port-mouseleave="onPortMouseleave"
-					@show-output-button="showOutputButton(node)"
 					@remove-operator="(event) => removeNode(event)"
 					@duplicate-branch="duplicateBranch(node.id)"
 					@remove-edges="removeEdges"
@@ -90,18 +89,6 @@
 					</template>
 				</tera-operator>
 			</tera-canvas-item>
-			<tera-operator-menu
-				v-if="nodeWithOpenedMenu"
-				:node="nodeWithOpenedMenu"
-				:style="{
-					top: `${currentPortPosition.y - 18}px`,
-					left: `${currentPortPosition.x + 40}px`
-				}"
-				@mouseenter="() => (isMenuFocused = true)"
-				@mouseleave="() => (isMenuFocused = false)"
-				@focus="() => (isMenuFocused = true)"
-				@blur="() => (isMenuFocused = false)"
-			/>
 		</template>
 		<!-- background -->
 		<template #backgroundDefs>
@@ -177,7 +164,6 @@ import { cloneDeep, isArray, isEmpty } from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import TeraCanvasItem from '@/components/widgets/tera-canvas-item.vue';
-import TeraOperatorMenu from '@/components/operator/tera-operator-menu.vue';
 import type { Position } from '@/types/common';
 import type { Operation, Workflow, WorkflowEdge, WorkflowNode, WorkflowOutput, WorkflowPort } from '@/types/workflow';
 import { WorkflowDirection, WorkflowPortStatus, OperatorStatus } from '@/types/workflow';
@@ -285,9 +271,6 @@ const optionsMenuItems = ref([
 		}
 	}
 ]);
-
-const isMenuFocused = ref<boolean>(false);
-const nodeWithOpenedMenu = ref<WorkflowNode<any> | null>(null);
 
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
@@ -632,7 +615,6 @@ function saveTransform(newTransform: { k: number; x: number; y: number }) {
 const isCreatingNewEdge = computed(() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2);
 
 function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direction: WorkflowDirection) {
-	hideMenuButton();
 	if (!isCreatingNewEdge.value) {
 		newEdge.value = {
 			id: 'new edge',
@@ -696,13 +678,6 @@ function onCanvasClick() {
 	if (isCreatingNewEdge.value) {
 		cancelNewEdge();
 	}
-	hideMenuButton();
-}
-
-function hideMenuButton() {
-	if (!isMenuFocused.value) {
-		nodeWithOpenedMenu.value = null;
-	}
 }
 
 function cancelNewEdge() {
@@ -712,10 +687,6 @@ function cancelNewEdge() {
 function onPortMouseover(position: Position) {
 	currentPortPosition = position;
 	isMouseOverPort = true;
-}
-
-function showOutputButton(node: WorkflowNode<any>) {
-	nodeWithOpenedMenu.value = node;
 }
 
 function onPortMouseleave() {
