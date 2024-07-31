@@ -15,7 +15,6 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TSModel
 public class WorkflowNode<T> extends SupportAdditionalProperties implements Serializable {
 
 	private UUID id;

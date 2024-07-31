@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.workflow;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import java.io.Serializable;
+import java.util.List;
 import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -23,6 +25,8 @@ public class WorkflowEdge extends SupportAdditionalProperties implements Seriali
 
 	private UUID target;
 	private UUID targetPortId;
+
+	private List<JsonNode> points;
 
 	public WorkflowEdge clone(final UUID workflowId, final UUID source, final UUID target) {
 		final WorkflowEdge clone = (WorkflowEdge) super.clone();
