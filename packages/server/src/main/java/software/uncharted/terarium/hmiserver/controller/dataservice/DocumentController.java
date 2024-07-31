@@ -39,6 +39,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
@@ -64,6 +65,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @Transactional
 public class DocumentController {
 
+	final Config config;
 	final ReBACService reBACService;
 	final CurrentUserService currentUserService;
 	final Messages messages;
@@ -520,7 +522,10 @@ public class DocumentController {
 		try {
 			final Optional<byte[]> bytes = documentAssetService.fetchFileAsBytes(id, filename);
 
-			final CacheControl cacheControl = CacheControl.maxAge(24, TimeUnit.HOURS).cachePublic();
+			final CacheControl cacheControl = CacheControl.maxAge(
+				config.getCacheHeadersMaxAge(),
+				TimeUnit.SECONDS
+			).cachePublic();
 			return ResponseEntity.ok().cacheControl(cacheControl).body(bytes.orElse(null));
 		} catch (final Exception e) {
 			final String error = "Unable to download document";

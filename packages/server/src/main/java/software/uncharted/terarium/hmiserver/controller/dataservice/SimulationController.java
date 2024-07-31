@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
@@ -57,6 +58,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @Transactional
 public class SimulationController {
 
+	private final Config config;
 	private final ObjectMapper mapper;
 
 	private final SimulationService simulationService;
@@ -291,7 +293,10 @@ public class SimulationController {
 			if (results.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
-			final CacheControl cacheControl = CacheControl.maxAge(24, TimeUnit.HOURS).cachePublic();
+			final CacheControl cacheControl = CacheControl.maxAge(
+				config.getCacheHeadersMaxAge(),
+				TimeUnit.SECONDS
+			).cachePublic();
 			return ResponseEntity.ok().cacheControl(cacheControl).body(results.get());
 		} catch (final Exception e) {
 			final String error = String.format("Failed to get result of simulation %s", id);

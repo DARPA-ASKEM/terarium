@@ -46,6 +46,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
+import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvColumnStats;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
@@ -70,6 +71,8 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 public class DatasetController {
 
 	private static final int DEFAULT_CSV_LIMIT = 100;
+
+	final Config config;
 
 	final DatasetService datasetService;
 	final ClimateDataProxy climateDataProxy;
@@ -366,7 +369,10 @@ public class DatasetController {
 			csv.size()
 		);
 
-		final CacheControl cacheControl = CacheControl.maxAge(24, TimeUnit.HOURS).cachePublic();
+		final CacheControl cacheControl = CacheControl.maxAge(
+			config.getCacheHeadersMaxAge(),
+			TimeUnit.SECONDS
+		).cachePublic();
 		return ResponseEntity.ok().cacheControl(cacheControl).body(csvAsset);
 	}
 

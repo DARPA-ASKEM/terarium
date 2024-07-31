@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
@@ -50,6 +51,8 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @RequiredArgsConstructor
 @Transactional
 public class ArtifactController {
+
+	final Config config;
 
 	final ArtifactService artifactService;
 
@@ -358,7 +361,10 @@ public class ArtifactController {
 			if (bytes.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
-			final CacheControl cacheControl = CacheControl.maxAge(24, TimeUnit.HOURS).cachePublic();
+			final CacheControl cacheControl = CacheControl.maxAge(
+				config.getCacheHeadersMaxAge(),
+				TimeUnit.SECONDS
+			).cachePublic();
 			return ResponseEntity.ok().cacheControl(cacheControl).body(bytes.get());
 		} catch (final Exception e) {
 			log.error("Unable to GET artifact data", e);

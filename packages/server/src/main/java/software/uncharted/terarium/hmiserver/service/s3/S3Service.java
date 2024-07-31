@@ -50,6 +50,7 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
+import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.s3.S3Object;
 import software.uncharted.terarium.hmiserver.models.s3.S3ObjectListing;
 import software.uncharted.terarium.hmiserver.service.HashService;
@@ -60,6 +61,7 @@ public class S3Service {
 	private final S3Client client;
 	private final int BUFFER_SIZE;
 	private final S3Presigner preSigner;
+	private final Config config;
 
 	/**
 	 * Constructor
@@ -67,10 +69,11 @@ public class S3Service {
 	 * @param client     The S3 client to use
 	 * @param bufferSize The size of the buffer to use when writing multipart files
 	 */
-	public S3Service(final S3Client client, final S3Presigner preSigner, final int bufferSize) {
+	public S3Service(final Config config, final S3Client client, final S3Presigner preSigner, final int bufferSize) {
 		if (client == null) {
 			throw new IllegalArgumentException("client cannot be null");
 		}
+		this.config = config;
 		this.client = client;
 		this.preSigner = preSigner;
 		this.BUFFER_SIZE = bufferSize;
@@ -533,7 +536,10 @@ public class S3Service {
 			}
 		};
 
-		final CacheControl cacheControl = CacheControl.maxAge(24, TimeUnit.HOURS).cachePublic();
+		final CacheControl cacheControl = CacheControl.maxAge(
+			config.getCacheHeadersMaxAge(),
+			TimeUnit.SECONDS
+		).cachePublic();
 		return ResponseEntity.ok()
 			.header("Content-Disposition", "attachment; filename=\"" + key + "\"")
 			.header("Content-Length", String.valueOf(s3Object.getSizeInBytes()))
