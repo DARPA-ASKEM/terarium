@@ -7,10 +7,10 @@
 			type="button"
 			size="small"
 			@click="showMenu"
-			label="+"
+			icon="pi pi-plus"
 			:style="{
 				top: `${currentPortPosition.y - 18}px`,
-				left: `${currentPortPosition.x + 50}px`
+				left: `${currentPortPosition.x + 40}px`
 			}"
 			aria-haspopup="true"
 			aria-controls="overlay_menu"
@@ -40,12 +40,25 @@ const menu = ref();
 const menuItems = ref([
 	{
 		// label: "Options",
-		items: [{ label: 'Configure Model' }, { label: 'Stratify Model' }, { label: 'Edit Model' }]
+		items: [
+			{
+				label: 'Configure Model',
+				command() {}
+			},
+			{
+				label: 'Stratify Model',
+				command() {}
+			},
+			{
+				label: 'Edit Model',
+				command() {}
+			}
+		]
 	}
 ]);
 
 function showMenu(event) {
-	menu.value.toggle(event);
+	menu.value.show(event);
 	isMenuShowing.value = true;
 }
 </script>
