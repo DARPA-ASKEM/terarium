@@ -2878,10 +2878,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rushstack/eslint-patch@npm:1.10.3":
-  version: 1.10.3
-  resolution: "@rushstack/eslint-patch@npm:1.10.3"
-  checksum: e1986178618bfb5fb636a54c420a7c359879d7aed6a0e456333a92fdc93e0e7a9a914114284308317cdc75e522c0696f760cd6d0b77409ed8b9633e75f096628
+"@rushstack/eslint-patch@npm:1.10.4":
+  version: 1.10.4
+  resolution: "@rushstack/eslint-patch@npm:1.10.4"
+  checksum: fa14a091cc800e1fac75c03112db03eaebbdc2de6e1532ed7702e106c3ce0cbf9b896794d885d455b225e9cc696a5e10c7bfb803d00774461d691e7a39915fc7
   languageName: node
   linkType: hard
 
@@ -8756,7 +8756,7 @@ __metadata:
     "@pinia/testing": "npm:0.1.3"
     "@playwright/experimental-ct-vue": "npm:1.31.2"
     "@playwright/test": "npm:1.31.2"
-    "@rushstack/eslint-patch": "npm:1.10.3"
+    "@rushstack/eslint-patch": "npm:1.10.4"
     "@types/d3": "npm:7.4.3"
     "@types/lodash": "npm:4.17.7"
     "@types/node": "npm:18.19.3"
