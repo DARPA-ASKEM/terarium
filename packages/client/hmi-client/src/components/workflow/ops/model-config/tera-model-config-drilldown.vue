@@ -94,7 +94,7 @@
 					<Textarea v-else class="context-item" placeholder="Enter a description" v-model="newDescription" />
 				</AccordionTab>
 				<AccordionTab header="Diagram">
-					<tera-model-diagram v-if="model" :model="model" :is-editable="false" />
+					<tera-model-diagram v-if="model" :model="model" />
 				</AccordionTab>
 			</Accordion>
 			<Message v-if="model && isModelMissingMetadata(model)" class="m-2">

@@ -1,7 +1,7 @@
 <template>
 	<tera-tooltip :custom-position="hoveredTransitionPosition" :show-tooltip="!isEmpty(hoveredTransitionId)">
 		<main>
-			<TeraResizablePanel v-if="!isPreview" class="diagram-container">
+			<TeraResizablePanel v-if="!featureConfig?.isPreview" class="diagram-container">
 				<section class="graph-element">
 					<Toolbar>
 						<template #start>
@@ -87,12 +87,13 @@ import { MiraModel, MiraTemplateParams, ObservableSummary } from '@/model-repres
 import { isStratifiedModel, emptyMiraModel, convertToIGraph } from '@/model-representation/mira/mira';
 import { getModelRenderer } from '@/model-representation/service';
 import { NodeType } from '@/services/graph';
+import type { FeatureConfig } from '@/types/common';
 import TeraStratifiedMatrixModal from '../model-configurations/tera-stratified-matrix-modal.vue';
 import TeraStratifiedMatrixPreview from '../model-configurations/tera-stratified-matrix-preview.vue';
 
 const props = defineProps<{
 	model: Model;
-	isPreview?: boolean;
+	featureConfig?: FeatureConfig;
 }>();
 
 const graphElement = ref<HTMLDivElement | null>(null);

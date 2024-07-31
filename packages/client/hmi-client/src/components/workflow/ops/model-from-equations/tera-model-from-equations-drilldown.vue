@@ -107,9 +107,7 @@
 				<section v-if="selectedModel">
 					<tera-model-description
 						:model="selectedModel"
-						:feature-config="{
-							isPreview: true
-						}"
+						:feature-config="{ isPreview: true }"
 						:generating-card="isGeneratingCard"
 					/>
 				</section>
