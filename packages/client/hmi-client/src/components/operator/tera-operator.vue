@@ -65,6 +65,7 @@ const emit = defineEmits([
 	'port-selected',
 	'port-mouseover',
 	'port-mouseleave',
+	'show-output-button',
 	'remove-operator',
 	'remove-edges',
 	'resize',
@@ -101,7 +102,10 @@ function mouseoverPort(event: MouseEvent, portType: PortType) {
 		x: nodePosition.x + w + portElement.offsetWidth * 0.5,
 		y: nodePosition.y + totalOffsetY
 	};
-	emit('port-mouseover', portPosition, portType);
+	emit('port-mouseover', portPosition);
+	if (portType) {
+		emit('show-output-button');
+	}
 }
 
 function resizeHandler() {
