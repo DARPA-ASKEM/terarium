@@ -71,7 +71,7 @@ import type { FeatureConfig } from '@/types/common';
 import { AssetType, type Model } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
-import TeraInputText from '../widgets/tera-input-text.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 
 const props = defineProps({
 	assetId: {

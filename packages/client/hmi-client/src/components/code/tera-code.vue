@@ -168,9 +168,9 @@ import Textarea from 'primevue/textarea';
 import { computed, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraCodeDynamic from './tera-code-dynamic.vue';
 import TeraDirectory from './tera-directory.vue';
-import TeraInputText from '../widgets/tera-input-text.vue';
 
 const INITIAL_TEXT = '# Paste some code here';
 
