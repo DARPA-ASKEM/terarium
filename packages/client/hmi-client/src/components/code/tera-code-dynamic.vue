@@ -23,12 +23,12 @@
 						<div class="edit-container" v-else>
 							<div class="edit-input-container">
 								<label class="text-sm" for="code-dynamic-start">Start line</label>
-								<InputNumber class="small-input-number" v-model="startLine" input-id="code-dynamic-start" />
+								<tera-input-number v-model="startLine" input-id="code-dynamic-start" auto-width />
 							</div>
 
 							<div class="edit-input-container">
 								<label class="text-sm" for="code-dynamic-start">End line</label>
-								<InputNumber class="small-input-number" v-model="endLine" input-id="code-dynamic-end" />
+								<tera-input-number v-model="endLine" input-id="code-dynamic-end" auto-width />
 							</div>
 						</div>
 
@@ -47,7 +47,7 @@
 
 <script setup lang="ts">
 import Button from 'primevue/button';
-import InputNumber from 'primevue/inputnumber';
+import teraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import type { Code } from '@/types/Types';
 import { CodeBlock, extractDynamicRows, getCodeBlocks } from '@/utils/code-asset';
@@ -134,9 +134,8 @@ ul {
 	display: flex;
 }
 
-.edit-input-container:deep(.p-inputnumber-input) {
+.edit-input-container .tera-input {
 	width: 107px;
-	height: 2rem;
 }
 
 .footer-container {

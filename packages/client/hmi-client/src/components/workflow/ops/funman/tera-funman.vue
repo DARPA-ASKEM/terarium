@@ -27,15 +27,15 @@
 					<div class="section-row timespan">
 						<div class="button-column">
 							<label>Start time</label>
-							<InputNumber v-model="knobs.currentTimespan.start" />
+							<tera-input-number v-model="knobs.currentTimespan.start" />
 						</div>
 						<div class="button-column">
 							<label>End time</label>
-							<InputNumber v-model="knobs.currentTimespan.end" />
+							<tera-input-number v-model="knobs.currentTimespan.end" />
 						</div>
 						<div class="button-column">
 							<label>Number of steps</label>
-							<InputNumber v-model="knobs.numberOfSteps" />
+							<tera-input-number v-model="knobs.numberOfSteps" />
 						</div>
 					</div>
 					<tera-input-text :disabled="true" class="timespan-list mb-2" v-model="requestStepListString" />
@@ -148,7 +148,6 @@ import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
-import InputNumber from 'primevue/inputnumber';
 import Slider from 'primevue/slider';
 import MultiSelect from 'primevue/multiselect';
 
@@ -578,14 +577,6 @@ watch(
 	line-height: 1.3125rem;
 	/* 150% */
 	letter-spacing: 0.01563rem;
-}
-
-.button-column {
-	display: flex;
-	flex-direction: column;
-	padding: var(--gap-small) 0 var(--gap-small) 0;
-	align-items: flex-start;
-	align-self: stretch;
 }
 
 .section-row {
