@@ -249,8 +249,10 @@ public class TerariumAssetCloneService {
 
 			// upload the files (do this first as the asset creation my use the files)
 			for (final Map.Entry<String, FileExport> entry : assetExport.getFiles().entrySet()) {
+				final String filename = entry.getKey();
 				final FileExport fileExport = entry.getValue();
-				terariumAssetService.uploadFile(asset.getId(), fileExport);
+
+				terariumAssetService.uploadFile(asset.getId(), filename, fileExport);
 			}
 
 			// create the asset

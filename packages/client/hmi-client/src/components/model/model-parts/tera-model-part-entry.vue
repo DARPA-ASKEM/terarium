@@ -3,7 +3,7 @@
 		<h6>
 			<template v-if="item.templateId">{{ item.templateId }},</template> {{ item.id }}
 		</h6>
-		<tera-input
+		<tera-input-text
 			title="Name"
 			placeholder="Add a name"
 			:model-value="item.name ?? ''"
@@ -15,7 +15,7 @@
 			<span><span>Output:</span> {{ item.output }}</span>
 		</div>
 		<!--amr_to_mmt doesn't like unit expressions with spaces, removing them here before they are saved to the amr-->
-		<tera-input
+		<tera-input-text
 			v-else
 			label="Unit"
 			placeholder="Add a unit"
@@ -49,7 +49,7 @@
 			:expression="stringToLatexExpression(item.expression)"
 			:throw-on-error="false"
 		/>
-		<tera-input
+		<tera-input-text
 			title="Description"
 			placeholder="Add a description"
 			:model-value="item.description ?? ''"
@@ -61,7 +61,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import TeraInput from '@/components/widgets/tera-input.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import AutoComplete from 'primevue/autocomplete';
 import type { ModelPartItem } from '@/types/Model';
 import { stringToLatexExpression } from '@/services/model';

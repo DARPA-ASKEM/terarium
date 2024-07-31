@@ -209,6 +209,20 @@ async function updatePermissions(
 	}
 }
 
+async function clone(id: Project['id']): Promise<Project | null> {
+	try {
+		const response = await API.post(`/projects/clone/${id}`);
+		const { status, data } = response;
+		if (status !== 201) {
+			return null;
+		}
+		return data ?? null;
+	} catch (error) {
+		logger.error(error);
+		return null;
+	}
+}
+
 /**
  * Get the icon associated with an Asset
  */
@@ -231,6 +245,7 @@ function getAssetIcon(type: AssetType | string | null): string | Component {
 
 export {
 	addAsset,
+	clone,
 	create,
 	deleteAsset,
 	get,

@@ -45,7 +45,7 @@
 								></Dropdown>
 							</span>
 
-							<tera-input v-model="filterModelConfigurationsText" placeholder="Filter" />
+							<tera-input-text v-model="filterModelConfigurationsText" placeholder="Filter" />
 						</div>
 						<ul v-if="!isLoading && model?.id">
 							<li v-for="configuration in filteredModelConfigurations" :key="configuration.id">
@@ -254,7 +254,7 @@ import Message from 'primevue/message';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { useConfirm } from 'primevue/useconfirm';
-import TeraInput from '@/components/widgets/tera-input.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Dropdown from 'primevue/dropdown';
 import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
 import TeraModelConfigurationItem from './tera-model-configuration-item.vue';

@@ -39,5 +39,5 @@ public interface ITerariumAssetService<T extends TerariumAsset> {
 		final byte[] data
 	) throws IOException;
 
-	public Integer uploadFile(final UUID assetId, final FileExport fileExport) throws IOException;
+	public Integer uploadFile(final UUID assetId, final String filename, final FileExport fileExport) throws IOException;
 }

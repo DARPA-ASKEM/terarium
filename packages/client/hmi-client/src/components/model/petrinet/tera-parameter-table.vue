@@ -14,7 +14,7 @@
 					@click.stop="onAddUncertainty"
 					class="mr-2"
 				/>
-				<tera-input v-model="filterText" placeholder="Filter" />
+				<tera-input-text v-model="filterText" placeholder="Filter" />
 			</template>
 
 			<!-- Adding uncertainty header -->
@@ -142,7 +142,7 @@ import { DistributionType, DistributionTypeLabel, distributionTypeOptions } from
 import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
 import Checkbox from 'primevue/checkbox';
-import TeraInput from '@/components/widgets/tera-input.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraParameterEntry from './tera-parameter-entry.vue';
 import TeraStratifiedMatrixModal from './model-configurations/tera-stratified-matrix-modal.vue';
 
