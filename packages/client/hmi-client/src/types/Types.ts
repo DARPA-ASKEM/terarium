@@ -224,12 +224,12 @@ export interface InitialSemantic extends Semantic {
 }
 
 export interface ModelConfiguration extends TerariumAsset {
-    calibrationRunId?: string;
     modelId: string;
     simulationId?: string;
     observableSemanticList: ObservableSemantic[];
     parameterSemanticList: ParameterSemantic[];
     initialSemanticList: InitialSemantic[];
+    inferredParameterList?: ParameterSemantic[];
 }
 
 export interface ObservableSemantic extends Semantic {
@@ -707,7 +707,7 @@ export interface OptimizeRequestCiemss {
     timespan: TimeSpan;
     optimizeInterventions?: OptimizeInterventions;
     fixedStaticParameterInterventions?: Intervention[];
-    stepSize?: number;
+    loggingStepSize?: number;
     qoi: OptimizeQoi;
     riskBound: number;
     boundsInterventions: number[][];
@@ -778,6 +778,7 @@ export interface OptimizeExtra {
     isMinimized?: boolean;
     alpha?: number;
     solverMethod?: string;
+    solverStepSize?: number;
 }
 
 export interface OptimizeInterventions {

@@ -83,7 +83,7 @@ public interface SkemaUnifiedProxy {
 	@PostMapping("/text-reading/integrated-text-extractions")
 	ResponseEntity<JsonNode> integratedTextExtractions(
 		@RequestParam(value = "annotate_mit", defaultValue = "true") Boolean annotateMit,
-		@RequestParam(value = "annotate_skema", defaultValue = "true") Boolean annotateSkema,
+		@RequestParam(value = "annotate_skema", defaultValue = "false") Boolean annotateSkema,
 		@RequestBody IntegratedTextExtractionsBody body
 	);
 }

@@ -3,7 +3,7 @@
 		<AccordionTab>
 			<template #header>
 				Initials <span class="artifact-amount">({{ numInitials }})</span>
-				<tera-input v-model="filterText" placeholder="Filter" />
+				<tera-input-text v-model="filterText" placeholder="Filter" />
 			</template>
 
 			<ul>
@@ -73,7 +73,7 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import Divider from 'primevue/divider';
-import TeraInput from '@/components/widgets/tera-input.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraStratifiedMatrixModal from './model-configurations/tera-stratified-matrix-modal.vue';
 import TeraInitialEntry from './tera-initial-entry.vue';
 
