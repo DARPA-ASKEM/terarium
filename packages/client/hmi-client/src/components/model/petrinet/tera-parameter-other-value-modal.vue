@@ -82,7 +82,7 @@
 						</Column>
 						<Column :colspan="2">
 							<template #footer>
-								<tera-input
+								<tera-input-text
 									placeholder="Add a source"
 									v-model="customSource"
 									@update:modelValue="onCustomSelectionChange"
@@ -96,8 +96,7 @@
 						</Column>
 						<Column>
 							<template #footer v-if="numberType === numberOptions[0]">
-								<tera-input
-									type="nist"
+								<tera-input-number
 									placeholder="Constant"
 									v-model="customConstant"
 									@update:modelValue="onCustomSelectionChange"
@@ -106,22 +105,12 @@
 						</Column>
 						<Column>
 							<template #footer v-if="numberType === numberOptions[1]">
-								<tera-input
-									type="nist"
-									placeholder="Min"
-									v-model="customMin"
-									@update:modelValue="onCustomSelectionChange"
-								/>
+								<tera-input-number placeholder="Min" v-model="customMin" @update:modelValue="onCustomSelectionChange" />
 							</template>
 						</Column>
 						<Column>
 							<template #footer v-if="numberType === numberOptions[1]">
-								<tera-input
-									type="nist"
-									placeholder="Max"
-									v-model="customMax"
-									@update:modelValue="onCustomSelectionChange"
-								/>
+								<tera-input-number placeholder="Max" v-model="customMax" @update:modelValue="onCustomSelectionChange" />
 							</template>
 						</Column>
 					</Row>
@@ -141,7 +130,8 @@ import { extent } from 'd3';
 import { DistributionType } from '@/services/distribution';
 import { SemanticOtherValues } from '@/services/model-configurations';
 import Dropdown from 'primevue/dropdown';
-import TeraInput from '@/components/widgets/tera-input.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { ref } from 'vue';
 import Button from 'primevue/button';
 import TeraModal from '@/components/widgets/tera-modal.vue';

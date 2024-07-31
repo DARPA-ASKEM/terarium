@@ -9,7 +9,7 @@
 			<tera-slider-panel v-model:is-open="isSidebarOpen" content-width="360px" header="Intervention policies">
 				<template #content>
 					<section>
-						<tera-input v-model="filterInterventionsText" placeholder="Filter" />
+						<tera-input-text v-model="filterInterventionsText" placeholder="Filter" />
 						<ul v-if="!isFetchingPolicies">
 							<li v-for="policy in interventionPoliciesFiltered" :key="policy.id">
 								<tera-intervention-policy-card
@@ -129,7 +129,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import _, { cloneDeep, groupBy, isEmpty, isEqual } from 'lodash';
 import Button from 'primevue/button';
-import TeraInput from '@/components/widgets/tera-input.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { getInterventionPoliciesForModel, getModel } from '@/services/model';
 import { Intervention, InterventionPolicy, Model } from '@/types/Types';
 import { logger } from '@/utils/logger';

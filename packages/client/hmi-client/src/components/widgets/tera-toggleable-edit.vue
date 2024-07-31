@@ -1,7 +1,7 @@
 <template>
 	<div class="flex align-items-center">
 		<template v-if="isEditing">
-			<tera-input v-model="newValue" />
+			<tera-input-text v-model="newValue" />
 			<Button text icon="pi pi-times" @click="onCancel" />
 			<Button text icon="pi pi-check" @click="onConfirm" />
 		</template>
@@ -16,7 +16,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import Button from 'primevue/button';
-import TeraInput from './tera-input.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 
 const props = withDefaults(
 	defineProps<{
