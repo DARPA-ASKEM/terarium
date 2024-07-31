@@ -12,7 +12,7 @@
 		<template #default>
 			<form @submit.prevent>
 				<label for="new-name">What would you like to call it?</label>
-				<InputText id="new-name" type="text" v-model="newName" placeholder="Enter a unique name" />
+				<tera-input-text id="new-name" v-model="newName" placeholder="Enter a unique name" />
 			</form>
 		</template>
 		<template #footer>
@@ -26,7 +26,7 @@
 import { ref, PropType, computed } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { AssetType, ProgrammingLanguage } from '@/types/Types';
 import type { Model } from '@/types/Types';
