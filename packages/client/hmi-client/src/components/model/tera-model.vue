@@ -10,13 +10,13 @@
 		show-table-of-contents
 	>
 		<template #name-input>
-			<InputText
+			<tera-input-text
 				v-if="isNaming"
 				v-model.lazy="newName"
 				placeholder="Title of new model"
 				@keyup.enter="updateModelName"
 				@keyup.esc="updateModelName"
-				v-focus
+				auto-focus
 			/>
 			<div v-if="isNaming" class="flex flex-nowrap ml-1 mr-3">
 				<Button icon="pi pi-check" rounded text @click="updateModelName" />
@@ -65,13 +65,13 @@ import TeraModelDescription from '@/components/model/petrinet/tera-model-descrip
 import TeraModelParts from '@/components/model/tera-model-parts.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
 import ContextMenu from 'primevue/contextmenu';
 import { getModel, updateModel } from '@/services/model';
 import { FeatureConfig } from '@/types/common';
 import { AssetType, type Model } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
+import TeraInputText from '../widgets/tera-input-text.vue';
 
 const props = defineProps({
 	assetId: {

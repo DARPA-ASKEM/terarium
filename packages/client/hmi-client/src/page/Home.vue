@@ -51,12 +51,7 @@
 					<TabPanel v-for="(tab, i) in projectsTabs" :header="tab.title" :key="i">
 						<section class="filter-and-sort">
 							<div>
-								<InputText
-									v-model="searchProjects"
-									placeholder="Search for projects"
-									id="searchProject"
-									class="p-inputtext"
-								/>
+								<tera-input-text v-model="searchProjects" placeholder="Search for projects" id="searchProject" />
 							</div>
 							<div>
 								<span v-if="view === ProjectsView.Cards">
@@ -165,7 +160,7 @@ import { useProjectMenu } from '@/composables/project-menu';
 import { Project } from '@/types/Types';
 import { Vue3Lottie } from 'vue3-lottie';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
-import InputText from 'primevue/inputtext';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { FilterService } from 'primevue/api';
 
 const { isProjectConfigDialogVisible, menuProject } = useProjectMenu();
@@ -376,7 +371,7 @@ header > section > button {
 	padding-left: 0.5rem;
 }
 
-.p-inputtext {
+.tera-input {
 	min-width: 17rem;
 }
 

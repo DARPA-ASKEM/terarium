@@ -109,7 +109,7 @@
 			<template #default>
 				<form @submit.prevent>
 					<label class="text-sm mb-1" for="model-name">Name</label>
-					<InputText id="model-name" type="text" v-model="newDynamicsName" />
+					<tera-input-text id="model-name" v-model="newDynamicsName" />
 					<label class="text-sm mb-1" for="model-description">Description (optional)</label>
 					<Textarea v-model="newDynamicsDescription" />
 				</form>
@@ -170,6 +170,7 @@ import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import TeraCodeDynamic from './tera-code-dynamic.vue';
 import TeraDirectory from './tera-directory.vue';
+import TeraInputText from '../widgets/tera-input-text.vue';
 
 const INITIAL_TEXT = '# Paste some code here';
 
@@ -521,7 +522,6 @@ header > section {
 .name-input {
 	height: 2.25rem;
 	align-self: center;
-	border: 1px solid var(--surface-border);
 }
 
 .form-checkbox {
