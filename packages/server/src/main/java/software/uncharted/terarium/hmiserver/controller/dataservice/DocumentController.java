@@ -521,12 +521,14 @@ public class DocumentController {
 	) {
 		try {
 			final Optional<byte[]> bytes = documentAssetService.fetchFileAsBytes(id, filename);
-
+			if (bytes.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
 			final CacheControl cacheControl = CacheControl.maxAge(
 				config.getCacheHeadersMaxAge(),
 				TimeUnit.SECONDS
 			).cachePublic();
-			return ResponseEntity.ok().cacheControl(cacheControl).body(bytes.orElse(null));
+			return ResponseEntity.ok().cacheControl(cacheControl).body(bytes.get());
 		} catch (final Exception e) {
 			final String error = "Unable to download document";
 			log.error(error, e);
