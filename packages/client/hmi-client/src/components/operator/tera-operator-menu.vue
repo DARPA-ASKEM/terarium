@@ -1,9 +1,7 @@
 <template>
-	<section ref="operatorMenu" :style="style">
+	<nav ref="operatorMenu" :style="style">
 		<Button
-			v-if="node"
 			ref="openMenuButton"
-			class="button"
 			type="button"
 			size="small"
 			@click="showMenu"
@@ -17,7 +15,7 @@
 			severity="secondary"
 		/>
 		<Menu ref="menu" id="overlay_menu" :model="menuItems" :popup="true" />
-	</section>
+	</nav>
 </template>
 <script setup lang="ts">
 import { ref } from 'vue';
@@ -63,7 +61,7 @@ function showMenu(event) {
 }
 </script>
 <style scoped>
-.button {
+button {
 	outline: 1px solid var(--surface-border);
 	border-radius: var(--border-radius-medium);
 	box-shadow: var(--overlay-menu-shadow);
