@@ -1,16 +1,15 @@
 <template>
-	<nav>
-		<Button
-			type="button"
-			size="small"
-			@click="showMenu"
-			icon="pi pi-plus"
-			aria-haspopup="true"
-			aria-controls="overlay_menu"
-			severity="secondary"
-		/>
-		<Menu ref="menu" id="overlay_menu" :model="menuItems" :popup="true" />
-	</nav>
+	<Button
+		v-bind="$attrs"
+		type="button"
+		size="small"
+		@click="showMenu"
+		icon="pi pi-plus"
+		aria-haspopup="true"
+		aria-controls="overlay_menu"
+		severity="secondary"
+	/>
+	<Menu ref="menu" id="overlay_menu" :model="menuItems" :popup="true" />
 </template>
 <script setup lang="ts">
 import { ref } from 'vue';
