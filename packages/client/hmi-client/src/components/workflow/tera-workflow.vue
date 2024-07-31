@@ -92,10 +92,9 @@
 			<tera-operator-menu
 				v-if="nodeWithOpenedMenu && isOutputMenuShown"
 				:node="nodeWithOpenedMenu"
-				:currentPortPosition="currentPortPosition"
 				:style="{
-					top: `${currentPortPosition.y}px`,
-					left: `${currentPortPosition.x}px`
+					top: `${currentPortPosition.y - 18}px`,
+					left: `${currentPortPosition.x + 40}px`
 				}"
 				@mouseenter="() => (isMenufocused = true)"
 				@mouseleave="() => (isMenufocused = false)"

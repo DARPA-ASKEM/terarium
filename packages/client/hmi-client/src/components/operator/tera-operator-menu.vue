@@ -6,10 +6,6 @@
 			size="small"
 			@click="showMenu"
 			icon="pi pi-plus"
-			:style="{
-				top: `${currentPortPosition.y - 18}px`,
-				left: `${currentPortPosition.x + 40}px`
-			}"
 			aria-haspopup="true"
 			aria-controls="overlay_menu"
 			severity="secondary"
@@ -26,7 +22,6 @@ import Button from 'primevue/button';
 defineProps<{
 	node: WorkflowNode<any> | null;
 	style: { top: string; left: string };
-	currentPortPosition: any;
 }>();
 
 const openMenuButton = ref<HTMLElement>();
@@ -61,6 +56,10 @@ function showMenu(event) {
 }
 </script>
 <style scoped>
+nav {
+	position: relative;
+}
+
 button {
 	outline: 1px solid var(--surface-border);
 	border-radius: var(--border-radius-medium);
