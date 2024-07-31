@@ -2,6 +2,7 @@
 	<tera-model-part
 		:items="transitionsList"
 		:collapsed-items="collapsedTemplates"
+		:feature-config="featureConfig"
 		show-matrix
 		@open-matrix="(id: string) => (matrixModalId = id)"
 		@update-item="$emit('update-transition', $event)"
@@ -26,11 +27,13 @@ import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/
 import { collapseTemplates } from '@/model-representation/mira/mira';
 import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
 import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
+import type { FeatureConfig } from '@/types/common';
 
 const props = defineProps<{
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
 	transitions: Transition[];
+	featureConfig: FeatureConfig;
 }>();
 
 defineEmits(['update-transition']);
