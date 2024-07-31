@@ -8,7 +8,6 @@
 			aria-haspopup="true"
 			aria-controls="overlay_menu"
 			severity="secondary"
-			:style="style"
 		/>
 		<Menu ref="menu" id="overlay_menu" :model="menuItems" :popup="true" />
 	</nav>
