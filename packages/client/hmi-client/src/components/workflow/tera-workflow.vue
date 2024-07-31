@@ -90,16 +90,16 @@
 				</tera-operator>
 			</tera-canvas-item>
 			<tera-operator-menu
-				v-if="nodeWithOpenedMenu && isOutputMenuShown"
+				v-if="nodeWithOpenedMenu"
 				:node="nodeWithOpenedMenu"
 				:style="{
 					top: `${currentPortPosition.y - 18}px`,
 					left: `${currentPortPosition.x + 40}px`
 				}"
-				@mouseenter="() => (isMenufocused = true)"
-				@mouseleave="() => (isMenufocused = false)"
-				@focus="() => (isMenufocused = true)"
-				@blur="() => (isMenufocused = false)"
+				@mouseenter="() => (isMenuFocused = true)"
+				@mouseleave="() => (isMenuFocused = false)"
+				@focus="() => (isMenuFocused = true)"
+				@blur="() => (isMenuFocused = false)"
 			/>
 		</template>
 		<!-- background -->
@@ -285,8 +285,7 @@ const optionsMenuItems = ref([
 	}
 ]);
 
-const isMenufocused = ref<boolean>(false);
-const isOutputMenuShown = ref<boolean>(false);
+const isMenuFocused = ref<boolean>(false);
 const nodeWithOpenedMenu = ref<WorkflowNode<any> | null>(null);
 
 const toggleOptionsMenu = (event) => {
@@ -700,8 +699,8 @@ function onCanvasClick() {
 }
 
 function hideMenuButton() {
-	if (!isMenufocused.value) {
-		isOutputMenuShown.value = false;
+	if (!isMenuFocused.value) {
+		nodeWithOpenedMenu.value = null;
 	}
 }
 
@@ -713,7 +712,6 @@ function onPortMouseover(position: Position, type: any, node: WorkflowNode<any>)
 	currentPortPosition = position;
 	isMouseOverPort = true;
 	if (type) {
-		isOutputMenuShown.value = true;
 		nodeWithOpenedMenu.value = node;
 	}
 }

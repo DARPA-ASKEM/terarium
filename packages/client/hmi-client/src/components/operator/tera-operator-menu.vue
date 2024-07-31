@@ -1,7 +1,6 @@
 <template>
-	<nav ref="operatorMenu" :style="style">
+	<nav>
 		<Button
-			ref="openMenuButton"
 			type="button"
 			size="small"
 			@click="showMenu"
@@ -9,6 +8,7 @@
 			aria-haspopup="true"
 			aria-controls="overlay_menu"
 			severity="secondary"
+			:style="style"
 		/>
 		<Menu ref="menu" id="overlay_menu" :model="menuItems" :popup="true" />
 	</nav>
@@ -23,11 +23,7 @@ defineProps<{
 	node: WorkflowNode<any> | null;
 	style: { top: string; left: string };
 }>();
-
-const openMenuButton = ref<HTMLElement>();
-
 const isMenuShowing = ref<boolean>(false);
-const operatorMenu = ref<HTMLElement>();
 
 const menu = ref();
 const menuItems = ref([
