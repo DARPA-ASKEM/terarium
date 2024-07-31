@@ -3,11 +3,10 @@
 		<h6>{{ symbol }}</h6>
 		<span class="name">
 			<template v-if="featureConfig.isPreview">{{ item.name }}</template>
-			<tera-input
+			<tera-input-text
 				v-else
 				placeholder="Add a name"
 				:model-value="item.name ?? ''"
-				:feature-config="featureConfig"
 				@update:model-value="$emit('update-item', { key: 'name', value: $event })"
 			/>
 		</span>
@@ -19,12 +18,11 @@
 			<!--amr_to_mmt doesn't like unit expressions with spaces, removing them here before they are saved to the amr-->
 			<template v-else-if="showUnit">
 				<template v-if="featureConfig.isPreview"><label>Unit</label>{{ item.unitExpression }}</template>
-				<tera-input
+				<tera-input-text
 					v-else
 					label="Unit"
 					placeholder="Add a unit"
 					:model-value="item.unitExpression ?? ''"
-					:feature-config="featureConfig"
 					@update:model-value="
 						($event) => {
 							const value = $event.replace(/[\s.]+/g, '');
@@ -50,17 +48,17 @@
 			/>
 		</span>
 		<katex-element
+			v-if="item.expression"
 			class="expression"
-			:expression="item.expression && stringToLatexExpression(item.expression)"
+			:expression="stringToLatexExpression(item.expression)"
 			:throw-on-error="false"
 		/>
 		<span class="description">
 			<template v-if="featureConfig.isPreview">{{ item.description }}</template>
-			<tera-input
+			<tera-input-text
 				v-else
 				placeholder="Add a description"
 				:model-value="item.description ?? ''"
-				:feature-config="featureConfig"
 				@update:model-value="$emit('update-item', { key: 'description', value: $event })"
 			/>
 		</span>
@@ -69,7 +67,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import TeraInput from '@/components/widgets/tera-input.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import AutoComplete from 'primevue/autocomplete';
 import type { ModelPartItem } from '@/types/Model';
 import { stringToLatexExpression } from '@/services/model';

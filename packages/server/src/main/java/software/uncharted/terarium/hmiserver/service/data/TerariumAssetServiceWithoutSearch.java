@@ -290,6 +290,8 @@ public abstract class TerariumAssetServiceWithoutSearch<
 		final String bucket = config.getFileStorageS3BucketName();
 		final String key = getPath(uuid, filename);
 
+		log.info("READING FILE: {}", key);
+
 		try {
 			final ResponseInputStream<GetObjectResponse> stream = s3ClientService.getS3Service().getObject(bucket, key);
 			return Optional.of(stream.readAllBytes());
@@ -318,12 +320,15 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	}
 
 	@Observed(name = "function_profile")
-	public Integer uploadFile(final UUID assetId, final FileExport fileExport) throws IOException {
+	public Integer uploadFile(final UUID assetId, final String filename, final FileExport fileExport) throws IOException {
 		final String bucket = config.getFileStorageS3BucketName();
-		String key = fileExport.getFullpath();
-		if (key.isEmpty()) {
-			key = getPath(assetId, fileExport.getContentType().toString());
+		String prefix = fileExport.getPathPrefix();
+		if (prefix.isEmpty()) {
+			prefix = getAssetPath();
 		}
+
+		final String key = getPrefixedPath(prefix, assetId, filename);
+
 		final PutObjectResponse res = s3ClientService
 			.getS3Service()
 			.putObject(bucket, key, fileExport.getContentType(), fileExport.getBytes());
@@ -371,7 +376,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 					final FileExport fileExport = new FileExport();
 					fileExport.setBytes(bytes);
 					fileExport.setContentType(ContentType.parse(contentType));
-					fileExport.setFullpath(key);
+					fileExport.setPathPrefix(getAssetPath());
 
 					files.put(fileName, fileExport);
 				} catch (final NoSuchKeyException e) {
@@ -385,5 +390,9 @@ public abstract class TerariumAssetServiceWithoutSearch<
 
 	protected String getPath(final UUID id, final String filename) {
 		return String.join("/", getAssetPath(), id.toString(), filename);
+	}
+
+	protected String getPrefixedPath(final String prefix, final UUID id, final String filename) {
+		return String.join("/", prefix, id.toString(), filename);
 	}
 }

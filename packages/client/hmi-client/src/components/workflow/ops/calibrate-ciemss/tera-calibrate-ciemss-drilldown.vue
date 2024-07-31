@@ -140,15 +140,15 @@
 						</div>
 						<div class="label-and-input">
 							<label>Inference algorithm</label>
-							<tera-input disabled model-value="SVI" />
+							<tera-input-text disabled model-value="SVI" />
 						</div>
 						<div class="label-and-input">
 							<label>Loss function</label>
-							<tera-input disabled model-value="ELBO" />
+							<tera-input-text disabled model-value="ELBO" />
 						</div>
 						<div class="label-and-input">
 							<label>Optimizer method</label>
-							<tera-input disabled model-value="ADAM" />
+							<tera-input-text disabled model-value="ADAM" />
 						</div>
 					</div>
 				</section>
@@ -245,7 +245,7 @@ import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
 import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
-import TeraInput from '@/components/widgets/tera-input.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults } from './calibrate-utils';
 

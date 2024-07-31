@@ -23,7 +23,11 @@
 							size="small"
 						/>
 						<span v-else>
-							<tera-input label="Unit" placeholder="Add a unit" v-model="parentEditingState[index].childrenUnits" />
+							<tera-input-text
+								label="Unit"
+								placeholder="Add a unit"
+								v-model="parentEditingState[index].childrenUnits"
+							/>
 							<Button
 								icon="pi pi-check"
 								text
@@ -126,8 +130,8 @@ import { searchCuriesEntities } from '@/services/concept';
 import TeraModelPartEntry from '@/components/model/model-parts/tera-model-part-entry.vue';
 import AutoComplete from 'primevue/autocomplete';
 import Button from 'primevue/button';
-import TeraInput from '@/components/widgets/tera-input.vue';
 import type { FeatureConfig } from '@/types/common';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 
 const props = defineProps<{
 	items: {
