@@ -1,4 +1,4 @@
-## Download asset in a project
+## Download assets in a project
 Please go through __every__ step of the test scenario.\
 Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/terarium/issues/new?assignees=&labels=bug%2C+Q%26A&template=qa-issue.md&title=%5BBUG%5D%3A+).
 
@@ -10,12 +10,12 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
     ```
 2. Create, or open, project named `QA [Your Name]`
 
-### 2. Upload a PDF
-1. Upload _the Document_ [SIR.pdf](../data/SIR.pdf) using `Upload Resources` button in the bottom left.
-2. Wait for final notification of document extraction
-3. Open _the Document_ and check that extractions are visible
+### 2. Upload assets
+1. Model [SIR.json](https://drive.google.com/file/d/1eXlvpBfMmhrfC0xUXfuz0s_19gi-Rird/view?usp=drive_link)
+2. Dataset [SIR_Dataset](https://drive.google.com/file/d/1wdCLKKznHaoCg1gWI7q7OO8W4F7zOjpc/view?usp=drive_link)
+3. Document [SIR_Document](https://drive.google.com/file/d/1GYyRrxs2Nd8BsU0fGzYW8hJ8CulK5AIY/view?usp=drive_link)
 
-### 3. Download the PDF
-1. Click _the Document_ and select PDF.
-2. In the far right `...` menu select `Download this File`
-3. The file should download successfully.
+### 3. Download Asset
+1. For each asset, open the asset details page
+2. In the far right `...` menu select `Download`
+3. The asset should download successfully.
