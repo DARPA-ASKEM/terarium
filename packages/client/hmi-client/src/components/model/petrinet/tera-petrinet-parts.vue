@@ -8,6 +8,7 @@
 				v-if="!isEmpty(mmt.initials)"
 				:model="model"
 				:mmt="mmt"
+				:feature-config="featureConfig"
 				@update-state="emit('update-state', $event)"
 			/>
 		</AccordionTab>
@@ -20,6 +21,7 @@
 				:model="model"
 				:mmt="mmt"
 				:mmt-params="mmtParams"
+				:feature-config="featureConfig"
 				@update-parameter="emit('update-parameter', $event)"
 			/>
 		</AccordionTab>
@@ -32,6 +34,7 @@
 				:model="model"
 				:mmt="mmt"
 				:observables="observables"
+				:feature-config="featureConfig"
 				@update-item="emit('update-observable', $event)"
 			/>
 		</AccordionTab>
@@ -44,6 +47,7 @@
 				:mmt="mmt"
 				:mmt-params="mmtParams"
 				:transitions="transitions"
+				:feature-config="featureConfig"
 				@update-transition="emit('update-transition', $event)"
 			/>
 		</AccordionTab>
@@ -59,7 +63,7 @@
 				Time
 				<span class="artifact-amount">({{ time.length }})</span>
 			</template>
-			<tera-time v-if="time" :time="time" @update-time="emit('update-time', $event)" />
+			<tera-time v-if="time" :time="time" :feature-config="featureConfig" @update-time="emit('update-time', $event)" />
 		</AccordionTab>
 	</Accordion>
 </template>
@@ -77,13 +81,14 @@ import TeraParameters from '@/components/model/model-parts/tera-parameters.vue';
 import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
 import TeraTransitions from '@/components/model/model-parts/tera-transitions.vue';
 import TeraTime from '@/components/model/model-parts/tera-time.vue';
+import type { FeatureConfig } from '@/types/common';
 import TeraOtherConceptsTable from './tera-other-concepts-table.vue';
 
 const props = defineProps<{
 	model: Model;
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
-	readonly?: boolean;
+	featureConfig: FeatureConfig;
 }>();
 
 const emit = defineEmits([
