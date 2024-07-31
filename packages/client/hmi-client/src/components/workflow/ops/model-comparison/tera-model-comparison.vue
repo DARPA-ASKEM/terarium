@@ -5,7 +5,7 @@
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<div :tabName="Tabs.Wizard">
-			<tera-drilldown-section class="ml-4 mr-4 pt-3">
+			<tera-drilldown-section class="ml-4">
 				<!-- LLM generated overview -->
 				<section class="comparison-overview">
 					<Accordion :activeIndex="0">
@@ -198,7 +198,8 @@ const llmAnswer = computed(() => {
 
 const modelCardsToCompare = computed(() => modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard));
 const fields = computed(
-	() => [...new Set(modelCardsToCompare.value.reduce((acc, card) => acc.concat(Object.keys(card)), []))] as string[]
+	() =>
+		[...new Set(modelCardsToCompare.value.reduce((acc, card) => card && acc.concat(Object.keys(card)), []))] as string[]
 );
 
 const initializeAceEditor = (editorInstance: any) => {
@@ -428,7 +429,7 @@ ul {
 .comparison-overview {
 	border: 1px solid var(--surface-border);
 	border-radius: var(--border-radius-medium);
-	padding: var(--gap-small);
+	padding: var(--gap-2);
 }
 
 .subdued {
