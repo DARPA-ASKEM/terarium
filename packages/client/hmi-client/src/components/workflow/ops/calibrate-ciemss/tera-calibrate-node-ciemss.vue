@@ -346,7 +346,8 @@ watch(
 			const translationMap = parsePyCiemssMap(sampledData[0]);
 
 			const timeId = sampledData[0].timepoint_id;
-			const parameterIds = model.value?.semantics?.ode.parameters?.map((d) => d.id) as string[];
+			const ode = model.value?.semantics?.ode;
+			const parameterIds = ode?.parameters?.map((d) => d.id) as string[];
 			const parameterTable: { [key: string]: number[] } = {};
 			parameterIds.forEach((parameterId) => {
 				parameterTable[parameterId] = [];
@@ -357,11 +358,9 @@ watch(
 					parameterIds.forEach((parameterId) => {
 						let dataKey = translationMap[parameterId];
 
-						// "initials", need a different translation
+						// propbably initials, need a proxy-translation map
 						if (!dataKey) {
-							const surrogateKey = model.value?.semantics?.ode.initials?.find(
-								(d) => d.expression === parameterId
-							)?.target;
+							const surrogateKey = ode?.initials?.find((d) => d.expression === parameterId)?.target;
 							if (!surrogateKey) return;
 
 							dataKey = translationMap[surrogateKey];
