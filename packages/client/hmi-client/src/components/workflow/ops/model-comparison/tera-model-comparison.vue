@@ -5,7 +5,7 @@
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<div :tabName="Tabs.Wizard">
-			<tera-drilldown-section class="ml-4">
+			<tera-drilldown-section>
 				<!-- LLM generated overview -->
 				<section class="comparison-overview">
 					<Accordion :activeIndex="0">
@@ -15,7 +15,7 @@
 						</AccordionTab>
 					</Accordion>
 				</section>
-
+				{{ modelCardsToCompare }}
 				<!-- Model comparison table -->
 				<div class="p-datatable-wrapper">
 					<table class="p-datatable-table p-datatable-scrollable-table">
@@ -34,26 +34,24 @@
 									<tera-model-diagram :model="model" class="diagram" />
 								</td>
 							</tr>
-							<template v-for="field in fields" :key="field">
-								<tr>
-									<td class="field">{{ formatField(field) }}</td>
-									<td v-for="(card, index) in modelCardsToCompare" :key="index">
-										<template v-if="typeof card[field] === 'object'">
-											<template v-for="(value, j) in Object.values(card[field])">
-												<template v-if="Array.isArray(value)">
-													{{ value.join(', ') }}
-												</template>
-												<div class="value" v-else :key="j">
-													{{ value }}
-												</div>
+							<tr v-for="field in fields" :key="field">
+								<td class="field">{{ formatField(field) }}</td>
+								<td v-for="(card, index) in modelCardsToCompare" :key="index">
+									<template v-if="typeof card[field] === 'object'">
+										<template v-for="(value, j) in Object.values(card[field])">
+											<template v-if="Array.isArray(value)">
+												{{ value.join(', ') }}
 											</template>
+											<div class="value" v-else :key="j">
+												{{ value }}
+											</div>
 										</template>
-										<template v-if="Array.isArray(card[field])">
-											{{ card[field].join(', ') }}
-										</template>
-									</td>
-								</tr>
-							</template>
+									</template>
+									<template v-if="Array.isArray(card[field])">
+										{{ card[field].join(', ') }}
+									</template>
+								</td>
+							</tr>
 						</tbody>
 					</table>
 				</div>
@@ -199,21 +197,14 @@ const llmAnswer = computed(() => {
 const modelCardsToCompare = computed(() => modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard));
 const fields = computed(
 	() =>
-		[...new Set(modelCardsToCompare.value.reduce((acc, card) => card && acc.concat(Object.keys(card)), []))] as string[]
+		[
+			...new Set(modelCardsToCompare.value.reduce((acc, card) => card && acc && acc.concat(Object.keys(card)), []))
+		] as string[]
 );
 
 const initializeAceEditor = (editorInstance: any) => {
 	editor = editorInstance;
 };
-
-async function addModelForComparison(modelId: Model['id']) {
-	if (!modelId) return;
-	const model = await getModel(modelId);
-	if (model) modelsToCompare.value.push(model);
-	if (modelsToCompare.value.length === props.node.inputs.length - 1 && modelsToCompare.value.length > 1) {
-		buildJupyterContext();
-	}
-}
 
 function formatField(field: string) {
 	const result = field
@@ -331,15 +322,19 @@ onMounted(async () => {
 		isLoadingStructuralComparisons.value = false;
 	}
 
-	props.node.inputs.forEach((input) => {
-		if (input.value) {
-			addModelForComparison(input.value[0]);
-		}
-	});
-
-	const modelIds = props.node.inputs
+	const modelIds: string[] = props.node.inputs
 		.filter((input) => input.status === WorkflowPortStatus.CONNECTED)
 		.map((input) => input.value?.[0]);
+
+	modelsToCompare.value = (await Promise.all(modelIds.map(async (modelId) => getModel(modelId)))).filter(
+		Boolean
+	) as Model[];
+
+	buildJupyterContext();
+
+	console.log(modelsToCompare.value);
+	console.log(modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard));
+
 	processCompareModels(modelIds, props.node.workflowId, props.node.id);
 });
 
@@ -349,6 +344,10 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.p-datatable-wrapper {
+	margin: 0 var(--gap-4);
+}
+
 table {
 	table-layout: fixed;
 	width: 100%;
@@ -375,7 +374,6 @@ table {
 
 	& td:not(:first-child) {
 		padding: var(--gap-small);
-		padding-right: var(--gap);
 	}
 
 	& .value {
@@ -430,6 +428,8 @@ ul {
 	border: 1px solid var(--surface-border);
 	border-radius: var(--border-radius-medium);
 	padding: var(--gap-2);
+	margin: 0 var(--gap-4);
+	margin-top: var(--gap-4);
 }
 
 .subdued {
