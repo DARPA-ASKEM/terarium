@@ -83,7 +83,7 @@
 						</div>
 						<div class="label-and-input">
 							<label for="ode-method">ODE method</label>
-							<InputText class="p-inputtext-sm" v-model="extra.odeMethod" @update:model-value="updateStateExtras" />
+							<tera-input-text v-model="extra.odeMethod" @update:model-value="updateStateExtras" />
 						</div>
 						<div class="label-and-input">
 							<label for="calibrate-method">Calibrate method</label>
@@ -172,7 +172,7 @@ import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
-import InputText from 'primevue/inputtext';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import {
 	CalibrationRequestJulia,
 	ClientEvent,
