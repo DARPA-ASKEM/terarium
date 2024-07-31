@@ -95,7 +95,7 @@ import { uploadArtifactToProject } from '@/services/artifact';
 import { createModel, processAndAddModelToProject, validateAMRFile } from '@/services/model';
 import { createProvenance, RelationshipType } from '@/services/provenance';
 import { modelCard } from '@/services/goLLM';
-import TeraInputText from '../widgets/tera-input-text.vue';
+import TeraInputText from '@/components//widgets/tera-input-text.vue';
 
 defineProps<{
 	visible: boolean;
