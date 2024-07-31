@@ -15,7 +15,6 @@
 						</AccordionTab>
 					</Accordion>
 				</section>
-				{{ modelCardsToCompare }}
 				<!-- Model comparison table -->
 				<div class="p-datatable-wrapper">
 					<table class="p-datatable-table p-datatable-scrollable-table">
@@ -37,19 +36,16 @@
 							<tr v-for="field in fields" :key="field">
 								<td class="field">{{ formatField(field) }}</td>
 								<td v-for="(card, index) in modelCardsToCompare" :key="index">
-									<template v-if="typeof card[field] === 'object'">
+									<template v-if="!card?.[field]"> Not found </template>
+									<template v-else-if="typeof card[field] === 'object'">
 										<template v-for="(value, j) in Object.values(card[field])">
 											<template v-if="Array.isArray(value)">
 												{{ value.join(', ') }}
 											</template>
-											<div class="value" v-else :key="j">
-												{{ value }}
-											</div>
+											<div class="value" v-else :key="j">{{ value }}</div>
 										</template>
 									</template>
-									<template v-if="Array.isArray(card[field])">
-										{{ card[field].join(', ') }}
-									</template>
+									<template v-else-if="Array.isArray(card[field])">{{ card[field].join(', ') }}</template>
 								</td>
 							</tr>
 						</tbody>
@@ -177,6 +173,10 @@ const sampleAgentQuestions = [
 	'Compare the two models and visualize and display them.'
 ];
 
+const modelsToCompare = ref<Model[]>([]);
+const modelCardsToCompare = ref<any[]>([]);
+const fields = ref<string[]>([]);
+
 const isLoadingStructuralComparisons = ref(false);
 const structuralComparisons = ref<string[]>([]);
 const compareModelsTaskId = ref<string>('');
@@ -184,7 +184,6 @@ const compareModelsTaskOutput = ref<string>('');
 const code = ref(props.node.state.notebookHistory?.[0]?.code ?? '');
 const llmThoughts = ref<any[]>([]);
 const isKernelReady = ref(false);
-const modelsToCompare = ref<Model[]>([]);
 const contextLanguage = ref<string>('python3');
 
 const llmAnswer = computed(() => {
@@ -193,14 +192,6 @@ const llmAnswer = computed(() => {
 	const parsedValue = JSON.parse(str) as CompareModelsResponseType;
 	return parsedValue.response;
 });
-
-const modelCardsToCompare = computed(() => modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard));
-const fields = computed(
-	() =>
-		[
-			...new Set(modelCardsToCompare.value.reduce((acc, card) => card && acc && acc.concat(Object.keys(card)), []))
-		] as string[]
-);
 
 const initializeAceEditor = (editorInstance: any) => {
 	editor = editorInstance;
@@ -329,12 +320,10 @@ onMounted(async () => {
 	modelsToCompare.value = (await Promise.all(modelIds.map(async (modelId) => getModel(modelId)))).filter(
 		Boolean
 	) as Model[];
+	modelCardsToCompare.value = modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard);
+	fields.value = [...new Set(modelCardsToCompare.value.flatMap((card) => (card ? Object.keys(card) : [])))];
 
 	buildJupyterContext();
-
-	console.log(modelsToCompare.value);
-	console.log(modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard));
-
 	processCompareModels(modelIds, props.node.workflowId, props.node.id);
 });
 
