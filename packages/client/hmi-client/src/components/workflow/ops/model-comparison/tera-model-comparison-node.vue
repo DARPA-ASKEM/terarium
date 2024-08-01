@@ -1,6 +1,6 @@
 <template>
 	<section>
-		<tera-operator-placeholder :node="node"> Attach models to compare </tera-operator-placeholder>
+		<tera-operator-placeholder :node="node">Attach models to compare</tera-operator-placeholder>
 		<Button v-if="hasAtLeastTwoValues" label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 	</section>
 </template>

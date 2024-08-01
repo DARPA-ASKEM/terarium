@@ -46,7 +46,7 @@
 					</template>
 				</section>
 			</TeraResizablePanel>
-			<div v-else-if="model" ref="graphElement" class="graph-element preview" :style="{ pointerEvents: 'none' }" />
+			<div v-else-if="model" ref="graphElement" class="graph-element preview" />
 			<tera-stratified-matrix-modal
 				v-if="selectedTransitionId"
 				:id="selectedTransitionId"
@@ -242,6 +242,7 @@ main {
 	overflow: hidden;
 	border: none;
 	position: relative;
+	pointer-events: none;
 }
 
 .p-toolbar {
