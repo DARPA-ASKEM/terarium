@@ -6,7 +6,7 @@
 
 		<div class="button-row">
 			<label>Name of constraint</label>
-			<InputText
+			<tera-input-text
 				v-model="constraintName"
 				placeholder="Add constraint name"
 				@focusout="emit('update-self', { index: props.index, updatedConfig: updatedConfig })"
@@ -105,7 +105,7 @@
 
 <script setup lang="ts">
 import { watch, ref, computed } from 'vue';
-import InputText from 'primevue/inputtext';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import InputNumber from 'primevue/inputnumber';
 import MultiSelect from 'primevue/multiselect';
 import Dropdown from 'primevue/dropdown';

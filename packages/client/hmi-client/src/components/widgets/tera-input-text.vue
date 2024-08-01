@@ -1,5 +1,5 @@
 <template>
-	<div class="tera-input" :label="label" :title="title">
+	<div class="tera-input">
 		<label v-if="label" @click.self.stop="focusInput">{{ label }}</label>
 		<main :class="{ error: getErrorMessage }" @click.self.stop="focusInput">
 			<i v-if="icon" :class="icon" />
@@ -11,33 +11,35 @@
 				type="text"
 				:value="displayValue()"
 				@click.stop
-				@focus="isFocused = true"
+				@focus="onFocus"
 				@focusout="$emit('focusout', $event)"
 				@blur="onBlur"
 				@input="updateValue"
+				@keyup="$emit('keyup', $event)"
+				@keypress="$emit('keypress', $event)"
 			/>
 		</main>
+		<aside v-if="getErrorMessage"><i class="pi pi-exclamation-circle" /> {{ getErrorMessage }}</aside>
 	</div>
-	<aside v-if="getErrorMessage"><i class="pi pi-exclamation-circle" /> {{ getErrorMessage }}</aside>
 </template>
 
 <script setup lang="ts">
 import { numberToNist } from '@/utils/number';
 import { isString, toNumber, isNaN } from 'lodash';
-import { CSSProperties, computed, ref } from 'vue';
+import { CSSProperties, computed, onMounted, ref } from 'vue';
 
 const props = defineProps<{
 	modelValue: string | undefined;
 	label?: string;
-	title?: string;
 	icon?: string;
 	errorMessage?: string;
 	disabled?: boolean;
 	placeholder?: string;
 	autoWidth?: boolean;
+	autoFocus?: boolean;
 }>();
 
-const emit = defineEmits(['update:model-value', 'focusout']);
+const emit = defineEmits(['update:model-value', 'focusout', 'keyup', 'blur', 'focus', 'keypress']);
 const inputField = ref<HTMLInputElement | null>(null);
 const getDisabled = props.disabled ?? false;
 const isFocused = ref(false);
@@ -82,12 +84,21 @@ function formatValue(value: string | number | undefined) {
 const updateValue = (event: Event) => {
 	const target = event.target as HTMLInputElement;
 	const value = target.value;
-
-	console.log(value);
 	emit('update:model-value', value);
 };
 
-const onBlur = () => {
-	isFocused.value = false;
+const onFocus = (event) => {
+	isFocused.value = true;
+	emit('focus', event);
 };
+const onBlur = (event) => {
+	isFocused.value = false;
+	emit('blur', event);
+};
+
+onMounted(() => {
+	if (props.autoFocus) {
+		focusInput();
+	}
+});
 </script>

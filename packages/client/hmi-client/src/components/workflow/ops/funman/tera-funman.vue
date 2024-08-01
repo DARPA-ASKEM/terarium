@@ -38,7 +38,7 @@
 							<InputNumber v-model="knobs.numberOfSteps" />
 						</div>
 					</div>
-					<InputText :disabled="true" class="p-inputtext-sm timespan-list mb-2" v-model="requestStepListString" />
+					<tera-input-text :disabled="true" class="timespan-list mb-2" v-model="requestStepListString" />
 					<template v-if="showAdditionalOptions">
 						<div class="button-column">
 							<label>Tolerance</label>
@@ -146,7 +146,7 @@
 import _, { floor } from 'lodash';
 import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import InputNumber from 'primevue/inputnumber';
 import Slider from 'primevue/slider';
