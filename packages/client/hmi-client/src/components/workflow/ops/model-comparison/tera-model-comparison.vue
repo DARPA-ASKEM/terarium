@@ -323,8 +323,6 @@ onMounted(async () => {
 	modelCardsToCompare.value = modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard);
 	fields.value = [...new Set(modelCardsToCompare.value.flatMap((card) => (card ? Object.keys(card) : [])))];
 
-	console.log(modelsToCompare.value);
-
 	buildJupyterContext();
 	processCompareModels(modelIds, props.node.workflowId, props.node.id);
 });
