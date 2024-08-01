@@ -308,7 +308,7 @@ header.with-tabs {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	gap: var(--gap);
+	gap: var(--gap-2);
 }
 
 .close {
