@@ -35,26 +35,28 @@ await authStore.init();
 await clientEventServiceInit();
 
 // Set the hash value of the window.location to null
-// This is to prevent the Keycloak from redirecting to the hash value
-// after the authentication
+// This is to prevent the Keycloak from redirecting to the hash value after the authentication
 window.location.hash = '';
 
+// Set up the PrimeVue theme and plugins
+const primeVueConfig = {
+	theme: {
+		preset: Lara,
+		options: {
+			cssLayer: {
+				name: 'primevue',
+				order: 'tailwind-base, primevue, tailwind-utilities'
+			}
+		}
+	}
+};
+
+// Set up the Vue application with the plugins and components
 app
 	.use(router)
 	.use(ToastService)
 	.use(ConfirmationService)
-	.use(PrimeVue, {
-		// Default theme configuration
-		theme: {
-			preset: Lara,
-			options: {
-				cssLayer: {
-					name: 'primevue',
-					order: 'tailwind-base, primevue, tailwind-utilities'
-				}
-			}
-		}
-	})
+	.use(PrimeVue, primeVueConfig)
 	.use(VueKatex)
 	.directive('tooltip', Tooltip)
 	.directive('focus', {
