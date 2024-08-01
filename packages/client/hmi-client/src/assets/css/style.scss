@@ -1,15 +1,7 @@
 /* Reset */
 @import '@assets/css/reset.css';
-
-/**
- * PrimeVue
- * https://primefaces.org/primevue/setup
- */
-//@import '@node_modules/primevue/resources/primevue.min.css';
 @import '@node_modules/primeicons/primeicons.css';
-
-//@import '@assets/css/theme/theme.scss';
-
+@import '@assets/css/theme/theme.scss';
 
 /* Setup MathLive Fonts */
 @import '@node_modules/mathlive/dist/mathlive-fonts.css';
@@ -23,7 +15,7 @@
 	background-color: var(--surface-ground);
 	color: var(--text-color-primary);
 	color-scheme: light;
-	font-family: var(--font-family);
+	font-family: var(--font-family), sans-serif;
 	font-size: var(--font-size);
 	font-style: normal;
 	font-synthesis: none;
