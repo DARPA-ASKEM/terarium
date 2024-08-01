@@ -68,6 +68,7 @@
 				<tera-operator
 					ref="teraOperatorRefs"
 					:node="node"
+					:nodeMenu="nodeMenu"
 					@resize="resizeHandler"
 					@port-selected="(port: WorkflowPort, direction: WorkflowDirection) => createNewEdge(node, port, direction)"
 					@port-mouseover="onPortMouseover"
@@ -76,6 +77,7 @@
 					@duplicate-branch="duplicateBranch(node.id)"
 					@remove-edges="removeEdges"
 					@update-state="(event: any) => updateWorkflowNodeState(node, event)"
+					@menu-selection="onMenuSelection"
 				>
 					<template #body>
 						<component
@@ -236,6 +238,42 @@ registry.registerOp(InterventionPolicyOp);
 const props = defineProps<{
 	assetId: string;
 }>();
+
+const outputOptions = ref(new Map<string, Array<string>>());
+const inputOptions = ref(new Map<string, Array<string>>());
+const nodeMenu = ref(new Map<string, Array<string>>());
+
+function setOutputOptions(type, key, options: Map<string, Array<string>>) {
+	if (options.has(type)) {
+		const list = options.get(type) ?? [];
+		list.push(key);
+		options.set(type, list);
+	} else {
+		options.set(type, [key]);
+	}
+}
+
+function setPortOptions(type, key, options: Map<string, Array<string>>) {
+	if (options.has(key)) {
+		const list = options.get(key) ?? [];
+		list.push(type);
+		options.set(key, list);
+	} else {
+		options.set(key, [type]);
+	}
+}
+
+registry.nodeMap.forEach((value, key) => {
+	const inputs: Array<any> = registry.getOperation(key)?.inputs ?? [];
+	const output: Array<any> = registry.getOperation(key)?.outputs ?? [];
+
+	inputs.forEach((port) => setOutputOptions(port.type, key, inputOptions.value));
+	output.forEach((port) => setPortOptions(port.type, key, outputOptions.value));
+});
+
+outputOptions.value.forEach((value, key) => {
+	nodeMenu.value.set(key, inputOptions.value.get(value[0]) ?? []);
+});
 
 const route = useRoute();
 const router = useRouter();
@@ -438,6 +476,17 @@ const addOperatorToWorkflow: Function =
 		});
 		workflowDirty = true;
 	};
+
+function onMenuSelection(newNode) {
+	const name = newNode.selection;
+	const operation = registry.getOperation(newNode.selection);
+	const node = registry.getNode(newNode.selection);
+	const drilldown = registry.getDrilldown(newNode.selection);
+
+	if (name && operation && node && drilldown) {
+		addOperatorToWorkflow({ name, operation, node, drilldown })();
+	}
+}
 
 // Menu categories and list items are in order of appearance for separators to work
 const contextMenuItems: MenuItem[] = [

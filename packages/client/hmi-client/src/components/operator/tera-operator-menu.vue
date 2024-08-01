@@ -9,35 +9,44 @@
 		aria-controls="overlay_menu"
 		severity="secondary"
 	/>
-	<Menu ref="menu" id="overlay_menu" :model="menuItems" :popup="true" />
+	<Menu
+		ref="menu"
+		id="overlay_menu"
+		:model="menuItems"
+		:popup="true"
+		@mouseenter="emit('menu-mouseenter')"
+		@mouseleave="emit('menu-mouseleave')"
+		@focus="() => {}"
+		@blur="() => {}"
+	/>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import Menu from 'primevue/menu';
 import Button from 'primevue/button';
 
-const isMenuShowing = ref<boolean>(false);
+const props = defineProps<{
+	nodeMenu: Array<string>;
+}>();
 
+const emit = defineEmits(['menu-mouseenter', 'menu-mouseleave', 'menu-selection']);
+
+const isMenuShowing = ref<boolean>(false);
 const menu = ref();
-const menuItems = ref([
-	{
-		// label: "Options",
-		items: [
-			{
-				label: 'Configure Model',
-				command() {}
-			},
-			{
-				label: 'Stratify Model',
-				command() {}
-			},
-			{
-				label: 'Edit Model',
-				command() {}
+const menuItems = ref();
+
+onMounted(() => {
+	const options: Array<{}> = [];
+	props.nodeMenu.forEach((node) =>
+		options.push({
+			label: node,
+			command() {
+				emit('menu-selection', node);
 			}
-		]
-	}
-]);
+		})
+	);
+	menuItems.value = [{ items: options }];
+});
 
 function showMenu(event) {
 	menu.value.show(event);

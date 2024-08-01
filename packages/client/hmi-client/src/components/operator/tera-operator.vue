@@ -43,12 +43,16 @@
 	</main>
 	<tera-operator-menu
 		v-if="isMenuFocused"
+		:nodeMenu="nodeMenu.get(node.operationType)"
 		:style="{
 			top: '-30px',
 			left: `${operatorPosition.width + 20}px`
 		}"
 		@mouseenter="showOutputButton(PortType.Output)"
 		@mouseleave="hideOutputButton"
+		@menu-mouseenter="showOutputButton(PortType.Output)"
+		@menu-mouseleave="hideOutputButton"
+		@menu-selection="(selection) => onSelection(selection)"
 		@focus="() => {}"
 		@blur="() => {}"
 	/>
@@ -71,12 +75,14 @@ import TeraOperatorMenu from '@/components/operator/tera-operator-menu.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
+	nodeMenu: any;
 }>();
 
 const emit = defineEmits([
 	'port-selected',
 	'port-mouseover',
 	'port-mouseleave',
+	'menu-selection',
 	'remove-operator',
 	'remove-edges',
 	'resize',
@@ -141,6 +147,10 @@ function mouseoverPort(event: MouseEvent, portType: PortType) {
 function mouseleavePort() {
 	menuButtonTimeoutId.value = setTimeout(hideMenuButton, 1000);
 	emit('port-mouseleave');
+}
+
+function onSelection(selection) {
+	emit('menu-selection', { selection, position: operatorPosition.value });
 }
 
 function resizeHandler() {
