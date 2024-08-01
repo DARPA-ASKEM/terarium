@@ -273,9 +273,7 @@ onMounted(async () => {
 });
 
 async function subscribeToExtraction(event: ClientEvent<ExtractionStatusUpdate>) {
-	console.log(event.data.message);
 	if (!event.data || event.data.data.documentId !== props.assetId) return;
-
 	const status = event.data.state;
 	// FIXME: adding the 'dispatching' check since there seems to be an issue with the status of the extractions.
 	if (status === ProgressState.Complete || event.data.message.includes('Dispatching')) {
@@ -287,6 +285,7 @@ onUnmounted(async () => {
 	await unsubscribe(ClientEventType.ExtractionPdf, subscribeToExtraction);
 });
 </script>
+
 <style scoped>
 .extracted-item {
 	display: flex;
