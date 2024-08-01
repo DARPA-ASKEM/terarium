@@ -36,11 +36,22 @@
 		<tera-operator-outputs
 			:outputs="node.outputs"
 			@port-mouseover="(event) => mouseoverPort(event, PortType.Output)"
-			@port-mouseleave="emit('port-mouseleave')"
+			@port-mouseleave="mouseleavePort"
 			@port-selected="(input: WorkflowPort, direction: WorkflowDirection) => emit('port-selected', input, direction)"
 			@remove-edges="(portId: string) => emit('remove-edges', portId)"
 		/>
 	</main>
+	<tera-operator-menu
+		v-if="isMenuFocused"
+		:style="{
+			top: '-30px',
+			left: `${operatorPosition.width + 20}px`
+		}"
+		@mouseenter="showOutputButton(PortType.Output)"
+		@mouseleave="hideOutputButton"
+		@focus="() => {}"
+		@blur="() => {}"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -56,6 +67,7 @@ import TeraOperatorHeader from '@/components/operator/tera-operator-header.vue';
 import TeraOperatorInputs from '@/components/operator/tera-operator-inputs.vue';
 import TeraOperatorOutputs from '@/components/operator/tera-operator-outputs.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import TeraOperatorMenu from '@/components/operator/tera-operator-menu.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
@@ -78,8 +90,12 @@ enum PortType {
 }
 
 const operator = ref<HTMLElement>();
+const operatorPosition = ref();
 const interactionStatus = ref(0); // States will be added to it thorugh bitmasking
 const annotationRef = ref<typeof TeraOperatorAnnotation | null>(null);
+
+const isMenuFocused = ref<boolean>(false);
+const menuButtonTimeoutId = ref<NodeJS.Timeout | null>(null);
 
 let resizeObserver: ResizeObserver | null = null;
 
@@ -91,7 +107,25 @@ function openInNewWindow() {
 	floatingWindow.open(url);
 }
 
+function hideMenuButton() {
+	isMenuFocused.value = false;
+}
+
+function showOutputButton(portType: PortType) {
+	if (menuButtonTimeoutId.value) {
+		clearTimeout(menuButtonTimeoutId.value);
+	}
+	if (portType) {
+		isMenuFocused.value = true;
+	}
+}
+
+function hideOutputButton() {
+	menuButtonTimeoutId.value = setTimeout(hideMenuButton, 1000);
+}
+
 function mouseoverPort(event: MouseEvent, portType: PortType) {
+	showOutputButton(portType);
 	const el = event.target as HTMLElement;
 	const portElement = (el.querySelector('.port') as HTMLElement) ?? el;
 	const nodePosition: Position = { x: props.node.x, y: props.node.y };
@@ -104,6 +138,11 @@ function mouseoverPort(event: MouseEvent, portType: PortType) {
 	emit('port-mouseover', portPosition);
 }
 
+function mouseleavePort() {
+	menuButtonTimeoutId.value = setTimeout(hideMenuButton, 1000);
+	emit('port-mouseleave');
+}
+
 function resizeHandler() {
 	emit('resize', props.node);
 }
@@ -112,6 +151,7 @@ onMounted(() => {
 	if (operator.value) {
 		resizeObserver = new ResizeObserver(resizeHandler);
 		resizeObserver.observe(operator.value);
+		operatorPosition.value = operator.value.getBoundingClientRect();
 	}
 });
 
