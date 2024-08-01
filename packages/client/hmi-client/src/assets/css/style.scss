@@ -6,20 +6,11 @@
  * PrimeVue
  * https://primefaces.org/primevue/setup
  */
-@import '@node_modules/primeflex/primeflex.min.css';
-@import '@node_modules/primevue/resources/primevue.min.css';
+//@import '@node_modules/primevue/resources/primevue.min.css';
 @import '@node_modules/primeicons/primeicons.css';
 
-/*
- * Terarium PrimeVue Theme
- * https://www.primefaces.org/designer/primevue
- */
-@import '@assets/css/theme/theme.scss';
+//@import '@assets/css/theme/theme.scss';
 
-/*
- * Facets Overrides
- */
-@import '@assets/css/facets-overrides';
 
 /* Setup MathLive Fonts */
 @import '@node_modules/mathlive/dist/mathlive-fonts.css';
@@ -88,7 +79,7 @@ a {
 	flex: 0 0 4rem;
 	padding: 0.5rem 0;
 	text-align: left;
-}  
+}
 .jp-Collapser {
 	flex: 0 0 0;
 }
@@ -101,7 +92,7 @@ a {
 }
 .jp-OutputPrompt {
   color: var(--primary-color-dark);
-}	
+}
 .jp-InputArea-editor {
 	border-radius: 3px;
 }

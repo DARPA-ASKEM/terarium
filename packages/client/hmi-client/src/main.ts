@@ -3,6 +3,7 @@ import { RouteLocationNormalized } from 'vue-router';
 import { createPinia } from 'pinia';
 import ConfirmationService from 'primevue/confirmationservice';
 import PrimeVue from 'primevue/config';
+import Lara from '@primevue/themes/lara';
 import ToastService from 'primevue/toastservice';
 import Tooltip from 'primevue/tooltip';
 import VueFeather from 'vue-feather';
@@ -42,7 +43,18 @@ app
 	.use(router)
 	.use(ToastService)
 	.use(ConfirmationService)
-	.use(PrimeVue, { ripple: true })
+	.use(PrimeVue, {
+		// Default theme configuration
+		theme: {
+			preset: Lara,
+			options: {
+				cssLayer: {
+					name: 'primevue',
+					order: 'tailwind-base, primevue, tailwind-utilities'
+				}
+			}
+		}
+	})
 	.use(VueKatex)
 	.directive('tooltip', Tooltip)
 	.directive('focus', {
