@@ -26,7 +26,7 @@
 				class="p-button-icon-only p-button-text p-button-rounded"
 				@click="toggleOptionsMenu"
 			/>
-			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" :pt="optionsMenuPt" />
 		</template>
 		<Accordion v-if="view === DocumentView.EXTRACTIONS" :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]">
 			<!-- Abstract -->
@@ -216,6 +216,11 @@ const optionsMenuItems = ref([
 	},
 	{ icon: 'pi pi-trash', label: 'Remove', command: () => emit('remove') }
 ]);
+const optionsMenuPt = {
+	submenu: {
+		class: 'max-h-30rem overflow-y-scroll'
+	}
+};
 
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
