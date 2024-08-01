@@ -13,6 +13,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -21,6 +22,7 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -37,13 +39,12 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseStatus;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractionAssetType;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
@@ -64,6 +65,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @Transactional
 public class DocumentController {
 
+	final Config config;
 	final ReBACService reBACService;
 	final CurrentUserService currentUserService;
 	final Messages messages;
@@ -380,7 +382,7 @@ public class DocumentController {
 	 * Uploads an artifact inside the entity to TDS via a presigned URL
 	 *
 	 * @param documentId The ID of the document to upload to
-	 * @param fileName The name of the file to upload
+	 * @param fileName   The name of the file to upload
 	 * @param fileEntity The entity containing the file to upload
 	 * @return A response containing the status of the upload
 	 */
@@ -453,7 +455,10 @@ public class DocumentController {
 		}
 	}
 
-	/** Downloads a file from GitHub given the path and owner name, then uploads it to the project. */
+	/**
+	 * Downloads a file from GitHub given the path and owner name, then uploads it
+	 * to the project.
+	 */
 	@PutMapping("/{documentId}/upload-document-from-github")
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a document from github")
@@ -516,7 +521,14 @@ public class DocumentController {
 	) {
 		try {
 			final Optional<byte[]> bytes = documentAssetService.fetchFileAsBytes(id, filename);
-			return bytes.map(ResponseEntity::ok).orElse(null);
+			if (bytes.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			final CacheControl cacheControl = CacheControl.maxAge(
+				config.getCacheHeadersMaxAge(),
+				TimeUnit.SECONDS
+			).cachePublic();
+			return ResponseEntity.ok().cacheControl(cacheControl).body(bytes.get());
 		} catch (final Exception e) {
 			final String error = "Unable to download document";
 			log.error(error, e);
@@ -564,7 +576,7 @@ public class DocumentController {
 	 * Post Images to Equations Unified service to get an AMR
 	 *
 	 * @param documentId document id
-	 * @param filename filename of the image
+	 * @param filename   filename of the image
 	 * @return LaTeX representation of the equation
 	 */
 	@GetMapping("/{id}/image-to-equation")
@@ -617,11 +629,12 @@ public class DocumentController {
 	}
 
 	/**
-	 * Uploads a PDF file to a document asset and then fires and forgets the extraction
+	 * Uploads a PDF file to a document asset and then fires and forgets the
+	 * extraction
 	 *
-	 * @param doi DOI of the document
+	 * @param doi      DOI of the document
 	 * @param filename filename of the PDF
-	 * @param docId document id
+	 * @param docId    document id
 	 * @return extraction job id
 	 */
 	private void uploadPDFFileToDocumentThenExtract(

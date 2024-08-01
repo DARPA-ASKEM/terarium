@@ -31,7 +31,6 @@ apply plugin: 'idea'
 
 group = 'software.uncharted'
 version = '1.0.0-SNAPSHOT'
-sourceCompatibility = '17'
 
 configurations {
     compileOnly {

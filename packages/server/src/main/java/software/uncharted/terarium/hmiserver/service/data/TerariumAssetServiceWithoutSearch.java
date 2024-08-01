@@ -289,9 +289,6 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	public Optional<byte[]> fetchFileAsBytes(final UUID uuid, final String filename) throws IOException {
 		final String bucket = config.getFileStorageS3BucketName();
 		final String key = getPath(uuid, filename);
-
-		log.info("READING FILE: {}", key);
-
 		try {
 			final ResponseInputStream<GetObjectResponse> stream = s3ClientService.getS3Service().getObject(bucket, key);
 			return Optional.of(stream.readAllBytes());
