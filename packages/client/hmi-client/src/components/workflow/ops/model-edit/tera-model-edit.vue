@@ -63,7 +63,7 @@
 					:value="executeResponse.value"
 					:traceback="executeResponse.traceback"
 				/>
-				<tera-model-diagram v-else-if="amr" :model="amr" :is-editable="true" />
+				<tera-model-diagram v-else-if="amr" :model="amr" />
 				<div v-else>
 					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
 				</div>

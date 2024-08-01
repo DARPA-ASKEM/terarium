@@ -9,7 +9,11 @@
 				:options="viewOptions"
 			/>
 			<div class="container" v-if="model">
-				<tera-model-diagram v-if="view === ModelNodeView.Diagram" :model="model" :is-editable="false" is-preview />
+				<tera-model-diagram
+					v-if="view === ModelNodeView.Diagram"
+					:model="model"
+					:feature-config="{ isPreview: true }"
+				/>
 				<tera-model-equation v-else-if="view === ModelNodeView.Equation" :model="model" :is-editable="false" />
 			</div>
 			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
