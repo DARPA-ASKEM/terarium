@@ -1,7 +1,3 @@
-<!--
-  -- This template is a copy of tera-external-publication with some elements stripped out.
-  -- TODO: merge the concept of external publication and document asset.
-  -->
 <template>
 	<tera-asset
 		:id="assetId"
@@ -106,11 +102,6 @@
 				</ul>
 			</AccordionTab>
 		</Accordion>
-
-		<!--
-		  -- Adding this here for now...
-		  -- until we implement the process manager
-		  -->
 		<p
 			class="pl-3"
 			v-if="
