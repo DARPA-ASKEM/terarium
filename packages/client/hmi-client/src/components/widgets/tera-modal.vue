@@ -153,7 +153,7 @@ footer {
 	margin-bottom: 0.5em;
 }
 
-.content:deep(input),
+.content:deep(.tera-input),
 .content:deep(textarea) {
 	display: block;
 	margin-bottom: 1rem;

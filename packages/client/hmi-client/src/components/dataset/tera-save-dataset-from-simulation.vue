@@ -9,7 +9,7 @@
 		<div class="dialog-content">
 			<div class="flex flex-column mt-2 gap-2">
 				<label for="saveNameInput">What do you want to call it?</label>
-				<InputText v-model="saveAsName" id="saveNameInput" placeholder="Enter name" />
+				<tera-input-text v-model="saveAsName" id="saveNameInput" placeholder="Enter name" />
 			</div>
 		</div>
 		<template #footer>
@@ -26,7 +26,7 @@ import { computed, ref, watch } from 'vue';
 import { saveDataset } from '@/services/dataset';
 import { useProjects } from '@/composables/project';
 import Dialog from 'primevue/dialog';
-import InputText from 'primevue/inputtext';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Button from 'primevue/button';
 import { logger } from '@/utils/logger';
 

@@ -1,7 +1,7 @@
 <template>
 	<SelectButton class="p-button-xsm" :model-value="view" :options="viewOptions" @change="handleChange" />
 	<div class="container">
-		<tera-model-diagram v-if="view === View.Diagram" :model="model" :is-editable="false" is-preview />
+		<tera-model-diagram v-if="view === View.Diagram" :model="model" :feature-config="{ isPreview: true }" />
 		<tera-model-equation v-else-if="view === View.Equation" :model="model" :is-editable="false" />
 	</div>
 </template>

@@ -11,13 +11,13 @@
 		@tab-change="(e) => (selectedTabIndex = e.index)"
 	>
 		<template #name-input>
-			<InputText
+			<tera-input-text
 				v-if="isRenamingDataset"
 				v-model.lazy="newDatasetName"
 				placeholder="Dataset name"
 				@keyup.enter="updateDatasetName"
 				@keyup.esc="updateDatasetName"
-				v-focus
+				auto-focus
 			/>
 			<div v-if="isRenamingDataset" class="flex flex-nowrap ml-1 mr-3">
 				<Button icon="pi pi-check" rounded text @click="updateDatasetName" />
@@ -70,7 +70,7 @@ import type { FeatureConfig } from '@/types/common';
 import type { Source } from '@/types/search';
 import { DatasetSource } from '@/types/search';
 import { useProjects } from '@/composables/project';
-import InputText from 'primevue/inputtext';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import ContextMenu from 'primevue/contextmenu';
 import Button from 'primevue/button';
 import { logger } from '@/utils/logger';

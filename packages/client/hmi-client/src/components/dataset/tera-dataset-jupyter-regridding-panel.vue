@@ -76,7 +76,7 @@
 				<span class="p-button-text">Save as</span>
 			</Button>
 			<span v-if="showSaveInput" style="padding-left: 1em; padding-right: 2em">
-				<InputText v-model="saveAsName" class="post-fix" placeholder="New dataset name" />
+				<tera-input-text v-model="saveAsName" class="post-fix" placeholder="New dataset name" />
 				<i class="pi pi-times i" :class="{ clear: hasValidDatasetName }" @click="saveAsName = ''"></i>
 				<i
 					class="pi pi-check i"
@@ -101,7 +101,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
+import teraInputText from '@/components/widgets/tera-input-text.vue';
 import { useToastService } from '@/services/toast';
 import { IModel } from '@jupyterlab/services/lib/session/session';
 import type { NotebookSession } from '@/types/Types';
@@ -137,7 +137,7 @@ const autoExpandPreview = ref(<boolean>true);
 const actionTarget = ref('df');
 const contextInfo: any = ref({});
 const showSaveInput = ref(<boolean>false);
-const saveAsName = ref(<string | null>'');
+const saveAsName = ref('');
 const toast = useToastService();
 
 const updateKernelStatus = (statusString: string) => {

@@ -94,7 +94,7 @@
 					<Textarea v-else class="context-item" placeholder="Enter a description" v-model="newDescription" />
 				</AccordionTab>
 				<AccordionTab header="Diagram">
-					<tera-model-diagram v-if="model" :model="model" :is-editable="false" />
+					<tera-model-diagram v-if="model" :model="model" />
 				</AccordionTab>
 			</Accordion>
 			<Message v-if="model && isModelMissingMetadata(model)" class="m-2">
@@ -136,12 +136,7 @@
 							@question-asked="llmThoughts = []"
 						>
 							<template #toolbar-right-side>
-								<InputText
-									v-model="knobs.transientModelConfig.name"
-									placeholder="Configuration Name"
-									type="text"
-									class="input-small"
-								/>
+								<tera-input-text v-model="knobs.transientModelConfig.name" placeholder="Configuration Name" />
 								<Button icon="pi pi-play" label="Run" @click="runFromCode" />
 							</template>
 						</tera-notebook-jupyter-input>
@@ -212,7 +207,7 @@ import { cloneDeep, isEmpty, orderBy } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Textarea from 'primevue/textarea';
 import { computed, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
@@ -254,7 +249,6 @@ import Message from 'primevue/message';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { useConfirm } from 'primevue/useconfirm';
-import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Dropdown from 'primevue/dropdown';
 import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
 import TeraModelConfigurationItem from './tera-model-configuration-item.vue';

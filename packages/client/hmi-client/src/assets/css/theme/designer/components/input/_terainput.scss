@@ -47,7 +47,7 @@
 		}
 	}
 
-	+ aside {
+	& > aside {
 		color: var(--error-message-color);
 		font-size: var(--font-caption);
 		word-wrap: break-word;
