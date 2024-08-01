@@ -90,7 +90,7 @@
 						:traceback="executeResponse.traceback"
 					/>
 					<template v-else-if="stratifiedAmr">
-						<tera-model-diagram :model="stratifiedAmr" :is-editable="false" />
+						<tera-model-diagram :model="stratifiedAmr" />
 						<tera-model-parts :model="stratifiedAmr" :feature-config="{ isPreview: true }" />
 					</template>
 					<div v-else class="flex flex-column h-full justify-content-center">
