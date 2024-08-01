@@ -217,20 +217,21 @@
         box-shadow: $outlinedSecondaryBoxShadow;
 
         &:enabled:hover {
-            background: rgba($secondaryButtonBg, $textButtonHoverBgOpacity);
-            color: $outlinedSecondaryButtonTextColor;
-            box-shadow: $outlinedSecondaryBoxShadow;
+					background: $outlinedSecondaryButtonHoverBg;
+					color: $outlinedSecondaryButtonTextColor;
+					box-shadow: $outlinedSecondaryBoxShadow;
         }
 
         &:enabled:active {
-            background: rgba($secondaryButtonBg, $textButtonActiveBgOpacity);
-            color: $outlinedSecondaryButtonTextColor;
-            box-shadow: $outlinedSecondaryBoxShadow;
+					background: $outlinedSecondaryButtonActiveBg;
+					color: $outlinedSecondaryButtonTextColor;
+					box-shadow: $outlinedSecondaryBoxShadow;
         }
 
         &:enabled:focus {
-            color: $outlinedSecondaryButtonTextColor;
-            box-shadow: $outlinedSecondaryBoxShadow;
+					background: $outlinedSecondaryButtonActiveBg;
+					color: $outlinedSecondaryButtonTextColor;
+					box-shadow: $outlinedSecondaryBoxShadow;
         }
     }
 
