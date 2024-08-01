@@ -1,7 +1,14 @@
 <template>
 	<aside class="overlay-container">
-		<Button icon="pi pi-chevron-left" outlined severity="secondary" />
-		<section :class="{ popover: props.popover }">
+		<Button
+			:class="{ 'no-connections': isEmpty(connectedInputs) }"
+			icon="pi pi-chevron-left"
+			outlined
+			severity="secondary"
+			@click="toggle($event, inputMenu)"
+		/>
+		<Menu ref="inputMenu" popup />
+		<section :class="{ popover: popover }">
 			<tera-drilldown-header
 				:active-index="selectedViewIndex"
 				:views="views"
@@ -31,8 +38,8 @@
 							@update:selection="(e) => emit('update:selection', e)"
 						/>
 						<section v-if="!isEmpty(menuItems)" class="mx-2">
-							<Button icon="pi pi-ellipsis-v" rounded text @click.stop="toggle" />
-							<Menu ref="menu" :model="menuItems" :popup="true" />
+							<Button icon="pi pi-ellipsis-v" rounded text @click.stop="toggle($event, ellipsisMenu)" />
+							<Menu ref="ellipsisMenu" :model="menuItems" popup />
 						</section>
 					</template>
 				</template>
@@ -61,8 +68,14 @@
 				<slot name="footer" />
 			</footer>
 		</section>
-		<!--visibility-->
-		<Button icon="pi pi-chevron-right" outlined severity="secondary" />
+		<Button
+			:class="{ 'no-connections': isEmpty(connectedOutputs) }"
+			icon="pi pi-chevron-right"
+			outlined
+			severity="secondary"
+			@click="toggle($event, outputMenu)"
+		/>
+		<Menu ref="outputMenu" popup />
 	</aside>
 </template>
 
@@ -72,8 +85,8 @@ import { computed, ref, useSlots } from 'vue';
 import Button from 'primevue/button';
 import Chip from 'primevue/chip';
 import Menu from 'primevue/menu';
-import { TabViewChangeEvent } from 'primevue/tabview';
-import { WorkflowNode, WorkflowOperationTypes } from '@/types/workflow';
+import type { TabViewChangeEvent } from 'primevue/tabview';
+import { type WorkflowNode, WorkflowOperationTypes, WorkflowPortStatus } from '@/types/workflow';
 import TeraDrilldownHeader from '@/components/drilldown/tera-drilldown-header.vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
@@ -89,8 +102,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['on-close-clicked', 'update-state', 'update:selection', 'update-output-port']);
+
 const slots = useSlots();
-const menu = ref();
 /**
  * This will retrieve and filter all top level components in the default slot if they have the tabName prop.
  */
@@ -100,7 +113,6 @@ const tabs = computed(() => {
 			// if there is only 1 component we don't need to know the tab name and we can render it.
 			return slots.default();
 		}
-
 		return slots.default().filter((vnode) => vnode.props?.tabName);
 	}
 	return [];
@@ -116,12 +128,8 @@ const handleTabChange = (event: TabViewChangeEvent) => {
 const selectedTab = computed(() => views.value[selectedViewIndex.value]);
 defineExpose({ selectedTab });
 
-const selectedOutputId = computed(() => {
-	if (props.node.active) {
-		return props.node.active;
-	}
-	return null;
-});
+const selectedOutputId = computed(() => props.node.active ?? null);
+
 const outputOptions = computed(() => {
 	// We do not display output selection for Asset operators
 	if (
@@ -145,9 +153,21 @@ const outputOptions = computed(() => {
 	];
 });
 
-const toggle = (event) => {
-	menu.value.toggle(event);
-};
+const ellipsisMenu = ref();
+const inputMenu = ref();
+const outputMenu = ref();
+const toggle = (event, menu) => menu.toggle(event);
+
+const connectedInputs = computed(() =>
+	props.node.inputs.filter((input) => input.status === WorkflowPortStatus.CONNECTED)
+);
+
+const connectedOutputs = computed(() =>
+	props.node.outputs.filter((output) => output.status === WorkflowPortStatus.CONNECTED)
+);
+
+// show operator, if operator is just an asset just show the asset name
+console.log(props.node.inputs, props.node.outputs);
 </script>
 
 <style scoped>
@@ -187,6 +207,10 @@ const toggle = (event) => {
 		border-radius: var(--border-radius-big);
 		align-self: center;
 	}
+}
+
+.no-connections {
+	visibility: hidden;
 }
 
 footer {
