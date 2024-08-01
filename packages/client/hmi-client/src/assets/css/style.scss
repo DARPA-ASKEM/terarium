@@ -14,6 +14,7 @@
  * Terarium PrimeVue Theme
  * https://www.primefaces.org/designer/primevue
  */
+@import '@node_modules/primevue/resources/themes/lara-light-green/theme.css';
 @import '@assets/css/theme/theme.scss';
 
 /*
@@ -33,7 +34,7 @@
 	background-color: var(--surface-ground);
 	color: var(--text-color-primary);
 	color-scheme: light;
-	font-family: var(--font-family);
+	font-family: var(--font-family), sans-serif;
 	font-size: var(--font-size);
 	font-style: normal;
 	font-synthesis: none;
@@ -88,7 +89,7 @@ a {
 	flex: 0 0 4rem;
 	padding: 0.5rem 0;
 	text-align: left;
-}  
+}
 .jp-Collapser {
 	flex: 0 0 0;
 }
@@ -101,7 +102,7 @@ a {
 }
 .jp-OutputPrompt {
   color: var(--primary-color-dark);
-}	
+}
 .jp-InputArea-editor {
 	border-radius: 3px;
 }
