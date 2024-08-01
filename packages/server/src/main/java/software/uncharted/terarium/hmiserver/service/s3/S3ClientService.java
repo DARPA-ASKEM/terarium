@@ -120,7 +120,7 @@ public class S3ClientService {
 		if (getS3Client(id) != null) {
 			s3Services.putIfAbsent(
 				id,
-				new S3Service(getS3Client(id), getS3Presigner(id), config.getMultipartFileBufferSize())
+				new S3Service(config, getS3Client(id), getS3Presigner(id), config.getMultipartFileBufferSize())
 			);
 			return s3Services.get(id);
 		}
@@ -131,7 +131,8 @@ public class S3ClientService {
 	 * Initialize an {@link S3Client} by id, and store it in {@link #s3Clients}
 	 *
 	 * @param id The id of the client to initialize
-	 * @return The initialized client, or null if the client could not be initialized
+	 * @return The initialized client, or null if the client could not be
+	 *         initialized
 	 */
 	S3Client initializeS3Client(final String id) {
 		if (config.getAmazon().getS3().containsKey(id)) {
