@@ -90,7 +90,7 @@
 								/>
 								<div v-else class="mt-2" />
 								<span>{{ getEquationErrorLabel(equation) }}</span>
-								<InputText
+								<tera-input-text
 									v-model="equation.asset.text"
 									placeholder="Add an expression with LaTeX"
 									@update:model-value="emit('update-state', clonedState)"
@@ -147,7 +147,7 @@ import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeho
 import { useProjects } from '@/composables/project';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Textarea from 'primevue/textarea';
-import InputText from 'primevue/inputtext';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { DrilldownTabs } from '@/types/common';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
