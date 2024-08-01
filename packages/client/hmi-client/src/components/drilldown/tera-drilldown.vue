@@ -1,5 +1,6 @@
 <template>
 	<aside class="overlay-container">
+		<Button icon="pi pi-chevron-left" outlined severity="secondary" />
 		<section :class="{ popover: props.popover }">
 			<tera-drilldown-header
 				:active-index="selectedViewIndex"
@@ -60,6 +61,8 @@
 				<slot name="footer" />
 			</footer>
 		</section>
+		<!--visibility-->
+		<Button icon="pi pi-chevron-right" outlined severity="secondary" />
 	</aside>
 </template>
 
@@ -155,24 +158,34 @@ const toggle = (event) => {
 	width: 100%;
 	height: 100%;
 	background-color: rgba(0, 0, 0, 0.32);
-}
-
-/* There is a performance issue with these large modals.
-When scrolling it takes time to render the content, particularly heavy content such as the LLM integrations. This will show
-us the main application behind the modal temporarily as content loads when scrolling which is a bit of an eye sore.
-An extra div here is used to alleviate the impact of these issues a little by allowing us to see the overlay container rather
-than the main application behind the modal when these render issues come, however this is still an issue regardless.
-*/
-.overlay-container > section {
-	height: calc(100% - 1rem);
-	margin: 1rem 1.5rem 0rem 1.5rem;
-	background: var(--surface-0);
-	border-radius: var(--modal-border-radius) var(--modal-border-radius) 0 0;
+	padding: var(--gap-4) var(--gap-1);
+	padding-bottom: 0;
 	display: flex;
-	flex-direction: column;
-	overflow: hidden;
-	&.popover {
-		margin: 3rem 2.5rem 0rem 2.5rem;
+	gap: var(--gap-1);
+
+	/* There is a performance issue with these large modals.
+	When scrolling it takes time to render the content, particularly heavy content such as the LLM integrations. This will show
+	us the main application behind the modal temporarily as content loads when scrolling which is a bit of an eye sore.
+	An extra div here is used to alleviate the impact of these issues a little by allowing us to see the overlay container rather
+	than the main application behind the modal when these render issues come, however this is still an issue regardless.
+	*/
+	& > section {
+		flex: 1;
+		background: var(--surface-0);
+		border-radius: var(--modal-border-radius) var(--modal-border-radius) 0 0;
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+		&.popover {
+			margin: 3rem 2.5rem 0rem 2.5rem;
+		}
+	}
+
+	& > button {
+		height: 4rem;
+		width: 1.5rem;
+		border-radius: var(--border-radius-big);
+		align-self: center;
 	}
 }
 
