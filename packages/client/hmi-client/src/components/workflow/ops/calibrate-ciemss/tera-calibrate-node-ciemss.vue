@@ -53,8 +53,8 @@ import {
 	SimulationRequest,
 	Model,
 	ModelConfiguration,
-	ParameterSemantic,
-	SemanticType
+	SemanticType,
+	InferredParameterSemantic
 } from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
 import { createForecastChart } from '@/services/charts';
@@ -371,14 +371,14 @@ watch(
 				}
 			});
 
-			const inferredParameters: ParameterSemantic[] = [];
+			const inferredParameters: InferredParameterSemantic[] = [];
 			Object.keys(parameterTable).forEach((parameterId) => {
 				const mean = stats.mean(parameterTable[parameterId]);
 				const stddev = stats.stddev(parameterTable[parameterId]);
 
 				inferredParameters.push({
 					source: 'calibration',
-					type: SemanticType.Parameter,
+					type: SemanticType.Inferred,
 					referenceId: parameterId,
 					default: false,
 					distribution: {

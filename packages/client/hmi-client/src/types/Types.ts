@@ -217,6 +217,12 @@ export interface ModelFramework extends TerariumAssetThatSupportsAdditionalPrope
     semantics: string;
 }
 
+export interface InferredParameterSemantic extends Semantic {
+    referenceId: string;
+    distribution: ModelDistribution;
+    default: boolean;
+}
+
 export interface InitialSemantic extends Semantic {
     target: string;
     expression: string;
@@ -229,7 +235,7 @@ export interface ModelConfiguration extends TerariumAsset {
     observableSemanticList: ObservableSemantic[];
     parameterSemanticList: ParameterSemantic[];
     initialSemanticList: InitialSemantic[];
-    inferredParameterList?: ParameterSemantic[];
+    inferredParameterList?: InferredParameterSemantic[];
 }
 
 export interface ObservableSemantic extends Semantic {
@@ -1232,6 +1238,7 @@ export enum SemanticType {
     Initial = "initial",
     Parameter = "parameter",
     Observable = "observable",
+    Inferred = "inferredParameter",
 }
 
 export enum ProvenanceRelationType {
