@@ -498,6 +498,7 @@ nav {
 	border-bottom-right-radius: 0;
 	border-right: 0 none;
 	color: var(--text-color);
+	pointer-events: none;
 }
 
 :deep(.layout-project-selection.p-splitbutton .p-button:last-of-type) {

@@ -1,4 +1,4 @@
-@layer reset, theme, terarium, layout, icons;
+@layer reset, theme, terarium, layout;
 
 /* Reset */
 @import '@assets/css/reset.css';
@@ -9,7 +9,7 @@
  */
 @import '@node_modules/primeflex/primeflex.min.css' layer(theme);
 @import '@node_modules/primevue/resources/primevue.min.css' layer(theme);
-@import '@node_modules/primeicons/primeicons.css' layer(icons);
+@import '@node_modules/primeicons/primeicons.css' layer(theme);
 
 /* Terarium PrimeVue Theme */
 @import '@node_modules/primevue/resources/themes/lara-light-green/theme.css' layer(theme);
