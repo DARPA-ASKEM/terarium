@@ -20,13 +20,12 @@
 							Lines {{ extractDynamicRows(codeBlock.asset.block).startRow + 1 }} to
 							{{ extractDynamicRows(codeBlock.asset.block).endRow + 1 }}
 						</div>
-						<div class="edit-container" v-else>
-							<div class="edit-input-container">
+						<div class="flex" v-else>
+							<div>
 								<label class="text-sm" for="code-dynamic-start">Start line</label>
 								<tera-input-number v-model="startLine" input-id="code-dynamic-start" />
 							</div>
-
-							<div class="edit-input-container">
+							<div>
 								<label class="text-sm" for="code-dynamic-start">End line</label>
 								<tera-input-number v-model="endLine" input-id="code-dynamic-end" />
 							</div>
@@ -130,14 +129,9 @@ ul {
 	gap: var(--gap-small);
 }
 
-.edit-container {
-	display: flex;
+.tera-input :deep(input) {
+	width: 100%;
 }
-
-.edit-input-container .tera-input {
-	width: 107px;
-}
-
 .footer-container {
 	display: flex;
 	justify-content: end;

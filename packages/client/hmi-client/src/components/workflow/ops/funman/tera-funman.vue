@@ -25,22 +25,22 @@
 					</h5>
 					<p class="secondary-text mt-1">The validator will use these parameters to execute the sanity checks.</p>
 					<div class="section-row timespan">
-						<div class="button-column">
+						<div class="w-full">
 							<label>Start time</label>
 							<tera-input-number v-model="knobs.currentTimespan.start" />
 						</div>
-						<div class="button-column">
+						<div class="w-full">
 							<label>End time</label>
 							<tera-input-number v-model="knobs.currentTimespan.end" />
 						</div>
-						<div class="button-column">
+						<div class="w-full">
 							<label>Number of steps</label>
 							<tera-input-number v-model="knobs.numberOfSteps" />
 						</div>
 					</div>
 					<tera-input-text :disabled="true" class="timespan-list mb-2" v-model="requestStepListString" />
 					<template v-if="showAdditionalOptions">
-						<div class="button-column">
+						<div>
 							<label>Tolerance</label>
 							<div class="input-tolerance fadein animation-ease-in-out animation-duration-350">
 								<tera-input-number v-model="knobs.tolerance" />
@@ -595,10 +595,6 @@ watch(
 	gap: 0.8125rem;
 	align-self: stretch;
 	gap: 1.5rem;
-}
-
-.timespan > .button-column {
-	width: 100%;
 }
 
 div.section-row.timespan > div > span {
