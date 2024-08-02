@@ -44,7 +44,7 @@ export enum OperatorNodeSize {
 	xlarge
 }
 
-function getOperatorNodeSize(size: OperatorNodeSize): Size {
+export function getOperatorNodeSize(size: OperatorNodeSize): Size {
 	switch (size) {
 		case OperatorNodeSize.small:
 			return { width: 140, height: 220 };

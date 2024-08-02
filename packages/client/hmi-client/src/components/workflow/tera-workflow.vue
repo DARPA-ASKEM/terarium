@@ -77,7 +77,7 @@
 					@duplicate-branch="duplicateBranch(node.id)"
 					@remove-edges="removeEdges"
 					@update-state="(event: any) => updateWorkflowNodeState(node, event)"
-					@menu-selection="onMenuSelection"
+					@menu-selection="(selection) => onMenuSelection(selection, node)"
 				>
 					<template #body>
 						<component
@@ -443,14 +443,16 @@ const addOperatorToWorkflow: Function =
 		workflowDirty = true;
 	};
 
-function onMenuSelection(newNode) {
-	const name = newNode.selection;
-	const operation = registry.getOperation(newNode.selection);
-	const node = registry.getNode(newNode.selection);
-	const drilldown = registry.getDrilldown(newNode.selection);
+function onMenuSelection(selection, menuNode) {
+	const name = selection;
+	const operation = registry.getOperation(selection);
+	const node = registry.getNode(selection);
+	const drilldown = registry.getDrilldown(selection);
 
-	newNodePosition.x = newNode.position.left + 50;
-	newNodePosition.y = newNode.position.top - 50;
+	const width = workflowService.getOperatorNodeSize(OperatorNodeSize.medium).width;
+	newNodePosition.x = menuNode.x + 80 + width;
+	newNodePosition.y = menuNode.y;
+
 	if (name && operation && node && drilldown) {
 		addOperatorToWorkflow({ name, operation, node, drilldown })();
 	}

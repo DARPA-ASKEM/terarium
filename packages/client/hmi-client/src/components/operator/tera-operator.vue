@@ -152,7 +152,7 @@ function mouseleavePort() {
 }
 
 function onSelection(selection) {
-	emit('menu-selection', { selection, position: operatorPosition.value });
+	emit('menu-selection', selection);
 }
 
 function resizeHandler() {
