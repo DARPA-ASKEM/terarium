@@ -22,11 +22,21 @@
 					<div class="input-row">
 						<div class="label-and-input">
 							<label for="2">Start time</label>
-							<InputNumber id="2" v-model="timespan.start" inputId="integeronly" @update:model-value="updateState" />
+							<tera-input-number
+								id="2"
+								v-model="timespan.start"
+								inputId="integeronly"
+								@update:model-value="updateState"
+							/>
 						</div>
 						<div class="label-and-input">
 							<label for="3">End time</label>
-							<InputNumber id="3" v-model="timespan.end" inputId="integeronly" @update:model-value="updateState" />
+							<tera-input-number
+								id="3"
+								v-model="timespan.end"
+								inputId="integeronly"
+								@update:model-value="updateState"
+							/>
 						</div>
 					</div>
 
@@ -45,7 +55,7 @@
 					<div class="input-row mt-3">
 						<div class="label-and-input">
 							<label for="4">Number of samples</label>
-							<InputNumber
+							<tera-input-number
 								id="4"
 								v-model="numSamples"
 								inputId="integeronly"
@@ -161,7 +171,7 @@ import _ from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
-import InputNumber from 'primevue/inputnumber';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import type { CsvAsset, SimulationRequest, TimeSpan } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import {

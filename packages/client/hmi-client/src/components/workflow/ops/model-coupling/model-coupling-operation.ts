@@ -1,12 +1,11 @@
 import type { Operation, BaseState } from '@/types/workflow';
-import { WorkflowOperationTypes } from '@/types/workflow';
 
 const DOCUMENTATION_URL = 'https://algebraicjulia.github.io/Decapodes.jl/dev/overview/#Merging-Multiple-Physics';
 
 export interface ModelCouplingState extends BaseState {}
 
 export const ModelCouplingOperation: Operation = {
-	name: WorkflowOperationTypes.MODEL_COUPLING,
+	name: 'modelCoupling',
 	description: 'Couple models',
 	displayName: 'Couple models',
 	documentationUrl: DOCUMENTATION_URL,

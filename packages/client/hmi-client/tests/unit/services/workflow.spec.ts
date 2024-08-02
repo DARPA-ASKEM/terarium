@@ -1,19 +1,11 @@
-import {
-	OperatorStatus,
-	Workflow,
-	WorkflowPort,
-	Operation,
-	WorkflowNode,
-	WorkflowOperationTypes,
-	WorkflowPortStatus
-} from '@/types/workflow';
+import { OperatorStatus, Workflow, WorkflowPort, Operation, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import * as workflowService from '@/services/workflow';
 
 import { describe, expect, it } from 'vitest';
 import _ from 'lodash';
 
 const addOperation: Operation = {
-	name: WorkflowOperationTypes.ADD,
+	name: 'add',
 	displayName: 'Add',
 	description: 'add two numbers',
 	inputs: [{ type: 'number' }, { type: 'number' }],

@@ -65,8 +65,7 @@
 					<div class="input-row">
 						<div class="label-and-input">
 							<label for="chains">Chains</label>
-							<InputNumber
-								class="p-inputtext-sm"
+							<tera-input-number
 								inputId="integeronly"
 								v-model="extra.numChains"
 								@update:model-value="updateStateExtras"
@@ -74,8 +73,7 @@
 						</div>
 						<div class="label-and-input">
 							<label for="iterations">Iterations</label>
-							<InputNumber
-								class="p-inputtext-sm"
+							<tera-input-number
 								inputId="integeronly"
 								v-model="extra.numIterations"
 								@update:model-value="updateStateExtras"
@@ -171,7 +169,7 @@ import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
-import InputNumber from 'primevue/inputnumber';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import {
 	CalibrationRequestJulia,

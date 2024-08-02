@@ -12,7 +12,6 @@
 			<tera-dataset
 				v-else-if="previewItemResourceType === ResourceType.DATASET"
 				:asset-id="previewItemId"
-				:highlight="searchTerm"
 				:feature-config="{ isPreview: true }"
 				:source="source"
 				@close-preview="closePreview"
@@ -20,7 +19,6 @@
 			<tera-model
 				v-else-if="previewItemResourceType === ResourceType.MODEL"
 				:asset-id="previewItemId"
-				:highlight="searchTerm"
 				:feature-config="{ isPreview: true }"
 				@close-preview="closePreview"
 			/>
