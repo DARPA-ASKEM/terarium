@@ -7,6 +7,7 @@ import { EventEmitter } from '@/utils/emitter';
 import type { Position } from '@/types/common';
 import type {
 	Operation,
+	OperationData,
 	Size,
 	Workflow,
 	WorkflowEdge,
@@ -635,45 +636,53 @@ export const branchWorkflow = (wf: Workflow, nodeId: string) => {
 	wf.edges.push(...copyEdges);
 };
 
-function connectOutputOptionToOperator(typeId, key, options: Map<string, Array<{}>>, name) {
-	const displayName: string = name ?? key;
-	if (options.has(typeId)) {
-		const list = options.get(typeId) ?? [];
-		list.push({ type: key, displayName });
-		options.set(typeId, list);
-	} else {
-		options.set(typeId, [{ type: key, displayName }]);
-	}
-}
-
-function getOutputOptions(typeId, key, options: Map<string, Array<string>>) {
-	if (options.has(key)) {
-		const list = options.get(key) ?? [];
-		list.push(typeId);
-		options.set(key, list);
-	} else {
-		options.set(key, [typeId]);
-	}
-}
-
-function getPortOptions(operationMap: Map<string, any>, portKey: string, getOptionsFn: Function) {
-	const portOptions = new Map<string, Array<string>>();
+function getInputMap(operationMap: Map<string, Operation>) {
+	const inputMap = new Map<string, Array<{ type: string; displayName: string }>>();
 
 	operationMap.forEach((value, key) => {
-		const port: Array<any> = value?.[portKey] ?? [];
-		port.forEach((option) => getOptionsFn(option.type, key, portOptions, value?.displayName));
-	});
+		const inputList: Array<OperationData> = value?.inputs ?? [];
 
-	return portOptions;
+		inputList.forEach((input) => {
+			const displayName: string = value.displayName ?? key;
+			if (inputMap.has(input.type)) {
+				const list = inputMap.get(input.type) ?? [];
+				list.push({ type: key, displayName });
+				inputMap.set(input.type, list);
+			} else {
+				inputMap.set(input.type, [{ type: key, displayName }]);
+			}
+		});
+	});
+	return inputMap;
 }
 
-export function getNodeMenu(operationMap: Map<string, any>) {
-	const menuOptions = new Map<string, Array<any>>();
+function getOutputMap(operationMap: Map<string, Operation>) {
+	const outputMap = new Map<string, Array<string>>();
 
-	const inputOptions = getPortOptions(operationMap, 'inputs', connectOutputOptionToOperator);
-	const outputOptions = getPortOptions(operationMap, 'outputs', getOutputOptions);
-	outputOptions.forEach((value, key) => {
-		menuOptions.set(key, inputOptions.get(value[0]) ?? []);
+	operationMap.forEach((value, key) => {
+		const outputList: Array<OperationData> = value?.outputs ?? [];
+
+		outputList.forEach((input) => {
+			if (outputMap.has(key)) {
+				const list = outputMap.get(key) ?? [];
+				list.push(input.type);
+				outputMap.set(key, list);
+			} else {
+				outputMap.set(key, [input.type]);
+			}
+		});
+	});
+	return outputMap;
+}
+
+export function getNodeMenu(operationMap: Map<string, Operation>) {
+	const menuOptions = new Map<string, Array<{ type: string; displayName: string }>>();
+
+	const inputMap = getInputMap(operationMap);
+	const outputMap = getOutputMap(operationMap);
+
+	outputMap.forEach((value, key) => {
+		menuOptions.set(key, inputMap.get(value[0]) ?? []);
 	});
 	return menuOptions;
 }
