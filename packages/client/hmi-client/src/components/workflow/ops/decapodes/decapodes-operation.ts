@@ -1,4 +1,4 @@
-import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
+import { Operation, BaseState } from '@/types/workflow';
 
 export interface CodeHistory {
 	code: string;
@@ -9,7 +9,7 @@ export interface DecapodesOperationState extends BaseState {
 }
 
 export const DecapodesOperation: Operation = {
-	name: WorkflowOperationTypes.DECAPODES,
+	name: 'decapodes',
 	displayName: 'Decapodes',
 	description: 'Decapodes notebook.',
 	isRunnable: true,
