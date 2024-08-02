@@ -695,8 +695,11 @@ export function getNodeMenu(operationMap: Map<string, Operation>) {
 	const inputMap = getInputMap(operationMap);
 	const outputMap = getOutputMap(operationMap);
 
+	const uniqInputMap: Map<string, OperatorMenuItem[]> = new Map();
+	inputMap.forEach((value, key) => uniqInputMap.set(key, _.uniqBy(value, 'type')));
+
 	outputMap.forEach((value, key) => {
-		menuOptions.set(key, inputMap.get(value[0]) ?? []);
+		menuOptions.set(key, uniqInputMap.get(value[0]) ?? []);
 	});
 	return menuOptions;
 }
