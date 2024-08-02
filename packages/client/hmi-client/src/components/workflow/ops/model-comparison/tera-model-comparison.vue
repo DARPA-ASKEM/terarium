@@ -5,7 +5,7 @@
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<div :tabName="Tabs.Wizard">
-			<tera-drilldown-section class="ml-4 mr-4 pt-3">
+			<tera-drilldown-section>
 				<!-- LLM generated overview -->
 				<section class="comparison-overview">
 					<Accordion :activeIndex="0">
@@ -15,7 +15,6 @@
 						</AccordionTab>
 					</Accordion>
 				</section>
-
 				<!-- Model comparison table -->
 				<div class="p-datatable-wrapper">
 					<table class="p-datatable-table p-datatable-scrollable-table">
@@ -31,29 +30,24 @@
 							<tr>
 								<td class="field">Diagram</td>
 								<td v-for="(model, index) in modelsToCompare" :key="index">
-									<tera-model-diagram :model="model" :is-editable="false" is-preview class="diagram" />
+									<tera-model-diagram :model="model" class="diagram" />
 								</td>
 							</tr>
-							<template v-for="field in fields" :key="field">
-								<tr>
-									<td class="field">{{ formatField(field) }}</td>
-									<td v-for="(card, index) in modelCardsToCompare" :key="index">
-										<template v-if="typeof card[field] === 'object'">
-											<template v-for="(value, j) in Object.values(card[field])">
-												<template v-if="Array.isArray(value)">
-													{{ value.join(', ') }}
-												</template>
-												<div class="value" v-else :key="j">
-													{{ value }}
-												</div>
+							<tr v-for="field in fields" :key="field">
+								<td class="field">{{ formatField(field) }}</td>
+								<td v-for="(card, index) in modelCardsToCompare" :key="index">
+									<template v-if="!card?.[field]"> Not found </template>
+									<template v-else-if="typeof card[field] === 'object'">
+										<template v-for="(value, j) in Object.values(card[field])">
+											<template v-if="Array.isArray(value)">
+												{{ value.join(', ') }}
 											</template>
+											<div class="value" v-else :key="j">{{ value }}</div>
 										</template>
-										<template v-if="Array.isArray(card[field])">
-											{{ card[field].join(', ') }}
-										</template>
-									</td>
-								</tr>
-							</template>
+									</template>
+									<template v-else-if="Array.isArray(card[field])">{{ card[field].join(', ') }}</template>
+								</td>
+							</tr>
 						</tbody>
 					</table>
 				</div>
@@ -179,6 +173,10 @@ const sampleAgentQuestions = [
 	'Compare the two models and visualize and display them.'
 ];
 
+const modelsToCompare = ref<Model[]>([]);
+const modelCardsToCompare = ref<any[]>([]);
+const fields = ref<string[]>([]);
+
 const isLoadingStructuralComparisons = ref(false);
 const structuralComparisons = ref<string[]>([]);
 const compareModelsTaskId = ref<string>('');
@@ -186,7 +184,6 @@ const compareModelsTaskOutput = ref<string>('');
 const code = ref(props.node.state.notebookHistory?.[0]?.code ?? '');
 const llmThoughts = ref<any[]>([]);
 const isKernelReady = ref(false);
-const modelsToCompare = ref<Model[]>([]);
 const contextLanguage = ref<string>('python3');
 
 const llmAnswer = computed(() => {
@@ -196,24 +193,9 @@ const llmAnswer = computed(() => {
 	return parsedValue.response;
 });
 
-const modelCardsToCompare = computed(() => modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard));
-const fields = computed(
-	() => [...new Set(modelCardsToCompare.value.reduce((acc, card) => acc.concat(Object.keys(card)), []))] as string[]
-);
-const cellWidth = computed(() => `${85 / modelsToCompare.value.length}vw`);
-
 const initializeAceEditor = (editorInstance: any) => {
 	editor = editorInstance;
 };
-
-async function addModelForComparison(modelId: Model['id']) {
-	if (!modelId) return;
-	const model = await getModel(modelId);
-	if (model) modelsToCompare.value.push(model);
-	if (modelsToCompare.value.length === props.node.inputs.length - 1 && modelsToCompare.value.length > 1) {
-		buildJupyterContext();
-	}
-}
 
 function formatField(field: string) {
 	const result = field
@@ -331,15 +313,17 @@ onMounted(async () => {
 		isLoadingStructuralComparisons.value = false;
 	}
 
-	props.node.inputs.forEach((input) => {
-		if (input.value) {
-			addModelForComparison(input.value[0]);
-		}
-	});
-
-	const modelIds = props.node.inputs
+	const modelIds: string[] = props.node.inputs
 		.filter((input) => input.status === WorkflowPortStatus.CONNECTED)
 		.map((input) => input.value?.[0]);
+
+	modelsToCompare.value = (await Promise.all(modelIds.map(async (modelId) => getModel(modelId)))).filter(
+		Boolean
+	) as Model[];
+	modelCardsToCompare.value = modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard);
+	fields.value = [...new Set(modelCardsToCompare.value.flatMap((card) => (card ? Object.keys(card) : [])))];
+
+	buildJupyterContext();
 	processCompareModels(modelIds, props.node.workflowId, props.node.id);
 });
 
@@ -349,13 +333,19 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.p-datatable-wrapper {
+	margin: 0 var(--gap-4);
+}
+
 table {
+	table-layout: fixed;
+	width: 100%;
+
 	& td,
 	th {
 		vertical-align: top;
 		text-align: left;
-		padding: 0 var(--gap) var(--gap) var(--gap-small);
-		max-width: v-bind('cellWidth');
+		padding: var(--gap-2);
 		overflow: auto;
 		text-overflow: ellipsis;
 	}
@@ -364,15 +354,15 @@ table {
 		border-top: 1px solid var(--surface-border-light);
 	}
 
-	& td:first-child {
-		width: 10%;
+	& th:first-child,
+	td:first-child {
+		width: 8%;
 		padding: var(--gap-small) 0;
 		font-weight: 600;
 	}
 
 	& td:not(:first-child) {
 		padding: var(--gap-small);
-		padding-right: var(--gap);
 	}
 
 	& .value {
@@ -426,7 +416,8 @@ ul {
 .comparison-overview {
 	border: 1px solid var(--surface-border);
 	border-radius: var(--border-radius-medium);
-	padding: var(--gap-small);
+	padding: var(--gap-2);
+	margin: var(--gap-4) var(--gap-4) 0;
 }
 
 .subdued {

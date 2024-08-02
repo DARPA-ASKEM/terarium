@@ -592,7 +592,10 @@ public class ModelController {
 
 		try {
 			final List<ModelConfiguration> modelConfigurations =
-				modelConfigRepository.findByModelIdAndDeletedOnIsNullAndTemporaryFalse(id, PageRequest.of(page, pageSize));
+				modelConfigRepository.findByModelIdAndDeletedOnIsNullAndTemporaryFalseOrderByCreatedOnAsc(
+					id,
+					PageRequest.of(page, pageSize)
+				);
 
 			return ResponseEntity.ok(modelConfigurations);
 		} catch (final Exception e) {

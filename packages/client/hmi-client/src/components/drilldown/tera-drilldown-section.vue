@@ -1,6 +1,6 @@
 <template>
 	<section>
-		<header>
+		<header v-if="hasHeaderSlots">
 			<div>
 				<slot name="header-controls-left" />
 			</div>
@@ -19,28 +19,29 @@
 </template>
 
 <script setup lang="ts">
-import { useSlots } from 'vue';
+import { computed, useSlots } from 'vue';
 import TeraProgressSpinner from '../widgets/tera-progress-spinner.vue';
-
-const slots = useSlots();
 
 defineProps<{
 	isLoading?: boolean;
 }>();
+
+const slots = useSlots();
+const hasHeaderSlots = computed(() => !!slots['header-controls-left'] || !!slots['header-controls-right']);
 </script>
 
 <style scoped>
 footer {
 	display: flex;
 	justify-content: flex-end;
-	gap: 0.5rem;
+	gap: var(--gap-2);
 }
 
 header {
 	display: inline-flex;
 	justify-content: space-between;
-	margin-top: 1em;
-	gap: 0.75rem;
+	padding: var(--gap-2) 0;
+	gap: var(--gap-3);
 }
 
 header > div {
@@ -52,7 +53,7 @@ header > div {
 section {
 	display: flex;
 	flex-direction: column;
-	gap: 0.75rem;
+	gap: var(--gap-1);
 	overflow: hidden;
 	height: 100%;
 }
