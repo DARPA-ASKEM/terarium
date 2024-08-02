@@ -501,6 +501,10 @@ nav {
 	pointer-events: none;
 }
 
+:deep(.p-splitbutton.p-button-outlined > .p-button) {
+	box-shadow: var(--surface-400) 0 0 0 1px inset;
+}
+
 :deep(.layout-project-selection.p-splitbutton .p-button:last-of-type) {
 	background-color: var(--surface-200);
 	border-top-left-radius: 0;
