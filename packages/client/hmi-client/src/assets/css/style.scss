@@ -1,12 +1,9 @@
-@layer reset, theme, terarium, layout;
+@layer jupyter, reset, theme, terarium, layout;
 
 /* Reset */
 @import '@assets/css/reset.css';
 
-/**
- * PrimeVue
- * https://primefaces.org/primevue/setup
- */
+/* PrimeVue */
 @import '@node_modules/primeflex/primeflex.min.css' layer(theme);
 @import '@node_modules/primevue/resources/primevue.min.css' layer(theme);
 @import '@node_modules/primeicons/primeicons.css' layer(theme);
@@ -17,6 +14,13 @@
 
 /* Setup MathLive Fonts */
 @import '@node_modules/mathlive/dist/mathlive-fonts.css' layer(terarium);
+@import '@node_modules/katex/dist/katex.min.css' layer(terarium);
+
+/* Jupyter Lab */
+@import '@jupyterlab/application/style/index.css' layer(jupyter);
+@import '@jupyterlab/cells/style/index.css' layer(jupyter);
+@import '@jupyterlab/theme-light-extension/style/theme.css' layer(jupyter);
+@import '@jupyterlab/completer/style/index.css' layer(jupyter);
 
 @layer layout {
 	:root {
