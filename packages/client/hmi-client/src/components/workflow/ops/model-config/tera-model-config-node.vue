@@ -43,13 +43,13 @@ watch(
 
 		if (modelId) {
 			let configs = await getModelConfigurationsForModel(modelId);
-			if (!configs[0].id) {
+			if (!configs[0]?.id) {
 				const model = await getModel(modelId);
 				if (model) await postAsConfiguredModel(model); // Create a model configuration if it does not exist
 				configs = await getModelConfigurationsForModel(modelId);
 			}
 			// Auto append output
-			if (configs[0].id) {
+			if (configs[0]?.id) {
 				const config = configs[0];
 				state.transientModelConfig = config;
 				emit('update-state', state);
