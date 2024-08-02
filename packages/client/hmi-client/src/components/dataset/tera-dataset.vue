@@ -87,10 +87,6 @@ const props = defineProps({
 		type: Object as PropType<FeatureConfig>,
 		default: { isPreview: false } as FeatureConfig
 	},
-	highlight: {
-		type: String,
-		default: null
-	},
 	source: {
 		type: String as PropType<Source>,
 		default: DatasetSource.TERARIUM

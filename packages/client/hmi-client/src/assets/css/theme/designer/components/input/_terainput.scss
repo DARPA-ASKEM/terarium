@@ -38,11 +38,10 @@
 			font-feature-settings: 'tnum';
 			flex-grow: 1;
 			border: none;
-			background-color: none;
+			margin: 0;
 			&::-webkit-inner-spin-button,
 			&::-webkit-outer-spin-button {
 			-webkit-appearance: none;
-			margin: 0;
 	}
 		}
 	}
