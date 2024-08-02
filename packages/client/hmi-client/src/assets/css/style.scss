@@ -3,10 +3,18 @@
  */
 @layer vendor, reset, theme, terarium, layout;
 
-/* Reset */
-@import '@assets/css/reset.css';
+/* Vendor */
+@import '@jupyterlab/application/style/index.css' layer(vendor);
+@import '@jupyterlab/cells/style/index.css' layer(vendor);
+@import '@jupyterlab/theme-light-extension/style/theme.css' layer(vendor);
+@import '@jupyterlab/completer/style/index.css' layer(vendor);
+@import '@node_modules/mathlive/dist/mathlive-fonts.css' layer(vendor);
+@import '@node_modules/katex/dist/katex.min.css' layer(vendor);
 
-/* PrimeVue */
+/* Reset */
+@import '@assets/css/reset.css' layer(reset);
+
+/* PrimeVue Theme */
 @import '@node_modules/primeflex/primeflex.min.css' layer(theme);
 @import '@node_modules/primevue/resources/primevue.min.css' layer(theme);
 @import '@node_modules/primeicons/primeicons.css' layer(theme);
@@ -14,16 +22,6 @@
 
 /* Terarium PrimeVue Theme */
 @import '@assets/css/theme/theme.scss' layer(terarium);
-
-/* Setup MathLive Fonts */
-@import '@node_modules/mathlive/dist/mathlive-fonts.css' layer(vendor);
-@import '@node_modules/katex/dist/katex.min.css' layer(vendor);
-
-/* Jupyter Lab */
-@import '@jupyterlab/application/style/index.css' layer(vendor);
-@import '@jupyterlab/cells/style/index.css' layer(vendor);
-@import '@jupyterlab/theme-light-extension/style/theme.css' layer(vendor);
-@import '@jupyterlab/completer/style/index.css' layer(vendor);
 
 @layer layout {
 	:root {
