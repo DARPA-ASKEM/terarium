@@ -642,7 +642,16 @@ function getInputMap(operationMap: Map<string, Operation>) {
 	operationMap.forEach((value, key) => {
 		const inputList: Array<OperationData> = value?.inputs ?? [];
 
+		const inputSubList: OperationData[] = [];
 		inputList.forEach((input) => {
+			if (input.type.includes('|')) {
+				input.type.split('|').forEach((type) => inputSubList.push({ type }));
+			} else {
+				inputSubList.push(input);
+			}
+		});
+
+		inputSubList.forEach((input) => {
 			const displayName: string = value.displayName ?? key;
 			if (inputMap.has(input.type)) {
 				const list = inputMap.get(input.type) ?? [];
@@ -657,10 +666,10 @@ function getInputMap(operationMap: Map<string, Operation>) {
 }
 
 function getOutputMap(operationMap: Map<string, Operation>) {
-	const outputMap = new Map<string, Array<string>>();
+	const outputMap = new Map<string, string[]>();
 
 	operationMap.forEach((value, key) => {
-		const outputList: Array<OperationData> = value?.outputs ?? [];
+		const outputList: OperationData[] = value?.outputs ?? [];
 
 		outputList.forEach((input) => {
 			if (outputMap.has(key)) {
@@ -676,7 +685,7 @@ function getOutputMap(operationMap: Map<string, Operation>) {
 }
 
 export function getNodeMenu(operationMap: Map<string, Operation>) {
-	const menuOptions = new Map<string, Array<{ type: string; displayName: string }>>();
+	const menuOptions = new Map<string, { type: string; displayName: string }[]>();
 
 	const inputMap = getInputMap(operationMap);
 	const outputMap = getOutputMap(operationMap);
