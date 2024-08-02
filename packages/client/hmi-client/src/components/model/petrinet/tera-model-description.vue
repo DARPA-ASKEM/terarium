@@ -25,7 +25,7 @@
 				</section>
 			</AccordionTab>
 			<AccordionTab header="Diagram">
-				<tera-model-diagram ref="teraModelDiagramRef" :model="model" :is-editable="!featureConfig?.isPreview" />
+				<tera-model-diagram ref="teraModelDiagramRef" :model="model" :feature-config="featureConfig" />
 			</AccordionTab>
 			<AccordionTab header="Model equations">
 				<tera-model-equation :model="model" :is-editable="false" @model-updated="emit('model-updated')" />

@@ -1,7 +1,7 @@
 <template>
 	<tera-tooltip :custom-position="hoveredTransitionPosition" :show-tooltip="!isEmpty(hoveredTransitionId)">
 		<main>
-			<TeraResizablePanel v-if="!isPreview" class="diagram-container">
+			<TeraResizablePanel v-if="!featureConfig?.isPreview" class="diagram-container">
 				<section class="graph-element">
 					<Toolbar>
 						<template #start>
@@ -46,12 +46,7 @@
 					</template>
 				</section>
 			</TeraResizablePanel>
-			<div
-				v-else-if="model"
-				ref="graphElement"
-				class="graph-element preview"
-				:style="!isEditable && { pointerEvents: 'none' }"
-			/>
+			<div v-else-if="model" ref="graphElement" class="graph-element preview" />
 			<tera-stratified-matrix-modal
 				v-if="selectedTransitionId"
 				:id="selectedTransitionId"
@@ -85,7 +80,6 @@ import { getModelType, getMMT } from '@/services/model';
 import type { Model } from '@/types/Types';
 import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
 import TeraTooltip from '@/components/widgets/tera-tooltip.vue';
-
 import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
 import { StratifiedMatrix } from '@/types/Model';
 import { AMRSchemaNames } from '@/types/common';
@@ -93,13 +87,13 @@ import { MiraModel, MiraTemplateParams, ObservableSummary } from '@/model-repres
 import { isStratifiedModel, emptyMiraModel, convertToIGraph } from '@/model-representation/mira/mira';
 import { getModelRenderer } from '@/model-representation/service';
 import { NodeType } from '@/services/graph';
+import type { FeatureConfig } from '@/types/common';
 import TeraStratifiedMatrixModal from '../model-configurations/tera-stratified-matrix-modal.vue';
 import TeraStratifiedMatrixPreview from '../model-configurations/tera-stratified-matrix-preview.vue';
 
 const props = defineProps<{
 	model: Model;
-	isEditable: boolean;
-	isPreview?: boolean;
+	featureConfig?: FeatureConfig;
 }>();
 
 const graphElement = ref<HTMLDivElement | null>(null);
@@ -248,6 +242,7 @@ main {
 	overflow: hidden;
 	border: none;
 	position: relative;
+	pointer-events: none;
 }
 
 .p-toolbar {
