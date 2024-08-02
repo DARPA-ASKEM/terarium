@@ -99,7 +99,7 @@ export interface WorkflowNode<S> {
 	id: string;
 	displayName: string;
 	workflowId: string;
-	operationType: WorkflowOperationTypes;
+	operationType: string;
 	documentationUrl?: string;
 	imageUrl?: string;
 
