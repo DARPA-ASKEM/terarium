@@ -40,6 +40,8 @@
 			</div>
 			<footer><!--pill tags if already in another project--></footer>
 		</main>
+		<!--Add button from tera-search-item-->
+		<slot />
 	</div>
 </template>
 
