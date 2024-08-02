@@ -24,9 +24,10 @@
 import { ref, onMounted } from 'vue';
 import Menu from 'primevue/menu';
 import Button from 'primevue/button';
+import { OperatorMenuItem } from '@/services/workflow';
 
 const props = defineProps<{
-	nodeMenu: Array<{ type: string; displayName: string }>;
+	nodeMenu: OperatorMenuItem[];
 }>();
 
 const emit = defineEmits(['menu-mouseenter', 'menu-mouseleave', 'menu-selection']);

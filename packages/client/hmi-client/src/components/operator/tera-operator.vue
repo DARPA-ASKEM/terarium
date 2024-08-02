@@ -42,8 +42,8 @@
 		/>
 	</main>
 	<tera-operator-menu
-		v-if="isMenuFocused"
-		:nodeMenu="nodeMenu.get(node.operationType)"
+		v-if="isMenuFocused && menuOptions.length"
+		:nodeMenu="menuOptions"
 		:style="{
 			top: '-30px',
 			left: `${operatorPosition.width + 20}px`
@@ -72,10 +72,11 @@ import TeraOperatorInputs from '@/components/operator/tera-operator-inputs.vue';
 import TeraOperatorOutputs from '@/components/operator/tera-operator-outputs.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import TeraOperatorMenu from '@/components/operator/tera-operator-menu.vue';
+import { OperatorMenuItem } from '@/services/workflow';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
-	nodeMenu: any;
+	nodeMenu: Map<string, OperatorMenuItem[]>;
 }>();
 
 const emit = defineEmits([
@@ -102,6 +103,7 @@ const annotationRef = ref<typeof TeraOperatorAnnotation | null>(null);
 
 const isMenuFocused = ref<boolean>(false);
 const menuButtonTimeoutId = ref<NodeJS.Timeout | null>(null);
+const menuOptions = ref<OperatorMenuItem[] | []>([]);
 
 let resizeObserver: ResizeObserver | null = null;
 
@@ -158,6 +160,7 @@ function resizeHandler() {
 }
 
 onMounted(() => {
+	menuOptions.value = props.nodeMenu.get(props.node.operationType) ?? [];
 	if (operator.value) {
 		resizeObserver = new ResizeObserver(resizeHandler);
 		resizeObserver.observe(operator.value);

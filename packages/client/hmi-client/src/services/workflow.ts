@@ -636,8 +636,13 @@ export const branchWorkflow = (wf: Workflow, nodeId: string) => {
 	wf.edges.push(...copyEdges);
 };
 
+export interface OperatorMenuItem {
+	type: string;
+	displayName: string;
+}
+
 function getInputMap(operationMap: Map<string, Operation>) {
-	const inputMap = new Map<string, Array<{ type: string; displayName: string }>>();
+	const inputMap = new Map<string, OperatorMenuItem[]>();
 
 	operationMap.forEach((value, key) => {
 		const inputList: Array<OperationData> = value?.inputs ?? [];
@@ -685,7 +690,7 @@ function getOutputMap(operationMap: Map<string, Operation>) {
 }
 
 export function getNodeMenu(operationMap: Map<string, Operation>) {
-	const menuOptions = new Map<string, { type: string; displayName: string }[]>();
+	const menuOptions = new Map<string, OperatorMenuItem[]>();
 
 	const inputMap = getInputMap(operationMap);
 	const outputMap = getOutputMap(operationMap);
