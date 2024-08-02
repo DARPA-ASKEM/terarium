@@ -1,5 +1,5 @@
 <template>
-	<div class="tera-input" :label="label" :title="title">
+	<div class="tera-input">
 		<label v-if="label" @click.self.stop="focusInput">{{ label }}</label>
 		<main :class="{ error: getErrorMessage }" @click.self.stop="focusInput">
 			<i v-if="icon" :class="icon" />
@@ -17,8 +17,8 @@
 				:placeholder="placeholder"
 			/>
 		</main>
+		<aside v-if="getErrorMessage"><i class="pi pi-exclamation-circle" /> {{ getErrorMessage }}</aside>
 	</div>
-	<aside v-if="getErrorMessage"><i class="pi pi-exclamation-circle" /> {{ getErrorMessage }}</aside>
 </template>
 
 <script setup lang="ts">
@@ -29,7 +29,6 @@ import { CSSProperties, computed, ref, watch } from 'vue';
 const props = defineProps<{
 	modelValue: number | undefined;
 	label?: string;
-	title?: string;
 	icon?: string;
 	errorMessage?: string;
 	disabled?: boolean;

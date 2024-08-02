@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -44,6 +46,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
+import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvColumnStats;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
@@ -68,6 +71,8 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 public class DatasetController {
 
 	private static final int DEFAULT_CSV_LIMIT = 100;
+
+	final Config config;
 
 	final DatasetService datasetService;
 	final ClimateDataProxy climateDataProxy;
@@ -364,7 +369,11 @@ public class DatasetController {
 			csv.size()
 		);
 
-		return ResponseEntity.ok(csvAsset);
+		final CacheControl cacheControl = CacheControl.maxAge(
+			config.getCacheHeadersMaxAge(),
+			TimeUnit.SECONDS
+		).cachePublic();
+		return ResponseEntity.ok().cacheControl(cacheControl).body(csvAsset);
 	}
 
 	@GetMapping("/{id}/download-file")
@@ -475,7 +484,10 @@ public class DatasetController {
 		}
 	}
 
-	/** Downloads a CSV file from github given the path and owner name, then uploads it to the dataset. */
+	/**
+	 * Downloads a CSV file from github given the path and owner name, then uploads
+	 * it to the dataset.
+	 */
 	@PutMapping("/{id}/upload-csv-from-github")
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a CSV file from github to a dataset")
@@ -522,10 +534,11 @@ public class DatasetController {
 	}
 
 	/**
-	 * Uploads a CSV file to the dataset. This will grab a presigned URL from TDS then push the file to S3.
+	 * Uploads a CSV file to the dataset. This will grab a presigned URL from TDS
+	 * then push the file to S3.
 	 *
 	 * @param datasetId ID of the dataset to upload t
-	 * @param filename CSV file to upload
+	 * @param filename  CSV file to upload
 	 * @return Response
 	 */
 	@PutMapping(value = "/{id}/upload-csv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -675,16 +688,19 @@ public class DatasetController {
 	}
 
 	/**
-	 * Uploads a CSV file to the dataset. This will grab a presigned URL from TDS then push the file to S3 via a
+	 * Uploads a CSV file to the dataset. This will grab a presigned URL from TDS
+	 * then push the file to S3 via a
 	 * presigned URL and update the dataset with the headers.
 	 *
-	 * <p>If the headers fail to update there will be a print to the log, however, the response will just be the status
+	 * <p>
+	 * If the headers fail to update there will be a print to the log, however, the
+	 * response will just be the status
 	 * of the original csv upload.
 	 *
 	 * @param datasetId ID of the dataset to upload to
-	 * @param filename CSV file to upload
+	 * @param filename  CSV file to upload
 	 * @param csvEntity CSV file as an HttpEntity
-	 * @param headers headers of the CSV file
+	 * @param headers   headers of the CSV file
 	 * @return Response from the upload
 	 */
 	private ResponseEntity<ResponseStatus> uploadCSVAndUpdateColumns(

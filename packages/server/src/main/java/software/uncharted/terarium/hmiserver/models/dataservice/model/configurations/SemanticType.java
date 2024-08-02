@@ -10,5 +10,8 @@ public enum SemanticType {
 	PARAMETER,
 
 	@JsonProperty("observable")
-	OBSERVABLE
+	OBSERVABLE,
+
+	@JsonProperty("inferredParameter")
+	INFERRED
 }

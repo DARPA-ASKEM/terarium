@@ -122,12 +122,14 @@ const selectedOutputId = computed(() => {
 const outputOptions = computed(() => {
 	// We do not display output selection for Asset operators
 	if (
-		[
-			WorkflowOperationTypes.MODEL,
-			WorkflowOperationTypes.DATASET,
-			WorkflowOperationTypes.DOCUMENT,
-			WorkflowOperationTypes.CODE
-		].includes(props.node.operationType)
+		(
+			[
+				WorkflowOperationTypes.MODEL,
+				WorkflowOperationTypes.DATASET,
+				WorkflowOperationTypes.DOCUMENT,
+				WorkflowOperationTypes.CODE
+			] as string[]
+		).includes(props.node.operationType)
 	) {
 		return null;
 	}

@@ -21,7 +21,7 @@
 							@click="toggleOptionsMenu"
 						/>
 					</div>
-					<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+					<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" :pt="optionsMenuPt" />
 					<div class="right-side flex gap-2">
 						<Button class="toolbar-button" severity="secondary" outlined label="Save" @click="saveCode()" />
 						<Button
@@ -109,7 +109,7 @@
 			<template #default>
 				<form @submit.prevent>
 					<label class="text-sm mb-1" for="model-name">Name</label>
-					<InputText id="model-name" type="text" v-model="newDynamicsName" />
+					<tera-input-text id="model-name" v-model="newDynamicsName" />
 					<label class="text-sm mb-1" for="model-description">Description (optional)</label>
 					<Textarea v-model="newDynamicsDescription" />
 				</form>
@@ -168,6 +168,7 @@ import Textarea from 'primevue/textarea';
 import { computed, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraCodeDynamic from './tera-code-dynamic.vue';
 import TeraDirectory from './tera-directory.vue';
 
@@ -472,6 +473,12 @@ const optionsMenuItems = ref([
 				})) ?? []
 	}
 ]);
+const optionsMenuPt = {
+	submenu: {
+		class: 'max-h-30rem overflow-y-scroll'
+	}
+};
+
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
 };
@@ -521,7 +528,6 @@ header > section {
 .name-input {
 	height: 2.25rem;
 	align-self: center;
-	border: 1px solid var(--surface-border);
 }
 
 .form-checkbox {

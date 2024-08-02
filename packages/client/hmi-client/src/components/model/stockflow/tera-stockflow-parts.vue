@@ -8,6 +8,7 @@
 				v-if="!isEmpty(mmt.initials)"
 				:model="model"
 				:mmt="mmt"
+				:feature-config="featureConfig"
 				@update-state="emit('update-state', $event)"
 			/>
 		</AccordionTab>
@@ -20,6 +21,7 @@
 				:model="model"
 				:mmt="mmt"
 				:mmt-params="mmtParams"
+				:feature-config="featureConfig"
 				@update-parameter="emit('update-parameter', $event)"
 			/>
 		</AccordionTab>
@@ -32,6 +34,7 @@
 				:model="model"
 				:mmt="mmt"
 				:observables="observables"
+				:feature-config="featureConfig"
 				@update-item="emit('update-observable', $event)"
 			/>
 		</AccordionTab>
@@ -113,7 +116,7 @@
 				Time
 				<span class="artifact-amount">({{ time.length }})</span>
 			</template>
-			<tera-time v-if="time" :time="time" @update-time="emit('update-time', $event)" />
+			<tera-time v-if="time" :time="time" :feature-config="featureConfig" @update-time="emit('update-time', $event)" />
 		</AccordionTab>
 	</Accordion>
 </template>
@@ -134,13 +137,14 @@ import TeraStates from '@/components/model/model-parts/tera-states.vue';
 import TeraParameters from '@/components/model/model-parts/tera-parameters.vue';
 import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
 import TeraTime from '@/components/model/model-parts/tera-time.vue';
+import type { FeatureConfig } from '@/types/common';
 
 const props = defineProps<{
 	model: Model;
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
 	observableSummary: ObservableSummary;
-	readonly?: boolean;
+	featureConfig: FeatureConfig;
 }>();
 
 const emit = defineEmits(['update-state', 'update-parameter', 'update-observable', 'update-time']);

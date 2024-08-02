@@ -2,6 +2,7 @@
 	<tera-model-part
 		:items="stateList"
 		:collapsed-items="collapsedInitials"
+		:feature-config="featureConfig"
 		@update-item="emit('update-state', $event)"
 	/>
 </template>
@@ -14,10 +15,12 @@ import { getStates } from '@/model-representation/service';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { collapseInitials } from '@/model-representation/mira/mira';
 import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
+import type { FeatureConfig } from '@/types/common';
 
 const props = defineProps<{
 	model: Model;
 	mmt: MiraModel;
+	featureConfig: FeatureConfig;
 }>();
 
 const emit = defineEmits(['update-state']);

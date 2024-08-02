@@ -25,22 +25,22 @@
 					</h5>
 					<p class="secondary-text mt-1">The validator will use these parameters to execute the sanity checks.</p>
 					<div class="section-row timespan">
-						<div class="button-column">
+						<div class="w-full">
 							<label>Start time</label>
-							<InputNumber v-model="knobs.currentTimespan.start" />
+							<tera-input-number v-model="knobs.currentTimespan.start" />
 						</div>
-						<div class="button-column">
+						<div class="w-full">
 							<label>End time</label>
-							<InputNumber v-model="knobs.currentTimespan.end" />
+							<tera-input-number v-model="knobs.currentTimespan.end" />
 						</div>
-						<div class="button-column">
+						<div class="w-full">
 							<label>Number of steps</label>
-							<InputNumber v-model="knobs.numberOfSteps" />
+							<tera-input-number v-model="knobs.numberOfSteps" />
 						</div>
 					</div>
-					<InputText :disabled="true" class="p-inputtext-sm timespan-list mb-2" v-model="requestStepListString" />
+					<tera-input-text :disabled="true" class="timespan-list mb-2" v-model="requestStepListString" />
 					<template v-if="showAdditionalOptions">
-						<div class="button-column">
+						<div>
 							<label>Tolerance</label>
 							<div class="input-tolerance fadein animation-ease-in-out animation-duration-350">
 								<tera-input-number v-model="knobs.tolerance" />
@@ -146,9 +146,8 @@
 import _, { floor } from 'lodash';
 import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
-import InputNumber from 'primevue/inputnumber';
 import Slider from 'primevue/slider';
 import MultiSelect from 'primevue/multiselect';
 
@@ -580,14 +579,6 @@ watch(
 	letter-spacing: 0.01563rem;
 }
 
-.button-column {
-	display: flex;
-	flex-direction: column;
-	padding: var(--gap-small) 0 var(--gap-small) 0;
-	align-items: flex-start;
-	align-self: stretch;
-}
-
 .section-row {
 	display: flex;
 	padding: 0.5rem 0rem;
@@ -604,10 +595,6 @@ watch(
 	gap: 0.8125rem;
 	align-self: stretch;
 	gap: 1.5rem;
-}
-
-.timespan > .button-column {
-	width: 100%;
 }
 
 div.section-row.timespan > div > span {

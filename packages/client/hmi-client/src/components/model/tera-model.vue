@@ -5,18 +5,18 @@
 		:name="model?.header.name"
 		:feature-config="featureConfig"
 		:is-naming-asset="isNaming"
-		@close-preview="emit('close-preview')"
 		:is-loading="isModelLoading"
 		show-table-of-contents
+		@close-preview="emit('close-preview')"
 	>
 		<template #name-input>
-			<InputText
+			<tera-input-text
 				v-if="isNaming"
 				v-model.lazy="newName"
 				placeholder="Title of new model"
 				@keyup.enter="updateModelName"
 				@keyup.esc="updateModelName"
-				v-focus
+				auto-focus
 			/>
 			<div v-if="isNaming" class="flex flex-nowrap ml-1 mr-3">
 				<Button icon="pi pi-check" rounded text @click="updateModelName" />
@@ -24,7 +24,7 @@
 		</template>
 		<template #edit-buttons v-if="!featureConfig.isPreview">
 			<Button icon="pi pi-ellipsis-v" text rounded @click="toggleOptionsMenu" />
-			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" :pt="optionsMenuPt" />
 			<div class="btn-group">
 				<Button label="Reset" severity="secondary" outlined @click="teraModelPartsRef?.reset()" :disabled="isSaved" />
 				<Button label="Save as..." severity="secondary" outlined @click="showSaveModal = true" />
@@ -42,8 +42,8 @@
 				ref="teraModelPartsRef"
 				class="mt-0"
 				:model="model"
+				:feature-config="featureConfig"
 				@update-model="updateModelContent"
-				:readonly="featureConfig?.isPreview"
 			/>
 		</section>
 	</tera-asset>
@@ -65,13 +65,13 @@ import TeraModelDescription from '@/components/model/petrinet/tera-model-descrip
 import TeraModelParts from '@/components/model/tera-model-parts.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
 import ContextMenu from 'primevue/contextmenu';
 import { getModel, updateModel } from '@/services/model';
-import { FeatureConfig } from '@/types/common';
+import type { FeatureConfig } from '@/types/common';
 import { AssetType, type Model } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 
 const props = defineProps({
 	assetId: {
@@ -141,6 +141,11 @@ const optionsMenuItems = computed(() => [
 		}
 	}
 ]);
+const optionsMenuPt = {
+	submenu: {
+		class: 'max-h-30rem overflow-y-scroll'
+	}
+};
 
 async function updateModelContent(updatedModel: Model) {
 	if (!useProjects().hasEditPermission()) {

@@ -85,9 +85,9 @@
 								"
 							/>
 							<div v-if="showAddMappingInput" class="flex items-center">
-								<InputText
+								<tera-input-text
 									v-model="newSolutionMappingKey"
-									v-focus
+									auto-focus
 									class="w-full"
 									placeholder="Add a name"
 									@keypress.enter="
@@ -132,13 +132,13 @@
 							<tbody class="p-datatable-tbody">
 								<td class="w-2">Steps</td>
 								<td>
-									<InputNumber class="w-full" v-model="timeSpan.start" />
+									<tera-input-number class="w-full" v-model="timeSpan.start" />
 								</td>
 								<td>
-									<InputNumber class="w-full" v-model="timeSpan.end" />
+									<tera-input-number class="w-full" v-model="timeSpan.end" />
 								</td>
 								<td>
-									<InputNumber class="w-full" v-model="numSamples" />
+									<tera-input-number class="w-full" v-model="numSamples" />
 								</td>
 							</tbody>
 						</table>
@@ -193,9 +193,8 @@ import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
-import InputText from 'primevue/inputtext';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Dropdown from 'primevue/dropdown';
-import InputNumber from 'primevue/inputnumber';
 
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
