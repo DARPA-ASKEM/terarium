@@ -449,6 +449,8 @@ function onMenuSelection(newNode) {
 	const node = registry.getNode(newNode.selection);
 	const drilldown = registry.getDrilldown(newNode.selection);
 
+	newNodePosition.x = newNode.position.left + 50;
+	newNodePosition.y = newNode.position.top - 50;
 	if (name && operation && node && drilldown) {
 		addOperatorToWorkflow({ name, operation, node, drilldown })();
 	}
