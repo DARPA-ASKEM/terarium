@@ -53,7 +53,7 @@
 				<label v-if="weights">
 					{{ variable + ' Weight' }}
 				</label>
-				<InputNumber
+				<tera-input-number
 					v-if="weights"
 					:key="index"
 					:placeholder="variable"
@@ -73,21 +73,22 @@
 		</section>
 
 		<!-- These are the start, end times and upper, lower bounts inputs -->
-		<!--FIXME: InputNumber seems like it has some min-width set even though it's nowhere to be found (adjust screen width to see what I mean)
-		Once that can be changed replace the tailwind and label-padding class here with the section-row and button-row classes used above
-		-->
-
 		<!-- I have cleaned this up a bit to make the fields spaced out better, fitting at full width. Also set the inputtext to md so that they match other fields on the page. -NG -->
 
 		<div v-if="constraintType !== 'monotonicityConstraint'" class="flex-container">
 			<div class="input-container">
 				<label for="input1" class="label label-padding">Start time</label>
-				<InputNumber id="input1" class="p-inputtext-md" v-model="startTime" @update:model-value="updateChanges()" />
+				<tera-input-number
+					id="input1"
+					class="p-inputtext-md"
+					v-model="startTime"
+					@update:model-value="updateChanges()"
+				/>
 			</div>
 
 			<div class="input-container">
 				<label for="input2" class="label label-padding">End time</label>
-				<InputNumber id="input2" class="p-inputtext-md" v-model="endTime" @update:model-value="updateChanges()" />
+				<tera-input-number id="input2" class="p-inputtext-md" v-model="endTime" @update:model-value="updateChanges()" />
 			</div>
 
 			<div class="input-container">
@@ -106,7 +107,6 @@
 <script setup lang="ts">
 import { watch, ref, computed } from 'vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
-import InputNumber from 'primevue/inputnumber';
 import MultiSelect from 'primevue/multiselect';
 import Dropdown from 'primevue/dropdown';
 import RadioButton from 'primevue/radiobutton';
