@@ -52,7 +52,7 @@
 		@mouseleave="hideOutputButton"
 		@menu-mouseenter="showOutputButton(PortType.Output)"
 		@menu-mouseleave="hideOutputButton"
-		@menu-selection="(selection) => onSelection(selection)"
+		@menu-selection="(operatorType) => onSelection(operatorType)"
 		@focus="() => {}"
 		@blur="() => {}"
 	/>
@@ -151,8 +151,8 @@ function mouseleavePort() {
 	emit('port-mouseleave');
 }
 
-function onSelection(selection) {
-	emit('menu-selection', selection);
+function onSelection(operatorType: string) {
+	emit('menu-selection', operatorType);
 }
 
 function resizeHandler() {
