@@ -6,13 +6,15 @@ body {
 }
 
 /* -- Normalize -- */
-body, h1, h2, h3, h4, h5, h6 {
+body {
 	margin: 0;
 	padding: 0;
 }
 
 a, div, em, figure, footer, form, h1, h2, h3, h4, h5, h6, header, img, li, ol, p, span:not(.pi), strong, ul {
 	font: inherit;
+	margin: 0;
+	padding: 0;
 	vertical-align: baseline;
 }
 
