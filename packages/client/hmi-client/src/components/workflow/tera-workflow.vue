@@ -176,7 +176,7 @@ import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
 import ContextMenu from 'primevue/contextmenu';
 import * as workflowService from '@/services/workflow';
-import { OperatorImport, OperatorNodeSize } from '@/services/workflow';
+import { OperatorImport, OperatorNodeSize, getNodeMenu } from '@/services/workflow';
 import * as d3 from 'd3';
 import { AssetType, EventType } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
@@ -239,41 +239,7 @@ const props = defineProps<{
 	assetId: string;
 }>();
 
-const outputOptions = ref(new Map<string, Array<string>>());
-const inputOptions = ref(new Map<string, Array<string>>());
-const nodeMenu = ref(new Map<string, Array<string>>());
-
-function setOutputOptions(type, key, options: Map<string, Array<string>>) {
-	if (options.has(type)) {
-		const list = options.get(type) ?? [];
-		list.push(key);
-		options.set(type, list);
-	} else {
-		options.set(type, [key]);
-	}
-}
-
-function setPortOptions(type, key, options: Map<string, Array<string>>) {
-	if (options.has(key)) {
-		const list = options.get(key) ?? [];
-		list.push(type);
-		options.set(key, list);
-	} else {
-		options.set(key, [type]);
-	}
-}
-
-registry.nodeMap.forEach((value, key) => {
-	const inputs: Array<any> = registry.getOperation(key)?.inputs ?? [];
-	const output: Array<any> = registry.getOperation(key)?.outputs ?? [];
-
-	inputs.forEach((port) => setOutputOptions(port.type, key, inputOptions.value));
-	output.forEach((port) => setPortOptions(port.type, key, outputOptions.value));
-});
-
-outputOptions.value.forEach((value, key) => {
-	nodeMenu.value.set(key, inputOptions.value.get(value[0]) ?? []);
-});
+const nodeMenu = ref(getNodeMenu(registry.operationMap));
 
 const route = useRoute();
 const router = useRouter();

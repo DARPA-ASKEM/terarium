@@ -26,7 +26,7 @@ import Menu from 'primevue/menu';
 import Button from 'primevue/button';
 
 const props = defineProps<{
-	nodeMenu: Array<string>;
+	nodeMenu: Array<{ type: string; displayName: string }>;
 }>();
 
 const emit = defineEmits(['menu-mouseenter', 'menu-mouseleave', 'menu-selection']);
@@ -39,9 +39,9 @@ onMounted(() => {
 	const options: Array<{}> = [];
 	props.nodeMenu.forEach((node) =>
 		options.push({
-			label: node,
+			label: node.displayName,
 			command() {
-				emit('menu-selection', node);
+				emit('menu-selection', node.type);
 			}
 		})
 	);

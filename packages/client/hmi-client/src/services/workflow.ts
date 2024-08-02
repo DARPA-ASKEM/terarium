@@ -634,3 +634,46 @@ export const branchWorkflow = (wf: Workflow, nodeId: string) => {
 	wf.nodes.push(...copyNodes);
 	wf.edges.push(...copyEdges);
 };
+
+function connectOutputOptionToOperator(typeId, key, options: Map<string, Array<{}>>, name) {
+	const displayName: string = name ?? key;
+	if (options.has(typeId)) {
+		const list = options.get(typeId) ?? [];
+		list.push({ type: key, displayName });
+		options.set(typeId, list);
+	} else {
+		options.set(typeId, [{ type: key, displayName }]);
+	}
+}
+
+function getOutputOptions(typeId, key, options: Map<string, Array<string>>) {
+	if (options.has(key)) {
+		const list = options.get(key) ?? [];
+		list.push(typeId);
+		options.set(key, list);
+	} else {
+		options.set(key, [typeId]);
+	}
+}
+
+function getPortOptions(operationMap: Map<string, any>, portKey: string, getOptionsFn: Function) {
+	const portOptions = new Map<string, Array<string>>();
+
+	operationMap.forEach((value, key) => {
+		const port: Array<any> = value?.[portKey] ?? [];
+		port.forEach((option) => getOptionsFn(option.type, key, portOptions, value?.displayName));
+	});
+
+	return portOptions;
+}
+
+export function getNodeMenu(operationMap: Map<string, any>) {
+	const menuOptions = new Map<string, Array<any>>();
+
+	const inputOptions = getPortOptions(operationMap, 'inputs', connectOutputOptionToOperator);
+	const outputOptions = getPortOptions(operationMap, 'outputs', getOutputOptions);
+	outputOptions.forEach((value, key) => {
+		menuOptions.set(key, inputOptions.get(value[0]) ?? []);
+	});
+	return menuOptions;
+}
