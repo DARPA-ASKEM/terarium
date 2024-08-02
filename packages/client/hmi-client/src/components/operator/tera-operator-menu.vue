@@ -14,10 +14,8 @@
 		id="overlay_menu"
 		:model="menuItems"
 		:popup="true"
-		@mouseenter="emit('menu-mouseenter')"
-		@mouseleave="emit('menu-mouseleave')"
-		@focus="() => {}"
-		@blur="() => {}"
+		@focus="emit('menu-focus')"
+		@blur="emit('menu-blur')"
 	/>
 </template>
 <script setup lang="ts">
@@ -30,7 +28,7 @@ const props = defineProps<{
 	nodeMenu: OperatorMenuItem[];
 }>();
 
-const emit = defineEmits(['menu-mouseenter', 'menu-mouseleave', 'menu-selection']);
+const emit = defineEmits(['menu-focus', 'menu-blur', 'menu-selection']);
 
 const isMenuShowing = ref<boolean>(false);
 const menu = ref();

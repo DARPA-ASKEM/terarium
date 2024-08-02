@@ -48,13 +48,11 @@
 			top: '-30px',
 			left: `${operatorPosition.width + 20}px`
 		}"
-		@mouseenter="showOutputButton(PortType.Output)"
-		@mouseleave="hideOutputButton"
-		@menu-mouseenter="showOutputButton(PortType.Output)"
-		@menu-mouseleave="hideOutputButton"
+		@menu-focus="showOutputButton(PortType.Output)"
+		@menu-blur="hideOutputButton"
 		@menu-selection="(operatorType) => onSelection(operatorType)"
-		@focus="() => {}"
-		@blur="() => {}"
+		@focus="showOutputButton(PortType.Output)"
+		@blur="hideOutputButton"
 	/>
 </template>
 
