@@ -14,10 +14,16 @@
 
 <script setup lang="ts">
 import { debounce } from 'lodash';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 // import unchartedVegaTheme from './vega-theme';
-import { createForecastChart, createHistogramChart, createErrorChart } from '@/services/charts';
+import {
+	createForecastChart,
+	createHistogramChart,
+	createErrorChart,
+	generateForecastChartAnnotation,
+	createForecastChartAnnotation
+} from '@/services/charts';
 // import { createLLMSummary, getSummaries } from '@/services/summary-service';
 
 const rand = (v: number) => Math.round(Math.random() * v);
@@ -116,28 +122,42 @@ const debounceHandleIntervalSelect = debounce(handleIntervalSelect, 200);
 
 // Generate time series data
 const dataNew = generateSimulateData();
-const specNew = ref<any>(
-	createForecastChart(
-		{
-			dataset: dataNew.data,
-			variables: ['alpha', 'beta'],
-			timeField: 'time',
-			groupField: 'sample'
-		},
-		{
-			dataset: dataNew.summary,
-			variables: ['alphaMean', 'betaMean'],
-			timeField: 'time'
-		},
-		null,
-		{
-			width: 400,
-			height: 200,
-			legend: true,
-			colorscheme: ['#F00', '#0F0', '#00F'],
-			xAxisTitle: 'x-axis',
-			yAxisTitle: 'y-axis'
-		}
+const forecastAnnotations = ref([createForecastChartAnnotation('x', 60, 'test')]);
+
+const applyForecastAnnotations = (chartSpec: any, forecastAnnotations: any[]) => {
+	const layerSpecs = forecastAnnotations.map((a) => a.layerSpec);
+	const spec = structuredClone(chartSpec);
+	if (!spec.layer[1]) return spec;
+	// add label to statistic layer
+	spec.layer[1].layer.push(...layerSpecs);
+	return spec;
+};
+
+const specNew = computed(() =>
+	applyForecastAnnotations(
+		createForecastChart(
+			{
+				dataset: dataNew.data,
+				variables: ['alpha', 'beta'],
+				timeField: 'time',
+				groupField: 'sample'
+			},
+			{
+				dataset: dataNew.summary,
+				variables: ['alphaMean', 'betaMean'],
+				timeField: 'time'
+			},
+			null,
+			{
+				width: 400,
+				height: 200,
+				legend: true,
+				colorscheme: ['#F00', '#0F0', '#00F'],
+				xAxisTitle: 'x-axis',
+				yAxisTitle: 'y-axis'
+			}
+		),
+		forecastAnnotations.value
 	)
 );
 
@@ -223,6 +243,8 @@ const specHistogram = ref<any>(
 		]
 	})
 );
+
+const specForecast = ref<any>();
 
 onMounted(async () => {
 	// Test
