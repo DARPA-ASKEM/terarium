@@ -644,8 +644,8 @@ export interface OperatorMenuItem {
 function getInputMap(operationMap: Map<string, Operation>) {
 	const inputMap = new Map<string, OperatorMenuItem[]>();
 
-	operationMap.forEach((value, key) => {
-		const inputList: Array<OperationData> = value?.inputs ?? [];
+	operationMap.forEach((operation, key) => {
+		const inputList: Array<OperationData> = operation.inputs ?? [];
 
 		const inputSubList: OperationData[] = [];
 		inputList.forEach((input) => {
@@ -657,7 +657,7 @@ function getInputMap(operationMap: Map<string, Operation>) {
 		});
 
 		inputSubList.forEach((input) => {
-			const displayName: string = value.displayName ?? key;
+			const displayName: string = operation.displayName;
 			if (inputMap.has(input.type)) {
 				const list = inputMap.get(input.type) ?? [];
 				list.push({ type: key, displayName });
@@ -674,15 +674,15 @@ function getOutputMap(operationMap: Map<string, Operation>) {
 	const outputMap = new Map<string, string[]>();
 
 	operationMap.forEach((value, key) => {
-		const outputList: OperationData[] = value?.outputs ?? [];
+		const outputList: OperationData[] = value.outputs ?? [];
 
-		outputList.forEach((input) => {
+		outputList.forEach((output) => {
 			if (outputMap.has(key)) {
 				const list = outputMap.get(key) ?? [];
-				list.push(input.type);
+				list.push(output.type);
 				outputMap.set(key, list);
 			} else {
-				outputMap.set(key, [input.type]);
+				outputMap.set(key, [output.type]);
 			}
 		});
 	});
