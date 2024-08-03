@@ -641,62 +641,51 @@ export interface OperatorMenuItem {
 	displayName: string;
 }
 
-function getInputMap(operationMap: Map<string, Operation>) {
-	const inputMap = new Map<string, OperatorMenuItem[]>();
-
+function assetToOperation(operationMap: Map<string, Operation>) {
+	const result = new Map<string, OperatorMenuItem[]>();
 	operationMap.forEach((operation, key) => {
 		const inputList: Array<OperationData> = operation.inputs ?? [];
-
-		const inputSubList: OperationData[] = [];
 		inputList.forEach((input) => {
-			if (input.type.includes('|')) {
-				input.type.split('|').forEach((type) => inputSubList.push({ type }));
-			} else {
-				inputSubList.push(input);
-			}
-		});
-
-		inputSubList.forEach((input) => {
-			const displayName: string = operation.displayName;
-			if (inputMap.has(input.type)) {
-				const list = inputMap.get(input.type) ?? [];
-				list.push({ type: key, displayName });
-				inputMap.set(input.type, list);
-			} else {
-				inputMap.set(input.type, [{ type: key, displayName }]);
-			}
+			input.type.split('|').forEach((subType) => {
+				if (!result.has(subType)) {
+					result.set(subType, []);
+				} else {
+					result.get(subType)?.push({
+						type: key,
+						displayName: operation.displayName
+					});
+				}
+			});
 		});
 	});
-	return inputMap;
+	return result;
 }
 
-function getOutputMap(operationMap: Map<string, Operation>) {
-	const outputMap = new Map<string, string[]>();
+function operationToAsset(operationMap: Map<string, Operation>) {
+	const result = new Map<string, string[]>();
 
-	operationMap.forEach((value, key) => {
-		const outputList: OperationData[] = value.outputs ?? [];
+	operationMap.forEach((operation, key) => {
+		result.set(key, []);
 
+		const outputList: OperationData[] = operation.outputs ?? [];
 		outputList.forEach((output) => {
-			if (outputMap.has(key)) {
-				const list = outputMap.get(key) ?? [];
-				list.push(output.type);
-				outputMap.set(key, list);
-			} else {
-				outputMap.set(key, [output.type]);
-			}
+			output.type.split('|').forEach((subType) => {
+				result.get(key)?.push(subType);
+			});
 		});
 	});
-	return outputMap;
+	return result;
 }
 
+/* We want to get mapping of { operation => [operation] } */
 export function getNodeMenu(operationMap: Map<string, Operation>) {
 	const menuOptions = new Map<string, OperatorMenuItem[]>();
 
-	const inputMap = getInputMap(operationMap);
-	const outputMap = getOutputMap(operationMap);
+	const inputMap = assetToOperation(operationMap);
+	const outputMap = operationToAsset(operationMap);
 
 	const uniqInputMap: Map<string, OperatorMenuItem[]> = new Map();
-	inputMap.forEach((value, key) => uniqInputMap.set(key, _.uniqBy(value, 'type')));
+	inputMap.forEach((menuItem, key) => uniqInputMap.set(key, _.uniqBy(menuItem, 'type')));
 
 	outputMap.forEach((value, key) => {
 		menuOptions.set(key, uniqInputMap.get(value[0]) ?? []);
