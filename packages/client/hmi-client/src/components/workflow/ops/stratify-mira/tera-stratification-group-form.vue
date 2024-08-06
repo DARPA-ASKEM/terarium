@@ -3,7 +3,11 @@
 		<div class="input-row">
 			<div class="label-and-input">
 				<label>Name of strata</label>
-				<InputText v-model="strataName" placeholder="e.g., Age group" @focusout="emit('update-self', updatedConfig)" />
+				<tera-input-text
+					v-model="strataName"
+					placeholder="e.g., Age group"
+					@focusout="emit('update-self', updatedConfig)"
+				/>
 			</div>
 			<div class="label-and-input">
 				<label>Select variables and parameters to stratify</label>
@@ -22,7 +26,11 @@
 					Enter a comma separated list of labels for each group.
 					<span class="subdued-text">(Max 100)</span>
 				</label>
-				<InputText v-model="labels" placeholder="e.g., Young, Old" @focusout="emit('update-self', updatedConfig)" />
+				<tera-input-text
+					v-model="labels"
+					placeholder="e.g., Young, Old"
+					@focusout="emit('update-self', updatedConfig)"
+				/>
 			</div>
 		</div>
 		<div class="input-row justify-space-between">
@@ -40,7 +48,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import InputText from 'primevue/inputtext';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import MultiSelect from 'primevue/multiselect';
 import InputSwitch from 'primevue/inputswitch';
 import { StratifyGroup } from '@/components/workflow/ops/stratify-mira/stratify-mira-operation';

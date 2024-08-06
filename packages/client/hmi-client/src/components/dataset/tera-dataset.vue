@@ -11,13 +11,13 @@
 		@tab-change="(e) => (selectedTabIndex = e.index)"
 	>
 		<template #name-input>
-			<InputText
+			<tera-input-text
 				v-if="isRenamingDataset"
 				v-model.lazy="newDatasetName"
 				placeholder="Dataset name"
 				@keyup.enter="updateDatasetName"
 				@keyup.esc="updateDatasetName"
-				v-focus
+				auto-focus
 			/>
 			<div v-if="isRenamingDataset" class="flex flex-nowrap ml-1 mr-3">
 				<Button icon="pi pi-check" rounded text @click="updateDatasetName" />
@@ -30,7 +30,7 @@
 					class="p-button-icon-only p-button-text p-button-rounded"
 					@click="toggleOptionsMenu"
 				/>
-				<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+				<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" :pt="optionsMenuPt" />
 			</template>
 		</template>
 
@@ -66,11 +66,11 @@ import { downloadRawFile, getClimateDataset, getDataset, getDownloadURL, updateD
 import { AssetType, type CsvAsset, type Dataset, type DatasetColumn, PresignedURL } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import { FeatureConfig } from '@/types/common';
+import type { FeatureConfig } from '@/types/common';
 import type { Source } from '@/types/search';
 import { DatasetSource } from '@/types/search';
 import { useProjects } from '@/composables/project';
-import InputText from 'primevue/inputtext';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import ContextMenu from 'primevue/contextmenu';
 import Button from 'primevue/button';
 import { logger } from '@/utils/logger';
@@ -86,10 +86,6 @@ const props = defineProps({
 	featureConfig: {
 		type: Object as PropType<FeatureConfig>,
 		default: { isPreview: false } as FeatureConfig
-	},
-	highlight: {
-		type: String,
-		default: null
 	},
 	source: {
 		type: String as PropType<Source>,
@@ -179,8 +175,12 @@ const optionsMenuItems = ref([
 			emit('close-preview');
 		}
 	}
-	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteDataset }
 ]);
+const optionsMenuPt = {
+	submenu: {
+		class: 'max-h-30rem overflow-y-scroll'
+	}
+};
 
 // TODO - It's got to be a better way to do this
 async function updateDatasetName() {

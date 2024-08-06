@@ -1,82 +1,95 @@
 <template>
 	<section>
-		<h6>
-			<template v-if="item.templateId">{{ item.templateId }},</template> {{ item.id }}
-		</h6>
-		<tera-input
-			title="Name"
-			placeholder="Add a name"
-			:model-value="item.name ?? ''"
-			@update:model-value="$emit('update-item', { key: 'name', value: $event })"
-			:disabled="disabledInputs?.includes('name')"
-		/>
-		<div v-if="item.input && item.output" label="Unit">
-			<span><span>Input:</span> {{ item.input }}</span>
-			<span><span>Output:</span> {{ item.output }}</span>
-		</div>
-		<!--amr_to_mmt doesn't like unit expressions with spaces, removing them here before they are saved to the amr-->
-		<tera-input
-			v-else
-			label="Unit"
-			placeholder="Add a unit"
-			:model-value="item.unitExpression ?? ''"
-			@update:model-value="
-				($event) => {
-					const value = $event.replace(/[\s.]+/g, '');
-					$emit('update-item', { key: 'unitExpression', value });
-				}
-			"
-			:disabled="disabledInputs?.includes('unitExpression')"
-			@focusout="($event) => ($event.target.value = $event.target.value.replace(/[\s.]+/g, ''))"
-		/>
-		<span class="concept">
+		<h6>{{ symbol }}</h6>
+		<span class="name">
+			<template v-if="featureConfig.isPreview">{{ item.name }}</template>
+			<tera-input-text
+				v-else
+				placeholder="Add a name"
+				:model-value="item.name ?? ''"
+				@update:model-value="$emit('update-item', { key: 'name', value: $event })"
+			/>
+		</span>
+		<span class="unit">
+			<template v-if="item.input && item.output">
+				<span><label>Input:</label> {{ item.input }}</span>
+				<span><label>Output:</label> {{ item.output }}</span>
+			</template>
+			<!--amr_to_mmt doesn't like unit expressions with spaces, removing them here before they are saved to the amr-->
+			<template v-else-if="showUnit">
+				<template v-if="featureConfig.isPreview"><label>Unit</label>{{ item.unitExpression }}</template>
+				<tera-input-text
+					v-else
+					label="Unit"
+					placeholder="Add a unit"
+					:model-value="item.unitExpression ?? ''"
+					@update:model-value="
+						($event) => {
+							const value = $event.replace(/[\s.]+/g, '');
+							$emit('update-item', { key: 'unitExpression', value });
+						}
+					"
+					@focusout="($event) => ($event.target.value = $event.target.value.replace(/[\s.]+/g, ''))"
+				/>
+			</template>
+		</span>
+		<span v-if="showConcept" class="concept">
 			<label>Concept</label>
+			<template v-if="featureConfig.isPreview">{{ query }}</template>
 			<AutoComplete
-				label="Concept"
+				v-else
 				size="small"
 				placeholder="Search concepts"
 				v-model="query"
 				:suggestions="results"
 				optionLabel="name"
-				:disabled="disabledInputs?.includes('concept')"
 				@complete="async () => (results = await searchCuriesEntities(query))"
 				@item-select="$emit('update-item', { key: 'concept', value: $event.value.curie })"
 			/>
 		</span>
 		<katex-element
-			class="expression"
 			v-if="item.expression"
+			class="expression"
 			:expression="stringToLatexExpression(item.expression)"
 			:throw-on-error="false"
 		/>
-		<tera-input
-			title="Description"
-			placeholder="Add a description"
-			:model-value="item.description ?? ''"
-			@update:model-value="$emit('update-item', { key: 'description', value: $event })"
-			:disabled="disabledInputs?.includes('description')"
-		/>
+		<span class="description">
+			<template v-if="featureConfig.isPreview">{{ item.description }}</template>
+			<tera-input-text
+				v-else
+				placeholder="Add a description"
+				:model-value="item.description ?? ''"
+				@update:model-value="$emit('update-item', { key: 'description', value: $event })"
+			/>
+		</span>
 	</section>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import TeraInput from '@/components/widgets/tera-input.vue';
+import { ref, computed, watch } from 'vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import AutoComplete from 'primevue/autocomplete';
 import type { ModelPartItem } from '@/types/Model';
 import { stringToLatexExpression } from '@/services/model';
 import type { DKG } from '@/types/Types';
 import { getCurieFromGroundingIdentifier, getNameOfCurieCached, searchCuriesEntities } from '@/services/concept';
+import type { FeatureConfig } from '@/types/common';
 
 const props = defineProps<{
 	item: ModelPartItem;
-	disabledInputs?: string[];
+	featureConfig: FeatureConfig;
 }>();
 
 defineEmits(['update-item']);
 
 const query = ref('');
 const results = ref<DKG[]>([]);
+
+const symbol = computed(() => (props.item.templateId ? `${props.item.templateId}, ${props.item.id}` : props.item.id));
+
+// If we are in preview mode and there is no content, show nothing
+const showUnit = computed(() => !(props.featureConfig.isPreview && !props.item.unitExpression));
+const showConcept = computed(() => !(props.featureConfig.isPreview && !query.value));
 
 watch(
 	() => props.item.grounding?.identifiers,
@@ -97,6 +110,15 @@ section {
 	grid-template-columns: max-content max-content max-content auto max-content;
 	gap: var(--gap-2);
 	align-items: center;
+	font-size: var(--font-caption);
+
+	& > *:empty {
+		display: none;
+	}
+}
+
+label {
+	color: var(--text-color-subdued);
 }
 
 h6 {
@@ -109,41 +131,34 @@ h6 {
 	}
 }
 
-div {
-	display: flex;
-	gap: var(--gap-2);
-	font-size: var(--font-caption);
-	& > span > span {
-		color: var(--text-color-subdued);
-	}
-}
-
-:deep([title='Name']) {
+.name {
 	grid-area: name;
 }
 
-:deep([title='Description']) {
+.description {
 	grid-area: description;
 }
 
-:deep([label='Unit']) {
+.unit {
 	grid-area: unit;
+}
+
+.expression {
+	grid-area: expression;
 }
 
 .concept {
 	grid-area: concept;
+}
+
+.unit,
+.concept {
 	display: flex;
 	align-items: center;
-	color: var(--text-color-subdued);
-	font-size: var(--font-caption);
 	gap: var(--gap-1);
 }
 
 :deep(.p-autocomplete-input) {
 	padding: var(--gap-1) var(--gap-2);
-}
-
-.expression {
-	grid-area: expression;
 }
 </style>

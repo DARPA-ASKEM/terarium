@@ -13,7 +13,7 @@
 		</header>
 		<main>
 			<span class="expression">
-				<tera-input
+				<tera-input-text
 					label="Expression"
 					:model-value="getInitialExpression(modelConfiguration, initialId)"
 					@update:model-value="emit('update-expression', { id: initialId, value: $event })"
@@ -23,7 +23,7 @@
 			<Button :label="getOtherValuesLabel" text size="small" @click="showOtherConfigValueModal = true" />
 		</main>
 		<footer v-if="sourceOpen">
-			<tera-input
+			<tera-input-text
 				placeholder="Add a source"
 				:model-value="getInitialSource(modelConfiguration, initialId)"
 				@update:model-value="emit('update-source', { id: initialId, value: $event })"
@@ -47,7 +47,7 @@
 import { DistributionType } from '@/services/distribution';
 import { Model, ModelConfiguration } from '@/types/Types';
 import { getInitialExpression, getInitialSource, getOtherValues } from '@/services/model-configurations';
-import TeraInput from '@/components/widgets/tera-input.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraInitialOtherValueModal from '@/components/model/petrinet/tera-initial-other-value-modal.vue';
 import { computed, ref } from 'vue';
 import Button from 'primevue/button';

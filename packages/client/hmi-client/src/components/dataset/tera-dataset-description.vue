@@ -82,7 +82,7 @@ import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vu
 import { getClimateDatasetPreview } from '@/services/dataset';
 import type { Dataset, ProjectAsset } from '@/types/Types';
 import { AssetType } from '@/types/Types';
-import { FeatureConfig } from '@/types/common';
+import type { FeatureConfig } from '@/types/common';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';

@@ -22,12 +22,7 @@
 				</template>
 				<template #header-controls-right>
 					<Button icon="pi pi-play" label="Run" @click="runCodeModelCoupling" />
-					<InputText
-						v-model="newModelName"
-						placeholder="model name"
-						type="text"
-						class="input-small white-space-nowrap"
-					/>
+					<tera-input-text v-model="newModelName" placeholder="model name" class="input-small white-space-nowrap" />
 				</template>
 
 				<v-ace-editor
@@ -64,7 +59,7 @@
 <script setup lang="ts">
 import { ref, watch, onUnmounted, computed } from 'vue';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { AssetType } from '@/types/Types';
 import { createModel, getModel } from '@/services/model';
 import { WorkflowNode } from '@/types/workflow';

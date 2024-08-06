@@ -62,20 +62,17 @@
 				<section v-if="showNewValueOptions">
 					<h6 class="pt-4, pb-3">Intervention Value</h6>
 					<div class="input-row">
-						<tera-input
-							type="nist"
+						<tera-input-number
 							label="Lower bound"
 							v-model="knobs.lowerBoundValue"
 							@update:model-value="$emit('update-self', knobs)"
 						/>
-						<tera-input
-							type="nist"
+						<tera-input-number
 							label="Upper bound"
 							v-model="knobs.upperBoundValue"
 							@update:model-value="emit('update-self', knobs)"
 						/>
-						<tera-input
-							type="nist"
+						<tera-input-number
 							label="Initial guess"
 							v-model="knobs.initialGuessValue"
 							@update:model-value="emit('update-self', knobs)"
@@ -85,20 +82,17 @@
 				<section v-if="showStartTimeOptions">
 					<h6 class="pt-4, pb-3">Intervention Time</h6>
 					<div class="input-row">
-						<tera-input
-							type="nist"
+						<tera-input-number
 							label="Start time"
 							v-model="knobs.startTime"
 							@update:model-value="emit('update-self', knobs)"
 						/>
-						<tera-input
-							type="nist"
+						<tera-input-number
 							label="End time"
 							v-model="knobs.endTime"
 							@update:model-value="emit('update-self', knobs)"
 						/>
-						<tera-input
-							type="nist"
+						<tera-input-number
 							label="Initial guess"
 							v-model="knobs.startTimeGuess"
 							@update:model-value="emit('update-self', knobs)"
@@ -120,7 +114,7 @@
 
 <script setup lang="ts">
 import Dropdown from 'primevue/dropdown';
-import TeraInput from '@/components/widgets/tera-input.vue';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import InputSwitch from 'primevue/inputswitch';
 import { computed, ref } from 'vue';
 import { StaticIntervention } from '@/types/Types';

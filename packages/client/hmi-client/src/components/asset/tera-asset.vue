@@ -78,7 +78,7 @@
 import { ref, computed, watch, PropType, useSlots, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import Button from 'primevue/button';
-import { FeatureConfig } from '@/types/common';
+import type { FeatureConfig } from '@/types/common';
 import { ProjectPages } from '@/types/Project';
 import { AssetType } from '@/types/Types';
 import TabView from 'primevue/tabview';
@@ -308,7 +308,7 @@ header.with-tabs {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	gap: var(--gap);
+	gap: var(--gap-2);
 }
 
 .close {

@@ -16,7 +16,7 @@
 					<div class="input-row">
 						<div class="label-and-input">
 							<label for="2">Start time</label>
-							<InputNumber
+							<tera-input-number
 								id="2"
 								class="p-inputtext-sm"
 								v-model="timespan.start"
@@ -26,7 +26,7 @@
 						</div>
 						<div class="label-and-input">
 							<label for="3">End time</label>
-							<InputNumber
+							<tera-input-number
 								id="3"
 								class="p-inputtext-sm"
 								v-model="timespan.end"
@@ -103,7 +103,7 @@
 import _ from 'lodash';
 import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
-import InputNumber from 'primevue/inputnumber';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import type { CsvAsset, SimulationRequest, TimeSpan } from '@/types/Types';
 import type { RunResults } from '@/types/SimulateConfig';
 import type { WorkflowNode } from '@/types/workflow';

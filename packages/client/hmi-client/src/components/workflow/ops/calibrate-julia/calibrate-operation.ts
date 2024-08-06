@@ -1,4 +1,4 @@
-import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
+import { Operation, BaseState } from '@/types/workflow';
 
 const DOCUMENTATION_URL = 'https://github.com/DARPA-ASKEM/sciml-service/blob/main/src/operations.jl#L245';
 
@@ -33,7 +33,7 @@ export interface CalibrationOperationStateJulia extends BaseState {
 }
 
 export const CalibrationOperationJulia: Operation = {
-	name: WorkflowOperationTypes.CALIBRATION_JULIA,
+	name: 'calibrateJulia',
 	displayName: 'Calibrate with SciML',
 	description:
 		'given a model id, a dataset id, and optionally a configuration. calibrate the models initial values and rates',

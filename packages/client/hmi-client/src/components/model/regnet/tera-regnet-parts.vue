@@ -32,7 +32,7 @@
 					</template>
 					<template #editor="{ data }">
 						<AutoComplete
-							v-if="!readonly"
+							v-if="!featureConfig.isPreview"
 							v-model="conceptSearchTerm"
 							:suggestions="curies"
 							@complete="onSearch"
@@ -64,6 +64,7 @@
 				:model="model"
 				:mmt="mmt"
 				:mmt-params="mmtParams"
+				:feature-config="featureConfig"
 				@update-parameter="emit('update-parameter', $event)"
 			/>
 		</AccordionTab>
@@ -88,13 +89,14 @@ import {
 } from '@/services/concept';
 import type { MiraModel, MiraTemplateParams, ObservableSummary } from '@/model-representation/mira/mira-common';
 import TeraParameters from '@/components/model/model-parts/tera-parameters.vue';
+import type { FeatureConfig } from '@/types/common';
 
 const props = defineProps<{
 	model: Model;
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
 	observableSummary: ObservableSummary;
-	readonly?: boolean;
+	featureConfig: FeatureConfig;
 }>();
 
 const emit = defineEmits(['update-model', 'update-parameter']);

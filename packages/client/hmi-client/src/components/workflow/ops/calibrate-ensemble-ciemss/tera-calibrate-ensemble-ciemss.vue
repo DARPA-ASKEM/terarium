@@ -29,7 +29,7 @@
 												{{ id }}
 											</td>
 											<td>
-												<tera-input v-model="knobs.ensembleConfigs[i].weight" type="number" />
+												<tera-input-number v-model="knobs.ensembleConfigs[i].weight" />
 											</td>
 										</tr>
 									</tbody>
@@ -101,10 +101,10 @@
 							<tbody class="p-datatable-tbody">
 								<td>Steps</td>
 								<td>
-									<InputNumber v-model="knobs.extra.numParticles" />
+									<tera-input-number v-model="knobs.extra.numParticles" />
 								</td>
 								<td>
-									<InputNumber v-model="knobs.extra.numIterations" />
+									<tera-input-number v-model="knobs.extra.numIterations" />
 								</td>
 								<td>
 									<Dropdown
@@ -176,10 +176,9 @@ import _ from 'lodash';
 import { ref, shallowRef, computed, watch, onMounted } from 'vue';
 import { getRunResultCiemss, makeEnsembleCiemssCalibration } from '@/services/models/simulation-service';
 import Button from 'primevue/button';
-import InputNumber from 'primevue/inputnumber';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
-import TeraInput from '@/components/widgets/tera-input.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import Dropdown from 'primevue/dropdown';
 import { useProjects } from '@/composables/project';

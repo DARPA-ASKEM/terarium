@@ -63,7 +63,7 @@
 					:value="executeResponse.value"
 					:traceback="executeResponse.traceback"
 				/>
-				<tera-model-diagram v-else-if="amr" :model="amr" :is-editable="true" />
+				<tera-model-diagram v-else-if="amr" :model="amr" />
 				<div v-else>
 					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
 				</div>
@@ -80,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty, cloneDeep } from 'lodash';
+import { cloneDeep, isEmpty } from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import { VAceEditor } from 'vue3-ace-editor';
@@ -89,8 +89,8 @@ import '@/ace-config';
 import { v4 as uuidv4 } from 'uuid';
 import type { Model } from '@/types/Types';
 import { AssetType } from '@/types/Types';
-import { getModel, createModel } from '@/services/model';
-import { WorkflowNode, WorkflowOutput, OperatorStatus } from '@/types/workflow';
+import { createModel, getModel } from '@/services/model';
+import { OperatorStatus, WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
@@ -150,7 +150,8 @@ const sampleAgentQuestions = [
 	'Add an observable titled sample with the expression A * B  * p.',
 	'Rename the state S to Susceptible in the infection transition.',
 	'Rename the transition infection to inf.',
-	'Change rate law of inf to S * I * z.'
+	'Change rate law of inf to S * I * z.',
+	'Add a new parameter with id θ and value 0.5.'
 ];
 
 const contextLanguage = ref<string>('python3');

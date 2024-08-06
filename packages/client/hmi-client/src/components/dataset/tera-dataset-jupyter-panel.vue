@@ -125,7 +125,7 @@
 	<Dialog v-model:visible="showSaveInput" :modal="true" :style="{ width: '50vw' }" header="Save as">
 		<div class="p-fluid mt-4">
 			<div class="p-field">
-				<InputText id="name" v-model="saveAsName" placeholder="What do you want to call it?" />
+				<tera-input-text id="name" v-model="saveAsName" placeholder="What do you want to call it?" />
 			</div>
 		</div>
 		<template #footer>
@@ -138,7 +138,7 @@
 import { computed, onMounted, onUnmounted, ref, Ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
-import InputText from 'primevue/inputtext';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { useToastService } from '@/services/toast';
 import { IModel } from '@jupyterlab/services/lib/session/session';
 import type { CsvAsset, NotebookSession } from '@/types/Types';
@@ -183,7 +183,7 @@ const newCsvHeader: any = ref(null);
 const oldCsvHeaders: any = ref(null);
 const jupyterCsv: Ref<CsvAsset | null> = ref(null);
 const showSaveInput = ref(<boolean>false);
-const saveAsName = ref(<string | null>'');
+const saveAsName = ref('');
 const toast = useToastService();
 
 const updateKernelStatus = (statusString: string) => {

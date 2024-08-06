@@ -83,13 +83,7 @@
 					</h5>
 					<div class="input-row">
 						<div class="label-and-input">
-							<InputNumber
-								class="p-inputtext-sm"
-								inputId="integeronly"
-								v-model="numSamples"
-								:min="1"
-								@update:model-value="updateState"
-							/>
+							<tera-input-number inputId="integeronly" v-model="numSamples" @update:model-value="updateState" />
 						</div>
 					</div>
 					<h5>
@@ -108,7 +102,7 @@
 						</div>
 						<div class="label-and-input">
 							<label for="num-steps">Step size</label>
-							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.stepSize" />
+							<tera-input-number inputId="integeronly" v-model="knobs.stepSize" />
 						</div>
 					</div>
 					<h5>
@@ -118,37 +112,27 @@
 					<div class="input-row">
 						<div class="label-and-input">
 							<label for="num-iterations">Number of solver iterations</label>
-							<InputNumber
-								class="p-inputtext-sm"
-								inputId="integeronly"
-								v-model="numIterations"
-								@update:model-value="updateState"
-							/>
+							<tera-input-number inputId="integeronly" v-model="numIterations" @update:model-value="updateState" />
 						</div>
 						<div class="label-and-input">
 							<label for="num-samples">End time for forecast</label>
-							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.endTime" />
+							<tera-input-number inputId="integeronly" v-model="knobs.endTime" />
 						</div>
 						<div class="label-and-input">
 							<label for="learning-rate">Learning rate</label>
-							<InputNumber
-								class="p-inputtext-sm"
-								inputId="numberonly"
-								v-model="learningRate"
-								@update:model-value="updateState"
-							/>
+							<tera-input-number inputId="numberonly" v-model="learningRate" @update:model-value="updateState" />
 						</div>
 						<div class="label-and-input">
 							<label>Inference algorithm</label>
-							<tera-input disabled model-value="SVI" />
+							<tera-input-text disabled model-value="SVI" />
 						</div>
 						<div class="label-and-input">
 							<label>Loss function</label>
-							<tera-input disabled model-value="ELBO" />
+							<tera-input-text disabled model-value="ELBO" />
 						</div>
 						<div class="label-and-input">
 							<label>Optimizer method</label>
-							<tera-input disabled model-value="ADAM" />
+							<tera-input-text disabled model-value="ADAM" />
 						</div>
 					</div>
 				</section>
@@ -209,7 +193,7 @@ import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
-import InputNumber from 'primevue/inputnumber';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { CalibrateMap, renderLossGraph, setupDatasetInput, setupModelInput } from '@/services/calibrate-workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -245,7 +229,7 @@ import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
 import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
-import TeraInput from '@/components/widgets/tera-input.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults } from './calibrate-utils';
 
