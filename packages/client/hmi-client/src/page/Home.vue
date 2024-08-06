@@ -51,13 +51,17 @@
 					<TabPanel v-for="(tab, i) in projectsTabs" :header="tab.title" :key="i">
 						<section class="filter-and-sort">
 							<div>
+								<ProjectSearchBar />
+							</div>
+							<!--
+							<div>
 								<tera-input-text
 									class="w-17rem"
 									v-model="searchProjects"
 									placeholder="Search for projects"
 									id="searchProject"
 								/>
-							</div>
+							</div> -->
 							<div>
 								<span v-if="view === ProjectsView.Cards">
 									<Dropdown
@@ -165,8 +169,8 @@ import { useProjectMenu } from '@/composables/project-menu';
 import { Project } from '@/types/Types';
 import { Vue3Lottie } from 'vue3-lottie';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
-import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { FilterService } from 'primevue/api';
+import ProjectSearchBar from '@/components/home/project-search-bar.vue';
 
 const { isProjectConfigDialogVisible, menuProject } = useProjectMenu();
 
