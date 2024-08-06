@@ -182,7 +182,6 @@ watch(
 			state.inProgressPreForecastId = preForecastId;
 			state.inProgressPostForecastId = postForecastId;
 			state.optimizedInterventionPolicyId = newInterventionResponse.id ?? '';
-			state.optimizeErrorMessage = { name: '', value: '', traceback: '' };
 			emit('update-state', state);
 		} else {
 			// Poller did not complete successfully
@@ -237,7 +236,6 @@ Provide a consis summary in 100 words or less.
 			state.preForecastRunId = preSimId;
 			state.inProgressPostForecastId = '';
 			state.postForecastRunId = postSimId;
-			state.simulateErrorMessage = { name: '', value: '', traceback: '' };
 			emit('update-state', state);
 
 			emit('append-output', {
