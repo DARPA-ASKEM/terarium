@@ -105,11 +105,7 @@
 			</tera-drilldown-section>
 			<tera-drilldown-preview>
 				<section v-if="selectedModel">
-					<tera-model-description
-						:model="selectedModel"
-						:feature-config="{ isPreview: true }"
-						:generating-card="isGeneratingCard"
-					/>
+					<tera-model-description :model="selectedModel" :generating-card="isGeneratingCard" />
 				</section>
 				<tera-operator-placeholder v-else :node="node" style="height: 100%" />
 			</tera-drilldown-preview>

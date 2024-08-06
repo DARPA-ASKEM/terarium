@@ -242,9 +242,9 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 		allTemplates.push(scrubbedTemplate);
 	});
 
-	const templateMap = new Map<string, MiraTemplate>();
+	const expandedTemplateMap = new Map<string, MiraTemplate>();
 	miraModel.templates.forEach((t) => {
-		templateMap.set(t.name, t);
+		expandedTemplateMap.set(t.name, t);
 	});
 
 	// 2. Do post processing
@@ -255,13 +255,31 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 	const tempMatrixMap = new Map<string, MiraTemplate[]>();
 	const matrixMap = new Map<string, MiraTemplate[]>();
 
+	// Each template should be inserted once but where specifically needs to be determined
+	// const insertedTemplates: MiraTemplate[] = [];
+
+	// console.log(expandedTemplateMap);
+	// console.log(allTemplates);
+	console.log(miraModel.templates);
+	// How come there are template duplicates?
+
 	allTemplates.forEach((t) => {
 		const key = `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
 		if (!tempMatrixMap.has(key)) {
 			tempMatrixMap.set(key, []);
 		}
-		const originalTemplate = templateMap.get(t.name);
+
+		const originalTemplate = expandedTemplateMap.get(t.name);
 		tempMatrixMap.get(key)?.push(originalTemplate as MiraTemplate);
+		// const originalTemplate = expandedTemplateMap.get(t.name);
+		// if (originalTemplate) {
+		// 	if (!insertedTemplates.includes(originalTemplate)) {
+		// 		tempMatrixMap.get(key)?.push(originalTemplate);
+		// 		insertedTemplates.push(originalTemplate);
+		// 	} else {
+		// 		console.log(key, originalTemplate);
+		// 	}
+		// }
 
 		if (check.has(key)) return;
 
