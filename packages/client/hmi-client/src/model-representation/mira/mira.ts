@@ -101,6 +101,7 @@ export const collapseParameters = (miraModel: MiraModel, miraTemplateParams: Mir
 		const rootName = _.first(tokens) as string;
 
 		// Ignore non-numerics
+		/*
 		if (tokens.length > 1) {
 			let numerical = true;
 			for (let j = 1; j < tokens.length; j++) {
@@ -112,6 +113,13 @@ export const collapseParameters = (miraModel: MiraModel, miraTemplateParams: Mir
 				map.set(name, [name]);
 				continue;
 			}
+		}
+		*/
+
+		const displayName = miraModel.parameters[key].display_name;
+		if (displayName === null || displayName === key) {
+			map.set(name, [name]);
+			continue;
 		}
 
 		if (map.has(rootName)) {
@@ -214,6 +222,7 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 
 	// 1. Roll back to "original name" by trimming off modifiers
 	miraModel.templates.forEach((t) => {
+		console.log('..', t.name);
 		const scrubbedTemplate: TemplateSummary = {
 			name: t.name,
 			expression: t.rate_law,
