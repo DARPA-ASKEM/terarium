@@ -247,8 +247,11 @@ Provide a consis summary in 100 words or less.
 			});
 		} else {
 			// Poller did not complete successfully
-			const preSimulation = await getSimulation(preSimId);
-			const postSimulation = await getSimulation(postSimId);
+			const preForecastResponce = getSimulation(preSimId);
+			const postForecastResponce = getSimulation(postSimId);
+			const forescastResults = await Promise.all([preForecastResponce, postForecastResponce]);
+			const preSimulation = forescastResults[0];
+			const postSimulation = forescastResults[1];
 			const state = _.cloneDeep(props.node.state);
 			if (preSimulation?.status && preSimulation?.statusMessage) {
 				state.simulateErrorMessage = {
