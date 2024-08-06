@@ -170,7 +170,7 @@ watch(
 			// Start 2nd simulation to get sample simulation from dill
 			const newInterventionResponse = await createInterventionPolicyFromOptimize(modelConfigId.value as string, optId);
 
-			const preForecastResponse = startForecast(undefined);
+			const preForecastResponse = startForecast();
 			const postForecastResponse = startForecast(newInterventionResponse);
 			const forecastResults = await Promise.all([preForecastResponse, postForecastResponse]);
 			const [{ id: preForecastId }, { id: postForecastId }] = forecastResults;
