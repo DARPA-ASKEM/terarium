@@ -30,7 +30,8 @@ import {
 	makeForecastJobCiemss,
 	getRunResult,
 	getRunResultCSV,
-	parsePyCiemssMap
+	parsePyCiemssMap,
+	getSimulation
 } from '@/services/models/simulation-service';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { SimulationRequest, InterventionPolicy } from '@/types/Types';
@@ -169,10 +170,11 @@ watch(
 			// Start 2nd simulation to get sample simulation from dill
 			const newInterventionResponse = await createInterventionPolicyFromOptimize(modelConfigId.value as string, optId);
 
-			const preForecastResponce = await startForecast(undefined);
-			const preForecastId = preForecastResponce.id;
-			const postForecastResponce = await startForecast(newInterventionResponse);
-			const postForecastId = postForecastResponce.id;
+			const preForecastResponce = startForecast(undefined);
+			const postForecastResponce = startForecast(newInterventionResponse);
+			const forescastResults = await Promise.all([preForecastResponce, postForecastResponce]);
+			const preForecastId = forescastResults[0].id;
+			const postForecastId = forescastResults[1].id;
 
 			const state = _.cloneDeep(props.node.state);
 			state.inProgressOptimizeId = '';
@@ -180,6 +182,22 @@ watch(
 			state.inProgressPreForecastId = preForecastId;
 			state.inProgressPostForecastId = postForecastId;
 			state.optimizedInterventionPolicyId = newInterventionResponse.id ?? '';
+			state.optimizeErrorMessage = { name: '', value: '', traceback: '' };
+			emit('update-state', state);
+		} else {
+			// Poller did not complete successfully
+			const simulation = await getSimulation(optId);
+			const state = _.cloneDeep(props.node.state);
+			if (simulation?.status && simulation?.statusMessage) {
+				state.optimizeErrorMessage = {
+					name: optId,
+					value: simulation.status,
+					traceback: simulation.statusMessage
+				};
+			}
+			state.inProgressOptimizeId = '';
+			state.inProgressPreForecastId = '';
+			state.inProgressPostForecastId = '';
 			emit('update-state', state);
 		}
 	},
@@ -219,6 +237,7 @@ Provide a consis summary in 100 words or less.
 			state.preForecastRunId = preSimId;
 			state.inProgressPostForecastId = '';
 			state.postForecastRunId = postSimId;
+			state.simulateErrorMessage = { name: '', value: '', traceback: '' };
 			emit('update-state', state);
 
 			emit('append-output', {
@@ -228,6 +247,30 @@ Provide a consis summary in 100 words or less.
 				isSelected: false,
 				state
 			});
+		} else {
+			// Poller did not complete successfully
+			const preSimulation = await getSimulation(preSimId);
+			const postSimulation = await getSimulation(postSimId);
+			const state = _.cloneDeep(props.node.state);
+			if (preSimulation?.status && preSimulation?.statusMessage) {
+				state.simulateErrorMessage = {
+					name: preSimId,
+					value: preSimulation.status,
+					traceback: preSimulation.statusMessage
+				};
+			}
+			// Probably no need to capture both simulation error messages as theyre very similar simulation calls.
+			else if (postSimulation?.status && postSimulation?.statusMessage) {
+				state.simulateErrorMessage = {
+					name: postSimId,
+					value: postSimulation.status,
+					traceback: postSimulation.statusMessage
+				};
+			}
+			state.inProgressOptimizeId = '';
+			state.inProgressPreForecastId = '';
+			state.inProgressPostForecastId = '';
+			emit('update-state', state);
 		}
 	},
 	{ immediate: true }
