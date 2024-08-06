@@ -116,7 +116,7 @@
 	</tera-drilldown>
 	<tera-save-asset-modal
 		v-if="selectedModel"
-		:model="selectedModel"
+		:asset="selectedModel"
 		:is-visible="showSaveModelModal"
 		@close-modal="onCloseModelModal"
 		@on-save="onAddModel"
