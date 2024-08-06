@@ -30,8 +30,7 @@ import {
 	makeForecastJobCiemss,
 	getRunResult,
 	getRunResultCSV,
-	parsePyCiemssMap,
-	getSimulation
+	parsePyCiemssMap
 } from '@/services/models/simulation-service';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { SimulationRequest, InterventionPolicy } from '@/types/Types';
@@ -184,13 +183,12 @@ watch(
 			emit('update-state', state);
 		} else {
 			// Simulation Failed:
-			const simulation = await getSimulation(optId);
 			const state = _.cloneDeep(props.node.state);
-			if (simulation?.status && simulation?.statusMessage) {
+			if (response?.state && response?.error) {
 				state.optimizeErrorMessage = {
 					name: optId,
-					value: simulation.status,
-					traceback: simulation.statusMessage
+					value: response.state,
+					traceback: response.error
 				};
 			}
 			state.inProgressOptimizeId = '';
@@ -246,25 +244,20 @@ Provide a consis summary in 100 words or less.
 			});
 		} else {
 			// Simulation Failed:
-			const preForecastResponse = getSimulation(preSimId);
-			const postForecastResponse = getSimulation(postSimId);
-			const forescastResults = await Promise.all([preForecastResponse, postForecastResponse]);
-			const preSimulation = forescastResults[0];
-			const postSimulation = forescastResults[1];
 			const state = _.cloneDeep(props.node.state);
-			if (preSimulation?.status && preSimulation?.statusMessage) {
+			if (preResponse?.state && preResponse?.error) {
 				state.simulateErrorMessage = {
 					name: preSimId,
-					value: preSimulation.status,
-					traceback: preSimulation.statusMessage
+					value: preResponse.state,
+					traceback: preResponse.error
 				};
 			}
 			// Probably no need to capture both simulation error messages as theyre very similar simulation calls.
-			else if (postSimulation?.status && postSimulation?.statusMessage) {
+			else if (postResponse?.state && postResponse?.error) {
 				state.simulateErrorMessage = {
 					name: postSimId,
-					value: postSimulation.status,
-					traceback: postSimulation.statusMessage
+					value: postResponse.state,
+					traceback: postResponse.error
 				};
 			}
 			state.inProgressOptimizeId = '';
