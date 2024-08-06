@@ -170,9 +170,9 @@ watch(
 			// Start 2nd simulation to get sample simulation from dill
 			const newInterventionResponse = await createInterventionPolicyFromOptimize(modelConfigId.value as string, optId);
 
-			const preForecastResponce = startForecast(undefined);
-			const postForecastResponce = startForecast(newInterventionResponse);
-			const forescastResults = await Promise.all([preForecastResponce, postForecastResponce]);
+			const preForecastResponse = startForecast(undefined);
+			const postForecastResponse = startForecast(newInterventionResponse);
+			const forescastResults = await Promise.all([preForecastResponse, postForecastResponse]);
 			const preForecastId = forescastResults[0].id;
 			const postForecastId = forescastResults[1].id;
 
@@ -247,9 +247,9 @@ Provide a consis summary in 100 words or less.
 			});
 		} else {
 			// Poller did not complete successfully
-			const preForecastResponce = getSimulation(preSimId);
-			const postForecastResponce = getSimulation(postSimId);
-			const forescastResults = await Promise.all([preForecastResponce, postForecastResponce]);
+			const preForecastResponse = getSimulation(preSimId);
+			const postForecastResponse = getSimulation(postSimId);
+			const forescastResults = await Promise.all([preForecastResponse, postForecastResponse]);
 			const preSimulation = forescastResults[0];
 			const postSimulation = forescastResults[1];
 			const state = _.cloneDeep(props.node.state);
