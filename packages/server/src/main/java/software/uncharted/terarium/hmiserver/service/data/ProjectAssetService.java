@@ -107,6 +107,9 @@ public class ProjectAssetService {
 		if (!projectAssets.isEmpty()) {
 			projectAssets.forEach(projectAsset -> {
 				projectAsset.setAssetName(asset.getName());
+				if (asset instanceof Model) {
+					projectAsset.setAssetName(((Model) asset).getHeader().getName());
+				}
 				updateProjectAsset(projectAsset, hasWritePermission);
 			});
 		} else {
