@@ -291,8 +291,6 @@ const specHistogram = ref<any>(
 	})
 );
 
-const specForecast = ref<any>();
-
 onMounted(async () => {
 	// Test
 	// const abc = await createLLMSummary('what is 1 + 2 + 3');
