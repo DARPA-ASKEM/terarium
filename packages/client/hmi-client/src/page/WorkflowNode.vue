@@ -5,8 +5,6 @@
 		<tera-dataset-transformer v-else-if="isNodeType(OperationType.DATASET_TRANSFORMER)" :node="node" />
 		<tera-dataset-drilldown v-else-if="isNodeType(OperationType.DATASET)" :node="node" />
 		<tera-regridding-drilldown v-else-if="isNodeType(OperationType.REGRIDDING)" :node="node" />
-		<tera-calibrate-julia v-else-if="isNodeType(OperationType.CALIBRATION_JULIA)" :node="node" />
-		<tera-simulate-julia v-else-if="isNodeType(OperationType.SIMULATE_JULIA)" :node="node" />
 		<tera-calibrate-ciemss v-else-if="isNodeType(OperationType.CALIBRATION_CIEMSS)" :node="node" />
 		<tera-calibrate-ensemble-ciemss v-else-if="isNodeType(OperationType.CALIBRATE_ENSEMBLE_CIEMSS)" :node="node" />
 		<tera-simulate-ciemss v-else-if="isNodeType(OperationType.SIMULATE_CIEMSS)" :node="node" />
@@ -26,21 +24,19 @@ import TeraModelWorkflowWrapper from '@/components/workflow/ops/model/tera-model
 import TeraDatasetDrilldown from '@/components/workflow/ops/dataset/tera-dataset-drilldown.vue';
 import TeraRegriddingDrilldown from '@/components/workflow/ops/regridding/tera-regridding.vue';
 import TeraDatasetTransformer from '@/components/workflow/ops/dataset-transformer/tera-dataset-transformer.vue';
-import TeraCalibrateJulia from '@/components/workflow/ops/calibrate-julia/tera-calibrate-julia.vue';
-import TeraSimulateJulia from '@/components/workflow/ops/simulate-julia/tera-simulate-julia.vue';
 import TeraCalibrateCiemss from '@/components/workflow/ops/calibrate-ciemss/tera-calibrate-ciemss-drilldown.vue';
 import TeraCalibrateEnsembleCiemss from '@/components/workflow/ops/calibrate-ensemble-ciemss/tera-calibrate-ensemble-ciemss.vue';
 import TeraSimulateCiemss from '@/components/workflow/ops/simulate-ciemss/tera-simulate-ciemss.vue';
 import TeraSimulateEnsembleCiemss from '@/components/workflow/ops/simulate-ensemble-ciemss/tera-simulate-ensemble-ciemss.vue';
 import TeraFunman from '@/components/workflow/ops/funman/tera-funman.vue';
-import teraStratifyMira from '@/components/workflow/ops/stratify-mira/tera-stratify-mira.vue';
+import TeraStratifyMira from '@/components/workflow/ops/stratify-mira/tera-stratify-mira.vue';
 import TeraCodeAssetWrapper from '@/components/workflow/ops/code-asset/tera-code-asset-wrapper.vue';
 
 const props = defineProps<{ nodeId: string; workflowId: string }>();
 
 const node = ref<WorkflowNode<any>>();
 
-function isNodeType(type: OperationType): boolean {
+function isNodeType(type: string): boolean {
 	return node.value?.operationType === type;
 }
 

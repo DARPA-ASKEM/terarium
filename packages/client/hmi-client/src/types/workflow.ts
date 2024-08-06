@@ -1,35 +1,28 @@
 import type { Position } from '@/types/common';
 
-export enum WorkflowOperationTypes {
-	ADD = 'add', // temp for test to work
-	TEST = 'TestOperation',
-	CALIBRATION_JULIA = 'CalibrationOperationJulia',
-	CALIBRATION_CIEMSS = 'CalibrationOperationCiemss',
-	DATASET = 'Dataset',
-	MODEL = 'ModelOperation',
-	SIMULATE_JULIA = 'SimulateJuliaOperation',
-	SIMULATE_CIEMSS = 'SimulateCiemssOperation',
-	STRATIFY_JULIA = 'StratifyJulia',
-	STRATIFY_MIRA = 'StratifyMira',
-	SIMULATE_ENSEMBLE_CIEMSS = 'SimulateEnsembleCiemms',
-	CALIBRATE_ENSEMBLE_CIEMSS = 'CalibrateEnsembleCiemms',
-	DATASET_TRANSFORMER = 'DatasetTransformer',
-	SUBSET_DATA = 'SubsetData',
-	MODEL_TRANSFORMER = 'ModelTransformer',
-	MODEL_FROM_CODE = 'ModelFromCode',
-	FUNMAN = 'Funman',
-	CODE = 'Code',
-	MODEL_COMPARISON = 'ModelComparison',
-	MODEL_CONFIG = 'ModelConfiguration',
-	OPTIMIZE_CIEMSS = 'OptimizeCiemss',
-	MODEL_COUPLING = 'ModelCoupling',
-	MODEL_EDIT = 'ModelEdit',
-	DOCUMENT = 'Document',
-	MODEL_FROM_EQUATIONS = 'ModelFromEquations',
-	DECAPODES = 'Decapodes',
-	REGRIDDING = 'Regridding',
-	INTERVENTION_POLICY = 'InterventionPolicy'
-}
+export const WorkflowOperationTypes = Object.freeze({
+	CALIBRATION_CIEMSS: 'CalibrationOperationCiemss',
+	DATASET: 'Dataset',
+	MODEL: 'ModelOperation',
+	SIMULATE_CIEMSS: 'SimulateCiemssOperation',
+	STRATIFY_MIRA: 'StratifyMira',
+	SIMULATE_ENSEMBLE_CIEMSS: 'SimulateEnsembleCiemms',
+	CALIBRATE_ENSEMBLE_CIEMSS: 'CalibrateEnsembleCiemms',
+	DATASET_TRANSFORMER: 'DatasetTransformer',
+	SUBSET_DATA: 'SubsetData',
+	MODEL_TRANSFORMER: 'ModelTransformer',
+	MODEL_FROM_CODE: 'ModelFromCode',
+	FUNMAN: 'Funman',
+	CODE: 'Code',
+	MODEL_COMPARISON: 'ModelComparison',
+	MODEL_CONFIG: 'ModelConfiguration',
+	OPTIMIZE_CIEMSS: 'OptimizeCiemss',
+	MODEL_EDIT: 'ModelEdit',
+	DOCUMENT: 'Document',
+	MODEL_FROM_EQUATIONS: 'ModelFromEquations',
+	REGRIDDING: 'Regridding',
+	INTERVENTION_POLICY: 'InterventionPolicy'
+});
 
 export enum OperatorStatus {
 	DEFAULT = 'default',
@@ -54,7 +47,7 @@ export interface OperationData {
 
 // Defines a function: eg: model, simulate, calibrate
 export interface Operation {
-	name: WorkflowOperationTypes;
+	name: string;
 	description: string;
 	displayName: string; // Human-readable name for each node.
 	documentationUrl?: string;
@@ -106,7 +99,7 @@ export interface WorkflowNode<S> {
 	id: string;
 	displayName: string;
 	workflowId: string;
-	operationType: WorkflowOperationTypes;
+	operationType: string;
 	documentationUrl?: string;
 	imageUrl?: string;
 

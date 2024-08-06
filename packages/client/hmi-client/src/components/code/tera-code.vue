@@ -21,7 +21,7 @@
 							@click="toggleOptionsMenu"
 						/>
 					</div>
-					<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+					<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" :pt="optionsMenuPt" />
 					<div class="right-side flex gap-2">
 						<Button class="toolbar-button" severity="secondary" outlined label="Save" @click="saveCode()" />
 						<Button
@@ -473,6 +473,12 @@ const optionsMenuItems = ref([
 				})) ?? []
 	}
 ]);
+const optionsMenuPt = {
+	submenu: {
+		class: 'max-h-30rem overflow-y-scroll'
+	}
+};
+
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
 };

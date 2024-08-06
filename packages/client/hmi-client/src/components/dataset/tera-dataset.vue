@@ -30,7 +30,7 @@
 					class="p-button-icon-only p-button-text p-button-rounded"
 					@click="toggleOptionsMenu"
 				/>
-				<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+				<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" :pt="optionsMenuPt" />
 			</template>
 		</template>
 
@@ -86,10 +86,6 @@ const props = defineProps({
 	featureConfig: {
 		type: Object as PropType<FeatureConfig>,
 		default: { isPreview: false } as FeatureConfig
-	},
-	highlight: {
-		type: String,
-		default: null
 	},
 	source: {
 		type: String as PropType<Source>,
@@ -179,8 +175,12 @@ const optionsMenuItems = ref([
 			emit('close-preview');
 		}
 	}
-	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteDataset }
 ]);
+const optionsMenuPt = {
+	submenu: {
+		class: 'max-h-30rem overflow-y-scroll'
+	}
+};
 
 // TODO - It's got to be a better way to do this
 async function updateDatasetName() {
