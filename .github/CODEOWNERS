@@ -10,7 +10,7 @@
 * @dgauldie @mwdchang @YohannParis
 
 # Client code owners
-/packages/client/ @YohannParis @mwdchang
+/packages/client/ @YohannParis @mwdchang @terarium-front-end
 
 # Backend services owners
 /packages/server/ @dgauldie @dvince2 @YohannParis
