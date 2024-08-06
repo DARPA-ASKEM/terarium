@@ -42,15 +42,17 @@
 		/>
 	</main>
 	<tera-operator-menu
-		v-if="isMenuFocused"
+		v-if="isMenuFocused && menuOptions.length"
+		:nodeMenu="menuOptions"
 		:style="{
 			top: '-30px',
 			left: `${operatorPosition.width + 20}px`
 		}"
-		@mouseenter="showOutputButton(PortType.Output)"
-		@mouseleave="hideOutputButton"
-		@focus="() => {}"
-		@blur="() => {}"
+		@menu-focus="showOutputButton(PortType.Output)"
+		@menu-blur="hideOutputButton"
+		@menu-selection="(operatorType) => onSelection(operatorType)"
+		@focus="showOutputButton(PortType.Output)"
+		@blur="hideOutputButton"
 	/>
 </template>
 
@@ -68,15 +70,18 @@ import TeraOperatorInputs from '@/components/operator/tera-operator-inputs.vue';
 import TeraOperatorOutputs from '@/components/operator/tera-operator-outputs.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import TeraOperatorMenu from '@/components/operator/tera-operator-menu.vue';
+import { OperatorMenuItem } from '@/services/workflow';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
+	nodeMenu: Map<string, OperatorMenuItem[]>;
 }>();
 
 const emit = defineEmits([
 	'port-selected',
 	'port-mouseover',
 	'port-mouseleave',
+	'menu-selection',
 	'remove-operator',
 	'remove-edges',
 	'resize',
@@ -96,6 +101,7 @@ const annotationRef = ref<typeof TeraOperatorAnnotation | null>(null);
 
 const isMenuFocused = ref<boolean>(false);
 const menuButtonTimeoutId = ref<NodeJS.Timeout | null>(null);
+const menuOptions = ref<OperatorMenuItem[] | []>([]);
 
 let resizeObserver: ResizeObserver | null = null;
 
@@ -143,11 +149,16 @@ function mouseleavePort() {
 	emit('port-mouseleave');
 }
 
+function onSelection(operatorType: string) {
+	emit('menu-selection', operatorType);
+}
+
 function resizeHandler() {
 	emit('resize', props.node);
 }
 
 onMounted(() => {
+	menuOptions.value = props.nodeMenu.get(props.node.operationType) ?? [];
 	if (operator.value) {
 		resizeObserver = new ResizeObserver(resizeHandler);
 		resizeObserver.observe(operator.value);
