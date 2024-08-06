@@ -255,7 +255,6 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 	const tempMatrixMap = new Map<string, MiraTemplate[]>();
 	const matrixMap = new Map<string, MiraTemplate[]>();
 
-	// Each template should be inserted once but where specifically needs to be determined
 	allTemplates.forEach((t) => {
 		const key = `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
 		if (!tempMatrixMap.has(key)) {
