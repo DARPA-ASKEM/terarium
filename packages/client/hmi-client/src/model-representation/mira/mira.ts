@@ -260,6 +260,7 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 		if (!tempMatrixMap.has(key)) {
 			tempMatrixMap.set(key, []);
 		}
+
 		const originalTemplate = templateMap.get(t.name);
 		tempMatrixMap.get(key)?.push(originalTemplate as MiraTemplate);
 
