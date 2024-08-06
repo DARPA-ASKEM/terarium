@@ -184,7 +184,7 @@ watch(
 			state.optimizedInterventionPolicyId = newInterventionResponse.id ?? '';
 			emit('update-state', state);
 		} else {
-			// Poller did not complete successfully
+			// Simulation Failed:
 			const simulation = await getSimulation(optId);
 			const state = _.cloneDeep(props.node.state);
 			if (simulation?.status && simulation?.statusMessage) {
@@ -246,7 +246,7 @@ Provide a consis summary in 100 words or less.
 				state
 			});
 		} else {
-			// Poller did not complete successfully
+			// Simulation Failed:
 			const preForecastResponse = getSimulation(preSimId);
 			const postForecastResponse = getSimulation(postSimId);
 			const forescastResults = await Promise.all([preForecastResponse, postForecastResponse]);
