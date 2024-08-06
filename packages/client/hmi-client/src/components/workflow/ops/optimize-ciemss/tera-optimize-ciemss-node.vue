@@ -172,7 +172,7 @@ watch(
 
 			const preForecastResponse = startForecast(undefined);
 			const postForecastResponse = startForecast(newInterventionResponse);
-			const forescastResults = await Promise.all([preForecastResponse, postForecastResponse]);
+			const forecastResults = await Promise.all([preForecastResponse, postForecastResponse]);
 			const [{ id: preForecastId }, { id: postForecastId }] = forecastResults;
 
 			const state = _.cloneDeep(props.node.state);
