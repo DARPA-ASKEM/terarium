@@ -245,7 +245,7 @@ Provide a consis summary in 100 words or less.
 		} else {
 			// Simulation Failed:
 			const state = _.cloneDeep(props.node.state);
-			if (preResponse.state && preResponse.error) {
+			if (preResponse.error) {
 				state.simulateErrorMessage = {
 					name: preSimId,
 					value: preResponse.state,
@@ -253,7 +253,7 @@ Provide a consis summary in 100 words or less.
 				};
 			}
 			// Probably no need to capture both simulation error messages as theyre very similar simulation calls.
-			else if (postResponse.state && postResponse.error) {
+			else if (postResponse.error) {
 				state.simulateErrorMessage = {
 					name: postSimId,
 					value: postResponse.state,
