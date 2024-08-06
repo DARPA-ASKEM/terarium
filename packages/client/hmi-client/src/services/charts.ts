@@ -1,4 +1,5 @@
 import API from '@/api/api';
+import { b64DecodeUnicode } from '@/utils/binary';
 import { percentile } from '@/utils/math';
 import { isEmpty } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
@@ -512,7 +513,7 @@ export const createForecastChart = (
 
 export const createForecastChartAnnotation = (axis: 'x' | 'y', datum: number, label: string) => {
 	const layerSpec = {
-		description: 'annotation',
+		description: `At ${axis} ${datum}, add a label '${label}'.`,
 		encoding: {
 			[axis]: { datum }
 		},
@@ -539,20 +540,18 @@ export const createForecastChartAnnotation = (axis: 'x' | 'y', datum: number, la
 	const annotation = {
 		id: uuidv4(),
 		layerSpec,
-		isLLMGenerated: false
+		isLLMGenerated: false,
+		metadata: { axis, datum, label }
 	};
 	return annotation;
 };
 
 export const generateForecastChartAnnotation = async (
+	request: string,
 	timeField: string,
 	variables: string[],
 	axisTitle: { x: string; y: string }
 ) => {
-	const request = 'Add a label "important" at day 200';
-	variables = ['hospitalization'];
-	timeField = 'timepoint_id';
-	axisTitle = { x: 'Day', y: 'person' };
 	const prompt = `
 	  You are an agent who is an expert in Vega-Lite chart specs. Provide a Vega-Lite layer JSON object for the annotation that can be added to an existing chart spec to satisfy the provided user request.
 
@@ -588,7 +587,7 @@ export const generateForecastChartAnnotation = async (
     At day 200, add a label 'important'
     Answer:
     {
-      "description": "annotation",
+      "description": "At day 200, add a label 'important'",
       "layer": [
         {
           "mark": {
@@ -618,7 +617,7 @@ export const generateForecastChartAnnotation = async (
     Add a label 'expensive' at price 20
     Answer:
     {
-      "description": "annotation",
+      "description": "Add a label 'expensive' at price 20",
       "layer": [
         {
           "mark": {
@@ -648,7 +647,7 @@ export const generateForecastChartAnnotation = async (
     Add a vertical line for the day where the price exceeds 100.
     Answer:
     {
-      "description": "annotation",
+      "description": "Add a vertical line for the day where the price exceeds 100.",
       "transform": [
         {"filter": "datum.valueField > 100"},
         {"aggregate": [{"op": "min", "field": "date", "as": "min_date"}]}
@@ -699,27 +698,31 @@ export const generateForecastChartAnnotation = async (
             ...
           ]
         }
-    - The unit for the x-axis is day.
     - Assume all unknown variables except the time field are for the y-axis and are renamed to the valueField.
 
      Give me the layer object to be added to the existing chart spec based on the following user request.
+		 Please return only a JSON object as a response. Make sure to return plain JSON object that can be parsed as JSON. Do not include code block.
 
 		Request:
     ${request}
     Answer
     {
 	`;
-	// FIXME: Use dedicated endpoint for annotation generation instead of using the summary endpoint
+	// FIXME: Use dedicated endpoint for annotation generation that's configured with JSON response_format instead of using the summary endpoint which is for text output
 	const mode = 'SYNC';
 	const { data } = await API.post(`/gollm/generate-summary?mode=${mode}`, prompt, {
 		headers: {
 			'Content-Type': 'application/json'
 		}
 	});
+	const str = b64DecodeUnicode(data.output);
+	const result = JSON.parse(str);
+	const layerSpec = JSON.parse(result.response);
 	const annotation = {
 		id: uuidv4(),
-		layerSpec: data,
-		isLLMGenerated: true
+		layerSpec,
+		isLLMGenerated: true,
+		metadata: { llmRequest: request }
 	};
 	return annotation;
 };
