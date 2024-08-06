@@ -100,7 +100,7 @@ import TeraJupyterResponseThought from '@/components/llm/tera-beaker-response-th
 import Button from 'primevue/button';
 import Textarea from 'primevue/textarea';
 import Menu from 'primevue/menu';
-import { defineEmits, ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import type { CsvAsset } from '@/types/Types';
 
 const emit = defineEmits([
