@@ -252,8 +252,7 @@ const stratifyRequest = () => {
 		concepts_to_stratify: conceptsToStratify,
 		params_to_stratify: parametersToStratify,
 		cartesian_control: strataOption.cartesianProduct,
-		structure: strataOption.useStructure === true ? null : [],
-		param_renaming_uses_strata_name: true
+		structure: strataOption.useStructure === true ? null : []
 	};
 	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
 		kernelManager
