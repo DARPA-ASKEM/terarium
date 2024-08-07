@@ -32,6 +32,7 @@ export const getModelConfigurationById = async (id: string): Promise<ModelConfig
 };
 
 export const createModelConfiguration = async (modelConfiguration: ModelConfiguration): Promise<ModelConfiguration> => {
+	delete modelConfiguration.id;
 	modelConfiguration.temporary = modelConfiguration.temporary ?? false;
 	const response = await API.post(`/model-configurations`, modelConfiguration);
 	return response?.data ?? null;

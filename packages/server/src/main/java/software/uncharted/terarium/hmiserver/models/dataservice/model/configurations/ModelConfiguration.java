@@ -58,7 +58,7 @@ public class ModelConfiguration extends TerariumAsset {
 	@TSOptional
 	@OneToMany(mappedBy = "modelConfiguration", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JsonManagedReference
-	private List<ParameterSemantic> inferredParameterList = new ArrayList<>();
+	private List<InferredParameterSemantic> inferredParameterList = new ArrayList<>();
 
 	@Override
 	public ModelConfiguration clone() {
@@ -66,6 +66,7 @@ public class ModelConfiguration extends TerariumAsset {
 		super.cloneSuperFields(clone);
 
 		clone.setModelId(this.modelId);
+		clone.setSimulationId(this.simulationId);
 
 		if (this.observableSemanticList != null) {
 			clone.setObservableSemanticList(new ArrayList<>());
@@ -83,7 +84,7 @@ public class ModelConfiguration extends TerariumAsset {
 
 		if (this.inferredParameterList != null) {
 			clone.setInferredParameterList(new ArrayList<>());
-			for (final ParameterSemantic semantic : inferredParameterList) {
+			for (final InferredParameterSemantic semantic : inferredParameterList) {
 				clone.getInferredParameterList().add(semantic.clone());
 			}
 		}

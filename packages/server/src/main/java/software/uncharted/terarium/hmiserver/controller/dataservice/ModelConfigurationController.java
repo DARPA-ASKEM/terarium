@@ -345,8 +345,12 @@ public class ModelConfigurationController {
 			projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
+			if (modelConfiguration.getId() == null) {
+				modelConfiguration.setId(UUID.randomUUID());
+			}
+
 			return ResponseEntity.status(HttpStatus.CREATED).body(
-				modelConfigurationService.createAsset(modelConfiguration.clone(), projectId, permission)
+				modelConfigurationService.createAsset(modelConfiguration, projectId, permission)
 			);
 		} catch (final IOException e) {
 			log.error("Unable to get model configuration from postgres db", e);

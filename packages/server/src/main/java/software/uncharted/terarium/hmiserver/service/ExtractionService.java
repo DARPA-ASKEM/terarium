@@ -401,12 +401,12 @@ public class ExtractionService {
 			// Create a collection to hold the variable extractions
 			JsonNode collection = null;
 
-			notificationInterface.sendMessage("Sending request to be processes by SKEMA and MIT.");
+			notificationInterface.sendMessage("Sending request to be processes by MIT.");
 
 			final IntegratedTextExtractionsBody body = new IntegratedTextExtractionsBody(document.getText(), models);
 
-			log.info("Sending variable extraction request to SKEMA");
-			final ResponseEntity<JsonNode> resp = skemaUnifiedProxy.integratedTextExtractions(true, true, body);
+			log.info("Sending variable extraction request to SKEMA using MIT only");
+			final ResponseEntity<JsonNode> resp = skemaUnifiedProxy.integratedTextExtractions(true, false, body);
 
 			notificationInterface.sendMessage("Response received.");
 			if (resp.getStatusCode().is2xxSuccessful()) {

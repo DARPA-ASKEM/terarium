@@ -20,15 +20,14 @@
 							Lines {{ extractDynamicRows(codeBlock.asset.block).startRow + 1 }} to
 							{{ extractDynamicRows(codeBlock.asset.block).endRow + 1 }}
 						</div>
-						<div class="edit-container" v-else>
-							<div class="edit-input-container">
+						<div class="flex" v-else>
+							<div>
 								<label class="text-sm" for="code-dynamic-start">Start line</label>
-								<InputNumber class="small-input-number" v-model="startLine" input-id="code-dynamic-start" />
+								<tera-input-number v-model="startLine" input-id="code-dynamic-start" />
 							</div>
-
-							<div class="edit-input-container">
+							<div>
 								<label class="text-sm" for="code-dynamic-start">End line</label>
-								<InputNumber class="small-input-number" v-model="endLine" input-id="code-dynamic-end" />
+								<tera-input-number v-model="endLine" input-id="code-dynamic-end" />
 							</div>
 						</div>
 
@@ -47,7 +46,7 @@
 
 <script setup lang="ts">
 import Button from 'primevue/button';
-import InputNumber from 'primevue/inputnumber';
+import teraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import type { Code } from '@/types/Types';
 import { CodeBlock, extractDynamicRows, getCodeBlocks } from '@/utils/code-asset';
@@ -130,15 +129,9 @@ ul {
 	gap: var(--gap-small);
 }
 
-.edit-container {
-	display: flex;
+.tera-input :deep(input) {
+	width: 100%;
 }
-
-.edit-input-container:deep(.p-inputnumber-input) {
-	width: 107px;
-	height: 2rem;
-}
-
 .footer-container {
 	display: flex;
 	justify-content: end;
