@@ -1,18 +1,27 @@
 <template>
 	<nav>
 		<header>
-			<div class="p-inputgroup">
-				<InputText
-					v-model="searchAsset"
-					placeholder="Filter"
-					id="searchAsset"
-					@focus="inputFocused = true"
-					@blur="inputFocused = false"
-				/>
-				<span v-if="searchAsset || inputFocused" class="clear-icon" @click="clearSearch()">
-					<i class="pi pi-times"></i>
-				</span>
-			</div>
+			<InputText
+				v-model="searchAsset"
+				class="resource-panel-search"
+				placeholder="Filter"
+				id="searchAsset"
+				@focus="inputFocused = true"
+				@blur="inputFocused = false"
+			/>
+			<span v-if="searchAsset || inputFocused" class="clear-icon" @click="clearSearch()">
+				<i class="pi pi-times"></i>
+			</span>
+			<Button
+				class="upload-resources-button"
+				size="small"
+				label="Upload"
+				@click="isUploadResourcesModalVisible = true"
+			/>
+			<tera-upload-resources-modal
+				:visible="isUploadResourcesModalVisible"
+				@close="isUploadResourcesModalVisible = false"
+			/>
 		</header>
 		<Button
 			class="asset-button"
@@ -153,6 +162,7 @@ import InputText from 'primevue/inputtext';
 import Skeleton from 'primevue/skeleton';
 import { computed, ref } from 'vue';
 import { getElapsedTimeText } from '@/utils/date';
+import TeraUploadResourcesModal from '@/components/project/tera-upload-resources-modal.vue';
 
 defineProps<{
 	pageType: ProjectPages | AssetType;
@@ -169,6 +179,7 @@ const draggedAsset = ref<AssetRoute | null>(null);
 const assetToDelete = ref<AssetItem | null>(null);
 const searchAsset = ref<string>('');
 const inputFocused = ref(false);
+const isUploadResourcesModalVisible = ref(false);
 
 const assetItemsMap = computed(() => generateProjectAssetsMap(searchAsset.value));
 const assetItemsKeysNotEmpty = computed(() => getNonNullSetOfVisibleItems(assetItemsMap.value));
@@ -347,6 +358,7 @@ p.remove {
 
 .resource-panel-search {
 	width: 100%;
+	margin-left: var(--gap-2);
 }
 
 :deep(.p-button-icon-left.icon) {
@@ -358,5 +370,14 @@ p.remove {
 	flex-direction: column;
 	align-items: center;
 	row-gap: 0.5rem;
+}
+
+.upload-resources-button {
+	margin: 0 var(--gap-2);
+	justify-content: center;
+
+	& :deep(.p-button-label) {
+		flex-grow: 0;
+	}
 }
 </style>
