@@ -15,71 +15,82 @@
 				</template>
 			</div>
 
-			<span v-if="description">{{ description }}</span>
+			<span class="description" v-if="description">{{ description }}</span>
 		</header>
-		<main>
-			<span class="flex gap-2">
-				<Dropdown
-					:model-value="getParameterDistribution(modelConfiguration, parameterId).type"
-					@change="
-						emit('update-parameter', {
-							id: parameterId,
-							distribution: formatPayloadFromTypeChange($event.value)
-						})
-					"
-					option-label="name"
-					option-value="value"
-					:options="distributionTypeOptions()"
-				/>
+		<template v-if="isEmpty(modelConfiguration.inferredParameterList)">
+			<main>
+				<span class="flex gap-2">
+					<Dropdown
+						:model-value="getParameterDistribution(modelConfiguration, parameterId).type"
+						@change="
+							emit('update-parameter', {
+								id: parameterId,
+								distribution: formatPayloadFromTypeChange($event.value)
+							})
+						"
+						option-label="name"
+						option-value="value"
+						:options="distributionTypeOptions()"
+					/>
 
-				<!-- Constant -->
-				<tera-input-number
-					v-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Constant"
-					label="Constant"
-					:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.value"
-					@update:model-value="
-						emit('update-parameter', {
-							id: parameterId,
-							distribution: formatPayloadFromParameterChange({ value: $event })
-						})
-					"
+					<!-- Constant -->
+					<tera-input-number
+						v-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Constant"
+						label="Constant"
+						:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.value"
+						@update:model-value="
+							emit('update-parameter', {
+								id: parameterId,
+								distribution: formatPayloadFromParameterChange({ value: $event })
+							})
+						"
+					/>
+					<!-- Uniform Distribution -->
+					<template v-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Uniform">
+						<tera-input-number
+							label="Min"
+							:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.minimum"
+							@update:model-value="
+								emit('update-parameter', {
+									id: parameterId,
+									distribution: formatPayloadFromParameterChange({ minimum: $event })
+								})
+							"
+						/>
+						<tera-input-number
+							label="Max"
+							:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.maximum"
+							@update:model-value="
+								emit('update-parameter', {
+									id: parameterId,
+									distribution: formatPayloadFromParameterChange({ maximum: $event })
+								})
+							"
+						/>
+					</template>
+				</span>
+				<section>
+					<Button :label="getSourceLabel(parameterId)" text size="small" @click="isSourceOpen = !isSourceOpen" />
+					<Button :label="getOtherValuesLabel" text size="small" @click="showOtherConfigValueModal = true" />
+				</section>
+			</main>
+			<footer v-if="isSourceOpen" class="mb-2">
+				<tera-input-text
+					placeholder="Add a source"
+					:model-value="getParameterSource(modelConfiguration, parameterId)"
+					@update:model-value="emit('update-source', { id: parameterId, value: $event })"
 				/>
-				<!-- Uniform Distribution -->
-				<template v-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Uniform">
-					<tera-input-number
-						label="Min"
-						:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.minimum"
-						@update:model-value="
-							emit('update-parameter', {
-								id: parameterId,
-								distribution: formatPayloadFromParameterChange({ minimum: $event })
-							})
-						"
-					/>
-					<tera-input-number
-						label="Max"
-						:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.maximum"
-						@update:model-value="
-							emit('update-parameter', {
-								id: parameterId,
-								distribution: formatPayloadFromParameterChange({ maximum: $event })
-							})
-						"
-					/>
-				</template>
+			</footer>
+		</template>
+		<div v-else-if="inferredDistribution" class="inferred-parameter">
+			<span class="type"><label>Type</label> {{ inferredDistribution.type }}</span>
+			<span class="mean">
+				<label>Mean</label> {{ displayNumber(inferredDistribution?.parameters?.mean.toString()) }}
 			</span>
-			<section>
-				<Button :label="getSourceLabel(parameterId)" text size="small" @click="isSourceOpen = !isSourceOpen" />
-				<Button :label="getOtherValuesLabel" text size="small" @click="showOtherConfigValueModal = true" />
-			</section>
-		</main>
-		<footer v-if="isSourceOpen" class="mb-2">
-			<tera-input-text
-				placeholder="Add a source"
-				:model-value="getParameterSource(modelConfiguration, parameterId)"
-				@update:model-value="emit('update-source', { id: parameterId, value: $event })"
-			/>
-		</footer>
+			<span class="std">
+				<label>STD</label> {{ displayNumber(inferredDistribution?.parameters?.stddev.toString()) }}
+			</span>
+		</div>
 	</div>
 	<tera-parameter-other-value-modal
 		v-if="showOtherConfigValueModal"
@@ -93,6 +104,7 @@
 </template>
 
 <script setup lang="ts">
+import { isEmpty } from 'lodash';
 import { Model, ModelConfiguration } from '@/types/Types';
 import { getParameterSource, getParameterDistribution, getOtherValues } from '@/services/model-configurations';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
@@ -103,6 +115,7 @@ import Dropdown from 'primevue/dropdown';
 import { DistributionType, distributionTypeOptions } from '@/services/distribution';
 import { getParameter } from '@/model-representation/service';
 import TeraParameterOtherValueModal from '@/components/model/petrinet/tera-parameter-other-value-modal.vue';
+import { displayNumber } from '@/utils/number';
 
 const props = defineProps<{
 	model: Model;
@@ -117,6 +130,9 @@ const name = getParameter(props.model, props.parameterId)?.name;
 const units = getParameter(props.model, props.parameterId)?.units?.expression;
 const description = getParameter(props.model, props.parameterId)?.description;
 const concept = getParameter(props.model, props.parameterId)?.grounding?.identifiers[0];
+const inferredDistribution = props.modelConfiguration.inferredParameterList?.find(
+	(param) => param.referenceId === props.parameterId
+)?.distribution;
 
 const isSourceOpen = ref(false);
 const showOtherConfigValueModal = ref(false);
@@ -167,11 +183,22 @@ main {
 	padding-bottom: var(--gap-small);
 }
 
+.description {
+	color: var(--text-color-subdued);
+}
+
 :deep(.p-dropdown-label) {
 	min-width: 10rem;
 }
 
 label {
 	color: var(--text-color-subdued);
+}
+
+.inferred-parameter {
+	display: flex;
+	& > span {
+		width: 20%;
+	}
 }
 </style>

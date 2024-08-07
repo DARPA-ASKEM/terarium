@@ -9,26 +9,28 @@
 					<span class="ml-1">{{ unit }}</span>
 				</template>
 			</div>
-			<span v-if="description" class="ml-4">{{ description }}</span>
+			<span v-if="description" class="description">{{ description }}</span>
 		</header>
-		<main>
-			<span class="expression">
+		<template v-if="isEmpty(modelConfiguration.inferredParameterList)">
+			<main>
+				<span class="expression">
+					<tera-input-text
+						label="Expression"
+						:model-value="getInitialExpression(modelConfiguration, initialId)"
+						@update:model-value="emit('update-expression', { id: initialId, value: $event })"
+					/>
+				</span>
+				<Button :label="getSourceLabel(initialId)" text size="small" @click="sourceOpen = !sourceOpen" />
+				<Button :label="getOtherValuesLabel" text size="small" @click="showOtherConfigValueModal = true" />
+			</main>
+			<footer v-if="sourceOpen">
 				<tera-input-text
-					label="Expression"
-					:model-value="getInitialExpression(modelConfiguration, initialId)"
-					@update:model-value="emit('update-expression', { id: initialId, value: $event })"
+					placeholder="Add a source"
+					:model-value="getInitialSource(modelConfiguration, initialId)"
+					@update:model-value="emit('update-source', { id: initialId, value: $event })"
 				/>
-			</span>
-			<Button :label="getSourceLabel(initialId)" text size="small" @click="sourceOpen = !sourceOpen" />
-			<Button :label="getOtherValuesLabel" text size="small" @click="showOtherConfigValueModal = true" />
-		</main>
-		<footer v-if="sourceOpen">
-			<tera-input-text
-				placeholder="Add a source"
-				:model-value="getInitialSource(modelConfiguration, initialId)"
-				@update:model-value="emit('update-source', { id: initialId, value: $event })"
-			/>
-		</footer>
+			</footer>
+		</template>
 	</div>
 	<tera-initial-other-value-modal
 		v-if="showOtherConfigValueModal"
@@ -44,6 +46,7 @@
 </template>
 
 <script setup lang="ts">
+import { isEmpty } from 'lodash';
 import { DistributionType } from '@/services/distribution';
 import { Model, ModelConfiguration } from '@/types/Types';
 import { getInitialExpression, getInitialSource, getOtherValues } from '@/services/model-configurations';
@@ -86,7 +89,11 @@ const getOtherValuesLabel = computed(() => `Other Values(${otherValueList.value?
 header {
 	display: flex;
 	flex-direction: column;
-	padding-bottom: var(--gap-small);
+	padding-bottom: var(--gap-2);
+	gap: var(--gap-2);
+}
+.description {
+	color: var(--text-color-subdued);
 }
 .expression {
 	flex-grow: 1;
