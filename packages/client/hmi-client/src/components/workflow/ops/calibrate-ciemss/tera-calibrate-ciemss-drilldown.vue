@@ -153,8 +153,22 @@
 
 				<!-- Variable charts -->
 				<div v-if="!showSpinner" class="form-section">
-					<h5>Variables</h5>
 					<section v-if="modelConfig && csvAsset" ref="outputPanel">
+						<h5>Parameters</h5>
+						<template v-for="(cfg, index) of node.state.distributionChartConfigs" :key="index">
+							<tera-chart-control
+								:chart-config="{ selectedRun: 'fixme', selectedVariable: cfg }"
+								:multi-select="false"
+								:show-remove-button="true"
+								:variables="Object.keys(pyciemssMap)"
+								@configuration-change="distributionChartProxy.configurationChange(index, $event)"
+								@remove="distributionChartProxy.removeChart(index)"
+							/>
+							<vega-chart :are-embed-actions-visible="true" :visualization-spec="preparedCharts[index]" />
+						</template>
+						<Button size="small" text @click="distributionChartProxy.addChart()" label="Add chart" icon="pi pi-plus" />
+						<br />
+						<h5>Variables</h5>
 						<template v-for="(cfg, index) of node.state.chartConfigs" :key="index">
 							<tera-chart-control
 								:chart-config="{ selectedRun: 'fixme', selectedVariable: cfg }"
@@ -441,9 +455,11 @@ const preparedCharts = computed(() => {
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 
-const chartProxy = chartActionsProxy(props.node, (state: CalibrationOperationStateCiemss) => {
+const updateChartCallback = (state: CalibrationOperationStateCiemss) => {
 	emit('update-state', state);
-});
+};
+const chartProxy = chartActionsProxy(props.node, updateChartCallback, 'forecast');
+const distributionChartProxy = chartActionsProxy(props.node, updateChartCallback, 'distribution');
 
 const runCalibrate = async () => {
 	if (!modelConfigId.value || !datasetId.value || !currentDatasetFileName.value) return;

@@ -17,24 +17,29 @@ export const drilldownChartSize = (element: HTMLElement | null) => {
  * The idea is to have a single place to do data manipulations but let the caller retain control
  * via the callback function
  * */
-export const chartActionsProxy = (node: WorkflowNode<any>, updateStateCallback: Function) => {
-	if (!node.state.chartConfigs) throw new Error('Cannot find chartConfigs in state object');
+export const chartActionsProxy = (
+	node: WorkflowNode<any>,
+	updateStateCallback: Function,
+	chartType: 'forecast' | 'distribution' = 'forecast'
+) => {
+	const chartConfigProp = { forecast: 'chartConfigs', distribution: 'distributionChartConfigs' }[chartType];
+	if (!node.state[chartConfigProp]) throw new Error(`Cannot find ${chartConfigProp} in state object`);
 
 	const addChart = () => {
 		const copy = _.cloneDeep(node.state);
-		copy.chartConfigs.push([]);
+		copy[chartConfigProp].push([]);
 		updateStateCallback(copy);
 	};
 
 	const removeChart = (index: number) => {
 		const copy = _.cloneDeep(node.state);
-		copy.chartConfigs.splice(index, 1);
+		copy[chartConfigProp].splice(index, 1);
 		updateStateCallback(copy);
 	};
 
 	const configurationChange = (index: number, config: ChartConfig) => {
 		const copy = _.cloneDeep(node.state);
-		copy.chartConfigs[index] = config.selectedVariable;
+		copy[chartConfigProp][index] = config.selectedVariable;
 		updateStateCallback(copy);
 	};
 
