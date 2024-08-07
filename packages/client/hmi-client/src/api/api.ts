@@ -103,6 +103,7 @@ type ProgressCallback = (progressData: any, current: number, max: number) => voi
 export interface PollerResult<T> {
 	state: PollerState;
 	data: T | null;
+	error?: string;
 }
 
 export class Poller<T> {
@@ -174,7 +175,8 @@ export class Poller<T> {
 				if (error) {
 					return {
 						state: PollerState.Failed,
-						data: null
+						data: null,
+						error
 					};
 				}
 
