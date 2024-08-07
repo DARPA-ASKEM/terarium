@@ -86,6 +86,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+    implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
+
 
     implementation(platform("software.amazon.awssdk:bom:2.21.26"))
     implementation("software.amazon.awssdk:s3")
