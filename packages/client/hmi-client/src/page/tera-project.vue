@@ -126,6 +126,7 @@ onMounted(() => {
 .resource-panel {
 	z-index: 1000;
 	isolation: isolate;
+	outline-color: var(--surface-border);
 }
 
 .tab-group {
