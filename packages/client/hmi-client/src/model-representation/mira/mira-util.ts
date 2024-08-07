@@ -169,7 +169,7 @@ export const extractTemplateMatrix = (templates: MiraTemplate[]) => {
 	const rowNames = extractConceptNames(templates, 'subject');
 	const colNames = extractConceptNames(templates, 'outcome');
 
-	// Not sure how to parse templates with no subejct or no outcomes
+	// Not sure how to parse templates with no subject or no outcomes
 	// and interacts with only controllers and itself, return a matrix
 	// with a single row for now - Mar 13, 2024
 	if (rowNames.length === 0 || colNames.length === 0) {

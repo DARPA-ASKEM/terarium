@@ -11,22 +11,40 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 2. Create, or open, project named `QA [Your Name]`
 3. Upload model [SIR.json](https://drive.google.com/file/d/1eXlvpBfMmhrfC0xUXfuz0s_19gi-Rird/view?usp=drive_link) to project
 
-### 2. Configure a model
-1. Make sure the initial and parameter tables appear with expected data
-2. Add a name and a description under the context accordian
-3. In the initial table pick any variable and change the expression and add a source.
-4. In the parameter table pick any variable and make some changes, such as changing between constant and uniform and adding value, min, and max to the respective parameter type
-6. Click `Save` and ensure all values that you have filled are still persisting
+### 2. Configure a Model**
+1. Add the  SIR model to your workflow canvas. Add a `Configure Model` operator and connect this to your SIR model. Open the configuration editor.
+2. Make sure the initial condition (e.g. SIR) and parameter (e.g. beta,gamma) tables appear as expected with data.
+3. Update the configuration name and add a description.
+4. Pick an initial condition and update it (e.g., change S to 1000; I to 2; R to 0).
+5. Pick an initial condition and add a source (e.g., NY Times data).
+6. Pick a parameter and update it (e.g. change beta from uniform to constant and set to .9).
+7. Pick an initial condition and add a source (e.g., https://www.mdpi.com/1099-4300/23/1/59 )
+8. Save your configuration and make sure the changes you have made persist.
 
-### 2a. Add an uncertainty
-1. In the parameters table click the "Add Uncertainty" button table to add uncertainties to any constant parameter
-2. Click the check to apply the uncertainty and make sure that all selected constant values have a uniform distribution applied with the correct uncertainty (i.e an uncertainty of 10% on a constant of 5 will yield a uniform distribution of min: 4.5 max 5.5).
+### 3. Add Uncertainty to Parameter**
+1. Update the configuration name and add a description (e.g., SIR with uncertainty).
+2. In the parameter table click `add uncertainty.`Apply this to beta. Make sure that this has been updated from `constant` to `uniform.` and has values set to +/- 10% of the intial constant.
+3. Save as a new configuration and make sure the changes you've made persist.
 
-### 3. Configure the model again
-1. Change the name and description of the model config
-2. Make some changes (whatever you feel) to the initial and parameters table as well as interventions
-3. Click the Run button and make sure the changes persist
-4. In the top dropdown, select between each configuration and when selected, ensure that the values in name, description, tables, and interventions change accordingly.
 
-### 4. Configure a stratified model
-1. Repeat #2, #2a, and #3 for a stratified model
+### 4. Configure a Stratified Model**
+1. Add the SIR model to your workflow canvas. Add a `Stratify Model` operator and connect this to your SIR Model. Open the stratification editor.
+2. In the stratification editor create a new strata for `age` with two levels: old, young. Stratify for the initial conditions SIR and parameter gamma.  Uncheck create new transition between strata (we are assuming people stay in their age category). Run stratification and save as a new model. Name this `Stratified SIR`
+3. Return to your workflow canvas and add the `Stratifed SIR ` to your canvas. Add the `Configure Model` operator and connect this to your stratified model.
+4. Make sure the initial conditions (SIR) and parameter tables appear as expected with data. Note that the initial condition R should have two levels: old and young. 5
+5. Update the configuration name and add a description.
+6. Ensure you have matrices for young and old for SIR, and gamma. Update the configuration values to the following:
+   1. S_young: 1000
+   2. S_old: 500
+   3. I_young: 1
+   4. I_old: 2
+   5. R_young:0
+   6. R_old:0
+   7. Gamma_young: 14
+   8. Gamma_old: 21
+7. Add a source to one of the initial conditions or parameters: e.g., NY Times data
+8. Change beta to constant: .9
+9. Save as a new configuration and make sure that your changes persisted.
+10. Create a new configuration name and new description.
+11. Add uncertainty to beta:  In the parameter table click `add uncertainty.`Apply this to beta. Make sure that this has been updated from `constant` to `uniform.` and has values set to +/- 10% of the initial constant (should be min .81  and max 99).
+12. Save as a new configuration and make sure the changes you've made persist.

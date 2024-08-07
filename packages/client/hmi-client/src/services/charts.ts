@@ -395,7 +395,6 @@ export const createForecastChart = (
 	// Helper function to capture common layer structure
 	const newLayer = (layer: ForecastChartLayer, markType: string) => {
 		const header = {
-			mark: { type: markType },
 			data: { values: layer.dataset },
 			transform: [
 				{
@@ -420,15 +419,20 @@ export const createForecastChart = (
 
 		return {
 			...header,
-			encoding
+			layer: [
+				{
+					mark: { type: markType },
+					encoding
+				}
+			]
 		} as any;
 	};
 
 	// Build sample layer
 	if (samplingLayer && !isEmpty(samplingLayer.variables)) {
 		const layerSpec = newLayer(samplingLayer, 'line');
-
-		Object.assign(layerSpec.encoding, {
+		const encoding = layerSpec.layer[0].encoding;
+		Object.assign(encoding, {
 			detail: { field: samplingLayer.groupField, type: 'nominal' },
 			strokeWidth: { value: 1 },
 			opacity: { value: 0.1 }
@@ -440,46 +444,24 @@ export const createForecastChart = (
 	// Build statistical layer
 	if (statisticsLayer && !isEmpty(statisticsLayer.variables)) {
 		const layerSpec = newLayer(statisticsLayer, 'line');
-		Object.assign(layerSpec.encoding, {
+		const lineSubLayer = layerSpec.layer[0];
+		const tooltipSubLayer = structuredClone(lineSubLayer);
+		Object.assign(lineSubLayer.encoding, {
 			opacity: { value: 1.0 },
 			strokeWidth: { value: 2 }
 		});
 
 		if (options.legend === true) {
-			layerSpec.encoding.color.legend = {
+			lineSubLayer.encoding.color.legend = {
 				...legendProperties
 			};
 
 			if (labelExpr.length > 0) {
-				layerSpec.encoding.color.legend.labelExpr = labelExpr;
+				lineSubLayer.encoding.color.legend.labelExpr = labelExpr;
 			}
 		}
-		spec.layer.push(layerSpec);
-	}
 
-	// Build ground truth layer
-	if (groundTruthLayer && !isEmpty(groundTruthLayer.variables)) {
-		const layerSpec = newLayer(groundTruthLayer, 'point');
-
-		// FIXME: variables not aligned, set unique color for now
-		layerSpec.encoding.color.scale.range = ['#1B8073'];
-		// layerSpec.encoding.color.scale.range = options.colorscheme || CATEGORICAL_SCHEME;
-
-		if (options.legend === true) {
-			layerSpec.encoding.color.legend = {
-				...legendProperties
-			};
-
-			if (labelExpr.length > 0) {
-				layerSpec.encoding.color.legend.labelExpr = labelExpr;
-			}
-		}
-		spec.layer.push(layerSpec);
-	}
-
-	// Build a transparent layer with fat lines as a better hover target for tooltips
-	// Re-Build statistical layer
-	if (statisticsLayer && !isEmpty(statisticsLayer.variables)) {
+		// Build a transparent layer with fat lines as a better hover target for tooltips
 		const tooltipContent = statisticsLayer.variables?.map((d) => {
 			const tip: any = {
 				field: d,
@@ -492,13 +474,34 @@ export const createForecastChart = (
 
 			return tip;
 		});
-
-		const layerSpec = newLayer(statisticsLayer, 'line');
-		Object.assign(layerSpec.encoding, {
+		Object.assign(tooltipSubLayer.encoding, {
 			opacity: { value: 0.00000001 },
 			strokeWidth: { value: 16 },
 			tooltip: [{ field: statisticsLayer.timeField, type: 'quantitative' }, ...(tooltipContent || [])]
 		});
+		layerSpec.layer.push(tooltipSubLayer);
+
+		spec.layer.push(layerSpec);
+	}
+
+	// Build ground truth layer
+	if (groundTruthLayer && !isEmpty(groundTruthLayer.variables)) {
+		const layerSpec = newLayer(groundTruthLayer, 'point');
+		const encoding = layerSpec.layer[0].encoding;
+
+		// FIXME: variables not aligned, set unique color for now
+		encoding.color.scale.range = ['#1B8073'];
+		// encoding.color.scale.range = options.colorscheme || CATEGORICAL_SCHEME;
+
+		if (options.legend === true) {
+			encoding.color.legend = {
+				...legendProperties
+			};
+
+			if (labelExpr.length > 0) {
+				encoding.color.legend.labelExpr = labelExpr;
+			}
+		}
 		spec.layer.push(layerSpec);
 	}
 
