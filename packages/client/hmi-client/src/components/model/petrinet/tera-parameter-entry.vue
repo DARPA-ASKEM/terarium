@@ -88,7 +88,7 @@
 				<label>Mean</label> {{ displayNumber(inferredDistribution?.parameters?.mean.toString()) }}
 			</span>
 			<span class="std">
-				<label>STD</label> {{ displayNumber(inferredDistribution?.parameters?.stddev.toString()) }}
+				<label>STDDEV</label> {{ displayNumber(inferredDistribution?.parameters?.stddev.toString()) }}
 			</span>
 		</div>
 	</div>
