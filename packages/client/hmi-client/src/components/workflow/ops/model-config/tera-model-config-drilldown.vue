@@ -571,7 +571,6 @@ const onSelectConfiguration = (config: ModelConfiguration) => {
 const applyConfigValues = (config: ModelConfiguration) => {
 	const state = cloneDeep(props.node.state);
 	knobs.value.transientModelConfig = cloneDeep(config);
-	console.log(config);
 
 	// Update output port:
 	if (!config.id) {
@@ -680,13 +679,6 @@ onUnmounted(() => {
 
 :deep(.p-accordion-content) {
 	padding-bottom: var(--gap-2);
-}
-
-.artifact-amount {
-	font-size: var(--font-caption);
-	color: var(--text-color-subdued);
-	margin-left: var(--gap-1);
-	margin-right: auto;
 }
 
 #notebook-section:deep(main) {
