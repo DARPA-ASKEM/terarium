@@ -54,7 +54,8 @@
 					<div class="flex justify-space-between w-full">
 						<div class="flex align-items-center w-full">
 							<template v-if="type === AssetType.Document">Documents</template>
-							<template v-else>{{ capitalize(type) }}</template>
+							<template v-else-if="type === AssetType.Code">Code Files</template>
+							<template v-else>{{ capitalize(type) }}s</template>
 							<aside>({{ assetItems.length }})</aside>
 						</div>
 						<!-- New asset buttons for some types -->
