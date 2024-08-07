@@ -1,5 +1,6 @@
 import { percentile } from '@/utils/math';
 import { isEmpty } from 'lodash';
+import { VisualizationSpec } from 'vega-embed';
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
@@ -277,9 +278,9 @@ export const createHistogramChart = (dataset: Record<string, any>[], options: Hi
 		}));
 	};
 
-	const spec = {
+	const spec: VisualizationSpec = {
 		$schema: VEGALITE_SCHEMA,
-		title: titleObj,
+		title: titleObj as any,
 		width: options.width,
 		height: options.height,
 		autosize: { type: 'fit' },
