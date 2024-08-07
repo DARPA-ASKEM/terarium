@@ -7,7 +7,7 @@
 		<tera-regridding-drilldown v-else-if="isNodeType(OperationType.REGRIDDING)" :node="node" />
 		<tera-calibrate-ciemss v-else-if="isNodeType(OperationType.CALIBRATION_CIEMSS)" :node="node" />
 		<tera-calibrate-ensemble-ciemss v-else-if="isNodeType(OperationType.CALIBRATE_ENSEMBLE_CIEMSS)" :node="node" />
-		<tera-simulate-ciemss v-else-if="isNodeType(OperationType.SIMULATE_CIEMSS)" :node="node" />
+		<tera-simulate-ciemss-drilldown v-else-if="isNodeType(OperationType.SIMULATE_CIEMSS)" :node="node" />
 		<tera-simulate-ensemble-ciemss v-else-if="isNodeType(OperationType.SIMULATE_ENSEMBLE_CIEMSS)" :node="node" />
 		<tera-funman v-else-if="isNodeType(OperationType.FUNMAN)" :node="node" />
 		<tera-code-asset-wrapper v-else-if="isNodeType(OperationType.CODE)" :node="node" />
@@ -26,7 +26,7 @@ import TeraRegriddingDrilldown from '@/components/workflow/ops/regridding/tera-r
 import TeraDatasetTransformer from '@/components/workflow/ops/dataset-transformer/tera-dataset-transformer.vue';
 import TeraCalibrateCiemss from '@/components/workflow/ops/calibrate-ciemss/tera-calibrate-ciemss-drilldown.vue';
 import TeraCalibrateEnsembleCiemss from '@/components/workflow/ops/calibrate-ensemble-ciemss/tera-calibrate-ensemble-ciemss.vue';
-import TeraSimulateCiemss from '@/components/workflow/ops/simulate-ciemss/tera-simulate-ciemss.vue';
+import TeraSimulateCiemssDrilldown from '@/components/workflow/ops/simulate-ciemss/tera-simulate-ciemss-drilldown.vue';
 import TeraSimulateEnsembleCiemss from '@/components/workflow/ops/simulate-ensemble-ciemss/tera-simulate-ensemble-ciemss.vue';
 import TeraFunman from '@/components/workflow/ops/funman/tera-funman.vue';
 import TeraStratifyMira from '@/components/workflow/ops/stratify-mira/tera-stratify-mira.vue';
