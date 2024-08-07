@@ -7,6 +7,10 @@ import static software.uncharted.terarium.hmiserver.utils.rebac.httputil.HttpUti
 import com.authzed.api.v1.Core;
 import com.authzed.api.v1.PermissionService.Consistency;
 import com.authzed.grpcutil.BearerToken;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.github.benmanes.caffeine.cache.RemovalCause;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.inprocess.InProcessChannelBuilder;
@@ -15,9 +19,13 @@ import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.nullness.qual.PolyNull;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.CreatedResponseUtil;
 import org.keycloak.admin.client.Keycloak;
@@ -82,6 +90,39 @@ public class ReBACService {
 	private String getKeycloakBearerToken() {
 		return "Bearer " + keycloak.tokenManager().getAccessTokenString();
 	}
+
+	private class CacheKey {
+
+		SchemaObject who;
+		Schema.Permission permission;
+		SchemaObject what;
+
+		CacheKey(SchemaObject who, Schema.Permission permission, SchemaObject what) {
+			this.who = who;
+			this.permission = permission;
+			this.what = what;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (!(o instanceof CacheKey)) {
+				return false;
+			}
+			CacheKey other = (CacheKey) o;
+			return who.equals(other.who) && permission == other.permission && what.equals(other.what);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(who, permission, what);
+		}
+	}
+
+	Cache<CacheKey, Boolean> rebacCache = Caffeine.newBuilder()
+		.expireAfterWrite(5, TimeUnit.MINUTES)
+		.recordStats()
+		.removalListener((Object key, Object value, RemovalCause cause) -> log.info("Key {} was removed {}", key, cause))
+		.<CacheKey, Boolean>build();
 
 	@PostConstruct
 	void startup() throws Exception {
@@ -347,19 +388,32 @@ public class ReBACService {
 	 *                   unavailable
 	 */
 	@Observed(name = "function_profile")
-	public boolean can(final SchemaObject who, final Schema.Permission permission, final SchemaObject what)
-		throws Exception {
-		final ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		if (SPICEDB_LAUNCHMODE.equals("TEST")) {
-			return true;
-		}
-		return rebac.checkPermission(who, permission, what, getCurrentConsistency());
+	public boolean can(final SchemaObject who, final Schema.Permission permission, final SchemaObject what) {
+		@PolyNull
+		Boolean result = rebacCache.get(new CacheKey(who, permission, what), permissionMappingFn);
+		log.info("Cache hit: {}, miss: {}", rebacCache.stats().hitCount(), rebacCache.stats().missCount());
+		return result;
 	}
+
+	private Function<CacheKey, Boolean> permissionMappingFn = key -> {
+		final ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
+		try {
+			if (SPICEDB_LAUNCHMODE.equals("TEST")) {
+				return true;
+			}
+			return rebac.checkPermission(key.who, key.permission, key.what, getCurrentConsistency());
+		} catch (Exception e) {
+			log.error("Failed to get Permission from SpiceDB: {}", e);
+			return false;
+		}
+	};
 
 	@Observed(name = "function_profile")
 	public boolean isMemberOf(final SchemaObject who, final SchemaObject what) throws Exception {
-		final ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		return rebac.checkPermission(who, Schema.Permission.MEMBERSHIP, what, getCurrentConsistency());
+		@PolyNull
+		Boolean result = rebacCache.get(new CacheKey(who, Schema.Permission.MEMBERSHIP, what), permissionMappingFn);
+		log.info("Cache hit: {}, miss: {}", rebacCache.stats().hitCount(), rebacCache.stats().missCount());
+		return result;
 	}
 
 	@Observed(name = "function_profile")
@@ -404,6 +458,8 @@ public class ReBACService {
 
 	@Observed(name = "function_profile")
 	public ResponseEntity<Void> deleteRoleFromUser(final String roleName, final String userId) {
+		// NB: No need to adjust {rebacCache} as we will allow for a maximum 5 minute decay of a user's role
+		//     as the {rebacCache} will flush the permissions then.
 		final UsersResource usersResource = keycloak.realm(REALM_NAME).users();
 		final UserResource userResource = usersResource.get(userId);
 		try {
@@ -448,6 +504,7 @@ public class ReBACService {
 
 	@Observed(name = "function_profile")
 	public ResponseEntity<Void> addRoleToUser(final String roleName, final String userId) {
+		// NB: No need to adjust {rebacCache} as simply will grant a user a role
 		final UsersResource usersResource = keycloak.realm(REALM_NAME).users();
 		final UserResource userResource = usersResource.get(userId);
 		try {
@@ -499,6 +556,7 @@ public class ReBACService {
 	@Observed(name = "function_profile")
 	public List<UUID> lookupResources(final SchemaObject who, final Schema.Permission permission, final Schema.Type type)
 		throws Exception {
+		// NB: These permissions will be handled by {ProjectPermissionService} and its caching
 		final ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		return rebac.lookupResources(type, permission, who, getCurrentConsistency());
 	}
