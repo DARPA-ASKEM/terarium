@@ -1,13 +1,13 @@
 <template>
 	<aside class="overlay-container">
 		<Button
-			:class="{ 'no-connections': isEmpty(connectedInputs) }"
+			:class="{ 'no-connections': isEmpty(inputOperatorsNav) }"
 			icon="pi pi-chevron-left"
 			outlined
 			severity="secondary"
 			@click="toggle($event, inputMenu)"
 		/>
-		<Menu ref="inputMenu" popup />
+		<Menu ref="inputMenu" popup :model="inputOperatorsNav" />
 		<section :class="{ popover: popover }">
 			<tera-drilldown-header
 				:active-index="selectedViewIndex"
@@ -69,13 +69,13 @@
 			</footer>
 		</section>
 		<Button
-			:class="{ 'no-connections': isEmpty(connectedOutputs) }"
+			:class="{ 'no-connections': isEmpty(outputOperatorsNav) }"
 			icon="pi pi-chevron-right"
 			outlined
 			severity="secondary"
 			@click="toggle($event, outputMenu)"
 		/>
-		<Menu ref="outputMenu" popup />
+		<Menu ref="outputMenu" popup :model="outputOperatorsNav" />
 	</aside>
 </template>
 
@@ -86,7 +86,7 @@ import Button from 'primevue/button';
 import Chip from 'primevue/chip';
 import Menu from 'primevue/menu';
 import type { TabViewChangeEvent } from 'primevue/tabview';
-import { type WorkflowNode, WorkflowOperationTypes, WorkflowPortStatus } from '@/types/workflow';
+import { type WorkflowNode, WorkflowOperationTypes } from '@/types/workflow';
 import TeraDrilldownHeader from '@/components/drilldown/tera-drilldown-header.vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
@@ -95,6 +95,8 @@ import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue'
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
+	inputOperatorsNav: any[];
+	outputOperatorsNav: any[];
 	menuItems?: any[];
 	title?: string;
 	tooltip?: string;
@@ -159,17 +161,6 @@ const ellipsisMenu = ref();
 const inputMenu = ref();
 const outputMenu = ref();
 const toggle = (event, menu) => menu.toggle(event);
-
-const connectedInputs = computed(() =>
-	props.node.inputs.filter((input) => input.status === WorkflowPortStatus.CONNECTED)
-);
-
-const connectedOutputs = computed(() =>
-	props.node.outputs.filter((output) => output.status === WorkflowPortStatus.CONNECTED)
-);
-
-// show operator, if operator is just an asset just show the asset name
-console.log(props.node.inputs, props.node.outputs);
 </script>
 
 <style scoped>
@@ -184,6 +175,7 @@ console.log(props.node.inputs, props.node.outputs);
 	padding-bottom: 0;
 	display: flex;
 	gap: var(--gap-1);
+	backdrop-filter: blur(2px);
 
 	/* There is a performance issue with these large modals.
 	When scrolling it takes time to render the content, particularly heavy content such as the LLM integrations. This will show
@@ -198,6 +190,7 @@ console.log(props.node.inputs, props.node.outputs);
 		display: flex;
 		flex-direction: column;
 		overflow: hidden;
+		animation: scaleUp 0.15s ease-out;
 		&.popover {
 			margin: 3rem 2.5rem 0rem 2.5rem;
 		}
@@ -229,5 +222,16 @@ footer {
 
 :deep(.p-chip .p-chip-text) {
 	font-size: var(--font-body-small);
+}
+
+@keyframes scaleUp {
+	from {
+		opacity: 0.5;
+		scale: 0.5;
+	}
+	to {
+		opacity: 1;
+		scale: 1;
+	}
 }
 </style>

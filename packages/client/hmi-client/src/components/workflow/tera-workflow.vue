@@ -68,7 +68,7 @@
 				<tera-operator
 					ref="teraOperatorRefs"
 					:node="node"
-					:nodeMenu="nodeMenu"
+					:nodeMenu="outputPortMenu"
 					@resize="resizeHandler"
 					@port-selected="(port: WorkflowPort, direction: WorkflowDirection) => createNewEdge(node, port, direction)"
 					@port-mouseover="onPortMouseover"
@@ -151,6 +151,8 @@
 			v-if="dialogIsOpened && currentActiveNode"
 			:is="registry.getDrilldown(currentActiveNode.operationType)"
 			:node="currentActiveNode"
+			:input-operators-nav="inputOperatorsNav"
+			:output-operators-nav="outputOperatorsNav"
 			@append-output="(event: any) => appendOutput(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			@update-status="(event: any) => updateWorkflowNodeStatus(currentActiveNode, event)"
@@ -239,7 +241,9 @@ const props = defineProps<{
 	assetId: string;
 }>();
 
-const nodeMenu = ref(getNodeMenu(registry.operationMap));
+const outputPortMenu = ref(getNodeMenu(registry.operationMap));
+const inputOperatorsNav = ref<MenuItem[]>([]);
+const outputOperatorsNav = ref<MenuItem[]>([]);
 
 const route = useRoute();
 const router = useRouter();
@@ -851,7 +855,20 @@ const handleDrilldown = () => {
 	const operatorId = route.query?.operator?.toString();
 	if (operatorId) {
 		const operator = wf.value.nodes.find((n) => n.id === operatorId);
-		if (operator) openDrilldown(operator);
+		if (operator) {
+			// Prepare drilldown navigation menus
+			const { inputNodes, outputNodes } = workflowService.getNeighborNodes(wf.value, operatorId);
+			inputOperatorsNav.value = inputNodes.map((node) => ({
+				label: node.displayName,
+				command: () => addOperatorToRoute(node.id)
+			}));
+			outputOperatorsNav.value = outputNodes.map((node) => ({
+				label: node.displayName,
+				command: () => addOperatorToRoute(node.id)
+			}));
+			// Open drilldown
+			openDrilldown(operator);
+		}
 	} else {
 		closeDrilldown();
 	}

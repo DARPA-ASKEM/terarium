@@ -265,6 +265,18 @@ export const removeNode = (wf: Workflow, id: string) => {
 	wf.nodes = wf.nodes.filter((node) => node.id !== id);
 };
 
+export const getNeighborNodes = (wf: Workflow, id: string) => {
+	const inputEdges = wf.edges.filter((edge) => edge.target === id);
+	const outputEdges = wf.edges.filter((edge) => edge.source === id);
+	const inputNodes = inputEdges
+		.map((edge) => wf.nodes.find((n) => n.id === edge.source))
+		.filter(Boolean) as WorkflowNode<any>[];
+	const outputNodes = outputEdges
+		.map((edge) => wf.nodes.find((n) => n.id === edge.target))
+		.filter(Boolean) as WorkflowNode<any>[];
+	return { inputNodes, outputNodes };
+};
+
 export const updateNodeState = (wf: Workflow, nodeId: string, state: any) => {
 	const node = wf.nodes.find((d) => d.id === nodeId);
 	if (!node) return;
