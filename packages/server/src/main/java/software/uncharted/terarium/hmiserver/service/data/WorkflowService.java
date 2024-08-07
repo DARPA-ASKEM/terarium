@@ -83,15 +83,7 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 		final UUID projectId,
 		final Schema.Permission hasWritePermission
 	) throws IOException, IllegalArgumentException {
-		final Map<UUID, WorkflowNode> nodeMap = new HashMap();
-
 		// ensure the workflow id is set correctly
-		if (asset.getNodes() != null) {
-			for (final WorkflowNode node : asset.getNodes()) {
-				node.setWorkflowId(asset.getId());
-				nodeMap.put(node.getId(), node);
-			}
-		}
 		if (asset.getEdges() != null) {
 			for (final WorkflowEdge edge : asset.getEdges()) {
 				edge.setWorkflowId(asset.getId());
@@ -108,8 +100,14 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 		// - If the nodes are different, then the version we want to write must have
 		//   version >= db node's version
 		final List<WorkflowNode> dbWorkflowNodes = dbWorkflow.getNodes();
+		final Map<UUID, WorkflowNode> nodeMap = new HashMap();
+		if (asset.getNodes() != null) {
+			for (final WorkflowNode node : asset.getNodes()) {
+				node.setWorkflowId(asset.getId());
+				nodeMap.put(node.getId(), node);
+			}
+		}
 
-		final List<WorkflowNode> candidateWorkflowNodes = asset.getNodes();
 		for (int index = 0; index < dbWorkflowNodes.size(); index++) {
 			WorkflowNode dbNode = dbWorkflowNodes.get(index);
 			WorkflowNode node = nodeMap.get(dbNode.getId());
@@ -128,20 +126,59 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 				node.setVersion(1L);
 			}
 
-			if (dbNode.getVersion() <= node.getVersion()) {
+			if (dbNode.getVersion() == node.getVersion()) {
 				node.setVersion(dbNode.getVersion() + 1L);
 				dbWorkflowNodes.set(index, node);
 			}
 			// mark as done
 			nodeMap.remove(node.getId());
 		}
-
-		// Remaining ones are additions
+		// The remaining ones are additions
 		for (Map.Entry<UUID, WorkflowNode> pair : nodeMap.entrySet()) {
 			dbWorkflowNodes.add(pair.getValue());
 		}
 
+		final List<WorkflowEdge> dbWorkflowEdges = dbWorkflow.getEdges();
+		final Map<UUID, WorkflowEdge> edgeMap = new HashMap();
+		if (asset.getEdges() != null) {
+			for (final WorkflowEdge edge : asset.getEdges()) {
+				edge.setWorkflowId(asset.getId());
+				edgeMap.put(edge.getId(), edge);
+			}
+		}
+
+		for (int index = 0; index < dbWorkflowEdges.size(); index++) {
+			WorkflowEdge dbEdge = dbWorkflowEdges.get(index);
+			WorkflowEdge edge = edgeMap.get(dbEdge.getId());
+
+			if (edge == null) continue;
+			JsonNode edgeContent = this.objectMapper.valueToTree(edge);
+			JsonNode dbEdgeContent = this.objectMapper.valueToTree(dbEdge);
+
+			if (edgeContent.equals(dbEdgeContent) == true) continue;
+
+			// FIXME: backwards compatibility for older workflows, remove in a few month. Aug 2024
+			if (dbEdge.getVersion() == null) {
+				dbEdge.setVersion(1L);
+			}
+			if (edge.getVersion() == null) {
+				edge.setVersion(1L);
+			}
+
+			if (dbEdge.getVersion() == edge.getVersion()) {
+				edge.setVersion(dbEdge.getVersion() + 1L);
+				dbWorkflowEdges.set(index, edge);
+			}
+			// mark as done
+			edgeMap.remove(edge.getId());
+		}
+		// The remaining ones are additions
+		for (Map.Entry<UUID, WorkflowEdge> pair : edgeMap.entrySet()) {
+			dbWorkflowEdges.add(pair.getValue());
+		}
+
 		/*
+		final List<WorkflowNode> candidateWorkflowNodes = asset.getNodes();
 		for (WorkflowNode node : candidateWorkflowNodes) {
 			WorkflowNode dbNode = dbWorkflowNodeMap.get(node.getId());
 			if (dbNode == null) continue;
@@ -155,40 +192,10 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 
 		System.out.println("");
 
-		/*
-		for (int index = 0; index < candidateWorkflowNodes.size(); index++) {
-			WorkflowNode node = candidateWorkflowNodes.get(index);
-			WorkflowNode dbNode = dbWorkflowNodeMap.get(node.getId());
-			if (dbNode == null) continue;
-
-			JsonNode nodeContent = this.objectMapper.valueToTree(node);
-			JsonNode dbNodeContent = this.objectMapper.valueToTree(dbNode);
-
-			// No change
-			if (nodeContent.equals(dbNodeContent) == true) continue;
-
-			if (dbNode.getVersion() == null || node.getVersion() == null) {
-				node.setVersion(1L);
-			} else if(dbNode.getVersion() <= node.getVersion()) {
-				node.setVersion(node.getVersion() + 1);
-			} else {
-				// Merge and ensure the latest version lives on
-				// NOTE: We don't know if we also modified the same node
-				candidateWorkflowNodes.set(index, dbNode);
-			}
-		}
-		*/
-
-		// if nodeA != nodeB && nodeA.version >= nodeB.version
-		//   // then we can update
-		// else
-		//   // rturn 409??  420
-
 		long endTime = System.currentTimeMillis();
 		System.out.println("Elapsed: " + (endTime - startTime));
 		System.out.println("");
 		System.out.println("");
-
 		return super.updateAsset(asset, projectId, hasWritePermission);
 	}
 

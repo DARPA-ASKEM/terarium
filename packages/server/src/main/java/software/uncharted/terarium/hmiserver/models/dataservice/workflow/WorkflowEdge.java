@@ -20,6 +20,9 @@ public class WorkflowEdge extends SupportAdditionalProperties implements Seriali
 	private UUID id;
 	private UUID workflowId;
 
+	@TSIgnore
+	private Long version;
+
 	private UUID source;
 	private UUID sourcePortId;
 
