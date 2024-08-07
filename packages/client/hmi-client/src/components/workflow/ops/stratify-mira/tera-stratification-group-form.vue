@@ -17,7 +17,7 @@
 					placeholder="Click to select"
 					display="chip"
 					@update:model-value="emit('update-self', updatedConfig)"
-				></MultiSelect>
+				/>
 			</div>
 		</div>
 		<div class="input-row">
