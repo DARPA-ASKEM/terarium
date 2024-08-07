@@ -40,13 +40,13 @@ footer {
 header {
 	display: inline-flex;
 	justify-content: space-between;
-	padding: var(--gap-2) 0;
+	padding: var(--gap-4) 0;
 	gap: var(--gap-3);
 }
 
 header > div {
 	display: inline-flex;
-	gap: var(--gap-small);
+	gap: var(--gap-1);
 	align-items: center;
 }
 
