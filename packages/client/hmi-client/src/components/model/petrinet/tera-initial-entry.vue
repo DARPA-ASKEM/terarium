@@ -1,13 +1,17 @@
 <template>
 	<div>
 		<header>
-			<div>
+			<div class="flex">
 				<strong>{{ initialId }}</strong>
 				<span v-if="name" class="ml-1">{{ '| ' + name }}</span>
 				<template v-if="unit">
 					<label class="ml-2">Unit</label>
 					<span class="ml-1">{{ unit }}</span>
 				</template>
+				<span class="ml-auto">
+					<label>Concept</label>
+					<span class="ml-1">{{ concept }}</span>
+				</span>
 			</div>
 			<span v-if="description" class="description">{{ description }}</span>
 		</header>
@@ -47,14 +51,15 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
+import { computed, ref, onMounted } from 'vue';
 import { DistributionType } from '@/services/distribution';
 import { Model, ModelConfiguration } from '@/types/Types';
 import { getInitialExpression, getInitialSource, getOtherValues } from '@/services/model-configurations';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraInitialOtherValueModal from '@/components/model/petrinet/tera-initial-other-value-modal.vue';
-import { computed, ref } from 'vue';
 import Button from 'primevue/button';
-import { getInitialDescription, getInitialName, getInitialUnits } from '@/model-representation/service';
+import { getInitialDescription, getInitialName, getInitialUnits, getStates } from '@/model-representation/service';
+import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
 
 const props = defineProps<{
 	model: Model;
@@ -73,8 +78,11 @@ const name = getInitialName(props.model, props.initialId);
 const unit = getInitialUnits(props.model, props.initialId);
 const description = getInitialDescription(props.model, props.initialId);
 
+const concept = ref('');
 const sourceOpen = ref(false);
 const showOtherConfigValueModal = ref(false);
+
+const getOtherValuesLabel = computed(() => `Other Values(${otherValueList.value?.length})`);
 
 function getSourceLabel(initialId) {
 	if (sourceOpen.value) return 'Hide source';
@@ -82,7 +90,10 @@ function getSourceLabel(initialId) {
 	return 'Show source';
 }
 
-const getOtherValuesLabel = computed(() => `Other Values(${otherValueList.value?.length})`);
+onMounted(async () => {
+	const identifiers = getStates(props.model).find((state) => state.id === props.initialId)?.grounding?.identifiers;
+	if (identifiers) concept.value = await getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
+});
 </script>
 
 <style scoped>

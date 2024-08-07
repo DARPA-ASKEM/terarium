@@ -1,7 +1,7 @@
 <template>
 	<div class="flex flex-column flex-1">
 		<header>
-			<div>
+			<div class="flex">
 				<strong>{{ parameterId }}</strong>
 				<span v-if="name" class="ml-1">{{ '| ' + name }}</span>
 				<template v-if="units">
@@ -105,17 +105,18 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
+import { computed, ref, onMounted } from 'vue';
 import { Model, ModelConfiguration } from '@/types/Types';
 import { getParameterSource, getParameterDistribution, getOtherValues } from '@/services/model-configurations';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
-import { computed, ref } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { DistributionType, distributionTypeOptions } from '@/services/distribution';
 import { getParameter } from '@/model-representation/service';
 import TeraParameterOtherValueModal from '@/components/model/petrinet/tera-parameter-other-value-modal.vue';
 import { displayNumber } from '@/utils/number';
+import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
 
 const props = defineProps<{
 	model: Model;
@@ -129,11 +130,11 @@ const emit = defineEmits(['update-parameter', 'update-source']);
 const name = getParameter(props.model, props.parameterId)?.name;
 const units = getParameter(props.model, props.parameterId)?.units?.expression;
 const description = getParameter(props.model, props.parameterId)?.description;
-const concept = getParameter(props.model, props.parameterId)?.grounding?.identifiers[0];
 const inferredDistribution = props.modelConfiguration.inferredParameterList?.find(
 	(param) => param.referenceId === props.parameterId
 )?.distribution;
 
+const concept = ref('');
 const isSourceOpen = ref(false);
 const showOtherConfigValueModal = ref(false);
 
@@ -168,6 +169,11 @@ function formatPayloadFromTypeChange(type: DistributionType) {
 }
 
 const getOtherValuesLabel = computed(() => `Other Values(${otherValueList.value?.length})`);
+
+onMounted(async () => {
+	const identifiers = getParameter(props.model, props.parameterId)?.grounding?.identifiers;
+	if (identifiers) concept.value = await getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
+});
 </script>
 
 <style scoped>
