@@ -4,16 +4,13 @@
 			<div class="p-inputgroup">
 				<InputText
 					v-model="searchAsset"
-					placeholder="Filter resources"
+					placeholder="Filter"
 					id="searchAsset"
 					@focus="inputFocused = true"
 					@blur="inputFocused = false"
 				/>
 				<span v-if="searchAsset || inputFocused" class="clear-icon" @click="clearSearch()">
 					<i class="pi pi-times"></i>
-				</span>
-				<span class="p-inputgroup-addon">
-					<i class="pi pi-filter"></i>
 				</span>
 			</div>
 		</header>
