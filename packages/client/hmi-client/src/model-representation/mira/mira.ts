@@ -100,18 +100,11 @@ export const collapseParameters = (miraModel: MiraModel, miraTemplateParams: Mir
 		const tokens = key.split('_') as string[];
 		const rootName = _.first(tokens) as string;
 
-		// Ignore non-numerics
-		if (tokens.length > 1) {
-			let numerical = true;
-			for (let j = 1; j < tokens.length; j++) {
-				if (Number.isNaN(parseInt(tokens[j], 10))) {
-					numerical = false;
-				}
-			}
-			if (!numerical) {
-				map.set(name, [name]);
-				continue;
-			}
+		// There are some cases where parameter names have underscores but are not stratified
+		const displayName = miraModel.parameters[key].display_name;
+		if (tokens.length > 1 && displayName === key) {
+			map.set(name, [name]);
+			continue;
 		}
 
 		if (map.has(rootName)) {
