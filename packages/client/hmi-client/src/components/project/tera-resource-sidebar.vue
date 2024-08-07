@@ -9,9 +9,9 @@
 				@focus="inputFocused = true"
 				@blur="inputFocused = false"
 			/>
-			<span v-if="searchAsset || inputFocused" class="clear-icon" @click="clearSearch()">
+			<!---<span v-if="searchAsset || inputFocused" class="clear-icon" @click="clearSearch()">
 				<i class="pi pi-times"></i>
-			</span>
+			</span>-->
 			<Button
 				class="upload-resources-button"
 				size="small"
@@ -190,9 +190,9 @@ const activeAccordionTabs = ref(
 	)
 );
 
-function clearSearch() {
+/** function clearSearch() {
 	searchAsset.value = '';
-}
+} */
 
 function removeAsset() {
 	if (assetToDelete.value) {

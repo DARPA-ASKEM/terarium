@@ -67,7 +67,7 @@ footer {
 }
 
 .slider {
-	outline: 1px solid var(--surface-border-light);
+	outline: 1px solid var(--surface-border);
 	z-index: 0;
 }
 
