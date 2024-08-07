@@ -207,7 +207,6 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 
 	// 1. Roll back to "original name" by trimming off modifiers
 	miraModel.templates.forEach((t) => {
-		console.log('..', t.name);
 		const scrubbedTemplate: TemplateSummary = {
 			name: t.name,
 			expression: t.rate_law,
