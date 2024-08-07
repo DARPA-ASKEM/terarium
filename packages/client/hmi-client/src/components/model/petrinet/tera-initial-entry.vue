@@ -8,10 +8,10 @@
 					<label class="ml-2">Unit</label>
 					<span class="ml-1">{{ unit }}</span>
 				</template>
-				<span class="ml-auto">
-					<label>Concept</label>
+				<template v-if="concept">
+					<label class="ml-auto">Concept</label>
 					<span class="ml-1">{{ concept }}</span>
-				</span>
+				</template>
 			</div>
 			<span v-if="description" class="description">{{ description }}</span>
 		</header>
