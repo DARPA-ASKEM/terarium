@@ -153,6 +153,7 @@
 			:node="currentActiveNode"
 			:input-operators-nav="inputOperatorsNav"
 			:output-operators-nav="outputOperatorsNav"
+			:spawn-animation="drilldownSpawnAnimation"
 			@append-output="(event: any) => appendOutput(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			@update-status="(event: any) => updateWorkflowNodeStatus(currentActiveNode, event)"
@@ -244,6 +245,7 @@ const props = defineProps<{
 const outputPortMenu = ref(getNodeMenu(registry.operationMap));
 const inputOperatorsNav = ref<MenuItem[]>([]);
 const outputOperatorsNav = ref<MenuItem[]>([]);
+const drilldownSpawnAnimation = ref<'left' | 'right' | 'scale'>('scale');
 
 const route = useRoute();
 const router = useRouter();
@@ -374,7 +376,8 @@ function updateOutputPort(node: WorkflowNode<any> | null, workflowOutput: Workfl
 }
 
 // Route is mutated then watcher is triggered to open or close the drilldown
-function addOperatorToRoute(nodeId: string | null) {
+function addOperatorToRoute(nodeId: string | null, animation: 'left' | 'right' | 'scale' = 'scale') {
+	drilldownSpawnAnimation.value = animation;
 	if (nodeId !== null) {
 		router.push({ query: { operator: nodeId } });
 	} else {
@@ -860,11 +863,11 @@ const handleDrilldown = () => {
 			const { inputNodes, outputNodes } = workflowService.getNeighborNodes(wf.value, operatorId);
 			inputOperatorsNav.value = inputNodes.map((node) => ({
 				label: node.displayName,
-				command: () => addOperatorToRoute(node.id)
+				command: () => addOperatorToRoute(node.id, 'right')
 			}));
 			outputOperatorsNav.value = outputNodes.map((node) => ({
 				label: node.displayName,
-				command: () => addOperatorToRoute(node.id)
+				command: () => addOperatorToRoute(node.id, 'left')
 			}));
 			// Open drilldown
 			openDrilldown(operator);

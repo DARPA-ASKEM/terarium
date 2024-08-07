@@ -8,7 +8,7 @@
 			@click="toggle($event, inputMenu)"
 		/>
 		<Menu ref="inputMenu" popup :model="inputOperatorsNav" />
-		<section :class="{ popover: popover }">
+		<section v-bind="$attrs" :class="animationClass">
 			<tera-drilldown-header
 				:active-index="selectedViewIndex"
 				:views="views"
@@ -81,10 +81,11 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { computed, ref, useSlots } from 'vue';
+import { computed, onMounted, ref, useSlots } from 'vue';
 import Button from 'primevue/button';
 import Chip from 'primevue/chip';
 import Menu from 'primevue/menu';
+import { MenuItem } from 'primevue/menuitem';
 import type { TabViewChangeEvent } from 'primevue/tabview';
 import { type WorkflowNode, WorkflowOperationTypes } from '@/types/workflow';
 import TeraDrilldownHeader from '@/components/drilldown/tera-drilldown-header.vue';
@@ -95,17 +96,20 @@ import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue'
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
-	inputOperatorsNav: any[];
-	outputOperatorsNav: any[];
 	menuItems?: any[];
 	title?: string;
 	tooltip?: string;
-	popover?: boolean;
+	// Applied in dynamic compoenent in tera-workflow.vue
+	inputOperatorsNav?: MenuItem[];
+	outputOperatorsNav?: MenuItem[];
+	spawnAnimation?: 'left' | 'right' | 'scale';
 }>();
 
 const emit = defineEmits(['on-close-clicked', 'update-state', 'update:selection', 'update-output-port']);
 
 const slots = useSlots();
+
+// const n = 'fadeRight 0.15s ease-out';
 /**
  * This will retrieve and filter all top level components in the default slot if they have the tabName prop.
  */
@@ -161,6 +165,12 @@ const ellipsisMenu = ref();
 const inputMenu = ref();
 const outputMenu = ref();
 const toggle = (event, menu) => menu.toggle(event);
+
+// Animation class must be applied on mounted to avoid flickering
+const animationClass = ref('');
+onMounted(() => {
+	animationClass.value = props.spawnAnimation ?? 'scale';
+});
 </script>
 
 <style scoped>
@@ -190,9 +200,17 @@ const toggle = (event, menu) => menu.toggle(event);
 		display: flex;
 		flex-direction: column;
 		overflow: hidden;
-		animation: scaleUp 0.15s ease-out;
 		&.popover {
 			margin: 3rem 2.5rem 0rem 2.5rem;
+		}
+		&.left {
+			animation: fadeLeft 0.15s ease-out;
+		}
+		&.right {
+			animation: fadeRight 0.15s ease-out;
+		}
+		&.scale {
+			animation: scaleForward 0.15s ease-out;
 		}
 	}
 
@@ -224,7 +242,7 @@ footer {
 	font-size: var(--font-body-small);
 }
 
-@keyframes scaleUp {
+@keyframes scaleForward {
 	from {
 		opacity: 0.5;
 		scale: 0.5;
@@ -232,6 +250,28 @@ footer {
 	to {
 		opacity: 1;
 		scale: 1;
+	}
+}
+
+@keyframes fadeLeft {
+	from {
+		opacity: 0;
+		transform: translateX(5rem);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+@keyframes fadeRight {
+	from {
+		opacity: 0;
+		transform: translateX(-5rem);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
 	}
 }
 </style>
