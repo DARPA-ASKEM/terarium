@@ -12,18 +12,18 @@
 		:loading="isLoading"
 	>
 		<template #value="slotProps">
-			{{ getLabelById(slotProps.value) }}
-			<span class="ml-2 dropdown-option-group">
-				{{ getCreateTimeById(slotProps.value) }}
-			</span>
+			<div class="dropdown-option">
+				<span>{{ getLabelById(slotProps.value) }}</span>
+				<span class="timestamp"> {{ getCreateTimeById(slotProps.value) }} </span>
+			</div>
 		</template>
 		<template #optiongroup="slotProps">
-			<span class="dropdown-option-group">{{ slotProps.option?.label }}</span>
+			<span class="timestamp">{{ slotProps.option?.label }}</span>
 		</template>
 		<template #option="slotProps">
 			<div class="dropdown-option">
 				<span>{{ slotProps.option?.label }}</span>
-				<span class="dropdown-option-group">
+				<span class="timestamp">
 					{{ getElapsedTimeText(slotProps.option?.timestamp) }}
 				</span>
 				<span v-if="slotProps.option?.status === WorkflowPortStatus.CONNECTED" class="connection-indicator"
@@ -66,12 +66,12 @@ const getLabelById = (id: string) => {
 <style scoped>
 .p-dropdown {
 	/*FIXME: We may want to truncate the text with ellipsis or something (up to designers) */
-	max-width: 20rem;
+	max-width: 25rem;
 	align-self: end;
 }
 
 .output-dropdown:deep(.p-inputtext) {
-	padding: 0.75rem 1rem;
+	padding-left: var(--gap-3);
 	font-size: var(--font-body-small);
 }
 
@@ -85,16 +85,15 @@ const getLabelById = (id: string) => {
 
 .dropdown-option {
 	display: flex;
-	gap: var(--gap-small);
-	font-size: var(--font-body-small);
+	gap: var(--gap-2);
 }
 
-.dropdown-option-group {
+.timestamp {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	font-size: var(--font-caption);
-	color: var(--gray-600);
+	color: var(--text-color-subdued);
 }
 .connection-indicator {
 	font-size: var(--font-caption);
