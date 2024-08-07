@@ -169,10 +169,10 @@ watch(
 			// Start 2nd simulation to get sample simulation from dill
 			const newInterventionResponse = await createInterventionPolicyFromOptimize(modelConfigId.value as string, optId);
 
-			const preForecastResponce = await startForecast(undefined);
-			const preForecastId = preForecastResponce.id;
-			const postForecastResponce = await startForecast(newInterventionResponse);
-			const postForecastId = postForecastResponce.id;
+			const preForecastResponse = startForecast();
+			const postForecastResponse = startForecast(newInterventionResponse);
+			const forecastResults = await Promise.all([preForecastResponse, postForecastResponse]);
+			const [{ id: preForecastId }, { id: postForecastId }] = forecastResults;
 
 			const state = _.cloneDeep(props.node.state);
 			state.inProgressOptimizeId = '';
@@ -180,6 +180,20 @@ watch(
 			state.inProgressPreForecastId = preForecastId;
 			state.inProgressPostForecastId = postForecastId;
 			state.optimizedInterventionPolicyId = newInterventionResponse.id ?? '';
+			emit('update-state', state);
+		} else {
+			// Simulation Failed:
+			const state = _.cloneDeep(props.node.state);
+			if (response?.state && response?.error) {
+				state.optimizeErrorMessage = {
+					name: optId,
+					value: response.state,
+					traceback: response.error
+				};
+			}
+			state.inProgressOptimizeId = '';
+			state.inProgressPreForecastId = '';
+			state.inProgressPostForecastId = '';
 			emit('update-state', state);
 		}
 	},
@@ -228,6 +242,28 @@ Provide a consis summary in 100 words or less.
 				isSelected: false,
 				state
 			});
+		} else {
+			// Simulation Failed:
+			const state = _.cloneDeep(props.node.state);
+			if (preResponse.error) {
+				state.simulateErrorMessage = {
+					name: preSimId,
+					value: preResponse.state,
+					traceback: preResponse.error
+				};
+			}
+			// Probably no need to capture both simulation error messages as theyre very similar simulation calls.
+			else if (postResponse.error) {
+				state.simulateErrorMessage = {
+					name: postSimId,
+					value: postResponse.state,
+					traceback: postResponse.error
+				};
+			}
+			state.inProgressOptimizeId = '';
+			state.inProgressPreForecastId = '';
+			state.inProgressPostForecastId = '';
+			emit('update-state', state);
 		}
 	},
 	{ immediate: true }

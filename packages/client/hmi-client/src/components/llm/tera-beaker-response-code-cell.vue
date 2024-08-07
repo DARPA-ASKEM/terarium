@@ -192,12 +192,6 @@ function cancelDelete() {
 }
 </script>
 
-<style lang="scss" global>
-@import '@jupyterlab/application/style/index.css';
-@import '@jupyterlab/cells/style/index.css';
-@import '@jupyterlab/theme-light-extension/style/theme.css';
-@import '@jupyterlab/completer/style/index.css';
-</style>
 <style scoped>
 .code-cell {
 	position: relative;
