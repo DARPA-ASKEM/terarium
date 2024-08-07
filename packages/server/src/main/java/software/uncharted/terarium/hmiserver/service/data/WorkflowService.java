@@ -76,6 +76,16 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 		return super.createAsset(asset, projectId, hasWritePermission);
 	}
 
+	@Observed(name = "function_profile")
+	public Optional<Workflow> updateAsset(
+		final Workflow asset,
+		final UUID nodeId,
+		final UUID projectId,
+		final Schema.Permission hasWritePermission
+	) throws IOException, IllegalArgumentException {
+		final Workflow dbWorkflow = getAsset(asset.getId(), hasWritePermission).get();
+	}
+
 	@Override
 	@Observed(name = "function_profile")
 	public Optional<Workflow> updateAsset(
@@ -84,15 +94,11 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 		final Schema.Permission hasWritePermission
 	) throws IOException, IllegalArgumentException {
 		// ensure the workflow id is set correctly
-		if (asset.getEdges() != null) {
-			for (final WorkflowEdge edge : asset.getEdges()) {
-				edge.setWorkflowId(asset.getId());
-			}
-		}
-
-		long startTime = System.currentTimeMillis();
-		System.out.println("");
-		System.out.println("");
+		// if (asset.getEdges() != null) {
+		// 	for (final WorkflowEdge edge : asset.getEdges()) {
+		// 		edge.setWorkflowId(asset.getId());
+		// 	}
+		// }
 
 		final Workflow dbWorkflow = getAsset(asset.getId(), hasWritePermission).get();
 
@@ -189,14 +195,7 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 				System.out.println(" lombok: " + node.getDisplayName() + " not equal");
 			}
 		}*/
-
-		System.out.println("");
-
-		long endTime = System.currentTimeMillis();
-		System.out.println("Elapsed: " + (endTime - startTime));
-		System.out.println("");
-		System.out.println("");
-		return super.updateAsset(asset, projectId, hasWritePermission);
+		return super.updateAsset(dbWorkflow, projectId, hasWritePermission);
 	}
 
 	@Override
