@@ -159,18 +159,6 @@ h6 {
 	gap: var(--gap-1);
 }
 
-.type {
-	grid-area: type;
-}
-
-.mean {
-	grid-area: mean;
-}
-
-.std {
-	grid-area: std;
-}
-
 :deep(.p-autocomplete-input) {
 	padding: var(--gap-1) var(--gap-2);
 }
