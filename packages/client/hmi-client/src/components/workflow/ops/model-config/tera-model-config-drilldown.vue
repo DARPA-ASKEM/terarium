@@ -65,7 +65,7 @@
 			</tera-slider-panel>
 		</template>
 
-		<tera-drilldown-section :tabName="ConfigTabs.Wizard" class="px-3">
+		<tera-drilldown-section :tabName="ConfigTabs.Wizard" class="pl-3">
 			<template #header-controls-left>
 				<tera-toggleable-edit
 					v-if="knobs.transientModelConfig.name"
