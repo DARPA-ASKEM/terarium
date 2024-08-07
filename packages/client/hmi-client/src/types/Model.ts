@@ -1,4 +1,4 @@
-import { ModelGrounding } from '@/types/Types';
+import { ModelGrounding, ModelDistribution } from '@/types/Types';
 import { CONCEPT_FACETS_DISPLAY_NAME, CONCEPT_FACETS_FIELD } from './Concept';
 import { Filters } from './Filter';
 
@@ -22,6 +22,8 @@ export type ModelPartItem = {
 	templateId?: string;
 	input?: string;
 	output?: string;
+	// Calibrated config
+	distribution?: ModelDistribution;
 };
 
 export enum StratifiedMatrix {

@@ -62,6 +62,11 @@
 				@update:model-value="$emit('update-item', { key: 'description', value: $event })"
 			/>
 		</span>
+		<template v-if="item.distribution">
+			<span class="type"><label>Type</label> {{ item.distribution.type }}</span>
+			<span class="mean"><label>Mean</label> {{ item.distribution.parameters.mean }}</span>
+			<span class="std"> <label>STD</label> {{ item.distribution.parameters.stddev }}</span>
+		</template>
 	</section>
 </template>
 
@@ -106,7 +111,8 @@ section {
 	grid-template-areas:
 		'symbol name unit . concept'
 		'expression expression expression expression expression'
-		'description description description description description';
+		'description description description description description'
+		'type mean std . .';
 	grid-template-columns: max-content max-content max-content auto max-content;
 	gap: var(--gap-2);
 	align-items: center;
@@ -137,6 +143,7 @@ h6 {
 
 .description {
 	grid-area: description;
+	color: var(--text-color-subdued);
 }
 
 .unit {
@@ -156,6 +163,18 @@ h6 {
 	display: flex;
 	align-items: center;
 	gap: var(--gap-1);
+}
+
+.type {
+	grid-area: type;
+}
+
+.mean {
+	grid-area: mean;
+}
+
+.std {
+	grid-area: std;
 }
 
 :deep(.p-autocomplete-input) {

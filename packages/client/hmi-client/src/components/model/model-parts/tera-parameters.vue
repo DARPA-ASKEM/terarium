@@ -22,7 +22,7 @@
 import { ref, computed } from 'vue';
 import { StratifiedMatrix } from '@/types/Model';
 import type { ModelPartItem } from '@/types/Model';
-import { Model } from '@/types/Types';
+import { Model, InferredParameterSemantic } from '@/types/Types';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { getParameters } from '@/model-representation/service';
 import { collapseParameters } from '@/model-representation/mira/mira';
@@ -35,6 +35,7 @@ const props = defineProps<{
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
 	featureConfig: FeatureConfig;
+	inferredParameters?: InferredParameterSemantic[];
 }>();
 
 const emit = defineEmits(['update-parameter']);
@@ -60,7 +61,8 @@ const parameterList = computed<
 					name: p.name,
 					description: p.description,
 					grounding: p.grounding,
-					unitExpression: p.units?.expression
+					unitExpression: p.units?.expression,
+					distribution: props.inferredParameters?.find((i) => i.referenceId === childId)?.distribution
 				};
 			})
 			.filter(Boolean) as ModelPartItem[];
@@ -74,7 +76,8 @@ const parameterList = computed<
 						name: baseParameter.name,
 						description: baseParameter.description,
 						grounding: baseParameter.grounding,
-						unitExpression: baseParameter.units?.expression
+						unitExpression: baseParameter.units?.expression,
+						distribution: props.inferredParameters?.find((i) => i.referenceId === id)?.distribution
 					};
 
 		return { base, children, isParent };

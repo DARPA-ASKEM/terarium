@@ -97,30 +97,61 @@
 					<tera-model-diagram v-if="model" :model="model" />
 				</AccordionTab>
 			</Accordion>
-			<Message v-if="model && isModelMissingMetadata(model)" class="m-2">
-				Some metadata is missing from these values. This information can be added manually to the attached model.
-			</Message>
-
-			<tera-initial-table
-				v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.initials) && model"
-				:model="model"
-				:model-configuration="knobs.transientModelConfig"
-				:modelConfigurations="filteredModelConfigurations"
-				:mmt="mmt"
-				:mmt-params="mmtParams"
-				@update-expression="setInitialExpression(knobs.transientModelConfig, $event.id, $event.value)"
-				@update-source="setInitialSource(knobs.transientModelConfig, $event.id, $event.value)"
-			/>
-			<tera-parameter-table
-				v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.parameters) && model"
-				:model="model"
-				:model-configuration="knobs.transientModelConfig"
-				:modelConfigurations="filteredModelConfigurations"
-				:mmt="mmt"
-				:mmt-params="mmtParams"
-				@update-parameters="setParameterDistributions(knobs.transientModelConfig, $event)"
-				@update-source="setParameterSource(knobs.transientModelConfig, $event.id, $event.value)"
-			/>
+			<template v-if="model">
+				<Message v-if="isModelMissingMetadata(model)" class="m-2">
+					Some metadata is missing from these values. This information can be added manually to the attached model.
+				</Message>
+				<!--Calibrated config (read only)-->
+				<template v-if="!isEmpty(knobs.transientModelConfig.inferredParameterList)">
+					<Accordion multiple :active-index="[0, 1]">
+						<AccordionTab>
+							<template #header>
+								State variables<span class="artifact-amount">({{ Object.keys(mmt.initials).length }})</span>
+							</template>
+							<tera-states
+								v-if="!isEmpty(mmt.initials)"
+								:model="model"
+								:mmt="mmt"
+								:feature-config="{ isPreview: true }"
+						/></AccordionTab>
+						<AccordionTab
+							><template #header>
+								Parameters<span class="artifact-amount">({{ Object.keys(mmt.parameters).length }})</span>
+							</template>
+							<tera-parameters
+								v-if="!isEmpty(mmt.parameters)"
+								:model="model"
+								:mmt="mmt"
+								:mmt-params="mmtParams"
+								:inferred-parameters="knobs.transientModelConfig.inferredParameterList"
+								:feature-config="{ isPreview: true }"
+						/></AccordionTab>
+					</Accordion>
+				</template>
+				<!--Regular config-->
+				<template v-else>
+					<tera-initial-table
+						v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.initials)"
+						:model="model"
+						:model-configuration="knobs.transientModelConfig"
+						:modelConfigurations="filteredModelConfigurations"
+						:mmt="mmt"
+						:mmt-params="mmtParams"
+						@update-expression="setInitialExpression(knobs.transientModelConfig, $event.id, $event.value)"
+						@update-source="setInitialSource(knobs.transientModelConfig, $event.id, $event.value)"
+					/>
+					<tera-parameter-table
+						v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.parameters)"
+						:model="model"
+						:model-configuration="knobs.transientModelConfig"
+						:modelConfigurations="filteredModelConfigurations"
+						:mmt="mmt"
+						:mmt-params="mmtParams"
+						@update-parameters="setParameterDistributions(knobs.transientModelConfig, $event)"
+						@update-source="setParameterSource(knobs.transientModelConfig, $event.id, $event.value)"
+					/>
+				</template>
+			</template>
 		</tera-drilldown-section>
 		<tera-columnar-panel :tabName="ConfigTabs.Notebook">
 			<tera-drilldown-section id="notebook-section">
@@ -251,6 +282,8 @@ import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { useConfirm } from 'primevue/useconfirm';
 import Dropdown from 'primevue/dropdown';
 import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
+import TeraStates from '@/components/model/model-parts/tera-states.vue';
+import TeraParameters from '@/components/model/model-parts/tera-parameters.vue';
 import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
 import { ModelConfigOperation, ModelConfigOperationState, blankModelConfig } from './model-config-operation';
 
@@ -569,6 +602,7 @@ const onSelectConfiguration = (config: ModelConfiguration) => {
 const applyConfigValues = (config: ModelConfiguration) => {
 	const state = cloneDeep(props.node.state);
 	knobs.value.transientModelConfig = cloneDeep(config);
+	console.log(config);
 
 	// Update output port:
 	if (!config.id) {
@@ -673,6 +707,13 @@ onUnmounted(() => {
 
 :deep(.p-button:disabled.p-button-outlined) {
 	background-color: var(--surface-0) !important;
+}
+
+.artifact-amount {
+	font-size: var(--font-caption);
+	color: var(--text-color-subdued);
+	margin-left: var(--gap-1);
+	margin-right: auto;
 }
 
 #notebook-section:deep(main) {
