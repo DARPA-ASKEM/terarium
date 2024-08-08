@@ -23,7 +23,7 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 
 ### 3. Add Uncertainty to Parameter**
 1. Update the configuration name and add a description (e.g., SIR with uncertainty).
-2. In the parameter table click `add uncertainty.`Apply this to beta. Make sure that this has been updated from `constant` to `uniform.` and has values set to +/- 10% of the intial constant.
+2. In the parameter table click `add uncertainty.`Apply this to beta. Make sure that this has been updated from `constant` to `uniform.` and has values set to +/- 10% of the initial constant.
 3. Save as a new configuration and make sure the changes you've made persist.
 
 
@@ -31,7 +31,7 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 1. Add the SIR model to your workflow canvas. Add a `Stratify Model` operator and connect this to your SIR Model. Open the stratification editor.
 2. In the stratification editor create a new strata for `age` with two levels: old, young. Stratify for the initial conditions SIR and parameter gamma.  Uncheck create new transition between strata (we are assuming people stay in their age category). Run stratification and save as a new model. Name this `Stratified SIR`
 3. Return to your workflow canvas and add the `Stratifed SIR ` to your canvas. Add the `Configure Model` operator and connect this to your stratified model.
-4. Make sure the initial conditions (SIR) and parameter tables appear as expected with data. Note that the initial condition R should have two levels: old and young. 5
+4. Make sure the initial conditions (SIR) and parameter tables appear as expected with data. Note that the initial condition R should have two levels: old and young.
 5. Update the configuration name and add a description.
 6. Ensure you have matrices for young and old for SIR, and gamma. Update the configuration values to the following:
    1. S_young: 1000
