@@ -5,8 +5,18 @@
 			:id="output.id"
 			:key="output.id"
 			:class="{ 'port-connected': output.status === WorkflowPortStatus.CONNECTED }"
-			@mouseenter="emit('port-mouseover', $event)"
-			@mouseleave="emit('port-mouseleave')"
+			@mouseenter="
+				($event) => {
+					menuFocusId = output.id;
+					emit('port-mouseover', $event);
+				}
+			"
+			@mouseleave="
+				() => {
+					menuFocusId = null;
+					emit('port-mouseleave');
+				}
+			"
 			@click.stop="emit('port-selected', output, WorkflowDirection.FROM_OUTPUT)"
 			@focus="() => {}"
 			@focusout="() => {}"
@@ -29,6 +39,22 @@
 					/>
 				</div>
 			</section>
+			<tera-operator-menu
+				v-show="menuOptions.length && (hoveredOutputId === output.id || menuFocusId === output.id)"
+				:nodeMenu="menuOptions"
+				:style="{
+					height: '2rem',
+					position: 'absolute',
+					right: '-4rem',
+					bottom: '0px'
+				}"
+				@click.stop
+				@mousedown.stop
+				@mouseup.stop
+				@menu-focus="menuFocusId = output.id"
+				@menu-blur="menuFocusId = null"
+				@menu-selection="(operatorType) => emit('menu-selection', operatorType)"
+			/>
 			<!--TODO: We will see how to integrate port actions into this button later-->
 			<!-- <Button
 				size="small"
@@ -41,15 +67,31 @@
 </template>
 
 <script setup lang="ts">
-import { PropType, computed } from 'vue';
+import { PropType, computed, ref } from 'vue';
 import { WorkflowPortStatus, WorkflowDirection, WorkflowOutput } from '@/types/workflow';
 import Button from 'primevue/button';
+import { OperatorMenuItem } from '@/services/workflow';
+import TeraOperatorMenu from './tera-operator-menu.vue';
 
-const emit = defineEmits(['port-mouseover', 'port-selected', 'port-mouseover', 'port-mouseleave', 'remove-edges']);
+const hoveredOutputId = ref<string | null>(null);
+const menuFocusId = ref<string | null>(null);
+
+const emit = defineEmits([
+	'port-mouseover',
+	'port-selected',
+	'port-mouseover',
+	'port-mouseleave',
+	'remove-edges',
+	'menu-selection'
+]);
 
 const props = defineProps({
 	outputs: {
 		type: Array as PropType<WorkflowOutput<any>[]>,
+		default: () => []
+	},
+	menuOptions: {
+		type: Array as PropType<OperatorMenuItem[]>,
 		default: () => []
 	}
 });
@@ -79,6 +121,15 @@ li > section {
 
 li > *:not(:first-child) {
 	margin-right: calc(var(--port-base-size) * 2);
+}
+
+li:hover:before {
+	content: '';
+	position: absolute;
+	width: 6.5rem;
+	height: 4rem;
+	bottom: -0.75rem;
+	right: -8rem;
 }
 
 .port-container {
