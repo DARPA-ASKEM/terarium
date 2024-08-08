@@ -5,9 +5,9 @@
 			icon="pi pi-chevron-left"
 			outlined
 			severity="secondary"
-			@click="toggle($event, inputMenu)"
+			@click="toggle($event, inputMenu, inputOperatorsNav)"
 		/>
-		<Menu ref="inputMenu" popup :model="inputOperatorsNav" />
+		<Menu ref="inputMenu" class="-mt-7 ml-5" popup :model="inputOperatorsNav" />
 		<section v-bind="$attrs" :class="animationClass">
 			<tera-drilldown-header
 				:active-index="selectedViewIndex"
@@ -73,19 +73,19 @@
 			icon="pi pi-chevron-right"
 			outlined
 			severity="secondary"
-			@click="toggle($event, outputMenu)"
+			@click="toggle($event, outputMenu, outputOperatorsNav)"
 		/>
-		<Menu ref="outputMenu" popup :model="outputOperatorsNav" />
+		<Menu ref="outputMenu" class="-mt-7 -ml-5" popup :model="outputOperatorsNav" />
 	</aside>
 </template>
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { computed, onMounted, ref, useSlots } from 'vue';
+import { ref, computed, onMounted, useSlots } from 'vue';
 import Button from 'primevue/button';
 import Chip from 'primevue/chip';
 import Menu from 'primevue/menu';
-import { MenuItem } from 'primevue/menuitem';
+import { MenuItem, MenuItemCommandEvent } from 'primevue/menuitem';
 import type { TabViewChangeEvent } from 'primevue/tabview';
 import { type WorkflowNode, WorkflowOperationTypes } from '@/types/workflow';
 import TeraDrilldownHeader from '@/components/drilldown/tera-drilldown-header.vue';
@@ -162,9 +162,18 @@ const outputOptions = computed(() => {
 });
 
 const ellipsisMenu = ref();
+
 const inputMenu = ref();
 const outputMenu = ref();
-const toggle = (event, menu) => menu.toggle(event);
+const toggle = (event: MouseEvent, menu: Menu, operatorsNav: MenuItem[] = []) => {
+	// If there is only one item in the menu, just navigate to that one
+	if (operatorsNav.length === 1 && operatorsNav[0]?.command) {
+		const dummyEvent: MenuItemCommandEvent = { originalEvent: event, item: operatorsNav[0] };
+		operatorsNav[0].command(dummyEvent);
+	} else {
+		menu.toggle(event);
+	}
+};
 
 // Animation class must be applied on mounted to avoid flickering
 const animationClass = ref('');
@@ -219,11 +228,11 @@ onMounted(() => {
 		width: 1.5rem;
 		border-radius: var(--border-radius-big);
 		align-self: center;
-	}
-}
 
-.no-connections {
-	visibility: hidden;
+		&.no-connections {
+			visibility: hidden;
+		}
+	}
 }
 
 footer {
@@ -255,8 +264,8 @@ footer {
 
 @keyframes fadeLeft {
 	from {
-		opacity: 0;
-		transform: translateX(5rem);
+		opacity: 0.5;
+		transform: translateX(10rem);
 	}
 	to {
 		opacity: 1;
@@ -266,8 +275,8 @@ footer {
 
 @keyframes fadeRight {
 	from {
-		opacity: 0;
-		transform: translateX(-5rem);
+		opacity: 0.5;
+		transform: translateX(-10rem);
 	}
 	to {
 		opacity: 1;
