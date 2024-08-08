@@ -1,13 +1,13 @@
 <template>
 	<aside class="overlay-container">
 		<Button
-			:class="{ 'no-connections': isEmpty(inputOperatorsNav) }"
+			:class="{ 'no-connections': isEmpty(inputOperatorsNav?.[0].items) }"
 			icon="pi pi-chevron-left"
 			outlined
 			severity="secondary"
 			@click="toggle($event, inputMenu, inputOperatorsNav)"
 		/>
-		<Menu ref="inputMenu" class="-mt-7 ml-5" popup :model="inputOperatorsNav" />
+		<Menu ref="inputMenu" class="ml-5" popup :model="inputOperatorsNav" :pt="menuPt" />
 		<section v-bind="$attrs" :class="animationClass">
 			<tera-drilldown-header
 				:active-index="selectedViewIndex"
@@ -69,13 +69,13 @@
 			</footer>
 		</section>
 		<Button
-			:class="{ 'no-connections': isEmpty(outputOperatorsNav) }"
+			:class="{ 'no-connections': isEmpty(outputOperatorsNav?.[0].items) }"
 			icon="pi pi-chevron-right"
 			outlined
 			severity="secondary"
 			@click="toggle($event, outputMenu, outputOperatorsNav)"
 		/>
-		<Menu ref="outputMenu" class="-mt-7 -ml-5" popup :model="outputOperatorsNav" />
+		<Menu ref="outputMenu" class="-ml-5" popup :model="outputOperatorsNav" :pt="menuPt" />
 	</aside>
 </template>
 
@@ -109,7 +109,6 @@ const emit = defineEmits(['on-close-clicked', 'update-state', 'update:selection'
 
 const slots = useSlots();
 
-// const n = 'fadeRight 0.15s ease-out';
 /**
  * This will retrieve and filter all top level components in the default slot if they have the tabName prop.
  */
@@ -165,11 +164,17 @@ const ellipsisMenu = ref();
 
 const inputMenu = ref();
 const outputMenu = ref();
-const toggle = (event: MouseEvent, menu: Menu, operatorsNav: MenuItem[] = []) => {
+const menuPt = {
+	root: {
+		'margin-top': '-7rem'
+	}
+};
+const toggle = (event: MouseEvent, menu: Menu, operatorsNav?: MenuItem[]) => {
+	const navItems = operatorsNav?.[0]?.items ?? [];
 	// If there is only one item in the menu, just navigate to that one
-	if (operatorsNav.length === 1 && operatorsNav[0]?.command) {
-		const dummyEvent: MenuItemCommandEvent = { originalEvent: event, item: operatorsNav[0] };
-		operatorsNav[0].command(dummyEvent);
+	if (navItems.length === 1 && navItems[0]?.command) {
+		const dummyEvent: MenuItemCommandEvent = { originalEvent: event, item: navItems[0] };
+		navItems[0].command(dummyEvent);
 	} else {
 		menu.toggle(event);
 	}

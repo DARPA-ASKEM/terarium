@@ -861,14 +861,24 @@ const handleDrilldown = () => {
 		if (operator) {
 			// Prepare drilldown navigation menus
 			const { inputNodes, outputNodes } = workflowService.getNeighborNodes(wf.value, operatorId);
-			inputOperatorsNav.value = inputNodes.map((node) => ({
-				label: node.displayName,
-				command: () => addOperatorToRoute(node.id, 'right')
-			}));
-			outputOperatorsNav.value = outputNodes.map((node) => ({
-				label: node.displayName,
-				command: () => addOperatorToRoute(node.id, 'left')
-			}));
+			inputOperatorsNav.value = [
+				{
+					label: 'Upstream operators',
+					items: inputNodes.map((node) => ({
+						label: node.displayName,
+						command: () => addOperatorToRoute(node.id, 'right')
+					}))
+				}
+			];
+			outputOperatorsNav.value = [
+				{
+					label: 'Downstream operators',
+					items: outputNodes.map((node) => ({
+						label: node.displayName,
+						command: () => addOperatorToRoute(node.id, 'left')
+					}))
+				}
+			];
 			// Open drilldown
 			openDrilldown(operator);
 		}
