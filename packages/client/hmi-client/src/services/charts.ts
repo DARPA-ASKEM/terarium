@@ -33,6 +33,13 @@ export interface ForecastChartLayer {
 	groupField?: string;
 }
 
+export interface ForecastChartAnnotation {
+	id: string;
+	layerSpec: any;
+	isLLMGenerated: boolean;
+	metadata: any;
+}
+
 export interface HistogramChartOptions extends BaseChartOptions {
 	maxBins?: number;
 	variables: { field: string; label?: string; width: number; color: string }[];
@@ -45,7 +52,7 @@ export interface ErrorChartOptions extends Omit<BaseChartOptions, 'height' | 'yA
 	variables: { field: string; label?: string }[];
 }
 
-export const createErrorChart = (dataset: Record<string, any>[], options: ErrorChartOptions) => {
+export function createErrorChart(dataset: Record<string, any>[], options: ErrorChartOptions) {
 	const axisColor = '#EEE';
 	const labelColor = '#667085';
 	const labelFontWeight = 'normal';
@@ -207,9 +214,9 @@ export const createErrorChart = (dataset: Record<string, any>[], options: ErrorC
 			]
 		}
 	};
-};
+}
 
-export const createHistogramChart = (dataset: Record<string, any>[], options: HistogramChartOptions) => {
+export function createHistogramChart(dataset: Record<string, any>[], options: HistogramChartOptions) {
 	const maxBins = options.maxBins ?? 10;
 	const axisColor = '#EEE';
 	const labelColor = '#667085';
@@ -293,7 +300,7 @@ export const createHistogramChart = (dataset: Record<string, any>[], options: Hi
 		}
 	};
 	return spec;
-};
+}
 
 /**
  * Generate Vegalite specs for simulation/forecast charts. The chart can contain:
@@ -314,12 +321,12 @@ export const createHistogramChart = (dataset: Record<string, any>[], options: Hi
  *
  * Then we use the new 'var' and 'value' columns to render timeseries
  * */
-export const createForecastChart = (
+export function createForecastChart(
 	samplingLayer: ForecastChartLayer | null,
 	statisticsLayer: ForecastChartLayer | null,
 	groundTruthLayer: ForecastChartLayer | null,
 	options: ForecastChartOptions
-) => {
+) {
 	const axisColor = '#EEE';
 	const labelColor = '#667085';
 	const labelFontWeight = 'normal';
@@ -509,9 +516,9 @@ export const createForecastChart = (
 	}
 
 	return spec;
-};
+}
 
-export const createForecastChartAnnotation = (axis: 'x' | 'y', datum: number, label: string) => {
+export function createForecastChartAnnotation(axis: 'x' | 'y', datum: number, label: string) {
 	const layerSpec = {
 		description: `At ${axis} ${datum}, add a label '${label}'.`,
 		encoding: {
@@ -537,21 +544,21 @@ export const createForecastChartAnnotation = (axis: 'x' | 'y', datum: number, la
 			}
 		]
 	};
-	const annotation = {
+	const annotation: ForecastChartAnnotation = {
 		id: uuidv4(),
 		layerSpec,
 		isLLMGenerated: false,
 		metadata: { axis, datum, label }
 	};
 	return annotation;
-};
+}
 
-export const generateForecastChartAnnotation = async (
+export async function generateForecastChartAnnotation(
 	request: string,
 	timeField: string,
 	variables: string[],
 	axisTitle: { x: string; y: string }
-) => {
+) {
 	const prompt = `
 	  You are an agent who is an expert in Vega-Lite chart specs. Provide a Vega-Lite layer JSON object for the annotation that can be added to an existing chart spec to satisfy the provided user request.
 
@@ -709,8 +716,7 @@ export const generateForecastChartAnnotation = async (
     {
 	`;
 	// FIXME: Use dedicated endpoint for annotation generation that's configured with JSON response_format instead of using the summary endpoint which is for text output
-	const mode = 'SYNC';
-	const { data } = await API.post(`/gollm/generate-summary?mode=${mode}`, prompt, {
+	const { data } = await API.post(`/gollm/generate-summary?mode=SYNC`, prompt, {
 		headers: {
 			'Content-Type': 'application/json'
 		}
@@ -718,14 +724,14 @@ export const generateForecastChartAnnotation = async (
 	const str = b64DecodeUnicode(data.output);
 	const result = JSON.parse(str);
 	const layerSpec = JSON.parse(result.response);
-	const annotation = {
+	const annotation: ForecastChartAnnotation = {
 		id: uuidv4(),
 		layerSpec,
 		isLLMGenerated: true,
 		metadata: { llmRequest: request }
 	};
 	return annotation;
-};
+}
 
 /// /////////////////////////////////////////////////////////////////////////////
 // Optimize charts
@@ -900,7 +906,7 @@ export function createInterventionChartMarkers(data: { name: string; value: numb
 	return [markerSpec, labelSpec];
 }
 
-export const createInterventionChart = (interventionsData: { name: string; value: number; time: number }[]) => {
+export function createInterventionChart(interventionsData: { name: string; value: number; time: number }[]) {
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
 		width: 400,
@@ -925,4 +931,4 @@ export const createInterventionChart = (interventionsData: { name: string; value
 		});
 	}
 	return spec;
-};
+}
