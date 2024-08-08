@@ -46,7 +46,7 @@
         &:not(.p-checkbox-disabled):hover {
             box-shadow: 0 0 1px 10px rgba($checkboxActiveBg, .04);
         }
-    
+
         &:not(.p-checkbox-disabled).p-checkbox-focused {
             box-shadow: 0 0 1px 10px rgba($checkboxActiveBg, .12);
         }
@@ -77,9 +77,9 @@
       height: 0;
       transform: translate3d(0,0,0) rotate(45deg);
     }
-    100%{    
+    100%{
       width: 4px;
-      height: 10px;    
+      height: 10px;
       border-color: $checkboxIconActiveColor;
       transform: translate3d(0,-10px,0) rotate(45deg);
     }
