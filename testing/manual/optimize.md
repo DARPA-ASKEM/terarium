@@ -16,26 +16,43 @@ Note: sampling combinations in PyCIEMSS can result in numerical instability, whe
 2. Create, or open, project named `QA [Your Name]`
 3. Create a workflow named `Optimize Test`
 
-### 2. Model setup
-1. Use/upload a model from [google drive](https://drive.google.com/drive/folders/1bllvuKt6ZA1vc36AW3Xet4y6ZAnwnaVN)
-2. Connect the model to a Model Configuration operation, create a configuration
-3. Ensure that the model parameters (e.g. beta, gamma) have distribution ranges
-4. Connect the model-configuration to a `PyCIEMSS Optimize` operator
+### 2. Upload assets
+1. Use/upload the _SEIRHD_ model from [google drive](https://drive.google.com/drive/folders/1bllvuKt6ZA1vc36AW3Xet4y6ZAnwnaVN)
+2. Use/upload the _LA county_ dataset from [google drive](https://drive.google.com/drive/folders/1bllvuKt6ZA1vc36AW3Xet4y6ZAnwnaVN)
 
-### 3. Run with minimal effort:
-1. Select a state in the constraint box. This will be done via a dropdown. You should be able to select any that you wish. 
-    An example is `Infected`
-2. Select a parameter in the Intervention policy box. This is also done in a via a dropdown. You should be able to select any. To make the most sense this should be one that impacts the state selected in the first step.
-    An example is `beta`
-3. Leaving everything else as defaulted values hit the `Run` button.
-4. Ensure that the run finishes and that you can see some charts. 
+### 3. Model setup
+1. Create a default configuration with the `Configure model` operator
+2. Calibrate the model with the dataset with the `Calibrate` operator.
 
-### 5. Misc - pick a few to try:
-1. Run a second time time with at least one input differet. Verify that you can go back and forth between the two outputs created and that the input box you updated changes with the output change
-2. Change intervention type to `start time` (instead of `parameter value`) 
-3. change the constraint from `max` to `Day average`
-4. change the constraint from `less than` to `greater than`
-5. create multiple policy bounds
-6. create multiple contraints ** Will be meaningless at the moment.
-7. utilize the `active` toggle in constraint and/or policy boxes.
-8. plug in a calibration into this node and rerun
+### 4. Masking start time optimization
+1. Create a Masking Policy operation with the `Intervention Policy` operator.
+
+#### 4.a Static intervention
+1. Set _NPI mult_ to `0.5` starting at _time_ `61` 
+2. Optimize intervention: set _H_ to `< 20 000` in all time points in `95%` of simulated outcomes. 
+3. Find a new start time for _NPI mult_ **upper** bound (how long we can delay masking). Start time `60`, end time `150`, initial guess `61`. 
+4. Optimization settings: end time `150`, maxiter `3` max eval `30`
+
+#### 4.b Dynamic intervention
+1. Same as above but with a dynamic intervention 
+2. replace 4.a.1 with _NPI mult_ to `0.5` when _H_ `> 16 000`.
+
+### 5. Hospitalizations optimization
+1. Create a Hospitalizations Policy operation with the `Intervention Policy` operator.
+
+#### 5.a Static intervention
+1. Set _NPI mult_ to `0.5` starting at _time_ `118`
+2. Optimize intervention: set _H_ to `< 20 000` in all time points in `95%` of simulated outcomes.
+3. Find a new start time for _NPI mult_ **upper** bound (minimal reduction in transmission). Min value = `.0002` intial guess `.5` max = `.9996`
+4. Optimization settings: end time `150`, maxiter `3` max eval `30`
+
+#### 5.b Dynamic intervention
+1. Same as above but with a dynamic intervention
+2. replace 5.a.1 with _NPI mult_ to `0.5` when _H_ `> 16 000`.
+
+### 6. Vaccinations optimization
+1. Create a Vaccinations operation with the `Intervention Policy` operator.
+2. Set _r_sv_ to `20 000` starting at _time_ `61`
+3. Optimize intervention: set _H_ to `< 13 000` in all time points in `95%` of simulated outcomes.
+4. Find a new start time for _r_sv_ **lower** bound (minimal increase in daily vaccinations). Min value = `10 000` intial guess `20 000` max = `90 000`
+5. Optimization settings: end time `150`, maxiter `3` max eval `30`
