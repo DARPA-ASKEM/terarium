@@ -164,7 +164,34 @@
 								@configuration-change="distributionChartProxy.configurationChange(index, $event)"
 								@remove="distributionChartProxy.removeChart(index)"
 							/>
-							<vega-chart :are-embed-actions-visible="true" :visualization-spec="preparedDistributionCharts[index]" />
+							<vega-chart
+								:are-embed-actions-visible="true"
+								:visualization-spec="preparedDistributionCharts[index].histogram"
+							>
+								<template v-slot:footer>
+									<table class="distribution-table">
+										<thead>
+											<tr>
+												<th scope="col"></th>
+												<th scope="col">{{ preparedDistributionCharts[index].stat.header[0] }}</th>
+												<th scope="col">{{ preparedDistributionCharts[index].stat.header[1] }}</th>
+											</tr>
+										</thead>
+										<tbody>
+											<tr>
+												<th scope="row">Mean</th>
+												<td>{{ preparedDistributionCharts[index].stat.mean[0] }}</td>
+												<td>{{ preparedDistributionCharts[index].stat.mean[1] }}</td>
+											</tr>
+											<tr>
+												<th scope="row">Variance</th>
+												<td>{{ preparedDistributionCharts[index].stat.variance[0] }}</td>
+												<td>{{ preparedDistributionCharts[index].stat.variance[1] }}</td>
+											</tr>
+										</tbody>
+									</table>
+								</template>
+							</vega-chart>
 						</template>
 						<Button size="small" text @click="distributionChartProxy.addChart()" label="Add chart" icon="pi pi-plus" />
 						<br />
@@ -201,7 +228,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { csvParse, autoType } from 'd3';
+import { csvParse, autoType, mean, variance } from 'd3';
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
 import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
@@ -467,9 +494,11 @@ const preparedDistributionCharts = computed(() => {
 	if (!preparedChartInputs.value) return [];
 	const { result } = preparedChartInputs.value;
 	const state = props.node.state;
+	const labelPre = 'Before calibration';
+	const labelAfter = 'After calibration';
 	return state.distributionChartConfigs.map((config) => {
 		const fieldName = pyciemssMap[config[0]];
-		return createHistogramChart(result, {
+		const histogram = createHistogramChart(result, {
 			title: `${config[0]}`,
 			width: chartSize.value.width,
 			height: chartSize.value.height,
@@ -477,10 +506,16 @@ const preparedDistributionCharts = computed(() => {
 			yAxisTitle: 'Count',
 			maxBins: 10,
 			variables: [
-				{ field: `${fieldName}:pre`, label: 'Before calibration', width: 54, color: '#AAB3C6' },
-				{ field: fieldName, label: 'After calibration', width: 24, color: '#1B8073' }
+				{ field: `${fieldName}:pre`, label: labelPre, width: 54, color: '#AAB3C6' },
+				{ field: fieldName, label: labelAfter, width: 24, color: '#1B8073' }
 			]
 		});
+		const stat = {
+			header: [labelPre, labelAfter],
+			mean: [mean(result, (d) => d[`${fieldName}:pre`]), mean(result, (d) => d[fieldName])],
+			variance: [variance(result, (d) => d[`${fieldName}:pre`]), variance(result, (d) => d[fieldName])]
+		};
+		return { histogram, stat };
 	});
 });
 
@@ -770,5 +805,23 @@ img {
 	background: var(--surface-a);
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-medium);
+}
+
+.distribution-table {
+	width: 100%;
+	border-collapse: collapse;
+	thead {
+		background-color: var(--surface-200);
+	}
+	tr {
+		height: 1.75rem;
+	}
+	tbody tr {
+		border-bottom: 1px solid var(--surface-border-light);
+	}
+	td,
+	th {
+		text-align: center;
+	}
 }
 </style>
