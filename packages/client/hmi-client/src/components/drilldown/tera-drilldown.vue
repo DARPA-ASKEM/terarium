@@ -1,13 +1,13 @@
 <template>
 	<aside class="overlay-container">
 		<Button
-			:class="{ 'no-connections': isEmpty(inputOperatorsNav?.[0].items) }"
+			:class="{ 'no-connections': isEmpty(upstreamOperatorsNav?.[0].items) }"
 			icon="pi pi-chevron-left"
 			outlined
 			severity="secondary"
-			@click="toggle($event, inputMenu, inputOperatorsNav)"
+			@click="toggle($event, inputMenu, upstreamOperatorsNav)"
 		/>
-		<Menu ref="inputMenu" class="ml-5" popup :model="inputOperatorsNav" :pt="menuPt" />
+		<Menu ref="inputMenu" class="ml-5" popup :model="upstreamOperatorsNav" :pt="menuPt" />
 		<section v-bind="$attrs" :class="animationClass">
 			<tera-drilldown-header
 				:active-index="selectedViewIndex"
@@ -69,14 +69,14 @@
 			</footer>
 		</section>
 		<Button
-			:class="{ 'no-connections': isEmpty(outputOperatorsNav?.[0].items) }"
+			:class="{ 'no-connections': isEmpty(downstreamOperatorsNav?.[0].items) }"
 			icon="pi pi-chevron-right"
 			outlined
 			severity="secondary"
 			v-tooltip="`Output: s`"
-			@click="toggle($event, outputMenu, outputOperatorsNav)"
+			@click="toggle($event, outputMenu, downstreamOperatorsNav)"
 		/>
-		<Menu ref="outputMenu" class="-ml-5" popup :model="outputOperatorsNav" :pt="menuPt" />
+		<Menu ref="outputMenu" class="-ml-5" popup :model="downstreamOperatorsNav" :pt="menuPt" />
 	</aside>
 </template>
 
@@ -88,7 +88,8 @@ import Chip from 'primevue/chip';
 import Menu from 'primevue/menu';
 import { MenuItem, MenuItemCommandEvent } from 'primevue/menuitem';
 import type { TabViewChangeEvent } from 'primevue/tabview';
-import { type WorkflowNode, WorkflowOperationTypes } from '@/types/workflow';
+import { type WorkflowNode } from '@/types/workflow';
+import { isAssetOperator } from '@/services/workflow';
 import TeraDrilldownHeader from '@/components/drilldown/tera-drilldown-header.vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
@@ -101,8 +102,8 @@ const props = defineProps<{
 	title?: string;
 	tooltip?: string;
 	// Applied in dynamic compoenent in tera-workflow.vue
-	inputOperatorsNav?: MenuItem[];
-	outputOperatorsNav?: MenuItem[];
+	upstreamOperatorsNav?: MenuItem[];
+	downstreamOperatorsNav?: MenuItem[];
 	spawnAnimation?: 'left' | 'right' | 'scale';
 }>();
 
@@ -138,16 +139,7 @@ const selectedOutputId = computed(() => props.node.active ?? null);
 
 const outputOptions = computed(() => {
 	// We do not display output selection for Asset operators
-	if (
-		(
-			[
-				WorkflowOperationTypes.MODEL,
-				WorkflowOperationTypes.DATASET,
-				WorkflowOperationTypes.DOCUMENT,
-				WorkflowOperationTypes.CODE
-			] as string[]
-		).includes(props.node.operationType)
-	) {
+	if (isAssetOperator(props.node.operationType)) {
 		return null;
 	}
 

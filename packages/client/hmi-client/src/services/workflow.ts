@@ -280,14 +280,24 @@ export const updateNodeStatus = (wf: Workflow, nodeId: string, status: OperatorS
 export const getNeighborNodes = (wf: Workflow, id: string) => {
 	const inputEdges = wf.edges.filter((edge) => edge.target === id);
 	const outputEdges = wf.edges.filter((edge) => edge.source === id);
-	const inputNodes = inputEdges
+	const upstreamNodes = inputEdges
 		.map((edge) => wf.nodes.find((n) => n.id === edge.source))
 		.filter(Boolean) as WorkflowNode<any>[];
-	const outputNodes = outputEdges
+	const downstreamNodes = outputEdges
 		.map((edge) => wf.nodes.find((n) => n.id === edge.target))
 		.filter(Boolean) as WorkflowNode<any>[];
-	return { inputNodes, outputNodes };
+	return { upstreamNodes, downstreamNodes };
 };
+
+export const isAssetOperator = (operationType: string) =>
+	(
+		[
+			WorkflowOperationTypes.MODEL,
+			WorkflowOperationTypes.DATASET,
+			WorkflowOperationTypes.DOCUMENT,
+			WorkflowOperationTypes.CODE
+		] as string[]
+	).includes(operationType);
 
 export const iconToOperatorMap = new Map<string, string>([
 	[WorkflowOperationTypes.DOCUMENT, 'pi pi-file'],

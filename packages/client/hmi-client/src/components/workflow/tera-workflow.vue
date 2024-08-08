@@ -151,8 +151,8 @@
 			v-if="dialogIsOpened && currentActiveNode"
 			:is="registry.getDrilldown(currentActiveNode.operationType)"
 			:node="currentActiveNode"
-			:input-operators-nav="inputOperatorsNav"
-			:output-operators-nav="outputOperatorsNav"
+			:upstream-operators-nav="upstreamOperatorsNav"
+			:downstream-operators-nav="downstreamOperatorsNav"
 			:spawn-animation="drilldownSpawnAnimation"
 			@append-output="(event: any) => appendOutput(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
@@ -243,8 +243,8 @@ const props = defineProps<{
 }>();
 
 const outputPortMenu = ref(getNodeMenu(registry.operationMap));
-const inputOperatorsNav = ref<MenuItem[]>([]);
-const outputOperatorsNav = ref<MenuItem[]>([]);
+const upstreamOperatorsNav = ref<MenuItem[]>([]);
+const downstreamOperatorsNav = ref<MenuItem[]>([]);
 const drilldownSpawnAnimation = ref<'left' | 'right' | 'scale'>('scale');
 
 const route = useRoute();
@@ -860,24 +860,30 @@ const handleDrilldown = () => {
 		const operator = wf.value.nodes.find((n) => n.id === operatorId);
 		if (operator) {
 			// Prepare drilldown navigation menus
-			const { inputNodes, outputNodes } = workflowService.getNeighborNodes(wf.value, operatorId);
-			inputOperatorsNav.value = [
+			const connectedInputs = operator.inputs.filter((input) => input.status === WorkflowPortStatus.CONNECTED);
+			const connectedOutputs = operator.outputs.filter((output) => output.status === WorkflowPortStatus.CONNECTED);
+			const { upstreamNodes, downstreamNodes } = workflowService.getNeighborNodes(wf.value, operatorId);
+			upstreamOperatorsNav.value = [
 				{
 					label: 'Upstream operators',
-					items: inputNodes.map((node) => ({
-						label: node.displayName,
-						icon: workflowService.iconToOperatorMap.get(node.operationType) ?? 'pi pi-cog',
-						command: () => addOperatorToRoute(node.id, 'right')
+					items: upstreamNodes.map((upstreamNode, index) => ({
+						label: workflowService.isAssetOperator(upstreamNode.operationType)
+							? connectedInputs[index].label
+							: upstreamNode.displayName,
+						icon: workflowService.iconToOperatorMap.get(upstreamNode.operationType) ?? 'pi pi-cog',
+						command: () => addOperatorToRoute(upstreamNode.id, 'right')
 					}))
 				}
 			];
-			outputOperatorsNav.value = [
+			downstreamOperatorsNav.value = [
 				{
 					label: 'Downstream operators',
-					items: outputNodes.map((node) => ({
-						label: node.displayName,
-						icon: workflowService.iconToOperatorMap.get(node.operationType) ?? 'pi pi-cog',
-						command: () => addOperatorToRoute(node.id, 'left')
+					items: downstreamNodes.map((downstreamNode, index) => ({
+						label: workflowService.isAssetOperator(downstreamNode.operationType)
+							? connectedOutputs[index].label
+							: downstreamNode.displayName,
+						icon: workflowService.iconToOperatorMap.get(downstreamNode.operationType) ?? 'pi pi-cog',
+						command: () => addOperatorToRoute(downstreamNode.id, 'left')
 					}))
 				}
 			];
