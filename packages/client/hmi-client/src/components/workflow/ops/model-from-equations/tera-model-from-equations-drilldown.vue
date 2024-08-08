@@ -104,13 +104,7 @@
 				</template>
 			</tera-drilldown-section>
 			<tera-drilldown-preview>
-				<section v-if="selectedModel">
-					<tera-model-description
-						:model="selectedModel"
-						:feature-config="{ isPreview: true }"
-						:generating-card="isGeneratingCard"
-					/>
-				</section>
+				<tera-model-description v-if="selectedModel" :model="selectedModel" :generating-card="isGeneratingCard" />
 				<tera-operator-placeholder v-else :node="node" style="height: 100%" />
 			</tera-drilldown-preview>
 		</tera-columnar-panel>
@@ -120,7 +114,7 @@
 	</tera-drilldown>
 	<tera-save-asset-modal
 		v-if="selectedModel"
-		:model="selectedModel"
+		:asset="selectedModel"
 		:is-visible="showSaveModelModal"
 		@close-modal="onCloseModelModal"
 		@on-save="onAddModel"

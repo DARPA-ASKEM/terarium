@@ -396,9 +396,9 @@ watch(
 				description: `Calibrated: ${baseConfig.description}`,
 				simulationId: state.calibrationId,
 				modelId: baseConfig.modelId,
-				observableSemanticList: [],
+				observableSemanticList: _.cloneDeep(baseConfig.observableSemanticList),
 				parameterSemanticList: [],
-				initialSemanticList: [],
+				initialSemanticList: _.cloneDeep(baseConfig.initialSemanticList),
 				inferredParameterList: inferredParameters
 			};
 			const modelConfigResponse = await createModelConfiguration(calibratedModelConfig);

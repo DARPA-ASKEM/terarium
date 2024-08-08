@@ -10,41 +10,39 @@
 	>
 		<div :tabName="StratifyTabs.Wizard">
 			<tera-drilldown-section class="pl-4">
-				<div class="form-section">
-					<header class="inline-flex justify-content-between">
-						<section>
-							<h5>Stratify model</h5>
-							<p>The model will be stratified with the following settings.</p>
-							<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
-								Note: Code has been executed which may not be reflected here.
-							</p>
-						</section>
-						<section>
-							<Button
-								style="margin-right: auto"
-								size="small"
-								severity="secondary"
-								outlined
-								label="Reset"
-								@click="resetModel"
-								class="mr-2"
-							/>
-							<Button
-								:disabled="isStratifyButtonDisabled"
-								:label="stratifyButtonLabel"
-								size="small"
-								icon="pi pi-play"
-								@click="stratifyModel"
-							/>
-						</section>
-					</header>
-					<tera-stratification-group-form
-						class="mt-2"
-						:model-node-options="modelNodeOptions"
-						:config="node.state.strataGroup"
-						@update-self="updateStratifyGroupForm"
+				<template #header-controls-left>
+					<section>
+						<h5>Stratify model</h5>
+						<p>The model will be stratified with the following settings.</p>
+						<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
+							Note: Code has been executed which may not be reflected here.
+						</p>
+					</section>
+				</template>
+				<template #header-controls-right>
+					<Button
+						style="margin-right: auto"
+						size="small"
+						severity="secondary"
+						outlined
+						label="Reset"
+						@click="resetModel"
+						class="mr-2"
 					/>
-				</div>
+					<Button
+						:disabled="isStratifyButtonDisabled"
+						:label="stratifyButtonLabel"
+						size="small"
+						icon="pi pi-play"
+						@click="stratifyModel"
+					/>
+				</template>
+				<tera-stratification-group-form
+					class="mt-2"
+					:model-node-options="modelNodeOptions"
+					:config="node.state.strataGroup"
+					@update-self="updateStratifyGroupForm"
+				/>
 			</tera-drilldown-section>
 		</div>
 		<div :tabName="StratifyTabs.Notebook">
