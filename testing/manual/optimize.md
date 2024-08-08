@@ -14,11 +14,11 @@ Note: sampling combinations in PyCIEMSS can result in numerical instability, whe
     password: askem-quality-assurance
     ```
 2. Create, or open, project named `QA [Your Name]`
-3. Create a workflow named `Optimize Test`
+3. Create a workflow named `Optimize`
 
 ### 2. Upload assets
-1. Use/upload the _SEIRHD_ model from [google drive](https://drive.google.com/drive/folders/1bllvuKt6ZA1vc36AW3Xet4y6ZAnwnaVN)
-2. Use/upload the _LA county_ dataset from [google drive](https://drive.google.com/drive/folders/1bllvuKt6ZA1vc36AW3Xet4y6ZAnwnaVN)
+1. Use/upload the _SEIRHD_ model from [google drive]([https://drive.google.com/drive/folders/1bllvuKt6ZA1vc36AW3Xet4y6ZAnwnaVN](https://drive.google.com/file/d/1wCZl0NCjN6jZeoEy5UNVbElW8a4xQHXw/view?usp=drive_link))
+2. Use/upload the _LA county_ dataset from [google drive]([https://drive.google.com/drive/folders/1bllvuKt6ZA1vc36AW3Xet4y6ZAnwnaVN](https://drive.google.com/file/d/1gW-q-N_pLOAUp151NyPAuXNL1WTBRDak/view?usp=drive_link))
 
 ### 3. Model setup
 1. Create a default configuration with the `Configure model` operator
