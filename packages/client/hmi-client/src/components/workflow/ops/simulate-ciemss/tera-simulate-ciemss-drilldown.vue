@@ -76,6 +76,10 @@
 					<div v-if="inferredParameters">Using inferred parameters from calibration: {{ inferredParameters[0] }}</div>
 					-->
 				</div>
+				<tera-pyciemss-output-settings
+					:simulation-chart-options="Object.keys(pyciemssMap)"
+					:interventionsOptions="interventionsOptions"
+				/>
 			</tera-drilldown-section>
 		</section>
 		<tera-drilldown-section :tabName="DrilldownTabs.Notebook" class="notebook-section">
@@ -193,6 +197,7 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
+import teraPyciemssOutputSettings from '@/components/pyciemss/tera-pyciemss-output-settings.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
 import { useProjects } from '@/composables/project';
@@ -206,6 +211,7 @@ import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import { getModelConfigurationById } from '@/services/model-configurations';
+import { getInterventionOptionsByPolicyId } from '@/services/intervention-policy';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import TeraChartControl from '../../tera-chart-control.vue';
 
@@ -215,6 +221,8 @@ const props = defineProps<{
 const emit = defineEmits(['update-state', 'select-output', 'close']);
 
 const modelVarUnits = ref<{ [key: string]: string }>({});
+const interventionsOptions = ref<string[]>([]);
+
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
 
@@ -420,6 +428,7 @@ const lazyLoadSimulationData = async (runId: string) => {
 
 	const result = await getRunResultCSV(selectedRunId.value, 'result.csv');
 	pyciemssMap = parsePyCiemssMap(result[0]);
+	console.log(pyciemssMap);
 	runResults.value[selectedRunId.value] = result;
 	rawContent.value[selectedRunId.value] = convertToCsvAsset(result, Object.values(pyciemssMap));
 
@@ -454,6 +463,29 @@ const buildJupyterContext = async () => {
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
 	}
+};
+
+// Used to initialze anything involved with the model input
+const initalizeModel = async () => {
+	const modelInput = props.node.inputs[0];
+	if (!modelInput.value) return;
+
+	const modelId = modelInput.value[0];
+	const model = await getModelByModelConfigurationId(modelId);
+	if (model) modelVarUnits.value = getUnitsFromModelParts(model);
+};
+
+// Used to initialze anything involved with the interventions input
+const initializeInterventions = async () => {
+	const interventionInput = props.node.inputs[1];
+	if (!interventionInput.value) return;
+	const interventionPolicyId = interventionInput.value[0];
+	interventionsOptions.value = await getInterventionOptionsByPolicyId(interventionPolicyId);
+};
+
+const initialize = async () => {
+	initalizeModel();
+	initializeInterventions();
 };
 
 const runCode = () => {
@@ -493,19 +525,6 @@ const initializeAceEditor = (editorInstance: any) => {
 };
 
 watch(
-	() => props.node.inputs[0].value,
-	async () => {
-		const input = props.node.inputs[0];
-		if (!input.value) return;
-
-		const id = input.value[0];
-		const model = await getModelByModelConfigurationId(id);
-		if (model) modelVarUnits.value = getUnitsFromModelParts(model);
-	},
-	{ immediate: true }
-);
-
-watch(
 	() => props.node.state.inProgressSimulationId,
 	(id) => {
 		if (id === '') showSpinner.value = false;
@@ -531,6 +550,7 @@ watch(
 
 onMounted(() => {
 	buildJupyterContext();
+	initialize();
 });
 
 onUnmounted(() => kernelManager.shutdown());

@@ -30,3 +30,13 @@ export const updateInterventionPolicy = async (policy: InterventionPolicy): Prom
 	const response = await API.put(`/interventions/${policy.id}`, policy);
 	return response?.data ?? null;
 };
+
+export const getInterventionOptionsByPolicyId = async (policyId: string): Promise<string[]> => {
+	const interventionPolicy = await getInterventionPolicyById(policyId);
+	const interventionOptions: string[] = [];
+	interventionPolicy.interventions.forEach((intervention) => {
+		interventionOptions.push(intervention.appliedTo);
+	});
+
+	return interventionOptions;
+};
