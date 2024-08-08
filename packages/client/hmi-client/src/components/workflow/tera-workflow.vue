@@ -866,6 +866,7 @@ const handleDrilldown = () => {
 					label: 'Upstream operators',
 					items: inputNodes.map((node) => ({
 						label: node.displayName,
+						icon: workflowService.iconToOperatorMap.get(node.operationType) ?? 'pi pi-cog',
 						command: () => addOperatorToRoute(node.id, 'right')
 					}))
 				}
@@ -875,6 +876,7 @@ const handleDrilldown = () => {
 					label: 'Downstream operators',
 					items: outputNodes.map((node) => ({
 						label: node.displayName,
+						icon: workflowService.iconToOperatorMap.get(node.operationType) ?? 'pi pi-cog',
 						command: () => addOperatorToRoute(node.id, 'left')
 					}))
 				}

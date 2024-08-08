@@ -73,6 +73,7 @@
 			icon="pi pi-chevron-right"
 			outlined
 			severity="secondary"
+			v-tooltip="`Output: s`"
 			@click="toggle($event, outputMenu, outputOperatorsNav)"
 		/>
 		<Menu ref="outputMenu" class="-ml-5" popup :model="outputOperatorsNav" :pt="menuPt" />
@@ -166,7 +167,10 @@ const inputMenu = ref();
 const outputMenu = ref();
 const menuPt = {
 	root: {
-		'margin-top': '-7rem'
+		style: 'margin-top: -6rem'
+	},
+	submenuHeader: {
+		style: 'color: var(--text-color-subdued); padding-top: 0.3rem;'
 	}
 };
 const toggle = (event: MouseEvent, menu: Menu, operatorsNav?: MenuItem[]) => {

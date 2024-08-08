@@ -15,7 +15,7 @@ import type {
 	WorkflowPort,
 	WorkflowOutput
 } from '@/types/workflow';
-import { WorkflowPortStatus, OperatorStatus } from '@/types/workflow';
+import { WorkflowPortStatus, OperatorStatus, WorkflowOperationTypes } from '@/types/workflow';
 import { summarizeNotebook } from './beaker';
 
 /**
@@ -265,6 +265,18 @@ export const removeNode = (wf: Workflow, id: string) => {
 	wf.nodes = wf.nodes.filter((node) => node.id !== id);
 };
 
+export const updateNodeState = (wf: Workflow, nodeId: string, state: any) => {
+	const node = wf.nodes.find((d) => d.id === nodeId);
+	if (!node) return;
+	node.state = state;
+};
+
+export const updateNodeStatus = (wf: Workflow, nodeId: string, status: OperatorStatus) => {
+	const node = wf.nodes.find((d) => d.id === nodeId);
+	if (!node) return;
+	node.status = status;
+};
+
 export const getNeighborNodes = (wf: Workflow, id: string) => {
 	const inputEdges = wf.edges.filter((edge) => edge.target === id);
 	const outputEdges = wf.edges.filter((edge) => edge.source === id);
@@ -277,17 +289,28 @@ export const getNeighborNodes = (wf: Workflow, id: string) => {
 	return { inputNodes, outputNodes };
 };
 
-export const updateNodeState = (wf: Workflow, nodeId: string, state: any) => {
-	const node = wf.nodes.find((d) => d.id === nodeId);
-	if (!node) return;
-	node.state = state;
-};
-
-export const updateNodeStatus = (wf: Workflow, nodeId: string, status: OperatorStatus) => {
-	const node = wf.nodes.find((d) => d.id === nodeId);
-	if (!node) return;
-	node.status = status;
-};
+export const iconToOperatorMap = new Map<string, string>([
+	[WorkflowOperationTypes.DOCUMENT, 'pi pi-file'],
+	[WorkflowOperationTypes.MODEL, 'pi pi-share-alt'],
+	[WorkflowOperationTypes.DATASET, 'pi pi-table'],
+	[WorkflowOperationTypes.SIMULATE_CIEMSS, 'pi pi-chart-line'],
+	[WorkflowOperationTypes.CALIBRATION_CIEMSS, 'pi pi-chart-line'],
+	[WorkflowOperationTypes.MODEL_CONFIG, 'pi pi-cog'],
+	[WorkflowOperationTypes.STRATIFY_MIRA, 'pi pi-share-alt'],
+	[WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS, 'pi pi-chart-line'],
+	[WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS, 'pi pi-chart-line'],
+	[WorkflowOperationTypes.DATASET_TRANSFORMER, 'pi pi-table'],
+	[WorkflowOperationTypes.SUBSET_DATA, 'pi pi-table'],
+	[WorkflowOperationTypes.MODEL_TRANSFORMER, 'pi pi-share-alt'],
+	[WorkflowOperationTypes.FUNMAN, 'pi pi-cog'],
+	[WorkflowOperationTypes.CODE, 'pi pi-code'],
+	[WorkflowOperationTypes.MODEL_COMPARISON, 'pi pi-share-alt'],
+	[WorkflowOperationTypes.OPTIMIZE_CIEMSS, 'pi pi-chart-line'],
+	[WorkflowOperationTypes.MODEL_EDIT, 'pi pi-share-alt'],
+	[WorkflowOperationTypes.MODEL_FROM_EQUATIONS, 'pi pi-share-alt'],
+	[WorkflowOperationTypes.REGRIDDING, 'pi pi-table'],
+	[WorkflowOperationTypes.INTERVENTION_POLICY, 'pi pi-cog']
+]);
 
 // Get port label for frontend
 const defaultPortLabels = {

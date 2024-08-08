@@ -11,7 +11,6 @@ export const WorkflowOperationTypes = Object.freeze({
 	DATASET_TRANSFORMER: 'DatasetTransformer',
 	SUBSET_DATA: 'SubsetData',
 	MODEL_TRANSFORMER: 'ModelTransformer',
-	MODEL_FROM_CODE: 'ModelFromCode',
 	FUNMAN: 'Funman',
 	CODE: 'Code',
 	MODEL_COMPARISON: 'ModelComparison',
