@@ -39,22 +39,24 @@
 					/>
 				</div>
 			</section>
-			<tera-operator-menu
-				v-show="menuOptions.length && (hoveredOutputId === output.id || menuFocusId === output.id)"
-				:nodeMenu="menuOptions"
-				:style="{
-					height: '2rem',
-					position: 'absolute',
-					right: '-4rem',
-					bottom: '0px'
-				}"
-				@click.stop
-				@mousedown.stop
-				@mouseup.stop
-				@menu-focus="menuFocusId = output.id"
-				@menu-blur="menuFocusId = null"
-				@menu-selection="(operatorType) => emit('menu-selection', operatorType)"
-			/>
+			<Transition>
+				<tera-operator-menu
+					v-show="menuOptions.length && (hoveredOutputId === output.id || menuFocusId === output.id)"
+					:nodeMenu="menuOptions"
+					:style="{
+						height: '2rem',
+						position: 'absolute',
+						right: '-4rem',
+						bottom: '0px'
+					}"
+					@click.stop
+					@mousedown.stop
+					@mouseup.stop
+					@menu-focus="menuFocusId = output.id"
+					@menu-blur="menuFocusId = null"
+					@menu-selection="(operatorType) => emit('menu-selection', operatorType)"
+				/>
+			</Transition>
 			<!--TODO: We will see how to integrate port actions into this button later-->
 			<!-- <Button
 				size="small"
@@ -157,5 +159,15 @@ li:hover:before {
 	position: absolute;
 	top: -0.35rem;
 	left: -0.35rem;
+}
+
+.v-enter-active,
+.v-leave-active {
+	transition: opacity 0.5s ease;
+}
+
+.v-enter-from,
+.v-leave-to {
+	opacity: 0;
 }
 </style>
