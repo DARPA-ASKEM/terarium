@@ -451,12 +451,21 @@ public class ReBACService {
 		return rebac.hasRelationship(who, Schema.Relationship.CREATOR, what, getCurrentConsistency());
 	}
 
+	private void invalidatePermissionCache(SchemaObject who, SchemaObject what) {
+		permissionCache.invalidate(new CacheKey(who, Schema.Permission.READ, what));
+		permissionCache.invalidate(new CacheKey(who, Schema.Permission.WRITE, what));
+		permissionCache.invalidate(new CacheKey(who, Schema.Permission.MEMBERSHIP, what));
+		permissionCache.invalidate(new CacheKey(who, Schema.Permission.ADMINISTRATE, what));
+	}
+
 	@Observed(name = "function_profile")
 	public void createRelationship(
 		final SchemaObject who,
 		final SchemaObject what,
 		final Schema.Relationship relationship
 	) throws Exception, RelationshipAlreadyExistsException {
+		userCache.invalidate(who.id);
+		invalidatePermissionCache(who, what);
 		final ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		CURRENT_ZED_TOKEN = rebac.createRelationship(who, relationship, what);
 	}
@@ -467,6 +476,8 @@ public class ReBACService {
 		final SchemaObject what,
 		final Schema.Relationship relationship
 	) throws Exception, RelationshipAlreadyExistsException {
+		userCache.invalidate(who.id);
+		invalidatePermissionCache(who, what);
 		final ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		CURRENT_ZED_TOKEN = rebac.removeRelationship(who, relationship, what);
 	}
