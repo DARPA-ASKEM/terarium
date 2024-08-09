@@ -18,12 +18,7 @@
 			</div>
 			<div class="matrix-grid">
 				<template v-for="row in matrix">
-					<div
-						class="cell"
-						:class="{ 'filled-cell': cell.content.id }"
-						v-for="(cell, colIdx) in row"
-						:key="colIdx"
-					></div>
+					<div class="cell" :class="{ 'filled-cell': cell.content.id }" v-for="(cell, colIdx) in row" :key="colIdx" />
 				</template>
 			</div>
 		</section>

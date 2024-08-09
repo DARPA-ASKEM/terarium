@@ -498,6 +498,11 @@ nav {
 	border-bottom-right-radius: 0;
 	border-right: 0 none;
 	color: var(--text-color);
+	pointer-events: none;
+}
+
+:deep(.p-splitbutton.p-button-outlined > .p-button) {
+	box-shadow: var(--surface-400) 0 0 0 1px inset;
 }
 
 :deep(.layout-project-selection.p-splitbutton .p-button:last-of-type) {

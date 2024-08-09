@@ -68,6 +68,7 @@
 				<tera-operator
 					ref="teraOperatorRefs"
 					:node="node"
+					:nodeMenu="nodeMenu"
 					@resize="resizeHandler"
 					@port-selected="(port: WorkflowPort, direction: WorkflowDirection) => createNewEdge(node, port, direction)"
 					@port-mouseover="onPortMouseover"
@@ -76,6 +77,7 @@
 					@duplicate-branch="duplicateBranch(node.id)"
 					@remove-edges="removeEdges"
 					@update-state="(event: any) => updateWorkflowNodeState(node, event)"
+					@menu-selection="(operatorType) => onMenuSelection(operatorType, node)"
 				>
 					<template #body>
 						<component
@@ -174,7 +176,7 @@ import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
 import ContextMenu from 'primevue/contextmenu';
 import * as workflowService from '@/services/workflow';
-import { OperatorImport, OperatorNodeSize } from '@/services/workflow';
+import { OperatorImport, OperatorNodeSize, getNodeMenu } from '@/services/workflow';
 import * as d3 from 'd3';
 import { AssetType, EventType } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
@@ -236,6 +238,8 @@ registry.registerOp(InterventionPolicyOp);
 const props = defineProps<{
 	assetId: string;
 }>();
+
+const nodeMenu = ref(getNodeMenu(registry.operationMap));
 
 const route = useRoute();
 const router = useRouter();
@@ -438,6 +442,21 @@ const addOperatorToWorkflow: Function =
 		});
 		workflowDirty = true;
 	};
+
+function onMenuSelection(operatorType: string, menuNode: WorkflowNode<any>) {
+	const name = operatorType;
+	const operation = registry.getOperation(operatorType);
+	const node = registry.getNode(operatorType);
+	const drilldown = registry.getDrilldown(operatorType);
+
+	const width = workflowService.getOperatorNodeSize(OperatorNodeSize.medium).width;
+	newNodePosition.x = menuNode.x + 80 + width;
+	newNodePosition.y = menuNode.y;
+
+	if (name && operation && node && drilldown) {
+		addOperatorToWorkflow({ name, operation, node, drilldown })();
+	}
+}
 
 // Menu categories and list items are in order of appearance for separators to work
 const contextMenuItems: MenuItem[] = [
