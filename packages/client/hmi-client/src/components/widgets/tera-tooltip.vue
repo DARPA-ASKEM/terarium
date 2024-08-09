@@ -82,6 +82,7 @@ div {
 		border-radius: var(--border-radius);
 		box-shadow: var(--overlay-menu-shadow);
 		margin: var(--gap);
+		z-index: 9999;
 	}
 
 	/* Position of tooltip box */

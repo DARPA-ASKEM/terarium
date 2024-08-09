@@ -1,12 +1,25 @@
 <template>
 	<aside class="overlay-container">
-		<Button
-			:class="{ 'no-connections': isEmpty(upstreamOperatorsNav?.[0].items) }"
-			icon="pi pi-chevron-left"
-			outlined
-			severity="secondary"
-			@click="toggle($event, inputMenu, upstreamOperatorsNav)"
-		/>
+		<tera-tooltip :class="{ 'no-connections': isEmpty(upstreamOperatorsNav?.[0].items) }">
+			<Button
+				icon="pi pi-chevron-left"
+				outlined
+				severity="secondary"
+				@click="toggle($event, inputMenu, upstreamOperatorsNav)"
+			/>
+			<template #tooltip-content>
+				<span class="operator-nav-info">
+					<span v-if="upstreamOperatorsNav?.[0]?.items?.length === 1">
+						<i :class="upstreamOperatorsNav[0].items[0].icon" />
+						<label>{{ upstreamOperatorsNav[0].items[0].label }}</label>
+					</span>
+					<label v-else>Upstream operators</label>
+					<span>
+						<kbd>Ctrl</kbd> + <kbd><i class="pi pi-arrow-left" /></kbd>
+					</span>
+				</span>
+			</template>
+		</tera-tooltip>
 		<Menu ref="inputMenu" class="ml-5" popup :model="upstreamOperatorsNav" :pt="menuPt" />
 		<section v-bind="$attrs" :class="animationClass">
 			<tera-drilldown-header
@@ -68,14 +81,26 @@
 				<slot name="footer" />
 			</footer>
 		</section>
-		<Button
-			:class="{ 'no-connections': isEmpty(downstreamOperatorsNav?.[0].items) }"
-			icon="pi pi-chevron-right"
-			outlined
-			severity="secondary"
-			v-tooltip="`Output: s`"
-			@click="toggle($event, outputMenu, downstreamOperatorsNav)"
-		/>
+		<tera-tooltip :class="{ 'no-connections': isEmpty(downstreamOperatorsNav?.[0].items) }" position="left">
+			<Button
+				icon="pi pi-chevron-right"
+				outlined
+				severity="secondary"
+				@click="toggle($event, outputMenu, downstreamOperatorsNav)"
+			/>
+			<template #tooltip-content>
+				<span class="operator-nav-info">
+					<span v-if="downstreamOperatorsNav?.[0]?.items?.length === 1">
+						<i :class="downstreamOperatorsNav[0].items[0].icon" />
+						<label>{{ downstreamOperatorsNav[0].items[0].label }}</label>
+					</span>
+					<label v-else>Downstream operators</label>
+					<span>
+						<kbd>Ctrl</kbd> + <kbd><i class="pi pi-arrow-right" /></kbd>
+					</span>
+				</span>
+			</template>
+		</tera-tooltip>
 		<Menu ref="outputMenu" class="-ml-5" popup :model="downstreamOperatorsNav" :pt="menuPt" />
 	</aside>
 </template>
@@ -95,6 +120,7 @@ import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import TeraOperatorPortIcon from '@/components/operator/tera-operator-port-icon.vue';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
+import TeraTooltip from '@/components/widgets/tera-tooltip.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
@@ -224,15 +250,46 @@ onMounted(() => {
 		}
 	}
 
-	& > button {
-		height: 4rem;
-		width: 1.5rem;
-		border-radius: var(--border-radius-big);
+	& > div {
 		align-self: center;
-
 		&.no-connections {
 			visibility: hidden;
 		}
+
+		& > button {
+			height: 4rem;
+			width: 1.5rem;
+			border-radius: var(--border-radius-big);
+		}
+	}
+}
+
+kbd {
+	background-color: var(--surface-section);
+	border: 1px solid var(--surface-border);
+	border-radius: var(--border-radius);
+	padding: 2px var(--gap-xsmall);
+	font-weight: var(--font-weight-semibold);
+	color: var(--text-color-subdued);
+}
+
+i {
+	color: var(--text-color-subdued);
+}
+
+.operator-nav-info {
+	display: flex;
+	flex-direction: column;
+	flex-wrap: nowrap;
+	padding: var(--gap-2);
+	gap: var(--gap-4);
+	white-space: nowrap;
+
+	& > span {
+		display: flex;
+		align-items: center;
+		margin: 0 auto;
+		gap: var(--gap-2);
 	}
 }
 

@@ -858,36 +858,35 @@ const handleDrilldown = () => {
 	const operatorId = route.query?.operator?.toString();
 	if (operatorId) {
 		const operator = wf.value.nodes.find((n) => n.id === operatorId);
-		if (operator) {
-			// Prepare drilldown navigation menus
-			const { upstreamNodes, downstreamNodes } = workflowService.getNeighborNodes(wf.value, operatorId);
-			upstreamOperatorsNav.value = [
-				{
-					label: 'Upstream operators',
-					items: upstreamNodes.map((upstreamNode) => ({
-						label: workflowService.isAssetOperator(upstreamNode.operationType)
-							? upstreamNode.outputs[0].label // Asset name
-							: upstreamNode.displayName, // Operator name
-						icon: workflowService.iconToOperatorMap.get(upstreamNode.operationType) ?? 'pi pi-cog',
-						command: () => addOperatorToRoute(upstreamNode.id, 'right')
-					}))
-				}
-			];
-			downstreamOperatorsNav.value = [
-				{
-					label: 'Downstream operators',
-					items: downstreamNodes.map((downstreamNode) => ({
-						label: workflowService.isAssetOperator(downstreamNode.operationType)
-							? downstreamNode.outputs[0].label // Asset name
-							: downstreamNode.displayName, // Operator name
-						icon: workflowService.iconToOperatorMap.get(downstreamNode.operationType) ?? 'pi pi-cog',
-						command: () => addOperatorToRoute(downstreamNode.id, 'left')
-					}))
-				}
-			];
-			// Open drilldown
-			openDrilldown(operator);
-		}
+		if (!operator) return;
+		// Prepare drilldown navigation menus
+		const { upstreamNodes, downstreamNodes } = workflowService.getNeighborNodes(wf.value, operatorId);
+		upstreamOperatorsNav.value = [
+			{
+				label: 'Upstream operators',
+				items: upstreamNodes.map((upstreamNode) => ({
+					label: workflowService.isAssetOperator(upstreamNode.operationType)
+						? upstreamNode.outputs[0].label // Asset name
+						: upstreamNode.displayName, // Operator name
+					icon: workflowService.iconToOperatorMap.get(upstreamNode.operationType) ?? 'pi pi-cog',
+					command: () => addOperatorToRoute(upstreamNode.id, 'right')
+				}))
+			}
+		];
+		downstreamOperatorsNav.value = [
+			{
+				label: 'Downstream operators',
+				items: downstreamNodes.map((downstreamNode) => ({
+					label: workflowService.isAssetOperator(downstreamNode.operationType)
+						? downstreamNode.outputs[0].label // Asset name
+						: downstreamNode.displayName, // Operator name
+					icon: workflowService.iconToOperatorMap.get(downstreamNode.operationType) ?? 'pi pi-cog',
+					command: () => addOperatorToRoute(downstreamNode.id, 'left')
+				}))
+			}
+		];
+		// Open drilldown
+		openDrilldown(operator);
 	} else {
 		closeDrilldown();
 	}
