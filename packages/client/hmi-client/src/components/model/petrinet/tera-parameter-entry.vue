@@ -17,7 +17,16 @@
 
 			<span class="description" v-if="description">{{ description }}</span>
 		</header>
-		<template v-if="isEmpty(modelConfiguration.inferredParameterList)">
+		<div v-if="inferredDistribution" class="inferred-parameter">
+			<span class="type"><label>Type</label> {{ inferredDistribution.type }}</span>
+			<span class="mean">
+				<label>Mean</label> {{ displayNumber(inferredDistribution?.parameters?.mean.toString()) }}
+			</span>
+			<span class="std">
+				<label>STDDEV</label> {{ displayNumber(inferredDistribution?.parameters?.stddev.toString()) }}
+			</span>
+		</div>
+		<template v-else>
 			<main>
 				<span class="flex gap-2">
 					<Dropdown
@@ -82,15 +91,6 @@
 				/>
 			</footer>
 		</template>
-		<div v-else-if="inferredDistribution" class="inferred-parameter">
-			<span class="type"><label>Type</label> {{ inferredDistribution.type }}</span>
-			<span class="mean">
-				<label>Mean</label> {{ displayNumber(inferredDistribution?.parameters?.mean.toString()) }}
-			</span>
-			<span class="std">
-				<label>STDDEV</label> {{ displayNumber(inferredDistribution?.parameters?.stddev.toString()) }}
-			</span>
-		</div>
 	</div>
 	<tera-parameter-other-value-modal
 		v-if="showOtherConfigValueModal"
@@ -104,7 +104,6 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty } from 'lodash';
 import { computed, ref, onMounted } from 'vue';
 import { Model, ModelConfiguration } from '@/types/Types';
 import { getParameterSource, getParameterDistribution, getOtherValues } from '@/services/model-configurations';
@@ -130,9 +129,11 @@ const emit = defineEmits(['update-parameter', 'update-source']);
 const name = getParameter(props.model, props.parameterId)?.name;
 const units = getParameter(props.model, props.parameterId)?.units?.expression;
 const description = getParameter(props.model, props.parameterId)?.description;
-const inferredDistribution = props.modelConfiguration.inferredParameterList?.find(
-	(param) => param.referenceId === props.parameterId
-)?.distribution;
+const inferredDistribution = computed(
+	() =>
+		props.modelConfiguration.inferredParameterList?.find((param) => param.referenceId === props.parameterId)
+			?.distribution
+);
 
 const concept = ref('');
 const isSourceOpen = ref(false);
