@@ -9,7 +9,6 @@ import com.authzed.api.v1.PermissionService.Consistency;
 import com.authzed.grpcutil.BearerToken;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -85,7 +84,7 @@ public class ReBACService {
 
 	public static String API_SERVICE_USER_ID;
 
-	volatile String CURRENT_ZED_TOKEN;
+	private volatile String CURRENT_ZED_TOKEN;
 
 	private String getKeycloakBearerToken() {
 		return "Bearer " + keycloak.tokenManager().getAccessTokenString();
@@ -118,11 +117,17 @@ public class ReBACService {
 		}
 	}
 
-	Cache<CacheKey, Boolean> rebacCache = Caffeine.newBuilder()
+	private final Cache<CacheKey, Boolean> permissionCache = Caffeine.newBuilder()
 		.expireAfterWrite(5, TimeUnit.MINUTES)
 		.recordStats()
 		.removalListener((Object key, Object value, RemovalCause cause) -> log.info("Key {} was removed {}", key, cause))
 		.<CacheKey, Boolean>build();
+
+	private final Cache<String, PermissionUser> userCache = Caffeine.newBuilder()
+		.expireAfterWrite(15, TimeUnit.MINUTES)
+		.recordStats()
+		.removalListener((Object key, Object value, RemovalCause cause) -> log.info("Key {} was removed {}", key, cause))
+		.<String, PermissionUser>build();
 
 	@PostConstruct
 	void startup() throws Exception {
@@ -275,15 +280,20 @@ public class ReBACService {
 
 	@Observed(name = "function_profile")
 	public PermissionUser getUser(final String id) {
-		final UsersResource usersResource = keycloak.realm(REALM_NAME).users();
-		final UserResource userResource = usersResource.get(id);
-		final UserRepresentation userRepresentation = userResource.toRepresentation();
-		return new PermissionUser(
-			userRepresentation.getId(),
-			userRepresentation.getFirstName(),
-			userRepresentation.getLastName(),
-			userRepresentation.getEmail()
-		);
+		@PolyNull
+		PermissionUser result = userCache.get(id, key_id -> {
+			final UsersResource usersResource = keycloak.realm(REALM_NAME).users();
+			final UserResource userResource = usersResource.get(key_id);
+			final UserRepresentation userRepresentation = userResource.toRepresentation();
+			return new PermissionUser(
+				userRepresentation.getId(),
+				userRepresentation.getFirstName(),
+				userRepresentation.getLastName(),
+				userRepresentation.getEmail()
+			);
+		});
+		log.info("User Cache hit: {}, miss: {}", userCache.stats().hitCount(), userCache.stats().missCount());
+		return result;
 	}
 
 	@Observed(name = "function_profile")
@@ -390,8 +400,8 @@ public class ReBACService {
 	@Observed(name = "function_profile")
 	public boolean can(final SchemaObject who, final Schema.Permission permission, final SchemaObject what) {
 		@PolyNull
-		Boolean result = rebacCache.get(new CacheKey(who, permission, what), permissionMappingFn);
-		log.info("Cache hit: {}, miss: {}", rebacCache.stats().hitCount(), rebacCache.stats().missCount());
+		Boolean result = permissionCache.get(new CacheKey(who, permission, what), permissionMappingFn);
+		log.info("Cache hit: {}, miss: {}", permissionCache.stats().hitCount(), permissionCache.stats().missCount());
 		return result;
 	}
 
@@ -411,8 +421,8 @@ public class ReBACService {
 	@Observed(name = "function_profile")
 	public boolean isMemberOf(final SchemaObject who, final SchemaObject what) throws Exception {
 		@PolyNull
-		Boolean result = rebacCache.get(new CacheKey(who, Schema.Permission.MEMBERSHIP, what), permissionMappingFn);
-		log.info("Cache hit: {}, miss: {}", rebacCache.stats().hitCount(), rebacCache.stats().missCount());
+		Boolean result = permissionCache.get(new CacheKey(who, Schema.Permission.MEMBERSHIP, what), permissionMappingFn);
+		log.info("Cache hit: {}, miss: {}", permissionCache.stats().hitCount(), permissionCache.stats().missCount());
 		return result;
 	}
 
