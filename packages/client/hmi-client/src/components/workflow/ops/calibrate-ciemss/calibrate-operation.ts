@@ -8,7 +8,6 @@ export interface CalibrationOperationStateCiemss extends BaseState {
 	method: string;
 	selectedParameters: string[];
 	selectedVariables: string[];
-	chartConfigs: string[][];
 	mapping: CalibrateMap[];
 	simulationsInProgress: string[];
 
@@ -55,7 +54,6 @@ export const CalibrationOperationCiemss: Operation = {
 			method: 'dopri5',
 			selectedParameters: [],
 			selectedVariables: [],
-			chartConfigs: [],
 			mapping: [{ modelVariable: '', datasetVariable: '' }],
 			simulationsInProgress: [],
 			currentProgress: 0,
