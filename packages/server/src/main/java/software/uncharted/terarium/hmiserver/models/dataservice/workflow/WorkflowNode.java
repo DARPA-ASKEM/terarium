@@ -23,6 +23,8 @@ public class WorkflowNode<T> extends SupportAdditionalProperties implements Seri
 	@TSIgnore
 	private Long version;
 
+	private Boolean isDeleted;
+
 	private String displayName;
 	private String operationType;
 

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -76,16 +77,6 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 		return super.createAsset(asset, projectId, hasWritePermission);
 	}
 
-	@Observed(name = "function_profile")
-	public Optional<Workflow> updateAsset(
-		final Workflow asset,
-		final UUID nodeId,
-		final UUID projectId,
-		final Schema.Permission hasWritePermission
-	) throws IOException, IllegalArgumentException {
-		final Workflow dbWorkflow = getAsset(asset.getId(), hasWritePermission).get();
-	}
-
 	@Override
 	@Observed(name = "function_profile")
 	public Optional<Workflow> updateAsset(
@@ -93,64 +84,85 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 		final UUID projectId,
 		final Schema.Permission hasWritePermission
 	) throws IOException, IllegalArgumentException {
-		// ensure the workflow id is set correctly
-		// if (asset.getEdges() != null) {
-		// 	for (final WorkflowEdge edge : asset.getEdges()) {
-		// 		edge.setWorkflowId(asset.getId());
-		// 	}
-		// }
-
+		// Fetch database copy, we will update into it
 		final Workflow dbWorkflow = getAsset(asset.getId(), hasWritePermission).get();
 
-		// Iterate through nodes and edges and check if updates can be done
-		// - If the nodes are different, then the version we want to write must have
-		//   version >= db node's version
 		final List<WorkflowNode> dbWorkflowNodes = dbWorkflow.getNodes();
+		final List<WorkflowEdge> dbWorkflowEdges = dbWorkflow.getEdges();
 		final Map<UUID, WorkflowNode> nodeMap = new HashMap();
+		final Map<UUID, WorkflowEdge> edgeMap = new HashMap();
+
+		// Prep: sane state, cache the nodes/edges to update for easy retrival
 		if (asset.getNodes() != null) {
 			for (final WorkflowNode node : asset.getNodes()) {
 				node.setWorkflowId(asset.getId());
+				if (node.getVersion() == null) {
+					node.setVersion(1L);
+				}
 				nodeMap.put(node.getId(), node);
 			}
 		}
+		if (asset.getEdges() != null) {
+			for (final WorkflowEdge edge : asset.getEdges()) {
+				edge.setWorkflowId(asset.getId());
+				if (edge.getVersion() == null) {
+					edge.setVersion(1L);
+				}
+				edgeMap.put(edge.getId(), edge);
+			}
+		}
 
+		////////////////////////////////////////////////////////////////////////////////
+		// Handle deletes Tombstoning
+		////////////////////////////////////////////////////////////////////////////////
+		// for (Iterator<WorkflowNode> iter = dbWorkflowNodes.listIterator(); iter.hasNext(); ) {
+		// 	WorkflowNode node = iter.next();
+		// 	if (nodeMap.get(node.getId()) == null) {
+		// 		iter.remove();
+		// 	}
+		// }
+		// for (Iterator<WorkflowEdge> iter = dbWorkflowEdges.listIterator(); iter.hasNext(); ) {
+		// 	WorkflowEdge edge = iter.next();
+		// 	if (edgeMap.get(edge.getId()) == null) {
+		// 		iter.remove();
+		// 	}
+		// }
+
+		////////////////////////////////////////////////////////////////////////////////
+		// Handle updates and deletes (tombdstoning)
+		////////////////////////////////////////////////////////////////////////////////
 		for (int index = 0; index < dbWorkflowNodes.size(); index++) {
 			WorkflowNode dbNode = dbWorkflowNodes.get(index);
 			WorkflowNode node = nodeMap.get(dbNode.getId());
 
 			if (node == null) continue;
+			if (node.getIsDeleted() != null && node.getIsDeleted() == true) {
+				dbNode.setIsDeleted(true);
+				nodeMap.remove(node.getId());
+				continue;
+			}
+
 			JsonNode nodeContent = this.objectMapper.valueToTree(node);
 			JsonNode dbNodeContent = this.objectMapper.valueToTree(dbNode);
 
-			if (nodeContent.equals(dbNodeContent) == true) continue;
+			if (nodeContent.equals(dbNodeContent) == true) {
+				nodeMap.remove(node.getId());
+				continue;
+			}
 
 			// FIXME: backwards compatibility for older workflows, remove in a few month. Aug 2024
 			if (dbNode.getVersion() == null) {
 				dbNode.setVersion(1L);
-			}
-			if (node.getVersion() == null) {
-				node.setVersion(1L);
+				continue;
 			}
 
 			if (dbNode.getVersion() == node.getVersion()) {
 				node.setVersion(dbNode.getVersion() + 1L);
 				dbWorkflowNodes.set(index, node);
 			}
-			// mark as done
-			nodeMap.remove(node.getId());
-		}
-		// The remaining ones are additions
-		for (Map.Entry<UUID, WorkflowNode> pair : nodeMap.entrySet()) {
-			dbWorkflowNodes.add(pair.getValue());
-		}
 
-		final List<WorkflowEdge> dbWorkflowEdges = dbWorkflow.getEdges();
-		final Map<UUID, WorkflowEdge> edgeMap = new HashMap();
-		if (asset.getEdges() != null) {
-			for (final WorkflowEdge edge : asset.getEdges()) {
-				edge.setWorkflowId(asset.getId());
-				edgeMap.put(edge.getId(), edge);
-			}
+			// remove once updated
+			nodeMap.remove(node.getId());
 		}
 
 		for (int index = 0; index < dbWorkflowEdges.size(); index++) {
@@ -158,43 +170,56 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 			WorkflowEdge edge = edgeMap.get(dbEdge.getId());
 
 			if (edge == null) continue;
+			if (edge.getIsDeleted() != null && edge.getIsDeleted() == true) {
+				dbEdge.setIsDeleted(true);
+				edgeMap.remove(edge.getId());
+				continue;
+			}
+
 			JsonNode edgeContent = this.objectMapper.valueToTree(edge);
 			JsonNode dbEdgeContent = this.objectMapper.valueToTree(dbEdge);
 
-			if (edgeContent.equals(dbEdgeContent) == true) continue;
+			if (edgeContent.equals(dbEdgeContent) == true) {
+				edgeMap.remove(edge.getId());
+				continue;
+			}
 
 			// FIXME: backwards compatibility for older workflows, remove in a few month. Aug 2024
 			if (dbEdge.getVersion() == null) {
 				dbEdge.setVersion(1L);
-			}
-			if (edge.getVersion() == null) {
-				edge.setVersion(1L);
 			}
 
 			if (dbEdge.getVersion() == edge.getVersion()) {
 				edge.setVersion(dbEdge.getVersion() + 1L);
 				dbWorkflowEdges.set(index, edge);
 			}
-			// mark as done
+
+			// remove once updated
 			edgeMap.remove(edge.getId());
 		}
-		// The remaining ones are additions
+
+		////////////////////////////////////////////////////////////////////////////////
+		// Handle new nodes or edges
+		////////////////////////////////////////////////////////////////////////////////
+		for (Map.Entry<UUID, WorkflowNode> pair : nodeMap.entrySet()) {
+			dbWorkflowNodes.add(pair.getValue());
+		}
 		for (Map.Entry<UUID, WorkflowEdge> pair : edgeMap.entrySet()) {
 			dbWorkflowEdges.add(pair.getValue());
 		}
 
-		/*
-		final List<WorkflowNode> candidateWorkflowNodes = asset.getNodes();
-		for (WorkflowNode node : candidateWorkflowNodes) {
-			WorkflowNode dbNode = dbWorkflowNodeMap.get(node.getId());
-			if (dbNode == null) continue;
+		// Testing lombok equals
+		// final List<WorkflowNode> candidateWorkflowNodes = asset.getNodes();
+		// for (WorkflowNode node : candidateWorkflowNodes) {
+		// 	WorkflowNode dbNode = dbWorkflowNodeMap.get(node.getId());
+		// 	if (dbNode == null) continue;
+		// 	if (node.equals(dbNode) == true) {
+		// 		System.out.println(" lombok: " + node.getDisplayName() + " equal");
+		// 	} else {
+		// 		System.out.println(" lombok: " + node.getDisplayName() + " not equal");
+		// 	}
+		// }
 
-			if (node.equals(dbNode) == true) {
-				System.out.println(" lombok: " + node.getDisplayName() + " equal");
-			} else {
-				System.out.println(" lombok: " + node.getDisplayName() + " not equal");
-			}
-		}*/
 		return super.updateAsset(dbWorkflow, projectId, hasWritePermission);
 	}
 
