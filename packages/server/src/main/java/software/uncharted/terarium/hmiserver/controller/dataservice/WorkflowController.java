@@ -137,7 +137,7 @@ public class WorkflowController {
 		}
 	)
 	public ResponseEntity<Workflow> createWorkflow(
-		@RequestBody final Workflow item,
+		@RequestBody final Workflow workflow,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
@@ -145,7 +145,9 @@ public class WorkflowController {
 			projectId
 		);
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED).body(workflowService.createAsset(item, projectId, permission));
+			return ResponseEntity.status(HttpStatus.CREATED).body(
+				workflowService.createAsset(workflow, projectId, permission)
+			);
 		} catch (final IOException e) {
 			final String error = "Unable to create workflow";
 			log.error(error, e);
@@ -181,6 +183,7 @@ public class WorkflowController {
 		);
 		try {
 			workflow.setId(id);
+
 			final Optional<Workflow> updated = workflowService.updateAsset(workflow, projectId, permission);
 			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
