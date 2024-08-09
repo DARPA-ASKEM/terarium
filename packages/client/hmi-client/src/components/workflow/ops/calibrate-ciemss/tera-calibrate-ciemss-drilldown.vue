@@ -155,46 +155,43 @@
 				<div v-if="!showSpinner" class="form-section">
 					<section v-if="modelConfig && csvAsset" ref="outputPanel">
 						<h5>Parameters</h5>
-						<template v-for="(cfg, index) of node.state.distributionChartConfigs" :key="index">
-							<tera-chart-control
-								:chart-config="{ selectedRun: 'fixme', selectedVariable: cfg }"
-								:multi-select="false"
-								:show-remove-button="true"
-								:variables="Object.keys(pyciemssMap).filter((c) => modelPartTypesMap[c] === 'parameter')"
-								@configuration-change="distributionChartProxy.configurationChange(index, $event)"
-								@remove="distributionChartProxy.removeChart(index)"
-							/>
+						<tera-chart-control
+							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedParameters }"
+							:multi-select="true"
+							:show-remove-button="false"
+							:variables="Object.keys(pyciemssMap).filter((c) => modelPartTypesMap[c] === 'parameter')"
+							@configuration-change="updateSelectedParameters"
+						/>
+						<template v-for="param of node.state.selectedParameters" :key="param">
 							<vega-chart
 								:are-embed-actions-visible="true"
-								:visualization-spec="preparedDistributionCharts[index].histogram"
+								:visualization-spec="preparedDistributionCharts[getParamIndex(param)].histogram"
 							>
 								<template v-slot:footer>
 									<table class="distribution-table">
 										<thead>
 											<tr>
 												<th scope="col"></th>
-												<th scope="col">{{ preparedDistributionCharts[index].stat.header[0] }}</th>
-												<th scope="col">{{ preparedDistributionCharts[index].stat.header[1] }}</th>
+												<th scope="col">{{ preparedDistributionCharts[getParamIndex(param)].stat.header[0] }}</th>
+												<th scope="col">{{ preparedDistributionCharts[getParamIndex(param)].stat.header[1] }}</th>
 											</tr>
 										</thead>
 										<tbody>
 											<tr>
 												<th scope="row">Mean</th>
-												<td>{{ preparedDistributionCharts[index].stat.mean[0] }}</td>
-												<td>{{ preparedDistributionCharts[index].stat.mean[1] }}</td>
+												<td>{{ preparedDistributionCharts[getParamIndex(param)].stat.mean[0] }}</td>
+												<td>{{ preparedDistributionCharts[getParamIndex(param)].stat.mean[1] }}</td>
 											</tr>
 											<tr>
 												<th scope="row">Variance</th>
-												<td>{{ preparedDistributionCharts[index].stat.variance[0] }}</td>
-												<td>{{ preparedDistributionCharts[index].stat.variance[1] }}</td>
+												<td>{{ preparedDistributionCharts[getParamIndex(param)].stat.variance[0] }}</td>
+												<td>{{ preparedDistributionCharts[getParamIndex(param)].stat.variance[1] }}</td>
 											</tr>
 										</tbody>
 									</table>
 								</template>
 							</vega-chart>
 						</template>
-						<Button size="small" text @click="distributionChartProxy.addChart()" label="Add chart" icon="pi pi-plus" />
-						<br />
 						<h5>Variables</h5>
 						<template v-for="(cfg, index) of node.state.chartConfigs" :key="index">
 							<tera-chart-control
@@ -205,7 +202,11 @@
 								@configuration-change="chartProxy.configurationChange(index, $event)"
 								@remove="chartProxy.removeChart(index)"
 							/>
-							<vega-chart :are-embed-actions-visible="true" :visualization-spec="preparedCharts[index]" />
+							<vega-chart
+								v-if="cfg.length > 0"
+								:are-embed-actions-visible="true"
+								:visualization-spec="preparedCharts[index]"
+							/>
 						</template>
 						<Button size="small" text @click="chartProxy.addChart()" label="Add chart" icon="pi pi-plus" />
 					</section>
@@ -271,6 +272,7 @@ import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
 import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import { displayNumber } from '@/utils/number';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults } from './calibrate-utils';
 
@@ -490,43 +492,56 @@ const preparedCharts = computed(() => {
 		);
 	});
 });
+
+const outputPanel = ref(null);
+const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+
+const chartProxy = chartActionsProxy(props.node, (state: CalibrationOperationStateCiemss) => {
+	emit('update-state', state);
+});
+
 const preparedDistributionCharts = computed(() => {
 	if (!preparedChartInputs.value) return [];
 	const { result } = preparedChartInputs.value;
 	const state = props.node.state;
-	const labelPre = 'Before calibration';
+	const labelBefore = 'Before calibration';
 	const labelAfter = 'After calibration';
-	return state.distributionChartConfigs.map((config) => {
-		const fieldName = pyciemssMap[config[0]];
+	return state.selectedParameters.map((param) => {
+		const fieldName = pyciemssMap[param];
+		const beforeFieldName = `${fieldName}:pre`;
 		const histogram = createHistogramChart(result, {
-			title: `${config[0]}`,
+			title: `${param}`,
 			width: chartSize.value.width,
 			height: chartSize.value.height,
-			xAxisTitle: `${config[0]}`,
+			xAxisTitle: `${param}`,
 			yAxisTitle: 'Count',
 			maxBins: 10,
 			variables: [
-				{ field: `${fieldName}:pre`, label: labelPre, width: 54, color: '#AAB3C6' },
+				{ field: beforeFieldName, label: labelBefore, width: 54, color: '#AAB3C6' },
 				{ field: fieldName, label: labelAfter, width: 24, color: '#1B8073' }
 			]
 		});
+		const toDisplayNumber = (num?: number) => (num ? displayNumber(num.toString()) : '');
 		const stat = {
-			header: [labelPre, labelAfter],
-			mean: [mean(result, (d) => d[`${fieldName}:pre`]), mean(result, (d) => d[fieldName])],
-			variance: [variance(result, (d) => d[`${fieldName}:pre`]), variance(result, (d) => d[fieldName])]
+			header: [labelBefore, labelAfter],
+			mean: [mean(result, (d) => d[beforeFieldName]), mean(result, (d) => d[fieldName])].map(toDisplayNumber),
+			variance: [variance(result, (d) => d[beforeFieldName]), variance(result, (d) => d[fieldName])].map(
+				toDisplayNumber
+			)
 		};
 		return { histogram, stat };
 	});
 });
 
-const outputPanel = ref(null);
-const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+const selectedParameters = ref<string[]>(props.node.state.selectedParameters);
 
-const updateChartCallback = (state: CalibrationOperationStateCiemss) => {
+const getParamIndex = (param: string) => props.node.state.selectedParameters.findIndex((v) => v === param);
+
+function updateSelectedParameters(event) {
+	const state = _.cloneDeep(props.node.state);
+	state.selectedParameters = event.selectedVariable;
 	emit('update-state', state);
-};
-const chartProxy = chartActionsProxy(props.node, updateChartCallback, 'forecast');
-const distributionChartProxy = chartActionsProxy(props.node, updateChartCallback, 'distribution');
+}
 
 const runCalibrate = async () => {
 	if (!modelConfigId.value || !datasetId.value || !currentDatasetFileName.value) return;
