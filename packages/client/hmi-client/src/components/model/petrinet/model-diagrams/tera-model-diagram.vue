@@ -313,6 +313,7 @@ kbd {
 	padding: 2px var(--gap-xsmall);
 	font-size: var(--font-tiny);
 	font-weight: var(--font-weight-semibold);
+	color: var(--text-color-subdued);
 }
 
 ul.legend {

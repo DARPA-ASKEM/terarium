@@ -1,5 +1,5 @@
 <template>
-	<aside class="overlay-container">
+	<aside ref="drilldownRef" class="overlay-container">
 		<tera-tooltip :class="{ 'no-connections': isEmpty(upstreamOperatorsNav?.[0].items) }">
 			<Button
 				icon="pi pi-chevron-left"
@@ -15,7 +15,7 @@
 					</span>
 					<label v-else>Upstream operators</label>
 					<span>
-						<kbd>Ctrl</kbd> + <kbd><i class="pi pi-arrow-left" /></kbd>
+						<kbd>Shift</kbd> + <kbd><i class="pi pi-arrow-left" /></kbd>
 					</span>
 				</span>
 			</template>
@@ -96,7 +96,7 @@
 					</span>
 					<label v-else>Downstream operators</label>
 					<span>
-						<kbd>Ctrl</kbd> + <kbd><i class="pi pi-arrow-right" /></kbd>
+						<kbd>Shift</kbd> + <kbd><i class="pi pi-arrow-right" /></kbd>
 					</span>
 				</span>
 			</template>
@@ -107,7 +107,7 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { ref, computed, onMounted, useSlots } from 'vue';
+import { ref, computed, onMounted, onUnmounted, useSlots } from 'vue';
 import Button from 'primevue/button';
 import Chip from 'primevue/chip';
 import Menu from 'primevue/menu';
@@ -191,7 +191,7 @@ const menuPt = {
 		style: 'color: var(--text-color-subdued); padding-top: 0.3rem;'
 	}
 };
-const toggle = (event: MouseEvent, menu: Menu, operatorsNav?: MenuItem[]) => {
+const toggle = (event: MouseEvent | KeyboardEvent, menu: Menu, operatorsNav?: MenuItem[]) => {
 	const navItems = operatorsNav?.[0]?.items ?? [];
 	// If there is only one item in the menu, just navigate to that one
 	if (navItems.length === 1 && navItems[0]?.command) {
@@ -202,11 +202,23 @@ const toggle = (event: MouseEvent, menu: Menu, operatorsNav?: MenuItem[]) => {
 	}
 };
 
-// Animation class must be applied on mounted to avoid flickering
+const drilldownRef = ref<HTMLElement | null>(null);
 const animationClass = ref('');
+
+function handleKeyNavigation(event: KeyboardEvent) {
+	if (event.shiftKey && event.key === 'ArrowLeft') {
+		toggle(event, inputMenu.value, props.upstreamOperatorsNav);
+	} else if (event.shiftKey && event.key === 'ArrowRight') {
+		toggle(event, outputMenu.value, props.downstreamOperatorsNav);
+	}
+}
+
 onMounted(() => {
-	animationClass.value = props.spawnAnimation ?? 'scale';
+	animationClass.value = props.spawnAnimation ?? 'scale'; // Animation class must be applied on mounted to avoid flickering
+	window.addEventListener('keydown', handleKeyNavigation);
 });
+
+onUnmounted(() => window.removeEventListener('keydown', handleKeyNavigation));
 </script>
 
 <style scoped>
@@ -281,8 +293,8 @@ i {
 	display: flex;
 	flex-direction: column;
 	flex-wrap: nowrap;
-	padding: var(--gap-2);
-	gap: var(--gap-4);
+	padding: var(--gap-1) var(--gap-2);
+	gap: var(--gap-3);
 	white-space: nowrap;
 
 	& > span {
