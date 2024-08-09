@@ -24,7 +24,8 @@ export const blankModelConfig: ModelConfiguration = {
 	simulationId: '',
 	observableSemanticList: [],
 	parameterSemanticList: [],
-	initialSemanticList: []
+	initialSemanticList: [],
+	inferredParameterList: []
 };
 
 export const ModelConfigOperation: Operation = {

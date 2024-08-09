@@ -122,22 +122,27 @@
 	</div>
 
 	<!-- Save as dialog -->
-	<Dialog v-model:visible="showSaveInput" :modal="true" :style="{ width: '50vw' }" header="Save as">
-		<div class="p-fluid mt-4">
-			<div class="p-field">
-				<tera-input-text id="name" v-model="saveAsName" placeholder="What do you want to call it?" />
-			</div>
-		</div>
+	<tera-modal v-if="showSaveInput" class="w-4">
+		<template #header>
+			<h4>Save as</h4>
+		</template>
+		<tera-input-text
+			id="name"
+			v-model="saveAsName"
+			placeholder="What do you want to call it?"
+			auto-focus
+			@keyup.enter="saveAsNewDataset()"
+		/>
 		<template #footer>
 			<Button label="Cancel" @click="showSaveInput = false" severity="secondary" outlined />
 			<Button label="Save" :disabled="!hasValidDatasetName" @click="saveAsNewDataset()" />
 		</template>
-	</Dialog>
+	</tera-modal>
 </template>
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, Ref, watch } from 'vue';
 import Button from 'primevue/button';
-import Dialog from 'primevue/dialog';
+import TeraModal from '@/components/widgets/tera-modal.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { useToastService } from '@/services/toast';
 import { IModel } from '@jupyterlab/services/lib/session/session';

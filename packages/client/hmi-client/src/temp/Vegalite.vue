@@ -1,23 +1,53 @@
 <template>
-	<div style="padding: 2rem; display: flex; flex-direction: row">
-		<vega-chart
-			:interval-selection-signal-names="['brush']"
-			:visualization-spec="spec"
-			@chart-click="handleChartClick($event)"
-			@update-interval-selection="debounceHandleIntervalSelect"
-		/>
-		<vega-chart :visualization-spec="spec2" />
-		<vega-chart :visualization-spec="specNew" />
+	<div style="padding: 2rem; display: flex; flex-direction: col">
+		<div>
+			<vega-chart :visualization-spec="forecastChartSpec" />
+			<div>
+				<div v-for="a in forecastAnnotations" :key="a.id">
+					{{ a.layerSpec.description }} <i class="pi pi-trash pi-trash" @click="removeAnnotation(a.id)" />
+				</div>
+			</div>
+			<div style="display: flex; flex-direction: col">
+				<tera-input-text
+					class="input"
+					style="flex-grow: 1"
+					ref="inputElement"
+					v-model="questionString"
+					:disabled="waitingForForecastChartAnnotation"
+					:placeholder="waitingForForecastChartAnnotation ? 'Please wait...' : 'What do you want to annotate?'"
+					@keydown.enter="generateAndAddAnnotation"
+				/>
+				<i v-if="waitingForForecastChartAnnotation" class="pi pi-spin pi-spinner" />
+				<Button v-else severity="secondary" icon="pi pi-send" @click="generateAndAddAnnotation" />
+			</div>
+		</div>
+		<div>
+			<vega-chart
+				:interval-selection-signal-names="['brush']"
+				:visualization-spec="spec"
+				@chart-click="handleChartClick($event)"
+				@update-interval-selection="debounceHandleIntervalSelect"
+			/>
+			<vega-chart :visualization-spec="spec2" style="" />
+		</div>
 		<vega-chart :visualization-spec="specHistogram" />
 	</div>
 </template>
 
 <script setup lang="ts">
 import { debounce } from 'lodash';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import Button from 'primevue/button';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 // import unchartedVegaTheme from './vega-theme';
-import { createForecastChart, createHistogramChart, createErrorChart } from '@/services/charts';
+import {
+	createForecastChart,
+	createHistogramChart,
+	createErrorChart,
+	generateForecastChartAnnotation,
+	createForecastChartAnnotation
+} from '@/services/charts';
 // import { createLLMSummary, getSummaries } from '@/services/summary-service';
 
 const rand = (v: number) => Math.round(Math.random() * v);
@@ -116,28 +146,65 @@ const debounceHandleIntervalSelect = debounce(handleIntervalSelect, 200);
 
 // Generate time series data
 const dataNew = generateSimulateData();
-const specNew = ref<any>(
-	createForecastChart(
-		{
-			dataset: dataNew.data,
-			variables: ['alpha', 'beta'],
-			timeField: 'time',
-			groupField: 'sample'
-		},
-		{
-			dataset: dataNew.summary,
-			variables: ['alphaMean', 'betaMean'],
-			timeField: 'time'
-		},
-		null,
-		{
-			width: 400,
-			height: 200,
-			legend: true,
-			colorscheme: ['#F00', '#0F0', '#00F'],
-			xAxisTitle: 'x-axis',
-			yAxisTitle: 'y-axis'
-		}
+const forecastAnnotations = ref<
+	{
+		id: string;
+		layerSpec: any;
+		isLLMGenerated: boolean;
+		metadata: any;
+	}[]
+>([createForecastChartAnnotation('x', 60, 'test label')]);
+
+const applyForecastAnnotations = (chartSpec: any, forecastAnnotations: any[], targetLayerIndex = 1) => {
+	targetLayerIndex = 1; // Assume the target layer is the second layer which is the statistic layer
+	const layerSpecs = forecastAnnotations.map((a) => a.layerSpec);
+	const spec = structuredClone(chartSpec);
+	if (!spec.layer[targetLayerIndex]) return spec;
+	spec.layer[targetLayerIndex].layer.push(...layerSpecs);
+	return spec;
+};
+
+const questionString = ref('');
+const waitingForForecastChartAnnotation = ref(false);
+const generateAndAddAnnotation = async () => {
+	if (!questionString.value) return;
+	waitingForForecastChartAnnotation.value = true;
+	const timeField = 'time';
+	const variables = ['alphaMean', 'betaMean'];
+	const axisTitle = { x: 'Day', y: 'Value' };
+	const annotation = await generateForecastChartAnnotation(questionString.value, timeField, variables, axisTitle);
+	forecastAnnotations.value.push(annotation);
+	waitingForForecastChartAnnotation.value = false;
+};
+const removeAnnotation = async (id: string) => {
+	forecastAnnotations.value = forecastAnnotations.value.filter((a) => a.id !== id);
+};
+
+const forecastChartSpec = computed(() =>
+	applyForecastAnnotations(
+		createForecastChart(
+			{
+				dataset: dataNew.data,
+				variables: ['alpha', 'beta'],
+				timeField: 'time',
+				groupField: 'sample'
+			},
+			{
+				dataset: dataNew.summary,
+				variables: ['alphaMean', 'betaMean'],
+				timeField: 'time'
+			},
+			null,
+			{
+				width: 400,
+				height: 200,
+				legend: true,
+				colorscheme: ['#F00', '#0F0', '#00F'],
+				xAxisTitle: 'Day',
+				yAxisTitle: 'Value'
+			}
+		),
+		forecastAnnotations.value
 	)
 );
 
