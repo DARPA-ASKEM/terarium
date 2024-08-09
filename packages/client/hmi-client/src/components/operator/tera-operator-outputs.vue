@@ -161,6 +161,7 @@ li:hover:before {
 	left: -0.35rem;
 }
 
+/** These v-* classes are used for animations for the <Transition /> element */
 .v-enter-active,
 .v-leave-active {
 	transition: opacity 0.5s ease;
