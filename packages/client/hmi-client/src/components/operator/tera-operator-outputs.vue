@@ -41,7 +41,7 @@
 			</section>
 			<Transition>
 				<tera-operator-menu
-					v-show="menuOptions.length && (hoveredOutputId === output.id || menuFocusId === output.id)"
+					v-show="menuOptions.length && menuFocusId === output.id"
 					:nodeMenu="menuOptions"
 					:style="{
 						height: '2rem',
@@ -75,7 +75,6 @@ import Button from 'primevue/button';
 import { OperatorMenuItem } from '@/services/workflow';
 import TeraOperatorMenu from './tera-operator-menu.vue';
 
-const hoveredOutputId = ref<string | null>(null);
 const menuFocusId = ref<string | null>(null);
 
 const emit = defineEmits([
