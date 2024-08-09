@@ -2,11 +2,11 @@
 	<main>
 		<template
 			v-if="
-				!inProgressCalibrationId && runResult && csvAsset && runResultPre && props.node.state.chartConfigs[0]?.length
+				!inProgressCalibrationId && runResult && csvAsset && runResultPre && props.node.state.selectedVariables?.length
 			"
 		>
 			<vega-chart
-				v-for="(_config, index) of props.node.state.chartConfigs"
+				v-for="(_var, index) of props.node.state.selectedVariables"
 				:key="index"
 				:are-embed-actions-visible="false"
 				:visualization-spec="preparedCharts[index]"
@@ -144,25 +144,23 @@ const preparedCharts = computed(() => {
 	// Need to get the dataset's time field
 	const datasetTimeField = state.mapping.find((d) => d.modelVariable === 'timestamp')?.datasetVariable;
 
-	return state.chartConfigs.map((config) => {
+	return state.selectedVariables.map((variable) => {
 		const datasetVariables: string[] = [];
-		config.forEach((variableName) => {
-			const mapObj = state.mapping.find((d) => d.modelVariable === variableName);
-			if (mapObj) {
-				datasetVariables.push(mapObj.datasetVariable);
-			}
-		});
+		const mapObj = state.mapping.find((d) => d.modelVariable === variable);
+		if (mapObj) {
+			datasetVariables.push(mapObj.datasetVariable);
+		}
 
 		return createForecastChart(
 			{
 				dataset: result,
-				variables: [...config.map((d) => `${pyciemssMap[d]}:pre`), ...config.map((d) => pyciemssMap[d])],
+				variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
 				timeField: 'timepoint_id',
 				groupField: 'sample_id'
 			},
 			{
 				dataset: resultSummary,
-				variables: [...config.map((d) => `${pyciemssMap[d]}_mean:pre`), ...config.map((d) => `${pyciemssMap[d]}_mean`)],
+				variables: [`${pyciemssMap[variable]}_mean:pre`, `${pyciemssMap[variable]}_mean`],
 				timeField: 'timepoint_id'
 			},
 			{
@@ -177,7 +175,7 @@ const preparedCharts = computed(() => {
 				legend: true,
 				translationMap: reverseMap,
 				xAxisTitle: modelVarUnits.value._time || 'Time',
-				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || '',
+				yAxisTitle: modelVarUnits.value[variable] || '',
 				colorscheme: ['#AAB3C6', '#1B8073']
 			}
 		);
@@ -311,9 +309,6 @@ watch(
 
 		if (doneProcess) {
 			const state = _.cloneDeep(props.node.state);
-			if (state.chartConfigs.length === 0) {
-				state.chartConfigs = [[]];
-			}
 			state.forecastId = state.inProgressForecastId;
 			state.preForecastId = state.inProgressPreForecastId;
 
