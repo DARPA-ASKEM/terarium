@@ -335,6 +335,7 @@ header {
 	text-align: left;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+	font-weight: var(--font-weight);
 }
 
 .loading-spinner {
