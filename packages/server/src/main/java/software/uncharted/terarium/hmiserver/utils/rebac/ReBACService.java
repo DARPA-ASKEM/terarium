@@ -285,11 +285,25 @@ public class ReBACService {
 			final UsersResource usersResource = keycloak.realm(REALM_NAME).users();
 			final UserResource userResource = usersResource.get(key_id);
 			final UserRepresentation userRepresentation = userResource.toRepresentation();
+
+			final List<PermissionRole> roles = new ArrayList<>();
+			for (final RoleRepresentation roleRepresentation : userResource.roles().getAll().getRealmMappings()) {
+				if (roleRepresentation.getDescription().isBlank()) {
+					final PermissionRole role = new PermissionRole(
+						roleRepresentation.getId(),
+						roleRepresentation.getName()
+						// no users are acquired (to avoid circular references etc)
+					);
+					roles.add(role);
+				}
+			}
+
 			return new PermissionUser(
 				userRepresentation.getId(),
 				userRepresentation.getFirstName(),
 				userRepresentation.getLastName(),
-				userRepresentation.getEmail()
+				userRepresentation.getEmail(),
+				roles
 			);
 		});
 		log.info("User Cache hit: {}, miss: {}", userCache.stats().hitCount(), userCache.stats().missCount());
@@ -306,27 +320,32 @@ public class ReBACService {
 			if (userRepresentation.getEmail() == null || userRepresentation.getEmail().isBlank()) {
 				continue;
 			}
-			final UserResource userResource = usersResource.get(userRepresentation.getId());
 
-			final List<PermissionRole> roles = new ArrayList<>();
-			for (final RoleRepresentation roleRepresentation : userResource.roles().getAll().getRealmMappings()) {
-				if (roleRepresentation.getDescription().isBlank()) {
-					final PermissionRole role = new PermissionRole(
-						roleRepresentation.getId(),
-						roleRepresentation.getName()
-						// no users are acquired (to avoid circular references etc)
-					);
-					roles.add(role);
+			@PolyNull
+			PermissionUser user = userCache.get(userRepresentation.getId(), key_id -> {
+				final UserResource userResource = usersResource.get(key_id);
+
+				final List<PermissionRole> roles = new ArrayList<>();
+				for (final RoleRepresentation roleRepresentation : userResource.roles().getAll().getRealmMappings()) {
+					if (roleRepresentation.getDescription().isBlank()) {
+						final PermissionRole role = new PermissionRole(
+							roleRepresentation.getId(),
+							roleRepresentation.getName()
+							// no users are acquired (to avoid circular references etc)
+						);
+						roles.add(role);
+					}
 				}
-			}
 
-			final PermissionUser user = new PermissionUser(
-				userRepresentation.getId(),
-				userRepresentation.getFirstName(),
-				userRepresentation.getLastName(),
-				userRepresentation.getEmail(),
-				roles
-			);
+				return new PermissionUser(
+					userRepresentation.getId(),
+					userRepresentation.getFirstName(),
+					userRepresentation.getLastName(),
+					userRepresentation.getEmail(),
+					roles
+				);
+			});
+
 			response.add(user);
 		}
 		return response;
@@ -470,6 +489,9 @@ public class ReBACService {
 	public ResponseEntity<Void> deleteRoleFromUser(final String roleName, final String userId) {
 		// NB: No need to adjust {rebacCache} as we will allow for a maximum 5 minute decay of a user's role
 		//     as the {rebacCache} will flush the permissions then.
+
+		userCache.invalidate(userId);
+
 		final UsersResource usersResource = keycloak.realm(REALM_NAME).users();
 		final UserResource userResource = usersResource.get(userId);
 		try {
@@ -515,6 +537,9 @@ public class ReBACService {
 	@Observed(name = "function_profile")
 	public ResponseEntity<Void> addRoleToUser(final String roleName, final String userId) {
 		// NB: No need to adjust {rebacCache} as simply will grant a user a role
+
+		userCache.invalidate(userId);
+
 		final UsersResource usersResource = keycloak.realm(REALM_NAME).users();
 		final UserResource userResource = usersResource.get(userId);
 		try {
