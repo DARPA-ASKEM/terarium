@@ -2,13 +2,11 @@
 	<tera-drilldown
 		:node="node"
 		:menu-items="menuItems"
+		v-bind="$attrs"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 		@update:selection="onSelection"
 	>
-		<template #header-actions>
-			<tera-operator-annotation :state="node.state" @update-state="(state: any) => emit('update-state', state)" />
-		</template>
 		<template #sidebar>
 			<tera-slider-panel v-model:is-open="isSidebarOpen" header="Configurations" content-width="360px">
 				<template #content>
@@ -165,10 +163,10 @@
 	</tera-drilldown>
 	<tera-drilldown
 		v-if="suggestedConfigurationContext.isOpen"
+		class="popover"
 		:title="suggestedConfigurationContext.modelConfiguration?.name ?? 'Model Configuration'"
 		:node="node"
 		@on-close-clicked="suggestedConfigurationContext.isOpen = false"
-		popover
 	>
 		<tera-drilldown-section class="p-2">
 			<!-- Redo this to show model configs-->

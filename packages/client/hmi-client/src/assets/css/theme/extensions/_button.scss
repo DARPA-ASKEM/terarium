@@ -76,8 +76,7 @@
 		background: rgba($secondaryButtonBg, .68);
 	}
 
-	&.p-button-text,
-	&.p-button-outlined {
+	&.p-button-text {
 		&:enabled:focus {
 			background: rgba($secondaryButtonBg, .12);
 		}

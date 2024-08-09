@@ -1,6 +1,14 @@
 <template>
 	<aside class="overlay-container">
-		<section :class="{ popover: props.popover }">
+		<Button
+			:class="{ 'no-connections': isEmpty(upstreamOperatorsNav?.[0].items) }"
+			icon="pi pi-chevron-left"
+			outlined
+			severity="secondary"
+			@click="toggle($event, inputMenu, upstreamOperatorsNav)"
+		/>
+		<Menu ref="inputMenu" class="ml-5" popup :model="upstreamOperatorsNav" :pt="menuPt" />
+		<section v-bind="$attrs" :class="animationClass">
 			<tera-drilldown-header
 				:active-index="selectedViewIndex"
 				:views="views"
@@ -30,8 +38,8 @@
 							@update:selection="(e) => emit('update:selection', e)"
 						/>
 						<section v-if="!isEmpty(menuItems)" class="mx-2">
-							<Button icon="pi pi-ellipsis-v" rounded text @click.stop="toggle" />
-							<Menu ref="menu" :model="menuItems" :popup="true" />
+							<Button icon="pi pi-ellipsis-v" rounded text @click.stop="toggle($event, ellipsisMenu)" />
+							<Menu ref="ellipsisMenu" :model="menuItems" popup />
 						</section>
 					</template>
 				</template>
@@ -60,17 +68,28 @@
 				<slot name="footer" />
 			</footer>
 		</section>
+		<Button
+			:class="{ 'no-connections': isEmpty(downstreamOperatorsNav?.[0].items) }"
+			icon="pi pi-chevron-right"
+			outlined
+			severity="secondary"
+			v-tooltip="`Output: s`"
+			@click="toggle($event, outputMenu, downstreamOperatorsNav)"
+		/>
+		<Menu ref="outputMenu" class="-ml-5" popup :model="downstreamOperatorsNav" :pt="menuPt" />
 	</aside>
 </template>
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { computed, ref, useSlots } from 'vue';
+import { ref, computed, onMounted, useSlots } from 'vue';
 import Button from 'primevue/button';
 import Chip from 'primevue/chip';
 import Menu from 'primevue/menu';
-import { TabViewChangeEvent } from 'primevue/tabview';
-import { WorkflowNode, WorkflowOperationTypes } from '@/types/workflow';
+import { MenuItem, MenuItemCommandEvent } from 'primevue/menuitem';
+import type { TabViewChangeEvent } from 'primevue/tabview';
+import { type WorkflowNode } from '@/types/workflow';
+import { isAssetOperator } from '@/services/workflow';
 import TeraDrilldownHeader from '@/components/drilldown/tera-drilldown-header.vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
@@ -82,12 +101,16 @@ const props = defineProps<{
 	menuItems?: any[];
 	title?: string;
 	tooltip?: string;
-	popover?: boolean;
+	// Applied in dynamic compoenent in tera-workflow.vue
+	upstreamOperatorsNav?: MenuItem[];
+	downstreamOperatorsNav?: MenuItem[];
+	spawnAnimation?: 'left' | 'right' | 'scale';
 }>();
 
 const emit = defineEmits(['on-close-clicked', 'update-state', 'update:selection', 'update-output-port']);
+
 const slots = useSlots();
-const menu = ref();
+
 /**
  * This will retrieve and filter all top level components in the default slot if they have the tabName prop.
  */
@@ -97,7 +120,6 @@ const tabs = computed(() => {
 			// if there is only 1 component we don't need to know the tab name and we can render it.
 			return slots.default();
 		}
-
 		return slots.default().filter((vnode) => vnode.props?.tabName);
 	}
 	return [];
@@ -113,24 +135,11 @@ const handleTabChange = (event: TabViewChangeEvent) => {
 const selectedTab = computed(() => views.value[selectedViewIndex.value]);
 defineExpose({ selectedTab });
 
-const selectedOutputId = computed(() => {
-	if (props.node.active) {
-		return props.node.active;
-	}
-	return null;
-});
+const selectedOutputId = computed(() => props.node.active ?? null);
+
 const outputOptions = computed(() => {
 	// We do not display output selection for Asset operators
-	if (
-		(
-			[
-				WorkflowOperationTypes.MODEL,
-				WorkflowOperationTypes.DATASET,
-				WorkflowOperationTypes.DOCUMENT,
-				WorkflowOperationTypes.CODE
-			] as string[]
-		).includes(props.node.operationType)
-	) {
+	if (isAssetOperator(props.node.operationType)) {
 		return null;
 	}
 
@@ -144,9 +153,34 @@ const outputOptions = computed(() => {
 	];
 });
 
-const toggle = (event) => {
-	menu.value.toggle(event);
+const ellipsisMenu = ref();
+
+const inputMenu = ref();
+const outputMenu = ref();
+const menuPt = {
+	root: {
+		style: 'margin-top: -6rem'
+	},
+	submenuHeader: {
+		style: 'color: var(--text-color-subdued); padding-top: 0.3rem;'
+	}
 };
+const toggle = (event: MouseEvent, menu: Menu, operatorsNav?: MenuItem[]) => {
+	const navItems = operatorsNav?.[0]?.items ?? [];
+	// If there is only one item in the menu, just navigate to that one
+	if (navItems.length === 1 && navItems[0]?.command) {
+		const dummyEvent: MenuItemCommandEvent = { originalEvent: event, item: navItems[0] };
+		navItems[0].command(dummyEvent);
+	} else {
+		menu.toggle(event);
+	}
+};
+
+// Animation class must be applied on mounted to avoid flickering
+const animationClass = ref('');
+onMounted(() => {
+	animationClass.value = props.spawnAnimation ?? 'scale';
+});
 </script>
 
 <style scoped>
@@ -157,24 +191,48 @@ const toggle = (event) => {
 	width: 100%;
 	height: 100%;
 	background-color: rgba(0, 0, 0, 0.32);
-}
-
-/* There is a performance issue with these large modals.
-When scrolling it takes time to render the content, particularly heavy content such as the LLM integrations. This will show
-us the main application behind the modal temporarily as content loads when scrolling which is a bit of an eye sore.
-An extra div here is used to alleviate the impact of these issues a little by allowing us to see the overlay container rather
-than the main application behind the modal when these render issues come, however this is still an issue regardless.
-*/
-.overlay-container > section {
-	height: calc(100% - 1rem);
-	margin: 1rem 1.5rem 0rem 1.5rem;
-	background: var(--surface-0);
-	border-radius: var(--modal-border-radius) var(--modal-border-radius) 0 0;
+	padding: var(--gap-4) var(--gap-1);
+	padding-bottom: 0;
 	display: flex;
-	flex-direction: column;
-	overflow: hidden;
-	&.popover {
-		margin: 3rem 2.5rem 0rem 2.5rem;
+	gap: var(--gap-1);
+	backdrop-filter: blur(2px);
+
+	/* There is a performance issue with these large modals.
+	When scrolling it takes time to render the content, particularly heavy content such as the LLM integrations. This will show
+	us the main application behind the modal temporarily as content loads when scrolling which is a bit of an eye sore.
+	An extra div here is used to alleviate the impact of these issues a little by allowing us to see the overlay container rather
+	than the main application behind the modal when these render issues come, however this is still an issue regardless.
+	*/
+	& > section {
+		flex: 1;
+		background: var(--surface-0);
+		border-radius: var(--modal-border-radius) var(--modal-border-radius) 0 0;
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+		&.popover {
+			margin: 3rem 2.5rem 0rem 2.5rem;
+		}
+		&.left {
+			animation: fadeLeft 0.15s ease-out;
+		}
+		&.right {
+			animation: fadeRight 0.15s ease-out;
+		}
+		&.scale {
+			animation: scaleForward 0.15s ease-out;
+		}
+	}
+
+	& > button {
+		height: 4rem;
+		width: 1.5rem;
+		border-radius: var(--border-radius-big);
+		align-self: center;
+
+		&.no-connections {
+			visibility: hidden;
+		}
 	}
 }
 
@@ -192,5 +250,38 @@ footer {
 
 :deep(.p-chip .p-chip-text) {
 	font-size: var(--font-body-small);
+}
+
+@keyframes scaleForward {
+	from {
+		opacity: 0.5;
+		scale: 0.5;
+	}
+	to {
+		opacity: 1;
+		scale: 1;
+	}
+}
+
+@keyframes fadeLeft {
+	from {
+		opacity: 0.5;
+		transform: translateX(10rem);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+@keyframes fadeRight {
+	from {
+		opacity: 0.5;
+		transform: translateX(-10rem);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
 }
 </style>
