@@ -1,14 +1,12 @@
 <template>
 	<tera-drilldown
+		v-bind="$attrs"
 		:node="node"
 		:menu-items="menuItems"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 		@update:selection="onSelection"
 	>
-		<template #header-actions>
-			<tera-operator-annotation :state="node.state" @update-state="(state: any) => emit('update-state', state)" />
-		</template>
 		<template #sidebar>
 			<tera-slider-panel v-model:is-open="isSidebarOpen" header="Configurations" content-width="360px">
 				<template #content>
@@ -119,7 +117,6 @@
 						:modelConfigurations="filteredModelConfigurations"
 						:mmt="mmt"
 						:mmt-params="mmtParams"
-						:feature-config="{ isPreview: true }"
 						@update-parameters="setParameterDistributions(knobs.transientModelConfig, $event)"
 						@update-source="setParameterSource(knobs.transientModelConfig, $event.id, $event.value)"
 					/>
