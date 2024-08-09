@@ -191,13 +191,13 @@ export const getUnitsFromModelParts = (model: Model) => {
 
 export const getTypesFromModelParts = (model: Model) => {
 	const typeMapping: { [key: string]: string } = {};
-	[...(model?.model.states ?? [])].forEach((v) => {
+	[...(model.model.states ?? [])].forEach((v) => {
 		typeMapping[v.id] = 'state';
 	});
-	[...(model?.semantics?.ode?.parameters ?? [])].forEach((v) => {
+	[...(model.semantics?.ode?.parameters ?? [])].forEach((v) => {
 		typeMapping[v.id] = 'parameter';
 	});
-	(model?.semantics?.ode?.observables || []).forEach((o) => {
+	(model.semantics?.ode?.observables || []).forEach((o) => {
 		typeMapping[o.id] = 'observable';
 	});
 	return typeMapping;
