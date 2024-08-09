@@ -165,27 +165,27 @@
 						<template v-for="param of node.state.selectedParameters" :key="param">
 							<vega-chart
 								:are-embed-actions-visible="true"
-								:visualization-spec="preparedDistributionCharts[getParamIndex(param)].histogram"
+								:visualization-spec="preparedDistributionCharts[param].histogram"
 							>
 								<template v-slot:footer>
 									<table class="distribution-table">
 										<thead>
 											<tr>
 												<th scope="col"></th>
-												<th scope="col">{{ preparedDistributionCharts[getParamIndex(param)].stat.header[0] }}</th>
-												<th scope="col">{{ preparedDistributionCharts[getParamIndex(param)].stat.header[1] }}</th>
+												<th scope="col">{{ preparedDistributionCharts[param].stat.header[0] }}</th>
+												<th scope="col">{{ preparedDistributionCharts[param].stat.header[1] }}</th>
 											</tr>
 										</thead>
 										<tbody>
 											<tr>
 												<th scope="row">Mean</th>
-												<td>{{ preparedDistributionCharts[getParamIndex(param)].stat.mean[0] }}</td>
-												<td>{{ preparedDistributionCharts[getParamIndex(param)].stat.mean[1] }}</td>
+												<td>{{ preparedDistributionCharts[param].stat.mean[0] }}</td>
+												<td>{{ preparedDistributionCharts[param].stat.mean[1] }}</td>
 											</tr>
 											<tr>
 												<th scope="row">Variance</th>
-												<td>{{ preparedDistributionCharts[getParamIndex(param)].stat.variance[0] }}</td>
-												<td>{{ preparedDistributionCharts[getParamIndex(param)].stat.variance[1] }}</td>
+												<td>{{ preparedDistributionCharts[param].stat.variance[0] }}</td>
+												<td>{{ preparedDistributionCharts[param].stat.variance[1] }}</td>
 											</tr>
 										</tbody>
 									</table>
@@ -506,7 +506,8 @@ const preparedDistributionCharts = computed(() => {
 	const state = props.node.state;
 	const labelBefore = 'Before calibration';
 	const labelAfter = 'After calibration';
-	return state.selectedParameters.map((param) => {
+	const charts = {};
+	state.selectedParameters.forEach((param) => {
 		const fieldName = pyciemssMap[param];
 		const beforeFieldName = `${fieldName}:pre`;
 		const histogram = createHistogramChart(result, {
@@ -529,13 +530,12 @@ const preparedDistributionCharts = computed(() => {
 				toDisplayNumber
 			)
 		};
-		return { histogram, stat };
+		charts[param] = { histogram, stat };
 	});
+	return charts;
 });
 
 const selectedParameters = ref<string[]>(props.node.state.selectedParameters);
-
-const getParamIndex = (param: string) => props.node.state.selectedParameters.findIndex((v) => v === param);
 
 function updateSelectedParameters(event) {
 	const state = _.cloneDeep(props.node.state);
