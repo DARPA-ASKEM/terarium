@@ -137,6 +137,7 @@ h6 {
 
 .description {
 	grid-area: description;
+	color: var(--text-color-subdued);
 }
 
 .unit {

@@ -1,5 +1,6 @@
 <template>
 	<tera-drilldown
+		v-bind="$attrs"
 		:node="node"
 		:menu-items="menuItems"
 		v-bind="$attrs"
@@ -63,7 +64,7 @@
 			</tera-slider-panel>
 		</template>
 
-		<tera-drilldown-section :tabName="ConfigTabs.Wizard" class="px-3">
+		<tera-drilldown-section :tabName="ConfigTabs.Wizard" class="pl-3">
 			<template #header-controls-left>
 				<tera-toggleable-edit
 					v-if="knobs.transientModelConfig.name"
@@ -95,30 +96,44 @@
 					<tera-model-diagram v-if="model" :model="model" />
 				</AccordionTab>
 			</Accordion>
-			<Message v-if="model && isModelMissingMetadata(model)" class="m-2">
-				Some metadata is missing from these values. This information can be added manually to the attached model.
-			</Message>
-
-			<tera-initial-table
-				v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.initials) && model"
-				:model="model"
-				:model-configuration="knobs.transientModelConfig"
-				:modelConfigurations="filteredModelConfigurations"
-				:mmt="mmt"
-				:mmt-params="mmtParams"
-				@update-expression="setInitialExpression(knobs.transientModelConfig, $event.id, $event.value)"
-				@update-source="setInitialSource(knobs.transientModelConfig, $event.id, $event.value)"
-			/>
-			<tera-parameter-table
-				v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.parameters) && model"
-				:model="model"
-				:model-configuration="knobs.transientModelConfig"
-				:modelConfigurations="filteredModelConfigurations"
-				:mmt="mmt"
-				:mmt-params="mmtParams"
-				@update-parameters="setParameterDistributions(knobs.transientModelConfig, $event)"
-				@update-source="setParameterSource(knobs.transientModelConfig, $event.id, $event.value)"
-			/>
+			<template v-if="model">
+				<Message v-if="isModelMissingMetadata(model)" class="m-2">
+					Some metadata is missing from these values. This information can be added manually to the attached model.
+				</Message>
+				<template v-if="!isEmpty(knobs.transientModelConfig)">
+					<tera-initial-table
+						v-if="!isEmpty(mmt.initials)"
+						:model="model"
+						:model-configuration="knobs.transientModelConfig"
+						:modelConfigurations="filteredModelConfigurations"
+						:mmt="mmt"
+						:mmt-params="mmtParams"
+						@update-expression="setInitialExpression(knobs.transientModelConfig, $event.id, $event.value)"
+						@update-source="setInitialSource(knobs.transientModelConfig, $event.id, $event.value)"
+					/>
+					<tera-parameter-table
+						v-if="!isEmpty(mmt.parameters)"
+						:model="model"
+						:model-configuration="knobs.transientModelConfig"
+						:modelConfigurations="filteredModelConfigurations"
+						:mmt="mmt"
+						:mmt-params="mmtParams"
+						@update-parameters="setParameterDistributions(knobs.transientModelConfig, $event)"
+						@update-source="setParameterSource(knobs.transientModelConfig, $event.id, $event.value)"
+					/>
+					<Accordion :active-index="0" v-if="!isEmpty(calibratedConfigObservables)">
+						<AccordionTab header="Observables">
+							<tera-observables
+								class="pl-4"
+								:model="model"
+								:mmt="mmt"
+								:observables="calibratedConfigObservables"
+								:feature-config="{ isPreview: true }"
+							/>
+						</AccordionTab>
+					</Accordion>
+				</template>
+			</template>
 		</tera-drilldown-section>
 		<tera-columnar-panel :tabName="ConfigTabs.Notebook">
 			<tera-drilldown-section id="notebook-section">
@@ -219,6 +234,7 @@ import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelParts from '@/components/model/tera-model-parts.vue';
+import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
@@ -238,7 +254,7 @@ import {
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
 import type { Model, ModelConfiguration, TaskResponse, ClientEvent } from '@/types/Types';
-import { ClientEventType, TaskStatus } from '@/types/Types';
+import { ClientEventType, Observable, TaskStatus } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
@@ -285,6 +301,15 @@ interface BasicKnobs {
 const knobs = ref<BasicKnobs>({
 	transientModelConfig: blankModelConfig
 });
+
+const calibratedConfigObservables = computed<Observable[]>(() =>
+	knobs.value.transientModelConfig.observableSemanticList.map(({ referenceId, states, expression }) => ({
+		id: referenceId,
+		name: referenceId,
+		states,
+		expression
+	}))
+);
 
 const sanityCheckErrors = ref<string[]>([]);
 const isSaveDisabled = computed(() => knobs.value.transientModelConfig.name === '');
@@ -671,6 +696,10 @@ onUnmounted(() => {
 
 :deep(.p-button:disabled.p-button-outlined) {
 	background-color: var(--surface-0) !important;
+}
+
+:deep(.p-accordion-content) {
+	padding-bottom: var(--gap-2);
 }
 
 #notebook-section:deep(main) {

@@ -562,17 +562,38 @@ export async function generateSummary(
 }
 
 // Check if the current-state matches that of the output-state.
-// Note operatorState subsumes the keys of the outputState
-export const isOperatorStateInSync = (operatorState: Record<string, any>, outputState: Record<string, any>) => {
+//
+// Note operatorState subsumes the keys of the outputState, thus if
+// all of outputState[x] matches operatorState[x] it is considered
+// to be in sync.
+export const isOperatorStateInSync = (
+	operatorState: Record<string, any>,
+	outputState: Record<string, any>
+): boolean => {
 	const hasKey = Object.prototype.hasOwnProperty;
 
-	const keys = Object.keys(outputState);
+	// Use cloneDeep to get rid of any proxies
+	const operatorStateRaw = _.cloneDeep(operatorState);
+	const outputStateRaw = _.cloneDeep(outputState);
+
+	const keys = Object.keys(outputStateRaw);
 	for (let i = 0; i < keys.length; i++) {
 		const key = keys[i];
-		if (!hasKey.call(operatorState, key)) return false;
-		if (!_.isEqual(operatorState[key], outputState[key])) return false;
+		if (!hasKey.call(operatorStateRaw, key)) return false;
+		if (!_.isEqual(operatorStateRaw[key], outputStateRaw[key])) return false;
 	}
 	return true;
+};
+export const isWorkflowNodeDirty = (node: WorkflowNode<any>): boolean => {
+	// There is no output
+	if (!node.active) return true;
+
+	// Main check
+	const outputState = node.outputs.filter((d) => d.id === node.active)[0].state;
+	if (outputState) {
+		return !isOperatorStateInSync(node.state, outputState);
+	}
+	return false;
 };
 
 /**
