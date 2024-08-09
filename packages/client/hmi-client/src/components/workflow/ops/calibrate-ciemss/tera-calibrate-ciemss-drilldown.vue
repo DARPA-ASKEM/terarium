@@ -193,22 +193,16 @@
 							</vega-chart>
 						</template>
 						<h5>Variables</h5>
-						<template v-for="(cfg, index) of node.state.chartConfigs" :key="index">
-							<tera-chart-control
-								:chart-config="{ selectedRun: 'fixme', selectedVariable: cfg }"
-								:multi-select="false"
-								:show-remove-button="true"
-								:variables="Object.keys(pyciemssMap).filter((c) => modelPartTypesMap[c] !== 'parameter')"
-								@configuration-change="chartProxy.configurationChange(index, $event)"
-								@remove="chartProxy.removeChart(index)"
-							/>
-							<vega-chart
-								v-if="cfg.length > 0"
-								:are-embed-actions-visible="true"
-								:visualization-spec="preparedCharts[index]"
-							/>
+						<tera-chart-control
+							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedVariables }"
+							:multi-select="true"
+							:show-remove-button="false"
+							:variables="Object.keys(pyciemssMap).filter((c) => modelPartTypesMap[c] !== 'parameter')"
+							@configuration-change="updateSelectedVariables"
+						/>
+						<template v-for="variable of node.state.selectedVariables" :key="variable">
+							<vega-chart :are-embed-actions-visible="true" :visualization-spec="preparedCharts[variable]" />
 						</template>
-						<Button size="small" text @click="chartProxy.addChart()" label="Add chart" icon="pi pi-plus" />
 					</section>
 					<section v-else-if="!modelConfig" class="emptyState">
 						<img src="@assets/svg/seed.svg" alt="" draggable="false" />
@@ -252,7 +246,7 @@ import {
 	DatasetColumn,
 	ModelConfiguration
 } from '@/types/Types';
-import { getTimespan, chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
+import { getTimespan, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 import { useToastService } from '@/services/toast';
 import { autoCalibrationMapping } from '@/services/concept';
 import {
@@ -405,6 +399,11 @@ const disableRunButton = computed(
 );
 
 const selectedOutputId = ref<string>();
+const outputPanel = ref(null);
+const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+
+const selectedParameters = ref<string[]>(props.node.state.selectedParameters);
+const selectedVariables = ref<string[]>(props.node.state.selectedVariables);
 
 let pyciemssMap: Record<string, string> = {};
 const preparedChartInputs = computed(() => {
@@ -452,25 +451,23 @@ const preparedCharts = computed(() => {
 	// Need to get the dataset's time field
 	const datasetTimeField = state.mapping.find((d) => d.modelVariable === 'timestamp')?.datasetVariable;
 
-	return state.chartConfigs.map((config) => {
+	const charts = {};
+	state.selectedVariables.forEach((variable) => {
 		const datasetVariables: string[] = [];
-		config.forEach((variableName) => {
-			const mapObj = state.mapping.find((d) => d.modelVariable === variableName);
-			if (mapObj) {
-				datasetVariables.push(mapObj.datasetVariable);
-			}
-		});
-
-		return createForecastChart(
+		const mapObj = state.mapping.find((d) => d.modelVariable === variable);
+		if (mapObj) {
+			datasetVariables.push(mapObj.datasetVariable);
+		}
+		charts[variable] = createForecastChart(
 			{
 				dataset: result,
-				variables: [...config.map((d) => `${pyciemssMap[d]}:pre`), ...config.map((d) => pyciemssMap[d])],
+				variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
 				timeField: 'timepoint_id',
 				groupField: 'sample_id'
 			},
 			{
 				dataset: resultSummary,
-				variables: [...config.map((d) => `${pyciemssMap[d]}_mean:pre`), ...config.map((d) => `${pyciemssMap[d]}_mean`)],
+				variables: [`${pyciemssMap[variable]}_mean:pre`, `${pyciemssMap[variable]}_mean`],
 				timeField: 'timepoint_id'
 			},
 			{
@@ -480,24 +477,18 @@ const preparedCharts = computed(() => {
 				groupField: 'sample_id'
 			},
 			{
-				title: '',
+				title: variable,
 				width: chartSize.value.width,
 				height: chartSize.value.height,
 				legend: true,
 				translationMap: reverseMap,
 				xAxisTitle: modelVarUnits.value._time || 'Time',
-				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || '',
+				yAxisTitle: modelVarUnits.value[variable] || '',
 				colorscheme: ['#AAB3C6', '#1B8073']
 			}
 		);
 	});
-});
-
-const outputPanel = ref(null);
-const chartSize = computed(() => drilldownChartSize(outputPanel.value));
-
-const chartProxy = chartActionsProxy(props.node, (state: CalibrationOperationStateCiemss) => {
-	emit('update-state', state);
+	return charts;
 });
 
 const preparedDistributionCharts = computed(() => {
@@ -534,14 +525,6 @@ const preparedDistributionCharts = computed(() => {
 	});
 	return charts;
 });
-
-const selectedParameters = ref<string[]>(props.node.state.selectedParameters);
-
-function updateSelectedParameters(event) {
-	const state = _.cloneDeep(props.node.state);
-	state.selectedParameters = event.selectedVariable;
-	emit('update-state', state);
-}
 
 const runCalibrate = async () => {
 	if (!modelConfigId.value || !datasetId.value || !currentDatasetFileName.value) return;
@@ -607,6 +590,14 @@ const messageHandler = (event: ClientEvent<any>) => {
 const onSelection = (id: string) => {
 	emit('select-output', id);
 };
+
+function updateSelectedParameters(event) {
+	emit('update-state', { ...props.node.state, selectedParameters: event.selectedVariable });
+}
+
+function updateSelectedVariables(event) {
+	emit('update-state', { ...props.node.state, selectedVariables: event.selectedVariable });
+}
 
 // Used from button to add new entry to the mapping object
 function addMapping() {
