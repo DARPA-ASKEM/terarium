@@ -7,6 +7,10 @@
     transition: $formElementTransition;
     border-radius: $borderRadius;
 
+		&:focus {
+			box-shadow: none;
+		}
+
     &:enabled:hover {
         background: $buttonHoverBg;
         color: $buttonTextHoverColor;

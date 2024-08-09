@@ -860,16 +860,14 @@ const handleDrilldown = () => {
 		const operator = wf.value.nodes.find((n) => n.id === operatorId);
 		if (operator) {
 			// Prepare drilldown navigation menus
-			const connectedInputs = operator.inputs.filter((input) => input.status === WorkflowPortStatus.CONNECTED);
-			const connectedOutputs = operator.outputs.filter((output) => output.status === WorkflowPortStatus.CONNECTED);
 			const { upstreamNodes, downstreamNodes } = workflowService.getNeighborNodes(wf.value, operatorId);
 			upstreamOperatorsNav.value = [
 				{
 					label: 'Upstream operators',
-					items: upstreamNodes.map((upstreamNode, index) => ({
+					items: upstreamNodes.map((upstreamNode) => ({
 						label: workflowService.isAssetOperator(upstreamNode.operationType)
-							? connectedInputs[index].label
-							: upstreamNode.displayName,
+							? upstreamNode.outputs[0].label // Asset name
+							: upstreamNode.displayName, // Operator name
 						icon: workflowService.iconToOperatorMap.get(upstreamNode.operationType) ?? 'pi pi-cog',
 						command: () => addOperatorToRoute(upstreamNode.id, 'right')
 					}))
@@ -878,10 +876,10 @@ const handleDrilldown = () => {
 			downstreamOperatorsNav.value = [
 				{
 					label: 'Downstream operators',
-					items: downstreamNodes.map((downstreamNode, index) => ({
+					items: downstreamNodes.map((downstreamNode) => ({
 						label: workflowService.isAssetOperator(downstreamNode.operationType)
-							? connectedOutputs[index].label
-							: downstreamNode.displayName,
+							? downstreamNode.outputs[0].label // Asset name
+							: downstreamNode.displayName, // Operator name
 						icon: workflowService.iconToOperatorMap.get(downstreamNode.operationType) ?? 'pi pi-cog',
 						command: () => addOperatorToRoute(downstreamNode.id, 'left')
 					}))
