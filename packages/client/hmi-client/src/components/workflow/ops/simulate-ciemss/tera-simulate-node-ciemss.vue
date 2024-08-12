@@ -137,7 +137,7 @@ Provide a summary in 100 words or less.
 	}
 	emit('append-output', {
 		type: SimulateCiemssOperation.outputs[0].type,
-		label: nodeOutputLabel(props.node, 'Output'),
+		label: nodeOutputLabel(props.node, 'Dataset'),
 		value: [datasetResult.id],
 		state: {
 			currentTimespan: state.currentTimespan,
