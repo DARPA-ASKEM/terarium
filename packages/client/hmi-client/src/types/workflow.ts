@@ -96,8 +96,11 @@ export interface BaseState {
 export interface WorkflowNode<S> {
 	// Information
 	id: string;
-	displayName: string;
 	workflowId: string;
+	isDeleted?: boolean;
+	version?: number;
+
+	displayName: string;
 	operationType: string;
 	documentationUrl?: string;
 	imageUrl?: string;
@@ -123,8 +126,10 @@ export interface WorkflowNode<S> {
 export interface WorkflowEdge {
 	id: string;
 	workflowId: string;
-	points: Position[];
+	isDeleted?: boolean;
+	version?: number;
 
+	points: Position[];
 	source?: WorkflowNode<any>['id'];
 	sourcePortId?: string;
 
