@@ -74,7 +74,7 @@ header .title {
 header .tabs-row {
 	justify-content: space-between;
 	align-items: end;
-	gap: var(--gap);
+	gap: var(--gap-1);
 }
 
 header .tabs-row:deep(.p-tabview .p-tabview-panels) {
