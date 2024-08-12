@@ -261,12 +261,10 @@ async function createDatasetFromSimulationResult(
 	isTemporary?: boolean
 ): Promise<Dataset | null> {
 	if (isTemporary === undefined) isTemporary = false;
-	console.log(isTemporary);
 	try {
 		const response: AxiosResponse<Dataset> = await API.post(
 			`/simulations/${simulationId}/create-result-as-dataset/${projectId}?dataset-name=${datasetName}&is-temporary=${isTemporary}`
 		);
-		console.log(response);
 		return response.data as Dataset;
 	} catch (error) {
 		logger.error(`/simulations/{id}/create-result-as-dataset/{projectId} not responding:  ${error}`, {
