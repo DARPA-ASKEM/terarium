@@ -238,7 +238,7 @@ const numSamples = ref<number>(props.node.state.numSamples);
 
 const newSolutionMappingKey = ref<string>('');
 const runResults = ref<RunResults>({});
-const cancelRunId = computed(() => props.node.state.inProgressSimulationId);
+const cancelRunId = computed(() => props.node.state.inProgressForecastId);
 // Preview selection
 const outputs = computed(() => {
 	if (!_.isEmpty(props.node.outputs)) {
@@ -302,7 +302,7 @@ const runEnsemble = async () => {
 	const response = await makeEnsembleCiemssSimulation(params, nodeMetadata(props.node));
 
 	const state = _.cloneDeep(props.node.state);
-	state.inProgressSimulationId = response.simulationId;
+	state.inProgressForecastId = response.simulationId;
 	emit('update-state', state);
 };
 
@@ -344,7 +344,7 @@ onMounted(async () => {
 });
 
 watch(
-	() => props.node.state.inProgressSimulationId,
+	() => props.node.state.inProgressForecastId,
 	(id) => {
 		if (id === '') showSpinner.value = false;
 		else showSpinner.value = true;

@@ -9,7 +9,8 @@ export interface SimulateEnsembleCiemssOperationState extends BaseState {
 	mapping: EnsembleModelConfigs[];
 	timeSpan: TimeSpan;
 	numSamples: number;
-	inProgressSimulationId: string;
+	inProgressForecastId: string;
+	forecastId: string; // Completed run's Id
 	errorMessage: { name: string; value: string; traceback: string };
 }
 
@@ -20,7 +21,7 @@ export const SimulateEnsembleCiemssOperation: Operation = {
 	documentationUrl: DOCUMENTATION_URL,
 	imageUrl: simulateEnsembleCiemss,
 	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }],
-	outputs: [{ type: 'simulationId' }],
+	outputs: [{ type: 'datasetId' }],
 	isRunnable: true,
 
 	// TODO: Figure out mapping
@@ -35,7 +36,8 @@ export const SimulateEnsembleCiemssOperation: Operation = {
 			mapping: [],
 			timeSpan: { start: 0, end: 40 },
 			numSamples: 40,
-			inProgressSimulationId: '',
+			inProgressForecastId: '',
+			forecastId: '',
 			errorMessage: { name: '', value: '', traceback: '' }
 		};
 		return init;
