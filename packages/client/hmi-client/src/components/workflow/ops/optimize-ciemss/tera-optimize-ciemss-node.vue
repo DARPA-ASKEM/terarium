@@ -243,7 +243,7 @@ Provide a consis summary in 100 words or less.
 				projectId,
 				state.postForecastRunId,
 				datasetName,
-				true
+				false
 			);
 			if (!datasetResult) {
 				logger.error('Error creating dataset from simulation result.');
