@@ -338,7 +338,7 @@ public class SimulationController {
 		@PathVariable("id") final UUID id,
 		@PathVariable("project-id") final UUID projectId,
 		@RequestParam("dataset-name") final String datasetName,
-		@RequestParam("is-temporary") final Boolean isTemporary
+		@RequestParam("add-to-project") final Boolean addToProject
 	) {
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
@@ -371,8 +371,7 @@ public class SimulationController {
 			datasetService.updateAsset(dataset, projectId, permission);
 
 			// If this is a temporary asset, do not add to project.
-			if (isTemporary == true) {
-				dataset.setTemporary(true);
+			if (addToProject == false) {
 				return ResponseEntity.status(HttpStatus.CREATED).body(dataset);
 			}
 
