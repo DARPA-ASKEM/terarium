@@ -1,7 +1,7 @@
 /** CSS Layers order
  * https://developer.mozilla.org/en-US/docs/Web/CSS/@layer
  */
-@layer vendor, reset, theme, terarium, layout;
+@layer vendor, reset, theme, terarium;
 
 /* Vendor */
 @import '@jupyterlab/application/style/index.css' layer(vendor);
@@ -23,7 +23,7 @@
 /* Terarium PrimeVue Theme */
 @import '@assets/css/theme/theme.scss' layer(terarium);
 
-@layer layout {
+@layer terarium {
 	:root {
 		--navbar-outer-height: 51px;
 		-webkit-font-smoothing: antialiased;
