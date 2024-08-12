@@ -158,7 +158,7 @@
 		</template>
 		<template #footer>
 			<tera-save-dataset-from-simulation
-				:simulation-run-id="selectedRunId"
+				:simulation-run-id="node.state.forecastId"
 				:showDialog="showSaveDataDialog"
 				@hide-dialog="showSaveDataDialog = false"
 			/>
