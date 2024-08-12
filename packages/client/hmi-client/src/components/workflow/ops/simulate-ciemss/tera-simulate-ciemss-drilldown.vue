@@ -416,13 +416,10 @@ const makeForecastRequest = async () => {
 };
 
 const lazyLoadSimulationData = async (outputRunId: string) => {
-	console.log('Lazy load:');
 	if (runResults.value[outputRunId] && rawContent.value[outputRunId]) return;
-	console.log('Results currently not set:');
 
 	const forecastId = props.node.state.forecastId;
 	if (!forecastId || forecastId === '') return;
-	console.log('Forecast run found:');
 
 	const result = await getRunResultCSV(forecastId, 'result.csv');
 	pyciemssMap = parsePyCiemssMap(result[0]);

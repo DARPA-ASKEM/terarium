@@ -143,7 +143,8 @@ Provide a summary in 100 words or less.
 			currentTimespan: state.currentTimespan,
 			numSamples: state.numSamples,
 			method: state.method,
-			summaryId: summaryResponse?.id
+			summaryId: summaryResponse?.id,
+			forecastId: runId
 		},
 		isSelected: false
 	});
