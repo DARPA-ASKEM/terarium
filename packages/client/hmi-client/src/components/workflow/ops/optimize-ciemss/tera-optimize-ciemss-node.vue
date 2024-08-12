@@ -252,7 +252,7 @@ Provide a consis summary in 100 words or less.
 
 			emit('append-output', {
 				type: OptimizeCiemssOperation.outputs[0].type,
-				label: nodeOutputLabel(props.node, `Simulation output`),
+				label: nodeOutputLabel(props.node, `Optimize output`),
 				value: [
 					{
 						policyInterventionId: state.optimizedInterventionPolicyId,
