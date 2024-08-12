@@ -203,7 +203,9 @@ const toggleNavigationMenu = (
 	operatorsNav?: MenuItem[],
 	button?: Button | null
 ) => {
-	const navItems = operatorsNav?.[0]?.items ?? [];
+	const navItems = operatorsNav?.[0]?.items;
+	if (!navItems || isEmpty(navItems)) return; // Prevents keyboard shortcut from toggling hidden button and empty menu
+
 	// If there is only one item in the menu, just navigate to that one
 	if (navItems.length === 1 && navItems[0]?.command) {
 		const dummyEvent: MenuItemCommandEvent = { originalEvent: event, item: navItems[0] };
@@ -213,6 +215,7 @@ const toggleNavigationMenu = (
 	else if (event instanceof KeyboardEvent && button) {
 		// @ts-ignore
 		button.$el.dispatchEvent(new MouseEvent('click'));
+		console.log(navItems);
 	}
 	// Regular @click event
 	else menu?.toggle(event);
