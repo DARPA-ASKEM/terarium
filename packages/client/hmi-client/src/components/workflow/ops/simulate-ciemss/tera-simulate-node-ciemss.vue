@@ -36,7 +36,7 @@ import type { WorkflowNode } from '@/types/workflow';
 import { createLLMSummary } from '@/services/summary-service';
 import { useProjects } from '@/composables/project';
 import { createForecastChart } from '@/services/charts';
-import { createTemporaryDatasetFromSimulationResult } from '@/services/dataset';
+import { createDatasetFromSimulationResult } from '@/services/dataset';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import type { Model } from '@/types/Types';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
@@ -130,7 +130,7 @@ Provide a summary in 100 words or less.
 
 	const datasetName = `Forecast run ${runId}`;
 	const projectId = useProjects().activeProject.value?.id ?? '';
-	const datasetResult = await createTemporaryDatasetFromSimulationResult(projectId, runId, datasetName);
+	const datasetResult = await createDatasetFromSimulationResult(projectId, runId, datasetName, true);
 	if (!datasetResult) {
 		logger.error('Error creating dataset from simulation result.');
 		return;

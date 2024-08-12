@@ -252,36 +252,24 @@ async function createNewDatasetFromFile(
 	return newDataset;
 }
 
+// If isTemporary = true this will not add the asset to the project.
+// If isTemporary is not provided or false this asset will be added to the project.
 async function createDatasetFromSimulationResult(
 	projectId: string,
 	simulationId: string,
-	datasetName: string | null
-): Promise<boolean> {
-	try {
-		const response: AxiosResponse<Response> = await API.post(
-			`/simulations/${simulationId}/add-result-as-dataset-to-project/${projectId}?dataset-name=${datasetName}`
-		);
-		return response && response.status === 201;
-	} catch (error) {
-		logger.error(`/simulations/{id}/add-result-as-dataset-to-project/{projectId} not responding:  ${error}`, {
-			toastTitle: 'TDS - Simulation'
-		});
-		return false;
-	}
-}
-
-async function createTemporaryDatasetFromSimulationResult(
-	projectId: string,
-	simulationId: string,
-	datasetName: string | null
+	datasetName: string | null,
+	isTemporary?: boolean
 ): Promise<Dataset | null> {
+	if (isTemporary === undefined) isTemporary = false;
+	console.log(isTemporary);
 	try {
-		const response: AxiosResponse<Response> = await API.post(
-			`/simulations/${simulationId}/create-result-as-temporary-dataset/${projectId}?dataset-name=${datasetName}`
+		const response: AxiosResponse<Dataset> = await API.post(
+			`/simulations/${simulationId}/create-result-as-dataset/${projectId}?dataset-name=${datasetName}&is-temporary=${isTemporary}`
 		);
+		console.log(response);
 		return response.data as Dataset;
 	} catch (error) {
-		logger.error(`/simulations/{id}/create-result-as-temporary-dataset/{projectId} not responding:  ${error}`, {
+		logger.error(`/simulations/{id}/create-result-as-dataset/{projectId} not responding:  ${error}`, {
 			toastTitle: 'TDS - Simulation'
 		});
 		return null;
@@ -290,7 +278,8 @@ async function createTemporaryDatasetFromSimulationResult(
 
 const saveDataset = async (projectId: string, simulationId: string | undefined, datasetName: string | null) => {
 	if (!simulationId) return false;
-	return createDatasetFromSimulationResult(projectId, simulationId, datasetName);
+	const response = await createDatasetFromSimulationResult(projectId, simulationId, datasetName);
+	return response !== null;
 };
 
 /**
@@ -394,7 +383,6 @@ export {
 	createNewDatasetFromFile,
 	createNewDatasetFromGithubFile,
 	createDatasetFromSimulationResult,
-	createTemporaryDatasetFromSimulationResult,
 	saveDataset,
 	createCsvAssetFromRunResults,
 	createDataset

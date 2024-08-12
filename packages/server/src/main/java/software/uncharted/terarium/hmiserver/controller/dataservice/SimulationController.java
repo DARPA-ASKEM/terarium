@@ -313,7 +313,7 @@ public class SimulationController {
 	 * @param projectId ID of the project to add the dataset to
 	 * @return Dataset the new dataset created
 	 */
-	@PostMapping("/{id}/add-result-as-dataset-to-project/{project-id}")
+	@PostMapping("/{id}/create-result-as-dataset/{project-id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new dataset from a simulation result, then add it to a project as a Dataset")
 	@ApiResponses(
@@ -334,10 +334,11 @@ public class SimulationController {
 			)
 		}
 	)
-	public ResponseEntity<ProjectAsset> createFromSimulationResult(
+	public ResponseEntity<Dataset> createFromSimulationResult(
 		@PathVariable("id") final UUID id,
 		@PathVariable("project-id") final UUID projectId,
-		@RequestParam("dataset-name") final String datasetName
+		@RequestParam("dataset-name") final String datasetName,
+		@RequestParam("is-temporary") final Boolean isTemporary
 	) {
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
@@ -368,92 +369,23 @@ public class SimulationController {
 			// Duplicate the simulation results to a new dataset
 			simulationService.copySimulationResultToDataset(sim.get(), dataset);
 			datasetService.updateAsset(dataset, projectId, permission);
+
+			// If this is a temporary asset, do not add to project.
+			if (isTemporary == true) {
+				dataset.setTemporary(true);
+				return ResponseEntity.status(HttpStatus.CREATED).body(dataset);
+			}
 
 			// Add the dataset to the project as an asset
 			final Optional<Project> project = projectService.getProject(projectId);
 			if (project.isPresent()) {
-				final Optional<ProjectAsset> asset = projectAssetService.createProjectAsset(
-					project.get(),
-					AssetType.DATASET,
-					dataset,
-					permission
-				);
+				projectAssetService.createProjectAsset(project.get(), AssetType.DATASET, dataset, permission);
 				// underlying asset does not exist
-				return asset
-					.map(projectAsset -> ResponseEntity.status(HttpStatus.CREATED).body(projectAsset))
-					.orElseGet(() -> ResponseEntity.notFound().build());
+				return ResponseEntity.status(HttpStatus.CREATED).body(dataset);
 			} else {
 				log.error("Failed to add the dataset from simulation {} result", id);
 				return ResponseEntity.internalServerError().build();
 			}
-		} catch (final IOException e) {
-			final String error = String.format("Failed to add simulation %s result as dataset to project %s", id, projectId);
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
-		}
-	}
-
-	/**
-	 * Creates a new temporary dataset from a simulation result. This is to be used in the workflow
-	 * Where we wish to have temporary assets as outputs.
-	 *
-	 * @param id        ID of the simulation to create a dataset from
-	 * @param projectId ID of the project to add the dataset to
-	 * @return Dataset the new dataset created
-	 */
-	@PostMapping("/{id}/create-result-as-temporary-dataset/{project-id}")
-	@Secured(Roles.USER)
-	@Operation(summary = "Create a new temporaray dataset from a simulation result")
-	@ApiResponses(
-		value = {
-			@ApiResponse(
-				responseCode = "201",
-				description = "Dataset created",
-				content = @Content(
-					mediaType = MediaType.APPLICATION_JSON_VALUE,
-					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProjectAsset.class)
-				)
-			),
-			@ApiResponse(responseCode = "404", description = "Simulation not found", content = @Content),
-			@ApiResponse(responseCode = "500", description = "There was an issue creating the dataset", content = @Content)
-		}
-	)
-	public ResponseEntity<Dataset> createTemporaryDatasetFromSimulationResult(
-		@PathVariable("id") final UUID id,
-		@PathVariable("project-id") final UUID projectId,
-		@RequestParam("dataset-name") final String datasetName
-	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
-		try {
-			final Optional<Simulation> sim = simulationService.getAsset(id, permission);
-			if (sim.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-
-			// Create the dataset asset:
-			final UUID simId = sim.get().getId();
-			final Dataset dataset = datasetService.createAsset(new Dataset(), projectId, permission);
-			dataset.setName(datasetName);
-			dataset.setTemporary(true);
-			dataset.setDescription(sim.get().getDescription());
-			dataset.setMetadata(mapper.convertValue(Map.of("simulationId", simId.toString()), JsonNode.class));
-			dataset.setFileNames(sim.get().getResultFiles());
-			dataset.setDataSourceDate(sim.get().getCompletedTime());
-			dataset.setColumns(new ArrayList<>());
-
-			// Attach the user to the dataset
-			if (sim.get().getUserId() != null) {
-				dataset.setUserId(sim.get().getUserId());
-			}
-
-			// Duplicate the simulation results to a new dataset
-			simulationService.copySimulationResultToDataset(sim.get(), dataset);
-			datasetService.updateAsset(dataset, projectId, permission);
-			return ResponseEntity.status(HttpStatus.CREATED).body(dataset);
 		} catch (final IOException e) {
 			final String error = String.format("Failed to add simulation %s result as dataset to project %s", id, projectId);
 			log.error(error, e);
