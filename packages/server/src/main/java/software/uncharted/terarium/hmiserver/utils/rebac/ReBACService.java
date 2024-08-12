@@ -120,13 +120,13 @@ public class ReBACService {
 	private final Cache<CacheKey, Boolean> permissionCache = Caffeine.newBuilder()
 		.expireAfterWrite(5, TimeUnit.MINUTES)
 		.recordStats()
-		.removalListener((Object key, Object value, RemovalCause cause) -> log.info("Key {} was removed {}", key, cause))
+		.removalListener((Object key, Object value, RemovalCause cause) -> log.trace("Key {} was removed {}", key, cause))
 		.<CacheKey, Boolean>build();
 
 	private final Cache<String, PermissionUser> userCache = Caffeine.newBuilder()
 		.expireAfterWrite(15, TimeUnit.MINUTES)
 		.recordStats()
-		.removalListener((Object key, Object value, RemovalCause cause) -> log.info("Key {} was removed {}", key, cause))
+		.removalListener((Object key, Object value, RemovalCause cause) -> log.trace("Key {} was removed {}", key, cause))
 		.<String, PermissionUser>build();
 
 	@PostConstruct
@@ -306,7 +306,7 @@ public class ReBACService {
 				roles
 			);
 		});
-		log.info("User Cache hit: {}, miss: {}", userCache.stats().hitCount(), userCache.stats().missCount());
+		log.trace("User Cache hit: {}, miss: {}", userCache.stats().hitCount(), userCache.stats().missCount());
 		return result;
 	}
 
@@ -420,7 +420,7 @@ public class ReBACService {
 	public boolean can(final SchemaObject who, final Schema.Permission permission, final SchemaObject what) {
 		@PolyNull
 		Boolean result = permissionCache.get(new CacheKey(who, permission, what), permissionMappingFn);
-		log.info("Cache hit: {}, miss: {}", permissionCache.stats().hitCount(), permissionCache.stats().missCount());
+		log.trace("Cache hit: {}, miss: {}", permissionCache.stats().hitCount(), permissionCache.stats().missCount());
 		return result;
 	}
 
@@ -441,7 +441,7 @@ public class ReBACService {
 	public boolean isMemberOf(final SchemaObject who, final SchemaObject what) throws Exception {
 		@PolyNull
 		Boolean result = permissionCache.get(new CacheKey(who, Schema.Permission.MEMBERSHIP, what), permissionMappingFn);
-		log.info("Cache hit: {}, miss: {}", permissionCache.stats().hitCount(), permissionCache.stats().missCount());
+		log.trace("Cache hit: {}, miss: {}", permissionCache.stats().hitCount(), permissionCache.stats().missCount());
 		return result;
 	}
 
