@@ -158,7 +158,7 @@
 		</template>
 		<template #footer>
 			<tera-save-dataset-from-simulation
-				:simulation-run-id="selectedRunId"
+				:simulation-run-id="node.state.forecastId"
 				:showDialog="showSaveDataDialog"
 				@hide-dialog="showSaveDataDialog = false"
 			/>
@@ -311,7 +311,7 @@ const presetType = computed(() => {
 const selectedOutputId = ref<string>();
 const selectedRunId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
 
-const cancelRunId = computed(() => props.node.state.inProgressSimulationId);
+const cancelRunId = computed(() => props.node.state.inProgressForecastId);
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 
@@ -380,7 +380,7 @@ const run = async () => {
 	const simulationId = await makeForecastRequest();
 
 	const state = _.cloneDeep(props.node.state);
-	state.inProgressSimulationId = simulationId;
+	state.inProgressForecastId = simulationId;
 	emit('update-state', state);
 };
 
@@ -415,16 +415,19 @@ const makeForecastRequest = async () => {
 	return response.id;
 };
 
-const lazyLoadSimulationData = async (runId: string) => {
-	if (runResults.value[runId] && rawContent.value[runId]) return;
+const lazyLoadSimulationData = async (outputRunId: string) => {
+	if (runResults.value[outputRunId] && rawContent.value[outputRunId]) return;
 
-	const result = await getRunResultCSV(selectedRunId.value, 'result.csv');
+	const forecastId = props.node.state.forecastId;
+	if (!forecastId || forecastId === '') return;
+
+	const result = await getRunResultCSV(forecastId, 'result.csv');
 	pyciemssMap = parsePyCiemssMap(result[0]);
-	runResults.value[selectedRunId.value] = result;
-	rawContent.value[selectedRunId.value] = convertToCsvAsset(result, Object.values(pyciemssMap));
+	runResults.value[outputRunId] = result;
+	rawContent.value[outputRunId] = convertToCsvAsset(result, Object.values(pyciemssMap));
 
-	const resultSummary = await getRunResultCSV(selectedRunId.value, 'result_summary.csv');
-	runResultsSummary.value[selectedRunId.value] = resultSummary;
+	const resultSummary = await getRunResultCSV(forecastId, 'result_summary.csv');
+	runResultsSummary.value[outputRunId] = resultSummary;
 };
 
 const onSelection = (id: string) => {
@@ -506,7 +509,7 @@ watch(
 );
 
 watch(
-	() => props.node.state.inProgressSimulationId,
+	() => props.node.state.inProgressForecastId,
 	(id) => {
 		if (id === '') showSpinner.value = false;
 		else showSpinner.value = true;
