@@ -252,18 +252,16 @@ async function createNewDatasetFromFile(
 	return newDataset;
 }
 
-// If isTemporary = true this will not add the asset to the project.
-// If isTemporary is not provided or false this asset will be added to the project.
 async function createDatasetFromSimulationResult(
 	projectId: string,
 	simulationId: string,
 	datasetName: string | null,
-	isTemporary?: boolean
+	addtoProject?: boolean
 ): Promise<Dataset | null> {
-	if (isTemporary === undefined) isTemporary = false;
+	if (addtoProject === undefined) addtoProject = true;
 	try {
 		const response: AxiosResponse<Dataset> = await API.post(
-			`/simulations/${simulationId}/create-result-as-dataset/${projectId}?dataset-name=${datasetName}&is-temporary=${isTemporary}`
+			`/simulations/${simulationId}/create-result-as-dataset/${projectId}?dataset-name=${datasetName}&add-to-project=${addtoProject}`
 		);
 		return response.data as Dataset;
 	} catch (error) {
