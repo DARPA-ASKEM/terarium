@@ -194,6 +194,7 @@ const menuPt = {
 const toggle = (event: MouseEvent | KeyboardEvent, menu: Menu, operatorsNav?: MenuItem[]) => {
 	const navItems = operatorsNav?.[0]?.items ?? [];
 	// If there is only one item in the menu, just navigate to that one
+	console.log(event);
 	if (navItems.length === 1 && navItems[0]?.command) {
 		const dummyEvent: MenuItemCommandEvent = { originalEvent: event, item: navItems[0] };
 		navItems[0].command(dummyEvent);
