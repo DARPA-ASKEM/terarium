@@ -128,7 +128,7 @@ export const OptimizeCiemssOperation: Operation = {
 			acceptMultiple: false
 		}
 	],
-	outputs: [{ type: 'simulationId' }],
+	outputs: [{ type: 'policyInterventionId|datasetId' }],
 	isRunnable: true,
 
 	initState: () => {
