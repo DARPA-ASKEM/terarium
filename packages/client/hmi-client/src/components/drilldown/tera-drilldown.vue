@@ -215,7 +215,6 @@ const toggleNavigationMenu = (
 	else if (event instanceof KeyboardEvent && button) {
 		// @ts-ignore
 		button.$el.dispatchEvent(new MouseEvent('click'));
-		console.log(navItems);
 	}
 	// Regular @click event
 	else menu?.toggle(event);
