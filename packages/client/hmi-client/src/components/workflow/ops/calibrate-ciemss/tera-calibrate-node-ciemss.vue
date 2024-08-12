@@ -60,7 +60,7 @@ import { createLLMSummary } from '@/services/summary-service';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import * as stats from '@/utils/stats';
-import { createTemporaryDatasetFromSimulationResult } from '@/services/dataset';
+import { createDatasetFromSimulationResult } from '@/services/dataset';
 import { useProjects } from '@/composables/project';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { CalibrationOperationCiemss } from './calibrate-operation';
@@ -408,7 +408,7 @@ watch(
 			const modelConfigResponse = await createModelConfiguration(calibratedModelConfig);
 			const datasetName = `Forecast run ${state.forecastId}`;
 			const projectId = useProjects().activeProject.value?.id ?? '';
-			const datasetResult = await createTemporaryDatasetFromSimulationResult(projectId, state.forecastId, datasetName);
+			const datasetResult = await createDatasetFromSimulationResult(projectId, state.forecastId, datasetName, true);
 			if (!datasetResult) {
 				logger.error('Error creating dataset from simulation result.');
 				return;
