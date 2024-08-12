@@ -1,21 +1,24 @@
 <template>
 	<nav>
 		<header>
-			<div class="p-inputgroup">
-				<InputText
-					v-model="searchAsset"
-					placeholder="Filter resources"
-					id="searchAsset"
-					@focus="inputFocused = true"
-					@blur="inputFocused = false"
-				/>
-				<span v-if="searchAsset || inputFocused" class="clear-icon" @click="clearSearch()">
-					<i class="pi pi-times"></i>
-				</span>
-				<span class="p-inputgroup-addon">
-					<i class="pi pi-filter"></i>
-				</span>
-			</div>
+			<InputText
+				v-model="searchAsset"
+				class="resource-panel-search"
+				placeholder="Filter"
+				id="searchAsset"
+				@focus="inputFocused = true"
+				@blur="inputFocused = false"
+			/>
+			<Button
+				class="upload-resources-button"
+				size="small"
+				label="Upload"
+				@click="isUploadResourcesModalVisible = true"
+			/>
+			<tera-upload-resources-modal
+				:visible="isUploadResourcesModalVisible"
+				@close="isUploadResourcesModalVisible = false"
+			/>
 		</header>
 		<Button
 			class="asset-button"
@@ -48,7 +51,8 @@
 					<div class="flex justify-space-between w-full">
 						<div class="flex align-items-center w-full">
 							<template v-if="type === AssetType.Document">Documents</template>
-							<template v-else>{{ capitalize(type) }}</template>
+							<template v-else-if="type === AssetType.Code">Code Files</template>
+							<template v-else>{{ capitalize(type) }}s</template>
 							<aside>({{ assetItems.length }})</aside>
 						</div>
 						<!-- New asset buttons for some types -->
@@ -156,6 +160,7 @@ import InputText from 'primevue/inputtext';
 import Skeleton from 'primevue/skeleton';
 import { computed, ref } from 'vue';
 import { getElapsedTimeText } from '@/utils/date';
+import TeraUploadResourcesModal from '@/components/project/tera-upload-resources-modal.vue';
 
 defineProps<{
 	pageType: ProjectPages | AssetType;
@@ -172,6 +177,7 @@ const draggedAsset = ref<AssetRoute | null>(null);
 const assetToDelete = ref<AssetItem | null>(null);
 const searchAsset = ref<string>('');
 const inputFocused = ref(false);
+const isUploadResourcesModalVisible = ref(false);
 
 const assetItemsMap = computed(() => generateProjectAssetsMap(searchAsset.value));
 const assetItemsKeysNotEmpty = computed(() => getNonNullSetOfVisibleItems(assetItemsMap.value));
@@ -181,10 +187,6 @@ const activeAccordionTabs = ref(
 			assetItemsKeysNotEmpty.value ?? [0, 1, 2, 3, 4, 5, 6]
 	)
 );
-
-function clearSearch() {
-	searchAsset.value = '';
-}
 
 function removeAsset() {
 	if (assetToDelete.value) {
@@ -326,6 +328,7 @@ header {
 	text-align: left;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+	font-weight: var(--font-weight);
 }
 
 .loading-spinner {
@@ -350,6 +353,7 @@ p.remove {
 
 .resource-panel-search {
 	width: 100%;
+	margin-left: var(--gap-2);
 }
 
 :deep(.p-button-icon-left.icon) {
@@ -361,5 +365,14 @@ p.remove {
 	flex-direction: column;
 	align-items: center;
 	row-gap: 0.5rem;
+}
+
+.upload-resources-button {
+	margin: 0 var(--gap-2);
+	justify-content: center;
+
+	& :deep(.p-button-label) {
+		flex-grow: 0;
+	}
 }
 </style>
