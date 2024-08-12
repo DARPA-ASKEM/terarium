@@ -12,7 +12,7 @@ export interface SimulateCiemssOperationState extends BaseState {
 	currentTimespan: TimeSpan;
 	numSamples: number;
 	method: string;
-	forecastId: string; // Completed run's Id (No longer in output
+	forecastId: string; // Completed run's Id
 
 	// In progress
 	inProgressForecastId: string;
