@@ -150,8 +150,10 @@ watch(
 
 		selectedRunId.value = props.node.outputs.find((o) => o.id === active)?.value?.[0];
 		if (!selectedRunId.value) return;
+		const forecastId = props.node.state.forecastId;
+		if (!forecastId) return;
 
-		const output = await getRunResultCiemss(selectedRunId.value, 'result.csv');
+		const output = await getRunResultCiemss(forecastId, 'result.csv');
 		runResults.value[selectedRunId.value] = output.runResults;
 	},
 	{ immediate: true }
