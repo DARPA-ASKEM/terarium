@@ -4,6 +4,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
@@ -87,7 +88,7 @@ public class UsersController {
 			}
 			return reBACService.addRoleToUser(roleName, userId);
 		} catch (final RelationshipAlreadyExistsException e) {
-			return ResponseEntity.status(304).build(); // Not Modified
+			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 		} catch (final Exception e) {
 			log.error("Error while adding role to user", e);
 			return ResponseEntity.internalServerError().build();
