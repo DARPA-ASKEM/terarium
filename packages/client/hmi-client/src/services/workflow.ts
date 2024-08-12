@@ -272,7 +272,6 @@ export const removeNode = (wf: Workflow, id: string) => {
 	// Tombstone
 	const node = wf.nodes.find((n) => n.id === id);
 	if (node) {
-		console.log('tombstoning node');
 		node.isDeleted = true;
 	}
 
