@@ -7,6 +7,7 @@ import { EventEmitter } from '@/utils/emitter';
 import type { Position } from '@/types/common';
 import type {
 	Operation,
+	OperationData,
 	Size,
 	Workflow,
 	WorkflowEdge,
@@ -43,7 +44,7 @@ export enum OperatorNodeSize {
 	xlarge
 }
 
-function getOperatorNodeSize(size: OperatorNodeSize): Size {
+export function getOperatorNodeSize(size: OperatorNodeSize): Size {
 	switch (size) {
 		case OperatorNodeSize.small:
 			return { width: 140, height: 220 };
@@ -516,17 +517,38 @@ export async function generateSummary(
 }
 
 // Check if the current-state matches that of the output-state.
-// Note operatorState subsumes the keys of the outputState
-export const isOperatorStateInSync = (operatorState: Record<string, any>, outputState: Record<string, any>) => {
+//
+// Note operatorState subsumes the keys of the outputState, thus if
+// all of outputState[x] matches operatorState[x] it is considered
+// to be in sync.
+export const isOperatorStateInSync = (
+	operatorState: Record<string, any>,
+	outputState: Record<string, any>
+): boolean => {
 	const hasKey = Object.prototype.hasOwnProperty;
 
-	const keys = Object.keys(outputState);
+	// Use cloneDeep to get rid of any proxies
+	const operatorStateRaw = _.cloneDeep(operatorState);
+	const outputStateRaw = _.cloneDeep(outputState);
+
+	const keys = Object.keys(outputStateRaw);
 	for (let i = 0; i < keys.length; i++) {
 		const key = keys[i];
-		if (!hasKey.call(operatorState, key)) return false;
-		if (!_.isEqual(operatorState[key], outputState[key])) return false;
+		if (!hasKey.call(operatorStateRaw, key)) return false;
+		if (!_.isEqual(operatorStateRaw[key], outputStateRaw[key])) return false;
 	}
 	return true;
+};
+export const isWorkflowNodeDirty = (node: WorkflowNode<any>): boolean => {
+	// There is no output
+	if (!node.active) return true;
+
+	// Main check
+	const outputState = node.outputs.filter((d) => d.id === node.active)[0].state;
+	if (outputState) {
+		return !isOperatorStateInSync(node.state, outputState);
+	}
+	return false;
 };
 
 /**
@@ -634,3 +656,60 @@ export const branchWorkflow = (wf: Workflow, nodeId: string) => {
 	wf.nodes.push(...copyNodes);
 	wf.edges.push(...copyEdges);
 };
+
+export interface OperatorMenuItem {
+	type: string;
+	displayName: string;
+}
+
+function assetToOperation(operationMap: Map<string, Operation>) {
+	const result = new Map<string, OperatorMenuItem[]>();
+	operationMap.forEach((operation, key) => {
+		const inputList: Array<OperationData> = operation.inputs ?? [];
+		inputList.forEach((input) => {
+			input.type.split('|').forEach((subType) => {
+				if (!result.has(subType)) {
+					result.set(subType, []);
+				} else {
+					result.get(subType)?.push({
+						type: key,
+						displayName: operation.displayName
+					});
+				}
+			});
+		});
+	});
+	return result;
+}
+
+function operationToAsset(operationMap: Map<string, Operation>) {
+	const result = new Map<string, string[]>();
+
+	operationMap.forEach((operation, key) => {
+		result.set(key, []);
+
+		const outputList: OperationData[] = operation.outputs ?? [];
+		outputList.forEach((output) => {
+			output.type.split('|').forEach((subType) => {
+				result.get(key)?.push(subType);
+			});
+		});
+	});
+	return result;
+}
+
+/* We want to get mapping of { operation => [operation] } */
+export function getNodeMenu(operationMap: Map<string, Operation>) {
+	const menuOptions = new Map<string, OperatorMenuItem[]>();
+
+	const inputMap = assetToOperation(operationMap);
+	const outputMap = operationToAsset(operationMap);
+
+	const uniqInputMap: Map<string, OperatorMenuItem[]> = new Map();
+	inputMap.forEach((menuItem, key) => uniqInputMap.set(key, _.uniqBy(menuItem, 'type')));
+
+	outputMap.forEach((value, key) => {
+		menuOptions.set(key, uniqInputMap.get(value[0]) ?? []);
+	});
+	return menuOptions;
+}
