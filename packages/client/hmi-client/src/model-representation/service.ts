@@ -3,7 +3,7 @@ import { runDagreLayout } from '@/services/graph';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
-import type { Initial, Model, ModelParameter, State, RegNetVertex, Transition } from '@/types/Types';
+import type { Initial, Model, ModelParameter, State, RegNetVertex, Transition, Rate } from '@/types/Types';
 import { getModelType } from '@/services/model';
 import { AMRSchemaNames } from '@/types/common';
 import { parseCurie } from '@/services/concept';
@@ -249,6 +249,75 @@ export function isModelMissingMetadata(model: Model): boolean {
 	});
 
 	const parametersCheck = parameters.some((p) => !p.name || !p.description || !p.units?.expression);
-
 	return initialsCheck || parametersCheck;
+}
+
+/**
+ * Sanity check Petrinet AMR, returns a list of discovered faults
+ * - Check various arrays match up in lengths
+ * - Check states make sense
+ * - Check transitions make sense
+ * */
+export function checkPetrinetAMR(amr: Model) {
+	function isASCII(str: string) {
+		// eslint-disable-next-line
+		return /^[\x00-\x7F]*$/.test(str);
+	}
+
+	const results: { type: string; content: string }[] = [];
+	const model = amr.model;
+	const ode = amr.semantics?.ode;
+
+	const numStates = model.states.length;
+	const numTransitions = model.transitions.length;
+	const numInitials = ode?.initials?.length || 0;
+	const numRates = ode?.rates?.length || 0;
+
+	if (numStates !== numInitials) {
+		results.push({ type: 'error', content: 'states need to match initials' });
+	}
+	if (numRates !== numTransitions) {
+		results.push({ type: 'error', content: 'transitions need to match rates' });
+	}
+
+	// Build cache
+	const initialMap: Map<string, Initial> = new Map();
+	const rateMap: Map<string, Rate> = new Map();
+
+	ode?.initials?.forEach((initial) => {
+		initialMap.set(initial.target, initial);
+	});
+	ode?.rates?.forEach((rate) => {
+		rateMap.set(rate.target, rate);
+	});
+
+	// Check state
+	model.states.forEach((state) => {
+		const initial = initialMap.get(state.id);
+		if (!initial) {
+			results.push({ type: 'error', content: `${state.id} has no initial` });
+		}
+		if (_.isEmpty(initial?.expression)) {
+			results.push({ type: 'warn', content: `${state.id} has no initial.expression` });
+		}
+		if (!isASCII(initial?.expression as string)) {
+			results.push({ type: 'warn', content: `${state.id} has non-ascii expression` });
+		}
+	});
+
+	// Check transitions
+	model.transitions.forEach((transition) => {
+		const rate = rateMap.get(transition.id);
+		if (!rate) {
+			results.push({ type: 'error', content: `${transition.id} has no rate` });
+		}
+		if (_.isEmpty(rate?.expression)) {
+			results.push({ type: 'warn', content: `${transition.id} has no rate.expression` });
+		}
+		if (!isASCII(rate?.expression as string)) {
+			results.push({ type: 'warn', content: `${transition.id} has non-ascii expression` });
+		}
+	});
+
+	return results;
 }
