@@ -270,6 +270,24 @@ async function createDatasetFromSimulationResult(
 	}
 }
 
+async function createTemporaryDatasetFromSimulationResult(
+	projectId: string,
+	simulationId: string,
+	datasetName: string | null
+): Promise<Dataset | null> {
+	try {
+		const response: AxiosResponse<Response> = await API.post(
+			`/simulations/${simulationId}/create-result-as-temporary-dataset/${projectId}?dataset-name=${datasetName}`
+		);
+		return response.data as Dataset;
+	} catch (error) {
+		logger.error(`/simulations/{id}/create-result-as-temporary-dataset/{projectId} not responding:  ${error}`, {
+			toastTitle: 'TDS - Simulation'
+		});
+		return null;
+	}
+}
+
 const saveDataset = async (projectId: string, simulationId: string | undefined, datasetName: string | null) => {
 	if (!simulationId) return false;
 	return createDatasetFromSimulationResult(projectId, simulationId, datasetName);
@@ -376,6 +394,7 @@ export {
 	createNewDatasetFromFile,
 	createNewDatasetFromGithubFile,
 	createDatasetFromSimulationResult,
+	createTemporaryDatasetFromSimulationResult,
 	saveDataset,
 	createCsvAssetFromRunResults,
 	createDataset
