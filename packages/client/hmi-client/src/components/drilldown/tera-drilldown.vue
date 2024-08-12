@@ -265,9 +265,6 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeyNavigation));
 		display: flex;
 		flex-direction: column;
 		overflow: hidden;
-		&.popover {
-			margin: 3rem 2.5rem 0rem 2.5rem;
-		}
 		&.left {
 			animation: fadeLeft 0.15s ease-out;
 		}
