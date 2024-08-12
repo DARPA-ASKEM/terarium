@@ -408,7 +408,7 @@ watch(
 			const modelConfigResponse = await createModelConfiguration(calibratedModelConfig);
 			const datasetName = `Forecast run ${state.forecastId}`;
 			const projectId = useProjects().activeProject.value?.id ?? '';
-			const datasetResult = await createDatasetFromSimulationResult(projectId, state.forecastId, datasetName, true);
+			const datasetResult = await createDatasetFromSimulationResult(projectId, state.forecastId, datasetName, false);
 			if (!datasetResult) {
 				logger.error('Error creating dataset from simulation result.');
 				return;
