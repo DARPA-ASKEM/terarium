@@ -113,89 +113,77 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 		}
 
 		////////////////////////////////////////////////////////////////////////////////
-		// Handle deletes Tombstoning
-		////////////////////////////////////////////////////////////////////////////////
-		// for (Iterator<WorkflowNode> iter = dbWorkflowNodes.listIterator(); iter.hasNext(); ) {
-		// 	WorkflowNode node = iter.next();
-		// 	if (nodeMap.get(node.getId()) == null) {
-		// 		iter.remove();
-		// 	}
-		// }
-		// for (Iterator<WorkflowEdge> iter = dbWorkflowEdges.listIterator(); iter.hasNext(); ) {
-		// 	WorkflowEdge edge = iter.next();
-		// 	if (edgeMap.get(edge.getId()) == null) {
-		// 		iter.remove();
-		// 	}
-		// }
-
-		////////////////////////////////////////////////////////////////////////////////
 		// Handle updates and deletes (tombdstoning)
 		////////////////////////////////////////////////////////////////////////////////
-		for (int index = 0; index < dbWorkflowNodes.size(); index++) {
-			WorkflowNode dbNode = dbWorkflowNodes.get(index);
-			WorkflowNode node = nodeMap.get(dbNode.getId());
+		if (dbWorkflowNodes != null && dbWorkflowNodes.size() > 0) {
+			for (int index = 0; index < dbWorkflowNodes.size(); index++) {
+				WorkflowNode dbNode = dbWorkflowNodes.get(index);
+				WorkflowNode node = nodeMap.get(dbNode.getId());
 
-			if (node == null) continue;
-			if (node.getIsDeleted() != null && node.getIsDeleted() == true) {
-				dbNode.setIsDeleted(true);
+				if (node == null) continue;
+				if (node.getIsDeleted() != null && node.getIsDeleted() == true) {
+					dbNode.setIsDeleted(true);
+					nodeMap.remove(node.getId());
+					continue;
+				}
+
+				JsonNode nodeContent = this.objectMapper.valueToTree(node);
+				JsonNode dbNodeContent = this.objectMapper.valueToTree(dbNode);
+
+				if (nodeContent.equals(dbNodeContent) == true) {
+					nodeMap.remove(node.getId());
+					continue;
+				}
+
+				// FIXME: backwards compatibility for older workflows, remove in a few month. Aug 2024
+				if (dbNode.getVersion() == null) {
+					dbNode.setVersion(1L);
+					continue;
+				}
+
+				if (dbNode.getVersion() == node.getVersion()) {
+					node.setVersion(dbNode.getVersion() + 1L);
+					dbWorkflowNodes.set(index, node);
+				}
+
+				// remove once updated
 				nodeMap.remove(node.getId());
-				continue;
 			}
-
-			JsonNode nodeContent = this.objectMapper.valueToTree(node);
-			JsonNode dbNodeContent = this.objectMapper.valueToTree(dbNode);
-
-			if (nodeContent.equals(dbNodeContent) == true) {
-				nodeMap.remove(node.getId());
-				continue;
-			}
-
-			// FIXME: backwards compatibility for older workflows, remove in a few month. Aug 2024
-			if (dbNode.getVersion() == null) {
-				dbNode.setVersion(1L);
-				continue;
-			}
-
-			if (dbNode.getVersion() == node.getVersion()) {
-				node.setVersion(dbNode.getVersion() + 1L);
-				dbWorkflowNodes.set(index, node);
-			}
-
-			// remove once updated
-			nodeMap.remove(node.getId());
 		}
 
-		for (int index = 0; index < dbWorkflowEdges.size(); index++) {
-			WorkflowEdge dbEdge = dbWorkflowEdges.get(index);
-			WorkflowEdge edge = edgeMap.get(dbEdge.getId());
+		if (dbWorkflowEdges != null && dbWorkflowEdges.size() > 0) {
+			for (int index = 0; index < dbWorkflowEdges.size(); index++) {
+				WorkflowEdge dbEdge = dbWorkflowEdges.get(index);
+				WorkflowEdge edge = edgeMap.get(dbEdge.getId());
 
-			if (edge == null) continue;
-			if (edge.getIsDeleted() != null && edge.getIsDeleted() == true) {
-				dbEdge.setIsDeleted(true);
+				if (edge == null) continue;
+				if (edge.getIsDeleted() != null && edge.getIsDeleted() == true) {
+					dbEdge.setIsDeleted(true);
+					edgeMap.remove(edge.getId());
+					continue;
+				}
+
+				JsonNode edgeContent = this.objectMapper.valueToTree(edge);
+				JsonNode dbEdgeContent = this.objectMapper.valueToTree(dbEdge);
+
+				if (edgeContent.equals(dbEdgeContent) == true) {
+					edgeMap.remove(edge.getId());
+					continue;
+				}
+
+				// FIXME: backwards compatibility for older workflows, remove in a few month. Aug 2024
+				if (dbEdge.getVersion() == null) {
+					dbEdge.setVersion(1L);
+				}
+
+				if (dbEdge.getVersion() == edge.getVersion()) {
+					edge.setVersion(dbEdge.getVersion() + 1L);
+					dbWorkflowEdges.set(index, edge);
+				}
+
+				// remove once updated
 				edgeMap.remove(edge.getId());
-				continue;
 			}
-
-			JsonNode edgeContent = this.objectMapper.valueToTree(edge);
-			JsonNode dbEdgeContent = this.objectMapper.valueToTree(dbEdge);
-
-			if (edgeContent.equals(dbEdgeContent) == true) {
-				edgeMap.remove(edge.getId());
-				continue;
-			}
-
-			// FIXME: backwards compatibility for older workflows, remove in a few month. Aug 2024
-			if (dbEdge.getVersion() == null) {
-				dbEdge.setVersion(1L);
-			}
-
-			if (dbEdge.getVersion() == edge.getVersion()) {
-				edge.setVersion(dbEdge.getVersion() + 1L);
-				dbWorkflowEdges.set(index, edge);
-			}
-
-			// remove once updated
-			edgeMap.remove(edge.getId());
 		}
 
 		////////////////////////////////////////////////////////////////////////////////
