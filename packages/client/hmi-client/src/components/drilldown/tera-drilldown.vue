@@ -2,13 +2,13 @@
 	<aside class="overlay-container">
 		<tera-tooltip :class="{ 'no-connections': isEmpty(upstreamOperatorsNav?.[0].items) }">
 			<Button
-				ref="leftChevron"
+				ref="leftChevronButton"
 				icon="pi pi-chevron-left"
 				outlined
 				severity="secondary"
-				@click="toggle($event, inputMenu, upstreamOperatorsNav)"
+				@click="toggleNavigationMenu($event, upstreamMenu, upstreamOperatorsNav)"
 			/>
-			<Menu ref="inputMenu" class="ml-5" popup :model="upstreamOperatorsNav" :pt="menuPt" />
+			<Menu ref="upstreamMenu" class="ml-5" popup :model="upstreamOperatorsNav" :pt="menuPt" />
 			<template #tooltip-content>
 				<span class="operator-nav-info">
 					<span v-if="upstreamOperatorsNav?.[0]?.items?.length === 1">
@@ -22,7 +22,7 @@
 				</span>
 			</template>
 		</tera-tooltip>
-		<section v-bind="$attrs" :class="animationClass">
+		<section v-bind="$attrs" :class="spawnAnimationRef">
 			<tera-drilldown-header
 				:active-index="selectedViewIndex"
 				:views="views"
@@ -52,7 +52,7 @@
 							@update:selection="(e) => emit('update:selection', e)"
 						/>
 						<section v-if="!isEmpty(menuItems)" class="mx-2">
-							<Button icon="pi pi-ellipsis-v" rounded text @click.stop="toggle($event, ellipsisMenu)" />
+							<Button icon="pi pi-ellipsis-v" rounded text @click.stop="toggleEllipsisMenu" />
 							<Menu ref="ellipsisMenu" :model="menuItems" popup />
 						</section>
 					</template>
@@ -84,13 +84,13 @@
 		</section>
 		<tera-tooltip :class="{ 'no-connections': isEmpty(downstreamOperatorsNav?.[0].items) }" position="left">
 			<Button
-				ref="rightChevron"
+				ref="rightChevronButton"
 				icon="pi pi-chevron-right"
 				outlined
 				severity="secondary"
-				@click="toggle($event, outputMenu, downstreamOperatorsNav)"
+				@click="toggleNavigationMenu($event, downstreamMenu, downstreamOperatorsNav)"
 			/>
-			<Menu ref="outputMenu" class="-ml-5" popup :model="downstreamOperatorsNav" :pt="menuPt" />
+			<Menu ref="downstreamMenu" class="-ml-5" popup :model="downstreamOperatorsNav" :pt="menuPt" />
 			<template #tooltip-content>
 				<span class="operator-nav-info">
 					<span v-if="downstreamOperatorsNav?.[0]?.items?.length === 1">
@@ -182,11 +182,13 @@ const outputOptions = computed(() => {
 });
 
 const ellipsisMenu = ref();
+const toggleEllipsisMenu = (event: MouseEvent) => ellipsisMenu.value.toggle(event);
 
-const leftChevron = ref<Button | null>(null);
-const rightChevron = ref<Button | null>(null);
-const inputMenu = ref<Menu | null>(null);
-const outputMenu = ref<Menu | null>(null);
+// Drilldown navigation and animations
+const leftChevronButton = ref<Button | null>(null);
+const rightChevronButton = ref<Button | null>(null);
+const upstreamMenu = ref<Menu | null>(null);
+const downstreamMenu = ref<Menu | null>(null);
 const menuPt = {
 	root: {
 		style: 'margin-top: -6rem'
@@ -195,7 +197,7 @@ const menuPt = {
 		style: 'color: var(--text-color-subdued); padding-top: 0.3rem;'
 	}
 };
-const toggle = (
+const toggleNavigationMenu = (
 	event: MouseEvent | KeyboardEvent,
 	menu: Menu | null,
 	operatorsNav?: MenuItem[],
@@ -206,28 +208,28 @@ const toggle = (
 	if (navItems.length === 1 && navItems[0]?.command) {
 		const dummyEvent: MenuItemCommandEvent = { originalEvent: event, item: navItems[0] };
 		navItems[0].command(dummyEvent);
-	} else if (event instanceof KeyboardEvent && button) {
-		// @ts-ignore; Mimics clicking the navigation button to open the menu where expected
+	}
+	// Keyboard event will mimic clicking the navigation button to open the menu where expected
+	else if (event instanceof KeyboardEvent && button) {
+		// @ts-ignore
 		button.$el.dispatchEvent(new MouseEvent('click'));
 	}
 	// Regular @click event
-	else {
-		menu?.toggle(event);
-	}
+	else menu?.toggle(event);
 };
-
-const animationClass = ref('');
 
 function handleKeyNavigation(event: KeyboardEvent) {
 	if (event.shiftKey && event.key === 'ArrowLeft') {
-		toggle(event, inputMenu.value, props.upstreamOperatorsNav, leftChevron.value);
+		toggleNavigationMenu(event, upstreamMenu.value, props.upstreamOperatorsNav, leftChevronButton.value);
 	} else if (event.shiftKey && event.key === 'ArrowRight') {
-		toggle(event, outputMenu.value, props.downstreamOperatorsNav, rightChevron.value);
+		toggleNavigationMenu(event, downstreamMenu.value, props.downstreamOperatorsNav, rightChevronButton.value);
 	}
 }
 
+// Animation class must be applied on mounted to avoid flickering
+const spawnAnimationRef = ref('');
 onMounted(() => {
-	animationClass.value = props.spawnAnimation ?? 'scale'; // Animation class must be applied on mounted to avoid flickering
+	spawnAnimationRef.value = props.spawnAnimation ?? 'scale';
 	window.addEventListener('keydown', handleKeyNavigation);
 });
 
