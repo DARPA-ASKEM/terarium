@@ -244,7 +244,6 @@ export const removeEdge = (wf: Workflow, id: string) => {
 	// Tombstone
 	const edge = wf.edges.find((e) => e.id === id);
 	if (edge) {
-		console.log('tombstoning edge');
 		edge.isDeleted = true;
 	}
 
