@@ -68,7 +68,7 @@
 				<tera-operator
 					ref="teraOperatorRefs"
 					:node="node"
-					:nodeMenu="nodeMenu"
+					:nodeMenu="outputPortMenu"
 					@resize="resizeHandler"
 					@port-selected="(port: WorkflowPort, direction: WorkflowDirection) => createNewEdge(node, port, direction)"
 					@port-mouseover="onPortMouseover"
@@ -151,6 +151,9 @@
 			v-if="dialogIsOpened && currentActiveNode"
 			:is="registry.getDrilldown(currentActiveNode.operationType)"
 			:node="currentActiveNode"
+			:upstream-operators-nav="upstreamOperatorsNav"
+			:downstream-operators-nav="downstreamOperatorsNav"
+			:spawn-animation="drilldownSpawnAnimation"
 			@append-output="(event: any) => appendOutput(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			@update-status="(event: any) => updateWorkflowNodeStatus(currentActiveNode, event)"
@@ -239,7 +242,10 @@ const props = defineProps<{
 	assetId: string;
 }>();
 
-const nodeMenu = ref(getNodeMenu(registry.operationMap));
+const outputPortMenu = ref(getNodeMenu(registry.operationMap));
+const upstreamOperatorsNav = ref<MenuItem[]>([]);
+const downstreamOperatorsNav = ref<MenuItem[]>([]);
+const drilldownSpawnAnimation = ref<'left' | 'right' | 'scale'>('scale');
 
 const route = useRoute();
 const router = useRouter();
@@ -370,7 +376,11 @@ function updateOutputPort(node: WorkflowNode<any> | null, workflowOutput: Workfl
 }
 
 // Route is mutated then watcher is triggered to open or close the drilldown
-function addOperatorToRoute(nodeId: string | null) {
+function addOperatorToRoute(
+	nodeId: string | null,
+	animation: 'left' | 'right' | 'scale' = 'scale' // drilldownSpawnAnimation is set here, left/right animations are for drilldown navigation
+) {
+	drilldownSpawnAnimation.value = animation;
 	if (nodeId !== null) {
 		router.push({ query: { operator: nodeId } });
 	} else {
@@ -852,7 +862,35 @@ const handleDrilldown = () => {
 	const operatorId = route.query?.operator?.toString();
 	if (operatorId) {
 		const operator = wf.value.getNodes().find((n) => n.id === operatorId);
-		if (operator) openDrilldown(operator);
+		if (!operator) return;
+		// Prepare drilldown navigation menus
+		const { upstreamNodes, downstreamNodes } = wf.value.getNeighborNodes(operatorId);
+		upstreamOperatorsNav.value = [
+			{
+				label: 'Upstream operators',
+				items: upstreamNodes.map((upstreamNode) => ({
+					label: workflowService.isAssetOperator(upstreamNode.operationType)
+						? upstreamNode.outputs[0].label // Asset name
+						: upstreamNode.displayName, // Operator name
+					icon: workflowService.iconToOperatorMap.get(upstreamNode.operationType) ?? 'pi pi-cog',
+					command: () => addOperatorToRoute(upstreamNode.id, 'right')
+				}))
+			}
+		];
+		downstreamOperatorsNav.value = [
+			{
+				label: 'Downstream operators',
+				items: downstreamNodes.map((downstreamNode) => ({
+					label: workflowService.isAssetOperator(downstreamNode.operationType)
+						? downstreamNode.outputs[0].label // Asset name
+						: downstreamNode.displayName, // Operator name
+					icon: workflowService.iconToOperatorMap.get(downstreamNode.operationType) ?? 'pi pi-cog',
+					command: () => addOperatorToRoute(downstreamNode.id, 'left')
+				}))
+			}
+		];
+		// Open drilldown
+		openDrilldown(operator);
 	} else {
 		closeDrilldown();
 	}
