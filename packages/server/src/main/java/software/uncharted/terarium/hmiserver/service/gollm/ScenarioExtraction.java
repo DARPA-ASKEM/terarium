@@ -40,6 +40,8 @@ public class ScenarioExtraction {
 			if (conditionParameter.has("value")) {
 				final double value = conditionParameter.get("value").doubleValue();
 				parameter.setValue(value);
+				// set distribution to null if it is a value
+				parameter.setDistribution(null);
 			}
 			if (conditionParameter.has("distribution")) {
 				try {
