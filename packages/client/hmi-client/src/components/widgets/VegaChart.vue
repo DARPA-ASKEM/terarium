@@ -4,7 +4,7 @@
 			{{ renderErrorMessage }}
 		</p>
 		<div ref="vegaContainer"></div>
-		<footer>
+		<footer v-if="$slots.footer">
 			<slot name="footer" />
 		</footer>
 	</div>
