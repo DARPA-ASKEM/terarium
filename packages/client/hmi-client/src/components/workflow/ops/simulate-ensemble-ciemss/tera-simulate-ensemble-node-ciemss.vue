@@ -94,10 +94,9 @@ const processResult = async (simulationId: string) => {
 	}
 
 	const datasetName = `Forecast run ${simulationId}`;
-	const projectId = useProjects().activeProject.value?.id ?? '';
+	const projectId = useProjects().activeProjectId.value;
 	const datasetResult = await createDatasetFromSimulationResult(projectId, simulationId, datasetName, false);
 	if (!datasetResult) {
-		logger.error('Error creating dataset from simulation result.');
 		return;
 	}
 
