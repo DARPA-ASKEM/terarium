@@ -290,14 +290,23 @@ export const updateNodeStatus = (wf: Workflow, nodeId: string, status: OperatorS
 	node.status = status;
 };
 
+export const neighborNodeCache = new Map<string, WorkflowNode<any>>();
 export const getNeighborNodes = (wf: Workflow, id: string) => {
+	const findNeighborNode = (neighborId?: string) => {
+		if (!neighborId) return null;
+		if (!neighborNodeCache.has(neighborId)) {
+			const node = wf.nodes.find((n) => n.id === neighborId);
+			if (!node) return null;
+			neighborNodeCache.set(neighborId, node);
+		}
+		return neighborNodeCache.get(neighborId) ?? null;
+	};
+	console.log(neighborNodeCache);
 	const inputEdges = wf.edges.filter((edge) => edge.target === id);
 	const outputEdges = wf.edges.filter((edge) => edge.source === id);
-	const upstreamNodes = inputEdges
-		.map((edge) => wf.nodes.find((n) => n.id === edge.source))
-		.filter(Boolean) as WorkflowNode<any>[];
+	const upstreamNodes = inputEdges.map((edge) => findNeighborNode(edge.source)).filter(Boolean) as WorkflowNode<any>[];
 	const downstreamNodes = outputEdges
-		.map((edge) => wf.nodes.find((n) => n.id === edge.target))
+		.map((edge) => findNeighborNode(edge.target))
 		.filter(Boolean) as WorkflowNode<any>[];
 	return { upstreamNodes, downstreamNodes };
 };

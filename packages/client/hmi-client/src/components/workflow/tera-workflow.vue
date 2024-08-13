@@ -376,7 +376,10 @@ function updateOutputPort(node: WorkflowNode<any> | null, workflowOutput: Workfl
 }
 
 // Route is mutated then watcher is triggered to open or close the drilldown
-function addOperatorToRoute(nodeId: string | null, animation: 'left' | 'right' | 'scale' = 'scale') {
+function addOperatorToRoute(
+	nodeId: string | null,
+	animation: 'left' | 'right' | 'scale' = 'scale' // drilldownSpawnAnimation is set here, left/right animations are for drilldown navigation
+) {
 	drilldownSpawnAnimation.value = animation;
 	if (nodeId !== null) {
 		router.push({ query: { operator: nodeId } });
@@ -896,6 +899,7 @@ const handleDrilldown = () => {
 watch(
 	() => [props.assetId],
 	async () => {
+		workflowService.neighborNodeCache.clear(); // Clear cache that assists drilldown navigation
 		isRenamingWorkflow.value = false; // Closes rename input if opened in previous workflow
 		if (wf.value && workflowDirty) {
 			workflowService.updateWorkflow(wf.value);
