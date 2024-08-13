@@ -7,6 +7,8 @@ const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss
 export interface SimulateCiemssOperationState extends BaseState {
 	// state shared across all runs
 	chartConfigs: string[][];
+	selectedInterventionVariables: string[]; // Output display setting
+	selectedSimulationVariables: string[]; // Output display setting
 
 	// state specific to individual simulate runs
 	currentTimespan: TimeSpan;
@@ -41,6 +43,8 @@ export const SimulateCiemssOperation: Operation = {
 	initState: () => {
 		const init: SimulateCiemssOperationState = {
 			chartConfigs: [],
+			selectedInterventionVariables: [],
+			selectedSimulationVariables: [],
 			currentTimespan: { start: 0, end: 100 },
 			numSamples: 100,
 			method: 'dopri5',

@@ -76,6 +76,17 @@
 					<div v-if="inferredParameters">Using inferred parameters from calibration: {{ inferredParameters[0] }}</div>
 					-->
 				</div>
+				<tera-pyciemss-output-settings
+					:successDisplayChartsCheckbox="true"
+					:summaryCheckbox="true"
+					:interventionsDisplayChartsCheckbox="true"
+					:simulationDisplayChartsCheckbox="true"
+					:selectedSimulationVariables="selectedSimulationVariables"
+					:selectedInterventionVariables="selectedInterventionVariables"
+					:simulationChartOptions="simulationChartOptions"
+					:interventionsOptions="interventionAppliedToOptions"
+					@update-self="updateOutputSettingForm"
+				/>
 			</tera-drilldown-section>
 		</section>
 		<tera-drilldown-section :tabName="DrilldownTabs.Notebook" class="notebook-section">
@@ -195,10 +206,14 @@ import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-datase
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
+import teraPyciemssOutputSettings, {
+	OutputSettingKnobs
+} from '@/components/pyciemss/tera-pyciemss-output-settings.vue';
 import { useProjects } from '@/composables/project';
 import { isSaveDatasetDisabled } from '@/components/dataset/utils';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import { KernelSessionManager } from '@/services/jupyter';
+import { getInterventionPolicyById } from '@/services/intervention-policy';
 import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
@@ -218,11 +233,16 @@ const modelVarUnits = ref<{ [key: string]: string }>({});
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
 
-const policyInterventionId = computed(() => props.node.inputs[1].value);
+const policyInterventionId = computed(() => props.node.inputs[1].value?.[0]);
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
 const llmThoughts = ref<any[]>([]);
 const llmQuery = ref('');
+
+const selectedSimulationVariables = ref<string[]>(props.node.state.selectedSimulationVariables);
+const selectedInterventionVariables = ref<string[]>(props.node.state.selectedInterventionVariables);
+const simulationChartOptions = ref<string[]>([]);
+const interventionAppliedToOptions = ref<string[]>([]);
 
 // extras
 const numSamples = ref<number>(props.node.state.numSamples);
@@ -319,6 +339,12 @@ const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperation
 	emit('update-state', state);
 });
 
+const updateOutputSettingForm = (config: OutputSettingKnobs) => {
+	selectedSimulationVariables.value = config.selectedSimulationVariables;
+	selectedInterventionVariables.value = config.selectedInterventionVariables;
+	updateState();
+};
+
 const setPresetValues = (data: CiemssPresetTypes) => {
 	if (data === CiemssPresetTypes.Normal) {
 		numSamples.value = qualityValues.numSamples;
@@ -373,6 +399,8 @@ const updateState = () => {
 	state.currentTimespan = timespan.value;
 	state.numSamples = numSamples.value;
 	state.method = method.value;
+	state.selectedSimulationVariables = selectedSimulationVariables.value;
+	state.selectedInterventionVariables = selectedInterventionVariables.value;
 	emit('update-state', state);
 };
 
@@ -407,8 +435,8 @@ const makeForecastRequest = async () => {
 		payload.extra.inferred_parameters = modelConfig.simulationId;
 	}
 
-	if (policyInterventionId.value?.[0]) {
-		payload.policyInterventionId = policyInterventionId.value[0];
+	if (policyInterventionId.value) {
+		payload.policyInterventionId = policyInterventionId.value;
 	}
 
 	const response = await makeForecastJob(payload, nodeMetadata(props.node));
@@ -423,6 +451,8 @@ const lazyLoadSimulationData = async (outputRunId: string) => {
 
 	const result = await getRunResultCSV(forecastId, 'result.csv');
 	pyciemssMap = parsePyCiemssMap(result[0]);
+	simulationChartOptions.value = Object.keys(pyciemssMap);
+
 	runResults.value[outputRunId] = result;
 	rawContent.value[outputRunId] = convertToCsvAsset(result, Object.values(pyciemssMap));
 
@@ -491,6 +521,7 @@ const runCode = () => {
 				});
 		});
 };
+
 const initializeAceEditor = (editorInstance: any) => {
 	editor = editorInstance;
 };
@@ -517,6 +548,18 @@ watch(
 );
 
 watch(
+	() => props.node.inputs[1].value,
+	async () => {
+		// Intervention input
+		if (policyInterventionId.value) {
+			const interventionPolicy = await getInterventionPolicyById(policyInterventionId.value);
+			interventionAppliedToOptions.value = [...new Set(interventionPolicy.interventions.map((ele) => ele.appliedTo))];
+		}
+	},
+	{ immediate: true }
+);
+
+watch(
 	() => props.node.active,
 	async (newValue, oldValue) => {
 		if (!props.node.active || newValue === oldValue) return;
@@ -526,6 +569,8 @@ watch(
 		timespan.value = props.node.state.currentTimespan;
 		numSamples.value = props.node.state.numSamples;
 		method.value = props.node.state.method;
+		selectedSimulationVariables.value = props.node.state.selectedSimulationVariables;
+		selectedInterventionVariables.value = props.node.state.selectedInterventionVariables;
 
 		lazyLoadSimulationData(selectedRunId.value);
 	},
