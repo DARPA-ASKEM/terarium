@@ -73,12 +73,12 @@
 												@update-source="emit('update-source', $event)"
 											/>
 										</div>
-										<Divider type="solid" />
 									</li>
 								</ul>
 							</div>
 						</AccordionTab>
 					</Accordion>
+
 					<!-- Unstratified -->
 					<div v-else class="flex gap-4">
 						<Checkbox
@@ -99,7 +99,6 @@
 							@update-source="emit('update-source', $event)"
 						/>
 					</div>
-					<Divider type="solid" />
 				</li>
 			</ul>
 		</AccordionTab>
@@ -236,28 +235,35 @@ const onUpdateDistributions = () => {
 <style scoped>
 ul {
 	flex-grow: 1;
+
 	li {
 		list-style: none;
+	}
+
+	li + li {
+		border-top: 1px solid var(--gray-300);
+		margin-top: var(--gap-1-5);
+		padding-top: var(--gap-4);
+	}
+
+	li:last-child {
+		margin-bottom: var(--gap-4);
 	}
 }
 
 :deep(.p-divider) {
-	&.p-divider-horizontal {
-		margin-top: 0;
-		margin-bottom: var(--gap);
-		color: var(--gray-300);
-	}
 	&.p-divider-vertical {
-		margin-left: var(--gap-small);
-		margin-right: var(--gap);
+		margin-left: var(--gap-2);
+		margin-right: var(--gap-4);
 	}
 }
 
 .artifact-amount {
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
-	margin-left: 0.25rem;
+	margin-left: var(--gap-1);
 }
+
 :deep(.uncertainty-percentage) > input {
 	width: 4rem;
 }

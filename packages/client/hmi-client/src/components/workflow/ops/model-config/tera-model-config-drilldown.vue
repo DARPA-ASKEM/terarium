@@ -75,7 +75,6 @@
 				<Button label="Reset" @click="resetConfiguration" outlined severity="secondary" />
 				<Button class="mr-3" :disabled="isSaveDisabled" label="Save" @click="() => createConfiguration()" />
 			</template>
-
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab>
 					<template #header>
