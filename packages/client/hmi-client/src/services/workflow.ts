@@ -446,18 +446,12 @@ export class WorkflowWrapper {
 
 	// Get neighbor nodes for drilldown navigation
 	getNeighborNodes = (id: string) => {
-		const neighborNodeCache = new Map(this.getNodes().map((node) => [node.id, node]));
-
+		const cache = new Map(this.getNodes().map((node) => [node.id, node]));
 		const inputEdges = this.getEdges().filter((e) => e.target === id);
 		const outputEdges = this.getEdges().filter((e) => e.source === id);
-
 		return {
-			upstreamNodes: inputEdges
-				.map((e) => e.source && neighborNodeCache.get(e.source))
-				.filter(Boolean) as WorkflowNode<any>[],
-			downstreamNodes: outputEdges
-				.map((e) => e.target && neighborNodeCache.get(e.target))
-				.filter(Boolean) as WorkflowNode<any>[]
+			upstreamNodes: inputEdges.map((e) => e.source && cache.get(e.source)).filter(Boolean) as WorkflowNode<any>[],
+			downstreamNodes: outputEdges.map((e) => e.target && cache.get(e.target)).filter(Boolean) as WorkflowNode<any>[]
 		};
 	};
 }
