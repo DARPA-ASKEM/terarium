@@ -196,18 +196,6 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 			dbWorkflowEdges.add(pair.getValue());
 		}
 
-		// Testing lombok equals
-		// final List<WorkflowNode> candidateWorkflowNodes = asset.getNodes();
-		// for (WorkflowNode node : candidateWorkflowNodes) {
-		// 	WorkflowNode dbNode = dbWorkflowNodeMap.get(node.getId());
-		// 	if (dbNode == null) continue;
-		// 	if (node.equals(dbNode) == true) {
-		// 		System.out.println(" lombok: " + node.getDisplayName() + " equal");
-		// 	} else {
-		// 		System.out.println(" lombok: " + node.getDisplayName() + " not equal");
-		// 	}
-		// }
-
 		return super.updateAsset(dbWorkflow, projectId, hasWritePermission);
 	}
 
