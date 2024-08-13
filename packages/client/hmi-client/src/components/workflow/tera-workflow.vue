@@ -56,7 +56,7 @@
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" style="white-space: nowrap; width: auto" />
 			<tera-canvas-item
-				v-for="node in wf.getNodes().filter((n) => n.isDeleted !== true)"
+				v-for="node in wf.getNodes()"
 				:key="node.id"
 				:style="{
 					width: `${node.width}px`,
@@ -135,7 +135,7 @@
 				fill="none"
 			/>
 			<path
-				v-for="edge of wf.getEdges().filter((e) => e.isDeleted !== true)"
+				v-for="edge of wf.getEdges()"
 				:key="edge.id"
 				:d="drawPath(interpolatePointsForCurve(edge.points[0], edge.points[1]))"
 				stroke="#667085"
@@ -671,7 +671,6 @@ function removeEdges(portId: string) {
 	);
 	const nodeCache = new Map<WorkflowOutput<any>['id'], WorkflowNode<any>[]>();
 	wf.value.getEdges().forEach((edge) => {
-		if (edge.isDeleted === true) return;
 		if (!edge.source || !edge.target) return;
 		if (!nodeCache.has(edge.source)) nodeCache.set(edge.source, []);
 		nodeCache.get(edge.source)?.push(nodeMap.get(edge.target) as WorkflowNode<any>);
