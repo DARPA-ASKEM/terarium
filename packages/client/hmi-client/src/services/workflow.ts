@@ -284,7 +284,7 @@ export class WorkflowWrapper {
 	 * */
 	branchWorkflow(nodeId: string) {
 		// 1. Find anchor point
-		const anchor = this.wf.nodes.find((n) => n.id === nodeId && n.isDeleted !== true);
+		const anchor = this.getNodes().find((n) => n.id === nodeId);
 		if (!anchor) return;
 
 		// 2. Collect the subgraph that we want to copy
@@ -296,12 +296,12 @@ export class WorkflowWrapper {
 		// basically depth-first-search
 		while (stack.length > 0) {
 			const id = stack.pop();
-			const node = this.wf.nodes.find((n) => n.id === id && n.isDeleted !== true);
+			const node = this.getNodes().find((n) => n.id === id);
 			if (node) copyNodes.push(_.cloneDeep(node));
 			processed.add(id as string);
 
 			// Grab downstream edges
-			const edges = this.wf.edges.filter((e) => e.source === id && e.isDeleted !== true);
+			const edges = this.getEdges().filter((e) => e.source === id);
 			edges.forEach((edge) => {
 				const newId = edge.target as string;
 				if (!processed.has(newId)) {
@@ -312,7 +312,7 @@ export class WorkflowWrapper {
 		}
 
 		// 3. Collect the upstream edges of the anchor
-		const upstreamEdges = this.wf.edges.filter((edge) => edge.target === anchor.id && edge.isDeleted !== true);
+		const upstreamEdges = this.getEdges().filter((edge) => edge.target === anchor.id);
 		upstreamEdges.forEach((edge) => {
 			copyEdges.push(_.cloneDeep(edge));
 		});
@@ -402,7 +402,7 @@ export class WorkflowWrapper {
 		operator.active = selected.id;
 
 		// If this output is connected to input port(s), update the input port(s)
-		const hasOutgoingEdges = this.wf.edges.some((edge) => edge.source === operator.id && edge.isDeleted !== true);
+		const hasOutgoingEdges = this.getEdges().some((edge) => edge.source === operator.id);
 		if (!hasOutgoingEdges) return;
 
 		selected.status = WorkflowPortStatus.CONNECTED;
@@ -411,8 +411,7 @@ export class WorkflowWrapper {
 		const nodeCache = new Map<string, WorkflowNode<any>[]>();
 		nodeCache.set(operator.id, []);
 
-		this.wf.edges.forEach((edge) => {
-			if (edge.isDeleted === true) return;
+		this.getEdges().forEach((edge) => {
 			// Update the input port of the direct target node
 			if (edge.source === operator.id) {
 				const targetNode = this.wf.nodes.find((node) => node.id === edge.target);
@@ -435,13 +434,13 @@ export class WorkflowWrapper {
 	}
 
 	updateNodeState(nodeId: string, state: any) {
-		const node = this.wf.nodes.find((d) => d.id === nodeId && d.isDeleted !== true);
+		const node = this.getNodes().find((d) => d.id === nodeId);
 		if (!node) return;
 		node.state = state;
 	}
 
 	updateNodeStatus(nodeId: string, status: OperatorStatus) {
-		const node = this.wf.nodes.find((d) => d.id === nodeId && d.isDeleted !== true);
+		const node = this.getNodes().find((d) => d.id === nodeId);
 		if (!node) return;
 		node.status = status;
 	}
