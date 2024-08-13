@@ -155,7 +155,7 @@
 
 				<!-- Variable charts -->
 				<div v-if="!showSpinner" class="form-section">
-					<section ref="previewPanel" v-if="modelConfig && csvAsset">
+					<section ref="outputPanel" v-if="modelConfig && csvAsset">
 						<h5>Parameters</h5>
 						<tera-chart-control
 							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedParameters }"
@@ -403,8 +403,8 @@ const disableRunButton = computed(
 const selectedOutputId = ref<string>();
 const lossChartContainer = ref(null);
 const lossChartSize = computed(() => drilldownChartSize(lossChartContainer.value));
-const previewPanel = ref(null);
-const chartSize = computed(() => drilldownChartSize(previewPanel.value));
+const outputPanel = ref(null);
+const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 
 const selectedParameters = ref<string[]>(props.node.state.selectedParameters);
 const selectedVariables = ref<string[]>(props.node.state.selectedVariables);
