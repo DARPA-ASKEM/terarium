@@ -44,7 +44,7 @@ export const CalibrationOperationCiemss: Operation = {
 			isOptional: true
 		}
 	],
-	outputs: [{ type: 'modelConfigId' }],
+	outputs: [{ type: 'modelConfigId|datasetId' }],
 	isRunnable: true,
 
 	action: async () => {},

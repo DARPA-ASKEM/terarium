@@ -60,7 +60,10 @@ import { createLLMSummary } from '@/services/summary-service';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import * as stats from '@/utils/stats';
+import { createDatasetFromSimulationResult } from '@/services/dataset';
+import { useProjects } from '@/composables/project';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
+import { CalibrationOperationCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults } from './calibrate-utils';
 
 const props = defineProps<{
@@ -396,13 +399,25 @@ watch(
 				initialSemanticList: _.cloneDeep(baseConfig.initialSemanticList),
 				inferredParameterList: inferredParameters
 			};
+
 			const modelConfigResponse = await createModelConfiguration(calibratedModelConfig);
+			const datasetName = `Forecast run ${state.forecastId}`;
+			const projectId = useProjects().activeProjectId.value;
+			const datasetResult = await createDatasetFromSimulationResult(projectId, state.forecastId, datasetName, false);
+			if (!datasetResult) {
+				return;
+			}
 
 			// const portLabel = props.node.inputs[0].label;
 			emit('append-output', {
-				type: 'modelConfigId',
+				type: CalibrationOperationCiemss.outputs[0].type,
 				label: nodeOutputLabel(props.node, `Calibration Result`),
-				value: [modelConfigResponse.id],
+				value: [
+					{
+						modelConfigId: modelConfigResponse.id,
+						datasetId: datasetResult.id
+					}
+				],
 				state: {
 					calibrationId: state.calibrationId,
 					forecastId: state.forecastId,
