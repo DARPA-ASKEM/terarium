@@ -149,7 +149,7 @@
 
 				<!-- Loss chart -->
 				<h5>Loss</h5>
-				<div ref="drilldownLossPlot" class="loss-chart" />
+				<vega-chart ref="lossChartRef" :are-embed-actions-visible="true" :visualization-spec="lossChartSpec" />
 
 				<!-- Variable charts -->
 				<div v-if="!showSpinner" class="form-section">
@@ -187,6 +187,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
+import * as vega from 'vega';
 import { csvParse, autoType } from 'd3';
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
 import Button from 'primevue/button';
@@ -305,7 +306,6 @@ const runResultSummaryPre = ref<DataArray>([]);
 const previewChartWidth = ref(120);
 
 const showSpinner = ref(false);
-let lossValues: { [key: string]: number }[] = [];
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 
@@ -408,18 +408,18 @@ const preparedCharts = computed(() => {
 
 		return createForecastChart(
 			{
-				dataset: result,
+				data: result,
 				variables: [...config.map((d) => `${pyciemssMap[d]}:pre`), ...config.map((d) => pyciemssMap[d])],
 				timeField: 'timepoint_id',
 				groupField: 'sample_id'
 			},
 			{
-				dataset: resultSummary,
+				data: resultSummary,
 				variables: [...config.map((d) => `${pyciemssMap[d]}_mean:pre`), ...config.map((d) => `${pyciemssMap[d]}_mean`)],
 				timeField: 'timepoint_id'
 			},
 			{
-				dataset: groundTruth,
+				data: groundTruth,
 				variables: datasetVariables,
 				timeField: datasetTimeField as string,
 				groupField: 'sample_id'
@@ -444,6 +444,30 @@ const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 const chartProxy = chartActionsProxy(props.node, (state: CalibrationOperationStateCiemss) => {
 	emit('update-state', state);
 });
+
+const LOSS_CHART_DATA_SOURCE = 'lossData'; // Name of the streaming data source
+const lossChartRef = ref<InstanceType<typeof VegaChart>>();
+const lossChartSpec = ref();
+let lossValues: { [key: string]: number }[] = [];
+const updateLossChartSpec = (data: string | Record<string, any>[]) => {
+	lossChartSpec.value = createForecastChart(
+		null,
+		null,
+		null,
+		{
+			title: '',
+			width: 400,
+			height: 100,
+			xAxisTitle: 'Solver iterations',
+			yAxisTitle: 'Loss'
+		},
+		{
+			data: Array.isArray(data) ? data : { name: data },
+			variables: ['loss'],
+			timeField: 'iter'
+		}
+	);
+};
 
 const runCalibrate = async () => {
 	if (!modelConfigId.value || !datasetId.value || !currentDatasetFileName.value) return;
@@ -496,14 +520,10 @@ const runCalibrate = async () => {
 };
 
 const messageHandler = (event: ClientEvent<any>) => {
-	lossValues.push({ iter: lossValues.length, loss: event.data.loss });
-
-	if (drilldownLossPlot.value) {
-		renderLossGraph(drilldownLossPlot.value, lossValues, {
-			width: previewChartWidth.value,
-			height: 120
-		});
-	}
+	if (!lossChartRef.value?.view) return;
+	const data = { iter: lossValues.length, loss: event.data.loss };
+	lossChartRef.value.view.change(LOSS_CHART_DATA_SOURCE, vega.changeset().insert(data)).run();
+	lossValues.push(data);
 };
 
 const onSelection = (id: string) => {
@@ -591,9 +611,11 @@ watch(
 	(id) => {
 		if (id === '') {
 			showSpinner.value = false;
+			updateLossChartSpec(lossValues);
 			unsubscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
 		} else {
 			showSpinner.value = true;
+			updateLossChartSpec(LOSS_CHART_DATA_SOURCE);
 			subscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
 		}
 	},
@@ -614,6 +636,8 @@ watch(
 					iter: i,
 					loss: d.data.loss
 				}));
+				updateLossChartSpec(lossValues);
+
 				if (drilldownLossPlot.value) {
 					renderLossGraph(drilldownLossPlot.value, lossValues, {
 						width: previewChartWidth.value,

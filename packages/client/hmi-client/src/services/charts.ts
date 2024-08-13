@@ -27,7 +27,7 @@ export interface ForecastChartOptions extends BaseChartOptions {
 }
 
 export interface ForecastChartLayer {
-	dataset: Record<string, any>[];
+	data: Record<string, any>[] | { name: string } | { url: string };
 	variables: string[];
 	timeField: string;
 	groupField?: string;
@@ -325,7 +325,8 @@ export function createForecastChart(
 	samplingLayer: ForecastChartLayer | null,
 	statisticsLayer: ForecastChartLayer | null,
 	groundTruthLayer: ForecastChartLayer | null,
-	options: ForecastChartOptions
+	options: ForecastChartOptions,
+	summaryLayer?: ForecastChartLayer | null
 ) {
 	const axisColor = '#EEE';
 	const labelColor = '#667085';
@@ -405,7 +406,7 @@ export function createForecastChart(
 	// Helper function to capture common layer structure
 	const newLayer = (layer: ForecastChartLayer, markType: string) => {
 		const header = {
-			data: { values: layer.dataset },
+			data: Array.isArray(layer.data) ? { values: layer.data } : layer.data,
 			transform: [
 				{
 					fold: layer.variables,
@@ -512,6 +513,28 @@ export function createForecastChart(
 				encoding.color.legend.labelExpr = labelExpr;
 			}
 		}
+		spec.layer.push(layerSpec);
+	}
+
+	// Build summary layer
+	if (summaryLayer && !isEmpty(summaryLayer.variables)) {
+		const layerSpec = newLayer(summaryLayer, 'line');
+		const encoding = layerSpec.layer[0].encoding;
+		Object.assign(encoding, {
+			opacity: { value: 1.0 },
+			strokeWidth: { value: 2 }
+		});
+
+		// if (options.legend === true) {
+		// 	encoding.color.legend = {
+		// 		...legendProperties
+		// 	};
+
+		// 	if (labelExpr.length > 0) {
+		// 		encoding.color.legend.labelExpr = labelExpr;
+		// 	}
+		// }
+
 		spec.layer.push(layerSpec);
 	}
 

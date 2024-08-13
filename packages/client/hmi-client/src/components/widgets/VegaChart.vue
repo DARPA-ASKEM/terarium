@@ -12,7 +12,7 @@ import embed, { Result, VisualizationSpec } from 'vega-embed';
 import { Config as VgConfig } from 'vega';
 import { Config as VlConfig } from 'vega-lite';
 
-import { ref, watch, toRaw, isRef, isReactive, isProxy } from 'vue';
+import { ref, watch, toRaw, isRef, isReactive, isProxy, computed } from 'vue';
 
 export type Config = VgConfig | VlConfig;
 
@@ -38,6 +38,8 @@ const props = withDefaults(
 );
 const vegaContainer = ref<HTMLElement>();
 const vegaVisualization = ref<Result>();
+const view = computed(() => vegaVisualization.value?.view);
+
 const renderErrorMessage = ref<String>();
 
 const emit = defineEmits<{
@@ -94,9 +96,8 @@ async function updateVegaVisualization(container: HTMLElement, visualizationSpec
 				actions: props.areEmbedActionsVisible === false ? false : undefined
 			}
 		);
-		const { view } = vegaVisualization.value;
 		props.intervalSelectionSignalNames.forEach((signalName) => {
-			view.addSignalListener(signalName, (name, valueRange: { [fieldName: string]: [number, number] }) => {
+			view.value!.addSignalListener(signalName, (name, valueRange: { [fieldName: string]: [number, number] }) => {
 				if (valueRange === undefined || Object.keys(valueRange).length === 0) {
 					emit('update-interval-selection', name, null);
 					return;
@@ -104,7 +105,7 @@ async function updateVegaVisualization(container: HTMLElement, visualizationSpec
 				emit('update-interval-selection', name, valueRange);
 			});
 		});
-		view.addEventListener('click', (_event, item) => {
+		view.value!.addEventListener('click', (_event, item) => {
 			emit('chart-click', item?.datum ?? null);
 		});
 	} catch (e) {
@@ -119,6 +120,10 @@ watch([vegaContainer, () => props.visualizationSpec], () => {
 	}
 	const spec = deepToRaw(props.visualizationSpec);
 	updateVegaVisualization(vegaContainer.value, spec);
+});
+
+defineExpose({
+	view
 });
 </script>
 <style scoped>

@@ -155,18 +155,18 @@ const preparedCharts = computed(() => {
 
 		return createForecastChart(
 			{
-				dataset: result,
+				data: result,
 				variables: [...config.map((d) => `${pyciemssMap[d]}:pre`), ...config.map((d) => pyciemssMap[d])],
 				timeField: 'timepoint_id',
 				groupField: 'sample_id'
 			},
 			{
-				dataset: resultSummary,
+				data: resultSummary,
 				variables: [...config.map((d) => `${pyciemssMap[d]}_mean:pre`), ...config.map((d) => `${pyciemssMap[d]}_mean`)],
 				timeField: 'timepoint_id'
 			},
 			{
-				dataset: groundTruth,
+				data: groundTruth,
 				variables: datasetVariables,
 				timeField: datasetTimeField as string
 			},
