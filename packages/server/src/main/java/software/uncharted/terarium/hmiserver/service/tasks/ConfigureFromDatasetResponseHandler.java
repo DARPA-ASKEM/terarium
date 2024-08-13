@@ -72,6 +72,7 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 	@Override
 	public TaskResponse onSuccess(final TaskResponse resp) {
 		try {
+			System.out.println("ConfigureFromDatasetResponseHandler.onSuccess");
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final Model model = modelService
 				.getAsset(props.getModelId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER)
@@ -81,6 +82,9 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 			// Map the parameters values to the model
 			final Model modelCopy = (Model) model.clone();
 			modelCopy.setId(model.getId());
+			ScenarioExtraction.setNullDefaultModelInitials(modelCopy);
+			ScenarioExtraction.setNullDefaultModelParameters(modelCopy);
+
 			final JsonNode condition = configurations.getResponse().get("values");
 			final List<ModelParameter> modelParameters = ScenarioExtraction.getModelParameters(condition, modelCopy);
 			final List<Initial> modelInitials = ScenarioExtraction.getModelInitials(condition, modelCopy);

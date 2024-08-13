@@ -83,4 +83,20 @@ public class ScenarioExtraction {
 		});
 		return modelInitials;
 	}
+
+	public static void setNullDefaultModelInitials(final Model modelCopy) {
+		final List<Initial> modelInitials = modelCopy.getInitials();
+		modelInitials.forEach(initial -> {
+			initial.setExpression(null);
+			initial.setExpressionMathml(null);
+		});
+	}
+
+	public static void setNullDefaultModelParameters(final Model modelCopy) {
+		final List<ModelParameter> modelParameters = modelCopy.getParameters();
+		modelParameters.forEach(parameter -> {
+			parameter.setValue(null);
+			parameter.setDistribution(null);
+		});
+	}
 }
