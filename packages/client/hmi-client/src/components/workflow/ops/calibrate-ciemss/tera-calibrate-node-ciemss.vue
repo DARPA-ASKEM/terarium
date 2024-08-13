@@ -405,7 +405,6 @@ watch(
 			const projectId = useProjects().activeProjectId.value;
 			const datasetResult = await createDatasetFromSimulationResult(projectId, state.forecastId, datasetName, false);
 			if (!datasetResult) {
-				logger.error('Error creating dataset from simulation result.');
 				return;
 			}
 
