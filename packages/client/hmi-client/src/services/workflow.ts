@@ -295,19 +295,16 @@ export const getNeighborNodes = (wf: Workflow, id: string) => {
 	const findNeighborNode = (neighborId?: string) => {
 		if (!neighborId) return null;
 		if (!neighborNodeCache.has(neighborId)) {
-			const node = wf.nodes.find((n) => n.id === neighborId);
+			const node = wf.nodes.find((n) => n.id === neighborId && n.isDeleted !== true);
 			if (!node) return null;
 			neighborNodeCache.set(neighborId, node);
 		}
 		return neighborNodeCache.get(neighborId) ?? null;
 	};
-	console.log(neighborNodeCache);
-	const inputEdges = wf.edges.filter((edge) => edge.target === id);
-	const outputEdges = wf.edges.filter((edge) => edge.source === id);
-	const upstreamNodes = inputEdges.map((edge) => findNeighborNode(edge.source)).filter(Boolean) as WorkflowNode<any>[];
-	const downstreamNodes = outputEdges
-		.map((edge) => findNeighborNode(edge.target))
-		.filter(Boolean) as WorkflowNode<any>[];
+	const inputEdges = wf.edges.filter((e) => e.target === id && e.isDeleted !== true);
+	const outputEdges = wf.edges.filter((e) => e.source === id && e.isDeleted !== true);
+	const upstreamNodes = inputEdges.map((e) => findNeighborNode(e.source)).filter(Boolean) as WorkflowNode<any>[];
+	const downstreamNodes = outputEdges.map((e) => findNeighborNode(e.target)).filter(Boolean) as WorkflowNode<any>[];
 	return { upstreamNodes, downstreamNodes };
 };
 
