@@ -238,7 +238,7 @@ Provide a consis summary in 100 words or less.
 			emit('update-state', state);
 
 			const datasetName = `Forecast run ${state.postForecastRunId}`;
-			const projectId = useProjects().activeProjectId;
+			const projectId = useProjects().activeProjectId.value;
 			const datasetResult = await createDatasetFromSimulationResult(
 				projectId,
 				state.postForecastRunId,
