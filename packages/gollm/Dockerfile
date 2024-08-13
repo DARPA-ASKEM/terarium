@@ -1,5 +1,5 @@
 # Build the Spring Boot application
-FROM eclipse-temurin:17.0.11_9-jdk-focal AS gollm_taskrunner_builder
+FROM eclipse-temurin:17.0.12_7-jdk-focal AS gollm_taskrunner_builder
 
 ###### DEV ONLY ######
 #VVVVVVVVVVVVVVVVVVVVV
