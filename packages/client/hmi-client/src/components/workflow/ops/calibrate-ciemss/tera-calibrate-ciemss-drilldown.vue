@@ -332,7 +332,8 @@ const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.v
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
 const policyInterventionId = computed(() => props.node.inputs[2].value?.[0]);
 
-const simulationChartOptions = computed<string[]>(() => [...Object.keys(pyciemssMap.value)]);
+let pyciemssMap: Record<string, string> = {};
+const simulationChartOptions = ref<string[]>([]);
 
 const interventionAppliedToOptions = ref<string[]>([]);
 
@@ -418,7 +419,6 @@ const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 
 const selectedParameters = ref<string[]>(props.node.state.selectedParameters);
 
-const pyciemssMap = ref<Record<string, string>>({});
 const preparedChartInputs = computed(() => {
 	const state = props.node.state;
 
@@ -434,9 +434,9 @@ const preparedChartInputs = computed(() => {
 
 	// Build lookup map for calibration, include before/afer and dataset (observations)
 	const reverseMap: Record<string, string> = {};
-	Object.keys(pyciemssMap.value).forEach((key) => {
-		reverseMap[`${pyciemssMap.value[key]}_mean`] = `${key} after calibration`;
-		reverseMap[`${pyciemssMap.value[key]}_mean:pre`] = `${key} before calibration`;
+	Object.keys(pyciemssMap).forEach((key) => {
+		reverseMap[`${pyciemssMap[key]}_mean`] = `${key} after calibration`;
+		reverseMap[`${pyciemssMap[key]}_mean:pre`] = `${key} before calibration`;
 	});
 	state.mapping.forEach((mapObj) => {
 		reverseMap[mapObj.datasetVariable] = 'Observations';
@@ -474,13 +474,13 @@ const preparedCharts = computed(() => {
 		charts[variable] = createForecastChart(
 			{
 				dataset: result,
-				variables: [`${pyciemssMap.value[variable]}:pre`, pyciemssMap.value[variable]],
+				variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
 				timeField: 'timepoint_id',
 				groupField: 'sample_id'
 			},
 			{
 				dataset: resultSummary,
-				variables: [`${pyciemssMap.value[variable]}_mean:pre`, `${pyciemssMap.value[variable]}_mean`],
+				variables: [`${pyciemssMap[variable]}_mean:pre`, `${pyciemssMap[variable]}_mean`],
 				timeField: 'timepoint_id'
 			},
 			{
@@ -512,7 +512,7 @@ const preparedDistributionCharts = computed(() => {
 	const labelAfter = 'After calibration';
 	const charts = {};
 	state.selectedParameters.forEach((param) => {
-		const fieldName = pyciemssMap.value[param];
+		const fieldName = pyciemssMap[param];
 		const beforeFieldName = `${fieldName}:pre`;
 		const histogram = createHistogramChart(result, {
 			title: `${param}`,
@@ -747,7 +747,8 @@ watch(
 				renameFnGenerator('pre')
 			);
 
-			pyciemssMap.value = parsePyCiemssMap(runResult.value[0]);
+			pyciemssMap = parsePyCiemssMap(runResult.value[0]);
+			simulationChartOptions.value = Object.keys(pyciemssMap);
 		}
 	},
 	{ immediate: true }
