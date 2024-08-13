@@ -15,7 +15,7 @@ import type {
 	WorkflowPort,
 	WorkflowOutput
 } from '@/types/workflow';
-import { WorkflowPortStatus, OperatorStatus } from '@/types/workflow';
+import { WorkflowPortStatus, OperatorStatus, WorkflowOperationTypes } from '@/types/workflow';
 import { summarizeNotebook } from './beaker';
 
 /**
@@ -443,6 +443,17 @@ export class WorkflowWrapper {
 		if (!node) return;
 		node.status = status;
 	}
+
+	// Get neighbor nodes for drilldown navigation
+	getNeighborNodes = (id: string) => {
+		const cache = new Map(this.getNodes().map((node) => [node.id, node]));
+		const inputEdges = this.getEdges().filter((e) => e.target === id);
+		const outputEdges = this.getEdges().filter((e) => e.source === id);
+		return {
+			upstreamNodes: inputEdges.map((e) => e.source && cache.get(e.source)).filter(Boolean) as WorkflowNode<any>[],
+			downstreamNodes: outputEdges.map((e) => e.target && cache.get(e.target)).filter(Boolean) as WorkflowNode<any>[]
+		};
+	};
 }
 
 /**
@@ -484,6 +495,39 @@ export function getOperatorNodeSize(size: OperatorNodeSize): Size {
 			return { width: 180, height: 220 };
 	}
 }
+
+export const isAssetOperator = (operationType: string) =>
+	(
+		[
+			WorkflowOperationTypes.MODEL,
+			WorkflowOperationTypes.DATASET,
+			WorkflowOperationTypes.DOCUMENT,
+			WorkflowOperationTypes.CODE
+		] as string[]
+	).includes(operationType);
+
+export const iconToOperatorMap = new Map<string, string>([
+	[WorkflowOperationTypes.DOCUMENT, 'pi pi-file'],
+	[WorkflowOperationTypes.MODEL, 'pi pi-share-alt'],
+	[WorkflowOperationTypes.DATASET, 'pi pi-table'],
+	[WorkflowOperationTypes.SIMULATE_CIEMSS, 'pi pi-chart-line'],
+	[WorkflowOperationTypes.CALIBRATION_CIEMSS, 'pi pi-chart-line'],
+	[WorkflowOperationTypes.MODEL_CONFIG, 'pi pi-cog'],
+	[WorkflowOperationTypes.STRATIFY_MIRA, 'pi pi-share-alt'],
+	[WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS, 'pi pi-chart-line'],
+	[WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS, 'pi pi-chart-line'],
+	[WorkflowOperationTypes.DATASET_TRANSFORMER, 'pi pi-table'],
+	[WorkflowOperationTypes.SUBSET_DATA, 'pi pi-table'],
+	[WorkflowOperationTypes.MODEL_TRANSFORMER, 'pi pi-share-alt'],
+	[WorkflowOperationTypes.FUNMAN, 'pi pi-cog'],
+	[WorkflowOperationTypes.CODE, 'pi pi-code'],
+	[WorkflowOperationTypes.MODEL_COMPARISON, 'pi pi-share-alt'],
+	[WorkflowOperationTypes.OPTIMIZE_CIEMSS, 'pi pi-chart-line'],
+	[WorkflowOperationTypes.MODEL_EDIT, 'pi pi-share-alt'],
+	[WorkflowOperationTypes.MODEL_FROM_EQUATIONS, 'pi pi-share-alt'],
+	[WorkflowOperationTypes.REGRIDDING, 'pi pi-table'],
+	[WorkflowOperationTypes.INTERVENTION_POLICY, 'pi pi-cog']
+]);
 
 // Get port label for frontend
 const defaultPortLabels = {
