@@ -42,7 +42,6 @@ import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/servic
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { createDatasetFromSimulationResult } from '@/services/dataset';
 import { useProjects } from '@/composables/project';
-import { logger } from '@/utils/logger';
 import {
 	OptimizeCiemssOperationState,
 	OptimizeCiemssOperation,
@@ -246,7 +245,6 @@ Provide a consis summary in 100 words or less.
 				false
 			);
 			if (!datasetResult) {
-				logger.error('Error creating dataset from simulation result.');
 				return;
 			}
 
