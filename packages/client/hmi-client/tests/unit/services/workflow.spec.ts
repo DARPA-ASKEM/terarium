@@ -447,15 +447,15 @@ describe('get neighbor nodes for drilldown navigation', () => {
 		const { upstreamNodes, downstreamNodes } = workflowService.getNeighborNodes(wf, n2.id);
 		expect(upstreamNodes.length + downstreamNodes.length).to.eq(2);
 		expect(upstreamNodes[0].id).to.eq(n1.id);
-		expect(downstreamNodes[1].id).to.eq(n3.id);
+		expect(downstreamNodes[0].id).to.eq(n3.id);
 	});
 
 	it('get neighbors for n3', () => {
 		const { upstreamNodes, downstreamNodes } = workflowService.getNeighborNodes(wf, n3.id);
 		expect(upstreamNodes.length + downstreamNodes.length).to.eq(3);
 		expect(upstreamNodes[0].id).to.eq(n2.id);
-		expect(downstreamNodes[1].id).to.eq(n4.id);
-		expect(downstreamNodes[2].id).to.eq(n5.id);
+		expect(downstreamNodes[0].id).to.eq(n4.id);
+		expect(downstreamNodes[1].id).to.eq(n5.id);
 	});
 
 	it('get neighbors for n4', () => {
