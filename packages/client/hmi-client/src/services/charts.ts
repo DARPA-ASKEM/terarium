@@ -525,17 +525,6 @@ export function createForecastChart(
 			opacity: { value: 1.0 },
 			strokeWidth: { value: 2 }
 		});
-
-		// if (options.legend === true) {
-		// 	encoding.color.legend = {
-		// 		...legendProperties
-		// 	};
-
-		// 	if (labelExpr.length > 0) {
-		// 		encoding.color.legend.labelExpr = labelExpr;
-		// 	}
-		// }
-
 		spec.layer.push(layerSpec);
 	}
 
