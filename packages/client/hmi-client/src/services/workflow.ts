@@ -290,6 +290,7 @@ export const updateNodeStatus = (wf: Workflow, nodeId: string, status: OperatorS
 	node.status = status;
 };
 
+// Get/Keep track of neighbor nodes for drilldown navigation
 export const neighborNodeCache = new Map<string, WorkflowNode<any>>();
 export const getNeighborNodes = (wf: Workflow, id: string) => {
 	const findNeighborNode = (neighborId?: string) => {
