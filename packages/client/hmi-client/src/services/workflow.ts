@@ -63,7 +63,7 @@ export class WorkflowWrapper {
 
 	removeNode(id: string) {
 		// Remove all the edges first
-		const edgesToRemove = this.wf.edges.filter((d) => d.source === id || d.target === id);
+		const edgesToRemove = this.getEdges().filter((d) => d.source === id || d.target === id);
 		const edgeIds = edgesToRemove.map((d) => d.id);
 		edgeIds.forEach((edgeId) => {
 			this.removeEdge(edgeId);
@@ -109,7 +109,7 @@ export class WorkflowWrapper {
 		// wf.edges = wf.edges.filter((edge) => edge.id !== id);
 
 		// If there are no more references reset the connected status of the source node
-		if (_.isEmpty(this.wf.edges.filter((e) => e.isDeleted !== true && e.source === edgeToRemove.source))) {
+		if (_.isEmpty(this.getEdges().filter((e) => e.source === edgeToRemove.source))) {
 			const sourceNode = this.wf.nodes.find((d) => d.id === edgeToRemove.source);
 			if (!sourceNode) return;
 			const sourcePort = sourceNode.outputs.find((d) => d.id === edgeToRemove.sourcePortId);
@@ -206,9 +206,8 @@ export class WorkflowWrapper {
 		if (!sourceOutputPort || !targetInputPort) return;
 
 		// Check if edge already exist
-		const existingEdge = this.wf.edges.find(
+		const existingEdge = this.getEdges().find(
 			(d) =>
-				d.isDeleted !== true &&
 				d.source === sourceId &&
 				d.sourcePortId === sourcePortId &&
 				d.target === targetId &&
