@@ -41,7 +41,7 @@ services:
 
   elasticsearch:
     container_name: elasticsearch
-    image: elasticsearch:8.11.4
+    image: elasticsearch:8.15.0
     networks:
       - terarium
     ports:
