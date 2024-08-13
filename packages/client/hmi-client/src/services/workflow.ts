@@ -290,23 +290,22 @@ export const updateNodeStatus = (wf: Workflow, nodeId: string, status: OperatorS
 	node.status = status;
 };
 
-// Get/Keep track of neighbor nodes for drilldown navigation
-export const neighborNodeCache = new Map<string, WorkflowNode<any>>();
+// Get neighbor nodes for drilldown navigation
 export const getNeighborNodes = (wf: Workflow, id: string) => {
-	const findNeighborNode = (neighborId?: string) => {
-		if (!neighborId) return null;
-		if (!neighborNodeCache.has(neighborId)) {
-			const node = wf.nodes.find((n) => n.id === neighborId && n.isDeleted !== true);
-			if (!node) return null;
-			neighborNodeCache.set(neighborId, node);
-		}
-		return neighborNodeCache.get(neighborId) ?? null;
-	};
+	const neighborNodeCache = new Map<string, WorkflowNode<any>>();
+	wf.nodes.forEach((node) => neighborNodeCache.set(node.id, node));
+
 	const inputEdges = wf.edges.filter((e) => e.target === id && e.isDeleted !== true);
 	const outputEdges = wf.edges.filter((e) => e.source === id && e.isDeleted !== true);
-	const upstreamNodes = inputEdges.map((e) => findNeighborNode(e.source)).filter(Boolean) as WorkflowNode<any>[];
-	const downstreamNodes = outputEdges.map((e) => findNeighborNode(e.target)).filter(Boolean) as WorkflowNode<any>[];
-	return { upstreamNodes, downstreamNodes };
+
+	return {
+		upstreamNodes: inputEdges
+			.map((e) => e.source && neighborNodeCache.get(e.source))
+			.filter(Boolean) as WorkflowNode<any>[],
+		downstreamNodes: outputEdges
+			.map((e) => e.target && neighborNodeCache.get(e.target))
+			.filter(Boolean) as WorkflowNode<any>[]
+	};
 };
 
 export const isAssetOperator = (operationType: string) =>

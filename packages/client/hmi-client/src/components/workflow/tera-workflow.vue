@@ -899,7 +899,6 @@ const handleDrilldown = () => {
 watch(
 	() => [props.assetId],
 	async () => {
-		workflowService.neighborNodeCache.clear(); // Clear cache that assists drilldown navigation
 		isRenamingWorkflow.value = false; // Closes rename input if opened in previous workflow
 		if (wf.value && workflowDirty) {
 			workflowService.updateWorkflow(wf.value);
