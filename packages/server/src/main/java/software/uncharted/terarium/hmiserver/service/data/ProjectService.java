@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
 import io.micrometer.observation.annotation.Observed;
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
 public class ProjectService {
 
 	final ProjectRepository projectRepository;
+	final ProjectSearchService projectSearchService;
 	final UserRepository userRepository;
 	final ReBACService reBACService;
 	final Messages messages;
@@ -102,12 +104,14 @@ public class ProjectService {
 	}
 
 	@Observed(name = "function_profile")
-	public Project createProject(final Project project) {
-		return projectRepository.save(project);
+	public Project createProject(final Project project) throws IOException {
+		final Project created = projectRepository.save(project);
+		projectSearchService.indexProject(project);
+		return created;
 	}
 
 	@Observed(name = "function_profile")
-	public Optional<Project> updateProject(final Project project) {
+	public Optional<Project> updateProject(final Project project) throws IOException {
 		if (!projectRepository.existsById(project.getId())) {
 			return Optional.empty();
 		}
@@ -117,15 +121,20 @@ public class ProjectService {
 		// merge the existing project with values from the new project
 		final Project mergedProject = Project.mergeProjectFields(existingProject, project);
 
-		return Optional.of(projectRepository.save(mergedProject));
+		final Project updated = projectRepository.save(mergedProject);
+
+		projectSearchService.updateProject(updated);
+
+		return Optional.of(updated);
 	}
 
 	@Observed(name = "function_profile")
-	public boolean delete(final UUID id) {
+	public boolean delete(final UUID id) throws IOException {
 		final Optional<Project> project = getProject(id);
 		if (project.isEmpty()) return false;
 		project.get().setDeletedOn(Timestamp.from(Instant.now()));
 		projectRepository.save(project.get());
+		projectSearchService.removeProject(id);
 		return true;
 	}
 
