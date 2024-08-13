@@ -6,8 +6,12 @@ const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss
 
 export interface CalibrationOperationStateCiemss extends BaseState {
 	method: string;
-	selectedParameters: string[];
-	selectedVariables: string[];
+	selectedParameters: string[]; // Output display setting
+	selectedVariables: string[]; // Output display setting
+
+	selectedInterventionVariables: string[]; // Output display setting
+	selectedSimulationVariables: string[]; // Output display setting
+
 	mapping: CalibrateMap[];
 	simulationsInProgress: string[];
 
@@ -54,6 +58,8 @@ export const CalibrationOperationCiemss: Operation = {
 			method: 'dopri5',
 			selectedParameters: [],
 			selectedVariables: [],
+			selectedInterventionVariables: [],
+			selectedSimulationVariables: [],
 			mapping: [{ modelVariable: '', datasetVariable: '' }],
 			simulationsInProgress: [],
 			currentProgress: 0,

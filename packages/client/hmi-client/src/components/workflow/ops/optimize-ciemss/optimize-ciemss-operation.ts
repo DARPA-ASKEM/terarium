@@ -61,8 +61,8 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	interventionPolicyGroups: InterventionPolicyGroupForm[];
 	// Constraints:
 	constraintGroups: Criterion[];
-	selectedInterventionVariables: string[];
-	selectedSimulationVariables: string[];
+	selectedInterventionVariables: string[]; // Output display setting
+	selectedSimulationVariables: string[]; // Output display setting
 	inProgressOptimizeId: string;
 	inProgressPreForecastId: string;
 	preForecastRunId: string;

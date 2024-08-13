@@ -136,6 +136,17 @@
 						</div>
 					</div>
 				</section>
+				<tera-pyciemss-output-settings
+					:successDisplayChartsCheckbox="true"
+					:summaryCheckbox="true"
+					:interventionsDisplayChartsCheckbox="true"
+					:simulationDisplayChartsCheckbox="true"
+					:selectedSimulationVariables="knobs.selectedSimulationVariables"
+					:selectedInterventionVariables="knobs.selectedInterventionVariables"
+					:simulationChartOptions="simulationChartOptions"
+					:interventionsOptions="interventionAppliedToOptions"
+					@update-self="updateOutputSettingForm"
+				/>
 			</tera-drilldown-section>
 		</section>
 		<section :tabName="DrilldownTabs.Notebook">
@@ -247,6 +258,9 @@ import {
 	ModelConfiguration
 } from '@/types/Types';
 import { getTimespan, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
+import teraPyciemssOutputSettings, {
+	OutputSettingKnobs
+} from '@/components/pyciemss/tera-pyciemss-output-settings.vue';
 import { useToastService } from '@/services/toast';
 import { autoCalibrationMapping } from '@/services/concept';
 import {
@@ -259,9 +273,9 @@ import {
 	DataArray,
 	CiemssMethodOptions
 } from '@/services/models/simulation-service';
-
 import type { WorkflowNode } from '@/types/workflow';
 import { createForecastChart, createHistogramChart } from '@/services/charts';
+import { getInterventionPolicyById } from '@/services/intervention-policy';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
 import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
@@ -324,7 +338,13 @@ const modelPartTypesMap = ref<{ [key: string]: string }>({});
 
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
-const policyInterventionId = computed(() => props.node.inputs[2].value);
+const policyInterventionId = computed(() => props.node.inputs[2].value?.[0]);
+
+const simulationChartOptions = computed<string[]>(() => [
+	...Object.keys(pyciemssMap).filter((c) => modelPartTypesMap[c] === 'parameter'),
+	...(modelStateOptions.value?.map((ele) => ele.referenceId ?? (ele.id as string)) ?? '')
+]);
+const interventionAppliedToOptions = ref<string[]>([]);
 
 const cancelRunId = computed(
 	() =>
@@ -364,6 +384,8 @@ const updateState = () => {
 interface BasicKnobs {
 	numIterations: number;
 	numSamples: number;
+	selectedInterventionVariables: string[];
+	selectedSimulationVariables: string[];
 	endTime: number;
 	stepSize: number;
 	learningRate: number;
@@ -373,6 +395,8 @@ interface BasicKnobs {
 const knobs = ref<BasicKnobs>({
 	numIterations: props.node.state.numIterations ?? 1000,
 	numSamples: props.node.state.numSamples ?? 100,
+	selectedInterventionVariables: props.node.state.selectedInterventionVariables ?? [],
+	selectedSimulationVariables: props.node.state.selectedSimulationVariables ?? [],
 	endTime: props.node.state.endTime ?? 100,
 	stepSize: props.node.state.stepSize ?? 1,
 	learningRate: props.node.state.learningRate ?? 0.1,
@@ -560,8 +584,8 @@ const runCalibrate = async () => {
 		engine: 'ciemss'
 	};
 
-	if (policyInterventionId.value?.[0]) {
-		calibrationRequest.policyInterventionId = policyInterventionId.value[0];
+	if (policyInterventionId.value) {
+		calibrationRequest.policyInterventionId = policyInterventionId.value;
 	}
 
 	const response = await makeCalibrateJobCiemss(calibrationRequest, nodeMetadata(props.node));
@@ -598,6 +622,11 @@ function updateSelectedParameters(event) {
 function updateSelectedVariables(event) {
 	emit('update-state', { ...props.node.state, selectedVariables: event.selectedVariable });
 }
+
+const updateOutputSettingForm = (config: OutputSettingKnobs) => {
+	knobs.value.selectedSimulationVariables = config.selectedSimulationVariables;
+	knobs.value.selectedInterventionVariables = config.selectedInterventionVariables;
+};
 
 // Used from button to add new entry to the mapping object
 function addMapping() {
@@ -664,6 +693,12 @@ onMounted(async () => {
 	currentDatasetFileName.value = filename;
 	csvAsset.value = csv;
 	datasetColumns.value = datasetOptions;
+
+	// Intervention input
+	if (policyInterventionId.value) {
+		const interventionPolicy = await getInterventionPolicyById(policyInterventionId.value);
+		interventionAppliedToOptions.value = [...new Set(interventionPolicy.interventions.map((ele) => ele.appliedTo))];
+	}
 });
 
 watch(
@@ -673,6 +708,8 @@ watch(
 		state.numIterations = knobs.value.numIterations;
 		state.numSamples = knobs.value.numSamples;
 		state.endTime = knobs.value.endTime;
+		state.selectedInterventionVariables = knobs.value.selectedInterventionVariables;
+		state.selectedSimulationVariables = knobs.value.selectedSimulationVariables;
 		emit('update-state', state);
 	},
 	{ deep: true }

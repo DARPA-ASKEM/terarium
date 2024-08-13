@@ -311,7 +311,6 @@ import {
 import { logger } from '@/utils/logger';
 import { drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 import { WorkflowNode } from '@/types/workflow';
-
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import { useProjects } from '@/composables/project';
 import { isSaveDatasetDisabled } from '@/components/dataset/utils';
@@ -496,10 +495,6 @@ const onSelection = (id: string) => {
 const updateOutputSettingForm = (config: OutputSettingKnobs) => {
 	knobs.value.selectedSimulationVariables = config.selectedSimulationVariables;
 	knobs.value.selectedInterventionVariables = config.selectedInterventionVariables;
-	// const state = _.cloneDeep(props.node.state);
-	// state.selectedSimulationVariables = config.selectedSimulationVariables;
-	// state.selectedInterventionVariables = config.selectedInterventionVariables;
-	// emit('update-state', state);
 };
 
 const updateInterventionPolicyGroupForm = (index: number, config: InterventionPolicyGroupForm) => {
