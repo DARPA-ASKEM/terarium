@@ -29,7 +29,7 @@
 							<Button icon="pi pi-check" rounded text @click="updateWorkflowName" />
 						</div>
 					</div>
-					<h4 v-else>{{ wf.name }}</h4>
+					<h4 v-else>{{ wf.getName() }}</h4>
 					<Button
 						v-if="!isRenamingWorkflow"
 						icon="pi pi-ellipsis-v"
@@ -56,7 +56,7 @@
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" style="white-space: nowrap; width: auto" />
 			<tera-canvas-item
-				v-for="node in wf.nodes.filter((n) => n.isDeleted !== true)"
+				v-for="node in wf.getNodes()"
 				:key="node.id"
 				:style="{
 					width: `${node.width}px`,
@@ -68,7 +68,7 @@
 				<tera-operator
 					ref="teraOperatorRefs"
 					:node="node"
-					:nodeMenu="nodeMenu"
+					:nodeMenu="outputPortMenu"
 					@resize="resizeHandler"
 					@port-selected="(port: WorkflowPort, direction: WorkflowDirection) => createNewEdge(node, port, direction)"
 					@port-mouseover="onPortMouseover"
@@ -135,7 +135,7 @@
 				fill="none"
 			/>
 			<path
-				v-for="edge of wf.edges.filter((e) => e.isDeleted !== true)"
+				v-for="edge of wf.getEdges()"
 				:key="edge.id"
 				:d="drawPath(interpolatePointsForCurve(edge.points[0], edge.points[1]))"
 				stroke="#667085"
@@ -151,6 +151,9 @@
 			v-if="dialogIsOpened && currentActiveNode"
 			:is="registry.getDrilldown(currentActiveNode.operationType)"
 			:node="currentActiveNode"
+			:upstream-operators-nav="upstreamOperatorsNav"
+			:downstream-operators-nav="downstreamOperatorsNav"
+			:spawn-animation="drilldownSpawnAnimation"
 			@append-output="(event: any) => appendOutput(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			@update-status="(event: any) => updateWorkflowNodeStatus(currentActiveNode, event)"
@@ -167,7 +170,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import TeraCanvasItem from '@/components/widgets/tera-canvas-item.vue';
 import type { Position } from '@/types/common';
-import type { Operation, Workflow, WorkflowEdge, WorkflowNode, WorkflowOutput, WorkflowPort } from '@/types/workflow';
+import type { Operation, WorkflowEdge, WorkflowNode, WorkflowOutput, WorkflowPort } from '@/types/workflow';
 import { WorkflowDirection, WorkflowPortStatus, OperatorStatus } from '@/types/workflow';
 // Operation imports
 import TeraOperator from '@/components/operator/tera-operator.vue';
@@ -239,7 +242,10 @@ const props = defineProps<{
 	assetId: string;
 }>();
 
-const nodeMenu = ref(getNodeMenu(registry.operationMap));
+const outputPortMenu = ref(getNodeMenu(registry.operationMap));
+const upstreamOperatorsNav = ref<MenuItem[]>([]);
+const downstreamOperatorsNav = ref<MenuItem[]>([]);
+const drilldownSpawnAnimation = ref<'left' | 'right' | 'scale'>('scale');
 
 const route = useRoute();
 const router = useRouter();
@@ -258,7 +264,7 @@ const currentActiveNode = ref<WorkflowNode<any> | null>(null);
 const newEdge = ref<WorkflowEdge | undefined>();
 const dialogIsOpened = ref(false);
 
-const wf = ref<Workflow>(workflowService.emptyWorkflow());
+const wf = ref<workflowService.WorkflowWrapper>(new workflowService.WorkflowWrapper());
 const contextMenu = ref();
 
 const isRenamingWorkflow = ref(false);
@@ -271,7 +277,7 @@ const optionsMenuItems = ref([
 		label: 'Rename',
 		command() {
 			isRenamingWorkflow.value = true;
-			newWorkflowName.value = wf.value?.name ?? '';
+			newWorkflowName.value = wf.value?.getName() ?? '';
 		}
 	}
 ]);
@@ -282,7 +288,7 @@ const toggleOptionsMenu = (event) => {
 const teraOperatorRefs = ref();
 
 async function updateWorkflowName() {
-	const workflowClone = cloneDeep(wf.value);
+	const workflowClone = cloneDeep(wf.value.dump());
 	workflowClone.name = newWorkflowName.value;
 	await workflowService.updateWorkflow(workflowClone);
 	await useProjects().refresh();
@@ -347,19 +353,19 @@ function appendOutput(
 
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
 	if (!node) return;
-	workflowService.updateNodeState(wf.value, node.id, state);
+	wf.value.updateNodeState(node.id, state);
 	workflowDirty = true;
 }
 
 function updateWorkflowNodeStatus(node: WorkflowNode<any> | null, status: OperatorStatus) {
 	if (!node) return;
-	workflowService.updateNodeStatus(wf.value, node.id, status);
+	wf.value.updateNodeStatus(node.id, status);
 	workflowDirty = true;
 }
 
 function selectOutput(node: WorkflowNode<any> | null, selectedOutputId: string) {
 	if (!node) return;
-	workflowService.selectOutput(wf.value, node, selectedOutputId);
+	wf.value.selectOutput(node, selectedOutputId);
 	workflowDirty = true;
 }
 
@@ -370,7 +376,11 @@ function updateOutputPort(node: WorkflowNode<any> | null, workflowOutput: Workfl
 }
 
 // Route is mutated then watcher is triggered to open or close the drilldown
-function addOperatorToRoute(nodeId: string | null) {
+function addOperatorToRoute(
+	nodeId: string | null,
+	animation: 'left' | 'right' | 'scale' = 'scale' // drilldownSpawnAnimation is set here, left/right animations are for drilldown navigation
+) {
+	drilldownSpawnAnimation.value = animation;
 	if (nodeId !== null) {
 		router.push({ query: { operator: nodeId } });
 	} else {
@@ -397,13 +407,13 @@ const closeDrilldown = async () => {
 	);
 };
 
-const removeNode = (event) => {
-	workflowService.removeNode(wf.value, event);
+const removeNode = (nodeId: string) => {
+	wf.value.removeNode(nodeId);
 	workflowDirty = true;
 };
 
-const duplicateBranch = (id: string) => {
-	workflowService.branchWorkflow(wf.value, id);
+const duplicateBranch = (nodeId: string) => {
+	wf.value.branchWorkflow(nodeId);
 
 	cloneNoteBookSessions();
 	workflowDirty = true;
@@ -416,8 +426,8 @@ const cloneNoteBookSessions = async () => {
 
 	const operationList = [DatasetTransformerOp.operation.name, RegriddingOp.operation.name];
 
-	for (let i = 0; i < wf.value.nodes.length; i++) {
-		const node = wf.value.nodes[i];
+	for (let i = 0; i < wf.value.getNodes().length; i++) {
+		const node = wf.value.getNodes()[i];
 		if (operationList.includes(node.operationType)) {
 			const state = node.state;
 			const sessionId = state.notebookSessionId as string;
@@ -437,7 +447,7 @@ const cloneNoteBookSessions = async () => {
 const addOperatorToWorkflow: Function =
 	(operator: OperatorImport, nodeSize: OperatorNodeSize = OperatorNodeSize.medium) =>
 	() => {
-		workflowService.addNode(wf.value, operator.operation, newNodePosition, {
+		wf.value.addNode(operator.operation, newNodePosition, {
 			size: nodeSize
 		});
 		workflowDirty = true;
@@ -608,7 +618,7 @@ function onDrop(event) {
 			default:
 				return;
 		}
-		workflowService.addNode(wf.value, operation, newNodePosition, { state });
+		wf.value.addNode(operation, newNodePosition, { state });
 	}
 }
 
@@ -625,7 +635,7 @@ function updateNewNodePosition(event) {
 function saveTransform(newTransform: { k: number; x: number; y: number }) {
 	canvasTransform = newTransform;
 
-	const t = wf.value.transform;
+	const t = wf.value.getTransform();
 	t.x = newTransform.x;
 	t.y = newTransform.y;
 	t.k = newTransform.k;
@@ -649,8 +659,7 @@ function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direction: W
 			direction
 		};
 	} else {
-		workflowService.addEdge(
-			wf.value,
+		wf.value.addEdge(
 			newEdge.value!.source ?? node.id,
 			newEdge.value!.sourcePortId ?? port.id,
 			newEdge.value!.target ?? node.id,
@@ -662,15 +671,16 @@ function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direction: W
 }
 
 function removeEdges(portId: string) {
-	const edges = wf.value.edges.filter(
-		({ targetPortId, sourcePortId }) => targetPortId === portId || sourcePortId === portId
-	);
+	const edges = wf.value
+		.getEdges()
+		.filter(({ targetPortId, sourcePortId }) => targetPortId === portId || sourcePortId === portId);
 
 	// Build a traversal map before we do actual removal
-	const nodeMap = new Map<WorkflowNode<any>['id'], WorkflowNode<any>>(wf.value.nodes.map((node) => [node.id, node]));
+	const nodeMap = new Map<WorkflowNode<any>['id'], WorkflowNode<any>>(
+		wf.value.getNodes().map((node) => [node.id, node])
+	);
 	const nodeCache = new Map<WorkflowOutput<any>['id'], WorkflowNode<any>[]>();
-	wf.value.edges.forEach((edge) => {
-		if (edge.isDeleted === true) return;
+	wf.value.getEdges().forEach((edge) => {
 		if (!edge.source || !edge.target) return;
 		if (!nodeCache.has(edge.source)) nodeCache.set(edge.source, []);
 		nodeCache.get(edge.source)?.push(nodeMap.get(edge.target) as WorkflowNode<any>);
@@ -680,7 +690,7 @@ function removeEdges(portId: string) {
 	// Remove edge
 	if (!isEmpty(edges)) {
 		edges.forEach((edge) => {
-			workflowService.removeEdge(wf.value, edge.id);
+			wf.value.removeEdge(edge.id);
 		});
 		workflowDirty = true;
 	} else {
@@ -729,8 +739,8 @@ const threshold2 = 5.0 * 5.0;
  * FIXME: not efficient, need cache/map for larger workflows
  */
 function relinkEdges(node: WorkflowNode<any> | null) {
-	const nodes = node ? [node] : wf.value.nodes;
-	const allEdges = wf.value.edges;
+	const nodes = node ? [node] : wf.value.getNodes();
+	const allEdges = wf.value.getEdges();
 
 	// Note id can start with numerals, so we need [id=...]
 	const getPortElement = (id: string) => d3.select(`[id='${id}']`).select('.port').node() as HTMLElement;
@@ -805,7 +815,7 @@ function mouseUpdate(event: MouseEvent) {
 }
 
 function updateEdgePositions(node: WorkflowNode<any>, { x, y }) {
-	wf.value.edges.forEach((edge) => {
+	wf.value.getEdges().forEach((edge) => {
 		if (edge.source === node.id) {
 			edge.points[0].x += x / canvasTransform.k;
 			edge.points[0].y += y / canvasTransform.k;
@@ -844,15 +854,43 @@ const drawPath = (v: any) => pathFn(v) as string;
 
 const unloadCheck = () => {
 	if (workflowDirty) {
-		workflowService.updateWorkflow(wf.value);
+		workflowService.updateWorkflow(wf.value.dump());
 	}
 };
 
 const handleDrilldown = () => {
 	const operatorId = route.query?.operator?.toString();
 	if (operatorId) {
-		const operator = wf.value.nodes.find((n) => n.id === operatorId);
-		if (operator) openDrilldown(operator);
+		const operator = wf.value.getNodes().find((n) => n.id === operatorId);
+		if (!operator) return;
+		// Prepare drilldown navigation menus
+		const { upstreamNodes, downstreamNodes } = wf.value.getNeighborNodes(operatorId);
+		upstreamOperatorsNav.value = [
+			{
+				label: 'Upstream operators',
+				items: upstreamNodes.map((upstreamNode) => ({
+					label: workflowService.isAssetOperator(upstreamNode.operationType)
+						? upstreamNode.outputs[0].label // Asset name
+						: upstreamNode.displayName, // Operator name
+					icon: workflowService.iconToOperatorMap.get(upstreamNode.operationType) ?? 'pi pi-cog',
+					command: () => addOperatorToRoute(upstreamNode.id, 'right')
+				}))
+			}
+		];
+		downstreamOperatorsNav.value = [
+			{
+				label: 'Downstream operators',
+				items: downstreamNodes.map((downstreamNode) => ({
+					label: workflowService.isAssetOperator(downstreamNode.operationType)
+						? downstreamNode.outputs[0].label // Asset name
+						: downstreamNode.displayName, // Operator name
+					icon: workflowService.iconToOperatorMap.get(downstreamNode.operationType) ?? 'pi pi-cog',
+					command: () => addOperatorToRoute(downstreamNode.id, 'left')
+				}))
+			}
+		];
+		// Open drilldown
+		openDrilldown(operator);
 	} else {
 		closeDrilldown();
 	}
@@ -863,7 +901,7 @@ watch(
 	async () => {
 		isRenamingWorkflow.value = false; // Closes rename input if opened in previous workflow
 		if (wf.value && workflowDirty) {
-			workflowService.updateWorkflow(wf.value);
+			workflowService.updateWorkflow(wf.value.dump());
 		}
 		const workflowId = props.assetId;
 		if (!workflowId) return;
@@ -873,7 +911,7 @@ watch(
 		if (transform) {
 			canvasTransform = transform;
 		}
-		wf.value = await workflowService.getWorkflow(workflowId);
+		wf.value.load(await workflowService.getWorkflow(workflowId));
 		isWorkflowLoading.value = false;
 
 		handleDrilldown();
@@ -895,7 +933,7 @@ onMounted(() => {
 	window.addEventListener('beforeunload', unloadCheck);
 	saveTimer = setInterval(() => {
 		if (workflowDirty && useProjects().hasEditPermission()) {
-			workflowService.updateWorkflow(wf.value);
+			workflowService.updateWorkflow(wf.value.dump());
 			workflowDirty = false;
 		}
 	}, WORKFLOW_SAVE_INTERVAL);
@@ -903,13 +941,13 @@ onMounted(() => {
 
 onUnmounted(() => {
 	if (workflowDirty) {
-		workflowService.updateWorkflow(wf.value);
+		workflowService.updateWorkflow(wf.value.dump());
 	}
 	if (saveTimer) {
 		clearInterval(saveTimer);
 	}
 	if (canvasTransform) {
-		setLocalStorageTransform(wf.value.id, canvasTransform);
+		setLocalStorageTransform(wf.value.getId(), canvasTransform);
 	}
 	document.removeEventListener('mousemove', mouseUpdate);
 	window.removeEventListener('beforeunload', unloadCheck);

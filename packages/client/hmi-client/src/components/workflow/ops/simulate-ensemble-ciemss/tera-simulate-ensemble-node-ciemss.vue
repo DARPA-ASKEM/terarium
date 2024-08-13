@@ -1,5 +1,5 @@
 <template>
-	<section v-if="!inProgressSimulationId && runResults[selectedRunId]">
+	<section v-if="!inProgressForecastId && runResults[selectedRunId]">
 		<tera-simulate-chart
 			v-for="(cfg, index) of node.state.chartConfigs"
 			:key="index"
@@ -13,7 +13,7 @@
 
 	<Button v-if="node.inputs[0].value" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
 	<tera-operator-placeholder v-else :node="node">Connect a model configuration</tera-operator-placeholder>
-	<tera-progress-spinner v-if="inProgressSimulationId" :font-size="2" is-centered style="height: 100%" />
+	<tera-progress-spinner v-if="inProgressForecastId" :font-size="2" is-centered style="height: 100%" />
 </template>
 
 <script setup lang="ts">
@@ -29,6 +29,8 @@ import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeho
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { logger } from '@/utils/logger';
 import { chartActionsProxy, nodeOutputLabel } from '@/components/workflow/util';
+import { useProjects } from '@/composables/project';
+import { createDatasetFromSimulationResult } from '@/services/dataset';
 import {
 	SimulateEnsembleCiemssOperation,
 	SimulateEnsembleCiemssOperationState
@@ -41,7 +43,7 @@ const emit = defineEmits(['append-output', 'update-state', 'open-drilldown', 'ap
 
 // const runResults = ref<RunResults>({});
 const runResults = ref<{ [runId: string]: RunResults }>({});
-const inProgressSimulationId = computed(() => props.node.state.inProgressSimulationId);
+const inProgressForecastId = computed(() => props.node.state.inProgressForecastId);
 const selectedRunId = ref<string>('');
 
 const chartProxy = chartActionsProxy(props.node, (state: SimulateEnsembleCiemssOperationState) => {
@@ -60,7 +62,7 @@ const getStatus = async (simulationId: string) => {
 	state.errorMessage = { name: '', value: '', traceback: '' };
 
 	if (pollerResults.state === PollerState.Cancelled) {
-		state.inProgressSimulationId = '';
+		state.inProgressForecastId = '';
 		poller.stop();
 	} else if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		logger.error(`Simulation: ${simulationId} has failed`, {
@@ -69,7 +71,7 @@ const getStatus = async (simulationId: string) => {
 		const simulation = await getSimulation(simulationId);
 		if (simulation?.status && simulation?.statusMessage) {
 			state = _.cloneDeep(props.node.state);
-			state.inProgressSimulationId = '';
+			state.inProgressForecastId = '';
 			state.errorMessage = {
 				name: simulationId,
 				value: simulation.status,
@@ -91,14 +93,22 @@ const processResult = async (simulationId: string) => {
 		chartProxy.addChart();
 	}
 
+	const datasetName = `Forecast run ${simulationId}`;
+	const projectId = useProjects().activeProjectId.value;
+	const datasetResult = await createDatasetFromSimulationResult(projectId, simulationId, datasetName, false);
+	if (!datasetResult) {
+		return;
+	}
+
 	emit('append-output', {
 		type: SimulateEnsembleCiemssOperation.outputs[0].type,
 		label: nodeOutputLabel(props.node, `${portLabel} Result`),
-		value: [simulationId],
+		value: [datasetResult.id],
 		state: {
 			mapping: state.mapping,
 			timeSpan: state.timeSpan,
-			numSamples: state.numSamples
+			numSamples: state.numSamples,
+			forecastId: simulationId
 		},
 		isSelected: false
 	});
@@ -115,7 +125,7 @@ watch(
 );
 
 watch(
-	() => props.node.state.inProgressSimulationId,
+	() => props.node.state.inProgressForecastId,
 	async (id) => {
 		if (!id || id === '') return;
 
@@ -124,7 +134,8 @@ watch(
 			processResult(id);
 		}
 		const state = _.cloneDeep(props.node.state);
-		state.inProgressSimulationId = '';
+		state.inProgressForecastId = '';
+		state.forecastId = id;
 		emit('update-state', state);
 	},
 	{ immediate: true }
@@ -138,8 +149,10 @@ watch(
 
 		selectedRunId.value = props.node.outputs.find((o) => o.id === active)?.value?.[0];
 		if (!selectedRunId.value) return;
+		const forecastId = props.node.state.forecastId;
+		if (!forecastId) return;
 
-		const output = await getRunResultCiemss(selectedRunId.value, 'result.csv');
+		const output = await getRunResultCiemss(forecastId, 'result.csv');
 		runResults.value[selectedRunId.value] = output.runResults;
 	},
 	{ immediate: true }

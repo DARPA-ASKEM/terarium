@@ -339,6 +339,7 @@ public class ProjectController {
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 
+		log.error("Failed to delete project");
 		throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("projects.unable-to-delete"));
 	}
 
@@ -466,6 +467,7 @@ public class ProjectController {
 		}
 
 		if (!updatedProject.isPresent()) {
+			log.error("Updated Project is NOT present");
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("projects.unable-to-update"));
 		}
 
@@ -754,6 +756,7 @@ public class ProjectController {
 				assets = List.of(asset.get());
 			}
 		} catch (final IOException e) {
+			log.error("IO exception when trying to create asset", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 
@@ -767,6 +770,7 @@ public class ProjectController {
 			);
 
 			if (projectAsset.isEmpty()) {
+				log.error("Project Asset is empty");
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("asset.unable-to-create"));
 			}
 
@@ -877,6 +881,7 @@ public class ProjectController {
 				}
 			}
 		} catch (final Exception e) {
+			log.error("Failed to get permissions for project", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
 
@@ -1053,6 +1058,7 @@ public class ProjectController {
 			}
 			return ResponseEntity.ok().build();
 		} catch (final Exception e) {
+			log.error("Failed to set project public permissions", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
 	}

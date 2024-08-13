@@ -226,14 +226,14 @@ watch(
 
 		selectedRunId.value = props.node.outputs.find((o) => o.id === active)?.value?.[0];
 		const forecastId = props.node.state.forecastId;
-		if (!forecastId) return;
+		if (!forecastId || !selectedRunId.value) return;
 
 		const result = await getRunResultCSV(forecastId, 'result.csv');
 		pyciemssMap = parsePyCiemssMap(result[0]);
-		runResults.value[forecastId] = result;
+		runResults.value[selectedRunId.value] = result;
 
 		const resultSummary = await getRunResultCSV(forecastId, 'result_summary.csv');
-		runResultsSummary.value[forecastId] = resultSummary;
+		runResultsSummary.value[selectedRunId.value] = resultSummary;
 	},
 	{ immediate: true }
 );

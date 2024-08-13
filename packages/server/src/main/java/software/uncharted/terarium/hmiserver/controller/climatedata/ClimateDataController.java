@@ -55,6 +55,7 @@ public class ClimateDataController {
 						"Search ESGF failed."
 					);
 				}
+				log.error("Search ESGF failed.");
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Search ESGF failed.");
 			}
 
