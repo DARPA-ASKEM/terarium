@@ -161,6 +161,7 @@ export const addEdge = (
 	// Check if edge already exist
 	const existingEdge = wf.edges.find(
 		(d) =>
+			d.isDeleted !== true &&
 			d.source === sourceId &&
 			d.sourcePortId === sourcePortId &&
 			d.target === targetId &&
@@ -240,11 +241,17 @@ export const removeEdge = (wf: Workflow, id: string) => {
 		targetPort.type = targetPort.originalType;
 	}
 
+	// Tombstone
+	const edge = wf.edges.find((e) => e.id === id);
+	if (edge) {
+		edge.isDeleted = true;
+	}
+
 	// Edge re-assignment
-	wf.edges = wf.edges.filter((edge) => edge.id !== id);
+	// wf.edges = wf.edges.filter((edge) => edge.id !== id);
 
 	// If there are no more references reset the connected status of the source node
-	if (_.isEmpty(wf.edges.filter((e) => e.source === edgeToRemove.source))) {
+	if (_.isEmpty(wf.edges.filter((e) => e.isDeleted !== true && e.source === edgeToRemove.source))) {
 		const sourceNode = wf.nodes.find((d) => d.id === edgeToRemove.source);
 		if (!sourceNode) return;
 		const sourcePort = sourceNode.outputs.find((d) => d.id === edgeToRemove.sourcePortId);
@@ -261,18 +268,24 @@ export const removeNode = (wf: Workflow, id: string) => {
 		removeEdge(wf, edgeId);
 	});
 
+	// Tombstone
+	const node = wf.nodes.find((n) => n.id === id);
+	if (node) {
+		node.isDeleted = true;
+	}
+
 	// Remove the node
-	wf.nodes = wf.nodes.filter((node) => node.id !== id);
+	// wf.nodes = wf.nodes.filter((node) => node.id !== id);
 };
 
 export const updateNodeState = (wf: Workflow, nodeId: string, state: any) => {
-	const node = wf.nodes.find((d) => d.id === nodeId);
+	const node = wf.nodes.find((d) => d.id === nodeId && d.isDeleted !== true);
 	if (!node) return;
 	node.state = state;
 };
 
 export const updateNodeStatus = (wf: Workflow, nodeId: string, status: OperatorStatus) => {
-	const node = wf.nodes.find((d) => d.id === nodeId);
+	const node = wf.nodes.find((d) => d.id === nodeId && d.isDeleted !== true);
 	if (!node) return;
 	node.status = status;
 };
@@ -452,7 +465,7 @@ export function selectOutput(
 	operator.active = selected.id;
 
 	// If this output is connected to input port(s), update the input port(s)
-	const hasOutgoingEdges = wf.edges.some((edge) => edge.source === operator.id);
+	const hasOutgoingEdges = wf.edges.some((edge) => edge.source === operator.id && edge.isDeleted !== true);
 	if (!hasOutgoingEdges) return;
 
 	selected.status = WorkflowPortStatus.CONNECTED;
@@ -462,6 +475,7 @@ export function selectOutput(
 	nodeCache.set(operator.id, []);
 
 	wf.edges.forEach((edge) => {
+		if (edge.isDeleted === true) return;
 		// Update the input port of the direct target node
 		if (edge.source === operator.id) {
 			const targetNode = wf.nodes.find((node) => node.id === edge.target);
@@ -568,7 +582,7 @@ export const isWorkflowNodeDirty = (node: WorkflowNode<any>): boolean => {
  * */
 export const branchWorkflow = (wf: Workflow, nodeId: string) => {
 	// 1. Find anchor point
-	const anchor = wf.nodes.find((n) => n.id === nodeId);
+	const anchor = wf.nodes.find((n) => n.id === nodeId && n.isDeleted !== true);
 	if (!anchor) return;
 
 	// 2. Collect the subgraph that we want to copy
@@ -580,12 +594,12 @@ export const branchWorkflow = (wf: Workflow, nodeId: string) => {
 	// basically depth-first-search
 	while (stack.length > 0) {
 		const id = stack.pop();
-		const node = wf.nodes.find((n) => n.id === id);
+		const node = wf.nodes.find((n) => n.id === id && n.isDeleted !== true);
 		if (node) copyNodes.push(_.cloneDeep(node));
 		processed.add(id as string);
 
 		// Grab downstream edges
-		const edges = wf.edges.filter((e) => e.source === id);
+		const edges = wf.edges.filter((e) => e.source === id && e.isDeleted !== true);
 		edges.forEach((edge) => {
 			const newId = edge.target as string;
 			if (!processed.has(newId)) {
@@ -596,7 +610,7 @@ export const branchWorkflow = (wf: Workflow, nodeId: string) => {
 	}
 
 	// 3. Collect the upstream edges of the anchor
-	const upstreamEdges = wf.edges.filter((edge) => edge.target === anchor.id);
+	const upstreamEdges = wf.edges.filter((edge) => edge.target === anchor.id && edge.isDeleted !== true);
 	upstreamEdges.forEach((edge) => {
 		copyEdges.push(_.cloneDeep(edge));
 	});

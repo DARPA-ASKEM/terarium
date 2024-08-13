@@ -31,6 +31,15 @@ const workflow: Workflow = {
 	edges: []
 };
 
+// eslint-disable-next-line
+const _edges = (wf: Workflow) => {
+	return wf.edges.filter((d) => d.isDeleted !== true);
+};
+// eslint-disable-next-line
+const _nodes = (wf: Workflow) => {
+	return wf.nodes.filter((d) => d.isDeleted !== true);
+};
+
 const operationLib = new Map<string, Operation>();
 operationLib.set('add', addOperation);
 
@@ -183,32 +192,32 @@ describe('workflow copying branch -< fork', () => {
 	workflowService.addEdge(wf, n3.id, 'n3o', n5.id, 'n5i', []);
 
 	it('bootstrapped workflow programmatically', () => {
-		expect(wf.nodes.length).to.eq(5);
-		expect(wf.edges.length).to.eq(4);
+		expect(_nodes(wf).length).to.eq(5);
+		expect(_edges(wf).length).to.eq(4);
 		expect(sanityCheck(wf)).to.eq(true);
 	});
 
 	it('duplicate linear flow', () => {
 		const testWf = _.cloneDeep(wf);
 		workflowService.branchWorkflow(testWf, n1.id);
-		expect(testWf.nodes.length).to.eq(10);
-		expect(testWf.edges.length).to.eq(8);
+		expect(_nodes(testWf).length).to.eq(10);
+		expect(_edges(testWf).length).to.eq(8);
 		expect(sanityCheck(testWf)).to.eq(true);
 	});
 
 	it('duplicate tail operator', () => {
 		const testWf = _.cloneDeep(wf);
 		workflowService.branchWorkflow(testWf, n5.id);
-		expect(testWf.nodes.length).to.eq(6);
-		expect(testWf.edges.length).to.eq(5);
+		expect(_nodes(testWf).length).to.eq(6);
+		expect(_edges(testWf).length).to.eq(5);
 		expect(sanityCheck(testWf)).to.eq(true);
 	});
 
 	it('duplicate at fork', () => {
 		const testWf = _.cloneDeep(wf);
 		workflowService.branchWorkflow(testWf, n3.id);
-		expect(testWf.nodes.length).to.eq(8);
-		expect(testWf.edges.length).to.eq(7);
+		expect(_nodes(testWf).length).to.eq(8);
+		expect(_edges(testWf).length).to.eq(7);
 		expect(testWf.edges.filter((edge) => edge.source === n2.id).length).to.eq(2);
 		expect(sanityCheck(testWf)).to.eq(true);
 	});
@@ -216,8 +225,8 @@ describe('workflow copying branch -< fork', () => {
 	it('bad duplication', () => {
 		const testWf = _.cloneDeep(wf);
 		workflowService.branchWorkflow(testWf, 'does not exist');
-		expect(testWf.nodes.length).to.eq(5);
-		expect(testWf.edges.length).to.eq(4);
+		expect(_nodes(testWf).length).to.eq(5);
+		expect(_edges(testWf).length).to.eq(4);
 	});
 });
 
@@ -270,18 +279,18 @@ describe('workflow copying branch >- fork', () => {
 	workflowService.addEdge(wf, n3.id, 'n3o', n4.id, 'n4i', []);
 
 	it('bootstrapped workflow programmatically', () => {
-		expect(wf.nodes.length).to.eq(4);
-		expect(wf.edges.length).to.eq(3);
+		expect(_nodes(wf).length).to.eq(4);
+		expect(_edges(wf).length).to.eq(3);
 		expect(sanityCheck(wf)).to.eq(true);
 	});
 
 	it('duplicate at fork', () => {
 		const testWf = _.cloneDeep(wf);
 		workflowService.branchWorkflow(testWf, n3.id);
-		expect(testWf.nodes.length).to.eq(6);
-		expect(testWf.edges.length).to.eq(6);
-		expect(testWf.edges.filter((edge) => edge.source === n1.id).length).to.eq(2);
-		expect(testWf.edges.filter((edge) => edge.source === n2.id).length).to.eq(2);
+		expect(_nodes(testWf).length).to.eq(6);
+		expect(_edges(testWf).length).to.eq(6);
+		expect(_edges(testWf).filter((edge) => edge.source === n1.id).length).to.eq(2);
+		expect(_edges(testWf).filter((edge) => edge.source === n2.id).length).to.eq(2);
 		expect(sanityCheck(wf)).to.eq(true);
 	});
 });
@@ -349,8 +358,8 @@ describe('workflow operator with multiple output types', () => {
 		);
 
 		expect(datasetNode.inputs[0].value).toMatchObject(['dataset xyz']);
-		expect(wf.edges.length).eq(1);
-		workflowService.removeEdge(wf, wf.edges[0].id);
+		expect(_edges(wf).length).eq(1);
+		workflowService.removeEdge(wf, _edges(wf)[0].id);
 	});
 
 	it('dataset|model => model', () => {
@@ -364,8 +373,8 @@ describe('workflow operator with multiple output types', () => {
 		);
 
 		expect(modelNode.inputs[0].value).toMatchObject(['model abc']);
-		expect(wf.edges.length).eq(1);
-		workflowService.removeEdge(wf, wf.edges[0].id);
+		expect(_edges(wf).length).eq(1);
+		workflowService.removeEdge(wf, _edges(wf)[0].id);
 	});
 
 	it('dataset|model => test', () => {
@@ -379,7 +388,7 @@ describe('workflow operator with multiple output types', () => {
 		);
 
 		expect(testNode.inputs[0].value).toBeNull();
-		expect(wf.edges.length).eq(0);
+		expect(_edges(wf).length).eq(0);
 	});
 
 	it('edge case many to many', () => {
@@ -392,6 +401,6 @@ describe('workflow operator with multiple output types', () => {
 			[]
 		);
 		expect(edgeCaseNode.inputs[0].value).toBeNull();
-		expect(wf.edges.length).eq(0);
+		expect(_edges(wf).length).eq(0);
 	});
 });

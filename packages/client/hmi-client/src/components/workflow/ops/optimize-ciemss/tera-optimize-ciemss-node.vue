@@ -40,7 +40,8 @@ import { createForecastChart } from '@/services/charts';
 import { mergeResults, renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
 import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
-
+import { createDatasetFromSimulationResult } from '@/services/dataset';
+import { useProjects } from '@/composables/project';
 import {
 	OptimizeCiemssOperationState,
 	OptimizeCiemssOperation,
@@ -235,10 +236,27 @@ Provide a consis summary in 100 words or less.
 			state.postForecastRunId = postSimId;
 			emit('update-state', state);
 
+			const datasetName = `Forecast run ${state.postForecastRunId}`;
+			const projectId = useProjects().activeProjectId.value;
+			const datasetResult = await createDatasetFromSimulationResult(
+				projectId,
+				state.postForecastRunId,
+				datasetName,
+				false
+			);
+			if (!datasetResult) {
+				return;
+			}
+
 			emit('append-output', {
 				type: OptimizeCiemssOperation.outputs[0].type,
-				label: nodeOutputLabel(props.node, `Simulation output`),
-				value: [postSimId],
+				label: nodeOutputLabel(props.node, `Optimize output`),
+				value: [
+					{
+						policyInterventionId: state.optimizedInterventionPolicyId,
+						datasetId: datasetResult.id
+					}
+				],
 				isSelected: false,
 				state
 			});

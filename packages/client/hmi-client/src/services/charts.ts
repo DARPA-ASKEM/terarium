@@ -2,6 +2,7 @@ import API from '@/api/api';
 import { b64DecodeUnicode } from '@/utils/binary';
 import { percentile } from '@/utils/math';
 import { isEmpty } from 'lodash';
+import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
@@ -287,9 +288,9 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 		}));
 	};
 
-	const spec = {
+	const spec: VisualizationSpec = {
 		$schema: VEGALITE_SCHEMA,
-		title: titleObj,
+		title: titleObj as any,
 		width: options.width,
 		height: options.height,
 		autosize: { type: 'fit' },
@@ -384,8 +385,9 @@ export function createForecastChart(
 		$schema: VEGALITE_SCHEMA,
 		title: titleObj,
 		description: '',
-		width: options.width,
-		height: options.height,
+		width: options.width - 25,
+		height: options.height - 25,
+		padding: { left: 20, right: 5, top: 5, bottom: 20 },
 		autosize: {
 			type: 'fit-x'
 		},

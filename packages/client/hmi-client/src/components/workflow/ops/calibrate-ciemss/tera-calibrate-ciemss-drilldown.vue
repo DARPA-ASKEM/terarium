@@ -149,24 +149,62 @@
 
 				<!-- Loss chart -->
 				<h5>Loss</h5>
-				<vega-chart ref="lossChartRef" :are-embed-actions-visible="true" :visualization-spec="lossChartSpec" />
+				<div ref="lossChartContainer">
+					<vega-chart ref="lossChartRef" :are-embed-actions-visible="true" :visualization-spec="lossChartSpec" />
+				</div>
 
 				<!-- Variable charts -->
-				<div v-if="!showSpinner" class="form-section">
-					<h5>Variables</h5>
-					<section v-if="modelConfig && csvAsset" ref="outputPanel">
-						<template v-for="(cfg, index) of node.state.chartConfigs" :key="index">
-							<tera-chart-control
-								:chart-config="{ selectedRun: 'fixme', selectedVariable: cfg }"
-								:multi-select="false"
-								:show-remove-button="true"
-								:variables="Object.keys(pyciemssMap)"
-								@configuration-change="chartProxy.configurationChange(index, $event)"
-								@remove="chartProxy.removeChart(index)"
-							/>
-							<vega-chart :are-embed-actions-visible="true" :visualization-spec="preparedCharts[index]" />
+				<div v-if="!showSpinner" class="form-section mx-0">
+					<section ref="previewPanel" v-if="modelConfig && csvAsset">
+						<h5>Parameters</h5>
+						<tera-chart-control
+							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedParameters }"
+							:multi-select="true"
+							:show-remove-button="false"
+							:variables="Object.keys(pyciemssMap).filter((c) => modelPartTypesMap[c] === 'parameter')"
+							@configuration-change="updateSelectedParameters"
+						/>
+						<template v-for="param of node.state.selectedParameters" :key="param">
+							<vega-chart
+								:are-embed-actions-visible="true"
+								:visualization-spec="preparedDistributionCharts[param].histogram"
+							>
+								<template v-slot:footer>
+									<table class="distribution-table">
+										<thead>
+											<tr>
+												<th scope="col"></th>
+												<th scope="col">{{ preparedDistributionCharts[param].stat.header[0] }}</th>
+												<th scope="col">{{ preparedDistributionCharts[param].stat.header[1] }}</th>
+											</tr>
+										</thead>
+										<tbody>
+											<tr>
+												<th scope="row">Mean</th>
+												<td>{{ preparedDistributionCharts[param].stat.mean[0] }}</td>
+												<td>{{ preparedDistributionCharts[param].stat.mean[1] }}</td>
+											</tr>
+											<tr>
+												<th scope="row">Variance</th>
+												<td>{{ preparedDistributionCharts[param].stat.variance[0] }}</td>
+												<td>{{ preparedDistributionCharts[param].stat.variance[1] }}</td>
+											</tr>
+										</tbody>
+									</table>
+								</template>
+							</vega-chart>
 						</template>
-						<Button size="small" text @click="chartProxy.addChart()" label="Add chart" icon="pi pi-plus" />
+						<h5>Variables</h5>
+						<tera-chart-control
+							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedVariables }"
+							:multi-select="true"
+							:show-remove-button="false"
+							:variables="Object.keys(pyciemssMap).filter((c) => modelPartTypesMap[c] !== 'parameter')"
+							@configuration-change="updateSelectedVariables"
+						/>
+						<template v-for="variable of node.state.selectedVariables" :key="variable">
+							<vega-chart :are-embed-actions-visible="true" :visualization-spec="preparedCharts[variable]" />
+						</template>
 					</section>
 					<section v-else-if="!modelConfig" class="emptyState">
 						<img src="@assets/svg/seed.svg" alt="" draggable="false" />
@@ -188,7 +226,7 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import * as vega from 'vega';
-import { csvParse, autoType } from 'd3';
+import { csvParse, autoType, mean, variance } from 'd3';
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
 import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
@@ -211,7 +249,7 @@ import {
 	DatasetColumn,
 	ModelConfiguration
 } from '@/types/Types';
-import { getTimespan, chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
+import { getTimespan, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 import { useToastService } from '@/services/toast';
 import { autoCalibrationMapping } from '@/services/concept';
 import {
@@ -226,11 +264,12 @@ import {
 } from '@/services/models/simulation-service';
 
 import type { WorkflowNode } from '@/types/workflow';
-import { createForecastChart } from '@/services/charts';
+import { createForecastChart, createHistogramChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
 import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import { displayNumber } from '@/utils/number';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults } from './calibrate-utils';
 
@@ -284,6 +323,7 @@ const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const modelConfig = ref<ModelConfiguration>();
 
 const modelVarUnits = ref<{ [key: string]: string }>({});
+const modelPartTypesMap = ref<{ [key: string]: string }>({});
 
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
@@ -361,12 +401,19 @@ const disableRunButton = computed(
 );
 
 const selectedOutputId = ref<string>();
+const lossChartContainer = ref(null);
+const lossChartSize = computed(() => drilldownChartSize(lossChartContainer.value));
+const previewPanel = ref(null);
+const chartSize = computed(() => drilldownChartSize(previewPanel.value));
+
+const selectedParameters = ref<string[]>(props.node.state.selectedParameters);
+const selectedVariables = ref<string[]>(props.node.state.selectedVariables);
 
 let pyciemssMap: Record<string, string> = {};
-const preparedCharts = computed(() => {
+const preparedChartInputs = computed(() => {
 	const state = props.node.state;
 
-	if (!state.calibrationId) return [];
+	if (!state.calibrationId) return null;
 
 	// Merge before/after for chart
 	const { result, resultSummary } = mergeResults(
@@ -385,6 +432,17 @@ const preparedCharts = computed(() => {
 	state.mapping.forEach((mapObj) => {
 		reverseMap[mapObj.datasetVariable] = 'Observations';
 	});
+	return {
+		result,
+		resultSummary,
+		reverseMap
+	};
+});
+
+const preparedCharts = computed(() => {
+	if (!preparedChartInputs.value) return [];
+	const { result, resultSummary, reverseMap } = preparedChartInputs.value;
+	const state = props.node.state;
 
 	// FIXME: Hacky re-parse CSV with correct data types
 	let groundTruth: DataArray = [];
@@ -397,25 +455,23 @@ const preparedCharts = computed(() => {
 	// Need to get the dataset's time field
 	const datasetTimeField = state.mapping.find((d) => d.modelVariable === 'timestamp')?.datasetVariable;
 
-	return state.chartConfigs.map((config) => {
+	const charts = {};
+	state.selectedVariables.forEach((variable) => {
 		const datasetVariables: string[] = [];
-		config.forEach((variableName) => {
-			const mapObj = state.mapping.find((d) => d.modelVariable === variableName);
-			if (mapObj) {
-				datasetVariables.push(mapObj.datasetVariable);
-			}
-		});
-
-		return createForecastChart(
+		const mapObj = state.mapping.find((d) => d.modelVariable === variable);
+		if (mapObj) {
+			datasetVariables.push(mapObj.datasetVariable);
+		}
+		charts[variable] = createForecastChart(
 			{
 				data: result,
-				variables: [...config.map((d) => `${pyciemssMap[d]}:pre`), ...config.map((d) => pyciemssMap[d])],
+				variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
 				timeField: 'timepoint_id',
 				groupField: 'sample_id'
 			},
 			{
 				data: resultSummary,
-				variables: [...config.map((d) => `${pyciemssMap[d]}_mean:pre`), ...config.map((d) => `${pyciemssMap[d]}_mean`)],
+				variables: [`${pyciemssMap[variable]}_mean:pre`, `${pyciemssMap[variable]}_mean`],
 				timeField: 'timepoint_id'
 			},
 			{
@@ -425,24 +481,53 @@ const preparedCharts = computed(() => {
 				groupField: 'sample_id'
 			},
 			{
-				title: '',
+				title: variable,
 				width: chartSize.value.width,
 				height: chartSize.value.height,
 				legend: true,
 				translationMap: reverseMap,
 				xAxisTitle: modelVarUnits.value._time || 'Time',
-				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || '',
+				yAxisTitle: modelVarUnits.value[variable] || '',
 				colorscheme: ['#AAB3C6', '#1B8073']
 			}
 		);
 	});
+	return charts;
 });
 
-const outputPanel = ref(null);
-const chartSize = computed(() => drilldownChartSize(outputPanel.value));
-
-const chartProxy = chartActionsProxy(props.node, (state: CalibrationOperationStateCiemss) => {
-	emit('update-state', state);
+const preparedDistributionCharts = computed(() => {
+	if (!preparedChartInputs.value) return [];
+	const { result } = preparedChartInputs.value;
+	const state = props.node.state;
+	const labelBefore = 'Before calibration';
+	const labelAfter = 'After calibration';
+	const charts = {};
+	state.selectedParameters.forEach((param) => {
+		const fieldName = pyciemssMap[param];
+		const beforeFieldName = `${fieldName}:pre`;
+		const histogram = createHistogramChart(result, {
+			title: `${param}`,
+			width: chartSize.value.width,
+			height: chartSize.value.height,
+			xAxisTitle: `${param}`,
+			yAxisTitle: 'Count',
+			maxBins: 10,
+			variables: [
+				{ field: beforeFieldName, label: labelBefore, width: 54, color: '#AAB3C6' },
+				{ field: fieldName, label: labelAfter, width: 24, color: '#1B8073' }
+			]
+		});
+		const toDisplayNumber = (num?: number) => (num ? displayNumber(num.toString()) : '');
+		const stat = {
+			header: [labelBefore, labelAfter],
+			mean: [mean(result, (d) => d[beforeFieldName]), mean(result, (d) => d[fieldName])].map(toDisplayNumber),
+			variance: [variance(result, (d) => d[beforeFieldName]), variance(result, (d) => d[fieldName])].map(
+				toDisplayNumber
+			)
+		};
+		charts[param] = { histogram, stat };
+	});
+	return charts;
 });
 
 const LOSS_CHART_DATA_SOURCE = 'lossData'; // Name of the streaming data source
@@ -456,7 +541,7 @@ const updateLossChartSpec = (data: string | Record<string, any>[]) => {
 		null,
 		{
 			title: '',
-			width: 400,
+			width: lossChartSize.value.width,
 			height: 100,
 			xAxisTitle: 'Solver iterations',
 			yAxisTitle: 'Loss'
@@ -530,6 +615,14 @@ const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
+function updateSelectedParameters(event) {
+	emit('update-state', { ...props.node.state, selectedParameters: event.selectedVariable });
+}
+
+function updateSelectedVariables(event) {
+	emit('update-state', { ...props.node.state, selectedVariables: event.selectedVariable });
+}
+
 // Used from button to add new entry to the mapping object
 function addMapping() {
 	mapping.value.push({
@@ -582,10 +675,13 @@ onMounted(async () => {
 	}
 
 	// Model configuration input
-	const { modelConfiguration, modelOptions, modelVariableUnits } = await setupModelInput(modelConfigId.value);
+	const { modelConfiguration, modelOptions, modelPartUnits, modelPartTypes } = await setupModelInput(
+		modelConfigId.value
+	);
 	modelConfig.value = modelConfiguration;
 	modelStateOptions.value = modelOptions;
-	modelVarUnits.value = modelVariableUnits ?? {};
+	modelVarUnits.value = modelPartUnits ?? {};
+	modelPartTypesMap.value = modelPartTypes ?? {};
 
 	// dataset input
 	const { filename, csv, datasetOptions } = await setupDatasetInput(datasetId.value);
@@ -743,5 +839,23 @@ img {
 	background: var(--surface-a);
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-medium);
+}
+
+.distribution-table {
+	width: 100%;
+	border-collapse: collapse;
+	thead {
+		background-color: var(--surface-200);
+	}
+	tr {
+		height: 1.75rem;
+	}
+	tbody tr {
+		border-bottom: 1px solid var(--surface-border-light);
+	}
+	td,
+	th {
+		text-align: center;
+	}
 }
 </style>

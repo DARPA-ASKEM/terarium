@@ -4,6 +4,9 @@
 			{{ renderErrorMessage }}
 		</p>
 		<div ref="vegaContainer"></div>
+		<footer>
+			<slot name="footer" />
+		</footer>
 	</div>
 </template>
 
@@ -133,6 +136,9 @@ defineExpose({
 	border: 1px solid var(--surface-border-light);
 	margin-bottom: var(--gap-4);
 	padding-top: var(--gap-2);
+	footer {
+		padding: var(--gap-3);
+	}
 }
 
 /* adjust style, position and rotation of action button */

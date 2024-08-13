@@ -16,19 +16,6 @@
 					@open-new-asset="openNewAsset"
 				/>
 			</template>
-			<template v-slot:footerButtons>
-				<Button
-					class="upload-resources-button"
-					size="small"
-					icon="pi pi-upload"
-					label="Upload resources"
-					@click="isUploadResourcesModalVisible = true"
-				/>
-				<tera-upload-resources-modal
-					:visible="isUploadResourcesModalVisible"
-					@close="isUploadResourcesModalVisible = false"
-				/>
-			</template>
 		</tera-slider-panel>
 		<section class="project-page">
 			<tera-model v-if="pageType === AssetType.Model" :asset-id="assetId" />
@@ -78,11 +65,9 @@ import { AssetType } from '@/types/Types';
 import { AssetRoute } from '@/types/common';
 import { logger } from '@/utils/logger';
 import { isEqual } from 'lodash';
-import Button from 'primevue/button';
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
-import TeraUploadResourcesModal from '@/components/project/tera-upload-resources-modal.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -91,7 +76,6 @@ const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
 const showSaveAssetModal = ref(false);
 const assetTypeToCreate = ref<AssetType>(AssetType.Model);
-const isUploadResourcesModalVisible = ref(false);
 
 const pageType = computed(() => (route.params.pageType as ProjectPages | AssetType) ?? '');
 const assetId = computed(() => (route.params.assetId as string) ?? '');
@@ -142,6 +126,7 @@ onMounted(() => {
 .resource-panel {
 	z-index: 1000;
 	isolation: isolate;
+	outline-color: var(--surface-border);
 }
 
 .tab-group {
@@ -156,17 +141,6 @@ section {
 	flex: 1;
 	overflow-x: auto;
 	overflow-y: hidden;
-}
-
-.upload-resources-button {
-	margin: 0 1rem;
-	flex-grow: 1;
-	min-width: 140px;
-	justify-content: center;
-
-	& :deep(.p-button-label) {
-		flex-grow: 0;
-	}
 }
 
 .p-tabmenu:deep(.p-tabmenuitem) {
