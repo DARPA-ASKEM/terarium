@@ -203,15 +203,7 @@
 								</template>
 							</vega-chart>
 						</template>
-						<h5>Variables</h5>
-						<tera-chart-control
-							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedVariables }"
-							:multi-select="true"
-							:show-remove-button="false"
-							:variables="Object.keys(pyciemssMap).filter((c) => modelPartTypesMap[c] !== 'parameter')"
-							@configuration-change="updateSelectedVariables"
-						/>
-						<template v-for="variable of node.state.selectedVariables" :key="variable">
+						<template v-for="variable of node.state.selectedSimulationVariables" :key="variable">
 							<vega-chart :are-embed-actions-visible="true" :visualization-spec="preparedCharts[variable]" />
 						</template>
 					</section>
@@ -344,6 +336,7 @@ const simulationChartOptions = computed<string[]>(() => [
 	...Object.keys(pyciemssMap).filter((c) => modelPartTypesMap[c] === 'parameter'),
 	...(modelStateOptions.value?.map((ele) => ele.referenceId ?? (ele.id as string)) ?? '')
 ]);
+
 const interventionAppliedToOptions = ref<string[]>([]);
 
 const cancelRunId = computed(
@@ -427,7 +420,6 @@ const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 
 const selectedParameters = ref<string[]>(props.node.state.selectedParameters);
-const selectedVariables = ref<string[]>(props.node.state.selectedVariables);
 
 let pyciemssMap: Record<string, string> = {};
 const preparedChartInputs = computed(() => {
@@ -476,7 +468,7 @@ const preparedCharts = computed(() => {
 	const datasetTimeField = state.mapping.find((d) => d.modelVariable === 'timestamp')?.datasetVariable;
 
 	const charts = {};
-	state.selectedVariables.forEach((variable) => {
+	state.selectedSimulationVariables.forEach((variable) => {
 		const datasetVariables: string[] = [];
 		const mapObj = state.mapping.find((d) => d.modelVariable === variable);
 		if (mapObj) {
@@ -617,10 +609,6 @@ const onSelection = (id: string) => {
 
 function updateSelectedParameters(event) {
 	emit('update-state', { ...props.node.state, selectedParameters: event.selectedVariable });
-}
-
-function updateSelectedVariables(event) {
-	emit('update-state', { ...props.node.state, selectedVariables: event.selectedVariable });
 }
 
 const updateOutputSettingForm = (config: OutputSettingKnobs) => {

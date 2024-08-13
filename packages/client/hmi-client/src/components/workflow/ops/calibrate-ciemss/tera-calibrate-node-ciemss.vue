@@ -2,11 +2,15 @@
 	<main>
 		<template
 			v-if="
-				!inProgressCalibrationId && runResult && csvAsset && runResultPre && props.node.state.selectedVariables?.length
+				!inProgressCalibrationId &&
+				runResult &&
+				csvAsset &&
+				runResultPre &&
+				props.node.state.selectedSimulationVariables?.length
 			"
 		>
 			<vega-chart
-				v-for="(_var, index) of props.node.state.selectedVariables"
+				v-for="(_var, index) of props.node.state.selectedSimulationVariables"
 				:key="index"
 				:are-embed-actions-visible="false"
 				:visualization-spec="preparedCharts[index]"
@@ -147,7 +151,7 @@ const preparedCharts = computed(() => {
 	// Need to get the dataset's time field
 	const datasetTimeField = state.mapping.find((d) => d.modelVariable === 'timestamp')?.datasetVariable;
 
-	return state.selectedVariables.map((variable) => {
+	return state.selectedSimulationVariables.map((variable) => {
 		const datasetVariables: string[] = [];
 		const mapObj = state.mapping.find((d) => d.modelVariable === variable);
 		if (mapObj) {
