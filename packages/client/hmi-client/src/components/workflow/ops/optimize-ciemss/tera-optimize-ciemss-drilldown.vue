@@ -136,74 +136,17 @@
 						</div>
 					</div>
 				</section>
-				<section class="form-section">
-					<h5>
-						Output settings
-						<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle" />
-					</h5>
-
-					<!--Summary-->
-					<h5>Summary</h5>
-					<tera-checkbox
-						v-model="summaryCheckbox"
-						inputId="generate-summary"
-						label="Auto-generate operation summary"
-						subtext="Automatically generates a brief summary of the inputs and outputs."
-						disabled
-					/>
-					<Divider />
-
-					<!--Success Criteria-->
-					<h5>
-						Success Criteria
-						<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle" />
-					</h5>
-					<tera-checkbox
-						v-model="successDisplayChartsCheckbox"
-						inputId="success-criteria-display-charts"
-						label="Display chart(s)"
-						subtext="Turn this on to generate an interactive chart of the success criteria conditions."
-						disabled
-					/>
-					<Divider />
-
-					<!--Interventions-->
-					<h5>
-						Interventions
-						<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle" />
-					</h5>
-					<MultiSelect
-						v-model="knobs.selectedInterventionVariables"
-						:options="_.keys(preProcessedInterventionsData)"
-						placeholder="What do you want to see?"
-						filter
-					/>
-					<tera-checkbox
-						v-model="interventionsDisplayChartsCheckbox"
-						inputId="interventions-display-charts"
-						label="Display chart(s)"
-						disabled
-					/>
-					<Divider />
-
-					<!--Simulation plots-->
-					<h5>
-						Simulation plots
-						<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle" />
-					</h5>
-					<MultiSelect
-						v-model="knobs.selectedSimulationVariables"
-						:options="simulationChartOptions"
-						placeholder="What do you want to see?"
-						filter
-					/>
-					<tera-checkbox
-						v-model="simulationDisplayChartsCheckbox"
-						inputId="sim-plots-display-charts"
-						label="Display chart(s)"
-						disabled
-					/>
-				</section>
+				<tera-pyciemss-output-settings
+					:successDisplayChartsCheckbox="true"
+					:summaryCheckbox="true"
+					:interventionsDisplayChartsCheckbox="true"
+					:simulationDisplayChartsCheckbox="true"
+					:selectedSimulationVariables="knobs.selectedSimulationVariables"
+					:selectedInterventionVariables="knobs.selectedInterventionVariables"
+					:simulationChartOptions="simulationChartOptions"
+					:interventionsOptions="_.keys(preProcessedInterventionsData)"
+					@update-self="updateOutputSettingForm"
+				/>
 			</tera-drilldown-section>
 		</section>
 		<section :tabName="DrilldownTabs.Notebook" class="ml-4 mr-2 pt-3">
@@ -341,6 +284,9 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
+import teraPyciemssOutputSettings, {
+	OutputSettingKnobs
+} from '@/components/pyciemss/tera-pyciemss-output-settings.vue';
 import { getUnitsFromModelParts, getModelByModelConfigurationId } from '@/services/model';
 import { createModelConfiguration, getModelConfigurationById } from '@/services/model-configurations';
 import {
@@ -370,13 +316,10 @@ import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import { useProjects } from '@/composables/project';
 import { isSaveDatasetDisabled } from '@/components/dataset/utils';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
-import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
-import Divider from 'primevue/divider';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { createSuccessCriteriaChart, createForecastChart, createInterventionChartMarkers } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import MultiSelect from 'primevue/multiselect';
 import { mergeResults, renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
@@ -432,13 +375,6 @@ const knobs = ref<BasicKnobs>({
 const criteriaTooltip = 'TODO';
 const interventionPolicyToolTip = 'TODO';
 const optimizeSettingsToolTip = 'TODO';
-const outputSettingsToolTip = 'TODO';
-
-const summaryCheckbox = ref(true);
-
-const successDisplayChartsCheckbox = ref(true);
-const interventionsDisplayChartsCheckbox = ref(true);
-const simulationDisplayChartsCheckbox = ref(true);
 
 const modelConfigName = ref<string>('');
 const modelConfigDesc = ref<string>('');
@@ -555,6 +491,15 @@ const getUnit = (paramId: string) => {
 
 const onSelection = (id: string) => {
 	emit('select-output', id);
+};
+
+const updateOutputSettingForm = (config: OutputSettingKnobs) => {
+	knobs.value.selectedSimulationVariables = config.selectedSimulationVariables;
+	knobs.value.selectedInterventionVariables = config.selectedInterventionVariables;
+	// const state = _.cloneDeep(props.node.state);
+	// state.selectedSimulationVariables = config.selectedSimulationVariables;
+	// state.selectedInterventionVariables = config.selectedInterventionVariables;
+	// emit('update-state', state);
 };
 
 const updateInterventionPolicyGroupForm = (index: number, config: InterventionPolicyGroupForm) => {
@@ -781,6 +726,7 @@ const runOptimize = async () => {
 	emit('update-state', state);
 };
 
+// If the users has not selected output settings, we should set them based off of the input form.
 const setOutputSettingDefaults = () => {
 	const selectedInterventionVariables: Array<string> = [];
 	const selectedSimulationVariables: Array<string> = [];
