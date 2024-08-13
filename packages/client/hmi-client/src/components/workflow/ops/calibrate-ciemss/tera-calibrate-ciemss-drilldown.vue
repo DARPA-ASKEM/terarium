@@ -154,7 +154,7 @@
 				</div>
 
 				<!-- Variable charts -->
-				<div v-if="!showSpinner" class="form-section mx-0">
+				<div v-if="!showSpinner" class="form-section">
 					<section ref="previewPanel" v-if="modelConfig && csvAsset">
 						<h5>Parameters</h5>
 						<tera-chart-control
@@ -607,7 +607,7 @@ const runCalibrate = async () => {
 const messageHandler = (event: ClientEvent<any>) => {
 	if (!lossChartRef.value?.view) return;
 	const data = { iter: lossValues.length, loss: event.data.loss };
-	lossChartRef.value.view.change(LOSS_CHART_DATA_SOURCE, vega.changeset().insert(data)).run();
+	lossChartRef.value.view.change(LOSS_CHART_DATA_SOURCE, vega.changeset().insert(data)).resize().run();
 	lossValues.push(data);
 };
 

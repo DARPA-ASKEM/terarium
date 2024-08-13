@@ -385,9 +385,8 @@ export function createForecastChart(
 		$schema: VEGALITE_SCHEMA,
 		title: titleObj,
 		description: '',
-		width: options.width - 25,
-		height: options.height - 25,
-		padding: { left: 20, right: 5, top: 5, bottom: 20 },
+		width: options.width,
+		height: options.height,
 		autosize: {
 			type: 'fit-x'
 		},
