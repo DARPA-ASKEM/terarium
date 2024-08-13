@@ -1,4 +1,4 @@
-import { OperatorStatus, Workflow, WorkflowPort, Operation, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
+import { Workflow, WorkflowPort, Operation, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import * as workflowService from '@/services/workflow';
 
 import { describe, expect, it } from 'vitest';
@@ -22,22 +22,13 @@ const addOperation: Operation = {
 	}
 };
 
-const workflow: Workflow = {
-	id: '0',
-	name: 'test',
+const testOp: Operation = {
+	name: 'test' as any,
+	displayName: 'test',
 	description: 'test',
-	transform: { x: 0, y: 0, k: 1 },
-	nodes: [],
-	edges: []
-};
-
-// eslint-disable-next-line
-const _edges = (wf: Workflow) => {
-	return wf.edges.filter((d) => d.isDeleted !== true);
-};
-// eslint-disable-next-line
-const _nodes = (wf: Workflow) => {
-	return wf.nodes.filter((d) => d.isDeleted !== true);
+	inputs: [{ type: 'number' }],
+	outputs: [{ type: 'number' }],
+	isRunnable: true
 };
 
 const operationLib = new Map<string, Operation>();
@@ -53,19 +44,13 @@ const runNode = (node: WorkflowNode<any>): void => {
 	}
 };
 
-const plusNode = (id: string) =>
-	({
-		id,
-		workflowId: '0',
-		operationType: 'add',
-		inputs: operationLib.get('add')?.inputs.map((d, i) => ({ id: `${i}`, type: d.type, value: null })),
-		outputs: operationLib.get('add')?.inputs.map((d, i) => ({ id: `${i}`, type: d.type, value: null })),
-		x: 0,
-		y: 0,
-		width: 0,
-		height: 0,
-		status: OperatorStatus.INVALID
-	}) as WorkflowNode<any>;
+describe('Workflow basics', () => {
+	it('new workflow', () => {
+		const wf = new workflowService.WorkflowWrapper();
+		expect(wf.getEdges().length).toEqual(0);
+		expect(wf.getNodes().length).toEqual(0);
+	});
+});
 
 describe('basic tests to make sure it all works', () => {
 	it('simple workflow test (1 + 2) + (3 + 4)', () => {
@@ -74,37 +59,22 @@ describe('basic tests to make sure it all works', () => {
 		//             ---> Z:add(X, Y)
 		// Y:add(3,4) /
 
-		const X = plusNode('X');
-		const Y = plusNode('Y');
-		const Z = plusNode('Z');
-		workflow.nodes.push(X);
-		workflow.nodes.push(Y);
-		workflow.nodes.push(Z);
+		const wf = new workflowService.WorkflowWrapper();
+		const X = wf.addNode(addOperation, { x: 0, y: 0 }, {});
+		const Y = wf.addNode(addOperation, { x: 0, y: 0 }, {});
+		const Z = wf.addNode(addOperation, { x: 0, y: 0 }, {});
 
-		// Pretend we are linking connections
-		let temp: WorkflowPort | undefined;
-		temp = X.inputs.find((d) => d.id === '0');
-		if (temp) {
-			temp.value = [1];
-		}
-		temp = X.inputs.find((d) => d.id === '1');
-		if (temp) {
-			temp.value = [2];
-		}
-		temp = Y.inputs.find((d) => d.id === '0');
-		if (temp) {
-			temp.value = [3];
-		}
-		temp = Y.inputs.find((d) => d.id === '1');
-		if (temp) {
-			temp.value = [4];
-		}
+		X.inputs[0].value = [1];
+		X.inputs[1].value = [2];
+
+		Y.inputs[0].value = [3];
+		Y.inputs[1].value = [4];
 
 		runNode(X); // should be 3
 		runNode(Y); // should be 7
 
-		workflowService.addEdge(workflow, 'X', '0', 'Z', '0', []);
-		workflowService.addEdge(workflow, 'Y', '0', 'Z', '1', []);
+		wf.addEdge(X.id, X.outputs[0].id, Z.id, Z.inputs[0].id, []);
+		wf.addEdge(Y.id, Y.outputs[0].id, Z.id, Z.inputs[1].id, []);
 
 		runNode(Z); // should be 10
 
@@ -133,15 +103,6 @@ describe('operator state sync/staleness check', () => {
 	});
 });
 
-const testOp: Operation = {
-	name: 'test' as any,
-	displayName: 'test',
-	description: 'test',
-	inputs: [{ type: 'number' }],
-	outputs: [{ type: 'number' }],
-	isRunnable: true
-};
-
 // Helper
 const sanityCheck = (wf: Workflow) => {
 	const dupe = new Set<string>();
@@ -162,18 +123,13 @@ describe('workflow copying branch -< fork', () => {
 	 *                 \__ n5
 	 *
 	 * */
-	const wf = workflowService.emptyWorkflow('test', 'test');
-	workflowService.addNode(wf, testOp, { x: 0, y: 0 }, {});
-	workflowService.addNode(wf, testOp, { x: 300, y: 0 }, {});
-	workflowService.addNode(wf, testOp, { x: 600, y: 0 }, {});
-	workflowService.addNode(wf, testOp, { x: 900, y: -200 }, {});
-	workflowService.addNode(wf, testOp, { x: 900, y: 200 }, {});
+	const wf = new workflowService.WorkflowWrapper();
+	const n1 = wf.addNode(testOp, { x: 0, y: 0 }, {});
+	const n2 = wf.addNode(testOp, { x: 300, y: 0 }, {});
+	const n3 = wf.addNode(testOp, { x: 600, y: 0 }, {});
+	const n4 = wf.addNode(testOp, { x: 900, y: -200 }, {});
+	const n5 = wf.addNode(testOp, { x: 900, y: 200 }, {});
 
-	const n1 = wf.nodes[0];
-	const n2 = wf.nodes[1];
-	const n3 = wf.nodes[2];
-	const n4 = wf.nodes[3];
-	const n5 = wf.nodes[4];
 	const NC = WorkflowPortStatus.NOT_CONNECTED;
 
 	n1.outputs = [{ id: 'n1o', type: 'number', value: [1], status: NC, isOptional: false }];
@@ -186,47 +142,47 @@ describe('workflow copying branch -< fork', () => {
 	n5.inputs = [{ id: 'n5i', type: 'number', value: [3], status: NC, isOptional: false }];
 	n5.outputs = [{ id: 'n5o', type: 'number', value: [5], status: NC, isOptional: false }];
 
-	workflowService.addEdge(wf, n1.id, 'n1o', n2.id, 'n2i', []);
-	workflowService.addEdge(wf, n2.id, 'n2o', n3.id, 'n3i', []);
-	workflowService.addEdge(wf, n3.id, 'n3o', n4.id, 'n4i', []);
-	workflowService.addEdge(wf, n3.id, 'n3o', n5.id, 'n5i', []);
+	wf.addEdge(n1.id, 'n1o', n2.id, 'n2i', []);
+	wf.addEdge(n2.id, 'n2o', n3.id, 'n3i', []);
+	wf.addEdge(n3.id, 'n3o', n4.id, 'n4i', []);
+	wf.addEdge(n3.id, 'n3o', n5.id, 'n5i', []);
 
 	it('bootstrapped workflow programmatically', () => {
-		expect(_nodes(wf).length).to.eq(5);
-		expect(_edges(wf).length).to.eq(4);
-		expect(sanityCheck(wf)).to.eq(true);
+		expect(wf.getNodes().length).to.eq(5);
+		expect(wf.getEdges().length).to.eq(4);
+		expect(sanityCheck(wf.dump())).to.eq(true);
 	});
 
 	it('duplicate linear flow', () => {
 		const testWf = _.cloneDeep(wf);
-		workflowService.branchWorkflow(testWf, n1.id);
-		expect(_nodes(testWf).length).to.eq(10);
-		expect(_edges(testWf).length).to.eq(8);
-		expect(sanityCheck(testWf)).to.eq(true);
+		testWf.branchWorkflow(n1.id);
+		expect(testWf.getNodes().length).to.eq(10);
+		expect(testWf.getEdges().length).to.eq(8);
+		expect(sanityCheck(testWf.dump())).to.eq(true);
 	});
 
 	it('duplicate tail operator', () => {
 		const testWf = _.cloneDeep(wf);
-		workflowService.branchWorkflow(testWf, n5.id);
-		expect(_nodes(testWf).length).to.eq(6);
-		expect(_edges(testWf).length).to.eq(5);
-		expect(sanityCheck(testWf)).to.eq(true);
+		testWf.branchWorkflow(n5.id);
+		expect(testWf.getNodes().length).to.eq(6);
+		expect(testWf.getEdges().length).to.eq(5);
+		expect(sanityCheck(testWf.dump())).to.eq(true);
 	});
 
 	it('duplicate at fork', () => {
 		const testWf = _.cloneDeep(wf);
-		workflowService.branchWorkflow(testWf, n3.id);
-		expect(_nodes(testWf).length).to.eq(8);
-		expect(_edges(testWf).length).to.eq(7);
-		expect(testWf.edges.filter((edge) => edge.source === n2.id).length).to.eq(2);
-		expect(sanityCheck(testWf)).to.eq(true);
+		testWf.branchWorkflow(n3.id);
+		expect(testWf.getNodes().length).to.eq(8);
+		expect(testWf.getEdges().length).to.eq(7);
+		expect(testWf.getEdges().filter((edge) => edge.source === n2.id).length).to.eq(2);
+		expect(sanityCheck(testWf.dump())).to.eq(true);
 	});
 
 	it('bad duplication', () => {
 		const testWf = _.cloneDeep(wf);
-		workflowService.branchWorkflow(testWf, 'does not exist');
-		expect(_nodes(testWf).length).to.eq(5);
-		expect(_edges(testWf).length).to.eq(4);
+		testWf.branchWorkflow('does not exist');
+		expect(testWf.getNodes().length).to.eq(5);
+		expect(testWf.getEdges().length).to.eq(4);
 	});
 });
 
@@ -240,16 +196,11 @@ describe('workflow copying branch >- fork', () => {
 	 *  n2 _/
 	 *
 	 * */
-	const wf = workflowService.emptyWorkflow('test', 'test');
-	workflowService.addNode(wf, testOp, { x: 0, y: 800 }, {});
-	workflowService.addNode(wf, testOp, { x: 0, y: 0 }, {});
-	workflowService.addNode(wf, testOp, { x: 300, y: 400 }, {});
-	workflowService.addNode(wf, testOp, { x: 600, y: 40 }, {});
-
-	const n1 = wf.nodes[0];
-	const n2 = wf.nodes[1];
-	const n3 = wf.nodes[2];
-	const n4 = wf.nodes[3];
+	const wf = new workflowService.WorkflowWrapper();
+	const n1 = wf.addNode(testOp, { x: 0, y: 800 }, {});
+	const n2 = wf.addNode(testOp, { x: 0, y: 0 }, {});
+	const n3 = wf.addNode(testOp, { x: 300, y: 400 }, {});
+	const n4 = wf.addNode(testOp, { x: 600, y: 40 }, {});
 	const NC = WorkflowPortStatus.NOT_CONNECTED;
 
 	n1.outputs = [{ id: 'n1o', type: 'number', value: [1], status: NC, isOptional: false }];
@@ -274,24 +225,24 @@ describe('workflow copying branch >- fork', () => {
 	n4.inputs = [{ id: 'n4i', type: 'number', value: [3], status: NC, isOptional: false }];
 	n4.outputs = [{ id: 'n4o', type: 'number', value: [4], status: NC, isOptional: false }];
 
-	workflowService.addEdge(wf, n1.id, 'n1o', n3.id, 'n3i_1', []);
-	workflowService.addEdge(wf, n2.id, 'n2o', n3.id, 'n3i_2', []);
-	workflowService.addEdge(wf, n3.id, 'n3o', n4.id, 'n4i', []);
+	wf.addEdge(n1.id, 'n1o', n3.id, 'n3i_1', []);
+	wf.addEdge(n2.id, 'n2o', n3.id, 'n3i_2', []);
+	wf.addEdge(n3.id, 'n3o', n4.id, 'n4i', []);
 
 	it('bootstrapped workflow programmatically', () => {
-		expect(_nodes(wf).length).to.eq(4);
-		expect(_edges(wf).length).to.eq(3);
-		expect(sanityCheck(wf)).to.eq(true);
+		expect(wf.getNodes().length).to.eq(4);
+		expect(wf.getEdges().length).to.eq(3);
+		expect(sanityCheck(wf.dump())).to.eq(true);
 	});
 
 	it('duplicate at fork', () => {
 		const testWf = _.cloneDeep(wf);
-		workflowService.branchWorkflow(testWf, n3.id);
-		expect(_nodes(testWf).length).to.eq(6);
-		expect(_edges(testWf).length).to.eq(6);
-		expect(_edges(testWf).filter((edge) => edge.source === n1.id).length).to.eq(2);
-		expect(_edges(testWf).filter((edge) => edge.source === n2.id).length).to.eq(2);
-		expect(sanityCheck(wf)).to.eq(true);
+		testWf.branchWorkflow(n3.id);
+		expect(testWf.getNodes().length).to.eq(6);
+		expect(testWf.getEdges().length).to.eq(6);
+		expect(testWf.getEdges().filter((edge) => edge.source === n1.id).length).to.eq(2);
+		expect(testWf.getEdges().filter((edge) => edge.source === n2.id).length).to.eq(2);
+		expect(sanityCheck(testWf.dump())).to.eq(true);
 	});
 });
 
@@ -327,14 +278,13 @@ describe('workflow operator with multiple output types', () => {
 		outputs: []
 	};
 
-	const wf = workflowService.emptyWorkflow('test', 'test');
-	workflowService.addNode(wf, multiOutputOp, { x: 0, y: 0 }, {});
-	workflowService.addNode(wf, datasetOp, { x: 0, y: 0 }, {});
-	workflowService.addNode(wf, modelConfigOp, { x: 0, y: 0 }, {});
-	workflowService.addNode(wf, testOp, { x: 0, y: 0 }, {});
-	workflowService.addNode(wf, edgeCaseOp, { x: 0, y: 0 }, {});
+	const wf = new workflowService.WorkflowWrapper();
 
-	const multiOutputNode = wf.nodes[0];
+	const multiOutputNode = wf.addNode(multiOutputOp, { x: 0, y: 0 }, {});
+	const datasetNode = wf.addNode(datasetOp, { x: 0, y: 0 }, {});
+	const modelNode = wf.addNode(modelConfigOp, { x: 0, y: 0 }, {});
+	const testNode = wf.addNode(testOp, { x: 0, y: 0 }, {});
+	const edgeCaseNode = wf.addNode(edgeCaseOp, { x: 0, y: 0 }, {});
 	multiOutputNode.outputs[0].value = [
 		{
 			datasetId: 'dataset xyz',
@@ -342,83 +292,44 @@ describe('workflow operator with multiple output types', () => {
 		}
 	];
 
-	const datasetNode = wf.nodes[1];
-	const modelNode = wf.nodes[2];
-	const testNode = wf.nodes[3];
-	const edgeCaseNode = wf.nodes[4];
-
 	it('dataset|model => dataset', () => {
-		workflowService.addEdge(
-			wf,
-			multiOutputNode.id,
-			multiOutputNode.outputs[0].id,
-			datasetNode.id,
-			datasetNode.inputs[0].id,
-			[]
-		);
+		wf.addEdge(multiOutputNode.id, multiOutputNode.outputs[0].id, datasetNode.id, datasetNode.inputs[0].id, []);
 
 		expect(datasetNode.inputs[0].value).toMatchObject(['dataset xyz']);
-		expect(_edges(wf).length).eq(1);
-		workflowService.removeEdge(wf, _edges(wf)[0].id);
+		expect(wf.getEdges().length).eq(1);
+		wf.removeEdge(wf.getEdges()[0].id);
 	});
 
 	it('dataset|model => model', () => {
-		workflowService.addEdge(
-			wf,
-			multiOutputNode.id,
-			multiOutputNode.outputs[0].id,
-			modelNode.id,
-			modelNode.inputs[0].id,
-			[]
-		);
+		wf.addEdge(multiOutputNode.id, multiOutputNode.outputs[0].id, modelNode.id, modelNode.inputs[0].id, []);
 
 		expect(modelNode.inputs[0].value).toMatchObject(['model abc']);
-		expect(_edges(wf).length).eq(1);
-		workflowService.removeEdge(wf, _edges(wf)[0].id);
+		expect(wf.getEdges().length).eq(1);
+		wf.removeEdge(wf.getEdges()[0].id);
 	});
 
 	it('dataset|model => test', () => {
-		workflowService.addEdge(
-			wf,
-			multiOutputNode.id,
-			multiOutputNode.outputs[0].id,
-			testNode.id,
-			testNode.inputs[0].id,
-			[]
-		);
+		wf.addEdge(multiOutputNode.id, multiOutputNode.outputs[0].id, testNode.id, testNode.inputs[0].id, []);
 
 		expect(testNode.inputs[0].value).toBeNull();
-		expect(_edges(wf).length).eq(0);
+		expect(wf.getEdges().length).eq(0);
 	});
 
 	it('edge case many to many', () => {
-		workflowService.addEdge(
-			wf,
-			multiOutputNode.id,
-			multiOutputNode.outputs[0].id,
-			edgeCaseNode.id,
-			edgeCaseNode.inputs[0].id,
-			[]
-		);
+		wf.addEdge(multiOutputNode.id, multiOutputNode.outputs[0].id, edgeCaseNode.id, edgeCaseNode.inputs[0].id, []);
 		expect(edgeCaseNode.inputs[0].value).toBeNull();
-		expect(_edges(wf).length).eq(0);
+		expect(wf.getEdges().length).eq(0);
 	});
 });
 
 describe('get neighbor nodes for drilldown navigation', () => {
-	const wf = workflowService.emptyWorkflow('test', 'test');
+	const wf = new workflowService.WorkflowWrapper();
 
-	workflowService.addNode(wf, testOp, { x: 0, y: 0 }, {});
-	workflowService.addNode(wf, testOp, { x: 300, y: 0 }, {});
-	workflowService.addNode(wf, testOp, { x: 600, y: 0 }, {});
-	workflowService.addNode(wf, testOp, { x: 900, y: -200 }, {});
-	workflowService.addNode(wf, testOp, { x: 900, y: 200 }, {});
-
-	const n1 = wf.nodes[0];
-	const n2 = wf.nodes[1];
-	const n3 = wf.nodes[2];
-	const n4 = wf.nodes[3];
-	const n5 = wf.nodes[4];
+	const n1 = wf.addNode(testOp, { x: 0, y: 0 }, {});
+	const n2 = wf.addNode(testOp, { x: 300, y: 0 }, {});
+	const n3 = wf.addNode(testOp, { x: 600, y: 0 }, {});
+	const n4 = wf.addNode(testOp, { x: 900, y: -200 }, {});
+	const n5 = wf.addNode(testOp, { x: 900, y: 200 }, {});
 
 	const NC = WorkflowPortStatus.NOT_CONNECTED;
 
@@ -432,26 +343,26 @@ describe('get neighbor nodes for drilldown navigation', () => {
 	n5.inputs = [{ id: 'n5i', type: 'number', value: [3], status: NC, isOptional: false }];
 	n5.outputs = [{ id: 'n5o', type: 'number', value: [5], status: NC, isOptional: false }];
 
-	workflowService.addEdge(wf, n1.id, 'n1o', n2.id, 'n2i', []);
-	workflowService.addEdge(wf, n2.id, 'n2o', n3.id, 'n3i', []);
-	workflowService.addEdge(wf, n3.id, 'n3o', n4.id, 'n4i', []);
-	workflowService.addEdge(wf, n3.id, 'n3o', n5.id, 'n5i', []);
+	wf.addEdge(n1.id, 'n1o', n2.id, 'n2i', []);
+	wf.addEdge(n2.id, 'n2o', n3.id, 'n3i', []);
+	wf.addEdge(n3.id, 'n3o', n4.id, 'n4i', []);
+	wf.addEdge(n3.id, 'n3o', n5.id, 'n5i', []);
 
 	it('get neighbors for n1', () => {
-		const { upstreamNodes, downstreamNodes } = workflowService.getNeighborNodes(wf, n1.id);
+		const { upstreamNodes, downstreamNodes } = wf.getNeighborNodes(n1.id);
 		expect(upstreamNodes.length + downstreamNodes.length).to.eq(1);
 		expect(downstreamNodes[0].id).to.eq(n2.id);
 	});
 
 	it('get neighbors for n2', () => {
-		const { upstreamNodes, downstreamNodes } = workflowService.getNeighborNodes(wf, n2.id);
+		const { upstreamNodes, downstreamNodes } = wf.getNeighborNodes(n2.id);
 		expect(upstreamNodes.length + downstreamNodes.length).to.eq(2);
 		expect(upstreamNodes[0].id).to.eq(n1.id);
 		expect(downstreamNodes[0].id).to.eq(n3.id);
 	});
 
 	it('get neighbors for n3', () => {
-		const { upstreamNodes, downstreamNodes } = workflowService.getNeighborNodes(wf, n3.id);
+		const { upstreamNodes, downstreamNodes } = wf.getNeighborNodes(n3.id);
 		expect(upstreamNodes.length + downstreamNodes.length).to.eq(3);
 		expect(upstreamNodes[0].id).to.eq(n2.id);
 		expect(downstreamNodes[0].id).to.eq(n4.id);
@@ -459,19 +370,19 @@ describe('get neighbor nodes for drilldown navigation', () => {
 	});
 
 	it('get neighbors for n4', () => {
-		const { upstreamNodes, downstreamNodes } = workflowService.getNeighborNodes(wf, n4.id);
+		const { upstreamNodes, downstreamNodes } = wf.getNeighborNodes(n4.id);
 		expect(upstreamNodes.length + downstreamNodes.length).to.eq(1);
 		expect(upstreamNodes[0].id).to.eq(n3.id);
 	});
 
 	it('get neighbors for n5', () => {
-		const { upstreamNodes, downstreamNodes } = workflowService.getNeighborNodes(wf, n5.id);
+		const { upstreamNodes, downstreamNodes } = wf.getNeighborNodes(n5.id);
 		expect(upstreamNodes.length + downstreamNodes.length).to.eq(1);
 		expect(upstreamNodes[0].id).to.eq(n3.id);
 	});
 
 	it('get neighbors for non-existent node', () => {
-		const { upstreamNodes, downstreamNodes } = workflowService.getNeighborNodes(wf, 'does not exist');
+		const { upstreamNodes, downstreamNodes } = wf.getNeighborNodes('does not exist');
 		expect(upstreamNodes.length + downstreamNodes.length).to.eq(0);
 	});
 });
