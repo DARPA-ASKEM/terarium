@@ -150,7 +150,12 @@
 				<!-- Loss chart -->
 				<h5>Loss</h5>
 				<div ref="lossChartContainer">
-					<vega-chart ref="lossChartRef" :are-embed-actions-visible="true" :visualization-spec="lossChartSpec" />
+					<vega-chart
+						v-if="lossValues.length > 0 || showSpinner"
+						ref="lossChartRef"
+						:are-embed-actions-visible="true"
+						:visualization-spec="lossChartSpec"
+					/>
 				</div>
 
 				<!-- Variable charts -->
@@ -530,7 +535,7 @@ const preparedDistributionCharts = computed(() => {
 const LOSS_CHART_DATA_SOURCE = 'lossData'; // Name of the streaming data source
 const lossChartRef = ref<InstanceType<typeof VegaChart>>();
 const lossChartSpec = ref();
-let lossValues: { [key: string]: number }[] = [];
+const lossValues = ref<{ [key: string]: number }[]>([]);
 const updateLossChartSpec = (data: string | Record<string, any>[]) => {
 	lossChartSpec.value = createForecastChart(
 		null,
@@ -562,7 +567,7 @@ const runCalibrate = async () => {
 	}
 
 	// Reset loss buffer
-	lossValues = [];
+	lossValues.value = [];
 
 	const state = _.cloneDeep(props.node.state);
 
@@ -602,9 +607,9 @@ const runCalibrate = async () => {
 
 const messageHandler = (event: ClientEvent<any>) => {
 	if (!lossChartRef.value?.view) return;
-	const data = { iter: lossValues.length, loss: event.data.loss };
+	const data = { iter: lossValues.value.length, loss: event.data.loss };
 	lossChartRef.value.view.change(LOSS_CHART_DATA_SOURCE, vega.changeset().insert(data)).resize().run();
-	lossValues.push(data);
+	lossValues.value.push(data);
 };
 
 const onSelection = (id: string) => {
@@ -698,7 +703,7 @@ watch(
 	(id) => {
 		if (id === '') {
 			showSpinner.value = false;
-			updateLossChartSpec(lossValues);
+			updateLossChartSpec(lossValues.value);
 			unsubscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
 		} else {
 			showSpinner.value = true;
@@ -719,11 +724,11 @@ watch(
 			// Fetch saved intermediate state
 			const simulationObj = await getSimulation(props.node.state.calibrationId);
 			if (simulationObj?.updates) {
-				lossValues = simulationObj?.updates.map((d, i) => ({
+				lossValues.value = simulationObj?.updates.map((d, i) => ({
 					iter: i,
 					loss: d.data.loss
 				}));
-				updateLossChartSpec(lossValues);
+				updateLossChartSpec(lossValues.value);
 			}
 
 			const state = props.node.state;
