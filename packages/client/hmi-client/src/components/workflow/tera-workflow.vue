@@ -293,7 +293,7 @@ async function updateWorkflowName() {
 	await workflowService.updateWorkflow(workflowClone);
 	await useProjects().refresh();
 	isRenamingWorkflow.value = false;
-	wf.value = await workflowService.getWorkflow(props.assetId);
+	wf.value.load(await workflowService.getWorkflow(props.assetId));
 }
 
 function appendInputPort(node: WorkflowNode<any>, port: { type: string; label?: string; value: any }) {
