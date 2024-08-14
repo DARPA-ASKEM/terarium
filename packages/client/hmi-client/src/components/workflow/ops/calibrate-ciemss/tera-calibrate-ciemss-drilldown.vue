@@ -165,47 +165,67 @@
 				<!-- Variable charts -->
 				<div v-if="!showSpinner" class="form-section">
 					<section v-if="modelConfig && csvAsset" ref="outputPanel">
-						<h5>Parameters</h5>
-						<tera-chart-control
-							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedParameters }"
-							:multi-select="true"
-							:show-remove-button="false"
-							:variables="Object.keys(pyciemssMap).filter((c) => modelPartTypesMap[c] === 'parameter')"
-							@configuration-change="updateSelectedParameters"
-						/>
-						<template v-for="param of node.state.selectedParameters" :key="param">
-							<vega-chart
-								:are-embed-actions-visible="true"
-								:visualization-spec="preparedDistributionCharts[param].histogram"
-							>
-								<template v-slot:footer>
-									<table class="distribution-table">
-										<thead>
-											<tr>
-												<th scope="col"></th>
-												<th scope="col">{{ preparedDistributionCharts[param].stat.header[0] }}</th>
-												<th scope="col">{{ preparedDistributionCharts[param].stat.header[1] }}</th>
-											</tr>
-										</thead>
-										<tbody>
-											<tr>
-												<th scope="row">Mean</th>
-												<td>{{ preparedDistributionCharts[param].stat.mean[0] }}</td>
-												<td>{{ preparedDistributionCharts[param].stat.mean[1] }}</td>
-											</tr>
-											<tr>
-												<th scope="row">Variance</th>
-												<td>{{ preparedDistributionCharts[param].stat.variance[0] }}</td>
-												<td>{{ preparedDistributionCharts[param].stat.variance[1] }}</td>
-											</tr>
-										</tbody>
-									</table>
+						<Accordion multiple :active-index="[0, 1, 2]">
+							<AccordionTab header="Parameters">
+								<tera-chart-control
+									:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedParameters }"
+									:multi-select="true"
+									:show-remove-button="false"
+									:variables="Object.keys(pyciemssMap).filter((c) => modelPartTypesMap[c] === 'parameter')"
+									@configuration-change="updateSelectedParameters"
+								/>
+								<template v-for="param of node.state.selectedParameters" :key="param">
+									<vega-chart
+										:are-embed-actions-visible="true"
+										:visualization-spec="preparedDistributionCharts[param].histogram"
+									>
+										<template v-slot:footer>
+											<table class="distribution-table">
+												<thead>
+													<tr>
+														<th scope="col"></th>
+														<th scope="col">{{ preparedDistributionCharts[param].stat.header[0] }}</th>
+														<th scope="col">{{ preparedDistributionCharts[param].stat.header[1] }}</th>
+													</tr>
+												</thead>
+												<tbody>
+													<tr>
+														<th scope="row">Mean</th>
+														<td>{{ preparedDistributionCharts[param].stat.mean[0] }}</td>
+														<td>{{ preparedDistributionCharts[param].stat.mean[1] }}</td>
+													</tr>
+													<tr>
+														<th scope="row">Variance</th>
+														<td>{{ preparedDistributionCharts[param].stat.variance[0] }}</td>
+														<td>{{ preparedDistributionCharts[param].stat.variance[1] }}</td>
+													</tr>
+												</tbody>
+											</table>
+										</template>
+									</vega-chart>
 								</template>
-							</vega-chart>
-						</template>
-						<template v-for="variable of node.state.selectedSimulationVariables" :key="variable">
-							<vega-chart :are-embed-actions-visible="true" :visualization-spec="preparedCharts[variable]" />
-						</template>
+							</AccordionTab>
+							<AccordionTab header="Simulation plots">
+								<ul v-if="runResult && selectedOutputId">
+									<li v-for="variable of node.state.selectedSimulationVariables" :key="variable">
+										<vega-chart
+											:are-embed-actions-visible="true"
+											:visualization-spec="preparedCharts.simulationCharts[variable]"
+										/>
+									</li>
+								</ul>
+							</AccordionTab>
+							<AccordionTab header="Interventions">
+								<ul v-if="runResult && selectedOutputId">
+									<li v-for="variable of node.state.selectedInterventionVariables" :key="variable">
+										<vega-chart
+											are-embed-actions-visible
+											:visualization-spec="preparedCharts.interventionCharts[variable]"
+										/>
+									</li>
+								</ul>
+							</AccordionTab>
+						</Accordion>
 					</section>
 					<section v-else-if="!modelConfig" class="emptyState">
 						<img src="@assets/svg/seed.svg" alt="" draggable="false" />
@@ -225,13 +245,15 @@
 </template>
 
 <script setup lang="ts">
-import _ from 'lodash';
+import _, { Dictionary } from 'lodash';
 import { csvParse, autoType, mean, variance } from 'd3';
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
 import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { CalibrateMap, renderLossGraph, setupDatasetInput, setupModelInput } from '@/services/calibrate-workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -247,7 +269,8 @@ import {
 	ClientEventType,
 	CsvAsset,
 	DatasetColumn,
-	ModelConfiguration
+	ModelConfiguration,
+	Model
 } from '@/types/Types';
 import { getTimespan, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 import teraPyciemssOutputSettings, {
@@ -265,8 +288,9 @@ import {
 	DataArray,
 	CiemssMethodOptions
 } from '@/services/models/simulation-service';
+import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
 import type { WorkflowNode } from '@/types/workflow';
-import { createForecastChart, createHistogramChart } from '@/services/charts';
+import { createForecastChart, createHistogramChart, createInterventionChartMarkers } from '@/services/charts';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
@@ -323,6 +347,7 @@ const modelStateOptions = ref<any[] | undefined>();
 const datasetColumns = ref<DatasetColumn[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
+const model = ref<Model | null>(null);
 const modelConfig = ref<ModelConfiguration>();
 
 const modelVarUnits = ref<{ [key: string]: string }>({});
@@ -448,9 +473,45 @@ const preparedChartInputs = computed(() => {
 	};
 });
 
+const getUnit = (paramId: string) => {
+	if (!model.value) return '';
+	return getUnitsFromModelParts(model.value)[paramId] || '';
+};
+
+const preProcessedInterventionsData = computed<Dictionary<{ name: string; value: number; time: number }[]>>(() => {
+	if (!policyInterventionId.value) return {};
+
+	const interventions = [
+		...(policyInterventionId.value.interventions.flatMap((inter) =>
+			inter.staticInterventions.map((intervention) => ({
+				appliedTo: inter.appliedTo,
+				name: inter.name,
+				value: intervention.value,
+				time: intervention.timestep
+			}))
+		) || [])
+	];
+
+	// Group by appliedTo and map to exclude 'appliedTo' from final objects
+	const groupedAndMapped = _.mapValues(_.groupBy(interventions, 'appliedTo'), (int) =>
+		int.map(({ name, value, time }) => ({
+			name,
+			value,
+			time
+		}))
+	);
+
+	return groupedAndMapped;
+});
+
 const preparedCharts = computed(() => {
-	if (!preparedChartInputs.value) return [];
-	const { result, resultSummary, reverseMap } = preparedChartInputs.value;
+	const charts: { interventionCharts: any[]; simulationCharts: any[] } = {
+		interventionCharts: [],
+		simulationCharts: []
+	};
+
+	if (!preparedChartInputs.value) return charts;
+	const { result, resultSummary } = preparedChartInputs.value;
 	const state = props.node.state;
 
 	// FIXME: Hacky re-parse CSV with correct data types
@@ -461,17 +522,34 @@ const preparedCharts = computed(() => {
 		groundTruth = csvParse(csvRaw, autoType);
 	}
 
+	const chartOptions = {
+		width: chartSize.value.width,
+		height: chartSize.value.height,
+		legend: true,
+		xAxisTitle: getUnit('_time') || 'Time',
+		yAxisTitle: getUnit('') || '',
+		title: '',
+		colorscheme: ['#AAB3C6', '#1B8073'],
+		translationMap: {}
+	};
+
+	const translationMap = (variable: string) => ({
+		[`${pyciemssMap[variable]}_mean:pre`]: `${variable} before optimization`,
+		[`${pyciemssMap[variable]}_mean`]: `${variable} after optimization`
+	});
+
 	// Need to get the dataset's time field
 	const datasetTimeField = state.mapping.find((d) => d.modelVariable === 'timestamp')?.datasetVariable;
 
-	const charts = {};
+	// simulation chart spec
 	state.selectedSimulationVariables.forEach((variable) => {
+		const options = _.cloneDeep(chartOptions);
 		const datasetVariables: string[] = [];
 		const mapObj = state.mapping.find((d) => d.modelVariable === variable);
 		if (mapObj) {
 			datasetVariables.push(mapObj.datasetVariable);
 		}
-		charts[variable] = createForecastChart(
+		charts.simulationCharts[variable] = createForecastChart(
 			{
 				dataset: result,
 				variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
@@ -489,18 +567,36 @@ const preparedCharts = computed(() => {
 				timeField: datasetTimeField as string,
 				groupField: 'sample_id'
 			},
-			{
-				title: variable,
-				width: chartSize.value.width,
-				height: chartSize.value.height,
-				legend: true,
-				translationMap: reverseMap,
-				xAxisTitle: modelVarUnits.value._time || 'Time',
-				yAxisTitle: modelVarUnits.value[variable] || '',
-				colorscheme: ['#AAB3C6', '#1B8073']
-			}
+			options
 		);
 	});
+
+	// intervention chart spec
+	charts.interventionCharts = knobs.value.selectedInterventionVariables.map((variable) => {
+		const options = _.cloneDeep(chartOptions);
+		options.translationMap = translationMap(variable);
+		options.yAxisTitle = getUnit(variable);
+
+		const forecastChart = createForecastChart(
+			{
+				dataset: result,
+				variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
+				timeField: 'timepoint_id',
+				groupField: 'sample_id'
+			},
+			{
+				dataset: resultSummary,
+				variables: [`${pyciemssMap[variable]}_mean:pre`, `${pyciemssMap[variable]}_mean`],
+				timeField: 'timepoint_id'
+			},
+			null,
+			options
+		);
+		// add intervention annotations (rules and text)
+		forecastChart.layer.push(...createInterventionChartMarkers(preProcessedInterventionsData.value[variable]));
+		return forecastChart;
+	});
+
 	return charts;
 });
 
@@ -672,6 +768,7 @@ onMounted(async () => {
 	modelStateOptions.value = modelOptions;
 	modelVarUnits.value = modelPartUnits ?? {};
 	modelPartTypesMap.value = modelPartTypes ?? {};
+	if (modelConfigId.value) model.value = await getModelByModelConfigurationId(modelConfigId.value);
 
 	// dataset input
 	const { filename, csv, datasetOptions } = await setupDatasetInput(datasetId.value);
