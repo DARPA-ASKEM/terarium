@@ -138,8 +138,7 @@ export class WorkflowWrapper {
 				label: port.label,
 				status: WorkflowPortStatus.NOT_CONNECTED,
 				value: null,
-				isOptional: port.isOptional ?? false,
-				acceptMultiple: port.acceptMultiple
+				isOptional: port.isOptional ?? false
 			})),
 
 			outputs: op.outputs.map((port) => ({
@@ -149,7 +148,6 @@ export class WorkflowWrapper {
 				status: WorkflowPortStatus.NOT_CONNECTED,
 				value: null,
 				isOptional: false,
-				acceptMultiple: false,
 				state: {}
 			})),
 
@@ -227,10 +225,7 @@ export class WorkflowWrapper {
 		}
 
 		// Not supported if there is a mismatch
-		if (
-			intersectionTypes.length === 0 ||
-			(!targetInputPort.acceptMultiple && targetInputPort.status === WorkflowPortStatus.CONNECTED)
-		) {
+		if (intersectionTypes.length === 0 || targetInputPort.status === WorkflowPortStatus.CONNECTED) {
 			return;
 		}
 

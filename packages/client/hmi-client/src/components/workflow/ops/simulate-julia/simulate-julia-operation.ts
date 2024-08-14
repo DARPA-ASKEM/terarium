@@ -19,7 +19,7 @@ export const SimulateJuliaOperation: Operation = {
 	displayName: 'Simulate with SciML',
 	description: 'given a model id, and configuration id, run a simulation',
 	documentationUrl: DOCUMENTATION_URL,
-	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }],
+	inputs: [{ type: 'modelConfigId', label: 'Model configuration' }],
 	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
 
