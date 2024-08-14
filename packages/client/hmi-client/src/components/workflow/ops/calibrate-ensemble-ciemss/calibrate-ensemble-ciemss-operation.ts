@@ -29,7 +29,7 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 	imageUrl: calibrateEnsembleCiemss,
 	inputs: [
 		{ type: 'datasetId', label: 'Dataset' },
-		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }
+		{ type: 'modelConfigId', label: 'Model configuration' }
 	],
 	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
