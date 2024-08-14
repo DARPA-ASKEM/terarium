@@ -87,9 +87,8 @@ const updateValue = (event: Event) => {
 	if (props.charactersToReject && !isEmpty(props.charactersToReject)) {
 		const start = target.selectionStart;
 		const end = target.selectionEnd;
-		target.value = target.value.replace(/\s+/g, ''); // Don't allow spaces since unit variables can't have spaces
-		// target.value = target.value.split(props.charactersToReject[0]).join('');
-		target.setSelectionRange(start, end); // Maintain cursor position
+		target.value = target.value.replace(new RegExp(`[${props.charactersToReject.join('')}]`, 'g'), ''); // Create a regex pattern from charactersToReject to remove them
+		target.setSelectionRange(start, end); // Maintain cursor position, is needed if we are entering in the middle of the input
 	}
 	emit('update:model-value', target.value);
 };
