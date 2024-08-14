@@ -1048,8 +1048,10 @@ public class ProjectController {
 				projectPermissionsService.removeProjectPermissions(project, who, relationship);
 			}
 			return ResponseEntity.ok().build();
+		} catch (final ResponseStatusException e) {
+			throw e;
 		} catch (final Exception e) {
-			log.error("Failed to set project public permissions", e);
+			log.error("Unexpected error, failed to set project public permissions", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
 	}
