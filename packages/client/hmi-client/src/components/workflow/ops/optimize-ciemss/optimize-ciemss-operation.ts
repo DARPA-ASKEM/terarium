@@ -121,11 +121,10 @@ export const OptimizeCiemssOperation: Operation = {
 	documentationUrl: DOCUMENTATION_URL,
 	imageUrl: optimizeModel,
 	inputs: [
-		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },
+		{ type: 'modelConfigId', label: 'Model configuration' },
 		{
 			type: 'policyInterventionId',
-			label: 'Intervention Policy',
-			acceptMultiple: false
+			label: 'Intervention Policy'
 		}
 	],
 	outputs: [{ type: 'policyInterventionId|datasetId' }],

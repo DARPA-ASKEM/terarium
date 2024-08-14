@@ -321,3 +321,68 @@ describe('workflow operator with multiple output types', () => {
 		expect(wf.getEdges().length).eq(0);
 	});
 });
+
+describe('get neighbor nodes for drilldown navigation', () => {
+	const wf = new workflowService.WorkflowWrapper();
+
+	const n1 = wf.addNode(testOp, { x: 0, y: 0 }, {});
+	const n2 = wf.addNode(testOp, { x: 300, y: 0 }, {});
+	const n3 = wf.addNode(testOp, { x: 600, y: 0 }, {});
+	const n4 = wf.addNode(testOp, { x: 900, y: -200 }, {});
+	const n5 = wf.addNode(testOp, { x: 900, y: 200 }, {});
+
+	const NC = WorkflowPortStatus.NOT_CONNECTED;
+
+	n1.outputs = [{ id: 'n1o', type: 'number', value: [1], status: NC, isOptional: false }];
+	n2.inputs = [{ id: 'n2i', type: 'number', value: [1], status: NC, isOptional: false }];
+	n2.outputs = [{ id: 'n2o', type: 'number', value: [2], status: NC, isOptional: false }];
+	n3.inputs = [{ id: 'n3i', type: 'number', value: [2], status: NC, isOptional: false }];
+	n3.outputs = [{ id: 'n3o', type: 'number', value: [3], status: NC, isOptional: false }];
+	n4.inputs = [{ id: 'n4i', type: 'number', value: [3], status: NC, isOptional: false }];
+	n4.outputs = [{ id: 'n4o', type: 'number', value: [4], status: NC, isOptional: false }];
+	n5.inputs = [{ id: 'n5i', type: 'number', value: [3], status: NC, isOptional: false }];
+	n5.outputs = [{ id: 'n5o', type: 'number', value: [5], status: NC, isOptional: false }];
+
+	wf.addEdge(n1.id, 'n1o', n2.id, 'n2i', []);
+	wf.addEdge(n2.id, 'n2o', n3.id, 'n3i', []);
+	wf.addEdge(n3.id, 'n3o', n4.id, 'n4i', []);
+	wf.addEdge(n3.id, 'n3o', n5.id, 'n5i', []);
+
+	it('get neighbors for n1', () => {
+		const { upstreamNodes, downstreamNodes } = wf.getNeighborNodes(n1.id);
+		expect(upstreamNodes.length + downstreamNodes.length).to.eq(1);
+		expect(downstreamNodes[0].id).to.eq(n2.id);
+	});
+
+	it('get neighbors for n2', () => {
+		const { upstreamNodes, downstreamNodes } = wf.getNeighborNodes(n2.id);
+		expect(upstreamNodes.length + downstreamNodes.length).to.eq(2);
+		expect(upstreamNodes[0].id).to.eq(n1.id);
+		expect(downstreamNodes[0].id).to.eq(n3.id);
+	});
+
+	it('get neighbors for n3', () => {
+		const { upstreamNodes, downstreamNodes } = wf.getNeighborNodes(n3.id);
+		expect(upstreamNodes.length + downstreamNodes.length).to.eq(3);
+		expect(upstreamNodes[0].id).to.eq(n2.id);
+		expect(downstreamNodes[0].id).to.eq(n4.id);
+		expect(downstreamNodes[1].id).to.eq(n5.id);
+	});
+
+	it('get neighbors for n4', () => {
+		const { upstreamNodes, downstreamNodes } = wf.getNeighborNodes(n4.id);
+		expect(upstreamNodes.length + downstreamNodes.length).to.eq(1);
+		expect(upstreamNodes[0].id).to.eq(n3.id);
+	});
+
+	it('get neighbors for n5', () => {
+		const { upstreamNodes, downstreamNodes } = wf.getNeighborNodes(n5.id);
+		expect(upstreamNodes.length + downstreamNodes.length).to.eq(1);
+		expect(upstreamNodes[0].id).to.eq(n3.id);
+	});
+
+	it('get neighbors for non-existent node', () => {
+		const { upstreamNodes, downstreamNodes } = wf.getNeighborNodes('does not exist');
+		expect(upstreamNodes.length + downstreamNodes.length).to.eq(0);
+	});
+});

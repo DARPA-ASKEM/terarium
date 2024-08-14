@@ -29,11 +29,10 @@ export const SimulateCiemssOperation: Operation = {
 	documentationUrl: DOCUMENTATION_URL,
 	imageUrl: simulateProbabilistic,
 	inputs: [
-		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },
+		{ type: 'modelConfigId', label: 'Model configuration' },
 		{
 			type: 'policyInterventionId',
 			label: 'Interventions',
-			acceptMultiple: false,
 			isOptional: true
 		}
 	],
