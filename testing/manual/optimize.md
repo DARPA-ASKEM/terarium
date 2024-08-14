@@ -30,7 +30,7 @@ Note: sampling combinations in PyCIEMSS can result in numerical instability, whe
 #### 4.a Static intervention
 1. Set _NPI mult_ to `0.5` starting at _time_ `61` 
 2. Optimize intervention: set _H_ to `< 20 000` in all time points in `95%` of simulated outcomes. 
-3. Find a new start time for _NPI mult_ **upper** bound (how long we can delay masking). Start time `60`, end time `150`, initial guess `61`. 
+3. Find a `new start time` for _NPI mult_ **upper** bound (how long we can delay masking). Start time `60`, end time `150`, initial guess `61`. 
 4. Optimization settings: end time `150`, maxiter `3` max eval `30`
 
 #### 4.b Dynamic intervention
@@ -41,9 +41,9 @@ Note: sampling combinations in PyCIEMSS can result in numerical instability, whe
 1. Create a Hospitalizations Policy operation with the `Intervention Policy` operator.
 
 #### 5.a Static intervention
-1. Set _NPI mult_ to `0.5` starting at _time_ `118`
+1. Create an intervention for _NPI mult_, set its value to `0.5`, and starting time to `118`
 2. Optimize intervention: set _H_ to `< 20 000` in all time points in `95%` of simulated outcomes.
-3. Find a new start time for _NPI mult_ **upper** bound (minimal reduction in transmission). Min value = `.0002` intial guess `.5` max = `.9996`
+3. Find a `new value` for _NPI mult_ **upper** bound (minimal reduction in transmission). Using the following guidelines: Min value = `.0002` intial guess `.5` max = `.9996`
 4. Optimization settings: end time `150`, maxiter `3` max eval `30`
 
 #### 5.b Dynamic intervention
@@ -54,5 +54,5 @@ Note: sampling combinations in PyCIEMSS can result in numerical instability, whe
 1. Create a Vaccinations operation with the `Intervention Policy` operator.
 2. Set _r_sv_ to `20 000` starting at _time_ `61`
 3. Optimize intervention: set _H_ to `< 13 000` in all time points in `95%` of simulated outcomes.
-4. Find a new start time for _r_sv_ **lower** bound (minimal increase in daily vaccinations). Min value = `10 000` intial guess `20 000` max = `90 000`
+4. Find a `new start time` for _r_sv_ **lower** bound (minimal increase in daily vaccinations). Min value = `10 000` intial guess `20 000` max = `90 000`
 5. Optimization settings: end time `150`, maxiter `3` max eval `30`
