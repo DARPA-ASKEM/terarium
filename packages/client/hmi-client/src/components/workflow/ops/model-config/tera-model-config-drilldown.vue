@@ -175,19 +175,6 @@
 			</tera-drilldown-preview>
 		</tera-columnar-panel>
 	</tera-drilldown>
-	<tera-drilldown
-		v-if="suggestedConfigurationContext.isOpen"
-		:title="suggestedConfigurationContext.modelConfiguration?.name ?? 'Model Configuration'"
-		:node="node"
-		@on-close-clicked="suggestedConfigurationContext.isOpen = false"
-		popover
-	>
-		<tera-drilldown-section class="p-2">
-			<!-- Redo this to show model configs-->
-			<tera-model-parts v-if="model" :model="model" :feature-config="{ isPreview: true }" />
-		</tera-drilldown-section>
-	</tera-drilldown>
-
 	<tera-modal v-if="sanityCheckErrors.length > 0">
 		<template #header>
 			<h4>Warning, these settings may cause errors</h4>
@@ -232,7 +219,6 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import TeraModelParts from '@/components/model/tera-model-parts.vue';
 import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';

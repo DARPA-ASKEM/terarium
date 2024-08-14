@@ -16,7 +16,7 @@ export const ModelEditOperation: Operation = {
 	documentationUrl: DOCUMENTATION_URL,
 	imageUrl: editModel,
 	isRunnable: false,
-	inputs: [{ type: 'modelId|modelConfigId', label: 'Model or Model configuration', acceptMultiple: false }],
+	inputs: [{ type: 'modelId|modelConfigId', label: 'Model or Model configuration' }],
 	outputs: [{ type: 'modelId', label: 'Model' }],
 	action: async () => ({}),
 	initState: () => {
