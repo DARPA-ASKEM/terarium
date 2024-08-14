@@ -73,7 +73,7 @@ const projectMenuItems = computed(() => {
 		items.push(renameMenuItem, shareMenuItem, separatorMenuItem, removeMenuItem);
 	}
 	if (props.project?.userPermission === 'writer') {
-		items.push(renameMenuItem, shareMenuItem);
+		items.push(renameMenuItem);
 	}
 	return items;
 });
