@@ -25,7 +25,6 @@
 					:characters-to-reject="[' ']"
 					:model-value="item.unitExpression ?? ''"
 					@update:model-value="$emit('update-item', { key: 'unitExpression', value: $event })"
-					@focusout="($event) => ($event.target.value = $event.target.value.replace(/[\s.]+/g, ''))"
 				/>
 			</template>
 		</span>
