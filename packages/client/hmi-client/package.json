@@ -41,6 +41,7 @@
 		"@vueup/vue-quill": "1.2.0",
 		"ace-builds": "1.32.9",
 		"axios": "1.6.8",
+		"beaker-vue": "file:/Users/cblanchard/Developer/beaker-kernel/beaker-vue",
 		"chart.js": "4.4.3",
 		"chartjs-plugin-annotation": "3.0.1",
 		"chartjs-plugin-datalabels": "2.2.0",

@@ -223,6 +223,10 @@ async function initialize(editorInstance) {
 	editor.value = editorInstance;
 	editorInstance.session.selection.on('changeSelection', onSelectedTextChange);
 	editorInstance.setShowPrintMargin(false);
+	editorInstance.setOptions({
+		enableBasicAutocompletion: true,
+		enableLiveAutocompletion: true
+	});
 }
 
 /**

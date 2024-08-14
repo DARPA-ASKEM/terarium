@@ -18,6 +18,7 @@ import JupyterTest from '@/temp/JupyterTest.vue';
 import CustomInputTest from '@/temp/custom-input-test.vue';
 import ClipboardTest from '@/temp/Clipboard.vue';
 import VegaliteTest from '@/temp/Vegalite.vue';
+import BeakerComponentLibTest from '@/temp/BeakerComponentLibTest.vue';
 import { RouteName } from './routes';
 
 export enum RoutePath {
@@ -70,6 +71,7 @@ const routes = [
 	{ path: '/pyodide-test', component: PyodideTest },
 	{ path: '/jupyter-test', component: JupyterTest },
 	{ path: '/custom-input-test', component: CustomInputTest },
+	{ path: '/test-components', component: BeakerComponentLibTest },
 	{ path: '/clipboard', component: ClipboardTest },
 	{ path: '/vegalite', component: VegaliteTest }
 ];
