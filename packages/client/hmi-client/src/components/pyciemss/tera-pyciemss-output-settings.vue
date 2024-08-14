@@ -106,7 +106,7 @@ export interface OutputSettingKnobs {
 	selectedInterventionVariables: string[];
 }
 const knobs = ref<OutputSettingKnobs>({
-	successDisplayChartsCheckbox: props.successDisplayChartsCheckbox ?? true,
+	successDisplayChartsCheckbox: props.successDisplayChartsCheckbox ?? false,
 	summaryCheckbox: props.summaryCheckbox ?? true,
 	interventionsDisplayChartsCheckbox: props.interventionsDisplayChartsCheckbox ?? true,
 	simulationDisplayChartsCheckbox: props.simulationDisplayChartsCheckbox ?? true,
