@@ -757,8 +757,6 @@ async function getAutoMapping() {
 }
 
 onMounted(async () => {
-	console.log('On mount:');
-	console.log(_.cloneDeep(props.node));
 	// Get sizing
 	if (drilldownLossPlot.value) {
 		previewChartWidth.value = drilldownLossPlot.value.offsetWidth;
