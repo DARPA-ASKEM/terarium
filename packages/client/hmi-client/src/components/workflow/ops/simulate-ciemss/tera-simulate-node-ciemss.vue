@@ -27,7 +27,7 @@ import {
 import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
-import { chartActionsProxy, nodeOutputLabel } from '@/components/workflow/util';
+import { nodeOutputLabel } from '@/components/workflow/util';
 
 import type { WorkflowNode } from '@/types/workflow';
 import { createLLMSummary } from '@/services/summary-service';
@@ -92,15 +92,8 @@ const pollResult = async (runId: string) => {
 	return pollerResults;
 };
 
-const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperationState) => {
-	emit('update-state', state);
-});
-
 const processResult = async (runId: string) => {
 	const state = _.cloneDeep(props.node.state);
-	if (state.chartConfigs.length === 0) {
-		chartProxy.addChart();
-	}
 
 	const summaryData = await getRunResultCSV(runId, 'result_summary.csv');
 	const start = _.first(summaryData);
