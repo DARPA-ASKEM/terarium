@@ -174,7 +174,7 @@
 			</tera-drilldown-preview>
 		</tera-columnar-panel>
 	</tera-drilldown>
-	<tera-modal v-if="sanityCheckErrors.length > 0">
+	<tera-modal v-if="!isEmpty(sanityCheckErrors)">
 		<template #header>
 			<h4>Warning, these settings may cause errors</h4>
 		</template>
@@ -491,22 +491,19 @@ const createConfiguration = async () => {
 	if (!model.value || isSaveDisabled.value) return;
 
 	const state = cloneDeep(props.node.state);
-
 	const modelConfig = cloneDeep(knobs.value.transientModelConfig);
 
 	const data = await createModelConfiguration(modelConfig);
-
 	if (!data) {
 		logger.error('Failed to create model configuration');
 		return;
 	}
 
 	knobs.value.transientModelConfig = cloneDeep(data);
-	state.transientModelConfig = knobs.value.transientModelConfig;
 	useToastService().success('', 'Created model configuration');
 	emit('append-output', {
 		type: ModelConfigOperation.outputs[0].type,
-		label: state.transientModelConfig.name,
+		label: data.name,
 		value: data.id,
 		isSelected: false,
 		state
@@ -567,7 +564,6 @@ const onSelectConfiguration = (config: ModelConfiguration) => {
 };
 
 const applyConfigValues = (config: ModelConfiguration) => {
-	const state = cloneDeep(props.node.state);
 	knobs.value.transientModelConfig = cloneDeep(config);
 
 	// Update output port:
@@ -585,7 +581,7 @@ const applyConfigValues = (config: ModelConfiguration) => {
 	// If the output does not already exist
 	else {
 		// Append this config to the output.
-		state.transientModelConfig = knobs.value.transientModelConfig;
+		const state = cloneDeep(props.node.state);
 		emit('append-output', {
 			type: ModelConfigOperation.outputs[0].type,
 			label: config.name,
@@ -613,9 +609,7 @@ const resetConfiguration = () => {
 		message: 'This will reset all values original values of the configuration.',
 		accept: () => {
 			const originalConfig = suggestedConfigurationContext.value.tableData.find((c) => c.id === selectedConfigId.value);
-			if (originalConfig) {
-				applyConfigValues(originalConfig);
-			}
+			if (originalConfig) applyConfigValues(originalConfig);
 		},
 		acceptLabel: 'Confirm',
 		rejectLabel: 'Cancel'
