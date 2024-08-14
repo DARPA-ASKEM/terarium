@@ -1131,7 +1131,8 @@ public class ProjectController {
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacUser who = new RebacUser(userId, reBACService);
 
-			// no need to update the search perms since we cant never reduce below a read.
+			// no need to update the search perms since we don't reduce permissions below a
+			// read.
 
 			return projectPermissionsService.updateProjectPermissions(what, who, oldRelationship, newRelationship);
 		} catch (final Exception e) {

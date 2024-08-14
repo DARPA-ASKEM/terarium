@@ -127,9 +127,6 @@ public class ProjectSearchService {
 		final String routing = project.getId().toString();
 
 		elasticService.indexWithRouting(getAlias(), project.getId().toString(), doc, routing);
-		// for (final String userId : userIds) {
-		// addProjectPermission(project.getId(), userId);
-		// }
 	}
 
 	public void updateProject(final Project project) throws IOException {
@@ -140,9 +137,6 @@ public class ProjectSearchService {
 		doc.setPermissionJoin(PermissionJoin.CreateProjectJoin());
 
 		elasticService.update(getAlias(), project.getId().toString(), doc);
-		// for (final String userId : userIds) {
-		// addProjectPermission(project.getId(), userId);
-		// }
 	}
 
 	public void removeProject(final UUID id) throws IOException {
