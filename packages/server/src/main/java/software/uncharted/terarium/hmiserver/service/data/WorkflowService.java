@@ -92,6 +92,9 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 		final Map<UUID, WorkflowNode> nodeMap = new HashMap();
 		final Map<UUID, WorkflowEdge> edgeMap = new HashMap();
 
+		dbWorkflow.setName(asset.getName());
+		dbWorkflow.setDescription(asset.getDescription());
+
 		// Prep: sane state, cache the nodes/edges to update for easy retrival
 		if (asset.getNodes() != null) {
 			for (final WorkflowNode node : asset.getNodes()) {
