@@ -15,8 +15,441 @@ import type {
 	WorkflowPort,
 	WorkflowOutput
 } from '@/types/workflow';
-import { WorkflowPortStatus, OperatorStatus } from '@/types/workflow';
+import { WorkflowPortStatus, OperatorStatus, WorkflowOperationTypes } from '@/types/workflow';
 import { summarizeNotebook } from './beaker';
+
+/**
+ * A wrapper class around the workflow data struture to make it easier
+ * to deal with CURD operations
+ * */
+export class WorkflowWrapper {
+	private wf: Workflow;
+
+	constructor(wf?: Workflow) {
+		if (wf) {
+			this.wf = _.cloneDeep(wf);
+		} else {
+			this.wf = emptyWorkflow();
+		}
+	}
+
+	load(wf: Workflow) {
+		this.wf = _.cloneDeep(wf);
+	}
+
+	dump() {
+		return this.wf;
+	}
+
+	getId() {
+		return this.wf.id;
+	}
+
+	getName() {
+		return this.wf.name;
+	}
+
+	getTransform() {
+		return this.wf.transform;
+	}
+
+	getNodes() {
+		return this.wf.nodes.filter((d) => d.isDeleted !== true);
+	}
+
+	getEdges() {
+		return this.wf.edges.filter((d) => d.isDeleted !== true);
+	}
+
+	removeNode(id: string) {
+		// Remove all the edges first
+		const edgesToRemove = this.getEdges().filter((d) => d.source === id || d.target === id);
+		const edgeIds = edgesToRemove.map((d) => d.id);
+		edgeIds.forEach((edgeId) => {
+			this.removeEdge(edgeId);
+		});
+
+		// Tombstone
+		const node = this.wf.nodes.find((n) => n.id === id);
+		if (node) {
+			node.isDeleted = true;
+		}
+
+		// TODO: option Remove the node
+		// wf.nodes = wf.nodes.filter((node) => node.id !== id);
+	}
+
+	removeEdge(id: string) {
+		const edgeToRemove = this.wf.edges.find((d) => d.id === id);
+		if (!edgeToRemove) return;
+
+		// Remove the data reference at the targetPort
+		const targetNode = this.wf.nodes.find((d) => d.id === edgeToRemove.target);
+		if (!targetNode) return;
+
+		const targetPort = targetNode.inputs.find((d) => d.id === edgeToRemove.targetPortId);
+		if (!targetPort) return;
+
+		targetPort.value = null;
+		targetPort.status = WorkflowPortStatus.NOT_CONNECTED;
+		delete targetPort.label;
+
+		// Resets the type to the original type (used when multiple types for a port are allowed)
+		if (targetPort?.originalType) {
+			targetPort.type = targetPort.originalType;
+		}
+
+		// Tombstone
+		const edge = this.wf.edges.find((e) => e.id === id);
+		if (edge) {
+			edge.isDeleted = true;
+		}
+
+		// TODO: option Edge re-assignment
+		// wf.edges = wf.edges.filter((edge) => edge.id !== id);
+
+		// If there are no more references reset the connected status of the source node
+		if (_.isEmpty(this.getEdges().filter((e) => e.source === edgeToRemove.source))) {
+			const sourceNode = this.wf.nodes.find((d) => d.id === edgeToRemove.source);
+			if (!sourceNode) return;
+			const sourcePort = sourceNode.outputs.find((d) => d.id === edgeToRemove.sourcePortId);
+			if (!sourcePort) return;
+			sourcePort.status = WorkflowPortStatus.NOT_CONNECTED;
+		}
+	}
+
+	addNode(op: Operation, pos: Position, options: { size?: OperatorNodeSize; state?: any }) {
+		const nodeSize: Size = getOperatorNodeSize(options.size ?? OperatorNodeSize.medium);
+
+		const node: WorkflowNode<any> = {
+			id: uuidv4(),
+			workflowId: this.wf.id,
+			operationType: op.name,
+			displayName: op.displayName,
+			documentationUrl: op.documentationUrl,
+			imageUrl: op.imageUrl,
+			x: pos.x,
+			y: pos.y,
+			state: options.state ?? {},
+
+			inputs: op.inputs.map((port) => ({
+				id: uuidv4(),
+				type: port.type,
+				label: port.label,
+				status: WorkflowPortStatus.NOT_CONNECTED,
+				value: null,
+				isOptional: port.isOptional ?? false
+			})),
+
+			outputs: op.outputs.map((port) => ({
+				id: uuidv4(),
+				type: port.type,
+				label: port.label,
+				status: WorkflowPortStatus.NOT_CONNECTED,
+				value: null,
+				isOptional: false,
+				state: {}
+			})),
+
+			status: OperatorStatus.INVALID,
+			width: nodeSize.width,
+			height: nodeSize.height
+		};
+		if (op.initState && _.isEmpty(node.state)) {
+			node.state = op.initState();
+		}
+		this.wf.nodes.push(node);
+		return node;
+	}
+
+	/**
+	 * Create an edge between two nodes, and transfer the value from
+	 * source-node's output port to target-node's input port
+	 *
+	 * The terms are used as depicted in the following schematics
+	 *
+	 *
+	 *  ------------             ------------
+	 *  | Source    |            | Target    |
+	 *  |           |            |           |
+	 *  |  [output port] ---> [input port]   |
+	 *  |           |            |           |
+	 *  ------------             -------------
+	 *
+	 *
+	 * There are several special cases
+	 *
+	 * The target-input can accept multiple types, but this is more of an exception
+	 * rather than the norm. This is resolved by checking one of the accepted type
+	 * matches the provided type.
+	 *
+	 * The second case is when the source produce multiple types, a similar check, but
+	 * on the reverse side is performed.
+	 *
+	 *
+	 * Ambiguity arises when the source provide multiple types and the target accepts multiple
+	 * types and there is no resolution. For example
+	 * - source provides {A, B, C}
+	 * - target accepts A or C
+	 * We do not deal with this and throw an error/warning, and the edge creation will be cancelled.
+	 *
+	 * */
+	addEdge(sourceId: string, sourcePortId: string, targetId: string, targetPortId: string, points: Position[]) {
+		const sourceNode = this.wf.nodes.find((d) => d.id === sourceId);
+		const targetNode = this.wf.nodes.find((d) => d.id === targetId);
+		if (!sourceNode || !targetNode) return;
+
+		const sourceOutputPort = sourceNode.outputs.find((d) => d.id === sourcePortId);
+		const targetInputPort = targetNode.inputs.find((d) => d.id === targetPortId);
+		if (!sourceOutputPort || !targetInputPort) return;
+
+		// Check if edge already exist
+		const existingEdge = this.getEdges().find(
+			(d) =>
+				d.source === sourceId &&
+				d.sourcePortId === sourcePortId &&
+				d.target === targetId &&
+				d.targetPortId === targetPortId
+		);
+		if (existingEdge) return;
+
+		// Check if type is compatible
+		const outputTypes = sourceOutputPort.type.split('|').map((d) => d.trim());
+		const allowedInputTypes = targetInputPort.type.split('|').map((d) => d.trim());
+		const intersectionTypes = _.intersection(outputTypes, allowedInputTypes);
+
+		// Not supported if there are more than one match
+		if (intersectionTypes.length > 1) {
+			console.error(`Ambiguous matching types [${outputTypes}] to [${allowedInputTypes}]`);
+			return;
+		}
+
+		// Not supported if there is a mismatch
+		if (intersectionTypes.length === 0 || targetInputPort.status === WorkflowPortStatus.CONNECTED) {
+			return;
+		}
+
+		// Transfer data value/reference
+		targetInputPort.label = sourceOutputPort.label;
+		if (outputTypes.length > 1) {
+			const concreteType = intersectionTypes[0];
+			if (sourceOutputPort.value) {
+				targetInputPort.value = [sourceOutputPort.value[0][concreteType]];
+			}
+		} else {
+			targetInputPort.value = sourceOutputPort.value;
+		}
+
+		// Transfer concrete type to the input type to match the output type
+		// Saves the original type in case we want to revert when we unlink the edge
+		if (allowedInputTypes.length > 1) {
+			targetInputPort.originalType = targetInputPort.type;
+			targetInputPort.type = sourceOutputPort.type;
+		}
+
+		const edge: WorkflowEdge = {
+			id: uuidv4(),
+			workflowId: this.wf.id,
+			source: sourceId,
+			sourcePortId,
+			target: targetId,
+			targetPortId,
+			points: _.cloneDeep(points)
+		};
+		this.wf.edges.push(edge);
+		sourceOutputPort.status = WorkflowPortStatus.CONNECTED;
+		targetInputPort.status = WorkflowPortStatus.CONNECTED;
+	}
+
+	/**
+	 * Including the node given by nodeId, copy/branch everything downstream,
+	 *
+	 * For example:
+	 *    P - B - C - D
+	 *    Q /
+	 *
+	 * if we branch at B, we will get
+	 *
+	 *    P - B  - C  - D
+	 *      X
+	 *    Q _ B' - C' - D'
+	 *
+	 * with { B', C', D' } new node entities
+	 * */
+	branchWorkflow(nodeId: string) {
+		// 1. Find anchor point
+		const anchor = this.getNodes().find((n) => n.id === nodeId);
+		if (!anchor) return;
+
+		// 2. Collect the subgraph that we want to copy
+		const copyNodes: WorkflowNode<any>[] = [];
+		const copyEdges: WorkflowEdge[] = [];
+		const stack = [anchor.id]; // working list of nodeIds to crawl
+		const processed: Set<string> = new Set();
+
+		// basically depth-first-search
+		while (stack.length > 0) {
+			const id = stack.pop();
+			const node = this.getNodes().find((n) => n.id === id);
+			if (node) copyNodes.push(_.cloneDeep(node));
+			processed.add(id as string);
+
+			// Grab downstream edges
+			const edges = this.getEdges().filter((e) => e.source === id);
+			edges.forEach((edge) => {
+				const newId = edge.target as string;
+				if (!processed.has(newId)) {
+					stack.push(edge.target as string);
+				}
+				copyEdges.push(_.cloneDeep(edge));
+			});
+		}
+
+		// 3. Collect the upstream edges of the anchor
+		const upstreamEdges = this.getEdges().filter((edge) => edge.target === anchor.id);
+		upstreamEdges.forEach((edge) => {
+			copyEdges.push(_.cloneDeep(edge));
+		});
+
+		// 4. Reassign identifiers
+		const registry: Map<string, string> = new Map();
+		copyNodes.forEach((node) => {
+			registry.set(node.id, uuidv4());
+			node.inputs.forEach((port) => {
+				registry.set(port.id, uuidv4());
+			});
+			node.outputs.forEach((port) => {
+				registry.set(port.id, uuidv4());
+			});
+		});
+		copyEdges.forEach((edge) => {
+			registry.set(edge.id, uuidv4());
+		});
+
+		copyEdges.forEach((edge) => {
+			// Don't replace upstream edge sources, they are still valid
+			if (upstreamEdges.map((e) => e.source).includes(edge.source) === false) {
+				edge.source = registry.get(edge.source as string);
+				edge.sourcePortId = registry.get(edge.sourcePortId as string);
+			}
+			edge.id = registry.get(edge.id) as string;
+			edge.target = registry.get(edge.target as string);
+			edge.targetPortId = registry.get(edge.targetPortId as string);
+		});
+		copyNodes.forEach((node) => {
+			node.id = registry.get(node.id) as string;
+			node.inputs.forEach((port) => {
+				port.id = registry.get(port.id) as string;
+			});
+			node.outputs.forEach((port) => {
+				port.id = registry.get(port.id) as string;
+			});
+			if (node.active) {
+				node.active = registry.get(node.active);
+			}
+		});
+
+		// 5. Reposition new nodes so they don't exaclty overlap
+		const offset = 75;
+		copyNodes.forEach((n) => {
+			n.y += offset;
+		});
+		copyEdges.forEach((edge) => {
+			if (!edge.points || edge.points.length < 2) return;
+			if (upstreamEdges.map((e) => e.source).includes(edge.source) === false) {
+				edge.points[0].y += offset;
+			}
+			edge.points[edge.points.length - 1].y += offset;
+		});
+
+		// 6. Finally put everything back into the workflow
+		this.wf.nodes.push(...copyNodes);
+		this.wf.edges.push(...copyEdges);
+	}
+
+	/**
+	 * Updates the operator's state using the data from a specified WorkflowOutput. If the operator's
+	 * current state was not previously stored as a WorkflowOutput, this function first saves the current state
+	 * as a new WorkflowOutput. It then replaces the operator's existing state with the data from the specified WorkflowOutput.
+	 *
+	 * @param operator - The operator whose state is to be updated.
+	 * @param selectedWorkflowOutputId - The ID of the WorkflowOutput whose data will be used to update the operator's state.
+	 * */
+	selectOutput(operator: WorkflowNode<any>, selectedWorkflowOutputId: WorkflowOutput<any>['id']) {
+		operator.outputs.forEach((output) => {
+			output.isSelected = false;
+			output.status = WorkflowPortStatus.NOT_CONNECTED;
+		});
+
+		// Update the Operator state with the selected one
+		const selected = operator.outputs.find((output) => output.id === selectedWorkflowOutputId);
+		if (!selected) {
+			logger.warn(
+				`Operator Output Id ${selectedWorkflowOutputId} does not exist within ${operator.displayName} Operator ${operator.id}.`
+			);
+			return;
+		}
+
+		selected.isSelected = true;
+		operator.state = Object.assign(operator.state, _.cloneDeep(selected.state));
+		operator.status = selected.operatorStatus ?? OperatorStatus.DEFAULT;
+		operator.active = selected.id;
+
+		// If this output is connected to input port(s), update the input port(s)
+		const hasOutgoingEdges = this.getEdges().some((edge) => edge.source === operator.id);
+		if (!hasOutgoingEdges) return;
+
+		selected.status = WorkflowPortStatus.CONNECTED;
+
+		const nodeMap = new Map<string, WorkflowNode<any>>(this.wf.nodes.map((node) => [node.id, node]));
+		const nodeCache = new Map<string, WorkflowNode<any>[]>();
+		nodeCache.set(operator.id, []);
+
+		this.getEdges().forEach((edge) => {
+			// Update the input port of the direct target node
+			if (edge.source === operator.id) {
+				const targetNode = this.wf.nodes.find((node) => node.id === edge.target);
+				if (!targetNode) return;
+				// Update the input port of the target node
+				const targetPort = targetNode.inputs.find((port) => port.id === edge.targetPortId);
+				if (!targetPort) return;
+				edge.sourcePortId = selected.id; // Sync edge source port to selected output
+				targetPort.label = selected.label;
+				targetPort.value = selected.value;
+			}
+
+			// Collect node cache
+			if (!edge.source || !edge.target) return;
+			if (!nodeCache.has(edge.source)) nodeCache.set(edge.source, []);
+			nodeCache.get(edge.source)?.push(nodeMap.get(edge.target) as WorkflowNode<any>);
+		});
+
+		cascadeInvalidateDownstream(operator, nodeCache);
+	}
+
+	updateNodeState(nodeId: string, state: any) {
+		const node = this.getNodes().find((d) => d.id === nodeId);
+		if (!node) return;
+		node.state = state;
+	}
+
+	updateNodeStatus(nodeId: string, status: OperatorStatus) {
+		const node = this.getNodes().find((d) => d.id === nodeId);
+		if (!node) return;
+		node.status = status;
+	}
+
+	// Get neighbor nodes for drilldown navigation
+	getNeighborNodes = (id: string) => {
+		const cache = new Map(this.getNodes().map((node) => [node.id, node]));
+		const inputEdges = this.getEdges().filter((e) => e.target === id);
+		const outputEdges = this.getEdges().filter((e) => e.source === id);
+		return {
+			upstreamNodes: inputEdges.map((e) => e.source && cache.get(e.source)).filter(Boolean) as WorkflowNode<any>[],
+			downstreamNodes: outputEdges.map((e) => e.target && cache.get(e.target)).filter(Boolean) as WorkflowNode<any>[]
+		};
+	};
+}
 
 /**
  * Captures common actions performed on workflow nodes/edges. The functions here are
@@ -58,237 +491,38 @@ export function getOperatorNodeSize(size: OperatorNodeSize): Size {
 	}
 }
 
-export const addNode = (
-	wf: Workflow,
-	op: Operation,
-	pos: Position,
-	options: { size?: OperatorNodeSize; state?: any }
-) => {
-	const nodeSize: Size = getOperatorNodeSize(options.size ?? OperatorNodeSize.medium);
+export const isAssetOperator = (operationType: string) =>
+	(
+		[
+			WorkflowOperationTypes.MODEL,
+			WorkflowOperationTypes.DATASET,
+			WorkflowOperationTypes.DOCUMENT,
+			WorkflowOperationTypes.CODE
+		] as string[]
+	).includes(operationType);
 
-	const node: WorkflowNode<any> = {
-		id: uuidv4(),
-		workflowId: wf.id,
-		operationType: op.name,
-		displayName: op.displayName,
-		documentationUrl: op.documentationUrl,
-		imageUrl: op.imageUrl,
-		x: pos.x,
-		y: pos.y,
-		state: options.state ?? {},
-
-		inputs: op.inputs.map((port) => ({
-			id: uuidv4(),
-			type: port.type,
-			label: port.label,
-			status: WorkflowPortStatus.NOT_CONNECTED,
-			value: null,
-			isOptional: port.isOptional ?? false,
-			acceptMultiple: port.acceptMultiple
-		})),
-
-		outputs: op.outputs.map((port) => ({
-			id: uuidv4(),
-			type: port.type,
-			label: port.label,
-			status: WorkflowPortStatus.NOT_CONNECTED,
-			value: null,
-			isOptional: false,
-			acceptMultiple: false,
-			state: {}
-		})),
-
-		status: OperatorStatus.INVALID,
-
-		width: nodeSize.width,
-		height: nodeSize.height
-	};
-	if (op.initState && _.isEmpty(node.state)) {
-		node.state = op.initState();
-	}
-
-	wf.nodes.push(node);
-};
-
-/**
- * Create an edge between two nodes, and transfer the value from
- * source-node's output port to target-node's input port
- *
- * The terms are used as depicted in the following schematics
- *
- *
- *  ------------             ------------
- *  | Source    |            | Target    |
- *  |           |            |           |
- *  |  [output port] ---> [input port]   |
- *  |           |            |           |
- *  ------------             -------------
- *
- *
- * There are several special cases
- *
- * The target-input can accept multiple types, but this is more of an exception
- * rather than the norm. This is resolved by checking one of the accepted type
- * matches the provided type.
- *
- * The second case is when the source produce multiple types, a similar check, but
- * on the reverse side is performed.
- *
- *
- * Ambiguity arises when the source provide multiple types and the target accepts multiple
- * types and there is no resolution. For example
- * - source provides {A, B, C}
- * - target accepts A or C
- * We do not deal with this and throw an error/warning, and the edge creation will be cancelled.
- *
- * */
-export const addEdge = (
-	wf: Workflow,
-	sourceId: string,
-	sourcePortId: string,
-	targetId: string,
-	targetPortId: string,
-	points: Position[]
-) => {
-	const sourceNode = wf.nodes.find((d) => d.id === sourceId);
-	const targetNode = wf.nodes.find((d) => d.id === targetId);
-	if (!sourceNode || !targetNode) return;
-
-	const sourceOutputPort = sourceNode.outputs.find((d) => d.id === sourcePortId);
-	const targetInputPort = targetNode.inputs.find((d) => d.id === targetPortId);
-	if (!sourceOutputPort || !targetInputPort) return;
-
-	// Check if edge already exist
-	const existingEdge = wf.edges.find(
-		(d) =>
-			d.isDeleted !== true &&
-			d.source === sourceId &&
-			d.sourcePortId === sourcePortId &&
-			d.target === targetId &&
-			d.targetPortId === targetPortId
-	);
-	if (existingEdge) return;
-
-	// Check if type is compatible
-	const outputTypes = sourceOutputPort.type.split('|').map((d) => d.trim());
-	const allowedInputTypes = targetInputPort.type.split('|').map((d) => d.trim());
-	const intersectionTypes = _.intersection(outputTypes, allowedInputTypes);
-
-	// Not supported if there are more than one match
-	if (intersectionTypes.length > 1) {
-		console.error(`Ambiguous matching types [${outputTypes}] to [${allowedInputTypes}]`);
-		return;
-	}
-
-	// Not supported if there is a mismatch
-	if (
-		intersectionTypes.length === 0 ||
-		(!targetInputPort.acceptMultiple && targetInputPort.status === WorkflowPortStatus.CONNECTED)
-	) {
-		return;
-	}
-
-	// Transfer data value/reference
-	targetInputPort.label = sourceOutputPort.label;
-	if (outputTypes.length > 1) {
-		const concreteType = intersectionTypes[0];
-		if (sourceOutputPort.value) {
-			targetInputPort.value = [sourceOutputPort.value[0][concreteType]];
-		}
-	} else {
-		targetInputPort.value = sourceOutputPort.value;
-	}
-
-	// Transfer concrete type to the input type to match the output type
-	// Saves the original type in case we want to revert when we unlink the edge
-	if (allowedInputTypes.length > 1) {
-		targetInputPort.originalType = targetInputPort.type;
-		targetInputPort.type = sourceOutputPort.type;
-	}
-
-	const edge: WorkflowEdge = {
-		id: uuidv4(),
-		workflowId: wf.id,
-		source: sourceId,
-		sourcePortId,
-		target: targetId,
-		targetPortId,
-		points: _.cloneDeep(points)
-	};
-
-	wf.edges.push(edge);
-	sourceOutputPort.status = WorkflowPortStatus.CONNECTED;
-	targetInputPort.status = WorkflowPortStatus.CONNECTED;
-};
-
-export const removeEdge = (wf: Workflow, id: string) => {
-	const edgeToRemove = wf.edges.find((d) => d.id === id);
-	if (!edgeToRemove) return;
-
-	// Remove the data reference at the targetPort
-	const targetNode = wf.nodes.find((d) => d.id === edgeToRemove.target);
-	if (!targetNode) return;
-
-	const targetPort = targetNode.inputs.find((d) => d.id === edgeToRemove.targetPortId);
-	if (!targetPort) return;
-
-	targetPort.value = null;
-	targetPort.status = WorkflowPortStatus.NOT_CONNECTED;
-	delete targetPort.label;
-
-	// Resets the type to the original type (used when multiple types for a port are allowed)
-	if (targetPort?.originalType) {
-		targetPort.type = targetPort.originalType;
-	}
-
-	// Tombstone
-	const edge = wf.edges.find((e) => e.id === id);
-	if (edge) {
-		edge.isDeleted = true;
-	}
-
-	// Edge re-assignment
-	// wf.edges = wf.edges.filter((edge) => edge.id !== id);
-
-	// If there are no more references reset the connected status of the source node
-	if (_.isEmpty(wf.edges.filter((e) => e.isDeleted !== true && e.source === edgeToRemove.source))) {
-		const sourceNode = wf.nodes.find((d) => d.id === edgeToRemove.source);
-		if (!sourceNode) return;
-		const sourcePort = sourceNode.outputs.find((d) => d.id === edgeToRemove.sourcePortId);
-		if (!sourcePort) return;
-		sourcePort.status = WorkflowPortStatus.NOT_CONNECTED;
-	}
-};
-
-export const removeNode = (wf: Workflow, id: string) => {
-	// Remove all the edges first
-	const edgesToRemove = wf.edges.filter((d) => d.source === id || d.target === id);
-	const edgeIds = edgesToRemove.map((d) => d.id);
-	edgeIds.forEach((edgeId) => {
-		removeEdge(wf, edgeId);
-	});
-
-	// Tombstone
-	const node = wf.nodes.find((n) => n.id === id);
-	if (node) {
-		node.isDeleted = true;
-	}
-
-	// Remove the node
-	// wf.nodes = wf.nodes.filter((node) => node.id !== id);
-};
-
-export const updateNodeState = (wf: Workflow, nodeId: string, state: any) => {
-	const node = wf.nodes.find((d) => d.id === nodeId && d.isDeleted !== true);
-	if (!node) return;
-	node.state = state;
-};
-
-export const updateNodeStatus = (wf: Workflow, nodeId: string, status: OperatorStatus) => {
-	const node = wf.nodes.find((d) => d.id === nodeId && d.isDeleted !== true);
-	if (!node) return;
-	node.status = status;
-};
+export const iconToOperatorMap = new Map<string, string>([
+	[WorkflowOperationTypes.DOCUMENT, 'pi pi-file'],
+	[WorkflowOperationTypes.MODEL, 'pi pi-share-alt'],
+	[WorkflowOperationTypes.DATASET, 'pi pi-table'],
+	[WorkflowOperationTypes.SIMULATE_CIEMSS, 'pi pi-chart-line'],
+	[WorkflowOperationTypes.CALIBRATION_CIEMSS, 'pi pi-chart-line'],
+	[WorkflowOperationTypes.MODEL_CONFIG, 'pi pi-cog'],
+	[WorkflowOperationTypes.STRATIFY_MIRA, 'pi pi-share-alt'],
+	[WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS, 'pi pi-chart-line'],
+	[WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS, 'pi pi-chart-line'],
+	[WorkflowOperationTypes.DATASET_TRANSFORMER, 'pi pi-table'],
+	[WorkflowOperationTypes.SUBSET_DATA, 'pi pi-table'],
+	[WorkflowOperationTypes.MODEL_TRANSFORMER, 'pi pi-share-alt'],
+	[WorkflowOperationTypes.FUNMAN, 'pi pi-cog'],
+	[WorkflowOperationTypes.CODE, 'pi pi-code'],
+	[WorkflowOperationTypes.MODEL_COMPARISON, 'pi pi-share-alt'],
+	[WorkflowOperationTypes.OPTIMIZE_CIEMSS, 'pi pi-chart-line'],
+	[WorkflowOperationTypes.MODEL_EDIT, 'pi pi-share-alt'],
+	[WorkflowOperationTypes.MODEL_FROM_EQUATIONS, 'pi pi-share-alt'],
+	[WorkflowOperationTypes.REGRIDDING, 'pi pi-table'],
+	[WorkflowOperationTypes.INTERVENTION_POLICY, 'pi pi-cog']
+]);
 
 // Get port label for frontend
 const defaultPortLabels = {
@@ -431,72 +665,6 @@ export function cascadeInvalidateDownstream(
 // Operator
 ///
 
-/**
- * Updates the operator's state using the data from a specified WorkflowOutput. If the operator's
- * current state was not previously stored as a WorkflowOutput, this function first saves the current state
- * as a new WorkflowOutput. It then replaces the operator's existing state with the data from the specified WorkflowOutput.
- *
- * @param operator - The operator whose state is to be updated.
- * @param selectedWorkflowOutputId - The ID of the WorkflowOutput whose data will be used to update the operator's state.
- */
-
-export function selectOutput(
-	wf: Workflow,
-	operator: WorkflowNode<any>,
-	selectedWorkflowOutputId: WorkflowOutput<any>['id']
-) {
-	operator.outputs.forEach((output) => {
-		output.isSelected = false;
-		output.status = WorkflowPortStatus.NOT_CONNECTED;
-	});
-
-	// Update the Operator state with the selected one
-	const selected = operator.outputs.find((output) => output.id === selectedWorkflowOutputId);
-	if (!selected) {
-		logger.warn(
-			`Operator Output Id ${selectedWorkflowOutputId} does not exist within ${operator.displayName} Operator ${operator.id}.`
-		);
-		return;
-	}
-
-	selected.isSelected = true;
-	operator.state = Object.assign(operator.state, _.cloneDeep(selected.state));
-	operator.status = selected.operatorStatus ?? OperatorStatus.DEFAULT;
-	operator.active = selected.id;
-
-	// If this output is connected to input port(s), update the input port(s)
-	const hasOutgoingEdges = wf.edges.some((edge) => edge.source === operator.id && edge.isDeleted !== true);
-	if (!hasOutgoingEdges) return;
-
-	selected.status = WorkflowPortStatus.CONNECTED;
-
-	const nodeMap = new Map<WorkflowNode<any>['id'], WorkflowNode<any>>(wf.nodes.map((node) => [node.id, node]));
-	const nodeCache = new Map<WorkflowOutput<any>['id'], WorkflowNode<any>[]>();
-	nodeCache.set(operator.id, []);
-
-	wf.edges.forEach((edge) => {
-		if (edge.isDeleted === true) return;
-		// Update the input port of the direct target node
-		if (edge.source === operator.id) {
-			const targetNode = wf.nodes.find((node) => node.id === edge.target);
-			if (!targetNode) return;
-			// Update the input port of the target node
-			const targetPort = targetNode.inputs.find((port) => port.id === edge.targetPortId);
-			if (!targetPort) return;
-			edge.sourcePortId = selected.id; // Sync edge source port to selected output
-			targetPort.label = selected.label;
-			targetPort.value = selected.value;
-		}
-
-		// Collect node cache
-		if (!edge.source || !edge.target) return;
-		if (!nodeCache.has(edge.source)) nodeCache.set(edge.source, []);
-		nodeCache.get(edge.source)?.push(nodeMap.get(edge.target) as WorkflowNode<any>);
-	});
-
-	cascadeInvalidateDownstream(operator, nodeCache);
-}
-
 export function getActiveOutput(node: WorkflowNode<any>) {
 	return node.outputs.find((o) => o.id === node.active);
 }
@@ -563,112 +731,6 @@ export const isWorkflowNodeDirty = (node: WorkflowNode<any>): boolean => {
 		return !isOperatorStateInSync(node.state, outputState);
 	}
 	return false;
-};
-
-/**
- * Including the node given by nodeId, copy/branch everything downstream,
- *
- * For example:
- *    P - B - C - D
- *    Q /
- *
- * if we branch at B, we will get
- *
- *    P - B  - C  - D
- *      X
- *    Q _ B' - C' - D'
- *
- * with { B', C', D' } new node entities
- * */
-export const branchWorkflow = (wf: Workflow, nodeId: string) => {
-	// 1. Find anchor point
-	const anchor = wf.nodes.find((n) => n.id === nodeId && n.isDeleted !== true);
-	if (!anchor) return;
-
-	// 2. Collect the subgraph that we want to copy
-	const copyNodes: WorkflowNode<any>[] = [];
-	const copyEdges: WorkflowEdge[] = [];
-	const stack = [anchor.id]; // working list of nodeIds to crawl
-	const processed: Set<string> = new Set();
-
-	// basically depth-first-search
-	while (stack.length > 0) {
-		const id = stack.pop();
-		const node = wf.nodes.find((n) => n.id === id && n.isDeleted !== true);
-		if (node) copyNodes.push(_.cloneDeep(node));
-		processed.add(id as string);
-
-		// Grab downstream edges
-		const edges = wf.edges.filter((e) => e.source === id && e.isDeleted !== true);
-		edges.forEach((edge) => {
-			const newId = edge.target as string;
-			if (!processed.has(newId)) {
-				stack.push(edge.target as string);
-			}
-			copyEdges.push(_.cloneDeep(edge));
-		});
-	}
-
-	// 3. Collect the upstream edges of the anchor
-	const upstreamEdges = wf.edges.filter((edge) => edge.target === anchor.id && edge.isDeleted !== true);
-	upstreamEdges.forEach((edge) => {
-		copyEdges.push(_.cloneDeep(edge));
-	});
-
-	// 4. Reassign identifiers
-	const registry: Map<string, string> = new Map();
-	copyNodes.forEach((node) => {
-		registry.set(node.id, uuidv4());
-		node.inputs.forEach((port) => {
-			registry.set(port.id, uuidv4());
-		});
-		node.outputs.forEach((port) => {
-			registry.set(port.id, uuidv4());
-		});
-	});
-	copyEdges.forEach((edge) => {
-		registry.set(edge.id, uuidv4());
-	});
-
-	copyEdges.forEach((edge) => {
-		// Don't replace upstream edge sources, they are still valid
-		if (upstreamEdges.map((e) => e.source).includes(edge.source) === false) {
-			edge.source = registry.get(edge.source as string);
-			edge.sourcePortId = registry.get(edge.sourcePortId as string);
-		}
-		edge.id = registry.get(edge.id) as string;
-		edge.target = registry.get(edge.target as string);
-		edge.targetPortId = registry.get(edge.targetPortId as string);
-	});
-	copyNodes.forEach((node) => {
-		node.id = registry.get(node.id) as string;
-		node.inputs.forEach((port) => {
-			port.id = registry.get(port.id) as string;
-		});
-		node.outputs.forEach((port) => {
-			port.id = registry.get(port.id) as string;
-		});
-		if (node.active) {
-			node.active = registry.get(node.active);
-		}
-	});
-
-	// 5. Reposition new nodes so they don't exaclty overlap
-	const offset = 75;
-	copyNodes.forEach((n) => {
-		n.y += offset;
-	});
-	copyEdges.forEach((edge) => {
-		if (!edge.points || edge.points.length < 2) return;
-		if (upstreamEdges.map((e) => e.source).includes(edge.source) === false) {
-			edge.points[0].y += offset;
-		}
-		edge.points[edge.points.length - 1].y += offset;
-	});
-
-	// 6. Finally put everything back into the workflow
-	wf.nodes.push(...copyNodes);
-	wf.edges.push(...copyEdges);
 };
 
 export interface OperatorMenuItem {
