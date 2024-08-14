@@ -330,7 +330,7 @@ const modelPartTypesMap = ref<{ [key: string]: string }>({});
 
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
-const policyInterventionId = computed(() => props.node.inputs[2].value?.[0]);
+const policyInterventionId = computed(() => props.node.inputs[2]?.value?.[0]);
 
 let pyciemssMap: Record<string, string> = {};
 const simulationChartOptions = ref<string[]>([]);
