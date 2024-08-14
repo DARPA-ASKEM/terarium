@@ -273,6 +273,14 @@ export function checkPetrinetAMR(amr: Model) {
 	const numInitials = ode?.initials?.length || 0;
 	const numRates = ode?.rates?.length || 0;
 
+	if (numStates === 0) {
+		results.push({ type: 'warn', content: 'zero states' });
+	}
+
+	if (numTransitions === 0) {
+		results.push({ type: 'warn', content: 'zero transitions' });
+	}
+
 	if (numStates !== numInitials) {
 		results.push({ type: 'error', content: 'states need to match initials' });
 	}
@@ -292,6 +300,8 @@ export function checkPetrinetAMR(amr: Model) {
 	});
 
 	// Check state
+	const stateSet = new Set<string>();
+	const initialSet = new Set<string>();
 	model.states.forEach((state) => {
 		const initial = initialMap.get(state.id);
 		if (!initial) {
@@ -303,9 +313,19 @@ export function checkPetrinetAMR(amr: Model) {
 		if (!isASCII(initial?.expression as string)) {
 			results.push({ type: 'warn', content: `${state.id} has non-ascii expression` });
 		}
+		if (stateSet.has(state.id)) {
+			results.push({ type: 'error', content: `state (${state.id}) has duplicate` });
+		}
+		if (initialSet.has(initial?.target as string)) {
+			results.push({ type: 'error', content: `initial (${initial?.target}) has duplicate` });
+		}
+		stateSet.add(state.id);
+		initialSet.add(initial?.target as string);
 	});
 
 	// Check transitions
+	const transitionSet = new Set<string>();
+	const rateSet = new Set<string>();
 	model.transitions.forEach((transition) => {
 		const rate = rateMap.get(transition.id);
 		if (!rate) {
@@ -317,6 +337,14 @@ export function checkPetrinetAMR(amr: Model) {
 		if (!isASCII(rate?.expression as string)) {
 			results.push({ type: 'warn', content: `${transition.id} has non-ascii expression` });
 		}
+		if (transitionSet.has(transition.id)) {
+			results.push({ type: 'error', content: `transition (${transition.id}) has duplicate` });
+		}
+		if (rateSet.has(rate?.target as string)) {
+			results.push({ type: 'error', content: `rate (${rate?.target}) has duplicate` });
+		}
+		transitionSet.add(transition.id);
+		rateSet.add(rate?.target as string);
 	});
 
 	return results;
