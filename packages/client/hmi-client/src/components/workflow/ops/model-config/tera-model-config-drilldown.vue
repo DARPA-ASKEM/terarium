@@ -135,8 +135,7 @@
 			</template>
 		</tera-drilldown-section>
 		<tera-columnar-panel :tabName="ConfigTabs.Notebook">
-			<tera-drilldown-section id="notebook-section">
-				<div class="toolbar-right-side"></div>
+			<tera-drilldown-section class="notebook-section">
 				<div class="toolbar">
 					<Suspense>
 						<tera-notebook-jupyter-input
@@ -145,7 +144,7 @@
 							:context-language="contextLanguage"
 							@llm-output="(data: any) => appendCode(data, 'code')"
 							@llm-thought-output="(data: any) => llmThoughts.push(data)"
-							@question-asked="llmThoughts = []"
+							@question-asked="updateLlmQuery"
 						>
 							<template #toolbar-right-side>
 								<tera-input-text v-model="knobs.transientModelConfig.name" placeholder="Configuration Name" />
@@ -250,6 +249,7 @@ import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { useConfirm } from 'primevue/useconfirm';
 import Dropdown from 'primevue/dropdown';
 import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
+import { saveCodeToState } from '@/services/notebook';
 import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
 import { ModelConfigOperation, ModelConfigOperationState, blankModelConfig } from './model-config-operation';
 
@@ -316,6 +316,7 @@ const buildJupyterContext = () => {
 	};
 };
 const codeText = ref('# This environment contains the variable "model_config" to be read and updated');
+const llmQuery = ref('');
 const llmThoughts = ref<any[]>([]);
 const notebookResponse = ref();
 const executeResponse = ref({
@@ -378,9 +379,7 @@ const runFromCode = () => {
 			if (!data.content) return;
 			knobs.value.transientModelConfig = data.content;
 
-			if (executedCode) {
-				saveCodeToState(executedCode, true);
-			}
+			if (executedCode) updateCodeState(executedCode, true);
 		})
 		.register('any_execute_reply', (data) => {
 			let status = OperatorStatus.DEFAULT;
@@ -395,21 +394,15 @@ const runFromCode = () => {
 		});
 };
 
-// FIXME: Copy pasted in 3 locations, could be written cleaner and in a service
-const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
-	const state = cloneDeep(props.node.state);
-	state.hasCodeBeenRun = hasCodeBeenRun;
+function updateLlmQuery(query: string) {
+	llmThoughts.value = [];
+	llmQuery.value = query;
+}
 
-	// for now only save the last code executed, may want to save all code executed in the future
-	const codeHistoryLength = props.node.state.modelEditCodeHistory.length;
-	const timestamp = Date.now();
-	if (codeHistoryLength > 0) {
-		state.modelEditCodeHistory[0] = { code, timestamp };
-	} else {
-		state.modelEditCodeHistory.push({ code, timestamp });
-	}
+function updateCodeState(code: string = codeText.value, hasCodeRun: boolean = true) {
+	const state = saveCodeToState(props.node, code, hasCodeRun, llmQuery.value, llmThoughts.value);
 	emit('update-state', state);
-};
+}
 
 const initializeEditor = (editorInstance: any) => {
 	editor = editorInstance;
@@ -687,7 +680,7 @@ onUnmounted(() => {
 	padding-bottom: var(--gap-2);
 }
 
-#notebook-section:deep(main) {
+.notebook-section:deep(main) {
 	gap: var(--gap-small);
 	position: relative;
 }
