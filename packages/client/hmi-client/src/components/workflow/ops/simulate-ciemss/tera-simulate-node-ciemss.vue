@@ -1,13 +1,10 @@
 <template>
 	<main>
-		<template v-if="selectedRunId && runResults[selectedRunId]">
-			<vega-chart
-				v-for="(_config, index) of props.node.state.chartConfigs"
-				:key="index"
-				:are-embed-actions-visible="false"
-				:visualization-spec="preparedCharts[index]"
-			/>
-		</template>
+		<div v-if="runResults">
+			<template v-for="(_, index) of node.state.selectedSimulationVariables" :key="index">
+				<vega-chart :visualization-spec="preparedCharts[index]" :are-embed-actions-visible="false" />
+			</template>
+		</div>
 		<tera-progress-spinner v-if="inProgressForecastId" :font-size="2" is-centered style="height: 100%" />
 		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
 		<tera-operator-placeholder v-else :node="node"> Connect a model configuration </tera-operator-placeholder>
@@ -151,38 +148,40 @@ Provide a summary in 100 words or less.
 };
 
 const preparedCharts = computed(() => {
-	if (!selectedRunId.value) return [];
+	const selectedSimulationVariables = props.node.state.selectedSimulationVariables;
 
+	if (!selectedRunId.value) return [];
 	const result = runResults.value[selectedRunId.value];
 	const resultSummary = runResultsSummary.value[selectedRunId.value];
-	const reverseMap: Record<string, string> = {};
-	Object.keys(pyciemssMap).forEach((key) => {
-		reverseMap[`${pyciemssMap[key]}_mean`] = key;
-	});
 
-	return props.node.state.chartConfigs.map((config) =>
+	if (!result || !resultSummary) return [];
+
+	return selectedSimulationVariables.map((variable) =>
 		createForecastChart(
 			{
 				dataset: result,
-				variables: config.map((d) => pyciemssMap[d]),
+				variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
 				timeField: 'timepoint_id',
 				groupField: 'sample_id'
 			},
 			{
 				dataset: resultSummary,
-				variables: config.map((d) => `${pyciemssMap[d]}_mean`),
+				variables: [`${pyciemssMap[variable]}_mean:pre`, `${pyciemssMap[variable]}_mean`],
 				timeField: 'timepoint_id'
 			},
 			null,
-			// options
 			{
-				title: '',
 				width: 180,
 				height: 120,
 				legend: true,
-				translationMap: reverseMap,
 				xAxisTitle: modelVarUnits.value._time || 'Time',
-				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
+				yAxisTitle: modelVarUnits.value[variable] || '',
+				translationMap: {
+					[`${pyciemssMap[variable]}_mean:pre`]: `${variable} before optimization`,
+					[`${pyciemssMap[variable]}_mean`]: `${variable} after optimization`
+				},
+				title: '',
+				colorscheme: ['#AAB3C6', '#1B8073']
 			}
 		)
 	);
