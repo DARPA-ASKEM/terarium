@@ -335,7 +335,7 @@ public class ProjectController {
 				return ResponseEntity.ok(new ResponseDeleted("project", id));
 			}
 		} catch (final Exception e) {
-			log.error("Error exporting project", e);
+			log.error("Error deleting project", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 
