@@ -1,13 +1,10 @@
-// module.exports = {
-//   '!(Types.ts).{ts,vue}': () => 'yarn run format',
-//   '*.java': () => 'npx prettier --write "**/*.java"'
-// }
-
 module.exports = {
+	// Lint then format TypeScript and Vue files
   '!(Types.ts).{ts,vue}': [
-		'prettier --write',
-		'eslint --fix --cache'
+		'eslint --fix --cache',
+		'prettier --write'
 	],
+	// Format all Java files
   '*.java': [
 		'prettier --write'
 	]
