@@ -412,7 +412,6 @@ watch(
 				return;
 			}
 
-			console.log('Appending output:');
 			// const portLabel = props.node.inputs[0].label;
 			emit('append-output', {
 				type: CalibrationOperationCiemss.outputs[0].type,
