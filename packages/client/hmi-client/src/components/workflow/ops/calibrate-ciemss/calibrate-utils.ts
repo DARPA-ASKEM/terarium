@@ -27,5 +27,24 @@ export const mergeResults = (
 	for (let i = 0; i < resultSummaryAfter.length; i++) {
 		resultSummary.push(_.assign(resultSummaryAfter[i], resultSummaryPre[i]));
 	}
-	return { result, resultSummary };
+	return { result, resultSummary, error: computeMeanAbsoluteError(result) };
+};
+
+export const computeMeanAbsoluteError = (result: DataArray) => {
+	const errors: DataArray = [];
+	if (result.length === 0) return errors;
+
+	const relevantVariables = Object.keys(result[0])
+		.filter((key) => key.includes(':pre'))
+		.map((key) => key.replace(':pre', ''));
+	const groupedBySampleId = _.groupBy(result, 'sample_id');
+
+	Object.entries(groupedBySampleId).forEach(([sampleId, values]) => {
+		const item = { sample_id: Number(sampleId) };
+		relevantVariables.forEach((variable) => {
+			item[variable] = _.meanBy(values, (value) => Math.abs(value[`${variable}:pre`] - value[variable]));
+		});
+		errors.push(item);
+	});
+	return errors;
 };

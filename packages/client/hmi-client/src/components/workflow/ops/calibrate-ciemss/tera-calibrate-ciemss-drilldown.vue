@@ -413,10 +413,10 @@ const preparedChartInputs = computed(() => {
 
 	// Merge before/after for chart
 	const { result, resultSummary } = mergeResults(
-		runResult.value,
 		runResultPre.value,
-		runResultSummary.value,
-		runResultSummaryPre.value
+		runResult.value,
+		runResultSummaryPre.value,
+		runResultSummary.value
 	);
 
 	// Build lookup map for calibration, include before/afer and dataset (observations)
