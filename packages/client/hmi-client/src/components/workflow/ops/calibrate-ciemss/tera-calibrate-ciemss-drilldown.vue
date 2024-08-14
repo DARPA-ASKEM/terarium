@@ -270,7 +270,8 @@ import {
 	CsvAsset,
 	DatasetColumn,
 	ModelConfiguration,
-	Model
+	Model,
+	InterventionPolicy
 } from '@/types/Types';
 import { getTimespan, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 import teraPyciemssOutputSettings, {
@@ -356,6 +357,7 @@ const modelPartTypesMap = ref<{ [key: string]: string }>({});
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
 const policyInterventionId = computed(() => props.node.inputs[2]?.value?.[0]);
+const interventionPolicy = ref<InterventionPolicy | null>(null);
 
 let pyciemssMap: Record<string, string> = {};
 const simulationChartOptions = ref<string[]>([]);
@@ -479,10 +481,10 @@ const getUnit = (paramId: string) => {
 };
 
 const preProcessedInterventionsData = computed<Dictionary<{ name: string; value: number; time: number }[]>>(() => {
-	if (!policyInterventionId.value) return {};
+	if (!interventionPolicy.value) return {};
 
 	const interventions = [
-		...(policyInterventionId.value.interventions.flatMap((inter) =>
+		...(interventionPolicy.value.interventions.flatMap((inter) =>
 			inter.staticInterventions.map((intervention) => ({
 				appliedTo: inter.appliedTo,
 				name: inter.name,
@@ -778,8 +780,10 @@ onMounted(async () => {
 
 	// Intervention input
 	if (policyInterventionId.value) {
-		const interventionPolicy = await getInterventionPolicyById(policyInterventionId.value);
-		interventionAppliedToOptions.value = [...new Set(interventionPolicy.interventions.map((ele) => ele.appliedTo))];
+		interventionPolicy.value = await getInterventionPolicyById(policyInterventionId.value);
+		interventionAppliedToOptions.value = [
+			...new Set(interventionPolicy.value.interventions.map((ele) => ele.appliedTo))
+		];
 	}
 
 	// Output setting options:
