@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<div v-if="runResults">
+		<div v-if="runResults && selectedRunId">
 			<template v-for="(_, index) of node.state.selectedSimulationVariables" :key="index">
 				<vega-chart :visualization-spec="preparedCharts[index]" :are-embed-actions-visible="false" />
 			</template>
