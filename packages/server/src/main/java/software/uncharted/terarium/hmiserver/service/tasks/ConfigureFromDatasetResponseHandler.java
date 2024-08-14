@@ -72,7 +72,6 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 	@Override
 	public TaskResponse onSuccess(final TaskResponse resp) {
 		try {
-			System.out.println("ConfigureFromDatasetResponseHandler.onSuccess");
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final Model model = modelService
 				.getAsset(props.getModelId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER)
