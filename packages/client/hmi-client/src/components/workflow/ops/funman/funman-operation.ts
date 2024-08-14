@@ -44,7 +44,7 @@ export const FunmanOperation: Operation = {
 	displayName: 'Validate configuration',
 	description: 'Validate configuration',
 	documentationUrl: DOCUMENTATION_URL,
-	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }],
+	inputs: [{ type: 'modelConfigId', label: 'Model configuration' }],
 	outputs: [{ type: 'funmanQueryId' }],
 	isRunnable: true,
 	action: () => {},
