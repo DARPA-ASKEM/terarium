@@ -684,6 +684,9 @@ onMounted(async () => {
 		const interventionPolicy = await getInterventionPolicyById(policyInterventionId.value);
 		interventionAppliedToOptions.value = [...new Set(interventionPolicy.interventions.map((ele) => ele.appliedTo))];
 	}
+
+	// Output setting options:
+	simulationChartOptions.value = Object.keys(modelPartTypesMap.value);
 });
 
 watch(
@@ -748,7 +751,6 @@ watch(
 			);
 
 			pyciemssMap = parsePyCiemssMap(runResult.value[0]);
-			simulationChartOptions.value = Object.keys(pyciemssMap);
 		}
 	},
 	{ immediate: true }
