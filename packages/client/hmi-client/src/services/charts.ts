@@ -326,8 +326,7 @@ export function createForecastChart(
 	samplingLayer: ForecastChartLayer | null,
 	statisticsLayer: ForecastChartLayer | null,
 	groundTruthLayer: ForecastChartLayer | null,
-	options: ForecastChartOptions,
-	summaryLayer?: ForecastChartLayer | null
+	options: ForecastChartOptions
 ) {
 	const axisColor = '#EEE';
 	const labelColor = '#667085';
@@ -516,18 +515,6 @@ export function createForecastChart(
 		}
 		spec.layer.push(layerSpec);
 	}
-
-	// Build summary layer
-	if (summaryLayer && !isEmpty(summaryLayer.variables)) {
-		const layerSpec = newLayer(summaryLayer, 'line');
-		const encoding = layerSpec.layer[0].encoding;
-		Object.assign(encoding, {
-			opacity: { value: 1.0 },
-			strokeWidth: { value: 2 }
-		});
-		spec.layer.push(layerSpec);
-	}
-
 	return spec;
 }
 

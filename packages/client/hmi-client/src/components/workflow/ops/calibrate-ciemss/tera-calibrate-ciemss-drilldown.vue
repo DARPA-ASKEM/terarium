@@ -233,7 +233,7 @@ import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
-import { CalibrateMap, renderLossGraph, setupDatasetInput, setupModelInput } from '@/services/calibrate-workflow';
+import { CalibrateMap, setupDatasetInput, setupModelInput } from '@/services/calibrate-workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
@@ -337,13 +337,10 @@ const cancelRunId = computed(
 );
 const currentDatasetFileName = ref<string>();
 
-const drilldownLossPlot = ref<HTMLElement>();
 const runResult = ref<DataArray>([]);
 const runResultPre = ref<DataArray>([]);
 const runResultSummary = ref<DataArray>([]);
 const runResultSummaryPre = ref<DataArray>([]);
-
-const previewChartWidth = ref(120);
 
 const showSpinner = ref(false);
 
@@ -537,7 +534,11 @@ let lossValues: { [key: string]: number }[] = [];
 const updateLossChartSpec = (data: string | Record<string, any>[]) => {
 	lossChartSpec.value = createForecastChart(
 		null,
-		null,
+		{
+			data: Array.isArray(data) ? data : { name: data },
+			variables: ['loss'],
+			timeField: 'iter'
+		},
 		null,
 		{
 			title: '',
@@ -545,11 +546,6 @@ const updateLossChartSpec = (data: string | Record<string, any>[]) => {
 			height: 100,
 			xAxisTitle: 'Solver iterations',
 			yAxisTitle: 'Loss'
-		},
-		{
-			data: Array.isArray(data) ? data : { name: data },
-			variables: ['loss'],
-			timeField: 'iter'
 		}
 	);
 };
@@ -669,11 +665,6 @@ async function getAutoMapping() {
 }
 
 onMounted(async () => {
-	// Get sizing
-	if (drilldownLossPlot.value) {
-		previewChartWidth.value = drilldownLossPlot.value.offsetWidth;
-	}
-
 	// Model configuration input
 	const { modelConfiguration, modelOptions, modelPartUnits, modelPartTypes } = await setupModelInput(
 		modelConfigId.value
@@ -733,13 +724,6 @@ watch(
 					loss: d.data.loss
 				}));
 				updateLossChartSpec(lossValues);
-
-				if (drilldownLossPlot.value) {
-					renderLossGraph(drilldownLossPlot.value, lossValues, {
-						width: previewChartWidth.value,
-						height: 120
-					});
-				}
 			}
 
 			const state = props.node.state;
