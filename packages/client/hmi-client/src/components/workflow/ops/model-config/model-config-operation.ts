@@ -9,7 +9,7 @@ export const name = 'ModelConfigOperation';
 export interface ModelConfigOperationState extends BaseState {
 	transientModelConfig: ModelConfiguration;
 	notebookHistory: NotebookHistory[];
-	hasCodeBeenRun: boolean;
+	hasCodeRun: boolean;
 }
 
 export const blankModelConfig: ModelConfiguration = {
@@ -39,9 +39,9 @@ export const ModelConfigOperation: Operation = {
 	action: async () => ({}),
 	initState: () => {
 		const init: ModelConfigOperationState = {
+			transientModelConfig: blankModelConfig,
 			notebookHistory: [],
-			hasCodeBeenRun: false,
-			transientModelConfig: blankModelConfig
+			hasCodeRun: false
 		};
 		return init;
 	}
