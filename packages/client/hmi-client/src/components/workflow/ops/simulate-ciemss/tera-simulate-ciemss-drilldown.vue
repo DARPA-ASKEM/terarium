@@ -529,8 +529,6 @@ const lazyLoadSimulationData = async (outputRunId: string) => {
 
 	const result = await getRunResultCSV(forecastId, 'result.csv');
 	pyciemssMap = parsePyCiemssMap(result[0]);
-	console.log(Object.keys(pyciemssMap));
-
 	runResults.value[outputRunId] = result;
 	rawContent.value[outputRunId] = convertToCsvAsset(result, Object.values(pyciemssMap));
 
