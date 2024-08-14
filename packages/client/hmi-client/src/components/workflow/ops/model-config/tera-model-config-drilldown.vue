@@ -202,7 +202,7 @@
 
 <script setup lang="ts">
 import '@/ace-config';
-import { cloneDeep, isEmpty, orderBy } from 'lodash';
+import { cloneDeep, isEmpty, isEqual, orderBy } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
@@ -458,6 +458,7 @@ useClientEvent(ClientEventType.TaskGollmConfigureFromDataset, configModelEventHa
 
 const selectedOutputId = ref<string>('');
 const selectedConfigId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
+const selectedModelConfig = ref<ModelConfiguration | null>(null);
 
 const documentId = computed(() => props.node.inputs[1]?.value?.[0]?.documentId);
 const datasetIds = computed(() => props.node.inputs[2]?.value);
@@ -545,6 +546,7 @@ const initialize = async () => {
 		applyConfigValues(suggestedConfigurationContext.value.tableData[0]);
 	} else {
 		knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
+		selectedModelConfig.value = cloneDeep(state.transientModelConfig);
 	}
 
 	// Create a new session and context based on model
@@ -563,6 +565,12 @@ const initialize = async () => {
 };
 
 const onSelectConfiguration = (config: ModelConfiguration) => {
+	// Checks if there are unsaved changes to current model configuration
+	if (isEqual(selectedModelConfig.value, knobs.value.transientModelConfig)) {
+		applyConfigValues(config);
+		return;
+	}
+
 	confirm.require({
 		header: 'Are you sure you want to select this configuration?',
 		message: `This will apply the configuration "${config.name}" to the model.  All current values will be replaced.`,
@@ -577,6 +585,7 @@ const onSelectConfiguration = (config: ModelConfiguration) => {
 const applyConfigValues = (config: ModelConfiguration) => {
 	const state = cloneDeep(props.node.state);
 	knobs.value.transientModelConfig = cloneDeep(config);
+	selectedModelConfig.value = cloneDeep(config);
 
 	// Update output port:
 	if (!config.id) {
