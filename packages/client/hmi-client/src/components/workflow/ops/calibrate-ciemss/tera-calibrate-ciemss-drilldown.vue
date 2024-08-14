@@ -574,7 +574,7 @@ const preparedCharts = computed(() => {
 	});
 
 	// intervention chart spec
-	charts.interventionCharts = knobs.value.selectedInterventionVariables.map((variable) => {
+	state.selectedInterventionVariables.forEach((variable) => {
 		const options = _.cloneDeep(chartOptions);
 		options.translationMap = translationMap(variable);
 		options.yAxisTitle = getUnit(variable);
@@ -596,7 +596,7 @@ const preparedCharts = computed(() => {
 		);
 		// add intervention annotations (rules and text)
 		forecastChart.layer.push(...createInterventionChartMarkers(preProcessedInterventionsData.value[variable]));
-		return forecastChart;
+		charts.interventionCharts[variable] = forecastChart;
 	});
 
 	return charts;
