@@ -4,6 +4,7 @@
 		<main :class="{ error: getErrorMessage }" @click.self.stop="focusInput">
 			<i v-if="icon" :class="icon" />
 			<input
+				v-bind="$attrs"
 				ref="inputField"
 				:disabled="getDisabled"
 				:placeholder="placeholder"
@@ -12,11 +13,8 @@
 				:value="displayValue()"
 				@click.stop
 				@focus="onFocus"
-				@focusout="$emit('focusout', $event)"
 				@blur="onBlur"
 				@input="updateValue"
-				@keyup="$emit('keyup', $event)"
-				@keypress="$emit('keypress', $event)"
 			/>
 		</main>
 		<aside v-if="getErrorMessage"><i class="pi pi-exclamation-circle" /> {{ getErrorMessage }}</aside>
@@ -39,7 +37,7 @@ const props = defineProps<{
 	autoFocus?: boolean;
 }>();
 
-const emit = defineEmits(['update:model-value', 'focusout', 'keyup', 'blur', 'focus', 'keypress']);
+const emit = defineEmits(['update:model-value', 'blur', 'focus']);
 const inputField = ref<HTMLInputElement | null>(null);
 const getDisabled = props.disabled ?? false;
 const isFocused = ref(false);

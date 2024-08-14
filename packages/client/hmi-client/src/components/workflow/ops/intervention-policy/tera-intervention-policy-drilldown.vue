@@ -54,7 +54,7 @@
 			</tera-drilldown-section>
 			<tera-drilldown-section>
 				<template v-if="selectedPolicy?.id">
-					<tera-toggleable-edit
+					<tera-toggleable-input
 						v-if="selectedPolicy?.name"
 						:model-value="selectedPolicy.name"
 						@update:model-value="onChangeName"
@@ -136,7 +136,7 @@ import { logger } from '@/utils/logger';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { useConfirm } from 'primevue/useconfirm';
 import { getParameters, getStates } from '@/model-representation/service';
-import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
+import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import {
 	createInterventionPolicy,
 	getInterventionPolicyById,

@@ -65,7 +65,7 @@
 
 		<tera-drilldown-section :tabName="ConfigTabs.Wizard" class="pl-3">
 			<template #header-controls-left>
-				<tera-toggleable-edit
+				<tera-toggleable-input
 					v-if="knobs.transientModelConfig.name"
 					v-model="knobs.transientModelConfig.name"
 					tag="h4"
@@ -249,7 +249,7 @@ import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { useConfirm } from 'primevue/useconfirm';
 import Dropdown from 'primevue/dropdown';
-import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
+import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
 import { ModelConfigOperation, ModelConfigOperationState, blankModelConfig } from './model-config-operation';
 
