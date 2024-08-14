@@ -489,8 +489,6 @@ const downloadConfiguredModel = async (configuration: ModelConfiguration = knobs
 
 const createConfiguration = async () => {
 	if (!model.value || isSaveDisabled.value) return;
-
-	const state = cloneDeep(props.node.state);
 	const modelConfig = cloneDeep(knobs.value.transientModelConfig);
 
 	const data = await createModelConfiguration(modelConfig);
@@ -506,7 +504,7 @@ const createConfiguration = async () => {
 		label: data.name,
 		value: data.id,
 		isSelected: false,
-		state
+		state: cloneDeep(props.node.state)
 	});
 };
 
@@ -581,13 +579,12 @@ const applyConfigValues = (config: ModelConfiguration) => {
 	// If the output does not already exist
 	else {
 		// Append this config to the output.
-		const state = cloneDeep(props.node.state);
 		emit('append-output', {
 			type: ModelConfigOperation.outputs[0].type,
 			label: config.name,
 			value: config.id,
 			isSelected: false,
-			state
+			state: cloneDeep(props.node.state)
 		});
 	}
 	logger.success(`Configuration applied ${config.name}`);
