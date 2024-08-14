@@ -1,9 +1,12 @@
 <template>
 	<main>
 		<div v-if="runResults && selectedRunId">
-			<template v-for="(_, index) of node.state.selectedSimulationVariables" :key="index">
-				<vega-chart :visualization-spec="preparedCharts[index]" :are-embed-actions-visible="false" />
-			</template>
+			<vega-chart
+				v-for="(_, index) of node.state.selectedSimulationVariables"
+				:key="index"
+				:visualization-spec="preparedCharts[index]"
+				:are-embed-actions-visible="false"
+			/>
 		</div>
 		<tera-progress-spinner v-if="inProgressForecastId" :font-size="2" is-centered style="height: 100%" />
 		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
