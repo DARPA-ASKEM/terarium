@@ -73,7 +73,7 @@
 			</template>
 			<template #header-controls-right>
 				<Button label="Reset" @click="resetConfiguration" outlined severity="secondary" />
-				<Button class="mr-3" :disabled="isSaveDisabled" label="Save" @click="() => createConfiguration()" />
+				<Button class="mr-3" :disabled="isSaveDisabled" label="Save" @click="createConfiguration" />
 			</template>
 
 			<Accordion multiple :active-index="[0, 1]">
@@ -187,11 +187,7 @@
 		</template>
 		<template #footer>
 			<Button label="Ok" class="p-button-primary" @click="sanityCheckErrors = []" />
-			<Button
-				label="Ignore warnings and use configuration"
-				class="p-button-secondary"
-				@click="() => createConfiguration()"
-			/>
+			<Button label="Ignore warnings and use configuration" class="p-button-secondary" @click="createConfiguration" />
 		</template>
 	</tera-modal>
 
@@ -379,7 +375,10 @@ const runFromCode = () => {
 			if (!data.content) return;
 			knobs.value.transientModelConfig = data.content;
 
-			if (executedCode) updateCodeState(executedCode, true);
+			if (executedCode) {
+				updateCodeState(executedCode, true);
+				createConfiguration();
+			}
 		})
 		.register('any_execute_reply', (data) => {
 			let status = OperatorStatus.DEFAULT;
