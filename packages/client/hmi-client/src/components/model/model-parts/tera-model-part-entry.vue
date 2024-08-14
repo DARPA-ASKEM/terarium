@@ -22,13 +22,9 @@
 					v-else
 					label="Unit"
 					placeholder="Add a unit"
+					:characters-to-reject="[' ']"
 					:model-value="item.unitExpression ?? ''"
-					@update:model-value="
-						($event) => {
-							const value = $event.replace(/[\s.]+/g, '');
-							$emit('update-item', { key: 'unitExpression', value });
-						}
-					"
+					@update:model-value="$emit('update-item', { key: 'unitExpression', value: $event })"
 					@focusout="($event) => ($event.target.value = $event.target.value.replace(/[\s.]+/g, ''))"
 				/>
 			</template>
@@ -74,6 +70,16 @@ import { stringToLatexExpression } from '@/services/model';
 import type { DKG } from '@/types/Types';
 import { getCurieFromGroundingIdentifier, getNameOfCurieCached, searchCuriesEntities } from '@/services/concept';
 import type { FeatureConfig } from '@/types/common';
+
+// @input="
+// 						($event: Event) => {
+// 							const target = $event.target as HTMLInputElement;
+// 							const start = target.selectionStart;
+// 							const end = target.selectionEnd;
+// 							target.value = target.value.replace(/\s+/g, ''); // Don't allow spaces since unit variables can't have spaces
+// 							$emit('update-item', { key: 'unitExpression', value: target.value });
+// 							target.setSelectionRange(start, end); // Maintain cursor position
+// 						}
 
 const props = defineProps<{
 	item: ModelPartItem;
