@@ -144,18 +144,25 @@
 				<tera-notebook-error v-bind="node.state.errorMessage" />
 				<template v-if="runResults[selectedRunId]">
 					<div v-if="view === OutputView.Charts" ref="outputPanel">
-						<template v-for="(cfg, index) of node.state.chartConfigs" :key="index">
-							<tera-chart-control
-								:chart-config="{ selectedRun: selectedRunId, selectedVariable: cfg }"
-								:multi-select="true"
-								:show-remove-button="true"
-								:variables="Object.keys(pyciemssMap)"
-								@configuration-change="chartProxy.configurationChange(index, $event)"
-								@remove="chartProxy.removeChart(index)"
-							/>
-							<vega-chart :are-embed-actions-visible="true" :visualization-spec="preparedCharts[index]" />
-						</template>
-						<Button size="small" text @click="chartProxy.addChart()" label="Add chart" icon="pi pi-plus" />
+						<Accordion multiple :active-index="[0, 1]">
+							<AccordionTab header="Interventions">
+								<ul>
+									<li v-for="(_, key) of selectedInterventionVariables" :key="key">
+										<vega-chart
+											are-embed-actions-visible
+											:visualization-spec="preparedCharts.interventionCharts[key]"
+										/>
+									</li>
+								</ul>
+							</AccordionTab>
+							<AccordionTab header="Simulation plots">
+								<ul>
+									<li v-for="(_, key) of selectedSimulationVariables" :key="key">
+										<vega-chart are-embed-actions-visible :visualization-spec="preparedCharts.simulationCharts[key]" />
+									</li>
+								</ul>
+							</AccordionTab>
+						</Accordion>
 					</div>
 					<div v-else-if="view === OutputView.Data">
 						<tera-dataset-datatable
@@ -178,12 +185,12 @@
 </template>
 
 <script setup lang="ts">
-import _ from 'lodash';
+import _, { Dictionary } from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
-import type { CsvAsset, SimulationRequest, TimeSpan } from '@/types/Types';
+import type { CsvAsset, SimulationRequest, TimeSpan, Model, InterventionPolicy } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import {
 	getRunResultCSV,
@@ -194,8 +201,8 @@ import {
 	CiemssMethodOptions
 } from '@/services/models/simulation-service';
 import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
-import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
-
+import { getInterventionPolicyById } from '@/services/intervention-policy';
+import { drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 import SelectButton from 'primevue/selectbutton';
@@ -205,6 +212,8 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
 import teraPyciemssOutputSettings, {
 	OutputSettingKnobs
@@ -213,27 +222,27 @@ import { useProjects } from '@/composables/project';
 import { isSaveDatasetDisabled } from '@/components/dataset/utils';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import { KernelSessionManager } from '@/services/jupyter';
-import { getInterventionPolicyById } from '@/services/intervention-policy';
 import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import { createForecastChart } from '@/services/charts';
+import { createForecastChart, createInterventionChartMarkers } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
-import TeraChartControl from '../../tera-chart-control.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
 }>();
 const emit = defineEmits(['update-state', 'select-output', 'close']);
 
+const model = ref<Model | null>(null);
 const modelVarUnits = ref<{ [key: string]: string }>({});
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
 
 const policyInterventionId = computed(() => props.node.inputs[1].value?.[0]);
+const interventionPolicy = ref<InterventionPolicy | null>(null);
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
 const llmThoughts = ref<any[]>([]);
@@ -335,10 +344,6 @@ const cancelRunId = computed(() => props.node.state.inProgressForecastId);
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 
-const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperationState) => {
-	emit('update-state', state);
-});
-
 const updateOutputSettingForm = (config: OutputSettingKnobs) => {
 	selectedSimulationVariables.value = config.selectedSimulationVariables;
 	selectedInterventionVariables.value = config.selectedInterventionVariables;
@@ -356,42 +361,115 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 	}
 };
 
-const preparedCharts = computed(() => {
-	if (!selectedRunId.value) return [];
+const getUnit = (paramId: string) => {
+	if (!model.value) return '';
+	return getUnitsFromModelParts(model.value)[paramId] || '';
+};
 
+const preProcessedInterventionsData = computed<Dictionary<{ name: string; value: number; time: number }[]>>(() => {
+	if (!interventionPolicy.value) return {};
+
+	const interventions = [
+		...(interventionPolicy.value.interventions.flatMap((inter) =>
+			inter.staticInterventions.map((intervention) => ({
+				appliedTo: inter.appliedTo,
+				name: inter.name,
+				value: intervention.value,
+				time: intervention.timestep
+			}))
+		) || [])
+	];
+
+	// Group by appliedTo and map to exclude 'appliedTo' from final objects
+	const groupedAndMapped = _.mapValues(_.groupBy(interventions, 'appliedTo'), (int) =>
+		int.map(({ name, value, time }) => ({
+			name,
+			value,
+			time
+		}))
+	);
+
+	return groupedAndMapped;
+});
+
+// Creates forecast charts for interventions and simulation charts, based on the selected variables
+const preparedCharts = computed(() => {
+	const charts: { interventionCharts: any[]; simulationCharts: any[] } = {
+		interventionCharts: [],
+		simulationCharts: []
+	};
+
+	if (!selectedRunId.value) return charts;
 	const result = runResults.value[selectedRunId.value];
 	const resultSummary = runResultsSummary.value[selectedRunId.value];
 
-	const reverseMap: Record<string, string> = {};
-	Object.keys(pyciemssMap).forEach((key) => {
-		reverseMap[`${pyciemssMap[key]}_mean`] = key;
+	if (!result || !resultSummary) return charts;
+
+	const chartOptions = {
+		width: chartSize.value.width,
+		height: chartSize.value.height,
+		legend: true,
+		xAxisTitle: getUnit('_time') || 'Time',
+		yAxisTitle: getUnit('') || '',
+		title: '',
+		colorscheme: ['#AAB3C6', '#1B8073'],
+		translationMap: {}
+	};
+
+	const translationMap = (variable: string) => ({
+		[`${pyciemssMap[variable]}_mean:pre`]: `${variable} before optimization`,
+		[`${pyciemssMap[variable]}_mean`]: `${variable} after optimization`
 	});
-	return props.node.state.chartConfigs.map((config) =>
-		createForecastChart(
+
+	// intervention chart spec
+	charts.interventionCharts = selectedInterventionVariables.value.map((variable) => {
+		const options = _.cloneDeep(chartOptions);
+		options.translationMap = translationMap(variable);
+		options.yAxisTitle = getUnit(variable);
+
+		const forecastChart = createForecastChart(
 			{
 				dataset: result,
-				variables: config.map((d) => pyciemssMap[d]),
+				variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
 				timeField: 'timepoint_id',
 				groupField: 'sample_id'
 			},
 			{
 				dataset: resultSummary,
-				variables: config.map((d) => `${pyciemssMap[d]}_mean`),
+				variables: [`${pyciemssMap[variable]}_mean:pre`, `${pyciemssMap[variable]}_mean`],
 				timeField: 'timepoint_id'
 			},
 			null,
-			// options
+			options
+		);
+		// add intervention annotations (rules and text)
+		forecastChart.layer.push(...createInterventionChartMarkers(preProcessedInterventionsData.value[variable]));
+		return forecastChart;
+	});
+
+	// simulation chart spec
+	charts.simulationCharts = selectedSimulationVariables.value.map((variable) => {
+		const options = _.cloneDeep(chartOptions);
+		options.translationMap = translationMap(variable);
+		options.yAxisTitle = getUnit(variable);
+
+		return createForecastChart(
 			{
-				title: '',
-				width: chartSize.value.width,
-				height: chartSize.value.height,
-				legend: true,
-				translationMap: reverseMap,
-				xAxisTitle: modelVarUnits.value._time || 'Time',
-				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
-			}
-		)
-	);
+				dataset: result,
+				variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
+				timeField: 'timepoint_id',
+				groupField: 'sample_id'
+			},
+			{
+				dataset: resultSummary,
+				variables: [`${pyciemssMap[variable]}_mean:pre`, `${pyciemssMap[variable]}_mean`],
+				timeField: 'timepoint_id'
+			},
+			null,
+			options
+		);
+	});
+	return charts;
 });
 
 const updateState = () => {
@@ -533,8 +611,8 @@ watch(
 		if (!input.value) return;
 
 		const id = input.value[0];
-		const model = await getModelByModelConfigurationId(id);
-		if (model) modelVarUnits.value = getUnitsFromModelParts(model);
+		model.value = await getModelByModelConfigurationId(id);
+		if (model.value) modelVarUnits.value = getUnitsFromModelParts(model.value);
 	},
 	{ immediate: true }
 );
@@ -552,8 +630,10 @@ watch(
 	async () => {
 		// Intervention input
 		if (policyInterventionId.value) {
-			const interventionPolicy = await getInterventionPolicyById(policyInterventionId.value);
-			interventionAppliedToOptions.value = [...new Set(interventionPolicy.interventions.map((ele) => ele.appliedTo))];
+			interventionPolicy.value = await getInterventionPolicyById(policyInterventionId.value);
+			interventionAppliedToOptions.value = [
+				...new Set(interventionPolicy.value.interventions.map((ele) => ele.appliedTo))
+			];
 		}
 	},
 	{ immediate: true }
