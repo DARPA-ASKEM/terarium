@@ -12,7 +12,7 @@
 				:visualization-spec="preparedCharts[index]"
 			/>
 		</template>
-		<div v-else ref="drilldownLossPlot" class="loss-chart" />
+		<vega-chart v-else-if="lossChartSpec" :are-embed-actions-visible="false" :visualization-spec="lossChartSpec" />
 
 		<tera-progress-spinner v-if="inProgressCalibrationId" :font-size="2" is-centered style="height: 100%">
 			<div>{{ props.node.state.currentProgress }}%</div>
@@ -42,7 +42,7 @@ import {
 } from '@/services/models/simulation-service';
 import { getModelConfigurationById, createModelConfiguration } from '@/services/model-configurations';
 import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
-import { renderLossGraph, setupDatasetInput } from '@/services/calibrate-workflow';
+import { setupDatasetInput } from '@/services/calibrate-workflow';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
@@ -80,23 +80,34 @@ const runResult = ref<DataArray>([]);
 const runResultPre = ref<DataArray>([]);
 const runResultSummary = ref<DataArray>([]);
 const runResultSummaryPre = ref<DataArray>([]);
-const drilldownLossPlot = ref<HTMLElement>();
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const areInputsFilled = computed(() => props.node.inputs[0].value && props.node.inputs[1].value);
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
 
+const chartSize = { width: 180, height: 120 };
+
 let lossValues: { [key: string]: number }[] = [];
 
-function drawLossGraph() {
-	if (drilldownLossPlot.value) {
-		renderLossGraph(drilldownLossPlot.value, lossValues, {
-			width: 200,
-			height: 120
-		});
-	}
-}
+const lossChartSpec = ref();
+const updateLossChartSpec = (data: Record<string, any>[]) => {
+	lossChartSpec.value = createForecastChart(
+		null,
+		{
+			data,
+			variables: ['loss'],
+			timeField: 'iter'
+		},
+		null,
+		{
+			title: '',
+			xAxisTitle: 'Solver iterations',
+			yAxisTitle: 'Loss',
+			...chartSize
+		}
+	);
+};
 
 async function updateLossChartWithSimulation() {
 	if (props.node.active) {
@@ -106,7 +117,7 @@ async function updateLossChartWithSimulation() {
 				iter: i,
 				loss: d.data.loss
 			}));
-			drawLossGraph();
+			updateLossChartSpec(lossValues);
 		}
 	}
 }
@@ -173,13 +184,12 @@ const preparedCharts = computed(() => {
 			},
 			{
 				title: '',
-				width: 180,
-				height: 120,
 				legend: true,
 				translationMap: reverseMap,
 				xAxisTitle: modelVarUnits.value._time || 'Time',
 				yAxisTitle: modelVarUnits.value[variable] || '',
-				colorscheme: ['#AAB3C6', '#1B8073']
+				colorscheme: ['#AAB3C6', '#1B8073'],
+				...chartSize
 			}
 		);
 	});
@@ -197,7 +207,7 @@ const pollResult = async (runId: string) => {
 					iter: i,
 					loss: d.data.loss
 				}));
-				drawLossGraph();
+				updateLossChartSpec(lossValues);
 			}
 			if (runId === props.node.state.inProgressCalibrationId && data.updates.length > 0) {
 				const checkpoint = _.first(data.updates);
