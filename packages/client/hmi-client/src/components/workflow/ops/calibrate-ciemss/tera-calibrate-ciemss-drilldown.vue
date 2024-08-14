@@ -203,6 +203,8 @@
 						<template v-for="variable of node.state.selectedVariables" :key="variable">
 							<vega-chart :are-embed-actions-visible="true" :visualization-spec="preparedCharts[variable]" />
 						</template>
+						<h5>Errors</h5>
+						<vega-chart :are-embed-actions-visible="true" :visualization-spec="errorChart" />
 					</section>
 					<section v-else-if="!modelConfig" class="emptyState">
 						<img src="@assets/svg/seed.svg" alt="" draggable="false" />
@@ -261,7 +263,7 @@ import {
 } from '@/services/models/simulation-service';
 
 import type { WorkflowNode } from '@/types/workflow';
-import { createForecastChart, createHistogramChart } from '@/services/charts';
+import { createForecastChart, createHistogramChart, createErrorChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
 import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
@@ -412,7 +414,7 @@ const preparedChartInputs = computed(() => {
 	if (!state.calibrationId) return null;
 
 	// Merge before/after for chart
-	const { result, resultSummary } = mergeResults(
+	const { result, resultSummary, error } = mergeResults(
 		runResultPre.value,
 		runResult.value,
 		runResultSummaryPre.value,
@@ -431,7 +433,8 @@ const preparedChartInputs = computed(() => {
 	return {
 		result,
 		resultSummary,
-		reverseMap
+		reverseMap,
+		error
 	};
 });
 
@@ -524,6 +527,22 @@ const preparedDistributionCharts = computed(() => {
 		charts[param] = { histogram, stat };
 	});
 	return charts;
+});
+
+const errorChart = computed(() => {
+	if (!preparedChartInputs.value) return [];
+	const { error } = preparedChartInputs.value;
+	const variables = props.node.state.selectedVariables.map((variable) => ({
+		field: pyciemssMap[variable],
+		label: variable
+	}));
+	const spec = createErrorChart(error, {
+		title: '',
+		width: chartSize.value.width,
+		variables,
+		xAxisTitle: 'Mean absolute (MAE)'
+	});
+	return spec;
 });
 
 const runCalibrate = async () => {
