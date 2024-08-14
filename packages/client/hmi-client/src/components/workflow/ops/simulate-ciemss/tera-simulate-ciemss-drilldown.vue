@@ -529,7 +529,7 @@ const lazyLoadSimulationData = async (outputRunId: string) => {
 
 	const result = await getRunResultCSV(forecastId, 'result.csv');
 	pyciemssMap = parsePyCiemssMap(result[0]);
-	simulationChartOptions.value = Object.keys(pyciemssMap);
+	console.log(Object.keys(pyciemssMap));
 
 	runResults.value[outputRunId] = result;
 	rawContent.value[outputRunId] = convertToCsvAsset(result, Object.values(pyciemssMap));
@@ -612,7 +612,15 @@ watch(
 
 		const id = input.value[0];
 		model.value = await getModelByModelConfigurationId(id);
-		if (model.value) modelVarUnits.value = getUnitsFromModelParts(model.value);
+		if (model.value) {
+			modelVarUnits.value = getUnitsFromModelParts(model.value);
+
+			// Set output settings:
+			const modelParameterOptions = (model.value?.semantics?.ode?.parameters ?? []).map((p) => p.id);
+			const modelStateOptions = model.value?.model.states.map((state: any) => state.id);
+			const modelObsOptions = (model.value.semantics?.ode.observables ?? []).map((obs: any) => obs.id);
+			simulationChartOptions.value = [...new Set([...modelParameterOptions, ...modelStateOptions, ...modelObsOptions])];
+		}
 	},
 	{ immediate: true }
 );
