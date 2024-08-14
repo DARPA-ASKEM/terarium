@@ -137,7 +137,7 @@
 					</div>
 				</section>
 				<tera-pyciemss-output-settings
-					:successDisplayChartsCheckbox="true"
+					:successDisplayChartsCheckbox="false"
 					:summaryCheckbox="true"
 					:interventionsDisplayChartsCheckbox="true"
 					:simulationDisplayChartsCheckbox="true"
