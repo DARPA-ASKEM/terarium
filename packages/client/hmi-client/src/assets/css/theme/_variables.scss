@@ -161,13 +161,16 @@ $roundedButtonBorderRadius: 2rem !default;
 
 $textButtonHoverBgOpacity: .04 !default;
 $textButtonActiveBgOpacity: .16 !default;
+$plainButtonTextColor: $textColor !default;
+$plainButtonHoverBgColor: rgba(0, 0, 0, $textButtonHoverBgOpacity) !default;
+$plainButtonActiveBgColor: rgba(0, 0, 0, $textButtonActiveBgOpacity) !default;
+
 $outlinedSecondaryButtonBg: #ffffff !default;
 $outlinedSecondaryButtonTextColor: var(--text-color-primary) !default;
 $outlinedSecondaryBoxShadow: var(--surface-border) inset 0 0 0 1px;
+$outlinedSecondaryButtonHoverBg: var(--gray-50) !default;
+$outlinedSecondaryButtonActiveBg: var(--gray-50) !default;
 $outlinedButtonBorder: 0 none !default;
-$plainButtonTextColor: $textColor !default;
-$plainButtonHoverBgColor: rgba(0, 0, 0, .04) !default;
-$plainButtonActiveBgColor: rgba(0, 0, 0, .16) !default;
 
 $secondaryButtonBg: $accentColor !default;
 $secondaryButtonTextColor: var(--text-color-subdued) !default;
@@ -248,9 +251,9 @@ $checkboxBorder: 2px solid #757575 !default;
 $checkboxIconFontSize: 14px !default;
 $checkboxActiveBorderColor: $primaryColor !default;
 $checkboxActiveBg: $primaryColor !default;
-$checkboxIconActiveColor: $primaryTextColor !default;
+$checkboxIconActiveColor: $primaryColor !default;
 $checkboxActiveHoverBg: $primaryColor !default;
-$checkboxIconActiveHoverColor: $primaryTextColor !default;
+$checkboxIconActiveHoverColor: $primaryColor !default;
 $checkboxActiveHoverBorderColor: $primaryColor !default;
 
 //radiobutton
@@ -995,5 +998,4 @@ $petri-inputBox: var(--surface-0);
 	--gap-10: 2.5rem;					// 40px
 	--gap-11: 2.75rem;				// 44px
 	--gap-12: 3rem;						// 48px
-
 }

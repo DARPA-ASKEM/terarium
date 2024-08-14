@@ -2,11 +2,11 @@
 	<main>
 		<template
 			v-if="
-				!inProgressCalibrationId && runResult && csvAsset && runResultPre && props.node.state.chartConfigs[0]?.length
+				!inProgressCalibrationId && runResult && csvAsset && runResultPre && props.node.state.selectedVariables?.length
 			"
 		>
 			<vega-chart
-				v-for="(_config, index) of props.node.state.chartConfigs"
+				v-for="(_var, index) of props.node.state.selectedVariables"
 				:key="index"
 				:are-embed-actions-visible="false"
 				:visualization-spec="preparedCharts[index]"
@@ -60,7 +60,10 @@ import { createLLMSummary } from '@/services/summary-service';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import * as stats from '@/utils/stats';
+import { createDatasetFromSimulationResult } from '@/services/dataset';
+import { useProjects } from '@/composables/project';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
+import { CalibrationOperationCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults } from './calibrate-utils';
 
 const props = defineProps<{
@@ -144,25 +147,23 @@ const preparedCharts = computed(() => {
 	// Need to get the dataset's time field
 	const datasetTimeField = state.mapping.find((d) => d.modelVariable === 'timestamp')?.datasetVariable;
 
-	return state.chartConfigs.map((config) => {
+	return state.selectedVariables.map((variable) => {
 		const datasetVariables: string[] = [];
-		config.forEach((variableName) => {
-			const mapObj = state.mapping.find((d) => d.modelVariable === variableName);
-			if (mapObj) {
-				datasetVariables.push(mapObj.datasetVariable);
-			}
-		});
+		const mapObj = state.mapping.find((d) => d.modelVariable === variable);
+		if (mapObj) {
+			datasetVariables.push(mapObj.datasetVariable);
+		}
 
 		return createForecastChart(
 			{
 				dataset: result,
-				variables: [...config.map((d) => `${pyciemssMap[d]}:pre`), ...config.map((d) => pyciemssMap[d])],
+				variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
 				timeField: 'timepoint_id',
 				groupField: 'sample_id'
 			},
 			{
 				dataset: resultSummary,
-				variables: [...config.map((d) => `${pyciemssMap[d]}_mean:pre`), ...config.map((d) => `${pyciemssMap[d]}_mean`)],
+				variables: [`${pyciemssMap[variable]}_mean:pre`, `${pyciemssMap[variable]}_mean`],
 				timeField: 'timepoint_id'
 			},
 			{
@@ -177,7 +178,7 @@ const preparedCharts = computed(() => {
 				legend: true,
 				translationMap: reverseMap,
 				xAxisTitle: modelVarUnits.value._time || 'Time',
-				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || '',
+				yAxisTitle: modelVarUnits.value[variable] || '',
 				colorscheme: ['#AAB3C6', '#1B8073']
 			}
 		);
@@ -311,9 +312,6 @@ watch(
 
 		if (doneProcess) {
 			const state = _.cloneDeep(props.node.state);
-			if (state.chartConfigs.length === 0) {
-				state.chartConfigs = [[]];
-			}
 			state.forecastId = state.inProgressForecastId;
 			state.preForecastId = state.inProgressPreForecastId;
 
@@ -396,18 +394,30 @@ watch(
 				description: `Calibrated: ${baseConfig.description}`,
 				simulationId: state.calibrationId,
 				modelId: baseConfig.modelId,
-				observableSemanticList: [],
+				observableSemanticList: _.cloneDeep(baseConfig.observableSemanticList),
 				parameterSemanticList: [],
-				initialSemanticList: [],
+				initialSemanticList: _.cloneDeep(baseConfig.initialSemanticList),
 				inferredParameterList: inferredParameters
 			};
+
 			const modelConfigResponse = await createModelConfiguration(calibratedModelConfig);
+			const datasetName = `Forecast run ${state.forecastId}`;
+			const projectId = useProjects().activeProjectId.value;
+			const datasetResult = await createDatasetFromSimulationResult(projectId, state.forecastId, datasetName, false);
+			if (!datasetResult) {
+				return;
+			}
 
 			// const portLabel = props.node.inputs[0].label;
 			emit('append-output', {
-				type: 'modelConfigId',
+				type: CalibrationOperationCiemss.outputs[0].type,
 				label: nodeOutputLabel(props.node, `Calibration Result`),
-				value: [modelConfigResponse.id],
+				value: [
+					{
+						modelConfigId: modelConfigResponse.id,
+						datasetId: datasetResult.id
+					}
+				],
 				state: {
 					calibrationId: state.calibrationId,
 					forecastId: state.forecastId,

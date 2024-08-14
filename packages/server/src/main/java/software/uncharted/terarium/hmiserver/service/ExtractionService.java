@@ -364,6 +364,7 @@ public class ExtractionService {
 				);
 			} catch (final RuntimeException e) {
 				notificationInterface.sendError(e.getMessage());
+				log.error(e.getMessage(), e);
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
 			} catch (final Exception e) {
 				final String error = "Unable to extract pdf";

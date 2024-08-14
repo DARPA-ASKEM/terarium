@@ -3,7 +3,7 @@ import * as d3 from 'd3';
 import type { Dataset, CsvAsset } from '@/types/Types';
 import { getModelConfigurationById, getObservables } from '@/services/model-configurations';
 import { downloadRawFile, getDataset } from '@/services/dataset';
-import { getUnitsFromModelParts, getModelByModelConfigurationId } from '@/services/model';
+import { getUnitsFromModelParts, getModelByModelConfigurationId, getTypesFromModelParts } from '@/services/model';
 
 export interface CalibrateMap {
 	modelVariable: string;
@@ -19,7 +19,8 @@ export const setupModelInput = async (modelConfigId: string | undefined) => {
 			getModelByModelConfigurationId(modelConfigId)
 		]);
 
-		const modelVariableUnits = !model ? {} : getUnitsFromModelParts(model);
+		const modelPartUnits = !model ? {} : getUnitsFromModelParts(model);
+		const modelPartTypes = !model ? {} : getTypesFromModelParts(model);
 
 		const modelOptions: any[] = model?.model.states;
 
@@ -29,7 +30,7 @@ export const setupModelInput = async (modelConfigId: string | undefined) => {
 
 		modelOptions.push({ id: 'timestamp' });
 
-		return { modelConfiguration, modelOptions, modelVariableUnits };
+		return { modelConfiguration, modelOptions, modelPartUnits, modelPartTypes };
 	}
 	return {};
 };

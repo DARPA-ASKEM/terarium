@@ -189,6 +189,20 @@ export const getUnitsFromModelParts = (model: Model) => {
 	return unitMapping;
 };
 
+export const getTypesFromModelParts = (model: Model) => {
+	const typeMapping: { [key: string]: string } = {};
+	[...(model.model.states ?? [])].forEach((v) => {
+		typeMapping[v.id] = 'state';
+	});
+	[...(model.semantics?.ode?.parameters ?? [])].forEach((v) => {
+		typeMapping[v.id] = 'parameter';
+	});
+	(model.semantics?.ode?.observables || []).forEach((o) => {
+		typeMapping[o.id] = 'observable';
+	});
+	return typeMapping;
+};
+
 export function isInitial(obj: Initial | ModelParameter | null): obj is Initial {
 	return obj !== null && 'target' in obj && 'expression' in obj && 'expression_mathml' in obj;
 }

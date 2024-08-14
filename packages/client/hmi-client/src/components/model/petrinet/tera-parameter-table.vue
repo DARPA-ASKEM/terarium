@@ -41,7 +41,7 @@
 				<Button text small icon="pi pi-times" @click="isAddingUncertainty = false" />
 			</span>
 
-			<ul>
+			<ul class="pl-4">
 				<li v-for="{ baseParameter, childParameters, isVirtual } in parameterList" :key="baseParameter">
 					<!-- Stratified -->
 					<Accordion v-if="isVirtual" multiple>
@@ -80,7 +80,7 @@
 						</AccordionTab>
 					</Accordion>
 					<!-- Unstratified -->
-					<div v-else class="flex gap-4 pl-5">
+					<div v-else class="flex gap-4">
 						<Checkbox
 							v-if="
 								isAddingUncertainty &&

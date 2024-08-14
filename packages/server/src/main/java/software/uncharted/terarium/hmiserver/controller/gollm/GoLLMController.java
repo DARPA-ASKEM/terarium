@@ -455,7 +455,7 @@ public class GoLLMController {
 			projectId
 		);
 
-		final List<String> modelCards = new ArrayList<>();
+		final List<String> amrs = new ArrayList<>();
 		for (final UUID modelId : modelIds) {
 			// Grab the model
 			final Optional<Model> model = modelService.getAsset(modelId, permission);
@@ -463,27 +463,23 @@ public class GoLLMController {
 				log.warn(String.format("Model %s not found", modelId));
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 			}
-			if (model.get().getMetadata().getGollmCard() != null) {
-				try {
-					modelCards.add(objectMapper.writeValueAsString(model.get().getMetadata().getGollmCard()));
-				} catch (final JsonProcessingException e) {
-					log.error("Unable to serialize model card", e);
-					throw new ResponseStatusException(
-						HttpStatus.INTERNAL_SERVER_ERROR,
-						messages.get("task.gollm.json-processing")
-					);
-				}
+
+			try {
+				amrs.add(objectMapper.writeValueAsString(model.get()));
+			} catch (final JsonProcessingException e) {
+				log.error("Unable to serialize model card", e);
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
 			}
 		}
 
 		// if the number of models is less than 2, return an error
-		if (modelCards.size() < 2) {
+		if (amrs.size() < 2) {
 			log.warn("Less than 2 models provided for comparison");
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("task.gollm.model-card.bad-number"));
 		}
 
 		final CompareModelsResponseHandler.Input input = new CompareModelsResponseHandler.Input();
-		input.setCards(modelCards);
+		input.setAmrs(amrs);
 
 		// create the task
 		final TaskRequest req = new TaskRequest();

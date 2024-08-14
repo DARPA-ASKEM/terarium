@@ -1,16 +1,20 @@
 <template>
-	<div>
-		<header>
-			<div>
-				<strong>{{ initialId }}</strong>
-				<span v-if="name" class="ml-1">{{ '| ' + name }}</span>
-				<template v-if="unit">
-					<label class="ml-2">Unit</label>
-					<span class="ml-1">{{ unit }}</span>
-				</template>
-			</div>
-			<span v-if="description" class="ml-4">{{ description }}</span>
-		</header>
+	<header>
+		<div class="flex">
+			<strong>{{ initialId }}</strong>
+			<span v-if="name" class="ml-1">{{ '| ' + name }}</span>
+			<template v-if="unit">
+				<label class="ml-2">Unit</label>
+				<span class="ml-1">{{ unit }}</span>
+			</template>
+			<template v-if="concept">
+				<label class="ml-auto">Concept</label>
+				<span class="ml-1">{{ concept }}</span>
+			</template>
+		</div>
+		<span v-if="description" class="description">{{ description }}</span>
+	</header>
+	<template v-if="isEmpty(modelConfiguration.inferredParameterList)">
 		<main>
 			<span class="expression">
 				<tera-input-text
@@ -29,7 +33,13 @@
 				@update:model-value="emit('update-source', { id: initialId, value: $event })"
 			/>
 		</footer>
-	</div>
+	</template>
+	<katex-element
+		v-else
+		class="expression"
+		:expression="stringToLatexExpression(getInitialExpression(modelConfiguration, initialId))"
+		:throw-on-error="false"
+	/>
 	<tera-initial-other-value-modal
 		v-if="showOtherConfigValueModal"
 		:id="initialId"
@@ -44,14 +54,17 @@
 </template>
 
 <script setup lang="ts">
+import { isEmpty } from 'lodash';
+import { computed, ref, onMounted } from 'vue';
 import { DistributionType } from '@/services/distribution';
 import { Model, ModelConfiguration } from '@/types/Types';
 import { getInitialExpression, getInitialSource, getOtherValues } from '@/services/model-configurations';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraInitialOtherValueModal from '@/components/model/petrinet/tera-initial-other-value-modal.vue';
-import { computed, ref } from 'vue';
 import Button from 'primevue/button';
-import { getInitialDescription, getInitialName, getInitialUnits } from '@/model-representation/service';
+import { getInitialDescription, getInitialName, getInitialUnits, getStates } from '@/model-representation/service';
+import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
+import { stringToLatexExpression } from '@/services/model';
 
 const props = defineProps<{
 	model: Model;
@@ -70,8 +83,11 @@ const name = getInitialName(props.model, props.initialId);
 const unit = getInitialUnits(props.model, props.initialId);
 const description = getInitialDescription(props.model, props.initialId);
 
+const concept = ref('');
 const sourceOpen = ref(false);
 const showOtherConfigValueModal = ref(false);
+
+const getOtherValuesLabel = computed(() => `Other Values(${otherValueList.value?.length})`);
 
 function getSourceLabel(initialId) {
 	if (sourceOpen.value) return 'Hide source';
@@ -79,14 +95,21 @@ function getSourceLabel(initialId) {
 	return 'Show source';
 }
 
-const getOtherValuesLabel = computed(() => `Other Values(${otherValueList.value?.length})`);
+onMounted(async () => {
+	const identifiers = getStates(props.model).find((state) => state.id === props.initialId)?.grounding?.identifiers;
+	if (identifiers) concept.value = await getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
+});
 </script>
 
 <style scoped>
 header {
 	display: flex;
 	flex-direction: column;
-	padding-bottom: var(--gap-small);
+	padding-bottom: var(--gap-2);
+	gap: var(--gap-2);
+}
+.description {
+	color: var(--text-color-subdued);
 }
 .expression {
 	flex-grow: 1;

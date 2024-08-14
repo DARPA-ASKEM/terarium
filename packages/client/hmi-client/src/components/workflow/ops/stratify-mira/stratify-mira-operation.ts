@@ -60,7 +60,7 @@ export const StratifyMiraOperation: Operation = {
 	description: 'Stratify a model',
 	documentationUrl: DOCUMENTATION_URL,
 	imageUrl: stratifyModel,
-	inputs: [{ type: 'modelId|modelConfigId', label: 'Model or Model configuration', acceptMultiple: false }],
+	inputs: [{ type: 'modelId|modelConfigId', label: 'Model or Model configuration' }],
 	outputs: [{ type: 'modelId', label: 'Model' }],
 	isRunnable: false,
 	action: () => {},

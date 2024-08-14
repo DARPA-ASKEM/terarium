@@ -1,25 +1,27 @@
 <template>
-	<Button
-		v-bind="$attrs"
-		type="button"
-		size="small"
-		@click="showMenu"
-		icon="pi pi-plus"
-		aria-haspopup="true"
-		aria-controls="overlay_menu"
-		severity="secondary"
-	/>
-	<Menu
-		ref="menu"
-		id="overlay_menu"
-		:model="menuItems"
-		:popup="true"
-		@focus="emit('menu-focus')"
-		@blur="emit('menu-blur')"
-	/>
+	<aside>
+		<Button
+			v-bind="$attrs"
+			type="button"
+			size="small"
+			@click="showMenu"
+			icon="pi pi-plus"
+			aria-haspopup="true"
+			aria-controls="overlay_menu"
+			severity="secondary"
+		/>
+		<Menu
+			ref="menu"
+			id="overlay_menu"
+			:model="menuItems"
+			:popup="true"
+			@focus="emit('menu-focus')"
+			@blur="emit('menu-blur')"
+		/>
+	</aside>
 </template>
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import Menu from 'primevue/menu';
 import Button from 'primevue/button';
 import { OperatorMenuItem } from '@/services/workflow';
@@ -32,9 +34,7 @@ const emit = defineEmits(['menu-focus', 'menu-blur', 'menu-selection']);
 
 const isMenuShowing = ref<boolean>(false);
 const menu = ref();
-const menuItems = ref();
-
-onMounted(() => {
+const menuItems = computed(() => {
 	const options: Array<{}> = [];
 	props.nodeMenu.forEach((node) =>
 		options.push({
@@ -44,7 +44,7 @@ onMounted(() => {
 			}
 		})
 	);
-	menuItems.value = [{ items: options }];
+	return [{ items: options }];
 });
 
 function showMenu(event) {

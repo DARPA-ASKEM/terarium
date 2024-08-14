@@ -21,7 +21,7 @@ public class CompareModelsResponseHandler extends TaskResponseHandler {
 	@Data
 	public static class Input {
 
-		List<String> cards;
+		List<String> amrs;
 	}
 
 	@Data

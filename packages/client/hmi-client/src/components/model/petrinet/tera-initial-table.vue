@@ -6,7 +6,7 @@
 				<tera-input-text v-model="filterText" placeholder="Filter" />
 			</template>
 
-			<ul>
+			<ul class="pl-4">
 				<li v-for="{ baseInitial, childInitials, isVirtual } in initialList" :key="baseInitial">
 					<!-- Stratified -->
 					<Accordion v-if="isVirtual" multiple>
