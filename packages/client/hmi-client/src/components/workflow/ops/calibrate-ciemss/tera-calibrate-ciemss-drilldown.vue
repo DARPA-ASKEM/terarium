@@ -447,7 +447,7 @@ const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 const selectedParameters = ref<string[]>(props.node.state.selectedParameters);
 
 const preparedChartInputs = computed(() => {
-	const state = props.node.state;
+	const state = _.cloneDeep(props.node.state);
 
 	if (!state.calibrationId) return null;
 
@@ -514,7 +514,7 @@ const preparedCharts = computed(() => {
 
 	if (!preparedChartInputs.value) return charts;
 	const { result, resultSummary } = preparedChartInputs.value;
-	const state = props.node.state;
+	const state = _.cloneDeep(props.node.state);
 
 	// FIXME: Hacky re-parse CSV with correct data types
 	let groundTruth: DataArray = [];
@@ -605,7 +605,7 @@ const preparedCharts = computed(() => {
 const preparedDistributionCharts = computed(() => {
 	if (!preparedChartInputs.value) return [];
 	const { result } = preparedChartInputs.value;
-	const state = props.node.state;
+	const state = _.cloneDeep(props.node.state);
 	const labelBefore = 'Before calibration';
 	const labelAfter = 'After calibration';
 	const charts = {};
@@ -757,6 +757,8 @@ async function getAutoMapping() {
 }
 
 onMounted(async () => {
+	console.log('On mount:');
+	console.log(_.cloneDeep(props.node));
 	// Get sizing
 	if (drilldownLossPlot.value) {
 		previewChartWidth.value = drilldownLossPlot.value.offsetWidth;
@@ -840,7 +842,7 @@ watch(
 				}
 			}
 
-			const state = props.node.state;
+			const state = _.cloneDeep(props.node.state);
 			runResult.value = await getRunResultCSV(state.forecastId, 'result.csv');
 			runResultSummary.value = await getRunResultCSV(state.forecastId, 'result_summary.csv');
 

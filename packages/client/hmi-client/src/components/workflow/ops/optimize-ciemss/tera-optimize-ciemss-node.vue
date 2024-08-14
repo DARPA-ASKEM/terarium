@@ -291,7 +291,7 @@ watch(
 	() => props.node.active,
 	async () => {
 		const active = props.node.active;
-		const state = props.node.state;
+		const state = _.cloneDeep(props.node.state);
 		if (!active) return;
 		if (!state.postForecastRunId || !state.preForecastRunId) return;
 

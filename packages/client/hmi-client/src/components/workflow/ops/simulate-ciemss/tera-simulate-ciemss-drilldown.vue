@@ -492,7 +492,7 @@ const run = async () => {
 
 const makeForecastRequest = async () => {
 	const modelConfigId = props.node.inputs[0].value?.[0];
-	const state = props.node.state;
+	const state = _.cloneDeep(props.node.state);
 
 	const payload: SimulationRequest = {
 		modelConfigId,

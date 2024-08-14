@@ -120,7 +120,7 @@ onMounted(async () => updateLossChartWithSimulation());
 let pyciemssMap: Record<string, string> = {};
 
 const preparedCharts = computed(() => {
-	const state = props.node.state;
+	const state = _.cloneDeep(props.node.state);
 
 	if (!runResult.value || !csvAsset.value || !runResultPre.value) return [];
 
@@ -412,6 +412,7 @@ watch(
 				return;
 			}
 
+			console.log('Appending output:');
 			// const portLabel = props.node.inputs[0].label;
 			emit('append-output', {
 				type: CalibrationOperationCiemss.outputs[0].type,
@@ -440,7 +441,7 @@ watch(
 	() => props.node.active,
 	async () => {
 		const active = props.node.active;
-		const state = props.node.state;
+		const state = _.cloneDeep(props.node.state);
 		if (!active) return;
 		if (!state.forecastId) return;
 
