@@ -40,7 +40,6 @@ export const CalibrationOperationCiemss: Operation = {
 		{
 			type: 'policyInterventionId',
 			label: 'Interventions',
-			acceptMultiple: false,
 			isOptional: true
 		}
 	],
