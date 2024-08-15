@@ -77,7 +77,13 @@
 							<p class="description text" v-if="!isEditingDescription">
 								{{ selectedPolicy?.description }}
 							</p>
-							<Textarea v-else class="w-full" placeholder="Enter a description" v-model="newDescription" />
+							<Textarea
+								v-else
+								ref="descriptionTextareaRef"
+								class="w-full"
+								placeholder="Enter a description"
+								v-model="newDescription"
+							/>
 						</AccordionTab>
 						<AccordionTab header="Charts">
 							<ul class="flex flex-column gap-2">
@@ -125,13 +131,13 @@
 </template>
 
 <script setup lang="ts">
+import _, { cloneDeep, groupBy, isEmpty, isEqual } from 'lodash';
+import { computed, onMounted, ref, watch, nextTick } from 'vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { WorkflowNode } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
-import { computed, onMounted, ref, watch } from 'vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
-import _, { cloneDeep, groupBy, isEmpty, isEqual } from 'lodash';
 import Button from 'primevue/button';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { getInterventionPoliciesForModel, getModel } from '@/services/model';
@@ -194,6 +200,7 @@ const selectedOutputId = ref<string>('');
 const selectedPolicy = ref<InterventionPolicy | null>(null);
 
 const newDescription = ref('');
+const descriptionTextareaRef = ref<InstanceType<typeof Textarea> | null>(null);
 const isEditingDescription = ref(false);
 const isSaved = computed(
 	() =>
@@ -344,9 +351,12 @@ const onChangeName = async (name: string) => {
 	await fetchInterventionPolicies(selectedPolicy.value.modelId);
 };
 
-const onEditDescription = () => {
+const onEditDescription = async () => {
 	isEditingDescription.value = true;
 	newDescription.value = selectedPolicy.value?.description ?? '';
+	await nextTick();
+	// @ts-ignore
+	descriptionTextareaRef.value?.$el.focus();
 };
 
 const onConfirmEditDescription = async () => {

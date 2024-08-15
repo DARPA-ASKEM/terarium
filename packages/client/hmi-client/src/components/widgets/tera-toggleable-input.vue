@@ -1,6 +1,7 @@
 <template>
 	<div v-if="isEditing" v-bind="$attrs" class="flex align-items-center gap-1">
 		<tera-input-text
+			ref="inputRef"
 			:model-value="modelValue"
 			@update:model-value="emit('update:model-value', $event)"
 			@keydown="handleKeyDown"
@@ -15,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, nextTick } from 'vue';
 import Button from 'primevue/button';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 
@@ -32,11 +33,15 @@ const props = withDefaults(
 const emit = defineEmits(['update:model-value']);
 
 let initialValue = '';
+
+const inputRef = ref<InstanceType<typeof TeraInputText> | null>(null);
 const isEditing = ref(false);
 
-const onEdit = () => {
+const onEdit = async () => {
 	initialValue = props.modelValue;
 	isEditing.value = true;
+	await nextTick();
+	inputRef.value?.$el.querySelector('input')?.focus();
 };
 
 const onConfirm = () => {
@@ -44,7 +49,7 @@ const onConfirm = () => {
 };
 
 const onCancel = () => {
-	emit('update:model-value', initialValue); // Cancel changes
+	emit('update:model-value', initialValue); // Revert changes
 	isEditing.value = false;
 };
 

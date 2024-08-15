@@ -92,7 +92,13 @@
 					<p class="description text" v-if="!isEditingDescription">
 						{{ knobs.transientModelConfig.description }}
 					</p>
-					<Textarea v-else class="context-item" placeholder="Enter a description" v-model="newDescription" />
+					<Textarea
+						v-else
+						ref="descriptionTextareaRef"
+						class="context-item"
+						placeholder="Enter a description"
+						v-model="newDescription"
+					/>
 				</AccordionTab>
 				<AccordionTab header="Diagram">
 					<tera-model-diagram v-if="model" :model="model" />
@@ -201,12 +207,12 @@
 <script setup lang="ts">
 import '@/ace-config';
 import { cloneDeep, isEmpty, orderBy } from 'lodash';
+import { computed, onUnmounted, ref, watch, nextTick } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Textarea from 'primevue/textarea';
-import { computed, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { useClientEvent } from '@/composables/useClientEvent';
@@ -264,6 +270,7 @@ const props = defineProps<{
 const isSidebarOpen = ref(true);
 const isEditingDescription = ref(false);
 const newDescription = ref('');
+const descriptionTextareaRef = ref<InstanceType<typeof Textarea> | null>(null);
 
 const menuItems = computed(() => [
 	{
@@ -593,9 +600,12 @@ const applyConfigValues = (config: ModelConfiguration) => {
 	logger.success(`Configuration applied ${config.name}`);
 };
 
-const onEditDescription = () => {
+const onEditDescription = async () => {
 	isEditingDescription.value = true;
 	newDescription.value = knobs.value.transientModelConfig.description ?? '';
+	await nextTick();
+	// @ts-ignore
+	descriptionTextareaRef.value?.$el.focus();
 };
 
 const onConfirmEditDescription = () => {
