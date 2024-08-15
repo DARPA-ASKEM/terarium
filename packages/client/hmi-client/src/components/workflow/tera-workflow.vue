@@ -920,9 +920,7 @@ onMounted(() => {
 			workflowService.updateWorkflow(wf.value.dump());
 			workflowDirty = false;
 		}
-		if (canvasTransform) {
-			setLocalStorageTransform(wf.value.getId(), canvasTransform);
-		}
+		setLocalStorageTransform(wf.value.getId(), canvasTransform);
 	}, WORKFLOW_SAVE_INTERVAL);
 });
 
