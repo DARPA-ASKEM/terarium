@@ -23,7 +23,7 @@ Note: sampling combinations in PyCIEMSS can result in numerical instability, whe
 ### 3. Model setup
 1. Create a default configuration with the `Configure model` operator
 2. Calibrate the model with the dataset with the `Calibrate` operator.
-   Mapping the model variable: culmative_cases with the dataset variable cases
+   Mapping the model variable: Culmative_cases with the dataset variable cases
                                deceased with deaths
                                timestamp with Timestamp
 
