@@ -355,7 +355,6 @@ const onEditDescription = async () => {
 	isEditingDescription.value = true;
 	newDescription.value = selectedPolicy.value?.description ?? '';
 	await nextTick();
-	// @ts-ignore
 	descriptionTextareaRef.value?.$el.focus();
 };
 

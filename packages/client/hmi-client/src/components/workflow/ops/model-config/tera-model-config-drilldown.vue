@@ -613,7 +613,6 @@ const onEditDescription = async () => {
 	isEditingDescription.value = true;
 	newDescription.value = knobs.value.transientModelConfig.description ?? '';
 	await nextTick();
-	// @ts-ignore
 	descriptionTextareaRef.value?.$el.focus();
 };
 
