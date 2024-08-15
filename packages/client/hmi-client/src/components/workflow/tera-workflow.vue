@@ -282,7 +282,7 @@ const optionsMenuItems = ref([
 	}
 ]);
 
-const toggleOptionsMenu = (event) => {
+const toggleOptionsMenu = (event: MouseEvent) => {
 	optionsMenu.value.toggle(event);
 };
 const teraOperatorRefs = ref();
@@ -567,7 +567,7 @@ const showAddComponentMenu = () => {
 
 const { getDragData } = useDragEvent();
 
-function onDrop(event) {
+function onDrop(event: DragEvent) {
 	const { assetId, assetType } = getDragData('initAssetNode') as {
 		assetId: string;
 		assetType: AssetType;
@@ -603,12 +603,12 @@ function onDrop(event) {
 	}
 }
 
-function toggleContextMenu(event) {
+function toggleContextMenu(event: MouseEvent) {
 	contextMenu.value.show(event);
 	updateNewNodePosition(event);
 }
 
-function updateNewNodePosition(event) {
+function updateNewNodePosition(event: MouseEvent) {
 	newNodePosition.x = (event.offsetX - canvasTransform.x) / canvasTransform.k;
 	newNodePosition.y = (event.offsetY - canvasTransform.y) / canvasTransform.k;
 }
@@ -880,6 +880,9 @@ const handleDrilldown = () => {
 watch(
 	() => [props.assetId],
 	async () => {
+		// Save previous location
+		setLocalStorageTransform(wf.value.getId(), canvasTransform);
+
 		isRenamingWorkflow.value = false; // Closes rename input if opened in previous workflow
 		if (wf.value && workflowDirty) {
 			workflowService.updateWorkflow(wf.value.dump());
@@ -916,6 +919,9 @@ onMounted(() => {
 		if (workflowDirty && useProjects().hasEditPermission()) {
 			workflowService.updateWorkflow(wf.value.dump());
 			workflowDirty = false;
+		}
+		if (canvasTransform) {
+			setLocalStorageTransform(wf.value.getId(), canvasTransform);
 		}
 	}, WORKFLOW_SAVE_INTERVAL);
 });
