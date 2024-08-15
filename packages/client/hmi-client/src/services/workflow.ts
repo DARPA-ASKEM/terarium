@@ -32,12 +32,34 @@ export class WorkflowWrapper {
 		}
 	}
 
+	// This will replace the entire workflow, should only use for initial load
+	// as there it will not propapate reactivity
 	load(wf: Workflow) {
 		this.wf = _.cloneDeep(wf);
 	}
 
 	dump() {
 		return this.wf;
+	}
+
+	update(updatedWF: Workflow) {
+		// FIXME: Not efficient, use map lookup
+		const nodes = this.getNodes();
+		for (let i = 0; i < nodes.length; i++) {
+			const nodeId = nodes[i].id;
+			const updated = updatedWF.nodes.find((d) => d.id === nodeId);
+			if (updated) {
+				nodes[i] = Object.assign(nodes[i], updated);
+			}
+		}
+		const edges = this.getEdges();
+		for (let i = 0; i < edges.length; i++) {
+			const edgeId = edges[i].id;
+			const updated = updatedWF.edges.find((d) => d.id === edgeId);
+			if (updated) {
+				edges[i] = Object.assign(edges[i], updated);
+			}
+		}
 	}
 
 	getId() {

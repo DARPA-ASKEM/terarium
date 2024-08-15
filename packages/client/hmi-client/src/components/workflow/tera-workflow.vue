@@ -764,6 +764,7 @@ function relinkEdges(node: WorkflowNode<any> | null) {
 
 			edges.forEach((edge) => {
 				const portElem = getPortElement(edge.sourcePortId as string);
+				if (!portElem) return;
 				const totalOffsetY = portElem.offsetTop + portElem.offsetHeight / 2;
 				const portPos = {
 					x: nodePosition.x + n.width + portElem.offsetWidth * 0.5,
@@ -915,9 +916,10 @@ watch(
 onMounted(() => {
 	document.addEventListener('mousemove', mouseUpdate);
 	window.addEventListener('beforeunload', unloadCheck);
-	saveTimer = setInterval(() => {
+	saveTimer = setInterval(async () => {
 		if (workflowDirty && useProjects().hasEditPermission()) {
-			workflowService.updateWorkflow(wf.value.dump());
+			const updated = await workflowService.updateWorkflow(wf.value.dump());
+			wf.value.update(updated);
 			workflowDirty = false;
 		}
 		setLocalStorageTransform(wf.value.getId(), canvasTransform);
