@@ -240,10 +240,8 @@ const initialize = async () => {
 	if (state.interventionPolicy?.id) {
 		// copy the state into the knobs if it exists
 		selectedPolicy.value = await getInterventionPolicyById(state.interventionPolicy.id);
-		knobs.value.transientInterventionPolicy = cloneDeep(state.interventionPolicy);
-	} else {
-		knobs.value.transientInterventionPolicy = cloneDeep(state.interventionPolicy);
 	}
+	knobs.value.transientInterventionPolicy = cloneDeep(state.interventionPolicy);
 };
 
 const applyInterventionPolicy = (interventionPolicy: InterventionPolicy) => {
