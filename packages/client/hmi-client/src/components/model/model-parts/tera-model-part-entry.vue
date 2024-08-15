@@ -141,6 +141,7 @@ h6 {
 
 .expression {
 	grid-area: expression;
+	font-size: var(--font-body-small);
 }
 
 .concept {
