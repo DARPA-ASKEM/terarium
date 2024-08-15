@@ -23,7 +23,7 @@
 
 <script setup lang="ts">
 import { numberToNist } from '@/utils/number';
-import { isString, toNumber, isNaN } from 'lodash';
+import { isString, toNumber, isNaN, isEmpty } from 'lodash';
 import { CSSProperties, computed, onMounted, ref } from 'vue';
 
 const props = defineProps<{
@@ -35,6 +35,7 @@ const props = defineProps<{
 	placeholder?: string;
 	autoWidth?: boolean;
 	autoFocus?: boolean;
+	charactersToReject?: string[];
 }>();
 
 const emit = defineEmits(['update:model-value', 'blur', 'focus']);
@@ -81,8 +82,13 @@ function formatValue(value: string | number | undefined) {
 
 const updateValue = (event: Event) => {
 	const target = event.target as HTMLInputElement;
-	const value = target.value;
-	emit('update:model-value', value);
+	if (props.charactersToReject && !isEmpty(props.charactersToReject)) {
+		const start = target.selectionStart;
+		const end = target.selectionEnd;
+		target.value = target.value.replace(new RegExp(`[${props.charactersToReject.join('')}]`, 'g'), ''); // Create a regex pattern from charactersToReject to remove them
+		target.setSelectionRange(start, end); // Maintain cursor position, is needed if we are entering in the middle of the input
+	}
+	emit('update:model-value', target.value);
 };
 
 const onFocus = (event) => {
