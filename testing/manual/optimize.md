@@ -29,16 +29,18 @@ Note: sampling combinations in PyCIEMSS can result in numerical instability, whe
 
 ### 4. Masking start time optimization
 1. Create a Masking Policy operation with the `Intervention Policy` operator.
+2. Set _NPI mult_ to `0.5` starting at _time_ `61` 
 
 #### 4.a Static intervention
-1. Set _NPI mult_ to `0.5` starting at _time_ `61` 
+1. Connect the calibrated configuration from step 3 and the intervention from step 4 to an optimize node.
 2. Optimize intervention: set _H_ to `< 20 000` in all time points in `95%` of simulated outcomes. 
-3. Find a `new start time` for _NPI mult_ **upper** bound (how long we can delay masking). Start time `60`, end time `150`, initial guess `61`. 
+3. Find a `new start time` for _NPI mult_ `upper bound` (how long we can delay masking). Start time `60`, end time `150`, initial guess `61`. 
 4. Optimization settings: end time `150`, maxiter `3` max eval `30`
+5. This should succeed with a new start time around 60 to 75 range (may vary due to calibration results as well as optimize run)
 
 #### 4.b Dynamic intervention
 1. Same as above but with a dynamic intervention 
-2. replace 4.a.1 with _NPI mult_ to `0.5` when _H_ `> 16 000`.
+2. replace 4.a.2 with _NPI mult_ to `0.5` when _H_ `> 16 000`.
 
 ### 5. Hospitalizations optimization
 1. Create a Hospitalizations Policy operation with the `Intervention Policy` operator.
