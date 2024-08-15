@@ -184,13 +184,13 @@ const forecastChartSpec = computed(() =>
 	applyForecastAnnotations(
 		createForecastChart(
 			{
-				dataset: dataNew.data,
+				data: dataNew.data,
 				variables: ['alpha', 'beta'],
 				timeField: 'time',
 				groupField: 'sample'
 			},
 			{
-				dataset: dataNew.summary,
+				data: dataNew.summary,
 				variables: ['alphaMean', 'betaMean'],
 				timeField: 'time'
 			},
