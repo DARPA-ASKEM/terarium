@@ -206,7 +206,7 @@
 
 <script setup lang="ts">
 import '@/ace-config';
-import { computed, onUnmounted, ref, watch, nextTick } from 'vue';
+import { computed, onUnmounted, ref, watch, nextTick, ComponentPublicInstance } from 'vue';
 import { cloneDeep, isEmpty, isEqual, orderBy } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -270,7 +270,7 @@ const props = defineProps<{
 const isSidebarOpen = ref(true);
 const isEditingDescription = ref(false);
 const newDescription = ref('');
-const descriptionTextareaRef = ref<InstanceType<typeof Textarea> | null>(null);
+const descriptionTextareaRef = ref<ComponentPublicInstance<typeof Textarea> | null>(null);
 
 const menuItems = computed(() => [
 	{

@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick } from 'vue';
+import { ref, nextTick, ComponentPublicInstance } from 'vue';
 import Button from 'primevue/button';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 
@@ -34,7 +34,7 @@ const emit = defineEmits(['update:model-value']);
 
 let initialValue = '';
 
-const inputRef = ref<InstanceType<typeof TeraInputText> | null>(null);
+const inputRef = ref<ComponentPublicInstance<typeof TeraInputText> | null>(null);
 const isEditing = ref(false);
 
 const onEdit = async () => {

@@ -132,7 +132,7 @@
 
 <script setup lang="ts">
 import _, { cloneDeep, groupBy, isEmpty, isEqual } from 'lodash';
-import { computed, onMounted, ref, watch, nextTick } from 'vue';
+import { computed, onMounted, ref, watch, nextTick, ComponentPublicInstance } from 'vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { WorkflowNode } from '@/types/workflow';
@@ -200,7 +200,7 @@ const selectedOutputId = ref<string>('');
 const selectedPolicy = ref<InterventionPolicy | null>(null);
 
 const newDescription = ref('');
-const descriptionTextareaRef = ref<InstanceType<typeof Textarea> | null>(null);
+const descriptionTextareaRef = ref<ComponentPublicInstance<typeof Textarea> | null>(null);
 const isEditingDescription = ref(false);
 const isSaved = computed(
 	() =>
