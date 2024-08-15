@@ -1,6 +1,11 @@
 <template>
 	<div v-if="isEditing" class="flex align-items-center">
-		<tera-input-text v-bind="$attrs" :model-value="modelValue" @keydown="handleKeyDown" />
+		<tera-input-text
+			v-bind="$attrs"
+			:model-value="modelValue"
+			@update:model-value="emit('update:model-value', $event)"
+			@keydown="handleKeyDown"
+		/>
 		<Button text icon="pi pi-times" @click="onCancel" />
 		<Button text icon="pi pi-check" @click="onConfirm" />
 	</div>
@@ -24,22 +29,22 @@ const props = withDefaults(
 	}
 );
 
-const newValue = ref();
-const isEditing = ref(false);
-
 const emit = defineEmits(['update:model-value']);
 
+let initialValue = '';
+const isEditing = ref(false);
+
 const onEdit = () => {
-	isEditing.value = !isEditing.value;
-	newValue.value = props.modelValue;
+	initialValue = props.modelValue;
+	isEditing.value = true;
 };
 
 const onConfirm = () => {
-	emit('update:model-value', newValue.value);
 	isEditing.value = false;
 };
 
 const onCancel = () => {
+	emit('update:model-value', initialValue); // Cancel changes
 	isEditing.value = false;
 };
 
