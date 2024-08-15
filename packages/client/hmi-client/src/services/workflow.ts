@@ -16,7 +16,6 @@ import type {
 	WorkflowOutput
 } from '@/types/workflow';
 import { WorkflowPortStatus, OperatorStatus, WorkflowOperationTypes } from '@/types/workflow';
-import { summarizeNotebook } from './beaker';
 
 /**
  * A wrapper class around the workflow data struture to make it easier
@@ -673,29 +672,6 @@ export function updateOutputPort(node: WorkflowNode<any>, updatedOutputPort: Wor
 	let outputPort = node.outputs.find((port) => port.id === updatedOutputPort.id);
 	if (!outputPort) return;
 	outputPort = Object.assign(outputPort, updatedOutputPort);
-}
-
-// Keep track of the summary generation requests to prevent multiple requests for the same workflow output
-// TODO: Instead of relying on the Ids stored in memory, consider creating a table in the backend to store the summaries to keep track of their status and results.
-const summaryGenerationRequestIds = new Set<string>();
-
-export async function generateSummary(
-	node: WorkflowNode<any>,
-	outputPort: WorkflowOutput<any>,
-	createNotebookFn: ((state: any, value: WorkflowPort['value']) => Promise<any>) | null
-) {
-	if (!node || !createNotebookFn || summaryGenerationRequestIds.has(outputPort.id)) return null;
-	try {
-		summaryGenerationRequestIds.add(outputPort.id);
-		const notebook = await createNotebookFn(outputPort.state, outputPort.value);
-		const result = await summarizeNotebook(notebook);
-		if (!result.summary) throw new Error('AI Generated summary is empty.');
-		return result;
-	} catch {
-		return { title: outputPort.label, summary: 'Generating AI summary has failed.' };
-	} finally {
-		summaryGenerationRequestIds.delete(outputPort.id);
-	}
 }
 
 // Check if the current-state matches that of the output-state.
