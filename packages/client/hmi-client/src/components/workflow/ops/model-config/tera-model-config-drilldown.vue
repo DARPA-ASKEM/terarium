@@ -79,12 +79,15 @@
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab>
 					<template #header>
-						Description
-						<Button v-if="!isEditingDescription" icon="pi pi-pencil" text @click.stop="onEditDescription" />
-						<template v-else>
+						<Button v-if="!isEditingDescription" class="start-edit" text @click.stop="onEditDescription">
+							<h5 class="btn-content">Description</h5>
+							<i class="pi pi-pencil" />
+						</Button>
+						<span v-else class="confirm-cancel">
+							<span>Description</span>
 							<Button icon="pi pi-times" text @click.stop="isEditingDescription = false" />
 							<Button icon="pi pi-check" text @click.stop="onConfirmEditDescription" />
-						</template>
+						</span>
 					</template>
 					<p class="description text" v-if="!isEditingDescription">
 						{{ knobs.transientModelConfig.description }}
@@ -709,5 +712,29 @@ onUnmounted(() => {
 ul {
 	list-style: none;
 	padding-top: var(--gap-small);
+}
+
+button.start-edit {
+	display: flex;
+	gap: var(--gap-3);
+	width: fit-content;
+	padding: var(--gap-2);
+
+	& > .btn-content {
+		color: var(--text-color);
+	}
+
+	& > .pi {
+		color: var(--text-color-subdued);
+	}
+}
+
+.confirm-cancel {
+	display: flex;
+	align-items: center;
+	gap: var(--gap-1);
+	& > span {
+		margin-left: var(--gap-2);
+	}
 }
 </style>

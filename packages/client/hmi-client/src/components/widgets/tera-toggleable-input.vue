@@ -1,7 +1,6 @@
 <template>
-	<div v-if="isEditing" class="flex align-items-center">
+	<div v-if="isEditing" v-bind="$attrs" class="flex align-items-center gap-1">
 		<tera-input-text
-			v-bind="$attrs"
 			:model-value="modelValue"
 			@update:model-value="emit('update:model-value', $event)"
 			@keydown="handleKeyDown"
@@ -9,11 +8,12 @@
 		<Button text icon="pi pi-times" @click="onCancel" />
 		<Button text icon="pi pi-check" @click="onConfirm" />
 	</div>
-	<Button v-else class="read-content" text @click="onEdit">
+	<Button v-else :class="$attrs.class" class="text-to-edit" text @click="onEdit">
 		<component class="btn-content" :is="tag">{{ modelValue }}</component>
 		<i class="pi pi-pencil" />
 	</Button>
 </template>
+
 <script setup lang="ts">
 import { ref } from 'vue';
 import Button from 'primevue/button';
@@ -55,7 +55,7 @@ const handleKeyDown = (event: KeyboardEvent) => {
 </script>
 
 <style scoped>
-button.read-content {
+button.text-to-edit {
 	display: flex;
 	gap: var(--gap-3);
 	width: fit-content;
@@ -65,7 +65,7 @@ button.read-content {
 		color: var(--text-color);
 	}
 
-	& > .pi-pencil {
+	& > .pi {
 		color: var(--text-color-subdued);
 	}
 }
