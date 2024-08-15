@@ -1,7 +1,7 @@
 <template>
 	<div class="intervention-card">
 		<header class="flex align-items-center">
-			<tera-toggleable-edit
+			<tera-toggleable-input
 				class="mr-auto"
 				:model-value="intervention.name"
 				@update:model-value="onUpdateName($event)"
@@ -139,7 +139,7 @@
 </template>
 
 <script setup lang="ts">
-import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
+import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import Button from 'primevue/button';
 import RadioButton from 'primevue/radiobutton';
 import { computed } from 'vue';
