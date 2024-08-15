@@ -54,6 +54,7 @@ import software.uncharted.terarium.hmiserver.service.data.ITerariumAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectPermissionsService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.TerariumAssetServices;
 import software.uncharted.terarium.hmiserver.service.data.WorkflowService;
@@ -106,6 +107,7 @@ public class ProjectController {
 	final WorkflowService workflowService;
 	final ObjectMapper objectMapper;
 	final ProjectPermissionsService projectPermissionsService;
+	final ProjectSearchService projectSearchService;
 
 	// --------------------------------------------------------------------------
 	// Basic Project Operations
@@ -327,8 +329,15 @@ public class ProjectController {
 	public ResponseEntity<ResponseDeleted> deleteProject(@PathVariable("id") final UUID id) {
 		projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), id);
 
-		final boolean deleted = projectService.delete(id);
-		if (deleted) return ResponseEntity.ok(new ResponseDeleted("project", id));
+		try {
+			final boolean deleted = projectService.delete(id);
+			if (deleted) {
+				return ResponseEntity.ok(new ResponseDeleted("project", id));
+			}
+		} catch (final Exception e) {
+			log.error("Error deleting project", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
 
 		log.error("Failed to delete project");
 		throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("projects.unable-to-delete"));
@@ -1083,6 +1092,7 @@ public class ProjectController {
 
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacUser who = new RebacUser(userId, reBACService);
+			projectSearchService.addProjectPermission(projectId, userId);
 			projectPermissionsService.setProjectPermissions(what, who, relationship);
 			return ResponseEntity.ok().build();
 		} catch (final Exception e) {
@@ -1122,6 +1132,10 @@ public class ProjectController {
 
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacUser who = new RebacUser(userId, reBACService);
+
+			// no need to update the search perms since we don't reduce permissions below a
+			// read.
+
 			return projectPermissionsService.updateProjectPermissions(what, who, oldRelationship, newRelationship);
 		} catch (final Exception e) {
 			log.error("Error deleting project user permission relationships", e);
@@ -1160,7 +1174,11 @@ public class ProjectController {
 
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacUser who = new RebacUser(userId, reBACService);
+
+			projectSearchService.removeProjectPermission(projectId, userId);
+
 			projectPermissionsService.removeProjectPermissions(what, who, relationship);
+
 			return ResponseEntity.ok().build();
 		} catch (final Exception e) {
 			log.error("Error deleting project user permission relationships", e);
