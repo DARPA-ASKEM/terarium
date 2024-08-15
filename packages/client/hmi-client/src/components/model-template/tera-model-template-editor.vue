@@ -49,7 +49,7 @@
 						:disabled="isDecomposedLoading"
 					/>
 					<span class="btn-group">
-						<Button label="Reset" outlined severity="secondary" @click="$emit('reset')" />
+						<Button label="Reset" outlined severity="secondary" @click="reset" />
 						<Button label="Save" @click="$emit('save-new-model-output', model)" />
 					</span>
 				</section>
@@ -425,17 +425,10 @@ function mouseUpdate(event: MouseEvent) {
 	prevY = event.y;
 }
 
-function refreshFlattenedCanvas() {
-	if (props.model) {
-		flattenedCanvas.value = modelTemplatingService.initializeCanvas();
-		modelTemplatingService.updateFlattenedTemplateInView(flattenedCanvas.value, props.model);
-	}
-}
-
 function onEditorFormatSwitch(newFormat: EditorFormat) {
 	currentModelFormat.value = newFormat;
 	if (newFormat === EditorFormat.Decomposed)
-		refreshFlattenedCanvas(); // Removes unlinked decomposed templates
+		renderFlattenedCanvas(); // Removes unlinked decomposed templates
 	else {
 		// When switching to the flattened view, we save the decomposed port positions
 		// so that edges can be drawn correctly when relecting flattened edits to the decomposed view
@@ -448,37 +441,40 @@ function onEditorFormatSwitch(newFormat: EditorFormat) {
 	}
 }
 
+function reset() {
+	emit('reset');
+	renderDecomposedCanvas();
+}
+
+// Rendering functions populate the canvases with all their model templates, can be used to refresh the view
+function renderFlattenedCanvas() {
+	flattenedCanvas.value = modelTemplatingService.initializeCanvas();
+	modelTemplatingService.updateFlattenedTemplateInView(flattenedCanvas.value, props.model);
+}
+
+function renderDecomposedCanvas() {
+	decomposedCanvas.value = modelTemplatingService.initializeCanvas();
+	modelTemplatingService.flattenedToDecomposedInKernel(
+		props.kernelManager,
+		decomposedCanvas.value,
+		interpolatePointsForCurve
+	);
+}
+
 // Triggered after syncWithMiraModel() in parent
 watch(
 	() => props.model,
 	(newModel, oldModel) => {
-		refreshFlattenedCanvas();
-		// If we are working with a new model id then we must decompose it since it's made of different templates
-		// FIXME: This shouldn't be triggered on the first edit to the original model but should be if we switch from the original model output to a new one
-		if (oldModel?.id !== newModel?.id) {
-			decomposedCanvas.value = modelTemplatingService.initializeCanvas();
-			modelTemplatingService.flattenedToDecomposedInKernel(
-				props.kernelManager,
-				decomposedCanvas.value,
-				interpolatePointsForCurve
-			);
-		}
+		renderFlattenedCanvas();
+		// If we are working with a new model id then we must decompose it since it's made of different templates (on output switch)
+		if (oldModel?.id !== newModel?.id) renderDecomposedCanvas();
 	}
 );
 
 onMounted(() => {
 	document.addEventListener('mousemove', mouseUpdate);
-
-	if (props.model) {
-		// Create flattened view of model
-		modelTemplatingService.updateFlattenedTemplateInView(flattenedCanvas.value, props.model);
-		// Create decomposed view of model
-		modelTemplatingService.flattenedToDecomposedInKernel(
-			props.kernelManager,
-			decomposedCanvas.value,
-			interpolatePointsForCurve
-		);
-	}
+	renderFlattenedCanvas();
+	renderDecomposedCanvas();
 });
 
 onUnmounted(() => {
