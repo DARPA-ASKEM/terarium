@@ -65,7 +65,7 @@
 
 		<tera-drilldown-section :tabName="ConfigTabs.Wizard" class="pl-3">
 			<template #header-controls-left>
-				<tera-toggleable-edit
+				<tera-toggleable-input
 					v-if="knobs.transientModelConfig.name"
 					v-model="knobs.transientModelConfig.name"
 					tag="h4"
@@ -79,17 +79,26 @@
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab>
 					<template #header>
-						Description
-						<Button v-if="!isEditingDescription" icon="pi pi-pencil" text @click.stop="onEditDescription" />
-						<template v-else>
+						<Button v-if="!isEditingDescription" class="start-edit" text @click.stop="onEditDescription">
+							<h5 class="btn-content">Description</h5>
+							<i class="pi pi-pencil" />
+						</Button>
+						<span v-else class="confirm-cancel">
+							<span>Description</span>
 							<Button icon="pi pi-times" text @click.stop="isEditingDescription = false" />
 							<Button icon="pi pi-check" text @click.stop="onConfirmEditDescription" />
-						</template>
+						</span>
 					</template>
 					<p class="description text" v-if="!isEditingDescription">
 						{{ knobs.transientModelConfig.description }}
 					</p>
-					<Textarea v-else class="context-item" placeholder="Enter a description" v-model="newDescription" />
+					<Textarea
+						v-else
+						ref="descriptionTextareaRef"
+						class="context-item"
+						placeholder="Enter a description"
+						v-model="newDescription"
+					/>
 				</AccordionTab>
 				<AccordionTab header="Diagram">
 					<tera-model-diagram v-if="model" :model="model" />
@@ -197,13 +206,13 @@
 
 <script setup lang="ts">
 import '@/ace-config';
-import { cloneDeep, isEmpty, orderBy } from 'lodash';
+import { computed, onUnmounted, ref, watch, nextTick, ComponentPublicInstance } from 'vue';
+import { cloneDeep, isEmpty, isEqual, orderBy } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Textarea from 'primevue/textarea';
-import { computed, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { useClientEvent } from '@/composables/useClientEvent';
@@ -244,7 +253,7 @@ import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { useConfirm } from 'primevue/useconfirm';
 import Dropdown from 'primevue/dropdown';
-import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
+import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import { saveCodeToState } from '@/services/notebook';
 import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
 import { ModelConfigOperation, ModelConfigOperationState, blankModelConfig } from './model-config-operation';
@@ -261,6 +270,7 @@ const props = defineProps<{
 const isSidebarOpen = ref(true);
 const isEditingDescription = ref(false);
 const newDescription = ref('');
+const descriptionTextareaRef = ref<ComponentPublicInstance<typeof Textarea> | null>(null);
 
 const menuItems = computed(() => [
 	{
@@ -450,6 +460,7 @@ useClientEvent(ClientEventType.TaskGollmConfigureFromDataset, configModelEventHa
 
 const selectedOutputId = ref<string>('');
 const selectedConfigId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
+let originalConfig: ModelConfiguration | null = null;
 
 const documentId = computed(() => props.node.inputs[1]?.value?.[0]?.documentId);
 const datasetIds = computed(() => props.node.inputs[2]?.value);
@@ -532,6 +543,7 @@ const initialize = async () => {
 		applyConfigValues(suggestedConfigurationContext.value.tableData[0]);
 	} else {
 		knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
+		originalConfig = cloneDeep(state.transientModelConfig);
 	}
 
 	// Create a new session and context based on model
@@ -550,6 +562,12 @@ const initialize = async () => {
 };
 
 const onSelectConfiguration = (config: ModelConfiguration) => {
+	// Checks if there are unsaved changes to current model configuration
+	if (isEqual(originalConfig, knobs.value.transientModelConfig)) {
+		applyConfigValues(config);
+		return;
+	}
+
 	confirm.require({
 		header: 'Are you sure you want to select this configuration?',
 		message: `This will apply the configuration "${config.name}" to the model.  All current values will be replaced.`,
@@ -563,6 +581,7 @@ const onSelectConfiguration = (config: ModelConfiguration) => {
 
 const applyConfigValues = (config: ModelConfiguration) => {
 	knobs.value.transientModelConfig = cloneDeep(config);
+	originalConfig = cloneDeep(config);
 
 	// Update output port:
 	if (!config.id) {
@@ -590,9 +609,11 @@ const applyConfigValues = (config: ModelConfiguration) => {
 	logger.success(`Configuration applied ${config.name}`);
 };
 
-const onEditDescription = () => {
+const onEditDescription = async () => {
 	isEditingDescription.value = true;
 	newDescription.value = knobs.value.transientModelConfig.description ?? '';
+	await nextTick();
+	descriptionTextareaRef.value?.$el.focus();
 };
 
 const onConfirmEditDescription = () => {
@@ -605,7 +626,6 @@ const resetConfiguration = () => {
 		header: 'Are you sure you want to reset the configuration?',
 		message: 'This will reset all values original values of the configuration.',
 		accept: () => {
-			const originalConfig = suggestedConfigurationContext.value.tableData.find((c) => c.id === selectedConfigId.value);
 			if (originalConfig) applyConfigValues(originalConfig);
 		},
 		acceptLabel: 'Confirm',
@@ -709,5 +729,29 @@ onUnmounted(() => {
 ul {
 	list-style: none;
 	padding-top: var(--gap-small);
+}
+
+button.start-edit {
+	display: flex;
+	gap: var(--gap-3);
+	width: fit-content;
+	padding: var(--gap-2);
+
+	& > .btn-content {
+		color: var(--text-color);
+	}
+
+	& > .pi {
+		color: var(--text-color-subdued);
+	}
+}
+
+.confirm-cancel {
+	display: flex;
+	align-items: center;
+	gap: var(--gap-1);
+	& > span {
+		margin-left: var(--gap-2);
+	}
 }
 </style>
