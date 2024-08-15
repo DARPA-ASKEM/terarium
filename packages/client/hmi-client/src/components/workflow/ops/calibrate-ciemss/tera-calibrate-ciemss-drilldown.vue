@@ -719,7 +719,8 @@ watch(
 	async () => {
 		// Update selected output
 		if (props.node.active) {
-			selectedOutputId.value = props.node.active;
+			const active = props.node.active;
+			selectedOutputId.value = props.node.outputs.find((o) => o.id === active)?.value?.[0];
 
 			// Fetch saved intermediate state
 			const simulationObj = await getSimulation(props.node.state.calibrationId);
