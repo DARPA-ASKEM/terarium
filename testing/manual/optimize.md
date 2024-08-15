@@ -38,10 +38,6 @@ Note: sampling combinations in PyCIEMSS can result in numerical instability, whe
 4. Optimization settings: end time `150`, maxiter `3` max eval `30`
 5. This should succeed with a new start time around 60 to 75 range (may vary due to calibration results as well as optimize run)
 
-#### 4.b Dynamic intervention
-1. Same as above but with a dynamic intervention 
-2. replace 4.a.2 with _NPI mult_ to `0.5` when _H_ `> 16 000`.
-
 ### 5. Hospitalizations optimization
 1. Create a Hospitalizations Policy operation with the `Intervention Policy` operator.
 
