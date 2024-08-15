@@ -9,7 +9,7 @@ export interface NotebookHistory {
 }
 
 // A common pattern used to save code from a notebook within an operator
-// This is ready to be ported to nodes such as tera-model-config and tera-stratify-mira
+// One more operator to port this to: tera-stratify-mira
 // Not ported yet since this will ruin the states of the nodes that already exist due to their differently named properties
 export const saveCodeToState = (
 	node: WorkflowNode<any>,

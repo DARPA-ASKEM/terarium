@@ -151,7 +151,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		transitions
 			.append('text')
 			.attr('y', (d) => -d.height / 2 - 8)
-			.classed('latex-fontt', true)
+			.classed('latex-font', true)
 			.style('font-style', 'italic')
 			.style('font-size', FONT_SIZE_SMALL)
 			.style('text-anchor', 'middle')

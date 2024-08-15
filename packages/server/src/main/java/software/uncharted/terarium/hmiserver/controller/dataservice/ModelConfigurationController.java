@@ -350,7 +350,7 @@ public class ModelConfigurationController {
 			}
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(
-				modelConfigurationService.createAsset(modelConfiguration, projectId, permission)
+				modelConfigurationService.createAsset(modelConfiguration.clone(), projectId, permission)
 			);
 		} catch (final IOException e) {
 			log.error("Unable to get model configuration from postgres db", e);

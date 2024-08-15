@@ -73,7 +73,7 @@
 			</template>
 			<template #header-controls-right>
 				<Button label="Reset" @click="resetConfiguration" outlined severity="secondary" />
-				<Button class="mr-3" :disabled="isSaveDisabled" label="Save" @click="() => createConfiguration()" />
+				<Button class="mr-3" :disabled="isSaveDisabled" label="Save" @click="createConfiguration" />
 			</template>
 
 			<Accordion multiple :active-index="[0, 1]">
@@ -135,8 +135,7 @@
 			</template>
 		</tera-drilldown-section>
 		<tera-columnar-panel :tabName="ConfigTabs.Notebook">
-			<tera-drilldown-section id="notebook-section">
-				<div class="toolbar-right-side"></div>
+			<tera-drilldown-section class="notebook-section">
 				<div class="toolbar">
 					<Suspense>
 						<tera-notebook-jupyter-input
@@ -145,7 +144,7 @@
 							:context-language="contextLanguage"
 							@llm-output="(data: any) => appendCode(data, 'code')"
 							@llm-thought-output="(data: any) => llmThoughts.push(data)"
-							@question-asked="llmThoughts = []"
+							@question-asked="updateLlmQuery"
 						>
 							<template #toolbar-right-side>
 								<tera-input-text v-model="knobs.transientModelConfig.name" placeholder="Configuration Name" />
@@ -175,7 +174,7 @@
 			</tera-drilldown-preview>
 		</tera-columnar-panel>
 	</tera-drilldown>
-	<tera-modal v-if="sanityCheckErrors.length > 0">
+	<tera-modal v-if="!isEmpty(sanityCheckErrors)">
 		<template #header>
 			<h4>Warning, these settings may cause errors</h4>
 		</template>
@@ -188,11 +187,7 @@
 		</template>
 		<template #footer>
 			<Button label="Ok" class="p-button-primary" @click="sanityCheckErrors = []" />
-			<Button
-				label="Ignore warnings and use configuration"
-				class="p-button-secondary"
-				@click="() => createConfiguration()"
-			/>
+			<Button label="Ignore warnings and use configuration" class="p-button-secondary" @click="createConfiguration" />
 		</template>
 	</tera-modal>
 
@@ -250,6 +245,7 @@ import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { useConfirm } from 'primevue/useconfirm';
 import Dropdown from 'primevue/dropdown';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
+import { saveCodeToState } from '@/services/notebook';
 import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
 import { ModelConfigOperation, ModelConfigOperationState, blankModelConfig } from './model-config-operation';
 
@@ -316,6 +312,7 @@ const buildJupyterContext = () => {
 	};
 };
 const codeText = ref('# This environment contains the variable "model_config" to be read and updated');
+const llmQuery = ref('');
 const llmThoughts = ref<any[]>([]);
 const notebookResponse = ref();
 const executeResponse = ref({
@@ -379,7 +376,8 @@ const runFromCode = () => {
 			knobs.value.transientModelConfig = data.content;
 
 			if (executedCode) {
-				saveCodeToState(executedCode, true);
+				updateCodeState(executedCode, true);
+				createConfiguration();
 			}
 		})
 		.register('any_execute_reply', (data) => {
@@ -395,21 +393,15 @@ const runFromCode = () => {
 		});
 };
 
-// FIXME: Copy pasted in 3 locations, could be written cleaner and in a service
-const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
-	const state = cloneDeep(props.node.state);
-	state.hasCodeBeenRun = hasCodeBeenRun;
+function updateLlmQuery(query: string) {
+	llmThoughts.value = [];
+	llmQuery.value = query;
+}
 
-	// for now only save the last code executed, may want to save all code executed in the future
-	const codeHistoryLength = props.node.state.modelEditCodeHistory.length;
-	const timestamp = Date.now();
-	if (codeHistoryLength > 0) {
-		state.modelEditCodeHistory[0] = { code, timestamp };
-	} else {
-		state.modelEditCodeHistory.push({ code, timestamp });
-	}
+function updateCodeState(code: string = codeText.value, hasCodeRun: boolean = true) {
+	const state = saveCodeToState(props.node, code, hasCodeRun, llmQuery.value, llmThoughts.value);
 	emit('update-state', state);
-};
+}
 
 const initializeEditor = (editorInstance: any) => {
 	editor = editorInstance;
@@ -497,27 +489,22 @@ const downloadConfiguredModel = async (configuration: ModelConfiguration = knobs
 
 const createConfiguration = async () => {
 	if (!model.value || isSaveDisabled.value) return;
-
-	const state = cloneDeep(props.node.state);
-
 	const modelConfig = cloneDeep(knobs.value.transientModelConfig);
 
 	const data = await createModelConfiguration(modelConfig);
-
 	if (!data) {
 		logger.error('Failed to create model configuration');
 		return;
 	}
 
 	knobs.value.transientModelConfig = cloneDeep(data);
-	state.transientModelConfig = knobs.value.transientModelConfig;
 	useToastService().success('', 'Created model configuration');
 	emit('append-output', {
 		type: ModelConfigOperation.outputs[0].type,
-		label: state.transientModelConfig.name,
+		label: data.name,
 		value: data.id,
 		isSelected: false,
-		state
+		state: cloneDeep(props.node.state)
 	});
 };
 
@@ -575,7 +562,6 @@ const onSelectConfiguration = (config: ModelConfiguration) => {
 };
 
 const applyConfigValues = (config: ModelConfiguration) => {
-	const state = cloneDeep(props.node.state);
 	knobs.value.transientModelConfig = cloneDeep(config);
 
 	// Update output port:
@@ -593,13 +579,12 @@ const applyConfigValues = (config: ModelConfiguration) => {
 	// If the output does not already exist
 	else {
 		// Append this config to the output.
-		state.transientModelConfig = knobs.value.transientModelConfig;
 		emit('append-output', {
 			type: ModelConfigOperation.outputs[0].type,
 			label: config.name,
 			value: config.id,
 			isSelected: false,
-			state
+			state: cloneDeep(props.node.state)
 		});
 	}
 	logger.success(`Configuration applied ${config.name}`);
@@ -621,9 +606,7 @@ const resetConfiguration = () => {
 		message: 'This will reset all values original values of the configuration.',
 		accept: () => {
 			const originalConfig = suggestedConfigurationContext.value.tableData.find((c) => c.id === selectedConfigId.value);
-			if (originalConfig) {
-				applyConfigValues(originalConfig);
-			}
+			if (originalConfig) applyConfigValues(originalConfig);
 		},
 		acceptLabel: 'Confirm',
 		rejectLabel: 'Cancel'
@@ -687,7 +670,7 @@ onUnmounted(() => {
 	padding-bottom: var(--gap-2);
 }
 
-#notebook-section:deep(main) {
+.notebook-section:deep(main) {
 	gap: var(--gap-small);
 	position: relative;
 }
