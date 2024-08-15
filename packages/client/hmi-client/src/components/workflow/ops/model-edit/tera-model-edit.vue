@@ -197,6 +197,7 @@ const appendCode = (data: any, property: string) => {
 };
 
 const syncWithMiraModel = (data: any) => {
+	console.log(data);
 	const updatedModel = data.content?.['application/json'];
 	if (!updatedModel || !activeModelId) {
 		logger.error('Error getting updated model from beaker');
