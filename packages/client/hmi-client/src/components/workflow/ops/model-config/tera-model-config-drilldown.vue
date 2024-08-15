@@ -67,7 +67,7 @@
 			<template #header-controls-left>
 				<tera-toggleable-input
 					v-if="knobs.transientModelConfig.name"
-					v-model="knobs.transientModelConfig.name"
+					:model-value="knobs.transientModelConfig.name"
 					tag="h4"
 				/>
 			</template>
