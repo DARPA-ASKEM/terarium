@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "priority": 501,
+  "index_patterns": [
+    "tds_project_tera_2.*",
+    "tds_test_project_tera_2.*"
+  ],
+  "_meta": {
+    "description": "This index template is the standard template for Terarium Projects"
+  },
+  "template": {
+    "settings": {
+      "index": {
+        "number_of_shards": 1,
+        "number_of_replicas": 1,
+        "refresh_interval": "1s"
+      }
+    },
+    "mappings": {
+      "properties": {
+        "permissionJoin": {
+          "type": "join",
+          "relations": {
+            "project": "permission"
+          }
+        },
+        "type": {
+          "type": "keyword"
+        },
+        "userId": {
+          "type": "keyword"
+        },
+        "createdOn": {
+          "type": "date",
+          "format": "strict_date_optional_time||strict_date_hour_minute_second||epoch_millis"
+        },
+        "updatedOn": {
+          "type": "date",
+          "format": "strict_date_optional_time||strict_date_hour_minute_second||epoch_millis"
+        },
+        "publicAsset": {
+          "type": "boolean"
+        },
+        "asset_embeddings": {
+          "type": "nested",
+          "properties": {
+            "assetId": {
+              "type": "keyword"
+            },
+            "assetType": {
+              "type": "keyword"
+            },
+            "vector": {
+              "type": "dense_vector",
+              "element_type": "float",
+              "dims": 1536
+            },
+            "embeddingId": {
+              "type": "keyword"
+            },
+            "span": {
+              "type": "long"
+            }
+          }
+        }
+      }
+    }
+  }
+}
