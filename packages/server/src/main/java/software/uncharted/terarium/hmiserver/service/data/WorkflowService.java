@@ -22,41 +22,17 @@ import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
-public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, WorkflowRepository> {
+public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow, WorkflowRepository> {
 
 	public WorkflowService(
 		final ObjectMapper objectMapper,
 		final Config config,
-		final ElasticsearchConfiguration elasticConfig,
-		final ElasticsearchService elasticService,
 		final ProjectService projectService,
 		final ProjectAssetService projectAssetService,
 		final S3ClientService s3ClientService,
 		final WorkflowRepository repository
 	) {
-		super(
-			objectMapper,
-			config,
-			elasticConfig,
-			elasticService,
-			projectService,
-			projectAssetService,
-			s3ClientService,
-			repository,
-			Workflow.class
-		);
-	}
-
-	@Override
-	@Observed(name = "function_profile")
-	protected String getAssetIndex() {
-		return elasticConfig.getWorkflowIndex();
-	}
-
-	@Override
-	@Observed(name = "function_profile")
-	public String getAssetAlias() {
-		return elasticConfig.getWorkflowAlias();
+		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService, Workflow.class);
 	}
 
 	@Override
