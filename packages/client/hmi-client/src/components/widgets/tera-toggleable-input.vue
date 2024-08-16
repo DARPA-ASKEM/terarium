@@ -38,7 +38,6 @@ const inputRef = ref<ComponentPublicInstance<typeof TeraInputText> | null>(null)
 const isEditing = ref(false);
 
 const onEdit = async () => {
-	console.log(props.modelValue);
 	initialValue = props.modelValue;
 	isEditing.value = true;
 	await nextTick();
