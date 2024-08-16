@@ -195,6 +195,9 @@ const menuPt = {
 	},
 	submenuHeader: {
 		style: 'color: var(--text-color-subdued); padding-top: 0.3rem;'
+	},
+	icon: {
+		style: 'color: var(--text-color);'
 	}
 };
 const toggleNavigationMenu = (
@@ -284,7 +287,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeyNavigation));
 
 		& > button {
 			height: 4rem;
-			width: 1.5rem;
+			width: 20px;
 			border-radius: var(--border-radius-big);
 		}
 	}
@@ -299,10 +302,6 @@ kbd {
 	color: var(--text-color-subdued);
 }
 
-i {
-	color: var(--text-color-subdued);
-}
-
 .operator-nav-info {
 	display: flex;
 	flex-direction: column;
@@ -314,7 +313,6 @@ i {
 	& > span {
 		display: flex;
 		align-items: center;
-		margin: 0 auto;
 		gap: var(--gap-2);
 	}
 }
