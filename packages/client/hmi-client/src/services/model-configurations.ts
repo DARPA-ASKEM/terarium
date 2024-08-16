@@ -5,8 +5,7 @@ import type {
 	ModelConfiguration,
 	ModelDistribution,
 	ObservableSemantic,
-	ParameterSemantic,
-	Provenance
+	ParameterSemantic
 } from '@/types/Types';
 import { isEmpty } from 'lodash';
 import { pythonInstance } from '@/python/PyodideController';
@@ -68,11 +67,6 @@ export const getModelIdFromModelConfigurationId = async (id: string) => {
 	const modelConfiguration = await getModelConfigurationById(id);
 	return modelConfiguration?.modelId ?? null;
 };
-
-export async function getExtractedFromSource(id: string): Promise<Provenance[]> {
-	const response = await API.get(`/model-configurations/${id}/extracted-from`);
-	return response?.data ?? ([] as Provenance[]);
-}
 
 export function getParameters(config: ModelConfiguration): ParameterSemantic[] {
 	return config.parameterSemanticList ?? [];
