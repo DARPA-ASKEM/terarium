@@ -55,10 +55,9 @@
 			<tera-drilldown-section>
 				<template v-if="selectedPolicy?.id">
 					<tera-toggleable-input
-						v-if="typeof selectedPolicy.name === 'string'"
+						v-if="typeof knobs.transientInterventionPolicy.name === 'string'"
 						class="mt-1"
-						:model-value="selectedPolicy.name"
-						@update:model-value="onChangeName"
+						v-model="knobs.transientInterventionPolicy.name"
 						tag="h4"
 					/>
 					<Accordion multiple :active-index="[0, 1]">
@@ -75,7 +74,7 @@
 								</span>
 							</template>
 							<p class="description text" v-if="!isEditingDescription">
-								{{ selectedPolicy?.description }}
+								{{ knobs.transientInterventionPolicy?.description }}
 							</p>
 							<Textarea
 								v-else
@@ -150,7 +149,7 @@ import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue'
 import {
 	createInterventionPolicy,
 	getInterventionPolicyById,
-	updateInterventionPolicy,
+	// updateInterventionPolicy,
 	blankIntervention
 } from '@/services/intervention-policy';
 import Accordion from 'primevue/accordion';
@@ -224,7 +223,9 @@ const stateOptions = computed(() => {
 	}));
 });
 
-const groupedOutputParameters = computed(() => groupBy(selectedPolicy.value?.interventions, 'appliedTo'));
+const groupedOutputParameters = computed(() =>
+	groupBy(knobs.value.transientInterventionPolicy.interventions, 'appliedTo')
+);
 
 const preparedCharts = computed(() =>
 	_.mapValues(groupedOutputParameters.value, (interventions) => {
@@ -342,15 +343,6 @@ const onDeleteIntervention = (index: number) => {
 	}
 };
 
-const onChangeName = async (name: string) => {
-	if (!selectedPolicy.value) return;
-	selectedPolicy.value.name = name;
-	await updateInterventionPolicy(selectedPolicy.value);
-	updateNodeLabel(selectedOutputId.value, name);
-	if (selectedPolicy.value.id) selectedPolicy.value = await getInterventionPolicyById(selectedPolicy.value.id);
-	await fetchInterventionPolicies(selectedPolicy.value.modelId);
-};
-
 const onEditDescription = async () => {
 	isEditingDescription.value = true;
 	newDescription.value = selectedPolicy.value?.description ?? '';
@@ -359,12 +351,8 @@ const onEditDescription = async () => {
 };
 
 const onConfirmEditDescription = async () => {
-	if (!selectedPolicy.value) return;
-	selectedPolicy.value.description = newDescription.value;
+	knobs.value.transientInterventionPolicy.description = newDescription.value;
 	isEditingDescription.value = false;
-	await updateInterventionPolicy(selectedPolicy.value);
-	if (selectedPolicy.value.id) selectedPolicy.value = await getInterventionPolicyById(selectedPolicy.value.id);
-	await fetchInterventionPolicies(selectedPolicy.value.modelId);
 };
 
 const saveInterventions = async () => {
@@ -372,16 +360,14 @@ const saveInterventions = async () => {
 	policy.name = 'New Intervention Policy';
 	policy.description = 'This is a new intervention policy.';
 
+	// if (!selectedPolicy.value) return;
+	// await updateInterventionPolicy(selectedPolicy.value);
+	// if (selectedPolicy.value.id) selectedPolicy.value = await getInterventionPolicyById(selectedPolicy.value.id);
+	// await fetchInterventionPolicies(selectedPolicy.value.modelId);
+
 	const response = await createInterventionPolicy(policy);
 	applyInterventionPolicy(response);
 };
-
-function updateNodeLabel(id: string, label: string) {
-	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.id === id));
-	if (!outputPort) return;
-	outputPort.label = label;
-	emit('update-output-port', outputPort);
-}
 
 const onResetPolicy = () => {
 	confirm.require({
