@@ -100,36 +100,31 @@ public class ProvenanceSearchService {
 	/**
 	 * Get the documents and datasets used to create a model configuration
 	 *
-	 * @param model-configuration-id - Model configuration id.
+	 * @param id - Model configuration id.
 	 * @return Set<Provenance> - The Documents and Datasets used to create a model configuration.
 	 */
-	public Set<Provenance> modelConfigSource(final UUID modelConfigurationId) {
+	public Set<Provenance> modelConfigSource(final UUID id) {
 		final Set<Provenance> provenances = new HashSet<>();
 		try (final Session session = neo4jService.getSession()) {
-			final String documentsQuery = String.format(
-				"MATCH (d:Document)<-[r:EXTRACTED_FROM]-(m:ModelConfiguration {id: '%s'}) RETURN d " + modelConfigurationId
+			final String query = String.format(
+				"MATCH (d:Document)<-[r:EXTRACTED_FROM]-(m:ModelConfiguration {id: '%s'}) RETURN d.id as id, 'DOCUMENT' as type " +
+				"UNION " +
+				"MATCH (ds:Dataset)<-[r:EXTRACTED_FROM]-(m:ModelConfiguration {id: '%s'}) RETURN ds.id as id, 'DATASET' as type",
+				id,
+				id
 			);
 
-			final Result documentResponse = session.run(documentsQuery);
-			while (documentResponse.hasNext()) {
+			final Result response = session.run(query);
+			while (response.hasNext()) {
+				final var record = response.next();
+				final ProvenanceType recordType = record.get("type").asString().equals("DOCUMENT")
+					? ProvenanceType.DOCUMENT
+					: ProvenanceType.DATASET;
 				final Provenance provenance = new Provenance();
-				provenance.setLeft(modelConfigurationId);
-				provenance.setRight(UUID.fromString(documentResponse.next().get("d").get("id").asString()));
-				provenance.setRightType(ProvenanceType.DOCUMENT);
-				provenance.setRelationType(ProvenanceRelationType.EXTRACTED_FROM);
-				provenances.add(provenance);
-			}
-
-			final String datasetsQuery = String.format(
-				"MATCH (ds:Dataset)<-[r:EXTRACTED_FROM]-(m:ModelConfiguration {id: '%s'}) RETURN ds",
-				modelConfigurationId
-			);
-			final Result datasetResponse = session.run(datasetsQuery);
-			while (datasetResponse.hasNext()) {
-				final Provenance provenance = new Provenance();
-				provenance.setLeft(modelConfigurationId);
-				provenance.setRight(UUID.fromString(datasetResponse.next().get("d").get("id").asString()));
-				provenance.setRightType(ProvenanceType.DATASET);
+				provenance.setLeft(id);
+				provenance.setLeftType(ProvenanceType.MODEL_CONFIGURATION);
+				provenance.setRight(UUID.fromString(record.get("id").asString()));
+				provenance.setRightType(recordType);
 				provenance.setRelationType(ProvenanceRelationType.EXTRACTED_FROM);
 				provenances.add(provenance);
 			}
