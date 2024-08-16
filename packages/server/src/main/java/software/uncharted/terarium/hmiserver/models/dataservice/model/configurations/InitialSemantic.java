@@ -44,4 +44,15 @@ public class InitialSemantic extends Semantic {
 		clone.expressionMathml = this.expressionMathml;
 		return clone;
 	}
+
+	@Override
+	public void setSource(String source) {
+		if (this.getSource() != null) {
+			return;
+		}
+
+		if (this.expression != null || this.expressionMathml != null) {
+			super.setSource(source);
+		}
+	}
 }
