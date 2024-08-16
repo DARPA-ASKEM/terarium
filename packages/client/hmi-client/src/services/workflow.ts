@@ -57,7 +57,25 @@ export class WorkflowWrapper {
 			const updated = updatedNodeMap.get(nodeId);
 			if (updated) {
 				if ((updated.version as number) > (nodes[i].version as number)) {
-					nodes[i] = Object.assign(nodes[i], updated);
+					nodes[i].version = updated.version;
+					nodes[i].isDeleted = updated.isDeleted;
+					nodes[i].status = updated.status;
+					nodes[i].x = updated.x;
+					nodes[i].y = updated.y;
+					nodes[i].width = updated.width;
+					nodes[i].height = updated.height;
+					nodes[i].active = updated.active;
+
+					if (!_.isEqual(nodes[i].inputs, updated.inputs)) {
+						nodes[i].inputs = updated.inputs;
+					}
+					if (!_.isEqual(nodes[i].outputs, updated.outputs)) {
+						nodes[i].outputs = updated.outputs;
+					}
+					if (!_.isEqual(nodes[i].state, updated.state)) {
+						nodes[i].state = updated.state;
+					}
+					// nodes[i] = Object.assign(nodes[i], updated);
 				}
 				updatedNodeMap.delete(nodeId);
 			}
