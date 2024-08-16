@@ -78,20 +78,16 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 			for (final JsonNode condition : configurations.response.get("conditions")) {
 				final Model modelCopy = model.clone();
 				modelCopy.setId(model.getId());
-
+				ScenarioExtraction.setNullDefaultModelInitials(modelCopy);
+				ScenarioExtraction.setNullDefaultModelParameters(modelCopy);
 				// Map the parameters values to the model
 				if (condition.has("parameters")) {
-					final List<ModelParameter> modelParameters = ScenarioExtraction.getModelParameters(
-						condition.get("parameters"),
-						modelCopy
-					);
-					modelCopy.getSemantics().getOde().setParameters(modelParameters);
+					ScenarioExtraction.getModelParameters(condition.get("parameters"), modelCopy);
 				}
 
 				// Map the initials values to the model
 				if (condition.has("initials")) {
-					final List<Initial> modelInitials = ScenarioExtraction.getModelInitials(condition.get("initials"), modelCopy);
-					modelCopy.getSemantics().getOde().setInitials(modelInitials);
+					ScenarioExtraction.getModelInitials(condition.get("initials"), modelCopy);
 				}
 
 				// Create the new configuration

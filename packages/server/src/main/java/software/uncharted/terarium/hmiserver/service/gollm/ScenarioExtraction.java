@@ -40,6 +40,8 @@ public class ScenarioExtraction {
 			if (conditionParameter.has("value")) {
 				final double value = conditionParameter.get("value").doubleValue();
 				parameter.setValue(value);
+				// set distribution to null if it is a value
+				parameter.setDistribution(null);
 			}
 			if (conditionParameter.has("distribution")) {
 				try {
@@ -56,9 +58,9 @@ public class ScenarioExtraction {
 		}
 	}
 
-	public static List<ModelParameter> getModelParameters(final JsonNode condition, final Model modelCopy) {
-		final List<ModelParameter> modelParameters = modelCopy.getParameters();
-		modelParameters.forEach(parameter -> {
+	public static List<ModelParameter> getModelParameters(final JsonNode condition, final Model model) {
+		final List<ModelParameter> parameters = model.getParameters();
+		parameters.forEach(parameter -> {
 			condition.forEach(conditionParameter -> {
 				// Test if type exist and is parameter for Dataset extraction
 				if (conditionParameter.has("type") && conditionParameter.get("type").asText().equals("initial")) {
@@ -67,18 +69,33 @@ public class ScenarioExtraction {
 				replaceParameter(parameter, conditionParameter);
 			});
 		});
-		return modelParameters;
+		return parameters;
 	}
 
-	public static List<Initial> getModelInitials(final JsonNode condition, final Model modelCopy) {
-		final List<Initial> modelInitials = modelCopy.getInitials();
-		modelInitials.forEach(initial -> {
-			final String target = initial.getTarget();
+	public static List<Initial> getModelInitials(final JsonNode condition, final Model model) {
+		final List<Initial> initials = model.getInitials();
+		initials.forEach(initial -> {
 			condition.forEach(conditionInitial -> {
 				if (conditionInitial.has("type") && conditionInitial.get("type").asText().equals("parameter")) return;
 				replaceInitial(initial, conditionInitial);
 			});
 		});
-		return modelInitials;
+		return initials;
+	}
+
+	public static void setNullDefaultModelInitials(final Model model) {
+		final List<Initial> initials = model.getInitials();
+		initials.forEach(initial -> {
+			initial.setExpression(null);
+			initial.setExpressionMathml(null);
+		});
+	}
+
+	public static void setNullDefaultModelParameters(final Model model) {
+		final List<ModelParameter> parameters = model.getParameters();
+		parameters.forEach(parameter -> {
+			parameter.setValue(null);
+			parameter.setDistribution(null);
+		});
 	}
 }
