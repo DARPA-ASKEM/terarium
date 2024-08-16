@@ -84,7 +84,6 @@
 					</section>
 				</tera-columnar-panel>
 			</main>
-
 			<footer v-if="slots.footer">
 				<slot name="footer" />
 			</footer>
