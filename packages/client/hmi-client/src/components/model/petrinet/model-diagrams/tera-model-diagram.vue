@@ -7,7 +7,7 @@
 						<template #start>
 							<span>
 								<Button @click="resetZoom" label="Reset zoom" size="small" severity="secondary" outlined />
-								<span class="how-to-zoom kbd-shortcut"><kbd>Ctrl</kbd>+<kbd>scroll</kbd>&nbsp;to zoom</span>
+								<span class="how-to-zoom kbd-shortcut-sm"><kbd>Ctrl</kbd>+<kbd>scroll</kbd>&nbsp;to zoom</span>
 							</span>
 						</template>
 						<template #center> </template>

@@ -67,8 +67,8 @@
 		display: flex;
 		align-items: center;
 		gap: var(--gap-1);
-		color: var(--text-color-subdued);
 		> kbd {
+			color: var(--text-color-subdued);
 			background-color: var(--surface-section);
 			border: 1px solid var(--surface-border);
 			border-radius: var(--border-radius);
@@ -77,6 +77,14 @@
 			> i {
 				font-size: var(--font-tiny);
 			}
+		}
+	}
+
+	.kbd-shortcut-sm {
+		@extend .kbd-shortcut;
+		> kbd {
+			padding: var(--gap-0-5) var(--gap-1);
+			font-size: var(--font-tiny);
 		}
 	}
 

@@ -308,7 +308,9 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeyNavigation));
 	& > span {
 		display: flex;
 		align-items: center;
-		gap: var(--gap-2);
+		& > i {
+			margin-right: var(--gap-2);
+		}
 	}
 
 	& > label {
