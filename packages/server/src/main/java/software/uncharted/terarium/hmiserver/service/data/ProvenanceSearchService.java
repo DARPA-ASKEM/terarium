@@ -17,6 +17,7 @@ import org.neo4j.driver.Session;
 import org.neo4j.driver.types.Node;
 import org.neo4j.driver.types.Relationship;
 import org.springframework.stereotype.Service;
+import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceEdge;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceNode;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceQueryParam;
@@ -97,6 +98,46 @@ public class ProvenanceSearchService {
 	}
 
 	/**
+	 * Get the documents and datasets used to create a model configuration
+	 *
+	 * @param model-configuration-id - Model configuration id.
+	 * @return Set<Provenance> - The Documents and Datasets used to create a model configuration.
+	 */
+	public Set<Provenance> modelConfigSource(final UUID modelConfigurationId) {
+		final Set<Provenance> provenances = new HashSet<>();
+		try (final Session session = neo4jService.getSession()) {
+			final String documentsQuery = String.format(
+				"MATCH (d:Document)<-[r:EXTRACTED_FROM]-(m:ModelConfiguration {id: '%s'}) RETURN d " + modelConfigurationId
+			);
+
+			final Result documentResponse = session.run(documentsQuery);
+			while (documentResponse.hasNext()) {
+				final Provenance provenance = new Provenance();
+				provenance.setLeft(modelConfigurationId);
+				provenance.setRight(UUID.fromString(documentResponse.next().get("d").get("id").asString()));
+				provenance.setRightType(ProvenanceType.DOCUMENT);
+				provenance.setRelationType(ProvenanceRelationType.EXTRACTED_FROM);
+				provenances.add(provenance);
+			}
+
+			final String datasetsQuery = String.format(
+				"MATCH (ds:Dataset)<-[r:EXTRACTED_FROM]-(m:ModelConfiguration {id: '%s'}) RETURN ds",
+				modelConfigurationId
+			);
+			final Result datasetResponse = session.run(datasetsQuery);
+			while (datasetResponse.hasNext()) {
+				final Provenance provenance = new Provenance();
+				provenance.setLeft(modelConfigurationId);
+				provenance.setRight(UUID.fromString(datasetResponse.next().get("d").get("id").asString()));
+				provenance.setRightType(ProvenanceType.DATASET);
+				provenance.setRelationType(ProvenanceRelationType.EXTRACTED_FROM);
+				provenances.add(provenance);
+			}
+			return provenances;
+		}
+	}
+
+	/**
 	 * Identifies the document from which a model configuration was extracted
 	 *
 	 * @param payload - Search param payload.
@@ -105,7 +146,7 @@ public class ProvenanceSearchService {
 	public Set<String> modelConfigFromDocument(final ProvenanceQueryParam payload) {
 		if (payload.getRootType() != ProvenanceType.MODEL_CONFIGURATION) {
 			throw new IllegalArgumentException(
-				"Document used for model-configuration extraction can only be found by providing a model-confirguration"
+				"Document used for model-configuration extraction can only be found by providing a model-configuration"
 			);
 		}
 
