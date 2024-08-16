@@ -205,7 +205,7 @@ const upstreamMenu = ref<Menu | null>(null);
 const downstreamMenu = ref<Menu | null>(null);
 const menuPt = {
 	root: {
-		style: 'margin-top: -6rem; width: auto; height: auto; opacity: 0.3;'
+		style: 'margin-top: -6rem; width: auto; height: auto;'
 	},
 	submenuHeader: {
 		style: 'color: var(--text-color-subdued); font-weight: var(--font-weight); padding-top: 0.2rem; '
