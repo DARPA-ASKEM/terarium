@@ -43,23 +43,39 @@ export class WorkflowWrapper {
 	}
 
 	update(updatedWF: Workflow) {
-		// FIXME: Not efficient, use map lookup
+		this.wf.name = updatedWF.name;
+		this.wf.description = updatedWF.description;
+
 		const nodes = this.getNodes();
+		const edges = this.getEdges();
+		const updatedNodeMap = new Map<string, WorkflowNode<any>>(updatedWF.nodes.map((n) => [n.id, n]));
+		const updatedEdgeMap = new Map<string, WorkflowEdge>(updatedWF.edges.map((e) => [e.id, e]));
+
+		// Update and deletes
 		for (let i = 0; i < nodes.length; i++) {
 			const nodeId = nodes[i].id;
-			const updated = updatedWF.nodes.find((d) => d.id === nodeId);
+			const updated = updatedNodeMap.get(nodeId);
 			if (updated) {
-				nodes[i] = Object.assign(nodes[i], updated);
+				if ((updated.version as number) > (nodes[i].version as number)) {
+					nodes[i] = Object.assign(nodes[i], updated);
+				}
+				updatedNodeMap.delete(nodeId);
 			}
 		}
-		const edges = this.getEdges();
 		for (let i = 0; i < edges.length; i++) {
 			const edgeId = edges[i].id;
-			const updated = updatedWF.edges.find((d) => d.id === edgeId);
+			const updated = updatedEdgeMap.get(edgeId);
 			if (updated) {
-				edges[i] = Object.assign(edges[i], updated);
+				if ((updated.version as number) > (edges[i].version as number)) {
+					edges[i] = Object.assign(edges[i], updated);
+				}
+				updatedEdgeMap.delete(edgeId);
 			}
 		}
+
+		// New eleemnts
+		[...updatedNodeMap.values()].forEach((node) => this.wf.nodes.push(node));
+		[...updatedEdgeMap.values()].forEach((edge) => this.wf.edges.push(edge));
 	}
 
 	getId() {

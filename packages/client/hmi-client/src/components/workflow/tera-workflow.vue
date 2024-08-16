@@ -214,7 +214,7 @@ import * as ModelComparisonOp from '@/components/workflow/ops/model-comparison/m
 import * as RegriddingOp from '@/components/workflow/ops/regridding/mod';
 import * as InterventionPolicyOp from '@/components/workflow/ops/intervention-policy/mod';
 
-const WORKFLOW_SAVE_INTERVAL = 8000;
+const WORKFLOW_SAVE_INTERVAL = 4000;
 
 const registry = new workflowService.WorkflowRegistry();
 registry.registerOp(SimulateCiemssOp);
@@ -255,6 +255,7 @@ let canvasTransform = { x: 0, y: 0, k: 1 };
 let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverPort: boolean = false;
 let saveTimer: any = null;
+
 let workflowDirty: boolean = false;
 let startTime: number = 0;
 
@@ -933,6 +934,7 @@ onUnmounted(() => {
 	if (saveTimer) {
 		clearInterval(saveTimer);
 	}
+
 	if (canvasTransform) {
 		setLocalStorageTransform(wf.value.getId(), canvasTransform);
 	}
