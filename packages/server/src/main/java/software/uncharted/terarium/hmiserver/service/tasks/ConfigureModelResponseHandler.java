@@ -112,7 +112,6 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 				// Update the source of the model-configuration with the Document name
 				configuration.getInitialSemanticList().forEach(initial -> initial.setSource(source));
 				configuration.getParameterSemanticList().forEach(parameter -> parameter.setSource(source));
-				configuration.getObservableSemanticList().forEach(observable -> observable.setSource(source));
 
 				final ModelConfiguration newConfig = modelConfigurationService.createAsset(
 					configuration,

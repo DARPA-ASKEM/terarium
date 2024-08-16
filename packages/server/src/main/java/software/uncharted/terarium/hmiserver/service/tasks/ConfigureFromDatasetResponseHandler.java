@@ -117,7 +117,6 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 			// Update the source of the model-configuration with the Document name
 			modelConfiguration.getInitialSemanticList().forEach(initial -> initial.setSource(source));
 			modelConfiguration.getParameterSemanticList().forEach(parameter -> parameter.setSource(source));
-			modelConfiguration.getObservableSemanticList().forEach(observable -> observable.setSource(source));
 
 			try {
 				for (final UUID datasetId : props.datasetIds) {
