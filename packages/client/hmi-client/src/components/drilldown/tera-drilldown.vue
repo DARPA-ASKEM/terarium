@@ -11,13 +11,16 @@
 			<Menu ref="upstreamMenu" class="ml-5" popup :model="upstreamOperatorsNav" :pt="menuPt" />
 			<template #tooltip-content>
 				<span class="operator-nav-info">
-					<label>Upstream operators</label>
-					<span v-if="upstreamOperatorsNav?.[0]?.items?.length === 1">
-						<i :class="upstreamOperatorsNav[0].items[0].icon" />
-						<label>{{ upstreamOperatorsNav[0].items[0].label }}</label>
-					</span>
+					<template v-if="upstreamOperatorsNav?.[0]?.items?.length === 1">
+						<label>Upstream operator</label>
+						<span>
+							<i :class="upstreamOperatorsNav[0].items[0].icon" />
+							<label>{{ upstreamOperatorsNav[0].items[0].label }}</label>
+						</span>
+					</template>
+					<label v-else>Upstream operators</label>
 					<span class="kbd-shortcut">
-						<kbd>Shift</kbd> + <kbd><i class="pi pi-arrow-left" /></kbd>
+						<kbd>Shift</kbd>+<kbd><i class="pi pi-arrow-left" /></kbd>
 					</span>
 				</span>
 			</template>
