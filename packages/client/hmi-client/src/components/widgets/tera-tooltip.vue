@@ -1,5 +1,5 @@
 <template>
-	<div :class="!customPosition && position">
+	<div :class="!customPosition && position" :style="{ pointerEvents: showTooltip ? 'auto' : 'none' }">
 		<slot />
 		<div class="tooltip-content" :class="[{ 'has-arrow': hasArrow }, arrowClass]" :style="customPositionStyle">
 			<slot name="tooltip-content" />
@@ -41,8 +41,7 @@ const customPositionStyle = computed(() => {
 	if (props.customPosition) {
 		return {
 			top: `${props.customPosition.y}px`,
-			left: `${props.customPosition.x}px`,
-			display: props.showTooltip ? 'block' : 'none'
+			left: `${props.customPosition.x}px`
 		};
 	}
 	return {};

@@ -1,6 +1,9 @@
 <template>
 	<aside class="overlay-container">
-		<tera-tooltip :class="{ 'no-connections': isEmpty(upstreamOperatorsNav?.[0].items) }">
+		<tera-tooltip
+			:class="{ 'no-connections': isEmpty(upstreamOperatorsNav?.[0].items) }"
+			:show-tooltip="!(upstreamMenu as any)?.focused"
+		>
 			<Button
 				ref="leftChevronButton"
 				icon="pi pi-chevron-left"
@@ -81,11 +84,16 @@
 					</section>
 				</tera-columnar-panel>
 			</main>
+
 			<footer v-if="slots.footer">
 				<slot name="footer" />
 			</footer>
 		</section>
-		<tera-tooltip :class="{ 'no-connections': isEmpty(downstreamOperatorsNav?.[0].items) }" position="left">
+		<tera-tooltip
+			:class="{ 'no-connections': isEmpty(downstreamOperatorsNav?.[0].items) }"
+			:show-tooltip="!(downstreamMenu as any)?.focused"
+			position="left"
+		>
 			<Button
 				ref="rightChevronButton"
 				icon="pi pi-chevron-right"
@@ -115,7 +123,7 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { ref, computed, onMounted, onUnmounted, useSlots } from 'vue';
+import { ref, computed, onMounted, onUnmounted, useSlots, ComponentPublicInstance } from 'vue';
 import Button from 'primevue/button';
 import Chip from 'primevue/chip';
 import Menu from 'primevue/menu';
@@ -191,13 +199,13 @@ const ellipsisMenu = ref();
 const toggleEllipsisMenu = (event: MouseEvent) => ellipsisMenu.value.toggle(event);
 
 // Drilldown navigation and animations
-const leftChevronButton = ref<Button | null>(null);
-const rightChevronButton = ref<Button | null>(null);
+const leftChevronButton = ref<ComponentPublicInstance<typeof Button> | null>(null);
+const rightChevronButton = ref<ComponentPublicInstance<typeof Button> | null>(null);
 const upstreamMenu = ref<Menu | null>(null);
 const downstreamMenu = ref<Menu | null>(null);
 const menuPt = {
 	root: {
-		style: 'margin-top: -6rem; width: auto; height: auto;'
+		style: 'margin-top: -6rem; width: auto; height: auto; opacity: 0.3;'
 	},
 	submenuHeader: {
 		style: 'color: var(--text-color-subdued); font-weight: var(--font-weight); padding-top: 0.2rem; '
@@ -210,7 +218,7 @@ const toggleNavigationMenu = (
 	event: MouseEvent | KeyboardEvent,
 	menu: Menu | null,
 	operatorsNav?: MenuItem[],
-	button?: Button | null
+	button?: ComponentPublicInstance<typeof Button> | null
 ) => {
 	const navItems = operatorsNav?.[0]?.items;
 	if (!navItems || isEmpty(navItems)) return; // Prevents keyboard shortcut from toggling hidden button and empty menu
@@ -222,12 +230,10 @@ const toggleNavigationMenu = (
 	}
 	// Keyboard event will mimic clicking the navigation button to open the menu where expected
 	else if (event instanceof KeyboardEvent && button) {
-		// @ts-ignore
 		button.$el.dispatchEvent(new MouseEvent('click'));
 	}
 	// Regular @click event
 	else menu?.toggle(event);
-	console.log(menu);
 };
 
 function handleKeyNavigation(event: KeyboardEvent) {
@@ -304,7 +310,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeyNavigation));
 	display: flex;
 	flex-direction: column;
 	flex-wrap: nowrap;
-	padding: var(--gap-1) var(--gap-2);
+	padding: var(--gap-1-5) var(--gap-2);
 	gap: var(--gap-3);
 	white-space: nowrap;
 
