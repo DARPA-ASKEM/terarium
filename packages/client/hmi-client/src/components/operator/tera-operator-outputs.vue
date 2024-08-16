@@ -54,7 +54,9 @@
 					@mouseup.stop
 					@menu-focus="menuFocusId = output.id"
 					@menu-blur="menuFocusId = null"
-					@menu-selection="(operatorType) => emit('menu-selection', operatorType)"
+					@menu-selection="
+						(operatorType) => emit('menu-selection', operatorType, output, WorkflowDirection.FROM_OUTPUT)
+					"
 				/>
 			</Transition>
 			<!--TODO: We will see how to integrate port actions into this button later-->
@@ -73,7 +75,7 @@ import { PropType, computed, ref } from 'vue';
 import { WorkflowPortStatus, WorkflowDirection, WorkflowOutput } from '@/types/workflow';
 import Button from 'primevue/button';
 import { OperatorMenuItem } from '@/services/workflow';
-import TeraOperatorMenu from './tera-operator-menu.vue';
+import TeraOperatorMenu from '@/components/operator/tera-operator-menu.vue';
 
 const menuFocusId = ref<string | null>(null);
 
