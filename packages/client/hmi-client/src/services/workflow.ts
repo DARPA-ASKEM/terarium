@@ -15,8 +15,7 @@ import type {
 	WorkflowPort,
 	WorkflowOutput
 } from '@/types/workflow';
-import { WorkflowPortStatus, OperatorStatus } from '@/types/workflow';
-import { summarizeNotebook } from './beaker';
+import { WorkflowPortStatus, OperatorStatus, WorkflowOperationTypes } from '@/types/workflow';
 
 /**
  * A wrapper class around the workflow data struture to make it easier
@@ -33,12 +32,50 @@ export class WorkflowWrapper {
 		}
 	}
 
+	// This will replace the entire workflow, should only use for initial load
+	// as there it will not propapate reactivity
 	load(wf: Workflow) {
 		this.wf = _.cloneDeep(wf);
 	}
 
 	dump() {
 		return this.wf;
+	}
+
+	update(updatedWF: Workflow) {
+		this.wf.name = updatedWF.name;
+		this.wf.description = updatedWF.description;
+
+		const nodes = this.getNodes();
+		const edges = this.getEdges();
+		const updatedNodeMap = new Map<string, WorkflowNode<any>>(updatedWF.nodes.map((n) => [n.id, n]));
+		const updatedEdgeMap = new Map<string, WorkflowEdge>(updatedWF.edges.map((e) => [e.id, e]));
+
+		// Update and deletes
+		for (let i = 0; i < nodes.length; i++) {
+			const nodeId = nodes[i].id;
+			const updated = updatedNodeMap.get(nodeId);
+			if (updated) {
+				if ((updated.version as number) > (nodes[i].version as number)) {
+					nodes[i] = Object.assign(nodes[i], updated);
+				}
+				updatedNodeMap.delete(nodeId);
+			}
+		}
+		for (let i = 0; i < edges.length; i++) {
+			const edgeId = edges[i].id;
+			const updated = updatedEdgeMap.get(edgeId);
+			if (updated) {
+				if ((updated.version as number) > (edges[i].version as number)) {
+					edges[i] = Object.assign(edges[i], updated);
+				}
+				updatedEdgeMap.delete(edgeId);
+			}
+		}
+
+		// New eleemnts
+		[...updatedNodeMap.values()].forEach((node) => this.wf.nodes.push(node));
+		[...updatedEdgeMap.values()].forEach((edge) => this.wf.edges.push(edge));
 	}
 
 	getId() {
@@ -138,8 +175,7 @@ export class WorkflowWrapper {
 				label: port.label,
 				status: WorkflowPortStatus.NOT_CONNECTED,
 				value: null,
-				isOptional: port.isOptional ?? false,
-				acceptMultiple: port.acceptMultiple
+				isOptional: port.isOptional ?? false
 			})),
 
 			outputs: op.outputs.map((port) => ({
@@ -149,7 +185,6 @@ export class WorkflowWrapper {
 				status: WorkflowPortStatus.NOT_CONNECTED,
 				value: null,
 				isOptional: false,
-				acceptMultiple: false,
 				state: {}
 			})),
 
@@ -227,10 +262,7 @@ export class WorkflowWrapper {
 		}
 
 		// Not supported if there is a mismatch
-		if (
-			intersectionTypes.length === 0 ||
-			(!targetInputPort.acceptMultiple && targetInputPort.status === WorkflowPortStatus.CONNECTED)
-		) {
+		if (intersectionTypes.length === 0 || targetInputPort.status === WorkflowPortStatus.CONNECTED) {
 			return;
 		}
 
@@ -443,6 +475,17 @@ export class WorkflowWrapper {
 		if (!node) return;
 		node.status = status;
 	}
+
+	// Get neighbor nodes for drilldown navigation
+	getNeighborNodes = (id: string) => {
+		const cache = new Map(this.getNodes().map((node) => [node.id, node]));
+		const inputEdges = this.getEdges().filter((e) => e.target === id);
+		const outputEdges = this.getEdges().filter((e) => e.source === id);
+		return {
+			upstreamNodes: inputEdges.map((e) => e.source && cache.get(e.source)).filter(Boolean) as WorkflowNode<any>[],
+			downstreamNodes: outputEdges.map((e) => e.target && cache.get(e.target)).filter(Boolean) as WorkflowNode<any>[]
+		};
+	};
 }
 
 /**
@@ -484,6 +527,39 @@ export function getOperatorNodeSize(size: OperatorNodeSize): Size {
 			return { width: 180, height: 220 };
 	}
 }
+
+export const isAssetOperator = (operationType: string) =>
+	(
+		[
+			WorkflowOperationTypes.MODEL,
+			WorkflowOperationTypes.DATASET,
+			WorkflowOperationTypes.DOCUMENT,
+			WorkflowOperationTypes.CODE
+		] as string[]
+	).includes(operationType);
+
+export const iconToOperatorMap = new Map<string, string>([
+	[WorkflowOperationTypes.DOCUMENT, 'pi pi-file'],
+	[WorkflowOperationTypes.MODEL, 'pi pi-share-alt'],
+	[WorkflowOperationTypes.DATASET, 'pi pi-table'],
+	[WorkflowOperationTypes.SIMULATE_CIEMSS, 'pi pi-chart-line'],
+	[WorkflowOperationTypes.CALIBRATION_CIEMSS, 'pi pi-chart-line'],
+	[WorkflowOperationTypes.MODEL_CONFIG, 'pi pi-cog'],
+	[WorkflowOperationTypes.STRATIFY_MIRA, 'pi pi-share-alt'],
+	[WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS, 'pi pi-chart-line'],
+	[WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS, 'pi pi-chart-line'],
+	[WorkflowOperationTypes.DATASET_TRANSFORMER, 'pi pi-table'],
+	[WorkflowOperationTypes.SUBSET_DATA, 'pi pi-table'],
+	[WorkflowOperationTypes.MODEL_TRANSFORMER, 'pi pi-share-alt'],
+	[WorkflowOperationTypes.FUNMAN, 'pi pi-cog'],
+	[WorkflowOperationTypes.CODE, 'pi pi-code'],
+	[WorkflowOperationTypes.MODEL_COMPARISON, 'pi pi-share-alt'],
+	[WorkflowOperationTypes.OPTIMIZE_CIEMSS, 'pi pi-chart-line'],
+	[WorkflowOperationTypes.MODEL_EDIT, 'pi pi-share-alt'],
+	[WorkflowOperationTypes.MODEL_FROM_EQUATIONS, 'pi pi-share-alt'],
+	[WorkflowOperationTypes.REGRIDDING, 'pi pi-table'],
+	[WorkflowOperationTypes.INTERVENTION_POLICY, 'pi pi-cog']
+]);
 
 // Get port label for frontend
 const defaultPortLabels = {
@@ -634,29 +710,6 @@ export function updateOutputPort(node: WorkflowNode<any>, updatedOutputPort: Wor
 	let outputPort = node.outputs.find((port) => port.id === updatedOutputPort.id);
 	if (!outputPort) return;
 	outputPort = Object.assign(outputPort, updatedOutputPort);
-}
-
-// Keep track of the summary generation requests to prevent multiple requests for the same workflow output
-// TODO: Instead of relying on the Ids stored in memory, consider creating a table in the backend to store the summaries to keep track of their status and results.
-const summaryGenerationRequestIds = new Set<string>();
-
-export async function generateSummary(
-	node: WorkflowNode<any>,
-	outputPort: WorkflowOutput<any>,
-	createNotebookFn: ((state: any, value: WorkflowPort['value']) => Promise<any>) | null
-) {
-	if (!node || !createNotebookFn || summaryGenerationRequestIds.has(outputPort.id)) return null;
-	try {
-		summaryGenerationRequestIds.add(outputPort.id);
-		const notebook = await createNotebookFn(outputPort.state, outputPort.value);
-		const result = await summarizeNotebook(notebook);
-		if (!result.summary) throw new Error('AI Generated summary is empty.');
-		return result;
-	} catch {
-		return { title: outputPort.label, summary: 'Generating AI summary has failed.' };
-	} finally {
-		summaryGenerationRequestIds.delete(outputPort.id);
-	}
 }
 
 // Check if the current-state matches that of the output-state.

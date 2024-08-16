@@ -11,7 +11,6 @@ export const WorkflowOperationTypes = Object.freeze({
 	DATASET_TRANSFORMER: 'DatasetTransformer',
 	SUBSET_DATA: 'SubsetData',
 	MODEL_TRANSFORMER: 'ModelTransformer',
-	MODEL_FROM_CODE: 'ModelFromCode',
 	FUNMAN: 'Funman',
 	CODE: 'Code',
 	MODEL_COMPARISON: 'ModelComparison',
@@ -42,7 +41,6 @@ export interface OperationData {
 	type: string;
 	label?: string;
 	isOptional?: boolean;
-	acceptMultiple?: boolean; // @deprecated
 }
 
 // Defines a function: eg: model, simulate, calibrate
@@ -75,7 +73,6 @@ export interface WorkflowPort {
 	label?: string;
 	value?: any[] | null;
 	isOptional: boolean;
-	acceptMultiple?: boolean; // @deprecated
 }
 
 // Operator Output needs more information than a standard operator port.
@@ -173,13 +170,6 @@ export interface WorkflowTransformations {
 }
 export interface Transformations {
 	[key: string]: Transform;
-}
-
-export enum ProgressState {
-	RETRIEVING = 'retrieving',
-	QUEUED = 'queued',
-	RUNNING = 'running',
-	COMPLETE = 'complete'
 }
 
 export interface AssetBlock<T> {
