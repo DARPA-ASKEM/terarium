@@ -7,8 +7,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,11 +30,17 @@ import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
+import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceQueryParam;
+import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
+import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.service.data.ProvenanceSearchService;
+import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission;
 
@@ -47,6 +55,7 @@ public class ModelConfigurationController {
 	final CurrentUserService currentUserService;
 	final Messages messages;
 	final ProjectService projectService;
+	final ProvenanceSearchService provenanceSearchService;
 
 	/**
 	 * Gets all model configurations (which are visible to this user)
@@ -150,6 +159,42 @@ public class ModelConfigurationController {
 			throw new ResponseStatusException(
 				org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
 				messages.get("postgres.service-unavailable")
+			);
+		}
+	}
+
+	/**
+	 * Gets all the Document and Dataset provenance from a model configuration
+	 *
+	 * @param id UUID of the model configuration
+	 * @return the list of asset ids and types
+	 */
+	@GetMapping("/{id}/extracted-from")
+	@Secured(Roles.USER)
+	@Operation(summary = "Gets all the Document and Dataset provenance from a model configuration")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Provenances found.",
+				content = @Content(array = @ArraySchema(schema = @Schema(implementation = Provenance.class)))
+			),
+			@ApiResponse(
+				responseCode = "503",
+				description = "There was an issue communicating with back-end services",
+				content = @Content
+			)
+		}
+	)
+	public ResponseEntity<Set<Provenance>> getExtractedFrom(@PathVariable("id") final UUID id) {
+		try {
+			final Set<Provenance> provenances = provenanceSearchService.modelConfigSource(id);
+			return ResponseEntity.ok(provenances);
+		} catch (final Exception e) {
+			log.error("Unable to get model0configuration extraction source from the neo4j db", e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
+				messages.get("neo4j.service-unavailable")
 			);
 		}
 	}
