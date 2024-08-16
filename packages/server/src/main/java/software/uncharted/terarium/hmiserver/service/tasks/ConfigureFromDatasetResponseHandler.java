@@ -118,7 +118,7 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 				"This configuration was created from the dataset(s): " + source
 			);
 
-			// Update the source of the model-configuration with the Document name
+			// Update the source of the model-configuration with the datasets names
 			modelConfiguration.getInitialSemanticList().forEach(initial -> initial.setSource(source));
 			modelConfiguration.getParameterSemanticList().forEach(parameter -> parameter.setSource(source));
 
