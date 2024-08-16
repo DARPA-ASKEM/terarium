@@ -55,7 +55,7 @@
 			<tera-drilldown-section>
 				<template v-if="selectedPolicy?.id">
 					<tera-toggleable-input
-						v-if="selectedPolicy?.name"
+						v-if="typeof selectedPolicy?.name === 'string'"
 						class="mt-1"
 						:model-value="selectedPolicy.name"
 						@update:model-value="onChangeName"
