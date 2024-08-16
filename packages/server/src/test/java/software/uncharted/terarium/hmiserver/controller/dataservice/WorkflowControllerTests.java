@@ -34,13 +34,17 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 
 	@BeforeEach
 	public void setup() throws IOException {
+		workflowService.setupIndexAndAliasAndEnsureEmpty();
+
 		project = projectService.createProject(
 			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
 		);
 	}
 
 	@AfterEach
-	public void teardown() throws IOException {}
+	public void teardown() throws IOException {
+		workflowService.teardownIndexAndAlias();
+	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
