@@ -29,9 +29,9 @@ Note: sampling combinations in PyCIEMSS can result in numerical instability, whe
 4. Create a new intervention policy by specifying an intervention
 5. Select `Static` to create a static intervention
 6. Edit the name from `New Intervention` to `Int0`
-7. Select the parameter `\beta` from the dropdown, an intervention value of `0.1` starting at timepoint `50`
+7. Select the parameter `\beta` from the dropdown, an intervention value of `0.1` starting at timepoint `15`
 8. Click `+ Add intervention` to add another intervention with name `Int1`
-9. Select `Static`, the parameter `\gamma`, an intervention value of `0.6` and timepoint `60`
+9. Select `Static`, the parameter `\gamma`, an intervention value of `0.6` and timepoint `20`
 10. Click `+ Add intervention` again with name `Int2`
 11. Select `Dynamic`, the state variable `S`, an intervention value of `0.80`, the trigger variable `I`, `increases to above` and a threshold value of `0.10`
 12. Click `Save`
