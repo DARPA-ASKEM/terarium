@@ -5,11 +5,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
@@ -18,6 +22,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Prove
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
+import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
@@ -34,6 +39,7 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 	private final ModelService modelService;
 	private final ModelConfigurationService modelConfigurationService;
 	private final ProvenanceService provenanceService;
+	private final DatasetService datasetService;
 
 	@Override
 	public String getName() {
@@ -93,12 +99,25 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 				modelCopy.getModel().put("initials", objectMapper.convertValue(modelInitials, JsonNode.class));
 			}
 
+			// Fetch the dataset names
+			final List<String> datasetsNames = List.of();
+			props.datasetIds.forEach(datasetId -> {
+				final Optional<Dataset> dataset = datasetService.getAsset(datasetId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+				dataset.ifPresent(value -> datasetsNames.add(value.getName()));
+			});
+			final String source = String.join(", ", datasetsNames);
+
 			// Create the new configuration
 			final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
 				modelCopy,
-				"New configuration from dataset",
-				""
+				"Configuration from dataset(s)",
+				"This configuration was created from the dataset(s): " + source
 			);
+
+			// Update the source of the model-configuration with the Document name
+			modelConfiguration.getInitialSemanticList().forEach(initial -> initial.setSource(source));
+			modelConfiguration.getParameterSemanticList().forEach(parameter -> parameter.setSource(source));
+			modelConfiguration.getObservableSemanticList().forEach(observable -> observable.setSource(source));
 
 			try {
 				for (final UUID datasetId : props.datasetIds) {
