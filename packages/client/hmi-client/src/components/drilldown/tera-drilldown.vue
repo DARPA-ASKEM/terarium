@@ -11,12 +11,12 @@
 			<Menu ref="upstreamMenu" class="ml-5" popup :model="upstreamOperatorsNav" :pt="menuPt" />
 			<template #tooltip-content>
 				<span class="operator-nav-info">
+					<label>Upstream operators</label>
 					<span v-if="upstreamOperatorsNav?.[0]?.items?.length === 1">
 						<i :class="upstreamOperatorsNav[0].items[0].icon" />
 						<label>{{ upstreamOperatorsNav[0].items[0].label }}</label>
 					</span>
-					<label v-else>Upstream operators</label>
-					<span>
+					<span class="kbd-shortcut">
 						<kbd>Shift</kbd> + <kbd><i class="pi pi-arrow-left" /></kbd>
 					</span>
 				</span>
@@ -93,13 +93,16 @@
 			<Menu ref="downstreamMenu" class="-ml-5" popup :model="downstreamOperatorsNav" :pt="menuPt" />
 			<template #tooltip-content>
 				<span class="operator-nav-info">
-					<span v-if="downstreamOperatorsNav?.[0]?.items?.length === 1">
-						<i :class="downstreamOperatorsNav[0].items[0].icon" />
-						<label>{{ downstreamOperatorsNav[0].items[0].label }}</label>
-					</span>
+					<template v-if="downstreamOperatorsNav?.[0]?.items?.length === 1">
+						<label>Downstream operator</label>
+						<span>
+							<i :class="downstreamOperatorsNav[0].items[0].icon" />
+							<label>{{ downstreamOperatorsNav[0].items[0].label }}</label>
+						</span>
+					</template>
 					<label v-else>Downstream operators</label>
-					<span>
-						<kbd>Shift</kbd> + <kbd><i class="pi pi-arrow-right" /></kbd>
+					<span class="kbd-shortcut">
+						<kbd>Shift</kbd>+<kbd><i class="pi pi-arrow-right" /></kbd>
 					</span>
 				</span>
 			</template>
@@ -191,10 +194,10 @@ const upstreamMenu = ref<Menu | null>(null);
 const downstreamMenu = ref<Menu | null>(null);
 const menuPt = {
 	root: {
-		style: 'margin-top: -6rem'
+		style: 'margin-top: -6rem; width: auto; height: auto;'
 	},
 	submenuHeader: {
-		style: 'color: var(--text-color-subdued); padding-top: 0.3rem;'
+		style: 'color: var(--text-color-subdued); font-weight: var(--font-weight); padding-top: 0.2rem; '
 	},
 	icon: {
 		style: 'color: var(--text-color);'
@@ -221,6 +224,7 @@ const toggleNavigationMenu = (
 	}
 	// Regular @click event
 	else menu?.toggle(event);
+	console.log(menu);
 };
 
 function handleKeyNavigation(event: KeyboardEvent) {
@@ -293,15 +297,6 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeyNavigation));
 	}
 }
 
-kbd {
-	background-color: var(--surface-section);
-	border: 1px solid var(--surface-border);
-	border-radius: var(--border-radius);
-	padding: 2px var(--gap-xsmall);
-	font-weight: var(--font-weight-semibold);
-	color: var(--text-color-subdued);
-}
-
 .operator-nav-info {
 	display: flex;
 	flex-direction: column;
@@ -314,6 +309,10 @@ kbd {
 		display: flex;
 		align-items: center;
 		gap: var(--gap-2);
+	}
+
+	& > label {
+		color: var(--text-color-subdued);
 	}
 }
 

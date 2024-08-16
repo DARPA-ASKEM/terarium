@@ -7,11 +7,7 @@
 						<template #start>
 							<span>
 								<Button @click="resetZoom" label="Reset zoom" size="small" severity="secondary" outlined />
-								<span class="how-to-zoom">
-									<kbd>Ctrl</kbd>
-									+
-									<kbd>scroll</kbd>&nbsp;to zoom</span
-								>
+								<span class="how-to-zoom kbd-shortcut"><kbd>Ctrl</kbd>+<kbd>scroll</kbd>&nbsp;to zoom</span>
 							</span>
 						</template>
 						<template #center> </template>
@@ -304,16 +300,6 @@ main {
 	border-radius: var(--border-radius);
 	pointer-events: none;
 	user-select: none;
-}
-
-kbd {
-	background-color: var(--surface-section);
-	border: 1px solid var(--surface-border);
-	border-radius: var(--border-radius);
-	padding: 2px var(--gap-xsmall);
-	font-size: var(--font-tiny);
-	font-weight: var(--font-weight-semibold);
-	color: var(--text-color-subdued);
 }
 
 ul.legend {
