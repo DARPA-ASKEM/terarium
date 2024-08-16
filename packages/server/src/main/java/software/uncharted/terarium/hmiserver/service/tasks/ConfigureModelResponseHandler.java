@@ -4,12 +4,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.configuration.Config;
+import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
@@ -100,14 +103,16 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 				);
 
 				// Fetch the document name
-				final String documentName = Objects.requireNonNull(
-					documentAssetService.getAsset(props.documentId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER).orElse(null)
-				).getName();
+				final Optional<DocumentAsset> document = documentAssetService.getAsset(
+					props.documentId,
+					ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
+				);
+				final String source = document.map(TerariumAsset::getName).orElse(null);
 
 				// Update the source of the model-configuration with the Document name
-				configuration.getInitialSemanticList().forEach(initial -> initial.setSource(documentName));
-				configuration.getParameterSemanticList().forEach(parameter -> parameter.setSource(documentName));
-				configuration.getObservableSemanticList().forEach(observable -> observable.setSource(documentName));
+				configuration.getInitialSemanticList().forEach(initial -> initial.setSource(source));
+				configuration.getParameterSemanticList().forEach(parameter -> parameter.setSource(source));
+				configuration.getObservableSemanticList().forEach(observable -> observable.setSource(source));
 
 				final ModelConfiguration newConfig = modelConfigurationService.createAsset(
 					configuration,
