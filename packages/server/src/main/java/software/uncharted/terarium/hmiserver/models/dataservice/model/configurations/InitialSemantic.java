@@ -47,11 +47,7 @@ public class InitialSemantic extends Semantic {
 
 	@Override
 	public void setSource(String source) {
-		if (this.getSource() != null) {
-			return;
-		}
-
-		if (this.expression != null || this.expressionMathml != null) {
+		if ((this.expression != null || this.expressionMathml != null) && this.getSource() != null) {
 			super.setSource(source);
 		}
 	}
