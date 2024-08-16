@@ -270,7 +270,7 @@ import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { displayNumber } from '@/utils/number';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
-import { renameFnGenerator, mergeResults } from './calibrate-utils';
+import { renameFnGenerator, mergeResults, computeMeanAbsoluteError } from './calibrate-utils';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
@@ -413,13 +413,22 @@ const preparedChartInputs = computed(() => {
 
 	if (!state.calibrationId) return null;
 
+	// FIXME: Hacky re-parse CSV with correct data types
+	let groundTruth: DataArray = [];
+	if (csvAsset.value) {
+		const csv = csvAsset.value.csv;
+		const csvRaw = csv.map((d) => d.join(',')).join('\n');
+		groundTruth = csvParse(csvRaw, autoType);
+	}
+
 	// Merge before/after for chart
-	const { result, resultSummary, error } = mergeResults(
+	const { result, resultSummary } = mergeResults(
 		runResultPre.value,
 		runResult.value,
 		runResultSummaryPre.value,
 		runResultSummary.value
 	);
+	const error = computeMeanAbsoluteError(runResult.value, groundTruth, state.mapping, pyciemssMap);
 
 	// Build lookup map for calibration, include before/afer and dataset (observations)
 	const reverseMap: Record<string, string> = {};
@@ -434,22 +443,15 @@ const preparedChartInputs = computed(() => {
 		result,
 		resultSummary,
 		reverseMap,
-		error
+		error,
+		groundTruth
 	};
 });
 
 const preparedCharts = computed(() => {
 	if (!preparedChartInputs.value) return [];
-	const { result, resultSummary, reverseMap } = preparedChartInputs.value;
+	const { result, resultSummary, reverseMap, groundTruth } = preparedChartInputs.value;
 	const state = props.node.state;
-
-	// FIXME: Hacky re-parse CSV with correct data types
-	let groundTruth: DataArray = [];
-	if (csvAsset.value) {
-		const csv = csvAsset.value.csv;
-		const csvRaw = csv.map((d) => d.join(',')).join('\n');
-		groundTruth = csvParse(csvRaw, autoType);
-	}
 
 	// Need to get the dataset's time field
 	const datasetTimeField = state.mapping.find((d) => d.modelVariable === 'timestamp')?.datasetVariable;
@@ -532,10 +534,13 @@ const preparedDistributionCharts = computed(() => {
 const errorChart = computed(() => {
 	if (!preparedChartInputs.value) return [];
 	const { error } = preparedChartInputs.value;
-	const variables = props.node.state.selectedVariables.map((variable) => ({
-		field: pyciemssMap[variable],
-		label: variable
-	}));
+	if (error.length === 0) return [];
+	const variables = Object.keys(error[0])
+		.filter((v) => v !== 'sample_id')
+		.map((variable) => ({
+			field: variable,
+			label: (Object.entries(pyciemssMap).find((d) => d[1] === variable) || [])[0] ?? variable
+		}));
 	const spec = createErrorChart(error, {
 		title: '',
 		width: chartSize.value.width,
