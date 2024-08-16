@@ -160,42 +160,6 @@ public class ModelConfigurationController {
 	}
 
 	/**
-	 * Gets all the Document and Dataset provenance from a model configuration
-	 *
-	 * @param id UUID of the model configuration
-	 * @return the list of asset ids and types
-	 */
-	@GetMapping("/{id}/extracted-from")
-	@Secured(Roles.USER)
-	@Operation(summary = "Gets all the Document and Dataset provenance from a model configuration")
-	@ApiResponses(
-		value = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "Provenances found.",
-				content = @Content(array = @ArraySchema(schema = @Schema(implementation = Provenance.class)))
-			),
-			@ApiResponse(
-				responseCode = "503",
-				description = "There was an issue communicating with back-end services",
-				content = @Content
-			)
-		}
-	)
-	public ResponseEntity<Set<Provenance>> getExtractedFrom(@PathVariable("id") final UUID id) {
-		try {
-			final Set<Provenance> provenances = provenanceSearchService.modelConfigSource(id);
-			return ResponseEntity.ok(provenances);
-		} catch (final Exception e) {
-			log.error("Unable to get model0configuration extraction source from the neo4j db", e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
-				messages.get("neo4j.service-unavailable")
-			);
-		}
-	}
-
-	/**
 	 * Create a configured model from a model config
 	 *
 	 * @param id id of the model configuration

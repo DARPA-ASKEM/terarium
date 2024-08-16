@@ -17,7 +17,6 @@ import org.neo4j.driver.Session;
 import org.neo4j.driver.types.Node;
 import org.neo4j.driver.types.Relationship;
 import org.springframework.stereotype.Service;
-import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceEdge;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceNode;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceQueryParam;
@@ -94,41 +93,6 @@ public class ProvenanceSearchService {
 			final Result response = session.run(query);
 
 			return nodesEdges(response, payload);
-		}
-	}
-
-	/**
-	 * Get the documents and datasets used to create a model configuration
-	 *
-	 * @param id - Model configuration id.
-	 * @return Set<Provenance> - The Documents and Datasets used to create a model configuration.
-	 */
-	public Set<Provenance> modelConfigSource(final UUID id) {
-		final Set<Provenance> provenances = new HashSet<>();
-		try (final Session session = neo4jService.getSession()) {
-			final String query = String.format(
-				"MATCH (d:Document)<-[r:EXTRACTED_FROM]-(m:ModelConfiguration {id: '%s'}) RETURN d.id as id, 'DOCUMENT' as type " +
-				"UNION " +
-				"MATCH (ds:Dataset)<-[r:EXTRACTED_FROM]-(m:ModelConfiguration {id: '%s'}) RETURN ds.id as id, 'DATASET' as type",
-				id,
-				id
-			);
-
-			final Result response = session.run(query);
-			while (response.hasNext()) {
-				final var record = response.next();
-				final ProvenanceType recordType = record.get("type").asString().equals("DOCUMENT")
-					? ProvenanceType.DOCUMENT
-					: ProvenanceType.DATASET;
-				final Provenance provenance = new Provenance();
-				provenance.setLeft(id);
-				provenance.setLeftType(ProvenanceType.MODEL_CONFIGURATION);
-				provenance.setRight(UUID.fromString(record.get("id").asString()));
-				provenance.setRightType(recordType);
-				provenance.setRelationType(ProvenanceRelationType.EXTRACTED_FROM);
-				provenances.add(provenance);
-			}
-			return provenances;
 		}
 	}
 
