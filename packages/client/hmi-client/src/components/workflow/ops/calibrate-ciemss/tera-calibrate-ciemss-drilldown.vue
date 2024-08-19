@@ -279,6 +279,7 @@ import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { displayNumber } from '@/utils/number';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
+import { getErrorData } from '@/utils/stats';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults } from './calibrate-utils';
 
@@ -363,6 +364,7 @@ const runResult = ref<DataArray>([]);
 const runResultPre = ref<DataArray>([]);
 const runResultSummary = ref<DataArray>([]);
 const runResultSummaryPre = ref<DataArray>([]);
+const errorData = ref();
 
 const showSpinner = ref(false);
 
@@ -676,7 +678,7 @@ async function getAutoMapping() {
 	emit('update-state', state);
 }
 
-onMounted(async () => {
+const initialize = async () => {
 	// Model configuration input
 	const { modelConfiguration, modelOptions, modelPartUnits, modelPartTypes } = await setupModelInput(
 		modelConfigId.value
@@ -691,6 +693,10 @@ onMounted(async () => {
 	currentDatasetFileName.value = filename;
 	csvAsset.value = csv;
 	datasetColumns.value = datasetOptions;
+};
+
+onMounted(async () => {
+	initialize();
 });
 
 watch(
@@ -727,7 +733,7 @@ watch(
 		// Update selected output
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
-
+			await initialize();
 			// Fetch saved intermediate state
 			const simulationObj = await getSimulation(props.node.state.calibrationId);
 			if (simulationObj?.updates) {
@@ -750,6 +756,12 @@ watch(
 			);
 
 			pyciemssMap = parsePyCiemssMap(runResult.value[0]);
+
+			const csv = (csvAsset.value as CsvAsset).csv; // As we already called initialized this should not be undefined.
+			const csvRaw = csv.map((d) => d.join(',')).join('\n');
+			const groundTruth = csvParse(csvRaw, autoType);
+			console.log(groundTruth);
+			errorData.value = await getErrorData(groundTruth, runResult.value, mapping.value);
 		}
 	},
 	{ immediate: true }
