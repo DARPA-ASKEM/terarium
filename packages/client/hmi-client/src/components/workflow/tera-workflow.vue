@@ -258,7 +258,7 @@ let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverPort: boolean = false;
 let saveTimer: any = null;
 
-const nodeDragging = false;
+const nodeDragging: boolean = false;
 let workflowDirty: boolean = false;
 let startTime: number = 0;
 
