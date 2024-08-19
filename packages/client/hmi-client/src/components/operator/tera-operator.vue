@@ -114,8 +114,8 @@ function mouseleavePort() {
 	emit('port-mouseleave');
 }
 
-function onSelection(operatorType: string, input: WorkflowPort, direction: WorkflowDirection) {
-	emit('menu-selection', operatorType, input, direction);
+function onSelection(operatorType: string, input: WorkflowPort) {
+	emit('menu-selection', operatorType, input);
 }
 
 function resizeHandler() {
