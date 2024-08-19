@@ -68,6 +68,5 @@ export async function getErrorData(groundTruth: DataArray, simulationData: DataA
 		});
 		errors.push(item);
 	});
-	console.log(errors);
 	return errors;
 }
