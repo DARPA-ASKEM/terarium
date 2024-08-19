@@ -1,10 +1,15 @@
 <!--
-By default the entire area of tera-canvas-item works as a drag handle.
+Notes for how to use this component:
+1. Give this component a style attribute with the following properties:
+	- top: the top position of the component
+	- left: the left position of the component
+	- width: the width of the component
+2. By default the entire area of tera-canvas-item works as a drag handle.
 To specify a drag handle area add the "drag-handle" class within the component that would be placed in this slot.
 -->
 
 <template>
-	<section ref="canvasItem" :style="style">
+	<section ref="canvasItem">
 		<slot />
 	</section>
 </template>
@@ -12,11 +17,7 @@ To specify a drag handle area add the "drag-handle" class within the component t
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 
-defineProps<{
-	style: { width: string; top: string; left: string };
-}>();
-
-const emit = defineEmits(['dragging']);
+const emit = defineEmits(['dragging', 'dragstart', 'dragend']);
 
 const canvasItem = ref();
 
@@ -28,6 +29,7 @@ const startDrag = (evt: MouseEvent) => {
 	tempX = evt.x;
 	tempY = evt.y;
 	isDragging = true;
+	emit('dragstart');
 };
 
 const drag = (evt: MouseEvent) => {
@@ -46,6 +48,7 @@ const stopDrag = (/* evt: MouseEvent */) => {
 	tempX = 0;
 	tempY = 0;
 	isDragging = false;
+	emit('dragend');
 };
 
 onMounted(() => {

@@ -66,7 +66,7 @@
 		<tera-drilldown-section :tabName="ConfigTabs.Wizard" class="pl-3">
 			<template #header-controls-left>
 				<tera-toggleable-input
-					v-if="knobs.transientModelConfig.name"
+					v-if="typeof knobs.transientModelConfig.name === 'string'"
 					v-model="knobs.transientModelConfig.name"
 					tag="h4"
 				/>
