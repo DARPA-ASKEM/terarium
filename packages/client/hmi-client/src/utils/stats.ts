@@ -62,7 +62,6 @@ export async function getErrorData(groundTruth: DataArray, simulationData: DataA
 	};
 
 	Object.entries(simulationDataGrouped).forEach(([sampleId, simData]) => {
-		// only consider values that have corresponding ground truth
 		const item = { sample_id: Number(sampleId) };
 		relevantGroundTruthColumns.forEach((relevantColumn) => {
 			item[relevantColumn] = _.meanBy(simData, (simRow) =>
