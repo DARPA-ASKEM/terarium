@@ -56,7 +56,7 @@ export class WorkflowWrapper {
 			const nodeId = nodes[i].id;
 			const updated = updatedNodeMap.get(nodeId);
 			if (updated) {
-				if ((updated.version as number) > (nodes[i].version as number)) {
+				if (!nodes[i].version || (updated.version as number) > (nodes[i].version as number)) {
 					nodes[i].version = updated.version;
 					nodes[i].isDeleted = updated.isDeleted;
 					nodes[i].status = updated.status;
