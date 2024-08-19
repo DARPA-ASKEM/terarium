@@ -16,12 +16,16 @@ export const stddev = (numberList: number[], usePopulation = false) => {
 	);
 };
 
-// Get the mean absolute error from a provided source truth (input dataset) and a simulation run.
-// Utilied in calibration for charts
-// Assume that simulationData is in the form of pyciemss
-// 	This means states end with _State
-//  This means the timestamp column is titled: timepoint_id
-// Assume that the mapping is in the calibration form - AKA modelVariables will not have _State
+/**
+	* Get the mean absolute error from a provided source truth and a simulation run.
+	* Utilied in calibration for charts
+	* Assume that simulationData is in the form of pyciemss
+			states end with _State
+			The timestamp column is titled: timepoint_id
+	* Assume that the mapping is in the calibration form:
+			Ground truth will map to datasetVariable
+			Simulation data will map to modelVariable AND not include _State
+*/
 export async function getErrorData(groundTruth: DataArray, simulationData: DataArray, mapping: CalibrateMap[]) {
 	const errors: DataArray = [];
 	const pyciemssMap = await parsePyCiemssMap(simulationData[0]);
