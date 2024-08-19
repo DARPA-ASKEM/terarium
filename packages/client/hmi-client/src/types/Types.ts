@@ -518,6 +518,7 @@ export interface Simulation extends TerariumAsset {
 }
 
 export interface SimulationUpdate extends TerariumEntity {
+    sequenceNumber: number;
     data: any;
     simulation: Simulation;
 }
