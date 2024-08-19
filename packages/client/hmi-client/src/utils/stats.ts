@@ -54,7 +54,7 @@ export async function getErrorData(groundTruth: DataArray, simulationData: DataA
 		const map = mapping.find((ele) => ele.modelVariable === modelVariable);
 		if (!map) return NaN;
 		const truth = groundTruth[time][map.datasetVariable];
-		if (!truth) return NaN;
+		if (truth === undefined) return NaN; // Cant just say !truth or 0 will return NaN
 		return truth;
 	};
 
@@ -68,5 +68,6 @@ export async function getErrorData(groundTruth: DataArray, simulationData: DataA
 		});
 		errors.push(item);
 	});
+	console.log(errors);
 	return errors;
 }
