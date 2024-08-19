@@ -25,6 +25,8 @@ export const stddev = (numberList: number[], usePopulation = false) => {
 	* Assume that the mapping is in the calibration form:
 			Ground truth will map to datasetVariable
 			Simulation data will map to modelVariable AND not include _State
+
+	Note: This will only compare rows with the same timestep value.
 */
 export async function getErrorData(groundTruth: DataArray, simulationData: DataArray, mapping: CalibrateMap[]) {
 	const errors: DataArray = [];
