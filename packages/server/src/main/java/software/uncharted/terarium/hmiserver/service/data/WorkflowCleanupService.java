@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
 import jakarta.annotation.PostConstruct;
+import java.io.IOException;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +11,9 @@ import org.redisson.api.RedissonClient;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
+import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowEdge;
+import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowNode;
 
 @Service
 @RequiredArgsConstructor
@@ -29,8 +34,14 @@ public class WorkflowCleanupService {
 		try {
 			if (lock.tryLock(1, 100, TimeUnit.SECONDS)) {
 				try {
-					System.out.println("cleaning up");
-					//workflowService
+					final Set<Workflow> workflows = workflowService.findWorkflowsToClean();
+					for (final Workflow workflow : workflows) {
+						workflow.getEdges().removeIf(WorkflowEdge::getIsDeleted);
+						workflow.getNodes().removeIf(WorkflowNode::getIsDeleted);
+					}
+					workflowService.updateWorkflows(workflows);
+				} catch (final IOException e) {
+					throw new RuntimeException(e);
 				} finally {
 					lock.unlock();
 				}

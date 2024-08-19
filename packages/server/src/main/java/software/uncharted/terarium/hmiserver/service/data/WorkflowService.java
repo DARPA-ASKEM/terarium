@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -44,34 +45,12 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		return workflows;
 	}
 
-	/**
-	 * Update an asset.
-	 *
-	 * @param asset The asset to update
-	 * @return The updated asset
-	 * @throws IOException If there is an error updating the asset
-	 * @throws IllegalArgumentException If the asset tries to move from permanent to temporary
-	 */
-	//@Override
-	//@Observed(name = "function_profile")
-	//public Optional<List<Workflow>> updateWorkflows(final List<Workflow> assets, final UUID projectId, final Schema.Permission hasWritePermission)
-	//	throws IOException, IllegalArgumentException {
-	/*final Optional<T> updated = super.updateAsset(asset, projectId, hasWritePermission);
-
-		if (updated.isEmpty()) {
-			return Optional.empty();
-		}
-
-		if (!updated.get().getTemporary() && updated.get().getPublicAsset()) {
-			elasticService.index(getAssetAlias(), updated.get().getId().toString(), updated);
-		}
-
-		if (updated.get().getTemporary() || !updated.get().getPublicAsset()) {
-			elasticService.delete(getAssetAlias(), updated.get().getId().toString());
-		}
-
-		return updated;*/
-	//}
+	@Observed(name = "function_profile")
+	public Optional<List<Workflow>> updateWorkflows(final Collection<Workflow> assets)
+		throws IOException, IllegalArgumentException {
+		final List<Workflow> workflows = repository.saveAll(assets);
+		return Optional.of(workflows);
+	}
 
 	@Override
 	@Observed(name = "function_profile")
@@ -138,7 +117,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				final WorkflowNode node = nodeMap.get(dbNode.getId());
 
 				if (node == null) continue;
-				if (node.getIsDeleted() != null && node.getIsDeleted() == true) {
+				if (node.getIsDeleted()) {
 					dbNode.setIsDeleted(true);
 					nodeMap.remove(node.getId());
 					continue;
@@ -174,7 +153,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				final WorkflowEdge edge = edgeMap.get(dbEdge.getId());
 
 				if (edge == null) continue;
-				if (edge.getIsDeleted() != null && edge.getIsDeleted() == true) {
+				if (edge.getIsDeleted()) {
 					dbEdge.setIsDeleted(true);
 					edgeMap.remove(edge.getId());
 					continue;
