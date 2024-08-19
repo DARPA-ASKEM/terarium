@@ -140,7 +140,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 				});
 		}
 
-		if (asset.getHeader().getName() != null) {
+		if (asset.getHeader() != null && asset.getHeader().getName() != null) {
 			asset.setName(asset.getHeader().getName());
 		}
 		final Model created = super.createAsset(asset, projectId, hasWritePermission);
@@ -175,7 +175,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		final UUID projectId,
 		final Schema.Permission hasWritePermission
 	) throws IOException, IllegalArgumentException {
-		if (asset.getHeader().getName() != null) {
+		if (asset.getHeader() != null && asset.getHeader().getName() != null) {
 			asset.setName(asset.getHeader().getName());
 		}
 		final Optional<Model> updatedOptional = super.updateAsset(asset, projectId, hasWritePermission);
