@@ -25,8 +25,8 @@ public interface WorkflowRepository extends PSCrudSoftDeleteRepository<Workflow,
 	 */
 	@Query(
 		value = "SELECT w.* FROM Workflow w " +
-		" cross join json_array_elements(nodes) as edgesData" +
-		" where edgesData->>'isDeleted' = 'true'",
+		" cross join json_array_elements(nodes) as nodesData" +
+		" where nodesData->>'isDeleted' = 'true'",
 		nativeQuery = true
 	)
 	List<Workflow> findNodesToBeDeleted();
