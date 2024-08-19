@@ -258,7 +258,7 @@ let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverPort: boolean = false;
 let saveTimer: any = null;
 
-const nodeDragging = false;
+const nodeDragging = ref<boolean>(false);
 let workflowDirty: boolean = false;
 let startTime: number = 0;
 
@@ -924,7 +924,7 @@ onMounted(() => {
 	document.addEventListener('mousemove', mouseUpdate);
 	window.addEventListener('beforeunload', unloadCheck);
 	saveTimer = setInterval(async () => {
-		if (workflowDirty && useProjects().hasEditPermission() && nodeDragging === false) {
+		if (workflowDirty && useProjects().hasEditPermission() && nodeDragging.value === false) {
 			const updated = await workflowService.updateWorkflow(wf.value.dump());
 			wf.value.update(updated);
 			workflowDirty = false;
