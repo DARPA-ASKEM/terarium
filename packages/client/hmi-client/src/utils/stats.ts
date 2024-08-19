@@ -25,8 +25,7 @@ export const stddev = (numberList: number[], usePopulation = false) => {
 export async function getErrorData(groundTruth: DataArray, simulationData: DataArray, mapping: CalibrateMap[]) {
 	const errors: DataArray = [];
 	const pyciemssMap = await parsePyCiemssMap(simulationData[0]);
-	const timeMap = mapping.find((ele) => ele.modelVariable === 'timestamp');
-	const datasetTimeCol = timeMap?.datasetVariable;
+	const datasetTimeCol = mapping.find((ele) => ele.modelVariable === 'timestamp')?.datasetVariable;
 	if (!datasetTimeCol) {
 		console.error('No dataset time column found to getErrorData');
 		return errors;
