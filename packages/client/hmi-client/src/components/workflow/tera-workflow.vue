@@ -63,7 +63,9 @@
 					top: `${node.y}px`,
 					left: `${node.x}px`
 				}"
+				@dragstart="nodeDragging = true"
 				@dragging="(event) => updatePosition(node, event)"
+				@dragend="nodeDragging = false"
 			>
 				<tera-operator
 					ref="teraOperatorRefs"
@@ -214,7 +216,7 @@ import * as ModelComparisonOp from '@/components/workflow/ops/model-comparison/m
 import * as RegriddingOp from '@/components/workflow/ops/regridding/mod';
 import * as InterventionPolicyOp from '@/components/workflow/ops/intervention-policy/mod';
 
-const WORKFLOW_SAVE_INTERVAL = 8000;
+const WORKFLOW_SAVE_INTERVAL = 4000;
 
 const registry = new workflowService.WorkflowRegistry();
 registry.registerOp(SimulateCiemssOp);
@@ -255,6 +257,8 @@ let canvasTransform = { x: 0, y: 0, k: 1 };
 let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverPort: boolean = false;
 let saveTimer: any = null;
+
+const nodeDragging = ref<boolean>(false);
 let workflowDirty: boolean = false;
 let startTime: number = 0;
 
@@ -282,7 +286,7 @@ const optionsMenuItems = ref([
 	}
 ]);
 
-const toggleOptionsMenu = (event) => {
+const toggleOptionsMenu = (event: MouseEvent) => {
 	optionsMenu.value.toggle(event);
 };
 const teraOperatorRefs = ref();
@@ -293,7 +297,7 @@ async function updateWorkflowName() {
 	await workflowService.updateWorkflow(workflowClone);
 	await useProjects().refresh();
 	isRenamingWorkflow.value = false;
-	wf.value = await workflowService.getWorkflow(props.assetId);
+	wf.value.load(await workflowService.getWorkflow(props.assetId));
 }
 
 function appendInputPort(node: WorkflowNode<any>, port: { type: string; label?: string; value: any }) {
@@ -471,45 +475,36 @@ function onMenuSelection(operatorType: string, menuNode: WorkflowNode<any>) {
 // Menu categories and list items are in order of appearance for separators to work
 const contextMenuItems: MenuItem[] = [
 	{
-		label: 'Add resource',
+		label: 'Modeling',
 		items: [
-			{
-				label: ModelOp.operation.displayName,
-				command: addOperatorToWorkflow(ModelOp)
-			},
 			{
 				label: ModelFromDocumentOp.operation.displayName,
 				command: addOperatorToWorkflow(ModelFromDocumentOp)
-			},
-			{ separator: true },
-			{ label: DatasetOp.operation.displayName, command: addOperatorToWorkflow(DatasetOp) },
-			{ separator: true },
-			{ label: DocumentOp.operation.displayName, command: addOperatorToWorkflow(DocumentOp) },
-			{ separator: true },
-			{
-				label: CodeAssetOp.operation.displayName,
-				command: addOperatorToWorkflow(CodeAssetOp)
-			}
-		]
-	},
-	{
-		label: 'Work with model',
-		items: [
-			{
-				label: ModelConfigOp.operation.displayName,
-				command: addOperatorToWorkflow(ModelConfigOp)
 			},
 			{
 				label: ModelEditOp.operation.displayName,
 				command: addOperatorToWorkflow(ModelEditOp)
 			},
 			{
-				label: FunmanOp.operation.displayName,
-				command: addOperatorToWorkflow(FunmanOp)
-			},
-			{
 				label: StratifyMiraOp.operation.displayName,
 				command: addOperatorToWorkflow(StratifyMiraOp)
+			},
+			{
+				label: ModelComparisonOp.operation.displayName,
+				command: addOperatorToWorkflow(ModelComparisonOp)
+			}
+		]
+	},
+	{
+		label: 'Config & Intervention',
+		items: [
+			{
+				label: ModelConfigOp.operation.displayName,
+				command: addOperatorToWorkflow(ModelConfigOp)
+			},
+			{
+				label: FunmanOp.operation.displayName,
+				command: addOperatorToWorkflow(FunmanOp)
 			},
 			{
 				label: InterventionPolicyOp.operation.displayName,
@@ -518,42 +513,7 @@ const contextMenuItems: MenuItem[] = [
 		]
 	},
 	{
-		label: 'Work with multiple models',
-		items: [
-			{
-				label: ModelComparisonOp.operation.displayName,
-				command: addOperatorToWorkflow(ModelComparisonOp)
-			},
-			{ separator: true },
-			{
-				label: SimulateEnsembleCiemssOp.operation.displayName,
-				command: addOperatorToWorkflow(SimulateEnsembleCiemssOp)
-			},
-			{
-				label: CalibrateEnsembleCiemssOp.operation.displayName,
-				command: addOperatorToWorkflow(CalibrateEnsembleCiemssOp)
-			}
-		]
-	},
-	{
-		label: 'Work with dataset',
-		items: [
-			{
-				label: DatasetTransformerOp.operation.displayName,
-				command: addOperatorToWorkflow(DatasetTransformerOp)
-			},
-			{
-				label: SubsetDataOp.operation.displayName,
-				command: addOperatorToWorkflow(SubsetDataOp)
-			},
-			{
-				label: RegriddingOp.operation.displayName,
-				command: addOperatorToWorkflow(RegriddingOp)
-			}
-		]
-	},
-	{
-		label: 'Run model',
+		label: 'Simulation',
 		items: [
 			{
 				label: SimulateCiemssOp.operation.displayName,
@@ -566,6 +526,31 @@ const contextMenuItems: MenuItem[] = [
 			{
 				label: OptimizeCiemssOp.operation.displayName,
 				command: addOperatorToWorkflow(OptimizeCiemssOp)
+			},
+			{
+				label: SimulateEnsembleCiemssOp.operation.displayName,
+				command: addOperatorToWorkflow(SimulateEnsembleCiemssOp)
+			},
+			{
+				label: CalibrateEnsembleCiemssOp.operation.displayName,
+				command: addOperatorToWorkflow(CalibrateEnsembleCiemssOp)
+			}
+		]
+	},
+	{
+		label: 'Data',
+		items: [
+			{
+				label: DatasetTransformerOp.operation.displayName,
+				command: addOperatorToWorkflow(DatasetTransformerOp)
+			},
+			{
+				label: SubsetDataOp.operation.displayName,
+				command: addOperatorToWorkflow(SubsetDataOp)
+			},
+			{
+				label: RegriddingOp.operation.displayName,
+				command: addOperatorToWorkflow(RegriddingOp)
 			}
 		]
 	}
@@ -586,7 +571,7 @@ const showAddComponentMenu = () => {
 
 const { getDragData } = useDragEvent();
 
-function onDrop(event) {
+function onDrop(event: DragEvent) {
 	const { assetId, assetType } = getDragData('initAssetNode') as {
 		assetId: string;
 		assetType: AssetType;
@@ -622,12 +607,12 @@ function onDrop(event) {
 	}
 }
 
-function toggleContextMenu(event) {
+function toggleContextMenu(event: MouseEvent) {
 	contextMenu.value.show(event);
 	updateNewNodePosition(event);
 }
 
-function updateNewNodePosition(event) {
+function updateNewNodePosition(event: MouseEvent) {
 	newNodePosition.x = (event.offsetX - canvasTransform.x) / canvasTransform.k;
 	newNodePosition.y = (event.offsetY - canvasTransform.y) / canvasTransform.k;
 }
@@ -783,6 +768,7 @@ function relinkEdges(node: WorkflowNode<any> | null) {
 
 			edges.forEach((edge) => {
 				const portElem = getPortElement(edge.sourcePortId as string);
+				if (!portElem) return;
 				const totalOffsetY = portElem.offsetTop + portElem.offsetHeight / 2;
 				const portPos = {
 					x: nodePosition.x + n.width + portElem.offsetWidth * 0.5,
@@ -897,8 +883,14 @@ const handleDrilldown = () => {
 };
 
 watch(
-	() => [props.assetId],
-	async () => {
+	() => props.assetId,
+	async (newId, oldId) => {
+		if (newId !== oldId && oldId) {
+			// Save previous
+			if (workflowDirty) workflowService.updateWorkflow(wf.value.dump());
+			setLocalStorageTransform(wf.value.getId(), canvasTransform);
+		}
+
 		isRenamingWorkflow.value = false; // Closes rename input if opened in previous workflow
 		if (wf.value && workflowDirty) {
 			workflowService.updateWorkflow(wf.value.dump());
@@ -931,11 +923,13 @@ watch(
 onMounted(() => {
 	document.addEventListener('mousemove', mouseUpdate);
 	window.addEventListener('beforeunload', unloadCheck);
-	saveTimer = setInterval(() => {
-		if (workflowDirty && useProjects().hasEditPermission()) {
-			workflowService.updateWorkflow(wf.value.dump());
+	saveTimer = setInterval(async () => {
+		if (workflowDirty && useProjects().hasEditPermission() && nodeDragging.value === false) {
+			const updated = await workflowService.updateWorkflow(wf.value.dump());
+			wf.value.update(updated);
 			workflowDirty = false;
 		}
+		setLocalStorageTransform(wf.value.getId(), canvasTransform);
 	}, WORKFLOW_SAVE_INTERVAL);
 });
 
@@ -946,6 +940,7 @@ onUnmounted(() => {
 	if (saveTimer) {
 		clearInterval(saveTimer);
 	}
+
 	if (canvasTransform) {
 		setLocalStorageTransform(wf.value.getId(), canvasTransform);
 	}

@@ -163,13 +163,13 @@ const preparedCharts = computed(() => {
 	return props.node.state.chartConfigs.map((config) =>
 		createForecastChart(
 			{
-				dataset: result,
+				data: result,
 				variables: config.map((d) => pyciemssMap[d]),
 				timeField: 'timepoint_id',
 				groupField: 'sample_id'
 			},
 			{
-				dataset: resultSummary,
+				data: resultSummary,
 				variables: config.map((d) => `${pyciemssMap[d]}_mean`),
 				timeField: 'timepoint_id'
 			},
