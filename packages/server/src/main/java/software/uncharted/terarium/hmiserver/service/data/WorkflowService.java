@@ -5,10 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
@@ -58,6 +59,43 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 	public String getAssetAlias() {
 		return elasticConfig.getWorkflowAlias();
 	}
+
+	@Observed(name = "function_profile")
+	public Set<Workflow> findWorkflowsToClean() {
+		final Set<Workflow> workflows = new HashSet<>();
+		workflows.addAll(repository.findEdgesToBeDeleted());
+		workflows.addAll(repository.findNodesToBeDeleted());
+		return workflows;
+	}
+
+	/**
+	 * Update an asset.
+	 *
+	 * @param asset The asset to update
+	 * @return The updated asset
+	 * @throws IOException If there is an error updating the asset
+	 * @throws IllegalArgumentException If the asset tries to move from permanent to temporary
+	 */
+	//@Override
+	//@Observed(name = "function_profile")
+	//public Optional<List<Workflow>> updateWorkflows(final List<Workflow> assets, final UUID projectId, final Schema.Permission hasWritePermission)
+	//	throws IOException, IllegalArgumentException {
+	/*final Optional<T> updated = super.updateAsset(asset, projectId, hasWritePermission);
+
+		if (updated.isEmpty()) {
+			return Optional.empty();
+		}
+
+		if (!updated.get().getTemporary() && updated.get().getPublicAsset()) {
+			elasticService.index(getAssetAlias(), updated.get().getId().toString(), updated);
+		}
+
+		if (updated.get().getTemporary() || !updated.get().getPublicAsset()) {
+			elasticService.delete(getAssetAlias(), updated.get().getId().toString());
+		}
+
+		return updated;*/
+	//}
 
 	@Override
 	@Observed(name = "function_profile")
@@ -120,8 +158,8 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 		////////////////////////////////////////////////////////////////////////////////
 		if (dbWorkflowNodes != null && dbWorkflowNodes.size() > 0) {
 			for (int index = 0; index < dbWorkflowNodes.size(); index++) {
-				WorkflowNode dbNode = dbWorkflowNodes.get(index);
-				WorkflowNode node = nodeMap.get(dbNode.getId());
+				final WorkflowNode dbNode = dbWorkflowNodes.get(index);
+				final WorkflowNode node = nodeMap.get(dbNode.getId());
 
 				if (node == null) continue;
 				if (node.getIsDeleted() != null && node.getIsDeleted() == true) {
@@ -130,8 +168,8 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 					continue;
 				}
 
-				JsonNode nodeContent = this.objectMapper.valueToTree(node);
-				JsonNode dbNodeContent = this.objectMapper.valueToTree(dbNode);
+				final JsonNode nodeContent = this.objectMapper.valueToTree(node);
+				final JsonNode dbNodeContent = this.objectMapper.valueToTree(dbNode);
 
 				if (nodeContent.equals(dbNodeContent) == true) {
 					nodeMap.remove(node.getId());
@@ -156,8 +194,8 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 
 		if (dbWorkflowEdges != null && dbWorkflowEdges.size() > 0) {
 			for (int index = 0; index < dbWorkflowEdges.size(); index++) {
-				WorkflowEdge dbEdge = dbWorkflowEdges.get(index);
-				WorkflowEdge edge = edgeMap.get(dbEdge.getId());
+				final WorkflowEdge dbEdge = dbWorkflowEdges.get(index);
+				final WorkflowEdge edge = edgeMap.get(dbEdge.getId());
 
 				if (edge == null) continue;
 				if (edge.getIsDeleted() != null && edge.getIsDeleted() == true) {
@@ -166,8 +204,8 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 					continue;
 				}
 
-				JsonNode edgeContent = this.objectMapper.valueToTree(edge);
-				JsonNode dbEdgeContent = this.objectMapper.valueToTree(dbEdge);
+				final JsonNode edgeContent = this.objectMapper.valueToTree(edge);
+				final JsonNode dbEdgeContent = this.objectMapper.valueToTree(dbEdge);
 
 				if (edgeContent.equals(dbEdgeContent) == true) {
 					edgeMap.remove(edge.getId());
@@ -192,10 +230,10 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 		////////////////////////////////////////////////////////////////////////////////
 		// Handle new nodes or edges
 		////////////////////////////////////////////////////////////////////////////////
-		for (Map.Entry<UUID, WorkflowNode> pair : nodeMap.entrySet()) {
+		for (final Map.Entry<UUID, WorkflowNode> pair : nodeMap.entrySet()) {
 			dbWorkflowNodes.add(pair.getValue());
 		}
-		for (Map.Entry<UUID, WorkflowEdge> pair : edgeMap.entrySet()) {
+		for (final Map.Entry<UUID, WorkflowEdge> pair : edgeMap.entrySet()) {
 			dbWorkflowEdges.add(pair.getValue());
 		}
 
