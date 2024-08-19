@@ -63,7 +63,9 @@
 					top: `${node.y}px`,
 					left: `${node.x}px`
 				}"
+				@dragstart="nodeDragging = true"
 				@dragging="(event) => updatePosition(node, event)"
+				@dragend="nodeDragging = false"
 			>
 				<tera-operator
 					ref="teraOperatorRefs"
@@ -214,7 +216,7 @@ import * as ModelComparisonOp from '@/components/workflow/ops/model-comparison/m
 import * as RegriddingOp from '@/components/workflow/ops/regridding/mod';
 import * as InterventionPolicyOp from '@/components/workflow/ops/intervention-policy/mod';
 
-const WORKFLOW_SAVE_INTERVAL = 8000;
+const WORKFLOW_SAVE_INTERVAL = 4000;
 
 const registry = new workflowService.WorkflowRegistry();
 registry.registerOp(SimulateCiemssOp);
@@ -255,6 +257,8 @@ let canvasTransform = { x: 0, y: 0, k: 1 };
 let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverPort: boolean = false;
 let saveTimer: any = null;
+
+const nodeDragging = ref<boolean>(false);
 let workflowDirty: boolean = false;
 let startTime: number = 0;
 
@@ -282,7 +286,7 @@ const optionsMenuItems = ref([
 	}
 ]);
 
-const toggleOptionsMenu = (event) => {
+const toggleOptionsMenu = (event: MouseEvent) => {
 	optionsMenu.value.toggle(event);
 };
 const teraOperatorRefs = ref();
@@ -567,7 +571,7 @@ const showAddComponentMenu = () => {
 
 const { getDragData } = useDragEvent();
 
-function onDrop(event) {
+function onDrop(event: DragEvent) {
 	const { assetId, assetType } = getDragData('initAssetNode') as {
 		assetId: string;
 		assetType: AssetType;
@@ -603,12 +607,12 @@ function onDrop(event) {
 	}
 }
 
-function toggleContextMenu(event) {
+function toggleContextMenu(event: MouseEvent) {
 	contextMenu.value.show(event);
 	updateNewNodePosition(event);
 }
 
-function updateNewNodePosition(event) {
+function updateNewNodePosition(event: MouseEvent) {
 	newNodePosition.x = (event.offsetX - canvasTransform.x) / canvasTransform.k;
 	newNodePosition.y = (event.offsetY - canvasTransform.y) / canvasTransform.k;
 }
@@ -764,6 +768,7 @@ function relinkEdges(node: WorkflowNode<any> | null) {
 
 			edges.forEach((edge) => {
 				const portElem = getPortElement(edge.sourcePortId as string);
+				if (!portElem) return;
 				const totalOffsetY = portElem.offsetTop + portElem.offsetHeight / 2;
 				const portPos = {
 					x: nodePosition.x + n.width + portElem.offsetWidth * 0.5,
@@ -878,8 +883,14 @@ const handleDrilldown = () => {
 };
 
 watch(
-	() => [props.assetId],
-	async () => {
+	() => props.assetId,
+	async (newId, oldId) => {
+		if (newId !== oldId && oldId) {
+			// Save previous
+			if (workflowDirty) workflowService.updateWorkflow(wf.value.dump());
+			setLocalStorageTransform(wf.value.getId(), canvasTransform);
+		}
+
 		isRenamingWorkflow.value = false; // Closes rename input if opened in previous workflow
 		if (wf.value && workflowDirty) {
 			workflowService.updateWorkflow(wf.value.dump());
@@ -912,11 +923,13 @@ watch(
 onMounted(() => {
 	document.addEventListener('mousemove', mouseUpdate);
 	window.addEventListener('beforeunload', unloadCheck);
-	saveTimer = setInterval(() => {
-		if (workflowDirty && useProjects().hasEditPermission()) {
-			workflowService.updateWorkflow(wf.value.dump());
+	saveTimer = setInterval(async () => {
+		if (workflowDirty && useProjects().hasEditPermission() && nodeDragging.value === false) {
+			const updated = await workflowService.updateWorkflow(wf.value.dump());
+			wf.value.update(updated);
 			workflowDirty = false;
 		}
+		setLocalStorageTransform(wf.value.getId(), canvasTransform);
 	}, WORKFLOW_SAVE_INTERVAL);
 });
 
@@ -927,6 +940,7 @@ onUnmounted(() => {
 	if (saveTimer) {
 		clearInterval(saveTimer);
 	}
+
 	if (canvasTransform) {
 		setLocalStorageTransform(wf.value.getId(), canvasTransform);
 	}

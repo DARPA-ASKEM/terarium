@@ -16,7 +16,6 @@ import type {
 	WorkflowOutput
 } from '@/types/workflow';
 import { WorkflowPortStatus, OperatorStatus, WorkflowOperationTypes } from '@/types/workflow';
-import { summarizeNotebook } from './beaker';
 
 /**
  * A wrapper class around the workflow data struture to make it easier
@@ -33,12 +32,68 @@ export class WorkflowWrapper {
 		}
 	}
 
+	// This will replace the entire workflow, should only use for initial load
+	// as there it will not propapate reactivity
 	load(wf: Workflow) {
 		this.wf = _.cloneDeep(wf);
 	}
 
 	dump() {
 		return this.wf;
+	}
+
+	update(updatedWF: Workflow) {
+		this.wf.name = updatedWF.name;
+		this.wf.description = updatedWF.description;
+
+		const nodes = this.getNodes();
+		const edges = this.getEdges();
+		const updatedNodeMap = new Map<string, WorkflowNode<any>>(updatedWF.nodes.map((n) => [n.id, n]));
+		const updatedEdgeMap = new Map<string, WorkflowEdge>(updatedWF.edges.map((e) => [e.id, e]));
+
+		// Update and deletes
+		for (let i = 0; i < nodes.length; i++) {
+			const nodeId = nodes[i].id;
+			const updated = updatedNodeMap.get(nodeId);
+			if (updated) {
+				if ((updated.version as number) > (nodes[i].version as number)) {
+					nodes[i].version = updated.version;
+					nodes[i].isDeleted = updated.isDeleted;
+					nodes[i].status = updated.status;
+					nodes[i].x = updated.x;
+					nodes[i].y = updated.y;
+					nodes[i].width = updated.width;
+					nodes[i].height = updated.height;
+					nodes[i].active = updated.active;
+
+					if (!_.isEqual(nodes[i].inputs, updated.inputs)) {
+						nodes[i].inputs = updated.inputs;
+					}
+					if (!_.isEqual(nodes[i].outputs, updated.outputs)) {
+						nodes[i].outputs = updated.outputs;
+					}
+					if (!_.isEqual(nodes[i].state, updated.state)) {
+						nodes[i].state = updated.state;
+					}
+					// nodes[i] = Object.assign(nodes[i], updated);
+				}
+				updatedNodeMap.delete(nodeId);
+			}
+		}
+		for (let i = 0; i < edges.length; i++) {
+			const edgeId = edges[i].id;
+			const updated = updatedEdgeMap.get(edgeId);
+			if (updated) {
+				if ((updated.version as number) > (edges[i].version as number)) {
+					edges[i] = Object.assign(edges[i], updated);
+				}
+				updatedEdgeMap.delete(edgeId);
+			}
+		}
+
+		// New eleemnts
+		[...updatedNodeMap.values()].forEach((node) => this.wf.nodes.push(node));
+		[...updatedEdgeMap.values()].forEach((edge) => this.wf.edges.push(edge));
 	}
 
 	getId() {
@@ -673,29 +728,6 @@ export function updateOutputPort(node: WorkflowNode<any>, updatedOutputPort: Wor
 	let outputPort = node.outputs.find((port) => port.id === updatedOutputPort.id);
 	if (!outputPort) return;
 	outputPort = Object.assign(outputPort, updatedOutputPort);
-}
-
-// Keep track of the summary generation requests to prevent multiple requests for the same workflow output
-// TODO: Instead of relying on the Ids stored in memory, consider creating a table in the backend to store the summaries to keep track of their status and results.
-const summaryGenerationRequestIds = new Set<string>();
-
-export async function generateSummary(
-	node: WorkflowNode<any>,
-	outputPort: WorkflowOutput<any>,
-	createNotebookFn: ((state: any, value: WorkflowPort['value']) => Promise<any>) | null
-) {
-	if (!node || !createNotebookFn || summaryGenerationRequestIds.has(outputPort.id)) return null;
-	try {
-		summaryGenerationRequestIds.add(outputPort.id);
-		const notebook = await createNotebookFn(outputPort.state, outputPort.value);
-		const result = await summarizeNotebook(notebook);
-		if (!result.summary) throw new Error('AI Generated summary is empty.');
-		return result;
-	} catch {
-		return { title: outputPort.label, summary: 'Generating AI summary has failed.' };
-	} finally {
-		summaryGenerationRequestIds.delete(outputPort.id);
-	}
 }
 
 // Check if the current-state matches that of the output-state.
