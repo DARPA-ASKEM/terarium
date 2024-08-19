@@ -39,9 +39,14 @@ export async function getErrorData(groundTruth: DataArray, simulationData: DataA
 	const truthTimestamps = groundTruth.map((ele) => ele[datasetTimeCol]);
 	const simulationTimestamps = simulationData.map((ele) => ele.timepoint_id);
 	const relevantTimestamps = truthTimestamps.filter((ele) => simulationTimestamps.includes(ele));
-
 	if (relevantGroundTruthColumns.length === 0) return errors;
-	const simulationDataGrouped = _.groupBy(simulationData, 'sample_id');
+
+	// Filter out timepoints that are not shared.
+	// group on sampleID
+	const simulationDataGrouped = _.groupBy(
+		simulationData.filter((ele) => relevantTimestamps.includes(ele.timepoint_id)),
+		'sample_id'
+	);
 
 	// Helper function, takes in time and model variable.
 	// Returns the corresponding groundTruth value.
@@ -53,14 +58,12 @@ export async function getErrorData(groundTruth: DataArray, simulationData: DataA
 		return truth;
 	};
 
-	Object.entries(simulationDataGrouped).forEach(([sampleId, values]) => {
+	Object.entries(simulationDataGrouped).forEach(([sampleId, simData]) => {
 		// only consider values that have corresponding ground truth
-		const filteredValues = values.filter((value) => relevantTimestamps.includes(value.timepoint_id));
-
 		const item = { sample_id: Number(sampleId) };
 		relevantGroundTruthColumns.forEach((relevantColumn) => {
-			item[relevantColumn] = _.meanBy(filteredValues, (value) =>
-				Math.abs(getTruthValue(value.timepoint_id, relevantColumn) - value[pyciemssMap[relevantColumn]])
+			item[relevantColumn] = _.meanBy(simData, (simRow) =>
+				Math.abs(getTruthValue(simRow.timepoint_id, relevantColumn) - simRow[pyciemssMap[relevantColumn]])
 			);
 		});
 		errors.push(item);
