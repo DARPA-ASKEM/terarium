@@ -54,9 +54,7 @@
 					@mouseup.stop
 					@menu-focus="menuFocusId = output.id"
 					@menu-blur="menuFocusId = null"
-					@menu-selection="
-						(operatorType) => emit('menu-selection', operatorType, output, WorkflowDirection.FROM_OUTPUT)
-					"
+					@menu-selection="(operatorType) => emit('menu-selection', operatorType, output)"
 				/>
 			</Transition>
 			<!--TODO: We will see how to integrate port actions into this button later-->

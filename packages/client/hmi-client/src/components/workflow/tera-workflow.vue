@@ -77,10 +77,7 @@
 					@duplicate-branch="duplicateBranch(node.id)"
 					@remove-edges="removeEdges"
 					@update-state="(event: any) => updateWorkflowNodeState(node, event)"
-					@menu-selection="
-						(operatorType: string, port: WorkflowPort, direction: WorkflowDirection) =>
-							onMenuSelection(operatorType, node, port, direction)
-					"
+					@menu-selection="(operatorType: string, port: WorkflowPort) => onMenuSelection(operatorType, node, port)"
 				>
 					<template #body>
 						<component
@@ -466,12 +463,7 @@ const addOperatorToWorkflow: Function =
 		return node;
 	};
 
-async function onMenuSelection(
-	operatorType: string,
-	menuNode: WorkflowNode<any>,
-	port: WorkflowPort,
-	direction: WorkflowDirection
-) {
+async function onMenuSelection(operatorType: string, menuNode: WorkflowNode<any>, port: WorkflowPort) {
 	const name = operatorType;
 	const operation = registry.getOperation(operatorType);
 	const node = registry.getNode(operatorType);
@@ -488,8 +480,11 @@ async function onMenuSelection(
 		if (inputPort) {
 			// wait for the DOM to load the new node before adding the edge
 			await nextTick();
-			createNewEdge(menuNode, port, direction);
-			createNewEdge(newNode, inputPort, 0);
+
+			wf.value.addEdge(menuNode.id, port.id, newNode.id, inputPort.id, [
+				{ x: currentPortPosition.x, y: currentPortPosition.y },
+				{ x: currentPortPosition.x, y: currentPortPosition.y }
+			]);
 		}
 	}
 }
