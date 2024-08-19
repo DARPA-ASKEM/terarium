@@ -16,7 +16,7 @@ defineProps<{
 	style: { width: string; top: string; left: string };
 }>();
 
-const emit = defineEmits(['dragging']);
+const emit = defineEmits(['dragging', 'dragstart', 'dragend']);
 
 const canvasItem = ref();
 
@@ -28,6 +28,7 @@ const startDrag = (evt: MouseEvent) => {
 	tempX = evt.x;
 	tempY = evt.y;
 	isDragging = true;
+	emit('dragstart');
 };
 
 const drag = (evt: MouseEvent) => {
@@ -46,6 +47,7 @@ const stopDrag = (/* evt: MouseEvent */) => {
 	tempX = 0;
 	tempY = 0;
 	isDragging = false;
+	emit('dragend');
 };
 
 onMounted(() => {
