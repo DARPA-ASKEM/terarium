@@ -1,7 +1,12 @@
 <template>
 	<div :class="!customPosition && position">
 		<slot />
-		<div class="tooltip-content" :class="[{ 'has-arrow': hasArrow }, arrowClass]" :style="customPositionStyle">
+		<div
+			v-if="props.showTooltip"
+			class="tooltip-content"
+			:class="[{ 'has-arrow': hasArrow }, arrowClass]"
+			:style="tooltipStyle"
+		>
 			<slot name="tooltip-content" />
 		</div>
 	</div>
@@ -37,12 +42,11 @@ const props = defineProps({
 	}
 });
 
-const customPositionStyle = computed(() => {
+const tooltipStyle = computed(() => {
 	if (props.customPosition) {
 		return {
 			top: `${props.customPosition.y}px`,
-			left: `${props.customPosition.x}px`,
-			display: props.showTooltip ? 'block' : 'none'
+			left: `${props.customPosition.x}px`
 		};
 	}
 	return {};
