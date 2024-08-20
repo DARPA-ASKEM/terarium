@@ -70,8 +70,8 @@ const isExpanded = ref(false);
 const onExpand = async () => {
 	if (vegaContainerLg.value) {
 		const defaultSize = {
-			width: window.innerWidth / 1.3,
-			height: window.innerHeight / 1.3
+			width: window.innerWidth / 1.5,
+			height: window.innerHeight / 1.5
 		};
 		let spec = deepToRaw(props.visualizationSpec) as any;
 		spec.width = defaultSize.width;

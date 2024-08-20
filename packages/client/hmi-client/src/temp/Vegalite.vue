@@ -119,7 +119,7 @@ const spec = ref<any>(
 const onExpandErrorChart = () => {
 	const spec = createErrorChart(dataChart1, {
 		title: '',
-		width: window.innerWidth / 1.3,
+		width: window.innerWidth / 1.5,
 		height: 230,
 		boxPlotHeight: 50,
 		areaChartHeight: 150,
