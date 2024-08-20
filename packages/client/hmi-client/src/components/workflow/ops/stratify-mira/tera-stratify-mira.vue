@@ -12,7 +12,7 @@
 			<tera-drilldown-section class="pl-4">
 				<template #header-controls-left>
 					<section>
-						<h5>Stratify model</h5>
+						<h5>Stratification settings</h5>
 						<p>The model will be stratified with the following settings.</p>
 						<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
 							Note: Code has been executed which may not be reflected here.
@@ -33,7 +33,6 @@
 						:disabled="isStratifyButtonDisabled"
 						:label="stratifyButtonLabel"
 						size="small"
-						icon="pi pi-play"
 						@click="stratifyModel"
 					/>
 				</template>
