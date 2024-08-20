@@ -23,7 +23,7 @@
 		</div>
 		<div>
 			<vega-chart
-				expand
+				:expand="onExpandErrorChart"
 				:interval-selection-signal-names="['brush']"
 				:visualization-spec="spec"
 				@chart-click="handleChartClick($event)"
@@ -116,6 +116,18 @@ const spec = ref<any>(
 		xAxisTitle: 'Error'
 	})
 );
+const onExpandErrorChart = () => {
+	const spec = createErrorChart(dataChart1, {
+		title: '',
+		width: window.innerWidth / 1.3,
+		height: 230,
+		boxPlotHeight: 50,
+		areaChartHeight: 150,
+		variables: [{ field: 'error' }, { field: 'error2', label: 'e2' }],
+		xAxisTitle: 'Error'
+	});
+	return spec as any;
+};
 
 const spec2 = ref<any>(makeLineChart(dataChart2));
 

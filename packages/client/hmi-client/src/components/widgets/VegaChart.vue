@@ -3,8 +3,9 @@
 		class="vega-chart-modal"
 		modal
 		v-model:visible="showLargeChart"
-		:closable="false"
 		:dismissableMask="true"
+		:closable="true"
+		:closeOnEscape="true"
 		@show="onExpand"
 	>
 		<div>
@@ -43,7 +44,11 @@ const props = withDefaults(
 		 */
 		intervalSelectionSignalNames?: string[];
 		config?: Config | null;
-		expand?: boolean;
+		/**
+		 * Whether to show the expand button.
+		 * If a function is provided, it will be called before expanding the chart, and the returned spec will be used for the expanded chart.
+		 */
+		expand?: boolean | ((spec: VisualizationSpec) => VisualizationSpec);
 	}>(),
 	{
 		areEmbedActionsVisible: true,
@@ -57,6 +62,8 @@ const vegaVisualization = ref<Result>();
 const view = computed(() => vegaVisualization.value?.view);
 
 const vegaContainerLg = ref<HTMLElement>();
+const vegaVisualizationExpanded = ref<Result>();
+const expandedView = computed(() => vegaVisualizationExpanded.value?.view);
 
 // const renderErrorMessage = ref<String>();
 const showLargeChart = ref(false);
@@ -67,10 +74,13 @@ const onExpand = async () => {
 			width: window.innerWidth / 1.3,
 			height: window.innerHeight / 1.3
 		};
-		const spec = deepToRaw(props.visualizationSpec) as any;
+		let spec = deepToRaw(props.visualizationSpec) as any;
 		spec.width = defaultSize.width;
 		spec.height = defaultSize.height;
-		await createVegaVisualization(vegaContainerLg.value, spec, props.config, {
+		if (typeof props.expand === 'function') {
+			spec = props.expand(spec);
+		}
+		vegaVisualizationExpanded.value = await createVegaVisualization(vegaContainerLg.value, spec, props.config, {
 			actions: props.areEmbedActionsVisible,
 			expand: false
 		});
@@ -146,8 +156,7 @@ async function createVegaVisualization(
 		emit('chart-click', item?.datum ?? null);
 	});
 
-	// Add expand button to the vega container
-	console.log(options);
+	// Add expand button to the vega embed container
 	if (options.expand) {
 		const expandButton = h(Button, {
 			icon: 'pi pi-expand',
@@ -173,18 +182,26 @@ watch([vegaContainer, () => props.visualizationSpec], async () => {
 	const spec = deepToRaw(props.visualizationSpec);
 	vegaVisualization.value = await createVegaVisualization(vegaContainer.value, spec, props.config, {
 		actions: props.areEmbedActionsVisible,
-		expand: props.expand
+		expand: !!props.expand
 	});
 });
 
 defineExpose({
-	view
+	view,
+	expandedView
 });
 </script>
 <style>
+/* Since the modal and the tool tips are placed under <body> tag, we need unscoped styles. */
+
 #vg-tooltip-element {
 	/* Make sure this is higher than the z-index of the Dialog(modal) */
 	z-index: 2000;
+}
+.vega-chart-modal.p-dialog {
+	.p-dialog-header-icons {
+		display: none;
+	}
 }
 </style>
 <style scoped>
