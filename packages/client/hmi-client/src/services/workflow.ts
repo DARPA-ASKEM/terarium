@@ -778,12 +778,11 @@ function assetToOperation(operationMap: Map<string, Operation>) {
 			input.type.split('|').forEach((subType) => {
 				if (!result.has(subType)) {
 					result.set(subType, []);
-				} else {
-					result.get(subType)?.push({
-						type: key,
-						displayName: operation.displayName
-					});
 				}
+				result.get(subType)?.push({
+					type: key,
+					displayName: operation.displayName
+				});
 			});
 		});
 	});
