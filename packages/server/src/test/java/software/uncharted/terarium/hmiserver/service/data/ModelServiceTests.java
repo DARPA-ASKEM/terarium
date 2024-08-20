@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,11 @@ public class ModelServiceTests extends TerariumApplicationTests {
 
 	Project project;
 
+	@AfterEach
+	public void teardown() throws IOException {
+		modelService.teardownIndexAndAlias();
+	}
+
 	static Model createModel(final String key) {
 		final Model model = new Model();
 		model.setPublicAsset(true);
@@ -37,6 +43,7 @@ public class ModelServiceTests extends TerariumApplicationTests {
 		project = projectService.createProject(
 			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
 		);
+		modelService.setupIndexAndAliasAndEnsureEmpty();
 	}
 
 	@Test
