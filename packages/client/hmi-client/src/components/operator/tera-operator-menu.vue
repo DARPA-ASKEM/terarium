@@ -34,18 +34,14 @@ const emit = defineEmits(['menu-focus', 'menu-blur', 'menu-selection']);
 
 const isMenuShowing = ref<boolean>(false);
 const menu = ref();
-const menuItems = computed(() => {
-	const options: Array<{}> = [];
-	props.nodeMenu.forEach((node) =>
-		options.push({
-			label: node.displayName,
-			command() {
-				emit('menu-selection', node.type);
-			}
-		})
-	);
-	return [{ items: options }];
-});
+const menuItems = computed(() =>
+	props.nodeMenu.map((node) => ({
+		label: node.displayName,
+		command() {
+			emit('menu-selection', node.type);
+		}
+	}))
+);
 
 function showMenu(event) {
 	menu.value.show(event);
