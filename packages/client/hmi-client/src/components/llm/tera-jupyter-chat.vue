@@ -56,6 +56,7 @@ import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
 import { updateNotebookSession } from '@/services/notebook-session';
 import { useProjects } from '@/composables/project';
+import { isEmpty } from 'lodash';
 
 const messagesHistory = ref<JupyterMessage[]>([]);
 const isExecutingCode = ref(false);
@@ -411,7 +412,7 @@ watch(
 	() => {
 		if (props.notebookSession) {
 			notebookItems.value = props.notebookSession.data.history;
-			if (!notebookItems.value.length) {
+			if (isEmpty(notebookItems.value)) {
 				addCodeCell(true);
 			}
 		}
