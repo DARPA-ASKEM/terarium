@@ -2,7 +2,7 @@
 	<Dialog
 		class="vega-chart-modal"
 		modal
-		v-model:visible="showLargeChart"
+		v-model:visible="isExpanded"
 		:dismissableMask="true"
 		:closable="true"
 		:closeOnEscape="true"
@@ -65,8 +65,7 @@ const vegaContainerLg = ref<HTMLElement>();
 const vegaVisualizationExpanded = ref<Result>();
 const expandedView = computed(() => vegaVisualizationExpanded.value?.view);
 
-// const renderErrorMessage = ref<String>();
-const showLargeChart = ref(false);
+const isExpanded = ref(false);
 
 const onExpand = async () => {
 	if (vegaContainerLg.value) {
@@ -165,7 +164,7 @@ async function createVegaVisualization(
 			rounded: true,
 			text: true,
 			onClick: () => {
-				showLargeChart.value = true;
+				isExpanded.value = true;
 			}
 		});
 		const div = document.createElement('div');
