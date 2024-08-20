@@ -11,10 +11,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	software-properties-common
 RUN add-apt-repository ppa:deadsnakes/ppa
 RUN apt-get update && apt-get install -y --no-install-recommends \
-	python3.10 \
+	software-properties-common \
+  python3.11 \
+  python3.11-venv \
+  python3.11-dev \
 	wget \
 	python3-pip && \
 	rm -rf /var/lib/apt/lists/*
+
+# Set the default Python version to 3.11
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 && \
+    update-alternatives --set python /usr/bin/python3.11
+
+RUN python -m ensurepip --upgrade
+
+# Verify the installation
+RUN python --version
+RUN pip3 --version
 
 # Install gollm
 COPY ./packages/gollm/gollm-version.txt /gollmVersion.txt
@@ -25,7 +38,7 @@ RUN COMMIT_SHA="$(cat /gollmVersion.txt)" && \
 	rm gollm.tar.gz && \
 	mv GoLLM-* GoLLM
 WORKDIR /GoLLM
-RUN pip install --no-cache-dir .
+RUN pip3 install --no-cache-dir .
 
 #^^^^^^^^^^^^^^^^^^^^
 ######################
@@ -41,7 +54,7 @@ WORKDIR /
 # ------------------------------------------------------------------------------
 
 # Set up the Python image with JRE
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 WORKDIR /
 
