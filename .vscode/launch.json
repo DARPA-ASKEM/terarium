@@ -11,7 +11,7 @@
             "runtimeExecutable": "yarn",
             "cwd": "${workspaceFolder}/packages/client/hmi-client",
             "runtimeArgs": [
-                "dev"
+                "staging"
             ],
             // Run vite dev server using `yarn dev` and then luanch the chrome browser
             "serverReadyAction": {
