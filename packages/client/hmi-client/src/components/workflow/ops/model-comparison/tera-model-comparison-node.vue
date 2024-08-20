@@ -20,8 +20,8 @@ const props = defineProps<{
 
 const hasAtLeastTwoValues = computed(() => {
 	const flag = props.node.inputs.filter((input) => input.value).length >= 2;
-	// This is a custom way of granting a success status to the operator, since it has no output
-	if (flag) emit('update-status', OperatorStatus.SUCCESS);
+	// This is a custom way of granting a default status to the operator, since it has no output
+	if (flag) emit('update-status', OperatorStatus.DEFAULT);
 	else emit('update-status', OperatorStatus.INVALID);
 	return flag;
 });
