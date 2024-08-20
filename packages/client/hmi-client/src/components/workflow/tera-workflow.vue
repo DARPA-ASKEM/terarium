@@ -79,7 +79,7 @@
 					@duplicate-branch="duplicateBranch(node.id)"
 					@remove-edges="removeEdges"
 					@update-state="(event: any) => updateWorkflowNodeState(node, event)"
-					@menu-selection="(operatorType) => onMenuSelection(operatorType, node)"
+					@menu-selection="(operatorType: string, port: WorkflowPort) => onMenuSelection(operatorType, node, port)"
 				>
 					<template #body>
 						<component
@@ -168,13 +168,21 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep, isArray, isEmpty } from 'lodash';
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { cloneDeep, isArray, isEmpty, intersection } from 'lodash';
+import { computed, onMounted, onUnmounted, ref, watch, nextTick } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import TeraCanvasItem from '@/components/widgets/tera-canvas-item.vue';
 import type { Position } from '@/types/common';
-import type { Operation, WorkflowEdge, WorkflowNode, WorkflowOutput, WorkflowPort } from '@/types/workflow';
-import { WorkflowDirection, WorkflowPortStatus, OperatorStatus } from '@/types/workflow';
+import {
+	Operation,
+	WorkflowEdge,
+	WorkflowNode,
+	WorkflowOutput,
+	WorkflowPort,
+	WorkflowDirection,
+	WorkflowPortStatus,
+	OperatorStatus
+} from '@/types/workflow';
 // Operation imports
 import TeraOperator from '@/components/operator/tera-operator.vue';
 import Button from 'primevue/button';
@@ -452,13 +460,14 @@ const cloneNoteBookSessions = async () => {
 const addOperatorToWorkflow: Function =
 	(operator: OperatorImport, nodeSize: OperatorNodeSize = OperatorNodeSize.medium) =>
 	() => {
-		wf.value.addNode(operator.operation, newNodePosition, {
+		const node = wf.value.addNode(operator.operation, newNodePosition, {
 			size: nodeSize
 		});
 		workflowDirty = true;
+		return node;
 	};
 
-function onMenuSelection(operatorType: string, menuNode: WorkflowNode<any>) {
+async function onMenuSelection(operatorType: string, menuNode: WorkflowNode<any>, port: WorkflowPort) {
 	const name = operatorType;
 	const operation = registry.getOperation(operatorType);
 	const node = registry.getNode(operatorType);
@@ -469,7 +478,30 @@ function onMenuSelection(operatorType: string, menuNode: WorkflowNode<any>) {
 	newNodePosition.y = menuNode.y;
 
 	if (name && operation && node && drilldown) {
-		addOperatorToWorkflow({ name, operation, node, drilldown })();
+		const newNode: WorkflowNode<any> = addOperatorToWorkflow({ name, operation, node, drilldown })();
+
+		// The split('|') is for complex types - [modelId|modelConfigId] or [datasetId|simulationId]
+		const portTypes = port.type.split('|');
+		const inputPorts: WorkflowPort[] = [];
+		newNode.inputs.forEach((input) => {
+			if (intersection(input.type.split('|'), portTypes).length) {
+				inputPorts.push(input);
+			}
+		});
+
+		// Will not connect nodes if there is anything besides 1 match
+		if (inputPorts.length !== 1) {
+			console.warn(`Ambiguous matching types [${newNode.inputs}] to [${port}]`);
+			return;
+		}
+
+		// Wait for the DOM to load new node before adding edge
+		await nextTick();
+
+		wf.value.addEdge(menuNode.id, port.id, newNode.id, inputPorts[0].id, [
+			{ x: currentPortPosition.x, y: currentPortPosition.y },
+			{ x: currentPortPosition.x, y: currentPortPosition.y }
+		]);
 	}
 }
 
