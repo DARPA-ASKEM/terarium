@@ -264,7 +264,11 @@
 							<AccordionTab header="Success criteria">
 								<ul>
 									<li v-for="(_constraint, key) in node.state.constraintGroups" :key="key">
-										<vega-chart are-embed-actions-visible :visualization-spec="preparedSuccessCriteriaCharts[key]" />
+										<vega-chart
+											expand
+											are-embed-actions-visible
+											:visualization-spec="preparedSuccessCriteriaCharts[key]"
+										/>
 									</li>
 								</ul>
 							</AccordionTab>
@@ -272,6 +276,7 @@
 								<ul>
 									<li v-for="(_, key) of knobs.selectedInterventionVariables" :key="key">
 										<vega-chart
+											expand
 											are-embed-actions-visible
 											:visualization-spec="preparedForecastCharts.interventionCharts[key]"
 										/>
@@ -282,6 +287,7 @@
 								<ul>
 									<li v-for="(_, key) of knobs.selectedSimulationVariables" :key="key">
 										<vega-chart
+											expand
 											are-embed-actions-visible
 											:visualization-spec="preparedForecastCharts.simulationCharts[key]"
 										/>

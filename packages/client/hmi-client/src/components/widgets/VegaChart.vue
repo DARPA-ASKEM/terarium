@@ -49,7 +49,7 @@ const props = withDefaults(
 		areEmbedActionsVisible: true,
 		intervalSelectionSignalNames: () => [],
 		config: null,
-		expand: true
+		expand: false
 	}
 );
 const vegaContainer = ref<HTMLElement>();
@@ -147,6 +147,7 @@ async function createVegaVisualization(
 	});
 
 	// Add expand button to the vega container
+	console.log(options);
 	if (options.expand) {
 		const expandButton = h(Button, {
 			icon: 'pi pi-expand',
@@ -172,7 +173,7 @@ watch([vegaContainer, () => props.visualizationSpec], async () => {
 	const spec = deepToRaw(props.visualizationSpec);
 	vegaVisualization.value = await createVegaVisualization(vegaContainer.value, spec, props.config, {
 		actions: props.areEmbedActionsVisible,
-		expand: true
+		expand: props.expand
 	});
 });
 
@@ -183,7 +184,7 @@ defineExpose({
 <style>
 #vg-tooltip-element {
 	/* Make sure this is higher than the z-index of the Dialog(modal) */
-	z-index: 1102;
+	z-index: 2000;
 }
 </style>
 <style scoped>
@@ -206,8 +207,10 @@ defineExpose({
 	padding: 6px;
 	color: black;
 	position: absolute;
-	right: 30px;
 	background-color: transparent;
+}
+:deep(.vega-embed.has-actions .expand-button) {
+	right: 28px;
 }
 
 /* adjust style, position and rotation of action button */

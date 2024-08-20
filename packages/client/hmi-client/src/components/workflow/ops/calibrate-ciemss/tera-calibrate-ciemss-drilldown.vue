@@ -155,6 +155,7 @@
 				<h5>Loss</h5>
 				<div ref="lossChartContainer">
 					<vega-chart
+						expand
 						v-if="lossValues.length > 0 || showSpinner"
 						ref="lossChartRef"
 						:are-embed-actions-visible="true"
@@ -175,6 +176,7 @@
 						/>
 						<template v-for="param of node.state.selectedParameters" :key="param">
 							<vega-chart
+								expand
 								:are-embed-actions-visible="true"
 								:visualization-spec="preparedDistributionCharts[param].histogram"
 							>
@@ -212,7 +214,7 @@
 							@configuration-change="updateSelectedVariables"
 						/>
 						<template v-for="variable of node.state.selectedVariables" :key="variable">
-							<vega-chart :are-embed-actions-visible="true" :visualization-spec="preparedCharts[variable]" />
+							<vega-chart expand :are-embed-actions-visible="true" :visualization-spec="preparedCharts[variable]" />
 						</template>
 					</section>
 					<section v-else-if="!modelConfig" class="emptyState">
