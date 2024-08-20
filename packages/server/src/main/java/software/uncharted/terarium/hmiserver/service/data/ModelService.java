@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
@@ -28,6 +29,8 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 
 	private final EmbeddingService embeddingService;
 
+	private final Environment env;
+
 	public ModelService(
 		final ObjectMapper objectMapper,
 		final Config config,
@@ -37,7 +40,8 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		final ProjectAssetService projectAssetService,
 		final S3ClientService s3ClientService,
 		final ModelRepository repository,
-		final EmbeddingService embeddingService
+		final EmbeddingService embeddingService,
+		final Environment env
 	) {
 		super(
 			objectMapper,
@@ -51,6 +55,19 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 			Model.class
 		);
 		this.embeddingService = embeddingService;
+		this.env = env;
+	}
+
+	private boolean isRunningTestProfile() {
+		final String[] activeProfiles = env.getActiveProfiles();
+
+		for (final String profile : activeProfiles) {
+			if ("test".equals(profile)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	@Observed(name = "function_profile")
@@ -60,7 +77,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 			.build();
 
 		final SearchRequest req = new SearchRequest.Builder()
-			.index(getAssetIndex())
+			.index(getAssetAlias())
 			.from(page)
 			.size(pageSize)
 			.query(q ->
@@ -92,6 +109,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 	@Override
 	@Observed(name = "function_profile")
 	protected String getAssetIndex() {
+		log.info("MODEL INDEX: {}", elasticConfig.getModelIndex());
 		return elasticConfig.getModelIndex();
 	}
 
@@ -103,6 +121,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 
 	@Override
 	public String getAssetAlias() {
+		log.info("MODEL ALIAS: {}", elasticConfig.getModelAlias());
 		return elasticConfig.getModelAlias();
 	}
 
@@ -145,7 +164,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		}
 		final Model created = super.createAsset(asset, projectId, hasWritePermission);
 
-		if (created.getPublicAsset() && !created.getTemporary()) {
+		if (!isRunningTestProfile() && created.getPublicAsset() && !created.getTemporary()) {
 			String text;
 			if (created.getMetadata() != null && created.getMetadata().getGollmCard() != null) {
 				text = objectMapper.writeValueAsString(created.getMetadata().getGollmCard());
@@ -185,7 +204,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 
 		final Model updated = updatedOptional.get();
 
-		if (updated.getPublicAsset() && !updated.getTemporary()) {
+		if (!isRunningTestProfile() && updated.getPublicAsset() && !updated.getTemporary()) {
 			String text;
 			if (updated.getMetadata() != null && updated.getMetadata().getGollmCard() != null) {
 				text = objectMapper.writeValueAsString(updated.getMetadata().getGollmCard());
