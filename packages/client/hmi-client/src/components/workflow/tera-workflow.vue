@@ -63,7 +63,9 @@
 					top: `${node.y}px`,
 					left: `${node.x}px`
 				}"
+				@dragstart="nodeDragging = true"
 				@dragging="(event) => updatePosition(node, event)"
+				@dragend="nodeDragging = false"
 			>
 				<tera-operator
 					ref="teraOperatorRefs"
@@ -264,6 +266,7 @@ let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverPort: boolean = false;
 let saveTimer: any = null;
 
+const nodeDragging = ref<boolean>(false);
 let workflowDirty: boolean = false;
 let startTime: number = 0;
 
@@ -912,10 +915,13 @@ const handleDrilldown = () => {
 };
 
 watch(
-	() => [props.assetId],
-	async () => {
-		// Save previous location
-		setLocalStorageTransform(wf.value.getId(), canvasTransform);
+	() => props.assetId,
+	async (newId, oldId) => {
+		if (newId !== oldId && oldId) {
+			// Save previous
+			if (workflowDirty) workflowService.updateWorkflow(wf.value.dump());
+			setLocalStorageTransform(wf.value.getId(), canvasTransform);
+		}
 
 		isRenamingWorkflow.value = false; // Closes rename input if opened in previous workflow
 		if (wf.value && workflowDirty) {
@@ -950,7 +956,7 @@ onMounted(() => {
 	document.addEventListener('mousemove', mouseUpdate);
 	window.addEventListener('beforeunload', unloadCheck);
 	saveTimer = setInterval(async () => {
-		if (workflowDirty && useProjects().hasEditPermission()) {
+		if (workflowDirty && useProjects().hasEditPermission() && nodeDragging.value === false) {
 			const updated = await workflowService.updateWorkflow(wf.value.dump());
 			wf.value.update(updated);
 			workflowDirty = false;
