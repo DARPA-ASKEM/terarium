@@ -8,7 +8,6 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import software.uncharted.terarium.hmiserver.controller.dataservice.ModelConfigurationController;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
@@ -30,7 +29,6 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 	private final ModelService modelService;
 	private final ModelConfigurationService modelConfigurationService;
 	private final ProvenanceService provenanceService;
-	private final ModelConfigurationController modelConfigurationController;
 
 	@Override
 	public String getName() {
