@@ -27,6 +27,10 @@ public class ElasticsearchConfiguration {
 		return String.join("_", index.prefix, root, index.suffix);
 	}
 
+	public String getProjectIndex() {
+		return String.join("_", index.prefix, index.projectRoot, index.suffix);
+	}
+
 	public String getCodeIndex() {
 		return String.join("_", index.prefix, index.codeRoot, index.suffix);
 	}
@@ -73,6 +77,10 @@ public class ElasticsearchConfiguration {
 
 	public String getDecapodesContextIndex() {
 		return String.join("_", index.prefix, index.decapodesContextRoot, index.suffix);
+	}
+
+	public String getProjectAlias() {
+		return String.join("_", index.prefix, index.projectRoot);
 	}
 
 	public String getCodeAlias() {
@@ -126,6 +134,7 @@ public class ElasticsearchConfiguration {
 	public record Index(
 		String prefix,
 		String suffix,
+		String projectRoot,
 		String codeRoot,
 		String artifactRoot,
 		String datasetRoot,

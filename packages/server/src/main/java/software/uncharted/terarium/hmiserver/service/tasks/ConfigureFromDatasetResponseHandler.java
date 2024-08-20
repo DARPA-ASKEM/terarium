@@ -81,6 +81,9 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 			// Map the parameters values to the model
 			final Model modelCopy = (Model) model.clone();
 			modelCopy.setId(model.getId());
+			ScenarioExtraction.setNullDefaultModelInitials(modelCopy);
+			ScenarioExtraction.setNullDefaultModelParameters(modelCopy);
+
 			final JsonNode condition = configurations.getResponse().get("values");
 			final List<ModelParameter> modelParameters = ScenarioExtraction.getModelParameters(condition, modelCopy);
 			final List<Initial> modelInitials = ScenarioExtraction.getModelInitials(condition, modelCopy);

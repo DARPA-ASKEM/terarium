@@ -32,12 +32,68 @@ export class WorkflowWrapper {
 		}
 	}
 
+	// This will replace the entire workflow, should only use for initial load
+	// as there it will not propapate reactivity
 	load(wf: Workflow) {
 		this.wf = _.cloneDeep(wf);
 	}
 
 	dump() {
 		return this.wf;
+	}
+
+	update(updatedWF: Workflow) {
+		this.wf.name = updatedWF.name;
+		this.wf.description = updatedWF.description;
+
+		const nodes = this.getNodes();
+		const edges = this.getEdges();
+		const updatedNodeMap = new Map<string, WorkflowNode<any>>(updatedWF.nodes.map((n) => [n.id, n]));
+		const updatedEdgeMap = new Map<string, WorkflowEdge>(updatedWF.edges.map((e) => [e.id, e]));
+
+		// Update and deletes
+		for (let i = 0; i < nodes.length; i++) {
+			const nodeId = nodes[i].id;
+			const updated = updatedNodeMap.get(nodeId);
+			if (updated) {
+				if (!nodes[i].version || (updated.version as number) > (nodes[i].version as number)) {
+					nodes[i].version = updated.version;
+					nodes[i].isDeleted = updated.isDeleted;
+					nodes[i].status = updated.status;
+					nodes[i].x = updated.x;
+					nodes[i].y = updated.y;
+					nodes[i].width = updated.width;
+					nodes[i].height = updated.height;
+					nodes[i].active = updated.active;
+
+					if (!_.isEqual(nodes[i].inputs, updated.inputs)) {
+						nodes[i].inputs = updated.inputs;
+					}
+					if (!_.isEqual(nodes[i].outputs, updated.outputs)) {
+						nodes[i].outputs = updated.outputs;
+					}
+					if (!_.isEqual(nodes[i].state, updated.state)) {
+						nodes[i].state = updated.state;
+					}
+					// nodes[i] = Object.assign(nodes[i], updated);
+				}
+				updatedNodeMap.delete(nodeId);
+			}
+		}
+		for (let i = 0; i < edges.length; i++) {
+			const edgeId = edges[i].id;
+			const updated = updatedEdgeMap.get(edgeId);
+			if (updated) {
+				if ((updated.version as number) > (edges[i].version as number)) {
+					edges[i] = Object.assign(edges[i], updated);
+				}
+				updatedEdgeMap.delete(edgeId);
+			}
+		}
+
+		// New eleemnts
+		[...updatedNodeMap.values()].forEach((node) => this.wf.nodes.push(node));
+		[...updatedEdgeMap.values()].forEach((edge) => this.wf.edges.push(edge));
 	}
 
 	getId() {

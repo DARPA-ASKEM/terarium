@@ -55,7 +55,6 @@ public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
 	@BeforeEach
 	public void setup() throws IOException {
 		documentService.setupIndexAndAliasAndEnsureEmpty();
-		workflowService.setupIndexAndAliasAndEnsureEmpty();
 		project = projectService.createProject(
 			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
 		);
@@ -64,7 +63,6 @@ public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
 	@AfterEach
 	public void teardown() throws IOException {
 		documentService.setupIndexAndAliasAndEnsureEmpty();
-		workflowService.setupIndexAndAliasAndEnsureEmpty();
 	}
 
 	static Grounding createGrounding(final String key) {
