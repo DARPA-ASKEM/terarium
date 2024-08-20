@@ -165,7 +165,7 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep, isArray, isEmpty } from 'lodash';
+import { cloneDeep, isArray, isEmpty, intersection } from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch, nextTick } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import TeraCanvasItem from '@/components/widgets/tera-canvas-item.vue';
@@ -475,17 +475,29 @@ async function onMenuSelection(operatorType: string, menuNode: WorkflowNode<any>
 
 	if (name && operation && node && drilldown) {
 		const newNode: WorkflowNode<any> = addOperatorToWorkflow({ name, operation, node, drilldown })();
-		const inputPort = newNode.inputs.find((input) => input.type.includes(port.type));
 
-		if (inputPort) {
-			// wait for the DOM to load the new node before adding the edge
-			await nextTick();
+		// The split('|') is for complex types - [modelId|modelConfigId] or [datasetId|simulationId]
+		const portTypes = port.type.split('|');
+		const inputPorts: WorkflowPort[] = [];
+		newNode.inputs.forEach((input) => {
+			if (intersection(input.type.split('|'), portTypes).length) {
+				inputPorts.push(input);
+			}
+		});
 
-			wf.value.addEdge(menuNode.id, port.id, newNode.id, inputPort.id, [
-				{ x: currentPortPosition.x, y: currentPortPosition.y },
-				{ x: currentPortPosition.x, y: currentPortPosition.y }
-			]);
+		// Will not connect nodes if there is anything besides 1 match
+		if (inputPorts.length !== 1) {
+			console.warn(`Ambiguous matching types [${newNode.inputs}] to [${port}]`);
+			return;
 		}
+
+		// Wait for the DOM to load new node before adding edge
+		await nextTick();
+
+		wf.value.addEdge(menuNode.id, port.id, newNode.id, inputPorts[0].id, [
+			{ x: currentPortPosition.x, y: currentPortPosition.y },
+			{ x: currentPortPosition.x, y: currentPortPosition.y }
+		]);
 	}
 }
 
