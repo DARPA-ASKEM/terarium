@@ -117,6 +117,7 @@ const spec = ref<any>(
 	})
 );
 const onExpandErrorChart = () => {
+	// Customize the chart size by modifying the spec before expanding the chart
 	const spec = createErrorChart(dataChart1, {
 		title: '',
 		width: window.innerWidth / 1.5,
