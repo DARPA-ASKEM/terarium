@@ -88,6 +88,7 @@
 							@append-output="(event: any) => appendOutput(node, event)"
 							@append-input-port="(event: any) => appendInputPort(node, event)"
 							@update-state="(event: any) => updateWorkflowNodeState(node, event)"
+							@update-status="(status: OperatorStatus) => updateWorkflowNodeStatus(currentActiveNode, status)"
 							@open-drilldown="addOperatorToRoute(node.id)"
 						/>
 					</template>
@@ -158,7 +159,7 @@
 			:spawn-animation="drilldownSpawnAnimation"
 			@append-output="(event: any) => appendOutput(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
-			@update-status="(event: any) => updateWorkflowNodeStatus(currentActiveNode, event)"
+			@update-status="(status: OperatorStatus) => updateWorkflowNodeStatus(currentActiveNode, status)"
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
 			@close="addOperatorToRoute(null)"
 			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"

@@ -296,6 +296,7 @@ async function processCompareModels(modelIds, workflowId?: string, nodeId?: stri
 }
 
 function generateOverview() {
+	// Generate if there is no overview and the comparison task has been completed
 	if (!compareModelsTaskOutput || !isEmpty(props.node.state.overview)) return;
 	const str = b64DecodeUnicode(compareModelsTaskOutput);
 	const parsedValue = JSON.parse(str) as CompareModelsResponseType;
