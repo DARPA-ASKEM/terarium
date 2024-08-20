@@ -13,7 +13,7 @@
 							<p v-if="isEmpty(node.state.overview)" class="subdued">
 								Analyzing models metadata to generate a detailed comparison analysis...
 							</p>
-							<p v-else>{{ node.state.overview }}</p>
+							<vue-markdown v-else :source="node.state.overview" />
 						</AccordionTab>
 					</Accordion>
 				</section>
@@ -126,6 +126,7 @@
 <script setup lang="ts">
 import { isEmpty, cloneDeep } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
+import VueMarkdown from 'vue-markdown-render';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -174,6 +175,8 @@ const sampleAgentQuestions = [
 	'Compare the three models and visualize and display them.',
 	'Compare the two models and visualize and display them.'
 ];
+let compareModelsTaskId = '';
+let compareModelsTaskOutput = '';
 
 const modelsToCompare = ref<Model[]>([]);
 const modelCardsToCompare = ref<any[]>([]);
@@ -181,8 +184,6 @@ const fields = ref<string[]>([]);
 
 const isLoadingStructuralComparisons = ref(false);
 const structuralComparisons = ref<string[]>([]);
-let compareModelsTaskId = '';
-let compareModelsTaskOutput = '';
 const code = ref(props.node.state.notebookHistory?.[0]?.code ?? '');
 const llmThoughts = ref<any[]>([]);
 const isKernelReady = ref(false);
