@@ -10,8 +10,10 @@
 				<section class="comparison-overview">
 					<Accordion :activeIndex="0">
 						<AccordionTab header="Overview">
-							<p v-if="llmAnswer">{{ llmAnswer }}</p>
-							<p v-else class="subdued">Analyzing models metadata to generate a detailed comparison analysis...</p>
+							<p v-if="isEmpty(node.state.overview)" class="subdued">
+								Analyzing models metadata to generate a detailed comparison analysis...
+							</p>
+							<p v-else>{{ node.state.overview }}</p>
 						</AccordionTab>
 					</Accordion>
 				</section>
@@ -137,7 +139,7 @@ import { ClientEvent, ClientEventType, TaskResponse, TaskStatus, type Model } fr
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 
@@ -179,19 +181,12 @@ const fields = ref<string[]>([]);
 
 const isLoadingStructuralComparisons = ref(false);
 const structuralComparisons = ref<string[]>([]);
-const compareModelsTaskId = ref<string>('');
-const compareModelsTaskOutput = ref<string>('');
+let compareModelsTaskId = '';
+let compareModelsTaskOutput = '';
 const code = ref(props.node.state.notebookHistory?.[0]?.code ?? '');
 const llmThoughts = ref<any[]>([]);
 const isKernelReady = ref(false);
 const contextLanguage = ref<string>('python3');
-
-const llmAnswer = computed(() => {
-	if (!compareModelsTaskOutput.value) return '';
-	const str = b64DecodeUnicode(compareModelsTaskOutput.value);
-	const parsedValue = JSON.parse(str) as CompareModelsResponseType;
-	return parsedValue.response;
-});
 
 const initializeAceEditor = (editorInstance: any) => {
 	editor = editorInstance;
@@ -294,16 +289,26 @@ async function buildJupyterContext() {
 
 async function processCompareModels(modelIds, workflowId?: string, nodeId?: string) {
 	const taskRes = await compareModels(modelIds, workflowId, nodeId);
-	compareModelsTaskId.value = taskRes.id;
+	compareModelsTaskId = taskRes.id;
 	if (taskRes.status === TaskStatus.Success) {
-		compareModelsTaskOutput.value = taskRes.output;
+		compareModelsTaskOutput = taskRes.output;
 	}
 }
 
+function generateOverview() {
+	if (!compareModelsTaskOutput || !isEmpty(props.node.state.overview)) return;
+	const str = b64DecodeUnicode(compareModelsTaskOutput);
+	const parsedValue = JSON.parse(str) as CompareModelsResponseType;
+	const state = cloneDeep(props.node.state);
+	state.overview = parsedValue.response;
+	emit('update-state', state);
+}
+
 useClientEvent(ClientEventType.TaskGollmCompareModel, (event: ClientEvent<TaskResponse>) => {
-	if (!event.data || event.data.id !== compareModelsTaskId.value) return;
+	if (!event.data || event.data.id !== compareModelsTaskId) return;
 	if (event.data.status !== TaskStatus.Success) return;
-	compareModelsTaskOutput.value = event.data.output;
+	compareModelsTaskOutput = event.data.output;
+	generateOverview();
 });
 
 onMounted(async () => {
