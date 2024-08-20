@@ -1,23 +1,17 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.simulation;
 
-import java.io.Serial;
-import java.util.UUID;
-
-import org.hibernate.annotations.Type;
-
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.databind.JsonNode;
-
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.SequenceGenerator;
 import jakarta.validation.constraints.NotNull;
+import java.io.Serial;
+import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.TerariumEntity;
 
@@ -34,11 +28,6 @@ public class SimulationUpdate extends TerariumEntity {
 	@JsonBackReference
 	@NotNull
 	private Simulation simulation;
-
-	@Column(name = "sequence_number", nullable = false, unique = true)
-	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_gen")
-	@SequenceGenerator(name = "seq_gen", sequenceName = "sequence_number_seq", allocationSize = 1)
-	private Integer sequenceNumber;
 
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
