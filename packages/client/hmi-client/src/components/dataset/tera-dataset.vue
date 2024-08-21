@@ -4,10 +4,11 @@
 		:name="dataset?.name"
 		:feature-config="featureConfig"
 		:is-naming-asset="isRenamingDataset"
-		@close-preview="emit('close-preview')"
 		:is-loading="isDatasetLoading"
 		:overflow-hidden="selectedTabIndex === 1"
 		:selected-tab-index="selectedTabIndex"
+		show-table-of-contents
+		@close-preview="emit('close-preview')"
 		@tab-change="(e) => (selectedTabIndex = e.index)"
 	>
 		<template #name-input>
@@ -23,40 +24,40 @@
 				<Button icon="pi pi-check" rounded text @click="updateDatasetName" />
 			</div>
 		</template>
-		<template #edit-buttons>
-			<template v-if="!featureConfig.isPreview">
-				<Button
-					icon="pi pi-ellipsis-v"
-					class="p-button-icon-only p-button-text p-button-rounded"
-					@click="toggleOptionsMenu"
-				/>
-				<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" :pt="optionsMenuPt" />
-			</template>
+		<template #edit-buttons v-if="!featureConfig.isPreview">
+			<Button
+				icon="pi pi-ellipsis-v"
+				class="p-button-icon-only p-button-text p-button-rounded"
+				@click="toggleOptionsMenu"
+			/>
+			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" :pt="optionsMenuPt" />
+			<div class="btn-group">
+				<Button label="Enrich metadata with AI assistant" severity="secondary" outlined />
+				<Button label="Reset" severity="secondary" outlined />
+				<Button label="Save as..." severity="secondary" outlined />
+				<Button label="Save" />
+			</div>
 		</template>
-
-		<template #tabs>
-			<section class="tab" tabName="Description">
-				<p>
-					<span class="font-bold inline-block w-10rem">Dataset Id</span>
-					<code class="inline">{{ datasetInfo.id }}</code>
-				</p>
-				<p>
-					<span class="font-bold inline-block w-10rem">Dataset Filenames</span>
-					{{ datasetInfo.fileNames }}<br />
-				</p>
-
-				<tera-dataset-description
-					tabName="Description"
-					:dataset="dataset"
-					@fetch-dataset="fetchDataset"
-					@update-dataset="(dataset: Dataset) => updateAndFetchDataset(dataset)"
-				/>
-			</section>
-			<section class="tab data-tab" tabName="Data" v-if="!isEmpty(datasetInfo.fileNames)">
+		<section>
+			<p>
+				<span class="font-bold inline-block w-10rem">Dataset Id</span>
+				<code class="inline">{{ datasetInfo.id }}</code>
+			</p>
+			<p>
+				<span class="font-bold inline-block w-10rem">Dataset Filenames</span>
+				{{ datasetInfo.fileNames }}<br />
+			</p>
+			<tera-dataset-description
+				tabName="Description"
+				:dataset="dataset"
+				@fetch-dataset="fetchDataset"
+				@update-dataset="(dataset: Dataset) => updateAndFetchDataset(dataset)"
+			/>
+			<template v-if="!isEmpty(datasetInfo.fileNames)">
 				<tera-progress-spinner v-if="!rawContent" :font-size="2" is-centered />
 				<tera-dataset-datatable v-else :rows="100" :raw-content="rawContent" />
-			</section>
-		</template>
+			</template>
+		</section>
 	</tera-asset>
 </template>
 <script setup lang="ts">
@@ -273,14 +274,10 @@ watch(
 </script>
 
 <style scoped>
-.tab {
-	padding: var(--gap);
-
-	&.data-tab {
-		display: flex;
-		height: 100%;
-		overflow: hidden;
-		flex-direction: column;
-	}
+.btn-group {
+	display: flex;
+	align-items: center;
+	gap: var(--gap-small);
+	margin-left: auto;
 }
 </style>
