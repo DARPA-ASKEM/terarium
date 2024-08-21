@@ -53,9 +53,9 @@
 				/>
 			</tera-drilldown-section>
 			<tera-drilldown-section>
-				<template v-if="selectedPolicy?.id" #header-controls-left>
+				<template #header-controls-left>
 					<tera-toggleable-input
-						v-if="typeof selectedPolicy.name === 'string'"
+						v-if="typeof selectedPolicy?.name === 'string'"
 						:model-value="selectedPolicy.name"
 						@update:model-value="onChangeName"
 						tag="h4"

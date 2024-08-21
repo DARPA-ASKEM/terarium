@@ -283,7 +283,7 @@ function onDeleteRequested(msgId: string) {
 	border: 1px solid rgba(0, 0, 0, 0);
 }
 
-.jupyter-response:hover {
+.jupyter-response:hover:not(.selected) {
 	background-color: var(--surface-50);
 	border: 1px solid var(--surface-border-light);
 }
