@@ -1,6 +1,4 @@
 import _ from 'lodash';
-import { DataArray, parsePyCiemssMap } from '@/services/models/simulation-service';
-import { CalibrateMap } from '@/services/calibrate-workflow';
 
 export const mean = (numberList: number[]) =>
 	numberList.reduce((acc: number, val: number) => acc + val, 0) / numberList.length;
@@ -16,61 +14,18 @@ export const stddev = (numberList: number[], usePopulation = false) => {
 	);
 };
 
-/**
-	* Get the mean absolute error from a provided source truth and a simulation run.
-	* Utilied in calibration for charts
-	* Assume that simulationData is in the form of pyciemss
-			states end with _State
-			The timestamp column is titled: timepoint_id
-	* Assume that the mapping is in the calibration form:
-			Ground truth will map to datasetVariable
-			Simulation data will map to modelVariable AND not include _State
+// Get the mean absolute error between two arrays.
+// Assume each array is formed: [ { timestamp: value }, { timestamp: value } ...]
+export const mae = (arr1: any[], arr2: any[]) => {
+	const firstTimes = arr1.map((ele) => ele.timestamp);
+	const secondTimes = arr2.map((ele) => ele.timestamp);
+	const sharedTimes = firstTimes.filter((ele) => secondTimes.includes(ele));
 
-	Note: This will only compare rows with the same timestep value.
-*/
-export async function getErrorData(groundTruth: DataArray, simulationData: DataArray, mapping: CalibrateMap[]) {
-	const errors: DataArray = [];
-	const pyciemssMap = await parsePyCiemssMap(simulationData[0]);
-	const datasetTimeCol = mapping.find((ele) => ele.modelVariable === 'timestamp')?.datasetVariable;
-	if (!datasetTimeCol) {
-		console.error('No dataset time column found to getErrorData');
-		return errors;
-	}
-
-	const datasetVariables = mapping.map((ele) => ele.datasetVariable);
-	const relevantGroundTruthColumns = Object.keys(groundTruth[0]).filter(
-		(variable) => datasetVariables.includes(variable) && variable !== datasetTimeCol
-	);
-	const truthTimestamps = groundTruth.map((ele) => ele[datasetTimeCol]);
-	const simulationTimestamps = simulationData.map((ele) => ele.timepoint_id);
-	const relevantTimestamps = truthTimestamps.filter((ele) => simulationTimestamps.includes(ele));
-	if (relevantGroundTruthColumns.length === 0) return errors;
-
-	// Filter out timepoints that are not shared.
-	// group on sampleID
-	const simulationDataGrouped = _.groupBy(
-		simulationData.filter((ele) => relevantTimestamps.includes(ele.timepoint_id)),
-		'sample_id'
-	);
-
-	// Helper function, takes in time and model variable.
-	// Returns the corresponding groundTruth value.
-	const getTruthValue = (time: number, modelVariable: string) => {
-		const map = mapping.find((ele) => ele.modelVariable === modelVariable);
-		if (!map) return NaN;
-		const truth = groundTruth[time][map.datasetVariable];
-		if (truth === undefined) return NaN; // Cant just say !truth or 0 will return NaN
-		return truth;
-	};
-
-	Object.entries(simulationDataGrouped).forEach(([sampleId, simData]) => {
-		const item = { sample_id: Number(sampleId) };
-		relevantGroundTruthColumns.forEach((relevantColumn) => {
-			item[relevantColumn] = _.meanBy(simData, (simRow) =>
-				Math.abs(getTruthValue(simRow.timepoint_id, relevantColumn) - simRow[pyciemssMap[relevantColumn]])
-			);
-		});
-		errors.push(item);
+	// FIXME: THIS IS GROSS
+	const error = _.meanBy(sharedTimes, (time) => {
+		const firstValue = arr1.find((ele) => ele.timestamp === time).value;
+		const secondValue = arr2.find((ele) => ele.timestamp === time).value;
+		return Math.abs(firstValue - secondValue);
 	});
-	return errors;
-}
+	return error;
+};

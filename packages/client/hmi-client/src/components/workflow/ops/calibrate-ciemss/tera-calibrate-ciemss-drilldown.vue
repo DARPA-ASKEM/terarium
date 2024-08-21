@@ -279,9 +279,8 @@ import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { displayNumber } from '@/utils/number';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
-import { getErrorData } from '@/utils/stats';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
-import { renameFnGenerator, mergeResults } from './calibrate-utils';
+import { renameFnGenerator, mergeResults, getErrorData, getErrorData2 } from './calibrate-utils';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
@@ -761,6 +760,8 @@ watch(
 			const csvRaw = csv.map((d) => d.join(',')).join('\n');
 			const groundTruth = csvParse(csvRaw, autoType);
 			errorData.value = await getErrorData(groundTruth, runResult.value, mapping.value);
+			console.log(await getErrorData(groundTruth, runResult.value, mapping.value));
+			console.log(await getErrorData2(groundTruth, runResult.value, mapping.value));
 		}
 	},
 	{ immediate: true }
