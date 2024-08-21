@@ -150,7 +150,7 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
 import { saveCodeToState } from '@/services/notebook';
-import { getImage, getImages, addImage, deleteImages } from '@/services/image';
+import { getImages, addImage, deleteImages } from '@/services/image';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import { b64DecodeUnicode } from '@/utils/binary';
 import { useClientEvent } from '@/composables/useClientEvent';
@@ -303,13 +303,11 @@ function assignOverview(b64overview: string) {
 async function generateOverview() {
 	// Generate if there is no overview and the comparison task has been completed
 	if (!compareModelsTaskOutput || props.node.state.overviewId) return;
-	const newOverviewId = uuidv4();
-	console.log(newOverviewId);
-	addImage(newOverviewId, `data:text/plain;base64,${compareModelsTaskOutput}`);
+	// const newOverviewId = uuidv4(); // TODO: Save overview to S3
 	assignOverview(compareModelsTaskOutput);
-	const state = cloneDeep(props.node.state);
-	state.overviewId = newOverviewId;
-	emit('update-state', state);
+	// const state = cloneDeep(props.node.state);
+	// state.overviewId = newOverviewId;
+	// emit('update-state', state);
 	emit('update-status', OperatorStatus.DEFAULT); // This is a custom way of granting a default status to the operator, since it has no output
 }
 
@@ -326,12 +324,8 @@ onMounted(async () => {
 		structuralComparisons.value = await getImages(props.node.state.comparisonImageIds);
 		isLoadingStructuralComparisons.value = false;
 	}
-	if (props.node.state.overviewId) {
-		const b64overview = await getImage(props.node.state.overviewId);
-		console.log('overview', props.node.state.overviewId);
-		console.log(b64overview);
-		// if (b64overview) assignOverview(b64overview.split(',').slice(1).join(','));
-	}
+	// TODO: Get text from S3
+	// if (props.node.state.overviewId)
 
 	const modelIds: string[] = props.node.inputs
 		.filter((input) => input.status === WorkflowPortStatus.CONNECTED)
