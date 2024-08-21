@@ -54,9 +54,9 @@ public class ProjectSearchServiceTests extends TerariumApplicationTests {
 		project.setDescription("my description");
 
 		projectSearchService.indexProject(project);
-
-		final List<ProjectDocument> docs = projectSearchService.searchProjectsForUser(searcherId, 0, 10, null);
 		projectSearchService.forceESRefresh();
+		final List<ProjectDocument> docs = projectSearchService.searchProjectsForUser(searcherId, 0, 10, null);
+
 		Assertions.assertEquals(1, docs.size());
 	}
 
@@ -73,10 +73,12 @@ public class ProjectSearchServiceTests extends TerariumApplicationTests {
 		project.setDescription("my description");
 
 		projectSearchService.indexProject(project);
+		projectSearchService.forceESRefresh();
 		projectSearchService.addProjectPermission(project.getId(), searcherId);
+		projectSearchService.forceESRefresh();
 
 		final List<ProjectDocument> docs = projectSearchService.searchProjectsForUser(searcherId, 0, 10, null);
-		projectSearchService.forceESRefresh();
+
 		Assertions.assertEquals(1, docs.size());
 	}
 
@@ -92,9 +94,9 @@ public class ProjectSearchServiceTests extends TerariumApplicationTests {
 		project.setDescription("my description");
 
 		projectSearchService.indexProject(project);
-
-		final List<ProjectDocument> docs = projectSearchService.searchProjectsForUser(ownerId, 0, 10, null);
 		projectSearchService.forceESRefresh();
+		final List<ProjectDocument> docs = projectSearchService.searchProjectsForUser(ownerId, 0, 10, null);
+
 		Assertions.assertEquals(1, docs.size());
 	}
 
@@ -148,9 +150,10 @@ public class ProjectSearchServiceTests extends TerariumApplicationTests {
 
 			projectSearchService.indexProject(project);
 		}
+		projectSearchService.forceESRefresh();
 
 		final List<ProjectDocument> docs = projectSearchService.searchProjectsForUser(readerId, 0, 100, null);
-		projectSearchService.forceESRefresh();
+
 		Assertions.assertEquals(NUM_VISIBLE_PROJECTS + NUM_PUBLIC_PROJECTS + NUM_OWNED_PROJECTS, docs.size());
 	}
 }
