@@ -47,7 +47,7 @@ header {
 header > div {
 	display: inline-flex;
 	gap: var(--gap-1);
-	align-items: center;
+	align-items: start;
 }
 
 section {
