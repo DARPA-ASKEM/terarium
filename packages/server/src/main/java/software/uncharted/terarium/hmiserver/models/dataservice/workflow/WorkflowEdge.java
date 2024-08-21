@@ -43,4 +43,10 @@ public class WorkflowEdge extends SupportAdditionalProperties implements Seriali
 		clone.setTargetPortId(targetPortId);
 		return clone;
 	}
+
+	public boolean getIsDeleted() {
+		if (this.isDeleted == null) return false;
+
+		return this.isDeleted;
+	}
 }
