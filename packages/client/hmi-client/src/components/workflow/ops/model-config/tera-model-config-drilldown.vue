@@ -429,7 +429,6 @@ const extractConfigurationsFromInputs = async () => {
 			props.node.id
 		);
 		state.documentModelConfigTaskId = resp.id;
-		documentModelConfigTaskId.value = resp.id;
 	}
 	if (datasetIds.value) {
 		const matrixStr = generateModelDatasetConfigurationContext(mmt.value, mmtParams.value);
@@ -440,7 +439,6 @@ const extractConfigurationsFromInputs = async () => {
 			props.node.workflowId,
 			props.node.id
 		);
-		datasetModelConfigTaskId.value = resp.id;
 		state.datasetModelConfigTaskId = resp.id;
 	}
 	emit('update-state', state);
