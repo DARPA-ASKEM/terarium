@@ -31,9 +31,9 @@ const slots = useSlots();
 .content-container {
 	display: flex;
 	flex-direction: column;
+	gap: var(--gap-1);
 	flex-grow: 1;
 	padding: var(--gap);
-	border-radius: var(--border-radius-medium);
 	overflow: hidden;
 }
 
