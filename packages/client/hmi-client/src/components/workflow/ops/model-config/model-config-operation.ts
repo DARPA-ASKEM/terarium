@@ -10,8 +10,8 @@ export interface ModelConfigOperationState extends BaseState {
 	transientModelConfig: ModelConfiguration;
 	notebookHistory: NotebookHistory[];
 	hasCodeRun: boolean;
-	datasetModelConfigTaskId?: string;
-	documentModelConfigTaskId?: string;
+	datasetModelConfigTaskId: string;
+	documentModelConfigTaskId: string;
 }
 
 export const blankModelConfig: ModelConfiguration = {
@@ -43,7 +43,9 @@ export const ModelConfigOperation: Operation = {
 		const init: ModelConfigOperationState = {
 			transientModelConfig: blankModelConfig,
 			notebookHistory: [],
-			hasCodeRun: false
+			hasCodeRun: false,
+			datasetModelConfigTaskId: '',
+			documentModelConfigTaskId: ''
 		};
 		return init;
 	}

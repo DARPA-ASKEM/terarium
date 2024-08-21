@@ -48,7 +48,7 @@ const configModelEventHandler = async (event: ClientEvent<TaskResponse>) => {
 useClientEvent(ClientEventType.TaskGollmConfigureModel, configModelEventHandler);
 useClientEvent(ClientEventType.TaskGollmConfigureFromDataset, configModelEventHandler);
 
-const isLoading = computed(() => datasetModelConfigTaskId.value !== '' || datasetModelConfigTaskId.value !== '');
+const isLoading = computed(() => datasetModelConfigTaskId.value !== '' || documentModelConfigTaskId.value !== '');
 
 const modelInput = props.node.inputs.find((input) => input.type === 'modelId');
 const isModelInputConnected = computed(() => modelInput?.status === WorkflowPortStatus.CONNECTED);
