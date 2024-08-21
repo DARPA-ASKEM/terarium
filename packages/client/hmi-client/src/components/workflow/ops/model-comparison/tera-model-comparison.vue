@@ -13,7 +13,7 @@
 							<p v-if="isEmpty(overview)" class="subdued">
 								Analyzing models metadata to generate a detailed comparison analysis...
 							</p>
-							<vue-markdown v-else :source="overview" />
+							<p v-html="overview" v-else />
 						</AccordionTab>
 					</Accordion>
 				</section>
@@ -126,7 +126,7 @@
 <script setup lang="ts">
 import { isEmpty, cloneDeep } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
-import VueMarkdown from 'vue-markdown-render';
+import markdownit from 'markdown-it';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -297,7 +297,7 @@ async function processCompareModels(modelIds, workflowId?: string, nodeId?: stri
 }
 
 function assignOverview(b64overview: string) {
-	overview.value = JSON.parse(b64DecodeUnicode(b64overview)).response;
+	overview.value = markdownit().render(JSON.parse(b64DecodeUnicode(b64overview)).response);
 }
 
 async function generateOverview() {
