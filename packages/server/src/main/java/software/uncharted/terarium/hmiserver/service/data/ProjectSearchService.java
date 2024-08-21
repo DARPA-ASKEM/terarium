@@ -130,7 +130,12 @@ public class ProjectSearchService {
 	}
 
 	public void forceESRefresh() throws IOException {
-		elasticService.forceRefresh(getIndex());
+		final ProjectDocument doc = new ProjectDocument();
+		doc.setCreatedOn(new Timestamp(System.currentTimeMillis()));
+		doc.setUpdatedOn(new Timestamp(System.currentTimeMillis()));
+		doc.setPermissionJoin(PermissionJoin.CreateProjectJoin());
+
+		elasticService.forceRefresh(getIndex(), doc);
 	}
 
 	public void updateProject(final Project project) throws IOException {
