@@ -432,15 +432,6 @@ public class ElasticsearchService {
 		}
 	}
 
-	public <T> void forceRefresh(final String index, final T document) throws IOException {
-		final IndexRequest<T> req = new IndexRequest.Builder<T>()
-			.index(index)
-			.document(document)
-			.refresh(Refresh.WaitFor)
-			.build();
-		client.index(req);
-	}
-
 	/**
 	 * Remove a document from an index.
 	 *
