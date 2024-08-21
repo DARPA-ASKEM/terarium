@@ -57,4 +57,10 @@ public class WorkflowNode<T> extends SupportAdditionalProperties implements Seri
 		clone.setWorkflowId(workflowId);
 		return clone;
 	}
+
+	public boolean getIsDeleted() {
+		if (this.isDeleted == null) return false;
+
+		return this.isDeleted;
+	}
 }
