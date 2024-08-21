@@ -88,7 +88,6 @@
 							@append-output="(event: any) => appendOutput(node, event)"
 							@append-input-port="(event: any) => appendInputPort(node, event)"
 							@update-state="(event: any) => updateWorkflowNodeState(node, event)"
-							@update-status="(status: OperatorStatus) => updateWorkflowNodeStatus(node, status)"
 							@open-drilldown="addOperatorToRoute(node.id)"
 						/>
 					</template>

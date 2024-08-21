@@ -12,7 +12,7 @@ import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeho
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
-const emit = defineEmits(['append-input-port', 'open-drilldown', 'update-status']);
+const emit = defineEmits(['append-input-port', 'open-drilldown']);
 
 const props = defineProps<{
 	node: WorkflowNode<ModelComparisonOperationState>;
