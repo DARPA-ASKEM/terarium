@@ -42,7 +42,7 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 		String researchPaper;
 
 		@JsonProperty("amr")
-		Model amr;
+		String amr;
 	}
 
 	@Data
