@@ -123,8 +123,8 @@ watch(
 	() => {
 		if (!isLoading.value) {
 			const state = cloneDeep(props.node.state);
-			state.documentModelConfigTaskId = documentModelConfigTaskId.value;
-			state.datasetModelConfigTaskId = datasetModelConfigTaskId.value;
+			state.documentModelConfigTaskId = '';
+			state.datasetModelConfigTaskId = '';
 			emit('update-state', state);
 		}
 	}

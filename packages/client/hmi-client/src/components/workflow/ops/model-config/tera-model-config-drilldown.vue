@@ -461,11 +461,7 @@ const suggestedConfigurationContext = ref<{
 	modelConfiguration: null
 });
 const isFetching = ref(false);
-const documentModelConfigTaskId = ref('');
-const datasetModelConfigTaskId = ref('');
-const isLoading = computed(
-	() => documentModelConfigTaskId.value !== '' || datasetModelConfigTaskId.value !== '' || isFetching.value
-);
+const isLoading = ref(false);
 
 const model = ref<Model | null>(null);
 const mmt = ref<MiraModel>(emptyMiraModel());
@@ -620,16 +616,16 @@ const resetConfiguration = () => {
 };
 
 watch(
-	() => props.node.state.documentModelConfigTaskId,
-	() => {
-		documentModelConfigTaskId.value = props.node.state.documentModelConfigTaskId ?? '';
-	}
-);
-
-watch(
-	() => props.node.state.datasetModelConfigTaskId,
-	() => {
-		datasetModelConfigTaskId.value = props.node.state.datasetModelConfigTaskId ?? '';
+	() => `${props.node.state.datasetModelConfigTaskId}:${props.node.state.documentModelConfigTaskId}`,
+	async (watchStr) => {
+		if (watchStr !== ':') {
+			isLoading.value = true;
+		} else {
+			isLoading.value = false;
+			const modelId = props.node.inputs[0].value?.[0];
+			if (!modelId) return;
+			await fetchConfigurations(modelId);
+		}
 	}
 );
 
