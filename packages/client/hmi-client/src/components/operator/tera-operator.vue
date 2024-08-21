@@ -36,7 +36,7 @@
 		<tera-operator-outputs
 			:outputs="node.outputs"
 			:menu-options="menuOptions"
-			@menu-selection="onSelection"
+			@menu-selection="(operatorType: string, outputPort: WorkflowPort) => onSelection(operatorType, outputPort)"
 			@port-mouseover="(event) => mouseoverPort(event, PortType.Output)"
 			@port-mouseleave="mouseleavePort"
 			@port-selected="(input: WorkflowPort, direction: WorkflowDirection) => emit('port-selected', input, direction)"
@@ -114,8 +114,8 @@ function mouseleavePort() {
 	emit('port-mouseleave');
 }
 
-function onSelection(operatorType: string) {
-	emit('menu-selection', operatorType);
+function onSelection(operatorType: string, outputPort: WorkflowPort) {
+	emit('menu-selection', operatorType, outputPort);
 }
 
 function resizeHandler() {
