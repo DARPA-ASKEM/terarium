@@ -18,7 +18,7 @@ public interface WorkflowRepository extends PSCrudSoftDeleteRepository<Workflow,
 		" where edgesData->>'isDeleted' = 'true'",
 		nativeQuery = true
 	)
-	List<Workflow> findEdgesToBeDeleted();
+	List<Workflow> findWorkflowsWithEdgesToBeDeleted();
 
 	/**
 	 * Find all workflows who have at least one edge or node marked for deletion
@@ -29,5 +29,5 @@ public interface WorkflowRepository extends PSCrudSoftDeleteRepository<Workflow,
 		" where nodesData->>'isDeleted' = 'true'",
 		nativeQuery = true
 	)
-	List<Workflow> findNodesToBeDeleted();
+	List<Workflow> findWorkflowsWithNodesToBeDeleted();
 }

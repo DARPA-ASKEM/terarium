@@ -14,12 +14,10 @@ import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
-import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowEdge;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowNode;
 import software.uncharted.terarium.hmiserver.repository.data.WorkflowRepository;
-import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
@@ -40,8 +38,8 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 	@Observed(name = "function_profile")
 	public Set<Workflow> findWorkflowsToClean() {
 		final Set<Workflow> workflows = new HashSet<>();
-		workflows.addAll(repository.findEdgesToBeDeleted());
-		workflows.addAll(repository.findNodesToBeDeleted());
+		workflows.addAll(repository.findWorkflowsWithEdgesToBeDeleted());
+		workflows.addAll(repository.findWorkflowsWithNodesToBeDeleted());
 		return workflows;
 	}
 
