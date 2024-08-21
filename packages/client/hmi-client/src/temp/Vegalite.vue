@@ -1,7 +1,7 @@
 <template>
 	<div style="padding: 2rem; display: flex; flex-direction: col">
 		<div>
-			<vega-chart expand :visualization-spec="forecastChartSpec" />
+			<vega-chart expandable :visualization-spec="forecastChartSpec" />
 			<div>
 				<div v-for="a in forecastAnnotations" :key="a.id">
 					{{ a.layerSpec.description }} <i class="pi pi-trash pi-trash" @click="removeAnnotation(a.id)" />
@@ -23,15 +23,15 @@
 		</div>
 		<div>
 			<vega-chart
-				:expand="onExpandErrorChart"
+				:expandable="onExpandErrorChart"
 				:interval-selection-signal-names="['brush']"
 				:visualization-spec="spec"
 				@chart-click="handleChartClick($event)"
 				@update-interval-selection="debounceHandleIntervalSelect"
 			/>
-			<vega-chart expand :visualization-spec="spec2" style="" />
+			<vega-chart expandable :visualization-spec="spec2" style="" />
 		</div>
-		<vega-chart expand :visualization-spec="specHistogram" />
+		<vega-chart expandable :visualization-spec="specHistogram" />
 	</div>
 </template>
 

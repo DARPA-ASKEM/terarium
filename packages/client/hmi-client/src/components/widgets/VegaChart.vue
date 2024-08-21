@@ -48,13 +48,13 @@ const props = withDefaults(
 		 * Whether to show the expand button.
 		 * If a function is provided, it will be called before expanding the chart, and the returned spec will be used for the expanded chart.
 		 */
-		expand?: boolean | ((spec: VisualizationSpec) => VisualizationSpec);
+		expandable?: boolean | ((spec: VisualizationSpec) => VisualizationSpec);
 	}>(),
 	{
 		areEmbedActionsVisible: true,
 		intervalSelectionSignalNames: () => [],
 		config: null,
-		expand: false
+		expandable: false
 	}
 );
 const vegaContainer = ref<HTMLElement>();
@@ -76,12 +76,12 @@ const onExpand = async () => {
 		let spec = deepToRaw(props.visualizationSpec) as any;
 		spec.width = defaultSize.width;
 		spec.height = defaultSize.height;
-		if (typeof props.expand === 'function') {
-			spec = props.expand(spec);
+		if (typeof props.expandable === 'function') {
+			spec = props.expandable(spec);
 		}
 		vegaVisualizationExpanded.value = await createVegaVisualization(vegaContainerLg.value, spec, props.config, {
 			actions: props.areEmbedActionsVisible,
-			expand: false
+			expandable: false
 		});
 	}
 };
@@ -132,7 +132,7 @@ async function createVegaVisualization(
 	container: HTMLElement,
 	visualizationSpec: VisualizationSpec,
 	config: Config | null,
-	options: { actions?: boolean; expand?: boolean } = {}
+	options: { actions?: boolean; expandable?: boolean } = {}
 ) {
 	const viz = await embed(
 		container,
@@ -156,7 +156,7 @@ async function createVegaVisualization(
 	});
 
 	// Add expand button to the vega embed container
-	if (options.expand) {
+	if (options.expandable) {
 		const expandButton = h(Button, {
 			icon: 'pi pi-expand',
 			class: 'expand-button',
@@ -181,7 +181,7 @@ watch([vegaContainer, () => props.visualizationSpec], async () => {
 	const spec = deepToRaw(props.visualizationSpec);
 	vegaVisualization.value = await createVegaVisualization(vegaContainer.value, spec, props.config, {
 		actions: props.areEmbedActionsVisible,
-		expand: !!props.expand
+		expandable: !!props.expandable
 	});
 });
 
