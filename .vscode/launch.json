@@ -7,7 +7,7 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "HMI Client",
+            "name": "HMI Client (Staging)",
             "runtimeExecutable": "yarn",
             "cwd": "${workspaceFolder}/packages/client/hmi-client",
             "runtimeArgs": [
