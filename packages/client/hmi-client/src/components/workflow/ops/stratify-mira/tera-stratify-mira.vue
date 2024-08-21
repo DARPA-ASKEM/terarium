@@ -9,7 +9,7 @@
 		v-bind="$attrs"
 	>
 		<div :tabName="StratifyTabs.Wizard">
-			<tera-drilldown-section class="pl-3 pr-3 wizard-section">
+			<tera-drilldown-section class="px-3 wizard-section">
 				<template #header-controls-left>
 					<section>
 						<h5>Stratification settings</h5>
