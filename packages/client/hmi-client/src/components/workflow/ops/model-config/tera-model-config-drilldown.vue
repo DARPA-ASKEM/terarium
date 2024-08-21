@@ -418,6 +418,7 @@ const initializeEditor = (editorInstance: any) => {
 };
 
 const extractConfigurationsFromInputs = async () => {
+	const state = cloneDeep(props.node.state);
 	if (!model.value?.id) {
 		return;
 	}
@@ -428,6 +429,7 @@ const extractConfigurationsFromInputs = async () => {
 			props.node.workflowId,
 			props.node.id
 		);
+		state.documentModelConfigTaskId = resp.id;
 		documentModelConfigTaskId.value = resp.id;
 	}
 	if (datasetIds.value) {
@@ -440,7 +442,9 @@ const extractConfigurationsFromInputs = async () => {
 			props.node.id
 		);
 		datasetModelConfigTaskId.value = resp.id;
+		state.datasetModelConfigTaskId = resp.id;
 	}
+	emit('update-state', state);
 };
 
 const configModelEventHandler = async (event: ClientEvent<TaskResponse>) => {

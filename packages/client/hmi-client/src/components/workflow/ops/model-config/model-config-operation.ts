@@ -10,6 +10,8 @@ export interface ModelConfigOperationState extends BaseState {
 	transientModelConfig: ModelConfiguration;
 	notebookHistory: NotebookHistory[];
 	hasCodeRun: boolean;
+	datasetModelConfigTaskId?: string;
+	documentModelConfigTaskId?: string;
 }
 
 export const blankModelConfig: ModelConfiguration = {

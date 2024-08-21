@@ -1,6 +1,7 @@
 <template>
 	<section>
 		<tera-operator-placeholder :node="node" />
+		<tera-progress-spinner is-centered :font-size="2" v-if="isLoading" />
 		<Button
 			:label="isModelInputConnected ? 'Open' : 'Attach a model'"
 			@click="emit('open-drilldown')"
@@ -13,18 +14,41 @@
 
 <script setup lang="ts">
 import { cloneDeep } from 'lodash';
-import { computed, watch } from 'vue';
+import { computed, watch, ref } from 'vue';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { getModel, getModelConfigurationsForModel } from '@/services/model';
 import { postAsConfiguredModel } from '@/services/model-configurations';
+import { useClientEvent } from '@/composables/useClientEvent';
+import type { TaskResponse, ClientEvent } from '@/types/Types';
+import { ClientEventType, TaskStatus } from '@/types/Types';
 import { ModelConfigOperation, ModelConfigOperationState, blankModelConfig } from './model-config-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelConfigOperationState>;
 }>();
 const emit = defineEmits(['open-drilldown', 'append-input-port', 'update-state', 'append-output']);
+
+const documentModelConfigTaskId = ref<string>('');
+const datasetModelConfigTaskId = ref<string>('');
+
+const configModelEventHandler = async (event: ClientEvent<TaskResponse>) => {
+	const taskIdRefs = {
+		[ClientEventType.TaskGollmConfigureModel]: documentModelConfigTaskId,
+		[ClientEventType.TaskGollmConfigureFromDataset]: datasetModelConfigTaskId
+	};
+	if (event.data?.id !== taskIdRefs[event.type].value) return;
+	if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
+		taskIdRefs[event.type].value = '';
+	}
+};
+
+useClientEvent(ClientEventType.TaskGollmConfigureModel, configModelEventHandler);
+useClientEvent(ClientEventType.TaskGollmConfigureFromDataset, configModelEventHandler);
+
+const isLoading = computed(() => datasetModelConfigTaskId.value !== '' || datasetModelConfigTaskId.value !== '');
 
 const modelInput = props.node.inputs.find((input) => input.type === 'modelId');
 const isModelInputConnected = computed(() => modelInput?.status === WorkflowPortStatus.CONNECTED);
@@ -78,5 +102,19 @@ watch(
 		}
 	},
 	{ deep: true }
+);
+
+watch(
+	() => props.node.state.documentModelConfigTaskId,
+	() => {
+		documentModelConfigTaskId.value = props.node.state.documentModelConfigTaskId ?? '';
+	}
+);
+
+watch(
+	() => props.node.state.datasetModelConfigTaskId,
+	() => {
+		datasetModelConfigTaskId.value = props.node.state.datasetModelConfigTaskId ?? '';
+	}
 );
 </script>
