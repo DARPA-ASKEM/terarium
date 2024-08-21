@@ -117,4 +117,16 @@ watch(
 		datasetModelConfigTaskId.value = props.node.state.datasetModelConfigTaskId ?? '';
 	}
 );
+
+watch(
+	() => isLoading.value,
+	() => {
+		if (!isLoading.value) {
+			const state = cloneDeep(props.node.state);
+			state.documentModelConfigTaskId = documentModelConfigTaskId.value;
+			state.datasetModelConfigTaskId = datasetModelConfigTaskId.value;
+			emit('update-state', state);
+		}
+	}
+);
 </script>

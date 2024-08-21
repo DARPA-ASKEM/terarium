@@ -215,7 +215,6 @@ import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Textarea from 'primevue/textarea';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import { useClientEvent } from '@/composables/useClientEvent';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -242,8 +241,8 @@ import {
 	getAsConfiguredModel
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { Model, ModelConfiguration, TaskResponse, ClientEvent } from '@/types/Types';
-import { ClientEventType, Observable, TaskStatus } from '@/types/Types';
+import type { Model, ModelConfiguration } from '@/types/Types';
+import { Observable } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
@@ -447,21 +446,6 @@ const extractConfigurationsFromInputs = async () => {
 	emit('update-state', state);
 };
 
-const configModelEventHandler = async (event: ClientEvent<TaskResponse>) => {
-	const taskIdRefs = {
-		[ClientEventType.TaskGollmConfigureModel]: documentModelConfigTaskId,
-		[ClientEventType.TaskGollmConfigureFromDataset]: datasetModelConfigTaskId
-	};
-	if (event.data?.id !== taskIdRefs[event.type].value) return;
-	if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
-		taskIdRefs[event.type].value = '';
-	}
-	if (event.data.status === TaskStatus.Success && model.value?.id) await fetchConfigurations(model.value.id);
-};
-
-useClientEvent(ClientEventType.TaskGollmConfigureModel, configModelEventHandler);
-useClientEvent(ClientEventType.TaskGollmConfigureFromDataset, configModelEventHandler);
-
 const selectedOutputId = ref<string>('');
 const selectedConfigId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
 let originalConfig: ModelConfiguration | null = null;
@@ -636,6 +620,20 @@ const resetConfiguration = () => {
 		rejectLabel: 'Cancel'
 	});
 };
+
+watch(
+	() => props.node.state.documentModelConfigTaskId,
+	() => {
+		documentModelConfigTaskId.value = props.node.state.documentModelConfigTaskId ?? '';
+	}
+);
+
+watch(
+	() => props.node.state.datasetModelConfigTaskId,
+	() => {
+		datasetModelConfigTaskId.value = props.node.state.datasetModelConfigTaskId ?? '';
+	}
+);
 
 watch(
 	() => model.value,
