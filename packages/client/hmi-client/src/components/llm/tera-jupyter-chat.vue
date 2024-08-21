@@ -37,8 +37,8 @@
 </template>
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from 'vue';
-import { createMessageId, getSessionManager, JupyterMessage, KernelState } from '@/services/jupyter';
-import type { CsvAsset, NotebookSession } from '@/types/Types';
+import { createMessageId, getSessionManager, JupyterMessage, KernelState, INotebookItem } from '@/services/jupyter';
+import type { NotebookSession } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import TeraBeakerInput from '@/components/llm/tera-beaker-input.vue';
 import TeraJupyterResponse from '@/components/llm/tera-jupyter-response.vue';
@@ -54,18 +54,7 @@ const isExecutingCode = ref(false);
 const messageContainer = ref(<HTMLElement | null>null);
 const activeSessions = ref(null);
 const runningSessions = ref();
-const notebookItems = ref(
-	<
-		{
-			query_id: string;
-			query: string | null;
-			timestamp: string;
-			messages: JupyterMessage[];
-			resultingCsv: CsvAsset | null;
-			executions: any[];
-		}[]
-	>[]
-);
+const notebookItems = ref(<INotebookItem[]>[]);
 const notebookCells = ref<(typeof TeraJupyterResponse)[]>([]);
 
 const emit = defineEmits([
@@ -210,8 +199,8 @@ const addCodeCell = () => {
 const updateNotebookCells = (message) => {
 	// This computed property groups Jupyter messages into queries
 	// and stores resulting csv after each query.
-	let notebookItem;
-	const parentId: String | null =
+	let notebookItem: INotebookItem | undefined;
+	const parentId: string | null =
 		message.metadata?.notebook_item || message.parent_header?.msg_id || message.header?.msg_id || null;
 
 	// Update existing cell
@@ -222,7 +211,7 @@ const updateNotebookCells = (message) => {
 		const query = message.header.msg_type === 'llm_request' ? message.content.request : null;
 		// New cell
 		notebookItem = {
-			query_id: parentId,
+			query_id: parentId ?? '',
 			query,
 			timestamp: message.parent_header.date,
 			messages: [],
@@ -249,6 +238,9 @@ const updateNotebookCells = (message) => {
 			codeCell.content.code = message.content.code;
 		}
 		return;
+	} else if (['stream', 'display_data', 'execute_result'].indexOf(message.header.msg_type) > -1) {
+		// remove the old output cells if a new output type is received
+		notebookItem.messages = notebookItem.messages.filter((msg) => msg.header.msg_type !== message.header.msg_type);
 	}
 
 	notebookItem.messages.push(message);
@@ -261,9 +253,16 @@ const updateKernelStatus = (kernelStatus) => {
 const newJupyterMessage = (jupyterMessage) => {
 	const msgType = jupyterMessage.header.msg_type;
 	if (
-		['stream', 'code_cell', 'llm_request', 'llm_thought', 'llm_response', 'beaker_response', 'dataset'].indexOf(
-			msgType
-		) > -1
+		[
+			'stream',
+			'code_cell',
+			'llm_request',
+			'llm_thought',
+			'llm_response',
+			'beaker_response',
+			'dataset',
+			'display_data'
+		].indexOf(msgType) > -1
 	) {
 		messagesHistory.value.push(jupyterMessage);
 		updateNotebookCells(jupyterMessage);
