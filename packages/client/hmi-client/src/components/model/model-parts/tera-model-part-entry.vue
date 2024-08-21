@@ -103,6 +103,9 @@ section {
 		'expression expression expression expression expression'
 		'description description description description description';
 	grid-template-columns: max-content max-content max-content auto max-content;
+	grid-auto-flow: dense;
+	max-width: 100%;
+	overflow: auto;
 	gap: var(--gap-2);
 	align-items: center;
 	font-size: var(--font-caption);
@@ -137,6 +140,8 @@ h6 {
 
 .unit {
 	grid-area: unit;
+	max-width: 20rem;
+	overflow: auto;
 }
 
 .expression {

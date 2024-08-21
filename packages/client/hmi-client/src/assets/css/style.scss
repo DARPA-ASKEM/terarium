@@ -63,6 +63,31 @@
 		}
 	}
 
+.kbd-shortcut {
+		display: flex;
+		align-items: center;
+		gap: var(--gap-1);
+		> kbd {
+			color: var(--text-color-subdued);
+			background-color: var(--surface-section);
+			border: 1px solid var(--surface-border);
+			border-radius: var(--border-radius);
+			padding: var(--gap-1) var(--gap-2);
+			font-size: var(--font-caption);
+			> i {
+				font-size: var(--font-tiny);
+			}
+		}
+	}
+
+	.kbd-shortcut-sm {
+		@extend .kbd-shortcut;
+		> kbd {
+			padding: var(--gap-0-5) var(--gap-1);
+			font-size: var(--font-tiny);
+		}
+	}
+
 	/* Overwrite some PrimeVue new themes */
 	.p-speeddial-item.p-focus > .p-speeddial-action {
 		box-shadow: none;

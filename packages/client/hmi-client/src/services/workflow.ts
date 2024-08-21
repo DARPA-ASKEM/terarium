@@ -56,7 +56,7 @@ export class WorkflowWrapper {
 			const nodeId = nodes[i].id;
 			const updated = updatedNodeMap.get(nodeId);
 			if (updated) {
-				if ((updated.version as number) > (nodes[i].version as number)) {
+				if (!nodes[i].version || (updated.version as number) > (nodes[i].version as number)) {
 					nodes[i].version = updated.version;
 					nodes[i].isDeleted = updated.isDeleted;
 					nodes[i].status = updated.status;
@@ -778,12 +778,11 @@ function assetToOperation(operationMap: Map<string, Operation>) {
 			input.type.split('|').forEach((subType) => {
 				if (!result.has(subType)) {
 					result.set(subType, []);
-				} else {
-					result.get(subType)?.push({
-						type: key,
-						displayName: operation.displayName
-					});
 				}
+				result.get(subType)?.push({
+					type: key,
+					displayName: operation.displayName
+				});
 			});
 		});
 	});
@@ -813,11 +812,27 @@ export function getNodeMenu(operationMap: Map<string, Operation>) {
 	const inputMap = assetToOperation(operationMap);
 	const outputMap = operationToAsset(operationMap);
 
-	const uniqInputMap: Map<string, OperatorMenuItem[]> = new Map();
-	inputMap.forEach((menuItem, key) => uniqInputMap.set(key, _.uniqBy(menuItem, 'type')));
+	// Going from
+	//   outputMap(Operator => assetId[]) => inputMap(assetId => Operator[]) ;
+	//
+	// For example
+	//   Calibrate => [datasetId, modelConfig] => [Validate, Simulate, DataTransform...]
+	outputMap.forEach((assetTypes, operationKey) => {
+		const check = new Set<String>();
+		const menuItems: OperatorMenuItem[] = [];
 
-	outputMap.forEach((value, key) => {
-		menuOptions.set(key, uniqInputMap.get(value[0]) ?? []);
+		assetTypes.forEach((assetType) => {
+			const availableInputOperations = inputMap.get(assetType) ?? [];
+
+			availableInputOperations.forEach((item) => {
+				if (!check.has(item.type)) {
+					check.add(item.type);
+					menuItems.push(item);
+				}
+			});
+		});
+		menuOptions.set(operationKey, menuItems);
 	});
+
 	return menuOptions;
 }

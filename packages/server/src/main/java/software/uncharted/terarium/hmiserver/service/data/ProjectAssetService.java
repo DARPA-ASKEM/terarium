@@ -79,10 +79,6 @@ public class ProjectAssetService {
 		projectAsset.setAssetType(assetType);
 		projectAsset.setAssetName(asset.getName());
 
-		if (asset instanceof Model) {
-			projectAsset.setAssetName(((Model) asset).getHeader().getName());
-		}
-
 		projectAsset = projectAssetRepository.save(projectAsset);
 
 		project.getProjectAssets().add(projectAsset);
