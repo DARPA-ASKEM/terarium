@@ -145,5 +145,14 @@ public class NotificationServiceTests extends TerariumApplicationTests {
 		Assertions.assertEquals(1, resp3.size());
 		Assertions.assertNotNull(resp3.get(0).getNotificationEvents());
 		Assertions.assertEquals(4, resp3.get(0).getNotificationEvents().size());
+
+		final List<NotificationGroup> resp4 = notificationService.getUnAckedNotificationGroupsCreatedSinceLatestEventOnly(
+			currentUserService.get().getId(),
+			since
+		);
+
+		Assertions.assertEquals(1, resp4.size());
+		Assertions.assertNotNull(resp4.get(0).getNotificationEvents());
+		Assertions.assertEquals(1, resp4.get(0).getNotificationEvents().size());
 	}
 }
