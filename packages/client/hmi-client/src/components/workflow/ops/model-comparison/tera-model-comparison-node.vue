@@ -9,7 +9,7 @@
 import { watch, computed } from 'vue';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import { WorkflowNode, WorkflowPortStatus, OperatorStatus } from '@/types/workflow';
+import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const emit = defineEmits(['append-input-port', 'open-drilldown', 'update-status']);
@@ -18,13 +18,7 @@ const props = defineProps<{
 	node: WorkflowNode<ModelComparisonOperationState>;
 }>();
 
-const hasAtLeastTwoValues = computed(() => {
-	const flag = props.node.inputs.filter((input) => input.value).length >= 2;
-	// This is a custom way of granting a default status to the operator, since it has no output
-	if (flag) emit('update-status', OperatorStatus.DEFAULT);
-	else emit('update-status', OperatorStatus.INVALID);
-	return flag;
-});
+const hasAtLeastTwoValues = computed(() => props.node.inputs.filter((input) => input.value).length >= 2);
 
 watch(
 	() => props.node.inputs,

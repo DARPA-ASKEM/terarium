@@ -10,10 +10,10 @@
 				<section class="comparison-overview">
 					<Accordion :activeIndex="0">
 						<AccordionTab header="Overview">
-							<p v-if="isEmpty(node.state.overview)" class="subdued">
+							<p v-if="isEmpty(overview)" class="subdued">
 								Analyzing models metadata to generate a detailed comparison analysis...
 							</p>
-							<vue-markdown v-else :source="node.state.overview" />
+							<vue-markdown v-else :source="overview" />
 						</AccordionTab>
 					</Accordion>
 				</section>
@@ -137,7 +137,7 @@ import { compareModels } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
 import { getModel } from '@/services/model';
 import { ClientEvent, ClientEventType, TaskResponse, TaskStatus, type Model } from '@/types/Types';
-import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
+import { OperatorStatus, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import { onMounted, onUnmounted, ref } from 'vue';
@@ -150,18 +150,17 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
 import { saveCodeToState } from '@/services/notebook';
-import { getImages, addImage, deleteImages } from '@/services/image';
+import { getImage, getImages, addImage, deleteImages } from '@/services/image';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import { b64DecodeUnicode } from '@/utils/binary';
 import { useClientEvent } from '@/composables/useClientEvent';
-import { CompareModelsResponseType } from '@/types/common';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelComparisonOperationState>;
 }>();
 
-const emit = defineEmits(['update-state', 'close']);
+const emit = defineEmits(['update-state', 'update-status', 'close']);
 
 enum Tabs {
 	Wizard = 'Wizard',
@@ -183,6 +182,7 @@ const modelCardsToCompare = ref<any[]>([]);
 const fields = ref<string[]>([]);
 
 const isLoadingStructuralComparisons = ref(false);
+const overview = ref<string | null>(null);
 const structuralComparisons = ref<string[]>([]);
 const code = ref(props.node.state.notebookHistory?.[0]?.code ?? '');
 const llmThoughts = ref<any[]>([]);
@@ -296,14 +296,21 @@ async function processCompareModels(modelIds, workflowId?: string, nodeId?: stri
 	}
 }
 
-function generateOverview() {
+function assignOverview(b64overview: string) {
+	overview.value = JSON.parse(b64DecodeUnicode(b64overview)).response;
+}
+
+async function generateOverview() {
 	// Generate if there is no overview and the comparison task has been completed
-	if (!compareModelsTaskOutput || !isEmpty(props.node.state.overview)) return;
-	const str = b64DecodeUnicode(compareModelsTaskOutput);
-	const parsedValue = JSON.parse(str) as CompareModelsResponseType;
+	if (!compareModelsTaskOutput || props.node.state.overviewId) return;
+	const newOverviewId = uuidv4();
+	console.log(newOverviewId);
+	addImage(newOverviewId, `data:text/plain;base64,${compareModelsTaskOutput}`);
+	assignOverview(compareModelsTaskOutput);
 	const state = cloneDeep(props.node.state);
-	state.overview = parsedValue.response;
+	state.overviewId = newOverviewId;
 	emit('update-state', state);
+	emit('update-status', OperatorStatus.DEFAULT); // This is a custom way of granting a default status to the operator, since it has no output
 }
 
 useClientEvent(ClientEventType.TaskGollmCompareModel, (event: ClientEvent<TaskResponse>) => {
@@ -318,6 +325,12 @@ onMounted(async () => {
 		isLoadingStructuralComparisons.value = true;
 		structuralComparisons.value = await getImages(props.node.state.comparisonImageIds);
 		isLoadingStructuralComparisons.value = false;
+	}
+	if (props.node.state.overviewId) {
+		const b64overview = await getImage(props.node.state.overviewId);
+		console.log('overview', props.node.state.overviewId);
+		console.log(b64overview);
+		// if (b64overview) assignOverview(b64overview.split(',').slice(1).join(','));
 	}
 
 	const modelIds: string[] = props.node.inputs
