@@ -71,14 +71,6 @@ public class ElasticsearchConfiguration {
 		return String.join("_", index.prefix, index.workflowRoot, index.suffix);
 	}
 
-	public String getDecapodesConfigurationIndex() {
-		return String.join("_", index.prefix, index.decapodesConfigurationRoot, index.suffix);
-	}
-
-	public String getDecapodesContextIndex() {
-		return String.join("_", index.prefix, index.decapodesContextRoot, index.suffix);
-	}
-
 	public String getProjectAlias() {
 		return String.join("_", index.prefix, index.projectRoot);
 	}
@@ -123,14 +115,6 @@ public class ElasticsearchConfiguration {
 		return String.join("_", index.prefix, index.workflowRoot);
 	}
 
-	public String getDecapodesConfigurationAlias() {
-		return String.join("_", index.prefix, index.decapodesConfigurationRoot);
-	}
-
-	public String getDecapodesContextAlias() {
-		return String.join("_", index.prefix, index.decapodesContextRoot);
-	}
-
 	public record Index(
 		String prefix,
 		String suffix,
@@ -144,8 +128,6 @@ public class ElasticsearchConfiguration {
 		String modelConfigurationRoot,
 		String notebookSessionRoot,
 		String simulationRoot,
-		String workflowRoot,
-		String decapodesConfigurationRoot,
-		String decapodesContextRoot
+		String workflowRoot
 	) {}
 }
