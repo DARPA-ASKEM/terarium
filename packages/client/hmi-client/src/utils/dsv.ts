@@ -71,13 +71,13 @@ export const dsvParse = (text: string) => {
 		throw Error('unable to parse information');
 	}
 
-	const result: DSVEntry[] = [];
+	const entries: DSVEntry[] = [];
 	for (let i = hasColLabels ? 1 : 0; i < lines.length; i++) {
 		const line = lines[i];
 		const tokens = line.split(delimeter);
 
 		for (let j = hasRowLabels ? 1 : 0; j < tokens.length; j++) {
-			result.push({
+			entries.push({
 				colIdx: hasColLabels ? i - 1 : i,
 				colLabel: hasColLabels ? lineOne[j] : null,
 				rowIdx: hasColLabels ? j - 1 : j,
@@ -86,5 +86,11 @@ export const dsvParse = (text: string) => {
 			});
 		}
 	}
-	return result;
+
+	return {
+		delimeter,
+		hasColLabels,
+		hasRowLabels,
+		entries
+	};
 };
