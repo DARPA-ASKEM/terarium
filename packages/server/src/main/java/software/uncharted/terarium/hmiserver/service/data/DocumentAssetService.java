@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
@@ -24,6 +25,8 @@ public class DocumentAssetService extends TerariumAssetServiceWithSearch<Documen
 
 	private final EmbeddingService embeddingService;
 
+	private final Environment env;
+
 	public DocumentAssetService(
 		final ObjectMapper objectMapper,
 		final Config config,
@@ -33,7 +36,8 @@ public class DocumentAssetService extends TerariumAssetServiceWithSearch<Documen
 		final ProjectAssetService projectAssetService,
 		final S3ClientService s3ClientService,
 		final DocumentRepository repository,
-		final EmbeddingService embeddingService
+		final EmbeddingService embeddingService,
+		final Environment env
 	) {
 		super(
 			objectMapper,
@@ -47,6 +51,7 @@ public class DocumentAssetService extends TerariumAssetServiceWithSearch<Documen
 			DocumentAsset.class
 		);
 		this.embeddingService = embeddingService;
+		this.env = env;
 	}
 
 	@Override
@@ -76,6 +81,18 @@ public class DocumentAssetService extends TerariumAssetServiceWithSearch<Documen
 		return super.createAsset(asset, projectId, hasWritePermission);
 	}
 
+	private boolean isRunningTestProfile() {
+		final String[] activeProfiles = env.getActiveProfiles();
+
+		for (final String profile : activeProfiles) {
+			if ("test".equals(profile)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	@Override
 	@Observed(name = "function_profile")
 	public Optional<DocumentAsset> updateAsset(
@@ -101,7 +118,7 @@ public class DocumentAssetService extends TerariumAssetServiceWithSearch<Documen
 
 		final DocumentAsset updated = updatedOptional.get();
 
-		if (updated.getPublicAsset() && !updated.getTemporary()) {
+		if (!isRunningTestProfile() && updated.getPublicAsset() && !updated.getTemporary()) {
 			if (updated.getMetadata() != null && updated.getMetadata().containsKey("gollmCard")) {
 				// update embeddings
 				final JsonNode card = updated.getMetadata().get("gollmCard");
