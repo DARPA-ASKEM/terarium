@@ -48,12 +48,16 @@ public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
 	@Autowired
 	TerariumAssetCloneService cloneService;
 
+	@Autowired
+	private ProjectSearchService projectSearchService;
+
 	Project project;
 
 	static ObjectMapper objectMapper = new ObjectMapper();
 
 	@BeforeEach
 	public void setup() throws IOException {
+		projectSearchService.setupIndexAndAliasAndEnsureEmpty();
 		documentService.setupIndexAndAliasAndEnsureEmpty();
 		project = projectService.createProject(
 			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
@@ -62,7 +66,8 @@ public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
 
 	@AfterEach
 	public void teardown() throws IOException {
-		documentService.setupIndexAndAliasAndEnsureEmpty();
+		documentService.teardownIndexAndAlias();
+		projectSearchService.teardownIndexAndAlias();
 	}
 
 	static Grounding createGrounding(final String key) {
