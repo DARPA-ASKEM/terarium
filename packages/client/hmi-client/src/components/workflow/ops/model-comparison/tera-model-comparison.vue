@@ -100,8 +100,8 @@
 
 				<!-- Legend -->
 				<template #footer v-if="isLoadingStructuralComparisons || !isEmpty(structuralComparisons)">
-					<div class="legend flex align-items-center gap-7">
-						<span class="flex gap-5">
+					<div class="legend flex align-items-center gap-4">
+						<span class="flex gap-3">
 							<span class="flex align-items-center gap-2">
 								<span class="legend-circle subdued">Name</span>
 								<span>State variable nodes</span>
@@ -111,10 +111,11 @@
 								<span>Transition nodes</span>
 							</span>
 						</span>
-						<span class="flex gap-6">
-							<span class="legend-line orange">Model 1</span>
-							<span class="legend-line blue">Model 2</span>
-							<span class="legend-line red">Common to both models</span>
+						<span class="flex gap-4">
+							<span class="legend-line blue">Model 1</span>
+							<span class="legend-line green">Model 2</span>
+							<span class="legend-line orange">Common to both models</span>
+							<span class="legend-line red">Equal or related transitions</span>
 						</span>
 					</div>
 				</template>
@@ -288,8 +289,8 @@ async function buildJupyterContext() {
 	}
 }
 
-async function processCompareModels(modelIds, workflowId?: string, nodeId?: string) {
-	const taskRes = await compareModels(modelIds, workflowId, nodeId);
+async function processCompareModels(modelIds: string[]) {
+	const taskRes = await compareModels(modelIds, props.node.workflowId, props.node.id);
 	compareModelsTaskId = taskRes.id;
 	if (taskRes.status === TaskStatus.Success) {
 		compareModelsTaskOutput = taskRes.output;
@@ -301,13 +302,9 @@ function assignOverview(b64overview: string) {
 }
 
 async function generateOverview() {
-	// Generate if there is no overview and the comparison task has been completed
-	if (!compareModelsTaskOutput || props.node.state.overviewId) return;
-	// const newOverviewId = uuidv4(); // TODO: Save overview to S3
+	// Generate once the comparison task has been completed
+	if (!compareModelsTaskOutput) return;
 	assignOverview(compareModelsTaskOutput);
-	// const state = cloneDeep(props.node.state);
-	// state.overviewId = newOverviewId;
-	// emit('update-state', state);
 	emit('update-status', OperatorStatus.DEFAULT); // This is a custom way of granting a default status to the operator, since it has no output
 }
 
@@ -324,8 +321,6 @@ onMounted(async () => {
 		structuralComparisons.value = await getImages(props.node.state.comparisonImageIds);
 		isLoadingStructuralComparisons.value = false;
 	}
-	// TODO: Get text from S3
-	// if (props.node.state.overviewId)
 
 	const modelIds: string[] = props.node.inputs
 		.filter((input) => input.status === WorkflowPortStatus.CONNECTED)
@@ -446,6 +441,9 @@ ul {
 .legend {
 	font-size: var(--font-caption);
 	flex: 1;
+	margin-bottom: var(--gap-4);
+	overflow-x: auto;
+	padding: 0 var(--gap-4);
 }
 
 .legend-circle {
@@ -472,15 +470,20 @@ ul {
 	position: absolute;
 	top: 50%;
 	left: 0;
-	width: 24px;
-	height: 2px;
+	width: 2px;
+	height: 24px;
+	transform: translate(-10px, -10px);
+}
+.legend-line.red::before {
 	background-color: red;
-	transform: translate(-30px, -50%);
 }
 .legend-line.orange::before {
 	background-color: orange;
 }
 .legend-line.blue::before {
 	background-color: blue;
+}
+.legend-line.green::before {
+	background-color: lightgreen;
 }
 </style>
