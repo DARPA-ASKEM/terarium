@@ -761,7 +761,7 @@ watch(
 			const csv = (csvAsset.value as CsvAsset).csv; // As we already called initialized this should not be undefined.
 			const csvRaw = csv.map((d) => d.join(',')).join('\n');
 			const groundTruth = csvParse(csvRaw, autoType);
-			errorData.value = await getErrorData(groundTruth, runResult.value, mapping.value);
+			errorData.value = getErrorData(groundTruth, runResult.value, mapping.value);
 		}
 	},
 	{ immediate: true }

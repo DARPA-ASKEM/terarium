@@ -43,9 +43,9 @@ export const mergeResults = (
  * transform data, utilize mae, return mean aboslute error for charts.
  * Note: This will only compare rows with the same timestep value.
  */
-export async function getErrorData(groundTruth: DataArray, simulationData: DataArray, mapping: CalibrateMap[]) {
+export function getErrorData(groundTruth: DataArray, simulationData: DataArray, mapping: CalibrateMap[]) {
 	const errors: DataArray = [];
-	const pyciemssMap = await parsePyCiemssMap(simulationData[0]);
+	const pyciemssMap = parsePyCiemssMap(simulationData[0]);
 	const datasetTimeCol = mapping.find((ele) => ele.modelVariable === 'timestamp')?.datasetVariable;
 	if (!datasetTimeCol) {
 		console.error('No dataset time column found to getErrorData');
