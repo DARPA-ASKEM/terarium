@@ -14,8 +14,7 @@ export const stddev = (numberList: number[], usePopulation = false) => {
 	);
 };
 
-// Get the mean absolute error between two arrays.
-// Assume each array is formed: [ { timestamp: value }, { timestamp: value } ...]
+// Get the mean absolute error between two maps.
 export const mae = (map1: Map<number, number>, map2: Map<number, number>) => {
 	const sharedTimes = [...map1.keys()].filter((key) => map2.has(key));
 	const error = _.meanBy(sharedTimes, (time) => {
