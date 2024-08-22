@@ -34,12 +34,16 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 	private DocumentAssetService documentAssetService;
 
 	@Autowired
+	private ProjectSearchService projectSearchService;
+
+	@Autowired
 	private ProjectService projectService;
 
 	Project project;
 
 	@BeforeEach
 	public void setup() throws IOException {
+		projectSearchService.setupIndexAndAliasAndEnsureEmpty();
 		documentAssetService.setupIndexAndAliasAndEnsureEmpty();
 
 		project = projectService.createProject(
@@ -50,6 +54,7 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 	@AfterEach
 	public void teardown() throws IOException {
 		documentAssetService.teardownIndexAndAlias();
+		projectSearchService.teardownIndexAndAlias();
 	}
 
 	static Grounding createGrounding(final String key) {
