@@ -338,7 +338,7 @@ onMounted(async () => {
 	fields.value = [...new Set(modelCardsToCompare.value.flatMap((card) => (card ? Object.keys(card) : [])))];
 
 	buildJupyterContext();
-	processCompareModels(modelIds, props.node.workflowId, props.node.id);
+	processCompareModels(modelIds);
 });
 
 onUnmounted(() => {
