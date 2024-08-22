@@ -1,19 +1,4 @@
 <template>
-	<!-- Toolbar -->
-	<div class="notebook-toolbar">
-		<div class="toolbar-left-side">
-			<Dropdown :disabled="true" :model-value="contextLanguage" :options="contextLanguageOptions" />
-			<div class="flex gap-1 mr-2">
-				<InputSwitch v-model="showAssistant" class="mr-1" />
-				<img src="@assets/svg/icons/magic.svg" alt="Magic icon" />
-				<span>AI assistant</span>
-			</div>
-		</div>
-		<div class="toolbar-right-side">
-			<slot name="toolbar-right-side" />
-		</div>
-	</div>
-
 	<!-- AI assistant -->
 	<div v-if="showAssistant" class="ai-assistant">
 		<!-- <i class="pi pi-magic" /> -->
@@ -41,11 +26,25 @@
 		<i v-if="kernelStatus === KernelState.busy" class="pi pi-spin pi-spinner kernel-status" />
 		<Button v-else severity="secondary" icon="pi pi-send" @click="submitQuestion" />
 	</div>
+
+	<!-- Toolbar -->
+	<div class="notebook-toolbar">
+		<div class="toolbar-left-side">
+			<Dropdown :disabled="true" :model-value="contextLanguage" :options="contextLanguageOptions" />
+			<!---<div class="flex gap-1 mr-2">
+				<InputSwitch v-model="showAssistant" class="mr-1" />
+				<img src="@assets/svg/icons/magic.svg" alt="Magic icon" />
+				<span>AI assistant</span>
+			</div>-->
+		</div>
+		<div class="toolbar-right-side">
+			<slot name="toolbar-right-side" />
+		</div>
+	</div>
 </template>
 
 <script setup lang="ts">
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
-import InputSwitch from 'primevue/inputswitch';
 import Button from 'primevue/button';
 import { ref } from 'vue';
 import { KernelState, KernelSessionManager } from '@/services/jupyter';
@@ -97,6 +96,7 @@ const submitQuestion = () => {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
+	margin-bottom: var(--gap-small);
 }
 
 .notebook-toolbar {

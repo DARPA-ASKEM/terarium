@@ -33,7 +33,7 @@
 					>
 						<template #toolbar-right-side>
 							<Button label="Reset" outlined severity="secondary" size="small" @click="resetModel" />
-							<Button icon="pi pi-play" label="Run" size="small" @click="runFromCodeWrapper" />
+							<Button label="Run" size="small" @click="runFromCodeWrapper" />
 						</template>
 					</tera-notebook-jupyter-input>
 				</Suspense>
@@ -406,8 +406,10 @@ onUnmounted(() => {
 	flex-direction: column;
 }
 
-.notebook-section:deep(main .toolbar) {
-	padding-left: var(--gap-medium);
+.notebook-section {
+	background-color: var(--surface-disabled);
+	border-right: 1px solid var(--surface-border-dark);
+	padding: var(--gap);
 }
 
 .notebook-section:deep(main) {
