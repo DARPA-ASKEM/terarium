@@ -27,7 +27,9 @@
 				</template>
 			</Toolbar>
 			<figure ref="graphElement" class="graph-element">
-				<tera-progress-spinner class="spinner" is-centered :font-size="2"> Loading... </tera-progress-spinner>
+				<tera-progress-spinner v-if="!renderer" class="spinner" is-centered :font-size="2">
+					Loading...
+				</tera-progress-spinner>
 			</figure>
 			<ul class="legend" v-if="!isEmpty(graphLegendLabels)">
 				<li v-for="(label, index) in graphLegendLabels" :key="index">
@@ -37,7 +39,9 @@
 			</ul>
 		</tera-resizable-panel>
 		<figure v-else-if="model" ref="graphElement" class="graph-element preview">
-			<tera-progress-spinner class="spinner" is-centered :font-size="2"> Loading... </tera-progress-spinner>
+			<tera-progress-spinner v-if="!renderer" class="spinner" is-centered :font-size="2">
+				Loading...
+			</tera-progress-spinner>
 		</figure>
 		<tera-stratified-matrix-modal
 			v-if="selectedTransitionId"
@@ -264,6 +268,13 @@ watch(
 	&:active {
 		cursor: grabbing;
 	}
+}
+
+.spinner {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
 }
 
 :deep(.graph-element .p-button) {
