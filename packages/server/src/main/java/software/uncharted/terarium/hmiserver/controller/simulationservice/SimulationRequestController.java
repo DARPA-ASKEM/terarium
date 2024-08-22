@@ -27,7 +27,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simul
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationEngine;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationType;
 import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequestCiemss;
-import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequestJulia;
 import software.uncharted.terarium.hmiserver.models.simulationservice.EnsembleCalibrationCiemssRequest;
 import software.uncharted.terarium.hmiserver.models.simulationservice.EnsembleSimulationCiemssRequest;
 import software.uncharted.terarium.hmiserver.models.simulationservice.JobResponse;
@@ -102,64 +101,6 @@ public class SimulationRequestController implements SnakeCaseController {
 		}
 	}
 
-	@PostMapping("/forecast")
-	@Secured(Roles.USER)
-	public ResponseEntity<Simulation> makeForecastRun(
-		@RequestBody final SimulationRequestBody<SimulationRequest> request,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
-		request.payload.setEngine(SimulationEngine.SCIML.toString());
-		final JobResponse res = simulationServiceProxy
-			.makeForecastRun(convertObjectToSnakeCaseJsonNode(request.payload))
-			.getBody();
-
-		final Simulation sim = new Simulation();
-		sim.setId(UUID.fromString(res.getSimulationId()));
-		sim.setType(SimulationType.SIMULATION);
-
-		// Fire and forget
-		new SimulationRequestStatusNotifier(
-			notificationService,
-			clientEventService,
-			simulationService,
-			sim.getId(),
-			projectId,
-			permission,
-			request.metadata
-		)
-			.setInterval(2)
-			.setThreshold(300)
-			.setHalfTimeSeconds(2.0)
-			.startPolling();
-
-		sim.setExecutionPayload(objectMapper.convertValue(request.payload, JsonNode.class));
-		sim.setStatus(ProgressState.QUEUED);
-		sim.setEngine(SimulationEngine.SCIML);
-
-		final Optional<Project> project = projectService.getProject(projectId);
-		if (project.isPresent()) {
-			sim.setProjectId(project.get().getId());
-			sim.setUserId(project.get().getUserId());
-		}
-
-		try {
-			final Optional<Simulation> updated = simulationService.updateAsset(sim, projectId, permission);
-			if (updated.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-			return ResponseEntity.ok(updated.get());
-		} catch (final Exception e) {
-			final String error = "Failed to create simulation";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
-		}
-	}
-
 	@PostMapping("ciemss/forecast")
 	@Secured(Roles.USER)
 	public ResponseEntity<Simulation> makeForecastRunCiemss(
@@ -223,32 +164,6 @@ public class SimulationRequestController implements SnakeCaseController {
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
-	}
-
-	@PostMapping("/calibrate")
-	@Secured(Roles.USER)
-	public ResponseEntity<JobResponse> makeCalibrateJob(
-		@RequestBody final SimulationRequestBody<CalibrationRequestJulia> request,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-		final JobResponse res = simulationServiceProxy
-			.makeCalibrateJob(SCIML_QUEUE, convertObjectToSnakeCaseJsonNode(request.payload))
-			.getBody();
-		new SimulationRequestStatusNotifier(
-			notificationService,
-			clientEventService,
-			simulationService,
-			UUID.fromString(res.getSimulationId()),
-			projectId,
-			permission,
-			request.metadata
-		).startPolling();
-
-		return ResponseEntity.ok(res);
 	}
 
 	@PostMapping("ciemss/calibrate")
