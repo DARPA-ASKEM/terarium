@@ -70,20 +70,10 @@
 						<tera-beaker-code-cell
 							ref="codeCell"
 							:jupyter-session="jupyterSession"
-							:language="m.content['language']"
-							:code="m.content['code']"
-							:autorun="true"
 							:notebook-item-id="msg.query_id"
-							context="dataset"
-							:context_info="{ id: props.assetId, query: msg.query }"
-							@deleteRequested="onDeleteRequested(m.header.msg_id)"
-						/>
-
-						<tera-beaker-code-cell-2
-							:jupyter-session="jupyterSession"
-							:language="m.content['language']"
-							:code="m.content['code']"
 							:jupyter-message="m"
+							:lang="language"
+							@deleteRequested="onDeleteRequested(m.header.msg_id)"
 						/>
 					</div>
 					<div v-else-if="['stream', 'display_data', 'execute_result', 'error'].includes(m.header.msg_type)">
@@ -99,8 +89,7 @@
 import { isEmpty } from 'lodash';
 import { INotebookItem } from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils';
-import TeraBeakerCodeCell from '@/components/llm/tera-beaker-response-code-cell.vue';
-import TeraBeakerCodeCell2 from '@/components/llm/tera-beaker-code-cell.vue';
+import TeraBeakerCodeCell from '@/components/llm/tera-beaker-code-cell.vue';
 import TeraBeakerCodeCellOutput from '@/components/llm/tera-beaker-code-cell-output.vue';
 import TeraJupyterResponseThought from '@/components/llm/tera-beaker-response-thought.vue';
 import Button from 'primevue/button';
@@ -123,6 +112,7 @@ const props = defineProps<{
 	msg: INotebookItem;
 	showChatThoughts: boolean;
 	isExecutingCode: boolean;
+	language: string;
 	assetId?: string;
 	autoExpandPreview?: boolean;
 	defaultPreview?: string;

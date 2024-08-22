@@ -79,6 +79,7 @@
 			:show-chat-thoughts="props.showChatThoughts"
 			:jupyter-session="jupyterSession"
 			:kernel-status="kernelStatus"
+			:language="selectedLanguage"
 			@update-kernel-state="updateKernelState"
 			@update-kernel-status="updateKernelStatus"
 			@new-dataset-saved="onNewDatasetSaved"

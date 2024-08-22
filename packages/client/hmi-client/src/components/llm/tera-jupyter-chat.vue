@@ -21,6 +21,7 @@
 				:show-chat-thoughts="props.showChatThoughts"
 				:auto-expand-preview="autoExpandPreview"
 				:default-preview="defaultPreview"
+				:language="language"
 				@cell-updated="scrollToLastCell"
 				@preview-selected="previewSelected"
 				@delete-message="handleDeleteMessage"
@@ -81,6 +82,7 @@ const props = defineProps<{
 	assetName?: string;
 	assetId?: string;
 	assetType?: AssetType;
+	language: string;
 	showHistory?: { value: boolean; default: false };
 	showJupyterSettings?: boolean;
 	showChatThoughts?: boolean;
@@ -293,12 +295,19 @@ const updateNotebookCells = (message, isNextCell: boolean = true) => {
 		// add the latest message execution to the code cell, we need this in order to persist the latest code execution
 		const codeCell = notebookItem.messages.find((m) => m.header.msg_type === 'code_cell');
 		if (codeCell) {
-			codeCell.content.code = message.content.code;
+			codeCell.content = message.content;
 		}
 		return;
-	} else if (['stream', 'display_data', 'execute_result'].indexOf(message.header.msg_type) > -1) {
+	} else if (['stream', 'display_data', 'execute_result'].includes(message.header.msg_type)) {
 		// remove the old output cells if a new output type is received
-		notebookItem.messages = notebookItem.messages.filter((msg) => msg.header.msg_type !== message.header.msg_type);
+		notebookItem.messages = notebookItem.messages.filter(
+			(msg) => msg.header.msg_type !== message.header.msg_type && msg.header.msg_type !== 'error'
+		);
+	} else if (message.header.msg_type === 'error') {
+		// remove the all output cells
+		notebookItem.messages = notebookItem.messages.filter(
+			(msg) => !['stream', 'display_data', 'execute_result', 'error'].includes(msg.header.msg_type)
+		);
 	}
 
 	notebookItem.messages.push(message);
@@ -319,7 +328,9 @@ const newJupyterMessage = (jupyterMessage) => {
 			'llm_response',
 			'beaker_response',
 			'dataset',
-			'display_data'
+			'display_data',
+			'execute_result',
+			'error'
 		].indexOf(msgType) > -1
 	) {
 		messagesHistory.value.push(jupyterMessage);
