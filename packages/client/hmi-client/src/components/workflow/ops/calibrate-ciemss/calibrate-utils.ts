@@ -59,7 +59,7 @@ export async function getErrorData(groundTruth: DataArray, simulationData: DataA
 	if (relevantGroundTruthColumns.length === 0) return errors;
 
 	const simulationDataGrouped = _.groupBy(simulationData, 'sample_id');
-	const groundTruthReMapped: any[] = [];
+	const groundTruthReMapped: Map<number, number>[] = [];
 
 	relevantGroundTruthColumns.forEach((columnName) => {
 		// Remap ground truth into form [RelevantColumn: [{timestamp: value}, {timestamp2: value2}...], revevantColumn2: ...]
@@ -67,20 +67,21 @@ export async function getErrorData(groundTruth: DataArray, simulationData: DataA
 			const timestamp = ele[datasetTimeCol];
 			const value = ele[columnName];
 			if (!groundTruthReMapped[columnName]) {
-				groundTruthReMapped[columnName] = [];
+				groundTruthReMapped[columnName] = new Map<number, number>();
 			}
-			groundTruthReMapped[columnName][timestamp] = value;
+			groundTruthReMapped[columnName].set(timestamp, value);
 		});
 	});
 
 	Object.entries(simulationDataGrouped).forEach(([sampleId, entries]) => {
 		const resultRow = { sample_id: Number(sampleId) };
 		relevantGroundTruthColumns.forEach((columnName) => {
-			const transformedSimulationData: any[] = [];
+			const transformedSimulationData: Map<number, number> = new Map<number, number>();
+			// Remap simulation data into form: [{timestamp: value}, ...]
 			entries.forEach((entry) => {
 				const timestamp = entry.timepoint_id;
 				const value = entry[pyciemssMap[columnName]];
-				transformedSimulationData[timestamp] = value;
+				transformedSimulationData.set(timestamp, value);
 			});
 
 			const meanAbsoluteError = mae(groundTruthReMapped[columnName], transformedSimulationData);
@@ -89,5 +90,6 @@ export async function getErrorData(groundTruth: DataArray, simulationData: DataA
 		errors.push(resultRow);
 	});
 
+	console.log(errors);
 	return errors;
 }
