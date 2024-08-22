@@ -13,4 +13,26 @@ describe('statistics utilities', () => {
 		stddev = stats.stddev(numbers2);
 		expect(stddev).to.eq(0);
 	});
+	it('mae', () => {
+		const map1 = new Map<number, number>([
+			[1, 1],
+			[2, 1],
+			[3, 1],
+			[4, 1],
+			[5, 1]
+		]);
+		const map2 = new Map<number, number>([
+			[0, 5],
+			[5, 5]
+		]);
+		const map3 = new Map<number, number>([
+			[10, 10],
+			[20, 10]
+		]);
+		let mae = -999;
+		mae = stats.mae(map1, map2);
+		expect(mae).to.equal(4);
+		mae = stats.mae(map1, map3);
+		expect(Number.isNaN(mae)).to.equal(true);
+	});
 });
