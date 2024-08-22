@@ -3,11 +3,6 @@ export const enum RunType {
 	Ciemss = 'ciemss'
 }
 
-export enum TspanUnits {
-	'Units',
-	'Date'
-}
-
 export type ChartConfig = {
 	selectedVariable: string[];
 	selectedRun: string;
