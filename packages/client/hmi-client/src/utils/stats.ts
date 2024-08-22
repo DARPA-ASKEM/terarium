@@ -17,10 +17,10 @@ export const stddev = (numberList: number[], usePopulation = false) => {
 // Get the mean absolute error between two maps.
 // Note this will only compare values that share the same key.
 export const mae = (map1: Map<number, number>, map2: Map<number, number>) => {
-	const sharedTimes = [...map1.keys()].filter((key) => map2.has(key));
-	const error = _.meanBy(sharedTimes, (time) => {
-		const firstValue = map1.get(time) as number;
-		const secondValue = map2.get(time) as number;
+	const sharedKey = [...map1.keys()].filter((key) => map2.has(key));
+	const error = _.meanBy(sharedKey, (key) => {
+		const firstValue = map1.get(key) as number;
+		const secondValue = map2.get(key) as number;
 		return Math.abs(firstValue - secondValue);
 	});
 	return error;
