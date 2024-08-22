@@ -17,14 +17,12 @@ export const stddev = (numberList: number[], usePopulation = false) => {
 // Get the mean absolute error between two arrays.
 // Assume each array is formed: [ { timestamp: value }, { timestamp: value } ...]
 export const mae = (arr1: any[], arr2: any[]) => {
-	const firstTimes = arr1.map((ele) => ele.timestamp);
-	const secondTimes = arr2.map((ele) => ele.timestamp);
+	const firstTimes = Object.keys(arr1);
+	const secondTimes = Object.keys(arr2);
 	const sharedTimes = firstTimes.filter((ele) => secondTimes.includes(ele));
-
-	// FIXME: THIS IS GROSS
 	const error = _.meanBy(sharedTimes, (time) => {
-		const firstValue = arr1.find((ele) => ele.timestamp === time).value;
-		const secondValue = arr2.find((ele) => ele.timestamp === time).value;
+		const firstValue = arr1[time];
+		const secondValue = arr2[time];
 		return Math.abs(firstValue - secondValue);
 	});
 	return error;

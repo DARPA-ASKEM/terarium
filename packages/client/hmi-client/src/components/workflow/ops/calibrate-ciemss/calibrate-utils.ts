@@ -124,25 +124,25 @@ export async function getErrorData(groundTruth: DataArray, simulationData: DataA
 			if (!groundTruthReMapped[columnName]) {
 				groundTruthReMapped[columnName] = [];
 			}
-			// x[columnName][timestamp] = value;
-			groundTruthReMapped[columnName].push({
-				timestamp,
-				value
-			});
-		});
-		Object.entries(simulationDataGrouped).forEach(([sampleId, entries]) => {
-			const transformedEntries: any[] = entries.map((entry) => ({
-				timestamp: entry.timepoint_id,
-				value: entry[pyciemssMap[columnName]]
-			}));
-
-			const meanAbsoluteError = mae(groundTruthReMapped[columnName], transformedEntries);
-			const item = { sample_id: Number(sampleId) };
-			item[columnName] = meanAbsoluteError;
-			errors.push(item);
+			groundTruthReMapped[columnName][timestamp] = value;
 		});
 	});
 
-	console.log(errors);
+	Object.entries(simulationDataGrouped).forEach(([sampleId, entries]) => {
+		const item = { sample_id: Number(sampleId) };
+		relevantGroundTruthColumns.forEach((columnName) => {
+			const transformedEntries: any[] = [];
+			entries.forEach((entry) => {
+				const timestamp = entry.timepoint_id;
+				const value = entry[pyciemssMap[columnName]];
+				transformedEntries[timestamp] = value;
+			});
+
+			const meanAbsoluteError = mae(groundTruthReMapped[columnName], transformedEntries);
+			item[columnName] = meanAbsoluteError;
+		});
+		errors.push(item);
+	});
+
 	return errors;
 }
