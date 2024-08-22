@@ -1,7 +1,8 @@
 <template>
-	<div v-if="isEditing" v-bind="$attrs" class="flex align-items-center gap-1">
+	<div v-if="isEditing" v-bind="$attrs" class="flex flex-1 align-items-center gap-1">
 		<tera-input-text
 			ref="inputRef"
+			class="w-full"
 			:model-value="modelValue"
 			@update:model-value="emit('update:model-value', $event)"
 			@keydown="handleKeyDown"
@@ -63,7 +64,7 @@ const handleKeyDown = (event: KeyboardEvent) => {
 button.text-to-edit {
 	display: flex;
 	gap: var(--gap-3);
-	width: fit-content;
+	max-width: fit-content;
 	padding: var(--gap-2);
 
 	& > .btn-content {

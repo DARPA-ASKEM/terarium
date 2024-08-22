@@ -48,6 +48,10 @@ header > div {
 	display: inline-flex;
 	gap: var(--gap-1);
 	align-items: start;
+
+	&:first-child {
+		flex: 1;
+	}
 }
 
 section {
