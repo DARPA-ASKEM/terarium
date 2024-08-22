@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +23,9 @@ public class ModelServiceTests extends TerariumApplicationTests {
 	@Autowired
 	private ProjectService projectService;
 
+	@Autowired
+	private ProjectSearchService projectSearchService;
+
 	Project project;
 
 	static Model createModel(final String key) {
@@ -34,9 +38,17 @@ public class ModelServiceTests extends TerariumApplicationTests {
 
 	@BeforeEach
 	public void setup() throws IOException {
+		projectSearchService.setupIndexAndAliasAndEnsureEmpty();
+		modelService.setupIndexAndAliasAndEnsureEmpty();
 		project = projectService.createProject(
 			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
 		);
+	}
+
+	@AfterEach
+	public void teardown() throws IOException {
+		modelService.teardownIndexAndAlias();
+		projectSearchService.teardownIndexAndAlias();
 	}
 
 	@Test
