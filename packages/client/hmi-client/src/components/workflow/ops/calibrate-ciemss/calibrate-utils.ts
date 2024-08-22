@@ -61,8 +61,8 @@ export async function getErrorData(groundTruth: DataArray, simulationData: DataA
 	const simulationDataGrouped = _.groupBy(simulationData, 'sample_id');
 	const groundTruthReMapped: Map<number, number>[] = [];
 
+	// Remap ground truth into form [RelevantColumn: Map<timestamp,value>], revevantColumn2: ...]
 	relevantGroundTruthColumns.forEach((columnName) => {
-		// Remap ground truth into form [RelevantColumn: [{timestamp: value}, {timestamp2: value2}...], revevantColumn2: ...]
 		groundTruth.forEach((ele) => {
 			const timestamp = ele[datasetTimeCol];
 			const value = ele[columnName];
@@ -77,7 +77,6 @@ export async function getErrorData(groundTruth: DataArray, simulationData: DataA
 		const resultRow = { sample_id: Number(sampleId) };
 		relevantGroundTruthColumns.forEach((columnName) => {
 			const transformedSimulationData: Map<number, number> = new Map<number, number>();
-			// Remap simulation data into form: [{timestamp: value}, ...]
 			entries.forEach((entry) => {
 				const timestamp = entry.timepoint_id;
 				const value = entry[pyciemssMap[columnName]];
