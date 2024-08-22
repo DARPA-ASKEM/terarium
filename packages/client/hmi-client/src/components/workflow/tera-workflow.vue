@@ -194,7 +194,6 @@ import * as d3 from 'd3';
 import { AssetType, EventType } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 import { v4 as uuidv4 } from 'uuid';
-import { getLocalStorageTransform, setLocalStorageTransform } from '@/utils/localStorage';
 
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
@@ -920,7 +919,7 @@ watch(
 		if (newId !== oldId && oldId) {
 			// Save previous
 			if (workflowDirty) workflowService.updateWorkflow(wf.value.dump());
-			setLocalStorageTransform(wf.value.getId(), canvasTransform);
+			workflowService.setLocalStorageTransform(wf.value.getId(), canvasTransform);
 		}
 
 		isRenamingWorkflow.value = false; // Closes rename input if opened in previous workflow
@@ -931,7 +930,7 @@ watch(
 		if (!workflowId) return;
 		isWorkflowLoading.value = true;
 
-		const transform = getLocalStorageTransform(workflowId);
+		const transform = workflowService.getLocalStorageTransform(workflowId);
 		if (transform) {
 			canvasTransform = transform;
 		}
