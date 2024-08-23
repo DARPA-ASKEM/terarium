@@ -3,10 +3,9 @@
 </template>
 
 <script setup lang="ts">
-import { JupyterMessage } from '@/services/jupyter';
+import { JupyterMessage, renderMime } from '@/services/jupyter';
 import { computed, onMounted, ref, watch } from 'vue';
 import { OutputArea, OutputAreaModel } from '@jupyterlab/outputarea';
-import { RenderMimeRegistry, standardRendererFactories, markdownRendererFactory } from '@jupyterlab/rendermime';
 
 const props = defineProps<{
 	jupyterMessage: JupyterMessage;
@@ -15,15 +14,12 @@ const props = defineProps<{
 const outputAreaRef = ref<HTMLDivElement | null>(null);
 
 const renderOutputs = (outputs) => {
-	const rendermime = new RenderMimeRegistry({
-		initialFactories: [...standardRendererFactories, markdownRendererFactory]
-	});
 	const outputModel = new OutputAreaModel({ trusted: true });
 	outputModel.fromJSON(outputs);
 
 	const outputArea = new OutputArea({
 		model: outputModel,
-		rendermime
+		rendermime: renderMime
 	});
 
 	if (outputAreaRef.value) {
