@@ -33,10 +33,14 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 	@Autowired
 	private ProjectService projectService;
 
+	@Autowired
+	private ProjectSearchService projectSearchService;
+
 	Project project;
 
 	@BeforeEach
 	public void setup() throws IOException {
+		projectSearchService.setupIndexAndAliasAndEnsureEmpty();
 		datasetService.setupIndexAndAliasAndEnsureEmpty();
 
 		project = projectService.createProject(
@@ -47,6 +51,7 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 	@AfterEach
 	public void teardown() throws IOException {
 		datasetService.teardownIndexAndAlias();
+		projectSearchService.teardownIndexAndAlias();
 	}
 
 	static Grounding createGrounding(final String key) {

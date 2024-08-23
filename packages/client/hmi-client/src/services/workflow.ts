@@ -15,7 +15,13 @@ import type {
 	WorkflowPort,
 	WorkflowOutput
 } from '@/types/workflow';
-import { WorkflowPortStatus, OperatorStatus, WorkflowOperationTypes } from '@/types/workflow';
+import {
+	WorkflowPortStatus,
+	OperatorStatus,
+	WorkflowOperationTypes,
+	WorkflowTransformations,
+	Transform
+} from '@/types/workflow';
 
 /**
  * A wrapper class around the workflow data struture to make it easier
@@ -835,4 +841,29 @@ export function getNodeMenu(operationMap: Map<string, Operation>) {
 	});
 
 	return menuOptions;
+}
+
+export function getLocalStorageTransform(id: string): Transform | null {
+	const terariumWorkflowTransforms = localStorage.getItem('terariumWorkflowTransforms');
+	if (!terariumWorkflowTransforms) {
+		return null;
+	}
+
+	const workflowTransformations: WorkflowTransformations = JSON.parse(terariumWorkflowTransforms);
+	if (!workflowTransformations.workflows[id]) {
+		return null;
+	}
+	return workflowTransformations.workflows[id];
+}
+
+export function setLocalStorageTransform(id: string, canvasTransform: { x: number; y: number; k: number }) {
+	const terariumWorkflowTransforms = localStorage.getItem('terariumWorkflowTransforms');
+	if (!terariumWorkflowTransforms) {
+		const transformation: WorkflowTransformations = { workflows: { [id]: canvasTransform } };
+		localStorage.setItem('terariumWorkflowTransforms', JSON.stringify(transformation));
+		return;
+	}
+	const workflowTransformations = JSON.parse(terariumWorkflowTransforms);
+	workflowTransformations.workflows[id] = canvasTransform;
+	localStorage.setItem('terariumWorkflowTransforms', JSON.stringify(workflowTransformations));
 }
