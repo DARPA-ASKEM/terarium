@@ -18,9 +18,9 @@
 import { onMounted, onUnmounted, ref } from 'vue';
 import { getMMT } from '@/services/model';
 import TeraStratifiedMatrix from '@/components/model/petrinet/model-configurations/tera-stratified-matrix.vue';
-import { emptyMiraModel } from '@/model-representation/mira/mira';
+import { createParameterMatrix, emptyMiraModel } from '@/model-representation/mira/mira';
 import type { Model } from '@/types/Types';
-import type { MiraModel, MiraTemplateParams, TemplateSummary } from '@/model-representation/mira/mira-common';
+import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { StratifiedMatrix } from '@/types/Model';
 import { updateParameter } from '@/model-representation/service';
 import { dsvParse } from '@/utils/dsv';
@@ -34,52 +34,35 @@ const ready = ref(false);
 
 const updateByMatrixCSV = async (
 	model: Model,
-	paramLocationMap: Map<string, TemplateSummary[]>,
-	matrixType: string,
+	matrixType: 'subjectControllers' | 'outcomeControllers' | 'subjectOutcome',
 	text: string
 ) => {
 	const parseResult = dsvParse(text);
+	const matrices = createParameterMatrix(mmt.value, mmtParams.value, 'beta');
+	const matrix = matrices[matrixType];
 
-	parseResult.entries.forEach((entry) => {
-		paramLocationMap.forEach((v, k) => {
-			let row: string | null = null;
-			let col: string | null = null;
+	console.log(parseResult.entries);
 
-			if (matrixType === 'subjectControllers') {
-				row = v[0].subject;
-				col = v[0].controllers.join('-');
-			} else if (matrixType === 'subjectOutcome') {
-				row = v[0].subject;
-				col = v[0].outcome;
-			} else if (matrixType === 'outcomeControllers') {
-				row = v[0].outcome;
-				col = v[0].controllers.join('-');
-			}
-
-			if (entry.rowLabel === row && entry.colLabel === col) {
-				updateParameter(model, k, 'value', entry.value);
+	matrix.matrix.forEach((row) => {
+		row.forEach((matrixEntry) => {
+			// If we have label information, use them as they may be more accurate, otherwise use indices
+			if (parseResult.hasColLabels && parseResult.hasColLabels) {
+				const match = parseResult.entries.find((entry) => {
+					return entry.rowLabel === matrixEntry.rowCriteria && entry.colLabel === matrixEntry.colCriteria;
+				});
+				if (match) {
+					updateParameter(model, matrixEntry.content.id, 'value', match.value);
+				}
+			} else {
+				const match = parseResult.entries.find((entry) => {
+					return entry.rowIdx === matrixEntry.row && entry.colIdx === matrixEntry.col;
+				});
+				if (match) {
+					updateParameter(model, matrixEntry.content.id, 'value', match.value);
+				}
 			}
 		});
 	});
-};
-
-const createParamLocationMap = (mmtParams: MiraTemplateParams) => {
-	const paramLocationMap = new Map<string, TemplateSummary[]>();
-	const templateParams = Object.values(mmtParams);
-	templateParams.forEach((templateParam) => {
-		const params = templateParam.params;
-		params.forEach((paramName) => {
-			if (!paramLocationMap.has(paramName)) paramLocationMap.set(paramName, []);
-
-			paramLocationMap.get(paramName)?.push({
-				name: templateParam.name,
-				subject: templateParam.subject,
-				outcome: templateParam.outcome,
-				controllers: templateParam.controllers
-			});
-		});
-	});
-	return paramLocationMap;
 };
 
 const csvStringProcessor = async (item: DataTransferItem) => {
@@ -88,8 +71,7 @@ const csvStringProcessor = async (item: DataTransferItem) => {
 
 	// Presume this is a full matrix, with row/column labels
 	item.getAsString(async (text) => {
-		const paramLocationMap = createParamLocationMap(mmtParams.value);
-		updateByMatrixCSV(model.value as Model, paramLocationMap, 'subjectControllers', text);
+		updateByMatrixCSV(model.value as Model, 'subjectControllers', text);
 
 		// Update
 		const response = await getMMT(model.value as Model);

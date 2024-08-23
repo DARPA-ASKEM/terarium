@@ -78,9 +78,9 @@ export const dsvParse = (text: string) => {
 
 		for (let j = hasRowLabels ? 1 : 0; j < tokens.length; j++) {
 			entries.push({
-				colIdx: hasColLabels ? i - 1 : i,
+				colIdx: hasColLabels ? j - 1 : j,
 				colLabel: hasColLabels ? lineOne[j] : null,
-				rowIdx: hasColLabels ? j - 1 : j,
+				rowIdx: hasColLabels ? i - 1 : i,
 				rowLabel: hasRowLabels ? tokens[0] : null,
 				value: +tokens[j]
 			});
