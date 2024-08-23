@@ -21,11 +21,11 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { SessionContext } from '@jupyterlab/apputils';
-import { JupyterMessage, renderMime } from '@/services/jupyter';
+import { INotebookItem, JupyterMessage, renderMime } from '@/services/jupyter';
 import Button from 'primevue/button';
 import { CodeCell, CodeCellModel } from '@jupyterlab/cells';
 import { useConfirm } from 'primevue/useconfirm';
@@ -33,7 +33,7 @@ import { useConfirm } from 'primevue/useconfirm';
 const props = defineProps<{
 	jupyterMessage: JupyterMessage;
 	jupyterSession: SessionContext;
-	notebookItemId: string;
+	notebookItem: INotebookItem;
 	lang: string;
 }>();
 
@@ -79,7 +79,7 @@ const runCell = async () => {
 		rendermime: renderMime
 	});
 
-	CodeCell.execute(cellWidget, props.jupyterSession, { notebook_item: props.notebookItemId });
+	CodeCell.execute(cellWidget, props.jupyterSession, { notebook_item: props.notebookItem.query_id });
 };
 
 const onDelete = () => {
@@ -91,6 +91,12 @@ const onDelete = () => {
 		}
 	});
 };
+
+onMounted(() => {
+	if (props.notebookItem.autoRun) {
+		runCell();
+	}
+});
 
 defineExpose({
 	enter,

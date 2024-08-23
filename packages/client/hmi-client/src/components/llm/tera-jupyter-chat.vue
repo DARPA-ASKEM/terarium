@@ -273,7 +273,9 @@ const updateNotebookCells = (message, isNextCell: boolean = true) => {
 			timestamp: message.parent_header.date,
 			messages: [],
 			resultingCsv: null,
-			executions: []
+			executions: [],
+			// auto run the code block when we send an llm request
+			autoRun: message.header.msg_type === 'llm_request'
 		};
 
 		const index = notebookItems.value.findIndex((item) => item.query_id === selectedCellId.value);

@@ -70,7 +70,7 @@
 						<tera-beaker-code-cell
 							ref="codeCell"
 							:jupyter-session="jupyterSession"
-							:notebook-item-id="msg.query_id"
+							:notebook-item="msg"
 							:jupyter-message="m"
 							:lang="language"
 							@deleteRequested="onDeleteRequested(m.header.msg_id)"

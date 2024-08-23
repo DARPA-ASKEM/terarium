@@ -135,6 +135,7 @@ export interface INotebookItem {
 	messages: JupyterMessage[];
 	resultingCsv: CsvAsset | null;
 	executions: any[];
+	autoRun?: boolean;
 }
 
 export declare type JupyterMessage = IJupyterMessage | messages.Message;
