@@ -547,9 +547,12 @@ const model = ref<Model | null>(null);
 const modelParameterOptions = computed<string[]>(() =>
 	(model.value?.semantics?.ode?.parameters ?? []).map((p) => p.id)
 );
-const modelStateAndObsOptions = ref<string[]>([]);
+const modelStateAndObsOptions = ref<{ label: string; value: string }[]>([]);
 
-const simulationChartOptions = computed(() => [...modelParameterOptions.value, ...modelStateAndObsOptions.value]);
+const simulationChartOptions = computed(() => [
+	...modelParameterOptions.value,
+	...modelStateAndObsOptions.value.map((ele) => ele.label)
+]);
 const modelConfiguration = ref<ModelConfiguration>();
 
 const showAdditionalOptions = ref(true);
@@ -656,13 +659,20 @@ const initialize = async () => {
 		optimizedInterventionPolicy.value = await getInterventionPolicyById(optimizedPolicyId);
 	}
 
-	modelStateAndObsOptions.value = model.value?.model.states.map((state: any) => state.id);
+	modelStateAndObsOptions.value = model.value?.model.states.map((state: any) => ({
+		label: state.id,
+		value: `${state.id}_state`
+	}));
 
-	/** Until supported by pyciemss-service, do not show observables.
-	if (model?.semantics?.ode.observables) {
-		modelStateAndObsOptions.value.push(...model.semantics.ode.observables.map((observable: any) => observable.id));
+	// Add obs:
+	if (model.value?.semantics?.ode.observables) {
+		modelStateAndObsOptions.value.push(
+			...model.value.semantics.ode.observables.map((observable: any) => ({
+				label: observable.id,
+				value: `${observable.id}_observable`
+			}))
+		);
 	}
-	*/
 };
 
 const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => {
@@ -778,7 +788,7 @@ const runOptimize = async () => {
 
 	// InferredParameters is to link a calibration run to this optimize call.
 	optimizePayload.extra.inferredParameters = modelConfiguration.value.simulationId;
-
+	console.log(optimizePayload);
 	const optResult = await makeOptimizeJobCiemss(optimizePayload, nodeMetadata(props.node));
 	const state = _.cloneDeep(props.node.state);
 	state.inProgressOptimizeId = optResult.simulationId;
@@ -801,7 +811,13 @@ const setOutputSettingDefaults = () => {
 	if (!knobs.value.selectedSimulationVariables.length) {
 		props.node.state.constraintGroups.forEach((constraint) => {
 			if (constraint.targetVariable) {
-				selectedSimulationVariables.push(constraint.targetVariable);
+				// Use modelStateAndObsOptions to map from value -> label as simulation selection uses S not S_State
+				const userSelection = modelStateAndObsOptions.value.find(
+					(ele) => ele.value === constraint.targetVariable
+				)?.label;
+				if (userSelection) {
+					selectedSimulationVariables.push(userSelection);
+				}
 			}
 		});
 		if (selectedSimulationVariables.length) {
