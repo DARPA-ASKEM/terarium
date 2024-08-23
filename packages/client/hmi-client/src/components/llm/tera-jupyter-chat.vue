@@ -30,9 +30,6 @@
 				@edit-prompt="reRunPrompt"
 				@click="selectedCellId = msg.query_id"
 			/>
-			<!-- spacer to prevent the floating input panel at the bottom of the screen from covering the bottom item -->
-			<div style="height: 8rem"></div>
-
 			<!-- Beaker Input -->
 			<tera-beaker-input
 				class="tera-beaker-input"
@@ -129,6 +126,12 @@ const onKeyPress = (event) => {
 	}
 };
 
+const scrollToCell = (element: typeof TeraJupyterResponse) => {
+	if (element) {
+		element.$el.scrollIntoView({ block: 'start', inline: 'nearest', behavior: 'smooth' });
+	}
+};
+
 const enterCell = () => {
 	const index = notebookItems.value.findIndex((item) => item.query_id === selectedCellId.value);
 	if (index > -1) {
@@ -137,6 +140,8 @@ const enterCell = () => {
 			el.codeCell[0]?.enter();
 		}
 	}
+	// scroll to the selected cell
+	scrollToCell(notebookCells.value[index]);
 };
 
 const selectPreviousCell = () => {
@@ -144,6 +149,8 @@ const selectPreviousCell = () => {
 	if (index > 0) {
 		selectedCellId.value = notebookItems.value[index - 1].query_id;
 	}
+	// scroll to the selected cell
+	scrollToCell(notebookCells.value[index - 1]);
 };
 
 const selectNextCell = () => {
@@ -151,6 +158,8 @@ const selectNextCell = () => {
 	if (index < notebookItems.value.length - 1) {
 		selectedCellId.value = notebookItems.value[index + 1].query_id;
 	}
+	// scroll to the selected cell
+	scrollToCell(notebookCells.value[index]);
 };
 
 const previewSelected = (selection) => {
@@ -393,16 +402,6 @@ onUnmounted(() => {
 });
 
 watch(
-	() => messageContainer.value,
-	() => {
-		if (messageContainer.value) {
-			messageContainer.value?.scrollIntoView({ behavior: 'smooth' });
-		}
-	},
-	{ deep: true } // enable deep watching in case msg.messages is an array of objects
-);
-
-watch(
 	() => [
 		props.assetId, // Once the route name changes, add/switch to another tab
 		useProjects().activeProject.value
@@ -458,6 +457,8 @@ section {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
+	height: calc(100% - 13rem);
+	overflow-y: auto;
 }
 
 .selected {

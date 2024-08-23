@@ -1,5 +1,5 @@
 <template>
-	<div class="data-transform-container">
+	<div class="data-transform-container h-full overflow-hidden">
 		<!-- Toolbar -->
 		<div class="toolbar flex">
 			<!-- Kernel Status -->
