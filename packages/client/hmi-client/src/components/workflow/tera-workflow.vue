@@ -193,7 +193,6 @@ import * as d3 from 'd3';
 import { AssetType, EventType } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 import { v4 as uuidv4 } from 'uuid';
-import { getLocalStorageTransform, setLocalStorageTransform } from '@/utils/localStorage';
 
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
@@ -923,14 +922,14 @@ watch(
 		// Save previous workflow, if applicable
 		if (newId !== oldId && oldId) {
 			saveAndUpdateWorkflow();
-			setLocalStorageTransform(wf.value.getId(), canvasTransform);
+			workflowService.setLocalStorageTransform(wf.value.getId(), canvasTransform);
 		}
 
 		const workflowId = props.assetId;
 		if (!workflowId) return;
 		isWorkflowLoading.value = true;
 
-		const transform = getLocalStorageTransform(workflowId);
+		const transform = workflowService.getLocalStorageTransform(workflowId);
 		if (transform) {
 			canvasTransform = transform;
 		}
@@ -955,7 +954,7 @@ onMounted(() => {
 	document.addEventListener('mousemove', mouseUpdate);
 	window.addEventListener('beforeunload', unloadCheck);
 	saveTimer = setInterval(async () => {
-		setLocalStorageTransform(wf.value.getId(), canvasTransform);
+		workflowService.setLocalStorageTransform(wf.value.getId(), canvasTransform);
 	}, WORKFLOW_SAVE_INTERVAL);
 });
 
@@ -966,7 +965,7 @@ onUnmounted(() => {
 	}
 
 	if (canvasTransform) {
-		setLocalStorageTransform(wf.value.getId(), canvasTransform);
+		workflowService.setLocalStorageTransform(wf.value.getId(), canvasTransform);
 	}
 	document.removeEventListener('mousemove', mouseUpdate);
 	window.removeEventListener('beforeunload', unloadCheck);
