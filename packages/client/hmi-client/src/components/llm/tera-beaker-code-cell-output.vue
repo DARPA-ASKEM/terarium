@@ -6,7 +6,7 @@
 import { JupyterMessage } from '@/services/jupyter';
 import { computed, onMounted, ref, watch } from 'vue';
 import { OutputArea, OutputAreaModel } from '@jupyterlab/outputarea';
-import { RenderMimeRegistry, standardRendererFactories } from '@jupyterlab/rendermime';
+import { RenderMimeRegistry, standardRendererFactories, markdownRendererFactory } from '@jupyterlab/rendermime';
 
 const props = defineProps<{
 	jupyterMessage: JupyterMessage;
@@ -16,7 +16,7 @@ const outputAreaRef = ref<HTMLDivElement | null>(null);
 
 const renderOutputs = (outputs) => {
 	const rendermime = new RenderMimeRegistry({
-		initialFactories: standardRendererFactories
+		initialFactories: [...standardRendererFactories, markdownRendererFactory]
 	});
 	const outputModel = new OutputAreaModel({ trusted: true });
 	outputModel.fromJSON(outputs);
