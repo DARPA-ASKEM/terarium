@@ -49,6 +49,16 @@
             ]
         },
         {
+          "type": "java",
+          "name": "TerariumApplication (Staging Keycloak)",
+          "request": "launch",
+          "mainClass": "software.uncharted.terarium.hmiserver.TerariumApplication",
+          "projectName": "server",
+          "args": [
+              "--spring.profiles.active=default,secrets,local,staging-keycloak,ide"
+          ]
+        },
+        {
             "type": "java",
             "name": "TaskRunnerApplication",
             "request": "launch",
