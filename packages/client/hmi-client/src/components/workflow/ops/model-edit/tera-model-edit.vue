@@ -37,7 +37,7 @@
 						</template>
 					</tera-notebook-jupyter-input>
 				</Suspense>
-				<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
+				<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" :llmQuery="llmQuery" />
 			</div>
 			<v-ace-editor
 				v-model:value="codeText"
@@ -100,7 +100,6 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraModelTemplateEditor from '@/components/model-template/tera-model-template-editor.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
-
 import { KernelSessionManager } from '@/services/jupyter';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
