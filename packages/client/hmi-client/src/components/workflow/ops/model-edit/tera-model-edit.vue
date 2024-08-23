@@ -397,12 +397,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* The wizard of this operator is atypical and needs the outside margins to be removed
-	TODO: This case should be handled in the tera-drilldown component or something as it messes with the padding in the notebook tab */
-.overlay-container:deep(main) {
-	padding: 0 0 0 0;
-}
-
 .input {
 	width: 95%;
 }

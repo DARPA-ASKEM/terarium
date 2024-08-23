@@ -1,19 +1,17 @@
 import { WorkflowOperationTypes } from '@/types/workflow';
 import type { Operation, BaseState } from '@/types/workflow';
 import type { ModelConfiguration } from '@/types/Types';
+import { NotebookHistory } from '@/services/notebook';
 import configureModel from '@assets/svg/operator-images/configure-model.svg';
 
 export const name = 'ModelConfigOperation';
 
-export interface ModelEditCode {
-	code: string;
-	timestamp: number;
-}
-
 export interface ModelConfigOperationState extends BaseState {
 	transientModelConfig: ModelConfiguration;
-	modelEditCodeHistory: ModelEditCode[];
-	hasCodeBeenRun: boolean;
+	notebookHistory: NotebookHistory[];
+	hasCodeRun: boolean;
+	datasetModelConfigTaskId: string;
+	documentModelConfigTaskId: string;
 }
 
 export const blankModelConfig: ModelConfiguration = {
@@ -43,9 +41,11 @@ export const ModelConfigOperation: Operation = {
 	action: async () => ({}),
 	initState: () => {
 		const init: ModelConfigOperationState = {
-			modelEditCodeHistory: [],
-			hasCodeBeenRun: false,
-			transientModelConfig: blankModelConfig
+			transientModelConfig: blankModelConfig,
+			notebookHistory: [],
+			hasCodeRun: false,
+			datasetModelConfigTaskId: '',
+			documentModelConfigTaskId: ''
 		};
 		return init;
 	}

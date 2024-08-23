@@ -142,7 +142,7 @@
 								@configuration-change="chartProxy.configurationChange(index, $event)"
 								@remove="chartProxy.removeChart(index)"
 							/>
-							<vega-chart :are-embed-actions-visible="true" :visualization-spec="preparedCharts[index]" />
+							<vega-chart expandable :are-embed-actions-visible="true" :visualization-spec="preparedCharts[index]" />
 						</template>
 						<Button size="small" text @click="chartProxy.addChart()" label="Add chart" icon="pi pi-plus" />
 					</div>
@@ -343,13 +343,13 @@ const preparedCharts = computed(() => {
 	return props.node.state.chartConfigs.map((config) =>
 		createForecastChart(
 			{
-				dataset: result,
+				data: result,
 				variables: config.map((d) => pyciemssMap[d]),
 				timeField: 'timepoint_id',
 				groupField: 'sample_id'
 			},
 			{
-				dataset: resultSummary,
+				data: resultSummary,
 				variables: config.map((d) => `${pyciemssMap[d]}_mean`),
 				timeField: 'timepoint_id'
 			},

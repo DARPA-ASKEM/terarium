@@ -31,6 +31,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 
 public class DatasetControllerTests extends TerariumApplicationTests {
@@ -44,10 +45,14 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	@Autowired
 	private ProjectService projectService;
 
+	@Autowired
+	private ProjectSearchService projectSearchService;
+
 	Project project;
 
 	@BeforeEach
 	public void setup() throws IOException {
+		projectSearchService.setupIndexAndAliasAndEnsureEmpty();
 		datasetService.setupIndexAndAliasAndEnsureEmpty();
 
 		project = projectService.createProject(
@@ -58,6 +63,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	@AfterEach
 	public void teardown() throws IOException {
 		datasetService.teardownIndexAndAlias();
+		projectSearchService.teardownIndexAndAlias();
 	}
 
 	@Test

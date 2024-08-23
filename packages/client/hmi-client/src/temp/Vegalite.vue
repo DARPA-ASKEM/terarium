@@ -1,7 +1,7 @@
 <template>
 	<div style="padding: 2rem; display: flex; flex-direction: col">
 		<div>
-			<vega-chart :visualization-spec="forecastChartSpec" />
+			<vega-chart expandable :visualization-spec="forecastChartSpec" />
 			<div>
 				<div v-for="a in forecastAnnotations" :key="a.id">
 					{{ a.layerSpec.description }} <i class="pi pi-trash pi-trash" @click="removeAnnotation(a.id)" />
@@ -23,14 +23,15 @@
 		</div>
 		<div>
 			<vega-chart
+				:expandable="onExpandErrorChart"
 				:interval-selection-signal-names="['brush']"
 				:visualization-spec="spec"
 				@chart-click="handleChartClick($event)"
 				@update-interval-selection="debounceHandleIntervalSelect"
 			/>
-			<vega-chart :visualization-spec="spec2" style="" />
+			<vega-chart expandable :visualization-spec="spec2" style="" />
 		</div>
-		<vega-chart :visualization-spec="specHistogram" />
+		<vega-chart expandable :visualization-spec="specHistogram" />
 	</div>
 </template>
 
@@ -115,6 +116,19 @@ const spec = ref<any>(
 		xAxisTitle: 'Error'
 	})
 );
+const onExpandErrorChart = () => {
+	// Customize the chart size by modifying the spec before expanding the chart
+	const spec = createErrorChart(dataChart1, {
+		title: '',
+		width: window.innerWidth / 1.5,
+		height: 230,
+		boxPlotHeight: 50,
+		areaChartHeight: 150,
+		variables: [{ field: 'error' }, { field: 'error2', label: 'e2' }],
+		xAxisTitle: 'Error'
+	});
+	return spec as any;
+};
 
 const spec2 = ref<any>(makeLineChart(dataChart2));
 
@@ -184,13 +198,13 @@ const forecastChartSpec = computed(() =>
 	applyForecastAnnotations(
 		createForecastChart(
 			{
-				dataset: dataNew.data,
+				data: dataNew.data,
 				variables: ['alpha', 'beta'],
 				timeField: 'time',
 				groupField: 'sample'
 			},
 			{
-				dataset: dataNew.summary,
+				data: dataNew.summary,
 				variables: ['alphaMean', 'betaMean'],
 				timeField: 'time'
 			},

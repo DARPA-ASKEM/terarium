@@ -65,31 +65,40 @@
 
 		<tera-drilldown-section :tabName="ConfigTabs.Wizard" class="pl-3">
 			<template #header-controls-left>
-				<tera-toggleable-edit
-					v-if="knobs.transientModelConfig.name"
+				<tera-toggleable-input
+					v-if="typeof knobs.transientModelConfig.name === 'string'"
 					v-model="knobs.transientModelConfig.name"
 					tag="h4"
 				/>
 			</template>
 			<template #header-controls-right>
 				<Button label="Reset" @click="resetConfiguration" outlined severity="secondary" />
-				<Button class="mr-3" :disabled="isSaveDisabled" label="Save" @click="() => createConfiguration()" />
+				<Button class="mr-3" :disabled="isSaveDisabled" label="Save" @click="createConfiguration" />
 			</template>
 
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab>
 					<template #header>
-						Description
-						<Button v-if="!isEditingDescription" icon="pi pi-pencil" text @click.stop="onEditDescription" />
-						<template v-else>
+						<Button v-if="!isEditingDescription" class="start-edit" text @click.stop="onEditDescription">
+							<h5 class="btn-content">Description</h5>
+							<i class="pi pi-pencil" />
+						</Button>
+						<span v-else class="confirm-cancel">
+							<span>Description</span>
 							<Button icon="pi pi-times" text @click.stop="isEditingDescription = false" />
 							<Button icon="pi pi-check" text @click.stop="onConfirmEditDescription" />
-						</template>
+						</span>
 					</template>
 					<p class="description text" v-if="!isEditingDescription">
 						{{ knobs.transientModelConfig.description }}
 					</p>
-					<Textarea v-else class="context-item" placeholder="Enter a description" v-model="newDescription" />
+					<Textarea
+						v-else
+						ref="descriptionTextareaRef"
+						class="context-item"
+						placeholder="Enter a description"
+						v-model="newDescription"
+					/>
 				</AccordionTab>
 				<AccordionTab header="Diagram">
 					<tera-model-diagram v-if="model" :model="model" />
@@ -135,8 +144,7 @@
 			</template>
 		</tera-drilldown-section>
 		<tera-columnar-panel :tabName="ConfigTabs.Notebook">
-			<tera-drilldown-section id="notebook-section">
-				<div class="toolbar-right-side"></div>
+			<tera-drilldown-section class="notebook-section">
 				<div class="toolbar">
 					<Suspense>
 						<tera-notebook-jupyter-input
@@ -145,7 +153,7 @@
 							:context-language="contextLanguage"
 							@llm-output="(data: any) => appendCode(data, 'code')"
 							@llm-thought-output="(data: any) => llmThoughts.push(data)"
-							@question-asked="llmThoughts = []"
+							@question-asked="updateLlmQuery"
 						>
 							<template #toolbar-right-side>
 								<tera-input-text v-model="knobs.transientModelConfig.name" placeholder="Configuration Name" />
@@ -175,7 +183,7 @@
 			</tera-drilldown-preview>
 		</tera-columnar-panel>
 	</tera-drilldown>
-	<tera-modal v-if="sanityCheckErrors.length > 0">
+	<tera-modal v-if="!isEmpty(sanityCheckErrors)">
 		<template #header>
 			<h4>Warning, these settings may cause errors</h4>
 		</template>
@@ -188,11 +196,7 @@
 		</template>
 		<template #footer>
 			<Button label="Ok" class="p-button-primary" @click="sanityCheckErrors = []" />
-			<Button
-				label="Ignore warnings and use configuration"
-				class="p-button-secondary"
-				@click="() => createConfiguration()"
-			/>
+			<Button label="Ignore warnings and use configuration" class="p-button-secondary" @click="createConfiguration" />
 		</template>
 	</tera-modal>
 
@@ -202,16 +206,15 @@
 
 <script setup lang="ts">
 import '@/ace-config';
-import { cloneDeep, isEmpty, orderBy } from 'lodash';
+import { computed, onUnmounted, ref, watch, nextTick, ComponentPublicInstance } from 'vue';
+import { cloneDeep, isEmpty, isEqual, orderBy } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Textarea from 'primevue/textarea';
-import { computed, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import { useClientEvent } from '@/composables/useClientEvent';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -238,8 +241,8 @@ import {
 	getAsConfiguredModel
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { Model, ModelConfiguration, TaskResponse, ClientEvent } from '@/types/Types';
-import { ClientEventType, Observable, TaskStatus } from '@/types/Types';
+import type { Model, ModelConfiguration } from '@/types/Types';
+import { Observable } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
@@ -249,7 +252,8 @@ import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { useConfirm } from 'primevue/useconfirm';
 import Dropdown from 'primevue/dropdown';
-import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
+import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
+import { saveCodeToState } from '@/services/notebook';
 import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
 import { ModelConfigOperation, ModelConfigOperationState, blankModelConfig } from './model-config-operation';
 
@@ -265,6 +269,7 @@ const props = defineProps<{
 const isSidebarOpen = ref(true);
 const isEditingDescription = ref(false);
 const newDescription = ref('');
+const descriptionTextareaRef = ref<ComponentPublicInstance<typeof Textarea> | null>(null);
 
 const menuItems = computed(() => [
 	{
@@ -316,6 +321,7 @@ const buildJupyterContext = () => {
 	};
 };
 const codeText = ref('# This environment contains the variable "model_config" to be read and updated');
+const llmQuery = ref('');
 const llmThoughts = ref<any[]>([]);
 const notebookResponse = ref();
 const executeResponse = ref({
@@ -379,7 +385,8 @@ const runFromCode = () => {
 			knobs.value.transientModelConfig = data.content;
 
 			if (executedCode) {
-				saveCodeToState(executedCode, true);
+				updateCodeState(executedCode, true);
+				createConfiguration();
 			}
 		})
 		.register('any_execute_reply', (data) => {
@@ -395,27 +402,22 @@ const runFromCode = () => {
 		});
 };
 
-// FIXME: Copy pasted in 3 locations, could be written cleaner and in a service
-const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
-	const state = cloneDeep(props.node.state);
-	state.hasCodeBeenRun = hasCodeBeenRun;
+function updateLlmQuery(query: string) {
+	llmThoughts.value = [];
+	llmQuery.value = query;
+}
 
-	// for now only save the last code executed, may want to save all code executed in the future
-	const codeHistoryLength = props.node.state.modelEditCodeHistory.length;
-	const timestamp = Date.now();
-	if (codeHistoryLength > 0) {
-		state.modelEditCodeHistory[0] = { code, timestamp };
-	} else {
-		state.modelEditCodeHistory.push({ code, timestamp });
-	}
+function updateCodeState(code: string = codeText.value, hasCodeRun: boolean = true) {
+	const state = saveCodeToState(props.node, code, hasCodeRun, llmQuery.value, llmThoughts.value);
 	emit('update-state', state);
-};
+}
 
 const initializeEditor = (editorInstance: any) => {
 	editor = editorInstance;
 };
 
 const extractConfigurationsFromInputs = async () => {
+	const state = cloneDeep(props.node.state);
 	if (!model.value?.id) {
 		return;
 	}
@@ -426,7 +428,7 @@ const extractConfigurationsFromInputs = async () => {
 			props.node.workflowId,
 			props.node.id
 		);
-		documentModelConfigTaskId.value = resp.id;
+		state.documentModelConfigTaskId = resp.id;
 	}
 	if (datasetIds.value) {
 		const matrixStr = generateModelDatasetConfigurationContext(mmt.value, mmtParams.value);
@@ -437,27 +439,14 @@ const extractConfigurationsFromInputs = async () => {
 			props.node.workflowId,
 			props.node.id
 		);
-		datasetModelConfigTaskId.value = resp.id;
+		state.datasetModelConfigTaskId = resp.id;
 	}
+	emit('update-state', state);
 };
-
-const configModelEventHandler = async (event: ClientEvent<TaskResponse>) => {
-	const taskIdRefs = {
-		[ClientEventType.TaskGollmConfigureModel]: documentModelConfigTaskId,
-		[ClientEventType.TaskGollmConfigureFromDataset]: datasetModelConfigTaskId
-	};
-	if (event.data?.id !== taskIdRefs[event.type].value) return;
-	if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
-		taskIdRefs[event.type].value = '';
-	}
-	if (event.data.status === TaskStatus.Success && model.value?.id) await fetchConfigurations(model.value.id);
-};
-
-useClientEvent(ClientEventType.TaskGollmConfigureModel, configModelEventHandler);
-useClientEvent(ClientEventType.TaskGollmConfigureFromDataset, configModelEventHandler);
 
 const selectedOutputId = ref<string>('');
 const selectedConfigId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
+let originalConfig: ModelConfiguration | null = null;
 
 const documentId = computed(() => props.node.inputs[1]?.value?.[0]?.documentId);
 const datasetIds = computed(() => props.node.inputs[2]?.value);
@@ -472,11 +461,7 @@ const suggestedConfigurationContext = ref<{
 	modelConfiguration: null
 });
 const isFetching = ref(false);
-const documentModelConfigTaskId = ref('');
-const datasetModelConfigTaskId = ref('');
-const isLoading = computed(
-	() => documentModelConfigTaskId.value !== '' || datasetModelConfigTaskId.value !== '' || isFetching.value
-);
+const isLoading = ref(false);
 
 const model = ref<Model | null>(null);
 const mmt = ref<MiraModel>(emptyMiraModel());
@@ -497,27 +482,22 @@ const downloadConfiguredModel = async (configuration: ModelConfiguration = knobs
 
 const createConfiguration = async () => {
 	if (!model.value || isSaveDisabled.value) return;
-
-	const state = cloneDeep(props.node.state);
-
 	const modelConfig = cloneDeep(knobs.value.transientModelConfig);
 
 	const data = await createModelConfiguration(modelConfig);
-
 	if (!data) {
 		logger.error('Failed to create model configuration');
 		return;
 	}
 
 	knobs.value.transientModelConfig = cloneDeep(data);
-	state.transientModelConfig = knobs.value.transientModelConfig;
 	useToastService().success('', 'Created model configuration');
 	emit('append-output', {
 		type: ModelConfigOperation.outputs[0].type,
-		label: state.transientModelConfig.name,
+		label: data.name,
 		value: data.id,
 		isSelected: false,
-		state
+		state: cloneDeep(props.node.state)
 	});
 };
 
@@ -545,6 +525,7 @@ const initialize = async () => {
 		applyConfigValues(suggestedConfigurationContext.value.tableData[0]);
 	} else {
 		knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
+		originalConfig = cloneDeep(state.transientModelConfig);
 	}
 
 	// Create a new session and context based on model
@@ -563,6 +544,12 @@ const initialize = async () => {
 };
 
 const onSelectConfiguration = (config: ModelConfiguration) => {
+	// Checks if there are unsaved changes to current model configuration
+	if (isEqual(originalConfig, knobs.value.transientModelConfig)) {
+		applyConfigValues(config);
+		return;
+	}
+
 	confirm.require({
 		header: 'Are you sure you want to select this configuration?',
 		message: `This will apply the configuration "${config.name}" to the model.  All current values will be replaced.`,
@@ -575,8 +562,8 @@ const onSelectConfiguration = (config: ModelConfiguration) => {
 };
 
 const applyConfigValues = (config: ModelConfiguration) => {
-	const state = cloneDeep(props.node.state);
 	knobs.value.transientModelConfig = cloneDeep(config);
+	originalConfig = cloneDeep(config);
 
 	// Update output port:
 	if (!config.id) {
@@ -593,21 +580,22 @@ const applyConfigValues = (config: ModelConfiguration) => {
 	// If the output does not already exist
 	else {
 		// Append this config to the output.
-		state.transientModelConfig = knobs.value.transientModelConfig;
 		emit('append-output', {
 			type: ModelConfigOperation.outputs[0].type,
 			label: config.name,
 			value: config.id,
 			isSelected: false,
-			state
+			state: cloneDeep(props.node.state)
 		});
 	}
 	logger.success(`Configuration applied ${config.name}`);
 };
 
-const onEditDescription = () => {
+const onEditDescription = async () => {
 	isEditingDescription.value = true;
 	newDescription.value = knobs.value.transientModelConfig.description ?? '';
+	await nextTick();
+	descriptionTextareaRef.value?.$el.focus();
 };
 
 const onConfirmEditDescription = () => {
@@ -620,15 +608,26 @@ const resetConfiguration = () => {
 		header: 'Are you sure you want to reset the configuration?',
 		message: 'This will reset all values original values of the configuration.',
 		accept: () => {
-			const originalConfig = suggestedConfigurationContext.value.tableData.find((c) => c.id === selectedConfigId.value);
-			if (originalConfig) {
-				applyConfigValues(originalConfig);
-			}
+			if (originalConfig) applyConfigValues(originalConfig);
 		},
 		acceptLabel: 'Confirm',
 		rejectLabel: 'Cancel'
 	});
 };
+
+watch(
+	() => `${props.node.state.datasetModelConfigTaskId}:${props.node.state.documentModelConfigTaskId}`,
+	async (watchStr) => {
+		if (watchStr !== ':') {
+			isLoading.value = true;
+		} else {
+			isLoading.value = false;
+			const modelId = props.node.inputs[0].value?.[0];
+			if (!modelId) return;
+			await fetchConfigurations(modelId);
+		}
+	}
+);
 
 watch(
 	() => model.value,
@@ -687,7 +686,7 @@ onUnmounted(() => {
 	padding-bottom: var(--gap-2);
 }
 
-#notebook-section:deep(main) {
+.notebook-section:deep(main) {
 	gap: var(--gap-small);
 	position: relative;
 }
@@ -726,5 +725,29 @@ onUnmounted(() => {
 ul {
 	list-style: none;
 	padding-top: var(--gap-small);
+}
+
+button.start-edit {
+	display: flex;
+	gap: var(--gap-3);
+	width: fit-content;
+	padding: var(--gap-2);
+
+	& > .btn-content {
+		color: var(--text-color);
+	}
+
+	& > .pi {
+		color: var(--text-color-subdued);
+	}
+}
+
+.confirm-cancel {
+	display: flex;
+	align-items: center;
+	gap: var(--gap-1);
+	& > span {
+		margin-left: var(--gap-2);
+	}
 }
 </style>

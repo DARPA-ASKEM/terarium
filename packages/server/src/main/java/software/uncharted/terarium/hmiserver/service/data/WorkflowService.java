@@ -4,59 +4,50 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
-import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowEdge;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowNode;
 import software.uncharted.terarium.hmiserver.repository.data.WorkflowRepository;
-import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
-public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, WorkflowRepository> {
+public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow, WorkflowRepository> {
 
 	public WorkflowService(
 		final ObjectMapper objectMapper,
 		final Config config,
-		final ElasticsearchConfiguration elasticConfig,
-		final ElasticsearchService elasticService,
 		final ProjectService projectService,
 		final ProjectAssetService projectAssetService,
 		final S3ClientService s3ClientService,
 		final WorkflowRepository repository
 	) {
-		super(
-			objectMapper,
-			config,
-			elasticConfig,
-			elasticService,
-			projectService,
-			projectAssetService,
-			s3ClientService,
-			repository,
-			Workflow.class
-		);
+		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService, Workflow.class);
 	}
 
-	@Override
 	@Observed(name = "function_profile")
-	protected String getAssetIndex() {
-		return elasticConfig.getWorkflowIndex();
+	public Set<Workflow> findWorkflowsToClean() {
+		final Set<Workflow> workflows = new HashSet<>();
+		workflows.addAll(repository.findWorkflowsWithEdgesToBeDeleted());
+		workflows.addAll(repository.findWorkflowsWithNodesToBeDeleted());
+		return workflows;
 	}
 
-	@Override
 	@Observed(name = "function_profile")
-	public String getAssetAlias() {
-		return elasticConfig.getWorkflowAlias();
+	public Optional<List<Workflow>> updateWorkflows(final Collection<Workflow> assets)
+		throws IOException, IllegalArgumentException {
+		final List<Workflow> workflows = repository.saveAll(assets);
+		return Optional.of(workflows);
 	}
 
 	@Override
@@ -120,18 +111,18 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 		////////////////////////////////////////////////////////////////////////////////
 		if (dbWorkflowNodes != null && dbWorkflowNodes.size() > 0) {
 			for (int index = 0; index < dbWorkflowNodes.size(); index++) {
-				WorkflowNode dbNode = dbWorkflowNodes.get(index);
-				WorkflowNode node = nodeMap.get(dbNode.getId());
+				final WorkflowNode dbNode = dbWorkflowNodes.get(index);
+				final WorkflowNode node = nodeMap.get(dbNode.getId());
 
 				if (node == null) continue;
-				if (node.getIsDeleted() != null && node.getIsDeleted() == true) {
+				if (node.getIsDeleted()) {
 					dbNode.setIsDeleted(true);
 					nodeMap.remove(node.getId());
 					continue;
 				}
 
-				JsonNode nodeContent = this.objectMapper.valueToTree(node);
-				JsonNode dbNodeContent = this.objectMapper.valueToTree(dbNode);
+				final JsonNode nodeContent = this.objectMapper.valueToTree(node);
+				final JsonNode dbNodeContent = this.objectMapper.valueToTree(dbNode);
 
 				if (nodeContent.equals(dbNodeContent) == true) {
 					nodeMap.remove(node.getId());
@@ -156,18 +147,18 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 
 		if (dbWorkflowEdges != null && dbWorkflowEdges.size() > 0) {
 			for (int index = 0; index < dbWorkflowEdges.size(); index++) {
-				WorkflowEdge dbEdge = dbWorkflowEdges.get(index);
-				WorkflowEdge edge = edgeMap.get(dbEdge.getId());
+				final WorkflowEdge dbEdge = dbWorkflowEdges.get(index);
+				final WorkflowEdge edge = edgeMap.get(dbEdge.getId());
 
 				if (edge == null) continue;
-				if (edge.getIsDeleted() != null && edge.getIsDeleted() == true) {
+				if (edge.getIsDeleted()) {
 					dbEdge.setIsDeleted(true);
 					edgeMap.remove(edge.getId());
 					continue;
 				}
 
-				JsonNode edgeContent = this.objectMapper.valueToTree(edge);
-				JsonNode dbEdgeContent = this.objectMapper.valueToTree(dbEdge);
+				final JsonNode edgeContent = this.objectMapper.valueToTree(edge);
+				final JsonNode dbEdgeContent = this.objectMapper.valueToTree(dbEdge);
 
 				if (edgeContent.equals(dbEdgeContent) == true) {
 					edgeMap.remove(edge.getId());
@@ -192,10 +183,10 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 		////////////////////////////////////////////////////////////////////////////////
 		// Handle new nodes or edges
 		////////////////////////////////////////////////////////////////////////////////
-		for (Map.Entry<UUID, WorkflowNode> pair : nodeMap.entrySet()) {
+		for (final Map.Entry<UUID, WorkflowNode> pair : nodeMap.entrySet()) {
 			dbWorkflowNodes.add(pair.getValue());
 		}
-		for (Map.Entry<UUID, WorkflowEdge> pair : edgeMap.entrySet()) {
+		for (final Map.Entry<UUID, WorkflowEdge> pair : edgeMap.entrySet()) {
 			dbWorkflowEdges.add(pair.getValue());
 		}
 

@@ -239,7 +239,7 @@ public class GoLLMController {
 		// stripping the metadata from the model before its sent since it can cause
 		// gollm to fail with massive inputs
 		model.get().setMetadata(null);
-		input.setAmr(model.get());
+		input.setAmr(model.get().serializeWithoutTerariumFields());
 
 		// Create the task
 		final TaskRequest req = new TaskRequest();
@@ -372,7 +372,7 @@ public class GoLLMController {
 		// stripping the metadata from the model before its sent since it can cause
 		// gollm to fail with massive inputs
 		model.get().setMetadata(null);
-		input.setAmr(model.get());
+		input.setAmr(model.get().serializeWithoutTerariumFields());
 
 		// set matrix string if provided
 		if (body != null && !body.getMatrixStr().isEmpty()) {
@@ -464,12 +464,7 @@ public class GoLLMController {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 			}
 
-			try {
-				amrs.add(objectMapper.writeValueAsString(model.get()));
-			} catch (final JsonProcessingException e) {
-				log.error("Unable to serialize model card", e);
-				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
-			}
+			amrs.add(model.get().serializeWithoutTerariumFields());
 		}
 
 		// if the number of models is less than 2, return an error

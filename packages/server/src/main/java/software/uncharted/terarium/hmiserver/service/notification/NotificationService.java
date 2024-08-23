@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.service.notification;
 import io.micrometer.observation.annotation.Observed;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,8 +37,58 @@ public class NotificationService {
 	}
 
 	@Observed(name = "function_profile")
+	public List<NotificationGroup> getUnAckedNotificationGroupsCreatedSinceLatestEventOnly(
+		final String userId,
+		final Timestamp since
+	) {
+		final List<NotificationGroup> groups = notificationGroupRepository.findAllUnackedByUserReturnAllEvents(
+			userId,
+			since
+		);
+		for (final NotificationGroup group : groups) {
+			final List<NotificationEvent> events = group.getNotificationEvents();
+			if (!events.isEmpty()) {
+				NotificationEvent latestEvent = events.get(0);
+				for (final NotificationEvent event : events) {
+					if (event.getCreatedOn().after(latestEvent.getCreatedOn())) {
+						latestEvent = event;
+					}
+				}
+				final List<NotificationEvent> latestEventList = new ArrayList<>();
+				latestEventList.add(latestEvent);
+				group.setNotificationEvents(latestEventList);
+			}
+		}
+		return groups;
+	}
+
+	@Observed(name = "function_profile")
 	public List<NotificationGroup> getNotificationGroupsCreatedSince(final String userId, final Timestamp since) {
 		return notificationGroupRepository.findAllByUserIdAndCreatedOnGreaterThanOrderByCreatedOnDesc(userId, since);
+	}
+
+	@Observed(name = "function_profile")
+	public List<NotificationGroup> getNotificationGroupsCreatedSinceLatestEventOnly(
+		final String userId,
+		final Timestamp since
+	) {
+		final List<NotificationGroup> groups =
+			notificationGroupRepository.findAllByUserIdAndCreatedOnGreaterThanOrderByCreatedOnDesc(userId, since);
+		for (final NotificationGroup group : groups) {
+			final List<NotificationEvent> events = group.getNotificationEvents();
+			if (!events.isEmpty()) {
+				NotificationEvent latestEvent = events.get(0);
+				for (final NotificationEvent event : events) {
+					if (event.getCreatedOn().after(latestEvent.getCreatedOn())) {
+						latestEvent = event;
+					}
+				}
+				final List<NotificationEvent> latestEventList = new ArrayList<>();
+				latestEventList.add(latestEvent);
+				group.setNotificationEvents(latestEventList);
+			}
+		}
+		return groups;
 	}
 
 	@Observed(name = "function_profile")

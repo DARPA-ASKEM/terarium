@@ -15,5 +15,5 @@ setup(
             "gollm_task:generate_summary=tasks.generate_summary:main",
         ],
     },
-    python_requires=">=3.8",
+    python_requires=">=3.11",
 )

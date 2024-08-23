@@ -28,7 +28,7 @@ export interface ForecastChartOptions extends BaseChartOptions {
 }
 
 export interface ForecastChartLayer {
-	dataset: Record<string, any>[];
+	data: Record<string, any>[] | { name: string } | { url: string };
 	variables: string[];
 	timeField: string;
 	groupField?: string;
@@ -406,7 +406,7 @@ export function createForecastChart(
 	// Helper function to capture common layer structure
 	const newLayer = (layer: ForecastChartLayer, markType: string) => {
 		const header = {
-			data: { values: layer.dataset },
+			data: Array.isArray(layer.data) ? { values: layer.data } : layer.data,
 			transform: [
 				{
 					fold: layer.variables,
@@ -515,7 +515,6 @@ export function createForecastChart(
 		}
 		spec.layer.push(layerSpec);
 	}
-
 	return spec;
 }
 

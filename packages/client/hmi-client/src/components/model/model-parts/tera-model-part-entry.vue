@@ -22,14 +22,9 @@
 					v-else
 					label="Unit"
 					placeholder="Add a unit"
+					:characters-to-reject="[' ']"
 					:model-value="item.unitExpression ?? ''"
-					@update:model-value="
-						($event) => {
-							const value = $event.replace(/[\s.]+/g, '');
-							$emit('update-item', { key: 'unitExpression', value });
-						}
-					"
-					@focusout="($event) => ($event.target.value = $event.target.value.replace(/[\s.]+/g, ''))"
+					@update:model-value="$emit('update-item', { key: 'unitExpression', value: $event })"
 				/>
 			</template>
 		</span>
@@ -108,6 +103,9 @@ section {
 		'expression expression expression expression expression'
 		'description description description description description';
 	grid-template-columns: max-content max-content max-content auto max-content;
+	grid-auto-flow: dense;
+	max-width: 100%;
+	overflow: auto;
 	gap: var(--gap-2);
 	align-items: center;
 	font-size: var(--font-caption);
@@ -142,10 +140,13 @@ h6 {
 
 .unit {
 	grid-area: unit;
+	max-width: 20rem;
+	overflow: auto;
 }
 
 .expression {
 	grid-area: expression;
+	font-size: var(--font-body-small);
 }
 
 .concept {

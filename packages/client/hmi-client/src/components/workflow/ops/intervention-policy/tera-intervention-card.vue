@@ -1,30 +1,27 @@
 <template>
 	<div class="intervention-card">
-		<header class="flex align-items-center">
-			<tera-toggleable-edit
-				class="mr-auto"
-				:model-value="intervention.name"
-				@update:model-value="onUpdateName($event)"
-				tag="h5"
-			/>
-			<RadioButton
-				:model-value="interventionType"
-				:input-id="uniqueId()"
-				name="interventionType"
-				value="static"
-				@click="onInterventionTypeChange('static')"
-			/>
-			<label for="static" class="ml-2">Static</label>
-			<RadioButton
-				:model-value="interventionType"
-				:input-id="uniqueId()"
-				name="interventionType"
-				value="dynamic"
-				class="ml-3"
-				@click="onInterventionTypeChange('dynamic')"
-			/>
-			<label for="dynamic" class="ml-2">Dynamic</label>
-			<Button class="ml-3" icon="pi pi-trash" text @click="emit('delete')" />
+		<header class="flex align-items-center gap-2">
+			<tera-toggleable-input :model-value="intervention.name" @update:model-value="onUpdateName($event)" tag="h5" />
+			<div class="flex align-items-center ml-auto">
+				<RadioButton
+					:model-value="interventionType"
+					:input-id="uniqueId()"
+					name="interventionType"
+					value="static"
+					@click="onInterventionTypeChange('static')"
+				/>
+				<label for="static" class="ml-2">Static</label>
+				<RadioButton
+					:model-value="interventionType"
+					:input-id="uniqueId()"
+					name="interventionType"
+					value="dynamic"
+					class="ml-3"
+					@click="onInterventionTypeChange('dynamic')"
+				/>
+				<label for="dynamic" class="ml-2">Dynamic</label>
+				<Button class="ml-3" icon="pi pi-trash" text @click="emit('delete')" />
+			</div>
 		</header>
 		<section>
 			<div class="flex align-items-center flex-wrap gap-2">
@@ -139,7 +136,7 @@
 </template>
 
 <script setup lang="ts">
-import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
+import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import Button from 'primevue/button';
 import RadioButton from 'primevue/radiobutton';
 import { computed } from 'vue';

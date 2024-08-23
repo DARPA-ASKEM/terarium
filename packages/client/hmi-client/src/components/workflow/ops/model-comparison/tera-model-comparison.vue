@@ -10,8 +10,10 @@
 				<section class="comparison-overview">
 					<Accordion :activeIndex="0">
 						<AccordionTab header="Overview">
-							<p v-if="llmAnswer">{{ llmAnswer }}</p>
-							<p v-else class="subdued">Analyzing models metadata to generate a detailed comparison analysis...</p>
+							<p v-if="isEmpty(overview)" class="subdued">
+								Analyzing models metadata to generate a detailed comparison analysis...
+							</p>
+							<p v-html="overview" v-else />
 						</AccordionTab>
 					</Accordion>
 				</section>
@@ -98,8 +100,8 @@
 
 				<!-- Legend -->
 				<template #footer v-if="isLoadingStructuralComparisons || !isEmpty(structuralComparisons)">
-					<div class="legend flex align-items-center gap-7">
-						<span class="flex gap-5">
+					<div class="legend flex align-items-center gap-4">
+						<span class="flex gap-3">
 							<span class="flex align-items-center gap-2">
 								<span class="legend-circle subdued">Name</span>
 								<span>State variable nodes</span>
@@ -109,10 +111,11 @@
 								<span>Transition nodes</span>
 							</span>
 						</span>
-						<span class="flex gap-6">
-							<span class="legend-line orange">Model 1</span>
-							<span class="legend-line blue">Model 2</span>
-							<span class="legend-line red">Common to both models</span>
+						<span class="flex gap-4">
+							<span class="legend-line blue">Model 1</span>
+							<span class="legend-line green">Model 2</span>
+							<span class="legend-line orange">Common to both models</span>
+							<span class="legend-line red">Equal or related transitions</span>
 						</span>
 					</div>
 				</template>
@@ -124,6 +127,7 @@
 <script setup lang="ts">
 import { isEmpty, cloneDeep } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
+import markdownit from 'markdown-it';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -134,10 +138,10 @@ import { compareModels } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
 import { getModel } from '@/services/model';
 import { ClientEvent, ClientEventType, TaskResponse, TaskStatus, type Model } from '@/types/Types';
-import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
+import { OperatorStatus, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 
@@ -151,14 +155,13 @@ import { getImages, addImage, deleteImages } from '@/services/image';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import { b64DecodeUnicode } from '@/utils/binary';
 import { useClientEvent } from '@/composables/useClientEvent';
-import { CompareModelsResponseType } from '@/types/common';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelComparisonOperationState>;
 }>();
 
-const emit = defineEmits(['update-state', 'close']);
+const emit = defineEmits(['update-state', 'update-status', 'close']);
 
 enum Tabs {
 	Wizard = 'Wizard',
@@ -172,26 +175,20 @@ const sampleAgentQuestions = [
 	'Compare the three models and visualize and display them.',
 	'Compare the two models and visualize and display them.'
 ];
+let compareModelsTaskId = '';
+let compareModelsTaskOutput = '';
 
 const modelsToCompare = ref<Model[]>([]);
 const modelCardsToCompare = ref<any[]>([]);
 const fields = ref<string[]>([]);
 
 const isLoadingStructuralComparisons = ref(false);
+const overview = ref<string | null>(null);
 const structuralComparisons = ref<string[]>([]);
-const compareModelsTaskId = ref<string>('');
-const compareModelsTaskOutput = ref<string>('');
 const code = ref(props.node.state.notebookHistory?.[0]?.code ?? '');
 const llmThoughts = ref<any[]>([]);
 const isKernelReady = ref(false);
 const contextLanguage = ref<string>('python3');
-
-const llmAnswer = computed(() => {
-	if (!compareModelsTaskOutput.value) return '';
-	const str = b64DecodeUnicode(compareModelsTaskOutput.value);
-	const parsedValue = JSON.parse(str) as CompareModelsResponseType;
-	return parsedValue.response;
-});
 
 const initializeAceEditor = (editorInstance: any) => {
 	editor = editorInstance;
@@ -292,18 +289,30 @@ async function buildJupyterContext() {
 	}
 }
 
-async function processCompareModels(modelIds, workflowId?: string, nodeId?: string) {
-	const taskRes = await compareModels(modelIds, workflowId, nodeId);
-	compareModelsTaskId.value = taskRes.id;
+async function processCompareModels(modelIds: string[]) {
+	const taskRes = await compareModels(modelIds, props.node.workflowId, props.node.id);
+	compareModelsTaskId = taskRes.id;
 	if (taskRes.status === TaskStatus.Success) {
-		compareModelsTaskOutput.value = taskRes.output;
+		compareModelsTaskOutput = taskRes.output;
 	}
 }
 
+function assignOverview(b64overview: string) {
+	overview.value = markdownit().render(JSON.parse(b64DecodeUnicode(b64overview)).response);
+}
+
+async function generateOverview() {
+	// Generate once the comparison task has been completed
+	if (!compareModelsTaskOutput) return;
+	assignOverview(compareModelsTaskOutput);
+	emit('update-status', OperatorStatus.DEFAULT); // This is a custom way of granting a default status to the operator, since it has no output
+}
+
 useClientEvent(ClientEventType.TaskGollmCompareModel, (event: ClientEvent<TaskResponse>) => {
-	if (!event.data || event.data.id !== compareModelsTaskId.value) return;
+	if (!event.data || event.data.id !== compareModelsTaskId) return;
 	if (event.data.status !== TaskStatus.Success) return;
-	compareModelsTaskOutput.value = event.data.output;
+	compareModelsTaskOutput = event.data.output;
+	generateOverview();
 });
 
 onMounted(async () => {
@@ -324,7 +333,7 @@ onMounted(async () => {
 	fields.value = [...new Set(modelCardsToCompare.value.flatMap((card) => (card ? Object.keys(card) : [])))];
 
 	buildJupyterContext();
-	processCompareModels(modelIds, props.node.workflowId, props.node.id);
+	processCompareModels(modelIds);
 });
 
 onUnmounted(() => {
@@ -432,6 +441,9 @@ ul {
 .legend {
 	font-size: var(--font-caption);
 	flex: 1;
+	margin-bottom: var(--gap-4);
+	overflow-x: auto;
+	padding: 0 var(--gap-4);
 }
 
 .legend-circle {
@@ -458,15 +470,20 @@ ul {
 	position: absolute;
 	top: 50%;
 	left: 0;
-	width: 24px;
-	height: 2px;
+	width: 2px;
+	height: 24px;
+	transform: translate(-10px, -10px);
+}
+.legend-line.red::before {
 	background-color: red;
-	transform: translate(-30px, -50%);
 }
 .legend-line.orange::before {
 	background-color: orange;
 }
 .legend-line.blue::before {
 	background-color: blue;
+}
+.legend-line.green::before {
+	background-color: lightgreen;
 }
 </style>

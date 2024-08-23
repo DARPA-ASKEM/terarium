@@ -53,65 +53,76 @@
 				/>
 			</tera-drilldown-section>
 			<tera-drilldown-section>
-				<template v-if="selectedPolicy?.id">
-					<tera-toggleable-edit
-						v-if="selectedPolicy?.name"
+				<template #header-controls-left>
+					<tera-toggleable-input
+						v-if="typeof selectedPolicy?.name === 'string'"
 						:model-value="selectedPolicy.name"
 						@update:model-value="onChangeName"
 						tag="h4"
 					/>
-					<Accordion multiple :active-index="[0, 1]">
-						<AccordionTab>
-							<template #header>
-								Description
-								<Button v-if="!isEditingDescription" icon="pi pi-pencil" text @click.stop="onEditDescription" />
-								<template v-else>
-									<Button icon="pi pi-times" text @click.stop="isEditingDescription = false" />
-									<Button icon="pi pi-check" text @click.stop="onConfirmEditDescription" />
-								</template>
-							</template>
-							<p class="description text" v-if="!isEditingDescription">
-								{{ selectedPolicy?.description }}
-							</p>
-							<Textarea v-else class="w-full" placeholder="Enter a description" v-model="newDescription" />
-						</AccordionTab>
-						<AccordionTab header="Charts">
-							<ul class="flex flex-column gap-2">
-								<li v-for="(interventions, appliedTo) in groupedOutputParameters" :key="appliedTo">
-									<h5 class="pb-2">{{ appliedTo }}</h5>
-									<vega-chart :are-embed-actions-visible="false" :visualization-spec="preparedCharts[appliedTo]" />
-									<ul>
-										<li class="pb-2" v-for="intervention in interventions" :key="intervention.name">
-											<h6 class="pb-1">{{ intervention.name }}</h6>
-											<ul v-if="!isEmpty(intervention.staticInterventions)">
-												<li
-													v-for="staticIntervention in intervention.staticInterventions"
-													:key="staticIntervention.timestep"
-												>
-													<p>
-														Set {{ intervention.type }} {{ appliedTo }} to {{ staticIntervention.value }} at time step
-														{{ staticIntervention.timestep }}.
-													</p>
-												</li>
-											</ul>
-											<p v-else-if="!isEmpty(intervention.dynamicInterventions)">
-												Set {{ intervention.type }} {{ appliedTo }} to
-												{{ intervention.dynamicInterventions[0].value }} when the
-												{{ intervention.dynamicInterventions[0].parameter }}
-												{{
-													intervention.dynamicInterventions[0].isGreaterThan
-														? 'increases to above'
-														: 'decreases to below'
-												}}
-												{{ intervention.dynamicInterventions[0].threshold }}.
-											</p>
-										</li>
-									</ul>
-								</li>
-							</ul>
-						</AccordionTab>
-					</Accordion>
 				</template>
+				<Accordion v-if="selectedPolicy?.id" multiple :active-index="[0, 1]">
+					<AccordionTab>
+						<template #header>
+							<Button v-if="!isEditingDescription" class="start-edit" text @click.stop="onEditDescription">
+								<h5 class="btn-content">Description</h5>
+								<i class="pi pi-pencil" />
+							</Button>
+							<span v-else class="confirm-cancel">
+								<span>Description</span>
+								<Button icon="pi pi-times" text @click.stop="isEditingDescription = false" />
+								<Button icon="pi pi-check" text @click.stop="onConfirmEditDescription" />
+							</span>
+						</template>
+						<p class="description text" v-if="!isEditingDescription">
+							{{ selectedPolicy?.description }}
+						</p>
+						<Textarea
+							v-else
+							ref="descriptionTextareaRef"
+							class="w-full"
+							placeholder="Enter a description"
+							v-model="newDescription"
+						/>
+					</AccordionTab>
+					<AccordionTab header="Charts">
+						<ul class="flex flex-column gap-2">
+							<li v-for="(interventions, appliedTo) in groupedOutputParameters" :key="appliedTo">
+								<h5 class="pb-2">{{ appliedTo }}</h5>
+								<vega-chart
+									expandable
+									:are-embed-actions-visible="false"
+									:visualization-spec="preparedCharts[appliedTo]"
+								/>
+								<ul>
+									<li class="pb-2" v-for="intervention in interventions" :key="intervention.name">
+										<h6 class="pb-1">{{ intervention.name }}</h6>
+										<ul v-if="!isEmpty(intervention.staticInterventions)">
+											<li
+												v-for="staticIntervention in intervention.staticInterventions"
+												:key="staticIntervention.timestep"
+											>
+												<p>
+													Set {{ intervention.type }} {{ appliedTo }} to {{ staticIntervention.value }} at time step
+													{{ staticIntervention.timestep }}.
+												</p>
+											</li>
+										</ul>
+										<p v-else-if="!isEmpty(intervention.dynamicInterventions)">
+											Set {{ intervention.type }} {{ appliedTo }} to
+											{{ intervention.dynamicInterventions[0].value }} when the
+											{{ intervention.dynamicInterventions[0].parameter }}
+											{{
+												intervention.dynamicInterventions[0].isGreaterThan ? 'increases to above' : 'decreases to below'
+											}}
+											{{ intervention.dynamicInterventions[0].threshold }}.
+										</p>
+									</li>
+								</ul>
+							</li>
+						</ul>
+					</AccordionTab>
+				</Accordion>
 				<div v-else class="flex align-items-center h-full">
 					<Vue3Lottie :animationData="EmptySeed" :height="150" loop autoplay />
 				</div>
@@ -121,13 +132,13 @@
 </template>
 
 <script setup lang="ts">
+import _, { cloneDeep, groupBy, isEmpty, isEqual } from 'lodash';
+import { computed, onMounted, ref, watch, nextTick, ComponentPublicInstance } from 'vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { WorkflowNode } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
-import { computed, onMounted, ref, watch } from 'vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
-import _, { cloneDeep, groupBy, isEmpty, isEqual } from 'lodash';
 import Button from 'primevue/button';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { getInterventionPoliciesForModel, getModel } from '@/services/model';
@@ -136,7 +147,7 @@ import { logger } from '@/utils/logger';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { useConfirm } from 'primevue/useconfirm';
 import { getParameters, getStates } from '@/model-representation/service';
-import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
+import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import {
 	createInterventionPolicy,
 	getInterventionPolicyById,
@@ -190,6 +201,7 @@ const selectedOutputId = ref<string>('');
 const selectedPolicy = ref<InterventionPolicy | null>(null);
 
 const newDescription = ref('');
+const descriptionTextareaRef = ref<ComponentPublicInstance<typeof Textarea> | null>(null);
 const isEditingDescription = ref(false);
 const isSaved = computed(
 	() =>
@@ -240,10 +252,8 @@ const initialize = async () => {
 	if (state.interventionPolicy?.id) {
 		// copy the state into the knobs if it exists
 		selectedPolicy.value = await getInterventionPolicyById(state.interventionPolicy.id);
-		knobs.value.transientInterventionPolicy = cloneDeep(state.interventionPolicy);
-	} else {
-		knobs.value.transientInterventionPolicy = cloneDeep(state.interventionPolicy);
 	}
+	knobs.value.transientInterventionPolicy = cloneDeep(state.interventionPolicy);
 };
 
 const applyInterventionPolicy = (interventionPolicy: InterventionPolicy) => {
@@ -342,9 +352,11 @@ const onChangeName = async (name: string) => {
 	await fetchInterventionPolicies(selectedPolicy.value.modelId);
 };
 
-const onEditDescription = () => {
+const onEditDescription = async () => {
 	isEditingDescription.value = true;
 	newDescription.value = selectedPolicy.value?.description ?? '';
+	await nextTick();
+	descriptionTextareaRef.value?.$el.focus();
 };
 
 const onConfirmEditDescription = async () => {
@@ -420,5 +432,29 @@ section {
 	flex-direction: column;
 	gap: var(--gap);
 	padding: 0 var(--gap);
+}
+
+button.start-edit {
+	display: flex;
+	gap: var(--gap-3);
+	width: fit-content;
+	padding: var(--gap-2);
+
+	& > .btn-content {
+		color: var(--text-color);
+	}
+
+	& > .pi {
+		color: var(--text-color-subdued);
+	}
+}
+
+.confirm-cancel {
+	display: flex;
+	align-items: center;
+	gap: var(--gap-1);
+	& > span {
+		margin-left: var(--gap-2);
+	}
 }
 </style>

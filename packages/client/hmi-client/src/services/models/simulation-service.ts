@@ -3,7 +3,6 @@ import { logger } from '@/utils/logger';
 import API from '@/api/api';
 import {
 	CalibrationRequestCiemss,
-	CalibrationRequestJulia,
 	ClientEvent,
 	ClientEventType,
 	EnsembleCalibrationCiemssRequest,
@@ -39,28 +38,6 @@ export async function cancelCiemssJob(runId: String) {
 	}
 }
 
-export async function makeForecastJob(simulationParam: SimulationRequest, metadata?: any) {
-	try {
-		const resp = await API.post('simulation-request/forecast', {
-			payload: simulationParam,
-			metadata
-		});
-		EventService.create(
-			EventType.TransformPrompt,
-			useProjects().activeProject.value?.id,
-			JSON.stringify({
-				type: 'julia',
-				params: simulationParam
-			})
-		);
-		const output = resp.data;
-		return output;
-	} catch (err) {
-		logger.error(err);
-		return null;
-	}
-}
-
 export async function makeForecastJobCiemss(simulationParam: SimulationRequest, metadata?: any) {
 	try {
 		const resp = await API.post('simulation-request/ciemss/forecast', {
@@ -77,36 +54,6 @@ export async function makeForecastJobCiemss(simulationParam: SimulationRequest, 
 		);
 		const output = resp.data;
 		return output;
-	} catch (err) {
-		logger.error(err);
-		return null;
-	}
-}
-
-// TODO: Add typing to julia's output: https://github.com/DARPA-ASKEM/Terarium/issues/1655
-export async function getRunResultJulia(runId: string, filename = 'result.json') {
-	try {
-		const resp = await API.get(`simulations/${runId}/result`, {
-			params: { filename }
-		});
-		const output = resp.data;
-		const [states, params] = output;
-
-		const columnNames = (states.colindex.names as string[]).join(',');
-		let csvData: string = columnNames as string;
-		for (let j = 0; j < states.columns[0].length; j++) {
-			csvData += '\n';
-			for (let i = 0; i < states.columns.length; i++) {
-				csvData += `${states.columns[i][j]},`;
-			}
-		}
-
-		const paramVals = {};
-		Object.entries(params.colindex.lookup).forEach(([key, value]) => {
-			paramVals[key] = params.columns[(value as number) - 1][0];
-		});
-
-		return { csvData, paramVals };
 	} catch (err) {
 		logger.error(err);
 		return null;
@@ -238,25 +185,6 @@ export async function getSimulation(id: Simulation['id']): Promise<Simulation | 
 		return response.data;
 	} catch (error) {
 		logger.error(error);
-		return null;
-	}
-}
-
-export async function makeCalibrateJobJulia(calibrationParams: CalibrationRequestJulia, metadata?: any) {
-	try {
-		EventService.create(
-			EventType.RunCalibrate,
-			useProjects().activeProject.value?.id,
-			JSON.stringify(calibrationParams)
-		);
-		const resp = await API.post('simulation-request/calibrate', {
-			payload: calibrationParams,
-			metadata
-		});
-		const output = resp.data;
-		return output;
-	} catch (err) {
-		logger.error(err);
 		return null;
 	}
 }

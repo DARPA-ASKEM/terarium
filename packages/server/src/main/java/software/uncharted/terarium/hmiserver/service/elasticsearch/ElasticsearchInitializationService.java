@@ -57,7 +57,9 @@ public class ElasticsearchInitializationService {
 		return false;
 	}
 
-	/** For each system template resource, add it to the cluster if it doesn't exist */
+	/**
+	 * For each system template resource, add it to the cluster if it doesn't exist
+	 */
 	private void pushMissingComponentTemplates() throws IOException {
 		for (final Resource resource : resourceComponentTemplates) {
 			final String filename = resource.getFilename();
@@ -84,7 +86,9 @@ public class ElasticsearchInitializationService {
 		}
 	}
 
-	/** For each system template resource, add it to the cluster if it doesn't exist */
+	/**
+	 * For each system template resource, add it to the cluster if it doesn't exist
+	 */
 	private void pushMissingIndexTemplates() throws IOException {
 		for (final Resource resource : resourceIndexTemplates) {
 			final String filename = resource.getFilename();
@@ -135,17 +139,19 @@ public class ElasticsearchInitializationService {
 		}
 	}
 
-	/** For each index in the ElasticsearchConfiguration, add it to the cluster if it doesn't exist */
+	/**
+	 * For each index in the ElasticsearchConfiguration, add it to the cluster if it
+	 * doesn't exist
+	 */
 	private void pushMissingIndices() throws IOException {
 		final Map<String, String> indices = new HashMap<>() {
 			@Serial
 			private static final long serialVersionUID = -200876314045109854L;
 
 			{
+				put(config.getProjectIndex(), config.getProjectAlias());
 				put(config.getCodeIndex(), config.getCodeAlias());
 				put(config.getDatasetIndex(), config.getDatasetAlias());
-				put(config.getDecapodesConfigurationIndex(), config.getDecapodesConfigurationAlias());
-				put(config.getDecapodesContextIndex(), config.getDecapodesContextAlias());
 				put(config.getDocumentIndex(), config.getDocumentAlias());
 				put(config.getEquationIndex(), config.getEquationAlias());
 				put(config.getModelIndex(), config.getModelAlias());

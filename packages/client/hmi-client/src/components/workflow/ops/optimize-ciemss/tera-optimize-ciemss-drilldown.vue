@@ -264,7 +264,11 @@
 							<AccordionTab header="Success criteria">
 								<ul>
 									<li v-for="(_constraint, key) in node.state.constraintGroups" :key="key">
-										<vega-chart are-embed-actions-visible :visualization-spec="preparedSuccessCriteriaCharts[key]" />
+										<vega-chart
+											expandable
+											are-embed-actions-visible
+											:visualization-spec="preparedSuccessCriteriaCharts[key]"
+										/>
 									</li>
 								</ul>
 							</AccordionTab>
@@ -272,6 +276,7 @@
 								<ul>
 									<li v-for="(_, key) of knobs.selectedInterventionVariables" :key="key">
 										<vega-chart
+											expandable
 											are-embed-actions-visible
 											:visualization-spec="preparedForecastCharts.interventionCharts[key]"
 										/>
@@ -282,6 +287,7 @@
 								<ul>
 									<li v-for="(_, key) of knobs.selectedSimulationVariables" :key="key">
 										<vega-chart
+											expandable
 											are-embed-actions-visible
 											:visualization-spec="preparedForecastCharts.simulationCharts[key]"
 										/>
@@ -958,13 +964,13 @@ const preparedForecastCharts = computed(() => {
 
 		const forecastChart = createForecastChart(
 			{
-				dataset: result,
+				data: result,
 				variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
 				timeField: 'timepoint_id',
 				groupField: 'sample_id'
 			},
 			{
-				dataset: resultSummary,
+				data: resultSummary,
 				variables: [`${pyciemssMap[variable]}_mean:pre`, `${pyciemssMap[variable]}_mean`],
 				timeField: 'timepoint_id'
 			},
@@ -984,13 +990,13 @@ const preparedForecastCharts = computed(() => {
 
 		return createForecastChart(
 			{
-				dataset: result,
+				data: result,
 				variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
 				timeField: 'timepoint_id',
 				groupField: 'sample_id'
 			},
 			{
-				dataset: resultSummary,
+				data: resultSummary,
 				variables: [`${pyciemssMap[variable]}_mean:pre`, `${pyciemssMap[variable]}_mean`],
 				timeField: 'timepoint_id'
 			},
