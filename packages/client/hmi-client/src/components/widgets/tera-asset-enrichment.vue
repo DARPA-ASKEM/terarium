@@ -38,8 +38,8 @@ import {
 	getRelatedArtifacts,
 	mapAssetTypeToProvenanceType
 } from '@/services/provenance';
-import type { DocumentAsset, TerariumAsset, ProvenanceType, ProjectAsset } from '@/types/Types';
-import { AssetType } from '@/types/Types';
+import type { DocumentAsset, TerariumAsset, ProjectAsset } from '@/types/Types';
+import { AssetType, ProvenanceType } from '@/types/Types';
 import { isDocumentAsset } from '@/utils/data-util';
 import { isEmpty } from 'lodash';
 import Button from 'primevue/button';
