@@ -46,12 +46,7 @@
 					theme="chrome"
 					style="height: 100%; width: 100%"
 					class="ace-editor"
-					:options="{
-						showPrintMargin: false,
-						enableBasicAutocompletion: true,
-						enableLiveAutocompletion: true,
-						enableSnippets: true
-					}"
+					:options="{ showPrintMargin: false }"
 				/>
 			</div>
 			<div class="code-blocks-container">
