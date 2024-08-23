@@ -50,20 +50,16 @@
 							{{ snakeToCapitalized(key) }}
 						</div>
 						<div class="col">
-							<template v-if="typeof value === 'object'">
-								<ul>
-									<li v-for="(item, index) in Object.values(value)" :key="index">
-										{{ item }}
-									</li>
-								</ul>
-							</template>
-							<template v-else-if="Array.isArray(value)">
-								<ul>
-									<li v-for="(item, index) in value" :key="index">
-										{{ item }}
-									</li>
-								</ul>
-							</template>
+							<ul v-if="typeof value === 'object'">
+								<li v-for="(item, index) in Object.values(value)" :key="index">
+									{{ item }}
+								</li>
+							</ul>
+							<ul v-else-if="Array.isArray(value)">
+								<li v-for="(item, index) in value" :key="index">
+									{{ item }}
+								</li>
+							</ul>
 							<template v-else>
 								{{ value }}
 							</template>
