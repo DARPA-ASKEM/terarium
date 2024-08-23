@@ -1,5 +1,7 @@
 import _ from 'lodash';
 
+export type DataArray = Record<string, any>[];
+
 export const mean = (numberList: number[]) =>
 	numberList.reduce((acc: number, val: number) => acc + val, 0) / numberList.length;
 
@@ -16,7 +18,23 @@ export const stddev = (numberList: number[], usePopulation = false) => {
 
 // Get the mean absolute error between two maps.
 // Note this will only compare values that share the same key.
-export const mae = (map1: Map<number, number>, map2: Map<number, number>) => {
+export const mae = (arr1: DataArray, arr2: DataArray, keyField: string, valueField: string) => {
+	const map1: Map<number, number> = new Map();
+	const map2: Map<number, number> = new Map();
+
+	// Remap
+	arr1.forEach((ele) => {
+		const timestamp = ele[keyField];
+		const value = ele[valueField];
+		map1.set(timestamp, value);
+	});
+
+	arr2.forEach((ele) => {
+		const timestamp = ele[keyField];
+		const value = ele[valueField];
+		map2.set(timestamp, value);
+	});
+
 	const sharedKey = [...map1.keys()].filter((key) => map2.has(key));
 	const error = _.meanBy(sharedKey, (key) => {
 		const firstValue = map1.get(key) as number;

@@ -14,25 +14,25 @@ describe('statistics utilities', () => {
 		expect(stddev).to.eq(0);
 	});
 	it('mae', () => {
-		const map1 = new Map<number, number>([
-			[1, 1],
-			[2, 1],
-			[3, 1],
-			[4, 1],
-			[5, 1]
-		]);
-		const map2 = new Map<number, number>([
-			[0, 5],
-			[5, 5]
-		]);
-		const map3 = new Map<number, number>([
-			[10, 10],
-			[20, 10]
-		]);
+		const arr1 = [
+			{ time: 1, value: 1 },
+			{ time: 2, value: 1 },
+			{ time: 3, value: 1 },
+			{ time: 4, value: 1 },
+			{ time: 5, value: 1 }
+		];
+		const arr2 = [
+			{ time: 0, value: 5 },
+			{ time: 5, value: 5 }
+		];
+		const arr3 = [
+			{ time: 10, value: 10 },
+			{ time: 20, value: 10 }
+		];
 		let mae = -999;
-		mae = stats.mae(map1, map2);
+		mae = stats.mae(arr1, arr2, 'time', 'value');
 		expect(mae).to.equal(4);
-		mae = stats.mae(map1, map3);
+		mae = stats.mae(arr1, arr3, 'time', 'value');
 		expect(Number.isNaN(mae)).to.equal(true);
 	});
 });
