@@ -1,25 +1,14 @@
 <template>
 	<tera-drilldown
 		ref="drilldownRef"
+		v-bind="$attrs"
 		:node="node"
 		:menu-items="menuItems"
 		@update:selection="onSelection"
 		@on-close-clicked="onDrilldownClose"
 		@update-state="(state: any) => emit('update-state', state)"
 		@update-output-port="(output: any) => emit('update-output-port', output)"
-		v-bind="$attrs"
 	>
-		<tera-drilldown-section :tabName="DrilldownTabs.Wizard">
-			<tera-model-template-editor
-				v-if="amr"
-				:model="amr"
-				:kernel-manager="kernelManager"
-				@output-code="(data: any) => appendCode(data, 'executed_code')"
-				@sync-with-mira-model="syncWithMiraModel"
-				@save-new-model-output="createOutput"
-				@reset="resetModel"
-			/>
-		</tera-drilldown-section>
 		<tera-drilldown-section :tabName="DrilldownTabs.Notebook" class="notebook-section">
 			<div class="toolbar">
 				<Suspense>
@@ -69,6 +58,20 @@
 				</div>
 			</tera-drilldown-preview>
 		</template>
+		<tera-drilldown-section :tabName="DrilldownTabs.Wizard">
+			<template v-if="amr">
+				<tera-model-template-editor
+					v-if="amr.model.transitions.length < 50"
+					:model="amr"
+					:kernel-manager="kernelManager"
+					@output-code="(data: any) => appendCode(data, 'executed_code')"
+					@sync-with-mira-model="syncWithMiraModel"
+					@save-new-model-output="createOutput"
+					@reset="resetModel"
+				/>
+				<p v-else class="m-4">Model makes too many amr-to-mmt calls. Wizard is disabled for now.</p>
+			</template>
+		</tera-drilldown-section>
 	</tera-drilldown>
 	<tera-save-asset-modal
 		v-if="amr"
