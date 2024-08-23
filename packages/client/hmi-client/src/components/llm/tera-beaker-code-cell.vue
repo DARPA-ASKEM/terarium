@@ -1,11 +1,11 @@
 <template>
-	<div @keyup.ctrl.enter.prevent="runCell">
+	<div class="flex relative" @keyup.ctrl.enter.prevent="runCell">
+		<pre>[{{ jupyterMessage.content?.execution_count ?? '*' }}]</pre>
 		<v-ace-editor
 			:value="code"
 			@init="initialize"
 			theme="chrome"
-			style="min-height: 30px; width: 100%"
-			class="ace-editor"
+			class="ace-editor ml-5 w-full"
 			:options="{
 				showPrintMargin: false,
 				maxLines: 1000,
@@ -14,9 +14,9 @@
 			}"
 			:lang="language"
 		/>
-		<div class="controls">
-			<Button text rounded icon="pi pi-trash" class="danger-hover" @click="onDelete" />
-			<Button text rounded icon="pi pi-play" @click="runCell" />
+		<div class="flex">
+			<Button text rounded icon="pi pi-trash" class="danger-hover pt-0" @click="onDelete" />
+			<Button text rounded icon="pi pi-play" class="pt-0" @click="runCell" />
 		</div>
 	</div>
 </template>

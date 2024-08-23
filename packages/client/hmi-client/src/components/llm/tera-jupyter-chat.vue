@@ -297,17 +297,11 @@ const updateNotebookCells = (message, isNextCell: boolean = true) => {
 		if (codeCell) {
 			codeCell.content = message.content;
 		}
-		return;
-	} else if (['stream', 'display_data', 'execute_result'].includes(message.header.msg_type)) {
-		// remove the old output cells if a new output type is received
-		notebookItem.messages = notebookItem.messages.filter(
-			(msg) => msg.header.msg_type !== message.header.msg_type && msg.header.msg_type !== 'error'
-		);
-	} else if (message.header.msg_type === 'error') {
-		// remove the all output cells
+		// clear the cell outputs when we get a new code execution
 		notebookItem.messages = notebookItem.messages.filter(
 			(msg) => !['stream', 'display_data', 'execute_result', 'error'].includes(msg.header.msg_type)
 		);
+		return;
 	}
 
 	notebookItem.messages.push(message);
