@@ -95,7 +95,7 @@ import TeraJupyterResponseThought from '@/components/llm/tera-beaker-response-th
 import Button from 'primevue/button';
 import Textarea from 'primevue/textarea';
 import Menu from 'primevue/menu';
-import { defineEmits, ref, computed, onMounted, watch } from 'vue';
+import { defineEmits, ref, computed, onMounted } from 'vue';
 
 const emit = defineEmits([
 	'cell-updated',
@@ -194,15 +194,7 @@ function toTitleCase(str: string): string {
 
 onMounted(() => {
 	query.value = props.msg.query ?? '';
-	emit('cell-updated', resp.value, props.msg);
 });
-
-watch(
-	() => props.msg.messages,
-	() => {
-		emit('cell-updated', resp.value, props.msg, 'delete-cell');
-	}
-);
 
 defineExpose({
 	codeCell

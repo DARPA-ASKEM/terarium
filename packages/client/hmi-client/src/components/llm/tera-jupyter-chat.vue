@@ -9,7 +9,7 @@
 		>
 			<tera-jupyter-response
 				@keydown.stop
-				v-for="(msg, index) in notebookItems"
+				v-for="(msg, index) in filteredNotebookItems"
 				ref="notebookCells"
 				:class="{ selected: msg.query_id === selectedCellId }"
 				:key="msg.query_id"
@@ -42,7 +42,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { onUnmounted, ref, watch } from 'vue';
+import { onUnmounted, ref, watch, computed } from 'vue';
 import { createMessageId, JupyterMessage, KernelState, INotebookItem } from '@/services/jupyter';
 import type { NotebookSession } from '@/types/Types';
 import { AssetType } from '@/types/Types';
@@ -63,6 +63,10 @@ const notebookItems = ref(<INotebookItem[]>[]);
 
 const notebookCells = ref<(typeof TeraJupyterResponse)[]>([]);
 const selectedCellId = ref();
+
+const filteredNotebookItems = computed<INotebookItem[]>(() =>
+	notebookItems.value.filter((item) => !isEmpty(item.messages))
+);
 
 const emit = defineEmits([
 	'new-message',
@@ -125,40 +129,36 @@ const onKeyPress = (event) => {
 	}
 };
 
-const scrollToCell = (element: typeof TeraJupyterResponse) => {
+const scrollToCell = (element) => {
 	if (element) {
 		element.$el.scrollIntoView({ block: 'start', inline: 'nearest', behavior: 'smooth' });
 	}
 };
 
 const enterCell = () => {
-	const index = notebookItems.value.findIndex((item) => item.query_id === selectedCellId.value);
-	if (index > -1) {
-		const el = notebookCells.value[index];
-		if (el.codeCell) {
-			el.codeCell[0]?.enter();
-		}
+	const notebookCell = notebookCells.value.find((item) => item.$props.msg.query_id === selectedCellId.value);
+	if (notebookCell?.codeCell?.[0]) {
+		notebookCell.codeCell[0].enter();
 	}
-	// scroll to the selected cell
-	scrollToCell(notebookCells.value[index]);
+	scrollToCell(notebookCell);
 };
 
 const selectPreviousCell = () => {
-	const index = notebookItems.value.findIndex((item) => item.query_id === selectedCellId.value);
+	const index = filteredNotebookItems.value.findIndex((item) => item.query_id === selectedCellId.value);
 	if (index > 0) {
-		selectedCellId.value = notebookItems.value[index - 1].query_id;
+		selectedCellId.value = filteredNotebookItems.value[index - 1].query_id;
 	}
-	// scroll to the selected cell
-	scrollToCell(notebookCells.value[index - 1]);
+	const notebookCell = notebookCells.value.find((item) => item.$props.msg.query_id === selectedCellId.value);
+	scrollToCell(notebookCell);
 };
 
 const selectNextCell = () => {
-	const index = notebookItems.value.findIndex((item) => item.query_id === selectedCellId.value);
-	if (index < notebookItems.value.length - 1) {
-		selectedCellId.value = notebookItems.value[index + 1].query_id;
+	const index = filteredNotebookItems.value.findIndex((item) => item.query_id === selectedCellId.value);
+	if (index < filteredNotebookItems.value.length - 1) {
+		selectedCellId.value = filteredNotebookItems.value[index + 1].query_id;
 	}
-	// scroll to the selected cell
-	scrollToCell(notebookCells.value[index]);
+	const notebookCell = notebookCells.value.find((item) => item.$props.msg.query_id === selectedCellId.value);
+	scrollToCell(notebookCell);
 };
 
 const previewSelected = (selection) => {
@@ -293,7 +293,9 @@ const updateNotebookCells = (message, isNextCell: boolean = true) => {
 		notebookItem.messages = notebookItem.messages.filter((msg) => msg.header.msg_type !== 'dataset');
 		notebookItem.resultingCsv = message.content;
 		emit('update-kernel-state', message.content);
-	} else if (message.header.msg_type === 'model_preview') {
+		return;
+	}
+	if (message.header.msg_type === 'model_preview') {
 		// If we get a new model preview, remove any old previews
 		notebookItem.messages = notebookItem.messages.filter((msg) => msg.header.msg_type !== 'model_preview');
 		emit('update-kernel-state', message.content);
@@ -413,6 +415,8 @@ watch(
 			if (isEmpty(notebookItems.value)) {
 				addCodeCell(true);
 			}
+			messageContainer.value?.focus();
+			selectedCellId.value = filteredNotebookItems.value[filteredNotebookItems.value.length - 1]?.query_id;
 		}
 	},
 	{ immediate: true }

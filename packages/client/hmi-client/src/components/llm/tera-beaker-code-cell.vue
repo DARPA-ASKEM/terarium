@@ -63,10 +63,6 @@ const enter = () => {
 	editor.value?.focus();
 };
 
-defineExpose({
-	enter
-});
-
 const runCell = async () => {
 	if (!editor.value) return;
 
@@ -95,4 +91,9 @@ const onDelete = () => {
 		}
 	});
 };
+
+defineExpose({
+	enter,
+	runCell
+});
 </script>
