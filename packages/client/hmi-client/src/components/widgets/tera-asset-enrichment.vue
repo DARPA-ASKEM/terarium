@@ -1,6 +1,5 @@
 <template>
-	<main>
-		<p v-if="isEmpty(relatedDocuments)">
+	<!-- <p v-if="isEmpty(relatedDocuments)">
 			Terarium can extract information from documents to add relevant information to this resource.
 		</p>
 		<template v-else>
@@ -17,53 +16,43 @@
 					/>
 				</li>
 			</ul>
-		</template>
-		<footer class="flex gap-2">
-			<Button
-				severity="secondary"
-				size="small"
-				label="Enrich description"
-				:loading="isLoading"
-				@click="dialogForEnrichment"
-			/>
-			<Button
-				v-if="assetType === AssetType.Model"
-				severity="secondary"
-				size="small"
-				label="Extract variables"
-				:loading="isLoading"
-				@click="dialogForExtraction"
-			/>
-		</footer>
-		<Dialog modal v-model:visible="visible" :header="`Describe this ${assetType}`" :style="{ width: '50vw' }">
-			<p class="constrain-width mt-2 mb-4">
-				Terarium can extract information from documents to describe this
-				{{ assetType }}.<br />Select a document you would like to use.
-			</p>
-			<DataTable
-				v-if="!isEmpty(documents)"
-				:value="documents"
-				v-model:selection="selectedResources"
-				selection-mode="single"
-			>
-				<Column selectionMode="single" headerStyle="width: 3rem" />
-				<Column field="name" sortable header="Name" />
-			</DataTable>
-			<div v-else>
-				<div class="no-documents">
-					<img class="no-documents-img" src="@assets/svg/plants.svg" alt="" />
-					<div class="no-documents-text">You don't have any resources that can be used. Try adding some documents.</div>
-					<div class="no-documents-text">
-						Would you like to generate descriptions without attaching additional context?
-					</div>
+		</template> -->
+	<Button
+		label="Enrich metadata with AI assistant"
+		:loading="isLoading"
+		severity="secondary"
+		outlined
+		@click="dialogForEnrichment"
+	/>
+	<!-- dialogForExtraction v-if="assetType === AssetType.Model"-->
+	<Dialog modal v-model:visible="visible" :header="`Describe this ${assetType}`" :style="{ width: '50vw' }">
+		<p class="constrain-width mt-2 mb-4">
+			Terarium can extract information from documents to describe this
+			{{ assetType }}.<br />Select a document you would like to use.
+		</p>
+		<DataTable
+			v-if="!isEmpty(documents)"
+			:value="documents"
+			v-model:selection="selectedResources"
+			selection-mode="single"
+		>
+			<Column selectionMode="single" headerStyle="width: 3rem" />
+			<Column field="name" sortable header="Name" />
+		</DataTable>
+		<div v-else>
+			<div class="no-documents">
+				<img class="no-documents-img" src="@assets/svg/plants.svg" alt="" />
+				<div class="no-documents-text">You don't have any resources that can be used. Try adding some documents.</div>
+				<div class="no-documents-text">
+					Would you like to generate descriptions without attaching additional context?
 				</div>
 			</div>
-			<template #footer>
-				<Button severity="secondary" outlined label="Cancel" @click="closeDialog" />
-				<Button :label="dialogActionCopy" :disabled="isDialogDisabled" @click="acceptDialog" />
-			</template>
-		</Dialog>
-	</main>
+		</div>
+		<template #footer>
+			<Button severity="secondary" outlined label="Cancel" @click="closeDialog" />
+			<Button :label="dialogActionCopy" :disabled="isDialogDisabled" @click="acceptDialog" />
+		</template>
+	</Dialog>
 </template>
 
 <script setup lang="ts">
@@ -85,7 +74,7 @@ import Dialog from 'primevue/dialog';
 import { computed, onMounted, ref, watch } from 'vue';
 import { logger } from '@/utils/logger';
 import { modelCard } from '@/services/goLLM';
-import TeraAssetLink from './tera-asset-link.vue';
+// import TeraAssetLink from './tera-asset-link.vue';
 
 const props = defineProps<{
 	documents: { name: string; id: string }[];
@@ -137,10 +126,10 @@ function dialogForEnrichment() {
 	openDialog();
 }
 
-function dialogForExtraction() {
-	dialogType.value = DialogType.EXTRACT;
-	openDialog();
-}
+// function dialogForExtraction() {
+// 	dialogType.value = DialogType.EXTRACT;
+// 	openDialog();
+// }
 
 const acceptDialog = () => {
 	if (dialogType.value === DialogType.ENRICH) {

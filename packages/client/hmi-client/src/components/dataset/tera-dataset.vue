@@ -32,21 +32,28 @@
 			/>
 			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" :pt="optionsMenuPt" />
 			<div class="btn-group">
-				<Button label="Enrich metadata with AI assistant" severity="secondary" outlined />
+				<tera-asset-enrichment
+					:documents="documents"
+					:asset-type="AssetType.Dataset"
+					:assetId="assetId"
+					@enriched="fetchDataset"
+				/>
 				<Button label="Reset" severity="secondary" outlined />
 				<Button label="Save as..." severity="secondary" outlined />
 				<Button label="Save" />
 			</div>
 		</template>
 		<section>
-			<p>
-				<span class="font-bold inline-block w-10rem">Dataset Id</span>
-				<code class="inline">{{ datasetInfo.id }}</code>
-			</p>
-			<p>
-				<span class="font-bold inline-block w-10rem">Dataset Filenames</span>
-				{{ datasetInfo.fileNames }}<br />
-			</p>
+			<div class="m-3">
+				<p>
+					<span class="font-bold inline-block w-10rem">Dataset Id</span>
+					<code class="inline">{{ datasetInfo.id }}</code>
+				</p>
+				<p>
+					<span class="font-bold inline-block w-10rem">Dataset Filenames</span>
+					{{ datasetInfo.fileNames }}
+				</p>
+			</div>
 			<Accordion multiple :active-index="[0, 1, 2, 3, 4]">
 				<AccordionTab header="Description">
 					<section class="description">
@@ -61,17 +68,7 @@
 						</template>
 					</section>
 				</AccordionTab>
-				<!-- <AccordionTab header="Charts">
-					TBD
-				</AccordionTab> -->
-				<!-- <AccordionTab header="Provenance">
-					<tera-related-documents
-						:documents="documents"
-						:asset-type="AssetType.Dataset"
-						:assetId="dataset?.id ?? ''"
-						@enriched="fetchDataset"
-					/>
-				</AccordionTab> -->
+				<!-- <AccordionTab header="Charts">TBD</AccordionTab> -->
 				<AccordionTab header="Column information" v-if="!isClimateData && !isClimateSubset">
 					<tera-dataset-overview-table
 						v-if="dataset"
@@ -115,13 +112,11 @@
 							</template>
 						</div>
 					</AccordionTab>
-					<AccordionTab header="Data">
-						<template v-if="!isEmpty(datasetInfo.fileNames)">
-							<tera-progress-spinner v-if="!rawContent" :font-size="2" is-centered />
-							<tera-dataset-datatable v-else :rows="100" :raw-content="rawContent" />
-						</template>
-					</AccordionTab>
 				</template>
+				<AccordionTab header="Data" v-if="!isEmpty(datasetInfo.fileNames)">
+					<tera-progress-spinner v-if="!rawContent" :font-size="2" is-centered />
+					<tera-dataset-datatable v-else :rows="100" :raw-content="rawContent" />
+				</AccordionTab>
 			</Accordion>
 		</section>
 	</tera-asset>
@@ -131,13 +126,20 @@
 import { computed, onUpdated, PropType, Ref, ref, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import { snakeToCapitalized } from '@/utils/text';
-import { downloadRawFile, getClimateDataset, getDataset, getDownloadURL, updateDataset } from '@/services/dataset';
+import {
+	downloadRawFile,
+	getClimateDataset,
+	getClimateDatasetPreview,
+	getDataset,
+	getDownloadURL,
+	updateDataset
+} from '@/services/dataset';
 import {
 	AssetType,
 	type CsvAsset,
 	type Dataset,
 	type DatasetColumn,
-	// type ProjectAsset,
+	type ProjectAsset,
 	PresignedURL
 } from '@/types/Types';
 import TeraAsset from '@/components/asset/tera-asset.vue';
@@ -154,7 +156,7 @@ import Button from 'primevue/button';
 import { logger } from '@/utils/logger';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraCarousel from '@/components/widgets/tera-carousel.vue';
-// import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
+import TeraAssetEnrichment from '@/components/widgets/tera-asset-enrichment.vue';
 import TeraDatasetOverviewTable from './tera-dataset-overview-table.vue';
 import TeraDatasetDatatable from './tera-dataset-datatable.vue';
 import { enrichDataset } from './utils';
@@ -194,15 +196,15 @@ const datasetInfo = computed(() => {
 	return information;
 });
 
-// const documents = computed<{ name: string; id: string }[]>(
-// 	() =>
-// 		useProjects()
-// 			.getActiveProjectAssets(AssetType.Document)
-// 			.map((projectAsset: ProjectAsset) => ({
-// 				name: projectAsset.assetName,
-// 				id: projectAsset.assetId
-// 			})) ?? []
-// );
+const documents = computed<{ name: string; id: string }[]>(
+	() =>
+		useProjects()
+			.getActiveProjectAssets(AssetType.Document)
+			.map((projectAsset: ProjectAsset) => ({
+				name: projectAsset.assetName,
+				id: projectAsset.assetId
+			})) ?? []
+);
 
 const isClimateData = computed(() => dataset.value?.esgfId);
 const isClimateSubset = computed(() => dataset.value?.metadata?.format === 'netcdf');
@@ -323,6 +325,10 @@ const fetchDataset = async () => {
 	} else if (props.source === DatasetSource.ESGF) {
 		dataset.value = await getClimateDataset(props.assetId);
 	}
+
+	if (dataset.value?.esgfId && !image.value) {
+		image.value = await getClimateDatasetPreview(dataset.value.esgfId);
+	}
 };
 
 onUpdated(() => {
@@ -393,5 +399,27 @@ watch(
 	align-items: center;
 	gap: var(--gap-small);
 	margin-left: auto;
+}
+
+.description {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-small);
+	margin-left: 1.5rem;
+}
+
+.row {
+	display: flex;
+	justify-content: space-between;
+	border-bottom: 1px solid var(--surface-border);
+	padding: var(--gap-small) 0;
+}
+
+.key {
+	font-weight: bold;
+}
+
+.col {
+	flex: 1;
 }
 </style>
