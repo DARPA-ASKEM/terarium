@@ -22,7 +22,6 @@
 				:auto-expand-preview="autoExpandPreview"
 				:default-preview="defaultPreview"
 				:language="language"
-				@cell-updated="scrollToLastCell"
 				@preview-selected="previewSelected"
 				@delete-message="handleDeleteMessage"
 				@delete-prompt="handleDeletePrompt"
@@ -388,12 +387,6 @@ const clearOutputs = () => {
 				el.codeCell[j].clear();
 			}
 		}
-	}
-};
-
-const scrollToLastCell = (element, msg) => {
-	if (msg === notebookItems.value[notebookItems.value.length - 1]) {
-		element.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
 	}
 };
 
