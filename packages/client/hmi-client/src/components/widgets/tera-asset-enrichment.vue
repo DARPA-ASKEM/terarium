@@ -1,34 +1,18 @@
 <template>
-	<!-- <p v-if="isEmpty(relatedDocuments)">
-			Terarium can extract information from documents to add relevant information to this resource.
-		</p>
-		<template v-else>
-			<p>
-				Related publications, documents, and other resources that are relevant to this
-				{{ assetType }}.
-			</p>
-			<ul>
-				<li v-for="document in relatedDocuments" :key="document.id">
-					<tera-asset-link
-						:label="document.name"
-						:asset-route="{ assetId: document.id, pageType: AssetType.Document }"
-						show-icon
-					/>
-				</li>
-			</ul>
-		</template> -->
 	<Button
 		label="Enrich metadata with AI assistant"
 		:loading="isLoading"
 		severity="secondary"
 		outlined
-		@click="dialogForEnrichment"
+		@click="isModalVisible = true"
 	/>
-	<!-- dialogForExtraction v-if="assetType === AssetType.Model"-->
-	<Dialog modal v-model:visible="visible" :header="`Describe this ${assetType}`" :style="{ width: '50vw' }">
-		<p class="constrain-width mt-2 mb-4">
-			Terarium can extract information from documents to describe this
-			{{ assetType }}.<br />Select a document you would like to use.
+	<tera-modal v-if="isModalVisible" @modal-mask-clicked="isModalVisible = false">
+		<template #header>
+			<h4>Enrich metadata</h4>
+		</template>
+		<p>
+			The AI assistant can enrich the metadata of this {{ assetType }}. Select a document or generate the information
+			without additional context.
 		</p>
 		<DataTable
 			v-if="!isEmpty(documents)"
@@ -39,20 +23,11 @@
 			<Column selectionMode="single" headerStyle="width: 3rem" />
 			<Column field="name" sortable header="Name" />
 		</DataTable>
-		<div v-else>
-			<div class="no-documents">
-				<img class="no-documents-img" src="@assets/svg/plants.svg" alt="" />
-				<div class="no-documents-text">You don't have any resources that can be used. Try adding some documents.</div>
-				<div class="no-documents-text">
-					Would you like to generate descriptions without attaching additional context?
-				</div>
-			</div>
-		</div>
 		<template #footer>
-			<Button severity="secondary" outlined label="Cancel" @click="closeDialog" />
-			<Button :label="dialogActionCopy" :disabled="isDialogDisabled" @click="acceptDialog" />
+			<Button label="Enrich" :disabled="isDialogDisabled" @click="confirm" />
+			<Button label="Cancel" severity="secondary" outlined @click="closeDialog" />
 		</template>
-	</Dialog>
+	</tera-modal>
 </template>
 
 <script setup lang="ts">
@@ -63,21 +38,19 @@ import {
 	getRelatedArtifacts,
 	mapAssetTypeToProvenanceType
 } from '@/services/provenance';
-import type { DocumentAsset, TerariumAsset } from '@/types/Types';
-import { AssetType, ProvenanceType } from '@/types/Types';
+import type { DocumentAsset, TerariumAsset, AssetType, ProvenanceType, type ProjectAsset } from '@/types/Types';
 import { isDocumentAsset } from '@/utils/data-util';
 import { isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
-import Dialog from 'primevue/dialog';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { logger } from '@/utils/logger';
 import { modelCard } from '@/services/goLLM';
-// import TeraAssetLink from './tera-asset-link.vue';
+import { useProjects } from '@/composables/project';
+import TeraModal from '@/components/widgets/tera-modal.vue';
 
 const props = defineProps<{
-	documents: { name: string; id: string }[];
 	assetType: AssetType;
 	assetId: TerariumAsset['id'];
 }>();
@@ -87,8 +60,8 @@ enum DialogType {
 	EXTRACT
 }
 
-const emit = defineEmits(['enriched', 'extracted']);
-const visible = ref(false);
+const emit = defineEmits(['finished-job']);
+const isModalVisible = ref(false);
 const selectedResources = ref();
 const dialogType = ref<DialogType>(DialogType.ENRICH);
 const isLoading = ref(false);
@@ -101,65 +74,59 @@ const isDialogDisabled = computed(() => {
 	return !selectedResources.value;
 });
 
-const dialogActionCopy = computed(() => {
-	let result: string = '';
-	if (dialogType.value === DialogType.ENRICH) {
-		result = props.assetType === AssetType.Model ? 'Enrich description' : 'Generate descriptions';
-	} else if (dialogType.value === DialogType.EXTRACT) {
-		result = 'Extract variables';
-	}
-	if (isEmpty(selectedResources.value)) {
-		return result;
-	}
-	return `Use Document to ${result.toLowerCase()}`;
-});
+// const dialogActionCopy = computed(() => {
+// 	let result: string = '';
+// 	if (dialogType.value === DialogType.ENRICH) {
+// 		result = props.assetType === AssetType.Model ? 'Enrich description' : 'Generate descriptions';
+// 	} else if (dialogType.value === DialogType.EXTRACT) {
+// 		result = 'Extract variables';
+// 	}
+// 	if (isEmpty(selectedResources.value)) {
+// 		return result;
+// 	}
+// 	return `Use Document to ${result.toLowerCase()}`;
+// });
 
-function openDialog() {
-	visible.value = true;
-}
+const documents = computed<{ name: string; id: string }[]>(
+	() =>
+		useProjects()
+			.getActiveProjectAssets(AssetType.Document)
+			.map((projectAsset: ProjectAsset) => ({
+				name: projectAsset.assetName,
+				id: projectAsset.assetId
+			})) ?? []
+);
+
 function closeDialog() {
-	visible.value = false;
+	isModalVisible.value = false;
 }
 
-function dialogForEnrichment() {
-	dialogType.value = DialogType.ENRICH;
-	openDialog();
-}
+const confirm = async () => {
+	const selectedResourceId = selectedResources.value?.id ?? null;
+	isLoading.value = true;
 
-// function dialogForExtraction() {
-// 	dialogType.value = DialogType.EXTRACT;
-// 	openDialog();
-// }
-
-const acceptDialog = () => {
 	if (dialogType.value === DialogType.ENRICH) {
-		sendForEnrichment();
+		sendForEnrichment(selectedResourceId);
 	} else if (dialogType.value === DialogType.EXTRACT) {
-		sendForExtractions();
+		sendForExtractions(selectedResourceId);
 	}
+
+	isLoading.value = false;
+	emit('finished-job');
+	await getRelatedDocuments();
 	closeDialog();
 };
 
-const sendForEnrichment = async () => {
-	const selectedResourceId = selectedResources.value?.id ?? null;
-
-	isLoading.value = true;
+const sendForEnrichment = async (selectedResourceId) => {
 	// Build enrichment job ids list (profile asset, align model, etc...)
 	if (props.assetType === AssetType.Model) {
 		await modelCard(selectedResourceId);
 	} else if (props.assetType === AssetType.Dataset) {
 		await profileDataset(props.assetId, selectedResourceId);
 	}
-
-	isLoading.value = false;
-	emit('enriched');
-	await getRelatedDocuments();
 };
 
-const sendForExtractions = async () => {
-	const selectedResourceId = selectedResources.value?.id ?? null;
-	isLoading.value = true;
-
+const sendForExtractions = async (selectedResourceId) => {
 	// Dataset extraction
 	if (props.assetType === AssetType.Dataset) {
 		await extractPDF(selectedResourceId);
@@ -172,17 +139,12 @@ const sendForExtractions = async () => {
 		});
 
 		logger.info('Provenance created after extraction', { showToast: false });
-		emit('extracted');
 	}
 
 	// Model extraction
 	if (props.assetType === AssetType.Model && selectedResourceId) {
 		await extractVariables(selectedResourceId, [props.assetId]);
-		emit('enriched');
 	}
-
-	isLoading.value = false;
-	await getRelatedDocuments();
 };
 
 async function getRelatedDocuments() {
@@ -201,13 +163,10 @@ async function getRelatedDocuments() {
 	});
 }
 
-onMounted(() => {
-	getRelatedDocuments();
-});
-
 watch(
 	() => props.assetId,
-	() => getRelatedDocuments()
+	() => getRelatedDocuments(),
+	{ immediate: true }
 );
 </script>
 

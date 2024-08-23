@@ -32,12 +32,7 @@
 			/>
 			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" :pt="optionsMenuPt" />
 			<div class="btn-group">
-				<tera-asset-enrichment
-					:documents="documents"
-					:asset-type="AssetType.Dataset"
-					:assetId="assetId"
-					@enriched="fetchDataset"
-				/>
+				<tera-asset-enrichment :asset-type="AssetType.Dataset" :assetId="assetId" @finished-job="fetchDataset" />
 				<Button label="Reset" severity="secondary" outlined />
 				<Button label="Save as..." severity="secondary" outlined />
 				<Button label="Save" />
@@ -134,14 +129,7 @@ import {
 	getDownloadURL,
 	updateDataset
 } from '@/services/dataset';
-import {
-	AssetType,
-	type CsvAsset,
-	type Dataset,
-	type DatasetColumn,
-	type ProjectAsset,
-	PresignedURL
-} from '@/types/Types';
+import { AssetType, type CsvAsset, type Dataset, type DatasetColumn, PresignedURL } from '@/types/Types';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import type { FeatureConfig } from '@/types/common';
 import type { Source } from '@/types/search';
@@ -195,16 +183,6 @@ const datasetInfo = computed(() => {
 	}
 	return information;
 });
-
-const documents = computed<{ name: string; id: string }[]>(
-	() =>
-		useProjects()
-			.getActiveProjectAssets(AssetType.Document)
-			.map((projectAsset: ProjectAsset) => ({
-				name: projectAsset.assetName,
-				id: projectAsset.assetId
-			})) ?? []
-);
 
 const isClimateData = computed(() => dataset.value?.esgfId);
 const isClimateSubset = computed(() => dataset.value?.metadata?.format === 'netcdf');
