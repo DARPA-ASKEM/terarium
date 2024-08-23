@@ -7,7 +7,7 @@ import { logger } from '@/utils/logger';
  * Fetches model card data from the server and wait for task to finish.
  * @param {string} documentId - The document ID.
  */
-export async function modelCard(documentId: string): Promise<void> {
+export async function modelCard(documentId: string | null): Promise<void> {
 	try {
 		const response = await API.post<TaskResponse>('/gollm/model-card', null, {
 			params: {

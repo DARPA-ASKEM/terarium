@@ -140,7 +140,7 @@ export interface ProvenancePayload {
 	relation_type: RelationshipType;
 	left: string;
 	left_type: ProvenanceType;
-	right: string;
+	right: string | null;
 	right_type: ProvenanceType;
 	user_id?: number;
 	concept?: string;

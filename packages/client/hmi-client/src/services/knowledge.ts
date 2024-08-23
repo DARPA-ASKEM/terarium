@@ -45,7 +45,7 @@ export const profileDataset = async (datasetId: Dataset['id'], documentId: strin
 };
 
 /** Extract text and artifacts from a PDF document */
-export const extractPDF = async (documentId: DocumentAsset['id']) => {
+export const extractPDF = async (documentId: DocumentAsset['id'] | null) => {
 	console.group('PDF COSMOS Extraction');
 	if (documentId) {
 		const response = await API.post(`/knowledge/pdf-extractions?document-id=${documentId}`);
@@ -61,7 +61,7 @@ export const extractPDF = async (documentId: DocumentAsset['id']) => {
 };
 
 /** Extract variables from a text document */
-export const extractVariables = async (documentId: DocumentAsset['id'], modelIds: Array<Model['id']>) => {
+export const extractVariables = async (documentId: DocumentAsset['id'] | null, modelIds: Array<Model['id']>) => {
 	console.group('SKEMA Variable extraction');
 	if (documentId) {
 		const url = `/knowledge/variable-extractions?document-id=${documentId}&model-ids=${modelIds}`;

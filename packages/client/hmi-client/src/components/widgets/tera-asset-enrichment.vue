@@ -14,15 +14,12 @@
 			The AI assistant can enrich the metadata of this {{ assetType }}. Select a document or generate the information
 			without additional context.
 		</p>
-		<DataTable
-			v-if="!isEmpty(documents)"
-			:value="documents"
-			v-model:selection="selectedResources"
-			selection-mode="single"
-		>
-			<Column selectionMode="single" headerStyle="width: 3rem" />
-			<Column field="name" sortable header="Name" />
-		</DataTable>
+		<ul>
+			<li v-for="document in documents" :key="document.id">
+				<RadioButton inputId="document.id" name="document.id" v-model="selectedResourceId" :value="document.id" />
+				<label :for="document.id">{{ document.name }}</label>
+			</li>
+		</ul>
 		<template #footer>
 			<Button label="Enrich" :disabled="isDialogDisabled" @click="confirm" />
 			<Button label="Cancel" severity="secondary" outlined @click="closeDialog" />
@@ -41,10 +38,8 @@ import {
 import type { DocumentAsset, TerariumAsset, ProjectAsset } from '@/types/Types';
 import { AssetType, ProvenanceType } from '@/types/Types';
 import { isDocumentAsset } from '@/utils/data-util';
-import { isEmpty } from 'lodash';
 import Button from 'primevue/button';
-import Column from 'primevue/column';
-import DataTable from 'primevue/datatable';
+import RadioButton from 'primevue/radiobutton';
 import { computed, ref, watch } from 'vue';
 import { logger } from '@/utils/logger';
 import { modelCard } from '@/services/goLLM';
@@ -56,23 +51,25 @@ const props = defineProps<{
 	assetId: TerariumAsset['id'];
 }>();
 
+const emit = defineEmits(['finished-job']);
+
 enum DialogType {
 	ENRICH,
 	EXTRACT
 }
 
-const emit = defineEmits(['finished-job']);
-const isModalVisible = ref(false);
-const selectedResources = ref();
 const dialogType = ref<DialogType>(DialogType.ENRICH);
 const isLoading = ref(false);
+const isModalVisible = ref(false);
+
+const selectedResourceId = ref<string | null>(null);
 const relatedDocuments = ref<Array<{ name: string; id: string }>>([]);
 
 // Disable the dialog action button if no resources are selected
 // and the dialog type is not enrichment
 const isDialogDisabled = computed(() => {
 	if (dialogType.value === DialogType.ENRICH) return false;
-	return !selectedResources.value;
+	return !selectedResourceId.value;
 });
 
 // const dialogActionCopy = computed(() => {
@@ -88,28 +85,27 @@ const isDialogDisabled = computed(() => {
 // 	return `Use Document to ${result.toLowerCase()}`;
 // });
 
-const documents = computed<{ name: string; id: string }[]>(
-	() =>
-		useProjects()
-			.getActiveProjectAssets(AssetType.Document)
-			.map((projectAsset: ProjectAsset) => ({
-				name: projectAsset.assetName,
-				id: projectAsset.assetId
-			})) ?? []
-);
+const documents = computed<{ name: string; id: string }[]>(() => [
+	{ name: 'No document', id: '' }, // does empty string act the same as null?
+	...useProjects()
+		.getActiveProjectAssets(AssetType.Document)
+		.map((projectAsset: ProjectAsset) => ({
+			name: projectAsset.assetName,
+			id: projectAsset.assetId
+		}))
+]);
 
 function closeDialog() {
 	isModalVisible.value = false;
 }
 
 const confirm = async () => {
-	const selectedResourceId = selectedResources.value?.id ?? null;
 	isLoading.value = true;
 
 	if (dialogType.value === DialogType.ENRICH) {
-		sendForEnrichment(selectedResourceId);
+		sendForEnrichment();
 	} else if (dialogType.value === DialogType.EXTRACT) {
-		sendForExtractions(selectedResourceId);
+		sendForExtractions();
 	}
 
 	isLoading.value = false;
@@ -118,24 +114,24 @@ const confirm = async () => {
 	closeDialog();
 };
 
-const sendForEnrichment = async (selectedResourceId) => {
+const sendForEnrichment = async () => {
 	// Build enrichment job ids list (profile asset, align model, etc...)
 	if (props.assetType === AssetType.Model) {
-		await modelCard(selectedResourceId);
+		await modelCard(selectedResourceId.value);
 	} else if (props.assetType === AssetType.Dataset) {
-		await profileDataset(props.assetId, selectedResourceId);
+		await profileDataset(props.assetId, selectedResourceId.value);
 	}
 };
 
-const sendForExtractions = async (selectedResourceId) => {
+const sendForExtractions = async () => {
 	// Dataset extraction
 	if (props.assetType === AssetType.Dataset) {
-		await extractPDF(selectedResourceId);
+		await extractPDF(selectedResourceId.value);
 		await createProvenance({
 			relation_type: RelationshipType.EXTRACTED_FROM,
 			left: props.assetId!,
 			left_type: mapAssetTypeToProvenanceType(props.assetType),
-			right: selectedResourceId,
+			right: selectedResourceId.value,
 			right_type: ProvenanceType.Document
 		});
 
@@ -144,13 +140,11 @@ const sendForExtractions = async (selectedResourceId) => {
 
 	// Model extraction
 	if (props.assetType === AssetType.Model && selectedResourceId) {
-		await extractVariables(selectedResourceId, [props.assetId]);
+		await extractVariables(selectedResourceId.value, [props.assetId]);
 	}
 };
 
 async function getRelatedDocuments() {
-	if (!props.assetType) return;
-
 	const provenanceType = mapAssetTypeToProvenanceType(props.assetType);
 	if (!provenanceType) return;
 
@@ -179,12 +173,16 @@ main {
 }
 
 ul {
-	margin: var(--gap) 0;
-	list-style: none;
-}
+	display: flex;
+	flex-direction: column;
+	margin-top: var(--gap-4);
+	gap: var(--gap-2);
 
-ul:empty {
-	display: none;
+	& > li {
+		display: flex;
+		align-items: center;
+		gap: var(--gap);
+	}
 }
 
 .no-documents {
