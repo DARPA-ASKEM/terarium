@@ -92,7 +92,7 @@ public class SimulationController {
 	)
 	public ResponseEntity<Simulation> createSimulation(
 		@RequestBody final Simulation simulation,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestParam(name = "project-id") final UUID projectId
 	) {
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
@@ -135,10 +135,8 @@ public class SimulationController {
 			)
 		}
 	)
-	public ResponseEntity<Simulation> getSimulation(
-		@PathVariable("id") final UUID id,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
+	public ResponseEntity<Simulation> getSimulation(@PathVariable("id") final UUID id) {
+		final UUID projectId = simulationService.getProjectIdForAsset(id);
 		final Schema.Permission permission = projectService.checkPermissionCanRead(
 			currentUserService.get().getId(),
 			projectId
@@ -212,9 +210,9 @@ public class SimulationController {
 	)
 	public ResponseEntity<Simulation> updateSimulation(
 		@PathVariable("id") final UUID id,
-		@RequestBody final Simulation simulation,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestBody final Simulation simulation
 	) {
+		final UUID projectId = simulationService.getProjectIdForAsset(id);
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
 			projectId
@@ -244,10 +242,8 @@ public class SimulationController {
 			@ApiResponse(responseCode = "500", description = "There was an issue deleting the simulation", content = @Content)
 		}
 	)
-	public String deleteSimulation(
-		@PathVariable("id") final UUID id,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
+	public String deleteSimulation(@PathVariable("id") final UUID id) {
+		final UUID projectId = simulationService.getProjectIdForAsset(id);
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
 			projectId
@@ -336,10 +332,10 @@ public class SimulationController {
 	)
 	public ResponseEntity<Dataset> createFromSimulationResult(
 		@PathVariable("id") final UUID id,
-		@PathVariable("project-id") final UUID projectId,
 		@RequestParam("dataset-name") final String datasetName,
 		@RequestParam("add-to-project") final Boolean addToProject
 	) {
+		final UUID projectId = simulationService.getProjectIdForAsset(id);
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
 			projectId
