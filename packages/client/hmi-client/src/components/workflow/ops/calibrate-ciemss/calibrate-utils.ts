@@ -74,6 +74,6 @@ export function getErrorData(groundTruth: DataArray, simulationData: DataArray, 
 		});
 		errors.push(resultRow);
 	});
-	console.log(errors);
+
 	return errors;
 }
