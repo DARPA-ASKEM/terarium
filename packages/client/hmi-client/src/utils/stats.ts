@@ -22,7 +22,7 @@ export const mae = (arr1: DataArray, arr2: DataArray, keyField: string, valueFie
 	const map1: Map<number, number> = new Map();
 	const map2: Map<number, number> = new Map();
 
-	// Remap
+	// Remap for convenience
 	arr1.forEach((ele) => {
 		const timestamp = ele[keyField];
 		const value = ele[valueField];
