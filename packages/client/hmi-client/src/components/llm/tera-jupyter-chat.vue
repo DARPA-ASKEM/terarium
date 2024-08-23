@@ -42,7 +42,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { onUnmounted, ref, watch, computed } from 'vue';
+import { onUnmounted, ref, watch, computed, nextTick } from 'vue';
 import { createMessageId, JupyterMessage, KernelState, INotebookItem } from '@/services/jupyter';
 import type { NotebookSession } from '@/types/Types';
 import { AssetType } from '@/types/Types';
@@ -114,9 +114,15 @@ const onKeyPress = (event) => {
 			break;
 		case 'a':
 			addCodeCell(false, false);
+			nextTick(() => {
+				scrollToCell(notebookCells.value.find((item) => item.$props.msg.query_id === selectedCellId.value));
+			});
 			break;
 		case 'b':
 			addCodeCell();
+			nextTick(() => {
+				scrollToCell(notebookCells.value.find((item) => item.$props.msg.query_id === selectedCellId.value));
+			});
 			break;
 		case 'Enter':
 			enterCell();
