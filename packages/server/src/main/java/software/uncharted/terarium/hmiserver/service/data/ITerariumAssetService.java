@@ -11,6 +11,8 @@ import software.uncharted.terarium.hmiserver.models.dataservice.FileExport;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 public interface ITerariumAssetService<T extends TerariumAsset> {
+	UUID getProjectIdForAsset(final UUID assetId);
+
 	Optional<T> getAsset(final UUID id, final Schema.Permission hasReadPermission) throws IOException;
 
 	List<T> getPublicNotTemporaryAssets(final Integer page, final Integer pageSize) throws IOException;

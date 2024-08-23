@@ -1,6 +1,9 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.RemovalCause;
 import io.micrometer.observation.annotation.Observed;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
@@ -13,12 +16,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.util.EntityUtils;
+import org.checkerframework.checker.nullness.qual.PolyNull;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +40,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.FileExport;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.repository.PSCrudSoftDeleteRepository;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
+import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 /**
@@ -72,6 +78,25 @@ public abstract class TerariumAssetServiceWithoutSearch<
 
 	/** The expiration time for the presigned URLs in minutes */
 	private static final long EXPIRATION = 60;
+
+	private final Cache<UUID, UUID> assetIdToProjectIdCache = Caffeine.newBuilder()
+		.expireAfterWrite(60, TimeUnit.MINUTES)
+		.recordStats()
+		.removalListener((Object key, Object value, RemovalCause cause) -> log.trace("Key {} was removed {}", key, cause))
+		.<UUID, UUID>build();
+
+	@Override
+	@Observed(name = "function_profile")
+	public UUID getProjectIdForAsset(final UUID assetId) {
+		@PolyNull
+		UUID projectId = assetIdToProjectIdCache.get(assetId, keyId -> repository.getProjectIdForAsset(keyId));
+		log.trace(
+			"AssetId To ProjectId Cache hit: {}, miss: {}",
+			assetIdToProjectIdCache.stats().hitCount(),
+			assetIdToProjectIdCache.stats().missCount()
+		);
+		return projectId;
+	}
 
 	/**
 	 * Get an asset by its ID
