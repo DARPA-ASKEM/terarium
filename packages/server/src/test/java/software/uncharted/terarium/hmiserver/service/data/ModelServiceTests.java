@@ -28,11 +28,6 @@ public class ModelServiceTests extends TerariumApplicationTests {
 
 	Project project;
 
-	@AfterEach
-	public void teardown() throws IOException {
-		modelService.teardownIndexAndAlias();
-	}
-
 	static Model createModel(final String key) {
 		final Model model = new Model();
 		model.setPublicAsset(true);
