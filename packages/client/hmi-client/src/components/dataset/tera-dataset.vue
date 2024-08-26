@@ -30,7 +30,7 @@
 				class="p-button-icon-only p-button-text p-button-rounded"
 				@click="toggleOptionsMenu"
 			/>
-			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" :pt="optionsMenuPt" />
+			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" popup :pt="optionsMenuPt" />
 			<div class="btn-group">
 				<tera-asset-enrichment :asset-type="AssetType.Dataset" :assetId="assetId" @finished-job="fetchDataset" />
 				<Button label="Reset" severity="secondary" outlined />
