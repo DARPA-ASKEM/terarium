@@ -324,4 +324,4 @@ export class TaskHandler {
 	}
 }
 
-export default API;
+export { API, getProjectIdFromUrl };
