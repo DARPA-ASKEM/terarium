@@ -25,6 +25,7 @@
 				<Button label="Cancel" severity="secondary" outlined @click="closeDialog" />
 				<Button label="Enrich" :disabled="isDialogDisabled" @click="confirm" />
 			</div>
+			<!--TODO: Will make sure this works in a second pass-->
 			<div class="flex items-center">
 				<Checkbox v-model="overwriteContent" inputId="overwriteContent" binary />
 				<div class="ml-3">
