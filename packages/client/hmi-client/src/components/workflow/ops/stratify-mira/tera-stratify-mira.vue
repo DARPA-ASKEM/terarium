@@ -29,7 +29,7 @@
 						@click="resetModel"
 						class="mr-2"
 					/>
-					<Button :disabled="isStratifying" :label="stratifyButtonLabel" size="small" @click="stratifyModel" />
+					<Button :disabled="isStratifyInProgress" :label="stratifyButtonLabel" size="small" @click="stratifyModel" />
 				</template>
 				<tera-stratification-group-form
 					class="mt-2"
@@ -86,7 +86,7 @@
 						<tera-model-parts :model="stratifiedAmr" :feature-config="{ isPreview: true }" />
 					</template>
 					<div v-else class="flex flex-column h-full justify-content-center">
-						<tera-progress-spinner v-if="isStratifying" is-centered :font-size="2">
+						<tera-progress-spinner v-if="isStratifyInProgress" is-centered :font-size="2">
 							Processing...
 						</tera-progress-spinner>
 						<tera-operator-placeholder v-else :node="node" />
@@ -169,9 +169,9 @@ const executeResponse = ref({
 });
 const modelNodeOptions = ref<string[]>([]);
 const showSaveModelModal = ref(false);
-const isStratifying = ref(false);
 
-const stratifyButtonLabel = computed(() => (isStratifying.value ? 'Loading...' : 'Stratify'));
+const isStratifyInProgress = computed(() => props.node.state.isStratifyInProgress);
+const stratifyButtonLabel = computed(() => (isStratifyInProgress.value ? 'Loading...' : 'Stratify'));
 
 const selectedOutputId = ref<string>();
 
@@ -227,7 +227,9 @@ const handleResetResponse = (data: any) => {
 
 const stratifyModel = () => {
 	if (!amr.value) return;
-	isStratifying.value = true;
+	const state = _.cloneDeep(props.node.state);
+	state.isStratifyInProgress = true;
+	emit('update-state', state);
 
 	// Sanity check states vs parameters
 	const conceptsToStratify: string[] = [];
@@ -268,7 +270,9 @@ const handleStratifyResponse = (data: any) => {
 
 const handleModelPreview = async (data: any) => {
 	stratifiedAmr.value = data.content['application/json'];
-	isStratifying.value = false;
+	const state = _.cloneDeep(props.node.state);
+	state.isStratifyInProgress = false;
+	emit('update-state', state);
 	if (!stratifiedAmr.value) {
 		logger.error('Error getting updated model from beaker');
 		return;
@@ -391,7 +395,9 @@ const runCodeStratify = () => {
 		kernelManager
 			.sendMessage('execute_request', messageContent)
 			.register('execute_input', (data) => {
-				isStratifying.value = true;
+				const state = _.cloneDeep(props.node.state);
+				state.isStratifyInProgress = true;
+				emit('update-state', state);
 				executedCode = data.content.code;
 			})
 			.register('stream', (data) => {
