@@ -21,8 +21,17 @@
 			</li>
 		</ul>
 		<template #footer>
-			<Button label="Enrich" :disabled="isDialogDisabled" @click="confirm" />
-			<Button label="Cancel" severity="secondary" outlined @click="closeDialog" />
+			<div class="btn-group">
+				<Button label="Cancel" severity="secondary" outlined @click="closeDialog" />
+				<Button label="Enrich" :disabled="isDialogDisabled" @click="confirm" />
+			</div>
+			<div class="flex items-center">
+				<Checkbox v-model="overwriteContent" inputId="overwriteContent" binary />
+				<div class="ml-3">
+					<label for="overwriteContent">Overwrite existing content</label>
+					<p class="text-subdued">If unselected, new content will be appeded</p>
+				</div>
+			</div>
 		</template>
 	</tera-modal>
 </template>
@@ -40,6 +49,7 @@ import { AssetType, ProvenanceType } from '@/types/Types';
 import { isDocumentAsset } from '@/utils/data-util';
 import Button from 'primevue/button';
 import RadioButton from 'primevue/radiobutton';
+import Checkbox from 'primevue/checkbox';
 import { computed, ref, watch } from 'vue';
 import { logger } from '@/utils/logger';
 import { modelCard } from '@/services/goLLM';
@@ -61,8 +71,9 @@ enum DialogType {
 const dialogType = ref<DialogType>(DialogType.ENRICH);
 const isLoading = ref(false);
 const isModalVisible = ref(false);
+const overwriteContent = ref(false);
 
-const selectedResourceId = ref<string | null>(null);
+const selectedResourceId = ref<string>('');
 const relatedDocuments = ref<Array<{ name: string; id: string }>>([]);
 
 // Disable the dialog action button if no resources are selected
@@ -86,7 +97,7 @@ const isDialogDisabled = computed(() => {
 // });
 
 const documents = computed<{ name: string; id: string }[]>(() => [
-	{ name: 'No document', id: '' }, // does empty string act the same as null?
+	{ name: 'No document', id: '' }, // Empty string is falsey
 	...useProjects()
 		.getActiveProjectAssets(AssetType.Document)
 		.map((projectAsset: ProjectAsset) => ({
@@ -177,6 +188,7 @@ ul {
 	flex-direction: column;
 	margin-top: var(--gap-4);
 	gap: var(--gap-2);
+	padding: var(--gap-4) 0;
 
 	& > li {
 		display: flex;
@@ -211,5 +223,16 @@ ul {
 
 .p-dialog aside label {
 	margin: 0 var(--gap) 0 var(--gap-small);
+}
+
+.btn-group {
+	display: flex;
+	align-items: center;
+	gap: var(--gap-2);
+	margin-left: auto;
+}
+
+.text-subdued {
+	color: var(--text-color-subdued);
 }
 </style>
