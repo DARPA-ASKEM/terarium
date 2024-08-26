@@ -306,7 +306,6 @@ public class SimulationController {
 	 * Dataset.
 	 *
 	 * @param id        ID of the simulation to create a dataset from
-	 * @param projectId ID of the project to add the dataset to
 	 * @return Dataset the new dataset created
 	 */
 	@PostMapping("/{id}/create-result-as-dataset/{project-id}")
