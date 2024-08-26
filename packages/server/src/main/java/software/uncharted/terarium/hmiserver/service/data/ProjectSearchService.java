@@ -102,7 +102,14 @@ public class ProjectSearchService {
 			}
 		} catch (final Exception e) {}
 		elasticService.createOrEnsureIndexIsEmpty(index);
-		elasticService.createAlias(index, getAlias());
+		if (index == null || index.isEmpty()) {
+			throw new RuntimeException("Index name is empty");
+		}
+		final String alias = getAlias();
+		if (alias == null || alias.isEmpty()) {
+			throw new RuntimeException("Alias name is empty");
+		}
+		elasticService.createAlias(index, alias);
 	}
 
 	/**

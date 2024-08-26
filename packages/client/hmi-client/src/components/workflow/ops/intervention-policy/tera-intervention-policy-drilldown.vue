@@ -53,9 +53,9 @@
 				/>
 			</tera-drilldown-section>
 			<tera-drilldown-section>
-				<template v-if="selectedPolicy?.id" #header-controls-left>
+				<template #header-controls-left>
 					<tera-toggleable-input
-						v-if="typeof selectedPolicy.name === 'string'"
+						v-if="typeof selectedPolicy?.name === 'string'"
 						:model-value="selectedPolicy.name"
 						@update:model-value="onChangeName"
 						tag="h4"
@@ -89,7 +89,11 @@
 						<ul class="flex flex-column gap-2">
 							<li v-for="(interventions, appliedTo) in groupedOutputParameters" :key="appliedTo">
 								<h5 class="pb-2">{{ appliedTo }}</h5>
-								<vega-chart :are-embed-actions-visible="false" :visualization-spec="preparedCharts[appliedTo]" />
+								<vega-chart
+									expandable
+									:are-embed-actions-visible="false"
+									:visualization-spec="preparedCharts[appliedTo]"
+								/>
 								<ul>
 									<li class="pb-2" v-for="intervention in interventions" :key="intervention.name">
 										<h6 class="pb-1">{{ intervention.name }}</h6>

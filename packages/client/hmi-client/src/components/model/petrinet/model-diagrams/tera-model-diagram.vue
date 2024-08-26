@@ -1,66 +1,64 @@
 <template>
 	<tera-tooltip :custom-position="hoveredTransitionPosition" :show-tooltip="!isEmpty(hoveredTransitionId)">
-		<main>
-			<TeraResizablePanel v-if="!featureConfig?.isPreview" class="diagram-container">
-				<section class="graph-element">
-					<Toolbar>
-						<template #start>
-							<span>
-								<Button @click="resetZoom" label="Reset zoom" size="small" severity="secondary" outlined />
-								<span class="how-to-zoom kbd-shortcut-sm"><kbd>Ctrl</kbd>+<kbd>scroll</kbd>&nbsp;to zoom</span>
-							</span>
-						</template>
-						<template #center> </template>
-						<template #end>
-							<span>
-								<SelectButton
-									v-if="model && isStratified"
-									class="p-button-sm"
-									:model-value="stratifiedView"
-									@change="$event.value && toggleCollapsedView($event.value)"
-									:options="stratifiedViewOptions"
-									option-value="value"
-								>
-									<template #option="slotProps">
-										<i :class="`${slotProps.option.icon} p-button-icon-left`" />
-										<span class="p-button-label">{{ slotProps.option.value }}</span>
-									</template>
-								</SelectButton>
-							</span>
-						</template>
-					</Toolbar>
-					<template v-if="model">
-						<div class="graph-container">
-							<div ref="graphElement" class="graph-element" />
-							<ul class="legend" v-if="!isEmpty(graphLegendLabels)">
-								<li v-for="(label, index) in graphLegendLabels" :key="index">
-									<div class="legend-circle" :style="`background: ${graphLegendColors[index]}`" />
-									{{ label }}
-								</li>
-							</ul>
-						</div>
-					</template>
-				</section>
-			</TeraResizablePanel>
-			<div v-else-if="model" ref="graphElement" class="graph-element preview" />
-			<tera-stratified-matrix-modal
-				v-if="selectedTransitionId"
-				:id="selectedTransitionId"
+		<tera-resizable-panel v-if="!featureConfig?.isPreview" class="diagram-container">
+			<Toolbar>
+				<template #start>
+					<span>
+						<Button @click="resetZoom" label="Reset zoom" size="small" severity="secondary" outlined />
+						<span class="how-to-zoom kbd-shortcut-sm"><kbd>Ctrl</kbd>+<kbd>scroll</kbd>&nbsp;to zoom</span>
+					</span>
+				</template>
+				<template #end>
+					<span>
+						<SelectButton
+							v-if="model && isStratified"
+							class="p-button-sm"
+							:model-value="stratifiedView"
+							@change="$event.value && toggleCollapsedView($event.value)"
+							:options="stratifiedViewOptions"
+							option-value="value"
+						>
+							<template #option="slotProps">
+								<i :class="`${slotProps.option.icon} p-button-icon-left`" />
+								<span class="p-button-label">{{ slotProps.option.value }}</span>
+							</template>
+						</SelectButton>
+					</span>
+				</template>
+			</Toolbar>
+			<figure ref="graphElement" class="graph-element">
+				<tera-progress-spinner v-if="!renderer" class="spinner" is-centered :font-size="2">
+					Loading...
+				</tera-progress-spinner>
+			</figure>
+			<ul class="legend" v-if="!isEmpty(graphLegendLabels)">
+				<li v-for="(label, index) in graphLegendLabels" :key="index">
+					<div class="legend-circle" :style="`background: ${graphLegendColors[index]}`" />
+					{{ label }}
+				</li>
+			</ul>
+		</tera-resizable-panel>
+		<figure v-else-if="model" ref="graphElement" class="graph-element preview">
+			<tera-progress-spinner v-if="!renderer" class="spinner" is-centered :font-size="2">
+				Loading...
+			</tera-progress-spinner>
+		</figure>
+		<tera-stratified-matrix-modal
+			v-if="selectedTransitionId"
+			:id="selectedTransitionId"
+			:mmt="mmt"
+			:mmt-params="mmtParams"
+			:stratified-matrix-type="StratifiedMatrix.Rates"
+			@close-modal="selectedTransitionId = ''"
+		/>
+		<template #tooltip-content v-if="isStratified && !isEmpty(hoveredTransitionId)">
+			<tera-stratified-matrix-preview
+				ref="tooltipContentRef"
 				:mmt="mmt"
 				:mmt-params="mmtParams"
+				:id="hoveredTransitionId"
 				:stratified-matrix-type="StratifiedMatrix.Rates"
-				@close-modal="selectedTransitionId = ''"
 			/>
-		</main>
-		<template #tooltip-content v-if="isStratified && !isEmpty(hoveredTransitionId)">
-			<div ref="tooltipContentRef">
-				<tera-stratified-matrix-preview
-					:mmt="mmt"
-					:mmt-params="mmtParams"
-					:id="hoveredTransitionId"
-					:stratified-matrix-type="StratifiedMatrix.Rates"
-				/>
-			</div>
 		</template>
 	</tera-tooltip>
 </template>
@@ -84,6 +82,7 @@ import { isStratifiedModel, emptyMiraModel, convertToIGraph } from '@/model-repr
 import { getModelRenderer } from '@/model-representation/service';
 import { NodeType } from '@/services/graph';
 import type { FeatureConfig } from '@/types/common';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraStratifiedMatrixModal from '../model-configurations/tera-stratified-matrix-modal.vue';
 import TeraStratifiedMatrixPreview from '../model-configurations/tera-stratified-matrix-preview.vue';
 
@@ -152,8 +151,8 @@ async function renderGraph() {
 			const transitionMatrixBounds = selection.node().getBoundingClientRect();
 
 			await nextTick(); // Wait for tooltip to render to get its dimensions
-			const tooltipHeight = tooltipContentRef.value.parentElement.clientHeight;
-			const tooltipWidth = tooltipContentRef.value.parentElement.clientWidth;
+			const tooltipHeight = tooltipContentRef.value.$el.parentElement.clientHeight;
+			const tooltipWidth = tooltipContentRef.value.$el.parentElement.clientWidth;
 
 			if (diagramBounds && transitionMatrixBounds && tooltipHeight && tooltipWidth) {
 				const transitionMatrixX = transitionMatrixBounds.left - diagramBounds.left;
@@ -210,10 +209,6 @@ watch(
 </script>
 
 <style scoped>
-main {
-	overflow: auto;
-}
-
 .p-accordion {
 	display: flex;
 	flex-direction: column;
@@ -264,15 +259,7 @@ main {
 	background: var(--gray-50) !important;
 	border: none !important;
 }
-.graph-container {
-	background-color: var(--surface-secondary);
-	height: 100%;
-	max-height: 100%;
-	flex-grow: 1;
-	overflow: hidden;
-	border: none;
-	position: relative;
-}
+
 .graph-element {
 	background-color: var(--surface-secondary);
 	height: 100%;
@@ -281,6 +268,13 @@ main {
 	&:active {
 		cursor: grabbing;
 	}
+}
+
+.spinner {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
 }
 
 :deep(.graph-element .p-button) {
