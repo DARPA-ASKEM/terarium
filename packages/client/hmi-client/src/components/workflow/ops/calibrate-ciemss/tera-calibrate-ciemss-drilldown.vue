@@ -229,7 +229,7 @@
 							@configuration-change="updateSelectedErrorVariables"
 						/>
 						<vega-chart
-							v-if="selectedErrorVariables.length > 0"
+							v-if="node.state.selectedErrorVariables.length > 0"
 							:expandable="onExpandErrorChart"
 							:are-embed-actions-visible="true"
 							:visualization-spec="errorChart"
