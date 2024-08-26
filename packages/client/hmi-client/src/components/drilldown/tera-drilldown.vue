@@ -236,6 +236,10 @@ const toggleNavigationMenu = (
 };
 
 function handleKeyNavigation(event: KeyboardEvent) {
+	const target = event.target as HTMLElement;
+	if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+		return; // Prevent navigation if the user is editing text
+	}
 	if (event.shiftKey && event.key === 'ArrowLeft') {
 		toggleNavigationMenu(event, upstreamMenu.value, props.upstreamOperatorsNav, leftChevronButton.value);
 	} else if (event.shiftKey && event.key === 'ArrowRight') {
