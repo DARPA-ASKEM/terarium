@@ -116,10 +116,8 @@ public class SummaryController {
 			)
 		}
 	)
-	public ResponseEntity<Summary> getSummary(
-		@PathVariable("id") final UUID id,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
+	public ResponseEntity<Summary> getSummary(@PathVariable("id") final UUID id) {
+		final UUID projectId = summaryService.getProjectIdForAsset(id);
 		final Schema.Permission permission = projectService.checkPermissionCanRead(
 			currentUserService.get().getId(),
 			projectId
@@ -179,11 +177,8 @@ public class SummaryController {
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the summary", content = @Content)
 		}
 	)
-	public ResponseEntity<Summary> updateSummary(
-		@PathVariable("id") final UUID id,
-		@RequestBody final Summary summary,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
+	public ResponseEntity<Summary> updateSummary(@PathVariable("id") final UUID id, @RequestBody final Summary summary) {
+		final UUID projectId = summaryService.getProjectIdForAsset(id);
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
 			projectId
@@ -221,10 +216,8 @@ public class SummaryController {
 			@ApiResponse(responseCode = "500", description = "There was an issue deleting the summary", content = @Content)
 		}
 	)
-	public ResponseEntity<ResponseDeleted> deleteSummary(
-		@PathVariable("id") final UUID id,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
+	public ResponseEntity<ResponseDeleted> deleteSummary(@PathVariable("id") final UUID id) {
+		final UUID projectId = summaryService.getProjectIdForAsset(id);
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
 			projectId

@@ -1,5 +1,6 @@
-import API from '@/api/api';
+import { API, getProjectIdFromUrl } from '@/api/api';
 import type { Summary } from '@/types/Types';
+import { activeProjectId } from '@/composables/activeProject';
 
 type SummarizationMode = 'ASYNC' | 'SYNC';
 export const createLLMSummary = async (prompt: string, mode: SummarizationMode = 'ASYNC') => {
@@ -16,7 +17,8 @@ export const createLLMSummary = async (prompt: string, mode: SummarizationMode =
 
 type NewSummary = Omit<Summary, 'id'>;
 export const createSummary = async (summary: NewSummary) => {
-	const response = await API.post('/summary', summary);
+	const projectId = activeProjectId.value || getProjectIdFromUrl();
+	const response = await API.post(`/summary?project-id=${projectId}`, summary);
 	return response.data;
 };
 
@@ -26,6 +28,7 @@ export const updateSummary = async (summary: Summary) => {
 };
 
 export const getSummaries = async (ids: string[]): Promise<{ [key: string]: Summary }> => {
-	const response = await API.post('/summary/search', ids);
+	const projectId = activeProjectId.value || getProjectIdFromUrl();
+	const response = await API.post(`/summary/search?project-id=${projectId}`, ids);
 	return response.data;
 };
