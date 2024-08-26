@@ -165,12 +165,55 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close-preview', 'asset-loaded']);
+
 const dataset = ref<Dataset | null>(null);
 const newDatasetName = ref('');
 const isRenamingDataset = ref(false);
 const rawContent: Ref<CsvAsset | null> = ref(null);
 const isDatasetLoading = ref(false);
 const selectedTabIndex = ref(0);
+
+const optionsMenu = ref();
+const optionsMenuPt = {
+	submenu: {
+		class: 'max-h-30rem overflow-y-scroll'
+	}
+};
+const optionsMenuItems = ref([
+	{
+		icon: 'pi pi-pencil',
+		label: 'Rename',
+		command() {
+			isRenamingDataset.value = true;
+			newDatasetName.value = dataset.value?.name ?? '';
+		}
+	},
+	{
+		icon: 'pi pi-plus',
+		label: 'Add to project',
+		items:
+			useProjects()
+				.allProjects.value?.filter((project) => project.id !== useProjects().activeProject.value?.id)
+				.map((project) => ({
+					label: project.name,
+					command: async () => {
+						const response = await useProjects().addAsset(AssetType.Dataset, props.assetId, project.id);
+						if (response) logger.info(`Added asset to ${project.name}`);
+					}
+				})) ?? []
+	},
+	{
+		icon: 'pi pi-download',
+		label: 'Download',
+		command: async () => {
+			const presignedUrl: PresignedURL | null = await downloadFileFromDataset();
+			if (presignedUrl) {
+				window.open(presignedUrl.url, '_blank');
+			}
+			emit('close-preview');
+		}
+	}
+]);
 
 const datasetInfo = computed(() => {
 	const information = {
@@ -234,48 +277,6 @@ async function downloadFileFromDataset(): Promise<PresignedURL | null> {
 	}
 	return null;
 }
-
-const optionsMenu = ref();
-const optionsMenuItems = ref([
-	{
-		icon: 'pi pi-pencil',
-		label: 'Rename',
-		command() {
-			isRenamingDataset.value = true;
-			newDatasetName.value = dataset.value?.name ?? '';
-		}
-	},
-	{
-		icon: 'pi pi-plus',
-		label: 'Add to project',
-		items:
-			useProjects()
-				.allProjects.value?.filter((project) => project.id !== useProjects().activeProject.value?.id)
-				.map((project) => ({
-					label: project.name,
-					command: async () => {
-						const response = await useProjects().addAsset(AssetType.Dataset, props.assetId, project.id);
-						if (response) logger.info(`Added asset to ${project.name}`);
-					}
-				})) ?? []
-	},
-	{
-		icon: 'pi pi-download',
-		label: 'Download',
-		command: async () => {
-			const presignedUrl: PresignedURL | null = await downloadFileFromDataset();
-			if (presignedUrl) {
-				window.open(presignedUrl.url, '_blank');
-			}
-			emit('close-preview');
-		}
-	}
-]);
-const optionsMenuPt = {
-	submenu: {
-		class: 'max-h-30rem overflow-y-scroll'
-	}
-};
 
 // TODO - It's got to be a better way to do this
 async function updateDatasetName() {
