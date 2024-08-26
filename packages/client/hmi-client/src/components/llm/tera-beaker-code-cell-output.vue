@@ -52,8 +52,7 @@ watch(
 	() => props.jupyterMessage,
 	() => {
 		updateOutputs();
-	},
-	{ deep: true }
+	}
 );
 
 const messageType = computed(() => props.jupyterMessage.header.msg_type);
