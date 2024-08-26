@@ -104,7 +104,6 @@ public class ModelConfigurationController {
 	 * Gets a specific model configuration by id
 	 *
 	 * @param id UUID of the specific model configuration to fetch
-	 * @param projectId the owning project ID
 	 * @return the requested model configuration
 	 */
 	@GetMapping("/{id}")
@@ -134,10 +133,8 @@ public class ModelConfigurationController {
 			)
 		}
 	)
-	public ResponseEntity<ModelConfiguration> getModelConfiguration(
-		@PathVariable("id") final UUID id,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
+	public ResponseEntity<ModelConfiguration> getModelConfiguration(@PathVariable("id") final UUID id) {
+		final UUID projectId = modelConfigurationService.getProjectIdForAsset(id);
 		final Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 		try {
 			final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService.getAsset(id, permission);
@@ -158,7 +155,6 @@ public class ModelConfigurationController {
 	 * Create a configured model from a model config
 	 *
 	 * @param id id of the model configuration
-	 * @param projectId associated project for permissions
 	 * @return configured model
 	 */
 	@GetMapping("/as-configured-model/{id}")
@@ -188,10 +184,8 @@ public class ModelConfigurationController {
 			)
 		}
 	)
-	public ResponseEntity<Model> getConfiguredModel(
-		@PathVariable("id") final UUID id,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
+	public ResponseEntity<Model> getConfiguredModel(@PathVariable("id") final UUID id) {
+		final UUID projectId = modelConfigurationService.getProjectIdForAsset(id);
 		final Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 		try {
 			final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService.getAsset(id, permission);
@@ -281,9 +275,9 @@ public class ModelConfigurationController {
 		@PathVariable("id") final UUID id,
 		@RequestBody final Model configuredModel,
 		@RequestParam(name = "name", required = false) final String name,
-		@RequestParam(name = "description", required = false) final String description,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestParam(name = "description", required = false) final String description
 	) {
+		final UUID projectId = modelConfigurationService.getProjectIdForAsset(id);
 		final Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
@@ -341,8 +335,7 @@ public class ModelConfigurationController {
 		@RequestBody final ModelConfiguration modelConfiguration,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission permission =
-			projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		final Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			if (modelConfiguration.getId() == null) {
@@ -366,7 +359,6 @@ public class ModelConfigurationController {
 	 *
 	 * @param id UUID of the model to update
 	 * @param config New model config to update with
-	 * @param projectId owning project ID, used for permissions
 	 * @return updated project ID with UUID set
 	 */
 	@PutMapping("/{id}")
@@ -393,11 +385,10 @@ public class ModelConfigurationController {
 	)
 	public ResponseEntity<ModelConfiguration> updateModelConfiguration(
 		@PathVariable("id") final UUID id,
-		@RequestBody final ModelConfiguration config,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestBody final ModelConfiguration config
 	) {
-		final software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission permission =
-			projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		final UUID projectId = modelConfigurationService.getProjectIdForAsset(id);
+		final Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
 			config.setId(id);
 			final Optional<ModelConfiguration> updated = modelConfigurationService.updateAsset(config, projectId, permission);
@@ -415,7 +406,6 @@ public class ModelConfigurationController {
 	 * Deletes a model config by id
 	 *
 	 * @param id id of the model config to delete
-	 * @param projectId ID of the owning project, for permissions
 	 * @return ResponseDeleted
 	 */
 	@DeleteMapping("/{id}")
@@ -431,12 +421,9 @@ public class ModelConfigurationController {
 			@ApiResponse(responseCode = "503", description = "An error occurred while deleting", content = @Content)
 		}
 	)
-	public ResponseEntity<ResponseDeleted> deleteModelConfiguration(
-		@PathVariable("id") final UUID id,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
-		final software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission permission =
-			projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+	public ResponseEntity<ResponseDeleted> deleteModelConfiguration(@PathVariable("id") final UUID id) {
+		final UUID projectId = modelConfigurationService.getProjectIdForAsset(id);
+		final Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			modelConfigurationService.deleteAsset(id, projectId, permission);

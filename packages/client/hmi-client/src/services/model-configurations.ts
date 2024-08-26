@@ -1,4 +1,4 @@
-import API from '@/api/api';
+import { API, getProjectIdFromUrl } from '@/api/api';
 import type {
 	InitialSemantic,
 	Model,
@@ -9,6 +9,7 @@ import type {
 } from '@/types/Types';
 import { isEmpty } from 'lodash';
 import { pythonInstance } from '@/python/PyodideController';
+import { activeProjectId } from '@/composables/activeProject';
 import { DistributionType } from './distribution';
 
 export interface SemanticOtherValues {
@@ -32,9 +33,10 @@ export const getModelConfigurationById = async (id: string): Promise<ModelConfig
 };
 
 export const createModelConfiguration = async (modelConfiguration: ModelConfiguration): Promise<ModelConfiguration> => {
+	const projectId = activeProjectId.value || getProjectIdFromUrl();
 	delete modelConfiguration.id;
 	modelConfiguration.temporary = modelConfiguration.temporary ?? false;
-	const response = await API.post(`/model-configurations`, modelConfiguration);
+	const response = await API.post(`/model-configurations?project-id=${projectId}`, modelConfiguration);
 	return response?.data ?? null;
 };
 
@@ -54,7 +56,11 @@ export const getAsConfiguredModel = async (modelConfiguration: ModelConfiguratio
 };
 
 export const postAsConfiguredModel = async (model: Model): Promise<ModelConfiguration> => {
-	const response = await API.post<ModelConfiguration>(`model-configurations/as-configured-model/`, model);
+	const projectId = activeProjectId.value || getProjectIdFromUrl();
+	const response = await API.post<ModelConfiguration>(
+		`model-configurations/as-configured-model/?project-id=${projectId}`,
+		model
+	);
 	return response?.data ?? null;
 };
 
