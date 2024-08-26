@@ -1,7 +1,8 @@
-import API from '@/api/api';
+import { API, getProjectIdFromUrl } from '@/api/api';
 import type { Code } from '@/types/Types';
 import { ProgrammingLanguage } from '@/types/Types';
 import { Ref } from 'vue';
+import { activeProjectId } from '@/composables/activeProject';
 
 async function getCodeAsset(codeAssetId: string): Promise<Code | null> {
 	const response = await API.get(`/code-asset/${codeAssetId}`);
@@ -130,7 +131,8 @@ async function uploadCodeFromGithubRepo(repoOwnerAndName: string, repoUrl: strin
 }
 
 async function createNewCodeAsset(codeAsset: Code): Promise<Code | null> {
-	const response = await API.post('/code-asset', codeAsset);
+	const projectId = activeProjectId.value || getProjectIdFromUrl();
+	const response = await API.post(`/code-asset?project-id=${projectId}`, codeAsset);
 	if (!response || response.status >= 400) return null;
 	return response.data;
 }
