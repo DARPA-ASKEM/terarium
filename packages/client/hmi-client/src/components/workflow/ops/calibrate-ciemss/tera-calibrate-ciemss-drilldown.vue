@@ -558,7 +558,7 @@ const preparedDistributionCharts = computed(() => {
 });
 
 const errorChartVariables = computed(() => {
-	if (props.node.state.selectedErrorVariables.length === 0) return [];
+	if (!props.node.state.selectedErrorVariables?.length) return [];
 	const getDatasetVariable = (modelVariable: string) =>
 		mapping.value.find((d) => d.modelVariable === modelVariable)?.datasetVariable;
 	const variables = props.node.state.selectedErrorVariables.map((variable) => ({
