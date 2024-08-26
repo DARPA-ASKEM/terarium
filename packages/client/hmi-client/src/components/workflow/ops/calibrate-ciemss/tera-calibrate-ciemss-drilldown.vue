@@ -440,7 +440,7 @@ const selectedParameters = ref<string[]>(props.node.state.selectedParameters);
 const selectedVariables = ref<string[]>(props.node.state.selectedVariables);
 const selectedErrorVariables = ref<string[]>(props.node.state.selectedErrorVariables);
 
-let pyciemssMap: Record<string, string> = {};
+const pyciemssMap = ref<Record<string, string>>({});
 const preparedChartInputs = computed(() => {
 	const state = props.node.state;
 
@@ -465,9 +465,9 @@ const preparedChartInputs = computed(() => {
 
 	// Build lookup map for calibration, include before/afer and dataset (observations)
 	const reverseMap: Record<string, string> = {};
-	Object.keys(pyciemssMap).forEach((key) => {
-		reverseMap[`${pyciemssMap[key]}_mean`] = `${key} after calibration`;
-		reverseMap[`${pyciemssMap[key]}_mean:pre`] = `${key} before calibration`;
+	Object.keys(pyciemssMap.value).forEach((key) => {
+		reverseMap[`${pyciemssMap.value[key]}_mean`] = `${key} after calibration`;
+		reverseMap[`${pyciemssMap.value[key]}_mean:pre`] = `${key} before calibration`;
 	});
 	state.mapping.forEach((mapObj) => {
 		reverseMap[mapObj.datasetVariable] = 'Observations';
@@ -499,13 +499,13 @@ const preparedCharts = computed(() => {
 		charts[variable] = createForecastChart(
 			{
 				data: result,
-				variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
+				variables: [`${pyciemssMap.value[variable]}:pre`, pyciemssMap.value[variable]],
 				timeField: 'timepoint_id',
 				groupField: 'sample_id'
 			},
 			{
 				data: resultSummary,
-				variables: [`${pyciemssMap[variable]}_mean:pre`, `${pyciemssMap[variable]}_mean`],
+				variables: [`${pyciemssMap.value[variable]}_mean:pre`, `${pyciemssMap.value[variable]}_mean`],
 				timeField: 'timepoint_id'
 			},
 			{
@@ -537,7 +537,7 @@ const preparedDistributionCharts = computed(() => {
 	const labelAfter = 'After calibration';
 	const charts = {};
 	state.selectedParameters.forEach((param) => {
-		const fieldName = pyciemssMap[param];
+		const fieldName = pyciemssMap.value[param];
 		const beforeFieldName = `${fieldName}:pre`;
 		const histogram = createHistogramChart(result, {
 			title: `${param}`,
@@ -755,7 +755,6 @@ const initialize = async () => {
 	modelStateOptions.value = modelOptions;
 	modelVarUnits.value = modelPartUnits ?? {};
 	modelPartTypesMap.value = modelPartTypes ?? {};
-	console.log(modelPartTypesMap.value);
 
 	// dataset input
 	const { filename, csv, datasetOptions } = await setupDatasetInput(datasetId.value);
@@ -824,7 +823,7 @@ watch(
 				renameFnGenerator('pre')
 			);
 
-			pyciemssMap = parsePyCiemssMap(runResult.value[0]);
+			pyciemssMap.value = parsePyCiemssMap(runResult.value[0]);
 
 			const csv = (csvAsset.value as CsvAsset).csv; // As we already called initialized this should not be undefined.
 			const csvRaw = csv.map((d) => d.join(',')).join('\n');
