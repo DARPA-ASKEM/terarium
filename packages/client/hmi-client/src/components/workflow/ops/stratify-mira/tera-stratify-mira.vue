@@ -29,12 +29,7 @@
 						@click="resetModel"
 						class="mr-2"
 					/>
-					<Button
-						:disabled="isStratifyButtonDisabled"
-						:label="stratifyButtonLabel"
-						size="small"
-						@click="stratifyModel"
-					/>
+					<Button :disabled="isStratifying" :label="stratifyButtonLabel" size="small" @click="stratifyModel" />
 				</template>
 				<tera-stratification-group-form
 					class="mt-2"
@@ -91,7 +86,10 @@
 						<tera-model-parts :model="stratifiedAmr" :feature-config="{ isPreview: true }" />
 					</template>
 					<div v-else class="flex flex-column h-full justify-content-center">
-						<tera-operator-placeholder :node="node" />
+						<tera-progress-spinner v-if="isStratifying" is-centered :font-size="2">
+							Processing...
+						</tera-progress-spinner>
+						<tera-operator-placeholder v-else :node="node" />
 					</div>
 				</div>
 			</tera-drilldown-preview>
@@ -135,6 +133,7 @@ import { AssetType } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import { nodeOutputLabel } from '@/components/workflow/util';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
@@ -170,9 +169,9 @@ const executeResponse = ref({
 });
 const modelNodeOptions = ref<string[]>([]);
 const showSaveModelModal = ref(false);
-const isStratifyButtonDisabled = ref(false);
+const isStratifying = ref(false);
 
-const stratifyButtonLabel = computed(() => (isStratifyButtonDisabled.value ? 'Loading...' : 'Stratify'));
+const stratifyButtonLabel = computed(() => (isStratifying.value ? 'Loading...' : 'Stratify'));
 
 const selectedOutputId = ref<string>();
 
@@ -198,11 +197,6 @@ const updateStratifyGroupForm = (config: StratifyGroup) => {
 	const state = _.cloneDeep(props.node.state);
 	state.strataGroup = config;
 	emit('update-state', state);
-};
-
-const stratifyModel = () => {
-	isStratifyButtonDisabled.value = true;
-	stratifyRequest();
 };
 
 const processLLMOutput = (data: any) => {
@@ -231,8 +225,9 @@ const handleResetResponse = (data: any) => {
 	}
 };
 
-const stratifyRequest = () => {
+const stratifyModel = () => {
 	if (!amr.value) return;
+	isStratifying.value = true;
 
 	// Sanity check states vs parameters
 	const conceptsToStratify: string[] = [];
@@ -273,7 +268,7 @@ const handleStratifyResponse = (data: any) => {
 
 const handleModelPreview = async (data: any) => {
 	stratifiedAmr.value = data.content['application/json'];
-	isStratifyButtonDisabled.value = false;
+	isStratifying.value = false;
 	if (!stratifiedAmr.value) {
 		logger.error('Error getting updated model from beaker');
 		return;
@@ -396,6 +391,7 @@ const runCodeStratify = () => {
 		kernelManager
 			.sendMessage('execute_request', messageContent)
 			.register('execute_input', (data) => {
+				isStratifying.value = true;
 				executedCode = data.content.code;
 			})
 			.register('stream', (data) => {
