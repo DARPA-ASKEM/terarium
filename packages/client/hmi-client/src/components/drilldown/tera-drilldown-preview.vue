@@ -32,12 +32,8 @@ const slots = useSlots();
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap-1);
-	background-color: var(--surface-50);
 	flex-grow: 1;
 	padding: var(--gap);
-	margin: 0 var(--gap) var(--gap) var(--gap);
-	border-radius: var(--border-radius-medium);
-	box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.25) inset;
 	overflow: hidden;
 }
 
