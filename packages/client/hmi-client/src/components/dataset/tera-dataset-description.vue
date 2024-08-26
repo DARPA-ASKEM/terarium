@@ -47,7 +47,7 @@
 				<div v-for="(value, key) in dataset.metadata" :key="key" class="row">
 					<template v-if="key.toString() !== 'preview'">
 						<div class="col key">
-							{{ snakeToCapitalized(key) }}
+							{{ snakeToCapitalized(key.toString()) }}
 						</div>
 						<div class="col">
 							<template v-if="typeof value === 'object'">
