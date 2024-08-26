@@ -46,7 +46,7 @@ const updateByMatrixCSV = async (
 	matrix.matrix.forEach((row) => {
 		row.forEach((matrixEntry) => {
 			// If we have label information, use them as they may be more accurate, otherwise use indices
-			if (parseResult.hasColLabels && parseResult.hasColLabels) {
+			if (parseResult.hasColLabels && parseResult.hasRowLabels) {
 				const match = parseResult.entries.find((entry) => {
 					return entry.rowLabel === matrixEntry.rowCriteria && entry.colLabel === matrixEntry.colCriteria;
 				});
