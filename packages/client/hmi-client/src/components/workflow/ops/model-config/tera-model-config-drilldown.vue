@@ -110,21 +110,21 @@
 				</Message>
 				<template v-if="!isEmpty(knobs.transientModelConfig)">
 					<tera-initial-table
-						v-if="!isEmpty(mmt.initials)"
+						v-if="!isEmpty(configuredMmt.initials)"
 						:model="model"
 						:model-configuration="knobs.transientModelConfig"
-						:modelConfigurations="filteredModelConfigurations"
-						:mmt="mmt"
+						:model-configurations="filteredModelConfigurations"
+						:mmt="configuredMmt"
 						:mmt-params="mmtParams"
 						@update-expression="setInitialExpression(knobs.transientModelConfig, $event.id, $event.value)"
 						@update-source="setInitialSource(knobs.transientModelConfig, $event.id, $event.value)"
 					/>
 					<tera-parameter-table
-						v-if="!isEmpty(mmt.parameters)"
+						v-if="!isEmpty(configuredMmt.parameters)"
 						:model="model"
 						:model-configuration="knobs.transientModelConfig"
-						:modelConfigurations="filteredModelConfigurations"
-						:mmt="mmt"
+						:model-configurations="filteredModelConfigurations"
+						:mmt="configuredMmt"
 						:mmt-params="mmtParams"
 						@update-parameters="setParameterDistributions(knobs.transientModelConfig, $event)"
 						@update-source="setParameterSource(knobs.transientModelConfig, $event.id, $event.value)"
@@ -134,7 +134,7 @@
 							<tera-observables
 								class="pl-4"
 								:model="model"
-								:mmt="mmt"
+								:mmt="configuredMmt"
 								:observables="calibratedConfigObservables"
 								:feature-config="{ isPreview: true }"
 							/>
@@ -467,6 +467,24 @@ const model = ref<Model | null>(null);
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
 
+const configuredMmt = computed(() => {
+	const mmtCopy = cloneDeep(mmt.value);
+	if (!mmtCopy) return mmtCopy;
+	knobs.value.transientModelConfig.initialSemanticList.forEach((initial) => {
+		const mmtInitial = mmtCopy.initials[initial.target];
+		if (mmtInitial) {
+			mmtInitial.expression = initial.expression;
+		}
+	});
+	knobs.value.transientModelConfig.parameterSemanticList.forEach((parameter) => {
+		const mmtParameter = mmtCopy.parameters[parameter.referenceId];
+		if (mmtParameter) {
+			mmtParameter.value = parameter.distribution.parameters.value;
+		}
+	});
+	return mmtCopy;
+});
+
 const downloadConfiguredModel = async (configuration: ModelConfiguration = knobs.value.transientModelConfig) => {
 	const rawModel = await getAsConfiguredModel(configuration);
 	if (rawModel) {
@@ -645,6 +663,8 @@ watch(
 	async () => {
 		const state = cloneDeep(props.node.state);
 		state.transientModelConfig = knobs.value.transientModelConfig;
+		console.log(knobs.value.transientModelConfig);
+		console.log(mmt.value);
 		emit('update-state', state);
 	},
 	{ deep: true }
