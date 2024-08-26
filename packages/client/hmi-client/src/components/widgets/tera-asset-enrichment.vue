@@ -83,6 +83,7 @@ const isDialogDisabled = computed(() => {
 	return !selectedResourceId.value;
 });
 
+// FIXME: If we are keeping extractions, something like this may help when we add them back in
 // const dialogActionCopy = computed(() => {
 // 	let result: string = '';
 // 	if (dialogType.value === DialogType.ENRICH) {
