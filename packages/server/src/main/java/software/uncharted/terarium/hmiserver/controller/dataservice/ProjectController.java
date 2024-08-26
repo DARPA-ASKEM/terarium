@@ -9,14 +9,22 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
+import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -34,15 +42,18 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Contributor;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectExport;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.TerariumAssetCloneService;
 import software.uncharted.terarium.hmiserver.service.UserService;
@@ -58,6 +69,8 @@ import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.TerariumAssetServices;
 import software.uncharted.terarium.hmiserver.service.data.WorkflowService;
+import software.uncharted.terarium.hmiserver.service.notification.NotificationGroupInstance;
+import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
@@ -108,6 +121,24 @@ public class ProjectController {
 	final ObjectMapper objectMapper;
 	final ProjectPermissionsService projectPermissionsService;
 	final ProjectSearchService projectSearchService;
+
+	final ClientEventService clientEventService;
+	final NotificationService notificationService;
+	private ExecutorService executor;
+
+	@Data
+	private static class Properties {
+
+		private final UUID documentId;
+	}
+
+	@Value("${terarium.extractionService.poolSize:10}")
+	private int POOL_SIZE;
+
+	@PostConstruct
+	void init() {
+		executor = Executors.newFixedThreadPool(POOL_SIZE);
+	}
 
 	// --------------------------------------------------------------------------
 	// Basic Project Operations
@@ -518,23 +549,65 @@ public class ProjectController {
 	@Secured(Roles.USER)
 	public ResponseEntity<Project> copyProject(@PathVariable("id") final UUID id) {
 		projectService.checkPermissionCanRead(currentUserService.get().getId(), id);
+		// time the progress takes to reach each subsequent half.
+		final Double HALFTIME_SECONDS = 2.0;
+
+		Future<Project> project;
+		Project clonedProject;
 
 		final String userId = currentUserService.get().getId();
 		final String userName = userService.getById(userId).getName();
 
-		Project project;
 		try {
-			final ProjectExport export = cloneService.exportProject(id);
-			export.getProject().setName("Copy of " + export.getProject().getName());
+			final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<Properties>(
+				clientEventService,
+				notificationService,
+				ClientEventType.NOTIFICATION,
+				null,
+				new Properties(id),
+				HALFTIME_SECONDS
+			);
 
-			project = cloneService.importProject(userId, userName, export);
+			notificationInterface.sendMessage("Cloning the Project...");
+
+			project = executor.submit(() -> {
+				log.info("Staring Cloning Process...");
+				final ProjectExport export = cloneService.exportProject(id);
+				export.getProject().setName("Copy of " + export.getProject().getName());
+				log.info("Cloning...");
+				Project cloneProject = cloneService.importProject(userId, userName, export);
+				log.info("Cloned...");
+				return cloneProject;
+			});
+			notificationInterface.sendFinalMessage("Cloning complete");
+			clonedProject = project.get();
+		} catch (ExecutionException e) {
+			log.error("Execution Exception exporting project", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		} catch (CancellationException e) {
+			log.error("Canceled exporting project", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		} catch (InterruptedException e) {
+			log.error("Interrupted exporting project", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		} catch (final Exception e) {
 			log.error("Error exporting project", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 
+		// Project project;
+		// try {
+		// 	final ProjectExport export = cloneService.exportProject(id);
+		// 	export.getProject().setName("Copy of " + export.getProject().getName());
+
+		// 	project = cloneService.importProject(userId, userName, export);
+		// } catch (final Exception e) {
+		// 	log.error("Error exporting project", e);
+		// 	throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		// }
+
 		try {
-			final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
+			final RebacProject rebacProject = new RebacProject(clonedProject.getId(), reBACService);
 			final RebacGroup rebacAskemAdminGroup = new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService);
 			final RebacUser rebacUser = new RebacUser(userId, reBACService);
 
@@ -550,7 +623,7 @@ public class ProjectController {
 				messages.get("rebac.relationship-already-exists")
 			);
 		}
-		return ResponseEntity.status(HttpStatus.CREATED).body(project);
+		return ResponseEntity.status(HttpStatus.CREATED).body(clonedProject);
 	}
 
 	@Operation(summary = "Export a project")
