@@ -398,12 +398,7 @@ public class ElasticsearchService {
 		try {
 			log.info("Indexing: {} into {}", id, index);
 
-			final IndexRequest<T> req = new IndexRequest.Builder<T>()
-				.index(index)
-				.id(id)
-				.document(document)
-				.refresh(Refresh.WaitFor)
-				.build();
+			final IndexRequest<T> req = new IndexRequest.Builder<T>().index(index).id(id).document(document).build();
 
 			client.index(req);
 		} catch (final ElasticsearchException e) {
@@ -428,7 +423,6 @@ public class ElasticsearchService {
 				.index(index)
 				.id(id)
 				.document(document)
-				.refresh(Refresh.WaitFor)
 				.routing(routing)
 				.build();
 
@@ -448,7 +442,7 @@ public class ElasticsearchService {
 		try {
 			log.info("Deleting: {} from {}", id, index);
 
-			final DeleteRequest req = new DeleteRequest.Builder().index(index).id(id).refresh(Refresh.WaitFor).build();
+			final DeleteRequest req = new DeleteRequest.Builder().index(index).id(id).build();
 
 			client.delete(req);
 		} catch (final ElasticsearchException e) {
@@ -470,7 +464,6 @@ public class ElasticsearchService {
 				.index(index)
 				.id(id)
 				.doc(partial)
-				.refresh(Refresh.WaitFor)
 				.build();
 
 			client.update(req, Void.class);
