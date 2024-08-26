@@ -221,11 +221,7 @@
 							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedErrorVariables }"
 							:multi-select="true"
 							:show-remove-button="false"
-							:variables="
-								Object.keys(pyciemssMap).filter(
-									(c) => modelPartTypesMap[c] === 'state' && mapping.find((d) => d.modelVariable === c)
-								)
-							"
+							:variables="Object.keys(pyciemssMap).filter((c) => mapping.find((d) => d.modelVariable === c))"
 							@configuration-change="updateSelectedErrorVariables"
 						/>
 						<vega-chart
@@ -815,6 +811,7 @@ watch(
 				renameFnGenerator('pre')
 			);
 
+			if (!runResult.value.length) return;
 			pyciemssMap.value = parsePyCiemssMap(runResult.value[0]);
 			errorData.value = getErrorData(groundTruthData.value, runResult.value, mapping.value);
 		}
