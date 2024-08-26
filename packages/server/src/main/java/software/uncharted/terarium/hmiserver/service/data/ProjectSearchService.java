@@ -136,6 +136,10 @@ public class ProjectSearchService {
 		elasticService.indexWithRouting(getAlias(), project.getId().toString(), doc, routing);
 	}
 
+	public void forceESRefresh() throws IOException {
+		elasticService.refreshIndex(getIndex());
+	}
+
 	public void updateProject(final Project project) throws IOException {
 		final ProjectDocument doc = new ProjectDocument();
 		doc.setUserId(project.getUserId());
@@ -150,7 +154,7 @@ public class ProjectSearchService {
 		elasticService.delete(getAlias(), id.toString());
 	}
 
-	private String getPermissionId(final UUID projectId, final String userId) {
+	private static String getPermissionId(final UUID projectId, final String userId) {
 		return projectId.toString() + "_" + userId;
 	}
 
