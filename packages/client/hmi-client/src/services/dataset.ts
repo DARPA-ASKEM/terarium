@@ -2,13 +2,14 @@
  * Datasets
  */
 
-import API from '@/api/api';
+import { API, getProjectIdFromUrl } from '@/api/api';
 import { logger } from '@/utils/logger';
 import type { CsvAsset, CsvColumnStats, Dataset, PresignedURL } from '@/types/Types';
 import { Ref } from 'vue';
 import { AxiosResponse } from 'axios';
 import { RunResults } from '@/types/SimulateConfig';
 import { cloneDeep } from 'lodash';
+import { activeProjectId } from '@/composables/activeProject';
 
 /**
  * Get all datasets
@@ -148,7 +149,8 @@ async function getDownloadURL(datasetId: string, filename: string): Promise<Pres
  * @param dataset the dataset with updated storage ID from tds
  */
 async function createDataset(dataset: Dataset): Promise<Dataset | null> {
-	const resp = await API.post('/datasets', dataset);
+	const projectId = activeProjectId.value || getProjectIdFromUrl();
+	const resp = await API.post(`/datasets?project-id=${projectId}`, dataset);
 	if (resp && resp.status < 400 && resp.data) {
 		return resp.data;
 	}
