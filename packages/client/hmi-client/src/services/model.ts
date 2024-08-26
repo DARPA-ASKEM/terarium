@@ -1,4 +1,4 @@
-import API from '@/api/api';
+import { API, getProjectIdFromUrl } from '@/api/api';
 import { useProjects } from '@/composables/project';
 import * as EventService from '@/services/event';
 import type { Initial, InterventionPolicy, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
@@ -7,10 +7,12 @@ import { AMRSchemaNames } from '@/types/common';
 import { fileToJson } from '@/utils/file';
 import { isEmpty } from 'lodash';
 import type { MMT } from '@/model-representation/mira/mira-common';
+import { activeProjectId } from '@/composables/activeProject';
 
 export async function createModel(model: Model): Promise<Model | null> {
+	const projectId = activeProjectId.value || getProjectIdFromUrl();
 	delete model.id;
-	const response = await API.post(`/models`, model);
+	const response = await API.post(`/models?project-id=${projectId}`, model);
 	return response?.data ?? null;
 }
 

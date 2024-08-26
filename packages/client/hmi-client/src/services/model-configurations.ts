@@ -65,7 +65,11 @@ export const postAsConfiguredModel = async (model: Model): Promise<ModelConfigur
 };
 
 export const amrToModelConfiguration = async (model: Model): Promise<ModelConfiguration> => {
-	const response = await API.post<ModelConfiguration>(`/models/amr-to-model-configuration`, model);
+	const projectId = activeProjectId.value || getProjectIdFromUrl();
+	const response = await API.post<ModelConfiguration>(
+		`/models/amr-to-model-configuration?project-id=${projectId}`,
+		model
+	);
 	return response?.data ?? null;
 };
 

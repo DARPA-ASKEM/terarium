@@ -148,10 +148,8 @@ public class ModelController {
 			)
 		}
 	)
-	ResponseEntity<ModelDescription> getDescription(
-		@PathVariable("id") final UUID id,
-		@RequestParam("project-id") final UUID projectId
-	) {
+	ResponseEntity<ModelDescription> getDescription(@PathVariable("id") final UUID id) {
+		final UUID projectId = modelService.getProjectIdForAsset(id);
 		final Schema.Permission permission = projectService.checkPermissionCanRead(
 			currentUserService.get().getId(),
 			projectId
@@ -187,10 +185,8 @@ public class ModelController {
 			)
 		}
 	)
-	ResponseEntity<Model> getModel(
-		@PathVariable("id") final UUID id,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
+	ResponseEntity<Model> getModel(@PathVariable("id") final UUID id) {
+		final UUID projectId = modelService.getProjectIdForAsset(id);
 		final Schema.Permission permission = projectService.checkPermissionCanReadOrNone(
 			currentUserService.get().getId(),
 			projectId
@@ -285,10 +281,8 @@ public class ModelController {
 			)
 		}
 	)
-	ResponseEntity<Model> getModelFromConfigId(
-		@PathVariable("model-config-id") final UUID id,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
+	ResponseEntity<Model> getModelFromConfigId(@PathVariable("model-config-id") final UUID id) {
+		final UUID projectId = modelConfigurationService.getProjectIdForAsset(id);
 		final Schema.Permission permission = projectService.checkPermissionCanReadOrNone(
 			currentUserService.get().getId(),
 			projectId
@@ -439,11 +433,8 @@ public class ModelController {
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the model", content = @Content)
 		}
 	)
-	ResponseEntity<Model> updateModel(
-		@PathVariable("id") final UUID id,
-		@RequestBody final Model model,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
+	ResponseEntity<Model> updateModel(@PathVariable("id") final UUID id, @RequestBody final Model model) {
+		final UUID projectId = modelConfigurationService.getProjectIdForAsset(id);
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
 			projectId
@@ -491,10 +482,8 @@ public class ModelController {
 			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 		}
 	)
-	ResponseEntity<ResponseDeleted> deleteModel(
-		@PathVariable("id") final UUID id,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
+	ResponseEntity<ResponseDeleted> deleteModel(@PathVariable("id") final UUID id) {
+		final UUID projectId = modelConfigurationService.getProjectIdForAsset(id);
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
 			projectId
@@ -582,9 +571,9 @@ public class ModelController {
 	ResponseEntity<List<ModelConfiguration>> getModelConfigurationsForModelId(
 		@PathVariable("id") final UUID id,
 		@RequestParam(value = "page", required = false, defaultValue = "0") final int page,
-		@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize
 	) {
+		final UUID projectId = modelConfigurationService.getProjectIdForAsset(id);
 		final Schema.Permission permission = projectService.checkPermissionCanRead(
 			currentUserService.get().getId(),
 			projectId
@@ -629,9 +618,14 @@ public class ModelController {
 	ResponseEntity<List<InterventionPolicy>> getInterventionsForModelId(
 		@PathVariable("id") final UUID id,
 		@RequestParam(value = "page", required = false, defaultValue = "0") final int page,
-		@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize
 	) {
+		final UUID projectId = modelConfigurationService.getProjectIdForAsset(id);
+		final Schema.Permission permission = projectService.checkPermissionCanRead(
+			currentUserService.get().getId(),
+			projectId
+		);
+
 		try {
 			final List<InterventionPolicy> interventionPolicies =
 				interventionRepository.findByModelIdAndDeletedOnIsNullAndTemporaryFalse(id, PageRequest.of(page, pageSize));
@@ -665,11 +659,16 @@ public class ModelController {
 			)
 		}
 	)
-	static ResponseEntity<ModelConfiguration> modelConfigurationFromAmr(
+	ResponseEntity<ModelConfiguration> modelConfigurationFromAmr(
 		@RequestBody final Model model,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
 		try {
+			final Schema.Permission permission = projectService.checkPermissionCanRead(
+				currentUserService.get().getId(),
+				projectId
+			);
+
 			final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
 				model,
 				model.getName(),
