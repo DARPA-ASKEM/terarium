@@ -57,18 +57,15 @@
 			</tera-drilldown-preview>
 		</template>
 		<tera-drilldown-section :tabName="DrilldownTabs.Wizard">
-			<template v-if="amr">
-				<tera-model-template-editor
-					v-if="amr.model.transitions.length < 50"
+			<!-- <tera-model-template-editor v-if="amr"
 					:model="amr"
 					:kernel-manager="kernelManager"
 					@output-code="(data: any) => appendCode(data, 'executed_code')"
 					@sync-with-mira-model="syncWithMiraModel"
 					@save-new-model-output="createOutput"
 					@reset="resetModel"
-				/>
-				<p v-else class="m-4">Model makes too many amr-to-mmt calls. Wizard is disabled for now.</p>
-			</template>
+				/> -->
+			<p class="m-4">Wizard is disabled for now.</p>
 		</tera-drilldown-section>
 	</tera-drilldown>
 	<tera-save-asset-modal
@@ -98,7 +95,7 @@ import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraModelTemplateEditor from '@/components/model-template/tera-model-template-editor.vue';
+// import TeraModelTemplateEditor from '@/components/model-template/tera-model-template-editor.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
