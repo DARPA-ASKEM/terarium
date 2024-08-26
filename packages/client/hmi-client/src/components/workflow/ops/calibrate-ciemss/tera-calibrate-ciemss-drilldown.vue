@@ -210,14 +210,30 @@
 							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedVariables }"
 							:multi-select="true"
 							:show-remove-button="false"
-							:variables="Object.keys(pyciemssMap).filter((c) => modelPartTypesMap[c] !== 'parameter')"
+							:variables="Object.keys(pyciemssMap).filter((c) => modelPartTypesMap[c] === 'state')"
 							@configuration-change="updateSelectedVariables"
 						/>
 						<template v-for="variable of node.state.selectedVariables" :key="variable">
 							<vega-chart expandable :are-embed-actions-visible="true" :visualization-spec="preparedCharts[variable]" />
 						</template>
 						<h5>Errors</h5>
-						<vega-chart :are-embed-actions-visible="true" :visualization-spec="errorChart" />
+						<tera-chart-control
+							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedErrorVariables }"
+							:multi-select="true"
+							:show-remove-button="false"
+							:variables="
+								Object.keys(pyciemssMap).filter(
+									(c) => modelPartTypesMap[c] === 'state' && mapping.find((d) => d.modelVariable === c)
+								)
+							"
+							@configuration-change="updateSelectedErrorVariables"
+						/>
+						<vega-chart
+							v-if="selectedErrorVariables.length > 0"
+							:expandable="onExpandErrorChart"
+							:are-embed-actions-visible="true"
+							:visualization-spec="errorChart"
+						/>
 					</section>
 					<section v-else-if="!modelConfig" class="emptyState">
 						<img src="@assets/svg/seed.svg" alt="" draggable="false" />
@@ -284,7 +300,7 @@ import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { displayNumber } from '@/utils/number';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
-import { renameFnGenerator, mergeResults, computeMeanAbsoluteError } from './calibrate-utils';
+import { renameFnGenerator, mergeResults, getErrorData } from './calibrate-utils';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
@@ -367,6 +383,7 @@ const runResult = ref<DataArray>([]);
 const runResultPre = ref<DataArray>([]);
 const runResultSummary = ref<DataArray>([]);
 const runResultSummaryPre = ref<DataArray>([]);
+const errorData = ref();
 
 const showSpinner = ref(false);
 
@@ -421,6 +438,7 @@ const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 
 const selectedParameters = ref<string[]>(props.node.state.selectedParameters);
 const selectedVariables = ref<string[]>(props.node.state.selectedVariables);
+const selectedErrorVariables = ref<string[]>(props.node.state.selectedErrorVariables);
 
 let pyciemssMap: Record<string, string> = {};
 const preparedChartInputs = computed(() => {
@@ -443,7 +461,7 @@ const preparedChartInputs = computed(() => {
 		runResultSummaryPre.value,
 		runResultSummary.value
 	);
-	const error = computeMeanAbsoluteError(runResult.value, groundTruth, state.mapping, pyciemssMap);
+	const error = getErrorData(groundTruth, result, mapping.value);
 
 	// Build lookup map for calibration, include before/afer and dataset (observations)
 	const reverseMap: Record<string, string> = {};
@@ -464,7 +482,7 @@ const preparedChartInputs = computed(() => {
 });
 
 const preparedCharts = computed(() => {
-	if (!preparedChartInputs.value) return [];
+	if (!preparedChartInputs.value) return {};
 	const { result, resultSummary, reverseMap, groundTruth } = preparedChartInputs.value;
 	const state = props.node.state;
 
@@ -546,16 +564,22 @@ const preparedDistributionCharts = computed(() => {
 	return charts;
 });
 
-const errorChart = computed(() => {
-	if (!preparedChartInputs.value) return [];
+const errorChartInputs = computed(() => {
+	if (!preparedChartInputs.value) return null;
 	const { error } = preparedChartInputs.value;
-	if (error.length === 0) return [];
-	const variables = Object.keys(error[0])
-		.filter((v) => v !== 'sample_id')
-		.map((variable) => ({
-			field: variable,
-			label: (Object.entries(pyciemssMap).find((d) => d[1] === variable) || [])[0] ?? variable
-		}));
+	if (error.length === 0 || props.node.state.selectedErrorVariables.length === 0) return null;
+	const getDatasetVariable = (modelVariable: string) =>
+		mapping.value.find((d) => d.modelVariable === modelVariable)?.datasetVariable;
+	const variables = props.node.state.selectedErrorVariables.map((variable) => ({
+		field: getDatasetVariable(variable) as string,
+		label: variable
+	}));
+	return { error, variables };
+});
+
+const errorChart = computed(() => {
+	if (!errorChartInputs.value || errorChartInputs.value?.variables.length === 0) return {};
+	const { error, variables } = errorChartInputs.value;
 	const spec = createErrorChart(error, {
 		title: '',
 		width: chartSize.value.width,
@@ -564,6 +588,22 @@ const errorChart = computed(() => {
 	});
 	return spec;
 });
+
+const onExpandErrorChart = () => {
+	if (!errorChartInputs.value || errorChartInputs.value?.variables.length === 0) return {};
+	const { error, variables } = errorChartInputs.value;
+	// Customize the chart size by modifying the spec before expanding the chart
+	const spec = createErrorChart(error, {
+		title: '',
+		width: window.innerWidth / 1.5,
+		height: 230,
+		boxPlotHeight: 50,
+		areaChartHeight: 150,
+		variables,
+		xAxisTitle: 'Mean absolute (MAE)'
+	});
+	return spec as any;
+};
 
 const LOSS_CHART_DATA_SOURCE = 'lossData'; // Name of the streaming data source
 const lossChartRef = ref<InstanceType<typeof VegaChart>>();
@@ -657,6 +697,10 @@ function updateSelectedVariables(event) {
 	emit('update-state', { ...props.node.state, selectedVariables: event.selectedVariable });
 }
 
+function updateSelectedErrorVariables(event) {
+	emit('update-state', { ...props.node.state, selectedErrorVariables: event.selectedVariable });
+}
+
 // Used from button to add new entry to the mapping object
 function addMapping() {
 	mapping.value.push({
@@ -702,7 +746,7 @@ async function getAutoMapping() {
 	emit('update-state', state);
 }
 
-onMounted(async () => {
+const initialize = async () => {
 	// Model configuration input
 	const { modelConfiguration, modelOptions, modelPartUnits, modelPartTypes } = await setupModelInput(
 		modelConfigId.value
@@ -711,12 +755,17 @@ onMounted(async () => {
 	modelStateOptions.value = modelOptions;
 	modelVarUnits.value = modelPartUnits ?? {};
 	modelPartTypesMap.value = modelPartTypes ?? {};
+	console.log(modelPartTypesMap.value);
 
 	// dataset input
 	const { filename, csv, datasetOptions } = await setupDatasetInput(datasetId.value);
 	currentDatasetFileName.value = filename;
 	csvAsset.value = csv;
 	datasetColumns.value = datasetOptions;
+};
+
+onMounted(async () => {
+	initialize();
 });
 
 watch(
@@ -753,7 +802,7 @@ watch(
 		// Update selected output
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
-
+			await initialize();
 			// Fetch saved intermediate state
 			const simulationObj = await getSimulation(props.node.state.calibrationId);
 			if (simulationObj?.updates) {
@@ -776,6 +825,11 @@ watch(
 			);
 
 			pyciemssMap = parsePyCiemssMap(runResult.value[0]);
+
+			const csv = (csvAsset.value as CsvAsset).csv; // As we already called initialized this should not be undefined.
+			const csvRaw = csv.map((d) => d.join(',')).join('\n');
+			const groundTruth = csvParse(csvRaw, autoType);
+			errorData.value = getErrorData(groundTruth, runResult.value, mapping.value);
 		}
 	},
 	{ immediate: true }

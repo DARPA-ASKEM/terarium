@@ -1,7 +1,7 @@
 import _ from 'lodash';
-import { DataArray } from '@/services/models/simulation-service';
+import { DataArray, parsePyCiemssMap } from '@/services/models/simulation-service';
 import { CalibrateMap } from '@/services/calibrate-workflow';
-
+import { mae } from '@/utils/stats';
 /**
  * A rename function generator for getRunResultCSV. Here the idea
  * to differentiate before and after columns in the run results
@@ -31,41 +31,52 @@ export const mergeResults = (
 	return { result, resultSummary };
 };
 
-// Note: We want to have MAE precomputed from the backend, so we can just use instead of computing using this function on the fly.
-export const computeMeanAbsoluteError = (
-	calibrateResult: DataArray,
-	groundTruth: DataArray,
-	mapping: CalibrateMap[],
-	pyciemssMap: Record<string, string>
-) => {
+/**
+	* Get the mean absolute error from a provided source truth and a simulation run.
+	* Utilied in calibration for charts
+	* Assume that simulationData is in the form of pyciemss
+			states end with _State
+			The timestamp column is titled: timepoint_id
+	* Assume that the mapping is in the calibration form:
+			Ground truth will map to datasetVariable
+			Simulation data will map to modelVariable AND not include _State
+ * transform data, utilize mae, return mean aboslute error for charts.
+ * Note: This will only compare rows with the same timestep value.
+ */
+export function getErrorData(groundTruth: DataArray, simulationData: DataArray, mapping: CalibrateMap[]) {
 	const errors: DataArray = [];
-	if (!calibrateResult.length || !groundTruth.length || !Object.keys(pyciemssMap).length) return errors;
-	const modelToDatasetVar = {};
-	mapping.forEach((m) => {
-		if (pyciemssMap[m.modelVariable]) modelToDatasetVar[pyciemssMap[m.modelVariable]] = m.datasetVariable;
-	});
-	const relevantVariables = Object.keys(calibrateResult[0]).filter((variable) => modelToDatasetVar[variable]);
-	if (relevantVariables.length === 0) return errors;
-	const groupedBySampleId = _.groupBy(calibrateResult, 'sample_id');
+	if (simulationData.length === 0 || groundTruth.length === 0) return errors;
+	const pyciemssMap = parsePyCiemssMap(simulationData[0]);
+	const datasetTimeCol = mapping.find((ele) => ele.modelVariable === 'timestamp')?.datasetVariable;
+	if (!datasetTimeCol) {
+		console.error('No dataset time column found to getErrorData');
+		return errors;
+	}
 
-	const getTruthValue = (time: number, modelVariable: string) => {
-		const datasetVariable = modelToDatasetVar[modelVariable];
-		// Note:  We assume that ground truth is sorted by time in ascending order.
-		const truth = groundTruth[time];
-		if (!truth) return NaN;
-		return truth[datasetVariable];
-	};
+	const datasetVariables = mapping.map((ele) => ele.datasetVariable);
+	const relevantGroundTruthColumns = Object.keys(groundTruth[0]).filter(
+		(variable) => datasetVariables.includes(variable) && variable !== datasetTimeCol
+	);
+	if (relevantGroundTruthColumns.length === 0) return errors;
 
-	Object.entries(groupedBySampleId).forEach(([sampleId, values]) => {
-		// only consider values that have corresponding ground truth
-		const filteredValues = values.filter((value) => value.timepoint_id < groundTruth.length);
-		const item = { sample_id: Number(sampleId) };
-		relevantVariables.forEach((variable) => {
-			item[variable] = _.meanBy(filteredValues, (value) =>
-				Math.abs(getTruthValue(value.timepoint_id, variable) - value[variable])
-			);
+	// Fix the time values by using the index of the value since the values are floats not integer e.g t: 0.904522613065327 instead of t: 1
+	// We assume that ground truth is sorted by time in ascending order
+	const groundTruthTimeValuesCorrected = groundTruth.map((ele, index) => ({ ...ele, [datasetTimeCol]: index }));
+
+	const simulationDataGrouped = _.groupBy(simulationData, 'sample_id');
+
+	Object.entries(simulationDataGrouped).forEach(([sampleId, entries]) => {
+		const resultRow = { sample_id: Number(sampleId) };
+		relevantGroundTruthColumns.forEach((columnName) => {
+			const newEntries = entries.map((entry) => {
+				// Ensure the simulation data maps to the same as the ground truth:
+				const varName = mapping.find((m) => m.datasetVariable === columnName)?.modelVariable;
+				return { [datasetTimeCol]: entry.timepoint_id, [columnName]: entry[pyciemssMap[varName as string]] };
+			});
+			const meanAbsoluteError = mae(groundTruthTimeValuesCorrected, newEntries, datasetTimeCol, columnName);
+			resultRow[columnName] = meanAbsoluteError;
 		});
-		errors.push(item);
+		errors.push(resultRow);
 	});
 	return errors;
-};
+}
