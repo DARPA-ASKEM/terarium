@@ -63,8 +63,8 @@ export const dsvParse = (text: string) => {
 		if (Number.isNaN(+lineOne[1])) {
 			hasColLabels = true;
 		}
-		const line2 = lines[1];
-		if (Number.isNaN(+line2.split(delimeter)[0])) {
+		const lineTwo = lines[1];
+		if (Number.isNaN(+lineTwo.split(delimeter)[0])) {
 			hasRowLabels = true;
 		}
 	} else {
