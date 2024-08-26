@@ -20,20 +20,20 @@ function highlightText(text: string, searchTerms: string): string {
  *  - "MathExpressionTree" -> "Math Expression Tree"
  * @param pascalCaseString
  */
-function pascalCaseToCapitalSentence(pascalCaseString) {
+function pascalCaseToCapitalSentence(pascalCaseString: string) {
 	// Split the string by capital letters, but avoid acronyms
 	const words = pascalCaseString.match(/([A-Z]+[a-z]*)/g);
 
 	// Capitalize the first letter of each word and join them with spaces
-	return words.map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+	return words?.map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 }
 
-function snakeToCapitalized(snakeCaseString) {
+function snakeToCapitalized(snakeCaseString: string) {
 	const words = snakeCaseString.split('_');
 	return upperFirst(lowerCase(words.join(' ')));
 }
 
-function snakeToCapitalSentence(snakeCaseString) {
+function snakeToCapitalSentence(snakeCaseString: string) {
 	return startCase(toLower(snakeCaseString));
 }
 
