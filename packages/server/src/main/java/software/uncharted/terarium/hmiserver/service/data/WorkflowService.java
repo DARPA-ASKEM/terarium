@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,7 +57,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		throws IOException, IllegalArgumentException {
 		// ensure the workflow id is set correctly
 		if (asset.getNodes() != null) {
-			for (final WorkflowNode node : asset.getNodes()) {
+			for (final WorkflowNode<?> node : asset.getNodes()) {
 				node.setWorkflowId(asset.getId());
 			}
 		}
@@ -78,17 +79,17 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		// Fetch database copy, we will update into it
 		final Workflow dbWorkflow = getAsset(asset.getId(), hasWritePermission).get();
 
-		final List<WorkflowNode> dbWorkflowNodes = dbWorkflow.getNodes();
-		final List<WorkflowEdge> dbWorkflowEdges = dbWorkflow.getEdges();
-		final Map<UUID, WorkflowNode> nodeMap = new HashMap();
-		final Map<UUID, WorkflowEdge> edgeMap = new HashMap();
+		List<WorkflowNode<?>> dbWorkflowNodes = dbWorkflow.getNodes();
+		List<WorkflowEdge> dbWorkflowEdges = dbWorkflow.getEdges();
+		final Map<UUID, WorkflowNode<?>> nodeMap = new HashMap<>();
+		final Map<UUID, WorkflowEdge> edgeMap = new HashMap<>();
 
 		dbWorkflow.setName(asset.getName());
 		dbWorkflow.setDescription(asset.getDescription());
 
 		// Prep: sane state, cache the nodes/edges to update for easy retrival
 		if (asset.getNodes() != null) {
-			for (final WorkflowNode node : asset.getNodes()) {
+			for (final WorkflowNode<?> node : asset.getNodes()) {
 				node.setWorkflowId(asset.getId());
 				if (node.getVersion() == null) {
 					node.setVersion(1L);
@@ -111,8 +112,8 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		////////////////////////////////////////////////////////////////////////////////
 		if (dbWorkflowNodes != null && dbWorkflowNodes.size() > 0) {
 			for (int index = 0; index < dbWorkflowNodes.size(); index++) {
-				final WorkflowNode dbNode = dbWorkflowNodes.get(index);
-				final WorkflowNode node = nodeMap.get(dbNode.getId());
+				final WorkflowNode<?> dbNode = dbWorkflowNodes.get(index);
+				final WorkflowNode<?> node = nodeMap.get(dbNode.getId());
 
 				if (node == null) continue;
 				if (node.getIsDeleted()) {
@@ -129,7 +130,8 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 					continue;
 				}
 
-				// FIXME: backwards compatibility for older workflows, remove in a few month. Aug 2024
+				// FIXME: backwards compatibility for older workflows, remove in a few month.
+				// Aug 2024
 				if (dbNode.getVersion() == null) {
 					dbNode.setVersion(1L);
 					continue;
@@ -165,7 +167,8 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 					continue;
 				}
 
-				// FIXME: backwards compatibility for older workflows, remove in a few month. Aug 2024
+				// FIXME: backwards compatibility for older workflows, remove in a few month.
+				// Aug 2024
 				if (dbEdge.getVersion() == null) {
 					dbEdge.setVersion(1L);
 				}
@@ -183,8 +186,15 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		////////////////////////////////////////////////////////////////////////////////
 		// Handle new nodes or edges
 		////////////////////////////////////////////////////////////////////////////////
-		for (final Map.Entry<UUID, WorkflowNode> pair : nodeMap.entrySet()) {
+		if (dbWorkflowNodes == null) {
+			dbWorkflowNodes = new ArrayList<>();
+		}
+		for (final Map.Entry<UUID, WorkflowNode<?>> pair : nodeMap.entrySet()) {
 			dbWorkflowNodes.add(pair.getValue());
+		}
+
+		if (dbWorkflowEdges == null) {
+			dbWorkflowEdges = new ArrayList<>();
 		}
 		for (final Map.Entry<UUID, WorkflowEdge> pair : edgeMap.entrySet()) {
 			dbWorkflowEdges.add(pair.getValue());

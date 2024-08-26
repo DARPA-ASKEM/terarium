@@ -25,6 +25,7 @@
 				<Button label="Cancel" severity="secondary" outlined @click="closeDialog" />
 				<Button label="Enrich" :disabled="isDialogDisabled" @click="confirm" />
 			</div>
+			<!--TODO: Will make sure this works in a second pass-->
 			<div class="flex items-center">
 				<Checkbox v-model="overwriteContent" inputId="overwriteContent" binary />
 				<div class="ml-3">
@@ -83,6 +84,7 @@ const isDialogDisabled = computed(() => {
 	return !selectedResourceId.value;
 });
 
+// FIXME: If we are keeping extractions, something like this may help when we add them back in
 // const dialogActionCopy = computed(() => {
 // 	let result: string = '';
 // 	if (dialogType.value === DialogType.ENRICH) {

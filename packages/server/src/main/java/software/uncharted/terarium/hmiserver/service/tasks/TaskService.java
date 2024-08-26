@@ -88,14 +88,16 @@ public class TaskService {
 			additionalProperties = req.getAdditionalProperties();
 		}
 
-		public TaskResponse createResponse(final TaskStatus status) {
+		public TaskResponse createResponse(final TaskStatus status, final String stdout, final String stderr) {
 			return new TaskResponse()
 				.setId(id)
 				.setStatus(status)
+				.setScript(getScript())
 				.setUserId(userId)
 				.setProjectId(projectId)
-				.setScript(getScript())
 				.setAdditionalProperties(getAdditionalProperties())
+				.setStdout(stdout)
+				.setStderr(stderr)
 				.setRequestSHA256(getSHA256());
 		}
 	}
@@ -109,11 +111,18 @@ public class TaskService {
 			this.future = new CompletableFuture<>();
 		}
 
-		public CompletableTaskFuture(final UUID id, final TaskResponse resp) {
-			this.id = id;
+		public CompletableTaskFuture(final TaskRequestWithId req, final TaskResponse resp) {
+			this.id = req.getId();
+
+			// We are re-using a cached response, so lets create a TaskResponse from the
+			// actual TaskRequest
+			// and then copy over the response payload.
+			final TaskResponse actualResp = req.createResponse(resp.getStatus(), resp.getStdout(), resp.getStderr());
+			actualResp.setOutput(resp.getOutput());
+
 			this.future = new CompletableFuture<>();
-			this.future.complete(resp);
-			this.latestResponse = resp;
+			this.future.complete(actualResp);
+			this.latestResponse = actualResp;
 		}
 
 		public synchronized void complete(final TaskResponse resp) {
@@ -464,7 +473,7 @@ public class TaskService {
 			log.info("Task response found in cache for SHA: {}", hash);
 
 			// create and return a completed task future
-			return new CompletableTaskFuture(req.getId(), resp);
+			return new CompletableTaskFuture(req, resp);
 		}
 
 		// no cache entry for task, send a new one
@@ -506,7 +515,7 @@ public class TaskService {
 			rabbitTemplate.convertAndSend(requestQueue, jsonStr);
 
 			// publish the queued task response
-			final TaskResponse queuedResponse = req.createResponse(TaskStatus.QUEUED);
+			final TaskResponse queuedResponse = req.createResponse(TaskStatus.QUEUED, "", "");
 			final String respJsonStr = objectMapper.writeValueAsString(queuedResponse);
 			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", respJsonStr);
 

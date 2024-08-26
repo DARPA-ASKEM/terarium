@@ -7,14 +7,13 @@ import { logger } from '@/utils/logger';
  * Fetches model card data from the server and wait for task to finish.
  * @param {string} documentId - The document ID.
  */
-export async function modelCard(documentId: string | null): Promise<void> {
+export async function modelCard(documentId: string): Promise<void> {
 	try {
 		const response = await API.post<TaskResponse>('/gollm/model-card', null, {
 			params: {
 				'document-id': documentId
 			}
 		});
-
 		// FIXME: I think we need to refactor the response interceptors so that we can handle errors here, or even in the interceptor itself...might be worth a discussion
 		const taskId = response.data.id;
 		await handleTaskById(taskId, {
