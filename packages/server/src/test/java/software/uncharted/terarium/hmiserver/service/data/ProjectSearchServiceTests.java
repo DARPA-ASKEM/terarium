@@ -73,7 +73,6 @@ public class ProjectSearchServiceTests extends TerariumApplicationTests {
 		project.setDescription("my description");
 
 		projectSearchService.indexProject(project);
-		projectSearchService.forceESRefresh();
 		projectSearchService.addProjectPermission(project.getId(), searcherId);
 		projectSearchService.forceESRefresh();
 
