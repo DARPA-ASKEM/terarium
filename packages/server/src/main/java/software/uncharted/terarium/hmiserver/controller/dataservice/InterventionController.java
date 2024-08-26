@@ -109,10 +109,8 @@ public class InterventionController {
 			)
 		}
 	)
-	public ResponseEntity<InterventionPolicy> getIntervention(
-		@PathVariable("id") final UUID id,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
+	public ResponseEntity<InterventionPolicy> getIntervention(@PathVariable("id") final UUID id) {
+		final UUID projectId = interventionService.getProjectIdForAsset(id);
 		final Schema.Permission permission = projectService.checkPermissionCanRead(
 			currentUserService.get().getId(),
 			projectId
@@ -184,9 +182,9 @@ public class InterventionController {
 	)
 	public ResponseEntity<InterventionPolicy> updateIntervention(
 		@PathVariable("id") final UUID id,
-		@RequestBody final InterventionPolicy intervention,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestBody final InterventionPolicy intervention
 	) {
+		final UUID projectId = interventionService.getProjectIdForAsset(id);
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
 			projectId
@@ -228,10 +226,8 @@ public class InterventionController {
 			)
 		}
 	)
-	public ResponseEntity<ResponseDeleted> deleteIntervention(
-		@PathVariable("id") final UUID id,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
+	public ResponseEntity<ResponseDeleted> deleteIntervention(@PathVariable("id") final UUID id) {
+		final UUID projectId = interventionService.getProjectIdForAsset(id);
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
 			projectId
