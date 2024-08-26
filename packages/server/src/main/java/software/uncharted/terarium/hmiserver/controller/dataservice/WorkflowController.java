@@ -107,10 +107,8 @@ public class WorkflowController {
 			)
 		}
 	)
-	public ResponseEntity<Workflow> getWorkflow(
-		@PathVariable("id") final UUID id,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
+	public ResponseEntity<Workflow> getWorkflow(@PathVariable("id") final UUID id) {
+		final UUID projectId = workflowService.getProjectIdForAsset(id);
 		final Schema.Permission permission = projectService.checkPermissionCanRead(
 			currentUserService.get().getId(),
 			projectId
@@ -174,9 +172,9 @@ public class WorkflowController {
 	)
 	public ResponseEntity<Workflow> updateWorkflow(
 		@PathVariable("id") final UUID id,
-		@RequestBody final Workflow workflow,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestBody final Workflow workflow
 	) {
+		final UUID projectId = workflowService.getProjectIdForAsset(id);
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
 			projectId
@@ -215,10 +213,8 @@ public class WorkflowController {
 			@ApiResponse(responseCode = "500", description = "There was an issue deleting the workflow", content = @Content)
 		}
 	)
-	public ResponseEntity<ResponseDeleted> deleteWorkflow(
-		@PathVariable("id") final UUID id,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
+	public ResponseEntity<ResponseDeleted> deleteWorkflow(@PathVariable("id") final UUID id) {
+		final UUID projectId = workflowService.getProjectIdForAsset(id);
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
 			projectId

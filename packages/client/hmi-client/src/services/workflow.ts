@@ -1,7 +1,7 @@
 import { Component } from 'vue';
 import { v4 as uuidv4 } from 'uuid';
 import _ from 'lodash';
-import API from '@/api/api';
+import { API, getProjectIdFromUrl } from '@/api/api';
 import { logger } from '@/utils/logger';
 import { EventEmitter } from '@/utils/emitter';
 import type { Position } from '@/types/common';
@@ -22,6 +22,7 @@ import {
 	WorkflowTransformations,
 	Transform
 } from '@/types/workflow';
+import { activeProjectId } from '@/composables/activeProject';
 
 /**
  * A wrapper class around the workflow data struture to make it easier
@@ -626,7 +627,8 @@ export function canPropagateResource(outputs: WorkflowOutput<any>[]) {
 
 // Create
 export const createWorkflow = async (workflow: Workflow) => {
-	const response = await API.post('/workflows', workflow);
+	const projectId = activeProjectId.value || getProjectIdFromUrl();
+	const response = await API.post(`/workflows?project-id=${projectId}`, workflow);
 	return response?.data ?? null;
 };
 
