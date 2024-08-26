@@ -18,11 +18,12 @@
 import { onMounted, onUnmounted, ref } from 'vue';
 import { getMMT } from '@/services/model';
 import TeraStratifiedMatrix from '@/components/model/petrinet/model-configurations/tera-stratified-matrix.vue';
-import { emptyMiraModel } from '@/model-representation/mira/mira';
+import { createParameterMatrix, emptyMiraModel } from '@/model-representation/mira/mira';
 import type { Model } from '@/types/Types';
-import type { MiraModel, MiraTemplateParams, TemplateSummary } from '@/model-representation/mira/mira-common';
+import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { StratifiedMatrix } from '@/types/Model';
 import { updateParameter } from '@/model-representation/service';
+import { dsvParse } from '@/utils/dsv';
 
 import * as sirJSON from '@/examples/strata-example.json';
 
@@ -31,71 +32,46 @@ const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
 const ready = ref(false);
 
-/**
- * Given a matrix-like CSV (with row and column labels), update the model with specified values.
- *
- * For example, with:
- * ,A,B
- * C,1,2
- * D,3,4
- *
- * Will yield (A, C, 1), (A, D, 3), (B, C, 2) and (B, D, 4) update tuples
- *
- **/
 const updateByMatrixCSV = async (
 	model: Model,
-	paramLocationMap: Map<string, TemplateSummary[]>,
-	matrixType: string,
+	matrixType: 'subjectControllers' | 'outcomeControllers' | 'subjectOutcome',
 	text: string
 ) => {
-	// Parse
-	const rows = text.split('\n');
-	const columns = rows[0].split(',');
+	const parseResult = dsvParse(text);
+	const matrices = createParameterMatrix(mmt.value, mmtParams.value, 'beta');
+	const matrix = matrices[matrixType];
 
-	for (let i = 1; i < rows.length; i++) {
-		const data = rows[i].split(',');
-		for (let j = 1; j < data.length; j++) {
-			const rowLabel = data[0];
-			const colLabel = columns[j];
+	console.log(parseResult.entries);
 
-			paramLocationMap.forEach((v, k) => {
-				if (matrixType === 'subjectControllers') {
-					if (rowLabel === v[0].subject && colLabel === v[0].controllers.join('-')) {
-						updateParameter(model, k, 'value', +data[j]);
-					}
-				} else if (matrixType === 'subjectOutcome') {
-					// TODO
-				} else if (matrixType === 'outcomeControllers') {
-					// TODO
+	matrix.matrix.forEach((row) => {
+		row.forEach((matrixEntry) => {
+			// If we have label information, use them as they may be more accurate, otherwise use indices
+			if (parseResult.hasColLabels && parseResult.hasRowLabels) {
+				const match = parseResult.entries.find((entry) => {
+					return entry.rowLabel === matrixEntry.rowCriteria && entry.colLabel === matrixEntry.colCriteria;
+				});
+				if (match) {
+					updateParameter(model, matrixEntry.content.id, 'value', match.value);
 				}
-			});
-		}
-	}
+			} else {
+				const match = parseResult.entries.find((entry) => {
+					return entry.rowIdx === matrixEntry.row && entry.colIdx === matrixEntry.col;
+				});
+				if (match) {
+					updateParameter(model, matrixEntry.content.id, 'value', match.value);
+				}
+			}
+		});
+	});
 };
 
 const csvStringProcessor = async (item: DataTransferItem) => {
 	if (item.kind !== 'string') return;
 	if (item.type !== 'text/plain') return;
 
-	const paramLocationMap = new Map<string, TemplateSummary[]>();
-	const templateParams = Object.values(mmtParams.value);
-	templateParams.forEach((templateParam) => {
-		const params = templateParam.params;
-		params.forEach((paramName) => {
-			if (!paramLocationMap.has(paramName)) paramLocationMap.set(paramName, []);
-
-			paramLocationMap.get(paramName)?.push({
-				name: templateParam.name,
-				subject: templateParam.subject,
-				outcome: templateParam.outcome,
-				controllers: templateParam.controllers
-			});
-		});
-	});
-
 	// Presume this is a full matrix, with row/column labels
 	item.getAsString(async (text) => {
-		updateByMatrixCSV(model.value as Model, paramLocationMap, 'subjectControllers', text);
+		updateByMatrixCSV(model.value as Model, 'subjectControllers', text);
 
 		// Update
 		const response = await getMMT(model.value as Model);
