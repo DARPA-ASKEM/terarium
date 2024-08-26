@@ -148,10 +148,8 @@ public class ArtifactController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the artifact", content = @Content)
 		}
 	)
-	public ResponseEntity<Artifact> getArtifact(
-		@PathVariable("id") final UUID artifactId,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
+	public ResponseEntity<Artifact> getArtifact(@PathVariable("id") final UUID artifactId) {
+		final UUID projectId = artifactService.getProjectIdForAsset(artifactId);
 		final Schema.Permission permission = projectService.checkPermissionCanRead(
 			currentUserService.get().getId(),
 			projectId
@@ -185,9 +183,9 @@ public class ArtifactController {
 	)
 	public ResponseEntity<Artifact> updateArtifact(
 		@PathVariable("id") final UUID artifactId,
-		@RequestBody final Artifact artifact,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestBody final Artifact artifact
 	) {
+		final UUID projectId = artifactService.getProjectIdForAsset(artifactId);
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
 			projectId
@@ -220,10 +218,8 @@ public class ArtifactController {
 			@ApiResponse(responseCode = "500", description = "There was an issue deleting the artifact", content = @Content)
 		}
 	)
-	public ResponseEntity<ResponseDeleted> deleteArtifact(
-		@PathVariable("id") final UUID artifactId,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
+	public ResponseEntity<ResponseDeleted> deleteArtifact(@PathVariable("id") final UUID artifactId) {
+		final UUID projectId = artifactService.getProjectIdForAsset(artifactId);
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
 			projectId
