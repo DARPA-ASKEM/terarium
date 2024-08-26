@@ -1,6 +1,7 @@
 import type { Artifact } from '@/types/Types';
-import API from '@/api/api';
+import { API, getProjectIdFromUrl } from '@/api/api';
 import { Ref } from 'vue';
+import { activeProjectId } from '@/composables/activeProject';
 
 /**
  * This is a helper function to take an arbitrary file from a github repo and create a new artifact from it
@@ -76,7 +77,8 @@ async function uploadArtifactToProject(
  * @param artifact the artifact to create
  */
 async function createNewArtifact(artifact: Artifact): Promise<Artifact | null> {
-	const response = await API.post('/artifacts', artifact);
+	const projectId = activeProjectId.value || getProjectIdFromUrl();
+	const response = await API.post(`/artifacts?project-id=${projectId}`, artifact);
 	if (!response || response.status >= 400) return null;
 	return response.data;
 }
