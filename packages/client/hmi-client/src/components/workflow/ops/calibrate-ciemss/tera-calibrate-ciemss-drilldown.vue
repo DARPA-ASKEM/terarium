@@ -229,7 +229,7 @@
 							@configuration-change="updateSelectedErrorVariables"
 						/>
 						<vega-chart
-							v-if="node.state.selectedErrorVariables.length > 0"
+							v-if="node.state.selectedErrorVariables && node.state.selectedErrorVariables.length > 0"
 							:expandable="onExpandErrorChart"
 							:are-embed-actions-visible="true"
 							:visualization-spec="errorChart"
@@ -361,6 +361,12 @@ const modelStateOptions = ref<any[] | undefined>();
 
 const datasetColumns = ref<DatasetColumn[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
+const groundTruthData = computed<DataArray>(() => {
+	if (!csvAsset.value) return [];
+	const csv = (csvAsset.value as CsvAsset).csv;
+	const csvRaw = csv.map((d) => d.join(',')).join('\n');
+	return csvParse(csvRaw, autoType);
+});
 
 const modelConfig = ref<ModelConfiguration>();
 
@@ -383,7 +389,7 @@ const runResult = ref<DataArray>([]);
 const runResultPre = ref<DataArray>([]);
 const runResultSummary = ref<DataArray>([]);
 const runResultSummaryPre = ref<DataArray>([]);
-const errorData = ref();
+const errorData = ref<Record<string, any>[]>([]);
 
 const showSpinner = ref(false);
 
@@ -446,14 +452,6 @@ const preparedChartInputs = computed(() => {
 
 	if (!state.calibrationId) return null;
 
-	// FIXME: Hacky re-parse CSV with correct data types
-	let groundTruth: DataArray = [];
-	if (csvAsset.value) {
-		const csv = csvAsset.value.csv;
-		const csvRaw = csv.map((d) => d.join(',')).join('\n');
-		groundTruth = csvParse(csvRaw, autoType);
-	}
-
 	// Merge before/after for chart
 	const { result, resultSummary } = mergeResults(
 		runResultPre.value,
@@ -461,7 +459,6 @@ const preparedChartInputs = computed(() => {
 		runResultSummaryPre.value,
 		runResultSummary.value
 	);
-	const error = getErrorData(groundTruth, result, mapping.value);
 
 	// Build lookup map for calibration, include before/afer and dataset (observations)
 	const reverseMap: Record<string, string> = {};
@@ -475,15 +472,13 @@ const preparedChartInputs = computed(() => {
 	return {
 		result,
 		resultSummary,
-		reverseMap,
-		error,
-		groundTruth
+		reverseMap
 	};
 });
 
 const preparedCharts = computed(() => {
 	if (!preparedChartInputs.value) return {};
-	const { result, resultSummary, reverseMap, groundTruth } = preparedChartInputs.value;
+	const { result, resultSummary, reverseMap } = preparedChartInputs.value;
 	const state = props.node.state;
 
 	// Need to get the dataset's time field
@@ -509,7 +504,7 @@ const preparedCharts = computed(() => {
 				timeField: 'timepoint_id'
 			},
 			{
-				data: groundTruth,
+				data: groundTruthData.value,
 				variables: datasetVariables,
 				timeField: datasetTimeField as string,
 				groupField: 'sample_id'
@@ -564,42 +559,39 @@ const preparedDistributionCharts = computed(() => {
 	return charts;
 });
 
-const errorChartInputs = computed(() => {
-	if (!preparedChartInputs.value) return null;
-	const { error } = preparedChartInputs.value;
-	if (error.length === 0 || props.node.state.selectedErrorVariables.length === 0) return null;
+const errorChartVariables = computed(() => {
+	if (props.node.state.selectedErrorVariables.length === 0) return [];
 	const getDatasetVariable = (modelVariable: string) =>
 		mapping.value.find((d) => d.modelVariable === modelVariable)?.datasetVariable;
 	const variables = props.node.state.selectedErrorVariables.map((variable) => ({
 		field: getDatasetVariable(variable) as string,
 		label: variable
 	}));
-	return { error, variables };
+	return variables;
 });
 
 const errorChart = computed(() => {
-	if (!errorChartInputs.value || errorChartInputs.value?.variables.length === 0) return {};
-	const { error, variables } = errorChartInputs.value;
-	const spec = createErrorChart(error, {
+	if (errorData.value.length === 0) return {};
+	const spec = createErrorChart(errorData.value, {
 		title: '',
 		width: chartSize.value.width,
-		variables,
+		variables: errorChartVariables.value,
+
 		xAxisTitle: 'Mean absolute (MAE)'
 	});
 	return spec;
 });
 
 const onExpandErrorChart = () => {
-	if (!errorChartInputs.value || errorChartInputs.value?.variables.length === 0) return {};
-	const { error, variables } = errorChartInputs.value;
+	if (errorData.value.length === 0) return {};
 	// Customize the chart size by modifying the spec before expanding the chart
-	const spec = createErrorChart(error, {
+	const spec = createErrorChart(errorData.value, {
 		title: '',
 		width: window.innerWidth / 1.5,
 		height: 230,
 		boxPlotHeight: 50,
 		areaChartHeight: 150,
-		variables,
+		variables: errorChartVariables.value,
 		xAxisTitle: 'Mean absolute (MAE)'
 	});
 	return spec as any;
@@ -824,11 +816,7 @@ watch(
 			);
 
 			pyciemssMap.value = parsePyCiemssMap(runResult.value[0]);
-
-			const csv = (csvAsset.value as CsvAsset).csv; // As we already called initialized this should not be undefined.
-			const csvRaw = csv.map((d) => d.join(',')).join('\n');
-			const groundTruth = csvParse(csvRaw, autoType);
-			errorData.value = getErrorData(groundTruth, runResult.value, mapping.value);
+			errorData.value = getErrorData(groundTruthData.value, runResult.value, mapping.value);
 		}
 	},
 	{ immediate: true }
