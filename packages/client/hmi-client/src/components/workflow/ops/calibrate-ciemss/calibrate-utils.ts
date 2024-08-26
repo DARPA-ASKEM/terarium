@@ -59,10 +59,6 @@ export function getErrorData(groundTruth: DataArray, simulationData: DataArray, 
 	);
 	if (relevantGroundTruthColumns.length === 0) return errors;
 
-	// Fix the time values by using the index of the value since the values are floats not integer e.g t: 0.904522613065327 instead of t: 1
-	// We assume that ground truth is sorted by time in ascending order
-	const groundTruthTimeValuesCorrected = groundTruth.map((ele, index) => ({ ...ele, [datasetTimeCol]: index }));
-
 	const simulationDataGrouped = _.groupBy(simulationData, 'sample_id');
 
 	Object.entries(simulationDataGrouped).forEach(([sampleId, entries]) => {
@@ -73,7 +69,7 @@ export function getErrorData(groundTruth: DataArray, simulationData: DataArray, 
 				const varName = mapping.find((m) => m.datasetVariable === columnName)?.modelVariable;
 				return { [datasetTimeCol]: entry.timepoint_id, [columnName]: entry[pyciemssMap[varName as string]] };
 			});
-			const meanAbsoluteError = mae(groundTruthTimeValuesCorrected, newEntries, datasetTimeCol, columnName);
+			const meanAbsoluteError = mae(groundTruth, newEntries, datasetTimeCol, columnName);
 			resultRow[columnName] = meanAbsoluteError;
 		});
 		errors.push(resultRow);
