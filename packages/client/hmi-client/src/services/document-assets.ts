@@ -2,10 +2,11 @@
  * Documents Asset
  */
 
-import API from '@/api/api';
+import { API, getProjectIdFromUrl } from '@/api/api';
 import type { DocumentAsset } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { Ref } from 'vue';
+import { activeProjectId } from '@/composables/activeProject';
 
 /**
  * Get all documents
@@ -104,7 +105,8 @@ async function createNewDocumentFromGithubFile(
  * @param document the document asset to create
  */
 async function createNewDocumentAsset(documentAsset: DocumentAsset): Promise<DocumentAsset | null> {
-	const response = await API.post('/document-asset', documentAsset);
+	const projectId = activeProjectId.value || getProjectIdFromUrl();
+	const response = await API.post(`/document-asset?project-id=${projectId}`, documentAsset);
 	if (!response || response.status >= 400) return null;
 	return response.data;
 }

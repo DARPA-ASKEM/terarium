@@ -180,9 +180,9 @@ public class DocumentController {
 	)
 	public ResponseEntity<DocumentAsset> updateDocument(
 		@PathVariable("id") final UUID id,
-		@RequestBody final DocumentAsset document,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestBody final DocumentAsset document
 	) {
+		final UUID projectId = documentAssetService.getProjectIdForAsset(id);
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
 			projectId
@@ -227,10 +227,8 @@ public class DocumentController {
 			)
 		}
 	)
-	public ResponseEntity<DocumentAsset> getDocument(
-		@PathVariable("id") final UUID id,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
+	public ResponseEntity<DocumentAsset> getDocument(@PathVariable("id") final UUID id) {
+		final UUID projectId = documentAssetService.getProjectIdForAsset(id);
 		final Schema.Permission permission = projectService.checkPermissionCanReadOrNone(
 			currentUserService.get().getId(),
 			projectId
@@ -359,10 +357,8 @@ public class DocumentController {
 			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 		}
 	)
-	public ResponseEntity<ResponseDeleted> deleteDocument(
-		@PathVariable("id") final UUID id,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
+	public ResponseEntity<ResponseDeleted> deleteDocument(@PathVariable("id") final UUID id) {
+		final UUID projectId = documentAssetService.getProjectIdForAsset(id);
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
 			projectId
@@ -390,13 +386,9 @@ public class DocumentController {
 		final UUID documentId,
 		final String fileName,
 		final HttpEntity fileEntity,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		final UUID projectId,
+		final Schema.Permission permission
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			// upload file to S3
 			final Integer status = documentAssetService.uploadFile(documentId, fileName, fileEntity);
@@ -441,13 +433,18 @@ public class DocumentController {
 	public ResponseEntity<Void> uploadDocument(
 		@PathVariable("id") final UUID id,
 		@RequestParam("filename") final String filename,
-		@RequestPart("file") final MultipartFile file,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestPart("file") final MultipartFile file
 	) {
 		try {
+			final UUID projectId = documentAssetService.getProjectIdForAsset(id);
+			final Schema.Permission permission = projectService.checkPermissionCanWrite(
+				currentUserService.get().getId(),
+				projectId
+			);
+
 			final byte[] fileAsBytes = file.getBytes();
 			final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
-			return uploadDocumentHelper(id, filename, fileEntity, projectId);
+			return uploadDocumentHelper(id, filename, fileEntity, projectId, permission);
 		} catch (final IOException e) {
 			final String error = "Unable to upload document";
 			log.error(error, e);
@@ -479,9 +476,14 @@ public class DocumentController {
 		@PathVariable("documentId") final UUID documentId,
 		@RequestParam("path") final String path,
 		@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
-		@RequestParam("filename") final String filename,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestParam("filename") final String filename
 	) {
+		final UUID projectId = documentAssetService.getProjectIdForAsset(documentId);
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(
+			currentUserService.get().getId(),
+			projectId
+		);
+
 		log.debug("Uploading Document file from github to dataset {}", documentId);
 
 		// download file from GitHub
@@ -492,7 +494,7 @@ public class DocumentController {
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 		final HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
-		return uploadDocumentHelper(documentId, filename, fileEntity, projectId);
+		return uploadDocumentHelper(documentId, filename, fileEntity, projectId, permission);
 	}
 
 	@GetMapping(value = "/{id}/download-document", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
