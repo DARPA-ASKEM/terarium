@@ -43,6 +43,7 @@ public class ModelServiceTests extends TerariumApplicationTests {
 		project = projectService.createProject(
 			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
 		);
+		modelService.setupIndexAndAliasAndEnsureEmpty();
 	}
 
 	@AfterEach
