@@ -1,6 +1,6 @@
 <template>
-	<main style="display: flex; flex-direction: column; width: 90%; height: 90%; overflow: scroll">
-		<h2>Clipboard test <Button :disabled="disabled"> Paste </Button></h2>
+	<main style="width: 90%; height: 90%; overflow: scroll">
+		<h4>clipboard test</h4>
 
 		<tera-stratified-matrix
 			v-if="ready"
@@ -15,9 +15,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, computed } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import { getMMT } from '@/services/model';
-import Button from 'primevue/button';
 import TeraStratifiedMatrix from '@/components/model/petrinet/model-configurations/tera-stratified-matrix.vue';
 import { createParameterMatrix, emptyMiraModel } from '@/model-representation/mira/mira';
 import type { Model } from '@/types/Types';
@@ -25,7 +24,6 @@ import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/
 import { StratifiedMatrix } from '@/types/Model';
 import { updateParameter } from '@/model-representation/service';
 import { dsvParse } from '@/utils/dsv';
-import { getClipboardText, pasteEventGenerator } from '@/utils/clipboard';
 
 import * as sirJSON from '@/examples/strata-example.json';
 
@@ -33,12 +31,6 @@ const model = ref<Model>();
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
 const ready = ref(false);
-const clipboardText = ref('');
-let timerId = -1;
-
-const disabled = computed(() => {
-	return clipboardText.value === '';
-});
 
 const updateByMatrixCSV = async (
 	model: Model,
@@ -88,16 +80,12 @@ const csvStringProcessor = async (item: DataTransferItem) => {
 	});
 };
 
-const processPasteEvent = pasteEventGenerator(csvStringProcessor);
-
-/*
 const processPasteEvent = async (event: ClipboardEvent) => {
 	const clipboardData = event.clipboardData;
 	if (!clipboardData) return;
 	const item = clipboardData.items[0];
 	await csvStringProcessor(item);
 };
-*/
 
 onMounted(async () => {
 	model.value = sirJSON as Model;
@@ -107,14 +95,9 @@ onMounted(async () => {
 	ready.value = true;
 
 	document.addEventListener('paste', processPasteEvent);
-	timerId = window.setInterval(async () => {
-		const x = await getClipboardText();
-		console.log(x);
-	}, 1000);
 });
 
 onUnmounted(() => {
 	document.removeEventListener('paste', processPasteEvent);
-	window.clearInterval(timerId);
 });
 </script>
