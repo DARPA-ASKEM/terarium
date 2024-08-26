@@ -155,10 +155,8 @@ public class NotebookSessionController {
 			)
 		}
 	)
-	ResponseEntity<NotebookSession> getNotebookSession(
-		@PathVariable("id") final UUID id,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
+	ResponseEntity<NotebookSession> getNotebookSession(@PathVariable("id") final UUID id) {
+		final UUID projectId = sessionService.getProjectIdForAsset(id);
 		final Schema.Permission permission = projectService.checkPermissionCanRead(
 			currentUserService.get().getId(),
 			projectId
@@ -200,9 +198,9 @@ public class NotebookSessionController {
 	)
 	ResponseEntity<NotebookSession> updateNotebookSession(
 		@PathVariable("id") final UUID id,
-		@RequestBody final NotebookSession session,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestBody final NotebookSession session
 	) {
+		final UUID projectId = sessionService.getProjectIdForAsset(id);
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
 			projectId
@@ -235,10 +233,8 @@ public class NotebookSessionController {
 			@ApiResponse(responseCode = "500", description = "There was an issue cloning the session", content = @Content)
 		}
 	)
-	ResponseEntity<NotebookSession> cloneNotebookSession(
-		@PathVariable("id") final UUID id,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
+	ResponseEntity<NotebookSession> cloneNotebookSession(@PathVariable("id") final UUID id) {
+		final UUID projectId = sessionService.getProjectIdForAsset(id);
 		final Schema.Permission permission = projectService.checkPermissionCanRead(
 			currentUserService.get().getId(),
 			projectId
@@ -280,10 +276,8 @@ public class NotebookSessionController {
 			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 		}
 	)
-	ResponseEntity<ResponseDeleted> deleteNotebookSession(
-		@PathVariable("id") final UUID id,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
+	ResponseEntity<ResponseDeleted> deleteNotebookSession(@PathVariable("id") final UUID id) {
+		final UUID projectId = sessionService.getProjectIdForAsset(id);
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
 			projectId

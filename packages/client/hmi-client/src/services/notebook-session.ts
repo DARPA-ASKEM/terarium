@@ -1,5 +1,6 @@
-import API from '@/api/api';
+import { API, getProjectIdFromUrl } from '@/api/api';
 import type { NotebookSession } from '@/types/Types';
+import { activeProjectId } from '@/composables/activeProject';
 
 export const getAllNotebookSessions = async () => {
 	const response = await API.get(`/sessions`);
@@ -12,7 +13,8 @@ export const getNotebookSessionById = async (notebook_id: string) => {
 };
 
 export const createNotebookSession = async (notebookSession: NotebookSession) => {
-	const response = await API.post(`/sessions`, {
+	const projectId = activeProjectId.value || getProjectIdFromUrl();
+	const response = await API.post(`/sessions?project-id=${projectId}`, {
 		id: notebookSession.id,
 		description: notebookSession.description,
 		data: notebookSession.data
