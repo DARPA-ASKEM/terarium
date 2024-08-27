@@ -109,7 +109,8 @@
 					</AccordionTab>
 				</template>
 				<AccordionTab header="Data" v-if="!isEmpty(datasetInfo.fileNames)">
-					<tera-dataset-datatable :rows="100" :raw-content="rawContent" />
+					<tera-progress-spinner v-if="!rawContent" :font-size="2" is-centered />
+					<tera-dataset-datatable v-else :rows="100" :raw-content="rawContent" />
 				</AccordionTab>
 			</Accordion>
 		</section>
@@ -143,6 +144,7 @@ import Button from 'primevue/button';
 import { logger } from '@/utils/logger';
 import TeraCarousel from '@/components/widgets/tera-carousel.vue';
 import TeraAssetEnrichment from '@/components/widgets/tera-asset-enrichment.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraDatasetOverviewTable from './tera-dataset-overview-table.vue';
 import TeraDatasetDatatable from './tera-dataset-datatable.vue';
 import { enrichDataset } from './utils';
