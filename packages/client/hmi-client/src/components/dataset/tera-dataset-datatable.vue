@@ -210,6 +210,7 @@ const setBarChartData = (bins: number[]): ChartData => {
 	};
 };
 
+// TODO: We should be using a formatter from number.ts, not sure why we are formatting it like this (ask Yohann when he's back)
 function roundStat(stat: number) {
 	return Math.round(stat * 1000) / 1000;
 }
