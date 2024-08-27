@@ -20,16 +20,13 @@
 					</section>
 				</template>
 				<template #header-controls-right>
+					<Button size="small" severity="secondary" outlined label="Reset" @click="resetModel" />
 					<Button
-						style="margin-right: auto"
+						:disabled="isStratifyInProgress"
+						:label="isStratifyInProgress ? 'Loading...' : 'Stratify'"
 						size="small"
-						severity="secondary"
-						outlined
-						label="Reset"
-						@click="resetModel"
-						class="mr-2"
+						@click="stratifyModel"
 					/>
-					<Button :disabled="isStratifyInProgress" :label="stratifyButtonLabel" size="small" @click="stratifyModel" />
 				</template>
 				<tera-stratification-group-form
 					class="mt-2"
@@ -51,7 +48,12 @@
 						@question-asked="updateLlmQuery"
 					>
 						<template #toolbar-right-side>
-							<Button label="Run" size="small" icon="pi pi-play" @click="runCodeStratify" />
+							<Button
+								:label="isStratifyInProgress ? 'Loading...' : 'Run'"
+								size="small"
+								icon="pi pi-play"
+								@click="runCodeStratify"
+							/>
 						</template>
 					</tera-notebook-jupyter-input>
 					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
@@ -171,7 +173,6 @@ const modelNodeOptions = ref<string[]>([]);
 const showSaveModelModal = ref(false);
 
 const isStratifyInProgress = computed(() => props.node.state.isStratifyInProgress);
-const stratifyButtonLabel = computed(() => (isStratifyInProgress.value ? 'Loading...' : 'Stratify'));
 
 const selectedOutputId = ref<string>();
 
@@ -379,6 +380,9 @@ const initialize = (editorInstance: any) => {
 const runCodeStratify = () => {
 	const code = editor?.getValue();
 	if (!code) return;
+	const state = _.cloneDeep(props.node.state);
+	state.isStratifyInProgress = true;
+	emit('update-state', state);
 
 	const messageContent = {
 		silent: false,
@@ -395,9 +399,6 @@ const runCodeStratify = () => {
 		kernelManager
 			.sendMessage('execute_request', messageContent)
 			.register('execute_input', (data) => {
-				const state = _.cloneDeep(props.node.state);
-				state.isStratifyInProgress = true;
-				emit('update-state', state);
 				executedCode = data.content.code;
 			})
 			.register('stream', (data) => {
