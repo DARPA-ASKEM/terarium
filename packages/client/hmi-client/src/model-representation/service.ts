@@ -78,6 +78,7 @@ export const getModelRenderer = (
 			useAStarRouting: false,
 			useStableZoomPan: true,
 			zoomModifier: 'ctrlKey',
+			zoomRange: [0.1, 30],
 			runLayout: runDagreLayout,
 			dims,
 			nestedMap,
