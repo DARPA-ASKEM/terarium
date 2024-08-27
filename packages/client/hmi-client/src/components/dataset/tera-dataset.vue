@@ -118,7 +118,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onUpdated, PropType, Ref, ref, watch } from 'vue';
+import { computed, onUpdated, PropType, ref, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import { snakeToCapitalized } from '@/utils/text';
 import {
@@ -142,9 +142,9 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import { logger } from '@/utils/logger';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraCarousel from '@/components/widgets/tera-carousel.vue';
 import TeraAssetEnrichment from '@/components/widgets/tera-asset-enrichment.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraDatasetOverviewTable from './tera-dataset-overview-table.vue';
 import TeraDatasetDatatable from './tera-dataset-datatable.vue';
 import { enrichDataset } from './utils';
@@ -169,7 +169,7 @@ const emit = defineEmits(['close-preview', 'asset-loaded']);
 const dataset = ref<Dataset | null>(null);
 const newDatasetName = ref('');
 const isRenamingDataset = ref(false);
-const rawContent: Ref<CsvAsset | null> = ref(null);
+const rawContent = ref<CsvAsset | null>(null);
 const isDatasetLoading = ref(false);
 const selectedTabIndex = ref(0);
 
@@ -296,6 +296,7 @@ async function updateAndFetchDataset(ds: Dataset) {
 }
 
 const fetchDataset = async () => {
+	isDatasetLoading.value = true;
 	if (props.source === DatasetSource.TERARIUM) {
 		const datasetTemp = await getDataset(props.assetId);
 		if (datasetTemp) {
@@ -304,11 +305,29 @@ const fetchDataset = async () => {
 	} else if (props.source === DatasetSource.ESGF) {
 		dataset.value = await getClimateDataset(props.assetId);
 	}
+	isDatasetLoading.value = false;
 
 	if (dataset.value?.esgfId && !image.value) {
 		image.value = await getClimateDatasetPreview(dataset.value.esgfId);
 	}
 };
+
+function getRawContent() {
+	// If it's an ESGF dataset or a NetCDF file, we don't want to download the raw content
+	if (!dataset.value || dataset.value.esgfId || dataset.value.metadata?.format === 'netcdf') return;
+
+	// We are assuming here there is only a single csv file.
+	if (
+		dataset.value.fileNames &&
+		dataset.value.fileNames.length > 0 &&
+		!isEmpty(dataset.value.fileNames[0]) &&
+		dataset.value.fileNames[0].endsWith('.csv')
+	) {
+		downloadRawFile(props.assetId, dataset.value.fileNames[0]).then((res) => {
+			rawContent.value = res;
+		});
+	}
+}
 
 onUpdated(() => {
 	if (dataset.value) {
@@ -334,41 +353,18 @@ onUpdated(() => {
 
 // Whenever assetId changes, fetch dataset with that ID
 watch(
-	() => [props.assetId],
+	() => props.assetId,
 	async () => {
 		isRenamingDataset.value = false;
-		if (props.assetId !== '') {
-			isDatasetLoading.value = true;
-			fetchDataset().then(() => {
-				isDatasetLoading.value = false;
-			});
-		} else {
+		if (props.assetId) {
+			// Reset the dataset and rawContent so previous data is not shown
 			dataset.value = null;
 			rawContent.value = null;
+			await fetchDataset();
+			if (dataset.value) getRawContent(); // Whenever we change the dataset, we need to fetch the rawContent
 		}
 	},
 	{ immediate: true }
-);
-
-// Whenever we change the dataset, we need to fetch the rawContent
-watch(
-	() => dataset.value,
-	async () => {
-		// If it's an ESGF dataset or a NetCDF file, we don't want to download the raw content
-		if (!dataset.value || dataset.value.esgfId || dataset.value.metadata?.format === 'netcdf') return;
-
-		// We are assuming here there is only a single csv file.
-		if (
-			dataset.value.fileNames &&
-			dataset.value.fileNames.length > 0 &&
-			!isEmpty(dataset.value.fileNames[0]) &&
-			dataset.value.fileNames[0].endsWith('.csv')
-		) {
-			downloadRawFile(props.assetId, dataset.value.fileNames[0]).then((res) => {
-				rawContent.value = res;
-			});
-		}
-	}
 );
 </script>
 
