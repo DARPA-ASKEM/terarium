@@ -289,8 +289,12 @@ const createOutput = async (modelToSave: Model) => {
 	const modelData = isReadyToCreateDefaultOutput.value ? modelToSave : await createModel(modelToSave);
 	if (!modelData) return;
 
+	const modelLabel = isReadyToCreateDefaultOutput.value
+		? (modelData.name as string)
+		: nodeOutputLabel(props.node, 'Output'); // Just label the original model with its name
+
 	emit('append-output', {
-		label: isReadyToCreateDefaultOutput.value ? modelData.name : nodeOutputLabel(props.node, 'Output'), // Just label the original model with its name
+		label: modelLabel,
 		type: ModelEditOperation.outputs[0].type,
 		state: cloneDeep(props.node.state),
 		value: [modelData.id]
@@ -347,7 +351,7 @@ watch(
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
 			activeOutput.value = props.node.outputs.find((d) => d.id === selectedOutputId.value) ?? null;
-			await handleOutputChange();
+			handleOutputChange();
 		}
 	},
 	{ immediate: true }
