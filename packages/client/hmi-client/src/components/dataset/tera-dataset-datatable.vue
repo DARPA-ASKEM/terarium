@@ -98,7 +98,7 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import type { CsvAsset } from '@/types/Types';
@@ -122,9 +122,6 @@ const MINBARLENGTH = 1;
 
 const showSummaries = ref(true);
 const selectedColumns = ref<string[]>(props.rawContent.headers);
-const headerStats = ref<
-	{ minValue: number; maxValue: number; mean: number; median: number; sd: number; chartData: any }[]
->([]);
 
 // Given the bins for a column set up the object needed for the chart.
 const setBarChartData = (bins: number[]) => {
@@ -202,17 +199,16 @@ function roundStat(stat: number) {
 	return Math.round(stat * 1000) / 1000;
 }
 
-onMounted(() => {
-	headerStats.value =
-		props.rawContent.stats?.map((stat) => ({
-			minValue: roundStat(stat.minValue),
-			maxValue: roundStat(stat.maxValue),
-			mean: roundStat(stat.mean),
-			median: roundStat(stat.median),
-			sd: roundStat(stat.sd),
-			chartData: setBarChartData(stat.bins)
-		})) ?? [];
-});
+// Need functions to be above
+const headerStats =
+	props.rawContent.stats?.map((stat) => ({
+		minValue: roundStat(stat.minValue),
+		maxValue: roundStat(stat.maxValue),
+		mean: roundStat(stat.mean),
+		median: roundStat(stat.median),
+		sd: roundStat(stat.sd),
+		chartData: setBarChartData(stat.bins)
+	})) ?? [];
 </script>
 
 <style scoped>

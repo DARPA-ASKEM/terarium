@@ -356,6 +356,7 @@ watch(
 	async () => {
 		isRenamingDataset.value = false;
 		if (props.assetId) {
+			// Reset the dataset and rawContent so previous data is not shown
 			dataset.value = null;
 			rawContent.value = null;
 			await fetchDataset();
