@@ -49,6 +49,7 @@
 					>
 						<template #toolbar-right-side>
 							<Button
+								:disabled="isStratifyInProgress"
 								:label="isStratifyInProgress ? 'Loading...' : 'Run'"
 								size="small"
 								icon="pi pi-play"

@@ -70,7 +70,7 @@ export const StratifyMiraOperation: Operation = {
 			strataGroup: blankStratifyGroup,
 			strataCodeHistory: [],
 			hasCodeBeenRun: false,
-			isStratifyInProgress: true
+			isStratifyInProgress: false
 		};
 		return init;
 	}
