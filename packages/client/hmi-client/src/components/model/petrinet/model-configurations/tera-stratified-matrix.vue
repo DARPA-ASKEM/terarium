@@ -120,8 +120,8 @@ const emit = defineEmits(['update-cell-value']);
 
 const matrixTypes = ['subjectOutcome', 'subjectControllers', 'outcomeControllers', 'other'];
 const matrixType = ref(props.matrixType || 'subjectOutcome');
-const matrixMap = ref<any>();
-const matrix = ref<any>([]);
+const matrixMap = ref<{ [key: string]: MiraMatrix }>({});
+const matrix = ref<MiraMatrix>([]);
 
 const currentMatrixtype = ref(props.matrixType || '');
 
@@ -141,10 +141,7 @@ const parametersValueMap = computed(() => {
 // Copy and paste utilities
 let timerId = -1;
 const clipboardText = ref('');
-const updateByMatrixBulk = (
-	matrixToUpdate: MiraMatrix, // fixme typing
-	text: string
-) => {
+const updateByMatrixBulk = (matrixToUpdate: MiraMatrix, text: string) => {
 	const parseResult = dsvParse(text);
 
 	(matrixToUpdate as MiraMatrix).forEach((row) => {
@@ -181,6 +178,8 @@ const pasteItemProcessor = async (item: DataTransferItem) => {
 	if (item.kind !== 'string') return;
 	if (item.type !== 'text/plain') return;
 
+	console.log('paste paste');
+
 	// Presume this is a full matrix, with row/column labels
 	item.getAsString(async (text) => {
 		updateByMatrixBulk(matrix.value, text);
@@ -188,7 +187,6 @@ const pasteItemProcessor = async (item: DataTransferItem) => {
 };
 const processPasteEvent = pasteEventGenerator(pasteItemProcessor);
 const pasteBuffer = (text: string) => {
-	console.log(matrix.value);
 	updateByMatrixBulk(matrix.value, text);
 };
 
@@ -321,6 +319,7 @@ onMounted(() => {
 	generateMatrix();
 	resetEditState();
 
+	document.addEventListener('paste', processPasteEvent);
 	timerId = window.setInterval(async () => {
 		const x = await getClipboardText();
 		if (x !== clipboardText.value) {
