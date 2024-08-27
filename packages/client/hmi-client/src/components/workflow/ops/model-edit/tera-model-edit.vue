@@ -341,7 +341,7 @@ const onSelection = (id: string) => {
 
 // Updates output selection
 watch(
-	() => [props.node.active],
+	() => props.node.active,
 	async () => {
 		// Update selected output
 		if (props.node.active) {
