@@ -73,7 +73,8 @@
 			</template>
 			<template #header-controls-right>
 				<Button label="Reset" @click="resetConfiguration" outlined severity="secondary" />
-				<Button class="mr-3" :disabled="isSaveDisabled" label="Save" @click="createConfiguration" />
+				<Button label="Save as..." outlined severity="secondary" @click="showSaveModal = true" />
+				<Button class="mr-3" :disabled="isSaveDisabled" label="Save" @click="onSaveConfiguration" />
 			</template>
 
 			<Accordion multiple :active-index="[0, 1]">
@@ -183,23 +184,14 @@
 			</tera-drilldown-preview>
 		</tera-columnar-panel>
 	</tera-drilldown>
-	<tera-modal v-if="!isEmpty(sanityCheckErrors)">
-		<template #header>
-			<h4>Warning, these settings may cause errors</h4>
-		</template>
-		<template #default>
-			<section style="max-height: 22rem; overflow-y: scroll">
-				<div v-for="(errString, idx) of sanityCheckErrors" :key="idx">
-					{{ errString }}
-				</div>
-			</section>
-		</template>
-		<template #footer>
-			<Button label="Ok" class="p-button-primary" @click="sanityCheckErrors = []" />
-			<Button label="Ignore warnings and use configuration" class="p-button-secondary" @click="createConfiguration" />
-		</template>
-	</tera-modal>
-
+	<tera-save-asset-modal
+		:initial-name="knobs.transientModelConfig.name"
+		:is-visible="showSaveModal"
+		:asset="knobs.transientModelConfig"
+		:asset-type="AssetType.ModelConfiguration"
+		@close-modal="showSaveModal = false"
+		@on-save="onSaveAsModelConfiguration"
+	/>
 	<!-- Matrix effect easter egg  -->
 	<canvas id="matrix-canvas" />
 </template>
@@ -223,7 +215,6 @@ import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
-import TeraModal from '@/components/widgets/tera-modal.vue';
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
@@ -238,11 +229,12 @@ import {
 	setInitialExpression,
 	setParameterSource,
 	setParameterDistributions,
-	getAsConfiguredModel
+	getAsConfiguredModel,
+	updateModelConfiguration
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
 import type { Model, ModelConfiguration } from '@/types/Types';
-import { Observable } from '@/types/Types';
+import { Observable, AssetType } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
@@ -254,6 +246,7 @@ import { useConfirm } from 'primevue/useconfirm';
 import Dropdown from 'primevue/dropdown';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import { saveCodeToState } from '@/services/notebook';
+import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
 import { ModelConfigOperation, ModelConfigOperationState, blankModelConfig } from './model-config-operation';
 
@@ -301,8 +294,7 @@ const calibratedConfigObservables = computed<Observable[]>(() =>
 	}))
 );
 
-const sanityCheckErrors = ref<string[]>([]);
-const isSaveDisabled = computed(() => knobs.value.transientModelConfig.name === '');
+const isSaveDisabled = computed(() => knobs.value.transientModelConfig.name === '' || haveValuesChanged.value);
 
 const kernelManager = new KernelSessionManager();
 let editor: VAceEditorInstance['_editor'] | null;
@@ -342,6 +334,7 @@ const appendCode = (data: any, property: string, runUpdatedCode = false) => {
 	if (runUpdatedCode) runFromCode();
 };
 
+const showSaveModal = ref(false);
 const confirm = useConfirm();
 const filterModelConfigurationsText = ref('');
 const filteredModelConfigurations = computed(() => {
@@ -500,6 +493,76 @@ const createConfiguration = async () => {
 		state: cloneDeep(props.node.state)
 	});
 };
+
+const onSaveAsModelConfiguration = (data: ModelConfiguration) => {
+	knobs.value.transientModelConfig = cloneDeep(data);
+	useToastService().success('', 'Created model configuration');
+	emit('append-output', {
+		type: ModelConfigOperation.outputs[0].type,
+		label: data.name,
+		value: data.id,
+		isSelected: false,
+		state: cloneDeep(props.node.state)
+	});
+	showSaveModal.value = false;
+};
+
+const onSaveConfiguration = async () => {
+	if (!model.value || isSaveDisabled.value) return;
+	const modelConfig = cloneDeep(knobs.value.transientModelConfig);
+
+	const data = await updateModelConfiguration(modelConfig);
+	if (!data) {
+		logger.error('Failed to update model configuration');
+		return;
+	}
+	initialize();
+	logger.success('Saved model configuration');
+};
+
+// a function to check if the values have changed (not metadata such as name, description, sources...)
+const haveValuesChanged = computed(() => {
+	const modelConfig = cloneDeep(knobs.value.transientModelConfig);
+
+	if (!originalConfig) return false;
+
+	const originalInitialList = originalConfig.initialSemanticList;
+	const originalParameterList = originalConfig.parameterSemanticList;
+
+	const newInitialList = modelConfig.initialSemanticList;
+	const newParameterList = modelConfig.parameterSemanticList;
+
+	// compare initial values are the same
+	for (let i = 0; i < originalInitialList.length; i++) {
+		const originalTarget = originalInitialList[i].target;
+		for (let j = 0; j < newInitialList.length; j++) {
+			const newTarget = newInitialList[j].target;
+			if (originalTarget === newTarget) {
+				if (
+					!isEqual(originalInitialList[i].expression, newInitialList[j].expression) ||
+					!isEqual(originalInitialList[i].expressionMathml, newInitialList[j].expressionMathml)
+				) {
+					return true;
+				}
+			}
+		}
+	}
+
+	// compare parameter values are the same
+	for (let i = 0; i < originalParameterList.length; i++) {
+		const originalId = originalParameterList[i].referenceId;
+		for (let j = 0; j < newParameterList.length; j++) {
+			const newId = newParameterList[j].referenceId;
+			if (originalId === newId) {
+				if (!isEqual(originalParameterList[i].distribution, newParameterList[j].distribution)) {
+					return true;
+				}
+			}
+		}
+	}
+
+	return false;
+});
 
 const onSelection = (id: string) => {
 	emit('select-output', id);
