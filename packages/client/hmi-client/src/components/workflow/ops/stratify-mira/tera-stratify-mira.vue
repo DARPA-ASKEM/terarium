@@ -77,23 +77,21 @@
 				v-model:output="selectedOutputId"
 				is-selectable
 			>
-				<div class="h-full">
-					<tera-notebook-error
-						v-if="executeResponse.status === OperatorStatus.ERROR"
-						:name="executeResponse.name"
-						:value="executeResponse.value"
-						:traceback="executeResponse.traceback"
-					/>
-					<template v-else-if="stratifiedAmr">
-						<tera-model-diagram :model="stratifiedAmr" />
-						<tera-model-parts :model="stratifiedAmr" :feature-config="{ isPreview: true }" />
-					</template>
-					<div v-else class="flex flex-column h-full justify-content-center">
-						<tera-progress-spinner v-if="isStratifyInProgress" is-centered :font-size="2">
-							Processing...
-						</tera-progress-spinner>
-						<tera-operator-placeholder v-else :node="node" />
-					</div>
+				<tera-notebook-error
+					v-if="executeResponse.status === OperatorStatus.ERROR"
+					:name="executeResponse.name"
+					:value="executeResponse.value"
+					:traceback="executeResponse.traceback"
+				/>
+				<template v-else-if="stratifiedAmr">
+					<tera-model-diagram :model="stratifiedAmr" />
+					<tera-model-parts :model="stratifiedAmr" :feature-config="{ isPreview: true }" />
+				</template>
+				<div v-else class="flex flex-column h-full justify-content-center">
+					<tera-progress-spinner v-if="isStratifyInProgress" is-centered :font-size="2">
+						Processing...
+					</tera-progress-spinner>
+					<tera-operator-placeholder v-else :node="node" />
 				</div>
 			</tera-drilldown-preview>
 		</template>
