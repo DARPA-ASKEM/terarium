@@ -663,8 +663,6 @@ watch(
 	async () => {
 		const state = cloneDeep(props.node.state);
 		state.transientModelConfig = knobs.value.transientModelConfig;
-		console.log(knobs.value.transientModelConfig);
-		console.log(mmt.value);
 		emit('update-state', state);
 	},
 	{ deep: true }
