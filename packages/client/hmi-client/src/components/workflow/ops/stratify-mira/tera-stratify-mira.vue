@@ -22,7 +22,7 @@
 				<template #header-controls-right>
 					<Button size="small" severity="secondary" outlined label="Reset" @click="resetModel" />
 					<Button
-						:disabled="isStratifyInProgress"
+						:loading="isStratifyInProgress"
 						:label="isStratifyInProgress ? 'Loading...' : 'Stratify'"
 						size="small"
 						@click="stratifyModel"
@@ -49,7 +49,7 @@
 					>
 						<template #toolbar-right-side>
 							<Button
-								:disabled="isStratifyInProgress"
+								:loading="isStratifyInProgress"
 								:label="isStratifyInProgress ? 'Loading...' : 'Run'"
 								size="small"
 								icon="pi pi-play"
