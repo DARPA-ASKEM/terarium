@@ -3,7 +3,6 @@ import axios, { AxiosError, AxiosHeaders } from 'axios';
 import { EventSource } from 'extended-eventsource';
 import { ServerError } from '@/types/ServerError';
 import { Ref, ref } from 'vue';
-import { activeProjectId } from '@/composables/activeProject';
 import useAuthStore from '../stores/auth';
 
 export class FatalError extends Error {}
@@ -26,15 +25,6 @@ API.interceptors.request.use(
 	(config) => {
 		const auth = useAuthStore();
 		config.headers.setAuthorization(`Bearer ${auth.getToken()}`);
-		// ActiveProjectId is often not available when the API is called from a global context or immediately after pages are hard refreshed, so we need to check the URL for the project id
-		const projectId = activeProjectId.value || getProjectIdFromUrl();
-		if (projectId) {
-			if (config.params) {
-				config.params['project-id'] = projectId;
-			} else {
-				config.params = { 'project-id': projectId };
-			}
-		}
 		return config;
 	},
 	(error) => {
