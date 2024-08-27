@@ -469,7 +469,6 @@ const mmtParams = ref<MiraTemplateParams>({});
 
 const configuredMmt = computed(() => {
 	const mmtCopy = cloneDeep(mmt.value);
-	if (!mmtCopy) return mmtCopy;
 	knobs.value.transientModelConfig.initialSemanticList.forEach((initial) => {
 		const mmtInitial = mmtCopy.initials[initial.target];
 		if (mmtInitial) {
@@ -480,6 +479,12 @@ const configuredMmt = computed(() => {
 		const mmtParameter = mmtCopy.parameters[parameter.referenceId];
 		if (mmtParameter) {
 			mmtParameter.value = parameter.distribution.parameters.value;
+		}
+	});
+	knobs.value.transientModelConfig.observableSemanticList.forEach((observable) => {
+		const mmtObservable = mmtCopy.observables[observable.referenceId];
+		if (mmtObservable) {
+			mmtObservable.expression = observable.expression;
 		}
 	});
 	return mmtCopy;
