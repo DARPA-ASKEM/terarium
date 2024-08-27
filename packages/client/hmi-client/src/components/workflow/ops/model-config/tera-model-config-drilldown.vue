@@ -247,6 +247,7 @@ import Dropdown from 'primevue/dropdown';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import { saveCodeToState } from '@/services/notebook';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
+import { areModelConfigValuesEqual } from '@/utils/model-configuration';
 import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
 import { ModelConfigOperation, ModelConfigOperationState, blankModelConfig } from './model-config-operation';
 
@@ -299,51 +300,8 @@ const isSaveDisabled = computed(
 	() =>
 		knobs.value.transientModelConfig.name === '' ||
 		isEqual(originalConfig, knobs.value.transientModelConfig) ||
-		haveValuesChanged.value
+		!areModelConfigValuesEqual(originalConfig, knobs.value.transientModelConfig)
 );
-
-// a property to check if the values have changed (not metadata such as name, description, sources...)
-const haveValuesChanged = computed(() => {
-	const modelConfig = cloneDeep(knobs.value.transientModelConfig);
-
-	if (!originalConfig) return false;
-	const originalInitialList = originalConfig.initialSemanticList;
-	const originalParameterList = originalConfig.parameterSemanticList;
-
-	const newInitialList = modelConfig.initialSemanticList;
-	const newParameterList = modelConfig.parameterSemanticList;
-
-	// compare initial values are the same
-	for (let i = 0; i < originalInitialList.length; i++) {
-		const originalTarget = originalInitialList[i].target;
-		for (let j = 0; j < newInitialList.length; j++) {
-			const newTarget = newInitialList[j].target;
-			if (originalTarget === newTarget) {
-				if (
-					!isEqual(originalInitialList[i].expression, newInitialList[j].expression) ||
-					!isEqual(originalInitialList[i].expressionMathml, newInitialList[j].expressionMathml)
-				) {
-					return true;
-				}
-			}
-		}
-	}
-
-	// compare parameter values are the same
-	for (let i = 0; i < originalParameterList.length; i++) {
-		const originalId = originalParameterList[i].referenceId;
-		for (let j = 0; j < newParameterList.length; j++) {
-			const newId = newParameterList[j].referenceId;
-			if (originalId === newId) {
-				if (!isEqual(originalParameterList[i].distribution, newParameterList[j].distribution)) {
-					return true;
-				}
-			}
-		}
-	}
-
-	return false;
-});
 
 const kernelManager = new KernelSessionManager();
 let editor: VAceEditorInstance['_editor'] | null;
