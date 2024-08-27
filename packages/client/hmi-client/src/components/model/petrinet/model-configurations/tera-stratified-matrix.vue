@@ -310,15 +310,7 @@ watch(
 	}
 );
 
-watch([() => props.id, () => props.mmt], () => {
-	generateMatrix();
-	resetEditState();
-});
-
 onMounted(() => {
-	generateMatrix();
-	resetEditState();
-
 	document.addEventListener('paste', processPasteEvent);
 	timerId = window.setInterval(async () => {
 		const x = await getClipboardText();
@@ -332,6 +324,15 @@ onUnmounted(() => {
 	document.removeEventListener('paste', processPasteEvent);
 	window.clearInterval(timerId);
 });
+
+watch(
+	[() => props.id, () => props.mmt],
+	() => {
+		generateMatrix();
+		resetEditState();
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
