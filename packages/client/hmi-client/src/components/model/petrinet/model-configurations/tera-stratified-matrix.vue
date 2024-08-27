@@ -144,8 +144,9 @@ const clipboardText = ref('');
 const updateByMatrixBulk = (matrixToUpdate: MiraMatrix, text: string) => {
 	const parseResult = dsvParse(text);
 
-	(matrixToUpdate as MiraMatrix).forEach((row) => {
-		row.forEach((matrixEntry) => {
+	// FIXME: Not very efficient, maybe emit in bulk rather than one-by-one
+	matrixToUpdate.forEach((row) => {
+		row.forEach(async (matrixEntry) => {
 			// If we have label information, use them as they may be more accurate, otherwise use indices
 			if (parseResult.hasColLabels && parseResult.hasRowLabels) {
 				const match = parseResult.entries.find(
@@ -155,7 +156,7 @@ const updateByMatrixBulk = (matrixToUpdate: MiraMatrix, text: string) => {
 					emit('update-cell-value', {
 						variableName: matrixEntry.content.id,
 						newValue: match.value,
-						mathml: '' // fixme
+						mathml: (await pythonInstance.parseExpression(`${match.value}`)).mathml
 					});
 				}
 			} else {
@@ -166,7 +167,7 @@ const updateByMatrixBulk = (matrixToUpdate: MiraMatrix, text: string) => {
 					emit('update-cell-value', {
 						variableName: matrixEntry.content.id,
 						newValue: match.value,
-						mathml: '' // fixme
+						mathml: (await pythonInstance.parseExpression(`${match.value}`)).mathml
 					});
 				}
 			}
