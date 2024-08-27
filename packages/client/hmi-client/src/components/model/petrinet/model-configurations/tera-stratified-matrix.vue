@@ -1,12 +1,22 @@
 <template>
 	<div class="p-datatable-wrapper">
-		<Dropdown
-			v-if="matrixMap && Object.keys(matrixMap).length > 0"
-			:model-value="matrixType"
-			:options="matrixTypes"
-			placeholder="Select matrix type"
-			@update:model-value="(v) => changeMatrix(v)"
-		/>
+		<div class="matrix-toolbar">
+			<Dropdown
+				v-if="matrixMap && Object.keys(matrixMap).length > 0"
+				:model-value="matrixType"
+				:options="matrixTypes"
+				placeholder="Select matrix type"
+				@update:model-value="(v) => changeMatrix(v)"
+			/>
+
+			<Button
+				@click="pasteBuffer(clipboardText)"
+				label="Paste"
+				severity="secondary"
+				size="small"
+				:disabled="clipboardText === ''"
+			/>
+		</div>
 
 		<div
 			v-if="!isEmpty(matrix)"
@@ -81,17 +91,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { isEmpty, isNumber } from 'lodash';
 import { pythonInstance } from '@/python/PyodideController';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
+import Button from 'primevue/button';
 import { StratifiedMatrix } from '@/types/Model';
-import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import type { MiraMatrix, MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { createParameterMatrix, createInitialMatrix, collapseTemplates } from '@/model-representation/mira/mira';
 import { getVariable } from '@/model-representation/service';
 import { extractTemplateMatrix } from '@/model-representation/mira/mira-util';
 import { logger } from '@/utils/logger';
+import { getClipboardText, pasteEventGenerator } from '@/utils/clipboard';
+import { dsvParse } from '@/utils/dsv';
 
 const props = defineProps<{
 	mmt: MiraModel;
@@ -124,6 +137,60 @@ const parametersValueMap = computed(() => {
 	});
 	return result;
 });
+
+// Copy and paste utilities
+let timerId = -1;
+const clipboardText = ref('');
+const updateByMatrixBulk = (
+	matrixToUpdate: MiraMatrix, // fixme typing
+	text: string
+) => {
+	const parseResult = dsvParse(text);
+
+	(matrixToUpdate as MiraMatrix).forEach((row) => {
+		row.forEach((matrixEntry) => {
+			// If we have label information, use them as they may be more accurate, otherwise use indices
+			if (parseResult.hasColLabels && parseResult.hasRowLabels) {
+				const match = parseResult.entries.find(
+					(entry) => entry.rowLabel === matrixEntry.rowCriteria && entry.colLabel === matrixEntry.colCriteria
+				);
+				if (match) {
+					emit('update-cell-value', {
+						variableName: matrixEntry.content.id,
+						newValue: match.value,
+						mathml: '' // fixme
+					});
+				}
+			} else {
+				const match = parseResult.entries.find(
+					(entry) => entry.rowIdx === matrixEntry.row && entry.colIdx === matrixEntry.col
+				);
+				if (match) {
+					emit('update-cell-value', {
+						variableName: matrixEntry.content.id,
+						newValue: match.value,
+						mathml: '' // fixme
+					});
+				}
+			}
+		});
+	});
+};
+
+const pasteItemProcessor = async (item: DataTransferItem) => {
+	if (item.kind !== 'string') return;
+	if (item.type !== 'text/plain') return;
+
+	// Presume this is a full matrix, with row/column labels
+	item.getAsString(async (text) => {
+		updateByMatrixBulk(matrix.value, text);
+	});
+};
+const processPasteEvent = pasteEventGenerator(pasteItemProcessor);
+const pasteBuffer = (text: string) => {
+	console.log(matrix.value);
+	updateByMatrixBulk(matrix.value, text);
+};
 
 const changeMatrix = (v: string) => {
 	matrixType.value = v;
@@ -253,6 +320,18 @@ watch([() => props.id, () => props.mmt], () => {
 onMounted(() => {
 	generateMatrix();
 	resetEditState();
+
+	timerId = window.setInterval(async () => {
+		const x = await getClipboardText();
+		if (x !== clipboardText.value) {
+			clipboardText.value = x;
+		}
+	}, 1000);
+});
+
+onUnmounted(() => {
+	document.removeEventListener('paste', processPasteEvent);
+	window.clearInterval(timerId);
 });
 </script>
 
@@ -342,5 +421,13 @@ onMounted(() => {
 section {
 	display: flex;
 	justify-content: space-between;
+}
+
+.matrix-toolbar {
+	display: flex;
+	justify-content: space-between;
+}
+.matrix-toolbar Button {
+	margin-bottom: var(--gap);
 }
 </style>
