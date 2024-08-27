@@ -1,5 +1,6 @@
 <template>
-	<div class="datatable-container">
+	<tera-progress-spinner v-if="!rawContent" :font-size="2" is-centered />
+	<div v-else class="datatable-container">
 		<!-- Toggle histograms & column summary charts -->
 		<div class="datatable-toolbar">
 			<span class="datatable-toolbar-item">
@@ -98,6 +99,7 @@ import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
 import Chart from 'primevue/chart';
 import InputSwitch from 'primevue/inputswitch';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
 const props = defineProps<{
 	rawContent: CsvAsset | null; // Temporary - this is also any in ITypeModel
