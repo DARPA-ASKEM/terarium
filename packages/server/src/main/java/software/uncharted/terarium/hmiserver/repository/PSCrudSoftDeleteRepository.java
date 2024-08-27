@@ -12,7 +12,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelFrame
 
 @NoRepositoryBean
 public interface PSCrudSoftDeleteRepository<T, ID> extends PSCrudRepository<T, ID> {
-	@Query(value = "SELECT project_id FROM project_asset WHERE id = :assetId", nativeQuery = true)
+	@Query(value = "SELECT project_id FROM project_asset WHERE asset_id = :assetId", nativeQuery = true)
 	UUID getProjectIdForAsset(@Param("assetId") final UUID assetId);
 
 	List<T> findAllByIdInAndDeletedOnIsNull(final List<ID> ids);
