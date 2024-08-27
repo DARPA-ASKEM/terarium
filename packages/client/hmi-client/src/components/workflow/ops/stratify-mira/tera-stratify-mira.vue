@@ -87,12 +87,12 @@
 					<tera-model-diagram :model="stratifiedAmr" />
 					<tera-model-parts :model="stratifiedAmr" :feature-config="{ isPreview: true }" />
 				</template>
-				<div v-else class="flex flex-column h-full justify-content-center">
+				<template v-else>
 					<tera-progress-spinner v-if="isStratifyInProgress" is-centered :font-size="2">
 						Processing...
 					</tera-progress-spinner>
-					<tera-operator-placeholder v-else :node="node" />
-				</div>
+					<tera-operator-placeholder class="flex flex-column h-full justify-content-center" v-else :node="node" />
+				</template>
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>

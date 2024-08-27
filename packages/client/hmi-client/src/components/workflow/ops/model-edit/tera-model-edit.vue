@@ -62,12 +62,7 @@
 					<tera-model-diagram :model="amr" />
 					<tera-model-parts :model="amr" :feature-config="{ isPreview: true }" />
 				</template>
-				<tera-progress-spinner
-					class="flex flex-column h-full justify-content-center"
-					v-else-if="isUpdatingModel || !amr"
-					is-centered
-					:font-size="2"
-				>
+				<tera-progress-spinner v-else-if="isUpdatingModel || !amr" is-centered :font-size="2">
 					Loading...
 				</tera-progress-spinner>
 			</tera-drilldown-preview>
