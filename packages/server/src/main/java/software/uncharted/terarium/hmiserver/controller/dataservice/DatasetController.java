@@ -209,10 +209,8 @@ public class DatasetController {
 			)
 		}
 	)
-	public ResponseEntity<Dataset> getDataset(
-		@PathVariable("id") final UUID id,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
+	public ResponseEntity<Dataset> getDataset(@PathVariable("id") final UUID id) {
+		final UUID projectId = datasetService.getProjectIdForAsset(id);
 		final Schema.Permission permission = projectService.checkPermissionCanReadOrNone(
 			currentUserService.get().getId(),
 			projectId
