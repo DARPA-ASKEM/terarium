@@ -3385,7 +3385,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/markdown-it@npm:^14.1.2":
+"@types/markdown-it@npm:14.1.2":
   version: 14.1.2
   resolution: "@types/markdown-it@npm:14.1.2"
   dependencies:
@@ -8804,7 +8804,7 @@ __metadata:
     "@rushstack/eslint-patch": "npm:1.10.4"
     "@types/d3": "npm:7.4.3"
     "@types/lodash": "npm:4.17.7"
-    "@types/markdown-it": "npm:^14.1.2"
+    "@types/markdown-it": "npm:14.1.2"
     "@types/node": "npm:18.19.3"
     "@uncharted.software/design-tokens": "npm:1.1.0"
     "@uncharted.software/facets-core": "npm:3.2.6"
@@ -8829,7 +8829,7 @@ __metadata:
     jsdom: "npm:24.1.1"
     katex: "npm:0.16.11"
     lodash: "npm:4.17.21"
-    markdown-it: "npm:^14.1.0"
+    markdown-it: "npm:14.1.0"
     mathlive: "npm:0.89.2"
     mathml-to-latex: "npm:1.2.0"
     oidc-spa: "npm:4.6.2"
@@ -11090,7 +11090,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"markdown-it@npm:^14.1.0":
+"markdown-it@npm:14.1.0":
   version: 14.1.0
   resolution: "markdown-it@npm:14.1.0"
   dependencies:
