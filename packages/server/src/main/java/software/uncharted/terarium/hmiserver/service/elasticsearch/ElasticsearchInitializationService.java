@@ -152,8 +152,6 @@ public class ElasticsearchInitializationService {
 				put(config.getProjectIndex(), config.getProjectAlias());
 				put(config.getCodeIndex(), config.getCodeAlias());
 				put(config.getDatasetIndex(), config.getDatasetAlias());
-				put(config.getDecapodesConfigurationIndex(), config.getDecapodesConfigurationAlias());
-				put(config.getDecapodesContextIndex(), config.getDecapodesContextAlias());
 				put(config.getDocumentIndex(), config.getDocumentAlias());
 				put(config.getEquationIndex(), config.getEquationAlias());
 				put(config.getModelIndex(), config.getModelAlias());

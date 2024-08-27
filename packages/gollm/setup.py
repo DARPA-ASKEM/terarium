@@ -16,5 +16,5 @@ setup(
             "gollm_task:enrich_amr=tasks.enrich_amr:main",
         ],
     },
-    python_requires=">=3.8",
+    python_requires=">=3.11",
 )

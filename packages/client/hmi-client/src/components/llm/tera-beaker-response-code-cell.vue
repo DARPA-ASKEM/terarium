@@ -1,5 +1,5 @@
 <template>
-	<div class="code-cell" @keyup.ctrl.enter.prevent="run" @keyup.shift.enter.prevent="run">
+	<div class="code-cell" @keyup.ctrl.enter.prevent="run">
 		<template ref="codeCell" />
 		<div class="controls" :class="{ 'controls-with-query': isQuestion }">
 			<Button text rounded icon="pi pi-trash" class="danger-hover" @click="showDialog" />
@@ -112,6 +112,13 @@ commands.addCommand('run:cell', {
 	execute: () => CodeCell.execute(cellWidget, props.jupyterSession, { notebook_item: props.notebookItemId })
 });
 
+commands.addCommand('blur:editor', {
+	label: 'Blur Editor',
+	execute: () => {
+		exit();
+	}
+});
+
 // Add Key Bindings
 commands.addKeyBinding({
 	selector: '.jp-InputArea-editor.jp-mod-completer-enabled',
@@ -124,6 +131,12 @@ commands.addKeyBinding({
 	command: 'run:cell'
 });
 
+commands.addKeyBinding({
+	selector: '.jp-InputArea-editor',
+	keys: ['Escape'],
+	command: 'blur:editor'
+});
+
 // Save file function
 // const saveAsNewDataset = () => {
 // 	emit('save-as-new-dataset', { datasetName: savedFileName.value });
@@ -132,6 +145,14 @@ commands.addKeyBinding({
 
 const clear = () => {
 	cellWidget.model.clearExecution();
+};
+
+const enter = () => {
+	cellWidget.editor.focus();
+};
+
+const exit = () => {
+	cellWidget.editor.blur();
 };
 
 onMounted(() => {
@@ -169,7 +190,9 @@ cellWidget.activate();
 
 defineExpose({
 	cellWidget,
-	clear
+	clear,
+	enter,
+	exit
 });
 
 // Delete cell function

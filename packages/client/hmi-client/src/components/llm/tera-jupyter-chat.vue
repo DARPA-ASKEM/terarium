@@ -1,11 +1,18 @@
 <template>
 	<div class="tera-jupyter-chat">
 		<!-- Jupyter Response and Input -->
-		<div ref="messageContainer">
+		<div
+			ref="messageContainer"
+			@keydown.prevent="onKeyPress"
+			@keydown.esc.capture="messageContainer?.focus()"
+			tabindex="0"
+		>
 			<tera-jupyter-response
+				@keydown.stop
 				v-for="(msg, index) in notebookItems"
 				ref="notebookCells"
-				:key="index"
+				:class="{ selected: msg.query_id === selectedCellId }"
+				:key="msg.query_id"
 				:index="index"
 				:jupyter-session="jupyterSession"
 				:asset-id="props.assetId"
@@ -20,6 +27,7 @@
 				@delete-prompt="handleDeletePrompt"
 				@re-run-prompt="handleRerunPrompt"
 				@edit-prompt="reRunPrompt"
+				@click="selectedCellId = msg.query_id"
 			/>
 			<!-- spacer to prevent the floating input panel at the bottom of the screen from covering the bottom item -->
 			<div style="height: 8rem"></div>
@@ -30,30 +38,29 @@
 				:kernel-is-busy="props.kernelStatus !== KernelState.idle"
 				context="dataset"
 				@submitQuery="submitQuery"
-				@add-code-cell="addCodeCell"
+				@add-code-cell="addCodeCell()"
+				@keydown.stop
 			/>
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from 'vue';
-import { createMessageId, getSessionManager, JupyterMessage, KernelState } from '@/services/jupyter';
+import { onUnmounted, ref, watch } from 'vue';
+import { createMessageId, JupyterMessage, KernelState } from '@/services/jupyter';
 import type { CsvAsset, NotebookSession } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import TeraBeakerInput from '@/components/llm/tera-beaker-input.vue';
 import TeraJupyterResponse from '@/components/llm/tera-jupyter-response.vue';
-import { IModel } from '@jupyterlab/services/lib/session/session';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
 import { updateNotebookSession } from '@/services/notebook-session';
 import { useProjects } from '@/composables/project';
+import { isEmpty } from 'lodash';
 
 const messagesHistory = ref<JupyterMessage[]>([]);
 const isExecutingCode = ref(false);
 const messageContainer = ref(<HTMLElement | null>null);
-const activeSessions = ref(null);
-const runningSessions = ref();
 const notebookItems = ref(
 	<
 		{
@@ -67,6 +74,7 @@ const notebookItems = ref(
 	>[]
 );
 const notebookCells = ref<(typeof TeraJupyterResponse)[]>([]);
+const selectedCellId = ref();
 
 const emit = defineEmits([
 	'new-message',
@@ -91,18 +99,6 @@ const props = defineProps<{
 	notebookSession?: NotebookSession;
 }>();
 
-onMounted(async () => {
-	if (props.notebookSession) {
-		notebookItems.value = props.notebookSession.data?.history;
-	}
-	activeSessions.value = getSessionManager().running();
-
-	// Add a code cell if there are no cells present
-	if (notebookItems.value.length === 0) {
-		addCodeCell();
-	}
-});
-
 const defaultPreview = ref('d1');
 
 const iopubMessageHandler = (_session, message) => {
@@ -112,6 +108,56 @@ const iopubMessageHandler = (_session, message) => {
 		return;
 	}
 	newJupyterMessage(message);
+};
+const onKeyPress = (event) => {
+	switch (event.key) {
+		case 'j':
+		case 'ArrowUp':
+			selectPreviousCell();
+			break;
+		case 'k':
+		case 'ArrowDown':
+			selectNextCell();
+			break;
+		case 'a':
+			addCodeCell(false, false);
+			break;
+		case 'b':
+			addCodeCell();
+			break;
+		case 'Enter':
+			enterCell();
+			break;
+		case 'Escape':
+			messageContainer.value?.focus();
+			break;
+		default:
+			break;
+	}
+};
+
+const enterCell = () => {
+	const index = notebookItems.value.findIndex((item) => item.query_id === selectedCellId.value);
+	if (index > -1) {
+		const el = notebookCells.value[index];
+		if (el.codeCell) {
+			el.codeCell[0]?.enter();
+		}
+	}
+};
+
+const selectPreviousCell = () => {
+	const index = notebookItems.value.findIndex((item) => item.query_id === selectedCellId.value);
+	if (index > 0) {
+		selectedCellId.value = notebookItems.value[index - 1].query_id;
+	}
+};
+
+const selectNextCell = () => {
+	const index = notebookItems.value.findIndex((item) => item.query_id === selectedCellId.value);
+	if (index < notebookItems.value.length - 1) {
+		selectedCellId.value = notebookItems.value[index + 1].query_id;
+	}
 };
 
 const previewSelected = (selection) => {
@@ -181,7 +227,7 @@ const reRunPrompt = (queryId: string, query?: string) => {
 	isExecutingCode.value = true;
 };
 
-const addCodeCell = () => {
+const addCodeCell = (isDefaultCell: boolean = false, isNextCell: boolean = true) => {
 	const msgId = createMessageId('code_cell');
 	const date = new Date().toISOString();
 	const emptyCell: JupyterMessage = {
@@ -197,17 +243,16 @@ const addCodeCell = () => {
 		metadata: {},
 		content: {
 			language: 'python',
-			code: defaultPreview.value
+			code: isDefaultCell ? defaultPreview.value : ''
 		},
 		channel: 'iopub'
 	};
 	messagesHistory.value.push(emptyCell);
-	updateNotebookCells(emptyCell);
-	defaultPreview.value = ''; // reset the default preview
+	updateNotebookCells(emptyCell, isNextCell);
 };
 
 // const nestedMessages = computed(() => {
-const updateNotebookCells = (message) => {
+const updateNotebookCells = (message, isNextCell: boolean = true) => {
 	// This computed property groups Jupyter messages into queries
 	// and stores resulting csv after each query.
 	let notebookItem;
@@ -229,7 +274,18 @@ const updateNotebookCells = (message) => {
 			resultingCsv: null,
 			executions: []
 		};
-		notebookItems.value.push(notebookItem);
+
+		const index = notebookItems.value.findIndex((item) => item.query_id === selectedCellId.value);
+		if (isNextCell) {
+			if (index === -1) {
+				notebookItems.value.push(notebookItem);
+			} else {
+				notebookItems.value.splice(index + 1, 0, notebookItem);
+			}
+		} else {
+			notebookItems.value.splice(index, 0, notebookItem);
+		}
+		selectedCellId.value = parentId;
 	}
 	if (message.header.msg_type === 'dataset') {
 		// If we get a new dataset, remove any old datasets
@@ -331,24 +387,6 @@ onUnmounted(() => {
 });
 
 watch(
-	() => [activeSessions.value],
-	() => {
-		if (props.jupyterSession.session) {
-			const sessions = getSessionManager().running();
-			const results: IModel[] = [];
-			let result = sessions.next();
-			while (result) {
-				results.push(result);
-				result = sessions.next();
-			}
-			runningSessions.value = results.reverse().map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
-		}
-		return [];
-	},
-	{ deep: true }
-);
-
-watch(
 	() => messageContainer.value,
 	() => {
 		if (messageContainer.value) {
@@ -374,8 +412,12 @@ watch(
 	() => {
 		if (props.notebookSession) {
 			notebookItems.value = props.notebookSession.data.history;
+			if (isEmpty(notebookItems.value)) {
+				addCodeCell(true);
+			}
 		}
-	}
+	},
+	{ immediate: true }
 );
 
 watch(
@@ -410,5 +452,9 @@ section {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
+}
+
+.selected {
+	background-color: var(--gray-300);
 }
 </style>
