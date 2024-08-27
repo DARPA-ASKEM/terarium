@@ -227,6 +227,7 @@ const syncWithMiraModel = (data: any) => {
 
 const runCode = () => {
 	isUpdatingModel.value = true;
+	amr.value = null;
 	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
 		const messageContent = {
 			silent: false,
