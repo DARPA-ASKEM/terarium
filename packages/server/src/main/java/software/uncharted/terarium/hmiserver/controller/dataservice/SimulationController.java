@@ -55,7 +55,6 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@Transactional
 public class SimulationController {
 
 	private final Config config;

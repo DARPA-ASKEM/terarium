@@ -22,7 +22,6 @@ import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 
 @RequestMapping("/provenance")
 @RestController
-@Transactional
 public class ProvenanceController {
 
 	@Autowired

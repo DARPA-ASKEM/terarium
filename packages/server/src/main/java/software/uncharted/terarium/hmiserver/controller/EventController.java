@@ -54,7 +54,6 @@ public class EventController {
 	 */
 	@PostMapping
 	@Secured(Roles.USER)
-	@Transactional
 	@IgnoreRequestLogging
 	public ResponseEntity<Event> postEvent(@RequestBody final Event event) {
 		event.setUserId(currentUserService.get().getId());
