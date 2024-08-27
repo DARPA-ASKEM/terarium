@@ -46,7 +46,6 @@ import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Contributor;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
@@ -129,7 +128,7 @@ public class ProjectController {
 	@Data
 	private static class Properties {
 
-		private final UUID documentId;
+		private final UUID projectId;
 	}
 
 	@Value("${terarium.extractionService.poolSize:10}")
@@ -562,7 +561,7 @@ public class ProjectController {
 			final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<Properties>(
 				clientEventService,
 				notificationService,
-				ClientEventType.NOTIFICATION,
+				ClientEventType.CLONE_PROJECT,
 				null,
 				new Properties(id),
 				HALFTIME_SECONDS

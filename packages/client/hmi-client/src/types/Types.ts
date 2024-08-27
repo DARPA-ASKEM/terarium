@@ -1026,6 +1026,7 @@ export enum TaskStatus {
 }
 
 export enum ClientEventType {
+    CloneProject = "CLONE_PROJECT",
     Heartbeat = "HEARTBEAT",
     Notification = "NOTIFICATION",
     SimulationSciml = "SIMULATION_SCIML",

@@ -11,7 +11,12 @@ import {
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { Ref } from 'vue';
-import { ExtractionStatusUpdate, NotificationItem, NotificationItemStatus } from '@/types/common';
+import {
+	CloneProjectStatusUpdate,
+	ExtractionStatusUpdate,
+	NotificationItem,
+	NotificationItemStatus
+} from '@/types/common';
 import { snakeToCapitalSentence } from '@/utils/text';
 import { ProjectPages } from '@/types/Project';
 import { getDocumentAsset } from './document-assets';
@@ -129,6 +134,11 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 	};
 
 	// Register handlers for each client event type
+	registerHandler<CloneProjectStatusUpdate>(ClientEventType.CloneProject, (event, created) => {
+		console.log('event', event);
+		created.assetId = event.data.data.projectId;
+		created.typeDisplayName = 'Cloned Project';
+	});
 
 	registerHandler<ExtractionStatusUpdate>(ClientEventType.ExtractionPdf, (event, created) => {
 		created.assetId = event.data.data.documentId;
