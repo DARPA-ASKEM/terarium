@@ -49,6 +49,9 @@ export class WorkflowWrapper {
 	}
 
 	update(updatedWF: Workflow) {
+		if (updatedWF.id !== this.wf.id) {
+			throw new Error(`Workflow failed, inconsistent ids updated=${updatedWF.id} self=${this.wf.id}`);
+		}
 		this.wf.name = updatedWF.name;
 		this.wf.description = updatedWF.description;
 
