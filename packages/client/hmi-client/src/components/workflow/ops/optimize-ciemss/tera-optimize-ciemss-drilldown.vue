@@ -300,7 +300,7 @@
 						<tera-dataset-datatable
 							v-if="simulationRawContent[knobs.postForecastRunId]"
 							:rows="10"
-							:raw-content="simulationRawContent[knobs.postForecastRunId]"
+							:raw-content="simulationRawContent[knobs.postForecastRunId] as CsvAsset"
 						/>
 					</div>
 				</template>

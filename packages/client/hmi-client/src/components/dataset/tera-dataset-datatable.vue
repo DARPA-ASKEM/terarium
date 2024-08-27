@@ -60,34 +60,34 @@
 			>
 				<template #header>
 					<!-- column summary charts below -->
-					<div v-if="!previewMode && rawContent?.stats && showSummaries" class="column-summary">
+					<div v-if="!previewMode && !isEmpty(headerStats) && showSummaries" class="column-summary">
 						<div class="column-summary-row">
 							<span class="column-summary-label">Max:</span>
-							<span class="column-summary-value">{{ stats?.[index].maxValue }}</span>
+							<span class="column-summary-value">{{ headerStats?.[index].maxValue }}</span>
 						</div>
 						<Chart
-							v-if="stats?.[index].chartData"
+							v-if="headerStats?.[index].chartData"
 							class="histogram"
 							type="bar"
 							:height="480"
-							:data="stats?.[index].chartData"
+							:data="headerStats?.[index].chartData"
 							:options="setChartOptions()"
 						/>
 						<div class="column-summary-row max">
 							<span class="column-summary-label">Min:</span>
-							<span class="column-summary-value">{{ stats?.[index].minValue }}</span>
+							<span class="column-summary-value">{{ headerStats?.[index].minValue }}</span>
 						</div>
 						<div class="column-summary-row">
 							<span class="column-summary-label">Mean:</span>
-							<span class="column-summary-value">{{ stats?.[index].mean }}</span>
+							<span class="column-summary-value">{{ headerStats?.[index].mean }}</span>
 						</div>
 						<div class="column-summary-row">
 							<span class="column-summary-label">Median:</span>
-							<span class="column-summary-value">{{ stats?.[index].median }}</span>
+							<span class="column-summary-value">{{ headerStats?.[index].median }}</span>
 						</div>
 						<div class="column-summary-row">
 							<span class="column-summary-label">SD:</span>
-							<span class="column-summary-value">{{ stats?.[index].sd }}</span>
+							<span class="column-summary-value">{{ headerStats?.[index].sd }}</span>
 						</div>
 					</div>
 				</template>
@@ -97,6 +97,7 @@
 </template>
 
 <script setup lang="ts">
+import { isEmpty } from 'lodash';
 import { ref, onMounted } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -121,9 +122,9 @@ const MINBARLENGTH = 1;
 
 const showSummaries = ref(true);
 const selectedColumns = ref<string[]>(props.rawContent.headers);
-const stats = ref<
-	{ minValue: number; maxValue: number; mean: number; median: number; sd: number; chartData: any }[] | null
->(null);
+const headerStats = ref<
+	{ minValue: number; maxValue: number; mean: number; median: number; sd: number; chartData: any }[]
+>([]);
 
 // Given the bins for a column set up the object needed for the chart.
 const setBarChartData = (bins: number[]) => {
@@ -202,7 +203,7 @@ function roundStat(stat: number) {
 }
 
 onMounted(() => {
-	stats.value =
+	headerStats.value =
 		props.rawContent.stats?.map((stat) => ({
 			minValue: roundStat(stat.minValue),
 			maxValue: roundStat(stat.maxValue),
