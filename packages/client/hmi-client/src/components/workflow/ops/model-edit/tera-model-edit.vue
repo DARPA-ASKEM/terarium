@@ -41,7 +41,6 @@
 		<template #preview v-if="drilldownRef?.selectedTab === DrilldownTabs.Notebook">
 			<tera-drilldown-preview
 				title="Preview"
-				v-if="amr"
 				v-model:output="selectedOutputId"
 				@update:selection="onSelection"
 				:options="outputs"
@@ -53,7 +52,10 @@
 					:value="executeResponse.value"
 					:traceback="executeResponse.traceback"
 				/>
-				<tera-model-diagram :model="amr" />
+				<template v-else-if="amr">
+					<tera-model-diagram :model="amr" />
+					<tera-model-parts :model="amr" :feature-config="{ isPreview: true }" />
+				</template>
 			</tera-drilldown-preview>
 		</template>
 		<tera-drilldown-section :tabName="DrilldownTabs.Wizard">
@@ -91,6 +93,7 @@ import { createModel, getModel } from '@/services/model';
 import { OperatorStatus, WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import TeraModelParts from '@/components/model/tera-model-parts.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
