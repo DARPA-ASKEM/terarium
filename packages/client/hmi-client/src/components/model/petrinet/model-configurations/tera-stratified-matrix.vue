@@ -81,7 +81,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { isEmpty, isNumber } from 'lodash';
 import { pythonInstance } from '@/python/PyodideController';
 import InputText from 'primevue/inputtext';
@@ -245,15 +245,14 @@ watch(
 	}
 );
 
-watch([() => props.id, () => props.mmt], () => {
-	generateMatrix();
-	resetEditState();
-});
-
-onMounted(() => {
-	generateMatrix();
-	resetEditState();
-});
+watch(
+	[() => props.id, () => props.mmt],
+	() => {
+		generateMatrix();
+		resetEditState();
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
