@@ -63,6 +63,7 @@
 			@update-kernel-status="updateKernelStatus"
 			@new-model-saved="onNewModelSaved"
 			:notebook-session="props.notebookSession"
+			:language="'python'"
 		/>
 		<div :style="{ 'padding-bottom': '100px' }" v-if="kernelState">
 			<Button

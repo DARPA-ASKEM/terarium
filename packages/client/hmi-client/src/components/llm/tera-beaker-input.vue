@@ -117,7 +117,6 @@ onMounted(() => {
 .tera-beaker-container {
 	display: relative;
 	padding-top: 5px;
-	padding-bottom: 35px;
 }
 
 .chat-input-container {
