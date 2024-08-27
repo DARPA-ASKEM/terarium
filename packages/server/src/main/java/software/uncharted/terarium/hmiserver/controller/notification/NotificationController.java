@@ -30,7 +30,6 @@ import software.uncharted.terarium.hmiserver.service.notification.NotificationSe
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@Transactional
 public class NotificationController {
 
 	private final CurrentUserService currentUserService;

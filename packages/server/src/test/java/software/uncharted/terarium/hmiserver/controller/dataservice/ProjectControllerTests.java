@@ -25,7 +25,6 @@ import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 
-@Transactional
 public class ProjectControllerTests extends TerariumApplicationTests {
 
 	@Autowired

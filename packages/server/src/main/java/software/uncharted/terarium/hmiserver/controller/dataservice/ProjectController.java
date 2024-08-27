@@ -71,7 +71,6 @@ import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@Transactional
 @Tags(@Tag(name = "Projects", description = "Project related operations"))
 public class ProjectController {
 
