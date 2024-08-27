@@ -24,7 +24,7 @@
 		</template>
 		<template #edit-buttons v-if="!featureConfig.isPreview">
 			<Button icon="pi pi-ellipsis-v" text rounded @click="toggleOptionsMenu" />
-			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" :pt="optionsMenuPt" />
+			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" popup :pt="optionsMenuPt" />
 			<div class="btn-group">
 				<Button label="Reset" severity="secondary" outlined @click="teraModelPartsRef?.reset()" :disabled="isSaved" />
 				<Button label="Save as..." severity="secondary" outlined @click="showSaveModal = true" />
