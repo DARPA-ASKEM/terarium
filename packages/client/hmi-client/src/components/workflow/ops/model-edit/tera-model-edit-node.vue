@@ -42,7 +42,7 @@ onMounted(updateModel);
 watch(
 	() => props.node.active,
 	async () => {
-		updateModel();
+		await updateModel;
 	}
 );
 </script>
