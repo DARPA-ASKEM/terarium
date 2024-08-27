@@ -1917,7 +1917,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jupyterlab/outputarea@npm:^3.6.7":
+"@jupyterlab/outputarea@npm:3.6.7, @jupyterlab/outputarea@npm:^3.6.7":
   version: 3.6.7
   resolution: "@jupyterlab/outputarea@npm:3.6.7"
   dependencies:
@@ -8791,6 +8791,7 @@ __metadata:
     "@jupyterlab/codemirror": "npm:3.6.7"
     "@jupyterlab/completer": "npm:3.6.7"
     "@jupyterlab/coreutils": "npm:5.6.7"
+    "@jupyterlab/outputarea": "npm:3.6.7"
     "@jupyterlab/rendermime": "npm:3.6.7"
     "@jupyterlab/services": "npm:6.6.7"
     "@jupyterlab/theme-light-extension": "npm:3.6.7"
