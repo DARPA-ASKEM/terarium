@@ -173,7 +173,7 @@ const executeResponse = ref({
 const modelNodeOptions = ref<string[]>([]);
 const showSaveModelModal = ref(false);
 
-const isStratifyInProgress = computed(() => props.node.state.isStratifyInProgress);
+const isStratifyInProgress = ref(false);
 
 const selectedOutputId = ref<string>();
 
@@ -229,9 +229,7 @@ const handleResetResponse = (data: any) => {
 
 const stratifyModel = () => {
 	if (!amr.value) return;
-	const state = _.cloneDeep(props.node.state);
-	state.isStratifyInProgress = true;
-	emit('update-state', state);
+	isStratifyInProgress.value = true;
 
 	// Sanity check states vs parameters
 	const conceptsToStratify: string[] = [];
@@ -272,9 +270,7 @@ const handleStratifyResponse = (data: any) => {
 
 const handleModelPreview = async (data: any) => {
 	stratifiedAmr.value = data.content['application/json'];
-	const state = _.cloneDeep(props.node.state);
-	state.isStratifyInProgress = false;
-	emit('update-state', state);
+	isStratifyInProgress.value = false;
 	if (!stratifiedAmr.value) {
 		logger.error('Error getting updated model from beaker');
 		return;
@@ -381,9 +377,7 @@ const initialize = (editorInstance: any) => {
 const runCodeStratify = () => {
 	const code = editor?.getValue();
 	if (!code) return;
-	const state = _.cloneDeep(props.node.state);
-	state.isStratifyInProgress = true;
-	emit('update-state', state);
+	isStratifyInProgress.value = true;
 
 	const messageContent = {
 		silent: false,
