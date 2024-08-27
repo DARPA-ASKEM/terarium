@@ -1,4 +1,4 @@
-import { API, getProjectIdFromUrl } from '@/api/api';
+import API, { getProjectIdFromUrl } from '@/api/api';
 import type { Code } from '@/types/Types';
 import { ProgrammingLanguage } from '@/types/Types';
 import { Ref } from 'vue';

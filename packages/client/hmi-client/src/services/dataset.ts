@@ -2,7 +2,7 @@
  * Datasets
  */
 
-import { API, getProjectIdFromUrl } from '@/api/api';
+import API, { getProjectIdFromUrl } from '@/api/api';
 import { logger } from '@/utils/logger';
 import type { CsvAsset, CsvColumnStats, Dataset, PresignedURL } from '@/types/Types';
 import { Ref } from 'vue';

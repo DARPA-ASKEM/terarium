@@ -2,7 +2,7 @@
  * Documents Asset
  */
 
-import { API, getProjectIdFromUrl } from '@/api/api';
+import API, { getProjectIdFromUrl } from '@/api/api';
 import type { DocumentAsset } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { Ref } from 'vue';

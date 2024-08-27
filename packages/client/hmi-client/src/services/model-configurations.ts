@@ -1,4 +1,4 @@
-import { API, getProjectIdFromUrl } from '@/api/api';
+import API, { getProjectIdFromUrl } from '@/api/api';
 import type {
 	InitialSemantic,
 	Model,

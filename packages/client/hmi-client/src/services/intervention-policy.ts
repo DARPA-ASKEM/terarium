@@ -1,4 +1,4 @@
-import { API, getProjectIdFromUrl } from '@/api/api';
+import API, { getProjectIdFromUrl } from '@/api/api';
 import type { Intervention, InterventionPolicy } from '@/types/Types';
 import { InterventionSemanticType } from '@/types/Types';
 import { activeProjectId } from '@/composables/activeProject';

@@ -8,7 +8,7 @@ import useAuthStore from '../stores/auth';
 
 export class FatalError extends Error {}
 
-function getProjectIdFromUrl(): string | null {
+export function getProjectIdFromUrl(): string | null {
 	const url = new URL(window.location.href);
 	const match = url.pathname.match(/\/projects\/([a-z,0-9,-]+)\//);
 	return match ? match[1] : null;
@@ -324,4 +324,4 @@ export class TaskHandler {
 	}
 }
 
-export { API, getProjectIdFromUrl };
+export default API;

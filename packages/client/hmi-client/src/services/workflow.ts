@@ -1,7 +1,7 @@
 import { Component } from 'vue';
 import { v4 as uuidv4 } from 'uuid';
 import _ from 'lodash';
-import { API, getProjectIdFromUrl } from '@/api/api';
+import API, { getProjectIdFromUrl } from '@/api/api';
 import { logger } from '@/utils/logger';
 import { EventEmitter } from '@/utils/emitter';
 import type { Position } from '@/types/common';

@@ -1,5 +1,5 @@
 import type { Artifact } from '@/types/Types';
-import { API, getProjectIdFromUrl } from '@/api/api';
+import API, { getProjectIdFromUrl } from '@/api/api';
 import { Ref } from 'vue';
 import { activeProjectId } from '@/composables/activeProject';
 

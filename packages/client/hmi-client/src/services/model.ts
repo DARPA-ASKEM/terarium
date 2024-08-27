@@ -1,4 +1,4 @@
-import { API, getProjectIdFromUrl } from '@/api/api';
+import API, { getProjectIdFromUrl } from '@/api/api';
 import { useProjects } from '@/composables/project';
 import * as EventService from '@/services/event';
 import type { Initial, InterventionPolicy, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
