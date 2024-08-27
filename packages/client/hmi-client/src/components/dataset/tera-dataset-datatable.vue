@@ -18,9 +18,9 @@
 			/>
 			<span class="datatable-toolbar-item">
 				<MultiSelect
-					:modelValue="selectedColumns"
+					:model-value="selectedColumns"
 					:options="rawContent.headers"
-					@update:modelValue="onToggle"
+					@update:model-value="selectedColumns = rawContent.headers.filter((col) => $event.includes(col))"
 					:maxSelectedLabels="1"
 					placeholder="Select columns"
 				>
@@ -58,9 +58,9 @@
 				sortable
 				:frozen="index == 0"
 			>
-				<template #header>
+				<template #header v-if="!previewMode && !isEmpty(headerStats) && showSummaries">
 					<!-- column summary charts below -->
-					<div v-if="!previewMode && !isEmpty(headerStats) && showSummaries" class="column-summary">
+					<div class="column-summary">
 						<div class="column-summary-row">
 							<span class="column-summary-label">Max:</span>
 							<span class="column-summary-value">{{ headerStats?.[index].maxValue }}</span>
@@ -71,7 +71,7 @@
 							type="bar"
 							:height="480"
 							:data="headerStats?.[index].chartData"
-							:options="setChartOptions()"
+							:options="CHART_OPTIONS"
 						/>
 						<div class="column-summary-row max">
 							<span class="column-summary-label">Min:</span>
@@ -98,7 +98,7 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { ref } from 'vue';
+import { ref, watch, nextTick } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import type { CsvAsset } from '@/types/Types';
@@ -106,6 +106,19 @@ import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
 import Chart from 'primevue/chart';
 import InputSwitch from 'primevue/inputswitch';
+
+type ChartData = {
+	labels: string[];
+	datasets: {
+		label: string;
+		backgroundColor: string;
+		hoverBackgroundColor: string;
+		data: number[];
+		categoryPercentage: number;
+		barPercentage: number;
+		minBarLength: number;
+	}[];
+};
 
 const props = defineProps<{
 	rawContent: CsvAsset; // Temporary - this is also any in ITypeModel
@@ -119,12 +132,61 @@ const props = defineProps<{
 const CATEGORYPERCENTAGE = 1.0;
 const BARPERCENTAGE = 1.0;
 const MINBARLENGTH = 1;
+const CHART_OPTIONS = {
+	indexAxis: 'y',
+	plugins: {
+		legend: {
+			labels: {
+				display: false
+			},
+			display: false
+		},
+		tooltip: {
+			enabled: true,
+			position: 'nearest',
+			displayColors: false,
+			beforeTitle: 'Count:',
+			backgroundColor: '#666666dd'
+		}
+	},
+	scales: {
+		x: {
+			ticks: {
+				display: false
+			},
+			grid: {
+				display: false,
+				drawBorder: false
+			}
+		},
+		y: {
+			ticks: {
+				display: false
+			},
+			grid: {
+				display: false,
+				drawBorder: false,
+				borderColor: getComputedStyle(document.documentElement).getPropertyValue('--surface-border-light')
+			}
+		}
+	}
+};
 
 const showSummaries = ref(true);
 const selectedColumns = ref<string[]>(props.rawContent.headers);
+const headerStats = ref<
+	{
+		minValue: number;
+		maxValue: number;
+		mean: number;
+		median: number;
+		sd: number;
+		chartData: ChartData;
+	}[]
+>([]);
 
 // Given the bins for a column set up the object needed for the chart.
-const setBarChartData = (bins: number[]) => {
+const setBarChartData = (bins: number[]): ChartData => {
 	const documentStyle = getComputedStyle(document.documentElement);
 	const dummyLabels: string[] = [];
 	// reverse the bins so that the chart is displayed in the correct order
@@ -148,67 +210,26 @@ const setBarChartData = (bins: number[]) => {
 	};
 };
 
-const setChartOptions = () => {
-	const documentStyle = getComputedStyle(document.documentElement);
-	return {
-		indexAxis: 'y',
-		plugins: {
-			legend: {
-				labels: {
-					display: false
-				},
-				display: false
-			},
-			tooltip: {
-				enabled: true,
-				position: 'nearest',
-				displayColors: false,
-				beforeTitle: 'Count:',
-				backgroundColor: '#666666dd'
-			}
-		},
-		scales: {
-			x: {
-				ticks: {
-					display: false
-				},
-				grid: {
-					display: false,
-					drawBorder: false
-				}
-			},
-			y: {
-				ticks: {
-					display: false
-				},
-				grid: {
-					display: false,
-					drawBorder: false,
-					borderColor: documentStyle.getPropertyValue('--surface-border-light')
-				}
-			}
-		}
-	};
-};
-
-const onToggle = (val) => {
-	selectedColumns.value = props.rawContent.headers.filter((col) => val.includes(col));
-};
-
 function roundStat(stat: number) {
 	return Math.round(stat * 1000) / 1000;
 }
 
-// Need functions to be above
-const headerStats =
-	props.rawContent.stats?.map((stat) => ({
-		minValue: roundStat(stat.minValue),
-		maxValue: roundStat(stat.maxValue),
-		mean: roundStat(stat.mean),
-		median: roundStat(stat.median),
-		sd: roundStat(stat.sd),
-		chartData: setBarChartData(stat.bins)
-	})) ?? [];
+watch(
+	() => props.rawContent,
+	async () => {
+		await nextTick();
+		headerStats.value =
+			props.rawContent.stats?.map((stat) => ({
+				minValue: roundStat(stat.minValue),
+				maxValue: roundStat(stat.maxValue),
+				mean: roundStat(stat.mean),
+				median: roundStat(stat.median),
+				sd: roundStat(stat.sd),
+				chartData: setBarChartData(stat.bins)
+			})) ?? [];
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
