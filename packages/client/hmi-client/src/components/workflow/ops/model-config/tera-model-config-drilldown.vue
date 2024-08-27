@@ -298,8 +298,8 @@ const calibratedConfigObservables = computed<Observable[]>(() =>
 const isSaveDisabled = computed(
 	() =>
 		knobs.value.transientModelConfig.name === '' ||
-		haveValuesChanged.value ||
-		isEqual(originalConfig, knobs.value.transientModelConfig)
+		isEqual(originalConfig, knobs.value.transientModelConfig) ||
+		haveValuesChanged.value
 );
 
 const kernelManager = new KernelSessionManager();
