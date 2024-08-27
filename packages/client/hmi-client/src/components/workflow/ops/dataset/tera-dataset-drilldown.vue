@@ -4,12 +4,8 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
-		<tera-drilldown-section tabName="Description" :is-loading="fetchingDataset" class="ml-3 mr-3 pt-2">
-			<tera-dataset-description :dataset="dataset" :raw-content="rawContent" :image="image" />
-		</tera-drilldown-section>
-
-		<tera-drilldown-section tabName="Data" :is-loading="fetchingDataset" class="ml-3 mr-3 pt-2">
-			<tera-dataset-datatable :rows="100" :raw-content="rawContent" />
+		<tera-drilldown-section>
+			<tera-dataset v-if="node.state.datasetId" :asset-id="node.state.datasetId" />
 		</tera-drilldown-section>
 	</tera-drilldown>
 </template>
@@ -21,12 +17,10 @@ import { WorkflowNode } from '@/types/workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import type { CsvAsset, Dataset } from '@/types/Types';
 import { onMounted, Ref, ref } from 'vue';
-import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
-import TeraDatasetDescription from '@/components/dataset/tera-dataset-description.vue';
 import { downloadRawFile, getClimateDatasetPreview, getDataset } from '@/services/dataset';
 import { enrichDataset } from '@/components/dataset/utils';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-
+import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import { DatasetOperationState } from './dataset-operation';
 
 const dataset = ref<Dataset | null>(null);
