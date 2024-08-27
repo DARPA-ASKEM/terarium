@@ -294,7 +294,13 @@ const calibratedConfigObservables = computed<Observable[]>(() =>
 	}))
 );
 
-const isSaveDisabled = computed(() => knobs.value.transientModelConfig.name === '' || haveValuesChanged.value);
+// Save button is disabled if the model configuration name is empty, the values have changed, or the configuration is the same as the original
+const isSaveDisabled = computed(
+	() =>
+		knobs.value.transientModelConfig.name === '' ||
+		haveValuesChanged.value ||
+		isEqual(originalConfig, knobs.value.transientModelConfig)
+);
 
 const kernelManager = new KernelSessionManager();
 let editor: VAceEditorInstance['_editor'] | null;
@@ -525,7 +531,6 @@ const haveValuesChanged = computed(() => {
 	const modelConfig = cloneDeep(knobs.value.transientModelConfig);
 
 	if (!originalConfig) return false;
-
 	const originalInitialList = originalConfig.initialSemanticList;
 	const originalParameterList = originalConfig.parameterSemanticList;
 
