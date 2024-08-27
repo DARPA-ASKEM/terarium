@@ -1,6 +1,9 @@
 <template>
-	<main style="width: 90%; height: 90%; overflow: scroll">
-		<h4>clipboard test</h4>
+	<main style="display: flex; flex-direction: column; width: 90%; height: 90%; overflow: scroll">
+		<h2>
+			clipboard test
+			<Button v-if="model" :disabled="clipboardText === ''" @click="buttonClick()"> Paste </Button>
+		</h2>
 
 		<tera-stratified-matrix
 			v-if="ready"
@@ -17,6 +20,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue';
 import { getMMT } from '@/services/model';
+import Button from 'primevue/button';
 import TeraStratifiedMatrix from '@/components/model/petrinet/model-configurations/tera-stratified-matrix.vue';
 import { createParameterMatrix, emptyMiraModel } from '@/model-representation/mira/mira';
 import type { Model } from '@/types/Types';
@@ -24,15 +28,18 @@ import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/
 import { StratifiedMatrix } from '@/types/Model';
 import { updateParameter } from '@/model-representation/service';
 import { dsvParse } from '@/utils/dsv';
-
+import { getClipboardText } from '@/utils/clipboard';
 import * as sirJSON from '@/examples/strata-example.json';
+
+let timerId = -1;
+const clipboardText = ref('');
 
 const model = ref<Model>();
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
 const ready = ref(false);
 
-const updateByMatrixCSV = async (
+const updateByMatrixCSV = (
 	model: Model,
 	matrixType: 'subjectControllers' | 'outcomeControllers' | 'subjectOutcome',
 	text: string
@@ -42,6 +49,7 @@ const updateByMatrixCSV = async (
 	const matrix = matrices[matrixType];
 
 	console.log(parseResult.entries);
+	console.log(matrix);
 
 	matrix.matrix.forEach((row) => {
 		row.forEach((matrixEntry) => {
@@ -80,6 +88,13 @@ const csvStringProcessor = async (item: DataTransferItem) => {
 	});
 };
 
+const buttonClick = async () => {
+	updateByMatrixCSV(model.value as Model, 'subjectControllers', clipboardText.value);
+	const response = await getMMT(model.value as Model);
+	mmt.value = response.mmt;
+	mmtParams.value = response.template_params;
+};
+
 const processPasteEvent = async (event: ClipboardEvent) => {
 	const clipboardData = event.clipboardData;
 	if (!clipboardData) return;
@@ -95,9 +110,16 @@ onMounted(async () => {
 	ready.value = true;
 
 	document.addEventListener('paste', processPasteEvent);
+	timerId = window.setInterval(async () => {
+		const x = await getClipboardText();
+		if (x !== clipboardText.value) {
+			clipboardText.value = x;
+		}
+	}, 1000);
 });
 
 onUnmounted(() => {
 	document.removeEventListener('paste', processPasteEvent);
+	window.clearInterval(timerId);
 });
 </script>
