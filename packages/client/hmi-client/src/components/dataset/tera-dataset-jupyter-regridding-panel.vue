@@ -64,6 +64,7 @@
 			@new-dataset-saved="onNewDatasetSaved"
 			@download-response="onDownloadResponse"
 			:notebook-session="props.notebookSession"
+			:language="'python'"
 		/>
 		<div :style="{ 'padding-bottom': '100px' }" v-if="kernelState">
 			<Dropdown v-model="actionTarget" :options="Object.keys(kernelState || [])" />

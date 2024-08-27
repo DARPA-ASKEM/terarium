@@ -30,7 +30,6 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@Transactional
 @Tags(@Tag(name = "Assets", description = "Asset related operations"))
 public class AssetController {
 

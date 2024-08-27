@@ -21,7 +21,6 @@ import software.uncharted.terarium.hmiserver.service.data.FrameworkService;
 
 @RequestMapping("/models")
 @RestController
-@Transactional
 @RequiredArgsConstructor
 public class FrameworkController {
 
