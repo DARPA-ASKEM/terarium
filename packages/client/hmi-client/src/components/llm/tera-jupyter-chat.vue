@@ -9,7 +9,7 @@
 		>
 			<tera-jupyter-response
 				@keydown.stop
-				v-for="(msg, index) in notebookItems"
+				v-for="(msg, index) in filteredNotebookItems"
 				ref="notebookCells"
 				:class="{ selected: msg.query_id === selectedCellId }"
 				:key="msg.query_id"
@@ -21,7 +21,7 @@
 				:show-chat-thoughts="props.showChatThoughts"
 				:auto-expand-preview="autoExpandPreview"
 				:default-preview="defaultPreview"
-				@cell-updated="scrollToLastCell"
+				:language="language"
 				@preview-selected="previewSelected"
 				@delete-message="handleDeleteMessage"
 				@delete-prompt="handleDeletePrompt"
@@ -29,9 +29,6 @@
 				@edit-prompt="reRunPrompt"
 				@click="selectedCellId = msg.query_id"
 			/>
-			<!-- spacer to prevent the floating input panel at the bottom of the screen from covering the bottom item -->
-			<div style="height: 8rem"></div>
-
 			<!-- Beaker Input -->
 			<tera-beaker-input
 				class="tera-beaker-input"
@@ -45,9 +42,9 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { onUnmounted, ref, watch } from 'vue';
-import { createMessageId, JupyterMessage, KernelState } from '@/services/jupyter';
-import type { CsvAsset, NotebookSession } from '@/types/Types';
+import { onUnmounted, ref, watch, computed, nextTick } from 'vue';
+import { createMessageId, JupyterMessage, KernelState, INotebookItem } from '@/services/jupyter';
+import type { NotebookSession } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import TeraBeakerInput from '@/components/llm/tera-beaker-input.vue';
 import TeraJupyterResponse from '@/components/llm/tera-jupyter-response.vue';
@@ -61,20 +58,15 @@ import { isEmpty } from 'lodash';
 const messagesHistory = ref<JupyterMessage[]>([]);
 const isExecutingCode = ref(false);
 const messageContainer = ref(<HTMLElement | null>null);
-const notebookItems = ref(
-	<
-		{
-			query_id: string;
-			query: string | null;
-			timestamp: string;
-			messages: JupyterMessage[];
-			resultingCsv: CsvAsset | null;
-			executions: any[];
-		}[]
-	>[]
-);
+
+const notebookItems = ref(<INotebookItem[]>[]);
+
 const notebookCells = ref<(typeof TeraJupyterResponse)[]>([]);
 const selectedCellId = ref();
+
+const filteredNotebookItems = computed<INotebookItem[]>(() =>
+	notebookItems.value.filter((item) => !isEmpty(item.messages))
+);
 
 const emit = defineEmits([
 	'new-message',
@@ -90,6 +82,7 @@ const props = defineProps<{
 	assetName?: string;
 	assetId?: string;
 	assetType?: AssetType;
+	language: string;
 	showHistory?: { value: boolean; default: false };
 	showJupyterSettings?: boolean;
 	showChatThoughts?: boolean;
@@ -121,9 +114,15 @@ const onKeyPress = (event) => {
 			break;
 		case 'a':
 			addCodeCell(false, false);
+			nextTick(() => {
+				scrollToCell(notebookCells.value.find((item) => item.$props.msg.query_id === selectedCellId.value));
+			});
 			break;
 		case 'b':
 			addCodeCell();
+			nextTick(() => {
+				scrollToCell(notebookCells.value.find((item) => item.$props.msg.query_id === selectedCellId.value));
+			});
 			break;
 		case 'Enter':
 			enterCell();
@@ -136,28 +135,36 @@ const onKeyPress = (event) => {
 	}
 };
 
-const enterCell = () => {
-	const index = notebookItems.value.findIndex((item) => item.query_id === selectedCellId.value);
-	if (index > -1) {
-		const el = notebookCells.value[index];
-		if (el.codeCell) {
-			el.codeCell[0]?.enter();
-		}
+const scrollToCell = (element) => {
+	if (element) {
+		element.$el.scrollIntoView({ block: 'start', inline: 'nearest', behavior: 'smooth' });
 	}
+};
+
+const enterCell = () => {
+	const notebookCell = notebookCells.value.find((item) => item.$props.msg.query_id === selectedCellId.value);
+	if (notebookCell?.codeCell?.[0]) {
+		notebookCell.codeCell[0].enter();
+	}
+	scrollToCell(notebookCell);
 };
 
 const selectPreviousCell = () => {
-	const index = notebookItems.value.findIndex((item) => item.query_id === selectedCellId.value);
+	const index = filteredNotebookItems.value.findIndex((item) => item.query_id === selectedCellId.value);
 	if (index > 0) {
-		selectedCellId.value = notebookItems.value[index - 1].query_id;
+		selectedCellId.value = filteredNotebookItems.value[index - 1].query_id;
 	}
+	const notebookCell = notebookCells.value.find((item) => item.$props.msg.query_id === selectedCellId.value);
+	scrollToCell(notebookCell);
 };
 
 const selectNextCell = () => {
-	const index = notebookItems.value.findIndex((item) => item.query_id === selectedCellId.value);
-	if (index < notebookItems.value.length - 1) {
-		selectedCellId.value = notebookItems.value[index + 1].query_id;
+	const index = filteredNotebookItems.value.findIndex((item) => item.query_id === selectedCellId.value);
+	if (index < filteredNotebookItems.value.length - 1) {
+		selectedCellId.value = filteredNotebookItems.value[index + 1].query_id;
 	}
+	const notebookCell = notebookCells.value.find((item) => item.$props.msg.query_id === selectedCellId.value);
+	scrollToCell(notebookCell);
 };
 
 const previewSelected = (selection) => {
@@ -255,8 +262,8 @@ const addCodeCell = (isDefaultCell: boolean = false, isNextCell: boolean = true)
 const updateNotebookCells = (message, isNextCell: boolean = true) => {
 	// This computed property groups Jupyter messages into queries
 	// and stores resulting csv after each query.
-	let notebookItem;
-	const parentId: String | null =
+	let notebookItem: INotebookItem | undefined;
+	const parentId: string | null =
 		message.metadata?.notebook_item || message.parent_header?.msg_id || message.header?.msg_id || null;
 
 	// Update existing cell
@@ -267,12 +274,14 @@ const updateNotebookCells = (message, isNextCell: boolean = true) => {
 		const query = message.header.msg_type === 'llm_request' ? message.content.request : null;
 		// New cell
 		notebookItem = {
-			query_id: parentId,
+			query_id: parentId ?? '',
 			query,
 			timestamp: message.parent_header.date,
 			messages: [],
 			resultingCsv: null,
-			executions: []
+			executions: [],
+			// auto run the code block when we send an llm request
+			autoRun: message.header.msg_type === 'llm_request'
 		};
 
 		const index = notebookItems.value.findIndex((item) => item.query_id === selectedCellId.value);
@@ -292,7 +301,9 @@ const updateNotebookCells = (message, isNextCell: boolean = true) => {
 		notebookItem.messages = notebookItem.messages.filter((msg) => msg.header.msg_type !== 'dataset');
 		notebookItem.resultingCsv = message.content;
 		emit('update-kernel-state', message.content);
-	} else if (message.header.msg_type === 'model_preview') {
+		return;
+	}
+	if (message.header.msg_type === 'model_preview') {
 		// If we get a new model preview, remove any old previews
 		notebookItem.messages = notebookItem.messages.filter((msg) => msg.header.msg_type !== 'model_preview');
 		emit('update-kernel-state', message.content);
@@ -302,8 +313,12 @@ const updateNotebookCells = (message, isNextCell: boolean = true) => {
 		// add the latest message execution to the code cell, we need this in order to persist the latest code execution
 		const codeCell = notebookItem.messages.find((m) => m.header.msg_type === 'code_cell');
 		if (codeCell) {
-			codeCell.content.code = message.content.code;
+			codeCell.content = message.content;
 		}
+		// clear the cell outputs when we get a new code execution
+		notebookItem.messages = notebookItem.messages.filter(
+			(msg) => !['stream', 'display_data', 'execute_result', 'error'].includes(msg.header.msg_type)
+		);
 		return;
 	}
 
@@ -317,9 +332,18 @@ const updateKernelStatus = (kernelStatus) => {
 const newJupyterMessage = (jupyterMessage) => {
 	const msgType = jupyterMessage.header.msg_type;
 	if (
-		['stream', 'code_cell', 'llm_request', 'llm_thought', 'llm_response', 'beaker_response', 'dataset'].indexOf(
-			msgType
-		) > -1
+		[
+			'stream',
+			'code_cell',
+			'llm_request',
+			'llm_thought',
+			'llm_response',
+			'beaker_response',
+			'dataset',
+			'display_data',
+			'execute_result',
+			'error'
+		].indexOf(msgType) > -1
 	) {
 		messagesHistory.value.push(jupyterMessage);
 		updateNotebookCells(jupyterMessage);
@@ -376,25 +400,9 @@ const clearOutputs = () => {
 	}
 };
 
-const scrollToLastCell = (element, msg) => {
-	if (msg === notebookItems.value[notebookItems.value.length - 1]) {
-		element.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
-	}
-};
-
 onUnmounted(() => {
 	messagesHistory.value = [];
 });
-
-watch(
-	() => messageContainer.value,
-	() => {
-		if (messageContainer.value) {
-			messageContainer.value?.scrollIntoView({ behavior: 'smooth' });
-		}
-	},
-	{ deep: true } // enable deep watching in case msg.messages is an array of objects
-);
 
 watch(
 	() => [
@@ -415,6 +423,8 @@ watch(
 			if (isEmpty(notebookItems.value)) {
 				addCodeCell(true);
 			}
+			messageContainer.value?.focus();
+			selectedCellId.value = filteredNotebookItems.value[filteredNotebookItems.value.length - 1]?.query_id;
 		}
 	},
 	{ immediate: true }
@@ -452,6 +462,8 @@ section {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
+	height: calc(100% - 13rem);
+	overflow-y: auto;
 }
 
 .selected {
