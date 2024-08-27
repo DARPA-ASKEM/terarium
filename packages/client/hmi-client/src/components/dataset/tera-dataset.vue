@@ -355,12 +355,11 @@ watch(
 	() => props.assetId,
 	async () => {
 		isRenamingDataset.value = false;
-		if (props.assetId !== '') {
-			await fetchDataset();
-			if (dataset.value) getRawContent(); // Whenever we change the dataset, we need to fetch the rawContent
-		} else {
+		if (props.assetId) {
 			dataset.value = null;
 			rawContent.value = null;
+			await fetchDataset();
+			if (dataset.value) getRawContent(); // Whenever we change the dataset, we need to fetch the rawContent
 		}
 	},
 	{ immediate: true }

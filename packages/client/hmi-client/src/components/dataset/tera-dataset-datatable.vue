@@ -3,7 +3,7 @@
 		<!-- Toggle histograms & column summary charts -->
 		<div class="datatable-toolbar">
 			<span class="datatable-toolbar-item">
-				{{ rawContent.headers || 'No' }} columns | {{ rawContent.csv.length || 'No' }} rows
+				{{ rawContent.headers.length || 'No' }} columns | {{ rawContent.csv.length || 'No' }} rows
 			</span>
 			<span class="datatable-toolbar-item" style="margin-left: auto">
 				Show column summaries<InputSwitch v-model="showSummaries" />
