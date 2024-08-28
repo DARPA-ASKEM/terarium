@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 import Button from 'primevue/button';
 import { WorkflowNode } from '@/types/workflow';
 import { ModelEditOperationState } from '@/components/workflow/ops/model-edit/model-edit-operation';
@@ -29,20 +29,19 @@ const props = defineProps<{
 
 const model = ref<Model | null>(null);
 
-const updateModel = async () => {
+const fetchModel = async () => {
 	const modelId = operator.getActiveOutput(props.node)?.value?.[0];
 	if (modelId && modelId !== model?.value?.id) {
 		model.value = await getModel(modelId);
 	}
 };
 
-onMounted(updateModel);
-
 // Updates output selection
 watch(
 	() => props.node.active,
 	async () => {
-		await updateModel;
-	}
+		fetchModel();
+	},
+	{ immediate: true }
 );
 </script>
