@@ -346,9 +346,10 @@ public class TaskService {
 				try {
 					// add to the response cache
 					log.info(
-						"Writing SUCCESS response for task id {} to cache under SHA: {}",
+						"Writing SUCCESS response for task id {} to cache under SHA: {} for script {}",
 						resp.getId(),
-						resp.getRequestSHA256()
+						resp.getRequestSHA256(),
+						resp.getScript()
 					);
 					responseCache.put(
 						resp.getRequestSHA256(),
@@ -417,6 +418,75 @@ public class TaskService {
 		}
 	}
 
+	private void processCachedTaskResponse(final TaskRequestWithId req, TaskResponse resp) {
+		try {
+			log.info("Creating notification group under id: {}", req.getId());
+
+			// create the notification group for the task
+			final NotificationGroup group = new NotificationGroup();
+			group.setId(req.getId()); // use the task id
+			group.setType(TaskNotificationEventTypes.getTypeFor(req.getScript()).toString());
+			group.setUserId(req.getUserId());
+			group.setProjectId(req.getProjectId());
+
+			notificationService.createNotificationGroup(group);
+		} catch (final Exception e) {
+			log.error("Failed to create notificaiton group for id: {}", req.getId(), e);
+		}
+
+		try {
+			// execute the handler
+			if (responseHandlers.containsKey(resp.getScript())) {
+				// handle the response
+				resp = responseHandlers.get(resp.getScript()).handle(resp);
+			}
+		} catch (final Exception e) {
+			log.error("Error occured while executing response handler for task {}", resp.getId(), e);
+
+			// if the handler fails processing a success, convert it to a failure
+			resp.setStatus(TaskStatus.FAILED);
+			resp.setOutput(e.getMessage().getBytes());
+		}
+
+		try {
+			log.info("Creating notification group under id: {}", req.getId());
+
+			// create the notification group for the task
+			final NotificationGroup group = new NotificationGroup();
+			group.setId(req.getId()); // use the task id
+			group.setType(TaskNotificationEventTypes.getTypeFor(req.getScript()).toString());
+			group.setUserId(req.getUserId());
+			group.setProjectId(req.getProjectId());
+
+			notificationService.createNotificationGroup(group);
+			// create the notification event
+			final NotificationEvent event = new NotificationEvent();
+			event.setData(resp);
+
+			log.info("Creating notification event under group id: {}", resp.getId());
+
+			notificationService.createNotificationEvent(resp.getId(), event);
+		} catch (final Exception e) {
+			log.error("Failed to persist notification event for for task {}", resp.getId(), e);
+		}
+
+		try {
+			// send the client event
+			final ClientEventType clientEventType = TaskNotificationEventTypes.getTypeFor(resp.getScript());
+			log.info("Sending client event with type {} for task {} ", clientEventType.toString(), resp.getId());
+
+			final ClientEvent<TaskResponse> clientEvent = ClientEvent.<TaskResponse>builder()
+				.notificationGroupId(resp.getId())
+				.projectId(resp.getProjectId())
+				.type(clientEventType)
+				.data(resp)
+				.build();
+			clientEventService.sendToUser(clientEvent, resp.getUserId());
+		} catch (final Exception e) {
+			log.error("Failed to send client event for for task {}", resp.getId(), e);
+		}
+	}
+
 	private void broadcastTaskResponseToAllInstances(final TaskResponse resp) {
 		try {
 			final String jsonStr = objectMapper.writeValueAsString(resp);
@@ -462,7 +532,7 @@ public class TaskService {
 		// create sha256 hash of the request
 		final String hash = req.getSHA256();
 
-		log.info("Checking for cached response under SHA: {}", hash);
+		log.info("Checking for cached response under SHA: {} for {} for script: {}", hash, req.getId(), req.getScript());
 
 		// check if there is an existing response for the hash
 		final TaskResponse resp = responseCache.get(hash);
@@ -473,7 +543,12 @@ public class TaskService {
 			log.info("Task response found in cache for SHA: {}", hash);
 
 			// create and return a completed task future
-			return new CompletableTaskFuture(req, resp);
+			final CompletableTaskFuture future = new CompletableTaskFuture(req, resp);
+
+			// process the cached response as if it were a new response
+			processCachedTaskResponse(req, future.getLatest());
+
+			return future;
 		}
 
 		// no cache entry for task, send a new one

@@ -94,6 +94,5 @@ const addOutputPort = (data: any) => {
 .background {
 	background: white;
 	height: 100%;
-	overflow-y: auto;
 }
 </style>

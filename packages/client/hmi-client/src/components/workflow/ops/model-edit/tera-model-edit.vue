@@ -5,7 +5,7 @@
 		:node="node"
 		:menu-items="menuItems"
 		@update:selection="onSelection"
-		@on-close-clicked="onDrilldownClose"
+		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 		@update-output-port="(output: any) => emit('update-output-port', output)"
 	>
@@ -22,7 +22,13 @@
 					>
 						<template #toolbar-right-side>
 							<Button label="Reset" outlined severity="secondary" size="small" @click="resetModel" />
-							<Button icon="pi pi-play" label="Run" size="small" @click="runFromCodeWrapper" />
+							<Button
+								icon="pi pi-play"
+								:label="isUpdatingModel ? 'Loading...' : 'Run'"
+								size="small"
+								:loading="isUpdatingModel"
+								@click="runCode"
+							/>
 						</template>
 					</tera-notebook-jupyter-input>
 				</Suspense>
@@ -41,7 +47,6 @@
 		<template #preview v-if="drilldownRef?.selectedTab === DrilldownTabs.Notebook">
 			<tera-drilldown-preview
 				title="Preview"
-				v-if="amr"
 				v-model:output="selectedOutputId"
 				@update:selection="onSelection"
 				:options="outputs"
@@ -53,7 +58,13 @@
 					:value="executeResponse.value"
 					:traceback="executeResponse.traceback"
 				/>
-				<tera-model-diagram :model="amr" />
+				<template v-else-if="amr">
+					<tera-model-diagram :model="amr" />
+					<tera-model-parts :model="amr" :feature-config="{ isPreview: true }" />
+				</template>
+				<tera-progress-spinner v-else-if="isUpdatingModel || !amr" is-centered :font-size="2">
+					Loading...
+				</tera-progress-spinner>
 			</tera-drilldown-preview>
 		</template>
 		<tera-drilldown-section :tabName="DrilldownTabs.Wizard">
@@ -84,17 +95,18 @@ import Button from 'primevue/button';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import '@/ace-config';
-import { v4 as uuidv4 } from 'uuid';
 import type { Model } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import { createModel, getModel } from '@/services/model';
 import { OperatorStatus, WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import TeraModelParts from '@/components/model/tera-model-parts.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 // import TeraModelTemplateEditor from '@/components/model-template/tera-model-template-editor.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
@@ -104,7 +116,8 @@ import { getModelIdFromModelConfigurationId } from '@/services/model-configurati
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { saveCodeToState } from '@/services/notebook';
 import { DrilldownTabs } from '@/types/common';
-import { ModelEditOperationState } from './model-edit-operation';
+import { nodeOutputLabel } from '@/components/workflow/util';
+import { ModelEditOperationState, ModelEditOperation } from './model-edit-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
@@ -130,12 +143,12 @@ const isReadyToCreateDefaultOutput = computed(
 const drilldownRef = ref();
 const selectedOutputId = ref<string>('');
 const activeOutput = ref<WorkflowOutput<ModelEditOperationState> | null>(null);
+const isUpdatingModel = ref(false);
 
 const kernelManager = new KernelSessionManager();
 const amr = ref<Model | null>(null);
 let activeModelId: string | null = null;
 const showSaveModelModal = ref(false);
-let isDraft = false;
 
 let editor: VAceEditorInstance['_editor'] | null;
 const sampleAgentQuestions = [
@@ -202,56 +215,53 @@ const syncWithMiraModel = (data: any) => {
 	}
 	updatedModel.id = activeModelId;
 	amr.value = updatedModel;
-	isDraft = true;
+	isUpdatingModel.value = false;
+	createOutput(amr.value as Model);
 };
 
-// Reset model, then execute the code
-const runFromCodeWrapper = () => {
-	// Reset model
+const runCode = () => {
+	isUpdatingModel.value = true;
+	amr.value = null;
 	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
-		runFromCode(editor?.getValue() as string);
+		const messageContent = {
+			silent: false,
+			store_history: false,
+			user_expressions: {},
+			allow_stdin: true,
+			stop_on_error: false,
+			code: editor?.getValue() as string
+		};
+
+		let executedCode = '';
+
+		kernelManager
+			.sendMessage('execute_request', messageContent)
+			.register('execute_input', (data) => {
+				executedCode = data.content.code;
+			})
+			.register('stream', (data) => {
+				console.log('stream', data);
+			})
+			.register('model_preview', (data) => {
+				if (!data.content) return;
+				syncWithMiraModel(data);
+
+				if (executedCode) {
+					updateCodeState(executedCode);
+				}
+			})
+			.register('any_execute_reply', (data) => {
+				let status = OperatorStatus.DEFAULT;
+				if (data.msg.content.status === 'ok') status = OperatorStatus.SUCCESS;
+				if (data.msg.content.status === 'error') status = OperatorStatus.ERROR;
+				executeResponse.value = {
+					status,
+					name: data.msg.content.ename ? data.msg.content.ename : '',
+					value: data.msg.content.evalue ? data.msg.content.evalue : '',
+					traceback: data.msg.content.traceback ? data.msg.content.traceback : ''
+				};
+			});
 	});
-};
-
-const runFromCode = (code: string) => {
-	const messageContent = {
-		silent: false,
-		store_history: false,
-		user_expressions: {},
-		allow_stdin: true,
-		stop_on_error: false,
-		code
-	};
-
-	let executedCode = '';
-
-	kernelManager
-		.sendMessage('execute_request', messageContent)
-		.register('execute_input', (data) => {
-			executedCode = data.content.code;
-		})
-		.register('stream', (data) => {
-			console.log('stream', data);
-		})
-		.register('model_preview', (data) => {
-			if (!data.content) return;
-			syncWithMiraModel(data);
-
-			if (executedCode) {
-				updateCodeState(executedCode);
-			}
-		})
-		.register('any_execute_reply', (data) => {
-			let status = OperatorStatus.DEFAULT;
-			if (data.msg.content.status === 'ok') status = OperatorStatus.SUCCESS;
-			if (data.msg.content.status === 'error') status = OperatorStatus.ERROR;
-			executeResponse.value = {
-				status,
-				name: data.msg.content.ename ? data.msg.content.ename : '',
-				value: data.msg.content.evalue ? data.msg.content.evalue : '',
-				traceback: data.msg.content.traceback ? data.msg.content.traceback : ''
-			};
-		});
 };
 
 const resetModel = () => {
@@ -261,7 +271,6 @@ const resetModel = () => {
 		.sendMessage('reset_request', {})
 		.register('reset_response', handleResetResponse)
 		.register('model_preview', syncWithMiraModel);
-	isDraft = false;
 };
 
 const handleResetResponse = (data: any) => {
@@ -286,27 +295,21 @@ function updateCodeState(code: string = codeText.value, hasCodeRun: boolean = tr
 	emit('update-state', state);
 }
 
-function onDrilldownClose() {
-	if (isDraft) {
-		// TODO: Prompt user to save draft
-	}
-	emit('close');
-}
-
 const createOutput = async (modelToSave: Model) => {
 	// If it's the original model, use that otherwise create a new one
 	const modelData = isReadyToCreateDefaultOutput.value ? modelToSave : await createModel(modelToSave);
 	if (!modelData) return;
 
+	const modelLabel = isReadyToCreateDefaultOutput.value
+		? (modelData.name as string)
+		: nodeOutputLabel(props.node, 'Output'); // Just label the original model with its name
+
 	emit('append-output', {
-		id: uuidv4(),
-		label: isReadyToCreateDefaultOutput.value ? modelData.name : `Output ${Date.now()}`, // Just label the original model with its name
-		type: 'modelId',
+		label: modelLabel,
+		type: ModelEditOperation.outputs[0].type,
 		state: cloneDeep(props.node.state),
 		value: [modelData.id]
 	});
-
-	isDraft = false;
 };
 
 const buildJupyterContext = () => {
@@ -353,13 +356,13 @@ const onSelection = (id: string) => {
 
 // Updates output selection
 watch(
-	() => [props.node.active],
+	() => props.node.active,
 	async () => {
 		// Update selected output
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
 			activeOutput.value = props.node.outputs.find((d) => d.id === selectedOutputId.value) ?? null;
-			await handleOutputChange();
+			handleOutputChange();
 		}
 	},
 	{ immediate: true }
@@ -413,12 +416,6 @@ onUnmounted(() => {
 	position: relative;
 }
 
-:deep(.diagram-container) {
-	height: calc(100vh - 270px) !important;
-}
-:deep(.resize-handle) {
-	display: none;
-}
 .input-small {
 	padding: 0.5rem;
 	width: 100%;

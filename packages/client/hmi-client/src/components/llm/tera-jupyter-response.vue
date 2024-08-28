@@ -65,25 +65,19 @@
 					<div v-else-if="m.header.msg_type === 'stream' && m.content['name'] === 'stderr'">
 						<div class="error">{{ m.content['text'] }}</div>
 					</div>
-					<!-- Handle stream type for stdout -->
-					<div v-else-if="m.header.msg_type === 'stream' && m.content['name'] === 'stdout'">
-						<tera-jupyter-response-thought :show-thought="showThought || props.showChatThoughts">
-							{{ formattedThought(m.content['text'].trim()) }}
-						</tera-jupyter-response-thought>
-					</div>
 					<!-- Handle code_cell type -->
 					<div v-else-if="m.header.msg_type === 'code_cell'" class="code-cell">
 						<tera-beaker-code-cell
 							ref="codeCell"
 							:jupyter-session="jupyterSession"
-							:language="m.content['language']"
-							:code="m.content['code']"
-							:autorun="true"
-							:notebook-item-id="msg.query_id"
-							context="dataset"
-							:context_info="{ id: props.assetId, query: msg.query }"
+							:notebook-item="msg"
+							:jupyter-message="m"
+							:lang="language"
 							@deleteRequested="onDeleteRequested(m.header.msg_id)"
 						/>
+					</div>
+					<div v-else-if="['stream', 'display_data', 'execute_result', 'error'].includes(m.header.msg_type)">
+						<tera-beaker-code-cell-output :jupyter-message="m" />
 					</div>
 				</div>
 			</section>
@@ -93,15 +87,15 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { JupyterMessage } from '@/services/jupyter';
+import { INotebookItem } from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils';
-import TeraBeakerCodeCell from '@/components/llm/tera-beaker-response-code-cell.vue';
+import TeraBeakerCodeCell from '@/components/llm/tera-beaker-code-cell.vue';
+import TeraBeakerCodeCellOutput from '@/components/llm/tera-beaker-code-cell-output.vue';
 import TeraJupyterResponseThought from '@/components/llm/tera-beaker-response-thought.vue';
 import Button from 'primevue/button';
 import Textarea from 'primevue/textarea';
 import Menu from 'primevue/menu';
-import { defineEmits, ref, computed, onMounted, watch } from 'vue';
-import type { CsvAsset } from '@/types/Types';
+import { defineEmits, ref, computed, onMounted } from 'vue';
 
 const emit = defineEmits([
 	'cell-updated',
@@ -115,15 +109,10 @@ const emit = defineEmits([
 
 const props = defineProps<{
 	jupyterSession: SessionContext;
-	msg: {
-		query_id: string;
-		query: string | null;
-		timestamp: string;
-		messages: JupyterMessage[];
-		resultingCsv: CsvAsset | null;
-	};
+	msg: INotebookItem;
 	showChatThoughts: boolean;
 	isExecutingCode: boolean;
+	language: string;
 	assetId?: string;
 	autoExpandPreview?: boolean;
 	defaultPreview?: string;
@@ -179,22 +168,6 @@ const cancelEditingQuery = () => {
 // show the chat window menu
 const showChatWindowMenu = (event: Event) => chatWindowMenu.value.toggle(event);
 
-// format the thought text
-const formattedThought = (input: string) => {
-	const lines = input.split('\n'); // Split the string into lines
-	const formattedLines = lines.map((line) => {
-		const index = line.indexOf(':');
-		if (index > -1) {
-			// Transform the category to title case and remove underscores
-			const category = toTitleCase(line.slice(0, index));
-			// Add a newline character after the colon
-			return `${category}:\n${line.slice(index + 2)}`;
-		}
-		return line;
-	});
-	return formattedLines.join('\n\n'); // Combine the formatted lines into a single string with an extra newline between each
-};
-
 const formattedLlmThoughtPoints = (input: { [key: string]: string }) => {
 	let thought = '';
 	const details: string[] = [];
@@ -221,15 +194,7 @@ function toTitleCase(str: string): string {
 
 onMounted(() => {
 	query.value = props.msg.query ?? '';
-	emit('cell-updated', resp.value, props.msg);
 });
-
-watch(
-	() => props.msg.messages,
-	() => {
-		emit('cell-updated', resp.value, props.msg, 'delete-cell');
-	}
-);
 
 defineExpose({
 	codeCell
