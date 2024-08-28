@@ -1009,6 +1009,7 @@ export enum AssetType {
     Code = "code",
     ModelConfiguration = "model-configuration",
     Artifact = "artifact",
+    InterventionPolicy = "intervention-policy",
 }
 
 export enum EvaluationScenarioStatus {

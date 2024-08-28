@@ -7,10 +7,11 @@ import { AssetType } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
-import type { Model, Code } from '@/types/Types';
+import type { Model, Code, InterventionPolicy } from '@/types/Types';
 import type { Workflow } from '@/types/workflow';
+import { createInterventionPolicy } from './intervention-policy';
 
-export type AssetToSave = Model | Workflow | File;
+export type AssetToSave = Model | Workflow | File | InterventionPolicy;
 
 // TODO: Once assets have a type property, we can remove the assetType parameter
 
@@ -33,6 +34,9 @@ export async function saveAs(
 		case AssetType.Code:
 			response = await uploadCodeToProject(newAsset as File, ref(0));
 			break;
+		case AssetType.InterventionPolicy:
+			response = await createInterventionPolicy(newAsset as InterventionPolicy);
+			break;
 		default:
 			logger.info(`Saving for ${assetType} is not implemented.`);
 			return;
@@ -44,24 +48,26 @@ export async function saveAs(
 	}
 
 	// TODO: Potentially add a flag in case we don't want to add the asset to the project
-	const projectId = useProjects().activeProject.value?.id;
-	if (!projectId) {
-		logger.error(`Asset can't be saved since target project doesn't exist.`);
-		return;
-	}
-	await useProjects().addAsset(assetType, response.id, projectId);
+	if (assetType !== AssetType.InterventionPolicy) {
+		const projectId = useProjects().activeProject.value?.id;
+		if (!projectId) {
+			logger.error(`Asset can't be saved since target project doesn't exist.`);
+			return;
+		}
+		await useProjects().addAsset(assetType, response.id, projectId);
 
-	// After saving notify the user and do any necessary actions
-	logger.info(`${response.name} saved successfully in project ${useProjects().activeProject.value?.name}.`);
-	if (openOnSave) {
-		router.push({
-			name: RouteName.Project,
-			params: {
-				projectId,
-				pageType: assetType,
-				assetId: response.id
-			}
-		});
+		// After saving notify the user and do any necessary actions
+		logger.info(`${response.name} saved successfully in project ${useProjects().activeProject.value?.name}.`);
+		if (openOnSave) {
+			router.push({
+				name: RouteName.Project,
+				params: {
+					projectId,
+					pageType: assetType,
+					assetId: response.id
+				}
+			});
+		}
 	}
 
 	if (onSaveFunction) onSaveFunction(response);
