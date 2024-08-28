@@ -148,7 +148,7 @@ footer {
 	transform: scale(0.9);
 }
 
-.content:deep(label) {
+.content:deep(form label) {
 	display: block;
 	margin-bottom: 0.5em;
 }
