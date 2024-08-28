@@ -533,12 +533,14 @@ const createConfiguration = async () => {
 const onSaveAsModelConfiguration = (data: ModelConfiguration) => {
 	knobs.value.transientModelConfig = cloneDeep(data);
 	useToastService().success('', 'Created model configuration');
+	const state = cloneDeep(props.node.state);
+	state.transientModelConfig = knobs.value.transientModelConfig;
 	emit('append-output', {
 		type: ModelConfigOperation.outputs[0].type,
 		label: data.name,
 		value: data.id,
 		isSelected: false,
-		state: cloneDeep(props.node.state)
+		state
 	});
 	showSaveModal.value = false;
 };
