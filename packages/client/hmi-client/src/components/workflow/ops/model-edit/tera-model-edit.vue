@@ -96,7 +96,7 @@
 		:assetType="AssetType.Model"
 		:is-visible="showSaveModelModal"
 		@close-modal="showSaveModelModal = false"
-		@on-save="createOutput"
+		@on-save="updateNodeModel"
 	/>
 </template>
 
@@ -380,6 +380,13 @@ watch(
 	},
 	{ immediate: true }
 );
+
+async function updateNodeModel(model: Model) {
+	if (model) {
+		amr.value = model;
+		createOutput(model);
+	}
+}
 
 onMounted(async () => {
 	// By default the first output option is the original model
