@@ -47,6 +47,16 @@
 				:options="outputs"
 				is-selectable
 			>
+				<section class="right-side">
+					<Button
+						class="mr-3"
+						:disabled="isSaveForReuseDisabled"
+						outlined
+						severity="secondary"
+						label="Save As Reuse"
+						@click="showSaveModelModal = true"
+					/>
+				</section>
 				<tera-notebook-error
 					v-if="executeResponse.status === OperatorStatus.ERROR"
 					:name="executeResponse.name"
@@ -71,9 +81,11 @@
 	<tera-save-asset-modal
 		v-if="amr"
 		:asset="amr"
+		:initial-name="amr.name"
 		:assetType="AssetType.Model"
 		:is-visible="showSaveModelModal"
 		@close-modal="showSaveModelModal = false"
+		@on-save="saveAsNewModel"
 	/>
 </template>
 
@@ -157,6 +169,7 @@ const defaultCodeText = '# This environment contains the variable "model" \n# wh
 const codeText = ref(defaultCodeText);
 const llmQuery = ref('');
 const llmThoughts = ref<any[]>([]);
+const isSaveForReuseDisabled = ref(false);
 
 const executeResponse = ref({
 	status: OperatorStatus.DEFAULT,
@@ -357,6 +370,17 @@ watch(
 	{ immediate: true }
 );
 
+async function saveAsNewModel(model: Model) {
+	if (model) {
+		const newModel = await createModel(model);
+		if (!newModel) {
+			return;
+		}
+		amr.value = newModel;
+		createOutput(newModel);
+	}
+}
+
 onMounted(async () => {
 	// By default the first output option is the original model
 	if (isReadyToCreateDefaultOutput.value) {
@@ -421,5 +445,10 @@ onUnmounted(() => {
 	color: #cc0000;
 	padding: 10px;
 	border-radius: 4px;
+}
+
+.right-side {
+	display: flex;
+	justify-content: right;
 }
 </style>
