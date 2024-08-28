@@ -88,6 +88,15 @@ export interface Artifact extends TerariumAsset {
     metadata?: any;
 }
 
+export interface ChartAnnotation extends TerariumAsset {
+    nodeId: string;
+    outputId: string;
+    chartType: ChartType;
+    layerSpec: any;
+    metadata: any;
+    llmgenerated: boolean;
+}
+
 export interface CsvAsset {
     csv: string[][];
     stats?: CsvColumnStats[];
@@ -1009,6 +1018,13 @@ export enum AssetType {
     Code = "code",
     ModelConfiguration = "model-configuration",
     Artifact = "artifact",
+}
+
+export enum ChartType {
+    Variable = "VARIABLE",
+    Parameter = "PARAMETER",
+    Loss = "LOSS",
+    Error = "ERROR",
 }
 
 export enum EvaluationScenarioStatus {
