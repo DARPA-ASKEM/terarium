@@ -381,7 +381,7 @@ watch(
 	{ immediate: true }
 );
 
-async function updateNodeModel(model: Model) {
+function updateNodeModel(model: Model) {
 	if (model) {
 		amr.value = model;
 		createOutput(model);
