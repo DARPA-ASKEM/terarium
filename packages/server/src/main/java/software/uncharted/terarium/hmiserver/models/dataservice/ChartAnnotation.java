@@ -37,11 +37,10 @@ public class ChartAnnotation extends TerariumAsset {
 	private UUID nodeId;
 	private UUID outputId;
 
+	private UUID chartId;
+
 	@Enumerated(EnumType.STRING)
 	private ChartType chartType;
-
-	// TODO: We may want to also add chartId if we want annotation to be applied to individual chart
-	// private UUID chartId;
 
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
