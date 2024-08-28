@@ -22,7 +22,13 @@
 					>
 						<template #toolbar-right-side>
 							<Button label="Reset" outlined severity="secondary" size="small" @click="resetModel" />
-							<Button icon="pi pi-play" label="Run" size="small" @click="runFromCodeWrapper" />
+							<Button
+								icon="pi pi-play"
+								:label="isUpdatingModel ? 'Loading...' : 'Run'"
+								size="small"
+								:loading="isUpdatingModel"
+								@click="runCode"
+							/>
 						</template>
 					</tera-notebook-jupyter-input>
 				</Suspense>
@@ -41,7 +47,6 @@
 		<template #preview v-if="drilldownRef?.selectedTab === DrilldownTabs.Notebook">
 			<tera-drilldown-preview
 				title="Preview"
-				v-if="amr"
 				v-model:output="selectedOutputId"
 				@update:selection="onSelection"
 				:options="outputs"
@@ -63,7 +68,13 @@
 					:value="executeResponse.value"
 					:traceback="executeResponse.traceback"
 				/>
-				<tera-model-diagram :model="amr" />
+				<template v-else-if="amr">
+					<tera-model-diagram :model="amr" />
+					<tera-model-parts :model="amr" :feature-config="{ isPreview: true }" />
+				</template>
+				<tera-progress-spinner v-else-if="isUpdatingModel || !amr" is-centered :font-size="2">
+					Loading...
+				</tera-progress-spinner>
 			</tera-drilldown-preview>
 		</template>
 		<tera-drilldown-section :tabName="DrilldownTabs.Wizard">
@@ -102,10 +113,12 @@ import { createModel, getModel } from '@/services/model';
 import { OperatorStatus, WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import TeraModelParts from '@/components/model/tera-model-parts.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 // import TeraModelTemplateEditor from '@/components/model-template/tera-model-template-editor.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
@@ -142,6 +155,7 @@ const isReadyToCreateDefaultOutput = computed(
 const drilldownRef = ref();
 const selectedOutputId = ref<string>('');
 const activeOutput = ref<WorkflowOutput<ModelEditOperationState> | null>(null);
+const isUpdatingModel = ref(false);
 
 const kernelManager = new KernelSessionManager();
 const amr = ref<Model | null>(null);
@@ -214,56 +228,53 @@ const syncWithMiraModel = (data: any) => {
 	}
 	updatedModel.id = activeModelId;
 	amr.value = updatedModel;
+	isUpdatingModel.value = false;
 	createOutput(amr.value as Model);
 };
 
-// Reset model, then execute the code
-const runFromCodeWrapper = () => {
-	// Reset model
+const runCode = () => {
+	isUpdatingModel.value = true;
+	amr.value = null;
 	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
-		runFromCode(editor?.getValue() as string);
+		const messageContent = {
+			silent: false,
+			store_history: false,
+			user_expressions: {},
+			allow_stdin: true,
+			stop_on_error: false,
+			code: editor?.getValue() as string
+		};
+
+		let executedCode = '';
+
+		kernelManager
+			.sendMessage('execute_request', messageContent)
+			.register('execute_input', (data) => {
+				executedCode = data.content.code;
+			})
+			.register('stream', (data) => {
+				console.log('stream', data);
+			})
+			.register('model_preview', (data) => {
+				if (!data.content) return;
+				syncWithMiraModel(data);
+
+				if (executedCode) {
+					updateCodeState(executedCode);
+				}
+			})
+			.register('any_execute_reply', (data) => {
+				let status = OperatorStatus.DEFAULT;
+				if (data.msg.content.status === 'ok') status = OperatorStatus.SUCCESS;
+				if (data.msg.content.status === 'error') status = OperatorStatus.ERROR;
+				executeResponse.value = {
+					status,
+					name: data.msg.content.ename ? data.msg.content.ename : '',
+					value: data.msg.content.evalue ? data.msg.content.evalue : '',
+					traceback: data.msg.content.traceback ? data.msg.content.traceback : ''
+				};
+			});
 	});
-};
-
-const runFromCode = (code: string) => {
-	const messageContent = {
-		silent: false,
-		store_history: false,
-		user_expressions: {},
-		allow_stdin: true,
-		stop_on_error: false,
-		code
-	};
-
-	let executedCode = '';
-
-	kernelManager
-		.sendMessage('execute_request', messageContent)
-		.register('execute_input', (data) => {
-			executedCode = data.content.code;
-		})
-		.register('stream', (data) => {
-			console.log('stream', data);
-		})
-		.register('model_preview', (data) => {
-			if (!data.content) return;
-			syncWithMiraModel(data);
-
-			if (executedCode) {
-				updateCodeState(executedCode);
-			}
-		})
-		.register('any_execute_reply', (data) => {
-			let status = OperatorStatus.DEFAULT;
-			if (data.msg.content.status === 'ok') status = OperatorStatus.SUCCESS;
-			if (data.msg.content.status === 'error') status = OperatorStatus.ERROR;
-			executeResponse.value = {
-				status,
-				name: data.msg.content.ename ? data.msg.content.ename : '',
-				value: data.msg.content.evalue ? data.msg.content.evalue : '',
-				traceback: data.msg.content.traceback ? data.msg.content.traceback : ''
-			};
-		});
 };
 
 const resetModel = () => {
@@ -429,12 +440,6 @@ onUnmounted(() => {
 	position: relative;
 }
 
-:deep(.diagram-container) {
-	height: calc(100vh - 270px) !important;
-}
-:deep(.resize-handle) {
-	display: none;
-}
 .input-small {
 	padding: 0.5rem;
 	width: 100%;
