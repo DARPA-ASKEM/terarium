@@ -116,6 +116,29 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		log.info(new String(resp.getOutput()));
 	}
 
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendGoLLMEnrichAMRRequest() throws Exception {
+		final ClassPathResource modelResource = new ClassPathResource("gollm/SIR.json");
+		final String modelContent = new String(Files.readAllBytes(modelResource.getFile().toPath()));
+
+		final ClassPathResource documentResource = new ClassPathResource("gollm/SIR.txt");
+		final String documentContent = new String(Files.readAllBytes(documentResource.getFile().toPath()));
+
+		final EnrichAmrResponseHandler.Input input = new EnrichAmrResponseHandler.Input();
+		input.setResearchPaper(documentContent);
+		input.setAmr(modelContent);
+
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.GOLLM);
+		req.setScript("gollm_task:enrich_amr");
+		req.setInput(input);
+
+		final TaskResponse resp = taskService.runTaskSync(req);
+
+		log.info(new String(resp.getOutput()));
+	}
+
 	static class AdditionalProps {
 
 		public String str;

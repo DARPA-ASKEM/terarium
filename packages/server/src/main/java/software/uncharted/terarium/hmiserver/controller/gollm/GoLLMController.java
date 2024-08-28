@@ -617,7 +617,8 @@ public class GoLLMController {
 		@RequestParam(name = "model-id", required = true) final UUID modelId,
 		@RequestParam(name = "document-id", required = true) final UUID documentId,
 		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestParam(name = "project-id", required = false) final UUID projectId,
+		@RequestParam(name = "overwrite", required = false, defaultValue = "false") final boolean overwrite
 	) {
 		final Schema.Permission permission = projectService.checkPermissionCanRead(
 			currentUserService.get().getId(),
@@ -677,6 +678,7 @@ public class GoLLMController {
 		props.setProjectId(projectId);
 		props.setDocumentId(documentId);
 		props.setModelId(modelId);
+		props.setOverwrite(overwrite);
 		req.setAdditionalProperties(props);
 
 		final TaskResponse resp;

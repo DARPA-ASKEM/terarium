@@ -12,16 +12,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN add-apt-repository ppa:deadsnakes/ppa
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	software-properties-common \
-  python3.11 \
-  python3.11-venv \
-  python3.11-dev \
+	python3.11 \
+	python3.11-venv \
+	python3.11-dev \
 	wget \
 	python3-pip && \
 	rm -rf /var/lib/apt/lists/*
 
 # Set the default Python version to 3.11
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 && \
-    update-alternatives --set python /usr/bin/python3.11
+	update-alternatives --set python /usr/bin/python3.11
 
 RUN python -m ensurepip --upgrade
 

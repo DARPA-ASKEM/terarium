@@ -17,13 +17,14 @@ def main():
 
         input_dict = taskrunner.read_input_dict_with_timeout()
 
-        taskrunner.log("Creating ConfigureModel from input")
-        input_model = ConfigureModel(**input_dict)
-        amr = json.dumps(input_model.amr, separators=(",", ":"))
+        if isinstance(input_dict['amr'], str):
+            amr_dict = json.loads(input_dict['amr'])
+        else:
+            amr_dict = input_dict['amr']
 
         taskrunner.log("Sending request to OpenAI API")
         response = amr_enrichment_chain(
-            research_paper=input_model.research_paper, amr=amr
+            research_paper=input_dict['research_paper'], amr=amr_dict
         )
         taskrunner.log("Received response from OpenAI API")
 
