@@ -22,7 +22,7 @@
 				<li><b>Build a model.</b> Create a model that fits just what you need.</li>
 				<li>
 					<b>Create a workflow.</b> Connect resources with operators so you can focus on the science and not the
-					plumbning.
+					plumbing.
 				</li>
 			</ul>
 		</div>
