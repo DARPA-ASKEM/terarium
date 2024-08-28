@@ -54,7 +54,7 @@
 								:label="`${showThought ? 'Hide' : 'Show'} thoughts`"
 								@click="() => (showThought = !showThought)"
 							/>
-							<Button link label="Edit the prompts" @click="() => (isEditingQuery = true)" />
+							<Button link label="Edit prompt" @click="() => (isEditingQuery = true)" />
 						</div>
 					</div>
 					<!-- Handle llm_response type -->
@@ -219,10 +219,6 @@ function onDeleteRequested(msgId: string) {
 	font-size: var(--font-body-medium);
 	font-weight: 600;
 	font-family: var(--font-family);
-	/* Add ai-assistant icon */
-	background-image: url('@assets/svg/icons/message.svg');
-	background-repeat: no-repeat;
-	background-position: 4px 3px;
 }
 .edit-query-box {
 	display: flex;
@@ -252,17 +248,13 @@ function onDeleteRequested(msgId: string) {
 .jupyter-response {
 	position: relative;
 	margin: var(--gap);
-	padding: var(--gap-small);
+	padding: var(--gap-4);
 	display: flex;
 	flex-direction: column;
 	font-family: var(--font-family);
 	border-radius: var(--border-radius);
-	margin-top: 10px;
 	background-color: var(--surface-0);
-	transition:
-		background-color 0.3s,
-		border 0.3s;
-	border: 1px solid rgba(0, 0, 0, 0);
+	border: 1px solid var(--surface-border-light);
 }
 
 .jupyter-response:hover:not(.selected) {
@@ -287,8 +279,6 @@ function onDeleteRequested(msgId: string) {
 .query,
 .llm-thought,
 .llm-response {
-	padding-left: 57px;
-	padding-right: 2rem;
 	padding-bottom: var(--gap-small);
 }
 
@@ -301,12 +291,12 @@ function onDeleteRequested(msgId: string) {
 		background-image: url('@assets/svg/icons/magic.svg');
 		background-repeat: no-repeat;
 		background-size: 1.5rem 1.5rem;
-		background-position: 0 0.625rem;
-		padding: 0.625rem 0 0.625rem 1.875rem;
+		background-position: 0 0rem;
+		padding: 0rem 0 0.625rem 2.25rem;
 	}
 	li {
 		margin-bottom: var(--gap-xsmall);
-		padding-left: 0.625rem;
+		padding-left: 2.25rem;
 	}
 	li::first-letter {
 		text-transform: uppercase;
@@ -321,14 +311,5 @@ function onDeleteRequested(msgId: string) {
 	button:hover :deep(.p-button-label) {
 		text-decoration: none;
 	}
-}
-
-.llm-response {
-	white-space: pre-wrap;
-	color: var(--text-color);
-	/* Add ai-assistant magic icon */
-	background-image: url('@assets/svg/icons/magic.svg');
-	background-repeat: no-repeat;
-	background-position: 4px 2px;
 }
 </style>

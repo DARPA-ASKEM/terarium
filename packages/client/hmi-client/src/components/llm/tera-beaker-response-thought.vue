@@ -23,9 +23,11 @@ const props = defineProps<{
 	border-radius: var(--border-radius);
 	padding: var(--gap);
 	color: var(--text-color);
-	width: fit-content;
+	width: 100%;
 }
-
+.thought:deep(ul li)::marker {
+	margin-left: 2rem !important;
+}
 .hide {
 	max-height: 0;
 	overflow: hidden;

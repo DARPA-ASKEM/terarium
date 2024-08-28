@@ -1,11 +1,11 @@
 <template>
-	<div class="flex relative" @keyup.ctrl.enter.prevent="runCell">
-		<pre>In  [{{ jupyterMessage.content?.execution_count ?? '*' }}]</pre>
+	<div class="code-cell-row" @keyup.ctrl.enter.prevent="runCell">
+		<pre class="m-0">In  [{{ jupyterMessage.content?.execution_count ?? '*' }}]</pre>
 		<v-ace-editor
 			:value="code"
 			@init="initialize"
 			theme="chrome"
-			class="ace-editor ml-5 w-full"
+			class="ace-editor w-full"
 			:options="{
 				showPrintMargin: false,
 				maxLines: 1000,
@@ -103,3 +103,18 @@ defineExpose({
 	runCell
 });
 </script>
+<style scoped>
+.code-cell-row {
+	display: flex;
+	position: relative;
+	align-items: start;
+	gap: var(--gap-2);
+	padding-bottom: var(--gap-3);
+}
+
+.ace_editor {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	padding: var(--gap-2);
+}
+</style>

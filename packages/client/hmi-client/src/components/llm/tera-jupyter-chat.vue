@@ -467,6 +467,7 @@ section {
 }
 
 .selected {
-	background-color: var(--gray-300);
+	background-color: var(--surface-100);
+	border: 1px solid var(--primary-color);
 }
 </style>

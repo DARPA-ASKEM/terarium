@@ -59,8 +59,13 @@ const messageType = computed(() => props.jupyterMessage.header.msg_type);
 
 <style scoped>
 /* hack to add "Out" in front of outputs */
+:deep(.lm-Widget.p-Widget.jp-OutputPrompt.jp-OutputArea-prompt) {
+	color: var(--text-color);
+	margin-right: var(--gap-2);
+}
 :deep(.lm-Widget.p-Widget.jp-OutputPrompt.jp-OutputArea-prompt):before {
 	content: 'Out ';
 	font-family: 'Menlo', 'Consolas', 'DejaVu Sans Mono', monospace;
+	color: var(--text-color);
 }
 </style>
