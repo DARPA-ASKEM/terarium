@@ -55,8 +55,8 @@ export class WorkflowWrapper {
 		this.wf.name = updatedWF.name;
 		this.wf.description = updatedWF.description;
 
-		const nodes = this.getNodes();
-		const edges = this.getEdges();
+		const nodes = this.wf.nodes;
+		const edges = this.wf.edges;
 		const updatedNodeMap = new Map<string, WorkflowNode<any>>(updatedWF.nodes.map((n) => [n.id, n]));
 		const updatedEdgeMap = new Map<string, WorkflowEdge>(updatedWF.edges.map((e) => [e.id, e]));
 
