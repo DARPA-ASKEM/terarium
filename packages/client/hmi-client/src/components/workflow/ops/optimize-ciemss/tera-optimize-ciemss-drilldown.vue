@@ -741,7 +741,7 @@ const runOptimize = async () => {
 	};
 
 	// These are interventions to be considered but not optimized over.
-	const fixedStaticParameterInterventions: Intervention[] = _.cloneDeep(
+	const fixedStaticInterventions: Intervention[] = _.cloneDeep(
 		inactivePolicyGroups.value.map((ele) => ele.intervention)
 	);
 
@@ -761,7 +761,7 @@ const runOptimize = async () => {
 			end: knobs.value.endTime
 		},
 		optimizeInterventions,
-		fixedStaticParameterInterventions,
+		fixedStaticInterventions,
 		qoi,
 		riskBound: props.node.state.constraintGroups[0].threshold, // TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
 		boundsInterventions: listBoundsInterventions,
