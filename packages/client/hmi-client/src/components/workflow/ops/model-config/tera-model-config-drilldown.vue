@@ -199,7 +199,7 @@
 <script setup lang="ts">
 import '@/ace-config';
 import { computed, onUnmounted, ref, watch, nextTick, ComponentPublicInstance } from 'vue';
-import { cloneDeep, isEmpty, isEqual, orderBy } from 'lodash';
+import { cloneDeep, isEmpty, orderBy } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
@@ -580,9 +580,7 @@ const initialize = async () => {
 		applyConfigValues(suggestedConfigurationContext.value.tableData[0]);
 	} else {
 		knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
-		getModelConfigurationById(selectedConfigId.value).then((config) => {
-			originalConfig.value = config;
-		});
+		originalConfig.value = await getModelConfigurationById(selectedConfigId.value);
 	}
 
 	// Create a new session and context based on model
@@ -600,9 +598,9 @@ const initialize = async () => {
 	}
 };
 
-const onSelectConfiguration = (config: ModelConfiguration) => {
+const onSelectConfiguration = async (config: ModelConfiguration) => {
 	// Checks if there are unsaved changes to current model configuration
-	if (isEqual(originalConfig.value, knobs.value.transientModelConfig)) {
+	if (isModelConfigsEqual(originalConfig.value, knobs.value.transientModelConfig)) {
 		applyConfigValues(config);
 		return;
 	}
@@ -620,9 +618,6 @@ const onSelectConfiguration = (config: ModelConfiguration) => {
 
 const applyConfigValues = (config: ModelConfiguration) => {
 	knobs.value.transientModelConfig = cloneDeep(config);
-	getModelConfigurationById(selectedConfigId.value).then((modelConfig) => {
-		originalConfig.value = modelConfig;
-	});
 	// Update output port:
 	if (!config.id) {
 		logger.error('Model configuration not found');
