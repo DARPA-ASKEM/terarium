@@ -76,7 +76,7 @@ export const isModelConfigsEqual = (
 
 	// secondly check if the lists are equals
 	const listKeysToOmit = ['createdOn', 'updatedOn', 'id'];
-	const sortedOriginalConfig = {
+	const sortedOriginalConfigLists = {
 		initialSemanticList: sortBy(
 			originalConfig.initialSemanticList.map((item) => omit(item, listKeysToOmit)),
 			['target']
@@ -91,7 +91,7 @@ export const isModelConfigsEqual = (
 		)
 	};
 
-	const sortedNewConfig = {
+	const sortedNewConfigLists = {
 		initialSemanticList: sortBy(
 			newConfig.initialSemanticList.map((item) => omit(item, listKeysToOmit)),
 			['target']
@@ -106,8 +106,7 @@ export const isModelConfigsEqual = (
 		)
 	};
 
-	const listsAreEqual = isEqual(sortedOriginalConfig, sortedNewConfig);
-	// compare initial values are the same
+	const listsAreEqual = isEqual(sortedOriginalConfigLists, sortedNewConfigLists);
 
 	if (!listsAreEqual) return false;
 
