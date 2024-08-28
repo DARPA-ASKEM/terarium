@@ -5,7 +5,7 @@
 		:menu-items="menuItems"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
-		@update:selection="onSelection"
+		hide-dropdown
 	>
 		<template #sidebar>
 			<tera-slider-panel v-model:is-open="isSidebarOpen" header="Configurations" content-width="360px">
@@ -282,7 +282,7 @@ const menuItems = computed(() => [
 	}
 ]);
 
-const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close']);
+const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close', 'update-output-port']);
 
 interface BasicKnobs {
 	transientModelConfig: ModelConfiguration;
@@ -531,10 +531,9 @@ const createConfiguration = async () => {
 };
 
 const onSaveAsModelConfiguration = (data: ModelConfiguration) => {
-	knobs.value.transientModelConfig = cloneDeep(data);
 	useToastService().success('', 'Created model configuration');
 	const state = cloneDeep(props.node.state);
-	state.transientModelConfig = knobs.value.transientModelConfig;
+	state.transientModelConfig = data;
 	emit('append-output', {
 		type: ModelConfigOperation.outputs[0].type,
 		label: data.name,
@@ -556,10 +555,6 @@ const onSaveConfiguration = async () => {
 	}
 	initialize();
 	logger.success('Saved model configuration');
-};
-
-const onSelection = (id: string) => {
-	emit('select-output', id);
 };
 
 const fetchConfigurations = async (modelId: string) => {

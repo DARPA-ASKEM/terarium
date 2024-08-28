@@ -3,7 +3,7 @@ import type { Operation, BaseState } from '@/types/workflow';
 import type { ModelConfiguration } from '@/types/Types';
 import { NotebookHistory } from '@/services/notebook';
 import configureModel from '@assets/svg/operator-images/configure-model.svg';
-import { cloneDeep, isEqual, omit, sortBy } from 'lodash';
+import { cloneDeep, differenceWith, isEqual, omit } from 'lodash';
 
 export const name = 'ModelConfigOperation';
 
@@ -62,7 +62,7 @@ export const isModelConfigsEqual = (
 	newConfig = cloneDeep(newConfig);
 
 	// first check if the base keys are equal
-	const keysToOmit = [
+	const baseKeysToOmit = [
 		'createdOn',
 		'updatedOn',
 		'initialSemanticList',
@@ -70,43 +70,31 @@ export const isModelConfigsEqual = (
 		'observableSemanticList',
 		'inferredParameterList'
 	];
-	const baseKeysAreEqual = isEqual(omit(originalConfig, keysToOmit), omit(newConfig, keysToOmit));
+	const baseKeysAreEqual = isEqual(omit(originalConfig, baseKeysToOmit), omit(newConfig, baseKeysToOmit));
 
 	if (!baseKeysAreEqual) return false;
 
 	// secondly check if the lists are equals
 	const listKeysToOmit = ['createdOn', 'updatedOn', 'id'];
-	const sortedOriginalConfigLists = {
-		initialSemanticList: sortBy(
-			originalConfig.initialSemanticList.map((item) => omit(item, listKeysToOmit)),
-			['target']
-		),
-		parameterSemanticList: sortBy(
-			originalConfig.parameterSemanticList.map((item) => omit(item, listKeysToOmit)),
-			['referenceId']
-		),
-		observableSemanticList: sortBy(
-			originalConfig.observableSemanticList.map((item) => omit(item, listKeysToOmit)),
-			['referenceId']
-		)
+
+	const omitKeys = (list, keys) => list.map((item) => omit(item, keys));
+
+	const compareLists = (list1, list2, keysToOmit) => {
+		const processedList1 = omitKeys(list1, keysToOmit);
+		const processedList2 = omitKeys(list2, keysToOmit);
+		// Check if the lengths are equal
+		if (processedList1.length !== processedList2.length) {
+			return false;
+		}
+
+		// Compare the elements of the lists
+		return differenceWith(processedList1, processedList2, isEqual).length === 0;
 	};
 
-	const sortedNewConfigLists = {
-		initialSemanticList: sortBy(
-			newConfig.initialSemanticList.map((item) => omit(item, listKeysToOmit)),
-			['target']
-		),
-		parameterSemanticList: sortBy(
-			newConfig.parameterSemanticList.map((item) => omit(item, listKeysToOmit)),
-			['referenceId']
-		),
-		observableSemanticList: sortBy(
-			newConfig.observableSemanticList.map((item) => omit(item, listKeysToOmit)),
-			['referenceId']
-		)
-	};
-
-	const listsAreEqual = isEqual(sortedOriginalConfigLists, sortedNewConfigLists);
+	const listsAreEqual =
+		compareLists(originalConfig.initialSemanticList, newConfig.initialSemanticList, listKeysToOmit) &&
+		compareLists(originalConfig.parameterSemanticList, newConfig.parameterSemanticList, listKeysToOmit) &&
+		compareLists(originalConfig.observableSemanticList, newConfig.observableSemanticList, listKeysToOmit);
 
 	if (!listsAreEqual) return false;
 
