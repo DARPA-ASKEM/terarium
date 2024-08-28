@@ -114,7 +114,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onUpdated, PropType, ref, watch } from 'vue';
+import { computed, PropType, ref, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import { snakeToCapitalized } from '@/utils/text';
 import {
@@ -125,7 +125,7 @@ import {
 	getDownloadURL,
 	updateDataset
 } from '@/services/dataset';
-import { AssetType, type CsvAsset, type Dataset, type DatasetColumn, PresignedURL } from '@/types/Types';
+import { AssetType, type CsvAsset, type Dataset, PresignedURL } from '@/types/Types';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import type { FeatureConfig } from '@/types/common';
 import type { Source } from '@/types/search';
@@ -160,7 +160,7 @@ const props = defineProps({
 	}
 });
 
-const emit = defineEmits(['close-preview', 'asset-loaded']);
+const emit = defineEmits(['close-preview']);
 
 const dataset = ref<Dataset | null>(null);
 const newName = ref('');
@@ -227,15 +227,6 @@ const isClimateData = computed(() => dataset.value?.esgfId);
 const isClimateSubset = computed(() => dataset.value?.metadata?.format === 'netcdf');
 const datasetType = computed(() => card.value?.DATASET_TYPE ?? '');
 
-const groundingValues = ref<string[][]>([]);
-// originaGroundingValues are displayed as the first suggested value for concepts
-const originalGroundingValues = ref<string[]>([]);
-const suggestedValues = ref<string[]>([]);
-
-const rowEditList = ref<boolean[]>([]);
-// editableRows are the dataset columns that can be edited by the user; transient data
-const editableRows = ref<DatasetColumn[]>([]);
-
 const image = ref<string | undefined>(undefined);
 
 const card = computed(() => {
@@ -297,10 +288,8 @@ async function updateDatasetName() {
 const fetchDataset = async () => {
 	isDatasetLoading.value = true;
 	if (props.source === DatasetSource.TERARIUM) {
-		const datasetTemp = await getDataset(props.assetId);
-		if (datasetTemp) {
-			dataset.value = enrichDataset(datasetTemp);
-		}
+		const unenrichedDataset = await getDataset(props.assetId);
+		if (unenrichedDataset) dataset.value = enrichDataset(unenrichedDataset);
 	} else if (props.source === DatasetSource.ESGF) {
 		dataset.value = await getClimateDataset(props.assetId);
 	}
@@ -318,7 +307,7 @@ function getRawContent() {
 	// We are assuming here there is only a single csv file.
 	if (
 		dataset.value.fileNames &&
-		dataset.value.fileNames.length > 0 &&
+		!isEmpty(dataset.value.fileNames) &&
 		!isEmpty(dataset.value.fileNames[0]) &&
 		dataset.value.fileNames[0].endsWith('.csv')
 	) {
@@ -327,28 +316,6 @@ function getRawContent() {
 		});
 	}
 }
-
-onUpdated(() => {
-	if (dataset.value) {
-		emit('asset-loaded');
-
-		// setting values related to editing rows in the variables table
-		if (dataset.value.columns) {
-			rowEditList.value = dataset.value.columns.map(() => false);
-			suggestedValues.value = dataset.value.columns.map(() => '');
-			editableRows.value = dataset.value.columns.map((c) => ({ ...c }));
-			groundingValues.value = editableRows.value.map((row) => {
-				const grounding = row.grounding;
-				if (grounding) {
-					const keys = Object.keys(grounding.identifiers);
-					return keys.map((k) => grounding.identifiers[k]);
-				}
-				return [];
-			});
-			originalGroundingValues.value = groundingValues.value.map((g) => g[0]);
-		}
-	}
-});
 
 // Whenever assetId changes, fetch dataset with that ID
 watch(
