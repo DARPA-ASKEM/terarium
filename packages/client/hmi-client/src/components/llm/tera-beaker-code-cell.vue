@@ -1,6 +1,6 @@
 <template>
 	<div class="flex relative" @keyup.ctrl.enter.prevent="runCell">
-		<pre>[{{ jupyterMessage.content?.execution_count ?? '*' }}]</pre>
+		<pre>In  [{{ jupyterMessage.content?.execution_count ?? '*' }}]</pre>
 		<v-ace-editor
 			:value="code"
 			@init="initialize"
