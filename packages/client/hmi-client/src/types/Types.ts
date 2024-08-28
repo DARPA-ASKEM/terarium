@@ -91,6 +91,7 @@ export interface Artifact extends TerariumAsset {
 export interface ChartAnnotation extends TerariumAsset {
     nodeId: string;
     outputId: string;
+    chartId: string;
     chartType: ChartType;
     layerSpec: any;
     llmGenerated: boolean;
