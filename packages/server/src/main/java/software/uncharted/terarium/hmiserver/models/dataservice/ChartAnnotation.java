@@ -47,7 +47,7 @@ public class ChartAnnotation extends TerariumAsset {
 	@Column(columnDefinition = "json")
 	private JsonNode layerSpec;
 
-	private boolean isLLMGenerated;
+	private boolean llmGenerated;
 
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")

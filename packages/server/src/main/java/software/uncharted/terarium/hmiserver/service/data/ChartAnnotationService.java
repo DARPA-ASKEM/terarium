@@ -4,12 +4,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.ChartAnnotation;
 import software.uncharted.terarium.hmiserver.repository.data.ChartAnnotationRepository;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
+@Service
 public class ChartAnnotationService
 	extends TerariumAssetServiceWithoutSearch<ChartAnnotation, ChartAnnotationRepository> {
 
@@ -32,7 +34,7 @@ public class ChartAnnotationService
 		);
 	}
 
-	public List<ChartAnnotation> getAnnotationByNodeId(UUID nodeId, final Schema.Permission hasReadPermission) {
+	public List<ChartAnnotation> getAnnotationsByNodeId(UUID nodeId, final Schema.Permission hasReadPermission) {
 		return repository.findByNodeIdAndDeletedOnIsNull(nodeId);
 	}
 

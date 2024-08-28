@@ -46,7 +46,7 @@ public class ChartAnnotationController {
 
 	final CurrentUserService currentUserService;
 
-	private class SearchRequestBody {
+	private static class SearchRequestBody {
 
 		public UUID nodeId;
 	}
@@ -81,7 +81,7 @@ public class ChartAnnotationController {
 			projectId
 		);
 
-		final List<ChartAnnotation> chartAnnotations = chartAnnotationService.getAnnotationByNodeId(
+		final List<ChartAnnotation> chartAnnotations = chartAnnotationService.getAnnotationsByNodeId(
 			body.nodeId,
 			permission
 		);
