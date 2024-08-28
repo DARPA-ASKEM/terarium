@@ -30,8 +30,8 @@ public class OptimizeRequestCiemss implements Serializable {
 	private OptimizeInterventions optimizeInterventions;
 
 	@TSOptional
-	@JsonAlias("fixed_static_interventions")
-	private List<Intervention> fixedStaticInterventions;
+	@JsonAlias("fixed_interventions")
+	private List<Intervention> fixedInterventions;
 
 	@JsonAlias("logging_step_size")
 	@TSOptional
