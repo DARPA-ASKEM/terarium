@@ -230,7 +230,8 @@ import {
 	setParameterSource,
 	setParameterDistributions,
 	getAsConfiguredModel,
-	updateModelConfiguration
+	updateModelConfiguration,
+	getModelConfigurationById
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
 import type { Model, ModelConfiguration } from '@/types/Types';
@@ -247,9 +248,14 @@ import Dropdown from 'primevue/dropdown';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import { saveCodeToState } from '@/services/notebook';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
-import { areModelConfigValuesEqual } from '@/utils/model-configuration';
 import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
-import { ModelConfigOperation, ModelConfigOperationState, blankModelConfig } from './model-config-operation';
+import {
+	ModelConfigOperation,
+	ModelConfigOperationState,
+	blankModelConfig,
+	areModelConfigValuesEqual,
+	isModelConfigsEqual
+} from './model-config-operation';
 
 enum ConfigTabs {
 	Wizard = 'Wizard',
@@ -299,8 +305,8 @@ const calibratedConfigObservables = computed<Observable[]>(() =>
 const isSaveDisabled = computed(
 	() =>
 		knobs.value.transientModelConfig.name === '' ||
-		isEqual(originalConfig, knobs.value.transientModelConfig) ||
-		!areModelConfigValuesEqual(originalConfig, knobs.value.transientModelConfig)
+		isModelConfigsEqual(originalConfig.value, knobs.value.transientModelConfig) ||
+		!areModelConfigValuesEqual(originalConfig.value, knobs.value.transientModelConfig)
 );
 
 const kernelManager = new KernelSessionManager();
@@ -446,7 +452,7 @@ const extractConfigurationsFromInputs = async () => {
 
 const selectedOutputId = ref<string>('');
 const selectedConfigId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
-let originalConfig: ModelConfiguration | null = null;
+const originalConfig = ref<ModelConfiguration | null>(null);
 
 const documentId = computed(() => props.node.inputs[1]?.value?.[0]?.documentId);
 const datasetIds = computed(() => props.node.inputs[2]?.value);
@@ -574,7 +580,9 @@ const initialize = async () => {
 		applyConfigValues(suggestedConfigurationContext.value.tableData[0]);
 	} else {
 		knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
-		originalConfig = cloneDeep(state.transientModelConfig);
+		getModelConfigurationById(selectedConfigId.value).then((config) => {
+			originalConfig.value = config;
+		});
 	}
 
 	// Create a new session and context based on model
@@ -594,7 +602,7 @@ const initialize = async () => {
 
 const onSelectConfiguration = (config: ModelConfiguration) => {
 	// Checks if there are unsaved changes to current model configuration
-	if (isEqual(originalConfig, knobs.value.transientModelConfig)) {
+	if (isEqual(originalConfig.value, knobs.value.transientModelConfig)) {
 		applyConfigValues(config);
 		return;
 	}
@@ -612,8 +620,9 @@ const onSelectConfiguration = (config: ModelConfiguration) => {
 
 const applyConfigValues = (config: ModelConfiguration) => {
 	knobs.value.transientModelConfig = cloneDeep(config);
-	originalConfig = cloneDeep(config);
-
+	getModelConfigurationById(selectedConfigId.value).then((modelConfig) => {
+		originalConfig.value = modelConfig;
+	});
 	// Update output port:
 	if (!config.id) {
 		logger.error('Model configuration not found');
@@ -657,7 +666,7 @@ const resetConfiguration = () => {
 		header: 'Are you sure you want to reset the configuration?',
 		message: 'This will reset all values original values of the configuration.',
 		accept: () => {
-			if (originalConfig) applyConfigValues(originalConfig);
+			if (originalConfig.value) applyConfigValues(originalConfig.value);
 		},
 		acceptLabel: 'Confirm',
 		rejectLabel: 'Cancel'
