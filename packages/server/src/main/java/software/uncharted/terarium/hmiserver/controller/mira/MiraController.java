@@ -129,7 +129,7 @@ public class MiraController {
 		req.setType(TaskType.MIRA);
 
 		try {
-			req.setInput(objectMapper.writeValueAsString(model).getBytes());
+			req.setInput(objectMapper.treeToValue(model, Model.class).serializeWithoutTerariumFields().getBytes());
 		} catch (final Exception e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
