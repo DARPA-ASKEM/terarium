@@ -3,7 +3,7 @@
 		:id="assetId"
 		:name="dataset?.name"
 		:feature-config="featureConfig"
-		:is-naming-asset="isRenamingDataset"
+		:is-naming-asset="isRenaming"
 		:is-loading="isDatasetLoading"
 		:overflow-hidden="selectedTabIndex === 1"
 		:selected-tab-index="selectedTabIndex"
@@ -13,14 +13,14 @@
 	>
 		<template #name-input>
 			<tera-input-text
-				v-if="isRenamingDataset"
-				v-model.lazy="newDatasetName"
+				v-if="isRenaming"
+				v-model.lazy="newName"
 				placeholder="Dataset name"
 				@keyup.enter="updateDatasetName"
 				@keyup.esc="updateDatasetName"
 				auto-focus
 			/>
-			<div v-if="isRenamingDataset" class="flex flex-nowrap ml-1 mr-3">
+			<div v-if="isRenaming" class="flex flex-nowrap ml-1 mr-3">
 				<Button icon="pi pi-check" rounded text @click="updateDatasetName" />
 			</div>
 		</template>
@@ -64,12 +64,8 @@
 					</section>
 				</AccordionTab>
 				<!-- <AccordionTab header="Charts">TBD</AccordionTab> -->
-				<AccordionTab header="Column information" v-if="!isClimateData && !isClimateSubset">
-					<tera-dataset-overview-table
-						v-if="dataset"
-						:dataset="dataset"
-						@update-dataset="(dataset: Dataset) => updateAndFetchDataset(dataset)"
-					/>
+				<AccordionTab header="Column information" v-if="dataset && !isClimateData && !isClimateSubset">
+					<tera-dataset-overview-table :dataset="dataset" @update-dataset="updateDatasetContent" />
 				</AccordionTab>
 				<template v-else-if="dataset?.metadata">
 					<AccordionTab header="Preview">
@@ -167,8 +163,8 @@ const props = defineProps({
 const emit = defineEmits(['close-preview', 'asset-loaded']);
 
 const dataset = ref<Dataset | null>(null);
-const newDatasetName = ref('');
-const isRenamingDataset = ref(false);
+const newName = ref('');
+const isRenaming = ref(false);
 const rawContent = ref<CsvAsset | null>(null);
 const isDatasetLoading = ref(false);
 const selectedTabIndex = ref(0);
@@ -184,8 +180,8 @@ const optionsMenuItems = ref([
 		icon: 'pi pi-pencil',
 		label: 'Rename',
 		command() {
-			isRenamingDataset.value = true;
-			newDatasetName.value = dataset.value?.name ?? '';
+			isRenaming.value = true;
+			newName.value = dataset.value?.name ?? '';
 		}
 	},
 	{
@@ -278,21 +274,24 @@ async function downloadFileFromDataset(): Promise<PresignedURL | null> {
 	return null;
 }
 
-// TODO - It's got to be a better way to do this
-async function updateDatasetName() {
-	if (dataset.value && newDatasetName.value !== '') {
-		const datasetClone = cloneDeep(dataset.value);
-		datasetClone.name = newDatasetName.value;
-		await updateDataset(datasetClone);
-		dataset.value = await getDataset(props.assetId);
-		await useProjects().refresh();
-		isRenamingDataset.value = false;
+async function updateDatasetContent(updatedDataset: Dataset) {
+	if (!useProjects().hasEditPermission()) {
+		logger.error('You do not have permission to edit this dataset.');
+		return;
 	}
+	await updateDataset(updatedDataset);
+	logger.info('Saved changes.');
+	await useProjects().refresh();
+	fetchDataset();
 }
 
-async function updateAndFetchDataset(ds: Dataset) {
-	await updateDataset(ds);
-	fetchDataset();
+async function updateDatasetName() {
+	if (dataset.value && !isEmpty(newName.value)) {
+		const datasetClone = cloneDeep(dataset.value);
+		datasetClone.name = newName.value;
+		await updateDatasetContent(datasetClone);
+	}
+	isRenaming.value = false;
 }
 
 const fetchDataset = async () => {
@@ -355,7 +354,7 @@ onUpdated(() => {
 watch(
 	() => props.assetId,
 	async () => {
-		isRenamingDataset.value = false;
+		isRenaming.value = false;
 		if (props.assetId) {
 			// Reset the dataset and rawContent so previous data is not shown
 			dataset.value = null;

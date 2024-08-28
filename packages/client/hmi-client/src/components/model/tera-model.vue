@@ -149,12 +149,13 @@ const optionsMenuPt = {
 
 async function updateModelContent(updatedModel: Model) {
 	if (!useProjects().hasEditPermission()) {
+		logger.error('You do not have permission to edit this model.');
 		return;
 	}
 	await updateModel(updatedModel);
-	logger.info('Saved changes');
+	logger.info('Saved changes.');
 	await useProjects().refresh();
-	await fetchModel();
+	fetchModel();
 }
 
 async function updateModelName() {

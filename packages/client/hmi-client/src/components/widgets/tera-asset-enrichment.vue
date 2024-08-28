@@ -114,17 +114,17 @@ function closeDialog() {
 
 const confirm = async () => {
 	isLoading.value = true;
+	closeDialog();
 
 	if (dialogType.value === DialogType.ENRICH) {
-		sendForEnrichment();
+		await sendForEnrichment();
 	} else if (dialogType.value === DialogType.EXTRACT) {
-		sendForExtractions();
+		await sendForExtractions();
 	}
 
 	isLoading.value = false;
 	emit('finished-job');
-	await getRelatedDocuments();
-	closeDialog();
+	getRelatedDocuments();
 };
 
 const sendForEnrichment = async () => {
