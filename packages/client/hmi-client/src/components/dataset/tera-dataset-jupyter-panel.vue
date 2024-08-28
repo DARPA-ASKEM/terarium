@@ -1,4 +1,27 @@
 <template>
+	<!-- Output selector and Save as buttons artificially injected into drilldown header -->
+	<div class="header-action-buttons">
+		<div class="flex gap-2">
+			<Dropdown
+				v-model="actionTarget"
+				placeholder="Select a dataframe"
+				:options="Object.keys(kernelState || [])"
+				class="5"
+				:disabled="!kernelState"
+			/>
+			<Button
+				label="Save for reuse"
+				severity="secondary"
+				outlined
+				:disabled="!kernelState"
+				@click="showSaveInput = !showSaveInput"
+			/>
+			<!-- <Button
+				label="Close"
+				@click="emit('close')"
+			/> -->
+		</div>
+	</div>
 	<div class="data-transform-container h-full overflow-hidden">
 		<!-- Toolbar -->
 		<div class="toolbar flex">
@@ -51,14 +74,13 @@
 			</div>
 
 			<!-- Reset kernel -->
-			<span class="flex-auto"></span>
 			<Dropdown
 				:model-value="selectedLanguage"
 				placeholder="Select a language"
 				:options="languages"
 				option-label="name"
 				option-value="value"
-				class="5"
+				class="language-dropdown"
 				:disabled="kernelStatus !== 'idle'"
 				@change="onChangeLanguage"
 			/>
@@ -87,39 +109,6 @@
 			@update-language="(lang) => emit('update-language', lang)"
 			:notebook-session="props.notebookSession"
 		/>
-
-		<!-- Save, Download and Close buttons -->
-		<div class="bottom-right-button-group">
-			<div class="flex gap-2">
-				<Dropdown
-					v-model="actionTarget"
-					placeholder="Select a dataframe"
-					:options="Object.keys(kernelState || [])"
-					class="5"
-					:disabled="!kernelState"
-				/>
-				<Button
-					label="Save as"
-					icon="pi pi-save"
-					severity="secondary"
-					outlined
-					:disabled="!kernelState"
-					@click="showSaveInput = !showSaveInput"
-				/>
-				<Button
-					label="Download"
-					icon="pi pi-download"
-					severity="secondary"
-					outlined
-					:disabled="!kernelState"
-					@click="downloadDataset"
-				/>
-				<!-- <Button
-					label="Close"
-					@click="emit('close')"
-				/> -->
-			</div>
-		</div>
 	</div>
 
 	<!-- Save as dialog -->
@@ -468,21 +457,22 @@ const onNewDatasetSaved = async (payload) => {
 	toast.success('Dataset saved successfully', 'Refresh to see the dataset in the resource explorer');
 };
 
-const downloadDataset = () => {
-	const session = jupyterSession.session;
-	const kernel = session?.kernel as IKernelConnection;
-	const messageBody = {
-		session: session?.name || '',
-		channel: 'shell',
-		content: {
-			var_name: actionTarget.value
-		},
-		msgType: 'download_dataset_request',
-		msgId: createMessageId('download_dataset_request')
-	};
-	const message: JupyterMessage = createMessage(messageBody);
-	kernel?.sendJupyterMessage(message);
-};
+/* Download dataset feature has been removed, but keeping this code here in case it returns */
+// const downloadDataset = () => {
+// 	const session = jupyterSession.session;
+// 	const kernel = session?.kernel as IKernelConnection;
+// 	const messageBody = {
+// 		session: session?.name || '',
+// 		channel: 'shell',
+// 		content: {
+// 			var_name: actionTarget.value
+// 		},
+// 		msgType: 'download_dataset_request',
+// 		msgId: createMessageId('download_dataset_request')
+// 	};
+// 	const message: JupyterMessage = createMessage(messageBody);
+// 	kernel?.sendJupyterMessage(message);
+// };
 
 const onDownloadResponse = (payload) => {
 	const data = payload.data;
@@ -541,14 +531,15 @@ const onDownloadResponse = (payload) => {
 	flex-direction: row;
 	align-items: center;
 	background-color: var(--surface-100);
-	border-top: 1px solid var(--surface-border-light);
-	border-bottom: 1px solid var(--surface-border-light);
+	border-bottom: 1px solid var(--surface-border);
 	position: sticky;
 	top: 0;
 	left: 0;
 	z-index: 100;
 	width: 100%;
-	padding: var(--gap-xsmall) var(--gap) var(--gap-xsmall) 1.5rem;
+	height: 3.5rem;
+	padding: var(--gap-2) var(--gap) var(--gap-2) 1.5rem;
+	gap: var(--gap-2);
 }
 
 .toolbar-section {
@@ -558,19 +549,18 @@ const onDownloadResponse = (payload) => {
 	flex-wrap: nowrap;
 	white-space: nowrap;
 }
+:deep(.language-dropdown span) {
+	font-size: 12px;
+}
 
-.bottom-right-button-group {
+.header-action-buttons {
+	position: absolute;
+	top: 2rem;
+	right: 6rem;
 	display: flex;
 	flex-direction: row;
-	align-items: center;
-	flex-wrap: nowrap;
-	white-space: nowrap;
-	position: absolute;
-	bottom: 21px;
-	right: 40px;
-	z-index: 200;
 }
-.bottom-right-button-group:deep(.p-dropdown .p-dropdown-label) {
+.header-action-buttons:deep(.p-dropdown .p-dropdown-label) {
 	padding: 9px;
 }
 

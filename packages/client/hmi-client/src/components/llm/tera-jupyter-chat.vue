@@ -462,12 +462,13 @@ section {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
-	height: calc(100% - 13rem);
+	height: 100%;
 	overflow-y: auto;
+	padding-bottom: 10rem;
 }
 
 .selected {
-	background-color: var(--surface-100);
+	background-color: var(--surface-50);
 	border: 1px solid var(--primary-color);
 }
 </style>
