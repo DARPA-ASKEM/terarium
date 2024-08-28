@@ -58,7 +58,7 @@
 						:disabled="isSaveForReuseDisabled"
 						outlined
 						severity="secondary"
-						label="Save As Reuse"
+						label="Save as reuse"
 						@click="showSaveModelModal = true"
 					/>
 				</section>
@@ -96,7 +96,7 @@
 		:assetType="AssetType.Model"
 		:is-visible="showSaveModelModal"
 		@close-modal="showSaveModelModal = false"
-		@on-save="saveAsNewModel"
+		@on-save="createOutput"
 	/>
 </template>
 
@@ -380,17 +380,6 @@ watch(
 	},
 	{ immediate: true }
 );
-
-async function saveAsNewModel(model: Model) {
-	if (model) {
-		const newModel = await createModel(model);
-		if (!newModel) {
-			return;
-		}
-		amr.value = newModel;
-		createOutput(newModel);
-	}
-}
 
 onMounted(async () => {
 	// By default the first output option is the original model
