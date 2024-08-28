@@ -102,7 +102,7 @@ export const isModelConfigsEqual = (
 };
 
 // check if model config values are equal
-export const areModelConfigValuesEqual = (
+export const isModelConfigValuesEqual = (
 	originalConfig: ModelConfiguration | null,
 	newConfig: ModelConfiguration | null
 ): boolean => {

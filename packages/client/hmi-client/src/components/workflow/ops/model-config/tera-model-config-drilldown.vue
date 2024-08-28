@@ -253,7 +253,7 @@ import {
 	ModelConfigOperation,
 	ModelConfigOperationState,
 	blankModelConfig,
-	areModelConfigValuesEqual,
+	isModelConfigValuesEqual,
 	isModelConfigsEqual
 } from './model-config-operation';
 
@@ -306,7 +306,7 @@ const isSaveDisabled = computed(
 	() =>
 		knobs.value.transientModelConfig.name === '' ||
 		isModelConfigsEqual(originalConfig.value, knobs.value.transientModelConfig) ||
-		!areModelConfigValuesEqual(originalConfig.value, knobs.value.transientModelConfig)
+		!isModelConfigValuesEqual(originalConfig.value, knobs.value.transientModelConfig)
 );
 
 const kernelManager = new KernelSessionManager();
