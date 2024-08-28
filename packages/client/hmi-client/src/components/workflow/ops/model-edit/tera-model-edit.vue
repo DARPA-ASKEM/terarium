@@ -5,7 +5,7 @@
 		:node="node"
 		:menu-items="menuItems"
 		@update:selection="onSelection"
-		@on-close-clicked="onDrilldownClose"
+		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 		@update-output-port="(output: any) => emit('update-output-port', output)"
 	>
@@ -84,7 +84,6 @@ import Button from 'primevue/button';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import '@/ace-config';
-import { v4 as uuidv4 } from 'uuid';
 import type { Model } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import { createModel, getModel } from '@/services/model';
@@ -104,7 +103,8 @@ import { getModelIdFromModelConfigurationId } from '@/services/model-configurati
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { saveCodeToState } from '@/services/notebook';
 import { DrilldownTabs } from '@/types/common';
-import { ModelEditOperationState } from './model-edit-operation';
+import { nodeOutputLabel } from '@/components/workflow/util';
+import { ModelEditOperationState, ModelEditOperation } from './model-edit-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
@@ -135,7 +135,6 @@ const kernelManager = new KernelSessionManager();
 const amr = ref<Model | null>(null);
 let activeModelId: string | null = null;
 const showSaveModelModal = ref(false);
-let isDraft = false;
 
 let editor: VAceEditorInstance['_editor'] | null;
 const sampleAgentQuestions = [
@@ -202,7 +201,7 @@ const syncWithMiraModel = (data: any) => {
 	}
 	updatedModel.id = activeModelId;
 	amr.value = updatedModel;
-	isDraft = true;
+	createOutput(amr.value as Model);
 };
 
 // Reset model, then execute the code
@@ -261,7 +260,6 @@ const resetModel = () => {
 		.sendMessage('reset_request', {})
 		.register('reset_response', handleResetResponse)
 		.register('model_preview', syncWithMiraModel);
-	isDraft = false;
 };
 
 const handleResetResponse = (data: any) => {
@@ -286,27 +284,21 @@ function updateCodeState(code: string = codeText.value, hasCodeRun: boolean = tr
 	emit('update-state', state);
 }
 
-function onDrilldownClose() {
-	if (isDraft) {
-		// TODO: Prompt user to save draft
-	}
-	emit('close');
-}
-
 const createOutput = async (modelToSave: Model) => {
 	// If it's the original model, use that otherwise create a new one
 	const modelData = isReadyToCreateDefaultOutput.value ? modelToSave : await createModel(modelToSave);
 	if (!modelData) return;
 
+	const modelLabel = isReadyToCreateDefaultOutput.value
+		? (modelData.name as string)
+		: nodeOutputLabel(props.node, 'Output'); // Just label the original model with its name
+
 	emit('append-output', {
-		id: uuidv4(),
-		label: isReadyToCreateDefaultOutput.value ? modelData.name : `Output ${Date.now()}`, // Just label the original model with its name
-		type: 'modelId',
+		label: modelLabel,
+		type: ModelEditOperation.outputs[0].type,
 		state: cloneDeep(props.node.state),
 		value: [modelData.id]
 	});
-
-	isDraft = false;
 };
 
 const buildJupyterContext = () => {
@@ -353,13 +345,13 @@ const onSelection = (id: string) => {
 
 // Updates output selection
 watch(
-	() => [props.node.active],
+	() => props.node.active,
 	async () => {
 		// Update selected output
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
 			activeOutput.value = props.node.outputs.find((d) => d.id === selectedOutputId.value) ?? null;
-			await handleOutputChange();
+			handleOutputChange();
 		}
 	},
 	{ immediate: true }
