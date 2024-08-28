@@ -16,7 +16,7 @@ public class TaskNotificationEventTypes {
 		ClientEventType.TASK_GOLLM_CONFIGURE_FROM_DATASET,
 		CompareModelsResponseHandler.NAME,
 		ClientEventType.TASK_GOLLM_COMPARE_MODEL,
-		GenerateSummaryHandler.NAME,
+		GenerateResponseHandler.NAME,
 		ClientEventType.TASK_GOLLM_GENERATE_SUMMARY,
 		ValidateModelConfigHandler.NAME,
 		ClientEventType.TASK_FUNMAN_VALIDATION

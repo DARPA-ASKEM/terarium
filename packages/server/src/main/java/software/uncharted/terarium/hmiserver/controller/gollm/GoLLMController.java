@@ -1,8 +1,11 @@
 package software.uncharted.terarium.hmiserver.controller.gollm;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -45,6 +48,7 @@ import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.tasks.CompareModelsResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureFromDatasetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.GenerateResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.GenerateSummaryHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
@@ -70,7 +74,7 @@ public class GoLLMController {
 	private final ConfigureModelResponseHandler configureModelResponseHandler;
 	private final CompareModelsResponseHandler compareModelsResponseHandler;
 	private final ConfigureFromDatasetResponseHandler configureFromDatasetResponseHandler;
-	private final GenerateSummaryHandler generateSummaryHandler;
+	private final GenerateResponseHandler generateSummaryHandler;
 
 	private final Messages messages;
 
@@ -586,6 +590,100 @@ public class GoLLMController {
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
 		}
 
+		return ResponseEntity.ok().body(resp);
+	}
+
+	@PostMapping("/generate-response")
+	@Secured(Roles.USER)
+	@Operation(summary = "Dispatch a `GoLLM Generate Response` task.")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Dispatched successfully",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class)
+				)
+			),
+			@ApiResponse(
+				responseCode = "422",
+				description = "The request was interrupted while waiting for a response",
+				content = @Content
+			),
+			@ApiResponse(
+				responseCode = "503",
+				description = "The request was timed out while waiting for a response",
+				content = @Content
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+		}
+	)
+	public ResponseEntity<TaskResponse> createGenerateResponseTask(
+		@RequestParam(name = "mode", required = false, defaultValue = "SYNC") final TaskMode mode,
+		@RequestParam(name = "project-id", required = false) final UUID projectId,
+		@Parameter(
+			name = "response-format",
+			description = "The format of the response, either 'json' or OpenAI response_format json object, if not provided, the response will be in the default text format",
+			schema = @io.swagger.v3.oas.annotations.media.Schema(
+				oneOf = { JsonNode.class, String.class },
+				allowableValues = { "json" }
+			),
+			in = ParameterIn.QUERY
+		) @RequestParam(name = "response-format", required = false) final Object responseFormat,
+		@RequestBody final String instruction
+	) {
+		JsonNode resFormat = null;
+
+		if (responseFormat instanceof JsonNode) {
+			resFormat = (JsonNode) responseFormat;
+		} else if (responseFormat instanceof String) {
+			final String format = (String) responseFormat;
+			if (format.equals("json")) {
+				try {
+					resFormat = objectMapper.readTree("{\"type\": \"json_object\"}");
+				} catch (final JsonProcessingException e) {
+					throw new IllegalArgumentException("Invalid JSON format for response-format parameter");
+				}
+			}
+		}
+
+		// set task input
+		final GenerateResponseHandler.Input input = new GenerateResponseHandler.Input();
+		input.setInstruction(instruction);
+		input.setResponseFormat(resFormat);
+
+		// create the task
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.GOLLM);
+		req.setScript(GenerateResponseHandler.NAME);
+		req.setUserId(currentUserService.get().getId());
+
+		try {
+			req.setInput(objectMapper.writeValueAsBytes(input));
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+		}
+
+		req.setProjectId(projectId);
+
+		final TaskResponse resp;
+		try {
+			resp = taskService.runTask(mode, req);
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize input: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
+		} catch (final TimeoutException e) {
+			log.error("Timeout while waiting for task response: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
+		} catch (final InterruptedException e) {
+			log.error("Interrupted while waiting for task response: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
+		} catch (final ExecutionException e) {
+			log.error("Error while waiting for task response: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
+		}
 		return ResponseEntity.ok().body(resp);
 	}
 
