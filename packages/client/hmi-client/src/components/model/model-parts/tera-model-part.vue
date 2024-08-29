@@ -106,7 +106,7 @@
 						<tera-model-part-entry
 							:item="child"
 							:feature-config="featureConfig"
-							@update-item="$emit('update-item', { id: child.id, ...$event })"
+							@update-item="$emit('update-column', { id: child.id, ...$event })"
 						/>
 					</li>
 				</ul>
@@ -115,7 +115,7 @@
 				v-else
 				:item="base"
 				:feature-config="featureConfig"
-				@update-item="$emit('update-item', { id: base.id, ...$event })"
+				@update-item="$emit('update-column', { id: base.id, ...$event })"
 			/>
 		</li>
 	</ul>

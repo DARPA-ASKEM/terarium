@@ -1,5 +1,6 @@
 <template>
 	<tera-asset
+		v-bind="$attrs"
 		:id="assetId"
 		:name="dataset?.name"
 		:feature-config="featureConfig"
@@ -33,9 +34,9 @@
 			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" popup :pt="optionsMenuPt" />
 			<div class="btn-group">
 				<tera-asset-enrichment :asset-type="AssetType.Dataset" :assetId="assetId" @finished-job="fetchDataset" />
-				<Button label="Reset" severity="secondary" outlined />
-				<Button label="Save as..." severity="secondary" outlined />
-				<Button label="Save" />
+				<Button label="Reset" severity="secondary" outlined @click="reset" />
+				<Button label="Save as..." severity="secondary" outlined @click="showSaveModal = true" />
+				<Button label="Save" :disabled="isSaved" @click="transientDataset && updateDatasetContent(transientDataset)" />
 			</div>
 		</template>
 		<section>
@@ -64,8 +65,16 @@
 					</section>
 				</AccordionTab>
 				<!-- <AccordionTab header="Charts">TBD</AccordionTab> -->
-				<AccordionTab header="Column information" v-if="dataset && !isClimateData && !isClimateSubset">
-					<tera-dataset-overview-table :dataset="dataset" @update-dataset="updateDatasetContent" />
+				<AccordionTab header="Column information" v-if="!isClimateData && !isClimateSubset">
+					<ul>
+						<li v-for="(column, index) in columnInformation" :key="index">
+							<tera-column-info
+								:column="column"
+								:feature-config="{ isPreview: false }"
+								@update-column="updateColumn(index, $event.key, $event.value)"
+							/>
+						</li>
+					</ul>
 				</AccordionTab>
 				<template v-else-if="dataset?.metadata">
 					<AccordionTab header="Preview">
@@ -111,11 +120,20 @@
 			</Accordion>
 		</section>
 	</tera-asset>
+	<!-- <tera-save-asset-modal
+		v-if="transientDataset"
+		:initial-name="transientDataset.name"
+		:is-visible="showSaveModal"
+		:asset="transientDataset"
+		:asset-type="AssetType.Dataset"
+		@close-modal="showSaveModal = false"
+		@on-save="showSaveModal = false"
+	/> -->
 </template>
 
 <script setup lang="ts">
 import { computed, PropType, ref, watch } from 'vue';
-import { cloneDeep, isEmpty } from 'lodash';
+import { cloneDeep, isEmpty, isEqual } from 'lodash';
 import { snakeToCapitalized } from '@/utils/text';
 import {
 	downloadRawFile,
@@ -141,9 +159,10 @@ import { logger } from '@/utils/logger';
 import TeraCarousel from '@/components/widgets/tera-carousel.vue';
 import TeraAssetEnrichment from '@/components/widgets/tera-asset-enrichment.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import TeraDatasetOverviewTable from './tera-dataset-overview-table.vue';
-import TeraDatasetDatatable from './tera-dataset-datatable.vue';
-import { enrichDataset } from './utils';
+import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
+// import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
+import TeraColumnInfo from '@/components/dataset/tera-column-info.vue';
+// import { enrichDataset } from './utils';
 
 const props = defineProps({
 	assetId: {
@@ -163,8 +182,10 @@ const props = defineProps({
 const emit = defineEmits(['close-preview']);
 
 const dataset = ref<Dataset | null>(null);
+const transientDataset = ref<Dataset | null>(null);
 const newName = ref('');
 const isRenaming = ref(false);
+const showSaveModal = ref(false);
 const rawContent = ref<CsvAsset | null>(null);
 const isDatasetLoading = ref(false);
 const selectedTabIndex = ref(0);
@@ -210,6 +231,20 @@ const optionsMenuItems = ref([
 		}
 	}
 ]);
+
+const isSaved = computed(() => isEqual(dataset.value, transientDataset.value));
+const columnInformation = computed(
+	() =>
+		transientDataset.value?.columns?.map((column) => ({
+			symbol: column.name,
+			name: column.name,
+			description: column.description,
+			dataType: column.dataType,
+			groundings: column?.grounding,
+			unit: column.metadata?.unit,
+			stats: column.metadata?.column_stats
+		})) ?? []
+);
 
 const datasetInfo = computed(() => {
 	const information = {
@@ -288,8 +323,10 @@ async function updateDatasetName() {
 const fetchDataset = async () => {
 	isDatasetLoading.value = true;
 	if (props.source === DatasetSource.TERARIUM) {
-		const unenrichedDataset = await getDataset(props.assetId);
-		if (unenrichedDataset) dataset.value = enrichDataset(unenrichedDataset);
+		// const unenrichedDataset = await getDataset(props.assetId);
+		// if (unenrichedDataset) dataset.value = enrichDataset(unenrichedDataset);
+		// console.log(dataset.value);
+		dataset.value = await getDataset(props.assetId);
 	} else if (props.source === DatasetSource.ESGF) {
 		dataset.value = await getClimateDataset(props.assetId);
 	}
@@ -300,10 +337,14 @@ const fetchDataset = async () => {
 	}
 };
 
+function updateColumn(index: number, key: string, value: string) {
+	if (!transientDataset.value?.columns?.[index]) return;
+	transientDataset.value.columns[index][key] = value;
+}
+
 function getRawContent() {
 	// If it's an ESGF dataset or a NetCDF file, we don't want to download the raw content
 	if (!dataset.value || dataset.value.esgfId || dataset.value.metadata?.format === 'netcdf') return;
-
 	// We are assuming here there is only a single csv file.
 	if (
 		dataset.value.fileNames &&
@@ -317,17 +358,24 @@ function getRawContent() {
 	}
 }
 
+function reset() {
+	transientDataset.value = cloneDeep(dataset.value);
+}
+
 // Whenever assetId changes, fetch dataset with that ID
 watch(
 	() => props.assetId,
 	async () => {
 		isRenaming.value = false;
 		if (props.assetId) {
-			// Reset the dataset and rawContent so previous data is not shown
+			// Empty the dataset and rawContent so previous data is not shown
 			dataset.value = null;
 			rawContent.value = null;
 			await fetchDataset();
-			if (dataset.value) getRawContent(); // Whenever we change the dataset, we need to fetch the rawContent
+			if (dataset.value) {
+				reset(); // Initializes transientDataset
+				getRawContent(); // Whenever we change the dataset, we need to fetch the rawContent
+			}
 		}
 	},
 	{ immediate: true }
@@ -340,6 +388,11 @@ watch(
 	align-items: center;
 	gap: var(--gap-small);
 	margin-left: auto;
+}
+
+li {
+	padding-bottom: var(--gap-2);
+	border-bottom: 1px solid var(--surface-border);
 }
 
 .description {

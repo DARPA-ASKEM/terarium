@@ -7,7 +7,7 @@
 				v-else
 				placeholder="Add a name"
 				:model-value="item.name ?? ''"
-				@update:model-value="$emit('update-item', { key: 'name', value: $event })"
+				@update:model-value="$emit('update-column', { key: 'name', value: $event })"
 			/>
 		</span>
 		<span class="unit">
@@ -24,7 +24,7 @@
 					placeholder="Add a unit"
 					:characters-to-reject="[' ']"
 					:model-value="item.unitExpression ?? ''"
-					@update:model-value="$emit('update-item', { key: 'unitExpression', value: $event })"
+					@update:model-value="$emit('update-column', { key: 'unitExpression', value: $event })"
 				/>
 			</template>
 		</span>
@@ -39,7 +39,7 @@
 				:suggestions="results"
 				optionLabel="name"
 				@complete="async () => (results = await searchCuriesEntities(query))"
-				@item-select="$emit('update-item', { key: 'concept', value: $event.value.curie })"
+				@item-select="$emit('update-column', { key: 'concept', value: $event.value.curie })"
 			/>
 		</span>
 		<katex-element
@@ -54,7 +54,7 @@
 				v-else
 				placeholder="Add a description"
 				:model-value="item.description ?? ''"
-				@update:model-value="$emit('update-item', { key: 'description', value: $event })"
+				@update:model-value="$emit('update-column', { key: 'description', value: $event })"
 			/>
 		</span>
 	</section>
@@ -75,7 +75,7 @@ const props = defineProps<{
 	featureConfig: FeatureConfig;
 }>();
 
-defineEmits(['update-item']);
+defineEmits(['update-column']);
 
 const query = ref('');
 const results = ref<DKG[]>([]);
