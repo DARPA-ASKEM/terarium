@@ -224,7 +224,7 @@ async function createNewDatasetFromFile(
 	const formData = new FormData();
 	formData.append('file', file);
 
-	const response = await API.put(`/datasets/upload-${fileType}?project-id=${projectId}`, formData, {
+	const response = await API.post(`/datasets/upload-${fileType}?project-id=${projectId}`, formData, {
 		params: {
 			name,
 			description: description || file.name,

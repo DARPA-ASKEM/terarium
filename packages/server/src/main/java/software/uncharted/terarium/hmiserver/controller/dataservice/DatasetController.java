@@ -529,7 +529,7 @@ public class DatasetController {
 		return uploadCSVAndUpdateColumns(datasetId, projectId, filename, csvEntity, headers, permission);
 	}
 
-	@PutMapping(value = "/upload-csv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@PostMapping(value = "/upload-csv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a CSV file to a dataset")
 	@ApiResponses(
@@ -559,16 +559,16 @@ public class DatasetController {
 
 		final List<String> filenames = new ArrayList<>();
 		filenames.add(filename);
-		final Dataset dataset = new Dataset();
-		dataset
+		final Dataset tempDataset = new Dataset();
+		tempDataset
 			.setUserId(currentUserService.get().getId())
 			.setFileNames(filenames)
 			.setName(name)
 			.setDescription(description);
-		Dataset newDataset = null;
+		Dataset createdDataset = null;
 
 		try {
-			newDataset = datasetService.createAsset(dataset, projectId, permission);
+			createdDataset = datasetService.createAsset(tempDataset, projectId, permission);
 		} catch (final IOException e) {
 			final String error = "Unable to create dataset";
 			log.error(error, e);
@@ -576,7 +576,7 @@ public class DatasetController {
 		}
 
 		try {
-			log.debug("Uploading CSV file to dataset {}", newDataset.getId());
+			log.debug("Uploading CSV file to dataset {}", createdDataset.getId());
 
 			final byte[] csvBytes = input.getBytes();
 
@@ -589,7 +589,7 @@ public class DatasetController {
 				// strings.
 				headers[i] = headers[i].replaceAll("^\"|\"$", "");
 			}
-			uploadCSVAndUpdateColumns(newDataset.getId(), projectId, filename, csvEntity, headers, permission);
+			uploadCSVAndUpdateColumns(createdDataset.getId(), projectId, filename, csvEntity, headers, permission);
 		} catch (final IOException e) {
 			final String error = "Unable to upload csv dataset";
 			log.error(error, e);
@@ -611,7 +611,7 @@ public class DatasetController {
 		final Optional<ProjectAsset> projectAsset = projectAssetService.createProjectAsset(
 			project.get(),
 			assetType,
-			newDataset,
+			createdDataset,
 			permission
 		);
 
@@ -623,7 +623,7 @@ public class DatasetController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(projectAsset.get());
 	}
 
-	@PutMapping(value = "/upload-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@PostMapping(value = "/upload-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads an arbitrary file to a dataset")
 	@ApiResponses(
@@ -730,38 +730,38 @@ public class DatasetController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(projectAsset.get());
 	}
 
-	@GetMapping("/{id}/upload-url")
-	@Secured(Roles.USER)
-	@Operation(summary = "Gets a presigned url to upload the dataset")
-	@ApiResponses(
-		value = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "Presigned url generated.",
-				content = @Content(
-					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class)
-				)
-			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue retrieving the presigned url",
-				content = @Content
-			)
-		}
-	)
-	public ResponseEntity<PresignedURL> getUploadURL(
-		@PathVariable("id") final UUID id,
-		@RequestParam("filename") final String filename
-	) {
-		try {
-			return ResponseEntity.ok(datasetService.getUploadUrl(id, filename));
-		} catch (final Exception e) {
-			final String error = "Unable to get upload url";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
-		}
-	}
+	//	@GetMapping("/{id}/upload-url")
+	//	@Secured(Roles.USER)
+	//	@Operation(summary = "Gets a presigned url to upload the dataset")
+	//	@ApiResponses(
+	//		value = {
+	//			@ApiResponse(
+	//				responseCode = "200",
+	//				description = "Presigned url generated.",
+	//				content = @Content(
+	//					mediaType = "application/json",
+	//					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class)
+	//				)
+	//			),
+	//			@ApiResponse(
+	//				responseCode = "500",
+	//				description = "There was an issue retrieving the presigned url",
+	//				content = @Content
+	//			)
+	//		}
+	//	)
+	//	public ResponseEntity<PresignedURL> getUploadURL(
+	//		@PathVariable("id") final UUID id,
+	//		@RequestParam("filename") final String filename
+	//	) {
+	//		try {
+	//			return ResponseEntity.ok(datasetService.getUploadUrl(id, filename));
+	//		} catch (final Exception e) {
+	//			final String error = "Unable to get upload url";
+	//			log.error(error, e);
+	//			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+	//		}
+	//	}
 
 	/**
 	 * Uploads a CSV file to the dataset. This will grab a presigned URL from TDS
