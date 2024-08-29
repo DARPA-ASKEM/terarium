@@ -86,10 +86,6 @@ public class ChartAnnotationController {
 			permission
 		);
 
-		if (chartAnnotations.isEmpty()) {
-			return ResponseEntity.noContent().build();
-		}
-
 		return ResponseEntity.ok(chartAnnotations);
 	}
 
