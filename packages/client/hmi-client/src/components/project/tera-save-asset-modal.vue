@@ -29,7 +29,7 @@ import Button from 'primevue/button';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { AssetType, ProgrammingLanguage } from '@/types/Types';
-import type { InterventionPolicy, Model } from '@/types/Types';
+import type { InterventionPolicy, Model, ModelConfiguration } from '@/types/Types';
 import type { Workflow } from '@/types/workflow';
 import { emptyWorkflow } from '@/services/workflow';
 import { setFileExtension } from '@/services/code';
@@ -101,6 +101,9 @@ function save() {
 			break;
 		case AssetType.InterventionPolicy:
 			(newAsset as InterventionPolicy).name = newName.value;
+			break;
+		case AssetType.ModelConfiguration:
+			(newAsset as ModelConfiguration).name = newName.value;
 			break;
 		default:
 			break;

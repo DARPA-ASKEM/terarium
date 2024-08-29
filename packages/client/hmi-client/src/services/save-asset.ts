@@ -7,11 +7,12 @@ import { AssetType } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
-import type { Model, Code, InterventionPolicy } from '@/types/Types';
+import type { Model, Code, InterventionPolicy, ModelConfiguration } from '@/types/Types';
 import type { Workflow } from '@/types/workflow';
 import { createInterventionPolicy } from './intervention-policy';
+import { createModelConfiguration } from './model-configurations';
 
-export type AssetToSave = Model | Workflow | File | InterventionPolicy;
+export type AssetToSave = Model | Workflow | ModelConfiguration | InterventionPolicy | File;
 
 // TODO: Once assets have a type property, we can remove the assetType parameter
 
@@ -36,6 +37,9 @@ export async function saveAs(
 			break;
 		case AssetType.InterventionPolicy:
 			response = await createInterventionPolicy(newAsset as InterventionPolicy);
+			break;
+		case AssetType.ModelConfiguration:
+			response = await createModelConfiguration(newAsset as ModelConfiguration);
 			break;
 		default:
 			logger.info(`Saving for ${assetType} is not implemented.`);
