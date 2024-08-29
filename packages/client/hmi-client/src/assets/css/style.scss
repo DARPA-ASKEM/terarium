@@ -93,9 +93,16 @@
 		box-shadow: none;
 	}
 
-	/* Fixing the confirm dialog text placement */
+	/* Fixing the confirm dialog text placement and reject button styling */
 	.p-confirm-dialog-message {
 		margin-left: 0 !important;
+		margin-top: var(--gap);
+	}
+	.p-confirm-dialog-reject {
+		background-color: var(--surface-0);
+		color: var(--text-color-primary) !important;
+		border: 1px solid var(--surface-border) !important;
+		margin-right: 0 !important;
 	}
 
 	// Styles reused in Document.vue and DataExplorer.vue - TODO: look into changing prime vue styling to reflect this
