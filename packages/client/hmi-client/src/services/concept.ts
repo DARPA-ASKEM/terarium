@@ -46,7 +46,8 @@ async function searchCuriesEntities(query: string): Promise<Array<DKG>> {
 }
 
 function getCurieUrl(curie: string): string {
-	return `http://34.230.33.149:8772/${curie}`;
+	console.log(`http://mira-epi-dkg-lb-c7b58edea41524e6.elb.us-east-1.amazonaws.com/api/${curie}`);
+	return `http://mira-epi-dkg-lb-c7b58edea41524e6.elb.us-east-1.amazonaws.com/api/${curie}`;
 }
 
 /**
