@@ -135,6 +135,10 @@
 		}
 	}
 
+	/* Correct button font weight */
+	.p-button-label {
+		font-weight: var(--font-weight);
+	}
 
 	/* SplitButton menu height and width fix */
 	.p-tieredmenu {

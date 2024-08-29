@@ -29,7 +29,7 @@
 			<div class="toolbar-section">
 				<span><i class="pi pi-circle-fill kernel-status" :style="statusStyle" /></span>
 				<header id="GPT">
-					{{ kernelStatus === 'idle' ? 'Ready' : kernelStatus === 'busy' ? 'Busy' : 'Unavailable' }}
+					{{ kernelStatus === 'idle' ? 'Ready' : kernelStatus === 'busy' ? 'Busy' : 'Offline' }}
 				</header>
 			</div>
 			<span class="flex-auto"></span>

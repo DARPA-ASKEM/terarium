@@ -134,7 +134,7 @@ const autoGrow = () => {
 .chat-input-container {
 	position: absolute;
 	top: 8.5rem;
-	left: 14rem;
+	left: 9.25rem;
 	z-index: 100;
 	display: flex;
 	flex-direction: row;
