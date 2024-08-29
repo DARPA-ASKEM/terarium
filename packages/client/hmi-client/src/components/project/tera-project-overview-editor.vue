@@ -73,16 +73,22 @@ onUnmounted(() => {
 	min-height: 100%;
 	display: flex;
 	flex-direction: column;
+	border-top-left-radius: 0px !important;
 }
 
 :deep(.p-editor-content) {
 	flex-grow: 1;
 }
 
-:deep(.p-editor-container .p-editor-toolbar) {
+.p-editor-container:deep(.p-editor-toolbar) {
 	border-radius: 0px;
 	border-color: var(--surface-border-light) !important;
 	border-top: none !important;
+}
+.p-editor-container:deep(.p-editor-content) {
+	border-radius: 0px;
+	border-color: var(--surface-border-light) !important;
+	border: none !important;
 }
 
 :deep(.ql-picker-label) {
