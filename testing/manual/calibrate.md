@@ -25,15 +25,20 @@ sampling combinations in PyCIEMSS can result in numerical instability, when this
 7. Use/upload a dataset from [Google Drive](https://drive.google.com/drive/folders/1hjxiggCkBCofjCQgf9gXZEHBLkBqaVwe)
 8. Connect the dataset to Calibrate
 
+## 3. (Optional) Add intervention(s)
+1. Create a new intervention node and connect the model to this.
+2. Create a static or dynamic intervention on a parameter or state.
+3. Connect this to the calibration. 
+4. When verifying you should be able to see your intervention in the output charts.
 
-### 3. Configure calibration mappings
+### 4. Configure calibration mappings
 1. Map dataset `t` to model `timestamp`
 2. Map dataset `I_obs` to model `I` (it is not necessary to map `S_obs, R_obs`)
 3. Optionally change the number of samples and solver iterations to both 10 if you want a faster but worst run.
 4. Run calibrate
 
 
-### 4. Check results
+### 5. Check results
 1. Verify that there is a loss chart available while the process is running, showing the loss value as a function of solver iterations
 2. Verify that there is a `Parameters chart` available. This should allow the user to select different model parameters (Eg beta, gamma) and will display a bar chart showing before and afer calibration values for the selected parameters.
 3. Verify that there is a `Variables chart` available, showing time-series plots for each model variable based on a Simulate run with the calibrate parameter values.
