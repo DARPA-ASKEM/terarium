@@ -77,6 +77,15 @@
 				v-model:output="selectedOutputId"
 				is-selectable
 			>
+				<section class="right-side">
+					<Button
+						label="Save for re-use"
+						size="small"
+						outlined
+						severity="secondary"
+						@click="showSaveModelModal = true"
+					/>
+				</section>
 				<tera-notebook-error
 					v-if="executeResponse.status === OperatorStatus.ERROR"
 					:name="executeResponse.name"
@@ -101,6 +110,7 @@
 		:asset="stratifiedAmr"
 		:assetType="AssetType.Model"
 		:is-visible="showSaveModelModal"
+		@on-save="updateNodeModel"
 		@close-modal="showSaveModelModal = false"
 	/>
 </template>
@@ -266,6 +276,22 @@ const handleStratifyResponse = (data: any) => {
 	}
 };
 
+const createOutput = async (model: Model, useModelName = false) => {
+	const modelData = await createModel(model);
+	if (!modelData) return;
+
+	emit('append-output', {
+		id: uuidv4(),
+		label: useModelName ? modelData.header.name : nodeOutputLabel(props.node, 'Output'),
+		type: 'modelId',
+		state: {
+			strataGroup: _.cloneDeep(props.node.state.strataGroup),
+			strataCodeHistory: _.cloneDeep(props.node.state.strataCodeHistory)
+		},
+		value: [modelData.id]
+	});
+};
+
 const handleModelPreview = async (data: any) => {
 	stratifiedAmr.value = data.content['application/json'];
 	isStratifyInProgress.value = false;
@@ -275,19 +301,7 @@ const handleModelPreview = async (data: any) => {
 	}
 
 	// Create output
-	const modelData = await createModel(stratifiedAmr.value);
-	if (!modelData) return;
-
-	emit('append-output', {
-		id: uuidv4(),
-		label: nodeOutputLabel(props.node, 'Output'),
-		type: 'modelId',
-		state: {
-			strataGroup: _.cloneDeep(props.node.state.strataGroup),
-			strataCodeHistory: _.cloneDeep(props.node.state.strataCodeHistory)
-		},
-		value: [modelData.id]
-	});
+	createOutput(stratifiedAmr.value);
 };
 
 const buildJupyterContext = () => {
@@ -442,6 +456,12 @@ const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
+const updateNodeModel = (model: Model) => {
+	showSaveModelModal.value = false;
+	stratifiedAmr.value = model;
+	createOutput(model, true);
+};
+
 watch(
 	() => props.node.active,
 	async () => {
@@ -508,5 +528,10 @@ onUnmounted(() => {
 .wizard-section {
 	background-color: var(--surface-disabled);
 	border-right: 1px solid var(--surface-border-dark);
+}
+
+.right-side {
+	display: flex;
+	justify-content: right;
 }
 </style>
