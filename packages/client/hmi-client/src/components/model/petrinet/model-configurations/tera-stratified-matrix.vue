@@ -10,7 +10,7 @@
 			/>
 
 			<Button
-				@click="pasteBuffer(clipboardText)"
+				@click="clipboardBuffer(clipboardText)"
 				label="Paste"
 				severity="secondary"
 				size="small"
@@ -185,7 +185,7 @@ const pasteItemProcessor = async (item: DataTransferItem) => {
 	});
 };
 const processPasteEvent = pasteEventGenerator(pasteItemProcessor);
-const pasteBuffer = (text: string) => {
+const clipboardBuffer = (text: string) => {
 	updateByMatrixBulk(matrix.value, text);
 };
 
