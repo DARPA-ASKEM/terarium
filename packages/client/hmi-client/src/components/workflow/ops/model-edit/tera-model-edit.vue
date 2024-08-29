@@ -426,7 +426,6 @@ onMounted(async () => {
 		// Set default output which is the input (original model)
 		createOutput(originalModel);
 	}
-	hasCodeChange();
 });
 
 onUnmounted(() => {

@@ -54,7 +54,7 @@
 						<section v-if="isDraft">There are unsaved changes</section>
 						<tera-output-dropdown
 							class="mx-2"
-							:class="isDraft ? 'draft' : ''"
+							:class="{ draft: isDraft }"
 							:options="outputOptions"
 							:output="selectedOutputId"
 							@update:selection="(e) => emit('update:selection', e)"
