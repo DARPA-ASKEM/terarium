@@ -7,10 +7,11 @@ import { AssetType } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
-import type { Model, Code } from '@/types/Types';
+import type { Model, Code, ModelConfiguration } from '@/types/Types';
 import type { Workflow } from '@/types/workflow';
+import { createModelConfiguration } from './model-configurations';
 
-export type AssetToSave = Model | Workflow | File;
+export type AssetToSave = Model | Workflow | ModelConfiguration | File;
 
 // TODO: Once assets have a type property, we can remove the assetType parameter
 
@@ -33,6 +34,9 @@ export async function saveAs(
 		case AssetType.Code:
 			response = await uploadCodeToProject(newAsset as File, ref(0));
 			break;
+		case AssetType.ModelConfiguration:
+			response = await createModelConfiguration(newAsset as ModelConfiguration);
+			break;
 		default:
 			logger.info(`Saving for ${assetType} is not implemented.`);
 			return;
@@ -43,7 +47,6 @@ export async function saveAs(
 		return;
 	}
 
-	// TODO: Potentially add a flag in case we don't want to add the asset to the project
 	const projectId = useProjects().activeProject.value?.id;
 	if (!projectId) {
 		logger.error(`Asset can't be saved since target project doesn't exist.`);
