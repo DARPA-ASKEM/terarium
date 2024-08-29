@@ -92,7 +92,6 @@ export interface ChartAnnotation extends TerariumAsset {
     nodeId: string;
     outputId: string;
     chartId: string;
-    chartType: ChartType;
     layerSpec: any;
     llmGenerated: boolean;
     metadata: any;
@@ -1019,13 +1018,6 @@ export enum AssetType {
     Code = "code",
     ModelConfiguration = "model-configuration",
     Artifact = "artifact",
-}
-
-export enum ChartType {
-    Variable = "VARIABLE",
-    Parameter = "PARAMETER",
-    Loss = "LOSS",
-    Error = "ERROR",
 }
 
 export enum EvaluationScenarioStatus {
