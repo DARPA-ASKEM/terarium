@@ -38,6 +38,9 @@
 				@add-code-cell="addCodeCell()"
 				@keydown.stop
 			/>
+
+			<!-- Add a cell Button -->
+			<Button icon="pi pi-plus" label="Add a cell" size="small" class="add-cell-button" text @click="addCodeCell()" />
 		</div>
 	</div>
 </template>
@@ -54,6 +57,7 @@ import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
 import { updateNotebookSession } from '@/services/notebook-session';
 import { useProjects } from '@/composables/project';
 import { isEmpty } from 'lodash';
+import Button from 'primevue/button';
 
 const messagesHistory = ref<JupyterMessage[]>([]);
 const isExecutingCode = ref(false);
@@ -470,5 +474,13 @@ section {
 .selected {
 	background-color: var(--surface-50);
 	border: 1px solid var(--primary-color);
+}
+
+.add-cell-button {
+	margin-left: var(--gap);
+	width: 100%;
+}
+.add-cell-button:deep(.p-button-label) {
+	text-align: left;
 }
 </style>
