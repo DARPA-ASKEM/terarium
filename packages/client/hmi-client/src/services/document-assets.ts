@@ -3,7 +3,7 @@
  */
 
 import API, { getProjectIdFromUrl } from '@/api/api';
-import type { DocumentAsset } from '@/types/Types';
+import { DocumentAsset, ProjectAsset } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { Ref } from 'vue';
 import { activeProjectId } from '@/composables/activeProject';
@@ -43,25 +43,35 @@ async function getDocumentAsset(documentId: string, projectId?: string): Promise
  */
 async function uploadDocumentAssetToProject(
 	file: File,
-	userId: string,
 	description?: string,
 	progress?: Ref<number>
-): Promise<DocumentAsset | null> {
-	// Create a new document with the same name as the file, and post the metadata to TDS
-	const documentAsset: DocumentAsset = {
-		name: file.name,
-		description: description || file.name,
-		fileNames: [file.name],
-		userId
-	};
+): Promise<ProjectAsset | null> {
+	const projectId = activeProjectId.value || getProjectIdFromUrl();
 
-	const newDocumentAsset: DocumentAsset | null = await createNewDocumentAsset(documentAsset);
-	if (!newDocumentAsset || !newDocumentAsset.id) return null;
+	const formData = new FormData();
+	formData.append('file', file);
 
-	const successfulUpload = await addFileToDocumentAsset(newDocumentAsset.id, file, progress);
-	if (!successfulUpload) return null;
+	const response = await API.post(`/document-asset/upload-document?project-id=${projectId}`, formData, {
+		params: {
+			name: file.name,
+			description: description || file.name,
+			filename: file.name
+		},
+		headers: {
+			'Content-Type': 'multipart/form-data'
+		},
+		onUploadProgress(progressEvent) {
+			if (progress) {
+				progress.value = Math.min(90, Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100)));
+			}
+		},
+		timeout: 3600000
+	});
 
-	return newDocumentAsset;
+	if (response && response.status < 400 && response.data) {
+		return response.data;
+	}
+	return null;
 }
 
 async function createNewDocumentFromGithubFile(
@@ -109,33 +119,6 @@ async function createNewDocumentAsset(documentAsset: DocumentAsset): Promise<Doc
 	const response = await API.post(`/document-asset?project-id=${projectId}`, documentAsset);
 	if (!response || response.status >= 400) return null;
 	return response.data;
-}
-
-/**
- * Adds a file to a document in TDS
- * @param documentId the documentId to add the file to
- * @param file the file to upload
- */
-async function addFileToDocumentAsset(documentId: string, file: File, progress?: Ref<number>): Promise<boolean> {
-	const formData = new FormData();
-	formData.append('file', file);
-
-	const response = await API.put(`/document-asset/${documentId}/upload-document`, formData, {
-		params: {
-			filename: file.name
-		},
-		headers: {
-			'Content-Type': 'multipart/form-data'
-		},
-		onUploadProgress(progressEvent) {
-			if (progress) {
-				progress.value = Math.min(90, Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100)));
-			}
-		},
-		timeout: 3600000
-	});
-
-	return response && response.status < 400;
 }
 
 async function downloadDocumentAsset(documentId: string, fileName: string): Promise<string | null> {

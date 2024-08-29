@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
@@ -41,10 +42,13 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseStatus;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
@@ -52,6 +56,7 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.ExtractionService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
@@ -85,6 +90,8 @@ public class DocumentController {
 	final ObjectMapper objectMapper;
 	final ExtractionService extractionService;
 	final EmbeddingService embeddingService;
+
+	final ProjectAssetService projectAssetService;
 
 	@Value("${xdd.api-key}")
 	String apikey;
@@ -414,7 +421,7 @@ public class DocumentController {
 	}
 
 	/** Uploads a file to the project. */
-	@PutMapping(value = "/{id}/upload-document", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@PostMapping(value = "/upload-document", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a document")
 	@ApiResponses(
@@ -430,26 +437,73 @@ public class DocumentController {
 			@ApiResponse(responseCode = "500", description = "There was an issue uploading the document", content = @Content)
 		}
 	)
-	public ResponseEntity<Void> uploadDocument(
-		@PathVariable("id") final UUID id,
+	public ResponseEntity<ProjectAsset> uploadDocument(
+		@RequestParam("project-id") final UUID projectId,
+		@RequestParam("name") final String name,
+		@RequestParam("description") final String description,
 		@RequestParam("filename") final String filename,
 		@RequestPart("file") final MultipartFile file
 	) {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(
+			currentUserService.get().getId(),
+			projectId
+		);
+
+		final List<String> filenames = new ArrayList<>();
+		filenames.add(filename);
+		final DocumentAsset tempDocumentAsset = new DocumentAsset();
+		tempDocumentAsset
+			.setUserId(currentUserService.get().getId())
+			.setFileNames(filenames)
+			.setName(name)
+			.setDescription(description);
+		DocumentAsset createdDocumentAsset = null;
+
 		try {
-			final UUID projectId = documentAssetService.getProjectIdForAsset(id);
-			final Schema.Permission permission = projectService.checkPermissionCanWrite(
-				currentUserService.get().getId(),
-				projectId
-			);
+			createdDocumentAsset = documentAssetService.createAsset(tempDocumentAsset, projectId, permission);
+		} catch (final IOException e) {
+			final String error = "Unable to create document";
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+		}
+
+		try {
+			log.debug("Uploading file to document {}", createdDocumentAsset.getId());
 
 			final byte[] fileAsBytes = file.getBytes();
 			final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
-			return uploadDocumentHelper(id, filename, fileEntity, projectId, permission);
+			uploadDocumentHelper(createdDocumentAsset.getId(), filename, fileEntity, projectId, permission);
 		} catch (final IOException e) {
 			final String error = "Unable to upload document";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
+
+		final Optional<Project> project;
+		try {
+			project = projectService.getProject(projectId);
+			if (!project.isPresent()) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
+			}
+		} catch (final Exception e) {
+			log.error("Error communicating with project service", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
+
+		final AssetType assetType = AssetType.DOCUMENT;
+		final Optional<ProjectAsset> projectAsset = projectAssetService.createProjectAsset(
+			project.get(),
+			assetType,
+			createdDocumentAsset,
+			permission
+		);
+
+		if (projectAsset.isEmpty()) {
+			log.error("Project Asset is empty");
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("asset.unable-to-create"));
+		}
+
+		return ResponseEntity.status(HttpStatus.CREATED).body(projectAsset.get());
 	}
 
 	/**

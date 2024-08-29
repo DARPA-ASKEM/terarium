@@ -79,7 +79,7 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import Button from 'primevue/button';
 import { AcceptedExtensions, AcceptedTypes } from '@/types/common';
 import { uploadCodeToProject } from '@/services/code';
-import type { DocumentAsset, ProjectAsset } from '@/types/Types';
+import type { ProjectAsset } from '@/types/Types';
 import { AssetType, ProvenanceType } from '@/types/Types';
 import { uploadDocumentAssetToProject } from '@/services/document-assets';
 import { createNewDatasetFromFile } from '@/services/dataset';
@@ -153,13 +153,8 @@ async function processCode(file: File) {
  */
 async function processDocument(file: File) {
 	// This is pdf, txt, md files
-	const document: DocumentAsset | null = await uploadDocumentAssetToProject(
-		file,
-		useAuthStore().user?.id ?? '',
-		'',
-		progress
-	);
-	return { id: document?.id ?? '', assetType: AssetType.Document, name: file.name };
+	const addedAsset: ProjectAsset | null = await uploadDocumentAssetToProject(file, '', progress);
+	return { asset: addedAsset };
 }
 
 /**

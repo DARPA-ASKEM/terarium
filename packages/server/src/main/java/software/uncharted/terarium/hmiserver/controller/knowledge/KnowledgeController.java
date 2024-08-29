@@ -97,6 +97,7 @@ public class KnowledgeController {
 	final CurrentUserService currentUserService;
 
 	final Messages messages;
+	private final DocumentAssetService documentAssetService;
 
 	@Value("${openai-api-key:}")
 	String OPENAI_API_KEY;
@@ -687,9 +688,9 @@ public class KnowledgeController {
 	)
 	public ResponseEntity<Void> pdfExtractions(
 		@RequestParam("document-id") final UUID documentId,
-		@RequestParam(name = "domain", defaultValue = "epi") final String domain,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestParam(name = "domain", defaultValue = "epi") final String domain
 	) {
+		final UUID projectId = documentAssetService.getProjectIdForAsset(documentId);
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
 			projectId
