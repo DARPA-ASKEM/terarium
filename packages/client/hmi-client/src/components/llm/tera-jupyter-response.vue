@@ -29,7 +29,7 @@
 								<Button icon="pi pi-play" rounded text @click="saveEditingQuery" />
 							</div>
 						</div>
-						<div v-else-if="!isEmpty(query)" class="query">{{ query }}</div>
+						<div v-else-if="!isEmpty(query)" class="query pb-0">{{ query }}</div>
 					</section>
 					<!-- TODO: This processing notification was applied to all messages, not just the one that is processing. Need to add id check. -->
 					<div v-if="props.isExecutingCode" class="executing-message">
@@ -41,7 +41,10 @@
 				<div v-for="m in msg.messages" :key="m.header.msg_id">
 					<!-- Handle llm_thought type -->
 					<div v-if="m.header.msg_type === 'llm_thought'" class="llm-thought">
-						<tera-jupyter-response-thought :show-thought="showThought || props.showChatThoughts">
+						<tera-jupyter-response-thought
+							:show-thought="showThought || props.showChatThoughts"
+							@toggleThought="showThought = $event"
+						>
 							<ul>
 								<li v-for="(line, index) in formattedLlmThoughtPoints(m.content)" :key="index">
 									{{ line }}

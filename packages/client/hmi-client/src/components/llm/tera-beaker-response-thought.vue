@@ -2,21 +2,31 @@
 	<div class="response-thought-container">
 		<div ref="responseThought" class="thought" :class="{ hide: !props.showThought, show: props.showThought }">
 			<slot />
+			<Button text rounded icon="pi pi-times" @click="onClickClose" />
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, defineProps, defineEmits } from 'vue';
+import Button from 'primevue/button';
 
 const responseThought = ref(<HTMLElement | null>null);
 
 const props = defineProps<{
 	showThought?: boolean;
 }>();
+
+const emit = defineEmits(['toggleThought']);
+
+const onClickClose = () => {
+	emit('toggleThought', !props.showThought);
+};
 </script>
 
 <style scoped>
 .thought {
+	display: flex;
+	justify-content: space-between;
 	white-space: pre-line;
 	background-color: #fff;
 	border: 1px solid var(--surface-border);
