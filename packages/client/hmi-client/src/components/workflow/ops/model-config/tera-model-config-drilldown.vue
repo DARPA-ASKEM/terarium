@@ -207,7 +207,7 @@
 <script setup lang="ts">
 import '@/ace-config';
 import { computed, onUnmounted, ref, watch, nextTick, ComponentPublicInstance } from 'vue';
-import { cloneDeep, isEmpty, isEqual, orderBy } from 'lodash';
+import { cloneDeep, isEmpty, isEqual, orderBy, debounce } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
@@ -467,7 +467,9 @@ const model = ref<Model | null>(null);
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
 
-const configuredMmt = computed(() => {
+const configuredMmt = ref(makeConfiguredMMT());
+
+function makeConfiguredMMT() {
 	const mmtCopy = cloneDeep(mmt.value);
 	knobs.value.transientModelConfig.initialSemanticList.forEach((initial) => {
 		const mmtInitial = mmtCopy.initials[initial.target];
@@ -488,7 +490,7 @@ const configuredMmt = computed(() => {
 		}
 	});
 	return mmtCopy;
-});
+}
 
 const downloadConfiguredModel = async (configuration: ModelConfiguration = knobs.value.transientModelConfig) => {
 	const rawModel = await getAsConfiguredModel(configuration);
@@ -542,6 +544,11 @@ const initialize = async () => {
 	await fetchConfigurations(modelId);
 
 	model.value = await getModel(modelId);
+	if (model.value) {
+		const response = await getMMT(model.value);
+		mmt.value = response.mmt;
+		mmtParams.value = response.template_params;
+	}
 
 	if (!state.transientModelConfig.id) {
 		// Apply a configuration if one hasn't been applied yet
@@ -550,6 +557,7 @@ const initialize = async () => {
 		knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
 		originalConfig = cloneDeep(state.transientModelConfig);
 	}
+	configuredMmt.value = makeConfiguredMMT();
 
 	// Create a new session and context based on model
 	try {
@@ -652,23 +660,18 @@ watch(
 	}
 );
 
-watch(
-	() => model.value,
-	async () => {
-		if (!model.value) return;
-		const response: any = await getMMT(model.value);
-		mmt.value = response.mmt;
-		mmtParams.value = response.template_params;
-	},
-	{ immediate: true, deep: true }
-);
+const debounceUpdateState = debounce(() => {
+	console.log('debounced update');
+	const state = cloneDeep(props.node.state);
+	state.transientModelConfig = knobs.value.transientModelConfig;
+	configuredMmt.value = makeConfiguredMMT();
 
+	emit('update-state', state);
+}, 100);
 watch(
 	() => knobs.value,
 	async () => {
-		const state = cloneDeep(props.node.state);
-		state.transientModelConfig = knobs.value.transientModelConfig;
-		emit('update-state', state);
+		debounceUpdateState();
 	},
 	{ deep: true }
 );

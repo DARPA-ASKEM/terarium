@@ -179,8 +179,6 @@ const pasteItemProcessor = async (item: DataTransferItem) => {
 	if (item.kind !== 'string') return;
 	if (item.type !== 'text/plain') return;
 
-	console.log('paste paste');
-
 	// Presume this is a full matrix, with row/column labels
 	item.getAsString(async (text) => {
 		updateByMatrixBulk(matrix.value, text);
@@ -285,32 +283,6 @@ function resetEditState() {
 	}
 }
 
-watch(
-	() => [matrix.value, props.shouldEval],
-	async () => {
-		if (!matrix.value) return;
-		resetEditState();
-		expressionMap.value = {};
-
-		const evalList: any[] = [];
-		const tempMap: { [key: string]: any } = {};
-
-		const assignExpression = async (id: string, row: number, col: number) => {
-			if (!id) return;
-			tempMap[`${row}:${col}`] = await getMatrixValue(id);
-		};
-
-		matrix.value.forEach((matrixRow: any) => {
-			matrixRow.forEach((cell: any) => {
-				evalList.push(assignExpression(cell.content.id, cell.row, cell.col));
-			});
-		});
-
-		await Promise.all(evalList);
-		expressionMap.value = tempMap;
-	}
-);
-
 onMounted(() => {
 	document.addEventListener('paste', processPasteEvent);
 	timerId = window.setInterval(async () => {
@@ -327,7 +299,41 @@ onUnmounted(() => {
 });
 
 watch(
-	[() => props.id, () => props.mmt],
+	() => [matrix.value, props.shouldEval],
+	async () => {
+		if (!matrix.value) return;
+		resetEditState();
+		expressionMap.value = {};
+
+		const evalList: Promise<{ row: number; col: number; val: string } | undefined>[] = [];
+
+		const assignExpression = async (id: string, row: number, col: number) => {
+			if (!id) return { row: -1, col: -1, val: '' };
+			const val = await getMatrixValue(id);
+			return {
+				row,
+				col,
+				val
+			};
+		};
+
+		matrix.value.forEach((matrixRow: any) => {
+			matrixRow.forEach((cell: any) => {
+				evalList.push(assignExpression(cell.content.id, cell.row, cell.col));
+			});
+		});
+
+		const values = await Promise.all(evalList);
+		values.forEach((v) => {
+			if (v) {
+				expressionMap.value[`${v.row}:${v.col}`] = v.val;
+			}
+		});
+	}
+);
+
+watch(
+	() => [props.id, props.mmt],
 	() => {
 		generateMatrix();
 		resetEditState();
