@@ -89,7 +89,7 @@
 				severity="secondary"
 				outlined
 				icon="pi pi-replay"
-				class="p-button p-button-sm"
+				class="p-button p-button-sm pr-4"
 				@click="confirmReset"
 			/>
 		</div>
@@ -541,7 +541,9 @@ const onDownloadResponse = (payload) => {
 	padding: var(--gap-2) var(--gap) var(--gap-2) 1.5rem;
 	gap: var(--gap-2);
 }
-
+.toolbar:deep(.p-button .p-button-label) {
+	font-weight: 500;
+}
 .toolbar-section {
 	display: flex;
 	flex-direction: row;
@@ -553,6 +555,7 @@ const onDownloadResponse = (payload) => {
 	font-size: 12px;
 }
 
+/* hacks to make the selector and save button look consistant with other items that appear in the header */
 .header-action-buttons {
 	position: absolute;
 	top: 2rem;
@@ -560,8 +563,16 @@ const onDownloadResponse = (payload) => {
 	display: flex;
 	flex-direction: row;
 }
-.header-action-buttons:deep(.p-dropdown .p-dropdown-label) {
-	padding: 9px;
+.header-action-buttons:deep(.p-dropdown) {
+	padding: 0px 9px;
+	height: 32px;
+}
+.header-action-buttons:deep(.p-button) {
+	height: 32px;
+}
+.header-action-buttons:deep(.p-button .p-button-label) {
+	font-weight: 500;
+	padding: 0px var(--gap-1);
 }
 
 .variables-table {

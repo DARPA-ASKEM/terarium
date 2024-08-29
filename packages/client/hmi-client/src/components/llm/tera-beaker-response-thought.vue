@@ -34,6 +34,7 @@ const onClickClose = () => {
 	padding: var(--gap);
 	color: var(--text-color);
 	width: 100%;
+	margin-top: var(--gap-2);
 }
 .thought:deep(ul li)::marker {
 	margin-left: 2rem !important;

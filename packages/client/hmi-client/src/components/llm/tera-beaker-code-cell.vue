@@ -108,7 +108,7 @@ defineExpose({
 	display: flex;
 	position: relative;
 	align-items: start;
-	gap: var(--gap-2);
+	gap: var(--gap-5);
 	padding-bottom: var(--gap-3);
 }
 

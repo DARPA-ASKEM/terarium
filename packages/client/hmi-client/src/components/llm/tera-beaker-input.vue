@@ -30,7 +30,7 @@
 					outlined
 					:disabled="props.kernelIsBusy"
 					class="white-space-nowrap"
-					style="margin-top: 2px; height: 2.25rem; width: 10rem"
+					style="margin-top: 1px; height: 31px; width: 10rem"
 					title="Add a code cell to the notebook"
 					@click="addCodeCell"
 				>
@@ -134,7 +134,7 @@ const autoGrow = () => {
 .chat-input-container {
 	position: absolute;
 	top: 8.5rem;
-	left: 10rem;
+	left: 14rem;
 	z-index: 100;
 	display: flex;
 	flex-direction: row;

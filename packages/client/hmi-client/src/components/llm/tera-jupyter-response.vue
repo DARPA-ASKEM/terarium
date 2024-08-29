@@ -23,6 +23,7 @@
 								@click.stop
 								@keydown.enter.prevent="saveEditingQuery"
 								@keydown.esc.prevent="cancelEditingQuery"
+								style="padding: 8px"
 							/>
 							<div class="btn-group">
 								<Button icon="pi pi-times" rounded text @click="cancelEditingQuery" />
@@ -131,7 +132,7 @@ const query = ref('');
 const isEditingQuery = ref(false);
 
 // Computed values for the labels and icons
-const showThoughtLabel = computed(() => (showThought.value ? 'Hide reasoning' : 'Show reasoning'));
+const showThoughtLabel = computed(() => (showThought.value ? 'Hide thoughts' : 'Show thoughts'));
 const showHideIcon = computed(() => (showThought.value ? 'pi pi-fw pi-eye-slash' : 'pi pi-fw pi-eye'));
 
 // Reference for the chat window menu and its items
@@ -222,11 +223,13 @@ function onDeleteRequested(msgId: string) {
 	font-size: var(--font-body-medium);
 	font-weight: 600;
 	font-family: var(--font-family);
+	padding-bottom: var(--gap);
 }
 .edit-query-box {
 	display: flex;
 	flex-direction: row;
-	padding-bottom: 2px;
+	gap: var(--gap-2);
+	align-items: center;
 	textarea {
 		flex-grow: 1;
 	}
@@ -277,6 +280,11 @@ function onDeleteRequested(msgId: string) {
 	position: absolute;
 	top: 5px;
 	right: 10px;
+}
+
+/* Only show Processing message if the cell is selected */
+.jupyter-response:not(.selected) .executing-message {
+	display: none;
 }
 
 .query,
