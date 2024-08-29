@@ -4,6 +4,7 @@
 		v-bind="$attrs"
 		:node="node"
 		:menu-items="menuItems"
+		:is-draft="isDraft"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
@@ -53,14 +54,7 @@
 				is-selectable
 			>
 				<section class="right-side">
-					<Button
-						class="mr-3"
-						:disabled="isSaveForReuseDisabled"
-						outlined
-						severity="secondary"
-						label="Save as reuse"
-						@click="showSaveModelModal = true"
-					/>
+					<Button class="mr-3" outlined severity="secondary" label="Save as reuse" @click="showSaveModelModal = true" />
 				</section>
 				<tera-notebook-error
 					v-if="executeResponse.status === OperatorStatus.ERROR"
@@ -101,7 +95,7 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep, isEmpty } from 'lodash';
+import { cloneDeep, isEmpty, isEqual, debounce } from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import { VAceEditor } from 'vue3-ace-editor';
@@ -183,7 +177,9 @@ const defaultCodeText = '# This environment contains the variable "model" \n# wh
 const codeText = ref(defaultCodeText);
 const llmQuery = ref('');
 const llmThoughts = ref<any[]>([]);
-const isSaveForReuseDisabled = ref(false);
+
+const isDraft = ref(false);
+let saveModel = false;
 
 const executeResponse = ref({
 	status: OperatorStatus.DEFAULT,
@@ -313,9 +309,10 @@ const createOutput = async (modelToSave: Model) => {
 	const modelData = isReadyToCreateDefaultOutput.value ? modelToSave : await createModel(modelToSave);
 	if (!modelData) return;
 
-	const modelLabel = isReadyToCreateDefaultOutput.value
-		? (modelData.name as string)
-		: nodeOutputLabel(props.node, 'Output'); // Just label the original model with its name
+	const modelLabel =
+		isReadyToCreateDefaultOutput.value || saveModel
+			? (modelData.name as string)
+			: nodeOutputLabel(props.node, 'Output'); // Just label the original model with its name
 
 	emit('append-output', {
 		label: modelLabel,
@@ -323,6 +320,9 @@ const createOutput = async (modelToSave: Model) => {
 		state: cloneDeep(props.node.state),
 		value: [modelData.id]
 	});
+
+	isDraft.value = false;
+	saveModel = false;
 };
 
 const buildJupyterContext = () => {
@@ -367,6 +367,21 @@ const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
+// check if user has made changes to the code
+const hasCodeChange = () => {
+	if (props.node.state.notebookHistory.length) {
+		isDraft.value = !isEqual(codeText.value, props.node.state.notebookHistory?.[0]?.code);
+	} else {
+		isDraft.value = !isEqual(codeText.value, defaultCodeText);
+	}
+};
+const checkForCodeChange = debounce(hasCodeChange, 500);
+
+watch(
+	() => codeText.value,
+	() => checkForCodeChange()
+);
+
 // Updates output selection
 watch(
 	() => props.node.active,
@@ -384,6 +399,7 @@ watch(
 function updateNodeModel(model: Model) {
 	if (model) {
 		amr.value = model;
+		saveModel = true;
 		createOutput(model);
 	}
 }
@@ -410,6 +426,7 @@ onMounted(async () => {
 		// Set default output which is the input (original model)
 		createOutput(originalModel);
 	}
+	hasCodeChange();
 });
 
 onUnmounted(() => {
