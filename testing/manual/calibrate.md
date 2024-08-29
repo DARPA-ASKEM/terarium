@@ -21,9 +21,9 @@ sampling combinations in PyCIEMSS can result in numerical instability, when this
 3. Connect the model to a Model Configuration operation, create a configuration
 4. Ensure that the model parameters (e.g. beta, gamma) are assigned to an uniform distribution with valid lower and upper bounds
 5. To get a reasonable result, change the initial condition values of `S, I, R` to `1000, 2, 0` and the value of `beta` to `0.0002, 0.0008` (1/1000th of the default value to accommodate the non-normalized values of the state variables).
-6. Connect the model-configuration to a Calibrate-PyCIEMSS operation
+6. Connect the model-configuration to a Calibrate operation
 7. Use/upload a dataset from [Google Drive](https://drive.google.com/drive/folders/1hjxiggCkBCofjCQgf9gXZEHBLkBqaVwe)
-8. Connect the dataset to Calibrate-PyCIEMSS
+8. Connect the dataset to Calibrate
 
 
 ### 3. Configure calibration mappings
