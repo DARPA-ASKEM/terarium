@@ -256,8 +256,10 @@ public class ModelController {
 			}
 
 			// Force observable to empty-list if null or not specified
-			if (model.get().getSemantics().getOde().getObservables() == null) {
-				model.get().getSemantics().getOde().setObservables(new ArrayList());
+			if (model.get().getSemantics() != null) {
+				if (model.get().getSemantics().getOde().getObservables() == null) {
+					model.get().getSemantics().getOde().setObservables(new ArrayList());
+				}
 			}
 
 			// Return the model

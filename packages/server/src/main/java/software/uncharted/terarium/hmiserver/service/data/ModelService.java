@@ -161,8 +161,10 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		}
 
 		// Force observable to empty-list if null or not specified
-		if (asset.getSemantics().getOde().getObservables() == null) {
-			asset.getSemantics().getOde().setObservables(new ArrayList());
+		if (asset.getSemantics() != null) {
+			if (asset.getSemantics().getOde().getObservables() == null) {
+				asset.getSemantics().getOde().setObservables(new ArrayList());
+			}
 		}
 
 		if (asset.getHeader() != null && asset.getHeader().getName() != null) {
@@ -205,8 +207,10 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		}
 
 		// Force observable to empty-list if null or not specified
-		if (asset.getSemantics().getOde().getObservables() == null) {
-			asset.getSemantics().getOde().setObservables(new ArrayList());
+		if (asset.getSemantics() != null) {
+			if (asset.getSemantics().getOde().getObservables() == null) {
+				asset.getSemantics().getOde().setObservables(new ArrayList());
+			}
 		}
 
 		final Optional<Model> updatedOptional = super.updateAsset(asset, projectId, hasWritePermission);
