@@ -51,7 +51,7 @@
 						</Chip>
 					</aside>
 					<template v-if="!hideDropdown && outputOptions && selectedOutputId">
-            <section v-if="isDraft">There are unsaved changes</section>
+						<section v-if="isDraft">There are unsaved changes</section>
 						<tera-output-dropdown
 							class="mx-2"
 							:class="isDraft ? 'draft' : ''"
