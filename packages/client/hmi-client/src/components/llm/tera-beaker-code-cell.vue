@@ -84,8 +84,8 @@ const runCell = async () => {
 
 const onDelete = () => {
 	confirm.require({
+		header: 'Delete cell',
 		message: 'Are you sure you want to delete this cell?',
-		icon: 'pi pi-exclamation-triangle',
 		accept: () => {
 			emit('deleteRequested');
 		}
@@ -116,5 +116,9 @@ defineExpose({
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
 	padding: var(--gap-2);
+}
+:deep(.p-confirm-dialog-message) {
+	white-space: pre-wrap;
+	margin-left: 0;
 }
 </style>

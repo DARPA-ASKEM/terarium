@@ -269,13 +269,6 @@ function onDeleteRequested(msgId: string) {
 }
 
 .jupyter-response .menu-container {
-	display: none;
-	position: absolute;
-	top: 5px;
-	right: 10px;
-}
-
-.jupyter-response:hover .menu-container {
 	display: block;
 	position: absolute;
 	top: 5px;

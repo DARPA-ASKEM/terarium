@@ -478,7 +478,7 @@ section {
 
 .add-cell-button {
 	margin-left: var(--gap);
-	width: 100%;
+	width: calc(100% - 2rem);
 }
 .add-cell-button:deep(.p-button-label) {
 	text-align: left;
