@@ -50,7 +50,7 @@
 							</template>
 						</Chip>
 					</aside>
-					<template v-if="outputOptions && selectedOutputId">
+					<template v-if="!hideDropdown && outputOptions && selectedOutputId">
 						<tera-output-dropdown
 							class="mx-2"
 							:options="outputOptions"
@@ -146,6 +146,7 @@ const props = defineProps<{
 	upstreamOperatorsNav?: MenuItem[];
 	downstreamOperatorsNav?: MenuItem[];
 	spawnAnimation?: 'left' | 'right' | 'scale';
+	hideDropdown?: boolean;
 }>();
 
 const emit = defineEmits(['on-close-clicked', 'update-state', 'update:selection', 'update-output-port']);
