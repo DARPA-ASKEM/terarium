@@ -1,11 +1,11 @@
 <template>
 	<div class="code-cell-row" @keyup.ctrl.enter.prevent="runCell">
-		<pre class="m-0">In  [{{ jupyterMessage.content?.execution_count ?? '*' }}]</pre>
+		<pre class="m-0 pt-2">In  [{{ jupyterMessage.content?.execution_count ?? '*' }}]</pre>
 		<v-ace-editor
 			:value="code"
 			@init="initialize"
 			theme="chrome"
-			class="ace-editor w-full"
+			class="ace-editor w-full p-0"
 			:options="{
 				showPrintMargin: false,
 				maxLines: 1000,
@@ -14,9 +14,9 @@
 			}"
 			:lang="language"
 		/>
-		<div class="flex">
-			<Button text rounded icon="pi pi-trash" class="danger-hover pt-0" @click="onDelete" />
-			<Button text rounded icon="pi pi-play" class="pt-0" @click="runCell" />
+		<div class="flex pt-1">
+			<Button text rounded icon="pi pi-trash" class="danger-hover" @click="onDelete" />
+			<Button text rounded icon="pi pi-play" class="" @click="runCell" />
 		</div>
 	</div>
 </template>
@@ -116,9 +116,21 @@ defineExpose({
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
 	padding: var(--gap-2);
+	margin-left: 1px;
+	align-self: center;
 }
-:deep(.p-confirm-dialog-message) {
-	white-space: pre-wrap;
-	margin-left: 0;
+
+.danger-hover:hover {
+	color: var(--red-700);
+}
+/* Ace editor style overrides */
+:deep(.ace_active-line) {
+	background: transparent !important;
+}
+:deep(.ace_gutter-active-line) {
+	background: transparent !important;
+}
+:deep(.ace_gutter) {
+	height: 100%;
 }
 </style>
