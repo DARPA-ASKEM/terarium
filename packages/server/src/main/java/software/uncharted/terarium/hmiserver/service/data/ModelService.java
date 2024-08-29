@@ -6,6 +6,7 @@ import co.elastic.clients.elasticsearch.core.search.SourceFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -159,6 +160,11 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 				});
 		}
 
+		// Force observable to empty-list if null or not specified
+		if (asset.getSemantics().getOde().getObservables() == null) {
+			asset.getSemantics().getOde().setObservables(new ArrayList());
+		}
+
 		if (asset.getHeader() != null && asset.getHeader().getName() != null) {
 			asset.setName(asset.getHeader().getName());
 		}
@@ -197,6 +203,12 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		if (asset.getHeader() != null && asset.getHeader().getName() != null) {
 			asset.setName(asset.getHeader().getName());
 		}
+
+		// Force observable to empty-list if null or not specified
+		if (asset.getSemantics().getOde().getObservables() == null) {
+			asset.getSemantics().getOde().setObservables(new ArrayList());
+		}
+
 		final Optional<Model> updatedOptional = super.updateAsset(asset, projectId, hasWritePermission);
 		if (updatedOptional.isEmpty()) {
 			return Optional.empty();
