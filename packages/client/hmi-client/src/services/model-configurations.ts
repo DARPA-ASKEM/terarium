@@ -152,7 +152,11 @@ export function getInitial(config: ModelConfiguration, initialId: string): Initi
 	return getInitials(config).find((initial) => initial.target === initialId);
 }
 
-export async function setInitialExpression(config: ModelConfiguration, initialId: string, expression: string): void {
+export async function setInitialExpression(
+	config: ModelConfiguration,
+	initialId: string,
+	expression: string
+): Promise<void> {
 	const initial = getInitial(config, initialId);
 	if (!initial) return;
 
