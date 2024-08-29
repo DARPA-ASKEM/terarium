@@ -20,6 +20,7 @@ import java.util.regex.Matcher;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
@@ -155,6 +156,23 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		final String input =
 			"Following sections describe the input and output of an operation.\nInput: { a: 1}\nOutput: { a: 2}. Provide a summary in less than 10 words.";
 		req.setInput(input.getBytes(StandardCharsets.UTF_8));
+
+		final TaskResponse resp = taskService.runTaskSync(req);
+
+		log.info(new String(resp.getOutput()));
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendGoLLMGenerateResponseRequest() throws Exception {
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.GOLLM);
+		req.setScript(GenerateResponseHandler.NAME);
+		final GenerateResponseHandler.Input input = new GenerateResponseHandler.Input();
+		input.setInstruction("Give me a simple random json object");
+		final JsonNode resFormat = new ObjectMapper().readTree("{\"type\": \"json_object\"}");
+		input.setResponseFormat(resFormat);
+		req.setInput(input);
 
 		final TaskResponse resp = taskService.runTaskSync(req);
 
