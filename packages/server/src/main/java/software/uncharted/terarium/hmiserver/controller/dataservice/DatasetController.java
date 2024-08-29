@@ -556,6 +556,7 @@ public class DatasetController {
 			currentUserService.get().getId(),
 			projectId
 		);
+
 		final List<String> filenames = new ArrayList<>();
 		filenames.add(filename);
 		final Dataset dataset = new Dataset();
@@ -622,64 +623,7 @@ public class DatasetController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(projectAsset.get());
 	}
 
-	/**
-	 * Uploads a CSV file to the dataset. This will grab a presigned URL from TDS
-	 * then push the file to S3.
-	 *
-	 * @param datasetId ID of the dataset to upload t
-	 * @param filename  CSV file to upload
-	 * @return Response
-	 */
-	@PutMapping(value = "/{id}/upload-csv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	@Secured(Roles.USER)
-	@Operation(summary = "Uploads a CSV file to a dataset")
-	@ApiResponses(
-		value = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "Uploaded the CSV file.",
-				content = @Content(
-					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseStatus.class)
-				)
-			),
-			@ApiResponse(responseCode = "500", description = "There was an issue uploading the CSV", content = @Content)
-		}
-	)
-	public ResponseEntity<ResponseStatus> uploadCsv(
-		@PathVariable("id") final UUID datasetId,
-		@RequestParam("filename") final String filename,
-		@RequestPart("file") final MultipartFile input
-	) {
-		final UUID projectId = datasetService.getProjectIdForAsset(datasetId);
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
-		try {
-			log.debug("Uploading CSV file to dataset {}", datasetId);
-
-			final byte[] csvBytes = input.getBytes();
-
-			final HttpEntity csvEntity = new ByteArrayEntity(csvBytes, ContentType.APPLICATION_OCTET_STREAM);
-			final String csvString = new String(csvBytes);
-			final String[] csvRows = csvString.split("\\R");
-			final String[] headers = csvRows[0].split(",");
-			for (int i = 0; i < headers.length; i++) {
-				// this is very ugly but we're removing opening and closing "'s around these
-				// strings.
-				headers[i] = headers[i].replaceAll("^\"|\"$", "");
-			}
-			return uploadCSVAndUpdateColumns(datasetId, projectId, filename, csvEntity, headers, permission);
-		} catch (final IOException e) {
-			final String error = "Unable to upload csv dataset";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
-		}
-	}
-
-	@PutMapping(value = "/{id}/upload-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@PutMapping(value = "/upload-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads an arbitrary file to a dataset")
 	@ApiResponses(
@@ -695,24 +639,43 @@ public class DatasetController {
 			@ApiResponse(responseCode = "500", description = "There was an issue uploading the file", content = @Content)
 		}
 	)
-	public ResponseEntity<Void> uploadData(
-		@PathVariable("id") final UUID datasetId,
+	public ResponseEntity<ProjectAsset> uploadData(
+		@RequestParam("project-id") final UUID projectId,
+		@RequestParam("name") final String name,
+		@RequestParam("description") final String description,
 		@RequestParam("filename") final String filename,
 		@RequestPart("file") final MultipartFile input
 	) {
-		final UUID projectId = datasetService.getProjectIdForAsset(datasetId);
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
 			projectId
 		);
 
-		try {
-			log.debug("Uploading file to dataset {}", datasetId);
+		final List<String> filenames = new ArrayList<>();
+		filenames.add(filename);
+		final Dataset dataset = new Dataset();
+		dataset
+			.setUserId(currentUserService.get().getId())
+			.setFileNames(filenames)
+			.setName(name)
+			.setDescription(description);
+		Dataset newDataset = null;
 
-			final ResponseEntity<Void> res = datasetService.getUploadStream(datasetId, filename, input);
+		try {
+			newDataset = datasetService.createAsset(dataset, projectId, permission);
+		} catch (final IOException e) {
+			final String error = "Unable to create dataset";
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+		}
+
+		try {
+			log.debug("Uploading file to dataset {}", newDataset.getId());
+
+			final ResponseEntity<Void> res = datasetService.getUploadStream(newDataset.getId(), filename, input);
 			if (res.getStatusCode() == HttpStatus.OK) {
 				// add the filename to existing file names
-				Optional<Dataset> updatedDataset = datasetService.getAsset(datasetId, permission);
+				Optional<Dataset> updatedDataset = datasetService.getAsset(newDataset.getId(), permission);
 				if (updatedDataset.isEmpty()) {
 					final String error = "Failed to get dataset after upload";
 					log.error(error);
@@ -734,13 +697,37 @@ public class DatasetController {
 
 				datasetService.updateAsset(updatedDataset.get(), projectId, permission);
 			}
-
-			return res;
 		} catch (final IOException e) {
 			final String error = "Unable to upload file to dataset";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
+
+		final Optional<Project> project;
+		try {
+			project = projectService.getProject(projectId);
+			if (!project.isPresent()) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
+			}
+		} catch (final Exception e) {
+			log.error("Error communicating with project service", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
+
+		final AssetType assetType = AssetType.DATASET;
+		final Optional<ProjectAsset> projectAsset = projectAssetService.createProjectAsset(
+			project.get(),
+			assetType,
+			newDataset,
+			permission
+		);
+
+		if (projectAsset.isEmpty()) {
+			log.error("Project Asset is empty");
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("asset.unable-to-create"));
+		}
+
+		return ResponseEntity.status(HttpStatus.CREATED).body(projectAsset.get());
 	}
 
 	@GetMapping("/{id}/upload-url")
