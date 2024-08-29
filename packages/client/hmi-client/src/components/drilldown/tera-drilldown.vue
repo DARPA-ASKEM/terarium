@@ -50,8 +50,8 @@
 							</template>
 						</Chip>
 					</aside>
-					<template v-if="outputOptions && selectedOutputId">
-						<section v-if="isDraft">There are unsaved changes</section>
+					<template v-if="!hideDropdown && outputOptions && selectedOutputId">
+            <section v-if="isDraft">There are unsaved changes</section>
 						<tera-output-dropdown
 							class="mx-2"
 							:class="isDraft ? 'draft' : ''"
@@ -149,6 +149,7 @@ const props = defineProps<{
 	upstreamOperatorsNav?: MenuItem[];
 	downstreamOperatorsNav?: MenuItem[];
 	spawnAnimation?: 'left' | 'right' | 'scale';
+	hideDropdown?: boolean;
 }>();
 
 const emit = defineEmits(['on-close-clicked', 'update-state', 'update:selection', 'update-output-port']);
