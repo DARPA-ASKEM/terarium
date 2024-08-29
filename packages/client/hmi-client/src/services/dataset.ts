@@ -4,7 +4,7 @@
 
 import API, { getProjectIdFromUrl } from '@/api/api';
 import { logger } from '@/utils/logger';
-import type { CsvAsset, CsvColumnStats, Dataset, PresignedURL } from '@/types/Types';
+import type { CsvAsset, CsvColumnStats, Dataset, PresignedURL, ProjectAsset } from '@/types/Types';
 import { Ref } from 'vue';
 import { AxiosResponse } from 'axios';
 import { RunResults } from '@/types/SimulateConfig';
@@ -213,29 +213,21 @@ async function createNewDatasetFromGithubFile(repoOwnerAndName: string, path: st
 async function createNewDatasetFromFile(
 	progress: Ref<number>,
 	file: File,
-	userId: string,
 	description?: string
-): Promise<Dataset | null> {
+): Promise<ProjectAsset | null> {
 	const fileType = file.name.endsWith('.csv') ? 'csv' : 'file';
 	// Remove the file extension from the name, if any
 	const name = file.name.replace(/\.[^/.]+$/, '');
 
-	// Create a new dataset with the same name as the file, and post the metadata to TDS
-	const dataset: Dataset = {
-		name,
-		description: description || file.name,
-		fileNames: [file.name],
-		userId
-	};
-
-	const newDataset: Dataset | null = await createDataset(dataset);
-	if (!newDataset || !newDataset.id) return null;
+	const projectId = activeProjectId.value || getProjectIdFromUrl();
 
 	const formData = new FormData();
 	formData.append('file', file);
 
-	const urlResponse = await API.put(`/datasets/${newDataset.id}/upload-${fileType}`, formData, {
+	const response = await API.put(`/datasets/upload-${fileType}?project-id=${projectId}`, formData, {
 		params: {
+			name,
+			description: description || file.name,
 			filename: file.name
 		},
 		headers: {
@@ -246,12 +238,10 @@ async function createNewDatasetFromFile(
 		},
 		timeout: 3600000
 	});
-
-	if (!urlResponse || urlResponse.status >= 400) {
-		return null;
+	if (response && response.status < 400 && response.data) {
+		return response.data;
 	}
-
-	return newDataset;
+	return null;
 }
 
 async function createDatasetFromSimulationResult(

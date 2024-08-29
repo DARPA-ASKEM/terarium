@@ -79,8 +79,7 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import Button from 'primevue/button';
 import { AcceptedExtensions, AcceptedTypes } from '@/types/common';
 import { uploadCodeToProject } from '@/services/code';
-import { useProjects } from '@/composables/project';
-import type { Dataset, DocumentAsset } from '@/types/Types';
+import type { DocumentAsset, ProjectAsset } from '@/types/Types';
 import { AssetType, ProvenanceType } from '@/types/Types';
 import { uploadDocumentAssetToProject } from '@/services/document-assets';
 import { createNewDatasetFromFile } from '@/services/dataset';
@@ -96,6 +95,8 @@ import { createModel, processAndAddModelToProject, validateAMRFile } from '@/ser
 import { createProvenance, RelationshipType } from '@/services/provenance';
 import { modelCard } from '@/services/goLLM';
 import TeraInputText from '@/components//widgets/tera-input-text.vue';
+import { activeProject, activeProjectId } from '@/composables/activeProject';
+import * as ProjectService from '@/services/project';
 
 defineProps<{
 	visible: boolean;
@@ -103,7 +104,7 @@ defineProps<{
 const emit = defineEmits(['close']);
 
 const progress = ref(0);
-const results = ref<{ id: string; name: string; assetType: AssetType }[] | null>(null);
+const results = ref<{ asset: ProjectAsset }[] | null>(null);
 const urlToUpload = ref('');
 const isImportGithubFileModalVisible = ref(false);
 const importedFiles = ref<File[]>([]);
@@ -132,7 +133,7 @@ async function processFiles(files: File[], description: string) {
 			case AcceptedExtensions.STMX:
 				return processModel(file);
 			default:
-				return { id: '', assetType: '' };
+				return { asset: '' };
 		}
 	});
 }
@@ -167,13 +168,8 @@ async function processDocument(file: File) {
  * @param description
  */
 async function processDataset(file: File, description: string) {
-	const addedDataset: Dataset | null = await createNewDatasetFromFile(
-		progress,
-		file,
-		useAuthStore().user?.id ?? '',
-		description
-	);
-	return { id: addedDataset?.id ?? '', assetType: AssetType.Dataset };
+	const addedAsset: ProjectAsset | null = await createNewDatasetFromFile(progress, file, description);
+	return { asset: addedAsset };
 }
 
 /*
@@ -210,22 +206,23 @@ async function processModel(file: File) {
 	return { id: newModelId ?? '', assetType: AssetType.Model };
 }
 
-function importCompleted(newResults: { id: string; name: string; assetType: AssetType }[] | null) {
-	results.value = newResults?.filter((r) => r.id !== '') ?? [];
+function importCompleted(newResults: { asset: ProjectAsset }[] | null) {
+	results.value = newResults ?? [];
 }
 
+const TIMEOUT_MS = 100;
 async function upload() {
 	if (results.value) {
-		const createAssetsPromises = (results.value ?? []).map(({ id, assetType }) =>
-			useProjects().addAsset(assetType, id)
-		);
-		const createdAssets = await Promise.all(createAssetsPromises);
+		const createdAssets = results.value;
+		setTimeout(async () => {
+			activeProject.value = await ProjectService.get(activeProjectId.value);
+		}, TIMEOUT_MS);
 		createdAssets.forEach((_, index) => {
-			const { name, id } = (results.value ?? [])[index];
-			if (name && name.toLowerCase().endsWith('.pdf')) {
-				extractPDF(id);
-			} else if (name && (name.toLowerCase().endsWith('.txt') || name.toLowerCase().endsWith('.md'))) {
-				modelCard(id);
+			const { assetName, assetId } = (results.value ?? [])[index].asset;
+			if (assetName && assetName.toLowerCase().endsWith('.pdf')) {
+				extractPDF(assetId);
+			} else if (assetName && (assetName.toLowerCase().endsWith('.txt') || assetName.toLowerCase().endsWith('.md'))) {
+				modelCard(assetId);
 			}
 		});
 		emit('close');

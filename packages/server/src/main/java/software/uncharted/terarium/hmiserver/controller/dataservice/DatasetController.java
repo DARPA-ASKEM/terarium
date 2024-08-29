@@ -47,12 +47,15 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import software.uncharted.terarium.hmiserver.configuration.Config;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvColumnStats;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseStatus;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.proxies.climatedata.ClimateDataProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
@@ -524,6 +527,99 @@ public class DatasetController {
 		final String[] csvRows = csvString.split("\\R");
 		final String[] headers = csvRows[0].split(",");
 		return uploadCSVAndUpdateColumns(datasetId, projectId, filename, csvEntity, headers, permission);
+	}
+
+	@PutMapping(value = "/upload-csv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@Secured(Roles.USER)
+	@Operation(summary = "Uploads a CSV file to a dataset")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Uploaded the CSV file.",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseStatus.class)
+				)
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue uploading the CSV", content = @Content)
+		}
+	)
+	public ResponseEntity<ProjectAsset> uploadCsv(
+		@RequestParam("project-id") final UUID projectId,
+		@RequestParam("name") final String name,
+		@RequestParam("description") final String description,
+		@RequestParam("filename") final String filename,
+		@RequestPart("file") final MultipartFile input
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(
+			currentUserService.get().getId(),
+			projectId
+		);
+		final List<String> filenames = new ArrayList<>();
+		filenames.add(filename);
+		final Dataset dataset = new Dataset();
+		dataset
+			.setUserId(currentUserService.get().getId())
+			.setFileNames(filenames)
+			.setName(name)
+			.setDescription(description);
+		Dataset newDataset = null;
+
+		try {
+			newDataset = datasetService.createAsset(dataset, projectId, permission);
+		} catch (final IOException e) {
+			final String error = "Unable to create dataset";
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+		}
+
+		try {
+			log.debug("Uploading CSV file to dataset {}", newDataset.getId());
+
+			final byte[] csvBytes = input.getBytes();
+
+			final HttpEntity csvEntity = new ByteArrayEntity(csvBytes, ContentType.APPLICATION_OCTET_STREAM);
+			final String csvString = new String(csvBytes);
+			final String[] csvRows = csvString.split("\\R");
+			final String[] headers = csvRows[0].split(",");
+			for (int i = 0; i < headers.length; i++) {
+				// this is very ugly but we're removing opening and closing "'s around these
+				// strings.
+				headers[i] = headers[i].replaceAll("^\"|\"$", "");
+			}
+			uploadCSVAndUpdateColumns(newDataset.getId(), projectId, filename, csvEntity, headers, permission);
+		} catch (final IOException e) {
+			final String error = "Unable to upload csv dataset";
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+		}
+
+		final Optional<Project> project;
+		try {
+			project = projectService.getProject(projectId);
+			if (!project.isPresent()) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
+			}
+		} catch (final Exception e) {
+			log.error("Error communicating with project service", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
+
+		final AssetType assetType = AssetType.DATASET;
+		final Optional<ProjectAsset> projectAsset = projectAssetService.createProjectAsset(
+			project.get(),
+			assetType,
+			newDataset,
+			permission
+		);
+
+		if (projectAsset.isEmpty()) {
+			log.error("Project Asset is empty");
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("asset.unable-to-create"));
+		}
+
+		return ResponseEntity.status(HttpStatus.CREATED).body(projectAsset.get());
 	}
 
 	/**
