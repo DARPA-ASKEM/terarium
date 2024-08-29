@@ -59,7 +59,7 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 11. Add uncertainty to a parameter (e.g., apply uncertainty to β, setting it from constant to uniform with min 0.81 and max 0.99).
 12. Use the **Save As** button to create a new configuration. Confirm that the changes persist.
 
-### 6. Revert Changes
-1. For any configuration where changes have been made but not saved, click the **Revert** button.
+### 6. Reset Changes
+1. For any configuration where changes have been made but not saved, click the **Reset** button.
 2. Verify that all unsaved changes are discarded and the configuration reverts to its original state before any modifications were made.
 
