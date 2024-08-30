@@ -1,14 +1,14 @@
 <template>
 	<Editor v-model="editorContent" :class="{ readonly: !hasEditPermission }" :readonly="!hasEditPermission" />
 	<!-- empty state image -->
-	<section v-if="editorContent == '<h2><br></h2>'" class="emptyState">
+	<section v-if="editorContent === '<h2><br></h2>'" class="emptyState">
 		<Vue3Lottie :animationData="EmptySeed" :height="150" loop autoplay />
 		<p class="helpMessage">Use this space however you like</p>
 	</section>
 
 	<!-- empty state message -->
 	<Panel
-		v-if="showWelcomeMessage && editorContent == '<h2><br></h2>'"
+		v-if="showWelcomeMessage && editorContent === '<h2><br></h2>'"
 		header="Hey there! Not sure where to start?"
 		class="welcomeMessage"
 	>
