@@ -193,7 +193,7 @@ const outputs = computed(() => {
 
 	if (!isEmpty(unsavedOutputs)) {
 		groupedOutputs.push({
-			label: 'Select outputs to display in operator',
+			label: 'Select an output',
 			items: unsavedOutputs
 		});
 	}

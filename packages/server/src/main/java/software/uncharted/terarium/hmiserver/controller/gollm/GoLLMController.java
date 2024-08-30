@@ -242,7 +242,7 @@ public class GoLLMController {
 		// stripping the metadata from the model before its sent since it can cause
 		// gollm to fail with massive inputs
 		model.get().setMetadata(null);
-		input.setAmr(model.get().serializeWithoutTerariumFields());
+		input.setAmr(model.get().serializeWithoutTerariumFieldsKeepId());
 
 		// Create the task
 		final TaskRequest req = new TaskRequest();
