@@ -6,6 +6,7 @@
 			@keydown.prevent="onKeyPress"
 			@keydown.esc.capture="messageContainer?.focus()"
 			tabindex="0"
+			class="message-container"
 		>
 			<tera-jupyter-response
 				@keydown.stop
@@ -29,15 +30,6 @@
 				@edit-prompt="reRunPrompt"
 				@click="selectedCellId = msg.query_id"
 			/>
-			<!-- Beaker Input -->
-			<tera-beaker-input
-				class="tera-beaker-input"
-				:kernel-is-busy="props.kernelStatus !== KernelState.idle"
-				context="dataset"
-				@submitQuery="submitQuery"
-				@add-code-cell="addCodeCell()"
-				@keydown.stop
-			/>
 
 			<!-- Add a cell Button -->
 			<Button icon="pi pi-plus" label="Add a cell" size="small" class="add-cell-button" text @click="addCodeCell()" />
@@ -49,7 +41,6 @@ import { onUnmounted, ref, watch, computed, nextTick } from 'vue';
 import { createMessageId, JupyterMessage, KernelState, INotebookItem } from '@/services/jupyter';
 import type { NotebookSession } from '@/types/Types';
 import { AssetType } from '@/types/Types';
-import TeraBeakerInput from '@/components/llm/tera-beaker-input.vue';
 import TeraJupyterResponse from '@/components/llm/tera-jupyter-response.vue';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
@@ -450,7 +441,9 @@ watch(
 
 defineExpose({
 	clearHistory,
-	clearOutputs
+	clearOutputs,
+	submitQuery,
+	addCodeCell
 });
 </script>
 
@@ -467,8 +460,7 @@ section {
 	flex-direction: column;
 	width: 100%;
 	height: 100%;
-	overflow-y: auto;
-	padding-bottom: 10rem;
+	overflow: hidden;
 }
 
 .selected {
@@ -482,5 +474,9 @@ section {
 }
 .add-cell-button:deep(.p-button-label) {
 	text-align: left;
+}
+.message-container {
+	height: calc(100% - 3.5rem);
+	overflow-y: auto;
 }
 </style>

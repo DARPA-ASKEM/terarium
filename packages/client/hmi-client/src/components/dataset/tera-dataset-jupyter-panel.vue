@@ -32,6 +32,15 @@
 					{{ kernelStatus === 'idle' ? 'Ready' : kernelStatus === 'busy' ? 'Busy' : 'Offline' }}
 				</header>
 			</div>
+			<!-- Beaker Input -->
+			<tera-beaker-input
+				class="tera-beaker-input"
+				:kernel-is-busy="kernelStatus !== KernelState.idle"
+				context="dataset"
+				@submitQuery="onSubmitQuery"
+				@add-code-cell="onAddCodeCell"
+				@keydown.stop
+			/>
 			<span class="flex-auto"></span>
 
 			<!-- Jupyter Kernel Settings -->
@@ -140,7 +149,14 @@ import type { CsvAsset, NotebookSession } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
-import { createMessageId, getServerSettings, getSessionManager, JupyterMessage, newSession } from '@/services/jupyter';
+import {
+	createMessageId,
+	getServerSettings,
+	getSessionManager,
+	JupyterMessage,
+	newSession,
+	KernelState
+} from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
 import Dropdown from 'primevue/dropdown';
@@ -148,6 +164,7 @@ import { shutdownKernel } from '@jupyterlab/services/lib/kernel/restapi';
 import { useConfirm } from 'primevue/useconfirm';
 import { useProjects } from '@/composables/project';
 import { programmingLanguageOptions } from '@/types/common';
+import TeraBeakerInput from '@/components/llm/tera-beaker-input.vue';
 
 const jupyterSession: SessionContext = await newSession('beaker_kernel', 'Beaker Kernel');
 const selectedKernel = ref();
@@ -455,6 +472,18 @@ const onNewDatasetSaved = async (payload) => {
 	await useProjects().addAsset(AssetType.Dataset, datasetId);
 	emit('new-dataset-saved', { id: datasetId, name: saveAsName.value });
 	toast.success('Dataset saved successfully', 'Refresh to see the dataset in the resource explorer');
+};
+
+const onSubmitQuery = (question: string) => {
+	if (chat.value) {
+		chat.value.submitQuery(question);
+	}
+};
+
+const onAddCodeCell = () => {
+	if (chat.value) {
+		chat.value.addCodeCell();
+	}
 };
 
 /* Download dataset feature has been removed, but keeping this code here in case it returns */
