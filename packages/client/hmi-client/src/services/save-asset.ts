@@ -50,10 +50,10 @@ export async function saveAs(
 		logger.info(`Failed to save ${assetType}.`);
 		return;
 	}
+	const projectId = useProjects().activeProject.value?.id;
 
-	// TODO: Potentially add a flag in case we don't want to add the asset to the project
-	if (assetType !== AssetType.InterventionPolicy) {
-		const projectId = useProjects().activeProject.value?.id;
+	// save to project
+	if (assetType !== AssetType.InterventionPolicy && assetType !== AssetType.ModelConfiguration) {
 		if (!projectId) {
 			logger.error(`Asset can't be saved since target project doesn't exist.`);
 			return;
@@ -62,16 +62,18 @@ export async function saveAs(
 
 		// After saving notify the user and do any necessary actions
 		logger.info(`${response.name} saved successfully in project ${useProjects().activeProject.value?.name}.`);
-		if (openOnSave) {
-			router.push({
-				name: RouteName.Project,
-				params: {
-					projectId,
-					pageType: assetType,
-					assetId: response.id
-				}
-			});
-		}
+	}
+
+	// redirect to the asset page
+	if (openOnSave) {
+		router.push({
+			name: RouteName.Project,
+			params: {
+				projectId,
+				pageType: assetType,
+				assetId: response.id
+			}
+		});
 	}
 
 	if (onSaveFunction) onSaveFunction(response);
