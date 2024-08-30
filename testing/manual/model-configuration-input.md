@@ -11,40 +11,55 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 2. Create, or open, project named `QA [Your Name]`
 3. Upload model [SIR.json](https://drive.google.com/file/d/1eXlvpBfMmhrfC0xUXfuz0s_19gi-Rird/view?usp=drive_link) to project
 
-### 2. Configure a Model**
-1. Add the  SIR model to your workflow canvas. Add a `Configure Model` operator and connect this to your SIR model. Open the configuration editor.
-2. Make sure the initial condition (e.g. SIR) and parameter (e.g. beta,gamma) tables appear as expected with data.
+### 2. Configure a Model
+1. Add the SIR model to your workflow canvas. Add a `Configure Model` operator and connect it to your SIR model. Open the configuration editor.
+2. Verify that the initial condition (e.g., SIR) and parameter (e.g., β, γ) tables are populated with data.
 3. Update the configuration name and add a description.
-4. Pick an initial condition and update it (e.g., change S to 1000; I to 2; R to 0).
-5. Pick an initial condition and add a source (e.g., NY Times data).
-6. Pick a parameter and update it (e.g. change beta from uniform to constant and set to .9).
-7. Pick an initial condition and add a source (e.g., https://www.mdpi.com/1099-4300/23/1/59 )
-8. Save your configuration and make sure the changes you have made persist.
+4. Modify an initial condition (e.g., change S to 1000; I to 2; R to 0).
+5. Update a parameter (e.g., change β from uniform to constant and set it to 0.9).
+6. Add a source to an initial condition or parameter (e.g., NY Times data).
+7. Attempt to save the configuration:
+   - Verify that the **Save** button is disabled and the **Save As** button is enabled since values have been modified.
+8. Use the **Save As** button to create a new configuration. Confirm that the changes persist.
 
-### 3. Add Uncertainty to Parameter**
-1. Update the configuration name and add a description (e.g., SIR with uncertainty).
-2. In the parameter table click `add uncertainty.`Apply this to beta. Make sure that this has been updated from `constant` to `uniform.` and has values set to +/- 10% of the intial constant.
-3. Save as a new configuration and make sure the changes you've made persist.
+### 3. Update Metadata Only
+1. Open an existing model configuration in the configuration editor.
+2. Modify the configuration name, description, or initial/parameter sources without changing any values.
+3. Attempt to save the configuration:
+   - Verify that the **Save** button is enabled and that the configuration can be saved without creating a new one.
+4. Confirm that the changes persist after saving.
 
+### 4. Add Uncertainty to a Parameter
+1. Open an existing model configuration in the configuration editor.
+2. Add uncertainty to a parameter (e.g., apply uncertainty to β, changing it from constant to uniform with values set to +/- 10% of the initial constant). Note: uncertainties can **only** be applied to **constant** parameter types
+3. Attempt to save the configuration:
+   - Verify that the **Save** button is disabled and the **Save As** button is enabled due to the modification of the parameter values.
+4. Use the **Save As** button to create a new configuration. Confirm that the changes persist.
 
-### 4. Configure a Stratified Model**
-1. Add the SIR model to your workflow canvas. Add a `Stratify Model` operator and connect this to your SIR Model. Open the stratification editor.
-2. In the stratification editor create a new strata for `age` with two levels: old, young. Stratify for the initial conditions SIR and parameter gamma.  Uncheck create new transition between strata (we are assuming people stay in their age category). Run stratification and save as a new model. Name this `Stratified SIR`
-3. Return to your workflow canvas and add the `Stratifed SIR ` to your canvas. Add the `Configure Model` operator and connect this to your stratified model.
-4. Make sure the initial conditions (SIR) and parameter tables appear as expected with data. Note that the initial condition R should have two levels: old and young. 5
+### 5. Configure a Stratified Model
+1. Add the SIR model to your workflow canvas. Add a `Stratify Model` operator and connect it to your SIR model. Open the stratification editor.
+2. Create a new strata for `age` with two levels: old, young. Stratify the initial conditions (SIR) and parameter (γ). Uncheck `Create New Transition Between Strata` (assuming people remain in their age category). Run the stratification and save it as a new model named `Stratified SIR`.
+3. Return to the workflow canvas and add the `Stratified SIR` to the canvas. Add the `Configure Model` operator and connect it to the stratified model. Open the configuration editor.
+4. Verify that the initial condition (SIR) and parameter tables are correctly stratified with data. For example, ensure that the initial condition R has two levels: old and young.
 5. Update the configuration name and add a description.
-6. Ensure you have matrices for young and old for SIR, and gamma. Update the configuration values to the following:
+6. Update stratified values as follows:
    1. S_young: 1000
    2. S_old: 500
    3. I_young: 1
    4. I_old: 2
-   5. R_young:0
-   6. R_old:0
-   7. Gamma_young: 14
-   8. Gamma_old: 21
-7. Add a source to one of the initial conditions or parameters: e.g., NY Times data
-8. Change beta to constant: .9
-9. Save as a new configuration and make sure that your changes persisted.
-10. Create a new configuration name and new description.
-11. Add uncertainty to beta:  In the parameter table click `add uncertainty.`Apply this to beta. Make sure that this has been updated from `constant` to `uniform.` and has values set to +/- 10% of the initial constant (should be min .81  and max 99).
-12. Save as a new configuration and make sure the changes you've made persist.
+   5. R_young: 0
+   6. R_old: 0
+   7. γ_young: 14
+   8. γ_old: 21
+7. Add a source to an initial condition or parameter (e.g., NY Times data).
+8. Modify a parameter (e.g., change β to constant: 0.9).
+9. Attempt to save the configuration:
+   - Verify that the **Save** button is disabled and the **Save As** button is enabled due to changes in values.
+10. Use the **Save As** button to create a new configuration. Confirm that the changes persist.
+11. Add uncertainty to a parameter (e.g., apply uncertainty to β, setting it from constant to uniform with min 0.81 and max 0.99).
+12. Use the **Save As** button to create a new configuration. Confirm that the changes persist.
+
+### 6. Reset Changes
+1. For any configuration where changes have been made but not saved, click the **Reset** button.
+2. Verify that all unsaved changes are discarded and the configuration reverts to its original state before any modifications were made.
+
