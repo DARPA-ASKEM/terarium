@@ -44,7 +44,7 @@
 					:suggestions="results"
 					optionLabel="name"
 					@complete="async () => (results = await searchCuriesEntities(query))"
-					@item-select="$emit('update-column', { key: 'concept', value: $event.value.curie })"
+					@item-select="$emit('update-column', { key: 'concept', value: query })"
 				/>
 			</span>
 			<span class="description">
@@ -64,12 +64,13 @@
 <script setup lang="ts">
 /* Copied the structure of tera-model-parts.vue */
 import { ref, computed, watch } from 'vue';
+import { isEmpty } from 'lodash';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraBoxplot from '@/components/widgets/tera-boxplot.vue';
 import AutoComplete from 'primevue/autocomplete';
 import Dropdown from 'primevue/dropdown';
 import { type DKG, ColumnType, type Grounding } from '@/types/Types';
-import { getCurieFromGroundingIdentifier, getNameOfCurieCached, searchCuriesEntities } from '@/services/concept';
+import { searchCuriesEntities } from '@/services/concept';
 import type { FeatureConfig } from '@/types/common';
 
 type ColumnInfo = {
@@ -99,7 +100,11 @@ const showConcept = computed(() => !(props.featureConfig.isPreview && !query.val
 watch(
 	() => props.column.grounding?.identifiers,
 	async (identifiers) => {
-		if (identifiers) query.value = await getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
+		if (!isEmpty(identifiers)) {
+			// console.log(identifiers); // FIXME: Multiple identifiers are held in here after enrichment! Designs have to be updated to handle more.
+			// Just show first one for now.
+			query.value = identifiers?.[0].name ?? '';
+		}
 	},
 	{ immediate: true }
 );

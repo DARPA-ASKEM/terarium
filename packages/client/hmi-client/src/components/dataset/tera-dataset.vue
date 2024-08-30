@@ -161,9 +161,8 @@ import TeraCarousel from '@/components/widgets/tera-carousel.vue';
 import TeraAssetEnrichment from '@/components/widgets/tera-asset-enrichment.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
-// import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import TeraColumnInfo from '@/components/dataset/tera-column-info.vue';
-// import { parseCurie } from '@/services/concept';
+// import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 // import { enrichDataset } from './utils';
 
 const props = defineProps({
@@ -285,14 +284,17 @@ const card = computed(() => {
 const description = computed(() => dataset.value?.description?.concat('\n', card.value?.DESCRIPTION ?? '') ?? '');
 const author = computed(() => card.value?.AUTHOR_NAME ?? '');
 
-function updateColumn(index: number, key: string, value: string) {
+function updateColumn(index: number, key: string, value: any) {
 	if (!transientDataset.value?.columns?.[index]) return;
 	if (key === 'unit' || key === 'name') {
 		transientDataset.value.columns[index].metadata[key] = value;
 	} else if (key === 'concept') {
-		transientDataset.value.columns[index].grounding = {
-			identifiers: [{ curie: '', name: value }]
-		};
+		// Only one identifier is supported for now
+		if (transientDataset.value.columns[index].grounding?.identifiers) {
+			transientDataset.value.columns[index].grounding.identifiers[0] = value;
+		} else {
+			transientDataset.value.columns[index].grounding = { identifiers: [value] };
+		}
 	} else {
 		transientDataset.value.columns[index][key] = value;
 	}
