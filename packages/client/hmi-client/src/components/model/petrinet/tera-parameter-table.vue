@@ -18,7 +18,7 @@
 			</template>
 
 			<!-- Adding uncertainty header -->
-			<span v-if="isAddingUncertainty">
+			<span v-if="isAddingUncertainty" class="add-uncertainty-toolbar">
 				<Button size="small" text label="Unselect all" @click="selectedParameters = []" />
 				Add
 				<Dropdown
@@ -38,7 +38,7 @@
 				<InputNumber class="uncertainty-percentage" v-model="uncertaintyPercentage" suffix="%" :min="0" :max="100" />
 				bounds on the value of the selected constant parameters.
 				<Button text small icon="pi pi-check" @click="onUpdateDistributions" />
-				<Button text small icon="pi pi-times" @click="isAddingUncertainty = false" />
+				<Button text small icon="pi pi-times" @click="isAddingUncertainty = false" class="ml-auto" />
 			</span>
 
 			<ul class="pl-1">
@@ -264,6 +264,16 @@ ul {
 	color: var(--text-color-subdued);
 	margin-left: 0.25rem;
 }
+
+.add-uncertainty-toolbar {
+	display: flex;
+	align-items: center;
+	gap: var(--gap-2);
+	background-color: var(--surface-highlight);
+	padding: var(--gap-2);
+	margin-bottom: var(--gap-2);
+}
+
 :deep(.uncertainty-percentage) > input {
 	width: 4rem;
 }
