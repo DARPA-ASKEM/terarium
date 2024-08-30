@@ -36,6 +36,8 @@
 									@download="downloadConfiguredModel(configuration)"
 								/>
 							</li>
+							<!-- Show a message if nothing found after filtering -->
+							<li v-if="filteredModelConfigurations.length === 0">No configurations found</li>
 						</ul>
 						<tera-progress-spinner is-centered :font-size="2" v-if="isLoading" />
 					</div>
@@ -43,7 +45,7 @@
 			</tera-slider-panel>
 		</template>
 
-		<tera-drilldown-section :tabName="ConfigTabs.Wizard" class="pl-3">
+		<tera-drilldown-section :tabName="ConfigTabs.Wizard" class="px-3">
 			<template #header-controls-left>
 				<tera-toggleable-input
 					v-if="typeof knobs.transientModelConfig.name === 'string'"
@@ -54,7 +56,7 @@
 			<template #header-controls-right>
 				<Button label="Reset" @click="resetConfiguration" outlined severity="secondary" />
 				<Button label="Save as..." outlined severity="secondary" @click="showSaveModal = true" />
-				<Button class="mr-3" :disabled="isSaveDisabled" label="Save" @click="onSaveConfiguration" />
+				<Button class="mr-2" :disabled="isSaveDisabled" label="Save" @click="onSaveConfiguration" />
 			</template>
 
 			<Accordion multiple :active-index="[0, 1]">
