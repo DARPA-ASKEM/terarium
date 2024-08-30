@@ -18,7 +18,7 @@
 								label="Extract from inputs"
 								@click="extractConfigurationsFromInputs"
 								severity="primary"
-								class="white-space-nowrap w-9"
+								class="white-space-nowrap min-w-min"
 								:loading="isLoading"
 								:disabled="
 									!props.node.inputs[1]?.value &&
@@ -28,7 +28,13 @@
 								"
 							/>
 						</div>
-						<ul v-if="!isLoading && model?.id">
+						<!-- Show a spinner if loading -->
+						<section v-if="isLoading" class="processing-new-configuration-tile">
+							<p class="secondary-text">Processing...</p>
+						</section>
+
+						<!-- Show all configurations -->
+						<ul v-if="model?.id">
 							<li v-for="configuration in filteredModelConfigurations" :key="configuration.id">
 								<tera-model-configuration-item
 									:configuration="configuration"
@@ -42,7 +48,6 @@
 							<!-- Show a message if nothing found after filtering -->
 							<li v-if="filteredModelConfigurations.length === 0">No configurations found</li>
 						</ul>
-						<tera-progress-spinner is-centered :font-size="2" v-if="isLoading" />
 					</div>
 				</template>
 			</tera-slider-panel>
@@ -193,7 +198,6 @@ import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Textarea from 'primevue/textarea';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -709,6 +713,16 @@ onUnmounted(() => {
 	background: color-mix(in srgb, var(--surface-100) 80%, transparent 20%);
 }
 
+.processing-new-configuration-tile {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	padding: var(--gap-4);
+	background-color: var(--surface-0);
+	margin-top: var(--gap-3);
+	border-left: 4px solid var(--surface-300);
+}
+
 /* When accordions are closed, don't show their filter or edit buttons */
 :deep(.p-accordion-tab:not(.p-accordion-tab-active)) .p-accordion-header .p-accordion-header-link .tera-input,
 :deep(.p-accordion-tab:not(.p-accordion-tab-active)) .p-accordion-header .p-accordion-header-link button {
@@ -799,5 +813,9 @@ button.start-edit {
 	& > span {
 		margin-left: var(--gap-2);
 	}
+}
+
+.secondary-text {
+	color: var(--text-color-subdued);
 }
 </style>
