@@ -51,8 +51,10 @@
 						</Chip>
 					</aside>
 					<template v-if="!hideDropdown && outputOptions && selectedOutputId">
+						<section v-if="isDraft">There are unsaved changes</section>
 						<tera-output-dropdown
 							class="mx-2"
+							:class="{ draft: isDraft }"
 							:options="outputOptions"
 							:output="selectedOutputId"
 							@update:selection="(e) => emit('update:selection', e)"
@@ -142,6 +144,7 @@ const props = defineProps<{
 	menuItems?: any[];
 	title?: string;
 	tooltip?: string;
+	isDraft?: boolean;
 	// Applied in dynamic compoenent in tera-workflow.vue
 	upstreamOperatorsNav?: MenuItem[];
 	downstreamOperatorsNav?: MenuItem[];
@@ -345,6 +348,11 @@ footer {
 
 :deep(.p-chip .p-chip-text) {
 	font-size: var(--font-body-small);
+}
+
+.draft {
+	border-color: var(--warning-color);
+	background-color: var(--surface-warning);
 }
 
 @keyframes scaleForward {
