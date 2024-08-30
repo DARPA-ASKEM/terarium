@@ -192,7 +192,7 @@ const outputOptions = computed(() => {
 
 	return [
 		{
-			label: 'Select outputs to display in operator',
+			label: 'Select an output',
 			items: props.node.outputs
 		}
 	];
