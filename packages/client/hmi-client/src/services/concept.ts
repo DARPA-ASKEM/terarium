@@ -7,6 +7,8 @@ import type { Curies, DatasetColumn, DKG, EntitySimilarityResult, State } from '
 import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
 import { CalibrateMap } from '@/services/calibrate-workflow';
+import { FIFOCache } from '@/utils/FifoCache';
+import { AxiosResponse } from 'axios';
 
 interface Entity {
 	id: string;
@@ -20,14 +22,29 @@ interface EntityMap {
 
 const curieNameCache = new Map<string, string>();
 
+const currieEntityCache = new FIFOCache<Promise<AxiosResponse<any, any>>>(100);
 /**
  * Get DKG entities, either single ones or multiple at a time
  */
 async function getCuriesEntities(curies: Array<string>): Promise<Array<DKG> | null> {
-	const response = await API.get(`/mira/currie/${curies.toString()}`);
-	if (response?.status === 200 && response?.data) return response.data;
-	if (response?.status === 204) console.warn('No DKG entities found for curies:', curies);
-	return null;
+	try {
+		const cacheKey = curies.toString();
+
+		let promise = currieEntityCache.get(cacheKey);
+		if (!promise) {
+			promise = API.get(`/mira/currie/${curies.toString()}`);
+			currieEntityCache.set(cacheKey, promise);
+		}
+
+		// If a rename function is defined, loop over the first row
+		const response = await promise;
+		if (response?.status === 200 && response?.data) return response.data;
+		if (response?.status === 204) console.warn('No DKG entities found for curies:', curies);
+		return null;
+	} catch (err) {
+		logger.error(err);
+		return null;
+	}
 }
 
 async function searchCuriesEntities(query: string): Promise<Array<DKG>> {
