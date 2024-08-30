@@ -30,8 +30,9 @@ const props = defineProps<{
 const model = ref<Model | null>(null);
 
 const fetchModel = async () => {
+	model.value = null;
 	const modelId = operator.getActiveOutput(props.node)?.value?.[0];
-	if (modelId && modelId !== model?.value?.id) {
+	if (modelId) {
 		model.value = await getModel(modelId);
 	}
 };
@@ -39,7 +40,7 @@ const fetchModel = async () => {
 // Updates output selection
 watch(
 	() => props.node.active,
-	async () => {
+	() => {
 		fetchModel();
 	},
 	{ immediate: true }
