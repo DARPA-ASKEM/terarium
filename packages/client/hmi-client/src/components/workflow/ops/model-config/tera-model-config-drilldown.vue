@@ -11,17 +11,19 @@
 			<tera-slider-panel v-model:is-open="isSidebarOpen" header="Configurations" content-width="360px">
 				<template #content>
 					<div class="m-3">
-						<div class="flex flex-column gap-1">
+						<div class="flex flex-row gap-1">
+							<tera-input-text v-model="filterModelConfigurationsText" placeholder="Filter" />
+
 							<Button
 								outlined
 								icon="pi pi-plus"
 								label="Extract from inputs"
 								@click="extractConfigurationsFromInputs"
 								severity="secondary"
+								class="white-space-nowrap"
 								:loading="isLoading"
+								:disabled="!props.node.inputs[2]?.value && !props.node.inputs[1]?.value"
 							/>
-
-							<tera-input-text v-model="filterModelConfigurationsText" placeholder="Filter" />
 						</div>
 						<ul v-if="!isLoading && model?.id">
 							<li v-for="configuration in filteredModelConfigurations" :key="configuration.id">

@@ -93,6 +93,12 @@
 		box-shadow: none;
 	}
 
+
+	/* Make button labels regular font weight */
+	.p-button-label {
+		font-weight: var(--font-weight);
+	}
+	
 	// Styles reused in Document.vue and DataExplorer.vue - TODO: look into changing prime vue styling to reflect this
 	.p-buttonset {
 		white-space: nowrap;
