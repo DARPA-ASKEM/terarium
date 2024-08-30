@@ -226,7 +226,7 @@ const isSaveDisabled = computed(
 const parameterOptions = computed(() => {
 	if (!model.value) return [];
 	return getParameters(model.value).map((parameter) => ({
-		label: parameter.name ?? parameter.id,
+		label: parameter.id,
 		value: parameter.id
 	}));
 });
@@ -234,7 +234,7 @@ const parameterOptions = computed(() => {
 const stateOptions = computed(() => {
 	if (!model.value) return [];
 	return getStates(model.value).map((state) => ({
-		label: !isEmpty(state.name) ? state.name : state.id,
+		label: state.id,
 		value: state.id
 	}));
 });
