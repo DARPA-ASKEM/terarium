@@ -1,6 +1,6 @@
 <template>
 	<section>
-		<header v-if="hasHeaderSlots">
+		<header v-if="hasHeaderSlots" :class="{ shadow: hasScrolled }">
 			<div>
 				<slot name="header-controls-left" />
 			</div>
@@ -8,7 +8,7 @@
 				<slot name="header-controls-right" />
 			</div>
 		</header>
-		<main>
+		<main ref="main" @scroll="handleScroll">
 			<slot v-if="!isLoading" />
 			<tera-progress-spinner v-else :font-size="2" is-centered />
 		</main>
@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, useSlots } from 'vue';
+import { ref, onMounted, onUnmounted, computed, useSlots } from 'vue';
 import TeraProgressSpinner from '../widgets/tera-progress-spinner.vue';
 
 defineProps<{
@@ -28,6 +28,27 @@ defineProps<{
 
 const slots = useSlots();
 const hasHeaderSlots = computed(() => !!slots['header-controls-left'] || !!slots['header-controls-right']);
+
+/* This is for adding a shadow to the header if user has scrolled */
+const main = ref<HTMLElement | null>(null);
+const hasScrolled = ref(false);
+const handleScroll = () => {
+	if (main.value) {
+		hasScrolled.value = main.value.scrollTop > 20; // Change 20 to whatever threshold you deem appropriate
+	}
+};
+
+onMounted(() => {
+	if (main.value) {
+		main.value.addEventListener('scroll', handleScroll);
+	}
+});
+
+onUnmounted(() => {
+	if (main.value) {
+		main.value.removeEventListener('scroll', handleScroll);
+	}
+});
 </script>
 
 <style scoped>
@@ -52,6 +73,11 @@ header > div {
 	&:first-child {
 		flex: 1;
 	}
+}
+header.shadow {
+	box-shadow:
+		0px 10px 6px -11px var(--surface-500),
+		0px 9px 9px -11px var(--surface-400);
 }
 
 section {
