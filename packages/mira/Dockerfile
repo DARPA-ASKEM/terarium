@@ -16,9 +16,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	python3-pip && \
 	rm -rf /var/lib/apt/lists/*
 
-# Install an editor when we log into the docker image
-RUN apt-get install -y vim
-
 # Install Mira
 COPY ./packages/mira/mira-version.txt /miraVersion.txt
 RUN COMMIT_SHA="$(cat /miraVersion.txt)" && \
