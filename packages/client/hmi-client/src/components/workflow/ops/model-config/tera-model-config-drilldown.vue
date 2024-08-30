@@ -21,28 +21,6 @@
 								:loading="isLoading"
 							/>
 
-							<span class="flex gap-1">
-								<Dropdown
-									class="flex-1"
-									v-model="selectedSortOption"
-									:options="sortByOptions"
-									option-label="label"
-									option-value="value"
-								>
-									<template #value="{ value }">
-										<label class="sort-by-label">Sort by</label
-										>{{ sortByOptions.find((option) => option.value === value)?.label }}
-									</template>
-								</Dropdown>
-								<Dropdown
-									class="flex-1"
-									v-model="selectedShownOption"
-									:options="shownOptionsList"
-									option-label="label"
-									option-value="value"
-								></Dropdown>
-							</span>
-
 							<tera-input-text v-model="filterModelConfigurationsText" placeholder="Filter" />
 						</div>
 						<ul v-if="!isLoading && model?.id">
@@ -244,7 +222,6 @@ import Message from 'primevue/message';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { useConfirm } from 'primevue/useconfirm';
-import Dropdown from 'primevue/dropdown';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import { saveCodeToState } from '@/services/notebook';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
@@ -361,10 +338,6 @@ const filteredModelConfigurations = computed(() => {
 });
 
 const selectedSortOption = ref('createdOn');
-const sortByOptions = [{ label: 'Created On', value: 'createdOn' }];
-
-const selectedShownOption = ref('all');
-const shownOptionsList = [{ label: 'Show all', value: 'all' }];
 
 const runFromCode = () => {
 	const code = editor?.getValue();
@@ -720,6 +693,14 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* Make left sidebar grey */
+:deep(.slider-content) {
+	background-color: var(--surface-100);
+}
+:deep(.slider-content aside header) {
+	background: color-mix(in srgb, var(--surface-100) 80%, transparent 20%);
+}
+
 :deep(.p-datatable-loading-overlay.p-component-overlay) {
 	background-color: var(--surface-section);
 }
