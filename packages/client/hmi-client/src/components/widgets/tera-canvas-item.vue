@@ -69,6 +69,7 @@ onBeforeUnmount(() => {
 
 		dragHandle.removeEventListener('mousedown', startDrag);
 		document.removeEventListener('mousemove', drag);
+		document.removeEventListener('click', stopDrag);
 		dragHandle.removeEventListener('mouseup', stopDrag);
 	}
 });
