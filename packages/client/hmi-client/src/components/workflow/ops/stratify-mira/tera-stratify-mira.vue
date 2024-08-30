@@ -276,22 +276,6 @@ const handleStratifyResponse = (data: any) => {
 	}
 };
 
-const createOutput = async (model: Model, useModelName = false) => {
-	const modelData = await createModel(model);
-	if (!modelData) return;
-
-	emit('append-output', {
-		id: uuidv4(),
-		label: useModelName ? modelData.header.name : nodeOutputLabel(props.node, 'Output'),
-		type: 'modelId',
-		state: {
-			strataGroup: _.cloneDeep(props.node.state.strataGroup),
-			strataCodeHistory: _.cloneDeep(props.node.state.strataCodeHistory)
-		},
-		value: [modelData.id]
-	});
-};
-
 const handleModelPreview = async (data: any) => {
 	stratifiedAmr.value = data.content['application/json'];
 	isStratifyInProgress.value = false;
@@ -301,7 +285,19 @@ const handleModelPreview = async (data: any) => {
 	}
 
 	// Create output
-	createOutput(stratifiedAmr.value);
+	const modelData = await createModel(stratifiedAmr.value);
+	if (!modelData) return;
+
+	emit('append-output', {
+		id: uuidv4(),
+		label: nodeOutputLabel(props.node, 'Output'),
+		type: 'modelId',
+		state: {
+			strataGroup: _.cloneDeep(props.node.state.strataGroup),
+			strataCodeHistory: _.cloneDeep(props.node.state.strataCodeHistory)
+		},
+		value: [modelData.id]
+	});
 };
 
 const buildJupyterContext = () => {
@@ -455,13 +451,17 @@ const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 const onSelection = (id: string) => {
 	emit('select-output', id);
 };
+function updateNodeLabel(id: string, label: string) {
+	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
+	if (!outputPort) return;
+	outputPort.label = label;
+	emit('update-output-port', outputPort);
+}
 
-const updateNodeModel = (model: Model) => {
-	showSaveModelModal.value = false;
-	stratifiedAmr.value = model;
-	createOutput(model, true);
-};
-
+function updateNodeModel(model: Model) {
+	if (!selectedOutputId.value) return;
+	updateNodeLabel(selectedOutputId.value, model.header.name);
+}
 watch(
 	() => props.node.active,
 	async () => {
