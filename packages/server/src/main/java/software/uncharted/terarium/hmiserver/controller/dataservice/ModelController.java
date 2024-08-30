@@ -42,6 +42,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Annotations;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceQueryParam;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.models.simulationservice.interventions.InterventionPolicy;
@@ -260,6 +261,12 @@ public class ModelController {
 				if (model.get().getSemantics().getOde().getObservables() == null) {
 					model.get().getSemantics().getOde().setObservables(new ArrayList());
 				}
+			}
+			// Force proper annotation metadata
+			ModelMetadata metadata = model.get().getMetadata();
+			if (metadata.getAnnotations() == null) {
+				metadata.setAnnotations(new Annotations());
+				model.get().setMetadata(metadata);
 			}
 
 			// Return the model
