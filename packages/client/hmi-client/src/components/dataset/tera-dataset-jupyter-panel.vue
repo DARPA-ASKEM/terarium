@@ -561,26 +561,6 @@ const onDownloadResponse = (payload) => {
 	font-size: 12px;
 }
 
-/* hacks to make the selector and save button look consistant with other items that appear in the header */
-.header-action-buttons {
-	position: absolute;
-	top: 2rem;
-	right: 6rem;
-	display: flex;
-	flex-direction: row;
-}
-.header-action-buttons:deep(.p-dropdown) {
-	padding: 0px 9px;
-	height: 32px;
-}
-.header-action-buttons:deep(.p-button) {
-	height: 32px;
-}
-.header-action-buttons:deep(.p-button .p-button-label) {
-	font-weight: 500;
-	padding: 0px var(--gap-1);
-}
-
 .variables-table {
 	display: grid;
 	grid-template-columns: 1fr;

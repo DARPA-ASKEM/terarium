@@ -5,7 +5,7 @@
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<template #header-actions>
-			<div class="flex align-items-center ml-auto">
+			<div class="header-action-buttons">
 				<Dropdown
 					v-model="selectedDataset"
 					placeholder="Select a dataframe"
@@ -127,5 +127,23 @@ const onSave = () => {
 .background {
 	background: white;
 	height: 100%;
+}
+
+/* hacks to make the selector and save button look consistant with other items that appear in the header */
+.header-action-buttons {
+	display: flex;
+	flex-direction: row;
+	gap: var(--gap-2);
+}
+.header-action-buttons:deep(.p-dropdown) {
+	padding: 0px 9px;
+	height: 2rem;
+}
+.header-action-buttons:deep(.p-button) {
+	height: 2rem;
+}
+.header-action-buttons:deep(.p-button .p-button-label) {
+	font-weight: 500;
+	padding: 0px var(--gap-1);
 }
 </style>
