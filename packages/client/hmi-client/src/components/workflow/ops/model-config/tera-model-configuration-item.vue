@@ -78,17 +78,17 @@ const onDeleteConfiguration = () => {
 
 <style scoped>
 .config-card {
+	background: var(--surface-0);
 	&:hover {
 		cursor: pointer;
 		background-color: var(--gray-100);
 	}
 	&.card-selected {
-		background-color: var(--gray-100);
 		border-left: 4px solid var(--primary-color);
 	}
 
 	> div {
-		padding-left: var(--gap-small);
+		padding-left: var(--gap);
 	}
 }
 
