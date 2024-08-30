@@ -82,6 +82,8 @@
 						label="Save for re-use"
 						size="small"
 						outlined
+						dis
+						:disabled="isSaveDisabled"
 						severity="secondary"
 						@click="showSaveModelModal = true"
 					/>
@@ -130,6 +132,7 @@ import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-inp
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
 import { createModel, getModel } from '@/services/model';
+import { useProjects } from '@/composables/project';
 
 import { WorkflowNode, OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
@@ -184,6 +187,12 @@ const showSaveModelModal = ref(false);
 const isStratifyInProgress = ref(false);
 
 const selectedOutputId = ref<string>();
+
+const isSaveDisabled = computed(() => {
+	console.log(selectedOutputId.value);
+	console.log(useProjects().activeProject.value?.projectAssets.find((asset) => asset.id === selectedOutputId.value));
+	return _.isEmpty(selectedOutputId.value);
+});
 
 const kernelManager = new KernelSessionManager();
 
