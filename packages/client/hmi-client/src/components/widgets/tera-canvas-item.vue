@@ -45,6 +45,7 @@ const drag = (evt: MouseEvent) => {
 };
 
 const stopDrag = (/* evt: MouseEvent */) => {
+	if (!isDragging) return;
 	tempX = 0;
 	tempY = 0;
 	isDragging = false;
