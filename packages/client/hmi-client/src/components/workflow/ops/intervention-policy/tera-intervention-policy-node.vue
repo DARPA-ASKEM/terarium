@@ -20,7 +20,7 @@ import { cloneDeep } from 'lodash';
 import { blankIntervention } from '@/services/intervention-policy';
 import { InterventionPolicyState } from './intervention-policy-operation';
 
-const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
+const emit = defineEmits(['open-drilldown', 'update-state']);
 const props = defineProps<{
 	node: WorkflowNode<InterventionPolicyState>;
 }>();
@@ -30,7 +30,7 @@ const isModelInputConnected = computed(() => modelInput?.status === WorkflowPort
 
 watch(
 	() => props.node.inputs,
-	async (inputs) => {
+	(inputs) => {
 		const modelId = inputs.find((input) => input.type === 'modelId')?.value?.[0];
 		if (!modelId) return;
 
