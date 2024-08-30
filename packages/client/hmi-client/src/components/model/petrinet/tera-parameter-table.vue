@@ -14,7 +14,7 @@
 					@click.stop="onAddUncertainty"
 					class="mr-2"
 				/>
-				<tera-input-text v-model="filterText" placeholder="Filter" />
+				<tera-input-text v-model="filterText" placeholder="Filter" class="w-2 p-1" />
 			</template>
 
 			<!-- Adding uncertainty header -->

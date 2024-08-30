@@ -3,7 +3,7 @@
 		<AccordionTab>
 			<template #header>
 				Initials <span class="artifact-amount">({{ numInitials }})</span>
-				<tera-input-text v-model="filterText" placeholder="Filter" />
+				<tera-input-text v-model="filterText" placeholder="Filter" class="w-2 p-1" />
 			</template>
 
 			<ul class="pl-1">

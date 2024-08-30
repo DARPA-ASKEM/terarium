@@ -12,17 +12,20 @@
 				<template #content>
 					<div class="m-3">
 						<div class="flex flex-row gap-1">
-							<tera-input-text v-model="filterModelConfigurationsText" placeholder="Filter" />
+							<tera-input-text v-model="filterModelConfigurationsText" placeholder="Filter" class="w-full" />
 
 							<Button
-								outlined
-								icon="pi pi-plus"
 								label="Extract from inputs"
 								@click="extractConfigurationsFromInputs"
-								severity="secondary"
-								class="white-space-nowrap"
+								severity="primary"
+								class="white-space-nowrap w-9"
 								:loading="isLoading"
-								:disabled="!props.node.inputs[2]?.value && !props.node.inputs[1]?.value"
+								:disabled="
+									!props.node.inputs[1]?.value &&
+									!props.node.inputs[2]?.value &&
+									!props.node.inputs[3]?.value &&
+									!props.node.inputs[4]?.value
+								"
 							/>
 						</div>
 						<ul v-if="!isLoading && model?.id">
@@ -62,17 +65,16 @@
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab>
 					<template #header>
-						<Button v-if="!isEditingDescription" class="start-edit" text @click.stop="onEditDescription">
-							<h5 class="btn-content">Description</h5>
+						<h5 class="btn-content">Description</h5>
+						<Button v-if="!isEditingDescription" class="start-edit" text rounded @click.stop="onEditDescription">
 							<i class="pi pi-pencil" />
 						</Button>
 						<span v-else class="confirm-cancel">
-							<span>Description</span>
 							<Button icon="pi pi-times" text @click.stop="isEditingDescription = false" />
 							<Button icon="pi pi-check" text @click.stop="onConfirmEditDescription" />
 						</span>
 					</template>
-					<p class="description text" v-if="!isEditingDescription">
+					<p class="description text mb-3" v-if="!isEditingDescription">
 						{{ knobs.transientModelConfig.description }}
 					</p>
 					<Textarea
@@ -84,7 +86,7 @@
 					/>
 				</AccordionTab>
 				<AccordionTab header="Diagram">
-					<tera-model-diagram v-if="model" :model="model" />
+					<tera-model-diagram v-if="model" :model="model" class="mb-2" />
 				</AccordionTab>
 			</Accordion>
 			<template v-if="model">
@@ -705,6 +707,12 @@ onUnmounted(() => {
 	background: color-mix(in srgb, var(--surface-100) 80%, transparent 20%);
 }
 
+/* When accordions are closed, don't show their filter or edit buttons */
+:deep(.p-accordion-tab:not(.p-accordion-tab-active)) .p-accordion-header .p-accordion-header-link .tera-input,
+:deep(.p-accordion-tab:not(.p-accordion-tab-active)) .p-accordion-header .p-accordion-header-link button {
+	display: none;
+}
+
 :deep(.p-datatable-loading-overlay.p-component-overlay) {
 	background-color: var(--surface-section);
 }
@@ -769,7 +777,9 @@ button.start-edit {
 	display: flex;
 	gap: var(--gap-3);
 	width: fit-content;
+	min-width: var(--gap-3);
 	padding: var(--gap-2);
+	margin-left: var(--gap-1);
 
 	& > .btn-content {
 		color: var(--text-color);

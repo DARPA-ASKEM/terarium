@@ -40,6 +40,7 @@
 						option-label="name"
 						option-value="value"
 						:options="distributionTypeOptions()"
+						class="mr-3"
 					/>
 
 					<!-- Constant -->
@@ -65,6 +66,7 @@
 									distribution: formatPayloadFromParameterChange({ minimum: $event })
 								})
 							"
+							class="mr-2"
 						/>
 						<tera-input-number
 							label="Max"

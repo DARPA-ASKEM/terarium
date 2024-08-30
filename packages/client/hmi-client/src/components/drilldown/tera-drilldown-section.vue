@@ -61,7 +61,7 @@ footer {
 header {
 	display: inline-flex;
 	justify-content: space-between;
-	padding: var(--gap-4) 0;
+	padding: var(--gap-3) 0;
 	gap: var(--gap-3);
 }
 
