@@ -35,8 +35,8 @@
 			<div class="btn-group">
 				<tera-asset-enrichment :asset-type="AssetType.Dataset" :assetId="assetId" @finished-job="fetchDataset" />
 				<Button label="Reset" severity="secondary" outlined @click="reset" />
-				<Button label="Save as..." severity="secondary" outlined @click="showSaveModal = true" />
-				<Button label="Save" :disabled="isSaved" @click="transientDataset && updateDatasetContent(transientDataset)" />
+				<Button label="Save as..." severity="secondary" outlined @click="showSaveModal = true" disabled />
+				<Button label="Save" :disabled="isSaved" @click="updateDatasetContent" />
 			</div>
 		</template>
 		<section>
@@ -120,7 +120,8 @@
 			</Accordion>
 		</section>
 	</tera-asset>
-	<!-- <tera-save-asset-modal
+	<!-- TODO: Add create dataset support to save modal -->
+	<!---<tera-save-asset-modal
 		v-if="transientDataset"
 		:initial-name="transientDataset.name"
 		:is-visible="showSaveModal"
@@ -162,6 +163,7 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 // import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import TeraColumnInfo from '@/components/dataset/tera-column-info.vue';
+// import { parseCurie } from '@/services/concept';
 // import { enrichDataset } from './utils';
 
 const props = defineProps({
@@ -236,13 +238,14 @@ const isSaved = computed(() => isEqual(dataset.value, transientDataset.value));
 const columnInformation = computed(
 	() =>
 		transientDataset.value?.columns?.map((column) => ({
-			symbol: column.name,
-			name: column.name,
+			symbol: column.name, // Uneditable
 			description: column.description,
+			grounding: column?.grounding,
 			dataType: column.dataType,
-			groundings: column?.grounding,
+			// Metadata
+			name: column.metadata?.name ?? column.name,
 			unit: column.metadata?.unit,
-			stats: column.metadata?.column_stats
+			stats: column.metadata?.column_stats // Uneditable
 		})) ?? []
 );
 
@@ -282,6 +285,19 @@ const card = computed(() => {
 const description = computed(() => dataset.value?.description?.concat('\n', card.value?.DESCRIPTION ?? '') ?? '');
 const author = computed(() => card.value?.AUTHOR_NAME ?? '');
 
+function updateColumn(index: number, key: string, value: string) {
+	if (!transientDataset.value?.columns?.[index]) return;
+	if (key === 'unit' || key === 'name') {
+		transientDataset.value.columns[index].metadata[key] = value;
+	} else if (key === 'concept') {
+		transientDataset.value.columns[index].grounding = {
+			identifiers: [{ curie: '', name: value }]
+		};
+	} else {
+		transientDataset.value.columns[index][key] = value;
+	}
+}
+
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
 };
@@ -300,28 +316,31 @@ async function downloadFileFromDataset(): Promise<PresignedURL | null> {
 	return null;
 }
 
-async function updateDatasetContent(updatedDataset: Dataset) {
+async function updateDatasetContent() {
+	if (!transientDataset.value) return;
 	if (!useProjects().hasEditPermission()) {
 		logger.error('You do not have permission to edit this dataset.');
 		return;
 	}
-	await updateDataset(updatedDataset);
+	await updateDataset(transientDataset.value);
 	logger.info('Saved changes.');
 	await useProjects().refresh();
 	fetchDataset();
 }
 
 async function updateDatasetName() {
-	if (dataset.value && !isEmpty(newName.value)) {
-		const datasetClone = cloneDeep(dataset.value);
-		datasetClone.name = newName.value;
-		await updateDatasetContent(datasetClone);
+	if (transientDataset.value && !isEmpty(newName.value)) {
+		transientDataset.value.name = newName.value;
+		await updateDatasetContent();
 	}
 	isRenaming.value = false;
 }
 
+function reset() {
+	transientDataset.value = cloneDeep(dataset.value);
+}
+
 const fetchDataset = async () => {
-	isDatasetLoading.value = true;
 	if (props.source === DatasetSource.TERARIUM) {
 		// const unenrichedDataset = await getDataset(props.assetId);
 		// if (unenrichedDataset) dataset.value = enrichDataset(unenrichedDataset);
@@ -330,17 +349,12 @@ const fetchDataset = async () => {
 	} else if (props.source === DatasetSource.ESGF) {
 		dataset.value = await getClimateDataset(props.assetId);
 	}
-	isDatasetLoading.value = false;
+	reset(); // Prepare transientDataset for editing
 
 	if (dataset.value?.esgfId && !image.value) {
 		image.value = await getClimateDatasetPreview(dataset.value.esgfId);
 	}
 };
-
-function updateColumn(index: number, key: string, value: string) {
-	if (!transientDataset.value?.columns?.[index]) return;
-	transientDataset.value.columns[index][key] = value;
-}
 
 function getRawContent() {
 	// If it's an ESGF dataset or a NetCDF file, we don't want to download the raw content
@@ -358,10 +372,6 @@ function getRawContent() {
 	}
 }
 
-function reset() {
-	transientDataset.value = cloneDeep(dataset.value);
-}
-
 // Whenever assetId changes, fetch dataset with that ID
 watch(
 	() => props.assetId,
@@ -371,9 +381,10 @@ watch(
 			// Empty the dataset and rawContent so previous data is not shown
 			dataset.value = null;
 			rawContent.value = null;
+			isDatasetLoading.value = true;
 			await fetchDataset();
+			isDatasetLoading.value = false;
 			if (dataset.value) {
-				reset(); // Initializes transientDataset
 				getRawContent(); // Whenever we change the dataset, we need to fetch the rawContent
 			}
 		}

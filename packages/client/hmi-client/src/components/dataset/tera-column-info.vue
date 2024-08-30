@@ -23,14 +23,14 @@
 				/>
 			</span>
 			<span class="data-type">
-				<template v-if="featureConfig.isPreview"><label>Data type</label>{{ column.dataType }}</template>
-				<tera-input-text
+				<label>Data type</label>
+				<template v-if="featureConfig.isPreview">{{ column.dataType }}</template>
+				<Dropdown
 					v-else
-					label="Data type"
-					placeholder="Add a data type"
-					:characters-to-reject="[' ']"
+					placeholder="Select a data type"
 					:model-value="column.dataType ?? ''"
 					@update:model-value="$emit('update-column', { key: 'dataType', value: $event })"
+					:options="Object.values(ColumnType)"
 				/>
 			</span>
 			<span v-if="showConcept" class="concept">
@@ -67,12 +67,24 @@ import { ref, computed, watch } from 'vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraBoxplot from '@/components/widgets/tera-boxplot.vue';
 import AutoComplete from 'primevue/autocomplete';
-import type { DKG } from '@/types/Types'; // DatasetColumn
+import Dropdown from 'primevue/dropdown';
+import type { DKG, ColumnType, type Grounding } from '@/types/Types';
 import { getCurieFromGroundingIdentifier, getNameOfCurieCached, searchCuriesEntities } from '@/services/concept';
 import type { FeatureConfig } from '@/types/common';
 
+type ColumnInfo = {
+	symbol: string;
+	dataType?: ColumnType;
+	description?: string;
+	grounding?: Grounding;
+	// Metadata
+	unit?: string;
+	name?: string;
+	stats?: any;
+};
+
 const props = defineProps<{
-	column: any;
+	column: ColumnInfo;
 	featureConfig: FeatureConfig;
 }>();
 
@@ -116,6 +128,7 @@ section.entries {
 
 label {
 	color: var(--text-color-subdued);
+	text-wrap: nowrap;
 }
 
 h6 {
@@ -161,12 +174,14 @@ h6 {
 }
 
 .unit,
+.data-type,
 .concept {
 	display: flex;
 	align-items: center;
 	gap: var(--gap-1);
 }
 
+:deep(.p-dropdown > span),
 :deep(.p-autocomplete-input) {
 	padding: var(--gap-1) var(--gap-2);
 }
