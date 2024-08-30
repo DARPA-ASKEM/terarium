@@ -86,6 +86,8 @@ const getLabelById = (id: string) => {
 .dropdown-option {
 	display: flex;
 	gap: var(--gap-2);
+	width: 100%;
+	justify-content: space-between;
 }
 
 .timestamp {
@@ -93,6 +95,7 @@ const getLabelById = (id: string) => {
 	justify-content: space-between;
 	align-items: center;
 	font-size: var(--font-caption);
+	font-weight: 500;
 	color: var(--text-color-subdued);
 }
 .connection-indicator {
