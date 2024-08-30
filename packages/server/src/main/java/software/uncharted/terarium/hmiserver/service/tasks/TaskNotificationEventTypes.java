@@ -7,11 +7,11 @@ import software.uncharted.terarium.hmiserver.models.ClientEventType;
 @Slf4j
 public class TaskNotificationEventTypes {
 
-	private static Map<String, ClientEventType> clientEventTypes = Map.of(
+	private static final Map<String, ClientEventType> clientEventTypes = Map.of(
 		ModelCardResponseHandler.NAME,
 		ClientEventType.TASK_GOLLM_MODEL_CARD,
 		ConfigureModelResponseHandler.NAME,
-		ClientEventType.TASK_GOLLM_CONFIGURE_MODEL,
+		ClientEventType.TASK_GOLLM_CONFIGURE_MODEL_FROM_PAPER,
 		ConfigureFromDatasetResponseHandler.NAME,
 		ClientEventType.TASK_GOLLM_CONFIGURE_FROM_DATASET,
 		CompareModelsResponseHandler.NAME,
@@ -22,7 +22,7 @@ public class TaskNotificationEventTypes {
 		ClientEventType.TASK_FUNMAN_VALIDATION
 	);
 
-	public static ClientEventType getTypeFor(String taskName) {
+	public static ClientEventType getTypeFor(final String taskName) {
 		final ClientEventType eventType = clientEventTypes.get(taskName);
 		if (eventType == null) {
 			log.warn("Event type not found for task: " + taskName);

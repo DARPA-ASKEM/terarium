@@ -9,12 +9,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
-import java.util.regex.Matcher;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -314,7 +314,7 @@ public class GoLLMController {
 	)
 	public ResponseEntity<TaskResponse> createConfigFromDatasetTask(
 		@RequestParam(name = "model-id", required = true) final UUID modelId,
-		@RequestParam(name = "dataset-ids", required = true) final List<UUID> datasetIds,
+		@RequestParam(name = "dataset-id", required = true) final UUID datasetId,
 		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
 		@RequestParam(name = "workflow-id", required = false) final UUID workflowId,
 		@RequestParam(name = "node-id", required = false) final UUID nodeId,
@@ -327,37 +327,31 @@ public class GoLLMController {
 		);
 
 		// Grab the datasets
-		final List<String> datasets = new ArrayList<>();
-		for (final UUID datasetId : datasetIds) {
-			final Optional<Dataset> dataset = datasetService.getAsset(datasetId, permission);
-			if (dataset.isEmpty()) {
-				log.warn(String.format("Dataset %s not found", datasetId));
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.not-found"));
-			}
+		final List<String> dataArray = new ArrayList<>();
 
-			// make sure there is text in the document
-			if (dataset.get().getFileNames() == null || dataset.get().getFileNames().isEmpty()) {
-				log.warn(String.format("Dataset %s has no source files to send", datasetId));
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.files.not-found"));
-			}
-
-			for (final String filename : dataset.get().getFileNames()) {
-				try {
-					final Optional<String> datasetText = datasetService.fetchFileAsString(datasetId, filename);
-					if (datasetText.isPresent()) {
-						// ensure unescaped newlines are escaped
-						datasets.add(datasetText.get().replaceAll("(?<!\\\\)\\n", Matcher.quoteReplacement("\\\\n")));
-					}
-				} catch (final Exception e) {
-					log.warn("Unable to fetch dataset files", e);
-					throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.files.not-found"));
-				}
-			}
+		final Optional<Dataset> dataset = datasetService.getAsset(datasetId, permission);
+		if (dataset.isEmpty()) {
+			log.warn(String.format("Dataset %s not found", datasetId));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.not-found"));
 		}
 
-		if (datasets.isEmpty()) {
-			log.warn("No datasets found");
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.not-found"));
+		// make sure there is text in the document
+		if (dataset.get().getFileNames() == null || dataset.get().getFileNames().isEmpty()) {
+			log.warn(String.format("Dataset %s has no source files to send", datasetId));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.files.not-found"));
+		}
+
+		for (final String filename : dataset.get().getFileNames()) {
+			try {
+				final Optional<String> datasetText = datasetService.fetchFileAsString(datasetId, filename);
+				if (datasetText.isPresent()) {
+					final List<String> rows = Arrays.asList(datasetText.get().split("\\r?\\n"));
+					dataArray.addAll(rows);
+				}
+			} catch (final Exception e) {
+				log.warn("Unable to fetch dataset files", e);
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.files.not-found"));
+			}
 		}
 
 		// Grab the model
@@ -368,16 +362,11 @@ public class GoLLMController {
 		}
 
 		final ConfigureFromDatasetResponseHandler.Input input = new ConfigureFromDatasetResponseHandler.Input();
-		input.setDatasets(datasets);
+		input.setDataset(dataset.get());
 		// stripping the metadata from the model before its sent since it can cause
 		// gollm to fail with massive inputs
 		model.get().setMetadata(null);
 		input.setAmr(model.get().serializeWithoutTerariumFields());
-
-		// set matrix string if provided
-		if (body != null && !body.getMatrixStr().isEmpty()) {
-			input.setMatrixStr(body.getMatrixStr());
-		}
 
 		// Create the task
 		final TaskRequest req = new TaskRequest();
@@ -396,7 +385,7 @@ public class GoLLMController {
 
 		final ConfigureFromDatasetResponseHandler.Properties props = new ConfigureFromDatasetResponseHandler.Properties();
 		props.setProjectId(projectId);
-		props.setDatasetIds(datasetIds);
+		props.setDatasetId(datasetId);
 		props.setModelId(modelId);
 		props.setWorkflowId(workflowId);
 		props.setNodeId(nodeId);

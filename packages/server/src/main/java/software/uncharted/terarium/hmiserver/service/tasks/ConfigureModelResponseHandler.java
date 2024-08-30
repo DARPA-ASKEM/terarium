@@ -8,7 +8,6 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
@@ -23,7 +22,7 @@ import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 @Slf4j
 public class ConfigureModelResponseHandler extends TaskResponseHandler {
 
-	public static final String NAME = "gollm_task:configure_model";
+	public static final String NAME = "gollm_task:configure_model_from_paper";
 
 	private final ObjectMapper objectMapper;
 	private final ModelService modelService;
@@ -65,15 +64,14 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 	public TaskResponse onSuccess(final TaskResponse resp) {
 		try {
 			final Properties props = resp.getAdditionalProperties(Properties.class);
-			final Model model = modelService
-				.getAsset(props.getModelId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER)
-				.orElseThrow();
 			final Response configurations = objectMapper.readValue(resp.getOutput(), Response.class);
 
-			// For each configuration, create a new model configuration with parameters set
+			// For each configuration, create a new model configuration
 			for (final JsonNode condition : configurations.response.get("conditions")) {
 				final ModelConfiguration configuration = objectMapper.treeToValue(condition, ModelConfiguration.class);
-
+				if (configuration.getModelId() != props.modelId) {
+					configuration.setModelId(props.modelId);
+				}
 				final ModelConfiguration newConfig = modelConfigurationService.createAsset(
 					configuration,
 					props.projectId,
