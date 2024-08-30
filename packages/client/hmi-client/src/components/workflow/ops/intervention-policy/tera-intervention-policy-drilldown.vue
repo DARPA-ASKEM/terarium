@@ -62,7 +62,7 @@
 				</template>
 				<template #header-controls-right>
 					<Button label="Save as..." outlined severity="secondary" @click="showSaveModal = true" />
-					<Button class="mr-3" label="Save" @click="onSaveInterventionPolicy" :disabled="isSaved" />
+					<Button class="mr-3" label="Save" @click="onSaveInterventionPolicy" :disabled="isSaveDisabled" />
 				</template>
 				<Accordion v-if="knobs.transientInterventionPolicy.id" multiple :active-index="[0, 1]">
 					<AccordionTab>
@@ -143,7 +143,7 @@
 </template>
 
 <script setup lang="ts">
-import _, { cloneDeep, groupBy, isEmpty, isEqual } from 'lodash';
+import _, { cloneDeep, groupBy, isEmpty } from 'lodash';
 import { computed, onMounted, ref, watch, nextTick, ComponentPublicInstance } from 'vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -170,7 +170,12 @@ import { createInterventionChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import TeraInterventionCard from './tera-intervention-card.vue';
-import { InterventionPolicyOperation, InterventionPolicyState } from './intervention-policy-operation';
+import {
+	InterventionPolicyOperation,
+	InterventionPolicyState,
+	isInterventionPoliciesValuesEqual,
+	isInterventionPoliciesEqual
+} from './intervention-policy-operation';
 import TeraInterventionPolicyCard from './tera-intervention-policy-card.vue';
 
 const props = defineProps<{
@@ -211,10 +216,11 @@ const selectedPolicy = ref<InterventionPolicy | null>(null);
 const newDescription = ref('');
 const descriptionTextareaRef = ref<ComponentPublicInstance<typeof Textarea> | null>(null);
 const isEditingDescription = ref(false);
-const isSaved = computed(
+const isSaveDisabled = computed(
 	() =>
 		knobs.value.transientInterventionPolicy.id !== selectedPolicy.value?.id ||
-		isEqual(knobs.value.transientInterventionPolicy, selectedPolicy.value)
+		isInterventionPoliciesEqual(knobs.value.transientInterventionPolicy, selectedPolicy.value) ||
+		!isInterventionPoliciesValuesEqual(knobs.value.transientInterventionPolicy, selectedPolicy.value)
 );
 
 const parameterOptions = computed(() => {
@@ -315,7 +321,7 @@ const onUpdateInterventionCard = (intervention: Intervention, index: number) => 
 
 const onReplacePolicy = (policy: InterventionPolicy) => {
 	if (selectedPolicy.value?.id === policy.id) return;
-	if (isSaved.value) {
+	if (isSaveDisabled.value) {
 		applyInterventionPolicy(policy);
 	} else {
 		confirm.require({
@@ -388,7 +394,7 @@ const onSaveInterventionPolicy = async () => {
 		logger.error('Failed to save intervention policy');
 		return;
 	}
-	applyInterventionPolicy(data);
+	initialize();
 };
 
 watch(
