@@ -289,7 +289,7 @@ function updateColumn(index: number, key: string, value: any) {
 		transientDataset.value.columns[index].metadata[key] = value;
 	} else if (key === 'concept') {
 		// Only one identifier is supported for now
-		if (transientDataset.value.columns[index].grounding?.identifiers) {
+		if (transientDataset.value.columns[index]?.grounding?.identifiers) {
 			transientDataset.value.columns[index].grounding.identifiers[0] = value;
 		} else {
 			transientDataset.value.columns[index].grounding = { identifiers: [value] };
