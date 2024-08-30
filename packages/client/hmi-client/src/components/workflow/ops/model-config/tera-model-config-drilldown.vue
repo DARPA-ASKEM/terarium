@@ -48,7 +48,7 @@
 			</tera-slider-panel>
 		</template>
 
-		<tera-drilldown-section :tabName="ConfigTabs.Wizard" class="px-3">
+		<tera-drilldown-section :tabName="ConfigTabs.Wizard" class="px-3 mb-10">
 			<template #header-controls-left>
 				<tera-toggleable-input
 					v-if="typeof knobs.transientModelConfig.name === 'string'"
@@ -125,6 +125,8 @@
 							/>
 						</AccordionTab>
 					</Accordion>
+					<!-- vertical spacer at end of page -->
+					<div class="p-5"></div>
 				</template>
 			</template>
 		</tera-drilldown-section>
