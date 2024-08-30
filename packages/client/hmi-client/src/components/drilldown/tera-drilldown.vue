@@ -64,8 +64,8 @@
 					</template>
 				</template>
 				<template #actions>
-					<slot name="header-actions" />
 					<tera-operator-annotation :state="node.state" @update-state="(state: any) => emit('update-state', state)" />
+					<slot name="header-actions" />
 				</template>
 			</tera-drilldown-header>
 			<main class="flex overflow-hidden h-full">

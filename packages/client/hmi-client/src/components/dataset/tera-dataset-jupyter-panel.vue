@@ -1,27 +1,5 @@
 <template>
 	<!-- Output selector and Save as buttons artificially injected into drilldown header -->
-	<div class="header-action-buttons">
-		<div class="flex gap-2">
-			<Dropdown
-				v-model="actionTarget"
-				placeholder="Select a dataframe"
-				:options="Object.keys(kernelState || [])"
-				class="5"
-				:disabled="!kernelState"
-			/>
-			<Button
-				label="Save for reuse"
-				severity="secondary"
-				outlined
-				:disabled="!kernelState"
-				@click="showSaveInput = !showSaveInput"
-			/>
-			<!-- <Button
-				label="Close"
-				@click="emit('close')"
-			/> -->
-		</div>
-	</div>
 	<div class="data-transform-container h-full overflow-hidden">
 		<!-- Toolbar -->
 		<div class="toolbar flex">
@@ -111,32 +89,32 @@
 			:jupyter-session="jupyterSession"
 			:kernel-status="kernelStatus"
 			:language="selectedLanguage"
-			@update-kernel-state="updateKernelState"
+			@update-kernel-state="(e) => emit('update-kernel-state', e)"
 			@update-kernel-status="updateKernelStatus"
 			@new-dataset-saved="onNewDatasetSaved"
 			@download-response="onDownloadResponse"
 			@update-language="(lang) => emit('update-language', lang)"
 			:notebook-session="props.notebookSession"
 		/>
-	</div>
 
-	<!-- Save as dialog -->
-	<tera-modal v-if="showSaveInput" class="w-4">
-		<template #header>
-			<h4>Save as</h4>
-		</template>
-		<tera-input-text
-			id="name"
-			v-model="saveAsName"
-			placeholder="What do you want to call it?"
-			auto-focus
-			@keyup.enter="saveAsNewDataset()"
-		/>
-		<template #footer>
-			<Button label="Cancel" @click="showSaveInput = false" severity="secondary" outlined />
-			<Button label="Save" :disabled="!hasValidDatasetName" @click="saveAsNewDataset()" />
-		</template>
-	</tera-modal>
+		<!-- Save as dialog -->
+		<tera-modal v-if="showSaveInput" class="w-4">
+			<template #header>
+				<h4>Save as</h4>
+			</template>
+			<tera-input-text
+				id="name"
+				v-model="saveAsName"
+				placeholder="What do you want to call it?"
+				auto-focus
+				@keyup.enter="saveAsNewDataset()"
+			/>
+			<template #footer>
+				<Button label="Cancel" @click="showSaveInput = false" severity="secondary" outlined />
+				<Button label="Save" :disabled="!hasValidDatasetName" @click="saveAsNewDataset()" />
+			</template>
+		</tera-modal>
+	</div>
 </template>
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, Ref, watch } from 'vue';
@@ -166,6 +144,13 @@ import { useProjects } from '@/composables/project';
 import { programmingLanguageOptions } from '@/types/common';
 import TeraBeakerInput from '@/components/llm/tera-beaker-input.vue';
 
+const openDialog = () => {
+	showSaveInput.value = true;
+};
+
+defineExpose({
+	openDialog
+});
 const jupyterSession: SessionContext = await newSession('beaker_kernel', 'Beaker Kernel');
 const selectedKernel = ref();
 const runningSessions = ref<any[]>([]);
@@ -178,17 +163,17 @@ const props = defineProps<{
 	showChatThoughts: boolean;
 	notebookSession?: NotebookSession;
 	programmingLanguage?: string;
+	kernelState: any;
+	selectedDataset: string | null;
 }>();
 
 const languages = programmingLanguageOptions();
 const selectedLanguage = computed(() => props.programmingLanguage || languages[0].value);
 
-const emit = defineEmits(['new-dataset-saved', 'update-language']);
+const emit = defineEmits(['new-dataset-saved', 'update-language', 'update-kernel-state']);
 
 const chat = ref();
 const kernelStatus = ref(<string>'');
-const kernelState = ref(null);
-const actionTarget = ref<string | null>(null);
 
 const newCsvContent: any = ref(null);
 const newCsvHeader: any = ref(null);
@@ -327,14 +312,6 @@ onUnmounted(() => {
 	jupyterSession.shutdown();
 });
 
-const updateKernelState = (newKernelState: any) => {
-	kernelState.value = newKernelState;
-	// Default the dropdown to the first dataframe
-	if (!actionTarget.value) {
-		actionTarget.value = Object.keys(newKernelState)[0];
-	}
-};
-
 // TODO: Integrate tera-save-asset-modal.vue instead of doing this
 // There is no clear way to save a csv dataset unless we do it using jupyter like we have now, once we figure out how to save using createDataset we should move this
 // Save file function
@@ -364,7 +341,7 @@ const saveAsNewDataset = async () => {
 		content: {
 			parent_dataset_id: String(props.assets[0].id),
 			name: datasetName,
-			var_name: actionTarget.value
+			var_name: props.selectedDataset
 		},
 		msgType: 'save_dataset_request',
 		msgId: createMessageId('save_dataset_request')
