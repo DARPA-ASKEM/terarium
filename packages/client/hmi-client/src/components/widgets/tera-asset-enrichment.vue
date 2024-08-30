@@ -27,7 +27,7 @@
 			</div>
 			<!--TODO: Will make sure this works in a second pass-->
 			<div class="flex items-center">
-				<Checkbox v-model="overwriteContent" inputId="overwriteContent" binary />
+				<Checkbox v-model="overwriteContent" inputId="overwriteContent" binary disabled />
 				<div class="ml-3">
 					<label for="overwriteContent">Overwrite existing content</label>
 					<p class="text-subdued">If unselected, new content will be appeded</p>
@@ -72,7 +72,7 @@ enum DialogType {
 const dialogType = ref<DialogType>(DialogType.ENRICH);
 const isLoading = ref(false);
 const isModalVisible = ref(false);
-const overwriteContent = ref(false);
+const overwriteContent = ref(true);
 
 const selectedResourceId = ref<string>('');
 const relatedDocuments = ref<Array<{ name: string; id: string }>>([]);
