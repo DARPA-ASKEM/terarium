@@ -1,6 +1,10 @@
 ## Validate Model Configuration
-Please go through __every__ step of the test scenario.\
 Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/terarium/issues/new?assignees=&labels=bug%2C+Q%26A&template=qa-issue.md&title=%5BBUG%5D%3A+).
+
+### Preamble
+Validation checks whether a given model-configuration satisfies specific constraints when it is simulated. Then if so, what are the feasible parameter value ranges one can use.
+
+For example, one might have an `SEIRD` mode-configuration, where the infection rate is between `[0.1, 0.3]`, we want to know what is the maximum infection rate in order to keep the infected population under 1200 people across all times. Based on the rest of the model and its initial conditions, validation result may simply say this isn't feasible, or maybe it can be achieved if infection rate can be kept below `0.225`. 
 
 ### 1. Begin test
 1. Login to https://app.staging.terarium.ai using the test account
