@@ -163,7 +163,6 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraColumnInfo from '@/components/dataset/tera-column-info.vue';
 // import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
-// import { enrichDataset } from './utils';
 
 const props = defineProps({
 	assetId: {
@@ -344,9 +343,6 @@ function reset() {
 
 const fetchDataset = async () => {
 	if (props.source === DatasetSource.TERARIUM) {
-		// const unenrichedDataset = await getDataset(props.assetId);
-		// if (unenrichedDataset) dataset.value = enrichDataset(unenrichedDataset);
-		// console.log(dataset.value);
 		dataset.value = await getDataset(props.assetId);
 	} else if (props.source === DatasetSource.ESGF) {
 		dataset.value = await getClimateDataset(props.assetId);
