@@ -8,7 +8,6 @@ import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
 import { CalibrateMap } from '@/services/calibrate-workflow';
 import { FIFOCache } from '@/utils/FifoCache';
-import { AxiosResponse } from 'axios';
 
 interface Entity {
 	id: string;
@@ -22,7 +21,7 @@ interface EntityMap {
 
 const curieNameCache = new Map<string, string>();
 
-const currieEntityCache = new FIFOCache<Promise<AxiosResponse<any, any>>>(100);
+const currieEntityCache = new FIFOCache<Promise<{ data: any; status: number }>>(400);
 /**
  * Get DKG entities, either single ones or multiple at a time
  */
@@ -32,7 +31,7 @@ async function getCuriesEntities(curies: Array<string>): Promise<Array<DKG> | nu
 
 		let promise = currieEntityCache.get(cacheKey);
 		if (!promise) {
-			promise = API.get(`/mira/currie/${curies.toString()}`);
+			promise = API.get(`/mira/currie/${curies.toString()}`).then((res) => ({ data: res.data, status: res.status }));
 			currieEntityCache.set(cacheKey, promise);
 		}
 
