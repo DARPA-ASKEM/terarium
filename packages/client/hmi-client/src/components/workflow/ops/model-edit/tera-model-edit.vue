@@ -179,7 +179,6 @@ const llmQuery = ref('');
 const llmThoughts = ref<any[]>([]);
 
 const isDraft = ref(false);
-let saveModel = false;
 
 const executeResponse = ref({
 	status: OperatorStatus.DEFAULT,
@@ -310,7 +309,7 @@ const createOutput = async (modelToSave: Model) => {
 	if (!modelData) return;
 
 	const modelLabel =
-		isReadyToCreateDefaultOutput.value || saveModel
+		isReadyToCreateDefaultOutput.value || isDraft.value
 			? (modelData.name as string)
 			: nodeOutputLabel(props.node, 'Output'); // Just label the original model with its name
 
@@ -322,7 +321,6 @@ const createOutput = async (modelToSave: Model) => {
 	});
 
 	isDraft.value = false;
-	saveModel = false;
 };
 
 const buildJupyterContext = () => {
@@ -399,7 +397,6 @@ watch(
 function updateNodeModel(model: Model) {
 	if (model) {
 		amr.value = model;
-		saveModel = true;
 		createOutput(model);
 	}
 }
