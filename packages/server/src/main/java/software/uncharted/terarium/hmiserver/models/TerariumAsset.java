@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.models;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -91,5 +92,27 @@ public abstract class TerariumAsset extends TerariumEntity {
 		objectNode.remove("fileNames");
 		objectNode.remove("userId");
 		return objectNode.toString();
+	}
+
+	public String serializeWithoutTerariumFieldsKeepId() {
+		final ObjectMapper mapper = new ObjectMapper();
+		mapper.setConfig(mapper.getSerializationConfig().with(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY));
+		final ObjectNode objectNode = mapper.convertValue(this, ObjectNode.class);
+		objectNode.remove("createdOn");
+		objectNode.remove("updatedOn");
+		objectNode.remove("deletedOn");
+		objectNode.remove("name");
+		objectNode.remove("description");
+		objectNode.remove("temporary");
+		objectNode.remove("publicAsset");
+		objectNode.remove("fileNames");
+		objectNode.remove("userId");
+		return objectNode.toString();
+	}
+
+	public String serializeWithTerariumFields() throws JsonProcessingException {
+		final ObjectMapper mapper = new ObjectMapper();
+		mapper.setConfig(mapper.getSerializationConfig().with(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY));
+		return mapper.writeValueAsString(this);
 	}
 }
