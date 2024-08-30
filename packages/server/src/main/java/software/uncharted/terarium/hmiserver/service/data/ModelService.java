@@ -18,6 +18,8 @@ import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfigur
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Annotations;
 import software.uncharted.terarium.hmiserver.repository.data.ModelRepository;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
@@ -166,6 +168,12 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 				asset.getSemantics().getOde().setObservables(new ArrayList());
 			}
 		}
+		// Force proper annotation metadata
+		ModelMetadata metadata = asset.getMetadata();
+		if (metadata.getAnnotations() == null) {
+			metadata.setAnnotations(new Annotations());
+			asset.setMetadata(metadata);
+		}
 
 		if (asset.getHeader() != null && asset.getHeader().getName() != null) {
 			asset.setName(asset.getHeader().getName());
@@ -211,6 +219,12 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 			if (asset.getSemantics().getOde().getObservables() == null) {
 				asset.getSemantics().getOde().setObservables(new ArrayList());
 			}
+		}
+		// Force proper annotation metadata
+		ModelMetadata metadata = asset.getMetadata();
+		if (metadata.getAnnotations() == null) {
+			metadata.setAnnotations(new Annotations());
+			asset.setMetadata(metadata);
 		}
 
 		final Optional<Model> updatedOptional = super.updateAsset(asset, projectId, hasWritePermission);
