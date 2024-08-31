@@ -86,7 +86,7 @@
 									placeholder="Add a source"
 									v-model="customSource"
 									@update:modelValue="onCustomSelectionChange"
-									class="mb-0"
+									class="other-value-input"
 								/>
 							</template>
 						</Column>
@@ -101,7 +101,7 @@
 									placeholder="Constant"
 									v-model="customConstant"
 									@update:modelValue="onCustomSelectionChange"
-									class="mb-0"
+									class="other-value-input"
 								/>
 							</template>
 						</Column>
@@ -298,7 +298,7 @@ function applySelectedValue() {
 	width: 100%;
 }
 
-:deep(input) {
-	margin-top: var(--gap-4);
+.other-value-input {
+	margin-bottom: 0 !important;
 }
 </style>
