@@ -112,7 +112,7 @@
 		:asset="stratifiedAmr"
 		:assetType="AssetType.Model"
 		:is-visible="showSaveModelModal"
-		@on-save="updateNodeModel"
+		@on-save="updateNodeOutput"
 		@close-modal="showSaveModelModal = false"
 	/>
 </template>
@@ -187,12 +187,6 @@ const showSaveModelModal = ref(false);
 const isStratifyInProgress = ref(false);
 
 const selectedOutputId = ref<string>();
-
-const isSaveDisabled = computed(() => {
-	console.log(selectedOutputId.value);
-	console.log(useProjects().activeProject.value?.projectAssets.find((asset) => asset.id === selectedOutputId.value));
-	return _.isEmpty(selectedOutputId.value);
-});
 
 const kernelManager = new KernelSessionManager();
 
@@ -460,17 +454,29 @@ const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 const onSelection = (id: string) => {
 	emit('select-output', id);
 };
-function updateNodeLabel(id: string, label: string) {
-	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
+
+const isSaveDisabled = computed(() => {
+	const id = amr.value?.id;
+	if (!id || _.isEmpty(selectedOutputId.value)) return true;
+	const projectAssets = useProjects().activeProject.value?.projectAssets;
+	const outputPort = props.node.outputs?.find((port) => port.id === selectedOutputId.value);
+
+	return projectAssets?.some((asset) => asset.assetId === outputPort?.value?.[0]);
+});
+
+function updateNodeOutput(model: Model) {
+	if (!selectedOutputId.value || !model) return;
+
+	amr.value = model;
+	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === selectedOutputId.value));
+
 	if (!outputPort) return;
-	outputPort.label = label;
+	outputPort.label = model.header.name;
+	outputPort.value = [model.id];
+
 	emit('update-output-port', outputPort);
 }
 
-function updateNodeModel(model: Model) {
-	if (!selectedOutputId.value) return;
-	updateNodeLabel(selectedOutputId.value, model.header.name);
-}
 watch(
 	() => props.node.active,
 	async () => {
