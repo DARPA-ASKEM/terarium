@@ -54,7 +54,14 @@
 				is-selectable
 			>
 				<section class="right-side">
-					<Button class="mr-3" outlined severity="secondary" label="Save as reuse" @click="showSaveModelModal = true" />
+					<Button
+						class="mr-3"
+						outlined
+						severity="secondary"
+						:disabled="isSaveDisabled"
+						label="Save as reuse"
+						@click="showSaveModelModal = true"
+					/>
 				</section>
 				<tera-notebook-error
 					v-if="executeResponse.status === OperatorStatus.ERROR"
@@ -90,7 +97,7 @@
 		:assetType="AssetType.Model"
 		:is-visible="showSaveModelModal"
 		@close-modal="showSaveModelModal = false"
-		@on-save="updateNodeModel"
+		@on-save="updateNode"
 	/>
 </template>
 
@@ -123,6 +130,7 @@ import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { saveCodeToState } from '@/services/notebook';
 import { DrilldownTabs } from '@/types/common';
 import { nodeOutputLabel } from '@/components/workflow/util';
+import { useProjects } from '@/composables/project';
 import { ModelEditOperationState, ModelEditOperation } from './model-edit-operation';
 
 const props = defineProps<{
@@ -308,10 +316,9 @@ const createOutput = async (modelToSave: Model) => {
 	const modelData = isReadyToCreateDefaultOutput.value ? modelToSave : await createModel(modelToSave);
 	if (!modelData) return;
 
-	const modelLabel =
-		isReadyToCreateDefaultOutput.value || isDraft.value
-			? (modelData.name as string)
-			: nodeOutputLabel(props.node, 'Output'); // Just label the original model with its name
+	const modelLabel = isReadyToCreateDefaultOutput.value
+		? (modelData.name as string)
+		: nodeOutputLabel(props.node, 'Output'); // Just label the original model with its name
 
 	emit('append-output', {
 		label: modelLabel,
@@ -394,11 +401,26 @@ watch(
 	{ immediate: true }
 );
 
-function updateNodeModel(model: Model) {
-	if (model) {
-		amr.value = model;
-		createOutput(model);
-	}
+const isSaveDisabled = computed(() => {
+	const id = amr.value?.id;
+	if (!id) return true;
+	const projectAssets = useProjects().activeProject.value?.projectAssets;
+	const outputPort = props.node.outputs?.find((port) => port.value?.[0] === id);
+	return projectAssets?.some((asset) => asset.assetId === outputPort?.value?.[0]);
+});
+
+function updateNode(model: Model) {
+	const id = amr.value?.id;
+	if (!id || !model) return;
+
+	amr.value = model;
+	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.value?.[0] === id));
+
+	if (!outputPort) return;
+	outputPort.label = model.header.name;
+	outputPort.value = [model.id];
+
+	emit('update-output-port', outputPort);
 }
 
 onMounted(async () => {
