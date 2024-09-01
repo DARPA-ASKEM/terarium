@@ -249,7 +249,7 @@ const outputs = computed(() => {
 	if (!_.isEmpty(props.node.outputs)) {
 		return [
 			{
-				label: 'Select outputs to display in operator',
+				label: 'Select an output',
 				items: props.node.outputs
 			}
 		];
