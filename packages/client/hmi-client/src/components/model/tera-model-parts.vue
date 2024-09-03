@@ -139,6 +139,6 @@ defineExpose({ transientModel, reset });
 	content: 'None';
 	color: var(--text-color-secondary);
 	font-size: var(--font-caption);
-	margin-left: 1rem;
+	margin-left: var(--gap-6);
 }
 </style>

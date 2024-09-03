@@ -66,6 +66,7 @@
 					:class="{ 'chosen-item': id === chosenItem }"
 					:key="id"
 					@click="scrollTo(id)"
+					class="nav-item"
 				>
 					{{ navOption }}
 				</a>
@@ -221,7 +222,7 @@ watch(
 	() => assetElementRef.value?.scrollIntoView()
 );
 
-const applyShadow = computed(() => scrollPosition.value > 5);
+const applyShadow = computed(() => scrollPosition.value > 8);
 </script>
 
 <style scoped>
@@ -261,6 +262,9 @@ nav {
 	}
 }
 
+.nav-item {
+	min-width: 9rem;
+}
 header {
 	display: flex;
 	flex-direction: column;
