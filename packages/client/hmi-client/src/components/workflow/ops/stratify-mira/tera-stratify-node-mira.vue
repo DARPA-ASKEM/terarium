@@ -40,9 +40,11 @@ watch(
 		if (!modelId) return;
 		// Create a default if we dont have an output yet:
 		if (!props.node.outputs[0].value) {
+			const model = await getModel(modelId);
+			const modelName = model?.name;
 			emit('append-output', {
 				type: StratifyMiraOperation.outputs[0].type,
-				label: 'Default Model',
+				label: modelName ?? 'Default Model',
 				value: modelId
 			});
 		}
