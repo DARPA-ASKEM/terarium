@@ -3,7 +3,7 @@
 		:node="node"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
-		@update:selection="onSelection"
+		hide-dropdown
 	>
 		<template #sidebar>
 			<tera-slider-panel v-model:is-open="isSidebarOpen" content-width="360px" header="Intervention policies">
@@ -30,7 +30,6 @@
 				<template #header-controls-left> Select an intervention policy or create a new one here. </template>
 				<template #header-controls-right>
 					<Button outlined severity="secondary" label="Reset" @click="onResetPolicy" />
-					<Button @click="saveInterventions" label="Save" :disabled="isSaved" />
 				</template>
 				<ul class="flex flex-column gap-2">
 					<li v-for="(intervention, index) in knobs.transientInterventionPolicy.interventions" :key="index">
@@ -55,13 +54,17 @@
 			<tera-drilldown-section>
 				<template #header-controls-left>
 					<tera-toggleable-input
-						v-if="typeof selectedPolicy?.name === 'string'"
-						:model-value="selectedPolicy.name"
+						v-if="typeof knobs.transientInterventionPolicy.name === 'string'"
+						:model-value="knobs.transientInterventionPolicy.name"
 						@update:model-value="onChangeName"
 						tag="h4"
 					/>
 				</template>
-				<Accordion v-if="selectedPolicy?.id" multiple :active-index="[0, 1]">
+				<template #header-controls-right>
+					<Button label="Save as..." outlined severity="secondary" @click="showSaveModal = true" />
+					<Button class="mr-3" label="Save" @click="onSaveInterventionPolicy" :disabled="isSaveDisabled" />
+				</template>
+				<Accordion v-if="knobs.transientInterventionPolicy.id" multiple :active-index="[0, 1]">
 					<AccordionTab>
 						<template #header>
 							<Button v-if="!isEditingDescription" class="start-edit" text @click.stop="onEditDescription">
@@ -75,7 +78,7 @@
 							</span>
 						</template>
 						<p class="description text" v-if="!isEditingDescription">
-							{{ selectedPolicy?.description }}
+							{{ knobs.transientInterventionPolicy.description }}
 						</p>
 						<Textarea
 							v-else
@@ -129,10 +132,18 @@
 			</tera-drilldown-section>
 		</tera-columnar-panel>
 	</tera-drilldown>
+	<tera-save-asset-modal
+		:initial-name="knobs.transientInterventionPolicy.name"
+		:is-visible="showSaveModal"
+		:asset="knobs.transientInterventionPolicy"
+		:asset-type="AssetType.InterventionPolicy"
+		@close-modal="showSaveModal = false"
+		@on-save="onSaveAsInterventionPolicy"
+	/>
 </template>
 
 <script setup lang="ts">
-import _, { cloneDeep, groupBy, isEmpty, isEqual } from 'lodash';
+import _, { cloneDeep, groupBy, isEmpty } from 'lodash';
 import { computed, onMounted, ref, watch, nextTick, ComponentPublicInstance } from 'vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -142,18 +153,13 @@ import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import Button from 'primevue/button';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { getInterventionPoliciesForModel, getModel } from '@/services/model';
-import { Intervention, InterventionPolicy, Model } from '@/types/Types';
+import { Intervention, InterventionPolicy, Model, AssetType } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { useConfirm } from 'primevue/useconfirm';
 import { getParameters, getStates } from '@/model-representation/service';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
-import {
-	createInterventionPolicy,
-	getInterventionPolicyById,
-	updateInterventionPolicy,
-	blankIntervention
-} from '@/services/intervention-policy';
+import { getInterventionPolicyById, updateInterventionPolicy, blankIntervention } from '@/services/intervention-policy';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Textarea from 'primevue/textarea';
@@ -162,8 +168,14 @@ import { Vue3Lottie } from 'vue3-lottie';
 import { sortDatesDesc } from '@/utils/date';
 import { createInterventionChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
+import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import TeraInterventionCard from './tera-intervention-card.vue';
-import { InterventionPolicyOperation, InterventionPolicyState } from './intervention-policy-operation';
+import {
+	InterventionPolicyOperation,
+	InterventionPolicyState,
+	isInterventionPoliciesValuesEqual,
+	isInterventionPoliciesEqual
+} from './intervention-policy-operation';
 import TeraInterventionPolicyCard from './tera-intervention-policy-card.vue';
 
 const props = defineProps<{
@@ -187,6 +199,7 @@ const knobs = ref<BasicKnobs>({
 	}
 });
 
+const showSaveModal = ref(false);
 const isSidebarOpen = ref(true);
 const filterInterventionsText = ref('');
 const model = ref<Model | null>(null);
@@ -203,10 +216,11 @@ const selectedPolicy = ref<InterventionPolicy | null>(null);
 const newDescription = ref('');
 const descriptionTextareaRef = ref<ComponentPublicInstance<typeof Textarea> | null>(null);
 const isEditingDescription = ref(false);
-const isSaved = computed(
+const isSaveDisabled = computed(
 	() =>
 		knobs.value.transientInterventionPolicy.id !== selectedPolicy.value?.id ||
-		isEqual(knobs.value.transientInterventionPolicy, selectedPolicy.value)
+		isInterventionPoliciesEqual(knobs.value.transientInterventionPolicy, selectedPolicy.value) ||
+		!isInterventionPoliciesValuesEqual(knobs.value.transientInterventionPolicy, selectedPolicy.value)
 );
 
 const parameterOptions = computed(() => {
@@ -225,7 +239,9 @@ const stateOptions = computed(() => {
 	}));
 });
 
-const groupedOutputParameters = computed(() => groupBy(selectedPolicy.value?.interventions, 'appliedTo'));
+const groupedOutputParameters = computed(() =>
+	groupBy(knobs.value.transientInterventionPolicy.interventions, 'appliedTo')
+);
 
 const preparedCharts = computed(() =>
 	_.mapValues(groupedOutputParameters.value, (interventions) => {
@@ -303,13 +319,9 @@ const onUpdateInterventionCard = (intervention: Intervention, index: number) => 
 	knobs.value.transientInterventionPolicy.interventions = updatedInterventions;
 };
 
-const onSelection = (id: string) => {
-	emit('select-output', id);
-};
-
 const onReplacePolicy = (policy: InterventionPolicy) => {
 	if (selectedPolicy.value?.id === policy.id) return;
-	if (isSaved.value) {
+	if (isSaveDisabled.value) {
 		applyInterventionPolicy(policy);
 	} else {
 		confirm.require({
@@ -344,45 +356,20 @@ const onDeleteIntervention = (index: number) => {
 };
 
 const onChangeName = async (name: string) => {
-	if (!selectedPolicy.value) return;
-	selectedPolicy.value.name = name;
-	await updateInterventionPolicy(selectedPolicy.value);
-	updateNodeLabel(selectedOutputId.value, name);
-	if (selectedPolicy.value.id) selectedPolicy.value = await getInterventionPolicyById(selectedPolicy.value.id);
-	await fetchInterventionPolicies(selectedPolicy.value.modelId);
+	knobs.value.transientInterventionPolicy.name = name;
 };
 
 const onEditDescription = async () => {
 	isEditingDescription.value = true;
-	newDescription.value = selectedPolicy.value?.description ?? '';
+	newDescription.value = knobs.value.transientInterventionPolicy.description ?? '';
 	await nextTick();
 	descriptionTextareaRef.value?.$el.focus();
 };
 
 const onConfirmEditDescription = async () => {
-	if (!selectedPolicy.value) return;
-	selectedPolicy.value.description = newDescription.value;
+	knobs.value.transientInterventionPolicy.description = newDescription.value;
 	isEditingDescription.value = false;
-	await updateInterventionPolicy(selectedPolicy.value);
-	if (selectedPolicy.value.id) selectedPolicy.value = await getInterventionPolicyById(selectedPolicy.value.id);
-	await fetchInterventionPolicies(selectedPolicy.value.modelId);
 };
-
-const saveInterventions = async () => {
-	const policy = cloneDeep(knobs.value.transientInterventionPolicy);
-	policy.name = 'New Intervention Policy';
-	policy.description = 'This is a new intervention policy.';
-
-	const response = await createInterventionPolicy(policy);
-	applyInterventionPolicy(response);
-};
-
-function updateNodeLabel(id: string, label: string) {
-	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.id === id));
-	if (!outputPort) return;
-	outputPort.label = label;
-	emit('update-output-port', outputPort);
-}
 
 const onResetPolicy = () => {
 	confirm.require({
@@ -394,6 +381,20 @@ const onResetPolicy = () => {
 		acceptLabel: 'Confirm',
 		rejectLabel: 'Cancel'
 	});
+};
+
+const onSaveAsInterventionPolicy = (data: InterventionPolicy) => {
+	applyInterventionPolicy(data);
+};
+
+const onSaveInterventionPolicy = async () => {
+	const policy = cloneDeep(knobs.value.transientInterventionPolicy);
+	const data = await updateInterventionPolicy(policy);
+	if (!data) {
+		logger.error('Failed to save intervention policy');
+		return;
+	}
+	initialize();
 };
 
 watch(
