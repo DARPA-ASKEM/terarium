@@ -27,7 +27,7 @@
 								v-model="description"
 								autoResize
 								placeholder="Add a short description"
-								:style="{ width: '100%', resize: 'vertical', maxHeight: '160px', minHeight: '32px' }"
+								:style="{ width: '100%', resize: 'vertical', maxHeight: '278px', minHeight: '32px' }"
 							/>
 						</div>
 						<!--<div>
