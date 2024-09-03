@@ -1,7 +1,6 @@
 <template>
 	<!-- AI assistant -->
 	<div v-if="showAssistant" class="ai-assistant">
-		<!-- <i class="pi pi-magic" /> -->
 		<Dropdown
 			v-if="defaultOptions"
 			:editable="true"
@@ -27,6 +26,8 @@
 		<Button v-else severity="secondary" icon="pi pi-send" @click="submitQuestion" />
 	</div>
 
+	<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" :llm-query="questionString" />
+
 	<!-- Toolbar -->
 	<div class="notebook-toolbar">
 		<div class="toolbar-left-side">
@@ -45,6 +46,7 @@
 
 <script setup lang="ts">
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 import Button from 'primevue/button';
 import { ref } from 'vue';
 import { KernelState, KernelSessionManager } from '@/services/jupyter';
@@ -62,6 +64,7 @@ const questionString = ref('');
 const kernelStatus = ref<string>('');
 const showAssistant = ref(true);
 const thoughts = ref();
+const llmThoughts = ref([]);
 
 // FIXME: If the language is changed here it should mutate the beaker instance in the parent component
 
@@ -82,6 +85,8 @@ const submitQuestion = () => {
 	});
 	message.register('llm_thought', (data) => {
 		thoughts.value = data;
+		llmThoughts.value = []; // FIXME: When should this get reset?
+		llmThoughts.value.push(data);
 		emit('llm-thought-output', data);
 	});
 	message.register('llm_response', (data) => {
@@ -96,13 +101,12 @@ const submitQuestion = () => {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
-	margin-bottom: var(--gap-small);
 }
 
 .notebook-toolbar {
 	display: flex;
 	flex-direction: row;
-	margin-bottom: var(--gap-small);
+	margin-top: var(--gap-small);
 	gap: var(--gap-3);
 	justify-content: space-between;
 }
