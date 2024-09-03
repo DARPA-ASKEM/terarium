@@ -587,7 +587,7 @@ const initialize = async () => {
 
 		// FIXME: Bug sept-03, state.transientModelConfig may not be saved properly before this date
 		if (state.transientModelConfig.id !== originalConfig.value.id) {
-			knobs.value.transientModelConfig = Object.assign(knobs.value.transientModelConfig, originalConfig.value);
+			knobs.value.transientModelConfig = cloneDeep(originalConfig.value);
 		} else {
 			knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
 		}
