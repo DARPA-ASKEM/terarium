@@ -396,7 +396,7 @@ header > section > button {
 }
 
 .filter-and-sort label {
-	padding-right: 0.25]rem;
+	padding-right: 0.25rem;
 	font-size: var(--font-caption);
 }
 

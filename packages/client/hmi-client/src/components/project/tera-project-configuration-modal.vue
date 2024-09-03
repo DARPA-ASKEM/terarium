@@ -9,9 +9,11 @@
 					<form @submit.prevent>
 						<div>
 							<label for="new-project-name">Project title* <span>(Required)</span></label>
-							<InputText
+							<Textarea
 								id="new-project-name"
+								rows="1"
 								v-model="title"
+								autoResize
 								placeholder="What do you want to call your project?"
 								required
 								:style="{ width: '100%' }"
@@ -97,7 +99,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import Textarea from 'primevue/textarea';
-import InputText from 'primevue/inputtext';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Button from 'primevue/button';
 import { useProjects } from '@/composables/project';
