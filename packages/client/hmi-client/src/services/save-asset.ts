@@ -9,8 +9,8 @@ import router from '@/router';
 import { RouteName } from '@/router/routes';
 import type { Model, Code, InterventionPolicy, ModelConfiguration } from '@/types/Types';
 import type { Workflow } from '@/types/workflow';
-import { createInterventionPolicy } from './intervention-policy';
-import { createModelConfiguration } from './model-configurations';
+import { createInterventionPolicy, updateInterventionPolicy } from './intervention-policy';
+import { createModelConfiguration, updateModelConfiguration } from './model-configurations';
 
 export type AssetToSave = Model | Workflow | ModelConfiguration | InterventionPolicy | File;
 
@@ -94,6 +94,12 @@ export async function update(newAsset: AssetToSave, assetType: AssetType, onSave
 			break;
 		case AssetType.Code:
 			response = await updateCodeAsset(newAsset as Code);
+			break;
+		case AssetType.InterventionPolicy:
+			response = await updateInterventionPolicy(newAsset as InterventionPolicy);
+			break;
+		case AssetType.ModelConfiguration:
+			response = await updateModelConfiguration(newAsset as ModelConfiguration);
 			break;
 		default:
 			logger.info(`Update for ${assetType} is not implemented.`);
