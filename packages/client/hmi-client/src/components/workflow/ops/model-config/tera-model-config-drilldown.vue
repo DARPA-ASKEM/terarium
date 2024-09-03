@@ -652,7 +652,7 @@ const applyConfigValues = (config: ModelConfiguration) => {
 			label: config.name,
 			value: config.id,
 			isSelected: false,
-			state: cloneDeep(props.node.state)
+			state
 		});
 	}
 	logger.success(`Configuration applied ${config.name}`);
