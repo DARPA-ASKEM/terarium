@@ -300,7 +300,7 @@
 						<tera-dataset-datatable
 							v-if="simulationRawContent[knobs.postForecastRunId]"
 							:rows="10"
-							:raw-content="simulationRawContent[knobs.postForecastRunId]"
+							:raw-content="simulationRawContent[knobs.postForecastRunId] as CsvAsset"
 						/>
 					</div>
 				</template>
@@ -493,7 +493,7 @@ const outputs = computed(() => {
 	if (!_.isEmpty(props.node.outputs)) {
 		return [
 			{
-				label: 'Select outputs to display in operator',
+				label: 'Select an output',
 				items: props.node.outputs
 			}
 		];
@@ -751,9 +751,7 @@ const runOptimize = async () => {
 	};
 
 	// These are interventions to be considered but not optimized over.
-	const fixedStaticParameterInterventions: Intervention[] = _.cloneDeep(
-		inactivePolicyGroups.value.map((ele) => ele.intervention)
-	);
+	const fixedInterventions: Intervention[] = _.cloneDeep(inactivePolicyGroups.value.map((ele) => ele.intervention));
 
 	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
 	// The method should be a list but pyciemss + pyciemss service is not yet ready for this.
@@ -771,7 +769,7 @@ const runOptimize = async () => {
 			end: knobs.value.endTime
 		},
 		optimizeInterventions,
-		fixedStaticParameterInterventions,
+		fixedInterventions,
 		qoi,
 		riskBound: props.node.state.constraintGroups[0].threshold, // TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
 		boundsInterventions: listBoundsInterventions,

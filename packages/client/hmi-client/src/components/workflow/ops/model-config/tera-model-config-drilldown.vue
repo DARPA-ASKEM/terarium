@@ -5,7 +5,7 @@
 		:menu-items="menuItems"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
-		@update:selection="onSelection"
+		hide-dropdown
 	>
 		<template #sidebar>
 			<tera-slider-panel v-model:is-open="isSidebarOpen" header="Configurations" content-width="360px">
@@ -73,9 +73,9 @@
 			</template>
 			<template #header-controls-right>
 				<Button label="Reset" @click="resetConfiguration" outlined severity="secondary" />
-				<Button class="mr-3" :disabled="isSaveDisabled" label="Save" @click="createConfiguration" />
+				<Button label="Save as..." outlined severity="secondary" @click="showSaveModal = true" />
+				<Button class="mr-3" :disabled="isSaveDisabled" label="Save" @click="onSaveConfiguration" />
 			</template>
-
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab>
 					<template #header>
@@ -110,21 +110,21 @@
 				</Message>
 				<template v-if="!isEmpty(knobs.transientModelConfig)">
 					<tera-initial-table
-						v-if="!isEmpty(mmt.initials)"
+						v-if="!isEmpty(configuredMmt.initials)"
 						:model="model"
 						:model-configuration="knobs.transientModelConfig"
-						:modelConfigurations="filteredModelConfigurations"
-						:mmt="mmt"
+						:model-configurations="filteredModelConfigurations"
+						:mmt="configuredMmt"
 						:mmt-params="mmtParams"
 						@update-expression="setInitialExpression(knobs.transientModelConfig, $event.id, $event.value)"
 						@update-source="setInitialSource(knobs.transientModelConfig, $event.id, $event.value)"
 					/>
 					<tera-parameter-table
-						v-if="!isEmpty(mmt.parameters)"
+						v-if="!isEmpty(configuredMmt.parameters)"
 						:model="model"
 						:model-configuration="knobs.transientModelConfig"
-						:modelConfigurations="filteredModelConfigurations"
-						:mmt="mmt"
+						:model-configurations="filteredModelConfigurations"
+						:mmt="configuredMmt"
 						:mmt-params="mmtParams"
 						@update-parameters="setParameterDistributions(knobs.transientModelConfig, $event)"
 						@update-source="setParameterSource(knobs.transientModelConfig, $event.id, $event.value)"
@@ -134,7 +134,7 @@
 							<tera-observables
 								class="pl-4"
 								:model="model"
-								:mmt="mmt"
+								:mmt="configuredMmt"
 								:observables="calibratedConfigObservables"
 								:feature-config="{ isPreview: true }"
 							/>
@@ -183,23 +183,14 @@
 			</tera-drilldown-preview>
 		</tera-columnar-panel>
 	</tera-drilldown>
-	<tera-modal v-if="!isEmpty(sanityCheckErrors)">
-		<template #header>
-			<h4>Warning, these settings may cause errors</h4>
-		</template>
-		<template #default>
-			<section style="max-height: 22rem; overflow-y: scroll">
-				<div v-for="(errString, idx) of sanityCheckErrors" :key="idx">
-					{{ errString }}
-				</div>
-			</section>
-		</template>
-		<template #footer>
-			<Button label="Ok" class="p-button-primary" @click="sanityCheckErrors = []" />
-			<Button label="Ignore warnings and use configuration" class="p-button-secondary" @click="createConfiguration" />
-		</template>
-	</tera-modal>
-
+	<tera-save-asset-modal
+		:initial-name="knobs.transientModelConfig.name"
+		:is-visible="showSaveModal"
+		:asset="knobs.transientModelConfig"
+		:asset-type="AssetType.ModelConfiguration"
+		@close-modal="showSaveModal = false"
+		@on-save="onSaveAsModelConfiguration"
+	/>
 	<!-- Matrix effect easter egg  -->
 	<canvas id="matrix-canvas" />
 </template>
@@ -207,7 +198,7 @@
 <script setup lang="ts">
 import '@/ace-config';
 import { computed, onUnmounted, ref, watch, nextTick, ComponentPublicInstance } from 'vue';
-import { cloneDeep, isEmpty, isEqual, orderBy } from 'lodash';
+import { cloneDeep, isEmpty, orderBy, debounce } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
@@ -223,7 +214,6 @@ import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
-import TeraModal from '@/components/widgets/tera-modal.vue';
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
@@ -238,11 +228,13 @@ import {
 	setInitialExpression,
 	setParameterSource,
 	setParameterDistributions,
-	getAsConfiguredModel
+	getAsConfiguredModel,
+	updateModelConfiguration,
+	getModelConfigurationById
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
 import type { Model, ModelConfiguration } from '@/types/Types';
-import { Observable } from '@/types/Types';
+import { Observable, AssetType } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
@@ -254,8 +246,15 @@ import { useConfirm } from 'primevue/useconfirm';
 import Dropdown from 'primevue/dropdown';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import { saveCodeToState } from '@/services/notebook';
+import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
-import { ModelConfigOperation, ModelConfigOperationState, blankModelConfig } from './model-config-operation';
+import {
+	ModelConfigOperation,
+	ModelConfigOperationState,
+	blankModelConfig,
+	isModelConfigValuesEqual,
+	isModelConfigsEqual
+} from './model-config-operation';
 
 enum ConfigTabs {
 	Wizard = 'Wizard',
@@ -282,7 +281,7 @@ const menuItems = computed(() => [
 	}
 ]);
 
-const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close']);
+const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close', 'update-output-port']);
 
 interface BasicKnobs {
 	transientModelConfig: ModelConfiguration;
@@ -301,8 +300,13 @@ const calibratedConfigObservables = computed<Observable[]>(() =>
 	}))
 );
 
-const sanityCheckErrors = ref<string[]>([]);
-const isSaveDisabled = computed(() => knobs.value.transientModelConfig.name === '');
+// Save button is disabled if the model configuration name is empty, the values have changed, or the configuration is the same as the original
+const isSaveDisabled = computed(
+	() =>
+		knobs.value.transientModelConfig.name === '' ||
+		isModelConfigsEqual(originalConfig.value, knobs.value.transientModelConfig) ||
+		!isModelConfigValuesEqual(originalConfig.value, knobs.value.transientModelConfig)
+);
 
 const kernelManager = new KernelSessionManager();
 let editor: VAceEditorInstance['_editor'] | null;
@@ -342,6 +346,7 @@ const appendCode = (data: any, property: string, runUpdatedCode = false) => {
 	if (runUpdatedCode) runFromCode();
 };
 
+const showSaveModal = ref(false);
 const confirm = useConfirm();
 const filterModelConfigurationsText = ref('');
 const filteredModelConfigurations = computed(() => {
@@ -446,7 +451,7 @@ const extractConfigurationsFromInputs = async () => {
 
 const selectedOutputId = ref<string>('');
 const selectedConfigId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
-let originalConfig: ModelConfiguration | null = null;
+const originalConfig = ref<ModelConfiguration | null>(null);
 
 const documentId = computed(() => props.node.inputs[1]?.value?.[0]?.documentId);
 const datasetIds = computed(() => props.node.inputs[2]?.value);
@@ -466,6 +471,31 @@ const isLoading = ref(false);
 const model = ref<Model | null>(null);
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
+
+const configuredMmt = ref(makeConfiguredMMT());
+
+function makeConfiguredMMT() {
+	const mmtCopy = cloneDeep(mmt.value);
+	knobs.value.transientModelConfig.initialSemanticList.forEach((initial) => {
+		const mmtInitial = mmtCopy.initials[initial.target];
+		if (mmtInitial) {
+			mmtInitial.expression = initial.expression;
+		}
+	});
+	knobs.value.transientModelConfig.parameterSemanticList.forEach((parameter) => {
+		const mmtParameter = mmtCopy.parameters[parameter.referenceId];
+		if (mmtParameter) {
+			mmtParameter.value = parameter.distribution.parameters.value;
+		}
+	});
+	knobs.value.transientModelConfig.observableSemanticList.forEach((observable) => {
+		const mmtObservable = mmtCopy.observables[observable.referenceId];
+		if (mmtObservable) {
+			mmtObservable.expression = observable.expression;
+		}
+	});
+	return mmtCopy;
+}
 
 const downloadConfiguredModel = async (configuration: ModelConfiguration = knobs.value.transientModelConfig) => {
 	const rawModel = await getAsConfiguredModel(configuration);
@@ -501,8 +531,31 @@ const createConfiguration = async () => {
 	});
 };
 
-const onSelection = (id: string) => {
-	emit('select-output', id);
+const onSaveAsModelConfiguration = (data: ModelConfiguration) => {
+	useToastService().success('', 'Created model configuration');
+	const state = cloneDeep(props.node.state);
+	state.transientModelConfig = data;
+	emit('append-output', {
+		type: ModelConfigOperation.outputs[0].type,
+		label: data.name,
+		value: data.id,
+		isSelected: false,
+		state
+	});
+	showSaveModal.value = false;
+};
+
+const onSaveConfiguration = async () => {
+	if (!model.value || isSaveDisabled.value) return;
+	const modelConfig = cloneDeep(knobs.value.transientModelConfig);
+
+	const data = await updateModelConfiguration(modelConfig);
+	if (!data) {
+		logger.error('Failed to update model configuration');
+		return;
+	}
+	initialize();
+	logger.success('Saved model configuration');
 };
 
 const fetchConfigurations = async (modelId: string) => {
@@ -519,14 +572,20 @@ const initialize = async () => {
 	await fetchConfigurations(modelId);
 
 	model.value = await getModel(modelId);
+	if (model.value) {
+		const response = await getMMT(model.value);
+		mmt.value = response.mmt;
+		mmtParams.value = response.template_params;
+	}
 
 	if (!state.transientModelConfig.id) {
 		// Apply a configuration if one hasn't been applied yet
 		applyConfigValues(suggestedConfigurationContext.value.tableData[0]);
 	} else {
 		knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
-		originalConfig = cloneDeep(state.transientModelConfig);
+		originalConfig.value = await getModelConfigurationById(selectedConfigId.value);
 	}
+	configuredMmt.value = makeConfiguredMMT();
 
 	// Create a new session and context based on model
 	try {
@@ -543,9 +602,9 @@ const initialize = async () => {
 	}
 };
 
-const onSelectConfiguration = (config: ModelConfiguration) => {
+const onSelectConfiguration = async (config: ModelConfiguration) => {
 	// Checks if there are unsaved changes to current model configuration
-	if (isEqual(originalConfig, knobs.value.transientModelConfig)) {
+	if (isModelConfigsEqual(originalConfig.value, knobs.value.transientModelConfig)) {
 		applyConfigValues(config);
 		return;
 	}
@@ -563,8 +622,6 @@ const onSelectConfiguration = (config: ModelConfiguration) => {
 
 const applyConfigValues = (config: ModelConfiguration) => {
 	knobs.value.transientModelConfig = cloneDeep(config);
-	originalConfig = cloneDeep(config);
-
 	// Update output port:
 	if (!config.id) {
 		logger.error('Model configuration not found');
@@ -608,7 +665,7 @@ const resetConfiguration = () => {
 		header: 'Are you sure you want to reset the configuration?',
 		message: 'This will reset all values original values of the configuration.',
 		accept: () => {
-			if (originalConfig) applyConfigValues(originalConfig);
+			if (originalConfig.value) applyConfigValues(originalConfig.value);
 		},
 		acceptLabel: 'Confirm',
 		rejectLabel: 'Cancel'
@@ -629,23 +686,18 @@ watch(
 	}
 );
 
-watch(
-	() => model.value,
-	async () => {
-		if (!model.value) return;
-		const response: any = await getMMT(model.value);
-		mmt.value = response.mmt;
-		mmtParams.value = response.template_params;
-	},
-	{ immediate: true, deep: true }
-);
+const debounceUpdateState = debounce(() => {
+	console.log('debounced update');
+	const state = cloneDeep(props.node.state);
+	state.transientModelConfig = knobs.value.transientModelConfig;
+	configuredMmt.value = makeConfiguredMMT();
 
+	emit('update-state', state);
+}, 100);
 watch(
 	() => knobs.value,
 	async () => {
-		const state = cloneDeep(props.node.state);
-		state.transientModelConfig = knobs.value.transientModelConfig;
-		emit('update-state', state);
+		debounceUpdateState();
 	},
 	{ deep: true }
 );

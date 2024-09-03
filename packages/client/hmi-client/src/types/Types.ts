@@ -88,6 +88,15 @@ export interface Artifact extends TerariumAsset {
     metadata?: any;
 }
 
+export interface ChartAnnotation extends TerariumAsset {
+    nodeId: string;
+    outputId: string;
+    chartId: string;
+    layerSpec: any;
+    llmGenerated: boolean;
+    metadata: any;
+}
+
 export interface CsvAsset {
     csv: string[][];
     stats?: CsvColumnStats[];
@@ -569,7 +578,7 @@ export interface OptimizeRequestCiemss {
     modelConfigId: string;
     timespan: TimeSpan;
     optimizeInterventions?: OptimizeInterventions;
-    fixedStaticParameterInterventions?: Intervention[];
+    fixedInterventions?: Intervention[];
     loggingStepSize?: number;
     qoi: OptimizeQoi;
     riskBound: number;
@@ -1009,6 +1018,7 @@ export enum AssetType {
     Code = "code",
     ModelConfiguration = "model-configuration",
     Artifact = "artifact",
+    InterventionPolicy = "intervention-policy",
 }
 
 export enum EvaluationScenarioStatus {

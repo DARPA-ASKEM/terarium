@@ -214,7 +214,7 @@ export function createErrorChart(dataset: Record<string, any>[], options: ErrorC
 				}
 			]
 		}
-	};
+	} as any;
 }
 
 export function createHistogramChart(dataset: Record<string, any>[], options: HistogramChartOptions) {

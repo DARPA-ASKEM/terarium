@@ -20,18 +20,10 @@
 					</section>
 				</template>
 				<template #header-controls-right>
+					<Button size="small" severity="secondary" outlined label="Reset" @click="resetModel" />
 					<Button
-						style="margin-right: auto"
-						size="small"
-						severity="secondary"
-						outlined
-						label="Reset"
-						@click="resetModel"
-						class="mr-2"
-					/>
-					<Button
-						:disabled="isStratifyButtonDisabled"
-						:label="stratifyButtonLabel"
+						:loading="isStratifyInProgress"
+						:label="isStratifyInProgress ? 'Loading...' : 'Stratify'"
 						size="small"
 						@click="stratifyModel"
 					/>
@@ -56,7 +48,13 @@
 						@question-asked="updateLlmQuery"
 					>
 						<template #toolbar-right-side>
-							<Button label="Run" size="small" icon="pi pi-play" @click="runCodeStratify" />
+							<Button
+								:loading="isStratifyInProgress"
+								:label="isStratifyInProgress ? 'Loading...' : 'Run'"
+								size="small"
+								icon="pi pi-play"
+								@click="runCodeStratify"
+							/>
 						</template>
 					</tera-notebook-jupyter-input>
 					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
@@ -79,21 +77,22 @@
 				v-model:output="selectedOutputId"
 				is-selectable
 			>
-				<div class="h-full">
-					<tera-notebook-error
-						v-if="executeResponse.status === OperatorStatus.ERROR"
-						:name="executeResponse.name"
-						:value="executeResponse.value"
-						:traceback="executeResponse.traceback"
-					/>
-					<template v-else-if="stratifiedAmr">
-						<tera-model-diagram :model="stratifiedAmr" />
-						<tera-model-parts :model="stratifiedAmr" :feature-config="{ isPreview: true }" />
-					</template>
-					<div v-else class="flex flex-column h-full justify-content-center">
-						<tera-operator-placeholder :node="node" />
-					</div>
-				</div>
+				<tera-notebook-error
+					v-if="executeResponse.status === OperatorStatus.ERROR"
+					:name="executeResponse.name"
+					:value="executeResponse.value"
+					:traceback="executeResponse.traceback"
+				/>
+				<template v-else-if="stratifiedAmr">
+					<tera-model-diagram :model="stratifiedAmr" />
+					<tera-model-parts :model="stratifiedAmr" :feature-config="{ isPreview: true }" />
+				</template>
+				<template v-else>
+					<tera-progress-spinner v-if="isStratifyInProgress" is-centered :font-size="2">
+						Processing...
+					</tera-progress-spinner>
+					<tera-operator-placeholder class="flex flex-column h-full justify-content-center" v-else :node="node" />
+				</template>
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
@@ -135,6 +134,7 @@ import { AssetType } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import { nodeOutputLabel } from '@/components/workflow/util';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
@@ -170,9 +170,8 @@ const executeResponse = ref({
 });
 const modelNodeOptions = ref<string[]>([]);
 const showSaveModelModal = ref(false);
-const isStratifyButtonDisabled = ref(false);
 
-const stratifyButtonLabel = computed(() => (isStratifyButtonDisabled.value ? 'Loading...' : 'Stratify'));
+const isStratifyInProgress = ref(false);
 
 const selectedOutputId = ref<string>();
 
@@ -198,11 +197,6 @@ const updateStratifyGroupForm = (config: StratifyGroup) => {
 	const state = _.cloneDeep(props.node.state);
 	state.strataGroup = config;
 	emit('update-state', state);
-};
-
-const stratifyModel = () => {
-	isStratifyButtonDisabled.value = true;
-	stratifyRequest();
 };
 
 const processLLMOutput = (data: any) => {
@@ -231,8 +225,9 @@ const handleResetResponse = (data: any) => {
 	}
 };
 
-const stratifyRequest = () => {
+const stratifyModel = () => {
 	if (!amr.value) return;
+	isStratifyInProgress.value = true;
 
 	// Sanity check states vs parameters
 	const conceptsToStratify: string[] = [];
@@ -273,7 +268,7 @@ const handleStratifyResponse = (data: any) => {
 
 const handleModelPreview = async (data: any) => {
 	stratifiedAmr.value = data.content['application/json'];
-	isStratifyButtonDisabled.value = false;
+	isStratifyInProgress.value = false;
 	if (!stratifiedAmr.value) {
 		logger.error('Error getting updated model from beaker');
 		return;
@@ -380,6 +375,7 @@ const initialize = (editorInstance: any) => {
 const runCodeStratify = () => {
 	const code = editor?.getValue();
 	if (!code) return;
+	isStratifyInProgress.value = true;
 
 	const messageContent = {
 		silent: false,
