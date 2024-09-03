@@ -198,8 +198,8 @@
 
 <script setup lang="ts">
 import '@/ace-config';
-import { computed, onUnmounted, ref, watch, nextTick, ComponentPublicInstance } from 'vue';
-import { cloneDeep, isEmpty, orderBy, debounce } from 'lodash';
+import { ComponentPublicInstance, computed, nextTick, onUnmounted, ref, watch } from 'vue';
+import { cloneDeep, debounce, isEmpty, orderBy } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
@@ -220,22 +220,22 @@ import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
 import { emptyMiraModel, generateModelDatasetConfigurationContext } from '@/model-representation/mira/mira';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
-import { configureModelFromDatasets, configureModelFromDocument } from '@/services/goLLM';
+import { configureModelFromDataset, configureModelFromDocument } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
 import { getMMT, getModel, getModelConfigurationsForModel } from '@/services/model';
 import {
 	createModelConfiguration,
-	setInitialSource,
-	setInitialExpression,
-	setParameterSource,
-	setParameterDistributions,
 	getAsConfiguredModel,
-	updateModelConfiguration,
-	getModelConfigurationById
+	getModelConfigurationById,
+	setInitialExpression,
+	setInitialSource,
+	setParameterDistributions,
+	setParameterSource,
+	updateModelConfiguration
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { Model, ModelConfiguration } from '@/types/Types';
-import { Observable, AssetType } from '@/types/Types';
+import type { Model, ModelConfiguration, TaskResponse } from '@/types/Types';
+import { AssetType, Observable } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
@@ -250,11 +250,11 @@ import { saveCodeToState } from '@/services/notebook';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
 import {
-	ModelConfigOperation,
-	ModelConfigOperationState,
 	blankModelConfig,
+	isModelConfigsEqual,
 	isModelConfigValuesEqual,
-	isModelConfigsEqual
+	ModelConfigOperation,
+	ModelConfigOperationState
 } from './model-config-operation';
 
 enum ConfigTabs {
@@ -427,6 +427,7 @@ const extractConfigurationsFromInputs = async () => {
 	if (!model.value?.id) {
 		return;
 	}
+
 	if (documentId.value) {
 		const resp = await configureModelFromDocument(
 			documentId.value,
@@ -434,18 +435,23 @@ const extractConfigurationsFromInputs = async () => {
 			props.node.workflowId,
 			props.node.id
 		);
-		state.documentModelConfigTaskId = resp.id;
+		state.modelConfigTaskIds.push(resp.id);
 	}
+
 	if (datasetIds.value) {
 		const matrixStr = generateModelDatasetConfigurationContext(mmt.value, mmtParams.value);
-		const resp = await configureModelFromDatasets(
-			model.value.id,
-			datasetIds.value,
-			matrixStr,
-			props.node.workflowId,
-			props.node.id
-		);
-		state.datasetModelConfigTaskId = resp.id;
+		const promiseList = [] as Promise<TaskResponse | null>[];
+		datasetIds.value.forEach((datasetId) => {
+			promiseList.push(
+				configureModelFromDataset(model.value?.id as string, datasetId, matrixStr, props.node.workflowId, props.node.id)
+			);
+		});
+		const responsesRaw = await Promise.all(promiseList);
+		responsesRaw.forEach((resp) => {
+			if (resp) {
+				state.modelConfigTaskIds.push(resp.id);
+			}
+		});
 	}
 	emit('update-state', state);
 };
@@ -674,9 +680,9 @@ const resetConfiguration = () => {
 };
 
 watch(
-	() => `${props.node.state.datasetModelConfigTaskId}:${props.node.state.documentModelConfigTaskId}`,
-	async (watchStr) => {
-		if (watchStr !== ':') {
+	() => props.node.state.modelConfigTaskIds,
+	async (watchVal) => {
+		if (watchVal.length > 0) {
 			isLoading.value = true;
 		} else {
 			isLoading.value = false;

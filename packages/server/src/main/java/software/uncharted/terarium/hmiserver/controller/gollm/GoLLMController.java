@@ -326,7 +326,14 @@ public class GoLLMController {
 			projectId
 		);
 
-		// Grab the datasets
+		// Grab the model
+		final Optional<Model> model = modelService.getAsset(modelId, permission);
+		if (model.isEmpty()) {
+			log.warn(String.format("Model %s not found", modelId));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
+		}
+
+		// Grab the dataset
 		final List<String> dataArray = new ArrayList<>();
 
 		final Optional<Dataset> dataset = datasetService.getAsset(datasetId, permission);
@@ -354,15 +361,8 @@ public class GoLLMController {
 			}
 		}
 
-		// Grab the model
-		final Optional<Model> model = modelService.getAsset(modelId, permission);
-		if (model.isEmpty()) {
-			log.warn(String.format("Model %s not found", modelId));
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
-		}
-
 		final ConfigureFromDatasetResponseHandler.Input input = new ConfigureFromDatasetResponseHandler.Input();
-		input.setDataset(dataset.get());
+		input.setDataset(dataArray);
 		// stripping the metadata from the model before its sent since it can cause
 		// gollm to fail with massive inputs
 		model.get().setMetadata(null);
@@ -378,7 +378,6 @@ public class GoLLMController {
 			req.setInput(objectMapper.writeValueAsBytes(input));
 		} catch (final Exception e) {
 			log.error("Unable to serialize input", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 		}
 
 		req.setProjectId(projectId);

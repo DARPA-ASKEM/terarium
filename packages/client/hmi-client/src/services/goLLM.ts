@@ -49,9 +49,9 @@ export async function configureModelFromDocument(
 	return data;
 }
 
-export async function configureModelFromDatasets(
+export async function configureModelFromDataset(
 	modelId: string,
-	datasetIds: string[],
+	datasetId: string,
 	matrixStr: string,
 	workflowId?: string,
 	nodeId?: string
@@ -63,7 +63,7 @@ export async function configureModelFromDatasets(
 		{
 			params: {
 				'model-id': modelId,
-				'dataset-ids': datasetIds.join(),
+				'dataset-id': datasetId,
 				'workflow-id': workflowId,
 				'node-id': nodeId
 			}
