@@ -484,8 +484,7 @@ function updateNodeOutput(model: Model) {
 // check if user has made changes to the code
 const hasCodeChange = () => {
 	if (props.node.state.strataCodeHistory.length) {
-		isDraft.value =
-			!_.isEqual(codeText.value, props.node.state.strataCodeHistory?.[0]?.code) || !props.node.state.hasCodeBeenRun;
+		isDraft.value = !_.isEqual(codeText.value, props.node.state.strataCodeHistory?.[0]?.code);
 	} else {
 		isDraft.value = !_.isEqual(codeText.value, '');
 	}
