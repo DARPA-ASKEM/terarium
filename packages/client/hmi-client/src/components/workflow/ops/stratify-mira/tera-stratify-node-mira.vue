@@ -30,7 +30,7 @@ watch(
 	() => props.node.inputs,
 	async () => {
 		const input = props.node.inputs[0];
-		if (!input || !props.node.outputs[0].value) return;
+		if (!input || props.node.outputs[0].value) return;
 		// Create a default if we dont have an output yet:
 		let modelId: string | null = null;
 		if (input.type === 'modelId') {
