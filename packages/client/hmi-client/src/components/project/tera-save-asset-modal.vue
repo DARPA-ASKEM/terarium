@@ -108,7 +108,7 @@ function save() {
 
 	// Save method
 	if (props.isOverwriting) {
-		saveAssetService.update(newAsset, props.assetType, onSave);
+		saveAssetService.updateAddToProject(newAsset, props.assetType, onSave);
 	} else {
 		saveAssetService.saveAs(newAsset, props.assetType, props.openOnSave, onSave);
 	}

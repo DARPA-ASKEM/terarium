@@ -95,6 +95,7 @@
 		:asset="amr"
 		:initial-name="amr.name"
 		:assetType="AssetType.Model"
+		:is-overwriting="true"
 		:is-visible="showSaveModelModal"
 		@close-modal="showSaveModelModal = false"
 		@on-save="updateNode"
@@ -418,7 +419,6 @@ function updateNode(model: Model) {
 
 	if (!outputPort) return;
 	outputPort.label = model.header.name;
-	outputPort.value = [model.id];
 
 	emit('update-output-port', outputPort);
 }

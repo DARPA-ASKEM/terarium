@@ -102,3 +102,35 @@ export async function update(newAsset: AssetToSave, assetType: AssetType, onSave
 	logger.info(`Updated ${response.name}.`);
 	if (onSaveFunction) onSaveFunction(response.name);
 }
+
+// Overwrites/updates the asset and add to project
+export async function updateAddToProject(newAsset: AssetToSave, assetType: AssetType, onSaveFunction?: Function) {
+	let response: any = null;
+
+	switch (assetType) {
+		case AssetType.Model:
+			response = await updateModel(newAsset as Model);
+			break;
+		case AssetType.Code:
+			response = await updateCodeAsset(newAsset as Code);
+			break;
+		default:
+			logger.info(`Update for ${assetType} is not implemented.`);
+			return;
+	}
+
+	if (!response) {
+		logger.error(`Failed to update ${assetType}.`);
+		return;
+	}
+
+	const projectId = useProjects().activeProject.value?.id;
+	if (!projectId) {
+		logger.error(`Asset can't be saved since target project doesn't exist.`);
+		return;
+	}
+	await useProjects().addAsset(assetType, response.id, projectId);
+
+	logger.info(`Updated ${response.name}.`);
+	if (onSaveFunction) onSaveFunction(response);
+}
