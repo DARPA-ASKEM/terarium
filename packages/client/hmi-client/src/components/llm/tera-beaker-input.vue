@@ -1,8 +1,8 @@
 <template>
 	<div class="tera-beaker-container" ref="containerElement">
 		<div class="chat-input-container">
-			<div class="top-row">
-				<InputText
+			<div class="chat-input-elements">
+				<textarea
 					class="input"
 					ref="inputElement"
 					v-model="queryString"
@@ -10,24 +10,27 @@
 					:disabled="props.kernelIsBusy"
 					:placeholder="props.kernelIsBusy ? 'Please wait...' : 'What do you want to do?'"
 					@keydown.enter="submitQuery"
+					@input="autoGrow"
+					rows="1"
 				/>
 				<Button
+					v-if="queryString.length !== 0"
 					text
 					:icon="props.kernelIsBusy ? 'pi pi-spin pi-spinner' : 'pi pi-send'"
 					rounded
-					size="large"
 					class="kernel-status"
-					:disabled="queryString.length === 0"
 					@click="submitQuery"
 				></Button>
-			</div>
-			<div class="bottom-row">
+				<span v-else style="width: 2.25rem"></span>
+
 				<Button
 					ref="addCodeCellButton"
 					severity="secondary"
+					size="small"
 					outlined
 					:disabled="props.kernelIsBusy"
 					class="white-space-nowrap"
+					style="margin-top: 1px; height: 31px; width: 10rem"
 					title="Add a code cell to the notebook"
 					@click="addCodeCell"
 				>
@@ -43,7 +46,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import ProgressBar from 'primevue/progressbar';
-import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import * as EventService from '@/services/event';
 import { EventType } from '@/types/Types';
@@ -83,6 +85,9 @@ const submitQuery = () => {
 	EventService.create(EventType.TransformPrompt, useProjects().activeProject.value?.id, queryString.value);
 	emit('submit-query', queryString.value);
 	queryString.value = '';
+	setTimeout(() => {
+		autoGrow(); // Reset height after clearing
+	}, 50);
 };
 
 const addCodeCell = () => {
@@ -108,6 +113,13 @@ onMounted(() => {
 		window.removeEventListener('resize', updateWidth); // Clean up listener
 	});
 });
+
+const autoGrow = () => {
+	if (inputElement.value) {
+		inputElement.value.style.height = 'auto'; // Reset height to recalculate
+		inputElement.value.style.height = `${inputElement.value.scrollHeight}px`;
+	}
+};
 </script>
 
 <style scoped>
@@ -120,27 +132,15 @@ onMounted(() => {
 }
 
 .chat-input-container {
-	position: fixed;
-	bottom: 0px;
-	height: 10rem;
-	padding: var(--gap);
-	padding-bottom: 1.5rem;
-	z-index: 200;
-	border-top: 1px solid var(--surface-border-light);
-	background-color: var(--surface-transparent);
-	backdrop-filter: blur(10px);
-	width: calc(100% - 6 * var(--gap-small));
-	display: flex;
-	flex-direction: column;
-	flex-wrap: nowrap;
-	align-items: start;
-	justify-content: space-between;
-}
-
-.top-row {
 	display: flex;
 	flex-direction: row;
-	align-items: center;
+	width: 50rem;
+}
+
+.chat-input-elements {
+	display: flex;
+	flex-direction: row;
+	align-items: top;
 	justify-content: space-between;
 	width: 100%;
 }
@@ -148,18 +148,28 @@ onMounted(() => {
 	color: var(--text-color);
 	background-color: var(--surface-0);
 	border: 2px solid var(--primary-color);
-	padding: var(--gap);
+	border-radius: var(--border-radius);
+	padding: var(--gap-2);
 	padding-left: 3rem;
+	padding-right: 3rem;
+	padding-top: 5px;
+	line-height: 1.5;
+	min-height: 2.5rem;
 	width: 100%;
+	resize: none;
+	overflow: hidden;
+	box-sizing: border-box;
+	font-family: var(--font-family);
 	/* Add ai-assistant icon */
 	background-image: url('@assets/svg/icons/message.svg');
 	background-repeat: no-repeat;
-	background-position: var(--gap) center; /* Adjust 10px according to your icon size and position */
+	background-position: var(--gap) var(--gap-2);
 }
 
 .kernel-status {
-	position: absolute;
-	right: 2rem;
+	position: relative;
+	right: 2.5rem;
+	margin-top: 3px;
 }
 
 .input:disabled {

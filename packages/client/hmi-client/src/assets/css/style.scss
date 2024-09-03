@@ -63,7 +63,7 @@
 		}
 	}
 
-.kbd-shortcut {
+	.kbd-shortcut {
 		display: flex;
 		align-items: center;
 		gap: var(--gap-1);
@@ -99,6 +99,17 @@
 		color: var(--text-color-secondary);
 	}
 
+	/* Fixing the confirm dialog text placement and reject button styling */
+	.p-confirm-dialog-message {
+		margin-left: 0 !important;
+		margin-top: var(--gap);
+	}
+	.p-confirm-dialog-reject {
+		background-color: var(--surface-0);
+		color: var(--text-color-primary) !important;
+		border: 1px solid var(--surface-border) !important;
+		margin-right: 0 !important;
+	}
 
 	// Styles reused in Document.vue and DataExplorer.vue - TODO: look into changing prime vue styling to reflect this
 	.p-buttonset {
@@ -142,6 +153,10 @@
 		}
 	}
 
+	/* Correct button font weight */
+	.p-button-label {
+		font-weight: var(--font-weight);
+	}
 
 	/* SplitButton menu height and width fix */
 	.p-tieredmenu {
