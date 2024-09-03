@@ -57,7 +57,7 @@ const props = defineProps({
 		type: Boolean,
 		default: false
 	},
-	isOverwriting: {
+	isUpdatingAsset: {
 		type: Boolean,
 		default: false
 	}
@@ -70,7 +70,7 @@ const newName = ref<string>('');
 
 const title = computed(() => {
 	if (!props.asset) return `Create new ${props.assetType}`;
-	if (props.isOverwriting) return `Update ${props.assetType} name`;
+	if (props.isUpdatingAsset) return `Update ${props.assetType} name`;
 	return `Save as a new ${props.assetType}`;
 });
 
@@ -136,8 +136,8 @@ function save() {
 	}
 
 	// Save method
-	if (props.isOverwriting) {
-		saveAssetService.update(newAsset, props.assetType, onSave);
+	if (props.isUpdatingAsset) {
+		saveAssetService.updateAddToProject(newAsset, props.assetType, onSave);
 	} else {
 		saveAssetService.saveAs(newAsset, props.assetType, props.openOnSave, onSave);
 	}
