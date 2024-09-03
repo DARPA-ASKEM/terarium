@@ -132,7 +132,9 @@ defineExpose({ transientModel, reset });
 	color: var(--text-color-subdued);
 	margin-left: 0.25rem;
 }
-
+:deep(.p-accordion-content) {
+	margin-bottom: var(--gap-3);
+}
 :deep(.p-accordion-content:empty::before) {
 	content: 'None';
 	color: var(--text-color-secondary);

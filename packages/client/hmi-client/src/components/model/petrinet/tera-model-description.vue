@@ -109,4 +109,9 @@ const relatedTerariumDatasets = computed(() => relatedTerariumArtifacts.value.fi
 		}
 	}
 }
+
+/* add space beneath when accordion content is visible*/
+:deep(.p-toggleable-content) {
+	padding-bottom: var(--gap-3);
+}
 </style>
