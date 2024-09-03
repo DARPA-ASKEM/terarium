@@ -800,7 +800,7 @@ watch(
 			const simulationObj = await getSimulation(props.node.state.calibrationId);
 			if (simulationObj?.updates) {
 				lossValues.value = simulationObj?.updates
-					.sort((a, b) => b.data.progress - a.data.progress)
+					.sort((a, b) => a.data.progress - b.data.progress)
 					.map((d, i) => ({
 						iter: i,
 						loss: d.data.loss
