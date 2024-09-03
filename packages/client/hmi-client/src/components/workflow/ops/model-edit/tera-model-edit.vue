@@ -405,9 +405,8 @@ watch(
 const isSaveDisabled = computed(() => {
 	const id = amr.value?.id;
 	if (!id) return true;
-	const projectAssets = useProjects().activeProject.value?.projectAssets;
 	const outputPort = props.node.outputs?.find((port) => port.value?.[0] === id);
-	return projectAssets?.some((asset) => asset.assetId === outputPort?.value?.[0]);
+	return useProjects().hasAssetInActiveProject(outputPort?.value?.[0]);
 });
 
 function updateNode(model: Model) {
