@@ -46,4 +46,11 @@ public class ParameterSemantic extends Semantic {
 		clone.isDefault = this.isDefault;
 		return clone;
 	}
+
+	@Override
+	public void setSource(String source) {
+		if (!this.getDistribution().getParameters().isEmpty() && this.getSource() != null) {
+			super.setSource(source);
+		}
+	}
 }
