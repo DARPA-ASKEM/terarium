@@ -420,6 +420,7 @@ const runCodeStratify = () => {
 
 				if (executedCode) {
 					saveCodeToState(executedCode, true);
+					isDraft.value = false;
 				}
 			})
 			.register('any_execute_reply', (data) => {
@@ -482,7 +483,6 @@ const isDraft = ref(false);
 
 // check if user has made changes to the code
 const hasCodeChange = () => {
-	// console.log('props.node.state', props.node.state.strataCodeHistory)
 	if (props.node.state.strataCodeHistory.length) {
 		isDraft.value = !_.isEqual(codeText.value, props.node.state.strataCodeHistory?.[0]?.code);
 	} else {
