@@ -38,7 +38,7 @@ watch(
 			modelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
 		}
 		if (!modelId) return;
-		console.log(props.node.outputs[0].value);
+		// Create a default if we dont have an output yet:
 		if (!props.node.outputs[0].value) {
 			emit('append-output', {
 				type: StratifyMiraOperation.outputs[0].type,
