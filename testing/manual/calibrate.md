@@ -37,7 +37,7 @@ sampling combinations in PyCIEMSS can result in numerical instability, when this
 2. Verify that there is a `Parameters chart` available. This should allow the user to select different model parameters (Eg beta, gamma) and will display a bar chart showing before and afer calibration values for the selected parameters.
 3. Verify that there is a `Variables chart` available, showing time-series plots for each model variable based on a Simulate run with the calibrate parameter values.
 4. Verify the dataset columm to which a given model variable is mapped appear as a dotted line in the Variables chart of the model variable. This should have a legend with the name Observations
-5. Verify there is an `Error chart` available. This should allow the user to select different variables that were calibrated over. This will display the mean absolute error between the post forecast run and the incoming dataset.
+5. Verify that an `Error chart` is available. This should allow the user to select different calibrated variables. It will display the mean absolute error between the post-forcast run and the incoming dataset.
 6. Should be able to add/remove charts by selecting or deselecting options.
 
 ## 5. Add intervention(s)
