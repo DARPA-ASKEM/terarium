@@ -2,6 +2,7 @@
 	<tera-drilldown
 		:node="node"
 		:menu-items="menuItems"
+		:is-draft="isDraft"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 		@update-output-port="(output: any) => emit('update-output-port', output)"
@@ -476,6 +477,24 @@ function updateNodeOutput(model: Model) {
 
 	emit('update-output-port', outputPort);
 }
+
+const isDraft = ref(false);
+
+// check if user has made changes to the code
+const hasCodeChange = () => {
+	// console.log('props.node.state', props.node.state.strataCodeHistory)
+	if (props.node.state.strataCodeHistory.length) {
+		isDraft.value = !_.isEqual(codeText.value, props.node.state.strataCodeHistory?.[0]?.code);
+	} else {
+		isDraft.value = !_.isEqual(codeText.value, '');
+	}
+};
+const checkForCodeChange = _.debounce(hasCodeChange, 500);
+
+watch(
+	() => codeText.value,
+	() => checkForCodeChange()
+);
 
 watch(
 	() => props.node.active,
