@@ -520,14 +520,15 @@ const createConfiguration = async () => {
 		return;
 	}
 
-	knobs.value.transientModelConfig = cloneDeep(data);
+	const state = cloneDeep(props.node.state);
+	state.transientModelConfig = data;
 	useToastService().success('', 'Created model configuration');
 	emit('append-output', {
 		type: ModelConfigOperation.outputs[0].type,
 		label: data.name,
 		value: data.id,
 		isSelected: false,
-		state: cloneDeep(props.node.state)
+		state
 	});
 };
 
@@ -582,9 +583,16 @@ const initialize = async () => {
 		// Apply a configuration if one hasn't been applied yet
 		applyConfigValues(suggestedConfigurationContext.value.tableData[0]);
 	} else {
-		knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
 		originalConfig.value = await getModelConfigurationById(selectedConfigId.value);
+
+		// FIXME: Bug sept-03, state.transientModelConfig may not be saved properly before this date
+		if (state.transientModelConfig.id !== originalConfig.value.id) {
+			knobs.value.transientModelConfig = Object.assign(knobs.value.transientModelConfig, originalConfig.value);
+		} else {
+			knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
+		}
 	}
+
 	configuredMmt.value = makeConfiguredMMT();
 
 	// Create a new session and context based on model
@@ -621,7 +629,6 @@ const onSelectConfiguration = async (config: ModelConfiguration) => {
 };
 
 const applyConfigValues = (config: ModelConfiguration) => {
-	knobs.value.transientModelConfig = cloneDeep(config);
 	// Update output port:
 	if (!config.id) {
 		logger.error('Model configuration not found');
@@ -636,6 +643,9 @@ const applyConfigValues = (config: ModelConfiguration) => {
 	}
 	// If the output does not already exist
 	else {
+		const state = cloneDeep(props.node.state);
+		state.transientModelConfig = config;
+
 		// Append this config to the output.
 		emit('append-output', {
 			type: ModelConfigOperation.outputs[0].type,
