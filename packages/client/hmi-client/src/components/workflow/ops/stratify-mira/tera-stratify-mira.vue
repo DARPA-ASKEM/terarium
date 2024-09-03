@@ -489,7 +489,7 @@ const hasCodeChange = () => {
 		isDraft.value = !_.isEqual(codeText.value, '');
 	}
 };
-const checkForCodeChange = _.debounce(hasCodeChange, 500);
+const checkForCodeChange = _.debounce(hasCodeChange, 100);
 
 watch(
 	() => codeText.value,
