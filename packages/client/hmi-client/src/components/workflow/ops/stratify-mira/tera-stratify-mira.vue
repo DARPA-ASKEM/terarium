@@ -463,10 +463,9 @@ const onSelection = (id: string) => {
 const isSaveDisabled = computed(() => {
 	const id = amr.value?.id;
 	if (!id || _.isEmpty(selectedOutputId.value)) return true;
-	const projectAssets = useProjects().activeProject.value?.projectAssets;
 	const outputPort = props.node.outputs?.find((port) => port.id === selectedOutputId.value);
 
-	return projectAssets?.some((asset) => asset.assetId === outputPort?.value?.[0]);
+	return useProjects().hasAssetInActiveProject(outputPort?.value?.[0]);
 });
 
 function updateNodeOutput(model: Model) {
