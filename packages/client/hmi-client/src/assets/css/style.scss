@@ -152,6 +152,21 @@
 		font-weight: var(--font-weight);
 	}
 
+	/* Fill checkboxes with color when selected */ 
+	.p-checkbox .p-checkbox-box {
+		background-color: var(--surface-0);
+		border-color: var(--surface-border-dark);
+	}
+	.p-checkbox.p-highlight .p-checkbox-box {
+		background-color: var(--primary-color);
+		border-color: var(--primary-color);
+
+	}
+
+	.p-checkbox .p-checkbox-box .p-checkbox-icon {
+		color: var(--surface-0);
+	}
+
 	/* SplitButton menu height and width fix */
 	.p-tieredmenu {
 		width: auto;
