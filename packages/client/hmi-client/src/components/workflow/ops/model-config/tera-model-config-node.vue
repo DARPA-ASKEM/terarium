@@ -40,7 +40,7 @@ const configModelEventHandler = async (event: ClientEvent<TaskResponse>) => {
 	}
 };
 
-useClientEvent(ClientEventType.TaskGollmConfigureModel, configModelEventHandler);
+useClientEvent(ClientEventType.TaskGollmConfigureModelFromPaper, configModelEventHandler);
 useClientEvent(ClientEventType.TaskGollmConfigureFromDataset, configModelEventHandler);
 
 const isLoading = computed(() => modelConfigTaskIds.value.length > 0);

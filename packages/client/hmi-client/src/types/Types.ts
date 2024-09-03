@@ -1046,7 +1046,7 @@ export enum ClientEventType {
     ExtractionPdf = "EXTRACTION_PDF",
     TaskUndefinedEvent = "TASK_UNDEFINED_EVENT",
     TaskGollmModelCard = "TASK_GOLLM_MODEL_CARD",
-    TaskGollmConfigureModel = "TASK_GOLLM_CONFIGURE_MODEL",
+    TaskGollmConfigureModelFromPaper = "TASK_GOLLM_CONFIGURE_MODEL_FROM_PAPER",
     TaskGollmConfigureFromDataset = "TASK_GOLLM_CONFIGURE_FROM_DATASET",
     TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
     TaskGollmGenerateSummary = "TASK_GOLLM_GENERATE_SUMMARY",
