@@ -7,11 +7,12 @@ import { AssetType } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
-import type { Model, Code, ModelConfiguration } from '@/types/Types';
+import type { Model, Code, InterventionPolicy, ModelConfiguration } from '@/types/Types';
 import type { Workflow } from '@/types/workflow';
+import { createInterventionPolicy } from './intervention-policy';
 import { createModelConfiguration } from './model-configurations';
 
-export type AssetToSave = Model | Workflow | ModelConfiguration | File;
+export type AssetToSave = Model | Workflow | ModelConfiguration | InterventionPolicy | File;
 
 // TODO: Once assets have a type property, we can remove the assetType parameter
 
@@ -34,6 +35,9 @@ export async function saveAs(
 		case AssetType.Code:
 			response = await uploadCodeToProject(newAsset as File, ref(0));
 			break;
+		case AssetType.InterventionPolicy:
+			response = await createInterventionPolicy(newAsset as InterventionPolicy);
+			break;
 		case AssetType.ModelConfiguration:
 			response = await createModelConfiguration(newAsset as ModelConfiguration);
 			break;
@@ -46,16 +50,21 @@ export async function saveAs(
 		logger.info(`Failed to save ${assetType}.`);
 		return;
 	}
-
 	const projectId = useProjects().activeProject.value?.id;
-	if (!projectId) {
-		logger.error(`Asset can't be saved since target project doesn't exist.`);
-		return;
-	}
-	await useProjects().addAsset(assetType, response.id, projectId);
 
-	// After saving notify the user and do any necessary actions
-	logger.info(`${response.name} saved successfully in project ${useProjects().activeProject.value?.name}.`);
+	// save to project
+	if (assetType !== AssetType.InterventionPolicy && assetType !== AssetType.ModelConfiguration) {
+		if (!projectId) {
+			logger.error(`Asset can't be saved since target project doesn't exist.`);
+			return;
+		}
+		await useProjects().addAsset(assetType, response.id, projectId);
+
+		// After saving notify the user and do any necessary actions
+		logger.info(`${response.name} saved successfully in project ${useProjects().activeProject.value?.name}.`);
+	}
+
+	// redirect to the asset page
 	if (openOnSave) {
 		router.push({
 			name: RouteName.Project,

@@ -13,6 +13,7 @@ setup(
             "gollm_task:compare_models=tasks.compare_models:main",
             "gollm_task:configure_model_from_dataset=tasks.configure_model_from_dataset:main",
             "gollm_task:generate_summary=tasks.generate_summary:main",
+            "gollm_task:generate_response=tasks.generate_response:main",
         ],
     },
     python_requires=">=3.11",

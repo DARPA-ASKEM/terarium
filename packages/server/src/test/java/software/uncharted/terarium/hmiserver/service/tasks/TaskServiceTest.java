@@ -163,6 +163,23 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendGoLLMGenerateResponseRequest() throws Exception {
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.GOLLM);
+		req.setScript(GenerateResponseHandler.NAME);
+		final GenerateResponseHandler.Input input = new GenerateResponseHandler.Input();
+		input.setInstruction("Give me a simple random json object");
+		final JsonNode resFormat = new ObjectMapper().readTree("{\"type\": \"json_object\"}");
+		input.setResponseFormat(resFormat);
+		req.setInput(input);
+
+		final TaskResponse resp = taskService.runTaskSync(req);
+
+		log.info(new String(resp.getOutput()));
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendMiraMDLToStockflowRequest() throws Exception {
 		final ClassPathResource resource = new ClassPathResource("mira/IndiaNonSubscriptedPulsed.mdl");
 		final String content = new String(Files.readAllBytes(resource.getFile().toPath()));
