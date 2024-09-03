@@ -59,7 +59,7 @@
 						outlined
 						severity="secondary"
 						:disabled="isSaveDisabled"
-						label="Save as reuse"
+						label="Save for reuse"
 						@click="showSaveModelModal = true"
 					/>
 				</section>
@@ -95,7 +95,7 @@
 		:asset="amr"
 		:initial-name="amr.name"
 		:assetType="AssetType.Model"
-		:is-overwriting="true"
+		:is-updating-asset="true"
 		:is-visible="showSaveModelModal"
 		@close-modal="showSaveModelModal = false"
 		@on-save="updateNode"
