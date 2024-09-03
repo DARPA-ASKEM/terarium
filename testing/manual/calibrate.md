@@ -34,7 +34,7 @@ sampling combinations in PyCIEMSS can result in numerical instability, when this
 
 ### 4. Check results
 1. Verify that there is a loss chart available while the process is running, showing the loss value as a function of solver iterations
-2. Verify that there is a `Parameters chart` available. This should allow the user to select different model parameters (Eg beta, gamma) and will display a bar chart showing before and afer calibration values for the selected parameters.
+2. Verify that there is a `Parameters chart` available. This should allow the user to select different model parameters (Eg beta, gamma) and will display a bar chart showing before and after calibration values for the selected parameters.
 3. Verify that there is a `Variables chart` available, showing time-series plots for each model variable based on a Simulate run with the calibrate parameter values.
 4. Verify the dataset columm to which a given model variable is mapped appear as a dotted line in the Variables chart of the model variable. This should have a legend with the name Observations
 5. Verify that an `Error chart` is available. This should allow the user to select different calibrated variables. It will display the mean absolute error between the post-forcast run and the incoming dataset.
