@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -7,10 +8,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.transaction.Transactional;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
@@ -35,14 +39,33 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.configuration.Config;
+import software.uncharted.terarium.hmiserver.controller.mira.MiraController;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
+import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
+import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
+import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
+import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
+import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
+import software.uncharted.terarium.hmiserver.service.tasks.MdlToStockflowResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.SbmlToPetrinetResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.StellaToStockflowResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
+import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/artifacts")
@@ -62,6 +85,11 @@ public class ArtifactController {
 
 	private final ProjectService projectService;
 	private final CurrentUserService currentUserService;
+	private final Messages messages;
+	private final ModelConfigurationService modelConfigurationService;
+	private final TaskService taskService;
+	final ProjectAssetService projectAssetService;
+	final ProvenanceService provenanceService;
 
 	@GetMapping
 	@Secured(Roles.USER)
@@ -461,5 +489,180 @@ public class ArtifactController {
 				"Unable to PUT artifact data"
 			);
 		}
+	}
+
+	@PostMapping(value = "/upload-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@Secured(Roles.USER)
+	@Operation(summary = "Uploads a file to the artifact")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "File uploaded.",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Integer.class)
+				)
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue uploading the file", content = @Content)
+		}
+	)
+	public ResponseEntity<ProjectAsset> uploadFileForModel(
+		@RequestParam(name = "project-id", required = false) final UUID projectId,
+		@RequestParam("filename") final String filename,
+		@RequestPart("file") final MultipartFile input
+	) throws IOException {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(
+			currentUserService.get().getId(),
+			projectId
+		);
+
+		if (!endsWith(filename, List.of(".mdl", ".xmile", ".itmx", ".stmx", ".sbml", ".xml"))) {
+			log.error(String.format("Unable to determine the artifact type from the supplied filename: %s", filename));
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("artifact.file-type"));
+		}
+
+		final List<String> filenames = new ArrayList<>();
+		filenames.add(filename);
+		final Artifact tempArtifact = new Artifact();
+		tempArtifact.setUserId(currentUserService.get().getId()).setFileNames(filenames);
+		Artifact createdArtifact = null;
+
+		try {
+			createdArtifact = artifactService.createAsset(tempArtifact, projectId, permission);
+		} catch (final IOException e) {
+			final String error = "Unable to create artifact for model";
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+		}
+
+		try {
+			log.debug("Uploading artifact {} to project", createdArtifact.getId());
+
+			final byte[] fileAsBytes = input.getBytes();
+			final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
+			uploadArtifactHelper(createdArtifact.getId(), filename, fileEntity);
+		} catch (final IOException e) {
+			final String error = "Unable to upload artifact for model";
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+		}
+
+		final Optional<String> fileContents;
+		try {
+			fileContents = artifactService.fetchFileAsString(createdArtifact.getId(), filename);
+		} catch (final IOException e) {
+			log.error(String.format("Unable to read file contents for artifact %s.", createdArtifact.getId()), e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("artifact.file.unable-to-read"));
+		}
+
+		if (fileContents.isEmpty()) {
+			log.error(String.format("The file contents for artifact %s is empty.", createdArtifact.getId()));
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("artifact.file.content.empty"));
+		}
+
+		final MiraController.ConversionAdditionalProperties additionalProperties =
+			new MiraController.ConversionAdditionalProperties();
+		additionalProperties.setProjectId(projectId);
+		additionalProperties.setFileName(filename);
+
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskRequest.TaskType.MIRA);
+
+		try {
+			req.setInput(fileContents.get().getBytes());
+		} catch (final Exception e) {
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+		}
+		req.setAdditionalProperties(additionalProperties);
+		req.setUserId(currentUserService.get().getId());
+
+		if (endsWith(filename, List.of(".mdl"))) {
+			req.setScript(MdlToStockflowResponseHandler.NAME);
+		} else if (endsWith(filename, List.of(".xmile", ".itmx", ".stmx"))) {
+			req.setScript(StellaToStockflowResponseHandler.NAME);
+		} else if (endsWith(filename, List.of(".sbml", ".xml"))) {
+			req.setScript(SbmlToPetrinetResponseHandler.NAME);
+		} else {
+			log.error(String.format("Unable to determine the artifact type from the supplied filename: %s", filename));
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("artifact.file-type"));
+		}
+
+		// send the request
+		final TaskResponse resp;
+		try {
+			resp = taskService.runTaskSync(req);
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.json-processing"));
+		} catch (final TimeoutException e) {
+			log.warn("Timeout while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.mira.timeout"));
+		} catch (final InterruptedException e) {
+			log.warn("Interrupted while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.mira.interrupted"));
+		} catch (final ExecutionException e) {
+			log.error("Error while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.execution-failure"));
+		}
+
+		final Model model;
+		try {
+			model = objectMapper.readValue(resp.getOutput(), Model.class);
+			// create a default configuration
+			final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
+				model,
+				null,
+				null
+			);
+			modelConfigurationService.createAsset(modelConfiguration, projectId, permission);
+		} catch (final IOException e) {
+			log.error("Unable to deserialize output", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
+		}
+
+		final Optional<Project> project;
+		try {
+			project = projectService.getProject(projectId);
+			if (!project.isPresent()) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
+			}
+		} catch (final Exception e) {
+			log.error("Error communicating with project service", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
+
+		final AssetType assetType = AssetType.MODEL;
+		final Optional<ProjectAsset> projectAsset = projectAssetService.createProjectAsset(
+			project.get(),
+			assetType,
+			model,
+			permission
+		);
+
+		if (projectAsset.isEmpty()) {
+			log.error("Project Asset is empty");
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("asset.unable-to-create"));
+		}
+
+		final Provenance provenance = new Provenance()
+			.setRelationType(ProvenanceRelationType.EXTRACTED_FROM)
+			.setLeft(model.getId())
+			.setLeftType(ProvenanceType.MODEL)
+			.setRight(createdArtifact.getId())
+			.setRightType(ProvenanceType.ARTIFACT);
+		provenanceService.createProvenance(provenance);
+
+		return ResponseEntity.status(HttpStatus.CREATED).body(projectAsset.get());
+	}
+
+	private static boolean endsWith(final String filename, final List<String> suffixes) {
+		for (final String suffix : suffixes) {
+			if (filename.endsWith(suffix)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

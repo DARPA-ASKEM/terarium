@@ -80,19 +80,16 @@ import Button from 'primevue/button';
 import { AcceptedExtensions, AcceptedTypes } from '@/types/common';
 import { uploadCodeToProject } from '@/services/code';
 import type { ProjectAsset } from '@/types/Types';
-import { ProvenanceType } from '@/types/Types';
 import { uploadDocumentAssetToProject } from '@/services/document-assets';
 import { createNewDatasetFromFile } from '@/services/dataset';
-import useAuthStore from '@/stores/auth';
 import { ref } from 'vue';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
 import { useToastService } from '@/services/toast';
 import TeraImportGithubFile from '@/components/widgets/tera-import-github-file.vue';
 import { extractPDF } from '@/services/knowledge';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
-import { uploadArtifactToProject } from '@/services/artifact';
-import { createModel, processAndAddModelToProject, validateAMRFile } from '@/services/model';
-import { createProvenance, RelationshipType } from '@/services/provenance';
+import { addArtifactAndProcessAsModelToProject } from '@/services/artifact';
+import { createModel, validateAMRFile } from '@/services/model';
 import { modelCard } from '@/services/goLLM';
 import TeraInputText from '@/components//widgets/tera-input-text.vue';
 import { activeProject, activeProjectId } from '@/composables/activeProject';
@@ -187,18 +184,8 @@ async function processAMRJson(file: File) {
  * @param file
  */
 async function processModel(file: File) {
-	// Upload file as an artifact, create an empty model, and link them
-	const artifact = await uploadArtifactToProject(file, useAuthStore().user?.id ?? '', '', progress);
-	if (!artifact) return { asset: '' };
-	const newModelId = await processAndAddModelToProject(artifact);
-	await createProvenance({
-		relation_type: RelationshipType.EXTRACTED_FROM,
-		left: newModelId ?? '',
-		left_type: ProvenanceType.Model,
-		right: artifact.id ?? '',
-		right_type: ProvenanceType.Artifact
-	});
-	return { asset: '' };
+	const addedAsset = await addArtifactAndProcessAsModelToProject(file, progress);
+	return { asset: addedAsset };
 }
 
 function importCompleted(newResults: { asset: ProjectAsset }[] | null) {

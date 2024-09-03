@@ -1,4 +1,4 @@
-import type { Artifact } from '@/types/Types';
+import type { Artifact, ProjectAsset } from '@/types/Types';
 import API, { getProjectIdFromUrl } from '@/api/api';
 import { Ref } from 'vue';
 import { activeProjectId } from '@/composables/activeProject';
@@ -72,6 +72,31 @@ async function uploadArtifactToProject(
 	return newArtifact;
 }
 
+async function addArtifactAndProcessAsModelToProject(file: File, progress: Ref<number>): Promise<ProjectAsset | null> {
+	const projectId = activeProjectId.value || getProjectIdFromUrl();
+	const formData = new FormData();
+	formData.append('file', file);
+
+	const response = await API.post(`/artifacts/upload-file?project-id=${projectId}`, formData, {
+		params: {
+			filename: file.name
+		},
+		headers: {
+			'Content-Type': 'multipart/form-data'
+		},
+		onUploadProgress(progressEvent) {
+			if (progress) {
+				progress.value = Math.min(90, Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100)));
+			}
+		},
+		timeout: 3600000
+	});
+	if (response && response.status < 400 && response.data) {
+		return response.data;
+	}
+	return null;
+}
+
 /**
  * Creates a new artifact in TDS and returns the new artifact object id
  * @param artifact the artifact to create
@@ -132,4 +157,10 @@ async function getArtifactArrayBuffer(artifactId: string, fileName: string): Pro
 	return response.data;
 }
 
-export { uploadArtifactToProject, createNewArtifactFromGithubFile, getArtifactFileAsText, getArtifactArrayBuffer };
+export {
+	uploadArtifactToProject,
+	createNewArtifactFromGithubFile,
+	getArtifactFileAsText,
+	getArtifactArrayBuffer,
+	addArtifactAndProcessAsModelToProject
+};

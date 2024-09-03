@@ -36,12 +36,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceQueryParam;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.models.simulationservice.interventions.InterventionPolicy;
@@ -515,7 +518,7 @@ public class ModelController {
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the model", content = @Content)
 		}
 	)
-	ResponseEntity<Model> createModel(
+	ResponseEntity<ProjectAsset> createModel(
 		@RequestBody final Model model,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
@@ -524,27 +527,53 @@ public class ModelController {
 			projectId
 		);
 
+		Model createdModel;
+
 		try {
 			// Set the model name from the AMR header name.
 			// TerariumAsset have a name field, but it's not used for the model name outside
 			// the front-end.
 			model.setName(model.getHeader().getName());
-			final Model created = modelService.createAsset(model, projectId, permission);
+			createdModel = modelService.createAsset(model, projectId, permission);
 
 			// create default configuration
 			final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
-				created,
+				createdModel,
 				null,
 				null
 			);
 			modelConfigurationService.createAsset(modelConfiguration, projectId, permission);
-
-			return ResponseEntity.status(HttpStatus.CREATED).body(created);
 		} catch (final IOException e) {
 			final String error = "Unable to create model";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
+
+		final Optional<Project> project;
+		try {
+			project = projectService.getProject(projectId);
+			if (!project.isPresent()) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
+			}
+		} catch (final Exception e) {
+			log.error("Error communicating with project service", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
+
+		final AssetType assetType = AssetType.MODEL;
+		final Optional<ProjectAsset> projectAsset = projectAssetService.createProjectAsset(
+			project.get(),
+			assetType,
+			createdModel,
+			permission
+		);
+
+		if (projectAsset.isEmpty()) {
+			log.error("Project Asset is empty");
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("asset.unable-to-create"));
+		}
+
+		return ResponseEntity.status(HttpStatus.CREATED).body(projectAsset.get());
 	}
 
 	@GetMapping("/{id}/model-configurations")
