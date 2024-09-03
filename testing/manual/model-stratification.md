@@ -11,7 +11,7 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 2. Create, or open, project named `QA [Your Name]`
 
 ### 2. Upload asset
-1. Add the [SEIRHD model](https://github.com/DARPA-ASKEM/terarium/blob/main/testing/data/SEIRHD Q1b added params.json) to the project.
+1. Add the [SEIRHD model](https://github.com/DARPA-ASKEM/terarium/blob/nliu/stratify-test/testing/data/SEIRHD%20Q1b%20added%20params.json) to the project.
 
 ### 3. Stratify a model by many stratum groups
 
