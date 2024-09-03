@@ -16,14 +16,39 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import Button from 'primevue/button';
 import { getModel } from '@/services/model';
 import { Model } from '@/types/Types';
-import { StratifyOperationStateMira } from './stratify-mira-operation';
+import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
+import { StratifyOperationStateMira, StratifyMiraOperation } from './stratify-mira-operation';
 
-const emit = defineEmits(['open-drilldown']);
+const emit = defineEmits(['open-drilldown', 'append-output']);
 const outputPreview = ref<Model | null>();
 
 const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;
 }>();
+
+watch(
+	() => props.node.inputs,
+	async () => {
+		const input = props.node.inputs[0];
+		if (!input) return;
+		let modelId: string | null = null;
+		if (input.type === 'modelId') {
+			modelId = input.value?.[0];
+		} else if (input.type === 'modelConfigId') {
+			modelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
+		}
+		if (!modelId) return;
+		console.log(props.node.outputs[0].value);
+		if (!props.node.outputs[0].value) {
+			emit('append-output', {
+				type: StratifyMiraOperation.outputs[0].type,
+				label: 'Default Model',
+				value: modelId
+			});
+		}
+	},
+	{ deep: true }
+);
 
 watch(
 	() => props.node.active,
