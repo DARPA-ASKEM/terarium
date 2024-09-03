@@ -658,16 +658,17 @@ const initialize = async () => {
 	if (optimizedPolicyId) {
 		optimizedInterventionPolicy.value = await getInterventionPolicyById(optimizedPolicyId);
 	}
-
-	modelStateAndObsOptions.value = model.value?.model.states.map((state: any) => ({
+	const modelStates = model.value?.model.states;
+	modelStateAndObsOptions.value = modelStates.map((state: any) => ({
 		label: state.id,
 		value: `${state.id}_state`
 	}));
 
 	// Add obs:
-	if (model.value?.semantics?.ode.observables) {
+	const modelObs = model.value?.semantics?.ode.observables;
+	if (modelObs) {
 		modelStateAndObsOptions.value.push(
-			...model.value.semantics.ode.observables.map((observable: any) => ({
+			...modelObs.map((observable: any) => ({
 				label: observable.id,
 				value: `${observable.id}_observable`
 			}))
