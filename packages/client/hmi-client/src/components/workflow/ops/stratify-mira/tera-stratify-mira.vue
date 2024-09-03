@@ -185,6 +185,8 @@ const executeResponse = ref({
 const modelNodeOptions = ref<string[]>([]);
 const showSaveModelModal = ref(false);
 
+const isDraft = ref(false);
+
 const isStratifyInProgress = ref(false);
 
 const selectedOutputId = ref<string>();
@@ -479,12 +481,11 @@ function updateNodeOutput(model: Model) {
 	emit('update-output-port', outputPort);
 }
 
-const isDraft = ref(false);
-
 // check if user has made changes to the code
 const hasCodeChange = () => {
 	if (props.node.state.strataCodeHistory.length) {
-		isDraft.value = !_.isEqual(codeText.value, props.node.state.strataCodeHistory?.[0]?.code);
+		isDraft.value =
+			!_.isEqual(codeText.value, props.node.state.strataCodeHistory?.[0]?.code) || !props.node.state.hasCodeBeenRun;
 	} else {
 		isDraft.value = !_.isEqual(codeText.value, '');
 	}
