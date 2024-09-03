@@ -34,9 +34,9 @@ export const equationsToAMR = async (
  * Given a dataset, enrich its metadata
  * Returns a runId used to poll for result
  */
-export const profileDataset = async (datasetId: Dataset['id'], documentId: string | null = null) => {
+export const profileDataset = async (datasetId: Dataset['id'], documentId: DocumentAsset['id'] = '') => {
 	let response: any;
-	if (documentId && datasetId) {
+	if (documentId) {
 		response = await API.post(`/knowledge/profile-dataset/${datasetId}?document-id=${documentId}`);
 	} else {
 		response = await API.post(`/knowledge/profile-dataset/${datasetId}`);

@@ -14,17 +14,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
-import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
-import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
-@Transactional
 public class AssetControllerTests extends TerariumApplicationTests {
 
 	@Autowired
@@ -37,19 +35,18 @@ public class AssetControllerTests extends TerariumApplicationTests {
 	private DocumentAssetService documentAssetService;
 
 	@Autowired
-	private ElasticsearchService elasticService;
-
-	@Autowired
-	private ElasticsearchConfiguration elasticConfig;
+	private ProjectSearchService projectSearchService;
 
 	@BeforeEach
 	public void setup() throws IOException {
-		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getDocumentIndex());
+		projectSearchService.setupIndexAndAliasAndEnsureEmpty();
+		documentAssetService.setupIndexAndAliasAndEnsureEmpty();
 	}
 
 	@AfterEach
 	public void teardown() throws IOException {
-		elasticService.deleteIndex(elasticConfig.getDocumentIndex());
+		projectSearchService.teardownIndexAndAlias();
+		documentAssetService.teardownIndexAndAlias();
 	}
 
 	private static final String TEST_ASSET_NAME_1 = "test-asset-name-1";
@@ -189,7 +186,8 @@ public class AssetControllerTests extends TerariumApplicationTests {
 	}
 
 	/**
-	 * Helper method to set up a scenario where we have two projects each with one document asset.
+	 * Helper method to set up a scenario where we have two projects each with one
+	 * document asset.
 	 *
 	 * @throws Exception
 	 */

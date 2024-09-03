@@ -17,7 +17,6 @@ public class EventTest extends TerariumApplicationTests {
 	private EventService eventService;
 
 	@Test
-	@Transactional
 	public void canEventBeSavedThenRetrieved() {
 		final UUID projectId = UUID.randomUUID();
 
@@ -32,7 +31,6 @@ public class EventTest extends TerariumApplicationTests {
 	}
 
 	@Test
-	@Transactional
 	public void canEventBeSavedThenRetrievedWithByProjectId() {
 		UUID p1 = UUID.randomUUID();
 		UUID p2 = UUID.randomUUID();
@@ -72,7 +70,6 @@ public class EventTest extends TerariumApplicationTests {
 	}
 
 	@Test
-	@Transactional
 	public void canEventBeSavedThenRetrievedByLike() {
 		UUID p1 = UUID.randomUUID();
 
@@ -110,7 +107,6 @@ public class EventTest extends TerariumApplicationTests {
 	}
 
 	@Test
-	@Transactional
 	public void canEventBeSavedThenRetrievedByUserId() {
 		UUID p1 = UUID.randomUUID();
 

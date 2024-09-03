@@ -1,5 +1,5 @@
 <template>
-	<div class="data-transform-container">
+	<div class="data-transform-container h-full overflow-hidden">
 		<!-- Toolbar -->
 		<div class="toolbar flex">
 			<!-- Kernel Status -->
@@ -79,6 +79,7 @@
 			:show-chat-thoughts="props.showChatThoughts"
 			:jupyter-session="jupyterSession"
 			:kernel-status="kernelStatus"
+			:language="selectedLanguage"
 			@update-kernel-state="updateKernelState"
 			@update-kernel-status="updateKernelStatus"
 			@new-dataset-saved="onNewDatasetSaved"

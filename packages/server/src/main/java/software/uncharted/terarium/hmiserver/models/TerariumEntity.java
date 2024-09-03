@@ -36,8 +36,10 @@ public abstract class TerariumEntity implements Serializable {
 	// transaction is committed.
 	@PrePersist
 	protected void onCreate() {
-		this.createdOn = Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
-		this.updatedOn = this.createdOn;
+		if (this.createdOn == null) {
+			this.createdOn = Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
+			this.updatedOn = this.createdOn;
+		}
 	}
 
 	@TSOptional

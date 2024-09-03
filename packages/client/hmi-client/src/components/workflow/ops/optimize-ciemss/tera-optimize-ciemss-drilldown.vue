@@ -264,7 +264,11 @@
 							<AccordionTab header="Success criteria">
 								<ul>
 									<li v-for="(_constraint, key) in node.state.constraintGroups" :key="key">
-										<vega-chart are-embed-actions-visible :visualization-spec="preparedSuccessCriteriaCharts[key]" />
+										<vega-chart
+											expandable
+											are-embed-actions-visible
+											:visualization-spec="preparedSuccessCriteriaCharts[key]"
+										/>
 									</li>
 								</ul>
 							</AccordionTab>
@@ -272,6 +276,7 @@
 								<ul>
 									<li v-for="(_, key) of knobs.selectedInterventionVariables" :key="key">
 										<vega-chart
+											expandable
 											are-embed-actions-visible
 											:visualization-spec="preparedForecastCharts.interventionCharts[key]"
 										/>
@@ -282,6 +287,7 @@
 								<ul>
 									<li v-for="(_, key) of knobs.selectedSimulationVariables" :key="key">
 										<vega-chart
+											expandable
 											are-embed-actions-visible
 											:visualization-spec="preparedForecastCharts.simulationCharts[key]"
 										/>
@@ -294,7 +300,7 @@
 						<tera-dataset-datatable
 							v-if="simulationRawContent[knobs.postForecastRunId]"
 							:rows="10"
-							:raw-content="simulationRawContent[knobs.postForecastRunId]"
+							:raw-content="simulationRawContent[knobs.postForecastRunId] as CsvAsset"
 						/>
 					</div>
 				</template>
@@ -487,7 +493,7 @@ const outputs = computed(() => {
 	if (!_.isEmpty(props.node.outputs)) {
 		return [
 			{
-				label: 'Select outputs to display in operator',
+				label: 'Select an output',
 				items: props.node.outputs
 			}
 		];
@@ -735,9 +741,7 @@ const runOptimize = async () => {
 	};
 
 	// These are interventions to be considered but not optimized over.
-	const fixedStaticParameterInterventions: Intervention[] = _.cloneDeep(
-		inactivePolicyGroups.value.map((ele) => ele.intervention)
-	);
+	const fixedInterventions: Intervention[] = _.cloneDeep(inactivePolicyGroups.value.map((ele) => ele.intervention));
 
 	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
 	// The method should be a list but pyciemss + pyciemss service is not yet ready for this.
@@ -755,7 +759,7 @@ const runOptimize = async () => {
 			end: knobs.value.endTime
 		},
 		optimizeInterventions,
-		fixedStaticParameterInterventions,
+		fixedInterventions,
 		qoi,
 		riskBound: props.node.state.constraintGroups[0].threshold, // TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
 		boundsInterventions: listBoundsInterventions,

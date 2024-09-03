@@ -88,6 +88,15 @@ export interface Artifact extends TerariumAsset {
     metadata?: any;
 }
 
+export interface ChartAnnotation extends TerariumAsset {
+    nodeId: string;
+    outputId: string;
+    chartId: string;
+    layerSpec: any;
+    llmGenerated: boolean;
+    metadata: any;
+}
+
 export interface CsvAsset {
     csv: string[][];
     stats?: CsvColumnStats[];
@@ -277,141 +286,6 @@ export interface Transition {
     expression?: string;
     grounding?: ModelGrounding;
     properties?: Properties;
-}
-
-export interface Configuration {
-    parameters: { [index: string]: ConfigurationParameter };
-    initialConditions: { [index: string]: ConfigurationCondition };
-    boundryConditions: { [index: string]: ConfigurationCondition };
-    datasets: { [index: string]: ConfigurationDataset };
-}
-
-export interface ConfigurationCondition {
-    _type: string;
-    type: string;
-    value: string;
-    domainMesh: string;
-}
-
-export interface ConfigurationDataset {
-    _type: string;
-    type: string;
-    name: string;
-    description: string;
-    file: ConfigurationDatasetFile;
-}
-
-export interface ConfigurationDatasetFile {
-    _type: string;
-    uri: string;
-    format: string;
-    shape: number[];
-}
-
-export interface ConfigurationHeader {
-    id: string;
-    description: string;
-    name: string;
-    parentContext: string;
-}
-
-export interface ConfigurationParameter {
-    _type: string;
-    type: string;
-    value: any;
-}
-
-export interface Context {
-    constants: { [index: string]: ContextConstant };
-    spatialConstraints: any;
-    temporalConstraints: any;
-    primalDualRelations: ContextPrimalDualRelation[];
-    meshSubmeshRelations: ContextMeshSubmeshRelation[];
-    meshes: ContextMesh[];
-}
-
-export interface ContextConstant {
-    _type: string;
-    value: any;
-}
-
-export interface ContextFile {
-    uri: string;
-    format: string;
-}
-
-export interface ContextHeader {
-    id: string;
-    description: string;
-    name: string;
-    parentModel: string;
-}
-
-export interface ContextMesh {
-    id: string;
-    description: string;
-    dimensionality: any;
-    vertexCount: number;
-    edgeCount: number;
-    faceCount: number;
-    volumeCount: number;
-    regions: any[];
-    checksum: string;
-    file: ContextFile;
-}
-
-export interface ContextMeshSubmeshRelation {
-    mesh: string;
-    submesh: string;
-    relation: any;
-}
-
-export interface ContextPrimalDualRelation {
-    primal: string;
-    dual: string;
-    method: any;
-}
-
-export interface DecapodesComponent {
-    modelInterface: string[];
-    model: DecapodesExpression;
-    _type: string;
-}
-
-export interface DecapodesConfiguration extends TerariumAsset {
-    header: ConfigurationHeader;
-    configuration: Configuration;
-}
-
-export interface DecapodesContext extends TerariumAsset {
-    header: ContextHeader;
-    context: Context;
-}
-
-export interface DecapodesEquation {
-    lhs: any;
-    rhs: any;
-    _type: string;
-}
-
-export interface DecapodesExpression {
-    context: any[];
-    equations: DecapodesEquation[];
-    _type: string;
-}
-
-export interface DecapodesTerm {
-    name?: string;
-    var?: DecapodesTerm;
-    symbol?: string;
-    space?: string;
-    fs?: string[];
-    arg?: DecapodesTerm;
-    f?: string;
-    arg1?: DecapodesTerm;
-    arg2?: DecapodesTerm;
-    args?: DecapodesTerm[];
-    _type: string;
 }
 
 export interface NotebookSession extends TerariumAsset {
@@ -679,14 +553,6 @@ export interface CalibrationRequestCiemss {
     engine: string;
 }
 
-export interface CalibrationRequestJulia {
-    modelConfigId: string;
-    extra: any;
-    timespan?: TimeSpan;
-    dataset: DatasetLocation;
-    engine: string;
-}
-
 export interface CiemssStatusUpdate {
     loss: number;
     progress: number;
@@ -712,7 +578,7 @@ export interface OptimizeRequestCiemss {
     modelConfigId: string;
     timespan: TimeSpan;
     optimizeInterventions?: OptimizeInterventions;
-    fixedStaticParameterInterventions?: Intervention[];
+    fixedInterventions?: Intervention[];
     loggingStepSize?: number;
     qoi: OptimizeQoi;
     riskBound: number;
@@ -1152,6 +1018,7 @@ export enum AssetType {
     Code = "code",
     ModelConfiguration = "model-configuration",
     Artifact = "artifact",
+    InterventionPolicy = "intervention-policy",
 }
 
 export enum EvaluationScenarioStatus {

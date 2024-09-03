@@ -3,7 +3,6 @@ package software.uncharted.terarium.hmiserver.service.tasks;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.Data;
@@ -23,7 +22,6 @@ import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
-import software.uncharted.terarium.hmiserver.service.gollm.ScenarioExtraction;
 
 @Component
 @RequiredArgsConstructor
@@ -51,7 +49,7 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 		String researchPaper;
 
 		@JsonProperty("amr")
-		Model amr;
+		String amr;
 	}
 
 	@Data
@@ -81,26 +79,7 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 
 			// For each configuration, create a new model configuration with parameters set
 			for (final JsonNode condition : configurations.response.get("conditions")) {
-				final Model modelCopy = model.clone();
-				modelCopy.setId(model.getId());
-				ScenarioExtraction.setNullDefaultModelInitials(modelCopy);
-				ScenarioExtraction.setNullDefaultModelParameters(modelCopy);
-				// Map the parameters values to the model
-				if (condition.has("parameters")) {
-					ScenarioExtraction.getModelParameters(condition.get("parameters"), modelCopy);
-				}
-
-				// Map the initials values to the model
-				if (condition.has("initials")) {
-					ScenarioExtraction.getModelInitials(condition.get("initials"), modelCopy);
-				}
-
-				// Create the new configuration
-				final ModelConfiguration configuration = ModelConfigurationService.modelConfigurationFromAMR(
-					modelCopy,
-					condition.get("name").asText(),
-					condition.get("description").asText()
-				);
+				final ModelConfiguration configuration = objectMapper.treeToValue(condition, ModelConfiguration.class);
 
 				// Fetch the document name
 				final Optional<DocumentAsset> document = documentAssetService.getAsset(

@@ -1,11 +1,18 @@
 <template>
 	<div class="tera-jupyter-chat">
 		<!-- Jupyter Response and Input -->
-		<div ref="messageContainer">
+		<div
+			ref="messageContainer"
+			@keydown.prevent="onKeyPress"
+			@keydown.esc.capture="messageContainer?.focus()"
+			tabindex="0"
+		>
 			<tera-jupyter-response
-				v-for="(msg, index) in notebookItems"
+				@keydown.stop
+				v-for="(msg, index) in filteredNotebookItems"
 				ref="notebookCells"
-				:key="index"
+				:class="{ selected: msg.query_id === selectedCellId }"
+				:key="msg.query_id"
 				:index="index"
 				:jupyter-session="jupyterSession"
 				:asset-id="props.assetId"
@@ -14,59 +21,52 @@
 				:show-chat-thoughts="props.showChatThoughts"
 				:auto-expand-preview="autoExpandPreview"
 				:default-preview="defaultPreview"
-				@cell-updated="scrollToLastCell"
+				:language="language"
 				@preview-selected="previewSelected"
 				@delete-message="handleDeleteMessage"
 				@delete-prompt="handleDeletePrompt"
 				@re-run-prompt="handleRerunPrompt"
 				@edit-prompt="reRunPrompt"
+				@click="selectedCellId = msg.query_id"
 			/>
-			<!-- spacer to prevent the floating input panel at the bottom of the screen from covering the bottom item -->
-			<div style="height: 8rem"></div>
-
 			<!-- Beaker Input -->
 			<tera-beaker-input
 				class="tera-beaker-input"
 				:kernel-is-busy="props.kernelStatus !== KernelState.idle"
 				context="dataset"
 				@submitQuery="submitQuery"
-				@add-code-cell="addCodeCell"
+				@add-code-cell="addCodeCell()"
+				@keydown.stop
 			/>
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from 'vue';
-import { createMessageId, getSessionManager, JupyterMessage, KernelState } from '@/services/jupyter';
-import type { CsvAsset, NotebookSession } from '@/types/Types';
+import { onUnmounted, ref, watch, computed, nextTick } from 'vue';
+import { createMessageId, JupyterMessage, KernelState, INotebookItem } from '@/services/jupyter';
+import type { NotebookSession } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import TeraBeakerInput from '@/components/llm/tera-beaker-input.vue';
 import TeraJupyterResponse from '@/components/llm/tera-jupyter-response.vue';
-import { IModel } from '@jupyterlab/services/lib/session/session';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
 import { updateNotebookSession } from '@/services/notebook-session';
 import { useProjects } from '@/composables/project';
+import { isEmpty } from 'lodash';
 
 const messagesHistory = ref<JupyterMessage[]>([]);
 const isExecutingCode = ref(false);
 const messageContainer = ref(<HTMLElement | null>null);
-const activeSessions = ref(null);
-const runningSessions = ref();
-const notebookItems = ref(
-	<
-		{
-			query_id: string;
-			query: string | null;
-			timestamp: string;
-			messages: JupyterMessage[];
-			resultingCsv: CsvAsset | null;
-			executions: any[];
-		}[]
-	>[]
-);
+
+const notebookItems = ref(<INotebookItem[]>[]);
+
 const notebookCells = ref<(typeof TeraJupyterResponse)[]>([]);
+const selectedCellId = ref();
+
+const filteredNotebookItems = computed<INotebookItem[]>(() =>
+	notebookItems.value.filter((item) => !isEmpty(item.messages))
+);
 
 const emit = defineEmits([
 	'new-message',
@@ -82,6 +82,7 @@ const props = defineProps<{
 	assetName?: string;
 	assetId?: string;
 	assetType?: AssetType;
+	language: string;
 	showHistory?: { value: boolean; default: false };
 	showJupyterSettings?: boolean;
 	showChatThoughts?: boolean;
@@ -90,18 +91,6 @@ const props = defineProps<{
 	autoExpandPreview?: boolean;
 	notebookSession?: NotebookSession;
 }>();
-
-onMounted(async () => {
-	if (props.notebookSession) {
-		notebookItems.value = props.notebookSession.data?.history;
-	}
-	activeSessions.value = getSessionManager().running();
-
-	// Add a code cell if there are no cells present
-	if (notebookItems.value.length === 0) {
-		addCodeCell();
-	}
-});
 
 const defaultPreview = ref('d1');
 
@@ -112,6 +101,70 @@ const iopubMessageHandler = (_session, message) => {
 		return;
 	}
 	newJupyterMessage(message);
+};
+const onKeyPress = (event) => {
+	switch (event.key) {
+		case 'j':
+		case 'ArrowUp':
+			selectPreviousCell();
+			break;
+		case 'k':
+		case 'ArrowDown':
+			selectNextCell();
+			break;
+		case 'a':
+			addCodeCell(false, false);
+			nextTick(() => {
+				scrollToCell(notebookCells.value.find((item) => item.$props.msg.query_id === selectedCellId.value));
+			});
+			break;
+		case 'b':
+			addCodeCell();
+			nextTick(() => {
+				scrollToCell(notebookCells.value.find((item) => item.$props.msg.query_id === selectedCellId.value));
+			});
+			break;
+		case 'Enter':
+			enterCell();
+			break;
+		case 'Escape':
+			messageContainer.value?.focus();
+			break;
+		default:
+			break;
+	}
+};
+
+const scrollToCell = (element) => {
+	if (element) {
+		element.$el.scrollIntoView({ block: 'start', inline: 'nearest', behavior: 'smooth' });
+	}
+};
+
+const enterCell = () => {
+	const notebookCell = notebookCells.value.find((item) => item.$props.msg.query_id === selectedCellId.value);
+	if (notebookCell?.codeCell?.[0]) {
+		notebookCell.codeCell[0].enter();
+	}
+	scrollToCell(notebookCell);
+};
+
+const selectPreviousCell = () => {
+	const index = filteredNotebookItems.value.findIndex((item) => item.query_id === selectedCellId.value);
+	if (index > 0) {
+		selectedCellId.value = filteredNotebookItems.value[index - 1].query_id;
+	}
+	const notebookCell = notebookCells.value.find((item) => item.$props.msg.query_id === selectedCellId.value);
+	scrollToCell(notebookCell);
+};
+
+const selectNextCell = () => {
+	const index = filteredNotebookItems.value.findIndex((item) => item.query_id === selectedCellId.value);
+	if (index < filteredNotebookItems.value.length - 1) {
+		selectedCellId.value = filteredNotebookItems.value[index + 1].query_id;
+	}
+	const notebookCell = notebookCells.value.find((item) => item.$props.msg.query_id === selectedCellId.value);
+	scrollToCell(notebookCell);
 };
 
 const previewSelected = (selection) => {
@@ -181,7 +234,7 @@ const reRunPrompt = (queryId: string, query?: string) => {
 	isExecutingCode.value = true;
 };
 
-const addCodeCell = () => {
+const addCodeCell = (isDefaultCell: boolean = false, isNextCell: boolean = true) => {
 	const msgId = createMessageId('code_cell');
 	const date = new Date().toISOString();
 	const emptyCell: JupyterMessage = {
@@ -197,21 +250,20 @@ const addCodeCell = () => {
 		metadata: {},
 		content: {
 			language: 'python',
-			code: defaultPreview.value
+			code: isDefaultCell ? defaultPreview.value : ''
 		},
 		channel: 'iopub'
 	};
 	messagesHistory.value.push(emptyCell);
-	updateNotebookCells(emptyCell);
-	defaultPreview.value = ''; // reset the default preview
+	updateNotebookCells(emptyCell, isNextCell);
 };
 
 // const nestedMessages = computed(() => {
-const updateNotebookCells = (message) => {
+const updateNotebookCells = (message, isNextCell: boolean = true) => {
 	// This computed property groups Jupyter messages into queries
 	// and stores resulting csv after each query.
-	let notebookItem;
-	const parentId: String | null =
+	let notebookItem: INotebookItem | undefined;
+	const parentId: string | null =
 		message.metadata?.notebook_item || message.parent_header?.msg_id || message.header?.msg_id || null;
 
 	// Update existing cell
@@ -222,21 +274,36 @@ const updateNotebookCells = (message) => {
 		const query = message.header.msg_type === 'llm_request' ? message.content.request : null;
 		// New cell
 		notebookItem = {
-			query_id: parentId,
+			query_id: parentId ?? '',
 			query,
 			timestamp: message.parent_header.date,
 			messages: [],
 			resultingCsv: null,
-			executions: []
+			executions: [],
+			// auto run the code block when we send an llm request
+			autoRun: message.header.msg_type === 'llm_request'
 		};
-		notebookItems.value.push(notebookItem);
+
+		const index = notebookItems.value.findIndex((item) => item.query_id === selectedCellId.value);
+		if (isNextCell) {
+			if (index === -1) {
+				notebookItems.value.push(notebookItem);
+			} else {
+				notebookItems.value.splice(index + 1, 0, notebookItem);
+			}
+		} else {
+			notebookItems.value.splice(index, 0, notebookItem);
+		}
+		selectedCellId.value = parentId;
 	}
 	if (message.header.msg_type === 'dataset') {
 		// If we get a new dataset, remove any old datasets
 		notebookItem.messages = notebookItem.messages.filter((msg) => msg.header.msg_type !== 'dataset');
 		notebookItem.resultingCsv = message.content;
 		emit('update-kernel-state', message.content);
-	} else if (message.header.msg_type === 'model_preview') {
+		return;
+	}
+	if (message.header.msg_type === 'model_preview') {
 		// If we get a new model preview, remove any old previews
 		notebookItem.messages = notebookItem.messages.filter((msg) => msg.header.msg_type !== 'model_preview');
 		emit('update-kernel-state', message.content);
@@ -246,8 +313,12 @@ const updateNotebookCells = (message) => {
 		// add the latest message execution to the code cell, we need this in order to persist the latest code execution
 		const codeCell = notebookItem.messages.find((m) => m.header.msg_type === 'code_cell');
 		if (codeCell) {
-			codeCell.content.code = message.content.code;
+			codeCell.content = message.content;
 		}
+		// clear the cell outputs when we get a new code execution
+		notebookItem.messages = notebookItem.messages.filter(
+			(msg) => !['stream', 'display_data', 'execute_result', 'error'].includes(msg.header.msg_type)
+		);
 		return;
 	}
 
@@ -261,9 +332,18 @@ const updateKernelStatus = (kernelStatus) => {
 const newJupyterMessage = (jupyterMessage) => {
 	const msgType = jupyterMessage.header.msg_type;
 	if (
-		['stream', 'code_cell', 'llm_request', 'llm_thought', 'llm_response', 'beaker_response', 'dataset'].indexOf(
-			msgType
-		) > -1
+		[
+			'stream',
+			'code_cell',
+			'llm_request',
+			'llm_thought',
+			'llm_response',
+			'beaker_response',
+			'dataset',
+			'display_data',
+			'execute_result',
+			'error'
+		].indexOf(msgType) > -1
 	) {
 		messagesHistory.value.push(jupyterMessage);
 		updateNotebookCells(jupyterMessage);
@@ -320,43 +400,9 @@ const clearOutputs = () => {
 	}
 };
 
-const scrollToLastCell = (element, msg) => {
-	if (msg === notebookItems.value[notebookItems.value.length - 1]) {
-		element.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
-	}
-};
-
 onUnmounted(() => {
 	messagesHistory.value = [];
 });
-
-watch(
-	() => [activeSessions.value],
-	() => {
-		if (props.jupyterSession.session) {
-			const sessions = getSessionManager().running();
-			const results: IModel[] = [];
-			let result = sessions.next();
-			while (result) {
-				results.push(result);
-				result = sessions.next();
-			}
-			runningSessions.value = results.reverse().map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
-		}
-		return [];
-	},
-	{ deep: true }
-);
-
-watch(
-	() => messageContainer.value,
-	() => {
-		if (messageContainer.value) {
-			messageContainer.value?.scrollIntoView({ behavior: 'smooth' });
-		}
-	},
-	{ deep: true } // enable deep watching in case msg.messages is an array of objects
-);
 
 watch(
 	() => [
@@ -374,8 +420,14 @@ watch(
 	() => {
 		if (props.notebookSession) {
 			notebookItems.value = props.notebookSession.data.history;
+			if (isEmpty(notebookItems.value)) {
+				addCodeCell(true);
+			}
+			messageContainer.value?.focus();
+			selectedCellId.value = filteredNotebookItems.value[filteredNotebookItems.value.length - 1]?.query_id;
 		}
-	}
+	},
+	{ immediate: true }
 );
 
 watch(
@@ -410,5 +462,11 @@ section {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
+	height: calc(100% - 13rem);
+	overflow-y: auto;
+}
+
+.selected {
+	background-color: var(--gray-300);
 }
 </style>

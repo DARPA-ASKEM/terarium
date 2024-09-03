@@ -52,7 +52,7 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 		List<String> datasets;
 
 		@JsonProperty("amr")
-		Model amr;
+		String amr;
 
 		@JsonProperty("matrix_str")
 		String matrixStr;

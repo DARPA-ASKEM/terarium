@@ -15,7 +15,13 @@ import type {
 	WorkflowPort,
 	WorkflowOutput
 } from '@/types/workflow';
-import { WorkflowPortStatus, OperatorStatus, WorkflowOperationTypes } from '@/types/workflow';
+import {
+	WorkflowPortStatus,
+	OperatorStatus,
+	WorkflowOperationTypes,
+	WorkflowTransformations,
+	Transform
+} from '@/types/workflow';
 
 /**
  * A wrapper class around the workflow data struture to make it easier
@@ -43,11 +49,14 @@ export class WorkflowWrapper {
 	}
 
 	update(updatedWF: Workflow) {
+		if (updatedWF.id !== this.wf.id) {
+			throw new Error(`Workflow failed, inconsistent ids updated=${updatedWF.id} self=${this.wf.id}`);
+		}
 		this.wf.name = updatedWF.name;
 		this.wf.description = updatedWF.description;
 
-		const nodes = this.getNodes();
-		const edges = this.getEdges();
+		const nodes = this.wf.nodes;
+		const edges = this.wf.edges;
 		const updatedNodeMap = new Map<string, WorkflowNode<any>>(updatedWF.nodes.map((n) => [n.id, n]));
 		const updatedEdgeMap = new Map<string, WorkflowEdge>(updatedWF.edges.map((e) => [e.id, e]));
 
@@ -56,7 +65,7 @@ export class WorkflowWrapper {
 			const nodeId = nodes[i].id;
 			const updated = updatedNodeMap.get(nodeId);
 			if (updated) {
-				if ((updated.version as number) > (nodes[i].version as number)) {
+				if (!nodes[i].version || (updated.version as number) > (nodes[i].version as number)) {
 					nodes[i].version = updated.version;
 					nodes[i].isDeleted = updated.isDeleted;
 					nodes[i].status = updated.status;
@@ -778,12 +787,11 @@ function assetToOperation(operationMap: Map<string, Operation>) {
 			input.type.split('|').forEach((subType) => {
 				if (!result.has(subType)) {
 					result.set(subType, []);
-				} else {
-					result.get(subType)?.push({
-						type: key,
-						displayName: operation.displayName
-					});
 				}
+				result.get(subType)?.push({
+					type: key,
+					displayName: operation.displayName
+				});
 			});
 		});
 	});
@@ -813,11 +821,52 @@ export function getNodeMenu(operationMap: Map<string, Operation>) {
 	const inputMap = assetToOperation(operationMap);
 	const outputMap = operationToAsset(operationMap);
 
-	const uniqInputMap: Map<string, OperatorMenuItem[]> = new Map();
-	inputMap.forEach((menuItem, key) => uniqInputMap.set(key, _.uniqBy(menuItem, 'type')));
+	// Going from
+	//   outputMap(Operator => assetId[]) => inputMap(assetId => Operator[]) ;
+	//
+	// For example
+	//   Calibrate => [datasetId, modelConfig] => [Validate, Simulate, DataTransform...]
+	outputMap.forEach((assetTypes, operationKey) => {
+		const check = new Set<String>();
+		const menuItems: OperatorMenuItem[] = [];
 
-	outputMap.forEach((value, key) => {
-		menuOptions.set(key, uniqInputMap.get(value[0]) ?? []);
+		assetTypes.forEach((assetType) => {
+			const availableInputOperations = inputMap.get(assetType) ?? [];
+
+			availableInputOperations.forEach((item) => {
+				if (!check.has(item.type)) {
+					check.add(item.type);
+					menuItems.push(item);
+				}
+			});
+		});
+		menuOptions.set(operationKey, menuItems);
 	});
+
 	return menuOptions;
+}
+
+export function getLocalStorageTransform(id: string): Transform | null {
+	const terariumWorkflowTransforms = localStorage.getItem('terariumWorkflowTransforms');
+	if (!terariumWorkflowTransforms) {
+		return null;
+	}
+
+	const workflowTransformations: WorkflowTransformations = JSON.parse(terariumWorkflowTransforms);
+	if (!workflowTransformations.workflows[id]) {
+		return null;
+	}
+	return workflowTransformations.workflows[id];
+}
+
+export function setLocalStorageTransform(id: string, canvasTransform: { x: number; y: number; k: number }) {
+	const terariumWorkflowTransforms = localStorage.getItem('terariumWorkflowTransforms');
+	if (!terariumWorkflowTransforms) {
+		const transformation: WorkflowTransformations = { workflows: { [id]: canvasTransform } };
+		localStorage.setItem('terariumWorkflowTransforms', JSON.stringify(transformation));
+		return;
+	}
+	const workflowTransformations = JSON.parse(terariumWorkflowTransforms);
+	workflowTransformations.workflows[id] = canvasTransform;
+	localStorage.setItem('terariumWorkflowTransforms', JSON.stringify(workflowTransformations));
 }

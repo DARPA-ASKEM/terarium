@@ -298,9 +298,10 @@ function openProject(projectId: string) {
 	router.push({ name: RouteName.Project, params: { projectId } });
 }
 
-onMounted(() => {
+onMounted(async () => {
 	// Clear all...
 	queryStore.reset(); // Facets queries.
+	await useProjects().getAll();
 });
 </script>
 

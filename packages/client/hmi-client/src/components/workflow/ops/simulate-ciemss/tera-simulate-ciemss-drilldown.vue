@@ -142,7 +142,7 @@
 								@configuration-change="chartProxy.configurationChange(index, $event)"
 								@remove="chartProxy.removeChart(index)"
 							/>
-							<vega-chart :are-embed-actions-visible="true" :visualization-spec="preparedCharts[index]" />
+							<vega-chart expandable :are-embed-actions-visible="true" :visualization-spec="preparedCharts[index]" />
 						</template>
 						<Button size="small" text @click="chartProxy.addChart()" label="Add chart" icon="pi pi-plus" />
 					</div>
@@ -289,7 +289,7 @@ const outputs = computed(() => {
 	if (!_.isEmpty(props.node.outputs)) {
 		return [
 			{
-				label: 'Select outputs to display in operator',
+				label: 'Select an output',
 				items: props.node.outputs
 			}
 		];

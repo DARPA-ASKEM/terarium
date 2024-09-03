@@ -14,7 +14,6 @@ export async function modelCard(documentId: string): Promise<void> {
 				'document-id': documentId
 			}
 		});
-
 		// FIXME: I think we need to refactor the response interceptors so that we can handle errors here, or even in the interceptor itself...might be worth a discussion
 		const taskId = response.data.id;
 		await handleTaskById(taskId, {
