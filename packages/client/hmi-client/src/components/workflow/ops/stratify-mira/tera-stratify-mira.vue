@@ -83,7 +83,6 @@
 						label="Save for re-use"
 						size="small"
 						outlined
-						dis
 						:disabled="isSaveDisabled"
 						severity="secondary"
 						@click="showSaveModelModal = true"
