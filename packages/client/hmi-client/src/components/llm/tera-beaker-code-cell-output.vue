@@ -30,7 +30,6 @@ const renderOutputs = (outputs) => {
 const formatOutputs = () => {
 	const outputs: any[] = [];
 	const content = props.jupyterMessage.content;
-	delete content.execution_count;
 	outputs.push({
 		output_type: messageType.value,
 		...content
@@ -57,3 +56,19 @@ watch(
 
 const messageType = computed(() => props.jupyterMessage.header.msg_type);
 </script>
+
+<style scoped>
+:deep(.lm-Widget.p-Widget.jp-OutputPrompt.jp-OutputArea-prompt) {
+	color: var(--text-color);
+	margin-right: var(--gap-5);
+}
+:deep(.lm-Widget.p-Widget.lm-Panel.p-Panel.jp-OutputArea-child) {
+	margin-bottom: var(--gap-2);
+}
+/* hack to add "Out" in front of outputs */
+:deep(.lm-Widget.p-Widget.jp-OutputPrompt.jp-OutputArea-prompt):before {
+	content: 'Out ';
+	font-family: 'Menlo', 'Consolas', 'DejaVu Sans Mono', monospace;
+	color: var(--text-color);
+}
+</style>

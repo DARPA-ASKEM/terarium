@@ -6,6 +6,7 @@ import co.elastic.clients.elasticsearch.core.search.SourceFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,6 +18,8 @@ import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfigur
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Annotations;
 import software.uncharted.terarium.hmiserver.repository.data.ModelRepository;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
@@ -159,6 +162,19 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 				});
 		}
 
+		// Force observable to empty-list if null or not specified
+		if (asset.getSemantics() != null) {
+			if (asset.getSemantics().getOde().getObservables() == null) {
+				asset.getSemantics().getOde().setObservables(new ArrayList());
+			}
+		}
+		// Force proper annotation metadata
+		ModelMetadata metadata = asset.getMetadata();
+		if (metadata.getAnnotations() == null) {
+			metadata.setAnnotations(new Annotations());
+			asset.setMetadata(metadata);
+		}
+
 		if (asset.getHeader() != null && asset.getHeader().getName() != null) {
 			asset.setName(asset.getHeader().getName());
 		}
@@ -197,6 +213,20 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		if (asset.getHeader() != null && asset.getHeader().getName() != null) {
 			asset.setName(asset.getHeader().getName());
 		}
+
+		// Force observable to empty-list if null or not specified
+		if (asset.getSemantics() != null) {
+			if (asset.getSemantics().getOde().getObservables() == null) {
+				asset.getSemantics().getOde().setObservables(new ArrayList());
+			}
+		}
+		// Force proper annotation metadata
+		ModelMetadata metadata = asset.getMetadata();
+		if (metadata.getAnnotations() == null) {
+			metadata.setAnnotations(new Annotations());
+			asset.setMetadata(metadata);
+		}
+
 		final Optional<Model> updatedOptional = super.updateAsset(asset, projectId, hasWritePermission);
 		if (updatedOptional.isEmpty()) {
 			return Optional.empty();

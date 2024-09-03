@@ -1,5 +1,7 @@
 import sys
 import json
+import traceback
+
 from taskrunner import TaskRunnerInterface
 from mira.sources.amr import model_from_json
 
@@ -75,6 +77,7 @@ def main():
         print("AMR to MMT conversion succeeded")
     except Exception as e:
         sys.stderr.write(f"Error: {str(e)}\n")
+        sys.stderr.write(traceback.format_exc())
         sys.stderr.flush()
         exitCode = 1
 

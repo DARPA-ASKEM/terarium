@@ -11,8 +11,7 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 2. Create, or open, project named `QA [Your Name]`
 
 ### 2. Workflow
-1. Go to the model explorer and select `SIR Model`
-2. Add the `SIR Model` to your project
+1. Upload the SIR [model](https://drive.google.com/file/d/1eXlvpBfMmhrfC0xUXfuz0s_19gi-Rird/view?usp=drive_link)
 3. Create a new workflow named `Model Configuration Notebook`
 4. Add the model to it
 5. Add a `Configure model` operator to the workflow and attach the model to it

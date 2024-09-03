@@ -29,12 +29,11 @@ import Button from 'primevue/button';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { AssetType, ProgrammingLanguage } from '@/types/Types';
-import type { Model } from '@/types/Types';
+import type { InterventionPolicy, Model, ModelConfiguration } from '@/types/Types';
 import type { Workflow } from '@/types/workflow';
 import { emptyWorkflow } from '@/services/workflow';
 import { setFileExtension } from '@/services/code';
 import { useProjects } from '@/composables/project';
-import { newAMR } from '@/model-representation/petrinet/petrinet-service';
 import * as saveAssetService from '@/services/save-asset';
 
 const props = defineProps({
@@ -84,6 +83,31 @@ function closeModal() {
 	emit('close-modal');
 }
 
+function newAMR(modelName: string = '') {
+	const amr: Model = {
+		header: {
+			name: modelName,
+			description: '',
+			schema:
+				'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json',
+			schema_name: 'petrinet',
+			model_version: '0.1'
+		},
+		model: {
+			states: [],
+			transitions: []
+		},
+		semantics: {
+			ode: {
+				rates: [],
+				initials: [],
+				parameters: []
+			}
+		}
+	};
+	return amr;
+}
+
 // Generic save function
 function save() {
 	// Prepare the asset with the new name
@@ -98,6 +122,12 @@ function save() {
 			// File needs to be created here since name is read only
 			// Here newAsset comes as a string and is reassigned as a File
 			newAsset = new File([newAsset], newName.value);
+			break;
+		case AssetType.InterventionPolicy:
+			(newAsset as InterventionPolicy).name = newName.value;
+			break;
+		case AssetType.ModelConfiguration:
+			(newAsset as ModelConfiguration).name = newName.value;
 			break;
 		default:
 			break;
