@@ -34,7 +34,6 @@ import type { Workflow } from '@/types/workflow';
 import { emptyWorkflow } from '@/services/workflow';
 import { setFileExtension } from '@/services/code';
 import { useProjects } from '@/composables/project';
-import { newAMR } from '@/model-representation/petrinet/petrinet-service';
 import * as saveAssetService from '@/services/save-asset';
 
 const props = defineProps({
@@ -82,6 +81,31 @@ function onSave(data: any) {
 function closeModal() {
 	newName.value = '';
 	emit('close-modal');
+}
+
+function newAMR(modelName: string = '') {
+	const amr: Model = {
+		header: {
+			name: modelName,
+			description: '',
+			schema:
+				'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json',
+			schema_name: 'petrinet',
+			model_version: '0.1'
+		},
+		model: {
+			states: [],
+			transitions: []
+		},
+		semantics: {
+			ode: {
+				rates: [],
+				initials: [],
+				parameters: []
+			}
+		}
+	};
+	return amr;
 }
 
 // Generic save function
