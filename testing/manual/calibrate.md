@@ -36,13 +36,13 @@ sampling combinations in PyCIEMSS can result in numerical instability, when this
 1. Verify that there is a loss chart available while the process is running, showing the loss value as a function of solver iterations
 2. Verify that there is a `Parameters chart` available. This should allow the user to select different model parameters (Eg beta, gamma) and will display a bar chart showing before and afer calibration values for the selected parameters.
 3. Verify that there is a `Variables chart` available, showing time-series plots for each model variable based on a Simulate run with the calibrate parameter values.
-4. Verify the dataset colummn to which a given model variable is mapped appear as a dotted line in the Variables chart of the model variable. This should have a legend with the name Observations
+4. Verify the dataset columm to which a given model variable is mapped appear as a dotted line in the Variables chart of the model variable. This should have a legend with the name Observations
 5. Verify there is an `Error chart` available. This should allow the user to select different variables that were calibrated over. This will display the mean absolute error between the post forecast run and the incoming dataset.
 6. Should be able to add/remove charts by selecting or deselecting options.
 
 ## 5. Add intervention(s)
-1. Create a new intervention node and connect the model to this.
+1. Create a new intervention node and connect the model to it.
 2. Create one or many interventions. These can be static or dynamic intervention on a parameter or state.
 3. Connect this to the calibration node. 
 4. Rerun the calibration.
-5. When verifying you should be able to see your intervention in the output charts.
+5. When verifying, you should be able to see your intervention in the output charts.
