@@ -45,19 +45,29 @@ async function getCodeFileAsText(codeAssetId: string, fileName: string): Promise
 }
 
 async function uploadCodeToProject(file: File, progress: Ref<number>): Promise<Code | null> {
-	// Create a new code asset with the same name as the file and post the metadata to TDS
-	const codeAsset: Code = {
-		name: file.name,
-		description: file.name
-	};
+	const projectId = activeProjectId.value || getProjectIdFromUrl();
 
-	const newCodeAsset: Code | null = await createNewCodeAsset(codeAsset);
-	if (!newCodeAsset || !newCodeAsset.id) return null;
+	const formData = new FormData();
+	formData.append('file', file);
 
-	const successfulUpload = await addFileToCodeAsset(newCodeAsset.id, file, progress);
-	if (!successfulUpload) return null;
+	const response = await API.post(`/code-asset/upload-code?project-id=${projectId}`, formData, {
+		params: {
+			name: file.name,
+			description: file.name,
+			filename: file.name
+		},
+		headers: {
+			'Content-Type': 'multipart/form-data'
+		},
+		onUploadProgress(progressEvent) {
+			progress.value = Math.min(100, Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100)));
+		}
+	});
 
-	return newCodeAsset;
+	if (response && response.status < 400 && response.data) {
+		return response.data;
+	}
+	return null;
 }
 
 /**

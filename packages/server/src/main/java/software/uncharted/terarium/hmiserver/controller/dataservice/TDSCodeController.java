@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,10 +40,13 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.proxies.github.GithubProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
@@ -417,13 +421,12 @@ public class TDSCodeController {
 	/**
 	 * Uploads a file to the specified codeId.
 	 *
-	 * @param codeId the code ID to upload the file to
 	 * @param filename the name of the file to be uploaded
 	 * @param input the file to be uploaded
 	 * @return a ResponseEntity object with an Integer indicating the result of the upload
 	 * @throws IOException if an I/O error occurs while reading the file
 	 */
-	@PutMapping(value = "/{id}/upload-code", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@PostMapping(value = "/upload-code", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a file to the specified codeId")
 	@ApiResponses(
@@ -439,22 +442,67 @@ public class TDSCodeController {
 			@ApiResponse(responseCode = "500", description = "There was an issue uploading the file", content = @Content)
 		}
 	)
-	public ResponseEntity<Integer> uploadFile(
-		@PathVariable("id") final UUID codeId,
+	public ResponseEntity<ProjectAsset> uploadFile(
+		@RequestParam("project-id") final UUID projectId,
+		@RequestParam("name") final String name,
+		@RequestParam("description") final String description,
 		@RequestParam("filename") final String filename,
 		@RequestPart("file") final MultipartFile input
 	) throws IOException {
-		final UUID projectId = codeService.getProjectIdForAsset(codeId);
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
 			projectId
 		);
 
-		log.debug("Uploading code {} to project", codeId);
+		final List<String> filenames = new ArrayList<>();
+		filenames.add(filename);
+		final Code tempCode = new Code();
+		tempCode
+			//			.setUserId(currentUserService.get().getId())
+			.setFileNames(filenames)
+			.setName(name)
+			.setDescription(description);
+		Code createdCode = null;
+
+		try {
+			createdCode = codeService.createAsset(tempCode, projectId, permission);
+		} catch (final IOException e) {
+			final String error = "Unable to create dataset";
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+		}
+
+		log.debug("Uploading code {} to project", createdCode.getId());
 
 		final byte[] fileAsBytes = input.getBytes();
 		final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
-		return uploadCodeHelper(codeId, projectId, filename, fileEntity, permission);
+		uploadCodeHelper(createdCode.getId(), projectId, filename, fileEntity, permission);
+
+		final Optional<Project> project;
+		try {
+			project = projectService.getProject(projectId);
+			if (!project.isPresent()) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
+			}
+		} catch (final Exception e) {
+			log.error("Error communicating with project service", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
+
+		final AssetType assetType = AssetType.CODE;
+		final Optional<ProjectAsset> projectAsset = projectAssetService.createProjectAsset(
+			project.get(),
+			assetType,
+			createdCode,
+			permission
+		);
+
+		if (projectAsset.isEmpty()) {
+			log.error("Project Asset is empty");
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("asset.unable-to-create"));
+		}
+
+		return ResponseEntity.status(HttpStatus.CREATED).body(projectAsset.get());
 	}
 
 	/** Downloads a file from GitHub given the path and owner name, then uploads it to the project. */

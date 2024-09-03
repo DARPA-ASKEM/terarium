@@ -80,7 +80,7 @@ import Button from 'primevue/button';
 import { AcceptedExtensions, AcceptedTypes } from '@/types/common';
 import { uploadCodeToProject } from '@/services/code';
 import type { ProjectAsset } from '@/types/Types';
-import { AssetType, ProvenanceType } from '@/types/Types';
+import { ProvenanceType } from '@/types/Types';
 import { uploadDocumentAssetToProject } from '@/services/document-assets';
 import { createNewDatasetFromFile } from '@/services/dataset';
 import useAuthStore from '@/stores/auth';
@@ -143,8 +143,8 @@ async function processFiles(files: File[], description: string) {
  * @param file
  */
 async function processCode(file: File) {
-	const newCode = await uploadCodeToProject(file, progress);
-	return { id: newCode?.id ?? '', assetType: AssetType.Code };
+	const addedAsset = await uploadCodeToProject(file, progress);
+	return { asset: addedAsset };
 }
 
 /**
@@ -175,11 +175,11 @@ async function processAMRJson(file: File) {
 	// Check if the file is an AMR file
 	const amr = await validateAMRFile(file);
 	if (amr) {
-		const model = await createModel(amr);
-		return { id: model?.id ?? '', assetType: AssetType.Model };
+		const addedAsset = await createModel(amr);
+		return { asset: addedAsset };
 	}
 	// Ignore none AMR json files for now
-	return { id: '', assetType: '' };
+	return { asset: '' };
 }
 
 /**
@@ -189,7 +189,7 @@ async function processAMRJson(file: File) {
 async function processModel(file: File) {
 	// Upload file as an artifact, create an empty model, and link them
 	const artifact = await uploadArtifactToProject(file, useAuthStore().user?.id ?? '', '', progress);
-	if (!artifact) return { id: '', assetType: '' };
+	if (!artifact) return { asset: '' };
 	const newModelId = await processAndAddModelToProject(artifact);
 	await createProvenance({
 		relation_type: RelationshipType.EXTRACTED_FROM,
@@ -198,7 +198,7 @@ async function processModel(file: File) {
 		right: artifact.id ?? '',
 		right_type: ProvenanceType.Artifact
 	});
-	return { id: newModelId ?? '', assetType: AssetType.Model };
+	return { asset: '' };
 }
 
 function importCompleted(newResults: { asset: ProjectAsset }[] | null) {
