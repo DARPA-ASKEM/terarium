@@ -111,7 +111,9 @@
 		v-if="stratifiedAmr"
 		:asset="stratifiedAmr"
 		:assetType="AssetType.Model"
+		:initial-name="stratifiedAmr.name"
 		:is-visible="showSaveModelModal"
+		:is-updating-asset="true"
 		@on-save="updateNodeOutput"
 		@close-modal="showSaveModelModal = false"
 	/>
@@ -475,7 +477,6 @@ function updateNodeOutput(model: Model) {
 
 	if (!outputPort) return;
 	outputPort.label = model.header.name;
-	outputPort.value = [model.id];
 
 	emit('update-output-port', outputPort);
 }
