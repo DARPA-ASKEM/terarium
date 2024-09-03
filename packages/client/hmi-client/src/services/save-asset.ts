@@ -79,41 +79,12 @@ export async function saveAs(
 	if (onSaveFunction) onSaveFunction(response);
 }
 
-// Overwrites/updates the asset
-export async function update(newAsset: AssetToSave, assetType: AssetType, onSaveFunction?: Function) {
+// Overwrites/updates the asset and add to project
+export async function updateAddToProject(newAsset: AssetToSave, assetType: AssetType, onSaveFunction?: Function) {
 	if (!(newAsset instanceof File) && !newAsset.id) {
 		logger.error(`Can't update an asset that lacks an id.`);
 		return;
 	}
-
-	let response: any = null;
-
-	switch (assetType) {
-		case AssetType.Model:
-			response = await updateModel(newAsset as Model);
-			break;
-		case AssetType.Code:
-			response = await updateCodeAsset(newAsset as Code);
-			break;
-		default:
-			logger.info(`Update for ${assetType} is not implemented.`);
-			return;
-	}
-
-	if (!response) {
-		logger.error(`Failed to update ${assetType}.`);
-		return;
-	}
-
-	// TODO: Consider calling this refresh within the update functions in the services themselves
-	useProjects().refresh();
-
-	logger.info(`Updated ${response.name}.`);
-	if (onSaveFunction) onSaveFunction(response.name);
-}
-
-// Overwrites/updates the asset and add to project
-export async function updateAddToProject(newAsset: AssetToSave, assetType: AssetType, onSaveFunction?: Function) {
 	let response: any = null;
 
 	switch (assetType) {
