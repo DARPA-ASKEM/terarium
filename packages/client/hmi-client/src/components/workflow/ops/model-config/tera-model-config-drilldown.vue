@@ -76,7 +76,6 @@
 				<Button label="Save as..." outlined severity="secondary" @click="showSaveModal = true" />
 				<Button class="mr-3" :disabled="isSaveDisabled" label="Save" @click="onSaveConfiguration" />
 			</template>
-
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab>
 					<template #header>
