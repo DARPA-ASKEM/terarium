@@ -780,6 +780,10 @@ onUnmounted(() => {
 	padding-right: var(--gap-small);
 }
 
+:deep(.pi-spinner) {
+	padding: var(--gap-2);
+}
+
 ul {
 	list-style: none;
 	padding-top: var(--gap-small);
