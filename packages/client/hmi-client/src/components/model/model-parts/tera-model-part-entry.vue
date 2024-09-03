@@ -106,7 +106,7 @@ section {
 	grid-auto-flow: dense;
 	max-width: 100%;
 	overflow: auto;
-	gap: var(--gap-2);
+	gap: var(--gap-1) var(--gap-2);
 	align-items: center;
 	font-size: var(--font-caption);
 
