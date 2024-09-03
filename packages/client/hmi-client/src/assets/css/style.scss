@@ -93,6 +93,13 @@
 		box-shadow: none;
 	}
 
+
+	/* Correct secondary button styles */
+	.p-button.p-button-secondary.p-button-text, .p-buttonset.p-button-secondary > .p-button.p-button-text, .p-splitbutton.p-button-secondary > .p-button.p-button-text {
+		color: var(--text-color-secondary);
+	}
+
+
 	// Styles reused in Document.vue and DataExplorer.vue - TODO: look into changing prime vue styling to reflect this
 	.p-buttonset {
 		white-space: nowrap;
