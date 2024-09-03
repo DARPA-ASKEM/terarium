@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import _, { isEmpty } from 'lodash';
 import { runDagreLayout } from '@/services/graph';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri';
@@ -133,6 +133,11 @@ export function getParameter(model: Model, parameterId: string): ModelParameter 
 
 export function updateModelPartProperty(modelPart: any, key: string, value: any) {
 	if (key === 'unitExpression') {
+		if (isEmpty(value)) {
+			console.warn(`Invalid value setting ${modelPart}[${key}]`);
+			return;
+		}
+
 		if (!modelPart.units) modelPart.units = { expression: '', expression_mathml: '' };
 		modelPart.units.expression = value;
 		modelPart.units.expression_mathml = `<ci>${value}</ci>`;
