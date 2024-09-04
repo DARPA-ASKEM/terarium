@@ -568,8 +568,8 @@ public class ProjectController {
 			log.error("Execution Exception exporting project", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		} catch (CancellationException e) {
-			log.error("Canceled exporting project", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+			log.error("Cancelled exporting project", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("generic.io-error.write"));
 		} catch (InterruptedException e) {
 			log.error("Interrupted exporting project", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
