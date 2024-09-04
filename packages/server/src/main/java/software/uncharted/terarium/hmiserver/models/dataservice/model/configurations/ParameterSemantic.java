@@ -48,8 +48,10 @@ public class ParameterSemantic extends Semantic {
 	}
 
 	@Override
-	public void setSource(String source) {
-		if (!this.getDistribution().getParameters().isEmpty() && this.getSource() != null) {
+	public void setSource(final String source) {
+		if (
+			this.getDistribution() != null && !this.getDistribution().getParameters().isEmpty() && this.getSource() != null
+		) {
 			super.setSource(source);
 		}
 	}
