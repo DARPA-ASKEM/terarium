@@ -427,14 +427,19 @@ const extractConfigurationsFromInputs = async () => {
 		return;
 	}
 
-	if (documentId.value) {
-		const resp = await configureModelFromDocument(
-			documentId.value,
-			model.value.id,
-			props.node.workflowId,
-			props.node.id
-		);
-		state.modelConfigTaskIds.push(resp.id);
+	if (documentIds.value) {
+		const promiseList = [] as Promise<TaskResponse | null>[];
+		documentIds.value.forEach((documentId) => {
+			promiseList.push(
+				configureModelFromDocument(documentId, model.value?.id as string, props.node.workflowId, props.node.id)
+			);
+		});
+		const responsesRaw = await Promise.all(promiseList);
+		responsesRaw.forEach((resp) => {
+			if (resp) {
+				state.modelConfigTaskIds.push(resp.id);
+			}
+		});
 	}
 
 	if (datasetIds.value) {
@@ -459,8 +464,18 @@ const selectedOutputId = ref<string>('');
 const selectedConfigId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
 const originalConfig = ref<ModelConfiguration | null>(null);
 
-const documentId = computed(() => props.node.inputs[1]?.value?.[0]?.documentId);
-const datasetIds = computed(() => props.node.inputs[2]?.value);
+const documentIds = computed(() =>
+	props.node.inputs
+		.filter((input) => input.type === 'documentId' && input.status === 'connected')
+		.map((input) => input.value?.[0]?.documentId)
+		.filter((id): id is string => id !== undefined)
+);
+const datasetIds = computed(() =>
+	props.node.inputs
+		.filter((input) => input.type === 'datasetId' && input.status === 'connected')
+		.map((input) => input.value?.[0])
+		.filter((id): id is string => id !== undefined)
+);
 
 const suggestedConfigurationContext = ref<{
 	isOpen: boolean;

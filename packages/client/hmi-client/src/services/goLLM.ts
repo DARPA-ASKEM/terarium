@@ -56,7 +56,6 @@ export async function configureModelFromDataset(
 	workflowId?: string,
 	nodeId?: string
 ): Promise<TaskResponse> {
-	// FIXME: Using first dataset for now...
 	const { data } = await API.post<TaskResponse>(
 		'/gollm/configure-from-dataset',
 		{ matrixStr },
