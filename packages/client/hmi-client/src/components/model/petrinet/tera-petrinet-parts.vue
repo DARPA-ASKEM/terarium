@@ -53,13 +53,6 @@
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
-				Other concepts
-				<span class="artifact-amount">({{ otherConcepts.length }})</span>
-			</template>
-			<tera-other-concepts-table :model="model" @update-model="(updatedModel) => emit('update-model', updatedModel)" />
-		</AccordionTab>
-		<AccordionTab>
-			<template #header>
 				Time
 				<span class="artifact-amount">({{ time.length }})</span>
 			</template>
@@ -70,11 +63,10 @@
 
 <script setup lang="ts">
 import type { Model, Transition, State } from '@/types/Types';
-import { groupBy, isEmpty } from 'lodash';
+import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { computed } from 'vue';
-import { Dictionary } from 'vue-gtag';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import TeraStates from '@/components/model/model-parts/tera-states.vue';
 import TeraParameters from '@/components/model/model-parts/tera-parameters.vue';
@@ -82,7 +74,6 @@ import TeraObservables from '@/components/model/model-parts/tera-observables.vue
 import TeraTransitions from '@/components/model/model-parts/tera-transitions.vue';
 import TeraTime from '@/components/model/model-parts/tera-time.vue';
 import type { FeatureConfig } from '@/types/common';
-import TeraOtherConceptsTable from './tera-other-concepts-table.vue';
 
 const props = defineProps<{
 	model: Model;
@@ -103,10 +94,7 @@ const emit = defineEmits([
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
 const time = computed(() => (props.model?.semantics?.ode?.time ? [props.model?.semantics.ode.time] : []));
-const extractions = computed(() => {
-	const attributes = props.model?.metadata?.attributes ?? [];
-	return groupBy(attributes, 'amr_element_id');
-});
+
 const states = computed<State[]>(() => props.model?.model?.states ?? []);
 const transitions = computed<Transition[]>(() =>
 	props.model.model.transitions?.map((transition: Transition) => ({
@@ -115,22 +103,4 @@ const transitions = computed<Transition[]>(() =>
 		expression: props.model?.semantics?.ode?.rates?.find((rate) => rate.target === transition.id)?.expression
 	}))
 );
-const otherConcepts = computed(() => {
-	const ids = [...(states.value?.map((s) => s.id) ?? []), ...(transitions.value?.map((t) => t.id) ?? [])];
-
-	// find keys that are not aligned
-	const unalignedKeys = Object.keys(extractions.value).filter((k) => !ids.includes(k));
-
-	let unalignedExtractions: Dictionary<any>[] = [];
-	unalignedKeys.forEach((key) => {
-		unalignedExtractions = unalignedExtractions.concat(
-			extractions.value[key.toString()].filter((e) => ['anchored_extraction', 'anchored_entity'].includes(e.type))
-		);
-	});
-
-	const gollmExtractions = props.model?.metadata?.gollmExtractions ?? [];
-	unalignedExtractions.push(...gollmExtractions);
-
-	return unalignedExtractions ?? [];
-});
 </script>

@@ -19,6 +19,7 @@ import {
 } from '@/types/common';
 import { snakeToCapitalSentence } from '@/utils/text';
 import { ProjectPages } from '@/types/Project';
+import { useProjects } from '@/composables/project';
 import { getDocumentAsset } from './document-assets';
 import { getWorkflow } from './workflow';
 
@@ -135,9 +136,13 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 
 	// Register handlers for each client event type
 	registerHandler<CloneProjectStatusUpdate>(ClientEventType.CloneProject, (event, created) => {
-		console.log('event', event);
 		created.assetId = event.data.data.projectId;
 		created.typeDisplayName = 'Cloned Project';
+		useProjects()
+			.get(created.assetId)
+			.then((project) => {
+				created.sourceName = project?.name ?? 'Source Project';
+			});
 	});
 
 	registerHandler<ExtractionStatusUpdate>(ClientEventType.ExtractionPdf, (event, created) => {
@@ -156,7 +161,7 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 			Object.assign(created, { sourceName: document?.name || '' })
 		);
 	});
-	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureModel, (event, created) => {
+	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureModelFromDocument, (event, created) => {
 		created.supportCancel = true;
 		created.sourceName = 'Configure model';
 		created.assetId = event.data.additionalProperties.workflowId as string;
@@ -166,7 +171,7 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 			Object.assign(created, { context: workflow?.name || '' })
 		);
 	});
-	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureFromDataset, (event, created) => {
+	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureModelFromDataset, (event, created) => {
 		created.supportCancel = true;
 		created.sourceName = 'Configure model';
 		created.assetId = event.data.additionalProperties.workflowId as string;
