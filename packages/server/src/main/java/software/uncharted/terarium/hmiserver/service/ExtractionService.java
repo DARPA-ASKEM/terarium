@@ -337,7 +337,7 @@ public class ExtractionService {
 				// run variable extraction
 				try {
 					notificationInterface.sendMessage("Dispatching variable extraction request...");
-					extractionResponse.variableAttributes = runVariableExtraction(notificationInterface, documentText);
+					extractionResponse.variableAttributes = getVariablesFromDocumentText(notificationInterface, documentText);
 					notificationInterface.sendMessage("Variable extraction completed");
 				} catch (final Exception e) {
 					notificationInterface.sendMessage("Variable extraction failed, continuing");
@@ -372,7 +372,6 @@ public class ExtractionService {
 
 			notificationInterface.sendFinalMessage("Extraction complete");
 
-			// return the final document
 			return extractionResponse;
 		} catch (final FeignException e) {
 			final String error = "Transitive service failure";
@@ -409,7 +408,6 @@ public class ExtractionService {
 		document.setAssets(new ArrayList<>());
 		for (final DocumentExtraction extraction : extractionResponse.assets) {
 			document.getAssets().add(extraction);
-			document.getFileNames().add(extraction.getFileName());
 		}
 
 		if (extractionResponse.documentText != null) {
@@ -428,8 +426,13 @@ public class ExtractionService {
 		}
 
 		if (extractionResponse.gollmCard != null) {
+			if (document.getMetadata() == null) {
+				document.setMetadata(new HashMap<>());
+			}
 			document.getMetadata().put("gollmCard", extractionResponse.gollmCard);
 		}
+
+		log.info("Added extraction to document: {}", documentId);
 
 		return documentService.updateAsset(document, projectId, hasWritePermission).orElseThrow();
 	}
@@ -443,8 +446,8 @@ public class ExtractionService {
 			clientEventService,
 			notificationService,
 			ClientEventType.EXTRACTION_PDF,
-			null, // no project
-			null, // no extra props
+			projectId,
+			new Properties(documentId),
 			HALFTIME_SECONDS
 		);
 
@@ -472,6 +475,9 @@ public class ExtractionService {
 				extractionResponse = responseCache.get(documentId.toString());
 				notificationInterface.sendMessage("Cached response found for document extraction");
 			} else {
+				log.info("No cached response found for text from document {}", documentId);
+
+				notificationInterface.sendMessage("No extraction found in cache, dispatching extraction request...");
 				extractionResponse = runExtractPDF(filename, documentContents, userId, notificationInterface);
 				responseCache.put(
 					documentSHA,
@@ -488,7 +494,7 @@ public class ExtractionService {
 		});
 	}
 
-	private ArrayNode runVariableExtraction(
+	private ArrayNode getVariablesFromDocumentText(
 		final NotificationGroupInstance<Properties> notificationInterface,
 		final String documentText
 	) {
