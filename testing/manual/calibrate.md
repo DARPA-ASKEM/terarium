@@ -21,10 +21,9 @@ sampling combinations in PyCIEMSS can result in numerical instability, when this
 3. Connect the model to a Model Configuration operation, create a configuration
 4. Ensure that the model parameters (e.g. beta, gamma) are assigned to an uniform distribution with valid lower and upper bounds
 5. To get a reasonable result, change the initial condition values of `S, I, R` to `1000, 2, 0` and the value of `beta` to `0.0002, 0.0008` (1/1000th of the default value to accommodate the non-normalized values of the state variables).
-6. Connect the model-configuration to a Calibrate-PyCIEMSS operation
+6. Connect the model-configuration to a Calibrate operation
 7. Use/upload a dataset from [Google Drive](https://drive.google.com/drive/folders/1hjxiggCkBCofjCQgf9gXZEHBLkBqaVwe)
-8. Connect the dataset to Calibrate-PyCIEMSS
-
+8. Connect the dataset to Calibrate
 
 ### 3. Configure calibration mappings
 1. Map dataset `t` to model `timestamp`
@@ -35,6 +34,15 @@ sampling combinations in PyCIEMSS can result in numerical instability, when this
 
 ### 4. Check results
 1. Verify that there is a loss chart available while the process is running, showing the loss value as a function of solver iterations
-2. Verify that there is a Variables chart available, showing time-series plots for each model variable based on a Simulate run with the calibrate parameter values.
-3. Verify the dataset colummn to which a given model variable is mapped appear as a dashed line in the Variables chart of the model variable
-4. Should be able to add/remove Variables charts
+2. Verify that there is a `Parameters chart` available. This should allow the user to select different model parameters (Eg beta, gamma) and will display a bar chart showing before and after calibration values for the selected parameters.
+3. Verify that there is a `Variables chart` available, showing time-series plots for each model variable based on a Simulate run with the calibrate parameter values.
+4. Verify the dataset columm to which a given model variable is mapped appear as a dotted line in the Variables chart of the model variable. This should have a legend with the name Observations
+5. Verify that an `Error chart` is available. This should allow the user to select different calibrated variables. It will display the mean absolute error between the post-forcast run and the incoming dataset.
+6. Should be able to add/remove charts by selecting or deselecting options.
+
+## 5. Add intervention(s)
+1. Create a new intervention node and connect the model to it.
+2. Create one or many interventions. These can be static or dynamic intervention on a parameter or state.
+3. Connect this to the calibration node. 
+4. Rerun the calibration.
+5. When verifying, you should be able to see your intervention in the output charts.

@@ -13,7 +13,7 @@
 		<span class="unit">
 			<template v-if="item.input && item.output">
 				<span><label>Input:</label> {{ item.input }}</span>
-				<span><label>Output:</label> {{ item.output }}</span>
+				<span class="ml-"><label>Output:</label> {{ item.output }}</span>
 			</template>
 			<!--amr_to_mmt doesn't like unit expressions with spaces, removing them here before they are saved to the amr-->
 			<template v-else-if="showUnit">
@@ -28,19 +28,44 @@
 				/>
 			</template>
 		</span>
-		<span v-if="showConcept" class="concept">
-			<label>Concept</label>
-			<template v-if="featureConfig.isPreview">{{ query }}</template>
-			<AutoComplete
-				v-else
+		<span v-if="!featureConfig.isPreview" class="ml-auto flex gap-3">
+			<!-- Three states of description buttons: Hide / Show / Add description -->
+			<Button
+				v-if="(item.description && showDescription) || (!item.description && showDescription)"
+				text
 				size="small"
-				placeholder="Search concepts"
-				v-model="query"
-				:suggestions="results"
-				optionLabel="name"
-				@complete="async () => (results = await searchCuriesEntities(query))"
-				@item-select="$emit('update-item', { key: 'concept', value: $event.value.curie })"
+				label="Hide description"
+				@click="showDescription = false"
 			/>
+			<Button
+				v-else-if="item.description && !showDescription"
+				text
+				size="small"
+				label="Show description"
+				@click="showDescription = true"
+			/>
+			<Button
+				v-else-if="!item.description && !showDescription"
+				text
+				size="small"
+				label="Add description"
+				@click="showDescription = true"
+			/>
+
+			<span v-if="showConcept" class="concept">
+				<label>Concept</label>
+				<template v-if="featureConfig.isPreview">{{ query }}</template>
+				<AutoComplete
+					v-else
+					size="small"
+					placeholder="Search concepts"
+					v-model="query"
+					:suggestions="results"
+					optionLabel="name"
+					@complete="async () => (results = await searchCuriesEntities(query))"
+					@item-select="$emit('update-item', { key: 'concept', value: $event.value.curie })"
+				/>
+			</span>
 		</span>
 		<katex-element
 			v-if="item.expression"
@@ -51,7 +76,7 @@
 		<span class="description">
 			<template v-if="featureConfig.isPreview">{{ item.description }}</template>
 			<tera-input-text
-				v-else
+				v-if="showDescription"
 				placeholder="Add a description"
 				:model-value="item.description ?? ''"
 				@update:model-value="$emit('update-item', { key: 'description', value: $event })"
@@ -64,6 +89,7 @@
 import { ref, computed, watch } from 'vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import AutoComplete from 'primevue/autocomplete';
+import Button from 'primevue/button';
 import type { ModelPartItem } from '@/types/Model';
 import { stringToLatexExpression } from '@/services/model';
 import type { DKG } from '@/types/Types';
@@ -93,6 +119,9 @@ watch(
 	},
 	{ immediate: true }
 );
+
+const showDescription = ref(false);
+if (props.item.description) showDescription.value = true;
 </script>
 
 <style scoped>
@@ -106,7 +135,7 @@ section {
 	grid-auto-flow: dense;
 	max-width: 100%;
 	overflow: auto;
-	gap: var(--gap-2);
+	gap: var(--gap-1) var(--gap-2);
 	align-items: center;
 	font-size: var(--font-caption);
 
@@ -136,6 +165,7 @@ h6 {
 .description {
 	grid-area: description;
 	color: var(--text-color-subdued);
+	margin-right: var(--gap-2);
 }
 
 .unit {

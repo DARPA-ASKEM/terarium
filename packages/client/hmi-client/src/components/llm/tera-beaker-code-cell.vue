@@ -1,11 +1,11 @@
 <template>
-	<div class="flex relative" @keyup.ctrl.enter.prevent="runCell">
-		<pre>[{{ jupyterMessage.content?.execution_count ?? '*' }}]</pre>
+	<div class="code-cell-row" @keyup.ctrl.enter.prevent="runCell">
+		<pre class="m-0 pt-2">In  [{{ jupyterMessage.content?.execution_count ?? '*' }}]</pre>
 		<v-ace-editor
 			:value="code"
 			@init="initialize"
 			theme="chrome"
-			class="ace-editor ml-5 w-full"
+			class="ace-editor w-full p-0"
 			:options="{
 				showPrintMargin: false,
 				maxLines: 1000,
@@ -14,9 +14,9 @@
 			}"
 			:lang="language"
 		/>
-		<div class="flex">
-			<Button text rounded icon="pi pi-trash" class="danger-hover pt-0" @click="onDelete" />
-			<Button text rounded icon="pi pi-play" class="pt-0" @click="runCell" />
+		<div class="flex pt-1">
+			<Button text rounded icon="pi pi-trash" class="danger-hover" @click="onDelete" />
+			<Button text rounded icon="pi pi-play" class="" @click="runCell" />
 		</div>
 	</div>
 </template>
@@ -84,8 +84,8 @@ const runCell = async () => {
 
 const onDelete = () => {
 	confirm.require({
+		header: 'Delete cell',
 		message: 'Are you sure you want to delete this cell?',
-		icon: 'pi pi-exclamation-triangle',
 		accept: () => {
 			emit('deleteRequested');
 		}
@@ -103,3 +103,34 @@ defineExpose({
 	runCell
 });
 </script>
+<style scoped>
+.code-cell-row {
+	display: flex;
+	position: relative;
+	align-items: start;
+	gap: var(--gap-5);
+	padding-bottom: var(--gap-3);
+}
+
+.ace_editor {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	padding: var(--gap-2);
+	margin-left: 1px;
+	align-self: center;
+}
+
+.danger-hover:hover {
+	color: var(--red-700);
+}
+/* Ace editor style overrides */
+:deep(.ace_active-line) {
+	background: transparent !important;
+}
+:deep(.ace_gutter-active-line) {
+	background: transparent !important;
+}
+:deep(.ace_gutter) {
+	height: 100%;
+}
+</style>
