@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.models;
 
 public enum ClientEventType {
+	CLONE_PROJECT,
 	HEARTBEAT,
 	NOTIFICATION,
 	SIMULATION_SCIML,
