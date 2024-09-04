@@ -788,7 +788,7 @@ public class GoLLMController {
 		return ResponseEntity.ok().body(resp);
 	}
 
-	@GetMapping("/enrich-amr")
+	@GetMapping("/configure-model")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Enrich AMR` task")
 	@ApiResponses(
