@@ -94,6 +94,11 @@
 	}
 
 
+	/* Correct secondary button styles */
+	.p-button.p-button-secondary.p-button-text, .p-buttonset.p-button-secondary > .p-button.p-button-text, .p-splitbutton.p-button-secondary > .p-button.p-button-text {
+		color: var(--text-color-secondary);
+	}
+
 	/* Make button labels regular font weight */
 	.p-button-label {
 		font-weight: var(--font-weight);
