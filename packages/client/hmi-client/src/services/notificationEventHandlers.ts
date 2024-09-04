@@ -161,7 +161,7 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 			Object.assign(created, { sourceName: document?.name || '' })
 		);
 	});
-	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureModel, (event, created) => {
+	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureModelFromDocument, (event, created) => {
 		created.supportCancel = true;
 		created.sourceName = 'Configure model';
 		created.assetId = event.data.additionalProperties.workflowId as string;
@@ -171,7 +171,7 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 			Object.assign(created, { context: workflow?.name || '' })
 		);
 	});
-	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureFromDataset, (event, created) => {
+	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureModelFromDataset, (event, created) => {
 		created.supportCancel = true;
 		created.sourceName = 'Configure model';
 		created.assetId = event.data.additionalProperties.workflowId as string;

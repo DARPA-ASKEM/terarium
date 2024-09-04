@@ -12,12 +12,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
-import java.util.regex.Matcher;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,8 +46,8 @@ import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.tasks.CompareModelsResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.ConfigureFromDatasetResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelFromDatasetResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelFromDocumentResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.GenerateResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.GenerateSummaryHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
@@ -71,9 +71,9 @@ public class GoLLMController {
 	private final CurrentUserService currentUserService;
 
 	private final ModelCardResponseHandler modelCardResponseHandler;
-	private final ConfigureModelResponseHandler configureModelResponseHandler;
+	private final ConfigureModelFromDocumentResponseHandler configureModelFromDocumentResponseHandler;
 	private final CompareModelsResponseHandler compareModelsResponseHandler;
-	private final ConfigureFromDatasetResponseHandler configureFromDatasetResponseHandler;
+	private final ConfigureModelFromDatasetResponseHandler configureModelFromDatasetResponseHandler;
 	private final GenerateResponseHandler generateSummaryHandler;
 
 	private final Messages messages;
@@ -81,9 +81,9 @@ public class GoLLMController {
 	@PostConstruct
 	void init() {
 		taskService.addResponseHandler(modelCardResponseHandler);
-		taskService.addResponseHandler(configureModelResponseHandler);
+		taskService.addResponseHandler(configureModelFromDocumentResponseHandler);
 		taskService.addResponseHandler(compareModelsResponseHandler);
-		taskService.addResponseHandler(configureFromDatasetResponseHandler);
+		taskService.addResponseHandler(configureModelFromDatasetResponseHandler);
 		taskService.addResponseHandler(generateSummaryHandler);
 	}
 
@@ -205,7 +205,7 @@ public class GoLLMController {
 			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
 		}
 	)
-	public ResponseEntity<TaskResponse> createConfigureModelTask(
+	public ResponseEntity<TaskResponse> createConfigureModelFromDocumentTask(
 		@RequestParam(name = "model-id", required = true) final UUID modelId,
 		@RequestParam(name = "document-id", required = true) final UUID documentId,
 		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
@@ -238,7 +238,7 @@ public class GoLLMController {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 		}
 
-		final ConfigureModelResponseHandler.Input input = new ConfigureModelResponseHandler.Input();
+		final ConfigureModelFromDocumentResponseHandler.Input input = new ConfigureModelFromDocumentResponseHandler.Input();
 		input.setResearchPaper(document.get().getText());
 		// stripping the metadata from the model before its sent since it can cause
 		// gollm to fail with massive inputs
@@ -248,7 +248,7 @@ public class GoLLMController {
 		// Create the task
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
-		req.setScript(ConfigureModelResponseHandler.NAME);
+		req.setScript(ConfigureModelFromDocumentResponseHandler.NAME);
 		req.setUserId(currentUserService.get().getId());
 
 		try {
@@ -260,7 +260,8 @@ public class GoLLMController {
 
 		req.setProjectId(projectId);
 
-		final ConfigureModelResponseHandler.Properties props = new ConfigureModelResponseHandler.Properties();
+		final ConfigureModelFromDocumentResponseHandler.Properties props =
+			new ConfigureModelFromDocumentResponseHandler.Properties();
 		props.setProjectId(projectId);
 		props.setDocumentId(documentId);
 		props.setModelId(modelId);
@@ -316,9 +317,9 @@ public class GoLLMController {
 			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
 		}
 	)
-	public ResponseEntity<TaskResponse> createConfigFromDatasetTask(
+	public ResponseEntity<TaskResponse> createConfigureModelFromDatasetTask(
 		@RequestParam(name = "model-id", required = true) final UUID modelId,
-		@RequestParam(name = "dataset-ids", required = true) final List<UUID> datasetIds,
+		@RequestParam(name = "dataset-id", required = true) final UUID datasetId,
 		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
 		@RequestParam(name = "workflow-id", required = false) final UUID workflowId,
 		@RequestParam(name = "node-id", required = false) final UUID nodeId,
@@ -330,40 +331,6 @@ public class GoLLMController {
 			projectId
 		);
 
-		// Grab the datasets
-		final List<String> datasets = new ArrayList<>();
-		for (final UUID datasetId : datasetIds) {
-			final Optional<Dataset> dataset = datasetService.getAsset(datasetId, permission);
-			if (dataset.isEmpty()) {
-				log.warn(String.format("Dataset %s not found", datasetId));
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.not-found"));
-			}
-
-			// make sure there is text in the document
-			if (dataset.get().getFileNames() == null || dataset.get().getFileNames().isEmpty()) {
-				log.warn(String.format("Dataset %s has no source files to send", datasetId));
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.files.not-found"));
-			}
-
-			for (final String filename : dataset.get().getFileNames()) {
-				try {
-					final Optional<String> datasetText = datasetService.fetchFileAsString(datasetId, filename);
-					if (datasetText.isPresent()) {
-						// ensure unescaped newlines are escaped
-						datasets.add(datasetText.get().replaceAll("(?<!\\\\)\\n", Matcher.quoteReplacement("\\\\n")));
-					}
-				} catch (final Exception e) {
-					log.warn("Unable to fetch dataset files", e);
-					throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.files.not-found"));
-				}
-			}
-		}
-
-		if (datasets.isEmpty()) {
-			log.warn("No datasets found");
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.not-found"));
-		}
-
 		// Grab the model
 		final Optional<Model> model = modelService.getAsset(modelId, permission);
 		if (model.isEmpty()) {
@@ -371,36 +338,59 @@ public class GoLLMController {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 		}
 
-		final ConfigureFromDatasetResponseHandler.Input input = new ConfigureFromDatasetResponseHandler.Input();
-		input.setDatasets(datasets);
+		// Grab the dataset
+		final List<String> dataArray = new ArrayList<>();
+
+		final Optional<Dataset> dataset = datasetService.getAsset(datasetId, permission);
+		if (dataset.isEmpty()) {
+			log.warn(String.format("Dataset %s not found", datasetId));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.not-found"));
+		}
+
+		// make sure there is text in the document
+		if (dataset.get().getFileNames() == null || dataset.get().getFileNames().isEmpty()) {
+			log.warn(String.format("Dataset %s has no source files to send", datasetId));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.files.not-found"));
+		}
+
+		for (final String filename : dataset.get().getFileNames()) {
+			try {
+				final Optional<String> datasetText = datasetService.fetchFileAsString(datasetId, filename);
+				if (datasetText.isPresent()) {
+					final List<String> rows = Arrays.asList(datasetText.get().split("\\r?\\n"));
+					dataArray.addAll(rows);
+				}
+			} catch (final Exception e) {
+				log.warn("Unable to fetch dataset files", e);
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.files.not-found"));
+			}
+		}
+
+		final ConfigureModelFromDatasetResponseHandler.Input input = new ConfigureModelFromDatasetResponseHandler.Input();
+		input.setDataset(dataArray);
 		// stripping the metadata from the model before its sent since it can cause
 		// gollm to fail with massive inputs
 		model.get().setMetadata(null);
 		input.setAmr(model.get().serializeWithoutTerariumFields());
 
-		// set matrix string if provided
-		if (body != null && !body.getMatrixStr().isEmpty()) {
-			input.setMatrixStr(body.getMatrixStr());
-		}
-
 		// Create the task
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
-		req.setScript(ConfigureFromDatasetResponseHandler.NAME);
+		req.setScript(ConfigureModelFromDatasetResponseHandler.NAME);
 		req.setUserId(currentUserService.get().getId());
 
 		try {
 			req.setInput(objectMapper.writeValueAsBytes(input));
 		} catch (final Exception e) {
 			log.error("Unable to serialize input", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 		}
 
 		req.setProjectId(projectId);
 
-		final ConfigureFromDatasetResponseHandler.Properties props = new ConfigureFromDatasetResponseHandler.Properties();
+		final ConfigureModelFromDatasetResponseHandler.Properties props =
+			new ConfigureModelFromDatasetResponseHandler.Properties();
 		props.setProjectId(projectId);
-		props.setDatasetIds(datasetIds);
+		props.setDatasetId(datasetId);
 		props.setModelId(modelId);
 		props.setWorkflowId(workflowId);
 		props.setNodeId(nodeId);
@@ -637,8 +627,7 @@ public class GoLLMController {
 
 		if (responseFormat instanceof JsonNode) {
 			resFormat = (JsonNode) responseFormat;
-		} else if (responseFormat instanceof String) {
-			final String format = (String) responseFormat;
+		} else if (responseFormat instanceof final String format) {
 			if (format.equals("json")) {
 				try {
 					resFormat = objectMapper.readTree("{\"type\": \"json_object\"}");
