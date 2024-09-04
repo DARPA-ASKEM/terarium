@@ -50,7 +50,7 @@
 				<TabView @tab-change="tabChange">
 					<TabPanel v-for="(tab, i) in projectsTabs" :header="tab.title" :key="i">
 						<section class="filter-and-sort">
-							<div style="padding-right: 16px">
+							<div class="pr-4">
 								<tera-input-text
 									class="w-17rem"
 									v-model="searchProjects"
@@ -109,14 +109,12 @@
 											@click="openCreateProjectModal"
 										/>.
 									</p>
-									<!--<p>Your projects will be displayed on this page.</p>-->
 								</template>
 								<template v-if="tab.title === TabTitles.SampleProjects">
 									<p class="mt-4">Sample projects coming soon</p>
 								</template>
 								<template v-else-if="tab.title === TabTitles.PublicProjects">
 									<h3>You don't have any shared projects</h3>
-									<!-- <p>Shared projects will be displayed on this page</p> -->
 								</template>
 							</div>
 							<ul v-else-if="view === ProjectsView.Cards" class="project-cards-grid">

@@ -16,7 +16,7 @@
 								autoResize
 								placeholder="What do you want to call your project?"
 								required
-								:style="{ width: '100%' }"
+								class="w-full"
 							/>
 						</div>
 						<div>
@@ -27,21 +27,9 @@
 								v-model="description"
 								autoResize
 								placeholder="Add a short description"
-								:style="{ width: '100%', resize: 'vertical', maxHeight: '278px', minHeight: '32px' }"
+								class="w-full resize-y max-h-72 min-h-8"
 							/>
 						</div>
-						<!--<div>
-								TODO: Disabled until there is a domain property for Project.
-								This section might have similarities to tera-filter-bar.vue.
-								<label>Domain</label>
-								<span class="flex">
-								<Dropdown placeholder="Select domain"
-								disabled
-								:style="{ width: '100%' }"
-							/>
-								<Button disabled label="Suggest" text />
-							</span>
-						</div>-->
 					</form>
 				</section>
 				<section>
@@ -237,7 +225,7 @@ li {
 }
 .modal-content-container {
 	display: flex;
-	gap: 32px;
+	gap: var(--gap-8);
 }
 
 .select-thumbnail-panel {
