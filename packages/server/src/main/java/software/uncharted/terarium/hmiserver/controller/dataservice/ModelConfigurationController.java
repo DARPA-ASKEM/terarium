@@ -1,18 +1,26 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.constraints.NotNull;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -23,11 +31,14 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectExport;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
@@ -153,6 +164,181 @@ public class ModelConfigurationController {
 				messages.get("postgres.service-unavailable")
 			);
 		}
+	}
+
+	@PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@Secured(Roles.USER)
+	@Operation(summary = "Imports both a model and its configuration in a single go")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "201",
+				description = "Model and Configuration created",
+				content = @Content(mediaType = "application/json", schema = @Schema(implementation = Model.class))
+			),
+			@ApiResponse(
+				responseCode = "400",
+				description = "Bad Request. Possibly relating to the content type of the uploaded file",
+				content = @Content
+			),
+			@ApiResponse(
+				responseCode = "403",
+				description = "User does not have permissions to this project",
+				content = @Content
+			)
+		}
+	)
+	public ResponseEntity<Model> importModelConfigAndModel(
+		@RequestParam(name = "project-id", required = false) final UUID projectId,
+		@RequestPart("file") final MultipartFile input
+	) {
+		if (input.getContentType() == null || !input.getContentType().equals(MediaType.APPLICATION_OCTET_STREAM_VALUE)) {
+			return ResponseEntity.badRequest().build();
+		}
+
+		final Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+
+		try {
+			final ObjectMapper objectMapper = new ObjectMapper();
+			final ZipInputStream zipInputStream = new ZipInputStream(input.getInputStream());
+
+			ZipEntry zipEntry = zipInputStream.getNextEntry();
+			if (zipEntry == null) {
+				log.error("The model configuration component of the uploaded file is missing.");
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("modelconfig.upload-content-missing"));
+			}
+
+			ModelConfiguration modelConfig = objectMapper.readValue(
+				ProjectExport.readZipEntry(zipInputStream),
+				ModelConfiguration.class
+			);
+			zipEntry = zipInputStream.getNextEntry();
+
+			if (zipEntry == null) {
+				log.error("The model component of the uploaded file is missing.");
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("modelconfig.upload-content-missing"));
+			}
+
+			Model model = objectMapper.readValue(ProjectExport.readZipEntry(zipInputStream), Model.class);
+			model = model.clone();
+			final Model created = modelService.createAsset(model, projectId, permission);
+
+			modelConfig.setModelId(created.getId());
+			modelConfig = modelConfig.clone();
+			modelConfigurationService.createAsset(modelConfig, projectId, permission);
+
+			return ResponseEntity.status(HttpStatus.CREATED).body(model);
+		} catch (final IOException e) {
+			log.error("Unable to parse model or model configuration", e);
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("modelconfig.upload-content-damaged"));
+		}
+	}
+
+	@GetMapping("/download/{id}")
+	@Secured(Roles.USER)
+	@Operation(summary = "Imports both a model and its configuration in a single go")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Model and Configuration zipped for download",
+				content = @Content(mediaType = "application/json")
+			),
+			@ApiResponse(
+				responseCode = "403",
+				description = "User does not have permissions to this project",
+				content = @Content
+			),
+			@ApiResponse(
+				responseCode = "404",
+				description = "Model or model configuration could not be found",
+				content = @Content
+			),
+			@ApiResponse(
+				responseCode = "500",
+				description = "There was an issue zipping the model and model config",
+				content = @Content
+			),
+			@ApiResponse(
+				responseCode = "503",
+				description = "There was an issue communicating with back-end services",
+				content = @Content
+			)
+		}
+	)
+	public ResponseEntity<byte[]> downloadModelConfigurationWithModel(
+		@PathVariable("id") final UUID id,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) throws IOException {
+		final Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+		final Optional<ModelConfiguration> modelConfiguration;
+		final Optional<Model> model;
+
+		try {
+			modelConfiguration = modelConfigurationService.getAsset(id, permission);
+			if (modelConfiguration.isEmpty()) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("modelconfig.not-found"));
+			}
+
+			model = modelService.getAsset(modelConfiguration.get().getModelId(), permission);
+			if (model.isEmpty()) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
+			}
+		} catch (final Exception e) {
+			log.error("Unable to get model or model configuration from postgres db", e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
+				messages.get("postgres.service-unavailable")
+			);
+		}
+
+		final String filename = modelConfiguration.get().getName() + ".modelconfig";
+
+		final HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.parseMediaType("application/octet-stream"));
+		headers.setContentDispositionFormData(filename, filename);
+		headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+
+		try {
+			return new ResponseEntity<>(getAsZipFile(modelConfiguration.get(), model.get()), headers, HttpStatus.OK);
+		} catch (final Exception e) {
+			log.error("Unable to zip model configuration", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("modelconfig.unable-to-zip"));
+		}
+	}
+
+	/**
+	 * Helper method to zip a model config and model together.
+	 * @param modelConfiguration non null model config to add to the zip
+	 * @param model non null model to add to the zip
+	 * @return byte array representation of the zipped files
+	 * @throws IOException There was an error zipping the files
+	 */
+	private static byte[] getAsZipFile(@NotNull final ModelConfiguration modelConfiguration, @NotNull final Model model)
+		throws IOException {
+		final ObjectMapper objectMapper = new ObjectMapper();
+
+		final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+		final ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
+
+		byte[] bytes = objectMapper.writeValueAsBytes(modelConfiguration);
+
+		final ZipEntry modelConfigurationEntry = new ZipEntry(modelConfiguration.getId() + ".json");
+		zipOutputStream.putNextEntry(modelConfigurationEntry);
+		zipOutputStream.write(bytes);
+		zipOutputStream.closeEntry();
+
+		bytes = objectMapper.writeValueAsBytes(model);
+
+		final ZipEntry modelEntry = new ZipEntry(model.getId() + ".json");
+		zipOutputStream.putNextEntry(modelEntry);
+		zipOutputStream.write(bytes);
+		zipOutputStream.closeEntry();
+
+		zipOutputStream.finish();
+		zipOutputStream.close();
+
+		return byteArrayOutputStream.toByteArray();
 	}
 
 	/**

@@ -42,7 +42,7 @@
 									:selected="selectedConfigId === configuration.id"
 									@use="onSelectConfiguration(configuration)"
 									@delete="fetchConfigurations(model.id)"
-									@download="downloadConfiguredModel(configuration)"
+									@download="downloadModelArchive(configuration)"
 								/>
 							</li>
 							<!-- Show a message if nothing found after filtering -->
@@ -218,7 +218,7 @@ import {
 	setInitialExpression,
 	setParameterSource,
 	setParameterDistributions,
-	getAsConfiguredModel,
+	getArchive,
 	updateModelConfiguration,
 	getModelConfigurationById
 } from '@/services/model-configurations';
@@ -265,7 +265,7 @@ const menuItems = computed(() => [
 		icon: 'pi pi-download',
 		disabled: isSaveDisabled.value,
 		command: () => {
-			downloadConfiguredModel();
+			downloadModelArchive();
 		}
 	}
 ]);
@@ -482,14 +482,12 @@ function makeConfiguredMMT() {
 	return mmtCopy;
 }
 
-const downloadConfiguredModel = async (configuration: ModelConfiguration = knobs.value.transientModelConfig) => {
-	const rawModel = await getAsConfiguredModel(configuration);
-	if (rawModel) {
-		const data = `text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(rawModel, null, 2))}`;
+const downloadModelArchive = async (configuration: ModelConfiguration = knobs.value.transientModelConfig) => {
+	const archive = await getArchive(configuration);
+	if (archive) {
 		const a = document.createElement('a');
-		a.href = `data:${data}`;
-		a.download = `${configuration.name ?? 'configured_model'}.json`;
-		a.innerHTML = 'download JSON';
+		a.href = URL.createObjectURL(archive);
+		a.download = `${configuration.name}.modelconfig`;
 		a.click();
 		a.remove();
 	}
