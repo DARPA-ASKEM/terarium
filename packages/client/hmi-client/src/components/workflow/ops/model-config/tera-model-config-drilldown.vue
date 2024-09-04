@@ -570,7 +570,7 @@ const fetchConfigurations = async (modelId: string) => {
 };
 
 // Fill the form with the config data
-const initialize = async (overwriteState: boolean = false) => {
+const initialize = async (overwriteWithState: boolean = false) => {
 	const state = props.node.state;
 	const modelId = props.node.inputs[0].value?.[0];
 	if (!modelId) return;
@@ -588,7 +588,7 @@ const initialize = async (overwriteState: boolean = false) => {
 		applyConfigValues(suggestedConfigurationContext.value.tableData[0]);
 	} else {
 		originalConfig.value = await getModelConfigurationById(selectedConfigId.value);
-		if (!overwriteState) {
+		if (!overwriteWithState) {
 			knobs.value.transientModelConfig = cloneDeep(originalConfig.value);
 		} else {
 			knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
