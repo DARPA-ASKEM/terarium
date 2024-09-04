@@ -205,7 +205,7 @@ public class GoLLMController {
 			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
 		}
 	)
-	public ResponseEntity<TaskResponse> createConfigureModelTask(
+	public ResponseEntity<TaskResponse> createConfigureModelFromDocumentTask(
 		@RequestParam(name = "model-id", required = true) final UUID modelId,
 		@RequestParam(name = "document-id", required = true) final UUID documentId,
 		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
@@ -317,7 +317,7 @@ public class GoLLMController {
 			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
 		}
 	)
-	public ResponseEntity<TaskResponse> createConfigFromDatasetTask(
+	public ResponseEntity<TaskResponse> createConfigureModelFromDatasetTask(
 		@RequestParam(name = "model-id", required = true) final UUID modelId,
 		@RequestParam(name = "dataset-id", required = true) final UUID datasetId,
 		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
