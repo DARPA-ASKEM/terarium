@@ -99,6 +99,11 @@
 		color: var(--text-color-secondary);
 	}
 
+	/* Make button labels regular font weight */
+	.p-button-label {
+		font-weight: var(--font-weight);
+	}
+
 	/* Fixing the confirm dialog text placement and reject button styling */
 	.p-confirm-dialog-message {
 		margin-left: 0 !important;
