@@ -100,7 +100,6 @@
 							@update-source="emit('update-source', $event)"
 						/>
 					</div>
-					<Divider type="solid" />
 				</li>
 			</ul>
 		</AccordionTab>
@@ -138,7 +137,6 @@ import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
-import Divider from 'primevue/divider';
 import { DistributionType, DistributionTypeLabel, distributionTypeOptions } from '@/services/distribution';
 import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
@@ -237,11 +235,23 @@ const onUpdateDistributions = () => {
 <style scoped>
 ul {
 	flex-grow: 1;
+
 	li {
 		list-style: none;
 	}
+
+	li + li {
+		border-top: 1px solid var(--gray-300);
+		margin-top: var(--gap-1-5);
+		padding-top: var(--gap-4);
+	}
+
+	li:last-child {
+		margin-bottom: var(--gap-4);
+	}
 }
 
+<<<<<<< HEAD
 .parameter-entry-stratified {
 	border-left: 4px solid var(--surface-300);
 	padding-left: var(--gap-1);
@@ -252,19 +262,28 @@ ul {
 		margin-top: var(--gap-2);
 		margin-bottom: var(--gap-2);
 		color: var(--gray-300);
+=======
+.stratified {
+	ul {
+		border-left: 1px solid var(--gray-300);
+		margin-left: var(--gap-2);
+		padding-left: var(--gap-4);
+>>>>>>> origin/main
 	}
-	&.p-divider-vertical {
-		margin-left: var(--gap-small);
-		margin-right: var(--gap);
+
+	li {
+		display: flex;
+		gap: var(--gap-4);
 	}
 }
 
 .artifact-amount {
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
-	margin-left: 0.25rem;
+	margin-left: var(--gap-1);
 }
 
+<<<<<<< HEAD
 .add-uncertainty-toolbar {
 	display: flex;
 	align-items: center;
@@ -274,6 +293,8 @@ ul {
 	margin-bottom: var(--gap-2);
 }
 
+=======
+>>>>>>> origin/main
 :deep(.uncertainty-percentage) > input {
 	width: 4rem;
 }

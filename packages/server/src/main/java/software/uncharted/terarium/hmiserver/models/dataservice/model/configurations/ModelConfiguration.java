@@ -44,8 +44,7 @@ public class ModelConfiguration extends TerariumAsset {
 	 * This field is only populated if simulationId is not null, it is meant as a sampling of the
 	 * configured space, but not necessarily the true distributions. It will set once and should
 	 * be readonly afterward.
-	 *
-	 * We will designated a dummy distribution type
+	 * We will designate a dummy distribution type
 	 * {
 	 *   type: 'inferred',
 	 *   parameters: {
