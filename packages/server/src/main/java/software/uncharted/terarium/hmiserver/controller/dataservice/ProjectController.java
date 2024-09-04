@@ -578,17 +578,6 @@ public class ProjectController {
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 
-		// Project project;
-		// try {
-		// 	final ProjectExport export = cloneService.exportProject(id);
-		// 	export.getProject().setName("Copy of " + export.getProject().getName());
-
-		// 	project = cloneService.importProject(userId, userName, export);
-		// } catch (final Exception e) {
-		// 	log.error("Error exporting project", e);
-		// 	throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
-		// }
-
 		try {
 			final RebacProject rebacProject = new RebacProject(clonedProject.getId(), reBACService);
 			final RebacGroup rebacAskemAdminGroup = new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService);
