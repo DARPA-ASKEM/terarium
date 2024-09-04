@@ -1,7 +1,7 @@
 import json
 import sys
 from gollm.entities import ConfigureModelDataset
-from gollm.openai.tool_utils import config_from_dataset
+from gollm.openai.tool_utils import model_config_from_dataset
 
 from taskrunner import TaskRunnerInterface
 
@@ -23,7 +23,7 @@ def main():
         amr = json.dumps(input_model.amr, separators=(",", ":"))
 
         taskrunner.log("Sending request to OpenAI API")
-        response = config_from_dataset(dataset=input_model.dataset, amr=amr)
+        response = model_config_from_dataset(dataset=input_model.dataset, amr=amr)
         taskrunner.log("Received response from OpenAI API")
 
         taskrunner.write_output_dict_with_timeout({"response": response})

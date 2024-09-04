@@ -24,7 +24,7 @@ import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
+public class ConfigureModelFromDatasetResponseHandler extends TaskResponseHandler {
 
 	public static final String NAME = "gollm_task:configure_model_from_dataset";
 

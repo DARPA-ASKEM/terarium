@@ -23,9 +23,9 @@ import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class ConfigureModelResponseHandler extends TaskResponseHandler {
+public class ConfigureModelFromDocumentResponseHandler extends TaskResponseHandler {
 
-	public static final String NAME = "gollm_task:configure_model_from_paper";
+	public static final String NAME = "gollm_task:configure_model_from_document";
 
 	private final ObjectMapper objectMapper;
 	private final ModelConfigurationService modelConfigurationService;

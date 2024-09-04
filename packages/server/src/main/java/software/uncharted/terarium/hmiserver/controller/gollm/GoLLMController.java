@@ -46,8 +46,8 @@ import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.tasks.CompareModelsResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.ConfigureFromDatasetResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelFromDatasetResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelFromDocumentResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.GenerateResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.GenerateSummaryHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
@@ -71,9 +71,9 @@ public class GoLLMController {
 	private final CurrentUserService currentUserService;
 
 	private final ModelCardResponseHandler modelCardResponseHandler;
-	private final ConfigureModelResponseHandler configureModelResponseHandler;
+	private final ConfigureModelFromDocumentResponseHandler configureModelFromDocumentResponseHandler;
 	private final CompareModelsResponseHandler compareModelsResponseHandler;
-	private final ConfigureFromDatasetResponseHandler configureFromDatasetResponseHandler;
+	private final ConfigureModelFromDatasetResponseHandler configureModelFromDatasetResponseHandler;
 	private final GenerateResponseHandler generateSummaryHandler;
 
 	private final Messages messages;
@@ -81,9 +81,9 @@ public class GoLLMController {
 	@PostConstruct
 	void init() {
 		taskService.addResponseHandler(modelCardResponseHandler);
-		taskService.addResponseHandler(configureModelResponseHandler);
+		taskService.addResponseHandler(configureModelFromDocumentResponseHandler);
 		taskService.addResponseHandler(compareModelsResponseHandler);
-		taskService.addResponseHandler(configureFromDatasetResponseHandler);
+		taskService.addResponseHandler(configureModelFromDatasetResponseHandler);
 		taskService.addResponseHandler(generateSummaryHandler);
 	}
 
@@ -238,7 +238,7 @@ public class GoLLMController {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 		}
 
-		final ConfigureModelResponseHandler.Input input = new ConfigureModelResponseHandler.Input();
+		final ConfigureModelFromDocumentResponseHandler.Input input = new ConfigureModelFromDocumentResponseHandler.Input();
 		input.setResearchPaper(document.get().getText());
 		// stripping the metadata from the model before its sent since it can cause
 		// gollm to fail with massive inputs
@@ -248,7 +248,7 @@ public class GoLLMController {
 		// Create the task
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
-		req.setScript(ConfigureModelResponseHandler.NAME);
+		req.setScript(ConfigureModelFromDocumentResponseHandler.NAME);
 		req.setUserId(currentUserService.get().getId());
 
 		try {
@@ -260,7 +260,8 @@ public class GoLLMController {
 
 		req.setProjectId(projectId);
 
-		final ConfigureModelResponseHandler.Properties props = new ConfigureModelResponseHandler.Properties();
+		final ConfigureModelFromDocumentResponseHandler.Properties props =
+			new ConfigureModelFromDocumentResponseHandler.Properties();
 		props.setProjectId(projectId);
 		props.setDocumentId(documentId);
 		props.setModelId(modelId);
@@ -365,7 +366,7 @@ public class GoLLMController {
 			}
 		}
 
-		final ConfigureFromDatasetResponseHandler.Input input = new ConfigureFromDatasetResponseHandler.Input();
+		final ConfigureModelFromDatasetResponseHandler.Input input = new ConfigureModelFromDatasetResponseHandler.Input();
 		input.setDataset(dataArray);
 		// stripping the metadata from the model before its sent since it can cause
 		// gollm to fail with massive inputs
@@ -375,7 +376,7 @@ public class GoLLMController {
 		// Create the task
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
-		req.setScript(ConfigureFromDatasetResponseHandler.NAME);
+		req.setScript(ConfigureModelFromDatasetResponseHandler.NAME);
 		req.setUserId(currentUserService.get().getId());
 
 		try {
@@ -386,7 +387,8 @@ public class GoLLMController {
 
 		req.setProjectId(projectId);
 
-		final ConfigureFromDatasetResponseHandler.Properties props = new ConfigureFromDatasetResponseHandler.Properties();
+		final ConfigureModelFromDatasetResponseHandler.Properties props =
+			new ConfigureModelFromDatasetResponseHandler.Properties();
 		props.setProjectId(projectId);
 		props.setDatasetId(datasetId);
 		props.setModelId(modelId);
@@ -625,8 +627,7 @@ public class GoLLMController {
 
 		if (responseFormat instanceof JsonNode) {
 			resFormat = (JsonNode) responseFormat;
-		} else if (responseFormat instanceof String) {
-			final String format = (String) responseFormat;
+		} else if (responseFormat instanceof final String format) {
 			if (format.equals("json")) {
 				try {
 					resFormat = objectMapper.readTree("{\"type\": \"json_object\"}");

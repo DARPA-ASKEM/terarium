@@ -7,7 +7,7 @@ setup(
     install_requires=[],
     entry_points={
         "console_scripts": [
-            "gollm_task:configure_model_from_paper=tasks.configure_model_from_paper:main",
+            "gollm_task:configure_model_from_document=tasks.configure_model_from_document:main",
             "gollm_task:model_card=tasks.model_card:main",
             "gollm_task:embedding=tasks.embedding:main",
             "gollm_task:compare_models=tasks.compare_models:main",
