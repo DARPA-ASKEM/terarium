@@ -93,6 +93,17 @@
 		box-shadow: none;
 	}
 
+
+	/* Correct secondary button styles */
+	.p-button.p-button-secondary.p-button-text, .p-buttonset.p-button-secondary > .p-button.p-button-text, .p-splitbutton.p-button-secondary > .p-button.p-button-text {
+		color: var(--text-color-secondary);
+	}
+
+	/* Make button labels regular font weight */
+	.p-button-label {
+		font-weight: var(--font-weight);
+	}
+
 	/* Fixing the confirm dialog text placement and reject button styling */
 	.p-confirm-dialog-message {
 		margin-left: 0 !important;
@@ -150,6 +161,20 @@
 	/* Correct button font weight */
 	.p-button-label {
 		font-weight: var(--font-weight);
+	}
+
+	/* Fill checkboxes with color when selected */ 
+	.p-checkbox .p-checkbox-box {
+		background-color: var(--surface-0);
+		border-color: var(--surface-border-dark);
+	}
+	.p-checkbox.p-highlight .p-checkbox-box {
+		background-color: var(--primary-color);
+		border-color: var(--primary-color);
+
+	}
+	.p-checkbox .p-checkbox-box .p-checkbox-icon {
+		color: var(--surface-0);
 	}
 
 	/* SplitButton menu height and width fix */

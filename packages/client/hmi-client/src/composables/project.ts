@@ -237,6 +237,10 @@ export function useProjects() {
 		return false;
 	}
 
+	function hasAssetInActiveProject(id: string) {
+		return useProjects().activeProject.value?.projectAssets?.some((asset) => asset.assetId === id);
+	}
+
 	return {
 		activeProject,
 		activeProjectId,
@@ -256,6 +260,7 @@ export function useProjects() {
 		refresh,
 		setAccessibility,
 		getPermissions,
+		hasAssetInActiveProject,
 		hasEditPermission,
 		setPermissions,
 		removePermissions,
