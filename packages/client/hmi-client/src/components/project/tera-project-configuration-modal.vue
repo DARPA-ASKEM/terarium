@@ -237,7 +237,7 @@ li {
 }
 .modal-content-container {
 	display: flex;
-	gap: 32px;
+	gap: var(--gap-8);
 }
 
 .select-thumbnail-panel {
