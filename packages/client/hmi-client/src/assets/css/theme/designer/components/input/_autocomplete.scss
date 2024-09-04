@@ -67,8 +67,8 @@
     border: 1px solid var(--surface-border);
     border-top: none;
     border-radius: 0;
-    border-bottom-left-radius: 1.5rem;
-    border-bottom-right-radius: 1.5rem;
+    border-bottom-left-radius: var(--border-radius-big);
+    border-bottom-right-radius: var(--border-radius-big);
     padding-bottom: var(--gap-1);
     box-shadow: $inputOverlayShadow;
 

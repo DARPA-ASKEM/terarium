@@ -1,7 +1,7 @@
 <template>
 	<!-- AI assistant -->
 	<div v-if="showAssistant" class="ai-assistant">
-		<Dropdown
+		<!---<Dropdown
 			v-if="defaultOptions"
 			:editable="true"
 			class="input"
@@ -23,7 +23,25 @@
 			@keydown.enter="submitQuestion"
 		/>
 		<i v-if="kernelStatus === KernelState.busy" class="pi pi-spin pi-spinner kernel-status" />
-		<Button v-else severity="secondary" icon="pi pi-send" @click="submitQuestion" />
+		<Button v-else severity="secondary" icon="pi pi-send" @click="submitQuestion" />-->
+		<AutoComplete
+			v-model="questionString"
+			class="auto-complete"
+			:suggestions="filteredOptions"
+			completeOnFocus="true"
+			@complete="searchOptions"
+			placeholder="What do you want to do?"
+		/>
+		<!--<i v-if="kernelStatus === KernelState.busy" class="pi pi-spin pi-spinner kernel-status" />
+		<Button  v-if="questionString !== ''" severity="secondary" icon="pi pi-send" @click="submitQuestion" />-->
+		<!-- v-if="questionString !== ''"-->
+		<Button
+			v-if="questionString.length > 0"
+			class="submit-button"
+			severity="secondary"
+			:icon="kernelStatus === KernelState.busy ? 'pi pi-spin pi-spinner' : 'pi pi-send'"
+			@click="submitQuestion"
+		/>
 	</div>
 
 	<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" :llm-query="questionString" />
@@ -45,12 +63,12 @@
 </template>
 
 <script setup lang="ts">
-import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 import Button from 'primevue/button';
 import { ref } from 'vue';
 import { KernelState, KernelSessionManager } from '@/services/jupyter';
 import Dropdown from 'primevue/dropdown';
+import AutoComplete from 'primevue/autocomplete';
 
 const props = defineProps<{
 	kernelManager: KernelSessionManager;
@@ -65,6 +83,7 @@ const kernelStatus = ref<string>('');
 const showAssistant = ref(true);
 const thoughts = ref();
 const llmThoughts = ref([]);
+const filteredOptions = ref([]);
 
 // FIXME: If the language is changed here it should mutate the beaker instance in the parent component
 
@@ -93,6 +112,11 @@ const submitQuestion = () => {
 		thoughts.value = data;
 		emit('llm-thought-output', data);
 	});
+};
+
+const searchOptions = () => {
+	const query = questionString.value.toLowerCase();
+	filteredOptions.value = props.defaultOptions.filter((option) => option.toLowerCase().includes(query));
 };
 </script>
 
@@ -129,5 +153,25 @@ const submitQuestion = () => {
 	background-position: var(--gap-small);
 	background-repeat: no-repeat;
 	text-indent: 24px;
+}
+
+.auto-complete {
+	width: 100%;
+}
+
+.auto-complete:deep(input) {
+	width: 100%;
+	background-image: url('@assets/svg/icons/message.svg');
+	background-size: 1rem;
+	background-position: var(--gap-small);
+	background-repeat: no-repeat;
+	text-indent: 24px;
+}
+
+.submit-button {
+	box-shadow: none;
+	position: absolute;
+	background: none;
+	right: 0;
 }
 </style>
