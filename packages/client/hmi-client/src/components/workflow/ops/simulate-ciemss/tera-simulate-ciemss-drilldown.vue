@@ -5,79 +5,90 @@
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
+		class="drilldown"
 	>
-		<section :tabName="DrilldownTabs.Wizard" class="ml-4 mr-2 pt-3">
-			<tera-drilldown-section>
-				<template #header-controls-right>
-					<Button label="Run" icon="pi pi-play" @click="run" :disabled="showSpinner" />
-					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
-				</template>
-				<div class="form-section">
-					<h5>
-						Simulation settings
-						<i v-tooltip="simulationSettingsToolTip" class="pi pi-info-circle" />
-					</h5>
-
-					<!-- Start & End -->
-					<div class="input-row">
-						<div class="label-and-input">
-							<label for="2">Start time</label>
-							<tera-input-number
-								id="2"
-								v-model="timespan.start"
-								inputId="integeronly"
-								@update:model-value="updateState"
-							/>
-						</div>
-						<div class="label-and-input">
-							<label for="3">End time</label>
-							<tera-input-number
-								id="3"
-								v-model="timespan.end"
-								inputId="integeronly"
-								@update:model-value="updateState"
-							/>
-						</div>
+		<!-- Wizard -->
+		<section :tabName="DrilldownTabs.Wizard" class="wizard">
+			<tera-slider-panel v-model:is-open="isSidebarOpen" header="Simulation settings" content-width="420px">
+				<template #content>
+					<div class="toolbar">
+						<p>Click Run to start the simulation.</p>
+						<span class="flex gap-2">
+							<tera-pyciemss-cancel-button :simulation-run-id="cancelRunId" />
+							<Button label="Run" icon="pi pi-play" @click="run" :disabled="showSpinner" />
+						</span>
 					</div>
+					<div class="form-section" v-if="isSidebarOpen">
+						<!-- Presets -->
+						<div class="label-and-input">
+							<label for="4">Preset (optional)</label>
+							<Dropdown
+								v-model="presetType"
+								placeholder="Select an option"
+								:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
+								@update:model-value="setPresetValues"
+							/>
+						</div>
 
-					<!-- Presets -->
-					<div class="label-and-input">
-						<label for="4">Preset (optional)</label>
-						<Dropdown
-							v-model="presetType"
-							placeholder="Select an option"
-							:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
-							@update:model-value="setPresetValues"
+						<!-- Start & End -->
+						<div class="input-row">
+							<div class="label-and-input">
+								<label for="2">Start time</label>
+								<tera-input-number
+									id="2"
+									v-model="timespan.start"
+									inputId="integeronly"
+									@update:model-value="updateState"
+								/>
+							</div>
+							<div class="label-and-input">
+								<label for="3">End time</label>
+								<tera-input-number
+									id="3"
+									v-model="timespan.end"
+									inputId="integeronly"
+									@update:model-value="updateState"
+								/>
+							</div>
+						</div>
+
+						<!-- Number of Samples & Method -->
+						<div class="input-row">
+							<div class="label-and-input">
+								<label for="4">Number of samples</label>
+								<tera-input-number
+									id="4"
+									v-model="numSamples"
+									inputId="integeronly"
+									:min="1"
+									@update:model-value="updateState"
+								/>
+							</div>
+							<div class="label-and-input">
+								<label for="5">Method</label>
+								<Dropdown
+									v-model="method"
+									:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
+									@update:model-value="updateState"
+								/>
+							</div>
+						</div>
+						<!-- FIXME: show sampled values ???
+							<div v-if="inferredParameters">Using inferred parameters from calibration: {{ inferredParameters[0] }}</div>
+							-->
+
+						<!-- This used to be in the footer -->
+						<tera-save-dataset-from-simulation
+							:simulation-run-id="node.state.forecastId"
+							:showDialog="showSaveDataDialog"
+							@hide-dialog="showSaveDataDialog = false"
 						/>
 					</div>
-
-					<!-- Number of Samples & Method -->
-					<div class="input-row mt-3">
-						<div class="label-and-input">
-							<label for="4">Number of samples</label>
-							<tera-input-number
-								id="4"
-								v-model="numSamples"
-								inputId="integeronly"
-								:min="1"
-								@update:model-value="updateState"
-							/>
-						</div>
-						<div class="label-and-input">
-							<label for="5">Method</label>
-							<Dropdown
-								v-model="method"
-								:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
-								@update:model-value="updateState"
-							/>
-						</div>
-					</div>
-					<!-- FIXME: show sampled values ???
-					<div v-if="inferredParameters">Using inferred parameters from calibration: {{ inferredParameters[0] }}</div>
-					-->
-				</div>
-			</tera-drilldown-section>
+				</template>
+			</tera-slider-panel>
 		</section>
+
+		<!-- Notebook -->
 		<tera-drilldown-section :tabName="DrilldownTabs.Notebook" class="notebook-section">
 			<div class="toolbar">
 				<tera-notebook-jupyter-input
@@ -156,13 +167,6 @@
 				</template>
 			</tera-drilldown-preview>
 		</template>
-		<template #footer>
-			<tera-save-dataset-from-simulation
-				:simulation-run-id="node.state.forecastId"
-				:showDialog="showSaveDataDialog"
-				@hide-dialog="showSaveDataDialog = false"
-			/>
-		</template>
 	</tera-drilldown>
 </template>
 
@@ -172,6 +176,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
+import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import type { CsvAsset, SimulationRequest, TimeSpan } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import {
@@ -209,6 +214,7 @@ import { getModelConfigurationById } from '@/services/model-configurations';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import TeraChartControl from '../../tera-chart-control.vue';
 
+const isSidebarOpen = ref(false);
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
 }>();
@@ -227,8 +233,6 @@ const llmQuery = ref('');
 // extras
 const numSamples = ref<number>(props.node.state.numSamples);
 const method = ref(props.node.state.method);
-
-const simulationSettingsToolTip: string = 'TODO';
 
 enum OutputView {
 	Charts = 'Charts',
@@ -540,6 +544,39 @@ onUnmounted(() => kernelManager.shutdown());
 </script>
 
 <style scoped>
+/* Make left sidebar grey */
+:deep(.slider-content) {
+	background-color: var(--surface-100);
+	border-right: 1px solid var(--surface-border-light);
+}
+:deep(.slider-content aside header) {
+	background: color-mix(in srgb, var(--surface-100) 80%, transparent 20%);
+}
+:deep(.slider-tab) {
+	background-color: var(--surface-100);
+	border-right: 1px solid var(--surface-border-light);
+}
+:deep(.slider-tab header) {
+	background: transparent;
+}
+.wizard .toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--gap-1) var(--gap);
+	gap: var(--gap-2);
+}
+
+/* Make tera-inputs the same height as the dropdowns */
+.tera-input:deep(main) {
+	padding: 6px;
+}
+
+/* Override grid template so output expands when sidebar is closed */
+.overlay-container:deep(section.drilldown main) {
+	grid-template-columns: auto 1fr;
+}
+
 .notebook-section:deep(main .toolbar) {
 	padding-left: var(--gap-medium);
 }
@@ -550,14 +587,10 @@ onUnmounted(() => kernelManager.shutdown());
 }
 
 .form-section {
-	background-color: var(--surface-50);
-	border-radius: var(--border-radius-medium);
-	box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.25) inset;
 	display: flex;
 	flex-direction: column;
 	flex-grow: 1;
-	gap: var(--gap-1);
-	margin: 0 var(--gap) var(--gap) var(--gap);
+	gap: var(--gap);
 	padding: var(--gap);
 }
 
@@ -565,6 +598,7 @@ onUnmounted(() => kernelManager.shutdown());
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
+	margin-bottom: var(--gap);
 }
 
 .input-row {
