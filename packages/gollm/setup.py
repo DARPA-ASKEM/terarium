@@ -14,6 +14,7 @@ setup(
             "gollm_task:dataset_configure=tasks.dataset_configure:main",
             "gollm_task:generate_summary=tasks.generate_summary:main",
             "gollm_task:enrich_amr=tasks.enrich_amr:main",
+            "gollm_task:generate_response=tasks.generate_response:main",
         ],
     },
     python_requires=">=3.11",

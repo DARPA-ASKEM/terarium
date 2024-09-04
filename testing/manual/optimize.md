@@ -46,7 +46,3 @@ Note: sampling combinations in PyCIEMSS can result in numerical instability, whe
 2. Optimize intervention: set _H_ to `< 20 000` in all time points in `95%` of simulated outcomes.
 3. Find a `new value` for _NPI mult_ `upper bound` (minimal reduction in transmission). Using the following guidelines: Min value = `.0002` intial guess `.5` max = `.9996`
 4. Optimization settings: end time `150`, maxiter `3` max eval `30`
-
-#### 5.b Dynamic intervention
-1. Same as above but with a dynamic intervention
-2. replace 5.a.1 with _NPI mult_ to `0.5` when _H_ `> 16 000`.
