@@ -651,8 +651,6 @@ const applyConfigValues = (config: ModelConfiguration) => {
 	else {
 		const state = cloneDeep(props.node.state);
 		state.transientModelConfig = config;
-
-		// Append this config to the output.
 		emit('append-output', {
 			type: ModelConfigOperation.outputs[0].type,
 			label: config.name,
