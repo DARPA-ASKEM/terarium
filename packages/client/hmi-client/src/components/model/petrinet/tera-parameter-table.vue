@@ -251,7 +251,6 @@ ul {
 	}
 }
 
-<<<<<<< HEAD
 .parameter-entry-stratified {
 	border-left: 4px solid var(--surface-300);
 	padding-left: var(--gap-1);
@@ -262,13 +261,14 @@ ul {
 		margin-top: var(--gap-2);
 		margin-bottom: var(--gap-2);
 		color: var(--gray-300);
-=======
+	}
+}
+
 .stratified {
 	ul {
 		border-left: 1px solid var(--gray-300);
 		margin-left: var(--gap-2);
 		padding-left: var(--gap-4);
->>>>>>> origin/main
 	}
 
 	li {
@@ -283,7 +283,6 @@ ul {
 	margin-left: var(--gap-1);
 }
 
-<<<<<<< HEAD
 .add-uncertainty-toolbar {
 	display: flex;
 	align-items: center;
@@ -293,8 +292,6 @@ ul {
 	margin-bottom: var(--gap-2);
 }
 
-=======
->>>>>>> origin/main
 :deep(.uncertainty-percentage) > input {
 	width: 4rem;
 }
