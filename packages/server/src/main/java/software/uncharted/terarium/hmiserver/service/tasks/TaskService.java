@@ -143,12 +143,6 @@ public class TaskService {
 	@Value("${terarium.taskrunner.response-cache-max-idle-seconds:7200}") // 2 hours
 	private long CACHE_MAX_IDLE_SECONDS;
 
-	// Always use a lease time for distributed locks to prevent application wide
-	// deadlocks. If for whatever reason the lock has not been released within a
-	// N seconds, it will automatically free itself.
-	@Value("${terarium.taskrunner.redis-lock-lease-seconds:10}") // 10 seconds
-	private long REDIS_LOCK_LEASE_SECONDS;
-
 	private final RabbitTemplate rabbitTemplate;
 	private final RabbitAdmin rabbitAdmin;
 	private final Config config;
