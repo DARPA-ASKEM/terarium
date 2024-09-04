@@ -61,18 +61,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed } from 'vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import AutoComplete from 'primevue/autocomplete';
 import type { ModelPartItem } from '@/types/Model';
 import { stringToLatexExpression } from '@/services/model';
 import type { DKG } from '@/types/Types';
-import { getCurieFromGroundingIdentifier, getNameOfCurieCached, searchCuriesEntities } from '@/services/concept';
+import { searchCuriesEntities } from '@/services/concept';
 import type { FeatureConfig } from '@/types/common';
 
 const props = defineProps<{
 	item: ModelPartItem;
 	featureConfig: FeatureConfig;
+	// conceptName: string FIXME
 }>();
 
 defineEmits(['update-item']);
@@ -86,13 +87,13 @@ const symbol = computed(() => (props.item.templateId ? `${props.item.templateId}
 const showUnit = computed(() => !(props.featureConfig.isPreview && !props.item.unitExpression));
 const showConcept = computed(() => !(props.featureConfig.isPreview && !query.value));
 
-watch(
-	() => props.item.grounding?.identifiers,
-	async (identifiers) => {
-		if (identifiers) query.value = await getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
-	},
-	{ immediate: true }
-);
+// watch(
+// 	() => props.item.grounding?.identifiers,
+// 	async (identifiers) => {
+// 		if (identifiers) query.value = await getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
+// 	},
+// 	{ immediate: true }
+// );
 </script>
 
 <style scoped>

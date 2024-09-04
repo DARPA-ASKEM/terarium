@@ -104,7 +104,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref } from 'vue';
 import { Model, ModelConfiguration } from '@/types/Types';
 import { getParameterSource, getParameterDistribution, getOtherValues } from '@/services/model-configurations';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
@@ -115,13 +115,13 @@ import { DistributionType, distributionTypeOptions } from '@/services/distributi
 import { getParameter } from '@/model-representation/service';
 import TeraParameterOtherValueModal from '@/components/model/petrinet/tera-parameter-other-value-modal.vue';
 import { displayNumber } from '@/utils/number';
-import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
 
 const props = defineProps<{
 	model: Model;
 	modelConfiguration: ModelConfiguration;
 	modelConfigurations: ModelConfiguration[];
 	parameterId: string;
+	// concept: String fixme
 }>();
 
 const emit = defineEmits(['update-parameter', 'update-source']);
@@ -171,10 +171,10 @@ function formatPayloadFromTypeChange(type: DistributionType) {
 
 const getOtherValuesLabel = computed(() => `Other Values(${otherValueList.value?.length})`);
 
-onMounted(async () => {
-	const identifiers = getParameter(props.model, props.parameterId)?.grounding?.identifiers;
-	if (identifiers) concept.value = await getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
-});
+// onMounted(async () => {
+// 	const identifiers = getParameter(props.model, props.parameterId)?.grounding?.identifiers;
+// 	if (identifiers) concept.value = await getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
+// });
 </script>
 
 <style scoped>

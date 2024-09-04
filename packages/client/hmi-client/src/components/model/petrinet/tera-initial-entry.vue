@@ -55,15 +55,14 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref } from 'vue';
 import { DistributionType } from '@/services/distribution';
 import { Model, ModelConfiguration } from '@/types/Types';
 import { getInitialExpression, getInitialSource, getOtherValues } from '@/services/model-configurations';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraInitialOtherValueModal from '@/components/model/petrinet/tera-initial-other-value-modal.vue';
 import Button from 'primevue/button';
-import { getInitialDescription, getInitialName, getInitialUnits, getStates } from '@/model-representation/service';
-import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
+import { getInitialDescription, getInitialName, getInitialUnits } from '@/model-representation/service';
 import { stringToLatexExpression } from '@/services/model';
 
 const props = defineProps<{
@@ -71,6 +70,7 @@ const props = defineProps<{
 	initialId: string;
 	modelConfiguration: ModelConfiguration;
 	modelConfigurations: ModelConfiguration[];
+	// concept: stirng FIXME
 }>();
 
 const otherValueList = computed(() =>
@@ -95,10 +95,10 @@ function getSourceLabel(initialId) {
 	return 'Show source';
 }
 
-onMounted(async () => {
-	const identifiers = getStates(props.model).find((state) => state.id === props.initialId)?.grounding?.identifiers;
-	if (identifiers) concept.value = await getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
-});
+// onMounted(async () => {
+// 	const identifiers = getStates(props.model).find((state) => state.id === props.initialId)?.grounding?.identifiers;
+// 	if (identifiers) concept.value = await getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
+// });
 </script>
 
 <style scoped>

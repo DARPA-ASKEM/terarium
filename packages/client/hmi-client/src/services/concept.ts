@@ -26,6 +26,7 @@ const currieEntityCache = new FIFOCache<Promise<{ data: any; status: number }>>(
  * Get DKG entities, either single ones or multiple at a time
  */
 async function getCuriesEntities(curies: Array<string>): Promise<Array<DKG> | null> {
+	console.log('here');
 	try {
 		const cacheKey = curies.toString();
 

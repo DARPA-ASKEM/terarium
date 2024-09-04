@@ -94,6 +94,8 @@ function onCellEditComplete() {
 watch(
 	() => props.dataset?.columns,
 	async () => {
+		// Create the list here of IDs
+		// FIXME
 		tableData.value = await Promise.all(
 			props.dataset.columns?.map(async (col) => {
 				const identifier = col.metadata?.groundings?.identifiers ?? parseCurie(col.grounding?.identifiers[0].curie);
