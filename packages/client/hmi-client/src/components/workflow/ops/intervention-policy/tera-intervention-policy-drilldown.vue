@@ -257,7 +257,7 @@ const preparedCharts = computed(() =>
 	})
 );
 
-const initialize = async (overwriteState: boolean = false) => {
+const initialize = async (overwriteWithState: boolean = false) => {
 	const state = props.node.state;
 	const modelId = props.node.inputs[0].value?.[0];
 	if (!modelId) return;
@@ -269,7 +269,7 @@ const initialize = async (overwriteState: boolean = false) => {
 	if (selectedPolicyId.value) {
 		selectedPolicy.value = await getInterventionPolicyById(selectedPolicyId.value);
 		knobs.value.transientInterventionPolicy = cloneDeep(
-			!overwriteState ? selectedPolicy.value : state.interventionPolicy
+			!overwriteWithState ? selectedPolicy.value : state.interventionPolicy
 		);
 	} else {
 		knobs.value.transientInterventionPolicy = cloneDeep(state.interventionPolicy);
@@ -292,7 +292,6 @@ const applyInterventionPolicy = (interventionPolicy: InterventionPolicy) => {
 	}
 	// If the output does not already exist
 	else {
-		// Append this config to the output.
 		emit('append-output', {
 			type: InterventionPolicyOperation.outputs[0].type,
 			label: interventionPolicy.name,
