@@ -35,7 +35,7 @@ public class TerariumAssetTests extends TerariumApplicationTests {
 		final String json1 = model1.serializeWithoutTerariumFields();
 
 		final Model model2 = new Model();
-		model2.setName("myname 2");
+		model2.setName("myname");
 		model2.setDescription("mydescription 2");
 		model2.setFileNames(null);
 		model2.setDeletedOn(null);
