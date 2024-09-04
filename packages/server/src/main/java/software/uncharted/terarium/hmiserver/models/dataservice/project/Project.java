@@ -94,6 +94,7 @@ public class Project extends TerariumAsset {
 		return existingProject;
 	}
 
+	@Override
 	public Project clone() {
 		final Project cloned = new Project();
 		cloneSuperFields(cloned);
