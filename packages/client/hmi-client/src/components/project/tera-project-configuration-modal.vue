@@ -16,7 +16,7 @@
 								autoResize
 								placeholder="What do you want to call your project?"
 								required
-								:style="{ width: '100%' }"
+								class="w-full"
 							/>
 						</div>
 						<div>
