@@ -16,6 +16,6 @@ const icons = new Map<string, string>([
 </script>
 <style scoped>
 .p-chip-icon {
-	font-size: var(--font-body);
+	font-size: var(--font-body-small);
 }
 </style>
