@@ -36,7 +36,7 @@ public class TransformController {
 			if (statusCode != null && statusCode.is4xxClientError()) {
 				log.warn(String.format("SciML can't extract LaTeX equations for model: %s", id), error);
 				throw new ResponseStatusException(statusCode, messages.get("sciml.internal-error"));
-			} else if (statusCode == HttpStatus.SERVICE_UNAVAILABLE) {
+			} else if (statusCode != null && statusCode == HttpStatus.SERVICE_UNAVAILABLE) {
 				log.warn("SciML is currently unavailable");
 				throw new ResponseStatusException(statusCode, messages.get("sciml.service-unavailable"));
 			} else if (statusCode != null && statusCode.is5xxServerError()) {
@@ -47,7 +47,7 @@ public class TransformController {
 				String.format("an unknown error occurred while SciML was extract LaTeX equations for model: %s", id),
 				error
 			);
-			throw new ResponseStatusException(statusCode, messages.get("generic.unknown"));
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.unknown"));
 		}
 	}
 }
