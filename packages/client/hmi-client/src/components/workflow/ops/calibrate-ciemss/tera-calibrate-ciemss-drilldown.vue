@@ -271,7 +271,7 @@
 		:asset-type="AssetType.ModelConfiguration"
 		@close-modal="showSaveModal = false"
 		@on-save="onSaveAsModelConfiguration"
-		is-overwriting
+		is-updating-asset
 	/>
 </template>
 

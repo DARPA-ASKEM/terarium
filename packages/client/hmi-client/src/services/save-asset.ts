@@ -110,13 +110,14 @@ export async function updateAddToProject(newAsset: AssetToSave, assetType: Asset
 		return;
 	}
 
-	const projectId = useProjects().activeProject.value?.id;
-	if (!projectId) {
-		logger.error(`Asset can't be saved since target project doesn't exist.`);
-		return;
+	if (assetType !== AssetType.InterventionPolicy && assetType !== AssetType.ModelConfiguration) {
+		const projectId = useProjects().activeProject.value?.id;
+		if (!projectId) {
+			logger.error(`Asset can't be saved since target project doesn't exist.`);
+			return;
+		}
+		await useProjects().addAsset(assetType, response.id, projectId);
 	}
-	await useProjects().addAsset(assetType, response.id, projectId);
-
 	logger.info(`Updated ${response.name}.`);
 	if (onSaveFunction) onSaveFunction(response);
 }

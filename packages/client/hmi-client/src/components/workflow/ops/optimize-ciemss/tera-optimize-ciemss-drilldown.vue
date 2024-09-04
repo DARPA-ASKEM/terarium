@@ -346,7 +346,7 @@
 		:asset-type="AssetType.InterventionPolicy"
 		@close-modal="showSaveInterventionPolicy = false"
 		@on-save="onSaveForReuse"
-		is-overwriting
+		is-updating-asset
 	/>
 </template>
 
