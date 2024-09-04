@@ -110,7 +110,7 @@
 		v-if="outputAmr"
 		:asset="outputAmr"
 		:assetType="AssetType.Model"
-		:initial-name="stratifiedAmr.name"
+		:initial-name="outputAmr.name"
 		:is-visible="showSaveModelModal"
 		:is-updating-asset="true"
 		@on-save="updateNodeOutput"
