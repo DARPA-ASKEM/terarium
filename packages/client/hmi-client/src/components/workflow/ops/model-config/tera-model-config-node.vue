@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep } from 'lodash';
+import { cloneDeep, omit } from 'lodash';
 import { computed, watch, ref } from 'vue';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
@@ -82,7 +82,7 @@ watch(
 					label: config.name,
 					value: config.id,
 					isSelected: false,
-					state
+					state: omit(state, ['transientModelConfig'])
 				});
 			}
 		} else {

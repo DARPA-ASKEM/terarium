@@ -188,8 +188,8 @@
 
 <script setup lang="ts">
 import '@/ace-config';
-import { computed, onUnmounted, ref, watch, nextTick, ComponentPublicInstance } from 'vue';
-import { cloneDeep, isEmpty, orderBy, debounce } from 'lodash';
+import { computed, onUnmounted, ref, watch, nextTick, ComponentPublicInstance, onMounted } from 'vue';
+import { cloneDeep, isEmpty, orderBy, debounce, omit } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
@@ -513,7 +513,7 @@ const createConfiguration = async () => {
 		label: data.name,
 		value: data.id,
 		isSelected: false,
-		state
+		state: omit(state, ['transientModelConfig'])
 	});
 };
 
@@ -526,7 +526,7 @@ const onSaveAsModelConfiguration = (data: ModelConfiguration) => {
 		label: data.name,
 		value: data.id,
 		isSelected: false,
-		state
+		state: omit(state, ['transientModelConfig'])
 	});
 	showSaveModal.value = false;
 };
@@ -551,7 +551,7 @@ const fetchConfigurations = async (modelId: string) => {
 };
 
 // Fill the form with the config data
-const initialize = async () => {
+const initialize = async (overwriteState: boolean = false) => {
 	const state = props.node.state;
 	const modelId = props.node.inputs[0].value?.[0];
 	if (!modelId) return;
@@ -569,9 +569,7 @@ const initialize = async () => {
 		applyConfigValues(suggestedConfigurationContext.value.tableData[0]);
 	} else {
 		originalConfig.value = await getModelConfigurationById(selectedConfigId.value);
-
-		// FIXME: Bug sept-03, state.transientModelConfig may not be saved properly before this date
-		if (state.transientModelConfig.id !== originalConfig.value.id) {
+		if (!overwriteState) {
 			knobs.value.transientModelConfig = cloneDeep(originalConfig.value);
 		} else {
 			knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
@@ -637,7 +635,7 @@ const applyConfigValues = (config: ModelConfiguration) => {
 			label: config.name,
 			value: config.id,
 			isSelected: false,
-			state
+			state: omit(state, ['transientModelConfig'])
 		});
 	}
 	logger.success(`Configuration applied ${config.name}`);
@@ -697,6 +695,14 @@ watch(
 	{ deep: true }
 );
 
+onMounted(() => {
+	// setting as true will overwrite the model config with the current state value
+	if (props.node.active) {
+		selectedOutputId.value = props.node.active;
+		initialize(true);
+	}
+});
+
 watch(
 	() => props.node.active,
 	() => {
@@ -704,8 +710,7 @@ watch(
 			selectedOutputId.value = props.node.active;
 			initialize();
 		}
-	},
-	{ immediate: true }
+	}
 );
 
 onUnmounted(() => {
