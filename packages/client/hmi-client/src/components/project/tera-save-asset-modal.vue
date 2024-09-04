@@ -125,9 +125,11 @@ function save() {
 			break;
 		case AssetType.InterventionPolicy:
 			(newAsset as InterventionPolicy).name = newName.value;
+			(newAsset as InterventionPolicy).temporary = false;
 			break;
 		case AssetType.ModelConfiguration:
 			(newAsset as ModelConfiguration).name = newName.value;
+			(newAsset as ModelConfiguration).temporary = false;
 			break;
 		default:
 			break;
