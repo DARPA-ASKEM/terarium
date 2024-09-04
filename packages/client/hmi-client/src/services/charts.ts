@@ -214,7 +214,7 @@ export function createErrorChart(dataset: Record<string, any>[], options: ErrorC
 				}
 			]
 		}
-	};
+	} as any;
 }
 
 export function createHistogramChart(dataset: Record<string, any>[], options: HistogramChartOptions) {
@@ -745,9 +745,8 @@ export function createSuccessCriteriaChart(
 	alpha: number,
 	options: BaseChartOptions
 ): any {
-	const targetState = `${targetVariable}_state`;
-	const data = riskResults[targetState]?.qoi || [];
-	const risk = riskResults[targetState]?.risk?.[0] || 0;
+	const data = riskResults[targetVariable]?.qoi || [];
+	const risk = riskResults[targetVariable]?.risk?.[0] || 0;
 	const binCount = Math.floor(Math.sqrt(data.length)) ?? 1;
 	const alphaPercentile = percentile(data, alpha);
 

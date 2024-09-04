@@ -99,6 +99,7 @@ const relatedTerariumDatasets = computed(() => relatedTerariumArtifacts.value.fi
 	gap: var(--gap-small);
 	flex-direction: column;
 	grid-template-columns: max-content 1fr;
+	margin-left: var(--gap-6);
 
 	& label {
 		font-weight: bold;
@@ -108,5 +109,10 @@ const relatedTerariumDatasets = computed(() => relatedTerariumArtifacts.value.fi
 			content: '.';
 		}
 	}
+}
+
+/* add space beneath when accordion content is visible*/
+:deep(.p-toggleable-content) {
+	padding-bottom: var(--gap-3);
 }
 </style>

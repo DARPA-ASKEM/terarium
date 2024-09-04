@@ -300,7 +300,7 @@
 						<tera-dataset-datatable
 							v-if="simulationRawContent[knobs.postForecastRunId]"
 							:rows="10"
-							:raw-content="simulationRawContent[knobs.postForecastRunId]"
+							:raw-content="simulationRawContent[knobs.postForecastRunId] as CsvAsset"
 						/>
 					</div>
 				</template>
@@ -493,7 +493,7 @@ const outputs = computed(() => {
 	if (!_.isEmpty(props.node.outputs)) {
 		return [
 			{
-				label: 'Select outputs to display in operator',
+				label: 'Select an output',
 				items: props.node.outputs
 			}
 		];
@@ -547,9 +547,12 @@ const model = ref<Model | null>(null);
 const modelParameterOptions = computed<string[]>(() =>
 	(model.value?.semantics?.ode?.parameters ?? []).map((p) => p.id)
 );
-const modelStateAndObsOptions = ref<string[]>([]);
+const modelStateAndObsOptions = ref<{ label: string; value: string }[]>([]);
 
-const simulationChartOptions = computed(() => [...modelParameterOptions.value, ...modelStateAndObsOptions.value]);
+const simulationChartOptions = computed(() => [
+	...modelParameterOptions.value,
+	...modelStateAndObsOptions.value.map((ele) => ele.label)
+]);
 const modelConfiguration = ref<ModelConfiguration>();
 
 const showAdditionalOptions = ref(true);
@@ -655,14 +658,22 @@ const initialize = async () => {
 	if (optimizedPolicyId) {
 		optimizedInterventionPolicy.value = await getInterventionPolicyById(optimizedPolicyId);
 	}
+	const modelStates = model.value?.model.states;
+	modelStateAndObsOptions.value = modelStates.map((state: any) => ({
+		label: state.id,
+		value: `${state.id}_state`
+	}));
 
-	modelStateAndObsOptions.value = model.value?.model.states.map((state: any) => state.id);
-
-	/** Until supported by pyciemss-service, do not show observables.
-	if (model?.semantics?.ode.observables) {
-		modelStateAndObsOptions.value.push(...model.semantics.ode.observables.map((observable: any) => observable.id));
+	// Add obs:
+	const modelObs = model.value?.semantics?.ode.observables;
+	if (modelObs) {
+		modelStateAndObsOptions.value.push(
+			...modelObs.map((observable: any) => ({
+				label: observable.id,
+				value: `${observable.id}_observable`
+			}))
+		);
 	}
-	*/
 };
 
 const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => {
@@ -741,9 +752,7 @@ const runOptimize = async () => {
 	};
 
 	// These are interventions to be considered but not optimized over.
-	const fixedStaticParameterInterventions: Intervention[] = _.cloneDeep(
-		inactivePolicyGroups.value.map((ele) => ele.intervention)
-	);
+	const fixedInterventions: Intervention[] = _.cloneDeep(inactivePolicyGroups.value.map((ele) => ele.intervention));
 
 	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
 	// The method should be a list but pyciemss + pyciemss service is not yet ready for this.
@@ -761,7 +770,7 @@ const runOptimize = async () => {
 			end: knobs.value.endTime
 		},
 		optimizeInterventions,
-		fixedStaticParameterInterventions,
+		fixedInterventions,
 		qoi,
 		riskBound: props.node.state.constraintGroups[0].threshold, // TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
 		boundsInterventions: listBoundsInterventions,
@@ -778,7 +787,7 @@ const runOptimize = async () => {
 
 	// InferredParameters is to link a calibration run to this optimize call.
 	optimizePayload.extra.inferredParameters = modelConfiguration.value.simulationId;
-
+	console.log(optimizePayload);
 	const optResult = await makeOptimizeJobCiemss(optimizePayload, nodeMetadata(props.node));
 	const state = _.cloneDeep(props.node.state);
 	state.inProgressOptimizeId = optResult.simulationId;
@@ -801,7 +810,13 @@ const setOutputSettingDefaults = () => {
 	if (!knobs.value.selectedSimulationVariables.length) {
 		props.node.state.constraintGroups.forEach((constraint) => {
 			if (constraint.targetVariable) {
-				selectedSimulationVariables.push(constraint.targetVariable);
+				// Use modelStateAndObsOptions to map from value -> label as simulation selection uses S not S_State
+				const userSelection = modelStateAndObsOptions.value.find(
+					(ele) => ele.value === constraint.targetVariable
+				)?.label;
+				if (userSelection) {
+					selectedSimulationVariables.push(userSelection);
+				}
 			}
 		});
 		if (selectedSimulationVariables.length) {

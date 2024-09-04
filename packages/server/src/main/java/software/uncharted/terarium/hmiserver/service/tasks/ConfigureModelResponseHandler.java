@@ -3,17 +3,22 @@ package software.uncharted.terarium.hmiserver.service.tasks;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import software.uncharted.terarium.hmiserver.configuration.Config;
+import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
+import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
@@ -29,6 +34,8 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 	private final ModelService modelService;
 	private final ModelConfigurationService modelConfigurationService;
 	private final ProvenanceService provenanceService;
+	private final Config config;
+	private final DocumentAssetService documentAssetService;
 
 	@Override
 	public String getName() {
@@ -73,6 +80,17 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 			// For each configuration, create a new model configuration with parameters set
 			for (final JsonNode condition : configurations.response.get("conditions")) {
 				final ModelConfiguration configuration = objectMapper.treeToValue(condition, ModelConfiguration.class);
+
+				// Fetch the document name
+				final Optional<DocumentAsset> document = documentAssetService.getAsset(
+					props.documentId,
+					ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
+				);
+				final String source = document.map(TerariumAsset::getName).orElse(null);
+
+				// Update the source of the model-configuration with the Document name
+				configuration.getInitialSemanticList().forEach(initial -> initial.setSource(source));
+				configuration.getParameterSemanticList().forEach(parameter -> parameter.setSource(source));
 
 				final ModelConfiguration newConfig = modelConfigurationService.createAsset(
 					configuration,

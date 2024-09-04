@@ -7,10 +7,12 @@ import { AssetType } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
-import type { Model, Code } from '@/types/Types';
+import type { Model, Code, InterventionPolicy, ModelConfiguration } from '@/types/Types';
 import type { Workflow } from '@/types/workflow';
+import { createInterventionPolicy } from './intervention-policy';
+import { createModelConfiguration } from './model-configurations';
 
-export type AssetToSave = Model | Workflow | File;
+export type AssetToSave = Model | Workflow | ModelConfiguration | InterventionPolicy | File;
 
 // TODO: Once assets have a type property, we can remove the assetType parameter
 
@@ -33,6 +35,12 @@ export async function saveAs(
 		case AssetType.Code:
 			response = await uploadCodeToProject(newAsset as File, ref(0));
 			break;
+		case AssetType.InterventionPolicy:
+			response = await createInterventionPolicy(newAsset as InterventionPolicy);
+			break;
+		case AssetType.ModelConfiguration:
+			response = await createModelConfiguration(newAsset as ModelConfiguration);
+			break;
 		default:
 			logger.info(`Saving for ${assetType} is not implemented.`);
 			return;
@@ -42,17 +50,21 @@ export async function saveAs(
 		logger.info(`Failed to save ${assetType}.`);
 		return;
 	}
-
-	// TODO: Potentially add a flag in case we don't want to add the asset to the project
 	const projectId = useProjects().activeProject.value?.id;
-	if (!projectId) {
-		logger.error(`Asset can't be saved since target project doesn't exist.`);
-		return;
-	}
-	await useProjects().addAsset(assetType, response.id, projectId);
 
-	// After saving notify the user and do any necessary actions
-	logger.info(`${response.name} saved successfully in project ${useProjects().activeProject.value?.name}.`);
+	// save to project
+	if (assetType !== AssetType.InterventionPolicy && assetType !== AssetType.ModelConfiguration) {
+		if (!projectId) {
+			logger.error(`Asset can't be saved since target project doesn't exist.`);
+			return;
+		}
+		await useProjects().addAsset(assetType, response.id, projectId);
+
+		// After saving notify the user and do any necessary actions
+		logger.info(`${response.name} saved successfully in project ${useProjects().activeProject.value?.name}.`);
+	}
+
+	// redirect to the asset page
 	if (openOnSave) {
 		router.push({
 			name: RouteName.Project,
@@ -67,13 +79,12 @@ export async function saveAs(
 	if (onSaveFunction) onSaveFunction(response);
 }
 
-// Overwrites/updates the asset
-export async function update(newAsset: AssetToSave, assetType: AssetType, onSaveFunction?: Function) {
+// Overwrites/updates the asset and add to project
+export async function updateAddToProject(newAsset: AssetToSave, assetType: AssetType, onSaveFunction?: Function) {
 	if (!(newAsset instanceof File) && !newAsset.id) {
 		logger.error(`Can't update an asset that lacks an id.`);
 		return;
 	}
-
 	let response: any = null;
 
 	switch (assetType) {
@@ -93,9 +104,13 @@ export async function update(newAsset: AssetToSave, assetType: AssetType, onSave
 		return;
 	}
 
-	// TODO: Consider calling this refresh within the update functions in the services themselves
-	useProjects().refresh();
+	const projectId = useProjects().activeProject.value?.id;
+	if (!projectId) {
+		logger.error(`Asset can't be saved since target project doesn't exist.`);
+		return;
+	}
+	await useProjects().addAsset(assetType, response.id, projectId);
 
 	logger.info(`Updated ${response.name}.`);
-	if (onSaveFunction) onSaveFunction(response.name);
+	if (onSaveFunction) onSaveFunction(response);
 }

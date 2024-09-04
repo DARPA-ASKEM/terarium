@@ -43,7 +43,7 @@ header {
 	padding-top: 1rem;
 	padding-left: 1.5rem;
 	padding-right: 1.5rem;
-	border-bottom: 1px solid var(--surface-border-dark);
+	border-bottom: 1px solid var(--surface-border-light);
 }
 
 header > * {
