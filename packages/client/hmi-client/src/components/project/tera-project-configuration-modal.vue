@@ -23,11 +23,10 @@
 							<label for="new-project-description">Description <span>(Optional)</span></label>
 							<Textarea
 								id="new-project-description"
-								rows="3"
+								rows="8"
 								v-model="description"
-								autoResize
 								placeholder="Add a short description"
-								class="w-full resize-y max-h-72 min-h-8"
+								:style="{ width: '100%', resize: 'none', maxHeight: '278px', minHeight: '32px' }"
 							/>
 						</div>
 					</form>
@@ -57,7 +56,7 @@
 									<img src="@assets/images/project-thumbnails/default.png" alt="Default thumbnail image" />
 								</label>
 							</li>
-							<li v-for="i in 5" :key="i">
+							<li v-for="i in 14" :key="i">
 								<input type="radio" name="thumbnail" :id="`thumbnail-0${i}`" v-model="thumbnail" :value="`0${i}`" />
 								<label :for="`thumbnail-0${i}`">
 									<img
@@ -171,7 +170,6 @@ p {
 }
 
 ul {
-	margin-top: 1rem;
 	display: flex;
 	flex-wrap: wrap;
 	gap: var(--gap-small);
@@ -181,6 +179,7 @@ ul {
 li {
 	flex: 10rem;
 	border: 2px solid transparent;
+	flex-basis: 25%;
 
 	input {
 		display: none;
@@ -215,20 +214,17 @@ li {
 .select-thumbnail-panel {
 	background: var(--surface-50);
 	padding: var(--gap);
-	padding-top: 0px;
 	border-radius: var(--border-radius);
 	border: 1px solid var(--surface-border-light);
 	max-height: 100%;
+	max-width: 100%;
 	overflow-y: scroll;
 	width: 50vw;
+	height: 20vw;
 	margin-top: var(--gap-small);
 }
 .modal-content-container {
 	display: flex;
 	gap: var(--gap-8);
-}
-
-.select-thumbnail-panel {
-	max-width: 100%;
 }
 </style>
