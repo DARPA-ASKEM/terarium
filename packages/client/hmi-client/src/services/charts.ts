@@ -745,6 +745,7 @@ export function createSuccessCriteriaChart(
 	alpha: number,
 	options: BaseChartOptions
 ): any {
+	// FIXME: risk results can be null/undefined sometimes
 	const data = riskResults?.[targetVariable]?.qoi || [];
 	const risk = riskResults?.[targetVariable]?.risk?.[0] || 0;
 	const binCount = Math.floor(Math.sqrt(data.length)) ?? 1;

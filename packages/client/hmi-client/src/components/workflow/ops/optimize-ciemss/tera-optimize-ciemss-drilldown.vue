@@ -221,8 +221,8 @@
 				:is-loading="showSpinner"
 				:class="{ 'failed-run': optimizationResult.success === 'False' ?? 'successful-run' }"
 			>
-				<template #header-controls-left>
-					<h5 v-if="optimizedInterventionPolicy?.name">{{ optimizedInterventionPolicy?.name }}</h5>
+				<template #header-controls-left v-if="optimizedInterventionPolicy?.name">
+					<h5>{{ optimizedInterventionPolicy?.name }}</h5>
 				</template>
 				<template #header-controls-right>
 					<Button

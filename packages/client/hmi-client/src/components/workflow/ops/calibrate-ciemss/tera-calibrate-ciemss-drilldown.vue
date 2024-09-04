@@ -149,8 +149,8 @@
 		<!-- Output section -->
 		<template #preview>
 			<tera-drilldown-section class="ml-4 mr-2 pt-3">
-				<template #header-controls-left>
-					<h5 v-if="configuredModelConfig?.name">{{ configuredModelConfig.name }}</h5>
+				<template #header-controls-left v-if="configuredModelConfig?.name">
+					<h5>{{ configuredModelConfig.name }}</h5>
 				</template>
 				<template #header-controls-right>
 					<Button
