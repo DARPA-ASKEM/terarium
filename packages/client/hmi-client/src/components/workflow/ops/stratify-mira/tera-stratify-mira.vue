@@ -2,6 +2,7 @@
 	<tera-drilldown
 		:node="node"
 		:menu-items="menuItems"
+		:is-draft="isDraft"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 		@update-output-port="(output: any) => emit('update-output-port', output)"
@@ -77,6 +78,15 @@
 				v-model:output="selectedOutputId"
 				is-selectable
 			>
+				<Button
+					class="ml-auto py-3"
+					label="Save for re-use"
+					size="small"
+					outlined
+					:disabled="isSaveDisabled"
+					severity="secondary"
+					@click="showSaveModelModal = true"
+				/>
 				<tera-notebook-error
 					v-if="executeResponse.status === OperatorStatus.ERROR"
 					:name="executeResponse.name"
@@ -100,7 +110,10 @@
 		v-if="stratifiedAmr"
 		:asset="stratifiedAmr"
 		:assetType="AssetType.Model"
+		:initial-name="stratifiedAmr.name"
 		:is-visible="showSaveModelModal"
+		:is-updating-asset="true"
+		@on-save="updateNodeOutput"
 		@close-modal="showSaveModelModal = false"
 	/>
 </template>
@@ -120,6 +133,7 @@ import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-inp
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
 import { createModel, getModel } from '@/services/model';
+import { useProjects } from '@/composables/project';
 
 import { WorkflowNode, OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
@@ -170,6 +184,8 @@ const executeResponse = ref({
 });
 const modelNodeOptions = ref<string[]>([]);
 const showSaveModelModal = ref(false);
+
+const isDraft = ref(false);
 
 const isStratifyInProgress = ref(false);
 
@@ -406,6 +422,7 @@ const runCodeStratify = () => {
 
 				if (executedCode) {
 					saveCodeToState(executedCode, true);
+					isDraft.value = false;
 				}
 			})
 			.register('any_execute_reply', (data) => {
@@ -441,6 +458,41 @@ const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 const onSelection = (id: string) => {
 	emit('select-output', id);
 };
+
+const isSaveDisabled = computed(() => {
+	const id = amr.value?.id;
+	if (!id || _.isEmpty(selectedOutputId.value)) return true;
+	const outputPort = props.node.outputs?.find((port) => port.id === selectedOutputId.value);
+
+	return useProjects().hasAssetInActiveProject(outputPort?.value?.[0]);
+});
+
+function updateNodeOutput(model: Model) {
+	if (!selectedOutputId.value || !model) return;
+
+	amr.value = model;
+	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === selectedOutputId.value));
+
+	if (!outputPort) return;
+	outputPort.label = model.header.name;
+
+	emit('update-output-port', outputPort);
+}
+
+// check if user has made changes to the code
+const hasCodeChange = () => {
+	if (props.node.state.strataCodeHistory.length) {
+		isDraft.value = !_.isEqual(codeText.value, props.node.state.strataCodeHistory?.[0]?.code);
+	} else {
+		isDraft.value = !_.isEqual(codeText.value, '');
+	}
+};
+const checkForCodeChange = _.debounce(hasCodeChange, 100);
+
+watch(
+	() => codeText.value,
+	() => checkForCodeChange()
+);
 
 watch(
 	() => props.node.active,
