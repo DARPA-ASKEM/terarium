@@ -93,9 +93,9 @@
 					:value="executeResponse.value"
 					:traceback="executeResponse.traceback"
 				/>
-				<template v-else-if="stratifiedAmr">
-					<tera-model-diagram :model="stratifiedAmr" />
-					<tera-model-parts :model="stratifiedAmr" :feature-config="{ isPreview: true }" />
+				<template v-else-if="outputAmr">
+					<tera-model-diagram :model="outputAmr" />
+					<tera-model-parts :model="outputAmr" :feature-config="{ isPreview: true }" />
 				</template>
 				<template v-else>
 					<tera-progress-spinner v-if="isStratifyInProgress" is-centered :font-size="2">
@@ -107,10 +107,10 @@
 		</template>
 	</tera-drilldown>
 	<tera-save-asset-modal
-		v-if="stratifiedAmr"
-		:asset="stratifiedAmr"
+		v-if="outputAmr"
+		:asset="outputAmr"
 		:assetType="AssetType.Model"
-		:initial-name="stratifiedAmr.name"
+		:initial-name="outputAmr.name"
 		:is-visible="showSaveModelModal"
 		:is-updating-asset="true"
 		@on-save="updateNodeOutput"
@@ -175,7 +175,7 @@ enum StratifyTabs {
 }
 
 const amr = ref<Model | null>(null);
-const stratifiedAmr = ref<Model | null>(null);
+const outputAmr = ref<Model | null>(null);
 const executeResponse = ref({
 	status: OperatorStatus.DEFAULT,
 	name: '',
@@ -283,15 +283,15 @@ const handleStratifyResponse = (data: any) => {
 };
 
 const handleModelPreview = async (data: any) => {
-	stratifiedAmr.value = data.content['application/json'];
+	outputAmr.value = data.content['application/json'];
 	isStratifyInProgress.value = false;
-	if (!stratifiedAmr.value) {
+	if (!outputAmr.value) {
 		logger.error('Error getting updated model from beaker');
 		return;
 	}
 
 	// Create output
-	const modelData = await createModel(stratifiedAmr.value);
+	const modelData = await createModel(outputAmr.value);
 	if (!modelData) return;
 
 	emit('append-output', {
@@ -506,7 +506,7 @@ watch(
 				return;
 			}
 			const modelIdToLoad = output.value?.[0];
-			stratifiedAmr.value = await getModel(modelIdToLoad);
+			outputAmr.value = await getModel(modelIdToLoad);
 			codeText.value = _.last(props.node.state.strataCodeHistory)?.code ?? '';
 		}
 	},
