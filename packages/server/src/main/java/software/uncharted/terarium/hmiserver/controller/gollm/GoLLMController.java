@@ -46,11 +46,9 @@ import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.tasks.CompareModelsResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.ConfigureFromDatasetResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.EnrichAmrResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelFromDatasetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelFromDocumentResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.EnrichAmrResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.GenerateResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.GenerateSummaryHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
@@ -75,11 +73,10 @@ public class GoLLMController {
 
 	private final ModelCardResponseHandler modelCardResponseHandler;
 	private final ConfigureModelFromDocumentResponseHandler configureModelFromDocumentResponseHandler;
+	private final ConfigureModelFromDatasetResponseHandler configureModelFromDatasetResponseHandler;
 	private final CompareModelsResponseHandler compareModelsResponseHandler;
-	private final ConfigureFromDatasetResponseHandler configureFromDatasetResponseHandler;
 	private final GenerateSummaryHandler generateSummaryHandler;
 	private final EnrichAmrResponseHandler enrichAmrResponseHandler;
-	private final ConfigureModelFromDatasetResponseHandler configureModelFromDatasetResponseHandler;
 
 	private final Messages messages;
 
