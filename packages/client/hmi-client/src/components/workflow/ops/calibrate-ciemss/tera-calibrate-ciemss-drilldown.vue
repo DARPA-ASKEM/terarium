@@ -251,6 +251,37 @@
 				<tera-notebook-error v-if="!_.isEmpty(node.state?.errorMessage?.traceback)" v-bind="node.state.errorMessage" />
 			</tera-drilldown-preview>
 		</template>
+
+		<template #sidebar-right>
+			<tera-slider-panel
+				v-model:is-open="isOutputSettingsPanelOpen"
+				direction="right"
+				header="Output Settings"
+				content-width="360px"
+			>
+				<template #overlay>
+					<tera-chart-settings-panel v-model="isChartSettingsPanelOpen" @close="isChartSettingsPanelOpen = false" />
+				</template>
+				<template #content>
+					<div class="output-settings-panel">
+						<h5>Parameters</h5>
+						<div class="chart-settings-item-container">
+							<tera-chart-settings-item
+								v-for="settings of chartSettings"
+								:key="settings.id"
+								:settings="settings"
+								@open="isChartSettingsPanelOpen = true"
+								@delete="() => {}"
+							/>
+						</div>
+						<hr />
+						<h5>Model Variables</h5>
+						<hr />
+						<h5>Error</h5>
+					</div>
+				</template>
+			</tera-slider-panel>
+		</template>
 	</tera-drilldown>
 </template>
 
@@ -271,6 +302,9 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
+import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
+import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
+import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
 import {
 	CalibrationRequestCiemss,
 	ClientEvent,
@@ -303,6 +337,37 @@ import { displayNumber } from '@/utils/number';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults, getErrorData } from './calibrate-utils';
+
+const chartSettings = ref([
+	{
+		id: '1',
+		name: 'beta',
+		selectedVariables: ['beta'],
+		type: 'parameter',
+		multiSelect: false
+	},
+	{
+		id: '2',
+		name: 'beta',
+		selectedVariables: ['beta'],
+		type: 'parameter',
+		multiSelect: false
+	},
+	{
+		id: '3',
+		name: 'I',
+		selectedVariables: ['I'],
+		type: 'variable',
+		multiSelect: false
+	},
+	{
+		id: '4',
+		name: 'S',
+		selectedVariables: ['S'],
+		type: 'variable',
+		multiSelect: false
+	}
+]);
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
@@ -360,6 +425,9 @@ const odeSolverOptionsTooltip: string = 'TODO';
 
 // Model variables checked in the model configuration will be options in the mapping dropdown
 const modelStateOptions = ref<any[] | undefined>();
+
+const isOutputSettingsPanelOpen = ref(true);
+const isChartSettingsPanelOpen = ref(false);
 
 const datasetColumns = ref<DatasetColumn[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
@@ -926,5 +994,12 @@ img {
 	th {
 		text-align: center;
 	}
+}
+.chart-settings-item-container {
+	gap: 0.5rem;
+}
+
+.output-settings-panel {
+	padding: 1rem;
 }
 </style>

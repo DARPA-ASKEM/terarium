@@ -1,4 +1,4 @@
-import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes, BaseState, ChartSetting } from '@/types/workflow';
 import { CalibrateMap } from '@/services/calibrate-workflow';
 import calibrateSimulateCiemss from '@assets/svg/operator-images/calibrate-simulate-probabilistic.svg';
 
@@ -9,6 +9,7 @@ export interface CalibrationOperationStateCiemss extends BaseState {
 	selectedParameters: string[];
 	selectedVariables: string[];
 	selectedErrorVariables: string[];
+	chartSettings: ChartSetting[];
 	mapping: CalibrateMap[];
 	simulationsInProgress: string[];
 
@@ -55,6 +56,7 @@ export const CalibrationOperationCiemss: Operation = {
 			selectedParameters: [],
 			selectedVariables: [],
 			selectedErrorVariables: [],
+			chartSettings: [],
 			mapping: [{ modelVariable: '', datasetVariable: '' }],
 			simulationsInProgress: [],
 			currentProgress: 0,
