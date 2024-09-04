@@ -63,7 +63,7 @@ import OverlayPanel from 'primevue/overlaypanel';
 import { NotificationItem } from '@/types/common';
 import { AssetType, ClientEventType, ProgressState } from '@/types/Types';
 import ProgressBar from 'primevue/progressbar';
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useNotificationManager } from '@/composables/notificationManager';
 import { useProjects } from '@/composables/project';
 import { getElapsedTimeText } from '@/utils/date';
@@ -127,8 +127,8 @@ const cancelTask = (item: NotificationItem) => {
 	if (
 		[
 			ClientEventType.TaskGollmModelCard,
-			ClientEventType.TaskGollmConfigureModel,
-			ClientEventType.TaskGollmConfigureFromDataset,
+			ClientEventType.TaskGollmConfigureModelFromDocument,
+			ClientEventType.TaskGollmConfigureModelFromDataset,
 			ClientEventType.TaskGollmCompareModel
 		].includes(item.type)
 	) {

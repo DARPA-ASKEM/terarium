@@ -1,5 +1,5 @@
+import type { BaseState, Operation } from '@/types/workflow';
 import { WorkflowOperationTypes } from '@/types/workflow';
-import type { Operation, BaseState } from '@/types/workflow';
 import type { ModelConfiguration } from '@/types/Types';
 import { NotebookHistory } from '@/services/notebook';
 import configureModel from '@assets/svg/operator-images/configure-model.svg';
@@ -11,8 +11,7 @@ export interface ModelConfigOperationState extends BaseState {
 	transientModelConfig: ModelConfiguration;
 	notebookHistory: NotebookHistory[];
 	hasCodeRun: boolean;
-	datasetModelConfigTaskId: string;
-	documentModelConfigTaskId: string;
+	modelConfigTaskIds: string[];
 }
 
 export const blankModelConfig: ModelConfiguration = {
@@ -45,8 +44,7 @@ export const ModelConfigOperation: Operation = {
 			transientModelConfig: blankModelConfig,
 			notebookHistory: [],
 			hasCodeRun: false,
-			datasetModelConfigTaskId: '',
-			documentModelConfigTaskId: ''
+			modelConfigTaskIds: []
 		};
 		return init;
 	}
