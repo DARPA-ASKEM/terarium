@@ -78,16 +78,15 @@
 				v-model:output="selectedOutputId"
 				is-selectable
 			>
-				<section class="right-side">
-					<Button
-						label="Save for re-use"
-						size="small"
-						outlined
-						:disabled="isSaveDisabled"
-						severity="secondary"
-						@click="showSaveModelModal = true"
-					/>
-				</section>
+				<Button
+					class="ml-auto py-3"
+					label="Save for re-use"
+					size="small"
+					outlined
+					:disabled="isSaveDisabled"
+					severity="secondary"
+					@click="showSaveModelModal = true"
+				/>
 				<tera-notebook-error
 					v-if="executeResponse.status === OperatorStatus.ERROR"
 					:name="executeResponse.name"
@@ -561,10 +560,5 @@ onUnmounted(() => {
 .wizard-section {
 	background-color: var(--surface-disabled);
 	border-right: 1px solid var(--surface-border-dark);
-}
-
-.right-side {
-	display: flex;
-	justify-content: right;
 }
 </style>
