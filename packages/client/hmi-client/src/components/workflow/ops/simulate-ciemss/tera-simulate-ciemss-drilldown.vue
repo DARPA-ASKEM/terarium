@@ -114,6 +114,8 @@
 				class="ace-editor"
 			/>
 		</tera-drilldown-section>
+
+		<!-- Preview -->
 		<template #preview>
 			<tera-drilldown-preview
 				title="Simulation output"
@@ -153,7 +155,17 @@
 								@configuration-change="chartProxy.configurationChange(index, $event)"
 								@remove="chartProxy.removeChart(index)"
 							/>
-							<vega-chart expandable :are-embed-actions-visible="true" :visualization-spec="preparedCharts[index]" />
+							<vega-chart
+								v-if="preparedCharts[index].layer.length > 0"
+								expandable
+								:are-embed-actions-visible="true"
+								:visualization-spec="preparedCharts[index]"
+							/>
+							<!-- If no variables are selected, show empty state -->
+							<section class="empty-chart" v-else>
+								<img src="@assets/svg/seed.svg" class="empty-image" alt="" draggable="false" />
+								<p>No variables selected</p>
+							</section>
 						</template>
 						<Button size="small" text @click="chartProxy.addChart()" label="Add chart" icon="pi pi-plus" />
 					</div>
@@ -577,6 +589,22 @@ onUnmounted(() => kernelManager.shutdown());
 	grid-template-columns: auto 1fr;
 }
 
+.empty-chart {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	height: 10rem;
+	gap: var(--gap);
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	margin-bottom: var(--gap);
+	color: var(--text-color-secondary);
+}
+.empty-image {
+	width: 5rem;
+	height: 5rem;
+}
 .notebook-section:deep(main .toolbar) {
 	padding-left: var(--gap-medium);
 }
