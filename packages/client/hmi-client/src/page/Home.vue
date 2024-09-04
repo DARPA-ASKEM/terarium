@@ -115,7 +115,6 @@
 								</template>
 								<template v-else-if="tab.title === TabTitles.PublicProjects">
 									<h3>You don't have any shared projects</h3>
-									<!-- <p>Shared projects will be displayed on this page</p> -->
 								</template>
 							</div>
 							<ul v-else-if="view === ProjectsView.Cards" class="project-cards-grid">
