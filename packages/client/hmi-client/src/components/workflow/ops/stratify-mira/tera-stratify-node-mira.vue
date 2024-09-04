@@ -30,23 +30,24 @@ watch(
 	() => props.node.inputs,
 	async () => {
 		const input = props.node.inputs[0];
-		if (!input || props.node.outputs[0].value) return;
 		// Create a default if we dont have an output yet:
-		let modelId: string | null = null;
-		if (input.type === 'modelId') {
-			modelId = input.value?.[0];
-		} else if (input.type === 'modelConfigId') {
-			modelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
-		}
-		if (!modelId) return;
+		if (input && !props.node.outputs[0].value) {
+			let modelId: string | null = null;
+			if (input.type === 'modelId') {
+				modelId = input.value?.[0];
+			} else if (input.type === 'modelConfigId') {
+				modelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
+			}
+			if (!modelId) return;
 
-		const model = await getModel(modelId);
-		const modelName = model?.name;
-		emit('append-output', {
-			type: StratifyMiraOperation.outputs[0].type,
-			label: modelName ?? 'Default Model',
-			value: modelId
-		});
+			const model = await getModel(modelId);
+			const modelName = model?.name;
+			emit('append-output', {
+				type: StratifyMiraOperation.outputs[0].type,
+				label: modelName ?? 'Default Model',
+				value: modelId
+			});
+		}
 	},
 	{ deep: true }
 );
