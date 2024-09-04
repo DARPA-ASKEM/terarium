@@ -109,7 +109,6 @@
 											@click="openCreateProjectModal"
 										/>.
 									</p>
-									<!--<p>Your projects will be displayed on this page.</p>-->
 								</template>
 								<template v-if="tab.title === TabTitles.SampleProjects">
 									<p class="mt-4">Sample projects coming soon</p>
