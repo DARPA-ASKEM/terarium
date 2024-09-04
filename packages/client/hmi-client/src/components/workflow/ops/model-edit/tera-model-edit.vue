@@ -298,15 +298,15 @@ function onDrilldownClose() {
 
 const createOutput = async (modelToSave: Model) => {
 	// If it's the original model, use that otherwise create a new one
-	const modelData = isReadyToCreateDefaultOutput.value ? modelToSave : await createModel(modelToSave);
-	if (!modelData) return;
+	const projectAsset = isReadyToCreateDefaultOutput.value ? modelToSave : await createModel(modelToSave);
+	if (!projectAsset) return;
 
 	emit('append-output', {
 		id: uuidv4(),
-		label: isReadyToCreateDefaultOutput.value ? modelData.name : `Output ${Date.now()}`, // Just label the original model with its name
+		label: isReadyToCreateDefaultOutput.value ? projectAsset.assetName : `Output ${Date.now()}`, // Just label the original model with its name
 		type: 'modelId',
 		state: cloneDeep(props.node.state),
-		value: [modelData.id]
+		value: [projectAsset.assetId]
 	});
 
 	isDraft = false;

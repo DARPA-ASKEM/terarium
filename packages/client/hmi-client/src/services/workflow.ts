@@ -23,6 +23,7 @@ import {
 	Transform
 } from '@/types/workflow';
 import { activeProjectId } from '@/composables/activeProject';
+import type { ProjectAsset } from '@/types/Types';
 
 /**
  * A wrapper class around the workflow data struture to make it easier
@@ -626,7 +627,7 @@ export function canPropagateResource(outputs: WorkflowOutput<any>[]) {
  * */
 
 // Create
-export const createWorkflow = async (workflow: Workflow) => {
+export const createWorkflow = async (workflow: Workflow): Promise<ProjectAsset | null> => {
 	const projectId = activeProjectId.value || getProjectIdFromUrl();
 	const response = await API.post(`/workflows?project-id=${projectId}`, workflow);
 	return response?.data ?? null;

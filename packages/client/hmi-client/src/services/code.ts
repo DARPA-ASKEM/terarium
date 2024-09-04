@@ -1,5 +1,5 @@
 import API, { getProjectIdFromUrl } from '@/api/api';
-import type { Code } from '@/types/Types';
+import type { Code, ProjectAsset } from '@/types/Types';
 import { ProgrammingLanguage } from '@/types/Types';
 import { Ref } from 'vue';
 import { activeProjectId } from '@/composables/activeProject';
@@ -44,7 +44,7 @@ async function getCodeFileAsText(codeAssetId: string, fileName: string): Promise
 	return response.data;
 }
 
-async function uploadCodeToProject(file: File, progress: Ref<number>): Promise<Code | null> {
+async function uploadCodeToProject(file: File, progress: Ref<number>): Promise<ProjectAsset | null> {
 	const projectId = activeProjectId.value || getProjectIdFromUrl();
 
 	const formData = new FormData();

@@ -280,8 +280,8 @@ const handleModelPreview = async (data: any) => {
 	}
 
 	// Create output
-	const modelData = await createModel(stratifiedAmr.value);
-	if (!modelData) return;
+	const projectAsset = await createModel(stratifiedAmr.value);
+	if (!projectAsset) return;
 
 	emit('append-output', {
 		id: uuidv4(),
@@ -291,7 +291,7 @@ const handleModelPreview = async (data: any) => {
 			strataGroup: _.cloneDeep(props.node.state.strataGroup),
 			strataCodeHistory: _.cloneDeep(props.node.state.strataCodeHistory)
 		},
-		value: [modelData.id]
+		value: [projectAsset.assetId]
 	});
 };
 

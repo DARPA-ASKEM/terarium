@@ -26,13 +26,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.WorkflowService;
+import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/workflows")
@@ -49,6 +53,7 @@ public class WorkflowController {
 	final ProjectService projectService;
 
 	final CurrentUserService currentUserService;
+	final Messages messages;
 
 	@GetMapping
 	@Secured(Roles.USER)
@@ -142,15 +147,42 @@ public class WorkflowController {
 			currentUserService.get().getId(),
 			projectId
 		);
+
+		Workflow createdWorkflow;
+
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED).body(
-				workflowService.createAsset(workflow, projectId, permission)
-			);
+			createdWorkflow = workflowService.createAsset(workflow, projectId, permission);
 		} catch (final IOException e) {
 			final String error = "Unable to create workflow";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
+
+		final Optional<Project> project;
+		try {
+			project = projectService.getProject(projectId);
+			if (!project.isPresent()) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
+			}
+		} catch (final Exception e) {
+			log.error("Error communicating with project service", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
+
+		final AssetType assetType = AssetType.DATASET;
+		final Optional<ProjectAsset> projectAsset = projectAssetService.createProjectAsset(
+			project.get(),
+			assetType,
+			createdWorkflow,
+			permission
+		);
+
+		if (projectAsset.isEmpty()) {
+			log.error("Project Asset is empty");
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("asset.unable-to-create"));
+		}
+
+		return ResponseEntity.status(HttpStatus.CREATED).body(createdWorkflow);
 	}
 
 	@PutMapping("/{id}")

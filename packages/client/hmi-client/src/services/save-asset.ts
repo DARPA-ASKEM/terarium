@@ -3,12 +3,14 @@ import { createWorkflow } from '@/services/workflow';
 import { updateCodeAsset, uploadCodeToProject } from '@/services/code';
 import { createModel, updateModel } from '@/services/model';
 import { useProjects } from '@/composables/project';
-import { AssetType } from '@/types/Types';
+import { AssetType, ProjectAsset } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
 import type { Model, Code } from '@/types/Types';
 import type { Workflow } from '@/types/workflow';
+import { activeProjectId } from '@/composables/activeProject';
+import { getProjectIdFromUrl } from '@/api/api';
 
 export type AssetToSave = Model | Workflow | File;
 
@@ -21,7 +23,8 @@ export async function saveAs(
 	openOnSave: boolean = false,
 	onSaveFunction?: Function
 ) {
-	let response: any = null;
+	const projectId = activeProjectId.value || getProjectIdFromUrl();
+	let response: ProjectAsset | null = null;
 
 	switch (assetType) {
 		case AssetType.Model:
@@ -43,14 +46,6 @@ export async function saveAs(
 		return;
 	}
 
-	// TODO: Potentially add a flag in case we don't want to add the asset to the project
-	const projectId = useProjects().activeProject.value?.id;
-	if (!projectId) {
-		logger.error(`Asset can't be saved since target project doesn't exist.`);
-		return;
-	}
-	await useProjects().addAsset(assetType, response.id, projectId);
-
 	// After saving notify the user and do any necessary actions
 	logger.info(`${response.name} saved successfully in project ${useProjects().activeProject.value?.name}.`);
 	if (openOnSave) {
@@ -59,7 +54,7 @@ export async function saveAs(
 			params: {
 				projectId,
 				pageType: assetType,
-				assetId: response.id
+				assetId: response.assetId
 			}
 		});
 	}
