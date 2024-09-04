@@ -46,7 +46,7 @@
 					:style="{
 						height: '2rem',
 						position: 'absolute',
-						right: '-4rem',
+						right: '-3.5rem',
 						bottom: '0px'
 					}"
 					@click.stop
@@ -163,7 +163,7 @@ li:hover:before {
 /** These v-* classes are used for animations for the <Transition /> element */
 .v-enter-active,
 .v-leave-active {
-	transition: opacity 0.5s ease;
+	transition: opacity 0.15s;
 }
 
 .v-enter-from,
