@@ -527,7 +527,6 @@ const createConfiguration = async () => {
 	}
 
 	const state = cloneDeep(props.node.state);
-	state.transientModelConfig = data;
 	useToastService().success('', 'Created model configuration');
 	emit('append-output', {
 		type: ModelConfigOperation.outputs[0].type,
@@ -541,7 +540,6 @@ const createConfiguration = async () => {
 const onSaveAsModelConfiguration = (data: ModelConfiguration) => {
 	useToastService().success('', 'Created model configuration');
 	const state = cloneDeep(props.node.state);
-	state.transientModelConfig = data;
 	emit('append-output', {
 		type: ModelConfigOperation.outputs[0].type,
 		label: data.name,
@@ -648,9 +646,6 @@ const applyConfigValues = (config: ModelConfiguration) => {
 	// If the output does not already exist
 	else {
 		const state = cloneDeep(props.node.state);
-		state.transientModelConfig = config;
-
-		// Append this config to the output.
 		emit('append-output', {
 			type: ModelConfigOperation.outputs[0].type,
 			label: config.name,
