@@ -143,7 +143,7 @@
 </template>
 
 <script setup lang="ts">
-import _, { cloneDeep, groupBy, isEmpty } from 'lodash';
+import _, { cloneDeep, groupBy, isEmpty, omit } from 'lodash';
 import { computed, onMounted, ref, watch, nextTick, ComponentPublicInstance } from 'vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -211,6 +211,7 @@ const interventionPoliciesFiltered = computed(() =>
 		.sort((a, b) => sortDatesDesc(a.createdOn, b.createdOn))
 );
 const selectedOutputId = ref<string>('');
+const selectedPolicyId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
 const selectedPolicy = ref<InterventionPolicy | null>(null);
 
 const newDescription = ref('');
@@ -256,7 +257,7 @@ const preparedCharts = computed(() =>
 	})
 );
 
-const initialize = async () => {
+const initialize = async (overwriteState: boolean = false) => {
 	const state = props.node.state;
 	const modelId = props.node.inputs[0].value?.[0];
 	if (!modelId) return;
@@ -265,11 +266,14 @@ const initialize = async () => {
 	await fetchInterventionPolicies(modelId);
 
 	model.value = await getModel(modelId);
-	if (state.interventionPolicy?.id) {
-		// copy the state into the knobs if it exists
-		selectedPolicy.value = await getInterventionPolicyById(state.interventionPolicy.id);
+	if (selectedPolicyId.value) {
+		selectedPolicy.value = await getInterventionPolicyById(selectedPolicyId.value);
+		knobs.value.transientInterventionPolicy = cloneDeep(
+			!overwriteState ? selectedPolicy.value : state.interventionPolicy
+		);
+	} else {
+		knobs.value.transientInterventionPolicy = cloneDeep(state.interventionPolicy);
 	}
-	knobs.value.transientInterventionPolicy = cloneDeep(state.interventionPolicy);
 };
 
 const applyInterventionPolicy = (interventionPolicy: InterventionPolicy) => {
@@ -278,7 +282,6 @@ const applyInterventionPolicy = (interventionPolicy: InterventionPolicy) => {
 		logger.error('Policy not found');
 		return;
 	}
-	knobs.value.transientInterventionPolicy = cloneDeep(interventionPolicy);
 
 	const listOfPolicyIds: string[] = props.node.outputs.map((output) => output.value?.[0]);
 	// Check if this output already exists
@@ -290,12 +293,11 @@ const applyInterventionPolicy = (interventionPolicy: InterventionPolicy) => {
 	// If the output does not already exist
 	else {
 		// Append this config to the output.
-		state.interventionPolicy = interventionPolicy;
 		emit('append-output', {
 			type: InterventionPolicyOperation.outputs[0].type,
 			label: interventionPolicy.name,
 			value: interventionPolicy.id,
-			state
+			state: omit(state, ['transientInterventionPolicy'])
 		});
 	}
 	logger.success(`Policy applied ${interventionPolicy.name}`);
@@ -414,12 +416,17 @@ watch(
 			selectedOutputId.value = props.node.active;
 			initialize();
 		}
-	},
-	{ immediate: true }
+	}
 );
 
 onMounted(() => {
-	initialize();
+	if (props.node.active) {
+		selectedOutputId.value = props.node.active;
+		// setting true will force overwrite the intervention policy with the current state on the node
+		initialize(true);
+	} else {
+		initialize();
+	}
 });
 </script>
 
