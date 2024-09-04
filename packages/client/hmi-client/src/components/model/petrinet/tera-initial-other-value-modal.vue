@@ -64,7 +64,6 @@
 								placeholder="Add a source"
 								v-model="customSource"
 								@update:modelValue="onCustomSelectionChange"
-								class="mb-0"
 							/>
 						</template>
 					</Column>
@@ -73,7 +72,6 @@
 							<section class="inline-flex gap-1">
 								<span class="custom-input-label">Constant</span>
 								<tera-input-number
-									class="mb-0"
 									placeholder="Constant"
 									v-model="customConstant"
 									@update:modelValue="onCustomSelectionChange"
@@ -86,7 +84,7 @@
 		</DataTable>
 		<template #footer>
 			<Button label="Apply selected value" @click="applySelectedValue" :disabled="!selection" />
-			<Button label="Cancel" severity="secondary" outlined @click="emit('close-modal')" />
+			<Button label="Cancel" severity="secondary" raised @click="emit('close-modal')" />
 		</template>
 	</tera-modal>
 </template>

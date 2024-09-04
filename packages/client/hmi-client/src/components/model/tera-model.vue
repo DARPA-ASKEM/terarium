@@ -17,7 +17,6 @@
 				@keyup.enter="updateModelName"
 				@keyup.esc="updateModelName"
 				auto-focus
-				class="w-4"
 			/>
 			<div v-if="isNaming" class="flex flex-nowrap ml-1 mr-3">
 				<Button icon="pi pi-check" rounded text @click="updateModelName" />

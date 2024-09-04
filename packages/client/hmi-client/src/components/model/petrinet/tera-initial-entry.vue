@@ -1,58 +1,56 @@
 <template>
-	<div class="initial-entry">
-		<header>
-			<div class="flex">
-				<strong>{{ initialId }}</strong>
-				<span v-if="name" class="ml-1">{{ '| ' + name }}</span>
-				<template v-if="unit">
-					<label class="ml-2">Unit</label>
-					<span class="ml-1">{{ unit }}</span>
-				</template>
-				<template v-if="concept">
-					<label class="ml-auto">Concept</label>
-					<span class="ml-1">{{ concept }}</span>
-				</template>
-			</div>
-			<span v-if="description" class="description">{{ description }}</span>
-		</header>
-		<template v-if="isEmpty(modelConfiguration.inferredParameterList)">
-			<main>
-				<span class="expression">
-					<tera-input-text
-						label="Expression"
-						:model-value="getInitialExpression(modelConfiguration, initialId)"
-						@update:model-value="emit('update-expression', { id: initialId, value: $event })"
-					/>
-				</span>
-				<Button :label="getSourceLabel(initialId)" text size="small" @click="sourceOpen = !sourceOpen" />
-				<Button :label="getOtherValuesLabel" text size="small" @click="showOtherConfigValueModal = true" />
-			</main>
-			<footer v-if="sourceOpen">
+	<header>
+		<div class="flex">
+			<strong>{{ initialId }}</strong>
+			<span v-if="name" class="ml-1">{{ '| ' + name }}</span>
+			<template v-if="unit">
+				<label class="ml-2">Unit</label>
+				<span class="ml-1">{{ unit }}</span>
+			</template>
+			<template v-if="concept">
+				<label class="ml-auto">Concept</label>
+				<span class="ml-1">{{ concept }}</span>
+			</template>
+		</div>
+		<span v-if="description" class="description">{{ description }}</span>
+	</header>
+	<template v-if="isEmpty(modelConfiguration.inferredParameterList)">
+		<main>
+			<span class="expression">
 				<tera-input-text
-					placeholder="Add a source"
-					:model-value="getInitialSource(modelConfiguration, initialId)"
-					@update:model-value="emit('update-source', { id: initialId, value: $event })"
+					label="Expression"
+					:model-value="getInitialExpression(modelConfiguration, initialId)"
+					@update:model-value="emit('update-expression', { id: initialId, value: $event })"
 				/>
-			</footer>
-		</template>
-		<katex-element
-			v-else
-			class="expression"
-			:expression="stringToLatexExpression(getInitialExpression(modelConfiguration, initialId))"
-			:throw-on-error="false"
-		/>
-		<tera-initial-other-value-modal
-			v-if="showOtherConfigValueModal"
-			:id="initialId"
-			:updateEvent="'update-expression'"
-			:otherValueList="otherValueList"
-			:otherValuesInputTypes="DistributionType.Constant"
-			@modal-mask-clicked="showOtherConfigValueModal = false"
-			@update-expression="emit('update-expression', $event)"
-			@update-source="emit('update-source', $event)"
-			@close-modal="showOtherConfigValueModal = false"
-		/>
-	</div>
+			</span>
+			<Button :label="getSourceLabel(initialId)" text size="small" @click="sourceOpen = !sourceOpen" />
+			<Button :label="getOtherValuesLabel" text size="small" @click="showOtherConfigValueModal = true" />
+		</main>
+		<footer v-if="sourceOpen">
+			<tera-input-text
+				placeholder="Add a source"
+				:model-value="getInitialSource(modelConfiguration, initialId)"
+				@update:model-value="emit('update-source', { id: initialId, value: $event })"
+			/>
+		</footer>
+	</template>
+	<katex-element
+		v-else
+		class="expression"
+		:expression="stringToLatexExpression(getInitialExpression(modelConfiguration, initialId))"
+		:throw-on-error="false"
+	/>
+	<tera-initial-other-value-modal
+		v-if="showOtherConfigValueModal"
+		:id="initialId"
+		:updateEvent="'update-expression'"
+		:otherValueList="otherValueList"
+		:otherValuesInputTypes="DistributionType.Constant"
+		@modal-mask-clicked="showOtherConfigValueModal = false"
+		@update-expression="emit('update-expression', $event)"
+		@update-source="emit('update-source', $event)"
+		@close-modal="showOtherConfigValueModal = false"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -104,14 +102,9 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.initial-entry {
-	border-left: 4px solid var(--surface-300);
-	padding-left: var(--gap-4);
-}
 header {
 	display: flex;
 	flex-direction: column;
-	padding-top: var(--gap-2);
 	padding-bottom: var(--gap-2);
 	gap: var(--gap-2);
 }

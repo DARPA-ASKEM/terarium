@@ -86,7 +86,6 @@
 									placeholder="Add a source"
 									v-model="customSource"
 									@update:modelValue="onCustomSelectionChange"
-									class="other-value-input"
 								/>
 							</template>
 						</Column>
@@ -101,28 +100,17 @@
 									placeholder="Constant"
 									v-model="customConstant"
 									@update:modelValue="onCustomSelectionChange"
-									class="other-value-input"
 								/>
 							</template>
 						</Column>
 						<Column>
 							<template #footer v-if="numberType === numberOptions[1]">
-								<tera-input-number
-									placeholder="Min"
-									v-model="customMin"
-									@update:modelValue="onCustomSelectionChange"
-									class="mb-0"
-								/>
+								<tera-input-number placeholder="Min" v-model="customMin" @update:modelValue="onCustomSelectionChange" />
 							</template>
 						</Column>
 						<Column>
 							<template #footer v-if="numberType === numberOptions[1]">
-								<tera-input-number
-									placeholder="Max"
-									v-model="customMax"
-									@update:modelValue="onCustomSelectionChange"
-									class="mb-0"
-								/>
+								<tera-input-number placeholder="Max" v-model="customMax" @update:modelValue="onCustomSelectionChange" />
 							</template>
 						</Column>
 					</Row>
@@ -131,7 +119,7 @@
 		</section>
 		<template #footer>
 			<Button label="Apply selected value" @click="applySelectedValue" :disabled="!selection" />
-			<Button label="Cancel" severity="secondary" outlined @click="emit('close-modal')" />
+			<Button label="Cancel" severity="secondary" raised @click="emit('close-modal')" />
 		</template>
 	</tera-modal>
 </template>
@@ -298,7 +286,7 @@ function applySelectedValue() {
 	width: 100%;
 }
 
-.other-value-input {
-	margin-bottom: 0 !important;
+:deep(input) {
+	margin-top: var(--gap-4);
 }
 </style>

@@ -41,7 +41,7 @@ export interface InterventionPolicyGroupForm {
 
 export interface Criterion {
 	name: string; // Title of the group
-	targetVariable: string; // qoi context which will contain _state or _observable accordingly
+	targetVariable: string;
 	qoiMethod: ContextMethods;
 	riskTolerance: number;
 	threshold: number;

@@ -14,8 +14,3 @@ const icons = new Map<string, string>([
 	['modelConfigId', 'pi-cog']
 ]);
 </script>
-<style scoped>
-.p-chip-icon {
-	font-size: var(--font-body-small);
-}
-</style>

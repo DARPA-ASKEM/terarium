@@ -3,8 +3,7 @@
 		v-if="showHeader"
 		:class="{
 			'overview-banner': pageType === ProjectPages.OVERVIEW,
-			'with-tabs': tabs.length > 1,
-			shadow: applyShadow
+			'with-tabs': tabs.length > 1
 		}"
 	>
 		<!-- put the buttons above the title if there is an overline -->
@@ -66,7 +65,6 @@
 					:class="{ 'chosen-item': id === chosenItem }"
 					:key="id"
 					@click="scrollTo(id)"
-					class="nav-item"
 				>
 					{{ navOption }}
 				</a>
@@ -221,8 +219,6 @@ watch(
 	() => props.id,
 	() => assetElementRef.value?.scrollIntoView()
 );
-
-const applyShadow = computed(() => scrollPosition.value > 8);
 </script>
 
 <style scoped>
@@ -262,9 +258,6 @@ nav {
 	}
 }
 
-.nav-item {
-	min-width: 9rem;
-}
 header {
 	display: flex;
 	flex-direction: column;
@@ -272,12 +265,10 @@ header {
 	height: fit-content;
 	padding: var(--gap-small) var(--gap);
 	gap: var(--gap-small);
-	background-color: var(--surface-0);
+	background-color: var(--surface-ground-transparent);
 	backdrop-filter: blur(6px);
+	border-bottom: 1px solid var(--surface-border-light);
 	overflow: hidden;
-	z-index: 1;
-	box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
-	transition: box-shadow 0.3s;
 }
 
 header h4 {
@@ -353,12 +344,6 @@ header aside {
 	display: flex;
 	flex-direction: row;
 	gap: var(--gap-small);
-}
-
-.shadow {
-	box-shadow:
-		0 4px 6px -1px rgba(0, 0, 0, 0.1),
-		0 2px 4px -2px rgba(0, 0, 0, 0.1);
 }
 
 /* Affects child components put in the slot*/

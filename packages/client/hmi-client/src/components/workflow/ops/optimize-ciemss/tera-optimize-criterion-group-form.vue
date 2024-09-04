@@ -24,8 +24,6 @@
 			<Dropdown
 				class="p-inputtext-sm"
 				:options="modelStateAndObsOptions"
-				option-label="label"
-				option-value="value"
 				v-model="config.targetVariable"
 				placeholder="Select"
 				@update:model-value="emit('update-self', config)"
@@ -79,7 +77,7 @@ import { Criterion, ContextMethods } from './optimize-ciemss-operation';
 
 const props = defineProps<{
 	criterion: Criterion;
-	modelStateAndObsOptions: { label: string; value: string }[];
+	modelStateAndObsOptions: string[];
 }>();
 
 const emit = defineEmits(['update-self', 'delete-self']);

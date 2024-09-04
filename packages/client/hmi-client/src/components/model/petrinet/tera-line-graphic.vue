@@ -1,35 +1,17 @@
 <template>
 	<div ref="lineGraphic">
 		<svg :height="parentHeight">
-			<line x1="1" :y1="parentHeight / 2" :x2="width" :y2="parentHeight / 2" stroke="black" />
-			<!-- Range -->
+			<line x1="0" :y1="parentHeight / 2" :x2="width" :y2="parentHeight / 2" stroke="black" />
 			<rect
 				v-if="distribution.type === DistributionType.Uniform"
-				:x="rectX + 4"
+				:x="rectX"
 				:y="parentHeight / 2 - 2"
-				:width="rectWidth - 8"
-				rx="0"
+				:width="rectWidth"
+				rx="2"
 				height="4"
 				stroke="gray"
 				fill="gray"
 			/>
-			<circle
-				v-if="distribution.type === DistributionType.Uniform"
-				:cx="rectX + 5"
-				:cy="parentHeight / 2"
-				r="4"
-				stroke="black"
-				fill="black"
-			/>
-			<circle
-				v-if="distribution.type === DistributionType.Uniform"
-				:cx="rectX + rectWidth - 5"
-				:cy="parentHeight / 2"
-				r="4"
-				stroke="black"
-				fill="black"
-			/>
-			<!-- One point -->
 			<circle v-else :cx="circlePoint" :cy="parentHeight / 2" r="4" stroke="black" fill="black" />
 		</svg>
 	</div>

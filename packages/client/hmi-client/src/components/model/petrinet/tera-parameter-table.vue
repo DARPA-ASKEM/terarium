@@ -14,11 +14,11 @@
 					@click.stop="onAddUncertainty"
 					class="mr-2"
 				/>
-				<tera-input-text v-model="filterText" placeholder="Filter" class="w-2 p-1" />
+				<tera-input-text v-model="filterText" placeholder="Filter" />
 			</template>
 
 			<!-- Adding uncertainty header -->
-			<span v-if="isAddingUncertainty" class="add-uncertainty-toolbar">
+			<span v-if="isAddingUncertainty">
 				<Button size="small" text label="Unselect all" @click="selectedParameters = []" />
 				Add
 				<Dropdown
@@ -38,48 +38,44 @@
 				<InputNumber class="uncertainty-percentage" v-model="uncertaintyPercentage" suffix="%" :min="0" :max="100" />
 				bounds on the value of the selected constant parameters.
 				<Button text small icon="pi pi-check" @click="onUpdateDistributions" />
-				<Button text small icon="pi pi-times" @click="isAddingUncertainty = false" class="ml-auto" />
+				<Button text small icon="pi pi-times" @click="isAddingUncertainty = false" />
 			</span>
 
-			<ul class="pl-1">
+			<ul class="pl-4">
 				<li v-for="{ baseParameter, childParameters, isVirtual } in parameterList" :key="baseParameter">
 					<!-- Stratified -->
-					<section v-if="isVirtual" class="parameter-entry-stratified">
-						<Accordion multiple>
-							<AccordionTab>
-								<template #header>
-									<span>{{ baseParameter }}</span>
-									<Button label="Open Matrix" text size="small" @click.stop="matrixModalId = baseParameter" />
-								</template>
-								<div class="flex">
-									<ul class="ml-1">
-										<li v-for="{ referenceId } in childParameters" :key="referenceId">
-											<div class="flex gap-4">
-												<Checkbox
-													v-if="
-														isAddingUncertainty &&
-														getParameterDistribution(modelConfiguration, referenceId).type === DistributionType.Constant
-													"
-													binary
-													:model-value="selectedParameters.includes(referenceId)"
-													@change="onSelect(referenceId)"
-												/>
-												<tera-parameter-entry
-													:model="model"
-													:model-configuration="props.modelConfiguration"
-													:model-configurations="props.modelConfigurations"
-													:parameter-id="referenceId"
-													@update-parameter="emit('update-parameters', [$event])"
-													@update-source="emit('update-source', $event)"
-												/>
-											</div>
-											<Divider type="solid" />
-										</li>
-									</ul>
-								</div>
-							</AccordionTab>
-						</Accordion>
-					</section>
+					<Accordion v-if="isVirtual" multiple>
+						<AccordionTab>
+							<template #header>
+								<span>{{ baseParameter }}</span>
+								<Button label="Open Matrix" text size="small" @click.stop="matrixModalId = baseParameter" />
+							</template>
+							<div class="stratified">
+								<ul>
+									<li v-for="{ referenceId } in childParameters" :key="referenceId">
+										<Checkbox
+											v-if="
+												isAddingUncertainty &&
+												getParameterDistribution(modelConfiguration, referenceId).type === DistributionType.Constant
+											"
+											binary
+											:model-value="selectedParameters.includes(referenceId)"
+											@change="onSelect(referenceId)"
+										/>
+										<tera-parameter-entry
+											:model="model"
+											:model-configuration="props.modelConfiguration"
+											:model-configurations="props.modelConfigurations"
+											:parameter-id="referenceId"
+											@update-parameter="emit('update-parameters', [$event])"
+											@update-source="emit('update-source', $event)"
+										/>
+									</li>
+								</ul>
+							</div>
+						</AccordionTab>
+					</Accordion>
+
 					<!-- Unstratified -->
 					<div v-else class="flex gap-4">
 						<Checkbox
@@ -251,19 +247,6 @@ ul {
 	}
 }
 
-.parameter-entry-stratified {
-	border-left: 4px solid var(--surface-300);
-	padding-left: var(--gap-1);
-}
-
-:deep(.p-divider) {
-	&.p-divider-horizontal {
-		margin-top: var(--gap-2);
-		margin-bottom: var(--gap-2);
-		color: var(--gray-300);
-	}
-}
-
 .stratified {
 	ul {
 		border-left: 1px solid var(--gray-300);
@@ -281,15 +264,6 @@ ul {
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
 	margin-left: var(--gap-1);
-}
-
-.add-uncertainty-toolbar {
-	display: flex;
-	align-items: center;
-	gap: var(--gap-2);
-	background-color: var(--surface-highlight);
-	padding: var(--gap-2);
-	margin-bottom: var(--gap-2);
 }
 
 :deep(.uncertainty-percentage) > input {

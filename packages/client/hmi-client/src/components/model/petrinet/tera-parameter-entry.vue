@@ -1,5 +1,5 @@
 <template>
-	<div class="parameter-entry flex flex-column flex-1">
+	<div class="flex flex-column flex-1">
 		<header>
 			<div class="flex">
 				<strong>{{ parameterId }}</strong>
@@ -40,7 +40,6 @@
 						option-label="name"
 						option-value="value"
 						:options="distributionTypeOptions()"
-						class="mr-3"
 					/>
 
 					<!-- Constant -->
@@ -66,7 +65,6 @@
 									distribution: formatPayloadFromParameterChange({ minimum: $event })
 								})
 							"
-							class="mr-2"
 						/>
 						<tera-input-number
 							label="Max"
@@ -180,16 +178,10 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.parameter-entry {
-	border-left: 4px solid var(--surface-300);
-	padding-left: var(--gap-4);
-}
-
 header {
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap-small);
-	padding-bottom: var(--gap-small);
 	padding-bottom: var(--gap-small);
 }
 main {
