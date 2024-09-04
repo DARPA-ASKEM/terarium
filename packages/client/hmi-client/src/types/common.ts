@@ -207,7 +207,7 @@ export interface CompareModelsResponseType {
 }
 
 export type ExtractionStatusUpdate = StatusUpdate<{ documentId: string }>;
-
+export type CloneProjectStatusUpdate = StatusUpdate<{ projectId: string }>;
 export interface NotificationItem extends NotificationItemStatus, AssetRoute {
 	notificationGroupId: string;
 	type: ClientEventType;
