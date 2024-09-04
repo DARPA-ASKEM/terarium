@@ -11,41 +11,30 @@
 			<tera-slider-panel v-model:is-open="isSidebarOpen" header="Configurations" content-width="360px">
 				<template #content>
 					<div class="m-3">
-						<div class="flex flex-column gap-1">
+						<div class="flex flex-row gap-1">
+							<tera-input-text v-model="filterModelConfigurationsText" placeholder="Filter" class="w-full" />
+
 							<Button
-								outlined
-								icon="pi pi-plus"
 								label="Extract from inputs"
 								@click="extractConfigurationsFromInputs"
-								severity="secondary"
+								severity="primary"
+								class="white-space-nowrap min-w-min"
 								:loading="isLoading"
+								:disabled="
+									!props.node.inputs[1]?.value &&
+									!props.node.inputs[2]?.value &&
+									!props.node.inputs[3]?.value &&
+									!props.node.inputs[4]?.value
+								"
 							/>
-
-							<span class="flex gap-1">
-								<Dropdown
-									class="flex-1"
-									v-model="selectedSortOption"
-									:options="sortByOptions"
-									option-label="label"
-									option-value="value"
-								>
-									<template #value="{ value }">
-										<label class="sort-by-label">Sort by</label
-										>{{ sortByOptions.find((option) => option.value === value)?.label }}
-									</template>
-								</Dropdown>
-								<Dropdown
-									class="flex-1"
-									v-model="selectedShownOption"
-									:options="shownOptionsList"
-									option-label="label"
-									option-value="value"
-								></Dropdown>
-							</span>
-
-							<tera-input-text v-model="filterModelConfigurationsText" placeholder="Filter" />
 						</div>
-						<ul v-if="!isLoading && model?.id">
+						<!-- Show a spinner if loading -->
+						<section v-if="isLoading" class="processing-new-configuration-tile">
+							<p class="secondary-text">Processing...</p>
+						</section>
+
+						<!-- Show all configurations -->
+						<ul v-if="model?.id">
 							<li v-for="configuration in filteredModelConfigurations" :key="configuration.id">
 								<tera-model-configuration-item
 									:configuration="configuration"
@@ -56,14 +45,15 @@
 									@download="downloadConfiguredModel(configuration)"
 								/>
 							</li>
+							<!-- Show a message if nothing found after filtering -->
+							<li v-if="filteredModelConfigurations.length === 0">No configurations found</li>
 						</ul>
-						<tera-progress-spinner is-centered :font-size="2" v-if="isLoading" />
 					</div>
 				</template>
 			</tera-slider-panel>
 		</template>
 
-		<tera-drilldown-section :tabName="ConfigTabs.Wizard" class="pl-3">
+		<tera-drilldown-section :tabName="ConfigTabs.Wizard" class="px-3 mb-10">
 			<template #header-controls-left>
 				<tera-toggleable-input
 					v-if="typeof knobs.transientModelConfig.name === 'string'"
@@ -74,22 +64,21 @@
 			<template #header-controls-right>
 				<Button label="Reset" @click="resetConfiguration" outlined severity="secondary" />
 				<Button label="Save as..." outlined severity="secondary" @click="showSaveModal = true" />
-				<Button class="mr-3" :disabled="isSaveDisabled" label="Save" @click="onSaveConfiguration" />
+				<Button class="mr-2" :disabled="isSaveDisabled" label="Save" @click="onSaveConfiguration" />
 			</template>
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab>
 					<template #header>
-						<Button v-if="!isEditingDescription" class="start-edit" text @click.stop="onEditDescription">
-							<h5 class="btn-content">Description</h5>
+						<h5 class="btn-content">Description</h5>
+						<Button v-if="!isEditingDescription" class="start-edit" text rounded @click.stop="onEditDescription">
 							<i class="pi pi-pencil" />
 						</Button>
 						<span v-else class="confirm-cancel">
-							<span>Description</span>
 							<Button icon="pi pi-times" text @click.stop="isEditingDescription = false" />
 							<Button icon="pi pi-check" text @click.stop="onConfirmEditDescription" />
 						</span>
 					</template>
-					<p class="description text" v-if="!isEditingDescription">
+					<p class="description text mb-3" v-if="!isEditingDescription">
 						{{ knobs.transientModelConfig.description }}
 					</p>
 					<Textarea
@@ -101,7 +90,7 @@
 					/>
 				</AccordionTab>
 				<AccordionTab header="Diagram">
-					<tera-model-diagram v-if="model" :model="model" />
+					<tera-model-diagram v-if="model" :model="model" class="mb-2" />
 				</AccordionTab>
 			</Accordion>
 			<template v-if="model">
@@ -140,6 +129,8 @@
 							/>
 						</AccordionTab>
 					</Accordion>
+					<!-- vertical spacer at end of page -->
+					<div class="p-5"></div>
 				</template>
 			</template>
 		</tera-drilldown-section>
@@ -206,7 +197,6 @@ import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Textarea from 'primevue/textarea';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -243,7 +233,6 @@ import Message from 'primevue/message';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { useConfirm } from 'primevue/useconfirm';
-import Dropdown from 'primevue/dropdown';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import { saveCodeToState } from '@/services/notebook';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
@@ -360,10 +349,6 @@ const filteredModelConfigurations = computed(() => {
 });
 
 const selectedSortOption = ref('createdOn');
-const sortByOptions = [{ label: 'Created On', value: 'createdOn' }];
-
-const selectedShownOption = ref('all');
-const shownOptionsList = [{ label: 'Show all', value: 'all' }];
 
 const runFromCode = () => {
 	const code = editor?.getValue();
@@ -729,6 +714,30 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* Make left sidebar grey */
+:deep(.slider-content) {
+	background-color: var(--surface-100);
+}
+:deep(.slider-content aside header) {
+	background: color-mix(in srgb, var(--surface-100) 80%, transparent 20%);
+}
+
+.processing-new-configuration-tile {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	padding: var(--gap-4);
+	background-color: var(--surface-0);
+	margin-top: var(--gap-3);
+	border-left: 4px solid var(--surface-300);
+}
+
+/* When accordions are closed, don't show their filter or edit buttons */
+:deep(.p-accordion-tab:not(.p-accordion-tab-active)) .p-accordion-header .p-accordion-header-link .tera-input,
+:deep(.p-accordion-tab:not(.p-accordion-tab-active)) .p-accordion-header .p-accordion-header-link button {
+	display: none;
+}
+
 :deep(.p-datatable-loading-overlay.p-component-overlay) {
 	background-color: var(--surface-section);
 }
@@ -793,7 +802,9 @@ button.start-edit {
 	display: flex;
 	gap: var(--gap-3);
 	width: fit-content;
+	min-width: var(--gap-3);
 	padding: var(--gap-2);
+	margin-left: var(--gap-1);
 
 	& > .btn-content {
 		color: var(--text-color);
@@ -811,5 +822,9 @@ button.start-edit {
 	& > span {
 		margin-left: var(--gap-2);
 	}
+}
+
+.secondary-text {
+	color: var(--text-color-subdued);
 }
 </style>
