@@ -112,7 +112,7 @@ Next, let's stratify the model to again to introduce the dependency of the infec
    1. Name of strata: _vaccine_
    2. Select variables and parameters to stratify: _S_vaccinated, v_vaccinated, p_unvaccinated_vaccinated_
    3. Enter a comma-separated list of labels for each group: _pfizer, moderna, jj_
-   4. Create new transitions between strata: _True_
+   4. Create new transitions between strata: _False_
    5. Allow existing interactions to involve multiple strata: _False_
 5. Click **Stratify**
 6. Confirm that a new stratified model appears on the right
