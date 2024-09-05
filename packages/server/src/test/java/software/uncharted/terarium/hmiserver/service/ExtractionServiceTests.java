@@ -80,7 +80,7 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 		documentAsset = documentAssetService.createAsset(documentAsset, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		documentAsset = extractionService
-			.extractVariables(project.getId(), documentAsset.getId(), new ArrayList<>(), "epi", ASSUME_WRITE_PERMISSION)
+			.extractVariables(project.getId(), documentAsset.getId(), new ArrayList<>(), ASSUME_WRITE_PERMISSION)
 			.get();
 	}
 
@@ -104,7 +104,7 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 		model = modelService.createAsset(model, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		documentAsset = extractionService
-			.extractVariables(project.getId(), documentAsset.getId(), List.of(model.getId()), "epi", ASSUME_WRITE_PERMISSION)
+			.extractVariables(project.getId(), documentAsset.getId(), List.of(model.getId()), ASSUME_WRITE_PERMISSION)
 			.get();
 	}
 
@@ -119,7 +119,7 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 		documentAsset = documentAssetService.createAsset(documentAsset, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		documentAsset = extractionService
-			.extractVariables(project.getId(), documentAsset.getId(), new ArrayList<>(), "epi", ASSUME_WRITE_PERMISSION)
+			.extractVariables(project.getId(), documentAsset.getId(), new ArrayList<>(), ASSUME_WRITE_PERMISSION)
 			.get();
 
 		final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");
@@ -150,6 +150,8 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 
 		documentAssetService.uploadFile(documentAsset.getId(), "paper.pdf", pdfFileEntity);
 
-		documentAsset = extractionService.extractPDF(documentAsset.getId(), "epi", null, ASSUME_WRITE_PERMISSION).get();
+		documentAsset = extractionService
+			.extractPDFAndApplyToDocument(documentAsset.getId(), null, ASSUME_WRITE_PERMISSION)
+			.get();
 	}
 }

@@ -13,8 +13,8 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep } from 'lodash';
-import { computed, ref, watch } from 'vue';
+import { cloneDeep, omit } from 'lodash';
+import { computed, watch, ref } from 'vue';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
@@ -77,7 +77,7 @@ watch(
 					label: config.name,
 					value: config.id,
 					isSelected: false,
-					state
+					state: omit(state, ['transientModelConfig'])
 				});
 			}
 		} else {

@@ -16,10 +16,12 @@ public class TaskNotificationEventTypes {
 		ClientEventType.TASK_GOLLM_CONFIGURE_MODEL_FROM_DATASET,
 		CompareModelsResponseHandler.NAME,
 		ClientEventType.TASK_GOLLM_COMPARE_MODEL,
-		GenerateResponseHandler.NAME,
+		GenerateSummaryHandler.NAME,
 		ClientEventType.TASK_GOLLM_GENERATE_SUMMARY,
 		ValidateModelConfigHandler.NAME,
-		ClientEventType.TASK_FUNMAN_VALIDATION
+		ClientEventType.TASK_FUNMAN_VALIDATION,
+		EnrichAmrResponseHandler.NAME,
+		ClientEventType.TASK_ENRICH_AMR
 	);
 
 	public static ClientEventType getTypeFor(final String taskName) {
