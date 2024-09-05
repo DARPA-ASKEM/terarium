@@ -137,7 +137,6 @@ import TeraTooltip from '@/components/widgets/tera-tooltip.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
-	menuItems?: any[];
 	title?: string;
 	tooltip?: string;
 	isDraft?: boolean;

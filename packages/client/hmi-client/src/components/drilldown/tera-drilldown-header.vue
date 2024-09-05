@@ -1,5 +1,5 @@
 <template>
-	<header class="border-b" :style="{ borderColor: 'var(--surface-border-light)' }">
+	<header>
 		<div class="title-row">
 			<h4 class="title"><slot /> <i v-if="props.tooltip" v-tooltip="tooltip" class="pi pi-info-circle" /></h4>
 			<slot name="top-header-actions" />
