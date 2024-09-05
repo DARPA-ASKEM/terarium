@@ -11,9 +11,10 @@
 					<Accordion :activeIndex="0">
 						<AccordionTab header="Overview">
 							<p v-if="isEmpty(overview)" class="subdued">
+								<i class="pi pi-spin pi-spinner mr-1" />
 								Analyzing models metadata to generate a detailed comparison analysis...
 							</p>
-							<p v-html="overview" v-else />
+							<p v-html="overview" v-else class="markdown-text" />
 						</AccordionTab>
 					</Accordion>
 				</section>
