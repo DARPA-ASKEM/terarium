@@ -1,5 +1,5 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
-import { Intervention, InterventionSemanticType, InterventionPolicy } from '@/types/Types';
+import { Intervention, InterventionSemanticType, InterventionPolicy, ProjectAsset } from '@/types/Types';
 import { getRunResult, getSimulation } from '@/services/models/simulation-service';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import { createInterventionPolicy, blankIntervention } from '@/services/intervention-policy';
@@ -253,7 +253,10 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
  *
  *
  */
-export async function createInterventionPolicyFromOptimize(modelConfigId: string, optimizeRunId: string) {
+export async function createInterventionPolicyFromOptimize(
+	modelConfigId: string,
+	optimizeRunId: string
+): Promise<ProjectAsset> {
 	const modelId = await getModelIdFromModelConfigurationId(modelConfigId);
 	const optimizedInterventions = await getOptimizedInterventions(optimizeRunId);
 
@@ -263,6 +266,5 @@ export async function createInterventionPolicyFromOptimize(modelConfigId: string
 		temporary: true,
 		interventions: optimizedInterventions
 	};
-	const newInterventionPolicy: InterventionPolicy = await createInterventionPolicy(newIntervention);
-	return newInterventionPolicy;
+	return createInterventionPolicy(newIntervention);
 }

@@ -1,5 +1,5 @@
 import API, { getProjectIdFromUrl } from '@/api/api';
-import type { Intervention, InterventionPolicy } from '@/types/Types';
+import type { Intervention, InterventionPolicy, ProjectAsset } from '@/types/Types';
 import { InterventionSemanticType } from '@/types/Types';
 import { activeProjectId } from '@/composables/activeProject';
 
@@ -16,12 +16,12 @@ export const getInterventionPolicyById = async (policyId: string): Promise<Inter
 	return response?.data ?? null;
 };
 
-export const createInterventionPolicy = async (policy: InterventionPolicy): Promise<InterventionPolicy> => {
+export const createInterventionPolicy = async (policy: InterventionPolicy): Promise<ProjectAsset> => {
 	const projectId = activeProjectId.value || getProjectIdFromUrl();
 	delete policy.id;
 	delete policy.createdOn;
 	delete policy.updatedOn;
-	const response = await API.post<InterventionPolicy>(`/interventions?project-id=${projectId}`, policy);
+	const response = await API.post<ProjectAsset>(`/interventions?project-id=${projectId}`, policy);
 	return response?.data ?? null;
 };
 

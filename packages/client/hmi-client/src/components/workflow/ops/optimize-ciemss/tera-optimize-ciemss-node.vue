@@ -33,7 +33,7 @@ import {
 	parsePyCiemssMap
 } from '@/services/models/simulation-service';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
-import { SimulationRequest, InterventionPolicy } from '@/types/Types';
+import { SimulationRequest } from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { createForecastChart } from '@/services/charts';
@@ -87,7 +87,7 @@ const pollResult = async (runId: string) => {
 	return pollerResults;
 };
 
-const startForecast = async (optimizedInterventions?: InterventionPolicy) => {
+const startForecast = async (optimizedInterventionsId?: string) => {
 	const simulationPayload: SimulationRequest = {
 		modelConfigId: modelConfigId.value as string,
 		timespan: {
@@ -101,9 +101,9 @@ const startForecast = async (optimizedInterventions?: InterventionPolicy) => {
 		engine: 'ciemss'
 	};
 
-	if (optimizedInterventions) {
+	if (optimizedInterventionsId) {
 		// Use the intervention policy ID provided.
-		simulationPayload.policyInterventionId = optimizedInterventions.id;
+		simulationPayload.policyInterventionId = optimizedInterventionsId;
 	} else {
 		// Use the input interventions provided
 		const inputIntervention = props.node.inputs[1].value?.[0];
@@ -171,7 +171,7 @@ watch(
 			const newInterventionResponse = await createInterventionPolicyFromOptimize(modelConfigId.value as string, optId);
 
 			const preForecastResponse = startForecast();
-			const postForecastResponse = startForecast(newInterventionResponse);
+			const postForecastResponse = startForecast(newInterventionResponse?.assetId);
 			const forecastResults = await Promise.all([preForecastResponse, postForecastResponse]);
 			const [{ id: preForecastId }, { id: postForecastId }] = forecastResults;
 

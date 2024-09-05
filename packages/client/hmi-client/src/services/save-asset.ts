@@ -53,8 +53,8 @@ export async function saveAs(
 			break;
 		case AssetType.InterventionPolicy:
 			response = await createInterventionPolicy(newAsset as InterventionPolicy);
-			name = response?.name;
-			id = response?.id;
+			name = response?.assetName;
+			id = response?.assetId;
 			break;
 		case AssetType.ModelConfiguration:
 			response = await createModelConfiguration(newAsset as ModelConfiguration);

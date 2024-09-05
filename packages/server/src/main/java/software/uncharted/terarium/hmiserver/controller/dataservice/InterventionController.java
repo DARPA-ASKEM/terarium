@@ -26,13 +26,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.simulationservice.interventions.InterventionPolicy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.InterventionService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/interventions")
@@ -48,6 +52,8 @@ public class InterventionController {
 	final ProjectService projectService;
 
 	final CurrentUserService currentUserService;
+
+	final Messages messages;
 
 	@GetMapping
 	@Secured(Roles.USER)
@@ -139,7 +145,7 @@ public class InterventionController {
 			)
 		}
 	)
-	public ResponseEntity<InterventionPolicy> createIntervention(
+	public ResponseEntity<ProjectAsset> createIntervention(
 		@RequestBody final InterventionPolicy item,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
@@ -147,15 +153,42 @@ public class InterventionController {
 			currentUserService.get().getId(),
 			projectId
 		);
+
+		InterventionPolicy createdInterventionPolicy;
+
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED).body(
-				interventionService.createAsset(item, projectId, permission)
-			);
+			createdInterventionPolicy = interventionService.createAsset(item, projectId, permission);
 		} catch (final IOException e) {
 			final String error = "Unable to create intervention";
 			log.error(error, e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
+
+		final Optional<Project> project;
+		try {
+			project = projectService.getProject(projectId);
+			if (!project.isPresent()) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
+			}
+		} catch (final Exception e) {
+			log.error("Error communicating with project service", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
+
+		final AssetType assetType = AssetType.INTERVENTION_POLICY;
+		final Optional<ProjectAsset> projectAsset = projectAssetService.createProjectAsset(
+			project.get(),
+			assetType,
+			createdInterventionPolicy,
+			permission
+		);
+
+		if (projectAsset.isEmpty()) {
+			log.error("Project Asset is empty");
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("asset.unable-to-create"));
+		}
+
+		return ResponseEntity.status(HttpStatus.CREATED).body(projectAsset.get());
 	}
 
 	@PutMapping("/{id}")
