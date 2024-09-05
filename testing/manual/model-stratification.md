@@ -30,7 +30,7 @@ We want to stratified the model by several age groups to simulate how contact ra
    5. Allow existing interactions to involve multiple strata: _True_
 9. Click **Stratify**
 10. Expected result:
-   1. `Output - 1`  is available in the output selection dropdown in the top-right corner
+   1. `Output - 2`  is available in the output selection dropdown in the top-right corner
    2. A new model with the same structure as the SEIRHD model appears in the right half of the interface
    3. The states `S, E, I` of the new model have 18 nodes that are circle-packed within them, representing the new stratified states `S_0to4, S_5to9, ...`
 11. Select and double-click the transition `template-1` between the states `S, E` to expand the matrix view of this transition
@@ -65,7 +65,7 @@ We want to stratified the model by several age groups to simulate how contact ra
    2. Select variables and parameters to stratify: _S, v_
    3. Enter a comma-separated list of labels for each group: _unvaccinated, vaccinated_
    4. Create new transitions between strata: _True_
-   5. Allow existing interactions to involve multiple strata: _True_
+   5. Allow existing interactions to involve multiple strata: _False_
 9. Click **Stratify**
 10. Confirm that a new stratified model appears on the right
 11. Click on the **Notebook** tab at the top of the interface to refine the stratification
@@ -77,7 +77,7 @@ model = stratify(
     strata=['unvaccinated', 'vaccinated'],
     structure= None,
     directed=False,
-    cartesian_control=True,
+    cartesian_control=False,
     modify_names=True,
     concepts_to_stratify=['S'], #If none given, will stratify all concepts.
     params_to_stratify= ['v'], #If none given, will stratify all parameters.
@@ -99,6 +99,7 @@ model = stratify(
    2. Only the state `S` has two stratified states within it: `S_unvaccinated, S_vaccinated`
    3. One new transition named `template-7` with rate law `S_unvaccinated*p_unvaccinated_vaccinated`
    4. The transition `template-1` is now a `2 x 1` matrix
+   5. There are nine transitions in total
 16. Click **X** to exit this operator
 
 ### 5. Chain-stratify model
