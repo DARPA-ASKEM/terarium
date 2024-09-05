@@ -432,14 +432,14 @@ $tabviewHeaderBorder: solid rgba(0, 0, 0, .12) !default;
 $tabviewHeaderBorderWidth: 0 0 1px 0 !default;
 $tabviewHeaderBorderColor: transparent transparent rgba(0, 0, 0, .12) transparent !default;
 $tabviewHeaderBg: #ffffff !default;
-$tabviewHeaderTextColor: $textSecondaryColor !default;
+$tabviewHeaderTextColor: $textColor !default;
 $tabviewHeaderFontWeight: 500 !default;
 $tabviewHeaderPadding: 1rem 1.5rem !default;
 $tabviewHeaderMargin: 0 0 -1px 0 !default;
 
 $tabviewHeaderHoverBg: rgba($primaryColor, .04) !default;
 $tabviewHeaderHoverBorderColor: rgba(0, 0, 0, .12) !default;
-$tabviewHeaderTextHoverColor: $textSecondaryColor !default;
+$tabviewHeaderTextHoverColor: $textColor !default;
 
 $tabviewHeaderActiveBg: #ffffff !default;
 $tabviewHeaderActiveBorderColor: rgba(0, 0, 0, .12) !default;
