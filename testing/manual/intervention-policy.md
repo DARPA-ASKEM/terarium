@@ -10,9 +10,8 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
     ```
 2. Create, or open, project named `QA [Your Name]`
 
-### 2. Upload assets
+### 2. Upload asset
 1. Model [SIR.json](https://drive.google.com/file/d/1eXlvpBfMmhrfC0xUXfuz0s_19gi-Rird/view?usp=drive_link)
-2. Dataset [SIR_Dataset](https://drive.google.com/file/d/1wdCLKKznHaoCg1gWI7q7OO8W4F7zOjpc/view?usp=drive_link)
 
 ### 3. Create an intervention policy
 1. Create a new workflow named `Intervention Policy`
