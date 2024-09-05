@@ -73,7 +73,7 @@
 					v-for="assetItem in assetItems"
 					:key="assetItem.assetId"
 					:active="assetItem.assetId === assetId && assetItem.pageType === pageType"
-					:title="getElapsedTimeText(assetItem.assetCreatedOn)"
+					:title="`${assetItem.assetName} — ${getElapsedTimeText(assetItem.assetCreatedOn)}`"
 					class="asset-button"
 					plain
 					text
