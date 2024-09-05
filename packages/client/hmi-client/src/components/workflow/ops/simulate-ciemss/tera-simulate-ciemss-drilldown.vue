@@ -118,6 +118,7 @@
 		<!-- Preview -->
 		<template #preview>
 			<tera-drilldown-preview
+				v-if="selectedOutputId"
 				title="Simulation output"
 				:options="outputs"
 				v-model:output="selectedOutputId"
@@ -178,6 +179,12 @@
 					</div>
 				</template>
 			</tera-drilldown-preview>
+
+			<!-- Empty state -->
+			<section v-else class="emptyState">
+				<Vue3Lottie :animationData="EmptySeed" :height="150" loop autoplay />
+				<p class="helpMessage">Click 'Run' to start the simulation</p>
+			</section>
 		</template>
 	</tera-drilldown>
 </template>
@@ -187,6 +194,8 @@ import _ from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
+import { Vue3Lottie } from 'vue3-lottie';
+import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import type { CsvAsset, SimulationRequest, TimeSpan } from '@/types/Types';
@@ -640,5 +649,18 @@ onUnmounted(() => kernelManager.shutdown());
 	& > * {
 		flex: 1;
 	}
+}
+
+.emptyState {
+	position: absolute;
+	width: calc(100% - 240px);
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--gap);
+	text-align: center;
+	pointer-events: none;
 }
 </style>
