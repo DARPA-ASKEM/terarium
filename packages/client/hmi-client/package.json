@@ -21,7 +21,7 @@
 		"@hsorby/vue3-katex": "0.6.0-rc.7",
 		"@jupyter/ydoc": "1.0.2",
 		"@jupyterlab/application": "3.6.7",
-		"@jupyterlab/apputils": "3.6.7",
+		"@jupyterlab/apputils": "3.6.8",
 		"@jupyterlab/cells": "3.6.7",
 		"@jupyterlab/codemirror": "3.6.7",
 		"@jupyterlab/completer": "3.6.7",
