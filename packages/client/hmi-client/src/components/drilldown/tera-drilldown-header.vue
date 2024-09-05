@@ -98,12 +98,15 @@ a {
 :deep(.p-tabview .p-tabview-nav li .p-tabview-nav-link:focus) {
 	background-color: var(--surface-section);
 }
+:deep(.p-tabview .p-tabview-nav li .p-tabview-nav-link) {
+	padding: var(--gap-3) var(--gap-6);
+}
 
 .actions {
 	display: flex;
 	justify-content: flex-end;
 	gap: var(--gap-small);
-	padding-bottom: var(--gap-small);
+	padding-bottom: var(--gap-1);
 	flex: 1;
 }
 
