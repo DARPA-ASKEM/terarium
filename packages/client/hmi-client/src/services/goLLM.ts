@@ -49,21 +49,20 @@ export async function configureModelFromDocument(
 	return data;
 }
 
-export async function configureModelFromDatasets(
+export async function configureModelFromDataset(
 	modelId: string,
-	datasetIds: string[],
+	datasetId: string,
 	matrixStr: string,
 	workflowId?: string,
 	nodeId?: string
 ): Promise<TaskResponse> {
-	// FIXME: Using first dataset for now...
 	const { data } = await API.post<TaskResponse>(
 		'/gollm/configure-from-dataset',
 		{ matrixStr },
 		{
 			params: {
 				'model-id': modelId,
-				'dataset-ids': datasetIds.join(),
+				'dataset-id': datasetId,
 				'workflow-id': workflowId,
 				'node-id': nodeId
 			}

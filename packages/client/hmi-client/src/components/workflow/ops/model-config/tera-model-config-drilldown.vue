@@ -188,8 +188,8 @@
 
 <script setup lang="ts">
 import '@/ace-config';
-import { computed, onUnmounted, ref, watch, nextTick, ComponentPublicInstance } from 'vue';
-import { cloneDeep, isEmpty, orderBy, debounce } from 'lodash';
+import { ComponentPublicInstance, computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { cloneDeep, debounce, isEmpty, orderBy, omit } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
@@ -209,22 +209,22 @@ import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
 import { emptyMiraModel, generateModelDatasetConfigurationContext } from '@/model-representation/mira/mira';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
-import { configureModelFromDatasets, configureModelFromDocument } from '@/services/goLLM';
+import { configureModelFromDataset, configureModelFromDocument } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
 import { getMMT, getModel, getModelConfigurationsForModel } from '@/services/model';
 import {
 	createModelConfiguration,
-	setInitialSource,
-	setInitialExpression,
-	setParameterSource,
-	setParameterDistributions,
 	getAsConfiguredModel,
-	updateModelConfiguration,
-	getModelConfigurationById
+	getModelConfigurationById,
+	setInitialExpression,
+	setInitialSource,
+	setParameterDistributions,
+	setParameterSource,
+	updateModelConfiguration
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { Model, ModelConfiguration } from '@/types/Types';
-import { Observable, AssetType } from '@/types/Types';
+import type { Model, ModelConfiguration, TaskResponse } from '@/types/Types';
+import { AssetType, Observable } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
@@ -238,11 +238,11 @@ import { saveCodeToState } from '@/services/notebook';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
 import {
-	ModelConfigOperation,
-	ModelConfigOperationState,
 	blankModelConfig,
+	isModelConfigsEqual,
 	isModelConfigValuesEqual,
-	isModelConfigsEqual
+	ModelConfigOperation,
+	ModelConfigOperationState
 } from './model-config-operation';
 
 enum ConfigTabs {
@@ -411,25 +411,36 @@ const extractConfigurationsFromInputs = async () => {
 	if (!model.value?.id) {
 		return;
 	}
-	if (documentId.value) {
-		const resp = await configureModelFromDocument(
-			documentId.value,
-			model.value.id,
-			props.node.workflowId,
-			props.node.id
-		);
-		state.documentModelConfigTaskId = resp.id;
+
+	if (documentIds.value) {
+		const promiseList = [] as Promise<TaskResponse | null>[];
+		documentIds.value.forEach((documentId) => {
+			promiseList.push(
+				configureModelFromDocument(documentId, model.value?.id as string, props.node.workflowId, props.node.id)
+			);
+		});
+		const responsesRaw = await Promise.all(promiseList);
+		responsesRaw.forEach((resp) => {
+			if (resp) {
+				state.modelConfigTaskIds.push(resp.id);
+			}
+		});
 	}
+
 	if (datasetIds.value) {
 		const matrixStr = generateModelDatasetConfigurationContext(mmt.value, mmtParams.value);
-		const resp = await configureModelFromDatasets(
-			model.value.id,
-			datasetIds.value,
-			matrixStr,
-			props.node.workflowId,
-			props.node.id
-		);
-		state.datasetModelConfigTaskId = resp.id;
+		const promiseList = [] as Promise<TaskResponse | null>[];
+		datasetIds.value.forEach((datasetId) => {
+			promiseList.push(
+				configureModelFromDataset(model.value?.id as string, datasetId, matrixStr, props.node.workflowId, props.node.id)
+			);
+		});
+		const responsesRaw = await Promise.all(promiseList);
+		responsesRaw.forEach((resp) => {
+			if (resp) {
+				state.modelConfigTaskIds.push(resp.id);
+			}
+		});
 	}
 	emit('update-state', state);
 };
@@ -438,8 +449,18 @@ const selectedOutputId = ref<string>('');
 const selectedConfigId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
 const originalConfig = ref<ModelConfiguration | null>(null);
 
-const documentId = computed(() => props.node.inputs[1]?.value?.[0]?.documentId);
-const datasetIds = computed(() => props.node.inputs[2]?.value);
+const documentIds = computed(() =>
+	props.node.inputs
+		.filter((input) => input.type === 'documentId' && input.status === 'connected')
+		.map((input) => input.value?.[0]?.documentId)
+		.filter((id): id is string => id !== undefined)
+);
+const datasetIds = computed(() =>
+	props.node.inputs
+		.filter((input) => input.type === 'datasetId' && input.status === 'connected')
+		.map((input) => input.value?.[0])
+		.filter((id): id is string => id !== undefined)
+);
 
 const suggestedConfigurationContext = ref<{
 	isOpen: boolean;
@@ -506,27 +527,25 @@ const createConfiguration = async () => {
 	}
 
 	const state = cloneDeep(props.node.state);
-	state.transientModelConfig = data;
 	useToastService().success('', 'Created model configuration');
 	emit('append-output', {
 		type: ModelConfigOperation.outputs[0].type,
 		label: data.name,
 		value: data.id,
 		isSelected: false,
-		state
+		state: omit(state, ['transientModelConfig'])
 	});
 };
 
 const onSaveAsModelConfiguration = (data: ModelConfiguration) => {
 	useToastService().success('', 'Created model configuration');
 	const state = cloneDeep(props.node.state);
-	state.transientModelConfig = data;
 	emit('append-output', {
 		type: ModelConfigOperation.outputs[0].type,
 		label: data.name,
 		value: data.id,
 		isSelected: false,
-		state
+		state: omit(state, ['transientModelConfig'])
 	});
 	showSaveModal.value = false;
 };
@@ -551,7 +570,7 @@ const fetchConfigurations = async (modelId: string) => {
 };
 
 // Fill the form with the config data
-const initialize = async () => {
+const initialize = async (overwriteWithState: boolean = false) => {
 	const state = props.node.state;
 	const modelId = props.node.inputs[0].value?.[0];
 	if (!modelId) return;
@@ -569,9 +588,7 @@ const initialize = async () => {
 		applyConfigValues(suggestedConfigurationContext.value.tableData[0]);
 	} else {
 		originalConfig.value = await getModelConfigurationById(selectedConfigId.value);
-
-		// FIXME: Bug sept-03, state.transientModelConfig may not be saved properly before this date
-		if (state.transientModelConfig.id !== originalConfig.value.id) {
+		if (!overwriteWithState) {
 			knobs.value.transientModelConfig = cloneDeep(originalConfig.value);
 		} else {
 			knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
@@ -629,15 +646,12 @@ const applyConfigValues = (config: ModelConfiguration) => {
 	// If the output does not already exist
 	else {
 		const state = cloneDeep(props.node.state);
-		state.transientModelConfig = config;
-
-		// Append this config to the output.
 		emit('append-output', {
 			type: ModelConfigOperation.outputs[0].type,
 			label: config.name,
 			value: config.id,
 			isSelected: false,
-			state
+			state: omit(state, ['transientModelConfig'])
 		});
 	}
 	logger.success(`Configuration applied ${config.name}`);
@@ -660,7 +674,7 @@ const resetConfiguration = () => {
 		header: 'Are you sure you want to reset the configuration?',
 		message: 'This will reset all values original values of the configuration.',
 		accept: () => {
-			if (originalConfig.value) applyConfigValues(originalConfig.value);
+			if (originalConfig.value) knobs.value.transientModelConfig = cloneDeep(originalConfig.value);
 		},
 		acceptLabel: 'Confirm',
 		rejectLabel: 'Cancel'
@@ -668,9 +682,9 @@ const resetConfiguration = () => {
 };
 
 watch(
-	() => `${props.node.state.datasetModelConfigTaskId}:${props.node.state.documentModelConfigTaskId}`,
-	async (watchStr) => {
-		if (watchStr !== ':') {
+	() => props.node.state.modelConfigTaskIds,
+	async (watchVal) => {
+		if (watchVal.length > 0) {
 			isLoading.value = true;
 		} else {
 			isLoading.value = false;
@@ -697,6 +711,14 @@ watch(
 	{ deep: true }
 );
 
+onMounted(() => {
+	// setting as true will overwrite the model config with the current state value
+	if (props.node.active) {
+		selectedOutputId.value = props.node.active;
+		initialize(true);
+	}
+});
+
 watch(
 	() => props.node.active,
 	() => {
@@ -704,8 +726,7 @@ watch(
 			selectedOutputId.value = props.node.active;
 			initialize();
 		}
-	},
-	{ immediate: true }
+	}
 );
 
 onUnmounted(() => {
@@ -791,6 +812,10 @@ onUnmounted(() => {
 .sort-by-label {
 	color: var(--text-color-subdued);
 	padding-right: var(--gap-small);
+}
+
+:deep(.pi-spinner) {
+	padding: var(--gap-2);
 }
 
 ul {

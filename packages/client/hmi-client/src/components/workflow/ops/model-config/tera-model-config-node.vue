@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep } from 'lodash';
+import { cloneDeep, omit } from 'lodash';
 import { computed, watch, ref } from 'vue';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
@@ -22,33 +22,28 @@ import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeho
 import { getModel, getModelConfigurationsForModel } from '@/services/model';
 import { postAsConfiguredModel } from '@/services/model-configurations';
 import { useClientEvent } from '@/composables/useClientEvent';
-import type { TaskResponse, ClientEvent } from '@/types/Types';
+import type { ClientEvent, TaskResponse } from '@/types/Types';
 import { ClientEventType, TaskStatus } from '@/types/Types';
-import { ModelConfigOperation, ModelConfigOperationState, blankModelConfig } from './model-config-operation';
+import { blankModelConfig, ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelConfigOperationState>;
 }>();
 const emit = defineEmits(['open-drilldown', 'append-input-port', 'update-state', 'append-output']);
 
-const documentModelConfigTaskId = ref<string>('');
-const datasetModelConfigTaskId = ref<string>('');
+const modelConfigTaskIds = ref<string[]>([]);
 
 const configModelEventHandler = async (event: ClientEvent<TaskResponse>) => {
-	const taskIdRefs = {
-		[ClientEventType.TaskGollmConfigureModel]: documentModelConfigTaskId,
-		[ClientEventType.TaskGollmConfigureFromDataset]: datasetModelConfigTaskId
-	};
-	if (event.data?.id !== taskIdRefs[event.type].value) return;
+	if (!modelConfigTaskIds.value.includes(event.data?.id)) return;
 	if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
-		taskIdRefs[event.type].value = '';
+		modelConfigTaskIds.value = modelConfigTaskIds.value.filter((id) => id !== event.data.id);
 	}
 };
 
-useClientEvent(ClientEventType.TaskGollmConfigureModel, configModelEventHandler);
-useClientEvent(ClientEventType.TaskGollmConfigureFromDataset, configModelEventHandler);
+useClientEvent(ClientEventType.TaskGollmConfigureModelFromDocument, configModelEventHandler);
+useClientEvent(ClientEventType.TaskGollmConfigureModelFromDataset, configModelEventHandler);
 
-const isLoading = computed(() => datasetModelConfigTaskId.value !== '' || documentModelConfigTaskId.value !== '');
+const isLoading = computed(() => modelConfigTaskIds.value.length > 0);
 
 const modelInput = props.node.inputs.find((input) => input.type === 'modelId');
 const isModelInputConnected = computed(() => modelInput?.status === WorkflowPortStatus.CONNECTED);
@@ -82,7 +77,7 @@ watch(
 					label: config.name,
 					value: config.id,
 					isSelected: false,
-					state
+					state: omit(state, ['transientModelConfig'])
 				});
 			}
 		} else {
@@ -105,16 +100,9 @@ watch(
 );
 
 watch(
-	() => props.node.state.documentModelConfigTaskId,
+	() => props.node.state.modelConfigTaskIds,
 	() => {
-		documentModelConfigTaskId.value = props.node.state.documentModelConfigTaskId ?? '';
-	}
-);
-
-watch(
-	() => props.node.state.datasetModelConfigTaskId,
-	() => {
-		datasetModelConfigTaskId.value = props.node.state.datasetModelConfigTaskId ?? '';
+		modelConfigTaskIds.value = props.node.state.modelConfigTaskIds ?? [];
 	}
 );
 
@@ -123,8 +111,7 @@ watch(
 	() => {
 		if (!isLoading.value) {
 			const state = cloneDeep(props.node.state);
-			state.documentModelConfigTaskId = '';
-			state.datasetModelConfigTaskId = '';
+			state.modelConfigTaskIds = [];
 			emit('update-state', state);
 		}
 	}

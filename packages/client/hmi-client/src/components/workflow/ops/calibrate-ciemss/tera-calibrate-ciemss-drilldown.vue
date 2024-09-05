@@ -148,7 +148,19 @@
 
 		<!-- Output section -->
 		<template #preview>
-			<tera-drilldown-preview>
+			<tera-drilldown-section class="ml-4 mr-2 pt-3">
+				<template #header-controls-left v-if="configuredModelConfig?.name">
+					<h5>{{ configuredModelConfig.name }}</h5>
+				</template>
+				<template #header-controls-right>
+					<Button
+						label="Save for re-use"
+						severity="secondary"
+						outlined
+						:disabled="!configuredModelConfig"
+						@click="showSaveModal = true"
+					/>
+				</template>
 				<tera-operator-output-summary v-if="node.state.summaryId && !showSpinner" :summary-id="node.state.summaryId" />
 
 				<!-- Loss chart -->
@@ -249,7 +261,7 @@
 				</section>
 
 				<tera-notebook-error v-if="!_.isEmpty(node.state?.errorMessage?.traceback)" v-bind="node.state.errorMessage" />
-			</tera-drilldown-preview>
+			</tera-drilldown-section>
 		</template>
 
 		<template #sidebar-right>
@@ -290,6 +302,15 @@
 			</tera-slider-panel>
 		</template>
 	</tera-drilldown>
+	<tera-save-asset-modal
+		:initial-name="configuredModelConfig?.name"
+		:is-visible="showSaveModal"
+		:asset="configuredModelConfig"
+		:asset-type="AssetType.ModelConfiguration"
+		@close-modal="showSaveModal = false"
+		@on-save="onSaveAsModelConfiguration"
+		is-updating-asset
+	/>
 </template>
 
 <script setup lang="ts">
@@ -306,7 +327,6 @@ import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { CalibrateMap, setupDatasetInput, setupModelInput } from '@/services/calibrate-workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
@@ -319,7 +339,8 @@ import {
 	ClientEventType,
 	CsvAsset,
 	DatasetColumn,
-	ModelConfiguration
+	ModelConfiguration,
+	AssetType
 } from '@/types/Types';
 import { ChartSetting, ChartSettingType } from '@/types/workflow';
 import { getTimespan, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
@@ -335,6 +356,7 @@ import {
 	DataArray,
 	CiemssMethodOptions
 } from '@/services/models/simulation-service';
+import { getModelConfigurationById } from '@/services/model-configurations';
 
 import type { WorkflowNode } from '@/types/workflow';
 import { createForecastChart, createHistogramChart, createErrorChart } from '@/services/charts';
@@ -344,6 +366,7 @@ import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { displayNumber } from '@/utils/number';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
+import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults, getErrorData } from './calibrate-utils';
 
@@ -438,6 +461,8 @@ const runResultPre = ref<DataArray>([]);
 const runResultSummary = ref<DataArray>([]);
 const runResultSummaryPre = ref<DataArray>([]);
 const errorData = ref<Record<string, any>[]>([]);
+const showSaveModal = ref(false);
+const configuredModelConfig = ref<ModelConfiguration | null>(null);
 
 const showSpinner = ref(false);
 
@@ -855,6 +880,20 @@ const initialize = async () => {
 	currentDatasetFileName.value = filename;
 	csvAsset.value = csv;
 	datasetColumns.value = datasetOptions;
+
+	getConfiguredModelConfig();
+};
+
+const onSaveAsModelConfiguration = async () => {
+	getConfiguredModelConfig();
+};
+
+const getConfiguredModelConfig = async () => {
+	const selectedOutput = props.node.outputs.find((output) => output.id === selectedOutputId.value);
+	const configuredModelId = selectedOutput?.value?.[0]?.modelConfigId;
+	if (configuredModelId) {
+		configuredModelConfig.value = await getModelConfigurationById(configuredModelId);
+	}
 };
 
 onMounted(async () => {

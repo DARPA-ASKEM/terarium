@@ -407,7 +407,8 @@ watch(
 				observableSemanticList: _.cloneDeep(baseConfig.observableSemanticList),
 				parameterSemanticList: [],
 				initialSemanticList: _.cloneDeep(baseConfig.initialSemanticList),
-				inferredParameterList: inferredParameters
+				inferredParameterList: inferredParameters,
+				temporary: true
 			};
 
 			const modelConfigResponse = await createModelConfiguration(calibratedModelConfig);

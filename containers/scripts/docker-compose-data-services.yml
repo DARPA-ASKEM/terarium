@@ -3,7 +3,6 @@ services:
   beaker:
     container_name: beaker
     image: ghcr.io/darpa-askem/beaker-kernel:latest
-    platform: linux/amd64
     networks:
       - terarium
     ports:
