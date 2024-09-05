@@ -226,4 +226,29 @@
 		border-radius: 3px;
 		padding: var(--gap-small);
 	}
+
+	/* Markdown style overrides */
+	.markdown-text {
+		& h1 {
+			font-size: var(--font-body-large);
+			padding-bottom: var(--gap-1);
+		}
+
+		& h2 {
+			font-size: var(--font-body-medium);
+			padding-top: var(--gap-3);
+		}
+
+		& p {
+			padding-bottom: var(--gap);
+		}
+
+		& ul {
+			list-style-position: inside;
+			padding-bottom: var(--gap);
+			padding-left: var(--gap-2);
+			gap: 0;
+		}
+	}	
+
 }
