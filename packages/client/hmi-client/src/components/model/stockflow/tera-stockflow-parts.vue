@@ -61,58 +61,6 @@
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
-				Other concepts
-				<span class="artifact-amount">({{ otherConcepts.length }})</span>
-			</template>
-			<DataTable v-if="!isEmpty(otherConcepts)" data-key="id" :value="otherConcepts">
-				<Column field="payload.id.id" header="Payload id" />
-				<Column header="Names">
-					<template #body="{ data }">
-						{{
-							data.payload?.names?.map((n) => n?.name).join(', ') ||
-							data.payload?.mentions?.map((m) => m?.name).join(', ') ||
-							'--'
-						}}
-					</template>
-				</Column>
-				<Column header="Values">
-					<template #body="{ data }">
-						{{
-							data.payload?.values?.map((n) => n?.value?.amount).join(', ') ||
-							data.payload?.value_descriptions?.map((m) => m?.value?.amount).join(', ') ||
-							'--'
-						}}
-					</template>
-				</Column>
-				<Column header="Descriptions">
-					<template #body="{ data }">
-						{{
-							data.payload?.descriptions?.map((d) => d?.source).join(', ') ||
-							data.payload?.text_descriptions?.map((d) => d?.description).join(', ') ||
-							'--'
-						}}
-					</template>
-				</Column>
-				<Column field="payload.groundings" header="Concept">
-					<template #body="{ data }">
-						<template v-if="!data?.payload?.groundings || data?.payload?.groundings.length < 1">--</template>
-						<template v-else v-for="grounding in data?.payload?.groundings" :key="grounding.grounding_id">
-							{{ grounding.grounding_text }}
-							<a
-								target="_blank"
-								rel="noopener noreferrer"
-								:href="getCurieUrl(grounding.grounding_id)"
-								aria-label="Open Concept"
-							>
-								<i class="pi pi-external-link" />
-							</a>
-						</template>
-					</template>
-				</Column>
-			</DataTable>
-		</AccordionTab>
-		<AccordionTab>
-			<template #header>
 				Time
 				<span class="artifact-amount">({{ time.length }})</span>
 			</template>
@@ -123,12 +71,10 @@
 
 <script setup lang="ts">
 import type { Model } from '@/types/Types';
-import { groupBy, isEmpty } from 'lodash';
+import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { computed } from 'vue';
-import { Dictionary } from 'vue-gtag';
-import { getCurieUrl } from '@/services/concept';
 import { stringToLatexExpression } from '@/services/model';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -155,25 +101,6 @@ const parametersLength = computed(
 );
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
 const time = computed(() => (props.model?.semantics?.ode?.time ? [props.model?.semantics.ode.time] : []));
-const extractions = computed(() => {
-	const attributes = props.model?.metadata?.attributes ?? [];
-	return groupBy(attributes, 'amr_element_id');
-});
-const stocks = computed(() => props.model?.model?.stocks ?? []);
+
 const flows = computed(() => props.model?.model?.flows ?? []);
-const otherConcepts = computed(() => {
-	const ids = [...(stocks.value?.map((s) => s.id) ?? []), ...(flows.value?.map((f) => f.id) ?? [])];
-
-	// find keys that are not aligned
-	const unalignedKeys = Object.keys(extractions.value).filter((k) => !ids.includes(k));
-
-	let unalignedExtractions: Dictionary<any>[] = [];
-	unalignedKeys.forEach((key) => {
-		unalignedExtractions = unalignedExtractions.concat(
-			extractions.value[key.toString()].filter((e) => ['anchored_extraction', 'anchored_entity'].includes(e.type))
-		);
-	});
-
-	return unalignedExtractions ?? [];
-});
 </script>
