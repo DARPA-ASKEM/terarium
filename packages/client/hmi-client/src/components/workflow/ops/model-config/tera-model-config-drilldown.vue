@@ -674,7 +674,7 @@ const resetConfiguration = () => {
 		header: 'Are you sure you want to reset the configuration?',
 		message: 'This will reset all values original values of the configuration.',
 		accept: () => {
-			if (originalConfig.value) applyConfigValues(originalConfig.value);
+			if (originalConfig.value) knobs.value.transientModelConfig = cloneDeep(originalConfig.value);
 		},
 		acceptLabel: 'Confirm',
 		rejectLabel: 'Cancel'
