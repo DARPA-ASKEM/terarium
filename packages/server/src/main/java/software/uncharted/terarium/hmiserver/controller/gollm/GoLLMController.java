@@ -76,6 +76,7 @@ public class GoLLMController {
 	private final ConfigureModelFromDatasetResponseHandler configureModelFromDatasetResponseHandler;
 	private final CompareModelsResponseHandler compareModelsResponseHandler;
 	private final GenerateSummaryHandler generateSummaryHandler;
+	private final GenerateResponseHandler generateResponseHandler;
 	private final EnrichAmrResponseHandler enrichAmrResponseHandler;
 
 	private final Messages messages;
@@ -86,6 +87,7 @@ public class GoLLMController {
 		taskService.addResponseHandler(configureModelFromDocumentResponseHandler);
 		taskService.addResponseHandler(compareModelsResponseHandler);
 		taskService.addResponseHandler(configureModelFromDatasetResponseHandler);
+		taskService.addResponseHandler(generateResponseHandler);
 		taskService.addResponseHandler(generateSummaryHandler);
 		taskService.addResponseHandler(enrichAmrResponseHandler);
 	}
