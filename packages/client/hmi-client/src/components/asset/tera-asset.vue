@@ -275,7 +275,7 @@ header {
 	background-color: var(--surface-0);
 	backdrop-filter: blur(6px);
 	overflow: hidden;
-	z-index: 1;
+	z-index: 3;
 	box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
 	transition: box-shadow 0.3s;
 }
