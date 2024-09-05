@@ -274,6 +274,13 @@
 								@delete="() => {}"
 							/>
 						</div>
+						<tera-chart-control
+							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedParameters }"
+							:multi-select="true"
+							:show-remove-button="false"
+							:variables="Object.keys(pyciemssMap).filter((c) => modelPartTypesMap[c] === 'parameter')"
+							@configuration-change="updateSelectedParameters"
+						/>
 						<hr />
 						<h5>Model Variables</h5>
 						<hr />
@@ -288,6 +295,7 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import * as vega from 'vega';
+import { v4 as uuidv4 } from 'uuid';
 import { csvParse, autoType, mean, variance } from 'd3';
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
 import Button from 'primevue/button';
@@ -313,6 +321,7 @@ import {
 	DatasetColumn,
 	ModelConfiguration
 } from '@/types/Types';
+import { ChartSetting, ChartSettingType } from '@/types/workflow';
 import { getTimespan, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 import { useToastService } from '@/services/toast';
 import { autoCalibrationMapping } from '@/services/concept';
@@ -337,37 +346,6 @@ import { displayNumber } from '@/utils/number';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults, getErrorData } from './calibrate-utils';
-
-const chartSettings = ref([
-	{
-		id: '1',
-		name: 'beta',
-		selectedVariables: ['beta'],
-		type: 'parameter',
-		multiSelect: false
-	},
-	{
-		id: '2',
-		name: 'beta',
-		selectedVariables: ['beta'],
-		type: 'parameter',
-		multiSelect: false
-	},
-	{
-		id: '3',
-		name: 'I',
-		selectedVariables: ['I'],
-		type: 'variable',
-		multiSelect: false
-	},
-	{
-		id: '4',
-		name: 'S',
-		selectedVariables: ['S'],
-		type: 'variable',
-		multiSelect: false
-	}
-]);
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
@@ -750,9 +728,63 @@ const messageHandler = (event: ClientEvent<any>) => {
 const onSelection = (id: string) => {
 	emit('select-output', id);
 };
+// const chartSettings = ref<ChartSetting[]>([
+// 	{
+// 		id: '1',
+// 		name: 'beta',
+// 		selectedVariables: ['beta'],
+// 		type: ChartSettingType.PARAMETER,
+// 	},
+// 	{
+// 		id: '2',
+// 		name: 'beta',
+// 		selectedVariables: ['beta'],
+// 		type: 'parameter',
+// 		multiSelect: false
+// 	},
+// 	{
+// 		id: '3',
+// 		name: 'I',
+// 		selectedVariables: ['I'],
+// 		type: 'variable',
+// 		multiSelect: false
+// 	},
+// 	{
+// 		id: '4',
+// 		name: 'S',
+// 		selectedVariables: ['S'],
+// 		type: 'variable',
+// 		multiSelect: false
+// 	}
+// ]);;
+
+const chartSettings = ref<ChartSetting[]>(props.node.state.chartSettings ?? []);
 
 function updateSelectedParameters(event) {
-	emit('update-state', { ...props.node.state, selectedParameters: event.selectedVariable });
+	console.log(props.node.state.chartSettings);
+
+	const previousSettings = chartSettings.value.filter((setting) => setting.type === ChartSettingType.PARAMETER);
+	const selectedSettings = (event.selectedVariable as string[]).map((variable) => {
+		const found = previousSettings.find((setting) => setting.name === variable);
+		return (
+			found ??
+			({
+				id: uuidv4(),
+				name: variable,
+				selectedVariables: [variable],
+				type: ChartSettingType.PARAMETER
+			} as ChartSetting)
+		);
+	});
+	const updatedSettings: ChartSetting[] = [
+		...chartSettings.value.filter((setting) => setting.type !== ChartSettingType.PARAMETER),
+		...selectedSettings
+	];
+
+	console.log('updatedSettings', updatedSettings);
+	selectedParameters.value = event.selectedVariable;
+	emit('update-state', { ...props.node.state, chartSettings: updatedSettings });
+	// emit('update-state', { ...props.node.state, selectedParameters: event.selectedVariable });
 }
 
 function updateSelectedVariables(event) {
