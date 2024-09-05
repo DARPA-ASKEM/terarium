@@ -11,7 +11,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.InitialSemantic;
@@ -24,11 +28,14 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.seman
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Observable;
 import software.uncharted.terarium.hmiserver.repository.data.ModelConfigRepository;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
+import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
 public class ModelConfigurationService
 	extends TerariumAssetServiceWithoutSearch<ModelConfiguration, ModelConfigRepository> {
+
+	final Messages messages;
 
 	public ModelConfigurationService(
 		final ObjectMapper objectMapper,
@@ -36,7 +43,8 @@ public class ModelConfigurationService
 		final ProjectService projectService,
 		final ProjectAssetService projectAssetService,
 		final ModelConfigRepository repository,
-		final S3ClientService s3ClientService
+		final S3ClientService s3ClientService,
+		final Messages messages
 	) {
 		super(
 			objectMapper,
@@ -47,10 +55,20 @@ public class ModelConfigurationService
 			s3ClientService,
 			ModelConfiguration.class
 		);
+		this.messages = messages;
 	}
 
 	private static final String CONSTANT_TYPE = "Constant";
 	private static final String VALUE_PARAM = "value";
+
+	@Override
+	public UUID getProjectIdForAsset(final UUID assetId) {
+		Optional<ModelConfiguration> modelConfiguration = super.getAsset(assetId, Schema.Permission.READ);
+		if (modelConfiguration.isEmpty()) {
+			throw new ResponseStatusException(HttpStatus.NO_CONTENT, messages.get("modelconfig.not-found"));
+		}
+		return getProjectIdForAsset(modelConfiguration.get().getModelId());
+	}
 
 	@Override
 	protected String getAssetPath() {
