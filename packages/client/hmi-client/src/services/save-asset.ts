@@ -9,13 +9,15 @@ import router from '@/router';
 import { RouteName } from '@/router/routes';
 import type { Model, Code } from '@/types/Types';
 import type { Workflow } from '@/types/workflow';
-import { activeProjectId } from '@/composables/activeProject';
+import { activeProject, activeProjectId } from '@/composables/activeProject';
 import { getProjectIdFromUrl } from '@/api/api';
+import * as ProjectService from '@/services/project';
 
 export type AssetToSave = Model | Workflow | File;
 
 // TODO: Once assets have a type property, we can remove the assetType parameter
 
+const TIMEOUT_MS = 100;
 // Saves the asset as a new asset
 export async function saveAs(
 	newAsset: AssetToSave,
@@ -26,6 +28,9 @@ export async function saveAs(
 	const projectId = activeProjectId.value || getProjectIdFromUrl();
 	let response: ProjectAsset | null = null;
 
+	setTimeout(async () => {
+		activeProject.value = await ProjectService.get(activeProjectId.value);
+	}, TIMEOUT_MS);
 	switch (assetType) {
 		case AssetType.Model:
 			response = await createModel(newAsset as Model);

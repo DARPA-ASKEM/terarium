@@ -139,7 +139,7 @@ public class WorkflowController {
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the workflow", content = @Content)
 		}
 	)
-	public ResponseEntity<Workflow> createWorkflow(
+	public ResponseEntity<ProjectAsset> createWorkflow(
 		@RequestBody final Workflow workflow,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
@@ -169,7 +169,7 @@ public class WorkflowController {
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 
-		final AssetType assetType = AssetType.DATASET;
+		final AssetType assetType = AssetType.WORKFLOW;
 		final Optional<ProjectAsset> projectAsset = projectAssetService.createProjectAsset(
 			project.get(),
 			assetType,
@@ -182,7 +182,7 @@ public class WorkflowController {
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("asset.unable-to-create"));
 		}
 
-		return ResponseEntity.status(HttpStatus.CREATED).body(createdWorkflow);
+		return ResponseEntity.status(HttpStatus.CREATED).body(projectAsset.get());
 	}
 
 	@PutMapping("/{id}")
