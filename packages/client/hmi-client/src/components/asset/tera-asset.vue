@@ -263,7 +263,7 @@ nav {
 }
 
 .nav-item {
-	min-width: 9rem;
+	min-width: 9.5rem;
 }
 header {
 	display: flex;
