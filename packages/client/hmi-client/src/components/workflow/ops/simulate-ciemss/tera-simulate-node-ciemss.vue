@@ -1,16 +1,16 @@
 <template>
 	<main>
 		<template v-if="selectedRunId && runResults[selectedRunId]">
-			<vega-chart
-				v-for="(_config, index) of props.node.state.chartConfigs"
-				:key="index"
-				:are-embed-actions-visible="false"
-				:visualization-spec="preparedCharts[index]"
-			/>
-			<!-- JAMIE: Add test if chart is enpty here -->
-			<section v-if="true" class="empty-chart">
-				<img src="@assets/svg/seed.svg" alt="" draggable="false" class="empty-image" />
-				<p class="helpMessage">No variables selected</p>
+			<section v-for="(_config, index) of props.node.state.chartConfigs" :key="index">
+				<vega-chart
+					v-if="preparedCharts[index].layer.length > 0"
+					:visualization-spec="preparedCharts[index]"
+					:are-embed-actions-visible="false"
+				/>
+				<div v-else class="empty-chart">
+					<img src="@assets/svg/seed.svg" alt="" draggable="false" class="empty-image" />
+					<p class="helpMessage">No variables selected</p>
+				</div>
 			</section>
 		</template>
 		<tera-progress-spinner v-if="inProgressForecastId" :font-size="2" is-centered style="height: 100%" />
@@ -252,6 +252,7 @@ watch(
 	align-items: center;
 	height: 9rem;
 	gap: var(--gap);
+	background: var(--surface-50);
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
 	margin-bottom: var(--gap);

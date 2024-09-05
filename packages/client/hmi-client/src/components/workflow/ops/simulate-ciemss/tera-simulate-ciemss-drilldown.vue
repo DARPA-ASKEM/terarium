@@ -165,7 +165,7 @@
 							<!-- If no variables are selected, show empty state -->
 							<section class="empty-chart" v-else>
 								<img src="@assets/svg/seed.svg" class="empty-image" alt="" draggable="false" />
-								<p>No variables selected</p>
+								<p>Select one or more variables for this chart</p>
 							</section>
 						</template>
 						<Button size="small" text @click="chartProxy.addChart()" label="Add chart" icon="pi pi-plus" />
@@ -609,10 +609,11 @@ onUnmounted(() => kernelManager.shutdown());
 	border-radius: var(--border-radius);
 	margin-bottom: var(--gap);
 	color: var(--text-color-secondary);
+	background: var(--surface-50);
 }
 .empty-image {
 	width: 5rem;
-	height: 5rem;
+	height: 6rem;
 }
 .notebook-section:deep(main .toolbar) {
 	padding-left: var(--gap-medium);
