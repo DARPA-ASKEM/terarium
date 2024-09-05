@@ -23,7 +23,7 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 2. Edit the default intervention card, name it `Static Parameter` and leave it as _Static_.
 3. Set Parameter `β` to value `3` starting at timestep `20`.
 4. Click `+ Add`.
-5. In the new fields, set value to `4` starting at timestep 30`.
+5. In the new fields, set value to `4` starting at timestep `30`.
 
 ### 5. Create a dynamic parameter criteria
 1. Click `+ Add intervention`
