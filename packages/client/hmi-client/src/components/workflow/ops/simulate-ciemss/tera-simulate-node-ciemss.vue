@@ -245,6 +245,10 @@ watch(
 </script>
 
 <style scoped>
+:deep(.vega-chart-container) {
+	margin-bottom: 0;
+}
+
 .empty-chart {
 	display: flex;
 	flex-direction: column;
