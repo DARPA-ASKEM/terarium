@@ -579,7 +579,7 @@ public class TaskService {
 
 		try {
 			// send the request to the task runner
-			log.info("Dispatching request: {} for task id: {}", new String(req.getInput()), req.getId());
+			log.info("Dispatching request for task id: {}", req.getId());
 			final String jsonStr = objectMapper.writeValueAsString(req);
 			rabbitTemplate.convertAndSend(requestQueue, jsonStr);
 
