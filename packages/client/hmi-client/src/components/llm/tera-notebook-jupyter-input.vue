@@ -25,13 +25,18 @@
 		<i v-if="kernelStatus === KernelState.busy" class="pi pi-spin pi-spinner kernel-status" />
 		<Button v-else severity="secondary" icon="pi pi-send" @click="submitQuestion" />-->
 		<AutoComplete
+			v-if="showAutoComplete"
+			ref="autoComplete"
 			v-model="questionString"
 			class="auto-complete"
 			:suggestions="filteredOptions"
 			completeOnFocus="true"
 			@complete="searchOptions"
+			@change="onChange"
 			placeholder="What do you want to do?"
+			emptySearchMessage="No suggestions"
 		/>
+		<Textarea v-else ref="textArea" class="text-area" v-model="questionString" @input="onChange" rows="1" autoResize />
 		<!--<i v-if="kernelStatus === KernelState.busy" class="pi pi-spin pi-spinner kernel-status" />
 		<Button  v-if="questionString !== ''" severity="secondary" icon="pi pi-send" @click="submitQuestion" />-->
 		<!-- v-if="questionString !== ''"-->
@@ -65,10 +70,11 @@
 <script setup lang="ts">
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 import Button from 'primevue/button';
-import { ref } from 'vue';
+import { ref, nextTick } from 'vue';
 import { KernelState, KernelSessionManager } from '@/services/jupyter';
 import Dropdown from 'primevue/dropdown';
 import AutoComplete from 'primevue/autocomplete';
+import Textarea from 'primevue/textarea';
 
 const props = defineProps<{
 	kernelManager: KernelSessionManager;
@@ -84,6 +90,9 @@ const showAssistant = ref(true);
 const thoughts = ref();
 const llmThoughts = ref([]);
 const filteredOptions = ref([]);
+const autoComplete = ref<HTMLElement>();
+const textArea = ref<HTMLElement>();
+const showAutoComplete = ref(true);
 
 // FIXME: If the language is changed here it should mutate the beaker instance in the parent component
 
@@ -118,6 +127,24 @@ const searchOptions = () => {
 	const query = questionString.value.toLowerCase();
 	filteredOptions.value = props.defaultOptions.filter((option) => option.toLowerCase().includes(query));
 };
+
+const onChange = async () => {
+	// const inputEl = autoComplete.value.$el.querySelector('input');
+	// if (inputEl.scrollWidth > inputEl.clientWidth) {
+	if (questionString.value.length > 25) {
+		// We could make this 25 configurable (e.g., when input is smaller use, less chars)
+		showAutoComplete.value = false;
+		await nextTick();
+		// FIXME: check if defined
+		textArea.value.$el.focus();
+	} else {
+		showAutoComplete.value = true;
+		await nextTick();
+		// FIXME: check if defined
+		const inputEl = autoComplete.value.$el.querySelector('input');
+		inputEl.focus();
+	}
+};
 </script>
 
 <style scoped>
@@ -142,7 +169,7 @@ const searchOptions = () => {
 	align-items: center;
 }
 
-.input {
+/*.input {
 	width: 100%;
 	padding: var(--gap-xsmall);
 }
@@ -153,19 +180,23 @@ const searchOptions = () => {
 	background-position: var(--gap-small);
 	background-repeat: no-repeat;
 	text-indent: 24px;
-}
+}*/
 
-.auto-complete {
+.auto-complete,
+.text-area {
 	width: 100%;
 }
 
-.auto-complete:deep(input) {
+.auto-complete:deep(input),
+.text-area {
 	width: 100%;
 	background-image: url('@assets/svg/icons/message.svg');
 	background-size: 1rem;
-	background-position: var(--gap-small);
+	background-position-x: var(--gap-small);
+	background-position-y: var(--gap-small);
 	background-repeat: no-repeat;
-	text-indent: 24px;
+	padding-right: 2rem;
+	padding-left: 2rem;
 }
 
 .submit-button {
@@ -173,5 +204,10 @@ const searchOptions = () => {
 	position: absolute;
 	background: none;
 	right: 0;
+	top: 0;
+}
+
+.text-area {
+	resize: none;
 }
 </style>
