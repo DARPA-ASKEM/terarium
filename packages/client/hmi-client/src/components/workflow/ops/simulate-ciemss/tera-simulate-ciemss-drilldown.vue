@@ -226,7 +226,7 @@ import { getModelConfigurationById } from '@/services/model-configurations';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import TeraChartControl from '../../tera-chart-control.vue';
 
-const isSidebarOpen = ref(false);
+const isSidebarOpen = ref(true);
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
 }>();
