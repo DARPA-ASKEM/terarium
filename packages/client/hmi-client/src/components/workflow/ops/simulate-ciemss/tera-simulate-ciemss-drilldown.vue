@@ -129,6 +129,7 @@
 				<tera-operator-output-summary
 					v-if="node.state.summaryId && runResults[selectedRunId]"
 					:summary-id="node.state.summaryId"
+					class="pt-3"
 				/>
 				<div class="flex flex-row align-items-center gap-2">
 					<SelectButton
@@ -167,8 +168,14 @@
 								<img src="@assets/svg/seed.svg" class="empty-image" alt="" draggable="false" />
 								<p>Select one or more variables for this chart</p>
 							</section>
+
+							<!-- Spacer between charts -->
+							<div style="height: var(--gap-1)"></div>
 						</template>
 						<Button size="small" text @click="chartProxy.addChart()" label="Add chart" icon="pi pi-plus" />
+
+						<!-- Spacer at bottom of page -->
+						<div style="height: 2rem"></div>
 					</div>
 					<div v-else-if="view === OutputView.Data">
 						<tera-dataset-datatable
@@ -598,6 +605,11 @@ onUnmounted(() => kernelManager.shutdown());
 	grid-template-columns: auto 1fr;
 }
 
+/* Override top and bottom padding of content-container */
+.overlay-container:deep(section.drilldown main .content-container) {
+	padding: 0 var(--gap);
+}
+
 .empty-chart {
 	display: flex;
 	flex-direction: column;
@@ -663,5 +675,9 @@ onUnmounted(() => kernelManager.shutdown());
 	gap: var(--gap);
 	text-align: center;
 	pointer-events: none;
+}
+
+.p-button-icon-left {
+	color: var(--text-color-primary);
 }
 </style>
