@@ -1052,6 +1052,7 @@ export enum ClientEventType {
     TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
     TaskGollmGenerateSummary = "TASK_GOLLM_GENERATE_SUMMARY",
     TaskFunmanValidation = "TASK_FUNMAN_VALIDATION",
+    TaskEnrichAmr = "TASK_ENRICH_AMR",
 }
 
 export enum ProgressState {
