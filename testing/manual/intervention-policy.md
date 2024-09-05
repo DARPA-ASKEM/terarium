@@ -10,9 +10,8 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
     ```
 2. Create, or open, project named `QA [Your Name]`
 
-### 2. Upload assets
+### 2. Upload asset
 1. Model [SIR.json](https://drive.google.com/file/d/1eXlvpBfMmhrfC0xUXfuz0s_19gi-Rird/view?usp=drive_link)
-2. Dataset [SIR_Dataset](https://drive.google.com/file/d/1wdCLKKznHaoCg1gWI7q7OO8W4F7zOjpc/view?usp=drive_link)
 
 ### 3. Create an intervention policy
 1. Create a new workflow named `Intervention Policy`
@@ -34,12 +33,12 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 ### 6. Create a static state criteria
 1. Click `+ Add intervention`
 2. Name it `Static State` and leave it as _Static_.
-3. Set State `Recovered` to value `1000` starting at timestep `50`.
+3. Set State `R` to value `1000` starting at timestep 50`.
 
 ### 7. Create a dynamic state criteria
 1. Click `+ Add intervention`
 2. Name it `Dynamic State` and change it to _Dynamic_.
-3. Set Parameter `Infected` to `500` when `Recovered` `increases to above` the threshold of `1000`.
+3. Set State `I` to `500` when `R` `increases to above` the threshold of `1000`.
 
 ### 8. Save the intervention policy
 1. Save the intervention policy
