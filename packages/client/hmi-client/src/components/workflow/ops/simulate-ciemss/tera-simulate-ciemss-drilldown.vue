@@ -627,6 +627,13 @@ onUnmounted(() => kernelManager.shutdown());
 	width: 5rem;
 	height: 6rem;
 }
+
+/* Notebook */
+.notebook-section {
+	width: calc(50vw - 4rem);
+	background: var(--surface-100);
+	border-right: 1px solid var(--surface-border-light);
+}
 .notebook-section:deep(main .toolbar) {
 	padding-left: var(--gap-medium);
 }
