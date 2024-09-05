@@ -35,6 +35,8 @@ export const getModelConfigurationById = async (id: string): Promise<ModelConfig
 export const createModelConfiguration = async (modelConfiguration: ModelConfiguration): Promise<ModelConfiguration> => {
 	const projectId = activeProjectId.value || getProjectIdFromUrl();
 	delete modelConfiguration.id;
+	delete modelConfiguration.createdOn;
+	delete modelConfiguration.updatedOn;
 	modelConfiguration.temporary = modelConfiguration.temporary ?? false;
 	const response = await API.post(`/model-configurations?project-id=${projectId}`, modelConfiguration);
 	return response?.data ?? null;
@@ -162,21 +164,18 @@ export function getInitial(config: ModelConfiguration, initialId: string): Initi
 	return getInitials(config).find((initial) => initial.target === initialId);
 }
 
-export function setInitialExpression(config: ModelConfiguration, initialId: string, expression: string): void {
+export async function setInitialExpression(
+	config: ModelConfiguration,
+	initialId: string,
+	expression: string
+): Promise<void> {
 	const initial = getInitial(config, initialId);
 	if (!initial) return;
 
-	pythonInstance
-		.parseExpression(expression)
-		.then((result) => {
-			const mathml = result.mathml;
-			initial.expression = expression;
-			initial.expressionMathml = mathml;
-		})
-		.catch((error) => {
-			// Handle error appropriately
-			console.error('Error parsing expression:', error);
-		});
+	const result = await pythonInstance.parseExpression(expression);
+	const mathml = result.mathml;
+	initial.expression = expression;
+	initial.expressionMathml = mathml;
 }
 
 export function setInitialSource(config: ModelConfiguration, initialId: string, source: string): void {

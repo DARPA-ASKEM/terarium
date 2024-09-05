@@ -1,7 +1,8 @@
 import json
 import sys
-from gollm.entities import ConfigureModel
-from gollm.openai.tool_utils import model_config_chain
+from gollm.entities import ConfigureModelDocument
+from gollm.openai.tool_utils import model_config_from_document
+
 from taskrunner import TaskRunnerInterface
 
 
@@ -17,12 +18,12 @@ def main():
 
         input_dict = taskrunner.read_input_dict_with_timeout()
 
-        taskrunner.log("Creating ConfigureModel from input")
-        input_model = ConfigureModel(**input_dict)
+        taskrunner.log("Creating ConfigureModelDocument from input")
+        input_model = ConfigureModelDocument(**input_dict)
         amr = json.dumps(input_model.amr, separators=(",", ":"))
 
         taskrunner.log("Sending request to OpenAI API")
-        response = model_config_chain(
+        response = model_config_from_document(
             research_paper=input_model.research_paper, amr=amr
         )
         taskrunner.log("Received response from OpenAI API")

@@ -19,6 +19,8 @@ export const getInterventionPolicyById = async (policyId: string): Promise<Inter
 export const createInterventionPolicy = async (policy: InterventionPolicy): Promise<InterventionPolicy> => {
 	const projectId = activeProjectId.value || getProjectIdFromUrl();
 	delete policy.id;
+	delete policy.createdOn;
+	delete policy.updatedOn;
 	const response = await API.post<InterventionPolicy>(`/interventions?project-id=${projectId}`, policy);
 	return response?.data ?? null;
 };

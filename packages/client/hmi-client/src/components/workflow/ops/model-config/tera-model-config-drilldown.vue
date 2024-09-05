@@ -5,47 +5,36 @@
 		:menu-items="menuItems"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
-		@update:selection="onSelection"
+		hide-dropdown
 	>
 		<template #sidebar>
 			<tera-slider-panel v-model:is-open="isSidebarOpen" header="Configurations" content-width="360px">
 				<template #content>
 					<div class="m-3">
-						<div class="flex flex-column gap-1">
+						<div class="flex flex-row gap-1">
+							<tera-input-text v-model="filterModelConfigurationsText" placeholder="Filter" class="w-full" />
+
 							<Button
-								outlined
-								icon="pi pi-plus"
 								label="Extract from inputs"
 								@click="extractConfigurationsFromInputs"
-								severity="secondary"
+								severity="primary"
+								class="white-space-nowrap min-w-min"
 								:loading="isLoading"
+								:disabled="
+									!props.node.inputs[1]?.value &&
+									!props.node.inputs[2]?.value &&
+									!props.node.inputs[3]?.value &&
+									!props.node.inputs[4]?.value
+								"
 							/>
-
-							<span class="flex gap-1">
-								<Dropdown
-									class="flex-1"
-									v-model="selectedSortOption"
-									:options="sortByOptions"
-									option-label="label"
-									option-value="value"
-								>
-									<template #value="{ value }">
-										<label class="sort-by-label">Sort by</label
-										>{{ sortByOptions.find((option) => option.value === value)?.label }}
-									</template>
-								</Dropdown>
-								<Dropdown
-									class="flex-1"
-									v-model="selectedShownOption"
-									:options="shownOptionsList"
-									option-label="label"
-									option-value="value"
-								></Dropdown>
-							</span>
-
-							<tera-input-text v-model="filterModelConfigurationsText" placeholder="Filter" />
 						</div>
-						<ul v-if="!isLoading && model?.id">
+						<!-- Show a spinner if loading -->
+						<section v-if="isLoading" class="processing-new-configuration-tile">
+							<p class="secondary-text">Processing...</p>
+						</section>
+
+						<!-- Show all configurations -->
+						<ul v-if="model?.id">
 							<li v-for="configuration in filteredModelConfigurations" :key="configuration.id">
 								<tera-model-configuration-item
 									:configuration="configuration"
@@ -56,14 +45,15 @@
 									@download="downloadConfiguredModel(configuration)"
 								/>
 							</li>
+							<!-- Show a message if nothing found after filtering -->
+							<li v-if="filteredModelConfigurations.length === 0">No configurations found</li>
 						</ul>
-						<tera-progress-spinner is-centered :font-size="2" v-if="isLoading" />
 					</div>
 				</template>
 			</tera-slider-panel>
 		</template>
 
-		<tera-drilldown-section :tabName="ConfigTabs.Wizard" class="pl-3">
+		<tera-drilldown-section :tabName="ConfigTabs.Wizard" class="px-3 mb-10">
 			<template #header-controls-left>
 				<tera-toggleable-input
 					v-if="typeof knobs.transientModelConfig.name === 'string'"
@@ -73,23 +63,22 @@
 			</template>
 			<template #header-controls-right>
 				<Button label="Reset" @click="resetConfiguration" outlined severity="secondary" />
-				<Button class="mr-3" :disabled="isSaveDisabled" label="Save" @click="createConfiguration" />
+				<Button label="Save as..." outlined severity="secondary" @click="showSaveModal = true" />
+				<Button class="mr-2" :disabled="isSaveDisabled" label="Save" @click="onSaveConfiguration" />
 			</template>
-
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab>
 					<template #header>
-						<Button v-if="!isEditingDescription" class="start-edit" text @click.stop="onEditDescription">
-							<h5 class="btn-content">Description</h5>
+						<h5 class="btn-content">Description</h5>
+						<Button v-if="!isEditingDescription" class="start-edit" text rounded @click.stop="onEditDescription">
 							<i class="pi pi-pencil" />
 						</Button>
 						<span v-else class="confirm-cancel">
-							<span>Description</span>
 							<Button icon="pi pi-times" text @click.stop="isEditingDescription = false" />
 							<Button icon="pi pi-check" text @click.stop="onConfirmEditDescription" />
 						</span>
 					</template>
-					<p class="description text" v-if="!isEditingDescription">
+					<p class="description text mb-3" v-if="!isEditingDescription">
 						{{ knobs.transientModelConfig.description }}
 					</p>
 					<Textarea
@@ -101,7 +90,7 @@
 					/>
 				</AccordionTab>
 				<AccordionTab header="Diagram">
-					<tera-model-diagram v-if="model" :model="model" />
+					<tera-model-diagram v-if="model" :model="model" class="mb-2" />
 				</AccordionTab>
 			</Accordion>
 			<template v-if="model">
@@ -110,21 +99,21 @@
 				</Message>
 				<template v-if="!isEmpty(knobs.transientModelConfig)">
 					<tera-initial-table
-						v-if="!isEmpty(mmt.initials)"
+						v-if="!isEmpty(configuredMmt.initials)"
 						:model="model"
 						:model-configuration="knobs.transientModelConfig"
-						:modelConfigurations="filteredModelConfigurations"
-						:mmt="mmt"
+						:model-configurations="filteredModelConfigurations"
+						:mmt="configuredMmt"
 						:mmt-params="mmtParams"
 						@update-expression="setInitialExpression(knobs.transientModelConfig, $event.id, $event.value)"
 						@update-source="setInitialSource(knobs.transientModelConfig, $event.id, $event.value)"
 					/>
 					<tera-parameter-table
-						v-if="!isEmpty(mmt.parameters)"
+						v-if="!isEmpty(configuredMmt.parameters)"
 						:model="model"
 						:model-configuration="knobs.transientModelConfig"
-						:modelConfigurations="filteredModelConfigurations"
-						:mmt="mmt"
+						:model-configurations="filteredModelConfigurations"
+						:mmt="configuredMmt"
 						:mmt-params="mmtParams"
 						@update-parameters="setParameterDistributions(knobs.transientModelConfig, $event)"
 						@update-source="setParameterSource(knobs.transientModelConfig, $event.id, $event.value)"
@@ -134,12 +123,14 @@
 							<tera-observables
 								class="pl-4"
 								:model="model"
-								:mmt="mmt"
+								:mmt="configuredMmt"
 								:observables="calibratedConfigObservables"
 								:feature-config="{ isPreview: true }"
 							/>
 						</AccordionTab>
 					</Accordion>
+					<!-- vertical spacer at end of page -->
+					<div class="p-5"></div>
 				</template>
 			</template>
 		</tera-drilldown-section>
@@ -183,31 +174,22 @@
 			</tera-drilldown-preview>
 		</tera-columnar-panel>
 	</tera-drilldown>
-	<tera-modal v-if="!isEmpty(sanityCheckErrors)">
-		<template #header>
-			<h4>Warning, these settings may cause errors</h4>
-		</template>
-		<template #default>
-			<section style="max-height: 22rem; overflow-y: scroll">
-				<div v-for="(errString, idx) of sanityCheckErrors" :key="idx">
-					{{ errString }}
-				</div>
-			</section>
-		</template>
-		<template #footer>
-			<Button label="Ok" class="p-button-primary" @click="sanityCheckErrors = []" />
-			<Button label="Ignore warnings and use configuration" class="p-button-secondary" @click="createConfiguration" />
-		</template>
-	</tera-modal>
-
+	<tera-save-asset-modal
+		:initial-name="knobs.transientModelConfig.name"
+		:is-visible="showSaveModal"
+		:asset="knobs.transientModelConfig"
+		:asset-type="AssetType.ModelConfiguration"
+		@close-modal="showSaveModal = false"
+		@on-save="onSaveAsModelConfiguration"
+	/>
 	<!-- Matrix effect easter egg  -->
 	<canvas id="matrix-canvas" />
 </template>
 
 <script setup lang="ts">
 import '@/ace-config';
-import { computed, onUnmounted, ref, watch, nextTick, ComponentPublicInstance } from 'vue';
-import { cloneDeep, isEmpty, isEqual, orderBy } from 'lodash';
+import { ComponentPublicInstance, computed, nextTick, onUnmounted, ref, watch } from 'vue';
+import { cloneDeep, debounce, isEmpty, orderBy } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
@@ -215,7 +197,6 @@ import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Textarea from 'primevue/textarea';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -223,26 +204,27 @@ import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
-import TeraModal from '@/components/widgets/tera-modal.vue';
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
 import { emptyMiraModel, generateModelDatasetConfigurationContext } from '@/model-representation/mira/mira';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
-import { configureModelFromDatasets, configureModelFromDocument } from '@/services/goLLM';
+import { configureModelFromDataset, configureModelFromDocument } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
 import { getMMT, getModel, getModelConfigurationsForModel } from '@/services/model';
 import {
 	createModelConfiguration,
-	setInitialSource,
+	getAsConfiguredModel,
+	getModelConfigurationById,
 	setInitialExpression,
-	setParameterSource,
+	setInitialSource,
 	setParameterDistributions,
-	getAsConfiguredModel
+	setParameterSource,
+	updateModelConfiguration
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { Model, ModelConfiguration } from '@/types/Types';
-import { Observable } from '@/types/Types';
+import type { Model, ModelConfiguration, TaskResponse } from '@/types/Types';
+import { AssetType, Observable } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
@@ -251,11 +233,17 @@ import Message from 'primevue/message';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { useConfirm } from 'primevue/useconfirm';
-import Dropdown from 'primevue/dropdown';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import { saveCodeToState } from '@/services/notebook';
+import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
-import { ModelConfigOperation, ModelConfigOperationState, blankModelConfig } from './model-config-operation';
+import {
+	blankModelConfig,
+	isModelConfigsEqual,
+	isModelConfigValuesEqual,
+	ModelConfigOperation,
+	ModelConfigOperationState
+} from './model-config-operation';
 
 enum ConfigTabs {
 	Wizard = 'Wizard',
@@ -282,7 +270,7 @@ const menuItems = computed(() => [
 	}
 ]);
 
-const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close']);
+const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close', 'update-output-port']);
 
 interface BasicKnobs {
 	transientModelConfig: ModelConfiguration;
@@ -301,8 +289,13 @@ const calibratedConfigObservables = computed<Observable[]>(() =>
 	}))
 );
 
-const sanityCheckErrors = ref<string[]>([]);
-const isSaveDisabled = computed(() => knobs.value.transientModelConfig.name === '');
+// Save button is disabled if the model configuration name is empty, the values have changed, or the configuration is the same as the original
+const isSaveDisabled = computed(
+	() =>
+		knobs.value.transientModelConfig.name === '' ||
+		isModelConfigsEqual(originalConfig.value, knobs.value.transientModelConfig) ||
+		!isModelConfigValuesEqual(originalConfig.value, knobs.value.transientModelConfig)
+);
 
 const kernelManager = new KernelSessionManager();
 let editor: VAceEditorInstance['_editor'] | null;
@@ -342,6 +335,7 @@ const appendCode = (data: any, property: string, runUpdatedCode = false) => {
 	if (runUpdatedCode) runFromCode();
 };
 
+const showSaveModal = ref(false);
 const confirm = useConfirm();
 const filterModelConfigurationsText = ref('');
 const filteredModelConfigurations = computed(() => {
@@ -355,10 +349,6 @@ const filteredModelConfigurations = computed(() => {
 });
 
 const selectedSortOption = ref('createdOn');
-const sortByOptions = [{ label: 'Created On', value: 'createdOn' }];
-
-const selectedShownOption = ref('all');
-const shownOptionsList = [{ label: 'Show all', value: 'all' }];
 
 const runFromCode = () => {
 	const code = editor?.getValue();
@@ -421,35 +411,56 @@ const extractConfigurationsFromInputs = async () => {
 	if (!model.value?.id) {
 		return;
 	}
-	if (documentId.value) {
-		const resp = await configureModelFromDocument(
-			documentId.value,
-			model.value.id,
-			props.node.workflowId,
-			props.node.id
-		);
-		state.documentModelConfigTaskId = resp.id;
+
+	if (documentIds.value) {
+		const promiseList = [] as Promise<TaskResponse | null>[];
+		documentIds.value.forEach((documentId) => {
+			promiseList.push(
+				configureModelFromDocument(documentId, model.value?.id as string, props.node.workflowId, props.node.id)
+			);
+		});
+		const responsesRaw = await Promise.all(promiseList);
+		responsesRaw.forEach((resp) => {
+			if (resp) {
+				state.modelConfigTaskIds.push(resp.id);
+			}
+		});
 	}
+
 	if (datasetIds.value) {
 		const matrixStr = generateModelDatasetConfigurationContext(mmt.value, mmtParams.value);
-		const resp = await configureModelFromDatasets(
-			model.value.id,
-			datasetIds.value,
-			matrixStr,
-			props.node.workflowId,
-			props.node.id
-		);
-		state.datasetModelConfigTaskId = resp.id;
+		const promiseList = [] as Promise<TaskResponse | null>[];
+		datasetIds.value.forEach((datasetId) => {
+			promiseList.push(
+				configureModelFromDataset(model.value?.id as string, datasetId, matrixStr, props.node.workflowId, props.node.id)
+			);
+		});
+		const responsesRaw = await Promise.all(promiseList);
+		responsesRaw.forEach((resp) => {
+			if (resp) {
+				state.modelConfigTaskIds.push(resp.id);
+			}
+		});
 	}
 	emit('update-state', state);
 };
 
 const selectedOutputId = ref<string>('');
 const selectedConfigId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
-let originalConfig: ModelConfiguration | null = null;
+const originalConfig = ref<ModelConfiguration | null>(null);
 
-const documentId = computed(() => props.node.inputs[1]?.value?.[0]?.documentId);
-const datasetIds = computed(() => props.node.inputs[2]?.value);
+const documentIds = computed(() =>
+	props.node.inputs
+		.filter((input) => input.type === 'documentId' && input.status === 'connected')
+		.map((input) => input.value?.[0]?.documentId)
+		.filter((id): id is string => id !== undefined)
+);
+const datasetIds = computed(() =>
+	props.node.inputs
+		.filter((input) => input.type === 'datasetId' && input.status === 'connected')
+		.map((input) => input.value?.[0])
+		.filter((id): id is string => id !== undefined)
+);
 
 const suggestedConfigurationContext = ref<{
 	isOpen: boolean;
@@ -466,6 +477,31 @@ const isLoading = ref(false);
 const model = ref<Model | null>(null);
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
+
+const configuredMmt = ref(makeConfiguredMMT());
+
+function makeConfiguredMMT() {
+	const mmtCopy = cloneDeep(mmt.value);
+	knobs.value.transientModelConfig.initialSemanticList.forEach((initial) => {
+		const mmtInitial = mmtCopy.initials[initial.target];
+		if (mmtInitial) {
+			mmtInitial.expression = initial.expression;
+		}
+	});
+	knobs.value.transientModelConfig.parameterSemanticList.forEach((parameter) => {
+		const mmtParameter = mmtCopy.parameters[parameter.referenceId];
+		if (mmtParameter) {
+			mmtParameter.value = parameter.distribution.parameters.value;
+		}
+	});
+	knobs.value.transientModelConfig.observableSemanticList.forEach((observable) => {
+		const mmtObservable = mmtCopy.observables[observable.referenceId];
+		if (mmtObservable) {
+			mmtObservable.expression = observable.expression;
+		}
+	});
+	return mmtCopy;
+}
 
 const downloadConfiguredModel = async (configuration: ModelConfiguration = knobs.value.transientModelConfig) => {
 	const rawModel = await getAsConfiguredModel(configuration);
@@ -490,19 +526,43 @@ const createConfiguration = async () => {
 		return;
 	}
 
-	knobs.value.transientModelConfig = cloneDeep(data);
+	const state = cloneDeep(props.node.state);
+	state.transientModelConfig = data;
 	useToastService().success('', 'Created model configuration');
 	emit('append-output', {
 		type: ModelConfigOperation.outputs[0].type,
 		label: data.name,
 		value: data.id,
 		isSelected: false,
-		state: cloneDeep(props.node.state)
+		state
 	});
 };
 
-const onSelection = (id: string) => {
-	emit('select-output', id);
+const onSaveAsModelConfiguration = (data: ModelConfiguration) => {
+	useToastService().success('', 'Created model configuration');
+	const state = cloneDeep(props.node.state);
+	state.transientModelConfig = data;
+	emit('append-output', {
+		type: ModelConfigOperation.outputs[0].type,
+		label: data.name,
+		value: data.id,
+		isSelected: false,
+		state
+	});
+	showSaveModal.value = false;
+};
+
+const onSaveConfiguration = async () => {
+	if (!model.value || isSaveDisabled.value) return;
+	const modelConfig = cloneDeep(knobs.value.transientModelConfig);
+
+	const data = await updateModelConfiguration(modelConfig);
+	if (!data) {
+		logger.error('Failed to update model configuration');
+		return;
+	}
+	initialize();
+	logger.success('Saved model configuration');
 };
 
 const fetchConfigurations = async (modelId: string) => {
@@ -519,14 +579,27 @@ const initialize = async () => {
 	await fetchConfigurations(modelId);
 
 	model.value = await getModel(modelId);
+	if (model.value) {
+		const response = await getMMT(model.value);
+		mmt.value = response.mmt;
+		mmtParams.value = response.template_params;
+	}
 
 	if (!state.transientModelConfig.id) {
 		// Apply a configuration if one hasn't been applied yet
 		applyConfigValues(suggestedConfigurationContext.value.tableData[0]);
 	} else {
-		knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
-		originalConfig = cloneDeep(state.transientModelConfig);
+		originalConfig.value = await getModelConfigurationById(selectedConfigId.value);
+
+		// FIXME: Bug sept-03, state.transientModelConfig may not be saved properly before this date
+		if (state.transientModelConfig.id !== originalConfig.value.id) {
+			knobs.value.transientModelConfig = cloneDeep(originalConfig.value);
+		} else {
+			knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
+		}
 	}
+
+	configuredMmt.value = makeConfiguredMMT();
 
 	// Create a new session and context based on model
 	try {
@@ -543,9 +616,9 @@ const initialize = async () => {
 	}
 };
 
-const onSelectConfiguration = (config: ModelConfiguration) => {
+const onSelectConfiguration = async (config: ModelConfiguration) => {
 	// Checks if there are unsaved changes to current model configuration
-	if (isEqual(originalConfig, knobs.value.transientModelConfig)) {
+	if (isModelConfigsEqual(originalConfig.value, knobs.value.transientModelConfig)) {
 		applyConfigValues(config);
 		return;
 	}
@@ -562,9 +635,6 @@ const onSelectConfiguration = (config: ModelConfiguration) => {
 };
 
 const applyConfigValues = (config: ModelConfiguration) => {
-	knobs.value.transientModelConfig = cloneDeep(config);
-	originalConfig = cloneDeep(config);
-
 	// Update output port:
 	if (!config.id) {
 		logger.error('Model configuration not found');
@@ -579,13 +649,16 @@ const applyConfigValues = (config: ModelConfiguration) => {
 	}
 	// If the output does not already exist
 	else {
+		const state = cloneDeep(props.node.state);
+		state.transientModelConfig = config;
+
 		// Append this config to the output.
 		emit('append-output', {
 			type: ModelConfigOperation.outputs[0].type,
 			label: config.name,
 			value: config.id,
 			isSelected: false,
-			state: cloneDeep(props.node.state)
+			state
 		});
 	}
 	logger.success(`Configuration applied ${config.name}`);
@@ -608,7 +681,7 @@ const resetConfiguration = () => {
 		header: 'Are you sure you want to reset the configuration?',
 		message: 'This will reset all values original values of the configuration.',
 		accept: () => {
-			if (originalConfig) applyConfigValues(originalConfig);
+			if (originalConfig.value) applyConfigValues(originalConfig.value);
 		},
 		acceptLabel: 'Confirm',
 		rejectLabel: 'Cancel'
@@ -616,9 +689,9 @@ const resetConfiguration = () => {
 };
 
 watch(
-	() => `${props.node.state.datasetModelConfigTaskId}:${props.node.state.documentModelConfigTaskId}`,
-	async (watchStr) => {
-		if (watchStr !== ':') {
+	() => props.node.state.modelConfigTaskIds,
+	async (watchVal) => {
+		if (watchVal.length > 0) {
 			isLoading.value = true;
 		} else {
 			isLoading.value = false;
@@ -629,23 +702,18 @@ watch(
 	}
 );
 
-watch(
-	() => model.value,
-	async () => {
-		if (!model.value) return;
-		const response: any = await getMMT(model.value);
-		mmt.value = response.mmt;
-		mmtParams.value = response.template_params;
-	},
-	{ immediate: true, deep: true }
-);
+const debounceUpdateState = debounce(() => {
+	console.log('debounced update');
+	const state = cloneDeep(props.node.state);
+	state.transientModelConfig = knobs.value.transientModelConfig;
+	configuredMmt.value = makeConfiguredMMT();
 
+	emit('update-state', state);
+}, 100);
 watch(
 	() => knobs.value,
 	async () => {
-		const state = cloneDeep(props.node.state);
-		state.transientModelConfig = knobs.value.transientModelConfig;
-		emit('update-state', state);
+		debounceUpdateState();
 	},
 	{ deep: true }
 );
@@ -667,6 +735,30 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* Make left sidebar grey */
+:deep(.slider-content) {
+	background-color: var(--surface-100);
+}
+:deep(.slider-content aside header) {
+	background: color-mix(in srgb, var(--surface-100) 80%, transparent 20%);
+}
+
+.processing-new-configuration-tile {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	padding: var(--gap-4);
+	background-color: var(--surface-0);
+	margin-top: var(--gap-3);
+	border-left: 4px solid var(--surface-300);
+}
+
+/* When accordions are closed, don't show their filter or edit buttons */
+:deep(.p-accordion-tab:not(.p-accordion-tab-active)) .p-accordion-header .p-accordion-header-link .tera-input,
+:deep(.p-accordion-tab:not(.p-accordion-tab-active)) .p-accordion-header .p-accordion-header-link button {
+	display: none;
+}
+
 :deep(.p-datatable-loading-overlay.p-component-overlay) {
 	background-color: var(--surface-section);
 }
@@ -722,6 +814,10 @@ onUnmounted(() => {
 	padding-right: var(--gap-small);
 }
 
+:deep(.pi-spinner) {
+	padding: var(--gap-2);
+}
+
 ul {
 	list-style: none;
 	padding-top: var(--gap-small);
@@ -731,7 +827,9 @@ button.start-edit {
 	display: flex;
 	gap: var(--gap-3);
 	width: fit-content;
+	min-width: var(--gap-3);
 	padding: var(--gap-2);
+	margin-left: var(--gap-1);
 
 	& > .btn-content {
 		color: var(--text-color);
@@ -749,5 +847,9 @@ button.start-edit {
 	& > span {
 		margin-left: var(--gap-2);
 	}
+}
+
+.secondary-text {
+	color: var(--text-color-subdued);
 }
 </style>

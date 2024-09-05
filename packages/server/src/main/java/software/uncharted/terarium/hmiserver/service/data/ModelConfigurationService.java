@@ -116,7 +116,7 @@ public class ModelConfigurationService
 		final String description
 	) {
 		final ModelConfiguration modelConfiguration = new ModelConfiguration();
-		modelConfiguration.setName(name != null ? name : "Default Configuration");
+		modelConfiguration.setName(name != null ? name : "Default configuration");
 		modelConfiguration.setDescription(description != null ? description : "This is a default configuration.");
 		modelConfiguration.setModelId(model.getId());
 		modelConfiguration.setParameterSemanticList(createParameterSemanticList(model));

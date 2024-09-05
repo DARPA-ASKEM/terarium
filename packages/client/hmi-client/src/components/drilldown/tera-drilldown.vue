@@ -50,9 +50,11 @@
 							</template>
 						</Chip>
 					</aside>
-					<template v-if="outputOptions && selectedOutputId">
+					<template v-if="!hideDropdown && outputOptions && selectedOutputId">
+						<section v-if="isDraft">There are unsaved changes</section>
 						<tera-output-dropdown
 							class="mx-2"
+							:class="{ draft: isDraft }"
 							:options="outputOptions"
 							:output="selectedOutputId"
 							@update:selection="(e) => emit('update:selection', e)"
@@ -64,8 +66,8 @@
 					</template>
 				</template>
 				<template #actions>
-					<slot name="header-actions" />
 					<tera-operator-annotation :state="node.state" @update-state="(state: any) => emit('update-state', state)" />
+					<slot name="header-actions" />
 				</template>
 			</tera-drilldown-header>
 			<main class="flex overflow-hidden h-full">
@@ -142,10 +144,12 @@ const props = defineProps<{
 	menuItems?: any[];
 	title?: string;
 	tooltip?: string;
+	isDraft?: boolean;
 	// Applied in dynamic compoenent in tera-workflow.vue
 	upstreamOperatorsNav?: MenuItem[];
 	downstreamOperatorsNav?: MenuItem[];
 	spawnAnimation?: 'left' | 'right' | 'scale';
+	hideDropdown?: boolean;
 }>();
 
 const emit = defineEmits(['on-close-clicked', 'update-state', 'update:selection', 'update-output-port']);
@@ -188,7 +192,7 @@ const outputOptions = computed(() => {
 
 	return [
 		{
-			label: 'Select outputs to display in operator',
+			label: 'Select an output',
 			items: props.node.outputs
 		}
 	];
@@ -236,6 +240,10 @@ const toggleNavigationMenu = (
 };
 
 function handleKeyNavigation(event: KeyboardEvent) {
+	const target = event.target as HTMLElement;
+	if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+		return; // Prevent navigation if the user is editing text
+	}
 	if (event.shiftKey && event.key === 'ArrowLeft') {
 		toggleNavigationMenu(event, upstreamMenu.value, props.upstreamOperatorsNav, leftChevronButton.value);
 	} else if (event.shiftKey && event.key === 'ArrowRight') {
@@ -340,6 +348,12 @@ footer {
 
 :deep(.p-chip .p-chip-text) {
 	font-size: var(--font-body-small);
+	margin: var(--gap-0-5);
+}
+
+.draft {
+	border-color: var(--warning-color);
+	background-color: var(--surface-warning);
 }
 
 @keyframes scaleForward {

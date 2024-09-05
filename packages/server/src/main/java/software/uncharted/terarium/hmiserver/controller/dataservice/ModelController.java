@@ -43,6 +43,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Annotations;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceQueryParam;
@@ -67,7 +68,6 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@Transactional
 public class ModelController {
 
 	final ModelService modelService;
@@ -253,6 +253,19 @@ public class ModelController {
 				});
 			} else {
 				log.debug("Unable to get the, or empty, provenance search models_from_document for model " + id);
+			}
+
+			// Force observable to empty-list if null or not specified
+			if (model.get().getSemantics() != null) {
+				if (model.get().getSemantics().getOde().getObservables() == null) {
+					model.get().getSemantics().getOde().setObservables(new ArrayList());
+				}
+			}
+			// Force proper annotation metadata
+			ModelMetadata metadata = model.get().getMetadata();
+			if (metadata.getAnnotations() == null) {
+				metadata.setAnnotations(new Annotations());
+				model.get().setMetadata(metadata);
 			}
 
 			// Return the model

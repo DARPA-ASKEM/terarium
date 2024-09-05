@@ -70,7 +70,6 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@Transactional
 public class DatasetController {
 
 	private static final int DEFAULT_CSV_LIMIT = 100;

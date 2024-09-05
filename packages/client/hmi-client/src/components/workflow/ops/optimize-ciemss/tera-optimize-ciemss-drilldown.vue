@@ -38,7 +38,7 @@
 						Intervention policy
 						<i v-tooltip="interventionPolicyToolTip" class="pi pi-info-circle" />
 					</h5>
-					<template v-for="(cfg, idx) in props.node.state.interventionPolicyGroups">
+					<template v-for="(cfg, idx) in node.state.interventionPolicyGroups">
 						<tera-static-intervention-policy-group
 							v-if="cfg.intervention?.staticInterventions && cfg.intervention?.staticInterventions.length > 0"
 							:key="cfg.id || '' + idx"
@@ -46,7 +46,7 @@
 							@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
 						/>
 					</template>
-					<template v-for="(cfg, idx) in props.node.state.interventionPolicyGroups">
+					<template v-for="(cfg, idx) in node.state.interventionPolicyGroups">
 						<tera-dynamic-intervention-policy-group
 							v-if="cfg.intervention?.dynamicInterventions && cfg.intervention?.dynamicInterventions.length > 0"
 							:key="idx"
@@ -216,15 +216,24 @@
 			</div>
 		</section>
 		<template #preview>
-			<tera-drilldown-preview
-				title="Simulation output"
-				:options="outputs"
-				v-model:output="selectedOutputId"
-				@update:selection="onSelection"
+			<tera-drilldown-section
+				class="ml-4 mr-2 pt-3"
 				:is-loading="showSpinner"
-				is-selectable
 				:class="{ 'failed-run': optimizationResult.success === 'False' ?? 'successful-run' }"
 			>
+				<template #header-controls-left v-if="optimizedInterventionPolicy?.name">
+					<h5>{{ optimizedInterventionPolicy?.name }}</h5>
+				</template>
+				<template #header-controls-right>
+					<Button
+						label="Save for re-use"
+						severity="secondary"
+						outlined
+						:disabled="!optimizedInterventionPolicy"
+						@click="showSaveInterventionPolicy = true"
+					/>
+				</template>
+
 				<tera-operator-output-summary v-if="node.state.summaryId && !showSpinner" :summary-id="node.state.summaryId" />
 
 				<!-- Optimize result.json display: -->
@@ -300,11 +309,11 @@
 						<tera-dataset-datatable
 							v-if="simulationRawContent[knobs.postForecastRunId]"
 							:rows="10"
-							:raw-content="simulationRawContent[knobs.postForecastRunId]"
+							:raw-content="simulationRawContent[knobs.postForecastRunId] as CsvAsset"
 						/>
 					</div>
 				</template>
-			</tera-drilldown-preview>
+			</tera-drilldown-section>
 		</template>
 		<template #footer>
 			<tera-save-dataset-from-simulation
@@ -330,6 +339,15 @@
 			@click="saveModelConfiguration"
 		/>
 	</Dialog>
+	<tera-save-asset-modal
+		:initial-name="optimizedInterventionPolicy?.name"
+		:is-visible="showSaveInterventionPolicy"
+		:asset="optimizedInterventionPolicy"
+		:asset-type="AssetType.InterventionPolicy"
+		@close-modal="showSaveInterventionPolicy = false"
+		@on-save="onSaveForReuse"
+		is-updating-asset
+	/>
 </template>
 
 <script setup lang="ts">
@@ -340,10 +358,10 @@ import Dropdown from 'primevue/dropdown';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import SelectButton from 'primevue/selectbutton';
 import Dialog from 'primevue/dialog';
+import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
@@ -366,7 +384,8 @@ import {
 	Model,
 	OptimizeInterventions,
 	OptimizeQoi,
-	OptimizeRequestCiemss
+	OptimizeRequestCiemss,
+	AssetType
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
@@ -449,6 +468,7 @@ const simulationDisplayChartsCheckbox = ref(true);
 const modelConfigName = ref<string>('');
 const modelConfigDesc = ref<string>('');
 const showSaveDataDialog = ref<boolean>(false);
+const showSaveInterventionPolicy = ref<boolean>(false);
 
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
@@ -488,18 +508,6 @@ const showSpinner = computed<boolean>(
 
 const showModelModal = ref(false);
 const displayOptimizationResultMessage = ref(true);
-
-const outputs = computed(() => {
-	if (!_.isEmpty(props.node.outputs)) {
-		return [
-			{
-				label: 'Select outputs to display in operator',
-				items: props.node.outputs
-			}
-		];
-	}
-	return [];
-});
 
 const isRunDisabled = computed(
 	() =>
@@ -547,9 +555,12 @@ const model = ref<Model | null>(null);
 const modelParameterOptions = computed<string[]>(() =>
 	(model.value?.semantics?.ode?.parameters ?? []).map((p) => p.id)
 );
-const modelStateAndObsOptions = ref<string[]>([]);
+const modelStateAndObsOptions = ref<{ label: string; value: string }[]>([]);
 
-const simulationChartOptions = computed(() => [...modelParameterOptions.value, ...modelStateAndObsOptions.value]);
+const simulationChartOptions = computed(() => [
+	...modelParameterOptions.value,
+	...modelStateAndObsOptions.value.map((ele) => ele.label)
+]);
 const modelConfiguration = ref<ModelConfiguration>();
 
 const showAdditionalOptions = ref(true);
@@ -655,14 +666,22 @@ const initialize = async () => {
 	if (optimizedPolicyId) {
 		optimizedInterventionPolicy.value = await getInterventionPolicyById(optimizedPolicyId);
 	}
+	const modelStates = model.value?.model.states;
+	modelStateAndObsOptions.value = modelStates.map((state: any) => ({
+		label: state.id,
+		value: `${state.id}_state`
+	}));
 
-	modelStateAndObsOptions.value = model.value?.model.states.map((state: any) => state.id);
-
-	/** Until supported by pyciemss-service, do not show observables.
-	if (model?.semantics?.ode.observables) {
-		modelStateAndObsOptions.value.push(...model.semantics.ode.observables.map((observable: any) => observable.id));
+	// Add obs:
+	const modelObs = model.value?.semantics?.ode.observables;
+	if (modelObs) {
+		modelStateAndObsOptions.value.push(
+			...modelObs.map((observable: any) => ({
+				label: observable.id,
+				value: `${observable.id}_observable`
+			}))
+		);
 	}
-	*/
 };
 
 const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => {
@@ -741,9 +760,7 @@ const runOptimize = async () => {
 	};
 
 	// These are interventions to be considered but not optimized over.
-	const fixedStaticParameterInterventions: Intervention[] = _.cloneDeep(
-		inactivePolicyGroups.value.map((ele) => ele.intervention)
-	);
+	const fixedInterventions: Intervention[] = _.cloneDeep(inactivePolicyGroups.value.map((ele) => ele.intervention));
 
 	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
 	// The method should be a list but pyciemss + pyciemss service is not yet ready for this.
@@ -761,7 +778,7 @@ const runOptimize = async () => {
 			end: knobs.value.endTime
 		},
 		optimizeInterventions,
-		fixedStaticParameterInterventions,
+		fixedInterventions,
 		qoi,
 		riskBound: props.node.state.constraintGroups[0].threshold, // TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
 		boundsInterventions: listBoundsInterventions,
@@ -778,7 +795,7 @@ const runOptimize = async () => {
 
 	// InferredParameters is to link a calibration run to this optimize call.
 	optimizePayload.extra.inferredParameters = modelConfiguration.value.simulationId;
-
+	console.log(optimizePayload);
 	const optResult = await makeOptimizeJobCiemss(optimizePayload, nodeMetadata(props.node));
 	const state = _.cloneDeep(props.node.state);
 	state.inProgressOptimizeId = optResult.simulationId;
@@ -801,7 +818,13 @@ const setOutputSettingDefaults = () => {
 	if (!knobs.value.selectedSimulationVariables.length) {
 		props.node.state.constraintGroups.forEach((constraint) => {
 			if (constraint.targetVariable) {
-				selectedSimulationVariables.push(constraint.targetVariable);
+				// Use modelStateAndObsOptions to map from value -> label as simulation selection uses S not S_State
+				const userSelection = modelStateAndObsOptions.value.find(
+					(ele) => ele.value === constraint.targetVariable
+				)?.label;
+				if (userSelection) {
+					selectedSimulationVariables.push(userSelection);
+				}
 			}
 		});
 		if (selectedSimulationVariables.length) {
@@ -1006,6 +1029,14 @@ const preparedForecastCharts = computed(() => {
 	});
 	return charts;
 });
+
+// refresh policy
+const onSaveForReuse = async () => {
+	const policyId = props.node.state.optimizedInterventionPolicyId;
+	if (policyId) {
+		optimizedInterventionPolicy.value = await getInterventionPolicyById(policyId);
+	}
+};
 
 watch(
 	() => knobs.value,
