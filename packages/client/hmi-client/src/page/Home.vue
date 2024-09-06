@@ -120,7 +120,7 @@
 							<ul v-else-if="view === ProjectsView.Cards" class="project-cards-grid">
 								<template v-if="cloningProjects.length && !isLoadingProjects">
 									<li v-for="item in cloningProjects" :key="item.id">
-										<tera-project-card />
+										<tera-project-card v-if="item.id" :project="item" :is-cloning="true" />
 									</li>
 								</template>
 								<template v-if="isLoadingProjects">
@@ -178,7 +178,8 @@ const cloningProjects = computed(() => {
 	const items: any = [];
 	notificationItems.value.forEach((item) => {
 		if (item.type === ClientEventType.CloneProject && item.status === ProgressState.Running) {
-			items.push(item);
+			const project = myFilteredSortedProjects.value.find((p) => p.id === item.assetId);
+			items.push(project);
 		}
 	});
 	return items;

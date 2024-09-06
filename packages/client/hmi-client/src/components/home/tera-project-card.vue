@@ -44,7 +44,11 @@
 			</div>
 			<section>
 				<div class="title" ref="titleRef">
+					<p v-if="isCloning">Cloning...</p>
 					{{ project.name }}
+				</div>
+				<div v-if="isCloning">
+					<ProgressBar mode="indeterminate" />
 				</div>
 				<section class="details">
 					<div>
@@ -97,10 +101,12 @@ import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { Project } from '@/types/Types';
 import DefaultThumbnail from '@/assets/images/project-thumbnails/default.png';
 import getImage from '@/assets/utils';
+import ProgressBar from 'primevue/progressbar';
 import TeraProjectMenu from './tera-project-menu.vue';
 
 const props = defineProps<{
 	project?: Project;
+	isCloning?: boolean;
 }>();
 const emit = defineEmits(['forked-project']);
 
