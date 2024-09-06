@@ -370,8 +370,6 @@ public class ExtractionService {
 				}
 			}
 
-			notificationInterface.sendFinalMessage("Extraction complete");
-
 			return extractionResponse;
 		} catch (final FeignException e) {
 			final String error = "Transitive service failure";
@@ -437,6 +435,28 @@ public class ExtractionService {
 		return documentService.updateAsset(document, projectId, hasWritePermission).orElseThrow();
 	}
 
+	private static String sha256(final byte[] input) {
+		try {
+			// Create a MessageDigest instance for SHA-256
+			final MessageDigest digest = MessageDigest.getInstance("SHA-256");
+
+			// Convert the input string to bytes and compute the hash
+			final byte[] hashBytes = digest.digest(input);
+
+			// Convert the hash bytes to a hexadecimal string
+			final StringBuilder hexString = new StringBuilder();
+			for (final byte b : hashBytes) {
+				final String hex = Integer.toHexString(0xff & b);
+				if (hex.length() == 1) hexString.append('0');
+				hexString.append(hex);
+			}
+
+			return hexString.toString();
+		} catch (final Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	public Future<DocumentAsset> extractPDFAndApplyToDocument(
 		final UUID documentId,
 		final UUID projectId,
@@ -465,17 +485,18 @@ public class ExtractionService {
 
 			final byte[] documentContents = documentService.fetchFileAsBytes(documentId, filename).get();
 
-			final MessageDigest digest = MessageDigest.getInstance("SHA-256");
-			final String documentSHA = digest.digest(documentContents).toString();
+			final String documentSHA = sha256(documentContents);
+
+			log.info("Document SHA: {}, checking cache", documentSHA);
 
 			ExtractPDFResponse extractionResponse = null;
 			if (responseCache.containsKey(documentSHA)) {
-				log.info("Returning cached response for document {}", documentId);
+				log.info("Returning cached response for document {} for SHA: {}", documentId, documentSHA);
 
-				extractionResponse = responseCache.get(documentId.toString());
+				extractionResponse = responseCache.get(documentSHA);
 				notificationInterface.sendMessage("Cached response found for document extraction");
 			} else {
-				log.info("No cached response found for text from document {}", documentId);
+				log.info("No cached response found for text from document {} for SHA: {}", documentId, documentSHA);
 
 				notificationInterface.sendMessage("No extraction found in cache, dispatching extraction request...");
 				extractionResponse = runExtractPDF(filename, documentContents, userId, notificationInterface);
@@ -489,8 +510,13 @@ public class ExtractionService {
 				);
 			}
 
+			notificationInterface.sendMessage("Applying extraction results to document");
 			log.info("Applying extraction results to document {}", documentId);
-			return applyExtractPDFResponse(documentId, projectId, extractionResponse, hasWritePermission);
+			final DocumentAsset doc = applyExtractPDFResponse(documentId, projectId, extractionResponse, hasWritePermission);
+
+			notificationInterface.sendFinalMessage("Extraction complete");
+
+			return doc;
 		});
 	}
 
