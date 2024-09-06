@@ -73,11 +73,6 @@
 								/>
 							</div>
 						</div>
-						<!-- FIXME: show sampled values ???
-							<div v-if="inferredParameters">Using inferred parameters from calibration: {{ inferredParameters[0] }}</div>
-							-->
-
-						<!-- This used to be in the footer -->
 						<tera-save-dataset-from-simulation
 							:simulation-run-id="node.state.forecastId"
 							:showDialog="showSaveDataDialog"
