@@ -5,145 +5,157 @@
 		@update-state="(state: any) => emit('update-state', state)"
 		@update:selection="onSelection"
 	>
-		<section :tabName="DrilldownTabs.Wizard" class="ml-4 mr-2 pt-3">
-			<tera-drilldown-section>
-				<template #header-controls-right>
-					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
-					<Button label="Run" icon="pi pi-play" @click="runCalibrate" :disabled="disableRunButton" />
-				</template>
-				<div class="form-section">
-					<h5>Mapping</h5>
-					<DataTable class="mapping-table" :value="mapping">
-						<Column field="modelVariable">
-							<template #header>
-								<span class="column-header">Model variable</span>
-							</template>
-							<template #body="{ data, field }">
-								<Dropdown
-									class="w-full"
-									:placeholder="mappingDropdownPlaceholder"
-									v-model="data[field]"
-									:options="modelStateOptions?.map((ele) => ele.referenceId ?? ele.id)"
-								/>
-							</template>
-						</Column>
-						<Column field="datasetVariable">
-							<template #header>
-								<span class="column-header">Dataset variable</span>
-							</template>
-							<template #body="{ data, field }">
-								<Dropdown
-									class="w-full"
-									:placeholder="mappingDropdownPlaceholder"
-									v-model="data[field]"
-									:options="datasetColumns?.map((ele) => ele.name)"
-								/>
-							</template>
-						</Column>
-						<Column field="deleteRow">
-							<template #header>
-								<span class="column-header"></span>
-							</template>
-							<template #body="{ index }">
-								<Button class="p-button-sm p-button-text" label="Delete" @click="deleteMapRow(index)" />
-							</template>
-						</Column>
-					</DataTable>
-					<div class="flex justify-content-between">
-						<div>
-							<Button class="p-button-sm p-button-text" icon="pi pi-plus" label="Add mapping" @click="addMapping" />
-							<Button
-								class="p-button-sm p-button-text"
-								icon="pi pi-sparkles"
-								label="Auto map"
-								@click="getAutoMapping"
-							/>
-						</div>
-						<Button class="p-button-sm p-button-text" label="Delete all mapping" @click="deleteMapping" />
+		<!-- Wizard -->
+		<section :tabName="DrilldownTabs.Wizard" class="wizard">
+			<tera-slider-panel v-model:is-open="isSidebarOpen" header="Calibration settings" content-width="420px">
+				<template #content>
+					<div class="toolbar">
+						<p>Click Run to begin calibrating.</p>
+						<span class="flex gap-2">
+							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
+							<Button label="Run" icon="pi pi-play" @click="runCalibrate" :disabled="disableRunButton" />
+						</span>
 					</div>
-				</div>
+					<div class="form-section">
+						<h5>Mapping</h5>
+						<DataTable class="mapping-table" :value="mapping">
+							<Column field="modelVariable">
+								<template #header>
+									<span class="column-header">Model variable</span>
+								</template>
+								<template #body="{ data, field }">
+									<Dropdown
+										class="w-full"
+										:placeholder="mappingDropdownPlaceholder"
+										v-model="data[field]"
+										:options="modelStateOptions?.map((ele) => ele.referenceId ?? ele.id)"
+									/>
+								</template>
+							</Column>
+							<Column field="datasetVariable">
+								<template #header>
+									<span class="column-header">Dataset variable</span>
+								</template>
+								<template #body="{ data, field }">
+									<Dropdown
+										class="w-full"
+										:placeholder="mappingDropdownPlaceholder"
+										v-model="data[field]"
+										:options="datasetColumns?.map((ele) => ele.name)"
+									/>
+								</template>
+							</Column>
+							<Column field="deleteRow">
+								<template #header>
+									<span class="column-header"></span>
+								</template>
+								<template #body="{ index }">
+									<Button class="p-button-sm p-button-text" icon="pi pi-trash" @click="deleteMapRow(index)" />
+								</template>
+							</Column>
+						</DataTable>
+						<div class="flex justify-content-between">
+							<div>
+								<Button class="p-button-sm p-button-text" icon="pi pi-plus" label="Add mapping" @click="addMapping" />
+								<Button
+									class="p-button-sm p-button-text"
+									icon="pi pi-sparkles"
+									label="Auto map"
+									@click="getAutoMapping"
+								/>
+							</div>
+							<Button class="p-button-sm p-button-text" label="Delete all mapping" @click="deleteMapping" />
+						</div>
+					</div>
 
-				<section class="form-section">
-					<h5>
-						Calibration settings
-						<i v-tooltip="calibrationSettingsToolTip" class="pi pi-info-circle" />
-					</h5>
-					<div class="label-and-input">
-						<label for="4">Preset (optional)</label>
-						<Dropdown
-							v-model="presetType"
-							placeholder="Select an option"
-							:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
-							@update:model-value="setPresetValues"
-						/>
-					</div>
-					<h5>
-						Number of Samples
-						<i v-tooltip="numberOfSamplesTooltip" class="pi pi-info-circle" />
-					</h5>
-					<div class="input-row">
+					<section class="form-section">
+						<h5>
+							Calibration settings
+							<i v-tooltip="calibrationSettingsToolTip" class="pi pi-info-circle" />
+						</h5>
 						<div class="label-and-input">
-							<tera-input-number inputId="integeronly" v-model="knobs.numSamples" @update:model-value="updateState" />
-						</div>
-					</div>
-					<h5>
-						ODE solver options
-						<i v-tooltip="odeSolverOptionsTooltip" class="pi pi-info-circle" />
-					</h5>
-					<div class="input-row">
-						<div class="label-and-input">
-							<label for="5">Method</label>
+							<label for="4">Preset (optional)</label>
 							<Dropdown
-								id="5"
-								v-model="knobs.method"
-								:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
-								@update:model-value="updateState"
+								v-model="presetType"
+								placeholder="Select an option"
+								:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
+								@update:model-value="setPresetValues"
 							/>
 						</div>
-						<div class="label-and-input">
-							<label for="num-steps">Step size</label>
-							<tera-input-number inputId="integeronly" v-model="knobs.stepSize" />
+						<h5>
+							Number of Samples
+							<i v-tooltip="numberOfSamplesTooltip" class="pi pi-info-circle" />
+						</h5>
+						<div class="input-row">
+							<div class="label-and-input">
+								<tera-input-number inputId="integeronly" v-model="knobs.numSamples" @update:model-value="updateState" />
+							</div>
 						</div>
-					</div>
-					<h5>
-						Inference Options
-						<i v-tooltip="inferenceOptionsTooltip" class="pi pi-info-circle" />
-					</h5>
-					<div class="input-row">
-						<div class="label-and-input">
-							<label for="num-iterations">Number of solver iterations</label>
-							<tera-input-number
-								inputId="integeronly"
-								v-model="knobs.numIterations"
-								@update:model-value="updateState"
-							/>
+						<h5>
+							ODE solver options
+							<i v-tooltip="odeSolverOptionsTooltip" class="pi pi-info-circle" />
+						</h5>
+						<div class="input-row">
+							<div class="label-and-input">
+								<label for="5">Method</label>
+								<Dropdown
+									id="5"
+									v-model="knobs.method"
+									:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
+									@update:model-value="updateState"
+								/>
+							</div>
+							<div class="label-and-input">
+								<label for="num-steps">Step size</label>
+								<tera-input-number inputId="integeronly" v-model="knobs.stepSize" />
+							</div>
 						</div>
-						<div class="label-and-input">
-							<label for="num-samples">End time for forecast</label>
-							<tera-input-number inputId="integeronly" v-model="knobs.endTime" />
+						<h5>
+							Inference Options
+							<i v-tooltip="inferenceOptionsTooltip" class="pi pi-info-circle" />
+						</h5>
+						<div class="input-row">
+							<div class="label-and-input">
+								<label for="num-iterations">Number of solver iterations</label>
+								<tera-input-number
+									inputId="integeronly"
+									v-model="knobs.numIterations"
+									@update:model-value="updateState"
+								/>
+							</div>
+							<div class="label-and-input">
+								<label for="num-samples">End time for forecast</label>
+								<tera-input-number inputId="integeronly" v-model="knobs.endTime" />
+							</div>
+							<div class="label-and-input">
+								<label for="learning-rate">Learning rate</label>
+								<tera-input-number
+									inputId="numberonly"
+									v-model="knobs.learningRate"
+									@update:model-value="updateState"
+								/>
+							</div>
+							<div class="label-and-input">
+								<label>Inference algorithm</label>
+								<tera-input-text disabled model-value="SVI" />
+							</div>
+							<div class="label-and-input">
+								<label>Loss function</label>
+								<tera-input-text disabled model-value="ELBO" />
+							</div>
+							<div class="label-and-input">
+								<label>Optimizer method</label>
+								<tera-input-text disabled model-value="ADAM" />
+							</div>
 						</div>
-						<div class="label-and-input">
-							<label for="learning-rate">Learning rate</label>
-							<tera-input-number inputId="numberonly" v-model="knobs.learningRate" @update:model-value="updateState" />
-						</div>
-						<div class="label-and-input">
-							<label>Inference algorithm</label>
-							<tera-input-text disabled model-value="SVI" />
-						</div>
-						<div class="label-and-input">
-							<label>Loss function</label>
-							<tera-input-text disabled model-value="ELBO" />
-						</div>
-						<div class="label-and-input">
-							<label>Optimizer method</label>
-							<tera-input-text disabled model-value="ADAM" />
-						</div>
-					</div>
-				</section>
-			</tera-drilldown-section>
+					</section>
+				</template>
+			</tera-slider-panel>
 		</section>
-		<section :tabName="DrilldownTabs.Notebook">
-			<h5>Notebook</h5>
+
+		<!-- Notebook section -->
+		<section :tabName="DrilldownTabs.Notebook" class="notebook-section">
+			<p class="m-3">The notebook is under construction.</p>
 		</section>
 
 		<!-- Output section -->
@@ -288,6 +300,7 @@ import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { CalibrateMap, setupDatasetInput, setupModelInput } from '@/services/calibrate-workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
@@ -326,6 +339,8 @@ import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults, getErrorData } from './calibrate-utils';
+
+const isSidebarOpen = ref(true);
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
@@ -869,15 +884,53 @@ watch(
 </script>
 
 <style scoped>
+/* Left sidebar stuff */
+:deep(.slider-content) {
+	background-color: var(--surface-100);
+	border-right: 1px solid var(--surface-border-light);
+}
+:deep(.slider-content aside header) {
+	background: color-mix(in srgb, var(--surface-100) 80%, transparent 20%);
+}
+:deep(.slider-tab) {
+	background-color: var(--surface-100);
+	border-right: 1px solid var(--surface-border-light);
+}
+:deep(.slider-tab header) {
+	background: transparent;
+}
+.wizard .toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--gap-1) var(--gap);
+	gap: var(--gap-2);
+}
+
+/* In Wizard mode, override grid template so output expands when sidebar is closed */
+.overlay-container:deep(section.scale main) {
+	grid-template-columns: auto 1fr;
+}
+
+/* Notebook */
+.notebook-section {
+	width: calc(50vw - 4rem);
+	background: var(--surface-100);
+	border-right: 1px solid var(--surface-border-light);
+}
+
+/* Mapping table */
 .mapping-table:deep(td) {
 	border: none !important;
 	padding: 0 var(--gap-1) var(--gap-2) 0 !important;
+	background: var(--surface-100);
 }
 
 .mapping-table:deep(th) {
 	border: none !important;
 	padding: 0 var(--gap-1) var(--gap-2) var(--gap-1) !important;
 	width: 50%;
+	background: var(--surface-100);
 }
 
 th {
@@ -913,14 +966,10 @@ img {
 }
 
 .form-section {
-	background-color: var(--surface-50);
-	border-radius: var(--border-radius-medium);
-	box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.25) inset;
 	display: flex;
 	flex-direction: column;
 	flex-grow: 1;
 	gap: var(--gap-1);
-	margin: 0 var(--gap) var(--gap) var(--gap);
 	padding: var(--gap);
 }
 
