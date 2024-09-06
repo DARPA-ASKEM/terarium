@@ -179,14 +179,8 @@
 				<div v-if="!showSpinner" class="form-section">
 					<section ref="outputPanel" v-if="modelConfig && csvAsset">
 						<h5>Parameters</h5>
-						<tera-chart-control
-							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedParameters }"
-							:multi-select="true"
-							:show-remove-button="false"
-							:variables="Object.keys(pyciemssMap).filter((c) => modelPartTypesMap[c] === 'parameter')"
-							@configuration-change="updateSelectedParameters"
-						/>
-						<template v-for="param of node.state.selectedParameters" :key="param">
+						<br />
+						<template v-for="param of selectedParameters" :key="param">
 							<vega-chart
 								expandable
 								:are-embed-actions-visible="true"
@@ -218,32 +212,13 @@
 							</vega-chart>
 						</template>
 						<h5>Variables</h5>
-						<tera-chart-control
-							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedVariables }"
-							:multi-select="true"
-							:show-remove-button="false"
-							:variables="
-								Object.keys(pyciemssMap).filter((c) => ['state', 'observable'].includes(modelPartTypesMap[c]))
-							"
-							@configuration-change="updateSelectedVariables"
-						/>
-						<template v-for="variable of node.state.selectedVariables" :key="variable">
+						<br />
+						<template v-for="variable of selectedVariables" :key="variable">
 							<vega-chart expandable :are-embed-actions-visible="true" :visualization-spec="preparedCharts[variable]" />
 						</template>
 						<h5>Errors</h5>
-						<tera-chart-control
-							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedErrorVariables }"
-							:multi-select="true"
-							:show-remove-button="false"
-							:variables="Object.keys(pyciemssMap).filter((c) => mapping.find((d) => d.modelVariable === c))"
-							@configuration-change="updateSelectedErrorVariables"
-						/>
 						<vega-chart
-							v-if="
-								errorData.length > 0 &&
-								node.state.selectedErrorVariables &&
-								node.state.selectedErrorVariables.length > 0
-							"
+							v-if="errorData.length > 0 && selectedErrorVariables.length > 0"
 							:expandable="onExpandErrorChart"
 							:are-embed-actions-visible="true"
 							:visualization-spec="errorChart"
@@ -279,7 +254,7 @@
 						<h5>Parameters</h5>
 						<div class="chart-settings-item-container">
 							<tera-chart-settings-item
-								v-for="settings of chartSettings"
+								v-for="settings of chartSettings.filter((setting) => setting.type === ChartSettingType.PARAMETER)"
 								:key="settings.id"
 								:settings="settings"
 								@open="isChartSettingsPanelOpen = true"
@@ -295,8 +270,42 @@
 						/>
 						<hr />
 						<h5>Model Variables</h5>
+						<div class="chart-settings-item-container">
+							<tera-chart-settings-item
+								v-for="settings of chartSettings.filter((setting) => setting.type === ChartSettingType.VARIABLE)"
+								:key="settings.id"
+								:settings="settings"
+								@open="isChartSettingsPanelOpen = true"
+								@delete="() => {}"
+							/>
+						</div>
+						<tera-chart-control
+							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedVariables }"
+							:multi-select="true"
+							:show-remove-button="false"
+							:variables="
+								Object.keys(pyciemssMap).filter((c) => ['state', 'observable'].includes(modelPartTypesMap[c]))
+							"
+							@configuration-change="updateSelectedVariables"
+						/>
 						<hr />
 						<h5>Error</h5>
+						<div class="chart-settings-item-container">
+							<tera-chart-settings-item
+								v-for="settings of chartSettings.filter((setting) => setting.type === ChartSettingType.ERROR)"
+								:key="settings.id"
+								:settings="settings"
+								@open="isChartSettingsPanelOpen = true"
+								@delete="() => {}"
+							/>
+						</div>
+						<tera-chart-control
+							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedErrorVariables }"
+							:multi-select="true"
+							:show-remove-button="false"
+							:variables="Object.keys(pyciemssMap).filter((c) => mapping.find((d) => d.modelVariable === c))"
+							@configuration-change="updateSelectedErrorVariables"
+						/>
 					</div>
 				</template>
 			</tera-slider-panel>
@@ -515,9 +524,55 @@ const lossChartSize = computed(() => drilldownChartSize(lossChartContainer.value
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 
-const selectedParameters = ref<string[]>(props.node.state.selectedParameters);
-const selectedVariables = ref<string[]>(props.node.state.selectedVariables);
-const selectedErrorVariables = ref<string[]>(props.node.state.selectedErrorVariables);
+const chartSettings = computed(() => props.node.state.chartSettings ?? []);
+const selectedParameters = computed(() =>
+	chartSettings.value
+		.filter((setting) => setting.type === ChartSettingType.PARAMETER)
+		.map((setting) => setting.selectedVariables[0])
+);
+const selectedVariables = computed(() =>
+	chartSettings.value
+		.filter((setting) => setting.type === ChartSettingType.VARIABLE)
+		.map((setting) => setting.selectedVariables[0])
+);
+const selectedErrorVariables = computed(() =>
+	chartSettings.value
+		.filter((setting) => setting.type === ChartSettingType.ERROR)
+		.map((setting) => setting.selectedVariables[0])
+);
+
+/**
+ * Updates the given chart settings based on the selected variables and return it as new settings.
+ * This function assumes that the given chart settings are for single variable charts.
+ *
+ * @param {ChartSetting[]} settings - The current array of chart settings.
+ * @param {string[]} variableSelection - An array of selected variables to update the chart settings with.
+ * @param {ChartSettingType} type - The type of chart setting to update.
+ * @returns {ChartSetting[]} The updated array of chart settings.
+ */
+function updateChartSettingsBySelectedVariables(
+	settings: ChartSetting[],
+	type: ChartSettingType,
+	variableSelection: string[]
+) {
+	const previousSettings = settings.filter((setting) => setting.type !== type);
+	const selectedSettings = variableSelection.map((variable) => {
+		const found = previousSettings.find(
+			(setting) => setting.selectedVariables[0] === variable && setting.type === type
+		);
+		return (
+			found ??
+			({
+				id: uuidv4(),
+				name: variable,
+				selectedVariables: [variable],
+				type
+			} as ChartSetting)
+		);
+	});
+	const newSettings: ChartSetting[] = [...previousSettings, ...selectedSettings];
+	return newSettings;
+}
 
 const pyciemssMap = ref<Record<string, string>>({});
 const preparedChartInputs = computed(() => {
@@ -558,7 +613,7 @@ const preparedCharts = computed(() => {
 	const datasetTimeField = state.mapping.find((d) => d.modelVariable === 'timestamp')?.datasetVariable;
 
 	const charts = {};
-	state.selectedVariables.forEach((variable) => {
+	selectedVariables.value.forEach((variable) => {
 		const datasetVariables: string[] = [];
 		const mapObj = state.mapping.find((d) => d.modelVariable === variable);
 		if (mapObj) {
@@ -600,11 +655,10 @@ const preparedCharts = computed(() => {
 const preparedDistributionCharts = computed(() => {
 	if (!preparedChartInputs.value) return [];
 	const { result } = preparedChartInputs.value;
-	const state = props.node.state;
 	const labelBefore = 'Before calibration';
 	const labelAfter = 'After calibration';
 	const charts = {};
-	state.selectedParameters.forEach((param) => {
+	selectedParameters.value.forEach((param) => {
 		const fieldName = pyciemssMap.value[param];
 		const beforeFieldName = `${fieldName}:pre`;
 		const histogram = createHistogramChart(result, {
@@ -633,10 +687,10 @@ const preparedDistributionCharts = computed(() => {
 });
 
 const errorChartVariables = computed(() => {
-	if (!props.node.state.selectedErrorVariables?.length) return [];
+	if (!selectedErrorVariables.value.length) return [];
 	const getDatasetVariable = (modelVariable: string) =>
 		mapping.value.find((d) => d.modelVariable === modelVariable)?.datasetVariable;
-	const variables = props.node.state.selectedErrorVariables.map((variable) => ({
+	const variables = selectedErrorVariables.value.map((variable) => ({
 		field: getDatasetVariable(variable) as string,
 		label: variable
 	}));
@@ -753,71 +807,38 @@ const messageHandler = (event: ClientEvent<any>) => {
 const onSelection = (id: string) => {
 	emit('select-output', id);
 };
-// const chartSettings = ref<ChartSetting[]>([
-// 	{
-// 		id: '1',
-// 		name: 'beta',
-// 		selectedVariables: ['beta'],
-// 		type: ChartSettingType.PARAMETER,
-// 	},
-// 	{
-// 		id: '2',
-// 		name: 'beta',
-// 		selectedVariables: ['beta'],
-// 		type: 'parameter',
-// 		multiSelect: false
-// 	},
-// 	{
-// 		id: '3',
-// 		name: 'I',
-// 		selectedVariables: ['I'],
-// 		type: 'variable',
-// 		multiSelect: false
-// 	},
-// 	{
-// 		id: '4',
-// 		name: 'S',
-// 		selectedVariables: ['S'],
-// 		type: 'variable',
-// 		multiSelect: false
-// 	}
-// ]);;
-
-const chartSettings = ref<ChartSetting[]>(props.node.state.chartSettings ?? []);
 
 function updateSelectedParameters(event) {
-	console.log(props.node.state.chartSettings);
-
-	const previousSettings = chartSettings.value.filter((setting) => setting.type === ChartSettingType.PARAMETER);
-	const selectedSettings = (event.selectedVariable as string[]).map((variable) => {
-		const found = previousSettings.find((setting) => setting.name === variable);
-		return (
-			found ??
-			({
-				id: uuidv4(),
-				name: variable,
-				selectedVariables: [variable],
-				type: ChartSettingType.PARAMETER
-			} as ChartSetting)
-		);
+	emit('update-state', {
+		...props.node.state,
+		chartSettings: updateChartSettingsBySelectedVariables(
+			chartSettings.value,
+			ChartSettingType.PARAMETER,
+			event.selectedVariable
+		)
 	});
-	const updatedSettings: ChartSetting[] = [
-		...chartSettings.value.filter((setting) => setting.type !== ChartSettingType.PARAMETER),
-		...selectedSettings
-	];
-
-	console.log('updatedSettings', updatedSettings);
-	selectedParameters.value = event.selectedVariable;
-	emit('update-state', { ...props.node.state, chartSettings: updatedSettings });
-	// emit('update-state', { ...props.node.state, selectedParameters: event.selectedVariable });
 }
 
 function updateSelectedVariables(event) {
-	emit('update-state', { ...props.node.state, selectedVariables: event.selectedVariable });
+	emit('update-state', {
+		...props.node.state,
+		chartSettings: updateChartSettingsBySelectedVariables(
+			chartSettings.value,
+			ChartSettingType.VARIABLE,
+			event.selectedVariable
+		)
+	});
 }
 
 function updateSelectedErrorVariables(event) {
-	emit('update-state', { ...props.node.state, selectedErrorVariables: event.selectedVariable });
+	emit('update-state', {
+		...props.node.state,
+		chartSettings: updateChartSettingsBySelectedVariables(
+			chartSettings.value,
+			ChartSettingType.ERROR,
+			event.selectedVariable
+		)
+	});
 }
 
 // Used from button to add new entry to the mapping object
