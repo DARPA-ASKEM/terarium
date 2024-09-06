@@ -234,6 +234,8 @@
 				</div>
 			</div>
 		</section>
+
+		<!-- Preview tab -->
 		<template #preview>
 			<tera-drilldown-section
 				class="ml-3 mr-3"
@@ -254,9 +256,8 @@
 				</template>
 
 				<tera-operator-output-summary v-if="node.state.summaryId && !showSpinner" :summary-id="node.state.summaryId" />
-
 				<!-- Optimize result.json display: -->
-				<div v-if="optimizationResult && displayOptimizationResultMessage" class="result-message-grid mb-2">
+				<div v-if="optimizationResult && displayOptimizationResultMessage" class="result-message-grid mt-2 mb-2">
 					<span class="flex flex-row">
 						<p class="mt-2">For debugging</p>
 						<Button
