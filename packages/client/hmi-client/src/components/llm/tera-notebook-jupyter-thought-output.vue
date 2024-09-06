@@ -8,8 +8,10 @@
 		@click="() => (showThoughts = !showThoughts)"
 	/>
 	<p v-if="showThoughts" class="thought-bubble">
-		<span class="thought-bubble-title">{{ llmQuery }}</span>
-		<br />
+		<span v-if="llmQuery.length > 0" class="thought-bubble-title">
+			{{ llmQuery }}
+			<br />
+		</span>
 		{{ thought }}
 	</p>
 </template>
