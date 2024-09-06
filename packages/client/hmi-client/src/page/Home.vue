@@ -47,7 +47,7 @@
 
 			<!-- Tab section: My projects, Public projects, Sample projects -->
 			<section class="menu">
-				<TabView @tab-change="tabChange">
+				<TabView @tab-change="tabChange" :active-index="activeTabIndex" :key="activeTabIndex">
 					<TabPanel v-for="(tab, i) in projectsTabs" :header="tab.title" :key="i">
 						<section class="filter-and-sort">
 							<div class="pr-3">
@@ -129,7 +129,12 @@
 									</li>
 								</template>
 								<li v-else v-for="project in searchedAndFilterProjects" :key="project.id">
-									<tera-project-card v-if="project.id" :project="project" @click="openProject(project.id)" />
+									<tera-project-card
+										v-if="project.id"
+										:project="project"
+										@click="openProject(project.id)"
+										@forked-project="tabChange({ index: 0 })"
+									/>
 								</li>
 							</ul>
 							<tera-project-table
