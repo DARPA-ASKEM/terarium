@@ -177,7 +177,6 @@ const sampleAgentQuestions = [
 	'Compare the two models and visualize and display them.'
 ];
 let compareModelsTaskId = '';
-let compareModelsTaskOutput = '';
 
 const modelsToCompare = ref<Model[]>([]);
 const modelCardsToCompare = ref<any[]>([]);
@@ -294,22 +293,19 @@ async function processCompareModels(modelIds: string[]) {
 	const taskRes = await compareModels(modelIds, props.node.workflowId, props.node.id);
 	compareModelsTaskId = taskRes.id;
 	if (taskRes.status === TaskStatus.Success) {
-		compareModelsTaskOutput = taskRes.output;
+		generateOverview(taskRes.output);
 	}
 }
 
-async function generateOverview() {
-	// Generate once the comparison task has been completed
-	if (!compareModelsTaskOutput) return;
-	overview.value = markdownit().render(JSON.parse(b64DecodeUnicode(compareModelsTaskOutput)).response);
+// Generate once the comparison task has been completed
+function generateOverview(output: string) {
+	overview.value = markdownit().render(JSON.parse(b64DecodeUnicode(output)).response);
 	emit('update-status', OperatorStatus.DEFAULT); // This is a custom way of granting a default status to the operator, since it has no output
 }
 
 useClientEvent(ClientEventType.TaskGollmCompareModel, (event: ClientEvent<TaskResponse>) => {
-	if (!event.data || event.data.id !== compareModelsTaskId) return;
-	if (event.data.status !== TaskStatus.Success) return;
-	compareModelsTaskOutput = event.data.output;
-	generateOverview();
+	if (!event.data || event.data.id !== compareModelsTaskId || event.data.status !== TaskStatus.Success) return;
+	generateOverview(event.data.output);
 });
 
 onMounted(async () => {
