@@ -21,7 +21,7 @@
 					<div class="form-section" v-if="isSidebarOpen">
 						<!-- Presets -->
 						<div class="label-and-input">
-							<label for="4">Preset (optional)</label>
+							<label>Preset (optional)</label>
 							<Dropdown
 								v-model="presetType"
 								placeholder="Select an option"
@@ -33,18 +33,18 @@
 						<!-- Start & End -->
 						<div class="input-row">
 							<div class="label-and-input">
-								<label for="2">Start time</label>
+								<label for="start-time">Start time</label>
 								<tera-input-number
-									id="2"
+									id="start-time"
 									v-model="timespan.start"
 									inputId="integeronly"
 									@update:model-value="updateState"
 								/>
 							</div>
 							<div class="label-and-input">
-								<label for="3">End time</label>
+								<label for="timespan">End time</label>
 								<tera-input-number
-									id="3"
+									id="timespan"
 									v-model="timespan.end"
 									inputId="integeronly"
 									@update:model-value="updateState"
@@ -55,9 +55,9 @@
 						<!-- Number of Samples & Method -->
 						<div class="input-row">
 							<div class="label-and-input">
-								<label for="4">Number of samples</label>
+								<label for="num-samples">Number of samples</label>
 								<tera-input-number
-									id="4"
+									id="num-samples"
 									v-model="numSamples"
 									inputId="integeronly"
 									:min="1"
@@ -65,8 +65,9 @@
 								/>
 							</div>
 							<div class="label-and-input">
-								<label for="5">Method</label>
+								<label for="solver-method">Method</label>
 								<Dropdown
+									id="solver-method"
 									v-model="method"
 									:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
 									@update:model-value="updateState"
@@ -76,8 +77,6 @@
 						<!-- FIXME: show sampled values ???
 							<div v-if="inferredParameters">Using inferred parameters from calibration: {{ inferredParameters[0] }}</div>
 							-->
-
-						<!-- This used to be in the footer -->
 						<tera-save-dataset-from-simulation
 							:simulation-run-id="node.state.forecastId"
 							:showDialog="showSaveDataDialog"
