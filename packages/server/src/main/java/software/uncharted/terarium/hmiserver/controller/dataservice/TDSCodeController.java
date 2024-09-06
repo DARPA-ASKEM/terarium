@@ -477,31 +477,15 @@ public class TDSCodeController {
 		final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
 		uploadCodeHelper(createdCode.getId(), projectId, filename, fileEntity, permission);
 
-		final Optional<Project> project;
-		try {
-			project = projectService.getProject(projectId);
-			if (!project.isPresent()) {
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
-			}
-		} catch (final Exception e) {
-			log.error("Error communicating with project service", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
-		}
-
 		final AssetType assetType = AssetType.CODE;
-		final Optional<ProjectAsset> projectAsset = projectAssetService.createProjectAsset(
-			project.get(),
+		final ProjectAsset projectAsset = projectAssetService.createProjectAsset(
+			projectId,
 			assetType,
 			createdCode,
 			permission
 		);
 
-		if (projectAsset.isEmpty()) {
-			log.error("Project Asset is empty");
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("asset.unable-to-create"));
-		}
-
-		return ResponseEntity.status(HttpStatus.CREATED).body(projectAsset.get());
+		return ResponseEntity.status(HttpStatus.CREATED).body(projectAsset);
 	}
 
 	/** Downloads a file from GitHub given the path and owner name, then uploads it to the project. */

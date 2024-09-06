@@ -478,31 +478,15 @@ public class DocumentController {
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 
-		final Optional<Project> project;
-		try {
-			project = projectService.getProject(projectId);
-			if (!project.isPresent()) {
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
-			}
-		} catch (final Exception e) {
-			log.error("Error communicating with project service", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
-		}
-
 		final AssetType assetType = AssetType.DOCUMENT;
-		final Optional<ProjectAsset> projectAsset = projectAssetService.createProjectAsset(
-			project.get(),
+		final ProjectAsset projectAsset = projectAssetService.createProjectAsset(
+			projectId,
 			assetType,
 			createdDocumentAsset,
 			permission
 		);
 
-		if (projectAsset.isEmpty()) {
-			log.error("Project Asset is empty");
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("asset.unable-to-create"));
-		}
-
-		return ResponseEntity.status(HttpStatus.CREATED).body(projectAsset.get());
+		return ResponseEntity.status(HttpStatus.CREATED).body(projectAsset);
 	}
 
 	/**

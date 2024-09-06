@@ -11,13 +11,16 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.repository.data.ProjectAssetRepository;
+import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
@@ -29,6 +32,10 @@ public class ProjectAssetService {
 	final ProjectAssetRepository projectAssetRepository;
 
 	final ReBACService reBACService;
+
+	final ProjectService projectService;
+
+	final Messages messages;
 
 	/**
 	 * Find all active assets for a project. Active assets are defined as those that are not deleted and not temporary.
@@ -67,23 +74,34 @@ public class ProjectAssetService {
 	}
 
 	@Observed(name = "function_profile")
-	public Optional<ProjectAsset> createProjectAsset(
-		final Project project,
+	public ProjectAsset createProjectAsset(
+		final UUID projectId,
 		final AssetType assetType,
 		final TerariumAsset asset,
 		final Schema.Permission hasWritePermission
 	) {
+		final Optional<Project> project;
+		try {
+			project = projectService.getProject(projectId);
+			if (!project.isPresent()) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
+			}
+		} catch (final Exception e) {
+			log.error("Error communicating with project service", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
+
 		ProjectAsset projectAsset = new ProjectAsset();
-		projectAsset.setProject(project);
+		projectAsset.setProject(project.get());
 		projectAsset.setAssetId(asset.getId());
 		projectAsset.setAssetType(assetType);
 		projectAsset.setAssetName(asset.getName());
 
 		projectAsset = projectAssetRepository.save(projectAsset);
 
-		project.getProjectAssets().add(projectAsset);
+		project.get().getProjectAssets().add(projectAsset);
 
-		return Optional.of(projectAsset);
+		return projectAsset;
 	}
 
 	@Observed(name = "function_profile")

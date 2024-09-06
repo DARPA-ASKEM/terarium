@@ -154,10 +154,10 @@ public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
 		projectService.createProject(project);
 
 		for (final DocumentAsset doc : documents) {
-			projectAssetService.createProjectAsset(project, AssetType.DOCUMENT, doc, ASSUME_WRITE_PERMISSION);
+			projectAssetService.createProjectAsset(project.getId(), AssetType.DOCUMENT, doc, ASSUME_WRITE_PERMISSION);
 		}
 
-		projectAssetService.createProjectAsset(project, AssetType.WORKFLOW, workflow, ASSUME_WRITE_PERMISSION);
+		projectAssetService.createProjectAsset(project.getId(), AssetType.WORKFLOW, workflow, ASSUME_WRITE_PERMISSION);
 
 		final List<TerariumAsset> cloned = cloneService.cloneAndPersistAsset(project.getId(), workflow.getId());
 
@@ -203,10 +203,10 @@ public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
 		projectService.createProject(project);
 
 		for (final DocumentAsset doc : documents) {
-			projectAssetService.createProjectAsset(project, AssetType.DOCUMENT, doc, ASSUME_WRITE_PERMISSION);
+			projectAssetService.createProjectAsset(project.getId(), AssetType.DOCUMENT, doc, ASSUME_WRITE_PERMISSION);
 		}
 
-		projectAssetService.createProjectAsset(project, AssetType.WORKFLOW, workflow, ASSUME_WRITE_PERMISSION);
+		projectAssetService.createProjectAsset(project.getId(), AssetType.WORKFLOW, workflow, ASSUME_WRITE_PERMISSION);
 
 		final List<ProjectAsset> exportedAssets = projectAssetService.getProjectAssets(
 			project.getId(),

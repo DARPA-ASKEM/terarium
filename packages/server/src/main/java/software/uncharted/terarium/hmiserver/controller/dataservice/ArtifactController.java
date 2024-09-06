@@ -621,29 +621,8 @@ public class ArtifactController {
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
 		}
 
-		final Optional<Project> project;
-		try {
-			project = projectService.getProject(projectId);
-			if (!project.isPresent()) {
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
-			}
-		} catch (final Exception e) {
-			log.error("Error communicating with project service", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
-		}
-
 		final AssetType assetType = AssetType.MODEL;
-		final Optional<ProjectAsset> projectAsset = projectAssetService.createProjectAsset(
-			project.get(),
-			assetType,
-			model,
-			permission
-		);
-
-		if (projectAsset.isEmpty()) {
-			log.error("Project Asset is empty");
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("asset.unable-to-create"));
-		}
+		final ProjectAsset projectAsset = projectAssetService.createProjectAsset(projectId, assetType, model, permission);
 
 		final Provenance provenance = new Provenance()
 			.setRelationType(ProvenanceRelationType.EXTRACTED_FROM)
@@ -653,7 +632,7 @@ public class ArtifactController {
 			.setRightType(ProvenanceType.ARTIFACT);
 		provenanceService.createProvenance(provenance);
 
-		return ResponseEntity.status(HttpStatus.CREATED).body(projectAsset.get());
+		return ResponseEntity.status(HttpStatus.CREATED).body(projectAsset);
 	}
 
 	private static boolean endsWith(final String filename, final List<String> suffixes) {

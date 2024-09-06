@@ -263,15 +263,12 @@ public class TerariumAssetCloneService {
 			);
 
 			// add the asset to the project
-			final Optional<ProjectAsset> projectAsset = projectAssetService.createProjectAsset(
-				project,
+			final ProjectAsset projectAsset = projectAssetService.createProjectAsset(
+				project.getId(),
 				assetType,
 				asset,
 				Schema.Permission.WRITE
 			);
-			if (projectAsset.isEmpty()) {
-				throw new RuntimeException("Failed to create project asset");
-			}
 		}
 
 		return project;

@@ -765,17 +765,6 @@ public class ProjectController {
 			projectId
 		);
 
-		final Optional<Project> project;
-		try {
-			project = projectService.getProject(projectId);
-			if (!project.isPresent()) {
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
-			}
-		} catch (final Exception e) {
-			log.error("Error communicating with project service", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
-		}
-
 		final ITerariumAssetService<? extends TerariumAsset> terariumAssetService = terariumAssetServices.getServiceByType(
 			assetType
 		);
@@ -807,19 +796,9 @@ public class ProjectController {
 
 		final List<ProjectAsset> projectAssets = new ArrayList<>();
 		for (final TerariumAsset asset : assets) {
-			final Optional<ProjectAsset> projectAsset = projectAssetService.createProjectAsset(
-				project.get(),
-				assetType,
-				asset,
-				permission
-			);
+			final ProjectAsset projectAsset = projectAssetService.createProjectAsset(projectId, assetType, asset, permission);
 
-			if (projectAsset.isEmpty()) {
-				log.error("Project Asset is empty");
-				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("asset.unable-to-create"));
-			}
-
-			projectAssets.add(projectAsset.get());
+			projectAssets.add(projectAsset);
 		}
 
 		// return the first project asset, it is always the original asset that we

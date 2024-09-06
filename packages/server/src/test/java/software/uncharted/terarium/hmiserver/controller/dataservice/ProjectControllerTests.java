@@ -156,7 +156,7 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 			ASSUME_WRITE_PERMISSION
 		);
 
-		projectAssetService.createProjectAsset(project, AssetType.DOCUMENT, documentAsset, ASSUME_WRITE_PERMISSION);
+		projectAssetService.createProjectAsset(project.getId(), AssetType.DOCUMENT, documentAsset, ASSUME_WRITE_PERMISSION);
 
 		mockMvc
 			.perform(
