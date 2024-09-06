@@ -1,45 +1,33 @@
 <template>
 	<!-- AI assistant -->
 	<div v-if="showAssistant" class="ai-assistant">
-		<!---<Dropdown
-			v-if="defaultOptions"
-			:editable="true"
-			class="input"
-			ref="inputElement"
-			v-model="questionString"
-			:options="props.defaultOptions"
-			type="text"
-			:disabled="kernelStatus === KernelState.busy"
-			:placeholder="kernelStatus ? 'Please wait...' : 'What do you want to do?'"
-			@keydown.enter="submitQuestion"
-		/>
-		<tera-input-text
-			v-else
-			class="input"
-			ref="inputElement"
-			v-model="questionString"
-			:disabled="kernelStatus === KernelState.busy"
-			:placeholder="kernelStatus ? 'Please wait...' : 'What do you want to do?'"
-			@keydown.enter="submitQuestion"
-		/>
-		<i v-if="kernelStatus === KernelState.busy" class="pi pi-spin pi-spinner kernel-status" />
-		<Button v-else severity="secondary" icon="pi pi-send" @click="submitQuestion" />-->
 		<AutoComplete
 			v-if="showAutoComplete"
 			ref="autoComplete"
 			v-model="questionString"
 			class="auto-complete"
 			:suggestions="filteredOptions"
+			appendTo="self"
+			overlayStyle="width: 100%"
 			completeOnFocus="true"
 			@complete="searchOptions"
-			@change="onChange"
+			@change="onInputChange"
 			placeholder="What do you want to do?"
 			emptySearchMessage="No suggestions"
+			:disabled="kernelStatus === KernelState.busy"
 		/>
-		<Textarea v-else ref="textArea" class="text-area" v-model="questionString" @input="onChange" rows="1" autoResize />
-		<!--<i v-if="kernelStatus === KernelState.busy" class="pi pi-spin pi-spinner kernel-status" />
-		<Button  v-if="questionString !== ''" severity="secondary" icon="pi pi-send" @click="submitQuestion" />-->
-		<!-- v-if="questionString !== ''"-->
+
+		<Textarea
+			v-else
+			ref="textArea"
+			class="text-area"
+			v-model="questionString"
+			@input="onInputChange"
+			rows="1"
+			autoResize
+			:disabled="kernelStatus === KernelState.busy"
+		/>
+
 		<Button
 			v-if="questionString.length > 0"
 			class="submit-button"
@@ -76,11 +64,18 @@ import Dropdown from 'primevue/dropdown';
 import AutoComplete from 'primevue/autocomplete';
 import Textarea from 'primevue/textarea';
 
-const props = defineProps<{
-	kernelManager: KernelSessionManager;
-	defaultOptions?: string[];
-	contextLanguage: string;
-}>();
+const props = withDefaults(
+	defineProps<{
+		kernelManager: KernelSessionManager;
+		defaultOptions?: string[];
+		contextLanguage: string;
+		maxChars: number;
+	}>(),
+	{
+		defaultOptions: () => [],
+		maxChars: 25
+	}
+);
 
 const emit = defineEmits(['question-asked', 'llm-output', 'llm-thought-output']);
 
@@ -128,21 +123,18 @@ const searchOptions = () => {
 	filteredOptions.value = props.defaultOptions.filter((option) => option.toLowerCase().includes(query));
 };
 
-const onChange = async () => {
-	// const inputEl = autoComplete.value.$el.querySelector('input');
-	// if (inputEl.scrollWidth > inputEl.clientWidth) {
-	if (questionString.value.length > 25) {
-		// We could make this 25 configurable (e.g., when input is smaller use, less chars)
-		showAutoComplete.value = false;
-		await nextTick();
-		// FIXME: check if defined
-		textArea.value.$el.focus();
-	} else {
+const onInputChange = async () => {
+	const numChars = questionString.value.length;
+
+	if (numChars <= props.maxChars && numChars >= 0) {
 		showAutoComplete.value = true;
 		await nextTick();
-		// FIXME: check if defined
-		const inputEl = autoComplete.value.$el.querySelector('input');
+		const inputEl = autoComplete.value?.$el.querySelector('input');
 		inputEl.focus();
+	} else {
+		showAutoComplete.value = false;
+		await nextTick();
+		textArea.value?.$el.focus();
 	}
 };
 </script>
@@ -151,7 +143,7 @@ const onChange = async () => {
 .ai-assistant {
 	display: flex;
 	align-items: center;
-	gap: 0.5rem;
+	gap: var(--gap-small);
 }
 
 .notebook-toolbar {
@@ -169,19 +161,6 @@ const onChange = async () => {
 	align-items: center;
 }
 
-/*.input {
-	width: 100%;
-	padding: var(--gap-xsmall);
-}
-
-.input:deep(input) {
-	background-image: url('@assets/svg/icons/message.svg');
-	background-size: 1rem;
-	background-position: var(--gap-small);
-	background-repeat: no-repeat;
-	text-indent: 24px;
-}*/
-
 .auto-complete,
 .text-area {
 	width: 100%;
@@ -192,11 +171,18 @@ const onChange = async () => {
 	width: 100%;
 	background-image: url('@assets/svg/icons/message.svg');
 	background-size: 1rem;
-	background-position-x: var(--gap-small);
-	background-position-y: var(--gap-small);
+	background-position: var(--gap-small) 9px;
 	background-repeat: no-repeat;
 	padding-right: 2rem;
 	padding-left: 2rem;
+}
+
+.auto-complete:deep(.p-autocomplete-panel) {
+	width: 100%;
+}
+.auto-complete:deep(li) {
+	overflow-wrap: break-word;
+	overflow: auto;
 }
 
 .submit-button {
@@ -204,10 +190,6 @@ const onChange = async () => {
 	position: absolute;
 	background: none;
 	right: 0;
-	top: 0;
-}
-
-.text-area {
-	resize: none;
+	top: 1px;
 }
 </style>
