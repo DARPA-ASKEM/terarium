@@ -39,13 +39,13 @@
 			</div>
 		</template>
 		<section>
-			<div class="m-3">
+			<div class="pl-4 ml-3 pt-1 pb-3">
 				<p>
-					<span class="font-bold inline-block w-10rem">Dataset Id</span>
+					<span class="font-semibold inline-block w-10rem">Dataset ID</span>
 					<code class="inline">{{ datasetInfo.id }}</code>
 				</p>
 				<p>
-					<span class="font-bold inline-block w-10rem">Dataset Filenames</span>
+					<span class="font-semibold inline-block w-10rem">Dataset filenames</span>
 					{{ datasetInfo.fileNames }}
 				</p>
 			</div>
@@ -69,6 +69,7 @@
 						v-if="dataset"
 						:dataset="dataset"
 						@update-dataset="(dataset: Dataset) => updateAndFetchDataset(dataset)"
+						class="column-information-table"
 					/>
 				</AccordionTab>
 				<template v-else-if="dataset?.metadata">
@@ -368,6 +369,9 @@ watch(
 </script>
 
 <style scoped>
+.column-information-table {
+	border: 1px solid var(--surface-border-light);
+}
 .btn-group {
 	display: flex;
 	align-items: center;
@@ -395,5 +399,10 @@ watch(
 
 .col {
 	flex: 1;
+}
+
+/* Add gaps beneath open accordions */
+:deep(.p-accordion-content) {
+	padding-bottom: var(--gap-6) !important;
 }
 </style>
