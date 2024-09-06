@@ -91,17 +91,20 @@
 						<div>
 							<Button
 								v-if="!showAdditionalOptions"
+								icon="pi pi-plus-circle"
 								class="p-button-sm p-button-text"
 								label="Show additional options"
 								@click="toggleAdditionalOptions"
 							/>
 							<Button
 								v-if="showAdditionalOptions"
+								icon="pi pi-minus-circle"
 								class="p-button-sm p-button-text"
 								label="Hide additional options"
 								@click="toggleAdditionalOptions"
 							/>
 						</div>
+						<!-- Additional options -->
 						<div v-if="showAdditionalOptions" class="additional-options">
 							<div class="input-row">
 								<div class="label-and-input">
@@ -144,24 +147,23 @@
 						</div>
 					</section>
 					<section class="form-section">
-						<h5>
+						<h5 class="mb-1">
 							Output settings
 							<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle info-circle" />
 						</h5>
 
 						<!--Summary-->
-						<h5>Summary</h5>
 						<tera-checkbox
 							v-model="summaryCheckbox"
 							inputId="generate-summary"
 							label="Auto-generate operation summary"
-							subtext="Automatically generates a brief summary of the inputs and outputs."
+							subtext="Generates a brief summary of the inputs and outputs."
 							disabled
 						/>
 						<Divider />
 
 						<!--Success Criteria-->
-						<h5>
+						<h5 class="mb-1">
 							Success Criteria
 							<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle info-circle" />
 						</h5>
@@ -175,7 +177,7 @@
 						<Divider />
 
 						<!--Interventions-->
-						<h5>
+						<h5 class="mb-1">
 							Interventions
 							<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle info-circle" />
 						</h5>
@@ -194,7 +196,7 @@
 						<Divider />
 
 						<!--Simulation plots-->
-						<h5>
+						<h5 class="mb-1">
 							Simulation plots
 							<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle info-circle" />
 						</h5>
@@ -211,14 +213,21 @@
 							disabled
 						/>
 					</section>
+					<!-- This used to be in the footer -->
+					<tera-save-dataset-from-simulation
+						:simulation-run-id="knobs.postForecastRunId"
+						:showDialog="showSaveDataDialog"
+						@dialog-hide="showSaveDataDialog = false"
+					/>
 				</template>
 			</tera-slider-panel>
 		</section>
 
 		<!-- Notebook tab -->
-		<section :tabName="DrilldownTabs.Notebook" class="ml-4 mr-2 pt-3">
+		<section :tabName="DrilldownTabs.Notebook" class="notebook-section">
 			<p>Under construction. Use the wizard for now.</p>
 			<div class="result-message-grid">
+				<p class="mb-2">For debugging:</p>
 				<div v-for="(value, key) in optimizeRequestPayload" :key="key" class="result-message-row">
 					<div class="label">{{ key }}:</div>
 					<div class="value">{{ formatJsonValue(value) }}</div>
@@ -324,13 +333,6 @@
 					</div>
 				</template>
 			</tera-drilldown-section>
-		</template>
-		<template #footer>
-			<tera-save-dataset-from-simulation
-				:simulation-run-id="knobs.postForecastRunId"
-				:showDialog="showSaveDataDialog"
-				@dialog-hide="showSaveDataDialog = false"
-			/>
 		</template>
 	</tera-drilldown>
 	<Dialog v-model:visible="showModelModal" modal header="Save as new model configuration" class="save-dialog w-4">
@@ -1095,6 +1097,8 @@ watch(
 :deep(.slider-content) {
 	background-color: var(--surface-100);
 	border-right: 1px solid var(--surface-border-light);
+	height: auto;
+	padding-bottom: 7rem;
 }
 :deep(.slider-content aside header) {
 	background: color-mix(in srgb, var(--surface-100) 80%, transparent 20%);
@@ -1129,6 +1133,11 @@ watch(
 	border-radius: var(--border-radius);
 }
 
+/* Override grid template so output expands when sidebar is closed */
+.overlay-container:deep(section.scale main) {
+	grid-template-columns: auto 1fr;
+}
+
 .result-message-grid {
 	display: flex;
 	flex-direction: column;
@@ -1149,8 +1158,7 @@ watch(
 }
 
 .label {
-	font-weight: bold;
-	width: 210px;
+	font-weight: 600;
 	/* Adjust the width of the label column as needed */
 }
 
@@ -1216,5 +1224,16 @@ watch(
 
 .center-label {
 	align-content: center;
+}
+
+/* Notebook */
+.notebook-section {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap);
+	width: calc(50vw - 4rem);
+	padding: var(--gap);
+	background: var(--surface-100);
+	border-right: 1px solid var(--surface-border-light);
 }
 </style>
