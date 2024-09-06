@@ -3,7 +3,7 @@
 		<h6>{{ settings.name }}</h6>
 		<div class="btn-group">
 			<Button label="Open chart settings" outlined severity="secondary" size="small" @click="$emit('open')" />
-			<Button icon="pi pi-trash" rounded text @click="$emit('delete')" />
+			<Button icon="pi pi-trash" rounded text @click="$emit('remove', settings.id)" />
 		</div>
 	</div>
 </template>
@@ -17,7 +17,7 @@ defineProps({
 		default: () => ({})
 	}
 });
-defineEmits(['open', 'delete']);
+defineEmits(['open', 'remove']);
 </script>
 
 <style scoped>
@@ -25,11 +25,7 @@ defineEmits(['open', 'delete']);
 	border-left: 4px solid #667085;
 	padding: 0.75rem;
 	padding-left: 1rem;
-
-	margin-bottom: 0.5rem;
-	margin-top: 0.5rem;
-
-	background: #fafafa;
+	background: var(--surface-50);
 }
 .btn-group {
 	display: flex;

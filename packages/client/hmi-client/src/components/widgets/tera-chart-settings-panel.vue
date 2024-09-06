@@ -1,33 +1,30 @@
 <template>
 	<transition>
-		<div class="chart-settings-panel" v-if="isOpen">
+		<div class="chart-settings-panel" v-if="activeSettings !== null">
 			<header :class="{ shadow: false }">
-				<Button :icon="`pi pi-times`" @click="isOpen = false" text rounded size="large" />
+				<Button :icon="`pi pi-times`" @click="$emit('close')" text rounded size="large" />
 				<h4>Chart Settings</h4>
 			</header>
 			<div class="content">
-				<h5>Annotations</h5>
+				<div v-if="annotations !== undefined">
+					<h5>Annotations</h5>
+					<p>Not yet implemented</p>
+				</div>
 			</div>
 		</div>
 	</transition>
 </template>
 
 <script setup lang="ts">
-// import { emit } from 'vue';
 import Button from 'primevue/button';
+import { ChartSetting } from '@/types/workflow';
+import { ChartAnnotation } from '@/types/Types';
 
-const isOpen = defineModel({ required: true, default: false });
+defineProps<{
+	activeSettings: ChartSetting | null;
+	annotations?: ChartAnnotation[];
+}>();
 
-defineProps({
-	settings: {
-		type: Object,
-		default: () => ({})
-	},
-	annotations: {
-		type: Array,
-		default: () => []
-	}
-});
 defineEmits(['close', 'update:settings']);
 </script>
 

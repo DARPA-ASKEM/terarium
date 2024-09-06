@@ -20,7 +20,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import Button from 'primevue/button';
 import MultiSelect from 'primevue/multiselect';
 import { ChartConfig } from '@/types/SimulateConfig';
@@ -35,6 +35,13 @@ const props = defineProps<{
 const emit = defineEmits(['configuration-change', 'remove']);
 
 const selectedVariable = ref<string[]>(props.chartConfig.selectedVariable);
+
+watch(
+	() => props.chartConfig.selectedVariable,
+	(value) => {
+		selectedVariable.value = value;
+	}
+);
 
 const updateSelectedVariable = () => {
 	emit('configuration-change', {

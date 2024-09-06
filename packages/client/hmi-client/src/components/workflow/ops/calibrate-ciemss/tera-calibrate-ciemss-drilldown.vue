@@ -247,20 +247,22 @@
 				content-width="360px"
 			>
 				<template #overlay>
-					<tera-chart-settings-panel v-model="isChartSettingsPanelOpen" @close="isChartSettingsPanelOpen = false" />
+					<tera-chart-settings-panel
+						:annotations="[]"
+						:active-settings="activeChartSettings"
+						@close="activeChartSettings = null"
+					/>
 				</template>
 				<template #content>
 					<div class="output-settings-panel">
 						<h5>Parameters</h5>
-						<div class="chart-settings-item-container">
-							<tera-chart-settings-item
-								v-for="settings of chartSettings.filter((setting) => setting.type === ChartSettingType.PARAMETER)"
-								:key="settings.id"
-								:settings="settings"
-								@open="isChartSettingsPanelOpen = true"
-								@delete="() => {}"
-							/>
-						</div>
+						<tera-chart-settings-item
+							v-for="settings of chartSettings.filter((setting) => setting.type === ChartSettingType.PARAMETER)"
+							:key="settings.id"
+							:settings="settings"
+							@open="activeChartSettings = settings"
+							@remove="removeChartSetting"
+						/>
 						<tera-chart-control
 							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedParameters }"
 							:multi-select="true"
@@ -270,15 +272,13 @@
 						/>
 						<hr />
 						<h5>Model Variables</h5>
-						<div class="chart-settings-item-container">
-							<tera-chart-settings-item
-								v-for="settings of chartSettings.filter((setting) => setting.type === ChartSettingType.VARIABLE)"
-								:key="settings.id"
-								:settings="settings"
-								@open="isChartSettingsPanelOpen = true"
-								@delete="() => {}"
-							/>
-						</div>
+						<tera-chart-settings-item
+							v-for="settings of chartSettings.filter((setting) => setting.type === ChartSettingType.VARIABLE)"
+							:key="settings.id"
+							:settings="settings"
+							@open="activeChartSettings = settings"
+							@remove="removeChartSetting"
+						/>
 						<tera-chart-control
 							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedVariables }"
 							:multi-select="true"
@@ -290,15 +290,13 @@
 						/>
 						<hr />
 						<h5>Error</h5>
-						<div class="chart-settings-item-container">
-							<tera-chart-settings-item
-								v-for="settings of chartSettings.filter((setting) => setting.type === ChartSettingType.ERROR)"
-								:key="settings.id"
-								:settings="settings"
-								@open="isChartSettingsPanelOpen = true"
-								@delete="() => {}"
-							/>
-						</div>
+						<tera-chart-settings-item
+							v-for="settings of chartSettings.filter((setting) => setting.type === ChartSettingType.ERROR)"
+							:key="settings.id"
+							:settings="settings"
+							@open="activeChartSettings = settings"
+							@remove="removeChartSetting"
+						/>
 						<tera-chart-control
 							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedErrorVariables }"
 							:multi-select="true"
@@ -325,7 +323,6 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import * as vega from 'vega';
-import { v4 as uuidv4 } from 'uuid';
 import { csvParse, autoType, mean, variance } from 'd3';
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
 import Button from 'primevue/button';
@@ -334,6 +331,7 @@ import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { CalibrateMap, setupDatasetInput, setupModelInput } from '@/services/calibrate-workflow';
+import { removeChartSettingById, updateChartSettingsBySelectedVariables } from '@/services/workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
@@ -351,7 +349,6 @@ import {
 	ModelConfiguration,
 	AssetType
 } from '@/types/Types';
-import { ChartSetting, ChartSettingType } from '@/types/workflow';
 import { getTimespan, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 import { useToastService } from '@/services/toast';
 import { autoCalibrationMapping } from '@/services/concept';
@@ -367,7 +364,7 @@ import {
 } from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
 
-import type { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode, ChartSetting, ChartSettingType } from '@/types/workflow';
 import { createForecastChart, createHistogramChart, createErrorChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
@@ -437,7 +434,7 @@ const odeSolverOptionsTooltip: string = 'TODO';
 const modelStateOptions = ref<any[] | undefined>();
 
 const isOutputSettingsPanelOpen = ref(true);
-const isChartSettingsPanelOpen = ref(false);
+const activeChartSettings = ref<ChartSetting | null>(null);
 
 const datasetColumns = ref<DatasetColumn[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
@@ -540,39 +537,6 @@ const selectedErrorVariables = computed(() =>
 		.filter((setting) => setting.type === ChartSettingType.ERROR)
 		.map((setting) => setting.selectedVariables[0])
 );
-
-/**
- * Updates the given chart settings based on the selected variables and return it as new settings.
- * This function assumes that the given chart settings are for single variable charts.
- *
- * @param {ChartSetting[]} settings - The current array of chart settings.
- * @param {string[]} variableSelection - An array of selected variables to update the chart settings with.
- * @param {ChartSettingType} type - The type of chart setting to update.
- * @returns {ChartSetting[]} The updated array of chart settings.
- */
-function updateChartSettingsBySelectedVariables(
-	settings: ChartSetting[],
-	type: ChartSettingType,
-	variableSelection: string[]
-) {
-	const previousSettings = settings.filter((setting) => setting.type !== type);
-	const selectedSettings = variableSelection.map((variable) => {
-		const found = previousSettings.find(
-			(setting) => setting.selectedVariables[0] === variable && setting.type === type
-		);
-		return (
-			found ??
-			({
-				id: uuidv4(),
-				name: variable,
-				selectedVariables: [variable],
-				type
-			} as ChartSetting)
-		);
-	});
-	const newSettings: ChartSetting[] = [...previousSettings, ...selectedSettings];
-	return newSettings;
-}
 
 const pyciemssMap = ref<Record<string, string>>({});
 const preparedChartInputs = computed(() => {
@@ -807,6 +771,13 @@ const messageHandler = (event: ClientEvent<any>) => {
 const onSelection = (id: string) => {
 	emit('select-output', id);
 };
+
+function removeChartSetting(chartId) {
+	emit('update-state', {
+		...props.node.state,
+		chartSettings: removeChartSettingById(chartSettings.value, chartId)
+	});
+}
 
 function updateSelectedParameters(event) {
 	emit('update-state', {
@@ -1093,5 +1064,13 @@ img {
 
 .output-settings-panel {
 	padding: 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-small);
+	hr {
+		border: 0;
+		border-top: 1px solid var(--surface-border-alt);
+		width: 100%;
+	}
 }
 </style>
