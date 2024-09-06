@@ -17,7 +17,7 @@
 
 <script setup lang="ts">
 import Button from 'primevue/button';
-import { ChartSetting } from '@/types/workflow';
+import { ChartSetting } from '@/types/common';
 import { ChartAnnotation } from '@/types/Types';
 
 defineProps<{
