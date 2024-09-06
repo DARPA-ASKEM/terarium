@@ -1,12 +1,17 @@
 <template>
 	<main>
 		<template v-if="selectedRunId && runResults[selectedRunId]">
-			<vega-chart
-				v-for="(_config, index) of props.node.state.chartConfigs"
-				:key="index"
-				:are-embed-actions-visible="false"
-				:visualization-spec="preparedCharts[index]"
-			/>
+			<section v-for="(_config, index) of props.node.state.chartConfigs" :key="index">
+				<vega-chart
+					v-if="preparedCharts[index].layer.length > 0"
+					:visualization-spec="preparedCharts[index]"
+					:are-embed-actions-visible="false"
+				/>
+				<div v-else class="empty-chart">
+					<img src="@assets/svg/seed.svg" alt="" draggable="false" class="empty-image" />
+					<p class="helpMessage">No variables selected</p>
+				</div>
+			</section>
 		</template>
 		<tera-progress-spinner v-if="inProgressForecastId" :font-size="2" is-centered style="height: 100%" />
 		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
@@ -239,4 +244,27 @@ watch(
 );
 </script>
 
-<style scoped></style>
+<style scoped>
+:deep(.vega-chart-container) {
+	margin-bottom: 0;
+}
+
+.empty-chart {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	height: 9rem;
+	gap: var(--gap);
+	background: var(--surface-50);
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	margin-bottom: var(--gap);
+	color: var(--text-color-secondary);
+	font-size: var(--font-caption);
+}
+.empty-image {
+	width: 5rem;
+	height: 5rem;
+}
+</style>

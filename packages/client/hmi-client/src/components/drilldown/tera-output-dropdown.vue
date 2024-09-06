@@ -85,7 +85,7 @@ const getLabelById = (id: string) => {
 
 .dropdown-option {
 	display: flex;
-	gap: var(--gap-2);
+	gap: var(--gap-4);
 	width: 100%;
 	justify-content: space-between;
 }

@@ -55,6 +55,14 @@ export const getAsConfiguredModel = async (modelConfiguration: ModelConfiguratio
 	return response?.data ?? null;
 };
 
+export const getArchive = async (modelConfiguration: ModelConfiguration): Promise<any> => {
+	const response = await API.get(`model-configurations/download/${modelConfiguration.id}`, {
+		responseType: 'arraybuffer'
+	});
+	const blob = new Blob([response?.data], { type: 'application/octet-stream' });
+	return blob ?? null;
+};
+
 export const postAsConfiguredModel = async (model: Model): Promise<ModelConfiguration> => {
 	const response = await API.post<ModelConfiguration>(`model-configurations/as-configured-model/`, model);
 	return response?.data ?? null;
