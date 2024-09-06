@@ -23,8 +23,8 @@ defineEmits(['open', 'remove']);
 <style scoped>
 .chart-settings-item {
 	border-left: 4px solid #667085;
-	padding: 0.75rem;
-	padding-left: 1rem;
+	padding: var(--gap-3);
+	padding-left: var(--gap-4);
 	background: var(--surface-50);
 }
 .btn-group {

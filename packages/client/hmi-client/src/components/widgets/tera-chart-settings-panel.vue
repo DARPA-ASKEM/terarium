@@ -69,7 +69,7 @@ defineEmits(['close', 'update:settings']);
 		}
 	}
 	.content {
-		padding: 1rem;
+		padding: var(--gap-4);
 	}
 }
 </style>

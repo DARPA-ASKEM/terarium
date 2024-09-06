@@ -1059,11 +1059,11 @@ img {
 	}
 }
 .chart-settings-item-container {
-	gap: 0.5rem;
+	gap: var(--gap-2);
 }
 
 .output-settings-panel {
-	padding: 1rem;
+	padding: var(--gap-4);
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap-small);
