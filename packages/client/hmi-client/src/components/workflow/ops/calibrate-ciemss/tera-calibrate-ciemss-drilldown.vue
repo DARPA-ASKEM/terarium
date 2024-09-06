@@ -16,12 +16,17 @@
 							<Button label="Run" icon="pi pi-play" @click="runCalibrate" :disabled="disableRunButton" />
 						</span>
 					</div>
+
+					<!-- Mapping section -->
 					<div class="form-section">
-						<h5>Mapping</h5>
+						<h5 class="mb-1">Mapping</h5>
+						<p class="mb-2">Map model variables to dataset columns. Don't forget the timeline variable.</p>
+
+						<!-- Mapping table: Other variables -->
 						<DataTable class="mapping-table" :value="mapping">
 							<Column field="modelVariable">
 								<template #header>
-									<span class="column-header">Model variable</span>
+									<span class="column-header">Model variables</span>
 								</template>
 								<template #body="{ data, field }">
 									<Dropdown
@@ -34,7 +39,7 @@
 							</Column>
 							<Column field="datasetVariable">
 								<template #header>
-									<span class="column-header">Dataset variable</span>
+									<span class="column-header">Dataset variables</span>
 								</template>
 								<template #body="{ data, field }">
 									<Dropdown
@@ -54,6 +59,7 @@
 								</template>
 							</Column>
 						</DataTable>
+
 						<div class="flex justify-content-between">
 							<div>
 								<Button class="p-button-sm p-button-text" icon="pi pi-plus" label="Add mapping" @click="addMapping" />
@@ -68,13 +74,14 @@
 						</div>
 					</div>
 
+					<!-- Mapping section -->
 					<section class="form-section">
-						<h5>
+						<h5 class="mb-1">
 							Calibration settings
-							<i v-tooltip="calibrationSettingsToolTip" class="pi pi-info-circle" />
+							<i v-tooltip="calibrationSettingsToolTip" class="pi pi-info-circle info-circle" />
 						</h5>
+						<p class="mb-2">Select one of the presets or customize the settings below.</p>
 						<div class="label-and-input">
-							<label for="4">Preset (optional)</label>
 							<Dropdown
 								v-model="presetType"
 								placeholder="Select an option"
@@ -82,19 +89,21 @@
 								@update:model-value="setPresetValues"
 							/>
 						</div>
-						<h5>
+						<div class="spacer m-3" />
+						<p class="">
 							Number of Samples
-							<i v-tooltip="numberOfSamplesTooltip" class="pi pi-info-circle" />
-						</h5>
+							<i v-tooltip="numberOfSamplesTooltip" class="pi pi-info-circle info-circle" />
+						</p>
 						<div class="input-row">
 							<div class="label-and-input">
 								<tera-input-number inputId="integeronly" v-model="knobs.numSamples" @update:model-value="updateState" />
 							</div>
 						</div>
-						<h5>
+						<div class="spacer m-3" />
+						<p class="font-semibold">
 							ODE solver options
-							<i v-tooltip="odeSolverOptionsTooltip" class="pi pi-info-circle" />
-						</h5>
+							<i v-tooltip="odeSolverOptionsTooltip" class="pi pi-info-circle info-circle" />
+						</p>
 						<div class="input-row">
 							<div class="label-and-input">
 								<label for="5">Method</label>
@@ -110,10 +119,11 @@
 								<tera-input-number inputId="integeronly" v-model="knobs.stepSize" />
 							</div>
 						</div>
-						<h5>
+						<div class="spacer m-3" />
+						<p class="font-semibold">
 							Inference Options
-							<i v-tooltip="inferenceOptionsTooltip" class="pi pi-info-circle" />
-						</h5>
+							<i v-tooltip="inferenceOptionsTooltip" class="pi pi-info-circle info-circle" />
+						</p>
 						<div class="input-row">
 							<div class="label-and-input">
 								<label for="num-iterations">Number of solver iterations</label>
@@ -149,6 +159,7 @@
 							</div>
 						</div>
 					</section>
+					<div class="spacer m-7" />
 				</template>
 			</tera-slider-panel>
 		</section>
@@ -160,7 +171,7 @@
 
 		<!-- Output section -->
 		<template #preview>
-			<tera-drilldown-section class="ml-4 mr-2 pt-3">
+			<tera-drilldown-section>
 				<template #header-controls-left v-if="configuredModelConfig?.name">
 					<h5>{{ configuredModelConfig.name }}</h5>
 				</template>
@@ -928,7 +939,7 @@ watch(
 
 .mapping-table:deep(th) {
 	border: none !important;
-	padding: 0 var(--gap-1) var(--gap-2) var(--gap-1) !important;
+	padding: 0 var(--gap-1) var(--gap-2) 0 !important;
 	width: 50%;
 	background: var(--surface-100);
 }
@@ -940,7 +951,7 @@ th {
 .column-header {
 	color: var(--text-color-primary);
 	font-size: var(--font-body-small);
-	font-weight: var(--font-weight-semibold);
+	font-weight: var(--font-weight);
 	padding-top: var(--gap-2);
 }
 
@@ -978,13 +989,18 @@ img {
 	flex-direction: column;
 	gap: var(--gap-2);
 }
+.info-circle {
+	color: var(--text-color-secondary);
+	font-size: var(--font-caption);
+	margin-left: var(--gap-1);
+}
 
 .input-row {
 	align-items: center;
 	display: flex;
 	flex-direction: row;
 	flex-wrap: wrap;
-	gap: var(--gap-2);
+	gap: var(--gap-3) var(--gap-2);
 	width: 100%;
 
 	& > * {
