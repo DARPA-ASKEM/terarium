@@ -32,9 +32,10 @@ watch(
 	() => props.node.inputs,
 	(inputs) => {
 		const modelId = inputs.find((input) => input.type === 'modelId')?.value?.[0];
-		if (!modelId) return;
-
 		const state = cloneDeep(props.node.state);
+
+		if (!modelId || modelId === state.interventionPolicy?.modelId) return;
+
 		// Reset previous model cache
 		state.interventionPolicy = {
 			modelId,

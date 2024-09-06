@@ -42,7 +42,7 @@
 									:selected="selectedConfigId === configuration.id"
 									@use="onSelectConfiguration(configuration)"
 									@delete="fetchConfigurations(model.id)"
-									@download="downloadConfiguredModel(configuration)"
+									@download="downloadModelArchive(configuration)"
 								/>
 							</li>
 							<!-- Show a message if nothing found after filtering -->
@@ -214,7 +214,7 @@ import { KernelSessionManager } from '@/services/jupyter';
 import { getMMT, getModel, getModelConfigurationsForModel } from '@/services/model';
 import {
 	createModelConfiguration,
-	getAsConfiguredModel,
+	getArchive,
 	getModelConfigurationById,
 	setInitialExpression,
 	setInitialSource,
@@ -265,7 +265,7 @@ const menuItems = computed(() => [
 		icon: 'pi pi-download',
 		disabled: isSaveDisabled.value,
 		command: () => {
-			downloadConfiguredModel();
+			downloadModelArchive();
 		}
 	}
 ]);
@@ -503,14 +503,12 @@ function makeConfiguredMMT() {
 	return mmtCopy;
 }
 
-const downloadConfiguredModel = async (configuration: ModelConfiguration = knobs.value.transientModelConfig) => {
-	const rawModel = await getAsConfiguredModel(configuration);
-	if (rawModel) {
-		const data = `text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(rawModel, null, 2))}`;
+const downloadModelArchive = async (configuration: ModelConfiguration = knobs.value.transientModelConfig) => {
+	const archive = await getArchive(configuration);
+	if (archive) {
 		const a = document.createElement('a');
-		a.href = `data:${data}`;
-		a.download = `${configuration.name ?? 'configured_model'}.json`;
-		a.innerHTML = 'download JSON';
+		a.href = URL.createObjectURL(archive);
+		a.download = `${configuration.name}.modelconfig`;
 		a.click();
 		a.remove();
 	}
@@ -674,7 +672,7 @@ const resetConfiguration = () => {
 		header: 'Are you sure you want to reset the configuration?',
 		message: 'This will reset all values original values of the configuration.',
 		accept: () => {
-			if (originalConfig.value) applyConfigValues(originalConfig.value);
+			if (originalConfig.value) knobs.value.transientModelConfig = cloneDeep(originalConfig.value);
 		},
 		acceptLabel: 'Confirm',
 		rejectLabel: 'Cancel'
