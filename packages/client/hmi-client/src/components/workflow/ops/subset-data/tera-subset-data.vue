@@ -1,7 +1,6 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:menu-items="menuItems"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
@@ -191,7 +190,7 @@ import TeraCarousel from '@/components/widgets/tera-carousel.vue';
 import { WorkflowNode } from '@/types/workflow';
 import { getDataset, getClimateDatasetPreview, getClimateSubsetId } from '@/services/dataset';
 import type { Dataset } from '@/types/Types';
-import { AssetType } from '@/types/Types';
+// import { AssetType } from '@/types/Types';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 // import InputText from 'primevue/inputtext';
@@ -201,7 +200,7 @@ import Calender from 'primevue/calendar';
 import Checkbox from 'primevue/checkbox';
 import Slider from 'primevue/slider';
 import { logger } from '@/utils/logger';
-import { useProjects } from '@/composables/project';
+// import { useProjects } from '@/composables/project';
 import { SubsetDataOperationState } from './subset-data-operation';
 
 const props = defineProps<{
@@ -338,17 +337,6 @@ function mutateLoadingState(isLoading: boolean) {
 	emit('update-state', state);
 }
 
-const menuItems = computed(() => [
-	{
-		label: 'Add subset to project datasets',
-		icon: 'pi pi-pencil',
-		disabled: !subset.value,
-		command: () => {
-			addSubsetToProject();
-		}
-	}
-]);
-
 function updateState() {
 	const state = cloneDeep(props.node.state);
 	state.datasetId = dataset.value?.id ?? null;
@@ -365,15 +353,16 @@ function updateState() {
 	emit('update-state', state);
 }
 
-async function addSubsetToProject() {
-	const projectId = useProjects().activeProject.value?.id;
-	if (subset.value?.id && projectId) {
-		await useProjects().addAsset(AssetType.Dataset, subset.value.id, projectId);
-		logger.info(`New dataset saved as ${subset.value.name}`);
-	} else {
-		logger.error('Subset ID not found.');
-	}
-}
+// FIXME: removed drilldown hamburger menu
+// async function addSubsetToProject() {
+// 	const projectId = useProjects().activeProject.value?.id;
+// 	if (subset.value?.id && projectId) {
+// 		await useProjects().addAsset(AssetType.Dataset, subset.value.id, projectId);
+// 		logger.info(`New dataset saved as ${subset.value.name}`);
+// 	} else {
+// 		logger.error('Subset ID not found.');
+// 	}
+// }
 
 async function run() {
 	console.log('running');
