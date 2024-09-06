@@ -79,16 +79,16 @@ public class ExtractionService {
 	private final EmbeddingService embeddingService;
 	private final CurrentUserService currentUserService;
 
-	private static final String RESPONSE_CACHE_KEY = "task-service-response-cache";
+	private static final String RESPONSE_CACHE_KEY = "extraction-service-response-cache";
 
 	// TTL = Time to live, the maximum time a key will be in the cache before it is
 	// evicted, regardless of activity.
-	@Value("${terarium.extractionService.response-cache-ttl-seconds:43200}") // 12 hours
+	@Value("${terarium.extractionService.response-cache-ttl-seconds:604800}") // 7 days
 	private long CACHE_TTL_SECONDS;
 
 	// Max idle = The maximum time a key can be idle in the cache before it is
 	// evicted.
-	@Value("${terarium.extractionService.response-cache-max-idle-seconds:7200}") // 2 hours
+	@Value("${terarium.extractionService.response-cache-max-idle-seconds:86400}") // 24 hours
 	private long CACHE_MAX_IDLE_SECONDS;
 
 	private final RedissonClient redissonClient;
