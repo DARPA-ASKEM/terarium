@@ -188,7 +188,7 @@
 			</tera-drilldown-preview>
 
 			<!-- Empty state -->
-			<section v-else class="emptyState">
+			<section v-else class="empty-state">
 				<Vue3Lottie :animationData="EmptySeed" :height="150" loop autoplay />
 				<p class="helpMessage">Click 'Run' to start the simulation</p>
 			</section>
@@ -671,7 +671,7 @@ onUnmounted(() => kernelManager.shutdown());
 	}
 }
 
-.emptyState {
+.empty-state {
 	position: absolute;
 	width: calc(100% - 240px);
 	height: 100%;
