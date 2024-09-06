@@ -122,6 +122,7 @@ watch(
 
 .p-datatable:deep(.p-datatable-thead > tr > th) {
 	background-color: var(--surface-50);
+	padding-left: var(--gap);
 }
 
 .concept,
