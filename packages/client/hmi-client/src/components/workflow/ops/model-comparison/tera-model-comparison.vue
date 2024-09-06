@@ -298,14 +298,10 @@ async function processCompareModels(modelIds: string[]) {
 	}
 }
 
-function assignOverview(b64overview: string) {
-	overview.value = markdownit().render(JSON.parse(b64DecodeUnicode(b64overview)).response);
-}
-
 async function generateOverview() {
 	// Generate once the comparison task has been completed
 	if (!compareModelsTaskOutput) return;
-	assignOverview(compareModelsTaskOutput);
+	overview.value = markdownit().render(JSON.parse(b64DecodeUnicode(compareModelsTaskOutput)).response);
 	emit('update-status', OperatorStatus.DEFAULT); // This is a custom way of granting a default status to the operator, since it has no output
 }
 
