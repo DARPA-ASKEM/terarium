@@ -1066,7 +1066,7 @@ img {
 	padding: var(--gap-4);
 	display: flex;
 	flex-direction: column;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	hr {
 		border: 0;
 		border-top: 1px solid var(--surface-border-alt);
