@@ -42,7 +42,7 @@
 									:selected="selectedConfigId === configuration.id"
 									@use="onSelectConfiguration(configuration)"
 									@delete="fetchConfigurations(model.id)"
-									@download="downloadConfiguredModel(configuration)"
+									@download="downloadModelArchive(configuration)"
 								/>
 							</li>
 							<!-- Show a message if nothing found after filtering -->
@@ -188,8 +188,8 @@
 
 <script setup lang="ts">
 import '@/ace-config';
-import { ComponentPublicInstance, computed, nextTick, onUnmounted, ref, watch } from 'vue';
-import { cloneDeep, debounce, isEmpty, orderBy } from 'lodash';
+import { ComponentPublicInstance, computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { cloneDeep, debounce, isEmpty, orderBy, omit } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
@@ -214,7 +214,7 @@ import { KernelSessionManager } from '@/services/jupyter';
 import { getMMT, getModel, getModelConfigurationsForModel } from '@/services/model';
 import {
 	createModelConfiguration,
-	getAsConfiguredModel,
+	getArchive,
 	getModelConfigurationById,
 	setInitialExpression,
 	setInitialSource,
@@ -265,7 +265,7 @@ const menuItems = computed(() => [
 		icon: 'pi pi-download',
 		disabled: isSaveDisabled.value,
 		command: () => {
-			downloadConfiguredModel();
+			downloadModelArchive();
 		}
 	}
 ]);
@@ -503,14 +503,12 @@ function makeConfiguredMMT() {
 	return mmtCopy;
 }
 
-const downloadConfiguredModel = async (configuration: ModelConfiguration = knobs.value.transientModelConfig) => {
-	const rawModel = await getAsConfiguredModel(configuration);
-	if (rawModel) {
-		const data = `text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(rawModel, null, 2))}`;
+const downloadModelArchive = async (configuration: ModelConfiguration = knobs.value.transientModelConfig) => {
+	const archive = await getArchive(configuration);
+	if (archive) {
 		const a = document.createElement('a');
-		a.href = `data:${data}`;
-		a.download = `${configuration.name ?? 'configured_model'}.json`;
-		a.innerHTML = 'download JSON';
+		a.href = URL.createObjectURL(archive);
+		a.download = `${configuration.name}.modelconfig`;
 		a.click();
 		a.remove();
 	}
@@ -527,27 +525,25 @@ const createConfiguration = async () => {
 	}
 
 	const state = cloneDeep(props.node.state);
-	state.transientModelConfig = data;
 	useToastService().success('', 'Created model configuration');
 	emit('append-output', {
 		type: ModelConfigOperation.outputs[0].type,
 		label: data.name,
 		value: data.id,
 		isSelected: false,
-		state
+		state: omit(state, ['transientModelConfig'])
 	});
 };
 
 const onSaveAsModelConfiguration = (data: ModelConfiguration) => {
 	useToastService().success('', 'Created model configuration');
 	const state = cloneDeep(props.node.state);
-	state.transientModelConfig = data;
 	emit('append-output', {
 		type: ModelConfigOperation.outputs[0].type,
 		label: data.name,
 		value: data.id,
 		isSelected: false,
-		state
+		state: omit(state, ['transientModelConfig'])
 	});
 	showSaveModal.value = false;
 };
@@ -572,7 +568,7 @@ const fetchConfigurations = async (modelId: string) => {
 };
 
 // Fill the form with the config data
-const initialize = async () => {
+const initialize = async (overwriteWithState: boolean = false) => {
 	const state = props.node.state;
 	const modelId = props.node.inputs[0].value?.[0];
 	if (!modelId) return;
@@ -590,9 +586,7 @@ const initialize = async () => {
 		applyConfigValues(suggestedConfigurationContext.value.tableData[0]);
 	} else {
 		originalConfig.value = await getModelConfigurationById(selectedConfigId.value);
-
-		// FIXME: Bug sept-03, state.transientModelConfig may not be saved properly before this date
-		if (state.transientModelConfig.id !== originalConfig.value.id) {
+		if (!overwriteWithState) {
 			knobs.value.transientModelConfig = cloneDeep(originalConfig.value);
 		} else {
 			knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
@@ -650,15 +644,12 @@ const applyConfigValues = (config: ModelConfiguration) => {
 	// If the output does not already exist
 	else {
 		const state = cloneDeep(props.node.state);
-		state.transientModelConfig = config;
-
-		// Append this config to the output.
 		emit('append-output', {
 			type: ModelConfigOperation.outputs[0].type,
 			label: config.name,
 			value: config.id,
 			isSelected: false,
-			state
+			state: omit(state, ['transientModelConfig'])
 		});
 	}
 	logger.success(`Configuration applied ${config.name}`);
@@ -681,7 +672,7 @@ const resetConfiguration = () => {
 		header: 'Are you sure you want to reset the configuration?',
 		message: 'This will reset all values original values of the configuration.',
 		accept: () => {
-			if (originalConfig.value) applyConfigValues(originalConfig.value);
+			if (originalConfig.value) knobs.value.transientModelConfig = cloneDeep(originalConfig.value);
 		},
 		acceptLabel: 'Confirm',
 		rejectLabel: 'Cancel'
@@ -718,6 +709,14 @@ watch(
 	{ deep: true }
 );
 
+onMounted(() => {
+	// setting as true will overwrite the model config with the current state value
+	if (props.node.active) {
+		selectedOutputId.value = props.node.active;
+		initialize(true);
+	}
+});
+
 watch(
 	() => props.node.active,
 	() => {
@@ -725,8 +724,7 @@ watch(
 			selectedOutputId.value = props.node.active;
 			initialize();
 		}
-	},
-	{ immediate: true }
+	}
 );
 
 onUnmounted(() => {
