@@ -36,7 +36,6 @@ import co.elastic.clients.elasticsearch.indices.RefreshResponse;
 import co.elastic.clients.elasticsearch.ingest.GetPipelineRequest;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
-import co.elastic.clients.transport.endpoints.BooleanResponse;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -226,6 +225,7 @@ public class ElasticsearchService {
 			if (indexExists(index)) {
 				deleteIndex(index);
 			}
+			log.info("\n\nCreating index {}\n\n", index);
 			createIndex(index);
 		} catch (final ElasticsearchException e) {
 			throw handleException(e);
@@ -398,12 +398,7 @@ public class ElasticsearchService {
 		try {
 			log.info("Indexing: {} into {}", id, index);
 
-			final IndexRequest<T> req = new IndexRequest.Builder<T>()
-				.index(index)
-				.id(id)
-				.document(document)
-				.refresh(Refresh.WaitFor)
-				.build();
+			final IndexRequest<T> req = new IndexRequest.Builder<T>().index(index).id(id).document(document).build();
 
 			client.index(req);
 		} catch (final ElasticsearchException e) {
@@ -428,7 +423,6 @@ public class ElasticsearchService {
 				.index(index)
 				.id(id)
 				.document(document)
-				.refresh(Refresh.WaitFor)
 				.routing(routing)
 				.build();
 
@@ -448,7 +442,7 @@ public class ElasticsearchService {
 		try {
 			log.info("Deleting: {} from {}", id, index);
 
-			final DeleteRequest req = new DeleteRequest.Builder().index(index).id(id).refresh(Refresh.WaitFor).build();
+			final DeleteRequest req = new DeleteRequest.Builder().index(index).id(id).build();
 
 			client.delete(req);
 		} catch (final ElasticsearchException e) {
@@ -470,7 +464,6 @@ public class ElasticsearchService {
 				.index(index)
 				.id(id)
 				.doc(partial)
-				.refresh(Refresh.WaitFor)
 				.build();
 
 			client.update(req, Void.class);
@@ -684,36 +677,7 @@ public class ElasticsearchService {
 		try {
 			final GetAliasRequest request = new GetAliasRequest.Builder().name(alias).build();
 			final GetAliasResponse response = client.indices().getAlias(request);
-
 			return response.result().keySet().iterator().next();
-		} catch (final ElasticsearchException e) {
-			throw handleException(e);
-		}
-	}
-
-	enum IndexOrAlias {
-		INDEX,
-		ALIAS,
-		DOES_NOT_EXIST
-	}
-
-	public IndexOrAlias checkIfIndexOrAlias(final String name) throws IOException {
-		try {
-			final ExistsRequest existsRequest = new ExistsRequest.Builder().index(name).build();
-			final BooleanResponse isIndex = client.indices().exists(existsRequest);
-
-			if (isIndex.value()) {
-				return IndexOrAlias.INDEX;
-			}
-
-			final GetAliasRequest request = new GetAliasRequest.Builder().name(name).build();
-			final GetAliasResponse response = client.indices().getAlias(request);
-
-			if (response.result().size() != 0) {
-				return IndexOrAlias.ALIAS;
-			}
-
-			return IndexOrAlias.DOES_NOT_EXIST;
 		} catch (final ElasticsearchException e) {
 			throw handleException(e);
 		}

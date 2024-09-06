@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue';
+import { computed, watch } from 'vue';
 import Toast from 'primevue/toast';
 
 import { ToastSeverity, ToastSummaries, useToastService } from '@/services/toast';
@@ -62,10 +62,6 @@ watch(
 	},
 	{ immediate: true }
 );
-
-onMounted(async () => {
-	await useProjects().getAll();
-});
 </script>
 
 <style scoped>

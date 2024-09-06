@@ -16,13 +16,12 @@ import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
-import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
-import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 public class ArtifactControllerTests extends TerariumApplicationTests {
 
@@ -33,20 +32,16 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	private ArtifactService artifactService;
 
 	@Autowired
-	private ElasticsearchService elasticService;
-
-	@Autowired
-	private ElasticsearchConfiguration elasticConfig;
-
-	@Autowired
 	private ProjectService projectService;
+
+	@Autowired
+	private ProjectSearchService projectSearchService;
 
 	Project project;
 
 	@BeforeEach
 	public void setup() throws IOException {
-		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getArtifactIndex());
-
+		projectSearchService.setupIndexAndAliasAndEnsureEmpty();
 		project = projectService.createProject(
 			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
 		);
@@ -54,7 +49,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 
 	@AfterEach
 	public void teardown() throws IOException {
-		elasticService.deleteIndex(elasticConfig.getArtifactIndex());
+		projectSearchService.teardownIndexAndAlias();
 	}
 
 	@Test

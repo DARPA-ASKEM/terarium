@@ -1,25 +1,15 @@
 <template>
 	<tera-drilldown
 		ref="drilldownRef"
+		v-bind="$attrs"
 		:node="node"
 		:menu-items="menuItems"
+		:is-draft="isDraft"
 		@update:selection="onSelection"
-		@on-close-clicked="onDrilldownClose"
+		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 		@update-output-port="(output: any) => emit('update-output-port', output)"
-		v-bind="$attrs"
 	>
-		<tera-drilldown-section :tabName="DrilldownTabs.Wizard">
-			<tera-model-template-editor
-				v-if="amr"
-				:model="amr"
-				:kernel-manager="kernelManager"
-				@output-code="(data: any) => appendCode(data, 'executed_code')"
-				@sync-with-mira-model="syncWithMiraModel"
-				@save-new-model-output="createOutput"
-				@reset="resetModel"
-			/>
-		</tera-drilldown-section>
 		<tera-drilldown-section :tabName="DrilldownTabs.Notebook" class="notebook-section">
 			<div class="toolbar">
 				<Suspense>
@@ -33,7 +23,13 @@
 					>
 						<template #toolbar-right-side>
 							<Button label="Reset" outlined severity="secondary" size="small" @click="resetModel" />
-							<Button label="Run" size="small" @click="runFromCodeWrapper" />
+							<Button
+								icon="pi pi-play"
+								:label="isUpdatingModel ? 'Loading...' : 'Run'"
+								size="small"
+								:loading="isUpdatingModel"
+								@click="runCode"
+							/>
 						</template>
 					</tera-notebook-jupyter-input>
 				</Suspense>
@@ -56,54 +52,84 @@
 				:options="outputs"
 				is-selectable
 			>
+				<section class="right-side">
+					<Button
+						class="mr-3"
+						outlined
+						severity="secondary"
+						:disabled="isSaveDisabled"
+						label="Save for reuse"
+						@click="showSaveModelModal = true"
+					/>
+				</section>
 				<tera-notebook-error
 					v-if="executeResponse.status === OperatorStatus.ERROR"
 					:name="executeResponse.name"
 					:value="executeResponse.value"
 					:traceback="executeResponse.traceback"
 				/>
-				<tera-model-diagram v-else-if="amr" :model="amr" />
-				<div v-else>
-					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-				</div>
+				<template v-else-if="amr">
+					<tera-model-diagram :model="amr" />
+					<tera-model-parts :model="amr" :feature-config="{ isPreview: true }" />
+				</template>
+				<tera-progress-spinner v-else-if="isUpdatingModel || !amr" is-centered :font-size="2">
+					Loading...
+				</tera-progress-spinner>
 			</tera-drilldown-preview>
 		</template>
+		<tera-drilldown-section :tabName="DrilldownTabs.Wizard">
+			<!-- <tera-model-template-editor v-if="amr"
+					:model="amr"
+					:kernel-manager="kernelManager"
+					@output-code="(data: any) => appendCode(data, 'executed_code')"
+					@sync-with-mira-model="syncWithMiraModel"
+					@save-new-model-output="createOutput"
+					@reset="resetModel"
+				/> -->
+			<p class="m-4">Wizard is disabled for now.</p>
+		</tera-drilldown-section>
 	</tera-drilldown>
 	<tera-save-asset-modal
 		v-if="amr"
 		:asset="amr"
+		:initial-name="amr.name"
 		:assetType="AssetType.Model"
+		:is-updating-asset="true"
 		:is-visible="showSaveModelModal"
 		@close-modal="showSaveModelModal = false"
+		@on-save="updateNode"
 	/>
 </template>
 
 <script setup lang="ts">
-import { cloneDeep, isEmpty } from 'lodash';
+import { cloneDeep, isEmpty, isEqual, debounce } from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import '@/ace-config';
-import { v4 as uuidv4 } from 'uuid';
 import type { Model } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import { createModel, getModel } from '@/services/model';
 import { OperatorStatus, WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import TeraModelParts from '@/components/model/tera-model-parts.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraModelTemplateEditor from '@/components/model-template/tera-model-template-editor.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+// import TeraModelTemplateEditor from '@/components/model-template/tera-model-template-editor.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import { KernelSessionManager } from '@/services/jupyter';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { saveCodeToState } from '@/services/notebook';
 import { DrilldownTabs } from '@/types/common';
-import { ModelEditOperationState } from './model-edit-operation';
+import { nodeOutputLabel } from '@/components/workflow/util';
+import { useProjects } from '@/composables/project';
+import { ModelEditOperationState, ModelEditOperation } from './model-edit-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
@@ -114,7 +140,7 @@ const outputs = computed(() => {
 	if (!isEmpty(props.node.outputs)) {
 		return [
 			{
-				label: 'Select outputs to display in operator',
+				label: 'Select an output',
 				items: props.node.outputs
 			}
 		];
@@ -129,12 +155,12 @@ const isReadyToCreateDefaultOutput = computed(
 const drilldownRef = ref();
 const selectedOutputId = ref<string>('');
 const activeOutput = ref<WorkflowOutput<ModelEditOperationState> | null>(null);
+const isUpdatingModel = ref(false);
 
 const kernelManager = new KernelSessionManager();
 const amr = ref<Model | null>(null);
 let activeModelId: string | null = null;
 const showSaveModelModal = ref(false);
-let isDraft = false;
 
 let editor: VAceEditorInstance['_editor'] | null;
 const sampleAgentQuestions = [
@@ -157,6 +183,8 @@ const defaultCodeText = '# This environment contains the variable "model" \n# wh
 const codeText = ref(defaultCodeText);
 const llmQuery = ref('');
 const llmThoughts = ref<any[]>([]);
+
+const isDraft = ref(false);
 
 const executeResponse = ref({
 	status: OperatorStatus.DEFAULT,
@@ -201,56 +229,53 @@ const syncWithMiraModel = (data: any) => {
 	}
 	updatedModel.id = activeModelId;
 	amr.value = updatedModel;
-	isDraft = true;
+	isUpdatingModel.value = false;
+	createOutput(amr.value as Model);
 };
 
-// Reset model, then execute the code
-const runFromCodeWrapper = () => {
-	// Reset model
+const runCode = () => {
+	isUpdatingModel.value = true;
+	amr.value = null;
 	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
-		runFromCode(editor?.getValue() as string);
+		const messageContent = {
+			silent: false,
+			store_history: false,
+			user_expressions: {},
+			allow_stdin: true,
+			stop_on_error: false,
+			code: editor?.getValue() as string
+		};
+
+		let executedCode = '';
+
+		kernelManager
+			.sendMessage('execute_request', messageContent)
+			.register('execute_input', (data) => {
+				executedCode = data.content.code;
+			})
+			.register('stream', (data) => {
+				console.log('stream', data);
+			})
+			.register('model_preview', (data) => {
+				if (!data.content) return;
+				syncWithMiraModel(data);
+
+				if (executedCode) {
+					updateCodeState(executedCode);
+				}
+			})
+			.register('any_execute_reply', (data) => {
+				let status = OperatorStatus.DEFAULT;
+				if (data.msg.content.status === 'ok') status = OperatorStatus.SUCCESS;
+				if (data.msg.content.status === 'error') status = OperatorStatus.ERROR;
+				executeResponse.value = {
+					status,
+					name: data.msg.content.ename ? data.msg.content.ename : '',
+					value: data.msg.content.evalue ? data.msg.content.evalue : '',
+					traceback: data.msg.content.traceback ? data.msg.content.traceback : ''
+				};
+			});
 	});
-};
-
-const runFromCode = (code: string) => {
-	const messageContent = {
-		silent: false,
-		store_history: false,
-		user_expressions: {},
-		allow_stdin: true,
-		stop_on_error: false,
-		code
-	};
-
-	let executedCode = '';
-
-	kernelManager
-		.sendMessage('execute_request', messageContent)
-		.register('execute_input', (data) => {
-			executedCode = data.content.code;
-		})
-		.register('stream', (data) => {
-			console.log('stream', data);
-		})
-		.register('model_preview', (data) => {
-			if (!data.content) return;
-			syncWithMiraModel(data);
-
-			if (executedCode) {
-				updateCodeState(executedCode);
-			}
-		})
-		.register('any_execute_reply', (data) => {
-			let status = OperatorStatus.DEFAULT;
-			if (data.msg.content.status === 'ok') status = OperatorStatus.SUCCESS;
-			if (data.msg.content.status === 'error') status = OperatorStatus.ERROR;
-			executeResponse.value = {
-				status,
-				name: data.msg.content.ename ? data.msg.content.ename : '',
-				value: data.msg.content.evalue ? data.msg.content.evalue : '',
-				traceback: data.msg.content.traceback ? data.msg.content.traceback : ''
-			};
-		});
 };
 
 const resetModel = () => {
@@ -260,7 +285,6 @@ const resetModel = () => {
 		.sendMessage('reset_request', {})
 		.register('reset_response', handleResetResponse)
 		.register('model_preview', syncWithMiraModel);
-	isDraft = false;
 };
 
 const handleResetResponse = (data: any) => {
@@ -285,27 +309,23 @@ function updateCodeState(code: string = codeText.value, hasCodeRun: boolean = tr
 	emit('update-state', state);
 }
 
-function onDrilldownClose() {
-	if (isDraft) {
-		// TODO: Prompt user to save draft
-	}
-	emit('close');
-}
-
 const createOutput = async (modelToSave: Model) => {
 	// If it's the original model, use that otherwise create a new one
 	const modelData = isReadyToCreateDefaultOutput.value ? modelToSave : await createModel(modelToSave);
 	if (!modelData) return;
 
+	const modelLabel = isReadyToCreateDefaultOutput.value
+		? (modelData.name as string)
+		: nodeOutputLabel(props.node, 'Output'); // Just label the original model with its name
+
 	emit('append-output', {
-		id: uuidv4(),
-		label: isReadyToCreateDefaultOutput.value ? modelData.name : `Output ${Date.now()}`, // Just label the original model with its name
-		type: 'modelId',
+		label: modelLabel,
+		type: ModelEditOperation.outputs[0].type,
 		state: cloneDeep(props.node.state),
 		value: [modelData.id]
 	});
 
-	isDraft = false;
+	isDraft.value = false;
 };
 
 const buildJupyterContext = () => {
@@ -350,19 +370,54 @@ const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
+// check if user has made changes to the code
+const hasCodeChange = () => {
+	if (props.node.state.notebookHistory.length) {
+		isDraft.value = !isEqual(codeText.value, props.node.state.notebookHistory?.[0]?.code);
+	} else {
+		isDraft.value = !isEqual(codeText.value, defaultCodeText);
+	}
+};
+const checkForCodeChange = debounce(hasCodeChange, 500);
+
+watch(
+	() => codeText.value,
+	() => checkForCodeChange()
+);
+
 // Updates output selection
 watch(
-	() => [props.node.active],
+	() => props.node.active,
 	async () => {
 		// Update selected output
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
 			activeOutput.value = props.node.outputs.find((d) => d.id === selectedOutputId.value) ?? null;
-			await handleOutputChange();
+			handleOutputChange();
 		}
 	},
 	{ immediate: true }
 );
+
+const isSaveDisabled = computed(() => {
+	const id = amr.value?.id;
+	if (!id) return true;
+	const outputPort = props.node.outputs?.find((port) => port.value?.[0] === id);
+	return useProjects().hasAssetInActiveProject(outputPort?.value?.[0]);
+});
+
+function updateNode(model: Model) {
+	const id = amr.value?.id;
+	if (!id || !model) return;
+
+	amr.value = model;
+	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.value?.[0] === id));
+
+	if (!outputPort) return;
+	outputPort.label = model.header.name;
+
+	emit('update-output-port', outputPort);
+}
 
 onMounted(async () => {
 	// By default the first output option is the original model
@@ -414,12 +469,6 @@ onUnmounted(() => {
 	position: relative;
 }
 
-:deep(.diagram-container) {
-	height: calc(100vh - 270px) !important;
-}
-:deep(.resize-handle) {
-	display: none;
-}
 .input-small {
 	padding: 0.5rem;
 	width: 100%;
@@ -430,5 +479,10 @@ onUnmounted(() => {
 	color: #cc0000;
 	padding: 10px;
 	border-radius: 4px;
+}
+
+.right-side {
+	display: flex;
+	justify-content: right;
 }
 </style>

@@ -9,7 +9,10 @@ export enum ProjectPages {
  * This takes the Types from the AssetType enum and filters out the ones that are not visible
  */
 export const listOfVisibleAssetTypes: AssetType[] = Object.values(AssetType).filter(
-	(type) => ![AssetType.Artifact, AssetType.Simulation, AssetType.ModelConfiguration].includes(type)
+	(type) =>
+		![AssetType.Artifact, AssetType.Simulation, AssetType.ModelConfiguration, AssetType.InterventionPolicy].includes(
+			type
+		)
 );
 
 /**

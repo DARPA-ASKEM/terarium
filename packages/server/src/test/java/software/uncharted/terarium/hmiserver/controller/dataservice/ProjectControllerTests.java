@@ -22,9 +22,9 @@ import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 
-@Transactional
 public class ProjectControllerTests extends TerariumApplicationTests {
 
 	@Autowired
@@ -39,16 +39,21 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 	@Autowired
 	private DocumentAssetService documentAssetService;
 
+	@Autowired
+	private ProjectSearchService projectSearchService;
+
 	Project project;
 
 	@BeforeEach
 	public void setup() throws IOException {
+		projectSearchService.setupIndexAndAliasAndEnsureEmpty();
 		documentAssetService.setupIndexAndAliasAndEnsureEmpty();
 	}
 
 	@AfterEach
 	public void teardown() throws IOException {
 		documentAssetService.teardownIndexAndAlias();
+		projectSearchService.teardownIndexAndAlias();
 	}
 
 	@Test

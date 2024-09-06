@@ -148,7 +148,19 @@
 
 		<!-- Output section -->
 		<template #preview>
-			<tera-drilldown-preview>
+			<tera-drilldown-section class="ml-4 mr-2 pt-3">
+				<template #header-controls-left v-if="configuredModelConfig?.name">
+					<h5>{{ configuredModelConfig.name }}</h5>
+				</template>
+				<template #header-controls-right>
+					<Button
+						label="Save for re-use"
+						severity="secondary"
+						outlined
+						:disabled="!configuredModelConfig"
+						@click="showSaveModal = true"
+					/>
+				</template>
 				<tera-operator-output-summary v-if="node.state.summaryId && !showSpinner" :summary-id="node.state.summaryId" />
 
 				<!-- Loss chart -->
@@ -210,12 +222,32 @@
 							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedVariables }"
 							:multi-select="true"
 							:show-remove-button="false"
-							:variables="Object.keys(pyciemssMap).filter((c) => modelPartTypesMap[c] !== 'parameter')"
+							:variables="
+								Object.keys(pyciemssMap).filter((c) => ['state', 'observable'].includes(modelPartTypesMap[c]))
+							"
 							@configuration-change="updateSelectedVariables"
 						/>
 						<template v-for="variable of node.state.selectedVariables" :key="variable">
 							<vega-chart expandable :are-embed-actions-visible="true" :visualization-spec="preparedCharts[variable]" />
 						</template>
+						<h5>Errors</h5>
+						<tera-chart-control
+							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedErrorVariables }"
+							:multi-select="true"
+							:show-remove-button="false"
+							:variables="Object.keys(pyciemssMap).filter((c) => mapping.find((d) => d.modelVariable === c))"
+							@configuration-change="updateSelectedErrorVariables"
+						/>
+						<vega-chart
+							v-if="
+								errorData.length > 0 &&
+								node.state.selectedErrorVariables &&
+								node.state.selectedErrorVariables.length > 0
+							"
+							:expandable="onExpandErrorChart"
+							:are-embed-actions-visible="true"
+							:visualization-spec="errorChart"
+						/>
 					</section>
 					<section v-else-if="!modelConfig" class="emptyState">
 						<img src="@assets/svg/seed.svg" alt="" draggable="false" />
@@ -229,9 +261,18 @@
 				</section>
 
 				<tera-notebook-error v-if="!_.isEmpty(node.state?.errorMessage?.traceback)" v-bind="node.state.errorMessage" />
-			</tera-drilldown-preview>
+			</tera-drilldown-section>
 		</template>
 	</tera-drilldown>
+	<tera-save-asset-modal
+		:initial-name="configuredModelConfig?.name"
+		:is-visible="showSaveModal"
+		:asset="configuredModelConfig"
+		:asset-type="AssetType.ModelConfiguration"
+		@close-modal="showSaveModal = false"
+		@on-save="onSaveAsModelConfiguration"
+		is-updating-asset
+	/>
 </template>
 
 <script setup lang="ts">
@@ -247,7 +288,6 @@ import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { CalibrateMap, setupDatasetInput, setupModelInput } from '@/services/calibrate-workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
@@ -257,7 +297,8 @@ import {
 	ClientEventType,
 	CsvAsset,
 	DatasetColumn,
-	ModelConfiguration
+	ModelConfiguration,
+	AssetType
 } from '@/types/Types';
 import { getTimespan, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 import { useToastService } from '@/services/toast';
@@ -272,17 +313,19 @@ import {
 	DataArray,
 	CiemssMethodOptions
 } from '@/services/models/simulation-service';
+import { getModelConfigurationById } from '@/services/model-configurations';
 
 import type { WorkflowNode } from '@/types/workflow';
-import { createForecastChart, createHistogramChart } from '@/services/charts';
+import { createForecastChart, createHistogramChart, createErrorChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
 import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { displayNumber } from '@/utils/number';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
+import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
-import { renameFnGenerator, mergeResults } from './calibrate-utils';
+import { renameFnGenerator, mergeResults, getErrorData } from './calibrate-utils';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
@@ -343,6 +386,12 @@ const modelStateOptions = ref<any[] | undefined>();
 
 const datasetColumns = ref<DatasetColumn[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
+const groundTruthData = computed<DataArray>(() => {
+	if (!csvAsset.value) return [];
+	const csv = (csvAsset.value as CsvAsset).csv;
+	const csvRaw = csv.map((d) => d.join(',')).join('\n');
+	return csvParse(csvRaw, autoType);
+});
 
 const modelConfig = ref<ModelConfiguration>();
 
@@ -365,6 +414,9 @@ const runResult = ref<DataArray>([]);
 const runResultPre = ref<DataArray>([]);
 const runResultSummary = ref<DataArray>([]);
 const runResultSummaryPre = ref<DataArray>([]);
+const errorData = ref<Record<string, any>[]>([]);
+const showSaveModal = ref(false);
+const configuredModelConfig = ref<ModelConfiguration | null>(null);
 
 const showSpinner = ref(false);
 
@@ -419,8 +471,9 @@ const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 
 const selectedParameters = ref<string[]>(props.node.state.selectedParameters);
 const selectedVariables = ref<string[]>(props.node.state.selectedVariables);
+const selectedErrorVariables = ref<string[]>(props.node.state.selectedErrorVariables);
 
-let pyciemssMap: Record<string, string> = {};
+const pyciemssMap = ref<Record<string, string>>({});
 const preparedChartInputs = computed(() => {
 	const state = props.node.state;
 
@@ -428,17 +481,17 @@ const preparedChartInputs = computed(() => {
 
 	// Merge before/after for chart
 	const { result, resultSummary } = mergeResults(
-		runResult.value,
 		runResultPre.value,
-		runResultSummary.value,
-		runResultSummaryPre.value
+		runResult.value,
+		runResultSummaryPre.value,
+		runResultSummary.value
 	);
 
 	// Build lookup map for calibration, include before/afer and dataset (observations)
 	const reverseMap: Record<string, string> = {};
-	Object.keys(pyciemssMap).forEach((key) => {
-		reverseMap[`${pyciemssMap[key]}_mean`] = `${key} after calibration`;
-		reverseMap[`${pyciemssMap[key]}_mean:pre`] = `${key} before calibration`;
+	Object.keys(pyciemssMap.value).forEach((key) => {
+		reverseMap[`${pyciemssMap.value[key]}_mean`] = `${key} after calibration`;
+		reverseMap[`${pyciemssMap.value[key]}_mean:pre`] = `${key} before calibration`;
 	});
 	state.mapping.forEach((mapObj) => {
 		reverseMap[mapObj.datasetVariable] = 'Observations';
@@ -451,17 +504,9 @@ const preparedChartInputs = computed(() => {
 });
 
 const preparedCharts = computed(() => {
-	if (!preparedChartInputs.value) return [];
+	if (!preparedChartInputs.value) return {};
 	const { result, resultSummary, reverseMap } = preparedChartInputs.value;
 	const state = props.node.state;
-
-	// FIXME: Hacky re-parse CSV with correct data types
-	let groundTruth: DataArray = [];
-	if (csvAsset.value) {
-		const csv = csvAsset.value.csv;
-		const csvRaw = csv.map((d) => d.join(',')).join('\n');
-		groundTruth = csvParse(csvRaw, autoType);
-	}
 
 	// Need to get the dataset's time field
 	const datasetTimeField = state.mapping.find((d) => d.modelVariable === 'timestamp')?.datasetVariable;
@@ -476,17 +521,17 @@ const preparedCharts = computed(() => {
 		charts[variable] = createForecastChart(
 			{
 				data: result,
-				variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
+				variables: [`${pyciemssMap.value[variable]}:pre`, pyciemssMap.value[variable]],
 				timeField: 'timepoint_id',
 				groupField: 'sample_id'
 			},
 			{
 				data: resultSummary,
-				variables: [`${pyciemssMap[variable]}_mean:pre`, `${pyciemssMap[variable]}_mean`],
+				variables: [`${pyciemssMap.value[variable]}_mean:pre`, `${pyciemssMap.value[variable]}_mean`],
 				timeField: 'timepoint_id'
 			},
 			{
-				data: groundTruth,
+				data: groundTruthData.value,
 				variables: datasetVariables,
 				timeField: datasetTimeField as string,
 				groupField: 'sample_id'
@@ -514,7 +559,7 @@ const preparedDistributionCharts = computed(() => {
 	const labelAfter = 'After calibration';
 	const charts = {};
 	state.selectedParameters.forEach((param) => {
-		const fieldName = pyciemssMap[param];
+		const fieldName = pyciemssMap.value[param];
 		const beforeFieldName = `${fieldName}:pre`;
 		const histogram = createHistogramChart(result, {
 			title: `${param}`,
@@ -540,6 +585,44 @@ const preparedDistributionCharts = computed(() => {
 	});
 	return charts;
 });
+
+const errorChartVariables = computed(() => {
+	if (!props.node.state.selectedErrorVariables?.length) return [];
+	const getDatasetVariable = (modelVariable: string) =>
+		mapping.value.find((d) => d.modelVariable === modelVariable)?.datasetVariable;
+	const variables = props.node.state.selectedErrorVariables.map((variable) => ({
+		field: getDatasetVariable(variable) as string,
+		label: variable
+	}));
+	return variables;
+});
+
+const errorChart = computed(() => {
+	if (errorData.value.length === 0) return {};
+	const spec = createErrorChart(errorData.value, {
+		title: '',
+		width: chartSize.value.width,
+		variables: errorChartVariables.value,
+
+		xAxisTitle: 'Mean absolute (MAE)'
+	});
+	return spec;
+});
+
+const onExpandErrorChart = () => {
+	if (errorData.value.length === 0) return {};
+	// Customize the chart size by modifying the spec before expanding the chart
+	const spec = createErrorChart(errorData.value, {
+		title: '',
+		width: window.innerWidth / 1.5,
+		height: 230,
+		boxPlotHeight: 50,
+		areaChartHeight: 150,
+		variables: errorChartVariables.value,
+		xAxisTitle: 'Mean absolute (MAE)'
+	});
+	return spec as any;
+};
 
 const LOSS_CHART_DATA_SOURCE = 'lossData'; // Name of the streaming data source
 const lossChartRef = ref<InstanceType<typeof VegaChart>>();
@@ -633,6 +716,10 @@ function updateSelectedVariables(event) {
 	emit('update-state', { ...props.node.state, selectedVariables: event.selectedVariable });
 }
 
+function updateSelectedErrorVariables(event) {
+	emit('update-state', { ...props.node.state, selectedErrorVariables: event.selectedVariable });
+}
+
 // Used from button to add new entry to the mapping object
 function addMapping() {
 	mapping.value.push({
@@ -678,7 +765,7 @@ async function getAutoMapping() {
 	emit('update-state', state);
 }
 
-onMounted(async () => {
+const initialize = async () => {
 	// Model configuration input
 	const { modelConfiguration, modelOptions, modelPartUnits, modelPartTypes } = await setupModelInput(
 		modelConfigId.value
@@ -693,6 +780,24 @@ onMounted(async () => {
 	currentDatasetFileName.value = filename;
 	csvAsset.value = csv;
 	datasetColumns.value = datasetOptions;
+
+	getConfiguredModelConfig();
+};
+
+const onSaveAsModelConfiguration = async () => {
+	getConfiguredModelConfig();
+};
+
+const getConfiguredModelConfig = async () => {
+	const selectedOutput = props.node.outputs.find((output) => output.id === selectedOutputId.value);
+	const configuredModelId = selectedOutput?.value?.[0]?.modelConfigId;
+	if (configuredModelId) {
+		configuredModelConfig.value = await getModelConfigurationById(configuredModelId);
+	}
+};
+
+onMounted(async () => {
+	initialize();
 });
 
 watch(
@@ -729,14 +834,16 @@ watch(
 		// Update selected output
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
-
+			await initialize();
 			// Fetch saved intermediate state
 			const simulationObj = await getSimulation(props.node.state.calibrationId);
 			if (simulationObj?.updates) {
-				lossValues.value = simulationObj?.updates.map((d, i) => ({
-					iter: i,
-					loss: d.data.loss
-				}));
+				lossValues.value = simulationObj?.updates
+					.sort((a, b) => a.data.progress - b.data.progress)
+					.map((d, i) => ({
+						iter: i,
+						loss: d.data.loss
+					}));
 				updateLossChartSpec(lossValues.value);
 			}
 
@@ -751,7 +858,10 @@ watch(
 				renameFnGenerator('pre')
 			);
 
-			pyciemssMap = parsePyCiemssMap(runResult.value[0]);
+			if (!runResult.value.length) return;
+			pyciemssMap.value = parsePyCiemssMap(runResult.value[0]);
+
+			errorData.value = getErrorData(groundTruthData.value, runResult.value, mapping.value);
 		}
 	},
 	{ immediate: true }

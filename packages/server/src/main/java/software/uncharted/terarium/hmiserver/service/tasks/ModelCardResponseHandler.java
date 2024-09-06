@@ -52,8 +52,12 @@ public class ModelCardResponseHandler extends TaskResponseHandler {
 	public TaskResponse onSuccess(final TaskResponse resp) {
 		try {
 			final Properties props = resp.getAdditionalProperties(Properties.class);
-			log.info("Writing model card to database for document {}", props.getDocumentId());
+			if (props == null) {
+				// just return the response
+				return resp;
+			}
 
+			log.info("Writing model card to database for document {}", props.getDocumentId());
 			final DocumentAsset document = documentAssetService
 				.getAsset(props.getDocumentId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER)
 				.orElseThrow();

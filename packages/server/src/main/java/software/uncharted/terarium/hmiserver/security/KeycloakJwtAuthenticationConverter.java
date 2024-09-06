@@ -75,7 +75,6 @@ public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, Abstra
 			.collect(Collectors.toSet());
 	}
 
-	@Transactional
 	public User initializeUser(final Jwt jwt, final List<String> keycloakRoles) {
 		final User user = adminClientService.getUserFromJwt(jwt);
 

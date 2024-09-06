@@ -102,7 +102,14 @@ public class ProjectSearchService {
 			}
 		} catch (final Exception e) {}
 		elasticService.createOrEnsureIndexIsEmpty(index);
-		elasticService.createAlias(index, getAlias());
+		if (index == null || index.isEmpty()) {
+			throw new RuntimeException("Index name is empty");
+		}
+		final String alias = getAlias();
+		if (alias == null || alias.isEmpty()) {
+			throw new RuntimeException("Alias name is empty");
+		}
+		elasticService.createAlias(index, alias);
 	}
 
 	/**
@@ -129,6 +136,10 @@ public class ProjectSearchService {
 		elasticService.indexWithRouting(getAlias(), project.getId().toString(), doc, routing);
 	}
 
+	public void forceESRefresh() throws IOException {
+		elasticService.refreshIndex(getIndex());
+	}
+
 	public void updateProject(final Project project) throws IOException {
 		final ProjectDocument doc = new ProjectDocument();
 		doc.setUserId(project.getUserId());
@@ -143,7 +154,7 @@ public class ProjectSearchService {
 		elasticService.delete(getAlias(), id.toString());
 	}
 
-	private String getPermissionId(final UUID projectId, final String userId) {
+	private static String getPermissionId(final UUID projectId, final String userId) {
 		return projectId.toString() + "_" + userId;
 	}
 

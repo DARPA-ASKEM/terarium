@@ -13,4 +13,26 @@ describe('statistics utilities', () => {
 		stddev = stats.stddev(numbers2);
 		expect(stddev).to.eq(0);
 	});
+	it('mae', () => {
+		const arr1 = [
+			{ time: 1, value: 1 },
+			{ time: 2, value: 1 },
+			{ time: 3, value: 1 },
+			{ time: 4, value: 1 },
+			{ time: 5, value: 1 }
+		];
+		const arr2 = [
+			{ time: 0, value: 5 },
+			{ time: 5, value: 5 }
+		];
+		const arr3 = [
+			{ time: 10, value: 10 },
+			{ time: 20, value: 10 }
+		];
+		let mae = -999;
+		mae = stats.mae(arr1, arr2, 'time', 'value');
+		expect(mae).to.equal(4);
+		mae = stats.mae(arr1, arr3, 'time', 'value');
+		expect(Number.isNaN(mae)).to.equal(true);
+	});
 });
