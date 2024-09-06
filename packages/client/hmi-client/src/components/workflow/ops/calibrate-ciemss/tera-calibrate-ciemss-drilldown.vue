@@ -257,7 +257,9 @@
 					<div class="output-settings-panel">
 						<h5>Parameters</h5>
 						<tera-chart-settings-item
-							v-for="settings of chartSettings.filter((setting) => setting.type === ChartSettingType.PARAMETER)"
+							v-for="settings of chartSettings.filter(
+								(setting) => setting.type === ChartSettingType.DISTRIBUTION_COMPARISON
+							)"
 							:key="settings.id"
 							:settings="settings"
 							@open="activeChartSettings = settings"
@@ -273,7 +275,9 @@
 						<hr />
 						<h5>Model Variables</h5>
 						<tera-chart-settings-item
-							v-for="settings of chartSettings.filter((setting) => setting.type === ChartSettingType.VARIABLE)"
+							v-for="settings of chartSettings.filter(
+								(setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON
+							)"
 							:key="settings.id"
 							:settings="settings"
 							@open="activeChartSettings = settings"
@@ -291,7 +295,9 @@
 						<hr />
 						<h5>Error</h5>
 						<tera-chart-settings-item
-							v-for="settings of chartSettings.filter((setting) => setting.type === ChartSettingType.ERROR)"
+							v-for="settings of chartSettings.filter(
+								(setting) => setting.type === ChartSettingType.ERROR_DISTRIBUTION
+							)"
 							:key="settings.id"
 							:settings="settings"
 							@open="activeChartSettings = settings"
@@ -524,17 +530,17 @@ const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 const chartSettings = computed(() => props.node.state.chartSettings ?? []);
 const selectedParameters = computed(() =>
 	chartSettings.value
-		.filter((setting) => setting.type === ChartSettingType.PARAMETER)
+		.filter((setting) => setting.type === ChartSettingType.DISTRIBUTION_COMPARISON)
 		.map((setting) => setting.selectedVariables[0])
 );
 const selectedVariables = computed(() =>
 	chartSettings.value
-		.filter((setting) => setting.type === ChartSettingType.VARIABLE)
+		.filter((setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON)
 		.map((setting) => setting.selectedVariables[0])
 );
 const selectedErrorVariables = computed(() =>
 	chartSettings.value
-		.filter((setting) => setting.type === ChartSettingType.ERROR)
+		.filter((setting) => setting.type === ChartSettingType.ERROR_DISTRIBUTION)
 		.map((setting) => setting.selectedVariables[0])
 );
 
@@ -784,7 +790,7 @@ function updateSelectedParameters(event) {
 		...props.node.state,
 		chartSettings: updateChartSettingsBySelectedVariables(
 			chartSettings.value,
-			ChartSettingType.PARAMETER,
+			ChartSettingType.DISTRIBUTION_COMPARISON,
 			event.selectedVariable
 		)
 	});
@@ -795,7 +801,7 @@ function updateSelectedVariables(event) {
 		...props.node.state,
 		chartSettings: updateChartSettingsBySelectedVariables(
 			chartSettings.value,
-			ChartSettingType.VARIABLE,
+			ChartSettingType.VARIABLE_COMPARISON,
 			event.selectedVariable
 		)
 	});
@@ -806,7 +812,7 @@ function updateSelectedErrorVariables(event) {
 		...props.node.state,
 		chartSettings: updateChartSettingsBySelectedVariables(
 			chartSettings.value,
-			ChartSettingType.ERROR,
+			ChartSettingType.ERROR_DISTRIBUTION,
 			event.selectedVariable
 		)
 	});

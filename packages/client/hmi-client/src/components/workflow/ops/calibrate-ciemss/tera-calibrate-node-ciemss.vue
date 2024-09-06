@@ -89,7 +89,7 @@ let lossValues: { [key: string]: number }[] = [];
 
 const selectedVariables = computed(() =>
 	(props.node.state.chartSettings ?? [])
-		.filter((setting) => setting.type === ChartSettingType.VARIABLE)
+		.filter((setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON)
 		.map((setting) => setting.selectedVariables[0])
 );
 
