@@ -304,7 +304,9 @@ function generateOverview(output: string) {
 }
 
 useClientEvent(ClientEventType.TaskGollmCompareModel, (event: ClientEvent<TaskResponse>) => {
-	if (!event.data || event.data.id !== compareModelsTaskId || event.data.status !== TaskStatus.Success) return;
+	if (!event.data) return;
+	if (event.data.id !== compareModelsTaskId) return;
+	if (event.data.status !== TaskStatus.Success) return;
 	generateOverview(event.data.output);
 });
 
@@ -325,8 +327,8 @@ onMounted(async () => {
 	modelCardsToCompare.value = modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard);
 	fields.value = [...new Set(modelCardsToCompare.value.flatMap((card) => (card ? Object.keys(card) : [])))];
 
-	buildJupyterContext();
-	processCompareModels(modelIds);
+	await buildJupyterContext();
+	await processCompareModels(modelIds);
 });
 
 onUnmounted(() => {
