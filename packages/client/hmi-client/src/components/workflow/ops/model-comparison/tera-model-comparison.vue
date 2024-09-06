@@ -289,6 +289,13 @@ async function buildJupyterContext() {
 	}
 }
 
+// Generate once the comparison task has been completed
+function generateOverview(output: string) {
+	overview.value = markdownit().render(JSON.parse(b64DecodeUnicode(output)).response);
+	emit('update-status', OperatorStatus.DEFAULT); // This is a custom way of granting a default status to the operator, since it has no output
+}
+
+// Create a task to compare the models
 async function processCompareModels(modelIds: string[]) {
 	const taskRes = await compareModels(modelIds, props.node.workflowId, props.node.id);
 	compareModelsTaskId = taskRes.id;
@@ -297,12 +304,7 @@ async function processCompareModels(modelIds: string[]) {
 	}
 }
 
-// Generate once the comparison task has been completed
-function generateOverview(output: string) {
-	overview.value = markdownit().render(JSON.parse(b64DecodeUnicode(output)).response);
-	emit('update-status', OperatorStatus.DEFAULT); // This is a custom way of granting a default status to the operator, since it has no output
-}
-
+// Listen for the task completion event
 useClientEvent(ClientEventType.TaskGollmCompareModel, (event: ClientEvent<TaskResponse>) => {
 	if (!event.data) return;
 	if (event.data.id !== compareModelsTaskId) return;
