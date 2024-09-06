@@ -178,16 +178,3 @@ export interface AssetBlock<T> {
 	isCollapsed?: false;
 	asset: T;
 }
-
-export enum ChartSettingType {
-	VARIABLE = 'variable',
-	PARAMETER = 'parameter',
-	ERROR = 'error'
-}
-
-export interface ChartSetting {
-	id: string;
-	name: string;
-	selectedVariables: string[];
-	type: ChartSettingType;
-}

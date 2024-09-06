@@ -227,6 +227,19 @@ export interface NotificationItemStatus {
 	progress?: number;
 }
 
+export enum ChartSettingType {
+	VARIABLE = 'variable',
+	PARAMETER = 'parameter',
+	ERROR = 'error'
+}
+
+export interface ChartSetting {
+	id: string;
+	name: string;
+	selectedVariables: string[];
+	type: ChartSettingType;
+}
+
 export const ProgrammingLanguageVersion: { [key in ProgrammingLanguage]: string } = {
 	[ProgrammingLanguage.Python]: 'python3',
 	[ProgrammingLanguage.R]: 'ir',

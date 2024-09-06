@@ -52,7 +52,7 @@ import {
 	SemanticType,
 	InferredParameterSemantic
 } from '@/types/Types';
-import { ChartSettingType } from '@/types/workflow';
+import { ChartSettingType } from '@/types/common';
 import { createLLMSummary } from '@/services/summary-service';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
