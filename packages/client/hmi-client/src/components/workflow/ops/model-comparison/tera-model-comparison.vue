@@ -307,6 +307,7 @@ async function processCompareModels(modelIds: string[]) {
 // Listen for the task completion event
 useClientEvent(ClientEventType.TaskGollmCompareModel, (event: ClientEvent<TaskResponse>) => {
 	if (!event.data) return;
+	if (!isEmpty(overview.value)) return;
 	if (event.data.id !== compareModelsTaskId) return;
 	if (event.data.status !== TaskStatus.Success) return;
 	generateOverview(event.data.output);
