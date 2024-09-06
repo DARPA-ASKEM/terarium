@@ -49,6 +49,10 @@
 								@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
 							/>
 						</template>
+						<section class="empty-state" v-if="node.state.interventionPolicyGroups.length === 0">
+							<!-- TODO: This only works if the user clicks refresh !?!? -->
+							<p class="mt-1">No intervention policies have been added.</p>
+						</section>
 						<template v-for="(cfg, idx) in node.state.interventionPolicyGroups">
 							<tera-dynamic-intervention-policy-group
 								v-if="cfg.intervention?.dynamicInterventions && cfg.intervention?.dynamicInterventions.length > 0"
@@ -63,7 +67,7 @@
 							Optimization settings
 							<i v-tooltip="optimizeSettingsToolTip" class="pi pi-info-circle info-circle" />
 						</h5>
-						<div class="input-row">
+						<div class="input-row pt-1">
 							<div class="label-and-input">
 								<label>Start time</label>
 								<tera-input-number disabled :model-value="0" />
@@ -71,6 +75,17 @@
 							<div class="label-and-input">
 								<label>End time</label>
 								<tera-input-number v-model="knobs.endTime" />
+							</div>
+						</div>
+						<div class="input-row">
+							<div class="label-and-input">
+								<label>Preset (optional)</label>
+								<Dropdown
+									v-model="presetType"
+									placeholder="Select an option"
+									:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
+									@update:model-value="setPresetValues"
+								/>
 							</div>
 						</div>
 						<div>
@@ -87,18 +102,7 @@
 								@click="toggleAdditionalOptions"
 							/>
 						</div>
-						<div v-if="showAdditionalOptions">
-							<div class="input-row">
-								<div class="label-and-input">
-									<label>Preset (optional)</label>
-									<Dropdown
-										v-model="presetType"
-										placeholder="Select an option"
-										:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
-										@update:model-value="setPresetValues"
-									/>
-								</div>
-							</div>
+						<div v-if="showAdditionalOptions" class="additional-options">
 							<div class="input-row">
 								<div class="label-and-input">
 									<label>Number of samples to simulate model</label>
@@ -107,7 +111,7 @@
 									</div>
 								</div>
 								<div class="label-and-input">
-									<label>Solver method</label>
+									<label><br />Solver method</label>
 									<Dropdown
 										class="p-inputtext-sm"
 										:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
@@ -1113,6 +1117,16 @@ watch(
 	color: var(--text-color-secondary);
 	font-size: var(--font-caption);
 	margin-left: var(--gap-1);
+}
+.additional-options {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--gap-1);
+	padding: 0 var(--gap-2) var(--gap);
+	background: var(--surface-200);
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
 }
 
 .result-message-grid {
