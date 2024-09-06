@@ -30,7 +30,7 @@ public class ProjectExport {
 	Project project;
 	List<AssetExport> assets = new ArrayList<>();
 
-	private byte[] readZipEntry(final ZipInputStream zipInputStream) throws IOException {
+	public static byte[] readZipEntry(final ZipInputStream zipInputStream) throws IOException {
 		final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		final byte[] buffer = new byte[1024];
 		int count;
@@ -108,6 +108,7 @@ public class ProjectExport {
 		return byteArrayOutputStream.toByteArray();
 	}
 
+	@Override
 	public ProjectExport clone() {
 		final ProjectExport cloned = new ProjectExport();
 		cloned.setProject(project.clone());
