@@ -236,7 +236,7 @@
 		</section>
 		<template #preview>
 			<tera-drilldown-section
-				class="ml-4 mr-2 pt-3"
+				class="ml-3 mr-3"
 				:is-loading="showSpinner"
 				:class="{ 'failed-run': optimizationResult.success === 'False' ?? 'successful-run' }"
 			>
@@ -256,9 +256,9 @@
 				<tera-operator-output-summary v-if="node.state.summaryId && !showSpinner" :summary-id="node.state.summaryId" />
 
 				<!-- Optimize result.json display: -->
-				<div v-if="optimizationResult && displayOptimizationResultMessage" class="result-message-grid">
+				<div v-if="optimizationResult && displayOptimizationResultMessage" class="result-message-grid mb-2">
 					<span class="flex flex-row">
-						<h6>Response</h6>
+						<p class="mt-2">For debugging</p>
 						<Button
 							icon="pi pi-times"
 							text
@@ -278,6 +278,7 @@
 					@change="if ($event.value) outputViewSelection = $event.value;"
 					:options="outputViewOptions"
 					option-value="value"
+					class="select-button my-2"
 				>
 					<template #option="{ option }">
 						<i :class="`${option.icon} p-button-icon-left`" />
@@ -1144,12 +1145,17 @@ watch(
 	gap: var(--gap-0-5);
 	/* Adjust the gap between rows as needed */
 	font-size: var(--font-caption);
-	background-color: var(--surface-glass);
+	background-color: var(--surface-50);
 	border: solid 1px var(--surface-border-light);
 	border-radius: var(--border-radius);
 	padding: var(--gap-small);
 }
+/* Select button icon fix */
+.select-button .p-button-icon-left {
+	color: var(--text-color-secondary);
+}
 
+/* Debugging message styles */
 .result-message-row {
 	display: flex;
 	flex-direction: row;
