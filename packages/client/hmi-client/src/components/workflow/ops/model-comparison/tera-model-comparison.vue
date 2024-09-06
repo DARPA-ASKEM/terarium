@@ -74,7 +74,6 @@
 							<Button icon="pi pi-play" label="Run" size="small" @click="runCode" />
 						</template>
 					</tera-notebook-jupyter-input>
-					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
 				</div>
 				<v-ace-editor
 					v-model:value="code"
@@ -149,7 +148,6 @@ import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import Image from 'primevue/image';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
 import { saveCodeToState } from '@/services/notebook';
 import { getImages, addImage, deleteImages } from '@/services/image';
@@ -406,12 +404,16 @@ ul {
 }
 
 /* TODO: Improve this pattern later same in (tera-model-input) */
+
+.notebook-section {
+	background-color: var(--surface-disabled);
+	border-right: 1px solid var(--surface-border-dark);
+	padding: var(--gap);
+}
+
 .notebook-section:deep(main) {
 	gap: var(--gap-small);
 	position: relative;
-}
-.toolbar {
-	padding-left: var(--gap-medium);
 }
 
 .toolbar-right-side {
