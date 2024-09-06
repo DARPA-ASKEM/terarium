@@ -17,7 +17,7 @@
 			</div>
 		</template>
 		<div v-else-if="!isEmpty(annotation)" class="annotation">
-			<p @click="isEditing = true">{{ annotation }}<span class="pi pi-pencil ml-2 text-xs" /></p>
+			<p @click="isEditing = true">{{ annotation }}<span class="pi pi-pencil ml-2 text-xs edit-button" /></p>
 		</div>
 	</section>
 	<Button
@@ -81,6 +81,7 @@ watch(
 section {
 	display: flex;
 	flex: 1;
+
 	&:empty {
 		display: none;
 	}
@@ -112,6 +113,11 @@ section {
 				align-self: end;
 			}
 		}
+	}
+
+	.edit-button {
+		color: var(--text-color-secondary);
+		cursor: pointer;
 	}
 
 	/* In drilldown */
