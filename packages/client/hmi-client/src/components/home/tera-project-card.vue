@@ -43,10 +43,7 @@
 				<img :src="thumbnail" alt="Artistic representation of the Project statistics" />
 			</div>
 			<section>
-				<div class="title" ref="titleRef">
-					<p v-if="isCloning">Cloning...</p>
-					{{ project.name }}
-				</div>
+				<div class="title" ref="titleRef">Copy of {{ project.name }}</div>
 				<div v-if="isCloning">
 					<ProgressBar mode="indeterminate" />
 				</div>
@@ -62,11 +59,14 @@
 			</section>
 		</template>
 		<template #footer>
-			<span>Last updated {{ formatDdMmmYyyy(project.updatedOn) }}</span>
-			<tera-project-menu
-				:project="project"
-				@forked-project="(forkedProject) => emit('forked-project', forkedProject)"
-			/>
+			<template v-if="!isCloning">
+				<span>Last updated {{ formatDdMmmYyyy(project.updatedOn) }}</span>
+				<tera-project-menu
+					:project="project"
+					@forked-project="(forkedProject) => emit('forked-project', forkedProject)"
+				/>
+			</template>
+			<template v-else-if="isCloning">Copying</template>
 		</template>
 	</Card>
 	<Card v-else>
