@@ -21,47 +21,31 @@
 				<div v-else-if="col.field === 'stats'" class="stats">
 					<span
 						class="mr-1"
-						v-tooltip.top="
-							`${data.metadata?.['contributor-count']} contributor${data.metadata?.['contributor-count'] === 1 ? '' : 's'}`
-						"
+						v-tooltip.top="formatStatTooltip(formatStat(data.metadata, 'contributor-count'), 'contributor')"
 					>
-						<i class="pi pi-user mr-1" /> {{ data.metadata?.['contributor-count'] }}</span
-					>
-					<span
-						class="mr-1"
-						v-tooltip.top="
-							`${data.metadata?.['document-count']} paper${data.metadata?.['document-count'] === 1 ? '' : 's'}`
-						"
-						><i class="pi pi-file mr-1" /> {{ data.metadata?.['document-count'] }}</span
-					>
-					<span
-						class="mr-1"
-						v-tooltip.top="
-							`${data.metadata?.['datasets-count']} dataset${data.metadata?.['datasets-count'] === 1 ? '' : 's'}`
-						"
-					>
+						<i class="pi pi-user mr-1" />
+						{{ formatStat(data.metadata, 'contributor-count') }}
+					</span>
+					<span class="mr-1" v-tooltip.top="formatStatTooltip(formatStat(data.metadata, 'document-count'), 'paper')">
+						<i class="pi pi-file mr-1" />
+						{{ formatStat(data.metadata, 'document-count') }}
+					</span>
+					<span class="mr-1" v-tooltip.top="formatStatTooltip(formatStat(data.metadata, 'datasets-count'), 'dataset')">
 						<dataset-icon fill="var(--text-color-secondary)" class="mr-1" />
-						{{ data.metadata?.['datasets-count'] }}
+						{{ formatStat(data.metadata, 'datasets-count') }}
 					</span>
-					<span
-						v-tooltip.top="
-							`${data.metadata?.['models-count']} model${data.metadata?.['models-count'] === 1 ? '' : 's'}`
-						"
-					>
-						<i class="pi pi-share-alt mr-1" /> {{ data.metadata?.['models-count'] }}
+					<span v-tooltip.top="formatStatTooltip(formatStat(data.metadata, 'models-count'), 'model')">
+						<i class="pi pi-share-alt mr-1" />
+						{{ formatStat(data.metadata, 'models-count') }}
 					</span>
-					<span
-						v-tooltip.top="
-							`${data.metadata?.['workflows-count']} workflow${data.metadata?.['workflows-count'] === 1 ? '' : 's'}`
-						"
-					>
+					<span v-tooltip.top="formatStatTooltip(formatStat(data.metadata, 'workflows-count'), 'workflow')">
 						<vue-feather
 							class="p-button-icon-left"
 							type="git-merge"
 							size="1.25rem"
 							stroke="var(--text-color-secondary)"
 						/>
-						{{ data.metadata?.['workflows-count'] }}
+						{{ formatStat(data.metadata, 'workflows-count') }}
 					</span>
 				</div>
 				<template v-else-if="col.field === 'createdOn'">
@@ -96,18 +80,14 @@ defineProps<{
 
 const emit = defineEmits(['open-project']);
 
-/** const stats = computed(() => {
-	const metadata = props.project?.data.metadata;
-	//if (!props.project || !metadata) return null;
+function formatStat(data, key) {
+	const stat = data?.[key];
+	return key === 'contributor-count' ? parseInt(stat ?? '1', 10) : parseInt(stat ?? '0', 10);
+}
 
-	return {
-		contributors: parseInt(metadata['contributor-count'] ?? '1', 10),
-		papers: parseInt(metadata['document-count'] ?? '0', 10),
-		datasets: parseInt(metadata['datasets-count'] ?? '0', 10),
-		models: parseInt(metadata['models-count'] ?? '0', 10),
-		workflows: parseInt(metadata['workflows-count'] ?? '0', 10)
-	};
-}); */
+function formatStatTooltip(stat, displayName) {
+	return `${stat} ${displayName}${stat === 1 ? '' : 's'}`;
+}
 
 function getColumnWidth(columnField: string) {
 	switch (columnField) {
