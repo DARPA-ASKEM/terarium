@@ -118,18 +118,18 @@
 								</template>
 							</div>
 							<ul v-else-if="view === ProjectsView.Cards" class="project-cards-grid">
+								<template v-if="cloningProjects.length && !isLoadingProjects">
+									<li v-for="item in cloningProjects" :key="item.id">
+										<tera-project-card />
+									</li>
+								</template>
 								<template v-if="isLoadingProjects">
 									<li v-for="i in 3" :key="i">
 										<tera-project-card />
 									</li>
 								</template>
 								<li v-else v-for="project in searchedAndFilterProjects" :key="project.id">
-									<tera-project-card
-										v-if="project.id"
-										:project="project"
-										@click="openProject(project.id)"
-										@forked-project="(forkedProject) => openProject(forkedProject.id)"
-									/>
+									<tera-project-card v-if="project.id" :project="project" @click="openProject(project.id)" />
 								</li>
 							</ul>
 							<tera-project-table
@@ -148,7 +148,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref, onMounted, watch } from 'vue';
 import useQueryStore from '@/stores/query';
 import Button from 'primevue/button';
 import TabView from 'primevue/tabview';
@@ -163,13 +163,26 @@ import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import SelectButton from 'primevue/selectbutton';
 import { useProjectMenu } from '@/composables/project-menu';
-import { Project } from '@/types/Types';
+import { Project, ClientEventType, ProgressState } from '@/types/Types';
 import { Vue3Lottie } from 'vue3-lottie';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { FilterService } from 'primevue/api';
+import { useNotificationManager } from '@/composables/notificationManager';
 
 const { isProjectConfigDialogVisible, menuProject } = useProjectMenu();
+
+const { notificationItems } = useNotificationManager();
+
+const cloningProjects = computed(() => {
+	const items: any = [];
+	notificationItems.value.forEach((item) => {
+		if (item.type === ClientEventType.CloneProject && item.status === ProgressState.Running) {
+			items.push(item);
+		}
+	});
+	return items;
+});
 
 const activeTabIndex = ref(0);
 const showVideo = ref(false);
@@ -304,6 +317,15 @@ onMounted(async () => {
 	queryStore.reset(); // Facets queries.
 	await useProjects().getAll();
 });
+
+watch(
+	() => cloningProjects.value,
+	() => {
+		if (cloningProjects.value.length === 0) {
+			useProjects().getAll();
+		}
+	}
+);
 </script>
 
 <style scoped>

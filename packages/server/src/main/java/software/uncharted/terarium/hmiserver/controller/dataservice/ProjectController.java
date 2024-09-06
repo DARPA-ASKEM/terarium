@@ -533,7 +533,7 @@ public class ProjectController {
 	public ResponseEntity<Project> copyProject(@PathVariable("id") final UUID id) {
 		projectService.checkPermissionCanRead(currentUserService.get().getId(), id);
 		// time the progress takes to reach each subsequent half.
-		final Double HALFTIME_SECONDS = 2.0;
+		final Double HALFTIME_SECONDS = 1.0;
 
 		Future<Project> project;
 		Project clonedProject;
@@ -541,16 +541,16 @@ public class ProjectController {
 		final String userId = currentUserService.get().getId();
 		final String userName = userService.getById(userId).getName();
 
-		try {
-			final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<Properties>(
-				clientEventService,
-				notificationService,
-				ClientEventType.CLONE_PROJECT,
-				null,
-				new Properties(id),
-				HALFTIME_SECONDS
-			);
+		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<Properties>(
+			clientEventService,
+			notificationService,
+			ClientEventType.CLONE_PROJECT,
+			null,
+			new Properties(id),
+			HALFTIME_SECONDS
+		);
 
+		try {
 			notificationInterface.sendMessage("Cloning the Project...");
 
 			project = executor.submit(() -> {
@@ -562,7 +562,6 @@ public class ProjectController {
 				log.info("Cloned...");
 				return cloneProject;
 			});
-			notificationInterface.sendFinalMessage("Cloning complete");
 			clonedProject = project.get();
 		} catch (ExecutionException e) {
 			log.error("Execution Exception exporting project", e);
@@ -577,17 +576,6 @@ public class ProjectController {
 			log.error("Error exporting project", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
-
-		// Project project;
-		// try {
-		// 	final ProjectExport export = cloneService.exportProject(id);
-		// 	export.getProject().setName("Copy of " + export.getProject().getName());
-
-		// 	project = cloneService.importProject(userId, userName, export);
-		// } catch (final Exception e) {
-		// 	log.error("Error exporting project", e);
-		// 	throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
-		// }
 
 		try {
 			final RebacProject rebacProject = new RebacProject(clonedProject.getId(), reBACService);
@@ -606,6 +594,7 @@ public class ProjectController {
 				messages.get("rebac.relationship-already-exists")
 			);
 		}
+		notificationInterface.sendFinalMessage("Cloning complete");
 		return ResponseEntity.status(HttpStatus.CREATED).body(clonedProject);
 	}
 
