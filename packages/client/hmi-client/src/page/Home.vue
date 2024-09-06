@@ -133,7 +133,7 @@
 										v-if="project.id"
 										:project="project"
 										@click="openProject(project.id)"
-										@forked-project="tabChange({ index: 0 })"
+										@copied-project="tabChange({ index: 0 })"
 									/>
 								</li>
 							</ul>

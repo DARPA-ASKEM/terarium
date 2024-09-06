@@ -63,7 +63,7 @@
 				<span>Last updated {{ formatDdMmmYyyy(project.updatedOn) }}</span>
 				<tera-project-menu
 					:project="project"
-					@forked-project="(forkedProject) => emit('forked-project', forkedProject)"
+					@copied-project="(copiedProject) => emit('copied-project', copiedProject)"
 				/>
 			</template>
 			<template v-else-if="isCloning">Copying</template>
@@ -108,7 +108,7 @@ const props = defineProps<{
 	project?: Project;
 	isCloning?: boolean;
 }>();
-const emit = defineEmits(['forked-project']);
+const emit = defineEmits(['copied-project']);
 
 const titleRef = ref();
 const descriptionLines = computed(() => {
