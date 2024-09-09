@@ -235,6 +235,7 @@ import { useConfirm } from 'primevue/useconfirm';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import { saveCodeToState } from '@/services/notebook';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
+import { useProjects } from '@/composables/project';
 import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
 import {
 	blankModelConfig,
@@ -546,6 +547,7 @@ const onSaveConfiguration = async () => {
 		return;
 	}
 	initialize();
+	useProjects().refresh();
 	logger.success('Saved model configuration');
 };
 
