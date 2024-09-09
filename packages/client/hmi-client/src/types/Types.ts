@@ -554,9 +554,11 @@ export interface CalibrationRequestCiemss {
 }
 
 export interface CiemssStatusUpdate {
-    loss: number;
-    progress: number;
     jobId: string;
+    progress: number;
+    loss?: number;
+    currentResults?: number[];
+    totalPossibleIterations?: number;
 }
 
 export interface EnsembleCalibrationCiemssRequest {
