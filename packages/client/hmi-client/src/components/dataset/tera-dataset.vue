@@ -286,6 +286,9 @@ const author = computed(() => card.value?.AUTHOR_NAME ?? '');
 function updateColumn(index: number, key: string, value: any) {
 	if (!transientDataset.value?.columns?.[index]) return;
 	if (key === 'unit' || key === 'name') {
+		if (!transientDataset.value.columns[index].metadata) {
+			transientDataset.value.columns[index].metadata = {};
+		}
 		transientDataset.value.columns[index].metadata[key] = value;
 	} else if (key === 'concept') {
 		// Only one identifier is supported for now
