@@ -76,7 +76,7 @@ const updateLatexFormula = (equationsList: string[]) => {
 const updateModelFromEquations = async () => {
 	isUpdating.value = true;
 	isEditing.value = false;
-	const request = { equations: equations.value, modelId: props.model.id } as EquationsToAMRRequest;
+const request: EquationsToAMRRequest  = { equations: equations.value, modelId: props.model.id };
 	const modelId = await equationsToAMR(request);
 	if (modelId) {
 		emit('model-updated');
