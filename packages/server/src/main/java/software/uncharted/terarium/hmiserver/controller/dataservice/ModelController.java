@@ -556,6 +556,17 @@ public class ModelController {
 				null
 			);
 			modelConfigurationService.createAsset(modelConfiguration, projectId, permission);
+
+			// add default model configuration to project
+			final Optional<Project> project = projectService.getProject(projectId);
+			if (project.isPresent()) {
+				projectAssetService.createProjectAsset(
+					project.get().getId(),
+					AssetType.MODEL_CONFIGURATION,
+					modelConfiguration,
+					permission
+				);
+			}
 		} catch (final IOException e) {
 			final String error = "Unable to create model";
 			log.error(error, e);
