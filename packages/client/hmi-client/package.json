@@ -72,10 +72,10 @@
 		"vega": "5.30.0",
 		"vega-embed": "6.25.0",
 		"vega-lite": "5.19.0",
-		"vue": "3.4.38",
+		"vue": "3.5.3",
 		"vue-feather": "2.0.0",
 		"vue-gtag": "2.0.1",
-		"vue-router": "4.2.5",
+		"vue-router": "4.4.3",
 		"vue3-ace-editor": "2.2.4",
 		"vue3-draggable-resizable": "1.6.5",
 		"vue3-lottie": "3.2.0"
