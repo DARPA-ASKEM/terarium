@@ -62,7 +62,7 @@ const relatedTerariumDatasets = computed(() => relatedTerariumArtifacts.value.fi
 // Editor for the description
 const { activeProject } = useProjects();
 const hasEditPermission = computed(() => ['creator', 'writer'].includes(activeProject.value?.userPermission ?? ''));
-const editorContent = ref(card.value ?? '');
+const editorContent = ref(props.model.description ?? card.value ?? '');
 </script>
 
 <style scoped>
