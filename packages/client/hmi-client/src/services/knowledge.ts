@@ -14,8 +14,8 @@ import { AxiosResponse } from 'axios';
 export interface EquationsToAMRRequest {
 	equations: string[];
 	framework?: string;
-	modelId?: string;
-	documentId?: string;
+	modelId?: Model['id'];
+	documentId?: DocumentAsset['id'];
 }
 
 /**
