@@ -220,9 +220,10 @@ const descriptionTextareaRef = ref<ComponentPublicInstance<typeof Textarea> | nu
 const isEditingDescription = ref(false);
 const isSaveDisabled = computed(
 	() =>
-		knobs.value.transientInterventionPolicy.id !== selectedPolicy.value?.id ||
-		isInterventionPoliciesEqual(knobs.value.transientInterventionPolicy, selectedPolicy.value) ||
-		!isInterventionPoliciesValuesEqual(knobs.value.transientInterventionPolicy, selectedPolicy.value)
+		!!selectedPolicy.value &&
+		(knobs.value.transientInterventionPolicy.id !== selectedPolicy.value?.id ||
+			isInterventionPoliciesEqual(knobs.value.transientInterventionPolicy, selectedPolicy.value) ||
+			!isInterventionPoliciesValuesEqual(knobs.value.transientInterventionPolicy, selectedPolicy.value))
 );
 
 const parameterOptions = computed(() => {
@@ -391,13 +392,20 @@ const onSaveAsInterventionPolicy = (data: InterventionPolicy) => {
 
 const onSaveInterventionPolicy = async () => {
 	const policy = cloneDeep(knobs.value.transientInterventionPolicy);
-	const data = await updateInterventionPolicy(policy);
-	if (!data) {
-		logger.error('Failed to save intervention policy');
-		return;
+	let data;
+	if (!selectedPolicy.value) {
+		// create a new policy when there is no selected policy
+		showSaveModal.value = true;
+	} else {
+		// update the existing policy when there is a selected policy
+		data = await updateInterventionPolicy(policy);
+		if (!data) {
+			logger.error('Failed to save intervention policy');
+			return;
+		}
+		initialize();
+		useProjects().refresh();
 	}
-	initialize();
-	useProjects().refresh();
 };
 
 watch(
