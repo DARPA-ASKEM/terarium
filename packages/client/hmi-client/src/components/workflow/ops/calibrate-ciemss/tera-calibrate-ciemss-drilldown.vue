@@ -575,10 +575,12 @@ const selectedErrorVariables = computed(() =>
 );
 
 const chartAnnotations = ref<ChartAnnotation[]>([]);
-const generateAnnotation = async (setting: ChartSetting) => {
-	// Generate fake annotation
+const generateAnnotation = async (setting: ChartSetting, query: string) => {
+	// Generate fake annotation. The annotation generation logic for the specific chart setting should go here
+	// Different chart settings type may have different annotation generation logic
 	const annotation: ChartAnnotation = {
 		id: uuidv4(),
+		description: query,
 		nodeId: props.node.id,
 		outputId: '',
 		chartId: setting.id,
@@ -588,6 +590,7 @@ const generateAnnotation = async (setting: ChartSetting) => {
 	};
 	return annotation;
 };
+
 const pyciemssMap = ref<Record<string, string>>({});
 const preparedChartInputs = computed(() => {
 	const state = props.node.state;
