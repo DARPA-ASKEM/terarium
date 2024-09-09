@@ -44,7 +44,11 @@
 					:suggestions="results"
 					optionLabel="name"
 					@complete="async () => (results = await searchCuriesEntities(query))"
-					@item-select="$emit('update-column', { key: 'concept', value: query })"
+					@item-select="
+						$emit('update-column', { key: 'concept', value: { curie: $event.value.curie, name: $event.value.name } })
+					"
+					@keyup.enter="applyValidConcept"
+					@blur="applyValidConcept"
 				/>
 			</span>
 			<span class="description">
@@ -64,7 +68,6 @@
 <script setup lang="ts">
 /* Copied the structure of tera-model-parts.vue */
 import { ref, computed, watch } from 'vue';
-import { isEmpty } from 'lodash';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraBoxplot from '@/components/widgets/tera-boxplot.vue';
 import AutoComplete from 'primevue/autocomplete';
@@ -89,7 +92,7 @@ const props = defineProps<{
 	featureConfig: FeatureConfig;
 }>();
 
-defineEmits(['update-column']);
+const emit = defineEmits(['update-column']);
 
 const query = ref('');
 const results = ref<DKG[]>([]);
@@ -97,14 +100,26 @@ const results = ref<DKG[]>([]);
 // If we are in preview mode and there is no content, show nothing
 const showConcept = computed(() => !(props.featureConfig.isPreview && !query.value));
 
+// Used if an option isn't selected from the Autocomplete suggestions but is typed in regularly
+function applyValidConcept() {
+	// Allows to empty the concept
+	if (query.value === '') {
+		emit('update-column', { key: 'concept', value: { curie: '', name: '' } });
+	}
+	// If what was typed was one of the results then choose that result
+	else {
+		const concept = results.value.find((result) => result.name === query.value);
+		if (concept) {
+			emit('update-column', { key: 'concept', value: { curie: concept.curie, name: concept.name } });
+		}
+	}
+}
+
 watch(
 	() => props.column.grounding?.identifiers,
 	async (identifiers) => {
-		if (!isEmpty(identifiers)) {
-			// console.log(identifiers); // FIXME: Multiple identifiers are held in here after enrichment! Designs have to be updated to handle more.
-			// Just show first one for now.
-			query.value = identifiers?.[0].name ?? '';
-		}
+		// console.log(identifiers); // FIXME: Multiple identifiers are held in here after enrichment! Designs have to be updated to handle more.
+		query.value = identifiers?.[0].name ?? ''; // Just show first one for now.
 	},
 	{ immediate: true }
 );
