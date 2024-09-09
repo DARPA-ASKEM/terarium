@@ -306,13 +306,14 @@ async function processCompareModels(modelIds: string[]) {
 
 // Listen for the task completion event
 useClientEvent(ClientEventType.TaskGollmCompareModel, (event: ClientEvent<TaskResponse>) => {
-	if (!event.data 
-	|| event.data.id !== compareModelsTaskId 
-	|| !isEmpty(overview.value) 
-	|| event.data.status !== TaskStatus.Success
-) {
-	return;
-}
+	if (
+		!event.data ||
+		event.data.id !== compareModelsTaskId ||
+		!isEmpty(overview.value) ||
+		event.data.status !== TaskStatus.Success
+	) {
+		return;
+	}
 	generateOverview(event.data.output);
 });
 
