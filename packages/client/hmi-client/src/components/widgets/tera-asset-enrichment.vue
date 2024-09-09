@@ -117,6 +117,7 @@ const confirm = async () => {
 	isLoading.value = true;
 	closeDialog();
 
+	// Await for enrichment/extraction so once we call finished-job the refetched dataset will have the new data
 	if (dialogType.value === DialogType.ENRICH) {
 		await sendForEnrichment();
 	} else if (dialogType.value === DialogType.EXTRACT) {
