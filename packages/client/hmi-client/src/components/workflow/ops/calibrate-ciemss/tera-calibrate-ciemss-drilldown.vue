@@ -271,8 +271,11 @@
 			>
 				<template #overlay>
 					<tera-chart-settings-panel
-						:annotations="[]"
+						:annotations="
+							activeChartSettings?.type === ChartSettingType.VARIABLE_COMPARISON ? chartAnnotations : undefined
+						"
 						:active-settings="activeChartSettings"
+						:generate-annotation="generateAnnotation"
 						@close="activeChartSettings = null"
 					/>
 				</template>
@@ -352,6 +355,7 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import * as vega from 'vega';
+import { v4 as uuidv4 } from 'uuid';
 import { csvParse, autoType, mean, variance } from 'd3';
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
 import Button from 'primevue/button';
@@ -376,7 +380,8 @@ import {
 	CsvAsset,
 	DatasetColumn,
 	ModelConfiguration,
-	AssetType
+	AssetType,
+	ChartAnnotation
 } from '@/types/Types';
 import { CiemssPresetTypes, DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
 import { getTimespan, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
@@ -569,6 +574,20 @@ const selectedErrorVariables = computed(() =>
 		.map((setting) => setting.selectedVariables[0])
 );
 
+const chartAnnotations = ref<ChartAnnotation[]>([]);
+const generateAnnotation = async (setting: ChartSetting) => {
+	// Generate fake annotation
+	const annotation: ChartAnnotation = {
+		id: uuidv4(),
+		nodeId: props.node.id,
+		outputId: '',
+		chartId: setting.id,
+		layerSpec: {},
+		llmGenerated: false,
+		metadata: {}
+	};
+	return annotation;
+};
 const pyciemssMap = ref<Record<string, string>>({});
 const preparedChartInputs = computed(() => {
 	const state = props.node.state;
