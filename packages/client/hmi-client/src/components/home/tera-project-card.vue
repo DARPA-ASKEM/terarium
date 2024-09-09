@@ -44,12 +44,10 @@
 			</div>
 			<section>
 				<div class="title" ref="titleRef">
-					<span v-if="isCopying">Copy of</span>
+					<template v-if="isCopying">Copy of</template>
 					{{ project.name }}
 				</div>
-				<div v-if="isCopying">
-					<ProgressBar mode="indeterminate" />
-				</div>
+				<ProgressBar v-if="isCopying" mode="indeterminate" />
 				<section class="details">
 					<div>
 						<div class="author">{{ project?.userName ?? '——' }}</div>
