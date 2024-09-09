@@ -2,7 +2,6 @@
 	<tera-drilldown
 		v-bind="$attrs"
 		:node="node"
-		:menu-items="menuItems"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 		hide-dropdown
@@ -258,17 +257,6 @@ const isSidebarOpen = ref(true);
 const isEditingDescription = ref(false);
 const newDescription = ref('');
 const descriptionTextareaRef = ref<ComponentPublicInstance<typeof Textarea> | null>(null);
-
-const menuItems = computed(() => [
-	{
-		label: 'Download',
-		icon: 'pi pi-download',
-		disabled: isSaveDisabled.value,
-		command: () => {
-			downloadModelArchive();
-		}
-	}
-]);
 
 const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close', 'update-output-port']);
 
