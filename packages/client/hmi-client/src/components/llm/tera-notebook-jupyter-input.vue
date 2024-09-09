@@ -1,30 +1,28 @@
 <template>
 	<!-- AI assistant -->
 	<div v-if="showAssistant" class="ai-assistant">
-		<AutoComplete
-			v-if="showAutoComplete"
-			ref="autoComplete"
-			v-model="questionString"
-			class="auto-complete"
-			:suggestions="filteredOptions"
-			appendTo="self"
-			overlayStyle="width: 100%"
-			completeOnFocus="true"
-			@complete="searchOptions"
-			@change="onInputChange"
-			placeholder="What do you want to do?"
-			emptySearchMessage="No suggestions"
-			:disabled="kernelStatus === KernelState.busy"
-		/>
-
 		<Textarea
-			v-else
+			v-if="hideAutoComplete || props.defaultOptions.length === 0"
 			ref="textArea"
 			class="text-area"
 			v-model="questionString"
 			@input="onInputChange"
 			rows="1"
 			autoResize
+			:disabled="kernelStatus === KernelState.busy"
+			placeholder="What do you want to do?"
+		/>
+		<AutoComplete
+			v-else
+			ref="autoComplete"
+			v-model="questionString"
+			class="auto-complete"
+			:suggestions="filteredOptions"
+			:completeOnFocus="true"
+			@complete="searchOptions"
+			@change="onInputChange"
+			placeholder="What do you want to do?"
+			emptySearchMessage="No suggestions"
 			:disabled="kernelStatus === KernelState.busy"
 		/>
 
@@ -37,7 +35,7 @@
 		/>
 	</div>
 
-	<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" :llm-query="questionString" />
+	<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" :llm-query="llmQuery" />
 
 	<!-- Toolbar -->
 	<div class="notebook-toolbar">
@@ -69,11 +67,11 @@ const props = withDefaults(
 		kernelManager: KernelSessionManager;
 		defaultOptions?: string[];
 		contextLanguage: string;
-		maxChars: number;
+		maxChars?: number;
 	}>(),
 	{
 		defaultOptions: () => [],
-		maxChars: 25
+		maxChars: 75
 	}
 );
 
@@ -84,10 +82,11 @@ const kernelStatus = ref<string>('');
 const showAssistant = ref(true);
 const thoughts = ref();
 const llmThoughts = ref([]);
+const llmQuery = ref<string>('');
 const filteredOptions = ref([]);
 const autoComplete = ref<HTMLElement>();
 const textArea = ref<HTMLElement>();
-const showAutoComplete = ref(true);
+const hideAutoComplete = ref(false);
 
 // FIXME: If the language is changed here it should mutate the beaker instance in the parent component
 
@@ -108,8 +107,9 @@ const submitQuestion = () => {
 	});
 	message.register('llm_thought', (data) => {
 		thoughts.value = data;
-		llmThoughts.value = []; // FIXME: When should this get reset?
+		llmThoughts.value = [];
 		llmThoughts.value.push(data);
+		llmQuery.value = questionString.value;
 		emit('llm-thought-output', data);
 	});
 	message.register('llm_response', (data) => {
@@ -124,15 +124,19 @@ const searchOptions = () => {
 };
 
 const onInputChange = async () => {
-	const numChars = questionString.value.length;
+	// If there are no search suggestions to show, the auto complete element is never shown
+	if (props.defaultOptions.length === 0) return;
 
+	// If the number of characters entered exceeds the maximum, switch from auto complete to text area
+	// Force focus for a smoother transition
+	const numChars = questionString.value.length;
 	if (numChars <= props.maxChars && numChars >= 0) {
-		showAutoComplete.value = true;
+		hideAutoComplete.value = false;
 		await nextTick();
 		const inputEl = autoComplete.value?.$el.querySelector('input');
 		inputEl.focus();
 	} else {
-		showAutoComplete.value = false;
+		hideAutoComplete.value = true;
 		await nextTick();
 		textArea.value?.$el.focus();
 	}
@@ -177,12 +181,9 @@ const onInputChange = async () => {
 	padding-left: 2rem;
 }
 
-.auto-complete:deep(.p-autocomplete-panel) {
-	width: 100%;
-}
-.auto-complete:deep(li) {
-	overflow-wrap: break-word;
-	overflow: auto;
+.auto-complete:deep(.p-autocomplete-empty-message) {
+	padding: var(--gap-small);
+	color: var(--text-color-subdued);
 }
 
 .submit-button {

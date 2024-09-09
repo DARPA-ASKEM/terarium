@@ -141,6 +141,7 @@
 						<tera-notebook-jupyter-input
 							:kernel-manager="kernelManager"
 							:defaultOptions="sampleAgentQuestions"
+							:maxChars="60"
 							:context-language="contextLanguage"
 							@llm-output="(data: any) => appendCode(data, 'code')"
 							@llm-thought-output="(data: any) => llmThoughts.push(data)"
