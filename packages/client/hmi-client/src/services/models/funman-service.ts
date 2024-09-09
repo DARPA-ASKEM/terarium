@@ -146,11 +146,6 @@ export const getBoxes = (processedData: FunmanProcessedData, param1: string, par
 	// grab latest step
 	const step = temp.sort((a, b) => b.timestep - a.timestep)[0].timestep;
 
-	// console.group(boxType);
-	// console.log('boxes', processedData.boxes);
-	// console.log('step', step);
-	// console.groupEnd();
-
 	processedData.boxes
 		.filter((d: any) => d.label === boxType)
 		.filter((d: any) => d.timestep.ub === step)
@@ -342,7 +337,6 @@ export const renderFunmanBoundaryChart = (
 	processedData: FunmanProcessedData,
 	param1: string,
 	param2: string,
-	_timestep: number,
 	selectedBoxId: string,
 	options: RenderOptions
 ) => {
