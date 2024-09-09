@@ -120,7 +120,7 @@
 							<ul v-else-if="view === ProjectsView.Cards" class="project-cards-grid">
 								<template v-if="cloningProjects.length && !isLoadingProjects">
 									<li v-for="item in cloningProjects" :key="item.id">
-										<tera-project-card v-if="item.id" :project="item" :is-cloning="true" />
+										<tera-project-card v-if="item.id" :project="item" :is-copying="true" />
 									</li>
 								</template>
 								<template v-if="isLoadingProjects">

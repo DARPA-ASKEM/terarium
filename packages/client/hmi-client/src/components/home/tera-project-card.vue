@@ -43,8 +43,11 @@
 				<img :src="thumbnail" alt="Artistic representation of the Project statistics" />
 			</div>
 			<section>
-				<div class="title" ref="titleRef">Copy of {{ project.name }}</div>
-				<div v-if="isCloning">
+				<div class="title" ref="titleRef">
+					<span v-if="isCopying">Copy of</span>
+					{{ project.name }}
+				</div>
+				<div v-if="isCopying">
 					<ProgressBar mode="indeterminate" />
 				</div>
 				<section class="details">
@@ -59,14 +62,14 @@
 			</section>
 		</template>
 		<template #footer>
-			<template v-if="!isCloning">
+			<template v-if="!isCopying">
 				<span>Last updated {{ formatDdMmmYyyy(project.updatedOn) }}</span>
 				<tera-project-menu
 					:project="project"
 					@copied-project="(copiedProject) => emit('copied-project', copiedProject)"
 				/>
 			</template>
-			<template v-else-if="isCloning">Copying</template>
+			<template v-else-if="isCopying">Copying</template>
 		</template>
 	</Card>
 	<Card v-else>
@@ -106,7 +109,7 @@ import TeraProjectMenu from './tera-project-menu.vue';
 
 const props = defineProps<{
 	project?: Project;
-	isCloning?: boolean;
+	isCopying?: boolean;
 }>();
 const emit = defineEmits(['copied-project']);
 
