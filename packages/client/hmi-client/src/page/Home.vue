@@ -50,9 +50,9 @@
 				<TabView @tab-change="tabChange">
 					<TabPanel v-for="(tab, i) in projectsTabs" :header="tab.title" :key="i">
 						<section class="filter-and-sort">
-							<div class="pr-4">
+							<div class="pr-3">
 								<tera-input-text
-									class="w-17rem"
+									class="w-16rem"
 									v-model="searchProjects"
 									placeholder="Search for projects"
 									id="searchProject"
