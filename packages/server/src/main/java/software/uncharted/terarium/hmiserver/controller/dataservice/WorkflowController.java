@@ -37,6 +37,7 @@ import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectPermissionsService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.WorkflowService;
+import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
@@ -60,6 +61,8 @@ public class WorkflowController {
 	final ProjectPermissionsService projectPermissionsService;
 
 	final ReBACService reBACService;
+
+	final Messages messages;
 
 	@GetMapping
 	@Secured(Roles.USER)
@@ -156,9 +159,6 @@ public class WorkflowController {
 			projectId
 		);
 		try {
-			// do a notification to all users on the project (unless tom) that an update has occured.
-			// payload: workflow id, action taken (update or delete)???? maybe not.
-
 			return ResponseEntity.status(HttpStatus.CREATED).body(
 				workflowService.createAsset(workflow, projectId, permission)
 			);
@@ -195,15 +195,34 @@ public class WorkflowController {
 			currentUserService.get().getId(),
 			projectId
 		);
+
+		workflow.setId(id);
+		final Optional<Workflow> updated;
+
 		try {
-			workflow.setId(id);
+			updated = workflowService.updateAsset(workflow, projectId, permission);
+		} catch (final IOException e) {
+			log.error("Unable to update workflow", e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("postgres.service-unavailable")
+			);
+		}
 
-			final Optional<Workflow> updated = workflowService.updateAsset(workflow, projectId, permission);
+		if (updated == null || updated.isEmpty()) {
+			log.error("Updated workflow was empty");
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("postgres.service-unavailable")
+			);
+		}
 
-			final ClientEvent<Workflow> event = ClientEvent.<Workflow>builder()
-				.type(ClientEventType.WORKFLOW_UPDATE)
-				.data(updated.get())
-				.build();
+		final ClientEvent<Workflow> event = ClientEvent.<Workflow>builder()
+			.type(ClientEventType.WORKFLOW_UPDATE)
+			.data(updated.get())
+			.build();
+
+		try {
 			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
 			if (rebacProject.isPublic()) {
 				clientEventService.sendToAllUsers(event);
@@ -213,25 +232,14 @@ public class WorkflowController {
 					.stream()
 					.map(Contributor::getUserId)
 					.toList();
-
 				clientEventService.sendToUsers(event, userIds);
 			}
-
-			// do a notification to all users on the project (unless tom) that an update has occured.
-			// payload: workflow id, action taken (update or delete)
-
-			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
-		} catch (final IOException e) {
-			final String error = "Unable to update workflow";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
-		} catch (final IllegalArgumentException e) {
-			final String error = "ID does not match Workflow object ID";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, error);
 		} catch (final Exception e) {
-			throw new RuntimeException(e);
+			log.error("Unable to notify users of update to workflow", e);
+			// No response status exception here because the workflow was updated successfully, and it's just the update that's failed.
 		}
+
+		return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
 	@DeleteMapping("/{id}")
@@ -267,7 +275,16 @@ public class WorkflowController {
 
 		try {
 			workflowService.deleteAsset(id, projectId, permission);
+		} catch (final Exception e) {
+			final String error = String.format("Failed to delete workflow %s", id);
+			log.error(error, e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("postgres.service-unavailable")
+			);
+		}
 
+		try {
 			if (rebacProject.isPublic()) {
 				clientEventService.sendToAllUsers(event);
 			} else {
@@ -278,12 +295,11 @@ public class WorkflowController {
 					.toList();
 				clientEventService.sendToUsers(event, userIds);
 			}
-
-			return ResponseEntity.ok(new ResponseDeleted("Workflow", id));
 		} catch (final Exception e) {
-			final String error = String.format("Failed to delete workflow %s", id);
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			log.error("Unable to notify users of deleted  workflow", e);
+			// No response status exception here because the workflow was deleted successfully, and it's just the update that's failed.
 		}
+
+		return ResponseEntity.ok(new ResponseDeleted("Workflow", id));
 	}
 }
