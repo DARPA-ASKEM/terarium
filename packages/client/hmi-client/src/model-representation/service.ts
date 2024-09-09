@@ -143,7 +143,6 @@ export function updateModelPartProperty(modelPart: any, key: string, value: any)
 		modelPart.units.expression_mathml = `<ci>${value}</ci>`;
 	} else if (key === 'concept') {
 		if (!modelPart.grounding?.identifiers) modelPart.grounding = { identifiers: {}, modifiers: {} };
-		console.log(value);
 		modelPart.grounding.identifiers = parseCurie(value);
 	} else {
 		modelPart[key] = value;
