@@ -202,14 +202,8 @@
 				<div v-if="!showSpinner" class="form-section">
 					<section ref="outputPanel" v-if="modelConfig && csvAsset">
 						<h5>Parameters</h5>
-						<tera-chart-control
-							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedParameters }"
-							:multi-select="true"
-							:show-remove-button="false"
-							:variables="Object.keys(pyciemssMap).filter((c) => modelPartTypesMap[c] === 'parameter')"
-							@configuration-change="updateSelectedParameters"
-						/>
-						<template v-for="param of node.state.selectedParameters" :key="param">
+						<br />
+						<template v-for="param of selectedParameters" :key="param">
 							<vega-chart
 								expandable
 								:are-embed-actions-visible="true"
@@ -241,32 +235,13 @@
 							</vega-chart>
 						</template>
 						<h5>Variables</h5>
-						<tera-chart-control
-							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedVariables }"
-							:multi-select="true"
-							:show-remove-button="false"
-							:variables="
-								Object.keys(pyciemssMap).filter((c) => ['state', 'observable'].includes(modelPartTypesMap[c]))
-							"
-							@configuration-change="updateSelectedVariables"
-						/>
-						<template v-for="variable of node.state.selectedVariables" :key="variable">
+						<br />
+						<template v-for="variable of selectedVariables" :key="variable">
 							<vega-chart expandable :are-embed-actions-visible="true" :visualization-spec="preparedCharts[variable]" />
 						</template>
 						<h5>Errors</h5>
-						<tera-chart-control
-							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedErrorVariables }"
-							:multi-select="true"
-							:show-remove-button="false"
-							:variables="Object.keys(pyciemssMap).filter((c) => mapping.find((d) => d.modelVariable === c))"
-							@configuration-change="updateSelectedErrorVariables"
-						/>
 						<vega-chart
-							v-if="
-								errorData.length > 0 &&
-								node.state.selectedErrorVariables &&
-								node.state.selectedErrorVariables.length > 0
-							"
+							v-if="errorData.length > 0 && selectedErrorVariables.length > 0"
 							:expandable="onExpandErrorChart"
 							:are-embed-actions-visible="true"
 							:visualization-spec="errorChart"
@@ -285,6 +260,82 @@
 
 				<tera-notebook-error v-if="!_.isEmpty(node.state?.errorMessage?.traceback)" v-bind="node.state.errorMessage" />
 			</tera-drilldown-section>
+		</template>
+
+		<template #sidebar-right>
+			<tera-slider-panel
+				v-model:is-open="isOutputSettingsPanelOpen"
+				direction="right"
+				header="Output Settings"
+				content-width="360px"
+			>
+				<template #overlay>
+					<tera-chart-settings-panel
+						:annotations="[]"
+						:active-settings="activeChartSettings"
+						@close="activeChartSettings = null"
+					/>
+				</template>
+				<template #content>
+					<div class="output-settings-panel">
+						<h5>Parameters</h5>
+						<tera-chart-settings-item
+							v-for="settings of chartSettings.filter(
+								(setting) => setting.type === ChartSettingType.DISTRIBUTION_COMPARISON
+							)"
+							:key="settings.id"
+							:settings="settings"
+							@open="activeChartSettings = settings"
+							@remove="removeChartSetting"
+						/>
+						<tera-chart-control
+							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedParameters }"
+							:multi-select="true"
+							:show-remove-button="false"
+							:variables="Object.keys(pyciemssMap).filter((c) => modelPartTypesMap[c] === 'parameter')"
+							@configuration-change="updateSelectedParameters"
+						/>
+						<hr />
+						<h5>Model Variables</h5>
+						<tera-chart-settings-item
+							v-for="settings of chartSettings.filter(
+								(setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON
+							)"
+							:key="settings.id"
+							:settings="settings"
+							@open="activeChartSettings = settings"
+							@remove="removeChartSetting"
+						/>
+						<tera-chart-control
+							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedVariables }"
+							:multi-select="true"
+							:show-remove-button="false"
+							:variables="
+								Object.keys(pyciemssMap).filter((c) => ['state', 'observable'].includes(modelPartTypesMap[c]))
+							"
+							@configuration-change="updateSelectedVariables"
+						/>
+						<hr />
+						<h5>Error</h5>
+						<tera-chart-settings-item
+							v-for="settings of chartSettings.filter(
+								(setting) => setting.type === ChartSettingType.ERROR_DISTRIBUTION
+							)"
+							:key="settings.id"
+							:settings="settings"
+							@open="activeChartSettings = settings"
+							@remove="removeChartSetting"
+						/>
+						<tera-chart-control
+							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedErrorVariables }"
+							:multi-select="true"
+							:show-remove-button="false"
+							:variables="Object.keys(pyciemssMap).filter((c) => mapping.find((d) => d.modelVariable === c))"
+							@configuration-change="updateSelectedErrorVariables"
+						/>
+					</div>
+				</template>
+			</tera-slider-panel>
 		</template>
 	</tera-drilldown>
 	<tera-save-asset-modal
@@ -309,12 +360,15 @@ import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { CalibrateMap, setupDatasetInput, setupModelInput } from '@/services/calibrate-workflow';
+import { removeChartSettingById, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
+import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
+import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
+import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
 import {
 	CalibrationRequestCiemss,
 	ClientEvent,
@@ -324,6 +378,7 @@ import {
 	ModelConfiguration,
 	AssetType
 } from '@/types/Types';
+import { CiemssPresetTypes, DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
 import { getTimespan, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 import { useToastService } from '@/services/toast';
 import { autoCalibrationMapping } from '@/services/concept';
@@ -339,11 +394,10 @@ import {
 } from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
 
-import type { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode } from '@/types/workflow';
 import { createForecastChart, createHistogramChart, createErrorChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
-import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { displayNumber } from '@/utils/number';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
@@ -409,6 +463,9 @@ const odeSolverOptionsTooltip: string = 'TODO';
 
 // Model variables checked in the model configuration will be options in the mapping dropdown
 const modelStateOptions = ref<any[] | undefined>();
+
+const isOutputSettingsPanelOpen = ref(true);
+const activeChartSettings = ref<ChartSetting | null>(null);
 
 const datasetColumns = ref<DatasetColumn[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
@@ -495,9 +552,22 @@ const lossChartSize = computed(() => drilldownChartSize(lossChartContainer.value
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 
-const selectedParameters = ref<string[]>(props.node.state.selectedParameters);
-const selectedVariables = ref<string[]>(props.node.state.selectedVariables);
-const selectedErrorVariables = ref<string[]>(props.node.state.selectedErrorVariables);
+const chartSettings = computed(() => props.node.state.chartSettings ?? []);
+const selectedParameters = computed(() =>
+	chartSettings.value
+		.filter((setting) => setting.type === ChartSettingType.DISTRIBUTION_COMPARISON)
+		.map((setting) => setting.selectedVariables[0])
+);
+const selectedVariables = computed(() =>
+	chartSettings.value
+		.filter((setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON)
+		.map((setting) => setting.selectedVariables[0])
+);
+const selectedErrorVariables = computed(() =>
+	chartSettings.value
+		.filter((setting) => setting.type === ChartSettingType.ERROR_DISTRIBUTION)
+		.map((setting) => setting.selectedVariables[0])
+);
 
 const pyciemssMap = ref<Record<string, string>>({});
 const preparedChartInputs = computed(() => {
@@ -538,7 +608,7 @@ const preparedCharts = computed(() => {
 	const datasetTimeField = state.mapping.find((d) => d.modelVariable === 'timestamp')?.datasetVariable;
 
 	const charts = {};
-	state.selectedVariables.forEach((variable) => {
+	selectedVariables.value.forEach((variable) => {
 		const datasetVariables: string[] = [];
 		const mapObj = state.mapping.find((d) => d.modelVariable === variable);
 		if (mapObj) {
@@ -580,11 +650,10 @@ const preparedCharts = computed(() => {
 const preparedDistributionCharts = computed(() => {
 	if (!preparedChartInputs.value) return [];
 	const { result } = preparedChartInputs.value;
-	const state = props.node.state;
 	const labelBefore = 'Before calibration';
 	const labelAfter = 'After calibration';
 	const charts = {};
-	state.selectedParameters.forEach((param) => {
+	selectedParameters.value.forEach((param) => {
 		const fieldName = pyciemssMap.value[param];
 		const beforeFieldName = `${fieldName}:pre`;
 		const histogram = createHistogramChart(result, {
@@ -613,10 +682,10 @@ const preparedDistributionCharts = computed(() => {
 });
 
 const errorChartVariables = computed(() => {
-	if (!props.node.state.selectedErrorVariables?.length) return [];
+	if (!selectedErrorVariables.value.length) return [];
 	const getDatasetVariable = (modelVariable: string) =>
 		mapping.value.find((d) => d.modelVariable === modelVariable)?.datasetVariable;
-	const variables = props.node.state.selectedErrorVariables.map((variable) => ({
+	const variables = selectedErrorVariables.value.map((variable) => ({
 		field: getDatasetVariable(variable) as string,
 		label: variable
 	}));
@@ -734,16 +803,44 @@ const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
+function removeChartSetting(chartId) {
+	emit('update-state', {
+		...props.node.state,
+		chartSettings: removeChartSettingById(chartSettings.value, chartId)
+	});
+}
+
 function updateSelectedParameters(event) {
-	emit('update-state', { ...props.node.state, selectedParameters: event.selectedVariable });
+	emit('update-state', {
+		...props.node.state,
+		chartSettings: updateChartSettingsBySelectedVariables(
+			chartSettings.value,
+			ChartSettingType.DISTRIBUTION_COMPARISON,
+			event.selectedVariable
+		)
+	});
 }
 
 function updateSelectedVariables(event) {
-	emit('update-state', { ...props.node.state, selectedVariables: event.selectedVariable });
+	emit('update-state', {
+		...props.node.state,
+		chartSettings: updateChartSettingsBySelectedVariables(
+			chartSettings.value,
+			ChartSettingType.VARIABLE_COMPARISON,
+			event.selectedVariable
+		)
+	});
 }
 
 function updateSelectedErrorVariables(event) {
-	emit('update-state', { ...props.node.state, selectedErrorVariables: event.selectedVariable });
+	emit('update-state', {
+		...props.node.state,
+		chartSettings: updateChartSettingsBySelectedVariables(
+			chartSettings.value,
+			ChartSettingType.ERROR_DISTRIBUTION,
+			event.selectedVariable
+		)
+	});
 }
 
 // Used from button to add new entry to the mapping object
@@ -1029,6 +1126,21 @@ img {
 	td,
 	th {
 		text-align: center;
+	}
+}
+.chart-settings-item-container {
+	gap: var(--gap-2);
+}
+
+.output-settings-panel {
+	padding: var(--gap-4);
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-2);
+	hr {
+		border: 0;
+		border-top: 1px solid var(--surface-border-alt);
+		width: 100%;
 	}
 }
 </style>
