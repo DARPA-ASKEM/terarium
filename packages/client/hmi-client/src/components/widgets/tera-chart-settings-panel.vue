@@ -43,7 +43,7 @@ import TeraInputText from '@/components/widgets/tera-input-text.vue';
 const props = defineProps<{
 	activeSettings: ChartSetting | null;
 	annotations?: ChartAnnotation[];
-	generateAnnotation?: (setting: ChartSetting) => Promise<ChartAnnotation>;
+	generateAnnotation?: (setting: ChartSetting, query: string) => Promise<ChartAnnotation>;
 }>();
 
 const emit = defineEmits(['close', 'update:settings', 'delete-annotation', 'create-annotation']);
@@ -63,7 +63,7 @@ const createAnnotation = async () => {
 		return;
 	}
 	isGeneratingAnnotation.value = true;
-	const newAnnotation = await props.generateAnnotation(props.activeSettings);
+	const newAnnotation = await props.generateAnnotation(props.activeSettings, generateAnnotationQuery.value);
 	isGeneratingAnnotation.value = false;
 	generateAnnotationQuery.value = '';
 	emit('create-annotation', newAnnotation);
