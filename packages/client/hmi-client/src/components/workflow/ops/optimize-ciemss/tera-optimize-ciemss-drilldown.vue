@@ -1165,7 +1165,7 @@ watch(
 }
 
 .label {
-	font-weight: 600;
+	font-weight: var(--font-weight-semibold);
 	/* Adjust the width of the label column as needed */
 }
 
