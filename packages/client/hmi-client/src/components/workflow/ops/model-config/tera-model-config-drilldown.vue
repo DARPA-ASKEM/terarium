@@ -2,7 +2,6 @@
 	<tera-drilldown
 		v-bind="$attrs"
 		:node="node"
-		:menu-items="menuItems"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 		hide-dropdown
@@ -236,6 +235,7 @@ import { useConfirm } from 'primevue/useconfirm';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import { saveCodeToState } from '@/services/notebook';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
+import { useProjects } from '@/composables/project';
 import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
 import {
 	blankModelConfig,
@@ -258,17 +258,6 @@ const isSidebarOpen = ref(true);
 const isEditingDescription = ref(false);
 const newDescription = ref('');
 const descriptionTextareaRef = ref<ComponentPublicInstance<typeof Textarea> | null>(null);
-
-const menuItems = computed(() => [
-	{
-		label: 'Download',
-		icon: 'pi pi-download',
-		disabled: isSaveDisabled.value,
-		command: () => {
-			downloadModelArchive();
-		}
-	}
-]);
 
 const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close', 'update-output-port']);
 
@@ -558,6 +547,7 @@ const onSaveConfiguration = async () => {
 		return;
 	}
 	initialize();
+	useProjects().refresh();
 	logger.success('Saved model configuration');
 };
 

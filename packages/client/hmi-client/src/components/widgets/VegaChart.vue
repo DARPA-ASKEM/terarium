@@ -205,9 +205,7 @@ defineExpose({
 </style>
 <style scoped>
 .vega-chart-container {
-	background: var(--surface-a);
-	border-radius: var(--border-radius-medium);
-	border: 1px solid var(--surface-border-light);
+	background: var(--surface-0);
 	margin-bottom: var(--gap-4);
 	padding-top: var(--gap-2);
 	footer {
