@@ -3,12 +3,12 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/t
 
 ### 1. Begin test
 1. Login to [https://app.staging.terarium.ai](https://app.staging.terarium.ai/) using the test account
-    
+
     ```
     email: qa@test.io
     password: askem-quality-assurance
     ```
-    
+
 2. Create, or open, project named `QA <Your Name>`
 
 ### 2. Upload Datasets
@@ -30,4 +30,3 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/t
 8. Ask the operator to plot for cases and deaths.
 9. Copy the plot into the overview page.
 10. Add the dataset to the workflow canvas and preview the dataset. Ensure that it has saved correctly. 
-

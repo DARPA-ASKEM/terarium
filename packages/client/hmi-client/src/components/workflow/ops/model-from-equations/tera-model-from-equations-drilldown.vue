@@ -1,7 +1,6 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:menu-items="menuItems"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
@@ -323,17 +322,6 @@ function removeEquation(index: number) {
 	clonedState.value.equations.splice(index, 1);
 	emit('update-state', clonedState.value);
 }
-
-const menuItems = computed(() => [
-	{
-		label: 'Save as new model',
-		icon: 'pi pi-download',
-		disabled: !selectedModel.value,
-		command: () => {
-			showSaveModelModal.value = true;
-		}
-	}
-]);
 
 function getEquations() {
 	const newEquations = multipleEquations.value.split('\n');
