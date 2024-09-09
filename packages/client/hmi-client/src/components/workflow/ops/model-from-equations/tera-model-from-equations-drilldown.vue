@@ -119,7 +119,7 @@ import { getDocumentAsset, getEquationFromImageUrl } from '@/services/document-a
 import type { Card, DocumentAsset, DocumentExtraction, Model } from '@/types/Types';
 import { cloneDeep, unionBy } from 'lodash';
 import Image from 'primevue/image';
-import { equationsToAMR } from '@/services/knowledge';
+import { equationsToAMR, EquationsToAMRRequest } from '@/services/knowledge';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { getModel, updateModel } from '@/services/model';
@@ -246,7 +246,12 @@ async function onRun() {
 		.filter((e) => e.includeInProcess && !e.asset.extractionError)
 		.map((e) => e.asset.text);
 
-	const modelId = await equationsToAMR(equations, clonedState.value.modelFramework);
+	const request = {
+		equations,
+		framework: clonedState.value.modelFramework,
+		documentId: document.value?.id
+	} as EquationsToAMRRequest;
+	const modelId = await equationsToAMR(request);
 	if (!modelId) return;
 
 	if (document.value?.id) await generateCard(document.value.id);

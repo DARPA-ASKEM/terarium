@@ -5,22 +5,31 @@ import { ClientEventType } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { AxiosResponse } from 'axios';
 
-/**
- * Transform a list of LaTeX or mathml strings to an AMR
+/** Define the request type
  * @param equations string[] - list of LaTeX or mathml strings representing a model
  * @param framework string= - the framework to use for the extraction, default to 'petrinet'
  * @param modelId string= - the model id to use for the extraction
+ * @param documentId string= - the document id source of the equations
+ */
+export interface EquationsToAMRRequest {
+	equations: string[];
+	framework?: string;
+	modelId?: string;
+	documentId?: string;
+}
+
+/**
+ * Transform a list of LaTeX or mathml strings to an AMR
+ * @param request EquationsToAMRRequest
  * @return {Promise<any>}
  */
-export const equationsToAMR = async (
-	equations: string[],
-	framework: string = 'petrinet',
-	modelId?: string
-): Promise<string | null> => {
+export const equationsToAMR = async (request: EquationsToAMRRequest): Promise<string | null> => {
+	const { equations, framework: model = 'petrinet', modelId, documentId } = request;
 	try {
 		const response: AxiosResponse<string> = await API.post(`/knowledge/equations-to-model`, {
-			model: framework,
+			model,
 			modelId,
+			documentId,
 			equations
 		});
 		return response.data;

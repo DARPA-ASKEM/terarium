@@ -29,7 +29,7 @@ import { ref, watch } from 'vue';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import TeraEquationContainer from '@/components/model/petrinet/tera-equation-container.vue';
 import type { Model } from '@/types/Types';
-import { equationsToAMR } from '@/services/knowledge';
+import { equationsToAMR, EquationsToAMRRequest } from '@/services/knowledge';
 import { cleanLatexEquations } from '@/utils/math';
 import { isEmpty } from 'lodash';
 import { useToastService } from '@/services/toast';
@@ -76,7 +76,8 @@ const updateLatexFormula = (equationsList: string[]) => {
 const updateModelFromEquations = async () => {
 	isUpdating.value = true;
 	isEditing.value = false;
-	const modelId = await equationsToAMR(equations.value, 'petrinet', props.model.id);
+	const request = { equations: equations.value, modelId: props.model.id } as EquationsToAMRRequest;
+	const modelId = await equationsToAMR(request);
 	if (modelId) {
 		emit('model-updated');
 		useToastService().success('Success', `Model Updated from equation`);
