@@ -577,7 +577,6 @@ export const iconToOperatorMap = new Map<string, string>([
 	[WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS, 'pi pi-chart-line'],
 	[WorkflowOperationTypes.DATASET_TRANSFORMER, 'pi pi-table'],
 	[WorkflowOperationTypes.SUBSET_DATA, 'pi pi-table'],
-	[WorkflowOperationTypes.MODEL_TRANSFORMER, 'pi pi-share-alt'],
 	[WorkflowOperationTypes.FUNMAN, 'pi pi-cog'],
 	[WorkflowOperationTypes.CODE, 'pi pi-code'],
 	[WorkflowOperationTypes.MODEL_COMPARISON, 'pi pi-share-alt'],
