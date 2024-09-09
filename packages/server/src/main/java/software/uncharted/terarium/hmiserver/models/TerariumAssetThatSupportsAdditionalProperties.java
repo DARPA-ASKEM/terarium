@@ -28,8 +28,8 @@ public class TerariumAssetThatSupportsAdditionalProperties extends TerariumAsset
 	}
 
 	public TerariumAssetThatSupportsAdditionalProperties cloneSuperFields(
-			final TerariumAssetThatSupportsAdditionalProperties asset) {
-
+		final TerariumAssetThatSupportsAdditionalProperties asset
+	) {
 		super.cloneSuperFields(asset);
 		if (additionalProperties != null) {
 			asset.additionalProperties = new HashMap<>();

@@ -38,7 +38,8 @@ import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 /**
- * Base class for services that manage TerariumAssets without syncing to Elasticsearch.
+ * Base class for services that manage TerariumAssets without syncing to
+ * Elasticsearch.
  *
  * @param <T> The type of asset this service manages
  * @param <R> The respository of the asset this service manages
@@ -48,8 +49,9 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @RequiredArgsConstructor
 @Slf4j
 public abstract class TerariumAssetServiceWithoutSearch<
-				T extends TerariumAsset, R extends PSCrudSoftDeleteRepository<T, UUID>>
-		implements ITerariumAssetService<T> {
+	T extends TerariumAsset, R extends PSCrudSoftDeleteRepository<T, UUID>
+>
+	implements ITerariumAssetService<T> {
 
 	protected final ObjectMapper objectMapper;
 
@@ -97,7 +99,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	/**
 	 * Get a list of assets, this includes all assets, not just searchable ones.
 	 *
-	 * @param page The page number
+	 * @param page     The page number
 	 * @param pageSize The number of assets per page
 	 * @return The list of assets
 	 */
@@ -105,9 +107,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	@Observed(name = "function_profile")
 	public List<T> getPublicNotTemporaryAssets(final Integer page, final Integer pageSize) {
 		final Pageable pageable = PageRequest.of(page, pageSize);
-		return repository
-				.findAllByPublicAssetIsTrueAndTemporaryIsFalseAndDeletedOnIsNull(pageable)
-				.getContent();
+		return repository.findAllByPublicAssetIsTrueAndTemporaryIsFalseAndDeletedOnIsNull(pageable).getContent();
 	}
 
 	/**
@@ -119,7 +119,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	@Override
 	@Observed(name = "function_profile")
 	public Optional<T> deleteAsset(final UUID id, final UUID projectId, final Schema.Permission hasWritePermission)
-			throws IOException {
+		throws IOException {
 		final Optional<T> asset = getAsset(id, hasWritePermission);
 		if (asset.isEmpty()) {
 			return Optional.empty();
@@ -139,7 +139,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	@Override
 	@Observed(name = "function_profile")
 	public T createAsset(final T asset, final UUID projectId, final Schema.Permission hasWritePermission)
-			throws IOException {
+		throws IOException {
 		if (assetExists(asset.getId())) {
 			throw new IllegalArgumentException("Asset already exists for id:" + asset.getId());
 		}
@@ -159,12 +159,11 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	@Override
 	@Observed(name = "function_profile")
 	public List<T> createAssets(final List<T> assets, final UUID projectId, final Schema.Permission hasWritePermission)
-			throws IOException {
+		throws IOException {
 		final List<UUID> ids = assets.stream().map(TerariumAsset::getId).toList();
 		final List<T> existing = repository.findAllByIdInAndDeletedOnIsNull(ids);
 		if (existing.size() > 0) {
-			throw new IllegalArgumentException("Asset already exists for id:"
-					+ ids.stream().map(UUID::toString).toList());
+			throw new IllegalArgumentException("Asset already exists for id:" + ids.stream().map(UUID::toString).toList());
 		}
 
 		final boolean projectIsPublic = projectService.isProjectPublic(projectId);
@@ -178,20 +177,19 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	 *
 	 * @param asset The asset to update
 	 * @return The updated asset
-	 * @throws IOException If there is an error updating the asset
-	 * @throws IllegalArgumentException If the asset tries to move from permanent to temporary
-	 * @throws NotFoundException If the original asset does not exist
+	 * @throws IOException              If there is an error updating the asset
+	 * @throws IllegalArgumentException If the asset tries to move from permanent to
+	 *                                  temporary
+	 * @throws NotFoundException        If the original asset does not exist
 	 */
 	@Override
 	@Observed(name = "function_profile")
 	public Optional<T> updateAsset(final T asset, final UUID projectId, final Schema.Permission hasWritePermission)
-			throws IOException, IllegalArgumentException {
-
+		throws IOException, IllegalArgumentException {
 		final Optional<T> oldAsset = getAsset(asset.getId(), hasWritePermission);
 
 		if (oldAsset.isEmpty()) {
-			throw new NotFoundException(
-					"Asset not found for id: " + asset.getId().toString());
+			throw new NotFoundException("Asset not found for id: " + asset.getId().toString());
 		}
 
 		if (asset.getTemporary() && !oldAsset.get().getTemporary()) {
@@ -218,17 +216,18 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	/**
 	 * Get a presigned URL for uploading a file to S3
 	 *
-	 * @param id The ID of the asset to upload to
+	 * @param id       The ID of the asset to upload to
 	 * @param filename The name of the file to upload
 	 * @return The presigned URL
 	 */
 	@Observed(name = "function_profile")
 	public PresignedURL getUploadUrl(final UUID id, final String filename) {
-
 		final PresignedURL presigned = new PresignedURL();
-		presigned.setUrl(s3ClientService
+		presigned.setUrl(
+			s3ClientService
 				.getS3Service()
-				.getS3PreSignedPutUrl(config.getFileStorageS3BucketName(), getPath(id, filename), EXPIRATION));
+				.getS3PreSignedPutUrl(config.getFileStorageS3BucketName(), getPath(id, filename), EXPIRATION)
+		);
 		presigned.setMethod("PUT");
 		return presigned;
 	}
@@ -236,16 +235,15 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	/**
 	 * Get a presigned URL for downloading a file from S3
 	 *
-	 * @param id The ID of the asset to download from
+	 * @param id       The ID of the asset to download from
 	 * @param filename The name of the file to download
 	 * @return The presigned URL
 	 */
 	@Observed(name = "function_profile")
 	public Optional<PresignedURL> getDownloadUrl(final UUID id, final String filename) {
-
 		final Optional<String> url = s3ClientService
-				.getS3Service()
-				.getS3PreSignedGetUrl(config.getFileStorageS3BucketName(), getPath(id, filename), EXPIRATION);
+			.getS3Service()
+			.getS3PreSignedGetUrl(config.getFileStorageS3BucketName(), getPath(id, filename), EXPIRATION);
 
 		if (url.isEmpty()) {
 			return Optional.empty();
@@ -259,7 +257,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 
 	@Observed(name = "function_profile")
 	public ResponseEntity<Void> getUploadStream(final UUID uuid, final String filename, final MultipartFile file)
-			throws IOException {
+		throws IOException {
 		final String bucket = config.getFileStorageS3BucketName();
 		final String key = getPath(uuid, filename);
 
@@ -276,13 +274,11 @@ public abstract class TerariumAssetServiceWithoutSearch<
 
 	@Observed(name = "function_profile")
 	public Optional<String> fetchFileAsString(final UUID uuid, final String filename) throws IOException {
-
 		final String bucket = config.getFileStorageS3BucketName();
 		final String key = getPath(uuid, filename);
 
 		try {
-			final ResponseInputStream<GetObjectResponse> stream =
-					s3ClientService.getS3Service().getObject(bucket, key);
+			final ResponseInputStream<GetObjectResponse> stream = s3ClientService.getS3Service().getObject(bucket, key);
 			return Optional.of(new String(stream.readAllBytes(), StandardCharsets.UTF_8));
 		} catch (final NoSuchKeyException e) {
 			return Optional.empty();
@@ -293,10 +289,8 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	public Optional<byte[]> fetchFileAsBytes(final UUID uuid, final String filename) throws IOException {
 		final String bucket = config.getFileStorageS3BucketName();
 		final String key = getPath(uuid, filename);
-
 		try {
-			final ResponseInputStream<GetObjectResponse> stream =
-					s3ClientService.getS3Service().getObject(bucket, key);
+			final ResponseInputStream<GetObjectResponse> stream = s3ClientService.getS3Service().getObject(bucket, key);
 			return Optional.of(stream.readAllBytes());
 		} catch (final NoSuchKeyException e) {
 			return Optional.empty();
@@ -305,7 +299,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 
 	@Observed(name = "function_profile")
 	public Integer uploadFile(final UUID uuid, final String filename, final ContentType contentType, final byte[] data)
-			throws IOException {
+		throws IOException {
 		final String bucket = config.getFileStorageS3BucketName();
 		final String key = getPath(uuid, filename);
 		final PutObjectResponse res = s3ClientService.getS3Service().putObject(bucket, key, contentType, data);
@@ -314,17 +308,33 @@ public abstract class TerariumAssetServiceWithoutSearch<
 
 	@Observed(name = "function_profile")
 	public Integer uploadFile(final UUID uuid, final String filename, final HttpEntity fileEntity) throws IOException {
-
 		return uploadFile(
-				uuid,
-				filename,
-				ContentType.parse(fileEntity.getContentType().getValue()),
-				EntityUtils.toByteArray(fileEntity));
+			uuid,
+			filename,
+			ContentType.parse(fileEntity.getContentType().getValue()),
+			EntityUtils.toByteArray(fileEntity)
+		);
+	}
+
+	@Observed(name = "function_profile")
+	public Integer uploadFile(final UUID assetId, final String filename, final FileExport fileExport) throws IOException {
+		final String bucket = config.getFileStorageS3BucketName();
+		String prefix = fileExport.getPathPrefix();
+		if (prefix.isEmpty()) {
+			prefix = getAssetPath();
+		}
+
+		final String key = getPrefixedPath(prefix, assetId, filename);
+
+		final PutObjectResponse res = s3ClientService
+			.getS3Service()
+			.putObject(bucket, key, fileExport.getContentType(), fileExport.getBytes());
+		return res.sdkHttpResponse().statusCode();
 	}
 
 	@Observed(name = "function_profile")
 	public void copyAssetFiles(final T newAsset, final T oldAsset, final Schema.Permission hasWritePermission)
-			throws IOException {
+		throws IOException {
 		final String bucket = config.getFileStorageS3BucketName();
 		final List<String> validFileNames = new ArrayList<>();
 		if (oldAsset.getFileNames() != null) {
@@ -335,7 +345,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 					s3ClientService.getS3Service().copyObject(bucket, srcKey, bucket, dstKey);
 					validFileNames.add(fileName);
 				} catch (final NoSuchKeyException e) {
-					log.error("Failed to export fileName {}, no object found, excluding from exported asset", e);
+					log.error("Failed to copy fileName {}, no object found, excluding from copied asset", e);
 					continue;
 				}
 			}
@@ -345,7 +355,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 
 	@Observed(name = "function_profile")
 	public Map<String, FileExport> exportAssetFiles(final UUID assetId, final Schema.Permission hasReadPermission)
-			throws IOException {
+		throws IOException {
 		final T asset = getAsset(assetId, Schema.Permission.WRITE).orElseThrow();
 		final String bucket = config.getFileStorageS3BucketName();
 
@@ -355,8 +365,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 				final String key = getPath(assetId, fileName);
 
 				try {
-					final ResponseInputStream<GetObjectResponse> stream =
-							s3ClientService.getS3Service().getObject(bucket, key);
+					final ResponseInputStream<GetObjectResponse> stream = s3ClientService.getS3Service().getObject(bucket, key);
 					final byte[] bytes = stream.readAllBytes();
 
 					final String contentType = stream.response().contentType();
@@ -364,6 +373,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 					final FileExport fileExport = new FileExport();
 					fileExport.setBytes(bytes);
 					fileExport.setContentType(ContentType.parse(contentType));
+					fileExport.setPathPrefix(getAssetPath());
 
 					files.put(fileName, fileExport);
 				} catch (final NoSuchKeyException e) {
@@ -375,7 +385,11 @@ public abstract class TerariumAssetServiceWithoutSearch<
 		return files;
 	}
 
-	private String getPath(final UUID id, final String filename) {
+	protected String getPath(final UUID id, final String filename) {
 		return String.join("/", getAssetPath(), id.toString(), filename);
+	}
+
+	protected String getPrefixedPath(final String prefix, final UUID id, final String filename) {
+		return String.join("/", prefix, id.toString(), filename);
 	}
 }

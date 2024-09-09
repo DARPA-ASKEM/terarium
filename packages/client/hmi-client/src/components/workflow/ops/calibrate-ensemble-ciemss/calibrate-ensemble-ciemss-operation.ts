@@ -1,8 +1,8 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import type { EnsembleModelConfigs } from '@/types/Types';
+import calibrateEnsembleCiemss from '@assets/svg/operator-images/calibrate-ensemble-probabilistic.svg';
 
-const DOCUMENTATION_URL =
-	'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L156';
+const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L156';
 
 export interface EnsembleCalibrateExtraCiemss {
 	solverMethod: string;
@@ -26,9 +26,10 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 	displayName: 'Calibrate ensemble',
 	description: '',
 	documentationUrl: DOCUMENTATION_URL,
+	imageUrl: calibrateEnsembleCiemss,
 	inputs: [
 		{ type: 'datasetId', label: 'Dataset' },
-		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }
+		{ type: 'modelConfigId', label: 'Model configuration' }
 	],
 	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,

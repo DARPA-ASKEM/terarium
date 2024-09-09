@@ -1,11 +1,4 @@
-import {
-	addHover,
-	removeHover,
-	isHover,
-	addDrag,
-	removeDrag,
-	isDrag
-} from '@/services/operator-bitmask';
+import { addHover, removeHover, isHover, addDrag, removeDrag, isDrag } from '@/services/operator-bitmask';
 import { describe, expect, it } from 'vitest';
 
 let interactionStatus = 0;

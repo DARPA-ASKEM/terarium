@@ -1,7 +1,6 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:menu-items="menuItems"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
@@ -23,47 +22,33 @@
 						Set validation parameters
 						<i class="pi pi-info-circle" v-tooltip="validateParametersToolTip" />
 					</h5>
-					<p class="secondary-text mt-1">
-						The validator will use these parameters to execute the sanity checks.
-					</p>
+					<p class="secondary-text mt-1">The validator will use these parameters to execute the sanity checks.</p>
 					<div class="section-row timespan">
-						<div class="button-column">
+						<div class="w-full">
 							<label>Start time</label>
-							<InputNumber v-model="knobs.currentTimespan.start" />
+							<tera-input-number v-model="knobs.currentTimespan.start" />
 						</div>
-						<div class="button-column">
+						<div class="w-full">
 							<label>End time</label>
-							<InputNumber v-model="knobs.currentTimespan.end" />
+							<tera-input-number v-model="knobs.currentTimespan.end" />
 						</div>
-						<div class="button-column">
+						<div class="w-full">
 							<label>Number of steps</label>
-							<InputNumber v-model="knobs.numberOfSteps" />
+							<tera-input-number v-model="knobs.numberOfSteps" />
 						</div>
 					</div>
-					<InputText
-						:disabled="true"
-						class="p-inputtext-sm timespan-list mb-2"
-						v-model="requestStepListString"
-					/>
+					<tera-input-text :disabled="true" class="timespan-list mb-2" v-model="requestStepListString" />
 					<template v-if="showAdditionalOptions">
-						<div class="button-column">
+						<div>
 							<label>Tolerance</label>
 							<div class="input-tolerance fadein animation-ease-in-out animation-duration-350">
-								<tera-input type="nist" v-model="knobs.tolerance" />
-								<Slider
-									v-model="knobs.tolerance"
-									:min="0"
-									:max="1"
-									:step="0.01"
-									class="w-full mr-2"
-								/>
+								<tera-input-number v-model="knobs.tolerance" />
+								<Slider v-model="knobs.tolerance" :min="0" :max="1" :step="0.01" class="w-full mr-2" />
 							</div>
 						</div>
 						<div class="section-row fadein animation-duration-600">
 							<!-- This will definitely require a proper tool tip. -->
-							<label class="w-auto mr-2"
-								>Select parameters of interest <i class="pi pi-info-circle"
-							/></label>
+							<label class="w-auto mr-2">Select parameters of interest <i class="pi pi-info-circle" /></label>
 							<MultiSelect
 								ref="columnSelect"
 								:modelValue="variablesOfInterest"
@@ -95,9 +80,7 @@
 
 					<div class="spacer">
 						<h5>Add sanity checks</h5>
-						<p class="secondary-text mt-1">
-							Model configurations will be tested against these constraints.
-						</p>
+						<p class="secondary-text mt-1">Model configurations will be tested against these constraints.</p>
 					</div>
 					<tera-compartment-constraint :variables="modelStates" :mass="mass" />
 					<tera-constraint-group-form
@@ -150,7 +133,7 @@
 						@update:trajectoryState="updateTrajectorystate"
 					/>
 					<div v-else class="flex flex-column h-full justify-content-center">
-						<tera-operator-placeholder :operation-type="node.operationType" />
+						<tera-operator-placeholder :node="node" />
 					</div>
 				</template>
 			</tera-drilldown-preview>
@@ -162,9 +145,8 @@
 import _, { floor } from 'lodash';
 import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
-import TeraInput from '@/components/widgets/tera-input.vue';
-import InputNumber from 'primevue/inputnumber';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import Slider from 'primevue/slider';
 import MultiSelect from 'primevue/multiselect';
 
@@ -175,12 +157,7 @@ import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeho
 
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
-import type {
-	FunmanPostQueriesRequest,
-	Model,
-	ModelConfiguration,
-	ModelParameter
-} from '@/types/Types';
+import type { FunmanPostQueriesRequest, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import { makeQueries } from '@/services/models/funman-service';
 import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { getAsConfiguredModel, getModelConfigurationById } from '@/services/model-configurations';
@@ -297,7 +274,7 @@ const outputs = computed(() => {
 	if (!_.isEmpty(props.node.outputs)) {
 		return [
 			{
-				label: 'Select outputs to display in operator',
+				label: 'Select an output',
 				items: props.node.outputs
 			}
 		];
@@ -310,15 +287,6 @@ const activeOutput = ref<WorkflowOutput<FunmanOperationState> | null>(null);
 const toggleAdditonalOptions = () => {
 	showAdditionalOptions.value = !showAdditionalOptions.value;
 };
-
-const menuItems = computed(() => [
-	{
-		label: 'Save as new model configurations',
-		icon: 'pi pi-pencil',
-		disabled: true,
-		command: () => {}
-	}
-]);
 
 const variablesOfInterest = ref<string[]>([]);
 const onToggleVariableOfInterest = (vals: string[]) => {
@@ -450,10 +418,7 @@ const setModelOptions = async () => {
 		parametersMap[renameReserved(d.id)] = d.value || 0;
 	});
 
-	const massValue = await pythonInstance.evaluateExpression(
-		modelMassExpression as string,
-		parametersMap
-	);
+	const massValue = await pythonInstance.evaluateExpression(modelMassExpression as string, parametersMap);
 	mass.value = massValue;
 
 	if (model.value.model.states) {
@@ -482,9 +447,7 @@ const setModelOptions = async () => {
 	if (model.value.semantics?.ode.parameters) {
 		setRequestParameters(model.value.semantics?.ode.parameters);
 
-		variablesOfInterest.value = requestParameters.value
-			.filter((d: any) => d.label === 'all')
-			.map((d: any) => d.name);
+		variablesOfInterest.value = requestParameters.value.filter((d: any) => d.label === 'all').map((d: any) => d.name);
 	} else {
 		toast.error('', 'Provided model has no parameters');
 	}
@@ -606,14 +569,6 @@ watch(
 	letter-spacing: 0.01563rem;
 }
 
-.button-column {
-	display: flex;
-	flex-direction: column;
-	padding: var(--gap-small) 0 var(--gap-small) 0;
-	align-items: flex-start;
-	align-self: stretch;
-}
-
 .section-row {
 	display: flex;
 	padding: 0.5rem 0rem;
@@ -630,10 +585,6 @@ watch(
 	gap: 0.8125rem;
 	align-self: stretch;
 	gap: 1.5rem;
-}
-
-.timespan > .button-column {
-	width: 100%;
 }
 
 div.section-row.timespan > div > span {

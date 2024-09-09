@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 
 @Slf4j
 public class StructuredLog {
+
 	public enum Type {
 		REQUEST_STARTED,
 		REQUEST_COMPLETED,

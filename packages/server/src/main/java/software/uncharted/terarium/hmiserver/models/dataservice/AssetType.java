@@ -15,6 +15,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
+import software.uncharted.terarium.hmiserver.models.simulationservice.interventions.InterventionPolicy;
 
 @RequiredArgsConstructor
 @TSModel
@@ -42,16 +43,18 @@ public enum AssetType {
 	MODEL_CONFIGURATION,
 
 	@JsonProperty("artifact")
-	ARTIFACT;
+	ARTIFACT,
+
+	@JsonProperty("intervention-policy")
+	INTERVENTION_POLICY;
 
 	public static AssetType getAssetType(final String assetTypeName, final ObjectMapper objectMapper)
-			throws ResponseStatusException {
+		throws ResponseStatusException {
 		try {
 			return objectMapper.convertValue(assetTypeName, AssetType.class);
 		} catch (final IllegalArgumentException iae) {
 			log.error("Error converting the string assetTypeName into a valid AssetType", iae);
-			throw new ResponseStatusException(
-					HttpStatus.BAD_REQUEST, "Failed to convert an AssetTypeName into an AssetType");
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Failed to convert an AssetTypeName into an AssetType");
 		}
 	}
 
@@ -73,6 +76,8 @@ public enum AssetType {
 				return Simulation.class;
 			case WORKFLOW:
 				return Workflow.class;
+			case INTERVENTION_POLICY:
+				return InterventionPolicy.class;
 			default:
 				throw new IllegalArgumentException("Unrecognized asset type: " + this);
 		}

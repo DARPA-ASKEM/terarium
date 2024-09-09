@@ -11,6 +11,7 @@ import software.uncharted.terarium.hmiserver.repository.AuthorityRepository;
 @Slf4j
 @RequiredArgsConstructor
 public class AuthorityService {
+
 	private final AuthorityRepository authorityRepository;
 
 	public long count() {

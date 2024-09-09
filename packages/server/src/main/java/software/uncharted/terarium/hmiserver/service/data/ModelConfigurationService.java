@@ -3,6 +3,8 @@ package software.uncharted.terarium.hmiserver.service.data;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,22 +28,25 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
 public class ModelConfigurationService
-		extends TerariumAssetServiceWithoutSearch<ModelConfiguration, ModelConfigRepository> {
+	extends TerariumAssetServiceWithoutSearch<ModelConfiguration, ModelConfigRepository> {
+
 	public ModelConfigurationService(
-			final ObjectMapper objectMapper,
-			final Config config,
-			final ProjectService projectService,
-			final ProjectAssetService projectAssetService,
-			final ModelConfigRepository repository,
-			final S3ClientService s3ClientService) {
+		final ObjectMapper objectMapper,
+		final Config config,
+		final ProjectService projectService,
+		final ProjectAssetService projectAssetService,
+		final ModelConfigRepository repository,
+		final S3ClientService s3ClientService
+	) {
 		super(
-				objectMapper,
-				config,
-				projectService,
-				projectAssetService,
-				repository,
-				s3ClientService,
-				ModelConfiguration.class);
+			objectMapper,
+			config,
+			projectService,
+			projectAssetService,
+			repository,
+			s3ClientService,
+			ModelConfiguration.class
+		);
 	}
 
 	private static final String CONSTANT_TYPE = "Constant";
@@ -55,8 +60,10 @@ public class ModelConfigurationService
 	@Override
 	@Observed(name = "function_profile")
 	public ModelConfiguration createAsset(
-			final ModelConfiguration asset, final UUID projectId, final Schema.Permission hasWritePermission)
-			throws IOException {
+		final ModelConfiguration asset,
+		final UUID projectId,
+		final Schema.Permission hasWritePermission
+	) throws IOException {
 		setSemanticDBRelationships(asset);
 		return super.createAsset(asset, projectId, hasWritePermission);
 	}
@@ -64,8 +71,10 @@ public class ModelConfigurationService
 	@Override
 	@Observed(name = "function_profile")
 	public Optional<ModelConfiguration> updateAsset(
-			final ModelConfiguration asset, final UUID projectId, final Schema.Permission hasWritePermission)
-			throws IOException {
+		final ModelConfiguration asset,
+		final UUID projectId,
+		final Schema.Permission hasWritePermission
+	) throws IOException {
 		setSemanticDBRelationships(asset);
 		return super.updateAsset(asset, projectId, hasWritePermission);
 	}
@@ -73,9 +82,10 @@ public class ModelConfigurationService
 	@Override
 	@Observed(name = "function_profile")
 	public List<ModelConfiguration> createAssets(
-			final List<ModelConfiguration> assets, final UUID projectId, final Schema.Permission hasWritePermission)
-			throws IOException {
-
+		final List<ModelConfiguration> assets,
+		final UUID projectId,
+		final Schema.Permission hasWritePermission
+	) throws IOException {
 		for (final ModelConfiguration modelConfiguration : assets) {
 			setSemanticDBRelationships(modelConfiguration);
 		}
@@ -83,9 +93,12 @@ public class ModelConfigurationService
 	}
 
 	public static ModelConfiguration modelConfigurationFromAMR(
-			final Model model, final String name, final String description) {
+		final Model model,
+		final String name,
+		final String description
+	) {
 		final ModelConfiguration modelConfiguration = new ModelConfiguration();
-		modelConfiguration.setName(name != null ? name : "Default Configuration");
+		modelConfiguration.setName(name != null ? name : "Default configuration");
 		modelConfiguration.setDescription(description != null ? description : "This is a default configuration.");
 		modelConfiguration.setModelId(model.getId());
 		modelConfiguration.setParameterSemanticList(createParameterSemanticList(model));
@@ -188,7 +201,9 @@ public class ModelConfigurationService
 	}
 
 	private static void setModelParameters(
-			final List<ModelParameter> modelParameters, final List<ParameterSemantic> configParameters) {
+		final List<ModelParameter> modelParameters,
+		final List<ParameterSemantic> configParameters
+	) {
 		// Create a map from ConfigParameter IDs to ConfigParameter objects
 		final Map<String, ParameterSemantic> configParameterMap = new HashMap<>();
 		for (final ParameterSemantic configParameter : configParameters) {
@@ -201,13 +216,16 @@ public class ModelConfigurationService
 			final ParameterSemantic matchingConfigParameter = configParameterMap.get(modelParameter.getId());
 			if (matchingConfigParameter != null) {
 				// set distributions
-				if (CONSTANT_TYPE.equals(
-						matchingConfigParameter.getDistribution().getType())) {
-					modelParameter.setValue(((Number) matchingConfigParameter
-									.getDistribution()
-									.getParameters()
-									.get(VALUE_PARAM))
-							.doubleValue());
+				if (CONSTANT_TYPE.equals(matchingConfigParameter.getDistribution().getType())) {
+					try {
+						modelParameter.setValue(
+							NumberFormat.getInstance()
+								.parse(matchingConfigParameter.getDistribution().getParameters().get(VALUE_PARAM).toString())
+								.doubleValue()
+						);
+					} catch (final ParseException e) {
+						throw new RuntimeException(e);
+					}
 					modelParameter.setDistribution(null);
 				} else {
 					modelParameter.setDistribution(matchingConfigParameter.getDistribution());
@@ -216,8 +234,7 @@ public class ModelConfigurationService
 		}
 	}
 
-	private static void setModelInitials(
-			final List<Initial> modelInitials, final List<InitialSemantic> configInitials) {
+	private static void setModelInitials(final List<Initial> modelInitials, final List<InitialSemantic> configInitials) {
 		final Map<String, InitialSemantic> configInitialMap = new HashMap<>();
 		for (final InitialSemantic configInitial : configInitials) {
 			configInitialMap.put(configInitial.getTarget(), configInitial);
@@ -233,7 +250,9 @@ public class ModelConfigurationService
 	}
 
 	private static void setModelObservables(
-			final List<Observable> modelObservables, final List<ObservableSemantic> configObservables) {
+		final List<Observable> modelObservables,
+		final List<ObservableSemantic> configObservables
+	) {
 		final Map<String, ObservableSemantic> configObservableMap = new HashMap<>();
 		for (final ObservableSemantic configObservable : configObservables) {
 			configObservableMap.put(configObservable.getReferenceId(), configObservable);

@@ -22,15 +22,13 @@
 
 <script setup lang="ts">
 import { computed, PropType } from 'vue';
-import { isDataset, isDocument, isModel } from '@/utils/data-util';
+import { isDataset, isModel } from '@/utils/data-util';
 import { ResultType } from '@/types/common';
-import type { Document } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import { useRouter } from 'vue-router';
 import { useProjects } from '@/composables/project';
-import { createDocumentFromXDD } from '@/services/document-assets';
 
 const router = useRouter();
 
@@ -43,19 +41,11 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'clear-selected']);
 
-const projectOptions = computed(() =>
-	useProjects().allProjects.value?.map((p) => ({ name: p.name, id: p.id }))
-);
+const projectOptions = computed(() => useProjects().allProjects.value?.map((p) => ({ name: p.name, id: p.id })));
 
 const addResourcesToProject = async (projectId: string) => {
 	// send selected items to the store
 	props.selectedSearchItems.forEach(async (selectedItem) => {
-		if (isDocument(selectedItem)) {
-			const document = selectedItem as Document;
-			await createDocumentFromXDD(document, projectId);
-			// finally add asset to project
-			await useProjects().get(projectId);
-		}
 		if (isModel(selectedItem)) {
 			// FIXME: handle cases where assets is already added to the project
 			const modelId = selectedItem.id;

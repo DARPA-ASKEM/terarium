@@ -4,20 +4,13 @@
 			<label class="mr-auto" tag="h5"> {{ config.intervention?.name ?? `Intervention` }}</label>
 			<aside>
 				<label for="active">Optimize</label>
-				<InputSwitch
-					v-model="knobs.isActive"
-					:disabled="true"
-					@change="emit('update-self', knobs)"
-				/>
+				<InputSwitch v-model="knobs.isActive" :disabled="true" @change="emit('update-self', knobs)" />
 			</aside>
 		</div>
 		<p>
-			Set the {{ config.intervention?.type }}&nbsp;
-			<strong>{{ config.intervention?.appliedTo }}</strong> to
+			Set the {{ config.intervention?.type }}&nbsp; <strong>{{ config.intervention?.appliedTo }}</strong> to
 			<strong>{{ dynamicInterventions[0].threshold }}</strong> days when it
-			<strong>{{
-				dynamicInterventions[0].isGreaterThan ? 'increase to above' : 'decrease to below'
-			}}</strong>
+			<strong>{{ dynamicInterventions[0].isGreaterThan ? 'increase to above' : 'decrease to below' }}</strong>
 			the threshold value <strong>{{ dynamicInterventions[0].value }}</strong> person.
 		</p>
 	</div>
@@ -34,9 +27,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-self']);
 
-const dynamicInterventions = ref<DynamicIntervention[]>(
-	props.config.intervention.dynamicInterventions
-);
+const dynamicInterventions = ref<DynamicIntervention[]>(props.config.intervention.dynamicInterventions);
 
 const knobs = ref({
 	isActive: props.config.isActive ?? false
@@ -75,7 +66,7 @@ const knobs = ref({
 	gap: var(--gap-2);
 	border-radius: var(--gap-1-5);
 	background: var(--surface-section);
-	border: 1px solid rgba(0, 0, 0, 0.08);
+	border: 1px solid var(--surface-border-light);
 	/* Shadow/medium */
 	box-shadow:
 		0 2px 4px -1px rgba(0, 0, 0, 0.06),

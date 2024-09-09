@@ -14,6 +14,7 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @Accessors(chain = true)
 @TSModel
 public class RegNetEdge extends SupportAdditionalProperties implements Serializable {
+
 	@Serial
 	private static final long serialVersionUID = -2875068447471585535L;
 

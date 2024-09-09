@@ -3,12 +3,7 @@
 		<div>
 			<span class="flex align-items-center"
 				><h6>{{ configuration.name }}</h6>
-				<Button
-					class="ml-auto"
-					text
-					icon="pi pi-ellipsis-v"
-					@click.stop="toggleContextMenu"
-				></Button
+				<Button class="ml-auto" text icon="pi pi-ellipsis-v" @click.stop="toggleContextMenu"></Button
 			></span>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems"></ContextMenu>
 			<p>{{ configuration.description }}</p>
@@ -83,17 +78,18 @@ const onDeleteConfiguration = () => {
 
 <style scoped>
 .config-card {
+	background: var(--surface-0);
+	border-left: 4px solid var(--surface-300);
 	&:hover {
 		cursor: pointer;
-		background-color: var(--gray-100);
+		background-color: var(--gray-50);
 	}
 	&.card-selected {
-		background-color: var(--gray-100);
 		border-left: 4px solid var(--primary-color);
 	}
 
 	> div {
-		padding-left: var(--gap-small);
+		padding-left: var(--gap);
 	}
 }
 

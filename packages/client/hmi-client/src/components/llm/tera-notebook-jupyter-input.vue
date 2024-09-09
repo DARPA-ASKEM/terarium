@@ -29,12 +29,11 @@
 			:placeholder="kernelStatus ? 'Please wait...' : 'What do you want to do?'"
 			@keydown.enter="submitQuestion"
 		/>
-		<InputText
+		<tera-input-text
 			v-else
 			class="input"
 			ref="inputElement"
 			v-model="questionString"
-			type="text"
 			:disabled="kernelStatus === KernelState.busy"
 			:placeholder="kernelStatus ? 'Please wait...' : 'What do you want to do?'"
 			@keydown.enter="submitQuestion"
@@ -45,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import InputText from 'primevue/inputtext';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import InputSwitch from 'primevue/inputswitch';
 import Button from 'primevue/button';
 import { ref } from 'vue';

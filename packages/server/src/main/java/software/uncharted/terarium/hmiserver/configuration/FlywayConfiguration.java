@@ -40,7 +40,7 @@ public class FlywayConfiguration {
 	 */
 	@Bean
 	FlywayMigrationInitializer flywayInitializer(final Flyway flyway) {
-		return new FlywayMigrationInitializer(flyway, (f) -> {});
+		return new FlywayMigrationInitializer(flyway, f -> {});
 	}
 
 	static class FlywayVoid {}
@@ -63,7 +63,6 @@ public class FlywayConfiguration {
 	@Bean
 	@DependsOn("entityManagerFactory")
 	FlywayVoid delayedFlywayInitializer(final Flyway flyway, final FlywayProperties flywayProperties) {
-
 		Flyway flywayWithCorrectBaseline = flyway;
 		if (flywayProperties.isEnabled() && !isFlywayInitialized()) {
 			// get all migration names
@@ -76,8 +75,8 @@ public class FlywayConfiguration {
 
 			// re-create the flyway object with the correct baseline
 			final FluentConfiguration config = Flyway.configure()
-					.configuration(flyway.getConfiguration())
-					.baselineVersion(MigrationVersion.fromVersion(baselineVersion));
+				.configuration(flyway.getConfiguration())
+				.baselineVersion(MigrationVersion.fromVersion(baselineVersion));
 			flywayWithCorrectBaseline = new Flyway(config);
 			flywayWithCorrectBaseline.baseline();
 		}
@@ -106,12 +105,13 @@ public class FlywayConfiguration {
 	 * @return the largest (latest) version migration number as a string
 	 */
 	private String getBaselineVersion(final List<String> migrations) {
-		final String baseline = migrations.stream()
-				.map(filename -> filename.split("__")[0].substring(1))
-				.map(Integer::parseInt)
-				.max(Integer::compareTo)
-				.orElseThrow()
-				.toString();
+		final String baseline = migrations
+			.stream()
+			.map(filename -> filename.split("__")[0].substring(1))
+			.map(Integer::parseInt)
+			.max(Integer::compareTo)
+			.orElseThrow()
+			.toString();
 
 		return baseline;
 	}

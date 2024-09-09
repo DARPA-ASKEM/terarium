@@ -13,14 +13,16 @@ import software.uncharted.terarium.hmiserver.interceptors.OrderedHandlerIntercep
 @RequiredArgsConstructor
 @Slf4j
 public class TerariumWebConfiguration implements WebMvcConfigurer {
+
 	private final List<OrderedHandlerInterceptor> interceptorList;
 
 	final Config config;
 
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
-		interceptorList.stream()
-				.sorted(Comparator.comparingInt(OrderedHandlerInterceptor::getOrder))
-				.forEach(registry::addInterceptor);
+		interceptorList
+			.stream()
+			.sorted(Comparator.comparingInt(OrderedHandlerInterceptor::getOrder))
+			.forEach(registry::addInterceptor);
 	}
 }

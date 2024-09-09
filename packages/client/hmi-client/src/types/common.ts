@@ -2,18 +2,15 @@ import {
 	AssetType,
 	ClientEventType,
 	Dataset,
-	Document,
 	DocumentAsset,
 	Model,
 	ModelGrounding,
 	ProgrammingLanguage,
 	ProgressState,
-	StatusUpdate,
-	XDDFacetsItemResponse
+	StatusUpdate
 } from '@/types/Types';
 import { DatasetSearchParams } from './Dataset';
 import { ModelSearchParams } from './Model';
-import { XDDSearchParams } from './XDD';
 import { ProjectPages } from './Project';
 
 export interface FeatureConfig {
@@ -23,6 +20,11 @@ export interface FeatureConfig {
 export enum DrilldownTabs {
 	Wizard = 'Wizard',
 	Notebook = 'Notebook'
+}
+
+export enum CiemssPresetTypes {
+	Fast = 'Fast',
+	Normal = 'Normal'
 }
 
 export enum ParamType {
@@ -67,23 +69,21 @@ export enum ViewType {
 }
 
 export enum ResourceType {
-	XDD = 'xdd',
+	DOCUMENT = 'document',
 	MODEL = 'model',
 	DATASET = 'dataset',
 	ALL = 'all'
 }
 
 export type SearchParameters = {
-	[ResourceType.XDD]?: XDDSearchParams;
 	[ResourceType.MODEL]?: ModelSearchParams;
 	[ResourceType.DATASET]?: DatasetSearchParams;
 };
 
-export type ResultType = Model | Dataset | Document | DocumentAsset;
+export type ResultType = Model | Dataset | DocumentAsset;
 
 export type SearchResults = {
 	results: ResultType[];
-	facets?: { [p: string]: XDDFacetsItemResponse } | Facets;
 	searchSubsystem?: string;
 	hits?: number;
 	hasMore?: boolean;
@@ -155,7 +155,8 @@ export enum AcceptedTypes {
 	MDL = `application/vnd.vensim.mdl`,
 	XMILE = 'application/vnd.stella.xmile',
 	ITMX = 'application/vnd.stella.itmx',
-	STMX = 'application/vnd.stella.stmx'
+	STMX = 'application/vnd.stella.stmx',
+	MODELCONFIG = 'application/zip'
 }
 
 export enum AcceptedExtensions {
@@ -178,7 +179,9 @@ export enum AcceptedExtensions {
 	// Stella formats
 	XMILE = 'xmile',
 	ITMX = 'itmx',
-	STMX = 'stmx'
+	STMX = 'stmx',
+	// proprietary formats
+	MODELCONFIG = 'modelconfig'
 }
 
 export enum AMRSchemaNames {
@@ -207,7 +210,7 @@ export interface CompareModelsResponseType {
 }
 
 export type ExtractionStatusUpdate = StatusUpdate<{ documentId: string }>;
-
+export type CloneProjectStatusUpdate = StatusUpdate<{ projectId: string }>;
 export interface NotificationItem extends NotificationItemStatus, AssetRoute {
 	notificationGroupId: string;
 	type: ClientEventType;
@@ -227,6 +230,21 @@ export interface NotificationItemStatus {
 	progress?: number;
 }
 
+export enum ChartSettingType {
+	VARIABLE = 'variable',
+	VARIABLE_COMPARISON = 'variable-comparison',
+	DISTRIBUTION_COMPARISON = 'distribution-comparison',
+	ERROR_DISTRIBUTION = 'error-distribution',
+	INTERVENTION = 'intervention'
+}
+
+export interface ChartSetting {
+	id: string;
+	name: string;
+	selectedVariables: string[];
+	type: ChartSettingType;
+}
+
 export const ProgrammingLanguageVersion: { [key in ProgrammingLanguage]: string } = {
 	[ProgrammingLanguage.Python]: 'python3',
 	[ProgrammingLanguage.R]: 'ir',
@@ -244,7 +262,6 @@ export const programmingLanguageOptions = (): { name: string; value: string }[] 
 	Object.values(ProgrammingLanguage)
 		.filter((lang) => lang !== ProgrammingLanguage.Zip)
 		.map((lang) => ({
-			name:
-				lang && `${lang[0].toUpperCase() + lang.slice(1)} (${ProgrammingLanguageVersion[lang]})`,
+			name: lang && `${lang[0].toUpperCase() + lang.slice(1)} (${ProgrammingLanguageVersion[lang]})`,
 			value: ProgrammingLanguageVersion[lang]
 		}));

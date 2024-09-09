@@ -1,26 +1,10 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:menu-items="menuItems"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
-		<template #header-actions>
-			<tera-operator-annotation
-				:state="node.state"
-				@update-state="(state: any) => emit('update-state', state)"
-			/>
-			<!-- Unsure how to handle this -->
-			<tera-output-dropdown
-				:options="outputs"
-				v-model:output="selectedOutputId"
-				@update:selection="onSelection"
-				:is-loading="assetLoading"
-				is-selectable
-				class="hidden"
-			/>
-		</template>
 		<tera-columnar-panel :tabName="DrilldownTabs.Wizard">
 			<tera-drilldown-section :is-loading="assetLoading">
 				<template #header-controls-left>
@@ -37,12 +21,7 @@
 						option-disabled="disabled"
 						@change="onChangeModelFramework"
 					/>
-					<Button
-						label="Run"
-						@click="onRun"
-						:diabled="assetLoading"
-						:loading="loadingModel"
-					></Button>
+					<Button label="Run" @click="onRun" :diabled="assetLoading" :loading="loadingModel"></Button>
 				</template>
 				<header>
 					<section class="header-group">
@@ -63,9 +42,7 @@
 						</div>
 						<div>
 							<Button text @click="toggleCollapseAll">{{ getCollapsedLabel() }}</Button>
-							<Button text @click="toggleIncludedEquations">{{
-								getIncludedEquationLabel()
-							}}</Button>
+							<Button text @click="toggleIncludedEquations">{{ getIncludedEquationLabel() }}</Button>
 						</div>
 					</section>
 				</header>
@@ -100,7 +77,7 @@
 								/>
 								<div v-else class="mt-2" />
 								<span>{{ getEquationErrorLabel(equation) }}</span>
-								<InputText
+								<tera-input-text
 									v-model="equation.asset.text"
 									placeholder="Add an expression with LaTeX"
 									@update:model-value="emit('update-state', clonedState)"
@@ -114,20 +91,8 @@
 				</template>
 			</tera-drilldown-section>
 			<tera-drilldown-preview>
-				<section v-if="selectedModel">
-					<tera-model-description
-						:model="selectedModel"
-						:feature-config="{
-							isPreview: true
-						}"
-						:generating-card="isGeneratingCard"
-					/>
-				</section>
-				<tera-operator-placeholder
-					v-else
-					:operation-type="node.operationType"
-					style="height: 100%"
-				/>
+				<tera-model-description v-if="selectedModel" :model="selectedModel" :generating-card="isGeneratingCard" />
+				<tera-operator-placeholder v-else :node="node" style="height: 100%" />
 			</tera-drilldown-preview>
 		</tera-columnar-panel>
 		<tera-drilldown-section :tabName="DrilldownTabs.Notebook">
@@ -136,7 +101,7 @@
 	</tera-drilldown>
 	<tera-save-asset-modal
 		v-if="selectedModel"
-		:model="selectedModel"
+		:asset="selectedModel"
 		:is-visible="showSaveModelModal"
 		@close-modal="onCloseModelModal"
 		@on-save="onAddModel"
@@ -144,7 +109,7 @@
 </template>
 
 <script setup lang="ts">
-import { AssetBlock, WorkflowNode, WorkflowOutput } from '@/types/workflow';
+import { AssetBlock, WorkflowNode } from '@/types/workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
@@ -152,10 +117,9 @@ import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { getDocumentAsset, getEquationFromImageUrl } from '@/services/document-assets';
 import type { Card, DocumentAsset, DocumentExtraction, Model } from '@/types/Types';
-import { AssetType } from '@/types/Types';
-import { cloneDeep, isEmpty, unionBy } from 'lodash';
+import { cloneDeep, unionBy } from 'lodash';
 import Image from 'primevue/image';
-import { equationsToAMR } from '@/services/knowledge';
+import { equationsToAMR, type EquationsToAMRRequest } from '@/services/knowledge';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { getModel, updateModel } from '@/services/model';
@@ -163,10 +127,9 @@ import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeho
 import { useProjects } from '@/composables/project';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Textarea from 'primevue/textarea';
-import InputText from 'primevue/inputtext';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { DrilldownTabs } from '@/types/common';
-import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import { modelCard } from '@/services/goLLM';
@@ -178,13 +141,7 @@ import {
 	ModelFromEquationsState
 } from './model-from-equations-operation';
 
-const emit = defineEmits([
-	'close',
-	'update-state',
-	'append-output',
-	'select-output',
-	'update-output-port'
-]);
+const emit = defineEmits(['close', 'update-state', 'append-output', 'select-output', 'update-output-port']);
 const props = defineProps<{
 	node: WorkflowNode<ModelFromEquationsState>;
 }>();
@@ -197,54 +154,12 @@ enum ModelFramework {
 	MathExpressionTree = 'met'
 }
 
-const outputs = computed(() => {
-	const activeProjectModelIds = useProjects()
-		.getActiveProjectAssets(AssetType.Model)
-		.map((model) => model.id);
-
-	const savedOutputs: WorkflowOutput<ModelFromEquationsState>[] = [];
-	const unsavedOutputs: WorkflowOutput<ModelFromEquationsState>[] = [];
-
-	props.node.outputs.forEach((output) => {
-		const modelId = output.state?.modelId;
-		if (modelId) {
-			const isSaved = activeProjectModelIds?.includes(modelId);
-			if (isSaved) {
-				savedOutputs.push(output);
-				return;
-			}
-		}
-		unsavedOutputs.push(output);
-	});
-
-	const groupedOutputs: { label: string; items: WorkflowOutput<ModelFromEquationsState>[] }[] = [];
-
-	if (!isEmpty(unsavedOutputs)) {
-		groupedOutputs.push({
-			label: 'Select outputs to display in operator',
-			items: unsavedOutputs
-		});
-	}
-	if (!isEmpty(savedOutputs)) {
-		groupedOutputs.push({
-			label: 'Saved models',
-			items: savedOutputs
-		});
-	}
-
-	return groupedOutputs;
-});
-
 const selectedOutputId = ref<string>('');
 
 const modelFrameworks = Object.entries(ModelFramework).map(([key, value]) => ({
 	label: textUtils.pascalCaseToCapitalSentence(key),
 	value,
-	disabled: [
-		ModelFramework.Decapode,
-		ModelFramework.GeneralizedAMR,
-		ModelFramework.MathExpressionTree
-	].includes(value)
+	disabled: [ModelFramework.Decapode, ModelFramework.GeneralizedAMR, ModelFramework.MathExpressionTree].includes(value)
 }));
 
 const clonedState = ref<ModelFromEquationsState>({
@@ -271,8 +186,9 @@ onMounted(async () => {
 	}
 
 	const documentId = props.node.inputs?.[0]?.value?.[0]?.documentId;
-	const equations: AssetBlock<DocumentExtraction>[] =
-		props.node.inputs?.[0]?.value?.[0]?.equations?.filter((e) => e.includeInProcess);
+	const equations: AssetBlock<DocumentExtraction>[] = props.node.inputs?.[0]?.value?.[0]?.equations?.filter(
+		(e) => e.includeInProcess
+	);
 	assetLoading.value = true;
 	if (documentId) {
 		document.value = await getDocumentAsset(documentId);
@@ -306,13 +222,9 @@ onMounted(async () => {
 
 		const newEquations = await Promise.all(promises);
 
-		let extractedEquations = state.equations.filter((e) =>
-			instanceOfEquationFromImageBlock(e.asset)
-		);
+		let extractedEquations = state.equations.filter((e) => instanceOfEquationFromImageBlock(e.asset));
 		extractedEquations = unionBy(newEquations, extractedEquations, 'asset.fileName');
-		const inputEquations = state.equations.filter(
-			(e) => !instanceOfEquationFromImageBlock(e.asset)
-		);
+		const inputEquations = state.equations.filter((e) => !instanceOfEquationFromImageBlock(e.asset));
 		state.equations = [...extractedEquations, ...inputEquations];
 		state.text = document.value?.text ?? '';
 		emit('update-state', state);
@@ -334,7 +246,12 @@ async function onRun() {
 		.filter((e) => e.includeInProcess && !e.asset.extractionError)
 		.map((e) => e.asset.text);
 
-	const modelId = await equationsToAMR(equations, clonedState.value.modelFramework);
+	const request: EquationsToAMRRequest = {
+		equations,
+		framework: clonedState.value.modelFramework,
+		documentId: document.value?.id
+	};
+	const modelId = await equationsToAMR(request);
 	if (!modelId) return;
 
 	if (document.value?.id) await generateCard(document.value.id);
@@ -411,17 +328,6 @@ function removeEquation(index: number) {
 	emit('update-state', clonedState.value);
 }
 
-const menuItems = computed(() => [
-	{
-		label: 'Save as new model',
-		icon: 'pi pi-download',
-		disabled: !selectedModel.value,
-		command: () => {
-			showSaveModelModal.value = true;
-		}
-	}
-]);
-
 function getEquations() {
 	const newEquations = multipleEquations.value.split('\n');
 	newEquations.forEach((equation) => {
@@ -437,17 +343,13 @@ function getEquations() {
 	multipleEquations.value = '';
 }
 
-const allEquationCollapsed = computed(
-	() => !clonedState.value.equations.some((equation) => !equation.isCollapsed)
-);
+const allEquationCollapsed = computed(() => !clonedState.value.equations.some((equation) => !equation.isCollapsed));
 
 const allEquationsInProcess = computed(
 	() => !clonedState.value.equations.some((equation) => !equation.includeInProcess)
 );
 
-const selectedEquations = computed(() =>
-	clonedState.value.equations.filter((equation) => equation.includeInProcess)
-);
+const selectedEquations = computed(() => clonedState.value.equations.filter((equation) => equation.includeInProcess));
 
 function getEquationErrorLabel(equation) {
 	return equation.asset.extractionError ? "Couldn't extract equation" : '';

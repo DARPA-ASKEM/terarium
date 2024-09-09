@@ -1,33 +1,29 @@
 <template>
 	<div class="intervention-card">
-		<header class="flex align-items-center">
-			<tera-toggleable-edit
-				class="mr-auto"
-				:model-value="intervention.name"
-				@update:model-value="onUpdateName($event)"
-				tag="h5"
-			/>
-			<RadioButton
-				:model-value="interventionType"
-				:input-id="uniqueId()"
-				name="interventionType"
-				value="static"
-				@click="onInterventionTypeChange('static')"
-			/>
-			<label for="static" class="ml-2">Static</label>
-			<RadioButton
-				:model-value="interventionType"
-				:input-id="uniqueId()"
-				name="interventionType"
-				value="dynamic"
-				class="ml-3"
-				@click="onInterventionTypeChange('dynamic')"
-			/>
-			<label for="dynamic" class="ml-2">Dynamic</label>
-			<Button class="ml-3" icon="pi pi-trash" text @click="emit('delete')" />
+		<header class="flex align-items-center gap-2">
+			<tera-toggleable-input :model-value="intervention.name" @update:model-value="onUpdateName($event)" tag="h5" />
+			<div class="flex align-items-center ml-auto">
+				<RadioButton
+					:model-value="interventionType"
+					:input-id="uniqueId()"
+					name="interventionType"
+					value="static"
+					@click="onInterventionTypeChange('static')"
+				/>
+				<label for="static" class="ml-2">Static</label>
+				<RadioButton
+					:model-value="interventionType"
+					:input-id="uniqueId()"
+					name="interventionType"
+					value="dynamic"
+					class="ml-3"
+					@click="onInterventionTypeChange('dynamic')"
+				/>
+				<label for="dynamic" class="ml-2">Dynamic</label>
+				<Button class="ml-3" icon="pi pi-trash" text @click="emit('delete')" />
+			</div>
 		</header>
 		<section>
-			<!-- Static -->
 			<div class="flex align-items-center flex-wrap gap-2">
 				Set
 				<Dropdown
@@ -45,19 +41,20 @@
 					option-value="value"
 					placeholder="Select"
 				/>
-				<span>to<span v-if="intervention.staticInterventions.length > 1">...</span></span>
+
+				<!-- Static -->
 				<template v-if="interventionType === 'static'">
-					<template v-if="intervention.staticInterventions.length === 1">
-						<tera-input
-							type="nist"
+					to
+					<template v-if="intervention.staticInterventions.length > 1">...</template>
+					<template v-else-if="intervention.staticInterventions.length === 1">
+						<tera-input-number
 							auto-width
 							:model-value="intervention.staticInterventions[0].value"
 							@update:model-value="(val) => onUpdateValue(val, 0)"
 							placeholder="value"
 						/>
 						starting at
-						<tera-input
-							type="nist"
+						<tera-input-number
 							auto-width
 							:model-value="intervention.staticInterventions[0].timestep"
 							@update:model-value="(val) => onUpdateThreshold(val, 0)"
@@ -66,31 +63,24 @@
 						.
 					</template>
 
-					<ul v-if="intervention.staticInterventions.length > 1" class="flex-1">
-						<li v-for="(i, index) in intervention.staticInterventions" :key="index">
+					<ul v-if="intervention.staticInterventions.length > 1" class="w-full">
+						<li v-for="(i, index) in intervention.staticInterventions" class="flex-1" :key="index">
 							<div class="flex align-items-center pt-2 pb-2 gap-2">
-								<tera-input
-									type="nist"
+								<tera-input-number
 									auto-width
 									:model-value="i.value"
 									@update:model-value="(val) => onUpdateValue(val, index)"
 									placeholder="value"
 								/>
 								starting at
-								<tera-input
-									type="nist"
+								<tera-input-number
 									auto-width
 									:model-value="i.timestep"
 									@update:model-value="(val) => onUpdateThreshold(val, index)"
 									placeholder="timestep"
 								/>
 								.
-								<Button
-									class="ml-auto"
-									icon="pi pi-times"
-									text
-									@click="onRemoveStaticIntervention(index)"
-								/>
+								<Button class="ml-auto" icon="pi pi-times" text @click="onRemoveStaticIntervention(index)" />
 							</div>
 							<Divider />
 						</li>
@@ -99,8 +89,8 @@
 
 				<!-- Dynamic -->
 				<template v-else>
-					<tera-input
-						type="nist"
+					to
+					<tera-input-number
 						auto-width
 						:model-value="intervention.dynamicInterventions[0].value"
 						@update:model-value="(val) => onUpdateValue(val, 0)"
@@ -122,8 +112,7 @@
 						option-label="label"
 						option-value="value"
 					/>
-					<tera-input
-						type="nist"
+					<tera-input-number
 						auto-width
 						:model-value="intervention.dynamicInterventions[0].threshold"
 						@update:model-value="(val) => onUpdateThreshold(val, 0)"
@@ -147,13 +136,13 @@
 </template>
 
 <script setup lang="ts">
-import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
+import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import Button from 'primevue/button';
 import RadioButton from 'primevue/radiobutton';
 import { computed } from 'vue';
 import { Intervention, InterventionSemanticType } from '@/types/Types';
 import Dropdown, { DropdownChangeEvent } from 'primevue/dropdown';
-import TeraInput from '@/components/widgets/tera-input.vue';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { cloneDeep, uniqueId } from 'lodash';
 import Divider from 'primevue/divider';
 
@@ -166,11 +155,11 @@ const props = defineProps<{
 
 const interventionSemanticOptions = [
 	{ label: 'Parameter', value: InterventionSemanticType.Parameter },
-	{ label: 'Variable', value: InterventionSemanticType.Variable }
+	{ label: 'State', value: InterventionSemanticType.State }
 ];
 
 const semanticOptions = computed(() => {
-	if (props.intervention.type === InterventionSemanticType.Variable) {
+	if (props.intervention.type === InterventionSemanticType.State) {
 		return props.stateOptions;
 	}
 	return props.parameterOptions;
@@ -278,7 +267,7 @@ const onComparisonOperatorChange = (event: DropdownChangeEvent) => {
 const onSemanticChange = (event: DropdownChangeEvent) => {
 	const intervention = cloneDeep(props.intervention);
 	intervention.type = event.value;
-	if (event.value === InterventionSemanticType.Variable) {
+	if (event.value === InterventionSemanticType.State) {
 		intervention.appliedTo = '';
 	} else {
 		intervention.appliedTo = '';
@@ -299,7 +288,10 @@ const onSemanticChange = (event: DropdownChangeEvent) => {
 .intervention-card {
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-medium);
-	padding: var(--gap);
+	padding: var(--gap-2) var(--gap);
+	gap: var(--gap-2);
+	display: flex;
+	flex-direction: column;
 }
 
 ul {

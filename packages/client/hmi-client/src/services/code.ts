@@ -13,11 +13,7 @@ async function getCodeAsset(codeAssetId: string): Promise<Code | null> {
 	return response.data as Code;
 }
 
-async function updateCodeAsset(
-	code: Code,
-	file?: File,
-	progress?: Ref<number>
-): Promise<Code | null> {
+async function updateCodeAsset(code: Code, file?: File, progress?: Ref<number>): Promise<Code | null> {
 	if (!code.id) {
 		return null;
 	}
@@ -38,10 +34,7 @@ async function updateCodeAsset(
 }
 
 async function getCodeFileAsText(codeAssetId: string, fileName: string): Promise<string | null> {
-	const response = await API.get(
-		`/code-asset/${codeAssetId}/download-code-as-text?filename=${fileName}`,
-		{}
-	);
+	const response = await API.get(`/code-asset/${codeAssetId}/download-code-as-text?filename=${fileName}`, {});
 
 	if (!response) {
 		return null;
@@ -107,10 +100,7 @@ async function uploadCodeToProjectFromGithub(
 	return newCode;
 }
 
-async function uploadCodeFromGithubRepo(
-	repoOwnerAndName: string,
-	repoUrl: string
-): Promise<Code | null> {
+async function uploadCodeFromGithubRepo(repoOwnerAndName: string, repoUrl: string): Promise<Code | null> {
 	// Create a new code asset with the same name as the file and post the metadata to TDS
 	const repoName = `${repoOwnerAndName.split('/')[1]}.zip`;
 
@@ -145,11 +135,7 @@ async function createNewCodeAsset(codeAsset: Code): Promise<Code | null> {
 	return response.data;
 }
 
-async function addFileToCodeAsset(
-	codeAssetId: string,
-	file: File,
-	progress: Ref<number>
-): Promise<boolean> {
+async function addFileToCodeAsset(codeAssetId: string, file: File, progress: Ref<number>): Promise<boolean> {
 	const formData = new FormData();
 	formData.append('file', file);
 
@@ -161,10 +147,7 @@ async function addFileToCodeAsset(
 			'Content-Type': 'multipart/form-data'
 		},
 		onUploadProgress(progressEvent) {
-			progress.value = Math.min(
-				100,
-				Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100))
-			);
+			progress.value = Math.min(100, Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100)));
 		}
 	});
 

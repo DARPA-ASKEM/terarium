@@ -24,14 +24,8 @@
 			style="height: 100%"
 		/>
 
-		<Button
-			v-if="areInputsFilled"
-			label="Edit"
-			@click="emit('open-drilldown')"
-			severity="secondary"
-			outlined
-		/>
-		<tera-operator-placeholder v-else :operation-type="node.operationType">
+		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
+		<tera-operator-placeholder v-else :node="node">
 			Connect a model configuration and dataset
 		</tera-operator-placeholder>
 	</main>
@@ -51,7 +45,7 @@ import {
 	makeEnsembleCiemssSimulation
 } from '@/services/models/simulation-service';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
-import { chartActionsProxy, nodeMetadata } from '@/components/workflow/util';
+import { chartActionsProxy, nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 
 import { Poller, PollerState } from '@/api/api';
@@ -125,10 +119,7 @@ watch(
 					inferred_parameters: id
 				}
 			};
-			const simulationResponse = await makeEnsembleCiemssSimulation(
-				params,
-				nodeMetadata(props.node)
-			);
+			const simulationResponse = await makeEnsembleCiemssSimulation(params, nodeMetadata(props.node));
 			const forecastId = simulationResponse.simulationId;
 
 			const state = _.cloneDeep(props.node.state);
@@ -158,7 +149,7 @@ watch(
 			const portLabel = props.node.inputs[0].label;
 			emit('append-output', {
 				type: 'calibrateSimulationId',
-				label: `${portLabel} Result`,
+				label: nodeOutputLabel(props.node, `${portLabel} Result`),
 				value: [state.calibrationId]
 			});
 		}

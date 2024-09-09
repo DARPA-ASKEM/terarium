@@ -17,8 +17,23 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @AMRSchemaType
 @Accessors(chain = true)
 public class Annotations extends SupportAdditionalProperties implements Serializable {
+
 	@Serial
 	private static final long serialVersionUID = -2240171862204728842L;
+
+	public Annotations() {
+		this.license = null;
+		this.authors = new ArrayList();
+		this.references = new ArrayList();
+		this.timeScale = null;
+		this.timeStart = null;
+		this.timeEnd = null;
+		this.locations = new ArrayList();
+		this.pathogens = new ArrayList();
+		this.diseases = new ArrayList();
+		this.hosts = new ArrayList();
+		this.modelTypes = new ArrayList();
+	}
 
 	@TSOptional
 	private String license;

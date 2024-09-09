@@ -3,7 +3,8 @@
 		v-if="showHeader"
 		:class="{
 			'overview-banner': pageType === ProjectPages.OVERVIEW,
-			'with-tabs': tabs.length > 1
+			'with-tabs': tabs.length > 1,
+			shadow: applyShadow
 		}"
 	>
 		<!-- put the buttons above the title if there is an overline -->
@@ -49,11 +50,7 @@
 			<slot name="bottom-header-buttons" />
 		</div>
 		<slot name="summary" />
-		<TabView
-			v-if="tabs.length > 1"
-			:active-index="selectedTabIndex"
-			@tab-change="(e) => emit('tab-change', e)"
-		>
+		<TabView v-if="tabs.length > 1" :active-index="selectedTabIndex" @tab-change="(e) => emit('tab-change', e)">
 			<TabPanel v-for="(tab, index) in tabs" :key="index" :header="tab.props?.tabName" />
 		</TabView>
 	</header>
@@ -69,6 +66,7 @@
 					:class="{ 'chosen-item': id === chosenItem }"
 					:key="id"
 					@click="scrollTo(id)"
+					class="nav-item"
 				>
 					{{ navOption }}
 				</a>
@@ -82,7 +80,7 @@
 import { ref, computed, watch, PropType, useSlots, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import Button from 'primevue/button';
-import { FeatureConfig } from '@/types/common';
+import type { FeatureConfig } from '@/types/common';
 import { ProjectPages } from '@/types/Project';
 import { AssetType } from '@/types/Types';
 import TabView from 'primevue/tabview';
@@ -202,9 +200,7 @@ watch(
 
 		headers.forEach((header) => {
 			// Extract header name
-			const textNodes = Array.from(header.childNodes).filter(
-				(node) => node.nodeType === Node.TEXT_NODE
-			);
+			const textNodes = Array.from(header.childNodes).filter((node) => node.nodeType === Node.TEXT_NODE);
 			let text = textNodes.map((node) => node.textContent).join('');
 			if (!text) {
 				const span = header.querySelector('span');
@@ -225,6 +221,8 @@ watch(
 	() => props.id,
 	() => assetElementRef.value?.scrollIntoView()
 );
+
+const applyShadow = computed(() => scrollPosition.value > 8);
 </script>
 
 <style scoped>
@@ -242,6 +240,8 @@ main > section {
 	flex: 1;
 	& > :deep(*:not(nav, i)) {
 		flex: 1;
+		max-width: 100%;
+		overflow-x: auto;
 	}
 }
 
@@ -262,6 +262,9 @@ nav {
 	}
 }
 
+.nav-item {
+	min-width: 9.5rem;
+}
 header {
 	display: flex;
 	flex-direction: column;
@@ -269,10 +272,12 @@ header {
 	height: fit-content;
 	padding: var(--gap-small) var(--gap);
 	gap: var(--gap-small);
-	background-color: var(--surface-ground-transparent);
+	background-color: var(--surface-0);
 	backdrop-filter: blur(6px);
-	border-bottom: 1px solid var(--surface-border-light);
 	overflow: hidden;
+	z-index: 3;
+	box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+	transition: box-shadow 0.3s;
 }
 
 header h4 {
@@ -314,7 +319,7 @@ header.with-tabs {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	gap: var(--gap);
+	gap: var(--gap-2);
 }
 
 .close {
@@ -348,6 +353,12 @@ header aside {
 	display: flex;
 	flex-direction: row;
 	gap: var(--gap-small);
+}
+
+.shadow {
+	box-shadow:
+		0 4px 6px -1px rgba(0, 0, 0, 0.1),
+		0 2px 4px -2px rgba(0, 0, 0, 0.1);
 }
 
 /* Affects child components put in the slot*/

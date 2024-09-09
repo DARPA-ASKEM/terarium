@@ -23,6 +23,7 @@ import software.uncharted.terarium.hmiserver.proxies.KeycloakProxy;
 @Slf4j
 @RequiredArgsConstructor
 public class KeycloakTokenService {
+
 	private final KeycloakProxy keycloakProxy;
 	private final RedissonClient redissonClient;
 	private final ObjectMapper objectMapper;
@@ -44,7 +45,6 @@ public class KeycloakTokenService {
 	 * @return The token if authentication was successful, null otherwise
 	 */
 	public String getToken(final String username, final String password) {
-
 		// See if we have this token cached. If it's expired, remove it from the cache
 		// and get a new one
 		String token = tokenMap.get(key(username, password));
@@ -54,13 +54,14 @@ public class KeycloakTokenService {
 		}
 
 		if (token == null) {
-
 			// Fetch a token from keycloak
 			try {
-				token = keycloakProxy.getToken(new KeycloakTokenRequest()
+				token = keycloakProxy.getToken(
+					new KeycloakTokenRequest()
 						.setClientId(config.getKeycloak().getClientId())
 						.setUsername(username)
-						.setPassword(password));
+						.setPassword(password)
+				);
 			} catch (final Exception e) {
 				log.error("Error getting token from keycloak", e);
 				return null;
@@ -109,8 +110,7 @@ public class KeycloakTokenService {
 		try {
 			final Jwt jwt = jwtDecoder.decode(token);
 			// Add a buffer of a second for the request to get to the server
-			return jwt.getExpiresAt() != null
-					&& jwt.getExpiresAt().isAfter(Instant.now().minus(1, ChronoUnit.SECONDS));
+			return (jwt.getExpiresAt() != null && jwt.getExpiresAt().isAfter(Instant.now().minus(1, ChronoUnit.SECONDS)));
 		} catch (final Exception e) {
 			log.error("Error decoding token", e);
 			return false;
@@ -128,8 +128,7 @@ public class KeycloakTokenService {
 		try {
 			final Jwt jwt = jwtDecoder.decode(token);
 			// noinspection unchecked
-			return ((List<String>) jwt.getClaimAsMap("realm_access").getOrDefault("roles", new ArrayList<>()))
-					.contains(role);
+			return ((List<String>) jwt.getClaimAsMap("realm_access").getOrDefault("roles", new ArrayList<>())).contains(role);
 		} catch (final Exception e) {
 			log.error("Error decoding token", e);
 			return false;

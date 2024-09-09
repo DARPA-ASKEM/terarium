@@ -16,23 +16,25 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
 public class NotebookSessionService
-		extends TerariumAssetServiceWithoutSearch<NotebookSession, NotebookSessionRepository> {
+	extends TerariumAssetServiceWithoutSearch<NotebookSession, NotebookSessionRepository> {
 
 	public NotebookSessionService(
-			final ObjectMapper objectMapper,
-			final Config config,
-			final ProjectService projectService,
-			final ProjectAssetService projectAssetService,
-			final NotebookSessionRepository repository,
-			final S3ClientService s3ClientService) {
+		final ObjectMapper objectMapper,
+		final Config config,
+		final ProjectService projectService,
+		final ProjectAssetService projectAssetService,
+		final NotebookSessionRepository repository,
+		final S3ClientService s3ClientService
+	) {
 		super(
-				objectMapper,
-				config,
-				projectService,
-				projectAssetService,
-				repository,
-				s3ClientService,
-				NotebookSession.class);
+			objectMapper,
+			config,
+			projectService,
+			projectAssetService,
+			repository,
+			s3ClientService,
+			NotebookSession.class
+		);
 	}
 
 	@Override
@@ -43,22 +45,27 @@ public class NotebookSessionService
 	@Override
 	@Observed(name = "function_profile")
 	public void copyAssetFiles(
-			final NotebookSession newAsset, final NotebookSession oldAsset, final Schema.Permission hasWritePermission)
-			throws IOException {
-
+		final NotebookSession newAsset,
+		final NotebookSession oldAsset,
+		final Schema.Permission hasWritePermission
+	) throws IOException {
 		throw new UnsupportedOperationException("Unimplemented");
 	}
 
 	@Override
 	@Observed(name = "function_profile")
 	public Map<String, FileExport> exportAssetFiles(final UUID assetId, final Schema.Permission hasReadPermission) {
-
 		throw new UnsupportedOperationException("Unimplemented");
 	}
 
 	@Override
 	public Integer uploadFile(final UUID uuid, final String filename, final ContentType contentType, final byte[] data)
-			throws IOException {
+		throws IOException {
+		throw new UnsupportedOperationException("Unimplemented");
+	}
+
+	@Override
+	public Integer uploadFile(final UUID assetId, final String filename, final FileExport fileExport) throws IOException {
 		throw new UnsupportedOperationException("Unimplemented");
 	}
 }

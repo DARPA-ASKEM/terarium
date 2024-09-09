@@ -39,21 +39,25 @@ public class ProjectAssetService {
 	 */
 	@Observed(name = "function_profile")
 	public List<ProjectAsset> findActiveAssetsForProject(
-			@NotNull final UUID projectId,
-			final Collection<@NotNull AssetType> types,
-			final Schema.Permission hasReadPermission) {
-		return projectAssetRepository.findAllByProjectIdAndAssetTypeInAndDeletedOnIsNullAndTemporaryFalse(
-				projectId, types);
+		@NotNull final UUID projectId,
+		final Collection<@NotNull AssetType> types,
+		final Schema.Permission hasReadPermission
+	) {
+		return projectAssetRepository.findAllByProjectIdAndAssetTypeInAndDeletedOnIsNullAndTemporaryFalse(projectId, types);
 	}
 
 	@Observed(name = "function_profile")
 	public boolean deleteByAssetId(
-			@NotNull final UUID projectId,
-			@NotNull final AssetType type,
-			@NotNull final UUID originalAssetId,
-			final Schema.Permission hasWritePermission) {
-		final ProjectAsset asset =
-				projectAssetRepository.findByProjectIdAndAssetIdAndAssetType(projectId, originalAssetId, type);
+		@NotNull final UUID projectId,
+		@NotNull final AssetType type,
+		@NotNull final UUID originalAssetId,
+		final Schema.Permission hasWritePermission
+	) {
+		final ProjectAsset asset = projectAssetRepository.findByProjectIdAndAssetIdAndAssetType(
+			projectId,
+			originalAssetId,
+			type
+		);
 		if (asset == null) {
 			return false;
 		}
@@ -64,20 +68,16 @@ public class ProjectAssetService {
 
 	@Observed(name = "function_profile")
 	public Optional<ProjectAsset> createProjectAsset(
-			final Project project,
-			final AssetType assetType,
-			final TerariumAsset asset,
-			final Schema.Permission hasWritePermission) {
-
+		final Project project,
+		final AssetType assetType,
+		final TerariumAsset asset,
+		final Schema.Permission hasWritePermission
+	) {
 		ProjectAsset projectAsset = new ProjectAsset();
 		projectAsset.setProject(project);
 		projectAsset.setAssetId(asset.getId());
 		projectAsset.setAssetType(assetType);
 		projectAsset.setAssetName(asset.getName());
-
-		if (asset instanceof Model) {
-			projectAsset.setAssetName(((Model) asset).getHeader().getName());
-		}
 
 		projectAsset = projectAssetRepository.save(projectAsset);
 
@@ -88,7 +88,9 @@ public class ProjectAssetService {
 
 	@Observed(name = "function_profile")
 	public Optional<ProjectAsset> updateProjectAsset(
-			final ProjectAsset projectAsset, final Schema.Permission hasWritePermission) {
+		final ProjectAsset projectAsset,
+		final Schema.Permission hasWritePermission
+	) {
 		if (!projectAssetRepository.existsById(projectAsset.getId())) {
 			return Optional.empty();
 		}
@@ -105,8 +107,9 @@ public class ProjectAssetService {
 			});
 		} else {
 			log.warn(
-					"Could not update the project asset name for asset with id: {} because it does not exist.",
-					asset.getId());
+				"Could not update the project asset name for asset with id: {} because it does not exist.",
+				asset.getId()
+			);
 		}
 	}
 
@@ -118,24 +121,33 @@ public class ProjectAssetService {
 
 	@Observed(name = "function_profile")
 	public Optional<ProjectAsset> getProjectAssetByNameAndType(
-			final String assetName, final AssetType assetType, final Schema.Permission hasReadPermission) {
+		final String assetName,
+		final AssetType assetType,
+		final Schema.Permission hasReadPermission
+	) {
 		return Optional.ofNullable(
-				projectAssetRepository.findByAssetNameAndAssetTypeAndDeletedOnIsNull(assetName, assetType));
+			projectAssetRepository.findByAssetNameAndAssetTypeAndDeletedOnIsNull(assetName, assetType)
+		);
 	}
 
 	@Observed(name = "function_profile")
 	public Optional<ProjectAsset> getProjectAssetByNameAndTypeAndProjectId(
-			final UUID projectId,
-			final String assetName,
-			final AssetType assetType,
-			final Schema.Permission hasReadPermission) {
-		return Optional.ofNullable(projectAssetRepository.findByProjectIdAndAssetNameAndAssetTypeAndDeletedOnIsNull(
-				projectId, assetName, assetType));
+		final UUID projectId,
+		final String assetName,
+		final AssetType assetType,
+		final Schema.Permission hasReadPermission
+	) {
+		return Optional.ofNullable(
+			projectAssetRepository.findByProjectIdAndAssetNameAndAssetTypeAndDeletedOnIsNull(projectId, assetName, assetType)
+		);
 	}
 
 	@Observed(name = "function_profile")
 	public Optional<ProjectAsset> getProjectAssetByProjectIdAndAssetId(
-			final UUID id, final UUID assetId, final Schema.Permission hasReadPermission) {
+		final UUID id,
+		final UUID assetId,
+		final Schema.Permission hasReadPermission
+	) {
 		return Optional.ofNullable(projectAssetRepository.findByProjectIdAndAssetId(id, assetId));
 	}
 
@@ -158,28 +170,32 @@ public class ProjectAssetService {
 
 	@Observed(name = "function_profile")
 	public void togglePublicForAssets(
-			final TerariumAssetServices terariumAssetServices,
-			final UUID projectId,
-			final boolean isPublic,
-			final Schema.Permission hasWritePermission)
-			throws IOException {
-
+		final TerariumAssetServices terariumAssetServices,
+		final UUID projectId,
+		final boolean isPublic,
+		final Schema.Permission hasWritePermission
+	) throws IOException {
 		final List<ProjectAsset> projectAssets =
-				projectAssetRepository.findAllByProjectIdAndDeletedOnIsNullAndTemporaryFalse(projectId);
+			projectAssetRepository.findAllByProjectIdAndDeletedOnIsNullAndTemporaryFalse(projectId);
 
 		for (final ProjectAsset projectAsset : projectAssets) {
-
 			final ITerariumAssetService<? extends TerariumAsset> terariumAssetService =
-					terariumAssetServices.getServiceByType(projectAsset.getAssetType());
+				terariumAssetServices.getServiceByType(projectAsset.getAssetType());
 
-			final Optional<? extends TerariumAsset> asset =
-					terariumAssetService.getAsset(projectAsset.getAssetId(), hasWritePermission);
+			final Optional<? extends TerariumAsset> asset = terariumAssetService.getAsset(
+				projectAsset.getAssetId(),
+				hasWritePermission
+			);
 
 			if (asset.isPresent()) {
 				asset.get().setPublicAsset(isPublic);
 
 				terariumAssetServices.updateAsset(
-						(TerariumAsset) asset.get(), projectId, projectAsset.getAssetType(), hasWritePermission);
+					(TerariumAsset) asset.get(),
+					projectId,
+					projectAsset.getAssetType(),
+					hasWritePermission
+				);
 			}
 		}
 	}

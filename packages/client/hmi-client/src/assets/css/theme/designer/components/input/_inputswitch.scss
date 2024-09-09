@@ -38,8 +38,10 @@
         }
     }
 
-    &.p-inputswitch-checked {
-        .p-inputswitch-slider {
+    &.p-inputswitch-checked,
+		& .p-inputswitch-input:checked {
+        .p-inputswitch-slider,
+				& + .p-inputswitch-slider {
             background: $inputSwitchSliderOnBg;
 
             &:before {

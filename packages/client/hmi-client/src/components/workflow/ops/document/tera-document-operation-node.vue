@@ -5,7 +5,7 @@
 			<h6>
 				<span class="truncate-after-three-lines">{{ documentName }}</span>
 			</h6>
-			<tera-operator-placeholder :operation-type="node.operationType" />
+			<tera-operator-placeholder :node="node" />
 			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
 		<template v-else>
@@ -16,7 +16,7 @@
 				placeholder="Select a document"
 				@update:model-value="onDocumentChange"
 			/>
-			<tera-operator-placeholder :operation-type="node.operationType" />
+			<tera-operator-placeholder :node="node" />
 		</template>
 	</main>
 </template>
@@ -55,11 +55,7 @@ onMounted(async () => {
 		document.value = await getDocumentAsset(props.node.state.documentId);
 
 		// If the name is different, update the name
-		if (
-			document.value &&
-			documentName.value !== document.value.name &&
-			!isEmpty(document.value.name)
-		) {
+		if (document.value && documentName.value !== document.value.name && !isEmpty(document.value.name)) {
 			documentName.value = document.value.name;
 		}
 	}

@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,6 +22,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Prove
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceSearchResult;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
+import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 
@@ -35,76 +37,97 @@ public class ProvenanceControllerTests extends TerariumApplicationTests {
 	@Autowired
 	private ProjectService projectService;
 
+	@Autowired
+	private ProjectSearchService projectSearchService;
+
 	Project project;
 
 	@BeforeEach
 	public void setup() throws IOException {
+		projectSearchService.setupIndexAndAliasAndEnsureEmpty();
+		project = projectService.createProject(
+			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
+		);
+	}
 
-		project = projectService.createProject((Project)
-				new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description"));
+	@AfterEach
+	public void teardown() throws IOException {
+		projectSearchService.teardownIndexAndAlias();
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateProvenance() throws Exception {
-
 		final Provenance provenance = new Provenance()
-				.setLeft(UUID.randomUUID())
-				.setLeftType(ProvenanceType.MODEL)
-				.setRight(UUID.randomUUID())
-				.setRightType(ProvenanceType.EQUATION)
-				.setRelationType(ProvenanceRelationType.EXTRACTED_FROM);
+			.setLeft(UUID.randomUUID())
+			.setLeftType(ProvenanceType.MODEL)
+			.setRight(UUID.randomUUID())
+			.setRightType(ProvenanceType.EQUATION)
+			.setRelationType(ProvenanceRelationType.EXTRACTED_FROM);
 
-		mockMvc.perform(MockMvcRequestBuilders.post("/provenance")
-						.with(csrf())
-						.contentType("application/json")
-						.content(objectMapper.writeValueAsString(provenance)))
-				.andExpect(status().isCreated());
+		mockMvc
+			.perform(
+				MockMvcRequestBuilders.post("/provenance")
+					.with(csrf())
+					.contentType("application/json")
+					.content(objectMapper.writeValueAsString(provenance))
+			)
+			.andExpect(status().isCreated());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSearchProvenanceConnectedNodes() throws Exception {
-
 		final UUID modelId = UUID.randomUUID();
 		final UUID equationId = UUID.randomUUID();
 		final UUID codeId = UUID.randomUUID();
 		final UUID docId = UUID.randomUUID();
 
-		provenanceService.createProvenance(new Provenance()
+		provenanceService.createProvenance(
+			new Provenance()
 				.setLeft(modelId)
 				.setLeftType(ProvenanceType.MODEL)
 				.setRight(equationId)
 				.setRightType(ProvenanceType.EQUATION)
-				.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
-		provenanceService.createProvenance(new Provenance()
+				.setRelationType(ProvenanceRelationType.EXTRACTED_FROM)
+		);
+		provenanceService.createProvenance(
+			new Provenance()
 				.setLeft(modelId)
 				.setLeftType(ProvenanceType.MODEL)
 				.setRight(codeId)
 				.setRightType(ProvenanceType.CODE)
-				.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
-		provenanceService.createProvenance(new Provenance()
+				.setRelationType(ProvenanceRelationType.EXTRACTED_FROM)
+		);
+		provenanceService.createProvenance(
+			new Provenance()
 				.setLeft(modelId)
 				.setLeftType(ProvenanceType.MODEL)
 				.setRight(docId)
 				.setRightType(ProvenanceType.DOCUMENT)
-				.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
+				.setRelationType(ProvenanceRelationType.EXTRACTED_FROM)
+		);
 
 		final ProvenanceQueryParam payload = new ProvenanceQueryParam()
-				.setRootId(modelId)
-				.setRootType(ProvenanceType.MODEL)
-				.setEdges(true)
-				.setNodes(true);
+			.setRootId(modelId)
+			.setRootType(ProvenanceType.MODEL)
+			.setEdges(true)
+			.setNodes(true);
 
-		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/provenance/search/connected-nodes")
-						.contentType("application/json")
-						.content(objectMapper.writeValueAsString(payload))
-						.with(csrf()))
-				.andExpect(status().isOk())
-				.andReturn();
+		final MvcResult res = mockMvc
+			.perform(
+				MockMvcRequestBuilders.post("/provenance/search/connected-nodes")
+					.contentType("application/json")
+					.content(objectMapper.writeValueAsString(payload))
+					.with(csrf())
+			)
+			.andExpect(status().isOk())
+			.andReturn();
 
-		final ProvenanceSearchResult results =
-				objectMapper.readValue(res.getResponse().getContentAsString(), ProvenanceSearchResult.class);
+		final ProvenanceSearchResult results = objectMapper.readValue(
+			res.getResponse().getContentAsString(),
+			ProvenanceSearchResult.class
+		);
 
 		Assertions.assertEquals(4, results.getNodes().size());
 		Assertions.assertEquals(3, results.getEdges().size());
@@ -113,7 +136,6 @@ public class ProvenanceControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSearchProvenanceModelsFromCode() throws Exception {
-
 		final UUID modelIdA = UUID.randomUUID();
 		final UUID codeIdA1 = UUID.randomUUID();
 		final UUID codeIdA2 = UUID.randomUUID();
@@ -123,72 +145,92 @@ public class ProvenanceControllerTests extends TerariumApplicationTests {
 		final UUID codeIdB1 = UUID.randomUUID();
 		final UUID codeIdB2 = UUID.randomUUID();
 
-		provenanceService.createProvenance(new Provenance()
+		provenanceService.createProvenance(
+			new Provenance()
 				.setLeft(modelIdA)
 				.setLeftType(ProvenanceType.MODEL)
 				.setRight(codeIdA1)
 				.setRightType(ProvenanceType.CODE)
-				.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
-		provenanceService.createProvenance(new Provenance()
+				.setRelationType(ProvenanceRelationType.EXTRACTED_FROM)
+		);
+		provenanceService.createProvenance(
+			new Provenance()
 				.setLeft(modelIdA)
 				.setLeftType(ProvenanceType.MODEL)
 				.setRight(codeIdA2)
 				.setRightType(ProvenanceType.CODE)
-				.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
-		provenanceService.createProvenance(new Provenance()
+				.setRelationType(ProvenanceRelationType.EXTRACTED_FROM)
+		);
+		provenanceService.createProvenance(
+			new Provenance()
 				.setLeft(modelIdA)
 				.setLeftType(ProvenanceType.MODEL)
 				.setRight(codeIdA3)
 				.setRightType(ProvenanceType.CODE)
-				.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
+				.setRelationType(ProvenanceRelationType.EXTRACTED_FROM)
+		);
 
 		final ProvenanceQueryParam payloadA = new ProvenanceQueryParam()
-				.setRootId(modelIdA)
-				.setRootType(ProvenanceType.MODEL)
-				.setEdges(true)
-				.setNodes(true);
+			.setRootId(modelIdA)
+			.setRootType(ProvenanceType.MODEL)
+			.setEdges(true)
+			.setNodes(true);
 
-		final MvcResult resA = mockMvc.perform(MockMvcRequestBuilders.post("/provenance/search/connected-nodes")
-						.contentType("application/json")
-						.content(objectMapper.writeValueAsString(payloadA))
-						.with(csrf()))
-				.andExpect(status().isOk())
-				.andReturn();
+		final MvcResult resA = mockMvc
+			.perform(
+				MockMvcRequestBuilders.post("/provenance/search/connected-nodes")
+					.contentType("application/json")
+					.content(objectMapper.writeValueAsString(payloadA))
+					.with(csrf())
+			)
+			.andExpect(status().isOk())
+			.andReturn();
 
-		final ProvenanceSearchResult resultsA =
-				objectMapper.readValue(resA.getResponse().getContentAsString(), ProvenanceSearchResult.class);
+		final ProvenanceSearchResult resultsA = objectMapper.readValue(
+			resA.getResponse().getContentAsString(),
+			ProvenanceSearchResult.class
+		);
 
 		Assertions.assertEquals(4, resultsA.getNodes().size());
 		Assertions.assertEquals(3, resultsA.getEdges().size());
 
-		provenanceService.createProvenance(new Provenance()
+		provenanceService.createProvenance(
+			new Provenance()
 				.setLeft(modelIdB)
 				.setLeftType(ProvenanceType.MODEL)
 				.setRight(codeIdB1)
 				.setRightType(ProvenanceType.CODE)
-				.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
-		provenanceService.createProvenance(new Provenance()
+				.setRelationType(ProvenanceRelationType.EXTRACTED_FROM)
+		);
+		provenanceService.createProvenance(
+			new Provenance()
 				.setLeft(modelIdB)
 				.setLeftType(ProvenanceType.MODEL)
 				.setRight(codeIdB2)
 				.setRightType(ProvenanceType.CODE)
-				.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
+				.setRelationType(ProvenanceRelationType.EXTRACTED_FROM)
+		);
 
 		final ProvenanceQueryParam payloadB = new ProvenanceQueryParam()
-				.setRootId(modelIdB)
-				.setRootType(ProvenanceType.MODEL)
-				.setEdges(true)
-				.setNodes(true);
+			.setRootId(modelIdB)
+			.setRootType(ProvenanceType.MODEL)
+			.setEdges(true)
+			.setNodes(true);
 
-		final MvcResult resB = mockMvc.perform(MockMvcRequestBuilders.post("/provenance/search/connected-nodes")
-						.contentType("application/json")
-						.content(objectMapper.writeValueAsString(payloadB))
-						.with(csrf()))
-				.andExpect(status().isOk())
-				.andReturn();
+		final MvcResult resB = mockMvc
+			.perform(
+				MockMvcRequestBuilders.post("/provenance/search/connected-nodes")
+					.contentType("application/json")
+					.content(objectMapper.writeValueAsString(payloadB))
+					.with(csrf())
+			)
+			.andExpect(status().isOk())
+			.andReturn();
 
-		final ProvenanceSearchResult resultsB =
-				objectMapper.readValue(resB.getResponse().getContentAsString(), ProvenanceSearchResult.class);
+		final ProvenanceSearchResult resultsB = objectMapper.readValue(
+			resB.getResponse().getContentAsString(),
+			ProvenanceSearchResult.class
+		);
 
 		Assertions.assertEquals(3, resultsB.getNodes().size());
 		Assertions.assertEquals(2, resultsB.getEdges().size());

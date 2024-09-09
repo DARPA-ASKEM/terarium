@@ -14,6 +14,7 @@ import software.uncharted.terarium.hmiserver.utils.MatchUtil;
 
 @ExtendWith(OutputCaptureExtension.class)
 public class CacheServiceTests extends TerariumApplicationTests {
+
 	@Autowired
 	CacheService cacheService;
 
@@ -25,8 +26,7 @@ public class CacheServiceTests extends TerariumApplicationTests {
 
 	@AfterEach
 	public void afterEach() {
-		cacheManager.getCacheNames().forEach(name -> Objects.requireNonNull(cacheManager.getCache(name))
-				.clear());
+		cacheManager.getCacheNames().forEach(name -> Objects.requireNonNull(cacheManager.getCache(name)).clear());
 	}
 
 	// @Test

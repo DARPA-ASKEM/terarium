@@ -1,43 +1,45 @@
 <template>
-	<tera-slider
-		:content-width="contentWidth"
-		:tab-width="tabWidth"
-		:direction="direction"
-		:is-open="isOpen"
-	>
+	<tera-slider :content-width="contentWidth" :tab-width="tabWidth" :direction="direction" :is-open="isOpen">
 		<template v-slot:content>
-			<header class="slider-header content sticky">
-				<i
-					:class="`slider-header-item pi ${directionMap[direction].iconOpen}`"
-					@click="emit('update:isOpen', false)"
-				/>
-				<slot name="header"></slot>
-				<section>
-					<h4 class="slider-header-item">{{ header }}</h4>
-					<slot name="subHeader"></slot>
-				</section>
-			</header>
-			<slot name="content"></slot>
+			<aside @scroll="onScroll">
+				<header :class="{ shadow: isScrolled }">
+					<Button
+						:icon="`pi ${directionMap[direction].iconOpen}`"
+						@click="emit('update:isOpen', false)"
+						text
+						rounded
+						size="large"
+					/>
+					<h4>{{ header }}</h4>
+				</header>
+				<slot name="content" />
+			</aside>
+			<slot name="overlay" />
 		</template>
 		<template v-slot:tab>
-			<div :class="`slider-tab-header ${direction}`">
-				<i
-					:class="`slider-header-item pi ${directionMap[direction].iconClosed}`"
+			<header :class="`tab ${direction}`">
+				<Button
+					:icon="`pi ${directionMap[direction].iconClosed}`"
 					@click="emit('update:isOpen', true)"
+					text
+					rounded
+					size="large"
 				/>
-				<h5 class="slider-header-item">{{ header }}</h5>
-				<Badge v-if="indicatorValue" :value="indicatorValue" class="selected-resources-count" />
-			</div>
-			<slot name="tab"></slot>
+				<h5>{{ header }}</h5>
+				<Badge v-if="indicatorValue" :value="indicatorValue" />
+			</header>
+			<slot name="tab" />
 		</template>
 		<template v-if="$slots.footerButtons" v-slot:footerButtons>
-			<slot name="footerButtons"></slot>
+			<slot name="footerButtons" />
 		</template>
 	</tera-slider>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import Badge from 'primevue/badge';
+import Button from 'primevue/button';
 import TeraSlider from './tera-slider.vue';
 
 defineProps({
@@ -81,58 +83,53 @@ const directionMap = {
 		iconClosed: 'pi-angle-double-left'
 	}
 };
+
+/* This is for adding a subtle shadow to the header when the panel is scrolled */
+const isScrolled = ref(false);
+const onScroll = (event: Event) => {
+	// Check if the panel is scrolled beyond a certain point
+	isScrolled.value = (event.target as HTMLElement).scrollTop > 0;
+};
 </script>
 
 <style scoped>
-i {
-	font-size: 1.25rem;
-	cursor: pointer;
-}
-
-.slider-header {
+header {
+	position: sticky;
+	top: 0;
+	z-index: 3;
 	display: flex;
-	align-items: start;
-}
-
-section {
-	display: flex;
-	flex-direction: column;
-}
-
-.slider-header.content {
+	align-items: center;
 	flex-direction: row-reverse;
 	justify-content: space-between;
-	padding: 1rem;
+	padding: var(--gap-2);
+	padding-left: var(--gap);
+	gap: var(--gap);
+	background-color: rgba(255, 255, 255, 0.8);
+	backdrop-filter: blur(3px);
+	&.shadow {
+		box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.1);
+	}
 }
 
-.slider-header.tab {
-	justify-content: center;
+aside {
+	height: 100%;
+	overflow-y: auto;
 }
 
-i.slider-header-item {
-	color: var(--text-color-subdued);
+.p-button.p-button-icon-only.p-button-rounded {
+	height: 2.5rem;
 }
 
-.slider-tab-header {
-	align-items: center;
-	display: flex;
+.tab {
 	flex-direction: column;
-	padding: 1rem;
-	gap: 2rem;
+	padding: var(--gap-2);
 }
 
-.slider-tab-header h4 {
-	text-align: left;
-	line-height: 1em;
-	margin-bottom: 1rem;
-}
-
-.slider-tab-header h5 {
-	transform: rotate(0deg);
+h5 {
 	writing-mode: vertical-lr;
 }
 
-.selected-resources-count {
+.p-badge {
 	background-color: var(--surface-200);
 	color: var(--text-color-primary);
 	font-size: 1rem;
@@ -140,13 +137,5 @@ i.slider-header-item {
 	height: 2rem;
 	line-height: 2rem;
 	font-weight: var(--font-weight);
-}
-
-.sticky {
-	z-index: 3;
-	position: sticky;
-	top: 0;
-	background-color: rgba(255, 255, 255, 0.8);
-	backdrop-filter: blur(3px);
 }
 </style>

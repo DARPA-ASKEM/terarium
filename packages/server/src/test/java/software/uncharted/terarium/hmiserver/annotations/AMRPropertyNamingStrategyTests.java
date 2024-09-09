@@ -16,6 +16,7 @@ public class AMRPropertyNamingStrategyTests extends TerariumApplicationTests {
 	@AMRSchemaType
 	@Data
 	static class MyAMRType {
+
 		@JsonProperty("my_field")
 		String myField;
 
@@ -29,13 +30,11 @@ public class AMRPropertyNamingStrategyTests extends TerariumApplicationTests {
 
 	@Test
 	void testAMRPropertyNamingStrategy() throws Exception {
-
 		final ObjectMapper mapper = new ObjectMapper()
-				.setPropertyNamingStrategy(
-						new AMRPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy()));
+			.setPropertyNamingStrategy(new AMRPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy()));
 
 		final String jsonBefore =
-				"{\"my_field\":\"valueA\",\"myOtherField\":\"123\",\"as_is_snake\":\"value\",\"asIsCamel\": \"456\"}";
+			"{\"my_field\":\"valueA\",\"myOtherField\":\"123\",\"as_is_snake\":\"value\",\"asIsCamel\": \"456\"}";
 
 		// deserialize it
 		final MyAMRType testClass = mapper.readValue(jsonBefore, MyAMRType.class);

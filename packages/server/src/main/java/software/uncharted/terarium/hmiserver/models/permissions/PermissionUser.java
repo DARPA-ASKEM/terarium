@@ -10,6 +10,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @Data
 @Accessors(chain = true)
 public class PermissionUser {
+
 	private String id;
 	private String firstName;
 	private String lastName;

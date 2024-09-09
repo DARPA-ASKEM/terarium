@@ -1,0 +1,59 @@
+.tera-input {
+	display: flex;
+	& > label {
+			background-color: none;
+			color: var(--text-color-secondary);
+			cursor: text;
+			padding-right: var(--gap-1-5);
+			font-size: var(--font-caption);
+			align-self: center;
+	};
+	& > main {
+		display: flex;
+		flex: 1 1 0;
+		justify-content: space-between;
+		align-items: center;
+		padding: var(--gap-xsmall) var(--gap-small);
+		background-color: var(--surface-section);
+		border: 1px solid var(--surface-border-alt);
+		border-radius: var(--border-radius);
+		cursor: text;
+		transition: border-color 0.3s ease-in-out;
+		font-family: var(--font-family);
+		&:has(*:disabled) {
+			opacity: 0.5;
+		}
+		&:has(*:focus) {
+			border-color: var(--primary-color);
+		}
+		&.error {
+			border-color: var(--error-border-color);
+		}
+		& > i {
+			margin-right: var(--gap-1);
+		}
+		& > input {
+			min-width: 0;
+			font-family: var(--font-family);
+			font-feature-settings: 'tnum';
+			flex-grow: 1;
+			border: none;
+			margin: 0;
+			&::-webkit-inner-spin-button,
+			&::-webkit-outer-spin-button {
+			-webkit-appearance: none;
+	}
+		}
+	}
+
+	& > aside {
+		color: var(--error-message-color);
+		font-size: var(--font-caption);
+		word-wrap: break-word;
+		display: flex;
+		align-items: center;
+		i {
+			margin-right: var(--gap-2);
+		}
+	}
+}

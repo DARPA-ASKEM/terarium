@@ -1,16 +1,8 @@
 import { EventEmitter, EventName, EventCallback } from '@/utils/emitter';
 import { SessionContext } from '@jupyterlab/apputils';
-import {
-	ServerConnection,
-	KernelManager,
-	KernelSpecManager,
-	SessionManager
-} from '@jupyterlab/services';
+import { ServerConnection, KernelManager, KernelSpecManager, SessionManager } from '@jupyterlab/services';
 import { CodeMirrorMimeTypeService } from '@jupyterlab/codemirror';
-import {
-	standardRendererFactories as initialFactories,
-	RenderMimeRegistry
-} from '@jupyterlab/rendermime';
+import { standardRendererFactories as initialFactories, RenderMimeRegistry } from '@jupyterlab/rendermime';
 import { JSONObject } from '@lumino/coreutils';
 import * as messages from '@jupyterlab/services/lib/kernel/messages';
 import * as kernel from '@jupyterlab/services/lib/kernel/kernel';
@@ -19,6 +11,7 @@ import API from '@/api/api';
 import { v4 as uuidv4 } from 'uuid';
 import { createMessage as createMessageWrapper } from '@jupyterlab/services/lib/kernel/messages';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
+import { CsvAsset } from '@/types/Types';
 
 declare module '@jupyterlab/services/lib/kernel/messages' {
 	export function createMessage(options: JSONObject): JupyterMessage;
@@ -133,6 +126,16 @@ export interface IJupyterMessage<T extends JupyterMessageType = JupyterMessageTy
 	 * The parent message
 	 */
 	parent_header: messages.IHeader | any;
+}
+
+export interface INotebookItem {
+	query_id: string;
+	query: string | null;
+	timestamp: string;
+	messages: JupyterMessage[];
+	resultingCsv: CsvAsset | null;
+	executions: any[];
+	autoRun?: boolean;
 }
 
 export declare type JupyterMessage = IJupyterMessage | messages.Message;

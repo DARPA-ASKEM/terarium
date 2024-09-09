@@ -7,8 +7,8 @@
 				<section class="w-full">
 					<h3>From data to discovery</h3>
 					<p>
-						Accelerate scientific modeling and simulation using AI. Search available knowledge,
-						enhance extracted models and data, and test scenarios to simulate real-world problems.
+						Accelerate scientific modeling and simulation using AI. Search available knowledge, enhance extracted models
+						and data, and test scenarios to simulate real-world problems.
 					</p>
 					<!--Placeholder - button is disabled for now-->
 					<!-- <Button
@@ -50,12 +50,12 @@
 				<TabView @tab-change="tabChange">
 					<TabPanel v-for="(tab, i) in projectsTabs" :header="tab.title" :key="i">
 						<section class="filter-and-sort">
-							<div>
-								<InputText
+							<div class="pr-3">
+								<tera-input-text
+									class="w-16rem"
 									v-model="searchProjects"
 									placeholder="Search for projects"
 									id="searchProject"
-									class="p-inputtext"
 								/>
 							</div>
 							<div>
@@ -95,10 +95,7 @@
 							</div>
 						</section>
 						<section class="projects">
-							<div
-								v-if="!isLoadingProjects && isEmpty(searchedAndFilterProjects)"
-								class="no-projects"
-							>
+							<div v-if="!isLoadingProjects && isEmpty(searchedAndFilterProjects)" class="no-projects">
 								<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200"></Vue3Lottie>
 								<!--
 								<img src="@assets/svg/seed.svg" alt="" />
@@ -112,11 +109,12 @@
 											@click="openCreateProjectModal"
 										/>.
 									</p>
-									<p>Your projects will be displayed on this page.</p>
+								</template>
+								<template v-if="tab.title === TabTitles.SampleProjects">
+									<p class="mt-4">Sample projects coming soon</p>
 								</template>
 								<template v-else-if="tab.title === TabTitles.PublicProjects">
 									<h3>You don't have any shared projects</h3>
-									<p>Shared projects will be displayed on this page</p>
 								</template>
 							</div>
 							<ul v-else-if="view === ProjectsView.Cards" class="project-cards-grid">
@@ -168,7 +166,7 @@ import { useProjectMenu } from '@/composables/project-menu';
 import { Project } from '@/types/Types';
 import { Vue3Lottie } from 'vue3-lottie';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
-import InputText from 'primevue/inputtext';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { FilterService } from 'primevue/api';
 
 const { isProjectConfigDialogVisible, menuProject } = useProjectMenu();
@@ -206,9 +204,7 @@ const viewOptions = ref([
 const myFilteredSortedProjects = computed(() => {
 	const projects = useProjects().allProjects.value;
 	if (!projects) return [];
-	const myProjects = projects.filter(({ userPermission }) =>
-		['creator', 'writer'].includes(userPermission ?? '')
-	);
+	const myProjects = projects.filter(({ userPermission }) => ['creator', 'writer'].includes(userPermission ?? ''));
 	return filterAndSortProjects(myProjects);
 });
 
@@ -236,12 +232,7 @@ const searchedAndFilterProjects = computed(() => {
 	const currentTabIndex = activeTabIndex.value;
 	const projects = projectsTabs.value[currentTabIndex].projects;
 	const userInput = searchProjects.value.trim();
-	const result = FilterService.filter(
-		projects,
-		['name', 'description', 'userName'],
-		userInput,
-		'contains'
-	);
+	const result = FilterService.filter(projects, ['name', 'description', 'userName'], userInput, 'contains');
 	return filterAndSortProjects(result);
 });
 
@@ -253,18 +244,14 @@ function sortProjectByDates(projects: Project[], dateType: DateType, sorting: 'A
 		const dateValueB = b[dateType]?.toString();
 		const dateA = dateValueA ? new Date(dateValueA) : new Date(0);
 		const dateB = dateValueB ? new Date(dateValueB) : new Date(0);
-		return sorting === 'ASC'
-			? dateA.getTime() - dateB.getTime()
-			: dateB.getTime() - dateA.getTime();
+		return sorting === 'ASC' ? dateA.getTime() - dateB.getTime() : dateB.getTime() - dateA.getTime();
 	});
 }
 
 function filterAndSortProjects(projects: Project[]) {
 	if (projects) {
 		if (selectedSort.value === 'Alphabetical') {
-			return projects.sort((a, b) =>
-				(a.name ?? '').toLowerCase().localeCompare((b.name ?? '').toLowerCase())
-			);
+			return projects.sort((a, b) => (a.name ?? '').toLowerCase().localeCompare((b.name ?? '').toLowerCase()));
 		}
 		if (selectedSort.value === 'Last updated (descending)') {
 			return sortProjectByDates(projects, 'updatedOn', 'DESC');
@@ -312,9 +299,10 @@ function openProject(projectId: string) {
 	router.push({ name: RouteName.Project, params: { projectId } });
 }
 
-onMounted(() => {
+onMounted(async () => {
 	// Clear all...
 	queryStore.reset(); // Facets queries.
+	await useProjects().getAll();
 });
 </script>
 
@@ -388,10 +376,6 @@ header > section > button {
 	display: flex;
 	align-items: center;
 	padding-left: 0.5rem;
-}
-
-.p-inputtext {
-	min-width: 17rem;
 }
 
 .filter-and-sort {
@@ -482,8 +466,7 @@ a {
 }
 
 .video-thumbnail {
-	background-image: radial-gradient(circle, var(--primary-color), #004f3c),
-		url('@/assets/images/video-thumbnail.png');
+	background-image: radial-gradient(circle, var(--primary-color), #004f3c), url('@/assets/images/video-thumbnail.png');
 	background-blend-mode: multiply;
 	background-size: cover;
 	background-position: center;

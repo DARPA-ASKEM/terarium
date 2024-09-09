@@ -88,6 +88,15 @@ export interface Artifact extends TerariumAsset {
     metadata?: any;
 }
 
+export interface ChartAnnotation extends TerariumAsset {
+    nodeId: string;
+    outputId: string;
+    chartId: string;
+    layerSpec: any;
+    llmGenerated: boolean;
+    metadata: any;
+}
+
 export interface CsvAsset {
     csv: string[][];
     stats?: CsvColumnStats[];
@@ -179,18 +188,6 @@ export interface DatasetColumn extends TerariumEntity {
     dataset?: Dataset;
 }
 
-export interface AddDocumentAssetFromXDDRequest {
-    document: Document;
-    projectId: string;
-    domain: string;
-}
-
-export interface AddDocumentAssetFromXDDResponse {
-    documentAssetId: string;
-    pdfUploadError: boolean;
-    extractionJobId: string;
-}
-
 export interface DocumentAsset extends TerariumAsset {
     userId?: string;
     documentUrl?: string;
@@ -229,6 +226,12 @@ export interface ModelFramework extends TerariumAssetThatSupportsAdditionalPrope
     semantics: string;
 }
 
+export interface InferredParameterSemantic extends Semantic {
+    referenceId: string;
+    distribution: ModelDistribution;
+    default: boolean;
+}
+
 export interface InitialSemantic extends Semantic {
     target: string;
     expression: string;
@@ -236,12 +239,12 @@ export interface InitialSemantic extends Semantic {
 }
 
 export interface ModelConfiguration extends TerariumAsset {
-    calibrationRunId?: string;
     modelId: string;
     simulationId?: string;
     observableSemanticList: ObservableSemantic[];
     parameterSemanticList: ParameterSemantic[];
     initialSemanticList: InitialSemantic[];
+    inferredParameterList?: InferredParameterSemantic[];
 }
 
 export interface ObservableSemantic extends Semantic {
@@ -278,152 +281,15 @@ export interface Transition {
     id: string;
     input: string[];
     output: string[];
+    name?: string;
+    description?: string;
+    expression?: string;
     grounding?: ModelGrounding;
     properties?: Properties;
 }
 
-export interface Configuration {
-    parameters: { [index: string]: ConfigurationParameter };
-    initialConditions: { [index: string]: ConfigurationCondition };
-    boundryConditions: { [index: string]: ConfigurationCondition };
-    datasets: { [index: string]: ConfigurationDataset };
-}
-
-export interface ConfigurationCondition {
-    _type: string;
-    type: string;
-    value: string;
-    domainMesh: string;
-}
-
-export interface ConfigurationDataset {
-    _type: string;
-    type: string;
-    name: string;
-    description: string;
-    file: ConfigurationDatasetFile;
-}
-
-export interface ConfigurationDatasetFile {
-    _type: string;
-    uri: string;
-    format: string;
-    shape: number[];
-}
-
-export interface ConfigurationHeader {
-    id: string;
-    description: string;
-    name: string;
-    parentContext: string;
-}
-
-export interface ConfigurationParameter {
-    _type: string;
-    type: string;
-    value: any;
-}
-
-export interface Context {
-    constants: { [index: string]: ContextConstant };
-    spatialConstraints: any;
-    temporalConstraints: any;
-    primalDualRelations: ContextPrimalDualRelation[];
-    meshSubmeshRelations: ContextMeshSubmeshRelation[];
-    meshes: ContextMesh[];
-}
-
-export interface ContextConstant {
-    _type: string;
-    value: any;
-}
-
-export interface ContextFile {
-    uri: string;
-    format: string;
-}
-
-export interface ContextHeader {
-    id: string;
-    description: string;
-    name: string;
-    parentModel: string;
-}
-
-export interface ContextMesh {
-    id: string;
-    description: string;
-    dimensionality: any;
-    vertexCount: number;
-    edgeCount: number;
-    faceCount: number;
-    volumeCount: number;
-    regions: any[];
-    checksum: string;
-    file: ContextFile;
-}
-
-export interface ContextMeshSubmeshRelation {
-    mesh: string;
-    submesh: string;
-    relation: any;
-}
-
-export interface ContextPrimalDualRelation {
-    primal: string;
-    dual: string;
-    method: any;
-}
-
-export interface DecapodesComponent {
-    modelInterface: string[];
-    model: DecapodesExpression;
-    _type: string;
-}
-
-export interface DecapodesConfiguration extends TerariumAsset {
-    header: ConfigurationHeader;
-    configuration: Configuration;
-}
-
-export interface DecapodesContext extends TerariumAsset {
-    header: ContextHeader;
-    context: Context;
-}
-
-export interface DecapodesEquation {
-    lhs: any;
-    rhs: any;
-    _type: string;
-}
-
-export interface DecapodesExpression {
-    context: any[];
-    equations: DecapodesEquation[];
-    _type: string;
-}
-
-export interface DecapodesTerm {
-    name?: string;
-    var?: DecapodesTerm;
-    symbol?: string;
-    space?: string;
-    fs?: string[];
-    arg?: DecapodesTerm;
-    f?: string;
-    arg1?: DecapodesTerm;
-    arg2?: DecapodesTerm;
-    args?: DecapodesTerm[];
-    _type: string;
-}
-
 export interface NotebookSession extends TerariumAsset {
     data: any;
-}
-
-export interface PetriNetModel {
-    states: PetriNetState[];
-    transitions: PetriNetTransition[];
 }
 
 export interface Project extends TerariumAsset {
@@ -528,14 +394,6 @@ export interface Simulation extends TerariumAsset {
 export interface SimulationUpdate extends TerariumEntity {
     data: any;
     simulation: Simulation;
-}
-
-export interface DocumentsResponseOK extends XDDResponseOK {
-    data: Document[];
-    nextPage: string;
-    scrollId: string;
-    hits: number;
-    facets: { [index: string]: XDDFacetsItemResponse };
 }
 
 export interface EvaluationScenarioSummary {
@@ -695,14 +553,6 @@ export interface CalibrationRequestCiemss {
     engine: string;
 }
 
-export interface CalibrationRequestJulia {
-    modelConfigId: string;
-    extra: any;
-    timespan?: TimeSpan;
-    dataset: DatasetLocation;
-    engine: string;
-}
-
 export interface CiemssStatusUpdate {
     loss: number;
     progress: number;
@@ -728,11 +578,10 @@ export interface OptimizeRequestCiemss {
     modelConfigId: string;
     timespan: TimeSpan;
     optimizeInterventions?: OptimizeInterventions;
-    fixedStaticParameterInterventions?: Intervention[];
-    stepSize?: number;
+    fixedInterventions?: Intervention[];
+    loggingStepSize?: number;
     qoi: OptimizeQoi;
     riskBound: number;
-    initialGuessInterventions: number[];
     boundsInterventions: number[][];
     extra: OptimizeExtra;
     engine: string;
@@ -801,6 +650,7 @@ export interface OptimizeExtra {
     isMinimized?: boolean;
     alpha?: number;
     solverMethod?: string;
+    solverStepSize?: number;
 }
 
 export interface OptimizeInterventions {
@@ -883,31 +733,6 @@ export interface Links {
     self: string;
 }
 
-export interface Document {
-    gddId: string;
-    title: string;
-    abstractText: string;
-    journal: string;
-    type: string;
-    number: string;
-    pages: string;
-    publisher: string;
-    volume: string;
-    year: string;
-    link: { [index: string]: string }[];
-    author: { [index: string]: string }[];
-    identifier: { [index: string]: string }[];
-    githubUrls: string[];
-    knownTerms: { [index: string]: string[] };
-    highlight: string[];
-    relatedDocuments: Document[];
-    relatedExtractions: Extraction[];
-    knownEntities: KnownEntities;
-    knownEntitiesCounts: KnownEntitiesCounts;
-    citationList: { [index: string]: string }[];
-    citedBy: { [index: string]: any }[];
-}
-
 export interface DocumentExtraction {
     fileName: string;
     assetType: ExtractionAssetType;
@@ -972,21 +797,6 @@ export interface Properties {
     description?: string;
 }
 
-export interface PetriNetState {
-    id: string;
-    name: string;
-    grounding: ModelGrounding;
-    initial: ModelExpression;
-}
-
-export interface PetriNetTransition {
-    id: string;
-    input: string[];
-    output: string[];
-    grounding?: ModelGrounding;
-    properties: PetriNetTransitionProperties;
-}
-
 export interface ProvenanceNode {
     id: string;
     type: ProvenanceType;
@@ -997,17 +807,6 @@ export interface ProvenanceEdge {
     relationType: ProvenanceRelationType;
     left: ProvenanceNode;
     right: ProvenanceNode;
-}
-
-export interface XDDFacetsItemResponse {
-    buckets: XDDFacetBucket[];
-    doc_count_error_upper_bound: number;
-    sum_other_doc_count: number;
-}
-
-export interface XDDResponseOK {
-    v: number;
-    license: string;
 }
 
 export interface PermissionRole {
@@ -1025,27 +824,6 @@ export interface AuthorityInstance {
     id: number;
     mask: number;
     authority: Authority;
-}
-
-export interface Extraction {
-    id: number;
-    askemClass: string;
-    properties: ExtractionProperties;
-    askemId: string;
-    xddCreated: Date;
-    xddRegistrant: number;
-    highlight: string[];
-}
-
-export interface KnownEntities {
-    urlExtractions: XDDUrlExtraction[];
-    askemObjects: Extraction[];
-    summaries: any[];
-}
-
-export interface KnownEntitiesCounts {
-    askemObjectCount: number;
-    urlExtractionCount: number;
 }
 
 export interface OdeSemantics {
@@ -1094,51 +872,10 @@ export interface VariableStatement {
     provenance?: ProvenanceInfo;
 }
 
-export interface ModelExpression {
-    expression: string;
-    expression_mathml: string;
-}
-
-export interface PetriNetTransitionProperties {
-    name: string;
-    description: string;
-    grounding?: ModelGrounding;
-}
-
-export interface XDDFacetBucket {
-    key: string;
-    docCount: string;
-}
-
 export interface Authority {
     id: number;
     name: string;
     description: string;
-}
-
-export interface ExtractionProperties {
-    title: string;
-    trustScore: string;
-    abstractText: string;
-    xddId: string;
-    documentId: string;
-    documentTitle: string;
-    contentText: string;
-    indexInDocument: number;
-    contentJSON: any;
-    image: string;
-    relevantSentences: string;
-    sectionID: string;
-    sectionTitle: string;
-    caption: string;
-    documentBibjson: Document;
-    doi: string;
-}
-
-export interface XDDUrlExtraction {
-    url: string;
-    resourceTitle: string;
-    extractedFrom: string[];
 }
 
 export interface Rate {
@@ -1167,7 +904,10 @@ export interface Observable {
     id: string;
     name?: string;
     states?: string[];
+    description?: string;
+    units?: ModelUnit;
     expression?: string;
+    grounding?: ModelGrounding;
     expression_mathml?: string;
 }
 
@@ -1279,6 +1019,7 @@ export enum AssetType {
     Code = "code",
     ModelConfiguration = "model-configuration",
     Artifact = "artifact",
+    InterventionPolicy = "intervention-policy",
 }
 
 export enum EvaluationScenarioStatus {
@@ -1296,6 +1037,7 @@ export enum TaskStatus {
 }
 
 export enum ClientEventType {
+    CloneProject = "CLONE_PROJECT",
     Heartbeat = "HEARTBEAT",
     Notification = "NOTIFICATION",
     SimulationSciml = "SIMULATION_SCIML",
@@ -1306,11 +1048,12 @@ export enum ClientEventType {
     ExtractionPdf = "EXTRACTION_PDF",
     TaskUndefinedEvent = "TASK_UNDEFINED_EVENT",
     TaskGollmModelCard = "TASK_GOLLM_MODEL_CARD",
-    TaskGollmConfigureModel = "TASK_GOLLM_CONFIGURE_MODEL",
-    TaskGollmConfigureFromDataset = "TASK_GOLLM_CONFIGURE_FROM_DATASET",
+    TaskGollmConfigureModelFromDocument = "TASK_GOLLM_CONFIGURE_MODEL_FROM_DOCUMENT",
+    TaskGollmConfigureModelFromDataset = "TASK_GOLLM_CONFIGURE_MODEL_FROM_DATASET",
     TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
     TaskGollmGenerateSummary = "TASK_GOLLM_GENERATE_SUMMARY",
     TaskFunmanValidation = "TASK_FUNMAN_VALIDATION",
+    TaskEnrichAmr = "TASK_ENRICH_AMR",
 }
 
 export enum ProgressState {
@@ -1365,6 +1108,7 @@ export enum SemanticType {
     Initial = "initial",
     Parameter = "parameter",
     Observable = "observable",
+    Inferred = "inferredParameter",
 }
 
 export enum ProvenanceRelationType {
@@ -1418,7 +1162,7 @@ export enum SimulationEngine {
 }
 
 export enum InterventionSemanticType {
-    Variable = "variable",
+    State = "state",
     Parameter = "parameter",
 }
 

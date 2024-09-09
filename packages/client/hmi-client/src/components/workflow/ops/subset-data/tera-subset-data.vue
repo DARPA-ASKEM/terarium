@@ -1,7 +1,6 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:menu-items="menuItems"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
@@ -20,8 +19,8 @@
 				<!-- Geo boundaries -->
 				<h5>Select geo-boundaries</h5>
 				<p class="subheader">
-					Set your desired latitude and longitude to define the spatial boundaries. Apply spatial
-					skipping to retain every nth data point for a coarser subset.
+					Set your desired latitude and longitude to define the spatial boundaries. Apply spatial skipping to retain
+					every nth data point for a coarser subset.
 				</p>
 
 				<!-- Preview image -->
@@ -41,19 +40,13 @@
 				<span>
 					<label>Longitude</label>
 					<InputNumber v-model="longitudeStart" placeholder="Start" />
-					<Slider
-						v-model="longitudeRange"
-						range
-						class="w-full"
-						:min="-180"
-						:max="180"
-						:step="0.001"
-					/>
+					<Slider v-model="longitudeRange" range class="w-full" :min="-180" :max="180" :step="0.001" />
 					<InputNumber v-model="longitudeEnd" placeholder="End" />
 				</span>
 				<code>
-					selectSpatialDomain(['{{ latitudeStart }}', '{{ latitudeEnd }}', '{{ longitudeStart }}',
-					'{{ longitudeEnd }}'])
+					selectSpatialDomain(['{{ latitudeStart }}', '{{ latitudeEnd }}', '{{ longitudeStart }}', '{{
+						longitudeEnd
+					}}'])
 				</code>
 				<div class="flex flex-row align-items-center">
 					<span>
@@ -70,8 +63,8 @@
 				<!-- Temporal slice -->
 				<h5 class="mt-3">Select temporal slice</h5>
 				<p class="subheader">
-					Set your desired time range to define the temporal boundaries. Apply time skipping to
-					retain every nth time slice for a coarser subset.
+					Set your desired time range to define the temporal boundaries. Apply time skipping to retain every nth time
+					slice for a coarser subset.
 				</p>
 				<div class="flex flex-row">
 					<div class="col">
@@ -111,10 +104,7 @@
 				<TabView
 					><TabPanel header="Description">{{ subset?.description }}</TabPanel>
 					<TabPanel header="Map view">
-						<tera-carousel
-							v-if="subset?.metadata?.preview"
-							:labels="subset.metadata.preview.map(({ year }) => year)"
-						>
+						<tera-carousel v-if="subset?.metadata?.preview" :labels="subset.metadata.preview.map(({ year }) => year)">
 							<div v-for="item in subset.metadata.preview" :key="item">
 								<img :src="item.image" alt="Preview" />
 							</div>
@@ -150,10 +140,7 @@
 									</td>
 									<td>
 										<ul>
-											<li
-												v-for="(coordinate, coordinateKey) in value.coordinates"
-												:key="coordinateKey"
-											>
+											<li v-for="(coordinate, coordinateKey) in value.coordinates" :key="coordinateKey">
 												{{ coordinate }}
 											</li>
 										</ul>
@@ -169,8 +156,7 @@
 	<!--FIXME: Consider moving this to the modal composable for other dataset drilldowns to use-->
 	<!--This modal also causes warnings to popup since the entire component isn't wrapped by something, something to do with emit passing-->
 	<!--FIXME: Worry about naming subset later-->
-	<!-- <Teleport to="body">
-		<tera-modal
+	<!--<tera-modal
 			v-if="showSaveDatasetModal"
 			@modal-mask-clicked="showSaveDatasetModal = false"
 			@modal-enter-press="showSaveDatasetModal = false"
@@ -189,8 +175,7 @@
 					@click="showSaveDatasetModal = false"
 				/>
 			</template>
-		</tera-modal>
-	</Teleport> -->
+		</tera-modal>-->
 </template>
 
 <script setup lang="ts">
@@ -205,7 +190,7 @@ import TeraCarousel from '@/components/widgets/tera-carousel.vue';
 import { WorkflowNode } from '@/types/workflow';
 import { getDataset, getClimateDatasetPreview, getClimateSubsetId } from '@/services/dataset';
 import type { Dataset } from '@/types/Types';
-import { AssetType } from '@/types/Types';
+// import { AssetType } from '@/types/Types';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 // import InputText from 'primevue/inputtext';
@@ -215,7 +200,7 @@ import Calender from 'primevue/calendar';
 import Checkbox from 'primevue/checkbox';
 import Slider from 'primevue/slider';
 import { logger } from '@/utils/logger';
-import { useProjects } from '@/composables/project';
+// import { useProjects } from '@/composables/project';
 import { SubsetDataOperationState } from './subset-data-operation';
 
 const props = defineProps<{
@@ -352,17 +337,6 @@ function mutateLoadingState(isLoading: boolean) {
 	emit('update-state', state);
 }
 
-const menuItems = computed(() => [
-	{
-		label: 'Add subset to project datasets',
-		icon: 'pi pi-pencil',
-		disabled: !subset.value,
-		command: () => {
-			addSubsetToProject();
-		}
-	}
-]);
-
 function updateState() {
 	const state = cloneDeep(props.node.state);
 	state.datasetId = dataset.value?.id ?? null;
@@ -379,15 +353,16 @@ function updateState() {
 	emit('update-state', state);
 }
 
-async function addSubsetToProject() {
-	const projectId = useProjects().activeProject.value?.id;
-	if (subset.value?.id && projectId) {
-		await useProjects().addAsset(AssetType.Dataset, subset.value.id, projectId);
-		logger.info(`New dataset saved as ${subset.value.name}`);
-	} else {
-		logger.error('Subset ID not found.');
-	}
-}
+// FIXME: removed drilldown hamburger menu
+// async function addSubsetToProject() {
+// 	const projectId = useProjects().activeProject.value?.id;
+// 	if (subset.value?.id && projectId) {
+// 		await useProjects().addAsset(AssetType.Dataset, subset.value.id, projectId);
+// 		logger.info(`New dataset saved as ${subset.value.name}`);
+// 	} else {
+// 		logger.error('Subset ID not found.');
+// 	}
+// }
 
 async function run() {
 	console.log('running');
@@ -457,8 +432,7 @@ watch(
 	async () => {
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
-			const subsetId = props.node?.outputs?.find((output) => output.id === selectedOutputId.value)
-				?.value?.[0];
+			const subsetId = props.node.outputs.find((output) => output.id === selectedOutputId.value)?.value?.[0];
 			if (!isEmpty(subsetId) && subsetId) {
 				subset.value = await loadSubset(subsetId);
 			}

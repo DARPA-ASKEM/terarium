@@ -12,6 +12,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @Data
 @Entity
 public class ClimateDataPreviewTask {
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
 	@TSOptional
@@ -25,7 +26,12 @@ public class ClimateDataPreviewTask {
 	private String timeIndex;
 
 	public ClimateDataPreviewTask(
-			String statusId, String esgfId, String variableId, String timestamps, String timeIndex) {
+		String statusId,
+		String esgfId,
+		String variableId,
+		String timestamps,
+		String timeIndex
+	) {
 		this.statusId = statusId;
 		this.esgfId = esgfId;
 		this.variableId = variableId;

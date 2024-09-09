@@ -1,8 +1,8 @@
 import type { TimeSpan } from '@/types/Types';
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
+import simulateProbabilistic from '@assets/svg/operator-images/simulate-probabilistic.svg';
 
-const DOCUMENTATION_URL =
-	'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L323';
+const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L323';
 
 export interface SimulateCiemssOperationState extends BaseState {
 	// state shared across all runs
@@ -12,34 +12,29 @@ export interface SimulateCiemssOperationState extends BaseState {
 	currentTimespan: TimeSpan;
 	numSamples: number;
 	method: string;
+	forecastId: string; // Completed run's Id
 
 	// In progress
-	inProgressSimulationId: string;
+	inProgressForecastId: string;
 
 	errorMessage: { name: string; value: string; traceback: string };
 }
 
 export const SimulateCiemssOperation: Operation = {
 	name: WorkflowOperationTypes.SIMULATE_CIEMSS,
-	displayName: 'Simulate with PyCIEMSS',
+	displayName: 'Simulate',
 	description: 'given a model id, and configuration id, run a simulation',
 	documentationUrl: DOCUMENTATION_URL,
+	imageUrl: simulateProbabilistic,
 	inputs: [
-		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },
-		{
-			type: 'calibrateSimulationId',
-			label: 'Calibration',
-			acceptMultiple: false,
-			isOptional: true
-		},
+		{ type: 'modelConfigId', label: 'Model configuration' },
 		{
 			type: 'policyInterventionId',
 			label: 'Interventions',
-			acceptMultiple: false,
 			isOptional: true
 		}
 	],
-	outputs: [{ type: 'simulationId' }],
+	outputs: [{ type: 'datasetId' }],
 	isRunnable: true,
 
 	initState: () => {
@@ -48,7 +43,8 @@ export const SimulateCiemssOperation: Operation = {
 			currentTimespan: { start: 0, end: 100 },
 			numSamples: 100,
 			method: 'dopri5',
-			inProgressSimulationId: '',
+			forecastId: '',
+			inProgressForecastId: '',
 			errorMessage: { name: '', value: '', traceback: '' }
 		};
 		return init;

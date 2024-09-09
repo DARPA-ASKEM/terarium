@@ -10,6 +10,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Progr
 @Builder
 @TSModel
 public class StatusUpdate<T> implements Serializable {
+
 	private Double progress;
 	private ProgressState state;
 	private String message;

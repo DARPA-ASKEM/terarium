@@ -24,6 +24,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
 @RequiredArgsConstructor
 @Service
 public class ProjectPermissionsService {
+
 	final ReBACService reBACService;
 
 	/**
@@ -40,9 +41,11 @@ public class ProjectPermissionsService {
 		for (final RebacPermissionRelationship permissionRelationship : permissionRelationships) {
 			final Schema.Relationship relationship = permissionRelationship.getRelationship();
 			// Ensure the relationship is capable of editing the project
-			if (relationship.equals(Schema.Relationship.CREATOR)
-					|| relationship.equals(Schema.Relationship.ADMIN)
-					|| relationship.equals(Schema.Relationship.WRITER)) {
+			if (
+				relationship.equals(Schema.Relationship.CREATOR) ||
+				relationship.equals(Schema.Relationship.ADMIN) ||
+				relationship.equals(Schema.Relationship.WRITER)
+			) {
 				if (permissionRelationship.getSubjectType().equals(Schema.Type.USER)) {
 					final PermissionUser user = reBACService.getUser(permissionRelationship.getSubjectId());
 					final String name = user.getFirstName() + " " + user.getLastName();
@@ -63,17 +66,19 @@ public class ProjectPermissionsService {
 
 	@CacheEvict(value = "projectcontributors", key = "#what.id")
 	public void setProjectPermissions(final RebacProject what, final RebacObject who, final String relationship)
-			throws Exception {
+		throws Exception {
 		try {
 			what.setPermissionRelationships(who, relationship);
-		} catch (final RelationshipAlreadyExistsException ignore) {
-		}
+		} catch (final RelationshipAlreadyExistsException ignore) {}
 	}
 
 	@CacheEvict(value = "projectcontributors", key = "#what.id")
 	public ResponseEntity<JsonNode> updateProjectPermissions(
-			final RebacProject what, final RebacObject who, final String oldRelationship, final String newRelationship)
-			throws Exception {
+		final RebacProject what,
+		final RebacObject who,
+		final String oldRelationship,
+		final String newRelationship
+	) throws Exception {
 		try {
 			what.removePermissionRelationships(who, oldRelationship);
 			what.setPermissionRelationships(who, newRelationship);
@@ -85,10 +90,9 @@ public class ProjectPermissionsService {
 
 	@CacheEvict(value = "projectcontributors", key = "#what.id")
 	public void removeProjectPermissions(final RebacProject what, final RebacObject who, final String relationship)
-			throws Exception {
+		throws Exception {
 		try {
 			what.removePermissionRelationships(who, relationship);
-		} catch (final RelationshipAlreadyExistsException ignore) {
-		}
+		} catch (final RelationshipAlreadyExistsException ignore) {}
 	}
 }

@@ -1,35 +1,27 @@
 import type { Position } from '@/types/common';
 
-export enum WorkflowOperationTypes {
-	ADD = 'add', // temp for test to work
-	TEST = 'TestOperation',
-	CALIBRATION_JULIA = 'CalibrationOperationJulia',
-	CALIBRATION_CIEMSS = 'CalibrationOperationCiemss',
-	DATASET = 'Dataset',
-	MODEL = 'ModelOperation',
-	SIMULATE_JULIA = 'SimulateJuliaOperation',
-	SIMULATE_CIEMSS = 'SimulateCiemssOperation',
-	STRATIFY_JULIA = 'StratifyJulia',
-	STRATIFY_MIRA = 'StratifyMira',
-	SIMULATE_ENSEMBLE_CIEMSS = 'SimulateEnsembleCiemms',
-	CALIBRATE_ENSEMBLE_CIEMSS = 'CalibrateEnsembleCiemms',
-	DATASET_TRANSFORMER = 'DatasetTransformer',
-	SUBSET_DATA = 'SubsetData',
-	MODEL_TRANSFORMER = 'ModelTransformer',
-	MODEL_FROM_CODE = 'ModelFromCode',
-	FUNMAN = 'Funman',
-	CODE = 'Code',
-	MODEL_COMPARISON = 'ModelComparison',
-	MODEL_CONFIG = 'ModelConfiguration',
-	OPTIMIZE_CIEMSS = 'OptimizeCiemss',
-	MODEL_COUPLING = 'ModelCoupling',
-	MODEL_EDIT = 'ModelEdit',
-	DOCUMENT = 'Document',
-	MODEL_FROM_EQUATIONS = 'ModelFromEquations',
-	DECAPODES = 'Decapodes',
-	REGRIDDING = 'Regridding',
-	INTERVENTION_POLICY = 'InterventionPolicy'
-}
+export const WorkflowOperationTypes = Object.freeze({
+	CALIBRATION_CIEMSS: 'CalibrationOperationCiemss',
+	DATASET: 'Dataset',
+	MODEL: 'ModelOperation',
+	SIMULATE_CIEMSS: 'SimulateCiemssOperation',
+	STRATIFY_MIRA: 'StratifyMira',
+	SIMULATE_ENSEMBLE_CIEMSS: 'SimulateEnsembleCiemms',
+	CALIBRATE_ENSEMBLE_CIEMSS: 'CalibrateEnsembleCiemms',
+	DATASET_TRANSFORMER: 'DatasetTransformer',
+	SUBSET_DATA: 'SubsetData',
+	MODEL_TRANSFORMER: 'ModelTransformer',
+	FUNMAN: 'Funman',
+	CODE: 'Code',
+	MODEL_COMPARISON: 'ModelComparison',
+	MODEL_CONFIG: 'ModelConfiguration',
+	OPTIMIZE_CIEMSS: 'OptimizeCiemss',
+	MODEL_EDIT: 'ModelEdit',
+	DOCUMENT: 'Document',
+	MODEL_FROM_EQUATIONS: 'ModelFromEquations',
+	REGRIDDING: 'Regridding',
+	INTERVENTION_POLICY: 'InterventionPolicy'
+});
 
 export enum OperatorStatus {
 	DEFAULT = 'default',
@@ -49,15 +41,15 @@ export interface OperationData {
 	type: string;
 	label?: string;
 	isOptional?: boolean;
-	acceptMultiple?: boolean;
 }
 
 // Defines a function: eg: model, simulate, calibrate
 export interface Operation {
-	name: WorkflowOperationTypes;
+	name: string;
 	description: string;
 	displayName: string; // Human-readable name for each node.
 	documentationUrl?: string;
+	imageUrl?: string;
 
 	// The operation is self-runnable, that is, given just the inputs we can derive the outputs
 	isRunnable: boolean;
@@ -81,7 +73,6 @@ export interface WorkflowPort {
 	label?: string;
 	value?: any[] | null;
 	isOptional: boolean;
-	acceptMultiple?: boolean;
 }
 
 // Operator Output needs more information than a standard operator port.
@@ -103,10 +94,14 @@ export interface BaseState {
 export interface WorkflowNode<S> {
 	// Information
 	id: string;
-	displayName: string;
 	workflowId: string;
-	operationType: WorkflowOperationTypes;
+	isDeleted?: boolean;
+	version?: number;
+
+	displayName: string;
+	operationType: string;
 	documentationUrl?: string;
+	imageUrl?: string;
 
 	// Position on canvas
 	x: number;
@@ -129,8 +124,10 @@ export interface WorkflowNode<S> {
 export interface WorkflowEdge {
 	id: string;
 	workflowId: string;
-	points: Position[];
+	isDeleted?: boolean;
+	version?: number;
 
+	points: Position[];
 	source?: WorkflowNode<any>['id'];
 	sourcePortId?: string;
 
@@ -173,13 +170,6 @@ export interface WorkflowTransformations {
 }
 export interface Transformations {
 	[key: string]: Transform;
-}
-
-export enum ProgressState {
-	RETRIEVING = 'retrieving',
-	QUEUED = 'queued',
-	RUNNING = 'running',
-	COMPLETE = 'complete'
 }
 
 export interface AssetBlock<T> {

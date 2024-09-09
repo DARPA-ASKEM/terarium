@@ -1,82 +1,79 @@
 <template>
-	<Teleport to="body">
-		<tera-modal v-if="visible" @modal-mask-clicked="() => emit('close')">
-			<template #header>
-				<h4>Upload resources</h4>
-			</template>
-			<template #default>
-				<section class="main-section">
-					<section>
-						<label class="subheader">Add documents, models or datasets to your project here.</label>
-						<div class="supported-resources">
-							<div><i class="pi pi-file" /><span>Documents</span><span>(PDF, md, txt)</span></div>
-							<div>
-								<i class="pi pi-share-alt" /><span>Models</span
-								><span>(AMR, sbml, vensim, stella)</span>
-							</div>
-							<div><dataset-icon /><span>Datasets</span><span>(csv, netcdf)</span></div>
-						</div>
-						<tera-drag-and-drop-importer
-							:accept-types="[
-								AcceptedTypes.PDF,
-								AcceptedTypes.CSV,
-								AcceptedTypes.TXT,
-								AcceptedTypes.MD,
-								AcceptedTypes.PY,
-								AcceptedTypes.R,
-								AcceptedTypes.JL,
-								AcceptedTypes.NC,
-								AcceptedTypes.JSON,
-								AcceptedTypes.XML,
-								AcceptedTypes.SBML,
-								AcceptedTypes.MDL,
-								AcceptedTypes.XMILE,
-								AcceptedTypes.ITMX,
-								AcceptedTypes.STMX
-							]"
-							:accept-extensions="[
-								AcceptedExtensions.PDF,
-								AcceptedExtensions.CSV,
-								AcceptedExtensions.TXT,
-								AcceptedExtensions.MD,
-								AcceptedExtensions.PY,
-								AcceptedExtensions.R,
-								AcceptedExtensions.JL,
-								AcceptedExtensions.NC,
-								AcceptedExtensions.JSON,
-								AcceptedExtensions.XML,
-								AcceptedExtensions.SBML,
-								AcceptedExtensions.MDL,
-								AcceptedExtensions.XMILE,
-								AcceptedExtensions.ITMX,
-								AcceptedExtensions.STMX
-							]"
-							:import-action="processFiles"
-							:progress="progress"
-							@import-completed="importCompleted"
-							@imported-files-updated="(value) => (importedFiles = value)"
-						></tera-drag-and-drop-importer>
-					</section>
-					<section v-if="importedFiles.length < 1">
-						<label>Or upload from a Github repository URL</label>
-						<InputText v-model="urlToUpload" class="upload-from-github-url"></InputText>
-					</section>
-					<tera-import-github-file
-						:visible="isImportGithubFileModalVisible"
-						:url-string="urlToUpload"
-						@close="
-							isImportGithubFileModalVisible = false;
-							emit('close');
-						"
-					/>
+	<tera-modal v-if="visible" @modal-mask-clicked="() => emit('close')">
+		<template #header>
+			<h4>Upload resources</h4>
+		</template>
+		<template #default>
+			<section class="main-section">
+				<section>
+					<label class="subheader">Add documents, models or datasets to your project here.</label>
+					<div class="supported-resources">
+						<div><i class="pi pi-file" /><span>Documents</span><span>(PDF, md, txt)</span></div>
+						<div><i class="pi pi-share-alt" /><span>Models</span><span>(AMR, sbml, vensim, stella)</span></div>
+						<div><dataset-icon /><span>Datasets</span><span>(csv, netcdf)</span></div>
+					</div>
+					<tera-drag-and-drop-importer
+						:accept-types="[
+							AcceptedTypes.PDF,
+							AcceptedTypes.CSV,
+							AcceptedTypes.TXT,
+							AcceptedTypes.MD,
+							AcceptedTypes.PY,
+							AcceptedTypes.R,
+							AcceptedTypes.JL,
+							AcceptedTypes.NC,
+							AcceptedTypes.JSON,
+							AcceptedTypes.XML,
+							AcceptedTypes.SBML,
+							AcceptedTypes.MDL,
+							AcceptedTypes.XMILE,
+							AcceptedTypes.ITMX,
+							AcceptedTypes.STMX,
+							AcceptedTypes.MODELCONFIG
+						]"
+						:accept-extensions="[
+							AcceptedExtensions.PDF,
+							AcceptedExtensions.CSV,
+							AcceptedExtensions.TXT,
+							AcceptedExtensions.MD,
+							AcceptedExtensions.PY,
+							AcceptedExtensions.R,
+							AcceptedExtensions.JL,
+							AcceptedExtensions.NC,
+							AcceptedExtensions.JSON,
+							AcceptedExtensions.XML,
+							AcceptedExtensions.SBML,
+							AcceptedExtensions.MDL,
+							AcceptedExtensions.XMILE,
+							AcceptedExtensions.ITMX,
+							AcceptedExtensions.STMX,
+							AcceptedExtensions.MODELCONFIG
+						]"
+						:import-action="processFiles"
+						:progress="progress"
+						@import-completed="importCompleted"
+						@imported-files-updated="(value) => (importedFiles = value)"
+					></tera-drag-and-drop-importer>
 				</section>
-			</template>
-			<template #footer>
-				<Button label="Upload" class="p-button-primary" @click="upload" />
-				<Button label="Cancel" class="p-button-secondary" @click="() => emit('close')" />
-			</template>
-		</tera-modal>
-	</Teleport>
+				<section v-if="importedFiles.length < 1">
+					<label>Or upload from a Github repository URL</label>
+					<tera-input-text v-model="urlToUpload" class="upload-from-github-url" />
+				</section>
+				<tera-import-github-file
+					:visible="isImportGithubFileModalVisible"
+					:url-string="urlToUpload"
+					@close="
+						isImportGithubFileModalVisible = false;
+						emit('close');
+					"
+				/>
+			</section>
+		</template>
+		<template #footer>
+			<Button label="Upload" class="p-button-primary" @click="upload" />
+			<Button label="Cancel" class="p-button-secondary" @click="() => emit('close')" />
+		</template>
+	</tera-modal>
 </template>
 
 <script setup lang="ts">
@@ -92,15 +89,15 @@ import { createNewDatasetFromFile } from '@/services/dataset';
 import useAuthStore from '@/stores/auth';
 import { ref } from 'vue';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
-import InputText from 'primevue/inputtext';
 import { useToastService } from '@/services/toast';
 import TeraImportGithubFile from '@/components/widgets/tera-import-github-file.vue';
 import { extractPDF } from '@/services/knowledge';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { uploadArtifactToProject } from '@/services/artifact';
-import { createModel, processAndAddModelToProject, validateAMRFile } from '@/services/model';
+import { createModel, createModelAndModelConfig, processAndAddModelToProject, validateAMRFile } from '@/services/model';
 import { createProvenance, RelationshipType } from '@/services/provenance';
 import { modelCard } from '@/services/goLLM';
+import TeraInputText from '@/components//widgets/tera-input-text.vue';
 
 defineProps<{
 	visible: boolean;
@@ -136,6 +133,8 @@ async function processFiles(files: File[], description: string) {
 			case AcceptedExtensions.ITMX:
 			case AcceptedExtensions.STMX:
 				return processModel(file);
+			case AcceptedExtensions.MODELCONFIG:
+				return processModelConfigAndModel(file);
 			default:
 				return { id: '', assetType: '' };
 		}
@@ -215,6 +214,11 @@ async function processModel(file: File) {
 	return { id: newModelId ?? '', assetType: AssetType.Model };
 }
 
+async function processModelConfigAndModel(file: File) {
+	const model = await createModelAndModelConfig(file, progress);
+	return { id: model?.id ?? '', assetType: AssetType.Model };
+}
+
 function importCompleted(newResults: { id: string; name: string; assetType: AssetType }[] | null) {
 	results.value = newResults?.filter((r) => r.id !== '') ?? [];
 }
@@ -229,19 +233,13 @@ async function upload() {
 			const { name, id } = (results.value ?? [])[index];
 			if (name && name.toLowerCase().endsWith('.pdf')) {
 				extractPDF(id);
-			} else if (
-				name &&
-				(name.toLowerCase().endsWith('.txt') || name.toLowerCase().endsWith('.md'))
-			) {
+			} else if (name && (name.toLowerCase().endsWith('.txt') || name.toLowerCase().endsWith('.md'))) {
 				modelCard(id);
 			}
 		});
 		emit('close');
 		const resourceMsg = createdAssets.length > 1 ? 'resources were' : 'resource was';
-		useToastService().success(
-			'Success!',
-			`${createdAssets.length} ${resourceMsg} successfully added to this project`
-		);
+		useToastService().success('Success!', `${createdAssets.length} ${resourceMsg} successfully added to this project`);
 		importedFiles.value = [];
 		results.value = null;
 	} else if (urlToUpload.value) {

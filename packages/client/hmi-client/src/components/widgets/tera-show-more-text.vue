@@ -1,10 +1,6 @@
 <template>
 	<section>
-		<div
-			ref="textContainerRef"
-			:class="{ default: !expanded, expanded: expanded }"
-			:style="`--lines: ${lines}`"
-		>
+		<div ref="textContainerRef" :class="{ default: !expanded, expanded: expanded }" :style="`--lines: ${lines}`">
 			<div v-html="text"></div>
 		</div>
 		<span v-if="text > '' && (triggerShowMore || expanded)" @click="collapseOrExpand">
@@ -28,8 +24,7 @@ const textContainerRef = ref();
 
 function determineShowMore() {
 	triggerShowMore.value = !!(
-		textContainerRef.value &&
-		textContainerRef.value.offsetHeight < textContainerRef.value.scrollHeight
+		textContainerRef.value && textContainerRef.value.offsetHeight < textContainerRef.value.scrollHeight
 	);
 }
 

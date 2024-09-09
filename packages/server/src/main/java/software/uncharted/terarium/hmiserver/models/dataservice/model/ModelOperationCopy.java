@@ -11,6 +11,7 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 public class ModelOperationCopy extends SupportAdditionalProperties implements Serializable {
+
 	@Serial
 	private static final long serialVersionUID = -7385762829927577921L;
 

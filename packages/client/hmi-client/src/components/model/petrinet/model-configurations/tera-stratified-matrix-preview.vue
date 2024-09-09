@@ -18,12 +18,7 @@
 			</div>
 			<div class="matrix-grid">
 				<template v-for="row in matrix">
-					<div
-						class="cell"
-						:class="{ 'filled-cell': cell.content.id }"
-						v-for="(cell, colIdx) in row"
-						:key="colIdx"
-					></div>
+					<div class="cell" :class="{ 'filled-cell': cell.content.id }" v-for="(cell, colIdx) in row" :key="colIdx" />
 				</template>
 			</div>
 		</section>
@@ -67,9 +62,7 @@ watch(
 		matrix.value = extractTemplateMatrix(transitionMatrix).matrix;
 
 		// Get subject and outcome for the current template
-		const templateSummary = collapsedTemplates.templatesSummary.find(
-			(template) => template.name === props.id
-		);
+		const templateSummary = collapsedTemplates.templatesSummary.find((template) => template.name === props.id);
 		if (templateSummary) {
 			subject.value = templateSummary.subject;
 			outcome.value = templateSummary.outcome;

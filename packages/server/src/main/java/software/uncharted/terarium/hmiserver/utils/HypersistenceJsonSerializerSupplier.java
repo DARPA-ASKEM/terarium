@@ -26,8 +26,9 @@ public class HypersistenceJsonSerializerSupplier implements JsonSerializerSuppli
 
 	public static class HypersistenceJsonSerializer implements JsonSerializer {
 
-		private final ObjectMapperWrapper objectMapperWrapper =
-				new ObjectMapperWrapper(new HypersistenceObjectMapperSupplier().get());
+		private final ObjectMapperWrapper objectMapperWrapper = new ObjectMapperWrapper(
+			new HypersistenceObjectMapperSupplier().get()
+		);
 
 		@Override
 		@SuppressWarnings("unchecked")
@@ -38,7 +39,7 @@ public class HypersistenceJsonSerializerSupplier implements JsonSerializerSuppli
 				final Object firstElement = findFirstNonNullElement((Collection<?>) object);
 				if (firstElement != null) {
 					final JavaType type = TypeFactory.defaultInstance()
-							.constructParametricType(object.getClass(), firstElement.getClass());
+						.constructParametricType(object.getClass(), firstElement.getClass());
 					return objectMapperWrapper.fromBytes(objectMapperWrapper.toBytes(object), type);
 				}
 			} else if (object instanceof Map) {
@@ -47,7 +48,7 @@ public class HypersistenceJsonSerializerSupplier implements JsonSerializerSuppli
 					final Object key = firstEntry.getKey();
 					final Object value = firstEntry.getValue();
 					final JavaType type = TypeFactory.defaultInstance()
-							.constructParametricType(object.getClass(), key.getClass(), value.getClass());
+						.constructParametricType(object.getClass(), key.getClass(), value.getClass());
 					return (T) objectMapperWrapper.fromBytes(objectMapperWrapper.toBytes(object), type);
 				}
 			} else if (object instanceof JsonNode) {

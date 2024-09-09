@@ -12,9 +12,11 @@ import org.junit.jupiter.api.Test;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 
 public class SupportAdditionalPropertiesTests extends TerariumApplicationTests {
+
 	@Data
 	@EqualsAndHashCode(callSuper = true)
 	static class MyTypeNested extends SupportAdditionalProperties {
+
 		@JsonProperty("my_field")
 		String myField;
 	}
@@ -22,6 +24,7 @@ public class SupportAdditionalPropertiesTests extends TerariumApplicationTests {
 	@Data
 	@EqualsAndHashCode(callSuper = true)
 	static class MyType extends SupportAdditionalProperties {
+
 		MyTypeNested nested;
 
 		@JsonProperty("my_field")
@@ -35,7 +38,7 @@ public class SupportAdditionalPropertiesTests extends TerariumApplicationTests {
 	void testSupportAdditionalProperties() throws Exception {
 		final ObjectMapper mapper = new ObjectMapper();
 		final String jsonBefore =
-				"{\"nested\": null, \"my_field\":\"valueA\", \"myField\":\"valueA\", \"myOtherField\":\"123\",\"as_is_snake\":\"value\",\"asIsCamel\": \"456\"}";
+			"{\"nested\": null, \"my_field\":\"valueA\", \"myField\":\"valueA\", \"myOtherField\":\"123\",\"as_is_snake\":\"value\",\"asIsCamel\": \"456\"}";
 		// deserialize it
 		final MyType testClass = mapper.readValue(jsonBefore, MyType.class);
 		Assertions.assertEquals(testClass.getMyField(), "valueA");
@@ -52,7 +55,7 @@ public class SupportAdditionalPropertiesTests extends TerariumApplicationTests {
 	void testSupportAdditionalPropertiesWithNested() throws Exception {
 		final ObjectMapper mapper = new ObjectMapper();
 		final String jsonBefore =
-				"{\"nested\":{ \"my_field\":\"valueA\", \"nestedField\":\"valueA\" }, \"my_field\":\"valueA\", \"myField\":\"valueA\", \"myOtherField\":\"123\",\"as_is_snake\":\"value\",\"asIsCamel\": \"456\"}";
+			"{\"nested\":{ \"my_field\":\"valueA\", \"nestedField\":\"valueA\" }, \"my_field\":\"valueA\", \"myField\":\"valueA\", \"myOtherField\":\"123\",\"as_is_snake\":\"value\",\"asIsCamel\": \"456\"}";
 		// deserialize it
 		final MyType testClass = mapper.readValue(jsonBefore, MyType.class);
 		Assertions.assertEquals(testClass.getMyField(), "valueA");

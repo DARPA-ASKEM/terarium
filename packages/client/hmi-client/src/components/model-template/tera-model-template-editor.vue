@@ -49,16 +49,11 @@
 						:disabled="isDecomposedLoading"
 					/>
 					<span class="btn-group">
-						<Button label="Reset" outlined severity="secondary" @click="$emit('reset')" />
+						<Button label="Reset" outlined severity="secondary" @click="reset" />
 						<Button label="Save" @click="$emit('save-new-model-output', model)" />
 					</span>
 				</section>
-				<tera-progress-spinner
-					v-if="isDecomposedLoading"
-					class="spinner"
-					is-centered
-					:font-size="2"
-				>
+				<tera-progress-spinner v-if="isDecomposedLoading" class="spinner" is-centered :font-size="2">
 					Please wait...
 				</tera-progress-spinner>
 			</template>
@@ -90,9 +85,7 @@
 								)
 						"
 						@port-selected="(portId: string) => createNewEdge(card.id, portId)"
-						@port-mouseover="
-							(event: MouseEvent, cardWidth: number) => onPortMouseover(event, card, cardWidth)
-						"
+						@port-mouseover="(event: MouseEvent, cardWidth: number) => onPortMouseover(event, card, cardWidth)"
 						@port-mouseleave="onPortMouseleave"
 						@remove="
 							() =>
@@ -194,9 +187,7 @@ const modelFormatOptions = ref([EditorFormat.Decomposed, EditorFormat.Flattened]
 const currentModelFormat = ref(EditorFormat.Decomposed);
 
 const currentCanvas = computed(() =>
-	currentModelFormat.value === EditorFormat.Decomposed
-		? decomposedCanvas.value
-		: flattenedCanvas.value
+	currentModelFormat.value === EditorFormat.Decomposed ? decomposedCanvas.value : flattenedCanvas.value
 );
 const cards = computed<ModelTemplateCard[]>(() => currentCanvas.value.cards);
 const junctions = computed<ModelTemplateJunction[]>(() => currentCanvas.value.junctions);
@@ -205,9 +196,7 @@ const sidebarTemplateToAdd = ref<ModelTemplateCard | null>(null);
 const newEdge = ref();
 
 const isDecomposedLoading = computed(() => props.model && isEmpty(decomposedCanvas.value.cards));
-const isCreatingNewEdge = computed(
-	() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2
-);
+const isCreatingNewEdge = computed(() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2);
 
 function collisionFn(p: Position): boolean {
 	const buffer = 50;
@@ -374,10 +363,7 @@ function onDrop(event) {
 	else {
 		// If we are in the flattened view just add it in the UI - it will be added in kernel once linked to the flattened model
 		// Cards that aren't linked in the flattened view will be removed once the view switches to decomposed
-		modelTemplatingService.prepareDecomposedTemplateAddition(
-			flattenedCanvas.value,
-			sidebarTemplateToAdd.value
-		);
+		modelTemplatingService.prepareDecomposedTemplateAddition(flattenedCanvas.value, sidebarTemplateToAdd.value);
 		modelTemplatingService.addTemplateInView(flattenedCanvas.value, sidebarTemplateToAdd.value);
 	}
 
@@ -439,65 +425,56 @@ function mouseUpdate(event: MouseEvent) {
 	prevY = event.y;
 }
 
-function refreshFlattenedCanvas() {
-	if (props.model) {
-		flattenedCanvas.value = modelTemplatingService.initializeCanvas();
-		modelTemplatingService.updateFlattenedTemplateInView(flattenedCanvas.value, props.model);
-	}
-}
-
 function onEditorFormatSwitch(newFormat: EditorFormat) {
 	currentModelFormat.value = newFormat;
 	if (newFormat === EditorFormat.Decomposed)
-		refreshFlattenedCanvas(); // Removes unlinked decomposed templates
+		renderFlattenedCanvas(); // Removes unlinked decomposed templates
 	else {
 		// When switching to the flattened view, we save the decomposed port positions
 		// so that edges can be drawn correctly when relecting flattened edits to the decomposed view
 		decomposedPortOffsetValues.clear();
-		const decomposedPortElements = document.getElementsByClassName(
-			'port selectable'
-		) as HTMLCollectionOf<HTMLElement>;
+		const decomposedPortElements = document.getElementsByClassName('port selectable') as HTMLCollectionOf<HTMLElement>;
 
 		Array.from(decomposedPortElements).forEach((element) =>
-			decomposedPortOffsetValues.set(
-				element.id,
-				modelTemplatingService.getElementOffsetValues(element)
-			)
+			decomposedPortOffsetValues.set(element.id, modelTemplatingService.getElementOffsetValues(element))
 		);
 	}
+}
+
+function reset() {
+	emit('reset');
+	renderDecomposedCanvas();
+}
+
+// Rendering functions populate the canvases with all their model templates, can be used to refresh the view
+function renderFlattenedCanvas() {
+	flattenedCanvas.value = modelTemplatingService.initializeCanvas();
+	modelTemplatingService.updateFlattenedTemplateInView(flattenedCanvas.value, props.model);
+}
+
+function renderDecomposedCanvas() {
+	decomposedCanvas.value = modelTemplatingService.initializeCanvas();
+	modelTemplatingService.flattenedToDecomposedInKernel(
+		props.kernelManager,
+		decomposedCanvas.value,
+		interpolatePointsForCurve
+	);
 }
 
 // Triggered after syncWithMiraModel() in parent
 watch(
 	() => props.model,
 	(newModel, oldModel) => {
-		refreshFlattenedCanvas();
-		// If we are working with a new model id then we must decompose it since it's made of different templates
-		// FIXME: This shouldn't be triggered on the first edit to the original model but should be if we switch from the original model output to a new one
-		if (oldModel?.id !== newModel?.id) {
-			decomposedCanvas.value = modelTemplatingService.initializeCanvas();
-			modelTemplatingService.flattenedToDecomposedInKernel(
-				props.kernelManager,
-				decomposedCanvas.value,
-				interpolatePointsForCurve
-			);
-		}
+		renderFlattenedCanvas();
+		// If we are working with a new model id then we must decompose it since it's made of different templates (on output switch)
+		if (oldModel?.id !== newModel?.id) renderDecomposedCanvas();
 	}
 );
 
 onMounted(() => {
 	document.addEventListener('mousemove', mouseUpdate);
-
-	if (props.model) {
-		// Create flattened view of model
-		modelTemplatingService.updateFlattenedTemplateInView(flattenedCanvas.value, props.model);
-		// Create decomposed view of model
-		modelTemplatingService.flattenedToDecomposedInKernel(
-			props.kernelManager,
-			decomposedCanvas.value,
-			interpolatePointsForCurve
-		);
-	}
+	renderFlattenedCanvas();
+	renderDecomposedCanvas();
 });
 
 onUnmounted(() => {

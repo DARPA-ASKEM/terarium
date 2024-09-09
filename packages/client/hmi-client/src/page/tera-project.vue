@@ -16,27 +16,11 @@
 					@open-new-asset="openNewAsset"
 				/>
 			</template>
-			<template v-slot:footerButtons>
-				<Button
-					class="upload-resources-button"
-					size="small"
-					icon="pi pi-upload"
-					label="Upload resources"
-					@click="isUploadResourcesModalVisible = true"
-				/>
-				<tera-upload-resources-modal
-					:visible="isUploadResourcesModalVisible"
-					@close="isUploadResourcesModalVisible = false"
-				/>
-			</template>
 		</tera-slider-panel>
 		<section class="project-page">
 			<tera-model v-if="pageType === AssetType.Model" :asset-id="assetId" />
 			<tera-code :asset-id="assetId" v-else-if="pageType === AssetType.Code" />
-			<tera-project-overview
-				v-else-if="pageType === ProjectPages.OVERVIEW"
-				@open-new-asset="openNewAsset"
-			/>
+			<tera-project-overview v-else-if="pageType === ProjectPages.OVERVIEW" />
 			<tera-workflow v-else-if="pageType === AssetType.Workflow" :asset-id="assetId" />
 			<!--Add new process/asset views here-->
 			<template v-else-if="assetId">
@@ -49,12 +33,7 @@
 				<tera-dataset v-else-if="pageType === AssetType.Dataset" :asset-id="assetId" />
 			</template>
 		</section>
-		<tera-slider-panel
-			v-model:is-open="isNotesSliderOpen"
-			content-width="240px"
-			direction="right"
-			header="Notes"
-		>
+		<tera-slider-panel v-model:is-open="isNotesSliderOpen" content-width="240px" direction="right" header="Notes">
 			<template v-slot:content>
 				<tera-notes-sidebar :asset-id="assetId" :page-type="pageType" />
 			</template>
@@ -86,11 +65,9 @@ import { AssetType } from '@/types/Types';
 import { AssetRoute } from '@/types/common';
 import { logger } from '@/utils/logger';
 import { isEqual } from 'lodash';
-import Button from 'primevue/button';
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
-import TeraUploadResourcesModal from '@/components/project/tera-upload-resources-modal.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -99,7 +76,6 @@ const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
 const showSaveAssetModal = ref(false);
 const assetTypeToCreate = ref<AssetType>(AssetType.Model);
-const isUploadResourcesModalVisible = ref(false);
 
 const pageType = computed(() => (route.params.pageType as ProjectPages | AssetType) ?? '');
 const assetId = computed(() => (route.params.assetId as string) ?? '');
@@ -122,10 +98,7 @@ async function removeAsset(assetRoute: AssetRoute) {
 		isProjectAssetTypes(assetRoute.pageType) &&
 		assetRoute.pageType !== ProjectPages.OVERVIEW
 	) {
-		const isRemoved = await useProjects().deleteAsset(
-			assetRoute.pageType as AssetType,
-			assetRoute.assetId
-		);
+		const isRemoved = await useProjects().deleteAsset(assetRoute.pageType as AssetType, assetRoute.assetId);
 		if (isRemoved) {
 			if (isEqual(assetRoute, openedAssetRoute.value)) {
 				openAsset({ assetId: '', pageType: ProjectPages.OVERVIEW });
@@ -153,6 +126,7 @@ onMounted(() => {
 .resource-panel {
 	z-index: 1000;
 	isolation: isolate;
+	outline-color: var(--surface-border);
 }
 
 .tab-group {
@@ -167,17 +141,6 @@ section {
 	flex: 1;
 	overflow-x: auto;
 	overflow-y: hidden;
-}
-
-.upload-resources-button {
-	margin: 0 1rem;
-	flex-grow: 1;
-	min-width: 140px;
-	justify-content: center;
-
-	& :deep(.p-button-label) {
-		flex-grow: 0;
-	}
 }
 
 .p-tabmenu:deep(.p-tabmenuitem) {

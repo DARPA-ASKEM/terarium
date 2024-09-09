@@ -34,7 +34,6 @@ public class V13__NotificationEventProgress extends BaseJavaMigration {
 	@Override
 	public void migrate(final Context context) throws Exception {
 		try (var statement = context.getConnection().createStatement()) {
-
 			// Rename transform to transform_old
 			statement.execute("ALTER TABLE notification_event RENAME COLUMN state TO state_old;");
 
@@ -43,11 +42,13 @@ public class V13__NotificationEventProgress extends BaseJavaMigration {
 
 			// Select all rows from the simulation_result_files table
 			final ResultSet resultSet = statement.executeQuery(
-					"SELECT id, state_old FROM notification_event WHERE state_old IS NOT NULL ORDER BY id;");
+				"SELECT id, state_old FROM notification_event WHERE state_old IS NOT NULL ORDER BY id;"
+			);
 
 			// Prepare the update statement for the simulation table
-			final PreparedStatement preparedStatement =
-					context.getConnection().prepareStatement("UPDATE notification_event SET state = ? WHERE id = ?;");
+			final PreparedStatement preparedStatement = context
+				.getConnection()
+				.prepareStatement("UPDATE notification_event SET state = ? WHERE id = ?;");
 
 			// Iterate through the result set
 			while (resultSet.next()) {

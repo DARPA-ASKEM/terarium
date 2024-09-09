@@ -41,7 +41,7 @@ services:
 
   elasticsearch:
     container_name: elasticsearch
-    image: elasticsearch:8.11.4
+    image: elasticsearch:8.12.1
     networks:
       - terarium
     ports:
@@ -122,7 +122,7 @@ services:
 
   spicedb:
     container_name: spicedb
-    image: authzed/spicedb:v1.34.0
+    image: authzed/spicedb:v1.35.3
     networks:
       - terarium
     ports:
@@ -146,7 +146,7 @@ services:
 
   migrate-spicedb:
     container_name: migrate-spicedb
-    image: authzed/spicedb:v1.34.0
+    image: authzed/spicedb:v1.35.3
     networks:
       - terarium
     command: [ "migrate", "head" ]

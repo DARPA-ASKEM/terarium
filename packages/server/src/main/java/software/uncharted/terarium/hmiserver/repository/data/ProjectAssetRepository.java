@@ -11,21 +11,28 @@ import software.uncharted.terarium.hmiserver.repository.PSCrudRepository;
 
 @Repository
 public interface ProjectAssetRepository extends PSCrudRepository<ProjectAsset, UUID> {
-
 	ProjectAsset findByProjectIdAndAssetId(@NotNull UUID projectId, @NotNull UUID assetId);
 
 	List<ProjectAsset> findAllByProjectIdAndDeletedOnIsNullAndTemporaryFalse(@NotNull UUID projectId);
 
 	List<ProjectAsset> findAllByProjectIdAndAssetTypeInAndDeletedOnIsNullAndTemporaryFalse(
-			@NotNull UUID projectId, Collection<@NotNull AssetType> assetType);
+		@NotNull UUID projectId,
+		Collection<@NotNull AssetType> assetType
+	);
 
 	ProjectAsset findByProjectIdAndAssetIdAndAssetType(
-			@NotNull UUID projectId, @NotNull UUID assetId, @NotNull AssetType type);
+		@NotNull UUID projectId,
+		@NotNull UUID assetId,
+		@NotNull AssetType type
+	);
 
 	ProjectAsset findByAssetNameAndAssetTypeAndDeletedOnIsNull(@NotNull String assetName, @NotNull AssetType type);
 
 	ProjectAsset findByProjectIdAndAssetNameAndAssetTypeAndDeletedOnIsNull(
-			@NotNull UUID projectId, @NotNull String assetName, @NotNull AssetType type);
+		@NotNull UUID projectId,
+		@NotNull String assetName,
+		@NotNull AssetType type
+	);
 
 	List<ProjectAsset> findByAssetId(UUID assetId);
 }

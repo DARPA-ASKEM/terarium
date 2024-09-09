@@ -11,10 +11,12 @@ import software.uncharted.terarium.hmiserver.repository.PSCrudRepository;
 
 @Repository
 public interface NotificationEventRepository extends PSCrudRepository<NotificationEvent, UUID> {
-
 	@Modifying
 	@Query(
-			"UPDATE NotificationEvent e SET e.acknowledgedOn = :acknowledgedOn WHERE e.notificationGroup.id = :notificationGroupId")
+		"UPDATE NotificationEvent e SET e.acknowledgedOn = :acknowledgedOn WHERE e.notificationGroup.id = :notificationGroupId"
+	)
 	void setAcknowledgedOnWhereNotificationGroupIdEquals(
-			@Param("notificationGroupId") UUID notificationGroupId, @Param("acknowledgedOn") Timestamp acknowledgedOn);
+		@Param("notificationGroupId") UUID notificationGroupId,
+		@Param("acknowledgedOn") Timestamp acknowledgedOn
+	);
 }

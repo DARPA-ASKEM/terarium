@@ -14,7 +14,6 @@ export async function modelCard(documentId: string): Promise<void> {
 				'document-id': documentId
 			}
 		});
-
 		// FIXME: I think we need to refactor the response interceptors so that we can handle errors here, or even in the interceptor itself...might be worth a discussion
 		const taskId = response.data.id;
 		await handleTaskById(taskId, {
@@ -36,68 +35,43 @@ export async function modelCard(documentId: string): Promise<void> {
 export async function configureModelFromDocument(
 	documentId: string,
 	modelId: string,
-	handlers: TaskEventHandlers,
-	workflowId?: string,
-	nodeId?: string
-): Promise<TaskHandler | null> {
-	try {
-		const response = await API.get<TaskResponse>('/gollm/configure-model', {
-			params: {
-				'model-id': modelId,
-				'document-id': documentId,
-				'workflow-id': workflowId,
-				'node-id': nodeId
-			}
-		});
-
-		const taskId = response.data.id;
-		return await handleTaskById(taskId, handlers);
-	} catch (err) {
-		const message = `An issue occurred while extracting a model configuration from document. ${err}`;
-		logger.error(message);
-		console.debug(message);
-	}
-
-	return null;
-}
-
-export async function configureModelFromDatasets(
-	modelId: string,
-	datasetIds: string[],
-	matrixStr: string,
-	handlers: TaskEventHandlers,
-	workflowId?: string,
-	nodeId?: string
-): Promise<TaskHandler | null> {
-	try {
-		// FIXME: Using first dataset for now...
-		const response = await API.post<TaskResponse>(
-			'/gollm/configure-from-dataset',
-			{ matrixStr },
-			{
-				params: {
-					'model-id': modelId,
-					'dataset-ids': datasetIds.join(),
-					'workflow-id': workflowId,
-					'node-id': nodeId
-				}
-			}
-		);
-
-		const taskId = response.data.id;
-		return await handleTaskById(taskId, handlers);
-	} catch (err) {
-		logger.error(`An issue occured while exctracting a model configuration from dataset. ${err}`);
-	}
-
-	return null;
-}
-
-export async function compareModels(
-	modelIds: string[],
 	workflowId?: string,
 	nodeId?: string
 ): Promise<TaskResponse> {
+	const { data } = await API.get<TaskResponse>('/gollm/configure-model', {
+		params: {
+			'model-id': modelId,
+			'document-id': documentId,
+			'workflow-id': workflowId,
+			'node-id': nodeId
+		}
+	});
+	return data;
+}
+
+export async function configureModelFromDataset(
+	modelId: string,
+	datasetId: string,
+	matrixStr: string,
+	workflowId?: string,
+	nodeId?: string
+): Promise<TaskResponse> {
+	const { data } = await API.post<TaskResponse>(
+		'/gollm/configure-from-dataset',
+		{ matrixStr },
+		{
+			params: {
+				'model-id': modelId,
+				'dataset-id': datasetId,
+				'workflow-id': workflowId,
+				'node-id': nodeId
+			}
+		}
+	);
+	return data;
+}
+
+export async function compareModels(modelIds: string[], workflowId?: string, nodeId?: string): Promise<TaskResponse> {
 	const { data } = await API.get<TaskResponse>('/gollm/compare-models', {
 		params: {
 			'model-ids': modelIds.join(','),
@@ -120,10 +94,7 @@ export async function cancelTask(taskId: string): Promise<void> {
  * Handles task for a given task ID.
  * @param {string} id - The task ID.
  */
-export async function handleTaskById(
-	id: string,
-	handlers: TaskEventHandlers
-): Promise<TaskHandler> {
+export async function handleTaskById(id: string, handlers: TaskEventHandlers): Promise<TaskHandler> {
 	const taskHandler = new TaskHandler(`/gollm/${id}`, handlers);
 	await taskHandler.start();
 	return taskHandler;

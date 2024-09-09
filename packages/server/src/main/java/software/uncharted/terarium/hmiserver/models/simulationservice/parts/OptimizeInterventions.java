@@ -12,6 +12,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @TSModel
 // Interventions applied by the user within the optimization box.
 public class OptimizeInterventions {
+
 	// This denotes whether the intervention is on a start date, or a parameter value.
 	// https://github.com/DARPA-ASKEM/pyciemss-service/blob/main/service/models/operations/optimize.py#L99
 	private String interventionType;
@@ -37,6 +38,6 @@ public class OptimizeInterventions {
 
 	@Override
 	public String toString() {
-		return " { Parameter Names: " + this.paramNames + " start time: " + startTime.toString() + " } ";
+		return (" { Parameter Names: " + this.paramNames + " start time: " + startTime.toString() + " } ");
 	}
 }

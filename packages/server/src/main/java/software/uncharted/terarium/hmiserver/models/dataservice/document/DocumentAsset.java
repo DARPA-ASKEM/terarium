@@ -22,7 +22,6 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
-import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -85,25 +84,6 @@ public class DocumentAsset extends TerariumAsset {
 			}
 		}
 		return this.fileNames;
-	}
-
-	/**
-	 * Get the DOI of a document
-	 *
-	 * @param doc
-	 * @return the DOI of the document, or an empty string if no DOI is found
-	 */
-	public static String getDocumentDoi(final Document doc) {
-		String docIdentifier = "";
-		if (doc != null && doc.getIdentifier() != null && !doc.getIdentifier().isEmpty()) {
-			for (final Map<String, String> identifier : doc.getIdentifier()) {
-				if (identifier.get("type").equals("doi")) {
-					docIdentifier = identifier.get("id");
-					break;
-				}
-			}
-		}
-		return docIdentifier;
 	}
 
 	@Override

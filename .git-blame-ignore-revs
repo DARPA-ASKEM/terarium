@@ -1,4 +1,13 @@
 # .git-blame-ignore-revs
-# Move to Spotless formatting with Palantir's Java format
+# This file is used to ignore commits when running git blame.
+# Each line should be a commit hash or a range of hashes.
+
+# 2024-04 Spotless formatting with Palantir Java format
 437cb30c390af85d330a4bbcece634c55e0ab5aa
 bf85395f0471c427d13acfdfd726f7f667d4ed63
+
+# 2024-07-18  Prettier formatting
+e987b962a587a358c86b3dfcd42b84520bfc6040
+
+# 2024-07-18 Increase formatting width to 120
+6742870b41eed8ecc82e39cef3379c9399808519

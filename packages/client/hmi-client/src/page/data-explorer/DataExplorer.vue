@@ -1,21 +1,7 @@
 <template>
 	<main>
 		<section class="flex h-full relative overflow-hidden">
-			<tera-slider-panel
-				content-width="240px"
-				direction="left"
-				header="Filters"
-				v-model:is-open="isSliderFacetsOpen"
-			>
-				<template v-slot:content>
-					<tera-facets-panel
-						v-if="viewType === ViewType.LIST"
-						:facets="facets"
-						:filtered-facets="filteredFacets"
-						:result-type="resourceType"
-						:docCount="docCount"
-					/>
-				</template>
+			<tera-slider-panel content-width="240px" direction="left" header="Filters" v-model:is-open="isSliderFacetsOpen">
 			</tera-slider-panel>
 			<div class="results-content">
 				<div class="search">
@@ -41,7 +27,6 @@
 					</nav>
 					<tera-searchbar
 						ref="searchBarRef"
-						@query-changed="updateRelatedTerms"
 						@toggle-search-by-example="searchByExampleModalToggled"
 						:source="chosenSource"
 						:show-suggestions="false"
@@ -55,7 +40,6 @@
 				</div>
 				<tera-search-results-list
 					:data-items="resultsToShow"
-					:facets="filteredFacets"
 					:resource-type="resourceType"
 					:search-term="searchTerm"
 					:is-loading="isLoading"
@@ -82,36 +66,19 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import SelectButton from 'primevue/selectbutton';
 import Dropdown from 'primevue/dropdown';
-import { fetchData, getDocumentById, getRelatedTerms } from '@/services/data';
+import { fetchData } from '@/services/data';
 import { searchByAssetType } from '@/services/search';
-import {
-	ResourceType,
-	ResultType,
-	SearchByExampleOptions,
-	SearchParameters,
-	SearchResults,
-	ViewType
-} from '@/types/common';
-import { DocumentSource, DatasetSource } from '@/types/search';
+import { ResourceType, ResultType, SearchParameters, SearchResults } from '@/types/common';
+import { DatasetSource } from '@/types/search';
 import type { Source } from '@/types/search';
-import { getFacets } from '@/utils/facets';
-import {
-	FACET_FIELDS as XDD_FACET_FIELDS,
-	GITHUB_URL,
-	XDD_RESULT_DEFAULT_PAGE_SIZE,
-	XDDSearchParams,
-	YEAR
-} from '@/types/XDD';
 import useQueryStore from '@/stores/query';
 import filtersUtil from '@/utils/filters-util';
-import useResourcesStore from '@/stores/resources';
-import { getResourceID, isDataset, isDocument, isModel, validate } from '@/utils/data-util';
-import { cloneDeep, intersectionBy, isEmpty, isEqual, max, min, unionBy } from 'lodash';
+import { getResourceID, isDataset, isModel } from '@/utils/data-util';
+import { cloneDeep, intersectionBy, isEmpty, isEqual, unionBy } from 'lodash';
 import { useRoute } from 'vue-router';
 import TeraPreviewPanel from '@/page/data-explorer/components/tera-preview-panel.vue';
-import TeraFacetsPanel from '@/page/data-explorer/components/tera-facets-panel.vue';
 import TeraSearchResultsList from '@/page/data-explorer/components/tera-search-results-list.vue';
-import { AssetType, XDDFacetsItemResponse } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import TeraSearchbar from '@/components/navbar/tera-searchbar.vue'; // import Chip from 'primevue/chip';
 import { DatasetSearchParams } from '@/types/Dataset';
 import { ModelSearchParams } from '@/types/Model';
@@ -122,7 +89,6 @@ import TeraFilterBar from './components/tera-filter-bar.vue';
 
 const route = useRoute();
 const queryStore = useQueryStore();
-const resources = useResourcesStore();
 
 const { searchByExampleOptions, searchByExampleItem } = useSearchByExampleOptions();
 
@@ -137,19 +103,12 @@ const searchTerm = ref('');
 // default slider state
 const isSliderFacetsOpen = ref(false);
 const isSliderResourcesOpen = ref(false);
-const pageSize = ref(XDD_RESULT_DEFAULT_PAGE_SIZE);
-// xdd
-const dictNames = ref<string[]>([]);
-const rankedResults = ref(true); // disable sorted/ranked results to enable pagination
 // facets
-const facets = ref<{ [index: string]: XDDFacetsItemResponse }>({});
 const docCount = ref(0);
 let modelTotal: number = 0;
 let documentTotal: number = 0;
 let datasetTotal: number = 0;
-const filteredFacets = ref<{ [index: string]: XDDFacetsItemResponse }>({});
 
-const viewType = ref<string>(ViewType.LIST);
 const isLoading = ref<boolean>(false);
 // optimize search performance: only fetch as needed
 const dirtyResults = ref<{ [resourceType: string]: boolean }>({});
@@ -167,7 +126,7 @@ const assetOptions = ref([
 // Child components should be updated to accept AssetType instead of ResourceType
 const resourceType = computed(() => {
 	if (assetType.value === AssetType.Document) {
-		return ResourceType.XDD;
+		return ResourceType.DOCUMENT;
 	}
 	if (assetType.value === AssetType.Model) {
 		return ResourceType.MODEL;
@@ -180,19 +139,14 @@ const topicOptions = ref([
 	{ label: 'Climate Weather', value: 'climate-change-modeling' }
 ]);
 
-const sourceOptions = ref<Source[]>(Object.values(DocumentSource));
-const chosenSource = ref<Source>(DocumentSource.XDD);
+const sourceOptions = ref<Source[]>(Object.values(DatasetSource));
+const chosenSource = ref<Source>(DatasetSource.TERARIUM);
 
-const sliderWidth = computed(() =>
-	isSliderFacetsOpen.value ? 'calc(50% - 120px)' : 'calc(50% - 20px)'
-);
+const sliderWidth = computed(() => (isSliderFacetsOpen.value ? 'calc(50% - 120px)' : 'calc(50% - 20px)'));
 
 // Chooses source for search
 const resultsToShow = computed(() => {
-	if (
-		(assetType.value === AssetType.Document && chosenSource.value === DocumentSource.TERARIUM) ||
-		assetType.value === AssetType.Model
-	) {
+	if (assetType.value === AssetType.Document || assetType.value === AssetType.Model) {
 		return searchResults.value;
 	}
 	return dataItems.value;
@@ -207,34 +161,19 @@ watch(isSliderResourcesOpen, () => {
 
 function changeAssetType(type: AssetType) {
 	assetType.value = type;
-
-	if (assetType.value === AssetType.Document) {
-		sourceOptions.value = Object.values(DocumentSource);
-		chosenSource.value = DocumentSource.XDD;
-	} else if (assetType.value === AssetType.Dataset) {
+	if (assetType.value === AssetType.Dataset) {
 		sourceOptions.value = Object.values(DatasetSource);
 		chosenSource.value = DatasetSource.TERARIUM;
 	}
 }
 
-const calculateFacets = (unfilteredData: SearchResults[], filteredData: SearchResults[]) => {
-	// retrieves filtered & unfiltered facet data
-	facets.value = getFacets(unfilteredData, resourceType.value);
-	filteredFacets.value = getFacets(filteredData, resourceType.value);
-};
-
-const mergeResultsKeepRecentDuplicates = (
-	existingResults: SearchResults[],
-	newResults: SearchResults[]
-) => {
+const mergeResultsKeepRecentDuplicates = (existingResults: SearchResults[], newResults: SearchResults[]) => {
 	const mergeId = 'searchSubsystem';
 	const mergedResults = unionBy(existingResults, newResults, mergeId);
 	// replace existing old results with new ones, if any
 	const overlapping = intersectionBy(existingResults, newResults, mergeId);
 	overlapping.forEach((res) => {
-		const existingOldIndex = mergedResults.findIndex(
-			(u) => u.searchSubsystem === res.searchSubsystem
-		);
+		const existingOldIndex = mergedResults.findIndex((u) => u?.searchSubsystem === res?.searchSubsystem);
 		const newResult = newResults.find((u) => u.searchSubsystem === res.searchSubsystem);
 		// remove the old one and insert the new updated result
 		if (newResult) {
@@ -257,8 +196,7 @@ const executeSearch = async () => {
 
 	let searchWords = searchTerm.value;
 
-	const matchAll =
-		!isEmpty(searchWords) && searchWords.startsWith('"') && searchWords.endsWith('"');
+	const matchAll = !isEmpty(searchWords) && searchWords.startsWith('"') && searchWords.endsWith('"');
 	const allSearchTerms = searchWords.split(' ');
 	if (matchAll && !isEmpty(allSearchTerms)) {
 		// multiple words are provided as search term and the user requested to match all of them
@@ -266,24 +204,8 @@ const executeSearch = async () => {
 		searchWords = allSearchTerms.join(',');
 	}
 
-	const isValidDOI = validate(searchWords);
-
 	// start with initial search parameters
 	const searchParams: SearchParameters = {
-		[ResourceType.XDD]: {
-			dict: dictNames.value,
-			dataset: resources.getXddDataset,
-			max: pageSize.value,
-			perPage: pageSize.value,
-			fullResults: !rankedResults.value,
-			doi: isValidDOI ? searchWords : undefined,
-			includeHighlights: true,
-			inclusive: matchAll,
-			facets: true, // include facets aggregation data in the search results
-			match: true,
-			additional_fields: 'title,abstract',
-			known_entities: 'url_extractions,askem_object'
-		},
 		model: {},
 		[ResourceType.DATASET]: {
 			source: chosenSource.value as DatasetSource,
@@ -294,20 +216,7 @@ const executeSearch = async () => {
 	// handle the search-by-example for finding related documents, models, and/or datasets
 	if (executeSearchByExample.value && searchByExampleItem.value) {
 		const id = getResourceID(searchByExampleItem.value) as string;
-		//
-		// find related documents (which utilizes the xDD doc2vec API through the HMI server)
-		//
-		if (isDocument(searchByExampleItem.value) && searchParams.xdd) {
-			searchParams.xdd.dataset = resources.getXddDataset;
-			if (searchByExampleOptions.value.similarContent) {
-				searchParams.xdd.similar_search_enabled = executeSearchByExample.value;
-			}
-			if (searchByExampleOptions.value.relatedContent) {
-				searchParams.xdd.related_search_enabled = executeSearchByExample.value;
-			}
-			searchParams.xdd.related_search_id = id;
-			assetType.value = AssetType.Document;
-		}
+
 		//
 		// find related models (which utilizes the TDS provenance API through the HMI server)
 		//
@@ -327,40 +236,6 @@ const executeSearch = async () => {
 	}
 	const searchParamsWithFacetFilters: SearchParameters = cloneDeep(searchParams);
 
-	//
-	// extend search parameters by converting facet filters into proper search parameters
-	//
-	const xddSearchParams: XDDSearchParams = searchParamsWithFacetFilters?.[ResourceType.XDD] || {};
-	// transform facet filters into xdd search parameters
-	clientFilters.value.clauses.forEach((clause) => {
-		if (XDD_FACET_FIELDS.includes(clause.field)) {
-			// NOTE: special case
-			if (clause.field === YEAR) {
-				if (clause.values.length === 1) {
-					// a single year is selected
-					const val = (clause.values as string[]).join(',');
-					const minFormattedVal = `${val}-01-01`; // must be in ISO format; 2020-01-01
-					const maxFormattedVal = `${val}-12-31`; // must be in ISO format; 2020-01-01
-					xddSearchParams.min_published = minFormattedVal;
-					xddSearchParams.max_published = maxFormattedVal;
-				} else {
-					// multiple years are selected, so find their range
-					const years = clause.values.map((year) => +year);
-					const minYear = min(years);
-					const maxYear = max(years);
-					const formattedValMinYear = `${minYear}-01-01`; // must be in ISO format; 2020-01-01
-					const formattedValMaxYear = `${maxYear}-12-31`; // must be in ISO format; 2020-01-01
-					xddSearchParams.min_published = formattedValMinYear;
-					xddSearchParams.max_published = formattedValMaxYear;
-				}
-			} else if (clause.field === GITHUB_URL) {
-				xddSearchParams.githubUrls = (clause.values as string[]).join(',');
-			} else {
-				xddSearchParams[clause.field] = (clause.values as string[]).join(',');
-			}
-		}
-	});
-
 	let modelSearchParams: ModelSearchParams;
 	if (searchParamsWithFacetFilters?.[ResourceType.MODEL]?.filters) {
 		modelSearchParams = searchParamsWithFacetFilters[ResourceType.MODEL];
@@ -379,7 +254,6 @@ const executeSearch = async () => {
 	}
 
 	// update search parameters object
-	searchParamsWithFacetFilters.xdd = xddSearchParams;
 	searchParamsWithFacetFilters.model = modelSearchParams;
 	searchParamsWithFacetFilters.dataset = datasetSearchParams;
 
@@ -389,7 +263,7 @@ const executeSearch = async () => {
 		searchResults.value = [
 			{
 				results: await searchByAssetType(searchWords, AssetType.Document),
-				searchSubsystem: ResourceType.XDD
+				searchSubsystem: ResourceType.DOCUMENT
 			},
 			{
 				results: await searchByAssetType(searchWords, AssetType.Model),
@@ -412,7 +286,7 @@ const executeSearch = async () => {
 	// the list of results displayed in the data explorer is always the final filtered data
 	dataItems.value = mergeResultsKeepRecentDuplicates(dataItems.value, allDataFilteredWithFacets);
 	// final step: cache the facets and filteredFacets objects
-	calculateFacets(allData, allDataFilteredWithFacets);
+	// calculateFacets(allData, allDataFilteredWithFacets);
 
 	let total = 0;
 	allData.forEach((res) => {
@@ -421,7 +295,7 @@ const executeSearch = async () => {
 	});
 
 	// Note that we only do xDD document and Dataset searches on demand and don't have a way of knowing in advance how many results there are
-	if (chosenSource.value === DocumentSource.XDD && resourceType.value === ResourceType.XDD) {
+	if (resourceType.value === ResourceType.DOCUMENT) {
 		documentTotal = total ?? 0;
 	} else if (resourceType.value === ResourceType.DATASET) {
 		datasetTotal = total ?? 0;
@@ -431,11 +305,7 @@ const executeSearch = async () => {
 	for (let i = 0; i < searchResults.value.length; i++) {
 		if (searchResults.value[i].searchSubsystem === ResourceType.MODEL) {
 			modelTotal = searchResults.value[i].results.length ?? 0;
-		} else if (
-			searchResults.value[i].searchSubsystem === ResourceType.XDD &&
-			chosenSource.value === DocumentSource.TERARIUM &&
-			resourceType.value === ResourceType.XDD
-		) {
+		} else if (resourceType.value === ResourceType.DOCUMENT) {
 			// Note on the above, when we say XDD here we apparently don't actually mean XDD we mean Terarium Documents.
 			documentTotal = searchResults.value[i].results.length ?? 0;
 		}
@@ -470,25 +340,6 @@ const disableSearchByExample = () => {
 	executeSearchByExample.value = false;
 
 	clearSearchByExampleSelections();
-};
-
-const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
-	// user has requested a search by example, so re-fetch data
-	dirtyResults.value[resourceType.value] = true;
-
-	// REVIEW: executing a similar content search means to find similar objects to the one selected:
-	//         if a document is selected then find related documents (from xDD)
-	// REVIEW: executing a related content search means to find related artifacts to the one selected:
-	//         if a model/dataset/document is selected then find related artifacts from TDS
-	if (searchOptions.similarContent || searchOptions.relatedContent) {
-		// NOTE the executeSearch will set proper search-by-example search parameters
-		//  and let the data service handles the fetch
-		executeSearchByExample.value = true;
-
-		await executeSearch();
-
-		dirtyResults.value[resourceType.value] = false;
-	}
 };
 
 const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) => {
@@ -528,7 +379,7 @@ watch(resourceType, async (newResourceType, oldResourceType) => {
 
 	// if no data currently exist for the selected tab,
 	// or if data exists but outdated then we should refetch
-	const resList = dataItemsUnfiltered.value.find((res) => res.searchSubsystem === newResourceType);
+	const resList = dataItemsUnfiltered.value.find((res) => res?.searchSubsystem === newResourceType);
 
 	/** clear filters if they exist, we when to set the old resource type to
 	 * have dirty results since now they will need to be refetched when the facets filters are cleared
@@ -542,10 +393,6 @@ watch(resourceType, async (newResourceType, oldResourceType) => {
 		disableSearchByExample();
 		await executeSearch();
 		dirtyResults.value[newResourceType] = false;
-	} else {
-		// data has not changed; the user has just switched the result tab, e.g., from Documents to Models
-		// re-calculate the facets
-		calculateFacets(dataItemsUnfiltered.value, dataItems.value);
 	}
 });
 
@@ -571,22 +418,12 @@ async function executeNewQuery() {
 	dirtyResults.value[resourceType.value] = false;
 }
 
-async function searchByExampleOnPageRefresh(resourceId: string) {
-	if (!searchByExampleItem.value) {
-		searchByExampleItem.value = await getDocumentById(resourceId);
-	}
-	if (!Object.values(searchByExampleOptions.value).some((v) => v)) {
-		searchByExampleOptions.value.similarContent = true;
-	}
-	onSearchByExample(searchByExampleOptions.value);
-}
-
 // this is called whenever the user apply some facet filter(s)
 watch(clientFilters, async (n, o) => {
 	if (filtersUtil.isEqual(n, o)) return;
 
 	// We support facet filters for search by example for documents but not for models or datasets
-	if (resourceType.value !== ResourceType.XDD) {
+	if (resourceType.value !== ResourceType.DOCUMENT) {
 		disableSearchByExample();
 	}
 
@@ -604,29 +441,13 @@ watch(clientFilters, async (n, o) => {
 watch(
 	() => route.query,
 	() => {
-		// The query changes in the following cases:
-		// - when a user does a normal search - there is no `resourceId`
-		// - when a user does a search by example - there is a `resourceId`
-		// - when a user navigates back and forth on a page
-
-		if (route.query.resourceId) {
-			searchByExampleOnPageRefresh(route.query.resourceId.toString());
-		} else {
-			executeNewQuery();
-		}
+		executeNewQuery();
 	}
 );
 
 // Default query on reload
 onMounted(async () => {
-	resources.setXDDDataset('xdd-covid-19'); // give xdd dataset a default value
-	// On reload, if the url has a resourceId, we know that a user just did a search by example
-	// so we want to preserve the search by example so we perform a search by example instead of a normal search
-	if (route.query.resourceId) {
-		searchByExampleOnPageRefresh(route.query.resourceId.toString());
-	} else {
-		executeNewQuery();
-	}
+	executeNewQuery();
 });
 
 onUnmounted(() => {
@@ -637,11 +458,6 @@ onUnmounted(() => {
  * Search
  */
 const searchBarRef = ref();
-const terms = ref<string[]>([]);
-
-async function updateRelatedTerms(query?: string) {
-	if (query || query === '') terms.value = await getRelatedTerms(query);
-}
 
 function searchByExampleModalToggled() {
 	// TODO

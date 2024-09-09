@@ -1,7 +1,7 @@
 <template>
 	<DataTable
 		class="dataset-overview-table"
-		:value="formattedData"
+		:value="tableData"
 		dataKey="id"
 		:rowsPerPageOptions="[10, 20, 50]"
 		edit-mode="cell"
@@ -12,31 +12,19 @@
 		<Column field="description" header="Description" sortable style="width: 30%" />
 		<Column field="concept" header="Concept" sortable style="width: 10%">
 			<template #body="{ data }">
-				<template v-if="!isEmpty(data.concept)">
-					<div class="flex flex-row align-items-center">
-						{{
-							getNameOfCurieCached(nameOfCurieCache, getCurieFromGroundingIdentifier(data.concept))
-						}}
-						<i class="pi pi-chevron-down pl-2 text-xs" />
-						<a
-							target="_blank"
-							rel="noopener noreferrer"
-							:href="getCurieUrl(getCurieFromGroundingIdentifier(data.concept))"
-							@click.stop
-							aria-label="Open Concept"
-						>
-							<i class="pi pi-external-link pl-2 text-xs" v-tooltip.top="'MIRA Epi Metaregistry'" />
-						</a>
-					</div>
-				</template>
-				<template v-else>--</template>
+				<div v-if="data.concept" class="concept">
+					<span>{{ data.concept }}<i class="pi pi-chevron-down pl-2 text-xs" /></span>
+					<a target="_blank" rel="noopener noreferrer" :href="data.conceptURL" @click.stop aria-label="Open Concept">
+						<i class="pi pi-external-link pl-4 text-xs" v-tooltip.top="'MIRA Epi Metaregistry'" />
+					</a>
+				</div>
 			</template>
 			<template #editor="{ data, index }">
 				<AutoComplete
-					v-model="conceptSearchTerm.name"
+					v-model="query"
 					placeholder="Search for concepts"
 					:suggestions="curies"
-					@complete="onSearch"
+					@complete="async () => (curies = await searchCuriesEntities(query))"
 					@item-select="
 						updateDataset(index, 'metadata', {
 							...data.column?.metadata,
@@ -60,11 +48,11 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import type { Dataset, DatasetColumn, DKG } from '@/types/Types';
-import { computed, ref } from 'vue';
-import { cloneDeep, isEmpty } from 'lodash';
+import type { Dataset, DKG } from '@/types/Types';
+import { cloneDeep } from 'lodash';
 import {
 	getCurieFromGroundingIdentifier,
 	getCurieUrl,
@@ -72,7 +60,7 @@ import {
 	parseCurie,
 	searchCuriesEntities
 } from '@/services/concept';
-import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
+import AutoComplete from 'primevue/autocomplete';
 import TeraBoxplot from '@/components/widgets/tera-boxplot.vue';
 
 const props = defineProps<{
@@ -80,31 +68,15 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['update-dataset']);
 
-const conceptSearchTerm = ref({
-	curie: '',
-	name: ''
-});
+const query = ref('');
 const curies = ref<DKG[]>([]);
-const nameOfCurieCache = ref(new Map<string, string>());
-
-const formattedData = computed(() => {
-	if (!props.dataset?.columns) return [];
-	return formatData(props.dataset.columns);
-});
+const tableData = ref<any[]>([]);
 
 function formatName(name: string) {
 	return (name.charAt(0).toUpperCase() + name.slice(1)).replace('_', ' ');
 }
 
-async function onSearch(event: AutoCompleteCompleteEvent) {
-	const query = event.query;
-	if (query.length > 2) {
-		const response = await searchCuriesEntities(query);
-		curies.value = response;
-	}
-}
-
-function updateDataset(index: number, field: string, value: any) {
+async function updateDataset(index: number, field: string, value: any) {
 	const datasetClone = cloneDeep(props.dataset);
 	if (datasetClone.columns) {
 		if (!datasetClone.columns[index][field]) {
@@ -116,30 +88,31 @@ function updateDataset(index: number, field: string, value: any) {
 }
 
 function onCellEditComplete() {
-	conceptSearchTerm.value = { curie: '', name: '' };
+	query.value = '';
 }
 
-function formatData(data: DatasetColumn[]) {
-	return data.map((col) => {
-		let concept: object | undefined;
-		if (col.metadata?.groundings?.identifiers) {
-			concept = col.metadata.groundings.identifiers;
-		} else if (col.grounding?.identifiers[0]) {
-			concept = parseCurie(String(col.grounding.identifiers[0].curie));
-		}
-
-		return {
-			id: col.name,
-			name: formatName(col.name),
-			description: col.description,
-			concept,
-			unit: col.metadata?.unit,
-			dataType: col.metadata?.column_stats?.type,
-			stats: col.metadata?.column_stats,
-			column: col
-		};
-	});
-}
+watch(
+	() => props.dataset?.columns,
+	async () => {
+		tableData.value = await Promise.all(
+			props.dataset.columns?.map(async (col) => {
+				const identifier = col.metadata?.groundings?.identifiers ?? parseCurie(col.grounding?.identifiers[0].curie);
+				return {
+					id: col.name,
+					name: formatName(col.name),
+					description: col.description,
+					concept: await getNameOfCurieCached(getCurieFromGroundingIdentifier(identifier)),
+					conceptURL: getCurieUrl(getCurieFromGroundingIdentifier(identifier)),
+					unit: col.metadata?.unit,
+					dataType: col.metadata?.column_stats?.type,
+					stats: col.metadata?.column_stats,
+					column: col
+				};
+			}) ?? []
+		);
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
@@ -149,5 +122,14 @@ function formatData(data: DatasetColumn[]) {
 
 .p-datatable:deep(.p-datatable-thead > tr > th) {
 	background-color: var(--surface-50);
+	padding-left: var(--gap);
+}
+
+.concept,
+.concept > span {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	align-items: center;
 }
 </style>

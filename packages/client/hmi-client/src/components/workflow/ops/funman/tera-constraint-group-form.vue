@@ -6,7 +6,7 @@
 
 		<div class="button-row">
 			<label>Name of constraint</label>
-			<InputText
+			<tera-input-text
 				v-model="constraintName"
 				placeholder="Add constraint name"
 				@focusout="emit('update-self', { index: props.index, updatedConfig: updatedConfig })"
@@ -53,7 +53,7 @@
 				<label v-if="weights">
 					{{ variable + ' Weight' }}
 				</label>
-				<InputNumber
+				<tera-input-number
 					v-if="weights"
 					:key="index"
 					:placeholder="variable"
@@ -65,32 +65,20 @@
 
 		<!-- These are the radio buttons -->
 		<section class="radio-buttons" v-if="constraintType === 'monotonicityConstraint'">
-			<RadioButton
-				v-model="derivativeType"
-				@update:model-value="updateChanges()"
-				value="increasing"
-			/>
+			<RadioButton v-model="derivativeType" @update:model-value="updateChanges()" value="increasing" />
 			<label class="monoton-label">Increasing</label>
 			&nbsp;
-			<RadioButton
-				v-model="derivativeType"
-				@update:model-value="updateChanges()"
-				value="decreasing"
-			/>
+			<RadioButton v-model="derivativeType" @update:model-value="updateChanges()" value="decreasing" />
 			<label class="monoton-label">Decreasing</label>
 		</section>
 
 		<!-- These are the start, end times and upper, lower bounts inputs -->
-		<!--FIXME: InputNumber seems like it has some min-width set even though it's nowhere to be found (adjust screen width to see what I mean)
-		Once that can be changed replace the tailwind and label-padding class here with the section-row and button-row classes used above
-		-->
-
 		<!-- I have cleaned this up a bit to make the fields spaced out better, fitting at full width. Also set the inputtext to md so that they match other fields on the page. -NG -->
 
 		<div v-if="constraintType !== 'monotonicityConstraint'" class="flex-container">
 			<div class="input-container">
 				<label for="input1" class="label label-padding">Start time</label>
-				<InputNumber
+				<tera-input-number
 					id="input1"
 					class="p-inputtext-md"
 					v-model="startTime"
@@ -100,22 +88,17 @@
 
 			<div class="input-container">
 				<label for="input2" class="label label-padding">End time</label>
-				<InputNumber
-					id="input2"
-					class="p-inputtext-md"
-					v-model="endTime"
-					@update:model-value="updateChanges()"
-				/>
+				<tera-input-number id="input2" class="p-inputtext-md" v-model="endTime" @update:model-value="updateChanges()" />
 			</div>
 
 			<div class="input-container">
 				<label for="input3" class="label label-padding">Lower bound</label>
-				<tera-input type="number" v-model="lowerBound" @update:model-value="updateChanges()" />
+				<tera-input-number v-model="lowerBound" @update:model-value="updateChanges()" />
 			</div>
 
 			<div class="input-container">
 				<label for="input4" class="label label-padding">Upper bound</label>
-				<tera-input type="number" v-model="upperBound" @update:model-value="updateChanges()" />
+				<tera-input-number v-model="upperBound" @update:model-value="updateChanges()" />
 			</div>
 		</div>
 	</div>
@@ -123,13 +106,12 @@
 
 <script setup lang="ts">
 import { watch, ref, computed } from 'vue';
-import InputText from 'primevue/inputtext';
-import InputNumber from 'primevue/inputnumber';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import MultiSelect from 'primevue/multiselect';
 import Dropdown from 'primevue/dropdown';
 import RadioButton from 'primevue/radiobutton';
 import { ConstraintGroup } from '@/components/workflow/ops/funman/funman-operation';
-import TeraInput from '@/components/widgets/tera-input.vue';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 
 const props = defineProps<{
 	modelStates: string[];

@@ -48,50 +48,50 @@ public class DataInitializationService {
 		for (final RoleType roleType : roleTypesMissing) {
 			switch (roleType) {
 				case ADMIN -> roleService.createRole(
-						RoleType.ADMIN,
-						Map.of(
-								AuthorityType.GRANT_AUTHORITY,
-										List.of(
-												AuthorityLevel.READ,
-												AuthorityLevel.CREATE,
-												AuthorityLevel.UPDATE,
-												AuthorityLevel.DELETE),
-								AuthorityType.USERS,
-										List.of(
-												AuthorityLevel.READ,
-												AuthorityLevel.CREATE,
-												AuthorityLevel.UPDATE,
-												AuthorityLevel.DELETE)));
+					RoleType.ADMIN,
+					Map.of(
+						AuthorityType.GRANT_AUTHORITY,
+						List.of(AuthorityLevel.READ, AuthorityLevel.CREATE, AuthorityLevel.UPDATE, AuthorityLevel.DELETE),
+						AuthorityType.USERS,
+						List.of(AuthorityLevel.READ, AuthorityLevel.CREATE, AuthorityLevel.UPDATE, AuthorityLevel.DELETE)
+					)
+				);
 				case USER -> roleService.createRole(
-						RoleType.USER,
-						Map.of(
-								AuthorityType.GRANT_AUTHORITY, List.of(AuthorityLevel.READ),
-								AuthorityType.USERS, List.of(AuthorityLevel.READ, AuthorityLevel.UPDATE)));
+					RoleType.USER,
+					Map.of(
+						AuthorityType.GRANT_AUTHORITY,
+						List.of(AuthorityLevel.READ),
+						AuthorityType.USERS,
+						List.of(AuthorityLevel.READ, AuthorityLevel.UPDATE)
+					)
+				);
 				case GROUP -> roleService.createRole(
-						RoleType.GROUP,
-						Map.of(
-								AuthorityType.GRANT_AUTHORITY, List.of(AuthorityLevel.READ),
-								AuthorityType.USERS, List.of(AuthorityLevel.READ, AuthorityLevel.UPDATE)));
+					RoleType.GROUP,
+					Map.of(
+						AuthorityType.GRANT_AUTHORITY,
+						List.of(AuthorityLevel.READ),
+						AuthorityType.USERS,
+						List.of(AuthorityLevel.READ, AuthorityLevel.UPDATE)
+					)
+				);
 				case TEST -> roleService.createRole(
-						RoleType.TEST,
-						Map.of(
-								AuthorityType.GRANT_AUTHORITY, List.of(AuthorityLevel.READ),
-								AuthorityType.USERS,
-										List.of(
-												AuthorityLevel.READ,
-												AuthorityLevel.CREATE,
-												AuthorityLevel.UPDATE,
-												AuthorityLevel.DELETE)));
+					RoleType.TEST,
+					Map.of(
+						AuthorityType.GRANT_AUTHORITY,
+						List.of(AuthorityLevel.READ),
+						AuthorityType.USERS,
+						List.of(AuthorityLevel.READ, AuthorityLevel.CREATE, AuthorityLevel.UPDATE, AuthorityLevel.DELETE)
+					)
+				);
 				case SERVICE -> roleService.createRole(
-						RoleType.SERVICE,
-						Map.of(
-								AuthorityType.GRANT_AUTHORITY, List.of(AuthorityLevel.READ),
-								AuthorityType.USERS,
-										List.of(
-												AuthorityLevel.READ,
-												AuthorityLevel.CREATE,
-												AuthorityLevel.UPDATE,
-												AuthorityLevel.DELETE)));
+					RoleType.SERVICE,
+					Map.of(
+						AuthorityType.GRANT_AUTHORITY,
+						List.of(AuthorityLevel.READ),
+						AuthorityType.USERS,
+						List.of(AuthorityLevel.READ, AuthorityLevel.CREATE, AuthorityLevel.UPDATE, AuthorityLevel.DELETE)
+					)
+				);
 			}
 		}
 	}

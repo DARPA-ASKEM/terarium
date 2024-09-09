@@ -81,9 +81,7 @@ Basic rules to write organised code.
 
     ```html
     <tera-model 
-        :asset-id="previewItemId"
-        :project="resources.activeProject" 
-        :highlight="searchTerm"
+        :asset-id="previewItemId"  
         :feature-config="{ isPreview: true }"
     />
     ```

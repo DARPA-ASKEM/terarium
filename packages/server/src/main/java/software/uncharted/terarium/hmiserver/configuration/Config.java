@@ -18,14 +18,24 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Accessors(chain = true)
 @NoArgsConstructor
 public class Config {
-	/** The base url of the deployed application. Eg/ http://localhost:5173 or https://myapp.uncharted.software */
+
+	/**
+	 * The base url of the deployed application. Eg/ http://localhost:5173 or
+	 * https://myapp.uncharted.software
+	 */
 	String baseUrl;
 
 	/** A list of patterns for service requests that can be used via basic auth */
 	List<String> serviceRequestPatterns;
 
 	/**
-	 * A list of unauthenticated {@link org.springframework.util.AntPathMatcher} patterns for urls that should not be
+	 * Max age of the cache headers in seconds.
+	 */
+	Integer cacheHeadersMaxAge = 60 * 60 * 24;
+
+	/**
+	 * A list of unauthenticated {@link org.springframework.util.AntPathMatcher}
+	 * patterns for urls that should not be
 	 * authenticated via Spring Security
 	 */
 	List<String> unauthenticatedUrlPatterns;
@@ -39,13 +49,19 @@ public class Config {
 	/** Configuration values that are passed to the client */
 	ClientConfig clientConfig;
 
-	/** If queues should be declared durable. IF running Rabbit inside docker, this should be false */
+	/**
+	 * If queues should be declared durable. IF running Rabbit inside docker, this
+	 * should be false
+	 */
 	Boolean durableQueues = false;
 
 	/** The buffer size when uploading large files to the server */
 	Integer multipartFileBufferSize = 50 * 1024 * 1024;
 
-	/** The encryption key used to encrypt the download urls for retrieving files from the server */
+	/**
+	 * The encryption key used to encrypt the download urls for retrieving files
+	 * from the server
+	 */
 	String presignedUrlEncryptionKey;
 
 	/** The number of seconds that a presigned url signature is valid for */
@@ -72,14 +88,22 @@ public class Config {
 	@Data
 	@Accessors(chain = true)
 	public static class Caching {
-		/** If true, clear the cache on startup. Should be false in production environments */
+
+		/**
+		 * If true, clear the cache on startup. Should be false in production
+		 * environments
+		 */
 		Boolean clearOnStartup;
 	}
 
 	@Data
 	@Accessors(chain = true)
 	public static class Keycloak {
-		/** The url of the keycloak server. eg/ http://localhost:8081 or https://keycloak.uncharted.software */
+
+		/**
+		 * The url of the keycloak server. eg/ http://localhost:8081 or
+		 * https://keycloak.uncharted.software
+		 */
 		String url;
 		/** The realm name to use for authentication */
 		String realm;
@@ -104,19 +128,27 @@ public class Config {
 	@Accessors(chain = true)
 	@TSModel
 	public static class ClientConfig implements Serializable {
-		/** The base url of the deployed application. Mirror of {@link Config#baseUrl} */
+
+		/**
+		 * The base url of the deployed application. Mirror of {@link Config#baseUrl}
+		 */
 		String baseUrl;
 
 		/**
-		 * If true, we will log all client-side errors to the server. This is useful for debugging, but should be false
+		 * If true, we will log all client-side errors to the server. This is useful for
+		 * debugging, but should be false
 		 */
 		Boolean clientLogShippingEnabled;
 
-		/** The interval, in milliseconds, at which we will ship client-side logs to the server */
+		/**
+		 * The interval, in milliseconds, at which we will ship client-side logs to the
+		 * server
+		 */
 		Long clientLogShippingIntervalMillis;
 
 		/**
-		 * The interval, in milliseconds, at which we will send a heartbeat to connected clients for server-side-events
+		 * The interval, in milliseconds, at which we will send a heartbeat to connected
+		 * clients for server-side-events
 		 */
 		Long sseHeartbeatIntervalMillis;
 	}
@@ -124,6 +156,7 @@ public class Config {
 	@Data
 	@Accessors(chain = true)
 	public static class AmazonCredentials {
+
 		String accessKey;
 		String secretKey;
 	}
@@ -131,6 +164,7 @@ public class Config {
 	@Data
 	@Accessors(chain = true)
 	public static class AmazonS3 {
+
 		String region;
 		String url;
 		String credentialsId;
@@ -139,6 +173,7 @@ public class Config {
 	@Data
 	@Accessors(chain = true)
 	public static class Amazon {
+
 		Map<String, AmazonCredentials> credentials;
 		Map<String, AmazonS3> s3;
 	}

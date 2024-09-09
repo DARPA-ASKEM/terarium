@@ -5,9 +5,7 @@
 			<li v-for="(edge, index) in junction.edges" :key="index">
 				{{ junction.edges[0].target.portId }}
 				=
-				{{ cards.find(({ id }) => id === edge.target.cardId)?.model.header.name }}.{{
-					edge.target.portId
-				}}
+				{{ cards.find(({ id }) => id === edge.target.cardId)?.model.header.name }}.{{ edge.target.portId }}
 			</li>
 		</ul>
 	</section>

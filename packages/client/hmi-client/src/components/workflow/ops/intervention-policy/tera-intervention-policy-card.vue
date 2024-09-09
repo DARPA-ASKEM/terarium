@@ -46,16 +46,17 @@ const toggleContextMenu = (event) => {
 
 <style scoped>
 .policy-card {
-	&:hover {
-		cursor: pointer;
-		background-color: var(--gray-100);
-	}
 	&.card-selected {
 		background-color: var(--gray-100);
 		border-left: 4px solid var(--primary-color);
 	}
 
-	> div {
+	&:not(.card-selected):hover {
+		cursor: pointer;
+		background-color: var(--gray-100);
+	}
+
+	& > div {
 		padding-left: var(--gap-small);
 	}
 }

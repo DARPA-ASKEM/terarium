@@ -18,7 +18,7 @@
 				{{ useProjects().activeProject.value?.description }}
 			</p>
 		</template>
-		<tera-project-overview-editor />
+		<tera-project-overview-editor class="relative" />
 	</tera-asset>
 </template>
 
@@ -28,7 +28,7 @@ import * as DateUtils from '@/utils/date';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { useProjects } from '@/composables/project';
 import TeraProjectMenu from '@/components/home/tera-project-menu.vue';
-import teraProjectOverviewEditor from '@/components/home/tera-project-overview-editor.vue';
+import teraProjectOverviewEditor from '@/components/project/tera-project-overview-editor.vue';
 
 const isRenamingProject = ref(false);
 </script>

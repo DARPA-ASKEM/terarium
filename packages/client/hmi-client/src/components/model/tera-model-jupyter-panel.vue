@@ -63,6 +63,7 @@
 			@update-kernel-status="updateKernelStatus"
 			@new-model-saved="onNewModelSaved"
 			:notebook-session="props.notebookSession"
+			:language="'python'"
 		/>
 		<div :style="{ 'padding-bottom': '100px' }" v-if="kernelState">
 			<Button
@@ -74,12 +75,8 @@
 				<span class="p-button-text">Save as</span>
 			</Button>
 			<span v-if="showSaveInput" style="padding-left: 1em; padding-right: 2em">
-				<InputText v-model="saveAsName" class="post-fix" placeholder="New model name" />
-				<i
-					class="pi pi-times i"
-					:class="{ clear: hasValidDatasetName }"
-					@click="saveAsName = ''"
-				></i>
+				<tera-input-text v-model="saveAsName" class="post-fix" placeholder="New model name" />
+				<i class="pi pi-times i" :class="{ clear: hasValidDatasetName }" @click="saveAsName = ''"></i>
 				<i
 					class="pi pi-check i"
 					:class="{ save: hasValidDatasetName }"
@@ -95,7 +92,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, Ref, watch } from 'vue';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 // import { cloneDeep } from 'lodash';
 import { useToastService } from '@/services/toast';
 import { IModel } from '@jupyterlab/services/lib/session/session';
@@ -103,13 +100,7 @@ import type { CsvAsset, Model, NotebookSession } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
-import {
-	createMessageId,
-	getServerSettings,
-	getSessionManager,
-	JupyterMessage,
-	newSession
-} from '@/services/jupyter';
+import { createMessageId, getServerSettings, getSessionManager, JupyterMessage, newSession } from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
 import Dropdown from 'primevue/dropdown';
@@ -143,7 +134,7 @@ const newCsvHeader: any = ref(null);
 const oldCsvHeaders: any = ref(null);
 const jupyterCsv: Ref<CsvAsset | null> = ref(null);
 const showSaveInput = ref(<boolean>false);
-const saveAsName = ref(<string | null>'');
+const saveAsName = ref('');
 const toast = useToastService();
 
 const updateKernelStatus = (statusString: string) => {
@@ -208,9 +199,7 @@ onMounted(async () => {
 				results.push(result);
 				result = sessions.next();
 			}
-			runningSessions.value = results
-				.reverse()
-				.map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
+			runningSessions.value = results.reverse().map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
 			selectedKernel.value = {
 				kernelId: jupyterSession.session?.kernel?.id,
 				value: jupyterSession.session?.id
@@ -341,9 +330,7 @@ const updateKernelList = () => {
 			while (result) {
 				result = sessions.next();
 			}
-			runningSessions.value = results
-				.reverse()
-				.map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
+			runningSessions.value = results.reverse().map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
 			selectedKernel.value = {
 				kernelId: jupyterSession.session?.kernel?.id,
 				value: jupyterSession.session?.id

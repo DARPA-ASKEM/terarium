@@ -1,37 +1,8 @@
 <template>
-	<div
-		class="asset-card"
-		draggable="true"
-		@dragstart="startDrag(asset, resourceType)"
-		@dragend="endDrag"
-	>
+	<div class="asset-card" draggable="true" @dragstart="startDrag(asset, resourceType)" @dragend="endDrag">
 		<main>
 			<div class="type-and-filters">
-				{{ resourceType !== ResourceType.XDD ? resourceType.toUpperCase() : 'DOCUMENT' }}
-				<div
-					class="asset-filters"
-					v-if="
-						resourceType === ResourceType.XDD &&
-						source === DocumentSource.XDD &&
-						(asset as Document).knownEntities?.askemObjects
-					"
-				>
-					<template
-						v-for="icon in [
-							{ type: XDDExtractionType.URL, class: 'pi-link' },
-							{ type: XDDExtractionType.Figure, class: 'pi-chart-bar' },
-							{ type: XDDExtractionType.Table, class: 'pi-table' },
-							{ type: XDDExtractionType.Doc, class: 'pi-file-pdf' }
-						]"
-						:key="icon"
-					>
-						<i
-							:class="`pi ${icon.class}`"
-							:active="chosenExtractionFilter === icon.type"
-							@click.stop="updateExtractionFilter(icon.type)"
-						/>
-					</template>
-				</div>
+				{{ resourceType !== ResourceType.DOCUMENT ? resourceType.toUpperCase() : 'DOCUMENT' }}
 				<div v-if="resourceType === ResourceType.MODEL">
 					{{ (asset as Model).header.schema_name }}
 				</div>
@@ -43,9 +14,6 @@
 			</div>
 			<header class="title" v-html="title" />
 			<div class="details" v-html="formatDetails" />
-			<ul class="snippets" v-if="snippets">
-				<li v-for="(snippet, index) in snippets" :key="index" v-html="snippet" />
-			</ul>
 			<div
 				class="description"
 				v-if="resourceType === ResourceType.MODEL"
@@ -58,13 +26,10 @@
 			/>
 			<div
 				class="description"
-				v-else-if="resourceType === ResourceType.XDD"
+				v-else-if="resourceType === ResourceType.DOCUMENT"
 				v-html="highlightSearchTerms((asset as DocumentAsset).description)"
 			/>
-			<div
-				class="parameters"
-				v-if="resourceType === ResourceType.MODEL && (asset as Model).semantics?.ode?.parameters"
-			>
+			<div class="parameters" v-if="resourceType === ResourceType.MODEL && (asset as Model).semantics?.ode?.parameters">
 				PARAMETERS:
 				{{ (asset as Model).semantics?.ode.parameters }}
 				<!--may need a formatting function this attribute is always undefined at the moment-->
@@ -75,82 +40,17 @@
 			</div>
 			<footer><!--pill tags if already in another project--></footer>
 		</main>
-		<aside>
-			<tera-carousel
-				v-if="
-					resourceType === ResourceType.XDD &&
-					source === DocumentSource.XDD &&
-					!isEmpty(extractions)
-				"
-				is-numeric
-				height="6rem"
-				width="8rem"
-			>
-				<template v-for="(extraction, index) in extractions">
-					<img
-						v-if="extraction.properties.image"
-						:src="`data:image/jpeg;base64,${extraction.properties.image}`"
-						class="extracted-assets"
-						alt="asset"
-						:key="index"
-					/>
-					<a
-						v-else-if="extraction.properties.doi && extraction.properties.documentBibjson?.link"
-						:href="extraction.properties.documentBibjson.link[0].url"
-						@click.stop
-						rel="noreferrer noopener"
-						:key="`${index}a`"
-					>
-						{{ extraction.properties.documentBibjson.link[0].url }}
-					</a>
-					<a
-						v-else-if="extraction.properties.doi"
-						:href="`https://doi.org/${extraction.properties.doi}`"
-						@click.stop
-						rel="noreferrer noopener"
-						:key="`${index}b`"
-					>
-						{{ `https://doi.org/${extraction.properties.doi}` }}
-					</a>
-					<a
-						v-else-if="extraction.urlExtraction"
-						:href="extraction.urlExtraction.url"
-						@click.stop
-						rel="noreferrer noopener"
-						:key="`${index}c`"
-					>
-						{{ extraction.urlExtraction.resourceTitle }}
-					</a>
-				</template>
-			</tera-carousel>
-			<slot name="default"></slot>
-		</aside>
+		<!--Add button from tera-search-item-->
+		<slot />
 	</div>
 </template>
 
 <script setup lang="ts">
-import { isEmpty } from 'lodash';
-import { computed, ref, watch, ComputedRef } from 'vue';
-import { XDDExtractionType } from '@/types/XDD';
-import type {
-	Extraction,
-	XDDUrlExtraction,
-	DocumentAsset,
-	Dataset,
-	Model,
-	Document
-} from '@/types/Types';
+import { computed } from 'vue';
+import type { DocumentAsset, Dataset, Model } from '@/types/Types';
 import { ResourceType, ResultType } from '@/types/common';
-import { DocumentSource } from '@/types/search';
 import * as textUtil from '@/utils/text';
 import { useDragEvent } from '@/services/drag-drop';
-import TeraCarousel from '@/components/widgets/tera-carousel.vue';
-
-// This type is for easy frontend integration with the rest of the extraction types (just for use here)
-type UrlExtraction = {
-	askemClass: XDDExtractionType;
-	urlExtraction: XDDUrlExtraction;
-};
 
 const props = defineProps<{
 	asset: ResultType;
@@ -167,64 +67,12 @@ function highlightSearchTerms(text: string | undefined): string {
 	return text ?? '';
 }
 
-const relatedAssetPage = ref<number>(0);
-const chosenExtractionFilter = ref<XDDExtractionType | 'Asset'>('Asset');
-
 const foundInProjects = computed(() => [] /* ['project 1', 'project 2'] */);
 
-const urlExtractions = computed(() => {
-	const urls: UrlExtraction[] = [];
-
-	if ((props.asset as Document).knownEntities.askemObjects) {
-		const documentsWithUrls = (props.asset as Document).knownEntities.askemObjects.filter(
-			(ex) =>
-				ex.askemClass === XDDExtractionType.Doc &&
-				ex.properties.documentBibjson?.knownEntities &&
-				!isEmpty(ex.properties.documentBibjson.knownEntities.urlExtractions)
-		);
-
-		for (let i = 0; i < documentsWithUrls.length; i++) {
-			const knownEntities = documentsWithUrls[i].properties.documentBibjson.knownEntities;
-
-			if (knownEntities) {
-				for (let j = 0; i < knownEntities.urlExtractions.length; j++) {
-					urls.push({
-						askemClass: XDDExtractionType.URL,
-						urlExtraction: knownEntities.urlExtractions[j]
-					});
-				}
-			}
-		}
-	}
-	return urls;
-});
-
-const extractions: ComputedRef<UrlExtraction[] & Extraction[]> = computed(() => {
-	if ((props.asset as Document).knownEntities.askemObjects) {
-		const allExtractions = [
-			...((props.asset as Document).knownEntities.askemObjects as UrlExtraction[] & Extraction[]),
-			...(urlExtractions.value as UrlExtraction[] & Extraction[])
-		];
-
-		if (chosenExtractionFilter.value === 'Asset') return allExtractions;
-
-		return allExtractions.filter((ex) => ex.askemClass === chosenExtractionFilter.value);
-	}
-	return [];
-});
-
-const snippets = computed(() =>
-	(props.asset as Document).highlight
-		? Array.from((props.asset as Document).highlight).splice(0, 3)
-		: null
-);
 const title = computed(() => {
 	let value = '';
-	if (props.resourceType === ResourceType.XDD) {
-		value =
-			props.source === DocumentSource.XDD
-				? (props.asset as Document).title
-				: (props.asset as DocumentAsset).name ?? '';
+	if (props.resourceType === ResourceType.DOCUMENT) {
+		value = (props.asset as DocumentAsset).name ?? '';
 	} else if (props.resourceType === ResourceType.MODEL) {
 		value = (props.asset as Model).header.name;
 	} else if (props.resourceType === ResourceType.DATASET) {
@@ -233,33 +81,11 @@ const title = computed(() => {
 	return highlightSearchTerms(value);
 });
 
-// Reset page number on new search and when chosenExtractionFilter is changed
-watch(
-	() => [props.asset, chosenExtractionFilter.value],
-	() => {
-		relatedAssetPage.value = 0;
-	}
-);
-
-function updateExtractionFilter(extractionType: XDDExtractionType) {
-	chosenExtractionFilter.value =
-		chosenExtractionFilter.value === extractionType ? 'Asset' : extractionType;
-}
-
-// Return formatted author, year, journal
 // Return formatted author, year, journal
 const formatDetails = computed(() => {
-	if (props.resourceType === ResourceType.XDD && props.source === DocumentSource.XDD) {
-		const details = `${(props.asset as Document).author.map((a) => a.name).join(', ')} (${
-			(props.asset as Document).year
-		}) ${(props.asset as Document).journal}`;
-		return highlightSearchTerms(details);
-	}
-
 	if (props.resourceType === ResourceType.DATASET) {
 		return (props.asset as Dataset).datasetUrl;
 	}
-
 	return null;
 });
 

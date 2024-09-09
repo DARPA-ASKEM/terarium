@@ -1,9 +1,22 @@
 <template>
+	<Dialog
+		class="vega-chart-modal"
+		modal
+		v-model:visible="isExpanded"
+		:dismissableMask="true"
+		:closable="true"
+		:closeOnEscape="true"
+		@show="onExpand"
+	>
+		<div>
+			<div ref="vegaContainerLg"></div>
+		</div>
+	</Dialog>
 	<div class="vega-chart-container">
-		<p v-if="renderErrorMessage" class="p-error">
-			{{ renderErrorMessage }}
-		</p>
 		<div ref="vegaContainer"></div>
+		<footer v-if="$slots.footer">
+			<slot name="footer" />
+		</footer>
 	</div>
 </template>
 
@@ -11,8 +24,10 @@
 import embed, { Result, VisualizationSpec } from 'vega-embed';
 import { Config as VgConfig } from 'vega';
 import { Config as VlConfig } from 'vega-lite';
+import Button from 'primevue/button';
+import Dialog from 'primevue/dialog';
 
-import { ref, watch, toRaw, isRef, isReactive, isProxy } from 'vue';
+import { ref, watch, toRaw, isRef, isReactive, isProxy, computed, h, render } from 'vue';
 
 export type Config = VgConfig | VlConfig;
 
@@ -29,16 +44,47 @@ const props = withDefaults(
 		 */
 		intervalSelectionSignalNames?: string[];
 		config?: Config | null;
+		/**
+		 * Whether to show the expand button.
+		 * If a function is provided, it will be called before expanding the chart, and the returned spec will be used for the expanded chart.
+		 */
+		expandable?: boolean | ((spec: VisualizationSpec) => VisualizationSpec);
 	}>(),
 	{
 		areEmbedActionsVisible: true,
 		intervalSelectionSignalNames: () => [],
-		config: null
+		config: null,
+		expandable: false
 	}
 );
 const vegaContainer = ref<HTMLElement>();
 const vegaVisualization = ref<Result>();
-const renderErrorMessage = ref<String>();
+const view = computed(() => vegaVisualization.value?.view);
+
+const vegaContainerLg = ref<HTMLElement>();
+const vegaVisualizationExpanded = ref<Result>();
+const expandedView = computed(() => vegaVisualizationExpanded.value?.view);
+
+const isExpanded = ref(false);
+
+const onExpand = async () => {
+	if (vegaContainerLg.value) {
+		const defaultSize = {
+			width: window.innerWidth / 1.5,
+			height: window.innerHeight / 1.5
+		};
+		let spec = deepToRaw(props.visualizationSpec) as any;
+		spec.width = defaultSize.width;
+		spec.height = defaultSize.height;
+		if (typeof props.expandable === 'function') {
+			spec = props.expandable(spec);
+		}
+		vegaVisualizationExpanded.value = await createVegaVisualization(vegaContainerLg.value, spec, props.config, {
+			actions: props.areEmbedActionsVisible,
+			expandable: false
+		});
+	}
+};
 
 const emit = defineEmits<{
 	(
@@ -82,58 +128,103 @@ function deepToRaw<T extends Record<string, any>>(sourceObj: T): T {
 	return objectIterator(sourceObj);
 }
 
-async function updateVegaVisualization(
+async function createVegaVisualization(
 	container: HTMLElement,
-	visualizationSpec: VisualizationSpec
+	visualizationSpec: VisualizationSpec,
+	config: Config | null,
+	options: { actions?: boolean; expandable?: boolean } = {}
 ) {
-	renderErrorMessage.value = undefined;
-	vegaVisualization.value = undefined;
-	try {
-		vegaVisualization.value = await embed(
-			container,
-			{ ...visualizationSpec },
-			{
-				config: props.config || {},
-				actions: props.areEmbedActionsVisible === false ? false : undefined
+	const viz = await embed(
+		container,
+		{ ...visualizationSpec },
+		{
+			config: config || {},
+			actions: options.actions === false ? false : undefined
+		}
+	);
+	props.intervalSelectionSignalNames.forEach((signalName) => {
+		viz.view.addSignalListener(signalName, (name, valueRange: { [fieldName: string]: [number, number] }) => {
+			if (valueRange === undefined || Object.keys(valueRange).length === 0) {
+				emit('update-interval-selection', name, null);
+				return;
 			}
-		);
-		const { view } = vegaVisualization.value;
-		props.intervalSelectionSignalNames.forEach((signalName) => {
-			view.addSignalListener(
-				signalName,
-				(name, valueRange: { [fieldName: string]: [number, number] }) => {
-					if (valueRange === undefined || Object.keys(valueRange).length === 0) {
-						emit('update-interval-selection', name, null);
-						return;
-					}
-					emit('update-interval-selection', name, valueRange);
-				}
-			);
+			emit('update-interval-selection', name, valueRange);
 		});
-		view.addEventListener('click', (_event, item) => {
-			emit('chart-click', item?.datum ?? null);
+	});
+	viz.view.addEventListener('click', (_event, item) => {
+		emit('chart-click', item?.datum ?? null);
+	});
+
+	// Add expand button to the vega embed container
+	if (options.expandable) {
+		const expandButton = h(Button, {
+			icon: 'pi pi-expand',
+			class: 'expand-button',
+			severity: 'secondary',
+			rounded: true,
+			text: true,
+			onClick: () => {
+				isExpanded.value = true;
+			}
 		});
-	} catch (e) {
-		// renderErrorMessage.value = getErrorMessage(e);
-		// renderErrorMessage.value = e;
+		const div = document.createElement('div');
+		render(expandButton, div);
+		container.appendChild(div.firstChild as Node);
 	}
+	return viz;
 }
 
-watch([vegaContainer, () => props.visualizationSpec], () => {
+watch([vegaContainer, () => props.visualizationSpec], async () => {
 	if (!vegaContainer.value) {
 		return;
 	}
 	const spec = deepToRaw(props.visualizationSpec);
-	updateVegaVisualization(vegaContainer.value, spec);
+	vegaVisualization.value = await createVegaVisualization(vegaContainer.value, spec, props.config, {
+		actions: props.areEmbedActionsVisible,
+		expandable: !!props.expandable
+	});
+});
+
+defineExpose({
+	view,
+	expandedView
 });
 </script>
+<style>
+/* Since the modal and the tool tips are placed under <body> tag, we need unscoped styles. */
+
+#vg-tooltip-element {
+	/* Make sure this is higher than the z-index of the Dialog(modal) */
+	z-index: 2000;
+}
+.vega-chart-modal.p-dialog {
+	.p-dialog-header-icons {
+		display: none;
+	}
+}
+</style>
 <style scoped>
 .vega-chart-container {
-	background: var(--surface-a);
-	border-radius: var(--border-radius-medium);
-	border: 1px solid var(--surface-border-light);
+	background: var(--surface-0);
 	margin-bottom: var(--gap-4);
 	padding-top: var(--gap-2);
+	footer {
+		padding: var(--gap-3);
+	}
+}
+
+:deep(.vega-embed .expand-button, .vega-embed .expand-button:focus) {
+	padding-right: 0px;
+	position: relative;
+	top: 0;
+	right: 0;
+	padding: 6px;
+	color: black;
+	position: absolute;
+	background-color: transparent;
+}
+:deep(.vega-embed.has-actions .expand-button) {
+	right: 28px;
 }
 
 /* adjust style, position and rotation of action button */
@@ -146,7 +237,8 @@ watch([vegaContainer, () => props.visualizationSpec], () => {
 	opacity: 1;
 	box-shadow: none;
 }
-:deep(.vega-embed summary):hover {
+:deep(.vega-embed summary):hover,
+:deep(.vega-embed .expand-button):hover {
 	border: 1px solid transparent;
 	background: var(--surface-hover);
 }

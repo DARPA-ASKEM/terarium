@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.persistence.Lob;
 import java.io.Serial;
 import java.io.Serializable;
 import java.sql.Types;
@@ -9,8 +10,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import jakarta.persistence.Lob;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -27,6 +26,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metad
 @AMRSchemaType
 @Accessors(chain = true)
 public class ModelMetadata extends SupportAdditionalProperties implements Serializable {
+
 	@Serial
 	private static final long serialVersionUID = 1847034755264399454L;
 

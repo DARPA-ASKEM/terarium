@@ -1,6 +1,6 @@
 <template>
 	<section>
-		<tera-operator-placeholder v-if="!inProgressId" :operation-type="node.operationType">
+		<tera-operator-placeholder v-if="!inProgressId" :node="node">
 			<template v-if="!node.inputs[0].value"> Attach a model configuration </template>
 		</tera-operator-placeholder>
 
@@ -18,13 +18,11 @@ import { watch, computed, onUnmounted } from 'vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { WorkflowNode } from '@/types/workflow';
-import {
-	FunmanOperationState,
-	FunmanOperation
-} from '@/components/workflow/ops/funman/funman-operation';
+import { FunmanOperationState, FunmanOperation } from '@/components/workflow/ops/funman/funman-operation';
 import Button from 'primevue/button';
 import { Poller, PollerState } from '@/api/api';
 import { pollAction } from '@/services/models/simulation-service';
+import { nodeOutputLabel } from '@/components/workflow/util';
 
 const emit = defineEmits(['open-drilldown', 'append-output', 'update-state']);
 
@@ -42,7 +40,7 @@ const addOutputPorts = async (runId: string) => {
 	outState.inProgressId = '';
 
 	emit('append-output', {
-		label: `${portLabel} Result ${props.node.outputs.length + 1}`,
+		label: nodeOutputLabel(props.node, `${portLabel} Result`),
 		type: FunmanOperation.outputs[0].type,
 		value: runId,
 		state: outState

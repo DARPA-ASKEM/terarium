@@ -2,49 +2,42 @@
 	<Accordion multiple :active-index="[0]">
 		<AccordionTab>
 			<template #header>
-				<span class="mr-auto"
-					>Initials<span class="artifact-amount">({{ numInitials }})</span></span
-				>
-				<tera-input v-model="filterText" placeholder="Filter" />
+				Initials <span class="artifact-amount">({{ numInitials }})</span>
+				<tera-input-text v-model="filterText" placeholder="Filter" class="w-2 p-1" />
 			</template>
 
-			<ul>
+			<ul class="pl-1">
 				<li v-for="{ baseInitial, childInitials, isVirtual } in initialList" :key="baseInitial">
 					<!-- Stratified -->
-					<Accordion v-if="isVirtual" multiple>
-						<AccordionTab>
-							<template #header>
-								<span>{{ baseInitial }}</span>
-								<Button
-									label="Open Matrix"
-									text
-									size="small"
-									@click.stop="matrixModalId = baseInitial"
-								/>
-							</template>
-							<div class="flex">
-								<Divider layout="vertical" type="solid" />
-								<ul>
-									<li v-for="{ target } in childInitials" :key="target">
-										<tera-initial-entry
-											:model="model"
-											:model-configuration="modelConfiguration"
-											:modelConfigurations="modelConfigurations"
-											:initial-id="target"
-											@update-expression="emit('update-expression', $event)"
-											@update-source="emit('update-source', $event)"
-										/>
-										<Divider type="solid" />
-									</li>
-								</ul>
-							</div>
-						</AccordionTab>
-					</Accordion>
+					<section v-if="isVirtual" class="initial-entry-stratified">
+						<Accordion multiple>
+							<AccordionTab>
+								<template #header>
+									<span>{{ baseInitial }}</span>
+									<Button label="Open Matrix" text size="small" @click.stop="matrixModalId = baseInitial" />
+								</template>
+								<div class="flex">
+									<ul class="ml-1">
+										<li v-for="{ target } in childInitials" :key="target">
+											<tera-initial-entry
+												:model="model"
+												:model-configuration="modelConfiguration"
+												:modelConfigurations="modelConfigurations"
+												:initial-id="target"
+												@update-expression="emit('update-expression', $event)"
+												@update-source="emit('update-source', $event)"
+											/>
+											<Divider type="solid" />
+										</li>
+									</ul>
+								</div>
+							</AccordionTab>
+						</Accordion>
+					</section>
 
 					<!-- Unstratified -->
 					<tera-initial-entry
 						v-else
-						class="pl-5"
 						:model="model"
 						:model-configuration="modelConfiguration"
 						:modelConfigurations="modelConfigurations"
@@ -58,20 +51,16 @@
 		</AccordionTab>
 	</Accordion>
 
-	<Teleport to="body">
-		<tera-stratified-matrix-modal
-			v-if="matrixModalId && isStratified"
-			:id="matrixModalId"
-			:mmt="mmt"
-			:mmt-params="mmtParams"
-			:stratified-matrix-type="StratifiedMatrix.Initials"
-			:open-value-config="!!matrixModalId"
-			@close-modal="matrixModalId = ''"
-			@update-cell-value="
-				emit('update-expression', { id: $event.variableName, value: $event.newValue })
-			"
-		/>
-	</Teleport>
+	<tera-stratified-matrix-modal
+		v-if="matrixModalId && isStratified"
+		:id="matrixModalId"
+		:mmt="mmt"
+		:mmt-params="mmtParams"
+		:stratified-matrix-type="StratifiedMatrix.Initials"
+		:open-value-config="!!matrixModalId"
+		@close-modal="matrixModalId = ''"
+		@update-cell-value="emit('update-expression', { id: $event.variableName, value: $event.newValue })"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -85,7 +74,7 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import Divider from 'primevue/divider';
-import TeraInput from '@/components/widgets/tera-input.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraStratifiedMatrixModal from './model-configurations/tera-stratified-matrix-modal.vue';
 import TeraInitialEntry from './tera-initial-entry.vue';
 
@@ -110,7 +99,6 @@ const initialList = computed<
 	const collapsedInitials = collapseInitials(props.mmt);
 	const initials = getInitials(props.modelConfiguration);
 	return Array.from(collapsedInitials.keys())
-		.flat()
 		.map((id) => {
 			const childTargets = collapsedInitials.get(id) ?? [];
 			const childInitials = childTargets
@@ -121,9 +109,7 @@ const initialList = computed<
 
 			return { baseInitial, childInitials, isVirtual };
 		})
-		.filter(({ baseInitial }) =>
-			baseInitial.toLowerCase().includes(filterText.value.toLowerCase())
-		);
+		.filter(({ baseInitial }) => baseInitial.toLowerCase().includes(filterText.value.toLowerCase()));
 });
 
 const matrixModalId = ref('');
@@ -141,16 +127,22 @@ ul {
 	}
 }
 
+.initial-entry-stratified {
+	border-left: 4px solid var(--surface-300);
+	padding-left: var(--gap-1);
+}
+
 .artifact-amount {
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
-	margin-left: 0.25rem;
+	margin-left: var(--gap-1);
+	margin-right: auto;
 }
 
 :deep(.p-divider) {
 	&.p-divider-horizontal {
-		margin-top: 0;
-		margin-bottom: var(--gap);
+		margin-top: var(--gap-2);
+		margin-bottom: var(--gap-2);
 		color: var(--gray-300);
 	}
 	&.p-divider-vertical {

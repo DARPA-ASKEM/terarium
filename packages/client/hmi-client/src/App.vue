@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue';
+import { computed, watch } from 'vue';
 import Toast from 'primevue/toast';
 
 import { ToastSeverity, ToastSummaries, useToastService } from '@/services/toast';
@@ -47,12 +47,7 @@ API.interceptors.response.use(
 	(response) => response,
 	(error) => {
 		const status = error.response.status;
-		toast.showToast(
-			ToastSeverity.error,
-			`${ToastSummaries.NETWORK_ERROR} (${status})`,
-			'Unauthorized',
-			5000
-		);
+		toast.showToast(ToastSeverity.error, `${ToastSummaries.NETWORK_ERROR} (${status})`, 'Unauthorized', 5000);
 		if (status === 401 || status === 403) {
 			router.push({ name: 'unauthorized' });
 		}
@@ -67,10 +62,6 @@ watch(
 	},
 	{ immediate: true }
 );
-
-onMounted(async () => {
-	await useProjects().getAll();
-});
 </script>
 
 <style scoped>

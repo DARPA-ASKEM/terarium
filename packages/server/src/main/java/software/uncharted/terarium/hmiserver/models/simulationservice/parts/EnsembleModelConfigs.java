@@ -11,6 +11,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @TSModel
 // Used to specify the location of a dataset for simulation-service
 public class EnsembleModelConfigs {
+
 	private String id;
 
 	@JsonAlias("solution_mappings")

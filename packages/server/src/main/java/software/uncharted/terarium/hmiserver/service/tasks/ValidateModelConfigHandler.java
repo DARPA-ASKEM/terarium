@@ -21,6 +21,7 @@ import software.uncharted.terarium.hmiserver.service.data.SimulationService;
 @RequiredArgsConstructor
 @Slf4j
 public class ValidateModelConfigHandler extends TaskResponseHandler {
+
 	public static final String NAME = "funman_task:validate_modelconfig";
 
 	private final ObjectMapper objectMapper;
@@ -33,6 +34,7 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 
 	@Data
 	public static class Properties {
+
 		UUID projectId;
 		UUID simulationId;
 	}
@@ -50,8 +52,10 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final UUID simulationId = props.getSimulationId();
-			final Optional<Simulation> sim =
-					simulationService.getAsset(simulationId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+			final Optional<Simulation> sim = simulationService.getAsset(
+				simulationId,
+				ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
+			);
 			if (!sim.isEmpty()) {
 				sim.get().setProgress(progress);
 				simulationService.updateAsset(sim.get(), props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
@@ -70,8 +74,10 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 			// Parse validation result
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final UUID simulationId = props.getSimulationId();
-			final Optional<Simulation> sim =
-					simulationService.getAsset(simulationId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+			final Optional<Simulation> sim = simulationService.getAsset(
+				simulationId,
+				ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
+			);
 			if (sim.isEmpty()) {
 				log.error("Cannot find Simulation " + simulationId + " for task " + resp.getId());
 				throw new Error("Cannot find Simulation " + simulationId + " for task " + resp.getId());

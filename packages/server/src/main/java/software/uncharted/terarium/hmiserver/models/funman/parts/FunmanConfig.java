@@ -9,6 +9,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @Accessors(chain = true)
 @TSModel
 public class FunmanConfig {
+
 	@TSOptional
 	private Double tolerance;
 

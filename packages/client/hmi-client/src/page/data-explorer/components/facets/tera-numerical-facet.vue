@@ -132,10 +132,7 @@ export default defineComponent({
 	methods: {
 		updateSelection(event) {
 			const facet = event.currentTarget;
-			if (
-				event.detail.changedProperties.get('selection') !== undefined &&
-				!isEqual(facet.selection, this.selection)
-			) {
+			if (event.detail.changedProperties.get('selection') !== undefined && !isEqual(facet.selection, this.selection)) {
 				if (facet.selection) {
 					const from = this.baseData[facet.selection[0]].key;
 
@@ -145,8 +142,7 @@ export default defineComponent({
 							? '--'
 							: facet.selection[1] !== this.baseData.length
 								? this.baseData[facet.selection[1]].key
-								: (this.baseData[1].key - this.baseData[0].key) * this.baseData.length +
-									this.baseData[0].key;
+								: (this.baseData[1].key - this.baseData[0].key) * this.baseData.length + this.baseData[0].key;
 					this.query.setSearchClause({ field: this.facet, values: [[from, to]] });
 				} else {
 					this.query.setSearchClause({ field: this.facet, values: [[0, this.baseData.length]] });

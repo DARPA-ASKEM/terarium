@@ -40,7 +40,6 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@Transactional
 public class SummaryController {
 
 	final SummaryService summaryService;
@@ -55,27 +54,31 @@ public class SummaryController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets a map of summaries by list of IDs")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Summaries found.",
-						content =
-								@Content(
-										mediaType = MediaType.APPLICATION_JSON_VALUE,
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Summary.class))),
-				@ApiResponse(responseCode = "204", description = "There was no summary found", content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving the summaries from the data store",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Summaries found.",
+				content = @Content(
+					mediaType = MediaType.APPLICATION_JSON_VALUE,
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Summary.class)
+				)
+			),
+			@ApiResponse(responseCode = "204", description = "There was no summary found", content = @Content),
+			@ApiResponse(
+				responseCode = "500",
+				description = "There was an issue retrieving the summaries from the data store",
+				content = @Content
+			)
+		}
+	)
 	public ResponseEntity<Map<UUID, Summary>> getSummaryMap(
-			@RequestParam(name = "project-id", required = false) final UUID projectId,
-			@RequestBody final List<UUID> ids) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+		@RequestParam(name = "project-id", required = false) final UUID projectId,
+		@RequestBody final List<UUID> ids
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanRead(
+			currentUserService.get().getId(),
+			projectId
+		);
 
 		final List<Summary> summaries = summaryService.getSummaries(ids, permission);
 
@@ -95,60 +98,62 @@ public class SummaryController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets summary by ID")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Summary found.",
-						content =
-								@Content(
-										mediaType = MediaType.APPLICATION_JSON_VALUE,
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Summary.class))),
-				@ApiResponse(responseCode = "204", description = "There was no summary found", content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving the summary from the data store",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Summary found.",
+				content = @Content(
+					mediaType = MediaType.APPLICATION_JSON_VALUE,
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Summary.class)
+				)
+			),
+			@ApiResponse(responseCode = "204", description = "There was no summary found", content = @Content),
+			@ApiResponse(
+				responseCode = "500",
+				description = "There was an issue retrieving the summary from the data store",
+				content = @Content
+			)
+		}
+	)
 	public ResponseEntity<Summary> getSummary(
-			@PathVariable("id") final UUID id,
-			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+		@PathVariable("id") final UUID id,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanRead(
+			currentUserService.get().getId(),
+			projectId
+		);
 
 		final Optional<Summary> summary = summaryService.getAsset(id, permission);
-		return summary.map(ResponseEntity::ok)
-				.orElseGet(() -> ResponseEntity.noContent().build());
+		return summary.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
 	}
 
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new summary")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "201",
-						description = "Summary created.",
-						content =
-								@Content(
-										mediaType = MediaType.APPLICATION_JSON_VALUE,
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Summary.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue creating the summary",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "201",
+				description = "Summary created.",
+				content = @Content(
+					mediaType = MediaType.APPLICATION_JSON_VALUE,
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Summary.class)
+				)
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue creating the summary", content = @Content)
+		}
+	)
 	public ResponseEntity<Summary> createSummary(
-			@RequestBody final Summary item,
-			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		@RequestBody final Summary item,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(
+			currentUserService.get().getId(),
+			projectId
+		);
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED)
-					.body(summaryService.createAsset(item, projectId, permission));
+			return ResponseEntity.status(HttpStatus.CREATED).body(summaryService.createAsset(item, projectId, permission));
 		} catch (final IOException e) {
 			final String error = "Unable to create summary";
 			log.error(error, e);
@@ -160,33 +165,32 @@ public class SummaryController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a summary")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Summary updated.",
-						content =
-								@Content(
-										mediaType = MediaType.APPLICATION_JSON_VALUE,
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Summary.class))),
-				@ApiResponse(responseCode = "404", description = "Summary could not be found", content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue updating the summary",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Summary updated.",
+				content = @Content(
+					mediaType = MediaType.APPLICATION_JSON_VALUE,
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Summary.class)
+				)
+			),
+			@ApiResponse(responseCode = "404", description = "Summary could not be found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue updating the summary", content = @Content)
+		}
+	)
 	public ResponseEntity<Summary> updateSummary(
-			@PathVariable("id") final UUID id,
-			@RequestBody final Summary summary,
-			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		@PathVariable("id") final UUID id,
+		@RequestBody final Summary summary,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(
+			currentUserService.get().getId(),
+			projectId
+		);
 		try {
 			summary.setId(id);
 			final Optional<Summary> updated = summaryService.updateAsset(summary, projectId, permission);
-			return updated.map(ResponseEntity::ok)
-					.orElseGet(() -> ResponseEntity.notFound().build());
+			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to update summary";
 			log.error(error, e);
@@ -202,27 +206,28 @@ public class SummaryController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Delete a summary by ID")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Delete summary",
-						content = {
-							@Content(
-									mediaType = "application/json",
-									schema =
-											@io.swagger.v3.oas.annotations.media.Schema(
-													implementation = ResponseDeleted.class))
-						}),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue deleting the summary",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Delete summary",
+				content = {
+					@Content(
+						mediaType = "application/json",
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)
+					)
+				}
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue deleting the summary", content = @Content)
+		}
+	)
 	public ResponseEntity<ResponseDeleted> deleteSummary(
-			@PathVariable("id") final UUID id,
-			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		@PathVariable("id") final UUID id,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(
+			currentUserService.get().getId(),
+			projectId
+		);
 
 		try {
 			summaryService.deleteAsset(id, projectId, permission);

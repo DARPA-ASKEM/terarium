@@ -1,11 +1,5 @@
 <template>
-	<Button
-		:disabled="disabled"
-		outlined
-		severity="secondary"
-		@click="cancelSimulation"
-		label="Stop"
-	/>
+	<Button :disabled="disabled" outlined severity="secondary" @click="cancelSimulation" label="Stop" />
 </template>
 
 <script setup lang="ts">

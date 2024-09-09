@@ -1,13 +1,5 @@
 import { Viewport } from 'pixi-viewport';
-import {
-	Application,
-	Point,
-	Resource,
-	Texture,
-	BaseTexture,
-	SCALE_MODES,
-	MIPMAP_MODES
-} from 'pixi.js';
+import { Application, Point, Resource, Texture, BaseTexture, SCALE_MODES, MIPMAP_MODES } from 'pixi.js';
 
 // EMPTY_POINT used as a fallback value
 const EMPTY_POINT = new Point();
@@ -33,9 +25,7 @@ export class CustomBufferResource extends Resource {
 		const { width, height, internalFormat, format, type } = options || {};
 
 		if (!width || !height || !internalFormat || !format || !type) {
-			throw new Error(
-				'CustomBufferResource width, height, internalFormat, format, or type invalid'
-			);
+			throw new Error('CustomBufferResource width, height, internalFormat, format, or type invalid');
 		}
 
 		super(width, height);
@@ -122,7 +112,5 @@ export const uint32ArrayToRedIntTex = (data: Uint32Array, width: number, height:
 		type: 'UNSIGNED_INT'
 	});
 
-	return new Texture(
-		new BaseTexture(buffer, { scaleMode: SCALE_MODES.NEAREST, mipmap: MIPMAP_MODES.OFF })
-	);
+	return new Texture(new BaseTexture(buffer, { scaleMode: SCALE_MODES.NEAREST, mipmap: MIPMAP_MODES.OFF }));
 };

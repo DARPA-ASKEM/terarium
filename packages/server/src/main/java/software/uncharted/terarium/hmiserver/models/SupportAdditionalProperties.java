@@ -49,8 +49,7 @@ public class SupportAdditionalProperties implements Cloneable {
 		if (this.additionalProperties != null) {
 			clone.additionalProperties = new HashMap<>();
 			for (final String key : additionalProperties.keySet()) {
-				clone.getAdditionalProperties()
-						.put(key, additionalProperties.get(key).deepCopy());
+				clone.getAdditionalProperties().put(key, additionalProperties.get(key).deepCopy());
 			}
 		}
 

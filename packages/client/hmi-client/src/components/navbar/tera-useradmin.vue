@@ -4,11 +4,7 @@
 			<h4>Administration</h4>
 			<SelectButton v-model="view" :options="views" />
 		</header>
-		<DataTable
-			v-if="view === View.USER && !users"
-			class="p-datatable-sm user"
-			:value="Array.from(Array(10).keys())"
-		>
+		<DataTable v-if="view === View.USER && !users" class="p-datatable-sm user" :value="Array.from(Array(10).keys())">
 			<Column header="Email">
 				<template #body>
 					<Skeleton></Skeleton>
@@ -127,9 +123,7 @@
 					<Column header="Permission">
 						<template #body="groupUserSlotProps">
 							<section class="group-user-end-col">
-								<div
-									v-if="selectedGroupUser && selectedGroupUser.id === groupUserSlotProps.data.id"
-								>
+								<div v-if="selectedGroupUser && selectedGroupUser.id === groupUserSlotProps.data.id">
 									<Dropdown
 										v-model="selectedGroupRelationship"
 										:options="groupRelationships"
@@ -174,11 +168,7 @@
 		<Dialog v-model:visible="isRemoveUserDialogVisible" modal header="Remove user">
 			<p>Are you sure you want to remove this user from the group?</p>
 			<template #footer>
-				<Button
-					label="Cancel"
-					class="p-button-secondary"
-					@click="isRemoveUserDialogVisible = false"
-				/>
+				<Button label="Cancel" class="p-button-secondary" @click="isRemoveUserDialogVisible = false" />
 				<Button label="Remove project" @click="removeUserCallback" />
 			</template>
 		</Dialog>
@@ -266,13 +256,9 @@ const updateRoles = async () => {
 		loadingId.value = selectedId.value;
 		const existingRoles = users.value?.find((user) => user.id === selectedId.value)?.roles;
 		const rolesToAdd =
-			selectedRoles.value.filter(
-				({ name }) => !existingRoles?.map((role) => role.name).includes(name)
-			) ?? [];
+			selectedRoles.value.filter(({ name }) => !existingRoles?.map((role) => role.name).includes(name)) ?? [];
 		const rolesToRemove =
-			existingRoles?.filter(
-				({ name }) => !selectedRoles.value.map((role) => role.name).includes(name)
-			) ?? [];
+			existingRoles?.filter(({ name }) => !selectedRoles.value.map((role) => role.name).includes(name)) ?? [];
 		await Promise.all(rolesToAdd.map((role) => addRole(selectedId.value, role.name)));
 		await Promise.all(rolesToRemove.map((role) => removeRole(selectedId.value, role.name)));
 		users.value = await getUsers();
@@ -321,30 +307,26 @@ const addSelectedUserToGroup = async (groupId: string) => {
 };
 
 const onGroupUserRowSelect = (event: DataTableRowSelectEvent) => {
-	selectedGroupRelationship.value =
-		groupRelationships.value.find((r) => r === event.data.relationship) ?? '';
+	selectedGroupRelationship.value = groupRelationships.value.find((r) => r === event.data.relationship) ?? '';
 	currentGroupRelationship = selectedGroupRelationship.value;
 };
 
 const updateGroupUserRelationship = (event: DropdownChangeEvent, groupId: string) => {
 	if (selectedGroupUser.value) {
 		loadingId.value = selectedGroupUser.value.id;
-		updateGroupUserPermissions(
-			groupId,
-			selectedGroupUser.value?.id,
-			currentGroupRelationship,
-			event.value
-		).then((response) => {
-			if (response) {
-				getAndPopulateGroup(groupId).then(() => {
-					loadingId.value = null;
-					selectedGroupUser.value = null;
-					useToastService().success('', 'User group permission updated');
-				});
-			} else {
-				useToastService().error('', 'Failed to update user group permission');
+		updateGroupUserPermissions(groupId, selectedGroupUser.value?.id, currentGroupRelationship, event.value).then(
+			(response) => {
+				if (response) {
+					getAndPopulateGroup(groupId).then(() => {
+						loadingId.value = null;
+						selectedGroupUser.value = null;
+						useToastService().success('', 'User group permission updated');
+					});
+				} else {
+					useToastService().error('', 'Failed to update user group permission');
+				}
 			}
-		});
+		);
 	}
 };
 

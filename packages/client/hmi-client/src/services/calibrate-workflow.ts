@@ -1,12 +1,7 @@
-import * as d3 from 'd3';
-
-import type { Dataset, CsvAsset, ModelConfiguration } from '@/types/Types';
-import {
-	getAsConfiguredModel,
-	getModelConfigurationById,
-	getObservables
-} from '@/services/model-configurations';
+import type { Dataset, CsvAsset } from '@/types/Types';
+import { getModelConfigurationById, getObservables } from '@/services/model-configurations';
 import { downloadRawFile, getDataset } from '@/services/dataset';
+import { getUnitsFromModelParts, getModelByModelConfigurationId, getTypesFromModelParts } from '@/services/model';
 
 export interface CalibrateMap {
 	modelVariable: string;
@@ -17,8 +12,14 @@ export interface CalibrateMap {
 // Takes a model config Id and grabs relevant objects
 export const setupModelInput = async (modelConfigId: string | undefined) => {
 	if (modelConfigId) {
-		const modelConfiguration: ModelConfiguration = await getModelConfigurationById(modelConfigId);
-		const model = await getAsConfiguredModel(modelConfiguration);
+		const [modelConfiguration, model] = await Promise.all([
+			getModelConfigurationById(modelConfigId),
+			getModelByModelConfigurationId(modelConfigId)
+		]);
+
+		const modelPartUnits = !model ? {} : getUnitsFromModelParts(model);
+		const modelPartTypes = !model ? {} : getTypesFromModelParts(model);
+
 		const modelOptions: any[] = model?.model.states;
 
 		getObservables(modelConfiguration).forEach((o) => {
@@ -26,7 +27,8 @@ export const setupModelInput = async (modelConfigId: string | undefined) => {
 		});
 
 		modelOptions.push({ id: 'timestamp' });
-		return { modelConfiguration, modelOptions };
+
+		return { modelConfiguration, modelOptions, modelPartUnits, modelPartTypes };
 	}
 	return {};
 };
@@ -61,62 +63,4 @@ export const setupDatasetInput = async (datasetId: string | undefined) => {
 		return {};
 	}
 	return {};
-};
-
-export const renderLossGraph = (
-	element: HTMLElement,
-	data: any[],
-	options: { width: number; height: number }
-) => {
-	const marginTop = 10;
-	const marginBottom = 20;
-	const marginLeft = 50;
-	const marginRight = 20;
-
-	const { width, height } = options;
-	const elemSelection = d3.select(element);
-	let svg: any = elemSelection.select('svg');
-	if (svg.empty()) {
-		svg = elemSelection.append('svg').attr('width', width).attr('height', height);
-		svg.append('g').append('path').attr('class', 'line');
-	}
-	const group = svg.select('g');
-	const path = group.select('.line');
-
-	const [minX, maxX] = d3.extent(data, (d) => d.iter);
-	const [minY, maxY] = d3.extent(data, (d) => d.loss);
-
-	const xScale = d3
-		.scaleLinear()
-		.domain([minX, maxX])
-		.range([marginLeft, width - marginRight]);
-	const yScale = d3
-		.scaleLinear()
-		.domain([Math.min(minY, 0), maxY])
-		.range([height - marginBottom, marginTop]);
-
-	const pathFn = d3
-		.line()
-		.x((d: any) => xScale(d.iter))
-		.y((d: any) => yScale(d.loss))
-		.curve(d3.curveBasis);
-
-	// Update the data and path
-	path.datum(data).attr('d', pathFn(data)).style('stroke', '#888').style('fill', 'none');
-
-	// Add x-axis
-	const xAxis = d3.axisBottom(xScale).ticks(5);
-	let xAxisGroup = svg.select('.x-axis');
-	if (xAxisGroup.empty()) {
-		xAxisGroup = svg.append('g').attr('class', 'x-axis');
-	}
-	xAxisGroup.attr('transform', `translate(0, ${height - marginBottom})`).call(xAxis);
-
-	// Add y-axis
-	const yAxis = d3.axisLeft(yScale).ticks(3).tickFormat(d3.format('.1e'));
-	let yAxisGroup = svg.select('.y-axis');
-	if (yAxisGroup.empty()) {
-		yAxisGroup = svg.append('g').attr('class', 'y-axis');
-	}
-	yAxisGroup.attr('transform', `translate(${marginLeft}, 0)`).call(yAxis);
 };

@@ -99,9 +99,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.append('circle')
 			.classed('shape selectableNode', true)
 			.attr('r', (d) => 0.55 * d.width) // FIXME: need to adjust edge from sqaure mapping to circle
-			.attr('fill', (d) =>
-				d.data.strataType ? getNodeTypeColor(d.data.strataType) : 'var(--petri-nodeFill)'
-			)
+			.attr('fill', (d) => (d.data.strataType ? getNodeTypeColor(d.data.strataType) : 'var(--petri-nodeFill)'))
 			.attr('stroke', 'var(--petri-nodeBorder)')
 			.attr('stroke-width', 1)
 			.style('cursor', 'pointer');
@@ -130,9 +128,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('x', (d) => -d.width * 0.5)
 			.attr('rx', '6')
 			.attr('ry', '6')
-			.style('fill', (d) =>
-				d.data.strataType ? getNodeTypeColor(d.data.strataType) : 'var(--petri-nodeFill'
-			)
+			.style('fill', (d) => (d.data.strataType ? getNodeTypeColor(d.data.strataType) : 'var(--petri-nodeFill'))
 			.style('cursor', 'pointer')
 			.attr('stroke', 'var(--petri-nodeBorder)')
 			.attr('stroke-width', 1);
@@ -155,7 +151,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		transitions
 			.append('text')
 			.attr('y', (d) => -d.height / 2 - 8)
-			.classed('latex-fontt', true)
+			.classed('latex-font', true)
 			.style('font-style', 'italic')
 			.style('font-size', FONT_SIZE_SMALL)
 			.style('text-anchor', 'middle')
@@ -335,37 +331,32 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			start.y += +targetSelection.attr('cy');
 		});
 
-		this.on(
-			'node-drag-move',
-			(_eventName, event /* , _selection: D3SelectionINode<NodeData> */) => {
-				this.updateMultiEdgeLabels();
-				if (!this.isDragEnabled) return;
-				const pointerCoords = d3
-					.zoomTransform(svg.node() as Element)
-					.invert(d3.pointer(event, svg.node()));
-				targetData = d3.select<SVGGElement, INode<NodeData>>(event.sourceEvent.target).datum();
-				if (targetData) {
-					end.x = targetData.x;
-					end.y = targetData.y;
-				} else {
-					end.x = pointerCoords[0];
-					end.y = pointerCoords[1];
-				}
-				chart?.selectAll('.new-edge').remove();
-
-				const line = [
-					{ x: start.x, y: start.y },
-					{ x: end.x, y: end.y }
-				];
-				chart
-					?.append('path')
-					.classed('new-edge', true)
-					.attr('d', pathFn(line))
-					.attr('marker-end', 'url(#arrowhead)')
-					.style('stroke-width', 3)
-					.style('stroke', 'var(--primary-color)');
+		this.on('node-drag-move', (_eventName, event /* , _selection: D3SelectionINode<NodeData> */) => {
+			this.updateMultiEdgeLabels();
+			if (!this.isDragEnabled) return;
+			const pointerCoords = d3.zoomTransform(svg.node() as Element).invert(d3.pointer(event, svg.node()));
+			targetData = d3.select<SVGGElement, INode<NodeData>>(event.sourceEvent.target).datum();
+			if (targetData) {
+				end.x = targetData.x;
+				end.y = targetData.y;
+			} else {
+				end.x = pointerCoords[0];
+				end.y = pointerCoords[1];
 			}
-		);
+			chart?.selectAll('.new-edge').remove();
+
+			const line = [
+				{ x: start.x, y: start.y },
+				{ x: end.x, y: end.y }
+			];
+			chart
+				?.append('path')
+				.classed('new-edge', true)
+				.attr('d', pathFn(line))
+				.attr('marker-end', 'url(#arrowhead)')
+				.style('stroke-width', 3)
+				.style('stroke', 'var(--primary-color)');
+		});
 
 		this.on('node-drag-end', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
 			chart?.selectAll('.new-edge').remove();

@@ -8,6 +8,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Accessors(chain = true)
 @TSModel
 public class EntitySimilarityResult {
+
 	private String source;
 	private String target;
 	private Float similarity;

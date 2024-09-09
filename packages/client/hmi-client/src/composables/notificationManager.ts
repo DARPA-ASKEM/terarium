@@ -6,24 +6,19 @@ import {
 	convertToClientEvents,
 	getLatestUnacknowledgedNotifications
 } from '@/services/notification';
-import {
-	createNotificationEventHandlers,
-	createNotificationEventLogger
-} from '@/services/notificationEventHandlers';
+import { createNotificationEventHandlers, createNotificationEventLogger } from '@/services/notificationEventHandlers';
 import { ProgressState } from '@/types/Types';
 
 let initialized = false;
 
 const isFinished = (item: NotificationItem) =>
-	[ProgressState.Complete, ProgressState.Failed, ProgressState.Cancelled].includes(item.status);
+	[ProgressState.Complete, ProgressState.Failed, ProgressState.Cancelled, ProgressState.Error].includes(item.status);
 
 // Items stores the notifications for all projects
 const items = ref<NotificationItem[]>([]);
 
 export function useNotificationManager() {
-	const hasFinishedItems = computed(() =>
-		items.value.some((item: NotificationItem) => isFinished(item))
-	);
+	const hasFinishedItems = computed(() => items.value.some((item: NotificationItem) => isFinished(item)));
 	const unacknowledgedFinishedItems = computed(() =>
 		items.value.filter((item: NotificationItem) => isFinished(item) && !item.acknowledged)
 	);
@@ -43,17 +38,13 @@ export function useNotificationManager() {
 		// Initialize SSE event handlers for the subsequent events for the notification manager
 		supportedEventTypes.forEach((eventType) => subscribe(eventType, handlers.get(eventType)));
 		// Attach handlers for logging
-		supportedEventTypes.forEach((eventType) =>
-			subscribe(eventType, createNotificationEventLogger(items))
-		);
+		supportedEventTypes.forEach((eventType) => subscribe(eventType, createNotificationEventLogger(items)));
 
 		initialized = true;
 	}
 
 	function clearFinishedItems() {
-		items.value
-			.filter(isFinished)
-			.forEach((item) => acknowledgeNotification(item.notificationGroupId));
+		items.value.filter(isFinished).forEach((item) => acknowledgeNotification(item.notificationGroupId));
 		items.value = items.value.filter((item) => !isFinished(item));
 	}
 

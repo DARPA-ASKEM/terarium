@@ -11,6 +11,7 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 @Accessors(chain = true)
 @JsonDeserialize(using = AssetExportDeserializer.class)
 public class AssetExport {
+
 	AssetType type;
 	TerariumAsset asset;
 	Map<String, FileExport> files = new HashMap<>();

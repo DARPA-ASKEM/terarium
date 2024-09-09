@@ -36,9 +36,10 @@ public abstract class TerariumEntity implements Serializable {
 	// transaction is committed.
 	@PrePersist
 	protected void onCreate() {
-		this.createdOn =
-				Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
-		this.updatedOn = this.createdOn;
+		if (this.createdOn == null) {
+			this.createdOn = Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
+			this.updatedOn = this.createdOn;
+		}
 	}
 
 	@TSOptional
@@ -50,8 +51,7 @@ public abstract class TerariumEntity implements Serializable {
 	// transaction is committed.
 	@PreUpdate
 	protected void onUpdate() {
-		this.updatedOn =
-				Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
+		this.updatedOn = Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
 	}
 
 	protected TerariumEntity cloneSuperFields(final TerariumEntity entity) {

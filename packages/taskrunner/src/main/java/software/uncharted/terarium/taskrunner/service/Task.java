@@ -1,5 +1,7 @@
 package software.uncharted.terarium.taskrunner.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -16,10 +18,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.taskrunner.models.task.TaskRequest;
@@ -85,45 +83,63 @@ public class Task {
 
 	private void setup() throws IOException, InterruptedException {
 		if (req.getScript().equals("echo.py")) {
-
 			// raw python file, execute it through the runtime
 			final boolean fileExists = Files.exists(Paths.get(ECHO_SCRIPT_PATH));
 			if (!fileExists) {
 				throw new FileNotFoundException("Script file: " + ECHO_SCRIPT_PATH + " not found");
 			}
-			processBuilder = new ProcessBuilder("python3", ECHO_SCRIPT_PATH, "--id", req.getId().toString(),
-					"--input_pipe",
-					inputPipeName,
-					"--output_pipe",
-					outputPipeName,
-					"--progress_pipe",
-					progressPipeName);
+			processBuilder = new ProcessBuilder(
+				"python3",
+				ECHO_SCRIPT_PATH,
+				"--id",
+				req.getId().toString(),
+				"--input_pipe",
+				inputPipeName,
+				"--output_pipe",
+				outputPipeName,
+				"--progress_pipe",
+				progressPipeName
+			);
 		} else if (getExtension(req.getScript()).equals("py")) {
 			// raw python file, execute it through the runtime
 			final boolean fileExists = Files.exists(Paths.get(req.getScript()));
 			if (!fileExists) {
 				throw new FileNotFoundException("Script file: " + req.getScript() + " not found");
 			}
-			processBuilder = new ProcessBuilder("python3", req.getScript(), "--id", req.getId().toString(),
-					"--input_pipe",
-					inputPipeName,
-					"--output_pipe",
-					outputPipeName,
-					"--progress_pipe",
-					progressPipeName);
+			processBuilder = new ProcessBuilder(
+				"python3",
+				req.getScript(),
+				"--id",
+				req.getId().toString(),
+				"--input_pipe",
+				inputPipeName,
+				"--output_pipe",
+				outputPipeName,
+				"--progress_pipe",
+				progressPipeName
+			);
 		} else {
 			// executable command, execute it directly
-			processBuilder = new ProcessBuilder(req.getScript(), "--id", req.getId().toString(),
-					"--input_pipe",
-					inputPipeName,
-					"--output_pipe",
-					outputPipeName,
-					"--progress_pipe",
-					progressPipeName);
+			processBuilder = new ProcessBuilder(
+				req.getScript(),
+				"--id",
+				req.getId().toString(),
+				"--input_pipe",
+				inputPipeName,
+				"--output_pipe",
+				outputPipeName,
+				"--progress_pipe",
+				progressPipeName
+			);
 		}
 
-		log.info("Creating input, output, and progress pipes: {}, {}, {} for task {}", inputPipeName, outputPipeName,
-				progressPipeName, req.getId());
+		log.info(
+			"Creating input, output, and progress pipes: {}, {}, {} for task {}",
+			inputPipeName,
+			outputPipeName,
+			progressPipeName,
+			req.getId()
+		);
 
 		// Create the named pipes
 		final Process inputPipe = new ProcessBuilder("mkfifo", inputPipeName).start();
@@ -146,7 +162,7 @@ public class Task {
 	}
 
 	public void writeInputWithTimeout(final byte[] bytes, final int timeoutMinutes)
-			throws IOException, InterruptedException, TimeoutException {
+		throws IOException, InterruptedException, TimeoutException {
 		log.info("Dispatching write thread for input pipe: {} for task: {}", inputPipeName, req.getId());
 
 		final CompletableFuture<Void> future = new CompletableFuture<>();
@@ -189,7 +205,7 @@ public class Task {
 	}
 
 	public byte[] readOutputWithTimeout(final int timeoutMinutes)
-			throws IOException, InterruptedException, ExecutionException, TimeoutException {
+		throws IOException, InterruptedException, ExecutionException, TimeoutException {
 		log.info("Dispatching read thread for output pipe: {} for task: {}", outputPipeName, req.getId());
 
 		final CompletableFuture<byte[]> future = new CompletableFuture<>();
@@ -201,8 +217,7 @@ public class Task {
 				final byte[] buffer = new byte[BYTES_PER_READ]; // buffer size
 				int bytesRead;
 				while ((bytesRead = bis.read(buffer)) != -1) {
-					log.info("Read {} bytes from output pipe: {} for task: {}", bytesRead, outputPipeName,
-							req.getId());
+					log.info("Read {} bytes from output pipe: {} for task: {}", bytesRead, outputPipeName, req.getId());
 					bos.write(buffer, 0, bytesRead);
 				}
 				future.complete(bos.toByteArray());
@@ -239,7 +254,7 @@ public class Task {
 	}
 
 	public byte[] readProgressWithTimeout(final int timeoutMinutes)
-			throws IOException, InterruptedException, ExecutionException, TimeoutException {
+		throws IOException, InterruptedException, ExecutionException, TimeoutException {
 		log.info("Dispatching read thread for progress pipe: {} for task: {}", progressPipeName, req.getId());
 
 		final CompletableFuture<byte[]> future = new CompletableFuture<>();
@@ -251,8 +266,7 @@ public class Task {
 				final byte[] buffer = new byte[BYTES_PER_READ]; // buffer size
 				int bytesRead;
 				while ((bytesRead = bis.read(buffer)) != -1) {
-					log.info("Read {} bytes from progress pipe: {} for task: {}", bytesRead, progressPipeName,
-							req.getId());
+					log.info("Read {} bytes from progress pipe: {} for task: {}", bytesRead, progressPipeName, req.getId());
 					bos.write(buffer, 0, bytesRead);
 				}
 				future.complete(bos.toByteArray());
@@ -324,7 +338,6 @@ public class Task {
 	}
 
 	public void start() throws IOException, InterruptedException {
-
 		lock.lock();
 		try {
 			if (status == TaskStatus.CANCELLED) {
@@ -344,9 +357,12 @@ public class Task {
 			status = TaskStatus.RUNNING;
 
 			// Add a shutdown hook to kill the process if the JVM exits
-			Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-				process.destroy();
-			}));
+			Runtime.getRuntime()
+				.addShutdownHook(
+					new Thread(() -> {
+						process.destroy();
+					})
+				);
 
 			// Create a future to signal when the process has exited
 			processFuture = new CompletableFuture<>();
@@ -388,8 +404,7 @@ public class Task {
 						stdout.append(line).append("\n");
 					}
 				} catch (final IOException e) {
-					log.warn("Error occured while logging stdout for task {}: {}", req.getId(),
-							getStatus());
+					log.warn("Error occured while logging stdout for task {}: {}", req.getId(), getStatus());
 				}
 			}).start();
 
@@ -404,7 +419,6 @@ public class Task {
 					log.warn("Error occured while logging stderr for task {}: {}", req.getId(), getStatus());
 				}
 			}).start();
-
 		} catch (final Exception e) {
 			if (status != TaskStatus.CANCELLED) {
 				status = TaskStatus.FAILED;
@@ -431,7 +445,6 @@ public class Task {
 	}
 
 	public boolean flagAsCancelling() {
-
 		// Splitting this off as separate method allows us to accept a cancel
 		// request, response that we are cancelling, and then process it.
 
@@ -472,11 +485,18 @@ public class Task {
 		try {
 			processFuture.get(PROCESS_KILL_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
-			log.info("Process successfully cancelled in: {} for task {}", req.getId(),
-					TimeFormatter.format(System.currentTimeMillis() - start), req.getId());
+			log.info(
+				"Process successfully cancelled in: {} for task {}",
+				req.getId(),
+				TimeFormatter.format(System.currentTimeMillis() - start),
+				req.getId()
+			);
 		} catch (InterruptedException | ExecutionException | TimeoutException e) {
-			log.warn("Error while waiting for task {} process to exit cleanly in {}, sending SIGKILL", req.getId(),
-					TimeFormatter.format(System.currentTimeMillis() - start));
+			log.warn(
+				"Error while waiting for task {} process to exit cleanly in {}, sending SIGKILL",
+				req.getId(),
+				TimeFormatter.format(System.currentTimeMillis() - start)
+			);
 			// kill the process forcibly (SIGKILL)
 			process.destroyForcibly();
 		}
@@ -489,5 +509,4 @@ public class Task {
 			return status;
 		});
 	}
-
 }

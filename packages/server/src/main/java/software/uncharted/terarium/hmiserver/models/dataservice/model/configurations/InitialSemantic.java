@@ -6,6 +6,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotNull;
+import java.io.Serial;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -18,6 +19,9 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @TSModel
 @Entity
 public class InitialSemantic extends Semantic {
+
+	@Serial
+	private static final long serialVersionUID = 8134786856949924125L;
 
 	@Column(columnDefinition = "text")
 	private String target;
@@ -32,7 +36,8 @@ public class InitialSemantic extends Semantic {
 	@JsonBackReference
 	@Schema(hidden = true)
 	@TSIgnore
-	@NotNull private ModelConfiguration modelConfiguration;
+	@NotNull
+	private ModelConfiguration modelConfiguration;
 
 	@Override
 	public InitialSemantic clone() {
@@ -42,5 +47,10 @@ public class InitialSemantic extends Semantic {
 		clone.expression = this.expression;
 		clone.expressionMathml = this.expressionMathml;
 		return clone;
+	}
+
+	@Override
+	public void setSource(final String source) {
+		super.setSource(source);
 	}
 }

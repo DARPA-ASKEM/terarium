@@ -74,8 +74,7 @@ const card = computed(() => {
 });
 
 const authors = computed(() => {
-	const authorsArray =
-		props.model?.metadata?.annotations?.authors?.map((author) => author.name) ?? [];
+	const authorsArray = props.model?.metadata?.annotations?.authors?.map((author) => author.name) ?? [];
 
 	if (card.value?.authorAuthor) authorsArray.unshift(card.value?.authorAuthor);
 

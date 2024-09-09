@@ -26,7 +26,7 @@ public class TaskFuture implements Serializable {
 	}
 
 	public TaskResponse getFinal(final long timeout, final TimeUnit unit)
-			throws InterruptedException, ExecutionException, TimeoutException {
+		throws InterruptedException, ExecutionException, TimeoutException {
 		return future.get(timeout, unit);
 	}
 

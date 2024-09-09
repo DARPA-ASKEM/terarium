@@ -5,10 +5,7 @@ import { EventType } from '@/types/Types';
 import * as EventService from '@/services/event';
 import { useProjects } from '@/composables/project';
 
-export async function getGithubRepositoryContent(
-	repoOwnerAndName: string,
-	path: string
-): Promise<GithubRepo> {
+export async function getGithubRepositoryContent(repoOwnerAndName: string, path: string): Promise<GithubRepo> {
 	try {
 		EventService.create(
 			EventType.GithubImport,

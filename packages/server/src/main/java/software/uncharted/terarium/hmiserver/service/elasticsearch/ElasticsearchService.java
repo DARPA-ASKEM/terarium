@@ -36,7 +36,6 @@ import co.elastic.clients.elasticsearch.indices.RefreshResponse;
 import co.elastic.clients.elasticsearch.ingest.GetPipelineRequest;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
-import co.elastic.clients.transport.endpoints.BooleanResponse;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -98,8 +97,7 @@ public class ElasticsearchService {
 
 	public static RuntimeException handleException(final ElasticsearchException e) {
 		String error = "ElasticsearchException: " + e.response().error().reason();
-		if (e.response().error().rootCause() != null
-				&& e.response().error().rootCause().size() > 0) {
+		if (e.response().error().rootCause() != null && e.response().error().rootCause().size() > 0) {
 			error += ", root cause: " + e.response().error().rootCause().toString();
 		}
 		final ErrorCause causedBy = e.response().error().causedBy();
@@ -120,7 +118,7 @@ public class ElasticsearchService {
 			final String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
 			final Header header = new BasicHeader("Authorization", "Basic " + encodedAuth);
 
-			httpClientBuilder.setDefaultHeaders(new Header[] {header});
+			httpClientBuilder.setDefaultHeaders(new Header[] { header });
 		}
 
 		final RestClient httpClient = httpClientBuilder.build();
@@ -144,10 +142,7 @@ public class ElasticsearchService {
 	 */
 	public boolean indexExists(final String indexName) throws IOException {
 		try {
-
-			return client.indices()
-					.exists(ExistsRequest.of(e -> e.index(indexName)))
-					.value();
+			return client.indices().exists(ExistsRequest.of(e -> e.index(indexName))).value();
 		} catch (final ElasticsearchException e) {
 			throw handleException(e);
 		}
@@ -159,14 +154,12 @@ public class ElasticsearchService {
 	 * @return True if the index exists, false otherwise
 	 */
 	public boolean documentExists(final String indexName, final String id) throws IOException {
-
 		try {
-
 			final GetRequest req = new GetRequest.Builder()
-					.index(indexName)
-					.id(id)
-					.source(new SourceConfigParam.Builder().fetch(false).build())
-					.build();
+				.index(indexName)
+				.id(id)
+				.source(new SourceConfigParam.Builder().fetch(false).build())
+				.build();
 
 			final GetResponse<JsonNode> response = client.get(req, JsonNode.class);
 			return response.found();
@@ -178,9 +171,7 @@ public class ElasticsearchService {
 	/** Refresh an index. */
 	public boolean refreshIndex(final String indexName) throws IOException {
 		try {
-
-			final RefreshRequest refreshRequest =
-					new RefreshRequest.Builder().index(indexName).build();
+			final RefreshRequest refreshRequest = new RefreshRequest.Builder().index(indexName).build();
 			final RefreshResponse refreshResponse = client.indices().refresh(refreshRequest);
 
 			// Check if the refresh was acknowledged
@@ -198,9 +189,7 @@ public class ElasticsearchService {
 	 */
 	public long count(final String index) throws IOException {
 		try {
-
-			final CountRequest countRequest =
-					new CountRequest.Builder().index(index).build();
+			final CountRequest countRequest = new CountRequest.Builder().index(index).build();
 			final CountResponse countResponse = client.count(countRequest);
 			return countResponse.count();
 		} catch (final ElasticsearchException e) {
@@ -216,9 +205,7 @@ public class ElasticsearchService {
 	 */
 	public void createIndex(final String index) throws IOException {
 		try {
-
-			final CreateIndexRequest req =
-					new CreateIndexRequest.Builder().index(index).build();
+			final CreateIndexRequest req = new CreateIndexRequest.Builder().index(index).build();
 
 			client.indices().create(req);
 		} catch (final ElasticsearchException e) {
@@ -227,17 +214,18 @@ public class ElasticsearchService {
 	}
 
 	/**
-	 * Create the provided index if it doesn't exist, if it does, delete it and re-create it.
+	 * Create the provided index if it doesn't exist, if it does, delete it and
+	 * re-create it.
 	 *
 	 * @param index
 	 * @throws IOException
 	 */
 	public void createOrEnsureIndexIsEmpty(final String index) throws IOException {
 		try {
-
 			if (indexExists(index)) {
 				deleteIndex(index);
 			}
+			log.info("\n\nCreating index {}\n\n", index);
 			createIndex(index);
 		} catch (final ElasticsearchException e) {
 			throw handleException(e);
@@ -245,16 +233,16 @@ public class ElasticsearchService {
 	}
 
 	/**
-	 * Returns true if the ES cluster contains the index template with the provided name, false otherwise
+	 * Returns true if the ES cluster contains the index template with the provided
+	 * name, false otherwise
 	 *
 	 * @param name The name of the index template to check existence for
-	 * @return True if the index template is contained in the cluster, false otherwise
+	 * @return True if the index template is contained in the cluster, false
+	 *         otherwise
 	 */
 	public boolean containsIndexTemplate(final String name) throws IOException {
 		try {
-
-			final ExistsIndexTemplateRequest req =
-					new ExistsIndexTemplateRequest.Builder().name(name).build();
+			final ExistsIndexTemplateRequest req = new ExistsIndexTemplateRequest.Builder().name(name).build();
 
 			return client.indices().existsIndexTemplate(req).value();
 		} catch (final ElasticsearchException e) {
@@ -265,7 +253,7 @@ public class ElasticsearchService {
 	/**
 	 * Put an index template to the cluster
 	 *
-	 * @param name The name of the index template
+	 * @param name         The name of the index template
 	 * @param templateJson The index template json string
 	 * @return True if the index template was successfully added, false otherwise
 	 */
@@ -285,8 +273,7 @@ public class ElasticsearchService {
 	 */
 	public boolean containsPipeline(final String id) throws IOException {
 		try {
-			final GetPipelineRequest req =
-					new GetPipelineRequest.Builder().id(id).build();
+			final GetPipelineRequest req = new GetPipelineRequest.Builder().id(id).build();
 			return client.ingest().getPipeline(req).result().containsKey(id);
 		} catch (final ElasticsearchException e) {
 			throw handleException(e);
@@ -296,13 +283,12 @@ public class ElasticsearchService {
 	/**
 	 * Put a pipeline to the cluster
 	 *
-	 * @param name The name of the pipeline
+	 * @param name         The name of the pipeline
 	 * @param pipelineJson The pipeline json string
 	 * @return True if the pipeline was successfully added, false otherwise
 	 */
 	public boolean putPipeline(final String name, final String pipelineJson) {
 		try {
-
 			return putTyped(name, pipelineJson, "pipeline", "_ingest/pipeline");
 		} catch (final ElasticsearchException e) {
 			throw handleException(e);
@@ -310,14 +296,15 @@ public class ElasticsearchService {
 	}
 
 	/**
-	 * Returns true if the ES cluster contains the component template with the provided name, false otherwise
+	 * Returns true if the ES cluster contains the component template with the
+	 * provided name, false otherwise
 	 *
 	 * @param name The name of the index template to check existence for
-	 * @return True if the component template is contained in the cluster, false otherwise
+	 * @return True if the component template is contained in the cluster, false
+	 *         otherwise
 	 */
 	public boolean containsComponentTemplate(final String name) throws IOException {
-		final ExistsComponentTemplateRequest req =
-				new ExistsComponentTemplateRequest.Builder().name(name).build();
+		final ExistsComponentTemplateRequest req = new ExistsComponentTemplateRequest.Builder().name(name).build();
 
 		return client.cluster().existsComponentTemplate(req).value();
 	}
@@ -325,9 +312,10 @@ public class ElasticsearchService {
 	/**
 	 * Put an component template to the cluster
 	 *
-	 * @param name The name of the index template
+	 * @param name         The name of the index template
 	 * @param templateJson The component template json string
-	 * @return True if the component template was successfully added, false otherwise
+	 * @return True if the component template was successfully added, false
+	 *         otherwise
 	 */
 	public boolean putComponentTemplate(final String name, final String templateJson) {
 		return putTyped(name, templateJson, "component template", "_component_template");
@@ -336,9 +324,9 @@ public class ElasticsearchService {
 	/**
 	 * Put a typed object to the cluster
 	 *
-	 * @param name The name of the object
+	 * @param name      The name of the object
 	 * @param typedJson The object json string
-	 * @param typeName The type of the object
+	 * @param typeName  The type of the object
 	 * @param indexName The index to put the object in
 	 * @return True if the object was successfully added, false otherwise
 	 */
@@ -348,11 +336,7 @@ public class ElasticsearchService {
 			headers.setContentType(MediaType.APPLICATION_JSON);
 			final HttpEntity<String> entity = new HttpEntity<>(typedJson, headers);
 			final ResponseEntity<JsonNode> response = getRestTemplate()
-					.exchange(
-							new URI(config.getUrl() + "/" + indexName + "/" + name),
-							HttpMethod.PUT,
-							entity,
-							JsonNode.class);
+				.exchange(new URI(config.getUrl() + "/" + indexName + "/" + name), HttpMethod.PUT, entity, JsonNode.class);
 			final JsonNode body = response.getBody();
 			if (body != null) {
 				return body.at("/acknowledged").asBoolean();
@@ -366,14 +350,13 @@ public class ElasticsearchService {
 	/**
 	 * Search an index.
 	 *
-	 * @param <T> The type of the document
-	 * @param req - The search request
+	 * @param <T>    The type of the document
+	 * @param req    - The search request
 	 * @param tClass The class of the document
 	 * @return A list of found documents.
 	 */
 	public <T> List<T> search(final SearchRequest req, final Class<T> tClass) throws IOException {
 		try {
-
 			log.info("Searching: {}", req.index());
 
 			final List<T> docs = new ArrayList<>();
@@ -390,14 +373,13 @@ public class ElasticsearchService {
 	/**
 	 * Search an index.
 	 *
-	 * @param <T> The type of the document
-	 * @param req - The search request
+	 * @param <T>    The type of the document
+	 * @param req    - The search request
 	 * @param tClass The class of the document
 	 * @return A list of found documents.
 	 */
 	public <T> SearchResponse<T> searchWithResponse(final SearchRequest req, final Class<T> tClass) throws IOException {
 		try {
-
 			return client.search(req, tClass);
 		} catch (final ElasticsearchException e) {
 			throw handleException(e);
@@ -407,21 +389,42 @@ public class ElasticsearchService {
 	/**
 	 * Add a document to an index.
 	 *
-	 * @param <T> The type of the document
-	 * @param index The index to add the document to
-	 * @param id The id of the document
+	 * @param <T>      The type of the document
+	 * @param index    The index to add the document to
+	 * @param id       The id of the document
 	 * @param document The document to add
 	 */
 	public <T> void index(final String index, final String id, final T document) throws IOException {
 		try {
 			log.info("Indexing: {} into {}", id, index);
 
+			final IndexRequest<T> req = new IndexRequest.Builder<T>().index(index).id(id).document(document).build();
+
+			client.index(req);
+		} catch (final ElasticsearchException e) {
+			throw handleException(e);
+		}
+	}
+
+	/**
+	 * Add a document to an index with a routing key.
+	 *
+	 * @param <T>      The type of the document
+	 * @param index    The index to add the document to
+	 * @param id       The id of the document
+	 * @param document The document to add
+	 */
+	public <T> void indexWithRouting(final String index, final String id, final T document, final String routing)
+		throws IOException {
+		try {
+			log.info("Indexing: {} into {}", id, index);
+
 			final IndexRequest<T> req = new IndexRequest.Builder<T>()
-					.index(index)
-					.id(id)
-					.document(document)
-					.refresh(Refresh.WaitFor)
-					.build();
+				.index(index)
+				.id(id)
+				.document(document)
+				.routing(routing)
+				.build();
 
 			client.index(req);
 		} catch (final ElasticsearchException e) {
@@ -433,17 +436,13 @@ public class ElasticsearchService {
 	 * Remove a document from an index.
 	 *
 	 * @param index The index to remove the document from
-	 * @param id The id of the document to remove
+	 * @param id    The id of the document to remove
 	 */
 	public void delete(final String index, final String id) throws IOException {
 		try {
 			log.info("Deleting: {} from {}", id, index);
 
-			final DeleteRequest req = new DeleteRequest.Builder()
-					.index(index)
-					.id(id)
-					.refresh(Refresh.WaitFor)
-					.build();
+			final DeleteRequest req = new DeleteRequest.Builder().index(index).id(id).build();
 
 			client.delete(req);
 		} catch (final ElasticsearchException e) {
@@ -455,18 +454,17 @@ public class ElasticsearchService {
 	 * Update a document from an index.
 	 *
 	 * @param index The index to remove the document from
-	 * @param id The id of the document to remove
+	 * @param id    The id of the document to remove
 	 */
 	public <T, Partial> void update(final String index, final String id, final Partial partial) throws IOException {
 		try {
 			log.info("Updating: {} from {}", id, index);
 
 			final UpdateRequest<T, Partial> req = new UpdateRequest.Builder<T, Partial>()
-					.index(index)
-					.id(id)
-					.doc(partial)
-					.refresh(Refresh.WaitFor)
-					.build();
+				.index(index)
+				.id(id)
+				.doc(partial)
+				.build();
 
 			client.update(req, Void.class);
 		} catch (final ElasticsearchException e) {
@@ -483,8 +481,7 @@ public class ElasticsearchService {
 		try {
 			log.info("Deleting index: {}", index);
 
-			final DeleteIndexRequest deleteRequest =
-					new DeleteIndexRequest.Builder().index(index).build();
+			final DeleteIndexRequest deleteRequest = new DeleteIndexRequest.Builder().index(index).build();
 
 			client.indices().delete(deleteRequest);
 		} catch (final ElasticsearchException e) {
@@ -495,9 +492,9 @@ public class ElasticsearchService {
 	/**
 	 * Get a single document by id.
 	 *
-	 * @param <T> The type of the document
-	 * @param index The index to get the document from
-	 * @param id The id of the document to get
+	 * @param <T>    The type of the document
+	 * @param index  The index to get the document from
+	 * @param id     The id of the document to get
 	 * @param tClass The class of the document
 	 * @return The document if found, null otherwise
 	 */
@@ -518,23 +515,22 @@ public class ElasticsearchService {
 	}
 
 	public <T> SearchResponse<T> knnSearch(
-			final String index,
-			final KnnQuery knn,
-			final Query query,
-			final Integer page,
-			final Integer pageSize,
-			final List<String> excludes,
-			final Class<T> tClass)
-			throws IOException {
-
+		final String index,
+		final KnnQuery knn,
+		final Query query,
+		final Integer page,
+		final Integer pageSize,
+		final List<String> excludes,
+		final Class<T> tClass
+	) throws IOException {
 		try {
 			log.info("KNN search on: {}", index);
 
 			final SearchRequest.Builder builder = new SearchRequest.Builder()
-					.index(index)
-					.from(page)
-					.source(s -> s.filter(f -> f.excludes(excludes)))
-					.size(pageSize);
+				.index(index)
+				.from(page)
+				.source(s -> s.filter(f -> f.excludes(excludes)))
+				.size(pageSize);
 
 			if (knn != null) {
 				if (knn.numCandidates() < knn.k()) {
@@ -557,6 +553,7 @@ public class ElasticsearchService {
 
 	@Data
 	public static class BulkOpResponse {
+
 		private List<String> errors;
 		private long took;
 	}
@@ -569,8 +566,7 @@ public class ElasticsearchService {
 				if (doc.getId() == null) {
 					throw new RuntimeException("Document id cannot be null");
 				}
-				bulkRequest.operations(op -> op.index(
-						idx -> idx.index(index).id(doc.getId().toString()).document(doc)));
+				bulkRequest.operations(op -> op.index(idx -> idx.index(index).id(doc.getId().toString()).document(doc)));
 			}
 
 			final BulkResponse bulkResponse = client.bulk(bulkRequest.build());
@@ -604,13 +600,12 @@ public class ElasticsearchService {
 					throw new RuntimeException("Document id cannot be null");
 				}
 				final UpdateOperation<Object, Object> updateOperation = new UpdateOperation.Builder<>()
-						.index(index)
-						.id(doc.getId().toString())
-						.action(a -> a.doc(doc))
-						.build();
+					.index(index)
+					.id(doc.getId().toString())
+					.action(a -> a.doc(doc))
+					.build();
 
-				final BulkOperation operation =
-						new BulkOperation.Builder().update(updateOperation).build();
+				final BulkOperation operation = new BulkOperation.Builder().update(updateOperation).build();
 				operations.add(operation);
 			}
 			// Add the BulkOperation to the BulkRequest
@@ -642,16 +637,16 @@ public class ElasticsearchService {
 
 	public void transferAlias(final String alias, final String oldIndex, final String newIndex) throws IOException {
 		try {
-
 			log.info("Transfering alias {} from index {} to index {}", alias, oldIndex, newIndex);
 			// Remove alias from old index
-			final DeleteAliasRequest deleteAliasRequest =
-					new DeleteAliasRequest.Builder().index(oldIndex).name(alias).build();
+			final DeleteAliasRequest deleteAliasRequest = new DeleteAliasRequest.Builder()
+				.index(oldIndex)
+				.name(alias)
+				.build();
 			client.indices().deleteAlias(deleteAliasRequest);
 
 			// Add alias to new index
-			final PutAliasRequest putAliasRequest =
-					new PutAliasRequest.Builder().index(newIndex).name(alias).build();
+			final PutAliasRequest putAliasRequest = new PutAliasRequest.Builder().index(newIndex).name(alias).build();
 			client.indices().putAlias(putAliasRequest);
 		} catch (final ElasticsearchException e) {
 			throw handleException(e);
@@ -660,10 +655,8 @@ public class ElasticsearchService {
 
 	public void createAlias(final String index, final String alias) throws IOException {
 		try {
-
 			log.info("Creating alias {} for index {}", alias, index);
-			final PutAliasRequest putAliasRequest =
-					new PutAliasRequest.Builder().index(index).name(alias).build();
+			final PutAliasRequest putAliasRequest = new PutAliasRequest.Builder().index(index).name(alias).build();
 			client.indices().putAlias(putAliasRequest);
 		} catch (final ElasticsearchException e) {
 			throw handleException(e);
@@ -672,10 +665,8 @@ public class ElasticsearchService {
 
 	public void deleteAlias(final String index, final String alias) throws IOException {
 		try {
-
 			log.info("Deleting alias {} for index {}", alias, index);
-			final DeleteAliasRequest deleteAliasRequest =
-					new DeleteAliasRequest.Builder().index(index).name(alias).build();
+			final DeleteAliasRequest deleteAliasRequest = new DeleteAliasRequest.Builder().index(index).name(alias).build();
 			client.indices().deleteAlias(deleteAliasRequest);
 		} catch (final ElasticsearchException e) {
 			throw handleException(e);
@@ -684,42 +675,9 @@ public class ElasticsearchService {
 
 	public String getIndexFromAlias(final String alias) throws IOException {
 		try {
-
-			final GetAliasRequest request =
-					new GetAliasRequest.Builder().name(alias).build();
+			final GetAliasRequest request = new GetAliasRequest.Builder().name(alias).build();
 			final GetAliasResponse response = client.indices().getAlias(request);
-
 			return response.result().keySet().iterator().next();
-		} catch (final ElasticsearchException e) {
-			throw handleException(e);
-		}
-	}
-
-	enum IndexOrAlias {
-		INDEX,
-		ALIAS,
-		DOES_NOT_EXIST
-	}
-
-	public IndexOrAlias checkIfIndexOrAlias(final String name) throws IOException {
-		try {
-			final ExistsRequest existsRequest =
-					new ExistsRequest.Builder().index(name).build();
-			final BooleanResponse isIndex = client.indices().exists(existsRequest);
-
-			if (isIndex.value()) {
-				return IndexOrAlias.INDEX;
-			}
-
-			final GetAliasRequest request =
-					new GetAliasRequest.Builder().name(name).build();
-			final GetAliasResponse response = client.indices().getAlias(request);
-
-			if (response.result().size() != 0) {
-				return IndexOrAlias.ALIAS;
-			}
-
-			return IndexOrAlias.DOES_NOT_EXIST;
 		} catch (final ElasticsearchException e) {
 			throw handleException(e);
 		}
@@ -727,8 +685,7 @@ public class ElasticsearchService {
 
 	public boolean aliasExists(final String alias) {
 		try {
-			final GetAliasRequest request =
-					new GetAliasRequest.Builder().name(alias).build();
+			final GetAliasRequest request = new GetAliasRequest.Builder().name(alias).build();
 			final GetAliasResponse response = client.indices().getAlias(request);
 			return response.result().size() != 0;
 		} catch (final Exception e) {

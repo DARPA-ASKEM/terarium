@@ -1,14 +1,10 @@
 <template>
 	<div class="policy-group">
 		<div class="form-header">
-			<label class="mr-auto" tag="h5"> {{ config.intervention?.name ?? `Intervention` }}</label>
+			<h6 class="mr-auto">{{ config.intervention?.name ?? `Intervention` }}</h6>
 			<div>
 				<label for="active">Optimize</label>
-				<InputSwitch
-					v-model="knobs.isActive"
-					:disabled="isNotEditable"
-					@change="emit('update-self', knobs)"
-				/>
+				<InputSwitch v-model="knobs.isActive" :disabled="isNotEditable" @change="emit('update-self', knobs)" />
 			</div>
 		</div>
 		<template v-if="knobs.isActive">
@@ -23,10 +19,7 @@
 						:options="OPTIMIZATION_TYPE_MAP"
 						@change="emit('update-self', knobs)"
 					/>
-					for the {{ knobs.intervention.type }}&nbsp;<strong>{{
-						knobs.intervention.appliedTo
-					}}</strong
-					>.
+					for the {{ knobs.intervention.type }}&nbsp;<strong>{{ knobs.intervention.appliedTo }}</strong>
 				</p>
 				<p v-if="showNewValueOptions && staticInterventions.length === 1">
 					at the start time <strong>{{ staticInterventions[0].timestep }}</strong>
@@ -67,22 +60,19 @@
 				</section>
 
 				<section v-if="showNewValueOptions">
-					<h6 class="pt-4, pb-3">New Value</h6>
+					<h6 class="pt-4, pb-3">Intervention Value</h6>
 					<div class="input-row">
-						<tera-input
-							type="nist"
+						<tera-input-number
 							label="Lower bound"
 							v-model="knobs.lowerBoundValue"
 							@update:model-value="$emit('update-self', knobs)"
 						/>
-						<tera-input
-							type="nist"
+						<tera-input-number
 							label="Upper bound"
 							v-model="knobs.upperBoundValue"
 							@update:model-value="emit('update-self', knobs)"
 						/>
-						<tera-input
-							type="nist"
+						<tera-input-number
 							label="Initial guess"
 							v-model="knobs.initialGuessValue"
 							@update:model-value="emit('update-self', knobs)"
@@ -90,22 +80,19 @@
 					</div>
 				</section>
 				<section v-if="showStartTimeOptions">
-					<h6 class="pt-4, pb-3">Start Time</h6>
+					<h6 class="pt-4, pb-3">Intervention Time</h6>
 					<div class="input-row">
-						<tera-input
-							type="nist"
+						<tera-input-number
 							label="Start time"
 							v-model="knobs.startTime"
 							@update:model-value="emit('update-self', knobs)"
 						/>
-						<tera-input
-							type="nist"
+						<tera-input-number
 							label="End time"
 							v-model="knobs.endTime"
 							@update:model-value="emit('update-self', knobs)"
 						/>
-						<tera-input
-							type="nist"
+						<tera-input-number
 							label="Initial guess"
 							v-model="knobs.startTimeGuess"
 							@update:model-value="emit('update-self', knobs)"
@@ -115,25 +102,27 @@
 			</div>
 		</template>
 		<template v-else>
-			<p v-for="(staticIntervention, index) in staticInterventions" :key="index">
-				Set the <strong>{{ config.intervention?.type }}</strong>
-				<strong>{{ config.intervention?.appliedTo }}</strong> to the value of
-				<strong>{{ staticIntervention.value }}</strong> day at start time
-				<strong>{{ staticIntervention.timestep }}</strong> day.
-			</p>
+			<ul>
+				<li class="list-position-inside" v-for="(staticIntervention, index) in staticInterventions" :key="index">
+					Set the <strong>{{ config.intervention?.type }}</strong>
+					<strong>{{ config.intervention?.appliedTo }}</strong> to the value of
+					<strong>{{ staticIntervention.value }}</strong> day at start time
+					<strong>{{ staticIntervention.timestep }}</strong> day.
+				</li>
+			</ul>
 		</template>
 	</div>
 </template>
 
 <script setup lang="ts">
 import Dropdown from 'primevue/dropdown';
-import TeraInput from '@/components/widgets/tera-input.vue';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import InputSwitch from 'primevue/inputswitch';
 import { computed, ref } from 'vue';
 import { StaticIntervention } from '@/types/Types';
 import {
 	InterventionPolicyGroupForm,
-	InterventionTypes,
+	OptimizationInterventionObjective,
 	OPTIMIZATION_TYPE_MAP,
 	OBJECTIVE_FUNCTION_MAP
 } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
@@ -144,9 +133,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-self']);
 
-const staticInterventions = ref<StaticIntervention[]>(
-	props.config.intervention.staticInterventions
-);
+const staticInterventions = ref<StaticIntervention[]>(props.config.intervention.staticInterventions);
 
 const knobs = ref<InterventionPolicyGroupForm>({
 	...props.config
@@ -155,14 +142,14 @@ const knobs = ref<InterventionPolicyGroupForm>({
 const isNotEditable = computed(() => staticInterventions.value.length !== 1);
 
 const showStartTimeOptions = computed(
-	() => knobs.value.optimizationType === InterventionTypes.paramValue
-	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909
-	// || knobs.value.optimizationType === InterventionTypes.paramValueAndStartTime
+	() =>
+		knobs.value.optimizationType === OptimizationInterventionObjective.startTime ||
+		knobs.value.optimizationType === OptimizationInterventionObjective.paramValueAndStartTime
 );
 const showNewValueOptions = computed(
-	() => knobs.value.optimizationType === InterventionTypes.startTime
-	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909
-	// || knobs.value.optimizationType === InterventionTypes.paramValueAndStartTime
+	() =>
+		knobs.value.optimizationType === OptimizationInterventionObjective.paramValue ||
+		knobs.value.optimizationType === OptimizationInterventionObjective.paramValueAndStartTime
 );
 </script>
 
@@ -211,16 +198,15 @@ const showNewValueOptions = computed(
 
 .policy-group {
 	display: flex;
-	padding: var(--gap-4);
-	padding-left: var(--gap-5);
+	padding: var(--gap);
 	flex-direction: column;
 	justify-content: center;
 	align-items: flex-start;
 	gap: var(--gap-2);
 	border-radius: var(--gap-1-5);
 	background: var(--surface-section);
-	border: 1px solid rgba(0, 0, 0, 0.08);
-	/* Shadow/medium */
+	border: 1px solid var(--surface-border-light);
+	margin: var(--gap-1) 0;
 	box-shadow:
 		0 2px 4px -1px rgba(0, 0, 0, 0.06),
 		0 4px 6px -1px rgba(0, 0, 0, 0.08);
@@ -228,5 +214,11 @@ const showNewValueOptions = computed(
 
 .policy-group + .policy-group {
 	margin-top: var(--gap-2);
+}
+
+.list-position-inside {
+	list-style-position: outside;
+	margin-left: var(--gap);
+	padding-bottom: var(--gap-1);
 }
 </style>

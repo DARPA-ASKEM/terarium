@@ -30,11 +30,11 @@ public class AdminController {
 	@GetMapping("/users")
 	@Secured(Roles.ADMIN)
 	public ResponseEntity<List<User>> getUsers(
-			@RequestParam(required = false, defaultValue = "0") Integer page,
-			@RequestParam(required = false, defaultValue = "5") Integer rows,
-			@RequestParam(required = false) String sortField,
-			@RequestParam(required = false) Integer sortOrder) {
-
+		@RequestParam(required = false, defaultValue = "0") Integer page,
+		@RequestParam(required = false, defaultValue = "5") Integer rows,
+		@RequestParam(required = false) String sortField,
+		@RequestParam(required = false) Integer sortOrder
+	) {
 		Sort sort = Sort.unsorted();
 		if (sortField != null && !sortField.isEmpty()) {
 			Sort.Direction direction = sortOrder < 0 ? Sort.Direction.DESC : Sort.Direction.ASC;
@@ -77,11 +77,11 @@ public class AdminController {
 	@GetMapping("/roles")
 	@Secured(Roles.ADMIN)
 	public ResponseEntity<List<Role>> getRoles(
-			@RequestParam(required = false, defaultValue = "0") Integer page,
-			@RequestParam(required = false, defaultValue = "5") Integer rows,
-			@RequestParam(required = false) String sortField,
-			@RequestParam(required = false) Integer sortOrder) {
-
+		@RequestParam(required = false, defaultValue = "0") Integer page,
+		@RequestParam(required = false, defaultValue = "5") Integer rows,
+		@RequestParam(required = false) String sortField,
+		@RequestParam(required = false) Integer sortOrder
+	) {
 		Sort sort = Sort.unsorted();
 		if (sortField != null && !sortField.isEmpty()) {
 			Sort.Direction direction = sortOrder < 0 ? Sort.Direction.DESC : Sort.Direction.ASC;
@@ -104,9 +104,9 @@ public class AdminController {
 	@Secured(Roles.ADMIN)
 	public ResponseEntity<Role> getRole(@PathVariable String id) {
 		return roleRepository
-				.findById(Long.parseLong(id))
-				.map(ResponseEntity::ok)
-				.orElse(ResponseEntity.notFound().build());
+			.findById(Long.parseLong(id))
+			.map(ResponseEntity::ok)
+			.orElse(ResponseEntity.notFound().build());
 	}
 
 	/**
@@ -120,13 +120,13 @@ public class AdminController {
 	@Secured(Roles.ADMIN)
 	public ResponseEntity<Role> updateRole(@PathVariable String id, @RequestBody Role role) {
 		return roleRepository
-				.findById(Long.parseLong(id))
-				.map(roleData -> {
-					// The id and name on roles are immutable, the authorities are the only thing that can be changed
-					roleData.setAuthorities(role.getAuthorities());
-					return ResponseEntity.ok(roleRepository.save(roleData));
-				})
-				.orElse(ResponseEntity.notFound().build());
+			.findById(Long.parseLong(id))
+			.map(roleData -> {
+				// The id and name on roles are immutable, the authorities are the only thing that can be changed
+				roleData.setAuthorities(role.getAuthorities());
+				return ResponseEntity.ok(roleRepository.save(roleData));
+			})
+			.orElse(ResponseEntity.notFound().build());
 	}
 
 	// returns updated user if successful, null otherwise

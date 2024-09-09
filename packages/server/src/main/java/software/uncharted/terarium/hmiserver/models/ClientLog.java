@@ -11,6 +11,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @NoArgsConstructor
 @Data
 public class ClientLog {
+
 	private String level;
 	private long timestampMillis;
 	private String message;

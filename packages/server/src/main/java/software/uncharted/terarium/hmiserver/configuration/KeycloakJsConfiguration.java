@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 @Data
 public class KeycloakJsConfiguration implements Serializable {
+
 	@JsonProperty("auth-server-url")
 	private String url;
 

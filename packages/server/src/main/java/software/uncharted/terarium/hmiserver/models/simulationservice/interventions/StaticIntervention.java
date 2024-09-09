@@ -6,6 +6,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Data
 @TSModel
 public class StaticIntervention {
+
 	private Number timestep;
 	private Number value;
 

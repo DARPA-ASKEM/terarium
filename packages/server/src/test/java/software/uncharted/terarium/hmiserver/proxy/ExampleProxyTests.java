@@ -10,6 +10,7 @@ import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 
 @ExtendWith(OutputCaptureExtension.class)
 public class ExampleProxyTests extends TerariumApplicationTests {
+
 	@Autowired
 	private ExampleProxy proxy;
 

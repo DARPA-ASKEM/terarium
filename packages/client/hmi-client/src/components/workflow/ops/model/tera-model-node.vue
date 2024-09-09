@@ -12,14 +12,9 @@
 				<tera-model-diagram
 					v-if="view === ModelNodeView.Diagram"
 					:model="model"
-					:is-editable="false"
-					is-preview
+					:feature-config="{ isPreview: true }"
 				/>
-				<tera-model-equation
-					v-else-if="view === ModelNodeView.Equation"
-					:model="model"
-					:is-editable="false"
-				/>
+				<tera-model-equation v-else-if="view === ModelNodeView.Equation" :model="model" :is-editable="false" />
 			</div>
 			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
@@ -31,7 +26,7 @@
 				placeholder="Select a model"
 				@update:model-value="onModelChange"
 			/>
-			<tera-operator-placeholder :operation-type="node.operationType" />
+			<tera-operator-placeholder :node="node" />
 		</template>
 	</main>
 </template>

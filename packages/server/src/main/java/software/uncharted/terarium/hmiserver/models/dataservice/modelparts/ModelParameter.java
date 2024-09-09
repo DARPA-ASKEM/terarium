@@ -14,6 +14,7 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @AMRSchemaType
 @Accessors(chain = true)
 public class ModelParameter extends SupportAdditionalProperties implements Serializable {
+
 	@Serial
 	private static final long serialVersionUID = -8680842000646488249L;
 
@@ -47,8 +48,7 @@ public class ModelParameter extends SupportAdditionalProperties implements Seria
 
 		if (this.getGrounding() != null) clone.setGrounding(this.getGrounding().clone());
 
-		if (this.getDistribution() != null)
-			clone.setDistribution(this.getDistribution().clone());
+		if (this.getDistribution() != null) clone.setDistribution(this.getDistribution().clone());
 
 		if (this.getUnits() != null) clone.setUnits(this.getUnits().clone());
 

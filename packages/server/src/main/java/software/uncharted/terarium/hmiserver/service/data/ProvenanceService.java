@@ -43,12 +43,17 @@ public class ProvenanceService {
 		final Resource resource = resourceLoader.getResource("classpath:graph_relations.json");
 		final InputStream inputStream = resource.getInputStream();
 		final Map<String, List<List<String>>> jsonMap = objectMapper.readValue(
-				new InputStreamReader(inputStream), new TypeReference<Map<String, List<List<String>>>>() {});
+			new InputStreamReader(inputStream),
+			new TypeReference<Map<String, List<List<String>>>>() {}
+		);
 		return jsonMap;
 	}
 
 	private boolean validateRelationship(
-			final ProvenanceType left, final ProvenanceType right, final ProvenanceRelationType relationType) {
+		final ProvenanceType left,
+		final ProvenanceType right,
+		final ProvenanceRelationType relationType
+	) {
 		if (left == null || right == null || relationType == null) {
 			return false;
 		}
@@ -57,7 +62,6 @@ public class ProvenanceService {
 			return false;
 		}
 		for (final List<String> relation : relationshipAllowedTypes) {
-
 			final ProvenanceType expectedLeft = ProvenanceType.findByType(relation.get(0));
 			final ProvenanceType expectedRight = ProvenanceType.findByType(relation.get(1));
 
@@ -77,28 +81,39 @@ public class ProvenanceService {
 		try (final Session session = neo4jService.getSession()) {
 			// if node 1 is not created yet create node
 			final String leftNodeQuery = String.format(
-					"MERGE (n:%s {id: '%s', concept: '%s'})",
-					provenance.getLeftType(),
-					provenance.getLeft().toString(),
-					provenance.getConcept() != null ? provenance.getConcept() : ".");
+				"MERGE (n:%s {id: '%s', concept: '%s'})",
+				provenance.getLeftType(),
+				provenance.getLeft().toString(),
+				provenance.getConcept() != null ? provenance.getConcept() : "."
+			);
 			session.run(leftNodeQuery);
 
 			// if node 2 is not created yet create node
 			final String rightNodeQuery = String.format(
-					"MERGE (n:%s {id: '%s', concept: '.'})",
-					provenance.getRightType(), provenance.getRight().toString());
+				"MERGE (n:%s {id: '%s', concept: '.'})",
+				provenance.getRightType(),
+				provenance.getRight().toString()
+			);
 			session.run(rightNodeQuery);
 
 			// create edge
 			final String edgeQuery = String.format(
-					"MATCH (n1:%s {id: $left_id}) MATCH (n2:%s {id: $right_id}) MERGE (n1)-[:%s {user_id: $user_id}]->(n2)",
-					provenance.getLeftType(), provenance.getRightType(), provenance.getRelationType());
+				"MATCH (n1:%s {id: $left_id}) MATCH (n2:%s {id: $right_id}) MERGE (n1)-[:%s {user_id: $user_id}]->(n2)",
+				provenance.getLeftType(),
+				provenance.getRightType(),
+				provenance.getRelationType()
+			);
 			session.run(
-					edgeQuery,
-					Values.parameters(
-							"left_id", provenance.getLeft().toString(),
-							"right_id", provenance.getRight().toString(),
-							"user_id", provenance.getUserId() != null ? provenance.getUserId() : ""));
+				edgeQuery,
+				Values.parameters(
+					"left_id",
+					provenance.getLeft().toString(),
+					"right_id",
+					provenance.getRight().toString(),
+					"user_id",
+					provenance.getUserId() != null ? provenance.getUserId() : ""
+				)
+			);
 		}
 
 		return provenance;

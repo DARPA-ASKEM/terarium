@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
 import io.micrometer.observation.annotation.Observed;
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
 public class ProjectService {
 
 	final ProjectRepository projectRepository;
+	final ProjectSearchService projectSearchService;
 	final UserRepository userRepository;
 	final ReBACService reBACService;
 	final Messages messages;
@@ -48,14 +50,14 @@ public class ProjectService {
 
 	@Observed(name = "function_profile")
 	public List<Project> getActiveProjects(final List<UUID> ids) {
-		Map<UUID, Project> projectMap = new HashMap<>();
-		List<ProjectAndAssetAggregate> projectAggregates = projectRepository.findByIdsWithAssets(ids);
-		for (ProjectAndAssetAggregate aggregate : projectAggregates) {
+		final Map<UUID, Project> projectMap = new HashMap<>();
+		final List<ProjectAndAssetAggregate> projectAggregates = projectRepository.findByIdsWithAssets(ids);
+		for (final ProjectAndAssetAggregate aggregate : projectAggregates) {
 			if (projectMap.containsKey(aggregate.getId())) {
-				Project project = projectMap.get(aggregate.getId());
+				final Project project = projectMap.get(aggregate.getId());
 				addAssetCount(project, aggregate.getAssetType(), aggregate.getAssetCount());
 			} else {
-				Project project = new Project();
+				final Project project = new Project();
 				project.setId(aggregate.getId());
 				project.setCreatedOn(aggregate.getCreatedOn());
 				project.setUpdatedOn(aggregate.getUpdatedOn());
@@ -76,7 +78,7 @@ public class ProjectService {
 		return new ArrayList<>(projectMap.values());
 	}
 
-	private void addAssetCount(Project project, String assetTypeName, Integer assetCount) {
+	private void addAssetCount(final Project project, final String assetTypeName, final Integer assetCount) {
 		if (AssetType.DATASET.name().equals(assetTypeName)) {
 			project.getMetadata().put("datasets-count", assetCount.toString());
 		}
@@ -102,34 +104,41 @@ public class ProjectService {
 	}
 
 	@Observed(name = "function_profile")
-	public Project createProject(final Project project) {
-		return projectRepository.save(project);
+	public Project createProject(final Project project) throws IOException {
+		final Project created = projectRepository.save(project);
+		projectSearchService.indexProject(project);
+		return created;
 	}
 
 	@Observed(name = "function_profile")
-	public Optional<Project> updateProject(final Project project) {
+	public Optional<Project> updateProject(final Project project) throws IOException {
 		if (!projectRepository.existsById(project.getId())) {
 			return Optional.empty();
 		}
 
-		final Project existingProject =
-				projectRepository.getByIdAndDeletedOnIsNull(project.getId()).orElseThrow();
+		final Project existingProject = projectRepository.getByIdAndDeletedOnIsNull(project.getId()).orElseThrow();
 
 		// merge the existing project with values from the new project
 		final Project mergedProject = Project.mergeProjectFields(existingProject, project);
 
-		return Optional.of(projectRepository.save(mergedProject));
+		final Project updated = projectRepository.save(mergedProject);
+
+		projectSearchService.updateProject(updated);
+
+		return Optional.of(updated);
 	}
 
 	@Observed(name = "function_profile")
-	public boolean delete(final UUID id) {
+	public boolean delete(final UUID id) throws IOException {
 		final Optional<Project> project = getProject(id);
 		if (project.isEmpty()) return false;
 		project.get().setDeletedOn(Timestamp.from(Instant.now()));
 		projectRepository.save(project.get());
+		projectSearchService.removeProject(id);
 		return true;
 	}
 
+	@Observed(name = "function_profile")
 	public boolean isProjectPublic(final UUID id) {
 		final Optional<Boolean> isPublic = projectRepository.findPublicAssetByIdNative(id);
 		if (isPublic.isEmpty()) {
@@ -138,8 +147,9 @@ public class ProjectService {
 		return isPublic.get();
 	}
 
+	@Observed(name = "function_profile")
 	public Schema.Permission checkPermissionCanReadOrNone(final String userId, final UUID projectId)
-			throws ResponseStatusException {
+		throws ResponseStatusException {
 		try {
 			final RebacUser rebacUser = new RebacUser(userId, reBACService);
 			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
@@ -148,14 +158,14 @@ public class ProjectService {
 			}
 		} catch (final Exception e) {
 			log.error("Error updating project", e);
-			throw new ResponseStatusException(
-					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
 		return Schema.Permission.NONE;
 	}
 
+	@Observed(name = "function_profile")
 	public Schema.Permission checkPermissionCanRead(final String userId, final UUID projectId)
-			throws ResponseStatusException {
+		throws ResponseStatusException {
 		try {
 			final RebacUser rebacUser = new RebacUser(userId, reBACService);
 			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
@@ -164,14 +174,14 @@ public class ProjectService {
 			}
 		} catch (final Exception e) {
 			log.error("Error check project permission", e);
-			throw new ResponseStatusException(
-					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
 		throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
 	}
 
+	@Observed(name = "function_profile")
 	public Schema.Permission checkPermissionCanWrite(final String userId, final UUID projectId)
-			throws ResponseStatusException {
+		throws ResponseStatusException {
 		try {
 			final RebacUser rebacUser = new RebacUser(userId, reBACService);
 			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
@@ -180,14 +190,14 @@ public class ProjectService {
 			}
 		} catch (final Exception e) {
 			log.error("Error check project permission", e);
-			throw new ResponseStatusException(
-					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
 		throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
 	}
 
+	@Observed(name = "function_profile")
 	public Schema.Permission checkPermissionCanAdministrate(final String userId, final UUID projectId)
-			throws ResponseStatusException {
+		throws ResponseStatusException {
 		try {
 			final RebacUser rebacUser = new RebacUser(userId, reBACService);
 			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
@@ -196,8 +206,7 @@ public class ProjectService {
 			}
 		} catch (final Exception e) {
 			log.error("Error check project permission", e);
-			throw new ResponseStatusException(
-					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
 		throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
 	}

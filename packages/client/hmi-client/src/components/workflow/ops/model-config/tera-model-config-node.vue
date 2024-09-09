@@ -1,6 +1,7 @@
 <template>
 	<section>
-		<tera-operator-placeholder :operation-type="node.operationType" />
+		<tera-operator-placeholder :node="node" />
+		<tera-progress-spinner is-centered :font-size="2" v-if="isLoading" />
 		<Button
 			:label="isModelInputConnected ? 'Open' : 'Attach a model'"
 			@click="emit('open-drilldown')"
@@ -12,19 +13,37 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep, isEmpty } from 'lodash';
-import { computed, watch } from 'vue';
+import { cloneDeep, omit } from 'lodash';
+import { computed, watch, ref } from 'vue';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { getModel, getModelConfigurationsForModel } from '@/services/model';
 import { postAsConfiguredModel } from '@/services/model-configurations';
-import { ModelConfigOperationState } from './model-config-operation';
+import { useClientEvent } from '@/composables/useClientEvent';
+import type { ClientEvent, TaskResponse } from '@/types/Types';
+import { ClientEventType, TaskStatus } from '@/types/Types';
+import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelConfigOperationState>;
 }>();
-const emit = defineEmits(['open-drilldown', 'append-input-port', 'update-state']);
+const emit = defineEmits(['open-drilldown', 'append-input-port', 'update-state', 'append-output']);
+
+const modelConfigTaskIds = ref<string[]>([]);
+
+const configModelEventHandler = async (event: ClientEvent<TaskResponse>) => {
+	if (!modelConfigTaskIds.value.includes(event.data?.id)) return;
+	if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
+		modelConfigTaskIds.value = modelConfigTaskIds.value.filter((id) => id !== event.data.id);
+	}
+};
+
+useClientEvent(ClientEventType.TaskGollmConfigureModelFromDocument, configModelEventHandler);
+useClientEvent(ClientEventType.TaskGollmConfigureModelFromDataset, configModelEventHandler);
+
+const isLoading = computed(() => modelConfigTaskIds.value.length > 0);
 
 const modelInput = props.node.inputs.find((input) => input.type === 'modelId');
 const isModelInputConnected = computed(() => modelInput?.status === WorkflowPortStatus.CONNECTED);
@@ -32,38 +51,14 @@ const isModelInputConnected = computed(() => modelInput?.status === WorkflowPort
 // Update the node with the new input ports
 watch(
 	() => props.node.inputs,
-	() => {
+	async () => {
+		const state = cloneDeep(props.node.state);
 		const inputs = props.node.inputs;
+
 		const documentInputs = inputs.filter((input) => input.type === 'documentId');
 		const datasetInputs = inputs.filter((input) => input.type === 'datasetId');
-
 		const modelInputs = inputs.filter((input) => input.type === 'modelId');
-		if (!modelInputs[0].value) {
-			// Reset previous model cache
-			const state = cloneDeep(props.node.state);
-			state.transientModelConfig = {
-				id: '',
-				modelId: '',
-				observableSemanticList: [],
-				parameterSemanticList: [],
-				initialSemanticList: []
-			};
-			emit('update-state', state);
-		}
-
-		if (modelInputs?.[0]?.value?.[0]) {
-			const modelId = modelInputs?.[0]?.value?.[0];
-			getModelConfigurationsForModel(modelId).then((modelConfigurations) => {
-				if (isEmpty(modelConfigurations)) {
-					// Create a model configuration if it does not exist
-					getModel(modelId).then((model) => {
-						if (model) {
-							postAsConfiguredModel(model);
-						}
-					});
-				}
-			});
-		}
+		const modelId = modelInputs?.[0]?.value?.[0];
 
 		// If all document inputs are connected, add a new document input port
 		if (documentInputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
@@ -74,7 +69,47 @@ watch(
 		if (datasetInputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
 			emit('append-input-port', { type: 'datasetId', label: 'Dataset', isOptional: true });
 		}
+
+		// model
+		if (!modelId || modelId === state.transientModelConfig?.modelId) return;
+		let configs = await getModelConfigurationsForModel(modelId);
+		if (!configs[0]?.id) {
+			const model = await getModel(modelId);
+			if (model) await postAsConfiguredModel(model); // Create a model configuration if it does not exist
+			configs = await getModelConfigurationsForModel(modelId);
+		}
+		// Auto append output
+		if (configs[0]?.id) {
+			const config = configs[0];
+			state.transientModelConfig = config;
+			emit('update-state', state);
+			emit('append-output', {
+				type: ModelConfigOperation.outputs[0].type,
+				label: config.name,
+				value: config.id,
+				isSelected: false,
+				state: omit(state, ['transientModelConfig'])
+			});
+		}
 	},
 	{ deep: true }
+);
+
+watch(
+	() => props.node.state.modelConfigTaskIds,
+	() => {
+		modelConfigTaskIds.value = props.node.state.modelConfigTaskIds ?? [];
+	}
+);
+
+watch(
+	() => isLoading.value,
+	() => {
+		if (!isLoading.value) {
+			const state = cloneDeep(props.node.state);
+			state.modelConfigTaskIds = [];
+			emit('update-state', state);
+		}
+	}
 );
 </script>

@@ -3,9 +3,7 @@ import { logger } from '@/utils/logger';
 
 export async function getAnnotations(artifactId: String, artifactType: String) {
 	try {
-		const response = await API.get(
-			`/annotations?artifact-type=${artifactType}&artifact-id=${artifactId}`
-		);
+		const response = await API.get(`/annotations?artifact-type=${artifactType}&artifact-id=${artifactId}`);
 		return response.data;
 	} catch (error) {
 		logger.error(error);
@@ -13,12 +11,7 @@ export async function getAnnotations(artifactId: String, artifactType: String) {
 	}
 }
 
-export async function createAnnotation(
-	section: String,
-	content: String,
-	artifactId: String,
-	artifactType: String
-) {
+export async function createAnnotation(section: String, content: String, artifactId: String, artifactType: String) {
 	try {
 		const response = await API.post(
 			`/annotations?artifact-type=${artifactType}&artifact-id=${artifactId}&section=${section}&content=${content}`

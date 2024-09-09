@@ -1,17 +1,12 @@
 <template>
 	<section>
-		<tera-operator-placeholder
-			v-if="!node.inputs[0].value || !node.inputs[1].value"
-			:operation-type="node.operationType"
-		>
-			Attach models to compare
-		</tera-operator-placeholder>
-		<Button v-else label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
+		<tera-operator-placeholder :node="node">Attach models to compare</tera-operator-placeholder>
+		<Button v-if="hasAtLeastTwoValues" label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 	</section>
 </template>
 
 <script setup lang="ts">
-import { watch } from 'vue';
+import { watch, computed } from 'vue';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
@@ -22,6 +17,8 @@ const emit = defineEmits(['append-input-port', 'open-drilldown']);
 const props = defineProps<{
 	node: WorkflowNode<ModelComparisonOperationState>;
 }>();
+
+const hasAtLeastTwoValues = computed(() => props.node.inputs.filter((input) => input.value).length >= 2);
 
 watch(
 	() => props.node.inputs,

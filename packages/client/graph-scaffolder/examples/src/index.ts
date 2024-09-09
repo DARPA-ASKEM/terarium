@@ -32,9 +32,7 @@ class SampleRenderer extends BasicRenderer<NodeData, EdgeData> {
 
 	renderNodes(selection: D3SelectionINode<NodeData>) {
 		const species = selection.filter((d) => d.type !== 'custom' && d.data.type === 'species');
-		const transitions = selection.filter(
-			(d) => d.type !== 'custom' && d.data.type === 'transition'
-		);
+		const transitions = selection.filter((d) => d.type !== 'custom' && d.data.type === 'transition');
 		const customs = selection.filter((d) => d.type === 'custom');
 
 		customs
@@ -102,18 +100,12 @@ renderer.on('node-click', () => {
 renderer.on('node-dbl-click', () => {
 	console.log('node double click');
 });
-renderer.on(
-	'node-mouse-enter',
-	(_eventName: string, _evt: any, selection: D3SelectionINode<NodeData>) => {
-		// selection.select('rect').style('fill', '#f80');
-	}
-);
-renderer.on(
-	'node-mouse-leave',
-	(_eventName: string, _evt: any, selection: D3SelectionINode<NodeData>) => {
-		// selection.select('rect').style('fill', '#eee');
-	}
-);
+renderer.on('node-mouse-enter', (_eventName: string, _evt: any, selection: D3SelectionINode<NodeData>) => {
+	// selection.select('rect').style('fill', '#f80');
+});
+renderer.on('node-mouse-leave', (_eventName: string, _evt: any, selection: D3SelectionINode<NodeData>) => {
+	// selection.select('rect').style('fill', '#eee');
+});
 
 renderer.on('hello', (evtName: string, t: string) => {
 	console.log(evtName, t);

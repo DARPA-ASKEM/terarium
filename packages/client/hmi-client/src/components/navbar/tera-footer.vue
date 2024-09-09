@@ -5,11 +5,7 @@
 			<a target="_blank" rel="noopener noreferrer" href="https://terarium.canny.io/report-an-issue">
 				Report an issue
 			</a>
-			<a
-				target="_blank"
-				rel="noopener noreferrer"
-				href="https://terarium.canny.io/request-a-feature"
-			>
+			<a target="_blank" rel="noopener noreferrer" href="https://terarium.canny.io/request-a-feature">
 				Request a feature
 			</a>
 		</nav>

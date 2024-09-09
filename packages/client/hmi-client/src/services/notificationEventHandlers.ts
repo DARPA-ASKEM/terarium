@@ -11,9 +11,15 @@ import {
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { Ref } from 'vue';
-import { ExtractionStatusUpdate, NotificationItem, NotificationItemStatus } from '@/types/common';
+import {
+	CloneProjectStatusUpdate,
+	ExtractionStatusUpdate,
+	NotificationItem,
+	NotificationItemStatus
+} from '@/types/common';
 import { snakeToCapitalSentence } from '@/utils/text';
 import { ProjectPages } from '@/types/Project';
+import { useProjects } from '@/composables/project';
 import { getDocumentAsset } from './document-assets';
 import { getWorkflow } from './workflow';
 
@@ -42,14 +48,8 @@ const toastTitle = {
 	}
 };
 
-const logStatusMessage = (
-	eventType: ClientEventType,
-	status: ProgressState,
-	msg: string,
-	error: string
-) => {
-	if (![ProgressState.Complete, ProgressState.Failed, ProgressState.Cancelled].includes(status))
-		return;
+const logStatusMessage = (eventType: ClientEventType, status: ProgressState, msg: string, error: string) => {
+	if (![ProgressState.Complete, ProgressState.Failed, ProgressState.Cancelled].includes(status)) return;
 
 	if (status === ProgressState.Complete)
 		logger.success(msg, {
@@ -64,8 +64,7 @@ const logStatusMessage = (
 	if (status === ProgressState.Cancelled)
 		logger.info(msg, {
 			showToast: true,
-			toastTitle:
-				toastTitle[eventType]?.cancelled ?? `${snakeToCapitalSentence(eventType)} Cancelled`
+			toastTitle: toastTitle[eventType]?.cancelled ?? `${snakeToCapitalSentence(eventType)} Cancelled`
 		});
 };
 
@@ -85,8 +84,7 @@ const updateStatusFromTaskResponse = (event: ClientEvent<TaskResponse>): Notific
 const buildNotificationItemStatus = <T extends NotificationEventData>(
 	event: ClientEvent<T>
 ): NotificationItemStatus => {
-	if (isTaskResponse(event.data))
-		return updateStatusFromTaskResponse(event as ClientEvent<TaskResponse>);
+	if (isTaskResponse(event.data)) return updateStatusFromTaskResponse(event as ClientEvent<TaskResponse>);
 	return {
 		status: event.data.state,
 		msg: event.data.message,
@@ -101,10 +99,7 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 
 	const registerHandler = <T extends NotificationEventData>(
 		eventType: ClientEventType,
-		onCreateNewNotificationItem: (
-			event: ClientEvent<T>,
-			createdItem: NotificationItem
-		) => void = () => {}
+		onCreateNewNotificationItem: (event: ClientEvent<T>, createdItem: NotificationItem) => void = () => {}
 	) => {
 		handlers[eventType] = (event: ClientEvent<T>) => {
 			if (!event.data) return;
@@ -140,6 +135,15 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 	};
 
 	// Register handlers for each client event type
+	registerHandler<CloneProjectStatusUpdate>(ClientEventType.CloneProject, (event, created) => {
+		created.assetId = event.data.data.projectId;
+		created.typeDisplayName = 'Cloned Project';
+		useProjects()
+			.get(created.assetId)
+			.then((project) => {
+				created.sourceName = project?.name ?? 'Source Project';
+			});
+	});
 
 	registerHandler<ExtractionStatusUpdate>(ClientEventType.ExtractionPdf, (event, created) => {
 		created.assetId = event.data.data.documentId;
@@ -157,7 +161,7 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 			Object.assign(created, { sourceName: document?.name || '' })
 		);
 	});
-	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureModel, (event, created) => {
+	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureModelFromDocument, (event, created) => {
 		created.supportCancel = true;
 		created.sourceName = 'Configure model';
 		created.assetId = event.data.additionalProperties.workflowId as string;
@@ -167,7 +171,7 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 			Object.assign(created, { context: workflow?.name || '' })
 		);
 	});
-	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureFromDataset, (event, created) => {
+	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureModelFromDataset, (event, created) => {
 		created.supportCancel = true;
 		created.sourceName = 'Configure model';
 		created.assetId = event.data.additionalProperties.workflowId as string;
@@ -213,9 +217,7 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
  * @param visibleNotificationItems
  * @returns
  */
-export const createNotificationEventLogger = (
-	visibleNotificationItems: Ref<NotificationItem[]>
-) => {
+export const createNotificationEventLogger = (visibleNotificationItems: Ref<NotificationItem[]>) => {
 	const handleLogging = <T extends NotificationEventData>(event: ClientEvent<T>) => {
 		if (!event.notificationGroupId) return;
 		const notificationItem = visibleNotificationItems.value.find(

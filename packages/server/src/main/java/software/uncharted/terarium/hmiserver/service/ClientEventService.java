@@ -33,6 +33,7 @@ import software.uncharted.terarium.hmiserver.models.User;
 @Slf4j
 @RequiredArgsConstructor
 public class ClientEventService {
+
 	private final ObjectMapper mapper;
 	private final RabbitTemplate rabbitTemplate;
 
@@ -40,9 +41,9 @@ public class ClientEventService {
 	private static final String CLIENT_ALL_USERS_EVENT_EXCHANGE = "client-all-users-event-exchange";
 
 	final ClientEvent<Void> HEART_BEAT_EVENT = ClientEvent.<Void>builder()
-			.type(ClientEventType.HEARTBEAT)
-			.data(null)
-			.build();
+		.type(ClientEventType.HEARTBEAT)
+		.data(null)
+		.build();
 
 	/**
 	 * Map of user id to the emitters for that user. Users can have multiple emitters if they have multiple tabs open or
@@ -54,6 +55,7 @@ public class ClientEventService {
 	@Accessors(chain = true)
 	@NoArgsConstructor
 	public static class UserClientEvent<T> implements Serializable {
+
 		@Serial
 		private static final long serialVersionUID = -7617118669979761035L;
 
@@ -68,8 +70,10 @@ public class ClientEventService {
 	 * @return the emitter to send messages to the user
 	 */
 	public SseEmitter connect(final User user) {
-		final java.util.Queue<SseEmitter> emitters =
-				userIdToEmitters.getOrDefault(user.getId(), new ConcurrentLinkedQueue<>());
+		final java.util.Queue<SseEmitter> emitters = userIdToEmitters.getOrDefault(
+			user.getId(),
+			new ConcurrentLinkedQueue<>()
+		);
 		final SseEmitter emitter = new SseEmitter();
 		emitter.onError(e -> {
 			emitter.complete();
@@ -129,8 +133,7 @@ public class ClientEventService {
 	 */
 	public <T> void sendToUser(final ClientEvent<T> event, final String userId) {
 		try {
-			final String jsonStr = mapper.writeValueAsString(
-					new UserClientEvent<T>().setEvent(event).setUserId(userId));
+			final String jsonStr = mapper.writeValueAsString(new UserClientEvent<T>().setEvent(event).setUserId(userId));
 			rabbitTemplate.convertAndSend(CLIENT_USER_EVENT_EXCHANGE, "", jsonStr);
 		} catch (final JsonProcessingException e) {
 			log.error("Error sending all users message", e);
@@ -144,15 +147,15 @@ public class ClientEventService {
 	 * @param channel the channel to send the message on
 	 */
 	@RabbitListener(
-			bindings =
-					@QueueBinding(
-							value =
-									@Queue(
-											value =
-													"#{T(java.util.UUID).randomUUID().toString().concat('-all-users-event-queue')}",
-											durable = "false",
-											autoDelete = "true"),
-							exchange = @Exchange(value = CLIENT_ALL_USERS_EVENT_EXCHANGE, type = "fanout")))
+		bindings = @QueueBinding(
+			value = @Queue(
+				value = "#{T(java.util.UUID).randomUUID().toString().concat('-all-users-event-queue')}",
+				durable = "false",
+				autoDelete = "true"
+			),
+			exchange = @Exchange(value = CLIENT_ALL_USERS_EVENT_EXCHANGE, type = "fanout")
+		)
+	)
 	void onSendToAllUsersEvent(final Message message, final Channel channel) {
 		final JsonNode messageJson = decodeMessage(message, JsonNode.class);
 		if (messageJson == null) {
@@ -184,15 +187,15 @@ public class ClientEventService {
 	 * @throws IOException if there was an error sending the message
 	 */
 	@RabbitListener(
-			bindings =
-					@QueueBinding(
-							value =
-									@Queue(
-											value =
-													"#{T(java.util.UUID).randomUUID().toString().concat('-user-event-queue')}",
-											durable = "false",
-											autoDelete = "true"),
-							exchange = @Exchange(value = CLIENT_USER_EVENT_EXCHANGE, type = "fanout")))
+		bindings = @QueueBinding(
+			value = @Queue(
+				value = "#{T(java.util.UUID).randomUUID().toString().concat('-user-event-queue')}",
+				durable = "false",
+				autoDelete = "true"
+			),
+			exchange = @Exchange(value = CLIENT_USER_EVENT_EXCHANGE, type = "fanout")
+		)
+	)
 	void onSendToUserEvent(final Message message, final Channel channel) throws IOException {
 		final JsonNode messageJson = decodeMessage(message, JsonNode.class);
 		if (messageJson == null) {
@@ -238,10 +241,11 @@ public class ClientEventService {
 				return null;
 			} catch (final Exception e1) {
 				log.error(
-						"Error decoding message as either {} or {}. Raw message is: {}",
-						clazz.getName(),
-						JsonNode.class.getName(),
-						message.getBody());
+					"Error decoding message as either {} or {}. Raw message is: {}",
+					clazz.getName(),
+					JsonNode.class.getName(),
+					message.getBody()
+				);
 				log.error("", e1);
 				return null;
 			}

@@ -4,11 +4,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
-import {
-	FunmanProcessedData,
-	RenderOptions,
-	renderFunmanBoundaryChart
-} from '@/services/models/funman-service';
+import { FunmanProcessedData, RenderOptions, renderFunmanBoundaryChart } from '@/services/models/funman-service';
 
 const props = defineProps<{
 	processedData: FunmanProcessedData;
@@ -30,7 +26,6 @@ onMounted(async () => {
 		props.processedData,
 		props.param1,
 		props.param2,
-		props.timestep,
 		props.selectedBoxId,
 		renderOptions
 	);
@@ -44,7 +39,6 @@ watch(
 			props.processedData,
 			props.param1,
 			props.param2,
-			props.timestep,
 			props.selectedBoxId,
 			renderOptions
 		);

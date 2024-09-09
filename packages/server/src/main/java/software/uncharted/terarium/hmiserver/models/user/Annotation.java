@@ -19,9 +19,10 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Data
 @Accessors(chain = true)
 @NoArgsConstructor
-@Table(indexes = {@Index(columnList = "artifactType, artifactId")})
+@Table(indexes = { @Index(columnList = "artifactType, artifactId") })
 @TSModel
 public class Annotation implements Serializable {
+
 	@Serial
 	private static final long serialVersionUID = 4939620703969267901L;
 
@@ -31,7 +32,7 @@ public class Annotation implements Serializable {
 	@Column(nullable = false)
 	private Long timestampMillis = Instant.now().toEpochMilli();
 
-	@Column()
+	@Column
 	private UUID projectId;
 
 	@Column(columnDefinition = "TEXT")

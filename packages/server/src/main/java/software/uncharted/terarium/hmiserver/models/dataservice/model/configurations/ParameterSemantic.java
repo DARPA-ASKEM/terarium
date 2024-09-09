@@ -7,6 +7,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotNull;
+import java.io.Serial;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -22,6 +23,9 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 @Entity
 public class ParameterSemantic extends Semantic {
 
+	@Serial
+	private static final long serialVersionUID = -7971634834409255309L;
+
 	private String referenceId;
 
 	@Type(JsonType.class)
@@ -34,7 +38,8 @@ public class ParameterSemantic extends Semantic {
 	@JsonBackReference
 	@Schema(hidden = true)
 	@TSIgnore
-	@NotNull private ModelConfiguration modelConfiguration;
+	@NotNull
+	private ModelConfiguration modelConfiguration;
 
 	@Override
 	public ParameterSemantic clone() {
@@ -44,5 +49,10 @@ public class ParameterSemantic extends Semantic {
 		clone.distribution = this.distribution.clone();
 		clone.isDefault = this.isDefault;
 		return clone;
+	}
+
+	@Override
+	public void setSource(final String source) {
+		super.setSource(source);
 	}
 }

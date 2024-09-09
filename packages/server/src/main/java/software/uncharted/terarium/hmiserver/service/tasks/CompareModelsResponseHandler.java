@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class CompareModelsResponseHandler extends TaskResponseHandler {
+
 	public static final String NAME = "gollm_task:compare_models";
 
 	@Override
@@ -19,11 +20,13 @@ public class CompareModelsResponseHandler extends TaskResponseHandler {
 
 	@Data
 	public static class Input {
-		List<String> cards;
+
+		List<String> amrs;
 	}
 
 	@Data
 	public static class Properties {
+
 		List<UUID> modelIds;
 		UUID workflowId;
 		UUID nodeId;
@@ -31,6 +34,7 @@ public class CompareModelsResponseHandler extends TaskResponseHandler {
 
 	@Data
 	public static class Response {
+
 		JsonNode response;
 	}
 }

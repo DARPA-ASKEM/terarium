@@ -29,13 +29,14 @@ public class NotificationGroupInstance<T> {
 	public static final Double DEFAULT_HALF_TIME_SECONDS = 2.0;
 
 	public NotificationGroupInstance(
-			final ClientEventService clientEventService,
-			final NotificationService notificationService,
-			final ClientEventType type,
-			final UUID projectId,
-			final T data,
-			final Double halfTimeSeconds,
-			final UUID notificationGroupId) {
+		final ClientEventService clientEventService,
+		final NotificationService notificationService,
+		final ClientEventType type,
+		final UUID projectId,
+		final T data,
+		final Double halfTimeSeconds,
+		final UUID notificationGroupId
+	) {
 		this.clientEventService = clientEventService;
 		this.notificationService = notificationService;
 		this.halfTimeSeconds = halfTimeSeconds;
@@ -45,26 +46,21 @@ public class NotificationGroupInstance<T> {
 		this.data = data;
 
 		this.notificationGroup = notificationService.createNotificationGroup(
-				((NotificationGroup) new NotificationGroup().setId(notificationGroupId))
-						.setType(type.name())
-						.setProjectId(projectId));
+			((NotificationGroup) new NotificationGroup().setId(notificationGroupId)).setType(type.name()).setProjectId(
+					projectId
+				)
+		);
 	}
 
 	public NotificationGroupInstance(
-			final ClientEventService clientEventService,
-			final NotificationService notificationService,
-			final ClientEventType type,
-			final UUID projectId,
-			final T data,
-			final Double halfTimeSeconds) {
-		this(
-				clientEventService,
-				notificationService,
-				type,
-				projectId,
-				data,
-				DEFAULT_HALF_TIME_SECONDS,
-				UUID.randomUUID());
+		final ClientEventService clientEventService,
+		final NotificationService notificationService,
+		final ClientEventType type,
+		final UUID projectId,
+		final T data,
+		final Double halfTimeSeconds
+	) {
+		this(clientEventService, notificationService, type, projectId, data, DEFAULT_HALF_TIME_SECONDS, UUID.randomUUID());
 	}
 
 	private Double estimateT() {
@@ -77,22 +73,21 @@ public class NotificationGroupInstance<T> {
 	}
 
 	private void sendNotification(final String message, final String error, final Double t, final ProgressState state) {
-
 		final StatusUpdate<T> statusUpdate = StatusUpdate.<T>builder()
-				.progress(t)
-				.message(message)
-				.error(error)
-				.state(state)
-				.data(data)
-				.build();
+			.progress(t)
+			.message(message)
+			.error(error)
+			.state(state)
+			.data(data)
+			.build();
 
 		// produce the event
 		final ClientEvent<StatusUpdate<T>> event = ClientEvent.<StatusUpdate<T>>builder()
-				.type(type)
-				.projectId(projectId)
-				.notificationGroupId(notificationGroup.getId())
-				.data(statusUpdate)
-				.build();
+			.type(type)
+			.projectId(projectId)
+			.notificationGroupId(notificationGroup.getId())
+			.data(statusUpdate)
+			.build();
 
 		// generate the notification event
 		final NotificationEvent notification = new NotificationEvent();

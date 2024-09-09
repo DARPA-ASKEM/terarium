@@ -16,27 +16,29 @@ public class V8__SimulationResultFiles extends BaseJavaMigration {
 	@Override
 	public void migrate(final Context context) throws Exception {
 		try (var statement = context.getConnection().createStatement()) {
-
 			// Check the type of the transform column
-			final ResultSet typeResultSet = statement.executeQuery("SELECT data_type FROM information_schema.columns "
-					+ "WHERE table_name = 'simulation' AND column_name = 'result_files';");
+			final ResultSet typeResultSet = statement.executeQuery(
+				"SELECT data_type FROM information_schema.columns " +
+				"WHERE table_name = 'simulation' AND column_name = 'result_files';"
+			);
 
 			if (typeResultSet.next()) {
 				final String dataType = typeResultSet.getString("data_type");
 				if (!"json".equals(dataType)) {
 					// type is not `json`
-					statement.execute(
-							"ALTER TABLE simulation ALTER COLUMN result_files TYPE json USING result_files::json;");
+					statement.execute("ALTER TABLE simulation ALTER COLUMN result_files TYPE json USING result_files::json;");
 				}
 			}
 
 			// Select all rows from the simulation_result_files table
 			final ResultSet resultSet = statement.executeQuery(
-					"SELECT simulation_id, result_files FROM simulation_result_files ORDER BY simulation_id;");
+				"SELECT simulation_id, result_files FROM simulation_result_files ORDER BY simulation_id;"
+			);
 
 			// Prepare the update statement for the simulation table
-			final PreparedStatement preparedStatement = context.getConnection()
-					.prepareStatement("UPDATE simulation SET result_files = ?::json WHERE id = ?;");
+			final PreparedStatement preparedStatement = context
+				.getConnection()
+				.prepareStatement("UPDATE simulation SET result_files = ?::json WHERE id = ?;");
 
 			UUID prevId = null;
 			List<String> resultFiles = new ArrayList<>();

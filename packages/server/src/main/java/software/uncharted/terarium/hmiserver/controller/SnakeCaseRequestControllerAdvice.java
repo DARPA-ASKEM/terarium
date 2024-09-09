@@ -34,20 +34,19 @@ public class SnakeCaseRequestControllerAdvice extends RequestBodyAdviceAdapter {
 		// We modify the injected object mappers because Spring injects an ObjectMapper
 		// different from one that is returned via `new ObjectMapper()`
 		camelcaseMapper = camelcaseMapper
-				.copy()
-				.setPropertyNamingStrategy(
-						new AMRPropertyNamingStrategy(new PropertyNamingStrategies.LowerCamelCaseStrategy()));
+			.copy()
+			.setPropertyNamingStrategy(new AMRPropertyNamingStrategy(new PropertyNamingStrategies.LowerCamelCaseStrategy()));
 		snakecaseMapper = snakecaseMapper
-				.copy()
-				.setPropertyNamingStrategy(
-						new AMRPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy()));
+			.copy()
+			.setPropertyNamingStrategy(new AMRPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy()));
 	}
 
 	@Override
 	public boolean supports(
-			final MethodParameter methodParameter,
-			final Type targetType,
-			final Class<? extends HttpMessageConverter<?>> converterType) {
+		final MethodParameter methodParameter,
+		final Type targetType,
+		final Class<? extends HttpMessageConverter<?>> converterType
+	) {
 		return true;
 	}
 
@@ -57,12 +56,11 @@ public class SnakeCaseRequestControllerAdvice extends RequestBodyAdviceAdapter {
 
 	@Override
 	public HttpInputMessage beforeBodyRead(
-			final HttpInputMessage inputMessage,
-			final MethodParameter parameter,
-			final Type targetType,
-			final Class<? extends HttpMessageConverter<?>> converterType)
-			throws IOException {
-
+		final HttpInputMessage inputMessage,
+		final MethodParameter parameter,
+		final Type targetType,
+		final Class<? extends HttpMessageConverter<?>> converterType
+	) throws IOException {
 		if (containsKeyIgnoreCase(inputMessage.getHeaders(), "X-Enable-Snake-Case")) {
 			final JsonNode root = snakecaseMapper.readTree(inputMessage.getBody());
 			final String body = camelcaseMapper.writeValueAsString(root);

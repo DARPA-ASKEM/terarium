@@ -10,6 +10,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Data
 @TSModel
 public class CiemssStatusUpdate {
+
 	private Number loss;
 
 	private Number progress;

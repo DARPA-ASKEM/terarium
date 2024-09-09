@@ -1,29 +1,21 @@
 <template>
 	<main>
 		<template v-if="selectedRunId && runResults[selectedRunId]">
-			<vega-chart
-				v-for="(_config, index) of props.node.state.chartConfigs"
-				:key="index"
-				:are-embed-actions-visible="false"
-				:visualization-spec="preparedCharts[index]"
-			/>
+			<section v-for="(_config, index) of props.node.state.chartConfigs" :key="index">
+				<vega-chart
+					v-if="preparedCharts[index].layer.length > 0"
+					:visualization-spec="preparedCharts[index]"
+					:are-embed-actions-visible="false"
+				/>
+				<div v-else class="empty-chart">
+					<img src="@assets/svg/seed.svg" alt="" draggable="false" class="empty-image" />
+					<p class="helpMessage">No variables selected</p>
+				</div>
+			</section>
 		</template>
-		<tera-progress-spinner
-			v-if="inProgressSimulationId"
-			:font-size="2"
-			is-centered
-			style="height: 100%"
-		/>
-		<Button
-			v-if="areInputsFilled"
-			label="Edit"
-			@click="emit('open-drilldown')"
-			severity="secondary"
-			outlined
-		/>
-		<tera-operator-placeholder v-else :operation-type="node.operationType">
-			Connect a model configuration
-		</tera-operator-placeholder>
+		<tera-progress-spinner v-if="inProgressForecastId" :font-size="2" is-centered style="height: 100%" />
+		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
+		<tera-operator-placeholder v-else :node="node"> Connect a model configuration </tera-operator-placeholder>
 	</main>
 </template>
 
@@ -37,16 +29,21 @@ import {
 	getRunResultCSV,
 	pollAction,
 	getSimulation,
-	parsePyCiemssMap
+	parsePyCiemssMap,
+	DataArray
 } from '@/services/models/simulation-service';
+import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
-import { chartActionsProxy } from '@/components/workflow/util';
+import { chartActionsProxy, nodeOutputLabel } from '@/components/workflow/util';
 
 import type { WorkflowNode } from '@/types/workflow';
 import { createLLMSummary } from '@/services/summary-service';
+import { useProjects } from '@/composables/project';
 import { createForecastChart } from '@/services/charts';
+import { createDatasetFromSimulationResult } from '@/services/dataset';
 import VegaChart from '@/components/widgets/VegaChart.vue';
+import type { Model } from '@/types/Types';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
 
 const props = defineProps<{
@@ -54,11 +51,14 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
-const runResults = ref<{ [runId: string]: any }>({});
-const runResultsSummary = ref<{ [runId: string]: any }>({});
+const model = ref<Model | null>(null);
+const modelVarUnits = ref<{ [key: string]: string }>({});
+
+const runResults = ref<{ [runId: string]: DataArray }>({});
+const runResultsSummary = ref<{ [runId: string]: DataArray }>({});
 
 const selectedRunId = ref<string>();
-const inProgressSimulationId = computed(() => props.node.state.inProgressSimulationId);
+const inProgressForecastId = computed(() => props.node.state.inProgressForecastId);
 const areInputsFilled = computed(() => props.node.inputs[0].value);
 
 let pyciemssMap: Record<string, string> = {};
@@ -76,7 +76,7 @@ const pollResult = async (runId: string) => {
 	state.errorMessage = { name: '', value: '', traceback: '' };
 
 	if (pollerResults.state === PollerState.Cancelled) {
-		state.inProgressSimulationId = '';
+		state.inProgressForecastId = '';
 		poller.stop();
 	} else if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
@@ -86,7 +86,7 @@ const pollResult = async (runId: string) => {
 		const simulation = await getSimulation(runId);
 		if (simulation?.status && simulation?.statusMessage) {
 			state = _.cloneDeep(props.node.state);
-			state.inProgressSimulationId = '';
+			state.inProgressForecastId = '';
 			state.errorMessage = {
 				name: runId,
 				value: simulation.status,
@@ -133,15 +133,23 @@ Provide a summary in 100 words or less.
 
 	const summaryResponse = await createLLMSummary(prompt);
 
+	const datasetName = `Forecast run ${runId}`;
+	const projectId = useProjects().activeProject.value?.id ?? '';
+	const datasetResult = await createDatasetFromSimulationResult(projectId, runId, datasetName, false);
+	if (!datasetResult) {
+		logger.error('Error creating dataset from simulation result.');
+		return;
+	}
 	emit('append-output', {
 		type: SimulateCiemssOperation.outputs[0].type,
-		label: `Output - ${props.node.outputs.length + 1}`,
-		value: [runId],
+		label: nodeOutputLabel(props.node, 'Dataset'),
+		value: [datasetResult.id],
 		state: {
 			currentTimespan: state.currentTimespan,
 			numSamples: state.numSamples,
 			method: state.method,
-			summaryId: summaryResponse?.id
+			summaryId: summaryResponse?.id,
+			forecastId: runId
 		},
 		isSelected: false
 	});
@@ -152,25 +160,54 @@ const preparedCharts = computed(() => {
 
 	const result = runResults.value[selectedRunId.value];
 	const resultSummary = runResultsSummary.value[selectedRunId.value];
+	const reverseMap: Record<string, string> = {};
+	Object.keys(pyciemssMap).forEach((key) => {
+		reverseMap[`${pyciemssMap[key]}_mean`] = key;
+	});
 
 	return props.node.state.chartConfigs.map((config) =>
-		createForecastChart(result, resultSummary, [], {
-			width: 180,
-			height: 120,
-			variables: config.map((d) => pyciemssMap[d]),
-			statisticalVariables: config.map((d) => `${pyciemssMap[d]}_mean`),
-
-			legend: false,
-			groupField: 'sample_id',
-			timeField: 'timepoint_id',
-			xAxisTitle: '',
-			yAxisTitle: ''
-		})
+		createForecastChart(
+			{
+				data: result,
+				variables: config.map((d) => pyciemssMap[d]),
+				timeField: 'timepoint_id',
+				groupField: 'sample_id'
+			},
+			{
+				data: resultSummary,
+				variables: config.map((d) => `${pyciemssMap[d]}_mean`),
+				timeField: 'timepoint_id'
+			},
+			null,
+			// options
+			{
+				title: '',
+				width: 180,
+				height: 120,
+				legend: true,
+				translationMap: reverseMap,
+				xAxisTitle: modelVarUnits.value._time || 'Time',
+				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
+			}
+		)
 	);
 });
 
 watch(
-	() => props.node.state.inProgressSimulationId,
+	() => props.node.inputs[0].value,
+	async () => {
+		const input = props.node.inputs[0];
+		if (!input.value) return;
+
+		const id = input.value[0];
+		model.value = await getModelByModelConfigurationId(id);
+		modelVarUnits.value = getUnitsFromModelParts(model.value as Model);
+	},
+	{ immediate: true }
+);
+
+watch(
+	() => props.node.state.inProgressForecastId,
 	async (id) => {
 		if (!id || id === '') return;
 
@@ -179,7 +216,8 @@ watch(
 			await processResult(id);
 		}
 		const state = _.cloneDeep(props.node.state);
-		state.inProgressSimulationId = '';
+		state.inProgressForecastId = '';
+		state.forecastId = id;
 		emit('update-state', state);
 	},
 	{ immediate: true }
@@ -192,17 +230,41 @@ watch(
 		if (!active) return;
 
 		selectedRunId.value = props.node.outputs.find((o) => o.id === active)?.value?.[0];
-		if (!selectedRunId.value) return;
+		const forecastId = props.node.state.forecastId;
+		if (!forecastId || !selectedRunId.value) return;
 
-		const result = await getRunResultCSV(selectedRunId.value, 'result.csv');
+		const result = await getRunResultCSV(forecastId, 'result.csv');
 		pyciemssMap = parsePyCiemssMap(result[0]);
 		runResults.value[selectedRunId.value] = result;
 
-		const resultSummary = await getRunResultCSV(selectedRunId.value, 'result_summary.csv');
+		const resultSummary = await getRunResultCSV(forecastId, 'result_summary.csv');
 		runResultsSummary.value[selectedRunId.value] = resultSummary;
 	},
 	{ immediate: true }
 );
 </script>
 
-<style scoped></style>
+<style scoped>
+:deep(.vega-chart-container) {
+	margin-bottom: 0;
+}
+
+.empty-chart {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	height: 9rem;
+	gap: var(--gap);
+	background: var(--surface-50);
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	margin-bottom: var(--gap);
+	color: var(--text-color-secondary);
+	font-size: var(--font-caption);
+}
+.empty-image {
+	width: 5rem;
+	height: 5rem;
+}
+</style>
