@@ -3,7 +3,6 @@
 		ref="drilldownRef"
 		v-bind="$attrs"
 		:node="node"
-		:menu-items="menuItems"
 		:is-draft="isDraft"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
@@ -195,16 +194,6 @@ const executeResponse = ref({
 	value: '',
 	traceback: ''
 });
-
-const menuItems = computed(() => [
-	{
-		label: 'Save as new model',
-		icon: 'pi pi-pencil',
-		command: () => {
-			showSaveModelModal.value = true;
-		}
-	}
-]);
 
 const updateLlmQuery = (query: string) => {
 	llmThoughts.value = [];
