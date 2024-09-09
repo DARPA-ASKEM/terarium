@@ -320,7 +320,7 @@ async function downloadFileFromDataset(): Promise<PresignedURL | null> {
 async function updateDatasetContent() {
 	if (!transientDataset.value) return;
 	if (!useProjects().hasEditPermission()) {
-		logger.error('You do not have permission to edit this dataset.');
+		logger.error('You do not have permission to edit this dataset.'); // FIXME: Disable asset editing options if user does not have permission
 		return;
 	}
 	await updateDataset(transientDataset.value);
