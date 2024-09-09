@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -26,14 +25,21 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.models.ClientEvent;
+import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Contributor;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectPermissionsService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.WorkflowService;
+import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
+import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
 
 @RequestMapping("/workflows")
 @RestController
@@ -48,6 +54,12 @@ public class WorkflowController {
 	final ProjectService projectService;
 
 	final CurrentUserService currentUserService;
+
+	final ClientEventService clientEventService;
+
+	final ProjectPermissionsService projectPermissionsService;
+
+	final ReBACService reBACService;
 
 	@GetMapping
 	@Secured(Roles.USER)
@@ -144,6 +156,9 @@ public class WorkflowController {
 			projectId
 		);
 		try {
+			// do a notification to all users on the project (unless tom) that an update has occured.
+			// payload: workflow id, action taken (update or delete)???? maybe not.
+
 			return ResponseEntity.status(HttpStatus.CREATED).body(
 				workflowService.createAsset(workflow, projectId, permission)
 			);
@@ -184,6 +199,27 @@ public class WorkflowController {
 			workflow.setId(id);
 
 			final Optional<Workflow> updated = workflowService.updateAsset(workflow, projectId, permission);
+
+			final ClientEvent<Workflow> event = ClientEvent.<Workflow>builder()
+				.type(ClientEventType.WORKFLOW_UPDATE)
+				.data(updated.get())
+				.build();
+			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
+			if (rebacProject.isPublic()) {
+				clientEventService.sendToAllUsers(event);
+			} else {
+				final List<String> userIds = projectPermissionsService
+					.getReaders(rebacProject)
+					.stream()
+					.map(Contributor::getUserId)
+					.toList();
+
+				clientEventService.sendToUsers(event, userIds);
+			}
+
+			// do a notification to all users on the project (unless tom) that an update has occured.
+			// payload: workflow id, action taken (update or delete)
+
 			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to update workflow";
@@ -193,6 +229,8 @@ public class WorkflowController {
 			final String error = "ID does not match Workflow object ID";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, error);
+		} catch (final Exception e) {
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -223,8 +261,24 @@ public class WorkflowController {
 			projectId
 		);
 
+		final ClientEvent<Void> event = ClientEvent.<Void>builder().type(ClientEventType.WORKFLOW_UPDATE).build();
+
+		final RebacProject rebacProject = new RebacProject(projectId, reBACService);
+
 		try {
 			workflowService.deleteAsset(id, projectId, permission);
+
+			if (rebacProject.isPublic()) {
+				clientEventService.sendToAllUsers(event);
+			} else {
+				final List<String> userIds = projectPermissionsService
+					.getReaders(rebacProject)
+					.stream()
+					.map(Contributor::getUserId)
+					.toList();
+				clientEventService.sendToUsers(event, userIds);
+			}
+
 			return ResponseEntity.ok(new ResponseDeleted("Workflow", id));
 		} catch (final Exception e) {
 			final String error = String.format("Failed to delete workflow %s", id);

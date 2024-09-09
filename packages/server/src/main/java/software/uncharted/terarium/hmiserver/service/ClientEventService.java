@@ -7,6 +7,7 @@ import com.rabbitmq.client.Channel;
 import java.io.IOException;
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -84,7 +85,7 @@ public class ClientEventService {
 		});
 		try {
 			emitter.send(HEART_BEAT_EVENT);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			log.error("Error sending init heartbeat", e);
 		}
 		emitters.add(emitter);
@@ -137,6 +138,12 @@ public class ClientEventService {
 			rabbitTemplate.convertAndSend(CLIENT_USER_EVENT_EXCHANGE, "", jsonStr);
 		} catch (final JsonProcessingException e) {
 			log.error("Error sending all users message", e);
+		}
+	}
+
+	public <T> void sendToUsers(final ClientEvent<T> event, final Collection<String> userIds) {
+		for (final String userId : userIds) {
+			sendToUser(event, userId);
 		}
 	}
 
