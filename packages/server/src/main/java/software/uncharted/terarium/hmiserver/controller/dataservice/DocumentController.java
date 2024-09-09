@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -664,58 +663,6 @@ public class DocumentController {
 			final String error = "Unable to convert image to equation";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
-		}
-	}
-
-	/**
-	 * Uploads a PDF file to a document asset and then fires and forgets the
-	 * extraction
-	 *
-	 * @param doi      DOI of the document
-	 * @param filename filename of the PDF
-	 * @param docId    document id
-	 * @return extraction job id
-	 */
-	private void uploadPDFFileToDocumentThenExtract(
-		final String doi,
-		final String filename,
-		final UUID docId,
-		final String domain,
-		final UUID projectId,
-		final Schema.Permission hasWritePermission
-	) {
-		try {
-			final byte[] fileAsBytes = DownloadService.getPDF("https://unpaywall.org/" + doi);
-
-			// if this service fails, return ok with errors.
-			if (fileAsBytes == null || fileAsBytes.length == 0) {
-				log.debug("Document has not data, empty bytes, exit early.");
-				return;
-			}
-
-			// upload pdf to document asset
-			final Integer status = documentAssetService.uploadFile(
-				docId,
-				filename,
-				ContentType.create("application/pdf"),
-				fileAsBytes
-			);
-
-			if (status >= HttpStatus.BAD_REQUEST.value()) {
-				throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					"Unable to upload document"
-				);
-			}
-
-			// fire and forgot pdf extractions
-			extractionService.extractPDF(docId, domain, projectId, hasWritePermission);
-		} catch (final Exception e) {
-			log.error("Unable to upload PDF document then extract", e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				"Unable to upload document"
-			);
 		}
 	}
 }

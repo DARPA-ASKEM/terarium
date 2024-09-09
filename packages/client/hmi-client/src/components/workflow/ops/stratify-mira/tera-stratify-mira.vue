@@ -1,7 +1,6 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:menu-items="menuItems"
 		:is-draft="isDraft"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
@@ -158,16 +157,6 @@ const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;
 }>();
 const emit = defineEmits(['append-output', 'update-state', 'close', 'update-output-port', 'select-output']);
-
-const menuItems = computed(() => [
-	{
-		label: 'Save as new model',
-		icon: 'pi pi-pencil',
-		command: () => {
-			showSaveModelModal.value = true;
-		}
-	}
-]);
 
 enum StratifyTabs {
 	Wizard = 'Wizard',

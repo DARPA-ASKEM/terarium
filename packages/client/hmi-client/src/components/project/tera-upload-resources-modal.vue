@@ -28,7 +28,8 @@
 							AcceptedTypes.MDL,
 							AcceptedTypes.XMILE,
 							AcceptedTypes.ITMX,
-							AcceptedTypes.STMX
+							AcceptedTypes.STMX,
+							AcceptedTypes.MODELCONFIG
 						]"
 						:accept-extensions="[
 							AcceptedExtensions.PDF,
@@ -45,7 +46,8 @@
 							AcceptedExtensions.MDL,
 							AcceptedExtensions.XMILE,
 							AcceptedExtensions.ITMX,
-							AcceptedExtensions.STMX
+							AcceptedExtensions.STMX,
+							AcceptedExtensions.MODELCONFIG
 						]"
 						:import-action="processFiles"
 						:progress="progress"
@@ -129,6 +131,8 @@ async function processFiles(files: File[], description: string) {
 			case AcceptedExtensions.ITMX:
 			case AcceptedExtensions.STMX:
 				return processModel(file);
+			case AcceptedExtensions.MODELCONFIG:
+				return processModelConfigAndModel(file);
 			default:
 				return { asset: '' };
 		}
@@ -186,6 +190,11 @@ async function processAMRJson(file: File) {
 async function processModel(file: File) {
 	const addedAsset = await addArtifactAndProcessAsModelToProject(file, progress);
 	return { asset: addedAsset };
+}
+
+async function processModelConfigAndModel(file: File) {
+	const model = await createModelAndModelConfig(file, progress);
+	return { id: model?.id ?? '', assetType: AssetType.Model };
 }
 
 function importCompleted(newResults: { asset: ProjectAsset }[] | null) {

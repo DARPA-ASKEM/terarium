@@ -26,7 +26,6 @@ onMounted(async () => {
 		props.processedData,
 		props.param1,
 		props.param2,
-		props.timestep,
 		props.selectedBoxId,
 		renderOptions
 	);
@@ -40,7 +39,6 @@ watch(
 			props.processedData,
 			props.param1,
 			props.param2,
-			props.timestep,
 			props.selectedBoxId,
 			renderOptions
 		);

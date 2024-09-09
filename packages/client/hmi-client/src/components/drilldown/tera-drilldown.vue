@@ -59,10 +59,6 @@
 							:output="selectedOutputId"
 							@update:selection="(e) => emit('update:selection', e)"
 						/>
-						<section v-if="!isEmpty(menuItems)" class="mx-2">
-							<Button icon="pi pi-ellipsis-v" rounded text @click.stop="toggleEllipsisMenu" />
-							<Menu ref="ellipsisMenu" :model="menuItems" popup />
-						</section>
 					</template>
 				</template>
 				<template #actions>
@@ -85,6 +81,7 @@
 						<slot name="preview" />
 					</section>
 				</tera-columnar-panel>
+				<slot name="sidebar-right" />
 			</main>
 			<footer v-if="slots.footer">
 				<slot name="footer" />
@@ -141,7 +138,6 @@ import TeraTooltip from '@/components/widgets/tera-tooltip.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
-	menuItems?: any[];
 	title?: string;
 	tooltip?: string;
 	isDraft?: boolean;
@@ -197,9 +193,6 @@ const outputOptions = computed(() => {
 		}
 	];
 });
-
-const ellipsisMenu = ref();
-const toggleEllipsisMenu = (event: MouseEvent) => ellipsisMenu.value.toggle(event);
 
 // Drilldown navigation and animations
 const leftChevronButton = ref<ComponentPublicInstance<typeof Button> | null>(null);

@@ -350,7 +350,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		documentAsset = documentAssetService.createAsset(documentAsset, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		documentAsset = extractionService
-			.extractVariables(project.getId(), documentAsset.getId(), new ArrayList<>(), "epi", ASSUME_WRITE_PERMISSION)
+			.extractVariables(project.getId(), documentAsset.getId(), new ArrayList<>(), ASSUME_WRITE_PERMISSION)
 			.get();
 
 		final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");

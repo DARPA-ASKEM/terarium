@@ -15,11 +15,31 @@ import { fileToJson } from '@/utils/file';
 import { isEmpty } from 'lodash';
 import type { MMT } from '@/model-representation/mira/mira-common';
 import { activeProjectId } from '@/composables/activeProject';
+import { Ref } from 'vue';
 
 export async function createModel(model: Model): Promise<ProjectAsset | null> {
 	const projectId = activeProjectId.value || getProjectIdFromUrl();
 	delete model.id;
 	const response = await API.post(`/models?project-id=${projectId}`, model);
+	return response?.data ?? null;
+}
+
+export async function createModelAndModelConfig(file: File, progress?: Ref<number>): Promise<Model | null> {
+	const formData = new FormData();
+	formData.append('file', file);
+
+	const response = await API.post(`/model-configurations/import`, formData, {
+		headers: {
+			'Content-Type': 'multipart/form-data'
+		},
+		onUploadProgress(progressEvent) {
+			if (progress) {
+				progress.value = Math.min(90, Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100)));
+			}
+		},
+		timeout: 3600000
+	});
+
 	return response?.data ?? null;
 }
 

@@ -209,10 +209,11 @@ public class KnowledgeController {
 	/**
 	 * Transform source code to AMR
 	 *
-	 * @param codeId (String): id of the code artifact model
-	 * @param dynamicsOnly (Boolean): whether to only run the amr extraction over specified dynamics from the code
-	 *     object in TDS
-	 * @param llmAssisted (Boolean): whether amr extraction is llm assisted
+	 * @param codeId       (String): id of the code artifact model
+	 * @param dynamicsOnly (Boolean): whether to only run the amr extraction over
+	 *                     specified dynamics from the code
+	 *                     object in TDS
+	 * @param llmAssisted  (Boolean): whether amr extraction is llm assisted
 	 * @return Model
 	 */
 	@PostMapping("/code-to-amr")
@@ -475,7 +476,7 @@ public class KnowledgeController {
 	/**
 	 * Profile a dataset
 	 *
-	 * @param datasetId (String): The ID of the dataset to profile
+	 * @param datasetId  (String): The ID of the dataset to profile
 	 * @param documentId (String): The ID of the document to profile
 	 * @return the profiled dataset
 	 */
@@ -646,8 +647,8 @@ public class KnowledgeController {
 	 * Variables Extractions from Document with SKEMA
 	 *
 	 * @param documentId (String): The ID of the document to profile
-	 * @param modelIds (List<String>): The IDs of the models to use for extraction
-	 * @param domain (String): The domain of the document
+	 * @param modelIds   (List<String>): The IDs of the models to use for extraction
+	 * @param domain     (String): The domain of the document
 	 * @return an accepted response, the request being handled asynchronously
 	 */
 	@PostMapping("/variable-extractions")
@@ -665,7 +666,6 @@ public class KnowledgeController {
 			projectId,
 			documentId,
 			modelIds == null ? new ArrayList<>() : modelIds,
-			domain,
 			permission
 		);
 		return ResponseEntity.accepted().build();
@@ -695,7 +695,7 @@ public class KnowledgeController {
 			currentUserService.get().getId(),
 			projectId
 		);
-		extractionService.extractPDF(documentId, domain, projectId, permission);
+		extractionService.extractPDFAndApplyToDocument(documentId, projectId, permission);
 		return ResponseEntity.accepted().build();
 	}
 
@@ -715,24 +715,6 @@ public class KnowledgeController {
 		}
 		log.error(
 			"An unknown error occurred while Skema Unified Service was trying to produce an AMR based on the provided resources"
-		);
-		return new ResponseStatusException(statusCode, messages.get("generic.unknown"));
-	}
-
-	private ResponseStatusException handleMitFeignException(final FeignException e) {
-		final HttpStatus statusCode = HttpStatus.resolve(e.status());
-		if (statusCode != null && statusCode.is4xxClientError()) {
-			log.warn("MIT Text-reading did not return a valid card because a provided resource was not valid");
-			return new ResponseStatusException(statusCode, messages.get("mit.file.unable-to-read"));
-		} else if (statusCode == HttpStatus.SERVICE_UNAVAILABLE) {
-			log.warn("MIT Text-reading is currently unavailable");
-			return new ResponseStatusException(statusCode, messages.get("mit.service-unavailable"));
-		} else if (statusCode != null && statusCode.is5xxServerError()) {
-			log.error("An error occurred while MIT Text-reading was trying to produce a card based on the provided resource");
-			return new ResponseStatusException(statusCode, messages.get("mit.internal-error"));
-		}
-		log.error(
-			"An unknown error occurred while MIT Text-reading was trying to produce a card based on the provided resource"
 		);
 		return new ResponseStatusException(statusCode, messages.get("generic.unknown"));
 	}
