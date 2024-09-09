@@ -165,10 +165,7 @@ export interface Size {
 }
 
 export interface WorkflowTransformations {
-	workflows: Transformations;
-}
-export interface Transformations {
-	[key: string]: Transform;
+	workflows: { [key: string]: Transform };
 }
 
 export interface AssetBlock<T> {

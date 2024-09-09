@@ -194,6 +194,8 @@ export class WorkflowWrapper {
 			imageUrl: op.imageUrl,
 			x: pos.x,
 			y: pos.y,
+
+			active: null,
 			state: options.state ?? {},
 
 			inputs: op.inputs.map((port) => ({
@@ -409,7 +411,7 @@ export class WorkflowWrapper {
 				port.id = registry.get(port.id) as string;
 			});
 			if (node.active) {
-				node.active = registry.get(node.active);
+				node.active = registry.get(node.active) || null;
 			}
 		});
 
