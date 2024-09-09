@@ -135,21 +135,21 @@ interface FunmanBoundingBox {
 	x2: number;
 	y2: number;
 }
-export const getBoxes = (
-	processedData: FunmanProcessedData,
-	param1: string,
-	param2: string,
-	_timestep: number,
-	boxType: string
-) => {
+export const getBoxes = (processedData: FunmanProcessedData, param1: string, param2: string, boxType: string) => {
 	const result: FunmanBoundingBox[] = [];
 
 	const temp = processedData.boxes
 		.filter((d: any) => d.label === boxType)
-		.map((box: any) => ({ id: box.id, timestep: box.timestep.lb }));
+		.map((box: any) => ({ id: box.id, timestep: box.timestep.ub }));
 	if (temp.length === 0) return [];
 
+	// grab latest step
 	const step = temp.sort((a, b) => b.timestep - a.timestep)[0].timestep;
+
+	// console.group(boxType);
+	// console.log('boxes', processedData.boxes);
+	// console.log('step', step);
+	// console.groupEnd();
 
 	processedData.boxes
 		.filter((d: any) => d.label === boxType)
@@ -164,7 +164,6 @@ export const getBoxes = (
 			});
 		});
 
-	// console.log('!!!', result);
 	return result;
 };
 
@@ -343,7 +342,7 @@ export const renderFunmanBoundaryChart = (
 	processedData: FunmanProcessedData,
 	param1: string,
 	param2: string,
-	timestep: number,
+	_timestep: number,
 	selectedBoxId: string,
 	options: RenderOptions
 ) => {
@@ -354,14 +353,10 @@ export const renderFunmanBoundaryChart = (
 		margin = 5;
 	}
 
-	const trueBoxes = getBoxes(processedData, param1, param2, timestep, 'true');
-	const falseBoxes = getBoxes(processedData, param1, param2, timestep, 'false');
-	const { minX, maxX, minY, maxY } = getBoxesDomain([...trueBoxes, ...falseBoxes]);
+	const trueBoxes = getBoxes(processedData, param1, param2, 'true');
+	const falseBoxes = getBoxes(processedData, param1, param2, 'false');
 
-	// console.log('true', param1, param2, trueBoxes);
-	// console.log('false', param1, param2, falseBoxes);
-	// console.log(processedData);
-	// console.log('');
+	const { minX, maxX, minY, maxY } = getBoxesDomain([...trueBoxes, ...falseBoxes]);
 
 	d3.select(element).selectAll('*').remove();
 	const svg = d3.select(element).append('svg').attr('width', width).attr('height', height);
@@ -378,7 +373,6 @@ export const renderFunmanBoundaryChart = (
 		.range([height - margin, margin]); // output range (inverted)
 
 	g.selectAll('.true-box').data(trueBoxes).enter().append('rect').classed('true-box', true).attr('fill', 'teal');
-
 	g.selectAll('.false-box').data(falseBoxes).enter().append('rect').classed('false-box', true).attr('fill', 'orange');
 
 	g.selectAll<any, FunmanBoundingBox>('rect')
