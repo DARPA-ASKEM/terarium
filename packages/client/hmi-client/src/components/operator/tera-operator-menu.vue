@@ -17,6 +17,7 @@
 			:popup="true"
 			@focus="emit('menu-focus')"
 			@blur="emit('menu-blur')"
+			style="width: fit-content"
 		/>
 	</aside>
 </template>
@@ -58,10 +59,11 @@ button {
 	border-radius: var(--border-radius-medium);
 	box-shadow: var(--overlay-menu-shadow);
 	transition: box-shadow 80ms ease;
+	background: var(--surface-0);
+	z-index: 10;
 
 	&:hover {
 		box-shadow: var(--overlay-menu-shadow-hover);
-		z-index: 2;
 	}
 }
 </style>

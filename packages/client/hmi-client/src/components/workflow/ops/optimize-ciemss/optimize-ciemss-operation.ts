@@ -41,7 +41,7 @@ export interface InterventionPolicyGroupForm {
 
 export interface Criterion {
 	name: string; // Title of the group
-	targetVariable: string;
+	targetVariable: string; // qoi context which will contain _state or _observable accordingly
 	qoiMethod: ContextMethods;
 	riskTolerance: number;
 	threshold: number;
@@ -260,6 +260,7 @@ export async function createInterventionPolicyFromOptimize(modelConfigId: string
 	const newIntervention: InterventionPolicy = {
 		name: `Optimize run: ${optimizeRunId}`,
 		modelId,
+		temporary: true,
 		interventions: optimizedInterventions
 	};
 	const newInterventionPolicy: InterventionPolicy = await createInterventionPolicy(newIntervention);

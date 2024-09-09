@@ -31,6 +31,9 @@ public class TaskResponse implements Serializable {
 	private String requestSHA256;
 
 	public <T> T getAdditionalProperties(final Class<T> type) throws JsonProcessingException {
+		if (additionalProperties == null) {
+			return null;
+		}
 		final ObjectMapper objectMapper = new ObjectMapper();
 		return objectMapper.readValue(objectMapper.writeValueAsString(additionalProperties), type);
 	}

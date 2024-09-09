@@ -1,6 +1,7 @@
 <template>
 	<Button
 		label="Enrich metadata with AI assistant"
+		icon="pi pi-sparkles"
 		:loading="isLoading"
 		severity="secondary"
 		outlined
@@ -15,7 +16,7 @@
 			without additional context.
 		</p>
 		<ul>
-			<li v-for="document in documents" :key="document.id">
+			<li v-for="document in documents" :key="document.id" :class="document.id ? '' : 'mb-3'">
 				<RadioButton inputId="document.id" name="document.id" v-model="selectedResourceId" :value="document.id" />
 				<label :for="document.id">{{ document.name }}</label>
 			</li>
@@ -30,7 +31,7 @@
 				<Checkbox v-model="overwriteContent" inputId="overwriteContent" binary disabled />
 				<div class="ml-3">
 					<label for="overwriteContent">Overwrite existing content</label>
-					<p class="text-subdued">If unselected, new content will be appeded</p>
+					<p class="text-subdued">If unselected, new content will be appended</p>
 				</div>
 			</div>
 		</template>

@@ -3,7 +3,7 @@
 		ref="drilldownRef"
 		v-bind="$attrs"
 		:node="node"
-		:menu-items="menuItems"
+		:is-draft="isDraft"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
@@ -55,10 +55,10 @@
 				<section class="right-side">
 					<Button
 						class="mr-3"
-						:disabled="isSaveForReuseDisabled"
 						outlined
 						severity="secondary"
-						label="Save as reuse"
+						:disabled="isSaveDisabled"
+						label="Save for reuse"
 						@click="showSaveModelModal = true"
 					/>
 				</section>
@@ -94,14 +94,15 @@
 		:asset="amr"
 		:initial-name="amr.name"
 		:assetType="AssetType.Model"
+		:is-updating-asset="true"
 		:is-visible="showSaveModelModal"
 		@close-modal="showSaveModelModal = false"
-		@on-save="updateNodeModel"
+		@on-save="updateNode"
 	/>
 </template>
 
 <script setup lang="ts">
-import { cloneDeep, isEmpty } from 'lodash';
+import { cloneDeep, isEmpty, isEqual, debounce } from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import { VAceEditor } from 'vue3-ace-editor';
@@ -129,6 +130,7 @@ import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { saveCodeToState } from '@/services/notebook';
 import { DrilldownTabs } from '@/types/common';
 import { nodeOutputLabel } from '@/components/workflow/util';
+import { useProjects } from '@/composables/project';
 import { ModelEditOperationState, ModelEditOperation } from './model-edit-operation';
 
 const props = defineProps<{
@@ -140,7 +142,7 @@ const outputs = computed(() => {
 	if (!isEmpty(props.node.outputs)) {
 		return [
 			{
-				label: 'Select outputs to display in operator',
+				label: 'Select an output',
 				items: props.node.outputs
 			}
 		];
@@ -183,7 +185,8 @@ const defaultCodeText = '# This environment contains the variable "model" \n# wh
 const codeText = ref(defaultCodeText);
 const llmQuery = ref('');
 const llmThoughts = ref<any[]>([]);
-const isSaveForReuseDisabled = ref(false);
+
+const isDraft = ref(false);
 
 const executeResponse = ref({
 	status: OperatorStatus.DEFAULT,
@@ -191,16 +194,6 @@ const executeResponse = ref({
 	value: '',
 	traceback: ''
 });
-
-const menuItems = computed(() => [
-	{
-		label: 'Save as new model',
-		icon: 'pi pi-pencil',
-		command: () => {
-			showSaveModelModal.value = true;
-		}
-	}
-]);
 
 const updateLlmQuery = (query: string) => {
 	llmThoughts.value = [];
@@ -323,6 +316,8 @@ const createOutput = async (modelToSave: Model) => {
 		state: cloneDeep(props.node.state),
 		value: [modelData.id]
 	});
+
+	isDraft.value = false;
 };
 
 const buildJupyterContext = () => {
@@ -367,6 +362,21 @@ const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
+// check if user has made changes to the code
+const hasCodeChange = () => {
+	if (props.node.state.notebookHistory.length) {
+		isDraft.value = !isEqual(codeText.value, props.node.state.notebookHistory?.[0]?.code);
+	} else {
+		isDraft.value = !isEqual(codeText.value, defaultCodeText);
+	}
+};
+const checkForCodeChange = debounce(hasCodeChange, 500);
+
+watch(
+	() => codeText.value,
+	() => checkForCodeChange()
+);
+
 // Updates output selection
 watch(
 	() => props.node.active,
@@ -381,11 +391,24 @@ watch(
 	{ immediate: true }
 );
 
-function updateNodeModel(model: Model) {
-	if (model) {
-		amr.value = model;
-		createOutput(model);
-	}
+const isSaveDisabled = computed(() => {
+	const id = amr.value?.id;
+	if (!id) return true;
+	const outputPort = props.node.outputs?.find((port) => port.value?.[0] === id);
+	return useProjects().hasAssetInActiveProject(outputPort?.value?.[0]);
+});
+
+function updateNode(model: Model) {
+	const id = amr.value?.id;
+	if (!id || !model) return;
+
+	amr.value = model;
+	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.value?.[0] === id));
+
+	if (!outputPort) return;
+	outputPort.label = model.header.name;
+
+	emit('update-output-port', outputPort);
 }
 
 onMounted(async () => {
