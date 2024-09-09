@@ -246,7 +246,7 @@ async function onRun() {
 		.filter((e) => e.includeInProcess && !e.asset.extractionError)
 		.map((e) => e.asset.text);
 
-const request: EquationsToAMRRequest = {
+	const request: EquationsToAMRRequest = {
 		equations,
 		framework: clonedState.value.modelFramework,
 		documentId: document.value?.id
