@@ -26,9 +26,9 @@
 				<Button label="Cancel" severity="secondary" outlined @click="closeDialog" />
 				<Button label="Enrich" :disabled="isDialogDisabled" @click="confirm" />
 			</div>
-			<!--TODO: Will make sure this works in a second pass-->
+			<!--TODO: Overwrite is how we enrich, handle appending content in another pass-->
 			<div class="flex items-center">
-				<Checkbox v-model="overwriteContent" inputId="overwriteContent" binary />
+				<Checkbox v-model="overwriteContent" inputId="overwriteContent" binary disabled />
 				<div class="ml-3">
 					<label for="overwriteContent">Overwrite existing content</label>
 					<p class="text-subdued">If unselected, new content will be appended</p>
@@ -73,7 +73,7 @@ enum DialogType {
 const dialogType = ref<DialogType>(DialogType.ENRICH);
 const isLoading = ref(false);
 const isModalVisible = ref(false);
-const overwriteContent = ref(false);
+const overwriteContent = ref(true);
 
 const selectedResourceId = ref<string>('');
 const relatedDocuments = ref<Array<{ name: string; id: string }>>([]);
@@ -115,17 +115,18 @@ function closeDialog() {
 
 const confirm = async () => {
 	isLoading.value = true;
+	closeDialog();
 
+	// Await for enrichment/extraction so once we call finished-job the refetched dataset will have the new data
 	if (dialogType.value === DialogType.ENRICH) {
-		sendForEnrichment();
+		await sendForEnrichment();
 	} else if (dialogType.value === DialogType.EXTRACT) {
-		sendForExtractions();
+		await sendForExtractions();
 	}
 
 	isLoading.value = false;
 	emit('finished-job');
-	await getRelatedDocuments();
-	closeDialog();
+	getRelatedDocuments();
 };
 
 const sendForEnrichment = async () => {
