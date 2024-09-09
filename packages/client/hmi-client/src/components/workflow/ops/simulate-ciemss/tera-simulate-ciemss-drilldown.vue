@@ -5,79 +5,87 @@
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
+		class="drilldown"
 	>
-		<section :tabName="DrilldownTabs.Wizard" class="ml-4 mr-2 pt-3">
-			<tera-drilldown-section>
-				<template #header-controls-right>
-					<Button label="Run" icon="pi pi-play" @click="run" :disabled="showSpinner" />
-					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
-				</template>
-				<div class="form-section">
-					<h5>
-						Simulation settings
-						<i v-tooltip="simulationSettingsToolTip" class="pi pi-info-circle" />
-					</h5>
-
-					<!-- Start & End -->
-					<div class="input-row">
-						<div class="label-and-input">
-							<label for="2">Start time</label>
-							<tera-input-number
-								id="2"
-								v-model="timespan.start"
-								inputId="integeronly"
-								@update:model-value="updateState"
-							/>
-						</div>
-						<div class="label-and-input">
-							<label for="3">End time</label>
-							<tera-input-number
-								id="3"
-								v-model="timespan.end"
-								inputId="integeronly"
-								@update:model-value="updateState"
-							/>
-						</div>
+		<!-- Wizard -->
+		<section :tabName="DrilldownTabs.Wizard" class="wizard">
+			<tera-slider-panel v-model:is-open="isSidebarOpen" header="Simulation settings" content-width="420px">
+				<template #content>
+					<div class="toolbar">
+						<p>Click Run to start the simulation.</p>
+						<span class="flex gap-2">
+							<tera-pyciemss-cancel-button :simulation-run-id="cancelRunId" />
+							<Button label="Run" icon="pi pi-play" @click="run" :disabled="showSpinner" />
+						</span>
 					</div>
+					<div class="form-section" v-if="isSidebarOpen">
+						<!-- Presets -->
+						<div class="label-and-input">
+							<label>Preset (optional)</label>
+							<Dropdown
+								v-model="presetType"
+								placeholder="Select an option"
+								:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
+								@update:model-value="setPresetValues"
+							/>
+						</div>
 
-					<!-- Presets -->
-					<div class="label-and-input">
-						<label for="4">Preset (optional)</label>
-						<Dropdown
-							v-model="presetType"
-							placeholder="Select an option"
-							:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
-							@update:model-value="setPresetValues"
+						<!-- Start & End -->
+						<div class="input-row">
+							<div class="label-and-input">
+								<label for="start-time">Start time</label>
+								<tera-input-number
+									id="start-time"
+									v-model="timespan.start"
+									inputId="integeronly"
+									@update:model-value="updateState"
+								/>
+							</div>
+							<div class="label-and-input">
+								<label for="timespan">End time</label>
+								<tera-input-number
+									id="timespan"
+									v-model="timespan.end"
+									inputId="integeronly"
+									@update:model-value="updateState"
+								/>
+							</div>
+						</div>
+
+						<!-- Number of Samples & Method -->
+						<div class="input-row">
+							<div class="label-and-input">
+								<label for="num-samples">Number of samples</label>
+								<tera-input-number
+									id="num-samples"
+									v-model="numSamples"
+									inputId="integeronly"
+									:min="1"
+									@update:model-value="updateState"
+								/>
+							</div>
+							<div class="label-and-input">
+								<label for="solver-method">Method</label>
+								<Dropdown
+									id="solver-method"
+									v-model="method"
+									:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
+									@update:model-value="updateState"
+								/>
+							</div>
+						</div>
+
+						<tera-save-dataset-from-simulation
+							:simulation-run-id="node.state.forecastId"
+							:showDialog="showSaveDataDialog"
+							@hide-dialog="showSaveDataDialog = false"
 						/>
 					</div>
-
-					<!-- Number of Samples & Method -->
-					<div class="input-row mt-3">
-						<div class="label-and-input">
-							<label for="4">Number of samples</label>
-							<tera-input-number
-								id="4"
-								v-model="numSamples"
-								inputId="integeronly"
-								:min="1"
-								@update:model-value="updateState"
-							/>
-						</div>
-						<div class="label-and-input">
-							<label for="5">Method</label>
-							<Dropdown
-								v-model="method"
-								:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
-								@update:model-value="updateState"
-							/>
-						</div>
-					</div>
-					<!-- FIXME: show sampled values ???
-					<div v-if="inferredParameters">Using inferred parameters from calibration: {{ inferredParameters[0] }}</div>
-					-->
-				</div>
-			</tera-drilldown-section>
+				</template>
+			</tera-slider-panel>
 		</section>
+
+		<!-- Notebook -->
 		<tera-drilldown-section :tabName="DrilldownTabs.Notebook" class="notebook-section">
 			<div class="toolbar">
 				<tera-notebook-jupyter-input
@@ -101,8 +109,11 @@
 				class="ace-editor"
 			/>
 		</tera-drilldown-section>
+
+		<!-- Preview -->
 		<template #preview>
 			<tera-drilldown-preview
+				v-if="selectedOutputId"
 				title="Simulation output"
 				:options="outputs"
 				v-model:output="selectedOutputId"
@@ -113,6 +124,7 @@
 				<tera-operator-output-summary
 					v-if="node.state.summaryId && runResults[selectedRunId]"
 					:summary-id="node.state.summaryId"
+					class="pt-3"
 				/>
 				<div class="flex flex-row align-items-center gap-2">
 					<SelectButton
@@ -140,9 +152,25 @@
 								@configuration-change="chartProxy.configurationChange(index, $event)"
 								@remove="chartProxy.removeChart(index)"
 							/>
-							<vega-chart expandable :are-embed-actions-visible="true" :visualization-spec="preparedCharts[index]" />
+							<vega-chart
+								v-if="preparedCharts[index].layer.length > 0"
+								expandable
+								:are-embed-actions-visible="true"
+								:visualization-spec="preparedCharts[index]"
+							/>
+							<!-- If no variables are selected, show empty state -->
+							<section class="empty-chart" v-else>
+								<img src="@assets/svg/seed.svg" class="empty-image" alt="" draggable="false" />
+								<p>Select one or more variables for this chart</p>
+							</section>
+
+							<!-- Spacer between charts -->
+							<div style="height: var(--gap-1)"></div>
 						</template>
 						<Button size="small" text @click="chartProxy.addChart()" label="Add chart" icon="pi pi-plus" />
+
+						<!-- Spacer at bottom of page -->
+						<div style="height: 2rem"></div>
 					</div>
 					<div v-else-if="view === OutputView.Data">
 						<tera-dataset-datatable
@@ -153,13 +181,12 @@
 					</div>
 				</template>
 			</tera-drilldown-preview>
-		</template>
-		<template #footer>
-			<tera-save-dataset-from-simulation
-				:simulation-run-id="node.state.forecastId"
-				:showDialog="showSaveDataDialog"
-				@hide-dialog="showSaveDataDialog = false"
-			/>
+
+			<!-- Empty state -->
+			<section v-else class="empty-state">
+				<Vue3Lottie :animationData="EmptySeed" :height="150" loop autoplay />
+				<p class="helpMessage">Click 'Run' to start the simulation</p>
+			</section>
 		</template>
 	</tera-drilldown>
 </template>
@@ -169,7 +196,10 @@ import _ from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
+import { Vue3Lottie } from 'vue3-lottie';
+import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
+import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import type { CsvAsset, SimulationRequest, TimeSpan } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import {
@@ -206,6 +236,7 @@ import { getModelConfigurationById } from '@/services/model-configurations';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import TeraChartControl from '../../tera-chart-control.vue';
 
+const isSidebarOpen = ref(true);
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
 }>();
@@ -224,8 +255,6 @@ const llmQuery = ref('');
 // extras
 const numSamples = ref<number>(props.node.state.numSamples);
 const method = ref(props.node.state.method);
-
-const simulationSettingsToolTip: string = 'TODO';
 
 enum OutputView {
 	Charts = 'Charts',
@@ -537,10 +566,69 @@ onUnmounted(() => kernelManager.shutdown());
 </script>
 
 <style scoped>
+
+/* Make left sidebar grey */
+:deep(.slider-content) {
+	background-color: var(--surface-100);
+	border-right: 1px solid var(--surface-border-light);
+}
+:deep(.slider-content aside header) {
+	background: color-mix(in srgb, var(--surface-100) 80%, transparent 20%);
+}
+:deep(.slider-tab) {
+	background-color: var(--surface-100);
+	border-right: 1px solid var(--surface-border-light);
+}
+:deep(.slider-tab header) {
+	background: transparent;
+}
+.wizard .toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--gap-1) var(--gap);
+	gap: var(--gap-2);
+}
+
+/* Make tera-inputs the same height as the dropdowns */
+.tera-input:deep(main) {
+	padding: 6px;
+}
+
+/* Override grid template so output expands when sidebar is closed */
+.overlay-container:deep(section.drilldown main) {
+	grid-template-columns: auto 1fr;
+}
+
+/* Override top and bottom padding of content-container */
+.overlay-container:deep(section.drilldown main .content-container) {
+	padding: 0 var(--gap);
+}
+
+.empty-chart {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	height: 10rem;
+	gap: var(--gap);
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	margin-bottom: var(--gap);
+	color: var(--text-color-secondary);
+	background: var(--surface-50);
+}
+.empty-image {
+	width: 5rem;
+	height: 6rem;
+}
+
+/* Notebook */
 .notebook-section {
-	background-color: var(--surface-disabled);
-	border-right: 1px solid var(--surface-border-dark);
-	padding: var(--gap);
+	width: calc(50vw - 4rem);
+  padding: var(--gap);
+	background: var(--surface-100);
+	border-right: 1px solid var(--surface-border-light);
 }
 
 .notebook-section:deep(main) {
@@ -549,14 +637,10 @@ onUnmounted(() => kernelManager.shutdown());
 }
 
 .form-section {
-	background-color: var(--surface-50);
-	border-radius: var(--border-radius-medium);
-	box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.25) inset;
 	display: flex;
 	flex-direction: column;
 	flex-grow: 1;
-	gap: var(--gap-1);
-	margin: 0 var(--gap) var(--gap) var(--gap);
+	gap: var(--gap);
 	padding: var(--gap);
 }
 
@@ -564,6 +648,7 @@ onUnmounted(() => kernelManager.shutdown());
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
+	margin-bottom: var(--gap);
 }
 
 .input-row {
@@ -577,5 +662,22 @@ onUnmounted(() => kernelManager.shutdown());
 	& > * {
 		flex: 1;
 	}
+}
+
+.empty-state {
+	position: absolute;
+	width: calc(100% - 240px);
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--gap);
+	text-align: center;
+	pointer-events: none;
+}
+
+.p-button-icon-left {
+	color: var(--text-color-primary);
 }
 </style>

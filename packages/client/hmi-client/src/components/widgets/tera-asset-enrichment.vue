@@ -1,6 +1,7 @@
 <template>
 	<Button
 		label="Enrich metadata with AI assistant"
+		icon="pi pi-sparkles"
 		:loading="isLoading"
 		severity="secondary"
 		outlined
@@ -15,7 +16,7 @@
 			without additional context.
 		</p>
 		<ul>
-			<li v-for="document in documents" :key="document.id">
+			<li v-for="document in documents" :key="document.id" :class="document.id ? '' : 'mb-3'">
 				<RadioButton inputId="document.id" name="document.id" v-model="selectedResourceId" :value="document.id" />
 				<label :for="document.id">{{ document.name }}</label>
 			</li>
@@ -25,12 +26,12 @@
 				<Button label="Cancel" severity="secondary" outlined @click="closeDialog" />
 				<Button label="Enrich" :disabled="isDialogDisabled" @click="confirm" />
 			</div>
-			<!--TODO: Will make sure this works in a second pass-->
+			<!--TODO: Overwrite is how we enrich, handle appending content in another pass-->
 			<div class="flex items-center">
-				<Checkbox v-model="overwriteContent" inputId="overwriteContent" binary />
+				<Checkbox v-model="overwriteContent" inputId="overwriteContent" binary disabled />
 				<div class="ml-3">
 					<label for="overwriteContent">Overwrite existing content</label>
-					<p class="text-subdued">If unselected, new content will be appeded</p>
+					<p class="text-subdued">If unselected, new content will be appended</p>
 				</div>
 			</div>
 		</template>
@@ -72,7 +73,7 @@ enum DialogType {
 const dialogType = ref<DialogType>(DialogType.ENRICH);
 const isLoading = ref(false);
 const isModalVisible = ref(false);
-const overwriteContent = ref(false);
+const overwriteContent = ref(true);
 
 const selectedResourceId = ref<string>('');
 const relatedDocuments = ref<Array<{ name: string; id: string }>>([]);
@@ -114,17 +115,18 @@ function closeDialog() {
 
 const confirm = async () => {
 	isLoading.value = true;
+	closeDialog();
 
+	// Await for enrichment/extraction so once we call finished-job the refetched dataset will have the new data
 	if (dialogType.value === DialogType.ENRICH) {
-		sendForEnrichment();
+		await sendForEnrichment();
 	} else if (dialogType.value === DialogType.EXTRACT) {
-		sendForExtractions();
+		await sendForExtractions();
 	}
 
 	isLoading.value = false;
 	emit('finished-job');
-	await getRelatedDocuments();
-	closeDialog();
+	getRelatedDocuments();
 };
 
 const sendForEnrichment = async () => {

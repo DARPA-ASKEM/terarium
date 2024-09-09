@@ -169,6 +169,7 @@ import { sortDatesDesc } from '@/utils/date';
 import { createInterventionChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
+import { useProjects } from '@/composables/project';
 import TeraInterventionCard from './tera-intervention-card.vue';
 import {
 	InterventionPolicyOperation,
@@ -396,6 +397,7 @@ const onSaveInterventionPolicy = async () => {
 		return;
 	}
 	initialize();
+	useProjects().refresh();
 };
 
 watch(

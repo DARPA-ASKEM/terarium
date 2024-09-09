@@ -23,8 +23,9 @@ import { getModel, getModelConfigurationsForModel } from '@/services/model';
 import { postAsConfiguredModel } from '@/services/model-configurations';
 import { useClientEvent } from '@/composables/useClientEvent';
 import type { ClientEvent, TaskResponse } from '@/types/Types';
-import { ClientEventType, TaskStatus } from '@/types/Types';
-import { blankModelConfig, ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
+import { AssetType, ClientEventType, TaskStatus } from '@/types/Types';
+import { useProjects } from '@/composables/project';
+import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelConfigOperationState>;
@@ -60,32 +61,6 @@ watch(
 		const modelInputs = inputs.filter((input) => input.type === 'modelId');
 		const modelId = modelInputs?.[0]?.value?.[0];
 
-		if (modelId) {
-			let configs = await getModelConfigurationsForModel(modelId);
-			if (!configs[0]?.id) {
-				const model = await getModel(modelId);
-				if (model) await postAsConfiguredModel(model); // Create a model configuration if it does not exist
-				configs = await getModelConfigurationsForModel(modelId);
-			}
-			// Auto append output
-			if (configs[0]?.id) {
-				const config = configs[0];
-				state.transientModelConfig = config;
-				emit('update-state', state);
-				emit('append-output', {
-					type: ModelConfigOperation.outputs[0].type,
-					label: config.name,
-					value: config.id,
-					isSelected: false,
-					state: omit(state, ['transientModelConfig'])
-				});
-			}
-		} else {
-			// Reset previous model cache
-			state.transientModelConfig = blankModelConfig;
-			emit('update-state', state);
-		}
-
 		// If all document inputs are connected, add a new document input port
 		if (documentInputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
 			emit('append-input-port', { type: 'documentId', label: 'Document', isOptional: true });
@@ -94,6 +69,31 @@ watch(
 		// If all dataset inputs are connected, add a new dataset input port
 		if (datasetInputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
 			emit('append-input-port', { type: 'datasetId', label: 'Dataset', isOptional: true });
+		}
+
+		// model
+		if (!modelId || modelId === state.transientModelConfig?.modelId) return;
+		let configs = await getModelConfigurationsForModel(modelId);
+		if (!configs[0]?.id) {
+			const model = await getModel(modelId);
+			if (model) {
+				const modelConfig = await postAsConfiguredModel(model); // Create a model configuration if it does not exist
+				useProjects().addAsset(AssetType.ModelConfiguration, modelConfig.id);
+			}
+			configs = await getModelConfigurationsForModel(modelId);
+		}
+		// Auto append output
+		if (configs[0]?.id) {
+			const config = configs[0];
+			state.transientModelConfig = config;
+			emit('update-state', state);
+			emit('append-output', {
+				type: ModelConfigOperation.outputs[0].type,
+				label: config.name,
+				value: config.id,
+				isSelected: false,
+				state: omit(state, ['transientModelConfig'])
+			});
 		}
 	},
 	{ deep: true }

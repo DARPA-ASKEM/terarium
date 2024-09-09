@@ -66,7 +66,7 @@ const knobs = ref({
 	gap: var(--gap-2);
 	border-radius: var(--gap-1-5);
 	background: var(--surface-section);
-	border: 1px solid rgba(0, 0, 0, 0.08);
+	border: 1px solid var(--surface-border-light);
 	/* Shadow/medium */
 	box-shadow:
 		0 2px 4px -1px rgba(0, 0, 0, 0.06),
