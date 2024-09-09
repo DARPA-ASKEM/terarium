@@ -30,7 +30,7 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Column from 'primevue/column';
@@ -63,6 +63,12 @@ const relatedTerariumDatasets = computed(() => relatedTerariumArtifacts.value.fi
 const { activeProject } = useProjects();
 const hasEditPermission = computed(() => ['creator', 'writer'].includes(activeProject.value?.userPermission ?? ''));
 const editorContent = ref(props.model.description ?? card.value ?? '');
+
+watch(editorContent, () => {
+	if (editorContent.value !== props.model.description) {
+		emit('update-model', { ...props.model, description: editorContent.value });
+	}
+});
 </script>
 
 <style scoped>
