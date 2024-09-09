@@ -81,6 +81,7 @@
 						<slot name="preview" />
 					</section>
 				</tera-columnar-panel>
+				<slot name="sidebar-right" />
 			</main>
 			<footer v-if="slots.footer">
 				<slot name="footer" />

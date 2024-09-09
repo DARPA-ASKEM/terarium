@@ -230,6 +230,21 @@ export interface NotificationItemStatus {
 	progress?: number;
 }
 
+export enum ChartSettingType {
+	VARIABLE = 'variable',
+	VARIABLE_COMPARISON = 'variable-comparison',
+	DISTRIBUTION_COMPARISON = 'distribution-comparison',
+	ERROR_DISTRIBUTION = 'error-distribution',
+	INTERVENTION = 'intervention'
+}
+
+export interface ChartSetting {
+	id: string;
+	name: string;
+	selectedVariables: string[];
+	type: ChartSettingType;
+}
+
 export const ProgrammingLanguageVersion: { [key in ProgrammingLanguage]: string } = {
 	[ProgrammingLanguage.Python]: 'python3',
 	[ProgrammingLanguage.R]: 'ir',

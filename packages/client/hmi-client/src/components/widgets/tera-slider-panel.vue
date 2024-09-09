@@ -14,6 +14,7 @@
 				</header>
 				<slot name="content" />
 			</aside>
+			<slot name="overlay" />
 		</template>
 		<template v-slot:tab>
 			<header :class="`tab ${direction}`">
