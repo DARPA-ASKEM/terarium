@@ -6,9 +6,27 @@
 				<h4>Chart Settings</h4>
 			</header>
 			<div class="content">
-				<div v-if="annotations !== undefined">
+				<div v-if="chartAnnotations !== undefined">
 					<h5>Annotations</h5>
-					<p>Not yet implemented</p>
+					{{ chartAnnotations }}
+					<div>
+						<Button
+							v-if="!showAnnotationInput"
+							class="p-button-sm p-button-text"
+							icon="pi pi-plus"
+							label="Add annotation"
+							@click="showAnnotationInput = true"
+						/>
+						<tera-input-text
+							v-if="showAnnotationInput"
+							:icon="'pi pi-sparkles'"
+							:placeholder="'What do you want to annotate?'"
+							:disabled="!!isGeneratingAnnotation"
+							:model-value="generateAnnotationQuery"
+							@keyup.enter="createAnnotation"
+							@keyup.esc="cancelGenerateAnnotation"
+						/>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -16,16 +34,45 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed } from 'vue';
 import Button from 'primevue/button';
 import { ChartSetting } from '@/types/common';
 import { ChartAnnotation } from '@/types/Types';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 
-defineProps<{
+const props = defineProps<{
 	activeSettings: ChartSetting | null;
 	annotations?: ChartAnnotation[];
+	generateAnnotation?: (setting: ChartSetting) => Promise<ChartAnnotation>;
 }>();
 
-defineEmits(['close', 'update:settings']);
+const emit = defineEmits(['close', 'update:settings', 'delete-annotation', 'create-annotation']);
+
+const chartAnnotations = computed(() => {
+	if (props.annotations === undefined) {
+		return undefined;
+	}
+	return props.annotations.filter((annotation) => annotation.chartId === props.activeSettings?.id);
+});
+const isGeneratingAnnotation = ref(false);
+const generateAnnotationQuery = ref<string>('');
+const showAnnotationInput = ref<Boolean>(false);
+
+const createAnnotation = async () => {
+	if (props.generateAnnotation === undefined || props.activeSettings === null) {
+		return;
+	}
+	isGeneratingAnnotation.value = true;
+	const newAnnotation = await props.generateAnnotation(props.activeSettings);
+	isGeneratingAnnotation.value = false;
+	generateAnnotationQuery.value = '';
+	emit('create-annotation', newAnnotation);
+};
+
+const cancelGenerateAnnotation = () => {
+	generateAnnotationQuery.value = '';
+	showAnnotationInput.value = false;
+};
 </script>
 
 <style scoped>
