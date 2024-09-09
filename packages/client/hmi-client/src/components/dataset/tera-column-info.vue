@@ -117,7 +117,7 @@ function applyValidConcept() {
 
 watch(
 	() => props.column.grounding?.identifiers,
-	async (identifiers) => {
+	(identifiers) => {
 		// console.log(identifiers); // FIXME: Multiple identifiers are held in here after enrichment! Designs have to be updated to handle more.
 		query.value = identifiers?.[0].name ?? ''; // Just show first one for now.
 	},
