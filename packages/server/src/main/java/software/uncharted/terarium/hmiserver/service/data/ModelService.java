@@ -163,7 +163,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		}
 
 		// Force observable to empty-list if null or not specified
-		if (asset.getSemantics() != null) {
+		if (asset.getSemantics() != null && asset.getSemantics().getOde() != null) {
 			if (asset.getSemantics().getOde().getObservables() == null) {
 				asset.getSemantics().getOde().setObservables(new ArrayList());
 			}
@@ -215,7 +215,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		}
 
 		// Force observable to empty-list if null or not specified
-		if (asset.getSemantics() != null) {
+		if (asset.getSemantics() != null && asset.getSemantics().getOde() != null) {
 			if (asset.getSemantics().getOde().getObservables() == null) {
 				asset.getSemantics().getOde().setObservables(new ArrayList());
 			}

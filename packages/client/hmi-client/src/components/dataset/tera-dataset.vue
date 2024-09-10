@@ -1,9 +1,10 @@
 <template>
 	<tera-asset
+		v-bind="$attrs"
 		:id="assetId"
 		:name="dataset?.name"
 		:feature-config="featureConfig"
-		:is-naming-asset="isRenamingDataset"
+		:is-naming-asset="isRenaming"
 		:is-loading="isDatasetLoading"
 		:overflow-hidden="selectedTabIndex === 1"
 		:selected-tab-index="selectedTabIndex"
@@ -13,14 +14,14 @@
 	>
 		<template #name-input>
 			<tera-input-text
-				v-if="isRenamingDataset"
-				v-model.lazy="newDatasetName"
+				v-if="isRenaming"
+				v-model.lazy="newName"
 				placeholder="Dataset name"
 				@keyup.enter="updateDatasetName"
 				@keyup.esc="updateDatasetName"
 				auto-focus
 			/>
-			<div v-if="isRenamingDataset" class="flex flex-nowrap ml-1 mr-3">
+			<div v-if="isRenaming" class="flex flex-nowrap ml-1 mr-3">
 				<Button icon="pi pi-check" rounded text @click="updateDatasetName" />
 			</div>
 		</template>
@@ -33,9 +34,9 @@
 			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" popup :pt="optionsMenuPt" />
 			<div class="btn-group">
 				<tera-asset-enrichment :asset-type="AssetType.Dataset" :assetId="assetId" @finished-job="fetchDataset" />
-				<Button label="Reset" severity="secondary" outlined />
-				<Button label="Save as..." severity="secondary" outlined />
-				<Button label="Save" />
+				<Button label="Reset" severity="secondary" outlined @click="reset" />
+				<Button label="Save as..." severity="secondary" outlined @click="showSaveModal = true" disabled />
+				<Button label="Save" :disabled="isSaved" @click="updateDatasetContent" />
 			</div>
 		</template>
 		<section>
@@ -65,12 +66,15 @@
 				</AccordionTab>
 				<!-- <AccordionTab header="Charts">TBD</AccordionTab> -->
 				<AccordionTab header="Column information" v-if="!isClimateData && !isClimateSubset">
-					<tera-dataset-overview-table
-						v-if="dataset"
-						:dataset="dataset"
-						@update-dataset="(dataset: Dataset) => updateAndFetchDataset(dataset)"
-						class="column-information-table"
-					/>
+					<ul>
+						<li v-for="(column, index) in columnInformation" :key="index">
+							<tera-column-info
+								:column="column"
+								:feature-config="{ isPreview: false }"
+								@update-column="updateColumn(index, $event.key, $event.value)"
+							/>
+						</li>
+					</ul>
 				</AccordionTab>
 				<template v-else-if="dataset?.metadata">
 					<AccordionTab header="Preview">
@@ -116,11 +120,21 @@
 			</Accordion>
 		</section>
 	</tera-asset>
+	<!-- TODO: Add create dataset support to save modal -->
+	<!---<tera-save-asset-modal
+		v-if="transientDataset"
+		:initial-name="transientDataset.name"
+		:is-visible="showSaveModal"
+		:asset="transientDataset"
+		:asset-type="AssetType.Dataset"
+		@close-modal="showSaveModal = false"
+		@on-save="showSaveModal = false"
+	/> -->
 </template>
 
 <script setup lang="ts">
-import { computed, onUpdated, PropType, ref, watch } from 'vue';
-import { cloneDeep, isEmpty } from 'lodash';
+import { computed, PropType, ref, watch } from 'vue';
+import { cloneDeep, isEmpty, isEqual } from 'lodash';
 import { snakeToCapitalized } from '@/utils/text';
 import {
 	downloadRawFile,
@@ -130,7 +144,7 @@ import {
 	getDownloadURL,
 	updateDataset
 } from '@/services/dataset';
-import { AssetType, type CsvAsset, type Dataset, type DatasetColumn, PresignedURL } from '@/types/Types';
+import { AssetType, type CsvAsset, type Dataset, PresignedURL } from '@/types/Types';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import type { FeatureConfig } from '@/types/common';
 import type { Source } from '@/types/search';
@@ -146,9 +160,9 @@ import { logger } from '@/utils/logger';
 import TeraCarousel from '@/components/widgets/tera-carousel.vue';
 import TeraAssetEnrichment from '@/components/widgets/tera-asset-enrichment.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import TeraDatasetOverviewTable from './tera-dataset-overview-table.vue';
-import TeraDatasetDatatable from './tera-dataset-datatable.vue';
-import { enrichDataset } from './utils';
+import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
+import TeraColumnInfo from '@/components/dataset/tera-column-info.vue';
+// import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 
 const props = defineProps({
 	assetId: {
@@ -165,85 +179,30 @@ const props = defineProps({
 	}
 });
 
-const emit = defineEmits(['close-preview', 'asset-loaded']);
+const emit = defineEmits(['close-preview']);
+
 const dataset = ref<Dataset | null>(null);
-const newDatasetName = ref('');
-const isRenamingDataset = ref(false);
+const transientDataset = ref<Dataset | null>(null);
+const newName = ref('');
+const isRenaming = ref(false);
+const showSaveModal = ref(false);
 const rawContent = ref<CsvAsset | null>(null);
 const isDatasetLoading = ref(false);
 const selectedTabIndex = ref(0);
 
-const datasetInfo = computed(() => {
-	const information = {
-		id: '',
-		fileNames: ''
-	};
-	if (dataset.value) {
-		information.id = dataset.value.id ?? '';
-		information.fileNames = dataset.value.fileNames?.join(', ') ?? '';
-	}
-	return information;
-});
-
-const isClimateData = computed(() => dataset.value?.esgfId);
-const isClimateSubset = computed(() => dataset.value?.metadata?.format === 'netcdf');
-const datasetType = computed(() => card.value?.DATASET_TYPE ?? '');
-
-const groundingValues = ref<string[][]>([]);
-// originaGroundingValues are displayed as the first suggested value for concepts
-const originalGroundingValues = ref<string[]>([]);
-const suggestedValues = ref<string[]>([]);
-
-const rowEditList = ref<boolean[]>([]);
-// editableRows are the dataset columns that can be edited by the user; transient data
-const editableRows = ref<DatasetColumn[]>([]);
-
-const image = ref<string | undefined>(undefined);
-
-const card = computed(() => {
-	if (dataset.value?.metadata?.data_card) {
-		const cardWithUnknowns = dataset.value.metadata?.data_card;
-		const cardWithUnknownsArr = Object.entries(cardWithUnknowns);
-
-		for (let i = 0; i < cardWithUnknownsArr.length; i++) {
-			const key = cardWithUnknownsArr[i][0];
-			if (cardWithUnknowns[key] === 'UNKNOWN') {
-				cardWithUnknowns[key] = null;
-			}
-		}
-		return cardWithUnknowns;
-	}
-	return null;
-});
-const description = computed(() => dataset.value?.description?.concat('\n', card.value?.DESCRIPTION ?? '') ?? '');
-const author = computed(() => card.value?.AUTHOR_NAME ?? '');
-
-const toggleOptionsMenu = (event) => {
-	optionsMenu.value.toggle(event);
-};
-
-/**
- * Downloads the first file of the dataset from S3 directly
- * @param dataset
- */
-async function downloadFileFromDataset(): Promise<PresignedURL | null> {
-	if (dataset.value) {
-		const { id, fileNames } = dataset.value;
-		if (id && fileNames && fileNames.length > 0 && !isEmpty(fileNames[0])) {
-			return (await getDownloadURL(id, fileNames[0])) ?? null;
-		}
-	}
-	return null;
-}
-
 const optionsMenu = ref();
+const optionsMenuPt = {
+	submenu: {
+		class: 'max-h-30rem overflow-y-scroll'
+	}
+};
 const optionsMenuItems = ref([
 	{
 		icon: 'pi pi-pencil',
 		label: 'Rename',
 		command() {
-			isRenamingDataset.value = true;
-			newDatasetName.value = dataset.value?.name ?? '';
+			isRenaming.value = true;
+			newName.value = dataset.value?.name ?? '';
 		}
 	},
 	{
@@ -272,40 +231,127 @@ const optionsMenuItems = ref([
 		}
 	}
 ]);
-const optionsMenuPt = {
-	submenu: {
-		class: 'max-h-30rem overflow-y-scroll'
-	}
-};
 
-// TODO - It's got to be a better way to do this
-async function updateDatasetName() {
-	if (dataset.value && newDatasetName.value !== '') {
-		const datasetClone = cloneDeep(dataset.value);
-		datasetClone.name = newDatasetName.value;
-		await updateDataset(datasetClone);
-		dataset.value = await getDataset(props.assetId);
-		await useProjects().refresh();
-		isRenamingDataset.value = false;
+const isSaved = computed(() => isEqual(dataset.value, transientDataset.value));
+const columnInformation = computed(
+	() =>
+		transientDataset.value?.columns?.map((column) => ({
+			symbol: column.name, // Uneditable
+			description: column.description,
+			grounding: column?.grounding,
+			dataType: column.dataType,
+			// Metadata
+			name: column.metadata?.name ?? column.name,
+			unit: column.metadata?.unit,
+			stats: column.metadata?.column_stats // Uneditable
+		})) ?? []
+);
+
+const datasetInfo = computed(() => {
+	const information = {
+		id: '',
+		fileNames: ''
+	};
+	if (dataset.value) {
+		information.id = dataset.value.id ?? '';
+		information.fileNames = dataset.value.fileNames?.join(', ') ?? '';
+	}
+	return information;
+});
+
+const isClimateData = computed(() => dataset.value?.esgfId);
+const isClimateSubset = computed(() => dataset.value?.metadata?.format === 'netcdf');
+const datasetType = computed(() => card.value?.DATASET_TYPE ?? '');
+
+const image = ref<string | undefined>(undefined);
+
+const card = computed(() => {
+	if (dataset.value?.metadata?.data_card) {
+		const cardWithUnknowns = dataset.value.metadata?.data_card;
+		const cardWithUnknownsArr = Object.entries(cardWithUnknowns);
+
+		for (let i = 0; i < cardWithUnknownsArr.length; i++) {
+			const key = cardWithUnknownsArr[i][0];
+			if (cardWithUnknowns[key] === 'UNKNOWN') {
+				cardWithUnknowns[key] = null;
+			}
+		}
+		return cardWithUnknowns;
+	}
+	return null;
+});
+const description = computed(() => dataset.value?.description?.concat('\n', card.value?.DESCRIPTION ?? '') ?? '');
+const author = computed(() => card.value?.AUTHOR_NAME ?? '');
+
+function updateColumn(index: number, key: string, value: any) {
+	if (!transientDataset.value?.columns?.[index]) return;
+	if (key === 'unit' || key === 'name') {
+		if (!transientDataset.value.columns[index].metadata) {
+			transientDataset.value.columns[index].metadata = {};
+		}
+		transientDataset.value.columns[index].metadata[key] = value;
+	} else if (key === 'concept') {
+		// Only one identifier is supported for now
+		if (!transientDataset.value.columns[index]?.grounding?.identifiers) {
+			transientDataset.value.columns[index].grounding = { identifiers: [] };
+		}
+		// Replaces first element of identifiers array
+		transientDataset.value.columns[index].grounding?.identifiers?.shift();
+		transientDataset.value.columns[index].grounding?.identifiers?.unshift(value);
+	} else {
+		transientDataset.value.columns[index][key] = value;
 	}
 }
 
-async function updateAndFetchDataset(ds: Dataset) {
-	await updateDataset(ds);
+const toggleOptionsMenu = (event) => {
+	optionsMenu.value.toggle(event);
+};
+
+/**
+ * Downloads the first file of the dataset from S3 directly
+ * @param dataset
+ */
+async function downloadFileFromDataset(): Promise<PresignedURL | null> {
+	if (dataset.value) {
+		const { id, fileNames } = dataset.value;
+		if (id && fileNames && fileNames.length > 0 && !isEmpty(fileNames[0])) {
+			return (await getDownloadURL(id, fileNames[0])) ?? null;
+		}
+	}
+	return null;
+}
+
+async function updateDatasetContent() {
+	if (!transientDataset.value) return;
+	if (!useProjects().hasEditPermission()) {
+		logger.error('You do not have permission to edit this dataset.'); // FIXME: Disable asset editing options if user does not have permission
+		return;
+	}
+	await updateDataset(transientDataset.value);
+	logger.info('Saved changes.');
+	await useProjects().refresh();
 	fetchDataset();
 }
 
+async function updateDatasetName() {
+	if (transientDataset.value && !isEmpty(newName.value)) {
+		transientDataset.value.name = newName.value;
+		await updateDatasetContent();
+	}
+	isRenaming.value = false;
+}
+
+function reset() {
+	transientDataset.value = cloneDeep(dataset.value);
+}
+
 const fetchDataset = async () => {
-	isDatasetLoading.value = true;
 	if (props.source === DatasetSource.TERARIUM) {
-		const datasetTemp = await getDataset(props.assetId);
-		if (datasetTemp) {
-			dataset.value = enrichDataset(datasetTemp);
-		}
+		dataset.value = await getDataset(props.assetId);
 	} else if (props.source === DatasetSource.ESGF) {
 		dataset.value = await getClimateDataset(props.assetId);
 	}
-	isDatasetLoading.value = false;
+	reset(); // Prepare transientDataset for editing
 
 	if (dataset.value?.esgfId && !image.value) {
 		image.value = await getClimateDatasetPreview(dataset.value.esgfId);
@@ -315,11 +361,10 @@ const fetchDataset = async () => {
 function getRawContent() {
 	// If it's an ESGF dataset or a NetCDF file, we don't want to download the raw content
 	if (!dataset.value || dataset.value.esgfId || dataset.value.metadata?.format === 'netcdf') return;
-
 	// We are assuming here there is only a single csv file.
 	if (
 		dataset.value.fileNames &&
-		dataset.value.fileNames.length > 0 &&
+		!isEmpty(dataset.value.fileNames) &&
 		!isEmpty(dataset.value.fileNames[0]) &&
 		dataset.value.fileNames[0].endsWith('.csv')
 	) {
@@ -329,39 +374,21 @@ function getRawContent() {
 	}
 }
 
-onUpdated(() => {
-	if (dataset.value) {
-		emit('asset-loaded');
-
-		// setting values related to editing rows in the variables table
-		if (dataset.value.columns) {
-			rowEditList.value = dataset.value.columns.map(() => false);
-			suggestedValues.value = dataset.value.columns.map(() => '');
-			editableRows.value = dataset.value.columns.map((c) => ({ ...c }));
-			groundingValues.value = editableRows.value.map((row) => {
-				const grounding = row.grounding;
-				if (grounding) {
-					const keys = Object.keys(grounding.identifiers);
-					return keys.map((k) => grounding.identifiers[k]);
-				}
-				return [];
-			});
-			originalGroundingValues.value = groundingValues.value.map((g) => g[0]);
-		}
-	}
-});
-
 // Whenever assetId changes, fetch dataset with that ID
 watch(
 	() => props.assetId,
 	async () => {
-		isRenamingDataset.value = false;
+		isRenaming.value = false;
 		if (props.assetId) {
-			// Reset the dataset and rawContent so previous data is not shown
+			// Empty the dataset and rawContent so previous data is not shown
 			dataset.value = null;
 			rawContent.value = null;
+			isDatasetLoading.value = true;
 			await fetchDataset();
-			if (dataset.value) getRawContent(); // Whenever we change the dataset, we need to fetch the rawContent
+			isDatasetLoading.value = false;
+			if (dataset.value) {
+				getRawContent(); // Whenever we change the dataset, we need to fetch the rawContent
+			}
 		}
 	},
 	{ immediate: true }
@@ -377,6 +404,11 @@ watch(
 	align-items: center;
 	gap: var(--gap-small);
 	margin-left: auto;
+}
+
+li {
+	padding-bottom: var(--gap-2);
+	border-bottom: 1px solid var(--surface-border);
 }
 
 .description {
