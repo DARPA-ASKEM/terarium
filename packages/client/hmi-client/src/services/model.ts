@@ -71,7 +71,7 @@ export async function getBulkModels(modelIDs: string[]) {
 }
 
 // Note: will not work with decapodes
-export async function getMMT(model: Model): Promise<MMT | null> {
+export async function getMMT(model: Model) {
 	const response = await API.post('/mira/amr-to-mmt', model);
 
 	const miraModel = response?.data?.response;

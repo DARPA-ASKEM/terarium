@@ -198,8 +198,7 @@ watch(
 	async () => {
 		if (modelType.value === AMRSchemaNames.DECAPODES || graphElement.value === null) return;
 		// FIXME: inefficient, do not constant call API in watch
-		const response = await getMMT(props.model);
-		if (!response) return;
+		const response: any = await getMMT(props.model);
 		mmt.value = response.mmt;
 		mmtParams.value = response.template_params;
 		observableSummary = response.observable_summary;
