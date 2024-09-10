@@ -190,7 +190,7 @@ import ContextMenu from 'primevue/contextmenu';
 import * as workflowService from '@/services/workflow';
 import { OperatorImport, OperatorNodeSize, getNodeMenu } from '@/services/workflow';
 import * as d3 from 'd3';
-import { AssetType, EventType } from '@/types/Types';
+import { AssetType, ClientEventType, EventType } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -221,6 +221,7 @@ import * as ModelFromDocumentOp from '@/components/workflow/ops/model-from-equat
 import * as ModelComparisonOp from '@/components/workflow/ops/model-comparison/mod';
 import * as RegriddingOp from '@/components/workflow/ops/regridding/mod';
 import * as InterventionPolicyOp from '@/components/workflow/ops/intervention-policy/mod';
+import { subscribe } from '@/services/ClientEventService';
 
 const WORKFLOW_SAVE_INTERVAL = 4000;
 
@@ -956,6 +957,10 @@ onMounted(() => {
 	saveTimer = setInterval(async () => {
 		workflowService.setLocalStorageTransform(wf.value.getId(), canvasTransform);
 	}, WORKFLOW_SAVE_INTERVAL);
+
+	subscribe(ClientEventType.WorkflowUpdate, (d) => {
+		console.log('workflow updated !!!', d);
+	});
 });
 
 onUnmounted(() => {
