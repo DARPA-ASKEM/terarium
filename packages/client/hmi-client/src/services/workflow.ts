@@ -84,7 +84,6 @@ export class WorkflowWrapper {
 					if (!_.isEqual(nodes[i].state, updated.state)) {
 						nodes[i].state = updated.state;
 					}
-					// nodes[i] = Object.assign(nodes[i], updated);
 				}
 				updatedNodeMap.delete(nodeId);
 			}
@@ -138,9 +137,6 @@ export class WorkflowWrapper {
 		if (node) {
 			node.isDeleted = true;
 		}
-
-		// TODO: option Remove the node
-		// wf.nodes = wf.nodes.filter((node) => node.id !== id);
 	}
 
 	removeEdge(id: string) {
@@ -168,9 +164,6 @@ export class WorkflowWrapper {
 		if (edge) {
 			edge.isDeleted = true;
 		}
-
-		// TODO: option Edge re-assignment
-		// wf.edges = wf.edges.filter((edge) => edge.id !== id);
 
 		// If there are no more references reset the connected status of the source node
 		if (_.isEmpty(this.getEdges().filter((e) => e.source === edgeToRemove.source))) {
