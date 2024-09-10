@@ -19,13 +19,34 @@
 					{{ data.userName ?? '--' }}
 				</template>
 				<div v-else-if="col.field === 'stats'" class="stats">
-					<span class="mr-1"><i class="pi pi-user mr-1" /> {{ data.metadata?.['contributor-count'] }}</span>
-					<span class="mr-1"><i class="pi pi-file mr-1" /> {{ data.metadata?.['document-count'] }}</span>
-					<span class="mr-1">
-						<dataset-icon fill="var(--text-color-secondary)" class="mr-1" />
-						{{ data.metadata?.['datasets-count'] }}
+					<span
+						class="mr-1"
+						v-tooltip.top="formatStatTooltip(formatStat(data.metadata, 'contributor-count'), 'contributor')"
+					>
+						<i class="pi pi-user mr-1" />
+						{{ formatStat(data.metadata, 'contributor-count') }}
 					</span>
-					<span><i class="pi pi-share-alt mr-1" /> {{ data.metadata?.['models-count'] }}</span>
+					<span class="mr-1" v-tooltip.top="formatStatTooltip(formatStat(data.metadata, 'document-count'), 'paper')">
+						<i class="pi pi-file mr-1" />
+						{{ formatStat(data.metadata, 'document-count') }}
+					</span>
+					<span class="mr-1" v-tooltip.top="formatStatTooltip(formatStat(data.metadata, 'datasets-count'), 'dataset')">
+						<dataset-icon fill="var(--text-color-secondary)" class="mr-1" />
+						{{ formatStat(data.metadata, 'datasets-count') }}
+					</span>
+					<span v-tooltip.top="formatStatTooltip(formatStat(data.metadata, 'models-count'), 'model')">
+						<i class="pi pi-share-alt mr-1" />
+						{{ formatStat(data.metadata, 'models-count') }}
+					</span>
+					<span v-tooltip.top="formatStatTooltip(formatStat(data.metadata, 'workflows-count'), 'workflow')">
+						<vue-feather
+							class="p-button-icon-left"
+							type="git-merge"
+							size="1.25rem"
+							stroke="var(--text-color-secondary)"
+						/>
+						{{ formatStat(data.metadata, 'workflows-count') }}
+					</span>
 				</div>
 				<template v-else-if="col.field === 'createdOn'">
 					{{ data.createdOn ? formatDdMmmYyyy(data.createdOn) : '--' }}
@@ -58,6 +79,15 @@ defineProps<{
 }>();
 
 const emit = defineEmits(['open-project']);
+
+function formatStat(data, key) {
+	const stat = data?.[key];
+	return key === 'contributor-count' ? parseInt(stat ?? '1', 10) : parseInt(stat ?? '0', 10);
+}
+
+function formatStatTooltip(stat, displayName) {
+	return `${stat} ${displayName}${stat === 1 ? '' : 's'}`;
+}
 
 function getColumnWidth(columnField: string) {
 	switch (columnField) {
