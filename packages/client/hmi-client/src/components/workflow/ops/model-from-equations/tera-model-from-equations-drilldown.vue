@@ -5,8 +5,104 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
-		<tera-columnar-panel :tabName="DrilldownTabs.Wizard">
-			<tera-drilldown-section :is-loading="assetLoading">
+		<!-- <tera-columnar-panel :tabName="DrilldownTabs.Wizard"> -->
+		<template #content>
+			<tera-slider-panel v-model:is-open="isDocViewerOpen" header="Document Viewer" content-width="100%">
+				<template #content>
+					<div class="flex align-items-center font-bold pl-3 text-lg">Equation conversions</div>
+				</template>
+			</tera-slider-panel>
+			<tera-slider-panel v-model:is-open="isInputOpen" header="Input" content-width="100%">
+				<template #content>
+					<div class="flex align-items-center font-bold pl-3 text-lg">Equation conversions</div>
+					<p class="inline-flex align-items-center">Framework</p>
+					<Dropdown
+						class="w-full md:w-14rem ml-2"
+						v-model="clonedState.modelFramework"
+						:options="modelFrameworks"
+						option-label="label"
+						option-value="value"
+						option-disabled="disabled"
+						@change="onChangeModelFramework"
+					/>
+					<Button label="Run" @click="onRun" :diabled="assetLoading" :loading="loadingModel"></Button>
+
+					<header>
+						<section class="header-group">
+							<Textarea
+								v-model="multipleEquations"
+								autoResize
+								rows="1"
+								placeholder="Add an expression(s) with LaTex"
+								class="w-full"
+							/>
+							<Button label="Add" @click="getEquations" class="ml-2" />
+						</section>
+
+						<section class="header-group">
+							<div class="inline-flex align-items-center">
+								<h6>Equations</h6>
+								<span class="pl-1">{{ getEquationSelectedLabel() }}</span>
+							</div>
+							<div>
+								<Button text @click="toggleCollapseAll">{{ getCollapsedLabel() }}</Button>
+								<Button text @click="toggleIncludedEquations">{{ getIncludedEquationLabel() }}</Button>
+							</div>
+						</section>
+					</header>
+					<ul class="blocks-container ml-3">
+						<li v-for="(equation, i) in clonedState.equations" :key="i">
+							<tera-asset-block
+								:is-included="equation.includeInProcess"
+								:collapsed="equation.isCollapsed"
+								@update:collapsed="(isCollapsed) => changeCollapsed(equation, isCollapsed)"
+								@update:is-included="onUpdateInclude(equation)"
+								:is-deletable="!instanceOfEquationFromImageBlock(equation.asset)"
+								@delete="removeEquation(i)"
+							>
+								<template #header>
+									<h5>{{ equation.name }}</h5>
+								</template>
+								<div class="block-container">
+									<template v-if="instanceOfEquationFromImageBlock(equation.asset)">
+										<label>Extracted Image:</label>
+										<Image
+											id="img"
+											:src="getAssetUrl(equation as AssetBlock<EquationFromImageBlock>)"
+											:alt="''"
+											preview
+											class="equation-image"
+										/>
+									</template>
+									<tera-math-editor
+										v-if="equation.asset.text"
+										:latex-equation="equation.asset.text"
+										:is-editable="false"
+									/>
+									<div v-else class="mt-2" />
+									<span>{{ getEquationErrorLabel(equation) }}</span>
+									<tera-input-text
+										v-model="equation.asset.text"
+										placeholder="Add an expression with LaTeX"
+										@update:model-value="emit('update-state', clonedState)"
+									/>
+								</div>
+							</tera-asset-block>
+						</li>
+					</ul>
+				</template>
+			</tera-slider-panel>
+			<tera-slider-panel v-model:is-open="isOutputOpen" header="Output" content-width="100%">
+				<template #content>
+					<div class="flex align-items-center font-bold pl-3 text-lg">Equation conversions</div>
+					<tera-drilldown-preview>
+						<tera-model-description v-if="selectedModel" :model="selectedModel" :generating-card="isGeneratingCard" />
+						<tera-operator-placeholder v-else :node="node" style="height: 100%" />
+					</tera-drilldown-preview>
+				</template>
+			</tera-slider-panel>
+		</template>
+		<!-- <tera-drilldown-section :is-loading="assetLoading">
 				<template #header-controls-left>
 					<div class="flex align-items-center font-bold pl-3 text-lg">Equation conversions</div>
 				</template>
@@ -93,11 +189,11 @@
 			<tera-drilldown-preview>
 				<tera-model-description v-if="selectedModel" :model="selectedModel" :generating-card="isGeneratingCard" />
 				<tera-operator-placeholder v-else :node="node" style="height: 100%" />
-			</tera-drilldown-preview>
-		</tera-columnar-panel>
+			</tera-drilldown-preview> -->
+		<!-- </tera-columnar-panel>
 		<tera-drilldown-section :tabName="DrilldownTabs.Notebook">
 			<h5>Notebook</h5>
-		</tera-drilldown-section>
+		</tera-drilldown-section> -->
 	</tera-drilldown>
 	<tera-save-asset-modal
 		v-if="selectedModel"
@@ -111,7 +207,7 @@
 <script setup lang="ts">
 import { AssetBlock, WorkflowNode } from '@/types/workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+// import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { computed, onMounted, ref, watch } from 'vue';
@@ -129,11 +225,12 @@ import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Textarea from 'primevue/textarea';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
-import { DrilldownTabs } from '@/types/common';
+// import { DrilldownTabs } from '@/types/common';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
-import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
+// import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import { modelCard } from '@/services/goLLM';
 import * as textUtils from '@/utils/text';
+import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import {
 	EquationBlock,
 	EquationFromImageBlock,
@@ -178,6 +275,10 @@ const goLLMCard = computed<any>(() => document.value?.metadata?.gollmCard);
 const showSaveModelModal = ref(false);
 const isGeneratingCard = ref(false);
 const multipleEquations = ref<string>('');
+
+const isDocViewerOpen = ref(true);
+const isInputOpen = ref(true);
+const isOutputOpen = ref(true);
 
 onMounted(async () => {
 	clonedState.value = cloneDeep(props.node.state);
