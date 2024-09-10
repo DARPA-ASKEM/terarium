@@ -19,7 +19,7 @@
 					<Button :loading="showSpinner" class="run-button" label="Run" icon="pi pi-play" @click="runMakeQuery" />
 				</template>
 				<main>
-					<Accordion multiple :active-index="[0, 1]">
+					<Accordion multiple :active-index="[0, 1]" class="accordion-component">
 						<AccordionTab header="Model checks">
 							<!---<i class="pi pi-info-circle" v-tooltip="validateParametersToolTip" />-->
 							<p class="mt-1">Model configurations will be tested against these constraints.</p>
@@ -632,6 +632,15 @@ div.section-row.timespan > div > span {
 }
 
 .wizard-section {
+	background-color: var(--surface-100);
+}
+
+/** Override default styles */
+.accordion-component:deep(.p-accordion-header-link) {
+	background-color: var(--surface-100);
+}
+
+.accordion-component:deep(.p-accordion-content) {
 	background-color: var(--surface-100);
 }
 </style>

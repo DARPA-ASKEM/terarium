@@ -1,5 +1,5 @@
 <template>
-	<div class="constraint-group" :style="`border-left: 9px solid ${props.config.borderColour}`">
+	<div class="constraint-group">
 		<div class="trash-button-align">
 			<i class="trash-button pi pi-trash" @click="emit('delete-self', { index: props.index })" />
 		</div>
@@ -195,13 +195,9 @@ watch(
 	flex-direction: column;
 	justify-content: center;
 	align-items: flex-start;
-	border-radius: 0.375rem;
-	background: #fff;
-	border: 1px solid rgba(0, 0, 0, 0.08);
-	/* Shadow/medium */
-	box-shadow:
-		0px 2px 4px -1px rgba(0, 0, 0, 0.06),
-		0px 4px 6px -1px rgba(0, 0, 0, 0.08);
+	background: var(--gray-50);
+	border: 1px solid var(--gray-200);
+	border-radius: var(--border-radius);
 	overflow: hidden;
 }
 
