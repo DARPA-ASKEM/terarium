@@ -782,7 +782,7 @@ const runOptimize = async () => {
 	const qois: OptimizeQoi[] = [];
 	props.node.state.constraintGroups.forEach((constraintGroup) =>
 		qois.push({
-			contexts: constraintGroup.targetVariable,
+			contexts: [constraintGroup.targetVariable],
 			method: constraintGroup.qoiMethod
 		})
 	);
