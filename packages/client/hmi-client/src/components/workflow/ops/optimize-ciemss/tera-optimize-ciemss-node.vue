@@ -201,6 +201,7 @@ watch(
 			state.inProgressPreForecastId = preForecastId;
 			state.inProgressPostForecastId = postForecastId;
 			state.optimizedInterventionPolicyId = newInterventionResponse.id ?? '';
+			state.currentProgress = 0;
 			emit('update-state', state);
 		} else {
 			// Simulation Failed:
