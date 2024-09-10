@@ -313,6 +313,8 @@ const _saveWorkflow = async () => {
 };
 // eslint-disable-next-line
 const _updateWorkflow = (event: any) => {
+	if (event.data.id !== wf.value.getId()) return;
+
 	console.log('update workflow', event.data);
 	wf.value.update(event.data as Workflow);
 };
