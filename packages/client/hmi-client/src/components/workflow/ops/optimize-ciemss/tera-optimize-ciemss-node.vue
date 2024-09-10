@@ -201,7 +201,6 @@ watch(
 			state.inProgressPreForecastId = preForecastId;
 			state.inProgressPostForecastId = postForecastId;
 			state.optimizedInterventionPolicyId = newInterventionResponse.id ?? '';
-			state.currentProgress = 0;
 			emit('update-state', state);
 		} else {
 			// Simulation Failed:
@@ -255,6 +254,7 @@ Provide a consis summary in 100 words or less.
 			state.preForecastRunId = preSimId;
 			state.inProgressPostForecastId = '';
 			state.postForecastRunId = postSimId;
+			state.currentProgress = 0;
 			emit('update-state', state);
 
 			const datasetName = `Forecast run ${state.postForecastRunId}`;
@@ -302,6 +302,7 @@ Provide a consis summary in 100 words or less.
 			state.inProgressOptimizeId = '';
 			state.inProgressPreForecastId = '';
 			state.inProgressPostForecastId = '';
+			state.currentProgress = 0;
 			emit('update-state', state);
 		}
 	},
