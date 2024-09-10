@@ -4,7 +4,11 @@
 			<template v-if="!node.inputs[0].value"> Attach a model configuration </template>
 		</tera-operator-placeholder>
 		<template v-if="node.inputs[0].value">
-			<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%" />
+			<div v-if="showSpinner">
+				<p>{{ node.state.currentProgress }}% of maximum iterations complete</p>
+				<tera-progress-spinner :font-size="2" is-centered style="height: 100%" />
+			</div>
+
 			<div v-if="!showSpinner && runResults">
 				<template v-for="(_, index) of node.state.selectedSimulationVariables" :key="index">
 					<vega-chart :visualization-spec="preparedCharts[index]" :are-embed-actions-visible="false" />
@@ -33,7 +37,7 @@ import {
 	parsePyCiemssMap
 } from '@/services/models/simulation-service';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
-import { SimulationRequest, InterventionPolicy } from '@/types/Types';
+import { SimulationRequest, InterventionPolicy, Simulation } from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { createForecastChart } from '@/services/charts';
@@ -74,7 +78,23 @@ const pollResult = async (runId: string) => {
 	poller
 		.setInterval(5000)
 		.setThreshold(100)
-		.setPollAction(async () => pollAction(runId));
+		.setPollAction(async () => pollAction(runId))
+		.setProgressAction((data: Simulation) => {
+			if (data?.updates?.length) {
+				console.log(data.updates);
+			}
+			if (runId === props.node.state.inProgressOptimizeId && data.updates.length > 0) {
+				const checkpoint = _.first(data.updates);
+				if (checkpoint) {
+					const state = _.cloneDeep(props.node.state);
+					state.currentProgress = +((100 * checkpoint.data.progress) / checkpoint.data.totalPossibleIterations).toFixed(
+						2
+					);
+					console.log(state.currentProgress);
+					emit('update-state', state);
+				}
+			}
+		});
 
 	const pollerResults = await poller.start();
 
