@@ -81,11 +81,11 @@ const questionString = ref('');
 const kernelStatus = ref<string>('');
 const showAssistant = ref(true);
 const thoughts = ref();
-const llmThoughts = ref([]);
+const llmThoughts = ref<any[]>([]);
 const llmQuery = ref<string>('');
-const filteredOptions = ref([]);
-const autoComplete = ref<HTMLElement>();
-const textArea = ref<HTMLElement>();
+const filteredOptions = ref<any[]>([]);
+const autoComplete = ref();
+const textArea = ref();
 const hideAutoComplete = ref(false);
 
 // FIXME: If the language is changed here it should mutate the beaker instance in the parent component
