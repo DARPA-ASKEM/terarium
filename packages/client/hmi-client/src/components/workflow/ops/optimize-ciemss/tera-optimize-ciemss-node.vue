@@ -80,9 +80,6 @@ const pollResult = async (runId: string) => {
 		.setThreshold(100)
 		.setPollAction(async () => pollAction(runId))
 		.setProgressAction((data: Simulation) => {
-			if (data?.updates?.length) {
-				console.log(data.updates);
-			}
 			if (runId === props.node.state.inProgressOptimizeId && data.updates.length > 0) {
 				const checkpoint = _.first(data.updates);
 				if (checkpoint) {
@@ -90,7 +87,6 @@ const pollResult = async (runId: string) => {
 					state.currentProgress = +((100 * checkpoint.data.progress) / checkpoint.data.totalPossibleIterations).toFixed(
 						2
 					);
-					console.log(state.currentProgress);
 					emit('update-state', state);
 				}
 			}
