@@ -68,7 +68,7 @@ public class EnrichAmrResponseHandler extends TaskResponseHandler {
 			log.error("Failed to enrich amr", e);
 			throw new RuntimeException(e);
 		}
-		log.info("Model configured successfully");
+		log.info("Model enriched successfully");
 		return resp;
 	}
 }

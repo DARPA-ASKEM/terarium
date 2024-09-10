@@ -173,6 +173,7 @@ public class KnowledgeController {
 		req.setAdditionalProperties(props);
 
 		try {
+			log.info("ENRICHING MODEL!");
 			taskService.runTaskSync(req);
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
@@ -259,6 +260,10 @@ public class KnowledgeController {
 		if (modelId == null) {
 			try {
 				final Model model = modelService.createAsset(responseAMR, projectId, permission);
+				// enrich the model with the document
+				if (documentId != null) {
+					enrichModel(projectId, documentId, model.getId(), permission, true);
+				}
 				return ResponseEntity.ok(model.getId());
 			} catch (final IOException e) {
 				log.error("An error occurred while trying to create a Model asset.", e);
@@ -275,12 +280,13 @@ public class KnowledgeController {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("model.not-found"));
 		}
 
-		// enrich the model with the document
-		enrichModel(projectId, documentId, modelId, permission, true);
-
 		responseAMR.setId(model.get().getId());
 		try {
 			modelService.updateAsset(responseAMR, projectId, permission);
+			// enrich the model with the document
+			if (documentId != null) {
+				enrichModel(projectId, documentId, responseAMR.getId(), permission, true);
+			}
 			return ResponseEntity.ok(model.get().getId());
 		} catch (final IOException e) {
 			log.error(String.format("Unable to update the model with id %s.", modelId), e);
