@@ -112,7 +112,6 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 	@Override
 	@Observed(name = "function_profile")
 	protected String getAssetIndex() {
-		log.info("MODEL INDEX: {}", elasticConfig.getModelIndex());
 		return elasticConfig.getModelIndex();
 	}
 
@@ -124,7 +123,6 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 
 	@Override
 	public String getAssetAlias() {
-		log.info("MODEL ALIAS: {}", elasticConfig.getModelAlias());
 		return elasticConfig.getModelAlias();
 	}
 
@@ -169,7 +167,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 			}
 		}
 		// Force proper annotation metadata
-		ModelMetadata metadata = asset.getMetadata();
+		final ModelMetadata metadata = asset.getMetadata();
 		if (metadata.getAnnotations() == null) {
 			metadata.setAnnotations(new Annotations());
 			asset.setMetadata(metadata);
@@ -221,7 +219,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 			}
 		}
 		// Force proper annotation metadata
-		ModelMetadata metadata = asset.getMetadata();
+		final ModelMetadata metadata = asset.getMetadata();
 		if (metadata.getAnnotations() == null) {
 			metadata.setAnnotations(new Annotations());
 			asset.setMetadata(metadata);
