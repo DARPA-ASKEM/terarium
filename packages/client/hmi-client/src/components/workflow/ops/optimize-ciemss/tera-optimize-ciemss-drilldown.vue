@@ -779,10 +779,10 @@ const runOptimize = async () => {
 	// These are interventions to be considered but not optimized over.
 	const fixedInterventions: Intervention[] = _.cloneDeep(inactivePolicyGroups.value.map((ele) => ele.intervention));
 
-	const qoi: OptimizeQoi[] = [];
+	const qois: OptimizeQoi[] = [];
 	props.node.state.constraintGroups.forEach((constraintGroup) =>
-		qoi.push({
-			context: constraintGroup.targetVariable,
+		qois.push({
+			contexts: constraintGroup.targetVariable,
 			method: constraintGroup.qoiMethod
 		})
 	);
@@ -799,7 +799,7 @@ const runOptimize = async () => {
 		},
 		optimizeInterventions,
 		fixedInterventions,
-		qoi,
+		qoi: qois,
 		riskBound: props.node.state.constraintGroups[0].threshold, // TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
 		boundsInterventions: listBoundsInterventions,
 		extra: {

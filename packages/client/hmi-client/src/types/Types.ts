@@ -663,7 +663,7 @@ export interface OptimizeInterventions {
 }
 
 export interface OptimizeQoi {
-    context: string;
+    contexts: string[];
     method: string;
 }
 
