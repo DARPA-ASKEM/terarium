@@ -1,7 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.simulationservice.parts;
 
 import java.io.Serializable;
-import java.util.List;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
@@ -12,6 +11,6 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 // Used to kick off a Optimize job in simulation-service
 public class OptimizeQoi implements Serializable {
 
-	private List<String> contexts;
+	private String context;
 	private String method;
 }

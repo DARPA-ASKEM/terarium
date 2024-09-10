@@ -779,12 +779,15 @@ const runOptimize = async () => {
 	// These are interventions to be considered but not optimized over.
 	const fixedInterventions: Intervention[] = _.cloneDeep(inactivePolicyGroups.value.map((ele) => ele.intervention));
 
-	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
-	// The method should be a list but pyciemss + pyciemss service is not yet ready for this.
-	const qoi: OptimizeQoi = {
-		contexts: props.node.state.constraintGroups.map((ele) => ele.targetVariable),
-		method: props.node.state.constraintGroups[0].qoiMethod
-	};
+	const qoi: OptimizeQoi[] = [];
+	props.node.state.constraintGroups.forEach((constraintGroup) =>
+		qoi.push({
+			context: constraintGroup.targetVariable,
+			method: constraintGroup.qoiMethod
+		})
+	);
+
+	const alphas: number[] = props.node.state.constraintGroups.map((ele) => ele.riskTolerance / 100);
 
 	const optimizePayload: OptimizeRequestCiemss = {
 		userId: 'no_user_provided',
@@ -804,7 +807,7 @@ const runOptimize = async () => {
 			numSamples: knobs.value.numSamples,
 			maxiter: knobs.value.maxiter,
 			maxfeval: knobs.value.maxfeval,
-			alpha: props.node.state.constraintGroups[0].riskTolerance / 100, // riskTolerance to get alpha and divide by 100 to turn into a percent for pyciemss-service.
+			alpha: alphas, // riskTolerance to get alpha and divide by 100 to turn into a percent for pyciemss-service.
 			solverMethod: knobs.value.solverMethod,
 			solverStepSize: 1
 		}
