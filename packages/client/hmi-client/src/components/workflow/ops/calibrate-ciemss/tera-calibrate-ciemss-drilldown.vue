@@ -276,6 +276,8 @@
 						"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
+						@create-annotation="addChartAnnotation"
+						@delete-annotation="removeChartAnnotation"
 						@close="activeChartSettings = null"
 					/>
 				</template>
@@ -578,6 +580,9 @@ const chartAnnotations = ref<ChartAnnotation[]>([]);
 const generateAnnotation = async (setting: ChartSetting, query: string) => {
 	// Generate fake annotation. The annotation generation logic for the specific chart setting should go here
 	// Different chart settings type may have different annotation generation logic
+	await new Promise((resolve) => {
+		setTimeout(resolve, 1000);
+	});
 	const annotation: ChartAnnotation = {
 		id: uuidv4(),
 		description: query,
@@ -589,6 +594,15 @@ const generateAnnotation = async (setting: ChartSetting, query: string) => {
 		metadata: {}
 	};
 	return annotation;
+};
+const addChartAnnotation = (annotation: ChartAnnotation) => {
+	chartAnnotations.value.push(annotation);
+};
+const removeChartAnnotation = (annotationId: string) => {
+	const index = chartAnnotations.value.findIndex((annotation) => annotation.id === annotationId);
+	if (index !== -1) {
+		chartAnnotations.value.splice(index, 1);
+	}
 };
 
 const pyciemssMap = ref<Record<string, string>>({});

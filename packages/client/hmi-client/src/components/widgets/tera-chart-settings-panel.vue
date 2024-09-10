@@ -6,9 +6,14 @@
 				<h4>Chart Settings</h4>
 			</header>
 			<div class="content">
-				<div v-if="chartAnnotations !== undefined">
+				<div v-if="chartAnnotations !== undefined" class="annotation-items">
 					<h5>Annotations</h5>
-					{{ chartAnnotations }}
+					<div v-for="annotation in chartAnnotations" :key="annotation.id" class="annotation-item">
+						{{ annotation.description }}
+						<span class="btn-wrapper">
+							<Button icon="pi pi-trash" rounded text @click="$emit('delete-annotation', annotation.id)" />
+						</span>
+					</div>
 					<div>
 						<Button
 							v-if="!showAnnotationInput"
@@ -19,11 +24,11 @@
 						/>
 						<tera-input-text
 							v-if="showAnnotationInput"
+							v-model="generateAnnotationQuery"
 							:icon="'pi pi-sparkles'"
 							:placeholder="'What do you want to annotate?'"
 							:disabled="!!isGeneratingAnnotation"
-							:model-value="generateAnnotationQuery"
-							@keyup.enter="createAnnotation"
+							@keyup.enter="createAnnotationDebounced"
 							@keyup.esc="cancelGenerateAnnotation"
 						/>
 					</div>
@@ -34,6 +39,7 @@
 </template>
 
 <script setup lang="ts">
+import _ from 'lodash';
 import { ref, computed } from 'vue';
 import Button from 'primevue/button';
 import { ChartSetting } from '@/types/common';
@@ -65,9 +71,12 @@ const createAnnotation = async () => {
 	isGeneratingAnnotation.value = true;
 	const newAnnotation = await props.generateAnnotation(props.activeSettings, generateAnnotationQuery.value);
 	isGeneratingAnnotation.value = false;
+	showAnnotationInput.value = false;
 	generateAnnotationQuery.value = '';
 	emit('create-annotation', newAnnotation);
 };
+// Note: For some reason, @keyup.enter event on <tera-input-text> is fired twice. Let's introduce a debounced function to make sure the function is called only once.
+const createAnnotationDebounced = _.debounce(createAnnotation, 100);
 
 const cancelGenerateAnnotation = () => {
 	generateAnnotationQuery.value = '';
@@ -117,6 +126,28 @@ const cancelGenerateAnnotation = () => {
 	}
 	.content {
 		padding: var(--gap-4);
+	}
+
+	.annotation-items {
+		display: flex;
+		flex-direction: column;
+		gap: var(--gap-2);
+
+		.annotation-item {
+			position: relative;
+			padding: var(--gap-2);
+			padding-right: var(--gap-9);
+			background: var(--surface-50);
+		}
+		.btn-wrapper {
+			position: absolute;
+			top: 0;
+			right: var(--gap-2);
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			height: 100%;
+		}
 	}
 }
 </style>
