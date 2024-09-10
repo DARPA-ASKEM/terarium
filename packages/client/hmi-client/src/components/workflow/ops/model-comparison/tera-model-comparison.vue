@@ -11,9 +11,10 @@
 					<Accordion :activeIndex="0">
 						<AccordionTab header="Overview">
 							<p v-if="isEmpty(overview)" class="subdued">
+								<i class="pi pi-spin pi-spinner mr-1" />
 								Analyzing models metadata to generate a detailed comparison analysis...
 							</p>
-							<p v-html="overview" v-else />
+							<p v-html="overview" v-else class="markdown-text" />
 						</AccordionTab>
 					</Accordion>
 				</section>
@@ -176,7 +177,6 @@ const sampleAgentQuestions = [
 	'Compare the two models and visualize and display them.'
 ];
 let compareModelsTaskId = '';
-let compareModelsTaskOutput = '';
 
 const modelsToCompare = ref<Model[]>([]);
 const modelCardsToCompare = ref<any[]>([]);
@@ -289,30 +289,32 @@ async function buildJupyterContext() {
 	}
 }
 
+// Generate once the comparison task has been completed
+function generateOverview(output: string) {
+	overview.value = markdownit().render(JSON.parse(b64DecodeUnicode(output)).response);
+	emit('update-status', OperatorStatus.DEFAULT); // This is a custom way of granting a default status to the operator, since it has no output
+}
+
+// Create a task to compare the models
 async function processCompareModels(modelIds: string[]) {
 	const taskRes = await compareModels(modelIds, props.node.workflowId, props.node.id);
 	compareModelsTaskId = taskRes.id;
 	if (taskRes.status === TaskStatus.Success) {
-		compareModelsTaskOutput = taskRes.output;
+		generateOverview(taskRes.output);
 	}
 }
 
-function assignOverview(b64overview: string) {
-	overview.value = markdownit().render(JSON.parse(b64DecodeUnicode(b64overview)).response);
-}
-
-async function generateOverview() {
-	// Generate once the comparison task has been completed
-	if (!compareModelsTaskOutput) return;
-	assignOverview(compareModelsTaskOutput);
-	emit('update-status', OperatorStatus.DEFAULT); // This is a custom way of granting a default status to the operator, since it has no output
-}
-
+// Listen for the task completion event
 useClientEvent(ClientEventType.TaskGollmCompareModel, (event: ClientEvent<TaskResponse>) => {
-	if (!event.data || event.data.id !== compareModelsTaskId) return;
-	if (event.data.status !== TaskStatus.Success) return;
-	compareModelsTaskOutput = event.data.output;
-	generateOverview();
+	if (
+		!event.data ||
+		event.data.id !== compareModelsTaskId ||
+		!isEmpty(overview.value) ||
+		event.data.status !== TaskStatus.Success
+	) {
+		return;
+	}
+	generateOverview(event.data.output);
 });
 
 onMounted(async () => {
@@ -332,8 +334,8 @@ onMounted(async () => {
 	modelCardsToCompare.value = modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard);
 	fields.value = [...new Set(modelCardsToCompare.value.flatMap((card) => (card ? Object.keys(card) : [])))];
 
-	buildJupyterContext();
-	processCompareModels(modelIds);
+	await buildJupyterContext();
+	await processCompareModels(modelIds);
 });
 
 onUnmounted(() => {

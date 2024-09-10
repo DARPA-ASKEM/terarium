@@ -155,7 +155,8 @@ export enum AcceptedTypes {
 	MDL = `application/vnd.vensim.mdl`,
 	XMILE = 'application/vnd.stella.xmile',
 	ITMX = 'application/vnd.stella.itmx',
-	STMX = 'application/vnd.stella.stmx'
+	STMX = 'application/vnd.stella.stmx',
+	MODELCONFIG = 'application/zip'
 }
 
 export enum AcceptedExtensions {
@@ -178,7 +179,9 @@ export enum AcceptedExtensions {
 	// Stella formats
 	XMILE = 'xmile',
 	ITMX = 'itmx',
-	STMX = 'stmx'
+	STMX = 'stmx',
+	// proprietary formats
+	MODELCONFIG = 'modelconfig'
 }
 
 export enum AMRSchemaNames {
@@ -207,7 +210,7 @@ export interface CompareModelsResponseType {
 }
 
 export type ExtractionStatusUpdate = StatusUpdate<{ documentId: string }>;
-
+export type CloneProjectStatusUpdate = StatusUpdate<{ projectId: string }>;
 export interface NotificationItem extends NotificationItemStatus, AssetRoute {
 	notificationGroupId: string;
 	type: ClientEventType;
@@ -225,6 +228,21 @@ export interface NotificationItemStatus {
 	msg: string;
 	error: string;
 	progress?: number;
+}
+
+export enum ChartSettingType {
+	VARIABLE = 'variable',
+	VARIABLE_COMPARISON = 'variable-comparison',
+	DISTRIBUTION_COMPARISON = 'distribution-comparison',
+	ERROR_DISTRIBUTION = 'error-distribution',
+	INTERVENTION = 'intervention'
+}
+
+export interface ChartSetting {
+	id: string;
+	name: string;
+	selectedVariables: string[];
+	type: ChartSettingType;
 }
 
 export const ProgrammingLanguageVersion: { [key in ProgrammingLanguage]: string } = {

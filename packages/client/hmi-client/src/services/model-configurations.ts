@@ -33,6 +33,8 @@ export const getModelConfigurationById = async (id: string): Promise<ModelConfig
 
 export const createModelConfiguration = async (modelConfiguration: ModelConfiguration): Promise<ModelConfiguration> => {
 	delete modelConfiguration.id;
+	delete modelConfiguration.createdOn;
+	delete modelConfiguration.updatedOn;
 	modelConfiguration.temporary = modelConfiguration.temporary ?? false;
 	const response = await API.post(`/model-configurations`, modelConfiguration);
 	return response?.data ?? null;
@@ -51,6 +53,14 @@ export const deleteModelConfiguration = async (id: string) => {
 export const getAsConfiguredModel = async (modelConfiguration: ModelConfiguration): Promise<Model> => {
 	const response = await API.get<Model>(`model-configurations/as-configured-model/${modelConfiguration.id}`);
 	return response?.data ?? null;
+};
+
+export const getArchive = async (modelConfiguration: ModelConfiguration): Promise<any> => {
+	const response = await API.get(`model-configurations/download/${modelConfiguration.id}`, {
+		responseType: 'arraybuffer'
+	});
+	const blob = new Blob([response?.data], { type: 'application/octet-stream' });
+	return blob ?? null;
 };
 
 export const postAsConfiguredModel = async (model: Model): Promise<ModelConfiguration> => {
@@ -152,21 +162,18 @@ export function getInitial(config: ModelConfiguration, initialId: string): Initi
 	return getInitials(config).find((initial) => initial.target === initialId);
 }
 
-export function setInitialExpression(config: ModelConfiguration, initialId: string, expression: string): void {
+export async function setInitialExpression(
+	config: ModelConfiguration,
+	initialId: string,
+	expression: string
+): Promise<void> {
 	const initial = getInitial(config, initialId);
 	if (!initial) return;
 
-	pythonInstance
-		.parseExpression(expression)
-		.then((result) => {
-			const mathml = result.mathml;
-			initial.expression = expression;
-			initial.expressionMathml = mathml;
-		})
-		.catch((error) => {
-			// Handle error appropriately
-			console.error('Error parsing expression:', error);
-		});
+	const result = await pythonInstance.parseExpression(expression);
+	const mathml = result.mathml;
+	initial.expression = expression;
+	initial.expressionMathml = mathml;
 }
 
 export function setInitialSource(config: ModelConfiguration, initialId: string, source: string): void {

@@ -1,7 +1,5 @@
-import json
 import sys
-from gollm.entities import ConfigureModelDataset
-from gollm.openai.tool_utils import config_from_dataset
+from gollm.openai.tool_utils import generate_response
 from taskrunner import TaskRunnerInterface
 
 
@@ -12,18 +10,15 @@ def cleanup():
 def main():
     exitCode = 0
     try:
-        taskrunner = TaskRunnerInterface(description="Configure Model from dataset CLI")
+        taskrunner = TaskRunnerInterface(description="Generate Response CLI")
         taskrunner.on_cancellation(cleanup)
 
         input_dict = taskrunner.read_input_dict_with_timeout()
 
-        taskrunner.log("Creating ConfigureModel from input")
-        input_model = ConfigureModelDataset(**input_dict)
-        amr = json.dumps(input_model.amr, separators=(",", ":"))
-        matrix_str = input_model.matrix_str
+        taskrunner.log("Generating a response from input")
 
         taskrunner.log("Sending request to OpenAI API")
-        response = config_from_dataset(datasets=input_model.datasets, model_mapping=matrix_str, amr=amr)
+        response = generate_response(instruction=input_dict["instruction"], response_format=input_dict.get("responseFormat", None))
         taskrunner.log("Received response from OpenAI API")
 
         taskrunner.write_output_dict_with_timeout({"response": response})

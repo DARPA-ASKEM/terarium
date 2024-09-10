@@ -1,7 +1,7 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:menu-items="menuItems"
+		:is-draft="isDraft"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 		@update-output-port="(output: any) => emit('update-output-port', output)"
@@ -77,32 +77,42 @@
 				v-model:output="selectedOutputId"
 				is-selectable
 			>
-				<div class="h-full">
-					<tera-notebook-error
-						v-if="executeResponse.status === OperatorStatus.ERROR"
-						:name="executeResponse.name"
-						:value="executeResponse.value"
-						:traceback="executeResponse.traceback"
-					/>
-					<template v-else-if="stratifiedAmr">
-						<tera-model-diagram :model="stratifiedAmr" />
-						<tera-model-parts :model="stratifiedAmr" :feature-config="{ isPreview: true }" />
-					</template>
-					<div v-else class="flex flex-column h-full justify-content-center">
-						<tera-progress-spinner v-if="isStratifyInProgress" is-centered :font-size="2">
-							Processing...
-						</tera-progress-spinner>
-						<tera-operator-placeholder v-else :node="node" />
-					</div>
-				</div>
+				<Button
+					class="ml-auto py-3"
+					label="Save for re-use"
+					size="small"
+					outlined
+					:disabled="isSaveDisabled"
+					severity="secondary"
+					@click="showSaveModelModal = true"
+				/>
+				<tera-notebook-error
+					v-if="executeResponse.status === OperatorStatus.ERROR"
+					:name="executeResponse.name"
+					:value="executeResponse.value"
+					:traceback="executeResponse.traceback"
+				/>
+				<template v-else-if="outputAmr">
+					<tera-model-diagram :model="outputAmr" />
+					<tera-model-parts :model="outputAmr" :feature-config="{ isPreview: true }" />
+				</template>
+				<template v-else>
+					<tera-progress-spinner v-if="isStratifyInProgress" is-centered :font-size="2">
+						Processing...
+					</tera-progress-spinner>
+					<tera-operator-placeholder class="flex flex-column h-full justify-content-center" v-else :node="node" />
+				</template>
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
 	<tera-save-asset-modal
-		v-if="stratifiedAmr"
-		:asset="stratifiedAmr"
+		v-if="outputAmr"
+		:asset="outputAmr"
 		:assetType="AssetType.Model"
+		:initial-name="outputAmr.name"
 		:is-visible="showSaveModelModal"
+		:is-updating-asset="true"
+		@on-save="updateNodeOutput"
 		@close-modal="showSaveModelModal = false"
 	/>
 </template>
@@ -122,6 +132,7 @@ import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-inp
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
 import { createModel, getModel } from '@/services/model';
+import { useProjects } from '@/composables/project';
 
 import { WorkflowNode, OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
@@ -147,23 +158,13 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['append-output', 'update-state', 'close', 'update-output-port', 'select-output']);
 
-const menuItems = computed(() => [
-	{
-		label: 'Save as new model',
-		icon: 'pi pi-pencil',
-		command: () => {
-			showSaveModelModal.value = true;
-		}
-	}
-]);
-
 enum StratifyTabs {
 	Wizard = 'Wizard',
 	Notebook = 'Notebook'
 }
 
 const amr = ref<Model | null>(null);
-const stratifiedAmr = ref<Model | null>(null);
+const outputAmr = ref<Model | null>(null);
 const executeResponse = ref({
 	status: OperatorStatus.DEFAULT,
 	name: '',
@@ -172,6 +173,8 @@ const executeResponse = ref({
 });
 const modelNodeOptions = ref<string[]>([]);
 const showSaveModelModal = ref(false);
+
+const isDraft = ref(false);
 
 const isStratifyInProgress = ref(false);
 
@@ -269,15 +272,15 @@ const handleStratifyResponse = (data: any) => {
 };
 
 const handleModelPreview = async (data: any) => {
-	stratifiedAmr.value = data.content['application/json'];
+	outputAmr.value = data.content['application/json'];
 	isStratifyInProgress.value = false;
-	if (!stratifiedAmr.value) {
+	if (!outputAmr.value) {
 		logger.error('Error getting updated model from beaker');
 		return;
 	}
 
 	// Create output
-	const modelData = await createModel(stratifiedAmr.value);
+	const modelData = await createModel(outputAmr.value);
 	if (!modelData) return;
 
 	emit('append-output', {
@@ -408,6 +411,7 @@ const runCodeStratify = () => {
 
 				if (executedCode) {
 					saveCodeToState(executedCode, true);
+					isDraft.value = false;
 				}
 			})
 			.register('any_execute_reply', (data) => {
@@ -444,6 +448,41 @@ const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
+const isSaveDisabled = computed(() => {
+	const id = amr.value?.id;
+	if (!id || _.isEmpty(selectedOutputId.value)) return true;
+	const outputPort = props.node.outputs?.find((port) => port.id === selectedOutputId.value);
+
+	return useProjects().hasAssetInActiveProject(outputPort?.value?.[0]);
+});
+
+function updateNodeOutput(model: Model) {
+	if (!selectedOutputId.value || !model) return;
+
+	amr.value = model;
+	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === selectedOutputId.value));
+
+	if (!outputPort) return;
+	outputPort.label = model.header.name;
+
+	emit('update-output-port', outputPort);
+}
+
+// check if user has made changes to the code
+const hasCodeChange = () => {
+	if (props.node.state.strataCodeHistory.length) {
+		isDraft.value = !_.isEqual(codeText.value, props.node.state.strataCodeHistory?.[0]?.code);
+	} else {
+		isDraft.value = !_.isEqual(codeText.value, '');
+	}
+};
+const checkForCodeChange = _.debounce(hasCodeChange, 100);
+
+watch(
+	() => codeText.value,
+	() => checkForCodeChange()
+);
+
 watch(
 	() => props.node.active,
 	async () => {
@@ -456,7 +495,7 @@ watch(
 				return;
 			}
 			const modelIdToLoad = output.value?.[0];
-			stratifiedAmr.value = await getModel(modelIdToLoad);
+			outputAmr.value = await getModel(modelIdToLoad);
 			codeText.value = _.last(props.node.state.strataCodeHistory)?.code ?? '';
 		}
 	},

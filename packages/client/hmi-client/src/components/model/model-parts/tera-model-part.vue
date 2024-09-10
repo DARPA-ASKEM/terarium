@@ -1,6 +1,6 @@
 <template>
 	<ul>
-		<li v-for="({ base, children, isParent }, index) in items" :key="index">
+		<li v-for="({ base, children, isParent }, index) in items" :key="index" class="model-part">
 			<template v-if="isParent && !isEmpty(parentEditingState)">
 				<section class="parent">
 					<span>
@@ -10,97 +10,101 @@
 							rounded
 							size="small"
 							@click="parentEditingState[index].showChildren = !parentEditingState[index].showChildren"
+							class="mr-1"
 						/>
 						<h6>{{ base.id }}</h6>
 					</span>
 					<!--N/A if it's a transition-->
-					<template v-if="!featureConfig.isPreview && (!children[0].input || !children[0].output)">
-						<Button
-							v-if="!parentEditingState[index].isEditingChildrenUnits"
-							@click="parentEditingState[index].isEditingChildrenUnits = true"
-							label="Add unit to all children"
-							text
-							size="small"
-						/>
-						<span v-else>
-							<tera-input-text
-								label="Unit"
-								placeholder="Add a unit"
-								v-model="parentEditingState[index].childrenUnits"
-							/>
+					<div class="right-side">
+						<template v-if="!featureConfig.isPreview && (!children[0].input || !children[0].output)">
 							<Button
-								icon="pi pi-check"
+								:disabled="parentEditingState[index].isEditingChildrenUnits"
+								@click="parentEditingState[index].isEditingChildrenUnits = true"
+								label="Add unit to all children"
 								text
-								rounded
 								size="small"
-								@click="
-									() => {
-										updateAllChildren(base.id, 'unitExpression', parentEditingState[index].childrenUnits);
-										parentEditingState[index].isEditingChildrenUnits = false;
-									}
-								"
 							/>
+						</template>
+						<Button v-if="showMatrix" label="Open matrix" text size="small" @click="$emit('open-matrix', base.id)" />
+						<template v-if="!featureConfig.isPreview">
 							<Button
-								icon="pi pi-times"
+								:disabled="parentEditingState[index].isEditingChildrenConcepts"
+								@click="parentEditingState[index].isEditingChildrenConcepts = true"
+								label="Add concept to all children"
 								text
-								rounded
 								size="small"
-								@click="parentEditingState[index].isEditingChildrenUnits = false"
 							/>
-						</span>
-					</template>
-					<Button v-if="showMatrix" label="Open matrix" text size="small" @click="$emit('open-matrix', base.id)" />
-					<template v-if="!featureConfig.isPreview">
-						<Button
-							v-if="!parentEditingState[index].isEditingChildrenConcepts"
-							@click="parentEditingState[index].isEditingChildrenConcepts = true"
-							label="Add concept to all children"
-							text
-							size="small"
-						/>
-						<span v-else>
-							<span class="concept">
-								<label>Concept</label>
-								<AutoComplete
-									label="Concept"
-									size="small"
-									placeholder="Search concepts"
-									v-model="parentEditingState[index].childrenConcepts.name"
-									:suggestions="results"
-									optionLabel="name"
-									@complete="
-										async () => (results = await searchCuriesEntities(parentEditingState[index].childrenConcepts.name))
-									"
-									@item-select="
-										($event) => {
-											const { name, curie } = $event.value;
-											parentEditingState[index].childrenConcepts = { name, curie };
-										}
-									"
-								/>
-							</span>
-							<Button
-								icon="pi pi-check"
-								text
-								rounded
-								size="small"
-								@click="
-									() => {
-										updateAllChildren(base.id, 'concept', parentEditingState[index].childrenConcepts.curie);
-										parentEditingState[index].isEditingChildrenConcepts = false;
-									}
-								"
-							/>
-							<Button
-								icon="pi pi-times"
-								text
-								rounded
-								size="small"
-								@click="parentEditingState[index].isEditingChildrenConcepts = false"
-							/>
-						</span>
-					</template>
+						</template>
+					</div>
 				</section>
+
+				<!-- Add unit to all children toolbar -->
+				<div v-if="parentEditingState[index].isEditingChildrenUnits" class="add-to-all-children-toolbar">
+					<tera-input-text label="Unit" placeholder="Add a unit" v-model="parentEditingState[index].childrenUnits" />
+					<Button
+						icon="pi pi-check"
+						text
+						rounded
+						size="small"
+						@click="
+							() => {
+								updateAllChildren(base.id, 'unitExpression', parentEditingState[index].childrenUnits);
+								parentEditingState[index].isEditingChildrenUnits = false;
+							}
+						"
+					/>
+					<Button
+						icon="pi pi-times"
+						text
+						rounded
+						size="small"
+						@click="parentEditingState[index].isEditingChildrenUnits = false"
+					/>
+				</div>
+
+				<!-- Add concept to all children toolbar -->
+				<div v-if="parentEditingState[index].isEditingChildrenConcepts" class="add-to-all-children-toolbar">
+					<span class="concept">
+						<label>Concept</label>
+						<AutoComplete
+							label="Concept"
+							size="small"
+							placeholder="Search concepts"
+							v-model="parentEditingState[index].childrenConcepts.name"
+							:suggestions="results"
+							optionLabel="name"
+							@complete="
+								async () => (results = await searchCuriesEntities(parentEditingState[index].childrenConcepts.name))
+							"
+							@item-select="
+								($event) => {
+									const { name, curie } = $event.value;
+									parentEditingState[index].childrenConcepts = { name, curie };
+								}
+							"
+						/>
+					</span>
+					<Button
+						icon="pi pi-check"
+						text
+						rounded
+						size="small"
+						@click="
+							() => {
+								updateAllChildren(base.id, 'concept', parentEditingState[index].childrenConcepts.curie);
+								parentEditingState[index].isEditingChildrenConcepts = false;
+							}
+						"
+					/>
+					<Button
+						icon="pi pi-times"
+						text
+						rounded
+						size="small"
+						@click="parentEditingState[index].isEditingChildrenConcepts = false"
+					/>
+				</div>
+
 				<ul v-show="parentEditingState[index].showChildren" class="stratified">
 					<li v-for="(child, index) in children" :key="index">
 						<tera-model-part-entry
@@ -187,10 +191,22 @@ ul {
 	list-style: none;
 	gap: var(--gap-2);
 }
-
+.model-part {
+	margin-left: var(--gap-1);
+	padding: var(--gap-3) var(--gap-4);
+	border-left: 4px solid var(--surface-border);
+	background: var(--surface-0);
+	transition: background-color 0.15s;
+}
+.model-part:hover {
+	background: var(--surface-50);
+}
+.model-part:has(.parent) {
+	padding: var(--gap-2) var(--gap-1);
+}
 li {
 	padding-bottom: var(--gap-2);
-	border-bottom: 1px solid var(--surface-border);
+	border-bottom: 1px solid var(--surface-border-light);
 }
 
 .parent,
@@ -201,16 +217,19 @@ li {
 }
 
 .stratified {
-	margin: var(--gap-2) 0 0 var(--gap-6);
-
+	margin: var(--gap-2) 0 0 var(--gap-3);
+	background: var(--surface-0);
 	& > li {
-		border-left: 2px solid var(--primary-color-dark);
+		border-left: 4px solid var(--surface-border);
 		padding-left: var(--gap);
-		padding-bottom: 0;
+		padding-bottom: var(--gap-2);
+		padding-top: var(--gap-2);
 		border-bottom: none;
 	}
 }
-
+.stratified li:hover {
+	background: var(--surface-50);
+}
 .concept {
 	display: flex;
 	align-items: center;
@@ -221,5 +240,13 @@ li {
 
 :deep(.p-autocomplete-input) {
 	padding: var(--gap-1) var(--gap-2);
+}
+
+.add-to-all-children-toolbar {
+	display: flex;
+	align-items: center;
+	gap: var(--gap-1);
+	padding: var(--gap-1) var(--gap-9);
+	background-color: var(--surface-highlight);
 }
 </style>

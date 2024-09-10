@@ -1,12 +1,8 @@
 <template>
 	<main>
-		<template
-			v-if="
-				!inProgressCalibrationId && runResult && csvAsset && runResultPre && props.node.state.selectedVariables?.length
-			"
-		>
+		<template v-if="!inProgressCalibrationId && runResult && csvAsset && runResultPre && selectedVariables.length">
 			<vega-chart
-				v-for="(_var, index) of props.node.state.selectedVariables"
+				v-for="(_var, index) of selectedVariables"
 				:key="index"
 				:are-embed-actions-visible="false"
 				:visualization-spec="preparedCharts[index]"
@@ -56,6 +52,7 @@ import {
 	SemanticType,
 	InferredParameterSemantic
 } from '@/types/Types';
+import { ChartSettingType } from '@/types/common';
 import { createLLMSummary } from '@/services/summary-service';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
@@ -89,6 +86,12 @@ const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibr
 const chartSize = { width: 180, height: 120 };
 
 let lossValues: { [key: string]: number }[] = [];
+
+const selectedVariables = computed(() =>
+	(props.node.state.chartSettings ?? [])
+		.filter((setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON)
+		.map((setting) => setting.selectedVariables[0])
+);
 
 const lossChartSpec = ref();
 const updateLossChartSpec = (data: Record<string, any>[]) => {
@@ -158,7 +161,7 @@ const preparedCharts = computed(() => {
 	// Need to get the dataset's time field
 	const datasetTimeField = state.mapping.find((d) => d.modelVariable === 'timestamp')?.datasetVariable;
 
-	return state.selectedVariables.map((variable) => {
+	return selectedVariables.value.map((variable) => {
 		const datasetVariables: string[] = [];
 		const mapObj = state.mapping.find((d) => d.modelVariable === variable);
 		if (mapObj) {
@@ -407,7 +410,8 @@ watch(
 				observableSemanticList: _.cloneDeep(baseConfig.observableSemanticList),
 				parameterSemanticList: [],
 				initialSemanticList: _.cloneDeep(baseConfig.initialSemanticList),
-				inferredParameterList: inferredParameters
+				inferredParameterList: inferredParameters,
+				temporary: true
 			};
 
 			const modelConfigResponse = await createModelConfiguration(calibratedModelConfig);

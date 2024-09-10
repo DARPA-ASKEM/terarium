@@ -10,7 +10,7 @@
 				/>
 				<h6 v-else>{{ props.criterion.name }}</h6>
 				<i
-					:class="{ 'pi pi-check i': isEditing, 'pi pi-pencil i': !isEditing }"
+					:class="{ 'pi pi-check i': isEditing, 'pi pi-pencil i text-xs text-color-secondary': !isEditing }"
 					:style="'cursor: pointer'"
 					@click="onEdit"
 				/>
@@ -24,6 +24,8 @@
 			<Dropdown
 				class="p-inputtext-sm"
 				:options="modelStateAndObsOptions"
+				option-label="label"
+				option-value="value"
 				v-model="config.targetVariable"
 				placeholder="Select"
 				@update:model-value="emit('update-self', config)"
@@ -44,7 +46,6 @@
 			<tera-input-number v-model="config.threshold" @update:model-value="emit('update-self', config)" />
 			at
 			<Dropdown
-				class="p-inputtext-sm"
 				:options="[
 					{ label: 'all timepoints', value: ContextMethods.max },
 					{ label: 'last timepoint', value: ContextMethods.day_average }
@@ -77,7 +78,7 @@ import { Criterion, ContextMethods } from './optimize-ciemss-operation';
 
 const props = defineProps<{
 	criterion: Criterion;
-	modelStateAndObsOptions: string[];
+	modelStateAndObsOptions: { label: string; value: string }[];
 }>();
 
 const emit = defineEmits(['update-self', 'delete-self']);
@@ -95,12 +96,12 @@ const onEdit = () => {
 .container {
 	width: 100%;
 	display: flex;
-	margin-top: var(--gap);
-	padding: var(--gap) var(--gap) var(--gap) var(--gap-medium);
+	padding: var(--gap);
 	flex-direction: column;
 	justify-content: center;
 	align-items: flex-start;
-	border-radius: 0.375rem;
+	border-radius: var(--border-radius);
+	margin: var(--gap-1) 0;
 	background: #fff;
 	border: 1px solid rgba(0, 0, 0, 0.08);
 	/* Shadow/medium */

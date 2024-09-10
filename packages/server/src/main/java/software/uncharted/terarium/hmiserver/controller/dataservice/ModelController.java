@@ -36,12 +36,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Annotations;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceQueryParam;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.models.simulationservice.interventions.InterventionPolicy;
@@ -253,6 +256,19 @@ public class ModelController {
 				});
 			} else {
 				log.debug("Unable to get the, or empty, provenance search models_from_document for model " + id);
+			}
+
+			// Force observable to empty-list if null or not specified
+			if (model.get().getSemantics() != null) {
+				if (model.get().getSemantics().getOde().getObservables() == null) {
+					model.get().getSemantics().getOde().setObservables(new ArrayList());
+				}
+			}
+			// Force proper annotation metadata
+			ModelMetadata metadata = model.get().getMetadata();
+			if (metadata.getAnnotations() == null) {
+				metadata.setAnnotations(new Annotations());
+				model.get().setMetadata(metadata);
 			}
 
 			// Return the model
@@ -548,6 +564,17 @@ public class ModelController {
 				null
 			);
 			modelConfigurationService.createAsset(modelConfiguration, projectId, permission);
+
+			// add default model configuration to project
+			final Optional<Project> project = projectService.getProject(projectId);
+			if (project.isPresent()) {
+				projectAssetService.createProjectAsset(
+					project.get(),
+					AssetType.MODEL_CONFIGURATION,
+					modelConfiguration,
+					permission
+				);
+			}
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(created);
 		} catch (final IOException e) {

@@ -1,7 +1,6 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:menu-items="menuItems"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
@@ -275,7 +274,7 @@ const outputs = computed(() => {
 	if (!_.isEmpty(props.node.outputs)) {
 		return [
 			{
-				label: 'Select outputs to display in operator',
+				label: 'Select an output',
 				items: props.node.outputs
 			}
 		];
@@ -288,15 +287,6 @@ const activeOutput = ref<WorkflowOutput<FunmanOperationState> | null>(null);
 const toggleAdditonalOptions = () => {
 	showAdditionalOptions.value = !showAdditionalOptions.value;
 };
-
-const menuItems = computed(() => [
-	{
-		label: 'Save as new model configurations',
-		icon: 'pi pi-pencil',
-		disabled: true,
-		command: () => {}
-	}
-]);
 
 const variablesOfInterest = ref<string[]>([]);
 const onToggleVariableOfInterest = (vals: string[]) => {

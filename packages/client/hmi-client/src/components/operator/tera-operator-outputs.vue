@@ -28,7 +28,7 @@
 					<div class="port" />
 				</div>
 				<div class="relative w-full">
-					<div class="truncate text-right">{{ output.label }}</div>
+					<div class="truncate text-right">{{ useProjects().getAssetName(output.value?.[0]) || output.label }}</div>
 					<Button
 						class="unlink"
 						label="Unlink"
@@ -46,7 +46,7 @@
 					:style="{
 						height: '2rem',
 						position: 'absolute',
-						right: '-4rem',
+						right: '-3.5rem',
 						bottom: '0px'
 					}"
 					@click.stop
@@ -74,6 +74,7 @@ import { WorkflowPortStatus, WorkflowDirection, WorkflowOutput } from '@/types/w
 import Button from 'primevue/button';
 import { OperatorMenuItem } from '@/services/workflow';
 import TeraOperatorMenu from '@/components/operator/tera-operator-menu.vue';
+import { useProjects } from '@/composables/project';
 
 const menuFocusId = ref<string | null>(null);
 
@@ -163,7 +164,7 @@ li:hover:before {
 /** These v-* classes are used for animations for the <Transition /> element */
 .v-enter-active,
 .v-leave-active {
-	transition: opacity 0.5s ease;
+	transition: opacity 0.15s;
 }
 
 .v-enter-from,

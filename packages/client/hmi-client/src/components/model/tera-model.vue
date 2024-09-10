@@ -17,6 +17,7 @@
 				@keyup.enter="updateModelName"
 				@keyup.esc="updateModelName"
 				auto-focus
+				class="w-4"
 			/>
 			<div v-if="isNaming" class="flex flex-nowrap ml-1 mr-3">
 				<Button icon="pi pi-check" rounded text @click="updateModelName" />
@@ -149,12 +150,13 @@ const optionsMenuPt = {
 
 async function updateModelContent(updatedModel: Model) {
 	if (!useProjects().hasEditPermission()) {
+		logger.error('You do not have permission to edit this model.'); // FIXME: Disable asset editing options if user does not have permission
 		return;
 	}
 	await updateModel(updatedModel);
-	logger.info('Saved changes');
+	logger.info('Saved changes.');
 	await useProjects().refresh();
-	await fetchModel();
+	fetchModel();
 }
 
 async function updateModelName() {
