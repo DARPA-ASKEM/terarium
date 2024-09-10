@@ -788,7 +788,7 @@ const runOptimize = async () => {
 	);
 
 	const alphas: number[] = props.node.state.constraintGroups.map((ele) => ele.riskTolerance / 100);
-
+	const riskBounds: number[] = props.node.state.constraintGroups.map((ele) => ele.threshold);
 	const optimizePayload: OptimizeRequestCiemss = {
 		userId: 'no_user_provided',
 		engine: 'ciemss',
@@ -800,7 +800,7 @@ const runOptimize = async () => {
 		optimizeInterventions,
 		fixedInterventions,
 		qoi: qois,
-		riskBound: props.node.state.constraintGroups[0].threshold, // TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
+		riskBound: riskBounds,
 		boundsInterventions: listBoundsInterventions,
 		extra: {
 			isMinimized: props.node.state.constraintGroups[0].isMinimized,

@@ -581,7 +581,7 @@ export interface OptimizeRequestCiemss {
     fixedInterventions?: Intervention[];
     loggingStepSize?: number;
     qoi: OptimizeQoi[];
-    riskBound: number;
+    riskBound: number[];
     boundsInterventions: number[][];
     extra: OptimizeExtra;
     engine: string;
