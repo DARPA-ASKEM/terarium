@@ -239,7 +239,6 @@
 		<template #preview>
 			<tera-drilldown-section
 				class="ml-3 mr-3"
-				:is-loading="showSpinner"
 				:class="{ 'failed-run': optimizationResult.success === 'False' ?? 'successful-run' }"
 			>
 				<template #header-controls-left v-if="optimizedInterventionPolicy?.name">
@@ -254,10 +253,16 @@
 						@click="showSaveInterventionPolicy = true"
 					/>
 				</template>
-
+				<section v-if="showSpinner" class="spinner-message">
+					<tera-progress-spinner :font-size="2" is-centered style="height: 12rem" />
+					<p>{{ node.state.currentProgress }}% of maximum iterations complete</p>
+				</section>
 				<tera-operator-output-summary v-if="node.state.summaryId && !showSpinner" :summary-id="node.state.summaryId" />
 				<!-- Optimize result.json display: -->
-				<div v-if="optimizationResult && displayOptimizationResultMessage" class="result-message-grid mt-2 mb-2">
+				<div
+					v-if="optimizationResult && displayOptimizationResultMessage && !showSpinner"
+					class="result-message-grid mt-2 mb-2"
+				>
 					<span class="flex flex-row">
 						<p class="mt-2">For debugging</p>
 						<Button
@@ -275,6 +280,7 @@
 					</div>
 				</div>
 				<SelectButton
+					v-if="!showSpinner"
 					:model-value="outputViewSelection"
 					@change="if ($event.value) outputViewSelection = $event.value;"
 					:options="outputViewOptions"
@@ -288,7 +294,7 @@
 				</SelectButton>
 				<tera-notebook-error v-bind="node.state.optimizeErrorMessage" />
 				<tera-notebook-error v-bind="node.state.simulateErrorMessage" />
-				<template v-if="runResults[knobs.postForecastRunId] && runResults[knobs.preForecastRunId]">
+				<template v-if="runResults[knobs.postForecastRunId] && runResults[knobs.preForecastRunId] && !showSpinner">
 					<section v-if="outputViewSelection === OutputView.Charts" ref="outputPanel">
 						<Accordion multiple :active-index="[0, 1, 2]">
 							<AccordionTab header="Success criteria">
@@ -379,6 +385,7 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { getUnitsFromModelParts, getModelByModelConfigurationId } from '@/services/model';
 import { createModelConfiguration, getModelConfigurationById } from '@/services/model-configurations';
 import {
@@ -1119,6 +1126,17 @@ watch(
 	padding: var(--gap-1) var(--gap);
 	gap: var(--gap-2);
 }
+
+.spinner-message {
+	align-items: center;
+	align-self: center;
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-2);
+	margin-top: 15rem;
+	text-align: center;
+}
+
 .info-circle {
 	color: var(--text-color-secondary);
 	font-size: var(--font-caption);
