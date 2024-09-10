@@ -40,7 +40,7 @@
 					<template v-if="col.field === 'expression'">
 						<section class="inline-flex gap-1">
 							<span class="value-label">Constants</span>
-							<span class="value">{{ numberToNist(data.expression) }}</span>
+							<span class="value">{{ numberToNist(data.expression) || data.expression }}</span>
 						</section>
 					</template>
 				</template>
