@@ -23,7 +23,8 @@ import { getModel, getModelConfigurationsForModel } from '@/services/model';
 import { postAsConfiguredModel } from '@/services/model-configurations';
 import { useClientEvent } from '@/composables/useClientEvent';
 import type { ClientEvent, TaskResponse } from '@/types/Types';
-import { ClientEventType, TaskStatus } from '@/types/Types';
+import { AssetType, ClientEventType, TaskStatus } from '@/types/Types';
+import { useProjects } from '@/composables/project';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
 const props = defineProps<{
@@ -75,7 +76,10 @@ watch(
 		let configs = await getModelConfigurationsForModel(modelId);
 		if (!configs[0]?.id) {
 			const model = await getModel(modelId);
-			if (model) await postAsConfiguredModel(model); // Create a model configuration if it does not exist
+			if (model) {
+				const modelConfig = await postAsConfiguredModel(model); // Create a model configuration if it does not exist
+				useProjects().addAsset(AssetType.ModelConfiguration, modelConfig.id);
+			}
 			configs = await getModelConfigurationsForModel(modelId);
 		}
 		// Auto append output

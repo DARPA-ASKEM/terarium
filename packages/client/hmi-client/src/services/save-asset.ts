@@ -53,16 +53,15 @@ export async function saveAs(
 	const projectId = useProjects().activeProject.value?.id;
 
 	// save to project
-	if (assetType !== AssetType.InterventionPolicy && assetType !== AssetType.ModelConfiguration) {
-		if (!projectId) {
-			logger.error(`Asset can't be saved since target project doesn't exist.`);
-			return;
-		}
-		await useProjects().addAsset(assetType, response.id, projectId);
-
-		// After saving notify the user and do any necessary actions
-		logger.info(`${response.name} saved successfully in project ${useProjects().activeProject.value?.name}.`);
+	if (!projectId) {
+		logger.error(`Asset can't be saved since target project doesn't exist.`);
+		return;
 	}
+	await useProjects().addAsset(assetType, response.id, projectId);
+
+	// After saving notify the user and do any necessary actions
+	logger.info(`${response.name} saved successfully in project ${useProjects().activeProject.value?.name}.`);
+	await useProjects().refresh();
 
 	// redirect to the asset page
 	if (openOnSave) {
@@ -110,14 +109,14 @@ export async function updateAddToProject(newAsset: AssetToSave, assetType: Asset
 		return;
 	}
 
-	if (assetType !== AssetType.InterventionPolicy && assetType !== AssetType.ModelConfiguration) {
-		const projectId = useProjects().activeProject.value?.id;
-		if (!projectId) {
-			logger.error(`Asset can't be saved since target project doesn't exist.`);
-			return;
-		}
-		await useProjects().addAsset(assetType, response.id, projectId);
+	const projectId = useProjects().activeProject.value?.id;
+	if (!projectId) {
+		logger.error(`Asset can't be saved since target project doesn't exist.`);
+		return;
 	}
+	await useProjects().addAsset(assetType, response.id, projectId);
+
 	logger.info(`Updated ${response.name}.`);
+	await useProjects().refresh();
 	if (onSaveFunction) onSaveFunction(response);
 }

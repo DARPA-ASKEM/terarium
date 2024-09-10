@@ -72,7 +72,7 @@ dependencies {
     implementation 'org.elasticsearch.client:elasticsearch-rest-high-level-client:7.17.23'
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.jsoup:jsoup:1.7.2'
-    implementation 'org.keycloak:keycloak-admin-client:25.0.2'
+    implementation 'org.keycloak:keycloak-admin-client:25.0.4'
     implementation 'org.redisson:redisson-spring-boot-starter:3.23.4'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'

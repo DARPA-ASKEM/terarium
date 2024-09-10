@@ -44,8 +44,10 @@
 			</div>
 			<section>
 				<div class="title" ref="titleRef">
+					<template v-if="isCopying">Copy of</template>
 					{{ project.name }}
 				</div>
+				<ProgressBar v-if="isCopying" mode="indeterminate" />
 				<section class="details">
 					<div>
 						<div class="author">{{ project?.userName ?? '——' }}</div>
@@ -58,11 +60,14 @@
 			</section>
 		</template>
 		<template #footer>
-			<span>Last updated {{ formatDdMmmYyyy(project.updatedOn) }}</span>
-			<tera-project-menu
-				:project="project"
-				@forked-project="(forkedProject) => emit('forked-project', forkedProject)"
-			/>
+			<template v-if="!isCopying">
+				<span>Last updated {{ formatDdMmmYyyy(project.updatedOn) }}</span>
+				<tera-project-menu
+					:project="project"
+					@copied-project="(copiedProject) => emit('copied-project', copiedProject)"
+				/>
+			</template>
+			<template v-else-if="isCopying">Copying</template>
 		</template>
 	</Card>
 	<Card v-else>
@@ -97,12 +102,14 @@ import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { Project } from '@/types/Types';
 import DefaultThumbnail from '@/assets/images/project-thumbnails/default.png';
 import getImage from '@/assets/utils';
+import ProgressBar from 'primevue/progressbar';
 import TeraProjectMenu from './tera-project-menu.vue';
 
 const props = defineProps<{
 	project?: Project;
+	isCopying?: boolean;
 }>();
-const emit = defineEmits(['forked-project']);
+const emit = defineEmits(['copied-project']);
 
 const titleRef = ref();
 const descriptionLines = computed(() => {
