@@ -68,6 +68,7 @@
 			</tera-drilldown-header>
 			<main class="flex overflow-hidden h-full">
 				<slot name="sidebar" />
+				<slot name="content" />
 				<tera-columnar-panel class="flex-1">
 					<template v-for="(tab, index) in tabs" :key="index">
 						<!--
