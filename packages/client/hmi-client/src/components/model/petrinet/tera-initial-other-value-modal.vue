@@ -34,8 +34,8 @@
 					<template v-if="col.field === 'name'">
 						{{ data.name }}
 					</template>
-					<template v-if="col.field === 'target'">
-						{{ data.target }}
+					<template v-if="col.field === 'source'">
+						{{ data.source }}
 					</template>
 					<template v-if="col.field === 'expression'">
 						<section class="inline-flex gap-1">
@@ -114,7 +114,7 @@ const props = defineProps<{
 const otherValueList = ref(props.otherValueList);
 const columns = ref([
 	{ field: 'name', header: 'Configuration name' },
-	{ field: 'target', header: 'Source' },
+	{ field: 'source', header: 'Source' },
 	{ field: 'expression', header: 'Value' }
 ]);
 
@@ -131,13 +131,13 @@ const customSelection = ref(false);
 const selection = ref<null | { id?: string; source?: string; constant?: number }>(null);
 
 const onCustomSelectionChange = (val) => {
-	if (!val?.name) {
+	if (customSelection.value && !val?.name) {
 		selection.value =
 			numberType.value === numberOptions[0]
 				? { constant: customConstant.value, source: customSource.value }
 				: { constant: 0, source: '' };
 	} else {
-		selection.value = { constant: val.expression, source: customSource.value };
+		selection.value = { constant: val.expression, source: val.source };
 	}
 };
 
@@ -145,7 +145,7 @@ function getColumnWidth(columnField: string) {
 	switch (columnField) {
 		case 'name':
 			return 40;
-		case 'target':
+		case 'source':
 			return 20;
 		case 'expression':
 			return 100;
