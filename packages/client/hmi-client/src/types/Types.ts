@@ -1054,6 +1054,8 @@ export enum ClientEventType {
     TaskGollmGenerateSummary = "TASK_GOLLM_GENERATE_SUMMARY",
     TaskFunmanValidation = "TASK_FUNMAN_VALIDATION",
     TaskEnrichAmr = "TASK_ENRICH_AMR",
+    WorkflowUpdate = "WORKFLOW_UPDATE",
+    WorkflowDelete = "WORKFLOW_DELETE",
 }
 
 export enum ProgressState {

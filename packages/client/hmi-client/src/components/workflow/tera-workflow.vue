@@ -64,7 +64,7 @@
 					left: `${node.x}px`
 				}"
 				@dragging="(event) => updatePosition(node, event)"
-				@dragend="saveAndUpdateWorkflow()"
+				@dragend="saveWorkflowHandler()"
 			>
 				<tera-operator
 					ref="teraOperatorRefs"
@@ -173,6 +173,7 @@ import TeraCanvasItem from '@/components/widgets/tera-canvas-item.vue';
 import type { Position } from '@/types/common';
 import {
 	Operation,
+	Workflow,
 	WorkflowEdge,
 	WorkflowNode,
 	WorkflowOutput,
@@ -190,7 +191,7 @@ import ContextMenu from 'primevue/contextmenu';
 import * as workflowService from '@/services/workflow';
 import { OperatorImport, OperatorNodeSize, getNodeMenu } from '@/services/workflow';
 import * as d3 from 'd3';
-import { AssetType, EventType } from '@/types/Types';
+import { AssetType, ClientEventType, EventType } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -221,6 +222,7 @@ import * as ModelFromDocumentOp from '@/components/workflow/ops/model-from-equat
 import * as ModelComparisonOp from '@/components/workflow/ops/model-comparison/mod';
 import * as RegriddingOp from '@/components/workflow/ops/regridding/mod';
 import * as InterventionPolicyOp from '@/components/workflow/ops/intervention-policy/mod';
+import { subscribe, unsubscribe } from '@/services/ClientEventService';
 
 const WORKFLOW_SAVE_INTERVAL = 4000;
 
@@ -305,11 +307,20 @@ async function updateWorkflowName() {
 }
 
 // eslint-disable-next-line
-const _saveAndUpdateWorkflow = async () => {
-	const updated = await workflowService.updateWorkflow(wf.value.dump());
-	wf.value.update(updated);
+const _saveWorkflow = async () => {
+	await workflowService.updateWorkflow(wf.value.dump());
+	// wf.value.update(updated);
 };
-const saveAndUpdateWorkflow = debounce(_saveAndUpdateWorkflow, 500);
+// eslint-disable-next-line
+const _updateWorkflow = (event: any) => {
+	if (event.data.id !== wf.value.getId()) return;
+
+	// console.log('update workflow', event.data);
+	wf.value.update(event.data as Workflow);
+};
+
+const saveWorkflowHandler = debounce(_saveWorkflow, 400);
+const updateWorkflowHandler = debounce(_updateWorkflow, 250);
 
 function appendInputPort(node: WorkflowNode<any>, port: { type: string; label?: string; value: any }) {
 	node.inputs.push({
@@ -363,31 +374,31 @@ function appendOutput(
 	node.outputs = node.outputs.filter((d) => d.value);
 
 	selectOutput(node, uuid);
-	saveAndUpdateWorkflow();
+	saveWorkflowHandler();
 }
 
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
 	if (!node) return;
 	wf.value.updateNodeState(node.id, state);
-	saveAndUpdateWorkflow();
+	saveWorkflowHandler();
 }
 
 function updateWorkflowNodeStatus(node: WorkflowNode<any> | null, status: OperatorStatus) {
 	if (!node) return;
 	wf.value.updateNodeStatus(node.id, status);
-	saveAndUpdateWorkflow();
+	saveWorkflowHandler();
 }
 
 function selectOutput(node: WorkflowNode<any> | null, selectedOutputId: string) {
 	if (!node) return;
 	wf.value.selectOutput(node, selectedOutputId);
-	saveAndUpdateWorkflow();
+	saveWorkflowHandler();
 }
 
 function updateOutputPort(node: WorkflowNode<any> | null, workflowOutput: WorkflowOutput<any>) {
 	if (!node) return;
 	workflowService.updateOutputPort(node, workflowOutput);
-	saveAndUpdateWorkflow();
+	saveWorkflowHandler();
 }
 
 // Route is mutated then watcher is triggered to open or close the drilldown
@@ -424,14 +435,14 @@ const closeDrilldown = async () => {
 
 const removeNode = (nodeId: string) => {
 	wf.value.removeNode(nodeId);
-	saveAndUpdateWorkflow();
+	saveWorkflowHandler();
 };
 
 const duplicateBranch = (nodeId: string) => {
 	wf.value.branchWorkflow(nodeId);
 
 	cloneNoteBookSessions();
-	saveAndUpdateWorkflow();
+	saveWorkflowHandler();
 };
 
 // We need to clone data-transform sessions, unlike other operators that are
@@ -465,7 +476,7 @@ const addOperatorToWorkflow: Function =
 		const node = wf.value.addNode(operator.operation, newNodePosition, {
 			size: nodeSize
 		});
-		saveAndUpdateWorkflow();
+		saveWorkflowHandler();
 		return node;
 	};
 
@@ -504,6 +515,8 @@ async function onMenuSelection(operatorType: string, menuNode: WorkflowNode<any>
 			{ x: currentPortPosition.x, y: currentPortPosition.y },
 			{ x: currentPortPosition.x, y: currentPortPosition.y }
 		]);
+
+		saveWorkflowHandler();
 	}
 }
 
@@ -687,6 +700,7 @@ function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direction: W
 			newEdge.value!.points
 		);
 		cancelNewEdge();
+		saveWorkflowHandler();
 	}
 }
 
@@ -721,7 +735,7 @@ function removeEdges(portId: string) {
 	if (startingNodeId !== '') {
 		workflowService.cascadeInvalidateDownstream(nodeMap.get(startingNodeId) as WorkflowNode<any>, nodeCache);
 	}
-	saveAndUpdateWorkflow();
+	saveWorkflowHandler();
 }
 
 function onCanvasClick() {
@@ -873,7 +887,7 @@ const pathFn = d3
 const drawPath = (v: any) => pathFn(v) as string;
 
 const unloadCheck = () => {
-	saveAndUpdateWorkflow();
+	saveWorkflowHandler();
 };
 
 const handleDrilldown = () => {
@@ -921,7 +935,7 @@ watch(
 
 		// Save previous workflow, if applicable
 		if (newId !== oldId && oldId) {
-			saveAndUpdateWorkflow();
+			saveWorkflowHandler();
 			workflowService.setLocalStorageTransform(wf.value.getId(), canvasTransform);
 		}
 
@@ -956,13 +970,16 @@ onMounted(() => {
 	saveTimer = setInterval(async () => {
 		workflowService.setLocalStorageTransform(wf.value.getId(), canvasTransform);
 	}, WORKFLOW_SAVE_INTERVAL);
+
+	subscribe(ClientEventType.WorkflowUpdate, updateWorkflowHandler);
 });
 
 onUnmounted(() => {
-	saveAndUpdateWorkflow();
+	saveWorkflowHandler();
 	if (saveTimer) {
 		clearInterval(saveTimer);
 	}
+	unsubscribe(ClientEventType.WorkflowUpdate, updateWorkflowHandler);
 
 	if (canvasTransform) {
 		workflowService.setLocalStorageTransform(wf.value.getId(), canvasTransform);
