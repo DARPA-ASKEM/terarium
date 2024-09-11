@@ -115,6 +115,7 @@ public class GoLLMController {
 		}
 	)
 	public ResponseEntity<TaskResponse> createModelCardTask(
+		@RequestParam(name = "model-id", required = true) final UUID modelId,
 		@RequestParam(name = "document-id", required = true) final UUID documentId,
 		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
@@ -123,6 +124,13 @@ public class GoLLMController {
 			currentUserService.get().getId(),
 			projectId
 		);
+
+		// Grab the model
+		final Optional<Model> model = modelService.getAsset(modelId, permission);
+		if (model.isEmpty()) {
+			log.warn(String.format("Model %s not found", modelId));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
+		}
 
 		// Grab the document
 		final Optional<DocumentAsset> documentOpt = documentAssetService.getAsset(documentId, permission);
@@ -146,6 +154,7 @@ public class GoLLMController {
 		}
 
 		final ModelCardResponseHandler.Input input = new ModelCardResponseHandler.Input();
+		input.setAmr(model.get().serializeWithoutTerariumFields());
 		input.setResearchPaper(document.getText());
 
 		// Create the task
@@ -166,6 +175,7 @@ public class GoLLMController {
 		final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
 		props.setProjectId(projectId);
 		props.setDocumentId(documentId);
+		props.setModelId(modelId);
 		req.setAdditionalProperties(props);
 
 		final TaskResponse resp;

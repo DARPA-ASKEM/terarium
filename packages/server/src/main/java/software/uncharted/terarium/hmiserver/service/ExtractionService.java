@@ -44,8 +44,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
-import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
-import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy.IntegratedTextExtractionsBody;
@@ -55,7 +53,6 @@ import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationGroupInstance;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
-import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.JsonUtil;
@@ -258,8 +255,7 @@ public class ExtractionService {
 						final ObjectMapper objectMapper = new ObjectMapper();
 
 						final JsonNode rootNode = objectMapper.readTree(bytes);
-						if (rootNode instanceof ArrayNode) {
-							final ArrayNode arrayNode = (ArrayNode) rootNode;
+						if (rootNode instanceof final ArrayNode arrayNode) {
 							for (final JsonNode record : arrayNode) {
 								if (record.has("detect_cls") && record.get("detect_cls").asText().equals("Abstract")) {
 									abstractJsonNode = record;
@@ -341,32 +337,6 @@ public class ExtractionService {
 					notificationInterface.sendMessage("Variable extraction completed");
 				} catch (final Exception e) {
 					notificationInterface.sendMessage("Variable extraction failed, continuing");
-				}
-
-				// check for input length
-				if (documentText.length() > ModelCardResponseHandler.MAX_TEXT_SIZE) {
-					log.warn("Document {} text too long for GoLLM model card task, not sending request");
-				} else {
-					// dispatch GoLLM model card request
-					final ModelCardResponseHandler.Input input = new ModelCardResponseHandler.Input();
-					input.setResearchPaper(documentText);
-
-					// Create the task
-					final TaskRequest req = new TaskRequest();
-					req.setType(TaskRequest.TaskType.GOLLM);
-					req.setScript(ModelCardResponseHandler.NAME);
-					req.setInput(objectMapper.writeValueAsBytes(input));
-					req.setUserId(userId);
-
-					notificationInterface.sendMessage("Sending GoLLM model card request");
-
-					final TaskResponse resp = taskService.runTaskSync(req);
-
-					extractionResponse.gollmCard = objectMapper
-						.readValue(resp.getOutput(), ModelCardResponseHandler.Response.class)
-						.getResponse();
-
-					notificationInterface.sendMessage("Model Card created");
 				}
 			}
 
