@@ -114,6 +114,11 @@
             }
         }
 
+        .p-autocomplete-empty-message {
+            padding: var(--gap-small);
+	        color: var(--text-color-subdued);
+        }
+
         .p-autocomplete-item-group {
             margin: $submenuHeaderMargin;
             padding: $submenuHeaderPadding;
