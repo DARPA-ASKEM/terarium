@@ -198,7 +198,7 @@ watch(
 	background: var(--gray-50);
 	border: 1px solid var(--gray-200);
 	border-radius: var(--border-radius);
-	overflow: hidden;
+	overflow: auto;
 }
 
 .sub-header {
