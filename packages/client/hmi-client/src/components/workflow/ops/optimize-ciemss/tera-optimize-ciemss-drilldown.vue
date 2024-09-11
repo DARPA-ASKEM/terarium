@@ -253,10 +253,9 @@
 						@click="showSaveInterventionPolicy = true"
 					/>
 				</template>
-				<section v-if="showSpinner" class="spinner-message">
-					<tera-progress-spinner :font-size="2" is-centered style="height: 12rem" />
-					<p>{{ node.state.currentProgress }}% of maximum iterations complete</p>
-				</section>
+				<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%">
+					<div>{{ props.node.state.currentProgress }}% of maximum iterations complete</div>
+				</tera-progress-spinner>
 				<tera-operator-output-summary v-if="node.state.summaryId && !showSpinner" :summary-id="node.state.summaryId" />
 				<!-- Optimize result.json display: -->
 				<div
