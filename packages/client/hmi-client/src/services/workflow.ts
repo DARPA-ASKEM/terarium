@@ -84,7 +84,6 @@ export class WorkflowWrapper {
 					if (!_.isEqual(nodes[i].state, updated.state)) {
 						nodes[i].state = updated.state;
 					}
-					// nodes[i] = Object.assign(nodes[i], updated);
 				}
 				updatedNodeMap.delete(nodeId);
 			}
@@ -93,7 +92,7 @@ export class WorkflowWrapper {
 			const edgeId = edges[i].id;
 			const updated = updatedEdgeMap.get(edgeId);
 			if (updated) {
-				if ((updated.version as number) > (edges[i].version as number)) {
+				if (!edges[i].version || (updated.version as number) > (edges[i].version as number)) {
 					edges[i] = Object.assign(edges[i], updated);
 				}
 				updatedEdgeMap.delete(edgeId);
@@ -138,9 +137,6 @@ export class WorkflowWrapper {
 		if (node) {
 			node.isDeleted = true;
 		}
-
-		// TODO: option Remove the node
-		// wf.nodes = wf.nodes.filter((node) => node.id !== id);
 	}
 
 	removeEdge(id: string) {
@@ -169,9 +165,6 @@ export class WorkflowWrapper {
 			edge.isDeleted = true;
 		}
 
-		// TODO: option Edge re-assignment
-		// wf.edges = wf.edges.filter((edge) => edge.id !== id);
-
 		// If there are no more references reset the connected status of the source node
 		if (_.isEmpty(this.getEdges().filter((e) => e.source === edgeToRemove.source))) {
 			const sourceNode = this.wf.nodes.find((d) => d.id === edgeToRemove.source);
@@ -194,6 +187,8 @@ export class WorkflowWrapper {
 			imageUrl: op.imageUrl,
 			x: pos.x,
 			y: pos.y,
+
+			active: null,
 			state: options.state ?? {},
 
 			inputs: op.inputs.map((port) => ({
@@ -409,7 +404,7 @@ export class WorkflowWrapper {
 				port.id = registry.get(port.id) as string;
 			});
 			if (node.active) {
-				node.active = registry.get(node.active);
+				node.active = registry.get(node.active) || null;
 			}
 		});
 
@@ -577,7 +572,6 @@ export const iconToOperatorMap = new Map<string, string>([
 	[WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS, 'pi pi-chart-line'],
 	[WorkflowOperationTypes.DATASET_TRANSFORMER, 'pi pi-table'],
 	[WorkflowOperationTypes.SUBSET_DATA, 'pi pi-table'],
-	[WorkflowOperationTypes.MODEL_TRANSFORMER, 'pi pi-share-alt'],
 	[WorkflowOperationTypes.FUNMAN, 'pi pi-cog'],
 	[WorkflowOperationTypes.CODE, 'pi pi-code'],
 	[WorkflowOperationTypes.MODEL_COMPARISON, 'pi pi-share-alt'],
