@@ -165,8 +165,7 @@ const onInputChange = async () => {
 	align-items: center;
 }
 
-.auto-complete,
-.text-area {
+.auto-complete {
 	width: 100%;
 }
 
@@ -179,11 +178,6 @@ const onInputChange = async () => {
 	background-repeat: no-repeat;
 	padding-right: 2rem;
 	padding-left: 2rem;
-}
-
-.auto-complete:deep(.p-autocomplete-empty-message) {
-	padding: var(--gap-small);
-	color: var(--text-color-subdued);
 }
 
 .submit-button {
