@@ -14,8 +14,11 @@
 					</div>
 					<main>
 						<Accordion multiple :active-index="[0, 1]" class="accordion-component">
-							<AccordionTab header="Model checks">
-								<!--TODO<i class="pi pi-info-circle" v-tooltip="validateParametersToolTip" />-->
+							<AccordionTab>
+								<template #header>
+									Model checks
+									<i class="pi pi-info-circle pl-2" v-tooltip="validateParametersToolTip" />
+								</template>
 								<p class="mt-1">
 									Implement sanity checks on the state space of the model to see how the parameter space of the model is
 									partitioned into satisfiable and unsatisfiable regions separated by decision boundaries.
@@ -40,8 +43,11 @@
 									@click="addConstraintForm"
 								/>
 							</AccordionTab>
-							<AccordionTab header="Settings">
-								<!---TODO<i class="pi pi-info-circle" v-tooltip="validateParametersToolTip" />-->
+							<AccordionTab>
+								<template #header>
+									Settings
+									<i class="pi pi-info-circle pl-2" v-tooltip="validateParametersToolTip" />
+								</template>
 								<label>Select parameters of interest</label>
 								<MultiSelect
 									ref="columnSelect"
@@ -85,7 +91,6 @@
 			<tera-drilldown-section>
 				<main>
 					<!-- TODO: notebook functionality -->
-					<p>{{ requestConstraints }}</p>
 				</main>
 			</tera-drilldown-section>
 		</div>
@@ -159,9 +164,8 @@ enum FunmanTabs {
 	Notebook = 'Notebook'
 }
 const toast = useToastService();
-/* const validateParametersToolTip =
+const validateParametersToolTip =
 	'Validate the configuration of the model using functional model analysis (FUNMAN). \n \n The parameter space regions defined by the model configuration are evaluated to satisfactory or unsatisfactory depending on whether they generate model outputs that are within a given set of time-dependent constraints';
-*/
 const showSpinner = ref(false);
 const isSliderOpen = ref(true);
 
