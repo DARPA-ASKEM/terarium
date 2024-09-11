@@ -1,51 +1,6 @@
-import { ResourceType, ResultType } from '@/types/common';
-import { Filters } from '@/types/Filter';
-import { isEmpty } from 'lodash';
-import { FACET_FIELDS as MODEL_FACET_FIELDS } from '@/types/Model';
 import { Dataset, DocumentAsset, Model, ProgrammingLanguage } from '@/types/Types';
-import IconDocument20 from '@carbon/icons-vue/es/document/20';
-import IconMachineLearningModel20 from '@carbon/icons-vue/es/machine-learning-model/20';
-import IconTableSplit20 from '@carbon/icons-vue/es/table--split/20';
-import { FACET_FIELDS as DATASET_FACET_FIELDS } from '@/types/Dataset';
 
-export const applyFacetFilters = <T>(results: T[], filters: Filters, resourceType: ResourceType) => {
-	if (isEmpty(filters) || isEmpty(results)) {
-		return;
-	}
-
-	const { clauses } = filters;
-	const ASSET_FACET_FIELDS: string[] = resourceType === ResourceType.MODEL ? MODEL_FACET_FIELDS : DATASET_FACET_FIELDS;
-
-	clauses.forEach((clause) => {
-		const filterField: string = clause.field; // the field to filter on
-		// "filters" may include fields that belong to different types of artifacts
-		//  thus make sure to only filter models using Model fields
-		if (ASSET_FACET_FIELDS.includes(filterField)) {
-			const filterValues = clause.values.map((v) => v.toString()); // array of values to filter upon
-			const isNot = !clause.isNot; // is the filter reversed?
-
-			results.splice(
-				0,
-				results.length,
-				...results.filter((asset) => {
-					const assetAttribute: any = asset[filterField as keyof T];
-					return filterValues.includes(assetAttribute.toString()) === isNot;
-				})
-			);
-		}
-	});
-};
-
-export const getResourceTypeIcon = (type: string) => {
-	switch (type) {
-		case ResourceType.MODEL:
-			return IconMachineLearningModel20;
-		case ResourceType.DATASET:
-			return IconTableSplit20;
-		default:
-			return IconDocument20;
-	}
-};
+export type ResultType = Model | Dataset | DocumentAsset;
 
 // TEMP FUNCTIONS
 export function isModel(item: ResultType): item is Model {
