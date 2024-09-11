@@ -162,20 +162,20 @@ public class SimulationEventService {
 				message,
 				CiemssOptimizeStatusUpdate.class
 			);
-			updateAndSendMessage(message, update);
+			updateAndSendPyciemssMessage(message, update);
 		} else if (updateType.equals(CiemssStatusType.CALIBRATE.toString())) {
 			final CiemssCalibrateStatusUpdate update = ClientEventService.decodeMessage(
 				message,
 				CiemssCalibrateStatusUpdate.class
 			);
-			updateAndSendMessage(message, update);
+			updateAndSendPyciemssMessage(message, update);
 		} else {
 			log.error("message in simulation-status with unknown type: " + updateType);
 			return;
 		}
 	}
 
-	private void updateAndSendMessage(final Message message, final CiemssStatusUpdate update) {
+	private void updateAndSendPyciemssMessage(final Message message, final CiemssStatusUpdate update) {
 		if (update == null) {
 			return;
 		}
