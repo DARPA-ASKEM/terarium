@@ -6,10 +6,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.entity.ContentType;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
@@ -22,6 +25,7 @@ import software.uncharted.terarium.hmiserver.repository.data.SimulationRepositor
 import software.uncharted.terarium.hmiserver.repository.data.SimulationUpdateRepository;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.service.s3.S3Service;
+import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
@@ -29,6 +33,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulation, SimulationRepository> {
 
 	private final SimulationUpdateRepository simulationUpdateRepository;
+	private Messages messages;
 
 	/**
 	 * Constructor for SimulationService
@@ -49,6 +54,17 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 	) {
 		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService, Simulation.class);
 		this.simulationUpdateRepository = simulationUpdateRepository;
+	}
+
+	@Override
+	public UUID getProjectIdForAsset(final UUID assetId) {
+		//TODO Make simulations a project asset to remove this special override
+
+		final Optional<Simulation> simulation = super.getAsset(assetId, Schema.Permission.READ);
+		if (simulation.isEmpty()) {
+			throw new ResponseStatusException(HttpStatus.NO_CONTENT, messages.get("simulation.not-found"));
+		}
+		return simulation.get().getProjectId();
 	}
 
 	@Override
@@ -96,6 +112,7 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 		}
 	}
 
+	@Override
 	@Observed(name = "function_profile")
 	public void copyAssetFiles(
 		final Simulation newAsset,
@@ -123,6 +140,7 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 		}
 	}
 
+	@Override
 	@Observed(name = "function_profile")
 	public Map<String, FileExport> exportAssetFiles(final UUID simId, final Schema.Permission hasReadPermission)
 		throws IOException {

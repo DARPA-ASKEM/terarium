@@ -80,20 +80,16 @@ public class SimulationRequestController implements SnakeCaseController {
 
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
-	public ResponseEntity<Simulation> getSimulation(
-		@PathVariable("id") final UUID id,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
+	public ResponseEntity<Simulation> getSimulation(@PathVariable("id") final UUID id) {
+		final UUID projectId = simulationService.getProjectIdForAsset(id);
+
 		final Schema.Permission permission = projectService.checkPermissionCanRead(
 			currentUserService.get().getId(),
 			projectId
 		);
 		try {
 			final Optional<Simulation> sim = simulationService.getAsset(id, permission);
-			if (sim.isEmpty()) {
-				return ResponseEntity.noContent().build();
-			}
-			return ResponseEntity.ok(sim.get());
+			return sim.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
 		} catch (final Exception e) {
 			final String error = String.format("Failed to get result of simulation %s", id);
 			log.error(error, e);
@@ -104,10 +100,10 @@ public class SimulationRequestController implements SnakeCaseController {
 	@PostMapping("ciemss/forecast")
 	@Secured(Roles.USER)
 	public ResponseEntity<Simulation> makeForecastRunCiemss(
-		@RequestBody final SimulationRequestBody<SimulationRequest> request,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestBody final SimulationRequestBody<SimulationRequest> request
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
+		final UUID projectId = modelConfigService.getProjectIdForAsset(request.payload.getModelConfigId());
+		final Schema.Permission permission = projectService.checkPermissionCanRead(
 			currentUserService.get().getId(),
 			projectId
 		);
@@ -155,10 +151,7 @@ public class SimulationRequestController implements SnakeCaseController {
 
 		try {
 			final Optional<Simulation> updated = simulationService.updateAsset(sim, projectId, permission);
-			if (updated.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-			return ResponseEntity.ok(updated.get());
+			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
 			final String error = "Failed to create simulation";
 			log.error(error, e);
@@ -169,9 +162,10 @@ public class SimulationRequestController implements SnakeCaseController {
 	@PostMapping("ciemss/calibrate")
 	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeCalibrateJobCiemss(
-		@RequestBody final SimulationRequestBody<CalibrationRequestCiemss> request,
-		@RequestParam("project-id") final UUID projectId
+		@RequestBody final SimulationRequestBody<CalibrationRequestCiemss> request
 	) {
+		final UUID projectId = modelConfigService.getProjectIdForAsset(request.payload.getModelConfigId());
+
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
 			projectId
@@ -204,9 +198,10 @@ public class SimulationRequestController implements SnakeCaseController {
 	@PostMapping("ciemss/optimize")
 	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeOptimizeJobCiemss(
-		@RequestBody final SimulationRequestBody<OptimizeRequestCiemss> request,
-		@RequestParam("project-id") final UUID projectId
+		@RequestBody final SimulationRequestBody<OptimizeRequestCiemss> request
 	) {
+		final UUID projectId = modelConfigService.getProjectIdForAsset(request.payload.getModelConfigId());
+
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
 			projectId

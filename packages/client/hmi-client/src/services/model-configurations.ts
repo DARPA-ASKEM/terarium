@@ -53,12 +53,16 @@ export const deleteModelConfiguration = async (id: string) => {
 };
 
 export const getAsConfiguredModel = async (modelConfiguration: ModelConfiguration): Promise<Model> => {
-	const response = await API.get<Model>(`model-configurations/as-configured-model/${modelConfiguration.id}`);
+	const projectId = activeProjectId.value || getProjectIdFromUrl();
+	const response = await API.get<Model>(
+		`model-configurations/as-configured-model/${modelConfiguration.id}?project-id=${projectId}`
+	);
 	return response?.data ?? null;
 };
 
 export const getArchive = async (modelConfiguration: ModelConfiguration): Promise<any> => {
-	const response = await API.get(`model-configurations/download/${modelConfiguration.id}`, {
+	const projectId = activeProjectId.value || getProjectIdFromUrl();
+	const response = await API.get(`model-configurations/download/${modelConfiguration.id}/?project-id=${projectId}`, {
 		responseType: 'arraybuffer'
 	});
 	const blob = new Blob([response?.data], { type: 'application/octet-stream' });

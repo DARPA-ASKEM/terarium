@@ -28,7 +28,9 @@ export async function createModelAndModelConfig(file: File, progress?: Ref<numbe
 	const formData = new FormData();
 	formData.append('file', file);
 
-	const response = await API.post(`/model-configurations/import`, formData, {
+	const projectId = activeProjectId.value || getProjectIdFromUrl();
+
+	const response = await API.post(`/model-configurations/import?project-id=${projectId}`, formData, {
 		headers: {
 			'Content-Type': 'multipart/form-data'
 		},

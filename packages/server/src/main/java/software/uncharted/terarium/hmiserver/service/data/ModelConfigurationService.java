@@ -63,11 +63,13 @@ public class ModelConfigurationService
 
 	@Override
 	public UUID getProjectIdForAsset(final UUID assetId) {
-		Optional<ModelConfiguration> modelConfiguration = super.getAsset(assetId, Schema.Permission.READ);
+		//TODO Make modelconfigs a project asset to remove this special override
+
+		final Optional<ModelConfiguration> modelConfiguration = super.getAsset(assetId, Schema.Permission.READ);
 		if (modelConfiguration.isEmpty()) {
 			throw new ResponseStatusException(HttpStatus.NO_CONTENT, messages.get("modelconfig.not-found"));
 		}
-		return getProjectIdForAsset(modelConfiguration.get().getModelId());
+		return super.getProjectIdForAsset(modelConfiguration.get().getModelId());
 	}
 
 	@Override

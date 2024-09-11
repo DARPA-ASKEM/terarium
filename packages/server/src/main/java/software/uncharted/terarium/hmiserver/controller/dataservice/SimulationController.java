@@ -91,7 +91,8 @@ public class SimulationController {
 	)
 	public ResponseEntity<Simulation> createSimulation(
 		@RequestBody final Simulation simulation,
-		@RequestParam(name = "project-id") final UUID projectId
+		//TODO can this be removed?
+		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),

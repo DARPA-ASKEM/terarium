@@ -186,7 +186,7 @@ public class ModelConfigurationController {
 		}
 	)
 	public ResponseEntity<Model> importModelConfigAndModel(
-		@RequestParam(name = "project-id", required = false) final UUID projectId,
+		@RequestParam(name = "project-id") final UUID projectId,
 		@RequestPart("file") final MultipartFile input
 	) {
 		if (input.getContentType() == null || !input.getContentType().equals(MediaType.APPLICATION_OCTET_STREAM_VALUE)) {
@@ -265,7 +265,7 @@ public class ModelConfigurationController {
 	)
 	public ResponseEntity<byte[]> downloadModelConfigurationWithModel(
 		@PathVariable("id") final UUID id,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestParam(name = "project-id") final UUID projectId
 	) throws IOException {
 		final Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 		final Optional<ModelConfiguration> modelConfiguration;
@@ -418,7 +418,7 @@ public class ModelConfigurationController {
 		@RequestBody final Model configuredModel,
 		@RequestParam(name = "name", required = false) final String name,
 		@RequestParam(name = "description", required = false) final String description,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestParam(name = "project-id") final UUID projectId
 	) {
 		final Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
