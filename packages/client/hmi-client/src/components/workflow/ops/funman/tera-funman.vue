@@ -6,7 +6,7 @@
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<div :tabName="FunmanTabs.Wizard">
-			<tera-slider-panel v-model:is-open="isSliderOpen" header="Validate configuration settings" content-width="500px">
+			<tera-slider-panel v-model:is-open="isSliderOpen" header="Validate configuration settings" content-width="515px">
 				<template #content>
 					<div class="top-toolbar">
 						<p>Set your model checks and settings then click run.</p>
@@ -60,15 +60,15 @@
 									placeholder="Select variables"
 								/>
 								<div class="mb-2 section-row timespan">
-									<div class="w-full">
+									<div class="">
 										<label>Start time</label>
 										<tera-input-number class="mt-1" v-model="knobs.currentTimespan.start" />
 									</div>
-									<div class="w-full">
+									<div class="">
 										<label>End time</label>
 										<tera-input-number class="mt-1" v-model="knobs.currentTimespan.end" />
 									</div>
-									<div class="w-full">
+									<div class="">
 										<label>Number of steps</label>
 										<tera-input-number class="mt-1" v-model="knobs.numberOfSteps" />
 									</div>
