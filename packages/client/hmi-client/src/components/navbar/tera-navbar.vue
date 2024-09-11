@@ -168,7 +168,7 @@ import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import Menu from 'primevue/menu';
 import { MenuItem } from 'primevue/menuitem';
-import { RoutePath, useCurrentRoute } from '@/router/index';
+import { RoutePath } from '@/router/index';
 import { RouteMetadata, RouteName } from '@/router/routes';
 import useAuthStore from '@/stores/auth';
 import SplitButton from 'primevue/splitbutton';
@@ -198,9 +198,6 @@ const isAboutModalVisible = ref(false);
 const router = useRouter();
 
 const menuLabel = computed(() => {
-	if (isDataExplorer.value) {
-		return 'Explorer';
-	}
 	if (useProjects().activeProject.value) {
 		return useProjects().activeProject.value?.name;
 	}
@@ -358,14 +355,7 @@ const homeItem: MenuItem = {
 	icon: RouteMetadata[RouteName.Home].icon,
 	command: () => router.push(RoutePath.Home)
 };
-const explorerItem: MenuItem = {
-	label: RouteMetadata[RouteName.DataExplorer].displayName,
-	icon: RouteMetadata[RouteName.DataExplorer].icon,
-	command: () => router.push(RoutePath.DataExplorer)
-};
-const navMenuItems = ref<MenuItem[]>([homeItem, explorerItem]);
-const currentRoute = useCurrentRoute();
-const isDataExplorer = computed(() => currentRoute.value.name === RouteName.DataExplorer);
+const navMenuItems = ref<MenuItem[]>([homeItem]);
 
 /*
  * User Menu
@@ -438,7 +428,6 @@ watch(
 		const removedUpdatedProject = remove(items, (item) => item.label === lastProjectUpdated?.name);
 		navMenuItems.value = [
 			homeItem,
-			explorerItem,
 			...removedUpdatedProject,
 			...sortBy(items, (item) => item.label?.toString().toLowerCase())
 		];

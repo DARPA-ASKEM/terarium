@@ -1,8 +1,7 @@
 <template>
 	<main>
 		<section class="flex h-full relative overflow-hidden">
-			<tera-slider-panel content-width="240px" direction="left" header="Filters" v-model:is-open="isSliderFacetsOpen">
-			</tera-slider-panel>
+			<tera-slider-panel content-width="240px" direction="left" header="Filters" v-model:is-open="isSliderFacetsOpen" />
 			<div class="results-content">
 				<div class="search">
 					<nav>
@@ -22,41 +21,10 @@
 									@change="if (assetType === AssetType.Dataset) executeNewQuery();"
 								/>
 							</span>
-							<tera-filter-bar :topic-options="topicOptions" @filter-changed="executeNewQuery" />
 						</div>
 					</nav>
-					<tera-searchbar
-						ref="searchBarRef"
-						@toggle-search-by-example="searchByExampleModalToggled"
-						:source="chosenSource"
-						:show-suggestions="false"
-					/>
-					<!-- <aside class="suggested-terms" v-if="!isEmpty(terms)">
-						Suggested terms:
-						<Chip v-for="term in terms" :key="term" removable remove-icon="pi pi-times">
-							<span @click="searchBarRef?.addToQuery(term)">{{ term }}</span>
-						</Chip>
-					</aside> -->
 				</div>
-				<tera-search-results-list
-					:data-items="resultsToShow"
-					:resource-type="resourceType"
-					:search-term="searchTerm"
-					:is-loading="isLoading"
-					:source="chosenSource"
-					:doc-count="docCount"
-					@toggle-data-item-selected="toggleDataItemSelected"
-				/>
 			</div>
-			<tera-preview-panel
-				:content-width="`${sliderWidth.slice(0, -1)} - 20px)`"
-				tab-width="0"
-				direction="right"
-				v-model:preview-item="previewItem"
-				:source="chosenSource"
-				:resource-type="resourceType"
-				:search-term="searchTerm"
-			/>
 		</section>
 	</main>
 </template>
@@ -74,16 +42,12 @@ import type { Source } from '@/types/search';
 import useQueryStore from '@/stores/query';
 import filtersUtil from '@/utils/filters-util';
 import { getResourceID, isDataset, isModel } from '@/utils/data-util';
-import { cloneDeep, intersectionBy, isEmpty, isEqual, unionBy } from 'lodash';
+import { cloneDeep, intersectionBy, isEmpty, unionBy } from 'lodash';
 import { useRoute } from 'vue-router';
-import TeraPreviewPanel from '@/page/data-explorer/components/tera-preview-panel.vue';
-import TeraSearchResultsList from '@/page/data-explorer/components/tera-search-results-list.vue';
 import { AssetType } from '@/types/Types';
-import TeraSearchbar from '@/components/navbar/tera-searchbar.vue'; // import Chip from 'primevue/chip';
 import { DatasetSearchParams } from '@/types/Dataset';
 import { ModelSearchParams } from '@/types/Model';
 import { useSearchByExampleOptions } from './search-by-example';
-import TeraFilterBar from './components/tera-filter-bar.vue';
 
 // FIXME: page count is not taken into consideration
 
@@ -96,7 +60,6 @@ const dataItems = ref<SearchResults[]>([]);
 const dataItemsUnfiltered = ref<SearchResults[]>([]);
 const searchResults = ref<SearchResults[]>([]);
 
-const selectedSearchItems = ref<ResultType[]>([]);
 const executeSearchByExample = ref(false);
 const previewItem = ref<ResultType | null>(null);
 const searchTerm = ref('');
@@ -134,23 +97,8 @@ const resourceType = computed(() => {
 	return ResourceType.DATASET;
 });
 
-const topicOptions = ref([
-	{ label: 'Covid-19', value: 'xdd-covid-19' },
-	{ label: 'Climate Weather', value: 'climate-change-modeling' }
-]);
-
 const sourceOptions = ref<Source[]>(Object.values(DatasetSource));
 const chosenSource = ref<Source>(DatasetSource.TERARIUM);
-
-const sliderWidth = computed(() => (isSliderFacetsOpen.value ? 'calc(50% - 120px)' : 'calc(50% - 20px)'));
-
-// Chooses source for search
-const resultsToShow = computed(() => {
-	if (assetType.value === AssetType.Document || assetType.value === AssetType.Model) {
-		return searchResults.value;
-	}
-	return dataItems.value;
-});
 
 // close resources if preview opens
 watch(isSliderResourcesOpen, () => {
@@ -342,37 +290,6 @@ const disableSearchByExample = () => {
 	clearSearchByExampleSelections();
 };
 
-const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) => {
-	let foundIndx = -1;
-	const item = dataItem.item;
-
-	if (dataItem.type && dataItem.type === 'clicked') {
-		// toggle preview
-		if (isEqual(dataItem.item, previewItem.value)) {
-			// clear preview item and close the preview panel
-			previewItem.value = null;
-		} else {
-			// open the preview panel
-			previewItem.value = item;
-			isSliderResourcesOpen.value = false;
-		}
-		return; // do not add to cart if the purpose is to toggle preview
-	}
-
-	// by now, the user has explicitly asked for this item to be added to the cart
-	foundIndx = selectedSearchItems.value.indexOf(item);
-	if (foundIndx >= 0) {
-		// item was already in the list so remove it
-		selectedSearchItems.value.splice(foundIndx, 1);
-	} else {
-		// add it to the list
-		selectedSearchItems.value = [...selectedSearchItems.value, item];
-		// open cart and close preview panel
-		previewItem.value = null;
-		isSliderResourcesOpen.value = true;
-	}
-};
-
 // Update asset type
 watch(resourceType, async (newResourceType, oldResourceType) => {
 	if (executeSearchByExample.value) return;
@@ -453,25 +370,6 @@ onMounted(async () => {
 onUnmounted(() => {
 	queryStore.reset();
 });
-
-/*
- * Search
- */
-const searchBarRef = ref();
-
-function searchByExampleModalToggled() {
-	// TODO
-	// toggle the search by example modal represented by the component search-by-example
-	// which may be used as follows
-	/*
-	<search-by-example
-		v-if="searchByExampleModal"
-		:item="searchByExampleItem"
-		@search="onSearchByExample"
-		@hide="searchByExampleModal = false"
-	/>
-	*/
-}
 </script>
 
 <style scoped>

@@ -5,9 +5,7 @@
 			<template v-else-if="props.searchTerm || searchByExampleOptionsStr">
 				{{ resultsText }}
 				<span v-if="isEmpty(searchByExampleOptionsStr)"> "{{ props.searchTerm }}" </span>
-				<div v-else-if="!isEmpty(searchByExampleOptionsStr)" class="search-by-example-card">
-					<tera-asset-card :asset="searchByExampleItem!" :resource-type="resourceType" :source="source" />
-				</div>
+				<div v-else-if="!isEmpty(searchByExampleOptionsStr)" class="search-by-example-card"></div>
 			</template>
 			<template v-else>{{ itemsText }} </template>
 		</span>
@@ -39,47 +37,26 @@
 		<h4 class="no-results-found">No results found</h4>
 		<span>Try adjusting your search or filters and try again.</span>
 	</div>
-	<ul v-else>
-		<li v-for="(asset, index) in filteredAssets" :key="index">
-			<tera-search-item
-				:asset="asset"
-				:source="source"
-				:resource-type="resourceType"
-				:is-adding-asset="isAdding && selectedAsset === asset"
-				:is-previewed="previewedAsset === asset"
-				:search-term="searchTerm"
-				:project-options="projectOptions"
-				@select-asset="updateSelection(asset)"
-				@toggle-asset-preview="togglePreview(asset)"
-			/>
-		</li>
-	</ul>
 </template>
 
 <script setup lang="ts">
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import LoadingWateringCan from '@/assets/images/lottie-loading-watering-can.json';
-import { useProjects } from '@/composables/project';
-import { AssetType, Dataset, DocumentAsset, Model, ProjectAsset } from '@/types/Types';
-import useQueryStore from '@/stores/query';
-import { ResourceType, ResultType, SearchResults } from '@/types/common';
+import Chip from 'primevue/chip';
+import { isEmpty } from 'lodash';
+import { computed, PropType } from 'vue';
+import { Vue3Lottie } from 'vue3-lottie';
+
+// Delete potential
+import { ResourceType, SearchResults } from '@/types/common'; // ResultType,
 import { DatasetSource } from '@/types/search';
 import type { Source } from '@/types/search';
-import Chip from 'primevue/chip';
+import useQueryStore from '@/stores/query';
 import { ClauseValue } from '@/types/Filter';
-import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
-import { getSearchByExampleOptionsString, useSearchByExampleOptions } from '@/page/data-explorer/search-by-example';
-import { isDataset, isModel } from '@/utils/data-util';
-import { logger } from '@/utils/logger';
-import { isEmpty, sortBy, orderBy, remove } from 'lodash';
-import { computed, PropType, Ref, ref } from 'vue';
-import { Vue3Lottie } from 'vue3-lottie';
-import { createDataset, getClimateDataset } from '@/services/dataset';
-import TeraSearchItem from './tera-search-item.vue';
+import { getSearchByExampleOptionsString } from '@/page/data-explorer/search-by-example'; // useSearchByExampleOptions
+// import { isDataset, isModel } from '@/utils/data-util';
 
-const { searchByExampleItem } = useSearchByExampleOptions();
-
-const emit = defineEmits(['toggle-data-item-selected']);
+// const { searchByExampleItem } = useSearchByExampleOptions();
 
 const props = defineProps({
 	dataItems: {
@@ -108,70 +85,70 @@ const props = defineProps({
 	}
 });
 
-const selectedAsset: Ref<ResultType> = ref({} as ResultType);
-const isAdding = ref(false);
+// const selectedAsset: Ref<ResultType> = ref({} as ResultType);
+// const isAdding = ref(false);
 
-const projectOptions = computed(() => {
-	const items =
-		useProjects().allProjects.value?.map((project) => ({
-			label: project.name,
-			command: async () => {
-				let response: ProjectAsset['id'] | null = null;
-				let assetName: string = '';
-				isAdding.value = true;
+// const projectOptions = computed(() => {
+// 	const items =
+// 		useProjects().allProjects.value?.map((project) => ({
+// 			label: project.name,
+// 			command: async () => {
+// 				let response: ProjectAsset['id'] | null = null;
+// 				let assetName: string = '';
+// 				isAdding.value = true;
 
-				if (isModel(selectedAsset.value)) {
-					const modelAsset: Model = selectedAsset.value as Model;
+// 				if (isModel(selectedAsset.value)) {
+// 					const modelAsset: Model = selectedAsset.value as Model;
 
-					const modelId = modelAsset.id;
-					response = await useProjects().addAsset(AssetType.Model, modelId, project.id);
-					assetName = modelAsset.header.name;
-				} else if (isDataset(selectedAsset.value)) {
-					let datasetId = selectedAsset.value.id;
+// 					const modelId = modelAsset.id;
+// 					response = await useProjects().addAsset(AssetType.Model, modelId, project.id);
+// 					assetName = modelAsset.header.name;
+// 				} else if (isDataset(selectedAsset.value)) {
+// 					let datasetId = selectedAsset.value.id;
 
-					if (useProjects().hasEditPermission()) {
-						if (!datasetId && selectedAsset.value.esgfId) {
-							// The selectedAsset is a light asset for front end and we need the whole thing.
-							const climateDataset: Dataset | null = await getClimateDataset(selectedAsset.value.esgfId);
-							if (climateDataset) {
-								const dataset: Dataset | null = await createDataset(climateDataset);
-								if (dataset) {
-									datasetId = dataset.id;
-								}
-							}
-						}
-					}
+// 					if (useProjects().hasEditPermission()) {
+// 						if (!datasetId && selectedAsset.value.esgfId) {
+// 							// The selectedAsset is a light asset for front end and we need the whole thing.
+// 							const climateDataset: Dataset | null = await getClimateDataset(selectedAsset.value.esgfId);
+// 							if (climateDataset) {
+// 								const dataset: Dataset | null = await createDataset(climateDataset);
+// 								if (dataset) {
+// 									datasetId = dataset.id;
+// 								}
+// 							}
+// 						}
+// 					}
 
-					// then, link and store in the project assets
-					if (datasetId) {
-						response = await useProjects().addAsset(AssetType.Dataset, datasetId, project.id);
-						assetName = selectedAsset.value.name ?? '';
-					}
-				} else {
-					const document = selectedAsset.value as DocumentAsset;
-					const assetType = AssetType.Document;
-					response = await useProjects().addAsset(assetType, document.id, project.id);
-					assetName = document.name ?? '';
-				}
+// 					// then, link and store in the project assets
+// 					if (datasetId) {
+// 						response = await useProjects().addAsset(AssetType.Dataset, datasetId, project.id);
+// 						assetName = selectedAsset.value.name ?? '';
+// 					}
+// 				} else {
+// 					const document = selectedAsset.value as DocumentAsset;
+// 					const assetType = AssetType.Document;
+// 					response = await useProjects().addAsset(assetType, document.id, project.id);
+// 					assetName = document.name ?? '';
+// 				}
 
-				if (response) logger.info(`Added ${assetName} to ${project.name}`);
+// 				if (response) logger.info(`Added ${assetName} to ${project.name}`);
 
-				isAdding.value = false;
-			}
-		})) ?? [];
+// 				isAdding.value = false;
+// 			}
+// 		})) ?? [];
 
-	const lastProjectUpdated = orderBy(useProjects().allProjects.value, ['updatedOn'], ['desc'])[0];
-	const lastUpdatedProjectItem = remove(items, (item) => item.label === lastProjectUpdated.name);
+// 	const lastProjectUpdated = orderBy(useProjects().allProjects.value, ['updatedOn'], ['desc'])[0];
+// 	const lastUpdatedProjectItem = remove(items, (item) => item.label === lastProjectUpdated.name);
 
-	return [
-		{
-			label: 'Add to which project?',
-			items: [...lastUpdatedProjectItem, ...sortBy(items, (item) => item.label?.toString().toLowerCase())]
-		}
-	];
-});
+// 	return [
+// 		{
+// 			label: 'Add to which project?',
+// 			items: [...lastUpdatedProjectItem, ...sortBy(items, (item) => item.label?.toString().toLowerCase())]
+// 		}
+// 	];
+// });
 
-const previewedAsset = ref<ResultType | null>(null);
+// const previewedAsset = ref<ResultType | null>(null);
 
 const chosenFacets = computed(() => useQueryStore().clientFilters.clauses);
 
@@ -181,14 +158,14 @@ const removeFacetValue = (field: string, values: ClauseValue[], valueToRemove: C
 	query.setSearchClause({ field, values });
 };
 
-const updateSelection = (asset: ResultType) => {
-	selectedAsset.value = asset;
-};
+// const updateSelection = (asset: ResultType) => {
+// 	selectedAsset.value = asset;
+// };
 
-const togglePreview = (asset: ResultType) => {
-	emit('toggle-data-item-selected', { item: asset, type: 'clicked' });
-	previewedAsset.value = previewedAsset.value === asset ? null : asset;
-};
+// const togglePreview = (asset: ResultType) => {
+// 	emit('toggle-data-item-selected', { item: asset, type: 'clicked' });
+// 	previewedAsset.value = previewedAsset.value === asset ? null : asset;
+// };
 
 // const rawConceptFacets = computed(() => {
 // 	const searchResults = props.dataItems.find((res) => res.searchSubsystem === props.resourceType);
@@ -269,9 +246,6 @@ ul {
 	flex-grow: 1;
 	font-size: var(--font-body-small);
 	color: var(--text-color-subdued);
-}
-
-.loading-spinner {
 }
 
 .pi-spinner {
