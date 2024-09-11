@@ -7,7 +7,12 @@
 	>
 		<template #content>
 			<tera-slider-panel v-model:is-open="isDocViewerOpen" header="Document Viewer" content-width="100%">
-				<template #content> </template>
+				<template #content>
+					<tera-drilldown-section :is-loading="isFetchingPDF">
+						<tera-pdf-embed v-if="pdfLink" :pdf-link="pdfLink" :title="document?.name || ''" />
+						<tera-text-editor v-else-if="docText" :initial-text="docText" />
+					</tera-drilldown-section>
+				</template>
 			</tera-slider-panel>
 
 			<tera-slider-panel v-model:is-open="isInputOpen" header="Input" content-width="100%">
@@ -152,7 +157,12 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { computed, onMounted, ref, watch } from 'vue';
-import { getDocumentAsset, getEquationFromImageUrl } from '@/services/document-assets';
+import {
+	downloadDocumentAsset,
+	getDocumentAsset,
+	getDocumentFileAsText,
+	getEquationFromImageUrl
+} from '@/services/document-assets';
 import type { Card, DocumentAsset, DocumentExtraction, Model } from '@/types/Types';
 import { cloneDeep, isEmpty, unionBy } from 'lodash';
 import { equationsToAMR, type EquationsToAMRRequest } from '@/services/knowledge';
@@ -168,6 +178,10 @@ import TeraModelDescription from '@/components/model/petrinet/tera-model-descrip
 import { modelCard } from '@/services/goLLM';
 // import * as textUtils from '@/utils/text';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
+
+import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
+import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
+import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import {
 	// EquationBlock,
 	EquationFromImageBlock,
@@ -217,6 +231,10 @@ const selectItem = (item, event) => {
 	// Prevent the child’s click handler from firing
 	event.stopImmediatePropagation();
 };
+
+const pdfLink = ref<string | null>();
+const docText = ref<string | null>();
+const isFetchingPDF = ref(false);
 
 const document = ref<DocumentAsset | null>();
 const assetLoading = ref(false);
@@ -283,6 +301,22 @@ onMounted(async () => {
 		state.text = document.value?.text ?? '';
 		emit('update-state', state);
 	}
+
+	if (documentId) {
+		isFetchingPDF.value = true;
+		document.value = await getDocumentAsset(documentId);
+		const filename = document.value?.fileNames?.[0];
+		const isPdf = document.value?.fileNames?.[0]?.endsWith('.pdf');
+		if (document.value?.id && filename) {
+			if (isPdf) {
+				pdfLink.value = await downloadDocumentAsset(document.value.id, filename);
+			} else {
+				docText.value = await getDocumentFileAsText(document.value.id, filename);
+			}
+		}
+		isFetchingPDF.value = false;
+	}
+
 	assetLoading.value = false;
 });
 
