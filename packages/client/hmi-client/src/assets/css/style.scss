@@ -227,6 +227,11 @@
 		padding: var(--gap-small);
 	}
 
+	.ace-editor {
+		border: 1px solid var(--surface-border);
+        border-radius: var(--border-radius-medium);
+	}
+	
 	/* Markdown style overrides */
 	.markdown-text {
 		& h1 {
