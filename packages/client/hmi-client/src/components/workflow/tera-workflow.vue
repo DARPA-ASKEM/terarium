@@ -315,12 +315,12 @@ const _saveWorkflow = async () => {
 const _updateWorkflow = (event: any) => {
 	if (event.data.id !== wf.value.getId()) return;
 
-	console.log('update workflow', event.data);
+	// console.log('update workflow', event.data);
 	wf.value.update(event.data as Workflow);
 };
 
 const saveWorkflowHandler = debounce(_saveWorkflow, 400);
-const updateWorkflowHandler = debounce(_updateWorkflow, 400);
+const updateWorkflowHandler = debounce(_updateWorkflow, 250);
 
 function appendInputPort(node: WorkflowNode<any>, port: { type: string; label?: string; value: any }) {
 	node.inputs.push({
@@ -515,6 +515,8 @@ async function onMenuSelection(operatorType: string, menuNode: WorkflowNode<any>
 			{ x: currentPortPosition.x, y: currentPortPosition.y },
 			{ x: currentPortPosition.x, y: currentPortPosition.y }
 		]);
+
+		saveWorkflowHandler();
 	}
 }
 
@@ -698,6 +700,7 @@ function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direction: W
 			newEdge.value!.points
 		);
 		cancelNewEdge();
+		saveWorkflowHandler();
 	}
 }
 
