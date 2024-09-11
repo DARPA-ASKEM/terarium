@@ -91,6 +91,7 @@
 			<tera-drilldown-section>
 				<main>
 					<!-- TODO: notebook functionality -->
+					<div class="mt-3 ml-4 mr-2">Notebook is under construction. Use the wizard for now.</div>
 				</main>
 			</tera-drilldown-section>
 		</div>
