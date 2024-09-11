@@ -169,7 +169,7 @@ import Dialog from 'primevue/dialog';
 import Menu from 'primevue/menu';
 import { MenuItem } from 'primevue/menuitem';
 import { RoutePath } from '@/router/index';
-import { RouteMetadata, RouteName } from '@/router/routes';
+import { RouteName } from '@/router/routes';
 import useAuthStore from '@/stores/auth';
 import SplitButton from 'primevue/splitbutton';
 import TeraModal from '@/components/widgets/tera-modal.vue';
@@ -351,8 +351,8 @@ const clearEvaluationScenario = () => {
 };
 
 const homeItem: MenuItem = {
-	label: RouteMetadata[RouteName.Home].displayName,
-	icon: RouteMetadata[RouteName.Home].icon,
+	label: 'Home',
+	icon: 'pi pi-home',
 	command: () => router.push(RoutePath.Home)
 };
 const navMenuItems = ref<MenuItem[]>([homeItem]);
