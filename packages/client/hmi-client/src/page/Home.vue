@@ -316,9 +316,7 @@ function openProject(projectId: string) {
 	router.push({ name: RouteName.Project, params: { projectId } });
 }
 
-onMounted(async () => {
-	await useProjects().getAll();
-});
+onMounted(() => useProjects().getAll());
 
 watch(
 	() => cloningProjects.value,
