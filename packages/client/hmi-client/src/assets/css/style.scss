@@ -116,54 +116,12 @@
 		margin-right: 0 !important;
 	}
 
-	// Styles reused in Document.vue and DataExplorer.vue - TODO: look into changing prime vue styling to reflect this
-	.p-buttonset {
-		white-space: nowrap;
-
-		.p-button.p-button-secondary {
-			border: 1px solid var(--surface-border);
-			box-shadow: none;
-		}
-
-		.p-button[active='false'].p-button-secondary,
-		.p-button[active='false'].p-button-secondary:focus,
-		.p-button[active='false'].p-button-secondary:enabled {
-			border-color: var(--surface-border);
-			background-color: var(--surface-0);
-			color: var(--text-color-primary);
-		}
-
-		.p-button[active='false'].p-button-secondary:hover {
-			border-color: var(--surface-border);
-			background-color: var(--surface-100);
-			color: var(--text-color-primary);
-		}
-
-		.p-button[active='true'].p-button-secondary,
-		.p-button[active='true'].p-button-secondary:focus,
-		.p-button[active='true'].p-button-secondary:enabled {
-			border-color: var(--surface-border);
-			background-color: var(--surface-highlight);
-			color: var(--text-color-primary);
-		}
-
-		.p-button[active='true'].p-button-secondary:hover {
-			border-color: var(--surface-border);
-			background-color: var(--surface-highlight);
-			color: var(--text-color-primary);
-		}
-
-		.p-button.p-button-sm {
-			padding: var(--gap-2) var(--gap-3);
-		}
-	}
-
 	/* Correct button font weight */
 	.p-button-label {
 		font-weight: var(--font-weight);
 	}
 
-	/* Fill checkboxes with color when selected */ 
+	/* Fill checkboxes with color when selected */
 	.p-checkbox .p-checkbox-box {
 		background-color: var(--surface-0);
 		border-color: var(--surface-border-dark);
@@ -254,6 +212,6 @@
 			padding-left: var(--gap-2);
 			gap: 0;
 		}
-	}	
+	}
 
 }
