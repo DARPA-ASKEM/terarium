@@ -447,12 +447,6 @@ onUnmounted(() => {
 	flex-direction: column;
 }
 
-.notebook-section {
-	background-color: var(--surface-disabled);
-	border-right: 1px solid var(--surface-border-dark);
-	padding: var(--gap);
-}
-
 .notebook-section:deep(main) {
 	gap: var(--gap-small);
 	position: relative;

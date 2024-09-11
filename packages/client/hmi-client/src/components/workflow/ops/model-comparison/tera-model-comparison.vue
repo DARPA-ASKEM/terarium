@@ -406,12 +406,6 @@ ul {
 
 /* TODO: Improve this pattern later same in (tera-model-input) */
 
-.notebook-section {
-	background-color: var(--surface-disabled);
-	border-right: 1px solid var(--surface-border-dark);
-	padding: var(--gap);
-}
-
 .notebook-section:deep(main) {
 	gap: var(--gap-small);
 	position: relative;
