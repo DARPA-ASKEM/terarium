@@ -8,7 +8,7 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/t
     email: qa@test.io
     password: askem-quality-assurance
     ```
-
+    
 2. Create, or open, project named `QA <Your Name>`
 
 ### 2. Upload Datasets
@@ -21,9 +21,6 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/t
 2. Connect the two datasets to a transform data set operator. 
 3. Ask the agent the two datasets on date. 
 4. Add a code cell to view the newly joined dataset
-``
-`merged_df`
-
 5. Filter for LA county for January 2021 to March 2021. 
 6. Ask the agent to add a new column named timestamp. 
 7. Save as a new dataset named 'LA_cases_deaths_data'

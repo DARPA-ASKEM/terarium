@@ -1,7 +1,6 @@
 import { computed } from 'vue';
 import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '@/page/Home.vue';
-import DataExplorerView from '@/page/data-explorer/DataExplorer.vue';
 import UnauthorizedView from '@/page/Unauthorized.vue';
 import ProjectView from '@/page/tera-project.vue';
 import WorkflowNodeView from '@/page/WorkflowNode.vue';
@@ -23,7 +22,6 @@ export enum RoutePath {
 	Home = '/',
 	Project = `/projects/:projectId/:pageType?/:assetId?`,
 	WorkflowNode = `/${RouteName.WorkflowNode}/:workflowId/:nodeId`,
-	DataExplorer = '/explorer',
 	UserAdmin = '/user-admin',
 	Unauthorized = '/unauthorized',
 
@@ -47,11 +45,6 @@ const routes = [
 		path: RoutePath.WorkflowNode,
 		component: WorkflowNodeView,
 		props: true
-	},
-	{
-		name: RouteName.DataExplorer,
-		path: RoutePath.DataExplorer,
-		component: DataExplorerView
 	},
 	{
 		name: RouteName.UserAdmin,

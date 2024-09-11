@@ -140,6 +140,7 @@
 						<tera-notebook-jupyter-input
 							:kernel-manager="kernelManager"
 							:defaultOptions="sampleAgentQuestions"
+							:maxChars="60"
 							:context-language="contextLanguage"
 							@llm-output="(data: any) => appendCode(data, 'code')"
 							@llm-thought-output="(data: any) => llmThoughts.push(data)"
@@ -151,7 +152,6 @@
 							</template>
 						</tera-notebook-jupyter-input>
 					</Suspense>
-					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
 				</div>
 				<v-ace-editor
 					v-model:value="codeText"
@@ -203,7 +203,6 @@ import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
-import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
 import { emptyMiraModel, generateModelDatasetConfigurationContext } from '@/model-representation/mira/mira';
@@ -766,6 +765,12 @@ onUnmounted(() => {
 	padding-bottom: var(--gap-2);
 }
 
+.notebook-section {
+	background-color: var(--surface-disabled);
+	border-right: 1px solid var(--surface-border-dark);
+	padding: var(--gap);
+}
+
 .notebook-section:deep(main) {
 	gap: var(--gap-small);
 	position: relative;
@@ -778,10 +783,6 @@ onUnmounted(() => {
 	gap: var(--gap-small);
 	display: flex;
 	align-items: center;
-}
-
-.toolbar {
-	padding-left: var(--gap-medium);
 }
 
 #matrix-canvas {

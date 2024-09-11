@@ -36,7 +36,7 @@
 							{{ data.name }}
 						</template>
 						<template v-if="col.field === 'source'">
-							{{ data.referenceId }}
+							{{ data.source }}
 						</template>
 						<tera-line-graphic
 							v-if="col.field === 'range'"
