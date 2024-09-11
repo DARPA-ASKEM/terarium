@@ -5,7 +5,10 @@
 		</tera-operator-placeholder>
 		<template v-if="node.inputs[0].value">
 			<div v-if="showSpinner">
-				<p>{{ node.state.currentProgress }}% of maximum iterations complete</p>
+				<div v-if="node.state.inProgressOptimizeId !== ''">
+					{{ props.node.state.currentProgress }}% of maximum iterations complete
+				</div>
+				<div v-else>Optimize complete. Running simulations</div>
 				<tera-progress-spinner :font-size="2" is-centered style="height: 100%" />
 			</div>
 

@@ -254,7 +254,10 @@
 					/>
 				</template>
 				<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%">
-					<div>{{ props.node.state.currentProgress }}% of maximum iterations complete</div>
+					<div v-if="node.state.inProgressOptimizeId !== ''">
+						{{ props.node.state.currentProgress }}% of maximum iterations complete
+					</div>
+					<div v-else>Optimize complete. Running simulations</div>
 				</tera-progress-spinner>
 				<tera-operator-output-summary v-if="node.state.summaryId && !showSpinner" :summary-id="node.state.summaryId" />
 				<!-- Optimize result.json display: -->
