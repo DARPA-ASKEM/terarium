@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,16 +11,20 @@ import jakarta.annotation.PostConstruct;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import lombok.Data;
@@ -45,6 +50,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Prove
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
+import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
@@ -55,6 +61,7 @@ import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationGroupInstance;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
+import software.uncharted.terarium.hmiserver.service.tasks.ExtractEquationsResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
@@ -844,5 +851,40 @@ public class ExtractionService {
 		}
 
 		return bytes;
+	}
+
+	@Value("${terarium.taskrunner.nougat.gpu-endpoint}")
+	private final String NOUGAT_GPU_ENDPOINT;
+
+	public ExtractEquationsResponseHandler.ResponseOutput extractEquationsFromPDF(final byte[] pdf, final String userId)
+		throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException, IOException {
+		final int REQUEST_TIMEOUT_MINUTES = 5;
+
+		final ExtractEquationsResponseHandler.Input input = new ExtractEquationsResponseHandler.Input();
+		input.setPdf(pdf);
+
+		final URL url = new URL(String.format("{}/ping", NOUGAT_GPU_ENDPOINT));
+		final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+		connection.setRequestMethod("GET");
+		final int responseCode = connection.getResponseCode();
+
+		final TaskRequest req = new TaskRequest();
+		req.setTimeoutMinutes(REQUEST_TIMEOUT_MINUTES);
+		req.setInput(input);
+		req.setScript(ExtractEquationsResponseHandler.NAME);
+		req.setUserId(userId);
+
+		if (responseCode == HttpURLConnection.HTTP_OK) {
+			// use GPU impl
+			req.setType(TaskType.NOUGAT_GPU);
+		} else {
+			// otherwise fallback to CPU impl
+			req.setType(TaskType.NOUGAT_CPU);
+		}
+
+		final TaskResponse resp = taskService.runTaskSync(req);
+
+		final byte[] outputBytes = resp.getOutput();
+		return objectMapper.readValue(outputBytes, ExtractEquationsResponseHandler.ResponseOutput.class);
 	}
 }
