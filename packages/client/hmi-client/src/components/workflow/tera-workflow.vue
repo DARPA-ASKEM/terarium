@@ -968,7 +968,6 @@ onMounted(() => {
 		workflowService.setLocalStorageTransform(wf.value.getId(), canvasTransform);
 	}, WORKFLOW_SAVE_INTERVAL);
 
-	console.log('on mounted');
 	subscribe(ClientEventType.WorkflowUpdate, updateWorkflowHandler);
 });
 
