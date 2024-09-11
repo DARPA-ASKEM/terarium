@@ -553,14 +553,6 @@ export interface CalibrationRequestCiemss {
     engine: string;
 }
 
-export interface CiemssStatusUpdate {
-    jobId: string;
-    progress: number;
-    loss?: number;
-    currentResults?: number[];
-    totalPossibleIterations?: number;
-}
-
 export interface EnsembleCalibrationCiemssRequest {
     modelConfigs: EnsembleModelConfigs[];
     dataset: DatasetLocation;
@@ -672,6 +664,21 @@ export interface OptimizeQoi {
 export interface TimeSpan {
     start: number;
     end: number;
+}
+
+export interface CiemssCalibrateStatusUpdate extends CiemssStatusUpdate {
+    loss: number;
+}
+
+export interface CiemssOptimizeStatusUpdate extends CiemssStatusUpdate {
+    currentResults: number[];
+    totalPossibleIterations: number;
+}
+
+export interface CiemssStatusUpdate {
+    jobId: string;
+    progress: number;
+    type: CiemssStatusType;
 }
 
 export interface TaskResponse {
@@ -1026,6 +1033,11 @@ export enum AssetType {
 export enum EvaluationScenarioStatus {
     Started = "STARTED",
     Stopped = "STOPPED",
+}
+
+export enum CiemssStatusType {
+    Optimize = "optimize",
+    Calibrate = "calibrate",
 }
 
 export enum TaskStatus {

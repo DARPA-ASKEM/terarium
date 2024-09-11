@@ -37,7 +37,7 @@ import {
 	parsePyCiemssMap
 } from '@/services/models/simulation-service';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
-import { SimulationRequest, InterventionPolicy, Simulation } from '@/types/Types';
+import { SimulationRequest, InterventionPolicy, Simulation, CiemssOptimizeStatusUpdate } from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { createForecastChart } from '@/services/charts';
@@ -81,10 +81,10 @@ const pollResult = async (runId: string) => {
 		.setPollAction(async () => pollAction(runId))
 		.setProgressAction((data: Simulation) => {
 			if (runId === props.node.state.inProgressOptimizeId && data.updates.length > 0) {
-				const checkpoint = _.first(data.updates);
-				if (checkpoint) {
+				const checkpointData = _.first(data.updates)?.data as CiemssOptimizeStatusUpdate;
+				if (checkpointData) {
 					const state = _.cloneDeep(props.node.state);
-					state.currentProgress = +((100 * checkpoint.data.progress) / checkpoint.data.totalPossibleIterations).toFixed(
+					state.currentProgress = +((100 * checkpointData.progress) / checkpointData.totalPossibleIterations).toFixed(
 						2
 					);
 					emit('update-state', state);
