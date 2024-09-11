@@ -92,7 +92,7 @@ export class WorkflowWrapper {
 			const edgeId = edges[i].id;
 			const updated = updatedEdgeMap.get(edgeId);
 			if (updated) {
-				if ((updated.version as number) > (edges[i].version as number)) {
+				if (!edges[i].version || (updated.version as number) > (edges[i].version as number)) {
 					edges[i] = Object.assign(edges[i], updated);
 				}
 				updatedEdgeMap.delete(edgeId);
