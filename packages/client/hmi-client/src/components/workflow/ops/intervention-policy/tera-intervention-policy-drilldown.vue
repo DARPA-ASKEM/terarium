@@ -228,7 +228,7 @@ const isSaveDisabled = computed(() => {
 	const hasSelectedPolicy = !!selectedPolicy.value;
 
 	// Check if the IDs of the transient and selected policies differ
-	const isPolicyIdDifferent = transientPolicyId !== selectedPolicyId.value?.id;
+	const isPolicyIdDifferent = transientPolicyId !== selectedPolicy.value?.id;
 
 	// Check if the policies themselves are equal
 	const arePoliciesEqual = isInterventionPoliciesEqual(transientPolicy, selectedPolicy.value);
