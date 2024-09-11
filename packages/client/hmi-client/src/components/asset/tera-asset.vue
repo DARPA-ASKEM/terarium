@@ -250,7 +250,7 @@ nav {
 	flex-direction: column;
 	width: fit-content;
 	gap: 1rem;
-	padding: var(--gap) var(--gap-large) 0 var(--gap-small);
+	padding: var(--gap) var(--gap-large) 0 var(--gap-2);
 	/* Responsible for stickiness */
 	position: sticky;
 	top: 0;
@@ -263,19 +263,19 @@ nav {
 }
 
 .nav-item {
-	min-width: 9rem;
+	min-width: 9.5rem;
 }
 header {
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
 	height: fit-content;
-	padding: var(--gap-small) var(--gap);
-	gap: var(--gap-small);
+	padding: var(--gap-2) var(--gap);
+	gap: var(--gap-2);
 	background-color: var(--surface-0);
 	backdrop-filter: blur(6px);
 	overflow: hidden;
-	z-index: 1;
+	z-index: 3;
 	box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
 	transition: box-shadow 0.3s;
 }
@@ -305,7 +305,7 @@ header.overview-banner section {
 }
 
 header.with-tabs {
-	padding: var(--gap-small) var(--gap) 0;
+	padding: var(--gap-2) var(--gap) 0;
 }
 
 .overview-banner {
@@ -337,7 +337,7 @@ header section:deep(> input) {
 }
 
 .authors i {
-	margin-right: var(--gap-small);
+	margin-right: var(--gap-2);
 }
 
 .authors ~ * {
@@ -352,7 +352,7 @@ header section:deep(> input) {
 header aside {
 	display: flex;
 	flex-direction: row;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 }
 
 .shadow {
@@ -363,17 +363,17 @@ header aside {
 
 /* Affects child components put in the slot*/
 main:deep(.p-accordion) {
-	margin: var(--gap-small);
+	margin: var(--gap-2);
 }
 
 main:deep(.p-accordion-content) {
-	padding-bottom: var(--gap-small);
+	padding-bottom: var(--gap-2);
 }
 
 main:deep(.p-accordion-content ul) {
 	display: flex;
 	flex-direction: column;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	list-style: none;
 }
 

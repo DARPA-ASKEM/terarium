@@ -1,7 +1,6 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:menu-items="menuItems"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
@@ -264,15 +263,6 @@ const outputs = computed(() => {
 });
 
 const activeOutput = ref<WorkflowOutput<FunmanOperationState> | null>(null);
-
-const menuItems = computed(() => [
-	{
-		label: 'Save as new model configurations',
-		icon: 'pi pi-pencil',
-		disabled: true,
-		command: () => {}
-	}
-]);
 
 const variablesOfInterest = ref<string[]>([]);
 const onToggleVariableOfInterest = (vals: string[]) => {

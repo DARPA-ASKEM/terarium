@@ -1,5 +1,6 @@
 <template>
 	<tera-drilldown
+		v-bind="$attrs"
 		:node="node"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
@@ -169,6 +170,7 @@ import { sortDatesDesc } from '@/utils/date';
 import { createInterventionChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
+import { useProjects } from '@/composables/project';
 import TeraInterventionCard from './tera-intervention-card.vue';
 import {
 	InterventionPolicyOperation,
@@ -217,12 +219,27 @@ const selectedPolicy = ref<InterventionPolicy | null>(null);
 const newDescription = ref('');
 const descriptionTextareaRef = ref<ComponentPublicInstance<typeof Textarea> | null>(null);
 const isEditingDescription = ref(false);
-const isSaveDisabled = computed(
-	() =>
-		knobs.value.transientInterventionPolicy.id !== selectedPolicy.value?.id ||
-		isInterventionPoliciesEqual(knobs.value.transientInterventionPolicy, selectedPolicy.value) ||
-		!isInterventionPoliciesValuesEqual(knobs.value.transientInterventionPolicy, selectedPolicy.value)
-);
+const isSaveDisabled = computed(() => {
+	// Extract the selected and transient policies
+	const transientPolicy = knobs.value.transientInterventionPolicy;
+	const transientPolicyId = transientPolicy.id;
+
+	// Check if the selected policy exists
+	const hasSelectedPolicy = !!selectedPolicy.value;
+
+	// Check if the IDs of the transient and selected policies differ
+	const isPolicyIdDifferent = transientPolicyId !== selectedPolicyId.value?.id;
+
+	// Check if the policies themselves are equal
+	const arePoliciesEqual = isInterventionPoliciesEqual(transientPolicy, selectedPolicy.value);
+
+	// Check if the policy values are equal
+	const arePolicyValuesEqual = isInterventionPoliciesValuesEqual(transientPolicy, selectedPolicy.value);
+
+	// Disable save if either the policy ID is different, the policies are equal,
+	// or the policy values are not equal
+	return hasSelectedPolicy && (isPolicyIdDifferent || arePoliciesEqual || !arePolicyValuesEqual);
+});
 
 const parameterOptions = computed(() => {
 	if (!model.value) return [];
@@ -390,12 +407,20 @@ const onSaveAsInterventionPolicy = (data: InterventionPolicy) => {
 
 const onSaveInterventionPolicy = async () => {
 	const policy = cloneDeep(knobs.value.transientInterventionPolicy);
-	const data = await updateInterventionPolicy(policy);
-	if (!data) {
-		logger.error('Failed to save intervention policy');
-		return;
+	let data;
+	if (!selectedPolicy.value) {
+		// create a new policy when there is no selected policy
+		showSaveModal.value = true;
+	} else {
+		// update the existing policy when there is a selected policy
+		data = await updateInterventionPolicy(policy);
+		if (!data) {
+			logger.error('Failed to save intervention policy');
+			return;
+		}
+		initialize();
+		useProjects().refresh();
 	}
-	initialize();
 };
 
 watch(

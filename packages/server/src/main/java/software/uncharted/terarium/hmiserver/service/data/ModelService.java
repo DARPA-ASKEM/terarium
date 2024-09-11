@@ -112,7 +112,6 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 	@Override
 	@Observed(name = "function_profile")
 	protected String getAssetIndex() {
-		log.info("MODEL INDEX: {}", elasticConfig.getModelIndex());
 		return elasticConfig.getModelIndex();
 	}
 
@@ -124,7 +123,6 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 
 	@Override
 	public String getAssetAlias() {
-		log.info("MODEL ALIAS: {}", elasticConfig.getModelAlias());
 		return elasticConfig.getModelAlias();
 	}
 
@@ -163,13 +161,13 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		}
 
 		// Force observable to empty-list if null or not specified
-		if (asset.getSemantics() != null) {
+		if (asset.getSemantics() != null && asset.getSemantics().getOde() != null) {
 			if (asset.getSemantics().getOde().getObservables() == null) {
 				asset.getSemantics().getOde().setObservables(new ArrayList());
 			}
 		}
 		// Force proper annotation metadata
-		ModelMetadata metadata = asset.getMetadata();
+		final ModelMetadata metadata = asset.getMetadata();
 		if (metadata.getAnnotations() == null) {
 			metadata.setAnnotations(new Annotations());
 			asset.setMetadata(metadata);
@@ -215,13 +213,13 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		}
 
 		// Force observable to empty-list if null or not specified
-		if (asset.getSemantics() != null) {
+		if (asset.getSemantics() != null && asset.getSemantics().getOde() != null) {
 			if (asset.getSemantics().getOde().getObservables() == null) {
 				asset.getSemantics().getOde().setObservables(new ArrayList());
 			}
 		}
 		// Force proper annotation metadata
-		ModelMetadata metadata = asset.getMetadata();
+		final ModelMetadata metadata = asset.getMetadata();
 		if (metadata.getAnnotations() == null) {
 			metadata.setAnnotations(new Annotations());
 			asset.setMetadata(metadata);

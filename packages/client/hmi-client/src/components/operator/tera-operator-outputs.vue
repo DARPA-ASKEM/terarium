@@ -28,7 +28,7 @@
 					<div class="port" />
 				</div>
 				<div class="relative w-full">
-					<div class="truncate text-right">{{ output.label }}</div>
+					<div class="truncate text-right">{{ useProjects().getAssetName(output.value?.[0]) || output.label }}</div>
 					<Button
 						class="unlink"
 						label="Unlink"
@@ -74,6 +74,7 @@ import { WorkflowPortStatus, WorkflowDirection, WorkflowOutput } from '@/types/w
 import Button from 'primevue/button';
 import { OperatorMenuItem } from '@/services/workflow';
 import TeraOperatorMenu from '@/components/operator/tera-operator-menu.vue';
+import { useProjects } from '@/composables/project';
 
 const menuFocusId = ref<string | null>(null);
 

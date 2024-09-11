@@ -1,7 +1,6 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:menu-items="menuItems"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
@@ -120,7 +119,7 @@ import { getDocumentAsset, getEquationFromImageUrl } from '@/services/document-a
 import type { Card, DocumentAsset, DocumentExtraction, Model } from '@/types/Types';
 import { cloneDeep, unionBy } from 'lodash';
 import Image from 'primevue/image';
-import { equationsToAMR } from '@/services/knowledge';
+import { equationsToAMR, type EquationsToAMRRequest } from '@/services/knowledge';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { getModel, updateModel } from '@/services/model';
@@ -247,7 +246,12 @@ async function onRun() {
 		.filter((e) => e.includeInProcess && !e.asset.extractionError)
 		.map((e) => e.asset.text);
 
-	const modelId = await equationsToAMR(equations, clonedState.value.modelFramework);
+	const request: EquationsToAMRRequest = {
+		equations,
+		framework: clonedState.value.modelFramework,
+		documentId: document.value?.id
+	};
+	const modelId = await equationsToAMR(request);
 	if (!modelId) return;
 
 	if (document.value?.id) await generateCard(document.value.id);
@@ -323,17 +327,6 @@ function removeEquation(index: number) {
 	clonedState.value.equations.splice(index, 1);
 	emit('update-state', clonedState.value);
 }
-
-const menuItems = computed(() => [
-	{
-		label: 'Save as new model',
-		icon: 'pi pi-download',
-		disabled: !selectedModel.value,
-		command: () => {
-			showSaveModelModal.value = true;
-		}
-	}
-]);
 
 function getEquations() {
 	const newEquations = multipleEquations.value.split('\n');
