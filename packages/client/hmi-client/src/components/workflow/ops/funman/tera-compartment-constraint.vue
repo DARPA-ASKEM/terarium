@@ -24,7 +24,7 @@ const props = defineProps<{
 	width: 100%;
 	margin-top: 1rem;
 	display: flex;
-	padding: 1rem 1rem 1rem 1.5rem;
+	padding: var(--gap-4);
 	flex-direction: column;
 	justify-content: center;
 	align-items: flex-start;

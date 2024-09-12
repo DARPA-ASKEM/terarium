@@ -191,14 +191,14 @@ watch(
 	width: 100%;
 	display: flex;
 	margin-top: 1rem;
-	padding: 1rem 1rem 1rem 1.5rem;
+	padding: var(--gap-4);
 	flex-direction: column;
 	justify-content: center;
 	align-items: flex-start;
 	background: var(--gray-50);
 	border: 1px solid var(--gray-200);
 	border-radius: var(--border-radius);
-	overflow: auto;
+	overflow: hidden;
 }
 
 .sub-header {
@@ -278,13 +278,13 @@ watch(
 	width: 100%;
 	display: flex;
 	gap: 8px;
+	flex-wrap: wrap;
 	overflow: invisible;
 }
 
 .input-container {
 	display: flex;
 	flex-direction: column;
-	width: 100%;
 }
 
 .label {

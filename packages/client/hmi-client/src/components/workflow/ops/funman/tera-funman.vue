@@ -60,16 +60,16 @@
 									placeholder="Select variables"
 								/>
 								<div class="mb-2 section-row timespan">
-									<div class="">
+									<div class="mr-2 timespan-input">
 										<label>Start time</label>
 										<tera-input-number class="mt-1" v-model="knobs.currentTimespan.start" />
 									</div>
-									<div class="">
+									<div class="mr-2 timespan-input">
 										<label>End time</label>
 										<tera-input-number class="mt-1" v-model="knobs.currentTimespan.end" />
 									</div>
-									<div class="">
-										<label>Number of steps</label>
+									<div class="timespan-input">
+										<label>Number of timepoints</label>
 										<tera-input-number class="mt-1" v-model="knobs.numberOfSteps" />
 									</div>
 								</div>
@@ -84,6 +84,7 @@
 							</AccordionTab>
 						</Accordion>
 					</main>
+					<div class="spacer m-7" />
 				</template>
 			</tera-slider-panel>
 		</div>
@@ -553,7 +554,6 @@ watch(
 .section-row {
 	display: flex;
 	align-items: center;
-	gap: 0.8125rem;
 	align-self: stretch;
 }
 
@@ -561,13 +561,18 @@ watch(
 	display: flex;
 	width: 100%;
 	align-items: center;
-	gap: 0.8125rem;
 	align-self: stretch;
-	gap: 1.5rem;
+	gap: var(--gap-medium);
 }
 
 div.section-row.timespan > div > span {
 	width: 100%;
+}
+
+.timespan-input {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
 }
 
 .timespan-list {
