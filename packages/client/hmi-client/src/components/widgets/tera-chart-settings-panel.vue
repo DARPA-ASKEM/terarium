@@ -49,6 +49,12 @@ import TeraInputText from '@/components/widgets/tera-input-text.vue';
 const props = defineProps<{
 	activeSettings: ChartSetting | null;
 	annotations?: ChartAnnotation[];
+	/**
+	 * We receives generateAnnotation as a functor from the parent to access the parent scope directly. This allows us to utilize dependencies defined in the parent component without passing them all as props, which can be cumbersome.
+	 * Additionally, it enables us to handle post-generation actions (like resetting loading state or clearing input) after function completion.
+	 * @param setting ChartSetting
+	 * @param query llm query to generate annotation
+	 */
 	generateAnnotation?: (setting: ChartSetting, query: string) => Promise<ChartAnnotation>;
 }>();
 
