@@ -11,17 +11,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	software-properties-common
 RUN add-apt-repository ppa:deadsnakes/ppa
 RUN apt-get update && apt-get install -y --no-install-recommends \
-	software-properties-common \
-	python3.11 \
-	python3.11-venv \
-	python3.11-dev \
+	python3.10 \
+	python3.10-venv \
+	python3.10-dev \
 	wget \
+	git \
 	python3-pip && \
 	rm -rf /var/lib/apt/lists/*
 
-# Set the default Python version to 3.11
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 && \
-	update-alternatives --set python /usr/bin/python3.11
+# Set the default Python version to 3.10
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1 && \
+	update-alternatives --set python /usr/bin/python3.10
 
 RUN python -m ensurepip --upgrade
 
@@ -32,13 +32,16 @@ RUN pip3 --version
 # Install nougat
 COPY ./packages/nougat_cpu/nougat-version.txt /nougatVersion.txt
 RUN COMMIT_SHA="$(cat /nougatVersion.txt)" && \
-	echo "Using GoLLM commit $COMMIT_SHA" && \
+	echo "Using document_intelligence commit $COMMIT_SHA" && \
 	wget --progress=dot:giga -O nougat.tar.gz "https://github.com/DARPA-ASKEM/document_intelligence/archive/${COMMIT_SHA}.tar.gz" && \
 	tar -zxvf nougat.tar.gz && \
 	rm nougat.tar.gz && \
 	mv document_intelligence-* document_intelligence
-WORKDIR /document_intelligence
-RUN pip3 install --no-cache-dir .
+WORKDIR /document_intelligence/document_intelligence/fast_latex
+RUN pip3 install -r requirements.txt
+
+#Install uvicorn
+RUN pip3 install uvicorn
 
 #^^^^^^^^^^^^^^^^^^^^
 ######################
@@ -54,13 +57,18 @@ WORKDIR /
 # ------------------------------------------------------------------------------
 
 # Set up the Python image with JRE
-FROM python:3.11-slim
+FROM python:3.10-slim
 
 WORKDIR /
+
+# Copy the supervisord configuration file
+COPY ./packages/nougat_cpu/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Install OpenJDK JRE and wget
 RUN apt-get update && \
 	apt-get install -y --no-install-recommends \
+	supervisor \
+	git \
 	openjdk-17-jre-headless && \
 	rm -rf /var/lib/apt/lists/*
 
@@ -69,8 +77,8 @@ COPY --from=nougat_cpu_taskrunner_builder /taskrunner/build/libs/*.jar /taskrunn
 
 # Install nougat
 COPY --from=nougat_cpu_taskrunner_builder /document_intelligence /document_intelligence
-WORKDIR /document_intelligence
-RUN pip install --no-cache-dir .
+WORKDIR /document_intelligence/document_intelligence/fast_latex
+RUN pip install -r requirements.txt
 
 # Install taskrunner
 COPY ./packages/taskrunner/setup.py /taskrunner/setup.py
@@ -79,10 +87,12 @@ WORKDIR /taskrunner
 RUN pip install --no-cache-dir -e .
 
 # Install document_intelligence tasks
-COPY ./packages/nougat /nougat_task
-
+COPY ./packages/nougat_cpu /nougat_task
 WORKDIR /nougat_task
 RUN pip install --no-cache-dir -e .
 
+#Install uvicorn
+RUN pip install uvicorn
+
 WORKDIR /
-CMD ["java", "-jar", "taskrunner.jar"]
+CMD ["/usr/bin/supervisord"]

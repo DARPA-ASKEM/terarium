@@ -10,5 +10,5 @@ setup(
             "nougat_task:extraction=tasks.extraction:main",
         ],
     },
-    python_requires=">=3.11",
+    python_requires=">=3.10",
 )

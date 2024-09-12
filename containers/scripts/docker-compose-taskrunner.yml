@@ -78,12 +78,13 @@ services:
     container_name: nougat_cpu-taskrunner
     networks:
       - terarium
+    ports:
+      - "6300:8001"
     environment:
       TERARIUM_MQ_ADDRESSES: "amqp://rabbitmq:5672"
       TERARIUM_MQ_PASSWORD: "terarium123"
       TERARIUM_MQ_USERNAME: "terarium"
       TERARIUM_TASKRUNNER_REQUEST_TYPE: "nougat_cpu"
-      OPENAI_API_KEY: "${secret_openai_key}"
     depends_on:
       rabbitmq:
         condition: service_healthy
