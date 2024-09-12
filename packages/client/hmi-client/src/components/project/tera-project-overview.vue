@@ -18,7 +18,7 @@
 				{{ useProjects().activeProject.value?.description }}
 			</p>
 		</template>
-		<tera-project-overview-editor class="relative" />
+		<tera-project-overview-editor />
 	</tera-asset>
 </template>
 
