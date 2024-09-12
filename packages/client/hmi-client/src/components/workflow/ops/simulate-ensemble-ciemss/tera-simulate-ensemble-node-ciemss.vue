@@ -4,7 +4,7 @@
 			v-for="(cfg, index) of node.state.chartConfigs"
 			:key="index"
 			:run-results="runResults[selectedRunId]"
-			:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg.selectedVariable ?? [] }"
+			:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
 			has-mean-line
 			@configuration-change="chartProxy.configurationChange(index, $event)"
 			:size="{ width: 190, height: 120 }"

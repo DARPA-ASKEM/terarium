@@ -146,9 +146,9 @@
 					<div v-if="view === OutputView.Charts" ref="outputPanel">
 						<template v-for="(cfg, index) of node.state.chartConfigs" :key="index">
 							<tera-chart-control
-								:chart-config="{ selectedRun: selectedRunId, selectedVariable: cfg.selectedVariable ?? [] }"
+								:chart-config="{ selectedRun: selectedRunId, selectedVariable: cfg }"
 								multi-select
-								:show-remove-button="!cfg.selectedIntervention"
+								show-remove-button
 								:variables="Object.keys(pyciemssMap)"
 								@configuration-change="chartProxy.configurationChange(index, $event)"
 								@remove="chartProxy.removeChart(index)"
@@ -358,13 +358,13 @@ const preparedCharts = computed(() => {
 		const chart = createForecastChart(
 			{
 				data: result,
-				variables: config.selectedVariable?.map((d) => pyciemssMap[d]) ?? [],
+				variables: config.map((d) => pyciemssMap[d]),
 				timeField: 'timepoint_id',
 				groupField: 'sample_id'
 			},
 			{
 				data: resultSummary,
-				variables: config.selectedVariable?.map((d) => `${pyciemssMap[d]}_mean`) ?? [],
+				variables: config.map((d) => `${pyciemssMap[d]}_mean`),
 				timeField: 'timepoint_id'
 			},
 			null,
@@ -376,14 +376,15 @@ const preparedCharts = computed(() => {
 				legend: true,
 				translationMap: reverseMap,
 				xAxisTitle: modelVarUnits.value._time || 'Time',
-				yAxisTitle:
-					_.uniq(config.selectedVariable?.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
+				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
 			}
 		);
-		if (config.selectedIntervention && interventionPolicy.value) {
-			chart.layer.push(
-				...createInterventionChartMarkers(groupedInterventionOutputs.value[config.selectedIntervention])
-			);
+		if (interventionPolicy.value) {
+			_.keys(groupedInterventionOutputs.value).forEach((key) => {
+				if (config.includes(key)) {
+					chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
+				}
+			});
 		}
 		return chart;
 	});

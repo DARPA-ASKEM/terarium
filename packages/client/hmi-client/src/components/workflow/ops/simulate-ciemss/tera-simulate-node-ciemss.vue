@@ -112,7 +112,7 @@ const processResult = async (runId: string) => {
 	if (interventionPolicyId.value && _.isEmpty(state.chartConfigs)) {
 		const groupedInterventions = _.groupBy(interventionPolicy.value?.interventions, 'appliedTo');
 		_.keys(groupedInterventions).forEach((key) => {
-			chartProxy.addChart(key);
+			chartProxy.addChart([key]);
 		});
 	} else if (_.isEmpty(state.chartConfigs)) {
 		chartProxy.addChart();
@@ -177,13 +177,13 @@ const preparedCharts = computed(() => {
 		createForecastChart(
 			{
 				data: result,
-				variables: config.selectedVariable?.map((d) => pyciemssMap[d]) ?? [],
+				variables: config.map((d) => pyciemssMap[d]),
 				timeField: 'timepoint_id',
 				groupField: 'sample_id'
 			},
 			{
 				data: resultSummary,
-				variables: config.selectedVariable?.map((d) => `${pyciemssMap[d]}_mean`) ?? [],
+				variables: config.map((d) => `${pyciemssMap[d]}_mean`),
 				timeField: 'timepoint_id'
 			},
 			null,
@@ -195,8 +195,7 @@ const preparedCharts = computed(() => {
 				legend: true,
 				translationMap: reverseMap,
 				xAxisTitle: modelVarUnits.value._time || 'Time',
-				yAxisTitle:
-					_.uniq(config.selectedVariable?.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
+				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
 			}
 		)
 	);

@@ -1,7 +1,6 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import type { EnsembleModelConfigs } from '@/types/Types';
 import calibrateEnsembleCiemss from '@assets/svg/operator-images/calibrate-ensemble-probabilistic.svg';
-import { ChartConfig } from '@/types/SimulateConfig';
 
 const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L156';
 
@@ -12,7 +11,7 @@ export interface EnsembleCalibrateExtraCiemss {
 }
 
 export interface CalibrateEnsembleCiemssOperationState extends BaseState {
-	chartConfigs: Partial<ChartConfig>[];
+	chartConfigs: string[][];
 	ensembleConfigs: EnsembleModelConfigs[];
 	timestampColName: string;
 	extra: EnsembleCalibrateExtraCiemss;
