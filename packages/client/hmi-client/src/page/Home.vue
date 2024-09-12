@@ -154,7 +154,6 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, watch } from 'vue';
-import useQueryStore from '@/stores/query';
 import Button from 'primevue/button';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
@@ -309,7 +308,6 @@ const onToggle = (val) => {
 	selectedColumns.value = columns.value.filter((col) => val.includes(col));
 };
 
-const queryStore = useQueryStore();
 const router = useRouter();
 
 const isLoadingProjects = computed(() => !useProjects().allProjects.value);
@@ -318,11 +316,7 @@ function openProject(projectId: string) {
 	router.push({ name: RouteName.Project, params: { projectId } });
 }
 
-onMounted(async () => {
-	// Clear all...
-	queryStore.reset(); // Facets queries.
-	await useProjects().getAll();
-});
+onMounted(() => useProjects().getAll());
 
 watch(
 	() => cloningProjects.value,
