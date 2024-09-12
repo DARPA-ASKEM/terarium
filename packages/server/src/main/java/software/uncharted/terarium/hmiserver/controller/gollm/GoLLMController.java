@@ -116,7 +116,7 @@ public class GoLLMController {
 	)
 	public ResponseEntity<TaskResponse> createModelCardTask(
 		@RequestParam(name = "model-id", required = true) final UUID modelId,
-		@RequestParam(name = "document-id", required = true) final UUID documentId,
+		@RequestParam(name = "document-id", required = false) final UUID documentId,
 		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
@@ -132,30 +132,34 @@ public class GoLLMController {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 		}
 
-		// Grab the document
-		final Optional<DocumentAsset> documentOpt = documentAssetService.getAsset(documentId, permission);
-		if (documentOpt.isEmpty()) {
-			log.warn(String.format("Document %s not found", documentId));
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
-		}
-
-		final DocumentAsset document = documentOpt.get();
-
-		// make sure there is text in the document
-		if (document.getText() == null || document.getText().isEmpty()) {
-			log.warn(String.format("Document %s has no text to send", documentId));
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.extraction.not-done"));
-		}
-
-		// check for input length
-		if (document.getText().length() > ModelCardResponseHandler.MAX_TEXT_SIZE) {
-			log.warn(String.format("Document %s text too long for GoLLM model card task", documentId));
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("document.text-length-exceeded"));
-		}
-
 		final ModelCardResponseHandler.Input input = new ModelCardResponseHandler.Input();
 		input.setAmr(model.get().serializeWithoutTerariumFields());
-		input.setResearchPaper(document.getText());
+
+		// Grab the document
+		final DocumentAsset document;
+		if (documentId != null) {
+			final Optional<DocumentAsset> documentOpt = documentAssetService.getAsset(documentId, permission);
+			if (documentOpt.isEmpty()) {
+				log.warn(String.format("Document %s not found", documentId));
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
+			}
+
+			document = documentOpt.get();
+
+			// make sure there is text in the document
+			if (document.getText() == null || document.getText().isEmpty()) {
+				log.warn(String.format("Document %s has no text to send", documentId));
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.extraction.not-done"));
+			}
+
+			// check for input length
+			if (document.getText().length() > ModelCardResponseHandler.MAX_TEXT_SIZE) {
+				log.warn(String.format("Document %s text too long for GoLLM model card task", documentId));
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("document.text-length-exceeded"));
+			}
+
+			input.setResearchPaper(document.getText());
+		}
 
 		// Create the task
 		final TaskRequest req = new TaskRequest();
