@@ -72,52 +72,6 @@ public class TDSCodeController {
 	final CurrentUserService currentUserService;
 
 	/**
-	 * Retrieves a list of codes.
-	 *
-	 * @param pageSize The number of codes to retrieve per page (optional, default value is 100).
-	 * @param page The page number to retrieve (optional, default value is 0).
-	 * @return A ResponseEntity containing a list of Code objects if successful, or an empty list if no codes are found.
-	 */
-	@GetMapping
-	@Secured(Roles.USER)
-	@Operation(summary = "Gets all code resources")
-	@ApiResponses(
-		value = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "code found.",
-				content = @Content(
-					array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Code.class))
-				)
-			),
-			@ApiResponse(
-				responseCode = "204",
-				description = "There is no code found and no errors occurred",
-				content = @Content
-			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue retrieving code from the data store",
-				content = @Content
-			)
-		}
-	)
-	public ResponseEntity<List<Code>> getCodes(
-		@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
-		@RequestParam(name = "page", defaultValue = "1", required = false) final Integer page
-	) {
-		try {
-			return ResponseEntity.ok(codeService.getPublicNotTemporaryAssets(pageSize, page));
-		} catch (final Exception e) {
-			log.error("Unable to get code resources", e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				"Unable to get code resources"
-			);
-		}
-	}
-
-	/**
 	 * Creates a code.
 	 *
 	 * @param code The code to be created.
