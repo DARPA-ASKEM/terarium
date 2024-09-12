@@ -52,7 +52,7 @@
 										:use-default-style="false"
 										:class="selectedItem === equation.name ? 'currenly-selected' : 'asset-panel'"
 									>
-										<section class="ctt-checkbox">
+										<section>
 											<Checkbox v-model="equation.includeInProcess" :binary="true" />
 											<div class="block-container">
 												<tera-math-editor
@@ -89,7 +89,7 @@
 										:use-default-style="false"
 										:class="selectedItem === equation.name ? 'currenly-selected' : 'asset-panel'"
 									>
-										<section class="ctt-checkbox">
+										<section>
 											<Checkbox v-model="equation.includeInProcess" :binary="true" />
 											<div class="block-container">
 												<tera-math-editor

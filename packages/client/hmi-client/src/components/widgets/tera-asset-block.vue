@@ -1,5 +1,5 @@
 <template>
-	<Panel :toggleable="isToggleable" :class="{ 'asset-panel': useDefaultStyle }">
+	<Panel :toggleable="isToggleable" :class="useDefaultStyle ? 'asset-panel' : ''">
 		<template #header>
 			<section>
 				<slot name="header" />
