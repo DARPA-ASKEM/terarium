@@ -958,23 +958,25 @@ onMounted(async () => {
 const preparedSuccessCriteriaCharts = computed(() => {
 	const postForecastRunId = props.node.state.postForecastRunId;
 
-	return props.node.state.constraintGroups.map((constraint) =>
-		createSuccessCriteriaChart(
-			riskResults.value[postForecastRunId],
-			constraint.targetVariable,
-			constraint.threshold,
-			constraint.isMinimized,
-			constraint.riskTolerance,
-			{
-				title: constraint.name,
-				width: chartSize.value.width,
-				height: chartSize.value.height,
-				xAxisTitle: 'Number of samples',
-				yAxisTitle: `${constraint.isMinimized ? 'Max' : 'Min'} value of ${constraint.targetVariable} at all timepoints`,
-				legend: true
-			}
-		)
-	);
+	return props.node.state.constraintGroups
+		.filter((ele) => ele.isActive)
+		.map((constraint) =>
+			createSuccessCriteriaChart(
+				riskResults.value[postForecastRunId],
+				constraint.targetVariable,
+				constraint.threshold,
+				constraint.isMinimized,
+				constraint.riskTolerance,
+				{
+					title: constraint.name,
+					width: chartSize.value.width,
+					height: chartSize.value.height,
+					xAxisTitle: 'Number of samples',
+					yAxisTitle: `${constraint.isMinimized ? 'Max' : 'Min'} value of ${constraint.targetVariable} at all timepoints`,
+					legend: true
+				}
+			)
+		);
 });
 
 // Creates forecast charts for interventions and simulation charts, based on the selected variables
