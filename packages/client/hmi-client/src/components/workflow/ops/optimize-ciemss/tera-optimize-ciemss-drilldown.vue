@@ -792,12 +792,14 @@ const runOptimize = async () => {
 	props.node.state.constraintGroups.forEach((constraintGroup) =>
 		qois.push({
 			contexts: [constraintGroup.targetVariable],
-			method: constraintGroup.qoiMethod
+			method: constraintGroup.qoiMethod,
+			riskBound: constraintGroup.threshold,
+			isMinimized: constraintGroup.isMinimized
 		})
 	);
 
+	// riskTolerance to get alpha and divide by 100 to turn into a percent for pyciemss-service.
 	const alphas: number[] = props.node.state.constraintGroups.map((ele) => ele.riskTolerance / 100);
-	const riskBounds: number[] = props.node.state.constraintGroups.map((ele) => ele.threshold);
 	const optimizePayload: OptimizeRequestCiemss = {
 		userId: 'no_user_provided',
 		engine: 'ciemss',
@@ -809,14 +811,13 @@ const runOptimize = async () => {
 		optimizeInterventions,
 		fixedInterventions,
 		qoi: qois,
-		riskBound: riskBounds,
 		boundsInterventions: listBoundsInterventions,
 		extra: {
 			isMinimized: props.node.state.constraintGroups[0].isMinimized,
 			numSamples: knobs.value.numSamples,
 			maxiter: knobs.value.maxiter,
 			maxfeval: knobs.value.maxfeval,
-			alpha: alphas, // riskTolerance to get alpha and divide by 100 to turn into a percent for pyciemss-service.
+			alpha: alphas,
 			solverMethod: knobs.value.solverMethod,
 			solverStepSize: 1
 		}
