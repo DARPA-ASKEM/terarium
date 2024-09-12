@@ -25,27 +25,44 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 3. Create a new "Compare models" operator
 4. Attach the Bertozzi2020, Fang2020, and Tang2020 models to the "Compare models" operator
 5. Open the compare models drilldown
-6. Ensure that when the drill-down starts the overview begins to generate an overview and the model graphs are displayed.
+6. Ensure that when the drill-down starts:
+   - The overview begins to generate
+   - The model graphs are displayed
 7. When the overview is generated, it should compare the structure of the AMR models.
-   - It should compare 
+   - It should have an overview of the models
+   - It should look at the semantic information of all the models
+   - It should state that there is a lack of metadata information to make other comparisons
+   - It should have a meaningful conclusion
 
 ### 3. Compare models with partial model cards
 1. Enrich the Bertozzi2020 and Fang2020 models with their respective documents 
 2. Create a new "Compare models" operator
 4. Attach the Bertozzi2020, Fang2020, and Tang2020 models to the new "Compare models" operator
 5. Open the drilldown
-6. Ensure that when the drill-down starts the overview begins to generate an overview and the model graphs are displayed.
+6. Ensure that when the drill-down starts:
+   - The overview begins to generate
+   - The model graphs are displayed
+   - Model card information is displayed for Bertozzi2020 and Fang2020
 7. When the overview is generated, it should compare both the structure of the AMR models and the metadata information.
-  - It should compare
+  - It should have an overview of the models
+  - It should look at semantic information of all the models
+  - It should compare the metadata information for the Bertozzi2020 and Fang2020 models
+  - It should have a meaningful conclusion
+
 
 ### 4. Compare models all with model cards
 1. Finally, enrich the Tang2020 models with its respective document
 2. Create a new "Compare models" operator
 4. Attach the Bertozzi2020, Fang2020, and Tang2020 models to the new "Compare models" operator
 5. Open the drilldown
-6. Ensure that when the drill-down starts the overview begins to generate an overview and the model graphs are displayed.
+6. Ensure that when the drill-down starts:
+  - The overview begins to generate
+  - The model graphs are displayed
+  - Model card information is displayed for all models
 7. When the overview is generated, it should only compare the metadata information from each model and not look at the structure.
-- It should compare
+   - It should have an overview of the models
+   - It should compare the metadata and semantic information for all models
+   - It should have a meaningful conclusion
 
 ### 5. Working with the Compare models drilldown: NOTEBOOK
 1. Switch to the **Notebook** tab.
