@@ -474,18 +474,24 @@ export class WorkflowWrapper {
 				if (!targetPort) return;
 				edge.sourcePortId = selected.id; // Sync edge source port to selected output
 
+				/**
+				 * Handle compound type unwrangling, this is very similar to what
+				 * we do in addEdge(...) but s already connected.
+				 * */
 				const selectedTypes = selected.type.split('|').map((d) => d.trim());
 				const allowedInputTypes = targetPort.type.split('|').map((d) => d.trim());
 				const intersectionTypes = _.intersection(selectedTypes, allowedInputTypes);
 
-				// Not supported if there are more than one match
+				// Sanity check: multiple matches found
 				if (intersectionTypes.length > 1) {
 					console.error(`Ambiguous matching types [${selectedTypes}] to [${allowedInputTypes}]`);
 					return;
 				}
+				// Sanity check: no matches found
 				if (intersectionTypes.length === 0) {
 					return;
 				}
+
 				if (selectedTypes.length > 1) {
 					const concreteType = intersectionTypes[0];
 					if (selected.value) {
