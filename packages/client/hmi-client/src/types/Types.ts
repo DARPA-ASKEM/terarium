@@ -553,12 +553,6 @@ export interface CalibrationRequestCiemss {
     engine: string;
 }
 
-export interface CiemssStatusUpdate {
-    loss: number;
-    progress: number;
-    jobId: string;
-}
-
 export interface EnsembleCalibrationCiemssRequest {
     modelConfigs: EnsembleModelConfigs[];
     dataset: DatasetLocation;
@@ -670,6 +664,21 @@ export interface OptimizeQoi {
 export interface TimeSpan {
     start: number;
     end: number;
+}
+
+export interface CiemssCalibrateStatusUpdate extends CiemssStatusUpdate {
+    loss: number;
+}
+
+export interface CiemssOptimizeStatusUpdate extends CiemssStatusUpdate {
+    currentResults: number[];
+    totalPossibleIterations: number;
+}
+
+export interface CiemssStatusUpdate {
+    jobId: string;
+    progress: number;
+    type: CiemssStatusType;
 }
 
 export interface TaskResponse {
@@ -1026,6 +1035,11 @@ export enum EvaluationScenarioStatus {
     Stopped = "STOPPED",
 }
 
+export enum CiemssStatusType {
+    Optimize = "optimize",
+    Calibrate = "calibrate",
+}
+
 export enum TaskStatus {
     Queued = "QUEUED",
     Running = "RUNNING",
@@ -1053,6 +1067,8 @@ export enum ClientEventType {
     TaskGollmGenerateSummary = "TASK_GOLLM_GENERATE_SUMMARY",
     TaskFunmanValidation = "TASK_FUNMAN_VALIDATION",
     TaskEnrichAmr = "TASK_ENRICH_AMR",
+    WorkflowUpdate = "WORKFLOW_UPDATE",
+    WorkflowDelete = "WORKFLOW_DELETE",
 }
 
 export enum ProgressState {

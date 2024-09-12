@@ -147,8 +147,7 @@ import {
 import { AssetType, type CsvAsset, type Dataset, PresignedURL } from '@/types/Types';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import type { FeatureConfig } from '@/types/common';
-import type { Source } from '@/types/search';
-import { DatasetSource } from '@/types/search';
+import { DatasetSource } from '@/types/Dataset';
 import { useProjects } from '@/composables/project';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
@@ -174,7 +173,7 @@ const props = defineProps({
 		default: { isPreview: false } as FeatureConfig
 	},
 	source: {
-		type: String as PropType<Source>,
+		type: String as PropType<DatasetSource>,
 		default: DatasetSource.TERARIUM
 	}
 });

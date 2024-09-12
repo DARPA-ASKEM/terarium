@@ -48,7 +48,7 @@ import {
 } from '@/services/provenance';
 import type { DocumentAsset, ProjectAsset, TerariumAsset } from '@/types/Types';
 import { AssetType, ProvenanceType } from '@/types/Types';
-import { isDocumentAsset } from '@/utils/data-util';
+import { isDocumentAsset } from '@/utils/asset';
 import Button from 'primevue/button';
 import RadioButton from 'primevue/radiobutton';
 import Checkbox from 'primevue/checkbox';
