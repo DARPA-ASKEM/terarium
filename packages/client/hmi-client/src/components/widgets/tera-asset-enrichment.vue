@@ -41,12 +41,12 @@
 <script setup lang="ts">
 import { extractPDF, extractVariables, profileDataset } from '@/services/knowledge';
 import {
-	RelationshipType,
 	createProvenance,
 	getRelatedArtifacts,
-	mapAssetTypeToProvenanceType
+	mapAssetTypeToProvenanceType,
+	RelationshipType
 } from '@/services/provenance';
-import type { DocumentAsset, TerariumAsset, ProjectAsset } from '@/types/Types';
+import type { DocumentAsset, ProjectAsset, TerariumAsset } from '@/types/Types';
 import { AssetType, ProvenanceType } from '@/types/Types';
 import { isDocumentAsset } from '@/utils/asset';
 import Button from 'primevue/button';
@@ -131,8 +131,8 @@ const confirm = async () => {
 
 const sendForEnrichment = async () => {
 	// Build enrichment job ids list (profile asset, align model, etc...)
-	if (props.assetType === AssetType.Model) {
-		await modelCard(selectedResourceId.value);
+	if (props.assetId && props.assetType === AssetType.Model) {
+		await modelCard(props.assetId, selectedResourceId.value);
 	} else if (props.assetType === AssetType.Dataset) {
 		await profileDataset(props.assetId, selectedResourceId.value);
 	}
