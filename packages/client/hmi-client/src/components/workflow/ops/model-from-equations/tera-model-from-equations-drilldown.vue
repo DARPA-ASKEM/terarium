@@ -18,14 +18,13 @@
 			<tera-slider-panel v-model:is-open="isInputOpen" header="Input" content-width="100%">
 				<template #content>
 					<header class="pb-2">
-						<nav class="change-to-tailwind">
-							<section class="ctt-checkbox">Specify which equations to use for this model.</section>
-							<section>
+						<nav class="flex justify-content-between p-2">
+							<span class="flex align-items-center">Specify which equations to use for this model.</span>
+							<section class="white-space-nowrap min-w-min">
 								<Button class="mr-1" label="Reset" severity="secondary" outlined></Button>
 								<Button label="Run" @click="onRun" :diabled="assetLoading" :loading="loadingModel"></Button>
 							</section>
 						</nav>
-
 						<section class="header-group">
 							<Textarea
 								v-model="multipleEquations"
@@ -36,17 +35,6 @@
 							/>
 							<Button label="Add" @click="getEquations" class="ml-2" :disabled="isEmpty(multipleEquations)" />
 						</section>
-
-						<!-- <section class="header-group">
-							<div class="inline-flex align-items-center">
-								<h6>Equations</h6>
-								<span class="pl-1">{{ getEquationSelectedLabel() }}</span>
-							</div>
-							<div>
-								<Button text @click="toggleCollapseAll">{{ getCollapsedLabel() }}</Button>
-								<Button text @click="toggleIncludedEquations">{{ getIncludedEquationLabel() }}</Button>
-							</div>
-						</section> -->
 					</header>
 					<Accordion :active-index="0">
 						<AccordionTab header="Model equations">
@@ -176,14 +164,12 @@ import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
 import { modelCard } from '@/services/goLLM';
-// import * as textUtils from '@/utils/text';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import {
-	// EquationBlock,
 	EquationFromImageBlock,
 	instanceOfEquationFromImageBlock,
 	ModelFromEquationsState
@@ -203,12 +189,6 @@ enum ModelFramework {
 }
 
 const selectedOutputId = ref<string>('');
-
-// const modelFrameworks = Object.entries(ModelFramework).map(([key, value]) => ({
-// 	label: textUtils.pascalCaseToCapitalSentence(key),
-// 	value,
-// 	disabled: [ModelFramework.Decapode, ModelFramework.GeneralizedAMR, ModelFramework.MathExpressionTree].includes(value)
-// }));
 
 const clonedState = ref<ModelFromEquationsState>({
 	equations: [],
@@ -265,6 +245,18 @@ onMounted(async () => {
 	if (documentId) {
 		document.value = await getDocumentAsset(documentId);
 
+		isFetchingPDF.value = true;
+		const filename = document.value?.fileNames?.[0];
+		const isPdf = document.value?.fileNames?.[0]?.endsWith('.pdf');
+		if (document.value?.id && filename) {
+			if (isPdf) {
+				pdfLink.value = await downloadDocumentAsset(document.value.id, filename);
+			} else {
+				docText.value = await getDocumentFileAsText(document.value.id, filename);
+			}
+		}
+		isFetchingPDF.value = false;
+
 		const state = cloneDeep(props.node.state);
 
 		// we want to add any new equation from images to the current state without running the image -> equations for the ones that already ran
@@ -302,28 +294,8 @@ onMounted(async () => {
 		emit('update-state', state);
 	}
 
-	if (documentId) {
-		isFetchingPDF.value = true;
-		document.value = await getDocumentAsset(documentId);
-		const filename = document.value?.fileNames?.[0];
-		const isPdf = document.value?.fileNames?.[0]?.endsWith('.pdf');
-		if (document.value?.id && filename) {
-			if (isPdf) {
-				pdfLink.value = await downloadDocumentAsset(document.value.id, filename);
-			} else {
-				docText.value = await getDocumentFileAsText(document.value.id, filename);
-			}
-		}
-		isFetchingPDF.value = false;
-	}
-
 	assetLoading.value = false;
 });
-
-// function onUpdateInclude(asset: AssetBlock<EquationBlock | EquationFromImageBlock>) {
-// 	asset.includeInProcess = !asset.includeInProcess;
-// 	emit('update-state', clonedState.value);
-// }
 
 const onSelection = (id: string) => {
 	emit('select-output', id);
@@ -353,10 +325,6 @@ async function onRun() {
 		value: [clonedState.value.modelId]
 	});
 }
-
-// function onChangeModelFramework() {
-// 	emit('update-state', clonedState.value);
-// }
 
 async function fetchModel() {
 	if (!clonedState.value.modelId) {
@@ -388,13 +356,6 @@ async function fetchModel() {
 	loadingModel.value = false;
 }
 
-// since AWS links expire we need to use the refetched document image urls to display the images
-// function getAssetUrl(asset: AssetBlock<EquationFromImageBlock>): string {
-// 	const foundAsset = document.value?.assets?.find((a) => a.fileName === asset.asset.fileName);
-// 	if (!foundAsset) return '';
-// 	return foundAsset.metadata?.url;
-// }
-
 function onAddModel(model: Model) {
 	if (!model?.name || !selectedOutputId.value) return;
 	updateNodeLabel(selectedOutputId.value, model.name);
@@ -411,11 +372,6 @@ function updateNodeLabel(id: string, label: string) {
 	emit('update-output-port', outputPort);
 }
 
-// function removeEquation(index: number) {
-// 	clonedState.value.equations.splice(index, 1);
-// 	emit('update-state', clonedState.value);
-// }
-
 function getEquations() {
 	const newEquations = multipleEquations.value.split('\n');
 	newEquations.forEach((equation) => {
@@ -431,48 +387,9 @@ function getEquations() {
 	multipleEquations.value = '';
 }
 
-// const allEquationCollapsed = computed(() => !clonedState.value.equations.some((equation) => !equation.isCollapsed));
-
-// const allEquationsInProcess = computed(
-// 	() => !clonedState.value.equations.some((equation) => !equation.includeInProcess)
-// );
-
-// const selectedEquations = computed(() => clonedState.value.equations.filter((equation) => equation.includeInProcess));
-
 function getEquationErrorLabel(equation) {
 	return equation.asset.extractionError ? "Couldn't extract equation" : '';
 }
-
-// function getEquationSelectedLabel() {
-// 	const total = clonedState.value.equations.length;
-// 	return `(${selectedEquations.value.length}/${total} selected)`;
-// }
-
-// function getCollapsedLabel() {
-// 	return allEquationCollapsed.value ? 'Expand All' : 'Collapse all';
-// }
-
-// function getIncludedEquationLabel() {
-// 	return allEquationsInProcess.value ? 'Remove all from process' : 'Include all in process';
-// }
-
-// function changeCollapsed(equation, isCollapsed = false) {
-// 	equation.isCollapsed = isCollapsed;
-// }
-
-// function toggleCollapseAll() {
-// 	const collapseEquations = allEquationCollapsed.value;
-// 	clonedState.value.equations.forEach((equation) => {
-// 		changeCollapsed(equation, !collapseEquations);
-// 	});
-// }
-
-// function toggleIncludedEquations() {
-// 	const allEquationsIncluded = allEquationsInProcess.value;
-// 	clonedState.value.equations.forEach((equation) => {
-// 		equation.includeInProcess = !allEquationsIncluded;
-// 	});
-// }
 
 // generates the model card and fetches the model when finished
 async function generateCard(docId: string) {
@@ -523,36 +440,17 @@ watch(
 	border-radius: 3px;
 }
 
-.change-to-tailwind {
-	display: flex;
-	justify-content: space-between;
-	padding-left: var(--gap-small);
-	padding-right: var(--gap-small);
-	padding-bottom: 1em;
-}
-
 .currenly-selected {
 	padding-top: 0.75rem;
 	border-radius: var(--border-radius-medium);
 	border: 1px solid var(--surface-border-light);
 	border-left: 0.25rem solid var(--primary-color);
 }
+
 .asset-panel {
 	padding-top: 0.75rem;
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-medium);
-}
-
-.ctt-checkbox {
-	display: flex;
-	align-items: center;
-	padding-bottom: 0.25em;
-	padding-top: 0.25em;
-}
-
-.block-container {
-	display: flex;
-	flex-direction: column;
 }
 
 .equation-image {
@@ -579,10 +477,6 @@ watch(
 
 .blocks-container {
 	overflow-y: auto;
-
-	> li:not(:last-child) {
-		/* margin-bottom: var(--gap-small); */
-	}
 }
 
 .p-panel:deep(.p-panel-footer) {
