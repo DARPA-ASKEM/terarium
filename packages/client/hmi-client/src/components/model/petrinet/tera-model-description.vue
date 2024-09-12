@@ -68,16 +68,14 @@ const emit = defineEmits(['update-model', 'model-updated']);
 const teraModelDiagramRef = ref();
 
 const card = computed<any>(() => props.model.metadata?.gollmCard ?? null);
-const summary = computed(() => card.value?.modelSummary ?? '');
-const description = computed(
-	() => card.value?.modelDetails?.modelDescription ?? props.model?.header?.description ?? ''
-);
+const summary = computed(() => card.value?.summary?.modelSummary ?? '');
+const description = computed(() => card.value?.details?.modelDescription ?? props.model?.header?.description ?? '');
 
-const biasAndRiskLimitations = computed(() => card.value?.biasRisksLimitations ?? '');
-const modelType = computed(() => card.value?.modelDetails?.modelType ?? props.model.header.schema_name ?? '');
-const fundedBy = computed(() => card.value?.modelDetails?.fundedBy ?? '');
-const evaluation = computed(() => card.value?.testingDataFactorsMetrics ?? '');
-const technicalSpecifications = computed(() => card.value?.modelSpecs ?? '');
+const biasAndRiskLimitations = computed(() => card.value?.biasRisksLimitations?.modelBiasRisksLimitations ?? '');
+const modelType = computed(() => card.value?.details?.modelType ?? props.model.header.schema_name ?? '');
+const fundedBy = computed(() => card.value?.details?.fundedBy ?? '');
+const evaluation = computed(() => card.value?.testing?.testingDataFactorsMetrics ?? '');
+const technicalSpecifications = computed(() => card.value?.specs?.modelSpecs ?? '');
 const glossary = computed(() => card.value?.glossary ?? []);
 const moreInformation = computed(() => card.value?.moreInformation?.links ?? []);
 
@@ -86,7 +84,7 @@ const authors = computed(() => {
 	const authorsSet: Set<string> = new Set();
 	if (props.model?.metadata?.annotations?.authors)
 		props.model.metadata.annotations.authors.forEach((author: Author) => authorsSet.add(author.name));
-	if (card.value?.modelCardAuthors) card.value.modelCardAuthors.forEach((author: string) => authorsSet.add(author));
+	if (card.value?.authors) card.value.authors.forEach((author: string) => authorsSet.add(author));
 	return [...authorsSet].join(', ');
 });
 
