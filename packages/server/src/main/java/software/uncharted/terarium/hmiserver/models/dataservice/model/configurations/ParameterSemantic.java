@@ -50,9 +50,4 @@ public class ParameterSemantic extends Semantic {
 		clone.isDefault = this.isDefault;
 		return clone;
 	}
-
-	@Override
-	public void setSource(final String source) {
-		super.setSource(source);
-	}
 }
