@@ -536,10 +536,10 @@ const showModelModal = ref(false);
 const displayOptimizationResultMessage = ref(true);
 
 const isRunDisabled = computed(() => {
-	const activeGroups = props.node.state.constraintGroups.filter((ele) => ele.isActive);
+	const activeConstraintGroups = props.node.state.constraintGroups.filter((ele) => ele.isActive);
 	return (
-		activeGroups.length === 0 ||
-		!activeGroups.every((ele) => ele.targetVariable) ||
+		activeConstraintGroups.length === 0 ||
+		!activeConstraintGroups.every((ele) => ele.targetVariable) ||
 		props.node.state.interventionPolicyGroups.length === 0 ||
 		activePolicyGroups.value.length <= 0
 	);
@@ -792,8 +792,8 @@ const runOptimize = async () => {
 	const fixedInterventions: Intervention[] = _.cloneDeep(inactivePolicyGroups.value.map((ele) => ele.intervention));
 
 	const qois: OptimizeQoi[] = [];
-	const activeGroups = props.node.state.constraintGroups.filter((ele) => ele.isActive);
-	activeGroups.forEach((constraintGroup) =>
+	const activeConstraintGroups = props.node.state.constraintGroups.filter((ele) => ele.isActive);
+	activeConstraintGroups.forEach((constraintGroup) =>
 		qois.push({
 			contexts: [constraintGroup.targetVariable],
 			method: constraintGroup.qoiMethod,
@@ -803,7 +803,7 @@ const runOptimize = async () => {
 	);
 
 	// riskTolerance to get alpha and divide by 100 to turn into a percent for pyciemss-service.
-	const alphas: number[] = activeGroups.map((ele) => ele.riskTolerance / 100);
+	const alphas: number[] = activeConstraintGroups.map((ele) => ele.riskTolerance / 100);
 	const optimizePayload: OptimizeRequestCiemss = {
 		userId: 'no_user_provided',
 		engine: 'ciemss',
