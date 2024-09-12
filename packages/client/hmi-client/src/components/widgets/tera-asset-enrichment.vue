@@ -131,8 +131,8 @@ const confirm = async () => {
 
 const sendForEnrichment = async () => {
 	// Build enrichment job ids list (profile asset, align model, etc...)
-	if (props.assetType === AssetType.Model) {
-		await modelCard(props.assetId!, selectedResourceId.value);
+	if (props.assetId && props.assetType === AssetType.Model) {
+		await modelCard(props.assetId, selectedResourceId.value);
 	} else if (props.assetType === AssetType.Dataset) {
 		await profileDataset(props.assetId, selectedResourceId.value);
 	}
