@@ -1,14 +1,13 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:menu-items="menuItems"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 		class="drilldown"
 	>
 		<!-- Wizard -->
-		<section :tabName="DrilldownTabs.Wizard" class="wizard">
+		<tera-drilldown-section :tabName="DrilldownTabs.Wizard" class="wizard">
 			<tera-slider-panel v-model:is-open="isSidebarOpen" header="Simulation settings" content-width="420px">
 				<template #content>
 					<div class="toolbar">
@@ -74,16 +73,18 @@
 								/>
 							</div>
 						</div>
-
-						<tera-save-dataset-from-simulation
-							:simulation-run-id="node.state.forecastId"
-							:showDialog="showSaveDataDialog"
-							@hide-dialog="showSaveDataDialog = false"
-						/>
+						<template v-if="interventionPolicy">
+							<h4>Intervention Policies</h4>
+							<tera-intervention-summary-card
+								v-for="(intervention, index) in interventionPolicy.interventions"
+								:intervention="intervention"
+								:key="index"
+							/>
+						</template>
 					</div>
 				</template>
 			</tera-slider-panel>
-		</section>
+		</tera-drilldown-section>
 
 		<!-- Notebook -->
 		<tera-drilldown-section :tabName="DrilldownTabs.Notebook" class="notebook-section">
@@ -145,9 +146,9 @@
 					<div v-if="view === OutputView.Charts" ref="outputPanel">
 						<template v-for="(cfg, index) of node.state.chartConfigs" :key="index">
 							<tera-chart-control
-								:chart-config="{ selectedRun: selectedRunId, selectedVariable: cfg }"
-								:multi-select="true"
-								:show-remove-button="true"
+								:chart-config="{ selectedRun: selectedRunId, selectedVariable: cfg.selectedVariable ?? [] }"
+								multi-select
+								:show-remove-button="!cfg.selectedIntervention"
 								:variables="Object.keys(pyciemssMap)"
 								@configuration-change="chartProxy.configurationChange(index, $event)"
 								@remove="chartProxy.removeChart(index)"
@@ -155,7 +156,7 @@
 							<vega-chart
 								v-if="preparedCharts[index].layer.length > 0"
 								expandable
-								:are-embed-actions-visible="true"
+								are-embed-actions-visible
 								:visualization-spec="preparedCharts[index]"
 							/>
 							<!-- If no variables are selected, show empty state -->
@@ -200,7 +201,7 @@ import { Vue3Lottie } from 'vue3-lottie';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
-import type { CsvAsset, SimulationRequest, TimeSpan } from '@/types/Types';
+import type { CsvAsset, InterventionPolicy, SimulationRequest, TimeSpan } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import {
 	getRunResultCSV,
@@ -218,21 +219,21 @@ import SelectButton from 'primevue/selectbutton';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
 import { useProjects } from '@/composables/project';
-import { isSaveDatasetDisabled } from '@/components/dataset/utils';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import { KernelSessionManager } from '@/services/jupyter';
 import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import { createForecastChart } from '@/services/charts';
+import { createForecastChart, createInterventionChartMarkers } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import { getModelConfigurationById } from '@/services/model-configurations';
+import { getInterventionPolicyById } from '@/services/intervention-policy';
+import TeraInterventionSummaryCard from '@/components/workflow/ops/simulate-ciemss/tera-intervention-summary-card.vue';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import TeraChartControl from '../../tera-chart-control.vue';
 
@@ -246,7 +247,8 @@ const modelVarUnits = ref<{ [key: string]: string }>({});
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
 
-const policyInterventionId = computed(() => props.node.inputs[1].value);
+const policyInterventionId = computed(() => props.node.inputs[1].value?.[0]);
+const interventionPolicy = ref<InterventionPolicy | null>(null);
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
 const llmThoughts = ref<any[]>([]);
@@ -280,28 +282,11 @@ const processLLMOutput = (data: any) => {
 	codeText.value = data.content.code;
 };
 
-const showSaveDataDialog = ref<boolean>(false);
 const view = ref(OutputView.Charts);
 const viewOptions = ref([
 	{ value: OutputView.Charts, icon: 'pi pi-image' },
 	{ value: OutputView.Data, icon: 'pi pi-list' }
 ]);
-
-const isSaveDisabled = computed<boolean>(() =>
-	isSaveDatasetDisabled(selectedRunId.value, useProjects().activeProject.value?.id)
-);
-
-const menuItems = computed(() => [
-	{
-		label: 'Save as new dataset',
-		icon: 'pi pi-pencil',
-		disabled: isSaveDisabled.value,
-		command: () => {
-			showSaveDataDialog.value = true;
-		}
-	}
-]);
-
 const showSpinner = ref(false);
 const runResults = ref<{ [runId: string]: DataArray }>({});
 const runResultsSummary = ref<{ [runId: string]: DataArray }>({});
@@ -356,6 +341,8 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 	}
 };
 
+const groupedInterventionOutputs = computed(() => _.groupBy(interventionPolicy.value?.interventions, 'appliedTo'));
+
 const preparedCharts = computed(() => {
 	if (!selectedRunId.value) return [];
 
@@ -366,17 +353,18 @@ const preparedCharts = computed(() => {
 	Object.keys(pyciemssMap).forEach((key) => {
 		reverseMap[`${pyciemssMap[key]}_mean`] = key;
 	});
-	return props.node.state.chartConfigs.map((config) =>
-		createForecastChart(
+
+	return props.node.state.chartConfigs.map((config) => {
+		const chart = createForecastChart(
 			{
 				data: result,
-				variables: config.map((d) => pyciemssMap[d]),
+				variables: config.selectedVariable?.map((d) => pyciemssMap[d]) ?? [],
 				timeField: 'timepoint_id',
 				groupField: 'sample_id'
 			},
 			{
 				data: resultSummary,
-				variables: config.map((d) => `${pyciemssMap[d]}_mean`),
+				variables: config.selectedVariable?.map((d) => `${pyciemssMap[d]}_mean`) ?? [],
 				timeField: 'timepoint_id'
 			},
 			null,
@@ -388,10 +376,17 @@ const preparedCharts = computed(() => {
 				legend: true,
 				translationMap: reverseMap,
 				xAxisTitle: modelVarUnits.value._time || 'Time',
-				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
+				yAxisTitle:
+					_.uniq(config.selectedVariable?.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
 			}
-		)
-	);
+		);
+		if (config.selectedIntervention && interventionPolicy.value) {
+			chart.layer.push(
+				...createInterventionChartMarkers(groupedInterventionOutputs.value[config.selectedIntervention])
+			);
+		}
+		return chart;
+	});
 });
 
 const updateState = () => {
@@ -433,8 +428,8 @@ const makeForecastRequest = async () => {
 		payload.extra.inferred_parameters = modelConfig.simulationId;
 	}
 
-	if (policyInterventionId.value?.[0]) {
-		payload.policyInterventionId = policyInterventionId.value[0];
+	if (policyInterventionId.value) {
+		payload.policyInterventionId = policyInterventionId.value;
 	}
 
 	const response = await makeForecastJob(payload, nodeMetadata(props.node));
@@ -554,6 +549,19 @@ watch(
 		method.value = props.node.state.method;
 
 		lazyLoadSimulationData(selectedRunId.value);
+	},
+	{ immediate: true }
+);
+
+// fetch intervention policy
+watch(
+	() => policyInterventionId.value,
+	() => {
+		if (policyInterventionId.value) {
+			getInterventionPolicyById(policyInterventionId.value).then((policy) => {
+				interventionPolicy.value = policy;
+			});
+		}
 	},
 	{ immediate: true }
 );

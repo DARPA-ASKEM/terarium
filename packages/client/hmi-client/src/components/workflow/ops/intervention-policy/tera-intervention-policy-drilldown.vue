@@ -262,16 +262,7 @@ const groupedOutputParameters = computed(() =>
 );
 
 const preparedCharts = computed(() =>
-	_.mapValues(groupedOutputParameters.value, (interventions) => {
-		const flattenedData = interventions.flatMap((intervention) =>
-			intervention.staticInterventions.map((staticIntervention) => ({
-				name: intervention.name,
-				value: staticIntervention.value,
-				time: staticIntervention.timestep
-			}))
-		);
-		return createInterventionChart(flattenedData);
-	})
+	_.mapValues(groupedOutputParameters.value, (interventions) => createInterventionChart(interventions))
 );
 
 const initialize = async (overwriteWithState: boolean = false) => {

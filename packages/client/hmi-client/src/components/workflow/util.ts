@@ -20,9 +20,13 @@ export const drilldownChartSize = (element: HTMLElement | null) => {
 export const chartActionsProxy = (node: WorkflowNode<any>, updateStateCallback: Function) => {
 	if (!node.state.chartConfigs) throw new Error('Cannot find chartConfigs in state object');
 
-	const addChart = () => {
+	const addChart = (selectedIntervention: string = '') => {
 		const copy = _.cloneDeep(node.state);
-		copy.chartConfigs.push([]);
+		const chartConfig: Partial<ChartConfig> = {
+			selectedIntervention,
+			selectedVariable: selectedIntervention ? [selectedIntervention] : []
+		};
+		copy.chartConfigs.push(chartConfig);
 		updateStateCallback(copy);
 	};
 
@@ -34,7 +38,7 @@ export const chartActionsProxy = (node: WorkflowNode<any>, updateStateCallback: 
 
 	const configurationChange = (index: number, config: ChartConfig) => {
 		const copy = _.cloneDeep(node.state);
-		copy.chartConfigs[index] = config.selectedVariable;
+		copy.chartConfigs[index].selectedVariable = config.selectedVariable;
 		updateStateCallback(copy);
 	};
 

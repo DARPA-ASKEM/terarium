@@ -5,6 +5,7 @@ export const enum RunType {
 
 export type ChartConfig = {
 	selectedVariable: string[];
+	selectedIntervention?: string;
 	selectedRun: string;
 };
 

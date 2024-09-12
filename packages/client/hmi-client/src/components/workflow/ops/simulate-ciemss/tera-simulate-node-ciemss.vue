@@ -43,7 +43,8 @@ import { useProjects } from '@/composables/project';
 import { createForecastChart } from '@/services/charts';
 import { createDatasetFromSimulationResult } from '@/services/dataset';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import type { Model } from '@/types/Types';
+import type { InterventionPolicy, Model } from '@/types/Types';
+import { getInterventionPolicyById } from '@/services/intervention-policy';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
 
 const props = defineProps<{
@@ -60,6 +61,8 @@ const runResultsSummary = ref<{ [runId: string]: DataArray }>({});
 const selectedRunId = ref<string>();
 const inProgressForecastId = computed(() => props.node.state.inProgressForecastId);
 const areInputsFilled = computed(() => props.node.inputs[0].value);
+const interventionPolicyId = computed(() => props.node.inputs[1].value?.[0]);
+const interventionPolicy = ref<InterventionPolicy | null>(null);
 
 let pyciemssMap: Record<string, string> = {};
 
@@ -106,7 +109,12 @@ const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperation
 
 const processResult = async (runId: string) => {
 	const state = _.cloneDeep(props.node.state);
-	if (state.chartConfigs.length === 0) {
+	if (interventionPolicyId.value && _.isEmpty(state.chartConfigs)) {
+		const groupedInterventions = _.groupBy(interventionPolicy.value?.interventions, 'appliedTo');
+		_.keys(groupedInterventions).forEach((key) => {
+			chartProxy.addChart(key);
+		});
+	} else if (_.isEmpty(state.chartConfigs)) {
 		chartProxy.addChart();
 	}
 
@@ -169,13 +177,13 @@ const preparedCharts = computed(() => {
 		createForecastChart(
 			{
 				data: result,
-				variables: config.map((d) => pyciemssMap[d]),
+				variables: config.selectedVariable?.map((d) => pyciemssMap[d]) ?? [],
 				timeField: 'timepoint_id',
 				groupField: 'sample_id'
 			},
 			{
 				data: resultSummary,
-				variables: config.map((d) => `${pyciemssMap[d]}_mean`),
+				variables: config.selectedVariable?.map((d) => `${pyciemssMap[d]}_mean`) ?? [],
 				timeField: 'timepoint_id'
 			},
 			null,
@@ -187,7 +195,8 @@ const preparedCharts = computed(() => {
 				legend: true,
 				translationMap: reverseMap,
 				xAxisTitle: modelVarUnits.value._time || 'Time',
-				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
+				yAxisTitle:
+					_.uniq(config.selectedVariable?.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
 			}
 		)
 	);
@@ -239,6 +248,18 @@ watch(
 
 		const resultSummary = await getRunResultCSV(forecastId, 'result_summary.csv');
 		runResultsSummary.value[selectedRunId.value] = resultSummary;
+	},
+	{ immediate: true }
+);
+
+watch(
+	() => interventionPolicyId.value,
+	() => {
+		if (interventionPolicyId.value) {
+			getInterventionPolicyById(interventionPolicyId.value).then((policy) => {
+				interventionPolicy.value = policy;
+			});
+		}
 	},
 	{ immediate: true }
 );

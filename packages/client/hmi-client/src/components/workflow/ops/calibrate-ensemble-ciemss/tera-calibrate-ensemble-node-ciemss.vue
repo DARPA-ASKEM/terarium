@@ -7,7 +7,7 @@
 				:run-results="runResults"
 				:chartConfig="{
 					selectedRun: props.node.state.forecastRunId,
-					selectedVariable: config
+					selectedVariable: config.selectedVariable ?? []
 				}"
 				:mapping="props.node.state.ensembleConfigs as any"
 				:initial-data="csvAsset"
@@ -141,7 +141,7 @@ watch(
 		if (response.state === PollerState.Done) {
 			const state = _.cloneDeep(props.node.state);
 
-			state.chartConfigs = [[]];
+			state.chartConfigs = [];
 			state.inProgressForecastId = '';
 			state.forecastRunId = id;
 			emit('update-state', state);

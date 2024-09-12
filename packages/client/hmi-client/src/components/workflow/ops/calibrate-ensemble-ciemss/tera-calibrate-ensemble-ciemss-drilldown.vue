@@ -139,7 +139,7 @@
 						:run-results="runResults"
 						:chartConfig="{
 							selectedRun: props.node.state.forecastRunId,
-							selectedVariable: cfg
+							selectedVariable: cfg.selectedVariable ?? []
 						}"
 						has-mean-line
 						@configuration-change="chartProxy.configurationChange(index, $event)"
