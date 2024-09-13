@@ -459,7 +459,7 @@ public class ExtractionService {
 
 			log.info("Document SHA: {}, checking cache", documentSHA);
 
-			ExtractPDFResponse extractionResponse = null;
+			final ExtractPDFResponse extractionResponse;
 			if (responseCache.containsKey(documentSHA)) {
 				log.info("Returning cached response for document {} for SHA: {}", documentId, documentSHA);
 

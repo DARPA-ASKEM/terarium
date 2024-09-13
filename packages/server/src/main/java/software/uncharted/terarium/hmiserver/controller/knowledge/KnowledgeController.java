@@ -275,7 +275,7 @@ public class KnowledgeController {
 		final List<String> files = new ArrayList<>();
 		final List<String> blobs = new ArrayList<>();
 
-		ResponseEntity<JsonNode> resp = null;
+		final ResponseEntity<JsonNode> resp;
 
 		if (dynamicsOnly) {
 			for (final Entry<String, String> entry : codeContent.entrySet()) {
@@ -492,7 +492,7 @@ public class KnowledgeController {
 		);
 
 		// Provenance call if a document id is provided
-		StringMultipartFile documentFile = null;
+		final StringMultipartFile documentFile;
 		if (documentId.isPresent()) {
 			final DocumentAsset document = documentService.getAsset(documentId.get(), permission).orElseThrow();
 			documentFile = new StringMultipartFile(document.getText(), documentId.get() + ".txt", "application/text");
