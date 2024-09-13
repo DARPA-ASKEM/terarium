@@ -254,7 +254,7 @@ async function onRun() {
 	const modelId = await equationsToAMR(request);
 	if (!modelId) return;
 
-	if (document.value?.id) await generateCard(document.value.id);
+	if (document.value?.id) await generateCard(modelId, document.value.id);
 
 	clonedState.value.modelId = modelId;
 	emit('append-output', {
@@ -387,10 +387,9 @@ function toggleIncludedEquations() {
 }
 
 // generates the model card and fetches the model when finished
-async function generateCard(docId: string) {
-	if (!docId) return;
+async function generateCard(modelId: string, docId: string) {
 	isGeneratingCard.value = true;
-	await modelCard(docId);
+	await modelCard(modelId, docId);
 	isGeneratingCard.value = false;
 	await fetchModel();
 }
