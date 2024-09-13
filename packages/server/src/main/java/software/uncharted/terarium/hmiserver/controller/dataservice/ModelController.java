@@ -262,7 +262,7 @@ public class ModelController {
 				}
 			}
 			// Force proper annotation metadata
-			ModelMetadata metadata = model.get().getMetadata();
+			final ModelMetadata metadata = model.get().getMetadata();
 			if (metadata.getAnnotations() == null) {
 				metadata.setAnnotations(new Annotations());
 				model.get().setMetadata(metadata);
@@ -540,7 +540,7 @@ public class ModelController {
 			projectId
 		);
 
-		Model createdModel;
+		final Model createdModel;
 
 		try {
 			// Set the model name from the AMR header name.
@@ -610,11 +610,8 @@ public class ModelController {
 		@RequestParam(value = "page", required = false, defaultValue = "0") final int page,
 		@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize
 	) {
-		final UUID projectId = modelConfigurationService.getProjectIdForAsset(id);
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
+		final UUID projectId = modelService.getProjectIdForAsset(id);
+		projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		try {
 			final List<ModelConfiguration> modelConfigurations =
@@ -657,7 +654,7 @@ public class ModelController {
 		@RequestParam(value = "page", required = false, defaultValue = "0") final int page,
 		@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize
 	) {
-		final UUID projectId = modelConfigurationService.getProjectIdForAsset(id);
+		final UUID projectId = modelService.getProjectIdForAsset(id);
 		final Schema.Permission permission = projectService.checkPermissionCanRead(
 			currentUserService.get().getId(),
 			projectId
