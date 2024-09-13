@@ -36,6 +36,7 @@
 </template>
 
 <script setup lang="ts">
+import { v4 as uuidv4 } from 'uuid';
 import { debounce } from 'lodash';
 import { ref, onMounted, computed } from 'vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
@@ -46,9 +47,11 @@ import {
 	createForecastChart,
 	createHistogramChart,
 	createErrorChart,
-	createForecastChartAnnotation
+	createForecastChartAnnotation,
+	applyForecastChartAnnotations
 } from '@/services/charts';
 import { generateForecastChartAnnotation } from '@/services/chart-settings';
+import { ChartAnnotation } from '@/types/Types';
 // import { createLLMSummary, getSummaries } from '@/services/summary-service';
 
 const rand = (v: number) => Math.round(Math.random() * v);
@@ -160,23 +163,7 @@ const debounceHandleIntervalSelect = debounce(handleIntervalSelect, 200);
 
 // Generate time series data
 const dataNew = generateSimulateData();
-const forecastAnnotations = ref<
-	{
-		id: string;
-		layerSpec: any;
-		isLLMGenerated: boolean;
-		metadata: any;
-	}[]
->([createForecastChartAnnotation('x', 60, 'test label')]);
-
-const applyForecastAnnotations = (chartSpec: any, forecastAnnotations: any[], targetLayerIndex = 1) => {
-	targetLayerIndex = 1; // Assume the target layer is the second layer which is the statistic layer
-	const layerSpecs = forecastAnnotations.map((a) => a.layerSpec);
-	const spec = structuredClone(chartSpec);
-	if (!spec.layer[targetLayerIndex]) return spec;
-	spec.layer[targetLayerIndex].layer.push(...layerSpecs);
-	return spec;
-};
+const forecastAnnotations = ref<ChartAnnotation[]>([createForecastChartAnnotation('x', 60, 'test label')]);
 
 const questionString = ref('');
 const waitingForForecastChartAnnotation = ref(false);
@@ -186,8 +173,22 @@ const generateAndAddAnnotation = async () => {
 	const timeField = 'time';
 	const variables = ['alphaMean', 'betaMean'];
 	const axisTitle = { x: 'Day', y: 'Value' };
-	const annotation = await generateForecastChartAnnotation(questionString.value, timeField, variables, axisTitle);
-	forecastAnnotations.value.push(annotation);
+	const { request, layerSpec } = await generateForecastChartAnnotation(
+		questionString.value,
+		timeField,
+		variables,
+		axisTitle
+	);
+	forecastAnnotations.value.push({
+		id: uuidv4(),
+		description: request,
+		nodeId: '',
+		outputId: '',
+		chartId: 'forecastchart',
+		layerSpec,
+		llmGenerated: true,
+		metadata: {}
+	});
 	waitingForForecastChartAnnotation.value = false;
 };
 const removeAnnotation = async (id: string) => {
@@ -195,7 +196,7 @@ const removeAnnotation = async (id: string) => {
 };
 
 const forecastChartSpec = computed(() =>
-	applyForecastAnnotations(
+	applyForecastChartAnnotations(
 		createForecastChart(
 			{
 				data: dataNew.data,
