@@ -7,7 +7,12 @@
 		hide-dropdown
 	>
 		<template #sidebar>
-			<tera-slider-panel v-model:is-open="isSidebarOpen" header="Configurations" content-width="360px">
+			<tera-slider-panel
+				class="input-config"
+				v-model:is-open="isSidebarOpen"
+				header="Configurations"
+				content-width="360px"
+			>
 				<template #content>
 					<div class="m-3">
 						<div class="flex flex-row gap-1">
@@ -722,14 +727,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Make left sidebar grey */
-:deep(.slider-content) {
-	background-color: var(--surface-100);
-}
-:deep(.slider-content aside header) {
-	background: color-mix(in srgb, var(--surface-100) 80%, transparent 20%);
-}
-
 .processing-new-configuration-tile {
 	display: flex;
 	flex-direction: row;
