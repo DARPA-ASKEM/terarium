@@ -1,7 +1,7 @@
 <template>
 	<aside
 		:class="`slider ${isOpen ? 'open' : 'closed'} ${direction}`"
-		:style="{ width: isOpen ? contentWidth : tabWidth }"
+		:style="{ width: isOpen ? contentWidth : tabWidth, minWidth: minTabWidth }"
 	>
 		<div class="slider-content-container" :style="{ width: isOpen ? contentWidth : 0 }">
 			<section class="slider-content" :style="sidePanelContentStyle">
@@ -35,7 +35,11 @@ const props = defineProps({
 	},
 	tabWidth: {
 		type: String,
-		default: '50px'
+		default: '40px'
+	},
+	minTabWidth: {
+		type: String,
+		default: '40px'
 	}
 });
 
