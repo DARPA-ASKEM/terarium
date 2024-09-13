@@ -1,7 +1,7 @@
 <template>
 	<div class="intervention-card">
 		<header class="flex align-items-center gap-2">
-			<tera-toggleable-input :model-value="intervention.name" @update:model-value="onUpdateName($event)" tag="h5" />
+			<tera-toggleable-input :model-value="intervention.name" @update:model-value="onUpdateName($event)" tag="h6" />
 			<div class="flex align-items-center ml-auto">
 				<RadioButton
 					:model-value="interventionType"
@@ -143,7 +143,7 @@ import { computed } from 'vue';
 import { Intervention, InterventionSemanticType } from '@/types/Types';
 import Dropdown, { DropdownChangeEvent } from 'primevue/dropdown';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
-import { cloneDeep, uniqueId } from 'lodash';
+import { cloneDeep, debounce, uniqueId } from 'lodash';
 import Divider from 'primevue/divider';
 
 const emit = defineEmits(['update', 'delete', 'add']);
@@ -183,7 +183,7 @@ const comparisonOperations = [
 const onUpdateName = (name: string) => {
 	const intervention = cloneDeep(props.intervention);
 	intervention.name = name;
-	emit('update', intervention);
+	debounceUpdateState(intervention);
 };
 
 const onAppliedToParameterChange = (event: DropdownChangeEvent) => {
@@ -274,6 +274,10 @@ const onSemanticChange = (event: DropdownChangeEvent) => {
 	}
 	emit('update', intervention);
 };
+
+const debounceUpdateState = debounce((intervention) => {
+	emit('update', intervention);
+}, 100);
 </script>
 
 <style scoped>
@@ -286,6 +290,7 @@ const onSemanticChange = (event: DropdownChangeEvent) => {
 }
 
 .intervention-card {
+	background-color: var(--surface-50);
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-medium);
 	padding: var(--gap-2) var(--gap);

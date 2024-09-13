@@ -7,7 +7,6 @@
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
-		@update-output-port="(output: any) => emit('update-output-port', output)"
 	>
 		<tera-drilldown-section :tabName="DrilldownTabs.Notebook" class="notebook-section">
 			<div class="toolbar">
