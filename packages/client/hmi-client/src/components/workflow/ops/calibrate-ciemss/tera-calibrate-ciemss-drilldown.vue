@@ -203,31 +203,35 @@
 					<section ref="outputPanel" v-if="modelConfig && csvAsset">
 						<h5>Parameters</h5>
 						<br />
-						<template v-for="param of selectedParameters" :key="param">
+						<template v-for="setting of selectedParameterSettings" :key="setting.id">
 							<vega-chart
 								expandable
 								:are-embed-actions-visible="true"
-								:visualization-spec="preparedDistributionCharts[param].histogram"
+								:visualization-spec="preparedDistributionCharts[setting.selectedVariables[0]].histogram"
 							>
 								<template v-slot:footer>
 									<table class="distribution-table">
 										<thead>
 											<tr>
 												<th scope="col"></th>
-												<th scope="col">{{ preparedDistributionCharts[param].stat.header[0] }}</th>
-												<th scope="col">{{ preparedDistributionCharts[param].stat.header[1] }}</th>
+												<th scope="col">
+													{{ preparedDistributionCharts[setting.selectedVariables[0]].stat.header[0] }}
+												</th>
+												<th scope="col">
+													{{ preparedDistributionCharts[setting.selectedVariables[0]].stat.header[1] }}
+												</th>
 											</tr>
 										</thead>
 										<tbody>
 											<tr>
 												<th scope="row">Mean</th>
-												<td>{{ preparedDistributionCharts[param].stat.mean[0] }}</td>
-												<td>{{ preparedDistributionCharts[param].stat.mean[1] }}</td>
+												<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].stat.mean[0] }}</td>
+												<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].stat.mean[1] }}</td>
 											</tr>
 											<tr>
 												<th scope="row">Variance</th>
-												<td>{{ preparedDistributionCharts[param].stat.variance[0] }}</td>
-												<td>{{ preparedDistributionCharts[param].stat.variance[1] }}</td>
+												<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].stat.variance[0] }}</td>
+												<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].stat.variance[1] }}</td>
 											</tr>
 										</tbody>
 									</table>
@@ -236,12 +240,16 @@
 						</template>
 						<h5>Variables</h5>
 						<br />
-						<template v-for="variable of selectedVariables" :key="variable">
-							<vega-chart expandable :are-embed-actions-visible="true" :visualization-spec="preparedCharts[variable]" />
+						<template v-for="setting of selectedVariableSettings" :key="setting.id">
+							<vega-chart
+								expandable
+								:are-embed-actions-visible="true"
+								:visualization-spec="preparedCharts[setting.selectedVariables[0]]"
+							/>
 						</template>
 						<h5>Errors</h5>
 						<vega-chart
-							v-if="errorData.length > 0 && selectedErrorVariables.length > 0"
+							v-if="errorData.length > 0 && selectedErrorVariableSettings.length > 0"
 							:expandable="onExpandErrorChart"
 							:are-embed-actions-visible="true"
 							:visualization-spec="errorChart"
@@ -294,7 +302,10 @@
 							@remove="removeChartSetting"
 						/>
 						<tera-chart-control
-							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedParameters }"
+							:chart-config="{
+								selectedRun: 'fixme',
+								selectedVariable: selectedParameterSettings.map((s) => s.selectedVariables[0])
+							}"
 							:multi-select="true"
 							:show-remove-button="false"
 							:variables="Object.keys(pyciemssMap).filter((c) => modelPartTypesMap[c] === 'parameter')"
@@ -312,7 +323,10 @@
 							@remove="removeChartSetting"
 						/>
 						<tera-chart-control
-							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedVariables }"
+							:chart-config="{
+								selectedRun: 'fixme',
+								selectedVariable: selectedVariableSettings.map((s) => s.selectedVariables[0])
+							}"
 							:multi-select="true"
 							:show-remove-button="false"
 							:variables="
@@ -332,7 +346,10 @@
 							@remove="removeChartSetting"
 						/>
 						<tera-chart-control
-							:chart-config="{ selectedRun: 'fixme', selectedVariable: selectedErrorVariables }"
+							:chart-config="{
+								selectedRun: 'fixme',
+								selectedVariable: selectedErrorVariableSettings.map((s) => s.selectedVariables[0])
+							}"
 							:multi-select="true"
 							:show-remove-button="false"
 							:variables="Object.keys(pyciemssMap).filter((c) => mapping.find((d) => d.modelVariable === c))"
@@ -357,7 +374,6 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import * as vega from 'vega';
-import { v4 as uuidv4 } from 'uuid';
 import { csvParse, autoType, mean, variance } from 'd3';
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
 import Button from 'primevue/button';
@@ -366,7 +382,12 @@ import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { CalibrateMap, setupDatasetInput, setupModelInput } from '@/services/calibrate-workflow';
-import { removeChartSettingById, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import {
+	generateForecastChartAnnotation,
+	removeChartSettingById,
+	saveAnnotation,
+	updateChartSettingsBySelectedVariables
+} from '@/services/chart-settings';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
@@ -402,7 +423,12 @@ import {
 import { getModelConfigurationById } from '@/services/model-configurations';
 
 import { WorkflowNode } from '@/types/workflow';
-import { createForecastChart, createHistogramChart, createErrorChart } from '@/services/charts';
+import {
+	createForecastChart,
+	createHistogramChart,
+	createErrorChart,
+	applyForecastChartAnnotations
+} from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
@@ -560,40 +586,29 @@ const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 
 const chartSettings = computed(() => props.node.state.chartSettings ?? []);
-const selectedParameters = computed(() =>
-	chartSettings.value
-		.filter((setting) => setting.type === ChartSettingType.DISTRIBUTION_COMPARISON)
-		.map((setting) => setting.selectedVariables[0])
+const selectedParameterSettings = computed(() =>
+	chartSettings.value.filter((setting) => setting.type === ChartSettingType.DISTRIBUTION_COMPARISON)
 );
-const selectedVariables = computed(() =>
-	chartSettings.value
-		.filter((setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON)
-		.map((setting) => setting.selectedVariables[0])
+const selectedVariableSettings = computed(() =>
+	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON)
 );
-const selectedErrorVariables = computed(() =>
-	chartSettings.value
-		.filter((setting) => setting.type === ChartSettingType.ERROR_DISTRIBUTION)
-		.map((setting) => setting.selectedVariables[0])
+
+const selectedErrorVariableSettings = computed(() =>
+	chartSettings.value.filter((setting) => setting.type === ChartSettingType.ERROR_DISTRIBUTION)
 );
 
 const chartAnnotations = ref<ChartAnnotation[]>([]);
 const generateAnnotation = async (setting: ChartSetting, query: string) => {
-	// Generate fake annotation. The annotation generation logic for the specific chart setting should go here
-	// Different chart settings type may have different annotation generation logic
-	await new Promise((resolve) => {
-		setTimeout(resolve, 1000);
-	});
-	const annotation: ChartAnnotation = {
-		id: uuidv4(),
-		description: query,
-		nodeId: props.node.id,
-		outputId: '',
-		chartId: setting.id,
-		layerSpec: {},
-		llmGenerated: false,
-		metadata: {}
-	};
-	return annotation;
+	// Note: Currently llm generated chart annotations are supported for the forecast chart only
+	const variable = setting.selectedVariables[0];
+	const annotationLayerSpec = await generateForecastChartAnnotation(
+		query,
+		'timpoint_id',
+		[`${pyciemssMap.value[variable]}:pre`, `${pyciemssMap.value[variable]}`],
+		{ x: modelVarUnits.value._time || 'Time', y: modelVarUnits.value[variable] || '' }
+	);
+	const saved = await saveAnnotation(annotationLayerSpec, props.node.id, setting.id);
+	return saved;
 };
 const addChartAnnotation = (annotation: ChartAnnotation) => {
 	chartAnnotations.value.push(annotation);
@@ -644,40 +659,45 @@ const preparedCharts = computed(() => {
 	const datasetTimeField = state.mapping.find((d) => d.modelVariable === 'timestamp')?.datasetVariable;
 
 	const charts = {};
-	selectedVariables.value.forEach((variable) => {
+	selectedVariableSettings.value.forEach((settings) => {
+		const variable = settings.selectedVariables[0];
+		const annotations = chartAnnotations.value.filter((annotation) => annotation.chartId === settings.id);
 		const datasetVariables: string[] = [];
 		const mapObj = state.mapping.find((d) => d.modelVariable === variable);
 		if (mapObj) {
 			datasetVariables.push(mapObj.datasetVariable);
 		}
-		charts[variable] = createForecastChart(
-			{
-				data: result,
-				variables: [`${pyciemssMap.value[variable]}:pre`, pyciemssMap.value[variable]],
-				timeField: 'timepoint_id',
-				groupField: 'sample_id'
-			},
-			{
-				data: resultSummary,
-				variables: [`${pyciemssMap.value[variable]}_mean:pre`, `${pyciemssMap.value[variable]}_mean`],
-				timeField: 'timepoint_id'
-			},
-			{
-				data: groundTruthData.value,
-				variables: datasetVariables,
-				timeField: datasetTimeField as string,
-				groupField: 'sample_id'
-			},
-			{
-				title: variable,
-				width: chartSize.value.width,
-				height: chartSize.value.height,
-				legend: true,
-				translationMap: reverseMap,
-				xAxisTitle: modelVarUnits.value._time || 'Time',
-				yAxisTitle: modelVarUnits.value[variable] || '',
-				colorscheme: ['#AAB3C6', '#1B8073']
-			}
+		charts[variable] = applyForecastChartAnnotations(
+			createForecastChart(
+				{
+					data: result,
+					variables: [`${pyciemssMap.value[variable]}:pre`, pyciemssMap.value[variable]],
+					timeField: 'timepoint_id',
+					groupField: 'sample_id'
+				},
+				{
+					data: resultSummary,
+					variables: [`${pyciemssMap.value[variable]}:pre`, `${pyciemssMap.value[variable]}_mean`],
+					timeField: 'timepoint_id'
+				},
+				{
+					data: groundTruthData.value,
+					variables: datasetVariables,
+					timeField: datasetTimeField as string,
+					groupField: 'sample_id'
+				},
+				{
+					title: variable,
+					width: chartSize.value.width,
+					height: chartSize.value.height,
+					legend: true,
+					translationMap: reverseMap,
+					xAxisTitle: modelVarUnits.value._time || 'Time',
+					yAxisTitle: modelVarUnits.value[variable] || '',
+					colorscheme: ['#AAB3C6', '#1B8073']
+				}
+			),
+			annotations
 		);
 	});
 	return charts;
@@ -689,7 +709,8 @@ const preparedDistributionCharts = computed(() => {
 	const labelBefore = 'Before calibration';
 	const labelAfter = 'After calibration';
 	const charts = {};
-	selectedParameters.value.forEach((param) => {
+	selectedParameterSettings.value.forEach((setting) => {
+		const param = setting.selectedVariables[0];
 		const fieldName = pyciemssMap.value[param];
 		const beforeFieldName = `${fieldName}:pre`;
 		const histogram = createHistogramChart(result, {
@@ -718,13 +739,15 @@ const preparedDistributionCharts = computed(() => {
 });
 
 const errorChartVariables = computed(() => {
-	if (!selectedErrorVariables.value.length) return [];
+	if (!selectedErrorVariableSettings.value.length) return [];
 	const getDatasetVariable = (modelVariable: string) =>
 		mapping.value.find((d) => d.modelVariable === modelVariable)?.datasetVariable;
-	const variables = selectedErrorVariables.value.map((variable) => ({
-		field: getDatasetVariable(variable) as string,
-		label: variable
-	}));
+	const variables = selectedErrorVariableSettings.value
+		.map((s) => s.selectedVariables[0])
+		.map((variable) => ({
+			field: getDatasetVariable(variable) as string,
+			label: variable
+		}));
 	return variables;
 });
 

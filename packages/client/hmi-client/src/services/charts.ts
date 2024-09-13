@@ -4,6 +4,7 @@ import { percentile } from '@/utils/math';
 import { isEmpty } from 'lodash';
 import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
+import { ChartAnnotation } from '@/types/Types';
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
@@ -516,6 +517,14 @@ export function createForecastChart(
 		spec.layer.push(layerSpec);
 	}
 	return spec;
+}
+
+export function applyForecastChartAnnotations(chartSpec: any, annotations: ChartAnnotation[]) {
+	const targetLayerIndex = 1; // Assume the target layer is the second layer which is the statistic layer
+	const layerSpecs = annotations.map((a) => a.layerSpec);
+	if (!chartSpec.layer[targetLayerIndex]) return chartSpec;
+	chartSpec.layer[targetLayerIndex].layer.push(...layerSpecs);
+	return chartSpec;
 }
 
 export function createForecastChartAnnotation(axis: 'x' | 'y', datum: number, label: string) {
