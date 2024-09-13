@@ -137,7 +137,7 @@ header:not(.tab) {
 	}
 
 	& .content-wrapper {
-		padding-bottom: 7rem;
+		padding-bottom: 4rem;
 	}
 
 	& :deep(.slider-content),

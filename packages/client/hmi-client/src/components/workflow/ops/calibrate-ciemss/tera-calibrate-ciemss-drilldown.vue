@@ -164,7 +164,6 @@
 							</div>
 						</div>
 					</section>
-					<div class="spacer m-7" />
 				</template>
 			</tera-slider-panel>
 		</section>
