@@ -12,7 +12,9 @@
 					/>
 					<h4>{{ header }}</h4>
 				</header>
-				<slot name="content" />
+				<div class="content-wrapper">
+					<slot name="content" />
+				</div>
 			</aside>
 			<slot name="overlay" />
 		</template>
@@ -122,6 +124,10 @@ header:not(.tab) {
 .input-config {
 	& header {
 		background: color-mix(in srgb, var(--surface-100) 80%, transparent 20%);
+	}
+
+	& .content-wrapper {
+		padding-bottom: 7rem;
 	}
 
 	& :deep(.slider-content),
