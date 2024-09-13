@@ -5,7 +5,7 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
-		<template #content>
+		<template #sidebar>
 			<tera-slider-panel v-model:is-open="isDocViewerOpen" header="Document Viewer" content-width="100%">
 				<template #content>
 					<tera-drilldown-section :is-loading="isFetchingPDF">
