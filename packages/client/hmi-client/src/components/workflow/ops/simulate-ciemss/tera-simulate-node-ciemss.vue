@@ -40,7 +40,7 @@ import { chartActionsProxy, nodeOutputLabel } from '@/components/workflow/util';
 import type { WorkflowNode } from '@/types/workflow';
 import { createLLMSummary } from '@/services/summary-service';
 import { useProjects } from '@/composables/project';
-import { createForecastChart } from '@/services/charts';
+import { createForecastChart, createInterventionChartMarkers } from '@/services/charts';
 import { createDatasetFromSimulationResult } from '@/services/dataset';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import type { InterventionPolicy, Model } from '@/types/Types';
@@ -162,6 +162,7 @@ Provide a summary in 100 words or less.
 		isSelected: false
 	});
 };
+const groupedInterventionOutputs = computed(() => _.groupBy(interventionPolicy.value?.interventions, 'appliedTo'));
 
 const preparedCharts = computed(() => {
 	if (!selectedRunId.value) return [];
@@ -173,8 +174,8 @@ const preparedCharts = computed(() => {
 		reverseMap[`${pyciemssMap[key]}_mean`] = key;
 	});
 
-	return props.node.state.chartConfigs.map((config) =>
-		createForecastChart(
+	return props.node.state.chartConfigs.map((config) => {
+		const chart = createForecastChart(
 			{
 				data: result,
 				variables: config.map((d) => pyciemssMap[d]),
@@ -197,8 +198,16 @@ const preparedCharts = computed(() => {
 				xAxisTitle: modelVarUnits.value._time || 'Time',
 				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
 			}
-		)
-	);
+		);
+		if (interventionPolicy.value) {
+			_.keys(groupedInterventionOutputs.value).forEach((key) => {
+				if (config.includes(key)) {
+					chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
+				}
+			});
+		}
+		return chart;
+	});
 });
 
 watch(
