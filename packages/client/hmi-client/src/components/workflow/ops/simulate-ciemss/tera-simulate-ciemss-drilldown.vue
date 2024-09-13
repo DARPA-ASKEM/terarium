@@ -9,7 +9,12 @@
 	>
 		<!-- Wizard -->
 		<section :tabName="DrilldownTabs.Wizard" class="wizard">
-			<tera-slider-panel v-model:is-open="isSidebarOpen" header="Simulation settings" content-width="420px">
+			<tera-slider-panel
+				class="input-config"
+				v-model:is-open="isSidebarOpen"
+				header="Simulation settings"
+				content-width="420px"
+			>
 				<template #content>
 					<div class="toolbar">
 						<p>Click Run to start the simulation.</p>
@@ -566,21 +571,6 @@ onUnmounted(() => kernelManager.shutdown());
 </script>
 
 <style scoped>
-/* Make left sidebar grey */
-:deep(.slider-content) {
-	background-color: var(--surface-100);
-	border-right: 1px solid var(--surface-border-light);
-}
-:deep(.slider-content aside header) {
-	background: color-mix(in srgb, var(--surface-100) 80%, transparent 20%);
-}
-:deep(.slider-tab) {
-	background-color: var(--surface-100);
-	border-right: 1px solid var(--surface-border-light);
-}
-:deep(.slider-tab header) {
-	background: transparent;
-}
 .wizard .toolbar {
 	display: flex;
 	align-items: center;

@@ -6,7 +6,12 @@
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<div :tabName="FunmanTabs.Wizard">
-			<tera-slider-panel v-model:is-open="isSliderOpen" header="Validate configuration settings" content-width="515px">
+			<tera-slider-panel
+				class="input-config"
+				v-model:is-open="isSliderOpen"
+				header="Validate configuration settings"
+				content-width="515px"
+			>
 				<template #content>
 					<div class="top-toolbar">
 						<p>Set your model checks and settings then click run.</p>
@@ -611,25 +616,6 @@ div.section-row.timespan > div > span {
 /* Override grid template so output expands when sidebar is closed */
 .overlay-container:deep(section.scale main) {
 	grid-template-columns: auto 1fr;
-}
-
-/* Make the slider light grey */
-:deep(.slider-content) {
-	background-color: var(--surface-100);
-	border-right: 1px solid var(--surface-border-light);
-}
-
-:deep(.slider-content header) {
-	background: transparent;
-}
-
-:deep(.slider-tab) {
-	background-color: var(--surface-100);
-	border-right: 1px solid var(--surface-border-light);
-}
-
-:deep(.slider-tab header) {
-	background: transparent;
 }
 
 .top-toolbar {
