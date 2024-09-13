@@ -173,7 +173,6 @@ public class KnowledgeController {
 		req.setAdditionalProperties(props);
 
 		try {
-			log.info("ENRICHING MODEL!");
 			taskService.runTaskSync(req);
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
