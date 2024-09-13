@@ -74,7 +74,6 @@
 							<Button icon="pi pi-play" label="Run" size="small" @click="runCode" />
 						</template>
 					</tera-notebook-jupyter-input>
-					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
 				</div>
 				<v-ace-editor
 					v-model:value="code"
@@ -149,7 +148,6 @@ import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import Image from 'primevue/image';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
 import { saveCodeToState } from '@/services/notebook';
 import { getImages, addImage, deleteImages } from '@/services/image';
@@ -177,7 +175,6 @@ const sampleAgentQuestions = [
 	'Compare the two models and visualize and display them.'
 ];
 let compareModelsTaskId = '';
-let compareModelsTaskOutput = '';
 
 const modelsToCompare = ref<Model[]>([]);
 const modelCardsToCompare = ref<any[]>([]);
@@ -290,30 +287,32 @@ async function buildJupyterContext() {
 	}
 }
 
+// Generate once the comparison task has been completed
+function generateOverview(output: string) {
+	overview.value = markdownit().render(JSON.parse(b64DecodeUnicode(output)).response);
+	emit('update-status', OperatorStatus.DEFAULT); // This is a custom way of granting a default status to the operator, since it has no output
+}
+
+// Create a task to compare the models
 async function processCompareModels(modelIds: string[]) {
 	const taskRes = await compareModels(modelIds, props.node.workflowId, props.node.id);
 	compareModelsTaskId = taskRes.id;
 	if (taskRes.status === TaskStatus.Success) {
-		compareModelsTaskOutput = taskRes.output;
+		generateOverview(taskRes.output);
 	}
 }
 
-function assignOverview(b64overview: string) {
-	overview.value = markdownit().render(JSON.parse(b64DecodeUnicode(b64overview)).response);
-}
-
-async function generateOverview() {
-	// Generate once the comparison task has been completed
-	if (!compareModelsTaskOutput) return;
-	assignOverview(compareModelsTaskOutput);
-	emit('update-status', OperatorStatus.DEFAULT); // This is a custom way of granting a default status to the operator, since it has no output
-}
-
+// Listen for the task completion event
 useClientEvent(ClientEventType.TaskGollmCompareModel, (event: ClientEvent<TaskResponse>) => {
-	if (!event.data || event.data.id !== compareModelsTaskId) return;
-	if (event.data.status !== TaskStatus.Success) return;
-	compareModelsTaskOutput = event.data.output;
-	generateOverview();
+	if (
+		!event.data ||
+		event.data.id !== compareModelsTaskId ||
+		!isEmpty(overview.value) ||
+		event.data.status !== TaskStatus.Success
+	) {
+		return;
+	}
+	generateOverview(event.data.output);
 });
 
 onMounted(async () => {
@@ -333,8 +332,8 @@ onMounted(async () => {
 	modelCardsToCompare.value = modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard);
 	fields.value = [...new Set(modelCardsToCompare.value.flatMap((card) => (card ? Object.keys(card) : [])))];
 
-	buildJupyterContext();
-	processCompareModels(modelIds);
+	await buildJupyterContext();
+	await processCompareModels(modelIds);
 });
 
 onUnmounted(() => {
@@ -406,12 +405,10 @@ ul {
 }
 
 /* TODO: Improve this pattern later same in (tera-model-input) */
+
 .notebook-section:deep(main) {
 	gap: var(--gap-small);
 	position: relative;
-}
-.toolbar {
-	padding-left: var(--gap-medium);
 }
 
 .toolbar-right-side {

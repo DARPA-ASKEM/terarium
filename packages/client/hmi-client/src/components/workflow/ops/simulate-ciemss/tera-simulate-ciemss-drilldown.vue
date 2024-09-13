@@ -1,7 +1,6 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:menu-items="menuItems"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
@@ -9,7 +8,12 @@
 	>
 		<!-- Wizard -->
 		<section :tabName="DrilldownTabs.Wizard" class="wizard">
-			<tera-slider-panel v-model:is-open="isSidebarOpen" header="Simulation settings" content-width="420px">
+			<tera-slider-panel
+				class="input-config"
+				v-model:is-open="isSidebarOpen"
+				header="Simulation settings"
+				content-width="420px"
+			>
 				<template #content>
 					<div class="toolbar">
 						<p>Click Run to start the simulation.</p>
@@ -95,12 +99,10 @@
 					@llm-thought-output="(data: any) => llmThoughts.push(data)"
 					@question-asked="updateLlmQuery"
 				>
-					<template #toolbar-right-side
-						>t
+					<template #toolbar-right-side>
 						<Button label="Run" size="small" icon="pi pi-play" @click="runCode" />
 					</template>
 				</tera-notebook-jupyter-input>
-				<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
 			</div>
 			<v-ace-editor
 				v-model:value="codeText"
@@ -216,7 +218,6 @@ import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/servic
 import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
-import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 import SelectButton from 'primevue/selectbutton';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -226,7 +227,6 @@ import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
 import { useProjects } from '@/composables/project';
-import { isSaveDatasetDisabled } from '@/components/dataset/utils';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import { KernelSessionManager } from '@/services/jupyter';
 import { logger } from '@/utils/logger';
@@ -288,21 +288,6 @@ const view = ref(OutputView.Charts);
 const viewOptions = ref([
 	{ value: OutputView.Charts, icon: 'pi pi-image' },
 	{ value: OutputView.Data, icon: 'pi pi-list' }
-]);
-
-const isSaveDisabled = computed<boolean>(() =>
-	isSaveDatasetDisabled(selectedRunId.value, useProjects().activeProject.value?.id)
-);
-
-const menuItems = computed(() => [
-	{
-		label: 'Save as new dataset',
-		icon: 'pi pi-pencil',
-		disabled: isSaveDisabled.value,
-		command: () => {
-			showSaveDataDialog.value = true;
-		}
-	}
 ]);
 
 const showSpinner = ref(false);
@@ -569,21 +554,6 @@ onUnmounted(() => kernelManager.shutdown());
 </script>
 
 <style scoped>
-/* Make left sidebar grey */
-:deep(.slider-content) {
-	background-color: var(--surface-100);
-	border-right: 1px solid var(--surface-border-light);
-}
-:deep(.slider-content aside header) {
-	background: color-mix(in srgb, var(--surface-100) 80%, transparent 20%);
-}
-:deep(.slider-tab) {
-	background-color: var(--surface-100);
-	border-right: 1px solid var(--surface-border-light);
-}
-:deep(.slider-tab header) {
-	background: transparent;
-}
 .wizard .toolbar {
 	display: flex;
 	align-items: center;
@@ -628,11 +598,6 @@ onUnmounted(() => kernelManager.shutdown());
 /* Notebook */
 .notebook-section {
 	width: calc(50vw - 4rem);
-	background: var(--surface-100);
-	border-right: 1px solid var(--surface-border-light);
-}
-.notebook-section:deep(main .toolbar) {
-	padding-left: var(--gap-medium);
 }
 
 .notebook-section:deep(main) {

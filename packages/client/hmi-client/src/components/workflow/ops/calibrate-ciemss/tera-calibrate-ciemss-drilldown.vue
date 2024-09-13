@@ -7,7 +7,12 @@
 	>
 		<!-- Wizard -->
 		<section :tabName="DrilldownTabs.Wizard" class="wizard">
-			<tera-slider-panel v-model:is-open="isSidebarOpen" header="Calibration settings" content-width="420px">
+			<tera-slider-panel
+				class="input-config"
+				v-model:is-open="isSidebarOpen"
+				header="Calibration settings"
+				content-width="420px"
+			>
 				<template #content>
 					<div class="toolbar">
 						<p>Click Run to begin calibrating.</p>
@@ -159,7 +164,6 @@
 							</div>
 						</div>
 					</section>
-					<div class="spacer m-7" />
 				</template>
 			</tera-slider-panel>
 		</section>
@@ -271,8 +275,13 @@
 			>
 				<template #overlay>
 					<tera-chart-settings-panel
-						:annotations="[]"
+						:annotations="
+							activeChartSettings?.type === ChartSettingType.VARIABLE_COMPARISON ? chartAnnotations : undefined
+						"
 						:active-settings="activeChartSettings"
+						:generate-annotation="generateAnnotation"
+						@create-annotation="addChartAnnotation"
+						@delete-annotation="removeChartAnnotation"
 						@close="activeChartSettings = null"
 					/>
 				</template>
@@ -352,6 +361,7 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import * as vega from 'vega';
+import { v4 as uuidv4 } from 'uuid';
 import { csvParse, autoType, mean, variance } from 'd3';
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
 import Button from 'primevue/button';
@@ -376,7 +386,8 @@ import {
 	CsvAsset,
 	DatasetColumn,
 	ModelConfiguration,
-	AssetType
+	AssetType,
+	ChartAnnotation
 } from '@/types/Types';
 import { CiemssPresetTypes, DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
 import { getTimespan, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
@@ -568,6 +579,35 @@ const selectedErrorVariables = computed(() =>
 		.filter((setting) => setting.type === ChartSettingType.ERROR_DISTRIBUTION)
 		.map((setting) => setting.selectedVariables[0])
 );
+
+const chartAnnotations = ref<ChartAnnotation[]>([]);
+const generateAnnotation = async (setting: ChartSetting, query: string) => {
+	// Generate fake annotation. The annotation generation logic for the specific chart setting should go here
+	// Different chart settings type may have different annotation generation logic
+	await new Promise((resolve) => {
+		setTimeout(resolve, 1000);
+	});
+	const annotation: ChartAnnotation = {
+		id: uuidv4(),
+		description: query,
+		nodeId: props.node.id,
+		outputId: '',
+		chartId: setting.id,
+		layerSpec: {},
+		llmGenerated: false,
+		metadata: {}
+	};
+	return annotation;
+};
+const addChartAnnotation = (annotation: ChartAnnotation) => {
+	chartAnnotations.value.push(annotation);
+};
+const removeChartAnnotation = (annotationId: string) => {
+	const index = chartAnnotations.value.findIndex((annotation) => annotation.id === annotationId);
+	if (index !== -1) {
+		chartAnnotations.value.splice(index, 1);
+	}
+};
 
 const pyciemssMap = ref<Record<string, string>>({});
 const preparedChartInputs = computed(() => {
@@ -992,21 +1032,6 @@ watch(
 </script>
 
 <style scoped>
-/* Left sidebar stuff */
-:deep(.slider-content) {
-	background-color: var(--surface-100);
-	border-right: 1px solid var(--surface-border-light);
-}
-:deep(.slider-content aside header) {
-	background: color-mix(in srgb, var(--surface-100) 80%, transparent 20%);
-}
-:deep(.slider-tab) {
-	background-color: var(--surface-100);
-	border-right: 1px solid var(--surface-border-light);
-}
-:deep(.slider-tab header) {
-	background: transparent;
-}
 .wizard .toolbar {
 	display: flex;
 	align-items: center;

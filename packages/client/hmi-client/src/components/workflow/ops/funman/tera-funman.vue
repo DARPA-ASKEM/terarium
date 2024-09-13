@@ -5,110 +5,98 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
-		<div :tabName="FunmanTabs.Wizard" class="ml-4 mr-2 mt-3">
-			<tera-drilldown-section>
-				<template #header-controls-right>
-					<Button
-						:loading="showSpinner"
-						class="run-button"
-						label="Run"
-						icon="pi pi-play"
-						@click="runMakeQuery"
-						size="large"
-					/>
+		<div :tabName="FunmanTabs.Wizard">
+			<tera-slider-panel
+				class="input-config"
+				v-model:is-open="isSliderOpen"
+				header="Validate configuration settings"
+				content-width="515px"
+			>
+				<template #content>
+					<div class="top-toolbar">
+						<p>Set your model checks and settings then click run.</p>
+						<Button :loading="showSpinner" label="Run" icon="pi pi-play" @click="runMakeQuery" />
+					</div>
+					<main>
+						<Accordion multiple :active-index="[0, 1]" class="accordion-component">
+							<AccordionTab>
+								<template #header>
+									Model checks
+									<i class="pi pi-info-circle pl-2" v-tooltip="validateParametersToolTip" />
+								</template>
+								<p class="mt-1">
+									Implement sanity checks on the state space of the model to see how the parameter space of the model is
+									partitioned into satisfiable and unsatisfiable regions separated by decision boundaries.
+								</p>
+								<tera-compartment-constraint :variables="modelStates" :mass="mass" />
+								<tera-constraint-group-form
+									v-for="(cfg, index) in node.state.constraintGroups"
+									:key="selectedOutputId + ':' + index"
+									:config="cfg"
+									:index="index"
+									:model-states="modelStates"
+									:model-parameters="modelParameters"
+									@delete-self="deleteConstraintGroupForm"
+									@update-self="updateConstraintGroupForm"
+								/>
+								<Button
+									class="add-constraint-spacer"
+									text
+									icon="pi pi-plus"
+									label="Add new check"
+									size="small"
+									@click="addConstraintForm"
+								/>
+							</AccordionTab>
+							<AccordionTab>
+								<template #header>
+									Settings
+									<i class="pi pi-info-circle pl-2" v-tooltip="validateParametersToolTip" />
+								</template>
+								<label>Select parameters of interest</label>
+								<MultiSelect
+									ref="columnSelect"
+									:modelValue="variablesOfInterest"
+									:options="requestParameters.map((d: any) => d.name)"
+									:show-toggle-all="false"
+									class="w-full mt-1 mb-2"
+									@update:modelValue="onToggleVariableOfInterest"
+									:maxSelectedLabels="1"
+									placeholder="Select variables"
+								/>
+								<div class="mb-2 section-row timespan">
+									<div class="mr-2 timespan-input">
+										<label>Start time</label>
+										<tera-input-number class="mt-1" v-model="knobs.currentTimespan.start" />
+									</div>
+									<div class="mr-2 timespan-input">
+										<label>End time</label>
+										<tera-input-number class="mt-1" v-model="knobs.currentTimespan.end" />
+									</div>
+									<div class="timespan-input">
+										<label>Number of timepoints</label>
+										<tera-input-number class="mt-1" v-model="knobs.numberOfSteps" />
+									</div>
+								</div>
+								<tera-input-text :disabled="true" class="timespan-list mb-2" v-model="requestStepListString" />
+								<div>
+									<label>Tolerance</label>
+									<div class="mt-1 input-tolerance fadein animation-ease-in-out animation-duration-350">
+										<tera-input-number v-model="knobs.tolerance" />
+										<Slider v-model="knobs.tolerance" :min="0" :max="1" :step="0.01" class="w-full mr-2" />
+									</div>
+								</div>
+							</AccordionTab>
+						</Accordion>
+					</main>
 				</template>
-				<main>
-					<h5>
-						Set validation parameters
-						<i class="pi pi-info-circle" v-tooltip="validateParametersToolTip" />
-					</h5>
-					<p class="secondary-text mt-1">The validator will use these parameters to execute the sanity checks.</p>
-					<div class="section-row timespan">
-						<div class="w-full">
-							<label>Start time</label>
-							<tera-input-number v-model="knobs.currentTimespan.start" />
-						</div>
-						<div class="w-full">
-							<label>End time</label>
-							<tera-input-number v-model="knobs.currentTimespan.end" />
-						</div>
-						<div class="w-full">
-							<label>Number of steps</label>
-							<tera-input-number v-model="knobs.numberOfSteps" />
-						</div>
-					</div>
-					<tera-input-text :disabled="true" class="timespan-list mb-2" v-model="requestStepListString" />
-					<template v-if="showAdditionalOptions">
-						<div>
-							<label>Tolerance</label>
-							<div class="input-tolerance fadein animation-ease-in-out animation-duration-350">
-								<tera-input-number v-model="knobs.tolerance" />
-								<Slider v-model="knobs.tolerance" :min="0" :max="1" :step="0.01" class="w-full mr-2" />
-							</div>
-						</div>
-						<div class="section-row fadein animation-duration-600">
-							<!-- This will definitely require a proper tool tip. -->
-							<label class="w-auto mr-2">Select parameters of interest <i class="pi pi-info-circle" /></label>
-							<MultiSelect
-								ref="columnSelect"
-								:modelValue="variablesOfInterest"
-								:options="requestParameters.map((d: any) => d.name)"
-								:show-toggle-all="false"
-								class="w-auto"
-								@update:modelValue="onToggleVariableOfInterest"
-								:maxSelectedLabels="1"
-								placeholder="Select variables"
-							/>
-						</div>
-					</template>
-					<Button
-						text
-						icon="pi pi-eye"
-						label="Show additional options"
-						size="small"
-						v-if="!showAdditionalOptions"
-						@click="toggleAdditonalOptions"
-					/>
-					<Button
-						text
-						icon="pi pi-eye-slash"
-						label="Hide additional options"
-						size="small"
-						v-if="showAdditionalOptions"
-						@click="toggleAdditonalOptions"
-					/>
-
-					<div class="spacer">
-						<h5>Add sanity checks</h5>
-						<p class="secondary-text mt-1">Model configurations will be tested against these constraints.</p>
-					</div>
-					<tera-compartment-constraint :variables="modelStates" :mass="mass" />
-					<tera-constraint-group-form
-						v-for="(cfg, index) in node.state.constraintGroups"
-						:key="selectedOutputId + ':' + index"
-						:config="cfg"
-						:index="index"
-						:model-states="modelStates"
-						:model-parameters="modelParameters"
-						@delete-self="deleteConstraintGroupForm"
-						@update-self="updateConstraintGroupForm"
-					/>
-					<Button
-						class="add-constraint-spacer"
-						text
-						icon="pi pi-plus"
-						label="Add another constraint"
-						size="small"
-						@click="addConstraintForm"
-					/>
-				</main>
-			</tera-drilldown-section>
+			</tera-slider-panel>
 		</div>
 		<div :tabName="FunmanTabs.Notebook">
 			<tera-drilldown-section>
 				<main>
 					<!-- TODO: notebook functionality -->
-					<p>{{ requestConstraints }}</p>
+					<div class="mt-3 ml-4 mr-2">Notebook is under construction. Use the wizard for now.</div>
 				</main>
 			</tera-drilldown-section>
 		</div>
@@ -149,11 +137,14 @@ import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import Slider from 'primevue/slider';
 import MultiSelect from 'primevue/multiselect';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
 
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
@@ -181,9 +172,8 @@ enum FunmanTabs {
 const toast = useToastService();
 const validateParametersToolTip =
 	'Validate the configuration of the model using functional model analysis (FUNMAN). \n \n The parameter space regions defined by the model configuration are evaluated to satisfactory or unsatisfactory depending on whether they generate model outputs that are within a given set of time-dependent constraints';
-
 const showSpinner = ref(false);
-const showAdditionalOptions = ref(false);
+const isSliderOpen = ref(true);
 
 interface BasicKnobs {
 	tolerance: number;
@@ -283,10 +273,6 @@ const outputs = computed(() => {
 });
 
 const activeOutput = ref<WorkflowOutput<FunmanOperationState> | null>(null);
-
-const toggleAdditonalOptions = () => {
-	showAdditionalOptions.value = !showAdditionalOptions.value;
-};
 
 const variablesOfInterest = ref<string[]>([]);
 const onToggleVariableOfInterest = (vals: string[]) => {
@@ -571,33 +557,30 @@ watch(
 
 .section-row {
 	display: flex;
-	padding: 0.5rem 0rem;
 	align-items: center;
-	gap: 0.8125rem;
 	align-self: stretch;
 }
 
 .input-tolerance {
 	display: flex;
-	padding: var(--gap-small) 0 var(--gap-small) 0;
 	width: 100%;
 	align-items: center;
-	gap: 0.8125rem;
 	align-self: stretch;
-	gap: 1.5rem;
+	gap: var(--gap-medium);
 }
 
 div.section-row.timespan > div > span {
 	width: 100%;
 }
 
-.timespan-list {
-	width: 100%;
+.timespan-input {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
 }
 
-.spacer {
-	margin-top: 1rem;
-	margin-bottom: 1rem;
+.timespan-list {
+	width: 100%;
 }
 
 .add-constraint-spacer {
@@ -613,7 +596,26 @@ div.section-row.timespan > div > span {
 	color: var(--text-color-subdued);
 }
 
-.run-button {
-	margin-right: auto;
+/** Override default accordion styles */
+.accordion-component:deep(.p-accordion-header-link) {
+	background-color: var(--surface-100);
+}
+
+.accordion-component:deep(.p-accordion-content) {
+	background-color: var(--surface-100);
+	padding-left: var(--gap);
+	padding-right: var(--gap);
+}
+
+/* Override grid template so output expands when sidebar is closed */
+.overlay-container:deep(section.scale main) {
+	grid-template-columns: auto 1fr;
+}
+
+.top-toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--gap-1) var(--gap);
 }
 </style>

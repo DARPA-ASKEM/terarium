@@ -43,7 +43,7 @@
 						<Chip
 							v-for="(input, index) in node.inputs.filter((input) => input.value)"
 							:key="index"
-							:label="input.label"
+							:label="useProjects().getAssetName(input.value?.[0]) || input.label"
 						>
 							<template #icon>
 								<tera-operator-port-icon v-if="input.type" :portType="input.type" />
@@ -135,6 +135,7 @@ import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotati
 import TeraOperatorPortIcon from '@/components/operator/tera-operator-port-icon.vue';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import TeraTooltip from '@/components/widgets/tera-tooltip.vue';
+import { useProjects } from '@/composables/project';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;

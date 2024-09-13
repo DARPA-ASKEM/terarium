@@ -10,7 +10,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.annotation.PostConstruct;
-import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -533,7 +532,7 @@ public class ProjectController {
 	public ResponseEntity<Project> copyProject(@PathVariable("id") final UUID id) {
 		projectService.checkPermissionCanRead(currentUserService.get().getId(), id);
 		// time the progress takes to reach each subsequent half.
-		final Double HALFTIME_SECONDS = 2.0;
+		final Double HALFTIME_SECONDS = 1.0;
 
 		Future<Project> project;
 		Project clonedProject;
@@ -541,16 +540,16 @@ public class ProjectController {
 		final String userId = currentUserService.get().getId();
 		final String userName = userService.getById(userId).getName();
 
-		try {
-			final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<Properties>(
-				clientEventService,
-				notificationService,
-				ClientEventType.CLONE_PROJECT,
-				null,
-				new Properties(id),
-				HALFTIME_SECONDS
-			);
+		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<Properties>(
+			clientEventService,
+			notificationService,
+			ClientEventType.CLONE_PROJECT,
+			null,
+			new Properties(id),
+			HALFTIME_SECONDS
+		);
 
+		try {
 			notificationInterface.sendMessage("Cloning the Project...");
 
 			project = executor.submit(() -> {
@@ -558,19 +557,18 @@ public class ProjectController {
 				final ProjectExport export = cloneService.exportProject(id);
 				export.getProject().setName("Copy of " + export.getProject().getName());
 				log.info("Cloning...");
-				Project cloneProject = cloneService.importProject(userId, userName, export);
+				final Project cloneProject = cloneService.importProject(userId, userName, export);
 				log.info("Cloned...");
 				return cloneProject;
 			});
-			notificationInterface.sendFinalMessage("Cloning complete");
 			clonedProject = project.get();
-		} catch (ExecutionException e) {
+		} catch (final ExecutionException e) {
 			log.error("Execution Exception exporting project", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
-		} catch (CancellationException e) {
+		} catch (final CancellationException e) {
 			log.error("Cancelled exporting project", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("generic.io-error.write"));
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			log.error("Interrupted exporting project", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		} catch (final Exception e) {
@@ -595,6 +593,7 @@ public class ProjectController {
 				messages.get("rebac.relationship-already-exists")
 			);
 		}
+		notificationInterface.sendFinalMessage("Cloning complete");
 		return ResponseEntity.status(HttpStatus.CREATED).body(clonedProject);
 	}
 
@@ -694,19 +693,23 @@ public class ProjectController {
 
 		Project project;
 		try {
+			log.info("Importing project");
 			project = cloneService.importProject(userId, userName, projectExport);
+			log.info("Project imported");
 		} catch (final Exception e) {
 			log.error("Error importing project", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 
 		try {
+			log.info("Setting project permissions");
 			final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
 			final RebacGroup rebacAskemAdminGroup = new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService);
 			final RebacUser rebacUser = new RebacUser(userId, reBACService);
 
 			rebacUser.createCreatorRelationship(rebacProject);
 			rebacAskemAdminGroup.createWriterRelationship(rebacProject);
+			log.info("Project permissions set");
 		} catch (final Exception e) {
 			log.error("Error setting user's permissions for project", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
@@ -718,6 +721,7 @@ public class ProjectController {
 			);
 		}
 
+		log.info("Returning project");
 		return ResponseEntity.status(HttpStatus.CREATED).body(project);
 	}
 

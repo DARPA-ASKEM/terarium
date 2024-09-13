@@ -4,7 +4,7 @@
 
 import API from '@/api/api';
 import { AssetType, ProvenanceQueryParam, ProvenanceSearchResult, ProvenanceType, TerariumAsset } from '@/types/Types';
-import { ResultType } from '@/types/common';
+import type { Asset } from '@/utils/asset';
 import { logger } from '@/utils/logger';
 import { getBulkDatasets } from './dataset';
 /* eslint-disable-next-line import/no-cycle */
@@ -57,8 +57,8 @@ async function getRelatedArtifacts(
 	id: TerariumAsset['id'],
 	rootType: ProvenanceType,
 	types: ProvenanceType[] = Object.values(ProvenanceType)
-): Promise<ResultType[]> {
-	const response: ResultType[] = [];
+): Promise<Asset[]> {
+	const response: Asset[] = [];
 
 	if (!rootType || !id) return response;
 	const connectedNodes: ProvenanceSearchResult | null = await getConnectedNodes(id, rootType, types);

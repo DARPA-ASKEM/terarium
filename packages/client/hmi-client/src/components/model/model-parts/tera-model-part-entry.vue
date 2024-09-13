@@ -38,20 +38,12 @@
 				@click="showDescription = false"
 			/>
 			<Button
-				v-else-if="item.description && !showDescription"
+				v-else-if="!showDescription"
 				text
 				size="small"
-				label="Show description"
+				:label="item.description ? 'Show description' : 'Add description'"
 				@click="showDescription = true"
 			/>
-			<Button
-				v-else-if="!item.description && !showDescription"
-				text
-				size="small"
-				label="Add description"
-				@click="showDescription = true"
-			/>
-
 			<span v-if="showConcept" class="concept">
 				<label>Concept</label>
 				<template v-if="featureConfig.isPreview">{{ query }}</template>
@@ -64,6 +56,8 @@
 					optionLabel="name"
 					@complete="async () => (results = await searchCuriesEntities(query))"
 					@item-select="$emit('update-item', { key: 'concept', value: $event.value.curie })"
+					@keyup.enter="applyValidConcept"
+					@blur="applyValidConcept"
 				/>
 			</span>
 		</span>
@@ -101,7 +95,7 @@ const props = defineProps<{
 	featureConfig: FeatureConfig;
 }>();
 
-defineEmits(['update-item']);
+const emit = defineEmits(['update-item']);
 
 const query = ref('');
 const results = ref<DKG[]>([]);
@@ -111,6 +105,21 @@ const symbol = computed(() => (props.item.templateId ? `${props.item.templateId}
 // If we are in preview mode and there is no content, show nothing
 const showUnit = computed(() => !(props.featureConfig.isPreview && !props.item.unitExpression));
 const showConcept = computed(() => !(props.featureConfig.isPreview && !query.value));
+
+// Used if an option isn't selected from the Autocomplete suggestions but is typed in regularly
+function applyValidConcept() {
+	// Allows to empty the concept
+	if (query.value === '') {
+		emit('update-item', { key: 'concept', value: '' });
+	}
+	// If what was typed was one of the results then choose that result
+	else {
+		const concept = results.value.find((result) => result.name === query.value);
+		if (concept) {
+			emit('update-item', { key: 'concept', value: concept.curie });
+		}
+	}
+}
 
 watch(
 	() => props.item.grounding?.identifiers,
