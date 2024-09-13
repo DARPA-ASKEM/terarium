@@ -157,7 +157,7 @@ h5 {
 }
 
 .p-button.p-button-icon-only.p-button-rounded {
-	height: 2.5rem;
+	height: var(--gap-10);
 }
 
 .p-badge {
