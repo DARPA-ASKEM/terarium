@@ -68,7 +68,18 @@ export async function saveAnnotation(
 		llmGenerated: true,
 		metadata: {}
 	};
-	return annotation;
+	const { data } = await API.post('/chart-annotations', annotation);
+	return data as ChartAnnotation;
+}
+
+export async function deleteAnnotation(annotationId: string) {
+	const { data } = await API.delete(`/chart-annotations/${annotationId}`);
+	return data;
+}
+
+export async function fetchAnnotations(nodeId: string) {
+	const { data } = await API.post(`/chart-annotations/search`, { nodeId });
+	return data as ChartAnnotation[];
 }
 
 export async function generateForecastChartAnnotation(
