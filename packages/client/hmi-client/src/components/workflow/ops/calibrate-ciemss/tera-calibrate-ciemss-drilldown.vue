@@ -599,6 +599,7 @@ const selectedErrorVariableSettings = computed(() =>
 	chartSettings.value.filter((setting) => setting.type === ChartSettingType.ERROR_DISTRIBUTION)
 );
 
+// --- Handle chart annotations
 const chartAnnotations = ref<ChartAnnotation[]>([]);
 const updateChartAnnotations = async () => {
 	chartAnnotations.value = await fetchAnnotations(props.node.id);
@@ -618,6 +619,7 @@ const generateAnnotation = async (setting: ChartSetting, query: string) => {
 	const saved = await saveAnnotation(annotationLayerSpec, props.node.id, setting.id);
 	return saved;
 };
+// ---
 
 const pyciemssMap = ref<Record<string, string>>({});
 const preparedChartInputs = computed(() => {
