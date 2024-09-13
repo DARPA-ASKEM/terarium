@@ -45,7 +45,6 @@
 									:key="i"
 									@click.capture="selectItem(equation.name, $event)"
 								>
-									<input type="radio" v-model="selectedItem" :value="equation.name" style="display: none" />
 									<tera-asset-block
 										:is-toggleable="false"
 										:is-permitted="false"
@@ -82,7 +81,6 @@
 									:key="i"
 									@click.capture="selectItem(equation.name, $event)"
 								>
-									<input type="radio" v-model="selectedItem" :value="equation.name" style="display: none" />
 									<tera-asset-block
 										:is-toggleable="false"
 										:is-permitted="false"
