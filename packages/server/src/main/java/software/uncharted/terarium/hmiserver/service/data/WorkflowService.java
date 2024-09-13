@@ -116,11 +116,6 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				final WorkflowNode<?> node = nodeMap.get(dbNode.getId());
 
 				if (node == null) continue;
-				if (node.getIsDeleted()) {
-					dbNode.setIsDeleted(true);
-					nodeMap.remove(node.getId());
-					continue;
-				}
 
 				final JsonNode nodeContent = this.objectMapper.valueToTree(node);
 				final JsonNode dbNodeContent = this.objectMapper.valueToTree(dbNode);
@@ -153,11 +148,6 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				final WorkflowEdge edge = edgeMap.get(dbEdge.getId());
 
 				if (edge == null) continue;
-				if (edge.getIsDeleted()) {
-					dbEdge.setIsDeleted(true);
-					edgeMap.remove(edge.getId());
-					continue;
-				}
 
 				final JsonNode edgeContent = this.objectMapper.valueToTree(edge);
 				final JsonNode dbEdgeContent = this.objectMapper.valueToTree(dbEdge);

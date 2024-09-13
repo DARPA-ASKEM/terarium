@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.models.simulationservice;
+package software.uncharted.terarium.hmiserver.models.simulationservice.statusupdates;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -9,14 +9,14 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
 @Data
 @TSModel
-public class CiemssStatusUpdate {
-
-	private Number loss;
-
-	private Number progress;
+public abstract class CiemssStatusUpdate {
 
 	@JsonAlias("job_id")
 	private String jobId;
+
+	private Number progress;
+
+	private CiemssStatusType type;
 
 	@JsonIgnore
 	public JsonNode getDataToPersist() {

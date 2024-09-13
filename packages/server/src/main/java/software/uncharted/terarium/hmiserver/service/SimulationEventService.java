@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.rabbitmq.client.Channel;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
@@ -26,8 +27,11 @@ import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.User;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationUpdate;
-import software.uncharted.terarium.hmiserver.models.simulationservice.CiemssStatusUpdate;
 import software.uncharted.terarium.hmiserver.models.simulationservice.ScimlStatusUpdate;
+import software.uncharted.terarium.hmiserver.models.simulationservice.statusupdates.CiemssCalibrateStatusUpdate;
+import software.uncharted.terarium.hmiserver.models.simulationservice.statusupdates.CiemssOptimizeStatusUpdate;
+import software.uncharted.terarium.hmiserver.models.simulationservice.statusupdates.CiemssStatusType;
+import software.uncharted.terarium.hmiserver.models.simulationservice.statusupdates.CiemssStatusUpdate;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
@@ -151,11 +155,30 @@ public class SimulationEventService {
 
 	@RabbitListener(queues = "${terarium.simulation-status}", concurrency = "1")
 	private void onPyciemssOneInstanceReceives(final Message message, final Channel channel) throws IOException {
-		final CiemssStatusUpdate update = ClientEventService.decodeMessage(message, CiemssStatusUpdate.class);
+		// Parse message to get message type:
+		final String updateType = (ClientEventService.decodeMessage(message, JsonNode.class)).get("type").asText();
+		if (updateType.equals(CiemssStatusType.OPTIMIZE.toString())) {
+			final CiemssOptimizeStatusUpdate update = ClientEventService.decodeMessage(
+				message,
+				CiemssOptimizeStatusUpdate.class
+			);
+			updateAndSendPyciemssMessage(message, update);
+		} else if (updateType.equals(CiemssStatusType.CALIBRATE.toString())) {
+			final CiemssCalibrateStatusUpdate update = ClientEventService.decodeMessage(
+				message,
+				CiemssCalibrateStatusUpdate.class
+			);
+			updateAndSendPyciemssMessage(message, update);
+		} else {
+			log.error("message in simulation-status with unknown type: " + updateType);
+			return;
+		}
+	}
+
+	private void updateAndSendPyciemssMessage(final Message message, final CiemssStatusUpdate update) {
 		if (update == null) {
 			return;
 		}
-
 		try {
 			final SimulationUpdate simulationUpdate = new SimulationUpdate();
 			simulationUpdate.setData(update.getDataToPersist());
@@ -193,26 +216,45 @@ public class SimulationEventService {
 	)
 	private void onPyciemssAllInstanceReceive(final Message message) {
 		try {
-			final CiemssStatusUpdate update = ClientEventService.decodeMessage(message, CiemssStatusUpdate.class);
-			if (update == null) {
+			// Parse message to get message type:
+			final String updateType = (ClientEventService.decodeMessage(message, JsonNode.class)).get("type").asText();
+			if (updateType.equals(CiemssStatusType.OPTIMIZE.toString())) {
+				final CiemssOptimizeStatusUpdate update = ClientEventService.decodeMessage(
+					message,
+					CiemssOptimizeStatusUpdate.class
+				);
+				passPyciemssToUser(update);
+			} else if (updateType.equals(CiemssStatusType.CALIBRATE.toString())) {
+				final CiemssCalibrateStatusUpdate update = ClientEventService.decodeMessage(
+					message,
+					CiemssCalibrateStatusUpdate.class
+				);
+				passPyciemssToUser(update);
+			} else {
+				log.error("message in simulation-status with unknown type: " + updateType);
 				return;
-			}
-
-			final ClientEvent<CiemssStatusUpdate> status = ClientEvent.<CiemssStatusUpdate>builder()
-				.type(ClientEventType.SIMULATION_PYCIEMSS)
-				.data(update)
-				.build();
-
-			final String id = update.getJobId();
-			if (simulationIdToUserIds.containsKey(id)) {
-				simulationIdToUserIds
-					.get(id)
-					.forEach(userId -> {
-						clientEventService.sendToUser(status, userId);
-					});
 			}
 		} catch (final Exception e) {
 			log.error("Error processing event", e);
+		}
+	}
+
+	private void passPyciemssToUser(final CiemssStatusUpdate update) {
+		if (update == null) {
+			return;
+		}
+		final ClientEvent<CiemssStatusUpdate> status = ClientEvent.<CiemssStatusUpdate>builder()
+			.type(ClientEventType.SIMULATION_PYCIEMSS)
+			.data(update)
+			.build();
+
+		final String id = update.getJobId();
+		if (simulationIdToUserIds.containsKey(id)) {
+			simulationIdToUserIds
+				.get(id)
+				.forEach(userId -> {
+					clientEventService.sendToUser(status, userId);
+				});
 		}
 	}
 }
