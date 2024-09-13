@@ -455,8 +455,10 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Make left sidebar grey */
-:deep(.slider-content) {
+/* Make the left sidebar grey */
+:deep(.slider-content),
+:deep(.slider-tab),
+:deep(.tab) {
 	background-color: var(--surface-100);
 }
 

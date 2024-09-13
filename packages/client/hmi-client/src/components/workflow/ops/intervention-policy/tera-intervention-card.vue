@@ -1,7 +1,7 @@
 <template>
 	<div class="intervention-card">
 		<header class="flex align-items-center gap-2">
-			<tera-toggleable-input :model-value="intervention.name" @update:model-value="onUpdateName($event)" tag="h5" />
+			<tera-toggleable-input :model-value="intervention.name" @update:model-value="onUpdateName($event)" tag="h6" />
 			<div class="flex align-items-center ml-auto">
 				<RadioButton
 					:model-value="interventionType"
@@ -286,6 +286,7 @@ const onSemanticChange = (event: DropdownChangeEvent) => {
 }
 
 .intervention-card {
+	background-color: var(--surface-50);
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-medium);
 	padding: var(--gap-2) var(--gap);
