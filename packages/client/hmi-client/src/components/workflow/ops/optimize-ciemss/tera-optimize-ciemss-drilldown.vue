@@ -889,39 +889,17 @@ const setOutputValues = async () => {
 	optimizeRequestPayload.value = (await getSimulation(knobs.value.optimizationRunId))?.executionPayload || '';
 };
 
-const preProcessedInterventionsData = computed<Dictionary<{ name: string; value: number; time: number }[]>>(() => {
+const preProcessedInterventionsData = computed<Dictionary<Intervention[]>>(() => {
 	const state = _.cloneDeep(props.node.state);
 
 	// Combine before and after interventions
 	const combinedInterventions = [
-		...state.interventionPolicyGroups.flatMap((group) =>
-			group.intervention.staticInterventions.map((intervention) => ({
-				appliedTo: group.intervention.appliedTo,
-				name: group.intervention.name,
-				value: intervention.value,
-				time: intervention.timestep
-			}))
-		),
-		...(optimizedInterventionPolicy.value?.interventions.flatMap((intervention) =>
-			intervention.staticInterventions.map((staticIntervention) => ({
-				appliedTo: intervention.appliedTo,
-				name: intervention.name,
-				value: staticIntervention.value,
-				time: staticIntervention.timestep
-			}))
-		) || [])
+		...state.interventionPolicyGroups.flatMap((group) => group.intervention),
+		...(optimizedInterventionPolicy.value?.interventions || [])
 	];
 
-	// Group by appliedTo and map to exclude 'appliedTo' from final objects
-	const groupedAndMapped = _.mapValues(_.groupBy(combinedInterventions, 'appliedTo'), (interventions) =>
-		interventions.map(({ name, value, time }) => ({
-			name,
-			value,
-			time
-		}))
-	);
-
-	return groupedAndMapped;
+	// Group by appliedTo
+	return _.groupBy(combinedInterventions, 'appliedTo');
 });
 
 onMounted(async () => {
