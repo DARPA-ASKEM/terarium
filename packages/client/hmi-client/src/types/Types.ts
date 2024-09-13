@@ -1066,6 +1066,8 @@ export enum ClientEventType {
     TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
     TaskGollmGenerateSummary = "TASK_GOLLM_GENERATE_SUMMARY",
     TaskFunmanValidation = "TASK_FUNMAN_VALIDATION",
+    TaskGollmEnrichAmr = "TASK_GOLLM_ENRICH_AMR",
+    TaskMiraAmrToMmt = "TASK_MIRA_AMR_TO_MMT",
     TaskEnrichAmr = "TASK_ENRICH_AMR",
     WorkflowUpdate = "WORKFLOW_UPDATE",
     WorkflowDelete = "WORKFLOW_DELETE",

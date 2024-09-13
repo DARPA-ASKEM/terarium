@@ -287,6 +287,7 @@ const viewOptions = ref([
 	{ value: OutputView.Charts, icon: 'pi pi-image' },
 	{ value: OutputView.Data, icon: 'pi pi-list' }
 ]);
+
 const showSpinner = ref(false);
 const runResults = ref<{ [runId: string]: DataArray }>({});
 const runResultsSummary = ref<{ [runId: string]: DataArray }>({});

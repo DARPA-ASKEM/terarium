@@ -1,7 +1,6 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:menu-items="menuItems"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
@@ -416,8 +415,6 @@ import { WorkflowNode } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
-import { useProjects } from '@/composables/project';
-import { isSaveDatasetDisabled } from '@/components/dataset/utils';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import Divider from 'primevue/divider';
@@ -500,33 +497,10 @@ const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 const cancelRunId = computed(() => props.node.state.inProgressPostForecastId || props.node.state.inProgressOptimizeId);
 
-const isSaveDisabled = computed<boolean>(() =>
-	isSaveDatasetDisabled(props.node.state.postForecastRunId, useProjects().activeProject.value?.id)
-);
-
 const activePolicyGroups = computed(() => props.node.state.interventionPolicyGroups.filter((ele) => ele.isActive));
 
 const inactivePolicyGroups = computed(() => props.node.state.interventionPolicyGroups.filter((ele) => !ele.isActive));
 let pyciemssMap: Record<string, string> = {};
-
-const menuItems = computed(() => [
-	{
-		label: 'Save as a new model configuration',
-		icon: 'pi pi-pencil',
-		disabled: modelConfigName.value === '',
-		command: () => {
-			showModelModal.value = true;
-		}
-	},
-	{
-		label: 'Save as new dataset',
-		icon: 'pi pi-pencil',
-		disabled: isSaveDisabled,
-		command: () => {
-			showSaveDataDialog.value = true;
-		}
-	}
-]);
 
 const showSpinner = computed<boolean>(
 	() => props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressPostForecastId !== ''
@@ -859,6 +833,7 @@ const setOutputSettingDefaults = () => {
 	}
 };
 
+// TODO: utlize with https://github.com/DARPA-ASKEM/terarium/issues/4767
 const saveModelConfiguration = async () => {
 	if (!modelConfiguration.value) return;
 
