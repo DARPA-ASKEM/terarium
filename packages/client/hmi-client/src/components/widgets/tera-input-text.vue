@@ -40,7 +40,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:model-value', 'blur', 'focus']);
 const inputField = ref<HTMLInputElement | null>(null);
-const getDisabled = props.disabled ?? false;
+const getDisabled = computed(() => props.disabled ?? false);
 const isFocused = ref(false);
 
 const focusInput = () => {

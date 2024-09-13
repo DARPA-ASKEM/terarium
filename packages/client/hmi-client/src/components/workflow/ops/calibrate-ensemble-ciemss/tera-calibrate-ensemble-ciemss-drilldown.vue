@@ -1,7 +1,6 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:menu-items="menuItems"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
@@ -181,7 +180,6 @@ import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import Dropdown from 'primevue/dropdown';
-import { useProjects } from '@/composables/project';
 import { setupDatasetInput, setupModelInput } from '@/services/calibrate-workflow';
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -199,7 +197,6 @@ import type {
 } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
-import { isSaveDatasetDisabled } from '@/components/dataset/utils';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	EnsembleCalibrateExtraCiemss
@@ -222,21 +219,6 @@ interface BasicKnobs {
 	forecastRunId: string;
 	timestampColName: string;
 }
-
-const isSaveDisabled = computed<boolean>(() =>
-	isSaveDatasetDisabled(props.node.state.forecastRunId, useProjects().activeProject.value?.id)
-);
-
-const menuItems = computed(() => [
-	{
-		label: 'Save as new dataset',
-		icon: 'pi pi-pencil',
-		disabled: isSaveDisabled,
-		command: () => {
-			showSaveDataDialog.value = true;
-		}
-	}
-]);
 
 const knobs = ref<BasicKnobs>({
 	ensembleConfigs: props.node.state.ensembleConfigs ?? [],

@@ -1,14 +1,18 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:menu-items="menuItems"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<!-- Wizard tab -->
 		<section :tabName="DrilldownTabs.Wizard" class="wizard">
-			<tera-slider-panel v-model:is-open="isSidebarOpen" header="Optimize intervention settings" content-width="420px">
+			<tera-slider-panel
+				class="input-config"
+				v-model:is-open="isSidebarOpen"
+				header="Optimize intervention settings"
+				content-width="420px"
+			>
 				<template #content>
 					<div class="toolbar">
 						<p>Click Run to start optimization.</p>
@@ -416,8 +420,6 @@ import { WorkflowNode } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
-import { useProjects } from '@/composables/project';
-import { isSaveDatasetDisabled } from '@/components/dataset/utils';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import Divider from 'primevue/divider';
@@ -500,33 +502,10 @@ const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 const cancelRunId = computed(() => props.node.state.inProgressPostForecastId || props.node.state.inProgressOptimizeId);
 
-const isSaveDisabled = computed<boolean>(() =>
-	isSaveDatasetDisabled(props.node.state.postForecastRunId, useProjects().activeProject.value?.id)
-);
-
 const activePolicyGroups = computed(() => props.node.state.interventionPolicyGroups.filter((ele) => ele.isActive));
 
 const inactivePolicyGroups = computed(() => props.node.state.interventionPolicyGroups.filter((ele) => !ele.isActive));
 let pyciemssMap: Record<string, string> = {};
-
-const menuItems = computed(() => [
-	{
-		label: 'Save as a new model configuration',
-		icon: 'pi pi-pencil',
-		disabled: modelConfigName.value === '',
-		command: () => {
-			showModelModal.value = true;
-		}
-	},
-	{
-		label: 'Save as new dataset',
-		icon: 'pi pi-pencil',
-		disabled: isSaveDisabled,
-		command: () => {
-			showSaveDataDialog.value = true;
-		}
-	}
-]);
 
 const showSpinner = computed<boolean>(
 	() => props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressPostForecastId !== ''
@@ -859,6 +838,7 @@ const setOutputSettingDefaults = () => {
 	}
 };
 
+// TODO: utlize with https://github.com/DARPA-ASKEM/terarium/issues/4767
 const saveModelConfiguration = async () => {
 	if (!modelConfiguration.value) return;
 
@@ -1104,23 +1084,6 @@ watch(
 </script>
 
 <style scoped>
-/* Left sidebar styles */
-:deep(.slider-content) {
-	background-color: var(--surface-100);
-	border-right: 1px solid var(--surface-border-light);
-	height: auto;
-	padding-bottom: 7rem;
-}
-:deep(.slider-content aside header) {
-	background: color-mix(in srgb, var(--surface-100) 80%, transparent 20%);
-}
-:deep(.slider-tab) {
-	background-color: var(--surface-100);
-	border-right: 1px solid var(--surface-border-light);
-}
-:deep(.slider-tab header) {
-	background: transparent;
-}
 .wizard .toolbar {
 	display: flex;
 	align-items: center;
