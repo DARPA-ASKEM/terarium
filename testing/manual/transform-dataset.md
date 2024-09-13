@@ -3,7 +3,6 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/t
 
 ### 1. Begin test
 1. Login to [https://app.staging.terarium.ai](https://app.staging.terarium.ai/) using the test account
-
     ```
     email: qa@test.io
     password: askem-quality-assurance

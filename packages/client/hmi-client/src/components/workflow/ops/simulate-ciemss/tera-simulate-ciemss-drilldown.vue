@@ -1,7 +1,6 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:menu-items="menuItems"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
@@ -223,7 +222,6 @@ import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
 import { useProjects } from '@/composables/project';
-import { isSaveDatasetDisabled } from '@/components/dataset/utils';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import { KernelSessionManager } from '@/services/jupyter';
 import { logger } from '@/utils/logger';
@@ -285,21 +283,6 @@ const view = ref(OutputView.Charts);
 const viewOptions = ref([
 	{ value: OutputView.Charts, icon: 'pi pi-image' },
 	{ value: OutputView.Data, icon: 'pi pi-list' }
-]);
-
-const isSaveDisabled = computed<boolean>(() =>
-	isSaveDatasetDisabled(selectedRunId.value, useProjects().activeProject.value?.id)
-);
-
-const menuItems = computed(() => [
-	{
-		label: 'Save as new dataset',
-		icon: 'pi pi-pencil',
-		disabled: isSaveDisabled.value,
-		command: () => {
-			showSaveDataDialog.value = true;
-		}
-	}
 ]);
 
 const showSpinner = ref(false);
