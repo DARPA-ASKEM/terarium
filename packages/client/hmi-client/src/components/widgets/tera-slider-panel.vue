@@ -1,5 +1,11 @@
 <template>
-	<tera-slider :content-width="contentWidth" :tab-width="tabWidth" :direction="direction" :is-open="isOpen">
+	<tera-slider
+		:content-width="contentWidth"
+		:tab-width="tabWidth"
+		:min-tab-width="minTabWidth"
+		:direction="direction"
+		:is-open="isOpen"
+	>
 		<template v-slot:content>
 			<aside @scroll="onScroll">
 				<header :class="{ shadow: isScrolled }">
@@ -57,6 +63,10 @@ defineProps({
 		default: '240px'
 	},
 	tabWidth: {
+		type: String,
+		default: '40px'
+	},
+	minTabWidth: {
 		type: String,
 		default: '40px'
 	},
