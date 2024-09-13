@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import API from '@/api/api';
 import type { ChartSetting, ChartSettingType } from '@/types/common';
 import { v4 as uuidv4 } from 'uuid';
@@ -93,8 +94,7 @@ export async function generateForecastChartAnnotation(
 		x: options.xAxisTitle ?? '',
 		y: options.yAxisTitle ?? ''
 	};
-	const translateMap = options.translationMap ?? {};
-
+	const translateMap = _.pick(options.translationMap ?? {}, variables);
 	const prompt = `
 	  You are an agent who is an expert in Vega-Lite chart specs. Provide a Vega-Lite layer JSON object for the annotation that can be added to an existing chart spec to satisfy the provided user request.
 
