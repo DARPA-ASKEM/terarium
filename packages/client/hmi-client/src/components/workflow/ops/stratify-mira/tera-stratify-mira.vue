@@ -263,16 +263,6 @@ const stratifyModel = () => {
 	});
 };
 
-// const handleStratifyResponse = (data: any) => {
-// 	const executedCode = data.content.executed_code;
-// 	if (executedCode) {
-// 		codeText.value = executedCode;
-//
-// 		// If stratify is run from the wizard, save the code but set `hasCodeBeenRun` to false
-// 		saveCodeToState(executedCode, false);
-// 	}
-// };
-
 const handleModelPreview = async (data: any) => {
 	const amrResponse = data.content['application/json'] as Model;
 	isStratifyInProgress.value = false;
