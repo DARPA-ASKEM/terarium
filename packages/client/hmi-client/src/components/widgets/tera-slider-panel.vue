@@ -106,6 +106,8 @@ const onScroll = (event: Event) => {
 
 <style scoped>
 aside {
+	display: flex;
+	flex-direction: column;
 	height: 100%;
 }
 
@@ -128,6 +130,10 @@ header {
 header:not(.tab) {
 	background-color: rgba(255, 255, 255, 0.8);
 	backdrop-filter: blur(3px);
+}
+
+.content-wrapper {
+	flex: 1;
 }
 
 /* Makes the slider light grey - apply this class to this component when needed */
