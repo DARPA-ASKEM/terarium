@@ -21,18 +21,23 @@ const emit = defineEmits(['dragging', 'dragstart', 'dragend']);
 
 const canvasItem = ref();
 
+let mousedown = false;
 let isDragging = false;
 let tempX = 0;
 let tempY = 0;
 
 const startDrag = (evt: MouseEvent) => {
+	mousedown = true;
 	tempX = evt.x;
 	tempY = evt.y;
-	isDragging = true;
-	emit('dragstart');
 };
 
 const drag = (evt: MouseEvent) => {
+	if (mousedown && !isDragging) {
+		isDragging = true;
+		emit('dragstart');
+		return;
+	}
 	if (!isDragging) return;
 
 	const dx = evt.x - tempX;
@@ -45,6 +50,8 @@ const drag = (evt: MouseEvent) => {
 };
 
 const stopDrag = (/* evt: MouseEvent */) => {
+	mousedown = false;
+
 	if (!isDragging) return;
 	tempX = 0;
 	tempY = 0;

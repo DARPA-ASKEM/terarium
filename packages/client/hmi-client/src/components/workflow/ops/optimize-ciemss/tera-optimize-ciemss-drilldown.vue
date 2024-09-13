@@ -1,7 +1,6 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:menu-items="menuItems"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
@@ -239,7 +238,6 @@
 		<template #preview>
 			<tera-drilldown-section
 				class="ml-3 mr-3"
-				:is-loading="showSpinner"
 				:class="{ 'failed-run': optimizationResult.success === 'False' ?? 'successful-run' }"
 			>
 				<template #header-controls-left v-if="optimizedInterventionPolicy?.name">
@@ -254,10 +252,18 @@
 						@click="showSaveInterventionPolicy = true"
 					/>
 				</template>
-
+				<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%">
+					<div v-if="node.state.inProgressOptimizeId !== ''">
+						{{ props.node.state.currentProgress }}% of maximum iterations complete
+					</div>
+					<div v-else>Optimize complete. Running simulations</div>
+				</tera-progress-spinner>
 				<tera-operator-output-summary v-if="node.state.summaryId && !showSpinner" :summary-id="node.state.summaryId" />
 				<!-- Optimize result.json display: -->
-				<div v-if="optimizationResult && displayOptimizationResultMessage" class="result-message-grid mt-2 mb-2">
+				<div
+					v-if="optimizationResult && displayOptimizationResultMessage && !showSpinner"
+					class="result-message-grid mt-2 mb-2"
+				>
 					<span class="flex flex-row">
 						<p class="mt-2">For debugging</p>
 						<Button
@@ -275,6 +281,7 @@
 					</div>
 				</div>
 				<SelectButton
+					v-if="!showSpinner"
 					:model-value="outputViewSelection"
 					@change="if ($event.value) outputViewSelection = $event.value;"
 					:options="outputViewOptions"
@@ -288,7 +295,7 @@
 				</SelectButton>
 				<tera-notebook-error v-bind="node.state.optimizeErrorMessage" />
 				<tera-notebook-error v-bind="node.state.simulateErrorMessage" />
-				<template v-if="runResults[knobs.postForecastRunId] && runResults[knobs.preForecastRunId]">
+				<template v-if="runResults[knobs.postForecastRunId] && runResults[knobs.preForecastRunId] && !showSpinner">
 					<section v-if="outputViewSelection === OutputView.Charts" ref="outputPanel">
 						<Accordion multiple :active-index="[0, 1, 2]">
 							<AccordionTab header="Success criteria">
@@ -379,6 +386,7 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { getUnitsFromModelParts, getModelByModelConfigurationId } from '@/services/model';
 import { createModelConfiguration, getModelConfigurationById } from '@/services/model-configurations';
 import {
@@ -407,8 +415,6 @@ import { WorkflowNode } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
-import { useProjects } from '@/composables/project';
-import { isSaveDatasetDisabled } from '@/components/dataset/utils';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import Divider from 'primevue/divider';
@@ -491,33 +497,10 @@ const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 const cancelRunId = computed(() => props.node.state.inProgressPostForecastId || props.node.state.inProgressOptimizeId);
 
-const isSaveDisabled = computed<boolean>(() =>
-	isSaveDatasetDisabled(props.node.state.postForecastRunId, useProjects().activeProject.value?.id)
-);
-
 const activePolicyGroups = computed(() => props.node.state.interventionPolicyGroups.filter((ele) => ele.isActive));
 
 const inactivePolicyGroups = computed(() => props.node.state.interventionPolicyGroups.filter((ele) => !ele.isActive));
 let pyciemssMap: Record<string, string> = {};
-
-const menuItems = computed(() => [
-	{
-		label: 'Save as a new model configuration',
-		icon: 'pi pi-pencil',
-		disabled: modelConfigName.value === '',
-		command: () => {
-			showModelModal.value = true;
-		}
-	},
-	{
-		label: 'Save as new dataset',
-		icon: 'pi pi-pencil',
-		disabled: isSaveDisabled,
-		command: () => {
-			showSaveDataDialog.value = true;
-		}
-	}
-]);
 
 const showSpinner = computed<boolean>(
 	() => props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressPostForecastId !== ''
@@ -850,6 +833,7 @@ const setOutputSettingDefaults = () => {
 	}
 };
 
+// TODO: utlize with https://github.com/DARPA-ASKEM/terarium/issues/4767
 const saveModelConfiguration = async () => {
 	if (!modelConfiguration.value) return;
 
@@ -1119,6 +1103,17 @@ watch(
 	padding: var(--gap-1) var(--gap);
 	gap: var(--gap-2);
 }
+
+.spinner-message {
+	align-items: center;
+	align-self: center;
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-2);
+	margin-top: 15rem;
+	text-align: center;
+}
+
 .info-circle {
 	color: var(--text-color-secondary);
 	font-size: var(--font-caption);

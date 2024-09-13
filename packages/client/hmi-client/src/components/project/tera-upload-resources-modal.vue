@@ -91,8 +91,7 @@ import TeraImportGithubFile from '@/components/widgets/tera-import-github-file.v
 import { extractPDF } from '@/services/knowledge';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { addArtifactAndProcessAsModelToProject } from '@/services/artifact';
-import { createModel, validateAMRFile } from '@/services/model';
-import { modelCard } from '@/services/goLLM';
+import { createModel, createModelAndModelConfig, validateAMRFile } from '@/services/model';
 import TeraInputText from '@/components//widgets/tera-input-text.vue';
 import { activeProject, activeProjectId } from '@/composables/activeProject';
 import * as ProjectService from '@/services/project';
@@ -209,11 +208,9 @@ async function upload() {
 			activeProject.value = await ProjectService.get(activeProjectId.value);
 		}, TIMEOUT_MS);
 		createdAssets.forEach((_, index) => {
-			const { assetName, assetId } = (results.value ?? [])[index].asset;
-			if (assetName && assetName.toLowerCase().endsWith('.pdf')) {
-				extractPDF(assetId);
-			} else if (assetName && (assetName.toLowerCase().endsWith('.txt') || assetName.toLowerCase().endsWith('.md'))) {
-				modelCard(assetId);
+			const { name, id } = (results.value ?? [])[index];
+			if (name && name.toLowerCase().endsWith('.pdf')) {
+				extractPDF(id);
 			}
 		});
 		emit('close');

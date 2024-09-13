@@ -72,6 +72,8 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	optimizedInterventionPolicyId: string;
 	optimizeErrorMessage: { name: string; value: string; traceback: string };
 	simulateErrorMessage: { name: string; value: string; traceback: string };
+	// Intermediate:
+	currentProgress: number; // optimization run's 2 digit %
 }
 
 // This is used as a map between dropdown labels and the inner values used by pyciemss-service.
@@ -150,7 +152,8 @@ export const OptimizeCiemssOperation: Operation = {
 			optimizationRunId: '',
 			optimizedInterventionPolicyId: '',
 			optimizeErrorMessage: { name: '', value: '', traceback: '' },
-			simulateErrorMessage: { name: '', value: '', traceback: '' }
+			simulateErrorMessage: { name: '', value: '', traceback: '' },
+			currentProgress: 0
 		};
 		return init;
 	}
