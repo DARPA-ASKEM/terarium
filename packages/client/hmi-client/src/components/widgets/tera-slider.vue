@@ -35,11 +35,11 @@ const props = defineProps({
 	},
 	tabWidth: {
 		type: String,
-		default: '50px'
+		default: '40px'
 	},
 	minTabWidth: {
 		type: String,
-		default: '50px'
+		default: '40px'
 	}
 });
 

@@ -431,22 +431,22 @@ watch(
 }
 
 .no-extract-equation {
-	padding: 1rem;
-	background: #f5f5f5;
+	padding: var(--gap-4);
+	background: var(--surface-disabled);
 	font-size: 12px;
-	color: gray;
-	border-radius: 3px;
+	color: var(--surface-600);
+	border-radius: var(--border-radius-small);
 }
 
 .currenly-selected {
-	padding-top: 0.75rem;
+	padding-top: var(--gap-3);
 	border-radius: var(--border-radius-medium);
 	border: 1px solid var(--surface-border-light);
 	border-left: 0.25rem solid var(--primary-color);
 }
 
 .asset-panel {
-	padding-top: 0.75rem;
+	padding-top: var(--gap-3);
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-medium);
 }
@@ -459,8 +459,8 @@ watch(
 
 .header-group {
 	display: flex;
-	padding-left: 0.75em;
-	padding-right: 0.5em;
+	padding-left: var(--gap-3);
+	padding-right: var(--gap-2);
 	flex-direction: row;
 	align-items: center;
 	justify-content: space-between;
