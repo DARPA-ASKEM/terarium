@@ -1,5 +1,5 @@
 <template>
-	<Panel :toggleable="isToggleable">
+	<Panel :toggleable="isToggleable" :class="{ 'asset-panel': useDefaultStyle }">
 		<template #header>
 			<section>
 				<slot name="header" />
@@ -51,12 +51,16 @@ defineProps({
 	isToggleable: {
 		type: Boolean,
 		default: true
+	},
+	useDefaultStyle: {
+		type: Boolean,
+		default: true
 	}
 });
 </script>
 
 <style scoped>
-.p-panel {
+.asset-panel {
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-medium);
 	border-left: 0.5rem solid var(--primary-color);
