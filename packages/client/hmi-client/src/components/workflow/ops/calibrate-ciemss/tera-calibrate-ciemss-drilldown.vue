@@ -609,12 +609,18 @@ useClientEvent([ClientEventType.ChartAnnotationCreate, ClientEventType.ChartAnno
 
 const generateAnnotation = async (setting: ChartSetting, query: string) => {
 	// Note: Currently llm generated chart annotations are supported for the forecast chart only
+	if (!preparedChartInputs.value) return {};
+	const { reverseMap } = preparedChartInputs.value;
 	const variable = setting.selectedVariables[0];
 	const annotationLayerSpec = await generateForecastChartAnnotation(
 		query,
 		'timpoint_id',
 		[`${pyciemssMap.value[variable]}_mean:pre`, `${pyciemssMap.value[variable]}_mean`],
-		{ x: modelVarUnits.value._time || 'Time', y: modelVarUnits.value[variable] || '' }
+		{
+			translationMap: reverseMap,
+			xAxisTitle: modelVarUnits.value._time || 'Time',
+			yAxisTitle: modelVarUnits.value[variable] || ''
+		}
 	);
 	const saved = await saveAnnotation(annotationLayerSpec, props.node.id, setting.id);
 	return saved;

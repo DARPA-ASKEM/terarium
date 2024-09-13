@@ -3,6 +3,7 @@ import type { ChartSetting, ChartSettingType } from '@/types/common';
 import { v4 as uuidv4 } from 'uuid';
 import { b64DecodeUnicode } from '@/utils/binary';
 import { ChartAnnotation } from '@/types/Types';
+import { ForecastChartOptions } from './charts';
 
 export interface LLMGeneratedChartAnnotation {
 	request: string;
@@ -86,8 +87,14 @@ export async function generateForecastChartAnnotation(
 	request: string,
 	timeField: string,
 	variables: string[],
-	axisTitle: { x: string; y: string }
+	options: Partial<ForecastChartOptions>
 ): Promise<LLMGeneratedChartAnnotation> {
+	const axisTitle = {
+		x: options.xAxisTitle ?? '',
+		y: options.yAxisTitle ?? ''
+	};
+	const translateMap = options.translationMap ?? {};
+
 	const prompt = `
 	  You are an agent who is an expert in Vega-Lite chart specs. Provide a Vega-Lite layer JSON object for the annotation that can be added to an existing chart spec to satisfy the provided user request.
 
@@ -235,6 +242,7 @@ export async function generateForecastChartAnnotation(
           ]
         }
     - Assume all unknown variables except the time field are for the y-axis and are renamed to the valueField.
+		- Leverage this variable to human readable name mapping: ${JSON.stringify(translateMap)} if needed.
 
      Give me the layer object to be added to the existing chart spec based on the following user request.
 
