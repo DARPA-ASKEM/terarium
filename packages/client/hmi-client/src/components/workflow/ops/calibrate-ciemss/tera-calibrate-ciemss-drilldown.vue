@@ -284,8 +284,7 @@
 						"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
-						@create-annotation="addChartAnnotation"
-						@delete-annotation="removeChartAnnotation"
+						@delete-annotation="deleteAnnotation"
 						@close="activeChartSettings = null"
 					/>
 				</template>
@@ -437,6 +436,7 @@ import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { displayNumber } from '@/utils/number';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
+import { useClientEvent } from '@/composables/useClientEvent';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults, getErrorData } from './calibrate-utils';
 
@@ -599,11 +599,13 @@ const selectedErrorVariableSettings = computed(() =>
 	chartSettings.value.filter((setting) => setting.type === ChartSettingType.ERROR_DISTRIBUTION)
 );
 
-onMounted(() => updateChartAnnotations());
 const chartAnnotations = ref<ChartAnnotation[]>([]);
 const updateChartAnnotations = async () => {
 	chartAnnotations.value = await fetchAnnotations(props.node.id);
 };
+onMounted(() => updateChartAnnotations());
+useClientEvent([ClientEventType.ChartAnnotationCreate, ClientEventType.ChartAnnotationDelete], updateChartAnnotations);
+
 const generateAnnotation = async (setting: ChartSetting, query: string) => {
 	// Note: Currently llm generated chart annotations are supported for the forecast chart only
 	const variable = setting.selectedVariables[0];
@@ -615,11 +617,6 @@ const generateAnnotation = async (setting: ChartSetting, query: string) => {
 	);
 	const saved = await saveAnnotation(annotationLayerSpec, props.node.id, setting.id);
 	return saved;
-};
-const addChartAnnotation = () => updateChartAnnotations();
-const removeChartAnnotation = async (annotationId: string) => {
-	await deleteAnnotation(annotationId);
-	await updateChartAnnotations();
 };
 
 const pyciemssMap = ref<Record<string, string>>({});
