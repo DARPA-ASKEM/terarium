@@ -613,7 +613,7 @@ const generateAnnotation = async (setting: ChartSetting, query: string) => {
 	const annotationLayerSpec = await generateForecastChartAnnotation(
 		query,
 		'timpoint_id',
-		[`${pyciemssMap.value[variable]}:pre`, `${pyciemssMap.value[variable]}`],
+		[`${pyciemssMap.value[variable]}_mean:pre`, `${pyciemssMap.value[variable]}_mean`],
 		{ x: modelVarUnits.value._time || 'Time', y: modelVarUnits.value[variable] || '' }
 	);
 	const saved = await saveAnnotation(annotationLayerSpec, props.node.id, setting.id);
@@ -678,7 +678,7 @@ const preparedCharts = computed(() => {
 				},
 				{
 					data: resultSummary,
-					variables: [`${pyciemssMap.value[variable]}:pre`, `${pyciemssMap.value[variable]}_mean`],
+					variables: [`${pyciemssMap.value[variable]}_mean:pre`, `${pyciemssMap.value[variable]}_mean`],
 					timeField: 'timepoint_id'
 				},
 				{
