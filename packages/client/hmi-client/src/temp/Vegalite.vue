@@ -172,7 +172,7 @@ const generateAndAddAnnotation = async () => {
 	waitingForForecastChartAnnotation.value = true;
 	const timeField = 'time';
 	const variables = ['alphaMean', 'betaMean'];
-	const axisTitle = { x: 'Day', y: 'Value' };
+	const axisTitle = { xAxisTitle: 'Day', yAxisTitle: 'Value' };
 	const { request, layerSpec } = await generateForecastChartAnnotation(
 		questionString.value,
 		timeField,
