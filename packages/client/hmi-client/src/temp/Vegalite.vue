@@ -46,9 +46,9 @@ import {
 	createForecastChart,
 	createHistogramChart,
 	createErrorChart,
-	generateForecastChartAnnotation,
 	createForecastChartAnnotation
 } from '@/services/charts';
+import { generateForecastChartAnnotation } from '@/services/chart-settings';
 // import { createLLMSummary, getSummaries } from '@/services/summary-service';
 
 const rand = (v: number) => Math.round(Math.random() * v);
