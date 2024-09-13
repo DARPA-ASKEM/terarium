@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	python3.10 \
 	python3.10-venv \
 	python3.10-dev \
+	python3-setuptools \
 	wget \
 	git \
 	python3-pip && \
@@ -40,8 +41,8 @@ RUN COMMIT_SHA="$(cat /nougatVersion.txt)" && \
 WORKDIR /document_intelligence/document_intelligence/fast_latex
 RUN pip3 install -r requirements.txt
 
-#Install uvicorn
-RUN pip3 install uvicorn
+#Install uvicorn and supervisord
+RUN pip3 install uvicorn setuptools supervisor
 
 #^^^^^^^^^^^^^^^^^^^^
 ######################
@@ -51,6 +52,9 @@ WORKDIR /taskrunner
 COPY ./packages/taskrunner .
 
 RUN ./gradlew bootJar
+
+# Copy the jar to the root directory
+RUN mv /taskrunner/build/libs/*.jar /taskrunner.jar
 
 WORKDIR /
 
@@ -67,7 +71,6 @@ COPY ./packages/nougat_cpu/supervisord.conf /etc/supervisor/conf.d/supervisord.c
 # Install OpenJDK JRE and wget
 RUN apt-get update && \
 	apt-get install -y --no-install-recommends \
-	supervisor \
 	git \
 	openjdk-17-jre-headless && \
 	rm -rf /var/lib/apt/lists/*
@@ -91,8 +94,8 @@ COPY ./packages/nougat_cpu /nougat_task
 WORKDIR /nougat_task
 RUN pip install --no-cache-dir -e .
 
-#Install uvicorn
-RUN pip install uvicorn
+#Install uvicorn and supervisord
+RUN pip install uvicorn setuptools supervisor
 
 WORKDIR /
-CMD ["/usr/bin/supervisord"]
+CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

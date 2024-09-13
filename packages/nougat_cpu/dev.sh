@@ -10,6 +10,5 @@ echo "Running taskrunner"
 cd /taskrunner
 pip3 install -e .
 
-BUILD_DIR=/taskrunner-build-nougat
-mkdir -p $BUILD_DIR
-./gradlew --project-cache-dir /tmp/.gradle/$$ -PcustomBuildDir=$BUILD_DIR bootRun
+echo "Starting supervisord"
+supervisord -c /nougat_task/supervisord.conf
