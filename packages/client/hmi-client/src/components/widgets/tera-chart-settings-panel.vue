@@ -6,9 +6,32 @@
 				<h4>Chart Settings</h4>
 			</header>
 			<div class="content">
-				<div v-if="annotations !== undefined">
+				<div v-if="chartAnnotations !== undefined" class="annotation-items">
 					<h5>Annotations</h5>
-					<p>Not yet implemented</p>
+					<div v-for="annotation in chartAnnotations" :key="annotation.id" class="annotation-item">
+						{{ annotation.description }}
+						<span class="btn-wrapper">
+							<Button icon="pi pi-trash" rounded text @click="$emit('delete-annotation', annotation.id)" />
+						</span>
+					</div>
+					<div>
+						<Button
+							v-if="!showAnnotationInput"
+							class="p-button-sm p-button-text"
+							icon="pi pi-plus"
+							label="Add annotation"
+							@click="showAnnotationInput = true"
+						/>
+						<tera-input-text
+							v-if="showAnnotationInput"
+							v-model="generateAnnotationQuery"
+							:icon="'pi pi-sparkles'"
+							:placeholder="'What do you want to annotate?'"
+							:disabled="!!isGeneratingAnnotation"
+							@keyup.enter="createAnnotationDebounced"
+							@keyup.esc="cancelGenerateAnnotation"
+						/>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -16,16 +39,55 @@
 </template>
 
 <script setup lang="ts">
+import _ from 'lodash';
+import { ref, computed } from 'vue';
 import Button from 'primevue/button';
 import { ChartSetting } from '@/types/common';
 import { ChartAnnotation } from '@/types/Types';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 
-defineProps<{
+const props = defineProps<{
 	activeSettings: ChartSetting | null;
 	annotations?: ChartAnnotation[];
+	/**
+	 * We receives generateAnnotation as a functor from the parent to access the parent scope directly. This allows us to utilize dependencies defined in the parent component without passing them all as props, which can be cumbersome.
+	 * Additionally, it enables us to handle post-generation actions (like resetting loading state or clearing input) after function completion.
+	 * @param setting ChartSetting
+	 * @param query llm query to generate annotation
+	 */
+	generateAnnotation?: (setting: ChartSetting, query: string) => Promise<ChartAnnotation>;
 }>();
 
-defineEmits(['close', 'update:settings']);
+const emit = defineEmits(['close', 'update:settings', 'delete-annotation', 'create-annotation']);
+
+const chartAnnotations = computed(() => {
+	if (props.annotations === undefined) {
+		return undefined;
+	}
+	return props.annotations.filter((annotation) => annotation.chartId === props.activeSettings?.id);
+});
+const isGeneratingAnnotation = ref(false);
+const generateAnnotationQuery = ref<string>('');
+const showAnnotationInput = ref<Boolean>(false);
+
+const createAnnotation = async () => {
+	if (props.generateAnnotation === undefined || props.activeSettings === null) {
+		return;
+	}
+	isGeneratingAnnotation.value = true;
+	const newAnnotation = await props.generateAnnotation(props.activeSettings, generateAnnotationQuery.value);
+	isGeneratingAnnotation.value = false;
+	showAnnotationInput.value = false;
+	generateAnnotationQuery.value = '';
+	emit('create-annotation', newAnnotation);
+};
+// Note: For some reason, @keyup.enter event on <tera-input-text> is fired twice. Let's introduce a debounced function to make sure the function is called only once.
+const createAnnotationDebounced = _.debounce(createAnnotation, 100);
+
+const cancelGenerateAnnotation = () => {
+	generateAnnotationQuery.value = '';
+	showAnnotationInput.value = false;
+};
 </script>
 
 <style scoped>
@@ -70,6 +132,28 @@ defineEmits(['close', 'update:settings']);
 	}
 	.content {
 		padding: var(--gap-4);
+	}
+
+	.annotation-items {
+		display: flex;
+		flex-direction: column;
+		gap: var(--gap-2);
+
+		.annotation-item {
+			position: relative;
+			padding: var(--gap-2);
+			padding-right: var(--gap-9);
+			background: var(--surface-50);
+		}
+		.btn-wrapper {
+			position: absolute;
+			top: 0;
+			right: var(--gap-2);
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			height: 100%;
+		}
 	}
 }
 </style>
