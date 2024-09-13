@@ -89,7 +89,6 @@
 							</AccordionTab>
 						</Accordion>
 					</main>
-					<div class="spacer m-7" />
 				</template>
 			</tera-slider-panel>
 		</div>
@@ -582,11 +581,6 @@ div.section-row.timespan > div > span {
 
 .timespan-list {
 	width: 100%;
-}
-
-.spacer {
-	margin-top: 1rem;
-	margin-bottom: 1rem;
 }
 
 .add-constraint-spacer {
