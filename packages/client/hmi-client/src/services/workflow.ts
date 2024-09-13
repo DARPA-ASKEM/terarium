@@ -48,6 +48,11 @@ export class WorkflowWrapper {
 		return this.wf;
 	}
 
+	/**
+	 * FIXME: Need to split workflow into different categories and sending the commands
+	 * instead of the result. It is possible here to become de-synced: eg state-update-response
+	 * comes in as we are about to change the output ports.
+	 * */
 	update(updatedWF: Workflow) {
 		if (updatedWF.id !== this.wf.id) {
 			throw new Error(`Workflow failed, inconsistent ids updated=${updatedWF.id} self=${this.wf.id}`);
