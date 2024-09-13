@@ -237,15 +237,13 @@ export async function generateForecastChartAnnotation(
     - Assume all unknown variables except the time field are for the y-axis and are renamed to the valueField.
 
      Give me the layer object to be added to the existing chart spec based on the following user request.
-		 Please return only a JSON object as a response. Make sure to return plain JSON object that can be parsed as JSON. Do not include code block.
 
 		Request:
     ${request}
     Answer
     {
 	`;
-	// FIXME: Use dedicated endpoint for annotation generation that's configured with JSON response_format instead of using the summary endpoint which is for text output
-	const { data } = await API.post(`/gollm/generate-summary?mode=SYNC`, prompt, {
+	const { data } = await API.post(`/gollm/generate-response?mode=SYNC&response-format=json`, prompt, {
 		headers: {
 			'Content-Type': 'application/json'
 		}
