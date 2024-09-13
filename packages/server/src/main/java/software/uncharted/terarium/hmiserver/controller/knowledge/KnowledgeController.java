@@ -105,7 +105,6 @@ public class KnowledgeController {
 	final CurrentUserService currentUserService;
 
 	final Messages messages;
-	private final DocumentAssetService documentAssetService;
 
 	@Value("${openai-api-key:}")
 	String OPENAI_API_KEY;
