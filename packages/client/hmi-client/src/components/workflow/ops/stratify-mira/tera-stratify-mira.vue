@@ -270,16 +270,17 @@ const handleStratifyResponse = (data: any) => {
 };
 
 const handleModelPreview = async (data: any) => {
-	outputAmr.value = data.content['application/json'];
+	const amrResponse = data.content['application/json'];
 	isStratifyInProgress.value = false;
-	if (!outputAmr.value) {
+	if (!amrResponse) {
 		logger.error('Error getting updated model from beaker');
 		return;
 	}
 
 	// Create output
-	const modelData = await createModel(outputAmr.value);
+	const modelData = await createModel(amrResponse);
 	if (!modelData) return;
+	outputAmr.value = modelData;
 
 	emit('append-output', {
 		id: uuidv4(),
