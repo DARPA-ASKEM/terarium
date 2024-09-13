@@ -552,7 +552,7 @@ public class KnowledgeController {
 		}
 
 		final JsonNode card = resp.getBody();
-		final JsonNode profilingResult = card.get("DATA_PROFILING_RESULT");
+		final JsonNode profilingResult = (card != null) ? card.get("DATA_PROFILING_RESULT") : mapper.createObjectNode();
 
 		for (final DatasetColumn col : dataset.getColumns()) {
 			final JsonNode annotation = profilingResult.get(col.getName());
@@ -712,9 +712,11 @@ public class KnowledgeController {
 			);
 			return new ResponseStatusException(statusCode, messages.get("skema.internal-error"));
 		}
+
+		final HttpStatus httpStatus = (statusCode == null) ? HttpStatus.INTERNAL_SERVER_ERROR : statusCode;
 		log.error(
 			"An unknown error occurred while Skema Unified Service was trying to produce an AMR based on the provided resources"
 		);
-		return new ResponseStatusException(statusCode, messages.get("generic.unknown"));
+		return new ResponseStatusException(httpStatus, messages.get("generic.unknown"));
 	}
 }

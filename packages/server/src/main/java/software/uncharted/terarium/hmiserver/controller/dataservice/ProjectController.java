@@ -676,7 +676,7 @@ public class ProjectController {
 	@PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	public ResponseEntity<Project> importProject(@RequestPart("file") final MultipartFile input) {
-		if (!input.getContentType().equals("application/zip")) {
+		if (input.getContentType() != null && !input.getContentType().equals("application/zip")) {
 			return ResponseEntity.badRequest().build();
 		}
 

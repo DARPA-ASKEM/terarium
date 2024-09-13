@@ -43,11 +43,13 @@ public class TransformController {
 				log.error(String.format("An error occurred while SciML was extract LaTeX equations for model: %s", id), error);
 				throw new ResponseStatusException(statusCode, messages.get("sciml.internal-error"));
 			}
+
+			final HttpStatus httpStatus = (statusCode == null) ? HttpStatus.INTERNAL_SERVER_ERROR : statusCode;
 			log.error(
 				String.format("an unknown error occurred while SciML was extract LaTeX equations for model: %s", id),
 				error
 			);
-			throw new ResponseStatusException(statusCode, messages.get("generic.unknown"));
+			throw new ResponseStatusException(httpStatus, messages.get("generic.unknown"));
 		}
 	}
 }
