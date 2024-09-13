@@ -7,7 +7,12 @@
 		hide-dropdown
 	>
 		<template #sidebar>
-			<tera-slider-panel v-model:is-open="isSidebarOpen" content-width="360px" header="Intervention policies">
+			<tera-slider-panel
+				v-model:is-open="isSidebarOpen"
+				content-width="360px"
+				header="Intervention policies"
+				class="input-config"
+			>
 				<template #content>
 					<section>
 						<tera-input-text v-model="filterInterventionsText" placeholder="Filter" />
@@ -455,17 +460,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Make the left sidebar grey */
-:deep(.slider-content),
-:deep(.slider-tab),
-:deep(.tab) {
-	background-color: var(--surface-100);
-}
-
-:deep(.slider-content aside header) {
-	background: color-mix(in srgb, var(--surface-100) 80%, transparent 20%);
-}
-
 .intervention-settings-section {
 	background-color: var(--surface-100);
 }
