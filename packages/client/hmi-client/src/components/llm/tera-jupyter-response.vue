@@ -126,8 +126,7 @@ const props = defineProps<{
 
 const codeCell = ref(null);
 const resp = ref(<HTMLElement | null>null);
-// Reference for showThought, initially set to false
-const showThought = ref(false);
+const showThought = ref(false); // Reference for showThought, initially set to false
 
 const query = ref('');
 const isEditingQuery = ref(false);
