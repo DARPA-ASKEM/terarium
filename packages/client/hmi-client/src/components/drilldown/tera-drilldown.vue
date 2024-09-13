@@ -149,8 +149,7 @@ const props = defineProps<{
 	hideDropdown?: boolean;
 }>();
 
-// FIXME: update-output-port unused
-const emit = defineEmits(['on-close-clicked', 'update-state', 'update:selection', 'update-output-port']);
+const emit = defineEmits(['on-close-clicked', 'update-state', 'update:selection']);
 
 const slots = useSlots();
 
