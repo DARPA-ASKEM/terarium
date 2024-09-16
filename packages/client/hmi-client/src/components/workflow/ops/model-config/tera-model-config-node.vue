@@ -82,18 +82,21 @@ watch(
 			}
 			configs = await getModelConfigurationsForModel(modelId);
 		}
-		// Auto append output
+
 		if (configs[0]?.id) {
 			const config = configs[0];
 			state.transientModelConfig = config;
 			emit('update-state', state);
-			emit('append-output', {
-				type: ModelConfigOperation.outputs[0].type,
-				label: config.name,
-				value: config.id,
-				isSelected: false,
-				state: omit(state, ['transientModelConfig'])
-			});
+			// Auto append output if and only if there isnt already an output
+			if (!props.node.outputs.at(0)?.value) {
+				emit('append-output', {
+					type: ModelConfigOperation.outputs[0].type,
+					label: config.name,
+					value: config.id,
+					isSelected: false,
+					state: omit(state, ['transientModelConfig'])
+				});
+			}
 		}
 	},
 	{ deep: true }
