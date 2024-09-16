@@ -22,6 +22,7 @@ import { ProjectPages } from '@/types/Project';
 import { useProjects } from '@/composables/project';
 import { getDocumentAsset } from './document-assets';
 import { getWorkflow } from './workflow';
+import { getModel } from './model';
 
 type NotificationEventData = TaskResponse | StatusUpdate<unknown>;
 /**
@@ -155,11 +156,9 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 	});
 	registerHandler<TaskResponse>(ClientEventType.TaskGollmModelCard, (event, created) => {
 		created.supportCancel = true;
-		created.assetId = event.data.additionalProperties.documentId as string;
-		created.pageType = AssetType.Document;
-		getDocumentAsset(created.assetId, created.projectId).then((document) =>
-			Object.assign(created, { sourceName: document?.name || '' })
-		);
+		created.assetId = event.data.additionalProperties.modelId as string;
+		created.pageType = AssetType.Model;
+		getModel(created.assetId).then((model) => Object.assign(created, { sourceName: model?.name || '' }));
 	});
 	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureModelFromDocument, (event, created) => {
 		created.supportCancel = true;

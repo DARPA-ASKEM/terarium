@@ -4,7 +4,6 @@
 		:is-draft="isDraft"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
-		@update-output-port="(output: any) => emit('update-output-port', output)"
 		@update:selection="onSelection"
 		v-bind="$attrs"
 	>
@@ -57,7 +56,6 @@
 							/>
 						</template>
 					</tera-notebook-jupyter-input>
-					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
 				</div>
 				<v-ace-editor
 					v-model:value="codeText"
@@ -129,7 +127,6 @@ import TeraModelParts from '@/components/model/tera-model-parts.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import TeraStratificationGroupForm from '@/components/workflow/ops/stratify-mira/tera-stratification-group-form.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
-import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
 import { createModel, getModel } from '@/services/model';
 import { useProjects } from '@/composables/project';
@@ -146,7 +143,6 @@ import type { Model } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
-import { nodeOutputLabel } from '@/components/workflow/util';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
 /* Jupyter imports */
@@ -245,6 +241,7 @@ const stratifyModel = () => {
 		if (modelParameters.includes(v)) parametersToStratify.push(v);
 	});
 
+	let executedCode = '';
 	const messageContent = {
 		key: strataOption.name,
 		strata: strataOption.groupLabels.split(',').map((d) => d.trim()),
@@ -256,36 +253,40 @@ const stratifyModel = () => {
 	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
 		kernelManager
 			.sendMessage('stratify_request', messageContent)
-			.register('stratify_response', handleStratifyResponse)
-			.register('model_preview', handleModelPreview);
+			.register('stratify_response', (data: any) => {
+				executedCode = data.content.executed_code;
+			})
+			.register('model_preview', async (data: any) => {
+				await handleModelPreview(data);
+				saveCodeToState(executedCode, false);
+			});
 	});
 };
 
-const handleStratifyResponse = (data: any) => {
-	const executedCode = data.content.executed_code;
-	if (executedCode) {
-		codeText.value = executedCode;
-
-		// If stratify is run from the wizard, save the code but set `hasCodeBeenRun` to false
-		saveCodeToState(executedCode, false);
-	}
-};
-
 const handleModelPreview = async (data: any) => {
-	outputAmr.value = data.content['application/json'];
+	const amrResponse = data.content['application/json'] as Model;
 	isStratifyInProgress.value = false;
-	if (!outputAmr.value) {
+	if (!amrResponse) {
 		logger.error('Error getting updated model from beaker');
 		return;
 	}
 
+	const state = props.node.state;
+
+	// Try to derive a better name
+	let newName = amr.value?.header.name ?? 'Model';
+	newName += ` (stratified ${state.strataGroup.name} with ${state.strataGroup.groupLabels.split(',').length} groups)`;
+	amrResponse.name = newName;
+	amrResponse.header.name = newName;
+
 	// Create output
-	const modelData = await createModel(outputAmr.value);
+	const modelData = await createModel(amrResponse);
 	if (!modelData) return;
+	outputAmr.value = modelData;
 
 	emit('append-output', {
 		id: uuidv4(),
-		label: nodeOutputLabel(props.node, 'Output'),
+		label: newName,
 		type: 'modelId',
 		state: {
 			strataGroup: _.cloneDeep(props.node.state.strataGroup),
@@ -524,10 +525,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.notebook-section:deep(main .toolbar) {
-	padding-left: var(--gap-medium);
-}
-
 .notebook-section:deep(main) {
 	gap: var(--gap-small);
 	position: relative;

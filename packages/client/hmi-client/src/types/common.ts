@@ -1,16 +1,11 @@
 import {
 	AssetType,
 	ClientEventType,
-	Dataset,
-	DocumentAsset,
-	Model,
 	ModelGrounding,
 	ProgrammingLanguage,
 	ProgressState,
 	StatusUpdate
 } from '@/types/Types';
-import { DatasetSearchParams } from './Dataset';
-import { ModelSearchParams } from './Model';
 import { ProjectPages } from './Project';
 
 export interface FeatureConfig {
@@ -67,52 +62,6 @@ export enum ViewType {
 	MATRIX = 'matrix',
 	GRAPH = 'graph'
 }
-
-export enum ResourceType {
-	DOCUMENT = 'document',
-	MODEL = 'model',
-	DATASET = 'dataset',
-	ALL = 'all'
-}
-
-export type SearchParameters = {
-	[ResourceType.MODEL]?: ModelSearchParams;
-	[ResourceType.DATASET]?: DatasetSearchParams;
-};
-
-export type ResultType = Model | Dataset | DocumentAsset;
-
-export type SearchResults = {
-	results: ResultType[];
-	searchSubsystem?: string;
-	hits?: number;
-	hasMore?: boolean;
-	nextPage?: string;
-};
-
-export type FullSearchResults = {
-	allData: SearchResults;
-	allDataFilteredWithFacets: SearchResults;
-};
-
-export type SearchByExampleOptions = {
-	similarContent: boolean;
-	forwardCitation: boolean;
-	backwardCitation: boolean;
-	relatedContent: boolean;
-};
-
-//
-// Facets
-//
-export type FacetBucket = {
-	key: string;
-	value: number;
-};
-
-export type Facets = {
-	[key: string]: FacetBucket[];
-};
 
 // Side panel
 export type SidePanelTab = {

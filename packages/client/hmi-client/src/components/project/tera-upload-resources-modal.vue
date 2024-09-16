@@ -96,7 +96,6 @@ import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { uploadArtifactToProject } from '@/services/artifact';
 import { createModel, createModelAndModelConfig, processAndAddModelToProject, validateAMRFile } from '@/services/model';
 import { createProvenance, RelationshipType } from '@/services/provenance';
-import { modelCard } from '@/services/goLLM';
 import TeraInputText from '@/components//widgets/tera-input-text.vue';
 
 defineProps<{
@@ -233,8 +232,6 @@ async function upload() {
 			const { name, id } = (results.value ?? [])[index];
 			if (name && name.toLowerCase().endsWith('.pdf')) {
 				extractPDF(id);
-			} else if (name && (name.toLowerCase().endsWith('.txt') || name.toLowerCase().endsWith('.md'))) {
-				modelCard(id);
 			}
 		});
 		emit('close');

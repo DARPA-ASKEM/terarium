@@ -23,7 +23,7 @@ jobs:
       image-name: ghcr.io/darpa-askem/funman-taskrunner
 
   amd64:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: image-tag
     permissions:
       contents: read
@@ -42,11 +42,11 @@ jobs:
       - name: Validate GradleW JAR
         uses: gradle/actions/wrapper-validation@v3
 
-      - name: Setup Java v17
+      - name: Setup Java v21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: 17
+          java-version: 21
           cache: gradle
 
       - name: Create image and push
@@ -59,7 +59,7 @@ jobs:
           tags: ${{ needs.image-tag.outputs.tagged-image-name }}--amd64
 
   arm64-emulation:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: image-tag
     permissions:
       contents: read
@@ -81,11 +81,11 @@ jobs:
       - name: Validate GradleW JAR
         uses: gradle/actions/wrapper-validation@v3
 
-      - name: Setup Java v17
+      - name: Setup Java v21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: 17
+          java-version: 21
           cache: gradle
 
       - name: Create image and push

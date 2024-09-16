@@ -68,7 +68,7 @@ header {
 header > div {
 	display: inline-flex;
 	gap: var(--gap-1);
-	align-items: start;
+	align-items: center;
 
 	&:first-child {
 		flex: 1;
@@ -92,5 +92,11 @@ main {
 	flex-direction: column;
 	flex-grow: 1;
 	overflow-y: auto;
+}
+
+.notebook-section {
+	background-color: var(--surface-disabled);
+	border-right: 1px solid var(--surface-border-dark);
+	padding: var(--gap);
 }
 </style>
