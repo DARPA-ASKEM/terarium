@@ -62,7 +62,7 @@ WORKDIR /
 # Install OpenJDK JRE and wget
 RUN apt-get update && \
 	apt-get install -y --no-install-recommends \
-	openjdk-17-jre-headless && \
+	openjdk-21-jre-headless && \
 	rm -rf /var/lib/apt/lists/*
 
 # Copy the Spring Boot fat JAR from the builder image
