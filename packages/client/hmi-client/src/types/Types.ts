@@ -581,15 +581,6 @@ export interface OptimizeRequestCiemss {
     userId: string;
 }
 
-export interface ScimlStatusUpdate {
-    loss: number;
-    iter: number;
-    params: { [index: string]: number };
-    id: string;
-    solData: { [index: string]: any };
-    timesteps: number[];
-}
-
 export interface SimulationRequest {
     modelConfigId: string;
     timespan: TimeSpan;

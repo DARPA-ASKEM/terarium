@@ -27,7 +27,6 @@ import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.User;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationUpdate;
-import software.uncharted.terarium.hmiserver.models.simulationservice.ScimlStatusUpdate;
 import software.uncharted.terarium.hmiserver.models.simulationservice.statusupdates.CiemssCalibrateStatusUpdate;
 import software.uncharted.terarium.hmiserver.models.simulationservice.statusupdates.CiemssOptimizeStatusUpdate;
 import software.uncharted.terarium.hmiserver.models.simulationservice.statusupdates.CiemssStatusType;
