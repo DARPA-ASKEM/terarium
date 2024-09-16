@@ -12,6 +12,9 @@ public interface ClimateDataProxy {
 	@GetMapping("/status/{uuid}")
 	ResponseEntity<JsonNode> status(@PathVariable("uuid") String uuid);
 
+	@GetMapping("/search/esgf")
+	ResponseEntity<JsonNode> searchEsgf(@RequestParam("query") final String query);
+
 	@GetMapping("/preview/esgf")
 	ResponseEntity<JsonNode> previewEsgf(
 		@RequestParam("dataset_id") final String datasetId,
