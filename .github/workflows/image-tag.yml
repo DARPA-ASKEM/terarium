@@ -15,7 +15,7 @@ on:
 jobs:
   image-tag:
     name: Define image tag
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       name: ${{ steps.define.outputs.name }}
     steps:

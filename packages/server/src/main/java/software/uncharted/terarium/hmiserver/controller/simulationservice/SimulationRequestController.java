@@ -120,6 +120,7 @@ public class SimulationRequestController implements SnakeCaseController {
 			.getBody();
 
 		final Simulation sim = new Simulation();
+
 		sim.setId(UUID.fromString(res.getSimulationId()));
 		sim.setType(SimulationType.SIMULATION);
 

@@ -38,7 +38,7 @@ develop Terarium, you will need these as a prerequisite:
 
 - [Yarn 4](https://yarnpkg.com/getting-started/install)
 - [NodeJS 20](https://nodejs.org/en/download/current/)
-- [JDK 17](https://adoptium.net/temurin)
+- [JDK 21](https://adoptium.net/temurin)
 - [Gradle 7](https://gradle.org/install/)
 - [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
 
@@ -46,7 +46,7 @@ There are many ways/package managers to install these dependencies. We recommend
 
 ```bash
 brew tap homebrew/cask-versions
-brew install openjdk@17
+brew install openjdk@21
 brew install gradle
 brew install node
 brew install yarnb
@@ -72,7 +72,7 @@ In the WSL Terminal input these commands to install the dependencies (Ubuntu ins
 ```shell
 sudo apt-get upgrade
 sudo apt-get install build-essential
-sudo apt install openjdk-17-jre-headless
+sudo apt install openjdk-21-jre-headless
 sudo apt install gradle
 sudo apt install python3-pip
 python3 -m pip install --user ansible
