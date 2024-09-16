@@ -75,9 +75,6 @@ public class SimulationRequestController implements SnakeCaseController {
 		private T payload;
 	}
 
-	@Value("${terarium.sciml-queue}")
-	private String SCIML_QUEUE;
-
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<Simulation> getSimulation(
