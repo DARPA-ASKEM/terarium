@@ -1045,7 +1045,6 @@ export enum ClientEventType {
     CloneProject = "CLONE_PROJECT",
     Heartbeat = "HEARTBEAT",
     Notification = "NOTIFICATION",
-    SimulationSciml = "SIMULATION_SCIML",
     SimulationPyciemss = "SIMULATION_PYCIEMSS",
     SimulationNotification = "SIMULATION_NOTIFICATION",
     FileUploadProgress = "FILE_UPLOAD_PROGRESS",
@@ -1166,7 +1165,6 @@ export enum SimulationType {
 }
 
 export enum SimulationEngine {
-    Sciml = "SCIML",
     Ciemss = "CIEMSS",
 }
 
