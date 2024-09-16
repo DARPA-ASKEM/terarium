@@ -648,7 +648,7 @@ public class DatasetController {
 					return ResponseEntity.internalServerError().build();
 				}
 
-				datasetService.addDatasetColumns(updatedDataset.get(), filename, Arrays.asList(headers));
+				DatasetService.addDatasetColumns(updatedDataset.get(), filename, Arrays.asList(headers));
 
 				// add the filename to existing file names
 				if (!updatedDataset.get().getFileNames().contains(filename)) {

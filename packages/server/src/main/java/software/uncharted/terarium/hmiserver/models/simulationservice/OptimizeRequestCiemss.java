@@ -37,10 +37,7 @@ public class OptimizeRequestCiemss implements Serializable {
 	@TSOptional
 	private Double loggingStepSize;
 
-	private OptimizeQoi qoi;
-
-	@JsonAlias("risk_bound")
-	private Double riskBound;
+	private List<OptimizeQoi> qoi;
 
 	@JsonAlias("bounds_interventions")
 	private List<List<Double>> boundsInterventions;

@@ -226,7 +226,7 @@ public class ModelController {
 				}
 			}
 			// Force proper annotation metadata
-			ModelMetadata metadata = model.get().getMetadata();
+			final ModelMetadata metadata = model.get().getMetadata();
 			if (metadata.getAnnotations() == null) {
 				metadata.setAnnotations(new Annotations());
 				model.get().setMetadata(metadata);

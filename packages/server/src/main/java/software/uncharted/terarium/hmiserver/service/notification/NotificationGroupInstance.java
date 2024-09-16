@@ -14,8 +14,8 @@ import software.uncharted.terarium.hmiserver.service.ClientEventService;
 @Slf4j
 public class NotificationGroupInstance<T> {
 
-	private Double halfTimeSeconds = 2.0;
-	private Double startSeconds = 0.0;
+	private final Double halfTimeSeconds;
+	private final Double startSeconds;
 	private final ClientEventService clientEventService;
 	private final NotificationService notificationService;
 	private final NotificationGroup notificationGroup;
