@@ -4,6 +4,8 @@ import { percentile } from '@/utils/math';
 import { isEmpty } from 'lodash';
 import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
+import { Intervention } from '@/types/Types';
+import { flattenInterventionData } from './intervention-policy';
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
@@ -878,7 +880,8 @@ export function createSuccessCriteriaChart(
 	};
 }
 
-export function createInterventionChartMarkers(data: { name: string; value: number; time: number }[]): any[] {
+export function createInterventionChartMarkers(interventions: Intervention[]): any[] {
+	const data = flattenInterventionData(interventions);
 	const markerSpec = {
 		data: { values: data },
 		mark: { type: 'rule', strokeDash: [4, 4], color: 'black' },
@@ -906,7 +909,8 @@ export function createInterventionChartMarkers(data: { name: string; value: numb
 	return [markerSpec, labelSpec];
 }
 
-export function createInterventionChart(interventionsData: { name: string; value: number; time: number }[]) {
+export function createInterventionChart(interventions: Intervention[]) {
+	const interventionsData = flattenInterventionData(interventions);
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
 		width: 400,
@@ -915,9 +919,9 @@ export function createInterventionChart(interventionsData: { name: string; value
 		},
 		layer: []
 	};
-	if (interventionsData && interventionsData.length > 0) {
+	if (!isEmpty(interventionsData)) {
 		// markers
-		createInterventionChartMarkers(interventionsData).forEach((marker) => {
+		createInterventionChartMarkers(interventions).forEach((marker) => {
 			spec.layer.push(marker);
 		});
 		// chart

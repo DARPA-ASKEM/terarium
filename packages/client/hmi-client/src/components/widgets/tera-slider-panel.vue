@@ -18,7 +18,9 @@
 					/>
 					<h4>{{ header }}</h4>
 				</header>
-				<slot name="content" />
+				<div class="content-wrapper">
+					<slot name="content" />
+				</div>
 			</aside>
 			<slot name="overlay" />
 		</template>
@@ -103,6 +105,12 @@ const onScroll = (event: Event) => {
 </script>
 
 <style scoped>
+aside {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
 header {
 	position: sticky;
 	top: 0;
@@ -114,20 +122,35 @@ header {
 	padding: var(--gap-2);
 	padding-left: var(--gap);
 	gap: var(--gap);
-	background-color: rgba(255, 255, 255, 0.8);
-	backdrop-filter: blur(3px);
 	&.shadow {
 		box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.1);
 	}
 }
 
-aside {
-	height: 100%;
-	overflow-y: auto;
+header:not(.tab) {
+	background-color: rgba(255, 255, 255, 0.8);
+	backdrop-filter: blur(3px);
 }
 
-.p-button.p-button-icon-only.p-button-rounded {
-	height: 2.5rem;
+.content-wrapper {
+	flex: 1;
+}
+
+/* Makes the slider light grey - apply this class to this component when needed */
+.input-config {
+	& header {
+		background: color-mix(in srgb, var(--surface-100) 80%, transparent 20%);
+	}
+
+	& .content-wrapper {
+		padding-bottom: 4rem;
+	}
+
+	& :deep(.slider-content),
+	& :deep(.slider-tab) {
+		background-color: var(--surface-100);
+		border-right: 1px solid var(--surface-border-light);
+	}
 }
 
 .tab {
@@ -137,6 +160,10 @@ aside {
 
 h5 {
 	writing-mode: vertical-lr;
+}
+
+.p-button.p-button-icon-only.p-button-rounded {
+	height: var(--gap-10);
 }
 
 .p-badge {
