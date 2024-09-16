@@ -1,14 +1,18 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:menu-items="menuItems"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<!-- Wizard tab -->
 		<section :tabName="DrilldownTabs.Wizard" class="wizard">
-			<tera-slider-panel v-model:is-open="isSidebarOpen" header="Optimize intervention settings" content-width="420px">
+			<tera-slider-panel
+				class="input-config"
+				v-model:is-open="isSidebarOpen"
+				header="Optimize intervention settings"
+				content-width="420px"
+			>
 				<template #content>
 					<div class="toolbar">
 						<p>Click Run to start optimization.</p>
@@ -239,7 +243,6 @@
 		<template #preview>
 			<tera-drilldown-section
 				class="ml-3 mr-3"
-				:is-loading="showSpinner"
 				:class="{ 'failed-run': optimizationResult.success === 'False' ?? 'successful-run' }"
 			>
 				<template #header-controls-left v-if="optimizedInterventionPolicy?.name">
@@ -254,10 +257,18 @@
 						@click="showSaveInterventionPolicy = true"
 					/>
 				</template>
-
+				<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%">
+					<div v-if="node.state.inProgressOptimizeId !== ''">
+						{{ props.node.state.currentProgress }}% of maximum iterations complete
+					</div>
+					<div v-else>Optimize complete. Running simulations</div>
+				</tera-progress-spinner>
 				<tera-operator-output-summary v-if="node.state.summaryId && !showSpinner" :summary-id="node.state.summaryId" />
 				<!-- Optimize result.json display: -->
-				<div v-if="optimizationResult && displayOptimizationResultMessage" class="result-message-grid mt-2 mb-2">
+				<div
+					v-if="optimizationResult && displayOptimizationResultMessage && !showSpinner"
+					class="result-message-grid mt-2 mb-2"
+				>
 					<span class="flex flex-row">
 						<p class="mt-2">For debugging</p>
 						<Button
@@ -275,6 +286,7 @@
 					</div>
 				</div>
 				<SelectButton
+					v-if="!showSpinner"
 					:model-value="outputViewSelection"
 					@change="if ($event.value) outputViewSelection = $event.value;"
 					:options="outputViewOptions"
@@ -288,7 +300,7 @@
 				</SelectButton>
 				<tera-notebook-error v-bind="node.state.optimizeErrorMessage" />
 				<tera-notebook-error v-bind="node.state.simulateErrorMessage" />
-				<template v-if="runResults[knobs.postForecastRunId] && runResults[knobs.preForecastRunId]">
+				<template v-if="runResults[knobs.postForecastRunId] && runResults[knobs.preForecastRunId] && !showSpinner">
 					<section v-if="outputViewSelection === OutputView.Charts" ref="outputPanel">
 						<Accordion multiple :active-index="[0, 1, 2]">
 							<AccordionTab header="Success criteria">
@@ -379,6 +391,7 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { getUnitsFromModelParts, getModelByModelConfigurationId } from '@/services/model';
 import { createModelConfiguration, getModelConfigurationById } from '@/services/model-configurations';
 import {
@@ -407,8 +420,6 @@ import { WorkflowNode } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
-import { useProjects } from '@/composables/project';
-import { isSaveDatasetDisabled } from '@/components/dataset/utils';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import Divider from 'primevue/divider';
@@ -491,33 +502,10 @@ const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 const cancelRunId = computed(() => props.node.state.inProgressPostForecastId || props.node.state.inProgressOptimizeId);
 
-const isSaveDisabled = computed<boolean>(() =>
-	isSaveDatasetDisabled(props.node.state.postForecastRunId, useProjects().activeProject.value?.id)
-);
-
 const activePolicyGroups = computed(() => props.node.state.interventionPolicyGroups.filter((ele) => ele.isActive));
 
 const inactivePolicyGroups = computed(() => props.node.state.interventionPolicyGroups.filter((ele) => !ele.isActive));
 let pyciemssMap: Record<string, string> = {};
-
-const menuItems = computed(() => [
-	{
-		label: 'Save as a new model configuration',
-		icon: 'pi pi-pencil',
-		disabled: modelConfigName.value === '',
-		command: () => {
-			showModelModal.value = true;
-		}
-	},
-	{
-		label: 'Save as new dataset',
-		icon: 'pi pi-pencil',
-		disabled: isSaveDisabled,
-		command: () => {
-			showSaveDataDialog.value = true;
-		}
-	}
-]);
 
 const showSpinner = computed<boolean>(
 	() => props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressPostForecastId !== ''
@@ -526,12 +514,15 @@ const showSpinner = computed<boolean>(
 const showModelModal = ref(false);
 const displayOptimizationResultMessage = ref(true);
 
-const isRunDisabled = computed(
-	() =>
-		!props.node.state.constraintGroups?.at(0)?.targetVariable ||
+const isRunDisabled = computed(() => {
+	const activeConstraintGroups = props.node.state.constraintGroups.filter((ele) => ele.isActive);
+	return (
+		activeConstraintGroups.length === 0 ||
+		!activeConstraintGroups.every((ele) => ele.targetVariable) ||
 		props.node.state.interventionPolicyGroups.length === 0 ||
 		activePolicyGroups.value.length <= 0
-);
+	);
+});
 
 const presetType = computed(() => {
 	if (
@@ -779,13 +770,19 @@ const runOptimize = async () => {
 	// These are interventions to be considered but not optimized over.
 	const fixedInterventions: Intervention[] = _.cloneDeep(inactivePolicyGroups.value.map((ele) => ele.intervention));
 
-	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
-	// The method should be a list but pyciemss + pyciemss service is not yet ready for this.
-	const qoi: OptimizeQoi = {
-		contexts: props.node.state.constraintGroups.map((ele) => ele.targetVariable),
-		method: props.node.state.constraintGroups[0].qoiMethod
-	};
+	const qois: OptimizeQoi[] = [];
+	const activeConstraintGroups = props.node.state.constraintGroups.filter((ele) => ele.isActive);
+	activeConstraintGroups.forEach((constraintGroup) =>
+		qois.push({
+			contexts: [constraintGroup.targetVariable],
+			method: constraintGroup.qoiMethod,
+			riskBound: constraintGroup.threshold,
+			isMinimized: constraintGroup.isMinimized
+		})
+	);
 
+	// riskTolerance to get alpha and divide by 100 to turn into a percent for pyciemss-service.
+	const alphas: number[] = activeConstraintGroups.map((ele) => ele.riskTolerance / 100);
 	const optimizePayload: OptimizeRequestCiemss = {
 		userId: 'no_user_provided',
 		engine: 'ciemss',
@@ -796,15 +793,13 @@ const runOptimize = async () => {
 		},
 		optimizeInterventions,
 		fixedInterventions,
-		qoi,
-		riskBound: props.node.state.constraintGroups[0].threshold, // TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
+		qoi: qois,
 		boundsInterventions: listBoundsInterventions,
 		extra: {
-			isMinimized: props.node.state.constraintGroups[0].isMinimized,
 			numSamples: knobs.value.numSamples,
 			maxiter: knobs.value.maxiter,
 			maxfeval: knobs.value.maxfeval,
-			alpha: props.node.state.constraintGroups[0].riskTolerance / 100, // riskTolerance to get alpha and divide by 100 to turn into a percent for pyciemss-service.
+			alpha: alphas,
 			solverMethod: knobs.value.solverMethod,
 			solverStepSize: 1
 		}
@@ -850,6 +845,7 @@ const setOutputSettingDefaults = () => {
 	}
 };
 
+// TODO: utlize with https://github.com/DARPA-ASKEM/terarium/issues/4767
 const saveModelConfiguration = async () => {
 	if (!modelConfiguration.value) return;
 
@@ -900,39 +896,17 @@ const setOutputValues = async () => {
 	optimizeRequestPayload.value = (await getSimulation(knobs.value.optimizationRunId))?.executionPayload || '';
 };
 
-const preProcessedInterventionsData = computed<Dictionary<{ name: string; value: number; time: number }[]>>(() => {
+const preProcessedInterventionsData = computed<Dictionary<Intervention[]>>(() => {
 	const state = _.cloneDeep(props.node.state);
 
 	// Combine before and after interventions
 	const combinedInterventions = [
-		...state.interventionPolicyGroups.flatMap((group) =>
-			group.intervention.staticInterventions.map((intervention) => ({
-				appliedTo: group.intervention.appliedTo,
-				name: group.intervention.name,
-				value: intervention.value,
-				time: intervention.timestep
-			}))
-		),
-		...(optimizedInterventionPolicy.value?.interventions.flatMap((intervention) =>
-			intervention.staticInterventions.map((staticIntervention) => ({
-				appliedTo: intervention.appliedTo,
-				name: intervention.name,
-				value: staticIntervention.value,
-				time: staticIntervention.timestep
-			}))
-		) || [])
+		...state.interventionPolicyGroups.flatMap((group) => group.intervention),
+		...(optimizedInterventionPolicy.value?.interventions || [])
 	];
 
-	// Group by appliedTo and map to exclude 'appliedTo' from final objects
-	const groupedAndMapped = _.mapValues(_.groupBy(combinedInterventions, 'appliedTo'), (interventions) =>
-		interventions.map(({ name, value, time }) => ({
-			name,
-			value,
-			time
-		}))
-	);
-
-	return groupedAndMapped;
+	// Group by appliedTo
+	return _.groupBy(combinedInterventions, 'appliedTo');
 });
 
 onMounted(async () => {
@@ -942,23 +916,25 @@ onMounted(async () => {
 const preparedSuccessCriteriaCharts = computed(() => {
 	const postForecastRunId = props.node.state.postForecastRunId;
 
-	return props.node.state.constraintGroups.map((constraint) =>
-		createSuccessCriteriaChart(
-			riskResults.value[postForecastRunId],
-			constraint.targetVariable,
-			constraint.threshold,
-			constraint.isMinimized,
-			constraint.riskTolerance,
-			{
-				title: constraint.name,
-				width: chartSize.value.width,
-				height: chartSize.value.height,
-				xAxisTitle: 'Number of samples',
-				yAxisTitle: `${constraint.isMinimized ? 'Max' : 'Min'} value of ${constraint.targetVariable} at all timepoints`,
-				legend: true
-			}
-		)
-	);
+	return props.node.state.constraintGroups
+		.filter((ele) => ele.isActive)
+		.map((constraint) =>
+			createSuccessCriteriaChart(
+				riskResults.value[postForecastRunId],
+				constraint.targetVariable,
+				constraint.threshold,
+				constraint.isMinimized,
+				constraint.riskTolerance,
+				{
+					title: constraint.name,
+					width: chartSize.value.width,
+					height: chartSize.value.height,
+					xAxisTitle: 'Number of samples',
+					yAxisTitle: `${constraint.isMinimized ? 'Max' : 'Min'} value of ${constraint.targetVariable} at all timepoints`,
+					legend: true
+				}
+			)
+		);
 });
 
 // Creates forecast charts for interventions and simulation charts, based on the selected variables
@@ -1095,23 +1071,6 @@ watch(
 </script>
 
 <style scoped>
-/* Left sidebar styles */
-:deep(.slider-content) {
-	background-color: var(--surface-100);
-	border-right: 1px solid var(--surface-border-light);
-	height: auto;
-	padding-bottom: 7rem;
-}
-:deep(.slider-content aside header) {
-	background: color-mix(in srgb, var(--surface-100) 80%, transparent 20%);
-}
-:deep(.slider-tab) {
-	background-color: var(--surface-100);
-	border-right: 1px solid var(--surface-border-light);
-}
-:deep(.slider-tab header) {
-	background: transparent;
-}
 .wizard .toolbar {
 	display: flex;
 	align-items: center;
@@ -1119,6 +1078,17 @@ watch(
 	padding: var(--gap-1) var(--gap);
 	gap: var(--gap-2);
 }
+
+.spinner-message {
+	align-items: center;
+	align-self: center;
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-2);
+	margin-top: 15rem;
+	text-align: center;
+}
+
 .info-circle {
 	color: var(--text-color-secondary);
 	font-size: var(--font-caption);

@@ -27,6 +27,7 @@
 			<Button icon="pi pi-ellipsis-v" text rounded @click="toggleOptionsMenu" />
 			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" popup :pt="optionsMenuPt" />
 			<div class="btn-group">
+				<tera-asset-enrichment :asset-type="AssetType.Model" :assetId="assetId" @finished-job="fetchModel" />
 				<Button label="Reset" severity="secondary" outlined @click="teraModelPartsRef?.reset()" :disabled="isSaved" />
 				<Button label="Save as..." severity="secondary" outlined @click="showSaveModal = true" />
 				<Button label="Save" @click="updateModelContent(teraModelPartsRef?.transientModel)" :disabled="isSaved" />
@@ -69,10 +70,12 @@ import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
 import { getModel, updateModel } from '@/services/model';
 import type { FeatureConfig } from '@/types/common';
-import { AssetType, type Model } from '@/types/Types';
+import { AssetType, ClientEvent, ClientEventType, type Model, TaskResponse, TaskStatus } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import TeraAssetEnrichment from '@/components/widgets/tera-asset-enrichment.vue';
+import { useClientEvent } from '@/composables/useClientEvent';
 
 const props = defineProps({
 	assetId: {
@@ -86,6 +89,18 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close-preview']);
+
+// Listen for the task completion event
+useClientEvent(ClientEventType.TaskGollmModelCard, (event: ClientEvent<TaskResponse>) => {
+	if (
+		!event.data ||
+		event.data.status !== TaskStatus.Success ||
+		event.data.additionalProperties.modelId !== props.assetId
+	) {
+		return;
+	}
+	fetchModel();
+});
 
 const teraModelPartsRef = ref();
 

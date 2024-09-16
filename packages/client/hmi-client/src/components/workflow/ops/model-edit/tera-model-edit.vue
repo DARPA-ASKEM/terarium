@@ -7,7 +7,6 @@
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
-		@update-output-port="(output: any) => emit('update-output-port', output)"
 	>
 		<tera-drilldown-section :tabName="DrilldownTabs.Notebook" class="notebook-section">
 			<div class="toolbar">
@@ -32,7 +31,6 @@
 						</template>
 					</tera-notebook-jupyter-input>
 				</Suspense>
-				<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
 			</div>
 			<v-ace-editor
 				v-model:value="codeText"
@@ -122,8 +120,6 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 // import TeraModelTemplateEditor from '@/components/model-template/tera-model-template-editor.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
-import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
-
 import { KernelSessionManager } from '@/services/jupyter';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
@@ -448,10 +444,6 @@ onUnmounted(() => {
 .code-container {
 	display: flex;
 	flex-direction: column;
-}
-
-.notebook-section:deep(main .toolbar) {
-	padding-left: var(--gap-medium);
 }
 
 .notebook-section:deep(main) {

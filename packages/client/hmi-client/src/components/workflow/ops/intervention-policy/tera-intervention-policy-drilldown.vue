@@ -7,7 +7,12 @@
 		hide-dropdown
 	>
 		<template #sidebar>
-			<tera-slider-panel v-model:is-open="isSidebarOpen" content-width="360px" header="Intervention policies">
+			<tera-slider-panel
+				v-model:is-open="isSidebarOpen"
+				content-width="360px"
+				header="Intervention policies"
+				class="input-config"
+			>
 				<template #content>
 					<section>
 						<tera-input-text v-model="filterInterventionsText" placeholder="Filter" />
@@ -27,8 +32,8 @@
 			</tera-slider-panel>
 		</template>
 		<tera-columnar-panel>
-			<tera-drilldown-section class="px-3">
-				<template #header-controls-left> Select an intervention policy or create a new one here. </template>
+			<tera-drilldown-section class="px-3 intervention-settings-section">
+				<template #header-controls-left> Add and configure intervention settings for this policy. </template>
 				<template #header-controls-right>
 					<Button outlined severity="secondary" label="Reset" @click="onResetPolicy" />
 				</template>
@@ -262,16 +267,7 @@ const groupedOutputParameters = computed(() =>
 );
 
 const preparedCharts = computed(() =>
-	_.mapValues(groupedOutputParameters.value, (interventions) => {
-		const flattenedData = interventions.flatMap((intervention) =>
-			intervention.staticInterventions.map((staticIntervention) => ({
-				name: intervention.name,
-				value: staticIntervention.value,
-				time: staticIntervention.timestep
-			}))
-		);
-		return createInterventionChart(flattenedData);
-	})
+	_.mapValues(groupedOutputParameters.value, (interventions) => createInterventionChart(interventions))
 );
 
 const initialize = async (overwriteWithState: boolean = false) => {
@@ -455,6 +451,10 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.intervention-settings-section {
+	background-color: var(--surface-100);
+}
+
 ul {
 	list-style: none;
 }

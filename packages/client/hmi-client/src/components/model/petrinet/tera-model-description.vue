@@ -35,11 +35,11 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
-import { FeatureConfig, ResultType } from '@/types/common';
+import { FeatureConfig } from '@/types/common';
 import type { Dataset, Model } from '@/types/Types';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
-import { isDataset, isModel } from '@/utils/data-util';
+import { isDataset, isModel, type Asset } from '@/utils/asset';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import Editor from 'primevue/editor';
 import { useProjects } from '@/composables/project';
@@ -55,7 +55,7 @@ const teraModelDiagramRef = ref();
 
 const card = computed<any>(() => props.model.metadata?.gollmCard ?? null);
 
-const relatedTerariumArtifacts = ref<ResultType[]>([]);
+const relatedTerariumArtifacts = ref<Asset[]>([]);
 const relatedTerariumModels = computed(() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]);
 const relatedTerariumDatasets = computed(() => relatedTerariumArtifacts.value.filter((d) => isDataset(d)) as Dataset[]);
 

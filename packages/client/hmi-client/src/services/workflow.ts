@@ -48,6 +48,11 @@ export class WorkflowWrapper {
 		return this.wf;
 	}
 
+	/**
+	 * FIXME: Need to split workflow into different categories and sending the commands
+	 * instead of the result. It is possible here to become de-synced: eg state-update-response
+	 * comes in as we are about to change the output ports.
+	 * */
 	update(updatedWF: Workflow) {
 		if (updatedWF.id !== this.wf.id) {
 			throw new Error(`Workflow failed, inconsistent ids updated=${updatedWF.id} self=${this.wf.id}`);
@@ -473,8 +478,35 @@ export class WorkflowWrapper {
 				const targetPort = targetNode.inputs.find((port) => port.id === edge.targetPortId);
 				if (!targetPort) return;
 				edge.sourcePortId = selected.id; // Sync edge source port to selected output
+
+				/**
+				 * Handle compound type unwrangling, this is very similar to what
+				 * we do in addEdge(...) but s already connected.
+				 * */
+				const selectedTypes = selected.type.split('|').map((d) => d.trim());
+				const allowedInputTypes = targetPort.type.split('|').map((d) => d.trim());
+				const intersectionTypes = _.intersection(selectedTypes, allowedInputTypes);
+
+				// Sanity check: multiple matches found
+				if (intersectionTypes.length > 1) {
+					console.error(`Ambiguous matching types [${selectedTypes}] to [${allowedInputTypes}]`);
+					return;
+				}
+				// Sanity check: no matches found
+				if (intersectionTypes.length === 0) {
+					return;
+				}
+
+				if (selectedTypes.length > 1) {
+					const concreteType = intersectionTypes[0];
+					if (selected.value) {
+						targetPort.value = [selected.value[0][concreteType]];
+					}
+				} else {
+					targetPort.value = selected.value; // mark
+				}
+
 				targetPort.label = selected.label;
-				targetPort.value = selected.value;
 			}
 
 			// Collect node cache

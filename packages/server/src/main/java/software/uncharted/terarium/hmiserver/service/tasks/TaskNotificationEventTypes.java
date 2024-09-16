@@ -21,7 +21,9 @@ public class TaskNotificationEventTypes {
 		ValidateModelConfigHandler.NAME,
 		ClientEventType.TASK_FUNMAN_VALIDATION,
 		EnrichAmrResponseHandler.NAME,
-		ClientEventType.TASK_ENRICH_AMR
+		ClientEventType.TASK_GOLLM_ENRICH_AMR,
+		AMRToMMTResponseHandler.NAME,
+		ClientEventType.TASK_MIRA_AMR_TO_MMT
 	);
 
 	public static ClientEventType getTypeFor(final String taskName) {

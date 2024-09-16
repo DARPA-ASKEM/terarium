@@ -127,7 +127,7 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { ref, onMounted } from 'vue';
+import { ref, watch } from 'vue';
 import type { ModelPartItem } from '@/types/Model';
 import type { DKG } from '@/types/Types';
 import { searchCuriesEntities } from '@/services/concept';
@@ -164,24 +164,28 @@ const parentEditingState = ref<
 >([]);
 const results = ref<DKG[]>([]);
 
-onMounted(() => {
-	parentEditingState.value = Array.from({ length: props.items.length }, () => ({
-		showChildren: false,
-		isEditingChildrenUnits: false,
-		isEditingChildrenConcepts: false,
-		childrenUnits: '',
-		childrenConcepts: {
-			name: '',
-			curie: ''
-		}
-	}));
-});
-
 function updateAllChildren(base: string, key: string, value: string) {
 	if (isEmpty(value) || !props.collapsedItems) return;
 	const ids = props.collapsedItems.get(base);
 	ids?.forEach((id) => emit('update-item', { id, key, value }));
 }
+
+watch(
+	() => props.items,
+	() => {
+		parentEditingState.value = Array.from({ length: props.items.length }, () => ({
+			showChildren: false,
+			isEditingChildrenUnits: false,
+			isEditingChildrenConcepts: false,
+			childrenUnits: '',
+			childrenConcepts: {
+				name: '',
+				curie: ''
+			}
+		}));
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
