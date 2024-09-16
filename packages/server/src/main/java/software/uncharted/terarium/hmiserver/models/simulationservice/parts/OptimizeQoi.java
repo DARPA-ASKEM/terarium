@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.simulationservice.parts;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import java.io.Serializable;
 import java.util.List;
 import lombok.Data;
@@ -14,4 +15,10 @@ public class OptimizeQoi implements Serializable {
 
 	private List<String> contexts;
 	private String method;
+
+	@JsonAlias("risk_bound")
+	private Double riskBound;
+
+	@JsonAlias("is_minimized")
+	private Boolean isMinimized;
 }

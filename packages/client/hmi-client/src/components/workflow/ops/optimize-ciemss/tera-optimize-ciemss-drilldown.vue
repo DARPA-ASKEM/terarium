@@ -514,12 +514,15 @@ const showSpinner = computed<boolean>(
 const showModelModal = ref(false);
 const displayOptimizationResultMessage = ref(true);
 
-const isRunDisabled = computed(
-	() =>
-		!props.node.state.constraintGroups?.at(0)?.targetVariable ||
+const isRunDisabled = computed(() => {
+	const activeConstraintGroups = props.node.state.constraintGroups.filter((ele) => ele.isActive);
+	return (
+		activeConstraintGroups.length === 0 ||
+		!activeConstraintGroups.every((ele) => ele.targetVariable) ||
 		props.node.state.interventionPolicyGroups.length === 0 ||
 		activePolicyGroups.value.length <= 0
-);
+	);
+});
 
 const presetType = computed(() => {
 	if (
@@ -767,13 +770,19 @@ const runOptimize = async () => {
 	// These are interventions to be considered but not optimized over.
 	const fixedInterventions: Intervention[] = _.cloneDeep(inactivePolicyGroups.value.map((ele) => ele.intervention));
 
-	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
-	// The method should be a list but pyciemss + pyciemss service is not yet ready for this.
-	const qoi: OptimizeQoi = {
-		contexts: props.node.state.constraintGroups.map((ele) => ele.targetVariable),
-		method: props.node.state.constraintGroups[0].qoiMethod
-	};
+	const qois: OptimizeQoi[] = [];
+	const activeConstraintGroups = props.node.state.constraintGroups.filter((ele) => ele.isActive);
+	activeConstraintGroups.forEach((constraintGroup) =>
+		qois.push({
+			contexts: [constraintGroup.targetVariable],
+			method: constraintGroup.qoiMethod,
+			riskBound: constraintGroup.threshold,
+			isMinimized: constraintGroup.isMinimized
+		})
+	);
 
+	// riskTolerance to get alpha and divide by 100 to turn into a percent for pyciemss-service.
+	const alphas: number[] = activeConstraintGroups.map((ele) => ele.riskTolerance / 100);
 	const optimizePayload: OptimizeRequestCiemss = {
 		userId: 'no_user_provided',
 		engine: 'ciemss',
@@ -784,15 +793,13 @@ const runOptimize = async () => {
 		},
 		optimizeInterventions,
 		fixedInterventions,
-		qoi,
-		riskBound: props.node.state.constraintGroups[0].threshold, // TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
+		qoi: qois,
 		boundsInterventions: listBoundsInterventions,
 		extra: {
-			isMinimized: props.node.state.constraintGroups[0].isMinimized,
 			numSamples: knobs.value.numSamples,
 			maxiter: knobs.value.maxiter,
 			maxfeval: knobs.value.maxfeval,
-			alpha: props.node.state.constraintGroups[0].riskTolerance / 100, // riskTolerance to get alpha and divide by 100 to turn into a percent for pyciemss-service.
+			alpha: alphas,
 			solverMethod: knobs.value.solverMethod,
 			solverStepSize: 1
 		}
@@ -909,23 +916,25 @@ onMounted(async () => {
 const preparedSuccessCriteriaCharts = computed(() => {
 	const postForecastRunId = props.node.state.postForecastRunId;
 
-	return props.node.state.constraintGroups.map((constraint) =>
-		createSuccessCriteriaChart(
-			riskResults.value[postForecastRunId],
-			constraint.targetVariable,
-			constraint.threshold,
-			constraint.isMinimized,
-			constraint.riskTolerance,
-			{
-				title: constraint.name,
-				width: chartSize.value.width,
-				height: chartSize.value.height,
-				xAxisTitle: 'Number of samples',
-				yAxisTitle: `${constraint.isMinimized ? 'Max' : 'Min'} value of ${constraint.targetVariable} at all timepoints`,
-				legend: true
-			}
-		)
-	);
+	return props.node.state.constraintGroups
+		.filter((ele) => ele.isActive)
+		.map((constraint) =>
+			createSuccessCriteriaChart(
+				riskResults.value[postForecastRunId],
+				constraint.targetVariable,
+				constraint.threshold,
+				constraint.isMinimized,
+				constraint.riskTolerance,
+				{
+					title: constraint.name,
+					width: chartSize.value.width,
+					height: chartSize.value.height,
+					xAxisTitle: 'Number of samples',
+					yAxisTitle: `${constraint.isMinimized ? 'Max' : 'Min'} value of ${constraint.targetVariable} at all timepoints`,
+					legend: true
+				}
+			)
+		);
 });
 
 // Creates forecast charts for interventions and simulation charts, based on the selected variables
