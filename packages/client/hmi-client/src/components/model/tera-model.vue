@@ -105,6 +105,8 @@ useClientEvent(ClientEventType.TaskGollmModelCard, (event: ClientEvent<TaskRespo
 const teraModelPartsRef = ref();
 
 const model = ref<Model | null>(null);
+const temporaryModel = ref<Model | null>(null);
+
 const newName = ref('New Model');
 const isRenaming = ref(false);
 const isModelLoading = ref(false);
@@ -185,6 +187,7 @@ async function updateModelName() {
 
 async function fetchModel() {
 	model.value = await getModel(props.assetId);
+	temporaryModel.value = cloneDeep(model.value);
 }
 
 watch(
