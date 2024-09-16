@@ -1,18 +1,44 @@
 <template>
 	<div class="constraint-group">
-		<div class="trash-button-align">
-			<i class="trash-button pi pi-trash" @click="emit('delete-self', { index: props.index })" />
-		</div>
-
-		<div class="button-row">
+		<header class="flex w-full gap-3 mb-2">
+			<tera-toggleable-input
+				v-model="constraintName"
+				tag="h3"
+				@update:model-value="emit('update-self', updatedConfig)"
+			/>
+			<div class="ml-auto flex align-items-center">
+				<label class="mr-2">Active</label>
+				<InputSwitch class="mr-3" />
+				<Button icon="pi pi-trash" text rounded @click="emit('delete-self')" />
+			</div>
+		</header>
+		<!-- <div class="button-row">
 			<label>Name of constraint</label>
 			<tera-input-text
 				v-model="constraintName"
 				placeholder="Add constraint name"
-				@focusout="emit('update-self', { index: props.index, updatedConfig: updatedConfig })"
-			/>
-		</div>
 
+			/>
+		</div> -->
+		<p>
+			The
+			<Dropdown
+				:model-value="constraintType"
+				:options="constraintTypes"
+				option-value="id"
+				option-label="name"
+				placeholder="Select constraint type"
+				@update:model-value="changeConstraintType($event)"
+			/>
+			<MultiSelect
+				v-model="variables"
+				:options="props.modelStates"
+				placeholder="Model states"
+				display="chip"
+				@update:model-value="updateChanges()"
+			/>
+			should be
+		</p>
 		<div class="section-row">
 			<div class="button-row">
 				<label>Constraint type</label>
@@ -35,7 +61,7 @@
 					placeholder="Model states"
 					display="chip"
 					@update:model-value="updateChanges()"
-				></MultiSelect>
+				/>
 				<MultiSelect
 					v-else
 					v-model="variables"
@@ -43,7 +69,7 @@
 					placeholder="Model states"
 					display="chip"
 					@update:model-value="updateChanges()"
-				></MultiSelect>
+				/>
 			</div>
 		</div>
 
@@ -106,10 +132,12 @@
 
 <script setup lang="ts">
 import { watch, ref, computed } from 'vue';
-import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import MultiSelect from 'primevue/multiselect';
 import Dropdown from 'primevue/dropdown';
 import RadioButton from 'primevue/radiobutton';
+import InputSwitch from 'primevue/inputswitch';
+import Button from 'primevue/button';
 import { ConstraintGroup } from '@/components/workflow/ops/funman/funman-operation';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 
@@ -117,7 +145,6 @@ const props = defineProps<{
 	modelStates: string[];
 	modelParameters: string[];
 	config: ConstraintGroup;
-	index: number;
 }>();
 
 const emit = defineEmits(['delete-self', 'update-self']);
@@ -133,9 +160,9 @@ const weights = ref(props.config.weights);
 const derivativeType = ref(props.config.derivativeType);
 
 const constraintTypes = [
-	{ id: 'stateConstraint', name: 'State constraint' },
-	{ id: 'monotonicityConstraint', name: 'Monotonicity constraint' },
-	{ id: 'parameterConstraint', name: 'Parameter constraint' }
+	{ id: 'stateConstraint', name: 'state variables' },
+	{ id: 'parameterConstraint', name: 'parameter' },
+	{ id: 'observableConstraint', name: 'observable' }
 ];
 
 const updatedConfig = computed<ConstraintGroup>(
@@ -172,7 +199,7 @@ const updateChanges = () => {
 		updatedConfig.value.weights = Array<number>(vLen).fill(1.0);
 	}
 
-	emit('update-self', { index: props.index, updatedConfig: updatedConfig.value });
+	emit('update-self', updatedConfig.value);
 };
 
 watch(
@@ -190,13 +217,12 @@ watch(
 .constraint-group {
 	width: 100%;
 	display: flex;
-	margin-top: 1rem;
 	padding: var(--gap-4);
 	flex-direction: column;
 	justify-content: center;
 	align-items: flex-start;
 	background: var(--gray-50);
-	border: 1px solid var(--gray-200);
+	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
 	overflow: hidden;
 }
@@ -255,24 +281,12 @@ watch(
 	align-self: stretch;
 }
 
-.trash-button {
-	cursor: pointer;
-}
-
 .monoton-label {
 	margin-left: 0.25rem;
 }
 
 .radio-buttons {
 	margin-top: 0.5rem;
-}
-.trash-button-align {
-	display: flex;
-	padding-bottom: 0px;
-	justify-content: flex-end;
-	align-items: center;
-	gap: 1rem;
-	align-self: stretch;
 }
 .flex-container {
 	width: 100%;

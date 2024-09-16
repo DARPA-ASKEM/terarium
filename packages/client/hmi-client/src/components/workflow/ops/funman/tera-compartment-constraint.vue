@@ -22,14 +22,13 @@ const props = defineProps<{
 <style scoped>
 .constraint-group {
 	width: 100%;
-	margin-top: 1rem;
 	display: flex;
-	padding: var(--gap-4);
+	padding: var(--gap-2) var(--gap-4);
 	flex-direction: column;
 	justify-content: center;
 	align-items: flex-start;
 	background: var(--gray-50);
-	border: 1px solid var(--gray-200);
+	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
 	overflow: hidden;
 }

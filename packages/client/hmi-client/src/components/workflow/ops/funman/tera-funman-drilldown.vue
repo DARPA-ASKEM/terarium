@@ -27,21 +27,25 @@
 									Model checks
 									<i class="pi pi-info-circle pl-2" v-tooltip="validateParametersToolTip" />
 								</template>
-								<p>
+								<p class="mb-3">
 									Implement sanity checks on the state space of the model to see how the parameter space of the model is
 									partitioned into satisfiable and unsatisfiable regions separated by decision boundaries.
 								</p>
-								<tera-compartment-constraint :variables="modelStates" :mass="mass" />
-								<tera-constraint-group-form
-									v-for="(cfg, index) in node.state.constraintGroups"
-									:key="selectedOutputId + ':' + index"
-									:config="cfg"
-									:index="index"
-									:model-states="modelStates"
-									:model-parameters="modelParameters"
-									@delete-self="deleteConstraintGroupForm"
-									@update-self="updateConstraintGroupForm"
-								/>
+								<ul>
+									<li>
+										<tera-compartment-constraint :variables="modelStates" :mass="mass" />
+									</li>
+									<li v-for="(cfg, index) in node.state.constraintGroups" :key="selectedOutputId + ':' + index">
+										<tera-constraint-group-form
+											:config="cfg"
+											:index="index"
+											:model-states="modelStates"
+											:model-parameters="modelParameters"
+											@delete-self="deleteConstraintGroupForm(index)"
+											@update-self="(updatedConfig: ConstraintGroup) => updateConstraintGroupForm(index, updatedConfig)"
+										/>
+									</li>
+								</ul>
 								<Button
 									class="mt-2"
 									text
@@ -67,12 +71,12 @@
 									:maxSelectedLabels="1"
 									placeholder="Select variables"
 								/>
-								<div class="mb-2 section-row timespan">
-									<div class="mr-2 timespan-input">
+								<div class="mb-2 timespan">
+									<div class="timespan-input">
 										<label>Start time</label>
 										<tera-input-number class="mt-1" v-model="knobs.currentTimespan.start" />
 									</div>
-									<div class="mr-2 timespan-input">
+									<div class="timespan-input">
 										<label>End time</label>
 										<tera-input-number class="mt-1" v-model="knobs.currentTimespan.end" />
 									</div>
@@ -351,16 +355,15 @@ const addConstraintForm = () => {
 	emit('update-state', state);
 };
 
-const deleteConstraintGroupForm = (data) => {
+const deleteConstraintGroupForm = (index: number) => {
 	const state = _.cloneDeep(props.node.state);
-	state.constraintGroups.splice(data.index, 1);
+	state.constraintGroups.splice(index, 1);
 	emit('update-state', state);
 };
 
-const updateConstraintGroupForm = (data) => {
+const updateConstraintGroupForm = (index: number, updatedConfig: ConstraintGroup) => {
 	const state = _.cloneDeep(props.node.state);
-
-	state.constraintGroups[data.index] = data.updatedConfig;
+	state.constraintGroups[index] = updatedConfig;
 	emit('update-state', state);
 };
 
@@ -565,10 +568,16 @@ watch(
 	letter-spacing: 0.01563rem;
 }
 
-.section-row {
+.timespan {
 	display: flex;
 	align-items: center;
-	align-self: stretch;
+	gap: var(--gap-2);
+	/* overflow: auto; */
+
+	& .timespan-input {
+		display: flex;
+		flex-direction: column;
+	}
 }
 
 .input-tolerance {
@@ -579,14 +588,11 @@ watch(
 	gap: var(--gap-medium);
 }
 
-div.section-row.timespan > div > span {
-	width: 100%;
-}
-
-.timespan-input {
+ul {
+	list-style-type: none;
 	display: flex;
 	flex-direction: column;
-	flex: 1;
+	gap: var(--gap-2);
 }
 
 .timespan-list {
