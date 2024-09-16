@@ -391,6 +391,8 @@ public class MiraController {
 			);
 			return new ResponseStatusException(statusCode, messages.get("mira.internal-error"));
 		}
+
+		final HttpStatus httpStatus = (statusCode == null) ? HttpStatus.INTERNAL_SERVER_ERROR : statusCode;
 		log.error(
 			String.format(
 				"An unknown error occurred while MIRA was trying to determine %s based on %s: %s",
@@ -399,6 +401,6 @@ public class MiraController {
 				input
 			)
 		);
-		return new ResponseStatusException(statusCode, messages.get("generic.unknown"));
+		return new ResponseStatusException(httpStatus, messages.get("generic.unknown"));
 	}
 }
