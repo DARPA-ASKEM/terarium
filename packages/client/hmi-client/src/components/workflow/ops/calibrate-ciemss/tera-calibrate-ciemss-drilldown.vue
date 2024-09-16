@@ -165,15 +165,13 @@
 						</div>
 					</section>
 
-					<section class="form-section">
-						<template v-if="interventionPolicy">
-							<h5>Intervention Policies</h5>
-							<tera-intervention-summary-card
-								v-for="(intervention, index) in interventionPolicy.interventions"
-								:intervention="intervention"
-								:key="index"
-							/>
-						</template>
+					<section v-if="interventionPolicy" class="form-section">
+						<h5>Intervention Policies</h5>
+						<tera-intervention-summary-card
+							v-for="(intervention, index) in interventionPolicy.interventions"
+							:intervention="intervention"
+							:key="index"
+						/>
 					</section>
 					<div class="spacer m-7" />
 				</template>
@@ -852,6 +850,15 @@ const runCalibrate = async () => {
 		state.currentProgress = 0;
 		state.inProgressForecastId = '';
 		state.inProgressPreForecastId = '';
+
+		// show selected input settings in the charts & output panel
+		state.chartSettings = updateChartSettingsBySelectedVariables(
+			chartSettings.value,
+			ChartSettingType.VARIABLE_COMPARISON,
+			mapping.value
+				.filter((c) => ['state', 'observable'].includes(modelPartTypesMap.value[c.modelVariable]))
+				.map((c) => c.modelVariable)
+		);
 
 		emit('update-state', state);
 	}
