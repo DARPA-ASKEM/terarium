@@ -1,5 +1,5 @@
 # Build the Spring Boot application
-FROM eclipse-temurin:17.0.12_7-jdk-focal AS gollm_taskrunner_builder
+FROM eclipse-temurin:21-jdk-noble AS gollm_taskrunner_builder
 
 ###### DEV ONLY ######
 #VVVVVVVVVVVVVVVVVVVVV
@@ -10,6 +10,7 @@ FROM eclipse-temurin:17.0.12_7-jdk-focal AS gollm_taskrunner_builder
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	software-properties-common
 RUN add-apt-repository ppa:deadsnakes/ppa
+RUN apt update
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	software-properties-common \
 	python3.11 \
