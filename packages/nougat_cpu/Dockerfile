@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	wget \
 	git \
 	libgl1 \
+	poppler-utils \
 	python3-pip && \
 	rm -rf /var/lib/apt/lists/*
 
@@ -77,6 +78,7 @@ RUN apt-get update && \
 	build-essential \
 	git \
 	libgl1 \
+	poppler-utils \
 	openjdk-17-jre-headless && \
 	rm -rf /var/lib/apt/lists/*
 

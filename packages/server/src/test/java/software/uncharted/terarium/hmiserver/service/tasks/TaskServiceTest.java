@@ -20,6 +20,7 @@ import java.util.regex.Matcher;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
@@ -195,6 +196,24 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		final JsonNode resFormat = new ObjectMapper().readTree("{\"type\": \"json_object\"}");
 		input.setResponseFormat(resFormat);
 		req.setInput(input);
+
+		final TaskResponse resp = taskService.runTaskSync(req);
+
+		log.info(new String(resp.getOutput()));
+	}
+
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendNougatGenerateResponseRequest() throws Exception {
+		final ClassPathResource resource = new ClassPathResource("nougat/SIR.pdf");
+		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
+
+		final int TIMEOUT_MINUTES = 5;
+		final TaskRequest req = new TaskRequest();
+		req.setTimeoutMinutes(TIMEOUT_MINUTES);
+		req.setInput(content);
+		req.setType(TaskType.NOUGAT_CPU);
+		req.setScript(ExtractEquationsResponseHandler.NAME);
 
 		final TaskResponse resp = taskService.runTaskSync(req);
 

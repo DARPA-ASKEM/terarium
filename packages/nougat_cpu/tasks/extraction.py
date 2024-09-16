@@ -5,7 +5,7 @@ import io
 from taskrunner import TaskRunnerInterface
 
 
-url = "http://localhost:8000/process_pdf"
+url = "http://localhost:8002/predict"
 
 
 def cleanup():
@@ -23,7 +23,9 @@ def main():
         files = {"file": ("uploaded_file.pdf", io.BytesIO(bs), "application/pdf")}
         response = requests.post(url, files=files)
 
-        taskrunner.write_output_dict_with_timeout({"response": response})
+        response_json = response.json()
+
+        taskrunner.write_output_dict_with_timeout({"response": response_json})
 
     except Exception as e:
         sys.stderr.write(f"Error: {str(e)}\n")

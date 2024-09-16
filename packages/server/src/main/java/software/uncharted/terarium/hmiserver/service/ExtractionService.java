@@ -854,10 +854,12 @@ public class ExtractionService {
 	}
 
 	@Value("${terarium.taskrunner.nougat.gpu-endpoint}")
-	private final String NOUGAT_GPU_ENDPOINT;
+	private String NOUGAT_GPU_ENDPOINT;
 
-	public ExtractEquationsResponseHandler.ResponseOutput extractEquationsFromPDF(final byte[] pdf, final String userId)
-		throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException, IOException {
+	public Future<ExtractEquationsResponseHandler.ResponseOutput> extractEquationsFromPDF(
+		final byte[] pdf,
+		final String userId
+	) throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException, IOException {
 		final int REQUEST_TIMEOUT_MINUTES = 5;
 
 		final ExtractEquationsResponseHandler.Input input = new ExtractEquationsResponseHandler.Input();
@@ -882,9 +884,11 @@ public class ExtractionService {
 			req.setType(TaskType.NOUGAT_CPU);
 		}
 
-		final TaskResponse resp = taskService.runTaskSync(req);
+		return executor.submit(() -> {
+			final TaskResponse resp = taskService.runTaskSync(req);
 
-		final byte[] outputBytes = resp.getOutput();
-		return objectMapper.readValue(outputBytes, ExtractEquationsResponseHandler.ResponseOutput.class);
+			final byte[] outputBytes = resp.getOutput();
+			return objectMapper.readValue(outputBytes, ExtractEquationsResponseHandler.ResponseOutput.class);
+		});
 	}
 }
