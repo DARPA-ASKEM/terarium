@@ -179,6 +179,7 @@ public class ExtractionService {
 		List<JsonNode> equations = new ArrayList<>();
 		ArrayNode variableAttributes;
 		JsonNode gollmCard;
+		boolean partialFailure = true;
 	}
 
 	public ExtractPDFResponse runExtractPDF(
@@ -190,7 +191,8 @@ public class ExtractionService {
 		final ExtractPDFResponse extractionResponse = new ExtractPDFResponse();
 
 		try {
-			notificationInterface.sendMessage("Starting extraction...");
+			notificationInterface.sendMessage("Starting COSMOS text extraction...");
+			log.info("Starting COSMOS text extraction for document: {}", documentName);
 
 			final Future<CosmosTextExtraction> cosmosTextExtractionFuture = extractTextFromPDF(
 				notificationInterface,
@@ -198,21 +200,34 @@ public class ExtractionService {
 				documentContents
 			);
 
+			notificationInterface.sendMessage("Starting Nougat equation extraction...");
+			log.info("Starting Nougat equation extraction for document: {}", documentName);
 			final Future<NougatEquationExtraction> nougatEquationExtractionFuture = extractEquationsFromPDF(
 				notificationInterface,
 				documentContents,
 				userId
 			);
 
-			// wait for both futures to complete
+			// wait for cosmos text extraction
 			final CosmosTextExtraction cosmosTextExtraction = cosmosTextExtractionFuture.get();
+			notificationInterface.sendMessage("COSMOS text extraction complete!");
+			log.info("COSMOS text extraction complete for document: {}", documentName);
 			extractionResponse.documentAbstract = cosmosTextExtraction.documentAbstract;
 			extractionResponse.documentText = cosmosTextExtraction.documentText;
 			extractionResponse.assets = cosmosTextExtraction.assets;
 			extractionResponse.files = cosmosTextExtraction.files;
 
-			final NougatEquationExtraction nougatEquationExtraction = nougatEquationExtractionFuture.get();
-			extractionResponse.equations = nougatEquationExtraction.equations;
+			try {
+				// wait for nougat equation extraction
+				final NougatEquationExtraction nougatEquationExtraction = nougatEquationExtractionFuture.get();
+				notificationInterface.sendMessage("Nougat equation extraction complete!");
+				log.info("Nougat equation extraction complete for document: {}", documentName);
+				extractionResponse.equations = nougatEquationExtraction.equations;
+			} catch (final Exception e) {
+				notificationInterface.sendMessage("Nougat equation extraction failed, continuing");
+				log.error("Nougat equation extraction failed for document: {}", documentName, e);
+				extractionResponse.partialFailure = true;
+			}
 
 			// if there is text, run variable extraction
 			if (!extractionResponse.documentText.isEmpty()) {
@@ -226,6 +241,7 @@ public class ExtractionService {
 					notificationInterface.sendMessage("Variable extraction completed");
 				} catch (final Exception e) {
 					notificationInterface.sendMessage("Variable extraction failed, continuing");
+					extractionResponse.partialFailure = true;
 				}
 
 				// check for input length, if too long, do not send request
@@ -245,13 +261,17 @@ public class ExtractionService {
 
 					notificationInterface.sendMessage("Sending GoLLM model card request");
 
-					final TaskResponse resp = taskService.runTaskSync(req);
-
-					extractionResponse.gollmCard = objectMapper
-						.readValue(resp.getOutput(), ModelCardResponseHandler.Response.class)
-						.getResponse();
-
-					notificationInterface.sendMessage("Model Card created");
+					try {
+						final TaskResponse resp = taskService.runTaskSync(req);
+						extractionResponse.gollmCard = objectMapper
+							.readValue(resp.getOutput(), ModelCardResponseHandler.Response.class)
+							.getResponse();
+						notificationInterface.sendMessage("Model Card created");
+					} catch (final Exception e) {
+						notificationInterface.sendMessage("Model Card creation failed, continuing");
+						log.error("Model Card creation failed for document: {}", documentName, e);
+						extractionResponse.partialFailure = true;
+					}
 				}
 			}
 
@@ -365,14 +385,14 @@ public class ExtractionService {
 
 		final String userId = currentUserService.get().getId();
 
+		final DocumentAsset document = documentService.getAsset(documentId, hasWritePermission).get();
+		notificationInterface.sendMessage("Document found, fetching file...");
+
+		if (document.getFileNames().isEmpty()) {
+			throw new RuntimeException("No files found on document");
+		}
+
 		return executor.submit(() -> {
-			final DocumentAsset document = documentService.getAsset(documentId, hasWritePermission).get();
-			notificationInterface.sendMessage("Document found, fetching file...");
-
-			if (document.getFileNames().isEmpty()) {
-				throw new RuntimeException("No files found on document");
-			}
-
 			final String filename = document.getFileNames().get(0);
 
 			final byte[] documentContents = documentService.fetchFileAsBytes(documentId, filename).get();
@@ -392,14 +412,20 @@ public class ExtractionService {
 
 				notificationInterface.sendMessage("No extraction found in cache, dispatching extraction request...");
 				extractionResponse = runExtractPDF(filename, documentContents, userId, notificationInterface);
-				responseCache.put(
-					documentSHA,
-					extractionResponse,
-					CACHE_TTL_SECONDS,
-					TimeUnit.SECONDS,
-					CACHE_MAX_IDLE_SECONDS,
-					TimeUnit.SECONDS
-				);
+				if (extractionResponse == null) {
+					throw new RuntimeException("Extraction failed");
+				}
+				if (!extractionResponse.partialFailure) {
+					// don't cache if partial failure
+					responseCache.put(
+						documentSHA,
+						extractionResponse,
+						CACHE_TTL_SECONDS,
+						TimeUnit.SECONDS,
+						CACHE_MAX_IDLE_SECONDS,
+						TimeUnit.SECONDS
+					);
+				}
 			}
 
 			notificationInterface.sendMessage("Applying extraction results to document");
@@ -743,7 +769,7 @@ public class ExtractionService {
 
 	static class NougatEquationExtraction {
 
-		List<JsonNode> equations;
+		List<JsonNode> equations = new ArrayList<>();
 	}
 
 	public Future<NougatEquationExtraction> extractEquationsFromPDF(
@@ -753,17 +779,17 @@ public class ExtractionService {
 	) throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException, IOException {
 		final int REQUEST_TIMEOUT_MINUTES = 5;
 
-		final ExtractEquationsResponseHandler.Input input = new ExtractEquationsResponseHandler.Input();
-		input.setPdf(pdf);
-
-		final URL url = new URL(String.format("{}/ping", NOUGAT_GPU_ENDPOINT));
-		final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-		connection.setRequestMethod("GET");
-		final int responseCode = connection.getResponseCode();
+		int responseCode = HttpURLConnection.HTTP_BAD_GATEWAY;
+		if (!NOUGAT_GPU_ENDPOINT.isEmpty()) {
+			final URL url = new URL(String.format("%s/health", NOUGAT_GPU_ENDPOINT));
+			final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+			connection.setRequestMethod("GET");
+			responseCode = connection.getResponseCode();
+		}
 
 		final TaskRequest req = new TaskRequest();
 		req.setTimeoutMinutes(REQUEST_TIMEOUT_MINUTES);
-		req.setInput(input);
+		req.setInput(pdf);
 		req.setScript(ExtractEquationsResponseHandler.NAME);
 		req.setUserId(userId);
 

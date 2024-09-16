@@ -19,12 +19,6 @@ public class ExtractEquationsResponseHandler extends TaskResponseHandler {
 	}
 
 	@Data
-	public static class Input {
-
-		byte[] pdf;
-	}
-
-	@Data
 	public static class ResponseOutput {
 
 		private JsonNode response;

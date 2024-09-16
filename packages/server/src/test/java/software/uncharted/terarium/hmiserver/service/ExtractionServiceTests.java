@@ -133,7 +133,7 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 			.get();
 	}
 
-	// // @Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void cosmosPdfExtraction() throws Exception {
 		final ClassPathResource resource = new ClassPathResource("knowledge/paper.pdf");
@@ -142,13 +142,13 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 		final HttpEntity pdfFileEntity = new ByteArrayEntity(content, ContentType.create("application/pdf"));
 
 		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
-			.setFileNames(List.of("paper.pdf"))
+			.setFileNames(List.of("SIR.pdf"))
 			.setName("test-pdf-name")
 			.setDescription("my description");
 
 		documentAsset = documentAssetService.createAsset(documentAsset, project.getId(), ASSUME_WRITE_PERMISSION);
 
-		documentAssetService.uploadFile(documentAsset.getId(), "paper.pdf", pdfFileEntity);
+		documentAssetService.uploadFile(documentAsset.getId(), "SIR.pdf", pdfFileEntity);
 
 		documentAsset = extractionService
 			.extractPDFAndApplyToDocument(documentAsset.getId(), null, ASSUME_WRITE_PERMISSION)
