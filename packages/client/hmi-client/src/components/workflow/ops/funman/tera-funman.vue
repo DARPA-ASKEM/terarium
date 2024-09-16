@@ -15,16 +15,19 @@
 				<template #content>
 					<div class="top-toolbar">
 						<p>Set your model checks and settings then click run.</p>
-						<Button :loading="showSpinner" label="Run" icon="pi pi-play" @click="runMakeQuery" />
+						<div class="btn-group">
+							<Button label="Reset" outlined severity="secondary" />
+							<Button :loading="showSpinner" label="Run" icon="pi pi-play" @click="runMakeQuery" />
+						</div>
 					</div>
 					<main>
-						<Accordion multiple :active-index="[0, 1]" class="accordion-component">
+						<Accordion multiple :active-index="[0, 1]">
 							<AccordionTab>
 								<template #header>
 									Model checks
 									<i class="pi pi-info-circle pl-2" v-tooltip="validateParametersToolTip" />
 								</template>
-								<p class="mt-1">
+								<p>
 									Implement sanity checks on the state space of the model to see how the parameter space of the model is
 									partitioned into satisfiable and unsatisfiable regions separated by decision boundaries.
 								</p>
@@ -40,7 +43,7 @@
 									@update-self="updateConstraintGroupForm"
 								/>
 								<Button
-									class="add-constraint-spacer"
+									class="mt-2"
 									text
 									icon="pi pi-plus"
 									label="Add new check"
@@ -530,6 +533,13 @@ watch(
 </script>
 
 <style scoped>
+.btn-group {
+	display: flex;
+	align-items: center;
+	gap: var(--gap-small);
+	margin-left: auto;
+}
+
 .primary-text {
 	display: flex;
 	align-items: center;
@@ -583,11 +593,6 @@ div.section-row.timespan > div > span {
 	width: 100%;
 }
 
-.add-constraint-spacer {
-	margin-top: 0.5rem;
-	margin-bottom: 2rem;
-}
-
 .green-text {
 	color: var(--Primary, #1b8073);
 }
@@ -596,15 +601,17 @@ div.section-row.timespan > div > span {
 	color: var(--text-color-subdued);
 }
 
+.p-accordion {
+	padding: 0 var(--gap-2);
+}
+
 /** Override default accordion styles */
-.accordion-component:deep(.p-accordion-header-link) {
+:deep(.p-accordion-header-link) {
 	background-color: var(--surface-100);
 }
 
-.accordion-component:deep(.p-accordion-content) {
+:deep(.p-accordion-content) {
 	background-color: var(--surface-100);
-	padding-left: var(--gap);
-	padding-right: var(--gap);
 }
 
 /* Override grid template so output expands when sidebar is closed */
