@@ -15,7 +15,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -170,11 +172,11 @@ public class ExtractionService {
 
 	static class ExtractPDFResponse {
 
-		JsonNode abstractJsonNode;
 		String documentAbstract;
 		String documentText;
 		List<ExtractionFile> files = new ArrayList<>();
 		List<DocumentExtraction> assets = new ArrayList<>();
+		List<JsonNode> equations = new ArrayList<>();
 		ArrayNode variableAttributes;
 		JsonNode gollmCard;
 	}
@@ -190,173 +192,49 @@ public class ExtractionService {
 		try {
 			notificationInterface.sendMessage("Starting extraction...");
 
-			final ByteMultipartFile documentFile = new ByteMultipartFile(documentContents, documentName, "application/pdf");
-
-			final boolean compressImages = false;
-			final boolean useCache = false;
-			final ResponseEntity<JsonNode> extractionResp = extractionProxy.processPdfExtraction(
-				compressImages,
-				useCache,
-				documentFile
+			final Future<CosmosTextExtraction> cosmosTextExtractionFuture = extractTextFromPDF(
+				notificationInterface,
+				documentName,
+				documentContents
 			);
 
-			final JsonNode body = extractionResp.getBody();
-			final UUID jobId = UUID.fromString(body.get("job_id").asText());
-
-			final int POLLING_INTERVAL_SECONDS = 5;
-			final int MAX_EXECUTION_TIME_SECONDS = 600;
-			final int MAX_ITERATIONS = MAX_EXECUTION_TIME_SECONDS / POLLING_INTERVAL_SECONDS;
-
-			boolean jobDone = false;
-			notificationInterface.sendMessage("COSMOS extraction in progress...");
-
-			for (int i = 0; i < MAX_ITERATIONS; i++) {
-				final ResponseEntity<JsonNode> statusResp = extractionProxy.status(jobId);
-				if (!statusResp.getStatusCode().is2xxSuccessful()) {
-					throw new RuntimeException("Unable to poll status endpoint");
-				}
-
-				final JsonNode statusData = statusResp.getBody();
-				if (!statusData.get("error").isNull()) {
-					throw new RuntimeException("Extraction job failed: " + statusData.has("error"));
-				}
-
-				log.info("Polled status endpoint {} times:\n{}", i + 1, statusData);
-				jobDone = statusData.get("error").asBoolean() || statusData.get("job_completed").asBoolean();
-				if (jobDone) {
-					notificationInterface.sendMessage("COSMOS extraction complete; processing results...");
-					break;
-				}
-				Thread.sleep(POLLING_INTERVAL_SECONDS * 1000);
-			}
-
-			if (!jobDone) {
-				throw new RuntimeException("Extraction job did not complete within the expected time");
-			}
-
-			final ResponseEntity<byte[]> zipFileResp = extractionProxy.result(jobId);
-			if (!zipFileResp.getStatusCode().is2xxSuccessful()) {
-				throw new RuntimeException("Unable to fetch the extraction result");
-			}
-
-			notificationInterface.sendMessage("Uploading COSMOS extraction results...");
-			final String zipFileName = documentName + "_cosmos.zip";
-
-			extractionResponse.files.add(
-				new ExtractionFile(zipFileName, zipFileResp.getBody(), ContentType.APPLICATION_OCTET_STREAM)
+			final Future<NougatEquationExtraction> nougatEquationExtractionFuture = extractEquationsFromPDF(
+				notificationInterface,
+				documentContents,
+				userId
 			);
 
-			JsonNode abstractJsonNode = null;
-			// Open the zipfile and extract the contents
-			notificationInterface.sendMessage("Extracting COSMOS extraction results...");
-			final Map<String, byte[]> fileMap = new HashMap<>();
-			try {
-				final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(zipFileResp.getBody());
-				final ZipInputStream zipInputStream = new ZipInputStream(byteArrayInputStream);
+			// wait for both futures to complete
+			final CosmosTextExtraction cosmosTextExtraction = cosmosTextExtractionFuture.get();
+			extractionResponse.documentAbstract = cosmosTextExtraction.documentAbstract;
+			extractionResponse.documentText = cosmosTextExtraction.documentText;
+			extractionResponse.assets = cosmosTextExtraction.assets;
+			extractionResponse.files = cosmosTextExtraction.files;
 
-				ZipEntry entry = zipInputStream.getNextEntry();
-				while (entry != null) {
-					log.info("Adding {} to filemap", entry.getName());
-					final String filenameNoExt = removeFileExtension(entry.getName());
-					final byte[] bytes = zipEntryToBytes(zipInputStream);
-
-					fileMap.put(filenameNoExt, bytes);
-					if (entry != null && entry.getName().toLowerCase().endsWith(".json")) {
-						final ObjectMapper objectMapper = new ObjectMapper();
-
-						final JsonNode rootNode = objectMapper.readTree(bytes);
-						if (rootNode instanceof ArrayNode) {
-							final ArrayNode arrayNode = (ArrayNode) rootNode;
-							for (final JsonNode record : arrayNode) {
-								if (record.has("detect_cls") && record.get("detect_cls").asText().equals("Abstract")) {
-									abstractJsonNode = record;
-									break;
-								}
-							}
-						}
-					}
-					entry = zipInputStream.getNextEntry();
-				}
-
-				zipInputStream.closeEntry();
-				zipInputStream.close();
-			} catch (final IOException e) {
-				throw new RuntimeException("Unable to extract the contents of the zip file", e);
-			}
-
-			if (abstractJsonNode != null) {
-				extractionResponse.documentAbstract = abstractJsonNode.get(NODE_CONTENT).asText();
-			}
-
-			final ResponseEntity<JsonNode> textResp = extractionProxy.text(jobId);
-			if (!textResp.getStatusCode().is2xxSuccessful()) {
-				throw new RuntimeException("Unable to fetch the text extractions");
-			}
-
-			for (final ExtractionAssetType extractionType : ExtractionAssetType.values()) {
-				final ResponseEntity<JsonNode> response = extractionProxy.extraction(jobId, extractionType.toStringPlural());
-				log.info("Extraction type {} response status: {}", extractionType, response.getStatusCode());
-				if (!response.getStatusCode().is2xxSuccessful()) {
-					log.warn("Unable to fetch the {} extractions", extractionType);
-					continue;
-				}
-
-				for (final JsonNode record : response.getBody()) {
-					String assetFileName = "";
-					if (record.has("img_pth")) {
-						final String path = record.get("img_pth").asText();
-						assetFileName = path.substring(path.lastIndexOf("/") + 1);
-						final String assetFilenameNoExt = removeFileExtension(assetFileName);
-						if (!fileMap.containsKey(assetFilenameNoExt)) {
-							log.warn("Unable to find file {} in zipfile", assetFileName);
-						}
-						final byte[] file = fileMap.get(assetFilenameNoExt);
-						if (file == null) {
-							throw new RuntimeException("Unable to find file " + assetFileName + " in zipfile");
-						}
-						extractionResponse.files.add(new ExtractionFile(assetFileName, file, ContentType.IMAGE_JPEG));
-					} else {
-						log.warn("No img_pth found in record: {}", record);
-					}
-
-					final DocumentExtraction extraction = new DocumentExtraction();
-					extraction.setFileName(assetFileName);
-					extraction.setAssetType(extractionType);
-					extraction.setMetadata(objectMapper.convertValue(record, new TypeReference<>() {}));
-
-					extractionResponse.assets.add(extraction);
-					notificationInterface.sendMessage(String.format("Add COSMOS extraction %s to Document...", assetFileName));
-				}
-			}
-
-			String documentText = "";
-			for (final JsonNode record : textResp.getBody()) {
-				if (record.has(NODE_CONTENT)) {
-					documentText += record.get(NODE_CONTENT).asText() + "\n";
-				} else {
-					log.warn("No content found in record: {}", record);
-				}
-			}
-			extractionResponse.documentText = documentText;
+			final NougatEquationExtraction nougatEquationExtraction = nougatEquationExtractionFuture.get();
+			extractionResponse.equations = nougatEquationExtraction.equations;
 
 			// if there is text, run variable extraction
-			if (!documentText.isEmpty()) {
+			if (!extractionResponse.documentText.isEmpty()) {
 				// run variable extraction
 				try {
 					notificationInterface.sendMessage("Dispatching variable extraction request...");
-					extractionResponse.variableAttributes = getVariablesFromDocumentText(notificationInterface, documentText);
+					extractionResponse.variableAttributes = getVariablesFromDocumentText(
+						notificationInterface,
+						extractionResponse.documentText
+					);
 					notificationInterface.sendMessage("Variable extraction completed");
 				} catch (final Exception e) {
 					notificationInterface.sendMessage("Variable extraction failed, continuing");
 				}
 
-				// check for input length
-				if (documentText.length() > ModelCardResponseHandler.MAX_TEXT_SIZE) {
+				// check for input length, if too long, do not send request
+				if (extractionResponse.documentText.length() > ModelCardResponseHandler.MAX_TEXT_SIZE) {
 					log.warn("Document {} text too long for GoLLM model card task, not sending request");
 				} else {
 					// dispatch GoLLM model card request
 					final ModelCardResponseHandler.Input input = new ModelCardResponseHandler.Input();
-					input.setResearchPaper(documentText);
+					input.setResearchPaper(extractionResponse.documentText);
 
 					// Create the task
 					final TaskRequest req = new TaskRequest();
@@ -435,6 +313,13 @@ public class ExtractionService {
 				document.setMetadata(new HashMap<>());
 			}
 			document.getMetadata().put("gollmCard", extractionResponse.gollmCard);
+		}
+
+		if (extractionResponse.equations != null) {
+			if (document.getMetadata() == null) {
+				document.setMetadata(new HashMap<>());
+			}
+			document.getMetadata().put("equations", objectMapper.valueToTree(extractionResponse.equations));
 		}
 
 		log.info("Added extraction to document: {}", documentId);
@@ -856,7 +741,13 @@ public class ExtractionService {
 	@Value("${terarium.taskrunner.nougat.gpu-endpoint}")
 	private String NOUGAT_GPU_ENDPOINT;
 
-	public Future<ExtractEquationsResponseHandler.ResponseOutput> extractEquationsFromPDF(
+	static class NougatEquationExtraction {
+
+		List<JsonNode> equations;
+	}
+
+	public Future<NougatEquationExtraction> extractEquationsFromPDF(
+		final NotificationGroupInstance<Properties> notificationInterface,
 		final byte[] pdf,
 		final String userId
 	) throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException, IOException {
@@ -888,7 +779,198 @@ public class ExtractionService {
 			final TaskResponse resp = taskService.runTaskSync(req);
 
 			final byte[] outputBytes = resp.getOutput();
-			return objectMapper.readValue(outputBytes, ExtractEquationsResponseHandler.ResponseOutput.class);
+			final ExtractEquationsResponseHandler.ResponseOutput output = objectMapper.readValue(
+				outputBytes,
+				ExtractEquationsResponseHandler.ResponseOutput.class
+			);
+
+			// Collect keys
+			final List<String> keys = new ArrayList<>();
+			final Iterator<Map.Entry<String, JsonNode>> fieldsIterator = output.getResponse().fields();
+			while (fieldsIterator.hasNext()) {
+				final Map.Entry<String, JsonNode> field = fieldsIterator.next();
+				keys.add(field.getKey());
+			}
+
+			// Sort keys
+			Collections.sort(keys);
+
+			final NougatEquationExtraction extraction = new NougatEquationExtraction();
+
+			for (final String key : keys) {
+				extraction.equations.add(output.getResponse().get(key));
+			}
+
+			return extraction;
+		});
+	}
+
+	static class CosmosTextExtraction {
+
+		String documentAbstract;
+		String documentText;
+		List<DocumentExtraction> assets = new ArrayList<>();
+		List<ExtractionFile> files = new ArrayList<>();
+	}
+
+	public Future<CosmosTextExtraction> extractTextFromPDF(
+		final NotificationGroupInstance<Properties> notificationInterface,
+		final String documentName,
+		final byte[] pdf
+	) {
+		return executor.submit(() -> {
+			final CosmosTextExtraction extractionResponse = new CosmosTextExtraction();
+
+			final ByteMultipartFile documentFile = new ByteMultipartFile(pdf, documentName, "application/pdf");
+
+			final boolean compressImages = false;
+			final boolean useCache = false;
+			final ResponseEntity<JsonNode> extractionResp = extractionProxy.processPdfExtraction(
+				compressImages,
+				useCache,
+				documentFile
+			);
+
+			final JsonNode body = extractionResp.getBody();
+			final UUID jobId = UUID.fromString(body.get("job_id").asText());
+
+			final int POLLING_INTERVAL_SECONDS = 5;
+			final int MAX_EXECUTION_TIME_SECONDS = 600;
+			final int MAX_ITERATIONS = MAX_EXECUTION_TIME_SECONDS / POLLING_INTERVAL_SECONDS;
+
+			boolean jobDone = false;
+			notificationInterface.sendMessage("COSMOS extraction in progress...");
+
+			for (int i = 0; i < MAX_ITERATIONS; i++) {
+				final ResponseEntity<JsonNode> statusResp = extractionProxy.status(jobId);
+				if (!statusResp.getStatusCode().is2xxSuccessful()) {
+					throw new RuntimeException("Unable to poll status endpoint");
+				}
+
+				final JsonNode statusData = statusResp.getBody();
+				if (!statusData.get("error").isNull()) {
+					throw new RuntimeException("Extraction job failed: " + statusData.has("error"));
+				}
+
+				log.info("Polled status endpoint {} times:\n{}", i + 1, statusData);
+				jobDone = statusData.get("error").asBoolean() || statusData.get("job_completed").asBoolean();
+				if (jobDone) {
+					notificationInterface.sendMessage("COSMOS extraction complete; processing results...");
+					break;
+				}
+				Thread.sleep(POLLING_INTERVAL_SECONDS * 1000);
+			}
+
+			if (!jobDone) {
+				throw new RuntimeException("Extraction job did not complete within the expected time");
+			}
+
+			final ResponseEntity<byte[]> zipFileResp = extractionProxy.result(jobId);
+			if (!zipFileResp.getStatusCode().is2xxSuccessful()) {
+				throw new RuntimeException("Unable to fetch the extraction result");
+			}
+
+			notificationInterface.sendMessage("Uploading COSMOS extraction results...");
+			final String zipFileName = documentName + "_cosmos.zip";
+
+			extractionResponse.files.add(
+				new ExtractionFile(zipFileName, zipFileResp.getBody(), ContentType.APPLICATION_OCTET_STREAM)
+			);
+
+			JsonNode abstractJsonNode = null;
+			// Open the zipfile and extract the contents
+			notificationInterface.sendMessage("Extracting COSMOS extraction results...");
+			final Map<String, byte[]> fileMap = new HashMap<>();
+			try {
+				final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(zipFileResp.getBody());
+				final ZipInputStream zipInputStream = new ZipInputStream(byteArrayInputStream);
+
+				ZipEntry entry = zipInputStream.getNextEntry();
+				while (entry != null) {
+					log.info("Adding {} to filemap", entry.getName());
+					final String filenameNoExt = removeFileExtension(entry.getName());
+					final byte[] bytes = zipEntryToBytes(zipInputStream);
+
+					fileMap.put(filenameNoExt, bytes);
+					if (entry != null && entry.getName().toLowerCase().endsWith(".json")) {
+						final ObjectMapper objectMapper = new ObjectMapper();
+
+						final JsonNode rootNode = objectMapper.readTree(bytes);
+						if (rootNode instanceof ArrayNode) {
+							final ArrayNode arrayNode = (ArrayNode) rootNode;
+							for (final JsonNode record : arrayNode) {
+								if (record.has("detect_cls") && record.get("detect_cls").asText().equals("Abstract")) {
+									abstractJsonNode = record;
+									break;
+								}
+							}
+						}
+					}
+					entry = zipInputStream.getNextEntry();
+				}
+
+				zipInputStream.closeEntry();
+				zipInputStream.close();
+			} catch (final IOException e) {
+				throw new RuntimeException("Unable to extract the contents of the zip file", e);
+			}
+
+			if (abstractJsonNode != null) {
+				extractionResponse.documentAbstract = abstractJsonNode.get(NODE_CONTENT).asText();
+			}
+
+			final ResponseEntity<JsonNode> textResp = extractionProxy.text(jobId);
+			if (!textResp.getStatusCode().is2xxSuccessful()) {
+				throw new RuntimeException("Unable to fetch the text extractions");
+			}
+
+			for (final ExtractionAssetType extractionType : ExtractionAssetType.values()) {
+				final ResponseEntity<JsonNode> response = extractionProxy.extraction(jobId, extractionType.toStringPlural());
+				log.info("Extraction type {} response status: {}", extractionType, response.getStatusCode());
+				if (!response.getStatusCode().is2xxSuccessful()) {
+					log.warn("Unable to fetch the {} extractions", extractionType);
+					continue;
+				}
+
+				for (final JsonNode record : response.getBody()) {
+					String assetFileName = "";
+					if (record.has("img_pth")) {
+						final String path = record.get("img_pth").asText();
+						assetFileName = path.substring(path.lastIndexOf("/") + 1);
+						final String assetFilenameNoExt = removeFileExtension(assetFileName);
+						if (!fileMap.containsKey(assetFilenameNoExt)) {
+							log.warn("Unable to find file {} in zipfile", assetFileName);
+						}
+						final byte[] file = fileMap.get(assetFilenameNoExt);
+						if (file == null) {
+							throw new RuntimeException("Unable to find file " + assetFileName + " in zipfile");
+						}
+						extractionResponse.files.add(new ExtractionFile(assetFileName, file, ContentType.IMAGE_JPEG));
+					} else {
+						log.warn("No img_pth found in record: {}", record);
+					}
+
+					final DocumentExtraction extraction = new DocumentExtraction();
+					extraction.setFileName(assetFileName);
+					extraction.setAssetType(extractionType);
+					extraction.setMetadata(objectMapper.convertValue(record, new TypeReference<>() {}));
+
+					extractionResponse.assets.add(extraction);
+					notificationInterface.sendMessage(String.format("Add COSMOS extraction %s to Document...", assetFileName));
+				}
+			}
+
+			String documentText = "";
+			for (final JsonNode record : textResp.getBody()) {
+				if (record.has(NODE_CONTENT)) {
+					documentText += record.get(NODE_CONTENT).asText() + "\n";
+				} else {
+					log.warn("No content found in record: {}", record);
+				}
+			}
+			extractionResponse.documentText = documentText;
+
+			return extractionResponse;
 		});
 	}
 }

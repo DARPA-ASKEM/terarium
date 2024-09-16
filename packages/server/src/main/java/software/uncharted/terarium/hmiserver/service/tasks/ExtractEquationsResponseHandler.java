@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,6 @@ public class ExtractEquationsResponseHandler extends TaskResponseHandler {
 	@Data
 	public static class ResponseOutput {
 
-		private String response;
+		private JsonNode response;
 	}
 }
