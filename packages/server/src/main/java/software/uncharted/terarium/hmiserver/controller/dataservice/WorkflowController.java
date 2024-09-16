@@ -1,7 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -63,42 +62,6 @@ public class WorkflowController {
 	final ReBACService reBACService;
 
 	final Messages messages;
-
-	@GetMapping
-	@Secured(Roles.USER)
-	@Operation(summary = "Gets all workflows")
-	@ApiResponses(
-		value = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "Workflows found.",
-				content = @Content(
-					mediaType = MediaType.APPLICATION_JSON_VALUE,
-					array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class))
-				)
-			),
-			@ApiResponse(
-				responseCode = "204",
-				description = "There are no workflows found and no errors occurred",
-				content = @Content
-			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue retrieving workflows from the data store",
-				content = @Content
-			)
-		}
-	)
-	public ResponseEntity<List<Workflow>> getWorkflows(
-		@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
-		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
-	) {
-		final List<Workflow> workflows = workflowService.getPublicNotTemporaryAssets(page, pageSize);
-		if (workflows.isEmpty()) {
-			return ResponseEntity.noContent().build();
-		}
-		return ResponseEntity.ok(workflows);
-	}
 
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)

@@ -105,42 +105,6 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanGetCodes() throws Exception {
-		codeAssetService.createAsset(
-			(Code) new Code()
-				.setMetadata(createMetadata())
-				.setFiles(Map.of("test.py", createCodeFile()))
-				.setName("test-code-name")
-				.setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
-		codeAssetService.createAsset(
-			(Code) new Code()
-				.setMetadata(createMetadata())
-				.setFiles(Map.of("test.py", createCodeFile()))
-				.setName("test-code-name")
-				.setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
-		codeAssetService.createAsset(
-			(Code) new Code()
-				.setMetadata(createMetadata())
-				.setFiles(Map.of("test.py", createCodeFile()))
-				.setName("test-code-name")
-				.setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
-		mockMvc.perform(MockMvcRequestBuilders.get("/code-asset").with(csrf())).andExpect(status().isOk()).andReturn();
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteCode() throws Exception {
 		final Code codeAsset = codeAssetService.createAsset(
 			(Code) new Code()
