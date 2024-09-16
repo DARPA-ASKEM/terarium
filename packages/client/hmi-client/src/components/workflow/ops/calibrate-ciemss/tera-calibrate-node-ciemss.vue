@@ -50,15 +50,17 @@ import {
 	Model,
 	ModelConfiguration,
 	SemanticType,
-	InferredParameterSemantic
+	InferredParameterSemantic,
+	InterventionPolicy
 } from '@/types/Types';
 import { ChartSettingType } from '@/types/common';
 import { createLLMSummary } from '@/services/summary-service';
-import { createForecastChart } from '@/services/charts';
+import { createForecastChart, createInterventionChartMarkers } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import * as stats from '@/utils/stats';
 import { createDatasetFromSimulationResult } from '@/services/dataset';
 import { useProjects } from '@/composables/project';
+import { getInterventionPolicyById } from '@/services/intervention-policy';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { CalibrationOperationCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults } from './calibrate-utils';
@@ -77,6 +79,8 @@ const runResult = ref<DataArray>([]);
 const runResultPre = ref<DataArray>([]);
 const runResultSummary = ref<DataArray>([]);
 const runResultSummaryPre = ref<DataArray>([]);
+const policyInterventionId = computed(() => props.node.inputs[2].value?.[0]);
+const interventionPolicy = ref<InterventionPolicy | null>(null);
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
@@ -129,6 +133,8 @@ onMounted(async () => updateLossChartWithSimulation());
 
 let pyciemssMap: Record<string, string> = {};
 
+const groupedInterventionOutputs = computed(() => _.groupBy(interventionPolicy.value?.interventions, 'appliedTo'));
+
 const preparedCharts = computed(() => {
 	const state = props.node.state;
 
@@ -168,7 +174,7 @@ const preparedCharts = computed(() => {
 			datasetVariables.push(mapObj.datasetVariable);
 		}
 
-		return createForecastChart(
+		const chart = createForecastChart(
 			{
 				data: result,
 				variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
@@ -195,6 +201,10 @@ const preparedCharts = computed(() => {
 				...chartSize
 			}
 		);
+
+		chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[variable]));
+
+		return chart;
 	});
 });
 
@@ -471,6 +481,18 @@ watch(
 		const datasetId = props.node.inputs[1]?.value?.[0];
 		const { csv } = await setupDatasetInput(datasetId);
 		csvAsset.value = csv;
+	},
+	{ immediate: true }
+);
+
+watch(
+	() => policyInterventionId.value,
+	() => {
+		if (policyInterventionId.value) {
+			getInterventionPolicyById(policyInterventionId.value).then((policy) => {
+				interventionPolicy.value = policy;
+			});
+		}
 	},
 	{ immediate: true }
 );
