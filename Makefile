@@ -57,4 +57,4 @@ images: $(TARGETS:%=image-%)
 
 ## Utilities
 yarn-install:
-	yarn install
+	@YARN_ENABLE_HARDENED_MODE=1 yarn install
