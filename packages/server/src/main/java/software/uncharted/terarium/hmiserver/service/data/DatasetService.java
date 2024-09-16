@@ -167,7 +167,7 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 	}
 
 	@Observed(name = "function_profile")
-	public void addDatasetColumns(final Dataset dataset, final String fileName, final List<String> headers) {
+	public static void addDatasetColumns(final Dataset dataset, final String fileName, final List<String> headers) {
 		if (dataset.getColumns() == null) {
 			dataset.setColumns(new ArrayList<>());
 		}
@@ -193,7 +193,7 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 
 		final BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(bytes.get())));
 
-		String line = null;
+		String line;
 		Integer count = 0;
 		while ((line = reader.readLine()) != null) {
 			if (limit > 0 && count > limit) {

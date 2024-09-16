@@ -156,7 +156,7 @@ public class ProjectController {
 	) {
 		final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
 
-		List<UUID> projectIds = null;
+		final List<UUID> projectIds;
 		try {
 			projectIds = rebacUser.lookupProjects();
 		} catch (final Exception e) {
@@ -213,7 +213,7 @@ public class ProjectController {
 			// Set the contributors for the project. If we are unable to get the
 			// contributors, we default to an empty
 			// list.
-			List<Contributor> contributors = null;
+			final List<Contributor> contributors;
 			try {
 				contributors = projectPermissionsService.getContributors(rebacProject);
 				project
@@ -534,8 +534,8 @@ public class ProjectController {
 		// time the progress takes to reach each subsequent half.
 		final Double HALFTIME_SECONDS = 1.0;
 
-		Future<Project> project;
-		Project clonedProject;
+		final Future<Project> project;
+		final Project clonedProject;
 
 		final String userId = currentUserService.get().getId();
 		final String userName = userService.getById(userId).getName();
@@ -676,7 +676,7 @@ public class ProjectController {
 	@PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	public ResponseEntity<Project> importProject(@RequestPart("file") final MultipartFile input) {
-		if (!input.getContentType().equals("application/zip")) {
+		if (input.getContentType() != null && !input.getContentType().equals("application/zip")) {
 			return ResponseEntity.badRequest().build();
 		}
 
@@ -691,7 +691,7 @@ public class ProjectController {
 		final String userId = currentUserService.get().getId();
 		final String userName = userService.getById(userId).getName();
 
-		Project project;
+		final Project project;
 		try {
 			log.info("Importing project");
 			project = cloneService.importProject(userId, userName, projectExport);

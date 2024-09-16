@@ -251,7 +251,7 @@ public class ExtractionService {
 					final byte[] bytes = zipEntryToBytes(zipInputStream);
 
 					fileMap.put(filenameNoExt, bytes);
-					if (entry != null && entry.getName().toLowerCase().endsWith(".json")) {
+					if (entry.getName().toLowerCase().endsWith(".json")) {
 						final ObjectMapper objectMapper = new ObjectMapper();
 
 						final JsonNode rootNode = objectMapper.readTree(bytes);
@@ -459,7 +459,7 @@ public class ExtractionService {
 
 			log.info("Document SHA: {}, checking cache", documentSHA);
 
-			ExtractPDFResponse extractionResponse = null;
+			final ExtractPDFResponse extractionResponse;
 			if (responseCache.containsKey(documentSHA)) {
 				log.info("Returning cached response for document {} for SHA: {}", documentId, documentSHA);
 
