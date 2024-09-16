@@ -6,7 +6,7 @@ cd /mira_task
 pip install -e .
 
 # run it
-echo "Running taskrunner"
+echo "Installing taskrunner"
 cd /taskrunner
 pip install -e .
 

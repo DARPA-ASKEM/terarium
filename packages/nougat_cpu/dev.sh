@@ -6,9 +6,12 @@ cd /nougat_task
 pip3 install -e .
 
 # run it
-echo "Running taskrunner"
+echo "Installing taskrunner"
 cd /taskrunner
 pip3 install -e .
+
+# make the log directory
+mkdir /var/log/supervisor
 
 echo "Starting supervisord"
 supervisord -c /nougat_task/supervisord.conf

@@ -79,7 +79,7 @@ services:
     networks:
       - terarium
     ports:
-      - "6300:8001"
+      - "6300:8002"
     environment:
       TERARIUM_MQ_ADDRESSES: "amqp://rabbitmq:5672"
       TERARIUM_MQ_PASSWORD: "terarium123"

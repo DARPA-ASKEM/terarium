@@ -6,7 +6,7 @@ cd /gollm_task
 pip3 install -e .
 
 # run it
-echo "Running taskrunner"
+echo "Installing taskrunner"
 cd /taskrunner
 pip3 install -e .
 

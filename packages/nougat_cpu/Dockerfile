@@ -11,12 +11,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	software-properties-common
 RUN add-apt-repository ppa:deadsnakes/ppa
 RUN apt-get update && apt-get install -y --no-install-recommends \
+	build-essential \
 	python3.10 \
 	python3.10-venv \
 	python3.10-dev \
 	python3-setuptools \
 	wget \
 	git \
+	libgl1 \
 	python3-pip && \
 	rm -rf /var/lib/apt/lists/*
 
@@ -42,7 +44,7 @@ WORKDIR /document_intelligence/document_intelligence/fast_latex
 RUN pip3 install -r requirements.txt
 
 #Install uvicorn and supervisord
-RUN pip3 install uvicorn setuptools supervisor
+RUN pip3 install uvicorn setuptools augraphy supervisor
 
 #^^^^^^^^^^^^^^^^^^^^
 ######################
@@ -53,10 +55,11 @@ COPY ./packages/taskrunner .
 
 RUN ./gradlew bootJar
 
-# Copy the jar to the root directory
-RUN mv /taskrunner/build/libs/*.jar /taskrunner.jar
-
 WORKDIR /
+
+# Copy the jar to the root directory
+RUN mv /taskrunner/build/libs/*.jar .
+RUN mv /terarium-1.0.0-SNAPSHOT.jar /taskrunner.jar
 
 # ------------------------------------------------------------------------------
 
@@ -71,7 +74,9 @@ COPY ./packages/nougat_cpu/supervisord.conf /etc/supervisor/conf.d/supervisord.c
 # Install OpenJDK JRE and wget
 RUN apt-get update && \
 	apt-get install -y --no-install-recommends \
+	build-essential \
 	git \
+	libgl1 \
 	openjdk-17-jre-headless && \
 	rm -rf /var/lib/apt/lists/*
 
@@ -95,7 +100,7 @@ WORKDIR /nougat_task
 RUN pip install --no-cache-dir -e .
 
 #Install uvicorn and supervisord
-RUN pip install uvicorn setuptools supervisor
+RUN pip install uvicorn setuptools augraphy supervisor
 
 WORKDIR /
 CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
