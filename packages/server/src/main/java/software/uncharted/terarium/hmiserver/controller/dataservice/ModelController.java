@@ -11,7 +11,6 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.transaction.Transactional;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -398,7 +397,7 @@ public class ModelController {
 		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
 	) {
 		try {
-			Query query = null;
+			final Query query;
 			if (queryJson != null) {
 				// if query is provided deserialize it, append the soft delete filter
 				final byte[] bytes = objectMapper.writeValueAsString(queryJson).getBytes();

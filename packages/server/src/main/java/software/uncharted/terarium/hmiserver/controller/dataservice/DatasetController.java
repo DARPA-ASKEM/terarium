@@ -12,7 +12,6 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -768,7 +767,7 @@ public class DatasetController {
 					return ResponseEntity.internalServerError().build();
 				}
 
-				datasetService.addDatasetColumns(updatedDataset.get(), filename, Arrays.asList(headers));
+				DatasetService.addDatasetColumns(updatedDataset.get(), filename, Arrays.asList(headers));
 
 				// add the filename to existing file names
 				if (!updatedDataset.get().getFileNames().contains(filename)) {

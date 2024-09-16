@@ -385,7 +385,7 @@ public class KnowledgeController {
 		final List<String> files = new ArrayList<>();
 		final List<String> blobs = new ArrayList<>();
 
-		ResponseEntity<JsonNode> resp = null;
+		final ResponseEntity<JsonNode> resp;
 
 		if (dynamicsOnly) {
 			for (final Entry<String, String> entry : codeContent.entrySet()) {
@@ -602,7 +602,7 @@ public class KnowledgeController {
 		);
 
 		// Provenance call if a document id is provided
-		StringMultipartFile documentFile = null;
+		final StringMultipartFile documentFile;
 		if (documentId.isPresent()) {
 			final DocumentAsset document = documentService.getAsset(documentId.get(), permission).orElseThrow();
 			documentFile = new StringMultipartFile(document.getText(), documentId.get() + ".txt", "application/text");
@@ -662,7 +662,7 @@ public class KnowledgeController {
 		}
 
 		final JsonNode card = resp.getBody();
-		final JsonNode profilingResult = card.get("DATA_PROFILING_RESULT");
+		final JsonNode profilingResult = (card != null) ? card.get("DATA_PROFILING_RESULT") : mapper.createObjectNode();
 
 		for (final DatasetColumn col : dataset.getColumns()) {
 			final JsonNode annotation = profilingResult.get(col.getName());
@@ -822,9 +822,11 @@ public class KnowledgeController {
 			);
 			return new ResponseStatusException(statusCode, messages.get("skema.internal-error"));
 		}
+
+		final HttpStatus httpStatus = (statusCode == null) ? HttpStatus.INTERNAL_SERVER_ERROR : statusCode;
 		log.error(
 			"An unknown error occurred while Skema Unified Service was trying to produce an AMR based on the provided resources"
 		);
-		return new ResponseStatusException(statusCode, messages.get("generic.unknown"));
+		return new ResponseStatusException(httpStatus, messages.get("generic.unknown"));
 	}
 }
