@@ -175,24 +175,6 @@ export function getModelType(model: Model | null | undefined): AMRSchemaNames {
 	return AMRSchemaNames.PETRINET;
 }
 
-// Converts a model into LaTeX equation, either one of PetriNet, StockN'Flow, or RegNet;
-export async function getModelEquation(model: Model): Promise<string> {
-	const unSupportedFormats = ['decapodes'];
-	if (unSupportedFormats.includes(model.header.schema_name as string)) {
-		console.warn(`getModelEquation: ${model.header.schema_name} not supported `);
-		return '';
-	}
-
-	/* TODO - Replace the GET with the POST when the backend is ready,
-	 *        see PR https://github.com/DARPA-ASKEM/sciml-service/pull/167
-	 */
-	const response = await API.get(`/transforms/model-to-latex/${model.id}`);
-	// const response = await API.post(`/transforms/model-to-latex/`, model);
-	const latex = response?.data?.latex;
-	if (!latex) return '';
-	return latex ?? '';
-}
-
 export const getUnitsFromModelParts = (model: Model) => {
 	const unitMapping: { [key: string]: string } = {
 		_time: model?.semantics?.ode?.time?.units?.expression || ''
