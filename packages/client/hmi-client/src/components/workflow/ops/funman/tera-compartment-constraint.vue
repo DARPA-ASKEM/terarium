@@ -1,8 +1,10 @@
 <template>
 	<div class="constraint-group">
-		<div class="section-row">
+		<header>
 			<label>Compartmental constraint</label>
-		</div>
+			<label class="mr-2">Active</label>
+			<InputSwitch class="mr-3" />
+		</header>
 		<div class="section-row" v-if="props.variables">
 			<div>{{ props.variables.join(' + ') }} = {{ props.mass }}</div>
 			<span v-for="v of props.variables" :key="v"> {{ v }} &#8805; 0, </span>
@@ -11,6 +13,9 @@
 </template>
 
 <script setup lang="ts">
+// import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
+import InputSwitch from 'primevue/inputswitch';
+
 const props = defineProps<{
 	variables: string[];
 	mass: string;

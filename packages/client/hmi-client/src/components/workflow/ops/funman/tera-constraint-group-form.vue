@@ -12,138 +12,90 @@
 				<Button icon="pi pi-trash" text rounded @click="emit('delete-self')" />
 			</div>
 		</header>
-		<!-- <div class="button-row">
-			<label>Name of constraint</label>
-			<tera-input-text
-				v-model="constraintName"
-				placeholder="Add constraint name"
-
-			/>
-		</div> -->
 		<p>
 			The
 			<Dropdown
 				:model-value="constraintType"
-				:options="constraintTypes"
-				option-value="id"
-				option-label="name"
-				placeholder="Select constraint type"
+				:options="Object.values(ConstraintType)"
 				@update:model-value="changeConstraintType($event)"
 			/>
 			<MultiSelect
 				v-model="variables"
-				:options="props.modelStates"
-				placeholder="Model states"
-				display="chip"
-				@update:model-value="updateChanges()"
+				placeholder="Select variables"
+				:options="ids"
+				@update:model-value="updateChanges"
 			/>
 			should be
+			<Dropdown
+				:model-value="derivativeType"
+				:options="Object.values(DerivativeType)"
+				@update:model-value="changeDerivativeType($event)"
+			/>
+			<tera-input-number
+				v-if="derivativeType === DerivativeType.LessThan"
+				v-model="upperBound"
+				@update:model-value="updateChanges"
+			/>
+			<tera-input-number
+				v-if="derivativeType === DerivativeType.GreaterThan"
+				v-model="lowerBound"
+				@update:model-value="updateChanges"
+			/>
+			<template v-if="derivativeType === DerivativeType.LessThan || derivativeType === DerivativeType.GreaterThan">
+				persons
+			</template>
+			<template
+				v-if="
+					derivativeType === DerivativeType.LessThan ||
+					derivativeType === DerivativeType.GreaterThan ||
+					derivativeType === DerivativeType.Increasing ||
+					derivativeType === DerivativeType.Decreasing ||
+					derivativeType === DerivativeType.LinearlyConstrained
+				"
+			>
+				from timepoint
+				<tera-input-number v-model="startTime" @update:model-value="updateChanges" />
+				day to timepoint
+				<tera-input-number v-model="endTime" @update:model-value="updateChanges" />
+			</template>
+			<!--Wrong variables being mutated-->
+			<template v-if="derivativeType === DerivativeType.Following">
+				time-series dataset within +/-
+				<tera-input-number v-model="startTime" @update:model-value="updateChanges" />
+				persons within a time window of
+				<tera-input-number v-model="endTime" @update:model-value="updateChanges" />
+			</template>
+			days.
 		</p>
-		<div class="section-row">
-			<div class="button-row">
-				<label>Constraint type</label>
-				<Dropdown
-					:model-value="constraintType"
-					:options="constraintTypes"
-					option-value="id"
-					option-label="name"
-					placeholder="Select constraint type"
-					@update:model-value="changeConstraintType($event)"
-				/>
-			</div>
-
-			<div class="button-row">
-				<label>Target</label>
-				<MultiSelect
-					v-if="constraintType !== 'parameterConstraint'"
-					v-model="variables"
-					:options="props.modelStates"
-					placeholder="Model states"
-					display="chip"
-					@update:model-value="updateChanges()"
-				/>
-				<MultiSelect
-					v-else
-					v-model="variables"
-					:options="props.modelParameters"
-					placeholder="Model states"
-					display="chip"
-					@update:model-value="updateChanges()"
-				/>
-			</div>
-		</div>
-
 		<!-- Weights -->
-		<div v-for="(variable, index) of variables" :key="index">
-			<div class="button-row">
-				<label v-if="weights">
-					{{ variable + ' Weight' }}
-				</label>
+		<ul v-if="weights && !isEmpty(weights)">
+			<li v-for="(variable, index) of variables" :key="index">
 				<tera-input-number
-					v-if="weights"
-					:key="index"
+					:label="variable + ' Weight'"
 					:placeholder="variable"
 					v-model="weights[index]"
 					@update:model-value="updateChanges()"
 				/>
-			</div>
-		</div>
-
-		<!-- These are the radio buttons -->
-		<section class="radio-buttons" v-if="constraintType === 'monotonicityConstraint'">
-			<RadioButton v-model="derivativeType" @update:model-value="updateChanges()" value="increasing" />
-			<label class="monoton-label">Increasing</label>
-			&nbsp;
-			<RadioButton v-model="derivativeType" @update:model-value="updateChanges()" value="decreasing" />
-			<label class="monoton-label">Decreasing</label>
-		</section>
-
-		<!-- These are the start, end times and upper, lower bounts inputs -->
-		<!-- I have cleaned this up a bit to make the fields spaced out better, fitting at full width. Also set the inputtext to md so that they match other fields on the page. -NG -->
-
-		<div v-if="constraintType !== 'monotonicityConstraint'" class="flex-container">
-			<div class="input-container">
-				<label for="input1" class="label label-padding">Start time</label>
-				<tera-input-number
-					id="input1"
-					class="p-inputtext-md"
-					v-model="startTime"
-					@update:model-value="updateChanges()"
-				/>
-			</div>
-
-			<div class="input-container">
-				<label for="input2" class="label label-padding">End time</label>
-				<tera-input-number id="input2" class="p-inputtext-md" v-model="endTime" @update:model-value="updateChanges()" />
-			</div>
-
-			<div class="input-container">
-				<label for="input3" class="label label-padding">Lower bound</label>
-				<tera-input-number v-model="lowerBound" @update:model-value="updateChanges()" />
-			</div>
-
-			<div class="input-container">
-				<label for="input4" class="label label-padding">Upper bound</label>
-				<tera-input-number v-model="upperBound" @update:model-value="updateChanges()" />
-			</div>
-		</div>
+			</li>
+		</ul>
 	</div>
 </template>
 
 <script setup lang="ts">
+import { isEmpty } from 'lodash';
 import { watch, ref, computed } from 'vue';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import MultiSelect from 'primevue/multiselect';
 import Dropdown from 'primevue/dropdown';
-import RadioButton from 'primevue/radiobutton';
 import InputSwitch from 'primevue/inputswitch';
 import Button from 'primevue/button';
-import { ConstraintGroup } from '@/components/workflow/ops/funman/funman-operation';
+import { ConstraintGroup, ConstraintType, DerivativeType } from '@/components/workflow/ops/funman/funman-operation';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 
 const props = defineProps<{
-	modelStates: string[];
-	modelParameters: string[];
+	stateIds: string[];
+	parameterIds: string[];
+	observableIds: string[];
 	config: ConstraintGroup;
 }>();
 
@@ -159,11 +111,18 @@ const variables = ref(props.config.variables);
 const weights = ref(props.config.weights);
 const derivativeType = ref(props.config.derivativeType);
 
-const constraintTypes = [
-	{ id: 'stateConstraint', name: 'state variables' },
-	{ id: 'parameterConstraint', name: 'parameter' },
-	{ id: 'observableConstraint', name: 'observable' }
-];
+const ids = computed(() => {
+	switch (constraintType.value) {
+		case ConstraintType.State:
+			return props.stateIds;
+		case ConstraintType.Parameter:
+			return props.parameterIds;
+		case ConstraintType.Observable:
+			return props.observableIds;
+		default:
+			return [];
+	}
+});
 
 const updatedConfig = computed<ConstraintGroup>(
 	() =>
@@ -179,27 +138,31 @@ const updatedConfig = computed<ConstraintGroup>(
 		}) as ConstraintGroup
 );
 
-// Changing type should wipe out current settings to avoid weird things from happening
-const changeConstraintType = (value: any) => {
-	constraintType.value = value;
-	weights.value = [];
-	variables.value = [];
-	startTime.value = 0;
-	endTime.value = 100;
-	lowerBound.value = 0;
-	upperBound.value = 1;
-
-	updateChanges();
-};
-
 const updateChanges = () => {
 	const wLen = updatedConfig.value.weights?.length ?? 0;
 	const vLen = updatedConfig.value.variables.length;
 	if (wLen !== vLen) {
 		updatedConfig.value.weights = Array<number>(vLen).fill(1.0);
 	}
-
 	emit('update-self', updatedConfig.value);
+};
+
+// Changing type should wipe out current settings to avoid weird things from happening
+const changeConstraintType = (newConstraintType: ConstraintType) => {
+	constraintType.value = newConstraintType;
+	weights.value = [];
+	variables.value = [];
+	startTime.value = 0;
+	endTime.value = 100;
+	lowerBound.value = 0;
+	upperBound.value = 1;
+	updateChanges();
+};
+
+const changeDerivativeType = (newDerivativeType: DerivativeType) => {
+	derivativeType.value = newDerivativeType;
+	// Mutate the rest of the sentence here
+	updateChanges();
 };
 
 watch(
@@ -227,83 +190,27 @@ watch(
 	overflow: hidden;
 }
 
-.sub-header {
-	display: flex;
-	padding-bottom: 0px;
-	justify-content: flex-end;
-	align-items: center;
-	gap: 1rem;
-	align-self: stretch;
+p {
+	&:deep(.tera-input) {
+		display: inline-flex;
+		height: 2.4rem; /* Match height of dropdowns */
+	}
+
+	&:deep(input) {
+		display: inline-flex;
+		width: 4rem;
+	}
 }
 
-.section-row {
-	display: flex;
-	flex-direction: row;
-	padding: var(--gap-small) 0;
-	align-items: center;
-	gap: 0.5rem;
-	width: 100%;
-}
-.button-row {
+ul {
+	list-style-type: none;
 	display: flex;
 	flex-direction: column;
-	padding: var(--gap-small) 0 var(--gap-small) 0;
-	width: 100%;
-	gap: var(--gap-xsmall);
-}
+	gap: var(--gap-2);
+	margin-top: var(--gap-2);
 
-.label-padding {
-	margin-bottom: 0.25rem;
-}
-
-.age-group {
-	display: flex;
-	flex-direction: column;
-	padding-right: var(--gap-medium);
-	padding-bottom: var(--gap-medium);
-}
-
-.select-variables {
-	display: flex;
-	flex-direction: column;
-}
-
-.subdued-text {
-	color: var(--text-color-subdued);
-}
-
-.sub-header {
-	display: flex;
-	padding-bottom: 0px;
-	justify-content: flex-end;
-	align-items: center;
-	gap: 1rem;
-	align-self: stretch;
-}
-
-.monoton-label {
-	margin-left: 0.25rem;
-}
-
-.radio-buttons {
-	margin-top: 0.5rem;
-}
-.flex-container {
-	width: 100%;
-	display: flex;
-	gap: 8px;
-	flex-wrap: wrap;
-	overflow: invisible;
-}
-
-.input-container {
-	display: flex;
-	flex-direction: column;
-}
-
-.label {
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
+	& > li {
+		text-align: right;
+	}
 }
 </style>

@@ -33,14 +33,15 @@
 								</p>
 								<ul>
 									<li>
-										<tera-compartment-constraint :variables="modelStates" :mass="mass" />
+										<tera-compartment-constraint :variables="stateIds" :mass="mass" />
 									</li>
 									<li v-for="(cfg, index) in node.state.constraintGroups" :key="selectedOutputId + ':' + index">
 										<tera-constraint-group-form
 											:config="cfg"
 											:index="index"
-											:model-states="modelStates"
-											:model-parameters="modelParameters"
+											:state-ids="stateIds"
+											:parameter-ids="parameterIds"
+											:observable-ids="observableIds"
 											@delete-self="deleteConstraintGroupForm(index)"
 											@update-self="(updatedConfig: ConstraintGroup) => updateConstraintGroupForm(index, updatedConfig)"
 										/>
@@ -164,7 +165,7 @@ import { pythonInstance } from '@/python/PyodideController';
 import TeraFunmanOutput from '@/components/workflow/ops/funman/tera-funman-output.vue';
 import TeraCompartmentConstraint from '@/components/workflow/ops/funman/tera-compartment-constraint.vue';
 import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-constraint-group-form.vue';
-import { FunmanOperationState, ConstraintGroup } from './funman-operation';
+import { FunmanOperationState, ConstraintGroup, ConstraintType, DerivativeType } from './funman-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<FunmanOperationState>;
@@ -208,7 +209,7 @@ const MAX = 99999999999;
 const requestConstraints = computed(() =>
 	// Same as node state's except typing for state vs linear constraint
 	props.node.state.constraintGroups?.map((ele) => {
-		if (ele.constraintType === 'monotonicityConstraint') {
+		if (ele.derivativeType === DerivativeType.Increasing || ele.derivativeType === DerivativeType.Decreasing) {
 			const weights = ele.weights ? ele.weights : [1.0];
 			const constraint: any = {
 				soft: true,
@@ -225,7 +226,7 @@ const requestConstraints = computed(() =>
 				derivative: true
 			};
 
-			if (ele.derivativeType === 'increasing') {
+			if (ele.derivativeType === DerivativeType.Increasing) {
 				// delete constraint.additive_bounds.closed_upper_bound;
 				// delete constraint.additive_bounds.ub;
 				// constraint.additive_bounds.lb = 0;
@@ -263,8 +264,9 @@ const requestParameters = ref<any[]>([]);
 const model = ref<Model | null>();
 const modelConfiguration = ref<ModelConfiguration>();
 
-const modelStates = ref<string[]>([]); // Used for form's multiselect.
-const modelParameters = ref<string[]>([]);
+const stateIds = ref<string[]>([]); // Used for form's multiselect.
+const parameterIds = ref<string[]>([]);
+const observableIds = ref<string[]>([]);
 
 const selectedOutputId = ref<string>();
 const outputs = computed(() => {
@@ -345,11 +347,11 @@ const addConstraintForm = () => {
 	const state = _.cloneDeep(props.node.state);
 	const newGroup: ConstraintGroup = {
 		borderColour: '#00c387',
-		name: '',
+		name: `Constraint ${state.constraintGroups.length + 1}`,
 		timepoints: { lb: 0, ub: 100 },
+		constraintType: ConstraintType.State,
 		variables: [],
-		constraintType: '',
-		derivativeType: ''
+		derivativeType: DerivativeType.LessThan
 	};
 	state.constraintGroups.push(newGroup);
 	emit('update-state', state);
@@ -413,22 +415,12 @@ const setModelOptions = async () => {
 	const massValue = await pythonInstance.evaluateExpression(modelMassExpression as string, parametersMap);
 	mass.value = massValue;
 
-	if (model.value.model.states) {
-		modelStates.value = model.value.model.states.map((s) => s.id);
+	const ode = model.value.semantics?.ode;
+	if (ode) {
+		if (ode.initials) stateIds.value = ode.initials.map((s) => s.target);
+		if (ode.parameters) parameterIds.value = ode.parameters.map((d) => d.id);
+		if (ode.observables) observableIds.value = ode.observables.map((d) => d.id);
 	}
-
-	if (model.value.semantics?.ode.parameters) {
-		modelParameters.value = model.value.semantics?.ode.parameters.map((d) => d.id);
-	}
-
-	// FIXME
-	// observables are not currently supported
-	// if (modelConfiguration.value.configuration.semantics?.ode?.observables) {
-	// 	modelConfiguration.value.configuration.semantics.ode.observables.forEach((o) => {
-	// 		modelColumnNameOptions.push(o.id);
-	// 	});
-	// }
-	// modelStates.value = modelColumnNameOptions;
 
 	const state = _.cloneDeep(props.node.state);
 	knobs.value.numberOfSteps = state.numSteps;

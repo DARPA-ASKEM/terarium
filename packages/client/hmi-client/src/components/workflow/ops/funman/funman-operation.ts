@@ -3,16 +3,30 @@ import type { FunmanInterval, TimeSpan } from '@/types/Types';
 
 const DOCUMENTATION_URL = 'https://github.com/siftech/funman';
 
+export enum ConstraintType {
+	State = 'state variable(s)',
+	Parameter = 'parameter(s)',
+	Observable = 'observable(s)'
+}
+
+export enum DerivativeType {
+	LessThan = 'less than',
+	GreaterThan = 'greater than',
+	Increasing = 'increasing',
+	Decreasing = 'decreasing',
+	LinearlyConstrained = 'linearly constrained',
+	Following = 'following'
+}
+
 export interface ConstraintGroup {
 	borderColour: string;
 	name: string;
-	constraintType: string;
+	constraintType: ConstraintType;
+	derivativeType: DerivativeType;
 	variables: string[]; // If len = 1, need to rename to "variable" for request formatting
 	weights?: number[]; // 1 to 1 mapping with variables
 	timepoints?: FunmanInterval;
 	interval?: FunmanInterval;
-
-	derivativeType?: string;
 }
 
 export interface RequestParameter {
