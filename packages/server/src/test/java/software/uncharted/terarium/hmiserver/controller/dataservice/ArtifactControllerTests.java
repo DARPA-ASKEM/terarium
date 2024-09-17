@@ -60,7 +60,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.post("/artifacts")
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", String.valueOf(project.getId()))
 					.with(csrf())
 					.contentType("application/json")
 					.content(objectMapper.writeValueAsString(artifact))
@@ -71,11 +71,19 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetArtifact() throws Exception {
-		final Artifact artifact = artifactService.createAsset(
-			(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		Artifact artifact = (Artifact) new Artifact().setName("test-artifact-name").setDescription("my description");
+
+		MvcResult res = mockMvc
+			.perform(
+				MockMvcRequestBuilders.post("/artifacts")
+					.param("project-id", String.valueOf(project.getId()))
+					.with(csrf())
+					.contentType("application/json")
+					.content(objectMapper.writeValueAsString(artifact))
+			)
+			.andReturn();
+
+		artifact = objectMapper.readValue(res.getResponse().getContentAsString(), Artifact.class);
 
 		mockMvc
 			.perform(MockMvcRequestBuilders.get("/artifacts/" + artifact.getId()).with(csrf()))
@@ -85,11 +93,19 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteArtifact() throws Exception {
-		final Artifact artifact = artifactService.createAsset(
-			(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		Artifact artifact = (Artifact) new Artifact().setName("test-artifact-name").setDescription("my description");
+
+		MvcResult res = mockMvc
+			.perform(
+				MockMvcRequestBuilders.post("/artifacts")
+					.param("project-id", String.valueOf(project.getId()))
+					.with(csrf())
+					.contentType("application/json")
+					.content(objectMapper.writeValueAsString(artifact))
+			)
+			.andReturn();
+
+		artifact = objectMapper.readValue(res.getResponse().getContentAsString(), Artifact.class);
 
 		mockMvc
 			.perform(MockMvcRequestBuilders.delete("/artifacts/" + artifact.getId()).with(csrf()))

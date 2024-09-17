@@ -45,7 +45,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
-import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
@@ -107,20 +106,23 @@ public class ArtifactController {
 	)
 	public ResponseEntity<Artifact> createArtifact(
 		@RequestBody final Artifact artifact,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestParam(name = "project-id") final UUID projectId
 	) {
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
 			projectId
 		);
+
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED).body(
-				artifactService.createAsset(artifact, projectId, permission)
-			);
+			final Artifact createdArtifact = artifactService.createAsset(artifact, projectId, permission);
+			projectAssetService.createProjectAsset(projectId, AssetType.ARTIFACT, createdArtifact, permission);
+			return ResponseEntity.status(HttpStatus.CREATED).body(createdArtifact);
 		} catch (final Exception e) {
-			final String error = "An error occurred while creating artifact";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			log.error("An error occurred while creating artifact", e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("artifact.unable-to-create")
+			);
 		}
 	}
 
@@ -147,13 +149,16 @@ public class ArtifactController {
 			currentUserService.get().getId(),
 			projectId
 		);
+
 		try {
 			final Optional<Artifact> artifact = artifactService.getAsset(artifactId, permission);
 			return artifact.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
-			final String error = "An error occurred while retrieving artifact";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			log.error("An error occurred while retrieving artifact", e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("postgres.service-unavailable")
+			);
 		}
 	}
 
@@ -189,9 +194,11 @@ public class ArtifactController {
 			final Optional<Artifact> updated = artifactService.updateAsset(artifact, projectId, permission);
 			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
-			final String error = "An error occurred while updating artifact";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			log.error("An error occurred while updating artifact", e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("artifact.unable-to-update")
+			);
 		}
 	}
 
@@ -222,9 +229,11 @@ public class ArtifactController {
 			artifactService.deleteAsset(artifactId, projectId, permission);
 			return ResponseEntity.ok(new ResponseDeleted("artifact", artifactId));
 		} catch (final Exception e) {
-			final String error = "Unable to delete artifact";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			log.error("Unable to delete artifact", e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("artifact.unable-to-delete")
+			);
 		}
 	}
 

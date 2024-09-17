@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -604,7 +605,7 @@ public class DocumentController {
 		Optional<byte[]> bytes = Optional.empty();
 		try {
 			bytes = documentAssetService.fetchFileAsBytes(documentId, filename);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			log.error("Unable to fetch files from the document asset service", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
 		}
