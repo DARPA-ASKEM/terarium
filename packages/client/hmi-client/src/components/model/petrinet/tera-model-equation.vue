@@ -25,12 +25,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import TeraEquationContainer from '@/components/model/petrinet/tera-equation-container.vue';
 import type { Model } from '@/types/Types';
 import { equationsToAMR, EquationsToAMRRequest } from '@/services/knowledge';
+import { cleanLatexEquations } from '@/utils/math';
+import { isEmpty } from 'lodash';
 import { useToastService } from '@/services/toast';
+import { getModelEquation } from '@/services/model';
 
 const props = defineProps<{
 	model: Model;
@@ -65,6 +68,11 @@ const cancelEdit = () => {
 	});
 };
 
+const updateLatexFormula = (equationsList: string[]) => {
+	equations.value = equationsList;
+	if (isEmpty(originalEquations.value)) originalEquations.value = Array.from(equationsList);
+};
+
 const updateModelFromEquations = async () => {
 	isUpdating.value = true;
 	isEditing.value = false;
@@ -76,4 +84,15 @@ const updateModelFromEquations = async () => {
 	}
 	isUpdating.value = false;
 };
+
+watch(
+	() => props.model,
+	async () => {
+		const latexFormula = await getModelEquation(props.model);
+		if (latexFormula) {
+			updateLatexFormula(cleanLatexEquations(latexFormula.split(' \\\\')));
+		}
+	},
+	{ deep: true, immediate: true }
+);
 </script>
