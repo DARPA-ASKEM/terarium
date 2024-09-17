@@ -75,7 +75,7 @@ useClientEvent(ClientEventType.TaskGollmModelCard, (event: ClientEvent<TaskRespo
 		return;
 	}
 
-	isLoading.value = status !== TaskStatus.Success;
+	isLoading.value = ![TaskStatus.Success, TaskStatus.Failed, TaskStatus.Cancelled].includes(status);
 });
 
 enum DialogType {
