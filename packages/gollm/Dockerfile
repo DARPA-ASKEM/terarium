@@ -31,10 +31,6 @@ RUN /bin/sh -c set -eux [ -s "/usr/local/bin/pip3" ]; [ ! -e "/usr/local/bin/pip
 # Verify the installation
 RUN python --version
 RUN pip --version
-RUN	python3 --version
-RUN	pip3 --version
-
-RUN pip install setuptools
 
 # Install gollm
 COPY ./packages/gollm/gollm-version.txt /gollmVersion.txt
@@ -46,7 +42,7 @@ RUN COMMIT_SHA="$(cat /gollmVersion.txt)" && \
  mv GoLLM-* GoLLM
 
 WORKDIR /GoLLM
-RUN pip install --no-cache-dir -e .
+RUN pip install --no-cache-dir .
 
 #^^^^^^^^^^^^^^^^^^^^
 ######################
@@ -86,10 +82,6 @@ RUN /bin/sh -c set -eux [ -s "/usr/local/bin/pip3" ]; [ ! -e "/usr/local/bin/pip
 # Verify the installation
 RUN python --version
 RUN pip --version
-RUN	python3 --version
-RUN	pip3 --version
-
-RUN pip install setuptools
 
 # Copy the Spring Boot fat JAR from the builder image
 COPY --from=gollm_taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.jar
@@ -97,7 +89,7 @@ COPY --from=gollm_taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.ja
 # Install GoLLM
 COPY --from=gollm_taskrunner_builder /GoLLM /GoLLM
 WORKDIR /GoLLM
-RUN pip install --no-cache-dir -e .
+RUN pip install --no-cache-dir .
 
 # Install taskrunner
 COPY ./packages/taskrunner/setup.py /taskrunner/setup.py
