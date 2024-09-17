@@ -55,7 +55,7 @@ def main():
         #add observables.
         odesys += obs_eqs
 		    #Reformat:
-        odesys = "\\begin{align} \n    " + " \\\\ \n    ".join([eq.replace(" = ", " &= ") for eq in odesys]) + "\n\\end{align}"
+        odesys = "\\begin{align} \n    " + " \\\\ \n    ".join([eq for eq in odesys]) + "\n\\end{align}"
 
         taskrunner.write_output_dict_with_timeout({"response": odesys})
         print("Generate latex succeeded")
