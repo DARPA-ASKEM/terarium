@@ -21,11 +21,6 @@ export interface SemanticOtherValues {
 	default?: boolean;
 }
 
-export const getAllModelConfigurations = async (): Promise<ModelConfiguration[]> => {
-	const response = await API.get(`/model-configurations`);
-	return response?.data ?? null;
-};
-
 export const getModelConfigurationById = async (id: string): Promise<ModelConfiguration> => {
 	const response = await API.get(`/model-configurations/${id}`);
 	return response?.data ?? null;
