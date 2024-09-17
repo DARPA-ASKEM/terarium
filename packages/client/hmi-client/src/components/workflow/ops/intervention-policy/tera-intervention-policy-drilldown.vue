@@ -70,7 +70,7 @@
 					<Button label="Save as..." outlined severity="secondary" @click="showSaveModal = true" />
 					<Button class="mr-3" label="Save" @click="onSaveInterventionPolicy" :disabled="isSaveDisabled" />
 				</template>
-				<Accordion v-if="knobs.transientInterventionPolicy.id" multiple :active-index="[0, 1]">
+				<Accordion v-if="knobs.transientInterventionPolicy" multiple :active-index="[0, 1]">
 					<AccordionTab>
 						<template #header>
 							<Button v-if="!isEditingDescription" class="start-edit" text @click.stop="onEditDescription">
@@ -267,7 +267,14 @@ const groupedOutputParameters = computed(() =>
 );
 
 const preparedCharts = computed(() =>
-	_.mapValues(groupedOutputParameters.value, (interventions) => createInterventionChart(interventions))
+	_.mapValues(groupedOutputParameters.value, (interventions) =>
+		createInterventionChart(interventions, {
+			width: 400,
+			height: 200,
+			xAxisTitle: 'Time',
+			yAxisTitle: 'Value'
+		})
+	)
 );
 
 const initialize = async (overwriteWithState: boolean = false) => {
