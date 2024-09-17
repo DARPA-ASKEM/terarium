@@ -33,11 +33,6 @@
 				<tera-dataset v-else-if="pageType === AssetType.Dataset" :asset-id="assetId" />
 			</template>
 		</section>
-		<tera-slider-panel v-model:is-open="isNotesSliderOpen" content-width="240px" direction="right" header="Notes">
-			<template v-slot:content>
-				<tera-notes-sidebar :asset-id="assetId" :page-type="pageType" />
-			</template>
-		</tera-slider-panel>
 		<!-- New asset modal -->
 		<tera-save-asset-modal
 			:is-visible="showSaveAssetModal"
@@ -67,13 +62,11 @@ import { isEqual } from 'lodash';
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
-import TeraNotesSidebar from '@/components/project/tera-notes-sidebar.vue';
 
 const route = useRoute();
 const router = useRouter();
 
 const isResourcesSliderOpen = ref(true);
-const isNotesSliderOpen = ref(false);
 const showSaveAssetModal = ref(false);
 const assetTypeToCreate = ref<AssetType>(AssetType.Model);
 
