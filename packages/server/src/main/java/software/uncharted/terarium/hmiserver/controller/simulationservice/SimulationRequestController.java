@@ -33,7 +33,6 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.JobRespons
 import software.uncharted.terarium.hmiserver.models.simulationservice.OptimizeRequestCiemss;
 import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationRequest;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationCiemssServiceProxy;
-import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationServiceProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
@@ -54,8 +53,6 @@ public class SimulationRequestController implements SnakeCaseController {
 
 	private final CurrentUserService currentUserService;
 
-	private final SimulationServiceProxy simulationServiceProxy;
-
 	private final SimulationCiemssServiceProxy simulationCiemssServiceProxy;
 
 	private final ProjectService projectService;
@@ -74,9 +71,6 @@ public class SimulationRequestController implements SnakeCaseController {
 		private JsonNode metadata;
 		private T payload;
 	}
-
-	@Value("${terarium.sciml-queue}")
-	private String SCIML_QUEUE;
 
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)

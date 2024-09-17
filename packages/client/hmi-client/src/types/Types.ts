@@ -581,15 +581,6 @@ export interface OptimizeRequestCiemss {
     userId: string;
 }
 
-export interface ScimlStatusUpdate {
-    loss: number;
-    iter: number;
-    params: { [index: string]: number };
-    id: string;
-    solData: { [index: string]: any };
-    timesteps: number[];
-}
-
 export interface SimulationRequest {
     modelConfigId: string;
     timespan: TimeSpan;
@@ -1055,7 +1046,6 @@ export enum ClientEventType {
     CloneProject = "CLONE_PROJECT",
     Heartbeat = "HEARTBEAT",
     Notification = "NOTIFICATION",
-    SimulationSciml = "SIMULATION_SCIML",
     SimulationPyciemss = "SIMULATION_PYCIEMSS",
     SimulationNotification = "SIMULATION_NOTIFICATION",
     FileUploadProgress = "FILE_UPLOAD_PROGRESS",
@@ -1176,7 +1166,6 @@ export enum SimulationType {
 }
 
 export enum SimulationEngine {
-    Sciml = "SCIML",
     Ciemss = "CIEMSS",
 }
 
