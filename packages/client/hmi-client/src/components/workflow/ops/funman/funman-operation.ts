@@ -19,14 +19,19 @@ export enum DerivativeType {
 }
 
 export interface ConstraintGroup {
-	borderColour: string;
 	name: string;
+	isActive: boolean;
 	constraintType: ConstraintType;
 	derivativeType: DerivativeType;
 	variables: string[]; // If len = 1, need to rename to "variable" for request formatting
 	weights?: number[]; // 1 to 1 mapping with variables
 	timepoints?: FunmanInterval;
 	interval?: FunmanInterval;
+}
+
+export interface CompartmentalConstraint {
+	name: string;
+	isActive: boolean;
 }
 
 export interface RequestParameter {
@@ -40,7 +45,7 @@ export interface FunmanOperationState extends BaseState {
 	numSteps: number;
 	tolerance: number;
 	inProgressId: string;
-	useCompartmentalConstraint: boolean;
+	compartmentalConstraint: CompartmentalConstraint;
 	constraintGroups: ConstraintGroup[];
 	requestParameters: RequestParameter[];
 
@@ -65,9 +70,9 @@ export const FunmanOperation: Operation = {
 			currentTimespan: { start: 0, end: 100 },
 			numSteps: 10,
 			tolerance: 0.2,
+			compartmentalConstraint: { name: 'Compartmental constraint', isActive: true },
 			constraintGroups: [],
 			requestParameters: [],
-			useCompartmentalConstraint: true,
 			inProgressId: ''
 		};
 		return init;

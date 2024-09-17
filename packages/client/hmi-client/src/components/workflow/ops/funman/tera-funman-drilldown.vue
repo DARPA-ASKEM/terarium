@@ -33,7 +33,19 @@
 								</p>
 								<ul>
 									<li>
-										<tera-compartment-constraint :variables="stateIds" :mass="mass" />
+										<section>
+											<header class="flex w-full gap-3 mb-2">
+												<tera-toggleable-input v-model="knobs.compartmentalConstraint.name" tag="h3" />
+												<div class="ml-auto flex align-items-center">
+													<label class="mr-2">Active</label>
+													<InputSwitch class="mr-3" v-model="knobs.compartmentalConstraint.isActive" />
+												</div>
+											</header>
+											<div class="section-row">
+												<div>{{ stateIds.join(' + ') }} = {{ mass }}</div>
+												<span v-for="v of stateIds" :key="v"> {{ v }} &#8805; 0, </span>
+											</div>
+										</section>
 									</li>
 									<li v-for="(cfg, index) in node.state.constraintGroups" :key="selectedOutputId + ':' + index">
 										<tera-constraint-group-form
@@ -42,8 +54,8 @@
 											:state-ids="stateIds"
 											:parameter-ids="parameterIds"
 											:observable-ids="observableIds"
+											@update-self="updateConstraintGroupForm(index, $event.key, $event.value)"
 											@delete-self="deleteConstraintGroupForm(index)"
-											@update-self="(updatedConfig: ConstraintGroup) => updateConstraintGroupForm(index, updatedConfig)"
 										/>
 									</li>
 								</ul>
@@ -155,6 +167,8 @@ import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeho
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
+import InputSwitch from 'primevue/inputswitch';
 
 import type { FunmanPostQueriesRequest, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import { makeQueries } from '@/services/models/funman-service';
@@ -163,10 +177,15 @@ import { getAsConfiguredModel, getModelConfigurationById } from '@/services/mode
 import { useToastService } from '@/services/toast';
 import { pythonInstance } from '@/python/PyodideController';
 import TeraFunmanOutput from '@/components/workflow/ops/funman/tera-funman-output.vue';
-import TeraCompartmentConstraint from '@/components/workflow/ops/funman/tera-compartment-constraint.vue';
 import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-constraint-group-form.vue';
 import { DrilldownTabs } from '@/types/common';
-import { FunmanOperationState, ConstraintGroup, ConstraintType, DerivativeType } from './funman-operation';
+import {
+	FunmanOperationState,
+	ConstraintGroup,
+	ConstraintType,
+	DerivativeType,
+	CompartmentalConstraint
+} from './funman-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<FunmanOperationState>;
@@ -181,14 +200,14 @@ interface BasicKnobs {
 		end: number;
 	};
 	numberOfSteps: number;
-	useCompartmentalConstraint: boolean;
+	compartmentalConstraint: CompartmentalConstraint;
 }
 
 const knobs = ref<BasicKnobs>({
 	tolerance: 0,
 	currentTimespan: { start: 0, end: 0 },
 	numberOfSteps: 0,
-	useCompartmentalConstraint: false
+	compartmentalConstraint: { name: '', isActive: false }
 });
 
 const toast = useToastService();
@@ -316,7 +335,7 @@ const runMakeQuery = async () => {
 				}
 			],
 			config: {
-				use_compartmental_constraints: knobs.value.useCompartmentalConstraint,
+				use_compartmental_constraints: knobs.value.compartmentalConstraint.isActive,
 				normalization_constant: 1,
 				tolerance: knobs.value.tolerance
 			}
@@ -325,7 +344,7 @@ const runMakeQuery = async () => {
 
 	// Calculate the normalization mass of the model = Sum(initials)
 	const semantics = model.value.semantics;
-	if (knobs.value.useCompartmentalConstraint && semantics) {
+	if (knobs.value.compartmentalConstraint.isActive && semantics) {
 		if (request.request.config) {
 			request.request.config.normalization_constant = parseFloat(mass.value);
 		}
@@ -341,8 +360,8 @@ const runMakeQuery = async () => {
 const addConstraintForm = () => {
 	const state = _.cloneDeep(props.node.state);
 	const newGroup: ConstraintGroup = {
-		borderColour: '#00c387',
 		name: `Constraint ${state.constraintGroups.length + 1}`,
+		isActive: true,
 		timepoints: { lb: 0, ub: 100 },
 		constraintType: ConstraintType.State,
 		variables: [],
@@ -358,9 +377,25 @@ const deleteConstraintGroupForm = (index: number) => {
 	emit('update-state', state);
 };
 
-const updateConstraintGroupForm = (index: number, updatedConfig: ConstraintGroup) => {
+const updateConstraintGroupForm = (index: number, key: string, value: any) => {
 	const state = _.cloneDeep(props.node.state);
-	state.constraintGroups[index] = updatedConfig;
+
+	// Changing constraint type resets settings
+	if (key === 'constraintType') {
+		state.constraintGroups[index].variables = [];
+		state.constraintGroups[index].weights = [];
+		state.constraintGroups[index].timepoints = { lb: 0, ub: 100 };
+		state.constraintGroups[index].interval = { lb: 0, ub: 1 };
+	}
+
+	// Update changes
+	state.constraintGroups[index][key] = value;
+
+	const weightLength = state.constraintGroups[index].weights?.length ?? 0;
+	const variableLength = state.constraintGroups[index].variables.length;
+	if (weightLength !== variableLength) {
+		state.constraintGroups[index].weights = Array<number>(variableLength).fill(1.0);
+	}
 	emit('update-state', state);
 };
 
@@ -421,7 +456,7 @@ const setModelOptions = async () => {
 	knobs.value.numberOfSteps = state.numSteps;
 	knobs.value.currentTimespan = _.cloneDeep(state.currentTimespan);
 	knobs.value.tolerance = state.tolerance;
-	knobs.value.useCompartmentalConstraint = state.useCompartmentalConstraint;
+	knobs.value.compartmentalConstraint = state.compartmentalConstraint;
 
 	if (model.value.semantics?.ode.parameters) {
 		setRequestParameters(model.value.semantics?.ode.parameters);
@@ -491,7 +526,7 @@ watch(
 		state.currentTimespan.start = knobs.value.currentTimespan.start;
 		state.currentTimespan.end = knobs.value.currentTimespan.end;
 		state.numSteps = knobs.value.numberOfSteps;
-		state.useCompartmentalConstraint = knobs.value.useCompartmentalConstraint;
+		state.compartmentalConstraint = knobs.value.compartmentalConstraint;
 
 		emit('update-state', state);
 	},
@@ -580,6 +615,24 @@ ul {
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap-2);
+
+	& section {
+		display: flex;
+		padding: var(--gap-4);
+		flex-direction: column;
+		background: var(--gray-50);
+		border: 1px solid var(--surface-border-light);
+		border-radius: var(--border-radius);
+	}
+
+	& .section-row {
+		display: flex;
+		padding: 0.5rem 0rem;
+		align-items: center;
+		gap: 0.5rem;
+		align-self: stretch;
+		flex-wrap: wrap;
+	}
 }
 
 .timespan-list {

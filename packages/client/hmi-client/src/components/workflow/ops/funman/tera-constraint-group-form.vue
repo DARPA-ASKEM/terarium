@@ -2,88 +2,104 @@
 	<section>
 		<header class="flex w-full gap-3 mb-2">
 			<tera-toggleable-input
-				v-model="constraintName"
+				:model-value="config.name"
 				tag="h3"
-				@update:model-value="emit('update-self', updatedConfig)"
+				@update:model-value="emit('update-self', { key: 'name', value: $event })"
 			/>
 			<div class="ml-auto flex align-items-center">
 				<label class="mr-2">Active</label>
-				<InputSwitch class="mr-3" />
+				<InputSwitch
+					class="mr-3"
+					:model-value="config.isActive"
+					@update:model-value="emit('update-self', { key: 'isActive', value: $event })"
+				/>
 				<Button icon="pi pi-trash" text rounded @click="emit('delete-self')" />
 			</div>
 		</header>
 		<p>
 			The
 			<Dropdown
-				:model-value="constraintType"
+				:model-value="config.constraintType"
 				:options="Object.values(ConstraintType)"
-				@update:model-value="changeConstraintType($event)"
+				@update:model-value="emit('update-self', { key: 'constraintType', value: $event })"
 			/>
 			<MultiSelect
-				v-model="variables"
+				:model-value="config.variables"
 				placeholder="Select variables"
-				:options="ids"
-				@update:model-value="updateChanges"
+				:options="variableOptions"
+				@update:model-value="emit('update-self', { key: 'variables', value: $event })"
 			/>
 			should be
 			<Dropdown
-				:model-value="derivativeType"
+				:model-value="config.derivativeType"
 				:options="Object.values(DerivativeType)"
-				@update:model-value="changeDerivativeType($event)"
+				@update:model-value="emit('update-self', { key: 'derivativeType', value: $event })"
 			/>
 			<tera-input-number
-				v-if="derivativeType === DerivativeType.LessThan"
-				v-model="upperBound"
-				@update:model-value="updateChanges"
+				v-if="config.derivativeType === DerivativeType.LessThan"
+				:model-value="config.interval?.ub ?? 0"
+				@update:model-value="emit('update-self', { key: 'interval', value: { lb: config.interval?.lb, ub: $event } })"
 			/>
 			<tera-input-number
-				v-if="derivativeType === DerivativeType.GreaterThan"
-				v-model="lowerBound"
-				@update:model-value="updateChanges"
+				v-if="config.derivativeType === DerivativeType.GreaterThan"
+				:model-value="config.interval?.lb ?? 0"
+				@update:model-value="emit('update-self', { key: 'interval', value: { lb: $event, ub: config.interval?.ub } })"
 			/>
-			<template v-if="derivativeType === DerivativeType.LessThan || derivativeType === DerivativeType.GreaterThan">
+			<template
+				v-if="config.derivativeType === DerivativeType.LessThan || config.derivativeType === DerivativeType.GreaterThan"
+			>
 				persons
 			</template>
-			<template
-				v-if="
-					derivativeType === DerivativeType.LessThan ||
-					derivativeType === DerivativeType.GreaterThan ||
-					derivativeType === DerivativeType.Increasing ||
-					derivativeType === DerivativeType.Decreasing ||
-					derivativeType === DerivativeType.LinearlyConstrained
-				"
-			>
+			<template v-if="config.derivativeType !== DerivativeType.Following">
 				from timepoint
-				<tera-input-number v-model="startTime" @update:model-value="updateChanges" />
+				<tera-input-number
+					:model-value="config.timepoints?.lb ?? 0"
+					@update:model-value="
+						emit('update-self', { key: 'timepoints', value: { lb: $event, ub: config.timepoints?.ub } })
+					"
+				/>
 				day to timepoint
-				<tera-input-number v-model="endTime" @update:model-value="updateChanges" />
+				<tera-input-number
+					:model-value="config.timepoints?.ub ?? 100"
+					@update:model-value="
+						emit('update-self', { key: 'timepoints', value: { lb: config.timepoints?.lb, ub: $event } })
+					"
+				/>
 			</template>
 			<!--Wrong variables being mutated-->
-			<template v-if="derivativeType === DerivativeType.Following">
+			<template v-else>
 				time-series dataset within +/-
-				<tera-input-number v-model="startTime" @update:model-value="updateChanges" />
+				<!-- <tera-input-number v-model="0" /> -->
+				<input />
 				persons within a time window of
-				<tera-input-number v-model="endTime" @update:model-value="updateChanges" />
+				<!-- <tera-input-number v-model="0" /> -->
+				<input />
 			</template>
 			days.
 		</p>
-		<!-- Weights -->
-		<!-- <ul v-if="weights && !isEmpty(weights)">
-			<li v-for="(variable, index) of variables" :key="index">
+		<ul v-if="config.weights && !isEmpty(config.weights)">
+			<li v-for="(variable, index) of config.variables" :key="index">
 				<tera-input-number
 					:label="variable + ' Weight'"
 					:placeholder="variable"
-					v-model="weights[index]"
-					@update:model-value="updateChanges()"
+					:model-value="config.weights[index]"
+					@update:model-value="
+						($event) => {
+							const newWeights = cloneDeep(config.weights);
+							if (!newWeights) return;
+							newWeights[index] = $event;
+							emit('update-self', { key: 'weights', value: newWeights });
+						}
+					"
 				/>
 			</li>
-		</ul> -->
+		</ul>
 	</section>
 </template>
 
 <script setup lang="ts">
-// import { isEmpty } from 'lodash';
-import { watch, ref, computed } from 'vue';
+import { isEmpty, cloneDeep } from 'lodash';
+import { computed } from 'vue';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import MultiSelect from 'primevue/multiselect';
 import Dropdown from 'primevue/dropdown';
@@ -101,18 +117,8 @@ const props = defineProps<{
 
 const emit = defineEmits(['delete-self', 'update-self']);
 
-const constraintName = ref(props.config.name);
-const constraintType = ref(props.config.constraintType);
-const upperBound = ref(props.config.interval?.ub);
-const lowerBound = ref(props.config.interval?.lb);
-const startTime = ref(props.config.timepoints?.lb);
-const endTime = ref(props.config.timepoints?.ub);
-const variables = ref(props.config.variables);
-const weights = ref(props.config.weights);
-const derivativeType = ref(props.config.derivativeType);
-
-const ids = computed(() => {
-	switch (constraintType.value) {
+const variableOptions = computed(() => {
+	switch (props.config.constraintType) {
 		case ConstraintType.State:
 			return props.stateIds;
 		case ConstraintType.Parameter:
@@ -123,57 +129,6 @@ const ids = computed(() => {
 			return [];
 	}
 });
-
-const updatedConfig = computed<ConstraintGroup>(
-	() =>
-		({
-			borderColour: props.config.borderColour,
-			name: constraintName.value,
-			variables: variables.value,
-			weights: weights.value,
-			timepoints: { lb: startTime.value, ub: endTime.value },
-			interval: { lb: lowerBound.value, ub: upperBound.value },
-			constraintType: constraintType.value,
-			derivativeType: derivativeType.value
-		}) as ConstraintGroup
-);
-
-const updateChanges = () => {
-	const wLen = updatedConfig.value.weights?.length ?? 0;
-	const vLen = updatedConfig.value.variables.length;
-	if (wLen !== vLen) {
-		updatedConfig.value.weights = Array<number>(vLen).fill(1.0);
-	}
-	emit('update-self', updatedConfig.value);
-};
-
-// Changing type should wipe out current settings to avoid weird things from happening
-const changeConstraintType = (newConstraintType: ConstraintType) => {
-	constraintType.value = newConstraintType;
-	weights.value = [];
-	variables.value = [];
-	startTime.value = 0;
-	endTime.value = 100;
-	lowerBound.value = 0;
-	upperBound.value = 1;
-	updateChanges();
-};
-
-const changeDerivativeType = (newDerivativeType: DerivativeType) => {
-	derivativeType.value = newDerivativeType;
-	// Mutate the rest of the sentence here
-	updateChanges();
-};
-
-watch(
-	() => variables.value,
-	() => {
-		if (!weights.value || weights.value.length === 0) {
-			weights.value = Array<number>(props.config.variables.length).fill(1);
-		}
-	},
-	{ immediate: true }
-);
 </script>
 
 <style scoped>
