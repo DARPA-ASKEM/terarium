@@ -23,7 +23,7 @@ def main():
         amr = json.dumps(input_model.amr, separators=(",", ":"))
 
         taskrunner.log("Sending request to OpenAI API")
-        response = model_config_from_dataset(dataset=input_model.dataset, amr=amr)
+        response = model_config_from_dataset(dataset=input_model.dataset, amr=amr, matrix=input_model.matrix)
         taskrunner.log("Received response from OpenAI API")
 
         taskrunner.write_output_dict_with_timeout({"response": response})
