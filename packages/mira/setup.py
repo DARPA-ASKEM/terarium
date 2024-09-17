@@ -13,5 +13,5 @@ setup(
             "mira_task:amr_to_mmt=tasks.amr_to_mmt:main",
         ],
     },
-    python_requires=">=3.8",
+    python_requires=">=3.10",
 )
