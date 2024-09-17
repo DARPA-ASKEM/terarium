@@ -70,7 +70,7 @@
 					<Button label="Save as..." outlined severity="secondary" @click="showSaveModal = true" />
 					<Button class="mr-3" label="Save" @click="onSaveInterventionPolicy" :disabled="isSaveDisabled" />
 				</template>
-				<Accordion v-if="knobs.transientInterventionPolicy.id" multiple :active-index="[0, 1]">
+				<Accordion v-if="knobs.transientInterventionPolicy" multiple :active-index="[0, 1]">
 					<AccordionTab>
 						<template #header>
 							<Button v-if="!isEditingDescription" class="start-edit" text @click.stop="onEditDescription">
@@ -97,7 +97,6 @@
 					<AccordionTab header="Charts">
 						<ul class="flex flex-column gap-2">
 							<li v-for="(interventions, appliedTo) in groupedOutputParameters" :key="appliedTo">
-								<h5 class="pb-2">{{ appliedTo }}</h5>
 								<vega-chart
 									expandable
 									:are-embed-actions-visible="false"
@@ -267,7 +266,15 @@ const groupedOutputParameters = computed(() =>
 );
 
 const preparedCharts = computed(() =>
-	_.mapValues(groupedOutputParameters.value, (interventions) => createInterventionChart(interventions))
+	_.mapValues(groupedOutputParameters.value, (interventions, key) =>
+		createInterventionChart(interventions, {
+			title: key,
+			width: 400,
+			height: 200,
+			xAxisTitle: 'Time',
+			yAxisTitle: 'Value'
+		})
+	)
 );
 
 const initialize = async (overwriteWithState: boolean = false) => {

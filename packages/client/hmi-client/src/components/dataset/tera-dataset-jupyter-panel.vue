@@ -89,6 +89,7 @@
 			:jupyter-session="jupyterSession"
 			:kernel-status="kernelStatus"
 			:language="selectedLanguage"
+			:default-preview="defaultPreview"
 			@update-kernel-state="(e) => emit('update-kernel-state', e)"
 			@update-kernel-status="updateKernelStatus"
 			@new-dataset-saved="onNewDatasetSaved"
@@ -155,10 +156,21 @@ const jupyterSession: SessionContext = await newSession('beaker_kernel', 'Beaker
 const selectedKernel = ref();
 const runningSessions = ref<any[]>([]);
 
+const defaultPreview = computed(() => {
+	let code = '';
+	props.assets.forEach((asset, index) => {
+		code += `#d${index + 1} = ${asset.name}\n`;
+	});
+
+	// add first dataset to the code
+	code += 'd1';
+	return code;
+});
+
 const confirm = useConfirm();
 
 const props = defineProps<{
-	assets: { id: string; type: string }[];
+	assets: { id: string; type: string; name: string }[];
 	showKernels: boolean;
 	showChatThoughts: boolean;
 	notebookSession?: NotebookSession;
