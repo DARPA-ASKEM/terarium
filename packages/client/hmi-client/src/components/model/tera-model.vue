@@ -50,10 +50,10 @@
 		</section>
 	</tera-asset>
 	<tera-save-asset-modal
+		:asset="temporaryModel"
+		:asset-type="AssetType.Model"
 		:initial-name="model?.header.name"
 		:is-visible="showSaveModal"
-		:asset="teraModelPartsRef?.transientModel"
-		:asset-type="AssetType.Model"
 		@close-modal="showSaveModal = false"
 		@on-save="showSaveModal = false"
 	/>

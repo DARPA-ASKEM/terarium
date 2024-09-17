@@ -102,18 +102,6 @@ function reset() {
 
 onMounted(() => updateMMT());
 
-// TODO: Do we still want autosave? It worked onUnmount but on staging the onbeforemount wasn't triggering
-// Apply changes to the model when the component unmounts or the user navigates away
-// onMounted(() => {
-// 	window.addEventListener('beforeunload', saveChanges);
-// 	updateMMT();
-// });
-
-// onUnmounted(() => {
-// 	saveChanges();
-// 	window.removeEventListener('beforeunload', saveChanges);
-// });
-
 watch(
 	() => props.model,
 	() => {
