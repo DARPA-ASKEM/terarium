@@ -1,5 +1,30 @@
 ---
 services:
+    sciml-service:
+        container_name: sciml-service
+        image: ghcr.io/darpa-askem/sciml-service:latest
+        networks:
+            - terarium
+        ports:
+            - "3030:8080"
+        environment:
+            SIMSERVICE_TDS_URL: "http://${local_host_name}:3000"
+            SIMSERVICE_TDS_USER: "${secret_service_account_username}"
+            SIMSERVICE_TDS_PASSWORD: "${secret_service_account_password}"
+            SIMSERVICE_ENABLE_TDS: "true"
+            SIMSERVICE_RABBITMQ_ENABLED: "true"
+            SIMSERVICE_RABBITMQ_LOGIN: "terarium"
+            SIMSERVICE_RABBITMQ_PASSWORD: "terarium123"
+            SIMSERVICE_RABBITMQ_ROUTE: "scimlQueue"
+            SIMSERVICE_RABBITMQ_HOST: "rabbitmq"
+            SIMSERVICE_RABBITMQ_PORT: "5672"
+            SIMSERVICE_RABBITMQ_SSL: "false"
+        depends_on:
+            rabbitmq:
+                condition: service_healthy
+        extra_hosts:
+            - "${local_host_name}:host-gateway"
+
     pyciemss-api:
         container_name: pyciemss-api
         image: ghcr.io/darpa-askem/pyciemss-api:latest
