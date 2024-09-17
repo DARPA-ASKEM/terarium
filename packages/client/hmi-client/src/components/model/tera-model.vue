@@ -67,20 +67,20 @@
 <script setup lang="ts">
 import { computed, PropType, ref, watch } from 'vue';
 import { cloneDeep, isEmpty, isEqual } from 'lodash';
+import Button from 'primevue/button';
+import ContextMenu from 'primevue/contextmenu';
 import TeraAsset from '@/components/asset/tera-asset.vue';
+import TeraAssetEnrichment from '@/components/widgets/tera-asset-enrichment.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
 import TeraModelParts from '@/components/model/tera-model-parts.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
-import Button from 'primevue/button';
-import ContextMenu from 'primevue/contextmenu';
 import { getModel, updateModel } from '@/services/model';
 import type { FeatureConfig } from '@/types/common';
 import { AssetType, ClientEvent, ClientEventType, type Model, TaskResponse, TaskStatus } from '@/types/Types';
+import { useClientEvent } from '@/composables/useClientEvent';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
-import TeraInputText from '@/components/widgets/tera-input-text.vue';
-import TeraAssetEnrichment from '@/components/widgets/tera-asset-enrichment.vue';
-import { useClientEvent } from '@/composables/useClientEvent';
 
 const props = defineProps({
 	assetId: {
