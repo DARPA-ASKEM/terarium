@@ -11,6 +11,7 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.test.context.support.WithUserDetails;
@@ -133,7 +134,7 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 			.get();
 	}
 
-	// @Test
+	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void cosmosPdfExtraction() throws Exception {
 		final ClassPathResource resource = new ClassPathResource("knowledge/paper.pdf");

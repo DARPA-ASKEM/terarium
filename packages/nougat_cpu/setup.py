@@ -7,7 +7,7 @@ setup(
     install_requires=[],
     entry_points={
         "console_scripts": [
-            "nougat_task:extraction=tasks.extraction:main",
+            "nougat_task:extract_equations=tasks.extraction:main",
         ],
     },
     python_requires=">=3.10",

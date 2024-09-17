@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class ExtractEquationsResponseHandler extends TaskResponseHandler {
 
-	public static final String NAME = "nougat_task:extraction";
+	public static final String NAME = "nougat_task:extract_equations";
 
 	@Override
 	public String getName() {
