@@ -14,5 +14,5 @@ setup(
 						"mira_task:generate_model_latex=tasks.generate_model_latex:main",
         ],
     },
-    python_requires=">=3.8",
+    python_requires=">=3.10",
 )
