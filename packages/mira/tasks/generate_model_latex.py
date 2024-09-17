@@ -65,7 +65,6 @@ def main():
         sys.stderr.write(traceback.format_exc())
         sys.stderr.flush()
         exitCode = 1
-        sys.exit(exitCode)
 
 
     taskrunner.log("Shutting down")
