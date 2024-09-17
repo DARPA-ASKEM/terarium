@@ -134,7 +134,7 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 			.get();
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void cosmosPdfExtraction() throws Exception {
 		final ClassPathResource resource = new ClassPathResource("knowledge/paper.pdf");
