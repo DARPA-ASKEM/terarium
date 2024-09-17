@@ -11,13 +11,26 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	software-properties-common
 RUN add-apt-repository ppa:deadsnakes/ppa
 RUN apt-get update && apt-get install -y --no-install-recommends \
-	python3.10 \
-	gcc \
-	python3-dev \
-	wget \
-	git \
-	python3-pip && \
-	rm -rf /var/lib/apt/lists/*
+ python3.8 \
+ python3.8-venv \
+ gcc \
+ git \
+ wget && \
+ rm -rf /var/lib/apt/lists/*
+
+# Set the default Python version to 3.8
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.8 1 && \
+ update-alternatives --set python /usr/bin/python3.8
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1 && \
+ update-alternatives --set python3 /usr/bin/python3.8
+
+# install pip for python 3.8
+RUN python -m ensurepip --upgrade
+RUN /bin/sh -c set -eux [ -s "/usr/local/bin/pip3" ]; [ ! -e "/usr/local/bin/pip" ]; ln -svT "pip3" "/usr/local/bin/pip";
+
+# Verify the installation
+RUN python --version
+RUN pip --version
 
 # Install funman-api
 COPY ./packages/funman/funman-version.txt /funmanVersion.txt
@@ -51,7 +64,7 @@ WORKDIR /
 # Install OpenJDK JRE and wget
 RUN apt-get update && \
 	apt-get install -y --no-install-recommends \
-	openjdk-17-jre-headless && \
+	openjdk-21-jre-headless && \
 	rm -rf /var/lib/apt/lists/*
 
 # Copy the Spring Boot fat JAR from the builder image
