@@ -105,13 +105,14 @@
 						option-value="value"
 						placeholder="Select a trigger"
 					/>
-					<Dropdown
+					crosses the threshold
+					<!-- <Dropdown
 						:model-value="intervention.dynamicInterventions[0].isGreaterThan"
 						@change="onComparisonOperatorChange"
 						:options="comparisonOperations"
 						option-label="label"
 						option-value="value"
-					/>
+					/> -->
 					<tera-input-number
 						auto-width
 						:model-value="intervention.dynamicInterventions[0].threshold"
@@ -175,10 +176,10 @@ const interventionType = computed(() => {
 	return 'static';
 });
 
-const comparisonOperations = [
-	{ label: 'increases to above', value: true },
-	{ label: 'decreases to below', value: false }
-];
+// const comparisonOperations = [
+// 	{ label: 'crosses the threshold', value: true },
+// 	{ label: 'decreases to below', value: false }
+// ];
 
 const onUpdateName = (name: string) => {
 	const intervention = cloneDeep(props.intervention);
@@ -258,11 +259,11 @@ const onTargetParameterChange = (event: DropdownChangeEvent) => {
 	emit('update', intervention);
 };
 
-const onComparisonOperatorChange = (event: DropdownChangeEvent) => {
-	const intervention = cloneDeep(props.intervention);
-	intervention.dynamicInterventions[0].isGreaterThan = event.value;
-	emit('update', intervention);
-};
+// const onComparisonOperatorChange = (event: DropdownChangeEvent) => {
+// 	const intervention = cloneDeep(props.intervention);
+// 	intervention.dynamicInterventions[0].isGreaterThan = event.value;
+// 	emit('update', intervention);
+// };
 
 const onSemanticChange = (event: DropdownChangeEvent) => {
 	const intervention = cloneDeep(props.intervention);
