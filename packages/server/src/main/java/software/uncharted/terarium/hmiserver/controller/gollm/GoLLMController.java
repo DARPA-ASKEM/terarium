@@ -392,6 +392,11 @@ public class GoLLMController {
 		model.get().setMetadata(null);
 		input.setAmr(model.get().serializeWithoutTerariumFields());
 
+		// set matrix string if provided
+		if (body != null && !body.getMatrixStr().isEmpty()) {
+			input.setMatrixStr(body.getMatrixStr());
+		}
+
 		// Create the task
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);

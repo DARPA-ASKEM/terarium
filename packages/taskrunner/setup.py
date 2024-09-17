@@ -6,5 +6,5 @@ setup(
     packages=find_packages(),
     install_requires=[],
     py_modules=['taskrunner'],
-    python_requires=">=3.8",
+    python_requires=">=3.11",
 )
