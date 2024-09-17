@@ -97,7 +97,6 @@
 					<AccordionTab header="Charts">
 						<ul class="flex flex-column gap-2">
 							<li v-for="(interventions, appliedTo) in groupedOutputParameters" :key="appliedTo">
-								<h5 class="pb-2">{{ appliedTo }}</h5>
 								<vega-chart
 									expandable
 									:are-embed-actions-visible="false"
@@ -267,8 +266,9 @@ const groupedOutputParameters = computed(() =>
 );
 
 const preparedCharts = computed(() =>
-	_.mapValues(groupedOutputParameters.value, (interventions) =>
+	_.mapValues(groupedOutputParameters.value, (interventions, key) =>
 		createInterventionChart(interventions, {
+			title: key,
 			width: 400,
 			height: 200,
 			xAxisTitle: 'Time',

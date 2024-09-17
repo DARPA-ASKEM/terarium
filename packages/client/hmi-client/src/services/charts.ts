@@ -909,11 +909,20 @@ export function createInterventionChartMarkers(interventions: Intervention[]): a
 	return [markerSpec, labelSpec];
 }
 
-export function createInterventionChart(interventions: Intervention[], chartOptions: BaseChartOptions) {
+export function createInterventionChart(interventions: Intervention[], chartOptions: Omit<BaseChartOptions, 'legend'>) {
 	const interventionsData = flattenInterventionData(interventions);
+	const titleObj = chartOptions.title
+		? {
+				text: chartOptions.title,
+				anchor: 'start',
+				subtitle: ' ',
+				subtitlePadding: 4
+			}
+		: null;
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
 		width: chartOptions.width,
+		title: titleObj,
 		height: chartOptions.height,
 		autosize: {
 			type: 'fit-x'

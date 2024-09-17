@@ -2,7 +2,6 @@
 	<section>
 		<ul v-if="node.state.interventionPolicy.id">
 			<li li v-for="(_interventions, appliedTo) in groupedOutputParameters" :key="appliedTo">
-				<h5 class="pb-2">{{ appliedTo }}</h5>
 				<vega-chart expandable :are-embed-actions-visible="false" :visualization-spec="preparedCharts[appliedTo]" />
 			</li>
 		</ul>
@@ -39,8 +38,9 @@ const isModelInputConnected = computed(() => modelInput?.status === WorkflowPort
 const groupedOutputParameters = computed(() => groupBy(props.node.state.interventionPolicy.interventions, 'appliedTo'));
 
 const preparedCharts = computed(() =>
-	_.mapValues(groupedOutputParameters.value, (interventions) =>
+	_.mapValues(groupedOutputParameters.value, (interventions, key) =>
 		createInterventionChart(interventions, {
+			title: key,
 			width: 180,
 			height: 120,
 			xAxisTitle: 'Time',
