@@ -394,7 +394,7 @@ public class GoLLMController {
 
 		// set matrix string if provided
 		if (body != null && !body.getMatrixStr().isEmpty()) {
-			input.setMatrixStr(body.getMatrixStr());
+			input.setMatrix(body.getMatrixStr());
 		}
 
 		// Create the task
