@@ -1,6 +1,7 @@
 import sys
 import requests
 import io
+import traceback
 
 from taskrunner import TaskRunnerInterface
 
@@ -29,6 +30,7 @@ def main():
 
     except Exception as e:
         sys.stderr.write(f"Error: {str(e)}\n")
+        sys.stderr.write(traceback.format_exc())
         sys.stderr.flush()
         exitCode = 1
 
