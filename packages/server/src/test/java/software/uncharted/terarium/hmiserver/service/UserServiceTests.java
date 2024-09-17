@@ -15,6 +15,7 @@ import software.uncharted.terarium.hmiserver.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTests extends TerariumApplicationTests {
+
 	@Autowired
 	UserService userService;
 
@@ -26,10 +27,10 @@ public class UserServiceTests extends TerariumApplicationTests {
 	public void testItCachesUsers() {
 		final String targetId = MockUser.ADAM;
 		final User mockUser = new User()
-				.setId(MockUser.ADAM)
-				.setGivenName("Emperor")
-				.setFamilyName("Adam")
-				.setEmail("adam@test.io");
+			.setId(MockUser.ADAM)
+			.setGivenName("Emperor")
+			.setFamilyName("Adam")
+			.setEmail("adam@test.io");
 
 		// Tell the repository function to return the mocked user
 		Mockito.when(mockRepository.findById(targetId)).thenReturn(Optional.ofNullable(mockUser));
@@ -47,16 +48,16 @@ public class UserServiceTests extends TerariumApplicationTests {
 	public void testItCreatesAndCachesUsers() {
 		final String targetId = MockUser.ADAM;
 		final User mockUser = new User()
-				.setId(MockUser.ADAM)
-				.setGivenName("Emperor")
-				.setFamilyName("Adam")
-				.setEmail("adam@test.io");
+			.setId(MockUser.ADAM)
+			.setGivenName("Emperor")
+			.setFamilyName("Adam")
+			.setEmail("adam@test.io");
 
 		// Tell the repository function to return the mocked user
 		Mockito.when(mockRepository.findById(targetId)).thenReturn(Optional.ofNullable(mockUser));
 
 		// Create user
-		userService.createUser(mockUser);
+		UserService.createUser(mockUser);
 
 		// Call the user service twice
 		userService.getById(targetId);
@@ -71,16 +72,16 @@ public class UserServiceTests extends TerariumApplicationTests {
 	public void testItCreatesAndUpdateAndCachesUsers() {
 		final String targetId = MockUser.ADAM;
 		final User mockUser = new User()
-				.setId(MockUser.ADAM)
-				.setGivenName("Emperor")
-				.setFamilyName("Adam")
-				.setEmail("adam@test.io");
+			.setId(MockUser.ADAM)
+			.setGivenName("Emperor")
+			.setFamilyName("Adam")
+			.setEmail("adam@test.io");
 
 		// Tell the repository function to return the mocked user
 		Mockito.when(mockRepository.findById(targetId)).thenReturn(Optional.ofNullable(mockUser));
 
 		// Create user
-		userService.createUser(mockUser);
+		UserService.createUser(mockUser);
 
 		// Update user
 		mockUser.setGivenName("King");

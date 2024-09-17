@@ -20,8 +20,9 @@ public class GithubRepo {
 	private static final List<String> CODE_TYPES = new ArrayList<>(List.of(".py", ".R", ".jl"));
 
 	@TSIgnore
-	private static final List<String> DATA_TYPES =
-			new ArrayList<>(List.of(".csv", ".json", ".tsv", ".xml", ".yaml", ".yml"));
+	private static final List<String> DATA_TYPES = new ArrayList<>(
+		List.of(".csv", ".json", ".tsv", ".xml", ".yaml", ".yml")
+	);
 
 	@TSIgnore
 	private static final List<String> DOCUMENT_TYPES = new ArrayList<>(List.of(".pdf", ".txt", ".md"));
@@ -37,14 +38,19 @@ public class GithubRepo {
 	 * @param files
 	 */
 	public GithubRepo(List<GithubFile> files) {
-
 		// Initialize our map by adding an empty list for each category
 		this.files = Map.of(
-				FileCategory.DIRECTORY, new ArrayList<>(),
-				FileCategory.CODE, new ArrayList<>(),
-				FileCategory.DATA, new ArrayList<>(),
-				FileCategory.DOCUMENTS, new ArrayList<>(),
-				FileCategory.OTHER, new ArrayList<>());
+			FileCategory.DIRECTORY,
+			new ArrayList<>(),
+			FileCategory.CODE,
+			new ArrayList<>(),
+			FileCategory.DATA,
+			new ArrayList<>(),
+			FileCategory.DOCUMENTS,
+			new ArrayList<>(),
+			FileCategory.OTHER,
+			new ArrayList<>()
+		);
 
 		// Add data to our map by iterating over our given files and adding them to the appropriate category
 		for (GithubFile file : files) {
@@ -74,8 +80,8 @@ public class GithubRepo {
 		}
 
 		// Sums the total number of files in our map, excluding directories
-		this.totalFiles = this.files.values().stream().mapToInt(List::size).sum()
-				- this.files.get(FileCategory.DIRECTORY).size();
+		this.totalFiles = this.files.values().stream().mapToInt(List::size).sum() -
+		this.files.get(FileCategory.DIRECTORY).size();
 	}
 
 	public enum FileCategory {

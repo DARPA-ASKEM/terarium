@@ -36,12 +36,14 @@ public class EventController {
 	@GetMapping
 	@Secured(Roles.USER)
 	public ResponseEntity<List<Event>> getEvents(
-			@RequestParam(value = "type") final EventType type,
-			@RequestParam(value = "projectId", required = false) final UUID projectId,
-			@RequestParam(value = "search", required = false) final String likeValue,
-			@RequestParam(value = "limit", defaultValue = "10") final int limit) {
-		return ResponseEntity.ok(eventService.findEvents(
-				type, projectId, currentUserService.get().getId(), likeValue, limit));
+		@RequestParam(value = "type") final EventType type,
+		@RequestParam(value = "projectId", required = false) final UUID projectId,
+		@RequestParam(value = "search", required = false) final String likeValue,
+		@RequestParam(value = "limit", defaultValue = "10") final int limit
+	) {
+		return ResponseEntity.ok(
+			eventService.findEvents(type, projectId, currentUserService.get().getId(), likeValue, limit)
+		);
 	}
 
 	/**
@@ -52,7 +54,6 @@ public class EventController {
 	 */
 	@PostMapping
 	@Secured(Roles.USER)
-	@Transactional
 	@IgnoreRequestLogging
 	public ResponseEntity<Event> postEvent(@RequestBody final Event event) {
 		event.setUserId(currentUserService.get().getId());

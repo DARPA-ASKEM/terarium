@@ -15,6 +15,7 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @AMRSchemaType
 @Accessors(chain = true)
 public class Rate extends SupportAdditionalProperties implements Serializable {
+
 	@Serial
 	private static final long serialVersionUID = -5200389942863765459L;
 
@@ -24,5 +25,14 @@ public class Rate extends SupportAdditionalProperties implements Serializable {
 
 	@TSOptional
 	@JsonProperty("expression_mathml")
-	private String expressionMathml;
+	private String expressionMathml = "";
+
+	@Override
+	public Rate clone() {
+		final Rate clone = (Rate) super.clone();
+		clone.setTarget(this.getTarget());
+		clone.setExpression(this.getExpression());
+		clone.setExpressionMathml(this.getExpressionMathml());
+		return clone;
+	}
 }

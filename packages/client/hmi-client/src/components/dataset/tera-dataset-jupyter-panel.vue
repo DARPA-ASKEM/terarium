@@ -1,17 +1,24 @@
 <template>
-	<div class="data-transform-container">
-		<!-- Confirm Dialogs -->
-		<ConfirmDialog class="w-4" />
-
+	<!-- Output selector and Save as buttons artificially injected into drilldown header -->
+	<div class="data-transform-container h-full overflow-hidden">
 		<!-- Toolbar -->
 		<div class="toolbar flex">
 			<!-- Kernel Status -->
 			<div class="toolbar-section">
 				<span><i class="pi pi-circle-fill kernel-status" :style="statusStyle" /></span>
 				<header id="GPT">
-					{{ kernelStatus === 'idle' ? 'Ready' : kernelStatus === 'busy' ? 'Busy' : 'Unavailable' }}
+					{{ kernelStatus === 'idle' ? 'Ready' : kernelStatus === 'busy' ? 'Busy' : 'Offline' }}
 				</header>
 			</div>
+			<!-- Beaker Input -->
+			<tera-beaker-input
+				class="tera-beaker-input"
+				:kernel-is-busy="kernelStatus !== KernelState.idle"
+				context="dataset"
+				@submitQuery="onSubmitQuery"
+				@add-code-cell="onAddCodeCell"
+				@keydown.stop
+			/>
 			<span class="flex-auto"></span>
 
 			<!-- Jupyter Kernel Settings -->
@@ -54,13 +61,22 @@
 			</div>
 
 			<!-- Reset kernel -->
-			<span class="flex-auto"></span>
+			<Dropdown
+				:model-value="selectedLanguage"
+				placeholder="Select a language"
+				:options="languages"
+				option-label="name"
+				option-value="value"
+				class="language-dropdown"
+				:disabled="kernelStatus !== 'idle'"
+				@change="onChangeLanguage"
+			/>
 			<Button
 				label="Reset kernel"
 				severity="secondary"
 				outlined
 				icon="pi pi-replay"
-				class="p-button p-button-sm"
+				class="p-button p-button-sm pr-4"
 				@click="confirmReset"
 			/>
 		</div>
@@ -72,66 +88,39 @@
 			:show-chat-thoughts="props.showChatThoughts"
 			:jupyter-session="jupyterSession"
 			:kernel-status="kernelStatus"
-			@update-kernel-state="updateKernelState"
+			:language="selectedLanguage"
+			@update-kernel-state="(e) => emit('update-kernel-state', e)"
 			@update-kernel-status="updateKernelStatus"
 			@new-dataset-saved="onNewDatasetSaved"
 			@download-response="onDownloadResponse"
+			@update-language="(lang) => emit('update-language', lang)"
 			:notebook-session="props.notebookSession"
 		/>
 
-		<!-- Save, Download and Close buttons -->
-		<div class="bottom-right-button-group">
-			<div class="flex gap-2">
-				<Dropdown
-					v-model="actionTarget"
-					placeholder="Select a dataframe"
-					:options="Object.keys(kernelState || [])"
-					class="5"
-					:disabled="!kernelState"
-				/>
-
-				<Button
-					label="Save as"
-					icon="pi pi-save"
-					severity="secondary"
-					outlined
-					:disabled="!kernelState"
-					@click="showSaveInput = !showSaveInput"
-				/>
-				<Button
-					label="Download"
-					icon="pi pi-download"
-					severity="secondary"
-					outlined
-					:disabled="!kernelState"
-					@click="downloadDataset"
-				/>
-				<!-- <Button
-					label="Close"
-					@click="emit('close')"
-				/> -->
-			</div>
-		</div>
+		<!-- Save as dialog -->
+		<tera-modal v-if="showSaveInput" class="w-4">
+			<template #header>
+				<h4>Save as</h4>
+			</template>
+			<tera-input-text
+				id="name"
+				v-model="saveAsName"
+				placeholder="What do you want to call it?"
+				auto-focus
+				@keyup.enter="saveAsNewDataset()"
+			/>
+			<template #footer>
+				<Button label="Cancel" @click="showSaveInput = false" severity="secondary" outlined />
+				<Button label="Save" :disabled="!hasValidDatasetName" @click="saveAsNewDataset()" />
+			</template>
+		</tera-modal>
 	</div>
-
-	<!-- Save as dialog -->
-	<Dialog v-model:visible="showSaveInput" :modal="true" :style="{ width: '50vw' }" header="Save as">
-		<div class="p-fluid mt-4">
-			<div class="p-field">
-				<InputText id="name" v-model="saveAsName" placeholder="What do you want to call it?" />
-			</div>
-		</div>
-		<template #footer>
-			<Button label="Cancel" @click="showSaveInput = false" severity="secondary" outlined />
-			<Button label="Save" :disabled="!hasValidDatasetName" @click="saveAsNewDataset()" />
-		</template>
-	</Dialog>
 </template>
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, Ref, watch } from 'vue';
 import Button from 'primevue/button';
-import Dialog from 'primevue/dialog';
-import InputText from 'primevue/inputtext';
+import TeraModal from '@/components/widgets/tera-modal.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { useToastService } from '@/services/toast';
 import { IModel } from '@jupyterlab/services/lib/session/session';
 import type { CsvAsset, NotebookSession } from '@/types/Types';
@@ -143,16 +132,25 @@ import {
 	getServerSettings,
 	getSessionManager,
 	JupyterMessage,
-	newSession
+	newSession,
+	KernelState
 } from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
 import Dropdown from 'primevue/dropdown';
 import { shutdownKernel } from '@jupyterlab/services/lib/kernel/restapi';
-import ConfirmDialog from 'primevue/confirmdialog';
 import { useConfirm } from 'primevue/useconfirm';
 import { useProjects } from '@/composables/project';
+import { programmingLanguageOptions } from '@/types/common';
+import TeraBeakerInput from '@/components/llm/tera-beaker-input.vue';
 
+const openDialog = () => {
+	showSaveInput.value = true;
+};
+
+defineExpose({
+	openDialog
+});
 const jupyterSession: SessionContext = await newSession('beaker_kernel', 'Beaker Kernel');
 const selectedKernel = ref();
 const runningSessions = ref<any[]>([]);
@@ -164,21 +162,25 @@ const props = defineProps<{
 	showKernels: boolean;
 	showChatThoughts: boolean;
 	notebookSession?: NotebookSession;
+	programmingLanguage?: string;
+	kernelState: any;
+	selectedDataset: string | null;
 }>();
 
-const emit = defineEmits(['new-dataset-saved']);
+const languages = programmingLanguageOptions();
+const selectedLanguage = computed(() => props.programmingLanguage || languages[0].value);
+
+const emit = defineEmits(['new-dataset-saved', 'update-language', 'update-kernel-state']);
 
 const chat = ref();
 const kernelStatus = ref(<string>'');
-const kernelState = ref(null);
-const actionTarget = ref('df');
 
 const newCsvContent: any = ref(null);
 const newCsvHeader: any = ref(null);
 const oldCsvHeaders: any = ref(null);
 const jupyterCsv: Ref<CsvAsset | null> = ref(null);
 const showSaveInput = ref(<boolean>false);
-const saveAsName = ref(<string | null>'');
+const saveAsName = ref('');
 const toast = useToastService();
 
 const updateKernelStatus = (statusString: string) => {
@@ -234,10 +236,46 @@ jupyterSession.kernelChanged.connect((_context, kernelInfo) => {
 	if (kernel?.name === 'beaker_kernel') {
 		setKernelContext(kernel as IKernelConnection, {
 			context: 'dataset',
+			language: selectedLanguage.value,
 			context_info: contextInfo
 		});
 	}
 });
+
+const onChangeLanguage = (val) => {
+	confirm.require({
+		message:
+			'Are you sure you want to change the language? Changing the language will reset the kernel to its starting state.',
+		header: 'Change language',
+		icon: 'pi pi-exclamation-triangle',
+		accept: () => {
+			const session = jupyterSession.session;
+			const kernel = session?.kernel as IKernelConnection;
+
+			const contextInfo: any = {};
+			props.assets.forEach((asset, i) => {
+				const key = `d${i + 1}`;
+				contextInfo[key] = {
+					id: asset.id,
+					asset_type: toAssetType(asset.type)
+				};
+			});
+			const messageBody = {
+				session: session?.name || '',
+				channel: 'shell',
+				content: {
+					context: 'dataset',
+					language: val.value,
+					context_info: contextInfo
+				},
+				msgType: 'context_setup_request',
+				msgId: createMessageId('context_setup_request')
+			};
+			const message: JupyterMessage = createMessage(messageBody);
+			kernel.sendJupyterMessage(message);
+		}
+	});
+};
 
 watch(
 	() => [jupyterCsv.value?.csv],
@@ -261,9 +299,7 @@ onMounted(() => {
 				results.push(result);
 				result = sessions.next();
 			}
-			runningSessions.value = results
-				.reverse()
-				.map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
+			runningSessions.value = results.reverse().map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
 			selectedKernel.value = {
 				kernelId: jupyterSession.session?.kernel?.id,
 				value: jupyterSession.session?.id
@@ -276,10 +312,8 @@ onUnmounted(() => {
 	jupyterSession.shutdown();
 });
 
-const updateKernelState = (newKernelState) => {
-	kernelState.value = newKernelState;
-};
-
+// TODO: Integrate tera-save-asset-modal.vue instead of doing this
+// There is no clear way to save a csv dataset unless we do it using jupyter like we have now, once we figure out how to save using createDataset we should move this
 // Save file function
 const saveAsNewDataset = async () => {
 	if (!hasValidDatasetName.value || saveAsName.value === null) {
@@ -299,7 +333,6 @@ const saveAsNewDataset = async () => {
 	// newDataset.fileNames = [filename];
 	// const result = await createNewDataset(newDataset);
 
-	// import { KernelConnection as JupyterKernelConnection } from '@/services/jupyter';
 	const session = jupyterSession.session;
 	const kernel = session?.kernel as IKernelConnection;
 	const messageBody = {
@@ -308,7 +341,7 @@ const saveAsNewDataset = async () => {
 		content: {
 			parent_dataset_id: String(props.assets[0].id),
 			name: datasetName,
-			var_name: actionTarget.value
+			var_name: props.selectedDataset
 		},
 		msgType: 'save_dataset_request',
 		msgId: createMessageId('save_dataset_request')
@@ -398,9 +431,7 @@ const updateKernelList = () => {
 			while (result) {
 				result = sessions.next();
 			}
-			runningSessions.value = results
-				.reverse()
-				.map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
+			runningSessions.value = results.reverse().map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
 			selectedKernel.value = {
 				kernelId: jupyterSession.session?.kernel?.id,
 				value: jupyterSession.session?.id
@@ -417,27 +448,37 @@ const onNewDatasetSaved = async (payload) => {
 	const datasetId = payload.dataset_id;
 	await useProjects().addAsset(AssetType.Dataset, datasetId);
 	emit('new-dataset-saved', { id: datasetId, name: saveAsName.value });
-	toast.success(
-		'Dataset saved successfully',
-		'Refresh to see the dataset in the resource explorer'
-	);
+	toast.success('Dataset saved successfully', 'Refresh to see the dataset in the resource explorer');
 };
 
-const downloadDataset = () => {
-	const session = jupyterSession.session;
-	const kernel = session?.kernel as IKernelConnection;
-	const messageBody = {
-		session: session?.name || '',
-		channel: 'shell',
-		content: {
-			var_name: actionTarget.value
-		},
-		msgType: 'download_dataset_request',
-		msgId: createMessageId('download_dataset_request')
-	};
-	const message: JupyterMessage = createMessage(messageBody);
-	kernel?.sendJupyterMessage(message);
+const onSubmitQuery = (question: string) => {
+	if (chat.value) {
+		chat.value.submitQuery(question);
+	}
 };
+
+const onAddCodeCell = () => {
+	if (chat.value) {
+		chat.value.addCodeCell();
+	}
+};
+
+/* Download dataset feature has been removed, but keeping this code here in case it returns */
+// const downloadDataset = () => {
+// 	const session = jupyterSession.session;
+// 	const kernel = session?.kernel as IKernelConnection;
+// 	const messageBody = {
+// 		session: session?.name || '',
+// 		channel: 'shell',
+// 		content: {
+// 			var_name: actionTarget.value
+// 		},
+// 		msgType: 'download_dataset_request',
+// 		msgId: createMessageId('download_dataset_request')
+// 	};
+// 	const message: JupyterMessage = createMessage(messageBody);
+// 	kernel?.sendJupyterMessage(message);
+// };
 
 const onDownloadResponse = (payload) => {
 	const data = payload.data;
@@ -496,16 +537,19 @@ const onDownloadResponse = (payload) => {
 	flex-direction: row;
 	align-items: center;
 	background-color: var(--surface-100);
-	border-top: 1px solid var(--surface-border-light);
-	border-bottom: 1px solid var(--surface-border-light);
+	border-bottom: 1px solid var(--surface-border);
 	position: sticky;
 	top: 0;
 	left: 0;
 	z-index: 100;
 	width: 100%;
-	padding: var(--gap-xsmall) var(--gap) var(--gap-xsmall) 1.5rem;
+	height: 3.5rem;
+	padding: var(--gap-2) var(--gap) var(--gap-2) 1.5rem;
+	gap: var(--gap-2);
 }
-
+.toolbar:deep(.p-button .p-button-label) {
+	font-weight: 500;
+}
 .toolbar-section {
 	display: flex;
 	flex-direction: row;
@@ -513,20 +557,8 @@ const onDownloadResponse = (payload) => {
 	flex-wrap: nowrap;
 	white-space: nowrap;
 }
-
-.bottom-right-button-group {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	flex-wrap: nowrap;
-	white-space: nowrap;
-	position: absolute;
-	bottom: 21px;
-	right: 40px;
-	z-index: 200;
-}
-.bottom-right-button-group:deep(.p-dropdown .p-dropdown-label) {
-	padding: 9px;
+:deep(.language-dropdown span) {
+	font-size: 12px;
 }
 
 .variables-table {
@@ -535,7 +567,7 @@ const onDownloadResponse = (payload) => {
 }
 
 .variables-table div {
-	padding: 0.25rem;
+	padding: var(--gap-1);
 }
 
 .variables-header {

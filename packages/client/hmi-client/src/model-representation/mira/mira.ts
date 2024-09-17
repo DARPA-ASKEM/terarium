@@ -1,5 +1,6 @@
-import _ from 'lodash';
+import _, { isEmpty, cloneDeep, uniq } from 'lodash';
 import { IGraph } from '@graph-scaffolder/types';
+import { NodeType } from '@/services/graph';
 import {
 	extractOutcomeControllersMatrix,
 	extractSubjectControllersMatrix,
@@ -12,8 +13,10 @@ import type {
 	MiraModel,
 	MiraTemplate,
 	MiraTemplateParams,
-	TemplateSummary
+	TemplateSummary,
+	ObservableSummary
 } from './mira-common';
+import type { NodeData } from '../petrinet/petrinet-renderer';
 
 export const emptyMiraModel = () => {
 	const newModel: MiraModel = {
@@ -87,10 +90,7 @@ export const isStratifiedModel = (miraModel: MiraModel) => {
  * Note this is mostly heuristically based, so there may be some edge cases where this will not work,
  * expecially if the model is changed manually after a stratification operation, e.g. rename a stratified variable
  * */
-export const collapseParameters = (
-	miraModel: MiraModel,
-	miraTemplateParams: MiraTemplateParams
-) => {
+export const collapseParameters = (miraModel: MiraModel, miraTemplateParams: MiraTemplateParams) => {
 	const map = new Map<string, string[]>();
 	const keys = Object.keys(miraModel.parameters);
 
@@ -100,18 +100,11 @@ export const collapseParameters = (
 		const tokens = key.split('_') as string[];
 		const rootName = _.first(tokens) as string;
 
-		// Ignore non-numerics
-		if (tokens.length > 1) {
-			let numerical = true;
-			for (let j = 1; j < tokens.length; j++) {
-				if (Number.isNaN(parseInt(tokens[j], 10))) {
-					numerical = false;
-				}
-			}
-			if (!numerical) {
-				map.set(name, [name]);
-				continue;
-			}
+		// There are some cases where parameter names have underscores but are not stratified
+		const displayName = miraModel.parameters[key].display_name;
+		if (tokens.length > 1 && displayName === key) {
+			map.set(name, [name]);
+			continue;
 		}
 
 		if (map.has(rootName)) {
@@ -134,10 +127,7 @@ export const collapseParameters = (
 		const mapKey = mapKeys[i];
 		const childrenParams = map.get(mapKey);
 
-		const isNormalStratify = _.every(
-			templateParams,
-			(t) => _.intersection(t.params, childrenParams).length <= 1
-		);
+		const isNormalStratify = _.every(templateParams, (t) => _.intersection(t.params, childrenParams).length <= 1);
 		if (!isNormalStratify) {
 			map.delete(mapKey);
 			childrenParams?.forEach((p) => {
@@ -163,6 +153,17 @@ export const collapseInitials = (miraModel: MiraModel) => {
 			map.set(rootName, [name]);
 		}
 	}
+
+	// when a key only has one child, we will rename the key of the root to the child.
+	// this is to avoid renaming when a single entry key has an underscore
+	[...map.keys()].forEach((key) => {
+		const newKey = map.get(key)?.[0];
+		if (newKey && map.get(key)?.length === 1 && newKey !== key) {
+			map.set(newKey, [newKey]);
+			map.delete(key);
+		}
+	});
+
 	return map;
 };
 
@@ -223,15 +224,11 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 
 		// note controller and controllers are mutually exclusive
 		if (t.controller) {
-			scrubbedTemplate.controllers.push(
-				removeModifiers(t.controller.name, t.controller.context, scrubbingKeys)
-			);
+			scrubbedTemplate.controllers.push(removeModifiers(t.controller.name, t.controller.context, scrubbingKeys));
 		}
 		if (t.controllers && t.controllers.length > 0) {
 			t.controllers.forEach((miraConcept) => {
-				scrubbedTemplate.controllers.push(
-					removeModifiers(miraConcept.name, miraConcept.context, scrubbingKeys)
-				);
+				scrubbedTemplate.controllers.push(removeModifiers(miraConcept.name, miraConcept.context, scrubbingKeys));
 			});
 			t.controllers.sort();
 		}
@@ -256,6 +253,7 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 		if (!tempMatrixMap.has(key)) {
 			tempMatrixMap.set(key, []);
 		}
+
 		const originalTemplate = templateMap.get(t.name);
 		tempMatrixMap.get(key)?.push(originalTemplate as MiraTemplate);
 
@@ -279,6 +277,20 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 		templatesSummary: uniqueTemplates,
 		matrixMap
 	};
+};
+
+export const collapseObservableReferences = (observableSummary: ObservableSummary, initials: Map<string, string[]>) => {
+	const collapsedObservableSummary: ObservableSummary = cloneDeep(observableSummary);
+	Object.values(collapsedObservableSummary).forEach((observable) => {
+		// Extract the first part of the reference before the first underscore
+		observable.references = uniq(
+			observable.references.map((r) => {
+				const splitReference = r.split('_')[0];
+				return initials.has(splitReference) ? splitReference : r;
+			})
+		);
+	});
+	return collapsedObservableSummary;
 };
 
 export const createInitialMatrix = (miraModel: MiraModel, key: string) => {
@@ -307,11 +319,7 @@ export const createInitialMatrix = (miraModel: MiraModel, key: string) => {
  * Assumes one-to-one with cells
  *
  * */
-export const createParameterMatrix = (
-	miraModel: MiraModel,
-	miraTemplateParams: MiraTemplateParams,
-	param: string
-) => {
+export const createParameterMatrix = (miraModel: MiraModel, miraTemplateParams: MiraTemplateParams, param: string) => {
 	const paramMap = collapseParameters(miraModel, miraTemplateParams);
 	const childrenParams = paramMap.get(param);
 	if (!childrenParams) throw new Error(`Cannot map ${param}`);
@@ -348,12 +356,7 @@ export const createParameterMatrix = (
 		return intersection.length > 0;
 	});
 
-	const subjectOutcome = extractSubjectOutcomeMatrix(
-		templates,
-		childrenParams,
-		paramValueMap,
-		paramLocationMap
-	);
+	const subjectOutcome = extractSubjectOutcomeMatrix(templates, childrenParams, paramValueMap, paramLocationMap);
 	const subjectControllers = extractSubjectControllersMatrix(
 		templates,
 		childrenParams,
@@ -393,7 +396,22 @@ export const createParameterMatrix = (
 };
 
 // const genKey = (t: TemplateSummary) => `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
-export const convertToIGraph = (templates: TemplateSummary[]) => {
+export const convertToIGraph = (
+	miraModel: MiraModel,
+	initObservableSummary: ObservableSummary,
+	isStratified: boolean
+) => {
+	const templates: TemplateSummary[] = [];
+	let observableSummary: ObservableSummary = {};
+
+	if (isStratified) {
+		templates.push(...collapseTemplates(miraModel).templatesSummary);
+		observableSummary = collapseObservableReferences(initObservableSummary, collapseInitials(miraModel));
+	} else {
+		templates.push(...rawTemplatesSummary(miraModel));
+		observableSummary = cloneDeep(initObservableSummary);
+	}
+
 	const graph: IGraph<any, any> = {
 		nodes: [],
 		edges: [],
@@ -419,15 +437,15 @@ export const convertToIGraph = (templates: TemplateSummary[]) => {
 			y: 0,
 			width: 50,
 			height: 50,
-			data: { type: 'state' },
+			data: { type: NodeType.State },
 			nodes: []
 		});
 	});
 
 	// templates
 	templates.forEach((t) => {
-		const nodeData: any = {
-			type: 'transition',
+		const nodeData: NodeData = {
+			type: NodeType.Transition,
 			expression: t.expression
 		};
 
@@ -481,15 +499,43 @@ export const convertToIGraph = (templates: TemplateSummary[]) => {
 		}
 	});
 
+	// observables
+	if (!isEmpty(observableSummary)) {
+		Object.keys(observableSummary).forEach((key) => {
+			const observable = observableSummary[key];
+			graph.nodes.push({
+				id: key,
+				label: observable.name,
+				x: 0,
+				y: 0,
+				width: 50,
+				height: 50,
+				data: {
+					type: NodeType.Observable,
+					expression: observable.expression,
+					references: observable.references
+				},
+				nodes: []
+			});
+
+			observable.references.forEach((reference: string) => {
+				graph.edges.push({
+					id: observable.expression,
+					source: reference,
+					target: key,
+					points: [],
+					data: { isObservable: true }
+				});
+			});
+		});
+	}
+
 	return graph;
 };
 
 // Experimental, additional matrix context for LLM agent
 // to match datasets to model parameters
-export const generateModelDatasetConfigurationContext = (
-	mmt: MiraModel,
-	miraTemplateParams: MiraTemplateParams
-) => {
+export const generateModelDatasetConfigurationContext = (mmt: MiraModel, miraTemplateParams: MiraTemplateParams) => {
 	// Create all possible matrices
 	const rootParams = collapseParameters(mmt, miraTemplateParams);
 	const rootParamKeys = [...rootParams.keys()];
@@ -522,9 +568,7 @@ export const generateModelDatasetConfigurationContext = (
 			lines.push('');
 			lines.push(header);
 			subjectControllers.matrix.forEach((r, idx) => {
-				const rowStr = `${subjectControllers.colNames[idx]},${r
-					.map((d) => d.content.id)
-					.join(',')}`;
+				const rowStr = `${subjectControllers.colNames[idx]},${r.map((d) => d.content.id).join(',')}`;
 				lines.push(rowStr);
 			});
 			lines.push('');
@@ -537,9 +581,7 @@ export const generateModelDatasetConfigurationContext = (
 			lines.push('');
 			lines.push(header);
 			outcomeControllers.matrix.forEach((r, idx) => {
-				const rowStr = `${outcomeControllers.colNames[idx]},${r
-					.map((d) => d.content.id)
-					.join(',')}`;
+				const rowStr = `${outcomeControllers.colNames[idx]},${r.map((d) => d.content.id).join(',')}`;
 				lines.push(rowStr);
 			});
 			lines.push('');

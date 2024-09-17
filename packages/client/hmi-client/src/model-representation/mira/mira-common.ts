@@ -74,3 +74,19 @@ export interface TemplateSummary {
 	outcome: string;
 	controllers: string[];
 }
+
+export interface ObservableSummary {
+	[key: string]: {
+		name: string;
+		display_name: string;
+		description: string;
+		expression: string;
+		references: string[];
+	};
+}
+
+export interface MMT {
+	mmt: MiraModel;
+	template_params: MiraTemplateParams;
+	observable_summary: ObservableSummary;
+}

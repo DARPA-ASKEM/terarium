@@ -5,9 +5,7 @@
 			<li v-for="(edge, index) in junction.edges" :key="index">
 				{{ junction.edges[0].target.portId }}
 				=
-				{{ templateCards.find(({ id }) => id === edge.target.cardId)?.name }}.{{
-					edge.target.portId
-				}}
+				{{ cards.find(({ id }) => id === edge.target.cardId)?.model.header.name }}.{{ edge.target.portId }}
 			</li>
 		</ul>
 	</section>
@@ -18,7 +16,7 @@ import type { ModelTemplateCard, ModelTemplateJunction } from '@/types/model-tem
 
 defineProps<{
 	junction: ModelTemplateJunction;
-	templateCards: ModelTemplateCard[];
+	cards: ModelTemplateCard[];
 }>();
 </script>
 

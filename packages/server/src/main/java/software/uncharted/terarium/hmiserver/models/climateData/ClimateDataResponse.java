@@ -6,12 +6,14 @@ import lombok.Data;
 
 @Data
 public class ClimateDataResponse {
+
 	private String id;
 	private String queued;
 	private Result result;
 
 	@Data
 	public static class Result {
+
 		@JsonProperty("created_at")
 		private String createdAt;
 

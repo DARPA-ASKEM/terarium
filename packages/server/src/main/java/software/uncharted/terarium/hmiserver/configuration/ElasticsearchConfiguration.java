@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Configuration;
 @Data
 @Accessors(chain = true)
 public class ElasticsearchConfiguration {
+
 	String url;
 
 	@Value("${terarium.elasticsearch.auth_enabled:false}")
@@ -26,6 +27,10 @@ public class ElasticsearchConfiguration {
 		return String.join("_", index.prefix, root, index.suffix);
 	}
 
+	public String getProjectIndex() {
+		return String.join("_", index.prefix, index.projectRoot, index.suffix);
+	}
+
 	public String getCodeIndex() {
 		return String.join("_", index.prefix, index.codeRoot, index.suffix);
 	}
@@ -35,7 +40,7 @@ public class ElasticsearchConfiguration {
 	}
 
 	public String getDatasetIndex() {
-		return String.join("_", index.prefix, index.datasetRoot, index.suffix);
+		return String.join("_", index.prefix, index.datasetRoot, "tera_2.1");
 	}
 
 	public String getDocumentIndex() {
@@ -66,12 +71,8 @@ public class ElasticsearchConfiguration {
 		return String.join("_", index.prefix, index.workflowRoot, index.suffix);
 	}
 
-	public String getDecapodesConfigurationIndex() {
-		return String.join("_", index.prefix, index.decapodesConfigurationRoot, index.suffix);
-	}
-
-	public String getDecapodesContextIndex() {
-		return String.join("_", index.prefix, index.decapodesContextRoot, index.suffix);
+	public String getProjectAlias() {
+		return String.join("_", index.prefix, index.projectRoot);
 	}
 
 	public String getCodeAlias() {
@@ -114,27 +115,19 @@ public class ElasticsearchConfiguration {
 		return String.join("_", index.prefix, index.workflowRoot);
 	}
 
-	public String getDecapodesConfigurationAlias() {
-		return String.join("_", index.prefix, index.decapodesConfigurationRoot);
-	}
-
-	public String getDecapodesContextAlias() {
-		return String.join("_", index.prefix, index.decapodesContextRoot);
-	}
-
 	public record Index(
-			String prefix,
-			String suffix,
-			String codeRoot,
-			String artifactRoot,
-			String datasetRoot,
-			String documentRoot,
-			String equationRoot,
-			String modelRoot,
-			String modelConfigurationRoot,
-			String notebookSessionRoot,
-			String simulationRoot,
-			String workflowRoot,
-			String decapodesConfigurationRoot,
-			String decapodesContextRoot) {}
+		String prefix,
+		String suffix,
+		String projectRoot,
+		String codeRoot,
+		String artifactRoot,
+		String datasetRoot,
+		String documentRoot,
+		String equationRoot,
+		String modelRoot,
+		String modelConfigurationRoot,
+		String notebookSessionRoot,
+		String simulationRoot,
+		String workflowRoot
+	) {}
 }

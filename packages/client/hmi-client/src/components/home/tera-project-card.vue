@@ -4,9 +4,7 @@
 			<header>
 				<div
 					class="flex align-items-center gap-1"
-					v-tooltip.top="
-						`${stats?.contributors} contributor${stats?.contributors === 1 ? '' : 's'}`
-					"
+					v-tooltip.top="`${stats?.contributors} contributor${stats?.contributors === 1 ? '' : 's'}`"
 				>
 					<i class="pi pi-user" /> {{ stats?.contributors }}
 				</div>
@@ -42,16 +40,18 @@
 				</div>
 			</header>
 			<div class="img">
-				<img :src="image" alt="Artistic representation of the Project statistics" />
+				<img :src="thumbnail" alt="Artistic representation of the Project statistics" />
 			</div>
 			<section>
 				<div class="title" ref="titleRef">
+					<template v-if="isCopying">Copy of</template>
 					{{ project.name }}
 				</div>
+				<ProgressBar v-if="isCopying" mode="indeterminate" />
 				<section class="details">
 					<div>
 						<div class="author">{{ project?.userName ?? '——' }}</div>
-						<div class="creation-date">{{ formatDdMmmYyyy(project.createdOn) }}</div>
+						<div>{{ formatDdMmmYyyy(project.updatedOn) }}</div>
 					</div>
 					<div class="description">
 						{{ project.description }}
@@ -60,11 +60,14 @@
 			</section>
 		</template>
 		<template #footer>
-			<span>Last updated {{ formatDdMmmYyyy(project.updatedOn) }}</span>
-			<tera-project-menu
-				:project="project"
-				@forked-project="(forkedProject) => emit('forked-project', forkedProject)"
-			/>
+			<template v-if="!isCopying">
+				<span>Last updated {{ formatDdMmmYyyy(project.updatedOn) }}</span>
+				<tera-project-menu
+					:project="project"
+					@copied-project="(copiedProject) => emit('copied-project', copiedProject)"
+				/>
+			</template>
+			<template v-else-if="isCopying">Copying</template>
 		</template>
 	</Card>
 	<Card v-else>
@@ -95,24 +98,24 @@ import { ref, computed } from 'vue';
 import Card from 'primevue/card';
 import Skeleton from 'primevue/skeleton';
 import { formatDdMmmYyyy } from '@/utils/date';
-import { placeholder } from '@/utils/project-card';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { Project } from '@/types/Types';
+import DefaultThumbnail from '@/assets/images/project-thumbnails/default.png';
+import getImage from '@/assets/utils';
+import ProgressBar from 'primevue/progressbar';
 import TeraProjectMenu from './tera-project-menu.vue';
 
 const props = defineProps<{
 	project?: Project;
+	isCopying?: boolean;
 }>();
-const emit = defineEmits(['forked-project']);
+const emit = defineEmits(['copied-project']);
 
 const titleRef = ref();
 const descriptionLines = computed(() => {
 	const titleHeight = titleRef.value?.clientHeight;
-	for (let i = 1; i < 3; i++) {
-		if (titleHeight === 17 * i) {
-			return 10 - i;
-		}
-	}
+	if (titleHeight === 17) return 9;
+	if (titleHeight === 34) return 8;
 	return 7;
 });
 
@@ -129,7 +132,9 @@ const stats = computed(() => {
 	};
 });
 
-const image = computed(() => (stats.value ? placeholder(stats.value) : undefined));
+const thumbnail = computed(
+	() => getImage(`project-thumbnails/${props.project?.thumbnail ?? 'default'}.png`) ?? DefaultThumbnail
+);
 </script>
 
 <style scoped>

@@ -1,0 +1,41 @@
+---
+# Merge AMD64 and ARM64 images into one manifest
+name: merge-images.yml
+
+on:
+  workflow_call:
+    inputs:
+      name:
+        required: true
+        description: 'The name of the image to be merged'
+        type: string
+
+jobs:
+  merge-images:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Login to registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create manifest
+        run: |
+          docker manifest create ${{ inputs.name }} \
+            --amend ${{ inputs.name }}--amd64 \
+            --amend ${{ inputs.name }}--arm64
+          docker manifest annotate --arch amd64 --os linux ${{ inputs.name }} ${{ inputs.name }}--amd64
+          docker manifest annotate --arch arm64 --os linux ${{ inputs.name }} ${{ inputs.name }}--arm64
+
+      - name: Inspect and push the manifest
+        run: |
+          docker manifest inspect ${{ inputs.name }}
+          docker manifest push ${{ inputs.name }}
+
+      - name: Delete the AMD64 and ARM64 manifest
+        continue-on-error: true
+        run: |
+          docker manifest rm ${{ inputs.name }}--amd64
+          docker manifest rm ${{ inputs.name }}--arm64

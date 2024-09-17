@@ -5,22 +5,31 @@ import { ClientEventType } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { AxiosResponse } from 'axios';
 
-/**
- * Transform a list of LaTeX or mathml strings to an AMR
+/** Define the request type
  * @param equations string[] - list of LaTeX or mathml strings representing a model
  * @param framework string= - the framework to use for the extraction, default to 'petrinet'
  * @param modelId string= - the model id to use for the extraction
+ * @param documentId string= - the document id source of the equations
+ */
+export interface EquationsToAMRRequest {
+	equations: string[];
+	framework?: string;
+	modelId?: Model['id'];
+	documentId?: DocumentAsset['id'];
+}
+
+/**
+ * Transform a list of LaTeX or mathml strings to an AMR
+ * @param request EquationsToAMRRequest
  * @return {Promise<any>}
  */
-export const equationsToAMR = async (
-	equations: string[],
-	framework: string = 'petrinet',
-	modelId?: string
-): Promise<string | null> => {
+export const equationsToAMR = async (request: EquationsToAMRRequest): Promise<string | null> => {
+	const { equations, framework: model = 'petrinet', modelId, documentId } = request;
 	try {
 		const response: AxiosResponse<string> = await API.post(`/knowledge/equations-to-model`, {
-			model: framework,
+			model,
 			modelId,
+			documentId,
 			equations
 		});
 		return response.data;
@@ -31,47 +40,16 @@ export const equationsToAMR = async (
 };
 
 /**
- * Given a model, enrich its metadata
- * Returns a runId used to poll for result
- */
-export const profileModel = async (modelId: Model['id'], documentId: string | null = null) => {
-	let response: any;
-	if (documentId && modelId) {
-		response = await API.post(`/knowledge/profile-model/${modelId}?document-id=${documentId}`);
-	} else {
-		response = await API.post(`/knowledge/profile-model/${modelId}`);
-	}
-	console.log('model profile response', response.data);
-	return response.data.id;
-};
-
-export const alignModel = async (
-	modelId: Model['id'],
-	documentId: DocumentAsset['id']
-): Promise<boolean> => {
-	if (!modelId || !documentId) {
-		return false;
-	}
-	const url = `/knowledge/align-model?document-id=${documentId}&model-id=${modelId}`;
-	const response = await API.post(url);
-	return response?.status === 204;
-};
-
-/**
  * Given a dataset, enrich its metadata
  * Returns a runId used to poll for result
  */
-export const profileDataset = async (
-	datasetId: Dataset['id'],
-	documentId: string | null = null
-) => {
+export const profileDataset = async (datasetId: Dataset['id'], documentId: DocumentAsset['id'] = '') => {
 	let response: any;
-	if (documentId && datasetId) {
+	if (documentId) {
 		response = await API.post(`/knowledge/profile-dataset/${datasetId}?document-id=${documentId}`);
 	} else {
 		response = await API.post(`/knowledge/profile-dataset/${datasetId}`);
 	}
-	console.log('data profile response', response.data);
 	return response.data.id;
 };
 
@@ -92,10 +70,7 @@ export const extractPDF = async (documentId: DocumentAsset['id']) => {
 };
 
 /** Extract variables from a text document */
-export const extractVariables = async (
-	documentId: DocumentAsset['id'],
-	modelIds: Array<Model['id']>
-) => {
+export const extractVariables = async (documentId: DocumentAsset['id'], modelIds: Array<Model['id']>) => {
 	console.group('SKEMA Variable extraction');
 	if (documentId) {
 		const url = `/knowledge/variable-extractions?document-id=${documentId}&model-ids=${modelIds}`;

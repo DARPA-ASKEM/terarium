@@ -32,16 +32,6 @@ export interface RenderOptions {
 	click?: Function;
 }
 
-export async function getQueries(id: string) {
-	try {
-		const response = await API.get(`/funman/queries/${id}`);
-		return response.data;
-	} catch (error) {
-		logger.error(error);
-		return null;
-	}
-}
-
 export async function makeQueries(body: FunmanPostQueriesRequest) {
 	try {
 		const resp = await API.post('/funman/queries', body);
@@ -49,16 +39,6 @@ export async function makeQueries(body: FunmanPostQueriesRequest) {
 		return output;
 	} catch (err) {
 		logger.error(err);
-		return null;
-	}
-}
-
-export async function haltQuery(id: string) {
-	try {
-		const response = await API.get(`/funman/queries/${id}/halt`);
-		return response.data;
-	} catch (error) {
-		logger.error(error);
 		return null;
 	}
 }
@@ -114,9 +94,7 @@ export const processFunman = (result: any) => {
 
 				// Get trajectories
 				const filteredVals = Object.keys(point.values)
-					.filter(
-						(key) => !params.includes(key) && key !== 'timestep' && key.split('_')[0] !== 'assume'
-					)
+					.filter((key) => !params.includes(key) && key !== 'timestep' && key.split('_')[0] !== 'assume')
 					.reduce((obj, key) => {
 						obj[key] = point.values[key];
 						return obj;
@@ -157,20 +135,15 @@ interface FunmanBoundingBox {
 	x2: number;
 	y2: number;
 }
-export const getBoxes = (
-	processedData: FunmanProcessedData,
-	param1: string,
-	param2: string,
-	_timestep: number,
-	boxType: string
-) => {
+export const getBoxes = (processedData: FunmanProcessedData, param1: string, param2: string, boxType: string) => {
 	const result: FunmanBoundingBox[] = [];
 
 	const temp = processedData.boxes
 		.filter((d: any) => d.label === boxType)
-		.map((box: any) => ({ id: box.id, timestep: box.timestep.lb }));
+		.map((box: any) => ({ id: box.id, timestep: box.timestep.ub }));
 	if (temp.length === 0) return [];
 
+	// grab latest step
 	const step = temp.sort((a, b) => b.timestep - a.timestep)[0].timestep;
 
 	processedData.boxes
@@ -186,7 +159,6 @@ export const getBoxes = (
 			});
 		});
 
-	// console.log('!!!', result);
 	return result;
 };
 
@@ -215,9 +187,10 @@ export const renderFumanTrajectories = (
 	const xDomain = d3.extent(trajs.map((d) => d.timestep)) as [number, number];
 
 	// Find max/min across all state values
-	const yDomain = d3.extent(
-		trajs.map((d) => states.filter((s) => s === state).map((s) => d[s])).flat()
-	) as [number, number];
+	const yDomain = d3.extent(trajs.map((d) => states.filter((s) => s === state).map((s) => d[s])).flat()) as [
+		number,
+		number
+	];
 
 	const xScale = d3
 		.scaleLinear()
@@ -321,9 +294,7 @@ export const renderFumanTrajectories = (
 	// Since this is variable-vs-time, we can't display constraints that involve more
 	// than one variable, and just the selected variable
 	if (options.constraints && options.constraints.length > 0) {
-		const singleVariableConstraints = options.constraints
-			.filter((d) => d.variable)
-			.filter((d) => d.variable === state);
+		const singleVariableConstraints = options.constraints.filter((d) => d.variable).filter((d) => d.variable === state);
 
 		svg
 			.selectAll('.constraint-box')
@@ -337,9 +308,7 @@ export const renderFumanTrajectories = (
 				const w = xScale(d.timepoints?.ub as number) - xScale(d.timepoints?.lb as number);
 				return w;
 			})
-			.attr('height', (d) =>
-				Math.abs(yScale(d.interval?.ub as number) - yScale(d.interval?.lb as number))
-			)
+			.attr('height', (d) => Math.abs(yScale(d.interval?.ub as number) - yScale(d.interval?.lb as number)))
 			.style('fill', 'teal')
 			.style('fill-opacity', 0.3);
 	}
@@ -368,7 +337,6 @@ export const renderFunmanBoundaryChart = (
 	processedData: FunmanProcessedData,
 	param1: string,
 	param2: string,
-	timestep: number,
 	selectedBoxId: string,
 	options: RenderOptions
 ) => {
@@ -379,14 +347,10 @@ export const renderFunmanBoundaryChart = (
 		margin = 5;
 	}
 
-	const trueBoxes = getBoxes(processedData, param1, param2, timestep, 'true');
-	const falseBoxes = getBoxes(processedData, param1, param2, timestep, 'false');
-	const { minX, maxX, minY, maxY } = getBoxesDomain([...trueBoxes, ...falseBoxes]);
+	const trueBoxes = getBoxes(processedData, param1, param2, 'true');
+	const falseBoxes = getBoxes(processedData, param1, param2, 'false');
 
-	// console.log('true', param1, param2, trueBoxes);
-	// console.log('false', param1, param2, falseBoxes);
-	// console.log(processedData);
-	// console.log('');
+	const { minX, maxX, minY, maxY } = getBoxesDomain([...trueBoxes, ...falseBoxes]);
 
 	d3.select(element).selectAll('*').remove();
 	const svg = d3.select(element).append('svg').attr('width', width).attr('height', height);
@@ -402,19 +366,8 @@ export const renderFunmanBoundaryChart = (
 		.domain([minY, maxY]) // input domain (inverted)
 		.range([height - margin, margin]); // output range (inverted)
 
-	g.selectAll('.true-box')
-		.data(trueBoxes)
-		.enter()
-		.append('rect')
-		.classed('true-box', true)
-		.attr('fill', 'teal');
-
-	g.selectAll('.false-box')
-		.data(falseBoxes)
-		.enter()
-		.append('rect')
-		.classed('false-box', true)
-		.attr('fill', 'orange');
+	g.selectAll('.true-box').data(trueBoxes).enter().append('rect').classed('true-box', true).attr('fill', 'teal');
+	g.selectAll('.false-box').data(falseBoxes).enter().append('rect').classed('false-box', true).attr('fill', 'orange');
 
 	g.selectAll<any, FunmanBoundingBox>('rect')
 		.attr('x', (d) => xScale(d.x1))

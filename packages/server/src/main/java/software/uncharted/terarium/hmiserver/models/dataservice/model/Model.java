@@ -4,14 +4,18 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 import java.io.Serial;
-import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
@@ -21,62 +25,95 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelSemantics;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Initial;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Observable;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Accessors(chain = true)
+@Entity
 @TSModel
 public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 
 	@Serial
 	private static final long serialVersionUID = 398195277271188277L;
 
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private ModelHeader header;
 
 	@TSOptional
+	@Column(length = 255)
 	private String userId;
 
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private Map<String, JsonNode> model;
 
 	@TSOptional
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private JsonNode properties;
 
 	@TSOptional
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private ModelSemantics semantics;
 
 	@TSOptional
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private ModelMetadata metadata;
 
-	public Model() {
-		super();
+	public ModelMetadata getMetadata() {
+		if (metadata == null) {
+			return new ModelMetadata();
+		}
+		return metadata;
 	}
 
-	// Copy constructor
-	public Model(final Model other) {
-		super();
-		this.setId(other.getId());
-		this.setName(other.getName());
-		this.setTemporary(other.getTemporary());
-		this.setPublicAsset(other.getPublicAsset());
+	@Override
+	public Model clone() {
+		final Model clone = new Model();
+		super.cloneSuperFields(clone);
 
-		if (other.getCreatedOn() != null) {
-			this.setCreatedOn((Timestamp) other.getCreatedOn());
+		if (header != null) {
+			clone.header = header.clone();
+		}
+		clone.userId = this.userId;
+
+		if (model != null) {
+			clone.model = new HashMap<>();
+			for (final Map.Entry<String, JsonNode> entry : model.entrySet()) {
+				clone.model.put(entry.getKey(), entry.getValue().deepCopy());
+			}
 		}
 
-		if (other.getUpdatedOn() != null) {
-			this.setUpdatedOn((Timestamp) other.getUpdatedOn());
+		if (properties != null) {
+			clone.properties = properties.deepCopy();
 		}
 
-		if (other.getDeletedOn() != null) {
-			this.setDeletedOn((Timestamp) other.getDeletedOn());
+		if (semantics != null) {
+			clone.semantics = semantics.clone();
 		}
 
-		this.header = other.header;
-		this.userId = other.userId;
-		this.model = new HashMap<>(other.model);
-		this.properties = other.properties;
-		this.semantics = other.semantics;
-		this.metadata = other.metadata;
+		if (metadata != null) {
+			clone.metadata = metadata.clone();
+		}
+
+		return clone;
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public List<Observable> getObservables() {
+		if (
+			this.getSemantics() == null ||
+			this.getSemantics().getOde() == null ||
+			this.getSemantics().getOde().getObservables() == null
+		) {
+			return new ArrayList<Observable>();
+		}
+		return this.getSemantics().getOde().getObservables();
 	}
 
 	@JsonIgnore
@@ -84,11 +121,16 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	public List<ModelParameter> getParameters() {
 		final ObjectMapper objectMapper = new ObjectMapper();
 		if (this.isRegnet()) {
-			return objectMapper.convertValue(
-					this.getModel().get("parameters"), new TypeReference<List<ModelParameter>>() {});
-		} else {
-			return this.getSemantics().getOde().getParameters();
+			return objectMapper.convertValue(this.getModel().get("parameters"), new TypeReference<>() {});
 		}
+		if (
+			this.getSemantics() == null ||
+			this.getSemantics().getOde() == null ||
+			this.getSemantics().getOde().getParameters() == null
+		) {
+			return new ArrayList<ModelParameter>();
+		}
+		return this.getSemantics().getOde().getParameters();
 	}
 
 	@JsonIgnore
@@ -96,8 +138,15 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	public List<Initial> getInitials() {
 		final ObjectMapper objectMapper = new ObjectMapper();
 		if (this.isRegnet()) {
-			return objectMapper.convertValue(this.getModel().get("initials"), new TypeReference<List<Initial>>() {});
+			return objectMapper.convertValue(this.getModel().get("initials"), new TypeReference<>() {});
 		} else {
+			if (
+				this.getSemantics() == null ||
+				this.getSemantics().getOde() == null ||
+				this.getSemantics().getOde().getInitials() == null
+			) {
+				return new ArrayList<Initial>();
+			}
 			return this.getSemantics().getOde().getInitials();
 		}
 	}

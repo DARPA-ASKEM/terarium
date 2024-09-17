@@ -1,35 +1,44 @@
 <template>
 	<div class="response-thought-container">
-		<div
-			ref="responseThought"
-			class="thought"
-			:class="{ hide: !props.showThought, show: props.showThought }"
-		>
-			{{ thought }}
+		<div ref="responseThought" class="thought" :class="{ hide: !props.showThought, show: props.showThought }">
+			<slot />
+			<Button text rounded icon="pi pi-times" @click="onClickClose" />
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, defineProps, defineEmits } from 'vue';
+import Button from 'primevue/button';
 
 const responseThought = ref(<HTMLElement | null>null);
 
 const props = defineProps<{
-	thought: string;
 	showThought?: boolean;
 }>();
+
+const emit = defineEmits(['toggleThought']);
+
+const onClickClose = () => {
+	emit('toggleThought', !props.showThought);
+};
 </script>
 
 <style scoped>
 .thought {
-	border-radius: 5px;
+	display: flex;
+	justify-content: space-between;
 	white-space: pre-line;
-	color: var(--gray-600);
-	max-height: 10000px;
-	overflow: hidden;
-	padding: 5px;
+	background-color: #fff;
+	border: 1px solid var(--surface-border);
+	border-radius: var(--border-radius);
+	padding: var(--gap);
+	color: var(--text-color);
+	width: 100%;
+	margin-top: var(--gap-2);
 }
-
+.thought:deep(ul li)::marker {
+	margin-left: 2rem !important;
+}
 .hide {
 	max-height: 0;
 	overflow: hidden;

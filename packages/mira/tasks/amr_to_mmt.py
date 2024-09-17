@@ -1,8 +1,8 @@
 import sys
-import os
 import json
-from core.taskrunner import TaskRunnerInterface
-from mira.sources.amr.petrinet import template_model_from_amr_json
+import traceback
+
+from taskrunner import TaskRunnerInterface
 from mira.sources.amr import model_from_json
 
 def cleanup():
@@ -15,7 +15,7 @@ def main():
         taskrunner = TaskRunnerInterface(description="AMR to MMT")
         taskrunner.on_cancellation(cleanup)
 
-        data = taskrunner.read_input_with_timeout()
+        data = taskrunner.read_input_str_with_timeout()
         amr = json.loads(data)
         mmt = model_from_json(amr)
 
@@ -50,15 +50,34 @@ def main():
             }
             template_params[tm.name] = entry
 
+        # Summarize observables, extract out concepts
+
+        # concept_names = list(map(lambda x: x.name, mmt.get_concepts_map().values()))
+        # FIXME: get_concept_map seems to be unreliable, need better/model-agnostic way to parse
+        concept_names = list(map(lambda x: x["id"], amr["model"]["states"]))
+
+        observable_summary = {}
+        for ob in mmt.observables.items():
+            obKey = ob[0]
+            obValue = ob[1]
+            observable_summary[obKey] = {
+                "name": obKey,
+                "display_name": obValue.display_name,
+                "expression": str(obValue.expression),
+                "references": list(obValue.get_parameter_names(concept_names))
+            }
+
         result = {
             "template_params": template_params,
+            "observable_summary": observable_summary,
             "mmt": json.loads(mmt.json())
         }
-        taskrunner.write_output_with_timeout({"response": result})
+        taskrunner.write_output_dict_with_timeout({"response": result})
 
         print("AMR to MMT conversion succeeded")
     except Exception as e:
         sys.stderr.write(f"Error: {str(e)}\n")
+        sys.stderr.write(traceback.format_exc())
         sys.stderr.flush()
         exitCode = 1
 

@@ -35,9 +35,9 @@
 .p-float-label {
     .p-treeselect-label {
         .p-treeselect-token {
-            padding: .25rem 1rem;
-            margin-top: .25rem;
-            margin-bottom: .25rem;
+            padding: var(--gap-1) 1rem;
+            margin-top: var(--gap-1);
+            margin-bottom: var(--gap-1);
         }
     }
 }
@@ -49,25 +49,25 @@
                 @include filled-input-float-label();
             }
         }
-        
+
         .p-inputwrapper-filled {
             &.p-treeselect {
                 .p-treeselect-label {
                     @include filled-input-float-label();
                 }
-                
+
                 &.p-treeselect-chip {
                     .p-treeselect-token {
                         padding-top: 0;
                         padding-bottom: 0;
                         margin-top: 0;
                         margin-bottom: 0;
-    
+
                         .p-treeselect-token-icon {
                             font-size: 75%;
                         }
                     }
-                }   
+                }
             }
         }
     }

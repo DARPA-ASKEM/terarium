@@ -8,39 +8,44 @@ name: Lint & Format Client
 # yamllint disable-line rule:truthy
 on:
   workflow_call:
-  push:
-    paths:
-      - 'packages/client/**'
-    branches: ['main']
-  pull_request:
-    paths:
-      - 'packages/client/**'
-    branches: ['main']
 
 jobs:
   lintClient:
     name: Lint & Format Client
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-
-      # Debugging purposes to verify branch being worked on
-      - run: git branch
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
       - name: Use Node.js 20.10.0 LTS
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 20.10.0
           cache: 'yarn'
 
       - name: Install packages
+        env:
+          YARN_ENABLE_HARDENED_MODE: 0
         run: yarn install --immutable
 
       - name: Run Linter
-        run: yarn lint:ci
+        run: yarn lint
 
       - name: Run Formatter
-        run: yarn prettier:ci
+        run: yarn prettier
 
       - name: Run Typechecks
         run: yarn typecheck
+
+      - name: Commit all changed files
+        run: |
+          git diff --exit-code || {
+            echo "Files have changed. Committing changes..."
+            git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git config --global user.name "github-actions[bot]"
+            git fetch --depth=1;
+            git checkout  ${{ github.head_ref }} --
+            git add .
+            git commit --message "chore: lint and format client codebase"
+            git push --set-upstream origin ${{ github.head_ref }}
+          }

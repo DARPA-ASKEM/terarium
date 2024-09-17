@@ -1,8 +1,0 @@
-# Ignore everything except what is needed for building
-*
-
-!packages/db-migration/gradle
-!packages/db-migration/docker
-!packages/db-migration/src
-!packages/db-migration/*gradle*
-

@@ -11,26 +11,6 @@ import { RunResults } from '@/types/SimulateConfig';
 import { cloneDeep } from 'lodash';
 
 /**
- * Get all datasets
- * @return Array<Dataset>|null - the list of all datasets, or null if none returned by API
- */
-async function getAll(): Promise<Dataset[] | null> {
-	const response = await API.get('/datasets').catch((error) => {
-		logger.error(`Error: ${error}`);
-	});
-	return response?.data ?? null;
-}
-
-async function searchClimateDatasets(query: string): Promise<Dataset[] | null> {
-	const response = await API.get(`/climatedata/queries/search-esgf?query=${query}`).catch(
-		(error) => {
-			logger.error(`Error: ${error}`);
-		}
-	);
-	return response?.data ?? null;
-}
-
-/**
  * Get Dataset from the data service
  * @return Dataset|null - the dataset, or null if none returned by API
  */
@@ -43,9 +23,7 @@ async function getDataset(datasetId: string): Promise<Dataset | null> {
 
 async function getClimateDataset(datasetId: string): Promise<Dataset | null> {
 	const response = await API.get(`/climatedata/queries/fetch-esgf/${datasetId}`).catch((error) => {
-		logger.error(
-			`Error: climate data service was not able to retrieve the dataset ${datasetId} ${error}`
-		);
+		logger.error(`Error: climate data service was not able to retrieve the dataset ${datasetId} ${error}`);
 	});
 	return response?.data ?? null;
 }
@@ -87,9 +65,7 @@ async function getClimateSubsetId(
 
 async function getClimateDatasetPreview(esgfId: string): Promise<string | undefined> {
 	const response = await API.get(`/climatedata/queries/preview-esgf/${esgfId}`).catch((error) => {
-		logger.error(
-			`Error: climate data service was not able to preview the dataset ${esgfId} ${error}`
-		);
+		logger.error(`Error: climate data service was not able to preview the dataset ${esgfId} ${error}`);
 	});
 	return response?.data ?? undefined;
 }
@@ -126,11 +102,7 @@ async function getBulkDatasets(datasetIDs: string[]) {
  * Get the raw (CSV) file content for a given dataset
  * @return Array<string>|null - the dataset raw content, or null if none returned by API
  */
-async function downloadRawFile(
-	datasetId: string,
-	filename: string,
-	limit: number = 100
-): Promise<CsvAsset | null> {
+async function downloadRawFile(datasetId: string, filename: string, limit: number = 100): Promise<CsvAsset | null> {
 	const URL = `/datasets/${datasetId}/download-csv?filename=${filename}&limit=${limit}`;
 	const response = await API.get(URL).catch((error) => {
 		logger.error(`Error: data-service was not able to retrieve the dataset's rawfile ${error}`);
@@ -175,12 +147,7 @@ async function createDataset(dataset: Dataset): Promise<Dataset | null> {
  * @param projectId
  * @param url the source url of the file
  */
-async function createNewDatasetFromGithubFile(
-	repoOwnerAndName: string,
-	path: string,
-	userId: string,
-	url: string
-) {
+async function createNewDatasetFromGithubFile(repoOwnerAndName: string, path: string, userId: string, url: string) {
 	// Find the file name by removing the path portion
 	const fileName: string | undefined = path.split('/').pop();
 
@@ -221,7 +188,6 @@ async function createNewDatasetFromGithubFile(
  * @param progress reference to display in ui
  * @param file an arbitrary or csv file
  * @param userName uploader of this dataset
- * @param projectId the project ID
  * @param description description of the file. Optional. If not given description will be just the csv name
  */
 async function createNewDatasetFromFile(
@@ -256,10 +222,7 @@ async function createNewDatasetFromFile(
 			'Content-Type': 'multipart/form-data'
 		},
 		onUploadProgress(progressEvent) {
-			progress.value = Math.min(
-				90,
-				Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100))
-			);
+			progress.value = Math.min(90, Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100)));
 		},
 		timeout: 3600000
 	});
@@ -274,34 +237,27 @@ async function createNewDatasetFromFile(
 async function createDatasetFromSimulationResult(
 	projectId: string,
 	simulationId: string,
-	datasetName: string | null
-): Promise<boolean> {
+	datasetName: string | null,
+	addtoProject?: boolean
+): Promise<Dataset | null> {
+	if (addtoProject === undefined) addtoProject = true;
 	try {
-		const response: AxiosResponse<Response> = await API.get(
-			`/simulations/${simulationId}/add-result-as-dataset-to-project/${projectId}?dataset-name=${datasetName}`
+		const response: AxiosResponse<Dataset> = await API.post(
+			`/simulations/${simulationId}/create-result-as-dataset/${projectId}?dataset-name=${datasetName}&add-to-project=${addtoProject}`
 		);
-		if (response && response.status === 201) {
-			return true;
-		}
-		return false;
+		return response.data as Dataset;
 	} catch (error) {
-		logger.error(
-			`/simulations/{id}/add-result-as-dataset-to-project/{projectId} not responding:  ${error}`,
-			{
-				toastTitle: 'TDS - Simulation'
-			}
-		);
-		return false;
+		logger.error(`/simulations/{id}/create-result-as-dataset/{projectId} not responding:  ${error}`, {
+			toastTitle: 'TDS - Simulation'
+		});
+		return null;
 	}
 }
 
-const saveDataset = async (
-	projectId: string,
-	simulationId: string | undefined,
-	datasetName: string | null
-) => {
+const saveDataset = async (projectId: string, simulationId: string | undefined, datasetName: string | null) => {
 	if (!simulationId) return false;
-	return createDatasetFromSimulationResult(projectId, simulationId, datasetName);
+	const response = await createDatasetFromSimulationResult(projectId, simulationId, datasetName);
+	return response !== null;
 };
 
 /**
@@ -320,7 +276,6 @@ const createCsvAssetFromRunResults = (runResults: RunResults, runId?: string): C
 	const csvColHeaders = Object.keys(runResult[runIdList[0]][0]);
 	let csvData: CsvAsset = {
 		headers: csvColHeaders,
-		data: [],
 		csv: [csvColHeaders],
 		rowCount: 0,
 		stats: []
@@ -331,7 +286,6 @@ const createCsvAssetFromRunResults = (runResults: RunResults, runId?: string): C
 	runIdList.forEach((id) => {
 		csvData = {
 			...csvData,
-			data: [...csvData.data, ...(runResult[id] as any)],
 			rowCount: csvData.rowCount + runResult[id].length
 		};
 		runResult[id].forEach((row) => {
@@ -394,8 +348,6 @@ const getCsvColumnStats = (csvColumn: number[]): CsvColumnStats => {
 };
 
 export {
-	getAll,
-	searchClimateDatasets,
 	getDataset,
 	getClimateDataset,
 	getClimateSubsetId,

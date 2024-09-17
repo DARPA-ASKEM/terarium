@@ -19,7 +19,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 
 @FeignClient(name = "skema-unified", url = "${skema-unified.url}")
 public interface SkemaUnifiedProxy {
-
 	@PostMapping("/workflows/latex/equations-to-amr")
 	ResponseEntity<Model> postLaTeXToAMR(@RequestBody JsonNode request);
 
@@ -43,12 +42,15 @@ public interface SkemaUnifiedProxy {
 
 	@PostMapping(value = "/workflows/code/snippets-to-amr", consumes = "multipart/form-data")
 	ResponseEntity<JsonNode> snippetsToAMR(
-			@RequestPart("files") List<String> files, @RequestPart("blobs") List<String> blobs);
+		@RequestPart("files") List<String> files,
+		@RequestPart("blobs") List<String> blobs
+	);
 
 	@PostMapping(value = "/metal/link_amr", consumes = "multipart/form-data")
 	ResponseEntity<JsonNode> linkAMRFile(
-			@RequestPart("amr_file") MultipartFile amrFile,
-			@RequestPart("text_extractions_file") MultipartFile extractionsFile);
+		@RequestPart("amr_file") MultipartFile amrFile,
+		@RequestPart("text_extractions_file") MultipartFile extractionsFile
+	);
 
 	@Data
 	class IntegratedTextExtractionsBody {
@@ -60,17 +62,18 @@ public interface SkemaUnifiedProxy {
 
 		public IntegratedTextExtractionsBody(final String text, final List<Model> amrs) {
 			this.texts = Arrays.asList(text);
-			this.amrs = amrs.stream()
-					.map(amr -> {
-						try {
-							final ObjectMapper mapper = new ObjectMapper();
-							return mapper.writeValueAsString(amr);
-						} catch (final JsonProcessingException e) {
-							e.printStackTrace();
-							return null;
-						}
-					})
-					.collect(Collectors.toList());
+			this.amrs = amrs
+				.stream()
+				.map(amr -> {
+					try {
+						final ObjectMapper mapper = new ObjectMapper();
+						return mapper.writeValueAsString(amr);
+					} catch (final JsonProcessingException e) {
+						e.printStackTrace();
+						return null;
+					}
+				})
+				.collect(Collectors.toList());
 		}
 
 		final List<String> texts;
@@ -79,7 +82,8 @@ public interface SkemaUnifiedProxy {
 
 	@PostMapping("/text-reading/integrated-text-extractions")
 	ResponseEntity<JsonNode> integratedTextExtractions(
-			@RequestParam(value = "annotate_mit", defaultValue = "true") Boolean annotateMit,
-			@RequestParam(value = "annotate_skema", defaultValue = "true") Boolean annotateSkema,
-			@RequestBody IntegratedTextExtractionsBody body);
+		@RequestParam(value = "annotate_mit", defaultValue = "true") Boolean annotateMit,
+		@RequestParam(value = "annotate_skema", defaultValue = "false") Boolean annotateSkema,
+		@RequestBody IntegratedTextExtractionsBody body
+	);
 }

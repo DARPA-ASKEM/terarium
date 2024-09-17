@@ -1,76 +1,76 @@
 ---
 services:
-  sciml-service:
-    container_name: sciml-service
-    image: ghcr.io/darpa-askem/sciml-service:latest
-    networks:
-      - terarium
-    ports:
-      - "3030:8080"
-    environment:
-      SIMSERVICE_TDS_URL: "http://${local_host_name}:3000"
-      SIMSERVICE_TDS_USER: "${secret_service_account_username}"
-      SIMSERVICE_TDS_PASSWORD: "${secret_service_account_password}"
-      SIMSERVICE_ENABLE_TDS: "true"
-      SIMSERVICE_RABBITMQ_ENABLED: "true"
-      SIMSERVICE_RABBITMQ_LOGIN: "terarium"
-      SIMSERVICE_RABBITMQ_PASSWORD: "terarium123"
-      SIMSERVICE_RABBITMQ_ROUTE: "scimlQueue"
-      SIMSERVICE_RABBITMQ_HOST: "rabbitmq"
-      SIMSERVICE_RABBITMQ_PORT: "5672"
-      SIMSERVICE_RABBITMQ_SSL: "false"
-    depends_on:
-      rabbitmq:
-        condition: service_started
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    sciml-service:
+        container_name: sciml-service
+        image: ghcr.io/darpa-askem/sciml-service:latest
+        networks:
+            - terarium
+        ports:
+            - "3030:8080"
+        environment:
+            SIMSERVICE_TDS_URL: "http://${local_host_name}:3000"
+            SIMSERVICE_TDS_USER: "${secret_service_account_username}"
+            SIMSERVICE_TDS_PASSWORD: "${secret_service_account_password}"
+            SIMSERVICE_ENABLE_TDS: "true"
+            SIMSERVICE_RABBITMQ_ENABLED: "true"
+            SIMSERVICE_RABBITMQ_LOGIN: "terarium"
+            SIMSERVICE_RABBITMQ_PASSWORD: "terarium123"
+            SIMSERVICE_RABBITMQ_ROUTE: "scimlQueue"
+            SIMSERVICE_RABBITMQ_HOST: "rabbitmq"
+            SIMSERVICE_RABBITMQ_PORT: "5672"
+            SIMSERVICE_RABBITMQ_SSL: "false"
+        depends_on:
+            rabbitmq:
+                condition: service_healthy
+        extra_hosts:
+            - "${local_host_name}:host-gateway"
 
-  pyciemss-api:
-    container_name: pyciemss-api
-    image: ghcr.io/darpa-askem/pyciemss-api:latest
-    networks:
-      - terarium
-    ports:
-      - "3040:8000"
-    environment:
-      PYCIEMSS_OUTPUT_FILEPATH: "result.csv"
-      RABBITMQ_HOST: "rabbitmq"
-      RABBITMQ_PASSWORD: "terarium123"
-      RABBITMQ_PORT: "5672"
-      RABBITMQ_SSL: "False"
-      RABBITMQ_USERNAME: "terarium"
-      REDIS_HOST: "redis"
-      REDIS_PORT: "6379"
-      STANDALONE_MODE: "False"
-      TDS_PASSWORD: "${secret_service_account_password}"
-      TDS_URL: "http://${local_host_name}:3000"
-      TDS_USER: "${secret_service_account_username}"
-    depends_on:
-      redis:
-        condition: service_started
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    pyciemss-api:
+        container_name: pyciemss-api
+        image: ghcr.io/darpa-askem/pyciemss-api:latest
+        networks:
+            - terarium
+        ports:
+            - "3040:8000"
+        environment:
+            PYCIEMSS_OUTPUT_FILEPATH: "result.csv"
+            RABBITMQ_HOST: "rabbitmq"
+            RABBITMQ_PASSWORD: "terarium123"
+            RABBITMQ_PORT: "5672"
+            RABBITMQ_SSL: "False"
+            RABBITMQ_USERNAME: "terarium"
+            REDIS_HOST: "redis"
+            REDIS_PORT: "6379"
+            STANDALONE_MODE: "False"
+            TDS_PASSWORD: "${secret_service_account_password}"
+            TDS_URL: "http://${local_host_name}:3000"
+            TDS_USER: "${secret_service_account_username}"
+        depends_on:
+            redis:
+                condition: service_started
+        extra_hosts:
+            - "${local_host_name}:host-gateway"
 
-  pyciemss-worker:
-    container_name: pyciemss-worker
-    image: ghcr.io/darpa-askem/pyciemss-worker:latest
-    networks:
-      - terarium
-    environment:
-      PYCIEMSS_OUTPUT_FILEPATH: "result.csv"
-      RABBITMQ_HOST: "rabbitmq"
-      RABBITMQ_PASSWORD: "terarium123"
-      RABBITMQ_PORT: "5672"
-      RABBITMQ_SSL: "False"
-      RABBITMQ_USERNAME: "terarium"
-      REDIS_HOST: "redis"
-      REDIS_PORT: "6379"
-      STANDALONE_MODE: "False"
-      TDS_PASSWORD: "${secret_service_account_password}"
-      TDS_URL: "http://${local_host_name}:3000"
-      TDS_USER: "${secret_service_account_username}"
-    depends_on:
-      redis:
-        condition: service_started
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    pyciemss-worker:
+        container_name: pyciemss-worker
+        image: ghcr.io/darpa-askem/pyciemss-worker:latest
+        networks:
+            - terarium
+        environment:
+            PYCIEMSS_OUTPUT_FILEPATH: "result.csv"
+            RABBITMQ_HOST: "rabbitmq"
+            RABBITMQ_PASSWORD: "terarium123"
+            RABBITMQ_PORT: "5672"
+            RABBITMQ_SSL: "False"
+            RABBITMQ_USERNAME: "terarium"
+            REDIS_HOST: "redis"
+            REDIS_PORT: "6379"
+            STANDALONE_MODE: "False"
+            TDS_PASSWORD: "${secret_service_account_password}"
+            TDS_URL: "http://${local_host_name}:3000"
+            TDS_USER: "${secret_service_account_username}"
+        depends_on:
+            redis:
+                condition: service_started
+        extra_hosts:
+            - "${local_host_name}:host-gateway"

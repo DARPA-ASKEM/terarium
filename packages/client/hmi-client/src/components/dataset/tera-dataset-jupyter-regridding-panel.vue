@@ -1,6 +1,5 @@
 <template>
 	<div class="data-transform-container">
-		<ConfirmDialog></ConfirmDialog>
 		<!-- Jupyter Kernel Settings -->
 		<div class="settings-title" v-if="showKernels">Kernel Settings</div>
 		<div class="jupyter-settings" v-if="showKernels">
@@ -65,6 +64,7 @@
 			@new-dataset-saved="onNewDatasetSaved"
 			@download-response="onDownloadResponse"
 			:notebook-session="props.notebookSession"
+			:language="'python'"
 		/>
 		<div :style="{ 'padding-bottom': '100px' }" v-if="kernelState">
 			<Dropdown v-model="actionTarget" :options="Object.keys(kernelState || [])" />
@@ -77,12 +77,8 @@
 				<span class="p-button-text">Save as</span>
 			</Button>
 			<span v-if="showSaveInput" style="padding-left: 1em; padding-right: 2em">
-				<InputText v-model="saveAsName" class="post-fix" placeholder="New dataset name" />
-				<i
-					class="pi pi-times i"
-					:class="{ clear: hasValidDatasetName }"
-					@click="saveAsName = ''"
-				></i>
+				<tera-input-text v-model="saveAsName" class="post-fix" placeholder="New dataset name" />
+				<i class="pi pi-times i" :class="{ clear: hasValidDatasetName }" @click="saveAsName = ''"></i>
 				<i
 					class="pi pi-check i"
 					:class="{ save: hasValidDatasetName }"
@@ -106,25 +102,18 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
+import teraInputText from '@/components/widgets/tera-input-text.vue';
 import { useToastService } from '@/services/toast';
 import { IModel } from '@jupyterlab/services/lib/session/session';
 import type { NotebookSession } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
-import {
-	createMessageId,
-	getServerSettings,
-	getSessionManager,
-	JupyterMessage,
-	newSession
-} from '@/services/jupyter';
+import { createMessageId, getServerSettings, getSessionManager, JupyterMessage, newSession } from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
 import Dropdown from 'primevue/dropdown';
 import { shutdownKernel } from '@jupyterlab/services/lib/kernel/restapi';
-import ConfirmDialog from 'primevue/confirmdialog';
 import { useConfirm } from 'primevue/useconfirm';
 import { useProjects } from '@/composables/project';
 
@@ -149,7 +138,7 @@ const autoExpandPreview = ref(<boolean>true);
 const actionTarget = ref('df');
 const contextInfo: any = ref({});
 const showSaveInput = ref(<boolean>false);
-const saveAsName = ref(<string | null>'');
+const saveAsName = ref('');
 const toast = useToastService();
 
 const updateKernelStatus = (statusString: string) => {
@@ -222,9 +211,7 @@ onMounted(() => {
 				results.push(result);
 				result = sessions.next();
 			}
-			runningSessions.value = results
-				.reverse()
-				.map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
+			runningSessions.value = results.reverse().map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
 			selectedKernel.value = {
 				kernelId: jupyterSession.session?.kernel?.id,
 				value: jupyterSession.session?.id
@@ -353,9 +340,7 @@ const updateKernelList = () => {
 			while (result) {
 				result = sessions.next();
 			}
-			runningSessions.value = results
-				.reverse()
-				.map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
+			runningSessions.value = results.reverse().map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
 			selectedKernel.value = {
 				kernelId: jupyterSession.session?.kernel?.id,
 				value: jupyterSession.session?.id
@@ -372,10 +357,7 @@ const onNewDatasetSaved = async (payload) => {
 	const datasetId = payload.dataset_id;
 	await useProjects().addAsset(AssetType.Dataset, datasetId);
 	emit('new-dataset-saved', { id: datasetId, name: saveAsName.value });
-	toast.success(
-		'Dataset saved successfully',
-		'Refresh to see the dataset in the resource explorer'
-	);
+	toast.success('Dataset saved successfully', 'Refresh to see the dataset in the resource explorer');
 };
 
 const downloadDataset = () => {

@@ -1,0 +1,71 @@
+---
+# This workflow tests the Taskrunner
+
+name: Taskrunner Tests
+
+env:
+  local_host_name: "localhost"
+
+# Controls when the action will run.
+on:
+  # Triggers the workflow on push or pull request events but only for the $default-branch branch
+  push:
+    branches: ["main"]
+    paths:
+      - "packages/taskrunner/**"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "packages/taskrunner/**"
+  # Allow for triggering from other workflows
+  workflow_call:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  taskrunner-tests:
+    # The type of runner that the job will run on
+    runs-on:
+
+    permissions:
+      contents: read
+      checks: write
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v4
+
+      # Validate Gradle JAR
+      - name: Validate GradleW JAR
+        uses: gradle/actions/wrapper-validation@v3
+
+      # Setup Java 21
+      - name: Setup Java v21
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: 21
+          cache: gradle
+
+      # Start containers
+      - name: Start containers
+        run: cd containers && docker compose --file docker-compose-actions.yml up --detach --wait
+
+      # Run the tests
+      - name: Run tests
+        run: ./gradlew test --info
+        working-directory: packages/taskrunner
+
+      # Run test reporter
+      - name: Test Report
+        uses: dorny/test-reporter@v1.7.0
+        if: always()
+        with:
+          name: Server JUnit Tests
+          path: packages/taskrunner/build/test-results/test/*.xml    # Path to test results
+          reporter: java-junit        # Format of test results
+
+      # Stop containers
+      - name: Stop containers
+        if: always()
+        run: cd containers && docker compose --file docker-compose-actions.yml down

@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.models.permissions;
 import java.util.List;
 
 public class PermissionRole {
+
 	private String id;
 	private String name;
 	private List<PermissionUser> users;

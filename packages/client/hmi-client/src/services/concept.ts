@@ -3,19 +3,11 @@
  */
 
 import API from '@/api/api';
-import { ConceptFacets } from '@/types/Concept';
-import { ClauseValue } from '@/types/Filter';
-import type {
-	AssetType,
-	Curies,
-	DatasetColumn,
-	DKG,
-	EntitySimilarityResult,
-	State
-} from '@/types/Types';
+import type { Curies, DatasetColumn, DKG, EntitySimilarityResult, State } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
 import { CalibrateMap } from '@/services/calibrate-workflow';
+import { FIFOCache } from '@/utils/FifoCache';
 
 interface Entity {
 	id: string;
@@ -27,38 +19,31 @@ interface EntityMap {
 	target: string;
 }
 
-/**
- * Get concept facets
- * @types string - filter returned facets to a given type.
- *        Available values : datasets, features, intermediates, model_parameters, models, projects, publications, qualifiers, simulation_parameters, simulation_plans, simulation_runs
- * @return ConceptFacets|null - the concept facets, or null if none returned by API
- */
-async function getFacets(type: AssetType, curies?: ClauseValue[]): Promise<ConceptFacets | null> {
-	try {
-		let url = `/concepts/facets?types=${type}`;
-		if (curies) {
-			curies.forEach((curie) => {
-				url += `&curies=${curie}`;
-			});
-		}
-		const response = await API.get(url);
-		const { status, data } = response;
-		if (status !== 200) return null;
-		return data ?? null;
-	} catch (error) {
-		console.error(error);
-		return null;
-	}
-}
+const curieNameCache = new Map<string, string>();
 
+const currieEntityCache = new FIFOCache<Promise<{ data: any; status: number }>>(400);
 /**
  * Get DKG entities, either single ones or multiple at a time
  */
 async function getCuriesEntities(curies: Array<string>): Promise<Array<DKG> | null> {
-	const response = await API.get(`/mira/currie/${curies.toString()}`);
-	if (response?.status === 200 && response?.data) return response.data;
-	if (response?.status === 204) console.warn('No DKG entities found for curies:', curies);
-	return null;
+	try {
+		const cacheKey = curies.toString();
+
+		let promise = currieEntityCache.get(cacheKey);
+		if (!promise) {
+			promise = API.get(`/mira/currie/${curies.toString()}`).then((res) => ({ data: res.data, status: res.status }));
+			currieEntityCache.set(cacheKey, promise);
+		}
+
+		// If a rename function is defined, loop over the first row
+		const response = await promise;
+		if (response?.status === 200 && response?.data) return response.data;
+		if (response?.status === 204) console.warn('No DKG entities found for curies:', curies);
+		return null;
+	} catch (err) {
+		logger.error(err);
+		return null;
+	}
 }
 
 async function searchCuriesEntities(query: string): Promise<Array<DKG>> {
@@ -77,7 +62,7 @@ async function searchCuriesEntities(query: string): Promise<Array<DKG>> {
 }
 
 function getCurieUrl(curie: string): string {
-	return `http://34.230.33.149:8772/${curie}`;
+	return `http://mira-epi-dkg-lb-c7b58edea41524e6.elb.us-east-1.amazonaws.com/entity/${curie}`;
 }
 
 /**
@@ -116,14 +101,16 @@ async function getEntitySimilarity(
 	}
 }
 
-const getNameOfCurieCached = (cache: Map<string, string>, curie: string): string => {
-	if (!cache.has(curie)) {
-		getCuriesEntities([curie]).then((response) => cache.set(curie, response?.[0].name ?? ''));
+const getNameOfCurieCached = async (curie: string): Promise<string> => {
+	if (isEmpty(curie)) return '';
+	if (!curieNameCache.has(curie)) {
+		const response = await getCuriesEntities([curie]);
+		curieNameCache.set(curie, response?.[0].name ?? '');
 	}
-	return cache.get(curie) ?? '';
+	return curieNameCache.get(curie) ?? '';
 };
 
-function getCurieFromGroudingIdentifier(identifier: Object | undefined): string {
+function getCurieFromGroundingIdentifier(identifier: Object | undefined): string {
 	if (!!identifier && !isEmpty(identifier)) {
 		const [key, value] = Object.entries(identifier)[0];
 		return `${key}:${value}`;
@@ -131,7 +118,9 @@ function getCurieFromGroudingIdentifier(identifier: Object | undefined): string 
 	return '';
 }
 
-function parseCurie(curie: string) {
+function parseCurie(curie: string | undefined): { [key: string]: string } {
+	if (!curie) return {};
+
 	const key = curie.split(':')[0];
 	const value = curie.split(':')[1];
 	return { [key]: value };
@@ -139,11 +128,7 @@ function parseCurie(curie: string) {
 
 // Takes in 2 lists of generic {id, groundings} and returns the singular
 // closest match for each element in list one
-const autoEntityMapping = async (
-	sourceEntities: Entity[],
-	targetEntities: Entity[],
-	acceptableDist?: number
-) => {
+const autoEntityMapping = async (sourceEntities: Entity[], targetEntities: Entity[], acceptableDist?: number) => {
 	const result = [] as EntityMap[];
 	const acceptableDistance = acceptableDist ?? 0.5;
 
@@ -155,10 +140,7 @@ const autoEntityMapping = async (
 	const distinctSourceGroundings = [...new Set(allSourceGroundings)];
 	const distinctTargetGroundings = [...new Set(allTargetGroundings)];
 
-	const allSimilarity = await getEntitySimilarity(
-		distinctSourceGroundings,
-		distinctTargetGroundings
-	);
+	const allSimilarity = await getEntitySimilarity(distinctSourceGroundings, distinctTargetGroundings);
 	if (!allSimilarity) return result;
 	// Filter out anything with a similarity too small
 	const filteredSimilarity = allSimilarity.filter((ele) => ele.similarity >= acceptableDistance);
@@ -313,11 +295,10 @@ const autoModelMapping = async (modelOneOptions: State[], modelTwoOptions: State
 
 export {
 	getCuriesEntities,
-	getFacets,
 	getEntitySimilarity,
 	searchCuriesEntities,
 	getNameOfCurieCached,
-	getCurieFromGroudingIdentifier,
+	getCurieFromGroundingIdentifier,
 	getCurieUrl,
 	parseCurie,
 	autoModelMapping,

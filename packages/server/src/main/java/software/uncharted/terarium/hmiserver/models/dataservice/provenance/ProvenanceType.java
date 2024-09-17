@@ -7,32 +7,43 @@ import java.util.Arrays;
 public enum ProvenanceType {
 	@JsonAlias("Concept")
 	CONCEPT("Concept"),
+
 	@JsonAlias("Dataset")
 	DATASET("Dataset"),
+
 	@JsonAlias("Model")
 	MODEL("Model"),
+
 	@JsonAlias("ModelRevision")
 	MODEL_REVISION("ModelRevision"),
+
 	@JsonAlias("ModelConfiguration")
 	MODEL_CONFIGURATION("ModelConfiguration"),
+
 	@JsonAlias("Project")
 	PROJECT("Project"),
-	@JsonAlias("Concept")
-	PUBLICATION("Publication"),
+
 	@JsonAlias("Simulation")
 	SIMULATION("Simulation"),
+
 	@JsonAlias("SimulationRun")
 	SIMULATION_RUN("SimulationRun"),
+
 	@JsonAlias("Plan")
 	PLAN("Plan"),
+
 	@JsonAlias("Artifact")
 	ARTIFACT("Artifact"),
+
 	@JsonAlias("Code")
 	CODE("Code"),
+
 	@JsonAlias("Document")
 	DOCUMENT("Document"),
+
 	@JsonAlias("Workflow")
 	WORKFLOW("Workflow"),
+
 	@JsonAlias("Equation")
 	EQUATION("Equation");
 
@@ -47,9 +58,9 @@ public enum ProvenanceType {
 	 */
 	public static ProvenanceType findByType(final String type) {
 		return Arrays.stream(values())
-				.filter(value -> type.equalsIgnoreCase(value.type))
-				.findFirst()
-				.orElseThrow(() -> new IllegalArgumentException("No ProvenanceType with type: " + type));
+			.filter(value -> type.equalsIgnoreCase(value.type))
+			.findFirst()
+			.orElseThrow(() -> new IllegalArgumentException("No ProvenanceType with type: " + type));
 	}
 
 	@Override

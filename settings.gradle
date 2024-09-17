@@ -10,5 +10,3 @@ rootProject.name = "terarium"
 
 include ":packages:server"
 include ":packages:taskrunner"
-include ':packages:db-migration'
-include ':packages:es-ingest'

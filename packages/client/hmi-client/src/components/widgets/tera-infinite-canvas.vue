@@ -1,11 +1,6 @@
 <template>
 	<main ref="canvasRef">
-		<svg
-			class="canvas-layer background-layer"
-			ref="backgroundLayerRef"
-			:width="width"
-			:height="height"
-		>
+		<svg class="canvas-layer background-layer" ref="backgroundLayerRef" :width="width" :height="height">
 			<defs>
 				<slot name="backgroundDefs" />
 			</defs>
@@ -16,7 +11,7 @@
 		<div class="canvas-layer data-layer" ref="dataLayerRef">
 			<slot name="data" />
 		</div>
-		<div class="canvas-layer foreground-layer">
+		<div class="canvas-layer foreground-layer" :class="{ disable: isDisabled }">
 			<slot name="foreground" />
 		</div>
 	</main>
@@ -32,6 +27,7 @@ const props = withDefaults(
 		debugMode?: boolean;
 		scaleExtent?: [number, number];
 		lastTransform?: { k: number; x: number; y: number };
+		isDisabled?: boolean;
 	}>(),
 	{
 		background: 'dots',
@@ -201,7 +197,7 @@ onMounted(() => {
 <style scoped>
 main {
 	width: 100%;
-	height: 100%;
+	min-height: 100%;
 }
 
 main > * {
@@ -229,5 +225,11 @@ svg:active {
 
 .foreground-layer {
 	position: relative;
+	display: flex;
+	flex-direction: column;
+}
+
+.disable {
+	height: 100%;
 }
 </style>

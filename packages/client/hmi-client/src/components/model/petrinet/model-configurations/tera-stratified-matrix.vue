@@ -1,12 +1,22 @@
 <template>
 	<div class="p-datatable-wrapper">
-		<Dropdown
-			v-if="matrixMap && Object.keys(matrixMap).length > 0"
-			:model-value="matrixType"
-			:options="matrixTypes"
-			placeholder="Select matrix type"
-			@update:model-value="(v) => changeMatrix(v)"
-		/>
+		<div class="matrix-toolbar">
+			<Dropdown
+				v-if="matrixMap && Object.keys(matrixMap).length > 0"
+				:model-value="matrixType"
+				:options="matrixTypes"
+				placeholder="Select matrix type"
+				@update:model-value="(v) => changeMatrix(v)"
+			/>
+
+			<Button
+				@click="clipboardBuffer(clipboardText)"
+				label="Paste"
+				severity="secondary"
+				size="small"
+				:disabled="clipboardText === ''"
+			/>
+		</div>
 
 		<div
 			v-if="!isEmpty(matrix)"
@@ -37,27 +47,23 @@
 							@keyup.enter="onEnterValueCell(cell.content.id, rowIdx, colIdx)"
 							@click="onEnterValueCell(cell.content.id, rowIdx, colIdx)"
 						>
-							<template v-if="cell.content.id">
-								<section class="flex flex-column">
-									<InputText
-										v-if="editableCellStates[rowIdx][colIdx]"
-										class="cell-input"
-										:class="stratifiedMatrixType !== StratifiedMatrix.Initials && 'big-cell-input'"
-										v-model.lazy="valueToEdit"
-										v-focus
-										@focusout="updateCellValue(cell.content.id, rowIdx, colIdx)"
-										@keyup.stop.enter="updateCellValue(cell.content.id, rowIdx, colIdx)"
-									/>
+							<section v-if="cell.content.id" class="flex flex-column">
+								<InputText
+									v-if="editableCellStates[rowIdx][colIdx]"
+									class="cell-input"
+									:class="stratifiedMatrixType !== StratifiedMatrix.Initials && 'big-cell-input'"
+									v-model.lazy="valueToEdit"
+									v-focus
+									@focusout="updateCellValue(cell.content.id, rowIdx, colIdx)"
+									@keyup.stop.enter="updateCellValue(cell.content.id, rowIdx, colIdx)"
+								/>
+								<div class="w-full" :class="{ 'hide-content': editableCellStates[rowIdx][colIdx] }">
 									<div
-										class="w-full"
-										:class="{ 'hide-content': editableCellStates[rowIdx][colIdx] }"
+										class="subdue mb-1 flex align-items-center gap-1 w-full justify-content-between"
+										v-if="stratifiedMatrixType !== StratifiedMatrix.Initials"
 									>
-										<div
-											class="subdue mb-1 flex align-items-center gap-1 w-full justify-content-between"
-											v-if="stratifiedMatrixType !== StratifiedMatrix.Initials"
-										>
-											{{ cell?.content.id }}
-											<!--
+										{{ cell?.content.id }}
+										<!--
 											<span
 												v-if="cell?.content?.controllers"
 												class="pi pi-info-circle"
@@ -67,16 +73,14 @@
 												}"
 											/>
 											-->
-										</div>
-										<div>
-											<div
-												class="mathml-container"
-												v-html="expressionMap[rowIdx + ':' + colIdx] ?? '...'"
-											/>
-										</div>
 									</div>
-								</section>
-							</template>
+									<div
+										v-if="!isReadOnly"
+										class="mathml-container"
+										v-html="expressionMap[rowIdx + ':' + colIdx] ?? '...'"
+									/>
+								</div>
+							</section>
 							<span v-else class="subdue">n/a</span>
 						</td>
 					</tr>
@@ -87,38 +91,39 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { isEmpty, isNumber } from 'lodash';
 import { pythonInstance } from '@/python/PyodideController';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
+import Button from 'primevue/button';
 import { StratifiedMatrix } from '@/types/Model';
-import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
-import {
-	createParameterMatrix,
-	createInitialMatrix,
-	collapseTemplates
-} from '@/model-representation/mira/mira';
+import type { MiraMatrix, MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import { createParameterMatrix, createInitialMatrix, collapseTemplates } from '@/model-representation/mira/mira';
 import { getVariable } from '@/model-representation/service';
 import { extractTemplateMatrix } from '@/model-representation/mira/mira-util';
 import { logger } from '@/utils/logger';
+import { getClipboardText, pasteEventGenerator } from '@/utils/clipboard';
+import { dsvParse } from '@/utils/dsv';
 
 const props = defineProps<{
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
 	id: string;
 	stratifiedMatrixType: StratifiedMatrix;
+	isReadOnly?: boolean;
 	shouldEval: boolean;
+	matrixType?: string;
 }>();
 
 const emit = defineEmits(['update-cell-value']);
 
 const matrixTypes = ['subjectOutcome', 'subjectControllers', 'outcomeControllers', 'other'];
-const matrixType = ref('subjectOutcome');
-const matrixMap = ref<any>();
-const matrix = ref<any>([]);
+const matrixType = ref(props.matrixType || 'subjectOutcome');
+const matrixMap = ref<{ [key: string]: MiraMatrix }>({});
+const matrix = ref<MiraMatrix>([]);
 
-const currentMatrixtype = ref('');
+const currentMatrixtype = ref(props.matrixType || '');
 
 const valueToEdit = ref('');
 const editableCellStates = ref<boolean[][]>([]);
@@ -133,6 +138,57 @@ const parametersValueMap = computed(() => {
 	return result;
 });
 
+// Copy and paste utilities
+let timerId = -1;
+const clipboardText = ref('');
+const updateByMatrixBulk = (matrixToUpdate: MiraMatrix, text: string) => {
+	const parseResult = dsvParse(text);
+
+	// FIXME: Not very efficient, maybe emit in bulk rather than one-by-one
+	matrixToUpdate.forEach((row) => {
+		row.forEach(async (matrixEntry) => {
+			// If we have label information, use them as they may be more accurate, otherwise use indices
+			if (parseResult.hasColLabels && parseResult.hasRowLabels) {
+				const match = parseResult.entries.find(
+					(entry) => entry.rowLabel === matrixEntry.rowCriteria && entry.colLabel === matrixEntry.colCriteria
+				);
+				if (match) {
+					emit('update-cell-value', {
+						variableName: matrixEntry.content.id,
+						newValue: match.value,
+						mathml: (await pythonInstance.parseExpression(`${match.value}`)).mathml
+					});
+				}
+			} else {
+				const match = parseResult.entries.find(
+					(entry) => entry.rowIdx === matrixEntry.row && entry.colIdx === matrixEntry.col
+				);
+				if (match) {
+					emit('update-cell-value', {
+						variableName: matrixEntry.content.id,
+						newValue: match.value,
+						mathml: (await pythonInstance.parseExpression(`${match.value}`)).mathml
+					});
+				}
+			}
+		});
+	});
+};
+
+const pasteItemProcessor = async (item: DataTransferItem) => {
+	if (item.kind !== 'string') return;
+	if (item.type !== 'text/plain') return;
+
+	// Presume this is a full matrix, with row/column labels
+	item.getAsString(async (text) => {
+		updateByMatrixBulk(matrix.value, text);
+	});
+};
+const processPasteEvent = pasteEventGenerator(pasteItemProcessor);
+const clipboardBuffer = (text: string) => {
+	updateByMatrixBulk(matrix.value, text);
+};
+
 const changeMatrix = (v: string) => {
 	matrixType.value = v;
 	matrix.value = matrixMap.value[v];
@@ -144,7 +200,7 @@ const vFocus = {
 };
 
 function onEnterValueCell(variableName: string, rowIdx: number, colIdx: number) {
-	if (!variableName) return;
+	if (!variableName || props.isReadOnly) return;
 	valueToEdit.value = getVariable(props.mmt, variableName).value;
 	editableCellStates.value[rowIdx][colIdx] = true;
 }
@@ -159,10 +215,7 @@ async function getMatrixValue(variableName: string) {
 	}
 
 	if (props.shouldEval) {
-		const expressionEval = await pythonInstance.evaluateExpression(
-			expressionBase,
-			parametersValueMap.value
-		);
+		const expressionEval = await pythonInstance.evaluateExpression(expressionBase, parametersValueMap.value);
 		return (await pythonInstance.parseExpression(expressionEval)).pmathml;
 	}
 	return (await pythonInstance.parseExpression(expressionBase)).pmathml;
@@ -230,6 +283,21 @@ function resetEditState() {
 	}
 }
 
+onMounted(() => {
+	document.addEventListener('paste', processPasteEvent);
+	timerId = window.setInterval(async () => {
+		const x = await getClipboardText();
+		if (x !== clipboardText.value) {
+			clipboardText.value = x;
+		}
+	}, 1000);
+});
+
+onUnmounted(() => {
+	document.removeEventListener('paste', processPasteEvent);
+	window.clearInterval(timerId);
+});
+
 watch(
 	() => [matrix.value, props.shouldEval],
 	async () => {
@@ -237,12 +305,16 @@ watch(
 		resetEditState();
 		expressionMap.value = {};
 
-		const evalList: any[] = [];
-		const tempMap: { [key: string]: any } = {};
+		const evalList: Promise<{ row: number; col: number; val: string } | undefined>[] = [];
 
 		const assignExpression = async (id: string, row: number, col: number) => {
-			if (!id) return;
-			tempMap[`${row}:${col}`] = await getMatrixValue(id);
+			if (!id) return { row: -1, col: -1, val: '' };
+			const val = await getMatrixValue(id);
+			return {
+				row,
+				col,
+				val
+			};
 		};
 
 		matrix.value.forEach((matrixRow: any) => {
@@ -251,20 +323,23 @@ watch(
 			});
 		});
 
-		await Promise.all(evalList);
-		expressionMap.value = tempMap;
+		const values = await Promise.all(evalList);
+		values.forEach((v) => {
+			if (v) {
+				expressionMap.value[`${v.row}:${v.col}`] = v.val;
+			}
+		});
 	}
 );
 
-watch([() => props.id, () => props.mmt], () => {
-	generateMatrix();
-	resetEditState();
-});
-
-onMounted(() => {
-	generateMatrix();
-	resetEditState();
-});
+watch(
+	() => [props.id, props.mmt],
+	() => {
+		generateMatrix();
+		resetEditState();
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
@@ -353,5 +428,13 @@ onMounted(() => {
 section {
 	display: flex;
 	justify-content: space-between;
+}
+
+.matrix-toolbar {
+	display: flex;
+	justify-content: space-between;
+}
+.matrix-toolbar Button {
+	margin-bottom: var(--gap);
 }
 </style>

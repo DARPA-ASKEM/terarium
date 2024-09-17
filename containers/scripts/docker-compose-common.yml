@@ -14,7 +14,7 @@ services:
       timeout: "3s"
       retries: 30
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "${local_host_name}:host-gateway"
 
   minio:
     image: minio/minio:RELEASE.2024-03-15T01-07-19Z
@@ -37,11 +37,11 @@ services:
     volumes:
       - minio-data:/data
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "${local_host_name}:host-gateway"
 
   elasticsearch:
     container_name: elasticsearch
-    image: elasticsearch:8.11.4
+    image: elasticsearch:8.12.1
     networks:
       - terarium
     ports:
@@ -71,11 +71,11 @@ services:
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "${local_host_name}:host-gateway"
 
   neo4j:
     container_name: neo4j
-    image: neo4j:5.12-community
+    image: neo4j:5.20-community
     healthcheck:
       test: wget http://127.0.0.1:7474 || exit 1
       interval: 1s
@@ -97,7 +97,7 @@ services:
     depends_on:
       - postgres
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "${local_host_name}:host-gateway"
 
   rabbitmq:
     container_name: rabbitmq
@@ -118,11 +118,11 @@ services:
       RABBITMQ_DEFAULT_PASS: "terarium123"
       RABBITMQ_MANAGEMENT_ENABLED: "true"
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "${local_host_name}:host-gateway"
 
   spicedb:
     container_name: spicedb
-    image: authzed/spicedb:v1.30.1
+    image: authzed/spicedb:v1.35.3
     networks:
       - terarium
     ports:
@@ -142,11 +142,11 @@ services:
       migrate-spicedb:
         condition: service_completed_successfully
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "${local_host_name}:host-gateway"
 
   migrate-spicedb:
     container_name: migrate-spicedb
-    image: authzed/spicedb:v1.30.1
+    image: authzed/spicedb:v1.35.3
     networks:
       - terarium
     command: [ "migrate", "head" ]
@@ -158,7 +158,7 @@ services:
       postgres:
         condition: service_healthy
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "${local_host_name}:host-gateway"
 
   postgres:
     container_name: postgres
@@ -182,7 +182,7 @@ services:
       - terarium-db:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "${local_host_name}:host-gateway"
 
 volumes:
   elasticsearch-data:

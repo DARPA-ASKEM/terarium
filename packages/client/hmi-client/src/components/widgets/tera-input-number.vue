@@ -1,49 +1,107 @@
 <template>
-	<InputText
-		class="no-arrows"
-		type="number"
-		:value="modelValue"
-		@input="$event.target && updateValue($event.target)"
-	/>
+	<div class="tera-input">
+		<label v-if="label" @click.self.stop="focusInput">{{ label }}</label>
+		<main :class="{ error: getErrorMessage }" @click.self.stop="focusInput">
+			<i v-if="icon" :class="icon" />
+			<input
+				@click.stop
+				ref="inputField"
+				:disabled="getDisabled"
+				:value="displayValue()"
+				@input="updateValue"
+				:style="inputStyle"
+				@blur="onBlur"
+				@focus="isFocused = true"
+				@focusout="$emit('focusout', $event)"
+				type="text"
+				:placeholder="placeholder"
+			/>
+		</main>
+		<aside v-if="getErrorMessage"><i class="pi pi-exclamation-circle" /> {{ getErrorMessage }}</aside>
+	</div>
 </template>
 
 <script setup lang="ts">
-import InputText from 'primevue/inputtext';
+import { numberToNist } from '@/utils/number';
+import { isNaN, toNumber } from 'lodash';
+import { CSSProperties, computed, ref, watch } from 'vue';
 
-defineProps({
-	modelValue: {
-		type: Number,
-		default: 0
-	},
-	// TODO: Add support for these later
-	minFractionDigits: {
-		type: Number,
-		default: null
-	},
-	maxFractionDigits: {
-		type: Number,
-		default: null
+const props = defineProps<{
+	modelValue: number | undefined;
+	label?: string;
+	icon?: string;
+	errorMessage?: string;
+	disabled?: boolean;
+	placeholder?: string;
+	autoWidth?: boolean;
+}>();
+const emit = defineEmits(['update:model-value', 'focusout']);
+const inputField = ref<HTMLInputElement | null>(null);
+const error = ref('');
+const maskedValue = ref('');
+const isFocused = ref(false);
+const getDisabled = props.disabled ?? false;
+const focusInput = () => {
+	inputField.value?.focus();
+};
+// Computed property to dynamically adjust the input's style based on the autoWidth prop
+const inputStyle = computed(() => {
+	const style: CSSProperties = {};
+	const value = displayValue()?.toString();
+	if (props.autoWidth) {
+		const textToMeasure = value || props.placeholder;
+		// Estimate the width based on the length of the text to measure.
+		const width = (textToMeasure?.length || 1) * 8 + 4; // 8px per character + 4px padding
+		style.width = `${width}px`; // Dynamically set the width
+		style['min-width'] = '20px'; // Ensure a minimum width
 	}
+	return style; // Return the combined style object
 });
+const getErrorMessage = computed(() => props.errorMessage || error.value);
 
-const emit = defineEmits(['update:modelValue']);
+const updateValue = (event: Event) => {
+	const value = (event.target as HTMLInputElement).value;
+	maskedValue.value = value;
+	const numValue = toNumber(value);
+	error.value = isNaN(numValue) ? 'Invalid number' : '';
+};
 
-function updateValue({ value }: any) {
-	if (value) {
-		emit('update:modelValue', parseFloat(value));
+function displayValue() {
+	// only format value if input is focused
+	if (isFocused.value) {
+		return maskedValue.value;
 	}
+	return formatValue(maskedValue.value);
 }
+
+function formatValue(value: string | undefined) {
+	// format as number if value is a number
+	if (!getErrorMessage.value) {
+		return numberToNist(value?.toString() ?? '');
+	}
+	return value;
+}
+
+const onBlur = () => {
+	const numValue = toNumber(maskedValue.value);
+	if (!getErrorMessage.value && !isNaN(numValue)) {
+		emit('update:model-value', maskedValue.value === '' ? Number.NaN : numValue);
+	}
+	isFocused.value = false;
+};
+
+watch(
+	() => props.modelValue,
+	(newValue) => {
+		if (isNaN(newValue)) return;
+		maskedValue.value = newValue?.toString() ?? '';
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
-.no-arrows::-webkit-inner-spin-button,
-.no-arrows::-webkit-outer-spin-button {
-	-webkit-appearance: none;
-	margin: 0;
-}
-
-.no-arrows {
-	-moz-appearance: textfield;
-	width: 100%;
+input {
+	text-align: right;
 }
 </style>

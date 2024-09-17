@@ -24,15 +24,19 @@ public class SwaggerRequestMatcher implements RequestMatcher {
 
 	private RequestMatcher pathMatcher;
 
-	private final List<String> SWAGGER_URLs =
-			Arrays.asList("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/swagger-resources/**");
+	private final List<String> SWAGGER_URLs = Arrays.asList(
+		"/swagger-ui/**",
+		"/swagger-ui.html",
+		"/v3/api-docs/**",
+		"/swagger-resources/**"
+	);
 
 	@PostConstruct
 	public void init() {
 		if (config.getEnableSwagger()) {
-
 			this.pathMatcher = new OrRequestMatcher(
-					SWAGGER_URLs.stream().map(p -> new AntPathRequestMatcher(p)).collect(Collectors.toList()));
+				SWAGGER_URLs.stream().map(p -> new AntPathRequestMatcher(p)).collect(Collectors.toList())
+			);
 		} else {
 			// will become a no-op matcher that doesn't match anything
 			this.pathMatcher = new NegatedRequestMatcher(AnyRequestMatcher.INSTANCE);

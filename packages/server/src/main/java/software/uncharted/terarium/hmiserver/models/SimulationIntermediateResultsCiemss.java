@@ -8,6 +8,7 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true)
 public class SimulationIntermediateResultsCiemss implements Serializable {
+
 	@JsonAlias("job_id")
 	private String jobId;
 

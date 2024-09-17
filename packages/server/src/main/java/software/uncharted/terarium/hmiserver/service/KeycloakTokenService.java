@@ -23,6 +23,7 @@ import software.uncharted.terarium.hmiserver.proxies.KeycloakProxy;
 @Slf4j
 @RequiredArgsConstructor
 public class KeycloakTokenService {
+
 	private final KeycloakProxy keycloakProxy;
 	private final RedissonClient redissonClient;
 	private final ObjectMapper objectMapper;
@@ -43,8 +44,7 @@ public class KeycloakTokenService {
 	 * @param password The password
 	 * @return The token if authentication was successful, null otherwise
 	 */
-	public String getToken(String username, String password) {
-
+	public String getToken(final String username, final String password) {
 		// See if we have this token cached. If it's expired, remove it from the cache
 		// and get a new one
 		String token = tokenMap.get(key(username, password));
@@ -54,14 +54,15 @@ public class KeycloakTokenService {
 		}
 
 		if (token == null) {
-
 			// Fetch a token from keycloak
 			try {
-				token = keycloakProxy.getToken(new KeycloakTokenRequest()
+				token = keycloakProxy.getToken(
+					new KeycloakTokenRequest()
 						.setClientId(config.getKeycloak().getClientId())
 						.setUsername(username)
-						.setPassword(password));
-			} catch (Exception e) {
+						.setPassword(password)
+				);
+			} catch (final Exception e) {
 				log.error("Error getting token from keycloak", e);
 				return null;
 			}
@@ -70,7 +71,7 @@ public class KeycloakTokenService {
 			try {
 				final JsonNode tokenNode = objectMapper.readTree(token);
 				token = tokenNode.get("access_token").asText();
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				log.error("Error parsing token", e);
 				return null;
 			}
@@ -95,7 +96,7 @@ public class KeycloakTokenService {
 	 * @param password The password
 	 * @return The map key
 	 */
-	private String key(String username, String password) {
+	private static String key(final String username, final String password) {
 		return HashService.sha256(username + password);
 	}
 
@@ -105,13 +106,12 @@ public class KeycloakTokenService {
 	 * @param token the token to test for validity. Obtained from the access_token field of the response from keycloak
 	 * @return true if the token is valid, false otherwise
 	 */
-	private boolean isValidToken(String token) {
+	private boolean isValidToken(final String token) {
 		try {
 			final Jwt jwt = jwtDecoder.decode(token);
 			// Add a buffer of a second for the request to get to the server
-			return jwt.getExpiresAt() != null
-					&& jwt.getExpiresAt().isAfter(Instant.now().minus(1, ChronoUnit.SECONDS));
-		} catch (Exception e) {
+			return (jwt.getExpiresAt() != null && jwt.getExpiresAt().isAfter(Instant.now().minus(1, ChronoUnit.SECONDS)));
+		} catch (final Exception e) {
 			log.error("Error decoding token", e);
 			return false;
 		}
@@ -124,13 +124,12 @@ public class KeycloakTokenService {
 	 * @param role the role to test for
 	 * @return true if the token has the role, false otherwise
 	 */
-	public boolean hasRealmRole(String token, String role) {
+	public boolean hasRealmRole(final String token, final String role) {
 		try {
 			final Jwt jwt = jwtDecoder.decode(token);
 			// noinspection unchecked
-			return ((List<String>) jwt.getClaimAsMap("realm_access").getOrDefault("roles", new ArrayList<>()))
-					.contains(role);
-		} catch (Exception e) {
+			return ((List<String>) jwt.getClaimAsMap("realm_access").getOrDefault("roles", new ArrayList<>())).contains(role);
+		} catch (final Exception e) {
 			log.error("Error decoding token", e);
 			return false;
 		}

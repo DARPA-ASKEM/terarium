@@ -30,7 +30,6 @@ const hasSlot = (name: string) => !!slots[name];
 const notifications = {
 	[OperatorStatus.SUCCESS]: { icon: 'check', message: 'Success' },
 	[OperatorStatus.IN_PROGRESS]: { icon: 'spinner', message: 'Processing' },
-	[OperatorStatus.WARNING]: { icon: 'alert-triangle', message: 'Warning' },
 	[OperatorStatus.ERROR]: { icon: 'alert-octagon', message: 'Error' }
 };
 
@@ -61,13 +60,6 @@ section {
 	background-color: var(--surface-highlight);
 	& > i {
 		color: var(--primary-color);
-	}
-}
-
-.warning {
-	background-color: var(--surface-warning);
-	& > i {
-		color: var(--warning-color);
 	}
 }
 

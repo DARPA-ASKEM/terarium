@@ -1,60 +1,46 @@
 package software.uncharted.terarium.hmiserver.models;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
-import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
-import java.io.Serializable;
 import java.sql.Timestamp;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
 @Data
 @Accessors(chain = true)
+@EqualsAndHashCode(callSuper = true)
 @TSModel
 @MappedSuperclass
-public abstract class TerariumAsset implements Serializable {
-
-	@Id
-	@TSOptional
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	private UUID id = UUID.randomUUID();
+public abstract class TerariumAsset extends TerariumEntity {
 
 	@TSOptional
+	@Column(length = 512)
+	@Schema(defaultValue = "Default Name")
 	private String name;
 
 	@TSOptional
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
-	private Timestamp createdOn;
-
-	// Don't use @CreationTimestamp because it doesn't get populated until after the
-	// transaction is committed.
-	@PrePersist
-	protected void onCreate() {
-		this.createdOn =
-				Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
-	}
+	@Schema(defaultValue = "Default Description")
+	@Column(columnDefinition = "text")
+	private String description;
 
 	@TSOptional
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
-	private Timestamp updatedOn;
-
-	// Don't use @UpdateTimestamp because it doesn't get populated until after the
-	// transaction is committed.
-	@PreUpdate
-	protected void onUpdate() {
-		this.updatedOn =
-				Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
-	}
+	@JsonAlias("file_names")
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
+	protected List<String> fileNames = new ArrayList<>();
 
 	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
@@ -68,19 +54,65 @@ public abstract class TerariumAsset implements Serializable {
 	private Boolean publicAsset = false;
 
 	// This is here just to satisfy the service interface.
+	@Override
 	public TerariumAsset clone() {
 		throw new RuntimeException(
-				"This should not be called. Override this method on the derived class and call cloneSuperFields instead.");
+			"This should not be called. Override this method on the derived class and call cloneSuperFields instead."
+		);
 	}
 
 	protected TerariumAsset cloneSuperFields(final TerariumAsset asset) {
-		asset.id = UUID.randomUUID(); // ensure we create a new id
+		// TODO this should be a part of the clone method, and this should implement
+		// Cloneable
+
+		super.cloneSuperFields(asset);
+
 		asset.name = name;
-		asset.createdOn = this.createdOn != null ? new Timestamp(this.createdOn.getTime()) : null;
-		asset.updatedOn = this.updatedOn != null ? new Timestamp(this.updatedOn.getTime()) : null;
-		asset.deletedOn = this.deletedOn != null ? new Timestamp(this.deletedOn.getTime()) : null;
+		asset.description = description;
+		asset.fileNames = fileNames != null ? new ArrayList<>(fileNames) : new ArrayList<>();
+		asset.deletedOn = deletedOn != null ? new Timestamp(deletedOn.getTime()) : null;
 		asset.temporary = temporary;
 		asset.publicAsset = publicAsset;
+
 		return asset;
+	}
+
+	public String serializeWithoutTerariumFields() {
+		final ObjectMapper mapper = new ObjectMapper();
+		mapper.setConfig(mapper.getSerializationConfig().with(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY));
+		final ObjectNode objectNode = mapper.convertValue(this, ObjectNode.class);
+		objectNode.remove("id");
+		objectNode.remove("createdOn");
+		objectNode.remove("updatedOn");
+		objectNode.remove("deletedOn");
+		objectNode.remove("name");
+		objectNode.remove("description");
+		objectNode.remove("temporary");
+		objectNode.remove("publicAsset");
+		objectNode.remove("fileNames");
+		objectNode.remove("userId");
+		return objectNode.toString();
+	}
+
+	public String serializeWithoutTerariumFieldsKeepId() {
+		final ObjectMapper mapper = new ObjectMapper();
+		mapper.setConfig(mapper.getSerializationConfig().with(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY));
+		final ObjectNode objectNode = mapper.convertValue(this, ObjectNode.class);
+		objectNode.remove("createdOn");
+		objectNode.remove("updatedOn");
+		objectNode.remove("deletedOn");
+		objectNode.remove("name");
+		objectNode.remove("description");
+		objectNode.remove("temporary");
+		objectNode.remove("publicAsset");
+		objectNode.remove("fileNames");
+		objectNode.remove("userId");
+		return objectNode.toString();
+	}
+
+	public String serializeWithTerariumFields() throws JsonProcessingException {
+		final ObjectMapper mapper = new ObjectMapper();
+		mapper.setConfig(mapper.getSerializationConfig().with(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY));
+		return mapper.writeValueAsString(this);
 	}
 }

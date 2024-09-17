@@ -15,6 +15,7 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @AMRSchemaType
 @Accessors(chain = true)
 public class StatementValue extends SupportAdditionalProperties implements Serializable {
+
 	@Serial
 	private static final long serialVersionUID = 3800270029449210997L;
 
@@ -25,4 +26,15 @@ public class StatementValue extends SupportAdditionalProperties implements Seria
 	@TSOptional
 	@JsonProperty("dkg_grounding")
 	private DKGConcept dkgGrounding;
+
+	@Override
+	public StatementValue clone() {
+		StatementValue clone = (StatementValue) super.clone();
+		clone.value = value;
+		clone.type = type;
+		if (dkgGrounding != null) {
+			clone.dkgGrounding = dkgGrounding.clone();
+		}
+		return clone;
+	}
 }

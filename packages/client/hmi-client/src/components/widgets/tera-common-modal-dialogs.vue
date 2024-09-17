@@ -1,20 +1,13 @@
 <template>
-	<Teleport to="body">
-		<tera-project-configuration-modal
-			id="project-configuration-modal"
-			v-if="isProjectConfigDialogVisible"
-			:confirm-text="menuProject ? 'Update' : 'Create'"
-			:modal-title="menuProject ? 'Edit project' : 'Create project'"
-			:project="menuProject"
-			@close-modal="isProjectConfigDialogVisible = false"
-		/>
-	</Teleport>
-	<Dialog
-		modal
-		:header="`Delete ${projectName}?`"
-		v-model:visible="isRemoveDialogVisible"
-		style="max-width: 640px"
-	>
+	<tera-project-configuration-modal
+		id="project-configuration-modal"
+		v-if="isProjectConfigDialogVisible"
+		:confirm-text="menuProject ? 'Update' : 'Create'"
+		:modal-title="menuProject ? 'Edit project' : 'Create project'"
+		:project="menuProject"
+		@close-modal="isProjectConfigDialogVisible = false"
+	/>
+	<Dialog modal :header="`Delete ${projectName}?`" v-model:visible="isRemoveDialogVisible" style="max-width: 640px">
 		<p style="margin-bottom: 0.5rem">
 			This action is irreversible and will permanently remove
 			<span style="font-weight: bold">{{ projectName }}</span>
@@ -34,7 +27,7 @@
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import TeraShareProject from '@/components/widgets/share-project/tera-share-project.vue';
-import TeraProjectConfigurationModal from '@/page/project/components/tera-project-configuration-modal.vue';
+import TeraProjectConfigurationModal from '@/components/project/tera-project-configuration-modal.vue';
 import { logger } from '@/utils/logger';
 import { useRouter } from 'vue-router';
 import { RoutePath, useCurrentRoute } from '@/router/index';
@@ -47,8 +40,7 @@ const currentRoute = useCurrentRoute();
 
 // For now, we just use project-menu.ts to manage modals related to projects
 // For non-project related modals we may want to create new composables or abstract project-menu.ts into a modal manager
-const { isShareDialogVisible, isRemoveDialogVisible, isProjectConfigDialogVisible, menuProject } =
-	useProjectMenu();
+const { isShareDialogVisible, isRemoveDialogVisible, isProjectConfigDialogVisible, menuProject } = useProjectMenu();
 
 const projectName = menuProject?.value?.name || '';
 

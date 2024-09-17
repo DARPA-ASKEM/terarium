@@ -9,12 +9,7 @@
 	</section>
 	<section v-if="isAuthor" class="permissions">Author</section>
 	<section v-else class="permissions">
-		<Dropdown
-			v-model="selectedPermission"
-			:options="permissions"
-			class="p-dropdown-sm"
-			@change="selectPermission"
-		/>
+		<Dropdown v-model="selectedPermission" :options="permissions" class="p-dropdown-sm" @change="selectPermission" />
 	</section>
 </template>
 
@@ -32,9 +27,7 @@ const auth = useAuthStore();
 
 const selectedPermission = ref('Edit');
 const permissions = ref(['Edit', 'Read only', 'Remove access']);
-const userInitials = computed(() =>
-	props.user.firstName.charAt(0).concat(props.user.lastName.charAt(0))
-);
+const userInitials = computed(() => props.user.firstName.charAt(0).concat(props.user.lastName.charAt(0)));
 const isAuthor = computed(() => props.permission === 'creator');
 
 function isYou() {

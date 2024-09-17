@@ -11,6 +11,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @Accessors(chain = true)
 @TSModel
 public class FunmanWorkRequest {
+
 	@TSOptional
 	private JsonNode query;
 

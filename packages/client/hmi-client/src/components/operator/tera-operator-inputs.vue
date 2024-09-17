@@ -10,13 +10,17 @@
 			@click.stop="emit('port-selected', input, WorkflowDirection.FROM_INPUT)"
 			@focus="() => {}"
 			@focusout="() => {}"
+			@mousedown.stop="emit('port-selected', input, WorkflowDirection.FROM_INPUT)"
+			@mouseup.stop="emit('port-selected', input, WorkflowDirection.FROM_INPUT)"
 		>
 			<section>
 				<div class="port-container">
 					<div class="port" />
 				</div>
 				<div class="relative w-full">
-					<div class="truncate text-left">{{ getPortLabel(input) }}</div>
+					<div class="truncate text-left">
+						{{ useProjects().getAssetName(input.value?.[0]) || getPortLabel(input) }}
+					</div>
 					<!--TODO: label is a string type not an array consider adding this back in if we support an array of labels-->
 					<!-- <label v-for="(label, labelIdx) in input.label?.split(',') ?? []" :key="labelIdx">
 					{{ label }}
@@ -40,14 +44,9 @@ import { PropType } from 'vue';
 import { WorkflowPort, WorkflowPortStatus, WorkflowDirection } from '@/types/workflow';
 import { getPortLabel } from '@/services/workflow';
 import Button from 'primevue/button';
+import { useProjects } from '@/composables/project';
 
-const emit = defineEmits([
-	'port-mouseover',
-	'port-selected',
-	'port-mouseover',
-	'port-mouseleave',
-	'remove-edges'
-]);
+const emit = defineEmits(['port-mouseover', 'port-selected', 'port-mouseover', 'port-mouseleave', 'remove-edges']);
 
 defineProps({
 	inputs: {

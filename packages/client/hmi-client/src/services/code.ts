@@ -13,11 +13,7 @@ async function getCodeAsset(codeAssetId: string): Promise<Code | null> {
 	return response.data as Code;
 }
 
-async function updateCodeAsset(
-	code: Code,
-	file?: File,
-	progress?: Ref<number>
-): Promise<Code | null> {
+async function updateCodeAsset(code: Code, file?: File, progress?: Ref<number>): Promise<Code | null> {
 	if (!code.id) {
 		return null;
 	}
@@ -38,10 +34,7 @@ async function updateCodeAsset(
 }
 
 async function getCodeFileAsText(codeAssetId: string, fileName: string): Promise<string | null> {
-	const response = await API.get(
-		`/code-asset/${codeAssetId}/download-code-as-text?filename=${fileName}`,
-		{}
-	);
+	const response = await API.get(`/code-asset/${codeAssetId}/download-code-as-text?filename=${fileName}`, {});
 
 	if (!response) {
 		return null;
@@ -107,10 +100,7 @@ async function uploadCodeToProjectFromGithub(
 	return newCode;
 }
 
-async function uploadCodeFromGithubRepo(
-	repoOwnerAndName: string,
-	repoUrl: string
-): Promise<Code | null> {
+async function uploadCodeFromGithubRepo(repoOwnerAndName: string, repoUrl: string): Promise<Code | null> {
 	// Create a new code asset with the same name as the file and post the metadata to TDS
 	const repoName = `${repoOwnerAndName.split('/')[1]}.zip`;
 
@@ -145,11 +135,7 @@ async function createNewCodeAsset(codeAsset: Code): Promise<Code | null> {
 	return response.data;
 }
 
-async function addFileToCodeAsset(
-	codeAssetId: string,
-	file: File,
-	progress: Ref<number>
-): Promise<boolean> {
+async function addFileToCodeAsset(codeAssetId: string, file: File, progress: Ref<number>): Promise<boolean> {
 	const formData = new FormData();
 	formData.append('file', file);
 
@@ -161,10 +147,7 @@ async function addFileToCodeAsset(
 			'Content-Type': 'multipart/form-data'
 		},
 		onUploadProgress(progressEvent) {
-			progress.value = Math.min(
-				100,
-				Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100))
-			);
+			progress.value = Math.min(100, Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100)));
 		}
 	});
 
@@ -173,8 +156,8 @@ async function addFileToCodeAsset(
 
 function getProgrammingLanguage(fileName: string): ProgrammingLanguage {
 	// given the extension of a file, return the programming language
-	const fileExtensiopn: string = fileName.split('.').pop() || '';
-	switch (fileExtensiopn) {
+	const fileExtension: string = fileName.split('.').pop() || '';
+	switch (fileExtension) {
 		case 'py':
 			return ProgrammingLanguage.Python;
 		case 'jl':
@@ -204,15 +187,14 @@ function getFileExtension(language: ProgrammingLanguage): string {
 }
 
 function setFileExtension(fileName: string, language: ProgrammingLanguage) {
-	// find the last '.' to find the file extension index.  Anything before this is the filename.
-	// if there is no extension, add the appropriate one based on the selected language
-	const fileExtensionIndex = fileName.lastIndexOf('.');
-
-	if (fileExtensionIndex !== -1) {
-		return fileName.slice(0, fileExtensionIndex).concat('.').concat(getFileExtension(language));
+	// Find the last '.' to find the file extension index.  Anything before this is the filename.
+	if (fileName.includes('.')) {
+		const fileExtensionIndex = fileName.lastIndexOf('.');
+		fileName = fileName.slice(0, fileExtensionIndex);
 	}
 
-	return fileName;
+	// Add the appropriate extension based on the selected language
+	return fileName.concat('.').concat(getFileExtension(language));
 }
 
 export {

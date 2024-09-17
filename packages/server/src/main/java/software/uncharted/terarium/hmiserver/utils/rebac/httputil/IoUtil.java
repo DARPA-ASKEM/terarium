@@ -87,7 +87,6 @@ public class IoUtil {
 	}
 
 	public static void copyStream(InputStream is, OutputStream os) {
-
 		byte[] buf = new byte[8192];
 
 		int rc;
@@ -107,7 +106,6 @@ public class IoUtil {
 	}
 
 	public static void ensureFile(Path path) throws IOException {
-
 		FileSystem fs = FileSystems.getDefault();
 		Set<String> supportedViews = fs.supportedFileAttributeViews();
 		Path parent = path.getParent();
@@ -153,28 +151,31 @@ public class IoUtil {
 		ListIterator<AclEntry> it = acl.listIterator();
 		while (it.hasNext()) {
 			AclEntry entry = it.next();
-			if ("BUILTIN\\Administrators".equals(entry.principal().getName())
-					|| "NT AUTHORITY\\SYSTEM".equals(entry.principal().getName())) {
+			if (
+				"BUILTIN\\Administrators".equals(entry.principal().getName()) ||
+				"NT AUTHORITY\\SYSTEM".equals(entry.principal().getName())
+			) {
 				continue;
 			}
 			it.remove();
 		}
 		AclEntry entry = AclEntry.newBuilder()
-				.setType(AclEntryType.ALLOW)
-				.setPrincipal(owner)
-				.setPermissions(
-						AclEntryPermission.READ_DATA,
-						AclEntryPermission.WRITE_DATA,
-						AclEntryPermission.APPEND_DATA,
-						AclEntryPermission.READ_NAMED_ATTRS,
-						AclEntryPermission.WRITE_NAMED_ATTRS,
-						AclEntryPermission.EXECUTE,
-						AclEntryPermission.READ_ATTRIBUTES,
-						AclEntryPermission.WRITE_ATTRIBUTES,
-						AclEntryPermission.DELETE,
-						AclEntryPermission.READ_ACL,
-						AclEntryPermission.SYNCHRONIZE)
-				.build();
+			.setType(AclEntryType.ALLOW)
+			.setPrincipal(owner)
+			.setPermissions(
+				AclEntryPermission.READ_DATA,
+				AclEntryPermission.WRITE_DATA,
+				AclEntryPermission.APPEND_DATA,
+				AclEntryPermission.READ_NAMED_ATTRS,
+				AclEntryPermission.WRITE_NAMED_ATTRS,
+				AclEntryPermission.EXECUTE,
+				AclEntryPermission.READ_ATTRIBUTES,
+				AclEntryPermission.WRITE_ATTRIBUTES,
+				AclEntryPermission.DELETE,
+				AclEntryPermission.READ_ACL,
+				AclEntryPermission.SYNCHRONIZE
+			)
+			.build();
 		acl.add(entry);
 		view.setAcl(acl);
 	}

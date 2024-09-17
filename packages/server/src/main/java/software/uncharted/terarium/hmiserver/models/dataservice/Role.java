@@ -19,9 +19,9 @@ public enum Role {
 	 */
 	public static Role findByType(final String type) {
 		return Arrays.stream(values())
-				.filter(value -> type.equalsIgnoreCase(value.type))
-				.findFirst()
-				.orElseThrow(() -> new IllegalArgumentException("No Role with type: " + type));
+			.filter(value -> type.equalsIgnoreCase(value.type))
+			.findFirst()
+			.orElseThrow(() -> new IllegalArgumentException("No Role with type: " + type));
 	}
 
 	Role(final String type) {

@@ -1,6 +1,5 @@
 import sys
-import io
-from core.taskrunner import TaskRunnerInterface
+from taskrunner import TaskRunnerInterface
 from mira.metamodel.ops import simplify_rate_laws
 from mira.modeling import Model
 from mira.modeling.amr.petrinet import AMRPetriNetModel
@@ -34,7 +33,7 @@ def main():
         taskrunner = TaskRunnerInterface(description="SBML to PetriNet")
         taskrunner.on_cancellation(cleanup)
 
-        sbml = taskrunner.read_input_with_timeout()
+        sbml = taskrunner.read_input_str_with_timeout()
 
         filename = get_filename(taskrunner.id)
 
@@ -45,7 +44,7 @@ def main():
         model_pn = AMRPetriNetModel(Model(model_tm_))
         model_pn_json = model_pn.to_json()
 
-        taskrunner.write_output_with_timeout({"response": model_pn_json})
+        taskrunner.write_output_dict_with_timeout({"response": model_pn_json})
         print("SBML to PetriNet conversion succeeded")
 
     except Exception as e:

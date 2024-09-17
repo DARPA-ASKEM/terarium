@@ -1,6 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.user;
 
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MediaType;
 import org.jboss.resteasy.annotations.SseElementType;
 import org.reactivestreams.Publisher;
 import org.springframework.http.HttpStatus;
@@ -24,9 +24,7 @@ public class ServerSentEventController {
 	@Secured(Roles.USER)
 	@SseElementType(MediaType.APPLICATION_JSON)
 	public ResponseEntity<Publisher<UserEvent>> stream() {
-
 		return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
-
 		// return Multi.createFrom().publisher(userEvents);
 	}
 }

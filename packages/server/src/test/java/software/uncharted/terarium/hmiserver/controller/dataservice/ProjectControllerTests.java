@@ -15,7 +15,6 @@ import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
-import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
@@ -23,11 +22,11 @@ import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
-import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
-@Transactional
 public class ProjectControllerTests extends TerariumApplicationTests {
+
 	@Autowired
 	private ObjectMapper objectMapper;
 
@@ -41,67 +40,65 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 	private DocumentAssetService documentAssetService;
 
 	@Autowired
-	private ElasticsearchService elasticService;
+	private ProjectSearchService projectSearchService;
 
-	@Autowired
-	private ElasticsearchConfiguration elasticConfig;
+	Project project;
 
 	@BeforeEach
 	public void setup() throws IOException {
-		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getDocumentIndex());
+		projectSearchService.setupIndexAndAliasAndEnsureEmpty();
+		documentAssetService.setupIndexAndAliasAndEnsureEmpty();
 	}
 
 	@AfterEach
 	public void teardown() throws IOException {
-		elasticService.deleteIndex(elasticConfig.getDocumentIndex());
+		documentAssetService.teardownIndexAndAlias();
+		projectSearchService.teardownIndexAndAlias();
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateProject() throws Exception {
-
-		final Project project = new Project().setName("test-name");
-
-		mockMvc.perform(MockMvcRequestBuilders.post("/projects")
-						.with(csrf())
-						.contentType("application/json")
-						.content(objectMapper.writeValueAsString(project)))
-				.andExpect(status().isCreated());
+		mockMvc
+			.perform(
+				MockMvcRequestBuilders.post("/projects?name=test&userId=abc123&description=desc")
+					.with(csrf())
+					.contentType("application/json")
+			)
+			.andExpect(status().isCreated());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetProject() throws Exception {
+		final Project project = projectService.createProject((Project) new Project().setName("test-name"));
 
-		final Project project = projectService.createProject(new Project().setName("test-name"));
-
-		mockMvc.perform(MockMvcRequestBuilders.get("/projects/" + project.getId())
-						.with(csrf()))
-				.andExpect(status().isOk());
+		mockMvc.perform(MockMvcRequestBuilders.get("/projects/" + project.getId()).with(csrf())).andExpect(status().isOk());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateProject() throws Exception {
+		final Project project = projectService.createProject((Project) new Project().setName("test-name"));
 
-		final Project project = projectService.createProject(new Project().setName("test-name"));
-
-		mockMvc.perform(MockMvcRequestBuilders.put("/projects/" + project.getId())
-						.with(csrf())
-						.contentType("application/json")
-						.content(objectMapper.writeValueAsString(project)))
-				.andExpect(status().isOk());
+		mockMvc
+			.perform(
+				MockMvcRequestBuilders.put("/projects/" + project.getId())
+					.with(csrf())
+					.contentType("application/json")
+					.content(objectMapper.writeValueAsString(project))
+			)
+			.andExpect(status().isOk());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteProject() throws Exception {
+		final Project project = projectService.createProject((Project) new Project().setName("test-name"));
 
-		final Project project = projectService.createProject(new Project().setName("test-name"));
-
-		mockMvc.perform(MockMvcRequestBuilders.delete("/projects/" + project.getId())
-						.with(csrf()))
-				.andExpect(status().isOk());
+		mockMvc
+			.perform(MockMvcRequestBuilders.delete("/projects/" + project.getId()).with(csrf()))
+			.andExpect(status().isOk());
 
 		Assertions.assertTrue(projectService.getProject(project.getId()).isEmpty());
 	}
@@ -109,32 +106,41 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateProjectAsset() throws Exception {
-
-		final Project project = projectService.createProject(new Project().setName("test-name"));
+		final Project project = projectService.createProject((Project) new Project().setName("test-name"));
 
 		final DocumentAsset documentAsset = documentAssetService.createAsset(
-				new DocumentAsset().setName("test-document-name").setDescription("my description"));
+			(DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description"),
+			project.getId(),
+			ASSUME_WRITE_PERMISSION
+		);
 
 		final ProjectAsset projectAsset = new ProjectAsset()
-				.setAssetId(documentAsset.getId())
-				.setAssetName("my-asset-name")
-				.setAssetType(AssetType.DOCUMENT);
+			.setAssetId(documentAsset.getId())
+			.setAssetName("my-asset-name")
+			.setAssetType(AssetType.DOCUMENT);
 
-		mockMvc.perform(MockMvcRequestBuilders.post("/projects/" + project.getId() + "/assets/"
-								+ AssetType.DOCUMENT.name() + "/" + documentAsset.getId())
-						.with(csrf())
-						.contentType("application/json")
-						.content(objectMapper.writeValueAsString(projectAsset)))
-				.andExpect(status().isCreated());
+		mockMvc
+			.perform(
+				MockMvcRequestBuilders.post(
+					"/projects/" + project.getId() + "/assets/" + AssetType.DOCUMENT.name() + "/" + documentAsset.getId()
+				)
+					.with(csrf())
+					.contentType("application/json")
+					.content(objectMapper.writeValueAsString(projectAsset))
+			)
+			.andExpect(status().isOk());
 
-		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.get("/document-asset/" + documentAsset.getId())
-						.param("types", AssetType.DOCUMENT.name())
-						.with(csrf()))
-				.andExpect(status().isOk())
-				.andReturn();
+		final MvcResult res = mockMvc
+			.perform(
+				MockMvcRequestBuilders.get("/document-asset/" + documentAsset.getId())
+					.param("types", AssetType.DOCUMENT.name())
+					.param("project-id", PROJECT_ID.toString())
+					.with(csrf())
+			)
+			.andExpect(status().isOk())
+			.andReturn();
 
-		final DocumentAsset results =
-				objectMapper.readValue(res.getResponse().getContentAsString(), DocumentAsset.class);
+		final DocumentAsset results = objectMapper.readValue(res.getResponse().getContentAsString(), DocumentAsset.class);
 
 		Assertions.assertNotNull(results);
 	}
@@ -142,17 +148,22 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteProjectAsset() throws Exception {
-
-		final Project project = projectService.createProject(new Project().setName("test-name"));
+		final Project project = projectService.createProject((Project) new Project().setName("test-name"));
 
 		final DocumentAsset documentAsset = documentAssetService.createAsset(
-				new DocumentAsset().setName("test-document-name").setDescription("my description"));
+			(DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description"),
+			project.getId(),
+			ASSUME_WRITE_PERMISSION
+		);
 
-		projectAssetService.createProjectAsset(project, AssetType.DOCUMENT, documentAsset);
+		projectAssetService.createProjectAsset(project, AssetType.DOCUMENT, documentAsset, ASSUME_WRITE_PERMISSION);
 
-		mockMvc.perform(MockMvcRequestBuilders.delete("/projects/" + project.getId() + "/assets/"
-								+ AssetType.DOCUMENT.name() + "/" + documentAsset.getId())
-						.with(csrf()))
-				.andExpect(status().isOk());
+		mockMvc
+			.perform(
+				MockMvcRequestBuilders.delete(
+					"/projects/" + project.getId() + "/assets/" + AssetType.DOCUMENT.name() + "/" + documentAsset.getId()
+				).with(csrf())
+			)
+			.andExpect(status().isOk());
 	}
 }

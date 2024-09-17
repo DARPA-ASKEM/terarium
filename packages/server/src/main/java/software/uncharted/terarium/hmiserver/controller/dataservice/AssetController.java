@@ -24,14 +24,12 @@ import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
-import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
-import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/assets")
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@Transactional
 @Tags(@Tag(name = "Assets", description = "Asset related operations"))
 public class AssetController {
 
@@ -54,61 +52,56 @@ public class AssetController {
 	@GetMapping("/asset-name-available/{asset-type}/{asset-name}")
 	@Secured(Roles.USER)
 	@Operation(
-			summary =
-					"Check if an asset name is available for a given asset type. If a ProjectId is given the search will be limited to just that project. Otherwise, the entire asset type will be searched.")
+		summary = "Check if an asset name is available for a given asset type. If a ProjectId is given the search will be limited to just that project. Otherwise, the entire asset type will be searched."
+	)
 	@ApiResponses(
-			value = {
-				@ApiResponse(responseCode = "204", description = "Asset name is available"),
-				@ApiResponse(responseCode = "409", description = "Asset name is not available"),
-				@ApiResponse(responseCode = "404", description = "Project id provided, but project not found"),
-				@ApiResponse(
-						responseCode = "403",
-						description = "User does not have permission to access this project"),
-				@ApiResponse(responseCode = "500", description = "Unable to verify project permissions")
-			})
+		value = {
+			@ApiResponse(responseCode = "204", description = "Asset name is available"),
+			@ApiResponse(responseCode = "409", description = "Asset name is not available"),
+			@ApiResponse(responseCode = "404", description = "Project id provided, but project not found"),
+			@ApiResponse(responseCode = "403", description = "User does not have permission to access this project"),
+			@ApiResponse(responseCode = "500", description = "Unable to verify project permissions")
+		}
+	)
 	public ResponseEntity<Void> verifyAssetNameAvailability(
-			@PathVariable("asset-type") final String assetTypeName,
-			@PathVariable("asset-name") final String assetName,
-			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		@PathVariable("asset-type") final String assetTypeName,
+		@PathVariable("asset-name") final String assetName,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final Schema.Permission assumedPermission = Schema.Permission.READ;
 		final AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
 
 		if (projectId == null) {
-
-			final Optional<ProjectAsset> asset = projectAssetService.getProjectAssetByNameAndType(assetName, assetType);
+			final Optional<ProjectAsset> asset = projectAssetService.getProjectAssetByNameAndType(
+				assetName,
+				assetType,
+				assumedPermission
+			);
 			if (asset.isPresent()) {
 				throw new ResponseStatusException(HttpStatus.CONFLICT, "Asset name is already in use");
 			} else {
 				return ResponseEntity.noContent().build();
 			}
-
 		} else {
-			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
-			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
 			try {
-				if (rebacUser.canRead(rebacProject)) {
-					final Optional<Project> project = projectService.getProject(projectId);
-					if (project.isPresent()) {
-						final Optional<ProjectAsset> asset =
-								projectAssetService.getProjectAssetByNameAndTypeAndProjectId(
-										projectId, assetName, assetType);
-						if (asset.isPresent()) {
-							throw new ResponseStatusException(
-									HttpStatus.CONFLICT, "Asset name is not available in this project");
-						} else {
-							return ResponseEntity.noContent().build();
-						}
+				final Optional<Project> project = projectService.getProject(projectId);
+				if (project.isPresent()) {
+					final Optional<ProjectAsset> asset = projectAssetService.getProjectAssetByNameAndTypeAndProjectId(
+						projectId,
+						assetName,
+						assetType,
+						assumedPermission
+					);
+					if (asset.isPresent()) {
+						throw new ResponseStatusException(HttpStatus.CONFLICT, "Asset name is not available in this project");
 					} else {
-						throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found");
+						return ResponseEntity.noContent().build();
 					}
 				} else {
-					throw new ResponseStatusException(
-							HttpStatus.FORBIDDEN, "User does not have permission to access this project");
+					throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found");
 				}
 			} catch (final ResponseStatusException e) {
 				throw e; // Like any responsible fisher, we're going to catch and release!
-			} catch (final Exception e) {
-				throw new ResponseStatusException(
-						HttpStatus.INTERNAL_SERVER_ERROR, "Unable to verify project permissions");
 			}
 		}
 	}

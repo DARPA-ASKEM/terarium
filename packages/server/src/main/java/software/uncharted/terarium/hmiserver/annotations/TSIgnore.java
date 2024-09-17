@@ -7,6 +7,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target({METHOD, FIELD})
+@Target({ METHOD, FIELD })
 @Retention(RetentionPolicy.RUNTIME)
-public @interface TSIgnore {}
+public @interface TSIgnore {
+}

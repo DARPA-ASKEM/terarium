@@ -14,8 +14,9 @@ import lombok.extern.slf4j.Slf4j;
 public class SchemaManager {
 
 	public boolean doesSchemaExist(ManagedChannel channel, BearerToken bearerToken) throws Exception {
-		SchemaServiceGrpc.SchemaServiceBlockingStub schemaService =
-				SchemaServiceGrpc.newBlockingStub(channel).withCallCredentials(bearerToken);
+		SchemaServiceGrpc.SchemaServiceBlockingStub schemaService = SchemaServiceGrpc.newBlockingStub(
+			channel
+		).withCallCredentials(bearerToken);
 
 		ReadSchemaRequest request = ReadSchemaRequest.newBuilder().build();
 
@@ -36,11 +37,11 @@ public class SchemaManager {
 	}
 
 	public void createSchema(ManagedChannel channel, BearerToken bearerToken, String schema) {
-		SchemaServiceGrpc.SchemaServiceBlockingStub schemaService =
-				SchemaServiceGrpc.newBlockingStub(channel).withCallCredentials(bearerToken);
+		SchemaServiceGrpc.SchemaServiceBlockingStub schemaService = SchemaServiceGrpc.newBlockingStub(
+			channel
+		).withCallCredentials(bearerToken);
 
-		WriteSchemaRequest request =
-				WriteSchemaRequest.newBuilder().setSchema(schema).build();
+		WriteSchemaRequest request = WriteSchemaRequest.newBuilder().setSchema(schema).build();
 
 		WriteSchemaResponse response;
 		response = schemaService.writeSchema(request);

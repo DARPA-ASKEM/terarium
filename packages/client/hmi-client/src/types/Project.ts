@@ -10,13 +10,9 @@ export enum ProjectPages {
  */
 export const listOfVisibleAssetTypes: AssetType[] = Object.values(AssetType).filter(
 	(type) =>
-		![
-			AssetType.Publication,
-			AssetType.Artifact,
-			AssetType.Simulation,
-			AssetType.ModelConfiguration,
-			AssetType.NotebookSession
-		].includes(type)
+		![AssetType.Artifact, AssetType.Simulation, AssetType.ModelConfiguration, AssetType.InterventionPolicy].includes(
+			type
+		)
 );
 
 /**

@@ -7,17 +7,17 @@
 				<section class="w-full">
 					<h3>From data to discovery</h3>
 					<p>
-						Accelerate scientific modeling and simulation using AI. Search available knowledge,
-						enhance extracted models and data, and test scenarios to simulate real-world problems.
+						Accelerate scientific modeling and simulation using AI. Search available knowledge, enhance extracted models
+						and data, and test scenarios to simulate real-world problems.
 					</p>
 					<!--Placeholder - button is disabled for now-->
-					<Button
+					<!-- <Button
 						label="Get started"
 						icon="pi pi-play"
 						icon-pos="right"
 						outlined
 						:disabled="true"
-					/>
+					/> -->
 				</section>
 
 				<!-- Video thumbnail image -->
@@ -47,20 +47,18 @@
 
 			<!-- Tab section: My projects, Public projects, Sample projects -->
 			<section class="menu">
-				<TabView>
+				<TabView @tab-change="tabChange" :active-index="activeTabIndex" :key="activeTabIndex">
 					<TabPanel v-for="(tab, i) in projectsTabs" :header="tab.title" :key="i">
 						<section class="filter-and-sort">
-							<div v-if="!isEmpty(tab.projects)">
-								<!-- TODO: Add project search back in once we are ready
-								<span class="p-input-icon-left">
-								<i class="pi pi-filter" />
-								<InputText
-									v-model="searchQuery"
-									size="small"
-									class="p-inputtext-sm"
-									placeholder="Filter by keyword"
+							<div class="pr-3">
+								<tera-input-text
+									class="w-16rem"
+									v-model="searchProjects"
+									placeholder="Search for projects"
+									id="searchProject"
 								/>
-							</span> -->
+							</div>
+							<div>
 								<span v-if="view === ProjectsView.Cards">
 									<Dropdown
 										v-model="selectedSort"
@@ -83,9 +81,9 @@
 							</div>
 							<div>
 								<SelectButton
-									v-if="!isEmpty(tab.projects)"
+									v-if="!isEmpty(searchedAndFilterProjects)"
 									:model-value="view"
-									@change="if ($event.value) view = $event.value;"
+									@change="selectChange"
 									:options="viewOptions"
 									option-value="value"
 								>
@@ -97,7 +95,7 @@
 							</div>
 						</section>
 						<section class="projects">
-							<div v-if="!isLoadingProjects && isEmpty(tab.projects)" class="no-projects">
+							<div v-if="!isLoadingProjects && isEmpty(searchedAndFilterProjects)" class="no-projects">
 								<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200"></Vue3Lottie>
 								<!--
 								<img src="@assets/svg/seed.svg" alt="" />
@@ -111,31 +109,37 @@
 											@click="openCreateProjectModal"
 										/>.
 									</p>
-									<p>Your projects will be displayed on this page.</p>
+								</template>
+								<template v-if="tab.title === TabTitles.SampleProjects">
+									<p class="mt-4">Sample projects coming soon</p>
 								</template>
 								<template v-else-if="tab.title === TabTitles.PublicProjects">
 									<h3>You don't have any shared projects</h3>
-									<p>Shared projects will be displayed on this page</p>
 								</template>
 							</div>
 							<ul v-else-if="view === ProjectsView.Cards" class="project-cards-grid">
+								<template v-if="cloningProjects.length && !isLoadingProjects">
+									<li v-for="item in cloningProjects" :key="item.id">
+										<tera-project-card v-if="item.id" :project="item" :is-copying="true" />
+									</li>
+								</template>
 								<template v-if="isLoadingProjects">
 									<li v-for="i in 3" :key="i">
 										<tera-project-card />
 									</li>
 								</template>
-								<li v-else v-for="project in tab.projects" :key="project.id">
+								<li v-else v-for="project in searchedAndFilterProjects" :key="project.id">
 									<tera-project-card
 										v-if="project.id"
 										:project="project"
 										@click="openProject(project.id)"
-										@forked-project="(forkedProject) => openProject(forkedProject.id)"
+										@copied-project="tabChange({ index: 0 })"
 									/>
 								</li>
 							</ul>
 							<tera-project-table
 								v-else-if="view === ProjectsView.Table"
-								:projects="tab.projects"
+								:projects="searchedAndFilterProjects"
 								:selected-columns="selectedColumns"
 								@open-project="openProject"
 								class="project-table"
@@ -149,8 +153,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue';
-import useQueryStore from '@/stores/query';
+import { computed, ref, onMounted, watch } from 'vue';
 import Button from 'primevue/button';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
@@ -164,13 +167,31 @@ import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import SelectButton from 'primevue/selectbutton';
 import { useProjectMenu } from '@/composables/project-menu';
-import { Project } from '@/types/Types';
+import { Project, ClientEventType, ProgressState } from '@/types/Types';
 import { Vue3Lottie } from 'vue3-lottie';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import { FilterService } from 'primevue/api';
+import { useNotificationManager } from '@/composables/notificationManager';
 
 const { isProjectConfigDialogVisible, menuProject } = useProjectMenu();
 
+const { notificationItems } = useNotificationManager();
+
+const cloningProjects = computed(() => {
+	const items: any = [];
+	notificationItems.value.forEach((item) => {
+		if (item.type === ClientEventType.CloneProject && item.status === ProgressState.Running) {
+			const project = myFilteredSortedProjects.value.find((p) => p.id === item.assetId);
+			items.push(project);
+		}
+	});
+	return items;
+});
+
+const activeTabIndex = ref(0);
 const showVideo = ref(false);
+const searchProjects = ref('');
 
 enum ProjectsView {
 	Cards = 'Cards',
@@ -201,11 +222,17 @@ const viewOptions = ref([
 const myFilteredSortedProjects = computed(() => {
 	const projects = useProjects().allProjects.value;
 	if (!projects) return [];
-	const myProjects = projects.filter(({ userPermission }) =>
-		['creator', 'writer'].includes(userPermission ?? '')
-	);
+	const myProjects = projects.filter(({ userPermission }) => ['creator', 'writer'].includes(userPermission ?? ''));
 	return filterAndSortProjects(myProjects);
 });
+
+function selectChange(event) {
+	if (event.value) view.value = event.value;
+}
+
+function tabChange(event) {
+	activeTabIndex.value = event.index;
+}
 
 const publicFilteredSortedProjects = computed(() => {
 	const projects = useProjects().allProjects.value;
@@ -219,20 +246,30 @@ function openCreateProjectModal() {
 	menuProject.value = null;
 }
 
+const searchedAndFilterProjects = computed(() => {
+	const currentTabIndex = activeTabIndex.value;
+	const projects = projectsTabs.value[currentTabIndex].projects;
+	const userInput = searchProjects.value.trim();
+	const result = FilterService.filter(projects, ['name', 'description', 'userName'], userInput, 'contains');
+	return filterAndSortProjects(result);
+});
+
 type DateType = 'createdOn' | 'updatedOn' | 'deletedOn';
 
 function sortProjectByDates(projects: Project[], dateType: DateType, sorting: 'ASC' | 'DESC') {
 	return projects.sort((a, b) => {
-		const dateA = a[dateType]?.valueOf() ?? 0;
-		const dateB = b[dateType]?.valueOf() ?? 0;
-		return sorting === 'ASC' ? dateA - dateB : dateB - dateA;
+		const dateValueA = a[dateType]?.toString();
+		const dateValueB = b[dateType]?.toString();
+		const dateA = dateValueA ? new Date(dateValueA) : new Date(0);
+		const dateB = dateValueB ? new Date(dateValueB) : new Date(0);
+		return sorting === 'ASC' ? dateA.getTime() - dateB.getTime() : dateB.getTime() - dateA.getTime();
 	});
 }
 
 function filterAndSortProjects(projects: Project[]) {
 	if (projects) {
 		if (selectedSort.value === 'Alphabetical') {
-			return projects.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+			return projects.sort((a, b) => (a.name ?? '').toLowerCase().localeCompare((b.name ?? '').toLowerCase()));
 		}
 		if (selectedSort.value === 'Last updated (descending)') {
 			return sortProjectByDates(projects, 'updatedOn', 'DESC');
@@ -260,10 +297,10 @@ const projectsTabs = computed<{ title: string; projects: Project[] }[]>(() => [
 const columns = ref([
 	{ field: 'name', header: 'Project title' },
 	{ field: 'description', header: 'Description' },
-	{ field: 'username', header: 'Author' },
+	{ field: 'userName', header: 'Author' },
 	{ field: 'stats', header: 'Stats' },
-	{ field: 'timestamp', header: 'Created' },
-	{ field: 'lastUpdated', header: 'Last updated' } // Last update property doesn't exist yet
+	{ field: 'createdOn', header: 'Created on' },
+	{ field: 'updatedOn', header: 'Last updated' }
 ]);
 
 const selectedColumns = ref(columns.value);
@@ -271,7 +308,6 @@ const onToggle = (val) => {
 	selectedColumns.value = columns.value.filter((col) => val.includes(col));
 };
 
-const queryStore = useQueryStore();
 const router = useRouter();
 
 const isLoadingProjects = computed(() => !useProjects().allProjects.value);
@@ -280,10 +316,16 @@ function openProject(projectId: string) {
 	router.push({ name: RouteName.Project, params: { projectId } });
 }
 
-onMounted(() => {
-	// Clear all...
-	queryStore.reset(); // Facets queries.
-});
+onMounted(() => useProjects().getAll());
+
+watch(
+	() => cloningProjects.value,
+	() => {
+		if (cloningProjects.value.length === 0) {
+			useProjects().getAll();
+		}
+	}
+);
 </script>
 
 <style scoped>
@@ -428,7 +470,6 @@ a {
 .new-project-button {
 	padding: 0;
 }
-
 .close-button {
 	width: 14px;
 	height: 14px;
@@ -447,8 +488,7 @@ a {
 }
 
 .video-thumbnail {
-	background-image: radial-gradient(circle, var(--primary-color), #004f3c),
-		url('@/assets/images/video-thumbnail.png');
+	background-image: radial-gradient(circle, var(--primary-color), #004f3c), url('@/assets/images/video-thumbnail.png');
 	background-blend-mode: multiply;
 	background-size: cover;
 	background-position: center;

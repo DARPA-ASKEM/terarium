@@ -3,21 +3,13 @@
  */
 
 import API from '@/api/api';
+import { AssetType, ProvenanceQueryParam, ProvenanceSearchResult, ProvenanceType, TerariumAsset } from '@/types/Types';
+import type { Asset } from '@/utils/asset';
 import { logger } from '@/utils/logger';
-import {
-	AssetType,
-	ProvenanceQueryParam,
-	ProvenanceSearchResult,
-	ProvenanceType,
-	TerariumAsset
-} from '@/types/Types';
-import { ResultType } from '@/types/common';
 import { getBulkDatasets } from './dataset';
 /* eslint-disable-next-line import/no-cycle */
-import { getBulkXDDDocuments } from './data';
-import { getBulkExternalPublications } from './external';
-import { getBulkModels } from './model';
 import { getBulkDocumentAssets } from './document-assets';
+import { getBulkModels } from './model';
 
 // FIXME: currently related artifacts extracted from the provenance graph will be provided
 //        as IDs that needs to be fetched, and since no bulk fetch API exists
@@ -49,8 +41,8 @@ async function getConnectedNodes(
 		verbose: true,
 		types
 	};
-	const connectedNodesRaw = await API.post('/provenance/search/connected-nodes', body).catch(
-		(error) => logger.error(`Error: ${error}`)
+	const connectedNodesRaw = await API.post('/provenance/search/connected-nodes', body).catch((error) =>
+		logger.error(`Error: ${error}`)
 	);
 
 	return connectedNodesRaw?.data ?? null;
@@ -65,18 +57,13 @@ async function getRelatedArtifacts(
 	id: TerariumAsset['id'],
 	rootType: ProvenanceType,
 	types: ProvenanceType[] = Object.values(ProvenanceType)
-): Promise<ResultType[]> {
-	const response: ResultType[] = [];
+): Promise<Asset[]> {
+	const response: Asset[] = [];
 
 	if (!rootType || !id) return response;
-	const connectedNodes: ProvenanceSearchResult | null = await getConnectedNodes(
-		id,
-		rootType,
-		types
-	);
+	const connectedNodes: ProvenanceSearchResult | null = await getConnectedNodes(id, rootType, types);
 	if (connectedNodes) {
 		const modelRevisionIDs: string[] = [];
-		const externalPublicationIds: string[] = [];
 		const datasetIDs: string[] = [];
 		const documentAssetIds: string[] = [];
 
@@ -91,25 +78,13 @@ async function getRelatedArtifacts(
 
 		// parse the response (sub)graph and extract relevant artifacts
 		connectedNodes.nodes.forEach((node) => {
-			if (rootType !== ProvenanceType.Publication) {
-				if (
-					node.type === ProvenanceType.Publication &&
-					externalPublicationIds.length < MAX_RELATED_ARTIFACT_COUNT
-				) {
-					externalPublicationIds.push(node.id.toString());
-				}
-			}
-
 			if (node.type === ProvenanceType.Dataset && datasetIDs.length < MAX_RELATED_ARTIFACT_COUNT) {
 				// FIXME: provenance data return IDs as number(s)
 				// but the fetch service expects IDs as string(s)
 				datasetIDs.push(node.id.toString());
 			}
 
-			if (
-				node.type === ProvenanceType.Document &&
-				documentAssetIds.length < MAX_RELATED_ARTIFACT_COUNT
-			) {
+			if (node.type === ProvenanceType.Document && documentAssetIds.length < MAX_RELATED_ARTIFACT_COUNT) {
 				documentAssetIds.push(node.id.toString());
 			}
 
@@ -131,11 +106,6 @@ async function getRelatedArtifacts(
 
 		const documentAssets = await getBulkDocumentAssets(documentAssetIds);
 		response.push(...documentAssets);
-
-		const externalPublications = await getBulkExternalPublications(externalPublicationIds);
-		// FIXME: xdd_uri
-		const xDDdocuments = await getBulkXDDDocuments(externalPublications.map((p) => p.xdd_uri));
-		response.push(...xDDdocuments);
 	}
 
 	// NOTE: performing a provenance search returns
@@ -195,8 +165,6 @@ export function mapAssetTypeToProvenanceType(assetType: AssetType): ProvenanceTy
 			return ProvenanceType.Dataset;
 		case AssetType.ModelConfiguration:
 			return ProvenanceType.ModelConfiguration;
-		case AssetType.Publication:
-			return ProvenanceType.Publication;
 		case AssetType.Simulation:
 			return ProvenanceType.Simulation;
 		case AssetType.Artifact:
@@ -211,4 +179,4 @@ export function mapAssetTypeToProvenanceType(assetType: AssetType): ProvenanceTy
 	}
 }
 
-export { getRelatedArtifacts, createProvenance };
+export { createProvenance, getRelatedArtifacts };

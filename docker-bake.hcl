@@ -26,15 +26,11 @@ function "check_suffix" {
 
 # ---------------------------------
 group "prod" {
-  targets = ["hmi-client", "hmi-server", "db-migration", "gollm-taskrunner", "mira-taskrunner"]
-}
-
-group "staging" {
-  targets = ["hmi-client", "hmi-server", "db-migration", "gollm-taskrunner", "mira-taskrunner"]
+  targets = ["hmi-client", "hmi-server", "gollm-taskrunner", "mira-taskrunner", "funman-taskrunner"]
 }
 
 group "default" {
-  targets = ["hmi-client-base", "hmi-server-base", "db-migration-base", "gollm-taskrunner-base", "mira-taskrunner-base"]
+  targets = ["hmi-client-base", "hmi-server-base", "gollm-taskrunner-base", "mira-taskrunner-base", "funman-taskrunner-base"]
 }
 
 # ---------------------------------
@@ -62,19 +58,9 @@ target "hmi-server" {
   inherits = ["_platforms", "hmi-server-base"]
 }
 
-target "db-migration-base" {
-	context = "." # root of the repo
-	dockerfile = "./packages/db-migration/docker/Dockerfile"
-	tags = tag("db-migration", "", "")
-}
-
-target "db-migration" {
-  inherits = ["_platforms", "db-migration-base"]
-}
-
 target "gollm-taskrunner-base" {
 	context = "." # root of the repo
-	dockerfile = "./packages/taskrunner/docker/Dockerfile.GoLLM"
+	dockerfile = "./packages/gollm/Dockerfile"
 	tags = tag("gollm-taskrunner", "", "")
 }
 
@@ -84,10 +70,20 @@ target "gollm-taskrunner" {
 
 target "mira-taskrunner-base" {
 	context = "." # root of the repo
-	dockerfile = "./packages/taskrunner/docker/Dockerfile.Mira"
+	dockerfile = "./packages/mira/Dockerfile"
 	tags = tag("mira-taskrunner", "", "")
 }
 
 target "mira-taskrunner" {
   inherits = ["_platforms", "mira-taskrunner-base"]
+}
+
+target "funman-taskrunner-base" {
+	context = "." # root of the repo
+	dockerfile = "./packages/funman/Dockerfile"
+	tags = tag("funman-taskrunner", "", "")
+}
+
+target "funman-taskrunner" {
+  inherits = ["_platforms", "funman-taskrunner-base"]
 }

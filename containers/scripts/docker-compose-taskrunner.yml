@@ -1,34 +1,71 @@
 ---
 services:
-  gollm-taskrunner:
-    container_name: gollm-taskrunner
-    image: ghcr.io/darpa-askem/gollm-taskrunner:latest
-    networks:
-      - terarium
-    environment:
-      TERARIUM_MQ-ADDRESSES: "amqp://rabbitmq:5672"
-      TERARIUM_MQ-PASSWORD: "terarium123"
-      TERARIUM_MQ-USERNAME: "terarium"
-      TERARIUM_TASKRUNNER_REQUEST-TYPE: "gollm"
-      OPENAI_API_KEY: "${secret_gollm_openai_key}"
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    gollm-taskrunner:
+        build:
+            context: ../..
+            dockerfile: ./packages/gollm/Dockerfile
+            target: gollm_taskrunner_builder
+        container_name: gollm-taskrunner
+        networks:
+            - terarium
+        environment:
+            TERARIUM_MQ_ADDRESSES: "amqp://rabbitmq:5672"
+            TERARIUM_MQ_PASSWORD: "terarium123"
+            TERARIUM_MQ_USERNAME: "terarium"
+            TERARIUM_TASKRUNNER_REQUEST_TYPE: "gollm"
+            OPENAI_API_KEY: "${secret_openai_key}"
+        depends_on:
+            rabbitmq:
+                condition: service_healthy
+        extra_hosts:
+            - "${local_host_name}:host-gateway"
+        volumes:
+            - ../../packages/gollm:/gollm_task
+            - ../../packages/taskrunner:/taskrunner
+        command: /gollm_task/dev.sh
 
-  mira-taskrunner:
-    container_name: mira-taskrunner
-    image: ghcr.io/darpa-askem/mira-taskrunner:latest
-    networks:
-      - terarium
-    environment:
-      TERARIUM_MQ-ADDRESSES: "amqp://rabbitmq:5672"
-      TERARIUM_MQ-PASSWORD: "terarium123"
-      TERARIUM_MQ-USERNAME: "terarium"
-      TERARIUM_TASKRUNNER_REQUEST-TYPE: "mira"
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    mira-taskrunner:
+        build:
+            context: ../..
+            dockerfile: ./packages/mira/Dockerfile
+            target: mira_taskrunner_builder
+        container_name: mira-taskrunner
+        networks:
+            - terarium
+        environment:
+            TERARIUM_MQ_ADDRESSES: "amqp://rabbitmq:5672"
+            TERARIUM_MQ_PASSWORD: "terarium123"
+            TERARIUM_MQ_USERNAME: "terarium"
+            TERARIUM_TASKRUNNER_REQUEST_TYPE: "mira"
+        depends_on:
+            rabbitmq:
+                condition: service_healthy
+        extra_hosts:
+            - "${local_host_name}:host-gateway"
+        volumes:
+            - ../../packages/mira:/mira_task
+            - ../../packages/taskrunner:/taskrunner
+        command: /mira_task/dev.sh
+
+    funman-taskrunner:
+        build:
+            context: ../..
+            dockerfile: ./packages/funman/Dockerfile
+            target: funman_taskrunner_builder
+        container_name: funman-taskrunner
+        networks:
+            - terarium
+        environment:
+            TERARIUM_MQ_ADDRESSES: "amqp://rabbitmq:5672"
+            TERARIUM_MQ_PASSWORD: "terarium123"
+            TERARIUM_MQ_USERNAME: "terarium"
+            TERARIUM_TASKRUNNER_REQUEST_TYPE: "funman"
+        depends_on:
+            rabbitmq:
+                condition: service_healthy
+        extra_hosts:
+            - "${local_host_name}:host-gateway"
+        volumes:
+            - ../../packages/funman:/funman_task
+            - ../../packages/taskrunner:/taskrunner
+        command: /funman_task/dev.sh

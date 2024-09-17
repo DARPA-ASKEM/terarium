@@ -1,11 +1,5 @@
 <template>
-	<DataTable
-		:value="projects"
-		dataKey="id"
-		:rowsPerPageOptions="[10, 20, 50]"
-		scrollable
-		scrollHeight="45rem"
-	>
+	<DataTable :value="projects" dataKey="id" :rowsPerPageOptions="[10, 20, 50]" scrollable scrollHeight="45rem">
 		<Column
 			v-for="(col, index) in selectedColumns"
 			:field="col.field"
@@ -14,32 +8,51 @@
 			:key="index"
 			:style="`width: ${getColumnWidth(col.field)}%`"
 		>
-			<template v-if="col.field !== 'username'" #body="{ data }">
-				<a
-					v-if="col.field === 'name'"
-					class="project-title-link"
-					@click.stop="emit('open-project', data.id)"
-				>
-					{{ data.name }}
-				</a>
-				<tera-show-more-text
-					v-else-if="col.field === 'description'"
-					:text="data.description"
-					:lines="1"
-				/>
+			<template #body="{ data }">
+				<template v-if="col.field === 'name'">
+					<a class="project-title-link" @click.stop="emit('open-project', data.id)">
+						{{ data.name }}
+					</a>
+				</template>
+				<tera-show-more-text v-else-if="col.field === 'description'" :text="data.description" :lines="1" />
+				<template v-if="col.field === 'userName'">
+					{{ data.userName ?? '--' }}
+				</template>
 				<div v-else-if="col.field === 'stats'" class="stats">
-					<span class="mr-1"><i class="pi pi-user mr-1" />1</span>
-					<span class="mr-1"
-						><i class="pi pi-file mr-1" /> {{ data.metadata?.['publications-count'] }}</span
+					<span
+						class="mr-1"
+						v-tooltip.top="formatStatTooltip(formatStat(data.metadata, 'contributor-count'), 'contributor')"
 					>
-					<span class="mr-1">
-						<dataset-icon fill="var(--text-color-secondary)" class="mr-1" />
-						{{ data.metadata?.['datasets-count'] }}
+						<i class="pi pi-user mr-1" />
+						{{ formatStat(data.metadata, 'contributor-count') }}
 					</span>
-					<span><i class="pi pi-share-alt mr-1" /> {{ data.metadata?.['models-count'] }}</span>
+					<span class="mr-1" v-tooltip.top="formatStatTooltip(formatStat(data.metadata, 'document-count'), 'paper')">
+						<i class="pi pi-file mr-1" />
+						{{ formatStat(data.metadata, 'document-count') }}
+					</span>
+					<span class="mr-1" v-tooltip.top="formatStatTooltip(formatStat(data.metadata, 'datasets-count'), 'dataset')">
+						<dataset-icon fill="var(--text-color-secondary)" class="mr-1" />
+						{{ formatStat(data.metadata, 'datasets-count') }}
+					</span>
+					<span v-tooltip.top="formatStatTooltip(formatStat(data.metadata, 'models-count'), 'model')">
+						<i class="pi pi-share-alt mr-1" />
+						{{ formatStat(data.metadata, 'models-count') }}
+					</span>
+					<span v-tooltip.top="formatStatTooltip(formatStat(data.metadata, 'workflows-count'), 'workflow')">
+						<vue-feather
+							class="p-button-icon-left"
+							type="git-merge"
+							size="1.25rem"
+							stroke="var(--text-color-secondary)"
+						/>
+						{{ formatStat(data.metadata, 'workflows-count') }}
+					</span>
 				</div>
-				<template v-else-if="col.field === 'timestamp'">
-					{{ formatDdMmmYyyy(data.updatedOn) }}
+				<template v-else-if="col.field === 'createdOn'">
+					{{ data.createdOn ? formatDdMmmYyyy(data.createdOn) : '--' }}
+				</template>
+				<template v-else-if="col.field === 'updatedOn'">
+					{{ data.updatedOn ? formatDdMmmYyyy(data.updatedOn) : '--' }}
 				</template>
 			</template>
 		</Column>
@@ -67,6 +80,15 @@ defineProps<{
 
 const emit = defineEmits(['open-project']);
 
+function formatStat(data, key) {
+	const stat = data?.[key];
+	return key === 'contributor-count' ? parseInt(stat ?? '1', 10) : parseInt(stat ?? '0', 10);
+}
+
+function formatStatTooltip(stat, displayName) {
+	return `${stat} ${displayName}${stat === 1 ? '' : 's'}`;
+}
+
 function getColumnWidth(columnField: string) {
 	switch (columnField) {
 		case 'description':
@@ -92,7 +114,7 @@ function getColumnWidth(columnField: string) {
 	display: flex;
 	gap: 0.1rem;
 	align-items: center;
-	width: 2rem;
+	width: 2.4rem;
 }
 
 .p-datatable {

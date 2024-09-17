@@ -5,7 +5,7 @@
 			<main>
 				<header>
 					<span :class="{ 'edit-name': isEditable }" @click="turnOnNameEdit" v-if="!isEditingName">
-						{{ card?.name }}
+						{{ model.header.name }}
 					</span>
 					<Textarea
 						v-else
@@ -16,7 +16,7 @@
 						@focusout="updateName"
 					/>
 				</header>
-				<tera-model-diagram :model="model" :is-editable="false" is-preview />
+				<tera-model-diagram :model="model" :feature-config="{ isPreview: true }" />
 			</main>
 			<Button v-if="isEditable" @click="toggle" icon="pi pi-ellipsis-v" rounded text />
 			<Menu ref="menu" :model="cardOptions" :popup="true" />
@@ -45,7 +45,6 @@ import { ref, computed, nextTick } from 'vue';
 import Button from 'primevue/button';
 import Textarea from 'primevue/textarea';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import type { ModelTemplateCard } from '@/types/model-templating';
 import Menu from 'primevue/menu';
 
 const props = defineProps<{
@@ -56,13 +55,7 @@ const props = defineProps<{
 	showParameters?: boolean;
 }>();
 
-const emit = defineEmits([
-	'port-mouseover',
-	'port-mouseleave',
-	'port-selected',
-	'update-name',
-	'remove'
-]);
+const emit = defineEmits(['port-mouseover', 'port-mouseleave', 'port-selected', 'update-name', 'remove']);
 
 // Used to pass card width.
 // Unsure if we want to set widths on certain cards but for now this works
@@ -91,16 +84,6 @@ const ports = computed(() =>
 		: props.model.model.states
 );
 
-const card = computed<ModelTemplateCard>(
-	() =>
-		props.model.metadata.templateCard ?? {
-			id: '',
-			name: props.model.header.name,
-			x: 0,
-			y: 0
-		}
-);
-
 async function turnOnNameEdit() {
 	if (props.isEditable && props.isDecomposed) {
 		isEditingName.value = true;
@@ -123,6 +106,7 @@ function updateName() {
 
 .card {
 	display: flex;
+	cursor: pointer;
 	background-color: var(--surface-section);
 	border-radius: var(--border-radius-medium);
 	outline: 1px solid var(--surface-border-alt);

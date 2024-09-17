@@ -8,8 +8,7 @@ import org.springframework.context.annotation.PropertySource;
 @PropertySource("classpath:application.properties")
 public class TaskRunnerApplication {
 
-	public static void main(String[] args) {
+	public static void main(final String[] args) {
 		SpringApplication.run(TaskRunnerApplication.class, args);
 	}
-
 }

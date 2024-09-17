@@ -15,17 +15,13 @@
 			@open-in-new-window="openInNewWindow"
 			@remove-operator="emit('remove-operator', props.node.id)"
 			@duplicate-branch="emit('duplicate-branch')"
-			@bring-to-front="bringToFront"
 			@show-annotation-editor="if (annotationRef) annotationRef.isEditing = true;"
 		/>
 		<tera-operator-inputs
 			:inputs="node.inputs"
-			@port-mouseover="(event) => mouseoverPort(event, PortDirection.Input)"
+			@port-mouseover="(event) => mouseoverPort(event, PortType.Input)"
 			@port-mouseleave="emit('port-mouseleave')"
-			@port-selected="
-				(input: WorkflowPort, direction: WorkflowDirection) =>
-					emit('port-selected', input, direction)
-			"
+			@port-selected="(input: WorkflowPort, direction: WorkflowDirection) => emit('port-selected', input, direction)"
 			@remove-edges="(portId: string) => emit('remove-edges', portId)"
 		/>
 		<section class="content">
@@ -39,12 +35,11 @@
 		</section>
 		<tera-operator-outputs
 			:outputs="node.outputs"
-			@port-mouseover="(event) => mouseoverPort(event, PortDirection.Output)"
-			@port-mouseleave="emit('port-mouseleave')"
-			@port-selected="
-				(input: WorkflowPort, direction: WorkflowDirection) =>
-					emit('port-selected', input, direction)
-			"
+			:menu-options="menuOptions"
+			@menu-selection="(operatorType: string, outputPort: WorkflowPort) => onSelection(operatorType, outputPort)"
+			@port-mouseover="(event) => mouseoverPort(event, PortType.Output)"
+			@port-mouseleave="mouseleavePort"
+			@port-selected="(input: WorkflowPort, direction: WorkflowDirection) => emit('port-selected', input, direction)"
 			@remove-edges="(portId: string) => emit('remove-edges', portId)"
 		/>
 	</main>
@@ -55,7 +50,7 @@ import type { WorkflowNode, WorkflowPort } from '@/types/workflow';
 import { WorkflowDirection } from '@/types/workflow';
 import type { Position } from '@/types/common';
 import { addDrag, addHover, removeDrag, removeHover } from '@/services/operator-bitmask';
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref, computed } from 'vue';
 import floatingWindow from '@/utils/floating-window';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
@@ -63,15 +58,18 @@ import TeraOperatorHeader from '@/components/operator/tera-operator-header.vue';
 import TeraOperatorInputs from '@/components/operator/tera-operator-inputs.vue';
 import TeraOperatorOutputs from '@/components/operator/tera-operator-outputs.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import { OperatorMenuItem } from '@/services/workflow';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
+	nodeMenu: Map<string, OperatorMenuItem[]>;
 }>();
 
 const emit = defineEmits([
 	'port-selected',
 	'port-mouseover',
 	'port-mouseleave',
+	'menu-selection',
 	'remove-operator',
 	'remove-edges',
 	'resize',
@@ -79,7 +77,7 @@ const emit = defineEmits([
 	'update-state'
 ]);
 
-enum PortDirection {
+enum PortType {
 	Input,
 	Output
 }
@@ -87,15 +85,9 @@ enum PortDirection {
 const operator = ref<HTMLElement>();
 const interactionStatus = ref(0); // States will be added to it thorugh bitmasking
 const annotationRef = ref<typeof TeraOperatorAnnotation | null>(null);
+const menuOptions = ref<OperatorMenuItem[] | []>([]);
 
 let resizeObserver: ResizeObserver | null = null;
-
-function bringToFront() {
-	// TODO: bring to front
-	// maybe there can be a z-index variable in the parent component
-	// and we can just increment it here, and add a z-index style to the node
-	// console.log('bring to front');
-}
 
 function openInNewWindow() {
 	const url = router.resolve({
@@ -105,12 +97,12 @@ function openInNewWindow() {
 	floatingWindow.open(url);
 }
 
-function mouseoverPort(event: MouseEvent, portType: PortDirection) {
+function mouseoverPort(event: MouseEvent, portType: PortType) {
 	const el = event.target as HTMLElement;
 	const portElement = (el.querySelector('.port') as HTMLElement) ?? el;
 	const nodePosition: Position = { x: props.node.x, y: props.node.y };
 	const totalOffsetY = portElement.offsetTop + portElement.offsetHeight / 2;
-	const w = portType === PortDirection.Input ? 0 : props.node.width;
+	const w = portType === PortType.Input ? 0 : props.node.width;
 	const portPosition = {
 		x: nodePosition.x + w + portElement.offsetWidth * 0.5,
 		y: nodePosition.y + totalOffsetY
@@ -118,11 +110,20 @@ function mouseoverPort(event: MouseEvent, portType: PortDirection) {
 	emit('port-mouseover', portPosition);
 }
 
+function mouseleavePort() {
+	emit('port-mouseleave');
+}
+
+function onSelection(operatorType: string, outputPort: WorkflowPort) {
+	emit('menu-selection', operatorType, outputPort);
+}
+
 function resizeHandler() {
 	emit('resize', props.node);
 }
 
 onMounted(() => {
+	menuOptions.value = props.nodeMenu.get(props.node.operationType) ?? [];
 	if (operator.value) {
 		resizeObserver = new ResizeObserver(resizeHandler);
 		resizeObserver.observe(operator.value);
@@ -135,6 +136,9 @@ onBeforeUnmount(() => {
 		resizeObserver = null;
 	}
 });
+
+const isEditing = computed(() => annotationRef.value?.isEditing ?? false);
+defineExpose({ isEditing, id: props.node.id });
 </script>
 
 <style scoped>

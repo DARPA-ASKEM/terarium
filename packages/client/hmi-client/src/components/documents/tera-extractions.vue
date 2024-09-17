@@ -69,7 +69,7 @@
 </template>
 <script setup lang="ts">
 import type { DocumentAsset, DocumentExtraction } from '@/types/Types';
-import { DocumentOperationState } from '@/workflow/ops/document/document-operation';
+import { DocumentOperationState } from '@/components/workflow/ops/document/document-operation';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { computed, ref } from 'vue';

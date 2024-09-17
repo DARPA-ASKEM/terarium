@@ -12,13 +12,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.FileCopyUtils;
-
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.taskrunner.TaskRunnerApplicationTests;
 import software.uncharted.terarium.taskrunner.models.task.TaskRequest;
 import software.uncharted.terarium.taskrunner.models.task.TaskStatus;
@@ -27,12 +25,13 @@ import software.uncharted.terarium.taskrunner.models.task.TaskStatus;
 public class TaskTests extends TaskRunnerApplicationTests {
 
 	private final String TEST_INPUT = "{\"research_paper\":\"Test research paper\"}";
+	private final String TEST_INPUT_WITH_PROGRESS =
+		"{\"research_paper\":\"Test research paper\",\"include_progress\":true}";
 	private final String FAILURE_INPUT = "{\"should_fail\":true}";
 	private final String SCRIPT_PATH = getClass().getResource("/echo.py").getPath();
 
 	@Test
 	public void testTaskSuccess() throws Exception {
-
 		final TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
 		req.setScript(SCRIPT_PATH);
@@ -53,7 +52,48 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 			task.waitFor(ONE_MINUTE);
 			Assertions.assertEquals(TaskStatus.SUCCESS, task.getStatus());
+		} catch (final Exception e) {
+			throw e;
+		} finally {
+			task.cleanup();
+		}
+	}
 
+	@Test
+	public void testTaskSuccessWithProgress() throws Exception {
+		final TaskRequest req = new TaskRequest();
+		req.setId(UUID.randomUUID());
+		req.setScript(SCRIPT_PATH);
+		req.setInput(new String(TEST_INPUT_WITH_PROGRESS).getBytes());
+
+		final int ONE_MINUTE = 1;
+
+		final Task task = new Task(req);
+		try {
+			Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
+			task.start();
+
+			Assertions.assertEquals(TaskStatus.RUNNING, task.getStatus());
+			task.writeInputWithTimeout(req.getInput(), ONE_MINUTE);
+
+			int progressCount = 0;
+			while (true) {
+				// block and wait for progress from the task
+				final byte[] output = task.readProgressWithTimeout(ONE_MINUTE);
+				if (output == null) {
+					// no more progress
+					break;
+				}
+				progressCount++;
+			}
+
+			Assertions.assertEquals(5, progressCount);
+
+			final byte[] output = task.readOutputWithTimeout(ONE_MINUTE);
+			Assertions.assertArrayEquals(req.getInput(), output);
+
+			task.waitFor(ONE_MINUTE);
+			Assertions.assertEquals(TaskStatus.SUCCESS, task.getStatus());
 		} catch (final Exception e) {
 			throw e;
 		} finally {
@@ -63,7 +103,6 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 	@Test
 	public void testTaskLargeInputOutput() throws Exception {
-
 		final ClassPathResource resource = new ClassPathResource("test_input.json");
 		final String input = new String(FileCopyUtils.copyToByteArray(resource.getInputStream()), StandardCharsets.UTF_8);
 
@@ -89,7 +128,6 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 			task.waitFor(ONE_MINUTE);
 			Assertions.assertEquals(TaskStatus.SUCCESS, task.getStatus());
-
 		} catch (final Exception e) {
 			throw e;
 		} finally {
@@ -118,7 +156,6 @@ public class TaskTests extends TaskRunnerApplicationTests {
 			Assertions.assertArrayEquals(req.getInput(), output);
 
 			task.waitFor(ONE_MINUTE);
-
 		} catch (final InterruptedException e) {
 			// this should happen
 		} finally {
@@ -130,7 +167,6 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 	@Test
 	public void testTaskCancel() throws Exception {
-
 		final TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
 		req.setScript(SCRIPT_PATH);
@@ -160,7 +196,6 @@ public class TaskTests extends TaskRunnerApplicationTests {
 			Assertions.assertArrayEquals(req.getInput(), output);
 
 			task.waitFor(ONE_MINUTE);
-
 		} catch (final InterruptedException e) {
 			// this should happen
 		} finally {
@@ -172,7 +207,6 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 	@Test
 	public void testTaskCancelMultipleTimes() throws Exception {
-
 		final TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
 		req.setScript(SCRIPT_PATH);
@@ -210,7 +244,6 @@ public class TaskTests extends TaskRunnerApplicationTests {
 			Assertions.assertArrayEquals(req.getInput(), output);
 
 			task.waitFor(ONE_MINUTE);
-
 		} catch (final InterruptedException e) {
 			// this should happen
 		} finally {
@@ -218,12 +251,10 @@ public class TaskTests extends TaskRunnerApplicationTests {
 		}
 
 		Assertions.assertEquals(TaskStatus.CANCELLED, task.getStatus());
-
 	}
 
 	@Test
 	public void testTaskCancelBeforeStart() throws Exception {
-
 		final TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
 		req.setScript(SCRIPT_PATH);
@@ -239,7 +270,6 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 			// we should not each this code
 			Assertions.assertTrue(false);
-
 		} catch (final InterruptedException e) {
 			// this should happen
 		} finally {
@@ -311,35 +341,39 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 					if (shouldCancelBefore) {
 						// dispatch the cancellation
-						new Thread(new Runnable() {
-							@Override
-							public void run() {
-								try {
-									final boolean res = task.cancel();
-									Assertions.assertTrue(res);
-								} catch (final Exception e) {
-									e.printStackTrace();
+						new Thread(
+							new Runnable() {
+								@Override
+								public void run() {
+									try {
+										final boolean res = task.cancel();
+										Assertions.assertTrue(res);
+									} catch (final Exception e) {
+										e.printStackTrace();
+									}
 								}
 							}
-						}).start();
+						).start();
 					}
 
 					task.start();
 
 					if (shouldCancelAfter) {
 						// dispatch the cancellation
-						new Thread(new Runnable() {
-							@Override
-							public void run() {
-								try {
-									Thread.sleep((long) (1000 * Math.random()));
-									final boolean res = task.cancel();
-									Assertions.assertTrue(res);
-								} catch (final Exception e) {
-									e.printStackTrace();
+						new Thread(
+							new Runnable() {
+								@Override
+								public void run() {
+									try {
+										Thread.sleep((long) (1000 * Math.random()));
+										final boolean res = task.cancel();
+										Assertions.assertTrue(res);
+									} catch (final Exception e) {
+										e.printStackTrace();
+									}
 								}
 							}
-						}).start();
+						).start();
 					}
 
 					try {
@@ -351,7 +385,6 @@ public class TaskTests extends TaskRunnerApplicationTests {
 						task.waitFor(ONE_MINUTE);
 
 						responses.put(req.getId(), TaskStatus.SUCCESS);
-
 					} catch (TimeoutException | InterruptedException e) {
 						if (expected == TaskStatus.CANCELLED) {
 							responses.put(req.getId(), TaskStatus.CANCELLED);

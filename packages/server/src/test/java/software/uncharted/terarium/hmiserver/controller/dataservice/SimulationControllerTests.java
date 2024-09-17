@@ -13,11 +13,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
-import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
+import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
-import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 public class SimulationControllerTests extends TerariumApplicationTests {
 
@@ -28,59 +29,87 @@ public class SimulationControllerTests extends TerariumApplicationTests {
 	private SimulationService simulationAssetService;
 
 	@Autowired
-	private ElasticsearchService elasticService;
+	private ProjectService projectService;
 
 	@Autowired
-	private ElasticsearchConfiguration elasticConfig;
+	private ProjectSearchService projectSearchService;
+
+	Project project;
 
 	@BeforeEach
 	public void setup() throws IOException {
-		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getSimulationIndex());
+		projectSearchService.setupIndexAndAliasAndEnsureEmpty();
+
+		project = projectService.createProject(
+			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
+		);
 	}
 
 	@AfterEach
 	public void teardown() throws IOException {
-		elasticService.deleteIndex(elasticConfig.getSimulationIndex());
+		projectSearchService.teardownIndexAndAlias();
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateSimulation() throws Exception {
+		final Simulation simulationAsset = new Simulation();
+		simulationAsset.setName("test-simulation-name");
+		simulationAsset.setDescription("my description");
 
-		final Simulation simulationAsset =
-				new Simulation().setName("test-simulation-name").setDescription("my description");
-
-		mockMvc.perform(MockMvcRequestBuilders.post("/simulations")
-						.with(csrf())
-						.contentType("application/json")
-						.content(objectMapper.writeValueAsString(simulationAsset)))
-				.andExpect(status().isCreated());
+		mockMvc
+			.perform(
+				MockMvcRequestBuilders.post("/simulations")
+					.param("project-id", PROJECT_ID.toString())
+					.with(csrf())
+					.contentType("application/json")
+					.content(objectMapper.writeValueAsString(simulationAsset))
+			)
+			.andExpect(status().isCreated());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetSimulation() throws Exception {
+		final Simulation tempSim = new Simulation();
+		tempSim.setName("test-simulation-name");
+		tempSim.setDescription("my description");
+		final Simulation simulationAsset = simulationAssetService.createAsset(
+			tempSim,
+			project.getId(),
+			ASSUME_WRITE_PERMISSION
+		);
 
-		final Simulation simulationAsset = simulationAssetService.createSimulation(
-				new Simulation().setName("test-simulation-name").setDescription("my description"));
-
-		mockMvc.perform(MockMvcRequestBuilders.get("/simulations/" + simulationAsset.getId())
-						.with(csrf()))
-				.andExpect(status().isOk());
+		mockMvc
+			.perform(
+				MockMvcRequestBuilders.get("/simulations/" + simulationAsset.getId())
+					.param("project-id", PROJECT_ID.toString())
+					.with(csrf())
+			)
+			.andExpect(status().isOk());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteSimulation() throws Exception {
+		final Simulation tempSim = new Simulation();
+		tempSim.setName("test-simulation-name");
+		tempSim.setDescription("my description");
 
-		final Simulation simulationAsset = simulationAssetService.createSimulation(
-				new Simulation().setName("test-simulation-name").setDescription("my description"));
+		final Simulation simulationAsset = simulationAssetService.createAsset(
+			tempSim,
+			project.getId(),
+			ASSUME_WRITE_PERMISSION
+		);
 
-		mockMvc.perform(MockMvcRequestBuilders.delete("/simulations/" + simulationAsset.getId())
-						.with(csrf()))
-				.andExpect(status().isOk());
+		mockMvc
+			.perform(
+				MockMvcRequestBuilders.delete("/simulations/" + simulationAsset.getId())
+					.param("project-id", PROJECT_ID.toString())
+					.with(csrf())
+			)
+			.andExpect(status().isOk());
 
-		Assertions.assertTrue(
-				simulationAssetService.getSimulation(simulationAsset.getId()).isEmpty());
+		Assertions.assertTrue(simulationAssetService.getAsset(simulationAsset.getId(), ASSUME_WRITE_PERMISSION).isEmpty());
 	}
 }

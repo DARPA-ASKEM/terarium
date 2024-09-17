@@ -1,21 +1,25 @@
 import {
 	AssetType,
 	ClientEventType,
-	Dataset,
-	Document,
-	DocumentAsset,
-	Model,
 	ModelGrounding,
-	XDDFacetsItemResponse
+	ProgrammingLanguage,
+	ProgressState,
+	StatusUpdate
 } from '@/types/Types';
-import { ConceptFacets } from './Concept';
-import { DatasetSearchParams } from './Dataset';
-import { ModelSearchParams } from './Model';
-import { XDDSearchParams } from './XDD';
 import { ProjectPages } from './Project';
 
 export interface FeatureConfig {
 	isPreview: boolean;
+}
+
+export enum DrilldownTabs {
+	Wizard = 'Wizard',
+	Notebook = 'Notebook'
+}
+
+export enum CiemssPresetTypes {
+	Fast = 'Fast',
+	Normal = 'Normal'
 }
 
 export enum ParamType {
@@ -37,7 +41,6 @@ export interface ModelConfigTableData {
 	source: string;
 	visibility: boolean;
 	tableFormattedMatrix?: ModelConfigTableData[];
-	timeseries?: string;
 }
 
 // TODO: Wherever these are used - investigate using an actual map instead, this has been avoided due to v-model not playing well with maps
@@ -60,55 +63,6 @@ export enum ViewType {
 	GRAPH = 'graph'
 }
 
-export enum ResourceType {
-	XDD = 'xdd',
-	MODEL = 'model',
-	DATASET = 'dataset',
-	ALL = 'all'
-}
-
-export type SearchParameters = {
-	[ResourceType.XDD]?: XDDSearchParams;
-	[ResourceType.MODEL]?: ModelSearchParams;
-	[ResourceType.DATASET]?: DatasetSearchParams;
-};
-
-export type ResultType = Model | Dataset | Document | DocumentAsset;
-
-export type SearchResults = {
-	results: ResultType[];
-	facets?: { [p: string]: XDDFacetsItemResponse } | Facets;
-	rawConceptFacets?: ConceptFacets | null;
-	searchSubsystem?: string;
-	hits?: number;
-	hasMore?: boolean;
-	nextPage?: string;
-};
-
-export type FullSearchResults = {
-	allData: SearchResults;
-	allDataFilteredWithFacets: SearchResults;
-};
-
-export type SearchByExampleOptions = {
-	similarContent: boolean;
-	forwardCitation: boolean;
-	backwardCitation: boolean;
-	relatedContent: boolean;
-};
-
-//
-// Facets
-//
-export type FacetBucket = {
-	key: string;
-	value: number;
-};
-
-export type Facets = {
-	[key: string]: FacetBucket[];
-};
-
 // Side panel
 export type SidePanelTab = {
 	name: string;
@@ -126,6 +80,7 @@ export type AssetRoute = {
 export interface AssetItem extends AssetRoute {
 	icon?: string;
 	assetName?: string;
+	assetCreatedOn?: string;
 }
 
 export type CodeRequest = {
@@ -149,7 +104,8 @@ export enum AcceptedTypes {
 	MDL = `application/vnd.vensim.mdl`,
 	XMILE = 'application/vnd.stella.xmile',
 	ITMX = 'application/vnd.stella.itmx',
-	STMX = 'application/vnd.stella.stmx'
+	STMX = 'application/vnd.stella.stmx',
+	MODELCONFIG = 'application/zip'
 }
 
 export enum AcceptedExtensions {
@@ -172,7 +128,9 @@ export enum AcceptedExtensions {
 	// Stella formats
 	XMILE = 'xmile',
 	ITMX = 'itmx',
-	STMX = 'stmx'
+	STMX = 'stmx',
+	// proprietary formats
+	MODELCONFIG = 'modelconfig'
 }
 
 export enum AMRSchemaNames {
@@ -200,14 +158,59 @@ export interface CompareModelsResponseType {
 	response: string;
 }
 
-export interface NotificationItem {
-	id: string;
+export type ExtractionStatusUpdate = StatusUpdate<{ documentId: string }>;
+export type CloneProjectStatusUpdate = StatusUpdate<{ projectId: string }>;
+export interface NotificationItem extends NotificationItemStatus, AssetRoute {
+	notificationGroupId: string;
 	type: ClientEventType;
-	assetName: string;
-	status: 'Completed' | 'Failed' | 'Running';
-	msg: string;
-	error: string;
-	progress: number;
+	typeDisplayName: string;
+	sourceName: string;
+	context: string;
+	projectId?: string;
+	nodeId?: string;
 	lastUpdated: number;
 	acknowledged: boolean;
+	supportCancel: boolean;
 }
+export interface NotificationItemStatus {
+	status: ProgressState;
+	msg: string;
+	error: string;
+	progress?: number;
+}
+
+export enum ChartSettingType {
+	VARIABLE = 'variable',
+	VARIABLE_COMPARISON = 'variable-comparison',
+	DISTRIBUTION_COMPARISON = 'distribution-comparison',
+	ERROR_DISTRIBUTION = 'error-distribution',
+	INTERVENTION = 'intervention'
+}
+
+export interface ChartSetting {
+	id: string;
+	name: string;
+	selectedVariables: string[];
+	type: ChartSettingType;
+}
+
+export const ProgrammingLanguageVersion: { [key in ProgrammingLanguage]: string } = {
+	[ProgrammingLanguage.Python]: 'python3',
+	[ProgrammingLanguage.R]: 'ir',
+	[ProgrammingLanguage.Julia]: 'julia-1.10',
+	[ProgrammingLanguage.Zip]: 'zip'
+};
+
+/**
+ * Returns an array of options for programming languages.
+ * Each option is an object with a `name` property that is a `ProgrammingLanguage` and a `value` property that is the corresponding version string.
+ * The `Zip` programming language is excluded from the options.
+ * @returns {Array} An array of options for programming languages.
+ */
+export const programmingLanguageOptions = (): { name: string; value: string }[] =>
+	Object.values(ProgrammingLanguage)
+		.filter((lang) => lang !== ProgrammingLanguage.Zip)
+		.map((lang) => ({
+			name: lang && `${lang[0].toUpperCase() + lang.slice(1)} (${ProgrammingLanguageVersion[lang]})`,
+			value: ProgrammingLanguageVersion[lang]
+		}));

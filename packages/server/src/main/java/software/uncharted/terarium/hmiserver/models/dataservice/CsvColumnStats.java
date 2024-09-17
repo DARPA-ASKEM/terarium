@@ -12,6 +12,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Slf4j
 @TSModel
 public class CsvColumnStats implements Serializable {
+
 	List<Integer> bins;
 	double minValue;
 	double maxValue;

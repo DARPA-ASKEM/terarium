@@ -13,6 +13,7 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @AMRSchemaType
 @Accessors(chain = true)
 public class DataColumn extends SupportAdditionalProperties implements Serializable {
+
 	@Serial
 	private static final long serialVersionUID = 892484869215158123L;
 
@@ -21,4 +22,13 @@ public class DataColumn extends SupportAdditionalProperties implements Serializa
 	private String name;
 
 	private MetadataDataset dataset;
+
+	@Override
+	public DataColumn clone() {
+		DataColumn clone = (DataColumn) super.clone();
+		clone.id = id;
+		clone.name = name;
+		if (dataset != null) clone.dataset = dataset.clone();
+		return clone;
+	}
 }

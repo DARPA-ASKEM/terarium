@@ -1,5 +1,7 @@
 package software.uncharted.terarium.taskrunner.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -16,7 +18,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,11 +26,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.taskrunner.TaskRunnerApplicationTests;
 import software.uncharted.terarium.taskrunner.models.task.TaskRequest;
 import software.uncharted.terarium.taskrunner.models.task.TaskResponse;
@@ -36,6 +33,7 @@ import software.uncharted.terarium.taskrunner.models.task.TaskStatus;
 
 @Slf4j
 public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
+
 	@Autowired
 	TaskRunnerService taskRunnerService;
 
@@ -47,6 +45,8 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 	private final long TIMEOUT_SECONDS = 30;
 	private final String TEST_INPUT = "{\"research_paper\":\"Test research paper\"}";
+	private final String TEST_INPUT_WITH_PROGRESS =
+		"{\"research_paper\":\"Test research paper\",\"include_progress\":true}";
 	private final String FAILURE_INPUT = "{\"should_fail\":true}";
 	private final String SCRIPT_PATH = getClass().getResource("/echo.py").getPath();
 	private final String TASK_RUNNER_RESPONSE_QUEUE = "terarium-response-queue-test";
@@ -56,8 +56,10 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		taskRunnerService.destroyQueues();
 		taskRunnerService.declareQueues();
 		taskRunnerService.declareAndBindTransientQueueWithRoutingKey(
-				taskRunnerService.TASK_RUNNER_RESPONSE_EXCHANGE,
-				TASK_RUNNER_RESPONSE_QUEUE, "");
+			taskRunnerService.TASK_RUNNER_RESPONSE_EXCHANGE,
+			TASK_RUNNER_RESPONSE_QUEUE,
+			""
+		);
 	}
 
 	@AfterEach
@@ -73,9 +75,11 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 			try {
 				final TaskResponse resp = queue.poll(TIMEOUT_SECONDS, TimeUnit.SECONDS);
 				responses.add(resp);
-				if (resp.getStatus() == TaskStatus.SUCCESS ||
-						resp.getStatus() == TaskStatus.FAILED ||
-						resp.getStatus() == TaskStatus.CANCELLED) {
+				if (
+					resp.getStatus() == TaskStatus.SUCCESS ||
+					resp.getStatus() == TaskStatus.FAILED ||
+					resp.getStatus() == TaskStatus.CANCELLED
+				) {
 					break;
 				}
 			} catch (final InterruptedException e) {
@@ -87,22 +91,24 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 	}
 
 	private BlockingQueue<TaskResponse> consumeForResponses() {
-
 		final BlockingQueue<TaskResponse> queue = new ArrayBlockingQueue<>(10);
 
 		final CompletableFuture<Void> processFuture = new CompletableFuture<>();
 
 		final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(
-				rabbitTemplate.getConnectionFactory());
+			rabbitTemplate.getConnectionFactory()
+		);
 		container.setQueueNames(TASK_RUNNER_RESPONSE_QUEUE);
 		container.setMessageListener(message -> {
 			try {
 				final TaskResponse resp = mapper.readValue(message.getBody(), TaskResponse.class);
 				queue.put(resp);
 
-				if (resp.getStatus() == TaskStatus.SUCCESS ||
-						resp.getStatus() == TaskStatus.FAILED ||
-						resp.getStatus() == TaskStatus.CANCELLED) {
+				if (
+					resp.getStatus() == TaskStatus.SUCCESS ||
+					resp.getStatus() == TaskStatus.FAILED ||
+					resp.getStatus() == TaskStatus.CANCELLED
+				) {
 					// signal we are done
 					processFuture.complete(null);
 				}
@@ -130,11 +136,10 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 	@Test
 	public void testRunTaskSuccess() throws InterruptedException, JsonProcessingException {
-
 		final TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
 		req.setScript(SCRIPT_PATH);
-		req.setInput(new String(TEST_INPUT).getBytes());
+		req.setInput(new String(TEST_INPUT_WITH_PROGRESS).getBytes());
 		req.setTimeoutMinutes(1);
 
 		final String reqStr = mapper.writeValueAsString(req);
@@ -142,14 +147,18 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 		final List<TaskResponse> responses = consumeAllResponses();
 
-		Assertions.assertTrue(responses.size() == 2);
+		Assertions.assertTrue(responses.size() == 7);
 		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(0).getStatus());
-		Assertions.assertEquals(TaskStatus.SUCCESS, responses.get(1).getStatus());
+		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(1).getStatus());
+		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(2).getStatus());
+		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(3).getStatus());
+		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(4).getStatus());
+		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(5).getStatus());
+		Assertions.assertEquals(TaskStatus.SUCCESS, responses.get(6).getStatus());
 	}
 
 	@Test
 	public void testRunTaskFailure() throws InterruptedException, JsonProcessingException {
-
 		final TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
 		req.setScript(SCRIPT_PATH);
@@ -168,11 +177,10 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 	@Test
 	public void testRunTaskCancelled() throws InterruptedException, JsonProcessingException {
-
 		final TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
 		req.setScript(SCRIPT_PATH);
-		req.setInput(new String(TEST_INPUT).getBytes());
+		req.setInput(new String(TEST_INPUT_WITH_PROGRESS).getBytes());
 		req.setTimeoutMinutes(1);
 
 		final String reqStr = mapper.writeValueAsString(req);
@@ -186,9 +194,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 			responses.add(resp);
 			if (resp.getStatus() == TaskStatus.RUNNING) {
 				// send the cancellation after we know the task has started
-				rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_CANCELLATION_EXCHANGE,
-						req.getId().toString(),
-						"");
+				rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_CANCELLATION_EXCHANGE, req.getId().toString(), "");
 			}
 			if (resp.getStatus() == TaskStatus.CANCELLED) {
 				break;
@@ -203,11 +209,10 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 	@Test
 	public void testRunTaskCancelledBeforeStart() throws InterruptedException, JsonProcessingException {
-
 		final TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
 		req.setScript(SCRIPT_PATH);
-		req.setInput(new String(TEST_INPUT).getBytes());
+		req.setInput(new String(TEST_INPUT_WITH_PROGRESS).getBytes());
 		req.setTimeoutMinutes(1);
 
 		// we have to create this queue before sending the cancellation to know that
@@ -215,15 +220,15 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		final String cancelQueue = req.getId().toString();
 		final String routingKey = req.getId().toString();
 		taskRunnerService.declareAndBindTransientQueueWithRoutingKey(
-				taskRunnerService.TASK_RUNNER_CANCELLATION_EXCHANGE, cancelQueue,
-				routingKey);
+			taskRunnerService.TASK_RUNNER_CANCELLATION_EXCHANGE,
+			cancelQueue,
+			routingKey
+		);
 
 		// send the cancellation BEFORE we send the request, this simulates a taskrunner
 		// under
 		// contention that could receive a cancellation before it processes a request
-		rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_CANCELLATION_EXCHANGE,
-				req.getId().toString(),
-				"");
+		rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_CANCELLATION_EXCHANGE, req.getId().toString(), "");
 
 		final String reqStr = mapper.writeValueAsString(req);
 		rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_REQUEST_QUEUE, reqStr);
@@ -236,8 +241,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 	@Test
 	public void testRunTaskSoakTest()
-			throws InterruptedException, JsonProcessingException, ExecutionException, TimeoutException {
-
+		throws InterruptedException, JsonProcessingException, ExecutionException, TimeoutException {
 		final int NUM_REQUESTS = 64;
 		final int NUM_THREADS = 4;
 
@@ -250,15 +254,19 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		final ConcurrentHashMap<UUID, CompletableFuture<Void>> responseFutures = new ConcurrentHashMap<>();
 
 		final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(
-				rabbitTemplate.getConnectionFactory());
+			rabbitTemplate.getConnectionFactory()
+		);
 		container.setQueueNames(TASK_RUNNER_RESPONSE_QUEUE);
 		container.setMessageListener(message -> {
 			try {
 				final TaskResponse resp = mapper.readValue(message.getBody(), TaskResponse.class);
 				responsesPerReq.get(resp.getId()).add(resp);
 
-				if (resp.getStatus() == TaskStatus.SUCCESS || resp.getStatus() == TaskStatus.CANCELLED
-						|| resp.getStatus() == TaskStatus.FAILED) {
+				if (
+					resp.getStatus() == TaskStatus.SUCCESS ||
+					resp.getStatus() == TaskStatus.CANCELLED ||
+					resp.getStatus() == TaskStatus.FAILED
+				) {
 					responseFutures.get(resp.getId()).complete(null);
 				}
 			} catch (final Exception e) {
@@ -270,7 +278,6 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		final Random rand = new Random();
 
 		for (int i = 0; i < NUM_REQUESTS; i++) {
-
 			final Future<?> future = executor.submit(() -> {
 				try {
 					final TaskRequest req = new TaskRequest();
@@ -287,8 +294,10 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 					final String cancelQueue = req.getId().toString();
 					final String routingKey = req.getId().toString();
 					taskRunnerService.declareAndBindTransientQueueWithRoutingKey(
-							taskRunnerService.TASK_RUNNER_CANCELLATION_EXCHANGE, cancelQueue,
-							routingKey);
+						taskRunnerService.TASK_RUNNER_CANCELLATION_EXCHANGE,
+						cancelQueue,
+						routingKey
+					);
 
 					boolean shouldCancelBefore = false;
 					boolean shouldCancelAfter = false;
@@ -298,8 +307,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 						case 0:
 							// success
 							req.setInput(new String(TEST_INPUT).getBytes());
-							expectedResponses.put(req.getId(),
-									List.of(List.of(TaskStatus.RUNNING, TaskStatus.SUCCESS)));
+							expectedResponses.put(req.getId(), List.of(List.of(TaskStatus.RUNNING, TaskStatus.SUCCESS)));
 							break;
 						case 1:
 							// failure
@@ -310,21 +318,27 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 							// cancellation
 							req.setInput(new String(TEST_INPUT).getBytes());
 							shouldCancelBefore = true;
-							expectedResponses.put(req.getId(), List.of(
+							expectedResponses.put(
+								req.getId(),
+								List.of(
 									List.of(TaskStatus.CANCELLED) // cancelled before request processed
-							));
+								)
+							);
 							break;
 						case 3:
 							// cancellation
 							req.setInput(new String(TEST_INPUT).getBytes());
 							shouldCancelAfter = true;
-							expectedResponses.put(req.getId(), List.of(
+							expectedResponses.put(
+								req.getId(),
+								List.of(
 									List.of(TaskStatus.CANCELLED), // cancelled before request processed
 									List.of(TaskStatus.RUNNING, TaskStatus.CANCELLING, TaskStatus.CANCELLED), // cancelled
 									// during
 									// processing
 									List.of(TaskStatus.RUNNING, TaskStatus.SUCCESS) // cancelled after processing
-							));
+								)
+							);
 							break;
 						default:
 							throw new RuntimeException("This shouldnt happen");
@@ -332,9 +346,11 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 					if (shouldCancelBefore) {
 						// send the cancellation before we send the request
-						rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_CANCELLATION_EXCHANGE,
-								req.getId().toString(),
-								"");
+						rabbitTemplate.convertAndSend(
+							taskRunnerService.TASK_RUNNER_CANCELLATION_EXCHANGE,
+							req.getId().toString(),
+							""
+						);
 					}
 
 					// send the request
@@ -344,9 +360,11 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 					if (shouldCancelAfter) {
 						Thread.sleep(1000);
 						// send the cancellation
-						rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_CANCELLATION_EXCHANGE,
-								req.getId().toString(),
-								"");
+						rabbitTemplate.convertAndSend(
+							taskRunnerService.TASK_RUNNER_CANCELLATION_EXCHANGE,
+							req.getId().toString(),
+							""
+						);
 					}
 				} catch (final Exception e) {
 					e.printStackTrace();
@@ -370,7 +388,6 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 		// check that the responses are valid
 		for (final Map.Entry<UUID, List<TaskResponse>> responseEntry : responsesPerReq.entrySet()) {
-
 			final UUID id = responseEntry.getKey();
 			final List<TaskResponse> responses = responseEntry.getValue();
 
@@ -384,8 +401,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 				for (int i = 0; i < expected.size(); i++) {
 					if (expected.get(i) != responses.get(i).getStatus()) {
 						if (responses.get(i).getOutput() != null) {
-							Assertions.assertArrayEquals("{\"result\":\"ok\"}".getBytes(),
-									responses.get(i).getOutput());
+							Assertions.assertArrayEquals("{\"result\":\"ok\"}".getBytes(), responses.get(i).getOutput());
 						}
 						break;
 					}
@@ -397,5 +413,4 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 			Assertions.assertTrue(found);
 		}
 	}
-
 }

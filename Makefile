@@ -40,31 +40,6 @@ image-hmi-client: clean-hmi-client yarn-install
 	yarn workspace hmi-client build
 	mv $(PROJECT_DIR)/packages/client/hmi-client/dist $(PROJECT_DIR)/packages/client/hmi-client/docker/dist
 
-TARGETS += db-migration
-clean-db-migration: clean-db-migration-base
-	rm -rf $(PROJECT_DIR)/packages/db-migration/docker/build
-
-image-db-migration: clean-db-migration
-	./gradlew :packages:db-migration:build -x test
-	mv $(PROJECT_DIR)/packages/db-migration/build $(PROJECT_DIR)/packages/db-migration/docker/build
-
-TARGETS += gollm-taskrunner
-clean-gollm-taskrunner: clean-gollm-taskrunner-base
-	rm -rf $(PROJECT_DIR)/packages/taskrunner/docker/build
-
-image-gollm-taskrunner: clean-gollm-taskrunner
-	./gradlew :packages:taskrunner:build -x test
-	mv $(PROJECT_DIR)/packages/taskrunner/build $(PROJECT_DIR)/packages/taskrunner/docker/build
-
-TARGETS += mira-taskrunner
-clean-mira-taskrunner: clean-mira-taskrunner-base
-	rm -rf $(PROJECT_DIR)/packages/taskrunner/docker/build
-
-image-mira-taskrunner: clean-mira-taskrunner
-	./gradlew :packages:taskrunner:build -x test
-	mv $(PROJECT_DIR)/packages/taskrunner/build $(PROJECT_DIR)/packages/taskrunner/docker/build
-
-
 ## Clean
 .PHONY: clean
 clean: $(TARGETS:%=clean-%)
@@ -74,20 +49,6 @@ clean: $(TARGETS:%=clean-%)
 clean-hmi-server-base:
 	./gradlew :packages:server:clean
 
-.PHONY: clean-db-migration-base
-clean-db-migration-base:
-	./gradlew :packages:db-migration:clean
-
-.PHONY: clean-gollm-taskrunner-base
-clean-gollm-taskrunner-base:
-	./gradlew :packages:taskrunner:clean
-
-.PHONY: clean-mira-taskrunner-base
-clean-mira-taskrunner-base:
-	./gradlew :packages:taskrunner:clean
-
-
-
 ## Images
 .PHONY: images
 images: $(TARGETS:%=image-%)
@@ -96,4 +57,4 @@ images: $(TARGETS:%=image-%)
 
 ## Utilities
 yarn-install:
-	yarn install
+	@YARN_ENABLE_HARDENED_MODE=1 yarn install

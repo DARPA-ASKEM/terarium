@@ -10,13 +10,26 @@ import software.uncharted.terarium.hmiserver.models.user.Event;
 @Repository
 public interface EventRepository extends PSCrudRepository<Event, String> {
 	List<Event> findAllByTypeAndProjectIdAndUserIdAndValueLike(
-			final EventType type, final UUID projectId, final String userId, final String like, Pageable pageable);
+		final EventType type,
+		final UUID projectId,
+		final String userId,
+		final String like,
+		Pageable pageable
+	);
 
 	List<Event> findAllByTypeAndUserIdAndValueLike(
-			final EventType type, final String userId, final String like, Pageable pageable);
+		final EventType type,
+		final String userId,
+		final String like,
+		Pageable pageable
+	);
 
 	List<Event> findAllByTypeAndProjectIdAndUserId(
-			final EventType type, final UUID projectId, final String userId, Pageable pageable);
+		final EventType type,
+		final UUID projectId,
+		final String userId,
+		Pageable pageable
+	);
 
 	List<Event> findAllByTypeAndUserId(final EventType type, final String userId, Pageable pageable);
 

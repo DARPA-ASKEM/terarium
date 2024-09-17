@@ -1,9 +1,8 @@
-import { csvParse } from 'd3';
+import { csvParse, autoType } from 'd3';
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
 import {
 	CalibrationRequestCiemss,
-	CalibrationRequestJulia,
 	ClientEvent,
 	ClientEventType,
 	EnsembleCalibrationCiemssRequest,
@@ -12,25 +11,25 @@ import {
 	OptimizeRequestCiemss,
 	ProgressState,
 	Simulation,
-	SimulationRequest
+	SimulationRequest,
+	CsvAsset
 } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import * as EventService from '@/services/event';
-import { WorkflowNode } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
+import { FIFOCache } from '@/utils/FifoCache';
 
-export async function makeForecastJob(simulationParam: SimulationRequest) {
+export type DataArray = Record<string, any>[];
+
+export enum CiemssMethodOptions {
+	dopri5 = 'dopri5',
+	euler = 'euler'
+}
+
+export async function cancelCiemssJob(runId: String) {
 	try {
-		const resp = await API.post('simulation-request/forecast', simulationParam);
-		EventService.create(
-			EventType.TransformPrompt,
-			useProjects().activeProject.value?.id,
-			JSON.stringify({
-				type: 'julia',
-				params: simulationParam
-			})
-		);
+		const resp = await API.get(`simulation-request/ciemss/cancel/${runId}`);
 		const output = resp.data;
 		return output;
 	} catch (err) {
@@ -39,9 +38,12 @@ export async function makeForecastJob(simulationParam: SimulationRequest) {
 	}
 }
 
-export async function makeForecastJobCiemss(simulationParam: SimulationRequest) {
+export async function makeForecastJobCiemss(simulationParam: SimulationRequest, metadata?: any) {
 	try {
-		const resp = await API.post('simulation-request/ciemss/forecast', simulationParam);
+		const resp = await API.post('simulation-request/ciemss/forecast', {
+			payload: simulationParam,
+			metadata
+		});
 		EventService.create(
 			EventType.TransformPrompt,
 			useProjects().activeProject.value?.id,
@@ -52,36 +54,6 @@ export async function makeForecastJobCiemss(simulationParam: SimulationRequest) 
 		);
 		const output = resp.data;
 		return output;
-	} catch (err) {
-		logger.error(err);
-		return null;
-	}
-}
-
-// TODO: Add typing to julia's output: https://github.com/DARPA-ASKEM/Terarium/issues/1655
-export async function getRunResultJulia(runId: string, filename = 'result.json') {
-	try {
-		const resp = await API.get(`simulations/${runId}/result`, {
-			params: { filename }
-		});
-		const output = resp.data;
-		const [states, params] = output;
-
-		const columnNames = (states.colindex.names as string[]).join(',');
-		let csvData: string = columnNames as string;
-		for (let j = 0; j < states.columns[0].length; j++) {
-			csvData += '\n';
-			for (let i = 0; i < states.columns.length; i++) {
-				csvData += `${states.columns[i][j]},`;
-			}
-		}
-
-		const paramVals = {};
-		Object.entries(params.colindex.lookup).forEach(([key, value]) => {
-			paramVals[key] = params.columns[(value as number) - 1][0];
-		});
-
-		return { csvData, paramVals };
 	} catch (err) {
 		logger.error(err);
 		return null;
@@ -101,6 +73,40 @@ export async function getRunResult(runId: string, filename: string) {
 	}
 }
 
+const dataArrayCache = new FIFOCache<Promise<string>>(100);
+export async function getRunResultCSV(
+	runId: string,
+	filename: string,
+	renameFn?: (s: string) => string
+): Promise<DataArray> {
+	try {
+		const cacheKey = `${runId}:${filename}`;
+
+		let promise = dataArrayCache.get(cacheKey);
+		if (!promise) {
+			promise = API.get(`simulations/${runId}/result`, {
+				params: { filename }
+			}).then((res) => res.data);
+
+			dataArrayCache.set(cacheKey, promise);
+		}
+
+		// If a rename function is defined, loop over the first row
+		let dataStr = await promise;
+		if (renameFn) {
+			const lines = dataStr.split(/\n/);
+			const line0 = lines[0].split(/,/).map(renameFn).join(',');
+			lines[0] = line0;
+			dataStr = lines.join('\n');
+		}
+		const output = csvParse(dataStr, autoType);
+		return output;
+	} catch (err) {
+		logger.error(err);
+		return [];
+	}
+}
+
 // Return the presigned download URL of the calibration output blob
 // This is only applicable to CIEMSS functionalities
 export async function getCalibrateBlobURL(runId: string) {
@@ -110,6 +116,8 @@ export async function getCalibrateBlobURL(runId: string) {
 	return resp.data.url;
 }
 
+// @deprecated - The notion of RunResult is a outdated with introduction of Vegalite charts
+// that use a more barebone setup closer to the raw data
 export async function getRunResultCiemss(runId: string, filename = 'result.csv') {
 	const resultCsv = await getRunResult(runId, filename);
 	const csvData = csvParse(resultCsv);
@@ -134,20 +142,31 @@ export async function getRunResultCiemss(runId: string, filename = 'result.csv')
 	parsedRawData.forEach((inputRow) => {
 		const outputRowRunResults = { timestamp: inputRow.timepoint_id };
 		Object.keys(inputRow).forEach((key) => {
-			const keyArr = key.split('_');
-			const keySuffix = keyArr.pop();
-			const keyName = keyArr.join('_');
-
-			if (keySuffix === 'param' || keySuffix === 'state') {
-				outputRowRunResults[keyName] = inputRow[key];
-				if (!runConfigs[keyName]) {
-					runConfigs[keyName] = [];
+			if (key.endsWith('_observable_state')) {
+				const newKey = key.replace(/_observable_state$/, '');
+				outputRowRunResults[newKey] = inputRow[key];
+				if (!runConfigs[newKey]) {
+					runConfigs[newKey] = [];
 				}
-				runConfigs[keyName].push(Number(inputRow[key]));
-			} else if (keySuffix === 'sol') {
-				outputRowRunResults[keyName] = inputRow[key];
-			} else if (keySuffix === 'obs') {
-				outputRowRunResults[keyName] = inputRow[key];
+				runConfigs[newKey].push(Number(inputRow[key]));
+				return;
+			}
+			if (key.endsWith('_state')) {
+				const newKey = key.replace(/_state$/, '');
+				outputRowRunResults[newKey] = inputRow[key];
+				if (!runConfigs[newKey]) {
+					runConfigs[newKey] = [];
+				}
+				runConfigs[newKey].push(Number(inputRow[key]));
+				return;
+			}
+			if (key.startsWith('persistent_') && key.endsWith('_param')) {
+				const newKey = key.replace(/_param$/, '').replace(/^persistent_/, '');
+				outputRowRunResults[newKey] = inputRow[key];
+				if (!runConfigs[newKey]) {
+					runConfigs[newKey] = [];
+				}
+				runConfigs[newKey].push(Number(inputRow[key]));
 			}
 		});
 		runResults[inputRow.sample_id as string].push(outputRowRunResults as any);
@@ -170,14 +189,12 @@ export async function getSimulation(id: Simulation['id']): Promise<Simulation | 
 	}
 }
 
-export async function makeCalibrateJobJulia(calibrationParams: CalibrationRequestJulia) {
+export async function makeCalibrateJobCiemss(calibrationParams: CalibrationRequestCiemss, metadata?: any) {
 	try {
-		EventService.create(
-			EventType.RunCalibrate,
-			useProjects().activeProject.value?.id,
-			JSON.stringify(calibrationParams)
-		);
-		const resp = await API.post('simulation-request/calibrate', calibrationParams);
+		const resp = await API.post('simulation-request/ciemss/calibrate', {
+			payload: calibrationParams,
+			metadata
+		});
 		const output = resp.data;
 		return output;
 	} catch (err) {
@@ -186,9 +203,12 @@ export async function makeCalibrateJobJulia(calibrationParams: CalibrationReques
 	}
 }
 
-export async function makeCalibrateJobCiemss(calibrationParams: CalibrationRequestCiemss) {
+export async function makeOptimizeJobCiemss(optimizeParams: OptimizeRequestCiemss, metadata?: any) {
 	try {
-		const resp = await API.post('simulation-request/ciemss/calibrate', calibrationParams);
+		const resp = await API.post('simulation-request/ciemss/optimize', {
+			payload: optimizeParams,
+			metadata
+		});
 		const output = resp.data;
 		return output;
 	} catch (err) {
@@ -197,9 +217,12 @@ export async function makeCalibrateJobCiemss(calibrationParams: CalibrationReque
 	}
 }
 
-export async function makeOptimizeJobCiemss(optimizeParams: OptimizeRequestCiemss) {
+export async function makeEnsembleCiemssSimulation(params: EnsembleSimulationCiemssRequest, metadata?: any) {
 	try {
-		const resp = await API.post('simulation-request/ciemss/optimize', optimizeParams);
+		const resp = await API.post('simulation-request/ciemss/ensemble-simulate', {
+			payload: params,
+			metadata
+		});
 		const output = resp.data;
 		return output;
 	} catch (err) {
@@ -208,9 +231,12 @@ export async function makeOptimizeJobCiemss(optimizeParams: OptimizeRequestCiems
 	}
 }
 
-export async function makeEnsembleCiemssSimulation(params: EnsembleSimulationCiemssRequest) {
+export async function makeEnsembleCiemssCalibration(params: EnsembleCalibrationCiemssRequest, metadata?: any) {
 	try {
-		const resp = await API.post('simulation-request/ciemss/ensemble-simulate', params);
+		const resp = await API.post('simulation-request/ciemss/ensemble-calibrate', {
+			payload: params,
+			metadata
+		});
 		const output = resp.data;
 		return output;
 	} catch (err) {
@@ -218,29 +244,6 @@ export async function makeEnsembleCiemssSimulation(params: EnsembleSimulationCie
 		return null;
 	}
 }
-
-export async function makeEnsembleCiemssCalibration(params: EnsembleCalibrationCiemssRequest) {
-	try {
-		const resp = await API.post('simulation-request/ciemss/ensemble-calibrate', params);
-		const output = resp.data;
-		return output;
-	} catch (err) {
-		logger.error(err);
-		return null;
-	}
-}
-
-// This function returns a string array of run ids.
-export const querySimulationInProgress = (node: WorkflowNode<any>): string[] => {
-	const state = node.state;
-	if (state.simulationsInProgress && state.simulationsInProgress.length > 0) {
-		// return all run ids on the node
-		return state.simulationsInProgress;
-	}
-
-	// return an empty array if no run ids are present
-	return [];
-};
 
 export async function subscribeToUpdateMessages(
 	simulationIds: string[],
@@ -269,12 +272,68 @@ export async function pollAction(id: string) {
 
 	if ([ProgressState.Queued, ProgressState.Running].includes(simResponse.status)) {
 		// TODO: untangle progress
-		return { data: null, progress: null, error: null };
+		return { data: null, progress: simResponse, error: null };
 	}
 
 	if ([ProgressState.Error, ProgressState.Failed].includes(simResponse.status)) {
 		const errorMessage: string = simResponse.statusMessage || `Failed running simulation ${id}`;
 		return { data: null, progress: null, error: errorMessage };
 	}
+
+	if (simResponse.status === ProgressState.Cancelled) {
+		return { data: null, progress: null, error: null, cancelled: true };
+	}
 	return { data: simResponse, progress: null, error: null };
 }
+
+// FIXME: PyCIEMSS renames state and parameters, should consolidate upstream in pyciemss-service
+export const parsePyCiemssMap = (obj: Record<string, any>) => {
+	const keys = Object.keys(obj);
+	const result: Record<string, string> = {};
+
+	keys.forEach((k) => {
+		if (k.endsWith('_observable_state')) {
+			const newKey = k.replace(/_observable_state$/, '');
+			result[newKey] = k;
+			return;
+		}
+
+		if (k.endsWith('_state')) {
+			const newKey = k.replace(/_state$/, '');
+			result[newKey] = k;
+			return;
+		}
+
+		if (k.startsWith('persistent_') && k.endsWith('_param')) {
+			const newKey = k.replace(/_param$/, '').replace(/^persistent_/, '');
+			result[newKey] = k;
+			return;
+		}
+		result[k] = k;
+	});
+
+	return result;
+};
+
+/**
+ * FIXME: This overlaps somewhat with services/dataset#createCsvAssetFromRunResults,
+ *
+ * This is a simpler version
+ * - without dealing with a list/set of runResults, which is now depreated.
+ * - no column stats, which are not used
+ * */
+export const convertToCsvAsset = (data: Record<string, any>[], keys: string[]) => {
+	const csvData: CsvAsset = {
+		headers: keys,
+		csv: [],
+		rowCount: data.length
+	};
+	data.forEach((datum) => {
+		const row: any[] = [];
+		keys.forEach((k) => {
+			row.push(datum[k] || '');
+		});
+		csvData.csv.push(row);
+	});
+	return csvData;
+};

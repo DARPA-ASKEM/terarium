@@ -11,13 +11,13 @@ body {
 	padding: 0;
 }
 
-a, div, em, figure, footer, form, h1, h2, h3, h4, h5, h6, header, img, li, ol, p, span, strong, ul {
-	border: 0;
+/* The :not(.pi) selector is used to avoid resetting the styles of the PrimeIcons */
+a, div, em, figure, footer, form, h1, h2, h3, h4, h5, h6, header, img, li, ol, p, strong, ul, span:not(.pi, .katex *) {
 	font: inherit;
 	margin: 0;
 	padding: 0;
 	vertical-align: baseline;
-} 
+}
 
 img {
 	display: block;
@@ -29,6 +29,7 @@ html {
 	box-sizing: border-box;
 }
 html *, html *::before, html *::after {
+	-webkit-box-sizing: inherit;
 	box-sizing: inherit;
 }
 
@@ -40,7 +41,6 @@ html, body {
 
 a:hover, a:focus {
 	cursor: pointer;
-	text-decoration: underline;
 }
 
 table {
@@ -49,4 +49,8 @@ table {
 
 thead {
 	border: none;
+}
+
+strong {
+	font-weight: var(--font-weight-semibold);
 }

@@ -11,6 +11,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @TSModel
 public class DKG {
+
 	@JsonAlias("id")
 	private String curie;
 

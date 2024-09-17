@@ -44,15 +44,20 @@ export default defineConfig({
 		},
 		proxy: {
 			'^/api': {
-				target: 'https://server.staging.terarium.ai',
+				target: 'https://server.dev.terarium.ai',
 				rewrite: (path_str) => path_str.replace(/^\/api/, ''),
 				changeOrigin: true
 			},
-			'^/beaker/(.*)': {
-				target: 'http://beaker.staging.terarium.ai'
+			'^/beaker': {
+				target: 'https://beaker.dev.terarium.ai',
+				changeOrigin: true,
+				rewrite: (path_str) => path_str.replace(/^\/beaker/, '')
 			},
-			'^/beaker_ws/(.*)': {
-				target: 'http://beaker.staging.terarium.ai'
+			'^/beaker_ws': {
+				target: 'ws://beaker.dev.terarium.ai',
+				ws: true,
+				changeOrigin: true,
+				rewrite: (path_str) => path_str.replace(/^\/beaker/, '')
 			}
 		}
 	},
@@ -64,7 +69,13 @@ export default defineConfig({
 		format: 'es'
 	},
 	build: {
-		target: 'esnext'
+		target: 'esnext',
+		rollupOptions: {
+			input: {
+				main: path.resolve(__dirname, 'index.html'),
+				sso: path.resolve(__dirname, 'silent-sso.html')
+			}
+		}
 	},
 	plugins: [
 		vue({
@@ -72,8 +83,7 @@ export default defineConfig({
 				compilerOptions: {
 					// treat all components starting with `facet` as custom elements
 					// ignore facets as custom elements
-					isCustomElement: (tag) =>
-						tag.startsWith('facet-') || tag === 'math-field' || tag == 'katex'
+					isCustomElement: (tag) => tag.startsWith('facet-') || tag === 'math-field' || tag == 'katex'
 				}
 			}
 		}),
@@ -86,6 +96,7 @@ export default defineConfig({
 		reporters: ['junit', 'default'],
 		outputFile: {
 			junit: './tests/unit/reports/junit-report.xml'
-		}
+		},
+		environment: 'jsdom'
 	}
 });

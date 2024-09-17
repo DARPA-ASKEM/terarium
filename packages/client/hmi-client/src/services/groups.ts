@@ -22,15 +22,9 @@ export async function getGroup(id: string): Promise<PermissionGroup | null> {
 	}
 }
 
-export async function addGroupUserPermissions(
-	groupId: string,
-	userId: string,
-	relationship: string
-) {
+export async function addGroupUserPermissions(groupId: string, userId: string, relationship: string) {
 	try {
-		const response = await API.post(
-			`/groups/${groupId}/permissions/user/${userId}/${relationship}`
-		);
+		const response = await API.post(`/groups/${groupId}/permissions/user/${userId}/${relationship}`);
 		return response.status === 200;
 	} catch (error) {
 		logger.error(error);
@@ -55,15 +49,9 @@ export async function updateGroupUserPermissions(
 	}
 }
 
-export async function removeGroupUserPermissions(
-	groupId: string,
-	userId: string,
-	relationship: string
-) {
+export async function removeGroupUserPermissions(groupId: string, userId: string, relationship: string) {
 	try {
-		const response = await API.delete(
-			`/groups/${groupId}/permissions/user/${userId}/${relationship}`
-		);
+		const response = await API.delete(`/groups/${groupId}/permissions/user/${userId}/${relationship}`);
 		return response.status === 200;
 	} catch (error) {
 		logger.error(error);

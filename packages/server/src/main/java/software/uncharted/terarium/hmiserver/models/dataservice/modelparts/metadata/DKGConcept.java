@@ -13,6 +13,7 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @AMRSchemaType
 @Accessors(chain = true)
 public class DKGConcept extends SupportAdditionalProperties implements Serializable {
+
 	@Serial
 	private static final long serialVersionUID = 8605126700128460881L;
 
@@ -21,4 +22,13 @@ public class DKGConcept extends SupportAdditionalProperties implements Serializa
 	private String name;
 
 	private Double score;
+
+	@Override
+	public DKGConcept clone() {
+		DKGConcept clone = (DKGConcept) super.clone();
+		clone.setId(id);
+		clone.setName(name);
+		clone.setScore(score);
+		return clone;
+	}
 }

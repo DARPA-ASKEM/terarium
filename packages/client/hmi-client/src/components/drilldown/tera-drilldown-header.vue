@@ -1,17 +1,9 @@
 <template>
 	<header>
 		<div class="title-row">
-			<h4><slot /> <i v-if="props.tooltip" v-tooltip="tooltip" class="pi pi-info-circle" /></h4>
-			<slot name="inputs" />
-			<!-- <a :href="documentationUrl" rel="noopener noreferrer">Documentation</a> -->
-			<Button
-				class="close-mask"
-				icon="pi pi-times"
-				text
-				rounded
-				aria-label="Close"
-				@click="emit('close')"
-			/>
+			<h4 class="title"><slot /> <i v-if="props.tooltip" v-tooltip="tooltip" class="pi pi-info-circle" /></h4>
+			<slot name="top-header-actions" />
+			<Button class="close-mask" icon="pi pi-times" text rounded aria-label="Close" @click="emit('close')" />
 		</div>
 		<div class="tabs-row">
 			<TabView v-if="views.length > 1" :active-index="activeIndex" @tab-change="onTabChange">
@@ -51,6 +43,7 @@ header {
 	padding-top: 1rem;
 	padding-left: 1.5rem;
 	padding-right: 1.5rem;
+	border-bottom: 1px solid var(--surface-border-light);
 }
 
 header > * {
@@ -73,10 +66,16 @@ header > * {
 	color: var(--text-color-primary);
 }
 
+header .title {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
 header .tabs-row {
 	justify-content: space-between;
 	align-items: end;
-	gap: var(--gap);
+	gap: var(--gap-4);
 }
 
 header .tabs-row:deep(.p-tabview .p-tabview-panels) {
@@ -99,12 +98,15 @@ a {
 :deep(.p-tabview .p-tabview-nav li .p-tabview-nav-link:focus) {
 	background-color: var(--surface-section);
 }
+:deep(.p-tabview .p-tabview-nav li .p-tabview-nav-link) {
+	padding: var(--gap-3) var(--gap-6);
+}
 
 .actions {
 	display: flex;
 	justify-content: flex-end;
 	gap: var(--gap-small);
-	padding-bottom: var(--gap-small);
+	padding-bottom: var(--gap-1);
 	flex: 1;
 }
 

@@ -8,14 +8,14 @@
 			<section class="template-options">
 				<header>Model templates</header>
 				<ul>
-					<li v-for="(model, index) in modelTemplatingService.modelTemplateOptions" :key="index">
+					<li v-for="(card, index) in modelTemplatingService.modelTemplateCardOptions" :key="index">
 						<tera-model-template
-							:model="model"
+							:model="card.model"
 							:is-editable="false"
 							is-decomposed
 							:style="isDecomposedLoading && { cursor: 'wait' }"
 							:draggable="!isDecomposedLoading"
-							@dragstart="sidebarTemplateToAdd = model"
+							@dragstart="sidebarTemplateToAdd = cloneDeep(card)"
 						/>
 					</li>
 				</ul>
@@ -26,6 +26,7 @@
 			</section>
 		</aside>
 		<tera-infinite-canvas
+			:is-disabled="isDecomposedLoading"
 			@click="onCanvasClick"
 			@save-transform="saveTransform"
 			@mouseenter="setMouseOverCanvas(true)"
@@ -38,23 +39,23 @@
 		>
 			<template #foreground>
 				<!--FIXME: This container holding the toggles overlaps the top of the canvas so the drag area is slightly cutoff-->
-				<section class="view-toggles">
+				<section class="button-container">
 					<!-- TODO: There will be a Diagram/Equation toggle here. There may be plans to make a component for this specific
 						toggle though since in some designs it is used outside of tera-model-diagram and others are inside -->
 					<SelectButton
 						:model-value="currentModelFormat"
 						@change="if ($event.value) onEditorFormatSwitch($event.value);"
 						:options="modelFormatOptions"
-					>
-						<template #option="{ option }">
-							<i
-								v-if="isDecomposedLoading && option === EditorFormat.Decomposed"
-								class="pi pi-spin pi-spinner p-button-icon-left"
-							/>
-							<span class="p-button-label">{{ option }}</span>
-						</template>
-					</SelectButton>
+						:disabled="isDecomposedLoading"
+					/>
+					<span class="btn-group">
+						<Button label="Reset" outlined severity="secondary" @click="reset" />
+						<Button label="Save" @click="$emit('save-new-model-output', model)" />
+					</span>
 				</section>
+				<tera-progress-spinner v-if="isDecomposedLoading" class="spinner" is-centered :font-size="2">
+					Please wait...
+				</tera-progress-spinner>
 			</template>
 			<template #data>
 				<tera-canvas-item
@@ -68,7 +69,7 @@
 					@dragging="(event) => updatePosition(event, card)"
 				>
 					<tera-model-template
-						:model="currentCanvas.models[index]"
+						:model="currentCanvas.cards[index].model"
 						is-editable
 						:is-decomposed="currentModelFormat === EditorFormat.Decomposed"
 						:id="card.id"
@@ -76,17 +77,15 @@
 							(name: string) =>
 								modelTemplatingService.updateDecomposedTemplateNameInKernel(
 									kernelManager,
-									currentCanvas.models[index],
-									flattenedCanvas.models[0],
+									currentCanvas.cards[index].model,
+									flattenedCanvas.cards[0].model,
 									name,
 									outputCode,
 									syncWithMiraModel
 								)
 						"
 						@port-selected="(portId: string) => createNewEdge(card.id, portId)"
-						@port-mouseover="
-							(event: MouseEvent, cardWidth: number) => onPortMouseover(event, card, cardWidth)
-						"
+						@port-mouseover="(event: MouseEvent, cardWidth: number) => onPortMouseover(event, card, cardWidth)"
 						@port-mouseleave="onPortMouseleave"
 						@remove="
 							() =>
@@ -106,7 +105,7 @@
 					:style="{ width: 'fit-content', top: `${junction.y}px`, left: `${junction.x}px` }"
 					@dragging="(event) => updatePosition(event, junction)"
 				>
-					<tera-model-junction :junction="junction" :template-cards="cards" />
+					<tera-model-junction :junction="junction" :cards="cards" />
 				</tera-canvas-item>
 			</template>
 			<template #background>
@@ -133,7 +132,7 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty, isEqual } from 'lodash'; // debounce
+import { isEmpty, isEqual, cloneDeep } from 'lodash'; // debounce
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { getAStarPath } from '@graph-scaffolder/core';
 import * as d3 from 'd3';
@@ -142,22 +141,25 @@ import type { Model } from '@/types/Types';
 import type {
 	ModelTemplateCanvas,
 	ModelTemplateCard,
-	ModelTemplateJunction
+	ModelTemplateJunction,
+	OffsetValues
 } from '@/types/model-templating';
 import * as modelTemplatingService from '@/services/model-templating';
 import SelectButton from 'primevue/selectbutton';
+import Button from 'primevue/button';
 import { KernelSessionManager } from '@/services/jupyter';
 import TeraInfiniteCanvas from '../widgets/tera-infinite-canvas.vue';
 import TeraModelTemplate from './tera-model-template.vue';
 import TeraModelJunction from './tera-model-junction.vue';
 import TeraCanvasItem from '../widgets/tera-canvas-item.vue';
+import TeraProgressSpinner from '../widgets/tera-progress-spinner.vue';
 
 const props = defineProps<{
-	model?: Model;
+	model: Model;
 	kernelManager: KernelSessionManager;
 }>();
 
-const emit = defineEmits(['output-code', 'sync-with-mira-model']);
+const emit = defineEmits(['output-code', 'sync-with-mira-model', 'save-new-model-output', 'reset']);
 
 function outputCode(data: any) {
 	emit('output-code', data);
@@ -177,6 +179,7 @@ let isMouseOverCanvas = false;
 let canvasTransform = { x: 0, y: 0, k: 1 };
 let isMouseOverPort = false;
 let junctionIdForNewEdge: string | null = null;
+const decomposedPortOffsetValues = new Map<string, OffsetValues>();
 
 const decomposedCanvas = ref<ModelTemplateCanvas>(modelTemplatingService.initializeCanvas());
 const flattenedCanvas = ref<ModelTemplateCanvas>(modelTemplatingService.initializeCanvas());
@@ -184,28 +187,22 @@ const modelFormatOptions = ref([EditorFormat.Decomposed, EditorFormat.Flattened]
 const currentModelFormat = ref(EditorFormat.Decomposed);
 
 const currentCanvas = computed(() =>
-	currentModelFormat.value === EditorFormat.Decomposed
-		? decomposedCanvas.value
-		: flattenedCanvas.value
+	currentModelFormat.value === EditorFormat.Decomposed ? decomposedCanvas.value : flattenedCanvas.value
 );
-const cards = computed<ModelTemplateCard[]>(
-	() => currentCanvas.value.models.map(({ metadata }) => metadata?.templateCard) ?? []
-);
+const cards = computed<ModelTemplateCard[]>(() => currentCanvas.value.cards);
 const junctions = computed<ModelTemplateJunction[]>(() => currentCanvas.value.junctions);
 
-const sidebarTemplateToAdd = ref<Model | null>(null);
+const sidebarTemplateToAdd = ref<ModelTemplateCard | null>(null);
 const newEdge = ref();
 
-const isDecomposedLoading = computed(() => props.model && isEmpty(decomposedCanvas.value.models));
-const isCreatingNewEdge = computed(
-	() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2
-);
+const isDecomposedLoading = computed(() => props.model && isEmpty(decomposedCanvas.value.cards));
+const isCreatingNewEdge = computed(() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2);
 
 function collisionFn(p: Position): boolean {
 	const buffer = 50;
-	return cards.value.some(({ x, y, width, height }) => {
-		const withinXRange = p.x >= x - buffer && p.x <= x + width + buffer;
-		const withinYRange = p.y >= y - buffer && p.y <= y + height + buffer;
+	return cards.value.some(({ x, y }) => {
+		const withinXRange = p.x >= x - buffer && p.x <= x + buffer;
+		const withinYRange = p.y >= y - buffer && p.y <= y + buffer;
 		return withinXRange && withinYRange;
 	});
 }
@@ -294,6 +291,7 @@ function createNewEdge(cardId: string, portId: string) {
 				props.kernelManager,
 				flattenedCanvas.value,
 				decomposedCanvas.value,
+				decomposedPortOffsetValues,
 				outputCode,
 				syncWithMiraModel,
 				interpolatePointsForCurve
@@ -342,15 +340,13 @@ function saveTransform(newTransform: { k: number; x: number; y: number }) {
 }
 
 function updateNewCardPosition(event) {
-	if (!sidebarTemplateToAdd.value?.metadata) return;
-	sidebarTemplateToAdd.value.metadata.templateCard.x =
-		(event.offsetX - canvasTransform.x) / canvasTransform.k;
-	sidebarTemplateToAdd.value.metadata.templateCard.y =
-		(event.offsetY - canvasTransform.y) / canvasTransform.k;
+	if (!sidebarTemplateToAdd.value) return;
+	sidebarTemplateToAdd.value.x = (event.offsetX - canvasTransform.x) / canvasTransform.k;
+	sidebarTemplateToAdd.value.y = (event.offsetY - canvasTransform.y) / canvasTransform.k;
 }
 
 function onDrop(event) {
-	if (!sidebarTemplateToAdd.value?.metadata) return;
+	if (!sidebarTemplateToAdd.value) return;
 
 	updateNewCardPosition(event);
 
@@ -367,13 +363,8 @@ function onDrop(event) {
 	else {
 		// If we are in the flattened view just add it in the UI - it will be added in kernel once linked to the flattened model
 		// Cards that aren't linked in the flattened view will be removed once the view switches to decomposed
-		const decomposedTemplateToAdd = modelTemplatingService.prepareDecomposedTemplateAddition(
-			flattenedCanvas.value,
-			sidebarTemplateToAdd.value
-		);
-		if (decomposedTemplateToAdd) {
-			modelTemplatingService.addTemplateInView(flattenedCanvas.value, decomposedTemplateToAdd);
-		}
+		modelTemplatingService.prepareDecomposedTemplateAddition(flattenedCanvas.value, sidebarTemplateToAdd.value);
+		modelTemplatingService.addTemplateInView(flattenedCanvas.value, sidebarTemplateToAdd.value);
 	}
 
 	sidebarTemplateToAdd.value = null;
@@ -434,36 +425,56 @@ function mouseUpdate(event: MouseEvent) {
 	prevY = event.y;
 }
 
-function refreshFlattenedCanvas() {
-	if (props.model) {
-		flattenedCanvas.value = modelTemplatingService.initializeCanvas();
-		modelTemplatingService.updateFlattenedTemplateInView(flattenedCanvas.value, props.model);
+function onEditorFormatSwitch(newFormat: EditorFormat) {
+	currentModelFormat.value = newFormat;
+	if (newFormat === EditorFormat.Decomposed)
+		renderFlattenedCanvas(); // Removes unlinked decomposed templates
+	else {
+		// When switching to the flattened view, we save the decomposed port positions
+		// so that edges can be drawn correctly when relecting flattened edits to the decomposed view
+		decomposedPortOffsetValues.clear();
+		const decomposedPortElements = document.getElementsByClassName('port selectable') as HTMLCollectionOf<HTMLElement>;
+
+		Array.from(decomposedPortElements).forEach((element) =>
+			decomposedPortOffsetValues.set(element.id, modelTemplatingService.getElementOffsetValues(element))
+		);
 	}
 }
 
-function onEditorFormatSwitch(newFormat: EditorFormat) {
-	currentModelFormat.value = newFormat;
-	if (newFormat === EditorFormat.Decomposed) refreshFlattenedCanvas(); // Removes unlinked decomposed templates
+function reset() {
+	emit('reset');
+	renderDecomposedCanvas();
 }
 
+// Rendering functions populate the canvases with all their model templates, can be used to refresh the view
+function renderFlattenedCanvas() {
+	flattenedCanvas.value = modelTemplatingService.initializeCanvas();
+	modelTemplatingService.updateFlattenedTemplateInView(flattenedCanvas.value, props.model);
+}
+
+function renderDecomposedCanvas() {
+	decomposedCanvas.value = modelTemplatingService.initializeCanvas();
+	modelTemplatingService.flattenedToDecomposedInKernel(
+		props.kernelManager,
+		decomposedCanvas.value,
+		interpolatePointsForCurve
+	);
+}
+
+// Triggered after syncWithMiraModel() in parent
 watch(
-	() => [props.model],
-	() => refreshFlattenedCanvas() // Triggered after syncWithMiraModel() in parent
+	() => props.model,
+	(newModel, oldModel) => {
+		renderFlattenedCanvas();
+		// If we are working with a new model id then we must decompose it since it's made of different templates (on output switch)
+		if (oldModel?.id !== newModel?.id) renderDecomposedCanvas();
+	}
 );
 
 onMounted(() => {
 	document.addEventListener('mousemove', mouseUpdate);
-
-	if (props.model) {
-		// Create flattened view of model
-		modelTemplatingService.updateFlattenedTemplateInView(flattenedCanvas.value, props.model);
-		// Create decomposed view of model
-		modelTemplatingService.flattenedToDecomposedInKernel(
-			props.kernelManager,
-			decomposedCanvas.value,
-			interpolatePointsForCurve
-		);
-	}
+	renderFlattenedCanvas();
+	renderDecomposedCanvas();
 });
 
 onUnmounted(() => {
@@ -474,24 +485,38 @@ onUnmounted(() => {
 <style scoped>
 .template-editor-wrapper {
 	display: flex;
-	flex: 1;
+	height: 100%;
 	overflow: hidden;
 	position: relative;
 }
 
-:deep(.card) {
-	cursor: pointer;
+:deep(.foreground-layer) {
+	pointer-events: none;
+	height: 100%;
 }
 
-.view-toggles {
-	padding: 0.5rem;
+.button-container {
+	display: flex;
+	justify-content: space-between;
+	padding: var(--gap-small);
 	pointer-events: none;
-	.pi-spin {
+	& .pi-spin {
 		color: var(--text-color-subdued);
 	}
+	& .btn-group {
+		display: flex;
+		gap: var(--gap-small);
+	}
+	& > * {
+		pointer-events: auto;
+	}
 }
-.view-toggles > * {
-	pointer-events: auto;
+
+.spinner {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
 }
 
 aside {
@@ -501,7 +526,7 @@ aside {
 	background-color: #f4f7fa;
 	border-right: 1px solid var(--surface-border-light);
 	padding: var(--gap);
-	gap: 0.5rem;
+	gap: var(--gap-small);
 	overflow: hidden;
 	z-index: 1;
 }
@@ -510,14 +535,14 @@ ul {
 	list-style: none;
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
-	margin-top: 0.5rem;
+	gap: var(--gap-small);
+	margin-top: var(--gap-small);
 }
 
 h5 {
 	display: flex;
 	align-items: center;
-	gap: 0.25rem;
+	gap: var(--gap-xsmall);
 	font-weight: var(--font-weight);
 }
 
@@ -542,7 +567,7 @@ header {
 
 	& > ul {
 		height: 85%;
-		padding: 0.25rem 0 0.25rem var(--gap-small);
+		padding: var(--gap-xsmall) 0 var(--gap-xsmall) var(--gap-small);
 	}
 }
 
@@ -557,7 +582,7 @@ header {
 
 	& > .pi-trash {
 		font-size: 1.5rem;
-		margin-bottom: 0.5rem;
+		margin-bottom: var(--gap-small);
 	}
 }
 </style>

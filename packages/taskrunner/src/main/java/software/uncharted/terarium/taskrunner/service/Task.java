@@ -1,5 +1,7 @@
 package software.uncharted.terarium.taskrunner.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -16,9 +18,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.taskrunner.models.task.TaskRequest;
@@ -37,11 +36,14 @@ public class Task {
 	private Process process;
 	private CompletableFuture<Integer> processFuture;
 	private String inputPipeName;
+	private String progressPipeName;
 	private String outputPipeName;
 	private TaskStatus status = TaskStatus.QUEUED;
 	private ScopedLock lock = new ScopedLock();
 	private StringBuilder stdout = new StringBuilder();
 	private StringBuilder stderr = new StringBuilder();
+
+	private final String ECHO_SCRIPT_PATH = getClass().getResource("/echo.py").getPath();
 
 	private int PROCESS_KILL_TIMEOUT_SECONDS = 10;
 
@@ -52,6 +54,7 @@ public class Task {
 
 		this.req = req;
 		inputPipeName = "/tmp/input-" + req.getId();
+		progressPipeName = "/tmp/progress-" + req.getId();
 		outputPipeName = "/tmp/output-" + req.getId();
 
 		try {
@@ -79,25 +82,64 @@ public class Task {
 	}
 
 	private void setup() throws IOException, InterruptedException {
-		if (getExtension(req.getScript()).equals("py")) {
+		if (req.getScript().equals("echo.py")) {
+			// raw python file, execute it through the runtime
+			final boolean fileExists = Files.exists(Paths.get(ECHO_SCRIPT_PATH));
+			if (!fileExists) {
+				throw new FileNotFoundException("Script file: " + ECHO_SCRIPT_PATH + " not found");
+			}
+			processBuilder = new ProcessBuilder(
+				"python3",
+				ECHO_SCRIPT_PATH,
+				"--id",
+				req.getId().toString(),
+				"--input_pipe",
+				inputPipeName,
+				"--output_pipe",
+				outputPipeName,
+				"--progress_pipe",
+				progressPipeName
+			);
+		} else if (getExtension(req.getScript()).equals("py")) {
 			// raw python file, execute it through the runtime
 			final boolean fileExists = Files.exists(Paths.get(req.getScript()));
 			if (!fileExists) {
 				throw new FileNotFoundException("Script file: " + req.getScript() + " not found");
 			}
-			processBuilder = new ProcessBuilder("python", req.getScript(), "--id", req.getId().toString(),
-					"--input_pipe",
-					inputPipeName,
-					"--output_pipe", outputPipeName);
+			processBuilder = new ProcessBuilder(
+				"python3",
+				req.getScript(),
+				"--id",
+				req.getId().toString(),
+				"--input_pipe",
+				inputPipeName,
+				"--output_pipe",
+				outputPipeName,
+				"--progress_pipe",
+				progressPipeName
+			);
 		} else {
 			// executable command, execute it directly
-			processBuilder = new ProcessBuilder(req.getScript(), "--id", req.getId().toString(),
-					"--input_pipe",
-					inputPipeName,
-					"--output_pipe", outputPipeName);
+			processBuilder = new ProcessBuilder(
+				req.getScript(),
+				"--id",
+				req.getId().toString(),
+				"--input_pipe",
+				inputPipeName,
+				"--output_pipe",
+				outputPipeName,
+				"--progress_pipe",
+				progressPipeName
+			);
 		}
 
-		log.debug("Creating input and output pipes: {} {} for task {}", inputPipeName, outputPipeName, req.getId());
+		log.info(
+			"Creating input, output, and progress pipes: {}, {}, {} for task {}",
+			inputPipeName,
+			outputPipeName,
+			progressPipeName,
+			req.getId()
+		);
 
 		// Create the named pipes
 		final Process inputPipe = new ProcessBuilder("mkfifo", inputPipeName).start();
@@ -111,19 +153,25 @@ public class Task {
 		if (exitCode != 0) {
 			throw new RuntimeException("Error creating input pipe");
 		}
+
+		final Process progressPipe = new ProcessBuilder("mkfifo", progressPipeName).start();
+		exitCode = progressPipe.waitFor();
+		if (exitCode != 0) {
+			throw new RuntimeException("Error creating input pipe");
+		}
 	}
 
 	public void writeInputWithTimeout(final byte[] bytes, final int timeoutMinutes)
-			throws IOException, InterruptedException, TimeoutException {
-		log.debug("Dispatching write thread for input pipe: {} for task: {}", inputPipeName, req.getId());
+		throws IOException, InterruptedException, TimeoutException {
+		log.info("Dispatching write thread for input pipe: {} for task: {}", inputPipeName, req.getId());
 
 		final CompletableFuture<Void> future = new CompletableFuture<>();
 		new Thread(() -> {
 			try {
 				// Write to the named pipe in a separate thread
-				log.debug("Opening input pipe: {} for task: {}", inputPipeName, req.getId());
+				log.info("Opening input pipe: {} for task: {}", inputPipeName, req.getId());
 				try (FileOutputStream fos = new FileOutputStream(inputPipeName)) {
-					log.debug("Writing to input pipe: {} for task: {}", inputPipeName, req.getId());
+					log.info("Writing to input pipe: {} for task: {}", inputPipeName, req.getId());
 					fos.write(bytes);
 				}
 				future.complete(null);
@@ -157,31 +205,22 @@ public class Task {
 	}
 
 	public byte[] readOutputWithTimeout(final int timeoutMinutes)
-			throws IOException, InterruptedException, ExecutionException, TimeoutException {
-		log.debug("Dispatching read thread for input pipe: {} for task: {}", outputPipeName, req.getId());
+		throws IOException, InterruptedException, ExecutionException, TimeoutException {
+		log.info("Dispatching read thread for output pipe: {} for task: {}", outputPipeName, req.getId());
 
 		final CompletableFuture<byte[]> future = new CompletableFuture<>();
 		new Thread(() -> {
-			log.debug("Opening output pipe: {} for task: {}", outputPipeName, req.getId());
+			log.info("Opening output pipe: {} for task: {}", outputPipeName, req.getId());
 			try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(outputPipeName))) {
-				log.debug("Reading from output pipe: {} for task: {}", outputPipeName, req.getId());
+				log.info("Reading from output pipe: {} for task: {}", outputPipeName, req.getId());
 				final ByteArrayOutputStream bos = new ByteArrayOutputStream();
 				final byte[] buffer = new byte[BYTES_PER_READ]; // buffer size
 				int bytesRead;
 				while ((bytesRead = bis.read(buffer)) != -1) {
-					log.debug("Read {} bytes from output pipe: {} for task: {}", bytesRead, outputPipeName,
-							req.getId());
+					log.info("Read {} bytes from output pipe: {} for task: {}", bytesRead, outputPipeName, req.getId());
 					bos.write(buffer, 0, bytesRead);
 				}
 				future.complete(bos.toByteArray());
-			} catch (final IOException e) {
-				future.completeExceptionally(e);
-			}
-
-			try (BufferedReader reader = new BufferedReader(
-					new InputStreamReader(new FileInputStream(outputPipeName)))) {
-				log.debug("Reading on output pipe: {} for task {}", outputPipeName, req.getId());
-				future.complete(reader.readLine().getBytes());
 			} catch (final IOException e) {
 				future.completeExceptionally(e);
 			}
@@ -214,6 +253,64 @@ public class Task {
 		throw new RuntimeException("Unexpected result type: " + result.getClass());
 	}
 
+	public byte[] readProgressWithTimeout(final int timeoutMinutes)
+		throws IOException, InterruptedException, ExecutionException, TimeoutException {
+		log.info("Dispatching read thread for progress pipe: {} for task: {}", progressPipeName, req.getId());
+
+		final CompletableFuture<byte[]> future = new CompletableFuture<>();
+		new Thread(() -> {
+			log.info("Opening progress pipe: {} for task: {}", progressPipeName, req.getId());
+			try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(progressPipeName))) {
+				log.info("Reading from progress pipe: {} for task: {}", progressPipeName, req.getId());
+				final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+				final byte[] buffer = new byte[BYTES_PER_READ]; // buffer size
+				int bytesRead;
+				while ((bytesRead = bis.read(buffer)) != -1) {
+					log.info("Read {} bytes from progress pipe: {} for task: {}", bytesRead, progressPipeName, req.getId());
+					bos.write(buffer, 0, bytesRead);
+				}
+				future.complete(bos.toByteArray());
+			} catch (final IOException e) {
+				future.completeExceptionally(e);
+			}
+		}).start();
+
+		Object result;
+		try {
+			result = CompletableFuture.anyOf(future, processFuture).get(timeoutMinutes, TimeUnit.MINUTES);
+		} catch (final TimeoutException e) {
+			future.cancel(true);
+			throw new TimeoutException("Reading from pipe took too long for task " + req.getId());
+		}
+
+		if (result == null) {
+			throw new RuntimeException("Unexpected null result for task " + req.getId());
+		}
+
+		if (result instanceof byte[]) {
+			// we got our response
+			try {
+				final JsonNode progress = mapper.readTree((byte[]) result);
+				if (progress.has("done")) {
+					// finished reading progress
+					return null;
+				}
+			} catch (final Exception e) {
+				// do nothing
+			}
+			return (byte[]) result;
+		}
+		if (result instanceof Integer) {
+			// process has exited early
+			if (getStatus() == TaskStatus.CANCELLED) {
+				throw new InterruptedException("Process for task " + req.getId() + " has been cancelled");
+			}
+			throw new InterruptedException("Process for task " + req.getId() + " exited early with code " + result);
+		}
+
+		throw new RuntimeException("Unexpected result type: " + result.getClass());
+	}
+
 	public void cleanup() {
 		try {
 			Files.deleteIfExists(Paths.get(inputPipeName));
@@ -228,6 +325,12 @@ public class Task {
 		}
 
 		try {
+			Files.deleteIfExists(Paths.get(progressPipeName));
+		} catch (final Exception e) {
+			log.warn("Exception occurred while cleaning up the task progress pipe:" + e);
+		}
+
+		try {
 			cancel();
 		} catch (final Exception e) {
 			log.warn("Exception occurred while killing any residual process:" + e);
@@ -235,7 +338,6 @@ public class Task {
 	}
 
 	public void start() throws IOException, InterruptedException {
-
 		lock.lock();
 		try {
 			if (status == TaskStatus.CANCELLED) {
@@ -255,15 +357,18 @@ public class Task {
 			status = TaskStatus.RUNNING;
 
 			// Add a shutdown hook to kill the process if the JVM exits
-			Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-				process.destroy();
-			}));
+			Runtime.getRuntime()
+				.addShutdownHook(
+					new Thread(() -> {
+						process.destroy();
+					})
+				);
 
 			// Create a future to signal when the process has exited
 			processFuture = new CompletableFuture<>();
 			new Thread(() -> {
 				try {
-					log.debug("Begin waiting for process to exit for task {}");
+					log.info("Begin waiting for process to exit for task {}", req.getId());
 					final int exitCode = process.waitFor();
 					log.info("Process exited with code {} for task {}", exitCode, req.getId());
 					lock.lock(() -> {
@@ -277,7 +382,7 @@ public class Task {
 							status = TaskStatus.SUCCESS;
 						}
 					});
-					log.debug("Finalized process status for task {}", exitCode, req.getId());
+					log.info("Finalized process status for task {}", exitCode, req.getId());
 					processFuture.complete(exitCode);
 				} catch (final InterruptedException e) {
 					log.warn("Process failed to exit cleanly for task {}: {}", req.getId(), e);
@@ -299,8 +404,7 @@ public class Task {
 						stdout.append(line).append("\n");
 					}
 				} catch (final IOException e) {
-					log.warn("Error occured while logging stdout for task {}: {}", req.getId(),
-							getStatus());
+					log.warn("Error occured while logging stdout for task {}: {}", req.getId(), getStatus());
 				}
 			}).start();
 
@@ -315,7 +419,6 @@ public class Task {
 					log.warn("Error occured while logging stderr for task {}: {}", req.getId(), getStatus());
 				}
 			}).start();
-
 		} catch (final Exception e) {
 			if (status != TaskStatus.CANCELLED) {
 				status = TaskStatus.FAILED;
@@ -342,14 +445,13 @@ public class Task {
 	}
 
 	public boolean flagAsCancelling() {
-
 		// Splitting this off as separate method allows us to accept a cancel
 		// request, response that we are cancelling, and then process it.
 
 		return lock.lock(() -> {
 			if (status == TaskStatus.QUEUED) {
 				// if we havaen't started yet, flag it as cancelled
-				log.debug("Cancelled task {} before starting it", req.getId());
+				log.info("Cancelled task {} before starting it", req.getId());
 				status = TaskStatus.CANCELLED;
 				return false;
 			}
@@ -383,11 +485,18 @@ public class Task {
 		try {
 			processFuture.get(PROCESS_KILL_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
-			log.info("Process successfully cancelled in: {} for task {}", req.getId(),
-					TimeFormatter.format(System.currentTimeMillis() - start), req.getId());
+			log.info(
+				"Process successfully cancelled in: {} for task {}",
+				req.getId(),
+				TimeFormatter.format(System.currentTimeMillis() - start),
+				req.getId()
+			);
 		} catch (InterruptedException | ExecutionException | TimeoutException e) {
-			log.warn("Error while waiting for task {} process to exit cleanly in {}, sending SIGKILL", req.getId(),
-					TimeFormatter.format(System.currentTimeMillis() - start));
+			log.warn(
+				"Error while waiting for task {} process to exit cleanly in {}, sending SIGKILL",
+				req.getId(),
+				TimeFormatter.format(System.currentTimeMillis() - start)
+			);
 			// kill the process forcibly (SIGKILL)
 			process.destroyForcibly();
 		}
@@ -400,5 +509,4 @@ public class Task {
 			return status;
 		});
 	}
-
 }

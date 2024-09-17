@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -17,40 +18,45 @@ import software.uncharted.terarium.hmiserver.annotations.AMRPropertyNamingStrate
 
 @RestControllerAdvice
 public class SnakeCaseResponseControllerAdvice implements ResponseBodyAdvice {
+
+	@Autowired
 	private ObjectMapper mapper;
 
 	@PostConstruct
 	public void init() {
-		mapper = new ObjectMapper()
-				.setPropertyNamingStrategy(
-						new AMRPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy()));
+		// We modify the injected object mappers because Spring injects an ObjectMapper
+		// different from one that is returned via `new ObjectMapper()`
+		mapper = mapper
+			.copy()
+			.setPropertyNamingStrategy(new AMRPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy()));
 	}
 
 	@Override
-	public boolean supports(MethodParameter returnType, Class converterType) {
+	public boolean supports(final MethodParameter returnType, final Class converterType) {
 		return returnType.getParameterType().isAssignableFrom(ResponseEntity.class);
 	}
 
-	private boolean containsKeyIgnoreCase(HttpHeaders headers, String key) {
+	private boolean containsKeyIgnoreCase(final HttpHeaders headers, final String key) {
 		return headers.keySet().stream().anyMatch(k -> k.equalsIgnoreCase(key));
 	}
 
 	@Override
 	public Object beforeBodyWrite(
-			Object body,
-			MethodParameter returnType,
-			MediaType selectedContentType,
-			Class selectedConverterType,
-			ServerHttpRequest request,
-			ServerHttpResponse response) {
-
-		if (body != null
-				&& selectedContentType == MediaType.APPLICATION_JSON
-				&& containsKeyIgnoreCase(request.getHeaders(), "X-Enable-Snake-Case")) {
+		final Object body,
+		final MethodParameter returnType,
+		final MediaType selectedContentType,
+		final Class selectedConverterType,
+		final ServerHttpRequest request,
+		final ServerHttpResponse response
+	) {
+		if (
+			body != null &&
+			selectedContentType == MediaType.APPLICATION_JSON &&
+			containsKeyIgnoreCase(request.getHeaders(), "X-Enable-Snake-Case")
+		) {
 			try {
 				return mapper.readValue(mapper.writeValueAsString(body), JsonNode.class);
-			} catch (JsonProcessingException ignored) {
-			}
+			} catch (final JsonProcessingException ignored) {}
 		}
 		return body;
 	}

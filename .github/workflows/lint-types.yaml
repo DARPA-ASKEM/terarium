@@ -1,20 +1,23 @@
+---
 name: Lint Generated Types
+
+# yamllint disable-line rule:truthy
 on:
   workflow_call:
   push:
     paths:
       - 'packages/client/hmi-client/src/types/Types.ts'
-      - 'packages/server/**'
+      - 'packages/server/src/main/java/**'
     branches: ['main']
   pull_request:
     paths:
       - 'packages/client/hmi-client/src/types/Types.ts'
-      - 'packages/server/**'
+      - 'packages/server/src/main/java/**'
     branches: ['main']
 jobs:
   lintTypes:
     name: Lint Generated Types
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     permissions:
       # Give the default GITHUB_TOKEN write permission to commit and push the
@@ -22,20 +25,20 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Setup Java v17
+      - name: Setup Java v21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: 17
+          java-version: 21
           cache: gradle
 
       - name: Check Generated Types
-        run: |
-          ./gradlew generateTypeScript
+        run: ./gradlew generateTypeScript
 
       - name: Commit all changed files
-        uses: stefanzweifel/git-auto-commit-action@4b8a201e31cadd9829df349894b28c54e6c19fe6
+        uses: stefanzweifel/git-auto-commit-action@7d0ca8f849305c56d36f992cfb1519b1af5b33f8
         with:
           commit_message: "chore: update generated types"

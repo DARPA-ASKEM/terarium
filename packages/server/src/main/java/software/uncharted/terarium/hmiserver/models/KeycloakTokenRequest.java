@@ -9,6 +9,7 @@ import lombok.experimental.Accessors;
 @Data
 @NoArgsConstructor
 public class KeycloakTokenRequest {
+
 	@Getter
 	@FormProperty("grant_type")
 	private String grantType = "password";

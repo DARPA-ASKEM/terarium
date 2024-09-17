@@ -3,39 +3,27 @@
  */
 
 import API from '@/api/api';
-import { logger } from '@/utils/logger';
-import { b64EncodeUnicode } from '@/utils/binary';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
-import { Component } from 'vue';
 import * as EventService from '@/services/event';
-import {
-	AssetType,
-	EventType,
-	PermissionRelationships,
-	Project,
-	ProjectAsset
-} from '@/types/Types';
+import { AssetType, EventType, PermissionRelationships, Project } from '@/types/Types';
+import { logger } from '@/utils/logger';
+import { Component } from 'vue';
 
 /**
  * Create a project
  * @param name Project['name']
  * @param [description] Project['description']
- * @param [userId] Project['userId']
  * @return Project|null - the appropriate project, or null if none returned by API
  */
 async function create(
-	name: Project['name'],
+	name: Project['name'] = 'Unnamed Project',
 	description: Project['description'] = '',
-	userId: Project['userId'] = ''
+	thumbnail: string = 'default'
 ): Promise<Project | null> {
 	try {
-		const project: Project = {
-			name,
-			description,
-			userId,
-			projectAssets: [] as ProjectAsset[]
-		};
-		const response = await API.post(`/projects`, project);
+		const response = await API.post(
+			`/projects?name=${encodeURIComponent(name)}&description=${encodeURIComponent(description)}&thumbnail=${encodeURIComponent(thumbnail)}`
+		);
 		const { status, data } = response;
 		if (status !== 201) return null;
 		return data ?? null;
@@ -47,12 +35,13 @@ async function create(
 
 async function update(project: Project): Promise<Project | null> {
 	try {
-		const { id, name, description, overviewContent } = project;
+		const { id, name, description, overviewContent, thumbnail } = project;
 		const response = await API.put(`/projects/${id}`, {
 			id,
 			name,
 			description,
-			overviewContent: b64EncodeUnicode(overviewContent)
+			thumbnail,
+			overviewContent // this should already be base64 encoded!
 		});
 		const { status, data } = response;
 		if (status !== 200) {
@@ -126,11 +115,7 @@ async function addAsset(projectId: string, assetType: string, assetId: string) {
  * @assetId string | number - represents the id of the asset to be added. This will be the internal id of some asset stored in one of the data service collections
  * @return boolean
  */
-async function deleteAsset(
-	projectId: Project['id'],
-	assetType: AssetType,
-	assetId: string | number
-): Promise<boolean> {
+async function deleteAsset(projectId: Project['id'], assetType: AssetType, assetId: string | number): Promise<boolean> {
 	try {
 		const url = `/projects/${projectId}/assets/${assetType}/${assetId}`;
 		const { status } = await API.delete(url);
@@ -180,15 +165,9 @@ async function getPermissions(projectId: Project['id']): Promise<PermissionRelat
 	}
 }
 
-async function setPermissions(
-	projectId: Project['id'],
-	userId: string,
-	relationship: string
-): Promise<boolean> {
+async function setPermissions(projectId: Project['id'], userId: string, relationship: string): Promise<boolean> {
 	try {
-		const { status } = await API.post(
-			`projects/${projectId}/permissions/user/${userId}/${relationship}`
-		);
+		const { status } = await API.post(`projects/${projectId}/permissions/user/${userId}/${relationship}`);
 		if (status !== 200) {
 			return false;
 		}
@@ -199,15 +178,9 @@ async function setPermissions(
 	}
 }
 
-async function removePermissions(
-	projectId: Project['id'],
-	userId: string,
-	relationship: string
-): Promise<boolean> {
+async function removePermissions(projectId: Project['id'], userId: string, relationship: string): Promise<boolean> {
 	try {
-		const { status } = await API.delete(
-			`projects/${projectId}/permissions/user/${userId}/${relationship}`
-		);
+		const { status } = await API.delete(`projects/${projectId}/permissions/user/${userId}/${relationship}`);
 		if (status !== 200) {
 			return false;
 		}
@@ -225,9 +198,7 @@ async function updatePermissions(
 	to: string
 ): Promise<boolean> {
 	try {
-		const { status } = await API.put(
-			`projects/${projectId}/permissions/user/${userId}/${oldRelationship}?to=${to}`
-		);
+		const { status } = await API.put(`projects/${projectId}/permissions/user/${userId}/${oldRelationship}?to=${to}`);
 		if (status !== 200) {
 			return false;
 		}
@@ -235,6 +206,20 @@ async function updatePermissions(
 	} catch (error) {
 		logger.error(error);
 		return false;
+	}
+}
+
+async function clone(id: Project['id']): Promise<Project | null> {
+	try {
+		const response = await API.post(`/projects/clone/${id}`);
+		const { status, data } = response;
+		if (status !== 201) {
+			return null;
+		}
+		return data ?? null;
+	} catch (error) {
+		logger.error(error);
+		return null;
 	}
 }
 
@@ -259,17 +244,18 @@ function getAssetIcon(type: AssetType | string | null): string | Component {
 }
 
 export {
-	create,
-	update,
-	get,
-	remove,
-	getAll,
 	addAsset,
+	clone,
+	create,
 	deleteAsset,
+	get,
+	getAll,
 	getAssetIcon,
-	setAccessibility,
 	getPermissions,
-	setPermissions,
+	remove,
 	removePermissions,
+	setAccessibility,
+	setPermissions,
+	update,
 	updatePermissions
 };

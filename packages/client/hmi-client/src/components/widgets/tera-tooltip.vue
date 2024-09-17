@@ -2,9 +2,10 @@
 	<div :class="!customPosition && position">
 		<slot />
 		<div
+			v-if="props.showTooltip"
 			class="tooltip-content"
 			:class="[{ 'has-arrow': hasArrow }, arrowClass]"
-			:style="customPositionStyle"
+			:style="tooltipStyle"
 		>
 			<slot name="tooltip-content" />
 		</div>
@@ -41,12 +42,11 @@ const props = defineProps({
 	}
 });
 
-const customPositionStyle = computed(() => {
+const tooltipStyle = computed(() => {
 	if (props.customPosition) {
 		return {
 			top: `${props.customPosition.y}px`,
-			left: `${props.customPosition.x}px`,
-			display: props.showTooltip ? 'block' : 'none'
+			left: `${props.customPosition.x}px`
 		};
 	}
 	return {};
@@ -85,7 +85,7 @@ div {
 		padding: var(--gap-small);
 		border-radius: var(--border-radius);
 		box-shadow: var(--overlay-menu-shadow);
-		margin: var(--gap);
+		z-index: 9999;
 	}
 
 	/* Position of tooltip box */
@@ -93,24 +93,29 @@ div {
 		bottom: 100%;
 		left: 50%;
 		transform: translateX(-50%);
+		/* TODO: Perhaps make these margins smaller if there is no arrow is present */
+		margin-bottom: var(--gap-6);
 	}
 
 	&.bottom > .tooltip-content {
 		top: 100%;
 		left: 50%;
 		transform: translateX(-50%);
+		margin-top: var(--gap-6);
 	}
 
 	&.left > .tooltip-content {
 		right: 100%;
 		top: 50%;
 		transform: translateY(-50%);
+		margin-right: var(--gap-6);
 	}
 
 	&.right > .tooltip-content {
 		left: 100%;
 		top: 50%;
 		transform: translateY(-50%);
+		margin-left: var(--gap-6);
 	}
 
 	/* Base rules for arrow */
@@ -126,8 +131,6 @@ div {
 	/* Top arrow */
 	&.tooltip-content.top-arrow::after {
 		top: -0.75rem;
-		left: 50%;
-		translate: -50%;
 		border-left: 1px solid var(--surface-border);
 		border-top: 1px solid var(--surface-border);
 	}
@@ -135,26 +138,36 @@ div {
 	/* Bottom arrow */
 	&.tooltip-content.bottom-arrow::after {
 		bottom: -0.75rem;
-		left: 50%;
-		translate: -50%;
 		border-right: 1px solid var(--surface-border);
 		border-bottom: 1px solid var(--surface-border);
 	}
 
+	/* Top/bottom arrow */
+	&.tooltip-content.top-arrow::after,
+	&.tooltip-content.bottom-arrow::after {
+		left: 50%;
+		translate: -50%;
+	}
+
 	/* Left arrow */
 	&.tooltip-content.left-arrow::after {
-		left: -0.75rem;
-		bottom: 50%;
+		left: -1.25rem;
 		border-left: 1px solid var(--surface-border);
 		border-bottom: 1px solid var(--surface-border);
 	}
 
 	/* Right arrow */
 	&.tooltip-content.right-arrow::after {
-		right: -0.75rem;
-		bottom: 50%;
+		right: -0.25rem;
 		border-right: 1px solid var(--surface-border);
 		border-top: 1px solid var(--surface-border);
+	}
+
+	/* Left/right arrow */
+	&.tooltip-content.left-arrow::after,
+	&.tooltip-content.right-arrow::after {
+		top: 50%;
+		transform: translateY(-50%);
 	}
 }
 </style>

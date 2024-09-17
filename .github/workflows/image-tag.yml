@@ -1,0 +1,38 @@
+---
+# Create a new tag for the image
+name: image-tag.yml
+on:
+  workflow_call:
+    inputs:
+      image-name:
+        required: true
+        description: 'The name of the image to be built'
+        type: string
+    outputs:
+      tagged-image-name:
+        description: 'The tagged name of the image to be built'
+        value: ${{ jobs.image-tag.outputs.name }}
+jobs:
+  image-tag:
+    name: Define image tag
+    runs-on: ubuntu-24.04
+    outputs:
+      name: ${{ steps.define.outputs.name }}
+    steps:
+      - name: Define the final tag based on the branch or tag
+        id: define
+        run: |
+          if [[ '${{ github.ref_type }}' == 'branch' && '${{ github.ref_name }}' == 'main' ]]; then
+            TAG=latest
+          else
+            SEMVER=$( echo ${{ github.ref_name }} | sed -nre 's/^v[^0-9]*(([0-9]+\.)*[0-9]+(-[a-z]+)?).*/\1/p')
+            if [[ -n $SEMVER ]]; then
+              TAG=${SEMVER}
+            else
+              TAG=${{ github.ref_name }}
+            fi
+          fi
+
+          IMAGE=${{ inputs.image-name }}:${TAG,,}
+          echo "$IMAGE"
+          echo "name=$IMAGE" >> $GITHUB_OUTPUT

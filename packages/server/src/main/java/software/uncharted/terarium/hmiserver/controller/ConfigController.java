@@ -13,6 +13,7 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 @RequestMapping("/config")
 @RequiredArgsConstructor
 public class ConfigController {
+
 	private final Config config;
 
 	@GetMapping

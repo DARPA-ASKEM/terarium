@@ -1,11 +1,11 @@
-import _ from 'lodash';
+import _, { isEmpty } from 'lodash';
 import { AssetItem } from '@/types/common';
 import { useProjects } from '@/composables/project';
 import { isVisibleProjectAssetTypes, listOfVisibleAssetTypes } from '@/types/Project';
-import { formatShort } from '@/utils/date';
+import { formatShort, sortDatesAsc } from '@/utils/date';
 
 // Map of asset types to their respective asset items
-type ProjectAssetItems = Map<string, Set<AssetItem>>;
+type ProjectAssetItems = Map<string, Array<AssetItem>>;
 
 /**
  * Generate a map of all the visible asset types and their respective asset items
@@ -13,8 +13,8 @@ type ProjectAssetItems = Map<string, Set<AssetItem>>;
  */
 export const generateProjectAssetsMap = (searchAsset: string): ProjectAssetItems => {
 	// Create a map of all the visible asset types
-	const assetItemsMap: ProjectAssetItems = new Map<string, Set<AssetItem>>();
-	listOfVisibleAssetTypes.forEach((type) => assetItemsMap.set(type, new Set<AssetItem>()));
+	const assetItemsMap: ProjectAssetItems = new Map<string, Array<AssetItem>>();
+	listOfVisibleAssetTypes.forEach((type) => assetItemsMap.set(type, new Array<AssetItem>()));
 
 	// Check if the project has any assets
 	const projectAssets = useProjects().activeProject?.value?.projectAssets;
@@ -29,7 +29,8 @@ export const generateProjectAssetsMap = (searchAsset: string): ProjectAssetItems
 					assetId: asset.assetId.toString(),
 					assetName:
 						asset.assetName ??
-						`${asset.assetId.substring(0, 3)} - ${formatShort(asset?.updatedOn)}`,
+						`${asset.assetId.substring(0, 3)} - ${formatShort(asset?.updatedOn ?? asset?.createdOn)}`,
+					assetCreatedOn: asset.createdOn,
 					pageType: asset.assetType
 				}) as AssetItem
 		)
@@ -42,7 +43,10 @@ export const generateProjectAssetsMap = (searchAsset: string): ProjectAssetItems
 
 	// Assign the assets to the map
 	Object.entries(_.groupBy(cleanAssets, 'pageType')).forEach(([type, assetList]) =>
-		assetItemsMap.set(type, new Set(assetList as AssetItem[]))
+		assetItemsMap.set(
+			type,
+			[...new Set(assetList as AssetItem[])].sort((a, b) => sortDatesAsc(a.assetCreatedOn, b.assetCreatedOn))
+		)
 	);
 
 	return assetItemsMap;
@@ -52,7 +56,7 @@ export const generateProjectAssetsMap = (searchAsset: string): ProjectAssetItems
 export function getNonNullSetOfVisibleItems(map: ProjectAssetItems): number[] {
 	const nonNullSet: number[] = [];
 	map.forEach((value, key) => {
-		if (value !== null && value.size > 0) {
+		if (!isEmpty(value)) {
 			nonNullSet.push(listOfVisibleAssetTypes.findIndex((type) => type === key));
 		}
 	});

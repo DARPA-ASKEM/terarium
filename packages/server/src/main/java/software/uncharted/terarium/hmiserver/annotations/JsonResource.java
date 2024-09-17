@@ -18,7 +18,7 @@ import java.lang.annotation.Target;
  * <p>It is also possible to load multiple resources into an array: @JsonResource("classpath*:/mock-users/*.json")
  * private User[] mockUsers;
  */
-@Target({ElementType.FIELD})
+@Target({ ElementType.FIELD })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface JsonResource {
 	String value();

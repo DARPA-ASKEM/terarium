@@ -3,7 +3,6 @@ services:
   beaker:
     container_name: beaker
     image: ghcr.io/darpa-askem/beaker-kernel:latest
-    platform: linux/amd64
     networks:
       - terarium
     ports:
@@ -11,11 +10,11 @@ services:
     environment:
       HMI_SERVER_URL: "http://${local_host_name}:3000"
       JUPYTER_SERVER: "http://${local_host_name}:3050"
-      MIRA_REST_URL: "http://34.230.33.149:8771/"
+      MIRA_REST_URL: "http://mira-epi-dkg-lb-c7b58edea41524e6.elb.us-east-1.amazonaws.com/"
       SIMULATION_SCHEDULER_URL: "http://${local_host_name}:3030"
       JUPYTER_TOKEN: "89f73481102c46c0bc13b2998f9a4fce"
       AUTH_USERNAME: "${secret_service_account_username}"
       AUTH_PASSWORD: "${secret_service_account_password}"
-      OPENAI_API_KEY: "${secret_mit_openai_key}"
+      OPENAI_API_KEY: "${secret_openai_key}"
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "${local_host_name}:host-gateway"

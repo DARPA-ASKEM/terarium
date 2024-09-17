@@ -1,12 +1,7 @@
 <template>
 	<main :class="isEditingStyle">
 		<section v-if="isEditable" class="controls">
-			<Button
-				v-if="isEditing"
-				class="p-button-sm p-button-outlined"
-				@click="emit('cancel-edit')"
-				label="Cancel"
-			/>
+			<Button v-if="isEditing" class="p-button-sm p-button-outlined" @click="emit('cancel-edit')" label="Cancel" />
 			<Button
 				v-if="isEditing"
 				class="p-button-sm"
@@ -48,12 +43,7 @@ const props = defineProps<{
 	isUpdating?: boolean;
 }>();
 
-const emit = defineEmits([
-	'cancel-edit',
-	'add-equation',
-	'start-editing',
-	'update-model-from-equation'
-]);
+const emit = defineEmits(['cancel-edit', 'add-equation', 'start-editing', 'update-model-from-equation']);
 
 const equationType = computed(() => props.equationType ?? 'equation');
 const isEditingStyle = computed(() => (props.isEditing ? 'is-editing' : ''));

@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17.0.10_7-jdk-focal AS builder
+FROM eclipse-temurin:21-jdk-noble AS builder
 
 WORKDIR /app
 COPY /packages/server .
@@ -12,7 +12,7 @@ RUN mkdir -p ./layers \
 WORKDIR /app/layers
 RUN java -Djarmode=layertools -jar ./*-SNAPSHOT.jar extract
 
-FROM eclipse-temurin:17.0.10_7-jre-focal
+FROM eclipse-temurin:21-jre-noble
 
 WORKDIR /app
 

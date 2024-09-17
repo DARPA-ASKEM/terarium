@@ -33,7 +33,7 @@
         border-color: transparent;
     }
 }
-    
+
 @mixin filled-input-interaction() {
     &:enabled:hover {
         background-color: $inputFilledHoverBg;
@@ -98,16 +98,16 @@
             background-image: none;
             background: transparent;
         }
-    } 
+    }
 }
 
 @mixin filled-input-float-label() {
     @if (nth($inputPadding, 1) == 1rem) {
-        padding-top: 1.5rem;
-        padding-bottom: .5rem;
+        padding-top: var(--gap-6);
+        padding-bottom: var(--gap-2);
     }
     @else if (nth($inputPadding, 1) == .75rem) {
-        padding-top: 1.25rem;
-        padding-bottom: .25rem;
+        padding-top: var(--gap-5);
+        padding-bottom: var(--gap-1);
     }
 }

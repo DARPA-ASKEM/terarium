@@ -4,9 +4,9 @@ import useAuthStore from '@/stores/auth';
 
 let configuration: ClientConfig | undefined;
 async function getConfiguration() {
-	if (!configuration) {
+	if (!configuration && useAuthStore().getToken()) {
 		const response = await axios.get('/api/config', {
-			headers: new AxiosHeaders().setAuthorization(`Bearer ${useAuthStore().token}`)
+			headers: new AxiosHeaders().setAuthorization(`Bearer ${useAuthStore().getToken()}`)
 		});
 		configuration = response.data;
 	}

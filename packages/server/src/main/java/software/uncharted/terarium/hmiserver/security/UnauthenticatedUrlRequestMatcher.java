@@ -1,8 +1,8 @@
 package software.uncharted.terarium.hmiserver.security;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.stream.Collectors;
-import javax.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
@@ -22,9 +22,13 @@ public class UnauthenticatedUrlRequestMatcher implements RequestMatcher {
 
 	@PostConstruct
 	public void init() {
-		this.pathMatcher = new OrRequestMatcher(config.getUnauthenticatedUrlPatterns().stream()
+		this.pathMatcher = new OrRequestMatcher(
+			config
+				.getUnauthenticatedUrlPatterns()
+				.stream()
 				.map(p -> new AntPathRequestMatcher(p))
-				.collect(Collectors.toList()));
+				.collect(Collectors.toList())
+		);
 	}
 
 	@Override

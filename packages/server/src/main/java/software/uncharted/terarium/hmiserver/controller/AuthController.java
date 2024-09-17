@@ -17,7 +17,7 @@ public class AuthController {
 
 	@GetMapping
 	ResponseEntity<String> isAuthenticated() {
-		final Jwt token = currentUserService.getToken();
+		final Jwt token = CurrentUserService.getToken();
 		return ResponseEntity.ok(token.getTokenValue());
 	}
 }

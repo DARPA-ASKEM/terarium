@@ -8,6 +8,7 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 @NoArgsConstructor
 public class StoredModel {
+
 	String id;
 	String inputs;
 	String outputs;

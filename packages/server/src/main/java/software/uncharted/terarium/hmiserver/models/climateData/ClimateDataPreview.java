@@ -10,6 +10,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @Data
 @Entity
 public class ClimateDataPreview {
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
 	@TSOptional

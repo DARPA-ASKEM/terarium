@@ -13,6 +13,7 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @AMRSchemaType
 @Accessors(chain = true)
 public class MetadataDataset extends SupportAdditionalProperties implements Serializable {
+
 	@Serial
 	private static final long serialVersionUID = 1513309568636474748L;
 
@@ -21,4 +22,13 @@ public class MetadataDataset extends SupportAdditionalProperties implements Seri
 	private String name;
 
 	private String metadata;
+
+	@Override
+	public MetadataDataset clone() {
+		MetadataDataset clone = (MetadataDataset) super.clone();
+		clone.id = this.id;
+		clone.name = this.name;
+		clone.metadata = this.metadata;
+		return clone;
+	}
 }

@@ -7,16 +7,24 @@ import static software.uncharted.terarium.hmiserver.utils.rebac.httputil.HttpUti
 import com.authzed.api.v1.Core;
 import com.authzed.api.v1.PermissionService.Consistency;
 import com.authzed.grpcutil.BearerToken;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.RemovalCause;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.inprocess.InProcessChannelBuilder;
+import io.micrometer.observation.annotation.Observed;
 import jakarta.annotation.PostConstruct;
+import jakarta.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
-import javax.ws.rs.core.Response;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.nullness.qual.PolyNull;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.CreatedResponseUtil;
 import org.keycloak.admin.client.Keycloak;
@@ -63,6 +71,9 @@ public class ReBACService {
 	@Value("${spicedb.launchmode}")
 	String SPICEDB_LAUNCHMODE;
 
+	@Value("${terarium.keycloak.api-service-name}")
+	String API_SERVICE_USER_NAME = "api-service";
+
 	private BearerToken spiceDbBearerToken;
 	private ManagedChannel channel;
 
@@ -71,30 +82,70 @@ public class ReBACService {
 	public static final String ASKEM_ADMIN_GROUP_NAME = "ASKEM Admins";
 	public static String ASKEM_ADMIN_GROUP_ID;
 
-	volatile String CURRENT_ZED_TOKEN;
+	public static String API_SERVICE_USER_ID;
+
+	private volatile String CURRENT_ZED_TOKEN;
 
 	private String getKeycloakBearerToken() {
 		return "Bearer " + keycloak.tokenManager().getAccessTokenString();
 	}
 
+	private class CacheKey {
+
+		SchemaObject who;
+		Schema.Permission permission;
+		SchemaObject what;
+
+		CacheKey(SchemaObject who, Schema.Permission permission, SchemaObject what) {
+			this.who = who;
+			this.permission = permission;
+			this.what = what;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (!(o instanceof CacheKey)) {
+				return false;
+			}
+			CacheKey other = (CacheKey) o;
+			return who.equals(other.who) && permission == other.permission && what.equals(other.what);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(who, permission, what);
+		}
+	}
+
+	private final Cache<CacheKey, Boolean> permissionCache = Caffeine.newBuilder()
+		.expireAfterWrite(5, TimeUnit.MINUTES)
+		.recordStats()
+		.removalListener((Object key, Object value, RemovalCause cause) -> log.trace("Key {} was removed {}", key, cause))
+		.<CacheKey, Boolean>build();
+
+	private final Cache<String, PermissionUser> userCache = Caffeine.newBuilder()
+		.expireAfterWrite(15, TimeUnit.MINUTES)
+		.recordStats()
+		.removalListener((Object key, Object value, RemovalCause cause) -> log.trace("Key {} was removed {}", key, cause))
+		.<String, PermissionUser>build();
+
 	@PostConstruct
 	void startup() throws Exception {
-
 		keycloak = KeycloakBuilder.builder()
-				.serverUrl(config.getKeycloak().getUrl())
-				.realm(config.getKeycloak().getAdminRealm())
-				.clientId(config.getKeycloak().getAdminClientId())
-				.grantType(OAuth2Constants.PASSWORD)
-				.username(config.getKeycloak().getAdminUsername())
-				.password(config.getKeycloak().getAdminPassword())
-				.build();
+			.serverUrl(config.getKeycloak().getUrl())
+			.realm(config.getKeycloak().getAdminRealm())
+			.clientId(config.getKeycloak().getAdminClientId())
+			.grantType(OAuth2Constants.PASSWORD)
+			.username(config.getKeycloak().getAdminUsername())
+			.password(config.getKeycloak().getAdminPassword())
+			.build();
 
 		spiceDbBearerToken = new BearerToken(SPICEDB_PRESHARED_KEY);
 		if (SPICEDB_LAUNCHMODE.equals("TEST")) {
 			channel = InProcessChannelBuilder.forName("TestSpiceDB").build();
 			return;
 		} else {
-			ManagedChannelBuilder<?> builder = ManagedChannelBuilder.forTarget(SPICEDB_TARGET);
+			final ManagedChannelBuilder<?> builder = ManagedChannelBuilder.forTarget(SPICEDB_TARGET);
 			if (SPICEDB_LAUNCHMODE.equals("TLS")) {
 				builder.useTransportSecurity();
 			} else {
@@ -117,39 +168,37 @@ public class ReBACService {
 				ASKEM_ADMIN_GROUP_ID = createGroup(ASKEM_ADMIN_GROUP_NAME).getId();
 			}
 
-			UsersResource usersResource = keycloak.realm(REALM_NAME).users();
-			List<UserRepresentation> users = usersResource.list();
-			for (UserRepresentation userRepresentation : users) {
-				if (userRepresentation.getEmail() == null
-						|| userRepresentation.getEmail().isBlank()) {
+			final UsersResource usersResource = keycloak.realm(REALM_NAME).users();
+			final List<UserRepresentation> users = usersResource.list();
+			for (final UserRepresentation userRepresentation : users) {
+				if (userRepresentation.getEmail() == null || userRepresentation.getEmail().isBlank()) {
 					continue;
 				}
-				UserResource userResource = usersResource.get(userRepresentation.getId());
-				String userId = userRepresentation.getId();
-				SchemaObject user = new SchemaObject(Schema.Type.USER, userId);
-				SchemaObject publicGroup = new SchemaObject(Schema.Type.GROUP, PUBLIC_GROUP_ID);
-				SchemaObject adminGroup = new SchemaObject(Schema.Type.GROUP, ASKEM_ADMIN_GROUP_ID);
+				final UserResource userResource = usersResource.get(userRepresentation.getId());
+				final String userId = userRepresentation.getId();
+				final SchemaObject user = new SchemaObject(Schema.Type.USER, userId);
+				final SchemaObject publicGroup = new SchemaObject(Schema.Type.GROUP, PUBLIC_GROUP_ID);
+				final SchemaObject adminGroup = new SchemaObject(Schema.Type.GROUP, ASKEM_ADMIN_GROUP_ID);
 
-				for (RoleRepresentation roleRepresentation :
-						userResource.roles().getAll().getRealmMappings()) {
+				for (final RoleRepresentation roleRepresentation : userResource.roles().getAll().getRealmMappings()) {
 					if (roleRepresentation.getDescription().isBlank()) {
 						switch (roleRepresentation.getName()) {
 							case "user":
 								try {
 									createRelationship(user, publicGroup, Schema.Relationship.MEMBER);
-								} catch (RelationshipAlreadyExistsException e) {
+								} catch (final RelationshipAlreadyExistsException e) {
 									log.error("Failed to add user {} to Public Group", userId, e);
 								}
 								break;
 							case "admin":
 								try {
 									createRelationship(user, publicGroup, Schema.Relationship.ADMIN);
-								} catch (RelationshipAlreadyExistsException e) {
+								} catch (final RelationshipAlreadyExistsException e) {
 									log.error("Failed to add admin {} to Public Group", userId, e);
 								}
 								try {
 									createRelationship(user, adminGroup, Schema.Relationship.ADMIN);
-								} catch (RelationshipAlreadyExistsException e) {
+								} catch (final RelationshipAlreadyExistsException e) {
 									log.error("Failed to add admin {} to Admin Group", userId, e);
 								}
 								break;
@@ -162,23 +211,35 @@ public class ReBACService {
 			ASKEM_ADMIN_GROUP_ID = getGroupId(ASKEM_ADMIN_GROUP_NAME);
 
 			// Ensure ASKEM_ADMIN_GROUP can write to all Projects
-			SchemaObject askemAdminGroup = new SchemaObject(Schema.Type.GROUP, ASKEM_ADMIN_GROUP_ID);
-			ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-			List<UUID> projectIds = rebac.lookupResources(Schema.Type.PROJECT, getCurrentConsistency());
-			for (UUID projectId : projectIds) {
-				SchemaObject project = new SchemaObject(Schema.Type.PROJECT, projectId.toString());
+			final SchemaObject askemAdminGroup = new SchemaObject(Schema.Type.GROUP, ASKEM_ADMIN_GROUP_ID);
+			final ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
+			final List<UUID> projectIds = rebac.lookupResources(Schema.Type.PROJECT, getCurrentConsistency());
+			for (final UUID projectId : projectIds) {
+				final SchemaObject project = new SchemaObject(Schema.Type.PROJECT, projectId.toString());
 				try {
 					createRelationship(askemAdminGroup, project, Schema.Relationship.WRITER);
-				} catch (RelationshipAlreadyExistsException ignore) {
-				}
+				} catch (final RelationshipAlreadyExistsException ignore) {}
 			}
 		}
+		API_SERVICE_USER_ID = getUserId(API_SERVICE_USER_NAME);
 	}
 
-	private String getGroupId(String name) {
-		List<GroupRepresentation> groups =
-				keycloak.realm(REALM_NAME).groups().groups(name, true, 0, Integer.MAX_VALUE, true);
-		for (GroupRepresentation group : groups) {
+	private String getUserId(final String name) {
+		final List<UserRepresentation> users = keycloak.realm(REALM_NAME).users().search(name);
+		for (final UserRepresentation user : users) {
+			if (user.getUsername().equals(API_SERVICE_USER_NAME)) {
+				return user.getId();
+			}
+		}
+		throw new RuntimeException("Api service user account does not exist");
+	}
+
+	private String getGroupId(final String name) {
+		final List<GroupRepresentation> groups = keycloak
+			.realm(REALM_NAME)
+			.groups()
+			.groups(name, true, 0, Integer.MAX_VALUE, true);
+		for (final GroupRepresentation group : groups) {
 			if (group.getPath().equals("/" + name)) {
 				return group.getId();
 			}
@@ -186,20 +247,20 @@ public class ReBACService {
 		return null;
 	}
 
-	private Response createGroupMaybeParent(String parentId, GroupRepresentation group) {
+	private Response createGroupMaybeParent(final String parentId, final GroupRepresentation group) {
 		if (parentId == null) {
 			return keycloak.realm(REALM_NAME).groups().add(group);
 		} else {
-			GroupResource parentGroup = keycloak.realm(REALM_NAME).groups().group(parentId);
+			final GroupResource parentGroup = keycloak.realm(REALM_NAME).groups().group(parentId);
 			return parentGroup.subGroup(group);
 		}
 	}
 
-	private PermissionGroup createGroup(String parentId, String name) {
-		GroupRepresentation groupRepresentation = new GroupRepresentation();
+	private PermissionGroup createGroup(final String parentId, final String name) {
+		final GroupRepresentation groupRepresentation = new GroupRepresentation();
 		groupRepresentation.setName(name);
 
-		Response response = createGroupMaybeParent(parentId, groupRepresentation);
+		final Response response = createGroupMaybeParent(parentId, groupRepresentation);
 		switch (response.getStatus()) {
 			case 201:
 				return new PermissionGroup(CreatedResponseUtil.getCreatedId(response), name);
@@ -212,79 +273,107 @@ public class ReBACService {
 		}
 	}
 
-	public PermissionGroup createGroup(String name) {
+	@Observed(name = "function_profile")
+	public PermissionGroup createGroup(final String name) {
 		return this.createGroup(null, name);
 	}
 
-	public PermissionUser getUser(String id) {
-		UsersResource usersResource = keycloak.realm(REALM_NAME).users();
-		UserResource userResource = usersResource.get(id);
-		UserRepresentation userRepresentation = userResource.toRepresentation();
-		return new PermissionUser(
-				userRepresentation.getId(),
-				userRepresentation.getFirstName(),
-				userRepresentation.getLastName(),
-				userRepresentation.getEmail());
-	}
+	@Observed(name = "function_profile")
+	public PermissionUser getUser(final String id) {
+		@PolyNull
+		PermissionUser result = userCache.get(id, key_id -> {
+			final UsersResource usersResource = keycloak.realm(REALM_NAME).users();
+			final UserResource userResource = usersResource.get(key_id);
+			final UserRepresentation userRepresentation = userResource.toRepresentation();
 
-	public List<PermissionUser> getUsers() {
-		List<PermissionUser> response = new ArrayList<>();
-		UsersResource usersResource = keycloak.realm(REALM_NAME).users();
-		Integer maxUsers = usersResource.count();
-		List<UserRepresentation> users = usersResource.list(0, maxUsers + 1);
-		for (UserRepresentation userRepresentation : users) {
-			if (userRepresentation.getEmail() == null
-					|| userRepresentation.getEmail().isBlank()) {
-				continue;
-			}
-			UserResource userResource = usersResource.get(userRepresentation.getId());
-
-			List<PermissionRole> roles = new ArrayList<>();
-			for (RoleRepresentation roleRepresentation :
-					userResource.roles().getAll().getRealmMappings()) {
+			final List<PermissionRole> roles = new ArrayList<>();
+			for (final RoleRepresentation roleRepresentation : userResource.roles().getAll().getRealmMappings()) {
 				if (roleRepresentation.getDescription().isBlank()) {
-					PermissionRole role = new PermissionRole(
-							roleRepresentation.getId(), roleRepresentation.getName()
-							// no users are acquired (to avoid circular references etc)
-							);
+					final PermissionRole role = new PermissionRole(
+						roleRepresentation.getId(),
+						roleRepresentation.getName()
+						// no users are acquired (to avoid circular references etc)
+					);
 					roles.add(role);
 				}
 			}
 
-			PermissionUser user = new PermissionUser(
+			return new PermissionUser(
+				userRepresentation.getId(),
+				userRepresentation.getFirstName(),
+				userRepresentation.getLastName(),
+				userRepresentation.getEmail(),
+				roles
+			);
+		});
+		log.trace("User Cache hit: {}, miss: {}", userCache.stats().hitCount(), userCache.stats().missCount());
+		return result;
+	}
+
+	@Observed(name = "function_profile")
+	public List<PermissionUser> getUsers() {
+		final List<PermissionUser> response = new ArrayList<>();
+		final UsersResource usersResource = keycloak.realm(REALM_NAME).users();
+		final Integer maxUsers = usersResource.count();
+		final List<UserRepresentation> users = usersResource.list(0, maxUsers + 1);
+		for (final UserRepresentation userRepresentation : users) {
+			if (userRepresentation.getEmail() == null || userRepresentation.getEmail().isBlank()) {
+				continue;
+			}
+
+			@PolyNull
+			PermissionUser user = userCache.get(userRepresentation.getId(), key_id -> {
+				final UserResource userResource = usersResource.get(key_id);
+
+				final List<PermissionRole> roles = new ArrayList<>();
+				for (final RoleRepresentation roleRepresentation : userResource.roles().getAll().getRealmMappings()) {
+					if (roleRepresentation.getDescription().isBlank()) {
+						final PermissionRole role = new PermissionRole(
+							roleRepresentation.getId(),
+							roleRepresentation.getName()
+							// no users are acquired (to avoid circular references etc)
+						);
+						roles.add(role);
+					}
+				}
+
+				return new PermissionUser(
 					userRepresentation.getId(),
 					userRepresentation.getFirstName(),
 					userRepresentation.getLastName(),
 					userRepresentation.getEmail(),
-					roles);
+					roles
+				);
+			});
+
 			response.add(user);
 		}
 		return response;
 	}
 
+	@Observed(name = "function_profile")
 	public List<PermissionRole> getRoles() {
-		List<PermissionRole> response = new ArrayList<>();
+		final List<PermissionRole> response = new ArrayList<>();
 
-		RolesResource rolesResource = keycloak.realm(REALM_NAME).roles();
-		for (RoleRepresentation roleRepresentation : rolesResource.list()) {
+		final RolesResource rolesResource = keycloak.realm(REALM_NAME).roles();
+		for (final RoleRepresentation roleRepresentation : rolesResource.list()) {
 			if (roleRepresentation.getDescription().isBlank()) {
-				RoleResource roleResource = rolesResource.get(roleRepresentation.getName());
-				List<PermissionUser> users = new ArrayList<>();
-				for (UserRepresentation userRepresentation : roleResource.getRoleUserMembers()) {
+				final RoleResource roleResource = rolesResource.get(roleRepresentation.getName());
+				final List<PermissionUser> users = new ArrayList<>();
+				for (final UserRepresentation userRepresentation : roleResource.getRoleUserMembers()) {
 					if (userRepresentation.getEmail() != null) {
-						PermissionUser user = new PermissionUser(
-								userRepresentation.getId(),
-								userRepresentation.getFirstName(),
-								userRepresentation.getLastName(),
-								userRepresentation.getEmail()
-								// no roles are acquired (to avoid circular references etc)
-								);
+						final PermissionUser user = new PermissionUser(
+							userRepresentation.getId(),
+							userRepresentation.getFirstName(),
+							userRepresentation.getLastName(),
+							userRepresentation.getEmail()
+							// no roles are acquired (to avoid circular references etc)
+						);
 						users.add(user);
 					}
 				}
 
-				PermissionRole role =
-						new PermissionRole(roleRepresentation.getId(), roleRepresentation.getName(), users);
+				final PermissionRole role = new PermissionRole(roleRepresentation.getId(), roleRepresentation.getName(), users);
 				response.add(role);
 			}
 		}
@@ -292,61 +381,104 @@ public class ReBACService {
 		return response;
 	}
 
+	@Observed(name = "function_profile")
 	public List<PermissionGroup> getGroups() {
-		List<PermissionGroup> response = new ArrayList<>();
+		final List<PermissionGroup> response = new ArrayList<>();
 
-		List<GroupRepresentation> groups = keycloak.realm(REALM_NAME).groups().groups();
-		for (GroupRepresentation groupRepresentation : groups) {
-			PermissionGroup group = new PermissionGroup(groupRepresentation.getId(), groupRepresentation.getName());
+		final List<GroupRepresentation> groups = keycloak.realm(REALM_NAME).groups().groups();
+		for (final GroupRepresentation groupRepresentation : groups) {
+			final PermissionGroup group = new PermissionGroup(groupRepresentation.getId(), groupRepresentation.getName());
 			response.add(group);
 		}
 
 		return response;
 	}
 
-	public PermissionGroup getGroup(String id) {
-		GroupResource groupResource = keycloak.realm(REALM_NAME).groups().group(id);
-		GroupRepresentation groupRepresentation = groupResource.toRepresentation();
-		PermissionGroup permissionGroup =
-				new PermissionGroup(groupRepresentation.getId(), groupRepresentation.getName());
+	@Observed(name = "function_profile")
+	public PermissionGroup getGroup(final String id) {
+		final GroupResource groupResource = keycloak.realm(REALM_NAME).groups().group(id);
+		final GroupRepresentation groupRepresentation = groupResource.toRepresentation();
+		final PermissionGroup permissionGroup = new PermissionGroup(
+			groupRepresentation.getId(),
+			groupRepresentation.getName()
+		);
 
 		return permissionGroup;
 	}
 
-	public boolean canRead(SchemaObject who, SchemaObject what) throws Exception {
-		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		return rebac.checkPermission(who, Schema.Permission.READ, what, getCurrentConsistency());
+	/**
+	 * Determines if user `who` has `permission` on resource `what`
+	 *
+	 * @param who        User requesting access
+	 * @param permission Granted permission
+	 * @param what       Resource being questioned
+	 * @return true if resource grants permission for user, otherwise false
+	 * @throws Exception some sort of ReBAC error, most likely SpiceDB is
+	 *                   unavailable
+	 */
+	@Observed(name = "function_profile")
+	public boolean can(final SchemaObject who, final Schema.Permission permission, final SchemaObject what) {
+		@PolyNull
+		Boolean result = permissionCache.get(new CacheKey(who, permission, what), permissionMappingFn);
+		log.trace("Cache hit: {}, miss: {}", permissionCache.stats().hitCount(), permissionCache.stats().missCount());
+		return result;
 	}
 
-	public boolean canWrite(SchemaObject who, SchemaObject what) throws Exception {
-		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		return rebac.checkPermission(who, Schema.Permission.WRITE, what, getCurrentConsistency());
+	private Function<CacheKey, Boolean> permissionMappingFn = key -> {
+		final ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
+		try {
+			if (SPICEDB_LAUNCHMODE.equals("TEST")) {
+				return true;
+			}
+			return rebac.checkPermission(key.who, key.permission, key.what, getCurrentConsistency());
+		} catch (Exception e) {
+			log.error("Failed to get Permission from SpiceDB: {}", e);
+			return false;
+		}
+	};
+
+	@Observed(name = "function_profile")
+	public boolean isMemberOf(final SchemaObject who, final SchemaObject what) throws Exception {
+		@PolyNull
+		Boolean result = permissionCache.get(new CacheKey(who, Schema.Permission.MEMBERSHIP, what), permissionMappingFn);
+		log.trace("Cache hit: {}, miss: {}", permissionCache.stats().hitCount(), permissionCache.stats().missCount());
+		return result;
 	}
 
-	public boolean isMemberOf(SchemaObject who, SchemaObject what) throws Exception {
-		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		return rebac.checkPermission(who, Schema.Permission.MEMBERSHIP, what, getCurrentConsistency());
-	}
-
-	public boolean canAdministrate(SchemaObject who, SchemaObject what) throws Exception {
-		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		return rebac.checkPermission(who, Schema.Permission.ADMINISTRATE, what, getCurrentConsistency());
-	}
-
-	public boolean isCreator(SchemaObject who, SchemaObject what) throws Exception {
-		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
+	@Observed(name = "function_profile")
+	public boolean isCreator(final SchemaObject who, final SchemaObject what) throws Exception {
+		final ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		return rebac.hasRelationship(who, Schema.Relationship.CREATOR, what, getCurrentConsistency());
 	}
 
-	public void createRelationship(SchemaObject who, SchemaObject what, Schema.Relationship relationship)
-			throws Exception, RelationshipAlreadyExistsException {
-		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
+	private void invalidatePermissionCache(SchemaObject who, SchemaObject what) {
+		permissionCache.invalidate(new CacheKey(who, Schema.Permission.READ, what));
+		permissionCache.invalidate(new CacheKey(who, Schema.Permission.WRITE, what));
+		permissionCache.invalidate(new CacheKey(who, Schema.Permission.MEMBERSHIP, what));
+		permissionCache.invalidate(new CacheKey(who, Schema.Permission.ADMINISTRATE, what));
+	}
+
+	@Observed(name = "function_profile")
+	public void createRelationship(
+		final SchemaObject who,
+		final SchemaObject what,
+		final Schema.Relationship relationship
+	) throws Exception, RelationshipAlreadyExistsException {
+		userCache.invalidate(who.id);
+		invalidatePermissionCache(who, what);
+		final ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		CURRENT_ZED_TOKEN = rebac.createRelationship(who, relationship, what);
 	}
 
-	public void removeRelationship(SchemaObject who, SchemaObject what, Schema.Relationship relationship)
-			throws Exception, RelationshipAlreadyExistsException {
-		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
+	@Observed(name = "function_profile")
+	public void removeRelationship(
+		final SchemaObject who,
+		final SchemaObject what,
+		final Schema.Relationship relationship
+	) throws Exception, RelationshipAlreadyExistsException {
+		userCache.invalidate(who.id);
+		invalidatePermissionCache(who, what);
+		final ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		CURRENT_ZED_TOKEN = rebac.removeRelationship(who, relationship, what);
 	}
 
@@ -354,30 +486,36 @@ public class ReBACService {
 		if (CURRENT_ZED_TOKEN == null) {
 			return Consistency.newBuilder().setFullyConsistent(true).build();
 		}
-		Core.ZedToken zedToken =
-				Core.ZedToken.newBuilder().setToken(CURRENT_ZED_TOKEN).build();
+		final Core.ZedToken zedToken = Core.ZedToken.newBuilder().setToken(CURRENT_ZED_TOKEN).build();
 		return Consistency.newBuilder().setAtLeastAsFresh(zedToken).build();
 	}
 
-	public List<RebacPermissionRelationship> getRelationships(SchemaObject what) throws Exception {
-		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
+	@Observed(name = "function_profile")
+	public List<RebacPermissionRelationship> getRelationships(final SchemaObject what) throws Exception {
+		final ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		return rebac.getRelationship(what, getCurrentConsistency());
 	}
 
-	public ResponseEntity<Void> deleteRoleFromUser(String roleName, String userId) {
-		UsersResource usersResource = keycloak.realm(REALM_NAME).users();
-		UserResource userResource = usersResource.get(userId);
+	@Observed(name = "function_profile")
+	public ResponseEntity<Void> deleteRoleFromUser(final String roleName, final String userId) {
+		// NB: No need to adjust {rebacCache} as we will allow for a maximum 5 minute decay of a user's role
+		//     as the {rebacCache} will flush the permissions then.
+
+		userCache.invalidate(userId);
+
+		final UsersResource usersResource = keycloak.realm(REALM_NAME).users();
+		final UserResource userResource = usersResource.get(userId);
 		try {
 			// test to see if user was found
 			userResource.toRepresentation();
-		} catch (Exception ignore) {
+		} catch (final Exception ignore) {
 			log.error("There is no user with id {}", userId);
 			return ResponseEntity.notFound().build();
 		}
 
 		RoleRepresentation roleToRemove = null;
-		RolesResource rolesResource = keycloak.realm(REALM_NAME).roles();
-		for (RoleRepresentation roleRepresentation : rolesResource.list()) {
+		final RolesResource rolesResource = keycloak.realm(REALM_NAME).roles();
+		for (final RoleRepresentation roleRepresentation : rolesResource.list()) {
 			// RoleResource roleResource = rolesResource.get(roleRepresentation.getName());
 			if (roleRepresentation.getName().equals(roleName)) {
 				roleToRemove = roleRepresentation;
@@ -389,43 +527,50 @@ public class ReBACService {
 			return ResponseEntity.notFound().build();
 		}
 
-		String resourceUrl = composeResourceUrl(
-				config.getKeycloak().getUrl() + "/admin/", REALM_NAME, "users/" + userId + "/role-mappings/realm");
+		final String resourceUrl = composeResourceUrl(
+			config.getKeycloak().getUrl() + "/admin/",
+			REALM_NAME,
+			"users/" + userId + "/role-mappings/realm"
+		);
 
-		List<RoleRepresentation> roles = new ArrayList<>();
+		final List<RoleRepresentation> roles = new ArrayList<>();
 		roles.add(roleToRemove);
 
 		try {
 			doDeleteJSON(resourceUrl, getKeycloakBearerToken(), roles);
 			return ResponseEntity.ok().build();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			log.error(e.getMessage());
 			return ResponseEntity.internalServerError().build();
 		}
 	}
 
-	public ResponseEntity<Void> addRoleToUser(String roleName, String userId) {
-		UsersResource usersResource = keycloak.realm(REALM_NAME).users();
-		UserResource userResource = usersResource.get(userId);
+	@Observed(name = "function_profile")
+	public ResponseEntity<Void> addRoleToUser(final String roleName, final String userId) {
+		// NB: No need to adjust {rebacCache} as simply will grant a user a role
+
+		userCache.invalidate(userId);
+
+		final UsersResource usersResource = keycloak.realm(REALM_NAME).users();
+		final UserResource userResource = usersResource.get(userId);
 		try {
 			// test to see if user was found
 			userResource.toRepresentation();
-		} catch (Exception ignore) {
+		} catch (final Exception ignore) {
 			log.error("There is no user with id {}", userId);
 			return ResponseEntity.notFound().build();
 		}
 
 		RoleRepresentation roleToAdd = null;
-		RolesResource rolesResource = keycloak.realm(REALM_NAME).roles();
-		for (RoleRepresentation roleRepresentation : rolesResource.list()) {
-			RoleResource roleResource = rolesResource.get(roleRepresentation.getName());
+		final RolesResource rolesResource = keycloak.realm(REALM_NAME).roles();
+		for (final RoleRepresentation roleRepresentation : rolesResource.list()) {
+			final RoleResource roleResource = rolesResource.get(roleRepresentation.getName());
 			if (roleRepresentation.getName().equals(roleName)) {
 				roleToAdd = roleRepresentation;
-				for (UserRepresentation user : roleResource.getRoleUserMembers()) {
+				for (final UserRepresentation user : roleResource.getRoleUserMembers()) {
 					if (user.getId().equals(userId)) {
 						log.debug("Add Role To User: already belongs");
-						return ResponseEntity.status(HttpStatusCode.valueOf(304))
-								.build();
+						return ResponseEntity.status(HttpStatusCode.valueOf(304)).build();
 					}
 				}
 			}
@@ -436,24 +581,34 @@ public class ReBACService {
 			return ResponseEntity.notFound().build();
 		}
 
-		String resourceUrl = composeResourceUrl(
-				config.getKeycloak().getUrl() + "/admin/", REALM_NAME, "users/" + userId + "/role-mappings/realm");
+		final String resourceUrl = composeResourceUrl(
+			config.getKeycloak().getUrl() + "/admin/",
+			REALM_NAME,
+			"users/" + userId + "/role-mappings/realm"
+		);
 
-		List<RoleRepresentation> roles = new ArrayList<>();
+		final List<RoleRepresentation> roles = new ArrayList<>();
 		roles.add(roleToAdd);
 
 		try {
 			doPostJSON(resourceUrl, getKeycloakBearerToken(), roles);
 			return ResponseEntity.ok().build();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			log.error(e.getMessage());
 			return ResponseEntity.internalServerError().build();
 		}
 	}
 
-	public List<UUID> lookupResources(SchemaObject who, Schema.Permission permission, Schema.Type type)
-			throws Exception {
-		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
+	@Observed(name = "function_profile")
+	public List<UUID> lookupResources(final SchemaObject who, final Schema.Permission permission, final Schema.Type type)
+		throws Exception {
+		// NB: These permissions will be handled by {ProjectPermissionService} and its caching
+		final ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		return rebac.lookupResources(type, permission, who, getCurrentConsistency());
+	}
+
+	@Observed(name = "function_profile")
+	public static boolean isServiceUser(final String id) {
+		return API_SERVICE_USER_ID != null && API_SERVICE_USER_ID.equals(id);
 	}
 }

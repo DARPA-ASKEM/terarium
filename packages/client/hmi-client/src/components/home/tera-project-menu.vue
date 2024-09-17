@@ -1,30 +1,26 @@
 <template>
-	<Button
-		icon="pi pi-ellipsis-v"
-		rounded
-		text
-		@click.stop="toggle"
-		:disabled="isEmpty(projectMenuItems)"
-	/>
+	<span v-if="isCopying">Copying...</span>
+	<Button v-else icon="pi pi-ellipsis-v" rounded text @click.stop="toggle" :disabled="isEmpty(projectMenuItems)" />
 	<Menu ref="menu" :model="projectMenuItems" :popup="true" @focus="menuProject = project" />
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import Button from 'primevue/button';
-import Menu from 'primevue/menu';
 import { useProjects } from '@/composables/project';
-import { isEmpty } from 'lodash';
 import { useProjectMenu } from '@/composables/project-menu';
 import { Project } from '@/types/Types';
+import { isEmpty } from 'lodash';
+import Button from 'primevue/button';
+import Menu from 'primevue/menu';
+import { computed, ref } from 'vue';
 
 const props = defineProps<{ project: Project | null }>();
 
-const emit = defineEmits(['forked-project']);
+const emit = defineEmits(['copied-project']);
 
 // Triggers modals from tera-common-modal-dialogs.vue to open
-const { isShareDialogVisible, isRemoveDialogVisible, isProjectConfigDialogVisible, menuProject } =
-	useProjectMenu();
+const { isShareDialogVisible, isRemoveDialogVisible, isProjectConfigDialogVisible, menuProject } = useProjectMenu();
+
+const isCopying = ref(false);
 
 const menu = ref();
 const renameMenuItem = {
@@ -48,13 +44,16 @@ const removeMenuItem = {
 		isRemoveDialogVisible.value = true;
 	}
 };
-const forkMenuItem = {
-	label: 'Fork this project',
+const copyMenuItem = {
+	label: 'Copy this project',
 	icon: 'pi pi-clone',
 	command: async () => {
 		if (props.project) {
-			const cloned = await useProjects().clone(props.project.id);
-			emit('forked-project', cloned);
+			isCopying.value = true;
+			const copiedProject = await useProjects().clone(props.project.id);
+			isCopying.value = false;
+			if (!copiedProject) return;
+			emit('copied-project', copiedProject);
 		}
 	}
 };
@@ -63,13 +62,13 @@ const separatorMenuItem = { separator: true };
 const projectMenuItems = computed(() => {
 	const items = [] as any[];
 	if (props.project?.publicProject) {
-		items.push(forkMenuItem);
+		items.push(copyMenuItem);
 	}
 	if (props.project?.userPermission === 'creator') {
 		items.push(renameMenuItem, shareMenuItem, separatorMenuItem, removeMenuItem);
 	}
 	if (props.project?.userPermission === 'writer') {
-		items.push(renameMenuItem, shareMenuItem);
+		items.push(renameMenuItem);
 	}
 	return items;
 });
@@ -78,3 +77,9 @@ function toggle(event) {
 	menu.value.toggle(event);
 }
 </script>
+
+<style scoped>
+span {
+	color: var(--primary-color);
+}
+</style>

@@ -11,5 +11,7 @@ import software.uncharted.terarium.hmiserver.models.code.GithubFile;
 public interface GithubProxy {
 	@GetMapping("/repos/{repoOwnerAndName}/contents/{path}")
 	ResponseEntity<List<GithubFile>> getGithubRepositoryContent(
-			@PathVariable("repoOwnerAndName") String repoOwnerAndName, @PathVariable("path") String path);
+		@PathVariable("repoOwnerAndName") String repoOwnerAndName,
+		@PathVariable("path") String path
+	);
 }

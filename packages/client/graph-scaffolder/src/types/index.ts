@@ -64,6 +64,7 @@ export interface Options {
 
 	useZoom?: boolean;
 	zoomRange?: [number, number];
+	zoomModifier?: string;
 	useStableLayout?: boolean;
 
 	// Attempt to use the same set of zoom parameters across layout changes

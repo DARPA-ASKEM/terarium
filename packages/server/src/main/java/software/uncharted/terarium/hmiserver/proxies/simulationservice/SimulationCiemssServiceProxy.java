@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.proxies.simulationservice;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import java.util.UUID;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,4 +30,7 @@ public interface SimulationCiemssServiceProxy {
 
 	@GetMapping("/status/{runId}")
 	ResponseEntity<SimulationStatusMessage> getRunStatus(@PathVariable("runId") String runId);
+
+	@GetMapping("/cancel/{runId}")
+	ResponseEntity<JobResponse> cancelJob(@PathVariable("runId") UUID runId);
 }

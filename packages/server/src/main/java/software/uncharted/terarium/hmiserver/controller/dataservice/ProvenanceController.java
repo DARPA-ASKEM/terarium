@@ -22,7 +22,6 @@ import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 
 @RequestMapping("/provenance")
 @RestController
-@Transactional
 public class ProvenanceController {
 
 	@Autowired
@@ -34,21 +33,18 @@ public class ProvenanceController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "201",
-						description = "Provenance entry created.",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Provenance.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue creating the provenance",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "201",
+				description = "Provenance entry created.",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Provenance.class)
+				)
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue creating the provenance", content = @Content)
+		}
+	)
 	public ResponseEntity<Provenance> createProvenance(@RequestBody Provenance provenance) {
 		provenance = provenanceService.createProvenance(provenance);
 		return ResponseEntity.status(HttpStatus.CREATED).body(provenance);
@@ -58,27 +54,28 @@ public class ProvenanceController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Search connected nodes")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Provenance results found.",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = ProvenanceSearchResult.class))),
-				@ApiResponse(
-						responseCode = "204",
-						description = "There are no results found and no errors occurred",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving results from the data store",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Provenance results found.",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProvenanceSearchResult.class)
+				)
+			),
+			@ApiResponse(
+				responseCode = "204",
+				description = "There are no results found and no errors occurred",
+				content = @Content
+			),
+			@ApiResponse(
+				responseCode = "500",
+				description = "There was an issue retrieving results from the data store",
+				content = @Content
+			)
+		}
+	)
 	public ResponseEntity<ProvenanceSearchResult> searchConnectedNodes(@RequestBody final ProvenanceQueryParam body) {
-
 		// TODO: This function should return the objects listed in the ProvenanceSearchResults and not simply the ids,
 		//  the client pulls these objects with a distinct request per object,
 		//  this would cut down on many inefficient network requests

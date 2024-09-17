@@ -46,4 +46,10 @@ function enrichDataset(dataset: Dataset): Dataset {
 	return dataset;
 }
 
-export { enrichDataset };
+function isSaveDatasetDisabled(id, projectid): boolean {
+	if (id === undefined || id === '' || !projectid) {
+		return true;
+	}
+	return false;
+}
+export { enrichDataset, isSaveDatasetDisabled };

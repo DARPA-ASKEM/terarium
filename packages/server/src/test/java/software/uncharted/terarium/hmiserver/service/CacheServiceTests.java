@@ -10,10 +10,11 @@ import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.cache.CacheManager;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.models.CacheName;
-import software.uncharted.terarium.hmiserver.util.MatchUtil;
+import software.uncharted.terarium.hmiserver.utils.MatchUtil;
 
 @ExtendWith(OutputCaptureExtension.class)
 public class CacheServiceTests extends TerariumApplicationTests {
+
 	@Autowired
 	CacheService cacheService;
 
@@ -25,8 +26,7 @@ public class CacheServiceTests extends TerariumApplicationTests {
 
 	@AfterEach
 	public void afterEach() {
-		cacheManager.getCacheNames().forEach(name -> Objects.requireNonNull(cacheManager.getCache(name))
-				.clear());
+		cacheManager.getCacheNames().forEach(name -> Objects.requireNonNull(cacheManager.getCache(name)).clear());
 	}
 
 	// @Test

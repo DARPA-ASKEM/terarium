@@ -3,7 +3,11 @@
 
 name: Server Tests
 
+env:
+  local_host_name: "localhost"
+
 # Controls when the action will run.
+# yamllint disable-line rule:truthy
 on:
   # Triggers the workflow on push or pull request events but only for the $default-branch branch
   push:
@@ -21,7 +25,7 @@ on:
 jobs:
   server-tests:
     # The type of runner that the job will run on
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     permissions:
       contents: read
@@ -34,14 +38,15 @@ jobs:
 
       # Validate Gradle JAR
       - name: Validate GradleW JAR
-        uses: gradle/wrapper-validation-action@460a3ca55fc5d559238a0efc7fa9f7465df8585d
+        uses: gradle/actions/wrapper-validation@v3
 
-      # Setup Java 17
-      - name: Setup Java v17
+      # Setup Java 21
+      - name: Setup Java v21
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
-          java-version: 17
+          java-version: 21
+          cache: gradle
 
       # Start containers
       - name: Start containers
@@ -49,13 +54,8 @@ jobs:
 
       # Run the tests
       - name: Run tests
-        uses: gradle/gradle-build-action@8baac4c8ef753599f92eeb509c246d09d6250fa6
-        with:
-          gradle-version: wrapper
-          build-root-directory: packages/server
-          arguments: |
-            test
-            --info
+        run: ./gradlew test --info
+        working-directory: packages/server
 
       # Run test reporter
       - name: Test Report

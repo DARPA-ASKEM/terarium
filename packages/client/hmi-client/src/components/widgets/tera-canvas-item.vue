@@ -1,10 +1,15 @@
 <!--
-By default the entire area of tera-canvas-item works as a drag handle.
+Notes for how to use this component:
+1. Give this component a style attribute with the following properties:
+	- top: the top position of the component
+	- left: the left position of the component
+	- width: the width of the component
+2. By default the entire area of tera-canvas-item works as a drag handle.
 To specify a drag handle area add the "drag-handle" class within the component that would be placed in this slot.
 -->
 
 <template>
-	<section ref="canvasItem" :style="style">
+	<section ref="canvasItem">
 		<slot />
 	</section>
 </template>
@@ -12,25 +17,27 @@ To specify a drag handle area add the "drag-handle" class within the component t
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 
-defineProps<{
-	style: { width: string; top: string; left: string };
-}>();
-
-const emit = defineEmits(['dragging']);
+const emit = defineEmits(['dragging', 'dragstart', 'dragend']);
 
 const canvasItem = ref();
 
+let mousedown = false;
 let isDragging = false;
 let tempX = 0;
 let tempY = 0;
 
 const startDrag = (evt: MouseEvent) => {
+	mousedown = true;
 	tempX = evt.x;
 	tempY = evt.y;
-	isDragging = true;
 };
 
 const drag = (evt: MouseEvent) => {
+	if (mousedown && !isDragging) {
+		isDragging = true;
+		emit('dragstart');
+		return;
+	}
 	if (!isDragging) return;
 
 	const dx = evt.x - tempX;
@@ -43,9 +50,13 @@ const drag = (evt: MouseEvent) => {
 };
 
 const stopDrag = (/* evt: MouseEvent */) => {
+	mousedown = false;
+
+	if (!isDragging) return;
 	tempX = 0;
 	tempY = 0;
 	isDragging = false;
+	emit('dragend');
 };
 
 onMounted(() => {
@@ -65,6 +76,7 @@ onBeforeUnmount(() => {
 
 		dragHandle.removeEventListener('mousedown', startDrag);
 		document.removeEventListener('mousemove', drag);
+		document.removeEventListener('click', stopDrag);
 		dragHandle.removeEventListener('mouseup', stopDrag);
 	}
 });

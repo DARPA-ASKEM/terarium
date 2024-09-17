@@ -1,46 +1,53 @@
 <template>
 	<div class="notification-button">
-		<Button
-			icon="pi pi-bell"
-			severity="secondary"
-			rounded
-			text
-			aria-label="Notifications"
-			@click="togglePanel"
-		/>
-		<span class="badge" v-if="unacknowledgedFinishedItems.length > 0">
-			{{ unacknowledgedFinishedItems.length }}</span
-		>
+		<Button icon="pi pi-bell" severity="secondary" rounded text aria-label="Notifications" @click="togglePanel" />
+		<span class="badge" v-if="unacknowledgedFinishedItems.length > 0"> {{ unacknowledgedFinishedItems.length }}</span>
 	</div>
-	<OverlayPanel class="notification-container" ref="panel" @hide="acknowledgeFinishedItems">
-		<div class="header">
+	<OverlayPanel class="notification-panel-container" ref="panel" @hide="acknowledgeFinishedItems">
+		<header>
 			<h1>Notifications</h1>
-			<Button
-				label="Clear notifications"
-				text
-				:disabled="!hasFinishedItems"
-				@click="clearFinishedItems"
-			/>
-		</div>
-		<ul class="notification-items-container" v-if="notificationItems.length > 0">
-			<li class="notification-item" v-for="item in notificationItems" :key="item.id">
+			<Button label="Clear notifications" text :disabled="!hasFinishedItems" @click="clearFinishedItems" />
+		</header>
+		<ul class="notification-items-container" v-if="sortedNotificationItems.length > 0">
+			<li class="notification-item" v-for="item in sortedNotificationItems" :key="item.notificationGroupId">
 				<p class="heading">
 					{{ getTitleText(item) }}
-					<tera-asset-link text-only :label="item.assetName" :asset-route="getAssetRoute(item)" />
+					<tera-asset-link
+						:label="item.sourceName"
+						:asset-route="getAssetRoute(item)"
+						:route-query="getAssetRouteQuery(item)"
+					/>
 				</p>
-				<p class="msg">{{ item.msg }}</p>
-				<div v-if="item.status === 'Running'" class="progressbar-container">
-					<p class="action">{{ getActionText(item) }}</p>
-					<ProgressBar :value="item.progress * 100" />
+				<div class="notification-path-text msg">
+					<p>
+						<span v-if="item.context">{{ item.context }}/</span>{{ getProjectName(item) }}
+					</p>
+					<p v-if="!isComplete(item)">{{ item.msg }}</p>
+				</div>
+				<div v-if="isRunning(item) || isCancelling(item) || isQueued(item)" class="progressbar-container">
+					<p class="action">
+						{{ getActionText(item) }}
+						<span v-if="item.progress !== undefined && isRunning(item)"> {{ Math.round(item.progress * 100) }}%</span>
+					</p>
+
+					<ProgressBar v-if="item.progress !== undefined" :value="isRunning(item) ? item.progress * 100 : 0" />
+					<ProgressBar v-else mode="indeterminate" />
+					<Button
+						v-if="item.supportCancel"
+						class="cancel-button"
+						label="Cancel"
+						text
+						aria-label="Cancel"
+						@click="cancelTask(item)"
+					/>
 				</div>
 				<div v-else class="done-container">
-					<div class="status-msg ok" v-if="item.status === 'Completed'">
-						<i class="pi pi-check-circle" />Completed
-					</div>
-					<div class="status-msg error" v-else-if="item.status === 'Failed'">
+					<div class="status-msg ok" v-if="isComplete(item)"><i class="pi pi-check-circle" />Completed</div>
+					<div class="status-msg cancel" v-if="isCancelled(item)"><i class="pi pi-exclamation-circle" />Cancelled</div>
+					<div class="status-msg error" v-else-if="isFailed(item)">
 						<i class="pi pi-exclamation-circle" /> Failed: {{ item.error }}
 					</div>
-					<span class="time-msg">{{ getElapsedTimeText(item) }}</span>
+					<span class="time-msg">{{ getElapsedTimeText(item.lastUpdated) }}</span>
 				</div>
 			</li>
 		</ul>
@@ -54,14 +61,19 @@
 import Button from 'primevue/button';
 import OverlayPanel from 'primevue/overlaypanel';
 import { NotificationItem } from '@/types/common';
-import { AssetType, ClientEventType } from '@/types/Types';
+import { AssetType, ClientEventType, ProgressState } from '@/types/Types';
 import ProgressBar from 'primevue/progressbar';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useNotificationManager } from '@/composables/notificationManager';
+import { useProjects } from '@/composables/project';
+import { getElapsedTimeText } from '@/utils/date';
+import { cancelTask as cancelGoLLMTask } from '@/services/goLLM';
+import { cancelCiemssJob } from '@/services/models/simulation-service';
+import { orderBy } from 'lodash';
 import TeraAssetLink from '../widgets/tera-asset-link.vue';
 
 const {
-	itemsForActiveProject: notificationItems,
+	notificationItems,
 	clearFinishedItems,
 	acknowledgeFinishedItems,
 	hasFinishedItems,
@@ -72,16 +84,28 @@ const panel = ref();
 
 const togglePanel = (event) => panel.value.toggle(event);
 
-const getTitleText = (item: NotificationItem) => {
-	switch (item.type) {
-		case ClientEventType.ExtractionPdf:
-			return 'PDF extraction from';
-		default:
-			return 'Process';
-	}
-};
+const getTitleText = (item: NotificationItem) => `${item.typeDisplayName} from`;
+
+const sortedNotificationItems = computed(() => orderBy(notificationItems.value, (item) => item.lastUpdated, ['desc']));
+
+const isComplete = (item: NotificationItem) => item.status === ProgressState.Complete;
+const isQueued = (item: NotificationItem) => item.status === ProgressState.Queued;
+const isFailed = (item: NotificationItem) =>
+	item.status === ProgressState.Failed || item.status === ProgressState.Error;
+const isRunning = (item: NotificationItem) => item.status === ProgressState.Running;
+const isCancelling = (item: NotificationItem) => item.status === ProgressState.Cancelling;
+const isCancelled = (item: NotificationItem) => item.status === ProgressState.Cancelled;
+
+const getProjectName = (item: NotificationItem) =>
+	(useProjects().allProjects.value || []).find((p) => p.id === item.projectId)?.name || '';
 
 const getActionText = (item: NotificationItem) => {
+	if (isCancelling(item)) {
+		return 'Cancelling...';
+	}
+	if (isQueued(item)) {
+		return 'Queued...';
+	}
 	switch (item.type) {
 		case ClientEventType.ExtractionPdf:
 			return 'Extracting...';
@@ -90,23 +114,59 @@ const getActionText = (item: NotificationItem) => {
 	}
 };
 
-const getAssetRoute = (item: NotificationItem) => {
-	switch (item.type) {
-		case ClientEventType.ExtractionPdf:
-			return { assetId: item.id, pageType: AssetType.Document };
-		default:
-			return { assetId: item.id, pageType: AssetType.Document };
-	}
-};
+const getAssetRoute = (item: NotificationItem) => ({
+	assetId: item.assetId as string,
+	projectId: item.projectId,
+	pageType: item.pageType
+});
+const getAssetRouteQuery = (item: NotificationItem) =>
+	item.pageType === AssetType.Workflow && item.nodeId ? { operator: item.nodeId } : {};
 
-const getElapsedTimeText = (item: NotificationItem) => {
-	const time = Date.now() - item.lastUpdated;
-	const minutes = Math.floor(time / (1000 * 60));
-	return minutes > 0 ? `${minutes} minutes ago` : 'Just now';
+const cancelTask = (item: NotificationItem) => {
+	if (!item.supportCancel) return;
+	if (
+		[
+			ClientEventType.TaskGollmModelCard,
+			ClientEventType.TaskGollmConfigureModelFromDocument,
+			ClientEventType.TaskGollmConfigureModelFromDataset,
+			ClientEventType.TaskGollmCompareModel
+		].includes(item.type)
+	) {
+		cancelGoLLMTask(item.notificationGroupId);
+	}
+	if (item.type === ClientEventType.SimulationNotification) {
+		item.status = ProgressState.Cancelling;
+		cancelCiemssJob(item.notificationGroupId);
+	}
 };
 </script>
 
 <style>
+/*
+ * Reset the default overlay component container style.
+ * Note that this style block isn't scoped since the overlay component is appended to the body html dynamically when opened
+ * and is placed outside of this component's scope and the scoped styles aren't applied to it.
+ */
+.notification-panel-container.p-overlaypanel {
+	top: var(--navbar-outer-height) !important;
+	width: 34rem;
+	box-shadow: 0 4px 4px 0 #00000040;
+	padding: var(--content-padding);
+	padding-bottom: 1.5rem;
+	gap: var(--gap);
+	border: 1px solid var(--surface-border-alt);
+	border-radius: var(--border-radius-medium);
+	.p-overlaypanel-content {
+		padding: 0;
+	}
+	&:after,
+	&:before {
+		content: none;
+	}
+}
+</style>
+
+<style scoped>
 .notification-button {
 	position: relative;
 	.p-button.p-button-secondary.p-button-text {
@@ -127,25 +187,7 @@ const getElapsedTimeText = (item: NotificationItem) => {
 		padding: 2px 5px;
 	}
 }
-/* Reset default overlay component style */
-.notification-container.p-overlaypanel .p-overlaypanel-content {
-	padding: 0;
-}
-.notification-container.p-overlaypanel:after,
-.notification-container.p-overlaypanel:before {
-	content: none;
-}
-.notification-container.p-overlaypanel {
-	top: 51px !important;
-	width: 540px;
-	box-shadow: 0px 4px 4px 0px #00000040;
-	padding: var(--content-padding);
-	padding-bottom: 1.5rem;
-	gap: var(--gap);
-	border: 1px solid #c3ccd6;
-	border-radius: var(--border-radius-medium);
-}
-.header {
+header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -156,17 +198,27 @@ const getElapsedTimeText = (item: NotificationItem) => {
 	}
 	button {
 		padding: 1px;
+		font-size: var(--font-caption);
 	}
 }
 .text-body {
 	font-size: var(--font-body-small);
 	color: var(--text-color-secondary);
+	margin-top: 1rem;
 }
 
 .notification-items-container {
 	max-height: 570px;
 	list-style: none;
 	overflow: auto;
+}
+
+.notification-path-text {
+	padding-top: 3px;
+}
+
+.cancel-button {
+	font-size: var(--font-caption);
 }
 
 .notification-item {
@@ -182,7 +234,9 @@ const getElapsedTimeText = (item: NotificationItem) => {
 	}
 	.msg {
 		font-size: var(--font-caption);
-		color: #9298a5;
+		color: var(--text-color-secondary);
+		margin-top: 0.2rem;
+		/* color: #9298a5; */
 	}
 	.action {
 		font-size: var(--font-caption);
@@ -205,21 +259,24 @@ const getElapsedTimeText = (item: NotificationItem) => {
 		justify-content: space-between;
 		align-items: center;
 		gap: var(--gap-small);
-	}
-	.done-container .status-msg {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-	}
-	.done-container .status-msg.ok {
-		color: var(--primary-color);
-	}
-	.done-container .status-msg.error {
-		color: var(--error-color);
-	}
-	.done-container .time-msg {
-		font-size: var(--font-caption);
-		color: var(--text-color-secondary);
+		.status-msg {
+			display: flex;
+			gap: 0.5rem;
+			font-size: var(--font-caption);
+		}
+		.status-msg.ok {
+			color: var(--primary-color);
+		}
+		.status-msg.error,
+		.status-msg.cancel {
+			color: var(--error-color);
+		}
+		.time-msg {
+			font-size: var(--font-caption);
+			color: var(--text-color-secondary);
+			min-width: 96px;
+			text-align: right;
+		}
 	}
 }
 </style>

@@ -3,7 +3,7 @@
 		<!-- Toggle histograms & column summary charts -->
 		<div class="datatable-toolbar">
 			<span class="datatable-toolbar-item">
-				{{ csvHeaders?.length || 'No' }} columns | {{ csvContent?.length || 'No' }} rows
+				{{ rawContent.headers.length || 'No' }} columns | {{ rawContent.csv.length - 1 || 'No' }} rows
 			</span>
 			<span class="datatable-toolbar-item" style="margin-left: auto">
 				Show column summaries<InputSwitch v-model="showSummaries" />
@@ -18,9 +18,9 @@
 			/>
 			<span class="datatable-toolbar-item">
 				<MultiSelect
-					:modelValue="selectedColumns"
-					:options="csvHeaders"
-					@update:modelValue="onToggle"
+					:model-value="selectedColumns"
+					:options="rawContent.headers"
+					@update:model-value="selectedColumns = rawContent.headers.filter((col) => $event.includes(col))"
 					:maxSelectedLabels="1"
 					placeholder="Select columns"
 				>
@@ -36,8 +36,8 @@
 		<!-- Datable -->
 		<DataTable
 			:class="previewMode ? 'p-datatable-xsm' : 'p-datatable-sm'"
-			:value="props.rawContent?.data ? csvContent : csvContent?.slice(1, csvContent.length)"
-			:rows="props.rows"
+			:value="rawContent.csv.slice(1, rawContent.csv.length)"
+			:rows="rows"
 			paginator
 			:paginatorPosition="paginatorPosition ? paginatorPosition : `bottom`"
 			:rowsPerPageOptions="[5, 10, 25, 50, 100]"
@@ -52,44 +52,42 @@
 			<Column
 				v-for="(colName, index) of selectedColumns"
 				:key="index"
-				:field="props.rawContent?.data ? colName : index.toString()"
+				:field="index.toString()"
 				:header="colName"
 				:style="previousHeaders && !previousHeaders.includes(colName) ? 'border-color: green' : ''"
 				sortable
 				:frozen="index == 0"
 			>
-				<template #header>
+				<template #header v-if="!previewMode && !isEmpty(headerStats) && showSummaries">
 					<!-- column summary charts below -->
-					<div
-						v-if="!previewMode && props.rawContent?.stats && showSummaries"
-						class="column-summary"
-					>
+					<div class="column-summary">
 						<div class="column-summary-row">
 							<span class="column-summary-label">Max:</span>
-							<span class="column-summary-value">{{ csvMaxsToDisplay?.at(index) }}</span>
+							<span class="column-summary-value">{{ headerStats?.[index].maxValue }}</span>
 						</div>
 						<Chart
+							v-if="headerStats?.[index].chartData"
 							class="histogram"
 							type="bar"
 							:height="480"
-							:data="chartData?.at(index)"
-							:options="chartOptions"
+							:data="headerStats?.[index].chartData"
+							:options="CHART_OPTIONS"
 						/>
 						<div class="column-summary-row max">
 							<span class="column-summary-label">Min:</span>
-							<span class="column-summary-value">{{ csvMinsToDisplay?.at(index) }}</span>
+							<span class="column-summary-value">{{ headerStats?.[index].minValue }}</span>
 						</div>
 						<div class="column-summary-row">
 							<span class="column-summary-label">Mean:</span>
-							<span class="column-summary-value">{{ csvMeansToDisplay?.at(index) }}</span>
+							<span class="column-summary-value">{{ headerStats?.[index].mean }}</span>
 						</div>
 						<div class="column-summary-row">
 							<span class="column-summary-label">Median:</span>
-							<span class="column-summary-value">{{ csvMedianToDisplay?.at(index) }}</span>
+							<span class="column-summary-value">{{ headerStats?.[index].median }}</span>
 						</div>
 						<div class="column-summary-row">
 							<span class="column-summary-label">SD:</span>
-							<span class="column-summary-value">{{ csvSdToDisplay?.at(index) }}</span>
+							<span class="column-summary-value">{{ headerStats?.[index].sd }}</span>
 						</div>
 					</div>
 				</template>
@@ -99,7 +97,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { isEmpty } from 'lodash';
+import { ref, watch, nextTick } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import type { CsvAsset } from '@/types/Types';
@@ -108,8 +107,21 @@ import Button from 'primevue/button';
 import Chart from 'primevue/chart';
 import InputSwitch from 'primevue/inputswitch';
 
+type ChartData = {
+	labels: string[];
+	datasets: {
+		label: string;
+		backgroundColor: string;
+		hoverBackgroundColor: string;
+		data: number[];
+		categoryPercentage: number;
+		barPercentage: number;
+		minBarLength: number;
+	}[];
+};
+
 const props = defineProps<{
-	rawContent: CsvAsset | null; // Temporary - this is also any in ITypeModel
+	rawContent: CsvAsset; // Temporary - this is also any in ITypeModel
 	rows?: number;
 	previewMode?: boolean;
 	previousHeaders?: String[] | null;
@@ -120,36 +132,61 @@ const props = defineProps<{
 const CATEGORYPERCENTAGE = 1.0;
 const BARPERCENTAGE = 1.0;
 const MINBARLENGTH = 1;
+const CHART_OPTIONS = {
+	indexAxis: 'y',
+	plugins: {
+		legend: {
+			labels: {
+				display: false
+			},
+			display: false
+		},
+		tooltip: {
+			enabled: true,
+			position: 'nearest',
+			displayColors: false,
+			beforeTitle: 'Count:',
+			backgroundColor: '#666666dd'
+		}
+	},
+	scales: {
+		x: {
+			ticks: {
+				display: false
+			},
+			grid: {
+				display: false,
+				drawBorder: false
+			}
+		},
+		y: {
+			ticks: {
+				display: false
+			},
+			grid: {
+				display: false,
+				drawBorder: false,
+				borderColor: getComputedStyle(document.documentElement).getPropertyValue('--surface-border-light')
+			}
+		}
+	}
+};
 
 const showSummaries = ref(true);
-
-const csvContent = computed(() => props.rawContent?.data || props.rawContent?.csv);
-const csvHeaders = computed(() => props.rawContent?.headers);
-const chartData = computed(
-	() => props.rawContent?.stats?.map((stat) => setBarChartData(stat.bins))
-);
-
-const selectedColumns = ref(csvHeaders?.value);
-
-const csvMinsToDisplay = computed(
-	() => props.rawContent?.stats?.map((stat) => Math.round(stat.minValue * 1000) / 1000)
-);
-const csvMaxsToDisplay = computed(
-	() => props.rawContent?.stats?.map((stat) => Math.round(stat.maxValue * 1000) / 1000)
-);
-const csvMeansToDisplay = computed(
-	() => props.rawContent?.stats?.map((stat) => Math.round(stat.mean * 1000) / 1000)
-);
-const csvMedianToDisplay = computed(
-	() => props.rawContent?.stats?.map((stat) => Math.round(stat.median * 1000) / 1000)
-);
-const csvSdToDisplay = computed(
-	() => props.rawContent?.stats?.map((stat) => Math.round(stat.sd * 1000) / 1000)
-);
-const chartOptions = computed(() => setChartOptions());
+const selectedColumns = ref<string[]>(props.rawContent.headers);
+const headerStats = ref<
+	{
+		minValue: number;
+		maxValue: number;
+		mean: number;
+		median: number;
+		sd: number;
+		chartData: ChartData;
+	}[]
+>([]);
 
 // Given the bins for a column set up the object needed for the chart.
-const setBarChartData = (bins: any[]) => {
+const setBarChartData = (bins: number[]): ChartData => {
 	const documentStyle = getComputedStyle(document.documentElement);
 	const dummyLabels: string[] = [];
 	// reverse the bins so that the chart is displayed in the correct order
@@ -158,18 +195,7 @@ const setBarChartData = (bins: any[]) => {
 		dummyLabels.push(i.toString());
 	}
 	return {
-		labels: [
-			'Bin 1',
-			'Bin 2',
-			'Bin 3',
-			'Bin 4',
-			'Bin 5',
-			'Bin 6',
-			'Bin 7',
-			'Bin 8',
-			'Bin 9',
-			'Bin 10'
-		].reverse(),
+		labels: ['Bin 1', 'Bin 2', 'Bin 3', 'Bin 4', 'Bin 5', 'Bin 6', 'Bin 7', 'Bin 8', 'Bin 9', 'Bin 10'].reverse(),
 		datasets: [
 			{
 				label: 'Count',
@@ -184,52 +210,27 @@ const setBarChartData = (bins: any[]) => {
 	};
 };
 
-const setChartOptions = () => {
-	const documentStyle = getComputedStyle(document.documentElement);
-	return {
-		indexAxis: 'y',
-		plugins: {
-			legend: {
-				labels: {
-					display: false
-				},
-				display: false
-			},
-			tooltip: {
-				enabled: true,
-				position: 'nearest',
-				displayColors: false,
-				beforeTitle: 'Count:',
-				backgroundColor: '#666666dd'
-			}
-		},
-		scales: {
-			x: {
-				ticks: {
-					display: false
-				},
-				grid: {
-					display: false,
-					drawBorder: false
-				}
-			},
-			y: {
-				ticks: {
-					display: false
-				},
-				grid: {
-					display: false,
-					drawBorder: false,
-					borderColor: documentStyle.getPropertyValue('--surface-border-light')
-				}
-			}
-		}
-	};
-};
+// TODO: We should be using a formatter from number.ts, not sure why we are formatting it like this (ask Yohann when he's back)
+function roundStat(stat: number) {
+	return Math.round(stat * 1000) / 1000;
+}
 
-const onToggle = (val) => {
-	selectedColumns.value = csvHeaders?.value?.filter((col) => val.includes(col));
-};
+watch(
+	() => props.rawContent,
+	async () => {
+		await nextTick();
+		headerStats.value =
+			props.rawContent.stats?.map((stat) => ({
+				minValue: roundStat(stat.minValue),
+				maxValue: roundStat(stat.maxValue),
+				mean: roundStat(stat.mean),
+				median: roundStat(stat.median),
+				sd: roundStat(stat.sd),
+				chartData: setBarChartData(stat.bins)
+			})) ?? [];
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
@@ -237,7 +238,7 @@ const onToggle = (val) => {
 	display: flex;
 	flex-direction: row;
 	gap: var(--gap);
-	padding-bottom: var(--gap);
+	padding-bottom: var(--gap-2);
 }
 .datatable-toolbar-item {
 	display: flex;
@@ -274,7 +275,7 @@ const onToggle = (val) => {
 }
 
 .p-datatable.p-datatable-sm:deep(.p-datatable-tbody > tr > td) {
-	padding: 0.25rem 0.5rem;
+	padding: var(--gap-1) 0.5rem;
 }
 /* Histograms & Charts  */
 .column-summary {

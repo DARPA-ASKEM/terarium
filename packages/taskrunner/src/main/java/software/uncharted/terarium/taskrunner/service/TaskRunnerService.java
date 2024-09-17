@@ -1,7 +1,13 @@
 package software.uncharted.terarium.taskrunner.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rabbitmq.client.Channel;
+import jakarta.annotation.PostConstruct;
 import java.io.IOException;
-
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.DirectExchange;
@@ -13,15 +19,6 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rabbitmq.client.Channel;
-
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.taskrunner.configuration.Config;
 import software.uncharted.terarium.taskrunner.models.task.TaskRequest;
 import software.uncharted.terarium.taskrunner.models.task.TaskResponse;
@@ -46,8 +43,11 @@ public class TaskRunnerService {
 	@Value("${terarium.taskrunner.cancellation-exchange}")
 	public String TASK_RUNNER_CANCELLATION_EXCHANGE;
 
-	public void declareAndBindTransientQueueWithRoutingKey(final String exchangeName, final String queueName,
-			final String routingKey) {
+	public void declareAndBindTransientQueueWithRoutingKey(
+		final String exchangeName,
+		final String queueName,
+		final String routingKey
+	) {
 		// Declare a direct exchange
 		final DirectExchange exchange = new DirectExchange(exchangeName, config.getDurableQueues(), false);
 		rabbitAdmin.declareExchange(exchange);
@@ -80,8 +80,10 @@ public class TaskRunnerService {
 		declareQueues();
 	}
 
-	@RabbitListener(queues = {
-			"${terarium.taskrunner.request-queue}-${terarium.taskrunner.request-type}" }, concurrency = "${terarium.taskrunner.request-concurrency}")
+	@RabbitListener(
+		queues = { "${terarium.taskrunner.request-queue}-${terarium.taskrunner.request-type}" },
+		concurrency = "${terarium.taskrunner.request-concurrency}"
+	)
 	void onTaskRequest(final Message message, final Channel channel) throws IOException, InterruptedException {
 		final TaskRequest req = decodeMessage(message, TaskRequest.class);
 		if (req == null) {
@@ -92,9 +94,7 @@ public class TaskRunnerService {
 		dispatchSingleInputSingleOutputTask(req);
 	}
 
-	private void dispatchSingleInputSingleOutputTask(final TaskRequest req)
-			throws IOException, InterruptedException {
-
+	private void dispatchSingleInputSingleOutputTask(final TaskRequest req) throws IOException, InterruptedException {
 		Task task;
 		SimpleMessageListenerContainer cancellationConsumer;
 
@@ -102,7 +102,7 @@ public class TaskRunnerService {
 			// ensure that the cancellation queue exists
 			declareCancellationQueue(req);
 
-			// lets see if its already been cancelled
+			// lets see if the task has already been cancelled
 			final boolean wasCancelled = checkForCancellation(req);
 			if (wasCancelled) {
 				// send cancellation response and return
@@ -145,7 +145,21 @@ public class TaskRunnerService {
 			// write the input to the task
 			task.writeInputWithTimeout(req.getInput(), req.getTimeoutMinutes());
 
-			// block and wait for input
+			while (true) {
+				// block and wait for progress from the task
+				final byte[] output = task.readProgressWithTimeout(req.getTimeoutMinutes());
+				if (output == null) {
+					// no more progress
+					break;
+				}
+
+				final TaskResponse progressResp = task.createResponse(TaskStatus.RUNNING);
+				progressResp.setOutput(output);
+				final String progressJson = mapper.writeValueAsString(progressResp);
+				rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", progressJson);
+			}
+
+			// block and wait for output from the task
 			final byte[] output = task.readOutputWithTimeout(req.getTimeoutMinutes());
 
 			// wait for the process to finish
@@ -155,17 +169,16 @@ public class TaskRunnerService {
 			successResp.setOutput(output);
 			final String successJson = mapper.writeValueAsString(successResp);
 			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", successJson);
-
 		} catch (final Exception e) {
 			if (task.getStatus() == TaskStatus.FAILED) {
 				log.error("Task {} failed", task.getId(), e);
 			} else if (task.getStatus() != TaskStatus.CANCELLED) {
-				// only log exception if it failed
 				log.error("Unexpected failure for task {}", task.getId(), e);
 			}
 
-			final TaskResponse failedResp = task
-					.createResponse(task.getStatus() == TaskStatus.CANCELLED ? TaskStatus.CANCELLED : TaskStatus.FAILED);
+			final TaskResponse failedResp = task.createResponse(
+				task.getStatus() == TaskStatus.CANCELLED ? TaskStatus.CANCELLED : TaskStatus.FAILED
+			);
 			if (task.getStatus() == TaskStatus.FAILED) {
 				// append error
 				failedResp.setOutput(e.getMessage().getBytes());
@@ -200,7 +213,8 @@ public class TaskRunnerService {
 		final String queueName = task.getId().toString();
 
 		final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(
-				rabbitTemplate.getConnectionFactory());
+			rabbitTemplate.getConnectionFactory()
+		);
 		container.setQueueNames(queueName);
 		container.setMessageListener(message -> {
 			try {
@@ -232,12 +246,15 @@ public class TaskRunnerService {
 				log.error("Unable to parse message as {}. Message: {}", clazz.getName(), jsonMessage.toPrettyString());
 				return null;
 			} catch (final Exception e1) {
-				log.error("Error decoding message as either {} or {}. Raw message is: {}", clazz.getName(),
-						JsonNode.class.getName(), message.getBody());
+				log.error(
+					"Error decoding message as either {} or {}. Raw message is: {}",
+					clazz.getName(),
+					JsonNode.class.getName(),
+					message.getBody()
+				);
 				log.error("", e1);
 				return null;
 			}
 		}
 	}
-
 }

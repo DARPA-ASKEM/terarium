@@ -2,17 +2,20 @@ package software.uncharted.terarium.hmiserver.models.dataservice.project;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Lob;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Transient;
 import java.io.Serial;
 import java.sql.Types;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.Where;
@@ -30,10 +33,10 @@ public class Project extends TerariumAsset {
 	@Serial
 	private static final long serialVersionUID = -241733670076432802L;
 
-	@Schema(defaultValue = "My New Project")
-	private String name;
-
 	private String userId;
+
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "default")
+	private String thumbnail;
 
 	@TSOptional
 	@Transient
@@ -46,21 +49,16 @@ public class Project extends TerariumAsset {
 	private List<String> authors;
 
 	@TSOptional
-	@Schema(defaultValue = "My Project Description")
-	private String description;
-
-	@TSOptional
 	@Schema(defaultValue = "My Project Overview")
 	@Lob
 	@JdbcTypeCode(Types.BINARY)
 	private byte[] overviewContent;
 
-	@OneToMany(mappedBy = "project")
+	@OneToMany(mappedBy = "project", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@Where(clause = "deleted_on IS NULL")
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@ToString.Exclude
 	@JsonManagedReference
-	private List<ProjectAsset> projectAssets;
+	private List<ProjectAsset> projectAssets = new ArrayList<>();
 
 	@TSOptional
 	@Transient
@@ -78,4 +76,39 @@ public class Project extends TerariumAsset {
 	@Transient
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private String userPermission;
+
+	public static Project mergeProjectFields(final Project existingProject, final Project project) {
+		// Merge non-transient Project specific fields into the existing project
+		if (project.getName() != null) {
+			existingProject.setName(project.getName());
+		}
+		if (project.getDescription() != null) {
+			existingProject.setDescription(project.getDescription());
+		}
+		if (project.getOverviewContent() != null) {
+			existingProject.setOverviewContent(project.getOverviewContent());
+		}
+		if (project.getThumbnail() != null) {
+			existingProject.setThumbnail(project.getThumbnail());
+		}
+		return existingProject;
+	}
+
+	@Override
+	public Project clone() {
+		final Project cloned = new Project();
+		cloneSuperFields(cloned);
+		cloned.userId = userId;
+		cloned.userName = userName;
+		if (authors != null) {
+			cloned.authors = new ArrayList<>(authors);
+		}
+		cloned.overviewContent = overviewContent;
+		if (metadata != null) {
+			cloned.metadata = new HashMap<>(metadata);
+		}
+		cloned.publicProject = publicProject;
+		cloned.userPermission = userPermission;
+		return cloned;
+	}
 }

@@ -28,19 +28,12 @@
 				severity="primary"
 				@click="stopEvaluationScenario"
 			/>
-			<Button
-				v-else
-				label="Start"
-				rounded
-				size="small"
-				severity="primary"
-				@click="beginEvaluationScenario"
-			/>
+			<Button v-else label="Start" rounded size="small" severity="primary" @click="beginEvaluationScenario" />
 		</aside>
 		<template v-if="active">
 			<a target="_blank" rel="noopener noreferrer" @click="isAboutModalVisible = true">About</a>
 			<a target="_blank" rel="noopener noreferrer" :href="documentation">Documentation</a>
-			<tera-notification-panel v-if="isProjectPage" />
+			<tera-notification-panel />
 
 			<Avatar :label="userInitials" class="avatar m-2" shape="circle" @click="showUserMenu" />
 			<Menu ref="userMenu" :model="userMenuItems" :popup="true" />
@@ -52,146 +45,118 @@
 				</template>
 			</Dialog>
 		</template>
-		<Teleport to="body">
-			<tera-modal
-				v-if="isEvaluationScenarioModalVisible"
-				@modal-mask-clicked="isEvaluationScenarioModalVisible = false"
-				class="evaluation-scenario-modal"
-			>
-				<template #header>
-					<div class="flex w-full justify-content-between align-items-center">
-						<h4>Evaluation scenario</h4>
-						<div>
-							<span class="text-sm">Status</span
-							><span class="ml-2 status-chip">{{
-								evaluationScenarioCurrentStatus ? evaluationScenarioCurrentStatus : 'Ready to start'
-							}}</span>
-						</div>
+		<tera-modal
+			v-if="isEvaluationScenarioModalVisible"
+			@modal-mask-clicked="isEvaluationScenarioModalVisible = false"
+			class="w-7"
+		>
+			<template #header>
+				<div class="flex w-full justify-content-between align-items-center">
+					<h4>Evaluation scenario</h4>
+					<div>
+						<span class="text-sm">Status</span
+						><span class="ml-2 status-chip">{{
+							evaluationScenarioCurrentStatus ? evaluationScenarioCurrentStatus : 'Ready to start'
+						}}</span>
 					</div>
-				</template>
-				<template #default>
-					<form>
-						<label class="text-sm" for="evaluation-scenario-name">Scenario</label>
-						<Dropdown
-							id="evaluation-scenario-name"
-							v-model="evaluationScenario"
-							:options="evalScenarios.scenarios"
-							optionLabel="name"
-							placeholder="Select a Scenario"
-							@change="onScenarioChange"
-						/>
-
-						<label class="text-sm" for="evaluation-scenario-task">Task</label>
-						<Dropdown
-							id="evaluation-scenario-task"
-							:options="evaluationScenario?.questions ?? []"
-							v-model="evaluationScenarioTask"
-							optionLabel="task"
-							placeholder="Select a Task"
-							@change="onTaskChange"
-						/>
-
-						<label class="text-sm" for="evaluation-scenario-description">Description</label>
-						<Textarea
-							id="evaluation-scenario-description"
-							rows="5"
-							v-model="evaluationScenarioDescription"
-							:readonly="true"
-						/>
-
-						<label class="text-sm" for="evaluation-scenario-notes">Notes</label>
-						<Textarea id="evaluation-scenario-notes" rows="5" v-model="evaluationScenarioNotes" />
-
-						<div class="field-checkbox">
-							<Checkbox name="multipleUsers" binary v-model="evaluationScenarioMultipleUsers" />
-							<label for="multipleUsers">Multiple Users</label>
-						</div>
-					</form>
-				</template>
-				<template #footer>
-					<div class="flex gap-2">
-						<Button
-							size="large"
-							class="p-button-danger"
-							v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started"
-							@click="stopEvaluationScenario"
-							>Stop</Button
-						>
-						<!-- sorry for this hackary but I couldn't figure out how to make the opposite logic work -->
-						<div
-							class="hidden"
-							v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started"
-						/>
-						<Button v-else size="large" @click="beginEvaluationScenario">Begin</Button>
-						<Button
-							size="large"
-							class="p-button-secondary"
-							outlined
-							@click="isEvaluationScenarioModalVisible = false"
-							>Close</Button
-						>
-					</div>
-					<div class="align-self-center">
-						<p>Runtime {{ evaluationScenarioRuntimeString }}</p>
-					</div>
-				</template>
-			</tera-modal>
-		</Teleport>
-		<Teleport to="body">
-			<tera-modal
-				v-if="isAboutModalVisible"
-				@modal-mask-clicked="isAboutModalVisible = false"
-				@modal-enter-press="isAboutModalVisible = false"
-				class="about-modal"
-			>
-				<article>
-					<img
-						src="@/assets/svg/terarium-logo.svg"
-						alt="Terarium logo"
-						class="about-terarium-logo"
+				</div>
+			</template>
+			<template #default>
+				<form>
+					<label class="text-sm" for="evaluation-scenario-name">Scenario</label>
+					<Dropdown
+						id="evaluation-scenario-name"
+						v-model="evaluationScenario"
+						:options="evalScenarios.scenarios"
+						optionLabel="name"
+						placeholder="Select a Scenario"
+						@change="onScenarioChange"
 					/>
-					<p class="text-2xl line-height-3 about-top-line">
-						Terarium is a comprehensive <span class="underlined">modeling</span> and
-						<span class="underlined">simulation</span> platform designed to help researchers and
-						analysts:
-					</p>
-					<p class="about-middle">
-						<span class="pi pi-search about-bullet"></span>Find models in academic literature
-					</p>
-					<p class="about-middle">
-						<span class="pi pi-sliders-h about-bullet"></span>Parameterize and calibrate them
-					</p>
-					<p class="about-middle">
-						<span class="pi pi-cog about-bullet"></span>Run simulations to test a variety of
-						scenarios, and
-					</p>
-					<p class="about-middle">
-						<span class="pi pi-chart-line about-bullet"></span>Analyze the results.
-					</p>
-				</article>
-				<article class="about-uncharted-section">
-					<img
-						src="@/assets/svg/uncharted-logo-official.svg"
-						alt="Uncharted Software logo"
-						class="about-uncharted-logo"
+
+					<label class="text-sm" for="evaluation-scenario-task">Task</label>
+					<Dropdown
+						id="evaluation-scenario-task"
+						:options="evaluationScenario?.questions ?? []"
+						v-model="evaluationScenarioTask"
+						optionLabel="task"
+						placeholder="Select a Task"
+						@change="onTaskChange"
 					/>
-					<p class="about-bottom-line text-sm">
-						Uncharted Software provides design, development and consulting services related to data
-						visualization and analysis software.
-					</p>
-				</article>
-				<template #footer>
-					<div class="modal-footer">
-						<p class="text-sm">
-							&copy; Copyright Uncharted Software {{ new Date().getFullYear() }}
-						</p>
-						<Button class="p-button" @click="isAboutModalVisible = false" size="large"
-							>Close</Button
-						>
+
+					<label class="text-sm" for="evaluation-scenario-description">Description</label>
+					<Textarea
+						id="evaluation-scenario-description"
+						rows="5"
+						v-model="evaluationScenarioDescription"
+						:readonly="true"
+					/>
+
+					<label class="text-sm" for="evaluation-scenario-notes">Notes</label>
+					<Textarea id="evaluation-scenario-notes" rows="5" v-model="evaluationScenarioNotes" />
+
+					<div class="field-checkbox">
+						<Checkbox name="multipleUsers" binary v-model="evaluationScenarioMultipleUsers" />
+						<label for="multipleUsers">Multiple Users</label>
 					</div>
-				</template>
-			</tera-modal>
-		</Teleport>
+				</form>
+			</template>
+			<template #footer>
+				<div class="flex gap-2">
+					<Button
+						size="large"
+						class="p-button-danger"
+						v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started"
+						@click="stopEvaluationScenario"
+						>Stop</Button
+					>
+					<!-- sorry for this hackary but I couldn't figure out how to make the opposite logic work -->
+					<div class="hidden" v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started" />
+					<Button v-else size="large" @click="beginEvaluationScenario">Begin</Button>
+					<Button size="large" class="p-button-secondary" outlined @click="isEvaluationScenarioModalVisible = false"
+						>Close</Button
+					>
+				</div>
+				<div class="align-self-center">
+					<p>Runtime {{ evaluationScenarioRuntimeString }}</p>
+				</div>
+			</template>
+		</tera-modal>
+		<tera-modal
+			v-if="isAboutModalVisible"
+			@modal-mask-clicked="isAboutModalVisible = false"
+			@modal-enter-press="isAboutModalVisible = false"
+		>
+			<article>
+				<img src="@/assets/svg/terarium-logo.svg" alt="Terarium logo" class="about-terarium-logo" />
+				<p class="text-2xl line-height-3 about-top-line">
+					Terarium is a comprehensive <span class="underlined">modeling</span> and
+					<span class="underlined">simulation</span> platform designed to help researchers and analysts:
+				</p>
+				<p class="about-middle"><span class="pi pi-search about-bullet"></span>Find models in academic literature</p>
+				<p class="about-middle"><span class="pi pi-sliders-h about-bullet"></span>Parameterize and calibrate them</p>
+				<p class="about-middle">
+					<span class="pi pi-cog about-bullet"></span>Run simulations to test a variety of scenarios, and
+				</p>
+				<p class="about-middle"><span class="pi pi-chart-line about-bullet"></span>Analyze the results.</p>
+			</article>
+			<article class="about-uncharted-section">
+				<img
+					src="@/assets/svg/uncharted-logo-official.svg"
+					alt="Uncharted Software logo"
+					class="about-uncharted-logo"
+				/>
+				<p class="about-bottom-line text-sm">
+					Uncharted Software provides design, development and consulting services related to data visualization and
+					analysis software.
+				</p>
+			</article>
+			<template #footer>
+				<div class="modal-footer">
+					<p class="text-sm">&copy; Copyright Uncharted Software {{ new Date().getFullYear() }}</p>
+					<Button class="p-button" @click="isAboutModalVisible = false" size="large">Close</Button>
+				</div>
+			</template>
+		</tera-modal>
 	</nav>
 </template>
 
@@ -203,8 +168,8 @@ import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import Menu from 'primevue/menu';
 import { MenuItem } from 'primevue/menuitem';
-import { RoutePath, useCurrentRoute } from '@/router/index';
-import { RouteMetadata, RouteName } from '@/router/routes';
+import { RoutePath } from '@/router/index';
+import { RouteName } from '@/router/routes';
 import useAuthStore from '@/stores/auth';
 import SplitButton from 'primevue/splitbutton';
 import TeraModal from '@/components/widgets/tera-modal.vue';
@@ -213,6 +178,7 @@ import Textarea from 'primevue/textarea';
 import * as EventService from '@/services/event';
 import { EvaluationScenarioStatus, EventType } from '@/types/Types';
 import API from '@/api/api';
+import { sortBy, orderBy, remove } from 'lodash';
 import { useProjects } from '@/composables/project';
 import { ProjectPages } from '@/types/Project';
 import { EvalScenario, Question, Scenario } from '@/types/EvalScenario';
@@ -232,9 +198,6 @@ const isAboutModalVisible = ref(false);
 const router = useRouter();
 
 const menuLabel = computed(() => {
-	if (isDataExplorer.value) {
-		return 'Explorer';
-	}
 	if (useProjects().activeProject.value) {
 		return useProjects().activeProject.value?.name;
 	}
@@ -251,18 +214,14 @@ const evaluationScenarioTask: Ref<Question> = ref(evaluationScenario.value.quest
 const evaluationScenarioDescription: Ref<string> = ref(evaluationScenarioTask.value.description);
 const evaluationScenarioMultipleUsers: Ref<boolean> = ref(true);
 const evaluationScenarioNotes = ref('');
-const evaluationScenarioCurrentStatus: Ref<EvaluationScenarioStatus> = ref(
-	EvaluationScenarioStatus.Stopped
-);
+const evaluationScenarioCurrentStatus: Ref<EvaluationScenarioStatus> = ref(EvaluationScenarioStatus.Stopped);
 const evaluationScenarioRuntimeMillis = ref(0);
 let intervalId: number;
 
 const evaluationScenarioRuntimeString = computed(() => {
 	const h = Math.floor(evaluationScenarioRuntimeMillis.value / 1000 / 60 / 60);
 	const m = Math.floor((evaluationScenarioRuntimeMillis.value / 1000 / 60 / 60 - h) * 60);
-	const s = Math.floor(
-		((evaluationScenarioRuntimeMillis.value / 1000 / 60 / 60 - h) * 60 - m) * 60
-	);
+	const s = Math.floor(((evaluationScenarioRuntimeMillis.value / 1000 / 60 / 60 - h) * 60 - m) * 60);
 	const hS = h < 10 ? `0${h}` : `${h}`;
 	const mS = m < 10 ? `0${m}` : `${m}`;
 	const sS = s < 10 ? `0${s}` : `${s}`;
@@ -334,10 +293,7 @@ const persistEvaluationScenario = () => {
 	window.localStorage.setItem('evaluationScenarioTask', evaluationScenarioTask.value.task);
 	window.localStorage.setItem('evaluationScenarioDescription', evaluationScenarioDescription.value);
 	window.localStorage.setItem('evaluationScenarioNotes', evaluationScenarioNotes.value);
-	window.localStorage.setItem(
-		'evaluationScenarioMultipleUsers',
-		evaluationScenarioMultipleUsers.value.toString()
-	);
+	window.localStorage.setItem('evaluationScenarioMultipleUsers', evaluationScenarioMultipleUsers.value.toString());
 };
 
 const refreshEvaluationScenario = async () => {
@@ -352,9 +308,7 @@ const refreshEvaluationScenario = async () => {
 
 const loadEvaluationScenario = async () => {
 	const scenarioName = window.localStorage.getItem('evaluationScenarioName');
-	const scenarioIndex = scenarioName
-		? evalScenarios.value.scenarios.findIndex((s) => s.name === scenarioName)
-		: 0;
+	const scenarioIndex = scenarioName ? evalScenarios.value.scenarios.findIndex((s) => s.name === scenarioName) : 0;
 	evaluationScenario.value = evalScenarios.value.scenarios[scenarioIndex];
 
 	const taskName = window.localStorage.getItem('evaluationScenarioTask');
@@ -367,8 +321,7 @@ const loadEvaluationScenario = async () => {
 
 	evaluationScenarioDescription.value = evaluationScenarioTask.value.description;
 	evaluationScenarioNotes.value = window.localStorage.getItem('evaluationScenarioNotes') || '';
-	evaluationScenarioMultipleUsers.value =
-		window.localStorage.getItem('evaluationScenarioMultipleUsers') !== 'false';
+	evaluationScenarioMultipleUsers.value = window.localStorage.getItem('evaluationScenarioMultipleUsers') !== 'false';
 
 	if (evaluationScenario.value) {
 		await refreshEvaluationScenario();
@@ -398,19 +351,11 @@ const clearEvaluationScenario = () => {
 };
 
 const homeItem: MenuItem = {
-	label: RouteMetadata[RouteName.Home].displayName,
-	icon: RouteMetadata[RouteName.Home].icon,
+	label: 'Home',
+	icon: 'pi pi-home',
 	command: () => router.push(RoutePath.Home)
 };
-const explorerItem: MenuItem = {
-	label: RouteMetadata[RouteName.DataExplorer].displayName,
-	icon: RouteMetadata[RouteName.DataExplorer].icon,
-	command: () => router.push(RoutePath.DataExplorer)
-};
-const navMenuItems = ref<MenuItem[]>([homeItem, explorerItem]);
-const currentRoute = useCurrentRoute();
-const isDataExplorer = computed(() => currentRoute.value.name === RouteName.DataExplorer);
-const isProjectPage = computed(() => currentRoute.value.name === RouteName.Project);
+const navMenuItems = ref<MenuItem[]>([homeItem]);
 
 /*
  * User Menu
@@ -461,22 +406,31 @@ function closeLogoutDialog() {
 	isLogoutDialog.value = false;
 }
 
+function getNavMenuItem(project) {
+	return {
+		label: project.name,
+		icon: 'pi pi-folder',
+		command: () =>
+			router.push({
+				name: RouteName.Project,
+				params: { projectId: project.id, pageType: ProjectPages.OVERVIEW }
+			})
+	};
+}
+
 watch(
 	() => useProjects().allProjects.value,
 	() => {
 		const items: MenuItem[] = [];
-		useProjects().allProjects.value?.forEach((project) => {
-			items.push({
-				label: project.name,
-				icon: 'pi pi-folder',
-				command: () =>
-					router.push({
-						name: RouteName.Project,
-						params: { projectId: project.id, pageType: ProjectPages.OVERVIEW }
-					})
-			});
-		});
-		navMenuItems.value = [homeItem, explorerItem, ...items];
+		const lastProjectUpdated = orderBy(useProjects().allProjects.value, ['updatedOn'], ['desc'])[0];
+		useProjects().allProjects.value?.forEach((project) => items.push(getNavMenuItem(project)));
+
+		const removedUpdatedProject = remove(items, (item) => item.label === lastProjectUpdated?.name);
+		navMenuItems.value = [
+			homeItem,
+			...removedUpdatedProject,
+			...sortBy(items, (item) => item.label?.toString().toLowerCase())
+		];
 	},
 	{ immediate: true }
 );
@@ -533,6 +487,11 @@ nav {
 	border-bottom-right-radius: 0;
 	border-right: 0 none;
 	color: var(--text-color);
+	pointer-events: none;
+}
+
+:deep(.p-splitbutton.p-button-outlined > .p-button) {
+	box-shadow: var(--surface-400) 0 0 0 1px inset;
 }
 
 :deep(.layout-project-selection.p-splitbutton .p-button:last-of-type) {
@@ -547,10 +506,6 @@ nav {
 		background-color: var(--surface-50);
 		color: var(--text-color);
 	}
-}
-
-.about-modal {
-	max-width: 800px;
 }
 
 .modal-footer {
@@ -620,10 +575,6 @@ nav {
 	}
 }
 
-.about-modal {
-	max-width: 800px;
-}
-
 .about-uncharted-logo {
 	width: 8rem;
 	margin-bottom: 0.5rem;
@@ -639,10 +590,6 @@ nav {
 	justify-content: space-between;
 	width: 100%;
 	color: var(--text-color-subdued);
-}
-
-.evaluation-scenario-modal:deep(section) {
-	width: 60vw;
 }
 
 .evaluation-scenario-modal:deep(footer) {

@@ -15,6 +15,11 @@ on:
       - 'packages/client/**'
 
 jobs:
+  lint-client:
+    name: Lint and format client
+    uses: ./.github/workflows/lint-client.yaml
+
   unit-tests:
     name: Client Unit Tests
+    needs: lint-client
     uses: ./.github/workflows/test-client-unit.yaml

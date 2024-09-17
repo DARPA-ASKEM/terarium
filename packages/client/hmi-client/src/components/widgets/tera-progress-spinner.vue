@@ -27,6 +27,10 @@ p.inline {
 	display: inline;
 }
 
+p:not(.inline) {
+	margin-top: var(--gap-small);
+}
+
 .center {
 	display: flex;
 	flex: 1;

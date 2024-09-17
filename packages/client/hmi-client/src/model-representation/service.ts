@@ -1,11 +1,12 @@
-import _ from 'lodash';
+import _, { isEmpty } from 'lodash';
 import { runDagreLayout } from '@/services/graph';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
-import type { Initial, Model, ModelParameter } from '@/types/Types';
+import type { Initial, Model, ModelParameter, State, RegNetVertex, Transition, Rate } from '@/types/Types';
 import { getModelType } from '@/services/model';
 import { AMRSchemaNames } from '@/types/common';
+import { parseCurie } from '@/services/concept';
 import { NestedPetrinetRenderer } from './petrinet/nested-petrinet-renderer';
 import { isStratifiedModel, getContextKeys, collapseTemplates } from './mira/mira';
 import { extractTemplateMatrix } from './mira/mira-util';
@@ -28,68 +29,6 @@ export const getVariable = (miraModel: MiraModel, variableName: string) => {
 		};
 	}
 	throw new Error(`${variableName} not found`);
-};
-
-export const updateVariable = (
-	amr: Model,
-	variableType: string,
-	variableName: string,
-	value: any,
-	valueMathML: string
-) => {
-	const schemaName = amr.header.schema_name;
-	console.log('updating regnet variable', variableName, schemaName);
-
-	// ======== PETRINET =======
-	if (schemaName === 'petrinet' && amr.semantics?.ode) {
-		const ode = amr.semantics.ode;
-
-		if (variableType === 'initials') {
-			const obj = ode.initials?.find((d) => d.target === variableName);
-			if (obj) {
-				obj.expression = value;
-				obj.expression_mathml = valueMathML;
-			}
-		}
-		if (variableType === 'parameters') {
-			const obj = ode.parameters?.find((d) => d.id === variableName);
-			if (obj) {
-				obj.value = +value;
-			}
-		}
-		if (variableType === 'rates') {
-			const obj = ode.rates?.find((d) => d.target === variableName);
-			if (obj) {
-				obj.expression = value;
-				obj.expression_mathml = valueMathML;
-			}
-		}
-	}
-
-	// ======== REGNET =======
-	if (schemaName === 'regnet') {
-		if (variableType === 'initials') {
-			const obj = amr.model.vertices.find((d) => d.id === variableName);
-			if (obj) {
-				obj.initial = value;
-			}
-		}
-		if (variableType === 'parameters') {
-			const obj = amr.model.parameters.find((d) => d.id === variableName);
-			if (obj) {
-				obj.value = value;
-			}
-		}
-		if (variableType === 'rates') {
-			const obj = amr.semantics?.ode.rates.find((d) => d.target === variableName);
-			if (obj) {
-				obj.expression = value;
-				obj.expression_mathml = valueMathML;
-			}
-		}
-	}
-
-	// FIXME: stocknflow
 };
 
 export const getModelRenderer = (
@@ -138,6 +77,8 @@ export const getModelRenderer = (
 			el: graphElement,
 			useAStarRouting: false,
 			useStableZoomPan: true,
+			zoomModifier: 'ctrlKey',
+			zoomRange: [0.1, 30],
 			runLayout: runDagreLayout,
 			dims,
 			nestedMap,
@@ -149,6 +90,7 @@ export const getModelRenderer = (
 		el: graphElement,
 		useAStarRouting: false,
 		useStableZoomPan: true,
+		zoomModifier: 'ctrlKey',
 		runLayout: runDagreLayout,
 		dragSelector: 'no-drag'
 	});
@@ -189,24 +131,101 @@ export function getParameter(model: Model, parameterId: string): ModelParameter 
 	}
 }
 
-/**
- * Retrieves the metadata for a specific initial in the model.
- * @param {Model} model - The model object.
- * @param {string} initialId - The ID of the initial.
- * @returns {any} - The metadata for the specified initial or undefined if not found.
- */
-export function getInitialMetadata(model: Model, parameterId: string) {
-	return model.metadata?.initials?.[parameterId];
+export function updateModelPartProperty(modelPart: any, key: string, value: any) {
+	if (key === 'unitExpression') {
+		if (isEmpty(value)) {
+			console.warn(`Invalid value setting ${modelPart}[${key}]`);
+			return;
+		}
+
+		if (!modelPart.units) modelPart.units = { expression: '', expression_mathml: '' };
+		modelPart.units.expression = value;
+		modelPart.units.expression_mathml = `<ci>${value}</ci>`;
+	} else if (key === 'concept') {
+		if (!modelPart.grounding?.identifiers) modelPart.grounding = { identifiers: {}, modifiers: {} };
+		modelPart.grounding.identifiers = parseCurie(value);
+	} else {
+		modelPart[key] = value;
+	}
+}
+
+export function updateParameter(model: Model, id: string, key: string, value: any) {
+	const parameters = getParameters(model);
+	const parameter = parameters.find((p: ModelParameter) => p.id === id);
+	if (!parameter) return;
+	updateModelPartProperty(parameter, key, value);
+
+	// FIXME: (For stockflow) Sometimes auxiliaries can share the same ids as parameters so for now both are be updated in that case
+	const auxiliaries = model.model?.auxiliaries ?? [];
+	const auxiliary = auxiliaries.find((a) => a.id === id);
+	if (!auxiliary) return;
+	updateModelPartProperty(auxiliary, key, value);
+}
+
+export function updateState(model: Model, id: string, key: string, value: any) {
+	const states = getStates(model);
+	const state = states.find((i: any) => i.id === id);
+	if (!state) return;
+	updateModelPartProperty(state, key, value);
+}
+
+export function updateObservable(model: Model, id: string, key: string, value: any) {
+	const observables = model?.semantics?.ode?.observables ?? [];
+	const observable = observables.find((o) => o.id === id);
+	if (!observable) return;
+	updateModelPartProperty(observable, key, value);
+}
+
+export function updateTransition(model: Model, id: string, key: string, value: any) {
+	const transitions: Transition[] = model?.model?.transitions ?? [];
+	const transition = transitions.find((t) => t.id === id);
+	if (!transition) return;
+	if (transition.properties && key === 'name') {
+		transition.properties.name = value;
+	}
+	updateModelPartProperty(transition, key, value);
+}
+
+export function updateTime(model: Model, key: string, value: any) {
+	const time: State = model?.semantics?.ode?.time;
+	updateModelPartProperty(time, key, value);
+}
+
+// Gets states, vertices, stocks (no stock type yet)
+export function getStates(model: Model): (State & RegNetVertex)[] {
+	const modelType = getModelType(model);
+	switch (modelType) {
+		case AMRSchemaNames.REGNET:
+			return model.model?.vertices ?? [];
+		case AMRSchemaNames.PETRINET:
+			return model.model?.states ?? [];
+		case AMRSchemaNames.STOCKFLOW:
+			return model.model?.stocks ?? [];
+		default:
+			return [];
+	}
 }
 
 /**
- * Retrieves the metadata for a specific parameter in the model.
+ * Retrieves the metadata for a specific initial in the model.
  * @param {Model} model - The model object.
- * @param {string} parameterId - The ID of the parameter.
- * @returns {any} - The metadata for the specified parameter or undefined if not found.
+ * @param {string} target - The target of the initial.
+ * @returns {any} - The metadata for the specified initial or undefined if not found.
  */
-export function getParameterMetadata(model: Model, parameterId: string) {
-	return model.metadata?.parameters?.[parameterId];
+export function getInitialMetadata(model: Model, target: string) {
+	return model.metadata?.initials?.[target];
+}
+
+export function getInitialName(model: Model, target: string): string {
+	return model.model.states.find((s) => s.id === target)?.name ?? '';
+}
+
+export function getInitialDescription(model: Model, target: string): string {
+	return model.model.states.find((s) => s.id === target)?.description ?? '';
+}
+
+export function getInitialUnits(model: Model, target: string): string {
+	return model.model.states.find((s) => s.id === target)?.units?.expression ?? '';
 }
 
 /**
@@ -226,97 +245,113 @@ export function getInitials(model: Model): Initial[] {
 	}
 }
 
+export function isModelMissingMetadata(model: Model): boolean {
+	const parameters: ModelParameter[] = getParameters(model);
+	const initials: Initial[] = getInitials(model);
+
+	const initialsCheck = initials.some((i) => {
+		const initialMetadata = getInitialMetadata(model, i.target);
+		return !initialMetadata?.name || !initialMetadata?.description || !initialMetadata?.units;
+	});
+
+	const parametersCheck = parameters.some((p) => !p.name || !p.description || !p.units?.expression);
+	return initialsCheck || parametersCheck;
+}
+
 /**
- * Returns the model initial with the specified ID.
- * @param {Model} model - The model object.
- * @param {string} initialId - The ID of the initial.
- * @returns {Initial | null} - The model initial or null if not found.
- */
-export function getInitial(model: Model, initialId: string): Initial | undefined {
-	const modelType = getModelType(model);
-	switch (modelType) {
-		case AMRSchemaNames.REGNET:
-			return model.model?.vertices.find((i) => i.id === initialId);
-		case AMRSchemaNames.PETRINET:
-		case AMRSchemaNames.STOCKFLOW:
-		default:
-			return model.semantics?.ode?.initials?.find((i) => i.target === initialId);
+ * Sanity check Petrinet AMR, returns a list of discovered faults
+ * - Check various arrays match up in lengths
+ * - Check states make sense
+ * - Check transitions make sense
+ * */
+export function checkPetrinetAMR(amr: Model) {
+	function isASCII(str: string) {
+		// eslint-disable-next-line
+		return /^[\x00-\x7F]*$/.test(str);
 	}
-}
 
-/**
- * Returns the timeseries for the specified semantic ID.
- * @param {Model} model - The model object.
- * @param {string} semanticId - The semantic ID.
- * @returns {any} - The timeseries.
- */
-export function getTimeseries(model: Model, semanticId: string) {
-	return model.metadata?.timeseries?.[semanticId];
-}
+	const results: { type: string; content: string }[] = [];
+	const model = amr.model;
+	const ode = amr.semantics?.ode;
 
-/**
- * Updates the metadata for a specific parameter in the model.
- * @param {Model} model - The model object.
- * @param {string} parameterId - The ID of the parameter.
- * @param {string} metadataKey - The key of the metadata to update.
- * @param {any} value - The new value for the metadata.
- */
-export function updateParameterMetadata(
-	model: Model,
-	parameterId: string,
-	metadataKey: string,
-	value: any
-) {
-	if (!model.metadata?.parameters?.[parameterId]) {
-		model.metadata ??= {};
-		model.metadata.parameters ??= {};
-		model.metadata.parameters[parameterId] ??= {};
+	const numStates = model.states.length;
+	const numTransitions = model.transitions.length;
+	const numInitials = ode?.initials?.length || 0;
+	const numRates = ode?.rates?.length || 0;
+
+	if (numStates === 0) {
+		results.push({ type: 'warn', content: 'zero states' });
 	}
-	model.metadata.parameters[parameterId][metadataKey] = value;
-}
 
-/**
- * Updates the metadata for a specific initial in the model.
- * @param {Model} model - The model object.
- * @param {string} initialId - The ID of the initial.
- * @param {string} metadataKey - The key of the metadata to update.
- * @param {any} value - The new value for the metadata.
- */
-export function updateInitialMetadata(
-	model: Model,
-	initialId: string,
-	metadataKey: string,
-	value: any
-) {
-	if (!model.metadata?.initials?.[initialId]) {
-		model.metadata ??= {};
-		model.metadata.initials ??= {};
-		model.metadata.initials[initialId] ??= {};
+	if (numTransitions === 0) {
+		results.push({ type: 'warn', content: 'zero transitions' });
 	}
-	model.metadata.initials[initialId][metadataKey] = value;
-}
 
-/**
- * Validates the time series values.
- * @param {string} values - The time series values.
- * @returns {boolean} - True if the values are valid, false otherwise.
- */
-export function validateTimeSeries(values: string) {
-	const isPairValid = (pair: string): boolean => /^\d+:\d+(\.\d+)?$/.test(pair.trim());
-	const isValid = values.split(',').every(isPairValid);
-	return isValid;
-}
-
-export function setParameters(model: Model, parameters: ModelParameter[]) {
-	const modelType = getModelType(model);
-	switch (modelType) {
-		case AMRSchemaNames.REGNET:
-			model.model.parameters = parameters;
-			break;
-		case AMRSchemaNames.PETRINET:
-		case AMRSchemaNames.STOCKFLOW:
-		default:
-			if (model.semantics) model.semantics.ode.parameters = parameters;
-			break;
+	if (numStates !== numInitials) {
+		results.push({ type: 'error', content: 'states need to match initials' });
 	}
+	if (numRates !== numTransitions) {
+		results.push({ type: 'error', content: 'transitions need to match rates' });
+	}
+
+	// Build cache
+	const initialMap: Map<string, Initial> = new Map();
+	const rateMap: Map<string, Rate> = new Map();
+
+	ode?.initials?.forEach((initial) => {
+		initialMap.set(initial.target, initial);
+	});
+	ode?.rates?.forEach((rate) => {
+		rateMap.set(rate.target, rate);
+	});
+
+	// Check state
+	const stateSet = new Set<string>();
+	const initialSet = new Set<string>();
+	model.states.forEach((state) => {
+		const initial = initialMap.get(state.id);
+		if (!initial) {
+			results.push({ type: 'error', content: `${state.id} has no initial` });
+		}
+		if (_.isEmpty(initial?.expression)) {
+			results.push({ type: 'warn', content: `${state.id} has no initial.expression` });
+		}
+		if (!isASCII(initial?.expression as string)) {
+			results.push({ type: 'warn', content: `${state.id} has non-ascii expression` });
+		}
+		if (stateSet.has(state.id)) {
+			results.push({ type: 'error', content: `state (${state.id}) has duplicate` });
+		}
+		if (initialSet.has(initial?.target as string)) {
+			results.push({ type: 'error', content: `initial (${initial?.target}) has duplicate` });
+		}
+		stateSet.add(state.id);
+		initialSet.add(initial?.target as string);
+	});
+
+	// Check transitions
+	const transitionSet = new Set<string>();
+	const rateSet = new Set<string>();
+	model.transitions.forEach((transition) => {
+		const rate = rateMap.get(transition.id);
+		if (!rate) {
+			results.push({ type: 'error', content: `${transition.id} has no rate` });
+		}
+		if (_.isEmpty(rate?.expression)) {
+			results.push({ type: 'warn', content: `${transition.id} has no rate.expression` });
+		}
+		if (!isASCII(rate?.expression as string)) {
+			results.push({ type: 'warn', content: `${transition.id} has non-ascii expression` });
+		}
+		if (transitionSet.has(transition.id)) {
+			results.push({ type: 'error', content: `transition (${transition.id}) has duplicate` });
+		}
+		if (rateSet.has(rate?.target as string)) {
+			results.push({ type: 'error', content: `rate (${rate?.target}) has duplicate` });
+		}
+		transitionSet.add(transition.id);
+		rateSet.add(rate?.target as string);
+	});
+
+	return results;
 }

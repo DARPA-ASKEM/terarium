@@ -6,18 +6,16 @@
 	Using the resource store for project data is no longer needed.
 */
 
-import { computed, shallowRef } from 'vue';
+import { activeProject, activeProjectId } from '@/composables/activeProject';
 import * as ProjectService from '@/services/project';
 import type { PermissionRelationships, Project, ProjectAsset } from '@/types/Types';
 import { AssetType } from '@/types/Types';
-import useAuthStore from '@/stores/auth';
+import { shallowRef } from 'vue';
 
 const TIMEOUT_MS = 100;
 
-const activeProject = shallowRef<Project | null>(null);
 const projectLoading = shallowRef<boolean>(false);
 const allProjects = shallowRef<Project[] | null>(null);
-const activeProjectId = computed<string>(() => activeProject.value?.id ?? '');
 
 export function useProjects() {
 	/**
@@ -55,14 +53,21 @@ export function useProjects() {
 	}
 
 	/**
+	 * Return Active Project Name or empty string
+	 * @returns string
+	 */
+	function getActiveProjectName() {
+		return activeProject.value?.name ?? '';
+	}
+
+	/**
 	 * Return all the asset of a certain AssetType from the active project.
 	 * @param assetType
 	 * @returns ProjectAsset[]
 	 */
 	function getActiveProjectAssets(assetType: AssetType) {
 		return (
-			activeProject.value?.projectAssets.filter((asset) => asset.assetType === assetType) ??
-			([] as ProjectAsset[])
+			activeProject.value?.projectAssets.filter((asset) => asset.assetType === assetType) ?? ([] as ProjectAsset[])
 		);
 	}
 
@@ -70,22 +75,18 @@ export function useProjects() {
 	 * If `projectId` is defined, add an asset to that project.
 	 * Otherwise, add an asset to the active project and refresh it.
 	 *
-	 * @param {string} assetType Type of asset to be added, e.g., 'documents'.
+	 * @param {AssetType} assetType Type of asset to be added, e.g., 'documents'.
 	 * @param {string} assetId Id of the asset to be added. This will be the internal id of some asset stored in one of the data service collections.
 	 * @param {Project['id']} [projectId] Id of the project to add the asset to.
 	 * @returns {Promise<string|null>} Id of the added asset, if successful. Null, otherwise.
 	 */
 	async function addAsset(
-		assetType: string,
+		assetType: AssetType,
 		assetId: ProjectAsset['id'],
 		projectId?: Project['id']
 	): Promise<ProjectAsset['id']> {
 		if (!assetId) return undefined;
-		const newAssetId = await ProjectService.addAsset(
-			projectId ?? activeProjectId.value,
-			assetType,
-			assetId
-		);
+		const newAssetId = await ProjectService.addAsset(projectId ?? activeProjectId.value, assetType, assetId);
 		if (!projectId || projectId === activeProjectId.value) {
 			setTimeout(async () => {
 				activeProject.value = await ProjectService.get(activeProjectId.value);
@@ -100,10 +101,7 @@ export function useProjects() {
 	 * @returns {ProjectAsset | undefined}
 	 */
 	function findAsset(assetId: ProjectAsset['assetId']): ProjectAsset | undefined {
-		const asset = activeProject.value?.projectAssets.find(
-			(projectAsset) => projectAsset.assetId === assetId
-		);
-		return asset;
+		return activeProject.value?.projectAssets.find((projectAsset) => projectAsset.assetId === assetId);
 	}
 
 	/**
@@ -126,11 +124,7 @@ export function useProjects() {
 	 * @returns {Promise<boolean>} True if the asset was successfully deleted. False, otherwise.
 	 */
 	async function deleteAsset(assetType: AssetType, assetId: string, projectId?: Project['id']) {
-		const deleted = await ProjectService.deleteAsset(
-			projectId ?? activeProjectId.value,
-			assetType,
-			assetId
-		);
+		const deleted = await ProjectService.deleteAsset(projectId ?? activeProjectId.value, assetType, assetId);
 		if (!projectId || projectId === activeProjectId.value) {
 			setTimeout(async () => {
 				activeProject.value = await ProjectService.get(activeProjectId.value);
@@ -144,11 +138,11 @@ export function useProjects() {
 	 *
 	 * @param {string} name Name of the project.
 	 * @param {string} description Short description.
-	 * @param {string} userId ID of the owner of the project.
+	 * @param {string=default} thumbnail Thumbnail of the project.
 	 * @returns {Promise<Project|null>} The created project, or null if none returned by the API.
 	 */
-	async function create(name: string, description: string, userId: string) {
-		const created = await ProjectService.create(name, description, userId);
+	async function create(name: string, description: string, thumbnail = 'default') {
+		const created = await ProjectService.create(name, description, thumbnail);
 		setTimeout(async () => {
 			getAll();
 		}, TIMEOUT_MS);
@@ -222,44 +216,29 @@ export function useProjects() {
 		return ProjectService.removePermissions(projectId, userId, relationship);
 	}
 
-	async function updatePermissions(
-		projectId: Project['id'],
-		userId: string,
-		oldRelationship: string,
-		to: string
-	) {
+	async function updatePermissions(projectId: Project['id'], userId: string, oldRelationship: string, to: string) {
 		return ProjectService.updatePermissions(projectId, userId, oldRelationship, to);
 	}
 
-	async function clone(projectId: Project['id']) {
-		const userId = useAuthStore().user?.id;
-		if (!userId) {
+	async function clone(id: Project['id']): Promise<Project | null> {
+		const cloned = await ProjectService.clone(id);
+		if (!cloned || !cloned.id) {
 			return null;
 		}
-		const projectToClone = await ProjectService.get(projectId);
-		if (!projectToClone) {
-			return null;
+		return cloned;
+	}
+
+	function hasEditPermission() {
+		const project = useProjects().activeProject.value;
+		if (project != null && ['creator', 'writer'].includes(project.userPermission ?? '')) {
+			return true;
 		}
-		const created = await ProjectService.create(
-			`Copy of ${projectToClone.name}`,
-			projectToClone.description,
-			userId
-		);
-		if (!created || !created.id) {
-			return null;
-		}
-		// There doesn't seem to be a way to add multiple assets in one call yet
-		// Object.entries(projectToClone.assets).forEach(async (projectAsset) => {
-		// 	const [assetType, assets] = projectAsset;
-		// 	if (assets.length) {
-		// 		await Promise.all(
-		// 			assets.map(async (asset) => {
-		// 				await ProjectService.addAsset(created.id!, assetType, asset.id);
-		// 			})
-		// 		);
-		// 	}
-		// });
-		return created;
+		console.warn('User has no edit permissions');
+		return false;
+	}
+
+	function hasAssetInActiveProject(id: string) {
+		return useProjects().activeProject.value?.projectAssets?.some((asset) => asset.assetId === id);
 	}
 
 	return {
@@ -270,6 +249,7 @@ export function useProjects() {
 		get,
 		getAll,
 		getActiveProjectAssets,
+		getActiveProjectName,
 		addAsset,
 		findAsset,
 		getAssetName,
@@ -280,6 +260,8 @@ export function useProjects() {
 		refresh,
 		setAccessibility,
 		getPermissions,
+		hasAssetInActiveProject,
+		hasEditPermission,
 		setPermissions,
 		removePermissions,
 		updatePermissions,

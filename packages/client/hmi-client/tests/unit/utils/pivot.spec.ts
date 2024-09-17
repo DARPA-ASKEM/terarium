@@ -8,11 +8,7 @@ const data: any[] = [
 	{ fruit: ['grape'], location: ['L1'] }
 ];
 
-const data2: any[] = [
-	{ fruit: ['apple', 'apple'] },
-	{ fruit: ['pear', 'pear'] },
-	{ fruit: ['orange', 'orange'] }
-];
+const data2: any[] = [{ fruit: ['apple', 'apple'] }, { fruit: ['pear', 'pear'] }, { fruit: ['orange', 'orange'] }];
 
 const data3: any[] = [{ fruit: ['apple', 'pear'] }, { fruit: ['apple', 'orange'] }];
 

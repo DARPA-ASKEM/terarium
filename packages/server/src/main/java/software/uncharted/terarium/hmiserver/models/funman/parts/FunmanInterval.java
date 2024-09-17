@@ -9,6 +9,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @Accessors(chain = true)
 @TSModel
 public class FunmanInterval {
+
 	@TSOptional
 	/** Upper bound * */
 	private Double ub;

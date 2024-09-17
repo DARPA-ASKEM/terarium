@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.service.tasks;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,14 +51,13 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateEchoTaskRequest() throws Exception {
-
 		final String additionalProps = "These are additional properties";
 
-		final byte[] input = "{\"input\":\"This is my input string\"}".getBytes();
+		final byte[] input = "{\"input\":\"This is my input string\",\"include_progress\":true}".getBytes();
 
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
-		req.setScript("/echo.py");
+		req.setScript("echo.py");
 		req.setInput(input);
 		req.setAdditionalProperties(additionalProps);
 
@@ -66,7 +66,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		Assertions.assertEquals(additionalProps, resp.getAdditionalProperties(String.class));
 	}
 
-	private String generateRandomString(final int length) {
+	private static String generateRandomString(final int length) {
 		final String characterSet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 		final Random random = new Random();
 		final StringBuilder builder = new StringBuilder(length);
@@ -82,16 +82,16 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateLargeEchoTaskRequest() throws Exception {
-
 		final String additionalProps = "These are additional properties";
 
 		final int STRING_LENGTH = 1048576;
 
-		final byte[] input = ("{\"input\":\"" + generateRandomString(STRING_LENGTH) + "\"}").getBytes();
+		final byte[] input =
+			("{\"input\":\"" + generateRandomString(STRING_LENGTH) + "\",\"include_progress\":true}").getBytes();
 
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
-		req.setScript("/echo.py");
+		req.setScript("echo.py");
 		req.setInput(input);
 		req.setAdditionalProperties(additionalProps);
 
@@ -103,21 +103,44 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendGoLLMModelCardRequest() throws Exception {
-
 		final ClassPathResource resource = new ClassPathResource("gollm/test_input.json");
 		final String content = new String(Files.readAllBytes(resource.getFile().toPath()));
 
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
-		req.setScript("gollm:model_card");
+		req.setScript("gollm_task:model_card");
 		req.setInput(content.getBytes());
 
-		final TaskResponse resp = taskService.runTaskSync(req, 300);
+		final TaskResponse resp = taskService.runTaskSync(req);
+
+		log.info(new String(resp.getOutput()));
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendGoLLMEnrichAMRRequest() throws Exception {
+		final ClassPathResource modelResource = new ClassPathResource("gollm/SIR.json");
+		final String modelContent = new String(Files.readAllBytes(modelResource.getFile().toPath()));
+
+		final ClassPathResource documentResource = new ClassPathResource("gollm/SIR.txt");
+		final String documentContent = new String(Files.readAllBytes(documentResource.getFile().toPath()));
+
+		final EnrichAmrResponseHandler.Input input = new EnrichAmrResponseHandler.Input();
+		input.setResearchPaper(documentContent);
+		input.setAmr(modelContent);
+
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.GOLLM);
+		req.setScript("gollm_task:enrich_amr");
+		req.setInput(input);
+
+		final TaskResponse resp = taskService.runTaskSync(req);
 
 		log.info(new String(resp.getOutput()));
 	}
 
 	static class AdditionalProps {
+
 		public String str;
 		public Integer num;
 	}
@@ -125,13 +148,12 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendGoLLMEmbeddingRequest() throws Exception {
-
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
-		req.setScript("gollm:embedding");
+		req.setScript("gollm_task:embedding");
 		req.setInput(
-				("{\"text\":\"What kind of dinosaur is the coolest?\",\"embedding_model\":\"text-embedding-ada-002\"}")
-						.getBytes());
+			("{\"text\":\"What kind of dinosaur is the coolest?\",\"embedding_model\":\"text-embedding-ada-002\"}").getBytes()
+		);
 
 		final AdditionalProps add = new AdditionalProps();
 		add.str = "this is my str";
@@ -149,8 +171,39 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanSendMiraMDLToStockflowRequest() throws Exception {
+	public void testItCanSendGoLLMGenerateSummaryRequest() throws Exception {
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.GOLLM);
+		req.setScript(GenerateSummaryHandler.NAME);
+		final String input =
+			"Following sections describe the input and output of an operation.\nInput: { a: 1}\nOutput: { a: 2}. Provide a summary in less than 10 words.";
+		req.setInput(input.getBytes(StandardCharsets.UTF_8));
 
+		final TaskResponse resp = taskService.runTaskSync(req);
+
+		log.info(new String(resp.getOutput()));
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendGoLLMGenerateResponseRequest() throws Exception {
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.GOLLM);
+		req.setScript(GenerateResponseHandler.NAME);
+		final GenerateResponseHandler.Input input = new GenerateResponseHandler.Input();
+		input.setInstruction("Give me a simple random json object");
+		final JsonNode resFormat = new ObjectMapper().readTree("{\"type\": \"json_object\"}");
+		input.setResponseFormat(resFormat);
+		req.setInput(input);
+
+		final TaskResponse resp = taskService.runTaskSync(req);
+
+		log.info(new String(resp.getOutput()));
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendMiraMDLToStockflowRequest() throws Exception {
 		final ClassPathResource resource = new ClassPathResource("mira/IndiaNonSubscriptedPulsed.mdl");
 		final String content = new String(Files.readAllBytes(resource.getFile().toPath()));
 
@@ -171,7 +224,6 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendMiraStellaToStockflowRequest() throws Exception {
-
 		final ClassPathResource resource = new ClassPathResource("mira/SIR.xmile");
 		final String content = new String(Files.readAllBytes(resource.getFile().toPath()));
 
@@ -192,7 +244,6 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendMiraSBMLToPetrinetRequest() throws Exception {
-
 		final ClassPathResource resource = new ClassPathResource("mira/BIOMD0000000001.xml");
 		final String content = new String(Files.readAllBytes(resource.getFile().toPath()));
 
@@ -209,29 +260,31 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendGoLLMConfigFromDatasetRequest() throws Exception {
-
 		final UUID taskId = UUID.randomUUID();
 
 		final ClassPathResource datasetResource1 = new ClassPathResource("gollm/Epi Sc 4 Interaction matrix.csv");
-		final String dataset1 =
-				new String(Files.readAllBytes(datasetResource1.getFile().toPath()));
+		final String dataset1 = new String(Files.readAllBytes(datasetResource1.getFile().toPath()));
 		final ClassPathResource datasetResource2 = new ClassPathResource("gollm/other-dataset.csv");
-		final String dataset2 =
-				new String(Files.readAllBytes(datasetResource2.getFile().toPath()));
+		final String dataset2 = new String(Files.readAllBytes(datasetResource2.getFile().toPath()));
 
 		final ClassPathResource amrResource = new ClassPathResource("gollm/scenario4_4spec_regnet_empty.json");
 		final String amr = new String(Files.readAllBytes(amrResource.getFile().toPath()));
 		final JsonNode amrJson = new ObjectMapper().readTree(amr);
 
-		final String content = "{\"datasets\": ["
-				+ "\"" + dataset1.replaceAll("(?<!\\\\)\\n", Matcher.quoteReplacement("\\\\n")) + "\","
-				+ "\"" + dataset2.replaceAll("(?<!\\\\)\\n", Matcher.quoteReplacement("\\\\n"))
-				+ "\"], \"amr\":"
-				+ amrJson.toString() + "}";
+		final String content =
+			"{\"datasets\": [" +
+			"\"" +
+			dataset1.replaceAll("(?<!\\\\)\\n", Matcher.quoteReplacement("\\\\n")) +
+			"\"," +
+			"\"" +
+			dataset2.replaceAll("(?<!\\\\)\\n", Matcher.quoteReplacement("\\\\n")) +
+			"\"], \"amr\":" +
+			amrJson.toString() +
+			"}";
 
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
-		req.setScript("gollm:dataset_configure");
+		req.setScript("gollm_task:configure_model_from_dataset");
 		req.setInput(content.getBytes());
 
 		final TaskResponse resp = taskService.runTaskSync(req);
@@ -244,7 +297,6 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendAmrToMmtRequest() throws Exception {
-
 		final UUID taskId = UUID.randomUUID();
 
 		final ClassPathResource resource = new ClassPathResource("mira/problem.json");
@@ -267,49 +319,22 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	public void testItCanCacheSuccess() throws Exception {
 		final int TIMEOUT_SECONDS = 20;
 
-		final byte[] input = "{\"input\":\"This is my input string\"}".getBytes();
+		final byte[] input = "{\"input\":\"This is my input string\",\"include_progress\":true}".getBytes();
 
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
-		req.setScript("/echo.py");
+		req.setScript("echo.py");
 		req.setInput(input);
 
 		final TaskFuture future1 = taskService.runTaskAsync(req);
-		Assertions.assertEquals(
-				TaskStatus.SUCCESS,
-				future1.get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
+		Assertions.assertEquals(TaskStatus.SUCCESS, future1.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
 
 		// next request should pull the successful response from cache
+		final long start = System.currentTimeMillis();
 		final TaskFuture future2 = taskService.runTaskAsync(req);
-		Assertions.assertEquals(
-				TaskStatus.SUCCESS,
-				future2.get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
-		Assertions.assertEquals(future1.getId(), future2.getId());
-	}
+		Assertions.assertEquals(TaskStatus.SUCCESS, future2.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
 
-	// @Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItDoesNotCacheFailure() throws Exception {
-		final int TIMEOUT_SECONDS = 20;
-
-		final byte[] input = "{\"input\":\"This is my input string\", \"should_fail\": true}".getBytes();
-
-		final TaskRequest req = new TaskRequest();
-		req.setType(TaskType.GOLLM);
-		req.setScript("/echo.py");
-		req.setInput(input);
-
-		final TaskFuture future1 = taskService.runTaskAsync(req);
-		Assertions.assertEquals(
-				TaskStatus.FAILED,
-				future1.get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
-
-		// next request should not pull the failed response from cache
-		final TaskFuture future2 = taskService.runTaskAsync(req);
-		Assertions.assertEquals(
-				TaskStatus.FAILED,
-				future2.get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
-		Assertions.assertNotEquals(future1.getId(), future2.getId());
+		Assertions.assertTrue(System.currentTimeMillis() - start < 1000);
 	}
 
 	// @Test
@@ -317,47 +342,40 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	public void testItDoesNotCacheFailureButCacheSuccessAfter() throws Exception {
 		final int TIMEOUT_SECONDS = 20;
 
-		final byte[] input = "{\"input\":\"This is my input string\"}".getBytes();
+		final byte[] input = "{\"input\":\"This is my input string\"},\"include_progress\":true".getBytes();
 
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
-		req.setScript("/echo.py");
+		req.setScript("echo.py");
 		req.setInput(input);
 
 		final TaskFuture future1 = taskService.runTaskAsync(req);
 		taskService.cancelTask(future1.getId());
-		Assertions.assertEquals(
-				TaskStatus.CANCELLED,
-				future1.get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
+		Assertions.assertEquals(TaskStatus.CANCELLED, future1.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
 
 		// next request should not pull the cancelled response from cache
 		final TaskFuture future2 = taskService.runTaskAsync(req);
-		Assertions.assertEquals(
-				TaskStatus.SUCCESS,
-				future2.get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
+		Assertions.assertEquals(TaskStatus.SUCCESS, future2.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
 		Assertions.assertNotEquals(future1.getId(), future2.getId());
 
 		// next request should pull the successful response from cache
 		final TaskFuture future3 = taskService.runTaskAsync(req);
-		Assertions.assertEquals(
-				TaskStatus.SUCCESS,
-				future3.get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
+		Assertions.assertEquals(TaskStatus.SUCCESS, future3.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
 		Assertions.assertEquals(future2.getId(), future3.getId());
 	}
 
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCacheWithConcurrency() throws Exception {
-
 		final int NUM_REQUESTS = 1024;
 		final int NUM_UNIQUE_REQUESTS = 32;
 		final int NUM_THREADS = 24;
-		final int TIMEOUT_SECONDS = 20;
+		final int TIMEOUT_MINUTES = 1;
 
 		final List<byte[]> reqInput = new ArrayList<>();
 		for (int i = 0; i < NUM_UNIQUE_REQUESTS; i++) {
 			// success tasks
-			reqInput.add(("{\"input\":\"" + generateRandomString(1024) + "\"}").getBytes());
+			reqInput.add(("{\"input\":\"" + generateRandomString(1024) + "\"},\"include_progress\":true").getBytes());
 		}
 		for (int i = 0; i < NUM_UNIQUE_REQUESTS; i++) {
 			// failure tasks
@@ -375,16 +393,14 @@ public class TaskServiceTest extends TerariumApplicationTests {
 			final Future<?> future = executor.submit(() -> {
 				try {
 					final TaskRequest req = new TaskRequest();
+					req.setTimeoutMinutes(TIMEOUT_MINUTES);
 					req.setType(TaskType.GOLLM);
-					req.setScript("/echo.py");
+					req.setScript("echo.py");
 					req.setInput(reqInput.get(rand.nextInt(NUM_UNIQUE_REQUESTS * 2)));
 
-					final TaskResponse resp = taskService.runTaskSync(req, TIMEOUT_SECONDS);
+					final TaskResponse resp = taskService.runTaskSync(req);
 					successTaskIds.add(resp.getId());
-				} catch (final RuntimeException e) {
-					// expected for purposely failed tasks
-
-				} catch (final Exception e) {
+				} catch (final RuntimeException e) {} catch (final Exception e) {
 					log.error("Error in test", e);
 				}
 			});
@@ -393,12 +409,11 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 		// wait for all the responses to be send
 		for (final Future<?> future : futures) {
-			future.get(TIMEOUT_SECONDS * 2, TimeUnit.SECONDS);
+			future.get(TIMEOUT_MINUTES * 2, TimeUnit.MINUTES);
 		}
 
 		for (final UUID taskId : successTaskIds) {
 			log.info("Task ID: {}", taskId.toString());
 		}
-		Assertions.assertTrue(successTaskIds.size() <= NUM_UNIQUE_REQUESTS);
 	}
 }

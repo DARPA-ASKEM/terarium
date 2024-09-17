@@ -280,24 +280,24 @@
          }
 
         .p-datatable-thead > tr > th {
-            padding: 0.125rem 0;
+            padding: var(--gap-0-5) 0;
             font-size: x-small;
         }
-        
+
         .p-datatable-tbody > tr > td {
-            padding: 0.125rem 0;
+            padding: var(--gap-0-5) 0;
             background-color: var(--surface-0);
             border: none;
         }
-        
+
         .p-datatable-thead > tr > th {
             background-color: var(--surface-0);
         }
-        
+
         .p-datatable-tbody > tr > t {
             border: none;
         }
-        
+
         .p-datatable-thead > tr > th {
             border: none;
         }

@@ -1,16 +1,17 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.databind.JsonNode;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 import java.io.Serial;
-import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.concept.OntologyConcept;
 
 /**
  * Represents a generic artifact that can be stored in the data service. For example, this could be a text file, a code
@@ -20,31 +21,33 @@ import software.uncharted.terarium.hmiserver.models.dataservice.concept.Ontology
 @Data
 @Accessors(chain = true)
 @TSModel
+@Entity
 public class Artifact extends TerariumAsset {
+
 	@Serial
 	private static final long serialVersionUID = -1122602270904707476L;
 
-	/* The id of the artifact. */
-
 	/* UserId of who created this asset */
+	@Column(length = 255)
 	private String userId;
-
-	/* The name of the artifact. */
-	private String name;
-
-	/* A description of the artifact. */
-	@TSOptional
-	private String description;
-
-	/* The name of the file(s) in this artifact */
-	@JsonAlias("file_names")
-	private List<String> fileNames;
 
 	/* metadata for these files */
 	@TSOptional
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private JsonNode metadata;
 
-	/* concepts associated with these files */
-	@TSOptional
-	private List<OntologyConcept> concepts;
+	@Override
+	public Artifact clone() {
+		final Artifact clone = new Artifact();
+		cloneSuperFields(clone);
+
+		clone.userId = this.userId;
+
+		if (this.metadata != null) {
+			clone.metadata = this.metadata.deepCopy();
+		}
+
+		return clone;
+	}
 }

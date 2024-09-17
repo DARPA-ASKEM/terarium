@@ -19,14 +19,16 @@ public class MultipartFileService {
 	 * @param request the request to parse
 	 * @return a map of form field name to the contents of the field as a byte array
 	 */
-	public static Map<String, byte[]> parse(HttpServletRequest request) {
+	public static Map<String, byte[]> parse(final HttpServletRequest request) {
 		final Map<String, byte[]> result = new HashMap<>();
 		try {
-			JakartaServletFileUpload upload = new JakartaServletFileUpload();
-			upload.getItemIterator(request).forEachRemaining(item -> {
-				result.put(item.getFieldName(), item.getInputStream().readAllBytes());
-			});
-		} catch (Exception e) {
+			final JakartaServletFileUpload upload = new JakartaServletFileUpload();
+			upload
+				.getItemIterator(request)
+				.forEachRemaining(item -> {
+					result.put(item.getFieldName(), item.getInputStream().readAllBytes());
+				});
+		} catch (final Exception e) {
 			log.error("Error parsing multipart file", e);
 		}
 		return result;

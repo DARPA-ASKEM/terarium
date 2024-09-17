@@ -7,9 +7,9 @@ import lombok.Data;
 
 @Data
 public class UserOld {
+
 	private String username;
 	private Set<String> roles;
-
 	/*public User(final SecurityIdentity identity) {
 		this.username = identity.getPrincipal().getName();
 		this.roles = identity.getRoles();

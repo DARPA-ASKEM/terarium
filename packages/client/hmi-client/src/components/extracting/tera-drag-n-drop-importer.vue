@@ -69,14 +69,12 @@ const props = defineProps({
 	acceptTypes: {
 		type: Array<AcceptedTypes>,
 		required: true,
-		validator: (value: Array<string>) =>
-			Object.values(AcceptedTypes).every((v) => value.includes(v))
+		validator: (value: Array<string>) => Object.values(AcceptedTypes).every((v) => value.includes(v))
 	},
 	acceptExtensions: {
 		type: Array<AcceptedExtensions>,
 		required: true,
-		validator: (value: Array<string>) =>
-			Object.values(AcceptedExtensions).every((v) => value.includes(v))
+		validator: (value: Array<string>) => Object.values(AcceptedExtensions).every((v) => value.includes(v))
 	},
 	// custom import action can be passed in as prop
 	importAction: {
@@ -106,9 +104,7 @@ const props = defineProps({
 	}
 });
 
-const fileInputAcceptedExtensions = computed(() =>
-	props.acceptExtensions.map((v) => `.${v}`).join(',')
-);
+const fileInputAcceptedExtensions = computed(() => props.acceptExtensions.map((v) => `.${v}`).join(','));
 
 /**
  * Add file event

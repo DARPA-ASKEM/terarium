@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -64,61 +65,72 @@ public class HttpUtil {
 	private static SSLConnectionSocketFactory sslsf;
 	private static final AtomicBoolean tlsWarningEmitted = new AtomicBoolean();
 
-	public static InputStream doGet(String url, String acceptType, String authorization) {
+	public static InputStream doGet(final String url, final String acceptType, final String authorization) {
 		try {
-			HttpGet request = new HttpGet(url);
+			final HttpGet request = new HttpGet(url);
 			request.setHeader(HttpHeaders.ACCEPT, acceptType);
 			return doRequest(authorization, request);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException("Failed to send request - " + e.getMessage(), e);
 		}
 	}
 
 	public static InputStream doPost(
-			String url, String contentType, String acceptType, String content, String authorization) {
+		final String url,
+		final String contentType,
+		final String acceptType,
+		final String content,
+		final String authorization
+	) {
 		try {
 			return doPostOrPut(contentType, acceptType, content, authorization, new HttpPost(url));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException("Failed to send request - " + e.getMessage(), e);
 		}
 	}
 
 	public static InputStream doPut(
-			String url, String contentType, String acceptType, String content, String authorization) {
+		final String url,
+		final String contentType,
+		final String acceptType,
+		final String content,
+		final String authorization
+	) {
 		try {
 			return doPostOrPut(contentType, acceptType, content, authorization, new HttpPut(url));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException("Failed to send request - " + e.getMessage(), e);
 		}
 	}
 
-	public static void doDelete(String url, String authorization) {
+	public static void doDelete(final String url, final String authorization) {
 		try {
-			HttpDelete request = new HttpDelete(url);
+			final HttpDelete request = new HttpDelete(url);
 			doRequest(authorization, request);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException("Failed to send request - " + e.getMessage(), e);
 		}
 	}
 
-	public static HeadersBodyStatus doGet(String url, HeadersBody request) throws IOException {
+	public static HeadersBodyStatus doGet(final String url, final HeadersBody request) throws IOException {
 		return doRequest("get", url, request);
 	}
 
-	public static HeadersBodyStatus doPost(String url, HeadersBody request) throws IOException {
+	public static HeadersBodyStatus doPost(final String url, final HeadersBody request) throws IOException {
 		return doRequest("post", url, request);
 	}
 
-	public static HeadersBodyStatus doPut(String url, HeadersBody request) throws IOException {
+	public static HeadersBodyStatus doPut(final String url, final HeadersBody request) throws IOException {
 		return doRequest("put", url, request);
 	}
 
-	public static HeadersBodyStatus doDelete(String url, HeadersBody request) throws IOException {
+	public static HeadersBodyStatus doDelete(final String url, final HeadersBody request) throws IOException {
 		return doRequest("delete", url, request);
 	}
 
-	public static HeadersBodyStatus doRequest(String type, String url, HeadersBody request) throws IOException {
-		HttpRequestBase req;
+	public static HeadersBodyStatus doRequest(final String type, final String url, final HeadersBody request)
+		throws IOException {
+		final HttpRequestBase req;
 		switch (type) {
 			case "get":
 				req = new HttpGet(url);
@@ -144,14 +156,14 @@ public class HttpUtil {
 		addHeaders(req, request.getHeaders());
 
 		if (request.getBody() != null) {
-			if (req instanceof HttpEntityEnclosingRequestBase == false) {
+			if (!(req instanceof HttpEntityEnclosingRequestBase)) {
 				throw new RuntimeException("Request type does not support body: " + type);
 			}
 			((HttpEntityEnclosingRequestBase) req).setEntity(new InputStreamEntity(request.getBody()));
 		}
 
-		HttpResponse res = getHttpClient().execute(req);
-		InputStream responseStream = null;
+		final HttpResponse res = getHttpClient().execute(req);
+		final InputStream responseStream;
 		if (res.getEntity() != null) {
 			responseStream = res.getEntity().getContent();
 		} else {
@@ -163,29 +175,29 @@ public class HttpUtil {
 			};
 		}
 
-		Headers headers = new Headers();
-		HeaderIterator it = res.headerIterator();
+		final Headers headers = new Headers();
+		final HeaderIterator it = res.headerIterator();
 		while (it.hasNext()) {
-			org.apache.http.Header header = it.nextHeader();
+			final org.apache.http.Header header = it.nextHeader();
 			headers.add(header.getName(), header.getValue());
 		}
 
 		return new HeadersBodyStatus(res.getStatusLine().toString(), headers, responseStream);
 	}
 
-	private static void addHeaders(HttpRequestBase request, Headers headers) {
-		for (Header header : headers) {
+	private static void addHeaders(final HttpRequestBase request, final Headers headers) {
+		for (final Header header : headers) {
 			request.setHeader(header.getName(), header.getValue());
 		}
 	}
 
 	private static InputStream doPostOrPut(
-			String contentType,
-			String acceptType,
-			String content,
-			String authorization,
-			HttpEntityEnclosingRequestBase request)
-			throws IOException {
+		final String contentType,
+		final String acceptType,
+		final String content,
+		final String authorization,
+		final HttpEntityEnclosingRequestBase request
+	) throws IOException {
 		request.setHeader(HttpHeaders.CONTENT_TYPE, contentType);
 		request.setHeader(HttpHeaders.ACCEPT, acceptType);
 		if (content != null) {
@@ -195,26 +207,26 @@ public class HttpUtil {
 		return doRequest(authorization, request);
 	}
 
-	private static InputStream doRequest(String authorization, HttpRequestBase request) throws IOException {
+	private static InputStream doRequest(final String authorization, final HttpRequestBase request) throws IOException {
 		addAuth(request, authorization);
 
-		HttpResponse response = getHttpClient().execute(request);
+		final HttpResponse response = getHttpClient().execute(request);
 		InputStream responseStream = null;
 		if (response.getEntity() != null) {
 			responseStream = response.getEntity().getContent();
 		}
 
-		int code = response.getStatusLine().getStatusCode();
+		final int code = response.getStatusLine().getStatusCode();
 		if (code >= 200 && code < 300) {
 			return responseStream;
 		} else {
 			Map<String, String> error = null;
 			try {
-				org.apache.http.Header header = response.getEntity().getContentType();
+				final org.apache.http.Header header = response.getEntity().getContentType();
 				if (header != null && APPLICATION_JSON.equals(header.getValue())) {
 					error = JsonSerialization.readValue(responseStream, Map.class);
 				}
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				throw new RuntimeException("Failed to read error response " + e);
 			} finally {
 				if (responseStream != null) {
@@ -227,14 +239,14 @@ public class HttpUtil {
 				message = error.get("error_description") + " [" + error.get("error") + "]";
 			}
 			throw new RuntimeException(
-					message != null
-							? message
-							: response.getStatusLine().getStatusCode() + " "
-									+ response.getStatusLine().getReasonPhrase());
+				message != null
+					? message
+					: response.getStatusLine().getStatusCode() + " " + response.getStatusLine().getReasonPhrase()
+			);
 		}
 	}
 
-	private static void addAuth(HttpRequestBase request, String authorization) {
+	private static void addAuth(final HttpRequestBase request, final String authorization) {
 		if (authorization != null) {
 			request.setHeader(HttpHeaders.AUTHORIZATION, authorization);
 		}
@@ -243,10 +255,7 @@ public class HttpUtil {
 	public static HttpClient getHttpClient() {
 		if (httpClient == null) {
 			if (sslsf != null) {
-				httpClient = HttpClientBuilder.create()
-						.useSystemProperties()
-						.setSSLSocketFactory(sslsf)
-						.build();
+				httpClient = HttpClientBuilder.create().useSystemProperties().setSSLSocketFactory(sslsf).build();
 			} else {
 				httpClient = HttpClientBuilder.create().useSystemProperties().build();
 			}
@@ -254,25 +263,19 @@ public class HttpUtil {
 		return httpClient;
 	}
 
-	public static String urlencode(String value) {
-		try {
-			return URLEncoder.encode(value, UTF_8);
-		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException("Failed to urlencode", e);
-		}
+	public static String urlencode(final String value) {
+		return URLEncoder.encode(value, StandardCharsets.UTF_8);
 	}
 
-	public static void setTruststore(File file, String password)
-			throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException,
-					KeyManagementException {
+	public static void setTruststore(final File file, final String password)
+		throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, KeyManagementException {
 		if (!file.isFile()) {
 			throw new RuntimeException("Truststore file not found: " + file.getAbsolutePath());
 		}
-		SSLContext theContext = SSLContexts.custom()
-				.setProtocol("TLS")
-				.loadTrustMaterial(
-						file, password == null ? null : password.toCharArray(), TrustSelfSignedStrategy.INSTANCE)
-				.build();
+		final SSLContext theContext = SSLContexts.custom()
+			.setProtocol("TLS")
+			.loadTrustMaterial(file, password == null ? null : password.toCharArray(), TrustSelfSignedStrategy.INSTANCE)
+			.build();
 		sslsf = new SSLConnectionSocketFactory(theContext);
 	}
 
@@ -288,24 +291,24 @@ public class HttpUtil {
 			log.error("The tool will skip certificate validation. This is highly discouraged for production use cases");
 		}
 
-		SSLContextBuilder builder = new SSLContextBuilder();
+		final SSLContextBuilder builder = new SSLContextBuilder();
 		try {
 			builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
 			sslsf = new SSLConnectionSocketFactory(builder.build());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new RuntimeException("Failed setting up TLS", e);
 		}
 	}
 
-	public static String extractIdFromLocation(String location) {
-		int last = location.lastIndexOf("/");
+	public static String extractIdFromLocation(final String location) {
+		final int last = location.lastIndexOf("/");
 		if (last != -1) {
 			return location.substring(last + 1);
 		}
 		return null;
 	}
 
-	public static String addQueryParamsToUri(String uri, String... queryParams) {
+	public static String addQueryParamsToUri(final String uri, final String... queryParams) {
 		if (queryParams == null) {
 			return uri;
 		}
@@ -314,36 +317,34 @@ public class HttpUtil {
 			throw new RuntimeException("Value missing for query parameter: " + queryParams[queryParams.length - 1]);
 		}
 
-		Map<String, String> params = new LinkedHashMap<>();
+		final Map<String, String> params = new LinkedHashMap<>();
 		for (int i = 0; i < queryParams.length; i += 2) {
 			params.put(queryParams[i], queryParams[i + 1]);
 		}
 		return addQueryParamsToUri(uri, params);
 	}
 
-	public static String addQueryParamsToUri(String uri, Map<String, String> queryParams) {
-
+	public static String addQueryParamsToUri(final String uri, final Map<String, String> queryParams) {
 		if (queryParams.size() == 0) {
 			return uri;
 		}
 
-		StringBuilder query = new StringBuilder();
-		for (Map.Entry<String, String> params : queryParams.entrySet()) {
+		final StringBuilder query = new StringBuilder();
+		for (final Map.Entry<String, String> params : queryParams.entrySet()) {
 			try {
 				if (query.length() > 0) {
 					query.append("&");
 				}
-				query.append(params.getKey()).append("=").append(URLEncoder.encode(params.getValue(), "utf-8"));
-			} catch (Exception e) {
-				throw new RuntimeException(
-						"Failed to encode query params: " + params.getKey() + "=" + params.getValue());
+				query.append(params.getKey()).append("=").append(URLEncoder.encode(params.getValue(), StandardCharsets.UTF_8));
+			} catch (final Exception e) {
+				throw new RuntimeException("Failed to encode query params: " + params.getKey() + "=" + params.getValue());
 			}
 		}
 
 		return uri + (uri.indexOf("?") == -1 ? "?" : "&") + query;
 	}
 
-	public static String composeResourceUrl(String adminRoot, String realm, String uri) {
+	public static String composeResourceUrl(final String adminRoot, final String realm, String uri) {
 		if (!uri.startsWith("http:") && !uri.startsWith("https:")) {
 			if ("realms".equals(uri) || uri.startsWith("realms/")) {
 				uri = normalize(adminRoot) + uri;
@@ -356,14 +357,14 @@ public class HttpUtil {
 		return uri;
 	}
 
-	public static String normalize(String value) {
+	public static String normalize(final String value) {
 		return value.endsWith("/") ? value : value + "/";
 	}
 
-	public static void checkSuccess(String url, HeadersBodyStatus response) {
+	public static void checkSuccess(final String url, final HeadersBodyStatus response) {
 		try {
 			response.checkSuccess();
-		} catch (HttpResponseException e) {
+		} catch (final HttpResponseException e) {
 			if (e.getStatusCode() == 404) {
 				throw new RuntimeException("Resource not found for url: " + url, e);
 			}
@@ -371,86 +372,83 @@ public class HttpUtil {
 		}
 	}
 
-	public static <T> T doGetJSON(Class<T> type, String resourceUrl, String auth) {
-
-		Headers headers = new Headers();
+	public static <T> T doGetJSON(final Class<T> type, final String resourceUrl, final String auth) {
+		final Headers headers = new Headers();
 		if (auth != null) {
 			headers.add("Authorization", auth);
 		}
 		headers.add("Accept", "application/json");
 
-		HeadersBodyStatus response;
+		final HeadersBodyStatus response;
 		try {
 			response = HttpUtil.doRequest("get", resourceUrl, new HeadersBody(headers));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException("HTTP request failed: GET " + resourceUrl, e);
 		}
 
 		checkSuccess(resourceUrl, response);
 
-		T result;
+		final T result;
 		try {
 			result = JsonSerialization.readValue(response.getBody(), type);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException("Failed to read JSON response", e);
 		}
 
 		return result;
 	}
 
-	public static void doPostJSON(String resourceUrl, String auth, Object content) {
-		Headers headers = new Headers();
+	public static void doPostJSON(final String resourceUrl, final String auth, final Object content) {
+		final Headers headers = new Headers();
 		if (auth != null) {
 			headers.add("Authorization", auth);
 		}
 		headers.add("Content-Type", "application/json");
 
-		HeadersBodyStatus response;
+		final HeadersBodyStatus response;
 
-		byte[] body;
+		final byte[] body;
 		try {
 			body = JsonSerialization.writeValueAsBytes(content);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException("Failed to serialize JSON", e);
 		}
 
 		try {
-			response =
-					HttpUtil.doRequest("post", resourceUrl, new HeadersBody(headers, new ByteArrayInputStream(body)));
-		} catch (IOException e) {
+			response = HttpUtil.doRequest("post", resourceUrl, new HeadersBody(headers, new ByteArrayInputStream(body)));
+		} catch (final IOException e) {
 			throw new RuntimeException("HTTP request failed: POST " + resourceUrl + "\n" + new String(body), e);
 		}
 
 		checkSuccess(resourceUrl, response);
 	}
 
-	public static void doDeleteJSON(String resourceUrl, String auth, Object content) {
-		Headers headers = new Headers();
+	public static void doDeleteJSON(final String resourceUrl, final String auth, final Object content) {
+		final Headers headers = new Headers();
 		if (auth != null) {
 			headers.add("Authorization", auth);
 		}
 		headers.add("Content-Type", "application/json");
 
-		HeadersBodyStatus response;
+		final HeadersBodyStatus response;
 
-		byte[] body;
+		final byte[] body;
 		try {
 			body = JsonSerialization.writeValueAsBytes(content);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException("Failed to serialize JSON", e);
 		}
 
 		try {
-			response =
-					HttpUtil.doRequest("delete", resourceUrl, new HeadersBody(headers, new ByteArrayInputStream(body)));
-		} catch (IOException e) {
+			response = HttpUtil.doRequest("delete", resourceUrl, new HeadersBody(headers, new ByteArrayInputStream(body)));
+		} catch (final IOException e) {
 			throw new RuntimeException("HTTP request failed: DELETE " + resourceUrl + "\n" + new String(body), e);
 		}
 
 		checkSuccess(resourceUrl, response);
 	}
 
-	public static String singularize(String value) {
+	public static String singularize(final String value) {
 		return value.substring(0, value.length() - 1);
 	}
 }

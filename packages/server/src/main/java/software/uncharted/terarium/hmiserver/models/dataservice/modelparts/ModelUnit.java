@@ -14,6 +14,7 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @AMRSchemaType
 @Accessors(chain = true)
 public class ModelUnit extends SupportAdditionalProperties implements Serializable {
+
 	@Serial
 	private static final long serialVersionUID = 2545917939916234517L;
 
@@ -21,4 +22,12 @@ public class ModelUnit extends SupportAdditionalProperties implements Serializab
 
 	@JsonProperty("expression_mathml")
 	private String expressionMathml;
+
+	@Override
+	public ModelUnit clone() {
+		ModelUnit clone = (ModelUnit) super.clone();
+		clone.setExpression(this.getExpression());
+		clone.setExpressionMathml(this.getExpressionMathml());
+		return clone;
+	}
 }

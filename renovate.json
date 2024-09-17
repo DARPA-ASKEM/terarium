@@ -12,13 +12,14 @@
 	"npm": {
 		"stabilityDays": 3
 	},
-	"reviewers": ["@bencodrington", "@dgauldie", "@mwdchang", "@YohannParis"],
+	"reviewers": ["@dgauldie", "@mwdchang", "@YohannParis"],
 	"reviewersSampleSize": 1,
 	"semanticCommitType": "build",
 	"automergeStrategy": "squash",
 	"ignoreDeps": [
 		"pyodide"
 	],
+  "ignorePaths": [".github/workflows/*"],
 	"packageRules": [
 		{
 			"description": "Trigger breaking release for major updates",

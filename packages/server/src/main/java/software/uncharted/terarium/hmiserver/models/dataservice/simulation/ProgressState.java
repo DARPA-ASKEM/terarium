@@ -16,5 +16,7 @@ public enum ProgressState {
 	@JsonAlias("retrieving")
 	RETRIEVING,
 	@JsonAlias("running")
-	RUNNING
+	RUNNING,
+	@JsonAlias("cancelling")
+	CANCELLING
 }

@@ -17,14 +17,16 @@ import org.springframework.web.servlet.NoHandlerFoundException;
 public class GlobalExceptionControllerAdvice {
 
 	// Log common 4XX errors
-	@ExceptionHandler({
-		MethodArgumentNotValidException.class,
-		HttpMessageConversionException.class,
-		HttpRequestMethodNotSupportedException.class,
-		ServletRequestBindingException.class,
-		MethodArgumentResolutionException.class,
-		NoHandlerFoundException.class
-	})
+	@ExceptionHandler(
+		{
+			MethodArgumentNotValidException.class,
+			HttpMessageConversionException.class,
+			HttpRequestMethodNotSupportedException.class,
+			ServletRequestBindingException.class,
+			MethodArgumentResolutionException.class,
+			NoHandlerFoundException.class
+		}
+	)
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	public void handleBadRequest(final Exception ex) {
 		log.error("HTTP Status Code: 400", ex);

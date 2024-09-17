@@ -1,11 +1,11 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -28,7 +28,10 @@ import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.notebooksession.NotebookSession;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.NotebookSessionService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 /** Rest controller for storing, retrieving, modifying and deleting notebook sessions in the dataservice */
 @RequestMapping("/sessions")
@@ -38,7 +41,9 @@ import software.uncharted.terarium.hmiserver.service.data.NotebookSessionService
 public class NotebookSessionController {
 
 	final NotebookSessionService sessionService;
-	final ObjectMapper objectMapper;
+
+	private final ProjectService projectService;
+	private final CurrentUserService currentUserService;
 
 	/**
 	 * Retrieve the list of NotebookSessions
@@ -51,29 +56,30 @@ public class NotebookSessionController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets all sessions")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "NotebookSessions found.",
-						content =
-								@Content(
-										array =
-												@ArraySchema(
-														schema =
-																@io.swagger.v3.oas.annotations.media.Schema(
-																		implementation = NotebookSession.class)))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving sessions from the data store",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "NotebookSessions found.",
+				content = @Content(
+					array = @ArraySchema(
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = NotebookSession.class)
+					)
+				)
+			),
+			@ApiResponse(
+				responseCode = "500",
+				description = "There was an issue retrieving sessions from the data store",
+				content = @Content
+			)
+		}
+	)
 	ResponseEntity<List<NotebookSession>> getNotebookSessions(
-			@RequestParam(name = "page-size", defaultValue = "100") final Integer pageSize,
-			@RequestParam(name = "page", defaultValue = "0") final Integer page) {
-
+		@RequestParam(name = "page-size", defaultValue = "100") final Integer pageSize,
+		@RequestParam(name = "page", defaultValue = "1") final Integer page
+	) {
 		try {
-			return ResponseEntity.ok(sessionService.getAssets(pageSize, page));
-		} catch (final IOException e) {
+			return ResponseEntity.ok(sessionService.getPublicNotTemporaryAssets(pageSize, page));
+		} catch (final Exception e) {
 			final String error = "Unable to get sessions";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
@@ -83,32 +89,36 @@ public class NotebookSessionController {
 	/**
 	 * Create session and return its ID
 	 *
-	 * @param session session to create
+	 * @param session session to create and projectId
 	 * @return new ID for session
 	 */
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new session")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "201",
-						description = "NotebookSession created.",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = NotebookSession.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue creating the session",
-						content = @Content)
-			})
-	ResponseEntity<NotebookSession> createNotebookSession(@RequestBody final NotebookSession session) {
+		value = {
+			@ApiResponse(
+				responseCode = "201",
+				description = "NotebookSession created.",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = NotebookSession.class)
+				)
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue creating the session", content = @Content)
+		}
+	)
+	ResponseEntity<NotebookSession> createNotebookSession(
+		@RequestBody final NotebookSession session,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(
+			currentUserService.get().getId(),
+			projectId
+		);
 
 		try {
-			sessionService.createAsset(session);
+			sessionService.createAsset(session, projectId, permission);
 			return ResponseEntity.status(HttpStatus.CREATED).body(session);
 		} catch (final IOException e) {
 			final String error = "Unable to create session";
@@ -127,29 +137,36 @@ public class NotebookSessionController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets session by ID")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "NotebookSession found.",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = NotebookSession.class))),
-				@ApiResponse(responseCode = "404", description = "There was no session found", content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving the session from the data store",
-						content = @Content)
-			})
-	ResponseEntity<NotebookSession> getNotebookSession(@PathVariable("id") final UUID id) {
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "NotebookSession found.",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = NotebookSession.class)
+				)
+			),
+			@ApiResponse(responseCode = "404", description = "There was no session found", content = @Content),
+			@ApiResponse(
+				responseCode = "500",
+				description = "There was an issue retrieving the session from the data store",
+				content = @Content
+			)
+		}
+	)
+	ResponseEntity<NotebookSession> getNotebookSession(
+		@PathVariable("id") final UUID id,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanRead(
+			currentUserService.get().getId(),
+			projectId
+		);
 
 		try {
-			final Optional<NotebookSession> session = sessionService.getAsset(id);
-			return session.map(ResponseEntity::ok)
-					.orElseGet(() -> ResponseEntity.notFound().build());
-		} catch (final IOException e) {
+			final Optional<NotebookSession> session = sessionService.getAsset(id, permission);
+			return session.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+		} catch (final Exception e) {
 			final String error = "Unable to get notebook session";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
@@ -160,40 +177,40 @@ public class NotebookSessionController {
 	 * Update an session
 	 *
 	 * @param id id of session to update
-	 * @param session session to update with
+	 * @param session session to update with and projectId
 	 * @return ID of updated session
 	 */
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a session")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "NotebookSession updated.",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = NotebookSession.class))),
-				@ApiResponse(
-						responseCode = "404",
-						description = "NotebookSession could not be found",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue updating the session",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "NotebookSession updated.",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = NotebookSession.class)
+				)
+			),
+			@ApiResponse(responseCode = "404", description = "NotebookSession could not be found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue updating the session", content = @Content)
+		}
+	)
 	ResponseEntity<NotebookSession> updateNotebookSession(
-			@PathVariable("id") final UUID id, @RequestBody final NotebookSession session) {
+		@PathVariable("id") final UUID id,
+		@RequestBody final NotebookSession session,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(
+			currentUserService.get().getId(),
+			projectId
+		);
 
 		try {
 			session.setId(id);
-			final Optional<NotebookSession> updated = sessionService.updateAsset(session);
-			return updated.map(ResponseEntity::ok)
-					.orElseGet(() -> ResponseEntity.notFound().build());
+			final Optional<NotebookSession> updated = sessionService.updateAsset(session, projectId, permission);
+			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to update notebook session";
 			log.error(error, e);
@@ -205,26 +222,33 @@ public class NotebookSessionController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Clone a session")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "NotebookSession cloned.",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = NotebookSession.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue cloning the session",
-						content = @Content)
-			})
-	ResponseEntity<NotebookSession> cloneNotebookSession(@PathVariable("id") final UUID id) {
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "NotebookSession cloned.",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = NotebookSession.class)
+				)
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue cloning the session", content = @Content)
+		}
+	)
+	ResponseEntity<NotebookSession> cloneNotebookSession(
+		@PathVariable("id") final UUID id,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanRead(
+			currentUserService.get().getId(),
+			projectId
+		);
 		try {
-			final NotebookSession clone = sessionService.cloneAsset(id);
-			return ResponseEntity.status(HttpStatus.CREATED).body(clone);
-		} catch (final IOException e) {
+			final Optional<NotebookSession> session = sessionService.getAsset(id, permission);
+			if (session.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			return ResponseEntity.status(HttpStatus.OK).body(session.get().clone());
+		} catch (final Exception e) {
 			final String error = "Unable to clone notebook session";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
@@ -241,23 +265,31 @@ public class NotebookSessionController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes an session")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Deleted session",
-						content = {
-							@Content(
-									mediaType = "application/json",
-									schema =
-											@io.swagger.v3.oas.annotations.media.Schema(
-													implementation = ResponseDeleted.class))
-						}),
-				@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
-			})
-	ResponseEntity<ResponseDeleted> deleteNotebookSession(@PathVariable("id") final UUID id) {
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Deleted session",
+				content = {
+					@Content(
+						mediaType = "application/json",
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)
+					)
+				}
+			),
+			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
+		}
+	)
+	ResponseEntity<ResponseDeleted> deleteNotebookSession(
+		@PathVariable("id") final UUID id,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(
+			currentUserService.get().getId(),
+			projectId
+		);
 
 		try {
-			sessionService.deleteAsset(id);
+			sessionService.deleteAsset(id, projectId, permission);
 			return ResponseEntity.ok(new ResponseDeleted("NotebookSession", id));
 		} catch (final IOException e) {
 			final String error = "Unable to delete noteboko session";

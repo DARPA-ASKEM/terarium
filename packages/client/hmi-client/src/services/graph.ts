@@ -5,44 +5,47 @@ import _ from 'lodash';
 import * as d3 from 'd3';
 import dagre from 'dagre';
 import graphScaffolder, { IGraph, INode, IEdge } from '@graph-scaffolder/index';
+import type { Position } from '@/types/common';
 
 export type D3SelectionINode<T> = d3.Selection<d3.BaseType, INode<T>, null, any>;
 export type D3SelectionIEdge<T> = d3.Selection<d3.BaseType, IEdge<T>, null, any>;
+
+export enum NodeType {
+	State = 'state',
+	Transition = 'transition',
+	Observable = 'observable'
+}
 
 export const pathFn = d3
 	.line<{ x: number; y: number }>()
 	.x((d) => d.x)
 	.y((d) => d.y);
 
+function interpolatePointsForCurve(a: Position, b: Position): Position[] {
+	const controlXOffset = 50;
+	return [a, { x: a.x + controlXOffset, y: a.y }, { x: b.x - controlXOffset, y: b.y }, b];
+}
+
 export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true): IGraph<V, E> => {
 	const g = new dagre.graphlib.Graph({ compound: true });
 	g.setGraph({});
 	g.setDefaultEdgeLabel(() => ({}));
 
-	graphScaffolder.traverseGraph(graphData, (node: INode<V>) => {
-		if (node.width && node.height) {
-			g.setNode(node.id, {
-				label: node.label,
-				width: node.width,
-				height: node.height,
-				x: node.x,
-				y: node.y
-			});
-		} else {
-			g.setNode(node.id, { label: node.label, x: node.x, y: node.y });
-		}
-		if (!_.isEmpty(node.nodes)) {
-			// eslint-disable-next-line
-			for (const child of node.nodes) {
-				g.setParent(child.id, node.id);
-			}
-		}
+	let observableAmount = 0;
+	graphScaffolder.traverseGraph(graphData, (node: INode<any>) => {
+		if (node.data?.type === NodeType.Observable) observableAmount++;
+		g.setNode(node.id, {
+			label: node.label,
+			width: node.width ?? 50,
+			height: node.height ?? 50
+		});
+		node.nodes.forEach((child) => g.setParent(child.id, node.id));
 	});
-
-	// eslint-disable-next-line
-	for (const edge of graphData.edges) {
+	// Set state/transitions edges
+	graphData.edges.forEach((edge: IEdge<any>) => {
+		if (edge.data?.isObservable) return;
 		g.setEdge(edge.source, edge.target);
-	}
+	});
 
 	if (lr === true) {
 		g.graph().rankDir = 'LR';
@@ -52,36 +55,70 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 
 	dagre.layout(g);
 
-	graphScaffolder.traverseGraph(graphData, (node) => {
-		const n = g.node(node.id);
-		node.width = n.width;
-		node.height = n.height;
+	let mostRightNodeX = 0;
+	let lowestNodeY = 0;
+	let highestNodeY = 0;
+	let currentObservableY = 0;
+	let isAddingObservables = false;
+	graphScaffolder.traverseGraph(graphData, (node: INode<any>) => {
+		let n = g.node(node.id);
+		const pid = g.parent(node.id);
+		// Determine bounds from state and transition nodes
+		// Observables are added to the end graphData.nodes array in convertToIGraph so assume that's the order
+		if (node.data?.type !== NodeType.Observable) {
+			if (n.x > mostRightNodeX) mostRightNodeX = n.x;
+			if (n.y < lowestNodeY) lowestNodeY = n.y;
+			if (n.y > highestNodeY) highestNodeY = n.y;
+		}
+		// Determine observable node (custom) placement
+		else {
+			if (!isAddingObservables) {
+				isAddingObservables = true;
+				mostRightNodeX += 150;
+				const midPointY = (highestNodeY + lowestNodeY) / 2;
+				const observablesHeight = observableAmount * n.height;
+				currentObservableY = midPointY - observablesHeight / 2;
+			}
+			g.setNode(node.id, {
+				x: mostRightNodeX,
+				y: currentObservableY,
+				width: node.width,
+				height: node.height
+			});
+			n = g.node(node.id);
+			currentObservableY += 100;
+		}
+		// Place node
 		node.x = n.x;
 		node.y = n.y;
-
-		const pid = g.parent(node.id);
 		if (pid) {
 			node.x -= g.node(pid).x;
 			node.y -= g.node(pid).y;
 		}
 	});
 
-	// eslint-disable-next-line
-	for (const edge of graphData.edges) {
+	graphData.edges.forEach((edge: IEdge<any>) => {
+		// Set observable (custom) edges here
+		if (edge.data?.isObservable) {
+			const sourceNode = g.node(edge.source);
+			const targetNode = g.node(edge.target);
+			if (!sourceNode || !targetNode) return;
+			g.setEdge(edge.source, edge.target, {
+				points: interpolatePointsForCurve(sourceNode, targetNode)
+			});
+		}
 		const e = g.edge(edge.source, edge.target);
-		edge.points = _.cloneDeep(e.points);
-	}
+		if (e?.points) edge.points = _.cloneDeep(e.points);
+	});
 
 	// HACK: multi-edges
 	const dupe: Set<string> = new Set();
 	for (let idx = 0; idx < graphData.edges.length; idx++) {
 		const edge = graphData.edges[idx];
 		const hash = `${edge.source};${edge.target}`;
-		if (dupe.has(hash)) {
-			if (edge.points.length > 2) {
-				for (let i = 1; i < edge.points.length - 1; i++) {
-					edge.points[i].y -= 25;
-				}
+		if (dupe.has(hash) && edge.points.length > 2) {
+			for (let i = 1; i < edge.points.length - 1; i++) {
+				edge.points[i].y -= 25;
 			}
 		}
 		dupe.add(hash);
@@ -110,6 +147,5 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 		graphData.width = Math.abs(maxX - minX);
 		graphData.height = Math.abs(maxY - minY);
 	}
-
 	return graphData;
 };

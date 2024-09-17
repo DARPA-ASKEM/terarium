@@ -11,6 +11,7 @@
 		<router-view v-slot="{ Component }">
 			<component class="page" :is="Component" />
 		</router-view>
+		<ConfirmDialog class="w-4" />
 	</main>
 	<footer>
 		<tera-footer />
@@ -19,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue';
+import { computed, watch } from 'vue';
 import Toast from 'primevue/toast';
 
 import { ToastSeverity, ToastSummaries, useToastService } from '@/services/toast';
@@ -29,33 +30,24 @@ import TeraNavbar from '@/components/navbar/tera-navbar.vue';
 import TeraFooter from '@/components/navbar/tera-footer.vue';
 import { useProjects } from '@/composables/project';
 import { Project } from '@/types/Types';
+import ConfirmDialog from 'primevue/confirmdialog';
 import TeraCommonModalDialogs from './components/widgets/tera-common-modal-dialogs.vue';
 import { useCurrentRoute } from './router/index';
 
 const toast = useToastService();
 
-/**
- * Router
- */
+/* Router */
 const route = useRoute();
 const router = useRouter();
 const currentRoute = useCurrentRoute();
-
 const displayNavBar = computed(() => currentRoute.value.name !== 'unauthorized');
 
-/**
- * Project
- */
+/* Project */
 API.interceptors.response.use(
 	(response) => response,
 	(error) => {
 		const status = error.response.status;
-		toast.showToast(
-			ToastSeverity.error,
-			`${ToastSummaries.NETWORK_ERROR} (${status})`,
-			'Unauthorized',
-			5000
-		);
+		toast.showToast(ToastSeverity.error, `${ToastSummaries.NETWORK_ERROR} (${status})`, 'Unauthorized', 5000);
 		if (status === 401 || status === 403) {
 			router.push({ name: 'unauthorized' });
 		}
@@ -70,10 +62,6 @@ watch(
 	},
 	{ immediate: true }
 );
-
-onMounted(async () => {
-	await useProjects().getAll();
-});
 </script>
 
 <style scoped>

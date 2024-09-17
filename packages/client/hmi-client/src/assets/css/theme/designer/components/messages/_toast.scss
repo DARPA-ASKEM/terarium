@@ -18,7 +18,7 @@
             .p-toast-message-icon {
                 font-size: $toastIconFontSize;
                 // display:none;
-                margin-left: 0.25rem;
+                margin-left: var(--gap-1);
                 width: 16px;
                 height: 16px;
             }

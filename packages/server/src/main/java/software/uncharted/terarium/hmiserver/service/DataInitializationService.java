@@ -2,10 +2,19 @@ package software.uncharted.terarium.hmiserver.service;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import software.uncharted.terarium.hmiserver.models.authority.*;
+import software.uncharted.terarium.hmiserver.models.authority.AuthorityLevel;
+import software.uncharted.terarium.hmiserver.models.authority.AuthorityType;
+import software.uncharted.terarium.hmiserver.models.authority.KeycloakRole;
+import software.uncharted.terarium.hmiserver.models.authority.Role;
+import software.uncharted.terarium.hmiserver.models.authority.RoleType;
 
 @Service
 @RequiredArgsConstructor
@@ -28,66 +37,66 @@ public class DataInitializationService {
 	}
 
 	private void initializeRoles() {
-		List<RoleType> roleTypesMissing = new ArrayList<>();
-		for (RoleType roleType : RoleType.values()) {
-			List<Role> res = roleService.getAllByTypes(new HashSet<>(Arrays.asList(roleType.name())));
+		final List<RoleType> roleTypesMissing = new ArrayList<>();
+		for (final RoleType roleType : RoleType.values()) {
+			final List<Role> res = roleService.getAllByTypes(new HashSet<>(List.of(roleType.name())));
 			if (res.isEmpty()) {
 				roleTypesMissing.add(roleType);
 			}
 		}
 
-		for (RoleType roleType : roleTypesMissing) {
+		for (final RoleType roleType : roleTypesMissing) {
 			switch (roleType) {
 				case ADMIN -> roleService.createRole(
-						RoleType.ADMIN,
-						Map.of(
-								AuthorityType.GRANT_AUTHORITY,
-										List.of(
-												AuthorityLevel.READ,
-												AuthorityLevel.CREATE,
-												AuthorityLevel.UPDATE,
-												AuthorityLevel.DELETE),
-								AuthorityType.USERS,
-										List.of(
-												AuthorityLevel.READ,
-												AuthorityLevel.CREATE,
-												AuthorityLevel.UPDATE,
-												AuthorityLevel.DELETE)));
+					RoleType.ADMIN,
+					Map.of(
+						AuthorityType.GRANT_AUTHORITY,
+						List.of(AuthorityLevel.READ, AuthorityLevel.CREATE, AuthorityLevel.UPDATE, AuthorityLevel.DELETE),
+						AuthorityType.USERS,
+						List.of(AuthorityLevel.READ, AuthorityLevel.CREATE, AuthorityLevel.UPDATE, AuthorityLevel.DELETE)
+					)
+				);
 				case USER -> roleService.createRole(
-						RoleType.USER,
-						Map.of(
-								AuthorityType.GRANT_AUTHORITY, List.of(AuthorityLevel.READ),
-								AuthorityType.USERS, List.of(AuthorityLevel.READ, AuthorityLevel.UPDATE)));
+					RoleType.USER,
+					Map.of(
+						AuthorityType.GRANT_AUTHORITY,
+						List.of(AuthorityLevel.READ),
+						AuthorityType.USERS,
+						List.of(AuthorityLevel.READ, AuthorityLevel.UPDATE)
+					)
+				);
 				case GROUP -> roleService.createRole(
-						RoleType.GROUP,
-						Map.of(
-								AuthorityType.GRANT_AUTHORITY, List.of(AuthorityLevel.READ),
-								AuthorityType.USERS, List.of(AuthorityLevel.READ, AuthorityLevel.UPDATE)));
+					RoleType.GROUP,
+					Map.of(
+						AuthorityType.GRANT_AUTHORITY,
+						List.of(AuthorityLevel.READ),
+						AuthorityType.USERS,
+						List.of(AuthorityLevel.READ, AuthorityLevel.UPDATE)
+					)
+				);
 				case TEST -> roleService.createRole(
-						RoleType.TEST,
-						Map.of(
-								AuthorityType.GRANT_AUTHORITY, List.of(AuthorityLevel.READ),
-								AuthorityType.USERS,
-										List.of(
-												AuthorityLevel.READ,
-												AuthorityLevel.CREATE,
-												AuthorityLevel.UPDATE,
-												AuthorityLevel.DELETE)));
+					RoleType.TEST,
+					Map.of(
+						AuthorityType.GRANT_AUTHORITY,
+						List.of(AuthorityLevel.READ),
+						AuthorityType.USERS,
+						List.of(AuthorityLevel.READ, AuthorityLevel.CREATE, AuthorityLevel.UPDATE, AuthorityLevel.DELETE)
+					)
+				);
 				case SERVICE -> roleService.createRole(
-						RoleType.SERVICE,
-						Map.of(
-								AuthorityType.GRANT_AUTHORITY, List.of(AuthorityLevel.READ),
-								AuthorityType.USERS,
-										List.of(
-												AuthorityLevel.READ,
-												AuthorityLevel.CREATE,
-												AuthorityLevel.UPDATE,
-												AuthorityLevel.DELETE)));
+					RoleType.SERVICE,
+					Map.of(
+						AuthorityType.GRANT_AUTHORITY,
+						List.of(AuthorityLevel.READ),
+						AuthorityType.USERS,
+						List.of(AuthorityLevel.READ, AuthorityLevel.CREATE, AuthorityLevel.UPDATE, AuthorityLevel.DELETE)
+					)
+				);
 			}
 		}
 	}
 
-	public Set<RoleType> getRoleTypesForKeycloakRole(final KeycloakRole keycloakRole) {
+	public static Set<RoleType> getRoleTypesForKeycloakRole(final KeycloakRole keycloakRole) {
 		return switch (keycloakRole) {
 			case ADMIN -> Set.of(RoleType.ADMIN, RoleType.USER);
 			case USER -> Set.of(RoleType.USER);

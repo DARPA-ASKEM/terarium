@@ -1,7 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.task;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -9,6 +9,7 @@ import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Base64;
+import java.util.UUID;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
@@ -22,7 +23,9 @@ public class TaskRequest implements Serializable {
 		@JsonAlias("gollm")
 		GOLLM("gollm"),
 		@JsonAlias("mira")
-		MIRA("mira");
+		MIRA("mira"),
+		@JsonAlias("funman")
+		FUNMAN("funman");
 
 		private final String value;
 
@@ -38,7 +41,9 @@ public class TaskRequest implements Serializable {
 	protected TaskType type;
 	protected String script;
 	protected byte[] input;
-	protected int timeoutMinutes = 30;
+	protected int timeoutMinutes = 5;
+	protected String userId;
+	protected UUID projectId;
 
 	// Sometimes we have context specific variables what we want to associate with a
 	// request but aren't actually used by the task on the other side but are
@@ -61,7 +66,7 @@ public class TaskRequest implements Serializable {
 		return objectMapper.readValue(objectMapper.writeValueAsString(additionalProperties), type);
 	}
 
-	@JsonIgnore
+	@JsonProperty("requestSHA256")
 	public String getSHA256() {
 		try {
 			// NOTE: do not include the task id in this hash, we want to determine if the
@@ -71,11 +76,8 @@ public class TaskRequest implements Serializable {
 			objectMapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
 
 			final String encodedInput = Base64.getEncoder().encodeToString(input);
-			final String encodedAdditionalProperties =
-					Base64.getEncoder().encodeToString(objectMapper.writeValueAsBytes(additionalProperties));
 
-			final String strHash =
-					String.format("%s-%s-%s-%s", type, script, encodedInput, encodedAdditionalProperties);
+			final String strHash = String.format("%s-%s-%s", type, script, encodedInput);
 			final MessageDigest md = MessageDigest.getInstance("SHA-256");
 			return Base64.getEncoder().encodeToString(md.digest(strHash.getBytes(StandardCharsets.UTF_8)));
 		} catch (final Exception e) {

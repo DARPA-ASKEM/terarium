@@ -6,7 +6,7 @@
     border-radius: $chipBorderRadius;
     font-weight: $fontWeightSemiBold;
     font-size: $fontCaption;
-    padding: 0 0.75rem;
+    padding: 0 var(--gap-3);
     border: solid 1px var(--surface-border-light);
 
     .p-chip-text,

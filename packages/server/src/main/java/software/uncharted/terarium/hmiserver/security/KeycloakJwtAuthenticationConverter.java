@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.security;
 
 import static java.util.stream.Collectors.toSet;
 
-import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -30,6 +29,7 @@ import software.uncharted.terarium.hmiserver.service.UserService;
 @Service
 @RequiredArgsConstructor
 public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticationToken> {
+
 	private final UserService userService;
 
 	private final RoleService roleService;
@@ -41,18 +41,20 @@ public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, Abstra
 	@Override
 	public AbstractAuthenticationToken convert(final Jwt source) {
 		return new JwtAuthenticationToken(
-				source,
-				Stream.concat(
-								new JwtGrantedAuthoritiesConverter().convert(source).stream(),
-								extractResourceRoles(source).stream())
-						.collect(toSet()));
+			source,
+			Stream.concat(
+				new JwtGrantedAuthoritiesConverter().convert(source).stream(),
+				extractResourceRoles(source).stream()
+			).collect(toSet())
+		);
 	}
 
 	@SuppressWarnings("unchecked")
 	private Collection<SimpleGrantedAuthority> extractResourceRoles(final Jwt jwt) {
 		// Extract the roles from keycloak itself
-		final List<String> realmRoles =
-				(List<String>) jwt.getClaimAsMap("realm_access").getOrDefault("roles", new ArrayList<>());
+		final List<String> realmRoles = (List<String>) jwt
+			.getClaimAsMap("realm_access")
+			.getOrDefault("roles", new ArrayList<>());
 
 		// Merge with existing roles (or create the new user if this is first login
 		final String userId = jwt.getClaimAsString(StandardClaimNames.SUB);
@@ -66,25 +68,25 @@ public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, Abstra
 			}
 		}
 
-		return roleService.getAuthorities(databaseUser.getRoles()).stream()
-				.map(SimpleGrantedAuthority::new)
-				.collect(Collectors.toSet());
+		return RoleService.getAuthorities(databaseUser.getRoles())
+			.stream()
+			.map(SimpleGrantedAuthority::new)
+			.collect(Collectors.toSet());
 	}
 
-	@Transactional
 	public User initializeUser(final Jwt jwt, final List<String> keycloakRoles) {
 		final User user = adminClientService.getUserFromJwt(jwt);
 
-		final Set<RoleType> roleTypes = KeycloakRole.get(keycloakRoles).stream()
-				.map(keycloakRole -> dataInitializationService.getRoleTypesForKeycloakRole(keycloakRole))
-				.flatMap(Collection::stream)
-				.collect(toSet());
+		final Set<RoleType> roleTypes = KeycloakRole.get(keycloakRoles)
+			.stream()
+			.map(keycloakRole -> DataInitializationService.getRoleTypesForKeycloakRole(keycloakRole))
+			.flatMap(Collection::stream)
+			.collect(toSet());
 
-		final List<Role> roles =
-				roleService.getAllByTypes(roleTypes.stream().map(Enum::name).collect(toSet()));
+		final List<Role> roles = roleService.getAllByTypes(roleTypes.stream().map(Enum::name).collect(toSet()));
 
 		user.setRoles(roles);
 
-		return userService.createUser(user);
+		return UserService.createUser(user);
 	}
 }

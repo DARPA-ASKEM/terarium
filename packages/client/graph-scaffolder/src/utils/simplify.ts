@@ -1,12 +1,6 @@
 import { IPoint } from '../types';
 
-const simplifyDPStep = (
-	points: IPoint[],
-	first: number,
-	last: number,
-	sqTolerance: number,
-	simplified: IPoint[]
-) => {
+const simplifyDPStep = (points: IPoint[], first: number, last: number, sqTolerance: number, simplified: IPoint[]) => {
 	const sqSegmentDistance = (p: IPoint, p1: IPoint, p2: IPoint) => {
 		const sqDifference = (a: number, b: number) => (a - b) * (a - b);
 		const sqDistance = (a: IPoint, b: IPoint) => sqDifference(a.x, a.x) + sqDifference(b.y, b.y);

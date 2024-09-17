@@ -21,4 +21,114 @@ h5 {
 
 h6 {
     font-size: $fontBodySmall;
-} 
+}
+
+
+@font-face {
+    font-family: 'Figtree';
+    src:    local(Figtree),
+            url('@/assets/fonts/figtree/Figtree-Regular.ttf');
+}
+
+@font-face {
+    font-family: 'Figtree';
+    font-style: italic;
+    src:    local(Figtree),
+            url('@/assets/fonts/figtree/Figtree-Italic.ttf');
+}
+
+@font-face {
+    font-family: 'Figtree';
+    font-style: italic;
+    font-size: medium;
+    src:    local(Figtree),
+            url('@/assets/fonts/figtree/Figtree-MediumItalic.ttf');
+}
+
+@font-face {
+    font-family: 'Figtree';
+    font-size: medium;
+    src:    local(Figtree),
+            url('@/assets/fonts/figtree/Figtree-Medium.ttf');
+}
+
+@font-face {
+    font-family: 'Figtree';
+    font-weight: 400;
+    src:    local(Figtree),
+            url('@/assets/fonts/figtree/Figtree-VariableFont_wght.ttf');
+}
+
+@font-face {
+    font-family: 'Figtree';
+    font-weight: 900;
+    src:    local(Figtree),
+            url('@/assets/fonts/figtree/Figtree-SemiBold.ttf');
+}
+
+@font-face {
+    font-family: 'Figtree';
+    font-weight: 900;
+    font-style: italic;
+    src:    local(Figtree),
+            url('@/assets/fonts/figtree/Figtree-SemiBoldItalic.ttf');
+}
+
+@font-face {
+    font-family: 'Figtree';
+    font-weight: bold;
+    src:    local(Figtree),
+            url('@/assets/fonts/figtree/Figtree-SemiBold.ttf');
+}
+
+@font-face {
+    font-family: 'Figtree';
+    font-weight: bold;
+    font-style: italic;
+    src:    local(Figtree),
+            url('@/assets/fonts/figtree/Figtree-SemiBoldItalic.ttf');
+}
+
+/*
+The Latin Modern fonts are released under the GUST font license, which is
+legally equivalent to the LaTeX Project Public License. See the files in this
+directory for details. The fonts can be obtained from several TeX distributions
+or package managers.
+
+The WOFF fonts have been obtained from
+http://www.gust.org.pl/projects/e-foundry/
+*/
+
+@font-face {
+    font-family: 'latex-math';
+    src:    local('Latin Modern Math'),
+            local('LatinModernMath-Regular'),
+            url('@/assets/fonts/latinModern/latinmodern-math.woff2'),
+            url('@/assets/fonts/latinModern/latinmodern-math.woff');
+}
+
+@font-face {
+    font-family: 'latex-roman12';
+    src:    url('@/assets/fonts/latinModern/lmroman12-regular.woff2'),
+            url('@/assets/fonts/latinModern/lmroman12-regular.woff');
+}
+
+@font-face {
+    font-family: 'latex-roman12';
+    font-weight: bold;
+    src:    url('@/assets/fonts/latinModern/lmroman12-bold.woff2'),
+            url('@/assets/fonts/latinModern/lmroman12-bold.woff');
+}
+
+@font-face {
+    font-family: 'latex-roman12';
+    font-style: italic;
+    src:    url('@/assets/fonts/latinModern/lmroman12-italic.woff2'),
+            url('@/assets/fonts/latinModern/lmroman12-italic.woff');
+}
+
+.latex-font {
+    font-family: 'latex-math, latex-roman12', serif;
+    font-size: medium;
+    font-style: italic;
+}

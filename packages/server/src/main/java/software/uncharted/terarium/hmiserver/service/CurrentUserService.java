@@ -21,7 +21,7 @@ public class CurrentUserService {
 	private final UserService userService;
 	private final AdminClientService adminClientService;
 
-	public Jwt getToken() {
+	public static Jwt getToken() {
 		final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		return (Jwt) (authentication.getPrincipal());
 	}
@@ -30,13 +30,11 @@ public class CurrentUserService {
 		final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		if (authentication.getPrincipal() instanceof User) {
 			return (User) authentication.getPrincipal();
-		} else if (authentication.getPrincipal() instanceof org.springframework.security.core.userdetails.User) {
+		} else if (authentication.getPrincipal() instanceof final org.springframework.security.core.userdetails.User u) {
 			// Used in tests
-			org.springframework.security.core.userdetails.User u =
-					(org.springframework.security.core.userdetails.User) authentication.getPrincipal();
-			User user = new User();
-			List<SimpleGrantedAuthority> auths = new ArrayList<>();
-			for (GrantedAuthority auth : u.getAuthorities()) {
+			final User user = new User();
+			final List<SimpleGrantedAuthority> auths = new ArrayList<>();
+			for (final GrantedAuthority auth : u.getAuthorities()) {
 				auths.add(new SimpleGrantedAuthority(auth.getAuthority()));
 			}
 			user.setUsername(u.getUsername());
@@ -45,10 +43,14 @@ public class CurrentUserService {
 		} else {
 			final Jwt jwt = (Jwt) (authentication.getPrincipal());
 			final User user = adminClientService
-					.getUserFromJwt(jwt)
-					.setAuthorities(authentication.getAuthorities().stream()
-							.map(a -> new SimpleGrantedAuthority(a.getAuthority()))
-							.collect(Collectors.toList()));
+				.getUserFromJwt(jwt)
+				.setAuthorities(
+					authentication
+						.getAuthorities()
+						.stream()
+						.map(a -> new SimpleGrantedAuthority(a.getAuthority()))
+						.collect(Collectors.toList())
+				);
 
 			final User storedUser = userService.getById(user.getId());
 			user.merge(storedUser);
