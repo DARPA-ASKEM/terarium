@@ -80,15 +80,6 @@ export async function getMMT(model: Model) {
 	return (response?.data?.response as MMT) ?? null;
 }
 
-/**
- * Get all models
- * @return Array<Model>|null - the list of all models, or null if none returned by API
- */
-export async function getAllModelDescriptions(): Promise<Model[] | null> {
-	const response = await API.get('/models/descriptions?page-size=500');
-	return response?.data ?? null;
-}
-
 export async function updateModel(model: Model) {
 	const response = await API.put(`/models/${model.id}`, model);
 	await EventService.create(

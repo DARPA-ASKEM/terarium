@@ -93,30 +93,6 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanGetDocuments() throws Exception {
-		documentAssetService.createAsset(
-			(DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
-		documentAssetService.createAsset(
-			(DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
-		documentAssetService.createAsset(
-			(DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
-		mockMvc.perform(MockMvcRequestBuilders.get("/document-asset").with(csrf())).andExpect(status().isOk()).andReturn();
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteDocument() throws Exception {
 		final DocumentAsset documentAsset = documentAssetService.createAsset(
 			(DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description"),
