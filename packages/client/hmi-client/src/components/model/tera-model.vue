@@ -28,15 +28,9 @@
 			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" popup :pt="optionsMenuPt" />
 			<div class="btn-group">
 				<tera-asset-enrichment :asset-type="AssetType.Model" :assetId="assetId" @finished-job="fetchModel" />
-				<Button
-					label="Reset"
-					severity="secondary"
-					outlined
-					@click="teraModelPartsRef?.reset()"
-					:disabled="hasChanged"
-				/>
-				<Button label="Save as..." severity="secondary" outlined @click="showSaveModal = true" />
-				<Button label="Save" @click="updateModelContent(teraModelPartsRef?.transientModel)" :disabled="hasChanged" />
+				<Button label="Reset" severity="secondary" outlined @click="onReset" :disabled="hasChanged" />
+				<Button label="Save as..." severity="secondary" outlined @click="onSaveAs" />
+				<Button label="Save" @click="onSave" :disabled="hasChanged" />
 			</div>
 		</template>
 		<section v-if="model">
@@ -47,7 +41,6 @@
 				@update-model="updateModelContent"
 			/>
 			<tera-model-parts
-				ref="teraModelPartsRef"
 				class="mt-0"
 				:model="model"
 				:feature-config="featureConfig"
@@ -108,8 +101,6 @@ useClientEvent(ClientEventType.TaskGollmModelCard, (event: ClientEvent<TaskRespo
 	fetchModel();
 });
 
-const teraModelPartsRef = ref();
-
 const model = ref<Model | null>(null);
 const temporaryModel = ref<Model | null>(null);
 
@@ -122,6 +113,17 @@ const isNaming = computed(() => isEmpty(props.assetId) || isRenaming.value);
 const hasChanged = computed(() => !isEqual(model.value, temporaryModel.value));
 
 const toggleOptionsMenu = (event) => optionsMenu.value.toggle(event);
+
+// Edit menu
+function onReset() {
+	temporaryModel.value = cloneDeep(model.value);
+}
+function onSave() {
+	if (temporaryModel.value) updateModelContent(temporaryModel.value);
+}
+function onSaveAs() {
+	showSaveModal.value = true;
+}
 
 // User menu
 const optionsMenu = ref();
@@ -195,7 +197,6 @@ async function fetchModel() {
 	model.value = await getModel(props.assetId);
 	temporaryModel.value = cloneDeep(model.value);
 }
-
 watch(
 	() => [props.assetId],
 	async () => {
