@@ -1,8 +1,5 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch.core.search.SourceConfig;
-import co.elastic.clients.elasticsearch.core.search.SourceFilter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,7 +8,6 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -94,40 +90,6 @@ public class ModelController {
 	final InterventionRepository interventionRepository;
 
 	final EmbeddingService embeddingService;
-
-	@GetMapping("/descriptions")
-	@Secured(Roles.USER)
-	@Operation(summary = "Gets all model descriptions")
-	@ApiResponses(
-		value = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "Model descriptions found.",
-				content = @Content(
-					array = @ArraySchema(
-						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelDescription.class)
-					)
-				)
-			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue retrieving descriptions from the data store",
-				content = @Content
-			)
-		}
-	)
-	public ResponseEntity<List<ModelDescription>> listModels(
-		@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
-		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
-	) {
-		try {
-			return ResponseEntity.ok(modelService.getDescriptions(page, pageSize));
-		} catch (final IOException e) {
-			final String error = "Unable to get model";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
-		}
-	}
 
 	@GetMapping("/{id}/descriptions")
 	@Secured(Roles.USER)
@@ -367,65 +329,6 @@ public class ModelController {
 			return ResponseEntity.ok(model.get());
 		} catch (final Exception e) {
 			final String error = "Unable to get model";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
-		}
-	}
-
-	@GetMapping("/search")
-	@Secured(Roles.USER)
-	@Operation(summary = "Search models with a query")
-	@ApiResponses(
-		value = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "Models found.",
-				content = @Content(
-					array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class))
-				)
-			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue retrieving models from the data store",
-				content = @Content
-			)
-		}
-	)
-	public ResponseEntity<List<Model>> searchModels(
-		@RequestBody final JsonNode queryJson,
-		@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
-		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
-	) {
-		try {
-			final Query query;
-			if (queryJson != null) {
-				// if query is provided deserialize it, append the soft delete filter
-				final byte[] bytes = objectMapper.writeValueAsString(queryJson).getBytes();
-				query = new Query.Builder()
-					.bool(b ->
-						b
-							.must(new Query.Builder().withJson(new ByteArrayInputStream(bytes)).build())
-							.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
-							.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))
-					)
-					.build();
-			} else {
-				query = new Query.Builder()
-					.bool(b ->
-						b
-							.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
-							.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))
-					)
-					.build();
-			}
-
-			final SourceConfig source = new SourceConfig.Builder()
-				.filter(new SourceFilter.Builder().excludes("model", "semantics").build())
-				.build();
-
-			return ResponseEntity.ok(modelService.searchAssets(page, pageSize, query, source));
-		} catch (final IOException e) {
-			final String error = "Unable to search models";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}

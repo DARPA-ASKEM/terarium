@@ -1,13 +1,10 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.transaction.Transactional;
 import java.io.IOException;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -54,44 +51,6 @@ public class InterventionController {
 	final CurrentUserService currentUserService;
 
 	final Messages messages;
-
-	@GetMapping
-	@Secured(Roles.USER)
-	@Operation(summary = "Gets all interventions")
-	@ApiResponses(
-		value = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "Interventions found.",
-				content = @Content(
-					mediaType = MediaType.APPLICATION_JSON_VALUE,
-					array = @ArraySchema(
-						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = InterventionPolicy.class)
-					)
-				)
-			),
-			@ApiResponse(
-				responseCode = "204",
-				description = "There are no interventions found and no errors occurred",
-				content = @Content
-			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue retrieving interventions from the data store",
-				content = @Content
-			)
-		}
-	)
-	public ResponseEntity<List<InterventionPolicy>> getInterventions(
-		@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
-		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
-	) {
-		final List<InterventionPolicy> interventions = interventionService.getPublicNotTemporaryAssets(page, pageSize);
-		if (interventions.isEmpty()) {
-			return ResponseEntity.noContent().build();
-		}
-		return ResponseEntity.ok(interventions);
-	}
 
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)

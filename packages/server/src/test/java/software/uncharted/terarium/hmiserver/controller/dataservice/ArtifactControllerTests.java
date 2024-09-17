@@ -84,28 +84,6 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanGetArtifacts() throws Exception {
-		artifactService.createAsset(
-			(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-		artifactService.createAsset(
-			(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-		artifactService.createAsset(
-			(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
-		mockMvc.perform(MockMvcRequestBuilders.get("/artifacts").with(csrf())).andExpect(status().isOk()).andReturn();
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteArtifact() throws Exception {
 		final Artifact artifact = artifactService.createAsset(
 			(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
