@@ -909,11 +909,21 @@ export function createInterventionChartMarkers(interventions: Intervention[]): a
 	return [markerSpec, labelSpec];
 }
 
-export function createInterventionChart(interventions: Intervention[]) {
+export function createInterventionChart(interventions: Intervention[], chartOptions: Omit<BaseChartOptions, 'legend'>) {
 	const interventionsData = flattenInterventionData(interventions);
+	const titleObj = chartOptions.title
+		? {
+				text: chartOptions.title,
+				anchor: 'start',
+				subtitle: ' ',
+				subtitlePadding: 4
+			}
+		: null;
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
-		width: 400,
+		width: chartOptions.width,
+		title: titleObj,
+		height: chartOptions.height,
 		autosize: {
 			type: 'fit-x'
 		},
@@ -929,8 +939,8 @@ export function createInterventionChart(interventions: Intervention[]) {
 			data: { values: interventionsData },
 			mark: 'point',
 			encoding: {
-				x: { field: 'time', type: 'quantitative' },
-				y: { field: 'value', type: 'quantitative' }
+				x: { field: 'time', type: 'quantitative', title: chartOptions.xAxisTitle },
+				y: { field: 'value', type: 'quantitative', title: chartOptions.yAxisTitle }
 			}
 		});
 	}
