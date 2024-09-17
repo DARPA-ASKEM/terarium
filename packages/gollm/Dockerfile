@@ -1,5 +1,5 @@
 # Build the Spring Boot application
-FROM eclipse-temurin:17.0.12_7-jdk-focal AS gollm_taskrunner_builder
+FROM eclipse-temurin:21-jdk-noble AS gollm_taskrunner_builder
 
 ###### DEV ONLY ######
 #VVVVVVVVVVVVVVVVVVVVV
@@ -61,7 +61,7 @@ WORKDIR /
 # Install OpenJDK JRE and wget
 RUN apt-get update && \
 	apt-get install -y --no-install-recommends \
-	openjdk-17-jre-headless && \
+	openjdk-21-jre-headless && \
 	rm -rf /var/lib/apt/lists/*
 
 # Copy the Spring Boot fat JAR from the builder image

@@ -2,14 +2,12 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -90,40 +88,6 @@ public class DocumentController {
 	@Value("${xdd.api-es-key}")
 	String api_es_key;
 
-	@GetMapping
-	@Secured(Roles.USER)
-	@Operation(summary = "Gets all documents")
-	@ApiResponses(
-		value = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "Documents found.",
-				content = @Content(
-					array = @ArraySchema(
-						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DocumentAsset.class)
-					)
-				)
-			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue retrieving documents from the data store",
-				content = @Content
-			)
-		}
-	)
-	public ResponseEntity<List<DocumentAsset>> getDocuments(
-		@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
-		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
-	) {
-		try {
-			return ResponseEntity.ok(documentAssetService.getPublicNotTemporaryAssets(page, pageSize));
-		} catch (final Exception e) {
-			final String error = "Unable to get documents";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
-		}
-	}
-
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new document")
@@ -155,7 +119,7 @@ public class DocumentController {
 		} catch (final IOException e) {
 			final String error = "Unable to create document";
 			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -200,7 +164,7 @@ public class DocumentController {
 		} catch (final IOException e) {
 			final String error = "Unable to update document";
 			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -300,7 +264,7 @@ public class DocumentController {
 		} catch (final Exception e) {
 			final String error = "Unable to get upload url";
 			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -335,7 +299,7 @@ public class DocumentController {
 		} catch (final Exception e) {
 			final String error = "Unable to get download url";
 			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -372,7 +336,7 @@ public class DocumentController {
 		} catch (final Exception e) {
 			final String error = "Unable to delete document";
 			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -415,7 +379,7 @@ public class DocumentController {
 		} catch (final IOException e) {
 			final String error = "Unable to upload document";
 			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -449,7 +413,7 @@ public class DocumentController {
 		} catch (final IOException e) {
 			final String error = "Unable to upload document";
 			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -487,7 +451,7 @@ public class DocumentController {
 		if (fileString == null) {
 			final String error = "Unable to download document from github";
 			log.error(error);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 		final HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
 		return uploadDocumentHelper(documentId, filename, fileEntity, projectId);
@@ -530,7 +494,7 @@ public class DocumentController {
 		} catch (final Exception e) {
 			final String error = "Unable to download document";
 			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -566,7 +530,7 @@ public class DocumentController {
 		} catch (final Exception e) {
 			final String error = "Unable to download document as text";
 			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -597,32 +561,37 @@ public class DocumentController {
 		@PathVariable("id") final UUID documentId,
 		@RequestParam("filename") final String filename
 	) {
+		Optional<byte[]> bytes = Optional.empty();
 		try {
-			final Optional<byte[]> bytes = documentAssetService.fetchFileAsBytes(documentId, filename);
-			if (bytes.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-
-			final byte[] imagesByte = bytes.get();
-
-			// Encode the image in Base 64
-			final String imageB64 = Base64.getEncoder().encodeToString(imagesByte);
-
-			// image -> mathML
-			final String mathML = skemaUnifiedProxy.postImageToEquations(imageB64).getBody();
-
-			// mathML -> LaTeX
-			final String latex = skemaRustProxy.convertMathML2Latex(mathML).getBody();
-
-			// Add spaces before and after "*"
-			String latexWithSpaces = latex.replaceAll("(?<!\\s)\\*", " *");
-			latexWithSpaces = latexWithSpaces.replaceAll("\\*(?!\\s)", "* ");
-
-			return ResponseEntity.ok(latexWithSpaces);
-		} catch (final Exception e) {
-			final String error = "Unable to convert image to equation";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			bytes = documentAssetService.fetchFileAsBytes(documentId, filename);
+		} catch (IOException e) {
+			log.error("Unable to fetch files from the document asset service", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
 		}
+
+		if (bytes.isEmpty()) {
+			return ResponseEntity.notFound().build();
+		}
+
+		final byte[] imagesByte = bytes.get();
+
+		// Encode the image in Base 64
+		final String imageB64 = Base64.getEncoder().encodeToString(imagesByte);
+
+		// image -> mathML
+		final String mathML = skemaUnifiedProxy.postImageToEquations(imageB64).getBody();
+
+		// mathML -> LaTeX
+		final String latex = skemaRustProxy.convertMathML2Latex(mathML).getBody();
+		if (latex == null) {
+			log.error("Unable to convert MathML to LaTeX");
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("skema.error.image-2-equation"));
+		}
+
+		// Add spaces before and after "*"
+		String latexWithSpaces = latex.replaceAll("(?<!\\s)\\*", " *");
+		latexWithSpaces = latexWithSpaces.replaceAll("\\*(?!\\s)", "* ");
+
+		return ResponseEntity.ok(latexWithSpaces);
 	}
 }

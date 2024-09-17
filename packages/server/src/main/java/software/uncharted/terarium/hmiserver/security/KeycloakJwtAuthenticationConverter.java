@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.security;
 
 import static java.util.stream.Collectors.toSet;
 
-import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

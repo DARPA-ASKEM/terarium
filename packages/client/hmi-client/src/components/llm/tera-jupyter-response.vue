@@ -100,6 +100,7 @@ import Button from 'primevue/button';
 import Textarea from 'primevue/textarea';
 import Menu from 'primevue/menu';
 import { defineEmits, ref, computed, onMounted } from 'vue';
+import { MenuItem } from 'primevue/menuitem';
 
 const emit = defineEmits([
 	'cell-updated',
@@ -157,7 +158,7 @@ const chatWindowMenuItems = ref([
 		icon: 'pi pi-fw pi-trash',
 		command: () => emit('delete-prompt', props.msg.query_id)
 	}
-]);
+] as MenuItem[]);
 
 const saveEditingQuery = () => {
 	emit('edit-prompt', props.msg.query_id, query.value);
