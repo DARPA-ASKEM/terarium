@@ -1,5 +1,5 @@
 # Build the Spring Boot application
-FROM eclipse-temurin:21-jdk-noble AS gollm_taskrunner_builder
+FROM eclipse-temurin:21.0.4_7-jdk-noble AS gollm_taskrunner_builder
 
 ###### DEV ONLY ######
 #VVVVVVVVVVVVVVVVVVVVV
@@ -54,7 +54,7 @@ RUN ./gradlew bootJar
 WORKDIR /
 
 # ------------------------------------------------------------------------------
-FROM eclipse-temurin:21-jre-noble
+FROM eclipse-temurin:21.0.4_7-jre-noble
 
 WORKDIR /
 
