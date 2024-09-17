@@ -217,15 +217,15 @@ public class MiraController {
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.execution-failure"));
 		}
 
-		final JsonNode mmtInfo;
+		final JsonNode latexResponse;
 		try {
-			mmtInfo = objectMapper.readValue(resp.getOutput(), JsonNode.class);
+			latexResponse = objectMapper.readValue(resp.getOutput(), JsonNode.class);
 		} catch (final IOException e) {
 			log.error("Unable to deserialize output", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
 		}
 
-		return ResponseEntity.ok().body(mmtInfo);
+		return ResponseEntity.ok().body(latexResponse);
 	}
 
 	@PostMapping("/convert-and-create-model")
