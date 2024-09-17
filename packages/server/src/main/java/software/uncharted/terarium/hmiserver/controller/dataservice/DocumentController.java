@@ -2,14 +2,12 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -89,40 +87,6 @@ public class DocumentController {
 
 	@Value("${xdd.api-es-key}")
 	String api_es_key;
-
-	@GetMapping
-	@Secured(Roles.USER)
-	@Operation(summary = "Gets all documents")
-	@ApiResponses(
-		value = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "Documents found.",
-				content = @Content(
-					array = @ArraySchema(
-						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DocumentAsset.class)
-					)
-				)
-			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue retrieving documents from the data store",
-				content = @Content
-			)
-		}
-	)
-	public ResponseEntity<List<DocumentAsset>> getDocuments(
-		@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
-		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
-	) {
-		try {
-			return ResponseEntity.ok(documentAssetService.getPublicNotTemporaryAssets(page, pageSize));
-		} catch (final Exception e) {
-			final String error = "Unable to get documents";
-			log.error(error, e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error);
-		}
-	}
 
 	@PostMapping
 	@Secured(Roles.USER)
