@@ -1,5 +1,5 @@
 <template>
-	<div class="constraint-group">
+	<section>
 		<header class="flex w-full gap-3 mb-2">
 			<tera-toggleable-input
 				v-model="constraintName"
@@ -68,7 +68,7 @@
 			days.
 		</p>
 		<!-- Weights -->
-		<ul v-if="weights && !isEmpty(weights)">
+		<!-- <ul v-if="weights && !isEmpty(weights)">
 			<li v-for="(variable, index) of variables" :key="index">
 				<tera-input-number
 					:label="variable + ' Weight'"
@@ -77,12 +77,12 @@
 					@update:model-value="updateChanges()"
 				/>
 			</li>
-		</ul>
-	</div>
+		</ul> -->
+	</section>
 </template>
 
 <script setup lang="ts">
-import { isEmpty } from 'lodash';
+// import { isEmpty } from 'lodash';
 import { watch, ref, computed } from 'vue';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import MultiSelect from 'primevue/multiselect';
@@ -177,17 +177,13 @@ watch(
 </script>
 
 <style scoped>
-.constraint-group {
-	width: 100%;
+section {
 	display: flex;
 	padding: var(--gap-4);
 	flex-direction: column;
-	justify-content: center;
-	align-items: flex-start;
 	background: var(--gray-50);
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
-	overflow: hidden;
 }
 
 p {

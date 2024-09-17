@@ -5,7 +5,7 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
-		<div :tabName="FunmanTabs.Wizard">
+		<div :tabName="DrilldownTabs.Wizard">
 			<tera-slider-panel
 				class="input-config"
 				v-model:is-open="isSliderOpen"
@@ -100,7 +100,7 @@
 				</template>
 			</tera-slider-panel>
 		</div>
-		<div :tabName="FunmanTabs.Notebook">
+		<div :tabName="DrilldownTabs.Notebook">
 			<tera-drilldown-section>
 				<main>
 					<!-- TODO: notebook functionality -->
@@ -165,6 +165,7 @@ import { pythonInstance } from '@/python/PyodideController';
 import TeraFunmanOutput from '@/components/workflow/ops/funman/tera-funman-output.vue';
 import TeraCompartmentConstraint from '@/components/workflow/ops/funman/tera-compartment-constraint.vue';
 import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-constraint-group-form.vue';
+import { DrilldownTabs } from '@/types/common';
 import { FunmanOperationState, ConstraintGroup, ConstraintType, DerivativeType } from './funman-operation';
 
 const props = defineProps<{
@@ -172,16 +173,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['append-output', 'select-output', 'update-state', 'close']);
-
-enum FunmanTabs {
-	Wizard = 'Wizard',
-	Notebook = 'Notebook'
-}
-const toast = useToastService();
-const validateParametersToolTip =
-	'Validate the configuration of the model using functional model analysis (FUNMAN). \n \n The parameter space regions defined by the model configuration are evaluated to satisfactory or unsatisfactory depending on whether they generate model outputs that are within a given set of time-dependent constraints';
-const showSpinner = ref(false);
-const isSliderOpen = ref(true);
 
 interface BasicKnobs {
 	tolerance: number;
@@ -200,15 +191,65 @@ const knobs = ref<BasicKnobs>({
 	useCompartmentalConstraint: false
 });
 
+const toast = useToastService();
+const validateParametersToolTip =
+	'Validate the configuration of the model using functional model analysis (FUNMAN). \n \n The parameter space regions defined by the model configuration are evaluated to satisfactory or unsatisfactory depending on whether they generate model outputs that are within a given set of time-dependent constraints';
+const showSpinner = ref(false);
+const isSliderOpen = ref(true);
+
 const mass = ref('0');
 
 const requestStepList = computed(() => getStepList());
 const requestStepListString = computed(() => requestStepList.value.join()); // Just used to display. dont like this but need to be quick
 
 const MAX = 99999999999;
-const requestConstraints = computed(() =>
-	// Same as node state's except typing for state vs linear constraint
-	props.node.state.constraintGroups?.map((ele) => {
+
+const requestParameters = ref<any[]>([]);
+const model = ref<Model | null>();
+const modelConfiguration = ref<ModelConfiguration>();
+
+const stateIds = ref<string[]>([]); // Used for form's multiselect.
+const parameterIds = ref<string[]>([]);
+const observableIds = ref<string[]>([]);
+
+const selectedOutputId = ref<string>();
+const outputs = computed(() => {
+	if (!_.isEmpty(props.node.outputs)) {
+		return [
+			{
+				label: 'Select an output',
+				items: props.node.outputs
+			}
+		];
+	}
+	return [];
+});
+
+const activeOutput = ref<WorkflowOutput<FunmanOperationState> | null>(null);
+
+const variablesOfInterest = ref<string[]>([]);
+const onToggleVariableOfInterest = (vals: string[]) => {
+	variablesOfInterest.value = vals;
+	requestParameters.value.forEach((d) => {
+		if (variablesOfInterest.value.includes(d.name)) {
+			d.label = 'all';
+		} else {
+			d.label = 'any';
+		}
+	});
+
+	const state = _.cloneDeep(props.node.state);
+	state.requestParameters = _.cloneDeep(requestParameters.value);
+	emit('update-state', state);
+};
+
+const runMakeQuery = async () => {
+	if (!model.value) {
+		toast.error('', 'No Model provided for request');
+		return;
+	}
+
+	const constraints = props.node.state.constraintGroups?.map((ele) => {
 		if (ele.derivativeType === DerivativeType.Increasing || ele.derivativeType === DerivativeType.Decreasing) {
 			const weights = ele.weights ? ele.weights : [1.0];
 			const constraint: any = {
@@ -257,58 +298,12 @@ const requestConstraints = computed(() =>
 			additive_bounds: ele.interval,
 			timepoints: ele.timepoints
 		};
-	})
-);
-
-const requestParameters = ref<any[]>([]);
-const model = ref<Model | null>();
-const modelConfiguration = ref<ModelConfiguration>();
-
-const stateIds = ref<string[]>([]); // Used for form's multiselect.
-const parameterIds = ref<string[]>([]);
-const observableIds = ref<string[]>([]);
-
-const selectedOutputId = ref<string>();
-const outputs = computed(() => {
-	if (!_.isEmpty(props.node.outputs)) {
-		return [
-			{
-				label: 'Select an output',
-				items: props.node.outputs
-			}
-		];
-	}
-	return [];
-});
-
-const activeOutput = ref<WorkflowOutput<FunmanOperationState> | null>(null);
-
-const variablesOfInterest = ref<string[]>([]);
-const onToggleVariableOfInterest = (vals: string[]) => {
-	variablesOfInterest.value = vals;
-	requestParameters.value.forEach((d) => {
-		if (variablesOfInterest.value.includes(d.name)) {
-			d.label = 'all';
-		} else {
-			d.label = 'any';
-		}
 	});
-
-	const state = _.cloneDeep(props.node.state);
-	state.requestParameters = _.cloneDeep(requestParameters.value);
-	emit('update-state', state);
-};
-
-const runMakeQuery = async () => {
-	if (!model.value) {
-		toast.error('', 'No Model provided for request');
-		return;
-	}
 
 	const request: FunmanPostQueriesRequest = {
 		model: model.value,
 		request: {
-			constraints: requestConstraints.value,
+			constraints,
 			parameters: requestParameters.value,
 			structure_parameters: [
 				{
