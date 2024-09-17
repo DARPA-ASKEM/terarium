@@ -184,7 +184,7 @@ public class MiraController {
 			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
 		}
 	)
-	public ResponseEntity<JsonNode> generateLatexFromModel(@RequestBody final JsonNode model) {
+	public ResponseEntity<JsonNode> generateModelLatex(@RequestBody final JsonNode model) {
 		//create request:
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.MIRA);
