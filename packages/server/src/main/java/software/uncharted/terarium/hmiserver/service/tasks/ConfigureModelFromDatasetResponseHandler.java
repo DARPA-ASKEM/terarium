@@ -47,8 +47,8 @@ public class ConfigureModelFromDatasetResponseHandler extends TaskResponseHandle
 		@JsonProperty("amr")
 		String amr;
 
-		@JsonProperty("matrix_str")
-		String matrixStr;
+		@JsonProperty("matrix")
+		String matrix;
 	}
 
 	@Data
