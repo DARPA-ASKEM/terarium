@@ -28,9 +28,15 @@
 			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" popup :pt="optionsMenuPt" />
 			<div class="btn-group">
 				<tera-asset-enrichment :asset-type="AssetType.Model" :assetId="assetId" @finished-job="fetchModel" />
-				<Button label="Reset" severity="secondary" outlined @click="onReset" :disabled="hasChanged" />
-				<Button label="Save as..." severity="secondary" outlined @click="onSaveAs" />
-				<Button label="Save" @click="onSave" :disabled="hasChanged" />
+				<Button
+					label="Reset"
+					severity="secondary"
+					outlined
+					@click="onReset"
+					:disabled="hasChanged || !hasEditPermission"
+				/>
+				<Button label="Save as..." severity="secondary" outlined @click="onSaveAs" :disabled="!hasEditPermission" />
+				<Button label="Save" @click="onSave" :disabled="hasChanged || !hasEditPermission" />
 			</div>
 		</template>
 		<section v-if="model">
@@ -108,24 +114,23 @@ const newName = ref('New Model');
 const isRenaming = ref(false);
 const isModelLoading = ref(false);
 const showSaveModal = ref(false);
-
 const isNaming = computed(() => isEmpty(props.assetId) || isRenaming.value);
 const hasChanged = computed(() => !isEqual(model.value, temporaryModel.value));
-
-const toggleOptionsMenu = (event) => optionsMenu.value.toggle(event);
+const hasEditPermission = computed(() => useProjects().hasEditPermission());
 
 // Edit menu
 function onReset() {
 	temporaryModel.value = cloneDeep(model.value);
 }
 function onSave() {
-	if (temporaryModel.value) updateModelContent(temporaryModel.value);
+	updateModelContent();
 }
 function onSaveAs() {
 	showSaveModal.value = true;
 }
 
 // User menu
+const toggleOptionsMenu = (event) => optionsMenu.value.toggle(event);
 const optionsMenu = ref();
 const optionsMenuItems = computed(() => [
 	{
@@ -173,22 +178,18 @@ const optionsMenuPt = {
 	}
 };
 
-async function updateModelContent(updatedModel: Model) {
-	if (!useProjects().hasEditPermission()) {
-		logger.error('You do not have permission to edit this model.'); // FIXME: Disable asset editing options if user does not have permission
-		return;
-	}
-	await updateModel(updatedModel);
-	logger.info('Saved changes.');
+async function updateModelContent() {
+	if (!hasEditPermission.value || !temporaryModel.value) return;
+	await updateModel(temporaryModel.value);
+	logger.info('Changes to the model has been saved.');
 	await useProjects().refresh();
-	fetchModel();
+	await fetchModel();
 }
 
 async function updateModelName() {
-	if (model.value && !isEmpty(newName.value)) {
-		const modelClone = cloneDeep(model.value);
-		modelClone.header.name = newName.value;
-		await updateModelContent(modelClone);
+	if (temporaryModel.value && !isEmpty(newName.value)) {
+		temporaryModel.value.header.name = newName.value;
+		await updateModelContent();
 	}
 	isRenaming.value = false;
 }
@@ -197,6 +198,7 @@ async function fetchModel() {
 	model.value = await getModel(props.assetId);
 	temporaryModel.value = cloneDeep(model.value);
 }
+
 watch(
 	() => [props.assetId],
 	async () => {
