@@ -55,7 +55,7 @@ public class Project extends TerariumAsset {
 	private byte[] overviewContent;
 
 	@OneToMany(mappedBy = "project", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@Where(clause = "deleted_on IS NULL")
+	@Where(clause = "deleted_on IS NULL and temporary = false")
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@JsonManagedReference
 	private List<ProjectAsset> projectAssets = new ArrayList<>();

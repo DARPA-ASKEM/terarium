@@ -78,11 +78,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 		);
 
 		mockMvc
-			.perform(
-				MockMvcRequestBuilders.get("/artifacts/" + artifact.getId())
-					.param("project-id", PROJECT_ID.toString())
-					.with(csrf())
-			)
+			.perform(MockMvcRequestBuilders.get("/artifacts/" + artifact.getId()).with(csrf()))
 			.andExpect(status().isOk());
 	}
 
@@ -118,11 +114,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 		);
 
 		mockMvc
-			.perform(
-				MockMvcRequestBuilders.delete("/artifacts/" + artifact.getId())
-					.param("project-id", PROJECT_ID.toString())
-					.with(csrf())
-			)
+			.perform(MockMvcRequestBuilders.delete("/artifacts/" + artifact.getId()).with(csrf()))
 			.andExpect(status().isOk());
 
 		Assertions.assertTrue(artifactService.getAsset(artifact.getId(), ASSUME_WRITE_PERMISSION).isEmpty());
