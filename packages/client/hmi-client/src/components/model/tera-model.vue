@@ -28,9 +28,15 @@
 			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" popup :pt="optionsMenuPt" />
 			<div class="btn-group">
 				<tera-asset-enrichment :asset-type="AssetType.Model" :assetId="assetId" @finished-job="fetchModel" />
-				<Button label="Reset" severity="secondary" outlined @click="teraModelPartsRef?.reset()" :disabled="isSaved" />
+				<Button
+					label="Reset"
+					severity="secondary"
+					outlined
+					@click="teraModelPartsRef?.reset()"
+					:disabled="hasChanged"
+				/>
 				<Button label="Save as..." severity="secondary" outlined @click="showSaveModal = true" />
-				<Button label="Save" @click="updateModelContent(teraModelPartsRef?.transientModel)" :disabled="isSaved" />
+				<Button label="Save" @click="updateModelContent(teraModelPartsRef?.transientModel)" :disabled="hasChanged" />
 			</div>
 		</template>
 		<section v-if="model">
@@ -113,7 +119,7 @@ const isModelLoading = ref(false);
 const showSaveModal = ref(false);
 
 const isNaming = computed(() => isEmpty(props.assetId) || isRenaming.value);
-const isSaved = computed(() => isEqual(model.value, teraModelPartsRef.value?.transientModel));
+const hasChanged = computed(() => !isEqual(model.value, temporaryModel.value));
 
 const toggleOptionsMenu = (event) => optionsMenu.value.toggle(event);
 
