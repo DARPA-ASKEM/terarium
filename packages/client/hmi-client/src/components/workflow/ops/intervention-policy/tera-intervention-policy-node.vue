@@ -1,7 +1,7 @@
 <template>
 	<section>
 		<ul v-if="node.state.interventionPolicy.id">
-			<li li v-for="(_interventions, appliedTo) in groupedOutputParameters" :key="appliedTo">
+			<li v-for="(_interventions, appliedTo) in groupedOutputParameters" :key="appliedTo">
 				<vega-chart expandable :are-embed-actions-visible="false" :visualization-spec="preparedCharts[appliedTo]" />
 			</li>
 		</ul>
