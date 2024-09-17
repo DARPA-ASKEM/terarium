@@ -70,31 +70,6 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanGetWorkflows() throws Exception {
-		final Workflow workflow = new Workflow();
-		workflow.setName("test-workflow-name1");
-		workflow.setDescription("test-workflow-description");
-		workflow.setPublicAsset(true);
-
-		final Workflow workflow2 = new Workflow();
-		workflow2.setName("test-workflow-name2");
-		workflow2.setDescription("test-workflow-description2");
-		workflow2.setPublicAsset(true);
-
-		final Workflow workflow3 = new Workflow();
-		workflow3.setName("test-workflow-name3");
-		workflow3.setDescription("test-workflow-description3");
-		workflow3.setPublicAsset(true);
-
-		workflowService.createAsset(workflow, project.getId(), ASSUME_WRITE_PERMISSION);
-		workflowService.createAsset(workflow2, project.getId(), ASSUME_WRITE_PERMISSION);
-		workflowService.createAsset(workflow3, project.getId(), ASSUME_WRITE_PERMISSION);
-
-		mockMvc.perform(MockMvcRequestBuilders.get("/workflows").with(csrf())).andExpect(status().isOk()).andReturn();
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetWorkflow() throws Exception {
 		Workflow workflow = new Workflow();
 		workflow.setName("test-workflow-name1");

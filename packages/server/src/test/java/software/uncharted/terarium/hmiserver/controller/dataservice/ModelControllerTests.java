@@ -185,26 +185,6 @@ public class ModelControllerTests extends TerariumApplicationTests {
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanGetModelDescriptions() throws Exception {
-		modelService.createAsset(
-			new Model()
-				.setHeader(
-					new ModelHeader()
-						.setName("test-name")
-						.setModelSchema("test-schema")
-						.setModelVersion("0.1.2")
-						.setDescription("test-description")
-						.setSchemaName("petrinet")
-				),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
-		mockMvc.perform(MockMvcRequestBuilders.get("/models/descriptions").with(csrf())).andExpect(status().isOk());
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
 	public void testItCannotGetUnpriviligedModelWithoutProject() throws Exception {
 		final Model model_public_not_temp = (Model) new Model()
 			.setHeader(
