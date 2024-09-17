@@ -27,9 +27,11 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
+import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
@@ -75,7 +77,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 			.perform(
 				MockMvcRequestBuilders.post("/datasets")
 					.with(csrf())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", String.valueOf(project.getId()))
 					.contentType("application/json")
 					.content(objectMapper.writeValueAsString(dataset))
 			)
@@ -103,16 +105,22 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteDataset() throws Exception {
-		final Dataset dataset = datasetService.createAsset(
-			(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		final Dataset dataset = (Dataset) new Dataset().setName("test-dataset-name").setDescription("my description");
+
+		mockMvc
+			.perform(
+				MockMvcRequestBuilders.post("/datasets")
+					.with(csrf())
+					.param("project-id", String.valueOf(project.getId()))
+					.contentType("application/json")
+					.content(objectMapper.writeValueAsString(dataset))
+			)
+			.andExpect(status().isCreated());
 
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.delete("/datasets/" + dataset.getId())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", String.valueOf(project.getId()))
 					.with(csrf())
 			)
 			.andExpect(status().isOk());
@@ -123,12 +131,6 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUploadDatasetCSV() throws Exception {
-		final Dataset dataset = datasetService.createAsset(
-			(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
 		final String content = "col0,col1,col2,col3\na,b,c,d\n";
 
 		// Create a MockMultipartFile object
@@ -140,39 +142,53 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 		);
 
 		// Perform the multipart file upload request
-		mockMvc
+		MvcResult res = mockMvc
 			.perform(
-				MockMvcRequestBuilders.multipart("/datasets/" + dataset.getId() + "/upload-csv")
+				MockMvcRequestBuilders.multipart("/datasets/upload-csv")
 					.file(file)
 					.queryParam("filename", "filename.csv")
-					.param("project-id", PROJECT_ID.toString())
+					.queryParam("name", "dataset name")
+					.queryParam("description", "description")
+					.param("project-id", String.valueOf(project.getId()))
 					.with(csrf())
 					.contentType(MediaType.MULTIPART_FORM_DATA)
 					.with(request -> {
-						request.setMethod("PUT");
+						request.setMethod("POST");
 						return request;
 					})
 			)
-			.andExpect(status().isOk());
+			.andExpect(status().isCreated())
+			.andReturn();
 
-		final Dataset updated = datasetService.getAsset(dataset.getId(), ASSUME_WRITE_PERMISSION).get();
+		final ProjectAsset projectAsset = objectMapper.readValue(
+			res.getResponse().getContentAsString(),
+			ProjectAsset.class
+		);
+
+		final Dataset updated = datasetService.getAsset(projectAsset.getAssetId(), ASSUME_WRITE_PERMISSION).get();
 		Assertions.assertEquals(4, updated.getColumns().size());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUploadDatasetFromGithub() throws Exception {
-		final Dataset dataset = datasetService.createAsset(
-			(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		final Dataset dataset = (Dataset) new Dataset().setName("test-dataset-name").setDescription("my description");
+
+		mockMvc
+			.perform(
+				MockMvcRequestBuilders.post("/datasets")
+					.with(csrf())
+					.param("project-id", String.valueOf(project.getId()))
+					.contentType("application/json")
+					.content(objectMapper.writeValueAsString(dataset))
+			)
+			.andExpect(status().isCreated());
 
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.put("/datasets/" + dataset.getId() + "/upload-csv-from-github")
 					.with(csrf())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", String.valueOf(project.getId()))
 					.param("repo-owner-and-name", "unchartedsoftware/torflow")
 					.param("path", "README.md")
 					.param("filename", "torflow-readme.md")
@@ -184,12 +200,6 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDownloadDatasetCSV() throws Exception {
-		final Dataset dataset = datasetService.createAsset(
-			(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
 		final String content = "col0,col1,col2,col3\na,b,c,d\n";
 
 		// Create a MockMultipartFile object
@@ -201,24 +211,32 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 		);
 
 		// Perform the multipart file upload request
-		mockMvc
+		MvcResult res = mockMvc
 			.perform(
-				MockMvcRequestBuilders.multipart("/datasets/" + dataset.getId() + "/upload-csv")
+				MockMvcRequestBuilders.multipart("/datasets/upload-csv")
 					.file(file)
 					.queryParam("filename", "filename.csv")
-					.param("project-id", PROJECT_ID.toString())
+					.queryParam("name", "dataset name")
+					.queryParam("description", "description")
+					.param("project-id", String.valueOf(project.getId()))
 					.with(csrf())
 					.contentType(MediaType.MULTIPART_FORM_DATA)
 					.with(request -> {
-						request.setMethod("PUT");
+						request.setMethod("POST");
 						return request;
 					})
 			)
-			.andExpect(status().isOk());
+			.andExpect(status().isCreated())
+			.andReturn();
 
-		final MvcResult res = mockMvc
+		final ProjectAsset projectAsset = objectMapper.readValue(
+			res.getResponse().getContentAsString(),
+			ProjectAsset.class
+		);
+
+		res = mockMvc
 			.perform(
-				MockMvcRequestBuilders.get("/datasets/" + dataset.getId() + "/download-csv")
+				MockMvcRequestBuilders.get("/datasets/" + projectAsset.getAssetId() + "/download-csv")
 					.queryParam("filename", "filename.csv")
 					.with(csrf())
 			)
@@ -233,12 +251,6 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUploadDataset() throws Exception {
-		final Dataset dataset = datasetService.createAsset(
-			(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
 		final String content = "This is my small test dataset\n";
 
 		// Create a MockMultipartFile object
@@ -250,31 +262,35 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 		);
 
 		// Perform the multipart file upload request
-		mockMvc
+		final MvcResult res = mockMvc
 			.perform(
-				MockMvcRequestBuilders.multipart("/datasets/" + dataset.getId() + "/upload-file")
+				MockMvcRequestBuilders.multipart("/datasets/upload-file")
 					.file(file)
 					.queryParam("filename", "filename.txt")
-					.param("project-id", PROJECT_ID.toString())
+					.queryParam("name", "dataset name")
+					.queryParam("description", "description")
+					.param("project-id", String.valueOf(project.getId()))
 					.with(csrf())
 					.contentType(MediaType.MULTIPART_FORM_DATA)
 					.with(request -> {
-						request.setMethod("PUT");
+						request.setMethod("POST");
 						return request;
 					})
 			)
-			.andExpect(status().isOk());
+			.andExpect(status().isCreated())
+			.andReturn();
+
+		final ProjectAsset projectAsset = objectMapper.readValue(
+			res.getResponse().getContentAsString(),
+			ProjectAsset.class
+		);
+
+		Assertions.assertNotNull(projectAsset);
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDownloadDataset() throws Exception {
-		final Dataset dataset = datasetService.createAsset(
-			(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
 		final String content = "col0,col1,col2,col3\na,b,c,d\n";
 
 		// Create a MockMultipartFile object
@@ -286,24 +302,32 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 		);
 
 		// Perform the multipart file upload request
-		mockMvc
+		MvcResult res = mockMvc
 			.perform(
-				MockMvcRequestBuilders.multipart("/datasets/" + dataset.getId() + "/upload-csv")
+				MockMvcRequestBuilders.multipart("/datasets/upload-csv")
 					.file(file)
 					.queryParam("filename", "filename.csv")
-					.param("project-id", PROJECT_ID.toString())
+					.queryParam("name", "dataset name")
+					.queryParam("description", "description")
+					.param("project-id", String.valueOf(project.getId()))
 					.with(csrf())
 					.contentType(MediaType.MULTIPART_FORM_DATA)
 					.with(request -> {
-						request.setMethod("PUT");
+						request.setMethod("POST");
 						return request;
 					})
 			)
-			.andExpect(status().isOk());
+			.andExpect(status().isCreated())
+			.andReturn();
 
-		final MvcResult res = mockMvc
+		final ProjectAsset projectAsset = objectMapper.readValue(
+			res.getResponse().getContentAsString(),
+			ProjectAsset.class
+		);
+
+		res = mockMvc
 			.perform(
-				MockMvcRequestBuilders.get("/datasets/" + dataset.getId() + "/download-file")
+				MockMvcRequestBuilders.get("/datasets/" + projectAsset.getAssetId() + "/download-file")
 					.queryParam("filename", "filename.csv")
 					.param("project-id", PROJECT_ID.toString())
 					.with(csrf())
@@ -313,92 +337,6 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 			.andExpect(status().isOk())
 			.andExpect(content().string(content))
 			.andReturn();
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItCanGetUploadUrl() throws Exception {
-		final Dataset dataset = datasetService.createAsset(
-			(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
-		// Perform the multipart file upload request
-		final MvcResult res = mockMvc
-			.perform(
-				MockMvcRequestBuilders.get("/datasets/" + dataset.getId() + "/upload-url")
-					.queryParam("filename", "filename.csv")
-					.with(csrf())
-			)
-			.andExpect(status().isOk())
-			.andReturn();
-
-		final PresignedURL url = objectMapper.readValue(res.getResponse().getContentAsString(), PresignedURL.class);
-
-		final String content = "col0,col1,col2,col3\na,b,c,d\n";
-		final byte[] csvBytes = content.getBytes();
-		final HttpEntity csvEntity = new ByteArrayEntity(csvBytes, ContentType.APPLICATION_OCTET_STREAM);
-
-		final CloseableHttpClient httpclient = HttpClients.custom().disableRedirectHandling().build();
-
-		final HttpPut put = new HttpPut(url.getUrl());
-		put.setEntity(csvEntity);
-		final HttpResponse response = httpclient.execute(put);
-		final int status = response.getStatusLine().getStatusCode();
-
-		Assertions.assertEquals(200, status);
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItCanGetDownloadUrl() throws Exception {
-		final Dataset dataset = datasetService.createAsset(
-			(Dataset) new Dataset().setName("test-document-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
-		// Perform the multipart file upload request
-		MvcResult res = mockMvc
-			.perform(
-				MockMvcRequestBuilders.get("/datasets/" + dataset.getId() + "/upload-url")
-					.queryParam("filename", "filename.txt")
-					.with(csrf())
-			)
-			.andExpect(status().isOk())
-			.andReturn();
-
-		PresignedURL url = objectMapper.readValue(res.getResponse().getContentAsString(), PresignedURL.class);
-
-		final String content = "col0,col1,col2,col3\na,b,c,d\n";
-		final byte[] csvBytes = content.getBytes();
-		final HttpEntity csvEntity = new ByteArrayEntity(csvBytes, ContentType.APPLICATION_OCTET_STREAM);
-
-		final CloseableHttpClient httpclient = HttpClients.custom().disableRedirectHandling().build();
-
-		final HttpPut put = new HttpPut(url.getUrl());
-		put.setEntity(csvEntity);
-		HttpResponse response = httpclient.execute(put);
-		final int status = response.getStatusLine().getStatusCode();
-
-		Assertions.assertEquals(200, status);
-
-		res = mockMvc
-			.perform(
-				MockMvcRequestBuilders.get("/datasets/" + dataset.getId() + "/download-url")
-					.queryParam("filename", "filename.txt")
-					.param("project-id", PROJECT_ID.toString())
-					.with(csrf())
-			)
-			.andExpect(status().isOk())
-			.andReturn();
-
-		url = objectMapper.readValue(res.getResponse().getContentAsString(), PresignedURL.class);
-
-		final HttpGet get = new HttpGet(url.getUrl());
-		response = httpclient.execute(get);
-		Assertions.assertEquals(response.getStatusLine().getStatusCode(), 200);
 	}
 
 	@Test

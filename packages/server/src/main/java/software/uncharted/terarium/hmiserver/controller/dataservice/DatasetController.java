@@ -98,7 +98,7 @@ public class DatasetController {
 	)
 	public ResponseEntity<Dataset> createDataset(
 		@RequestBody final Dataset dataset,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestParam(name = "project-id") final UUID projectId
 	) {
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
@@ -106,7 +106,10 @@ public class DatasetController {
 		);
 
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED).body(datasetService.createAsset(dataset, projectId, permission));
+			final Dataset createdDataset = datasetService.createAsset(dataset, projectId, permission);
+			projectAssetService.createProjectAsset(projectId, AssetType.DATASET, createdDataset, permission);
+
+			return ResponseEntity.status(HttpStatus.CREATED).body(createdDataset);
 		} catch (final IOException e) {
 			final String error = "Unable to create dataset";
 			log.error(error, e);
