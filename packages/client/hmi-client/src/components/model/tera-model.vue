@@ -39,16 +39,16 @@
 				<Button label="Save" @click="onSave" :disabled="hasChanged || !hasEditPermission" />
 			</div>
 		</template>
-		<section v-if="model">
+		<section v-if="temporaryModel">
 			<tera-model-description
-				:model="model"
+				:model="temporaryModel"
 				:feature-config="featureConfig"
 				@model-updated="fetchModel"
 				@update-model="updateModelContent"
 			/>
 			<tera-model-parts
 				class="mt-0"
-				:model="model"
+				:model="temporaryModel"
 				:feature-config="featureConfig"
 				@update-model="updateModelContent"
 			/>
