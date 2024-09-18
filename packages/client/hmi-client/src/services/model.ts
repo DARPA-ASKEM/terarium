@@ -175,9 +175,7 @@ export async function getModelEquation(model: Model): Promise<string> {
 	}
 
 	const response = await API.post(`/mira/model-to-latex`, model);
-	const latex = response?.data?.response;
-	if (!latex) return '';
-	return latex ?? '';
+	return response?.data?.response ?? '';
 }
 
 export const getUnitsFromModelParts = (model: Model) => {
