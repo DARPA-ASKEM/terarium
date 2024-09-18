@@ -114,7 +114,7 @@ public class DocumentController {
 	)
 	public ResponseEntity<DocumentAsset> createDocument(
 		@RequestBody final DocumentAsset documentAsset,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestParam(name = "project-id") final UUID projectId
 	) {
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
@@ -123,11 +123,11 @@ public class DocumentController {
 
 		try {
 			final DocumentAsset document = documentAssetService.createAsset(documentAsset, projectId, permission);
+			projectAssetService.createProjectAsset(projectId, AssetType.DATASET, document, permission);
 			return ResponseEntity.status(HttpStatus.CREATED).body(document);
 		} catch (final IOException e) {
-			final String error = "Unable to create document";
-			log.error(error, e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error);
+			log.error("Unable to create document", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("postgres.service-unavailable"));
 		}
 	}
 
@@ -165,14 +165,10 @@ public class DocumentController {
 
 		try {
 			final Optional<DocumentAsset> updated = documentAssetService.updateAsset(document, projectId, permission);
-			if (updated.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-			return ResponseEntity.ok(updated.get());
+			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
-			final String error = "Unable to update document";
-			log.error(error, e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error);
+			log.error("Unable to update document", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("document.unable-to-update"));
 		}
 	}
 
@@ -390,7 +386,7 @@ public class DocumentController {
 	@ApiResponses(
 		value = {
 			@ApiResponse(
-				responseCode = "200",
+				responseCode = "201",
 				description = "Uploaded the document.",
 				content = @Content(
 					mediaType = "application/json",

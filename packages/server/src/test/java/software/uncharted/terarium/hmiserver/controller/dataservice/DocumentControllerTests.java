@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import javax.swing.text.Document;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +20,7 @@ import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
@@ -65,7 +67,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.post("/document-asset")
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", String.valueOf(project.getId()))
 					.with(csrf())
 					.contentType("application/json")
 					.content(objectMapper.writeValueAsString(documentAsset))
@@ -94,16 +96,27 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteDocument() throws Exception {
-		final DocumentAsset documentAsset = documentAssetService.createAsset(
-			(DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
+			.setName("test-document-name")
+			.setDescription("my description");
+
+		final MvcResult res = mockMvc
+			.perform(
+				MockMvcRequestBuilders.post("/document-asset")
+					.with(csrf())
+					.param("project-id", String.valueOf(project.getId()))
+					.contentType("application/json")
+					.content(objectMapper.writeValueAsString(documentAsset))
+			)
+			.andExpect(status().isCreated())
+			.andReturn();
+
+		documentAsset = objectMapper.readValue(res.getResponse().getContentAsString(), DocumentAsset.class);
 
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.delete("/document-asset/" + documentAsset.getId())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", String.valueOf(project.getId()))
 					.with(csrf())
 			)
 			.andExpect(status().isOk());
@@ -114,12 +127,6 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUploadDocument() throws Exception {
-		final DocumentAsset documentAsset = documentAssetService.createAsset(
-			(DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
 		// Create a MockMultipartFile object
 		final MockMultipartFile file = new MockMultipartFile(
 			"file", // name of the file as expected in the request
@@ -131,33 +138,46 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 		// Perform the multipart file upload request
 		mockMvc
 			.perform(
-				MockMvcRequestBuilders.multipart("/document-asset/" + documentAsset.getId() + "/upload-document")
+				MockMvcRequestBuilders.multipart("/document-asset/upload-document")
 					.file(file)
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", String.valueOf(project.getId()))
 					.queryParam("filename", "filename.txt")
+					.queryParam("name", "test-document-name")
+					.queryParam("description", "my description")
 					.with(csrf())
 					.contentType(MediaType.MULTIPART_FORM_DATA)
 					.with(request -> {
-						request.setMethod("PUT");
+						request.setMethod("POST");
 						return request;
 					})
 			)
-			.andExpect(status().isOk());
+			.andExpect(status().isCreated());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUploadDocumentFromGithub() throws Exception {
-		final DocumentAsset documentAsset = documentAssetService.createAsset(
-			(DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
+			.setName("test-document-name")
+			.setDescription("my description");
+
+		final MvcResult res = mockMvc
+			.perform(
+				MockMvcRequestBuilders.post("/document-asset")
+					.with(csrf())
+					.param("project-id", String.valueOf(project.getId()))
+					.contentType("application/json")
+					.content(objectMapper.writeValueAsString(documentAsset))
+			)
+			.andExpect(status().isCreated())
+			.andReturn();
+
+		documentAsset = objectMapper.readValue(res.getResponse().getContentAsString(), DocumentAsset.class);
 
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.put("/document-asset/" + documentAsset.getId() + "/upload-document-from-github")
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", String.valueOf(project.getId()))
 					.with(csrf())
 					.param("repo-owner-and-name", "unchartedsoftware/torflow")
 					.param("path", "README.md")
@@ -170,12 +190,6 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDownloadDocument() throws Exception {
-		final DocumentAsset documentAsset = documentAssetService.createAsset(
-			(DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
 		final String content = "this is the file content for the testItCanDownloadDocument test";
 
 		// Create a MockMultipartFile object
@@ -187,24 +201,32 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 		);
 
 		// Perform the multipart file upload request
-		mockMvc
+		MvcResult res = mockMvc
 			.perform(
-				MockMvcRequestBuilders.multipart("/document-asset/" + documentAsset.getId() + "/upload-document")
+				MockMvcRequestBuilders.multipart("/document-asset/upload-document")
 					.file(file)
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", String.valueOf(project.getId()))
 					.queryParam("filename", "filename.txt")
+					.queryParam("name", "test-document-name")
+					.queryParam("description", "my description")
 					.with(csrf())
 					.contentType(MediaType.MULTIPART_FORM_DATA)
 					.with(request -> {
-						request.setMethod("PUT");
+						request.setMethod("POST");
 						return request;
 					})
 			)
-			.andExpect(status().isOk());
+			.andExpect(status().isCreated())
+			.andReturn();
 
-		final MvcResult res = mockMvc
+		final ProjectAsset projectAsset = objectMapper.readValue(
+			res.getResponse().getContentAsString(),
+			ProjectAsset.class
+		);
+
+		res = mockMvc
 			.perform(
-				MockMvcRequestBuilders.get("/document-asset/" + documentAsset.getId() + "/download-document")
+				MockMvcRequestBuilders.get("/document-asset/" + projectAsset.getAssetId() + "/download-document")
 					.queryParam("filename", "filename.txt")
 					.with(csrf())
 			)
@@ -219,12 +241,6 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDownloadDocumentAsText() throws Exception {
-		final DocumentAsset documentAsset = documentAssetService.createAsset(
-			(DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
 		final String content = "this is the file content for the testItCanDownloadDocument test";
 
 		// Create a MockMultipartFile object
@@ -236,24 +252,32 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 		);
 
 		// Perform the multipart file upload request
-		mockMvc
+		MvcResult res = mockMvc
 			.perform(
-				MockMvcRequestBuilders.multipart("/document-asset/" + documentAsset.getId() + "/upload-document")
+				MockMvcRequestBuilders.multipart("/document-asset/upload-document")
 					.file(file)
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", String.valueOf(project.getId()))
 					.queryParam("filename", "filename.txt")
+					.queryParam("name", "test-document-name")
+					.queryParam("description", "my description")
 					.with(csrf())
 					.contentType(MediaType.MULTIPART_FORM_DATA)
 					.with(request -> {
-						request.setMethod("PUT");
+						request.setMethod("POST");
 						return request;
 					})
 			)
-			.andExpect(status().isOk());
+			.andExpect(status().isCreated())
+			.andReturn();
 
-		final MvcResult res = mockMvc
+		final ProjectAsset projectAsset = objectMapper.readValue(
+			res.getResponse().getContentAsString(),
+			ProjectAsset.class
+		);
+
+		res = mockMvc
 			.perform(
-				MockMvcRequestBuilders.get("/document-asset/" + documentAsset.getId() + "/download-document-as-text")
+				MockMvcRequestBuilders.get("/document-asset/" + projectAsset.getAssetId() + "/download-document-as-text")
 					.queryParam("filename", "filename.txt")
 					.with(csrf())
 			)
