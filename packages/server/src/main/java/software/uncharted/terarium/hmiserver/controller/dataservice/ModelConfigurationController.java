@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
@@ -41,6 +42,7 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission;
@@ -56,6 +58,7 @@ public class ModelConfigurationController {
 	final CurrentUserService currentUserService;
 	final Messages messages;
 	final ProjectService projectService;
+	final ProjectAssetService projectAssetService;
 
 	/**
 	 * Gets a specific model configuration by id
@@ -466,7 +469,7 @@ public class ModelConfigurationController {
 	)
 	public ResponseEntity<ModelConfiguration> createModelConfiguration(
 		@RequestBody final ModelConfiguration modelConfiguration,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestParam(name = "project-id") final UUID projectId
 	) {
 		final Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -474,10 +477,14 @@ public class ModelConfigurationController {
 			if (modelConfiguration.getId() == null) {
 				modelConfiguration.setId(UUID.randomUUID());
 			}
-
-			return ResponseEntity.status(HttpStatus.CREATED).body(
-				modelConfigurationService.createAsset(modelConfiguration.clone(), projectId, permission)
+			final ModelConfiguration createdModelConfig = modelConfigurationService.createAsset(
+				modelConfiguration,
+				projectId,
+				permission
 			);
+			projectAssetService.createProjectAsset(projectId, AssetType.DATASET, createdModelConfig, permission);
+
+			return ResponseEntity.status(HttpStatus.CREATED).body(createdModelConfig);
 		} catch (final IOException e) {
 			log.error("Unable to get model configuration from postgres db", e);
 			throw new ResponseStatusException(

@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
@@ -53,21 +54,26 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetModelConfiguration() throws Exception {
-		final ModelConfiguration modelConfiguration = modelConfigurationService.createAsset(
-			(ModelConfiguration) new ModelConfiguration()
-				.setModelId(UUID.randomUUID())
-				.setName("test-framework")
-				.setDescription("test-desc"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		ModelConfiguration modelConfiguration = (ModelConfiguration) new ModelConfiguration()
+			.setModelId(UUID.randomUUID())
+			.setName("test-framework")
+			.setDescription("test-desc");
+
+		final MvcResult res = mockMvc
+			.perform(
+				MockMvcRequestBuilders.post("/model-configurations")
+					.param("project-id", String.valueOf(project.getId()))
+					.with(csrf())
+					.contentType("application/json")
+					.content(objectMapper.writeValueAsString(modelConfiguration))
+			)
+			.andExpect(status().isCreated())
+			.andReturn();
+
+		modelConfiguration = objectMapper.readValue(res.getResponse().getContentAsString(), ModelConfiguration.class);
 
 		mockMvc
-			.perform(
-				MockMvcRequestBuilders.get("/model-configurations/" + modelConfiguration.getId())
-					.param("project-id", PROJECT_ID.toString())
-					.with(csrf())
-			)
+			.perform(MockMvcRequestBuilders.get("/model-configurations/" + modelConfiguration.getId()).with(csrf()))
 			.andExpect(status().isOk());
 	}
 
