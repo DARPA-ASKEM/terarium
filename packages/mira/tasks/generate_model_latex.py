@@ -31,13 +31,12 @@ def main():
                 odeterms[var] += t.rate_law.args[0]
 
         # Time
-        symb = lambda x: sympy.Symbol(x)
-        try:
+        if model.time and model.time.name:
             time = model.time.name
-        except:
+        else:
             time = "t"
-        finally:
-            t = symb(time)
+
+        t = sympy.Symbol(time)
 
         # Observables
         if len(model.observables) != 0:
