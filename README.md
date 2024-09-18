@@ -39,7 +39,7 @@ develop Terarium, you will need these as a prerequisite:
 - [Yarn 4](https://yarnpkg.com/getting-started/install)
 - [NodeJS 20](https://nodejs.org/en/download/current/)
 - [JDK 21](https://adoptium.net/temurin)
-- [Gradle 7](https://gradle.org/install/)
+- [Gradle 8](https://gradle.org/install/)
 - [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
 
 There are many ways/package managers to install these dependencies. We recommend using [Homebrew](https://brew.sh/) on MacOS.

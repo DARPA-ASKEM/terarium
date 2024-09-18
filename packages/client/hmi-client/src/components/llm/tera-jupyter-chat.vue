@@ -21,9 +21,7 @@
 				:is-executing-code="isExecutingCode"
 				:show-chat-thoughts="props.showChatThoughts"
 				:auto-expand-preview="autoExpandPreview"
-				:default-preview="defaultPreview"
 				:language="language"
-				@preview-selected="previewSelected"
 				@delete-message="handleDeleteMessage"
 				@delete-prompt="handleDeletePrompt"
 				@re-run-prompt="handleRerunPrompt"
@@ -85,9 +83,8 @@ const props = defineProps<{
 	kernelStatus: String;
 	autoExpandPreview?: boolean;
 	notebookSession?: NotebookSession;
+	defaultPreview?: string;
 }>();
-
-const defaultPreview = ref('d1');
 
 const iopubMessageHandler = (_session, message) => {
 	if (message.header.msg_type === 'status') {
@@ -160,10 +157,6 @@ const selectNextCell = () => {
 	}
 	const notebookCell = notebookCells.value.find((item) => item.$props.msg.query_id === selectedCellId.value);
 	scrollToCell(notebookCell);
-};
-
-const previewSelected = (selection) => {
-	defaultPreview.value = selection;
 };
 
 props.jupyterSession.iopubMessage.connect(iopubMessageHandler);
@@ -245,7 +238,7 @@ const addCodeCell = (isDefaultCell: boolean = false, isNextCell: boolean = true)
 		metadata: {},
 		content: {
 			language: 'python',
-			code: isDefaultCell ? defaultPreview.value : ''
+			code: isDefaultCell ? props.defaultPreview : ''
 		},
 		channel: 'iopub'
 	};
