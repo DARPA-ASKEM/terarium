@@ -23,7 +23,9 @@ public class TaskNotificationEventTypes {
 		EnrichAmrResponseHandler.NAME,
 		ClientEventType.TASK_GOLLM_ENRICH_AMR,
 		AMRToMMTResponseHandler.NAME,
-		ClientEventType.TASK_MIRA_AMR_TO_MMT
+		ClientEventType.TASK_MIRA_AMR_TO_MMT,
+		GenerateModelLatexResponseHandler.NAME,
+		ClientEventType.TASK_MIRA_GENERATE_MODEL_LATEX
 	);
 
 	public static ClientEventType getTypeFor(final String taskName) {
