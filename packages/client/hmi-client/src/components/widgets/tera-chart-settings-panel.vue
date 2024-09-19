@@ -55,7 +55,7 @@ const props = defineProps<{
 	 * @param setting ChartSetting
 	 * @param query llm query to generate annotation
 	 */
-	generateAnnotation?: (setting: ChartSetting, query: string) => Promise<ChartAnnotation>;
+	generateAnnotation?: (setting: ChartSetting, query: string) => Promise<ChartAnnotation | null>;
 }>();
 
 const emit = defineEmits(['close', 'update:settings', 'delete-annotation', 'create-annotation']);
