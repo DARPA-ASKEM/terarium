@@ -1059,6 +1059,7 @@ export enum ClientEventType {
     TaskFunmanValidation = "TASK_FUNMAN_VALIDATION",
     TaskGollmEnrichAmr = "TASK_GOLLM_ENRICH_AMR",
     TaskMiraAmrToMmt = "TASK_MIRA_AMR_TO_MMT",
+    TaskMiraGenerateModelLatex = "TASK_MIRA_GENERATE_MODEL_LATEX",
     TaskEnrichAmr = "TASK_ENRICH_AMR",
     WorkflowUpdate = "WORKFLOW_UPDATE",
     WorkflowDelete = "WORKFLOW_DELETE",
