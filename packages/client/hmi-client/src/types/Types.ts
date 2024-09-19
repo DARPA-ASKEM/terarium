@@ -1157,6 +1157,7 @@ export enum ProvenanceType {
     Document = "Document",
     Workflow = "Workflow",
     Equation = "Equation",
+    InterventionPolicy = "InterventionPolicy",
 }
 
 export enum SimulationType {
