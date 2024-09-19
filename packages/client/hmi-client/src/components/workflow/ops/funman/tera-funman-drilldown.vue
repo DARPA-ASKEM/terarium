@@ -131,9 +131,11 @@
 			>
 				<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%" />
 				<template v-else>
+					<!--c205809b-3236-4bf3-92ad-6c3355b32698-->
+					<!--e44bd2c5-5c93-406e-b848-5ec4b3192d17-->
 					<tera-funman-output
 						v-if="true"
-						:fun-model-id="'e44bd2c5-5c93-406e-b848-5ec4b3192d17'"
+						:fun-model-id="'c205809b-3236-4bf3-92ad-6c3355b32698'"
 						:trajectoryState="node.state.trajectoryState"
 						@update:trajectoryState="updateTrajectorystate"
 					/>
