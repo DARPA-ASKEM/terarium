@@ -24,8 +24,8 @@ ENV JAVA_HOME=/usr/local/jdk-21
 ENV PATH="$JAVA_HOME/bin:$PATH"
 
 # Install equation-extraction
-COPY ./packages/equation_extraction/equation-extraction-version.txt /extractionersion.txt
-RUN COMMIT_SHA="$(cat /extractionersion.txt)" && \
+COPY ./packages/equation_extraction/equation-extraction-version.txt /extractionVersion.txt
+RUN COMMIT_SHA="$(cat /extractionVersion.txt)" && \
 	echo "Using document_intelligence commit $COMMIT_SHA" && \
 	wget --progress=dot:giga -O equation-extraction.tar.gz "https://github.com/DARPA-ASKEM/document_intelligence/archive/${COMMIT_SHA}.tar.gz" && \
 	tar -zxvf equation-extraction.tar.gz && \
