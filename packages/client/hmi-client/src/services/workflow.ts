@@ -48,6 +48,11 @@ export class WorkflowWrapper {
 		return this.wf;
 	}
 
+	/**
+	 * FIXME: Need to split workflow into different categories and sending the commands
+	 * instead of the result. It is possible here to become de-synced: eg state-update-response
+	 * comes in as we are about to change the output ports.
+	 * */
 	update(updatedWF: Workflow) {
 		if (updatedWF.id !== this.wf.id) {
 			throw new Error(`Workflow failed, inconsistent ids updated=${updatedWF.id} self=${this.wf.id}`);
@@ -364,9 +369,12 @@ export class WorkflowWrapper {
 			});
 		}
 
-		// 3. Collect the upstream edges of the anchor
-		const upstreamEdges = this.getEdges().filter((edge) => edge.target === anchor.id);
+		// 3. Collect the upstream edges
+		const targetIds = copyNodes.map((n) => n.id);
+		const upstreamEdges = this.getEdges().filter((edge) => targetIds.includes(edge.target as string));
+		const anchorUpstreamEdges = this.getEdges().filter((edge) => edge.target === anchor.id);
 		upstreamEdges.forEach((edge) => {
+			if (copyEdges.find((copyEdge) => copyEdge.id === edge.id)) return;
 			copyEdges.push(_.cloneDeep(edge));
 		});
 
@@ -386,8 +394,8 @@ export class WorkflowWrapper {
 		});
 
 		copyEdges.forEach((edge) => {
-			// Don't replace upstream edge sources, they are still valid
-			if (upstreamEdges.map((e) => e.source).includes(edge.source) === false) {
+			// Don't replace anchor upstream edge sources, they are still valid
+			if (anchorUpstreamEdges.map((e) => e.source).includes(edge.source) === false) {
 				edge.source = registry.get(edge.source as string);
 				edge.sourcePortId = registry.get(edge.sourcePortId as string);
 			}
@@ -415,10 +423,12 @@ export class WorkflowWrapper {
 		});
 		copyEdges.forEach((edge) => {
 			if (!edge.points || edge.points.length < 2) return;
-			if (upstreamEdges.map((e) => e.source).includes(edge.source) === false) {
+			if (copyNodes.map((n) => n.id).includes(edge.source as string) === true) {
 				edge.points[0].y += offset;
 			}
-			edge.points[edge.points.length - 1].y += offset;
+			if (copyNodes.map((n) => n.id).includes(edge.target as string) === true) {
+				edge.points[edge.points.length - 1].y += offset;
+			}
 		});
 
 		// 6. Finally put everything back into the workflow

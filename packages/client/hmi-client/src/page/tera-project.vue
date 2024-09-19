@@ -33,11 +33,6 @@
 				<tera-dataset v-else-if="pageType === AssetType.Dataset" :asset-id="assetId" />
 			</template>
 		</section>
-		<tera-slider-panel v-model:is-open="isNotesSliderOpen" content-width="240px" direction="right" header="Notes">
-			<template v-slot:content>
-				<tera-notes-sidebar :asset-id="assetId" :page-type="pageType" />
-			</template>
-		</tera-slider-panel>
 		<!-- New asset modal -->
 		<tera-save-asset-modal
 			:is-visible="showSaveAssetModal"
@@ -56,7 +51,6 @@ import TeraModel from '@/components/model/tera-model.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraWorkflow from '@/components/workflow/tera-workflow.vue';
 import { useProjects } from '@/composables/project';
-import TeraNotesSidebar from '@/components/project/tera-notes-sidebar.vue';
 import TeraProjectOverview from '@/components/project/tera-project-overview.vue';
 import TeraResourceSidebar from '@/components/project/tera-resource-sidebar.vue';
 import { RouteName } from '@/router/routes';
@@ -73,7 +67,6 @@ const route = useRoute();
 const router = useRouter();
 
 const isResourcesSliderOpen = ref(true);
-const isNotesSliderOpen = ref(false);
 const showSaveAssetModal = ref(false);
 const assetTypeToCreate = ref<AssetType>(AssetType.Model);
 

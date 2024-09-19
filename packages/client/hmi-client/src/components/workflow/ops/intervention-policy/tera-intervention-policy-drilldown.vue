@@ -7,7 +7,12 @@
 		hide-dropdown
 	>
 		<template #sidebar>
-			<tera-slider-panel v-model:is-open="isSidebarOpen" content-width="360px" header="Intervention policies">
+			<tera-slider-panel
+				v-model:is-open="isSidebarOpen"
+				content-width="360px"
+				header="Intervention policies"
+				class="input-config"
+			>
 				<template #content>
 					<section>
 						<tera-input-text v-model="filterInterventionsText" placeholder="Filter" />
@@ -27,8 +32,8 @@
 			</tera-slider-panel>
 		</template>
 		<tera-columnar-panel>
-			<tera-drilldown-section class="px-3">
-				<template #header-controls-left> Select an intervention policy or create a new one here. </template>
+			<tera-drilldown-section class="px-3 intervention-settings-section">
+				<template #header-controls-left> Add and configure intervention settings for this policy. </template>
 				<template #header-controls-right>
 					<Button outlined severity="secondary" label="Reset" @click="onResetPolicy" />
 				</template>
@@ -65,7 +70,7 @@
 					<Button label="Save as..." outlined severity="secondary" @click="showSaveModal = true" />
 					<Button class="mr-3" label="Save" @click="onSaveInterventionPolicy" :disabled="isSaveDisabled" />
 				</template>
-				<Accordion v-if="knobs.transientInterventionPolicy.id" multiple :active-index="[0, 1]">
+				<Accordion v-if="knobs.transientInterventionPolicy" multiple :active-index="[0, 1]">
 					<AccordionTab>
 						<template #header>
 							<Button v-if="!isEditingDescription" class="start-edit" text @click.stop="onEditDescription">
@@ -92,7 +97,6 @@
 					<AccordionTab header="Charts">
 						<ul class="flex flex-column gap-2">
 							<li v-for="(interventions, appliedTo) in groupedOutputParameters" :key="appliedTo">
-								<h5 class="pb-2">{{ appliedTo }}</h5>
 								<vega-chart
 									expandable
 									:are-embed-actions-visible="false"
@@ -262,16 +266,15 @@ const groupedOutputParameters = computed(() =>
 );
 
 const preparedCharts = computed(() =>
-	_.mapValues(groupedOutputParameters.value, (interventions) => {
-		const flattenedData = interventions.flatMap((intervention) =>
-			intervention.staticInterventions.map((staticIntervention) => ({
-				name: intervention.name,
-				value: staticIntervention.value,
-				time: staticIntervention.timestep
-			}))
-		);
-		return createInterventionChart(flattenedData);
-	})
+	_.mapValues(groupedOutputParameters.value, (interventions, key) =>
+		createInterventionChart(interventions, {
+			title: key,
+			width: 400,
+			height: 200,
+			xAxisTitle: 'Time',
+			yAxisTitle: 'Value'
+		})
+	)
 );
 
 const initialize = async (overwriteWithState: boolean = false) => {
@@ -455,6 +458,10 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.intervention-settings-section {
+	background-color: var(--surface-100);
+}
+
 ul {
 	list-style: none;
 }

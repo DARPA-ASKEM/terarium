@@ -54,17 +54,19 @@ import {
 	SemanticType,
 	InferredParameterSemantic,
 	ChartAnnotation,
-	ClientEventType
+	ClientEventType,
+	InterventionPolicy
 } from '@/types/Types';
 import { ChartSettingType } from '@/types/common';
 import { createLLMSummary } from '@/services/summary-service';
-import { applyForecastChartAnnotations, createForecastChart } from '@/services/charts';
+import { applyForecastChartAnnotations, createForecastChart, createInterventionChartMarkers } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import * as stats from '@/utils/stats';
 import { createDatasetFromSimulationResult } from '@/services/dataset';
 import { useProjects } from '@/composables/project';
 import { fetchAnnotations } from '@/services/chart-settings';
 import { useClientEvent } from '@/composables/useClientEvent';
+import { getInterventionPolicyById } from '@/services/intervention-policy';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { CalibrationOperationCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults } from './calibrate-utils';
@@ -83,6 +85,8 @@ const runResult = ref<DataArray>([]);
 const runResultPre = ref<DataArray>([]);
 const runResultSummary = ref<DataArray>([]);
 const runResultSummaryPre = ref<DataArray>([]);
+const policyInterventionId = computed(() => props.node.inputs[2].value?.[0]);
+const interventionPolicy = ref<InterventionPolicy | null>(null);
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
@@ -133,6 +137,8 @@ onMounted(async () => updateLossChartWithSimulation());
 
 let pyciemssMap: Record<string, string> = {};
 
+const groupedInterventionOutputs = computed(() => _.groupBy(interventionPolicy.value?.interventions, 'appliedTo'));
+
 const preparedCharts = computed(() => {
 	const state = props.node.state;
 
@@ -174,36 +180,37 @@ const preparedCharts = computed(() => {
 		}
 		const annotations = chartAnnotations.value.filter((annotation) => annotation.chartId === setting.id);
 
-		return applyForecastChartAnnotations(
-			createForecastChart(
-				{
-					data: result,
-					variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
-					timeField: 'timepoint_id',
-					groupField: 'sample_id'
-				},
-				{
-					data: resultSummary,
-					variables: [`${pyciemssMap[variable]}_mean:pre`, `${pyciemssMap[variable]}_mean`],
-					timeField: 'timepoint_id'
-				},
-				{
-					data: groundTruth,
-					variables: datasetVariables,
-					timeField: datasetTimeField as string
-				},
-				{
-					title: '',
-					legend: true,
-					translationMap: reverseMap,
-					xAxisTitle: modelVarUnits.value._time || 'Time',
-					yAxisTitle: modelVarUnits.value[variable] || '',
-					colorscheme: ['#AAB3C6', '#1B8073'],
-					...chartSize
-				}
-			),
-			annotations
+		const chart = createForecastChart(
+			{
+				data: result,
+				variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
+				timeField: 'timepoint_id',
+				groupField: 'sample_id'
+			},
+			{
+				data: resultSummary,
+				variables: [`${pyciemssMap[variable]}_mean:pre`, `${pyciemssMap[variable]}_mean`],
+				timeField: 'timepoint_id'
+			},
+			{
+				data: groundTruth,
+				variables: datasetVariables,
+				timeField: datasetTimeField as string
+			},
+			{
+				title: '',
+				legend: true,
+				translationMap: reverseMap,
+				xAxisTitle: modelVarUnits.value._time || 'Time',
+				yAxisTitle: modelVarUnits.value[variable] || '',
+				colorscheme: ['#AAB3C6', '#1B8073'],
+				...chartSize
+			}
 		);
+		applyForecastChartAnnotations(chart, annotations);
+		chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[variable]));
+
+		return chart;
 	});
 });
 
@@ -489,6 +496,18 @@ watch(
 		const datasetId = props.node.inputs[1]?.value?.[0];
 		const { csv } = await setupDatasetInput(datasetId);
 		csvAsset.value = csv;
+	},
+	{ immediate: true }
+);
+
+watch(
+	() => policyInterventionId.value,
+	() => {
+		if (policyInterventionId.value) {
+			getInterventionPolicyById(policyInterventionId.value).then((policy) => {
+				interventionPolicy.value = policy;
+			});
+		}
 	},
 	{ immediate: true }
 );

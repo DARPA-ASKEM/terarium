@@ -3,12 +3,12 @@
 # ensure the volume mounted python code is using editable mode
 echo "Installing python tasks"
 cd /funman_task
-pip install -e .
+pip install --no-cache-dir -e .
 
 # run it
-echo "Running taskrunner"
+echo "Installing taskrunner"
 cd /taskrunner
-pip install -e .
+pip install --no-cache-dir -e .
 
 BUILD_DIR=/taskrunner-build-funman
 mkdir -p $BUILD_DIR

@@ -7,7 +7,12 @@
 	>
 		<!-- Wizard -->
 		<section :tabName="DrilldownTabs.Wizard" class="wizard">
-			<tera-slider-panel v-model:is-open="isSidebarOpen" header="Calibration settings" content-width="420px">
+			<tera-slider-panel
+				class="input-config"
+				v-model:is-open="isSidebarOpen"
+				header="Calibration settings"
+				content-width="420px"
+			>
 				<template #content>
 					<div class="toolbar">
 						<p>Click Run to begin calibrating.</p>
@@ -158,6 +163,15 @@
 								<tera-input-text disabled model-value="ADAM" />
 							</div>
 						</div>
+					</section>
+
+					<section v-if="interventionPolicy" class="form-section">
+						<h5>Intervention Policies</h5>
+						<tera-intervention-summary-card
+							v-for="(intervention, index) in interventionPolicy.interventions"
+							:intervention="intervention"
+							:key="index"
+						/>
 					</section>
 					<div class="spacer m-7" />
 				</template>
@@ -405,7 +419,8 @@ import {
 	DatasetColumn,
 	ModelConfiguration,
 	AssetType,
-	ChartAnnotation
+	ChartAnnotation,
+	InterventionPolicy
 } from '@/types/Types';
 import { CiemssPresetTypes, DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
 import { getTimespan, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
@@ -428,7 +443,8 @@ import {
 	createForecastChart,
 	createHistogramChart,
 	createErrorChart,
-	applyForecastChartAnnotations
+	applyForecastChartAnnotations,
+	createInterventionChartMarkers
 } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
@@ -437,6 +453,8 @@ import { displayNumber } from '@/utils/number';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { useClientEvent } from '@/composables/useClientEvent';
+import { getInterventionPolicyById } from '@/services/intervention-policy';
+import TeraInterventionSummaryCard from '@/components/workflow/ops/simulate-ciemss/tera-intervention-summary-card.vue';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults, getErrorData } from './calibrate-utils';
 
@@ -518,7 +536,8 @@ const modelPartTypesMap = ref<{ [key: string]: string }>({});
 
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
-const policyInterventionId = computed(() => props.node.inputs[2].value);
+const policyInterventionId = computed(() => props.node.inputs[2].value?.[0]);
+const interventionPolicy = ref<InterventionPolicy | null>(null);
 
 const cancelRunId = computed(
 	() =>
@@ -657,6 +676,8 @@ const preparedChartInputs = computed(() => {
 	};
 });
 
+const groupedInterventionOutputs = computed(() => _.groupBy(interventionPolicy.value?.interventions, 'appliedTo'));
+
 const preparedCharts = computed(() => {
 	if (!preparedChartInputs.value) return {};
 	const { result, resultSummary, reverseMap } = preparedChartInputs.value;
@@ -706,6 +727,8 @@ const preparedCharts = computed(() => {
 			),
 			annotations
 		);
+
+		charts[variable].layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[variable]));
 	});
 	return charts;
 });
@@ -842,8 +865,8 @@ const runCalibrate = async () => {
 		engine: 'ciemss'
 	};
 
-	if (policyInterventionId.value?.[0]) {
-		calibrationRequest.policyInterventionId = policyInterventionId.value[0];
+	if (policyInterventionId.value) {
+		calibrationRequest.policyInterventionId = policyInterventionId.value;
 	}
 
 	const response = await makeCalibrateJobCiemss(calibrationRequest, nodeMetadata(props.node));
@@ -853,6 +876,15 @@ const runCalibrate = async () => {
 		state.currentProgress = 0;
 		state.inProgressForecastId = '';
 		state.inProgressPreForecastId = '';
+
+		// show selected input settings in the charts & output panel
+		state.chartSettings = updateChartSettingsBySelectedVariables(
+			chartSettings.value,
+			ChartSettingType.VARIABLE_COMPARISON,
+			mapping.value
+				.filter((c) => ['state', 'observable'].includes(modelPartTypesMap.value[c.modelVariable]))
+				.map((c) => c.modelVariable)
+		);
 
 		emit('update-state', state);
 	}
@@ -1055,24 +1087,21 @@ watch(
 	},
 	{ immediate: true }
 );
+
+watch(
+	() => policyInterventionId.value,
+	() => {
+		if (policyInterventionId.value) {
+			getInterventionPolicyById(policyInterventionId.value).then((policy) => {
+				interventionPolicy.value = policy;
+			});
+		}
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
-/* Left sidebar stuff */
-:deep(.slider-content) {
-	background-color: var(--surface-100);
-	border-right: 1px solid var(--surface-border-light);
-}
-:deep(.slider-content aside header) {
-	background: color-mix(in srgb, var(--surface-100) 80%, transparent 20%);
-}
-:deep(.slider-tab) {
-	background-color: var(--surface-100);
-	border-right: 1px solid var(--surface-border-light);
-}
-:deep(.slider-tab header) {
-	background: transparent;
-}
 .wizard .toolbar {
 	display: flex;
 	align-items: center;

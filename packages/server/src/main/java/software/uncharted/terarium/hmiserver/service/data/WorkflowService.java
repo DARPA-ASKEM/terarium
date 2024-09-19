@@ -120,7 +120,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				final JsonNode nodeContent = this.objectMapper.valueToTree(node);
 				final JsonNode dbNodeContent = this.objectMapper.valueToTree(dbNode);
 
-				if (nodeContent.equals(dbNodeContent) == true) {
+				if (nodeContent.equals(dbNodeContent)) {
 					nodeMap.remove(node.getId());
 					continue;
 				}
@@ -132,7 +132,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 					continue;
 				}
 
-				if (dbNode.getVersion() == node.getVersion()) {
+				if (dbNode.getVersion().equals(node.getVersion())) {
 					node.setVersion(dbNode.getVersion() + 1L);
 					dbWorkflowNodes.set(index, node);
 				}
@@ -152,7 +152,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				final JsonNode edgeContent = this.objectMapper.valueToTree(edge);
 				final JsonNode dbEdgeContent = this.objectMapper.valueToTree(dbEdge);
 
-				if (edgeContent.equals(dbEdgeContent) == true) {
+				if (edgeContent.equals(dbEdgeContent)) {
 					edgeMap.remove(edge.getId());
 					continue;
 				}
@@ -163,7 +163,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 					dbEdge.setVersion(1L);
 				}
 
-				if (dbEdge.getVersion() == edge.getVersion()) {
+				if (dbEdge.getVersion().equals(edge.getVersion())) {
 					edge.setVersion(dbEdge.getVersion() + 1L);
 					dbWorkflowEdges.set(index, edge);
 				}

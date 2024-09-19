@@ -2,7 +2,8 @@ import { percentile } from '@/utils/math';
 import { isEmpty } from 'lodash';
 import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
-import { ChartAnnotation } from '@/types/Types';
+import { ChartAnnotation, Intervention } from '@/types/Types';
+import { flattenInterventionData } from './intervention-policy';
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
@@ -701,7 +702,8 @@ export function createSuccessCriteriaChart(
 	};
 }
 
-export function createInterventionChartMarkers(data: { name: string; value: number; time: number }[]): any[] {
+export function createInterventionChartMarkers(interventions: Intervention[]): any[] {
+	const data = flattenInterventionData(interventions);
 	const markerSpec = {
 		data: { values: data },
 		mark: { type: 'rule', strokeDash: [4, 4], color: 'black' },
@@ -729,18 +731,29 @@ export function createInterventionChartMarkers(data: { name: string; value: numb
 	return [markerSpec, labelSpec];
 }
 
-export function createInterventionChart(interventionsData: { name: string; value: number; time: number }[]) {
+export function createInterventionChart(interventions: Intervention[], chartOptions: Omit<BaseChartOptions, 'legend'>) {
+	const interventionsData = flattenInterventionData(interventions);
+	const titleObj = chartOptions.title
+		? {
+				text: chartOptions.title,
+				anchor: 'start',
+				subtitle: ' ',
+				subtitlePadding: 4
+			}
+		: null;
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
-		width: 400,
+		width: chartOptions.width,
+		title: titleObj,
+		height: chartOptions.height,
 		autosize: {
 			type: 'fit-x'
 		},
 		layer: []
 	};
-	if (interventionsData && interventionsData.length > 0) {
+	if (!isEmpty(interventionsData)) {
 		// markers
-		createInterventionChartMarkers(interventionsData).forEach((marker) => {
+		createInterventionChartMarkers(interventions).forEach((marker) => {
 			spec.layer.push(marker);
 		});
 		// chart
@@ -748,8 +761,8 @@ export function createInterventionChart(interventionsData: { name: string; value
 			data: { values: interventionsData },
 			mark: 'point',
 			encoding: {
-				x: { field: 'time', type: 'quantitative' },
-				y: { field: 'value', type: 'quantitative' }
+				x: { field: 'time', type: 'quantitative', title: chartOptions.xAxisTitle },
+				y: { field: 'value', type: 'quantitative', title: chartOptions.yAxisTitle }
 			}
 		});
 	}

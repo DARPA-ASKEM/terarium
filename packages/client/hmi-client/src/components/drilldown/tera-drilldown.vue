@@ -149,7 +149,7 @@ const props = defineProps<{
 	hideDropdown?: boolean;
 }>();
 
-const emit = defineEmits(['on-close-clicked', 'update-state', 'update:selection', 'update-output-port']);
+const emit = defineEmits(['on-close-clicked', 'update-state', 'update:selection']);
 
 const slots = useSlots();
 

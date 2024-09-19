@@ -574,21 +574,11 @@ export interface OptimizeRequestCiemss {
     optimizeInterventions?: OptimizeInterventions;
     fixedInterventions?: Intervention[];
     loggingStepSize?: number;
-    qoi: OptimizeQoi;
-    riskBound: number;
+    qoi: OptimizeQoi[];
     boundsInterventions: number[][];
     extra: OptimizeExtra;
     engine: string;
     userId: string;
-}
-
-export interface ScimlStatusUpdate {
-    loss: number;
-    iter: number;
-    params: { [index: string]: number };
-    id: string;
-    solData: { [index: string]: any };
-    timesteps: number[];
 }
 
 export interface SimulationRequest {
@@ -642,7 +632,7 @@ export interface OptimizeExtra {
     maxiter?: number;
     maxfeval?: number;
     isMinimized?: boolean;
-    alpha?: number;
+    alpha?: number[];
     solverMethod?: string;
     solverStepSize?: number;
 }
@@ -659,6 +649,8 @@ export interface OptimizeInterventions {
 export interface OptimizeQoi {
     contexts: string[];
     method: string;
+    riskBound: number;
+    isMinimized: boolean;
 }
 
 export interface TimeSpan {
@@ -1053,7 +1045,6 @@ export enum ClientEventType {
     CloneProject = "CLONE_PROJECT",
     Heartbeat = "HEARTBEAT",
     Notification = "NOTIFICATION",
-    SimulationSciml = "SIMULATION_SCIML",
     SimulationPyciemss = "SIMULATION_PYCIEMSS",
     SimulationNotification = "SIMULATION_NOTIFICATION",
     FileUploadProgress = "FILE_UPLOAD_PROGRESS",
@@ -1068,6 +1059,7 @@ export enum ClientEventType {
     TaskFunmanValidation = "TASK_FUNMAN_VALIDATION",
     TaskGollmEnrichAmr = "TASK_GOLLM_ENRICH_AMR",
     TaskMiraAmrToMmt = "TASK_MIRA_AMR_TO_MMT",
+    TaskMiraGenerateModelLatex = "TASK_MIRA_GENERATE_MODEL_LATEX",
     TaskEnrichAmr = "TASK_ENRICH_AMR",
     WorkflowUpdate = "WORKFLOW_UPDATE",
     WorkflowDelete = "WORKFLOW_DELETE",
@@ -1176,7 +1168,6 @@ export enum SimulationType {
 }
 
 export enum SimulationEngine {
-    Sciml = "SCIML",
     Ciemss = "CIEMSS",
 }
 

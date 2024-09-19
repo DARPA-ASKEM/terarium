@@ -50,6 +50,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
+import { useProjects } from '@/composables/project';
 import { DatasetTransformerState } from './dataset-transformer-operation';
 
 const props = defineProps<{
@@ -64,7 +65,8 @@ const assets = computed(() =>
 		.filter((inputNode) => inputNode.status === WorkflowPortStatus.CONNECTED && inputNode.value)
 		.map((inputNode) => ({
 			type: inputNode.type,
-			id: inputNode.value![0]
+			id: inputNode.value![0],
+			name: useProjects().getAssetName(inputNode.value![0])
 		}))
 );
 
