@@ -367,7 +367,7 @@ public class TaskService {
 
 				notificationService.createNotificationEvent(resp.getId(), event);
 			} catch (final Exception e) {
-				log.error("Failed to persist notification event for for task {}", resp.getId(), e);
+				log.error("Failed to persist notification event for for task {}", resp.getId());
 			}
 
 			try {
@@ -461,7 +461,7 @@ public class TaskService {
 
 			notificationService.createNotificationEvent(resp.getId(), event);
 		} catch (final Exception e) {
-			log.error("Failed to persist notification event for for task {}", resp.getId(), e);
+			log.error("Failed to persist notification event for for task {}", resp.getId());
 		}
 
 		try {

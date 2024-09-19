@@ -1,5 +1,5 @@
 # Build the Spring Boot application
-FROM eclipse-temurin:21-jdk-noble AS funman_taskrunner_builder
+FROM eclipse-temurin:21.0.4_7-jdk-noble AS funman_taskrunner_builder
 
 ###### DEV ONLY ######
 #VVVVVVVVVVVVVVVVVVVVV
