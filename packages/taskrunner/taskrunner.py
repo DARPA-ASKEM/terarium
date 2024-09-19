@@ -110,7 +110,7 @@ class TaskRunnerInterface:
                 raise TimeoutError("Reading from input pipe timed out")
 
     def read_input_str_with_timeout(self, timeout_seconds: int = 30) -> str:
-        return self.read_input_str_with_timeout(timeout_seconds).decode("utf-8")
+        return self.read_input_bytes_with_timeout(timeout_seconds).decode("utf-8")
 
     def read_input_dict_with_timeout(self, timeout_seconds: int = 30) -> dict:
         return json.loads(self.read_input_str_with_timeout(timeout_seconds))
