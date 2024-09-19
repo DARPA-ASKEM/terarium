@@ -1,5 +1,8 @@
 <template>
 	<section>
+		<i class="ml-2" v-if="config.derivativeType === DerivativeType.Following">
+			"following" option is not supported yet
+		</i>
 		<header class="flex w-full gap-3 mb-2">
 			<tera-toggleable-input
 				:model-value="config.name"
@@ -11,6 +14,10 @@
 				<InputSwitch
 					class="mr-3"
 					:model-value="config.isActive"
+					:disabled="
+						// Lock if derivativeType is Following
+						config.derivativeType === DerivativeType.Following
+					"
 					@update:model-value="emit('update-self', { key: 'isActive', value: $event })"
 				/>
 				<Button icon="pi pi-trash" text rounded @click="emit('delete-self')" />
@@ -33,15 +40,25 @@
 			<Dropdown
 				:model-value="config.derivativeType"
 				:options="Object.values(DerivativeType)"
-				@update:model-value="emit('update-self', { key: 'derivativeType', value: $event })"
+				@update:model-value="
+					($event: DerivativeType) => {
+						// Disable isActive if derivativeType is Following
+						if ($event === DerivativeType.Following) {
+							emit('update-self', { key: 'isActive', value: false });
+						}
+						emit('update-self', { key: 'derivativeType', value: $event });
+					}
+				"
 			/>
 			<tera-input-number
 				v-if="config.derivativeType === DerivativeType.LessThan"
+				auto-width
 				:model-value="config.interval?.ub ?? 0"
 				@update:model-value="emit('update-self', { key: 'interval', value: { lb: config.interval?.lb, ub: $event } })"
 			/>
 			<tera-input-number
 				v-if="config.derivativeType === DerivativeType.GreaterThan"
+				auto-width
 				:model-value="config.interval?.lb ?? 0"
 				@update:model-value="emit('update-self', { key: 'interval', value: { lb: $event, ub: config.interval?.ub } })"
 			/>
@@ -53,6 +70,7 @@
 			<template v-if="config.derivativeType !== DerivativeType.Following">
 				from timepoint
 				<tera-input-number
+					auto-width
 					:model-value="config.timepoints?.lb ?? 0"
 					@update:model-value="
 						emit('update-self', { key: 'timepoints', value: { lb: $event, ub: config.timepoints?.ub } })
@@ -60,6 +78,7 @@
 				/>
 				day to timepoint
 				<tera-input-number
+					auto-width
 					:model-value="config.timepoints?.ub ?? 100"
 					@update:model-value="
 						emit('update-self', { key: 'timepoints', value: { lb: config.timepoints?.lb, ub: $event } })
@@ -69,11 +88,15 @@
 			<!--Wrong variables being mutated-->
 			<template v-else>
 				time-series dataset within +/-
-				<!-- <tera-input-number v-model="0" /> -->
-				<input />
+				<tera-input-number auto-width :model-value="0" />
 				persons within a time window of
-				<!-- <tera-input-number v-model="0" /> -->
-				<input />
+				<tera-input-number
+					auto-width
+					:model-value="config.timepoints?.ub ?? 100"
+					@update:model-value="
+						emit('update-self', { key: 'timepoints', value: { lb: config.timepoints?.lb, ub: $event } })
+					"
+				/>
 			</template>
 			days.
 		</p>
@@ -142,14 +165,14 @@ section {
 }
 
 p {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--gap-1);
+	align-items: center;
+
 	&:deep(.tera-input) {
 		display: inline-flex;
 		height: 2.4rem; /* Match height of dropdowns */
-	}
-
-	&:deep(input) {
-		display: inline-flex;
-		width: 4rem;
 	}
 }
 

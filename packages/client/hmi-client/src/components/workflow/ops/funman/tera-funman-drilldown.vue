@@ -42,7 +42,7 @@
 												</div>
 											</header>
 											<div class="section-row">
-												<div>{{ stateIds.join(' + ') }} = {{ mass }}</div>
+												<katex-element :expression="stringToLatexExpression(`${stateIds.join(' + ')} = ${mass}`)" />
 												<span v-for="v of stateIds" :key="v"> {{ v }} &#8805; 0, </span>
 											</div>
 										</section>
@@ -120,7 +120,6 @@
 				</main>
 			</tera-drilldown-section>
 		</div>
-
 		<template #preview>
 			<tera-drilldown-preview
 				title="Validation results"
@@ -170,7 +169,7 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import InputSwitch from 'primevue/inputswitch';
 
-import type { FunmanPostQueriesRequest, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
+import type { FunmanPostQueriesRequest, Model, ModelParameter, TimeSpan } from '@/types/Types';
 import { makeQueries } from '@/services/models/funman-service';
 import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { getAsConfiguredModel, getModelConfigurationById } from '@/services/model-configurations';
@@ -179,13 +178,8 @@ import { pythonInstance } from '@/python/PyodideController';
 import TeraFunmanOutput from '@/components/workflow/ops/funman/tera-funman-output.vue';
 import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-constraint-group-form.vue';
 import { DrilldownTabs } from '@/types/common';
-import {
-	FunmanOperationState,
-	ConstraintGroup,
-	ConstraintType,
-	DerivativeType,
-	CompartmentalConstraint
-} from './funman-operation';
+import { stringToLatexExpression } from '@/services/model';
+import { FunmanOperationState, ConstraintType, DerivativeType, CompartmentalConstraint } from './funman-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<FunmanOperationState>;
@@ -195,10 +189,7 @@ const emit = defineEmits(['append-output', 'select-output', 'update-state', 'clo
 
 interface BasicKnobs {
 	tolerance: number;
-	currentTimespan: {
-		start: number;
-		end: number;
-	};
+	currentTimespan: TimeSpan;
 	numberOfSteps: number;
 	compartmentalConstraint: CompartmentalConstraint;
 }
@@ -210,9 +201,11 @@ const knobs = ref<BasicKnobs>({
 	compartmentalConstraint: { name: '', isActive: false }
 });
 
+const MAX = 99999999999;
 const toast = useToastService();
 const validateParametersToolTip =
 	'Validate the configuration of the model using functional model analysis (FUNMAN). \n \n The parameter space regions defined by the model configuration are evaluated to satisfactory or unsatisfactory depending on whether they generate model outputs that are within a given set of time-dependent constraints';
+
 const showSpinner = ref(false);
 const isSliderOpen = ref(true);
 
@@ -221,13 +214,10 @@ const mass = ref('0');
 const requestStepList = computed(() => getStepList());
 const requestStepListString = computed(() => requestStepList.value.join()); // Just used to display. dont like this but need to be quick
 
-const MAX = 99999999999;
-
 const requestParameters = ref<any[]>([]);
 const model = ref<Model | null>();
-const modelConfiguration = ref<ModelConfiguration>();
 
-const stateIds = ref<string[]>([]); // Used for form's multiselect.
+const stateIds = ref<string[]>([]);
 const parameterIds = ref<string[]>([]);
 const observableIds = ref<string[]>([]);
 
@@ -268,56 +258,40 @@ const runMakeQuery = async () => {
 		return;
 	}
 
-	const constraints = props.node.state.constraintGroups?.map((ele) => {
-		if (ele.derivativeType === DerivativeType.Increasing || ele.derivativeType === DerivativeType.Decreasing) {
-			const weights = ele.weights ? ele.weights : [1.0];
-			const constraint: any = {
-				soft: true,
-				name: ele.name,
-				timepoints: null,
-				additive_bounds: {
-					lb: 0.0,
-					// ub: 0.0,
-					// closed_upper_bound: true,
-					original_width: MAX
-				},
-				variables: ele.variables,
-				weights: weights.map((d) => -Math.abs(d)), // should be all negative
-				derivative: true
-			};
-
-			if (ele.derivativeType === DerivativeType.Increasing) {
-				// delete constraint.additive_bounds.closed_upper_bound;
-				// delete constraint.additive_bounds.ub;
-				// constraint.additive_bounds.lb = 0;
-				constraint.weights = weights.map((d) => Math.abs(d)); // should be all positive
+	const constraints = props.node.state.constraintGroups
+		?.map((ele) => {
+			if (!ele.isActive) return null;
+			// Increasing/descreasing (monotonicity)
+			if (ele.derivativeType === DerivativeType.Increasing || ele.derivativeType === DerivativeType.Decreasing) {
+				const weights = ele.weights ?? [1.0];
+				return {
+					soft: true,
+					name: ele.name,
+					timepoints: null,
+					additive_bounds: {
+						lb: 0.0,
+						original_width: MAX
+					},
+					variables: ele.variables,
+					weights:
+						ele.derivativeType === DerivativeType.Increasing
+							? weights.map((d) => Math.abs(d))
+							: weights.map((d) => -Math.abs(d)),
+					derivative: true
+				};
 			}
-			return constraint;
-		}
-
-		if (ele.timepoints) {
-			ele.timepoints.closed_upper_bound = true;
-		}
-		if (ele.variables.length === 1) {
-			// State Variable Constraint
-			const singleVarConstraint = {
+			if (ele.timepoints) {
+				ele.timepoints.closed_upper_bound = true;
+			}
+			return {
 				name: ele.name,
-				variable: ele.variables[0],
-				interval: ele.interval,
+				variables: ele.variables,
+				weights: ele.weights,
+				additive_bounds: ele.interval,
 				timepoints: ele.timepoints
 			};
-			return singleVarConstraint;
-		}
-
-		return {
-			// Linear Constraint
-			name: ele.name,
-			variables: ele.variables,
-			weights: ele.weights,
-			additive_bounds: ele.interval,
-			timepoints: ele.timepoints
-		};
-	});
+		})
+		.filter(Boolean); // Removes falsey values
 
 	const request: FunmanPostQueriesRequest = {
 		model: model.value,
@@ -327,11 +301,7 @@ const runMakeQuery = async () => {
 			structure_parameters: [
 				{
 					name: 'schedules',
-					schedules: [
-						{
-							timepoints: requestStepList.value
-						}
-					]
+					schedules: [{ timepoints: requestStepList.value }]
 				}
 			],
 			config: {
@@ -359,15 +329,14 @@ const runMakeQuery = async () => {
 
 const addConstraintForm = () => {
 	const state = _.cloneDeep(props.node.state);
-	const newGroup: ConstraintGroup = {
+	state.constraintGroups.push({
 		name: `Constraint ${state.constraintGroups.length + 1}`,
 		isActive: true,
 		timepoints: { lb: 0, ub: 100 },
 		constraintType: ConstraintType.State,
 		variables: [],
 		derivativeType: DerivativeType.LessThan
-	};
-	state.constraintGroups.push(newGroup);
+	});
 	emit('update-state', state);
 };
 
@@ -418,8 +387,8 @@ function getStepList() {
 const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
-	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
-	model.value = await getAsConfiguredModel(modelConfiguration.value);
+	const modelConfiguration = await getModelConfigurationById(modelConfigurationId);
+	model.value = await getAsConfiguredModel(modelConfiguration);
 };
 
 const setModelOptions = async () => {
@@ -442,8 +411,7 @@ const setModelOptions = async () => {
 		parametersMap[renameReserved(d.id)] = d.value || 0;
 	});
 
-	const massValue = await pythonInstance.evaluateExpression(modelMassExpression as string, parametersMap);
-	mass.value = massValue;
+	mass.value = await pythonInstance.evaluateExpression(modelMassExpression as string, parametersMap);
 
 	const ode = model.value.semantics?.ode;
 	if (ode) {
@@ -460,7 +428,6 @@ const setModelOptions = async () => {
 
 	if (model.value.semantics?.ode.parameters) {
 		setRequestParameters(model.value.semantics?.ode.parameters);
-
 		variablesOfInterest.value = requestParameters.value.filter((d: any) => d.label === 'all').map((d: any) => d.name);
 	} else {
 		toast.error('', 'Provided model has no parameters');
@@ -558,6 +525,13 @@ watch(
 </script>
 
 <style scoped>
+.top-toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--gap-1) var(--gap);
+}
+
 .btn-group {
 	display: flex;
 	align-items: center;
@@ -639,14 +613,6 @@ ul {
 	width: 100%;
 }
 
-.green-text {
-	color: var(--Primary, #1b8073);
-}
-
-.green-text:hover {
-	color: var(--text-color-subdued);
-}
-
 .p-accordion {
 	padding: 0 var(--gap-2);
 }
@@ -663,12 +629,5 @@ ul {
 /* Override grid template so output expands when sidebar is closed */
 .overlay-container:deep(section.scale main) {
 	grid-template-columns: auto 1fr;
-}
-
-.top-toolbar {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: var(--gap-1) var(--gap);
 }
 </style>

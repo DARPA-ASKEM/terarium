@@ -23,7 +23,7 @@ export interface ConstraintGroup {
 	isActive: boolean;
 	constraintType: ConstraintType;
 	derivativeType: DerivativeType;
-	variables: string[]; // If len = 1, need to rename to "variable" for request formatting
+	variables: string[];
 	weights?: number[]; // 1 to 1 mapping with variables
 	timepoints?: FunmanInterval;
 	interval?: FunmanInterval;
