@@ -4,7 +4,7 @@
 			<vega-chart expandable :visualization-spec="forecastChartSpec" />
 			<div>
 				<div v-for="a in forecastAnnotations" :key="a.id">
-					{{ a.layerSpec.description }} <i class="pi pi-trash pi-trash" @click="removeAnnotation(a.id)" />
+					{{ a.layerSpec.description }} <i class="pi pi-trash pi-trash" @click="removeAnnotation(a.id ?? '')" />
 				</div>
 			</div>
 			<div style="display: flex; flex-direction: col">

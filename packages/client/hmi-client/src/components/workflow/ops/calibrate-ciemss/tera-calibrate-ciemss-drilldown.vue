@@ -628,7 +628,7 @@ useClientEvent([ClientEventType.ChartAnnotationCreate, ClientEventType.ChartAnno
 
 const generateAnnotation = async (setting: ChartSetting, query: string) => {
 	// Note: Currently llm generated chart annotations are supported for the forecast chart only
-	if (!preparedChartInputs.value) return {};
+	if (!preparedChartInputs.value) return null;
 	const { reverseMap } = preparedChartInputs.value;
 	const variable = setting.selectedVariables[0];
 	const annotationLayerSpec = await generateForecastChartAnnotation(
