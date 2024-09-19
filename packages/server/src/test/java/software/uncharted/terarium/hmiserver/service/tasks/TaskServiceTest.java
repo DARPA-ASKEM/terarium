@@ -316,6 +316,33 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendGoLLMInterventionsFromDocumentRequest() throws Exception {
+		final UUID taskId = UUID.randomUUID();
+
+		final ClassPathResource modelResource = new ClassPathResource("gollm/SIR.json");
+		final String modelContent = new String(Files.readAllBytes(modelResource.getFile().toPath()));
+
+		final ClassPathResource documentResource = new ClassPathResource("gollm/SIR.txt");
+		final String documentContent = new String(Files.readAllBytes(documentResource.getFile().toPath()));
+
+		final InterventionsFromDocumentResponseHandler.Input input = new InterventionsFromDocumentResponseHandler.Input();
+		input.setResearchPaper(documentContent);
+		input.setAmr(modelContent);
+
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.GOLLM);
+		req.setScript("gollm_task:interventions_from_document");
+		req.setInput(input);
+
+		final TaskResponse resp = taskService.runTaskSync(req);
+
+		Assertions.assertEquals(taskId, resp.getId());
+
+		log.info(new String(resp.getOutput()));
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendAmrToMmtRequest() throws Exception {
 		final UUID taskId = UUID.randomUUID();
 

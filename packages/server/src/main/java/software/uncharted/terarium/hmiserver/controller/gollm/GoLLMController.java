@@ -51,6 +51,7 @@ import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelFromDoc
 import software.uncharted.terarium.hmiserver.service.tasks.EnrichAmrResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.GenerateResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.GenerateSummaryHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.InterventionsFromDocumentResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
@@ -415,6 +416,111 @@ public class GoLLMController {
 			new ConfigureModelFromDatasetResponseHandler.Properties();
 		props.setProjectId(projectId);
 		props.setDatasetId(datasetId);
+		props.setModelId(modelId);
+		props.setWorkflowId(workflowId);
+		props.setNodeId(nodeId);
+		req.setAdditionalProperties(props);
+
+		final TaskResponse resp;
+		try {
+			resp = taskService.runTask(mode, req);
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
+		} catch (final TimeoutException e) {
+			log.warn("Timeout while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
+		} catch (final InterruptedException e) {
+			log.warn("Interrupted while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
+		} catch (final ExecutionException e) {
+			log.error("Error while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
+		}
+
+		return ResponseEntity.ok().body(resp);
+	}
+
+	@GetMapping("/interventions-from-document")
+	@Secured(Roles.USER)
+	@Operation(summary = "Dispatch a `GoLLM interventions-from-document` task")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Dispatched successfully",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class)
+				)
+			),
+			@ApiResponse(
+				responseCode = "404",
+				description = "The provided model or document arguments are not found",
+				content = @Content
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+		}
+	)
+	public ResponseEntity<TaskResponse> createInterventionsFromDocumentTask(
+		@RequestParam(name = "model-id", required = true) final UUID modelId,
+		@RequestParam(name = "document-id", required = true) final UUID documentId,
+		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
+		@RequestParam(name = "workflow-id", required = false) final UUID workflowId,
+		@RequestParam(name = "node-id", required = false) final UUID nodeId,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanRead(
+			currentUserService.get().getId(),
+			projectId
+		);
+
+		// Grab the document
+		final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
+		if (document.isEmpty()) {
+			log.warn(String.format("Document %s not found", documentId));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
+		}
+
+		// make sure there is text in the document
+		if (document.get().getText() == null || document.get().getText().isEmpty()) {
+			log.warn(String.format("Document %s has no extracted text", documentId));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.extraction.not-done"));
+		}
+
+		// Grab the model
+		final Optional<Model> model = modelService.getAsset(modelId, permission);
+		if (model.isEmpty()) {
+			log.warn(String.format("Model %s not found", modelId));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
+		}
+
+		final InterventionsFromDocumentResponseHandler.Input input = new InterventionsFromDocumentResponseHandler.Input();
+		input.setResearchPaper(document.get().getText());
+		// stripping the metadata from the model before its sent since it can cause
+		// gollm to fail with massive inputs
+		model.get().setMetadata(null);
+		input.setAmr(model.get().serializeWithoutTerariumFieldsKeepId());
+
+		// Create the task
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.GOLLM);
+		req.setScript(InterventionsFromDocumentResponseHandler.NAME);
+		req.setUserId(currentUserService.get().getId());
+
+		try {
+			req.setInput(objectMapper.writeValueAsBytes(input));
+		} catch (final Exception e) {
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+		}
+
+		req.setProjectId(projectId);
+
+		final InterventionsFromDocumentResponseHandler.Properties props =
+			new InterventionsFromDocumentResponseHandler.Properties();
+		props.setProjectId(projectId);
+		props.setDocumentId(documentId);
 		props.setModelId(modelId);
 		props.setWorkflowId(workflowId);
 		props.setNodeId(nodeId);
