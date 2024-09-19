@@ -179,7 +179,7 @@ import TeraFunmanOutput from '@/components/workflow/ops/funman/tera-funman-outpu
 import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-constraint-group-form.vue';
 import { DrilldownTabs } from '@/types/common';
 import { stringToLatexExpression } from '@/services/model';
-import { FunmanOperationState, ConstraintType, DerivativeType, CompartmentalConstraint } from './funman-operation';
+import { FunmanOperationState, Constraint, ConstraintType, CompartmentalConstraint } from './funman-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<FunmanOperationState>;
@@ -262,7 +262,7 @@ const runMakeQuery = async () => {
 		?.map((ele) => {
 			if (!ele.isActive) return null;
 			// Increasing/descreasing (monotonicity)
-			if (ele.derivativeType === DerivativeType.Increasing || ele.derivativeType === DerivativeType.Decreasing) {
+			if (ele.constraintType === ConstraintType.Increasing || ele.constraintType === ConstraintType.Decreasing) {
 				const weights = ele.weights ?? [1.0];
 				return {
 					soft: true,
@@ -274,7 +274,7 @@ const runMakeQuery = async () => {
 					},
 					variables: ele.variables,
 					weights:
-						ele.derivativeType === DerivativeType.Increasing
+						ele.constraintType === ConstraintType.Increasing
 							? weights.map((d) => Math.abs(d))
 							: weights.map((d) => -Math.abs(d)),
 					derivative: true
@@ -333,9 +333,9 @@ const addConstraintForm = () => {
 		name: `Constraint ${state.constraintGroups.length + 1}`,
 		isActive: true,
 		timepoints: { lb: 0, ub: 100 },
-		constraintType: ConstraintType.State,
+		constraint: Constraint.State,
 		variables: [],
-		derivativeType: DerivativeType.LessThan
+		constraintType: ConstraintType.LessThan
 	});
 	emit('update-state', state);
 };
