@@ -664,8 +664,8 @@ export const createWorkflow = async (workflow: Workflow) => {
 	return response?.data ?? null;
 };
 
-// Update
-export const updateWorkflow = async (workflow: Workflow) => {
+// Update/save
+export const saveWorkflow = async (workflow: Workflow) => {
 	const id = workflow.id;
 	const response = await API.put(`/workflows/${id}`, workflow);
 	return response?.data ?? null;
