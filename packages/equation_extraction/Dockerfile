@@ -1,5 +1,5 @@
 # Build the Spring Boot application
-FROM python:3.11-slim AS nougat_cpu_taskrunner_builder
+FROM python:3.11-slim AS equation_extraction_taskrunner_builder
 
 ###### DEV ONLY ######
 #VVVVVVVVVVVVVVVVVVVVV
@@ -23,13 +23,13 @@ RUN wget https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21
 ENV JAVA_HOME=/usr/local/jdk-21
 ENV PATH="$JAVA_HOME/bin:$PATH"
 
-# Install nougat
-COPY ./packages/nougat_cpu/nougat-version.txt /nougatVersion.txt
-RUN COMMIT_SHA="$(cat /nougatVersion.txt)" && \
+# Install equation-extraction
+COPY ./packages/equation_extraction/equation-extraction-version.txt /extractionersion.txt
+RUN COMMIT_SHA="$(cat /extractionersion.txt)" && \
 	echo "Using document_intelligence commit $COMMIT_SHA" && \
-	wget --progress=dot:giga -O nougat.tar.gz "https://github.com/DARPA-ASKEM/document_intelligence/archive/${COMMIT_SHA}.tar.gz" && \
-	tar -zxvf nougat.tar.gz && \
-	rm nougat.tar.gz && \
+	wget --progress=dot:giga -O equation-extraction.tar.gz "https://github.com/DARPA-ASKEM/document_intelligence/archive/${COMMIT_SHA}.tar.gz" && \
+	tar -zxvf equation-extraction.tar.gz && \
+	rm equation-extraction.tar.gz && \
 	mv document_intelligence-* document_intelligence
 WORKDIR /document_intelligence/document_intelligence/fast_latex
 RUN pip3 install -r requirements.txt
@@ -75,13 +75,13 @@ ENV JAVA_HOME=/usr/local/jre-21
 ENV PATH="$JAVA_HOME/bin:$PATH"
 
 # Copy the supervisord configuration file
-COPY ./packages/nougat_cpu/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY ./packages/equation_extraction/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Copy the Spring Boot fat JAR from the builder image
-COPY --from=nougat_cpu_taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.jar
+COPY --from=equation_extraction_taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.jar
 
-# Install nougat
-COPY --from=nougat_cpu_taskrunner_builder /document_intelligence /document_intelligence
+# Install equation-extraction
+COPY --from=equation_extraction_taskrunner_builder /document_intelligence /document_intelligence
 WORKDIR /document_intelligence/document_intelligence/fast_latex
 RUN pip install -r requirements.txt
 
@@ -92,8 +92,8 @@ WORKDIR /taskrunner
 RUN pip install --no-cache-dir -e .
 
 # Install document_intelligence tasks
-COPY ./packages/nougat_cpu /nougat_task
-WORKDIR /nougat_task
+COPY ./packages/equation_extraction /equation_extraction_task
+WORKDIR /equation_extraction_task
 RUN pip install --no-cache-dir -e .
 
 #Install uvicorn and supervisord
