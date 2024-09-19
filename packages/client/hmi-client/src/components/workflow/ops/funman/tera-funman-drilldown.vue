@@ -129,13 +129,11 @@
 				is-selectable
 				class="pb-3 pl-2 pr-4"
 			>
-				<template v-if="showSpinner">
-					<tera-progress-spinner :font-size="2" is-centered style="height: 100%" />
-				</template>
+				<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%" />
 				<template v-else>
 					<tera-funman-output
-						v-if="activeOutput"
-						:fun-model-id="activeOutput.value?.[0]"
+						v-if="true"
+						:fun-model-id="'e44bd2c5-5c93-406e-b848-5ec4b3192d17'"
 						:trajectoryState="node.state.trajectoryState"
 						@update:trajectoryState="updateTrajectorystate"
 					/>

@@ -32,7 +32,7 @@
 		</section>
 	</div>
 
-	<div class="variables-table" v-if="selectedParam2 === ''">
+	<div v-if="selectedParam2 === ''" class="variables-table">
 		<div class="variables-header">
 			<header v-for="(title, index) in ['select', 'Parameter', 'Lower bound', 'Upper bound', '', '']" :key="index">
 				{{ title }}
