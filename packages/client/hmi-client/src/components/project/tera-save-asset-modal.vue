@@ -157,7 +157,7 @@ function initializeAsset() {
 		return;
 	}
 
-	// Creates an empty version of the asset if there no asset passed
+	// Creates an empty version of the asset if there is no asset passed
 	switch (props.assetType) {
 		case AssetType.Model:
 			newAsset = newAMR() as Model;

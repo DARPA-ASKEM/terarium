@@ -60,7 +60,7 @@
 		:initial-name="model?.header.name"
 		:is-visible="showSaveModal"
 		@close-modal="showSaveModal = false"
-		@on-save="showSaveModal = false"
+		@on-save="onModalSave"
 	/>
 </template>
 
@@ -127,6 +127,11 @@ function onSave() {
 }
 function onSaveAs() {
 	showSaveModal.value = true;
+}
+
+// Save modal
+function onModalSave() {
+	showSaveModal.value = false;
 }
 
 // User menu
