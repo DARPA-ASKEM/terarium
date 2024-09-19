@@ -1731,22 +1731,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jupyterlab/coreutils@npm:5.6.7, @jupyterlab/coreutils@npm:^5.6.7":
-  version: 5.6.7
-  resolution: "@jupyterlab/coreutils@npm:5.6.7"
-  dependencies:
-    "@lumino/coreutils": "npm:^1.11.0"
-    "@lumino/disposable": "npm:^1.10.0"
-    "@lumino/signaling": "npm:^1.10.0"
-    minimist: "npm:~1.2.0"
-    moment: "npm:^2.24.0"
-    path-browserify: "npm:^1.0.0"
-    url-parse: "npm:~1.5.1"
-  checksum: 10/1fb5184334dff1282dd89b20d8fe355bb9656b9299c9376446d74fba45ec0cfcf1de6ad5e2eab387f8b53c0f801abec4cd539bf2f92255640261d152ef56dda0
-  languageName: node
-  linkType: hard
-
-"@jupyterlab/coreutils@npm:^5.6.8":
+"@jupyterlab/coreutils@npm:5.6.8, @jupyterlab/coreutils@npm:^5.6.8":
   version: 5.6.8
   resolution: "@jupyterlab/coreutils@npm:5.6.8"
   dependencies:
@@ -1758,6 +1743,21 @@ __metadata:
     path-browserify: "npm:^1.0.0"
     url-parse: "npm:~1.5.1"
   checksum: 10/d21905a34702319896fd29e37fa039e5637ab127d06f468689a2286df40608108a4a7e68b07feb081c2b553edc29e7b5b70dcbbad0955ba136e610ee1c0dd6ba
+  languageName: node
+  linkType: hard
+
+"@jupyterlab/coreutils@npm:^5.6.7":
+  version: 5.6.7
+  resolution: "@jupyterlab/coreutils@npm:5.6.7"
+  dependencies:
+    "@lumino/coreutils": "npm:^1.11.0"
+    "@lumino/disposable": "npm:^1.10.0"
+    "@lumino/signaling": "npm:^1.10.0"
+    minimist: "npm:~1.2.0"
+    moment: "npm:^2.24.0"
+    path-browserify: "npm:^1.0.0"
+    url-parse: "npm:~1.5.1"
+  checksum: 10/1fb5184334dff1282dd89b20d8fe355bb9656b9299c9376446d74fba45ec0cfcf1de6ad5e2eab387f8b53c0f801abec4cd539bf2f92255640261d152ef56dda0
   languageName: node
   linkType: hard
 
@@ -8841,7 +8841,7 @@ __metadata:
     "@jupyterlab/cells": "npm:3.6.8"
     "@jupyterlab/codemirror": "npm:3.6.8"
     "@jupyterlab/completer": "npm:3.6.8"
-    "@jupyterlab/coreutils": "npm:5.6.7"
+    "@jupyterlab/coreutils": "npm:5.6.8"
     "@jupyterlab/outputarea": "npm:3.6.8"
     "@jupyterlab/rendermime": "npm:3.6.8"
     "@jupyterlab/services": "npm:6.6.7"
