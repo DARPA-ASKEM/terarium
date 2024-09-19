@@ -1063,6 +1063,8 @@ export enum ClientEventType {
     TaskEnrichAmr = "TASK_ENRICH_AMR",
     WorkflowUpdate = "WORKFLOW_UPDATE",
     WorkflowDelete = "WORKFLOW_DELETE",
+    ChartAnnotationCreate = "CHART_ANNOTATION_CREATE",
+    ChartAnnotationDelete = "CHART_ANNOTATION_DELETE",
 }
 
 export enum ProgressState {
