@@ -350,10 +350,12 @@ const updateConstraintGroupForm = (index: number, key: string, value: any) => {
 	const state = _.cloneDeep(props.node.state);
 
 	// Changing constraint type resets settings
-	if (key === 'constraintType') {
+	if (key === 'constraint') {
 		state.constraintGroups[index].variables = [];
 		state.constraintGroups[index].weights = [];
-		state.constraintGroups[index].timepoints = { lb: 0, ub: 100 };
+	}
+
+	if (key === 'constraint' || key === 'constraintType') {
 		state.constraintGroups[index].interval = undefined;
 	}
 
