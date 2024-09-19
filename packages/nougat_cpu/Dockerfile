@@ -1,37 +1,27 @@
 # Build the Spring Boot application
-FROM eclipse-temurin:17.0.12_7-jdk-focal AS nougat_cpu_taskrunner_builder
+FROM python:3.11-slim AS nougat_cpu_taskrunner_builder
 
 ###### DEV ONLY ######
 #VVVVVVVVVVVVVVVVVVVVV
 
 # These deps are installed only for use during local development
 
-# Install Python
-RUN apt-get update && apt-get install -y --no-install-recommends \
-	software-properties-common
-RUN add-apt-repository ppa:deadsnakes/ppa
+# Install OpenJDK21
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	build-essential \
-	python3.10 \
-	python3.10-venv \
-	python3.10-dev \
-	python3-setuptools \
-	wget \
 	git \
 	libgl1 \
 	poppler-utils \
-	python3-pip && \
+	wget && \
 	rm -rf /var/lib/apt/lists/*
 
-# Set the default Python version to 3.10
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1 && \
-	update-alternatives --set python /usr/bin/python3.10
+RUN wget https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.4%2B7/OpenJDK21U-jdk_x64_linux_hotspot_21.0.4_7.tar.gz && \
+	tar xvf OpenJDK21U-jdk_x64_linux_hotspot_21.0.4_7.tar.gz && \
+	mv jdk-21.0.4+7 /usr/local/jdk-21 && \
+	rm OpenJDK21U-jdk_x64_linux_hotspot_21.0.4_7.tar.gz
 
-RUN python -m ensurepip --upgrade
-
-# Verify the installation
-RUN python --version
-RUN pip3 --version
+ENV JAVA_HOME=/usr/local/jdk-21
+ENV PATH="$JAVA_HOME/bin:$PATH"
 
 # Install nougat
 COPY ./packages/nougat_cpu/nougat-version.txt /nougatVersion.txt
@@ -63,24 +53,29 @@ RUN mv /taskrunner/build/libs/*.jar .
 RUN mv /terarium-1.0.0-SNAPSHOT.jar /taskrunner.jar
 
 # ------------------------------------------------------------------------------
-
-# Set up the Python image with JRE
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 WORKDIR /
 
-# Copy the supervisord configuration file
-COPY ./packages/nougat_cpu/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-# Install OpenJDK JRE and wget
-RUN apt-get update && \
-	apt-get install -y --no-install-recommends \
+# Install OpenJRE21
+RUN apt-get update && apt-get install -y --no-install-recommends \
 	build-essential \
 	git \
 	libgl1 \
 	poppler-utils \
-	openjdk-17-jre-headless && \
+	wget && \
 	rm -rf /var/lib/apt/lists/*
+
+RUN wget https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.4%2B7/OpenJDK21U-jre_x64_linux_hotspot_21.0.4_7.tar.gz && \
+	tar xvf OpenJDK21U-jre_x64_linux_hotspot_21.0.4_7.tar.gz && \
+	mv jdk-21.0.4+7-jre /usr/local/jre-21 && \
+	rm OpenJDK21U-jre_x64_linux_hotspot_21.0.4_7.tar.gz
+
+ENV JAVA_HOME=/usr/local/jre-21
+ENV PATH="$JAVA_HOME/bin:$PATH"
+
+# Copy the supervisord configuration file
+COPY ./packages/nougat_cpu/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Copy the Spring Boot fat JAR from the builder image
 COPY --from=nougat_cpu_taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.jar
