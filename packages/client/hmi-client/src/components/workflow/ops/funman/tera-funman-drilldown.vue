@@ -354,7 +354,7 @@ const updateConstraintGroupForm = (index: number, key: string, value: any) => {
 		state.constraintGroups[index].variables = [];
 		state.constraintGroups[index].weights = [];
 		state.constraintGroups[index].timepoints = { lb: 0, ub: 100 };
-		state.constraintGroups[index].interval = { lb: 0, ub: 1 };
+		state.constraintGroups[index].interval = undefined;
 	}
 
 	// Update changes
