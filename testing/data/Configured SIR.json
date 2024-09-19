@@ -51,17 +51,17 @@
       "initials": [
         {
           "target": "S",
-          "expression": "1000",
+          "expression": "1000.0",
           "expression_mathml": "<math></math>"
         },
         {
           "target": "I",
-          "expression": "2",
+          "expression": "2.0",
           "expression_mathml": "<math></math>"
         },
         {
           "target": "R",
-          "expression": "0",
+          "expression": "0.0",
           "expression_mathml": "<math></math>"
         }
       ],
@@ -69,12 +69,12 @@
         {
           "id": "β",
           "name": "β",
-          "value": 0.6
+          "value": 0.0006
         },
         {
           "id": "γ",
           "name": "γ",
-          "value": 0.2
+          "value": 0.0002
         }
       ]
     }
