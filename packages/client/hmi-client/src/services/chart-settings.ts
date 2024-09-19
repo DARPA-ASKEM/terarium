@@ -137,9 +137,9 @@ export async function generateForecastChartAnnotation(
             "type": "rule",
             "strokeDash": [4, 4]
           },
-					"encoding": {
-						"x": { "datum": 200, "axis": { "title": ""} }
-					}
+          "encoding": {
+            "x": { "datum": 200, "axis": { "title": ""} }
+          }
         },
         {
           "mark": {
@@ -149,7 +149,7 @@ export async function generateForecastChartAnnotation(
             "dy": -5
           },
           "encoding": {
-						"x": { "datum": 200, "axis": { "title": ""} }
+            "x": { "datum": 200, "axis": { "title": ""} }
             "text": {"value": "important"}
           }
         }
@@ -242,11 +242,11 @@ export async function generateForecastChartAnnotation(
           ]
         }
     - Assume all unknown variables except the time field are for the y-axis and are renamed to the valueField.
-		- Leverage this variable to human readable name mapping: ${JSON.stringify(translateMap)} if needed.
+    - Leverage this variable to human readable name mapping: ${JSON.stringify(translateMap)} if needed.
 
-     Give me the layer object to be added to the existing chart spec based on the following user request.
+    Give me the layer object to be added to the existing chart spec based on the following user request.
 
-		Request:
+    Request:
     ${request}
     Answer
     {
