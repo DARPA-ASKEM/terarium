@@ -86,8 +86,8 @@ class TaskRunnerInterface:
     def shutdown(self):
         self.self_destructor.stop()
 
-    def read_input_str_with_timeout(self, timeout_seconds: int = 30) -> str:
-        def read_input() -> dict:
+    def read_input_bytes_with_timeout(self, timeout_seconds: int = 30) -> bytes:
+        def read_input() -> bytes:
             self.log("Reading input from input pipe")
             chunks = []
             with open(self.input_pipe, "rb") as f:
@@ -96,7 +96,7 @@ class TaskRunnerInterface:
                     if chunk == b"":
                         break
                     chunks.append(chunk)
-            return b"".join(chunks).decode("utf-8")
+            return b"".join(chunks)
 
         if self.input is not None:
             self.log("Reading input from input argument")
@@ -108,6 +108,9 @@ class TaskRunnerInterface:
                 return future.result(timeout=timeout_seconds)
             except concurrent.futures.TimeoutError:
                 raise TimeoutError("Reading from input pipe timed out")
+
+    def read_input_str_with_timeout(self, timeout_seconds: int = 30) -> str:
+        return self.read_input_bytes_with_timeout(timeout_seconds).decode("utf-8")
 
     def read_input_dict_with_timeout(self, timeout_seconds: int = 30) -> dict:
         return json.loads(self.read_input_str_with_timeout(timeout_seconds))

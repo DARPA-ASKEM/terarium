@@ -4,7 +4,6 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.ErrorCause;
 import co.elastic.clients.elasticsearch._types.KnnQuery;
-import co.elastic.clients.elasticsearch._types.Refresh;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.cluster.ExistsComponentTemplateRequest;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
@@ -225,7 +224,7 @@ public class ElasticsearchService {
 			if (indexExists(index)) {
 				deleteIndex(index);
 			}
-			log.info("\n\nCreating index {}\n\n", index);
+			log.info("Creating index {}", index);
 			createIndex(index);
 		} catch (final ElasticsearchException e) {
 			throw handleException(e);

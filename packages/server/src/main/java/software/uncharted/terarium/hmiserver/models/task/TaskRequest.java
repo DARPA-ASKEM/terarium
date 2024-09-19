@@ -25,7 +25,11 @@ public class TaskRequest implements Serializable {
 		@JsonAlias("mira")
 		MIRA("mira"),
 		@JsonAlias("funman")
-		FUNMAN("funman");
+		FUNMAN("funman"),
+		@JsonAlias("nougat_cpu")
+		NOUGAT_CPU("nougat_cpu"),
+		@JsonAlias("nougat_gpu")
+		NOUGAT_GPU("nougat_gpu");
 
 		private final String value;
 

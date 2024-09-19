@@ -6,7 +6,7 @@ cd /mira_task
 pip install --no-cache-dir -e .
 
 # run it
-echo "Running taskrunner"
+echo "Installing taskrunner"
 cd /taskrunner
 pip install --no-cache-dir -e .
 

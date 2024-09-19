@@ -1,8 +1,10 @@
 <template>
 	<main>
-		<template v-if="!inProgressCalibrationId && runResult && csvAsset && runResultPre && selectedVariables.length">
+		<template
+			v-if="!inProgressCalibrationId && runResult && csvAsset && runResultPre && selectedVariableSettings.length"
+		>
 			<vega-chart
-				v-for="(_var, index) of selectedVariables"
+				v-for="(_var, index) of selectedVariableSettings"
 				:key="index"
 				:are-embed-actions-visible="false"
 				:visualization-spec="preparedCharts[index]"
@@ -51,15 +53,19 @@ import {
 	ModelConfiguration,
 	SemanticType,
 	InferredParameterSemantic,
+	ChartAnnotation,
+	ClientEventType,
 	InterventionPolicy
 } from '@/types/Types';
 import { ChartSettingType } from '@/types/common';
 import { createLLMSummary } from '@/services/summary-service';
-import { createForecastChart, createInterventionChartMarkers } from '@/services/charts';
+import { applyForecastChartAnnotations, createForecastChart, createInterventionChartMarkers } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import * as stats from '@/utils/stats';
 import { createDatasetFromSimulationResult } from '@/services/dataset';
 import { useProjects } from '@/composables/project';
+import { fetchAnnotations } from '@/services/chart-settings';
+import { useClientEvent } from '@/composables/useClientEvent';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { CalibrationOperationCiemss } from './calibrate-operation';
@@ -91,10 +97,8 @@ const chartSize = { width: 180, height: 120 };
 
 let lossValues: { [key: string]: number }[] = [];
 
-const selectedVariables = computed(() =>
-	(props.node.state.chartSettings ?? [])
-		.filter((setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON)
-		.map((setting) => setting.selectedVariables[0])
+const selectedVariableSettings = computed(() =>
+	(props.node.state.chartSettings ?? []).filter((setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON)
 );
 
 const lossChartSpec = ref();
@@ -167,12 +171,14 @@ const preparedCharts = computed(() => {
 	// Need to get the dataset's time field
 	const datasetTimeField = state.mapping.find((d) => d.modelVariable === 'timestamp')?.datasetVariable;
 
-	return selectedVariables.value.map((variable) => {
+	return selectedVariableSettings.value.map((setting) => {
+		const variable = setting.selectedVariables[0];
 		const datasetVariables: string[] = [];
 		const mapObj = state.mapping.find((d) => d.modelVariable === variable);
 		if (mapObj) {
 			datasetVariables.push(mapObj.datasetVariable);
 		}
+		const annotations = chartAnnotations.value.filter((annotation) => annotation.chartId === setting.id);
 
 		const chart = createForecastChart(
 			{
@@ -201,12 +207,21 @@ const preparedCharts = computed(() => {
 				...chartSize
 			}
 		);
-
+		applyForecastChartAnnotations(chart, annotations);
 		chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[variable]));
 
 		return chart;
 	});
 });
+
+// --- Handle chart annotations
+const chartAnnotations = ref<ChartAnnotation[]>([]);
+const updateChartAnnotations = async () => {
+	chartAnnotations.value = await fetchAnnotations(props.node.id);
+};
+onMounted(() => updateChartAnnotations());
+useClientEvent([ClientEventType.ChartAnnotationCreate, ClientEventType.ChartAnnotationDelete], updateChartAnnotations);
+// ---
 
 const poller = new Poller();
 const pollResult = async (runId: string) => {

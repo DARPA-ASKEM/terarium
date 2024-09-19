@@ -214,6 +214,20 @@ const optionsMenuItems = ref([
 					}
 				})) ?? []
 	},
+	{
+		icon: 'pi pi-download',
+		label: 'Download',
+		command: async () => {
+			if (pdfLink.value) {
+				const link = window.document.createElement('a');
+				link.href = pdfLink.value;
+				link.download = document.value?.name ?? 'document.pdf';
+				link.click();
+				URL.revokeObjectURL(link.href);
+			}
+			emit('close-preview');
+		}
+	},
 	{ icon: 'pi pi-trash', label: 'Remove', command: () => emit('remove') }
 ]);
 const optionsMenuPt = {
