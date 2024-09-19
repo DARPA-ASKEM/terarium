@@ -96,7 +96,7 @@ export async function generateForecastChartAnnotation(
 	};
 	const translateMap = _.pick(options.translationMap ?? {}, variables);
 	const prompt = `
-	  You are an agent who is an expert in Vega-Lite chart specs. Provide a Vega-Lite layer JSON object for the annotation that can be added to an existing chart spec to satisfy the provided user request.
+    You are an agent who is an expert in Vega-Lite chart specs. Provide a Vega-Lite layer JSON object for the annotation that can be added to an existing chart spec to satisfy the provided user request.
 
     - The Vega-Lite schema version you must use is https://vega.github.io/schema/vega-lite/v5.json.
     - Assume that you don’t know the exact data points from the data.
