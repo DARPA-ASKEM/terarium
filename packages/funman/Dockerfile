@@ -1,5 +1,5 @@
 # Build the Spring Boot application
-FROM python:3.8-slim AS funman_taskrunner_builder
+FROM ghcr.io/darpa-askem/funman-base:latest AS funman_taskrunner_builder
 
 ###### DEV ONLY ######
 #VVVVVVVVVVVVVVVVVVVVV
