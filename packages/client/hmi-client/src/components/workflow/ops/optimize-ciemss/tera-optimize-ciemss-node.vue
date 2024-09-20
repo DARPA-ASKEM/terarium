@@ -80,7 +80,7 @@ const poller = new Poller();
 const pollResult = async (runId: string) => {
 	poller
 		.setInterval(5000)
-		.setThreshold(100)
+		.setThreshold(350)
 		.setPollAction(async () => pollAction(runId))
 		.setProgressAction((data: Simulation) => {
 			if (runId === props.node.state.inProgressOptimizeId && data.updates.length > 0) {
