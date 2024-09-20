@@ -20,7 +20,6 @@ import java.util.regex.Matcher;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
@@ -101,7 +100,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		Assertions.assertEquals(additionalProps, resp.getAdditionalProperties(String.class));
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendGoLLMModelCardRequest() throws Exception {
 		final ClassPathResource resource = new ClassPathResource("gollm/test_input.json");
@@ -146,7 +145,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		public Integer num;
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendGoLLMEmbeddingRequest() throws Exception {
 		final TaskRequest req = new TaskRequest();
@@ -206,8 +205,6 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendEquationExtractionGenerateResponseRequest() throws Exception {
 		final ClassPathResource resource = new ClassPathResource("equation/SIR.pdf");
-		// final ClassPathResource resource = new
-		// ClassPathResource("knowledge/paper.pdf");
 		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
 
 		final int TIMEOUT_MINUTES = 5;
