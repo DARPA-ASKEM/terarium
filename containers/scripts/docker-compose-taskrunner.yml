@@ -70,12 +70,12 @@ services:
       - ../../packages/taskrunner:/taskrunner
     command: /funman_task/dev.sh
 
-  nougat_cpu-taskrunner:
+  equation_extraction_cpu-taskrunner:
     build:
       context: ../..
-      dockerfile: ./packages/nougat_cpu/Dockerfile
-      target: nougat_cpu_taskrunner_builder
-    container_name: nougat_cpu-taskrunner
+      dockerfile: ./packages/equation_extraction/Dockerfile
+      target: equation_extraction_taskrunner_builder
+    container_name: equation_extraction_cpu-taskrunner
     networks:
       - terarium
     ports:
@@ -84,13 +84,13 @@ services:
       TERARIUM_MQ_ADDRESSES: "amqp://rabbitmq:5672"
       TERARIUM_MQ_PASSWORD: "terarium123"
       TERARIUM_MQ_USERNAME: "terarium"
-      TERARIUM_TASKRUNNER_REQUEST_TYPE: "nougat_cpu"
+      TERARIUM_TASKRUNNER_REQUEST_TYPE: "equation_extraction"
     depends_on:
       rabbitmq:
         condition: service_healthy
     extra_hosts:
       - "${local_host_name}:host-gateway"
     volumes:
-      - ../../packages/nougat_cpu:/nougat_task
+      - ../../packages/equation_extraction:/equation_extraction_task
       - ../../packages/taskrunner:/taskrunner
-    command: /nougat_task/dev.sh
+    command: /equation_extraction_task/dev.sh
