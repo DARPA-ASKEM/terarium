@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	build-essential \
 	git \
 	libgl1 \
+	libglib2.0-0 \
 	poppler-utils \
 	wget && \
 	rm -rf /var/lib/apt/lists/*
@@ -62,6 +63,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	build-essential \
 	git \
 	libgl1 \
+	libglib2.0-0 \
 	poppler-utils \
 	wget && \
 	rm -rf /var/lib/apt/lists/*
