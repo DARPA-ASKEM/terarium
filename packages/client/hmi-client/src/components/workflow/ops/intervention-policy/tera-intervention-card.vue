@@ -26,22 +26,25 @@
 		<section>
 			<div class="flex align-items-center flex-wrap gap-2">
 				Set
-				<Dropdown
-					:model-value="intervention.type"
-					@change="onSemanticChange"
-					:options="interventionSemanticOptions"
-					option-label="label"
-					option-value="value"
-				/>
-				<Dropdown
-					:model-value="intervention.appliedTo"
-					@change="onAppliedToParameterChange"
-					:options="semanticOptions"
-					option-label="label"
-					option-value="value"
-					placeholder="Select"
-				/>
-
+				<section>
+					<Dropdown
+						class="type-menu"
+						:model-value="intervention.type"
+						@change="onSemanticChange"
+						:options="interventionSemanticOptions"
+						option-label="label"
+						option-value="value"
+					/>
+					<Dropdown
+						class="applied-to-menu"
+						:model-value="intervention.appliedTo"
+						@change="onAppliedToParameterChange"
+						:options="semanticOptions"
+						option-label="label"
+						option-value="value"
+						placeholder="Select"
+					/>
+				</section>
 				<!-- Static -->
 				<template v-if="interventionType === 'static'">
 					to
@@ -300,6 +303,15 @@ const debounceUpdateState = debounce((intervention) => {
 		margin-bottom: 0;
 		color: var(--gray-300);
 	}
+}
+
+.type-menu {
+	border-radius: 5px 0 0 5px;
+	background: var(--surface-200);
+}
+
+.applied-to-menu {
+	border-radius: 0 5px 5px 0;
 }
 
 .intervention-card {
