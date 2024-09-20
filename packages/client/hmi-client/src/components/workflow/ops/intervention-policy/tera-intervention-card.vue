@@ -118,7 +118,7 @@
 						@update:model-value="(val) => onUpdateThreshold(val, 0)"
 						placeholder="threshold"
 					/>
-					.
+					{{ dynamicInterventionUnits }}.
 				</template>
 			</div>
 		</section>
@@ -149,8 +149,8 @@ import Divider from 'primevue/divider';
 const emit = defineEmits(['update', 'delete', 'add']);
 const props = defineProps<{
 	intervention: Intervention;
-	parameterOptions: { label: string; value: string }[];
-	stateOptions: { label: string; value: string }[];
+	parameterOptions: { label: string; value: string; units?: string }[];
+	stateOptions: { label: string; value: string; units?: string }[];
 }>();
 
 const interventionSemanticOptions = [
@@ -173,6 +173,19 @@ const interventionType = computed(() => {
 		return 'dynamic';
 	}
 	return 'static';
+});
+
+const dynamicInterventionUnits = computed(() => {
+	let units = '';
+	const type = props.intervention.type;
+	const appliedTo = props.intervention.appliedTo;
+
+	if (type === InterventionSemanticType.Parameter) {
+		units = props.parameterOptions.find((parameter) => parameter.label === appliedTo)?.units ?? '';
+	} else {
+		units = props.stateOptions.find((state) => state.label === appliedTo)?.units ?? '';
+	}
+	return units;
 });
 
 const comparisonOperations = [

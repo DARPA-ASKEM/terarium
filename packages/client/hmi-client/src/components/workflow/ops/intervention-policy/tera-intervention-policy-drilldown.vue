@@ -15,6 +15,16 @@
 			>
 				<template #content>
 					<section>
+						<nav class="inline-flex">
+							<!-- Disabled until Backend code is complete -->
+							<!-- <Button class="flex-1 mr-1" outlined severity="secondary" label="Extract from inputs" /> -->
+							<Button
+								class="flex-1 ml-1"
+								label="Create New"
+								:disabled="!model?.id"
+								@click="createNewInterventionPolicy"
+							/>
+						</nav>
 						<tera-input-text v-model="filterInterventionsText" placeholder="Filter" />
 						<ul v-if="!isFetchingPolicies">
 							<li v-for="policy in interventionPoliciesFiltered" :key="policy.id">
@@ -145,6 +155,14 @@
 		@close-modal="showSaveModal = false"
 		@on-save="onSaveAsInterventionPolicy"
 	/>
+	<tera-save-asset-modal
+		initial-name="New Intervention Policy"
+		:is-visible="showCreatePolicyModal"
+		:asset-type="AssetType.InterventionPolicy"
+		:asset="newBlankInterventionPolicy"
+		@close-modal="showCreatePolicyModal = false"
+		@on-save="onSaveAsInterventionPolicy"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -205,7 +223,14 @@ const knobs = ref<BasicKnobs>({
 	}
 });
 
+const newBlankInterventionPolicy = ref({
+	name: '',
+	modelId: '',
+	interventions: []
+});
+
 const showSaveModal = ref(false);
+const showCreatePolicyModal = ref(false);
 const isSidebarOpen = ref(true);
 const filterInterventionsText = ref('');
 const model = ref<Model | null>(null);
@@ -249,7 +274,8 @@ const parameterOptions = computed(() => {
 	if (!model.value) return [];
 	return getParameters(model.value).map((parameter) => ({
 		label: parameter.id,
-		value: parameter.id
+		value: parameter.id,
+		units: parameter.units?.expression
 	}));
 });
 
@@ -257,7 +283,8 @@ const stateOptions = computed(() => {
 	if (!model.value) return [];
 	return getStates(model.value).map((state) => ({
 		label: state.id,
-		value: state.id
+		value: state.id,
+		units: state.units?.expression
 	}));
 });
 
@@ -424,6 +451,12 @@ const onSaveInterventionPolicy = async () => {
 		initialize();
 		useProjects().refresh();
 	}
+};
+
+const createNewInterventionPolicy = () => {
+	if (!model.value?.id) return;
+	newBlankInterventionPolicy.value.modelId = model.value?.id;
+	showCreatePolicyModal.value = true;
 };
 
 watch(
