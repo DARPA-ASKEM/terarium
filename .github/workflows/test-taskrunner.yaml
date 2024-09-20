@@ -24,7 +24,7 @@ on:
 jobs:
   taskrunner-tests:
     # The type of runner that the job will run on
-    runs-on:
+    runs-on: ubuntu-24.04
 
     permissions:
       contents: read
