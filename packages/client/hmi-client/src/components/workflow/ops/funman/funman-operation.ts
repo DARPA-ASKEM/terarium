@@ -25,8 +25,8 @@ export interface ConstraintGroup {
 	constraintType: ConstraintType;
 	variables: string[];
 	weights?: number[]; // 1 to 1 mapping with variables
-	timepoints?: FunmanInterval;
-	interval?: FunmanInterval;
+	timepoints: FunmanInterval;
+	interval: FunmanInterval;
 }
 
 export interface CompartmentalConstraint {

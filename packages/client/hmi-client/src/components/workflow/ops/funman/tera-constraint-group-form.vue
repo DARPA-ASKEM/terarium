@@ -23,6 +23,7 @@
 				<Button icon="pi pi-trash" text rounded @click="emit('delete-self')" />
 			</div>
 		</header>
+		{{ config.interval }}
 		<p>
 			The
 			<Dropdown
@@ -53,14 +54,14 @@
 			<tera-input-number
 				v-if="config.constraintType === ConstraintType.LessThan"
 				auto-width
-				:model-value="config.interval?.ub ?? 0"
-				@update:model-value="emit('update-self', { key: 'interval', value: { lb: config.interval?.lb, ub: $event } })"
+				:model-value="config.interval.ub"
+				@update:model-value="emit('update-self', { key: 'interval', value: { lb: config.interval.lb, ub: $event } })"
 			/>
 			<tera-input-number
 				v-if="config.constraintType === ConstraintType.GreaterThan"
 				auto-width
-				:model-value="config.interval?.lb ?? 0"
-				@update:model-value="emit('update-self', { key: 'interval', value: { lb: $event, ub: config.interval?.ub } })"
+				:model-value="config.interval.lb"
+				@update:model-value="emit('update-self', { key: 'interval', value: { lb: $event, ub: config.interval.ub } })"
 			/>
 			<template
 				v-if="config.constraintType === ConstraintType.LessThan || config.constraintType === ConstraintType.GreaterThan"
@@ -71,17 +72,17 @@
 				from timepoint
 				<tera-input-number
 					auto-width
-					:model-value="config.timepoints?.lb ?? 0"
+					:model-value="config.timepoints.lb"
 					@update:model-value="
-						emit('update-self', { key: 'timepoints', value: { lb: $event, ub: config.timepoints?.ub } })
+						emit('update-self', { key: 'timepoints', value: { lb: $event, ub: config.timepoints.ub } })
 					"
 				/>
 				day to timepoint
 				<tera-input-number
 					auto-width
-					:model-value="config.timepoints?.ub ?? 100"
+					:model-value="config.timepoints.ub"
 					@update:model-value="
-						emit('update-self', { key: 'timepoints', value: { lb: config.timepoints?.lb, ub: $event } })
+						emit('update-self', { key: 'timepoints', value: { lb: config.timepoints.lb, ub: $event } })
 					"
 				/>
 			</template>
@@ -92,9 +93,9 @@
 				persons within a time window of
 				<tera-input-number
 					auto-width
-					:model-value="config.timepoints?.ub ?? 100"
+					:model-value="config.timepoints.ub"
 					@update:model-value="
-						emit('update-self', { key: 'timepoints', value: { lb: config.timepoints?.lb, ub: $event } })
+						emit('update-self', { key: 'timepoints', value: { lb: config.timepoints.lb, ub: $event } })
 					"
 				/>
 			</template>
