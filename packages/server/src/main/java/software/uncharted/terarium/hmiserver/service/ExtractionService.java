@@ -200,9 +200,9 @@ public class ExtractionService {
 				documentContents
 			);
 
-			notificationInterface.sendMessage("Starting Nougat equation extraction...");
-			log.info("Starting Nougat equation extraction for document: {}", documentName);
-			final Future<NougatEquationExtraction> nougatEquationExtractionFuture = extractEquationsFromPDF(
+			notificationInterface.sendMessage("Starting equation extraction...");
+			log.info("Starting equation extraction for document: {}", documentName);
+			final Future<EquationExtraction> EquationExtractionFuture = extractEquationsFromPDF(
 				notificationInterface,
 				documentContents,
 				userId
@@ -218,14 +218,14 @@ public class ExtractionService {
 			extractionResponse.files = cosmosTextExtraction.files;
 
 			try {
-				// wait for nougat equation extraction
-				final NougatEquationExtraction nougatEquationExtraction = nougatEquationExtractionFuture.get();
-				notificationInterface.sendMessage("Nougat equation extraction complete!");
-				log.info("Nougat equation extraction complete for document: {}", documentName);
-				extractionResponse.equations = nougatEquationExtraction.equations;
+				// wait for equation extraction
+				final EquationExtraction EquationExtraction = EquationExtractionFuture.get();
+				notificationInterface.sendMessage("Equation extraction complete!");
+				log.info("Equation extraction complete for document: {}", documentName);
+				extractionResponse.equations = EquationExtraction.equations;
 			} catch (final Exception e) {
-				notificationInterface.sendMessage("Nougat equation extraction failed, continuing");
-				log.error("Nougat equation extraction failed for document: {}", documentName, e);
+				notificationInterface.sendMessage("Equation extraction failed, continuing");
+				log.error("Equation extraction failed for document: {}", documentName, e);
 				extractionResponse.partialFailure = true;
 			}
 
@@ -764,15 +764,15 @@ public class ExtractionService {
 		return bytes;
 	}
 
-	@Value("${terarium.taskrunner.nougat.gpu-endpoint}")
-	private String NOUGAT_GPU_ENDPOINT;
+	@Value("${terarium.taskrunner.equation_extraction.gpu-endpoint}")
+	private String EQUATION_EXTRACTION_GPU_ENDPOINT;
 
-	static class NougatEquationExtraction {
+	static class EquationExtraction {
 
 		List<JsonNode> equations = new ArrayList<>();
 	}
 
-	public Future<NougatEquationExtraction> extractEquationsFromPDF(
+	public Future<EquationExtraction> extractEquationsFromPDF(
 		final NotificationGroupInstance<Properties> notificationInterface,
 		final byte[] pdf,
 		final String userId
@@ -780,8 +780,8 @@ public class ExtractionService {
 		final int REQUEST_TIMEOUT_MINUTES = 5;
 
 		int responseCode = HttpURLConnection.HTTP_BAD_GATEWAY;
-		if (!NOUGAT_GPU_ENDPOINT.isEmpty()) {
-			final URL url = new URL(String.format("%s/health", NOUGAT_GPU_ENDPOINT));
+		if (!EQUATION_EXTRACTION_GPU_ENDPOINT.isEmpty()) {
+			final URL url = new URL(String.format("%s/health", EQUATION_EXTRACTION_GPU_ENDPOINT));
 			final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 			connection.setRequestMethod("GET");
 			responseCode = connection.getResponseCode();
@@ -795,10 +795,10 @@ public class ExtractionService {
 
 		if (responseCode == HttpURLConnection.HTTP_OK) {
 			// use GPU impl
-			req.setType(TaskType.NOUGAT_GPU);
+			req.setType(TaskType.EQUATION_EXTRACTION_GPU);
 		} else {
 			// otherwise fallback to CPU impl
-			req.setType(TaskType.NOUGAT_CPU);
+			req.setType(TaskType.EQUATION_EXTRACTION_CPU);
 		}
 
 		return executor.submit(() -> {
@@ -821,7 +821,7 @@ public class ExtractionService {
 			// Sort keys
 			Collections.sort(keys);
 
-			final NougatEquationExtraction extraction = new NougatEquationExtraction();
+			final EquationExtraction extraction = new EquationExtraction();
 
 			for (final String key : keys) {
 				extraction.equations.add(output.getResponse().get(key));

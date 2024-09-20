@@ -38,21 +38,22 @@ def main():
 
         t = sympy.Symbol(time)
 
-        # Observables
-        if len(model.observables) != 0:
-            obs_eqs = [
-                f"{{{obs.name}}}(t) = " + sympy.latex(obs.expression.args[0])
-                for obs in model.observables.values()
-            ]
-
         # Construct Sympy equations
         odesys = [
             sympy.latex(sympy.Eq(sympy.diff(sympy.Function(var)(t), t), terms))
             for var, terms in odeterms.items()
         ]
 
-        #add observables.
-        odesys += obs_eqs
+				# Observables
+				if len(model.observables) != 0:
+            obs_eqs = [
+                f"{{{obs.name}}}(t) = " + sympy.latex(obs.expression.args[0])
+                for obs in model.observables.values()
+            ]
+
+            #add observables.
+            odesys += obs_eqs
+
 		    #Reformat:
         odesys = "\\begin{align} \n    " + " \\\\ \n    ".join([eq for eq in odesys]) + "\n\\end{align}"
 
