@@ -332,6 +332,7 @@ const addConstraintForm = () => {
 		name: `Constraint ${state.constraintGroups.length + 1}`,
 		isActive: true,
 		timepoints: { lb: 0, ub: 100 },
+		interval: { lb: -MAX, ub: 100 },
 		constraint: Constraint.State,
 		variables: [],
 		constraintType: ConstraintType.LessThan
@@ -354,13 +355,21 @@ const updateConstraintGroupForm = (index: number, key: string, value: any) => {
 		state.constraintGroups[index].weights = [];
 	}
 
-	if (key === 'constraint' || key === 'constraintType') {
-		state.constraintGroups[index].interval = undefined;
-	}
-
 	// Update changes
 	state.constraintGroups[index][key] = value;
 
+	// Make sure interval makes sense
+	// Isn't read when increaing or decreasing
+	if (state.constraintGroups[index].constraintType === ConstraintType.LessThan) {
+		state.constraintGroups[index].interval = { lb: -MAX, ub: 100 };
+	} else if (
+		state.constraintGroups[index].constraintType === ConstraintType.GreaterThan ||
+		state.constraintGroups[index].constraintType === ConstraintType.LinearlyConstrained
+	) {
+		state.constraintGroups[index].interval = { lb: 0, ub: MAX };
+	}
+
+	// Make sure weights makes sense
 	const weightLength = state.constraintGroups[index].weights?.length ?? 0;
 	const variableLength = state.constraintGroups[index].variables.length;
 	if (weightLength !== variableLength) {
