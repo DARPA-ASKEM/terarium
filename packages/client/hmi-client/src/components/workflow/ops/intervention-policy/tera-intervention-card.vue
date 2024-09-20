@@ -306,12 +306,12 @@ const debounceUpdateState = debounce((intervention) => {
 }
 
 .type-menu {
-	border-radius: 5px 0 0 5px;
+	border-radius: var(--border-radius) 0 0 var(--border-radius);
 	background: var(--surface-200);
 }
 
 .applied-to-menu {
-	border-radius: 0 5px 5px 0;
+	border-radius: 0 var(--border-radius) var(--border-radius) 0;
 }
 
 .intervention-card {

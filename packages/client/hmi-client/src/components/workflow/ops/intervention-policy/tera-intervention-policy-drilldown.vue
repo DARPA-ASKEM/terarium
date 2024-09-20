@@ -226,7 +226,7 @@ const knobs = ref<BasicKnobs>({
 const newBlankInterventionPolicy = ref({
 	name: '',
 	modelId: '',
-	interventions: []
+	interventions: [blankIntervention]
 });
 
 const showSaveModal = ref(false);
@@ -455,7 +455,7 @@ const onSaveInterventionPolicy = async () => {
 
 const createNewInterventionPolicy = () => {
 	if (!model.value?.id) return;
-	newBlankInterventionPolicy.value.modelId = model.value?.id;
+	newBlankInterventionPolicy.value.modelId = model.value.id;
 	showCreatePolicyModal.value = true;
 };
 
