@@ -6,7 +6,7 @@ FROM python:3.11-slim-bookworm AS equation_extraction_taskrunner_builder
 
 # These deps are installed only for use during local development
 
-# Install OpenJDK17
+# Install OpenJDK
 RUN apt-get update && apt-get install -y --no-install-recommends \
   build-essential \
   git \
@@ -51,7 +51,7 @@ FROM python:3.11-slim-bookworm
 
 WORKDIR /
 
-# Install OpenJRE21
+# Install OpenJDK JRE
 RUN apt-get update && apt-get install -y --no-install-recommends \
   build-essential \
   git \

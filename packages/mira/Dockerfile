@@ -6,7 +6,7 @@ FROM python:3.10-slim-bookworm AS mira_taskrunner_builder
 
 # These deps are installed only for use during local development
 
-# Install OpenJDK17
+# Install OpenJDK
 RUN apt-get update && apt-get install -y --no-install-recommends \
   wget \
   openjdk-17-jdk-headless && \
@@ -37,7 +37,7 @@ FROM python:3.10-slim-bookworm
 
 WORKDIR /
 
-# Install OpenJRE21
+# Install OpenJDK JRE
 RUN apt-get update && apt-get install -y --no-install-recommends \
   wget \
   openjdk-17-jre-headless && \

@@ -43,7 +43,7 @@ FROM ghcr.io/darpa-askem/funman-base:latest
 
 WORKDIR /
 
-# Install OpenJDK JRE and wget
+# Install OpenJDK JRE
 RUN apt-get update && \
   apt-get install -y --no-install-recommends \
   openjdk-17-jre-headless && \
