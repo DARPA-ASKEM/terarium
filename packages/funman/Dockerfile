@@ -8,31 +8,24 @@ FROM ghcr.io/darpa-askem/funman-base:latest AS funman_taskrunner_builder
 
 # Install OpenJDK21
 RUN apt-get update && apt-get install -y --no-install-recommends \
-	gcc \
-	git \
-	wget && \
-	rm -rf /var/lib/apt/lists/*
-
-RUN wget https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.4%2B7/OpenJDK21U-jdk_x64_linux_hotspot_21.0.4_7.tar.gz && \
-	tar xvf OpenJDK21U-jdk_x64_linux_hotspot_21.0.4_7.tar.gz && \
-	mv jdk-21.0.4+7 /usr/local/jdk-21 && \
-	rm OpenJDK21U-jdk_x64_linux_hotspot_21.0.4_7.tar.gz
-
-ENV JAVA_HOME=/usr/local/jdk-21
-ENV PATH="$JAVA_HOME/bin:$PATH"
+  gcc \
+  git \
+  wget  \
+  openjdk-17-jdk-headless && \
+  rm -rf /var/lib/apt/lists/*
 
 # Install funman-api
 COPY ./packages/funman/funman-version.txt /funmanVersion.txt
 RUN COMMIT_SHA="$(cat /funmanVersion.txt)" && \
-	echo "Using FUNMAN commit $COMMIT_SHA" && \
-	wget --progress=dot:giga -O funman.tar.gz "https://github.com/DARPA-ASKEM/funman-api/archive/${COMMIT_SHA}.tar.gz" && \
-	tar -zxvf funman.tar.gz && \
-	rm funman.tar.gz && \
-	mv -v funman-* funman-api
+  echo "Using FUNMAN commit $COMMIT_SHA" && \
+  wget --progress=dot:giga -O funman.tar.gz "https://github.com/DARPA-ASKEM/funman-api/archive/${COMMIT_SHA}.tar.gz" && \
+  tar -zxvf funman.tar.gz && \
+  rm funman.tar.gz && \
+  mv -v funman-* funman-api
 WORKDIR /funman-api
 RUN pip install --no-cache-dir . && \
-	pip install --no-cache-dir auxiliary_packages/funman_dreal && \
-	pip install --no-cache-dir auxiliary_packages/funman_demo
+  pip install --no-cache-dir auxiliary_packages/funman_dreal && \
+  pip install --no-cache-dir auxiliary_packages/funman_demo
 
 #^^^^^^^^^^^^^^^^^^^^
 ######################
@@ -52,9 +45,9 @@ WORKDIR /
 
 # Install OpenJDK JRE and wget
 RUN apt-get update && \
-	apt-get install -y --no-install-recommends \
-	openjdk-21-jre-headless && \
-	rm -rf /var/lib/apt/lists/*
+  apt-get install -y --no-install-recommends \
+  openjdk-17-jre-headless && \
+  rm -rf /var/lib/apt/lists/*
 
 # Copy the Spring Boot fat JAR from the builder image
 COPY --from=funman_taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.jar
@@ -63,8 +56,8 @@ COPY --from=funman_taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.j
 COPY --from=funman_taskrunner_builder /funman-api /funman-api
 WORKDIR /funman-api
 RUN pip install --no-cache-dir . && \
-	pip install --no-cache-dir auxiliary_packages/funman_dreal && \
-	pip install --no-cache-dir auxiliary_packages/funman_demo
+  pip install --no-cache-dir auxiliary_packages/funman_dreal && \
+  pip install --no-cache-dir auxiliary_packages/funman_demo
 
 # Install taskrunner
 COPY ./packages/taskrunner/setup.py /taskrunner/setup.py
