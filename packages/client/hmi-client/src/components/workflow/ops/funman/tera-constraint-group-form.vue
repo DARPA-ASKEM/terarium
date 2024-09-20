@@ -23,7 +23,6 @@
 				<Button icon="pi pi-trash" text rounded @click="emit('delete-self')" />
 			</div>
 		</header>
-		{{ config.interval }}
 		<p>
 			The
 			<Dropdown
