@@ -1,12 +1,12 @@
 # Build the Spring Boot application
-FROM python:3.11-slim AS text_extraction_taskrunner_builder
+FROM python:3.11-slim-bookworm AS text_extraction_taskrunner_builder
 
 ###### DEV ONLY ######
 #VVVVVVVVVVVVVVVVVVVVV
 
 # These deps are installed only for use during local development
 
-# Install OpenJDK21
+# Install OpenJDK
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	ocrmypdf \
 	openjdk-17-jdk-headless && \
@@ -31,11 +31,11 @@ RUN mv /taskrunner/build/libs/*.jar .
 RUN mv /terarium-1.0.0-SNAPSHOT.jar /taskrunner.jar
 
 # ------------------------------------------------------------------------------
-FROM python:3.11-slim
+FROM python:3.11-slim-bookworm
 
 WORKDIR /
 
-# Install OpenJRE21
+# Install OpenJRE
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	ocrmypdf \
 	openjdk-17-jre-headless && \
