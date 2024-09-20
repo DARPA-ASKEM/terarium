@@ -85,7 +85,6 @@ const pollResult = async (runId: string) => {
 		.setProgressAction((data: Simulation) => {
 			if (runId === props.node.state.inProgressOptimizeId && data.updates.length > 0) {
 				const checkpointData = _.first(data.updates)?.data as CiemssOptimizeStatusUpdate;
-				console.log(checkpointData.progress);
 				if (checkpointData) {
 					const state = _.cloneDeep(props.node.state);
 					state.currentProgress = +((100 * checkpointData.progress) / checkpointData.totalPossibleIterations).toFixed(
