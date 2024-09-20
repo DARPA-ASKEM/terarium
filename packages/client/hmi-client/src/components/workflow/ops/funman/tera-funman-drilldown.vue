@@ -169,7 +169,7 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import InputSwitch from 'primevue/inputswitch';
 
-import type { FunmanPostQueriesRequest, Model, ModelParameter, TimeSpan } from '@/types/Types';
+import type { FunmanInterval, FunmanPostQueriesRequest, Model, ModelParameter, TimeSpan } from '@/types/Types';
 import { makeQueries } from '@/services/models/funman-service';
 import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { getAsConfiguredModel, getModelConfigurationById } from '@/services/model-configurations';
@@ -283,11 +283,23 @@ const runMakeQuery = async () => {
 			if (ele.timepoints) {
 				ele.timepoints.closed_upper_bound = true;
 			}
+
+			// Use bounds needed that are saved in the UI
+			const interval: FunmanInterval = {};
+			if (ele.constraintType === ConstraintType.LessThan) {
+				interval.ub = ele.interval.ub;
+			} else if (ele.constraintType === ConstraintType.GreaterThan) {
+				interval.lb = ele.interval.lb;
+			} else if (ele.constraintType === ConstraintType.LinearlyConstrained) {
+				interval.lb = ele.interval.lb;
+				interval.ub = ele.interval.ub;
+			}
+
 			return {
 				name: ele.name,
 				variables: ele.variables,
 				weights: ele.weights,
-				additive_bounds: ele.interval,
+				additive_bounds: interval,
 				timepoints: ele.timepoints
 			};
 		})
@@ -333,7 +345,7 @@ const addConstraintForm = () => {
 		name: `Constraint ${state.constraintGroups.length + 1}`,
 		isActive: true,
 		timepoints: { lb: 0, ub: 100 },
-		interval: { lb: -MAX, ub: 100 },
+		interval: { lb: 0, ub: 100 },
 		constraint: Constraint.State,
 		variables: [],
 		constraintType: ConstraintType.LessThan
@@ -354,21 +366,11 @@ const updateConstraintGroupForm = (index: number, key: string, value: any) => {
 	if (key === 'constraint') {
 		state.constraintGroups[index].variables = [];
 		state.constraintGroups[index].weights = [];
+		state.constraintGroups[index].interval = { lb: 0, ub: 100 };
 	}
 
 	// Update changes
 	state.constraintGroups[index][key] = value;
-
-	// Make sure interval makes sense
-	// Isn't read when increaing or decreasing
-	if (state.constraintGroups[index].constraintType === ConstraintType.LessThan) {
-		state.constraintGroups[index].interval = { lb: -MAX, ub: 100 };
-	} else if (
-		state.constraintGroups[index].constraintType === ConstraintType.GreaterThan ||
-		state.constraintGroups[index].constraintType === ConstraintType.LinearlyConstrained
-	) {
-		state.constraintGroups[index].interval = { lb: 0, ub: MAX };
-	}
 
 	// Make sure weights makes sense
 	const weightLength = state.constraintGroups[index].weights?.length ?? 0;
