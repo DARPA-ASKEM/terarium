@@ -127,7 +127,6 @@
 				@update:selection="onSelection"
 				:options="outputs"
 				is-selectable
-				class="pb-3 pl-2 pr-4"
 			>
 				<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%" />
 				<template v-else>
