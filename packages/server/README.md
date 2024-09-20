@@ -17,12 +17,6 @@ To build the JVM image simply run the following from the root. Alternatively cha
 docker buildx build -f modules/server/docker/Dockerfile -t docker.uncharted.software/terarium:server .
 ```
 
-### Building Native Image
-To build the NATIVE image simply run the following from the root directory.
-```sh
-docker buildx build -f modules/server/docker/Dockerfile.native -t docker.uncharted.software/terarium:server .
-```
-
 # Hibernate:
 
 ## When to use `json` / `jsonb` vs when to create a new `@Entity`
