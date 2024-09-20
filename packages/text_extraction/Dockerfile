@@ -9,16 +9,8 @@ FROM python:3.11-slim AS text_extraction_taskrunner_builder
 # Install OpenJDK21
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	ocrmypdf \
-	wget && \
+	openjdk-17-jdk-headless && \
 	rm -rf /var/lib/apt/lists/*
-
-RUN wget https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.4%2B7/OpenJDK21U-jdk_x64_linux_hotspot_21.0.4_7.tar.gz && \
-	tar xvf OpenJDK21U-jdk_x64_linux_hotspot_21.0.4_7.tar.gz && \
-	mv jdk-21.0.4+7 /usr/local/jdk-21 && \
-	rm OpenJDK21U-jdk_x64_linux_hotspot_21.0.4_7.tar.gz
-
-ENV JAVA_HOME=/usr/local/jdk-21
-ENV PATH="$JAVA_HOME/bin:$PATH"
 
 # Install PyPDF2
 RUN pip install PyPDF2
@@ -46,16 +38,8 @@ WORKDIR /
 # Install OpenJRE21
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	ocrmypdf \
-	wget && \
+	openjdk-17-jre-headless && \
 	rm -rf /var/lib/apt/lists/*
-
-RUN wget https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.4%2B7/OpenJDK21U-jre_x64_linux_hotspot_21.0.4_7.tar.gz && \
-	tar xvf OpenJDK21U-jre_x64_linux_hotspot_21.0.4_7.tar.gz && \
-	mv jdk-21.0.4+7-jre /usr/local/jre-21 && \
-	rm OpenJDK21U-jre_x64_linux_hotspot_21.0.4_7.tar.gz
-
-ENV JAVA_HOME=/usr/local/jre-21
-ENV PATH="$JAVA_HOME/bin:$PATH"
 
 # Install PyPDF2
 RUN pip install PyPDF2
