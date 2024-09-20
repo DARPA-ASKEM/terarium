@@ -46,13 +46,13 @@ def main():
 
 				# Observables
 				if len(model.observables) != 0:
-					obs_eqs = [
-						f"{{{obs.name}}}(t) = " + sympy.latex(obs.expression.args[0])
-						for obs in model.observables.values()
-					]
+            obs_eqs = [
+                f"{{{obs.name}}}(t) = " + sympy.latex(obs.expression.args[0])
+                for obs in model.observables.values()
+            ]
 
-					#add observables.
-					odesys += obs_eqs
+            #add observables.
+            odesys += obs_eqs
 
 		    #Reformat:
         odesys = "\\begin{align} \n    " + " \\\\ \n    ".join([eq for eq in odesys]) + "\n\\end{align}"
