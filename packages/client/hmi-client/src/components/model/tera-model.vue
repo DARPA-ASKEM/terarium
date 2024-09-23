@@ -33,10 +33,10 @@
 					severity="secondary"
 					outlined
 					@click="onReset"
-					:disabled="hasChanged || !hasEditPermission"
+					:disabled="!(hasChanged && hasEditPermission)"
 				/>
 				<Button label="Save as" severity="secondary" outlined @click="onSaveAs" :disabled="!hasEditPermission" />
-				<Button label="Save" @click="onSave" :disabled="hasChanged || !hasEditPermission" />
+				<Button label="Save" @click="onSave" :disabled="!(hasChanged && hasEditPermission)" />
 			</aside>
 		</template>
 		<section v-if="temporaryModel">
