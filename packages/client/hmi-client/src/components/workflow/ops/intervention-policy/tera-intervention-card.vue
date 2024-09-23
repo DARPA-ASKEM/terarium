@@ -185,11 +185,6 @@ const dynamicInterventionUnits = computed(() => {
 	return units;
 });
 
-const comparisonOperations = [
-	{ label: 'increases to above', value: true },
-	{ label: 'decreases to below', value: false }
-];
-
 const onUpdateName = (name: string) => {
 	const intervention = cloneDeep(props.intervention);
 	intervention.name = name;
