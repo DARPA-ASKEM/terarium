@@ -120,7 +120,7 @@
 						<h4>Equation conversions</h4>
 						<Button
 							v-if="selectedModel"
-							label="Save as"
+							label="Save for re-use"
 							outlined
 							severity="secondary"
 							class="ml-auto"
