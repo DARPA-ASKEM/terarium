@@ -38,6 +38,12 @@ def main():
 
         t = sympy.Symbol(time)
 
+        # Construct Sympy equations
+        odesys = [
+            sympy.latex(sympy.Eq(sympy.diff(sympy.Function(var)(t), t), terms))
+            for var, terms in odeterms.items()
+        ]
+
         # Observables
         if len(model.observables) != 0:
             obs_eqs = [
@@ -45,15 +51,10 @@ def main():
                 for obs in model.observables.values()
             ]
 
-        # Construct Sympy equations
-        odesys = [
-            sympy.latex(sympy.Eq(sympy.diff(sympy.Function(var)(t), t), terms))
-            for var, terms in odeterms.items()
-        ]
+            #add observables.
+            odesys += obs_eqs
 
-        #add observables.
-        odesys += obs_eqs
-		    #Reformat:
+        # Reformat:
         odesys = "\\begin{align} \n    " + " \\\\ \n    ".join([eq for eq in odesys]) + "\n\\end{align}"
 
         taskrunner.write_output_dict_with_timeout({"response": odesys})

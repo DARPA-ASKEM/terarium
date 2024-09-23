@@ -1,14 +1,15 @@
 <template>
 	<Editor v-model="editorContent" :class="{ readonly: !hasEditPermission }" :readonly="!hasEditPermission" />
 	<!-- empty state image -->
-	<section v-if="editorContent === '<h2><br></h2>'" class="emptyState">
+	<section v-if="editorContent.length === 0" class="emptyState">
 		<Vue3Lottie :animationData="EmptySeed" :height="150" loop autoplay />
-		<p class="helpMessage">Use this space however you like</p>
+		<p class="helpMessage"><strong>Use this space however you like.</strong></p>
+		<p class="helpMessage">Just click and start typing.</p>
 	</section>
 
 	<!-- empty state message -->
 	<Panel
-		v-if="showWelcomeMessage && editorContent === '<h2><br></h2>'"
+		v-if="showWelcomeMessage && editorContent.length === 0"
 		header="Hey there! Not sure where to start?"
 		class="welcomeMessage"
 	>
@@ -157,7 +158,7 @@ const showWelcomeMessage = ref(true);
 
 .welcomeMessage {
 	position: absolute;
-	width: calc(100% - 300px);
+	width: calc(100% - 264px); /* 240px + 12px + 12px */
 	margin-top: 3.5rem;
 	margin-left: var(--gap-3);
 	padding: var(--gap-1) var(--gap-3);
