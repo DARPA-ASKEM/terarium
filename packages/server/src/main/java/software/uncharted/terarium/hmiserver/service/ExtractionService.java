@@ -63,6 +63,7 @@ import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationGroupInstance;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
 import software.uncharted.terarium.hmiserver.service.tasks.ExtractEquationsResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.ExtractTextResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
@@ -190,10 +191,10 @@ public class ExtractionService {
 		final ExtractPDFResponse extractionResponse = new ExtractPDFResponse();
 
 		try {
-			notificationInterface.sendMessage("Starting COSMOS text extraction...");
-			log.info("Starting COSMOS text extraction for document: {}", documentName);
+			notificationInterface.sendMessage("Starting text extraction...");
+			log.info("Starting text extraction for document: {}", documentName);
 
-			final Future<CosmosTextExtraction> cosmosTextExtractionFuture = extractTextFromPDF(
+			final Future<TextExtraction> textExtractionFuture = extractTextFromPDF(
 				notificationInterface,
 				documentName,
 				documentContents
@@ -207,14 +208,14 @@ public class ExtractionService {
 				userId
 			);
 
-			// wait for cosmos text extraction
-			final CosmosTextExtraction cosmosTextExtraction = cosmosTextExtractionFuture.get();
-			notificationInterface.sendMessage("COSMOS text extraction complete!");
-			log.info("COSMOS text extraction complete for document: {}", documentName);
-			extractionResponse.documentAbstract = cosmosTextExtraction.documentAbstract;
-			extractionResponse.documentText = cosmosTextExtraction.documentText;
-			extractionResponse.assets = cosmosTextExtraction.assets;
-			extractionResponse.files = cosmosTextExtraction.files;
+			// wait for text extraction
+			final TextExtraction textExtraction = textExtractionFuture.get();
+			notificationInterface.sendMessage("Text extraction complete!");
+			log.info("Text extraction complete for document: {}", documentName);
+			extractionResponse.documentAbstract = textExtraction.documentAbstract;
+			extractionResponse.documentText = textExtraction.documentText;
+			extractionResponse.assets = textExtraction.assets;
+			extractionResponse.files = textExtraction.files;
 
 			try {
 				// wait for equation extraction
@@ -830,7 +831,7 @@ public class ExtractionService {
 		});
 	}
 
-	static class CosmosTextExtraction {
+	static class TextExtraction {
 
 		String documentAbstract;
 		String documentText;
@@ -838,13 +839,44 @@ public class ExtractionService {
 		List<ExtractionFile> files = new ArrayList<>();
 	}
 
-	public Future<CosmosTextExtraction> extractTextFromPDF(
+	public Future<TextExtraction> extractTextFromPDF(
+		final NotificationGroupInstance<Properties> notificationInterface,
+		final String userId,
+		final byte[] pdf
+	) throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException, IOException {
+		final int REQUEST_TIMEOUT_MINUTES = 5;
+
+		final TaskRequest req = new TaskRequest();
+		req.setTimeoutMinutes(REQUEST_TIMEOUT_MINUTES);
+		req.setInput(pdf);
+		req.setScript(ExtractTextResponseHandler.NAME);
+		req.setUserId(userId);
+		req.setType(TaskType.TEXT_EXTRACTION);
+
+		return executor.submit(() -> {
+			final TaskResponse resp = taskService.runTaskSync(req);
+
+			final byte[] outputBytes = resp.getOutput();
+			final ExtractTextResponseHandler.ResponseOutput output = objectMapper.readValue(
+				outputBytes,
+				ExtractTextResponseHandler.ResponseOutput.class
+			);
+
+			final TextExtraction extraction = new TextExtraction();
+
+			extraction.documentText = output.getResponse().asText();
+
+			return extraction;
+		});
+	}
+
+	public Future<TextExtraction> extractTextFromPDFCosmos(
 		final NotificationGroupInstance<Properties> notificationInterface,
 		final String documentName,
 		final byte[] pdf
 	) {
 		return executor.submit(() -> {
-			final CosmosTextExtraction extractionResponse = new CosmosTextExtraction();
+			final TextExtraction extractionResponse = new TextExtraction();
 
 			final ByteMultipartFile documentFile = new ByteMultipartFile(pdf, documentName, "application/pdf");
 

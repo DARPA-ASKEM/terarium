@@ -1,5 +1,5 @@
 import { percentile } from '@/utils/math';
-import { isEmpty } from 'lodash';
+import { isEmpty, pick } from 'lodash';
 import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
 import { ChartAnnotation, Intervention } from '@/types/Types';
@@ -398,8 +398,12 @@ export function createForecastChart(
 
 	// Helper function to capture common layer structure
 	const newLayer = (layer: ForecastChartLayer, markType: string) => {
+		const selectedFields = layer.variables.concat([layer.timeField]);
+		if (layer.groupField) selectedFields.push(layer.groupField);
+
+		const data = Array.isArray(layer.data) ? { values: layer.data.map((d) => pick(d, selectedFields)) } : layer.data;
 		const header = {
-			data: Array.isArray(layer.data) ? { values: layer.data } : layer.data,
+			data,
 			transform: [
 				{
 					fold: layer.variables,

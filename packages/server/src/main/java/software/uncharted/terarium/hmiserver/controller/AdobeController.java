@@ -23,8 +23,8 @@ public class AdobeController {
 
 	@GetMapping
 	@Secured(Roles.USER)
-	public ResponseEntity<String> getKey(@RequestHeader(value = "Origin", required = false) String origin) {
-		final String key = origin != null && origin.contains("localhost") ? adobeLocalhostKey : adobeKey;
+	public ResponseEntity<String> getKey(@RequestHeader(value = "Referer", required = false) String referer) {
+		final String key = referer != null && referer.contains("localhost") ? adobeLocalhostKey : adobeKey;
 		if (key == null) {
 			log.error("No Adobe API key is configured");
 			return ResponseEntity.internalServerError().build();

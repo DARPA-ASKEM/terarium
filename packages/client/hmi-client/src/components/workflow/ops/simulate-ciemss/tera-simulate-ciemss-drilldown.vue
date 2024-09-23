@@ -354,7 +354,6 @@ const preparedCharts = computed(() => {
 
 	const result = runResults.value[selectedRunId.value];
 	const resultSummary = runResultsSummary.value[selectedRunId.value];
-
 	const reverseMap: Record<string, string> = {};
 	Object.keys(pyciemssMap).forEach((key) => {
 		reverseMap[`${pyciemssMap[key]}_mean`] = key;

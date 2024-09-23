@@ -24,7 +24,7 @@ on:
 jobs:
   taskrunner-tests:
     # The type of runner that the job will run on
-    runs-on:
+    runs-on: ubuntu-24.04
 
     permissions:
       contents: read
@@ -39,12 +39,12 @@ jobs:
       - name: Validate GradleW JAR
         uses: gradle/actions/wrapper-validation@v3
 
-      # Setup Java 21
-      - name: Setup Java v21
+      # Setup Java 17
+      - name: Setup Java v17
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
-          java-version: 21
+          java-version: 17
           cache: gradle
 
       # Start containers
