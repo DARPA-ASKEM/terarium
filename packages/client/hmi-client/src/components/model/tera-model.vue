@@ -41,15 +41,15 @@
 		</template>
 		<section v-if="temporaryModel">
 			<tera-model-description
-				:model="temporaryModel"
 				:feature-config="featureConfig"
-				@update-model="updateModelContent"
+				:model="temporaryModel"
+				@update-model="updateTemporaryModel"
 			/>
 			<tera-model-parts
 				class="mt-0"
-				:model="temporaryModel"
 				:feature-config="featureConfig"
-				@update-model="updateModelContent"
+				:model="temporaryModel"
+				@update-model="updateTemporaryModel"
 			/>
 		</section>
 	</tera-asset>
@@ -196,6 +196,10 @@ async function updateModelName() {
 		await updateModelContent();
 	}
 	isRenaming.value = false;
+}
+
+function updateTemporaryModel(newModel: Model) {
+	temporaryModel.value = cloneDeep(newModel);
 }
 
 async function fetchModel() {
