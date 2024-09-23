@@ -45,11 +45,11 @@ const props = defineProps({
 	}
 });
 
-defineEmits(['update-model']);
+const emit = defineEmits(['update-model']);
 
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
-const transientModel = ref(cloneDeep(props.model));
+const transientModel = ref<Model>(cloneDeep(props.model));
 
 const modelType = computed(() => getModelType(props.model));
 
@@ -87,6 +87,7 @@ function onUpdate(property: string, event: any) {
 		default:
 			break;
 	}
+	emit('update-model', transientModel.value);
 }
 
 function updateMMT() {
