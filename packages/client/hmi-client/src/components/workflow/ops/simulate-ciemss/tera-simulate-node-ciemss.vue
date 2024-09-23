@@ -129,6 +129,8 @@ The input parameters are as follows:
 - samples: ${state.numSamples}
 - method: ${state.method}
 - timespan: ${JSON.stringify(state.currentTimespan)}
+- interventions: ${JSON.stringify(interventionPolicy.value?.interventions)};
+
 
 The output has these metrics at the start:
 - ${JSON.stringify(start)}
