@@ -142,7 +142,7 @@ const optionsMenuItems = computed(() => [
 		label: 'Rename',
 		command() {
 			isRenaming.value = true;
-			newName.value = model.value?.header.name ?? '';
+			newName.value = temporaryModel.value?.header.name ?? '';
 		}
 	},
 	{
@@ -193,7 +193,6 @@ async function updateModelContent() {
 async function updateModelName() {
 	if (temporaryModel.value && !isEmpty(newName.value)) {
 		temporaryModel.value.header.name = newName.value;
-		await updateModelContent();
 	}
 	isRenaming.value = false;
 }
