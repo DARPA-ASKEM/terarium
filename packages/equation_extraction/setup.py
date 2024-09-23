@@ -10,5 +10,5 @@ setup(
             "equation_extraction_task:extract_equations=tasks.extract_equations:main",
         ],
     },
-    python_requires=">=3.10",
+    python_requires=">=3.11",
 )
