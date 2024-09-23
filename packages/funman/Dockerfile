@@ -1,38 +1,49 @@
 # Build the Spring Boot application
-FROM ghcr.io/darpa-askem/funman-base:latest AS funman_taskrunner_builder
+FROM eclipse-temurin:17.0.12_7-jdk-noble AS funman_taskrunner_builder
 
 ###### DEV ONLY ######
 #VVVVVVVVVVVVVVVVVVVVV
 
 # These deps are installed only for use during local development
 
-# Install OpenJDK21
+# Install Python
 RUN apt-get update && apt-get install -y --no-install-recommends \
-	gcc \
-	git \
-	wget && \
-	rm -rf /var/lib/apt/lists/*
+	software-properties-common
+RUN add-apt-repository ppa:deadsnakes/ppa
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  python3.8 \
+  python3.8-venv \
+  gcc \
+  git \
+  wget && \
+  rm -rf /var/lib/apt/lists/*
 
-RUN wget https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.4%2B7/OpenJDK21U-jdk_x64_linux_hotspot_21.0.4_7.tar.gz && \
-	tar xvf OpenJDK21U-jdk_x64_linux_hotspot_21.0.4_7.tar.gz && \
-	mv jdk-21.0.4+7 /usr/local/jdk-21 && \
-	rm OpenJDK21U-jdk_x64_linux_hotspot_21.0.4_7.tar.gz
+# Set the default Python version to 3.8
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.8 1 && \
+ update-alternatives --set python /usr/bin/python3.8
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1 && \
+ update-alternatives --set python3 /usr/bin/python3.8
 
-ENV JAVA_HOME=/usr/local/jdk-21
-ENV PATH="$JAVA_HOME/bin:$PATH"
+# install pip for python 3.8
+RUN python -m ensurepip --upgrade
+RUN /bin/sh -c set -eux [ -s "/usr/local/bin/pip3" ]; [ ! -e "/usr/local/bin/pip" ]; ln -svT "pip3" "/usr/local/bin/pip";
+
+# Verify the installation
+RUN python --version
+RUN pip --version
 
 # Install funman-api
 COPY ./packages/funman/funman-version.txt /funmanVersion.txt
 RUN COMMIT_SHA="$(cat /funmanVersion.txt)" && \
-	echo "Using FUNMAN commit $COMMIT_SHA" && \
-	wget --progress=dot:giga -O funman.tar.gz "https://github.com/DARPA-ASKEM/funman-api/archive/${COMMIT_SHA}.tar.gz" && \
-	tar -zxvf funman.tar.gz && \
-	rm funman.tar.gz && \
-	mv -v funman-* funman-api
+  echo "Using FUNMAN commit $COMMIT_SHA" && \
+  wget --progress=dot:giga -O funman.tar.gz "https://github.com/DARPA-ASKEM/funman-api/archive/${COMMIT_SHA}.tar.gz" && \
+  tar -zxvf funman.tar.gz && \
+  rm funman.tar.gz && \
+  mv -v funman-* funman-api
 WORKDIR /funman-api
 RUN pip install --no-cache-dir . && \
-	pip install --no-cache-dir auxiliary_packages/funman_dreal && \
-	pip install --no-cache-dir auxiliary_packages/funman_demo
+  pip install --no-cache-dir auxiliary_packages/funman_dreal && \
+  pip install --no-cache-dir auxiliary_packages/funman_demo
 
 #^^^^^^^^^^^^^^^^^^^^
 ######################
@@ -50,11 +61,11 @@ FROM ghcr.io/darpa-askem/funman-base:latest
 
 WORKDIR /
 
-# Install OpenJDK JRE and wget
+# Install OpenJDK JRE
 RUN apt-get update && \
-	apt-get install -y --no-install-recommends \
-	openjdk-21-jre-headless && \
-	rm -rf /var/lib/apt/lists/*
+  apt-get install -y --no-install-recommends \
+  openjdk-17-jre-headless && \
+  rm -rf /var/lib/apt/lists/*
 
 # Copy the Spring Boot fat JAR from the builder image
 COPY --from=funman_taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.jar
@@ -63,8 +74,9 @@ COPY --from=funman_taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.j
 COPY --from=funman_taskrunner_builder /funman-api /funman-api
 WORKDIR /funman-api
 RUN pip install --no-cache-dir . && \
-	pip install --no-cache-dir auxiliary_packages/funman_dreal && \
-	pip install --no-cache-dir auxiliary_packages/funman_demo
+  pip install --no-cache-dir auxiliary_packages/funman_dreal && \
+  pip install --no-cache-dir auxiliary_packages/funman_demo
+
 
 # Install taskrunner
 COPY ./packages/taskrunner/setup.py /taskrunner/setup.py

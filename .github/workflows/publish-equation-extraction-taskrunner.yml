@@ -1,15 +1,15 @@
 ---
-# Automatically build and publish the funman-taskrunner to the container registry.
-# This workflow is triggered on changes to the funman-taskrunner directory.
+# Automatically build and publish the equation-extraction-taskrunner to the container registry.
+# This workflow is triggered on changes to the equation-extraction-taskrunner directory.
 
-name: Build and Publish funman-taskrunner
+name: Build and Publish equation-extraction-taskrunner
 
 # yamllint disable-line rule:truthy
 on:
   push:
     paths:
       - 'packages/taskrunner/**'
-      - 'packages/funman/**'
+      - 'packages/equation_extraction/**'
     branches:
       - 'main'
     tags:
@@ -20,7 +20,7 @@ jobs:
     name: Get tagged image name
     uses: ./.github/workflows/image-tag.yml
     with:
-      image-name: ghcr.io/darpa-askem/funman-taskrunner
+      image-name: ghcr.io/darpa-askem/equation-extraction-taskrunner
 
   amd64:
     runs-on: ubuntu-24.04
@@ -53,7 +53,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./packages/funman/Dockerfile
+          file: ./packages/equation_extraction/Dockerfile
           platforms: linux/amd64
           push: true
           tags: ${{ needs.image-tag.outputs.tagged-image-name }}--amd64
@@ -92,7 +92,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./packages/funman/Dockerfile
+          file: ./packages/equation_extraction/Dockerfile
           platforms: linux/arm64
           push: true
           tags: ${{ needs.image-tag.outputs.tagged-image-name }}--arm64
