@@ -69,6 +69,16 @@ watch(editorContent, () => {
 		emit('update-model', { ...props.model, description: editorContent.value });
 	}
 });
+
+// Watch the props.model.description to update the editor content
+watch(
+	() => props.model.description,
+	(newVal) => {
+		if (newVal !== editorContent.value) {
+			editorContent.value = newVal;
+		}
+	}
+);
 </script>
 
 <style scoped>
