@@ -9,9 +9,8 @@
 		</div>
 		<p>
 			Set the {{ config.intervention?.type }}&nbsp; <strong>{{ config.intervention?.appliedTo }}</strong> to
-			<strong>{{ dynamicInterventions[0].threshold }}</strong> days when it
-			<strong>{{ dynamicInterventions[0].isGreaterThan ? 'increase to above' : 'decrease to below' }}</strong>
-			the threshold value <strong>{{ dynamicInterventions[0].value }}</strong> person.
+			<strong>{{ dynamicInterventions[0].threshold }}</strong> days when it crosses the threshold value
+			<strong>{{ dynamicInterventions[0].value }}</strong> person.
 		</p>
 	</div>
 </template>
