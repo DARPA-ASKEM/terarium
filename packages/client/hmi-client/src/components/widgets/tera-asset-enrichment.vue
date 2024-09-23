@@ -1,6 +1,6 @@
 <template>
 	<Button
-		label="Enrich metadata with AI assistant"
+		label="Enrich metadata with AI"
 		icon="pi pi-sparkles"
 		:loading="isLoading"
 		severity="secondary"
@@ -228,7 +228,7 @@ ul {
 .no-documents-text {
 	padding: 5px;
 	font-size: var(--font-body-medium);
-	font-family: var(--font-family);
+	font-family: var(--font-family), sans-serif;
 	font-weight: 500;
 	color: var(--text-color-secondary);
 	text-align: left;
