@@ -29,7 +29,9 @@ public class TaskRequest implements Serializable {
 		@JsonAlias("equation_extraction")
 		EQUATION_EXTRACTION_CPU("equation_extraction"),
 		@JsonAlias("equation_extraction_gpu")
-		EQUATION_EXTRACTION_GPU("equation_extraction_gpu");
+		EQUATION_EXTRACTION_GPU("equation_extraction_gpu"),
+		@JsonAlias("text_extraction")
+		TEXT_EXTRACTION("text_extraction");
 
 		private final String value;
 
