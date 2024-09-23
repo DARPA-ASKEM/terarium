@@ -22,7 +22,7 @@
 			/>
 		</template>
 		<template #footer>
-			<Button label="Done" @click="emit('close-modal')" />
+			<Button label="OK" @click="emit('close-modal')" />
 		</template>
 	</tera-modal>
 </template>
