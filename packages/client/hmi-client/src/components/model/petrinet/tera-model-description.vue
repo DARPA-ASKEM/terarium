@@ -14,7 +14,7 @@
 				<tera-model-diagram ref="teraModelDiagramRef" :model="model" :feature-config="featureConfig" />
 			</AccordionTab>
 			<AccordionTab header="Model equations">
-				<tera-model-equation :model="model" :is-editable="false" @model-updated="emit('model-updated')" />
+				<tera-model-equation :model="model" />
 			</AccordionTab>
 			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 				<DataTable :value="relatedTerariumModels">
@@ -50,7 +50,7 @@ const props = defineProps<{
 	isGeneratingCard?: boolean;
 }>();
 
-const emit = defineEmits(['update-model', 'model-updated']);
+const emit = defineEmits(['update-model']);
 const teraModelDiagramRef = ref();
 
 const card = computed<any>(() => props.model.metadata?.gollmCard ?? null);

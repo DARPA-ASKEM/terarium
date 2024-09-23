@@ -26,7 +26,7 @@
 		<template #edit-buttons v-if="!featureConfig.isPreview">
 			<Button icon="pi pi-ellipsis-v" text rounded @click="toggleOptionsMenu" />
 			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" popup :pt="optionsMenuPt" />
-			<div class="btn-group">
+			<aside class="btn-group">
 				<tera-asset-enrichment :asset-type="AssetType.Model" :assetId="assetId" @finished-job="fetchModel" />
 				<Button
 					label="Reset"
@@ -37,13 +37,12 @@
 				/>
 				<Button label="Save as" severity="secondary" outlined @click="onSaveAs" :disabled="!hasEditPermission" />
 				<Button label="Save" @click="onSave" :disabled="hasChanged || !hasEditPermission" />
-			</div>
+			</aside>
 		</template>
 		<section v-if="temporaryModel">
 			<tera-model-description
 				:model="temporaryModel"
 				:feature-config="featureConfig"
-				@model-updated="fetchModel"
 				@update-model="updateModelContent"
 			/>
 			<tera-model-parts
