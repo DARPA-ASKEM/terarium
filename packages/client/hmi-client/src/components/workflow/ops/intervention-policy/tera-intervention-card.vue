@@ -26,22 +26,25 @@
 		<section>
 			<div class="flex align-items-center flex-wrap gap-2">
 				Set
-				<Dropdown
-					:model-value="intervention.type"
-					@change="onSemanticChange"
-					:options="interventionSemanticOptions"
-					option-label="label"
-					option-value="value"
-				/>
-				<Dropdown
-					:model-value="intervention.appliedTo"
-					@change="onAppliedToParameterChange"
-					:options="semanticOptions"
-					option-label="label"
-					option-value="value"
-					placeholder="Select"
-				/>
-
+				<section>
+					<Dropdown
+						class="type-menu"
+						:model-value="intervention.type"
+						@change="onSemanticChange"
+						:options="interventionSemanticOptions"
+						option-label="label"
+						option-value="value"
+					/>
+					<Dropdown
+						class="applied-to-menu"
+						:model-value="intervention.appliedTo"
+						@change="onAppliedToParameterChange"
+						:options="semanticOptions"
+						option-label="label"
+						option-value="value"
+						placeholder="Select"
+					/>
+				</section>
 				<!-- Static -->
 				<template v-if="interventionType === 'static'">
 					to
@@ -112,7 +115,7 @@
 						@update:model-value="(val) => onUpdateThreshold(val, 0)"
 						placeholder="threshold"
 					/>
-					.
+					{{ dynamicInterventionUnits }}.
 				</template>
 			</div>
 		</section>
@@ -143,8 +146,8 @@ import Divider from 'primevue/divider';
 const emit = defineEmits(['update', 'delete', 'add']);
 const props = defineProps<{
 	intervention: Intervention;
-	parameterOptions: { label: string; value: string }[];
-	stateOptions: { label: string; value: string }[];
+	parameterOptions: { label: string; value: string; units?: string }[];
+	stateOptions: { label: string; value: string; units?: string }[];
 }>();
 
 const interventionSemanticOptions = [
@@ -167,6 +170,19 @@ const interventionType = computed(() => {
 		return 'dynamic';
 	}
 	return 'static';
+});
+
+const dynamicInterventionUnits = computed(() => {
+	let units = '';
+	const type = props.intervention.type;
+	const appliedTo = props.intervention.appliedTo;
+
+	if (type === InterventionSemanticType.Parameter) {
+		units = props.parameterOptions.find((parameter) => parameter.label === appliedTo)?.units ?? '';
+	} else {
+		units = props.stateOptions.find((state) => state.label === appliedTo)?.units ?? '';
+	}
+	return units;
 });
 
 const onUpdateName = (name: string) => {
@@ -269,6 +285,15 @@ const debounceUpdateState = debounce((intervention) => {
 		margin-bottom: 0;
 		color: var(--gray-300);
 	}
+}
+
+.type-menu {
+	border-radius: var(--border-radius) 0 0 var(--border-radius);
+	background: var(--surface-200);
+}
+
+.applied-to-menu {
+	border-radius: 0 var(--border-radius) var(--border-radius) 0;
 }
 
 .intervention-card {
