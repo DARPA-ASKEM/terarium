@@ -219,6 +219,7 @@
 						<br />
 						<template v-for="setting of selectedParameterSettings" :key="setting.id">
 							<vega-chart
+								v-if="preparedDistributionCharts[setting.selectedVariables[0]]"
 								expandable
 								:are-embed-actions-visible="true"
 								:visualization-spec="preparedDistributionCharts[setting.selectedVariables[0]].histogram"
@@ -734,9 +735,9 @@ const preparedCharts = computed(() => {
 });
 
 const preparedDistributionCharts = computed(() => {
-	if (!preparedChartInputs.value) return [];
+	if (!preparedChartInputs.value || _.isEmpty(pyciemssMap.value)) return {};
 	const { result } = preparedChartInputs.value;
-	// Note that we want to show the distribution at the first timepoint only
+	// Note that we want to show the parameter distribution at the first timepoint only
 	const data = result.filter((d) => d.timepoint_id === 0);
 	const labelBefore = 'Before calibration';
 	const labelAfter = 'After calibration';
