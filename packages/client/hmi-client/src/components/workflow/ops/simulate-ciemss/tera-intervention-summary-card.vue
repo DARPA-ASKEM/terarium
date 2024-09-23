@@ -10,9 +10,8 @@
 			</li>
 			<li v-for="(dynamicIntervention, index) in intervention.dynamicInterventions" :key="`dynamic_${index}`">
 				Set the {{ intervention?.type }}&nbsp; <strong>{{ intervention?.appliedTo }}</strong> to
-				<strong>{{ dynamicIntervention.threshold }}</strong> days when it
-				<strong>{{ dynamicIntervention.isGreaterThan ? 'increase to above' : 'decrease to below' }}</strong>
-				the threshold value <strong>{{ dynamicIntervention.value }}</strong> person.
+				<strong>{{ dynamicIntervention.threshold }}</strong> days when it crosses the threshold value
+				<strong>{{ dynamicIntervention.value }}</strong> person.
 			</li>
 		</ul>
 	</section>
