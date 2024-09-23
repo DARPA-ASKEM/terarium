@@ -82,14 +82,7 @@ const props = defineProps<{
 	featureConfig: FeatureConfig;
 }>();
 
-const emit = defineEmits([
-	'update-model',
-	'update-state',
-	'update-parameter',
-	'update-observable',
-	'update-transition',
-	'update-time'
-]);
+const emit = defineEmits(['update-state', 'update-parameter', 'update-observable', 'update-transition', 'update-time']);
 
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);

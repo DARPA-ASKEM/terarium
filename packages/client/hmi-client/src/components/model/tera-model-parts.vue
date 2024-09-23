@@ -5,7 +5,6 @@
 		:mmt="mmt"
 		:mmt-params="mmtParams"
 		:feature-config="featureConfig"
-		@update-model="$emit('update-model', $event)"
 		@update-state="(e: any) => onUpdate('state', e)"
 		@update-parameter="(e: any) => onUpdate('parameter', e)"
 		@update-observable="(e: any) => onUpdate('observable', e)"
