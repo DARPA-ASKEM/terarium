@@ -3,12 +3,7 @@
 		<Accordion multiple :active-index="[0, 1, 2, 3]" v-bind:lazy="true" class="mb-0">
 			<AccordionTab header="Description">
 				<tera-progress-spinner v-if="isGeneratingCard" is-centered> Generating description... </tera-progress-spinner>
-				<Editor
-					v-else
-					v-model="editorContent"
-					:class="{ readonly: !hasEditPermission }"
-					:readonly="!hasEditPermission"
-				/>
+				<Editor v-else v-model="editorContent" />
 			</AccordionTab>
 			<AccordionTab header="Diagram">
 				<tera-model-diagram ref="teraModelDiagramRef" :model="model" :feature-config="featureConfig" />
@@ -42,7 +37,6 @@ import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.v
 import { isDataset, isModel, type Asset } from '@/utils/asset';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import Editor from 'primevue/editor';
-import { useProjects } from '@/composables/project';
 
 const props = defineProps<{
 	model: Model;
@@ -60,8 +54,6 @@ const relatedTerariumModels = computed(() => relatedTerariumArtifacts.value.filt
 const relatedTerariumDatasets = computed(() => relatedTerariumArtifacts.value.filter((d) => isDataset(d)) as Dataset[]);
 
 // Editor for the description
-const { activeProject } = useProjects();
-const hasEditPermission = computed(() => ['creator', 'writer'].includes(activeProject.value?.userPermission ?? ''));
 const editorContent = ref(props.model.description ?? card.value ?? '');
 
 watch(editorContent, () => {
