@@ -843,7 +843,7 @@ public class ExtractionService {
 		final NotificationGroupInstance<Properties> notificationInterface,
 		final String userId,
 		final byte[] pdf
-	) throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException, IOException {
+	) throws TimeoutException, InterruptedException, ExecutionException, IOException {
 		final int REQUEST_TIMEOUT_MINUTES = 5;
 
 		final TaskRequest req = new TaskRequest();
