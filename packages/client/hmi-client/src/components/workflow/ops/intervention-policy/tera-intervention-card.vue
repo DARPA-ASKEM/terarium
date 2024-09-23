@@ -232,8 +232,7 @@ const onInterventionTypeChange = (value: string) => {
 			{
 				threshold: Number.NaN,
 				value: Number.NaN,
-				parameter: '',
-				isGreaterThan: true
+				parameter: ''
 			}
 		];
 	}

@@ -121,9 +121,7 @@
 											Set {{ intervention.type }} {{ appliedTo }} to
 											{{ intervention.dynamicInterventions[0].value }} when the
 											{{ intervention.dynamicInterventions[0].parameter }}
-											{{
-												intervention.dynamicInterventions[0].isGreaterThan ? 'increases to above' : 'decreases to below'
-											}}
+											when it crosses the threshold value
 											{{ intervention.dynamicInterventions[0].threshold }}.
 										</p>
 									</li>
