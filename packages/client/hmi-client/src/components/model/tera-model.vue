@@ -1,23 +1,23 @@
 <template>
 	<tera-asset
 		v-bind="$attrs"
-		:id="assetId"
-		:name="model?.header.name"
 		:feature-config="featureConfig"
-		:is-naming-asset="isNaming"
+		:id="assetId"
 		:is-loading="isModelLoading"
-		show-table-of-contents
+		:is-naming-asset="isNaming"
+		:name="temporaryModel?.header.name"
 		@close-preview="emit('close-preview')"
+		show-table-of-contents
 	>
 		<template #name-input>
 			<tera-input-text
 				v-if="isNaming"
 				v-model.lazy="newName"
-				placeholder="Title of new model"
 				@keyup.enter="updateModelName"
 				@keyup.esc="updateModelName"
 				auto-focus
 				class="w-4"
+				placeholder="Title of new model"
 			/>
 			<div v-if="isNaming" class="flex flex-nowrap ml-1 mr-3">
 				<Button icon="pi pi-check" rounded text @click="updateModelName" />
