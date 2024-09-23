@@ -53,7 +53,7 @@ export class WorkflowWrapper {
 	 * instead of the result. It is possible here to become de-synced: eg state-update-response
 	 * comes in as we are about to change the output ports.
 	 * */
-	update(updatedWF: Workflow) {
+	update(updatedWF: Workflow, pendingSave: boolean, isDragging: boolean) {
 		if (updatedWF.id !== this.wf.id) {
 			throw new Error(`Workflow failed, inconsistent ids updated=${updatedWF.id} self=${this.wf.id}`);
 		}
@@ -64,6 +64,28 @@ export class WorkflowWrapper {
 		const edges = this.wf.edges;
 		const updatedNodeMap = new Map<string, WorkflowNode<any>>(updatedWF.nodes.map((n) => [n.id, n]));
 		const updatedEdgeMap = new Map<string, WorkflowEdge>(updatedWF.edges.map((e) => [e.id, e]));
+
+		if (pendingSave || isDragging) {
+			for (let i = 0; i < nodes.length; i++) {
+				const nodeId = nodes[i].id;
+				const updated = updatedNodeMap.get(nodeId);
+				if (updated) {
+					if (!nodes[i].version || (updated.version as number) > (nodes[i].version as number)) {
+						nodes[i].version = updated.version;
+					}
+				}
+			}
+			for (let i = 0; i < edges.length; i++) {
+				const edgeId = edges[i].id;
+				const updated = updatedEdgeMap.get(edgeId);
+				if (updated) {
+					if (!edges[i].version || (updated.version as number) > (edges[i].version as number)) {
+						edges[i].version = updated.version;
+					}
+				}
+			}
+			return;
+		}
 
 		// Update and deletes
 		for (let i = 0; i < nodes.length; i++) {

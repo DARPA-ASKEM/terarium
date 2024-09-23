@@ -64,7 +64,10 @@
 					left: `${node.x}px`
 				}"
 				@dragging="(event) => updatePosition(node, event)"
-				@dragend="saveWorkflowHandler()"
+				@dragend="
+					isDragging = false;
+					saveWorkflowHandler();
+				"
 			>
 				<tera-operator
 					ref="teraOperatorRefs"
@@ -266,6 +269,7 @@ let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverPort: boolean = false;
 let saveTimer: any = null;
 let pendingSave = false;
+let isDragging = false;
 
 let startTime: number = 0;
 
@@ -315,10 +319,10 @@ const _saveWorkflow = async () => {
 };
 // eslint-disable-next-line
 const _updateWorkflow = (event: any) => {
-	if (event.data.id !== wf.value.getId() || pendingSave === true) return;
-
-	// console.log('update workflow', event.data);
-	wf.value.update(event.data as Workflow);
+	if (event.data.id !== wf.value.getId()) {
+		return;
+	}
+	wf.value.update(event.data as Workflow, pendingSave, isDragging);
 };
 
 const saveWorkflowDebounced = debounce(_saveWorkflow, 400);
@@ -874,6 +878,7 @@ const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
 	if (teraNode.isEditing ?? false) {
 		return;
 	}
+	isDragging = true;
 	node.x += x / canvasTransform.k;
 	node.y += y / canvasTransform.k;
 	updateEdgePositions(node, { x, y });
