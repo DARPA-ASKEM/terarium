@@ -96,22 +96,19 @@ function updateMMT() {
 	});
 }
 
-function reset() {
+onMounted(() => {
 	transientModel.value = cloneDeep(props.model);
-}
-
-onMounted(() => updateMMT());
+	updateMMT();
+});
 
 watch(
 	() => props.model,
 	() => {
-		reset();
+		transientModel.value = cloneDeep(props.model);
 		updateMMT();
 	},
 	{ deep: true }
 );
-
-defineExpose({ transientModel, reset });
 </script>
 
 <style scoped>
