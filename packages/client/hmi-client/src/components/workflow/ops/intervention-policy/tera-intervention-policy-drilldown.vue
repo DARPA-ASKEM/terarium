@@ -148,19 +148,11 @@
 		</tera-columnar-panel>
 	</tera-drilldown>
 	<tera-save-asset-modal
-		:initial-name="knobs.transientInterventionPolicy.name"
+		:initial-name="showCreatePolicyModal ? 'New Intervention Policy' : knobs.transientInterventionPolicy.name"
 		:is-visible="showSaveModal"
-		:asset="knobs.transientInterventionPolicy"
+		:asset="showCreatePolicyModal ? newBlankInterventionPolicy : knobs.transientInterventionPolicy"
 		:asset-type="AssetType.InterventionPolicy"
 		@close-modal="showSaveModal = false"
-		@on-save="onSaveAsInterventionPolicy"
-	/>
-	<tera-save-asset-modal
-		initial-name="New Intervention Policy"
-		:is-visible="showCreatePolicyModal"
-		:asset-type="AssetType.InterventionPolicy"
-		:asset="newBlankInterventionPolicy"
-		@close-modal="showCreatePolicyModal = false"
 		@on-save="onSaveAsInterventionPolicy"
 	/>
 </template>
@@ -432,6 +424,7 @@ const onResetPolicy = () => {
 };
 
 const onSaveAsInterventionPolicy = (data: InterventionPolicy) => {
+	showCreatePolicyModal.value = false;
 	applyInterventionPolicy(data);
 };
 
@@ -455,8 +448,9 @@ const onSaveInterventionPolicy = async () => {
 
 const createNewInterventionPolicy = () => {
 	if (!model.value?.id) return;
-	newBlankInterventionPolicy.value.modelId = model.value.id;
 	showCreatePolicyModal.value = true;
+	newBlankInterventionPolicy.value.modelId = model.value.id;
+	showSaveModal.value = true;
 };
 
 watch(
