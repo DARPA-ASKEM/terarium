@@ -174,14 +174,8 @@ export async function getModelEquation(model: Model): Promise<string> {
 		return '';
 	}
 
-	/* TODO - Replace the GET with the POST when the backend is ready,
-	 *        see PR https://github.com/DARPA-ASKEM/sciml-service/pull/167
-	 */
-	const response = await API.get(`/transforms/model-to-latex/${model.id}`);
-	// const response = await API.post(`/transforms/model-to-latex/`, model);
-	const latex = response?.data?.latex;
-	if (!latex) return '';
-	return latex ?? '';
+	const response = await API.post(`/mira/model-to-latex`, model);
+	return response?.data?.response ?? '';
 }
 
 export const getUnitsFromModelParts = (model: Model) => {

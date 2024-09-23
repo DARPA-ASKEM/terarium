@@ -99,7 +99,7 @@ model = stratify(
    2. Only the state `S` has two stratified states within it: `S_unvaccinated, S_vaccinated`
    3. One new transition named `template-7` with rate law `S_unvaccinated*p_unvaccinated_vaccinated`
    4. The transition `template-1` is now a `2 x 1` matrix
-   5. There are nine transitions in total
+   5. There are 8 transitions in total
 16. Click **X** to exit this operator
 
 ### 5. Chain-stratify model

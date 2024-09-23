@@ -22,14 +22,21 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.models.ClientEvent;
+import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ChartAnnotation;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Contributor;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ChartAnnotationService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectPermissionsService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
+import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
 
 @RequestMapping("/chart-annotations")
 @RestController
@@ -45,6 +52,12 @@ public class ChartAnnotationController {
 	final ProjectService projectService;
 
 	final CurrentUserService currentUserService;
+
+	final ReBACService reBACService;
+
+	final ProjectPermissionsService projectPermissionsService;
+
+	final ClientEventService clientEventService;
 
 	private static class SearchRequestBody {
 
@@ -117,15 +130,39 @@ public class ChartAnnotationController {
 			currentUserService.get().getId(),
 			projectId
 		);
+
+		final ChartAnnotation chartAnnotation;
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED).body(
-				chartAnnotationService.createAsset(item, projectId, permission)
-			);
+			chartAnnotation = chartAnnotationService.createAsset(item, projectId, permission);
 		} catch (final IOException e) {
 			final String error = "Unable to create chart annotation";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
+
+		final ClientEvent<ChartAnnotation> event = ClientEvent.<ChartAnnotation>builder()
+			.type(ClientEventType.CHART_ANNOTATION_CREATE)
+			.data(chartAnnotation)
+			.build();
+
+		try {
+			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
+			if (rebacProject.isPublic()) {
+				clientEventService.sendToAllUsers(event);
+			} else {
+				final List<String> userIds = projectPermissionsService
+					.getReaders(rebacProject)
+					.stream()
+					.map(Contributor::getUserId)
+					.toList();
+				clientEventService.sendToUsers(event, userIds);
+			}
+		} catch (final Exception e) {
+			log.error("Unable to notify users for created chart annotations ", e);
+			// No response status exception here because the annotation created successfully, and it's just the sending events that's failed.
+		}
+
+		return ResponseEntity.status(HttpStatus.CREATED).body(chartAnnotation);
 	}
 
 	@DeleteMapping("/{id}")
@@ -161,11 +198,32 @@ public class ChartAnnotationController {
 
 		try {
 			chartAnnotationService.deleteAsset(id, projectId, permission);
-			return ResponseEntity.ok(new ResponseDeleted("ChartAnnotation", id));
 		} catch (final Exception e) {
 			final String error = String.format("Failed to delete chart annotation %s", id);
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
+
+		final ClientEvent<Void> event = ClientEvent.<Void>builder().type(ClientEventType.CHART_ANNOTATION_DELETE).build();
+
+		final RebacProject rebacProject = new RebacProject(projectId, reBACService);
+
+		try {
+			if (rebacProject.isPublic()) {
+				clientEventService.sendToAllUsers(event);
+			} else {
+				final List<String> userIds = projectPermissionsService
+					.getReaders(rebacProject)
+					.stream()
+					.map(Contributor::getUserId)
+					.toList();
+				clientEventService.sendToUsers(event, userIds);
+			}
+		} catch (final Exception e) {
+			log.error("Unable to notify users for deleted chart annotations", e);
+			// No response status exception here because the chart annotation deleted successfully, and it's just the sending events that's failed.
+		}
+
+		return ResponseEntity.ok(new ResponseDeleted("ChartAnnotation", id));
 	}
 }

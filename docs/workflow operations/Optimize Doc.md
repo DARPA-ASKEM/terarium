@@ -95,6 +95,10 @@ For example:
     A json serialized version of `optimize_results.dill` for use within the HMI.
     This can be found here: https://github.com/DARPA-ASKEM/pyciemss-service/blob/main/service/utils/tds.py#L233-L245
 
+  `maxcv` is the maximum constraint violation (includes constraint violation for the risk constraint and the bound constraints)
+  The error message means that the objective function was minimized successfully, but did not find an answer that satisfies the constraint given (like hosp below 3000 or whatever)
+  `success` This will be false if the answer did not converge. You can have a result that satisfies the constraints but could be better given more iterations or function evaluations.
+
 `optimize_results.dill`
     This is a status report from pyciemss that is passed on.
     Some of the information this contains is 

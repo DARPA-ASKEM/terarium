@@ -203,6 +203,24 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendEquationExtractionGenerateResponseRequest() throws Exception {
+		final ClassPathResource resource = new ClassPathResource("equation/SIR.pdf");
+		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
+
+		final int TIMEOUT_MINUTES = 5;
+		final TaskRequest req = new TaskRequest();
+		req.setTimeoutMinutes(TIMEOUT_MINUTES);
+		req.setInput(content);
+		req.setType(TaskType.EQUATION_EXTRACTION_CPU);
+		req.setScript(ExtractEquationsResponseHandler.NAME);
+
+		final TaskResponse resp = taskService.runTaskSync(req);
+
+		log.info(new String(resp.getOutput()));
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendMiraMDLToStockflowRequest() throws Exception {
 		final ClassPathResource resource = new ClassPathResource("mira/IndiaNonSubscriptedPulsed.mdl");
 		final String content = new String(Files.readAllBytes(resource.getFile().toPath()));
@@ -305,6 +323,26 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.MIRA);
 		req.setScript("mira_task:amr_to_mmt");
+		req.setInput(content.getBytes());
+
+		final TaskResponse resp = taskService.runTaskSync(req);
+
+		Assertions.assertEquals(taskId, resp.getId());
+
+		log.info(new String(resp.getOutput()));
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendGenerateModelLatexRequest() throws Exception {
+		final UUID taskId = UUID.randomUUID();
+
+		final ClassPathResource resource = new ClassPathResource("mira/problem.json");
+		final String content = new String(Files.readAllBytes(resource.getFile().toPath()));
+
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.MIRA);
+		req.setScript("mira_task:generate_model_latex");
 		req.setInput(content.getBytes());
 
 		final TaskResponse resp = taskService.runTaskSync(req);

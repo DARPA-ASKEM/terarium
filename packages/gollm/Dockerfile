@@ -1,33 +1,16 @@
 # Build the Spring Boot application
-FROM eclipse-temurin:21-jdk-noble AS gollm_taskrunner_builder
+FROM python:3.11-slim-bookworm AS gollm_taskrunner_builder
 
 ###### DEV ONLY ######
 #VVVVVVVVVVVVVVVVVVVVV
 
 # These deps are installed only for use during local development
 
-# Install Python
+# Install OpenJDK
 RUN apt-get update && apt-get install -y --no-install-recommends \
-	software-properties-common
-RUN add-apt-repository ppa:deadsnakes/ppa
-RUN apt-get update && apt-get install -y --no-install-recommends \
-	software-properties-common \
-	python3.11 \
-	python3.11-venv \
-	python3.11-dev \
-	wget \
-	python3-pip && \
+	wget  \
+  openjdk-17-jdk-headless && \
 	rm -rf /var/lib/apt/lists/*
-
-# Set the default Python version to 3.11
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 && \
-	update-alternatives --set python /usr/bin/python3.11
-
-RUN python -m ensurepip --upgrade
-
-# Verify the installation
-RUN python --version
-RUN pip3 --version
 
 # Install gollm
 COPY ./packages/gollm/gollm-version.txt /gollmVersion.txt
@@ -37,8 +20,9 @@ RUN COMMIT_SHA="$(cat /gollmVersion.txt)" && \
 	tar -zxvf gollm.tar.gz && \
 	rm gollm.tar.gz && \
 	mv GoLLM-* GoLLM
+
 WORKDIR /GoLLM
-RUN pip3 install --no-cache-dir .
+RUN pip install --no-cache-dir .
 
 #^^^^^^^^^^^^^^^^^^^^
 ######################
@@ -52,16 +36,14 @@ RUN ./gradlew bootJar
 WORKDIR /
 
 # ------------------------------------------------------------------------------
-
-# Set up the Python image with JRE
-FROM python:3.11-slim
+FROM python:3.11-slim-bookworm
 
 WORKDIR /
 
-# Install OpenJDK JRE and wget
-RUN apt-get update && \
-	apt-get install -y --no-install-recommends \
-	openjdk-21-jre-headless && \
+# Install OpenJDK JRE
+RUN apt-get update && apt-get install -y --no-install-recommends \
+	wget  \
+  openjdk-17-jre-headless && \
 	rm -rf /var/lib/apt/lists/*
 
 # Copy the Spring Boot fat JAR from the builder image
@@ -85,4 +67,5 @@ WORKDIR /gollm_task
 RUN pip install --no-cache-dir -e .
 
 WORKDIR /
+
 CMD ["java", "-jar", "taskrunner.jar"]
