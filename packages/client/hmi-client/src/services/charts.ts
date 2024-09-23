@@ -287,7 +287,14 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 		width: options.width,
 		height: options.height,
 		autosize: { type: 'fit' },
-		data: { values: dataset },
+		data: {
+			values: dataset.map((d) =>
+				pick(
+					d,
+					options.variables.map((v) => v.field)
+				)
+			)
+		},
 		layer: createLayers(options),
 		config: {
 			font: globalFont
