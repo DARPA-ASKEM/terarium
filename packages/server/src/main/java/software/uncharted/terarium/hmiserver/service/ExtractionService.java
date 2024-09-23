@@ -64,6 +64,7 @@ import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationGroupInstance;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
 import software.uncharted.terarium.hmiserver.service.tasks.ExtractEquationsResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.ExtractTextResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
@@ -191,41 +192,41 @@ public class ExtractionService {
 		final ExtractPDFResponse extractionResponse = new ExtractPDFResponse();
 
 		try {
-			notificationInterface.sendMessage("Starting COSMOS text extraction...");
-			log.info("Starting COSMOS text extraction for document: {}", documentName);
+			notificationInterface.sendMessage("Starting text extraction...");
+			log.info("Starting text extraction for document: {}", documentName);
 
-			final Future<CosmosTextExtraction> cosmosTextExtractionFuture = extractTextFromPDF(
+			final Future<TextExtraction> textExtractionFuture = extractTextFromPDF(
 				notificationInterface,
 				documentName,
 				documentContents
 			);
 
-			notificationInterface.sendMessage("Starting Nougat equation extraction...");
-			log.info("Starting Nougat equation extraction for document: {}", documentName);
-			final Future<NougatEquationExtraction> nougatEquationExtractionFuture = extractEquationsFromPDF(
+			notificationInterface.sendMessage("Starting equation extraction...");
+			log.info("Starting equation extraction for document: {}", documentName);
+			final Future<EquationExtraction> EquationExtractionFuture = extractEquationsFromPDF(
 				notificationInterface,
 				documentContents,
 				userId
 			);
 
-			// wait for cosmos text extraction
-			final CosmosTextExtraction cosmosTextExtraction = cosmosTextExtractionFuture.get();
-			notificationInterface.sendMessage("COSMOS text extraction complete!");
-			log.info("COSMOS text extraction complete for document: {}", documentName);
-			extractionResponse.documentAbstract = cosmosTextExtraction.documentAbstract;
-			extractionResponse.documentText = cosmosTextExtraction.documentText;
-			extractionResponse.assets = cosmosTextExtraction.assets;
-			extractionResponse.files = cosmosTextExtraction.files;
+			// wait for text extraction
+			final TextExtraction textExtraction = textExtractionFuture.get();
+			notificationInterface.sendMessage("Text extraction complete!");
+			log.info("Text extraction complete for document: {}", documentName);
+			extractionResponse.documentAbstract = textExtraction.documentAbstract;
+			extractionResponse.documentText = textExtraction.documentText;
+			extractionResponse.assets = textExtraction.assets;
+			extractionResponse.files = textExtraction.files;
 
 			try {
-				// wait for nougat equation extraction
-				final NougatEquationExtraction nougatEquationExtraction = nougatEquationExtractionFuture.get();
-				notificationInterface.sendMessage("Nougat equation extraction complete!");
-				log.info("Nougat equation extraction complete for document: {}", documentName);
-				extractionResponse.equations = nougatEquationExtraction.equations;
+				// wait for equation extraction
+				final EquationExtraction EquationExtraction = EquationExtractionFuture.get();
+				notificationInterface.sendMessage("Equation extraction complete!");
+				log.info("Equation extraction complete for document: {}", documentName);
+				extractionResponse.equations = EquationExtraction.equations;
 			} catch (final Exception e) {
-				notificationInterface.sendMessage("Nougat equation extraction failed, continuing");
-				log.error("Nougat equation extraction failed for document: {}", documentName, e);
+				notificationInterface.sendMessage("Equation extraction failed, continuing");
+				log.error("Equation extraction failed for document: {}", documentName, e);
 				extractionResponse.partialFailure = true;
 			}
 
@@ -764,15 +765,15 @@ public class ExtractionService {
 		return bytes;
 	}
 
-	@Value("${terarium.taskrunner.nougat.gpu-endpoint}")
-	private String NOUGAT_GPU_ENDPOINT;
+	@Value("${terarium.taskrunner.equation_extraction.gpu-endpoint}")
+	private String EQUATION_EXTRACTION_GPU_ENDPOINT;
 
-	static class NougatEquationExtraction {
+	static class EquationExtraction {
 
 		List<JsonNode> equations = new ArrayList<>();
 	}
 
-	public Future<NougatEquationExtraction> extractEquationsFromPDF(
+	public Future<EquationExtraction> extractEquationsFromPDF(
 		final NotificationGroupInstance<Properties> notificationInterface,
 		final byte[] pdf,
 		final String userId
@@ -780,8 +781,8 @@ public class ExtractionService {
 		final int REQUEST_TIMEOUT_MINUTES = 5;
 
 		int responseCode = HttpURLConnection.HTTP_BAD_GATEWAY;
-		if (!NOUGAT_GPU_ENDPOINT.isEmpty()) {
-			final URL url = new URL(String.format("%s/health", NOUGAT_GPU_ENDPOINT));
+		if (!EQUATION_EXTRACTION_GPU_ENDPOINT.isEmpty()) {
+			final URL url = new URL(String.format("%s/health", EQUATION_EXTRACTION_GPU_ENDPOINT));
 			final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 			connection.setRequestMethod("GET");
 			responseCode = connection.getResponseCode();
@@ -795,10 +796,10 @@ public class ExtractionService {
 
 		if (responseCode == HttpURLConnection.HTTP_OK) {
 			// use GPU impl
-			req.setType(TaskType.NOUGAT_GPU);
+			req.setType(TaskType.EQUATION_EXTRACTION_GPU);
 		} else {
 			// otherwise fallback to CPU impl
-			req.setType(TaskType.NOUGAT_CPU);
+			req.setType(TaskType.EQUATION_EXTRACTION_CPU);
 		}
 
 		return executor.submit(() -> {
@@ -821,7 +822,7 @@ public class ExtractionService {
 			// Sort keys
 			Collections.sort(keys);
 
-			final NougatEquationExtraction extraction = new NougatEquationExtraction();
+			final EquationExtraction extraction = new EquationExtraction();
 
 			for (final String key : keys) {
 				extraction.equations.add(output.getResponse().get(key));
@@ -831,7 +832,7 @@ public class ExtractionService {
 		});
 	}
 
-	static class CosmosTextExtraction {
+	static class TextExtraction {
 
 		String documentAbstract;
 		String documentText;
@@ -839,13 +840,44 @@ public class ExtractionService {
 		List<ExtractionFile> files = new ArrayList<>();
 	}
 
-	public Future<CosmosTextExtraction> extractTextFromPDF(
+	public Future<TextExtraction> extractTextFromPDF(
+		final NotificationGroupInstance<Properties> notificationInterface,
+		final String userId,
+		final byte[] pdf
+	) throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException, IOException {
+		final int REQUEST_TIMEOUT_MINUTES = 5;
+
+		final TaskRequest req = new TaskRequest();
+		req.setTimeoutMinutes(REQUEST_TIMEOUT_MINUTES);
+		req.setInput(pdf);
+		req.setScript(ExtractTextResponseHandler.NAME);
+		req.setUserId(userId);
+		req.setType(TaskType.TEXT_EXTRACTION);
+
+		return executor.submit(() -> {
+			final TaskResponse resp = taskService.runTaskSync(req);
+
+			final byte[] outputBytes = resp.getOutput();
+			final ExtractTextResponseHandler.ResponseOutput output = objectMapper.readValue(
+				outputBytes,
+				ExtractTextResponseHandler.ResponseOutput.class
+			);
+
+			final TextExtraction extraction = new TextExtraction();
+
+			extraction.documentText = output.getResponse().asText();
+
+			return extraction;
+		});
+	}
+
+	public Future<TextExtraction> extractTextFromPDFCosmos(
 		final NotificationGroupInstance<Properties> notificationInterface,
 		final String documentName,
 		final byte[] pdf
 	) {
 		return executor.submit(() -> {
-			final CosmosTextExtraction extractionResponse = new CosmosTextExtraction();
+			final TextExtraction extractionResponse = new TextExtraction();
 
 			final ByteMultipartFile documentFile = new ByteMultipartFile(pdf, documentName, "application/pdf");
 

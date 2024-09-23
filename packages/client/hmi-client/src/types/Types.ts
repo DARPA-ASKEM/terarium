@@ -593,7 +593,6 @@ export interface DynamicIntervention {
     parameter: string;
     threshold: number;
     value: number;
-    isGreaterThan: boolean;
 }
 
 export interface Intervention {

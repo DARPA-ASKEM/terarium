@@ -9,9 +9,9 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class ExtractEquationsResponseHandler extends TaskResponseHandler {
+public class ExtractTextResponseHandler extends TaskResponseHandler {
 
-	public static final String NAME = "equation_extraction_task:extract_equations";
+	public static final String NAME = "text_extraction_task:extract_text";
 
 	@Override
 	public String getName() {

@@ -44,17 +44,17 @@ def main():
             for var, terms in odeterms.items()
         ]
 
-				# Observables
-				if len(model.observables) != 0:
-					obs_eqs = [
-						f"{{{obs.name}}}(t) = " + sympy.latex(obs.expression.args[0])
-						for obs in model.observables.values()
-					]
+        # Observables
+        if len(model.observables) != 0:
+            obs_eqs = [
+                f"{{{obs.name}}}(t) = " + sympy.latex(obs.expression.args[0])
+                for obs in model.observables.values()
+            ]
 
-					#add observables.
-					odesys += obs_eqs
+            #add observables.
+            odesys += obs_eqs
 
-		    #Reformat:
+        # Reformat:
         odesys = "\\begin{align} \n    " + " \\\\ \n    ".join([eq for eq in odesys]) + "\n\\end{align}"
 
         taskrunner.write_output_dict_with_timeout({"response": odesys})
