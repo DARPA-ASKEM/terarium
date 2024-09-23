@@ -56,8 +56,9 @@
 	<tera-save-asset-modal
 		:asset="temporaryModel"
 		:asset-type="AssetType.Model"
-		:initial-name="model?.header.name"
+		:initial-name="temporaryModel?.header.name"
 		:is-visible="showSaveModal"
+		:open-on-save="true"
 		@close-modal="showSaveModal = false"
 		@on-save="onModalSave"
 	/>
