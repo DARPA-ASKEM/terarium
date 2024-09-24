@@ -38,7 +38,7 @@
 					</header>
 					<Accordion :active-index="0">
 						<AccordionTab header="Model equations">
-							<h6 class="pb-2">Use these equation</h6>
+							<h6 class="pb-2">Use {{ includedEquations.length > 1 ? 'these equations' : 'this equation' }}</h6>
 							<ul class="blocks-container ml-3">
 								<li
 									v-for="(equation, i) in includedEquations"
@@ -116,7 +116,17 @@
 
 			<tera-slider-panel v-model:is-open="isOutputOpen" header="Output" content-width="100%">
 				<template #content>
-					<div class="flex align-items-center font-bold pl-3 text-lg">Equation conversions</div>
+					<header class="flex align-items-center p-3">
+						<h4>Equation conversions</h4>
+						<Button
+							v-if="selectedModel"
+							label="Save for re-use"
+							outlined
+							severity="secondary"
+							class="ml-auto"
+							@click="showSaveModelModal = true"
+						/>
+					</header>
 					<tera-drilldown-preview>
 						<tera-model-description v-if="selectedModel" :model="selectedModel" :generating-card="isGeneratingCard" />
 						<tera-operator-placeholder v-else :node="node" style="height: 100%" />
