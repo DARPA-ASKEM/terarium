@@ -124,7 +124,7 @@
 						"
 					/>
 					<katex-element
-						:expression="stringToLatexExpression(`${variable} ${index === config.variables.length - 1 ? '' : '\\ +'}`)"
+						:expression="stringToLatexExpression(`${variable} ${index === config.variables.length - 1 ? '' : '\\ +'} `)"
 					/>
 				</template>
 				<katex-element :expression="stringToLatexExpression(`] \\leq`)" />
@@ -133,16 +133,15 @@
 					:model-value="config.interval.ub"
 					@update:model-value="emit('update-self', { key: 'interval', value: { lb: config.interval.lb, ub: $event } })"
 				/>
+				<katex-element
+					:expression="stringToLatexExpression(`\\forall \\ t \\in [${config.timepoints.lb}, ${config.timepoints.ub}]`)"
+				/>
 			</div>
 			<katex-element
 				v-else-if="config.constraintType !== ConstraintType.Following"
 				:expression="stringToLatexExpression(generateExpression())"
 			/>
-			<katex-element
-				:expression="stringToLatexExpression(`\\forall \\ t \\in [${config.timepoints.lb}, ${config.timepoints.ub}]`)"
-			/>
 		</div>
-		{{ config.weights }}
 	</section>
 </template>
 
@@ -181,12 +180,12 @@ const variableOptions = computed(() => {
 });
 
 function generateExpression() {
-	const { constraintType, interval, variables } = props.config;
+	const { constraintType, interval, variables, timepoints } = props.config;
 	let expression = '';
 	for (let i = 0; i < variables.length; i++) {
-		let expressionPart = variables[i];
+		let expressionPart = `${variables[i]}(t)`;
 		if (constraintType === ConstraintType.Increasing || constraintType === ConstraintType.Decreasing) {
-			expressionPart = `d/dt ${variables[i]}`;
+			expressionPart = `d/dt ${expressionPart}`;
 		}
 		if (i === variables.length - 1) {
 			if (constraintType === ConstraintType.LessThan || constraintType === ConstraintType.Decreasing) {
@@ -201,7 +200,8 @@ function generateExpression() {
 		}
 		expression += expressionPart;
 	}
-	return expression;
+	// Adding the for all in timepoints in the same expression helps with text alignment
+	return `${expression} \\ \\forall \\ t \\in [${timepoints.lb}, ${timepoints.ub}]`;
 }
 </script>
 
