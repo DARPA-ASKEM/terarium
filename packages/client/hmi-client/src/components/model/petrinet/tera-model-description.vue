@@ -48,19 +48,20 @@ const emit = defineEmits(['update-model']);
 const teraModelDiagramRef = ref();
 
 const currentActiveIndexes = ref([0, 1, 2, 3]);
-
-const card = computed<any>(() => props.model.metadata?.gollmCard ?? null);
-
 const relatedTerariumArtifacts = ref<Asset[]>([]);
 const relatedTerariumModels = computed(() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]);
 const relatedTerariumDatasets = computed(() => relatedTerariumArtifacts.value.filter((d) => isDataset(d)) as Dataset[]);
 
 // Editor for the description
-const editorContent = ref(props.model.description ?? card.value ?? '');
+const editorContent = ref(props.model.header.description ?? '');
 
 watch(editorContent, () => {
 	if (editorContent.value !== props.model.description) {
-		emit('update-model', { ...props.model, description: editorContent.value });
+		const updatedModel = {
+			...props.model,
+			header: { ...props.model.header, description: editorContent.value }
+		} as Model;
+		emit('update-model', updatedModel);
 	}
 });
 
@@ -69,7 +70,7 @@ watch(
 	() => props.model.description,
 	(newVal) => {
 		if (newVal !== editorContent.value) {
-			editorContent.value = newVal;
+			editorContent.value = newVal ?? '';
 		}
 	}
 );
