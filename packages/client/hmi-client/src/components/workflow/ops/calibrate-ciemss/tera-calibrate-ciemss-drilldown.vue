@@ -219,6 +219,7 @@
 						<br />
 						<template v-for="setting of selectedParameterSettings" :key="setting.id">
 							<vega-chart
+								v-if="preparedDistributionCharts[setting.selectedVariables[0]]"
 								expandable
 								:are-embed-actions-visible="true"
 								:visualization-spec="preparedDistributionCharts[setting.selectedVariables[0]].histogram"
@@ -734,8 +735,10 @@ const preparedCharts = computed(() => {
 });
 
 const preparedDistributionCharts = computed(() => {
-	if (!preparedChartInputs.value) return [];
+	if (!preparedChartInputs.value || _.isEmpty(pyciemssMap.value)) return {};
 	const { result } = preparedChartInputs.value;
+	// Note that we want to show the parameter distribution at the first timepoint only
+	const data = result.filter((d) => d.timepoint_id === 0);
 	const labelBefore = 'Before calibration';
 	const labelAfter = 'After calibration';
 	const charts = {};
@@ -743,7 +746,7 @@ const preparedDistributionCharts = computed(() => {
 		const param = setting.selectedVariables[0];
 		const fieldName = pyciemssMap.value[param];
 		const beforeFieldName = `${fieldName}:pre`;
-		const histogram = createHistogramChart(result, {
+		const histogram = createHistogramChart(data, {
 			title: `${param}`,
 			width: chartSize.value.width,
 			height: chartSize.value.height,
@@ -758,10 +761,8 @@ const preparedDistributionCharts = computed(() => {
 		const toDisplayNumber = (num?: number) => (num ? displayNumber(num.toString()) : '');
 		const stat = {
 			header: [labelBefore, labelAfter],
-			mean: [mean(result, (d) => d[beforeFieldName]), mean(result, (d) => d[fieldName])].map(toDisplayNumber),
-			variance: [variance(result, (d) => d[beforeFieldName]), variance(result, (d) => d[fieldName])].map(
-				toDisplayNumber
-			)
+			mean: [mean(data, (d) => d[beforeFieldName]), mean(data, (d) => d[fieldName])].map(toDisplayNumber),
+			variance: [variance(data, (d) => d[beforeFieldName]), variance(data, (d) => d[fieldName])].map(toDisplayNumber)
 		};
 		charts[param] = { histogram, stat };
 	});

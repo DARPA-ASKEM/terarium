@@ -64,7 +64,10 @@
 					left: `${node.x}px`
 				}"
 				@dragging="(event) => updatePosition(node, event)"
-				@dragend="saveWorkflowHandler()"
+				@dragend="
+					isDragging = false;
+					saveWorkflowHandler();
+				"
 			>
 				<tera-operator
 					ref="teraOperatorRefs"
@@ -223,6 +226,7 @@ import * as ModelComparisonOp from '@/components/workflow/ops/model-comparison/m
 import * as RegriddingOp from '@/components/workflow/ops/regridding/mod';
 import * as InterventionPolicyOp from '@/components/workflow/ops/intervention-policy/mod';
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
+import { activeProjectId } from '@/composables/activeProject';
 
 const WORKFLOW_SAVE_INTERVAL = 4000;
 
@@ -265,6 +269,8 @@ let canvasTransform = { x: 0, y: 0, k: 1 };
 let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverPort: boolean = false;
 let saveTimer: any = null;
+let pendingSave = false;
+let isDragging = false;
 
 let startTime: number = 0;
 
@@ -279,6 +285,7 @@ const contextMenu = ref();
 
 const isRenamingWorkflow = ref(false);
 const newWorkflowName = ref('');
+const currentProjectId = ref<string | null>(null);
 
 const optionsMenu = ref();
 const optionsMenuItems = ref([
@@ -300,7 +307,7 @@ const teraOperatorRefs = ref();
 async function updateWorkflowName() {
 	const workflowClone = cloneDeep(wf.value.dump());
 	workflowClone.name = newWorkflowName.value;
-	await workflowService.updateWorkflow(workflowClone);
+	await workflowService.saveWorkflow(workflowClone);
 	await useProjects().refresh();
 	isRenamingWorkflow.value = false;
 	wf.value.load(await workflowService.getWorkflow(props.assetId));
@@ -308,19 +315,26 @@ async function updateWorkflowName() {
 
 // eslint-disable-next-line
 const _saveWorkflow = async () => {
-	await workflowService.updateWorkflow(wf.value.dump());
+	pendingSave = false;
+	await workflowService.saveWorkflow(wf.value.dump(), currentProjectId.value ?? undefined);
 	// wf.value.update(updated);
 };
 // eslint-disable-next-line
 const _updateWorkflow = (event: any) => {
-	if (event.data.id !== wf.value.getId()) return;
-
-	// console.log('update workflow', event.data);
-	wf.value.update(event.data as Workflow);
+	if (event.data.id !== wf.value.getId()) {
+		return;
+	}
+	const delayUpdate = pendingSave || isDragging;
+	wf.value.update(event.data as Workflow, delayUpdate);
 };
 
-const saveWorkflowHandler = debounce(_saveWorkflow, 400);
+const saveWorkflowDebounced = debounce(_saveWorkflow, 400);
 const updateWorkflowHandler = debounce(_updateWorkflow, 250);
+
+const saveWorkflowHandler = () => {
+	pendingSave = true;
+	saveWorkflowDebounced();
+};
 
 function appendInputPort(node: WorkflowNode<any>, port: { type: string; label?: string; value: any }) {
 	node.inputs.push({
@@ -867,6 +881,7 @@ const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
 	if (teraNode.isEditing ?? false) {
 		return;
 	}
+	isDragging = true;
 	node.x += x / canvasTransform.k;
 	node.y += y / canvasTransform.k;
 	updateEdgePositions(node, { x, y });
@@ -932,6 +947,7 @@ watch(
 	() => props.assetId,
 	async (newId, oldId) => {
 		isRenamingWorkflow.value = false; // Closes rename input if opened in previous workflow
+		pendingSave = false;
 
 		// Save previous workflow, if applicable
 		if (newId !== oldId && oldId) {
@@ -972,6 +988,7 @@ onMounted(() => {
 	}, WORKFLOW_SAVE_INTERVAL);
 
 	subscribe(ClientEventType.WorkflowUpdate, updateWorkflowHandler);
+	currentProjectId.value = activeProjectId.value;
 });
 
 onUnmounted(() => {
