@@ -8,23 +8,23 @@ FROM python:3.11-slim-bookworm AS equation_extraction_taskrunner_builder
 
 # Install OpenJDK
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  build-essential \
-  git \
-  libgl1 \
-  libglib2.0-0 \
-  poppler-utils \
-  wget \
-  openjdk-17-jdk-headless && \
-  rm -rf /var/lib/apt/lists/*
+	build-essential \
+	git \
+	libgl1 \
+	libglib2.0-0 \
+	poppler-utils \
+	wget \
+	openjdk-17-jdk-headless && \
+	rm -rf /var/lib/apt/lists/*
 
 # Install equation-extraction
 COPY ./packages/equation_extraction/equation-extraction-version.txt /extractionVersion.txt
 RUN COMMIT_SHA="$(cat /extractionVersion.txt)" && \
-  echo "Using document_intelligence commit $COMMIT_SHA" && \
-  wget --progress=dot:giga -O equation-extraction.tar.gz "https://github.com/DARPA-ASKEM/document_intelligence/archive/${COMMIT_SHA}.tar.gz" && \
-  tar -zxvf equation-extraction.tar.gz && \
-  rm equation-extraction.tar.gz && \
-  mv document_intelligence-* document_intelligence
+	echo "Using document_intelligence commit $COMMIT_SHA" && \
+	wget --progress=dot:giga -O equation-extraction.tar.gz "https://github.com/DARPA-ASKEM/document_intelligence/archive/${COMMIT_SHA}.tar.gz" && \
+	tar -zxvf equation-extraction.tar.gz && \
+	rm equation-extraction.tar.gz && \
+	mv document_intelligence-* document_intelligence
 WORKDIR /document_intelligence/document_intelligence/fast_latex
 RUN pip3 install -r requirements.txt
 
@@ -43,7 +43,7 @@ RUN ./gradlew bootJar
 WORKDIR /
 
 # Copy the jar to the root directory
-RUN mv /taskrunner/build/libs/*.jar .
+RUN cp /taskrunner/build/libs/*.jar .
 RUN mv /terarium-1.0.0-SNAPSHOT.jar /taskrunner.jar
 
 # ------------------------------------------------------------------------------
@@ -53,14 +53,14 @@ WORKDIR /
 
 # Install OpenJDK JRE
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  build-essential \
-  git \
-  libgl1 \
-  libglib2.0-0 \
-  poppler-utils \
-  wget  \
-  openjdk-17-jre-headless && \
-  rm -rf /var/lib/apt/lists/*
+	build-essential \
+	git \
+	libgl1 \
+	libglib2.0-0 \
+	poppler-utils \
+	wget  \
+	openjdk-17-jre-headless && \
+	rm -rf /var/lib/apt/lists/*
 
 # Copy the supervisord configuration file
 COPY ./packages/equation_extraction/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
