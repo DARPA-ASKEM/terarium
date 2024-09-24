@@ -65,12 +65,11 @@ watch(editorContent, () => {
 	}
 });
 
-// Watch the props.model.description to update the editor content
 watch(
-	() => props.model.description,
-	(newVal) => {
-		if (newVal !== editorContent.value) {
-			editorContent.value = newVal ?? '';
+	() => props.model.header.description,
+	(newDescription) => {
+		if (newDescription !== editorContent.value) {
+			editorContent.value = newDescription ?? '';
 		}
 	}
 );
