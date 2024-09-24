@@ -50,7 +50,7 @@
 							class="applied-to-menu"
 							:model-value="intervention.dynamicInterventions[0].appliedTo"
 							@change="onAppliedToParameterChange($event, 0)"
-							:options="semanticOptions"
+							:options="semanticOptions(intervention.dynamicInterventions[0].type)"
 							option-label="label"
 							option-value="value"
 							placeholder="Select"
@@ -74,7 +74,7 @@
 								class="applied-to-menu"
 								:model-value="intervention.staticInterventions[0].appliedTo"
 								@change="onAppliedToParameterChange($event, 0)"
-								:options="semanticOptions"
+								:options="semanticOptions(intervention.staticInterventions[0].type)"
 								option-label="label"
 								option-value="value"
 								placeholder="Select"
@@ -106,7 +106,7 @@
 										class="applied-to-menu"
 										:model-value="i.appliedTo"
 										@change="onAppliedToParameterChange($event, index)"
-										:options="semanticOptions"
+										:options="semanticOptions(i.type)"
 										option-label="label"
 										option-value="value"
 										placeholder="Select"
@@ -191,16 +191,12 @@ const interventionSemanticOptions = [
 	{ label: 'State', value: InterventionSemanticType.State }
 ];
 
-const semanticOptions = computed(() => {
-	const intervention =
-		interventionType.value === 'static'
-			? props.intervention.staticInterventions
-			: props.intervention.dynamicInterventions;
-	if (intervention[0].type === InterventionSemanticType.State) {
+const semanticOptions = (type) => {
+	if (type === InterventionSemanticType.State) {
 		return props.stateOptions;
 	}
 	return props.parameterOptions;
-});
+};
 
 const interventionType = computed(() => {
 	if (props.intervention.staticInterventions.length > 0) {
