@@ -824,14 +824,14 @@ const setOutputSettingDefaults = () => {
 	const selectedSimulationVariables: Array<string> = [];
 
 	if (!knobs.value.selectedInterventionVariables.length) {
-		knobs.value.interventionPolicyGroups.forEach((intervention) => {
-			if (intervention.intervention.staticInterventions.length) {
-				selectedInterventionVariables.push(intervention.intervention.staticInterventions[0].appliedTo);
-			} else {
-				selectedInterventionVariables.push(intervention.intervention.dynamicInterventions[0].appliedTo);
-			}
+		activePolicyGroups.value.forEach((ele) => {
+			ele.intervention.staticInterventions.forEach((staticInt) =>
+				selectedInterventionVariables.push(staticInt.appliedTo)
+			);
+			ele.intervention.dynamicInterventions.forEach((dynamicsInt) =>
+				selectedInterventionVariables.push(dynamicsInt.appliedTo)
+			);
 		});
-		knobs.value.selectedInterventionVariables = [...new Set(selectedInterventionVariables)];
 	}
 
 	if (!knobs.value.selectedSimulationVariables.length) {
