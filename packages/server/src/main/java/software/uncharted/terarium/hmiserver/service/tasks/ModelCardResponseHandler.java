@@ -1,6 +1,6 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
-import static software.uncharted.terarium.hmiserver.utils.JsonToMarkdown.renderJsonToMarkdown;
+import static software.uncharted.terarium.hmiserver.utils.JsonToHTML.renderJsonToHTML;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -75,7 +75,7 @@ public class ModelCardResponseHandler extends TaskResponseHandler {
 				model.setMetadata(new ModelMetadata());
 			}
 			model.getMetadata().setGollmCard(card.response);
-			model.getHeader().setDescription(renderJsonToMarkdown(card.response));
+			model.getHeader().setDescription(renderJsonToHTML(card.response));
 			modelService.updateAsset(model, props.modelId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 		} catch (final Exception e) {
 			log.error("Failed to write model card to database", e);
