@@ -131,6 +131,7 @@ services:
       TERARIUM_MQ_PASSWORD: "terarium123"
       TERARIUM_MQ_USERNAME: "terarium"
       TERARIUM_TASKRUNNER_REQUEST_TYPE: "table_extraction"
+      ASKEM_DOC_AI_API_KEY: "${secret_openai_key}"
     depends_on:
       rabbitmq:
         condition: service_healthy
