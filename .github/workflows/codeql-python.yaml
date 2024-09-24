@@ -8,6 +8,7 @@ on:
   pull_request:
     branches: ['main']
     paths:
+      - 'packages/equation_extraction/**'
       - 'packages/funman/**'
       - 'packages/gollm/**'
       - 'packages/mira/**'

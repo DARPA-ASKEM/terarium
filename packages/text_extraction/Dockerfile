@@ -1,5 +1,5 @@
 # Build the Spring Boot application
-FROM python:3.11-slim-bookworm AS gollm_taskrunner_builder
+FROM python:3.11-slim-bookworm AS text_extraction_taskrunner_builder
 
 ###### DEV ONLY ######
 #VVVVVVVVVVVVVVVVVVVVV
@@ -8,21 +8,12 @@ FROM python:3.11-slim-bookworm AS gollm_taskrunner_builder
 
 # Install OpenJDK
 RUN apt-get update && apt-get install -y --no-install-recommends \
-	wget  \
-  openjdk-17-jdk-headless && \
+	ocrmypdf \
+	openjdk-17-jdk-headless && \
 	rm -rf /var/lib/apt/lists/*
 
-# Install gollm
-COPY ./packages/gollm/gollm-version.txt /gollmVersion.txt
-RUN COMMIT_SHA="$(cat /gollmVersion.txt)" && \
-	echo "Using GoLLM commit $COMMIT_SHA" && \
-	wget --progress=dot:giga -O gollm.tar.gz "https://github.com/DARPA-ASKEM/GoLLM/archive/${COMMIT_SHA}.tar.gz" && \
-	tar -zxvf gollm.tar.gz && \
-	rm gollm.tar.gz && \
-	mv GoLLM-* GoLLM
-
-WORKDIR /GoLLM
-RUN pip install --no-cache-dir .
+# Install PyPDF2
+RUN pip install PyPDF2
 
 #^^^^^^^^^^^^^^^^^^^^
 ######################
@@ -40,19 +31,17 @@ FROM python:3.11-slim-bookworm
 
 WORKDIR /
 
-# Install OpenJDK JRE
+# Install OpenJRE
 RUN apt-get update && apt-get install -y --no-install-recommends \
-	wget  \
-  openjdk-17-jre-headless && \
+	ocrmypdf \
+	openjdk-17-jre-headless && \
 	rm -rf /var/lib/apt/lists/*
 
-# Copy the Spring Boot fat JAR from the builder image
-COPY --from=gollm_taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.jar
+# Install PyPDF2
+RUN pip install PyPDF2
 
-# Install GoLLM
-COPY --from=gollm_taskrunner_builder /GoLLM /GoLLM
-WORKDIR /GoLLM
-RUN pip install --no-cache-dir .
+# Copy the Spring Boot fat JAR from the builder image
+COPY --from=text_extraction_taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.jar
 
 # Install taskrunner
 COPY ./packages/taskrunner/setup.py /taskrunner/setup.py
@@ -60,10 +49,10 @@ COPY ./packages/taskrunner/taskrunner.py /taskrunner/taskrunner.py
 WORKDIR /taskrunner
 RUN pip install --no-cache-dir -e .
 
-# Install GoLLM tasks
-COPY ./packages/gollm /gollm_task
+# Install pdf tasks
+COPY ./packages/text_extraction /text_extraction_task
 
-WORKDIR /gollm_task
+WORKDIR /text_extraction_task
 RUN pip install --no-cache-dir -e .
 
 WORKDIR /

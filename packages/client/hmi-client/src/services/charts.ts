@@ -1,5 +1,5 @@
 import { percentile } from '@/utils/math';
-import { isEmpty } from 'lodash';
+import { isEmpty, pick } from 'lodash';
 import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
 import { ChartAnnotation, Intervention } from '@/types/Types';
@@ -255,12 +255,45 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 		labelOffset: 4
 	};
 
+	const spec: VisualizationSpec = {
+		$schema: VEGALITE_SCHEMA,
+		title: titleObj as any,
+		width: options.width,
+		height: options.height,
+		autosize: { type: 'fit' },
+		data: {
+			values: []
+		},
+		layer: [],
+		config: {
+			font: globalFont
+		}
+	};
+
+	const data = dataset.map((d) =>
+		pick(
+			d,
+			options.variables.map((v) => v.field)
+		)
+	);
+
+	if (isEmpty(data?.[0])) return spec;
+
+	spec.data = { values: data };
+
+	// Create an extent from the min max of the data across all variables, this is used to set the bin extent and let multiple histograms from different layers to share the same bin extent
+	const extent = [Infinity, -Infinity];
+	data.forEach((d) => {
+		extent[0] = Math.min(extent[0], Math.min(...Object.values(d)));
+		extent[1] = Math.max(extent[1], Math.max(...Object.values(d)));
+	});
+
 	const createLayers = (opts) => {
 		const colorScale = {
 			domain: opts.variables.map((v) => v.label ?? v.field),
 			range: opts.variables.map((v) => v.color)
 		};
-		const bin = { maxbins: maxBins };
+		const bin = { maxbins: maxBins, extent };
 		const aggregate = 'count';
 		return opts.variables.map((varOption) => ({
 			mark: { type: 'bar', width: varOption.width, tooltip: true },
@@ -281,18 +314,9 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 		}));
 	};
 
-	const spec: VisualizationSpec = {
-		$schema: VEGALITE_SCHEMA,
-		title: titleObj as any,
-		width: options.width,
-		height: options.height,
-		autosize: { type: 'fit' },
-		data: { values: dataset },
-		layer: createLayers(options),
-		config: {
-			font: globalFont
-		}
-	};
+	// Add layers
+	spec.layer = createLayers(options);
+
 	return spec;
 }
 
@@ -398,8 +422,12 @@ export function createForecastChart(
 
 	// Helper function to capture common layer structure
 	const newLayer = (layer: ForecastChartLayer, markType: string) => {
+		const selectedFields = layer.variables.concat([layer.timeField]);
+		if (layer.groupField) selectedFields.push(layer.groupField);
+
+		const data = Array.isArray(layer.data) ? { values: layer.data.map((d) => pick(d, selectedFields)) } : layer.data;
 		const header = {
-			data: Array.isArray(layer.data) ? { values: layer.data } : layer.data,
+			data,
 			transform: [
 				{
 					fold: layer.variables,

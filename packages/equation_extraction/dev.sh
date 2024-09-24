@@ -2,7 +2,7 @@
 
 # ensure the volume mounted python code is using editable mode
 echo "Installing python tasks"
-cd /nougat_task
+cd /equation_extraction_task
 pip3 install -e .
 
 # run it
@@ -14,4 +14,4 @@ pip3 install -e .
 mkdir /var/log/supervisor
 
 echo "Starting supervisord"
-supervisord -c /nougat_task/supervisord.conf
+supervisord -c /equation_extraction_task/supervisord.conf

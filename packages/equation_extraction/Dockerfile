@@ -1,45 +1,29 @@
 # Build the Spring Boot application
-FROM eclipse-temurin:17.0.12_7-jdk-focal AS nougat_cpu_taskrunner_builder
+FROM python:3.11-slim-bookworm AS equation_extraction_taskrunner_builder
 
 ###### DEV ONLY ######
 #VVVVVVVVVVVVVVVVVVVVV
 
 # These deps are installed only for use during local development
 
-# Install Python
-RUN apt-get update && apt-get install -y --no-install-recommends \
-	software-properties-common
-RUN add-apt-repository ppa:deadsnakes/ppa
+# Install OpenJDK
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	build-essential \
-	python3.10 \
-	python3.10-venv \
-	python3.10-dev \
-	python3-setuptools \
-	wget \
 	git \
 	libgl1 \
+	libglib2.0-0 \
 	poppler-utils \
-	python3-pip && \
+	wget \
+	openjdk-17-jdk-headless && \
 	rm -rf /var/lib/apt/lists/*
 
-# Set the default Python version to 3.10
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1 && \
-	update-alternatives --set python /usr/bin/python3.10
-
-RUN python -m ensurepip --upgrade
-
-# Verify the installation
-RUN python --version
-RUN pip3 --version
-
-# Install nougat
-COPY ./packages/nougat_cpu/nougat-version.txt /nougatVersion.txt
-RUN COMMIT_SHA="$(cat /nougatVersion.txt)" && \
+# Install equation-extraction
+COPY ./packages/equation_extraction/equation-extraction-version.txt /extractionVersion.txt
+RUN COMMIT_SHA="$(cat /extractionVersion.txt)" && \
 	echo "Using document_intelligence commit $COMMIT_SHA" && \
-	wget --progress=dot:giga -O nougat.tar.gz "https://github.com/DARPA-ASKEM/document_intelligence/archive/${COMMIT_SHA}.tar.gz" && \
-	tar -zxvf nougat.tar.gz && \
-	rm nougat.tar.gz && \
+	wget --progress=dot:giga -O equation-extraction.tar.gz "https://github.com/DARPA-ASKEM/document_intelligence/archive/${COMMIT_SHA}.tar.gz" && \
+	tar -zxvf equation-extraction.tar.gz && \
+	rm equation-extraction.tar.gz && \
 	mv document_intelligence-* document_intelligence
 WORKDIR /document_intelligence/document_intelligence/fast_latex
 RUN pip3 install -r requirements.txt
@@ -59,34 +43,33 @@ RUN ./gradlew bootJar
 WORKDIR /
 
 # Copy the jar to the root directory
-RUN mv /taskrunner/build/libs/*.jar .
+RUN cp /taskrunner/build/libs/*.jar .
 RUN mv /terarium-1.0.0-SNAPSHOT.jar /taskrunner.jar
 
 # ------------------------------------------------------------------------------
-
-# Set up the Python image with JRE
-FROM python:3.10-slim
+FROM python:3.11-slim-bookworm
 
 WORKDIR /
 
-# Copy the supervisord configuration file
-COPY ./packages/nougat_cpu/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-# Install OpenJDK JRE and wget
-RUN apt-get update && \
-	apt-get install -y --no-install-recommends \
+# Install OpenJDK JRE
+RUN apt-get update && apt-get install -y --no-install-recommends \
 	build-essential \
 	git \
 	libgl1 \
+	libglib2.0-0 \
 	poppler-utils \
+	wget  \
 	openjdk-17-jre-headless && \
 	rm -rf /var/lib/apt/lists/*
 
-# Copy the Spring Boot fat JAR from the builder image
-COPY --from=nougat_cpu_taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.jar
+# Copy the supervisord configuration file
+COPY ./packages/equation_extraction/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Install nougat
-COPY --from=nougat_cpu_taskrunner_builder /document_intelligence /document_intelligence
+# Copy the Spring Boot fat JAR from the builder image
+COPY --from=equation_extraction_taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.jar
+
+# Install equation-extraction
+COPY --from=equation_extraction_taskrunner_builder /document_intelligence /document_intelligence
 WORKDIR /document_intelligence/document_intelligence/fast_latex
 RUN pip install -r requirements.txt
 
@@ -97,8 +80,8 @@ WORKDIR /taskrunner
 RUN pip install --no-cache-dir -e .
 
 # Install document_intelligence tasks
-COPY ./packages/nougat_cpu /nougat_task
-WORKDIR /nougat_task
+COPY ./packages/equation_extraction /equation_extraction_task
+WORKDIR /equation_extraction_task
 RUN pip install --no-cache-dir -e .
 
 #Install uvicorn and supervisord
