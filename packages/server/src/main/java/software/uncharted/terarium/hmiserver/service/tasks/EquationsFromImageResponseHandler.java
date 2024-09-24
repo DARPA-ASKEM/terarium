@@ -1,11 +1,10 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.Data;
@@ -86,14 +85,12 @@ public class EquationsFromImageResponseHandler extends TaskResponseHandler {
 			}
 
 			// get the existing equations and add the new ones
-			final JsonNode existingEquations = document.getMetadata().get("equations");
-			final List<JsonNode> newEquations = new ArrayList<>();
+			final ArrayNode existingEquations = (ArrayNode) document.getMetadata().get("equations");
+			for (final JsonNode equation : equations.response.get("equations")) {
+				existingEquations.add(equation);
+			}
 
-			newEquations.addAll(objectMapper.convertValue(existingEquations, new TypeReference<List<JsonNode>>() {}));
-			newEquations.addAll(
-				objectMapper.convertValue(equations.response.get("equations"), new TypeReference<List<JsonNode>>() {})
-			);
-			document.getMetadata().put("equations", objectMapper.valueToTree(newEquations));
+			document.getMetadata().put("equations", existingEquations);
 
 			documentService.updateAsset(document, props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER).orElseThrow();
 
