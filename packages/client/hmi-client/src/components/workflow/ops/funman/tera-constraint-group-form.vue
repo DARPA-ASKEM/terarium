@@ -101,19 +101,29 @@
 			<!--TODO: should be based on time variable in model semantics-->
 			days.
 		</p>
-		<div class="flex align-items-center gap-6 mt-3">
+		<!--TODO: Add dataset column -> variable mapping for following option-->
+		<div class="flex align-items-center gap-2 mt-3">
+			<div v-if="config.constraintType === ConstraintType.LinearlyConstrained" class="flex align-items-center gap-2">
+				<tera-input-number
+					auto-width
+					:model-value="config.interval.lb"
+					@update:model-value="emit('update-self', { key: 'interval', value: { lb: $event, ub: config.interval.ub } })"
+				/>
+				<katex-element :expression="stringToLatexExpression(`\\leq [${config.variables.join(', ')}] \\leq`)" />
+				<tera-input-number
+					auto-width
+					:model-value="config.interval.ub"
+					@update:model-value="emit('update-self', { key: 'interval', value: { lb: config.interval.lb, ub: $event } })"
+				/>
+			</div>
 			<katex-element
-				v-if="
-					config.constraintType !== ConstraintType.LinearlyConstrained &&
-					config.constraintType !== ConstraintType.Following
-				"
+				v-else-if="config.constraintType !== ConstraintType.Following"
 				:expression="stringToLatexExpression(generateExpression())"
 			/>
 			<katex-element
 				:expression="stringToLatexExpression(`\\forall \\ t \\in [${config.timepoints.lb}, ${config.timepoints.ub}]`)"
 			/>
 		</div>
-		<!-- <katex-element :expression="stringToLatexExpression(`d/dt`)" /> -->
 		<!--TODO: See if we still want to customize weights-->
 		<!-- <ul v-if="config.weights && !isEmpty(config.weights)">
 			<li v-for="(variable, index) of config.variables" :key="index">
