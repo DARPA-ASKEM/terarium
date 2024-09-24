@@ -41,9 +41,23 @@
 													<InputSwitch class="mr-3" v-model="knobs.compartmentalConstraint.isActive" />
 												</div>
 											</header>
-											<div class="section-row">
-												<katex-element :expression="stringToLatexExpression(`${stateIds.join(' + ')} = ${mass}`)" />
-												<span v-for="v of stateIds" :key="v"> {{ v }} &#8805; 0, </span>
+											<div class="flex align-items-center gap-6">
+												<div>
+													<katex-element
+														:expression="
+															stringToLatexExpression(
+																stateIds
+																	.map((s, index) => `${s}${index === stateIds.length - 1 ? `\\geq 0` : ', '}`)
+																	.join('')
+															)
+														"
+													/>
+												</div>
+												<katex-element
+													:expression="
+														stringToLatexExpression(`${stateIds.join(' + ')} = ${displayNumber(mass)} \\ \\forall \\ t`)
+													"
+												/>
 											</div>
 										</section>
 									</li>
@@ -179,6 +193,7 @@ import TeraFunmanOutput from '@/components/workflow/ops/funman/tera-funman-outpu
 import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-constraint-group-form.vue';
 import { DrilldownTabs } from '@/types/common';
 import { stringToLatexExpression } from '@/services/model';
+import { displayNumber } from '@/utils/number';
 import { FunmanOperationState, Constraint, ConstraintType, CompartmentalConstraint } from './funman-operation';
 
 const props = defineProps<{
@@ -331,6 +346,7 @@ const runMakeQuery = async () => {
 			request.request.config.normalization_constant = parseFloat(mass.value);
 		}
 	}
+	console.log(request);
 	const response = await makeQueries(request);
 
 	// Setup the in-progress id
@@ -610,15 +626,6 @@ ul {
 		background: var(--gray-50);
 		border: 1px solid var(--surface-border-light);
 		border-radius: var(--border-radius);
-	}
-
-	& .section-row {
-		display: flex;
-		padding: 0.5rem 0rem;
-		align-items: center;
-		gap: 0.5rem;
-		align-self: stretch;
-		flex-wrap: wrap;
 	}
 }
 

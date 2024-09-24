@@ -101,7 +101,21 @@
 			<!--TODO: should be based on time variable in model semantics-->
 			days.
 		</p>
-		<ul v-if="config.weights && !isEmpty(config.weights)">
+		<div class="flex align-items-center gap-6 mt-3">
+			<katex-element
+				v-if="
+					config.constraintType !== ConstraintType.LinearlyConstrained &&
+					config.constraintType !== ConstraintType.Following
+				"
+				:expression="stringToLatexExpression(generateExpression())"
+			/>
+			<katex-element
+				:expression="stringToLatexExpression(`\\forall \\ t \\in [${config.timepoints.lb}, ${config.timepoints.ub}]`)"
+			/>
+		</div>
+		<!-- <katex-element :expression="stringToLatexExpression(`d/dt`)" /> -->
+		<!--TODO: See if we still want to customize weights-->
+		<!-- <ul v-if="config.weights && !isEmpty(config.weights)">
 			<li v-for="(variable, index) of config.variables" :key="index">
 				<tera-input-number
 					:label="variable + ' Weight'"
@@ -117,12 +131,12 @@
 					"
 				/>
 			</li>
-		</ul>
+		</ul> -->
 	</section>
 </template>
 
 <script setup lang="ts">
-import { isEmpty, cloneDeep } from 'lodash';
+// import { isEmpty, cloneDeep } from 'lodash';
 import { computed } from 'vue';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import MultiSelect from 'primevue/multiselect';
@@ -131,6 +145,7 @@ import InputSwitch from 'primevue/inputswitch';
 import Button from 'primevue/button';
 import { ConstraintGroup, Constraint, ConstraintType } from '@/components/workflow/ops/funman/funman-operation';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
+import { stringToLatexExpression } from '@/services/model';
 
 const props = defineProps<{
 	stateIds: string[];
@@ -153,6 +168,30 @@ const variableOptions = computed(() => {
 			return [];
 	}
 });
+
+function generateExpression() {
+	const { constraintType, interval, variables } = props.config;
+	let expression = '';
+	for (let i = 0; i < variables.length; i++) {
+		let expressionPart = variables[i];
+		if (constraintType === ConstraintType.Increasing || constraintType === ConstraintType.Decreasing) {
+			expressionPart = `d/dt ${variables[i]}`;
+		}
+		if (i === variables.length - 1) {
+			if (constraintType === ConstraintType.LessThan || constraintType === ConstraintType.Decreasing) {
+				expressionPart += `\\leq`;
+				expressionPart += constraintType === ConstraintType.Decreasing ? '0' : `${interval?.ub ?? 0}`;
+			} else {
+				expressionPart += `\\geq`;
+				expressionPart += constraintType === ConstraintType.Increasing ? '0' : `${interval?.lb ?? 0}`;
+			}
+		} else {
+			expressionPart += ',';
+		}
+		expression += expressionPart;
+	}
+	return expression;
+}
 </script>
 
 <style scoped>
