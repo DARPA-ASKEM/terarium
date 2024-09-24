@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -203,7 +202,7 @@ public class ExtractionService {
 
 			notificationInterface.sendMessage("Starting equation extraction...");
 			log.info("Starting equation extraction for document: {}", documentName);
-			final Future<EquationExtraction> EquationExtractionFuture = extractEquationsFromPDF(
+			final Future<EquationExtraction> equationExtractionFuture = extractEquationsFromPDF(
 				notificationInterface,
 				documentContents,
 				userId
@@ -220,10 +219,10 @@ public class ExtractionService {
 
 			try {
 				// wait for equation extraction
-				final EquationExtraction EquationExtraction = EquationExtractionFuture.get();
+				final EquationExtraction equationExtraction = equationExtractionFuture.get();
 				notificationInterface.sendMessage("Equation extraction complete!");
 				log.info("Equation extraction complete for document: {}", documentName);
-				extractionResponse.equations = EquationExtraction.equations;
+				extractionResponse.equations = equationExtraction.equations;
 			} catch (final Exception e) {
 				notificationInterface.sendMessage("Equation extraction failed, continuing");
 				log.error("Equation extraction failed for document: {}", documentName, e);
@@ -777,7 +776,7 @@ public class ExtractionService {
 		final NotificationGroupInstance<Properties> notificationInterface,
 		final byte[] pdf,
 		final String userId
-	) throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException, IOException {
+	) throws TimeoutException, InterruptedException, ExecutionException, IOException {
 		final int REQUEST_TIMEOUT_MINUTES = 5;
 
 		int responseCode = HttpURLConnection.HTTP_BAD_GATEWAY;
@@ -844,7 +843,7 @@ public class ExtractionService {
 		final NotificationGroupInstance<Properties> notificationInterface,
 		final String userId,
 		final byte[] pdf
-	) throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException, IOException {
+	) throws TimeoutException, InterruptedException, ExecutionException, IOException {
 		final int REQUEST_TIMEOUT_MINUTES = 5;
 
 		final TaskRequest req = new TaskRequest();
@@ -954,8 +953,7 @@ public class ExtractionService {
 						final ObjectMapper objectMapper = new ObjectMapper();
 
 						final JsonNode rootNode = objectMapper.readTree(bytes);
-						if (rootNode instanceof ArrayNode) {
-							final ArrayNode arrayNode = (ArrayNode) rootNode;
+						if (rootNode instanceof ArrayNode arrayNode) {
 							for (final JsonNode record : arrayNode) {
 								if (record.has("detect_cls") && record.get("detect_cls").asText().equals("Abstract")) {
 									abstractJsonNode = record;
