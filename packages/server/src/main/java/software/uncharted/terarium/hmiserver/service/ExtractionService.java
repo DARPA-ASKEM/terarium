@@ -65,7 +65,6 @@ import software.uncharted.terarium.hmiserver.service.notification.NotificationGr
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
 import software.uncharted.terarium.hmiserver.service.tasks.ExtractEquationsResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ExtractTextResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.JsonUtil;
@@ -113,9 +112,6 @@ public class ExtractionService {
 
 	@Value("${terarium.extractionService.poolSize:10}")
 	private int POOL_SIZE;
-
-	@Value("${openai-api-key:}")
-	String OPENAI_API_KEY;
 
 	private ExecutorService executor;
 	private final Environment env;
@@ -243,36 +239,6 @@ public class ExtractionService {
 				} catch (final Exception e) {
 					notificationInterface.sendMessage("Variable extraction failed, continuing");
 					extractionResponse.partialFailure = true;
-				}
-
-				// check for input length, if too long, do not send request
-				if (extractionResponse.documentText.length() > ModelCardResponseHandler.MAX_TEXT_SIZE) {
-					log.warn("Document {} text too long for GoLLM model card task, not sending request");
-				} else {
-					// dispatch GoLLM model card request
-					final ModelCardResponseHandler.Input input = new ModelCardResponseHandler.Input();
-					input.setResearchPaper(extractionResponse.documentText);
-
-					// Create the task
-					final TaskRequest req = new TaskRequest();
-					req.setType(TaskRequest.TaskType.GOLLM);
-					req.setScript(ModelCardResponseHandler.NAME);
-					req.setInput(objectMapper.writeValueAsBytes(input));
-					req.setUserId(userId);
-
-					notificationInterface.sendMessage("Sending GoLLM model card request");
-
-					try {
-						final TaskResponse resp = taskService.runTaskSync(req);
-						extractionResponse.gollmCard = objectMapper
-							.readValue(resp.getOutput(), ModelCardResponseHandler.Response.class)
-							.getResponse();
-						notificationInterface.sendMessage("Model Card created");
-					} catch (final Exception e) {
-						notificationInterface.sendMessage("Model Card creation failed, continuing");
-						log.error("Model Card creation failed for document: {}", documentName, e);
-						extractionResponse.partialFailure = true;
-					}
 				}
 			}
 
