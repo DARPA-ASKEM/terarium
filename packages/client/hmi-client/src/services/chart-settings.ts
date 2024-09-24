@@ -20,6 +20,8 @@ export interface LLMGeneratedChartAnnotation {
  * @param {ChartSettingType} type - The type of chart setting to update.
  * @returns {ChartSetting[]} The updated array of chart settings.
  */
+
+// this would return duplicates if found, is that desired?
 export function updateChartSettingsBySelectedVariables(
 	settings: ChartSetting[],
 	type: ChartSettingType,
@@ -42,6 +44,28 @@ export function updateChartSettingsBySelectedVariables(
 	});
 	const newSettings: ChartSetting[] = [...previousSettings, ...selectedSettings];
 	return newSettings;
+}
+
+export function insertChartSettingsBySelectedVariables(
+	settings: ChartSetting[],
+	type: ChartSettingType,
+	variableSelection: string[]
+) {
+	const previousSettings = settings.filter((setting) => setting.type !== type);
+	variableSelection.forEach((variable) => {
+		const found = previousSettings.find(
+			(setting) => setting.selectedVariables[0] === variable && setting.type === type
+		);
+		if (!found) {
+			settings.push({
+				id: uuidv4(),
+				name: variable,
+				selectedVariables: [variable],
+				type
+			} as ChartSetting);
+		}
+	});
+	return settings;
 }
 
 /**

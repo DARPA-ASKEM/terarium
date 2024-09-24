@@ -34,6 +34,35 @@ export interface ForecastChartLayer {
 	groupField?: string;
 }
 
+export interface ForecastChartAnnotation {
+	id: string;
+	layerSpec: any;
+	isLLMGenerated: boolean;
+	metadata: any;
+}
+export interface ForecastChart {
+	$schema: string;
+	title: any;
+	description: string;
+	width: number;
+	height: number;
+	autosize: {
+		type: string;
+	};
+	config: {
+		font: string;
+	};
+
+	// layers
+	layer: any;
+
+	// Make layers independent
+	resolve: {
+		legend: { color: string };
+		scale: { color: string };
+	};
+}
+
 export interface HistogramChartOptions extends BaseChartOptions {
 	maxBins?: number;
 	variables: { field: string; label?: string; width: number; color: string }[];
@@ -373,7 +402,7 @@ export function createForecastChart(
 	};
 
 	// Start building
-	const spec: any = {
+	const spec: ForecastChart = {
 		$schema: VEGALITE_SCHEMA,
 		title: titleObj,
 		description: '',

@@ -401,7 +401,7 @@ import {
 	generateForecastChartAnnotation,
 	removeChartSettingById,
 	saveAnnotation,
-	updateChartSettingsBySelectedVariables
+	insertChartSettingsBySelectedVariables
 } from '@/services/chart-settings';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -606,17 +606,32 @@ const lossChartSize = computed(() => drilldownChartSize(lossChartContainer.value
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 
-const chartSettings = computed(() => props.node.state.chartSettings ?? []);
-const selectedParameterSettings = computed(() =>
-	chartSettings.value.filter((setting) => setting.type === ChartSettingType.DISTRIBUTION_COMPARISON)
-);
-const selectedVariableSettings = computed(() =>
-	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON)
-);
+// probably need to refactor these as well, stop using computeds and update original array
+const chartSettings = ref(props.node.state.chartSettings ?? []);
+console.log('chart settings');
+console.log(chartSettings.value);
 
-const selectedErrorVariableSettings = computed(() =>
-	chartSettings.value.filter((setting) => setting.type === ChartSettingType.ERROR_DISTRIBUTION)
-);
+function getSelectedOfType(settings, type) {
+	return settings.value.filter((setting) => setting.type === type);
+}
+
+let selectedParameterSettings = getSelectedOfType(chartSettings, ChartSettingType.DISTRIBUTION_COMPARISON);
+let selectedVariableSettings = getSelectedOfType(chartSettings, ChartSettingType.VARIABLE_COMPARISON);
+let selectedErrorVariableSettings = getSelectedOfType(chartSettings, ChartSettingType.ERROR_DISTRIBUTION);
+
+watch(chartSettings, async (newSetting, oldSetting) => {
+	console.log('new');
+	console.log(newSetting);
+	console.log('old');
+	console.log(oldSetting);
+	if (_.isEqual(newSetting, oldSetting)) {
+		// do nothing
+	} else {
+		selectedParameterSettings = getSelectedOfType(chartSettings, ChartSettingType.DISTRIBUTION_COMPARISON);
+		selectedVariableSettings = getSelectedOfType(chartSettings, ChartSettingType.VARIABLE_COMPARISON);
+		selectedErrorVariableSettings = getSelectedOfType(chartSettings, ChartSettingType.ERROR_DISTRIBUTION);
+	}
+});
 
 // --- Handle chart annotations
 const chartAnnotations = ref<ChartAnnotation[]>([]);
@@ -678,7 +693,8 @@ const preparedChartInputs = computed(() => {
 
 const groupedInterventionOutputs = computed(() => _.groupBy(interventionPolicy.value?.interventions, 'appliedTo'));
 
-const preparedCharts = computed(() => {
+// need to update existing preparedCharts rather than re-compute entirely
+const preparedCharts = ref(() => {
 	if (!preparedChartInputs.value) return {};
 	const { result, resultSummary, reverseMap } = preparedChartInputs.value;
 	const state = props.node.state;
@@ -878,7 +894,8 @@ const runCalibrate = async () => {
 		state.inProgressPreForecastId = '';
 
 		// show selected input settings in the charts & output panel
-		state.chartSettings = updateChartSettingsBySelectedVariables(
+		// update rather than replace?
+		state.chartSettings = insertChartSettingsBySelectedVariables(
 			chartSettings.value,
 			ChartSettingType.VARIABLE_COMPARISON,
 			mapping.value
@@ -911,7 +928,7 @@ function removeChartSetting(chartId) {
 function updateSelectedParameters(event) {
 	emit('update-state', {
 		...props.node.state,
-		chartSettings: updateChartSettingsBySelectedVariables(
+		chartSettings: insertChartSettingsBySelectedVariables(
 			chartSettings.value,
 			ChartSettingType.DISTRIBUTION_COMPARISON,
 			event.selectedVariable
@@ -922,7 +939,7 @@ function updateSelectedParameters(event) {
 function updateSelectedVariables(event) {
 	emit('update-state', {
 		...props.node.state,
-		chartSettings: updateChartSettingsBySelectedVariables(
+		chartSettings: insertChartSettingsBySelectedVariables(
 			chartSettings.value,
 			ChartSettingType.VARIABLE_COMPARISON,
 			event.selectedVariable
@@ -933,7 +950,7 @@ function updateSelectedVariables(event) {
 function updateSelectedErrorVariables(event) {
 	emit('update-state', {
 		...props.node.state,
-		chartSettings: updateChartSettingsBySelectedVariables(
+		chartSettings: insertChartSettingsBySelectedVariables(
 			chartSettings.value,
 			ChartSettingType.ERROR_DISTRIBUTION,
 			event.selectedVariable
