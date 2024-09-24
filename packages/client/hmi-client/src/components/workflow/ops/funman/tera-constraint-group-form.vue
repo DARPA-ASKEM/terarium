@@ -117,7 +117,7 @@
 						@update:model-value="
 							($event) => {
 								const newWeights = cloneDeep(config.weights);
-								if (!newWeights) return;
+								if (isNaN($event)) return; // Don't accept empty value
 								newWeights[index] = $event;
 								emit('update-self', { key: 'weights', value: newWeights });
 							}
@@ -142,6 +142,7 @@
 				:expression="stringToLatexExpression(`\\forall \\ t \\in [${config.timepoints.lb}, ${config.timepoints.ub}]`)"
 			/>
 		</div>
+		{{ config.weights }}
 	</section>
 </template>
 

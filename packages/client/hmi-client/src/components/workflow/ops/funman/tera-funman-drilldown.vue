@@ -42,17 +42,15 @@
 												</div>
 											</header>
 											<div class="flex align-items-center gap-6">
-												<div>
-													<katex-element
-														:expression="
-															stringToLatexExpression(
-																stateIds
-																	.map((s, index) => `${s}${index === stateIds.length - 1 ? `\\geq 0` : ','}`)
-																	.join('')
-															)
-														"
-													/>
-												</div>
+												<katex-element
+													:expression="
+														stringToLatexExpression(
+															stateIds
+																.map((s, index) => `${s}${index === stateIds.length - 1 ? `\\geq 0` : ','}`)
+																.join('')
+														)
+													"
+												/>
 												<katex-element
 													:expression="
 														stringToLatexExpression(`${stateIds.join('+')} = ${displayNumber(mass)} \\ \\forall \\ t`)
@@ -352,7 +350,6 @@ const runMakeQuery = async () => {
 			request.request.config.normalization_constant = parseFloat(mass.value);
 		}
 	}
-	console.log(request);
 	const response = await makeQueries(request);
 
 	// Setup the in-progress id
