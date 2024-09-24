@@ -118,7 +118,7 @@
 import Dropdown from 'primevue/dropdown';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import InputSwitch from 'primevue/inputswitch';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { StaticIntervention } from '@/types/Types';
 import {
 	InterventionPolicyGroupForm,
@@ -150,6 +150,14 @@ const showNewValueOptions = computed(
 	() =>
 		knobs.value.optimizationType === OptimizationInterventionObjective.paramValue ||
 		knobs.value.optimizationType === OptimizationInterventionObjective.paramValueAndStartTime
+);
+
+watch(
+	() => props.config,
+	() => {
+		knobs.value = { ...props.config };
+		staticInterventions.value = knobs.value.intervention.staticInterventions;
+	}
 );
 </script>
 
