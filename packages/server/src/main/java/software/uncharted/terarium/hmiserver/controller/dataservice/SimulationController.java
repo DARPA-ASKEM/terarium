@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -370,7 +369,7 @@ public class SimulationController {
 			datasetService.updateAsset(dataset, projectId, permission);
 
 			// If this is a temporary asset, do not add to project.
-			if (addToProject == false) {
+			if (!addToProject) {
 				return ResponseEntity.status(HttpStatus.CREATED).body(dataset);
 			}
 
