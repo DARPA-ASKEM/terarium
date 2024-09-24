@@ -26,10 +26,6 @@ RUN ./gradlew bootJar
 
 WORKDIR /
 
-# Copy the jar to the root directory
-RUN mv /taskrunner/build/libs/*.jar .
-RUN mv /terarium-1.0.0-SNAPSHOT.jar /taskrunner.jar
-
 # ------------------------------------------------------------------------------
 FROM python:3.11-slim-bookworm
 

@@ -223,6 +223,7 @@ import * as ModelComparisonOp from '@/components/workflow/ops/model-comparison/m
 import * as RegriddingOp from '@/components/workflow/ops/regridding/mod';
 import * as InterventionPolicyOp from '@/components/workflow/ops/intervention-policy/mod';
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
+import { activeProjectId } from '@/composables/activeProject';
 
 const WORKFLOW_SAVE_INTERVAL = 4000;
 
@@ -279,6 +280,7 @@ const contextMenu = ref();
 
 const isRenamingWorkflow = ref(false);
 const newWorkflowName = ref('');
+const currentProjectId = ref<string | null>(null);
 
 const optionsMenu = ref();
 const optionsMenuItems = ref([
@@ -308,7 +310,7 @@ async function updateWorkflowName() {
 
 // eslint-disable-next-line
 const _saveWorkflow = async () => {
-	await workflowService.updateWorkflow(wf.value.dump());
+	await workflowService.updateWorkflow(wf.value.dump(), currentProjectId.value ?? undefined);
 	// wf.value.update(updated);
 };
 // eslint-disable-next-line
@@ -972,6 +974,7 @@ onMounted(() => {
 	}, WORKFLOW_SAVE_INTERVAL);
 
 	subscribe(ClientEventType.WorkflowUpdate, updateWorkflowHandler);
+	currentProjectId.value = activeProjectId.value;
 });
 
 onUnmounted(() => {

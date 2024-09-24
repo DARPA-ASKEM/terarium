@@ -17,6 +17,13 @@
 					<div class="toolbar">
 						<p>Click Run to start optimization.</p>
 						<span class="flex gap-2">
+							<Button
+								label="Reset"
+								outlined
+								@click="resetState"
+								severity="secondary"
+								:disabled="_.isEmpty(node.outputs[0].value)"
+							/>
 							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 							<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runOptimize" />
 						</span>
@@ -25,7 +32,7 @@
 					<section class="form-section">
 						<h5>Success criteria <i v-tooltip="criteriaTooltip" class="pi pi-info-circle info-circle" /></h5>
 						<tera-optimize-criterion-group-form
-							v-for="(cfg, index) in node.state.constraintGroups"
+							v-for="(cfg, index) in knobs.constraintGroups"
 							:key="selectedOutputId + ':' + index"
 							:index="index"
 							:criterion="cfg"
@@ -45,7 +52,7 @@
 							Intervention policy
 							<i v-tooltip="interventionPolicyToolTip" class="pi pi-info-circle info-circle" />
 						</h5>
-						<template v-for="(cfg, idx) in node.state.interventionPolicyGroups">
+						<template v-for="(cfg, idx) in knobs.interventionPolicyGroups">
 							<tera-static-intervention-policy-group
 								v-if="cfg.intervention?.staticInterventions && cfg.intervention?.staticInterventions.length > 0"
 								:key="cfg.id || '' + idx"
@@ -53,11 +60,11 @@
 								@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
 							/>
 						</template>
-						<section class="empty-state" v-if="node.state.interventionPolicyGroups.length === 0">
+						<section class="empty-state" v-if="knobs.interventionPolicyGroups.length === 0">
 							<!-- TODO: This only works if the user clicks refresh !?!? -->
 							<p class="mt-1">No intervention policies have been added.</p>
 						</section>
-						<template v-for="(cfg, idx) in node.state.interventionPolicyGroups">
+						<template v-for="(cfg, idx) in knobs.interventionPolicyGroups">
 							<tera-dynamic-intervention-policy-group
 								v-if="cfg.intervention?.dynamicInterventions && cfg.intervention?.dynamicInterventions.length > 0"
 								:key="idx"
@@ -305,7 +312,7 @@
 						<Accordion multiple :active-index="[0, 1, 2]">
 							<AccordionTab header="Success criteria">
 								<ul>
-									<li v-for="(_constraint, key) in node.state.constraintGroups" :key="key">
+									<li v-for="(_constraint, key) in knobs.constraintGroups" :key="key">
 										<vega-chart
 											expandable
 											are-embed-actions-visible
@@ -431,6 +438,7 @@ import MultiSelect from 'primevue/multiselect';
 import { mergeResults, renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
+import { useConfirm } from 'primevue/useconfirm';
 import teraOptimizeCriterionGroupForm from './tera-optimize-criterion-group-form.vue';
 import TeraStaticInterventionPolicyGroup from './tera-static-intervention-policy-group.vue';
 import TeraDynamicInterventionPolicyGroup from './tera-dynamic-intervention-policy-group.vue';
@@ -442,6 +450,8 @@ import {
 	OptimizeCiemssOperationState,
 	OptimizationInterventionObjective
 } from './optimize-ciemss-operation';
+
+const confirm = useConfirm();
 
 const isSidebarOpen = ref(true);
 
@@ -467,6 +477,8 @@ interface BasicKnobs {
 	optimizationRunId: string;
 	selectedInterventionVariables: string[];
 	selectedSimulationVariables: string[];
+	constraintGroups: Criterion[];
+	interventionPolicyGroups: InterventionPolicyGroupForm[];
 }
 
 const knobs = ref<BasicKnobs>({
@@ -479,7 +491,9 @@ const knobs = ref<BasicKnobs>({
 	postForecastRunId: props.node.state.postForecastRunId ?? '',
 	optimizationRunId: props.node.state.optimizationRunId ?? '',
 	selectedInterventionVariables: props.node.state.selectedInterventionVariables ?? [],
-	selectedSimulationVariables: props.node.state.selectedSimulationVariables ?? []
+	selectedSimulationVariables: props.node.state.selectedSimulationVariables ?? [],
+	constraintGroups: props.node.state.constraintGroups ?? [],
+	interventionPolicyGroups: props.node.state.interventionPolicyGroups ?? []
 });
 
 const criteriaTooltip = 'TODO';
@@ -502,9 +516,9 @@ const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 const cancelRunId = computed(() => props.node.state.inProgressPostForecastId || props.node.state.inProgressOptimizeId);
 
-const activePolicyGroups = computed(() => props.node.state.interventionPolicyGroups.filter((ele) => ele.isActive));
+const activePolicyGroups = computed(() => knobs.value.interventionPolicyGroups.filter((ele) => ele.isActive));
 
-const inactivePolicyGroups = computed(() => props.node.state.interventionPolicyGroups.filter((ele) => !ele.isActive));
+const inactivePolicyGroups = computed(() => knobs.value.interventionPolicyGroups.filter((ele) => !ele.isActive));
 let pyciemssMap: Record<string, string> = {};
 
 const showSpinner = computed<boolean>(
@@ -515,11 +529,11 @@ const showModelModal = ref(false);
 const displayOptimizationResultMessage = ref(true);
 
 const isRunDisabled = computed(() => {
-	const activeConstraintGroups = props.node.state.constraintGroups.filter((ele) => ele.isActive);
+	const activeConstraintGroups = knobs.value.constraintGroups.filter((ele) => ele.isActive);
 	return (
 		activeConstraintGroups.length === 0 ||
 		!activeConstraintGroups.every((ele) => ele.targetVariable) ||
-		props.node.state.interventionPolicyGroups.length === 0 ||
+		knobs.value.interventionPolicyGroups.length === 0 ||
 		activePolicyGroups.value.length <= 0
 	);
 });
@@ -583,35 +597,19 @@ const onSelection = (id: string) => {
 };
 
 const updateInterventionPolicyGroupForm = (index: number, config: InterventionPolicyGroupForm) => {
-	const state = _.cloneDeep(props.node.state);
-	if (!state.interventionPolicyGroups) return;
-
-	state.interventionPolicyGroups[index] = config;
-	emit('update-state', state);
+	knobs.value.interventionPolicyGroups[index] = config;
 };
 
 const addCriterionGroupForm = () => {
-	const state = _.cloneDeep(props.node.state);
-	if (!state.constraintGroups) return;
-
-	state.constraintGroups.push(defaultCriterion);
-	emit('update-state', state);
+	knobs.value.constraintGroups.push(defaultCriterion);
 };
 
 const deleteCriterionGroupForm = (index: number) => {
-	const state = _.cloneDeep(props.node.state);
-	if (!state.constraintGroups) return;
-
-	state.constraintGroups.splice(index, 1);
-	emit('update-state', state);
+	knobs.value.constraintGroups.splice(index, 1);
 };
 
 const updateCriterionGroupForm = (index: number, config: Criterion) => {
-	const state = _.cloneDeep(props.node.state);
-	if (!state.constraintGroups) return;
-
-	state.constraintGroups[index] = config;
-	emit('update-state', state);
+	knobs.value.constraintGroups[index] = config;
 };
 
 const toggleAdditionalOptions = () => {
@@ -695,11 +693,15 @@ const initialize = async () => {
 const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => {
 	const state = _.cloneDeep(props.node.state);
 	// If already set + not changed since set, do not reset.
-	if (state.interventionPolicyGroups.length > 0 && state.interventionPolicyGroups[0].id === interventionPolicy.id) {
+	if (
+		knobs.value.interventionPolicyGroups.length > 0 &&
+		knobs.value.interventionPolicyGroups[0].id === interventionPolicy.id
+	) {
 		return;
 	}
 	state.interventionPolicyId = interventionPolicy.id ?? '';
-	state.interventionPolicyGroups = []; // Reset prior to populating.
+
+	knobs.value.interventionPolicyGroups = []; // Reset prior to populating.
 	if (interventionPolicy.interventions && interventionPolicy.interventions.length > 0) {
 		interventionPolicy.interventions.forEach((intervention) => {
 			const isNotActive = intervention.dynamicInterventions?.length > 0 || intervention.staticInterventions?.length > 1;
@@ -709,7 +711,7 @@ const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => 
 			newIntervention.isActive = !isNotActive;
 			newIntervention.startTimeGuess = intervention.staticInterventions[0]?.timestep;
 			newIntervention.initialGuessValue = intervention.staticInterventions[0]?.value;
-			state.interventionPolicyGroups.push(newIntervention);
+			knobs.value.interventionPolicyGroups.push(newIntervention);
 		});
 	}
 	emit('update-state', state);
@@ -756,7 +758,7 @@ const runOptimize = async () => {
 	});
 	// At the moment we only accept one intervention type. Pyciemss, pyciemss-service and this will all need to be updated.
 	// https://github.com/DARPA-ASKEM/terarium/issues/3909
-	const interventionType = props.node.state.interventionPolicyGroups[0].optimizationType;
+	const interventionType = knobs.value.interventionPolicyGroups[0].optimizationType;
 
 	// These are interventions to be optimized over.
 	const optimizeInterventions: OptimizeInterventions = {
@@ -772,7 +774,7 @@ const runOptimize = async () => {
 	const fixedInterventions: Intervention[] = _.cloneDeep(inactivePolicyGroups.value.map((ele) => ele.intervention));
 
 	const qois: OptimizeQoi[] = [];
-	const activeConstraintGroups = props.node.state.constraintGroups.filter((ele) => ele.isActive);
+	const activeConstraintGroups = knobs.value.constraintGroups.filter((ele) => ele.isActive);
 	activeConstraintGroups.forEach((constraintGroup) =>
 		qois.push({
 			contexts: [constraintGroup.targetVariable],
@@ -822,14 +824,14 @@ const setOutputSettingDefaults = () => {
 	const selectedSimulationVariables: Array<string> = [];
 
 	if (!knobs.value.selectedInterventionVariables.length) {
-		props.node.state.interventionPolicyGroups.forEach((intervention) =>
+		knobs.value.interventionPolicyGroups.forEach((intervention) =>
 			selectedInterventionVariables.push(intervention.intervention.staticInterventions[0].appliedTo)
 		);
 		knobs.value.selectedInterventionVariables = [...new Set(selectedInterventionVariables)];
 	}
 
 	if (!knobs.value.selectedSimulationVariables.length) {
-		props.node.state.constraintGroups.forEach((constraint) => {
+		knobs.value.constraintGroups.forEach((constraint) => {
 			if (constraint.targetVariable) {
 				// Use modelStateAndObsOptions to map from value -> label as simulation selection uses S not S_State
 				const userSelection = modelStateAndObsOptions.value.find(
@@ -898,11 +900,9 @@ const setOutputValues = async () => {
 };
 
 const preProcessedInterventionsData = computed<Dictionary<Intervention[]>>(() => {
-	const state = _.cloneDeep(props.node.state);
-
 	// Combine before and after interventions
 	const combinedInterventions = [
-		...state.interventionPolicyGroups.flatMap((group) => group.intervention),
+		...knobs.value.interventionPolicyGroups.flatMap((group) => group.intervention),
 		...(optimizedInterventionPolicy.value?.interventions || [])
 	];
 
@@ -917,7 +917,7 @@ onMounted(async () => {
 const preparedSuccessCriteriaCharts = computed(() => {
 	const postForecastRunId = props.node.state.postForecastRunId;
 
-	return props.node.state.constraintGroups
+	return knobs.value.constraintGroups
 		.filter((ele) => ele.isActive)
 		.map((constraint) =>
 			createSuccessCriteriaChart(
@@ -1032,6 +1032,21 @@ const onSaveForReuse = async () => {
 	}
 };
 
+// reset drilldown state
+const resetState = () => {
+	confirm.require({
+		header: 'Reset to original optimized state',
+		message: 'Are you sure you want to reset the state?',
+		accept: () => {
+			// Retore to the original output port state
+			const outputPort = props.node.outputs.find((output) => output.id === selectedOutputId.value);
+			if (outputPort) {
+				knobs.value = cloneDeep(outputPort.state as OptimizeCiemssOperationState);
+			}
+		}
+	});
+};
+
 watch(
 	() => knobs.value,
 	async () => {
@@ -1046,6 +1061,8 @@ watch(
 		state.optimizationRunId = knobs.value.optimizationRunId;
 		state.selectedInterventionVariables = knobs.value.selectedInterventionVariables;
 		state.selectedSimulationVariables = knobs.value.selectedSimulationVariables;
+		state.constraintGroups = knobs.value.constraintGroups;
+		state.interventionPolicyGroups = knobs.value.interventionPolicyGroups;
 		emit('update-state', state);
 	},
 	{ deep: true }
@@ -1060,9 +1077,7 @@ watch(
 			initialize();
 			if (props.node.state.postForecastRunId !== '' && props.node.state.preForecastRunId !== '') {
 				// The run has finished
-				knobs.value.optimizationRunId = props.node.state.optimizationRunId;
-				knobs.value.postForecastRunId = props.node.state.postForecastRunId;
-				knobs.value.preForecastRunId = props.node.state.preForecastRunId;
+				knobs.value = cloneDeep(props.node.state);
 				setOutputValues();
 			}
 		}
