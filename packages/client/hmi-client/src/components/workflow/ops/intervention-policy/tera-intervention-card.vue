@@ -1,6 +1,6 @@
 <template>
 	<div class="intervention-card">
-		<header class="flex align-items-center gap-2">
+		<header class="card-section">
 			<tera-toggleable-input :model-value="intervention.name" @update:model-value="onUpdateName($event)" tag="h6" />
 			<div class="flex align-items-center ml-auto">
 				<RadioButton
@@ -24,7 +24,7 @@
 			</div>
 		</header>
 		<section>
-			<div v-if="interventionType === 'static'" class="flex align-items-center flex-wrap gap-2 pb-2">
+			<div v-if="interventionType === 'static'" class="card-section pb-2">
 				Starting at day
 				<tera-input-number
 					auto-width
@@ -34,7 +34,7 @@
 				/>
 				,
 			</div>
-			<div class="flex align-items-center flex-wrap gap-2">
+			<div class="card-section">
 				<template v-if="interventionType === 'dynamic'">
 					Set
 					<section>
@@ -59,9 +59,7 @@
 				</template>
 				<!-- Static -->
 				<template v-if="interventionType === 'static'">
-					<!-- to -->
-					<template v-if="intervention.staticInterventions.length > 1">...</template>
-					<template v-else-if="intervention.staticInterventions.length === 1">
+					<template v-if="intervention.staticInterventions.length === 1">
 						Set
 						<section>
 							<Dropdown
@@ -340,6 +338,13 @@ const debounceUpdateState = debounce((intervention) => {
 		margin-bottom: 0;
 		color: var(--gray-300);
 	}
+}
+
+.card-section {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--gap-2);
 }
 
 .type-menu {

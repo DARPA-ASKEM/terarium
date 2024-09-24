@@ -19,9 +19,11 @@
 						:options="OPTIMIZATION_TYPE_MAP"
 						@change="emit('update-self', knobs)"
 					/>
-					for the {{ knobs.intervention.staticInterventions[0].type }}&nbsp;<strong>{{
-						knobs.intervention.staticInterventions[0].appliedTo
-					}}</strong>
+					<template v-if="knobs.intervention.staticInterventions.length === 1">
+						for the {{ knobs.intervention.staticInterventions[0].type }}&nbsp;<strong>{{
+							knobs.intervention.staticInterventions[0].appliedTo
+						}}</strong>
+					</template>
 				</p>
 				<p v-if="showNewValueOptions && staticInterventions.length === 1">
 					at the start time <strong>{{ staticInterventions[0].timestep }}</strong>
