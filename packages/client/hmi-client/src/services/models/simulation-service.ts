@@ -249,7 +249,6 @@ export async function makeEnsembleCiemssCalibration(params: EnsembleCalibrationC
 }
 
 export async function createSimulationAssets(
-	projectId: string,
 	simulationId: string,
 	simulationType: SimulationType,
 	newName: string | null,
@@ -257,7 +256,12 @@ export async function createSimulationAssets(
 ) {
 	try {
 		const response: AxiosResponse<TerariumAsset[]> = await API.post(
-			`/simulations/${simulationId}/create-assets-from-simulation/${projectId}?name=${newName}&simulation-type=${simulationType}${assetId ? `&asset-id=${assetId}` : ''}`
+			`/simulations/${simulationId}/create-assets-from-simulation`,
+			{
+				name: newName,
+				simulationType,
+				assetId
+			}
 		);
 		const output = response.data;
 		return output;

@@ -43,17 +43,13 @@ const newName = ref('');
 const emit = defineEmits(['close-modal', 'on-save']);
 
 function save() {
-	createSimulationAssets(
-		useProjects().activeProjectId.value,
-		props.simulationOptions.id,
-		props.simulationOptions.type,
-		newName.value,
-		props.assetId
-	).then((data) => {
-		useProjects().refresh();
-		closeModal();
-		emit('on-save', data);
-	});
+	createSimulationAssets(props.simulationOptions.id, props.simulationOptions.type, newName.value, props.assetId).then(
+		(data) => {
+			useProjects().refresh();
+			closeModal();
+			emit('on-save', data);
+		}
+	);
 }
 
 function closeModal() {

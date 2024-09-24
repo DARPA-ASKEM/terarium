@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -364,7 +365,7 @@ public class SimulationController {
 		}
 	}
 
-	@PostMapping("/{id}/create-assets-from-simulation/{project-id}")
+	@PostMapping("/{id}/create-assets-from-simulation")
 	@Secured(Roles.USER)
 	@Operation(summary = "Create assets from a simulation result, then add them to a project")
 	@ApiResponses(
@@ -387,15 +388,18 @@ public class SimulationController {
 	)
 	public ResponseEntity<List<TerariumAsset>> createAssetsFromSimulation(
 		@PathVariable("id") final UUID id,
-		@PathVariable("project-id") final UUID projectId,
-		@RequestParam("name") final String name,
-		@RequestParam("simulation-type") final SimulationType simulationType,
-		@RequestParam(name = "asset-id", required = false) final UUID assetId
+		@RequestBody final Map<String, Object> body,
+		@RequestParam("project-id") final UUID projectId
 	) {
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
 			projectId
 		);
+
+		// Extract parameters from the body map
+		final String name = (String) body.get("name");
+		final UUID assetId = body.get("assetId") != null ? UUID.fromString((String) body.get("assetId")) : null;
+		final SimulationType simulationType = SimulationType.valueOf((String) body.get("simulationType"));
 
 		try {
 			final Optional<Simulation> sim = simulationService.getAsset(id, permission);

@@ -97,8 +97,13 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 	) {
 		try {
 			final Optional<Simulation> sim = this.getAsset(simId, permission);
+			final Optional<Project> project = projectService.getProject(projectId);
 			if (sim.isEmpty()) {
 				throw new IllegalArgumentException("Simulation not found");
+			}
+
+			if (!project.isPresent() && addToProject) {
+				throw new IllegalArgumentException("Project not found");
 			}
 
 			final Dataset dataset = datasetService.createAsset(new Dataset(), projectId, permission);
@@ -118,16 +123,9 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 			this.copySimulationResultToDataset(sim.get(), dataset);
 			datasetService.updateAsset(dataset, projectId, permission);
 
-			if (!addToProject) {
-				return dataset;
-			}
-
-			// Add the dataset to the project
-			final Optional<Project> project = projectService.getProject(projectId);
-			if (project.isPresent()) {
+			// Add dataset to project
+			if (addToProject) {
 				projectAssetService.createProjectAsset(project.get(), AssetType.DATASET, dataset, permission);
-			} else {
-				throw new IllegalArgumentException("Project not found");
 			}
 
 			return dataset;
