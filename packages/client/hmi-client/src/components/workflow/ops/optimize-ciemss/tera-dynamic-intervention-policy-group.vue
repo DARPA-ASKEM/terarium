@@ -15,7 +15,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { DynamicIntervention } from '@/types/Types';
 import { InterventionPolicyGroupForm } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
 import InputSwitch from 'primevue/inputswitch';
@@ -26,7 +26,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-self']);
 
-const dynamicInterventions = ref<DynamicIntervention[]>(props.config.intervention.dynamicInterventions);
+const dynamicInterventions = computed<DynamicIntervention[]>(() => props.config.intervention.dynamicInterventions);
 
 const knobs = ref({
 	isActive: props.config.isActive ?? false
