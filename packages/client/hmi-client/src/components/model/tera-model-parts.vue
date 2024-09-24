@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep } from 'lodash';
+import { cloneDeep, isEqual } from 'lodash';
 import { computed, ref, onMounted, watch, PropType } from 'vue';
 import type { Model } from '@/types/Types';
 import TeraPetrinetParts from '@/components/model/petrinet/tera-petrinet-parts.vue';
@@ -101,11 +101,14 @@ onMounted(() => {
 	updateMMT();
 });
 
+// Only update the MMT when the semantics of the model changes outside this component.
 watch(
-	() => props.model,
-	() => {
-		transientModel.value = cloneDeep(props.model);
-		updateMMT();
+	() => props.model.semantics,
+	(newSemantics) => {
+		if (!isEqual(newSemantics, transientModel.value.semantics)) {
+			transientModel.value = cloneDeep(props.model);
+			updateMMT();
+		}
 	},
 	{ deep: true }
 );
