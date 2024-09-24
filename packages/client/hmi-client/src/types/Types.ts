@@ -593,12 +593,12 @@ export interface DynamicIntervention {
     parameter: string;
     threshold: number;
     value: number;
+    appliedTo: string;
+    type: InterventionSemanticType;
 }
 
 export interface Intervention {
     name: string;
-    appliedTo: string;
-    type: InterventionSemanticType;
     staticInterventions: StaticIntervention[];
     dynamicInterventions: DynamicIntervention[];
 }
@@ -611,6 +611,8 @@ export interface InterventionPolicy extends TerariumAsset {
 export interface StaticIntervention {
     timestep: number;
     value: number;
+    appliedTo: string;
+    type: InterventionSemanticType;
 }
 
 export interface DatasetLocation {
