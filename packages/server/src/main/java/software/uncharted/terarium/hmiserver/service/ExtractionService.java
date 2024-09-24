@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -65,7 +64,6 @@ import software.uncharted.terarium.hmiserver.service.notification.NotificationGr
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
 import software.uncharted.terarium.hmiserver.service.tasks.ExtractEquationsResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ExtractTextResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.JsonUtil;
@@ -113,9 +111,6 @@ public class ExtractionService {
 
 	@Value("${terarium.extractionService.poolSize:10}")
 	private int POOL_SIZE;
-
-	@Value("${openai-api-key:}")
-	String OPENAI_API_KEY;
 
 	private ExecutorService executor;
 	private final Environment env;
@@ -203,7 +198,7 @@ public class ExtractionService {
 
 			notificationInterface.sendMessage("Starting equation extraction...");
 			log.info("Starting equation extraction for document: {}", documentName);
-			final Future<EquationExtraction> EquationExtractionFuture = extractEquationsFromPDF(
+			final Future<EquationExtraction> equationExtractionFuture = extractEquationsFromPDF(
 				notificationInterface,
 				documentContents,
 				userId
@@ -220,10 +215,10 @@ public class ExtractionService {
 
 			try {
 				// wait for equation extraction
-				final EquationExtraction EquationExtraction = EquationExtractionFuture.get();
+				final EquationExtraction equationExtraction = equationExtractionFuture.get();
 				notificationInterface.sendMessage("Equation extraction complete!");
 				log.info("Equation extraction complete for document: {}", documentName);
-				extractionResponse.equations = EquationExtraction.equations;
+				extractionResponse.equations = equationExtraction.equations;
 			} catch (final Exception e) {
 				notificationInterface.sendMessage("Equation extraction failed, continuing");
 				log.error("Equation extraction failed for document: {}", documentName, e);
@@ -243,36 +238,6 @@ public class ExtractionService {
 				} catch (final Exception e) {
 					notificationInterface.sendMessage("Variable extraction failed, continuing");
 					extractionResponse.partialFailure = true;
-				}
-
-				// check for input length, if too long, do not send request
-				if (extractionResponse.documentText.length() > ModelCardResponseHandler.MAX_TEXT_SIZE) {
-					log.warn("Document {} text too long for GoLLM model card task, not sending request");
-				} else {
-					// dispatch GoLLM model card request
-					final ModelCardResponseHandler.Input input = new ModelCardResponseHandler.Input();
-					input.setResearchPaper(extractionResponse.documentText);
-
-					// Create the task
-					final TaskRequest req = new TaskRequest();
-					req.setType(TaskRequest.TaskType.GOLLM);
-					req.setScript(ModelCardResponseHandler.NAME);
-					req.setInput(objectMapper.writeValueAsBytes(input));
-					req.setUserId(userId);
-
-					notificationInterface.sendMessage("Sending GoLLM model card request");
-
-					try {
-						final TaskResponse resp = taskService.runTaskSync(req);
-						extractionResponse.gollmCard = objectMapper
-							.readValue(resp.getOutput(), ModelCardResponseHandler.Response.class)
-							.getResponse();
-						notificationInterface.sendMessage("Model Card created");
-					} catch (final Exception e) {
-						notificationInterface.sendMessage("Model Card creation failed, continuing");
-						log.error("Model Card creation failed for document: {}", documentName, e);
-						extractionResponse.partialFailure = true;
-					}
 				}
 			}
 
@@ -777,7 +742,7 @@ public class ExtractionService {
 		final NotificationGroupInstance<Properties> notificationInterface,
 		final byte[] pdf,
 		final String userId
-	) throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException, IOException {
+	) throws TimeoutException, InterruptedException, ExecutionException, IOException {
 		final int REQUEST_TIMEOUT_MINUTES = 5;
 
 		int responseCode = HttpURLConnection.HTTP_BAD_GATEWAY;
@@ -844,7 +809,7 @@ public class ExtractionService {
 		final NotificationGroupInstance<Properties> notificationInterface,
 		final String userId,
 		final byte[] pdf
-	) throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException, IOException {
+	) throws TimeoutException, InterruptedException, ExecutionException, IOException {
 		final int REQUEST_TIMEOUT_MINUTES = 5;
 
 		final TaskRequest req = new TaskRequest();
@@ -954,8 +919,7 @@ public class ExtractionService {
 						final ObjectMapper objectMapper = new ObjectMapper();
 
 						final JsonNode rootNode = objectMapper.readTree(bytes);
-						if (rootNode instanceof ArrayNode) {
-							final ArrayNode arrayNode = (ArrayNode) rootNode;
+						if (rootNode instanceof ArrayNode arrayNode) {
 							for (final JsonNode record : arrayNode) {
 								if (record.has("detect_cls") && record.get("detect_cls").asText().equals("Abstract")) {
 									abstractJsonNode = record;
