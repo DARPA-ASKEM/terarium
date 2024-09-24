@@ -449,7 +449,7 @@ public class GoLLMController {
 		return ResponseEntity.ok().body(resp);
 	}
 
-	@GetMapping("/interventions-from-document")
+	@PostMapping("/interventions-from-document")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM interventions-from-document` task")
 	@ApiResponses(
@@ -505,6 +505,7 @@ public class GoLLMController {
 
 		final InterventionsFromDocumentResponseHandler.Input input = new InterventionsFromDocumentResponseHandler.Input();
 		input.setResearchPaper(document.get().getText());
+
 		// stripping the metadata from the model before its sent since it can cause
 		// gollm to fail with massive inputs
 		model.get().setMetadata(null);
