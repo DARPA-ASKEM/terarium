@@ -233,16 +233,18 @@ const onUpdateName = (name: string) => {
 
 const onAppliedToParameterChange = (event: DropdownChangeEvent, index: number) => {
 	const intervention = cloneDeep(props.intervention);
-	const i = interventionType.value === 'static' ? intervention.staticInterventions : intervention.dynamicInterventions;
-	i[index].appliedTo = event.value;
+	const item =
+		interventionType.value === 'static' ? intervention.staticInterventions : intervention.dynamicInterventions;
+	item[index].appliedTo = event.value;
 	emit('update', intervention);
 };
 
 const onUpdateThreshold = (value: number, index: number) => {
 	const intervention = cloneDeep(props.intervention);
 	if (interventionType.value === 'static') {
-		intervention.staticInterventions.forEach((i) => {
-			i.timestep = value;
+		// The timestep value is the same only for static interventions
+		intervention.staticInterventions.forEach((item) => {
+			item.timestep = value;
 		});
 	} else {
 		intervention.dynamicInterventions[index].threshold = value;

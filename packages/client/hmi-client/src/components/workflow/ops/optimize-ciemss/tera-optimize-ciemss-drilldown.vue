@@ -731,7 +731,8 @@ const runOptimize = async () => {
 	const objectiveFunctionOption: string[] = [];
 
 	activePolicyGroups.value.forEach((ele) => {
-		paramNames.push(ele.intervention.appliedTo);
+		// Currently will only work with the one intervention
+		paramNames.push(ele.intervention.staticInterventions[0].appliedTo);
 		paramValues.push(ele.intervention.staticInterventions[0].value);
 		startTime.push(ele.intervention.staticInterventions[0].timestep);
 		objectiveFunctionOption.push(ele.objectiveFunctionOption);
@@ -822,7 +823,7 @@ const setOutputSettingDefaults = () => {
 
 	if (!knobs.value.selectedInterventionVariables.length) {
 		props.node.state.interventionPolicyGroups.forEach((intervention) =>
-			selectedInterventionVariables.push(intervention.intervention.appliedTo)
+			selectedInterventionVariables.push(intervention.intervention.staticInterventions[0].appliedTo)
 		);
 		knobs.value.selectedInterventionVariables = [...new Set(selectedInterventionVariables)];
 	}
