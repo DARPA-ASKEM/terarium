@@ -12,6 +12,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -65,7 +66,6 @@ import software.uncharted.terarium.hmiserver.service.notification.NotificationGr
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
 import software.uncharted.terarium.hmiserver.service.tasks.ExtractEquationsResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ExtractTextResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.JsonUtil;
@@ -178,6 +178,7 @@ public class ExtractionService {
 		List<ExtractionFile> files = new ArrayList<>();
 		List<DocumentExtraction> assets = new ArrayList<>();
 		List<JsonNode> equations = new ArrayList<>();
+		List<JsonNode> tables = new ArrayList<>();
 		ArrayNode variableAttributes;
 		JsonNode gollmCard;
 		boolean partialFailure = true;
@@ -203,10 +204,18 @@ public class ExtractionService {
 
 			notificationInterface.sendMessage("Starting equation extraction...");
 			log.info("Starting equation extraction for document: {}", documentName);
-			final Future<EquationExtraction> EquationExtractionFuture = extractEquationsFromPDF(
+			final Future<EquationExtraction> equationExtractionFuture = extractEquationsFromPDF(
 				notificationInterface,
 				documentContents,
 				userId
+			);
+
+			notificationInterface.sendMessage("Starting table extraction...");
+			log.info("Starting table extraction for document: {}", documentName);
+			final Future<TableExtraction> tableExtractionFuture = extractTablesFromPDF(
+				notificationInterface,
+				userId,
+				documentContents
 			);
 
 			// wait for text extraction
@@ -220,13 +229,25 @@ public class ExtractionService {
 
 			try {
 				// wait for equation extraction
-				final EquationExtraction EquationExtraction = EquationExtractionFuture.get();
+				final EquationExtraction equationExtraction = equationExtractionFuture.get();
 				notificationInterface.sendMessage("Equation extraction complete!");
 				log.info("Equation extraction complete for document: {}", documentName);
-				extractionResponse.equations = EquationExtraction.equations;
+				extractionResponse.equations = equationExtraction.equations;
 			} catch (final Exception e) {
 				notificationInterface.sendMessage("Equation extraction failed, continuing");
 				log.error("Equation extraction failed for document: {}", documentName, e);
+				extractionResponse.partialFailure = true;
+			}
+
+			try {
+				// wait for table extraction
+				final TableExtraction tableExtraction = tableExtractionFuture.get();
+				notificationInterface.sendMessage("Table extraction complete!");
+				log.info("Table extraction complete for document: {}", documentName);
+				extractionResponse.tables = tableExtraction.tables;
+			} catch (final Exception e) {
+				notificationInterface.sendMessage("Table extraction failed, continuing");
+				log.error("Table extraction failed for document: {}", documentName, e);
 				extractionResponse.partialFailure = true;
 			}
 
@@ -243,36 +264,6 @@ public class ExtractionService {
 				} catch (final Exception e) {
 					notificationInterface.sendMessage("Variable extraction failed, continuing");
 					extractionResponse.partialFailure = true;
-				}
-
-				// check for input length, if too long, do not send request
-				if (extractionResponse.documentText.length() > ModelCardResponseHandler.MAX_TEXT_SIZE) {
-					log.warn("Document {} text too long for GoLLM model card task, not sending request");
-				} else {
-					// dispatch GoLLM model card request
-					final ModelCardResponseHandler.Input input = new ModelCardResponseHandler.Input();
-					input.setResearchPaper(extractionResponse.documentText);
-
-					// Create the task
-					final TaskRequest req = new TaskRequest();
-					req.setType(TaskRequest.TaskType.GOLLM);
-					req.setScript(ModelCardResponseHandler.NAME);
-					req.setInput(objectMapper.writeValueAsBytes(input));
-					req.setUserId(userId);
-
-					notificationInterface.sendMessage("Sending GoLLM model card request");
-
-					try {
-						final TaskResponse resp = taskService.runTaskSync(req);
-						extractionResponse.gollmCard = objectMapper
-							.readValue(resp.getOutput(), ModelCardResponseHandler.Response.class)
-							.getResponse();
-						notificationInterface.sendMessage("Model Card created");
-					} catch (final Exception e) {
-						notificationInterface.sendMessage("Model Card creation failed, continuing");
-						log.error("Model Card creation failed for document: {}", documentName, e);
-						extractionResponse.partialFailure = true;
-					}
 				}
 			}
 
@@ -341,6 +332,13 @@ public class ExtractionService {
 				document.setMetadata(new HashMap<>());
 			}
 			document.getMetadata().put("equations", objectMapper.valueToTree(extractionResponse.equations));
+		}
+
+		if (extractionResponse.tables != null) {
+			if (document.getMetadata() == null) {
+				document.setMetadata(new HashMap<>());
+			}
+			document.getMetadata().put("tables", objectMapper.valueToTree(extractionResponse.tables));
 		}
 
 		log.info("Added extraction to document: {}", documentId);
@@ -782,7 +780,7 @@ public class ExtractionService {
 
 		int responseCode = HttpURLConnection.HTTP_BAD_GATEWAY;
 		if (!EQUATION_EXTRACTION_GPU_ENDPOINT.isEmpty()) {
-			final URL url = new URL(String.format("%s/health", EQUATION_EXTRACTION_GPU_ENDPOINT));
+			final URL url = URI.create(String.format("%s/health", EQUATION_EXTRACTION_GPU_ENDPOINT)).toURL();
 			final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 			connection.setRequestMethod("GET");
 			responseCode = connection.getResponseCode();
@@ -866,6 +864,55 @@ public class ExtractionService {
 			final TextExtraction extraction = new TextExtraction();
 
 			extraction.documentText = output.getResponse().asText();
+
+			return extraction;
+		});
+	}
+
+	static class TableExtraction {
+
+		List<JsonNode> tables;
+	}
+
+	public Future<TableExtraction> extractTablesFromPDF(
+		final NotificationGroupInstance<Properties> notificationInterface,
+		final String userId,
+		final byte[] pdf
+	) throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException, IOException {
+		final int REQUEST_TIMEOUT_MINUTES = 5;
+
+		final TaskRequest req = new TaskRequest();
+		req.setTimeoutMinutes(REQUEST_TIMEOUT_MINUTES);
+		req.setInput(pdf);
+		req.setScript(ExtractTextResponseHandler.NAME);
+		req.setUserId(userId);
+		req.setType(TaskType.TABLE_EXTRACTION);
+
+		return executor.submit(() -> {
+			final TaskResponse resp = taskService.runTaskSync(req);
+
+			final byte[] outputBytes = resp.getOutput();
+			final ExtractTextResponseHandler.ResponseOutput output = objectMapper.readValue(
+				outputBytes,
+				ExtractTextResponseHandler.ResponseOutput.class
+			);
+
+			// Collect keys
+			final List<String> keys = new ArrayList<>();
+			final Iterator<Map.Entry<String, JsonNode>> fieldsIterator = output.getResponse().fields();
+			while (fieldsIterator.hasNext()) {
+				final Map.Entry<String, JsonNode> field = fieldsIterator.next();
+				keys.add(field.getKey());
+			}
+
+			// Sort keys
+			Collections.sort(keys);
+
+			final TableExtraction extraction = new TableExtraction();
+
+			for (final String key : keys) {
+				extraction.tables.add(output.getResponse().get(key));
+			}
 
 			return extraction;
 		});
