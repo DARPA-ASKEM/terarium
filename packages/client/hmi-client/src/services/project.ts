@@ -223,6 +223,21 @@ async function clone(id: Project['id']): Promise<Project | null> {
 	}
 }
 
+async function createProjectFromFile(file: File) {
+	console.log('creating project from file:');
+	const formData = new FormData();
+	formData.append('file', file);
+
+	const response = await API.put(`/projects/import`, formData, {
+		params: {
+			filename: file.name
+		}
+	});
+	console.log('Response:');
+	console.log(response);
+	return response && response.status < 400;
+}
+
 /**
  * Get the icon associated with an Asset
  */
@@ -257,5 +272,6 @@ export {
 	setAccessibility,
 	setPermissions,
 	update,
-	updatePermissions
+	updatePermissions,
+	createProjectFromFile
 };
