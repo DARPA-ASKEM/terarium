@@ -53,20 +53,20 @@ const relatedTerariumModels = computed(() => relatedTerariumArtifacts.value.filt
 const relatedTerariumDatasets = computed(() => relatedTerariumArtifacts.value.filter((d) => isDataset(d)) as Dataset[]);
 
 // Editor for the description
-const editorContent = ref(props.model.header.description ?? '');
+const editorContent = ref(props.model?.metadata?.description ?? '');
 
 watch(editorContent, () => {
-	if (editorContent.value !== props.model.description) {
+	if (editorContent.value !== props.model?.metadata?.description) {
 		const updatedModel = {
 			...props.model,
-			header: { ...props.model.header, description: editorContent.value }
+			metadata: { ...props.model.metadata, description: editorContent.value }
 		} as Model;
 		emit('update-model', updatedModel);
 	}
 });
 
 watch(
-	() => props.model.header.description,
+	() => props.model?.metadata?.description,
 	(newDescription) => {
 		if (newDescription !== editorContent.value) {
 			editorContent.value = newDescription ?? '';
