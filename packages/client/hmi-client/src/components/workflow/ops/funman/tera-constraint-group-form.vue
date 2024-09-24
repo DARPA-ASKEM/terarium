@@ -113,7 +113,6 @@
 				<template v-for="(variable, index) in config.variables" :key="index">
 					<tera-input-number
 						auto-width
-						:placeholder="variable"
 						:model-value="config.weights[index]"
 						@update:model-value="
 							($event) => {
