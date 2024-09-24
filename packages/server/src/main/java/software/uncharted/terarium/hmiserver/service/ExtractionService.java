@@ -65,6 +65,7 @@ import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationGroupInstance;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
 import software.uncharted.terarium.hmiserver.service.tasks.ExtractEquationsResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.ExtractTablesResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ExtractTextResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
@@ -884,7 +885,7 @@ public class ExtractionService {
 		final TaskRequest req = new TaskRequest();
 		req.setTimeoutMinutes(REQUEST_TIMEOUT_MINUTES);
 		req.setInput(pdf);
-		req.setScript(ExtractTextResponseHandler.NAME);
+		req.setScript(ExtractTablesResponseHandler.NAME);
 		req.setUserId(userId);
 		req.setType(TaskType.TABLE_EXTRACTION);
 
@@ -892,9 +893,9 @@ public class ExtractionService {
 			final TaskResponse resp = taskService.runTaskSync(req);
 
 			final byte[] outputBytes = resp.getOutput();
-			final ExtractTextResponseHandler.ResponseOutput output = objectMapper.readValue(
+			final ExtractTablesResponseHandler.ResponseOutput output = objectMapper.readValue(
 				outputBytes,
-				ExtractTextResponseHandler.ResponseOutput.class
+				ExtractTablesResponseHandler.ResponseOutput.class
 			);
 
 			// Collect keys
