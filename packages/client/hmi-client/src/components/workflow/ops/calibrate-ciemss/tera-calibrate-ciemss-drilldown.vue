@@ -373,14 +373,16 @@
 			</tera-slider-panel>
 		</template>
 	</tera-drilldown>
-	<tera-save-asset-modal
+	<tera-save-simulation-modal
 		:initial-name="configuredModelConfig?.name"
 		:is-visible="showSaveModal"
-		:asset="configuredModelConfig"
-		:asset-type="AssetType.ModelConfiguration"
+		:asset-id="configuredModelConfig?.id"
 		@close-modal="showSaveModal = false"
 		@on-save="onSaveAsModelConfiguration"
-		is-updating-asset
+		:simulation-options="{
+			id: node.state.forecastId,
+			type: SimulationType.Calibration
+		}"
 	/>
 </template>
 
@@ -418,9 +420,9 @@ import {
 	CsvAsset,
 	DatasetColumn,
 	ModelConfiguration,
-	AssetType,
 	ChartAnnotation,
-	InterventionPolicy
+	InterventionPolicy,
+	SimulationType
 } from '@/types/Types';
 import { CiemssPresetTypes, DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
 import { getTimespan, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
@@ -451,7 +453,7 @@ import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { displayNumber } from '@/utils/number';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
-import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
+import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import { useClientEvent } from '@/composables/useClientEvent';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraInterventionSummaryCard from '@/components/workflow/ops/simulate-ciemss/tera-intervention-summary-card.vue';

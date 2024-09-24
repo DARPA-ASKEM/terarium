@@ -372,14 +372,16 @@
 			@click="saveModelConfiguration"
 		/>
 	</Dialog>
-	<tera-save-asset-modal
+	<tera-save-simulation-modal
 		:initial-name="optimizedInterventionPolicy?.name"
 		:is-visible="showSaveInterventionPolicy"
-		:asset="optimizedInterventionPolicy"
-		:asset-type="AssetType.InterventionPolicy"
+		:asset-id="optimizedInterventionPolicy?.id"
 		@close-modal="showSaveInterventionPolicy = false"
 		@on-save="onSaveForReuse"
-		is-updating-asset
+		:simulation-options="{
+			id: node.state.postForecastRunId,
+			type: SimulationType.Optimization
+		}"
 	/>
 </template>
 
@@ -391,7 +393,7 @@ import Dropdown from 'primevue/dropdown';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import SelectButton from 'primevue/selectbutton';
 import Dialog from 'primevue/dialog';
-import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
+import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -419,7 +421,7 @@ import {
 	OptimizeInterventions,
 	OptimizeQoi,
 	OptimizeRequestCiemss,
-	AssetType
+	SimulationType
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { drilldownChartSize, nodeMetadata } from '@/components/workflow/util';

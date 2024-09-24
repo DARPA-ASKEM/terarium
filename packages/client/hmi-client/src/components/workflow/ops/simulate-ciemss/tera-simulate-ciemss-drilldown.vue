@@ -118,15 +118,10 @@
 
 		<!-- Preview -->
 		<template #preview>
-			<tera-drilldown-preview
-				v-if="selectedOutputId"
-				title="Simulation output"
-				:options="outputs"
-				v-model:output="selectedOutputId"
-				@update:selection="onSelection"
-				:is-loading="showSpinner"
-				is-selectable
-			>
+			<tera-drilldown-section v-if="selectedOutputId" :is-loading="showSpinner">
+				<template #header-controls-right>
+					<Button label="Save for re-use" severity="secondary" outlined @click="showSaveDataset = true" />
+				</template>
 				<tera-operator-output-summary
 					v-if="node.state.summaryId && runResults[selectedRunId]"
 					:summary-id="node.state.summaryId"
@@ -186,7 +181,7 @@
 						/>
 					</div>
 				</template>
-			</tera-drilldown-preview>
+			</tera-drilldown-section>
 
 			<!-- Empty state -->
 			<section v-else class="empty-state">
@@ -195,6 +190,14 @@
 			</section>
 		</template>
 	</tera-drilldown>
+	<tera-save-simulation-modal
+		:is-visible="showSaveDataset"
+		@close-modal="showSaveDataset = false"
+		:simulation-options="{
+			id: node.state.forecastId,
+			type: SimulationType.Simulation
+		}"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -207,6 +210,7 @@ import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import type { CsvAsset, InterventionPolicy, SimulationRequest, TimeSpan } from '@/types/Types';
+import { SimulationType } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import {
 	getRunResultCSV,
@@ -223,7 +227,6 @@ import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vu
 import SelectButton from 'primevue/selectbutton';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
@@ -239,6 +242,7 @@ import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraInterventionSummaryCard from '@/components/workflow/ops/simulate-ciemss/tera-intervention-summary-card.vue';
+import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import TeraChartControl from '../../tera-chart-control.vue';
 
@@ -302,18 +306,6 @@ let pyciemssMap: Record<string, string> = {};
 
 const kernelManager = new KernelSessionManager();
 
-const outputs = computed(() => {
-	if (!_.isEmpty(props.node.outputs)) {
-		return [
-			{
-				label: 'Select an output',
-				items: props.node.outputs
-			}
-		];
-	}
-	return [];
-});
-
 const presetType = computed(() => {
 	if (numSamples.value === speedValues.numSamples && method.value === speedValues.method) {
 		return CiemssPresetTypes.Fast;
@@ -331,6 +323,8 @@ const selectedRunId = computed(() => props.node.outputs.find((o) => o.id === sel
 const cancelRunId = computed(() => props.node.state.inProgressForecastId);
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+
+const showSaveDataset = ref(false);
 
 const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperationState) => {
 	emit('update-state', state);
