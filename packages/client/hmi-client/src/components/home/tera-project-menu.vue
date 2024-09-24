@@ -12,6 +12,7 @@ import { isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import { computed, ref } from 'vue';
+import { exportProjectAsFile } from '@/services/project';
 
 const props = defineProps<{ project: Project | null }>();
 
@@ -64,12 +65,14 @@ const downloadMenuItem = {
 	command: async () => {
 		if (props.project) {
 			isCopying.value = true;
-			const blob = new Blob([JSON.stringify(props.project)], { type: 'application/json' });
-			const a = document.createElement('a');
-			a.href = URL.createObjectURL(blob);
-			a.download = `${props.project.name}.json`;
-			a.click();
-			a.remove();
+			const blob = await exportProjectAsFile(props.project.id);
+			if (blob) {
+				const a = document.createElement('a');
+				a.href = URL.createObjectURL(blob);
+				a.download = `${props.project.name}.zip`;
+				a.click();
+				a.remove();
+			}
 			isCopying.value = false;
 		}
 	}

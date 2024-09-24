@@ -29,13 +29,9 @@
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Button from 'primevue/button';
 import { AcceptedExtensions, AcceptedTypes } from '@/types/common';
-import { useProjects } from '@/composables/project';
-import { AssetType } from '@/types/Types';
 import { createProjectFromFile } from '@/services/project';
 import { ref } from 'vue';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
-import { useToastService } from '@/services/toast';
-import { extractPDF } from '@/services/knowledge';
 
 defineProps<{
 	visible: boolean;
@@ -43,43 +39,28 @@ defineProps<{
 const emit = defineEmits(['close']);
 
 const progress = ref(0);
-const results = ref<{ id: string; name: string; assetType: AssetType }[] | null>(null);
-const urlToUpload = ref('');
-const isImportGithubFileModalVisible = ref(false);
 const importedFiles = ref<File[]>([]);
 
 async function processProjects(files: File[]) {
-	return files.map(async (file) => {
-		await createProjectFromFile(file);
-	});
-}
-
-function importCompleted(newResults: { id: string; name: string; assetType: AssetType }[] | null) {
-	results.value = newResults?.filter((r) => r.id !== '') ?? [];
+	console.log('Tom creating projects:');
+	return files.map(async (file) => createProject(file));
 }
 
 async function upload() {
-	if (results.value) {
-		const createAssetsPromises = (results.value ?? []).map(({ id, assetType }) =>
-			useProjects().addAsset(assetType, id)
-		);
-		const createdAssets = await Promise.all(createAssetsPromises);
-		createdAssets.forEach((_, index) => {
-			const { name, id } = (results.value ?? [])[index];
-			if (name && name.toLowerCase().endsWith('.pdf')) {
-				extractPDF(id);
-			}
-		});
-		emit('close');
-		const resourceMsg = createdAssets.length > 1 ? 'resources were' : 'resource was';
-		useToastService().success('Success!', `${createdAssets.length} ${resourceMsg} successfully added to this project`);
-		importedFiles.value = [];
-		results.value = null;
-	} else if (urlToUpload.value) {
-		isImportGithubFileModalVisible.value = true;
-	} else {
-		useToastService().error('Error!', 'No files were selected');
-	}
+	console.log('Uploading:');
+	importedFiles.value.forEach((file) => {
+		createProjectFromFile(file);
+	});
+	console.log('Done uploading:');
+	emit('close');
+}
+
+function importCompleted() {
+	progress.value = 100;
+}
+
+async function createProject(file: File) {
+	await createProjectFromFile(file);
 }
 </script>
 

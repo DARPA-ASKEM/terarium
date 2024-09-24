@@ -223,6 +223,17 @@ async function clone(id: Project['id']): Promise<Project | null> {
 	}
 }
 
+async function exportProjectAsFile(id: Project['id']) {
+	try {
+		const response = await API.get(`projects/export/${id}`);
+		const blob = new Blob([response?.data], { type: 'application/zip' });
+		return blob ?? null;
+	} catch (error) {
+		logger.error(`Unable to download project file for project id ${id}: ${error}`);
+		return null;
+	}
+}
+
 async function createProjectFromFile(file: File) {
 	console.log('creating project from file:');
 	const formData = new FormData();
@@ -273,5 +284,6 @@ export {
 	setPermissions,
 	update,
 	updatePermissions,
+	exportProjectAsFile,
 	createProjectFromFile
 };
