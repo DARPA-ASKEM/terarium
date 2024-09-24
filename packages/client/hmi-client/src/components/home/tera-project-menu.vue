@@ -58,11 +58,29 @@ const copyMenuItem = {
 	}
 };
 
+const downloadMenuItem = {
+	label: 'Download this project',
+	icon: 'pi pi-clone',
+	command: async () => {
+		if (props.project) {
+			isCopying.value = true;
+			const blob = new Blob([JSON.stringify(props.project)], { type: 'application/json' });
+			const a = document.createElement('a');
+			a.href = URL.createObjectURL(blob);
+			a.download = `${props.project.name}.json`;
+			a.click();
+			a.remove();
+			isCopying.value = false;
+		}
+	}
+};
+
 const separatorMenuItem = { separator: true };
 const projectMenuItems = computed(() => {
 	const items = [] as any[];
-	if (props.project?.publicProject) {
+	if (props.project?.publicProject || props.project?.userPermission === 'creator') {
 		items.push(copyMenuItem);
+		items.push(downloadMenuItem);
 	}
 	if (props.project?.userPermission === 'creator') {
 		items.push(renameMenuItem, shareMenuItem, separatorMenuItem, removeMenuItem);
