@@ -693,9 +693,9 @@ export const createWorkflow = async (workflow: Workflow) => {
 };
 
 // Update/save
-export const saveWorkflow = async (workflow: Workflow) => {
+export const saveWorkflow = async (workflow: Workflow, projectId?: string) => {
 	const id = workflow.id;
-	const response = await API.put(`/workflows/${id}`, workflow);
+	const response = await API.put(`/workflows/${id}`, workflow, { params: { 'project-id': projectId } });
 	return response?.data ?? null;
 };
 
