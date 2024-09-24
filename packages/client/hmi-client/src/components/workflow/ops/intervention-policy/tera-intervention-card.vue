@@ -35,26 +35,28 @@
 				,
 			</div>
 			<div class="flex align-items-center flex-wrap gap-2">
-				<span v-if="interventionType === 'dynamic'">Set</span>
-				<section v-if="interventionType === 'dynamic'">
-					<Dropdown
-						class="type-menu"
-						:model-value="intervention.dynamicInterventions[0].type"
-						@change="onSemanticChange($event, 0)"
-						:options="interventionSemanticOptions"
-						option-label="label"
-						option-value="value"
-					/>
-					<Dropdown
-						class="applied-to-menu"
-						:model-value="intervention.dynamicInterventions[0].appliedTo"
-						@change="onAppliedToParameterChange($event, 0)"
-						:options="semanticOptions"
-						option-label="label"
-						option-value="value"
-						placeholder="Select"
-					/>
-				</section>
+				<template v-if="interventionType === 'dynamic'">
+					Set
+					<section>
+						<Dropdown
+							class="type-menu"
+							:model-value="intervention.dynamicInterventions[0].type"
+							@change="onSemanticChange($event, 0)"
+							:options="interventionSemanticOptions"
+							option-label="label"
+							option-value="value"
+						/>
+						<Dropdown
+							class="applied-to-menu"
+							:model-value="intervention.dynamicInterventions[0].appliedTo"
+							@change="onAppliedToParameterChange($event, 0)"
+							:options="semanticOptions"
+							option-label="label"
+							option-value="value"
+							placeholder="Select"
+						/>
+					</section>
+				</template>
 				<!-- Static -->
 				<template v-if="interventionType === 'static'">
 					<!-- to -->
