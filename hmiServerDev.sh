@@ -8,6 +8,7 @@ SECRET_FILES=()
 SECRET_FILES+=("${SERVER_DIR}/src/main/resources/application-secrets.properties")
 SECRET_FILES+=("containers/secrets.env")
 VAULT_PASSWORD=""~/askem-vault-id.txt""
+export COMPOSE_PROJECT_NAME="terarium"
 
 function decrypt_secrets() {
   echo "Decrypting local secrets vault"
