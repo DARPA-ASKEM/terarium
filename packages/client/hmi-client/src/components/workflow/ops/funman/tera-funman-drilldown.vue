@@ -47,7 +47,7 @@
 														:expression="
 															stringToLatexExpression(
 																stateIds
-																	.map((s, index) => `${s}${index === stateIds.length - 1 ? `\\geq 0` : ', '}`)
+																	.map((s, index) => `${s}${index === stateIds.length - 1 ? `\\geq 0` : ','}`)
 																	.join('')
 															)
 														"
@@ -55,7 +55,7 @@
 												</div>
 												<katex-element
 													:expression="
-														stringToLatexExpression(`${stateIds.join(' + ')} = ${displayNumber(mass)} \\ \\forall \\ t`)
+														stringToLatexExpression(`${stateIds.join('+')} = ${displayNumber(mass)} \\ \\forall \\ t`)
 													"
 												/>
 											</div>

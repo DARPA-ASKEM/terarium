@@ -109,7 +109,7 @@
 					:model-value="config.interval.lb"
 					@update:model-value="emit('update-self', { key: 'interval', value: { lb: $event, ub: config.interval.ub } })"
 				/>
-				<katex-element :expression="stringToLatexExpression(`\\leq [${config.variables.join(', ')}] \\leq`)" />
+				<katex-element :expression="stringToLatexExpression(`\\leq [${config.variables.join('+')}] \\leq`)" />
 				<tera-input-number
 					auto-width
 					:model-value="config.interval.ub"
