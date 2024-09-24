@@ -752,15 +752,6 @@ public class GoLLMController {
 			projectId
 		);
 
-		// validate the image
-		if (image == null || image.isEmpty()) {
-			log.warn("No image provided for equations from image task");
-			throw new ResponseStatusException(
-				HttpStatus.BAD_REQUEST,
-				messages.get("task.gollm.equations-from-image.no-image")
-			);
-		}
-
 		// validate that the string is a base64 encoding
 		byte[] decodedImage;
 		try {
