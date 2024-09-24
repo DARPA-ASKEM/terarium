@@ -109,7 +109,26 @@
 					:model-value="config.interval.lb"
 					@update:model-value="emit('update-self', { key: 'interval', value: { lb: $event, ub: config.interval.ub } })"
 				/>
-				<katex-element :expression="stringToLatexExpression(`\\leq [${config.variables.join('+')}] \\leq`)" />
+				<katex-element :expression="stringToLatexExpression(`\\leq [`)" />
+				<template v-for="(variable, index) in config.variables" :key="index">
+					<tera-input-number
+						auto-width
+						:placeholder="variable"
+						:model-value="config.weights[index]"
+						@update:model-value="
+							($event) => {
+								const newWeights = cloneDeep(config.weights);
+								if (!newWeights) return;
+								newWeights[index] = $event;
+								emit('update-self', { key: 'weights', value: newWeights });
+							}
+						"
+					/>
+					<katex-element
+						:expression="stringToLatexExpression(`${variable} ${index === config.variables.length - 1 ? '' : '\\ +'}`)"
+					/>
+				</template>
+				<katex-element :expression="stringToLatexExpression(`] \\leq`)" />
 				<tera-input-number
 					auto-width
 					:model-value="config.interval.ub"
@@ -124,29 +143,11 @@
 				:expression="stringToLatexExpression(`\\forall \\ t \\in [${config.timepoints.lb}, ${config.timepoints.ub}]`)"
 			/>
 		</div>
-		<!--TODO: See if we still want to customize weights-->
-		<!-- <ul v-if="config.weights && !isEmpty(config.weights)">
-			<li v-for="(variable, index) of config.variables" :key="index">
-				<tera-input-number
-					:label="variable + ' Weight'"
-					:placeholder="variable"
-					:model-value="config.weights[index]"
-					@update:model-value="
-						($event) => {
-							const newWeights = cloneDeep(config.weights);
-							if (!newWeights) return;
-							newWeights[index] = $event;
-							emit('update-self', { key: 'weights', value: newWeights });
-						}
-					"
-				/>
-			</li>
-		</ul> -->
 	</section>
 </template>
 
 <script setup lang="ts">
-// import { isEmpty, cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash';
 import { computed } from 'vue';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import MultiSelect from 'primevue/multiselect';
@@ -189,10 +190,10 @@ function generateExpression() {
 		}
 		if (i === variables.length - 1) {
 			if (constraintType === ConstraintType.LessThan || constraintType === ConstraintType.Decreasing) {
-				expressionPart += `\\leq`;
+				expressionPart += interval?.closed_upper_bound ? `\\leq` : `<`;
 				expressionPart += constraintType === ConstraintType.Decreasing ? '0' : `${interval?.ub ?? 0}`;
 			} else {
-				expressionPart += `\\geq`;
+				expressionPart += interval?.closed_upper_bound ? `\\geq` : `>`;
 				expressionPart += constraintType === ConstraintType.Increasing ? '0' : `${interval?.lb ?? 0}`;
 			}
 		} else {

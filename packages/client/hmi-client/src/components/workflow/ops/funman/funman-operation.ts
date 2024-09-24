@@ -24,7 +24,7 @@ export interface ConstraintGroup {
 	constraint: Constraint;
 	constraintType: ConstraintType;
 	variables: string[];
-	weights?: number[]; // 1 to 1 mapping with variables
+	weights: number[]; // 1 to 1 mapping with variables
 	timepoints: FunmanInterval;
 	interval: FunmanInterval;
 }

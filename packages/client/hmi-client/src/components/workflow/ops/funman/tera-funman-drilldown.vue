@@ -276,9 +276,15 @@ const runMakeQuery = async () => {
 	const constraints = props.node.state.constraintGroups
 		?.map((ele) => {
 			if (!ele.isActive) return null;
+
+			// Use inputted weights when linearly constrained otherwise use implicit weights
+			const weights =
+				ele.constraintType === ConstraintType.LinearlyConstrained
+					? ele.weights
+					: Array<number>(ele.variables.length).fill(1.0);
+
 			// Increasing/descreasing (monotonicity)
 			if (ele.constraintType === ConstraintType.Increasing || ele.constraintType === ConstraintType.Decreasing) {
-				const weights = ele.weights ?? [1.0];
 				return {
 					soft: true,
 					name: ele.name,
@@ -313,7 +319,7 @@ const runMakeQuery = async () => {
 			return {
 				name: ele.name,
 				variables: ele.variables,
-				weights: ele.weights,
+				weights,
 				additive_bounds: interval,
 				timepoints: ele.timepoints
 			};
@@ -364,6 +370,7 @@ const addConstraintForm = () => {
 		interval: { lb: 0, ub: 100 },
 		constraint: Constraint.State,
 		variables: [],
+		weights: [],
 		constraintType: ConstraintType.LessThan
 	});
 	emit('update-state', state);
@@ -378,7 +385,7 @@ const deleteConstraintGroupForm = (index: number) => {
 const updateConstraintGroupForm = (index: number, key: string, value: any) => {
 	const state = _.cloneDeep(props.node.state);
 
-	// Changing constraint type resets settings
+	// Changing constraint resets settings
 	if (key === 'constraint') {
 		state.constraintGroups[index].variables = [];
 		state.constraintGroups[index].weights = [];
@@ -389,7 +396,7 @@ const updateConstraintGroupForm = (index: number, key: string, value: any) => {
 	state.constraintGroups[index][key] = value;
 
 	// Make sure weights makes sense
-	const weightLength = state.constraintGroups[index].weights?.length ?? 0;
+	const weightLength = state.constraintGroups[index].weights.length;
 	const variableLength = state.constraintGroups[index].variables.length;
 	if (weightLength !== variableLength) {
 		state.constraintGroups[index].weights = Array<number>(variableLength).fill(1.0);
