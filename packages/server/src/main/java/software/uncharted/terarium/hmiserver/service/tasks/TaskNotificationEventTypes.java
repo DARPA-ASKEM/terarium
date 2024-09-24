@@ -16,10 +16,10 @@ public class TaskNotificationEventTypes {
 		Map.entry(ValidateModelConfigHandler.NAME, ClientEventType.TASK_FUNMAN_VALIDATION),
 		Map.entry(EnrichAmrResponseHandler.NAME, ClientEventType.TASK_GOLLM_ENRICH_AMR),
 		Map.entry(AMRToMMTResponseHandler.NAME, ClientEventType.TASK_MIRA_AMR_TO_MMT),
-		Map.entry(GenerateModelLatexResponseHandler.NAME, ClientEventType.TASK_MIRA_GENERATE_MODEL_LATEX),
 		Map.entry(ExtractEquationsResponseHandler.NAME, ClientEventType.TASK_EXTRACT_EQUATION_PDF),
 		Map.entry(ExtractTablesResponseHandler.NAME, ClientEventType.TASK_EXTRACT_TABLE_PDF),
-		Map.entry(ExtractTextResponseHandler.NAME, ClientEventType.TASK_EXTRACT_TEXT_PDF)
+		Map.entry(ExtractTextResponseHandler.NAME, ClientEventType.TASK_EXTRACT_TEXT_PDF),
+		Map.entry(EquationsFromImageResponseHandler.NAME, ClientEventType.TASK_GOLLM_EQUATIONS_FROM_IMAGE)
 	);
 
 	public static ClientEventType getTypeFor(final String taskName) {

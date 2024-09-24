@@ -10,14 +10,19 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import javax.imageio.ImageIO;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +54,7 @@ import software.uncharted.terarium.hmiserver.service.tasks.CompareModelsResponse
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelFromDatasetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelFromDocumentResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.EnrichAmrResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.EquationsFromImageResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.GenerateResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.GenerateSummaryHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
@@ -78,6 +84,7 @@ public class GoLLMController {
 	private final GenerateSummaryHandler generateSummaryHandler;
 	private final GenerateResponseHandler generateResponseHandler;
 	private final EnrichAmrResponseHandler enrichAmrResponseHandler;
+	private final EquationsFromImageResponseHandler equationsFromImageResponseHandler;
 
 	private final Messages messages;
 
@@ -90,6 +97,7 @@ public class GoLLMController {
 		taskService.addResponseHandler(generateSummaryHandler);
 		taskService.addResponseHandler(generateResponseHandler);
 		taskService.addResponseHandler(enrichAmrResponseHandler);
+		taskService.addResponseHandler(equationsFromImageResponseHandler);
 	}
 
 	@PostMapping("/model-card")
@@ -694,6 +702,100 @@ public class GoLLMController {
 		props.setDocumentId(documentId);
 		props.setModelId(modelId);
 		props.setOverwrite(overwrite);
+		req.setAdditionalProperties(props);
+
+		final TaskResponse resp;
+		try {
+			resp = taskService.runTask(mode, req);
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
+		} catch (final TimeoutException e) {
+			log.warn("Timeout while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
+		} catch (final InterruptedException e) {
+			log.warn("Interrupted while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
+		} catch (final ExecutionException e) {
+			log.error("Error while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
+		}
+
+		return ResponseEntity.ok().body(resp);
+	}
+
+	@PostMapping("/equations-from-image")
+	@Secured(Roles.USER)
+	@Operation(summary = "Dispatch a `GoLLM Equations from image` task")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Dispatched successfully",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class)
+				)
+			),
+			@ApiResponse(responseCode = "400", description = "The provided image is invalid", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+		}
+	)
+	public ResponseEntity<TaskResponse> equationsFromImageTask(
+		@RequestParam(name = "project-id", required = false) final UUID projectId,
+		@RequestParam(name = "document-id", required = true) final UUID documentId,
+		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
+		@RequestBody final String image
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanRead(
+			currentUserService.get().getId(),
+			projectId
+		);
+
+		// validate that the string is a base64 encoding
+		byte[] decodedImage;
+		try {
+			decodedImage = Base64.getDecoder().decode(image);
+		} catch (IllegalArgumentException e) {
+			log.error("Invalid base64 encoding for image", e);
+			throw new ResponseStatusException(
+				HttpStatus.BAD_REQUEST,
+				messages.get("task.gollm.equations-from-image.invalid-image")
+			);
+		}
+
+		// validate that the image is a valid image
+		try (ByteArrayInputStream bais = new ByteArrayInputStream(decodedImage)) {
+			BufferedImage bi = ImageIO.read(bais);
+		} catch (IOException e) {
+			log.error("Invalid image provided", e);
+			throw new ResponseStatusException(
+				HttpStatus.BAD_REQUEST,
+				messages.get("task.gollm.equations-from-image.invalid-image")
+			);
+		}
+
+		final EquationsFromImageResponseHandler.Input input = new EquationsFromImageResponseHandler.Input();
+		input.setImage(image);
+
+		// Create the task
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.GOLLM);
+		req.setScript(EquationsFromImageResponseHandler.NAME);
+		req.setUserId(currentUserService.get().getId());
+
+		try {
+			req.setInput(objectMapper.writeValueAsBytes(input));
+		} catch (final Exception e) {
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+		}
+
+		req.setProjectId(projectId);
+
+		final EquationsFromImageResponseHandler.Properties props = new EquationsFromImageResponseHandler.Properties();
+		props.setProjectId(projectId);
+		props.setDocumentId(documentId);
 		req.setAdditionalProperties(props);
 
 		final TaskResponse resp;
