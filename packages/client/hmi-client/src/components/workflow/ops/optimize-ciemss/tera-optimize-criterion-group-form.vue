@@ -69,7 +69,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
@@ -90,6 +90,14 @@ const isEditing = ref<boolean>(false);
 const onEdit = () => {
 	isEditing.value = !isEditing.value;
 };
+
+watch(
+	() => props.criterion,
+	() => {
+		config.value = _.cloneDeep(props.criterion);
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
