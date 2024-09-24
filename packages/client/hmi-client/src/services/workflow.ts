@@ -52,8 +52,14 @@ export class WorkflowWrapper {
 	 * FIXME: Need to split workflow into different categories and sending the commands
 	 * instead of the result. It is possible here to become de-synced: eg state-update-response
 	 * comes in as we are about to change the output ports.
+	 *
+	 * delayUpdate is a used to indicate there are actions in progress, and an update from
+	 * the DB can potentially overwrite what the user had already done that have yet to be flushed
+	 * to the backend. In situation like this, we will update the version (so our subsequent updates are
+	 * not rejected) and skip the rest. For example, the user may be dragging an operator on the
+	 * canvas when the db upate comes in.
 	 * */
-	update(updatedWF: Workflow, pendingSave: boolean, isDragging: boolean) {
+	update(updatedWF: Workflow, delayUpdate: boolean) {
 		if (updatedWF.id !== this.wf.id) {
 			throw new Error(`Workflow failed, inconsistent ids updated=${updatedWF.id} self=${this.wf.id}`);
 		}
@@ -65,7 +71,7 @@ export class WorkflowWrapper {
 		const updatedNodeMap = new Map<string, WorkflowNode<any>>(updatedWF.nodes.map((n) => [n.id, n]));
 		const updatedEdgeMap = new Map<string, WorkflowEdge>(updatedWF.edges.map((e) => [e.id, e]));
 
-		if (pendingSave || isDragging) {
+		if (delayUpdate) {
 			for (let i = 0; i < nodes.length; i++) {
 				const nodeId = nodes[i].id;
 				const updated = updatedNodeMap.get(nodeId);

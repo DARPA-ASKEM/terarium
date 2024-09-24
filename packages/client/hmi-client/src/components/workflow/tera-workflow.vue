@@ -322,7 +322,8 @@ const _updateWorkflow = (event: any) => {
 	if (event.data.id !== wf.value.getId()) {
 		return;
 	}
-	wf.value.update(event.data as Workflow, pendingSave, isDragging);
+	const delayUpdate = pendingSave || isDragging;
+	wf.value.update(event.data as Workflow, delayUpdate);
 };
 
 const saveWorkflowDebounced = debounce(_saveWorkflow, 400);
