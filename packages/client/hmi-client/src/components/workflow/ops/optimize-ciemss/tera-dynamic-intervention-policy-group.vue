@@ -9,14 +9,13 @@
 		</div>
 		<p>
 			Set the {{ config.intervention?.type }}&nbsp; <strong>{{ config.intervention?.appliedTo }}</strong> to
-			<strong>{{ dynamicInterventions[0].threshold }}</strong> days when it
-			<strong>{{ dynamicInterventions[0].isGreaterThan ? 'increase to above' : 'decrease to below' }}</strong>
-			the threshold value <strong>{{ dynamicInterventions[0].value }}</strong> person.
+			<strong>{{ dynamicInterventions[0].threshold }}</strong> days when it crosses the threshold value
+			<strong>{{ dynamicInterventions[0].value }}</strong> person.
 		</p>
 	</div>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { DynamicIntervention } from '@/types/Types';
 import { InterventionPolicyGroupForm } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
 import InputSwitch from 'primevue/inputswitch';
@@ -27,7 +26,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-self']);
 
-const dynamicInterventions = ref<DynamicIntervention[]>(props.config.intervention.dynamicInterventions);
+const dynamicInterventions = computed<DynamicIntervention[]>(() => props.config.intervention.dynamicInterventions);
 
 const knobs = ref({
 	isActive: props.config.isActive ?? false

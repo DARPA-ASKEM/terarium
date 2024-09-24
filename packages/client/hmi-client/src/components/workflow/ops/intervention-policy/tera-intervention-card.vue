@@ -26,22 +26,25 @@
 		<section>
 			<div class="flex align-items-center flex-wrap gap-2">
 				Set
-				<Dropdown
-					:model-value="intervention.type"
-					@change="onSemanticChange"
-					:options="interventionSemanticOptions"
-					option-label="label"
-					option-value="value"
-				/>
-				<Dropdown
-					:model-value="intervention.appliedTo"
-					@change="onAppliedToParameterChange"
-					:options="semanticOptions"
-					option-label="label"
-					option-value="value"
-					placeholder="Select"
-				/>
-
+				<section>
+					<Dropdown
+						class="type-menu"
+						:model-value="intervention.type"
+						@change="onSemanticChange"
+						:options="interventionSemanticOptions"
+						option-label="label"
+						option-value="value"
+					/>
+					<Dropdown
+						class="applied-to-menu"
+						:model-value="intervention.appliedTo"
+						@change="onAppliedToParameterChange"
+						:options="semanticOptions"
+						option-label="label"
+						option-value="value"
+						placeholder="Select"
+					/>
+				</section>
 				<!-- Static -->
 				<template v-if="interventionType === 'static'">
 					to
@@ -105,20 +108,14 @@
 						option-value="value"
 						placeholder="Select a trigger"
 					/>
-					<Dropdown
-						:model-value="intervention.dynamicInterventions[0].isGreaterThan"
-						@change="onComparisonOperatorChange"
-						:options="comparisonOperations"
-						option-label="label"
-						option-value="value"
-					/>
+					crosses the threshold
 					<tera-input-number
 						auto-width
 						:model-value="intervention.dynamicInterventions[0].threshold"
 						@update:model-value="(val) => onUpdateThreshold(val, 0)"
 						placeholder="threshold"
 					/>
-					.
+					{{ dynamicInterventionUnits }}.
 				</template>
 			</div>
 		</section>
@@ -149,8 +146,8 @@ import Divider from 'primevue/divider';
 const emit = defineEmits(['update', 'delete', 'add']);
 const props = defineProps<{
 	intervention: Intervention;
-	parameterOptions: { label: string; value: string }[];
-	stateOptions: { label: string; value: string }[];
+	parameterOptions: { label: string; value: string; units?: string }[];
+	stateOptions: { label: string; value: string; units?: string }[];
 }>();
 
 const interventionSemanticOptions = [
@@ -175,10 +172,18 @@ const interventionType = computed(() => {
 	return 'static';
 });
 
-const comparisonOperations = [
-	{ label: 'increases to above', value: true },
-	{ label: 'decreases to below', value: false }
-];
+const dynamicInterventionUnits = computed(() => {
+	let units = '';
+	const type = props.intervention.type;
+	const appliedTo = props.intervention.appliedTo;
+
+	if (type === InterventionSemanticType.Parameter) {
+		units = props.parameterOptions.find((parameter) => parameter.label === appliedTo)?.units ?? '';
+	} else {
+		units = props.stateOptions.find((state) => state.label === appliedTo)?.units ?? '';
+	}
+	return units;
+});
 
 const onUpdateName = (name: string) => {
 	const intervention = cloneDeep(props.intervention);
@@ -243,8 +248,7 @@ const onInterventionTypeChange = (value: string) => {
 			{
 				threshold: Number.NaN,
 				value: Number.NaN,
-				parameter: '',
-				isGreaterThan: true
+				parameter: ''
 			}
 		];
 	}
@@ -255,12 +259,6 @@ const onInterventionTypeChange = (value: string) => {
 const onTargetParameterChange = (event: DropdownChangeEvent) => {
 	const intervention = cloneDeep(props.intervention);
 	intervention.dynamicInterventions[0].parameter = event.value;
-	emit('update', intervention);
-};
-
-const onComparisonOperatorChange = (event: DropdownChangeEvent) => {
-	const intervention = cloneDeep(props.intervention);
-	intervention.dynamicInterventions[0].isGreaterThan = event.value;
 	emit('update', intervention);
 };
 
@@ -287,6 +285,15 @@ const debounceUpdateState = debounce((intervention) => {
 		margin-bottom: 0;
 		color: var(--gray-300);
 	}
+}
+
+.type-menu {
+	border-radius: var(--border-radius) 0 0 var(--border-radius);
+	background: var(--surface-200);
+}
+
+.applied-to-menu {
+	border-radius: 0 var(--border-radius) var(--border-radius) 0;
 }
 
 .intervention-card {
