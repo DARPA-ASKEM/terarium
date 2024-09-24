@@ -85,7 +85,7 @@ const props = defineProps<{
 const emit = defineEmits(['update-state', 'update-parameter', 'update-observable', 'update-transition', 'update-time']);
 
 // Keep track of active indexes using ref
-const currentActiveIndexes = ref([0, 1, 2, 3, 4, 5]);
+const currentActiveIndexes = ref([0, 1, 2, 3, 4]);
 
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);

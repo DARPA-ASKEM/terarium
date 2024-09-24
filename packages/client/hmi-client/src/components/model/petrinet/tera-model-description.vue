@@ -1,6 +1,6 @@
 <template>
 	<section>
-		<Accordion multiple :active-index="[0, 1, 2, 3]" v-bind:lazy="true" class="mb-0">
+		<Accordion multiple :active-index="currentActiveIndexes" v-bind:lazy="true" class="mb-0">
 			<AccordionTab header="Description">
 				<tera-progress-spinner v-if="isGeneratingCard" is-centered> Generating description... </tera-progress-spinner>
 				<Editor v-else v-model="editorContent" />
@@ -46,6 +46,8 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-model']);
 const teraModelDiagramRef = ref();
+
+const currentActiveIndexes = ref([0, 1, 2, 3]);
 
 const card = computed<any>(() => props.model.metadata?.gollmCard ?? null);
 
