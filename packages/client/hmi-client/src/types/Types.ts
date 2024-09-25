@@ -593,12 +593,12 @@ export interface DynamicIntervention {
     parameter: string;
     threshold: number;
     value: number;
+    appliedTo: string;
+    type: InterventionSemanticType;
 }
 
 export interface Intervention {
     name: string;
-    appliedTo: string;
-    type: InterventionSemanticType;
     staticInterventions: StaticIntervention[];
     dynamicInterventions: DynamicIntervention[];
 }
@@ -611,6 +611,8 @@ export interface InterventionPolicy extends TerariumAsset {
 export interface StaticIntervention {
     timestep: number;
     value: number;
+    appliedTo: string;
+    type: InterventionSemanticType;
 }
 
 export interface DatasetLocation {
@@ -1041,29 +1043,30 @@ export enum TaskStatus {
 }
 
 export enum ClientEventType {
-    CloneProject = "CLONE_PROJECT",
-    Heartbeat = "HEARTBEAT",
-    Notification = "NOTIFICATION",
-    SimulationPyciemss = "SIMULATION_PYCIEMSS",
-    SimulationNotification = "SIMULATION_NOTIFICATION",
-    FileUploadProgress = "FILE_UPLOAD_PROGRESS",
-    Extraction = "EXTRACTION",
-    ExtractionPdf = "EXTRACTION_PDF",
-    TaskUndefinedEvent = "TASK_UNDEFINED_EVENT",
-    TaskGollmModelCard = "TASK_GOLLM_MODEL_CARD",
-    TaskGollmConfigureModelFromDocument = "TASK_GOLLM_CONFIGURE_MODEL_FROM_DOCUMENT",
-    TaskGollmConfigureModelFromDataset = "TASK_GOLLM_CONFIGURE_MODEL_FROM_DATASET",
-    TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
-    TaskGollmGenerateSummary = "TASK_GOLLM_GENERATE_SUMMARY",
-    TaskFunmanValidation = "TASK_FUNMAN_VALIDATION",
-    TaskGollmEnrichAmr = "TASK_GOLLM_ENRICH_AMR",
-    TaskMiraAmrToMmt = "TASK_MIRA_AMR_TO_MMT",
-    TaskMiraGenerateModelLatex = "TASK_MIRA_GENERATE_MODEL_LATEX",
-    TaskEnrichAmr = "TASK_ENRICH_AMR",
-    WorkflowUpdate = "WORKFLOW_UPDATE",
-    WorkflowDelete = "WORKFLOW_DELETE",
     ChartAnnotationCreate = "CHART_ANNOTATION_CREATE",
     ChartAnnotationDelete = "CHART_ANNOTATION_DELETE",
+    CloneProject = "CLONE_PROJECT",
+    Extraction = "EXTRACTION",
+    ExtractionPdf = "EXTRACTION_PDF",
+    FileUploadProgress = "FILE_UPLOAD_PROGRESS",
+    Heartbeat = "HEARTBEAT",
+    Notification = "NOTIFICATION",
+    SimulationNotification = "SIMULATION_NOTIFICATION",
+    SimulationPyciemss = "SIMULATION_PYCIEMSS",
+    TaskEnrichAmr = "TASK_ENRICH_AMR",
+    TaskFunmanValidation = "TASK_FUNMAN_VALIDATION",
+    TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
+    TaskGollmConfigureModelFromDataset = "TASK_GOLLM_CONFIGURE_MODEL_FROM_DATASET",
+    TaskGollmConfigureModelFromDocument = "TASK_GOLLM_CONFIGURE_MODEL_FROM_DOCUMENT",
+    TaskGollmEnrichAmr = "TASK_GOLLM_ENRICH_AMR",
+    TaskGollmEquationsFromImage = "TASK_GOLLM_EQUATIONS_FROM_IMAGE",
+    TaskGollmGenerateSummary = "TASK_GOLLM_GENERATE_SUMMARY",
+    TaskGollmModelCard = "TASK_GOLLM_MODEL_CARD",
+    TaskMiraAmrToMmt = "TASK_MIRA_AMR_TO_MMT",
+    TaskMiraGenerateModelLatex = "TASK_MIRA_GENERATE_MODEL_LATEX",
+    TaskUndefinedEvent = "TASK_UNDEFINED_EVENT",
+    WorkflowDelete = "WORKFLOW_DELETE",
+    WorkflowUpdate = "WORKFLOW_UPDATE",
 }
 
 export enum ProgressState {
@@ -1156,6 +1159,7 @@ export enum ProvenanceType {
     Document = "Document",
     Workflow = "Workflow",
     Equation = "Equation",
+    InterventionPolicy = "InterventionPolicy",
 }
 
 export enum SimulationType {

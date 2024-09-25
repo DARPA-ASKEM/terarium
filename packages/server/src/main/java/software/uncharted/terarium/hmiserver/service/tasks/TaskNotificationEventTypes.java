@@ -25,7 +25,9 @@ public class TaskNotificationEventTypes {
 		AMRToMMTResponseHandler.NAME,
 		ClientEventType.TASK_MIRA_AMR_TO_MMT,
 		GenerateModelLatexResponseHandler.NAME,
-		ClientEventType.TASK_MIRA_GENERATE_MODEL_LATEX
+		ClientEventType.TASK_MIRA_GENERATE_MODEL_LATEX,
+		EquationsFromImageResponseHandler.NAME,
+		ClientEventType.TASK_GOLLM_EQUATIONS_FROM_IMAGE
 	);
 
 	public static ClientEventType getTypeFor(final String taskName) {
