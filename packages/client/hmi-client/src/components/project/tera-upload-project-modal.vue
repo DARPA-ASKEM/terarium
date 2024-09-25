@@ -14,7 +14,7 @@
 						:progress="progress"
 						@import-completed="importCompleted"
 						@imported-files-updated="(value) => (importedFiles = value)"
-					></tera-drag-and-drop-importer>
+					/>
 				</section>
 			</section>
 		</template>
