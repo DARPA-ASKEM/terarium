@@ -8,7 +8,7 @@
 			</aside>
 		</div>
 		<p>
-			Set the {{ config.intervention?.type }}&nbsp; <strong>{{ config.intervention?.appliedTo }}</strong> to
+			Set the {{ dynamicInterventions[0].type }}&nbsp; <strong>{{ dynamicInterventions[0].appliedTo }}</strong> to
 			<strong>{{ dynamicInterventions[0].threshold }}</strong> days when it crosses the threshold value
 			<strong>{{ dynamicInterventions[0].value }}</strong> person.
 		</p>
