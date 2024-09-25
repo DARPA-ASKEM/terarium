@@ -643,15 +643,6 @@ ul {
 	padding: 0 var(--gap-2);
 }
 
-/** Override default accordion styles */
-:deep(.p-accordion-header-link) {
-	background-color: var(--surface-100);
-}
-
-:deep(.p-accordion-content) {
-	background-color: var(--surface-100);
-}
-
 /* Override grid template so output expands when sidebar is closed */
 .overlay-container:deep(section.scale main) {
 	grid-template-columns: auto 1fr;

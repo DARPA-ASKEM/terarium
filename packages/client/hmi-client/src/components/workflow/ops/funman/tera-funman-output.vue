@@ -9,67 +9,81 @@
 			<Button label="Save for reuse" outlined severity="secondary" />
 		</div>
 	</header>
-	<div class="section-row">
-		<label>Trajectory State</label>
-		<Dropdown
-			v-model="selectedTrajState"
-			:options="modelStates"
-			@update:model-value="emit('update:trajectoryState', $event)"
-		>
-		</Dropdown>
-	</div>
-	<div ref="trajRef"></div>
-
-	<h4>Configuration parameters <i class="pi pi-info-circle" /></h4>
-	<p class="secondary-text" v-if="selectedParam2 === ''">
-		Adjust parameter ranges to only include values in the green region or less.
-	</p>
-
-	<div class="variables-table" v-if="selectedParam2">
-		<section class="boundary-drilldown">
-			<div class="boundary-drilldown-header">
-				{{ selectedParam }} : {{ selectedParam2 }} pairwise drilldown
-				<Button class="close-mask" icon="pi pi-times" text rounded aria-label="Close" @click="selectedParam2 = ''" />
+	<Accordion multiple :active-index="[0, 1, 2, 3]">
+		<AccordionTab header="Summary"> Summary text </AccordionTab>
+		<AccordionTab>
+			<template #header> State variables<i class="pi pi-info-circle" /> </template>
+			<label>Trajectory State</label>
+			<Dropdown
+				v-model="selectedTrajState"
+				:options="modelStates"
+				@update:model-value="emit('update:trajectoryState', $event)"
+			>
+			</Dropdown>
+			<div ref="trajRef"></div>
+		</AccordionTab>
+		<AccordionTab>
+			<template #header>Parameters<i class="pi pi-info-circle" /></template>
+			<p class="secondary-text" v-if="selectedParam2 === ''">
+				Adjust parameter ranges to only include values in the green region or less.
+			</p>
+			<div class="variables-table" v-if="selectedParam2">
+				<section class="boundary-drilldown">
+					<div class="boundary-drilldown-header">
+						{{ selectedParam }} : {{ selectedParam2 }} pairwise drilldown
+						<Button
+							class="close-mask"
+							icon="pi pi-times"
+							text
+							rounded
+							aria-label="Close"
+							@click="selectedParam2 = ''"
+						/>
+					</div>
+					<tera-funman-boundary-chart
+						:processed-data="processedData as FunmanProcessedData"
+						:param1="selectedParam"
+						:param2="selectedParam2"
+						:options="drilldownChartOptions"
+						:timestep="timestep"
+						:selectedBoxId="selectedBoxId"
+					/>
+				</section>
 			</div>
-			<tera-funman-boundary-chart
-				:processed-data="processedData as FunmanProcessedData"
-				:param1="selectedParam"
-				:param2="selectedParam2"
-				:options="drilldownChartOptions"
-				:timestep="timestep"
-				:selectedBoxId="selectedBoxId"
-			/>
-		</section>
-	</div>
-	<div class="variables-table" v-if="selectedParam2 === ''">
-		<div class="variables-header">
-			<header v-for="(title, index) in ['select', 'Parameter', 'Lower bound', 'Upper bound', '', '']" :key="index">
-				{{ title }}
-			</header>
-		</div>
+			<div class="variables-table" v-if="selectedParam2 === ''">
+				<div class="variables-header">
+					<header v-for="(title, index) in ['select', 'Parameter', 'Lower bound', 'Upper bound', '', '']" :key="index">
+						{{ title }}
+					</header>
+				</div>
 
-		<div v-for="(bound, parameter) in lastTrueBox?.bounds" :key="parameter + Date.now()">
-			<div class="variables-row" v-if="parameterOptions.includes(parameter)">
-				<RadioButton v-model="selectedParam" :value="parameter" />
-				<div>{{ parameter }}</div>
-				<div>{{ formatNumber(bound.lb) }}</div>
-				<div>{{ formatNumber(bound.ub) }}</div>
-				<tera-funman-boundary-chart
-					v-if="processedData"
-					:processed-data="processedData"
-					:param1="selectedParam"
-					:param2="parameter"
-					:timestep="timestep"
-					:selectedBoxId="selectedBoxId"
-					@click="selectedParam2 = parameter"
-				/>
-				<div v-if="selectedBoxId !== ''">
-					{{ formatNumber(selectedBox[parameter][0]) }} :
-					{{ formatNumber(selectedBox[parameter][1]) }}
+				<div v-for="(bound, parameter) in lastTrueBox?.bounds" :key="parameter + Date.now()">
+					<div class="variables-row" v-if="parameterOptions.includes(parameter)">
+						<RadioButton v-model="selectedParam" :value="parameter" />
+						<div>{{ parameter }}</div>
+						<div>{{ formatNumber(bound.lb) }}</div>
+						<div>{{ formatNumber(bound.ub) }}</div>
+						<tera-funman-boundary-chart
+							v-if="processedData"
+							:processed-data="processedData"
+							:param1="selectedParam"
+							:param2="parameter"
+							:timestep="timestep"
+							:selectedBoxId="selectedBoxId"
+							@click="selectedParam2 = parameter"
+						/>
+						<div v-if="selectedBoxId !== ''">
+							{{ formatNumber(selectedBox[parameter][0]) }} :
+							{{ formatNumber(selectedBox[parameter][1]) }}
+						</div>
+					</div>
 				</div>
 			</div>
-		</div>
-	</div>
+		</AccordionTab>
+		<AccordionTab v-if="contractedModel" header="Validated configuration"
+			><tera-model-diagram :model="contractedModel"
+		/></AccordionTab>
+	</Accordion>
 </template>
 
 <script setup lang="ts">
@@ -79,8 +93,9 @@ import { getRunResult } from '@/services/models/simulation-service';
 import Dropdown from 'primevue/dropdown';
 import RadioButton from 'primevue/radiobutton';
 import Button from 'primevue/button';
-// import Accordion from 'primevue/accordion';
-// import AccordionTab from 'primevue/accordiontab';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
+import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 // import InputNumber from 'primevue/inputnumber';
 import type { FunmanBox, RenderOptions } from '@/services/models/funman-service';
 import type { Model } from '@/types/Types';
@@ -135,7 +150,10 @@ const formatNumber = (v: number) => {
 const initalizeParameters = async () => {
 	const rawFunmanResult = await getRunResult(props.funModelId, 'validation.json');
 	const funmanResult = JSON.parse(rawFunmanResult);
+	console.log(funmanResult);
 
+	// funmanResult.contracted_model.header.schema = funmanResult.contracted_model.header.schema_;
+	// delete funmanResult.contracted_model.header.schema_;
 	contractedModel.value = funmanResult.contracted_model;
 
 	inputConstraints = funmanResult.request.constraints;
@@ -236,6 +254,10 @@ watch(
 	align-items: center;
 	gap: var(--gap-small);
 	margin-left: auto;
+}
+
+.pi-info-circle {
+	margin-left: var(--gap-2);
 }
 
 .secondary-text {
