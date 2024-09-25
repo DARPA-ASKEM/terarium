@@ -7,10 +7,30 @@ import { AMRSchemaNames } from '@/types/common';
 import { fileToJson } from '@/utils/file';
 import { isEmpty } from 'lodash';
 import type { MMT } from '@/model-representation/mira/mira-common';
+import { Ref } from 'vue';
 
 export async function createModel(model: Model): Promise<Model | null> {
 	delete model.id;
 	const response = await API.post(`/models`, model);
+	return response?.data ?? null;
+}
+
+export async function createModelAndModelConfig(file: File, progress?: Ref<number>): Promise<Model | null> {
+	const formData = new FormData();
+	formData.append('file', file);
+
+	const response = await API.post(`/model-configurations/import`, formData, {
+		headers: {
+			'Content-Type': 'multipart/form-data'
+		},
+		onUploadProgress(progressEvent) {
+			if (progress) {
+				progress.value = Math.min(90, Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100)));
+			}
+		},
+		timeout: 3600000
+	});
+
 	return response?.data ?? null;
 }
 
@@ -20,6 +40,14 @@ export async function createModel(model: Model): Promise<Model | null> {
  */
 export async function getModel(modelId: string): Promise<Model | null> {
 	const response = await API.get(`/models/${modelId}`);
+	return response?.data ?? null;
+}
+
+/**
+ * Get the model-configuration's underlying model
+ */
+export async function getModelByModelConfigurationId(configId: string): Promise<Model | null> {
+	const response = await API.get(`/models/from-model-configuration/${configId}`);
 	return response?.data ?? null;
 }
 
@@ -50,15 +78,6 @@ export async function getMMT(model: Model) {
 	if (!miraModel) throw new Error(`Failed to convert model ${model.id}`);
 
 	return (response?.data?.response as MMT) ?? null;
-}
-
-/**
- * Get all models
- * @return Array<Model>|null - the list of all models, or null if none returned by API
- */
-export async function getAllModelDescriptions(): Promise<Model[] | null> {
-	const response = await API.get('/models/descriptions?page-size=500');
-	return response?.data ?? null;
 }
 
 export async function updateModel(model: Model) {
@@ -155,15 +174,39 @@ export async function getModelEquation(model: Model): Promise<string> {
 		return '';
 	}
 
-	/* TODO - Replace the GET with the POST when the backend is ready,
-	 *        see PR https://github.com/DARPA-ASKEM/sciml-service/pull/167
-	 */
-	const response = await API.get(`/transforms/model-to-latex/${model.id}`);
-	// const response = await API.post(`/transforms/model-to-latex/`, model);
-	const latex = response?.data?.latex;
-	if (!latex) return '';
-	return latex ?? '';
+	const response = await API.post(`/mira/model-to-latex`, model);
+	return response?.data?.response ?? '';
 }
+
+export const getUnitsFromModelParts = (model: Model) => {
+	const unitMapping: { [key: string]: string } = {
+		_time: model?.semantics?.ode?.time?.units?.expression || ''
+	};
+	[...(model?.model.states ?? []), ...(model?.semantics?.ode?.parameters ?? [])].forEach((v) => {
+		unitMapping[v.id] = v.units?.expression || '';
+	});
+	// Add units for observables
+	(model?.semantics?.ode?.observables || []).forEach((o) => {
+		(o.states ?? []).forEach((s) => {
+			if (!unitMapping[o.id]) unitMapping[o.id] = unitMapping[s] || '';
+		});
+	});
+	return unitMapping;
+};
+
+export const getTypesFromModelParts = (model: Model) => {
+	const typeMapping: { [key: string]: string } = {};
+	[...(model.model.states ?? [])].forEach((v) => {
+		typeMapping[v.id] = 'state';
+	});
+	[...(model.semantics?.ode?.parameters ?? [])].forEach((v) => {
+		typeMapping[v.id] = 'parameter';
+	});
+	(model.semantics?.ode?.observables || []).forEach((o) => {
+		typeMapping[o.id] = 'observable';
+	});
+	return typeMapping;
+};
 
 export function isInitial(obj: Initial | ModelParameter | null): obj is Initial {
 	return obj !== null && 'target' in obj && 'expression' in obj && 'expression_mathml' in obj;
@@ -171,4 +214,24 @@ export function isInitial(obj: Initial | ModelParameter | null): obj is Initial 
 
 export function isModelParameter(obj: Initial | ModelParameter | null): obj is ModelParameter {
 	return obj !== null && 'id' in obj;
+}
+
+export function stringToLatexExpression(expression: string): string {
+	// Wrap everything after the first underscore in {} for each variable
+	// and add a \ before subsequent underscores
+	let latexExpression = expression.replace(/(_)([a-zA-Z0-9_]+)/g, (_match, p1, p2) => {
+		// Replace subsequent underscores in p2 with \_
+		const modifiedP2 = p2.replace(/_/g, '\\_');
+		return `${p1}{${modifiedP2}}`;
+	});
+
+	// (Unsure about this) Convert * to space (implicit multiplication) for LaTeX
+	// latexExpression = latexExpression.replace(/\*/g, ' ');
+
+	// Convert ^ to LaTeX superscript notation
+	latexExpression = latexExpression.replace(/\^([a-zA-Z0-9]+)/g, '^{$1}');
+
+	// Detect and convert fractions a/b to \frac{a}{b}
+	latexExpression = latexExpression.replace(/([a-zA-Z0-9]+)\/([a-zA-Z0-9]+)/g, '\\frac{$1}{$2}');
+	return latexExpression;
 }

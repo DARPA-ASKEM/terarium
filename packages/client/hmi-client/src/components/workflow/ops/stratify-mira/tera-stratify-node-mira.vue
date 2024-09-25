@@ -1,9 +1,9 @@
 <template>
 	<section>
-		<tera-operator-placeholder v-if="!outputPreview" :operation-type="node.operationType">
+		<tera-operator-placeholder v-if="!outputPreview" :node="node">
 			<template v-if="!node.inputs[0].value">Attach a model</template>
 		</tera-operator-placeholder>
-		<tera-model-diagram v-if="outputPreview" :model="outputPreview" :is-editable="false" is-preview />
+		<tera-model-diagram v-if="outputPreview" :model="outputPreview" :feature-config="{ isPreview: true }" />
 		<Button v-if="node.inputs[0].value" @click="emit('open-drilldown')" label="Edit" severity="secondary" outlined />
 	</section>
 </template>
@@ -16,14 +16,41 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import Button from 'primevue/button';
 import { getModel } from '@/services/model';
 import { Model } from '@/types/Types';
-import { StratifyOperationStateMira } from './stratify-mira-operation';
+import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
+import { StratifyOperationStateMira, StratifyMiraOperation } from './stratify-mira-operation';
 
-const emit = defineEmits(['open-drilldown']);
+const emit = defineEmits(['open-drilldown', 'append-output']);
 const outputPreview = ref<Model | null>();
 
 const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;
 }>();
+
+watch(
+	() => props.node.inputs,
+	async () => {
+		const input = props.node.inputs[0];
+		// Create a default if we dont have an output yet:
+		if (input && !props.node.outputs[0].value) {
+			let modelId: string | null = null;
+			if (input.type === 'modelId') {
+				modelId = input.value?.[0];
+			} else if (input.type === 'modelConfigId') {
+				modelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
+			}
+			if (!modelId) return;
+
+			const model = await getModel(modelId);
+			const modelName = model?.name;
+			emit('append-output', {
+				type: StratifyMiraOperation.outputs[0].type,
+				label: modelName ?? 'Default Model',
+				value: modelId
+			});
+		}
+	},
+	{ deep: true }
+);
 
 watch(
 	() => props.node.active,

@@ -16,6 +16,7 @@ import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
+import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.WorkflowService;
 
@@ -30,12 +31,14 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 	@Autowired
 	private ProjectService projectService;
 
+	@Autowired
+	private ProjectSearchService projectSearchService;
+
 	Project project;
 
 	@BeforeEach
 	public void setup() throws IOException {
-		workflowService.setupIndexAndAliasAndEnsureEmpty();
-
+		projectSearchService.setupIndexAndAliasAndEnsureEmpty();
 		project = projectService.createProject(
 			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
 		);
@@ -43,7 +46,7 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 
 	@AfterEach
 	public void teardown() throws IOException {
-		workflowService.teardownIndexAndAlias();
+		projectSearchService.teardownIndexAndAlias();
 	}
 
 	@Test
@@ -63,31 +66,6 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 					.content(objectMapper.writeValueAsString(workflow))
 			)
 			.andExpect(status().isCreated());
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItCanGetWorkflows() throws Exception {
-		final Workflow workflow = new Workflow();
-		workflow.setName("test-workflow-name1");
-		workflow.setDescription("test-workflow-description");
-		workflow.setPublicAsset(true);
-
-		final Workflow workflow2 = new Workflow();
-		workflow2.setName("test-workflow-name2");
-		workflow2.setDescription("test-workflow-description2");
-		workflow2.setPublicAsset(true);
-
-		final Workflow workflow3 = new Workflow();
-		workflow3.setName("test-workflow-name3");
-		workflow3.setDescription("test-workflow-description3");
-		workflow3.setPublicAsset(true);
-
-		workflowService.createAsset(workflow, project.getId(), ASSUME_WRITE_PERMISSION);
-		workflowService.createAsset(workflow2, project.getId(), ASSUME_WRITE_PERMISSION);
-		workflowService.createAsset(workflow3, project.getId(), ASSUME_WRITE_PERMISSION);
-
-		mockMvc.perform(MockMvcRequestBuilders.get("/workflows").with(csrf())).andExpect(status().isOk()).andReturn();
 	}
 
 	@Test

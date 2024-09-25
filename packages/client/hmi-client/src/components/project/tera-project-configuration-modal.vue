@@ -1,80 +1,74 @@
 <template>
-	<tera-modal
-		@modal-mask-clicked="emit('close-modal')"
-		@modal-enter-press="applyConfiguration"
-		class="create-project-modal"
-	>
+	<tera-modal @modal-mask-clicked="emit('close-modal')" @modal-enter-press="applyConfiguration">
 		<template #header>
 			<h4>{{ modalTitle }}</h4>
 		</template>
 		<template #default>
-			<section>
-				<form @submit.prevent>
-					<div>
-						<label for="new-project-name">Project title <span>Required</span></label>
-						<Textarea
-							id="new-project-name"
-							rows="2"
-							v-model="title"
-							placeholder="What do you want to call your project?"
-							required
-						/>
-					</div>
-					<div>
-						<label for="new-project-description">Description</label>
-						<Textarea
-							id="new-project-description"
-							rows="5"
-							v-model="description"
-							placeholder="Add a short description"
-						/>
-					</div>
-					<div>
-						<!--
-							TODO: Disabled until there is a domain property for Project.
-							This section might have similarities to tera-filter-bar.vue.
-						-->
-						<label>Domain</label>
-						<span class="flex">
-							<Dropdown placeholder="Select domain" disabled :style="{ width: '100%' }" />
-							<Button disabled label="Suggest" text />
+			<div class="modal-content-container">
+				<section>
+					<form @submit.prevent>
+						<div>
+							<label for="new-project-name">Project title* <span>(Required)</span></label>
+							<Textarea
+								id="new-project-name"
+								rows="1"
+								v-model="title"
+								autoResize
+								placeholder="What do you want to call your project?"
+								required
+								class="w-full"
+							/>
+						</div>
+						<div>
+							<label for="new-project-description">Description <span>(Optional)</span></label>
+							<Textarea
+								id="new-project-description"
+								rows="8"
+								v-model="description"
+								placeholder="Add a short description"
+								:style="{ width: '100%', resize: 'none', maxHeight: '278px', minHeight: '32px' }"
+							/>
+						</div>
+					</form>
+				</section>
+				<section>
+					<label class="label-spacing">Select a thumbnail image for your project</label>
+					<!-- <div>
+						<span class="p-input-icon-left">
+							<i class="pi pi-search" />
+							<InputText
+								placeholder="Search images..."
+								v-model="imageSearch"
+								icon="pi pi-search"
+								disabled
+							/>
 						</span>
 					</div>
-				</form>
-			</section>
-			<section class="select-thumbnail-panel">
-				<label>Select a thumbnail image for your project</label>
-				<!-- <div>
-					<span class="p-input-icon-left">
-						<i class="pi pi-search" />
-						<InputText
-							placeholder="Search images..."
-							v-model="imageSearch"
-							icon="pi pi-search"
-							disabled
-						/>
-					</span>
-				</div>
-				<p>
-					The concepts mentioned in your project title and description will be used to suggest
-					relevant thumbnail images.
-				</p> -->
-
-				<ul>
-					<li>
-						<input type="radio" name="thumbnail" id="thumbnail-default" v-model="thumbnail" value="default" />
-						<label for="thumbnail-default">
-							<img src="@assets/images/project-thumbnails/default.png" alt="Default thumbnail image" />
-						</label>
-					</li>
-					<li v-for="i in 5" :key="i">
-						<input type="radio" name="thumbnail" :id="`thumbnail-0${i}`" v-model="thumbnail" :value="`0${i}`" />
-						<label :for="`thumbnail-0${i}`">
-							<img :src="getImage(`project-thumbnails/0${i}.png`) ?? DefaultThumbnail" :alt="`Thumbnail image 0{$i}`" />
-						</label>
-					</li>
-				</ul>
-			</section>
+					<p>
+						The concepts mentioned in your project title and description will be used to suggest
+						relevant thumbnail images.
+					</p> -->
+					<div class="select-thumbnail-panel">
+						<ul>
+							<li>
+								<input type="radio" name="thumbnail" id="thumbnail-default" v-model="thumbnail" value="default" />
+								<label for="thumbnail-default">
+									<img src="@assets/images/project-thumbnails/default.png" alt="Default thumbnail image" />
+								</label>
+							</li>
+							<li v-for="i in 14" :key="i">
+								<input type="radio" name="thumbnail" :id="`thumbnail-0${i}`" v-model="thumbnail" :value="`0${i}`" />
+								<label :for="`thumbnail-0${i}`">
+									<img
+										:src="getImage(`project-thumbnails/0${i}.png`) ?? DefaultThumbnail"
+										:alt="`Thumbnail image 0{$i}`"
+									/>
+								</label>
+							</li>
+						</ul>
+					</div>
+				</section>
+			</div>
 		</template>
 		<template #footer>
 			<Button
@@ -91,7 +85,6 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Button from 'primevue/button';
@@ -154,6 +147,7 @@ function applyConfiguration() {
 
 section {
 	flex: 1;
+	min-width: 0;
 }
 
 form {
@@ -176,7 +170,6 @@ p {
 }
 
 ul {
-	margin-top: 1rem;
 	display: flex;
 	flex-wrap: wrap;
 	gap: var(--gap-small);
@@ -186,6 +179,7 @@ ul {
 li {
 	flex: 10rem;
 	border: 2px solid transparent;
+	flex-basis: 25%;
 
 	input {
 		display: none;
@@ -213,6 +207,9 @@ li {
 :deep(.content textarea) {
 	margin-bottom: 0;
 }
+:deep(.content textinput) {
+	margin-bottom: 0;
+}
 
 .select-thumbnail-panel {
 	background: var(--surface-50);
@@ -220,7 +217,14 @@ li {
 	border-radius: var(--border-radius);
 	border: 1px solid var(--surface-border-light);
 	max-height: 100%;
+	max-width: 100%;
 	overflow-y: scroll;
-	width: 40vw;
+	width: 50vw;
+	height: 20vw;
+	margin-top: var(--gap-small);
+}
+.modal-content-container {
+	display: flex;
+	gap: var(--gap-8);
 }
 </style>

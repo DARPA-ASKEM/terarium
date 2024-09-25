@@ -45,123 +45,118 @@
 				</template>
 			</Dialog>
 		</template>
-		<Teleport to="body">
-			<tera-modal
-				v-if="isEvaluationScenarioModalVisible"
-				@modal-mask-clicked="isEvaluationScenarioModalVisible = false"
-				class="evaluation-scenario-modal"
-			>
-				<template #header>
-					<div class="flex w-full justify-content-between align-items-center">
-						<h4>Evaluation scenario</h4>
-						<div>
-							<span class="text-sm">Status</span
-							><span class="ml-2 status-chip">{{
-								evaluationScenarioCurrentStatus ? evaluationScenarioCurrentStatus : 'Ready to start'
-							}}</span>
-						</div>
+		<tera-modal
+			v-if="isEvaluationScenarioModalVisible"
+			@modal-mask-clicked="isEvaluationScenarioModalVisible = false"
+			class="w-7"
+		>
+			<template #header>
+				<div class="flex w-full justify-content-between align-items-center">
+					<h4>Evaluation scenario</h4>
+					<div>
+						<span class="text-sm">Status</span
+						><span class="ml-2 status-chip">{{
+							evaluationScenarioCurrentStatus ? evaluationScenarioCurrentStatus : 'Ready to start'
+						}}</span>
 					</div>
-				</template>
-				<template #default>
-					<form>
-						<label class="text-sm" for="evaluation-scenario-name">Scenario</label>
-						<Dropdown
-							id="evaluation-scenario-name"
-							v-model="evaluationScenario"
-							:options="evalScenarios.scenarios"
-							optionLabel="name"
-							placeholder="Select a Scenario"
-							@change="onScenarioChange"
-						/>
-
-						<label class="text-sm" for="evaluation-scenario-task">Task</label>
-						<Dropdown
-							id="evaluation-scenario-task"
-							:options="evaluationScenario?.questions ?? []"
-							v-model="evaluationScenarioTask"
-							optionLabel="task"
-							placeholder="Select a Task"
-							@change="onTaskChange"
-						/>
-
-						<label class="text-sm" for="evaluation-scenario-description">Description</label>
-						<Textarea
-							id="evaluation-scenario-description"
-							rows="5"
-							v-model="evaluationScenarioDescription"
-							:readonly="true"
-						/>
-
-						<label class="text-sm" for="evaluation-scenario-notes">Notes</label>
-						<Textarea id="evaluation-scenario-notes" rows="5" v-model="evaluationScenarioNotes" />
-
-						<div class="field-checkbox">
-							<Checkbox name="multipleUsers" binary v-model="evaluationScenarioMultipleUsers" />
-							<label for="multipleUsers">Multiple Users</label>
-						</div>
-					</form>
-				</template>
-				<template #footer>
-					<div class="flex gap-2">
-						<Button
-							size="large"
-							class="p-button-danger"
-							v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started"
-							@click="stopEvaluationScenario"
-							>Stop</Button
-						>
-						<!-- sorry for this hackary but I couldn't figure out how to make the opposite logic work -->
-						<div class="hidden" v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started" />
-						<Button v-else size="large" @click="beginEvaluationScenario">Begin</Button>
-						<Button size="large" class="p-button-secondary" outlined @click="isEvaluationScenarioModalVisible = false"
-							>Close</Button
-						>
-					</div>
-					<div class="align-self-center">
-						<p>Runtime {{ evaluationScenarioRuntimeString }}</p>
-					</div>
-				</template>
-			</tera-modal>
-		</Teleport>
-		<Teleport to="body">
-			<tera-modal
-				v-if="isAboutModalVisible"
-				@modal-mask-clicked="isAboutModalVisible = false"
-				@modal-enter-press="isAboutModalVisible = false"
-				class="about-modal"
-			>
-				<article>
-					<img src="@/assets/svg/terarium-logo.svg" alt="Terarium logo" class="about-terarium-logo" />
-					<p class="text-2xl line-height-3 about-top-line">
-						Terarium is a comprehensive <span class="underlined">modeling</span> and
-						<span class="underlined">simulation</span> platform designed to help researchers and analysts:
-					</p>
-					<p class="about-middle"><span class="pi pi-search about-bullet"></span>Find models in academic literature</p>
-					<p class="about-middle"><span class="pi pi-sliders-h about-bullet"></span>Parameterize and calibrate them</p>
-					<p class="about-middle">
-						<span class="pi pi-cog about-bullet"></span>Run simulations to test a variety of scenarios, and
-					</p>
-					<p class="about-middle"><span class="pi pi-chart-line about-bullet"></span>Analyze the results.</p>
-				</article>
-				<article class="about-uncharted-section">
-					<img
-						src="@/assets/svg/uncharted-logo-official.svg"
-						alt="Uncharted Software logo"
-						class="about-uncharted-logo"
+				</div>
+			</template>
+			<template #default>
+				<form>
+					<label class="text-sm" for="evaluation-scenario-name">Scenario</label>
+					<Dropdown
+						id="evaluation-scenario-name"
+						v-model="evaluationScenario"
+						:options="evalScenarios.scenarios"
+						optionLabel="name"
+						placeholder="Select a Scenario"
+						@change="onScenarioChange"
 					/>
-					<p class="about-bottom-line text-sm">
-						Uncharted Software provides design, development and consulting services related to data visualization and
-						analysis software.
-					</p>
-				</article>
-				<template #footer>
-					<div class="modal-footer">
-						<p class="text-sm">&copy; Copyright Uncharted Software {{ new Date().getFullYear() }}</p>
-						<Button class="p-button" @click="isAboutModalVisible = false" size="large">Close</Button>
+
+					<label class="text-sm" for="evaluation-scenario-task">Task</label>
+					<Dropdown
+						id="evaluation-scenario-task"
+						:options="evaluationScenario?.questions ?? []"
+						v-model="evaluationScenarioTask"
+						optionLabel="task"
+						placeholder="Select a Task"
+						@change="onTaskChange"
+					/>
+
+					<label class="text-sm" for="evaluation-scenario-description">Description</label>
+					<Textarea
+						id="evaluation-scenario-description"
+						rows="5"
+						v-model="evaluationScenarioDescription"
+						:readonly="true"
+					/>
+
+					<label class="text-sm" for="evaluation-scenario-notes">Notes</label>
+					<Textarea id="evaluation-scenario-notes" rows="5" v-model="evaluationScenarioNotes" />
+
+					<div class="field-checkbox">
+						<Checkbox name="multipleUsers" binary v-model="evaluationScenarioMultipleUsers" />
+						<label for="multipleUsers">Multiple Users</label>
 					</div>
-				</template>
-			</tera-modal>
-		</Teleport>
+				</form>
+			</template>
+			<template #footer>
+				<div class="flex gap-2">
+					<Button
+						size="large"
+						class="p-button-danger"
+						v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started"
+						@click="stopEvaluationScenario"
+						>Stop</Button
+					>
+					<!-- sorry for this hackary but I couldn't figure out how to make the opposite logic work -->
+					<div class="hidden" v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started" />
+					<Button v-else size="large" @click="beginEvaluationScenario">Begin</Button>
+					<Button size="large" class="p-button-secondary" outlined @click="isEvaluationScenarioModalVisible = false"
+						>Close</Button
+					>
+				</div>
+				<div class="align-self-center">
+					<p>Runtime {{ evaluationScenarioRuntimeString }}</p>
+				</div>
+			</template>
+		</tera-modal>
+		<tera-modal
+			v-if="isAboutModalVisible"
+			@modal-mask-clicked="isAboutModalVisible = false"
+			@modal-enter-press="isAboutModalVisible = false"
+		>
+			<article>
+				<img src="@/assets/svg/terarium-logo.svg" alt="Terarium logo" class="about-terarium-logo" />
+				<p class="text-2xl line-height-3 about-top-line">
+					Terarium is a comprehensive <span class="underlined">modeling</span> and
+					<span class="underlined">simulation</span> platform designed to help researchers and analysts:
+				</p>
+				<p class="about-middle"><span class="pi pi-search about-bullet"></span>Find models in academic literature</p>
+				<p class="about-middle"><span class="pi pi-sliders-h about-bullet"></span>Parameterize and calibrate them</p>
+				<p class="about-middle">
+					<span class="pi pi-cog about-bullet"></span>Run simulations to test a variety of scenarios, and
+				</p>
+				<p class="about-middle"><span class="pi pi-chart-line about-bullet"></span>Analyze the results.</p>
+			</article>
+			<article class="about-uncharted-section">
+				<img
+					src="@/assets/svg/uncharted-logo-official.svg"
+					alt="Uncharted Software logo"
+					class="about-uncharted-logo"
+				/>
+				<p class="about-bottom-line text-sm">
+					Uncharted Software provides design, development and consulting services related to data visualization and
+					analysis software.
+				</p>
+			</article>
+			<template #footer>
+				<div class="modal-footer">
+					<p class="text-sm">&copy; Copyright Uncharted Software {{ new Date().getFullYear() }}</p>
+					<Button class="p-button" @click="isAboutModalVisible = false" size="large">Close</Button>
+				</div>
+			</template>
+		</tera-modal>
 	</nav>
 </template>
 
@@ -173,8 +168,8 @@ import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import Menu from 'primevue/menu';
 import { MenuItem } from 'primevue/menuitem';
-import { RoutePath, useCurrentRoute } from '@/router/index';
-import { RouteMetadata, RouteName } from '@/router/routes';
+import { RoutePath } from '@/router/index';
+import { RouteName } from '@/router/routes';
 import useAuthStore from '@/stores/auth';
 import SplitButton from 'primevue/splitbutton';
 import TeraModal from '@/components/widgets/tera-modal.vue';
@@ -203,9 +198,6 @@ const isAboutModalVisible = ref(false);
 const router = useRouter();
 
 const menuLabel = computed(() => {
-	if (isDataExplorer.value) {
-		return 'Explorer';
-	}
 	if (useProjects().activeProject.value) {
 		return useProjects().activeProject.value?.name;
 	}
@@ -359,18 +351,11 @@ const clearEvaluationScenario = () => {
 };
 
 const homeItem: MenuItem = {
-	label: RouteMetadata[RouteName.Home].displayName,
-	icon: RouteMetadata[RouteName.Home].icon,
+	label: 'Home',
+	icon: 'pi pi-home',
 	command: () => router.push(RoutePath.Home)
 };
-const explorerItem: MenuItem = {
-	label: RouteMetadata[RouteName.DataExplorer].displayName,
-	icon: RouteMetadata[RouteName.DataExplorer].icon,
-	command: () => router.push(RoutePath.DataExplorer)
-};
-const navMenuItems = ref<MenuItem[]>([homeItem, explorerItem]);
-const currentRoute = useCurrentRoute();
-const isDataExplorer = computed(() => currentRoute.value.name === RouteName.DataExplorer);
+const navMenuItems = ref<MenuItem[]>([homeItem]);
 
 /*
  * User Menu
@@ -443,7 +428,6 @@ watch(
 		const removedUpdatedProject = remove(items, (item) => item.label === lastProjectUpdated?.name);
 		navMenuItems.value = [
 			homeItem,
-			explorerItem,
 			...removedUpdatedProject,
 			...sortBy(items, (item) => item.label?.toString().toLowerCase())
 		];
@@ -503,6 +487,11 @@ nav {
 	border-bottom-right-radius: 0;
 	border-right: 0 none;
 	color: var(--text-color);
+	pointer-events: none;
+}
+
+:deep(.p-splitbutton.p-button-outlined > .p-button) {
+	box-shadow: var(--surface-400) 0 0 0 1px inset;
 }
 
 :deep(.layout-project-selection.p-splitbutton .p-button:last-of-type) {
@@ -517,10 +506,6 @@ nav {
 		background-color: var(--surface-50);
 		color: var(--text-color);
 	}
-}
-
-.about-modal {
-	max-width: 800px;
 }
 
 .modal-footer {
@@ -590,10 +575,6 @@ nav {
 	}
 }
 
-.about-modal {
-	max-width: 800px;
-}
-
 .about-uncharted-logo {
 	width: 8rem;
 	margin-bottom: 0.5rem;
@@ -609,10 +590,6 @@ nav {
 	justify-content: space-between;
 	width: 100%;
 	color: var(--text-color-subdued);
-}
-
-.evaluation-scenario-modal:deep(section) {
-	width: 60vw;
 }
 
 .evaluation-scenario-modal:deep(footer) {

@@ -14,11 +14,11 @@
 					@click.stop="onAddUncertainty"
 					class="mr-2"
 				/>
-				<tera-input v-model="filterText" placeholder="Filter" />
+				<tera-input-text v-model="filterText" placeholder="Filter" class="w-2 p-1" />
 			</template>
 
 			<!-- Adding uncertainty header -->
-			<span v-if="isAddingUncertainty">
+			<span v-if="isAddingUncertainty" class="add-uncertainty-toolbar">
 				<Button size="small" text label="Unselect all" @click="selectedParameters = []" />
 				Add
 				<Dropdown
@@ -38,49 +38,50 @@
 				<InputNumber class="uncertainty-percentage" v-model="uncertaintyPercentage" suffix="%" :min="0" :max="100" />
 				bounds on the value of the selected constant parameters.
 				<Button text small icon="pi pi-check" @click="onUpdateDistributions" />
-				<Button text small icon="pi pi-times" @click="isAddingUncertainty = false" />
+				<Button text small icon="pi pi-times" @click="isAddingUncertainty = false" class="ml-auto" />
 			</span>
 
-			<ul>
+			<ul class="pl-1">
 				<li v-for="{ baseParameter, childParameters, isVirtual } in parameterList" :key="baseParameter">
 					<!-- Stratified -->
-					<Accordion v-if="isVirtual" multiple>
-						<AccordionTab>
-							<template #header>
-								<span>{{ baseParameter }}</span>
-								<Button label="Open Matrix" text size="small" @click.stop="matrixModalId = baseParameter" />
-							</template>
-							<div class="flex">
-								<Divider layout="vertical" type="solid" />
-								<ul>
-									<li v-for="{ referenceId } in childParameters" :key="referenceId">
-										<div class="flex gap-4">
-											<Checkbox
-												v-if="
-													isAddingUncertainty &&
-													getParameterDistribution(modelConfiguration, referenceId).type === DistributionType.Constant
-												"
-												binary
-												:model-value="selectedParameters.includes(referenceId)"
-												@change="onSelect(referenceId)"
-											/>
-											<tera-parameter-entry
-												:model="model"
-												:model-configuration="props.modelConfiguration"
-												:model-configurations="props.modelConfigurations"
-												:parameter-id="referenceId"
-												@update-parameter="emit('update-parameters', [$event])"
-												@update-source="emit('update-source', $event)"
-											/>
-										</div>
-										<Divider type="solid" />
-									</li>
-								</ul>
-							</div>
-						</AccordionTab>
-					</Accordion>
+					<section v-if="isVirtual" class="parameter-entry-stratified">
+						<Accordion multiple>
+							<AccordionTab>
+								<template #header>
+									<span>{{ baseParameter }}</span>
+									<Button label="Open Matrix" text size="small" @click.stop="matrixModalId = baseParameter" />
+								</template>
+								<div class="flex">
+									<ul class="ml-1">
+										<li v-for="{ referenceId } in childParameters" :key="referenceId">
+											<div class="flex gap-4">
+												<Checkbox
+													v-if="
+														isAddingUncertainty &&
+														getParameterDistribution(modelConfiguration, referenceId).type === DistributionType.Constant
+													"
+													binary
+													:model-value="selectedParameters.includes(referenceId)"
+													@change="onSelect(referenceId)"
+												/>
+												<tera-parameter-entry
+													:model="model"
+													:model-configuration="props.modelConfiguration"
+													:model-configurations="props.modelConfigurations"
+													:parameter-id="referenceId"
+													@update-parameter="emit('update-parameters', [$event])"
+													@update-source="emit('update-source', $event)"
+												/>
+											</div>
+											<Divider type="solid" />
+										</li>
+									</ul>
+								</div>
+							</AccordionTab>
+						</Accordion>
+					</section>
 					<!-- Unstratified -->
-					<div v-else class="flex gap-4 pl-5">
+					<div v-else class="flex gap-4">
 						<Checkbox
 							v-if="
 								isAddingUncertainty &&
@@ -99,34 +100,31 @@
 							@update-source="emit('update-source', $event)"
 						/>
 					</div>
-					<Divider type="solid" />
 				</li>
 			</ul>
 		</AccordionTab>
 	</Accordion>
 
-	<Teleport to="body">
-		<tera-stratified-matrix-modal
-			v-if="matrixModalId && isStratified"
-			:id="matrixModalId"
-			:mmt="mmt"
-			:mmt-params="mmtParams"
-			:stratified-matrix-type="StratifiedMatrix.Parameters"
-			:open-value-config="!!matrixModalId"
-			@close-modal="matrixModalId = ''"
-			@update-cell-value="
-				emit('update-parameters', [
-					{
-						id: $event.variableName,
-						distribution: {
-							type: DistributionType.Constant,
-							parameters: { value: $event.newValue }
-						}
+	<tera-stratified-matrix-modal
+		v-if="matrixModalId && isStratified"
+		:id="matrixModalId"
+		:mmt="mmt"
+		:mmt-params="mmtParams"
+		:stratified-matrix-type="StratifiedMatrix.Parameters"
+		:open-value-config="!!matrixModalId"
+		@close-modal="matrixModalId = ''"
+		@update-cell-value="
+			emit('update-parameters', [
+				{
+					id: $event.variableName,
+					distribution: {
+						type: DistributionType.Constant,
+						parameters: { value: $event.newValue }
 					}
-				])
-			"
-		/>
-	</Teleport>
+				}
+			])
+		"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -139,12 +137,11 @@ import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
-import Divider from 'primevue/divider';
 import { DistributionType, DistributionTypeLabel, distributionTypeOptions } from '@/services/distribution';
 import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
 import Checkbox from 'primevue/checkbox';
-import TeraInput from '@/components/widgets/tera-input.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraParameterEntry from './tera-parameter-entry.vue';
 import TeraStratifiedMatrixModal from './model-configurations/tera-stratified-matrix-modal.vue';
 
@@ -238,28 +235,63 @@ const onUpdateDistributions = () => {
 <style scoped>
 ul {
 	flex-grow: 1;
+
 	li {
 		list-style: none;
 	}
+
+	li + li {
+		border-top: 1px solid var(--gray-300);
+		margin-top: var(--gap-1-5);
+		padding-top: var(--gap-4);
+	}
+
+	li:last-child {
+		margin-bottom: var(--gap-4);
+	}
+}
+
+.parameter-entry-stratified {
+	border-left: 4px solid var(--surface-300);
+	padding-left: var(--gap-1);
 }
 
 :deep(.p-divider) {
 	&.p-divider-horizontal {
-		margin-top: 0;
-		margin-bottom: var(--gap);
+		margin-top: var(--gap-2);
+		margin-bottom: var(--gap-2);
 		color: var(--gray-300);
 	}
-	&.p-divider-vertical {
-		margin-left: var(--gap-small);
-		margin-right: var(--gap);
+}
+
+.stratified {
+	ul {
+		border-left: 1px solid var(--gray-300);
+		margin-left: var(--gap-2);
+		padding-left: var(--gap-4);
+	}
+
+	li {
+		display: flex;
+		gap: var(--gap-4);
 	}
 }
 
 .artifact-amount {
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
-	margin-left: 0.25rem;
+	margin-left: var(--gap-1);
 }
+
+.add-uncertainty-toolbar {
+	display: flex;
+	align-items: center;
+	gap: var(--gap-2);
+	background-color: var(--surface-highlight);
+	padding: var(--gap-2);
+	margin-bottom: var(--gap-2);
+}
+
 :deep(.uncertainty-percentage) > input {
 	width: 4rem;
 }

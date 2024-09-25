@@ -18,15 +18,14 @@ import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
-import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Dynamics;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
-import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 public class TDSCodeControllerTests extends TerariumApplicationTests {
 
@@ -37,19 +36,16 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 	private CodeService codeAssetService;
 
 	@Autowired
-	private ElasticsearchService elasticService;
-
-	@Autowired
-	private ElasticsearchConfiguration elasticConfig;
-
-	@Autowired
 	private ProjectService projectService;
+
+	@Autowired
+	private ProjectSearchService projectSearchService;
 
 	Project project;
 
 	@BeforeEach
 	public void setup() throws IOException {
-		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getCodeIndex());
+		projectSearchService.setupIndexAndAliasAndEnsureEmpty();
 
 		project = projectService.createProject(
 			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
@@ -58,7 +54,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 
 	@AfterEach
 	public void teardown() throws IOException {
-		elasticService.deleteIndex(elasticConfig.getCodeIndex());
+		projectSearchService.teardownIndexAndAlias();
 	}
 
 	@Test
@@ -105,42 +101,6 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 
 	CodeFile createCodeFile() {
 		return new CodeFile().setFileNameAndProgrammingLanguage("test.py").setDynamics(createDynamics());
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItCanGetCodes() throws Exception {
-		codeAssetService.createAsset(
-			(Code) new Code()
-				.setMetadata(createMetadata())
-				.setFiles(Map.of("test.py", createCodeFile()))
-				.setName("test-code-name")
-				.setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
-		codeAssetService.createAsset(
-			(Code) new Code()
-				.setMetadata(createMetadata())
-				.setFiles(Map.of("test.py", createCodeFile()))
-				.setName("test-code-name")
-				.setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
-		codeAssetService.createAsset(
-			(Code) new Code()
-				.setMetadata(createMetadata())
-				.setFiles(Map.of("test.py", createCodeFile()))
-				.setName("test-code-name")
-				.setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
-		mockMvc.perform(MockMvcRequestBuilders.get("/code-asset").with(csrf())).andExpect(status().isOk()).andReturn();
 	}
 
 	@Test

@@ -23,7 +23,7 @@ jobs:
       image-name: ghcr.io/darpa-askem/mira-taskrunner
 
   amd64:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: image-tag
     permissions:
       contents: read
@@ -59,7 +59,7 @@ jobs:
           tags: ${{ needs.image-tag.outputs.tagged-image-name }}--amd64
 
   arm64-emulation:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: image-tag
     permissions:
       contents: read

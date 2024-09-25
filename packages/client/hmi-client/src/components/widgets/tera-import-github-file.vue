@@ -1,159 +1,157 @@
 <template>
 	<main>
-		<Teleport to="body">
-			<tera-modal v-if="visible" @modal-mask-clicked="emit('close')">
-				<template #header>
-					<h2>
-						https://github.com/{{ repoOwnerAndName }}<template v-if="isInDirectory">/{{ currentDirectory }}</template>
-					</h2>
-					<b>({{ directoryContent?.totalFiles }}) files found in: </b>
-					<div class="flex justify-content-left">
-						<Breadcrumb :home="home" :model="directories" style="color: black" />
-					</div>
-				</template>
-				<template #default>
-					<div style="display: flex; flex-direction: row">
-						<div style="max-width: 90%; width: 30%">
-							<ul>
-								<li v-if="isInDirectory" @click="openDirectory('')">
-									<i class="pi pi-folder-open" />
-									<b> ..</b>
-								</li>
-								<li v-if="hasDirectories">
-									<header>
-										<b>Directories</b>
-										<span class="artifact-amount">({{ directoryContent?.files.Directory?.length }})</span>
-									</header>
-								</li>
-								<li
-									v-for="(content, index) in directoryContent?.files.Directory"
-									:key="index"
-									@click="openDirectory(content.path)"
-								>
-									<i class="pi pi-folder" />
+		<tera-modal v-if="visible" @modal-mask-clicked="emit('close')">
+			<template #header>
+				<h2>
+					https://github.com/{{ repoOwnerAndName }}<template v-if="isInDirectory">/{{ currentDirectory }}</template>
+				</h2>
+				<b>({{ directoryContent?.totalFiles }}) files found in: </b>
+				<div class="flex justify-content-left">
+					<Breadcrumb :home="home" :model="directories" style="color: black" />
+				</div>
+			</template>
+			<template #default>
+				<div style="display: flex; flex-direction: row">
+					<div style="max-width: 90%; width: 30%">
+						<ul>
+							<li v-if="isInDirectory" @click="openDirectory('')">
+								<i class="pi pi-folder-open" />
+								<b> ..</b>
+							</li>
+							<li v-if="hasDirectories">
+								<header>
+									<b>Directories</b>
+									<span class="artifact-amount">({{ directoryContent?.files.Directory?.length }})</span>
+								</header>
+							</li>
+							<li
+								v-for="(content, index) in directoryContent?.files.Directory"
+								:key="index"
+								@click="openDirectory(content.path)"
+							>
+								<i class="pi pi-folder" />
+								{{ content.name }}
+							</li>
+							<li v-if="hasCode">
+								<header>
+									<b>Code</b>
+									<span class="artifact-amount">({{ directoryContent?.files.Code?.length }})</span>
+								</header>
+							</li>
+							<li
+								v-for="(content, index) in directoryContent?.files.Code"
+								:key="index"
+								@click="previewTextFile(content)"
+							>
+								<Checkbox class="file-checkboxes" v-model="selectedFiles" :inputId="content.name" :value="content" />
+								<i class="pi pi-file file-checkboxes" />
+								<label :for="content.name">{{ content.name }}</label>
+							</li>
+							<li v-if="hasData">
+								<header>
+									<b>Data</b>
+									<span class="artifact-amount">({{ directoryContent?.files.Data?.length }})</span>
+								</header>
+							</li>
+							<li
+								v-for="(content, index) in directoryContent?.files.Data"
+								:key="index"
+								@click="previewTextFile(content)"
+							>
+								<Checkbox class="file-checkboxes" v-model="selectedFiles" :inputId="content.name" :value="content" />
+								<i class="pi pi-file file-checkboxes" />
+								<label :for="content.name">{{ content.name }}</label>
+							</li>
+							<li v-if="hasDocuments">
+								<header>
+									<b>Documents</b>
+									<span class="artifact-amount">({{ directoryContent?.files.Documents?.length }})</span>
+								</header>
+							</li>
+							<li
+								v-for="(content, index) in directoryContent?.files.Documents"
+								:key="index"
+								@click="previewTextFile(content)"
+							>
+								<Checkbox class="file-checkboxes" v-model="selectedFiles" :inputId="content.name" :value="content" />
+								<i class="pi pi-file file-checkboxes" />
+								<label :for="content.name">{{ content.name }}</label>
+							</li>
+							<li v-if="hasOther">
+								<header>
+									<b>Unknown File Types</b>
+									<span class="artifact-amount">({{ directoryContent?.files.Other?.length }})</span>
+								</header>
+							</li>
+							<li
+								class="t"
+								v-for="(content, index) in directoryContent?.files.Other"
+								:key="index"
+								@click="previewTextFile(content)"
+							>
+								<div class="unknown-check">
+									<Checkbox v-model="selectedUnknownFiles" :inputId="content.name" :value="content" />
+									<i class="pi pi-file unknown-icon" />
 									{{ content.name }}
-								</li>
-								<li v-if="hasCode">
-									<header>
-										<b>Code</b>
-										<span class="artifact-amount">({{ directoryContent?.files.Code?.length }})</span>
-									</header>
-								</li>
-								<li
-									v-for="(content, index) in directoryContent?.files.Code"
-									:key="index"
-									@click="previewTextFile(content)"
-								>
-									<Checkbox class="file-checkboxes" v-model="selectedFiles" :inputId="content.name" :value="content" />
-									<i class="pi pi-file file-checkboxes" />
-									<label :for="content.name">{{ content.name }}</label>
-								</li>
-								<li v-if="hasData">
-									<header>
-										<b>Data</b>
-										<span class="artifact-amount">({{ directoryContent?.files.Data?.length }})</span>
-									</header>
-								</li>
-								<li
-									v-for="(content, index) in directoryContent?.files.Data"
-									:key="index"
-									@click="previewTextFile(content)"
-								>
-									<Checkbox class="file-checkboxes" v-model="selectedFiles" :inputId="content.name" :value="content" />
-									<i class="pi pi-file file-checkboxes" />
-									<label :for="content.name">{{ content.name }}</label>
-								</li>
-								<li v-if="hasDocuments">
-									<header>
-										<b>Documents</b>
-										<span class="artifact-amount">({{ directoryContent?.files.Documents?.length }})</span>
-									</header>
-								</li>
-								<li
-									v-for="(content, index) in directoryContent?.files.Documents"
-									:key="index"
-									@click="previewTextFile(content)"
-								>
-									<Checkbox class="file-checkboxes" v-model="selectedFiles" :inputId="content.name" :value="content" />
-									<i class="pi pi-file file-checkboxes" />
-									<label :for="content.name">{{ content.name }}</label>
-								</li>
-								<li v-if="hasOther">
-									<header>
-										<b>Unknown File Types</b>
-										<span class="artifact-amount">({{ directoryContent?.files.Other?.length }})</span>
-									</header>
-								</li>
-								<li
-									class="t"
-									v-for="(content, index) in directoryContent?.files.Other"
-									:key="index"
-									@click="previewTextFile(content)"
-								>
-									<div class="unknown-check">
-										<Checkbox v-model="selectedUnknownFiles" :inputId="content.name" :value="content" />
-										<i class="pi pi-file unknown-icon" />
-										{{ content.name }}
-									</div>
-									<div>
-										<Dropdown
-											v-model="content.fileCategory"
-											:options="asDocumentTypes"
-											optionLabel="name"
-											placeholder="Select a document type"
-											style="width: 90%; margin: 2px"
-										/>
-									</div>
-								</li>
-							</ul>
-						</div>
-						<section class="preview-container" style="width: 70%">
-							<div class="code-editor-container">
-								<h4 class="preview-title">Preview</h4>
-								<v-ace-editor
-									v-model:value="displayCode"
-									@init="initialize"
-									lang="python"
-									theme="chrome"
-									class="code-editor"
-								/>
-							</div>
-						</section>
+								</div>
+								<div>
+									<Dropdown
+										v-model="content.fileCategory"
+										:options="asDocumentTypes"
+										optionLabel="name"
+										placeholder="Select a document type"
+										style="width: 90%; margin: 2px"
+									/>
+								</div>
+							</li>
+						</ul>
 					</div>
-				</template>
-				<template #footer>
-					<Button v-if="useProjects().activeProject.value" @click="addRepoToCodeAsset()">Import repo to project</Button>
-					<Dropdown
-						v-else
-						placeholder="Import repo to project"
-						class="p-button dropdown-button"
-						:is-dropdown-left-aligned="false"
-						:options="projectOptions"
-						option-label="name"
-						@change="addRepoToCodeAsset"
-					/>
-					<Button
-						v-if="useProjects().activeProject.value"
-						:disabled="selectedFiles.length + selectedUnknownFiles.length < 1"
-						@click="openSelectedFiles()"
-						>Import {{ selectedFiles.length + selectedUnknownFiles.length }} file{{
-							selectedFiles.length == 1 ? '' : 's'
-						}}</Button
-					>
-					<Dropdown
-						v-else
-						:disabled="selectedFiles.length + selectedUnknownFiles.length < 1"
-						placeholder="Import files to project"
-						class="p-button dropdown-button"
-						:is-dropdown-left-aligned="false"
-						:options="projectOptions"
-						option-label="name"
-						@change="openSelectedFiles"
-					/>
-					<Button class="p-button-outlined" label="Cancel" @click="emit('close')" />
-				</template>
-			</tera-modal>
-		</Teleport>
+					<section class="preview-container" style="width: 70%">
+						<div class="code-editor-container">
+							<h4 class="preview-title">Preview</h4>
+							<v-ace-editor
+								v-model:value="displayCode"
+								@init="initialize"
+								lang="python"
+								theme="chrome"
+								class="code-editor"
+							/>
+						</div>
+					</section>
+				</div>
+			</template>
+			<template #footer>
+				<Button v-if="useProjects().activeProject.value" @click="addRepoToCodeAsset()">Import repo to project</Button>
+				<Dropdown
+					v-else
+					placeholder="Import repo to project"
+					class="p-button dropdown-button"
+					:is-dropdown-left-aligned="false"
+					:options="projectOptions"
+					option-label="name"
+					@change="addRepoToCodeAsset"
+				/>
+				<Button
+					v-if="useProjects().activeProject.value"
+					:disabled="selectedFiles.length + selectedUnknownFiles.length < 1"
+					@click="openSelectedFiles()"
+					>Import {{ selectedFiles.length + selectedUnknownFiles.length }} file{{
+						selectedFiles.length == 1 ? '' : 's'
+					}}</Button
+				>
+				<Dropdown
+					v-else
+					:disabled="selectedFiles.length + selectedUnknownFiles.length < 1"
+					placeholder="Import files to project"
+					class="p-button dropdown-button"
+					:is-dropdown-left-aligned="false"
+					:options="projectOptions"
+					option-label="name"
+					@change="openSelectedFiles"
+				/>
+				<Button class="p-button-outlined" label="Cancel" @click="emit('close')" />
+			</template>
+		</tera-modal>
 	</main>
 </template>
 

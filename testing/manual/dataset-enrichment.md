@@ -10,13 +10,17 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
     ```
 2. Create, or open, project named `QA [Your Name]`
 
+### 2. Upload assets
+1. Dataset [SIR_Dataset](https://drive.google.com/file/d/1wdCLKKznHaoCg1gWI7q7OO8W4F7zOjpc/view?usp=drive_link)
+2. The same Dataset using a different name [SIR_Dataset](https://drive.google.com/file/d/1wdCLKKznHaoCg1gWI7q7OO8W4F7zOjpc/view?usp=drive_link)
+3. Document [SIR_Document](https://drive.google.com/file/d/1GYyRrxs2Nd8BsU0fGzYW8hJ8CulK5AIY/view?usp=drive_link)
+4. Wait for the document extractions to finish for the uploaded document
 
-### 2. Test dataset enrichment without a document
-1. Upload _the dataset_ [SIR_Dataset](https://drive.google.com/file/d/1wdCLKKznHaoCg1gWI7q7OO8W4F7zOjpc/view?usp=drive_link)
-2. Go to SIR dataset (uploaded and created dataset) from the resource panel
-3. Click `Enrich description` -> Click `Generate descriptions` from the modal
-4. __Expected Result__: The process go through without any error
-5. __Expected Result__: the rows should be enriched as:
+### 3. Test dataset enrichment without a document
+1. Open the Dataset
+2. Enrich the description without a document
+3. __Expected Result__: The process go through without any error
+4. __Expected Result__: the rows should be enriched as:
 
 | ID | Name | Description                                                                                                                           | Concept                        | Unit     | Datatype | Stats                              |
 |----|------|---------------------------------------------------------------------------------------------------------------------------------------|--------------------------------|----------|----------|------------------------------------|
@@ -26,13 +30,11 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 | r  | R    | The proportion of the population that has recovered from an infection or condition, typically in the context of an SIR model.         | recovered population           | Unitless | numeric  | 0 - 0.24 - 0.810127005400101       |
 
 
-### 3. Test dataset enrichment with a document
-1. Upload _the dataset_ and _the document_ ([SIR_Dataset](https://drive.google.com/file/d/1wdCLKKznHaoCg1gWI7q7OO8W4F7zOjpc/view?usp=drive_link), [SIR_Document](https://drive.google.com/file/d/1GYyRrxs2Nd8BsU0fGzYW8hJ8CulK5AIY/view?usp=drive_link)).
-2. Open up the notification panel and wait for the document extractions to finish (Otherwise next steps might throw errors. See [Bug](https://github.com/DARPA-ASKEM/terarium/issues/3523))
-3. Go to the newly uploaded and created SIR Dataset from the resource panel
-4. Click `Enrich description` -> Select the uploaded document (`SIR.pdf`) -> Click `Enrich description`.
-5. __Expected Result__: Column information is updated with more details (description, concept, unit, etc) and the link to the document (`SIR.pdf`) is added to the `Provenance` section.
-6. __Expected Result__: the rows should be enriched as:
+### 4. Test dataset enrichment with a document
+1. Open the duplicated dataset
+2. Enrich the description with a document
+3. __Expected Result__: Column information is updated with more details (description, concept, unit, etc) and the link to the document (`SIR.pdf`) is added to the `Provenance` section.
+4. __Expected Result__: the rows should be enriched as:
 
 | ID | Name | Description                                                                                                                                            | Concept                        | Unit       | Datatype | Stats                              |
 |----|------|--------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------|------------|----------|------------------------------------|

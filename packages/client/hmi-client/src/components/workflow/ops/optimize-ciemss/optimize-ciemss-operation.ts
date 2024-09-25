@@ -2,7 +2,8 @@ import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import { Intervention, InterventionSemanticType, InterventionPolicy } from '@/types/Types';
 import { getRunResult, getSimulation } from '@/services/models/simulation-service';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
-import { createInterventionPolicy } from '@/services/intervention-policy';
+import { createInterventionPolicy, blankIntervention } from '@/services/intervention-policy';
+import optimizeModel from '@assets/svg/operator-images/optimize-model.svg';
 
 const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L747';
 
@@ -40,7 +41,7 @@ export interface InterventionPolicyGroupForm {
 
 export interface Criterion {
 	name: string; // Title of the group
-	targetVariable: string;
+	targetVariable: string; // qoi context which will contain _state or _observable accordingly
 	qoiMethod: ContextMethods;
 	riskTolerance: number;
 	threshold: number;
@@ -68,9 +69,11 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	inProgressPostForecastId: string;
 	postForecastRunId: string;
 	optimizationRunId: string;
-	optimizedInterventionPolicy: InterventionPolicy | null;
+	optimizedInterventionPolicyId: string;
 	optimizeErrorMessage: { name: string; value: string; traceback: string };
 	simulateErrorMessage: { name: string; value: string; traceback: string };
+	// Intermediate:
+	currentProgress: number; // optimization run's 2 digit %
 }
 
 // This is used as a map between dropdown labels and the inner values used by pyciemss-service.
@@ -89,14 +92,6 @@ export const OBJECTIVE_FUNCTION_MAP = [
 	{ label: 'lower bound', value: InterventionObjectiveFunctions.lowerBound },
 	{ label: 'upper bound', value: InterventionObjectiveFunctions.upperbound }
 ];
-
-export const blankIntervention: Intervention = {
-	name: 'New Intervention',
-	appliedTo: '',
-	type: InterventionSemanticType.Parameter,
-	staticInterventions: [{ timestep: Number.NaN, value: Number.NaN }],
-	dynamicInterventions: []
-};
 
 export const blankInterventionPolicyGroup: InterventionPolicyGroupForm = {
 	startTime: 0,
@@ -126,21 +121,15 @@ export const OptimizeCiemssOperation: Operation = {
 	displayName: 'Optimize intervention policy',
 	description: 'Optimize intervention policy',
 	documentationUrl: DOCUMENTATION_URL,
+	imageUrl: optimizeModel,
 	inputs: [
-		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },
-		{
-			type: 'calibrateSimulationId',
-			label: 'Calibration',
-			acceptMultiple: false,
-			isOptional: true
-		},
+		{ type: 'modelConfigId', label: 'Model configuration' },
 		{
 			type: 'policyInterventionId',
-			label: 'Intervention Policy',
-			acceptMultiple: false
+			label: 'Intervention Policy'
 		}
 	],
-	outputs: [{ type: 'simulationId' }],
+	outputs: [{ type: 'policyInterventionId|datasetId' }],
 	isRunnable: true,
 
 	initState: () => {
@@ -161,9 +150,10 @@ export const OptimizeCiemssOperation: Operation = {
 			preForecastRunId: '',
 			postForecastRunId: '',
 			optimizationRunId: '',
-			optimizedInterventionPolicy: null,
+			optimizedInterventionPolicyId: '',
 			optimizeErrorMessage: { name: '', value: '', traceback: '' },
-			simulateErrorMessage: { name: '', value: '', traceback: '' }
+			simulateErrorMessage: { name: '', value: '', traceback: '' },
+			currentProgress: 0
 		};
 		return init;
 	}
@@ -185,11 +175,9 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 	// From snake case -> camel case.
 	simulationStaticInterventions.forEach((inter) => {
 		const newIntervetion: Intervention = {
-			appliedTo: inter.applied_to,
 			dynamicInterventions: inter.dynamic_interventions,
 			name: inter.name,
-			staticInterventions: inter.static_interventions,
-			type: inter.type
+			staticInterventions: inter.static_interventions
 		};
 		allInterventions.push(newIntervetion);
 	});
@@ -209,10 +197,10 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 		for (let i = 0; i < paramNames.length; i++) {
 			allInterventions.push({
 				name: `Optimized ${paramNames[i]}`,
-				appliedTo: paramNames[i],
-				type: InterventionSemanticType.Parameter,
 				staticInterventions: [
 					{
+						appliedTo: paramNames[i],
+						type: InterventionSemanticType.Parameter,
 						timestep: policyResult[i],
 						value: paramValues[i]
 					}
@@ -225,12 +213,12 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 		for (let i = 0; i < paramNames.length; i++) {
 			allInterventions.push({
 				name: `Optimized ${paramNames[i]}`,
-				appliedTo: paramNames[i],
-				type: InterventionSemanticType.Parameter,
 				staticInterventions: [
 					{
 						timestep: startTimes[i],
-						value: policyResult[i]
+						value: policyResult[i],
+						appliedTo: paramNames[i],
+						type: InterventionSemanticType.Parameter
 					}
 				],
 				dynamicInterventions: []
@@ -242,12 +230,12 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 		for (let i = 0; i < paramNames.length; i++) {
 			allInterventions.push({
 				name: `Optimized ${paramNames[i]}`,
-				appliedTo: paramNames[i],
-				type: InterventionSemanticType.Parameter,
 				staticInterventions: [
 					{
 						timestep: policyResult[i * 2],
-						value: policyResult[i * 2 + 1]
+						value: policyResult[i * 2 + 1],
+						appliedTo: paramNames[i],
+						type: InterventionSemanticType.Parameter
 					}
 				],
 				dynamicInterventions: []
@@ -273,6 +261,7 @@ export async function createInterventionPolicyFromOptimize(modelConfigId: string
 	const newIntervention: InterventionPolicy = {
 		name: `Optimize run: ${optimizeRunId}`,
 		modelId,
+		temporary: true,
 		interventions: optimizedInterventions
 	};
 	const newInterventionPolicy: InterventionPolicy = await createInterventionPolicy(newIntervention);

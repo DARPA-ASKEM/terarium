@@ -1,38 +1,38 @@
 <template>
-	<div class="strata-group" :style="`border-left: 9px solid ${props.config.borderColour}`">
+	<div class="strata-group">
 		<div class="input-row">
-			<div class="label-and-input">
-				<label>Name of strata</label>
-				<InputText v-model="strataName" placeholder="e.g., Age group" @focusout="emit('update-self', updatedConfig)" />
-			</div>
-			<div class="label-and-input">
-				<label>Select variables and parameters to stratify</label>
-				<MultiSelect
-					v-model="selectedVariables"
-					:options="props.modelNodeOptions"
-					placeholder="Click to select"
-					display="chip"
-					@update:model-value="emit('update-self', updatedConfig)"
-				></MultiSelect>
-			</div>
+			<label>Name of strata</label>
+			<tera-input-text
+				v-model="strataName"
+				placeholder="e.g., Age group"
+				@focusout="emit('update-self', updatedConfig)"
+			/>
 		</div>
 		<div class="input-row">
-			<div class="label-and-input">
-				<label>
-					Enter a comma separated list of labels for each group.
-					<span class="subdued-text">(Max 100)</span>
-				</label>
-				<InputText v-model="labels" placeholder="e.g., Young, Old" @focusout="emit('update-self', updatedConfig)" />
-			</div>
+			<label>Select variables and parameters to stratify</label>
+			<MultiSelect
+				v-model="selectedVariables"
+				:options="props.modelNodeOptions"
+				placeholder="Click to select"
+				display="chip"
+				@update:model-value="emit('update-self', updatedConfig)"
+			/>
 		</div>
-		<div class="input-row justify-space-between">
+		<div class="input-row">
+			<label>
+				Enter a comma separated list of labels for each group.
+				<span class="subdued-text">(Max 100)</span>
+			</label>
+			<tera-input-text v-model="labels" placeholder="e.g., Young, Old" @focusout="emit('update-self', updatedConfig)" />
+		</div>
+		<div class="input-row">
 			<div class="flex align-items-center gap-2">
+				<Checkbox @change="emit('update-self', updatedConfig)" v-model="useStructure" binary />
 				<label>Create new transitions between strata</label>
-				<InputSwitch @change="emit('update-self', updatedConfig)" v-model="useStructure" />
 			</div>
 			<div class="flex align-items-center gap-2">
+				<Checkbox @change="emit('update-self', updatedConfig)" v-model="cartesianProduct" binary />
 				<label>Allow existing interactions to involve multiple strata</label>
-				<InputSwitch @change="emit('update-self', updatedConfig)" v-model="cartesianProduct" />
 			</div>
 		</div>
 	</div>
@@ -40,9 +40,9 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import InputText from 'primevue/inputtext';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import MultiSelect from 'primevue/multiselect';
-import InputSwitch from 'primevue/inputswitch';
+import Checkbox from 'primevue/checkbox';
 import { StratifyGroup } from '@/components/workflow/ops/stratify-mira/stratify-mira-operation';
 
 const props = defineProps<{
@@ -87,18 +87,10 @@ watch(
 <style scoped>
 .strata-group {
 	display: flex;
-	padding: 1rem 1.5rem;
 	flex-direction: column;
 	justify-content: center;
 	align-items: flex-start;
 	gap: 0.5rem;
-	border-radius: 0.375rem;
-	background: #fff;
-	border: 1px solid rgba(0, 0, 0, 0.08);
-	/* Shadow/medium */
-	box-shadow:
-		0px 2px 4px -1px rgba(0, 0, 0, 0.06),
-		0px 4px 6px -1px rgba(0, 0, 0, 0.08);
 }
 
 .sub-header {
@@ -117,8 +109,7 @@ watch(
 .input-row {
 	width: 100%;
 	display: flex;
-	flex-direction: row;
-	align-items: center;
+	flex-direction: column;
 	gap: var(--gap-small);
 	margin-bottom: var(--gap-small);
 

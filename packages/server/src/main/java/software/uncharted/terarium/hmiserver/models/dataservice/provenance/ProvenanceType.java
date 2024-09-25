@@ -45,7 +45,10 @@ public enum ProvenanceType {
 	WORKFLOW("Workflow"),
 
 	@JsonAlias("Equation")
-	EQUATION("Equation");
+	EQUATION("Equation"),
+
+	@JsonAlias("InterventionPolicy")
+	INTERVENTION_POLICY("InterventionPolicy");
 
 	public final String type;
 

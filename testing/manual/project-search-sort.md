@@ -31,7 +31,7 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
    - The 3 projects should be in the order `(2, 3, 1)`
 3. Select `Creation Date (descending)`.
    - The 3 projects should be in the order `(1, 3, 2)`
-4. Open the project card menu for project (3) and select `Edit modal details` for project (3)
+4. Open the project card menu for project (3) and select `Edit project details` for project (3)
    - change the description to `Apples`
 5. Select `Last updated (ascending)`
    - The 3 projects should be in the order `(2, 1, 3)`

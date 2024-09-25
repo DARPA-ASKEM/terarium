@@ -3,22 +3,9 @@
  */
 
 import API from '@/api/api';
-import type { Document, DocumentAsset } from '@/types/Types';
+import type { DocumentAsset } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { Ref } from 'vue';
-import { extractionStatusUpdateHandler, subscribe } from '@/services/ClientEventService';
-import { ClientEventType } from '@/types/Types';
-
-/**
- * Get all documents
- * @return Array<DocumentAsset>|null - the list of all document assets, or null if none returned by API
- */
-async function getAll(): Promise<DocumentAsset[] | null> {
-	const response = await API.get('/document-asset').catch((error) => {
-		logger.error(`Error: ${error}`);
-	});
-	return response?.data ?? null;
-}
 
 /**
  * Get DocumentAsset from the data service
@@ -187,30 +174,10 @@ async function getBulkDocumentAssets(docIDs: string[]) {
 	return result;
 }
 
-async function createDocumentFromXDD(document: Document, projectId: string) {
-	console.group('Document Asset Service: createDocumentFromXDD');
-	if (!document || !projectId) {
-		console.debug('Failed — Document or projectId is null');
-	} else {
-		const response = await API.post<DocumentAsset>(`/document-asset/create-document-from-xdd`, {
-			document,
-			projectId
-		});
-		if (response?.status === 202) {
-			await subscribe(ClientEventType.Extraction, extractionStatusUpdateHandler);
-		} else {
-			console.debug('Failed — ', response);
-		}
-	}
-	console.groupEnd();
-}
-
 export {
-	createDocumentFromXDD,
 	createNewDocumentAsset,
 	createNewDocumentFromGithubFile,
 	downloadDocumentAsset,
-	getAll,
 	getBulkDocumentAssets,
 	getDocumentAsset,
 	getDocumentFileAsText,

@@ -1,5 +1,9 @@
 <template>
-	<tera-model-part :items="observablesList" @update-observable="emit('update-observable', $event)" />
+	<tera-model-part
+		:items="observablesList"
+		:feature-config="featureConfig"
+		@update-observable="emit('update-observable', $event)"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -8,11 +12,13 @@ import { ModelPartItem } from '@/types/Model';
 import { Model, Observable } from '@/types/Types';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
+import type { FeatureConfig } from '@/types/common';
 
 const props = defineProps<{
 	model: Model;
 	mmt: MiraModel;
 	observables: Observable[];
+	featureConfig: FeatureConfig;
 }>();
 
 const emit = defineEmits(['update-observable']);

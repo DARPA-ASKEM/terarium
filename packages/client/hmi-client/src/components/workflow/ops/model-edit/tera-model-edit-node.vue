@@ -1,7 +1,7 @@
 <template>
 	<section>
 		<tera-operator-model-preview v-if="model" :model="model" />
-		<tera-operator-placeholder v-else :operation-type="node.operationType">
+		<tera-operator-placeholder v-else :node="node">
 			<template v-if="!node.inputs[0].value">Attach a model</template>
 		</tera-operator-placeholder>
 		<template v-if="node.inputs[0].value">
@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUpdated, ref } from 'vue';
+import { ref, watch } from 'vue';
 import Button from 'primevue/button';
 import { WorkflowNode } from '@/types/workflow';
 import { ModelEditOperationState } from '@/components/workflow/ops/model-edit/model-edit-operation';
@@ -28,12 +28,21 @@ const props = defineProps<{
 }>();
 
 const model = ref<Model | null>(null);
-const updateModel = async () => {
+
+const fetchModel = async () => {
+	model.value = null;
 	const modelId = operator.getActiveOutput(props.node)?.value?.[0];
-	if (modelId && modelId !== model?.value?.id) {
+	if (modelId) {
 		model.value = await getModel(modelId);
 	}
 };
-onMounted(updateModel);
-onUpdated(updateModel);
+
+// Updates output selection
+watch(
+	() => props.node.active,
+	() => {
+		fetchModel();
+	},
+	{ immediate: true }
+);
 </script>

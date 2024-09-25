@@ -6,11 +6,11 @@
 	Using the resource store for project data is no longer needed.
 */
 
-import { shallowRef } from 'vue';
+import { activeProject, activeProjectId } from '@/composables/activeProject';
 import * as ProjectService from '@/services/project';
 import type { PermissionRelationships, Project, ProjectAsset } from '@/types/Types';
 import { AssetType } from '@/types/Types';
-import { activeProject, activeProjectId } from '@/composables/activeProject';
+import { shallowRef } from 'vue';
 
 const TIMEOUT_MS = 100;
 
@@ -220,16 +220,12 @@ export function useProjects() {
 		return ProjectService.updatePermissions(projectId, userId, oldRelationship, to);
 	}
 
-	async function clone(projectId: Project['id']) {
-		const projectToClone = await ProjectService.get(projectId);
-		if (!projectToClone) {
+	async function clone(id: Project['id']): Promise<Project | null> {
+		const cloned = await ProjectService.clone(id);
+		if (!cloned || !cloned.id) {
 			return null;
 		}
-		const created = await ProjectService.create(`Copy of ${projectToClone.name}`, projectToClone.description);
-		if (!created || !created.id) {
-			return null;
-		}
-		return created;
+		return cloned;
 	}
 
 	function hasEditPermission() {
@@ -239,6 +235,10 @@ export function useProjects() {
 		}
 		console.warn('User has no edit permissions');
 		return false;
+	}
+
+	function hasAssetInActiveProject(id: string) {
+		return useProjects().activeProject.value?.projectAssets?.some((asset) => asset.assetId === id);
 	}
 
 	return {
@@ -260,6 +260,7 @@ export function useProjects() {
 		refresh,
 		setAccessibility,
 		getPermissions,
+		hasAssetInActiveProject,
 		hasEditPermission,
 		setPermissions,
 		removePermissions,

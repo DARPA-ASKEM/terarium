@@ -40,7 +40,8 @@ public class TerariumAssetCloneService {
 	private final TerariumAssetServices terariumAssetServices;
 
 	/**
-	 * Given a project and a target asset, discover any assets that the target asset depends on, clone them, replace any
+	 * Given a project and a target asset, discover any assets that the target asset
+	 * depends on, clone them, replace any
 	 * ids with the newly cloned ids and persist them.
 	 *
 	 * @param projectId
@@ -156,7 +157,8 @@ public class TerariumAssetCloneService {
 	}
 
 	/**
-	 * Given a project, clone all assets and download all related files. Return everything as a singular ProjectExport
+	 * Given a project, clone all assets and download all related files. Return
+	 * everything as a singular ProjectExport
 	 * object.
 	 *
 	 * @param projectId
@@ -247,9 +249,10 @@ public class TerariumAssetCloneService {
 
 			// upload the files (do this first as the asset creation my use the files)
 			for (final Map.Entry<String, FileExport> entry : assetExport.getFiles().entrySet()) {
-				final String fileName = entry.getKey();
+				final String filename = entry.getKey();
 				final FileExport fileExport = entry.getValue();
-				terariumAssetService.uploadFile(asset.getId(), fileName, fileExport.getContentType(), fileExport.getBytes());
+
+				terariumAssetService.uploadFile(asset.getId(), filename, fileExport);
 			}
 
 			// create the asset

@@ -1,19 +1,11 @@
 import {
 	AssetType,
 	ClientEventType,
-	Dataset,
-	Document,
-	DocumentAsset,
-	Model,
 	ModelGrounding,
 	ProgrammingLanguage,
 	ProgressState,
-	StatusUpdate,
-	XDDFacetsItemResponse
+	StatusUpdate
 } from '@/types/Types';
-import { DatasetSearchParams } from './Dataset';
-import { ModelSearchParams } from './Model';
-import { XDDSearchParams } from './XDD';
 import { ProjectPages } from './Project';
 
 export interface FeatureConfig {
@@ -23,6 +15,11 @@ export interface FeatureConfig {
 export enum DrilldownTabs {
 	Wizard = 'Wizard',
 	Notebook = 'Notebook'
+}
+
+export enum CiemssPresetTypes {
+	Fast = 'Fast',
+	Normal = 'Normal'
 }
 
 export enum ParamType {
@@ -66,54 +63,6 @@ export enum ViewType {
 	GRAPH = 'graph'
 }
 
-export enum ResourceType {
-	XDD = 'xdd',
-	MODEL = 'model',
-	DATASET = 'dataset',
-	ALL = 'all'
-}
-
-export type SearchParameters = {
-	[ResourceType.XDD]?: XDDSearchParams;
-	[ResourceType.MODEL]?: ModelSearchParams;
-	[ResourceType.DATASET]?: DatasetSearchParams;
-};
-
-export type ResultType = Model | Dataset | Document | DocumentAsset;
-
-export type SearchResults = {
-	results: ResultType[];
-	facets?: { [p: string]: XDDFacetsItemResponse } | Facets;
-	searchSubsystem?: string;
-	hits?: number;
-	hasMore?: boolean;
-	nextPage?: string;
-};
-
-export type FullSearchResults = {
-	allData: SearchResults;
-	allDataFilteredWithFacets: SearchResults;
-};
-
-export type SearchByExampleOptions = {
-	similarContent: boolean;
-	forwardCitation: boolean;
-	backwardCitation: boolean;
-	relatedContent: boolean;
-};
-
-//
-// Facets
-//
-export type FacetBucket = {
-	key: string;
-	value: number;
-};
-
-export type Facets = {
-	[key: string]: FacetBucket[];
-};
-
 // Side panel
 export type SidePanelTab = {
 	name: string;
@@ -155,7 +104,9 @@ export enum AcceptedTypes {
 	MDL = `application/vnd.vensim.mdl`,
 	XMILE = 'application/vnd.stella.xmile',
 	ITMX = 'application/vnd.stella.itmx',
-	STMX = 'application/vnd.stella.stmx'
+	STMX = 'application/vnd.stella.stmx',
+	MODELCONFIG = 'application/zip',
+	PROJECTCONFIG = 'application/zip'
 }
 
 export enum AcceptedExtensions {
@@ -178,7 +129,10 @@ export enum AcceptedExtensions {
 	// Stella formats
 	XMILE = 'xmile',
 	ITMX = 'itmx',
-	STMX = 'stmx'
+	STMX = 'stmx',
+	// proprietary formats
+	MODELCONFIG = 'modelconfig',
+	PROJECTCONFIG = 'project'
 }
 
 export enum AMRSchemaNames {
@@ -207,7 +161,7 @@ export interface CompareModelsResponseType {
 }
 
 export type ExtractionStatusUpdate = StatusUpdate<{ documentId: string }>;
-
+export type CloneProjectStatusUpdate = StatusUpdate<{ projectId: string }>;
 export interface NotificationItem extends NotificationItemStatus, AssetRoute {
 	notificationGroupId: string;
 	type: ClientEventType;
@@ -225,6 +179,21 @@ export interface NotificationItemStatus {
 	msg: string;
 	error: string;
 	progress?: number;
+}
+
+export enum ChartSettingType {
+	VARIABLE = 'variable',
+	VARIABLE_COMPARISON = 'variable-comparison',
+	DISTRIBUTION_COMPARISON = 'distribution-comparison',
+	ERROR_DISTRIBUTION = 'error-distribution',
+	INTERVENTION = 'intervention'
+}
+
+export interface ChartSetting {
+	id: string;
+	name: string;
+	selectedVariables: string[];
+	type: ChartSettingType;
 }
 
 export const ProgrammingLanguageVersion: { [key in ProgrammingLanguage]: string } = {

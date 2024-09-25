@@ -35,8 +35,10 @@
 		</section>
 		<tera-operator-outputs
 			:outputs="node.outputs"
+			:menu-options="menuOptions"
+			@menu-selection="(operatorType: string, outputPort: WorkflowPort) => onSelection(operatorType, outputPort)"
 			@port-mouseover="(event) => mouseoverPort(event, PortType.Output)"
-			@port-mouseleave="emit('port-mouseleave')"
+			@port-mouseleave="mouseleavePort"
 			@port-selected="(input: WorkflowPort, direction: WorkflowDirection) => emit('port-selected', input, direction)"
 			@remove-edges="(portId: string) => emit('remove-edges', portId)"
 		/>
@@ -56,16 +58,19 @@ import TeraOperatorHeader from '@/components/operator/tera-operator-header.vue';
 import TeraOperatorInputs from '@/components/operator/tera-operator-inputs.vue';
 import TeraOperatorOutputs from '@/components/operator/tera-operator-outputs.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import { OperatorMenuItem } from '@/services/workflow';
 import { activeProjectId } from '@/composables/activeProject';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
+	nodeMenu: Map<string, OperatorMenuItem[]>;
 }>();
 
 const emit = defineEmits([
 	'port-selected',
 	'port-mouseover',
 	'port-mouseleave',
+	'menu-selection',
 	'remove-operator',
 	'remove-edges',
 	'resize',
@@ -81,6 +86,7 @@ enum PortType {
 const operator = ref<HTMLElement>();
 const interactionStatus = ref(0); // States will be added to it thorugh bitmasking
 const annotationRef = ref<typeof TeraOperatorAnnotation | null>(null);
+const menuOptions = ref<OperatorMenuItem[] | []>([]);
 
 let resizeObserver: ResizeObserver | null = null;
 
@@ -109,11 +115,20 @@ function mouseoverPort(event: MouseEvent, portType: PortType) {
 	emit('port-mouseover', portPosition);
 }
 
+function mouseleavePort() {
+	emit('port-mouseleave');
+}
+
+function onSelection(operatorType: string, outputPort: WorkflowPort) {
+	emit('menu-selection', operatorType, outputPort);
+}
+
 function resizeHandler() {
 	emit('resize', props.node);
 }
 
 onMounted(() => {
+	menuOptions.value = props.nodeMenu.get(props.node.operationType) ?? [];
 	if (operator.value) {
 		resizeObserver = new ResizeObserver(resizeHandler);
 		resizeObserver.observe(operator.value);
@@ -183,7 +198,6 @@ main {
 		}
 
 		&:deep(li:hover .port) {
-			background-color: var(--primary-color);
 			background-color: var(--surface-border);
 		}
 

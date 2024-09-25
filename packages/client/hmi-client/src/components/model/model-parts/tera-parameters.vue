@@ -2,21 +2,20 @@
 	<tera-model-part
 		:items="parameterList"
 		:collapsed-items="collapsedParameters"
+		:feature-config="featureConfig"
 		show-matrix
 		@open-matrix="(id: string) => (matrixModalId = id)"
 		@update-item="emit('update-parameter', $event)"
 	/>
-	<teleport to="body">
-		<tera-stratified-matrix-modal
-			v-if="matrixModalId"
-			:id="matrixModalId"
-			:mmt="mmt"
-			:mmt-params="mmtParams"
-			:stratified-matrix-type="StratifiedMatrix.Parameters"
-			is-read-only
-			@close-modal="matrixModalId = ''"
-		/>
-	</teleport>
+	<tera-stratified-matrix-modal
+		v-if="matrixModalId"
+		:id="matrixModalId"
+		:mmt="mmt"
+		:mmt-params="mmtParams"
+		:stratified-matrix-type="StratifiedMatrix.Parameters"
+		is-read-only
+		@close-modal="matrixModalId = ''"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -29,11 +28,13 @@ import { getParameters } from '@/model-representation/service';
 import { collapseParameters } from '@/model-representation/mira/mira';
 import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
 import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
+import type { FeatureConfig } from '@/types/common';
 
 const props = defineProps<{
 	model: Model;
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
+	featureConfig: FeatureConfig;
 }>();
 
 const emit = defineEmits(['update-parameter']);

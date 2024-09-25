@@ -28,7 +28,6 @@ export interface NestedPetrinetOptions extends Options {
 	dims?: string[];
 }
 
-const CIRCLE_MARGIN = 2;
 const { getNodeTypeColor } = useNodeTypeColorPalette();
 const { getNestedTypeColor, setNestedTypeColor } = useNestedTypeColorPalette();
 
@@ -142,7 +141,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 		transitions
 			.append('text')
 			.attr('y', (d) => -d.height / 2 - 8)
-			.classed('latex-fontt', true)
+			.classed('latex-font', true)
 			.style('font-style', 'italic')
 			.style('font-size', FONT_SIZE_SMALL)
 			.style('text-anchor', 'middle')
@@ -193,7 +192,8 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			Object.entries(node).forEach((kvPair, i) => {
 				if (kvPair[0] === '_key') return;
 				const value = kvPair[1];
-				const childRadius = CIRCLE_PACKING_CHILD_NORMALIZED_RADII[nestedNodesLen] * parentRadius - CIRCLE_MARGIN;
+				const margin = parentRadius * 0.03;
+				const childRadius = CIRCLE_PACKING_CHILD_NORMALIZED_RADII[nestedNodesLen] * parentRadius - margin;
 
 				const xPos = parentRadius * CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS[nestedNodesLen][i][0] + parentX;
 				const yPos = parentRadius * CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS[nestedNodesLen][i][1] + parentY;

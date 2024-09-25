@@ -7,7 +7,7 @@ import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import * as EventService from '@/services/event';
 import { AssetType, EventType, PermissionRelationships, Project } from '@/types/Types';
 import { logger } from '@/utils/logger';
-import { Component } from 'vue';
+import type { Component, Ref } from 'vue';
 
 /**
  * Create a project
@@ -209,6 +209,51 @@ async function updatePermissions(
 	}
 }
 
+async function clone(id: Project['id']): Promise<Project | null> {
+	try {
+		const response = await API.post(`/projects/clone/${id}`);
+		const { status, data } = response;
+		if (status !== 201) {
+			return null;
+		}
+		return data ?? null;
+	} catch (error) {
+		logger.error(error);
+		return null;
+	}
+}
+
+async function exportProjectAsFile(id: Project['id']) {
+	try {
+		const response = await API.get(`projects/export/${id}`, {
+			responseType: 'arraybuffer'
+		});
+		const blob = new Blob([response?.data], { type: 'application/octet-stream' });
+		return blob ?? null;
+	} catch (error) {
+		logger.error(`Unable to download project file for project id ${id}: ${error}`);
+		return null;
+	}
+}
+
+async function createProjectFromFile(file: File, progress?: Ref<number>) {
+	const formData = new FormData();
+	formData.append('file', file);
+
+	const response = await API.post(`/projects/import`, formData, {
+		headers: {
+			'Content-Type': 'multipart/form-data'
+		},
+		onUploadProgress(progressEvent) {
+			if (progress) {
+				progress.value = Math.min(90, Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100)));
+			}
+		},
+		timeout: 3600000
+	});
+	return response && response.status < 400;
+}
+
 /**
  * Get the icon associated with an Asset
  */
@@ -231,6 +276,7 @@ function getAssetIcon(type: AssetType | string | null): string | Component {
 
 export {
 	addAsset,
+	clone,
 	create,
 	deleteAsset,
 	get,
@@ -242,5 +288,7 @@ export {
 	setAccessibility,
 	setPermissions,
 	update,
-	updatePermissions
+	updatePermissions,
+	exportProjectAsFile,
+	createProjectFromFile
 };

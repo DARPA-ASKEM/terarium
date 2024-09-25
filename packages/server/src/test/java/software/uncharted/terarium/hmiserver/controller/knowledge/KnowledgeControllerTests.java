@@ -27,7 +27,6 @@ import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
-import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
@@ -40,8 +39,8 @@ import software.uncharted.terarium.hmiserver.service.data.CodeService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
-import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 @Slf4j
 public class KnowledgeControllerTests extends TerariumApplicationTests {
@@ -65,20 +64,18 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 	private CodeService codeService;
 
 	@Autowired
-	private ElasticsearchService elasticService;
+	private ProjectSearchService projectSearchService;
 
 	@Autowired
 	private ExtractionService extractionService;
-
-	@Autowired
-	private ElasticsearchConfiguration elasticConfig;
 
 	Project project;
 
 	@BeforeEach
 	public void setup() throws IOException {
-		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getDocumentIndex());
-
+		projectSearchService.setupIndexAndAliasAndEnsureEmpty();
+		datasetService.setupIndexAndAliasAndEnsureEmpty();
+		modelService.setupIndexAndAliasAndEnsureEmpty();
 		project = projectService.createProject(
 			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
 		);
@@ -86,7 +83,9 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 
 	@AfterEach
 	public void teardown() throws IOException {
-		elasticService.deleteIndex(elasticConfig.getDocumentIndex());
+		projectSearchService.teardownIndexAndAlias();
+		datasetService.teardownIndexAndAlias();
+		modelService.teardownIndexAndAlias();
 	}
 
 	// @Test
@@ -351,7 +350,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		documentAsset = documentAssetService.createAsset(documentAsset, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		documentAsset = extractionService
-			.extractVariables(project.getId(), documentAsset.getId(), new ArrayList<>(), "epi", ASSUME_WRITE_PERMISSION)
+			.extractVariables(project.getId(), documentAsset.getId(), new ArrayList<>(), ASSUME_WRITE_PERMISSION)
 			.get();
 
 		final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");

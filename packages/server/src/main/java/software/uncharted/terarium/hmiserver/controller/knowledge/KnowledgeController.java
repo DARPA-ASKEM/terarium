@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.knowledge;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -20,6 +21,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import lombok.RequiredArgsConstructor;
@@ -55,6 +57,8 @@ import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Prove
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
+import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
+import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
@@ -67,6 +71,8 @@ import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
+import software.uncharted.terarium.hmiserver.service.tasks.EnrichAmrResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.StringMultipartFile;
@@ -88,10 +94,12 @@ public class KnowledgeController {
 	final ModelService modelService;
 	final ProvenanceService provenanceService;
 	final ProvenanceSearchService provenanceSearchService;
+	final DocumentAssetService documentAssetService;
 
 	final CodeService codeService;
 
 	final ExtractionService extractionService;
+	final TaskService taskService;
 
 	final ProjectService projectService;
 	final CurrentUserService currentUserService;
@@ -100,6 +108,86 @@ public class KnowledgeController {
 
 	@Value("${openai-api-key:}")
 	String OPENAI_API_KEY;
+
+	private void enrichModel(
+		final UUID projectId,
+		final UUID documentId,
+		final UUID modelId,
+		final Schema.Permission permission,
+		final boolean overwrite
+	) {
+		// Grab the document
+		final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
+		if (document.isEmpty()) {
+			log.warn(String.format("Document %s not found", documentId));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
+		}
+
+		// make sure there is text in the document
+		if (document.get().getText() == null || document.get().getText().isEmpty()) {
+			log.warn(String.format("Document %s has no extracted text", documentId));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.extraction.not-done"));
+		}
+
+		// Grab the model
+		final Optional<Model> model = modelService.getAsset(modelId, permission);
+		if (model.isEmpty()) {
+			log.warn(String.format("Model %s not found", modelId));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
+		}
+
+		final EnrichAmrResponseHandler.Input input = new EnrichAmrResponseHandler.Input();
+		input.setResearchPaper(document.get().getText());
+		// stripping the metadata from the model before its sent since it can cause
+		// gollm to fail with massive inputs
+		model.get().setMetadata(null);
+
+		try {
+			final String amr = mapper.writeValueAsString(model.get());
+			input.setAmr(amr);
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize model card", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
+		}
+
+		// Create the task
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.GOLLM);
+		req.setScript(EnrichAmrResponseHandler.NAME);
+		req.setUserId(currentUserService.get().getId());
+
+		try {
+			req.setInput(mapper.writeValueAsBytes(input));
+		} catch (final Exception e) {
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+		}
+
+		req.setProjectId(projectId);
+
+		final EnrichAmrResponseHandler.Properties props = new EnrichAmrResponseHandler.Properties();
+		props.setProjectId(projectId);
+		props.setDocumentId(documentId);
+		props.setModelId(modelId);
+		props.setOverwrite(overwrite);
+		req.setAdditionalProperties(props);
+
+		try {
+			taskService.runTaskSync(req);
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
+		} catch (final TimeoutException e) {
+			log.warn("Timeout while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
+		} catch (final InterruptedException e) {
+			log.warn("Interrupted while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
+		} catch (final ExecutionException e) {
+			log.error("Error while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
+		}
+	}
 
 	/**
 	 * Send the equations to the skema unified service to get the AMR
@@ -117,7 +205,21 @@ public class KnowledgeController {
 			projectId
 		);
 
+		log.info("equations-to-model request: {}", req);
+
 		final Model responseAMR;
+
+		UUID documentId = null;
+		final String documentIdString = req.get("documentId") != null ? req.get("documentId").asText() : null;
+		if (documentIdString != null) {
+			try {
+				// Get the document id if it is a valid UUID
+				documentId = UUID.fromString(documentIdString);
+			} catch (final IllegalArgumentException e) {
+				log.warn(String.format("Invalid document UUID supplied: %s", documentIdString), e);
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("generic.invalid-uuid"));
+			}
+		}
 
 		// Check if a model ID is supplied and try to extract it
 		UUID modelId = null;
@@ -157,6 +259,10 @@ public class KnowledgeController {
 		if (modelId == null) {
 			try {
 				final Model model = modelService.createAsset(responseAMR, projectId, permission);
+				// enrich the model with the document
+				if (documentId != null) {
+					enrichModel(projectId, documentId, model.getId(), permission, true);
+				}
 				return ResponseEntity.ok(model.getId());
 			} catch (final IOException e) {
 				log.error("An error occurred while trying to create a Model asset.", e);
@@ -176,6 +282,10 @@ public class KnowledgeController {
 		responseAMR.setId(model.get().getId());
 		try {
 			modelService.updateAsset(responseAMR, projectId, permission);
+			// enrich the model with the document
+			if (documentId != null) {
+				enrichModel(projectId, documentId, responseAMR.getId(), permission, true);
+			}
 			return ResponseEntity.ok(model.get().getId());
 		} catch (final IOException e) {
 			log.error(String.format("Unable to update the model with id %s.", modelId), e);
@@ -208,10 +318,11 @@ public class KnowledgeController {
 	/**
 	 * Transform source code to AMR
 	 *
-	 * @param codeId (String): id of the code artifact model
-	 * @param dynamicsOnly (Boolean): whether to only run the amr extraction over specified dynamics from the code
-	 *     object in TDS
-	 * @param llmAssisted (Boolean): whether amr extraction is llm assisted
+	 * @param codeId       (String): id of the code artifact model
+	 * @param dynamicsOnly (Boolean): whether to only run the amr extraction over
+	 *                     specified dynamics from the code
+	 *                     object in TDS
+	 * @param llmAssisted  (Boolean): whether amr extraction is llm assisted
 	 * @return Model
 	 */
 	@PostMapping("/code-to-amr")
@@ -274,7 +385,7 @@ public class KnowledgeController {
 		final List<String> files = new ArrayList<>();
 		final List<String> blobs = new ArrayList<>();
 
-		ResponseEntity<JsonNode> resp = null;
+		final ResponseEntity<JsonNode> resp;
 
 		if (dynamicsOnly) {
 			for (final Entry<String, String> entry : codeContent.entrySet()) {
@@ -474,7 +585,7 @@ public class KnowledgeController {
 	/**
 	 * Profile a dataset
 	 *
-	 * @param datasetId (String): The ID of the dataset to profile
+	 * @param datasetId  (String): The ID of the dataset to profile
 	 * @param documentId (String): The ID of the document to profile
 	 * @return the profiled dataset
 	 */
@@ -491,7 +602,7 @@ public class KnowledgeController {
 		);
 
 		// Provenance call if a document id is provided
-		StringMultipartFile documentFile = null;
+		final StringMultipartFile documentFile;
 		if (documentId.isPresent()) {
 			final DocumentAsset document = documentService.getAsset(documentId.get(), permission).orElseThrow();
 			documentFile = new StringMultipartFile(document.getText(), documentId.get() + ".txt", "application/text");
@@ -551,7 +662,7 @@ public class KnowledgeController {
 		}
 
 		final JsonNode card = resp.getBody();
-		final JsonNode profilingResult = card.get("DATA_PROFILING_RESULT");
+		final JsonNode profilingResult = (card != null) ? card.get("DATA_PROFILING_RESULT") : mapper.createObjectNode();
 
 		for (final DatasetColumn col : dataset.getColumns()) {
 			final JsonNode annotation = profilingResult.get(col.getName());
@@ -645,8 +756,8 @@ public class KnowledgeController {
 	 * Variables Extractions from Document with SKEMA
 	 *
 	 * @param documentId (String): The ID of the document to profile
-	 * @param modelIds (List<String>): The IDs of the models to use for extraction
-	 * @param domain (String): The domain of the document
+	 * @param modelIds   (List<String>): The IDs of the models to use for extraction
+	 * @param domain     (String): The domain of the document
 	 * @return an accepted response, the request being handled asynchronously
 	 */
 	@PostMapping("/variable-extractions")
@@ -664,7 +775,6 @@ public class KnowledgeController {
 			projectId,
 			documentId,
 			modelIds == null ? new ArrayList<>() : modelIds,
-			domain,
 			permission
 		);
 		return ResponseEntity.accepted().build();
@@ -694,7 +804,7 @@ public class KnowledgeController {
 			currentUserService.get().getId(),
 			projectId
 		);
-		extractionService.extractPDF(documentId, domain, projectId, permission);
+		extractionService.extractPDFAndApplyToDocument(documentId, projectId, permission);
 		return ResponseEntity.accepted().build();
 	}
 
@@ -712,27 +822,11 @@ public class KnowledgeController {
 			);
 			return new ResponseStatusException(statusCode, messages.get("skema.internal-error"));
 		}
+
+		final HttpStatus httpStatus = (statusCode == null) ? HttpStatus.INTERNAL_SERVER_ERROR : statusCode;
 		log.error(
 			"An unknown error occurred while Skema Unified Service was trying to produce an AMR based on the provided resources"
 		);
-		return new ResponseStatusException(statusCode, messages.get("generic.unknown"));
-	}
-
-	private ResponseStatusException handleMitFeignException(final FeignException e) {
-		final HttpStatus statusCode = HttpStatus.resolve(e.status());
-		if (statusCode != null && statusCode.is4xxClientError()) {
-			log.warn("MIT Text-reading did not return a valid card because a provided resource was not valid");
-			return new ResponseStatusException(statusCode, messages.get("mit.file.unable-to-read"));
-		} else if (statusCode == HttpStatus.SERVICE_UNAVAILABLE) {
-			log.warn("MIT Text-reading is currently unavailable");
-			return new ResponseStatusException(statusCode, messages.get("mit.service-unavailable"));
-		} else if (statusCode != null && statusCode.is5xxServerError()) {
-			log.error("An error occurred while MIT Text-reading was trying to produce a card based on the provided resource");
-			return new ResponseStatusException(statusCode, messages.get("mit.internal-error"));
-		}
-		log.error(
-			"An unknown error occurred while MIT Text-reading was trying to produce a card based on the provided resource"
-		);
-		return new ResponseStatusException(statusCode, messages.get("generic.unknown"));
+		return new ResponseStatusException(httpStatus, messages.get("generic.unknown"));
 	}
 }

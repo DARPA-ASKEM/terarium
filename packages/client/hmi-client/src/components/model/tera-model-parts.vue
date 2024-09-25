@@ -4,8 +4,7 @@
 		:model="transientModel"
 		:mmt="mmt"
 		:mmt-params="mmtParams"
-		:readonly="readonly"
-		@update-model="$emit('update-model', $event)"
+		:feature-config="featureConfig"
 		@update-state="(e: any) => onUpdate('state', e)"
 		@update-parameter="(e: any) => onUpdate('parameter', e)"
 		@update-observable="(e: any) => onUpdate('observable', e)"
@@ -15,12 +14,12 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep } from 'lodash';
-import { computed, ref, onMounted, watch } from 'vue';
+import { cloneDeep, isEqual } from 'lodash';
+import { computed, ref, onMounted, watch, PropType } from 'vue';
 import type { Model } from '@/types/Types';
-import TeraPetrinetTables from '@/components/model/petrinet/tera-petrinet-tables.vue';
-import TeraRegnetTables from '@/components/model/regnet/tera-regnet-tables.vue';
-import TeraStockflowTables from '@/components/model/stockflow/tera-stockflow-tables.vue';
+import TeraPetrinetParts from '@/components/model/petrinet/tera-petrinet-parts.vue';
+import TeraRegnetParts from '@/components/model/regnet/tera-regnet-parts.vue';
+import TeraStockflowParts from '@/components/model/stockflow/tera-stockflow-parts.vue';
 import { AMRSchemaNames } from '@/types/common';
 import { getModelType, getMMT } from '@/services/model';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
@@ -32,31 +31,37 @@ import {
 	updateTransition,
 	updateTime
 } from '@/model-representation/service';
-import { logger } from '@/utils/logger';
+import type { FeatureConfig } from '@/types/common';
 
-const props = defineProps<{
-	model: Model;
-	readonly?: boolean;
-}>();
+const props = defineProps({
+	model: {
+		type: Object as PropType<Model>,
+		required: true
+	},
+	featureConfig: {
+		type: Object as PropType<FeatureConfig>,
+		default: { isPreview: false } as FeatureConfig
+	}
+});
 
 const emit = defineEmits(['update-model']);
 
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
-const transientModel = ref(cloneDeep(props.model));
+const transientModel = ref<Model>(cloneDeep(props.model));
 
 const modelType = computed(() => getModelType(props.model));
 
 const partsComponent = computed(() => {
 	switch (modelType.value) {
 		case AMRSchemaNames.PETRINET:
-			return TeraPetrinetTables;
+			return TeraPetrinetParts;
 		case AMRSchemaNames.REGNET:
-			return TeraRegnetTables;
+			return TeraRegnetParts;
 		case AMRSchemaNames.STOCKFLOW:
-			return TeraStockflowTables;
+			return TeraStockflowParts;
 		default:
-			return TeraPetrinetTables;
+			return TeraPetrinetParts;
 	}
 });
 
@@ -81,6 +86,7 @@ function onUpdate(property: string, event: any) {
 		default:
 			break;
 	}
+	emit('update-model', transientModel.value);
 }
 
 function updateMMT() {
@@ -90,31 +96,16 @@ function updateMMT() {
 	});
 }
 
-// Apply changes to the model when the component unmounts or the user navigates away
-function saveChanges() {
-	emit('update-model', transientModel.value);
-	logger.info('Saved changes');
-}
-defineExpose({ saveChanges });
+onMounted(() => {
+	transientModel.value = cloneDeep(props.model);
+	updateMMT();
+});
 
-onMounted(() => updateMMT());
-
-// TODO: Do we still want autosave? It worked onUnmount but on staging the onbeforemount wasn't triggering
-// onMounted(() => {
-// 	window.addEventListener('beforeunload', saveChanges);
-// 	updateMMT();
-// });
-
-// onUnmounted(() => {
-// 	saveChanges();
-// 	window.removeEventListener('beforeunload', saveChanges);
-// });
-
-// Meant to run when we want to view a different model, like when we swtich outputs in the stratify operator
-// This is not to be used a refresh when saving a model
+// Only update the MMT when the semantics of the model changes outside this component.
 watch(
-	() => props.model,
-	() => {
+	() => [props.model.model, props.model.semantics],
+	(newValue, oldValue) => {
+		if (isEqual(newValue, oldValue)) return;
 		transientModel.value = cloneDeep(props.model);
 		updateMMT();
 	},
@@ -128,11 +119,13 @@ watch(
 	color: var(--text-color-subdued);
 	margin-left: 0.25rem;
 }
-
+:deep(.p-accordion-content) {
+	margin-bottom: var(--gap-3);
+}
 :deep(.p-accordion-content:empty::before) {
 	content: 'None';
 	color: var(--text-color-secondary);
 	font-size: var(--font-caption);
-	margin-left: 1rem;
+	margin-left: var(--gap-6);
 }
 </style>

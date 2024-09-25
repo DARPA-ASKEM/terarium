@@ -18,6 +18,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelHeader;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 
 public class ModelControllerTests extends TerariumApplicationTests {
@@ -31,10 +32,14 @@ public class ModelControllerTests extends TerariumApplicationTests {
 	@Autowired
 	private ProjectService projectService;
 
+	@Autowired
+	private ProjectSearchService projectSearchService;
+
 	Project project;
 
 	@BeforeEach
 	public void setup() throws IOException {
+		projectSearchService.setupIndexAndAliasAndEnsureEmpty();
 		modelService.setupIndexAndAliasAndEnsureEmpty();
 
 		project = projectService.createProject(
@@ -45,6 +50,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 	@AfterEach
 	public void teardown() throws IOException {
 		modelService.teardownIndexAndAlias();
+		projectSearchService.teardownIndexAndAlias();
 	}
 
 	@Test
@@ -175,26 +181,6 @@ public class ModelControllerTests extends TerariumApplicationTests {
 					.with(csrf())
 			)
 			.andExpect(status().isOk());
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItCanGetModelDescriptions() throws Exception {
-		modelService.createAsset(
-			new Model()
-				.setHeader(
-					new ModelHeader()
-						.setName("test-name")
-						.setModelSchema("test-schema")
-						.setModelVersion("0.1.2")
-						.setDescription("test-description")
-						.setSchemaName("petrinet")
-				),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
-		mockMvc.perform(MockMvcRequestBuilders.get("/models/descriptions").with(csrf())).andExpect(status().isOk());
 	}
 
 	@Test

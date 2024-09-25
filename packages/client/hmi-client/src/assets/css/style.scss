@@ -1,125 +1,217 @@
+/** CSS Layers order
+ * https://developer.mozilla.org/en-US/docs/Web/CSS/@layer
+ */
+@layer vendor, reset, theme, terarium;
+
+/* Vendor */
+@import '@jupyterlab/application/style/index.css' layer(vendor);
+@import '@jupyterlab/cells/style/index.css' layer(vendor);
+@import '@jupyterlab/theme-light-extension/style/theme.css' layer(vendor);
+@import '@jupyterlab/completer/style/index.css' layer(vendor);
+@import '@node_modules/mathlive/dist/mathlive-fonts.css' layer(vendor);
+@import '@node_modules/katex/dist/katex.min.css' layer(vendor);
+
 /* Reset */
-@import '@assets/css/reset.css';
-@import '@assets/css/buttonset.scss';
+@import '@assets/css/reset.css' layer(reset);
 
-/**
- * PrimeVue
- * https://primefaces.org/primevue/setup
- */
-@import '@node_modules/primeflex/primeflex.min.css';
-@import '@node_modules/primevue/resources/primevue.min.css';
-@import '@node_modules/primeicons/primeicons.css';
+/* PrimeVue Theme */
+@import '@node_modules/primeflex/primeflex.min.css' layer(theme);
+@import '@node_modules/primevue/resources/primevue.min.css' layer(theme);
+@import '@node_modules/primeicons/primeicons.css' layer(theme);
+@import '@node_modules/primevue/resources/themes/lara-light-green/theme.css' layer(theme);
 
-/*
- * Terarium PrimeVue Theme
- * https://www.primefaces.org/designer/primevue
- */
-@import '@assets/css/theme/theme.scss';
+/* Terarium PrimeVue Theme */
+@import '@assets/css/theme/theme.scss' layer(terarium);
 
-/*
- * Facets Overrides
- */
-@import '@assets/css/facets-overrides';
+@layer terarium {
+	:root {
+		--navbar-outer-height: 51px;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+		-webkit-text-size-adjust: 100%;
+		background-color: var(--surface-ground);
+		color: var(--text-color-primary);
+		color-scheme: light;
+		font-family: var(--font-family), sans-serif;
+		font-size: var(--font-size);
+		font-style: normal;
+		font-synthesis: none;
+		font-weight: var(--font-weight);
+		text-rendering: optimizeLegibility;
+	}
 
-/* Setup MathLive Fonts */
-@import '@node_modules/mathlive/dist/mathlive-fonts.css';
-
-:root {
-	/* Layout */
-	--navbar-outer-height: 51px;
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
-	-webkit-text-size-adjust: 100%;
-	background-color: var(--surface-ground);
-	color: var(--text-color-primary);
-	color-scheme: light;
-	font-family: var(--font-family);
-	font-size: var(--font-size);
-	font-style: normal;
-	font-synthesis: none;
-	font-weight: var(--font-weight);
-	text-rendering: optimizeLegibility;
-}
-
-/* Global */
-body {
-	background-color: inherit;
-	color: inherit;
-	font: inherit;
-	isolation: isolate;
-	min-width: 1000px;
-	display: grid;
-	grid-template-areas:
+	body {
+		background-color: inherit;
+		color: inherit;
+		font: inherit;
+		isolation: isolate;
+		min-width: 1000px;
+		display: grid;
+		grid-template-areas:
 		"header"
 		"main"
 		"footer";
-	grid-template-rows: minMax(3.5rem, max-content) 1fr max-content;
-
-	&:has(.standalone) {
-		grid-template-areas:
-			"main";
-		grid-template-rows: 1fr;
+		grid-template-rows: minMax(3.5rem, max-content) 1fr max-content;
 	}
-}
 
-/* Highlights */
-.highlight,
-.hl {
-	background-color: var(--surface-highlight);
-	border-radius: var(--border-radius);
-	padding-left: 0.2em;
-	padding-right: 0.2em;
-}
+	/* Hyperlinks */
+	a {
+		color: var(--text-color-subdued);
 
-/* Hyperlinks */
-a {
-	color: var(--text-color-subdued);
+		&:hover {
+			color: var(--primary-color-dark);
+		}
+	}
 
-	&:hover {
+	.kbd-shortcut {
+		display: flex;
+		align-items: center;
+		gap: var(--gap-1);
+		> kbd {
+			color: var(--text-color-subdued);
+			background-color: var(--surface-section);
+			border: 1px solid var(--surface-border);
+			border-radius: var(--border-radius);
+			padding: var(--gap-1) var(--gap-2);
+			font-size: var(--font-caption);
+			> i {
+				font-size: var(--font-tiny);
+			}
+		}
+	}
+
+	.kbd-shortcut-sm {
+		@extend .kbd-shortcut;
+		> kbd {
+			padding: var(--gap-0-5) var(--gap-1);
+			font-size: var(--font-tiny);
+		}
+	}
+
+	/* Overwrite some PrimeVue new themes */
+	.p-speeddial-item.p-focus > .p-speeddial-action {
+		box-shadow: none;
+	}
+
+
+	/* Correct secondary button styles */
+	.p-button.p-button-secondary.p-button-text, .p-buttonset.p-button-secondary > .p-button.p-button-text, .p-splitbutton.p-button-secondary > .p-button.p-button-text {
+		color: var(--text-color-secondary);
+	}
+
+	/* Make button labels regular font weight */
+	.p-button-label {
+		font-weight: var(--font-weight);
+	}
+
+	/* Fixing the confirm dialog text placement and reject button styling */
+	.p-confirm-dialog-message {
+		margin-left: 0 !important;
+		margin-top: var(--gap);
+	}
+	.p-confirm-dialog-reject {
+		background-color: var(--surface-0);
+		color: var(--text-color-primary) !important;
+		border: 1px solid var(--surface-border) !important;
+		margin-right: 0 !important;
+	}
+
+	/* Correct button font weight */
+	.p-button-label {
+		font-weight: var(--font-weight);
+	}
+
+	/* Fill checkboxes with color when selected */
+	.p-checkbox .p-checkbox-box {
+		background-color: var(--surface-0);
+		border-color: var(--surface-border-dark);
+	}
+	.p-checkbox.p-highlight .p-checkbox-box {
+		background-color: var(--primary-color);
+		border-color: var(--primary-color);
+
+	}
+	.p-checkbox .p-checkbox-box .p-checkbox-icon {
+		color: var(--surface-0);
+	}
+
+	/* SplitButton menu height and width fix */
+	.p-tieredmenu {
+		width: auto;
+		min-width: 3em;
+		max-height: 400px;
+		overflow-y: auto;
+	}
+
+	/* JupyterLab Overrides */
+	.jp-InputPrompt, .jp-OutputPrompt {
+		flex: 0 0 4rem;
+		padding: 0.5rem 0;
+		text-align: left;
+	}
+
+	.jp-Collapser {
+		flex: 0 0 0;
+	}
+
+	.jp-Cell {
+		padding: 0;
+	}
+
+	.jp-InputPrompt {
+		color: var(--text-color-subdued);
+	}
+
+	.jp-OutputPrompt {
 		color: var(--primary-color-dark);
 	}
-}
 
-/* SplitButton menu height and width fix */
-.p-tieredmenu {
-	width: auto;
-	min-width: 3em;
-	max-height: 400px;
-	overflow-y: auto;
-}
+	.jp-InputArea-editor {
+		border-radius: 3px;
+	}
 
+	.jp-InputArea-editor.jp-mod-focused {
+		border: solid 1px var(--primary-color);
+	}
 
-/* JupyterLab Overrides */
-.jp-InputPrompt, .jp-OutputPrompt {
-	flex: 0 0 4rem;
-	padding: 0.5rem 0;
-	text-align: left;
-}
-.jp-Collapser {
-	flex: 0 0 0;
-}
+	.CodeMirror.cm-s-jupyter {
+		min-height: 31px;
+	}
 
-.jp-Cell {
-	padding: 0;
-}
-.jp-InputPrompt {
-  color: var(--text-color-subdued);
-}
-.jp-OutputPrompt {
-  color: var(--primary-color-dark);
-}
-.jp-InputArea-editor {
-	border-radius: 3px;
-}
-.jp-InputArea-editor.jp-mod-focused {
-	border: solid 1px var(--primary-color);
-}
-.CodeMirror.cm-s-jupyter {
-	min-height: 31px;
-}
-.jp-OutputArea-output {
-	background-color: var(--surface-0);
-	border: solid 1px var(--surface-border-light);
-	border-radius: 3px;
-	padding: var(--gap-small);
+	.jp-OutputArea-output {
+		background-color: var(--surface-0);
+		border: solid 1px var(--surface-border-light);
+		border-radius: 3px;
+		padding: var(--gap-small);
+	}
+
+	.ace-editor {
+		border: 1px solid var(--surface-border);
+        border-radius: var(--border-radius-medium);
+	}
+	
+	/* Markdown style overrides */
+	.markdown-text {
+		& h1 {
+			font-size: var(--font-body-large);
+			padding-bottom: var(--gap-1);
+		}
+
+		& h2 {
+			font-size: var(--font-body-medium);
+			padding-top: var(--gap-3);
+		}
+
+		& p {
+			padding-bottom: var(--gap);
+		}
+
+		& ul {
+			list-style-position: inside;
+			padding-bottom: var(--gap);
+			padding-left: var(--gap-2);
+			gap: 0;
+		}
+	}
+
 }

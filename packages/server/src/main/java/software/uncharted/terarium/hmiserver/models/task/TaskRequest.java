@@ -25,7 +25,13 @@ public class TaskRequest implements Serializable {
 		@JsonAlias("mira")
 		MIRA("mira"),
 		@JsonAlias("funman")
-		FUNMAN("funman");
+		FUNMAN("funman"),
+		@JsonAlias("equation_extraction")
+		EQUATION_EXTRACTION_CPU("equation_extraction"),
+		@JsonAlias("equation_extraction_gpu")
+		EQUATION_EXTRACTION_GPU("equation_extraction_gpu"),
+		@JsonAlias("text_extraction")
+		TEXT_EXTRACTION("text_extraction");
 
 		private final String value;
 
@@ -76,10 +82,8 @@ public class TaskRequest implements Serializable {
 			objectMapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
 
 			final String encodedInput = Base64.getEncoder().encodeToString(input);
-			final String encodedAdditionalProperties = Base64.getEncoder()
-				.encodeToString(objectMapper.writeValueAsBytes(additionalProperties));
 
-			final String strHash = String.format("%s-%s-%s-%s", type, script, encodedInput, encodedAdditionalProperties);
+			final String strHash = String.format("%s-%s-%s", type, script, encodedInput);
 			final MessageDigest md = MessageDigest.getInstance("SHA-256");
 			return Base64.getEncoder().encodeToString(md.digest(strHash.getBytes(StandardCharsets.UTF_8)));
 		} catch (final Exception e) {

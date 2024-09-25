@@ -63,6 +63,7 @@
 			@update-kernel-status="updateKernelStatus"
 			@new-model-saved="onNewModelSaved"
 			:notebook-session="props.notebookSession"
+			:language="'python'"
 		/>
 		<div :style="{ 'padding-bottom': '100px' }" v-if="kernelState">
 			<Button
@@ -74,7 +75,7 @@
 				<span class="p-button-text">Save as</span>
 			</Button>
 			<span v-if="showSaveInput" style="padding-left: 1em; padding-right: 2em">
-				<InputText v-model="saveAsName" class="post-fix" placeholder="New model name" />
+				<tera-input-text v-model="saveAsName" class="post-fix" placeholder="New model name" />
 				<i class="pi pi-times i" :class="{ clear: hasValidDatasetName }" @click="saveAsName = ''"></i>
 				<i
 					class="pi pi-check i"
@@ -91,7 +92,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, Ref, watch } from 'vue';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 // import { cloneDeep } from 'lodash';
 import { useToastService } from '@/services/toast';
 import { IModel } from '@jupyterlab/services/lib/session/session';
@@ -133,7 +134,7 @@ const newCsvHeader: any = ref(null);
 const oldCsvHeaders: any = ref(null);
 const jupyterCsv: Ref<CsvAsset | null> = ref(null);
 const showSaveInput = ref(<boolean>false);
-const saveAsName = ref(<string | null>'');
+const saveAsName = ref('');
 const toast = useToastService();
 
 const updateKernelStatus = (statusString: string) => {

@@ -30,7 +30,6 @@ import software.uncharted.terarium.hmiserver.service.notification.NotificationSe
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@Transactional
 public class NotificationController {
 
 	private final CurrentUserService currentUserService;
@@ -63,9 +62,11 @@ public class NotificationController {
 		final String userId = currentUserService.get().getId().toString();
 
 		if (includeUnack) {
-			return ResponseEntity.ok(notificationService.getNotificationGroupsCreatedSince(userId, since));
+			return ResponseEntity.ok(notificationService.getNotificationGroupsCreatedSinceLatestEventOnly(userId, since));
 		}
-		return ResponseEntity.ok(notificationService.getUnAckedNotificationGroupsCreatedSince(userId, since));
+		return ResponseEntity.ok(
+			notificationService.getUnAckedNotificationGroupsCreatedSinceLatestEventOnly(userId, since)
+		);
 	}
 
 	@PutMapping("/ack/{groupId}")

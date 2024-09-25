@@ -1,13 +1,19 @@
 <template>
-	<p v-if="showThoughts" class="thought-bubble">
-		{{ thought }}
-	</p>
 	<Button
 		v-if="thought"
 		link
+		size="small"
+		class="thought-button"
 		:label="`${showThoughts ? 'Hide' : 'Show'} thoughts`"
 		@click="() => (showThoughts = !showThoughts)"
 	/>
+	<p v-if="showThoughts" class="thought-bubble">
+		<span v-if="llmQuery.length > 0" class="thought-bubble-title">
+			{{ llmQuery }}
+			<br />
+		</span>
+		{{ thought }}
+	</p>
 </template>
 
 <script setup lang="ts">
@@ -16,6 +22,7 @@ import Button from 'primevue/button';
 
 const props = defineProps<{
 	llmThoughts: any[];
+	llmQuery: string;
 }>();
 const showThoughts = ref(false);
 const thought = computed(() => {
@@ -30,10 +37,12 @@ const thought = computed(() => {
 
 <style scoped>
 .thought-bubble {
-	white-space: pre-line;
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius);
+	padding: 0 var(--gap-small) var(--gap-small) var(--gap-small);
+}
+.thought-bubble-title {
+	font-weight: var(--font-weight-semibold);
+}
+.thought-button {
 	padding: var(--gap-small);
-	margin-top: var(--gap-small);
 }
 </style>

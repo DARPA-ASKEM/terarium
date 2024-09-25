@@ -97,66 +97,6 @@ public class ProvenanceSearchService {
 	}
 
 	/**
-	 * Identifies the document from which a model configuration was extracted
-	 *
-	 * @param payload - Search param payload.
-	 * @return
-	 */
-	public Set<String> modelConfigFromDocument(final ProvenanceQueryParam payload) {
-		if (payload.getRootType() != ProvenanceType.MODEL_CONFIGURATION) {
-			throw new IllegalArgumentException(
-				"Document used for model-configuration extraction can only be found by providing a model-confirguration"
-			);
-		}
-
-		try (final Session session = neo4jService.getSession()) {
-			final UUID modelConfigurationId = payload.getRootId();
-
-			final String query = String.format(
-				"MATCH (d:Document)<-[r:EXTRACTED_FROM]-(m:ModelConfiguration {id: '%s'}) RETURN d",
-				modelConfigurationId
-			);
-
-			final Result response = session.run(query);
-			final Set<String> responseData = new HashSet<>();
-			while (response.hasNext()) {
-				responseData.add(response.next().get("d").get("id").asString());
-			}
-			return responseData;
-		}
-	}
-
-	/**
-	 * Identifies the dataset from which a model configuration was extracted
-	 *
-	 * @param payload - Search param payload.
-	 * @return
-	 */
-	public Set<String> modelConfigFromDataset(final ProvenanceQueryParam payload) {
-		if (payload.getRootType() != ProvenanceType.MODEL_CONFIGURATION) {
-			throw new IllegalArgumentException(
-				"Dataset used for model-configuration extraction can only be found by providing a model-confirguration"
-			);
-		}
-
-		try (final Session session = neo4jService.getSession()) {
-			final UUID modelConfigurationId = payload.getRootId();
-
-			final String query = String.format(
-				"MATCH (d:Dataset)<-[r:EXTRACTED_FROM]-(m:ModelConfiguration {id: '%s'}) RETURN d",
-				modelConfigurationId
-			);
-
-			final Result response = session.run(query);
-			final Set<String> responseData = new HashSet<>();
-			while (response.hasNext()) {
-				responseData.add(response.next().get("d").get("id").asString());
-			}
-			return responseData;
-		}
-	}
-
-	/**
 	 * Identifies the document from which a model was extracted
 	 *
 	 * @param payload - Search param payload.
@@ -258,7 +198,7 @@ public class ProvenanceSearchService {
 		final List<ProvenanceEdge> relationships,
 		final List<ProvenanceType> includedTypes
 	) {
-		if (includedTypes.size() == 0) {
+		if (includedTypes.isEmpty()) {
 			return relationships;
 		}
 		final List<ProvenanceEdge> clipped = new ArrayList<>();
@@ -276,7 +216,7 @@ public class ProvenanceSearchService {
 		final List<ProvenanceNode> nodes,
 		final List<ProvenanceType> includedTypes
 	) {
-		if (includedTypes.size() == 0) {
+		if (includedTypes.isEmpty()) {
 			return nodes;
 		}
 		final List<ProvenanceNode> res = new ArrayList<>();
@@ -301,23 +241,9 @@ public class ProvenanceSearchService {
 				nodes.add(formatted);
 			} catch (final NoSuchElementException e) {
 				log.warn("No element found: " + e);
-				continue;
 			}
 		}
 		return nodes;
-	}
-
-	public static String dynamicRelationshipDirection(final String direction, final String relationshipType) {
-		switch (direction) {
-			case "all":
-				return String.format("-['%s']-", relationshipType);
-			case "child":
-				return String.format("<-['%s']-", relationshipType);
-			case "parent":
-				return String.format("-['%s']->", relationshipType);
-			default:
-				throw new IllegalArgumentException("Relationship direction is not allowed.");
-		}
 	}
 
 	public String matchNodeBuilder(final ProvenanceType nodeType) {

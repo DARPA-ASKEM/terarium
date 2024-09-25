@@ -5,16 +5,17 @@ import { logger } from '@/utils/logger';
 
 /**
  * Fetches model card data from the server and wait for task to finish.
+ * @param {string} modelId - The model ID.
  * @param {string} documentId - The document ID.
  */
-export async function modelCard(documentId: string): Promise<void> {
+export async function modelCard(modelId: string, documentId?: string): Promise<void> {
 	try {
 		const response = await API.post<TaskResponse>('/gollm/model-card', null, {
 			params: {
+				'model-id': modelId,
 				'document-id': documentId
 			}
 		});
-
 		// FIXME: I think we need to refactor the response interceptors so that we can handle errors here, or even in the interceptor itself...might be worth a discussion
 		const taskId = response.data.id;
 		await handleTaskById(taskId, {
@@ -50,21 +51,20 @@ export async function configureModelFromDocument(
 	return data;
 }
 
-export async function configureModelFromDatasets(
+export async function configureModelFromDataset(
 	modelId: string,
-	datasetIds: string[],
+	datasetId: string,
 	matrixStr: string,
 	workflowId?: string,
 	nodeId?: string
 ): Promise<TaskResponse> {
-	// FIXME: Using first dataset for now...
 	const { data } = await API.post<TaskResponse>(
 		'/gollm/configure-from-dataset',
 		{ matrixStr },
 		{
 			params: {
 				'model-id': modelId,
-				'dataset-ids': datasetIds.join(),
+				'dataset-id': datasetId,
 				'workflow-id': workflowId,
 				'node-id': nodeId
 			}

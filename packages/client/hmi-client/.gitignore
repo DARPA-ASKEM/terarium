@@ -26,6 +26,7 @@ dist-ssr
 # Test artifacts
 coverage
 /tests/e2e/test-report/
+/tests/unit/reports/
 /tests/e2e/test-results/
 /tests/component/test-report/
 /playwright/.cache/

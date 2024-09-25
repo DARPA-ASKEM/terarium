@@ -38,7 +38,8 @@ import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 /**
- * Base class for services that manage TerariumAssets without syncing to Elasticsearch.
+ * Base class for services that manage TerariumAssets without syncing to
+ * Elasticsearch.
  *
  * @param <T> The type of asset this service manages
  * @param <R> The respository of the asset this service manages
@@ -98,7 +99,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	/**
 	 * Get a list of assets, this includes all assets, not just searchable ones.
 	 *
-	 * @param page The page number
+	 * @param page     The page number
 	 * @param pageSize The number of assets per page
 	 * @return The list of assets
 	 */
@@ -176,9 +177,10 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	 *
 	 * @param asset The asset to update
 	 * @return The updated asset
-	 * @throws IOException If there is an error updating the asset
-	 * @throws IllegalArgumentException If the asset tries to move from permanent to temporary
-	 * @throws NotFoundException If the original asset does not exist
+	 * @throws IOException              If there is an error updating the asset
+	 * @throws IllegalArgumentException If the asset tries to move from permanent to
+	 *                                  temporary
+	 * @throws NotFoundException        If the original asset does not exist
 	 */
 	@Override
 	@Observed(name = "function_profile")
@@ -214,7 +216,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	/**
 	 * Get a presigned URL for uploading a file to S3
 	 *
-	 * @param id The ID of the asset to upload to
+	 * @param id       The ID of the asset to upload to
 	 * @param filename The name of the file to upload
 	 * @return The presigned URL
 	 */
@@ -233,7 +235,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	/**
 	 * Get a presigned URL for downloading a file from S3
 	 *
-	 * @param id The ID of the asset to download from
+	 * @param id       The ID of the asset to download from
 	 * @param filename The name of the file to download
 	 * @return The presigned URL
 	 */
@@ -287,7 +289,6 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	public Optional<byte[]> fetchFileAsBytes(final UUID uuid, final String filename) throws IOException {
 		final String bucket = config.getFileStorageS3BucketName();
 		final String key = getPath(uuid, filename);
-
 		try {
 			final ResponseInputStream<GetObjectResponse> stream = s3ClientService.getS3Service().getObject(bucket, key);
 			return Optional.of(stream.readAllBytes());
@@ -316,6 +317,22 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	}
 
 	@Observed(name = "function_profile")
+	public Integer uploadFile(final UUID assetId, final String filename, final FileExport fileExport) throws IOException {
+		final String bucket = config.getFileStorageS3BucketName();
+		String prefix = fileExport.getPathPrefix();
+		if (prefix.isEmpty()) {
+			prefix = getAssetPath();
+		}
+
+		final String key = getPrefixedPath(prefix, assetId, filename);
+
+		final PutObjectResponse res = s3ClientService
+			.getS3Service()
+			.putObject(bucket, key, fileExport.getContentType(), fileExport.getBytes());
+		return res.sdkHttpResponse().statusCode();
+	}
+
+	@Observed(name = "function_profile")
 	public void copyAssetFiles(final T newAsset, final T oldAsset, final Schema.Permission hasWritePermission)
 		throws IOException {
 		final String bucket = config.getFileStorageS3BucketName();
@@ -328,7 +345,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 					s3ClientService.getS3Service().copyObject(bucket, srcKey, bucket, dstKey);
 					validFileNames.add(fileName);
 				} catch (final NoSuchKeyException e) {
-					log.error("Failed to export fileName {}, no object found, excluding from exported asset", e);
+					log.error("Failed to copy fileName {}, no object found, excluding from copied asset", e);
 					continue;
 				}
 			}
@@ -356,6 +373,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 					final FileExport fileExport = new FileExport();
 					fileExport.setBytes(bytes);
 					fileExport.setContentType(ContentType.parse(contentType));
+					fileExport.setPathPrefix(getAssetPath());
 
 					files.put(fileName, fileExport);
 				} catch (final NoSuchKeyException e) {
@@ -367,7 +385,11 @@ public abstract class TerariumAssetServiceWithoutSearch<
 		return files;
 	}
 
-	private String getPath(final UUID id, final String filename) {
+	protected String getPath(final UUID id, final String filename) {
 		return String.join("/", getAssetPath(), id.toString(), filename);
+	}
+
+	protected String getPrefixedPath(final String prefix, final UUID id, final String filename) {
+		return String.join("/", prefix, id.toString(), filename);
 	}
 }

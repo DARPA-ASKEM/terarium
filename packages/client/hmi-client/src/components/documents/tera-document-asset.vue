@@ -1,7 +1,3 @@
-<!--
-  -- This template is a copy of tera-external-publication with some elements stripped out.
-  -- TODO: merge the concept of external publication and document asset.
-  -->
 <template>
 	<tera-asset
 		:id="assetId"
@@ -30,7 +26,7 @@
 				class="p-button-icon-only p-button-text p-button-rounded"
 				@click="toggleOptionsMenu"
 			/>
-			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" :pt="optionsMenuPt" />
 		</template>
 		<Accordion v-if="view === DocumentView.EXTRACTIONS" :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]">
 			<!-- Abstract -->
@@ -106,11 +102,6 @@
 				</ul>
 			</AccordionTab>
 		</Accordion>
-
-		<!--
-		  -- Adding this here for now...
-		  -- until we implement the process manager
-		  -->
 		<p
 			class="pl-3"
 			v-if="
@@ -133,7 +124,7 @@ import { computed, onMounted, onUnmounted, onUpdated, ref, watch } from 'vue';
 import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { FeatureConfig, ExtractionStatusUpdate } from '@/types/common';
+import type { FeatureConfig, ExtractionStatusUpdate } from '@/types/common';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import type { ClientEvent, DocumentAsset } from '@/types/Types';
@@ -223,8 +214,27 @@ const optionsMenuItems = ref([
 					}
 				})) ?? []
 	},
+	{
+		icon: 'pi pi-download',
+		label: 'Download',
+		command: async () => {
+			if (pdfLink.value) {
+				const link = window.document.createElement('a');
+				link.href = pdfLink.value;
+				link.download = document.value?.name ?? 'document.pdf';
+				link.click();
+				URL.revokeObjectURL(link.href);
+			}
+			emit('close-preview');
+		}
+	},
 	{ icon: 'pi pi-trash', label: 'Remove', command: () => emit('remove') }
 ]);
+const optionsMenuPt = {
+	submenu: {
+		class: 'max-h-30rem overflow-y-scroll'
+	}
+};
 
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
@@ -282,9 +292,7 @@ onMounted(async () => {
 });
 
 async function subscribeToExtraction(event: ClientEvent<ExtractionStatusUpdate>) {
-	console.log(event.data.message);
 	if (!event.data || event.data.data.documentId !== props.assetId) return;
-
 	const status = event.data.state;
 	// FIXME: adding the 'dispatching' check since there seems to be an issue with the status of the extractions.
 	if (status === ProgressState.Complete || event.data.message.includes('Dispatching')) {
@@ -296,6 +304,7 @@ onUnmounted(async () => {
 	await unsubscribe(ClientEventType.ExtractionPdf, subscribeToExtraction);
 });
 </script>
+
 <style scoped>
 .extracted-item {
 	display: flex;

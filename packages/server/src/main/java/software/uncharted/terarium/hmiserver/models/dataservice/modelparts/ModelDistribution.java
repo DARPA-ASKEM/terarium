@@ -20,11 +20,12 @@ public class ModelDistribution extends SupportAdditionalProperties implements Se
 
 	private String type;
 
+	//TODO the fact that this is `Object` is causing issues, however, I'm not sure if we can make this not an object??
 	private Map<String, Object> parameters;
 
 	@Override
 	public ModelDistribution clone() {
-		ModelDistribution clone = (ModelDistribution) super.clone();
+		final ModelDistribution clone = (ModelDistribution) super.clone();
 		clone.setParameters(this.getParameters());
 		clone.setType(this.getType());
 		return clone;

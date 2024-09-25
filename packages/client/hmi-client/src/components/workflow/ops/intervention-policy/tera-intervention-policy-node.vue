@@ -1,6 +1,11 @@
 <template>
 	<section>
-		<tera-operator-placeholder :operation-type="node.operationType" />
+		<ul v-if="node.state.interventionPolicy.id">
+			<li v-for="(_interventions, appliedTo) in groupedOutputParameters" :key="appliedTo">
+				<vega-chart expandable :are-embed-actions-visible="false" :visualization-spec="preparedCharts[appliedTo]" />
+			</li>
+		</ul>
+		<tera-operator-placeholder :node="node" v-else />
 		<Button
 			:label="isModelInputConnected ? 'Open' : 'Attach a model'"
 			@click="emit('open-drilldown')"
@@ -16,8 +21,11 @@ import { computed, watch } from 'vue';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import { cloneDeep } from 'lodash';
-import { InterventionPolicyState } from './tera-intervention-policy-operation';
+import _, { cloneDeep, groupBy } from 'lodash';
+import { blankIntervention } from '@/services/intervention-policy';
+import { createInterventionChart } from '@/services/charts';
+import VegaChart from '@/components/widgets/VegaChart.vue';
+import { InterventionPolicyState } from './intervention-policy-operation';
 
 const emit = defineEmits(['open-drilldown', 'update-state']);
 const props = defineProps<{
@@ -27,26 +35,41 @@ const props = defineProps<{
 const modelInput = props.node.inputs.find((input) => input.type === 'modelId');
 const isModelInputConnected = computed(() => modelInput?.status === WorkflowPortStatus.CONNECTED);
 
+const groupedOutputParameters = computed(() => groupBy(props.node.state.interventionPolicy.interventions, 'appliedTo'));
+
+const preparedCharts = computed(() =>
+	_.mapValues(groupedOutputParameters.value, (interventions, key) =>
+		createInterventionChart(interventions, {
+			title: key,
+			width: 180,
+			height: 120,
+			xAxisTitle: 'Time',
+			yAxisTitle: 'Value'
+		})
+	)
+);
+
 watch(
 	() => props.node.inputs,
 	(inputs) => {
 		const modelId = inputs.find((input) => input.type === 'modelId')?.value?.[0];
 		const state = cloneDeep(props.node.state);
 
-		if (!modelId) {
-			// Reset previous model cache
-			state.interventionPolicy = {
-				modelId: '',
-				interventions: []
-			};
-		} else {
-			state.interventionPolicy = {
-				modelId,
-				interventions: []
-			};
-		}
+		if (!modelId || modelId === state.interventionPolicy?.modelId) return;
+
+		// Reset previous model cache
+		state.interventionPolicy = {
+			modelId,
+			interventions: [blankIntervention]
+		};
 		emit('update-state', state);
 	},
 	{ deep: true }
 );
 </script>
+
+<style scoped>
+ul {
+	list-style-type: none;
+}
+</style>

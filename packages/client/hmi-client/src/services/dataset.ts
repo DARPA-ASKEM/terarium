@@ -11,24 +11,6 @@ import { RunResults } from '@/types/SimulateConfig';
 import { cloneDeep } from 'lodash';
 
 /**
- * Get all datasets
- * @return Array<Dataset>|null - the list of all datasets, or null if none returned by API
- */
-async function getAll(): Promise<Dataset[] | null> {
-	const response = await API.get('/datasets').catch((error) => {
-		logger.error(`Error: ${error}`);
-	});
-	return response?.data ?? null;
-}
-
-async function searchClimateDatasets(query: string): Promise<Dataset[] | null> {
-	const response = await API.get(`/climatedata/queries/search-esgf?query=${query}`).catch((error) => {
-		logger.error(`Error: ${error}`);
-	});
-	return response?.data ?? null;
-}
-
-/**
  * Get Dataset from the data service
  * @return Dataset|null - the dataset, or null if none returned by API
  */
@@ -255,24 +237,27 @@ async function createNewDatasetFromFile(
 async function createDatasetFromSimulationResult(
 	projectId: string,
 	simulationId: string,
-	datasetName: string | null
-): Promise<boolean> {
+	datasetName: string | null,
+	addtoProject?: boolean
+): Promise<Dataset | null> {
+	if (addtoProject === undefined) addtoProject = true;
 	try {
-		const response: AxiosResponse<Response> = await API.post(
-			`/simulations/${simulationId}/add-result-as-dataset-to-project/${projectId}?dataset-name=${datasetName}`
+		const response: AxiosResponse<Dataset> = await API.post(
+			`/simulations/${simulationId}/create-result-as-dataset/${projectId}?dataset-name=${datasetName}&add-to-project=${addtoProject}`
 		);
-		return response && response.status === 201;
+		return response.data as Dataset;
 	} catch (error) {
-		logger.error(`/simulations/{id}/add-result-as-dataset-to-project/{projectId} not responding:  ${error}`, {
+		logger.error(`/simulations/{id}/create-result-as-dataset/{projectId} not responding:  ${error}`, {
 			toastTitle: 'TDS - Simulation'
 		});
-		return false;
+		return null;
 	}
 }
 
 const saveDataset = async (projectId: string, simulationId: string | undefined, datasetName: string | null) => {
 	if (!simulationId) return false;
-	return createDatasetFromSimulationResult(projectId, simulationId, datasetName);
+	const response = await createDatasetFromSimulationResult(projectId, simulationId, datasetName);
+	return response !== null;
 };
 
 /**
@@ -363,8 +348,6 @@ const getCsvColumnStats = (csvColumn: number[]): CsvColumnStats => {
 };
 
 export {
-	getAll,
-	searchClimateDatasets,
 	getDataset,
 	getClimateDataset,
 	getClimateSubsetId,

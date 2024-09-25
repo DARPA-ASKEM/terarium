@@ -35,9 +35,6 @@ public interface SkemaRustProxy {
 	@GetMapping("/models/{modelId}/named_opos")
 	ResponseEntity<String> getModelNamedOpos(@PathVariable("modelId") String modelId);
 
-	@PutMapping("/mathml/acset")
-	ResponseEntity<JsonNode> convertMathML2ACSet(@RequestBody List<String> mathML);
-
 	@PutMapping("/mathml/amr")
 	ResponseEntity<JsonNode> convertMathML2AMR(@RequestBody JsonNode request);
 

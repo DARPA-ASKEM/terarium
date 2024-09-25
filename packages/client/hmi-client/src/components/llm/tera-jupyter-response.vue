@@ -23,13 +23,14 @@
 								@click.stop
 								@keydown.enter.prevent="saveEditingQuery"
 								@keydown.esc.prevent="cancelEditingQuery"
+								style="padding: 8px"
 							/>
 							<div class="btn-group">
 								<Button icon="pi pi-times" rounded text @click="cancelEditingQuery" />
 								<Button icon="pi pi-play" rounded text @click="saveEditingQuery" />
 							</div>
 						</div>
-						<div v-else-if="!isEmpty(query)" class="query">{{ query }}</div>
+						<div v-else-if="!isEmpty(query)" class="query pb-0">{{ query }}</div>
 					</section>
 					<!-- TODO: This processing notification was applied to all messages, not just the one that is processing. Need to add id check. -->
 					<div v-if="props.isExecutingCode" class="executing-message">
@@ -41,7 +42,10 @@
 				<div v-for="m in msg.messages" :key="m.header.msg_id">
 					<!-- Handle llm_thought type -->
 					<div v-if="m.header.msg_type === 'llm_thought'" class="llm-thought">
-						<tera-jupyter-response-thought :show-thought="showThought || props.showChatThoughts">
+						<tera-jupyter-response-thought
+							:show-thought="showThought || props.showChatThoughts"
+							@toggleThought="showThought = $event"
+						>
 							<ul>
 								<li v-for="(line, index) in formattedLlmThoughtPoints(m.content)" :key="index">
 									{{ line }}
@@ -54,7 +58,7 @@
 								:label="`${showThought ? 'Hide' : 'Show'} thoughts`"
 								@click="() => (showThought = !showThought)"
 							/>
-							<Button link label="Edit the prompts" @click="() => (isEditingQuery = true)" />
+							<Button link label="Edit prompt" @click="() => (isEditingQuery = true)" />
 						</div>
 					</div>
 					<!-- Handle llm_response type -->
@@ -65,25 +69,19 @@
 					<div v-else-if="m.header.msg_type === 'stream' && m.content['name'] === 'stderr'">
 						<div class="error">{{ m.content['text'] }}</div>
 					</div>
-					<!-- Handle stream type for stdout -->
-					<div v-else-if="m.header.msg_type === 'stream' && m.content['name'] === 'stdout'">
-						<tera-jupyter-response-thought :show-thought="showThought || props.showChatThoughts">
-							{{ formattedThought(m.content['text'].trim()) }}
-						</tera-jupyter-response-thought>
-					</div>
 					<!-- Handle code_cell type -->
 					<div v-else-if="m.header.msg_type === 'code_cell'" class="code-cell">
 						<tera-beaker-code-cell
 							ref="codeCell"
 							:jupyter-session="jupyterSession"
-							:language="m.content['language']"
-							:code="m.content['code']"
-							:autorun="true"
-							:notebook-item-id="msg.query_id"
-							context="dataset"
-							:context_info="{ id: props.assetId, query: msg.query }"
+							:notebook-item="msg"
+							:jupyter-message="m"
+							:lang="language"
 							@deleteRequested="onDeleteRequested(m.header.msg_id)"
 						/>
+					</div>
+					<div v-else-if="['stream', 'display_data', 'execute_result', 'error'].includes(m.header.msg_type)">
+						<tera-beaker-code-cell-output :jupyter-message="m" />
 					</div>
 				</div>
 			</section>
@@ -93,15 +91,16 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { JupyterMessage } from '@/services/jupyter';
+import { INotebookItem } from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils';
-import TeraBeakerCodeCell from '@/components/llm/tera-beaker-response-code-cell.vue';
+import TeraBeakerCodeCell from '@/components/llm/tera-beaker-code-cell.vue';
+import TeraBeakerCodeCellOutput from '@/components/llm/tera-beaker-code-cell-output.vue';
 import TeraJupyterResponseThought from '@/components/llm/tera-beaker-response-thought.vue';
 import Button from 'primevue/button';
 import Textarea from 'primevue/textarea';
 import Menu from 'primevue/menu';
-import { defineEmits, ref, computed, onMounted, watch } from 'vue';
-import type { CsvAsset } from '@/types/Types';
+import { defineEmits, ref, computed, onMounted } from 'vue';
+import { MenuItem } from 'primevue/menuitem';
 
 const emit = defineEmits([
 	'cell-updated',
@@ -115,15 +114,10 @@ const emit = defineEmits([
 
 const props = defineProps<{
 	jupyterSession: SessionContext;
-	msg: {
-		query_id: string;
-		query: string | null;
-		timestamp: string;
-		messages: JupyterMessage[];
-		resultingCsv: CsvAsset | null;
-	};
+	msg: INotebookItem;
 	showChatThoughts: boolean;
 	isExecutingCode: boolean;
+	language: string;
 	assetId?: string;
 	autoExpandPreview?: boolean;
 	defaultPreview?: string;
@@ -139,7 +133,7 @@ const query = ref('');
 const isEditingQuery = ref(false);
 
 // Computed values for the labels and icons
-const showThoughtLabel = computed(() => (showThought.value ? 'Hide reasoning' : 'Show reasoning'));
+const showThoughtLabel = computed(() => (showThought.value ? 'Hide thoughts' : 'Show thoughts'));
 const showHideIcon = computed(() => (showThought.value ? 'pi pi-fw pi-eye-slash' : 'pi pi-fw pi-eye'));
 
 // Reference for the chat window menu and its items
@@ -164,7 +158,7 @@ const chatWindowMenuItems = ref([
 		icon: 'pi pi-fw pi-trash',
 		command: () => emit('delete-prompt', props.msg.query_id)
 	}
-]);
+] as MenuItem[]);
 
 const saveEditingQuery = () => {
 	emit('edit-prompt', props.msg.query_id, query.value);
@@ -178,22 +172,6 @@ const cancelEditingQuery = () => {
 
 // show the chat window menu
 const showChatWindowMenu = (event: Event) => chatWindowMenu.value.toggle(event);
-
-// format the thought text
-const formattedThought = (input: string) => {
-	const lines = input.split('\n'); // Split the string into lines
-	const formattedLines = lines.map((line) => {
-		const index = line.indexOf(':');
-		if (index > -1) {
-			// Transform the category to title case and remove underscores
-			const category = toTitleCase(line.slice(0, index));
-			// Add a newline character after the colon
-			return `${category}:\n${line.slice(index + 2)}`;
-		}
-		return line;
-	});
-	return formattedLines.join('\n\n'); // Combine the formatted lines into a single string with an extra newline between each
-};
 
 const formattedLlmThoughtPoints = (input: { [key: string]: string }) => {
 	let thought = '';
@@ -221,15 +199,7 @@ function toTitleCase(str: string): string {
 
 onMounted(() => {
 	query.value = props.msg.query ?? '';
-	emit('cell-updated', resp.value, props.msg);
 });
-
-watch(
-	() => props.msg.messages,
-	() => {
-		emit('cell-updated', resp.value, props.msg, 'delete-cell');
-	}
-);
 
 defineExpose({
 	codeCell
@@ -254,15 +224,13 @@ function onDeleteRequested(msgId: string) {
 	font-size: var(--font-body-medium);
 	font-weight: 600;
 	font-family: var(--font-family);
-	/* Add ai-assistant icon */
-	background-image: url('@assets/svg/icons/message.svg');
-	background-repeat: no-repeat;
-	background-position: 4px 3px;
+	padding-bottom: var(--gap);
 }
 .edit-query-box {
 	display: flex;
 	flex-direction: row;
-	padding-bottom: 2px;
+	gap: var(--gap-2);
+	align-items: center;
 	textarea {
 		flex-grow: 1;
 	}
@@ -287,43 +255,35 @@ function onDeleteRequested(msgId: string) {
 .jupyter-response {
 	position: relative;
 	margin: var(--gap);
-	padding: var(--gap-small);
+	padding: var(--gap-4);
 	display: flex;
 	flex-direction: column;
 	font-family: var(--font-family);
 	border-radius: var(--border-radius);
-	margin-top: 10px;
 	background-color: var(--surface-0);
-	transition:
-		background-color 0.3s,
-		border 0.3s;
-	border: 1px solid rgba(0, 0, 0, 0);
+	border: 1px solid var(--surface-border-light);
 }
 
-.jupyter-response:hover {
+.jupyter-response:hover:not(.selected) {
 	background-color: var(--surface-50);
 	border: 1px solid var(--surface-border-light);
 }
 
 .jupyter-response .menu-container {
-	display: none;
-	position: absolute;
-	top: 5px;
-	right: 10px;
-}
-
-.jupyter-response:hover .menu-container {
 	display: block;
 	position: absolute;
 	top: 5px;
 	right: 10px;
 }
 
+/* Only show Processing message if the cell is selected */
+.jupyter-response:not(.selected) .executing-message {
+	display: none;
+}
+
 .query,
 .llm-thought,
 .llm-response {
-	padding-left: 57px;
-	padding-right: 2rem;
 	padding-bottom: var(--gap-small);
 }
 
@@ -336,12 +296,12 @@ function onDeleteRequested(msgId: string) {
 		background-image: url('@assets/svg/icons/magic.svg');
 		background-repeat: no-repeat;
 		background-size: 1.5rem 1.5rem;
-		background-position: 0 0.625rem;
-		padding: 0.625rem 0 0.625rem 1.875rem;
+		background-position: 0 0rem;
+		padding: 0rem 0 0.625rem 2.25rem;
 	}
 	li {
 		margin-bottom: var(--gap-xsmall);
-		padding-left: 0.625rem;
+		padding-left: 2.25rem;
 	}
 	li::first-letter {
 		text-transform: uppercase;
@@ -356,14 +316,5 @@ function onDeleteRequested(msgId: string) {
 	button:hover :deep(.p-button-label) {
 		text-decoration: none;
 	}
-}
-
-.llm-response {
-	white-space: pre-wrap;
-	color: var(--text-color);
-	/* Add ai-assistant magic icon */
-	background-image: url('@assets/svg/icons/magic.svg');
-	background-repeat: no-repeat;
-	background-position: 4px 2px;
 }
 </style>

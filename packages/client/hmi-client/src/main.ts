@@ -14,12 +14,11 @@ import * as EventService from '@/services/event';
 import API from '@/api/api';
 import useAuthStore from '@/stores/auth';
 import router from '@/router';
-import '@node_modules/katex/dist/katex.min.css';
 import App from '@/App.vue';
 import { useProjects } from '@/composables/project';
 import { useNotificationManager } from '@/composables/notificationManager';
-import '@/assets/css/style.scss';
 import { init as clientEventServiceInit } from '@/services/ClientEventService';
+import '@/assets/css/style.scss';
 
 // Create the Vue application
 const app = createApp(App);
@@ -33,9 +32,8 @@ await authStore.init();
 // Initialize Client Events
 await clientEventServiceInit();
 
-// Set the hash value of the window.location to null
-// This is to prevent the Keycloak from redirecting to the hash value
-// after the authentication
+// Set the hash value of the window.location to null.
+// This is to prevent the Keycloak from redirecting to the hash value after authentication.
 window.location.hash = '';
 
 app

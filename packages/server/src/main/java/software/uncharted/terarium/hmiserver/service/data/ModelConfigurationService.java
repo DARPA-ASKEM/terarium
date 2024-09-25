@@ -3,6 +3,8 @@ package software.uncharted.terarium.hmiserver.service.data;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -96,7 +98,7 @@ public class ModelConfigurationService
 		final String description
 	) {
 		final ModelConfiguration modelConfiguration = new ModelConfiguration();
-		modelConfiguration.setName(name != null ? name : "Default Configuration");
+		modelConfiguration.setName(name != null ? name : "Default configuration");
 		modelConfiguration.setDescription(description != null ? description : "This is a default configuration.");
 		modelConfiguration.setModelId(model.getId());
 		modelConfiguration.setParameterSemanticList(createParameterSemanticList(model));
@@ -215,9 +217,15 @@ public class ModelConfigurationService
 			if (matchingConfigParameter != null) {
 				// set distributions
 				if (CONSTANT_TYPE.equals(matchingConfigParameter.getDistribution().getType())) {
-					modelParameter.setValue(
-						((Number) matchingConfigParameter.getDistribution().getParameters().get(VALUE_PARAM)).doubleValue()
-					);
+					try {
+						modelParameter.setValue(
+							NumberFormat.getInstance()
+								.parse(matchingConfigParameter.getDistribution().getParameters().get(VALUE_PARAM).toString())
+								.doubleValue()
+						);
+					} catch (final ParseException e) {
+						throw new RuntimeException(e);
+					}
 					modelParameter.setDistribution(null);
 				} else {
 					modelParameter.setDistribution(matchingConfigParameter.getDistribution());

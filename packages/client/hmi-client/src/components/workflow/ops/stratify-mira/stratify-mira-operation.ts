@@ -1,5 +1,6 @@
 import type { Operation, BaseState } from '@/types/workflow';
 import { WorkflowOperationTypes } from '@/types/workflow';
+import stratifyModel from '@assets/svg/operator-images/stratify-model.svg';
 
 const DOCUMENTATION_URL = 'https://github.com/gyorilab/mira/blob/main/notebooks/viz_strat_petri.ipynb';
 
@@ -58,7 +59,8 @@ export const StratifyMiraOperation: Operation = {
 	displayName: 'Stratify model',
 	description: 'Stratify a model',
 	documentationUrl: DOCUMENTATION_URL,
-	inputs: [{ type: 'modelId|modelConfigId', label: 'Model or Model configuration', acceptMultiple: false }],
+	imageUrl: stratifyModel,
+	inputs: [{ type: 'modelId|modelConfigId', label: 'Model or Model configuration' }],
 	outputs: [{ type: 'modelId', label: 'Model' }],
 	isRunnable: false,
 	action: () => {},
