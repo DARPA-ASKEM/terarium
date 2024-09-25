@@ -103,12 +103,11 @@ onMounted(() => {
 
 // Only update the MMT when the semantics of the model changes outside this component.
 watch(
-	() => props.model.semantics,
-	(newSemantics) => {
-		if (!isEqual(newSemantics, transientModel.value.semantics)) {
-			transientModel.value = cloneDeep(props.model);
-			updateMMT();
-		}
+	() => [props.model.model, props.model.semantics],
+	(newValue, oldValue) => {
+		if (isEqual(newValue, oldValue)) return;
+		transientModel.value = cloneDeep(props.model);
+		updateMMT();
 	},
 	{ deep: true }
 );

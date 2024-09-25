@@ -116,7 +116,7 @@ const isModelLoading = ref(false);
 const showSaveModal = ref(false);
 const isNaming = computed(() => isEmpty(props.assetId) || isRenaming.value);
 const hasChanged = computed(() => !isEqual(model.value, temporaryModel.value));
-const hasEditPermission = computed(() => useProjects().hasEditPermission());
+const hasEditPermission = useProjects().hasEditPermission();
 
 // Edit menu
 function onReset() {
