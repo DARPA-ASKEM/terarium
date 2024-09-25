@@ -52,7 +52,7 @@ export const CalibrationOperationCiemss: Operation = {
 		const init: CalibrationOperationStateCiemss = {
 			method: 'dopri5',
 			chartSettings: [],
-			mapping: [{ modelVariable: '', datasetVariable: '' }],
+			mapping: [{ modelVariable: 'timestamp', datasetVariable: '' }],
 			simulationsInProgress: [],
 			currentProgress: 0,
 			inProgressPreForecastId: '',
