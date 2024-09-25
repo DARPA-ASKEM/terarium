@@ -8,8 +8,8 @@
 				<section>
 					<label class="subheader">Add project here.</label>
 					<tera-drag-and-drop-importer
-						:accept-types="[AcceptedTypes.JSON]"
-						:accept-extensions="[AcceptedExtensions.JSON]"
+						:accept-types="[AcceptedTypes.PROJECTCONFIG]"
+						:accept-extensions="[AcceptedExtensions.PROJECTCONFIG]"
 						:import-action="processProjects"
 						:progress="progress"
 						@import-completed="importCompleted"
@@ -49,7 +49,7 @@ async function processProjects(files: File[]) {
 async function upload() {
 	console.log('Uploading:');
 	importedFiles.value.forEach((file) => {
-		createProjectFromFile(file);
+		createProjectFromFile(file, progress);
 	});
 	console.log('Done uploading:');
 	emit('close');
@@ -60,7 +60,7 @@ function importCompleted() {
 }
 
 async function createProject(file: File) {
-	await createProjectFromFile(file);
+	await createProjectFromFile(file, progress);
 }
 </script>
 

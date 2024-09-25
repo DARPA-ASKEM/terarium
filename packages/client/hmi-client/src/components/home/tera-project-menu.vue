@@ -13,6 +13,7 @@ import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import { computed, ref } from 'vue';
 import { exportProjectAsFile } from '@/services/project';
+import { AcceptedExtensions } from '@/types/common';
 
 const props = defineProps<{ project: Project | null }>();
 
@@ -69,7 +70,7 @@ const downloadMenuItem = {
 			if (blob) {
 				const a = document.createElement('a');
 				a.href = URL.createObjectURL(blob);
-				a.download = `${props.project.name}.zip`;
+				a.download = `${props.project.name}.${AcceptedExtensions.PROJECTCONFIG}`;
 				a.click();
 				a.remove();
 			}

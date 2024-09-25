@@ -7,7 +7,7 @@ import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import * as EventService from '@/services/event';
 import { AssetType, EventType, PermissionRelationships, Project } from '@/types/Types';
 import { logger } from '@/utils/logger';
-import { Component } from 'vue';
+import type { Component, Ref } from 'vue';
 
 /**
  * Create a project
@@ -234,15 +234,21 @@ async function exportProjectAsFile(id: Project['id']) {
 	}
 }
 
-async function createProjectFromFile(file: File) {
+async function createProjectFromFile(file: File, progress?: Ref<number>) {
 	console.log('creating project from file:');
 	const formData = new FormData();
 	formData.append('file', file);
 
-	const response = await API.put(`/projects/import`, formData, {
-		params: {
-			filename: file.name
-		}
+	const response = await API.post(`/projects/import`, formData, {
+		headers: {
+			'Content-Type': 'multipart/form-data'
+		},
+		onUploadProgress(progressEvent) {
+			if (progress) {
+				progress.value = Math.min(90, Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100)));
+			}
+		},
+		timeout: 3600000
 	});
 	console.log('Response:');
 	console.log(response);
