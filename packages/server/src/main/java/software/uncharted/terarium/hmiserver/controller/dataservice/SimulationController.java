@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -358,41 +357,16 @@ public class SimulationController {
 			if (sim.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
-
 			// Create the dataset asset:
 			final UUID simId = sim.get().getId();
-			final Dataset dataset = datasetService.createAsset(new Dataset(), projectId, permission);
-			dataset.setName(datasetName);
-			dataset.setDescription(sim.get().getDescription());
-			dataset.setMetadata(objectMapper.convertValue(Map.of("simulationId", simId.toString()), JsonNode.class));
-			dataset.setFileNames(sim.get().getResultFiles());
-			dataset.setDataSourceDate(sim.get().getCompletedTime());
-			dataset.setColumns(new ArrayList<>());
-
-			// Attach the user to the dataset
-			if (sim.get().getUserId() != null) {
-				dataset.setUserId(sim.get().getUserId());
-			}
-
-			// Duplicate the simulation results to a new dataset
-			simulationService.copySimulationResultToDataset(sim.get(), dataset);
-			datasetService.updateAsset(dataset, projectId, permission);
-
-			// If this is a temporary asset, do not add to project.
-			if (!addToProject) {
-				return ResponseEntity.status(HttpStatus.CREATED).body(dataset);
-			}
-
-			// Add the dataset to the project as an asset
-			final Optional<Project> project = projectService.getProject(projectId);
-			if (project.isPresent()) {
-				projectAssetService.createProjectAsset(project.get(), AssetType.DATASET, dataset, permission);
-				// underlying asset does not exist
-				return ResponseEntity.status(HttpStatus.CREATED).body(dataset);
-			} else {
-				log.error("Failed to add the dataset from simulation {} result", id);
-				return ResponseEntity.internalServerError().build();
-			}
+			final Dataset dataset = simulationService.createDatasetFromSimulation(
+				simId,
+				datasetName,
+				projectId,
+				addToProject,
+				permission
+			);
+			return ResponseEntity.status(HttpStatus.CREATED).body(dataset);
 		} catch (final Exception e) {
 			final String error = String.format("Failed to add simulation %s result as dataset to project %s", id, projectId);
 			log.error(error, e);
