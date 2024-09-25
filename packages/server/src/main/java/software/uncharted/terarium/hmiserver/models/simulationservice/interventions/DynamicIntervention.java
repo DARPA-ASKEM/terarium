@@ -10,6 +10,8 @@ public class DynamicIntervention {
 	private String parameter;
 	private Number threshold;
 	private Number value;
+	private String appliedTo;
+	private InterventionSemanticType type;
 
 	@Override
 	public DynamicIntervention clone() {
@@ -17,6 +19,8 @@ public class DynamicIntervention {
 		clone.parameter = this.parameter;
 		clone.threshold = this.threshold;
 		clone.value = this.value;
+		clone.appliedTo = this.appliedTo;
+		clone.type = this.type;
 		return clone;
 	}
 }

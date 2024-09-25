@@ -48,8 +48,6 @@ export const isInterventionPoliciesValuesEqual = (
 	if (originalPolicy.interventions.length !== newPolicy.interventions.length) return false;
 
 	const notEqual = originalPolicy.interventions.some((intervention, index) => {
-		if (intervention.appliedTo !== newPolicy.interventions[index].appliedTo) return true;
-		if (intervention.type !== newPolicy.interventions[index].type) return true;
 		if (!isEqual(intervention.staticInterventions, newPolicy.interventions[index].staticInterventions)) return true;
 		if (!isEqual(intervention.dynamicInterventions, newPolicy.interventions[index].dynamicInterventions)) return true;
 		return false;
