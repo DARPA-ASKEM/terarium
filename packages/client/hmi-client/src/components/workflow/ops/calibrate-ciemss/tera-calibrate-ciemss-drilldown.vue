@@ -30,11 +30,54 @@
 							dataset.
 						</p>
 
-						<!-- Mapping table: Other variables -->
-						<DataTable class="mapping-table" :value="mapping">
+						<!-- Mapping table: Time variables -->
+						<DataTable
+							v-if="mapping.find((ele) => ele.modelVariable === 'timestamp')"
+							class="mapping-table"
+							:value="mapping.filter((ele) => ele.modelVariable === 'timestamp')"
+						>
 							<Column field="modelVariable">
 								<template #header>
-									<span class="column-header">Model variables</span>
+									<span class="column-header">Model: Timeline variable</span>
+								</template>
+								<template #body="{ data, field }">
+									<Dropdown
+										class="w-full"
+										:placeholder="mappingDropdownPlaceholder"
+										v-model="data[field]"
+										:disabled="true"
+										:options="modelStateOptions?.map((ele) => ele.referenceId ?? ele.id)"
+									/>
+								</template>
+							</Column>
+							<Column field="datasetVariable">
+								<template #header>
+									<span class="column-header">Dataset: Timeline variable</span>
+								</template>
+								<template #body="{ data, field }">
+									<Dropdown
+										class="w-full"
+										:placeholder="mappingDropdownPlaceholder"
+										v-model="data[field]"
+										:options="datasetColumns?.map((ele) => ele.name)"
+									/>
+								</template>
+							</Column>
+							<Column field="deleteRow">
+								<template #header>
+									<span class="column-header"></span>
+								</template>
+								<template #body="{ index }">
+									<Button class="p-button-sm p-button-text" icon="pi pi-trash" @click="deleteMapRow(index)" />
+								</template>
+							</Column>
+						</DataTable>
+
+						<!-- Mapping table: Other variables -->
+						<DataTable class="mapping-table" :value="mapping.filter((ele) => ele.modelVariable !== 'timestamp')">
+							<Column field="modelVariable">
+								<template #header>
+									<span class="column-header">Model: Other variables</span>
 								</template>
 								<template #body="{ data, field }">
 									<Dropdown
@@ -47,7 +90,7 @@
 							</Column>
 							<Column field="datasetVariable">
 								<template #header>
-									<span class="column-header">Dataset variables</span>
+									<span class="column-header">Dataset: Other variables</span>
 								</template>
 								<template #body="{ data, field }">
 									<Dropdown
@@ -1147,7 +1190,7 @@ th {
 .column-header {
 	color: var(--text-color-primary);
 	font-size: var(--font-body-small);
-	font-weight: var(--font-weight);
+	font-weight: var(--font-weight-semibold);
 	padding-top: var(--gap-2);
 }
 
