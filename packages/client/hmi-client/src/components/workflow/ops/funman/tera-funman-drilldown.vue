@@ -145,8 +145,8 @@
 					<!--c205809b-3236-4bf3-92ad-6c3355b32698-->
 					<!--e44bd2c5-5c93-406e-b848-5ec4b3192d17-->
 					<tera-funman-output
-						v-if="true"
-						:fun-model-id="'c205809b-3236-4bf3-92ad-6c3355b32698'"
+						v-if="activeOutput"
+						:fun-model-id="activeOutput?.id"
 						:trajectoryState="node.state.trajectoryState"
 						@update:trajectoryState="updateTrajectorystate"
 					/>
@@ -352,6 +352,7 @@ const runMakeQuery = async () => {
 			request.request.config.normalization_constant = parseFloat(mass.value);
 		}
 	}
+	console.log(request);
 	const response = await makeQueries(request);
 
 	// Setup the in-progress id

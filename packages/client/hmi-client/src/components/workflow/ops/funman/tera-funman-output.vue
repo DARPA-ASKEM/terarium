@@ -40,30 +40,29 @@
 							@click="selectedParam2 = ''"
 						/>
 					</div>
-					<tera-funman-boundary-chart
+					<!-- <tera-funman-boundary-chart
 						:processed-data="processedData as FunmanProcessedData"
 						:param1="selectedParam"
 						:param2="selectedParam2"
 						:options="drilldownChartOptions"
 						:timestep="timestep"
 						:selectedBoxId="selectedBoxId"
-					/>
+					/> -->
 				</section>
 			</div>
 			<div class="variables-table" v-if="selectedParam2 === ''">
 				<div class="variables-header">
-					<header v-for="(title, index) in ['select', 'Parameter', 'Lower bound', 'Upper bound', '', '']" :key="index">
+					<header v-for="(title, index) in ['Parameter', 'Lower bound', 'Upper bound', '', '']" :key="index">
 						{{ title }}
 					</header>
 				</div>
 
 				<div v-for="(bound, parameter) in lastTrueBox?.bounds" :key="parameter + Date.now()">
 					<div class="variables-row" v-if="parameterOptions.includes(parameter)">
-						<RadioButton v-model="selectedParam" :value="parameter" />
 						<div>{{ parameter }}</div>
 						<div>{{ formatNumber(bound.lb) }}</div>
 						<div>{{ formatNumber(bound.ub) }}</div>
-						<tera-funman-boundary-chart
+						<!-- <tera-funman-boundary-chart
 							v-if="processedData"
 							:processed-data="processedData"
 							:param1="selectedParam"
@@ -71,7 +70,7 @@
 							:timestep="timestep"
 							:selectedBoxId="selectedBoxId"
 							@click="selectedParam2 = parameter"
-						/>
+						/> -->
 						<div v-if="selectedBoxId !== ''">
 							{{ formatNumber(selectedBox[parameter][0]) }} :
 							{{ formatNumber(selectedBox[parameter][1]) }}
@@ -84,6 +83,7 @@
 			><tera-model-diagram :model="contractedModel"
 		/></AccordionTab>
 	</Accordion>
+	{{ funModelId }}
 </template>
 
 <script setup lang="ts">
@@ -91,15 +91,14 @@ import { ref, onMounted, watch } from 'vue';
 import { FunmanProcessedData, processFunman, renderFumanTrajectories } from '@/services/models/funman-service';
 import { getRunResult } from '@/services/models/simulation-service';
 import Dropdown from 'primevue/dropdown';
-import RadioButton from 'primevue/radiobutton';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 // import InputNumber from 'primevue/inputnumber';
-import type { FunmanBox, RenderOptions } from '@/services/models/funman-service';
+import type { FunmanBox } from '@/services/models/funman-service';
+import { logger } from '@/utils/logger';
 import type { Model } from '@/types/Types';
-import TeraFunmanBoundaryChart from './tera-funman-boundary-chart.vue';
 
 const props = defineProps<{
 	funModelId: string;
@@ -127,17 +126,17 @@ const selectedBox = ref<any>({});
 
 let inputConstraints: any[] = [];
 
-const drilldownChartOptions = ref<RenderOptions>({
-	width: 550,
-	height: 275,
-	click: (d: any) => {
-		if (d.id === selectedBoxId.value) {
-			selectedBoxId.value = '';
-		} else {
-			selectedBoxId.value = d.id;
-		}
-	}
-});
+// const drilldownChartOptions = ref<RenderOptions>({
+// 	width: 550,
+// 	height: 275,
+// 	click: (d: any) => {
+// 		if (d.id === selectedBoxId.value) {
+// 			selectedBoxId.value = '';
+// 		} else {
+// 			selectedBoxId.value = d.id;
+// 		}
+// 	}
+// });
 
 // TODO: better range-bound logic
 const formatNumber = (v: number) => {
@@ -149,8 +148,13 @@ const formatNumber = (v: number) => {
 
 const initalizeParameters = async () => {
 	const rawFunmanResult = await getRunResult(props.funModelId, 'validation.json');
+	if (!rawFunmanResult) {
+		logger.error('Failed to fetch funman result');
+		return;
+	}
+
 	const funmanResult = JSON.parse(rawFunmanResult);
-	console.log(funmanResult);
+	console.log(rawFunmanResult, funmanResult);
 
 	// funmanResult.contracted_model.header.schema = funmanResult.contracted_model.header.schema_;
 	// delete funmanResult.contracted_model.header.schema_;
