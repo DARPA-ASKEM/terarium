@@ -18,8 +18,10 @@
 							<section>
 								<table class="p-datatable-table">
 									<thead class="p-datatable-thead">
-										<th>Model config ID</th>
-										<th>Weight</th>
+										<tr>
+											<th>Model config ID</th>
+											<th>Weight</th>
+										</tr>
 									</thead>
 									<tbody class="p-datatable-tbody">
 										<!-- Index matching listModelLabels and ensembleConfigs-->
@@ -53,32 +55,32 @@
 						/>
 						<template v-if="knobs.ensembleConfigs.length > 0">
 							<table class="w-full mt-3">
-								<tr>
-									<th class="w-4">Ensemble variables</th>
-									<!-- Index matching listModelLabels and ensembleConfigs-->
-									<th v-for="(element, i) in listModelLabels" :key="i">
-										{{ element }}
-									</th>
-								</tr>
-								<tr>
-									<div class="row-header">
+								<tbody>
+									<tr>
+										<th class="w-4">Ensemble variables</th>
+										<!-- Index matching listModelLabels and ensembleConfigs-->
+										<th v-for="(element, i) in listModelLabels" :key="i">
+											{{ element }}
+										</th>
+									</tr>
+									<tr>
 										<td v-for="(element, i) in Object.keys(knobs.ensembleConfigs[0].solutionMappings)" :key="i">
 											{{ element }}
 										</td>
-									</div>
-									<td v-for="i in knobs.ensembleConfigs.length" :key="i">
-										<template
-											v-for="element in Object.keys(knobs.ensembleConfigs[i - 1].solutionMappings)"
-											:key="element"
-										>
-											<Dropdown
-												v-model="knobs.ensembleConfigs[i - 1].solutionMappings[element]"
-												:options="allModelOptions[i - 1]?.map((ele) => ele.referenceId ?? ele.id)"
-												class="w-full mb-2 mt-2"
-											/>
-										</template>
-									</td>
-								</tr>
+										<td v-for="i in knobs.ensembleConfigs.length" :key="i">
+											<template
+												v-for="element in Object.keys(knobs.ensembleConfigs[i - 1].solutionMappings)"
+												:key="element"
+											>
+												<Dropdown
+													v-model="knobs.ensembleConfigs[i - 1].solutionMappings[element]"
+													:options="allModelOptions[i - 1]?.map((ele) => ele.referenceId ?? ele.id)"
+													class="w-full mb-2 mt-2"
+												/>
+											</template>
+										</td>
+									</tr>
+								</tbody>
 							</table>
 						</template>
 						<Dropdown
@@ -92,27 +94,31 @@
 					<AccordionTab header="Additional fields">
 						<table>
 							<thead class="p-datatable-thead">
-								<th>Units</th>
-								<th>Number of particles</th>
-								<th>Number of iterations</th>
-								<th>Solver method</th>
+								<tr>
+									<th>Units</th>
+									<th>Number of particles</th>
+									<th>Number of iterations</th>
+									<th>Solver method</th>
+								</tr>
 							</thead>
 							<tbody class="p-datatable-tbody">
-								<td>Steps</td>
-								<td>
-									<tera-input-number v-model="knobs.extra.numParticles" />
-								</td>
-								<td>
-									<tera-input-number v-model="knobs.extra.numIterations" />
-								</td>
-								<td>
-									<Dropdown
-										class="p-inputtext-sm"
-										:options="['dopri5', 'euler']"
-										v-model="knobs.extra.solverMethod"
-										placeholder="Select"
-									/>
-								</td>
+								<tr>
+									<td>Steps</td>
+									<td>
+										<tera-input-number v-model="knobs.extra.numParticles" />
+									</td>
+									<td>
+										<tera-input-number v-model="knobs.extra.numIterations" />
+									</td>
+									<td>
+										<Dropdown
+											class="p-inputtext-sm"
+											:options="['dopri5', 'euler']"
+											v-model="knobs.extra.solverMethod"
+											placeholder="Select"
+										/>
+									</td>
+								</tr>
 							</tbody>
 						</table>
 					</AccordionTab>
@@ -396,15 +402,6 @@ watch(
 </script>
 
 <style scoped>
-.row-header {
-	display: flex;
-	flex-direction: column;
-}
-
-.row-header td {
-	margin: 1rem 0;
-}
-
 .tera-ensemble {
 	background: white;
 	z-index: 1;
