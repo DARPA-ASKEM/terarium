@@ -16,6 +16,10 @@
 			without additional context.
 		</p>
 		<ul>
+			<li>
+				<RadioButton inputId="no-document" name="no-document" v-model="selectedResourceId" value="" />
+				<label for="no-document">Generate information without context</label>
+			</li>
 			<li v-for="document in documents" :key="document.id" :class="document.id ? '' : 'mb-3'">
 				<RadioButton :inputId="document.id" name="document.id" v-model="selectedResourceId" :value="document.id" />
 				<label :for="document.id">{{ document.name }}</label>
@@ -112,15 +116,14 @@ const isDialogDisabled = computed(() => {
 // 	return `Use Document to ${result.toLowerCase()}`;
 // });
 
-const documents = computed<{ name: string; id: string }[]>(() => [
-	{ name: 'No document', id: '' }, // Empty string is falsey
-	...useProjects()
+const documents = computed<{ name: string; id: string }[]>(() =>
+	useProjects()
 		.getActiveProjectAssets(AssetType.Document)
 		.map((projectAsset: ProjectAsset) => ({
 			name: projectAsset.assetName,
 			id: projectAsset.assetId
 		}))
-]);
+);
 
 function closeDialog() {
 	isModalVisible.value = false;
