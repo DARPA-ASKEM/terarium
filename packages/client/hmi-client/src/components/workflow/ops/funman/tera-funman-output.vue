@@ -1,4 +1,14 @@
 <template>
+	<header class="flex align-items-start">
+		<div>
+			<h4>{{ contractedModel?.header.name }}</h4>
+			<span class="secondary-text">Output generated date</span>
+		</div>
+		<div class="btn-group">
+			<Button label="Add to report" outlined severity="secondary" disabled />
+			<Button label="Save for reuse" outlined severity="secondary" />
+		</div>
+	</header>
 	<div class="section-row">
 		<label>Trajectory State</label>
 		<Dropdown
@@ -31,7 +41,6 @@
 			/>
 		</section>
 	</div>
-
 	<div class="variables-table" v-if="selectedParam2 === ''">
 		<div class="variables-header">
 			<header v-for="(title, index) in ['select', 'Parameter', 'Lower bound', 'Upper bound', '', '']" :key="index">
@@ -70,8 +79,11 @@ import { getRunResult } from '@/services/models/simulation-service';
 import Dropdown from 'primevue/dropdown';
 import RadioButton from 'primevue/radiobutton';
 import Button from 'primevue/button';
+// import Accordion from 'primevue/accordion';
+// import AccordionTab from 'primevue/accordiontab';
 // import InputNumber from 'primevue/inputnumber';
 import type { FunmanBox, RenderOptions } from '@/services/models/funman-service';
+import type { Model } from '@/types/Types';
 import TeraFunmanBoundaryChart from './tera-funman-boundary-chart.vue';
 
 const props = defineProps<{
@@ -84,6 +96,7 @@ const emit = defineEmits(['update:trajectoryState']);
 const parameterOptions = ref<string[]>([]);
 const selectedParam = ref<string>('');
 const selectedParam2 = ref<string>('');
+const contractedModel = ref<Model | null>(null);
 
 const selectedTrajState = ref<string>('');
 const modelStates = ref<string[]>([]);
@@ -122,6 +135,8 @@ const formatNumber = (v: number) => {
 const initalizeParameters = async () => {
 	const rawFunmanResult = await getRunResult(props.funModelId, 'validation.json');
 	const funmanResult = JSON.parse(rawFunmanResult);
+
+	contractedModel.value = funmanResult.contracted_model;
 
 	inputConstraints = funmanResult.request.constraints;
 	processedData.value = processFunman(funmanResult);
@@ -214,6 +229,13 @@ watch(
 	padding: 0.5rem 0rem;
 	align-items: center;
 	gap: 0.8125rem;
+}
+
+.btn-group {
+	display: flex;
+	align-items: center;
+	gap: var(--gap-small);
+	margin-left: auto;
 }
 
 .secondary-text {
