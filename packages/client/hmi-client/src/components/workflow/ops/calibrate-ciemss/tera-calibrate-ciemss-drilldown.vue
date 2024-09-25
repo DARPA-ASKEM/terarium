@@ -838,15 +838,10 @@ const updateLossChartSpec = (data: string | Record<string, any>[]) => {
 const initDefaultChartSettings = (state: CalibrationOperationStateCiemss) => {
 	// Initialize default selected chart settings when chart settings are not set yet. Return if chart settings are already set.
 	if (Array.isArray(state.chartSettings)) return;
-	const hasParamDistribution = (param: string) =>
-		Boolean(modelParameters.value.find((p) => p.id === param)?.distribution);
-	const defaultSelectedParam = Object.keys(pyciemssMap.value)
-		.filter((c) => modelPartTypesMap.value[c] === 'parameter')
-		.filter(hasParamDistribution);
+	const defaultSelectedParam = modelParameters.value.filter((p) => !!p.distribution).map((p) => p.id);
 	const mappedModelVariables = mapping.value
 		.filter((c) => ['state', 'observable'].includes(modelPartTypesMap.value[c.modelVariable]))
 		.map((c) => c.modelVariable);
-
 	state.chartSettings = updateChartSettingsBySelectedVariables(
 		[],
 		ChartSettingType.VARIABLE_COMPARISON,
