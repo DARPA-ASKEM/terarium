@@ -91,7 +91,7 @@
 										<span class="p-button-label">{{ slotProps.option.value }}</span>
 									</template>
 								</SelectButton>
-								<Button icon="pi pi-plus" label="Upload project" @click="openUploadProjectModal" />
+								<Button icon="pi pi-upload" label="Upload project" @click="openUploadProjectModal" />
 								<Button icon="pi pi-plus" label="New project" @click="openCreateProjectModal" />
 							</div>
 						</section>
