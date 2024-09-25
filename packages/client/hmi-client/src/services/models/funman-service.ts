@@ -45,7 +45,6 @@ export async function makeQueries(body: FunmanPostQueriesRequest) {
 }
 
 export function generateConstraintExpression(config: ConstraintGroup) {
-	console.log(config);
 	const { constraintType, interval, variables, timepoints } = config;
 	let expression = '';
 	for (let i = 0; i < variables.length; i++) {
@@ -71,7 +70,6 @@ export function generateConstraintExpression(config: ConstraintGroup) {
 		expression += expressionPart;
 	}
 	// Adding the "for all in timepoints" in the same expression helps with text alignment
-	console.log(`${expression} \\ \\forall \\ t \\in [${timepoints.lb}, ${timepoints.ub}]`);
 	return `${expression} \\ \\forall \\ t \\in [${timepoints.lb}, ${timepoints.ub}]`;
 }
 
