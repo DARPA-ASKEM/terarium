@@ -129,8 +129,8 @@
 					:model-value="config.weights[index]"
 					@update:model-value="
 						($event) => {
-							const newWeights = cloneDeep(config.weights);
 							if (isNaN($event)) return; // Don't accept empty value
+							const newWeights = cloneDeep(config.weights);
 							newWeights[index] = $event;
 							emit('update-self', { key: 'weights', value: newWeights });
 						}
@@ -153,7 +153,7 @@
 		<katex-element
 			class="mt-3"
 			v-else-if="config.constraintType !== ConstraintType.Following"
-			:expression="stringToLatexExpression(generateExpression(config))"
+			:expression="stringToLatexExpression(generateConstraintExpression(config))"
 		/>
 	</section>
 </template>
@@ -169,7 +169,7 @@ import Button from 'primevue/button';
 import { ConstraintGroup, Constraint, ConstraintType } from '@/components/workflow/ops/funman/funman-operation';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { stringToLatexExpression } from '@/services/model';
-import { generateExpression } from '@/services/models/funman-service';
+import { generateConstraintExpression } from '@/services/models/funman-service';
 
 const props = defineProps<{
 	stateIds: string[];
