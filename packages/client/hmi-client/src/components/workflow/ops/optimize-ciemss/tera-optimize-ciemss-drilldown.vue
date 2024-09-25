@@ -735,7 +735,8 @@ const runOptimize = async () => {
 	const objectiveFunctionOption: string[] = [];
 
 	activePolicyGroups.value.forEach((ele) => {
-		paramNames.push(ele.intervention.appliedTo);
+		// Only allowed to optimize on interventions that arent grouped aka staticInterventions' length is 1
+		paramNames.push(ele.intervention.staticInterventions[0].appliedTo);
 		paramValues.push(ele.intervention.staticInterventions[0].value);
 		startTime.push(ele.intervention.staticInterventions[0].timestep);
 		objectiveFunctionOption.push(ele.objectiveFunctionOption);
@@ -825,10 +826,14 @@ const setOutputSettingDefaults = () => {
 	const selectedSimulationVariables: Array<string> = [];
 
 	if (!knobs.value.selectedInterventionVariables.length) {
-		knobs.value.interventionPolicyGroups.forEach((intervention) =>
-			selectedInterventionVariables.push(intervention.intervention.appliedTo)
-		);
-		knobs.value.selectedInterventionVariables = [...new Set(selectedInterventionVariables)];
+		activePolicyGroups.value.forEach((ele) => {
+			ele.intervention.staticInterventions.forEach((staticInt) =>
+				selectedInterventionVariables.push(staticInt.appliedTo)
+			);
+			ele.intervention.dynamicInterventions.forEach((dynamicsInt) =>
+				selectedInterventionVariables.push(dynamicsInt.appliedTo)
+			);
+		});
 	}
 
 	if (!knobs.value.selectedSimulationVariables.length) {

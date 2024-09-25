@@ -98,9 +98,9 @@ public class EquationsFromImageResponseHandler extends TaskResponseHandler {
 			provenanceService.createProvenance(
 				new Provenance()
 					.setLeft(props.getDocumentId())
-					.setLeftType(ProvenanceType.DOCUMENT)
+					.setLeftType(ProvenanceType.EQUATION)
 					.setRight(props.getDocumentId())
-					.setRightType(ProvenanceType.EQUATION)
+					.setRightType(ProvenanceType.DOCUMENT)
 					.setRelationType(ProvenanceRelationType.EXTRACTED_FROM)
 			);
 		} catch (final Exception e) {
