@@ -1050,6 +1050,16 @@ const initialize = async () => {
 	datasetColumns.value = datasetOptions;
 
 	getConfiguredModelConfig();
+
+	// look for timestamp col in dataset if its not yet filled in.
+	const timeCol = datasetColumns.value?.find((ele) => ele.name.startsWith('time'));
+	if (timeCol) {
+		for (let i = 0; i < mapping.value.length; i++) {
+			if (mapping.value[i].modelVariable === 'timestamp' && mapping.value[i].datasetVariable === '') {
+				mapping.value[i].datasetVariable = timeCol.name;
+			}
+		}
+	}
 };
 
 const onSaveAsModelConfiguration = async () => {
