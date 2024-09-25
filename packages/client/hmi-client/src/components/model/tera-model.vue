@@ -184,7 +184,7 @@ const optionsMenuPt = {
 };
 
 async function saveModelContent() {
-	if (!hasEditPermission.value || !temporaryModel.value) return;
+	if (!hasEditPermission || !temporaryModel.value) return;
 	await updateModel(temporaryModel.value);
 	logger.info('Changes to the model has been saved.');
 	await useProjects().refresh();
