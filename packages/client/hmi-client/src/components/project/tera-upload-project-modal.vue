@@ -10,7 +10,7 @@
 					<tera-drag-and-drop-importer
 						:accept-types="[AcceptedTypes.PROJECTCONFIG]"
 						:accept-extensions="[AcceptedExtensions.PROJECTCONFIG]"
-						:import-action="processProjects"
+						:import-action="verifyProject"
 						:progress="progress"
 						@import-completed="importCompleted"
 						@imported-files-updated="(value) => (importedFiles = value)"
@@ -41,26 +41,25 @@ const emit = defineEmits(['close']);
 const progress = ref(0);
 const importedFiles = ref<File[]>([]);
 
-async function processProjects(files: File[]) {
-	console.log('Tom creating projects:');
-	return files.map(async (file) => createProject(file));
+async function verifyProject(files: File[]) {
+	return files.map(async (file) => validateProjectFile(file));
+}
+
+// Checks that the project file contains the correct extension.
+function validateProjectFile(file: File) {
+	if (!file.name.endsWith(AcceptedExtensions.PROJECTCONFIG)) return null;
+	return true;
 }
 
 async function upload() {
-	console.log('Uploading:');
 	importedFiles.value.forEach((file) => {
 		createProjectFromFile(file, progress);
 	});
-	console.log('Done uploading:');
 	emit('close');
 }
 
 function importCompleted() {
 	progress.value = 100;
-}
-
-async function createProject(file: File) {
-	await createProjectFromFile(file, progress);
 }
 </script>
 
