@@ -208,6 +208,10 @@ export const getTypesFromModelParts = (model: Model) => {
 	return typeMapping;
 };
 
+export function getModelParameters(model: Model): ModelParameter[] {
+	return model?.semantics?.ode?.parameters ?? [];
+}
+
 export function isInitial(obj: Initial | ModelParameter | null): obj is Initial {
 	return obj !== null && 'target' in obj && 'expression' in obj && 'expression_mathml' in obj;
 }

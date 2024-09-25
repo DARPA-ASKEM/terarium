@@ -421,7 +421,8 @@ import {
 	ModelConfiguration,
 	AssetType,
 	ChartAnnotation,
-	InterventionPolicy
+	InterventionPolicy,
+	ModelParameter
 } from '@/types/Types';
 import { CiemssPresetTypes, DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
 import { getTimespan, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
@@ -517,6 +518,8 @@ const odeSolverOptionsTooltip: string = 'TODO';
 
 // Model variables checked in the model configuration will be options in the mapping dropdown
 const modelStateOptions = ref<any[] | undefined>();
+
+const modelParameters = ref<ModelParameter[]>([]);
 
 const isOutputSettingsPanelOpen = ref(true);
 const activeChartSettings = ref<ChartSetting | null>(null);
@@ -832,6 +835,35 @@ const updateLossChartSpec = (data: string | Record<string, any>[]) => {
 	);
 };
 
+const initDefaultChartSettings = (state: CalibrationOperationStateCiemss) => {
+	// Initialize default selected chart settings when chart settings are not set yet. Return if chart settings are already set.
+	if (Array.isArray(state.chartSettings)) return;
+	const hasParamDistribution = (param: string) =>
+		Boolean(modelParameters.value.find((p) => p.id === param)?.distribution);
+	const defaultSelectedParam = Object.keys(pyciemssMap.value)
+		.filter((c) => modelPartTypesMap.value[c] === 'parameter')
+		.filter(hasParamDistribution);
+	const mappedModelVariables = mapping.value
+		.filter((c) => ['state', 'observable'].includes(modelPartTypesMap.value[c.modelVariable]))
+		.map((c) => c.modelVariable);
+
+	state.chartSettings = updateChartSettingsBySelectedVariables(
+		[],
+		ChartSettingType.VARIABLE_COMPARISON,
+		mappedModelVariables
+	);
+	state.chartSettings = updateChartSettingsBySelectedVariables(
+		state.chartSettings,
+		ChartSettingType.ERROR_DISTRIBUTION,
+		mappedModelVariables
+	);
+	state.chartSettings = updateChartSettingsBySelectedVariables(
+		state.chartSettings,
+		ChartSettingType.DISTRIBUTION_COMPARISON,
+		defaultSelectedParam
+	);
+};
+
 const runCalibrate = async () => {
 	if (!modelConfigId.value || !datasetId.value || !currentDatasetFileName.value) return;
 
@@ -877,16 +909,7 @@ const runCalibrate = async () => {
 		state.currentProgress = 0;
 		state.inProgressForecastId = '';
 		state.inProgressPreForecastId = '';
-
-		// show selected input settings in the charts & output panel
-		state.chartSettings = updateChartSettingsBySelectedVariables(
-			chartSettings.value,
-			ChartSettingType.VARIABLE_COMPARISON,
-			mapping.value
-				.filter((c) => ['state', 'observable'].includes(modelPartTypesMap.value[c.modelVariable]))
-				.map((c) => c.modelVariable)
-		);
-
+		initDefaultChartSettings(state);
 		emit('update-state', state);
 	}
 };
@@ -989,11 +1012,16 @@ async function getAutoMapping() {
 
 const initialize = async () => {
 	// Model configuration input
-	const { modelConfiguration, modelOptions, modelPartUnits, modelPartTypes } = await setupModelInput(
-		modelConfigId.value
-	);
+	const {
+		modelConfiguration,
+		modelOptions,
+		modelPartUnits,
+		modelPartTypes,
+		modelParameters: modelParams
+	} = await setupModelInput(modelConfigId.value);
 	modelConfig.value = modelConfiguration;
 	modelStateOptions.value = modelOptions;
+	modelParameters.value = modelParams ?? [];
 	modelVarUnits.value = modelPartUnits ?? {};
 	modelPartTypesMap.value = modelPartTypes ?? {};
 
