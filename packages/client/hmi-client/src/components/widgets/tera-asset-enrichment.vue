@@ -26,14 +26,6 @@
 				<Button label="Cancel" severity="secondary" outlined @click="closeDialog" />
 				<Button label="Enrich" :disabled="isDialogDisabled" @click="confirm" />
 			</div>
-			<!--TODO: Overwrite is how we enrich, handle appending content in another pass-->
-			<div class="flex items-center">
-				<Checkbox v-model="overwriteContent" inputId="overwriteContent" binary disabled />
-				<div class="ml-3">
-					<label for="overwriteContent">Overwrite existing content</label>
-					<p class="text-subdued">If unselected, new content will be appended</p>
-				</div>
-			</div>
 		</template>
 	</tera-modal>
 </template>
@@ -51,7 +43,6 @@ import { AssetType, ClientEventType, ProvenanceType, TaskStatus } from '@/types/
 import { isDocumentAsset } from '@/utils/asset';
 import Button from 'primevue/button';
 import RadioButton from 'primevue/radiobutton';
-import Checkbox from 'primevue/checkbox';
 import { computed, ref, watch } from 'vue';
 import { logger } from '@/utils/logger';
 import { modelCard } from '@/services/goLLM';
@@ -86,31 +77,15 @@ enum DialogType {
 const dialogType = ref<DialogType>(DialogType.ENRICH);
 const isLoading = ref(false);
 const isModalVisible = ref(false);
-const overwriteContent = ref(true);
 
 const selectedResourceId = ref<string>('');
 const relatedDocuments = ref<Array<{ name: string; id: string }>>([]);
 
-// Disable the dialog action button if no resources are selected
-// and the dialog type is not enrichment
+// Disable the dialog action button if no resources are selected and the dialog type is not enrichment
 const isDialogDisabled = computed(() => {
 	if (dialogType.value === DialogType.ENRICH) return false;
 	return !selectedResourceId.value;
 });
-
-// FIXME: If we are keeping extractions, something like this may help when we add them back in
-// const dialogActionCopy = computed(() => {
-// 	let result: string = '';
-// 	if (dialogType.value === DialogType.ENRICH) {
-// 		result = props.assetType === AssetType.Model ? 'Enrich description' : 'Generate descriptions';
-// 	} else if (dialogType.value === DialogType.EXTRACT) {
-// 		result = 'Extract variables';
-// 	}
-// 	if (isEmpty(selectedResources.value)) {
-// 		return result;
-// 	}
-// 	return `Use Document to ${result.toLowerCase()}`;
-// });
 
 const documents = computed<{ name: string; id: string }[]>(() => [
 	{ name: 'No document', id: '' }, // Empty string is falsey
@@ -139,7 +114,7 @@ const confirm = async () => {
 
 	isLoading.value = false;
 	emit('finished-job');
-	getRelatedDocuments();
+	await getRelatedDocuments();
 };
 
 const sendForEnrichment = async () => {
@@ -247,9 +222,5 @@ ul {
 	align-items: center;
 	gap: var(--gap-2);
 	margin-left: auto;
-}
-
-.text-subdued {
-	color: var(--text-color-subdued);
 }
 </style>
