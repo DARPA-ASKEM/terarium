@@ -218,7 +218,7 @@ ul {
 	}
 
 	li:first-child {
-		margin-bottom: var(--gap-3);
+		margin-bottom: var(--gap-2);
 	}
 
 	label {
