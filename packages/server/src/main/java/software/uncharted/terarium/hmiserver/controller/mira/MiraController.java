@@ -170,7 +170,7 @@ public class MiraController {
 
 	@PostMapping("/model-to-latex")
 	@Secured(Roles.USER)
-	@Operation(summary = "Generate latex from a model id")
+	@Operation(summary = "Generate latex from a model")
 	@ApiResponses(
 		value = {
 			@ApiResponse(

@@ -262,11 +262,11 @@ const datasetId = computed(() => {
 	return output?.value?.[0] ?? '';
 });
 
-const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
 const llmThoughts = ref<any[]>([]);
 const llmQuery = ref('');
 
-// extras
+// input params
+const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
 const numSamples = ref<number>(props.node.state.numSamples);
 const method = ref(props.node.state.method);
 
@@ -275,12 +275,12 @@ enum OutputView {
 	Data = 'Data'
 }
 
-const speedValues = Object.freeze({
+const speedPreset = Object.freeze({
 	numSamples: 10,
 	method: CiemssMethodOptions.euler
 });
 
-const qualityValues = Object.freeze({
+const qualityPreset = Object.freeze({
 	numSamples: 100,
 	method: CiemssMethodOptions.dopri5
 });
@@ -310,10 +310,10 @@ let pyciemssMap: Record<string, string> = {};
 const kernelManager = new KernelSessionManager();
 
 const presetType = computed(() => {
-	if (numSamples.value === speedValues.numSamples && method.value === speedValues.method) {
+	if (numSamples.value === speedPreset.numSamples && method.value === speedPreset.method) {
 		return CiemssPresetTypes.Fast;
 	}
-	if (numSamples.value === qualityValues.numSamples && method.value === qualityValues.method) {
+	if (numSamples.value === qualityPreset.numSamples && method.value === qualityPreset.method) {
 		return CiemssPresetTypes.Normal;
 	}
 
@@ -335,13 +335,14 @@ const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperation
 
 const setPresetValues = (data: CiemssPresetTypes) => {
 	if (data === CiemssPresetTypes.Normal) {
-		numSamples.value = qualityValues.numSamples;
-		method.value = qualityValues.method;
+		numSamples.value = qualityPreset.numSamples;
+		method.value = qualityPreset.method;
 	}
 	if (data === CiemssPresetTypes.Fast) {
-		numSamples.value = speedValues.numSamples;
-		method.value = speedValues.method;
+		numSamples.value = speedPreset.numSamples;
+		method.value = speedPreset.method;
 	}
+	updateState();
 };
 
 const groupedInterventionOutputs = computed(() => _.groupBy(interventionPolicy.value?.interventions, 'appliedTo'));
@@ -410,18 +411,16 @@ const run = async () => {
 
 const makeForecastRequest = async () => {
 	const modelConfigId = props.node.inputs[0].value?.[0];
-	const state = props.node.state;
-
 	const payload: SimulationRequest = {
 		modelConfigId,
 		timespan: {
-			start: state.currentTimespan.start,
-			end: state.currentTimespan.end
+			start: timespan.value.start,
+			end: timespan.value.end
 		},
 		extra: {
-			solver_method: state.method,
+			solver_method: method.value,
 			solver_step_size: 1,
-			num_samples: state.numSamples
+			num_samples: numSamples.value
 		},
 		engine: 'ciemss'
 	};
