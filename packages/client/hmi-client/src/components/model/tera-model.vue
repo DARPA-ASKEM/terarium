@@ -123,7 +123,7 @@ function onReset() {
 	temporaryModel.value = cloneDeep(model.value);
 }
 function onSave() {
-	updateModelContent();
+	saveModelContent();
 }
 function onSaveAs() {
 	showSaveModal.value = true;
@@ -183,7 +183,7 @@ const optionsMenuPt = {
 	}
 };
 
-async function updateModelContent() {
+async function saveModelContent() {
 	if (!hasEditPermission.value || !temporaryModel.value) return;
 	await updateModel(temporaryModel.value);
 	logger.info('Changes to the model has been saved.');
