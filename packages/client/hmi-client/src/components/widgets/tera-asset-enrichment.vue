@@ -17,7 +17,7 @@
 		</p>
 		<ul>
 			<li v-for="document in documents" :key="document.id" :class="document.id ? '' : 'mb-3'">
-				<RadioButton inputId="document.id" name="document.id" v-model="selectedResourceId" :value="document.id" />
+				<RadioButton :inputId="document.id" name="document.id" v-model="selectedResourceId" :value="document.id" />
 				<label :for="document.id">{{ document.name }}</label>
 			</li>
 		</ul>
@@ -207,31 +207,15 @@ ul {
 	gap: var(--gap-2);
 	padding: var(--gap-4) 0;
 
-	& > li {
+	li {
 		display: flex;
 		align-items: center;
-		gap: var(--gap);
 	}
-}
 
-.no-documents {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-}
-
-.no-documents-img {
-	width: 30%;
-	padding: 10px;
-}
-
-.no-documents-text {
-	padding: 5px;
-	font-size: var(--font-body-medium);
-	font-family: var(--font-family);
-	font-weight: 500;
-	color: var(--text-color-secondary);
-	text-align: left;
+	label {
+		cursor: pointer;
+		margin-left: var(--gap);
+	}
 }
 
 .p-dialog aside > * {
