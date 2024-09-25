@@ -36,7 +36,7 @@ import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-im
 defineProps<{
 	visible: boolean;
 }>();
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'project-added']);
 
 const progress = ref(0);
 const importedFiles = ref<File[]>([]);
@@ -52,10 +52,13 @@ function validateProjectFile(file: File) {
 }
 
 async function upload() {
+	const promiseList = [] as Promise<boolean | null>[];
 	importedFiles.value.forEach((file) => {
-		createProjectFromFile(file, progress);
+		promiseList.push(createProjectFromFile(file, progress));
 	});
 	emit('close');
+	await Promise.all(promiseList);
+	emit('project-added');
 }
 
 function importCompleted() {

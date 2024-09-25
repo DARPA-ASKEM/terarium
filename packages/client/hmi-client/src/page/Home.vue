@@ -154,6 +154,7 @@
 			<section>
 				<tera-upload-project-modal
 					:visible="isUploadProjectModalVisible"
+					@project-added="useProjects().getAll()"
 					@close="isUploadProjectModalVisible = false"
 				/>
 			</section>

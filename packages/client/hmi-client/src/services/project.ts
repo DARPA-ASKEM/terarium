@@ -237,7 +237,6 @@ async function exportProjectAsFile(id: Project['id']) {
 }
 
 async function createProjectFromFile(file: File, progress?: Ref<number>) {
-	console.log('creating project from file:');
 	const formData = new FormData();
 	formData.append('file', file);
 
@@ -252,8 +251,6 @@ async function createProjectFromFile(file: File, progress?: Ref<number>) {
 		},
 		timeout: 3600000
 	});
-	console.log('Response:');
-	console.log(response);
 	return response && response.status < 400;
 }
 
