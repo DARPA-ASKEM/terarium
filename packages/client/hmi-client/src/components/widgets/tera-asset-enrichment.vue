@@ -114,7 +114,7 @@ const confirm = async () => {
 
 	isLoading.value = false;
 	emit('finished-job');
-	await getRelatedDocuments();
+	getRelatedDocuments();
 };
 
 const sendForEnrichment = async () => {
