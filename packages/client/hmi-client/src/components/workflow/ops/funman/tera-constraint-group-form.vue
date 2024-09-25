@@ -39,7 +39,7 @@
 			should be
 			<Dropdown
 				:model-value="config.constraintType"
-				:options="Object.values(ConstraintType)"
+				:options="constraintTypeOptions"
 				@update:model-value="
 					($event: ConstraintType) => {
 						// Disable isActive if constraintType is Following
@@ -51,19 +51,30 @@
 				"
 			/>
 			<tera-input-number
-				v-if="config.constraintType === ConstraintType.LessThan"
+				v-if="
+					config.constraintType === ConstraintType.LessThan ||
+					config.constraintType === ConstraintType.LessThanOrEqualTo
+				"
 				auto-width
 				:model-value="config.interval.ub"
 				@update:model-value="emit('update-self', { key: 'interval', value: { lb: config.interval.lb, ub: $event } })"
 			/>
 			<tera-input-number
-				v-if="config.constraintType === ConstraintType.GreaterThan"
+				v-else-if="
+					config.constraintType === ConstraintType.GreaterThan ||
+					config.constraintType === ConstraintType.GreaterThanOrEqualTo
+				"
 				auto-width
 				:model-value="config.interval.lb"
 				@update:model-value="emit('update-self', { key: 'interval', value: { lb: $event, ub: config.interval.ub } })"
 			/>
 			<template
-				v-if="config.constraintType === ConstraintType.LessThan || config.constraintType === ConstraintType.GreaterThan"
+				v-if="
+					config.constraintType === ConstraintType.LessThan ||
+					config.constraintType === ConstraintType.LessThanOrEqualTo ||
+					config.constraintType === ConstraintType.GreaterThan ||
+					config.constraintType === ConstraintType.GreaterThanOrEqualTo
+				"
 			>
 				persons
 			</template>
@@ -102,46 +113,48 @@
 			days.
 		</p>
 		<!--TODO: Add dataset column -> variable mapping for following option-->
-		<div class="flex align-items-center gap-2 mt-3">
-			<div v-if="config.constraintType === ConstraintType.LinearlyConstrained" class="flex align-items-center gap-2">
+		<div
+			v-if="config.constraintType === ConstraintType.LinearlyConstrained"
+			class="flex flex-wrap align-items-center gap-2 mt-3"
+		>
+			<tera-input-number
+				auto-width
+				:model-value="config.interval.lb"
+				@update:model-value="emit('update-self', { key: 'interval', value: { lb: $event, ub: config.interval.ub } })"
+			/>
+			<katex-element :expression="stringToLatexExpression(`\\leq [`)" />
+			<template v-for="(variable, index) in config.variables" :key="index">
 				<tera-input-number
 					auto-width
-					:model-value="config.interval.lb"
-					@update:model-value="emit('update-self', { key: 'interval', value: { lb: $event, ub: config.interval.ub } })"
-				/>
-				<katex-element :expression="stringToLatexExpression(`\\leq [`)" />
-				<template v-for="(variable, index) in config.variables" :key="index">
-					<tera-input-number
-						auto-width
-						:model-value="config.weights[index]"
-						@update:model-value="
-							($event) => {
-								const newWeights = cloneDeep(config.weights);
-								if (isNaN($event)) return; // Don't accept empty value
-								newWeights[index] = $event;
-								emit('update-self', { key: 'weights', value: newWeights });
-							}
-						"
-					/>
-					<katex-element
-						:expression="stringToLatexExpression(`${variable} ${index === config.variables.length - 1 ? '' : '\\ +'} `)"
-					/>
-				</template>
-				<katex-element :expression="stringToLatexExpression(`] \\leq`)" />
-				<tera-input-number
-					auto-width
-					:model-value="config.interval.ub"
-					@update:model-value="emit('update-self', { key: 'interval', value: { lb: config.interval.lb, ub: $event } })"
+					:model-value="config.weights[index]"
+					@update:model-value="
+						($event) => {
+							const newWeights = cloneDeep(config.weights);
+							if (isNaN($event)) return; // Don't accept empty value
+							newWeights[index] = $event;
+							emit('update-self', { key: 'weights', value: newWeights });
+						}
+					"
 				/>
 				<katex-element
-					:expression="stringToLatexExpression(`\\forall \\ t \\in [${config.timepoints.lb}, ${config.timepoints.ub}]`)"
+					:expression="stringToLatexExpression(`${variable} ${index === config.variables.length - 1 ? '' : '\\ +'}`)"
 				/>
-			</div>
+			</template>
+			<katex-element :expression="stringToLatexExpression(`] \\leq`)" />
+			<tera-input-number
+				auto-width
+				:model-value="config.interval.ub"
+				@update:model-value="emit('update-self', { key: 'interval', value: { lb: config.interval.lb, ub: $event } })"
+			/>
 			<katex-element
-				v-else-if="config.constraintType !== ConstraintType.Following"
-				:expression="stringToLatexExpression(generateExpression())"
+				:expression="stringToLatexExpression(`\\forall \\ t \\in [${config.timepoints.lb}, ${config.timepoints.ub}]`)"
 			/>
 		</div>
+		<katex-element
+			class="mt-3"
+			v-else-if="config.constraintType !== ConstraintType.Following"
+			:expression="stringToLatexExpression(generateExpression(config))"
+		/>
 	</section>
 </template>
 
@@ -156,6 +169,7 @@ import Button from 'primevue/button';
 import { ConstraintGroup, Constraint, ConstraintType } from '@/components/workflow/ops/funman/funman-operation';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { stringToLatexExpression } from '@/services/model';
+import { generateExpression } from '@/services/models/funman-service';
 
 const props = defineProps<{
 	stateIds: string[];
@@ -165,6 +179,17 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['delete-self', 'update-self']);
+
+// Not supporting GreaterThan
+const constraintTypeOptions = [
+	ConstraintType.LessThan,
+	ConstraintType.LessThanOrEqualTo,
+	ConstraintType.GreaterThanOrEqualTo,
+	ConstraintType.Increasing,
+	ConstraintType.Decreasing,
+	ConstraintType.LinearlyConstrained,
+	ConstraintType.Following
+];
 
 const variableOptions = computed(() => {
 	switch (props.config.constraint) {
@@ -178,31 +203,6 @@ const variableOptions = computed(() => {
 			return [];
 	}
 });
-
-function generateExpression() {
-	const { constraintType, interval, variables, timepoints } = props.config;
-	let expression = '';
-	for (let i = 0; i < variables.length; i++) {
-		let expressionPart = `${variables[i]}(t)`;
-		if (constraintType === ConstraintType.Increasing || constraintType === ConstraintType.Decreasing) {
-			expressionPart = `d/dt ${expressionPart}`;
-		}
-		if (i === variables.length - 1) {
-			if (constraintType === ConstraintType.LessThan || constraintType === ConstraintType.Decreasing) {
-				expressionPart += interval?.closed_upper_bound ? `\\leq` : `<`;
-				expressionPart += constraintType === ConstraintType.Decreasing ? '0' : `${interval?.ub ?? 0}`;
-			} else {
-				expressionPart += interval?.closed_upper_bound ? `\\geq` : `>`;
-				expressionPart += constraintType === ConstraintType.Increasing ? '0' : `${interval?.lb ?? 0}`;
-			}
-		} else {
-			expressionPart += ',';
-		}
-		expression += expressionPart;
-	}
-	// Adding the for all in timepoints in the same expression helps with text alignment
-	return `${expression} \\ \\forall \\ t \\in [${timepoints.lb}, ${timepoints.ub}]`;
-}
 </script>
 
 <style scoped>

@@ -11,7 +11,9 @@ export enum Constraint {
 
 export enum ConstraintType {
 	LessThan = 'less than',
+	LessThanOrEqualTo = 'less than or equal to',
 	GreaterThan = 'greater than',
+	GreaterThanOrEqualTo = 'greater than or equal to',
 	Increasing = 'increasing',
 	Decreasing = 'decreasing',
 	LinearlyConstrained = 'linearly constrained',

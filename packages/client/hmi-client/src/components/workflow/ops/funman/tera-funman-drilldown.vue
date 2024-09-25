@@ -272,54 +272,57 @@ const runMakeQuery = async () => {
 	}
 
 	const constraints = props.node.state.constraintGroups
-		?.map((ele) => {
-			if (!ele.isActive) return null;
-
+		?.map((constraintGroup) => {
+			if (!constraintGroup.isActive) return null;
+			const { name, constraintType, variables, timepoints } = constraintGroup;
 			// Use inputted weights when linearly constrained otherwise use implicit weights
 			const weights =
-				ele.constraintType === ConstraintType.LinearlyConstrained
-					? ele.weights
-					: Array<number>(ele.variables.length).fill(1.0);
+				constraintType === ConstraintType.LinearlyConstrained
+					? constraintGroup.weights
+					: Array<number>(variables.length).fill(1.0);
 
 			// Increasing/descreasing (monotonicity)
-			if (ele.constraintType === ConstraintType.Increasing || ele.constraintType === ConstraintType.Decreasing) {
+			if (constraintType === ConstraintType.Increasing || constraintType === ConstraintType.Decreasing) {
 				return {
 					soft: true,
-					name: ele.name,
-					timepoints: null,
-					additive_bounds: {
-						lb: 0.0,
-						original_width: MAX
-					},
-					variables: ele.variables,
+					name,
+					timepoints,
+					additive_bounds: { lb: 0.0, original_width: MAX },
+					variables,
 					weights:
-						ele.constraintType === ConstraintType.Increasing
+						constraintGroup.constraintType === ConstraintType.Increasing
 							? weights.map((d) => Math.abs(d))
 							: weights.map((d) => -Math.abs(d)),
 					derivative: true
 				};
 			}
-			if (ele.timepoints) {
-				ele.timepoints.closed_upper_bound = true;
-			}
 
 			// Use bounds needed that are saved in the UI
 			const interval: FunmanInterval = {};
-			if (ele.constraintType === ConstraintType.LessThan) {
-				interval.ub = ele.interval.ub;
-			} else if (ele.constraintType === ConstraintType.GreaterThan) {
-				interval.lb = ele.interval.lb;
-			} else if (ele.constraintType === ConstraintType.LinearlyConstrained) {
-				interval.lb = ele.interval.lb;
-				interval.ub = ele.interval.ub;
+			if (constraintType === ConstraintType.LessThan || constraintType === ConstraintType.LessThanOrEqualTo) {
+				interval.ub = constraintGroup.interval.ub;
+			} else if (
+				constraintType === ConstraintType.GreaterThan ||
+				constraintType === ConstraintType.GreaterThanOrEqualTo
+			) {
+				interval.lb = constraintGroup.interval.lb;
+			} else if (constraintType === ConstraintType.LinearlyConstrained) {
+				interval.lb = constraintGroup.interval.lb;
+				interval.ub = constraintGroup.interval.ub;
 			}
 
+			if (constraintType === ConstraintType.LessThanOrEqualTo) {
+				interval.closed_upper_bound = true;
+			}
+
+			timepoints.closed_upper_bound = true;
+
 			return {
-				name: ele.name,
-				variables: ele.variables,
+				name,
+				variables,
 				weights,
 				additive_bounds: interval,
-				timepoints: ele.timepoints
+				timepoints
 			};
 		})
 		.filter(Boolean); // Removes falsey values
