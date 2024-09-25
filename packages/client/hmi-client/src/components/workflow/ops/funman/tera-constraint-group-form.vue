@@ -39,7 +39,7 @@
 			should be
 			<Dropdown
 				:model-value="config.constraintType"
-				:options="Object.values(ConstraintType)"
+				:options="constraintTypeOptions"
 				@update:model-value="
 					($event: ConstraintType) => {
 						// Disable isActive if constraintType is Following
@@ -51,19 +51,30 @@
 				"
 			/>
 			<tera-input-number
-				v-if="config.constraintType === ConstraintType.LessThan"
+				v-if="
+					config.constraintType === ConstraintType.LessThan ||
+					config.constraintType === ConstraintType.LessThanOrEqualTo
+				"
 				auto-width
 				:model-value="config.interval.ub"
 				@update:model-value="emit('update-self', { key: 'interval', value: { lb: config.interval.lb, ub: $event } })"
 			/>
 			<tera-input-number
-				v-if="config.constraintType === ConstraintType.GreaterThan"
+				v-else-if="
+					config.constraintType === ConstraintType.GreaterThan ||
+					config.constraintType === ConstraintType.GreaterThanOrEqualTo
+				"
 				auto-width
 				:model-value="config.interval.lb"
 				@update:model-value="emit('update-self', { key: 'interval', value: { lb: $event, ub: config.interval.ub } })"
 			/>
 			<template
-				v-if="config.constraintType === ConstraintType.LessThan || config.constraintType === ConstraintType.GreaterThan"
+				v-if="
+					config.constraintType === ConstraintType.LessThan ||
+					config.constraintType === ConstraintType.LessThanOrEqualTo ||
+					config.constraintType === ConstraintType.GreaterThan ||
+					config.constraintType === ConstraintType.GreaterThanOrEqualTo
+				"
 			>
 				persons
 			</template>
@@ -101,28 +112,54 @@
 			<!--TODO: should be based on time variable in model semantics-->
 			days.
 		</p>
-		<ul v-if="config.weights && !isEmpty(config.weights)">
-			<li v-for="(variable, index) of config.variables" :key="index">
+		<!--TODO: Add dataset column -> variable mapping for following option-->
+		<div
+			v-if="config.constraintType === ConstraintType.LinearlyConstrained"
+			class="flex flex-wrap align-items-center gap-2 mt-3"
+		>
+			<tera-input-number
+				auto-width
+				:model-value="config.interval.lb"
+				@update:model-value="emit('update-self', { key: 'interval', value: { lb: $event, ub: config.interval.ub } })"
+			/>
+			<katex-element :expression="stringToLatexExpression(`\\leq [`)" />
+			<template v-for="(variable, index) in config.variables" :key="index">
 				<tera-input-number
-					:label="variable + ' Weight'"
-					:placeholder="variable"
+					auto-width
 					:model-value="config.weights[index]"
 					@update:model-value="
 						($event) => {
+							if (isNaN($event)) return; // Don't accept empty value
 							const newWeights = cloneDeep(config.weights);
-							if (!newWeights) return;
 							newWeights[index] = $event;
 							emit('update-self', { key: 'weights', value: newWeights });
 						}
 					"
 				/>
-			</li>
-		</ul>
+				<katex-element
+					:expression="stringToLatexExpression(`${variable} ${index === config.variables.length - 1 ? '' : '\\ +'}`)"
+				/>
+			</template>
+			<katex-element :expression="stringToLatexExpression(`] \\leq`)" />
+			<tera-input-number
+				auto-width
+				:model-value="config.interval.ub"
+				@update:model-value="emit('update-self', { key: 'interval', value: { lb: config.interval.lb, ub: $event } })"
+			/>
+			<katex-element
+				:expression="stringToLatexExpression(`\\forall \\ t \\in [${config.timepoints.lb}, ${config.timepoints.ub}]`)"
+			/>
+		</div>
+		<katex-element
+			class="mt-3"
+			v-else-if="config.constraintType !== ConstraintType.Following"
+			:expression="stringToLatexExpression(generateConstraintExpression(config))"
+		/>
 	</section>
 </template>
 
 <script setup lang="ts">
-import { isEmpty, cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash';
 import { computed } from 'vue';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import MultiSelect from 'primevue/multiselect';
@@ -131,6 +168,8 @@ import InputSwitch from 'primevue/inputswitch';
 import Button from 'primevue/button';
 import { ConstraintGroup, Constraint, ConstraintType } from '@/components/workflow/ops/funman/funman-operation';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
+import { stringToLatexExpression } from '@/services/model';
+import { generateConstraintExpression } from '@/services/models/funman-service';
 
 const props = defineProps<{
 	stateIds: string[];
@@ -140,6 +179,17 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['delete-self', 'update-self']);
+
+// Not supporting GreaterThan
+const constraintTypeOptions = [
+	ConstraintType.LessThan,
+	ConstraintType.LessThanOrEqualTo,
+	ConstraintType.GreaterThanOrEqualTo,
+	ConstraintType.Increasing,
+	ConstraintType.Decreasing,
+	ConstraintType.LinearlyConstrained,
+	ConstraintType.Following
+];
 
 const variableOptions = computed(() => {
 	switch (props.config.constraint) {
