@@ -1,6 +1,6 @@
 <template>
 	<Button
-		label="Enrich metadata with AI assistant"
+		label="Enrich metadata with AI"
 		icon="pi pi-sparkles"
 		:loading="isLoading"
 		severity="secondary"
@@ -11,14 +11,20 @@
 		<template #header>
 			<h4>Enrich metadata</h4>
 		</template>
-		<p>
-			The AI assistant can enrich the metadata of this {{ assetType }}. Select a document or generate the information
-			without additional context.
-		</p>
+		<p>The AI assistant can enrich the metadata of this {{ assetType }}.</p>
+		<p>Select a document or generate the information without additional context.</p>
 		<ul>
+			<li>
+				<label for="no-document">
+					<RadioButton inputId="no-document" name="no-document" v-model="selectedResourceId" value="" />
+					Generate information without context
+				</label>
+			</li>
 			<li v-for="document in documents" :key="document.id" :class="document.id ? '' : 'mb-3'">
-				<RadioButton inputId="document.id" name="document.id" v-model="selectedResourceId" :value="document.id" />
-				<label :for="document.id">{{ document.name }}</label>
+				<label :for="document.id">
+					<RadioButton :inputId="document.id" name="document.id" v-model="selectedResourceId" :value="document.id" />
+					{{ document.name }}
+				</label>
 			</li>
 		</ul>
 		<template #footer>
@@ -87,15 +93,14 @@ const isDialogDisabled = computed(() => {
 	return !selectedResourceId.value;
 });
 
-const documents = computed<{ name: string; id: string }[]>(() => [
-	{ name: 'No document', id: '' }, // Empty string is falsey
-	...useProjects()
+const documents = computed<{ name: string; id: string }[]>(() =>
+	useProjects()
 		.getActiveProjectAssets(AssetType.Document)
 		.map((projectAsset: ProjectAsset) => ({
 			name: projectAsset.assetName,
 			id: projectAsset.assetId
 		}))
-]);
+);
 
 function closeDialog() {
 	isModalVisible.value = false;
@@ -182,31 +187,23 @@ ul {
 	gap: var(--gap-2);
 	padding: var(--gap-4) 0;
 
-	& > li {
+	li {
 		display: flex;
 		align-items: center;
-		gap: var(--gap);
 	}
-}
 
-.no-documents {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-}
+	li:first-child {
+		margin-bottom: var(--gap-2);
+	}
 
-.no-documents-img {
-	width: 30%;
-	padding: 10px;
-}
+	label {
+		cursor: pointer;
+	}
 
-.no-documents-text {
-	padding: 5px;
-	font-size: var(--font-body-medium);
-	font-family: var(--font-family);
-	font-weight: 500;
-	color: var(--text-color-secondary);
-	text-align: left;
+	/* Add margin between the input and the copy */
+	label > :last-child {
+		margin-right: var(--gap-2);
+	}
 }
 
 .p-dialog aside > * {

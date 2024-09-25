@@ -64,31 +64,19 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @RequiredArgsConstructor
 public class ModelController {
 
-	final ModelService modelService;
-
-	final DocumentAssetService documentAssetService;
-
-	final ProvenanceSearchService provenanceSearchService;
-
-	final ObjectMapper objectMapper;
-
-	final DatasetService datasetService;
-
-	final ProjectService projectService;
-
 	final CurrentUserService currentUserService;
-
-	final ProjectAssetService projectAssetService;
-
-	final ModelConfigurationService modelConfigurationService;
-
-	final Messages messages;
-
-	final ModelConfigRepository modelConfigRepository;
-
-	final InterventionRepository interventionRepository;
-
+	final DatasetService datasetService;
+	final DocumentAssetService documentAssetService;
 	final EmbeddingService embeddingService;
+	final InterventionRepository interventionRepository;
+	final Messages messages;
+	final ModelConfigRepository modelConfigRepository;
+	final ModelConfigurationService modelConfigurationService;
+	final ModelService modelService;
+	final ObjectMapper objectMapper;
+	final ProjectAssetService projectAssetService;
+	final ProjectService projectService;
+	final ProvenanceSearchService provenanceSearchService;
 
 	@GetMapping("/{id}/descriptions")
 	@Secured(Roles.USER)
@@ -202,8 +190,7 @@ public class ModelController {
 								new TypeReference<>() {}
 							);
 
-							// Append the Document extractions to the Model extractions, just for the
-							// front-end.
+							// Append the Document extractions to the Model extractions, just for the front-end.
 							// Those are NOT to be saved back to the data-service.
 							if (extractions != null) {
 								model.get().getMetadata().getAttributes().addAll(extractions);
