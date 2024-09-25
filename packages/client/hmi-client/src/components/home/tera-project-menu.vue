@@ -62,7 +62,7 @@ const copyMenuItem = {
 };
 
 const downloadMenuItem = {
-	label: 'Download this project',
+	label: 'Download',
 	icon: 'pi pi-download',
 	command: async () => {
 		if (props.project) {
