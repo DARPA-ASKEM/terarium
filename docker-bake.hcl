@@ -26,11 +26,11 @@ function "check_suffix" {
 
 # ---------------------------------
 group "prod" {
-  targets = ["hmi-client", "hmi-server", "gollm-taskrunner", "mira-taskrunner", "funman-taskrunner"]
+  targets = ["hmi-client", "hmi-server", "gollm-taskrunner", "mira-taskrunner", "funman-taskrunner", "text-extraction-taskrunner", "equation-extraction-taskrunner"]
 }
 
 group "default" {
-  targets = ["hmi-client-base", "hmi-server-base", "gollm-taskrunner-base", "mira-taskrunner-base", "funman-taskrunner-base"]
+  targets = ["hmi-client-base", "hmi-server-base", "gollm-taskrunner-base", "mira-taskrunner-base", "funman-taskrunner-base", "text-extraction-taskrunner-base", "equation-extraction-taskrunner-base"]
 }
 
 # ---------------------------------
@@ -86,4 +86,24 @@ target "funman-taskrunner-base" {
 
 target "funman-taskrunner" {
   inherits = ["_platforms", "funman-taskrunner-base"]
+}
+
+target "equation-extraction-taskrunner-base" {
+	context = "." # root of the repo
+	dockerfile = "./packages/equation_extraction/Dockerfile"
+	tags = tag("equation-extraction-taskrunner", "", "")
+}
+
+target "equation-extraction-taskrunner" {
+	inherits = ["_platforms", "equation-extraction-taskrunner-base"]
+}
+
+target "text-extraction-taskrunner-base" {
+	context = "." # root of the repo
+	dockerfile = "./packages/text_extraction/Dockerfile"
+	tags = tag("text-extraction-taskrunner", "", "")
+}
+
+target "text-extraction-taskrunner" {
+	inherits = ["_platforms", "text-extraction-taskrunner-base"]
 }

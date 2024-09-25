@@ -19,7 +19,11 @@
 						:options="OPTIMIZATION_TYPE_MAP"
 						@change="emit('update-self', knobs)"
 					/>
-					for the {{ knobs.intervention.type }}&nbsp;<strong>{{ knobs.intervention.appliedTo }}</strong>
+					<template v-if="knobs.intervention.staticInterventions.length === 1">
+						for the {{ knobs.intervention.staticInterventions[0].type }}&nbsp;<strong>{{
+							knobs.intervention.staticInterventions[0].appliedTo
+						}}</strong>
+					</template>
 				</p>
 				<p v-if="showNewValueOptions && staticInterventions.length === 1">
 					at the start time <strong>{{ staticInterventions[0].timestep }}</strong>
@@ -104,9 +108,8 @@
 		<template v-else>
 			<ul>
 				<li class="list-position-inside" v-for="(staticIntervention, index) in staticInterventions" :key="index">
-					Set the <strong>{{ config.intervention?.type }}</strong>
-					<strong>{{ config.intervention?.appliedTo }}</strong> to the value of
-					<strong>{{ staticIntervention.value }}</strong> day at start time
+					Set the <strong>{{ staticIntervention.type }}</strong> <strong>{{ staticIntervention.appliedTo }}</strong> to
+					the value of <strong>{{ staticIntervention.value }}</strong> day at start time
 					<strong>{{ staticIntervention.timestep }}</strong> day.
 				</li>
 			</ul>
@@ -118,7 +121,7 @@
 import Dropdown from 'primevue/dropdown';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import InputSwitch from 'primevue/inputswitch';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { StaticIntervention } from '@/types/Types';
 import {
 	InterventionPolicyGroupForm,
@@ -150,6 +153,14 @@ const showNewValueOptions = computed(
 	() =>
 		knobs.value.optimizationType === OptimizationInterventionObjective.paramValue ||
 		knobs.value.optimizationType === OptimizationInterventionObjective.paramValueAndStartTime
+);
+
+watch(
+	() => props.config,
+	() => {
+		knobs.value = { ...props.config };
+		staticInterventions.value = knobs.value.intervention.staticInterventions;
+	}
 );
 </script>
 

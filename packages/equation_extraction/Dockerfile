@@ -1,28 +1,21 @@
 # Build the Spring Boot application
-FROM python:3.11-slim AS equation_extraction_taskrunner_builder
+FROM python:3.11-slim-bookworm AS equation_extraction_taskrunner_builder
 
 ###### DEV ONLY ######
 #VVVVVVVVVVVVVVVVVVVVV
 
 # These deps are installed only for use during local development
 
-# Install OpenJDK21
+# Install OpenJDK
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	build-essential \
 	git \
 	libgl1 \
 	libglib2.0-0 \
 	poppler-utils \
-	wget && \
+	wget \
+	openjdk-17-jdk-headless && \
 	rm -rf /var/lib/apt/lists/*
-
-RUN wget https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.4%2B7/OpenJDK21U-jdk_x64_linux_hotspot_21.0.4_7.tar.gz && \
-	tar xvf OpenJDK21U-jdk_x64_linux_hotspot_21.0.4_7.tar.gz && \
-	mv jdk-21.0.4+7 /usr/local/jdk-21 && \
-	rm OpenJDK21U-jdk_x64_linux_hotspot_21.0.4_7.tar.gz
-
-ENV JAVA_HOME=/usr/local/jdk-21
-ENV PATH="$JAVA_HOME/bin:$PATH"
 
 # Install equation-extraction
 COPY ./packages/equation_extraction/equation-extraction-version.txt /extractionVersion.txt
@@ -50,31 +43,24 @@ RUN ./gradlew bootJar
 WORKDIR /
 
 # Copy the jar to the root directory
-RUN mv /taskrunner/build/libs/*.jar .
+RUN cp /taskrunner/build/libs/*.jar .
 RUN mv /terarium-1.0.0-SNAPSHOT.jar /taskrunner.jar
 
 # ------------------------------------------------------------------------------
-FROM python:3.11-slim
+FROM python:3.11-slim-bookworm
 
 WORKDIR /
 
-# Install OpenJRE21
+# Install OpenJDK JRE
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	build-essential \
 	git \
 	libgl1 \
 	libglib2.0-0 \
 	poppler-utils \
-	wget && \
+	wget  \
+	openjdk-17-jre-headless && \
 	rm -rf /var/lib/apt/lists/*
-
-RUN wget https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.4%2B7/OpenJDK21U-jre_x64_linux_hotspot_21.0.4_7.tar.gz && \
-	tar xvf OpenJDK21U-jre_x64_linux_hotspot_21.0.4_7.tar.gz && \
-	mv jdk-21.0.4+7-jre /usr/local/jre-21 && \
-	rm OpenJDK21U-jre_x64_linux_hotspot_21.0.4_7.tar.gz
-
-ENV JAVA_HOME=/usr/local/jre-21
-ENV PATH="$JAVA_HOME/bin:$PATH"
 
 # Copy the supervisord configuration file
 COPY ./packages/equation_extraction/supervisord.conf /etc/supervisor/conf.d/supervisord.conf

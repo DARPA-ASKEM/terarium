@@ -41,9 +41,21 @@
 													<InputSwitch class="mr-3" v-model="knobs.compartmentalConstraint.isActive" />
 												</div>
 											</header>
-											<div class="section-row">
-												<katex-element :expression="stringToLatexExpression(`${stateIds.join(' + ')} = ${mass}`)" />
-												<span v-for="v of stateIds" :key="v"> {{ v }} &#8805; 0, </span>
+											<div class="flex align-items-center gap-6">
+												<katex-element
+													:expression="
+														stringToLatexExpression(
+															stateIds
+																.map((s, index) => `${s}${index === stateIds.length - 1 ? `\\geq 0` : ','}`)
+																.join('')
+														)
+													"
+												/>
+												<katex-element
+													:expression="
+														stringToLatexExpression(`${stateIds.join('+')} = ${displayNumber(mass)} \\ \\forall \\ t`)
+													"
+												/>
 											</div>
 										</section>
 									</li>
@@ -168,7 +180,7 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import InputSwitch from 'primevue/inputswitch';
 
-import type { FunmanPostQueriesRequest, Model, ModelParameter, TimeSpan } from '@/types/Types';
+import type { FunmanInterval, FunmanPostQueriesRequest, Model, ModelParameter, TimeSpan } from '@/types/Types';
 import { makeQueries } from '@/services/models/funman-service';
 import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { getAsConfiguredModel, getModelConfigurationById } from '@/services/model-configurations';
@@ -178,6 +190,7 @@ import TeraFunmanOutput from '@/components/workflow/ops/funman/tera-funman-outpu
 import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-constraint-group-form.vue';
 import { DrilldownTabs } from '@/types/common';
 import { stringToLatexExpression } from '@/services/model';
+import { displayNumber } from '@/utils/number';
 import { FunmanOperationState, Constraint, ConstraintType, CompartmentalConstraint } from './funman-operation';
 
 const props = defineProps<{
@@ -258,36 +271,57 @@ const runMakeQuery = async () => {
 	}
 
 	const constraints = props.node.state.constraintGroups
-		?.map((ele) => {
-			if (!ele.isActive) return null;
+		?.map((constraintGroup) => {
+			if (!constraintGroup.isActive) return null;
+			const { name, constraintType, variables, timepoints } = constraintGroup;
+			// Use inputted weights when linearly constrained otherwise use implicit weights
+			const weights =
+				constraintType === ConstraintType.LinearlyConstrained
+					? constraintGroup.weights
+					: Array<number>(variables.length).fill(1.0);
+
 			// Increasing/descreasing (monotonicity)
-			if (ele.constraintType === ConstraintType.Increasing || ele.constraintType === ConstraintType.Decreasing) {
-				const weights = ele.weights ?? [1.0];
+			if (constraintType === ConstraintType.Increasing || constraintType === ConstraintType.Decreasing) {
 				return {
 					soft: true,
-					name: ele.name,
-					timepoints: null,
-					additive_bounds: {
-						lb: 0.0,
-						original_width: MAX
-					},
-					variables: ele.variables,
+					name,
+					timepoints,
+					additive_bounds: { lb: 0.0, original_width: MAX },
+					variables,
 					weights:
-						ele.constraintType === ConstraintType.Increasing
+						constraintGroup.constraintType === ConstraintType.Increasing
 							? weights.map((d) => Math.abs(d))
 							: weights.map((d) => -Math.abs(d)),
 					derivative: true
 				};
 			}
-			if (ele.timepoints) {
-				ele.timepoints.closed_upper_bound = true;
+
+			// Use bounds needed that are saved in the UI
+			const interval: FunmanInterval = {};
+			if (constraintType === ConstraintType.LessThan || constraintType === ConstraintType.LessThanOrEqualTo) {
+				interval.ub = constraintGroup.interval.ub;
+			} else if (
+				constraintType === ConstraintType.GreaterThan ||
+				constraintType === ConstraintType.GreaterThanOrEqualTo
+			) {
+				interval.lb = constraintGroup.interval.lb;
+			} else if (constraintType === ConstraintType.LinearlyConstrained) {
+				interval.lb = constraintGroup.interval.lb;
+				interval.ub = constraintGroup.interval.ub;
 			}
+
+			if (constraintType === ConstraintType.LessThanOrEqualTo) {
+				interval.closed_upper_bound = true;
+			}
+
+			timepoints.closed_upper_bound = true;
+
 			return {
-				name: ele.name,
-				variables: ele.variables,
-				weights: ele.weights,
-				additive_bounds: ele.interval,
-				timepoints: ele.timepoints
+				name,
+				variables,
+				weights,
+				additive_bounds: interval,
+				timepoints
 			};
 		})
 		.filter(Boolean); // Removes falsey values
@@ -332,9 +366,10 @@ const addConstraintForm = () => {
 		name: `Constraint ${state.constraintGroups.length + 1}`,
 		isActive: true,
 		timepoints: { lb: 0, ub: 100 },
-		interval: { lb: -MAX, ub: 100 },
+		interval: { lb: 0, ub: 100 },
 		constraint: Constraint.State,
 		variables: [],
+		weights: [],
 		constraintType: ConstraintType.LessThan
 	});
 	emit('update-state', state);
@@ -349,28 +384,18 @@ const deleteConstraintGroupForm = (index: number) => {
 const updateConstraintGroupForm = (index: number, key: string, value: any) => {
 	const state = _.cloneDeep(props.node.state);
 
-	// Changing constraint type resets settings
+	// Changing constraint resets settings
 	if (key === 'constraint') {
 		state.constraintGroups[index].variables = [];
 		state.constraintGroups[index].weights = [];
+		state.constraintGroups[index].interval = { lb: 0, ub: 100 };
 	}
 
 	// Update changes
 	state.constraintGroups[index][key] = value;
 
-	// Make sure interval makes sense
-	// Isn't read when increaing or decreasing
-	if (state.constraintGroups[index].constraintType === ConstraintType.LessThan) {
-		state.constraintGroups[index].interval = { lb: -MAX, ub: 100 };
-	} else if (
-		state.constraintGroups[index].constraintType === ConstraintType.GreaterThan ||
-		state.constraintGroups[index].constraintType === ConstraintType.LinearlyConstrained
-	) {
-		state.constraintGroups[index].interval = { lb: 0, ub: MAX };
-	}
-
 	// Make sure weights makes sense
-	const weightLength = state.constraintGroups[index].weights?.length ?? 0;
+	const weightLength = state.constraintGroups[index].weights.length;
 	const variableLength = state.constraintGroups[index].variables.length;
 	if (weightLength !== variableLength) {
 		state.constraintGroups[index].weights = Array<number>(variableLength).fill(1.0);
@@ -607,15 +632,6 @@ ul {
 		background: var(--gray-50);
 		border: 1px solid var(--surface-border-light);
 		border-radius: var(--border-radius);
-	}
-
-	& .section-row {
-		display: flex;
-		padding: 0.5rem 0rem;
-		align-items: center;
-		gap: 0.5rem;
-		align-self: stretch;
-		flex-wrap: wrap;
 	}
 }
 

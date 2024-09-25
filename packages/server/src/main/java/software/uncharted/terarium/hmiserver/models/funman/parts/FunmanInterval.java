@@ -11,9 +11,11 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 public class FunmanInterval {
 
 	/** Upper bound * */
+	@TSOptional
 	private Double ub;
 
 	/** Lower Bound * */
+	@TSOptional
 	private Double lb;
 
 	@TSOptional

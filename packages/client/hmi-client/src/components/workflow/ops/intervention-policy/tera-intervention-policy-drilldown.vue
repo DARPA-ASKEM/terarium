@@ -15,6 +15,16 @@
 			>
 				<template #content>
 					<section>
+						<nav class="inline-flex">
+							<!-- Disabled until Backend code is complete -->
+							<!-- <Button class="flex-1 mr-1" outlined severity="secondary" label="Extract from inputs" /> -->
+							<Button
+								class="flex-1 ml-1"
+								label="Create New"
+								:disabled="!model?.id"
+								@click="createNewInterventionPolicy"
+							/>
+						</nav>
 						<tera-input-text v-model="filterInterventionsText" placeholder="Filter" />
 						<ul v-if="!isFetchingPolicies">
 							<li v-for="policy in interventionPoliciesFiltered" :key="policy.id">
@@ -111,18 +121,16 @@
 												:key="staticIntervention.timestep"
 											>
 												<p>
-													Set {{ intervention.type }} {{ appliedTo }} to {{ staticIntervention.value }} at time step
-													{{ staticIntervention.timestep }}.
+													Set {{ staticIntervention.type }} {{ appliedTo }} to {{ staticIntervention.value }} at time
+													step {{ staticIntervention.timestep }}.
 												</p>
 											</li>
 										</ul>
 										<p v-else-if="!isEmpty(intervention.dynamicInterventions)">
-											Set {{ intervention.type }} {{ appliedTo }} to
+											Set {{ intervention.dynamicInterventions[0].type }} {{ appliedTo }} to
 											{{ intervention.dynamicInterventions[0].value }} when the
 											{{ intervention.dynamicInterventions[0].parameter }}
-											{{
-												intervention.dynamicInterventions[0].isGreaterThan ? 'increases to above' : 'decreases to below'
-											}}
+											when it crosses the threshold value
 											{{ intervention.dynamicInterventions[0].threshold }}.
 										</p>
 									</li>
@@ -138,9 +146,9 @@
 		</tera-columnar-panel>
 	</tera-drilldown>
 	<tera-save-asset-modal
-		:initial-name="knobs.transientInterventionPolicy.name"
+		:initial-name="showCreatePolicyModal ? 'New Intervention Policy' : knobs.transientInterventionPolicy.name"
 		:is-visible="showSaveModal"
-		:asset="knobs.transientInterventionPolicy"
+		:asset="showCreatePolicyModal ? newBlankInterventionPolicy : knobs.transientInterventionPolicy"
 		:asset-type="AssetType.InterventionPolicy"
 		@close-modal="showSaveModal = false"
 		@on-save="onSaveAsInterventionPolicy"
@@ -205,7 +213,14 @@ const knobs = ref<BasicKnobs>({
 	}
 });
 
+const newBlankInterventionPolicy = ref({
+	name: '',
+	modelId: '',
+	interventions: [blankIntervention]
+});
+
 const showSaveModal = ref(false);
+const showCreatePolicyModal = ref(false);
 const isSidebarOpen = ref(true);
 const filterInterventionsText = ref('');
 const model = ref<Model | null>(null);
@@ -249,7 +264,8 @@ const parameterOptions = computed(() => {
 	if (!model.value) return [];
 	return getParameters(model.value).map((parameter) => ({
 		label: parameter.id,
-		value: parameter.id
+		value: parameter.id,
+		units: parameter.units?.expression
 	}));
 });
 
@@ -257,12 +273,16 @@ const stateOptions = computed(() => {
 	if (!model.value) return [];
 	return getStates(model.value).map((state) => ({
 		label: state.id,
-		value: state.id
+		value: state.id,
+		units: state.units?.expression
 	}));
 });
 
 const groupedOutputParameters = computed(() =>
-	groupBy(knobs.value.transientInterventionPolicy.interventions, 'appliedTo')
+	groupBy(
+		knobs.value.transientInterventionPolicy.interventions,
+		(item) => item.dynamicInterventions[0]?.appliedTo || item.staticInterventions[0]?.appliedTo
+	)
 );
 
 const preparedCharts = computed(() =>
@@ -405,6 +425,7 @@ const onResetPolicy = () => {
 };
 
 const onSaveAsInterventionPolicy = (data: InterventionPolicy) => {
+	showCreatePolicyModal.value = false;
 	applyInterventionPolicy(data);
 };
 
@@ -424,6 +445,13 @@ const onSaveInterventionPolicy = async () => {
 		initialize();
 		useProjects().refresh();
 	}
+};
+
+const createNewInterventionPolicy = () => {
+	if (!model.value?.id) return;
+	showCreatePolicyModal.value = true;
+	newBlankInterventionPolicy.value.modelId = model.value.id;
+	showSaveModal.value = true;
 };
 
 watch(
