@@ -225,8 +225,10 @@ async function clone(id: Project['id']): Promise<Project | null> {
 
 async function exportProjectAsFile(id: Project['id']) {
 	try {
-		const response = await API.get(`projects/export/${id}`);
-		const blob = new Blob([response?.data], { type: 'application/zip' });
+		const response = await API.get(`projects/export/${id}`, {
+			responseType: 'arraybuffer'
+		});
+		const blob = new Blob([response?.data], { type: 'application/octet-stream' });
 		return blob ?? null;
 	} catch (error) {
 		logger.error(`Unable to download project file for project id ${id}: ${error}`);

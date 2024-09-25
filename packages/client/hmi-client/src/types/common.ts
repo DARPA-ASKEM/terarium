@@ -132,7 +132,7 @@ export enum AcceptedExtensions {
 	STMX = 'stmx',
 	// proprietary formats
 	MODELCONFIG = 'modelconfig',
-	PROJECTCONFIG = 'zip'
+	PROJECTCONFIG = 'project'
 }
 
 export enum AMRSchemaNames {
