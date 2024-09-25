@@ -1,5 +1,33 @@
 <template>
 	<Editor v-model="editorContent" :class="{ readonly: !hasEditPermission }" :readonly="!hasEditPermission" />
+	<!-- empty state image -->
+	<section v-if="editorContent.length === 0" class="emptyState">
+		<Vue3Lottie :animationData="EmptySeed" :height="150" loop autoplay />
+		<p class="helpMessage"><strong>Use this space however you like.</strong></p>
+		<p class="helpMessage">Just click and start typing.</p>
+	</section>
+
+	<!-- empty state message -->
+	<Panel
+		v-if="showWelcomeMessage && editorContent.length === 0"
+		header="Hey there! Not sure where to start?"
+		class="welcomeMessage"
+	>
+		<template #icons>
+			<Button icon="pi pi-times" text rounded @click="showWelcomeMessage = false" />
+		</template>
+		<div class="p-message-content">
+			<p>Here are some things you can try:</p>
+			<ul>
+				<li><b>Upload stuff.</b> Upload documents, models or datasets.</li>
+				<li><b>Build a model.</b> Create a model that fits just what you need.</li>
+				<li>
+					<b>Create a workflow.</b> Connect resources with operators so you can focus on the science and not the
+					plumbing.
+				</li>
+			</ul>
+		</div>
+	</Panel>
 </template>
 
 <script setup lang="ts">
@@ -8,6 +36,10 @@ import { update } from '@/services/project';
 import { b64DecodeUnicode, b64EncodeUnicode } from '@/utils/binary';
 import Editor from 'primevue/editor';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { Vue3Lottie } from 'vue3-lottie';
+import EmptySeed from '@/assets/images/lottie-empty-seed.json';
+import Panel from 'primevue/panel';
+import Button from 'primevue/button';
 
 const AUTO_SAVE_DELAY = 3000;
 
@@ -56,6 +88,8 @@ watch(editorContent, () => {
 onUnmounted(() => {
 	stopAutoSave();
 });
+
+const showWelcomeMessage = ref(true);
 </script>
 
 <style scoped>
@@ -73,16 +107,22 @@ onUnmounted(() => {
 	min-height: 100%;
 	display: flex;
 	flex-direction: column;
+	border-top-left-radius: 0px !important;
 }
 
 :deep(.p-editor-content) {
 	flex-grow: 1;
 }
 
-:deep(.p-editor-container .p-editor-toolbar) {
+.p-editor-container:deep(.p-editor-toolbar) {
 	border-radius: 0px;
 	border-color: var(--surface-border-light) !important;
 	border-top: none !important;
+}
+.p-editor-container:deep(.p-editor-content) {
+	border-radius: 0px;
+	border-color: var(--surface-border-light) !important;
+	border: none !important;
 }
 
 :deep(.ql-picker-label) {
@@ -100,5 +140,48 @@ onUnmounted(() => {
 
 :deep(.ql-selected) {
 	background-color: var(--surface-highlight) !important;
+}
+
+/* Empty state */
+.emptyState {
+	position: absolute;
+	width: calc(100% - 240px);
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--gap-2);
+	text-align: center;
+	pointer-events: none;
+}
+
+.welcomeMessage {
+	position: absolute;
+	width: calc(100% - 264px); /* 240px + 12px + 12px */
+	margin-top: 3.5rem;
+	margin-left: var(--gap-3);
+	padding: var(--gap-1) var(--gap-3);
+	display: flex;
+	flex-direction: column;
+	border: 1px solid var(--surface-border-light);
+	z-index: 10;
+	background-color: var(--surface-0);
+}
+.welcomeMessage .p-message-content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-2);
+}
+.welcomeMessage:deep(.p-panel-title) {
+	font-weight: 600;
+}
+.welcomeMessage ul {
+	list-style-position: inside;
+	line-height: 1.55rem;
+}
+
+.welcomeMessage:deep(.p-message-wrapper svg) {
+	display: none;
 }
 </style>

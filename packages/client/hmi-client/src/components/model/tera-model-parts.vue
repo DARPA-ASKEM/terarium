@@ -5,7 +5,6 @@
 		:mmt="mmt"
 		:mmt-params="mmtParams"
 		:feature-config="featureConfig"
-		@update-model="$emit('update-model', $event)"
 		@update-state="(e: any) => onUpdate('state', e)"
 		@update-parameter="(e: any) => onUpdate('parameter', e)"
 		@update-observable="(e: any) => onUpdate('observable', e)"
@@ -15,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep } from 'lodash';
+import { cloneDeep, isEqual } from 'lodash';
 import { computed, ref, onMounted, watch, PropType } from 'vue';
 import type { Model } from '@/types/Types';
 import TeraPetrinetParts from '@/components/model/petrinet/tera-petrinet-parts.vue';
@@ -45,11 +44,11 @@ const props = defineProps({
 	}
 });
 
-defineEmits(['update-model']);
+const emit = defineEmits(['update-model']);
 
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
-const transientModel = ref(cloneDeep(props.model));
+const transientModel = ref<Model>(cloneDeep(props.model));
 
 const modelType = computed(() => getModelType(props.model));
 
@@ -87,6 +86,7 @@ function onUpdate(property: string, event: any) {
 		default:
 			break;
 	}
+	emit('update-model', transientModel.value);
 }
 
 function updateMMT() {
@@ -96,34 +96,21 @@ function updateMMT() {
 	});
 }
 
-function reset() {
+onMounted(() => {
 	transientModel.value = cloneDeep(props.model);
-}
+	updateMMT();
+});
 
-onMounted(() => updateMMT());
-
-// TODO: Do we still want autosave? It worked onUnmount but on staging the onbeforemount wasn't triggering
-// Apply changes to the model when the component unmounts or the user navigates away
-// onMounted(() => {
-// 	window.addEventListener('beforeunload', saveChanges);
-// 	updateMMT();
-// });
-
-// onUnmounted(() => {
-// 	saveChanges();
-// 	window.removeEventListener('beforeunload', saveChanges);
-// });
-
+// Only update the MMT when the semantics of the model changes outside this component.
 watch(
-	() => props.model,
-	() => {
-		reset();
+	() => [props.model.model, props.model.semantics],
+	(newValue, oldValue) => {
+		if (isEqual(newValue, oldValue)) return;
+		transientModel.value = cloneDeep(props.model);
 		updateMMT();
 	},
 	{ deep: true }
 );
-
-defineExpose({ transientModel, reset });
 </script>
 
 <style scoped>
@@ -132,11 +119,13 @@ defineExpose({ transientModel, reset });
 	color: var(--text-color-subdued);
 	margin-left: 0.25rem;
 }
-
+:deep(.p-accordion-content) {
+	margin-bottom: var(--gap-3);
+}
 :deep(.p-accordion-content:empty::before) {
 	content: 'None';
 	color: var(--text-color-secondary);
 	font-size: var(--font-caption);
-	margin-left: 1rem;
+	margin-left: var(--gap-6);
 }
 </style>

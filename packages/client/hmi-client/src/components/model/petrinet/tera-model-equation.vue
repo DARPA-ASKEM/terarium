@@ -29,9 +29,9 @@ import { ref, watch } from 'vue';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import TeraEquationContainer from '@/components/model/petrinet/tera-equation-container.vue';
 import type { Model } from '@/types/Types';
-import { equationsToAMR } from '@/services/knowledge';
+import { equationsToAMR, EquationsToAMRRequest } from '@/services/knowledge';
 import { cleanLatexEquations } from '@/utils/math';
-import { isEmpty } from 'lodash';
+import { isEmpty, isEqual } from 'lodash';
 import { useToastService } from '@/services/toast';
 import { getModelEquation } from '@/services/model';
 
@@ -76,7 +76,8 @@ const updateLatexFormula = (equationsList: string[]) => {
 const updateModelFromEquations = async () => {
 	isUpdating.value = true;
 	isEditing.value = false;
-	const modelId = await equationsToAMR(equations.value, 'petrinet', props.model.id);
+	const request: EquationsToAMRRequest = { equations: equations.value, modelId: props.model.id };
+	const modelId = await equationsToAMR(request);
 	if (modelId) {
 		emit('model-updated');
 		useToastService().success('Success', `Model Updated from equation`);
@@ -85,8 +86,9 @@ const updateModelFromEquations = async () => {
 };
 
 watch(
-	() => props.model,
-	async () => {
+	() => props.model.semantics,
+	async (newSemantics, oldSemantics) => {
+		if (isEqual(newSemantics, oldSemantics)) return;
 		const latexFormula = await getModelEquation(props.model);
 		if (latexFormula) {
 			updateLatexFormula(cleanLatexEquations(latexFormula.split(' \\\\')));

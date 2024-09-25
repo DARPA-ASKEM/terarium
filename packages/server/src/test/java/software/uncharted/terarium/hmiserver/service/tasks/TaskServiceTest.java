@@ -66,7 +66,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		Assertions.assertEquals(additionalProps, resp.getAdditionalProperties(String.class));
 	}
 
-	private String generateRandomString(final int length) {
+	private static String generateRandomString(final int length) {
 		final String characterSet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 		final Random random = new Random();
 		final StringBuilder builder = new StringBuilder(length);
@@ -116,6 +116,29 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		log.info(new String(resp.getOutput()));
 	}
 
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendGoLLMEnrichAMRRequest() throws Exception {
+		final ClassPathResource modelResource = new ClassPathResource("gollm/SIR.json");
+		final String modelContent = new String(Files.readAllBytes(modelResource.getFile().toPath()));
+
+		final ClassPathResource documentResource = new ClassPathResource("gollm/SIR.txt");
+		final String documentContent = new String(Files.readAllBytes(documentResource.getFile().toPath()));
+
+		final EnrichAmrResponseHandler.Input input = new EnrichAmrResponseHandler.Input();
+		input.setResearchPaper(documentContent);
+		input.setAmr(modelContent);
+
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.GOLLM);
+		req.setScript("gollm_task:enrich_amr");
+		req.setInput(input);
+
+		final TaskResponse resp = taskService.runTaskSync(req);
+
+		log.info(new String(resp.getOutput()));
+	}
+
 	static class AdditionalProps {
 
 		public String str;
@@ -155,6 +178,41 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		final String input =
 			"Following sections describe the input and output of an operation.\nInput: { a: 1}\nOutput: { a: 2}. Provide a summary in less than 10 words.";
 		req.setInput(input.getBytes(StandardCharsets.UTF_8));
+
+		final TaskResponse resp = taskService.runTaskSync(req);
+
+		log.info(new String(resp.getOutput()));
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendGoLLMGenerateResponseRequest() throws Exception {
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.GOLLM);
+		req.setScript(GenerateResponseHandler.NAME);
+		final GenerateResponseHandler.Input input = new GenerateResponseHandler.Input();
+		input.setInstruction("Give me a simple random json object");
+		final JsonNode resFormat = new ObjectMapper().readTree("{\"type\": \"json_object\"}");
+		input.setResponseFormat(resFormat);
+		req.setInput(input);
+
+		final TaskResponse resp = taskService.runTaskSync(req);
+
+		log.info(new String(resp.getOutput()));
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendEquationExtractionGenerateResponseRequest() throws Exception {
+		final ClassPathResource resource = new ClassPathResource("equation/SIR.pdf");
+		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
+
+		final int TIMEOUT_MINUTES = 5;
+		final TaskRequest req = new TaskRequest();
+		req.setTimeoutMinutes(TIMEOUT_MINUTES);
+		req.setInput(content);
+		req.setType(TaskType.EQUATION_EXTRACTION_CPU);
+		req.setScript(ExtractEquationsResponseHandler.NAME);
 
 		final TaskResponse resp = taskService.runTaskSync(req);
 
@@ -244,8 +302,35 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
-		req.setScript("gollm_task:dataset_configure");
+		req.setScript("gollm_task:configure_model_from_dataset");
 		req.setInput(content.getBytes());
+
+		final TaskResponse resp = taskService.runTaskSync(req);
+
+		Assertions.assertEquals(taskId, resp.getId());
+
+		log.info(new String(resp.getOutput()));
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendGoLLMInterventionsFromDocumentRequest() throws Exception {
+		final UUID taskId = UUID.randomUUID();
+
+		final ClassPathResource modelResource = new ClassPathResource("gollm/SIR.json");
+		final String modelContent = new String(Files.readAllBytes(modelResource.getFile().toPath()));
+
+		final ClassPathResource documentResource = new ClassPathResource("gollm/SIR.txt");
+		final String documentContent = new String(Files.readAllBytes(documentResource.getFile().toPath()));
+
+		final InterventionsFromDocumentResponseHandler.Input input = new InterventionsFromDocumentResponseHandler.Input();
+		input.setResearchPaper(documentContent);
+		input.setAmr(modelContent);
+
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.GOLLM);
+		req.setScript("gollm_task:interventions_from_document");
+		req.setInput(input);
 
 		final TaskResponse resp = taskService.runTaskSync(req);
 
@@ -265,6 +350,26 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.MIRA);
 		req.setScript("mira_task:amr_to_mmt");
+		req.setInput(content.getBytes());
+
+		final TaskResponse resp = taskService.runTaskSync(req);
+
+		Assertions.assertEquals(taskId, resp.getId());
+
+		log.info(new String(resp.getOutput()));
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendGenerateModelLatexRequest() throws Exception {
+		final UUID taskId = UUID.randomUUID();
+
+		final ClassPathResource resource = new ClassPathResource("mira/problem.json");
+		final String content = new String(Files.readAllBytes(resource.getFile().toPath()));
+
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.MIRA);
+		req.setScript("mira_task:generate_model_latex");
 		req.setInput(content.getBytes());
 
 		final TaskResponse resp = taskService.runTaskSync(req);

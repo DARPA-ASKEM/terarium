@@ -1,5 +1,9 @@
 import { percentile } from '@/utils/math';
-import { isEmpty } from 'lodash';
+import { isEmpty, pick } from 'lodash';
+import { VisualizationSpec } from 'vega-embed';
+import { v4 as uuidv4 } from 'uuid';
+import { ChartAnnotation, Intervention } from '@/types/Types';
+import { flattenInterventionData } from './intervention-policy';
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
@@ -24,7 +28,7 @@ export interface ForecastChartOptions extends BaseChartOptions {
 }
 
 export interface ForecastChartLayer {
-	dataset: Record<string, any>[];
+	data: Record<string, any>[] | { name: string } | { url: string };
 	variables: string[];
 	timeField: string;
 	groupField?: string;
@@ -42,7 +46,7 @@ export interface ErrorChartOptions extends Omit<BaseChartOptions, 'height' | 'yA
 	variables: { field: string; label?: string }[];
 }
 
-export const createErrorChart = (dataset: Record<string, any>[], options: ErrorChartOptions) => {
+export function createErrorChart(dataset: Record<string, any>[], options: ErrorChartOptions) {
 	const axisColor = '#EEE';
 	const labelColor = '#667085';
 	const labelFontWeight = 'normal';
@@ -203,10 +207,10 @@ export const createErrorChart = (dataset: Record<string, any>[], options: ErrorC
 				}
 			]
 		}
-	};
-};
+	} as any;
+}
 
-export const createHistogramChart = (dataset: Record<string, any>[], options: HistogramChartOptions) => {
+export function createHistogramChart(dataset: Record<string, any>[], options: HistogramChartOptions) {
 	const maxBins = options.maxBins ?? 10;
 	const axisColor = '#EEE';
 	const labelColor = '#667085';
@@ -251,12 +255,45 @@ export const createHistogramChart = (dataset: Record<string, any>[], options: Hi
 		labelOffset: 4
 	};
 
+	const spec: VisualizationSpec = {
+		$schema: VEGALITE_SCHEMA,
+		title: titleObj as any,
+		width: options.width,
+		height: options.height,
+		autosize: { type: 'fit' },
+		data: {
+			values: []
+		},
+		layer: [],
+		config: {
+			font: globalFont
+		}
+	};
+
+	const data = dataset.map((d) =>
+		pick(
+			d,
+			options.variables.map((v) => v.field)
+		)
+	);
+
+	if (isEmpty(data?.[0])) return spec;
+
+	spec.data = { values: data };
+
+	// Create an extent from the min max of the data across all variables, this is used to set the bin extent and let multiple histograms from different layers to share the same bin extent
+	const extent = [Infinity, -Infinity];
+	data.forEach((d) => {
+		extent[0] = Math.min(extent[0], Math.min(...Object.values(d)));
+		extent[1] = Math.max(extent[1], Math.max(...Object.values(d)));
+	});
+
 	const createLayers = (opts) => {
 		const colorScale = {
 			domain: opts.variables.map((v) => v.label ?? v.field),
 			range: opts.variables.map((v) => v.color)
 		};
-		const bin = { maxbins: maxBins };
+		const bin = { maxbins: maxBins, extent };
 		const aggregate = 'count';
 		return opts.variables.map((varOption) => ({
 			mark: { type: 'bar', width: varOption.width, tooltip: true },
@@ -277,20 +314,11 @@ export const createHistogramChart = (dataset: Record<string, any>[], options: Hi
 		}));
 	};
 
-	const spec = {
-		$schema: VEGALITE_SCHEMA,
-		title: titleObj,
-		width: options.width,
-		height: options.height,
-		autosize: { type: 'fit' },
-		data: { values: dataset },
-		layer: createLayers(options),
-		config: {
-			font: globalFont
-		}
-	};
+	// Add layers
+	spec.layer = createLayers(options);
+
 	return spec;
-};
+}
 
 /**
  * Generate Vegalite specs for simulation/forecast charts. The chart can contain:
@@ -311,12 +339,12 @@ export const createHistogramChart = (dataset: Record<string, any>[], options: Hi
  *
  * Then we use the new 'var' and 'value' columns to render timeseries
  * */
-export const createForecastChart = (
+export function createForecastChart(
 	samplingLayer: ForecastChartLayer | null,
 	statisticsLayer: ForecastChartLayer | null,
 	groundTruthLayer: ForecastChartLayer | null,
 	options: ForecastChartOptions
-) => {
+) {
 	const axisColor = '#EEE';
 	const labelColor = '#667085';
 	const labelFontWeight = 'normal';
@@ -394,9 +422,12 @@ export const createForecastChart = (
 
 	// Helper function to capture common layer structure
 	const newLayer = (layer: ForecastChartLayer, markType: string) => {
+		const selectedFields = layer.variables.concat([layer.timeField]);
+		if (layer.groupField) selectedFields.push(layer.groupField);
+
+		const data = Array.isArray(layer.data) ? { values: layer.data.map((d) => pick(d, selectedFields)) } : layer.data;
 		const header = {
-			mark: { type: markType },
-			data: { values: layer.dataset },
+			data,
 			transform: [
 				{
 					fold: layer.variables,
@@ -420,15 +451,20 @@ export const createForecastChart = (
 
 		return {
 			...header,
-			encoding
+			layer: [
+				{
+					mark: { type: markType },
+					encoding
+				}
+			]
 		} as any;
 	};
 
 	// Build sample layer
 	if (samplingLayer && !isEmpty(samplingLayer.variables)) {
 		const layerSpec = newLayer(samplingLayer, 'line');
-
-		Object.assign(layerSpec.encoding, {
+		const encoding = layerSpec.layer[0].encoding;
+		Object.assign(encoding, {
 			detail: { field: samplingLayer.groupField, type: 'nominal' },
 			strokeWidth: { value: 1 },
 			opacity: { value: 0.1 }
@@ -440,46 +476,24 @@ export const createForecastChart = (
 	// Build statistical layer
 	if (statisticsLayer && !isEmpty(statisticsLayer.variables)) {
 		const layerSpec = newLayer(statisticsLayer, 'line');
-		Object.assign(layerSpec.encoding, {
+		const lineSubLayer = layerSpec.layer[0];
+		const tooltipSubLayer = structuredClone(lineSubLayer);
+		Object.assign(lineSubLayer.encoding, {
 			opacity: { value: 1.0 },
 			strokeWidth: { value: 2 }
 		});
 
 		if (options.legend === true) {
-			layerSpec.encoding.color.legend = {
+			lineSubLayer.encoding.color.legend = {
 				...legendProperties
 			};
 
 			if (labelExpr.length > 0) {
-				layerSpec.encoding.color.legend.labelExpr = labelExpr;
+				lineSubLayer.encoding.color.legend.labelExpr = labelExpr;
 			}
 		}
-		spec.layer.push(layerSpec);
-	}
 
-	// Build ground truth layer
-	if (groundTruthLayer && !isEmpty(groundTruthLayer.variables)) {
-		const layerSpec = newLayer(groundTruthLayer, 'point');
-
-		// FIXME: variables not aligned, set unique color for now
-		layerSpec.encoding.color.scale.range = ['#1B8073'];
-		// layerSpec.encoding.color.scale.range = options.colorscheme || CATEGORICAL_SCHEME;
-
-		if (options.legend === true) {
-			layerSpec.encoding.color.legend = {
-				...legendProperties
-			};
-
-			if (labelExpr.length > 0) {
-				layerSpec.encoding.color.legend.labelExpr = labelExpr;
-			}
-		}
-		spec.layer.push(layerSpec);
-	}
-
-	// Build a transparent layer with fat lines as a better hover target for tooltips
-	// Re-Build statistical layer
-	if (statisticsLayer && !isEmpty(statisticsLayer.variables)) {
+		// Build a transparent layer with fat lines as a better hover target for tooltips
 		const tooltipContent = statisticsLayer.variables?.map((d) => {
 			const tip: any = {
 				field: d,
@@ -492,18 +506,84 @@ export const createForecastChart = (
 
 			return tip;
 		});
-
-		const layerSpec = newLayer(statisticsLayer, 'line');
-		Object.assign(layerSpec.encoding, {
+		Object.assign(tooltipSubLayer.encoding, {
 			opacity: { value: 0.00000001 },
 			strokeWidth: { value: 16 },
 			tooltip: [{ field: statisticsLayer.timeField, type: 'quantitative' }, ...(tooltipContent || [])]
 		});
+		layerSpec.layer.push(tooltipSubLayer);
+
 		spec.layer.push(layerSpec);
 	}
 
+	// Build ground truth layer
+	if (groundTruthLayer && !isEmpty(groundTruthLayer.variables)) {
+		const layerSpec = newLayer(groundTruthLayer, 'point');
+		const encoding = layerSpec.layer[0].encoding;
+
+		// FIXME: variables not aligned, set unique color for now
+		encoding.color.scale.range = ['#1B8073'];
+		// encoding.color.scale.range = options.colorscheme || CATEGORICAL_SCHEME;
+
+		if (options.legend === true) {
+			encoding.color.legend = {
+				...legendProperties
+			};
+
+			if (labelExpr.length > 0) {
+				encoding.color.legend.labelExpr = labelExpr;
+			}
+		}
+		spec.layer.push(layerSpec);
+	}
 	return spec;
-};
+}
+
+export function applyForecastChartAnnotations(chartSpec: any, annotations: ChartAnnotation[]) {
+	const targetLayerIndex = 1; // Assume the target layer is the second layer which is the statistic layer
+	const layerSpecs = annotations.map((a) => a.layerSpec);
+	if (!chartSpec.layer[targetLayerIndex]) return chartSpec;
+	chartSpec.layer[targetLayerIndex].layer.push(...layerSpecs);
+	return chartSpec;
+}
+
+export function createForecastChartAnnotation(axis: 'x' | 'y', datum: number, label: string) {
+	const layerSpec = {
+		description: `At ${axis} ${datum}, add a label '${label}'.`,
+		encoding: {
+			[axis]: { datum }
+		},
+		layer: [
+			{
+				mark: {
+					type: 'rule',
+					strokeDash: [4, 4]
+				}
+			},
+			{
+				mark: {
+					type: 'text',
+					align: 'left',
+					dx: 5,
+					dy: -5
+				},
+				encoding: {
+					text: { value: label }
+				}
+			}
+		]
+	};
+	const annotation: ChartAnnotation = {
+		id: uuidv4(),
+		nodeId: '',
+		outputId: '',
+		chartId: '',
+		layerSpec,
+		llmGenerated: false,
+		metadata: { axis, datum, label }
+	};
+	return annotation;
+}
 
 /// /////////////////////////////////////////////////////////////////////////////
 // Optimize charts
@@ -517,9 +597,9 @@ export function createSuccessCriteriaChart(
 	alpha: number,
 	options: BaseChartOptions
 ): any {
-	const targetState = `${targetVariable}_state`;
-	const data = riskResults[targetState]?.qoi || [];
-	const risk = riskResults[targetState]?.risk?.[0] || 0;
+	// FIXME: risk results can be null/undefined sometimes
+	const data = riskResults?.[targetVariable]?.qoi || [];
+	const risk = riskResults?.[targetVariable]?.risk?.[0] || 0;
 	const binCount = Math.floor(Math.sqrt(data.length)) ?? 1;
 	const alphaPercentile = percentile(data, alpha);
 
@@ -650,7 +730,8 @@ export function createSuccessCriteriaChart(
 	};
 }
 
-export function createInterventionChartMarkers(data: { name: string; value: number; time: number }[]): any[] {
+export function createInterventionChartMarkers(interventions: Intervention[]): any[] {
+	const data = flattenInterventionData(interventions);
 	const markerSpec = {
 		data: { values: data },
 		mark: { type: 'rule', strokeDash: [4, 4], color: 'black' },
@@ -678,18 +759,29 @@ export function createInterventionChartMarkers(data: { name: string; value: numb
 	return [markerSpec, labelSpec];
 }
 
-export const createInterventionChart = (interventionsData: { name: string; value: number; time: number }[]) => {
+export function createInterventionChart(interventions: Intervention[], chartOptions: Omit<BaseChartOptions, 'legend'>) {
+	const interventionsData = flattenInterventionData(interventions);
+	const titleObj = chartOptions.title
+		? {
+				text: chartOptions.title,
+				anchor: 'start',
+				subtitle: ' ',
+				subtitlePadding: 4
+			}
+		: null;
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
-		width: 400,
+		width: chartOptions.width,
+		title: titleObj,
+		height: chartOptions.height,
 		autosize: {
 			type: 'fit-x'
 		},
 		layer: []
 	};
-	if (interventionsData && interventionsData.length > 0) {
+	if (!isEmpty(interventionsData)) {
 		// markers
-		createInterventionChartMarkers(interventionsData).forEach((marker) => {
+		createInterventionChartMarkers(interventions).forEach((marker) => {
 			spec.layer.push(marker);
 		});
 		// chart
@@ -697,10 +789,10 @@ export const createInterventionChart = (interventionsData: { name: string; value
 			data: { values: interventionsData },
 			mark: 'point',
 			encoding: {
-				x: { field: 'time', type: 'quantitative' },
-				y: { field: 'value', type: 'quantitative' }
+				x: { field: 'time', type: 'quantitative', title: chartOptions.xAxisTitle },
+				y: { field: 'value', type: 'quantitative', title: chartOptions.yAxisTitle }
 			}
 		});
 	}
 	return spec;
-};
+}

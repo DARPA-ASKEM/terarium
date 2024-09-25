@@ -1,0 +1,38 @@
+---
+name: 'CodeQL - Python'
+
+# yamllint disable-line rule:truthy
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+    paths:
+      - 'packages/equation_extraction/**'
+      - 'packages/funman/**'
+      - 'packages/gollm/**'
+      - 'packages/mira/**'
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:python'

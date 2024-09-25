@@ -38,3 +38,6 @@ out/
 .vscode/
 mira.egg-info
 __pycache__
+
+supervisord.log
+supervisord.pid

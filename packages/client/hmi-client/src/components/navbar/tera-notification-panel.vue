@@ -63,7 +63,7 @@ import OverlayPanel from 'primevue/overlaypanel';
 import { NotificationItem } from '@/types/common';
 import { AssetType, ClientEventType, ProgressState } from '@/types/Types';
 import ProgressBar from 'primevue/progressbar';
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useNotificationManager } from '@/composables/notificationManager';
 import { useProjects } from '@/composables/project';
 import { getElapsedTimeText } from '@/utils/date';
@@ -90,7 +90,8 @@ const sortedNotificationItems = computed(() => orderBy(notificationItems.value, 
 
 const isComplete = (item: NotificationItem) => item.status === ProgressState.Complete;
 const isQueued = (item: NotificationItem) => item.status === ProgressState.Queued;
-const isFailed = (item: NotificationItem) => item.status === ProgressState.Failed;
+const isFailed = (item: NotificationItem) =>
+	item.status === ProgressState.Failed || item.status === ProgressState.Error;
 const isRunning = (item: NotificationItem) => item.status === ProgressState.Running;
 const isCancelling = (item: NotificationItem) => item.status === ProgressState.Cancelling;
 const isCancelled = (item: NotificationItem) => item.status === ProgressState.Cancelled;
@@ -126,8 +127,8 @@ const cancelTask = (item: NotificationItem) => {
 	if (
 		[
 			ClientEventType.TaskGollmModelCard,
-			ClientEventType.TaskGollmConfigureModel,
-			ClientEventType.TaskGollmConfigureFromDataset,
+			ClientEventType.TaskGollmConfigureModelFromDocument,
+			ClientEventType.TaskGollmConfigureModelFromDataset,
 			ClientEventType.TaskGollmCompareModel
 		].includes(item.type)
 	) {

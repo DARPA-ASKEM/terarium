@@ -4,7 +4,6 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.ErrorCause;
 import co.elastic.clients.elasticsearch._types.KnnQuery;
-import co.elastic.clients.elasticsearch._types.Refresh;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.cluster.ExistsComponentTemplateRequest;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
@@ -36,7 +35,6 @@ import co.elastic.clients.elasticsearch.indices.RefreshResponse;
 import co.elastic.clients.elasticsearch.ingest.GetPipelineRequest;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
-import co.elastic.clients.transport.endpoints.BooleanResponse;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -215,7 +213,8 @@ public class ElasticsearchService {
 	}
 
 	/**
-	 * Create the provided index if it doesn't exist, if it does, delete it and re-create it.
+	 * Create the provided index if it doesn't exist, if it does, delete it and
+	 * re-create it.
 	 *
 	 * @param index
 	 * @throws IOException
@@ -225,6 +224,7 @@ public class ElasticsearchService {
 			if (indexExists(index)) {
 				deleteIndex(index);
 			}
+			log.info("Creating index {}", index);
 			createIndex(index);
 		} catch (final ElasticsearchException e) {
 			throw handleException(e);
@@ -232,10 +232,12 @@ public class ElasticsearchService {
 	}
 
 	/**
-	 * Returns true if the ES cluster contains the index template with the provided name, false otherwise
+	 * Returns true if the ES cluster contains the index template with the provided
+	 * name, false otherwise
 	 *
 	 * @param name The name of the index template to check existence for
-	 * @return True if the index template is contained in the cluster, false otherwise
+	 * @return True if the index template is contained in the cluster, false
+	 *         otherwise
 	 */
 	public boolean containsIndexTemplate(final String name) throws IOException {
 		try {
@@ -250,7 +252,7 @@ public class ElasticsearchService {
 	/**
 	 * Put an index template to the cluster
 	 *
-	 * @param name The name of the index template
+	 * @param name         The name of the index template
 	 * @param templateJson The index template json string
 	 * @return True if the index template was successfully added, false otherwise
 	 */
@@ -280,7 +282,7 @@ public class ElasticsearchService {
 	/**
 	 * Put a pipeline to the cluster
 	 *
-	 * @param name The name of the pipeline
+	 * @param name         The name of the pipeline
 	 * @param pipelineJson The pipeline json string
 	 * @return True if the pipeline was successfully added, false otherwise
 	 */
@@ -293,10 +295,12 @@ public class ElasticsearchService {
 	}
 
 	/**
-	 * Returns true if the ES cluster contains the component template with the provided name, false otherwise
+	 * Returns true if the ES cluster contains the component template with the
+	 * provided name, false otherwise
 	 *
 	 * @param name The name of the index template to check existence for
-	 * @return True if the component template is contained in the cluster, false otherwise
+	 * @return True if the component template is contained in the cluster, false
+	 *         otherwise
 	 */
 	public boolean containsComponentTemplate(final String name) throws IOException {
 		final ExistsComponentTemplateRequest req = new ExistsComponentTemplateRequest.Builder().name(name).build();
@@ -307,9 +311,10 @@ public class ElasticsearchService {
 	/**
 	 * Put an component template to the cluster
 	 *
-	 * @param name The name of the index template
+	 * @param name         The name of the index template
 	 * @param templateJson The component template json string
-	 * @return True if the component template was successfully added, false otherwise
+	 * @return True if the component template was successfully added, false
+	 *         otherwise
 	 */
 	public boolean putComponentTemplate(final String name, final String templateJson) {
 		return putTyped(name, templateJson, "component template", "_component_template");
@@ -318,9 +323,9 @@ public class ElasticsearchService {
 	/**
 	 * Put a typed object to the cluster
 	 *
-	 * @param name The name of the object
+	 * @param name      The name of the object
 	 * @param typedJson The object json string
-	 * @param typeName The type of the object
+	 * @param typeName  The type of the object
 	 * @param indexName The index to put the object in
 	 * @return True if the object was successfully added, false otherwise
 	 */
@@ -344,8 +349,8 @@ public class ElasticsearchService {
 	/**
 	 * Search an index.
 	 *
-	 * @param <T> The type of the document
-	 * @param req - The search request
+	 * @param <T>    The type of the document
+	 * @param req    - The search request
 	 * @param tClass The class of the document
 	 * @return A list of found documents.
 	 */
@@ -367,8 +372,8 @@ public class ElasticsearchService {
 	/**
 	 * Search an index.
 	 *
-	 * @param <T> The type of the document
-	 * @param req - The search request
+	 * @param <T>    The type of the document
+	 * @param req    - The search request
 	 * @param tClass The class of the document
 	 * @return A list of found documents.
 	 */
@@ -383,12 +388,33 @@ public class ElasticsearchService {
 	/**
 	 * Add a document to an index.
 	 *
-	 * @param <T> The type of the document
-	 * @param index The index to add the document to
-	 * @param id The id of the document
+	 * @param <T>      The type of the document
+	 * @param index    The index to add the document to
+	 * @param id       The id of the document
 	 * @param document The document to add
 	 */
 	public <T> void index(final String index, final String id, final T document) throws IOException {
+		try {
+			log.info("Indexing: {} into {}", id, index);
+
+			final IndexRequest<T> req = new IndexRequest.Builder<T>().index(index).id(id).document(document).build();
+
+			client.index(req);
+		} catch (final ElasticsearchException e) {
+			throw handleException(e);
+		}
+	}
+
+	/**
+	 * Add a document to an index with a routing key.
+	 *
+	 * @param <T>      The type of the document
+	 * @param index    The index to add the document to
+	 * @param id       The id of the document
+	 * @param document The document to add
+	 */
+	public <T> void indexWithRouting(final String index, final String id, final T document, final String routing)
+		throws IOException {
 		try {
 			log.info("Indexing: {} into {}", id, index);
 
@@ -396,7 +422,7 @@ public class ElasticsearchService {
 				.index(index)
 				.id(id)
 				.document(document)
-				.refresh(Refresh.WaitFor)
+				.routing(routing)
 				.build();
 
 			client.index(req);
@@ -409,13 +435,13 @@ public class ElasticsearchService {
 	 * Remove a document from an index.
 	 *
 	 * @param index The index to remove the document from
-	 * @param id The id of the document to remove
+	 * @param id    The id of the document to remove
 	 */
 	public void delete(final String index, final String id) throws IOException {
 		try {
 			log.info("Deleting: {} from {}", id, index);
 
-			final DeleteRequest req = new DeleteRequest.Builder().index(index).id(id).refresh(Refresh.WaitFor).build();
+			final DeleteRequest req = new DeleteRequest.Builder().index(index).id(id).build();
 
 			client.delete(req);
 		} catch (final ElasticsearchException e) {
@@ -427,7 +453,7 @@ public class ElasticsearchService {
 	 * Update a document from an index.
 	 *
 	 * @param index The index to remove the document from
-	 * @param id The id of the document to remove
+	 * @param id    The id of the document to remove
 	 */
 	public <T, Partial> void update(final String index, final String id, final Partial partial) throws IOException {
 		try {
@@ -437,7 +463,6 @@ public class ElasticsearchService {
 				.index(index)
 				.id(id)
 				.doc(partial)
-				.refresh(Refresh.WaitFor)
 				.build();
 
 			client.update(req, Void.class);
@@ -466,9 +491,9 @@ public class ElasticsearchService {
 	/**
 	 * Get a single document by id.
 	 *
-	 * @param <T> The type of the document
-	 * @param index The index to get the document from
-	 * @param id The id of the document to get
+	 * @param <T>    The type of the document
+	 * @param index  The index to get the document from
+	 * @param id     The id of the document to get
 	 * @param tClass The class of the document
 	 * @return The document if found, null otherwise
 	 */
@@ -651,36 +676,7 @@ public class ElasticsearchService {
 		try {
 			final GetAliasRequest request = new GetAliasRequest.Builder().name(alias).build();
 			final GetAliasResponse response = client.indices().getAlias(request);
-
 			return response.result().keySet().iterator().next();
-		} catch (final ElasticsearchException e) {
-			throw handleException(e);
-		}
-	}
-
-	enum IndexOrAlias {
-		INDEX,
-		ALIAS,
-		DOES_NOT_EXIST
-	}
-
-	public IndexOrAlias checkIfIndexOrAlias(final String name) throws IOException {
-		try {
-			final ExistsRequest existsRequest = new ExistsRequest.Builder().index(name).build();
-			final BooleanResponse isIndex = client.indices().exists(existsRequest);
-
-			if (isIndex.value()) {
-				return IndexOrAlias.INDEX;
-			}
-
-			final GetAliasRequest request = new GetAliasRequest.Builder().name(name).build();
-			final GetAliasResponse response = client.indices().getAlias(request);
-
-			if (response.result().size() != 0) {
-				return IndexOrAlias.ALIAS;
-			}
-
-			return IndexOrAlias.DOES_NOT_EXIST;
 		} catch (final ElasticsearchException e) {
 			throw handleException(e);
 		}

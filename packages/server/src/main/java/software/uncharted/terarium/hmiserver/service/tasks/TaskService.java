@@ -88,14 +88,16 @@ public class TaskService {
 			additionalProperties = req.getAdditionalProperties();
 		}
 
-		public TaskResponse createResponse(final TaskStatus status) {
+		public TaskResponse createResponse(final TaskStatus status, final String stdout, final String stderr) {
 			return new TaskResponse()
 				.setId(id)
 				.setStatus(status)
+				.setScript(getScript())
 				.setUserId(userId)
 				.setProjectId(projectId)
-				.setScript(getScript())
 				.setAdditionalProperties(getAdditionalProperties())
+				.setStdout(stdout)
+				.setStderr(stderr)
 				.setRequestSHA256(getSHA256());
 		}
 	}
@@ -109,11 +111,18 @@ public class TaskService {
 			this.future = new CompletableFuture<>();
 		}
 
-		public CompletableTaskFuture(final UUID id, final TaskResponse resp) {
-			this.id = id;
+		public CompletableTaskFuture(final TaskRequestWithId req, final TaskResponse resp) {
+			this.id = req.getId();
+
+			// We are re-using a cached response, so lets create a TaskResponse from the
+			// actual TaskRequest
+			// and then copy over the response payload.
+			final TaskResponse actualResp = req.createResponse(resp.getStatus(), resp.getStdout(), resp.getStderr());
+			actualResp.setOutput(resp.getOutput());
+
 			this.future = new CompletableFuture<>();
-			this.future.complete(resp);
-			this.latestResponse = resp;
+			this.future.complete(actualResp);
+			this.latestResponse = actualResp;
 		}
 
 		public synchronized void complete(final TaskResponse resp) {
@@ -133,12 +142,6 @@ public class TaskService {
 	// evicted.
 	@Value("${terarium.taskrunner.response-cache-max-idle-seconds:7200}") // 2 hours
 	private long CACHE_MAX_IDLE_SECONDS;
-
-	// Always use a lease time for distributed locks to prevent application wide
-	// deadlocks. If for whatever reason the lock has not been released within a
-	// N seconds, it will automatically free itself.
-	@Value("${terarium.taskrunner.redis-lock-lease-seconds:10}") // 10 seconds
-	private long REDIS_LOCK_LEASE_SECONDS;
 
 	private final RabbitTemplate rabbitTemplate;
 	private final RabbitAdmin rabbitAdmin;
@@ -337,9 +340,10 @@ public class TaskService {
 				try {
 					// add to the response cache
 					log.info(
-						"Writing SUCCESS response for task id {} to cache under SHA: {}",
+						"Writing SUCCESS response for task id {} to cache under SHA: {} for script {}",
 						resp.getId(),
-						resp.getRequestSHA256()
+						resp.getRequestSHA256(),
+						resp.getScript()
 					);
 					responseCache.put(
 						resp.getRequestSHA256(),
@@ -363,7 +367,7 @@ public class TaskService {
 
 				notificationService.createNotificationEvent(resp.getId(), event);
 			} catch (final Exception e) {
-				log.error("Failed to persist notification event for for task {}", resp.getId(), e);
+				log.error("Failed to persist notification event for for task {}", resp.getId());
 			}
 
 			try {
@@ -405,6 +409,75 @@ public class TaskService {
 			broadcastTaskResponseToAllInstances(resp);
 		} catch (final Exception e) {
 			log.error("Error processing task response message", e);
+		}
+	}
+
+	private void processCachedTaskResponse(final TaskRequestWithId req, TaskResponse resp) {
+		try {
+			log.info("Creating notification group under id: {}", req.getId());
+
+			// create the notification group for the task
+			final NotificationGroup group = new NotificationGroup();
+			group.setId(req.getId()); // use the task id
+			group.setType(TaskNotificationEventTypes.getTypeFor(req.getScript()).toString());
+			group.setUserId(req.getUserId());
+			group.setProjectId(req.getProjectId());
+
+			notificationService.createNotificationGroup(group);
+		} catch (final Exception e) {
+			log.error("Failed to create notificaiton group for id: {}", req.getId(), e);
+		}
+
+		try {
+			// execute the handler
+			if (responseHandlers.containsKey(resp.getScript())) {
+				// handle the response
+				resp = responseHandlers.get(resp.getScript()).handle(resp);
+			}
+		} catch (final Exception e) {
+			log.error("Error occured while executing response handler for task {}", resp.getId(), e);
+
+			// if the handler fails processing a success, convert it to a failure
+			resp.setStatus(TaskStatus.FAILED);
+			resp.setOutput(e.getMessage().getBytes());
+		}
+
+		try {
+			log.info("Creating notification group under id: {}", req.getId());
+
+			// create the notification group for the task
+			final NotificationGroup group = new NotificationGroup();
+			group.setId(req.getId()); // use the task id
+			group.setType(TaskNotificationEventTypes.getTypeFor(req.getScript()).toString());
+			group.setUserId(req.getUserId());
+			group.setProjectId(req.getProjectId());
+
+			notificationService.createNotificationGroup(group);
+			// create the notification event
+			final NotificationEvent event = new NotificationEvent();
+			event.setData(resp);
+
+			log.info("Creating notification event under group id: {}", resp.getId());
+
+			notificationService.createNotificationEvent(resp.getId(), event);
+		} catch (final Exception e) {
+			log.error("Failed to persist notification event for for task {}", resp.getId());
+		}
+
+		try {
+			// send the client event
+			final ClientEventType clientEventType = TaskNotificationEventTypes.getTypeFor(resp.getScript());
+			log.info("Sending client event with type {} for task {} ", clientEventType.toString(), resp.getId());
+
+			final ClientEvent<TaskResponse> clientEvent = ClientEvent.<TaskResponse>builder()
+				.notificationGroupId(resp.getId())
+				.projectId(resp.getProjectId())
+				.type(clientEventType)
+				.data(resp)
+				.build();
+			clientEventService.sendToUser(clientEvent, resp.getUserId());
+		} catch (final Exception e) {
+			log.error("Failed to send client event for for task {}", resp.getId(), e);
 		}
 	}
 
@@ -453,7 +526,7 @@ public class TaskService {
 		// create sha256 hash of the request
 		final String hash = req.getSHA256();
 
-		log.info("Checking for cached response under SHA: {}", hash);
+		log.info("Checking for cached response under SHA: {} for {} for script: {}", hash, req.getId(), req.getScript());
 
 		// check if there is an existing response for the hash
 		final TaskResponse resp = responseCache.get(hash);
@@ -464,7 +537,12 @@ public class TaskService {
 			log.info("Task response found in cache for SHA: {}", hash);
 
 			// create and return a completed task future
-			return new CompletableTaskFuture(req.getId(), resp);
+			final CompletableTaskFuture future = new CompletableTaskFuture(req, resp);
+
+			// process the cached response as if it were a new response
+			processCachedTaskResponse(req, future.getLatest());
+
+			return future;
 		}
 
 		// no cache entry for task, send a new one
@@ -501,12 +579,12 @@ public class TaskService {
 
 		try {
 			// send the request to the task runner
-			log.info("Dispatching request: {} for task id: {}", new String(req.getInput()), req.getId());
+			log.info("Dispatching request for task id: {}", req.getId());
 			final String jsonStr = objectMapper.writeValueAsString(req);
 			rabbitTemplate.convertAndSend(requestQueue, jsonStr);
 
 			// publish the queued task response
-			final TaskResponse queuedResponse = req.createResponse(TaskStatus.QUEUED);
+			final TaskResponse queuedResponse = req.createResponse(TaskStatus.QUEUED, "", "");
 			final String respJsonStr = objectMapper.writeValueAsString(queuedResponse);
 			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", respJsonStr);
 

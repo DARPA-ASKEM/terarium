@@ -43,6 +43,7 @@ header {
 	padding-top: 1rem;
 	padding-left: 1.5rem;
 	padding-right: 1.5rem;
+	border-bottom: 1px solid var(--surface-border-light);
 }
 
 header > * {
@@ -74,7 +75,7 @@ header .title {
 header .tabs-row {
 	justify-content: space-between;
 	align-items: end;
-	gap: var(--gap);
+	gap: var(--gap-4);
 }
 
 header .tabs-row:deep(.p-tabview .p-tabview-panels) {
@@ -97,12 +98,15 @@ a {
 :deep(.p-tabview .p-tabview-nav li .p-tabview-nav-link:focus) {
 	background-color: var(--surface-section);
 }
+:deep(.p-tabview .p-tabview-nav li .p-tabview-nav-link) {
+	padding: var(--gap-3) var(--gap-6);
+}
 
 .actions {
 	display: flex;
 	justify-content: flex-end;
 	gap: var(--gap-small);
-	padding-bottom: var(--gap-small);
+	padding-bottom: var(--gap-1);
 	flex: 1;
 }
 

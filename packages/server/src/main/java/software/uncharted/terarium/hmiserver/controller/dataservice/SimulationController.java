@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,7 +54,6 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@Transactional
 public class SimulationController {
 
 	private final Config config;
@@ -313,7 +311,7 @@ public class SimulationController {
 	 * @param projectId ID of the project to add the dataset to
 	 * @return Dataset the new dataset created
 	 */
-	@PostMapping("/{id}/add-result-as-dataset-to-project/{project-id}")
+	@PostMapping("/{id}/create-result-as-dataset/{project-id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new dataset from a simulation result, then add it to a project as a Dataset")
 	@ApiResponses(
@@ -334,10 +332,11 @@ public class SimulationController {
 			)
 		}
 	)
-	public ResponseEntity<ProjectAsset> createFromSimulationResult(
+	public ResponseEntity<Dataset> createFromSimulationResult(
 		@PathVariable("id") final UUID id,
 		@PathVariable("project-id") final UUID projectId,
-		@RequestParam("dataset-name") final String datasetName
+		@RequestParam("dataset-name") final String datasetName,
+		@RequestParam("add-to-project") final Boolean addToProject
 	) {
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
@@ -369,19 +368,17 @@ public class SimulationController {
 			simulationService.copySimulationResultToDataset(sim.get(), dataset);
 			datasetService.updateAsset(dataset, projectId, permission);
 
+			// If this is a temporary asset, do not add to project.
+			if (!addToProject) {
+				return ResponseEntity.status(HttpStatus.CREATED).body(dataset);
+			}
+
 			// Add the dataset to the project as an asset
 			final Optional<Project> project = projectService.getProject(projectId);
 			if (project.isPresent()) {
-				final Optional<ProjectAsset> asset = projectAssetService.createProjectAsset(
-					project.get(),
-					AssetType.DATASET,
-					dataset,
-					permission
-				);
+				projectAssetService.createProjectAsset(project.get(), AssetType.DATASET, dataset, permission);
 				// underlying asset does not exist
-				return asset
-					.map(projectAsset -> ResponseEntity.status(HttpStatus.CREATED).body(projectAsset))
-					.orElseGet(() -> ResponseEntity.notFound().build());
+				return ResponseEntity.status(HttpStatus.CREATED).body(dataset);
 			} else {
 				log.error("Failed to add the dataset from simulation {} result", id);
 				return ResponseEntity.internalServerError().build();

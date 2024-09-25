@@ -11,60 +11,123 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 2. Create, or open, project named `QA [Your Name]`
 
 ### 2. Upload asset
-1. Add the [SIR model](https://drive.google.com/file/d/1vtIwevIXR4DkEROcR7KdKrCrEHGfo7s0/view?usp=sharing) to the project.
+1. Add the [SEIRHD model](https://github.com/DARPA-ASKEM/terarium/blob/3c80ae8f3ad012ebfbdd3a8f1883066eec4b48ac/testing/data/SEIRHD%20Q1b%20added%20params.json) to the project.
 
-### 3. Create simple stratified model
-1. Create a new workflow and name it `SIR stratification`
-2. Add the model to the workflow and connect it to a `Configure model` component
-3. __Expected Result:__ The Configure model component shows accurate values
-   1. Appropriate Diagram
-   2. Three Model equations
-   3. Initial variables (1000, 2, 0)
-   4. Parameters (0.6, 0.2)
-4. Name and Save and close the Configure model component
-5. Add a `Stratify model` component to the workflow
-6. Link the saved model configuration to the stratify component and press the `Edit` button to bring up the component details
-7. Press the `Stratify` button
-8. __Expected Result:__ The original model should appear in the right panel
-9. Add a new stratification variable named `Age`
-   1. select all variables to stratify
-   2. add `young`, `middle`, and `old` age groups
-   3. ensure that `Create new transitions between strata` and `Allow existing interactions to involve multiple strata` are NOT checked
-10. Press the `Stratify` button
-11. __Expected Result:__ The stratified model should appear in the right panel with the following changes
-    1. The graph should contain stratified state and transitions
-    2. `Initial variables` should be stratified
-    3. `Parameters` should be stratified
-    4. `Transitions` should be stratified
-12. Save the stratified model as a new model and connect it to a new configure model component
-13. Open the new configure model component
-14. __Expected Result:__ The Configure model component shows accurate values
-    1. Appropriate Diagram
-    2. Matrix of Initial variables
-       * (S = 1000/3 each)
-       * (I = 2/3 each)
-       * (R = 0 each)
-    3. Matrix of Parameters
-       * (β = 0.6/3 each)
-       * (γ = 0.2/3 each)
-    4. Stratification variable `Age`
+### 3. Stratify a model by many stratum groups
 
-### 4. Edit Stratified Model
-1. Open up the new stratified model configuration created in the previous step
-2. Modify `Initial variables` and `Parameters` using various methods
-3. Save changes and close the model
-4. __Expected Result:__ The model should show the updated values
+We want to stratified the model by several age groups to simulate how contact rates between age groups can affect the number of susceptible persons of one age group become exposed to the disease by infected persons from another age group.
 
-### 5. Chain Stratified Models
-1. Add a new `Stratify model` component to the workflow
-2. Link the model created in the previous step to the stratify component and press the `Edit` button to bring up the component details
-3. Add a new stratification variable named `Intelligence`
-   1. select `S_middle`, `I_middle`, and `R_middle` to stratify
-   2. add `smart` and `dumb` groups
-   3. ensure that `Create new transitions between strata` and `Allow existing interactions to involve multiple strata` are NOT checked
-4. Press the `Stratify` button
-5. __Expected Result:__ The stratified model should appear in the right panel with the following changes
-   1. The graph should contain new stratified states
-   2. `Initial variables` should have new stratifications
-   3. `Parameters` should not have new stratifications
-   4. `Transitions` should have new stratifications
+1. Create a new workflow with the name `Stratify Test 1`
+2. Drag and drop the model onto the canvas
+3. Right-click on the canvas to add a `Stratify model` operator under **Modeling**
+6. Connect the output port of the `Model` operator to the input port of the `Stratify model` operator
+7. Click **Edit** on the `Stratify model` operator to specify the stratification action
+8. Apply these settings
+   1. Name of strata: _age_
+   2. Select variables and parameters to stratify: _S, E, I, c_
+   3. Enter a comma-separated list of labels for each group: _0to4, 5to9, 10to14, 15to19, 20to24, 25to29, 30to34, 35to39, 40to44, 45to49, 50to54, 55to59, 60to64, 65to69, 70to74, 75to79, 80to84, 85above_
+   4. Create new transitions between strata: _False_
+   5. Allow existing interactions to involve multiple strata: _True_
+9. Click **Stratify**
+10. Expected result:
+   1. `Output - 2`  is available in the output selection dropdown in the top-right corner
+   2. A new model with the same structure as the SEIRHD model appears in the right half of the interface
+   3. The states `S, E, I` of the new model have 18 nodes that are circle-packed within them, representing the new stratified states `S_0to4, S_5to9, ...`
+11. Select and double-click the transition `template-1` between the states `S, E` to expand the matrix view of this transition
+   1. The shape of the matrix `18 x 18`
+   2. The rows are `S_0to4, S_10to14, ...` and the columns are `E_0to4, E_10to14, ...`
+   3. All off-diagonal values are `n/a`
+   4. Toggle **Evaluate expression** in the top-right corner to numerically evaluate the parameters in the math expressions
+   5. Click **OK** to close this view
+12. Confirm that only the `S, E, I` states are expandable in the **State variables** table, ditto for `c` in the **Parameters** table
+   1. In the `Parameters` table, click on `Open matrix` on the right of the parameter `c`
+   2. An expanded view of the `18 x 18` matrix of `c` is shown
+   3. Select `subjectControllers` in the top-left dropdown
+   4. Every entry of the matrix should have a value of type `c_*_*`
+13. Click on the **...** in the top-right corner to save this stratified model as `test 1`
+   1. Confirm that `test 1` does appear in the **Models** section of the **Resources** panel on the left of the interface
+14. Click **X** in the top-right corner to exit
+15. Right-click on the canvas to add a `Configure model` operator under **Config & Intervention**
+16. Connect the output port of the `Stratify model` operator to the **Model** input port of the `Configure model` operator
+17. Click **Open** to expand the operator
+   1. Click **Open Matrix** on the `S` state in the `Initials` table
+   2. Confirm that the value of every state in the `18 x 1` matrix is `S_0 / 18`
+
+
+### 4. Customize a model stratification 
+1. Create a new workflow with the name `Stratify Test 2`
+2. Drag and drop the `SEIRHD` model onto the canvas
+3. Right-click on the canvas to add a `Stratify model` operator under **Modeling**
+6. Connect the output port of the `Model` operator to the input port of the `Stratify model` operator
+7. Click **Edit** on the `Stratify model` operator to specify the stratification action
+8. Apply these settings
+   1. Name of strata: _vaccination_
+   2. Select variables and parameters to stratify: _S, v_
+   3. Enter a comma-separated list of labels for each group: _unvaccinated, vaccinated_
+   4. Create new transitions between strata: _True_
+   5. Allow existing interactions to involve multiple strata: _False_
+9. Click **Stratify**
+10. Confirm that a new stratified model appears on the right
+11. Click on the **Notebook** tab at the top of the interface to refine the stratification
+12. Confirm that this function call is shown in the code editor
+```python
+model = stratify(
+    template_model=model,
+    key= "age",
+    strata=['unvaccinated', 'vaccinated'],
+    structure= None,
+    directed=False,
+    cartesian_control=False,
+    modify_names=True,
+    concepts_to_stratify=['S'], #If none given, will stratify all concepts.
+    params_to_stratify= ['v'], #If none given, will stratify all parameters.
+    param_renaming_uses_strata_names = True
+)
+```
+13. Edit the code as follows:
+```python
+model = stratify(
+    ...
+    structure= [['unvaccinated', 'vaccinated']],
+    directed=True,
+    ...
+)
+```
+14. Click **Run**
+15. Confirm that a new stratified model appears on the right
+   1. The model structure is mostly unchanged
+   2. Only the state `S` has two stratified states within it: `S_unvaccinated, S_vaccinated`
+   3. One new transition named `template-7` with rate law `S_unvaccinated*p_unvaccinated_vaccinated`
+   4. The transition `template-1` is now a `2 x 1` matrix
+   5. There are 8 transitions in total
+16. Click **X** to exit this operator
+
+### 5. Chain-stratify model
+
+Next, let's stratify the model to again to introduce the dependency of the infection and vaccine processes on which vaccine is used. That is, how many people are vaccined by the Pfizer, Moderna, or JJ vaccines and how the rate of infection is modified.
+
+1. Right-click on the canvas to add another `Stratify model` operator next to the previous one
+2. Connect the output port of the previous `Stratify model` operator to the input port of the new one
+3. Click **Edit** on the new `Stratify model` operator to specify the stratification action
+4. Apply these settings
+   1. Name of strata: _vaccine_
+   2. Select variables and parameters to stratify: _S_vaccinated, v_vaccinated, p_unvaccinated_vaccinated_
+   3. Enter a comma-separated list of labels for each group: _pfizer, moderna, jj_
+   4. Create new transitions between strata: _False_
+   5. Allow existing interactions to involve multiple strata: _False_
+5. Click **Stratify**
+6. Confirm that a new stratified model appears on the right
+   1. The `template-7` transition is now a `1 x 3` matrix, representing the three different possible vaccination processes (from unvaccinated to vaccinated by any of the three vaccines)
+   2. Check that there are now four stratified `S` states: `S_unvaccinated, S_vaccinated_jj, S_vaccinated_moderna, S_vaccinated_pfizer`
+   3. The parameter `v` is a `4 x 1` matrix (in 'subjectOutcome' view) with those values `v_unvaccinated, v_vaccinated`
+
+### 6. Confirm Auto-configuration
+
+Lastly, let's check that the stratification assigned appropriate initial condition values to the new, stratified state variables.
+
+1. Right-click on the canvas to add two `Configure model` operators, one below each of the `Stratify model` operators above
+2. Connect the output port of both `Stratify model` operators to the respective input **model** port of the `Configure model` operators
+3. In the first `Configure model` operator
+   1. Confirm that the values of the `S` state in the **Initials** table are `S0/2`
+4. In the second operator
+   1. Confirm that the initial value of `S_unvaccinated` is `S0/2`, and `S0/6` for the other stratified `S` states

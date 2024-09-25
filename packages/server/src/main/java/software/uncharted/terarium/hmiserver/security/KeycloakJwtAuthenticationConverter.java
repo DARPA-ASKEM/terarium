@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.security;
 
 import static java.util.stream.Collectors.toSet;
 
-import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -75,7 +74,6 @@ public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, Abstra
 			.collect(Collectors.toSet());
 	}
 
-	@Transactional
 	public User initializeUser(final Jwt jwt, final List<String> keycloakRoles) {
 		final User user = adminClientService.getUserFromJwt(jwt);
 

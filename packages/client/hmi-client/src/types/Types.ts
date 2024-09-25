@@ -88,6 +88,15 @@ export interface Artifact extends TerariumAsset {
     metadata?: any;
 }
 
+export interface ChartAnnotation extends TerariumAsset {
+    nodeId: string;
+    outputId: string;
+    chartId: string;
+    layerSpec: any;
+    llmGenerated: boolean;
+    metadata: any;
+}
+
 export interface CsvAsset {
     csv: string[][];
     stats?: CsvColumnStats[];
@@ -277,141 +286,6 @@ export interface Transition {
     expression?: string;
     grounding?: ModelGrounding;
     properties?: Properties;
-}
-
-export interface Configuration {
-    parameters: { [index: string]: ConfigurationParameter };
-    initialConditions: { [index: string]: ConfigurationCondition };
-    boundryConditions: { [index: string]: ConfigurationCondition };
-    datasets: { [index: string]: ConfigurationDataset };
-}
-
-export interface ConfigurationCondition {
-    _type: string;
-    type: string;
-    value: string;
-    domainMesh: string;
-}
-
-export interface ConfigurationDataset {
-    _type: string;
-    type: string;
-    name: string;
-    description: string;
-    file: ConfigurationDatasetFile;
-}
-
-export interface ConfigurationDatasetFile {
-    _type: string;
-    uri: string;
-    format: string;
-    shape: number[];
-}
-
-export interface ConfigurationHeader {
-    id: string;
-    description: string;
-    name: string;
-    parentContext: string;
-}
-
-export interface ConfigurationParameter {
-    _type: string;
-    type: string;
-    value: any;
-}
-
-export interface Context {
-    constants: { [index: string]: ContextConstant };
-    spatialConstraints: any;
-    temporalConstraints: any;
-    primalDualRelations: ContextPrimalDualRelation[];
-    meshSubmeshRelations: ContextMeshSubmeshRelation[];
-    meshes: ContextMesh[];
-}
-
-export interface ContextConstant {
-    _type: string;
-    value: any;
-}
-
-export interface ContextFile {
-    uri: string;
-    format: string;
-}
-
-export interface ContextHeader {
-    id: string;
-    description: string;
-    name: string;
-    parentModel: string;
-}
-
-export interface ContextMesh {
-    id: string;
-    description: string;
-    dimensionality: any;
-    vertexCount: number;
-    edgeCount: number;
-    faceCount: number;
-    volumeCount: number;
-    regions: any[];
-    checksum: string;
-    file: ContextFile;
-}
-
-export interface ContextMeshSubmeshRelation {
-    mesh: string;
-    submesh: string;
-    relation: any;
-}
-
-export interface ContextPrimalDualRelation {
-    primal: string;
-    dual: string;
-    method: any;
-}
-
-export interface DecapodesComponent {
-    modelInterface: string[];
-    model: DecapodesExpression;
-    _type: string;
-}
-
-export interface DecapodesConfiguration extends TerariumAsset {
-    header: ConfigurationHeader;
-    configuration: Configuration;
-}
-
-export interface DecapodesContext extends TerariumAsset {
-    header: ContextHeader;
-    context: Context;
-}
-
-export interface DecapodesEquation {
-    lhs: any;
-    rhs: any;
-    _type: string;
-}
-
-export interface DecapodesExpression {
-    context: any[];
-    equations: DecapodesEquation[];
-    _type: string;
-}
-
-export interface DecapodesTerm {
-    name?: string;
-    var?: DecapodesTerm;
-    symbol?: string;
-    space?: string;
-    fs?: string[];
-    arg?: DecapodesTerm;
-    f?: string;
-    arg1?: DecapodesTerm;
-    arg2?: DecapodesTerm;
-    args?: DecapodesTerm[];
-    _type: string;
 }
 
 export interface NotebookSession extends TerariumAsset {
@@ -679,20 +553,6 @@ export interface CalibrationRequestCiemss {
     engine: string;
 }
 
-export interface CalibrationRequestJulia {
-    modelConfigId: string;
-    extra: any;
-    timespan?: TimeSpan;
-    dataset: DatasetLocation;
-    engine: string;
-}
-
-export interface CiemssStatusUpdate {
-    loss: number;
-    progress: number;
-    jobId: string;
-}
-
 export interface EnsembleCalibrationCiemssRequest {
     modelConfigs: EnsembleModelConfigs[];
     dataset: DatasetLocation;
@@ -712,23 +572,13 @@ export interface OptimizeRequestCiemss {
     modelConfigId: string;
     timespan: TimeSpan;
     optimizeInterventions?: OptimizeInterventions;
-    fixedStaticParameterInterventions?: Intervention[];
+    fixedInterventions?: Intervention[];
     loggingStepSize?: number;
-    qoi: OptimizeQoi;
-    riskBound: number;
+    qoi: OptimizeQoi[];
     boundsInterventions: number[][];
     extra: OptimizeExtra;
     engine: string;
     userId: string;
-}
-
-export interface ScimlStatusUpdate {
-    loss: number;
-    iter: number;
-    params: { [index: string]: number };
-    id: string;
-    solData: { [index: string]: any };
-    timesteps: number[];
 }
 
 export interface SimulationRequest {
@@ -743,13 +593,12 @@ export interface DynamicIntervention {
     parameter: string;
     threshold: number;
     value: number;
-    isGreaterThan: boolean;
+    appliedTo: string;
+    type: InterventionSemanticType;
 }
 
 export interface Intervention {
     name: string;
-    appliedTo: string;
-    type: InterventionSemanticType;
     staticInterventions: StaticIntervention[];
     dynamicInterventions: DynamicIntervention[];
 }
@@ -762,6 +611,8 @@ export interface InterventionPolicy extends TerariumAsset {
 export interface StaticIntervention {
     timestep: number;
     value: number;
+    appliedTo: string;
+    type: InterventionSemanticType;
 }
 
 export interface DatasetLocation {
@@ -782,7 +633,7 @@ export interface OptimizeExtra {
     maxiter?: number;
     maxfeval?: number;
     isMinimized?: boolean;
-    alpha?: number;
+    alpha?: number[];
     solverMethod?: string;
     solverStepSize?: number;
 }
@@ -799,11 +650,28 @@ export interface OptimizeInterventions {
 export interface OptimizeQoi {
     contexts: string[];
     method: string;
+    riskBound: number;
+    isMinimized: boolean;
 }
 
 export interface TimeSpan {
     start: number;
     end: number;
+}
+
+export interface CiemssCalibrateStatusUpdate extends CiemssStatusUpdate {
+    loss: number;
+}
+
+export interface CiemssOptimizeStatusUpdate extends CiemssStatusUpdate {
+    currentResults: number[];
+    totalPossibleIterations: number;
+}
+
+export interface CiemssStatusUpdate {
+    jobId: string;
+    progress: number;
+    type: CiemssStatusType;
 }
 
 export interface TaskResponse {
@@ -896,6 +764,7 @@ export interface ModelMetadata {
     card?: Card;
     provenance?: string[];
     source?: any;
+    description?: any;
     processed_at?: number;
     processed_by?: string;
     variable_statements?: VariableStatement[];
@@ -1152,11 +1021,17 @@ export enum AssetType {
     Code = "code",
     ModelConfiguration = "model-configuration",
     Artifact = "artifact",
+    InterventionPolicy = "intervention-policy",
 }
 
 export enum EvaluationScenarioStatus {
     Started = "STARTED",
     Stopped = "STOPPED",
+}
+
+export enum CiemssStatusType {
+    Optimize = "optimize",
+    Calibrate = "calibrate",
 }
 
 export enum TaskStatus {
@@ -1169,21 +1044,30 @@ export enum TaskStatus {
 }
 
 export enum ClientEventType {
-    Heartbeat = "HEARTBEAT",
-    Notification = "NOTIFICATION",
-    SimulationSciml = "SIMULATION_SCIML",
-    SimulationPyciemss = "SIMULATION_PYCIEMSS",
-    SimulationNotification = "SIMULATION_NOTIFICATION",
-    FileUploadProgress = "FILE_UPLOAD_PROGRESS",
+    ChartAnnotationCreate = "CHART_ANNOTATION_CREATE",
+    ChartAnnotationDelete = "CHART_ANNOTATION_DELETE",
+    CloneProject = "CLONE_PROJECT",
     Extraction = "EXTRACTION",
     ExtractionPdf = "EXTRACTION_PDF",
-    TaskUndefinedEvent = "TASK_UNDEFINED_EVENT",
-    TaskGollmModelCard = "TASK_GOLLM_MODEL_CARD",
-    TaskGollmConfigureModel = "TASK_GOLLM_CONFIGURE_MODEL",
-    TaskGollmConfigureFromDataset = "TASK_GOLLM_CONFIGURE_FROM_DATASET",
-    TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
-    TaskGollmGenerateSummary = "TASK_GOLLM_GENERATE_SUMMARY",
+    FileUploadProgress = "FILE_UPLOAD_PROGRESS",
+    Heartbeat = "HEARTBEAT",
+    Notification = "NOTIFICATION",
+    SimulationNotification = "SIMULATION_NOTIFICATION",
+    SimulationPyciemss = "SIMULATION_PYCIEMSS",
+    TaskEnrichAmr = "TASK_ENRICH_AMR",
     TaskFunmanValidation = "TASK_FUNMAN_VALIDATION",
+    TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
+    TaskGollmConfigureModelFromDataset = "TASK_GOLLM_CONFIGURE_MODEL_FROM_DATASET",
+    TaskGollmConfigureModelFromDocument = "TASK_GOLLM_CONFIGURE_MODEL_FROM_DOCUMENT",
+    TaskGollmEnrichAmr = "TASK_GOLLM_ENRICH_AMR",
+    TaskGollmEquationsFromImage = "TASK_GOLLM_EQUATIONS_FROM_IMAGE",
+    TaskGollmGenerateSummary = "TASK_GOLLM_GENERATE_SUMMARY",
+    TaskGollmModelCard = "TASK_GOLLM_MODEL_CARD",
+    TaskMiraAmrToMmt = "TASK_MIRA_AMR_TO_MMT",
+    TaskMiraGenerateModelLatex = "TASK_MIRA_GENERATE_MODEL_LATEX",
+    TaskUndefinedEvent = "TASK_UNDEFINED_EVENT",
+    WorkflowDelete = "WORKFLOW_DELETE",
+    WorkflowUpdate = "WORKFLOW_UPDATE",
 }
 
 export enum ProgressState {
@@ -1276,6 +1160,7 @@ export enum ProvenanceType {
     Document = "Document",
     Workflow = "Workflow",
     Equation = "Equation",
+    InterventionPolicy = "InterventionPolicy",
 }
 
 export enum SimulationType {
@@ -1287,7 +1172,6 @@ export enum SimulationType {
 }
 
 export enum SimulationEngine {
-    Sciml = "SCIML",
     Ciemss = "CIEMSS",
 }
 

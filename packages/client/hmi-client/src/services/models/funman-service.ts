@@ -3,6 +3,7 @@ import API from '@/api/api';
 import type { FunmanPostQueriesRequest } from '@/types/Types';
 import * as d3 from 'd3';
 import { Dictionary, groupBy } from 'lodash';
+import { ConstraintGroup, ConstraintType } from '@/components/workflow/ops/funman/funman-operation';
 
 // Partially typing Funman response
 interface FunmanBound {
@@ -41,6 +42,35 @@ export async function makeQueries(body: FunmanPostQueriesRequest) {
 		logger.error(err);
 		return null;
 	}
+}
+
+export function generateConstraintExpression(config: ConstraintGroup) {
+	const { constraintType, interval, variables, timepoints } = config;
+	let expression = '';
+	for (let i = 0; i < variables.length; i++) {
+		let expressionPart = `${variables[i]}(t)`;
+		if (constraintType === ConstraintType.Increasing || constraintType === ConstraintType.Decreasing) {
+			expressionPart = `d/dt ${expressionPart}`;
+		}
+		if (i === variables.length - 1) {
+			if (
+				constraintType === ConstraintType.LessThan ||
+				constraintType === ConstraintType.LessThanOrEqualTo ||
+				constraintType === ConstraintType.Decreasing
+			) {
+				expressionPart += constraintType === ConstraintType.LessThan ? `<` : `\\leq`;
+				expressionPart += constraintType === ConstraintType.Decreasing ? '0' : `${interval?.ub ?? 0}`;
+			} else {
+				expressionPart += constraintType === ConstraintType.GreaterThan ? `>` : `\\geq`;
+				expressionPart += constraintType === ConstraintType.Increasing ? '0' : `${interval?.lb ?? 0}`;
+			}
+		} else {
+			expressionPart += ',';
+		}
+		expression += expressionPart;
+	}
+	// Adding the "for all in timepoints" in the same expression helps with text alignment
+	return `${expression} \\ \\forall \\ t \\in [${timepoints.lb}, ${timepoints.ub}]`;
 }
 
 export const processFunman = (result: any) => {
@@ -135,20 +165,15 @@ interface FunmanBoundingBox {
 	x2: number;
 	y2: number;
 }
-export const getBoxes = (
-	processedData: FunmanProcessedData,
-	param1: string,
-	param2: string,
-	_timestep: number,
-	boxType: string
-) => {
+export const getBoxes = (processedData: FunmanProcessedData, param1: string, param2: string, boxType: string) => {
 	const result: FunmanBoundingBox[] = [];
 
 	const temp = processedData.boxes
 		.filter((d: any) => d.label === boxType)
-		.map((box: any) => ({ id: box.id, timestep: box.timestep.lb }));
+		.map((box: any) => ({ id: box.id, timestep: box.timestep.ub }));
 	if (temp.length === 0) return [];
 
+	// grab latest step
 	const step = temp.sort((a, b) => b.timestep - a.timestep)[0].timestep;
 
 	processedData.boxes
@@ -164,7 +189,6 @@ export const getBoxes = (
 			});
 		});
 
-	// console.log('!!!', result);
 	return result;
 };
 
@@ -343,7 +367,6 @@ export const renderFunmanBoundaryChart = (
 	processedData: FunmanProcessedData,
 	param1: string,
 	param2: string,
-	timestep: number,
 	selectedBoxId: string,
 	options: RenderOptions
 ) => {
@@ -354,14 +377,10 @@ export const renderFunmanBoundaryChart = (
 		margin = 5;
 	}
 
-	const trueBoxes = getBoxes(processedData, param1, param2, timestep, 'true');
-	const falseBoxes = getBoxes(processedData, param1, param2, timestep, 'false');
-	const { minX, maxX, minY, maxY } = getBoxesDomain([...trueBoxes, ...falseBoxes]);
+	const trueBoxes = getBoxes(processedData, param1, param2, 'true');
+	const falseBoxes = getBoxes(processedData, param1, param2, 'false');
 
-	// console.log('true', param1, param2, trueBoxes);
-	// console.log('false', param1, param2, falseBoxes);
-	// console.log(processedData);
-	// console.log('');
+	const { minX, maxX, minY, maxY } = getBoxesDomain([...trueBoxes, ...falseBoxes]);
 
 	d3.select(element).selectAll('*').remove();
 	const svg = d3.select(element).append('svg').attr('width', width).attr('height', height);
@@ -378,7 +397,6 @@ export const renderFunmanBoundaryChart = (
 		.range([height - margin, margin]); // output range (inverted)
 
 	g.selectAll('.true-box').data(trueBoxes).enter().append('rect').classed('true-box', true).attr('fill', 'teal');
-
 	g.selectAll('.false-box').data(falseBoxes).enter().append('rect').classed('false-box', true).attr('fill', 'orange');
 
 	g.selectAll<any, FunmanBoundingBox>('rect')

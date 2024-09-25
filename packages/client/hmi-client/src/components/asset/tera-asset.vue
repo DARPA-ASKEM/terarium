@@ -3,7 +3,8 @@
 		v-if="showHeader"
 		:class="{
 			'overview-banner': pageType === ProjectPages.OVERVIEW,
-			'with-tabs': tabs.length > 1
+			'with-tabs': tabs.length > 1,
+			shadow: applyShadow
 		}"
 	>
 		<!-- put the buttons above the title if there is an overline -->
@@ -65,6 +66,7 @@
 					:class="{ 'chosen-item': id === chosenItem }"
 					:key="id"
 					@click="scrollTo(id)"
+					class="nav-item"
 				>
 					{{ navOption }}
 				</a>
@@ -219,6 +221,8 @@ watch(
 	() => props.id,
 	() => assetElementRef.value?.scrollIntoView()
 );
+
+const applyShadow = computed(() => scrollPosition.value > 8);
 </script>
 
 <style scoped>
@@ -236,6 +240,8 @@ main > section {
 	flex: 1;
 	& > :deep(*:not(nav, i)) {
 		flex: 1;
+		max-width: 100%;
+		overflow-x: auto;
 	}
 }
 
@@ -244,7 +250,7 @@ nav {
 	flex-direction: column;
 	width: fit-content;
 	gap: 1rem;
-	padding: var(--gap) var(--gap-large) 0 var(--gap-small);
+	padding: var(--gap) var(--gap-large) 0 var(--gap-2);
 	/* Responsible for stickiness */
 	position: sticky;
 	top: 0;
@@ -256,17 +262,22 @@ nav {
 	}
 }
 
+.nav-item {
+	min-width: 9.5rem;
+}
 header {
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
 	height: fit-content;
-	padding: var(--gap-small) var(--gap);
-	gap: var(--gap-small);
-	background-color: var(--surface-ground-transparent);
+	padding: var(--gap-2) var(--gap);
+	gap: var(--gap-2);
+	background-color: var(--surface-0);
 	backdrop-filter: blur(6px);
-	border-bottom: 1px solid var(--surface-border-light);
 	overflow: hidden;
+	z-index: 3;
+	box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+	transition: box-shadow 0.3s;
 }
 
 header h4 {
@@ -294,7 +305,7 @@ header.overview-banner section {
 }
 
 header.with-tabs {
-	padding: var(--gap-small) var(--gap) 0;
+	padding: var(--gap-2) var(--gap) 0;
 }
 
 .overview-banner {
@@ -326,7 +337,7 @@ header section:deep(> input) {
 }
 
 .authors i {
-	margin-right: var(--gap-small);
+	margin-right: var(--gap-2);
 }
 
 .authors ~ * {
@@ -341,22 +352,28 @@ header section:deep(> input) {
 header aside {
 	display: flex;
 	flex-direction: row;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
+}
+
+.shadow {
+	box-shadow:
+		0 4px 6px -1px rgba(0, 0, 0, 0.1),
+		0 2px 4px -2px rgba(0, 0, 0, 0.1);
 }
 
 /* Affects child components put in the slot*/
 main:deep(.p-accordion) {
-	margin: var(--gap-small);
+	margin: var(--gap-2);
 }
 
 main:deep(.p-accordion-content) {
-	padding-bottom: var(--gap-small);
+	padding-bottom: var(--gap-2);
 }
 
 main:deep(.p-accordion-content ul) {
 	display: flex;
 	flex-direction: column;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	list-style: none;
 }
 

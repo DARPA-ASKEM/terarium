@@ -4,7 +4,14 @@
 			<template v-if="!node.inputs[0].value"> Attach a model configuration </template>
 		</tera-operator-placeholder>
 		<template v-if="node.inputs[0].value">
-			<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%" />
+			<div v-if="showSpinner">
+				<div v-if="node.state.inProgressOptimizeId !== ''">
+					{{ props.node.state.currentProgress }}% of maximum iterations complete
+				</div>
+				<div v-else>Optimize complete. Running simulations</div>
+				<tera-progress-spinner :font-size="2" is-centered style="height: 100%" />
+			</div>
+
 			<div v-if="!showSpinner && runResults">
 				<template v-for="(_, index) of node.state.selectedSimulationVariables" :key="index">
 					<vega-chart :visualization-spec="preparedCharts[index]" :are-embed-actions-visible="false" />
@@ -33,14 +40,15 @@ import {
 	parsePyCiemssMap
 } from '@/services/models/simulation-service';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
-import { SimulationRequest, InterventionPolicy } from '@/types/Types';
+import { SimulationRequest, InterventionPolicy, Simulation, CiemssOptimizeStatusUpdate } from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { createForecastChart } from '@/services/charts';
 import { mergeResults, renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
 import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
-
+import { createDatasetFromSimulationResult } from '@/services/dataset';
+import { useProjects } from '@/composables/project';
 import {
 	OptimizeCiemssOperationState,
 	OptimizeCiemssOperation,
@@ -72,8 +80,20 @@ const poller = new Poller();
 const pollResult = async (runId: string) => {
 	poller
 		.setInterval(5000)
-		.setThreshold(100)
-		.setPollAction(async () => pollAction(runId));
+		.setThreshold(350)
+		.setPollAction(async () => pollAction(runId))
+		.setProgressAction((data: Simulation) => {
+			if (runId === props.node.state.inProgressOptimizeId && data.updates.length > 0) {
+				const checkpointData = _.first(data.updates)?.data as CiemssOptimizeStatusUpdate;
+				if (checkpointData) {
+					const state = _.cloneDeep(props.node.state);
+					state.currentProgress = +((100 * checkpointData.progress) / checkpointData.totalPossibleIterations).toFixed(
+						2
+					);
+					emit('update-state', state);
+				}
+			}
+		});
 
 	const pollerResults = await poller.start();
 
@@ -131,13 +151,13 @@ const preparedCharts = computed(() => {
 	return selectedSimulationVariables.map((variable) =>
 		createForecastChart(
 			{
-				dataset: result,
+				data: result,
 				variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
 				timeField: 'timepoint_id',
 				groupField: 'sample_id'
 			},
 			{
-				dataset: resultSummary,
+				data: resultSummary,
 				variables: [`${pyciemssMap[variable]}_mean:pre`, `${pyciemssMap[variable]}_mean`],
 				timeField: 'timepoint_id'
 			},
@@ -233,12 +253,30 @@ Provide a consis summary in 100 words or less.
 			state.preForecastRunId = preSimId;
 			state.inProgressPostForecastId = '';
 			state.postForecastRunId = postSimId;
+			state.currentProgress = 0;
 			emit('update-state', state);
+
+			const datasetName = `Forecast run ${state.postForecastRunId}`;
+			const projectId = useProjects().activeProjectId.value;
+			const datasetResult = await createDatasetFromSimulationResult(
+				projectId,
+				state.postForecastRunId,
+				datasetName,
+				false
+			);
+			if (!datasetResult) {
+				return;
+			}
 
 			emit('append-output', {
 				type: OptimizeCiemssOperation.outputs[0].type,
-				label: nodeOutputLabel(props.node, `Simulation output`),
-				value: [postSimId],
+				label: nodeOutputLabel(props.node, `Optimize output`),
+				value: [
+					{
+						policyInterventionId: state.optimizedInterventionPolicyId,
+						datasetId: datasetResult.id
+					}
+				],
 				isSelected: false,
 				state
 			});
@@ -263,6 +301,7 @@ Provide a consis summary in 100 words or less.
 			state.inProgressOptimizeId = '';
 			state.inProgressPreForecastId = '';
 			state.inProgressPostForecastId = '';
+			state.currentProgress = 0;
 			emit('update-state', state);
 		}
 	},

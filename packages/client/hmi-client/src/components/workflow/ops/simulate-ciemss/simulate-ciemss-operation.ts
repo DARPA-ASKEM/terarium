@@ -12,9 +12,10 @@ export interface SimulateCiemssOperationState extends BaseState {
 	currentTimespan: TimeSpan;
 	numSamples: number;
 	method: string;
+	forecastId: string; // Completed run's Id
 
 	// In progress
-	inProgressSimulationId: string;
+	inProgressForecastId: string;
 
 	errorMessage: { name: string; value: string; traceback: string };
 }
@@ -26,15 +27,14 @@ export const SimulateCiemssOperation: Operation = {
 	documentationUrl: DOCUMENTATION_URL,
 	imageUrl: simulateProbabilistic,
 	inputs: [
-		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },
+		{ type: 'modelConfigId', label: 'Model configuration' },
 		{
 			type: 'policyInterventionId',
 			label: 'Interventions',
-			acceptMultiple: false,
 			isOptional: true
 		}
 	],
-	outputs: [{ type: 'simulationId' }],
+	outputs: [{ type: 'datasetId' }],
 	isRunnable: true,
 
 	initState: () => {
@@ -43,7 +43,8 @@ export const SimulateCiemssOperation: Operation = {
 			currentTimespan: { start: 0, end: 100 },
 			numSamples: 100,
 			method: 'dopri5',
-			inProgressSimulationId: '',
+			forecastId: '',
+			inProgressForecastId: '',
 			errorMessage: { name: '', value: '', traceback: '' }
 		};
 		return init;

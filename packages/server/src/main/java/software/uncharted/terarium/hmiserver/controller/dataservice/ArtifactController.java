@@ -5,9 +5,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.transaction.Transactional;
 import java.io.IOException;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -49,7 +47,6 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@Transactional
 public class ArtifactController {
 
 	final Config config;
@@ -62,39 +59,6 @@ public class ArtifactController {
 
 	private final ProjectService projectService;
 	private final CurrentUserService currentUserService;
-
-	@GetMapping
-	@Secured(Roles.USER)
-	@Operation(summary = "Gets a list of artifacts")
-	@ApiResponses(
-		value = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "Artifacts retrieved.",
-				content = @Content(
-					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Artifact.class)
-				)
-			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue retrieving the artifacts",
-				content = @Content
-			)
-		}
-	)
-	public ResponseEntity<List<Artifact>> getArtifacts(
-		@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
-		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
-	) {
-		try {
-			return ResponseEntity.ok(artifactService.getPublicNotTemporaryAssets(page, pageSize));
-		} catch (final Exception e) {
-			final String error = "An error occurred while retrieving artifacts";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
-		}
-	}
 
 	@PostMapping
 	@Secured(Roles.USER)

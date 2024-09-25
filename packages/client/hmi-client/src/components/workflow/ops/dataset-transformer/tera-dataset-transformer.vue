@@ -4,9 +4,22 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
+		<template #header-actions>
+			<div class="header-action-buttons">
+				<Dropdown
+					v-model="selectedDataset"
+					placeholder="Select a dataframe"
+					:options="Object.keys(kernelState || [])"
+					class="5"
+					:disabled="!kernelState"
+				/>
+				<Button label="Save for reuse" severity="secondary" outlined :disabled="!kernelState" @click="onSave" />
+			</div>
+		</template>
 		<div class="background">
 			<Suspense>
 				<tera-dataset-jupyter-panel
+					ref="jupyterPanel"
 					:assets="assets"
 					:show-kernels="showKernels"
 					:show-chat-thoughts="showChatThoughts"
@@ -14,6 +27,9 @@
 					:notebook-session="notebookSession"
 					:programming-language="node.state.programmingLanguage"
 					@update-language="(lang) => onUpdateLanguage(lang)"
+					@update-kernel-state="updateKernelState"
+					:kernelState="kernelState"
+					:selected-dataset="selectedDataset"
 				/>
 			</Suspense>
 		</div>
@@ -32,6 +48,9 @@ import { cloneDeep } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 
+import Button from 'primevue/button';
+import Dropdown from 'primevue/dropdown';
+import { useProjects } from '@/composables/project';
 import { DatasetTransformerState } from './dataset-transformer-operation';
 
 const props = defineProps<{
@@ -46,9 +65,21 @@ const assets = computed(() =>
 		.filter((inputNode) => inputNode.status === WorkflowPortStatus.CONNECTED && inputNode.value)
 		.map((inputNode) => ({
 			type: inputNode.type,
-			id: inputNode.value![0]
+			id: inputNode.value![0],
+			name: useProjects().getAssetName(inputNode.value![0])
 		}))
 );
+
+const kernelState = ref(null);
+const jupyterPanel = ref();
+const selectedDataset = ref<string | null>(null);
+const updateKernelState = (newKernelState: any) => {
+	kernelState.value = newKernelState;
+	// Default the dropdown to the first dataframe
+	if (!selectedDataset.value) {
+		selectedDataset.value = Object.keys(newKernelState)[0];
+	}
+};
 
 const notebookSession = ref(<NotebookSession | undefined>undefined);
 
@@ -88,12 +119,33 @@ const addOutputPort = (data: any) => {
 		value: data.id
 	});
 };
+
+const onSave = () => {
+	jupyterPanel.value?.openDialog();
+};
 </script>
 
 <style scoped>
 .background {
 	background: white;
 	height: 100%;
-	overflow-y: auto;
+}
+
+/* hacks to make the selector and save button look consistant with other items that appear in the header */
+.header-action-buttons {
+	display: flex;
+	flex-direction: row;
+	gap: var(--gap-2);
+}
+.header-action-buttons:deep(.p-dropdown) {
+	padding: 0px 9px;
+	height: 2rem;
+}
+.header-action-buttons:deep(.p-button) {
+	height: 2rem;
+}
+.header-action-buttons:deep(.p-button .p-button-label) {
+	font-weight: 500;
+	padding: 0px var(--gap-1);
 }
 </style>

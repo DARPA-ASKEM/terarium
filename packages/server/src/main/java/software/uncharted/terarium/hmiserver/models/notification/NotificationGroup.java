@@ -50,5 +50,5 @@ public class NotificationGroup extends TerariumEntity {
 	@OneToMany(mappedBy = "notificationGroup", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@OrderBy("createdOn DESC")
 	@JsonManagedReference
-	private final List<NotificationEvent> notificationEvents = new ArrayList<>();
+	private List<NotificationEvent> notificationEvents = new ArrayList<>();
 }

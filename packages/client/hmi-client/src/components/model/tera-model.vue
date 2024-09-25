@@ -1,22 +1,23 @@
 <template>
 	<tera-asset
 		v-bind="$attrs"
-		:id="assetId"
-		:name="model?.header.name"
 		:feature-config="featureConfig"
-		:is-naming-asset="isNaming"
+		:id="assetId"
 		:is-loading="isModelLoading"
-		show-table-of-contents
+		:is-naming-asset="isNaming"
+		:name="temporaryModel?.header.name"
 		@close-preview="emit('close-preview')"
+		show-table-of-contents
 	>
 		<template #name-input>
 			<tera-input-text
 				v-if="isNaming"
 				v-model.lazy="newName"
-				placeholder="Title of new model"
 				@keyup.enter="updateModelName"
 				@keyup.esc="updateModelName"
 				auto-focus
+				class="w-4"
+				placeholder="Title of new model"
 			/>
 			<div v-if="isNaming" class="flex flex-nowrap ml-1 mr-3">
 				<Button icon="pi pi-check" rounded text @click="updateModelName" />
@@ -24,54 +25,62 @@
 		</template>
 		<template #edit-buttons v-if="!featureConfig.isPreview">
 			<Button icon="pi pi-ellipsis-v" text rounded @click="toggleOptionsMenu" />
-			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" :pt="optionsMenuPt" />
-			<div class="btn-group">
-				<Button label="Reset" severity="secondary" outlined @click="teraModelPartsRef?.reset()" :disabled="isSaved" />
-				<Button label="Save as..." severity="secondary" outlined @click="showSaveModal = true" />
-				<Button label="Save" @click="updateModelContent(teraModelPartsRef?.transientModel)" :disabled="isSaved" />
-			</div>
+			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" popup :pt="optionsMenuPt" />
+			<aside class="btn-group">
+				<tera-asset-enrichment :asset-type="AssetType.Model" :assetId="assetId" @finished-job="fetchModel" />
+				<Button
+					label="Reset"
+					severity="secondary"
+					outlined
+					@click="onReset"
+					:disabled="!(hasChanged && hasEditPermission)"
+				/>
+				<Button label="Save as" severity="secondary" outlined @click="onSaveAs" :disabled="!hasEditPermission" />
+				<Button label="Save" @click="onSave" :disabled="!(hasChanged && hasEditPermission)" />
+			</aside>
 		</template>
-		<section v-if="model">
+		<section v-if="temporaryModel">
 			<tera-model-description
-				:model="model"
 				:feature-config="featureConfig"
-				@model-updated="fetchModel"
-				@update-model="updateModelContent"
+				:model="temporaryModel"
+				@update-model="updateTemporaryModel"
 			/>
 			<tera-model-parts
-				ref="teraModelPartsRef"
 				class="mt-0"
-				:model="model"
 				:feature-config="featureConfig"
-				@update-model="updateModelContent"
+				:model="temporaryModel"
+				@update-model="updateTemporaryModel"
 			/>
 		</section>
 	</tera-asset>
 	<tera-save-asset-modal
-		:initial-name="model?.header.name"
-		:is-visible="showSaveModal"
-		:asset="teraModelPartsRef?.transientModel"
+		:asset="temporaryModel"
 		:asset-type="AssetType.Model"
+		:initial-name="temporaryModel?.header.name"
+		:is-visible="showSaveModal"
+		:open-on-save="true"
 		@close-modal="showSaveModal = false"
-		@on-save="showSaveModal = false"
+		@on-save="onModalSave"
 	/>
 </template>
 
 <script setup lang="ts">
 import { computed, PropType, ref, watch } from 'vue';
 import { cloneDeep, isEmpty, isEqual } from 'lodash';
+import Button from 'primevue/button';
+import ContextMenu from 'primevue/contextmenu';
 import TeraAsset from '@/components/asset/tera-asset.vue';
+import TeraAssetEnrichment from '@/components/widgets/tera-asset-enrichment.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
 import TeraModelParts from '@/components/model/tera-model-parts.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
-import Button from 'primevue/button';
-import ContextMenu from 'primevue/contextmenu';
 import { getModel, updateModel } from '@/services/model';
 import type { FeatureConfig } from '@/types/common';
-import { AssetType, type Model } from '@/types/Types';
+import { AssetType, ClientEvent, ClientEventType, type Model, TaskResponse, TaskStatus } from '@/types/Types';
+import { useClientEvent } from '@/composables/useClientEvent';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
-import TeraInputText from '@/components/widgets/tera-input-text.vue';
 
 const props = defineProps({
 	assetId: {
@@ -86,20 +95,47 @@ const props = defineProps({
 
 const emit = defineEmits(['close-preview']);
 
-const teraModelPartsRef = ref();
+// Listen for the task completion event
+useClientEvent(ClientEventType.TaskGollmModelCard, (event: ClientEvent<TaskResponse>) => {
+	if (
+		!event.data ||
+		event.data.status !== TaskStatus.Success ||
+		event.data.additionalProperties.modelId !== props.assetId
+	) {
+		return;
+	}
+	fetchModel();
+});
 
 const model = ref<Model | null>(null);
+const temporaryModel = ref<Model | null>(null);
+
 const newName = ref('New Model');
 const isRenaming = ref(false);
 const isModelLoading = ref(false);
 const showSaveModal = ref(false);
-
 const isNaming = computed(() => isEmpty(props.assetId) || isRenaming.value);
-const isSaved = computed(() => isEqual(model.value, teraModelPartsRef.value?.transientModel));
+const hasChanged = computed(() => !isEqual(model.value, temporaryModel.value));
+const hasEditPermission = useProjects().hasEditPermission();
 
-const toggleOptionsMenu = (event) => optionsMenu.value.toggle(event);
+// Edit menu
+function onReset() {
+	temporaryModel.value = cloneDeep(model.value);
+}
+function onSave() {
+	saveModelContent();
+}
+function onSaveAs() {
+	showSaveModal.value = true;
+}
+
+// Save modal
+function onModalSave() {
+	showSaveModal.value = false;
+}
 
 // User menu
+const toggleOptionsMenu = (event) => optionsMenu.value.toggle(event);
 const optionsMenu = ref();
 const optionsMenuItems = computed(() => [
 	{
@@ -107,7 +143,7 @@ const optionsMenuItems = computed(() => [
 		label: 'Rename',
 		command() {
 			isRenaming.value = true;
-			newName.value = model.value?.header.name ?? '';
+			newName.value = temporaryModel.value?.header.name ?? '';
 		}
 	},
 	{
@@ -147,27 +183,28 @@ const optionsMenuPt = {
 	}
 };
 
-async function updateModelContent(updatedModel: Model) {
-	if (!useProjects().hasEditPermission()) {
-		return;
-	}
-	await updateModel(updatedModel);
-	logger.info('Saved changes');
+async function saveModelContent() {
+	if (!hasEditPermission || !temporaryModel.value) return;
+	await updateModel(temporaryModel.value);
+	logger.info('Changes to the model has been saved.');
 	await useProjects().refresh();
 	await fetchModel();
 }
 
 async function updateModelName() {
-	if (model.value && !isEmpty(newName.value)) {
-		const modelClone = cloneDeep(model.value);
-		modelClone.header.name = newName.value;
-		await updateModelContent(modelClone);
+	if (temporaryModel.value && !isEmpty(newName.value)) {
+		temporaryModel.value.header.name = newName.value;
 	}
 	isRenaming.value = false;
 }
 
+function updateTemporaryModel(newModel: Model) {
+	temporaryModel.value = cloneDeep(newModel);
+}
+
 async function fetchModel() {
 	model.value = await getModel(props.assetId);
+	temporaryModel.value = cloneDeep(model.value);
 }
 
 watch(

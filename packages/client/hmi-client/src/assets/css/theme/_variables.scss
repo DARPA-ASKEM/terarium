@@ -161,13 +161,16 @@ $roundedButtonBorderRadius: 2rem !default;
 
 $textButtonHoverBgOpacity: .04 !default;
 $textButtonActiveBgOpacity: .16 !default;
+$plainButtonTextColor: $textColor !default;
+$plainButtonHoverBgColor: rgba(0, 0, 0, $textButtonHoverBgOpacity) !default;
+$plainButtonActiveBgColor: rgba(0, 0, 0, $textButtonActiveBgOpacity) !default;
+
 $outlinedSecondaryButtonBg: #ffffff !default;
 $outlinedSecondaryButtonTextColor: var(--text-color-primary) !default;
 $outlinedSecondaryBoxShadow: var(--surface-border) inset 0 0 0 1px;
+$outlinedSecondaryButtonHoverBg: var(--gray-50) !default;
+$outlinedSecondaryButtonActiveBg: var(--gray-50) !default;
 $outlinedButtonBorder: 0 none !default;
-$plainButtonTextColor: $textColor !default;
-$plainButtonHoverBgColor: rgba(0, 0, 0, .04) !default;
-$plainButtonActiveBgColor: rgba(0, 0, 0, .16) !default;
 
 $secondaryButtonBg: $accentColor !default;
 $secondaryButtonTextColor: var(--text-color-subdued) !default;
@@ -248,9 +251,9 @@ $checkboxBorder: 2px solid #757575 !default;
 $checkboxIconFontSize: 14px !default;
 $checkboxActiveBorderColor: $primaryColor !default;
 $checkboxActiveBg: $primaryColor !default;
-$checkboxIconActiveColor: $primaryTextColor !default;
+$checkboxIconActiveColor: $primaryColor !default;
 $checkboxActiveHoverBg: $primaryColor !default;
-$checkboxIconActiveHoverColor: $primaryTextColor !default;
+$checkboxIconActiveHoverColor: $primaryColor !default;
 $checkboxActiveHoverBorderColor: $primaryColor !default;
 
 //radiobutton
@@ -429,14 +432,14 @@ $tabviewHeaderBorder: solid rgba(0, 0, 0, .12) !default;
 $tabviewHeaderBorderWidth: 0 0 1px 0 !default;
 $tabviewHeaderBorderColor: transparent transparent rgba(0, 0, 0, .12) transparent !default;
 $tabviewHeaderBg: #ffffff !default;
-$tabviewHeaderTextColor: $textSecondaryColor !default;
+$tabviewHeaderTextColor: $textColor !default;
 $tabviewHeaderFontWeight: 500 !default;
 $tabviewHeaderPadding: 1rem 1.5rem !default;
 $tabviewHeaderMargin: 0 0 -1px 0 !default;
 
 $tabviewHeaderHoverBg: rgba($primaryColor, .04) !default;
 $tabviewHeaderHoverBorderColor: rgba(0, 0, 0, .12) !default;
-$tabviewHeaderTextHoverColor: $textSecondaryColor !default;
+$tabviewHeaderTextHoverColor: $textColor !default;
 
 $tabviewHeaderActiveBg: #ffffff !default;
 $tabviewHeaderActiveBorderColor: rgba(0, 0, 0, .12) !default;
@@ -927,6 +930,7 @@ $petri-inputBox: var(--surface-0);
 	--surface-border-alt: #CACBCC; /* Eventually we may settle with one of these border colors */
 	--surface-border-hover: #{$primaryColorLighter};
 	--surface-border-light: #EAEAEA;
+	--surface-border-dark: #BCC3CD;
 	--surface-border-warning: #D92D20;
 	--surface-c: rgba(0, 0, 0, .04);
 	--surface-card: #ffffff;
@@ -995,5 +999,4 @@ $petri-inputBox: var(--surface-0);
 	--gap-10: 2.5rem;					// 40px
 	--gap-11: 2.75rem;				// 44px
 	--gap-12: 3rem;						// 48px
-
 }

@@ -1,7 +1,7 @@
 <template>
 	<div class="policy-group">
 		<div class="form-header">
-			<label class="mr-auto" tag="h5"> {{ config.intervention?.name ?? `Intervention` }}</label>
+			<h6 class="mr-auto">{{ config.intervention?.name ?? `Intervention` }}</h6>
 			<div>
 				<label for="active">Optimize</label>
 				<InputSwitch v-model="knobs.isActive" :disabled="isNotEditable" @change="emit('update-self', knobs)" />
@@ -19,7 +19,11 @@
 						:options="OPTIMIZATION_TYPE_MAP"
 						@change="emit('update-self', knobs)"
 					/>
-					for the {{ knobs.intervention.type }}&nbsp;<strong>{{ knobs.intervention.appliedTo }}</strong>
+					<template v-if="knobs.intervention.staticInterventions.length === 1">
+						for the {{ knobs.intervention.staticInterventions[0].type }}&nbsp;<strong>{{
+							knobs.intervention.staticInterventions[0].appliedTo
+						}}</strong>
+					</template>
 				</p>
 				<p v-if="showNewValueOptions && staticInterventions.length === 1">
 					at the start time <strong>{{ staticInterventions[0].timestep }}</strong>
@@ -102,12 +106,13 @@
 			</div>
 		</template>
 		<template v-else>
-			<p v-for="(staticIntervention, index) in staticInterventions" :key="index">
-				Set the <strong>{{ config.intervention?.type }}</strong>
-				<strong>{{ config.intervention?.appliedTo }}</strong> to the value of
-				<strong>{{ staticIntervention.value }}</strong> day at start time
-				<strong>{{ staticIntervention.timestep }}</strong> day.
-			</p>
+			<ul>
+				<li class="list-position-inside" v-for="(staticIntervention, index) in staticInterventions" :key="index">
+					Set the <strong>{{ staticIntervention.type }}</strong> <strong>{{ staticIntervention.appliedTo }}</strong> to
+					the value of <strong>{{ staticIntervention.value }}</strong> day at start time
+					<strong>{{ staticIntervention.timestep }}</strong> day.
+				</li>
+			</ul>
 		</template>
 	</div>
 </template>
@@ -116,7 +121,7 @@
 import Dropdown from 'primevue/dropdown';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import InputSwitch from 'primevue/inputswitch';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { StaticIntervention } from '@/types/Types';
 import {
 	InterventionPolicyGroupForm,
@@ -148,6 +153,14 @@ const showNewValueOptions = computed(
 	() =>
 		knobs.value.optimizationType === OptimizationInterventionObjective.paramValue ||
 		knobs.value.optimizationType === OptimizationInterventionObjective.paramValueAndStartTime
+);
+
+watch(
+	() => props.config,
+	() => {
+		knobs.value = { ...props.config };
+		staticInterventions.value = knobs.value.intervention.staticInterventions;
+	}
 );
 </script>
 
@@ -196,16 +209,15 @@ const showNewValueOptions = computed(
 
 .policy-group {
 	display: flex;
-	padding: var(--gap-4);
-	padding-left: var(--gap-5);
+	padding: var(--gap);
 	flex-direction: column;
 	justify-content: center;
 	align-items: flex-start;
 	gap: var(--gap-2);
 	border-radius: var(--gap-1-5);
 	background: var(--surface-section);
-	border: 1px solid rgba(0, 0, 0, 0.08);
-	/* Shadow/medium */
+	border: 1px solid var(--surface-border-light);
+	margin: var(--gap-1) 0;
 	box-shadow:
 		0 2px 4px -1px rgba(0, 0, 0, 0.06),
 		0 4px 6px -1px rgba(0, 0, 0, 0.08);
@@ -213,5 +225,11 @@ const showNewValueOptions = computed(
 
 .policy-group + .policy-group {
 	margin-top: var(--gap-2);
+}
+
+.list-position-inside {
+	list-style-position: outside;
+	margin-left: var(--gap);
+	padding-bottom: var(--gap-1);
 }
 </style>

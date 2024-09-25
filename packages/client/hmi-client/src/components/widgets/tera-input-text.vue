@@ -4,6 +4,7 @@
 		<main :class="{ error: getErrorMessage }" @click.self.stop="focusInput">
 			<i v-if="icon" :class="icon" />
 			<input
+				v-bind="$attrs"
 				ref="inputField"
 				:disabled="getDisabled"
 				:placeholder="placeholder"
@@ -12,11 +13,8 @@
 				:value="displayValue()"
 				@click.stop
 				@focus="onFocus"
-				@focusout="$emit('focusout', $event)"
 				@blur="onBlur"
 				@input="updateValue"
-				@keyup="$emit('keyup', $event)"
-				@keypress="$emit('keypress', $event)"
 			/>
 		</main>
 		<aside v-if="getErrorMessage"><i class="pi pi-exclamation-circle" /> {{ getErrorMessage }}</aside>
@@ -25,7 +23,7 @@
 
 <script setup lang="ts">
 import { numberToNist } from '@/utils/number';
-import { isString, toNumber, isNaN } from 'lodash';
+import { isString, toNumber, isNaN, isEmpty } from 'lodash';
 import { CSSProperties, computed, onMounted, ref } from 'vue';
 
 const props = defineProps<{
@@ -37,11 +35,12 @@ const props = defineProps<{
 	placeholder?: string;
 	autoWidth?: boolean;
 	autoFocus?: boolean;
+	charactersToReject?: string[];
 }>();
 
-const emit = defineEmits(['update:model-value', 'focusout', 'keyup', 'blur', 'focus', 'keypress']);
+const emit = defineEmits(['update:model-value', 'blur', 'focus']);
 const inputField = ref<HTMLInputElement | null>(null);
-const getDisabled = props.disabled ?? false;
+const getDisabled = computed(() => props.disabled ?? false);
 const isFocused = ref(false);
 
 const focusInput = () => {
@@ -83,8 +82,13 @@ function formatValue(value: string | number | undefined) {
 
 const updateValue = (event: Event) => {
 	const target = event.target as HTMLInputElement;
-	const value = target.value;
-	emit('update:model-value', value);
+	if (props.charactersToReject && !isEmpty(props.charactersToReject)) {
+		const start = target.selectionStart;
+		const end = target.selectionEnd;
+		target.value = target.value.replace(new RegExp(`[${props.charactersToReject.join('')}]`, 'g'), ''); // Create a regex pattern from charactersToReject to remove them
+		target.setSelectionRange(start, end); // Maintain cursor position, is needed if we are entering in the middle of the input
+	}
+	emit('update:model-value', target.value);
 };
 
 const onFocus = (event) => {

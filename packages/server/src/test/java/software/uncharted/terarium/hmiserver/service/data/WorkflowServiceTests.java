@@ -3,7 +3,6 @@ package software.uncharted.terarium.hmiserver.service.data;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -35,11 +34,14 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 	@Autowired
 	private ProjectService projectService;
 
+	@Autowired
+	private ProjectSearchService projectSearchService;
+
 	Project project;
 
 	@BeforeEach
 	public void setup() throws IOException {
-		workflowService.setupIndexAndAliasAndEnsureEmpty();
+		projectSearchService.setupIndexAndAliasAndEnsureEmpty();
 		project = projectService.createProject(
 			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
 		);
@@ -47,7 +49,7 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 
 	@AfterEach
 	public void teardown() throws IOException {
-		workflowService.teardownIndexAndAlias();
+		projectSearchService.teardownIndexAndAlias();
 	}
 
 	static Workflow createWorkflow() throws Exception {
@@ -269,76 +271,5 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 			.forEach(n -> {
 				Assertions.assertTrue(n.has("somethingElse"));
 			});
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItCanSearchAssets() throws Exception {
-		final int NUM = 32;
-
-		List<Workflow> workflows = new ArrayList<>();
-		for (int i = 0; i < NUM; i++) {
-			workflows.add(createWorkflow(String.valueOf(i)));
-		}
-		workflows = workflowService.createAssets(workflows, project.getId(), Schema.Permission.WRITE);
-
-		final List<Workflow> results = workflowService.searchAssets(0, NUM, null);
-
-		Assertions.assertEquals(NUM, results.size());
-
-		for (int i = 0; i < results.size(); i++) {
-			Assertions.assertEquals(workflows.get(i).getName(), results.get(i).getName());
-			Assertions.assertEquals(workflows.get(i).getDescription(), results.get(i).getDescription());
-			Assertions.assertEquals(workflows.get(i).getTransform(), results.get(i).getTransform());
-			Assertions.assertEquals(
-				workflows.get(i).getCreatedOn().toInstant().getEpochSecond(),
-				results.get(i).getCreatedOn().toInstant().getEpochSecond()
-			);
-			Assertions.assertEquals(
-				workflows.get(i).getUpdatedOn().toInstant().getEpochSecond(),
-				results.get(i).getUpdatedOn().toInstant().getEpochSecond()
-			);
-			Assertions.assertEquals(workflows.get(i).getDeletedOn(), results.get(i).getDeletedOn());
-			Assertions.assertEquals(workflows.get(i).getNodes().size(), results.get(i).getNodes().size());
-			for (int j = 0; j < results.get(i).getNodes().size(); j++) {
-				Assertions.assertEquals(workflows.get(i).getNodes().get(j).getId(), results.get(i).getNodes().get(j).getId());
-				Assertions.assertEquals(
-					workflows.get(i).getNodes().get(j).getWorkflowId(),
-					results.get(i).getNodes().get(j).getWorkflowId()
-				);
-			}
-			Assertions.assertEquals(workflows.get(i).getEdges().size(), results.get(i).getEdges().size());
-			for (int j = 0; j < results.get(i).getEdges().size(); j++) {
-				Assertions.assertEquals(workflows.get(i).getEdges().get(j).getId(), results.get(i).getEdges().get(j).getId());
-				Assertions.assertEquals(
-					workflows.get(i).getEdges().get(j).getWorkflowId(),
-					results.get(i).getEdges().get(j).getWorkflowId()
-				);
-			}
-		}
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItCanSyncToNewIndex() throws Exception {
-		final int NUM = 32;
-
-		final List<Workflow> workflows = new ArrayList<>();
-		for (int i = 0; i < NUM; i++) {
-			workflows.add(createWorkflow(String.valueOf(i)));
-		}
-		workflowService.createAssets(workflows, project.getId(), Schema.Permission.WRITE);
-
-		final String currentIndex = workflowService.getCurrentAssetIndex();
-
-		Assertions.assertEquals(NUM, workflowService.searchAssets(0, NUM, null).size());
-
-		workflowService.syncAllAssetsToNewIndex(true);
-
-		final String newIndex = workflowService.getCurrentAssetIndex();
-
-		Assertions.assertEquals(NUM, workflowService.searchAssets(0, NUM, null).size());
-
-		Assertions.assertNotEquals(currentIndex, newIndex);
 	}
 }

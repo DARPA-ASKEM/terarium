@@ -1,18 +1,12 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import co.elastic.clients.elasticsearch._types.FieldValue;
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
-import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.math.Quantiles;
 import com.google.common.math.Stats;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,7 +61,6 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@Transactional
 public class DatasetController {
 
 	private static final int DEFAULT_CSV_LIMIT = 100;
@@ -83,76 +76,6 @@ public class DatasetController {
 	final ProjectAssetService projectAssetService;
 	final CurrentUserService currentUserService;
 	final Messages messages;
-
-	private final List<String> SEARCH_FIELDS = List.of("name", "description");
-
-	@GetMapping
-	@Secured(Roles.USER)
-	@Operation(summary = "Gets all datasets")
-	@ApiResponses(
-		value = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "Datasets found.",
-				content = @Content(
-					array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Dataset.class))
-				)
-			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue retrieving datasets from the data store",
-				content = @Content
-			)
-		}
-	)
-	public ResponseEntity<List<Dataset>> getDatasets(
-		@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
-		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page,
-		@RequestParam(name = "terms", defaultValue = "", required = false) final String terms
-	) {
-		try {
-			List<String> ts = new ArrayList<>();
-			if (terms != null && !terms.isEmpty()) {
-				ts = Arrays.asList(terms.split("[,\\s]"));
-			}
-
-			Query query = null;
-
-			if (!ts.isEmpty()) {
-				final List<FieldValue> values = new ArrayList<>();
-				for (final String term : ts) {
-					values.add(FieldValue.of(term));
-				}
-
-				final TermsQueryField termsQueryField = new TermsQueryField.Builder().value(values).build();
-
-				final List<TermsQuery> shouldQueries = new ArrayList<>();
-
-				for (final String field : SEARCH_FIELDS) {
-					final TermsQuery termsQuery = new TermsQuery.Builder().field(field).terms(termsQueryField).build();
-
-					shouldQueries.add(termsQuery);
-				}
-
-				query = new Query.Builder()
-					.bool(b -> {
-						shouldQueries.forEach(sq -> b.should(s -> s.terms(sq)));
-						return b;
-					})
-					.build();
-			}
-
-			if (query == null) {
-				return ResponseEntity.ok(datasetService.getPublicNotTemporaryAssets(page, pageSize));
-			} else {
-				return ResponseEntity.ok(datasetService.searchAssets(page, pageSize, query));
-			}
-		} catch (final IOException e) {
-			final String error = "Unable to get datasets";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
-		}
-	}
 
 	@PostMapping
 	@Secured(Roles.USER)
@@ -725,7 +648,7 @@ public class DatasetController {
 					return ResponseEntity.internalServerError().build();
 				}
 
-				datasetService.addDatasetColumns(updatedDataset.get(), filename, Arrays.asList(headers));
+				DatasetService.addDatasetColumns(updatedDataset.get(), filename, Arrays.asList(headers));
 
 				// add the filename to existing file names
 				if (!updatedDataset.get().getFileNames().contains(filename)) {

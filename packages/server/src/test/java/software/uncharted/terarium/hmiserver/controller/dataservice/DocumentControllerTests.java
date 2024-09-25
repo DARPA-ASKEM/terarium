@@ -20,6 +20,7 @@ import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 
 public class DocumentControllerTests extends TerariumApplicationTests {
@@ -33,10 +34,14 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	@Autowired
 	private ProjectService projectService;
 
+	@Autowired
+	private ProjectSearchService projectSearchService;
+
 	Project project;
 
 	@BeforeEach
 	public void setup() throws IOException {
+		projectSearchService.setupIndexAndAliasAndEnsureEmpty();
 		documentAssetService.setupIndexAndAliasAndEnsureEmpty();
 
 		project = projectService.createProject(
@@ -47,6 +52,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	@AfterEach
 	public void teardown() throws IOException {
 		documentAssetService.teardownIndexAndAlias();
+		projectSearchService.teardownIndexAndAlias();
 	}
 
 	@Test
@@ -83,30 +89,6 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 					.with(csrf())
 			)
 			.andExpect(status().isOk());
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItCanGetDocuments() throws Exception {
-		documentAssetService.createAsset(
-			(DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
-		documentAssetService.createAsset(
-			(DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
-		documentAssetService.createAsset(
-			(DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
-		mockMvc.perform(MockMvcRequestBuilders.get("/document-asset").with(csrf())).andExpect(status().isOk()).andReturn();
 	}
 
 	@Test

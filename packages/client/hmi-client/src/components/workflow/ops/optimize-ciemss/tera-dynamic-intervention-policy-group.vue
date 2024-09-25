@@ -8,15 +8,14 @@
 			</aside>
 		</div>
 		<p>
-			Set the {{ config.intervention?.type }}&nbsp; <strong>{{ config.intervention?.appliedTo }}</strong> to
-			<strong>{{ dynamicInterventions[0].threshold }}</strong> days when it
-			<strong>{{ dynamicInterventions[0].isGreaterThan ? 'increase to above' : 'decrease to below' }}</strong>
-			the threshold value <strong>{{ dynamicInterventions[0].value }}</strong> person.
+			Set the {{ dynamicInterventions[0].type }}&nbsp; <strong>{{ dynamicInterventions[0].appliedTo }}</strong> to
+			<strong>{{ dynamicInterventions[0].threshold }}</strong> days when it crosses the threshold value
+			<strong>{{ dynamicInterventions[0].value }}</strong> person.
 		</p>
 	</div>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { DynamicIntervention } from '@/types/Types';
 import { InterventionPolicyGroupForm } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
 import InputSwitch from 'primevue/inputswitch';
@@ -27,7 +26,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-self']);
 
-const dynamicInterventions = ref<DynamicIntervention[]>(props.config.intervention.dynamicInterventions);
+const dynamicInterventions = computed<DynamicIntervention[]>(() => props.config.intervention.dynamicInterventions);
 
 const knobs = ref({
 	isActive: props.config.isActive ?? false
@@ -66,7 +65,7 @@ const knobs = ref({
 	gap: var(--gap-2);
 	border-radius: var(--gap-1-5);
 	background: var(--surface-section);
-	border: 1px solid rgba(0, 0, 0, 0.08);
+	border: 1px solid var(--surface-border-light);
 	/* Shadow/medium */
 	box-shadow:
 		0 2px 4px -1px rgba(0, 0, 0, 0.06),

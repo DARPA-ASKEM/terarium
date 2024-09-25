@@ -36,57 +36,6 @@ public class ClimateDataController {
 
 	private final ClimateDataService climateDataService;
 
-	@GetMapping("/search-esgf")
-	@Secured(Roles.USER)
-	@ApiResponses(
-		value = {
-			@ApiResponse(responseCode = "200", description = "Search ESGF and get a list of datasets"),
-			@ApiResponse(responseCode = "500", description = "Internal server error")
-		}
-	)
-	public ResponseEntity<List<Dataset>> searchEsgf(@RequestParam("query") final String query) {
-		try {
-			final ResponseEntity<JsonNode> response = climateDataProxy.searchEsgf(query);
-			if (response == null || response.getBody() == null) {
-				if (response != null && response.getStatusCode().value() >= 400) {
-					log.error("Search ESGF failed. Response: {}", response);
-					throw new ResponseStatusException(
-						HttpStatus.valueOf(response.getStatusCode().value()),
-						"Search ESGF failed."
-					);
-				}
-				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Search ESGF failed.");
-			}
-
-			final List<Dataset> datasets = new ArrayList<>();
-
-			response
-				.getBody()
-				.get("results")
-				.forEach(result -> {
-					final Dataset dataset = new Dataset();
-					dataset.setName(result.get("metadata").get("title").asText());
-					dataset.setEsgfId(result.get("metadata").get("id").asText());
-					dataset.setMetadata(result.get("metadata"));
-					datasets.add(dataset);
-				});
-
-			return ResponseEntity.ok(datasets);
-		} catch (final FeignException.FeignClientException e) {
-			final String error = "Unable to search ESGF";
-			final int status = e.status() >= 400 ? e.status() : 500;
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
-		} catch (final Exception e) {
-			if (e instanceof ResponseStatusException) {
-				throw e;
-			}
-			final String error = "Unable to search ESGF";
-			log.error(error, e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error);
-		}
-	}
-
 	/**
 	 * @param esgfId The id of the ESGF (in the form `CMIP6.CMIP.NCAR.CESM2.historical.r11i1p1f1.CFday.ua.gn.v20190514`)
 	 * @param variableId The variable to preview (ie `ua`)

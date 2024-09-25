@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.models.simulationservice.parts;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import java.io.Serializable;
+import java.util.List;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
@@ -31,7 +32,7 @@ public class OptimizeExtra implements Serializable {
 	private Boolean isMinimized;
 
 	@TSOptional
-	private Double alpha;
+	private List<Double> alpha;
 
 	@JsonAlias("solver_method")
 	@TSOptional

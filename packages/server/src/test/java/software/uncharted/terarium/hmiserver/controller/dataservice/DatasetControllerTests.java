@@ -31,6 +31,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 
 public class DatasetControllerTests extends TerariumApplicationTests {
@@ -44,10 +45,14 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	@Autowired
 	private ProjectService projectService;
 
+	@Autowired
+	private ProjectSearchService projectSearchService;
+
 	Project project;
 
 	@BeforeEach
 	public void setup() throws IOException {
+		projectSearchService.setupIndexAndAliasAndEnsureEmpty();
 		datasetService.setupIndexAndAliasAndEnsureEmpty();
 
 		project = projectService.createProject(
@@ -58,6 +63,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	@AfterEach
 	public void teardown() throws IOException {
 		datasetService.teardownIndexAndAlias();
+		projectSearchService.teardownIndexAndAlias();
 	}
 
 	@Test
@@ -92,30 +98,6 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 					.with(csrf())
 			)
 			.andExpect(status().isOk());
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItCanGetDatasets() throws Exception {
-		datasetService.createAsset(
-			(Dataset) new Dataset().setName("test-dataset-name0").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
-		datasetService.createAsset(
-			(Dataset) new Dataset().setName("test-dataset-name1").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
-		datasetService.createAsset(
-			(Dataset) new Dataset().setName("test-dataset-name2").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
-		mockMvc.perform(MockMvcRequestBuilders.get("/datasets").with(csrf())).andExpect(status().isOk()).andReturn();
 	}
 
 	@Test

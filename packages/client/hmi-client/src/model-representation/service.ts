@@ -1,9 +1,9 @@
-import _ from 'lodash';
+import _, { isEmpty } from 'lodash';
 import { runDagreLayout } from '@/services/graph';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
-import type { Initial, Model, ModelParameter, State, RegNetVertex, Transition } from '@/types/Types';
+import type { Initial, Model, ModelParameter, State, RegNetVertex, Transition, Rate } from '@/types/Types';
 import { getModelType } from '@/services/model';
 import { AMRSchemaNames } from '@/types/common';
 import { parseCurie } from '@/services/concept';
@@ -78,6 +78,7 @@ export const getModelRenderer = (
 			useAStarRouting: false,
 			useStableZoomPan: true,
 			zoomModifier: 'ctrlKey',
+			zoomRange: [0.1, 30],
 			runLayout: runDagreLayout,
 			dims,
 			nestedMap,
@@ -132,6 +133,11 @@ export function getParameter(model: Model, parameterId: string): ModelParameter 
 
 export function updateModelPartProperty(modelPart: any, key: string, value: any) {
 	if (key === 'unitExpression') {
+		if (isEmpty(value)) {
+			console.warn(`Invalid value setting ${modelPart}[${key}]`);
+			return;
+		}
+
 		if (!modelPart.units) modelPart.units = { expression: '', expression_mathml: '' };
 		modelPart.units.expression = value;
 		modelPart.units.expression_mathml = `<ci>${value}</ci>`;
@@ -249,6 +255,103 @@ export function isModelMissingMetadata(model: Model): boolean {
 	});
 
 	const parametersCheck = parameters.some((p) => !p.name || !p.description || !p.units?.expression);
-
 	return initialsCheck || parametersCheck;
+}
+
+/**
+ * Sanity check Petrinet AMR, returns a list of discovered faults
+ * - Check various arrays match up in lengths
+ * - Check states make sense
+ * - Check transitions make sense
+ * */
+export function checkPetrinetAMR(amr: Model) {
+	function isASCII(str: string) {
+		// eslint-disable-next-line
+		return /^[\x00-\x7F]*$/.test(str);
+	}
+
+	const results: { type: string; content: string }[] = [];
+	const model = amr.model;
+	const ode = amr.semantics?.ode;
+
+	const numStates = model.states.length;
+	const numTransitions = model.transitions.length;
+	const numInitials = ode?.initials?.length || 0;
+	const numRates = ode?.rates?.length || 0;
+
+	if (numStates === 0) {
+		results.push({ type: 'warn', content: 'zero states' });
+	}
+
+	if (numTransitions === 0) {
+		results.push({ type: 'warn', content: 'zero transitions' });
+	}
+
+	if (numStates !== numInitials) {
+		results.push({ type: 'error', content: 'states need to match initials' });
+	}
+	if (numRates !== numTransitions) {
+		results.push({ type: 'error', content: 'transitions need to match rates' });
+	}
+
+	// Build cache
+	const initialMap: Map<string, Initial> = new Map();
+	const rateMap: Map<string, Rate> = new Map();
+
+	ode?.initials?.forEach((initial) => {
+		initialMap.set(initial.target, initial);
+	});
+	ode?.rates?.forEach((rate) => {
+		rateMap.set(rate.target, rate);
+	});
+
+	// Check state
+	const stateSet = new Set<string>();
+	const initialSet = new Set<string>();
+	model.states.forEach((state) => {
+		const initial = initialMap.get(state.id);
+		if (!initial) {
+			results.push({ type: 'error', content: `${state.id} has no initial` });
+		}
+		if (_.isEmpty(initial?.expression)) {
+			results.push({ type: 'warn', content: `${state.id} has no initial.expression` });
+		}
+		if (!isASCII(initial?.expression as string)) {
+			results.push({ type: 'warn', content: `${state.id} has non-ascii expression` });
+		}
+		if (stateSet.has(state.id)) {
+			results.push({ type: 'error', content: `state (${state.id}) has duplicate` });
+		}
+		if (initialSet.has(initial?.target as string)) {
+			results.push({ type: 'error', content: `initial (${initial?.target}) has duplicate` });
+		}
+		stateSet.add(state.id);
+		initialSet.add(initial?.target as string);
+	});
+
+	// Check transitions
+	const transitionSet = new Set<string>();
+	const rateSet = new Set<string>();
+	model.transitions.forEach((transition) => {
+		const rate = rateMap.get(transition.id);
+		if (!rate) {
+			results.push({ type: 'error', content: `${transition.id} has no rate` });
+		}
+		if (_.isEmpty(rate?.expression)) {
+			results.push({ type: 'warn', content: `${transition.id} has no rate.expression` });
+		}
+		if (!isASCII(rate?.expression as string)) {
+			results.push({ type: 'warn', content: `${transition.id} has non-ascii expression` });
+		}
+		if (transitionSet.has(transition.id)) {
+			results.push({ type: 'error', content: `transition (${transition.id}) has duplicate` });
+		}
+		if (rateSet.has(rate?.target as string)) {
+			results.push({ type: 'error', content: `rate (${rate?.target}) has duplicate` });
+		}
+		transitionSet.add(transition.id);
+		rateSet.add(rate?.target as string);
+	});
+
+	return results;
 }
