@@ -415,6 +415,7 @@ public class SimulationController {
 			final List<Map<String, Object>> assetsList = (List<Map<String, Object>>) body.get("assets");
 
 			// Iterate through the assets list and process each map
+			List<TerariumAsset> updatedAssets = new ArrayList<>();
 			for (Map<String, Object> assetMap : assetsList) {
 				UUID assetId = UUID.fromString((String) assetMap.get("id"));
 				AssetType assetType = AssetType.getAssetType((String) assetMap.get("type"), objectMapper);
@@ -451,14 +452,17 @@ public class SimulationController {
 					}
 					asset = dataset.get();
 				}
+				// add to project if not already part of it
 				if (!projectAssetService.isPartOfExistingProject(assetId)) {
 					projectAssetService.createProjectAsset(project.get(), assetType, asset, permission);
 				}
+				// add to final response
+				if (asset != null) {
+					updatedAssets.add(asset);
+				}
 			}
 
-			List<TerariumAsset> assetsout = new ArrayList<>();
-
-			return ResponseEntity.status(HttpStatus.CREATED).body(assetsout);
+			return ResponseEntity.status(HttpStatus.CREATED).body(updatedAssets);
 		} catch (final IOException e) {
 			final String error = String.format("Failed to add simulation %s result as dataset to project %s", id, projectId);
 			log.error(error, e);
