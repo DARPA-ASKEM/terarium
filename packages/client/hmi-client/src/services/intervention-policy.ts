@@ -4,9 +4,14 @@ import { InterventionSemanticType } from '@/types/Types';
 
 export const blankIntervention: Intervention = {
 	name: 'New Intervention',
-	appliedTo: '',
-	type: InterventionSemanticType.Parameter,
-	staticInterventions: [{ timestep: Number.NaN, value: Number.NaN }],
+	staticInterventions: [
+		{
+			timestep: Number.NaN,
+			value: Number.NaN,
+			type: InterventionSemanticType.Parameter,
+			appliedTo: ''
+		}
+	],
 	dynamicInterventions: []
 };
 
@@ -42,6 +47,6 @@ export const flattenInterventionData = (
 			name: intervention.name,
 			value: staticIntervention.value,
 			time: staticIntervention.timestep,
-			appliedTo: intervention.appliedTo
+			appliedTo: staticIntervention.appliedTo
 		}))
 	);

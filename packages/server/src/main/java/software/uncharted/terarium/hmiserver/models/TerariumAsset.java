@@ -1,7 +1,7 @@
 package software.uncharted.terarium.hmiserver.models;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -91,6 +91,14 @@ public abstract class TerariumAsset extends TerariumEntity {
 		objectNode.remove("publicAsset");
 		objectNode.remove("fileNames");
 		objectNode.remove("userId");
+
+		// Remove the field metadata.description as well
+		final JsonNode metadata = objectNode.get("metadata");
+		if (metadata != null) {
+			((ObjectNode) metadata).remove("description");
+		}
+		objectNode.set("metadata", metadata);
+
 		return objectNode.toString();
 	}
 
@@ -107,12 +115,14 @@ public abstract class TerariumAsset extends TerariumEntity {
 		objectNode.remove("publicAsset");
 		objectNode.remove("fileNames");
 		objectNode.remove("userId");
-		return objectNode.toString();
-	}
 
-	public String serializeWithTerariumFields() throws JsonProcessingException {
-		final ObjectMapper mapper = new ObjectMapper();
-		mapper.setConfig(mapper.getSerializationConfig().with(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY));
-		return mapper.writeValueAsString(this);
+		// Remove the field metadata.description as well
+		final JsonNode metadata = objectNode.get("metadata");
+		if (metadata != null) {
+			((ObjectNode) metadata).remove("description");
+		}
+		objectNode.set("metadata", metadata);
+
+		return objectNode.toString();
 	}
 }

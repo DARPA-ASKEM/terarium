@@ -90,24 +90,23 @@ public class ReBACService {
 		return "Bearer " + keycloak.tokenManager().getAccessTokenString();
 	}
 
-	private class CacheKey {
+	private static class CacheKey {
 
 		SchemaObject who;
 		Schema.Permission permission;
 		SchemaObject what;
 
-		CacheKey(SchemaObject who, Schema.Permission permission, SchemaObject what) {
+		CacheKey(final SchemaObject who, final Schema.Permission permission, final SchemaObject what) {
 			this.who = who;
 			this.permission = permission;
 			this.what = what;
 		}
 
 		@Override
-		public boolean equals(Object o) {
-			if (!(o instanceof CacheKey)) {
+		public boolean equals(final Object o) {
+			if (!(o instanceof final CacheKey other)) {
 				return false;
 			}
-			CacheKey other = (CacheKey) o;
 			return who.equals(other.who) && permission == other.permission && what.equals(other.what);
 		}
 
@@ -121,13 +120,13 @@ public class ReBACService {
 		.expireAfterWrite(5, TimeUnit.MINUTES)
 		.recordStats()
 		.removalListener((Object key, Object value, RemovalCause cause) -> log.trace("Key {} was removed {}", key, cause))
-		.<CacheKey, Boolean>build();
+		.build();
 
 	private final Cache<String, PermissionUser> userCache = Caffeine.newBuilder()
 		.expireAfterWrite(15, TimeUnit.MINUTES)
 		.recordStats()
 		.removalListener((Object key, Object value, RemovalCause cause) -> log.trace("Key {} was removed {}", key, cause))
-		.<String, PermissionUser>build();
+		.build();
 
 	@PostConstruct
 	void startup() throws Exception {
@@ -281,7 +280,7 @@ public class ReBACService {
 	@Observed(name = "function_profile")
 	public PermissionUser getUser(final String id) {
 		@PolyNull
-		PermissionUser result = userCache.get(id, key_id -> {
+		final PermissionUser result = userCache.get(id, key_id -> {
 			final UsersResource usersResource = keycloak.realm(REALM_NAME).users();
 			final UserResource userResource = usersResource.get(key_id);
 			final UserRepresentation userRepresentation = userResource.toRepresentation();
@@ -322,7 +321,7 @@ public class ReBACService {
 			}
 
 			@PolyNull
-			PermissionUser user = userCache.get(userRepresentation.getId(), key_id -> {
+			final PermissionUser user = userCache.get(userRepresentation.getId(), key_id -> {
 				final UserResource userResource = usersResource.get(key_id);
 
 				final List<PermissionRole> roles = new ArrayList<>();
@@ -419,12 +418,12 @@ public class ReBACService {
 	@Observed(name = "function_profile")
 	public boolean can(final SchemaObject who, final Schema.Permission permission, final SchemaObject what) {
 		@PolyNull
-		Boolean result = permissionCache.get(new CacheKey(who, permission, what), permissionMappingFn);
+		final Boolean result = permissionCache.get(new CacheKey(who, permission, what), permissionMappingFn);
 		log.trace("Cache hit: {}, miss: {}", permissionCache.stats().hitCount(), permissionCache.stats().missCount());
 		return result;
 	}
 
-	private Function<CacheKey, Boolean> permissionMappingFn = key -> {
+	private final Function<CacheKey, Boolean> permissionMappingFn = key -> {
 		final ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		try {
 			if (SPICEDB_LAUNCHMODE.equals("TEST")) {
@@ -440,7 +439,10 @@ public class ReBACService {
 	@Observed(name = "function_profile")
 	public boolean isMemberOf(final SchemaObject who, final SchemaObject what) throws Exception {
 		@PolyNull
-		Boolean result = permissionCache.get(new CacheKey(who, Schema.Permission.MEMBERSHIP, what), permissionMappingFn);
+		final Boolean result = permissionCache.get(
+			new CacheKey(who, Schema.Permission.MEMBERSHIP, what),
+			permissionMappingFn
+		);
 		log.trace("Cache hit: {}, miss: {}", permissionCache.stats().hitCount(), permissionCache.stats().missCount());
 		return result;
 	}
@@ -451,7 +453,7 @@ public class ReBACService {
 		return rebac.hasRelationship(who, Schema.Relationship.CREATOR, what, getCurrentConsistency());
 	}
 
-	private void invalidatePermissionCache(SchemaObject who, SchemaObject what) {
+	private void invalidatePermissionCache(final SchemaObject who, final SchemaObject what) {
 		permissionCache.invalidate(new CacheKey(who, Schema.Permission.READ, what));
 		permissionCache.invalidate(new CacheKey(who, Schema.Permission.WRITE, what));
 		permissionCache.invalidate(new CacheKey(who, Schema.Permission.MEMBERSHIP, what));

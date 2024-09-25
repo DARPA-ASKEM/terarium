@@ -105,7 +105,8 @@ export enum AcceptedTypes {
 	XMILE = 'application/vnd.stella.xmile',
 	ITMX = 'application/vnd.stella.itmx',
 	STMX = 'application/vnd.stella.stmx',
-	MODELCONFIG = 'application/zip'
+	MODELCONFIG = 'application/zip',
+	PROJECTCONFIG = 'application/zip'
 }
 
 export enum AcceptedExtensions {
@@ -130,7 +131,8 @@ export enum AcceptedExtensions {
 	ITMX = 'itmx',
 	STMX = 'stmx',
 	// proprietary formats
-	MODELCONFIG = 'modelconfig'
+	MODELCONFIG = 'modelconfig',
+	PROJECTCONFIG = 'project'
 }
 
 export enum AMRSchemaNames {
