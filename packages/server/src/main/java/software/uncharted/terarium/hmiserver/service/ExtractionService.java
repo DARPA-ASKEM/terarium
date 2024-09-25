@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -998,7 +999,7 @@ public class ExtractionService {
 						final ObjectMapper objectMapper = new ObjectMapper();
 
 						final JsonNode rootNode = objectMapper.readTree(bytes);
-						if (rootNode instanceof ArrayNode arrayNode) {
+						if (rootNode instanceof final ArrayNode arrayNode) {
 							for (final JsonNode record : arrayNode) {
 								if (record.has("detect_cls") && record.get("detect_cls").asText().equals("Abstract")) {
 									abstractJsonNode = record;
