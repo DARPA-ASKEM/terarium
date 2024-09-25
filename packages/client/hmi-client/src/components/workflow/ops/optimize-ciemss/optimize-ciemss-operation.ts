@@ -175,11 +175,9 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 	// From snake case -> camel case.
 	simulationStaticInterventions.forEach((inter) => {
 		const newIntervetion: Intervention = {
-			appliedTo: inter.applied_to,
 			dynamicInterventions: inter.dynamic_interventions,
 			name: inter.name,
-			staticInterventions: inter.static_interventions,
-			type: inter.type
+			staticInterventions: inter.static_interventions
 		};
 		allInterventions.push(newIntervetion);
 	});
@@ -199,10 +197,10 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 		for (let i = 0; i < paramNames.length; i++) {
 			allInterventions.push({
 				name: `Optimized ${paramNames[i]}`,
-				appliedTo: paramNames[i],
-				type: InterventionSemanticType.Parameter,
 				staticInterventions: [
 					{
+						appliedTo: paramNames[i],
+						type: InterventionSemanticType.Parameter,
 						timestep: policyResult[i],
 						value: paramValues[i]
 					}
@@ -215,12 +213,12 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 		for (let i = 0; i < paramNames.length; i++) {
 			allInterventions.push({
 				name: `Optimized ${paramNames[i]}`,
-				appliedTo: paramNames[i],
-				type: InterventionSemanticType.Parameter,
 				staticInterventions: [
 					{
 						timestep: startTimes[i],
-						value: policyResult[i]
+						value: policyResult[i],
+						appliedTo: paramNames[i],
+						type: InterventionSemanticType.Parameter
 					}
 				],
 				dynamicInterventions: []
@@ -232,12 +230,12 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 		for (let i = 0; i < paramNames.length; i++) {
 			allInterventions.push({
 				name: `Optimized ${paramNames[i]}`,
-				appliedTo: paramNames[i],
-				type: InterventionSemanticType.Parameter,
 				staticInterventions: [
 					{
 						timestep: policyResult[i * 2],
-						value: policyResult[i * 2 + 1]
+						value: policyResult[i * 2 + 1],
+						appliedTo: paramNames[i],
+						type: InterventionSemanticType.Parameter
 					}
 				],
 				dynamicInterventions: []
