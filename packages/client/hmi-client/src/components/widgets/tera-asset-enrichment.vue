@@ -11,18 +11,20 @@
 		<template #header>
 			<h4>Enrich metadata</h4>
 		</template>
-		<p>
-			The AI assistant can enrich the metadata of this {{ assetType }}. Select a document or generate the information
-			without additional context.
-		</p>
+		<p>The AI assistant can enrich the metadata of this {{ assetType }}.</p>
+		<p>Select a document or generate the information without additional context.</p>
 		<ul>
 			<li>
-				<RadioButton inputId="no-document" name="no-document" v-model="selectedResourceId" value="" />
-				<label for="no-document">Generate information without context</label>
+				<label for="no-document">
+					<RadioButton inputId="no-document" name="no-document" v-model="selectedResourceId" value="" />
+					Generate information without context
+				</label>
 			</li>
 			<li v-for="document in documents" :key="document.id" :class="document.id ? '' : 'mb-3'">
-				<RadioButton :inputId="document.id" name="document.id" v-model="selectedResourceId" :value="document.id" />
-				<label :for="document.id">{{ document.name }}</label>
+				<label :for="document.id">
+					<RadioButton :inputId="document.id" name="document.id" v-model="selectedResourceId" :value="document.id" />
+					{{ document.name }}
+				</label>
 			</li>
 		</ul>
 		<template #footer>
@@ -215,9 +217,17 @@ ul {
 		align-items: center;
 	}
 
+	li:first-child {
+		margin-bottom: var(--gap-3);
+	}
+
 	label {
 		cursor: pointer;
-		margin-left: var(--gap);
+	}
+
+	/* Add margin between the input and the copy */
+	label > :last-child {
+		margin-right: var(--gap-2);
 	}
 }
 
