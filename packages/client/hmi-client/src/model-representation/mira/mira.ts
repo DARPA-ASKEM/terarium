@@ -100,6 +100,10 @@ export const collapseParameters = (miraModel: MiraModel, miraTemplateParams: Mir
 		const tokens = key.split('_') as string[];
 		const rootName = _.first(tokens) as string;
 
+		console.group(`checking ${key}`);
+		console.log('rootname', rootName);
+		console.groupEnd();
+
 		// There are some cases where parameter names have underscores but are not stratified
 		const displayName = miraModel.parameters[key].display_name;
 		if (tokens.length > 1 && displayName === key) {
@@ -114,7 +118,7 @@ export const collapseParameters = (miraModel: MiraModel, miraTemplateParams: Mir
 		}
 	}
 
-	const mapKeys = [...map.keys()];
+	let mapKeys = [...map.keys()];
 	const templateParams = Object.values(miraTemplateParams);
 
 	/**
@@ -135,6 +139,18 @@ export const collapseParameters = (miraModel: MiraModel, miraTemplateParams: Mir
 			});
 		}
 	}
+
+	// when a key only has one child, we will rename the key of the root to the child.
+	// this is to avoid renaming when a single entry key has an underscore
+	mapKeys = [...map.keys()];
+	[...map.keys()].forEach((key) => {
+		const newKey = map.get(key)?.[0];
+		if (newKey && map.get(key)?.length === 1 && newKey !== key) {
+			map.set(newKey, [newKey]);
+			map.delete(key);
+		}
+	});
+
 	return map;
 };
 
