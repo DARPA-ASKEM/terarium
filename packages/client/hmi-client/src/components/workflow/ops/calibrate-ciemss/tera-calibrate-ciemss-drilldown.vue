@@ -187,12 +187,13 @@
 		<template #preview>
 			<tera-drilldown-section>
 				<template #header-controls-left v-if="configuredModelConfig?.name">
-					<h5>{{ configuredModelConfig.name }}</h5>
+					<h5 class="ml-3">{{ configuredModelConfig.name }}</h5>
 				</template>
 				<template #header-controls-right>
 					<Button
 						label="Save for re-use"
 						severity="secondary"
+						class="mr-3"
 						outlined
 						:disabled="!configuredModelConfig"
 						@click="showSaveModal = true"
@@ -201,15 +202,17 @@
 				<tera-operator-output-summary v-if="node.state.summaryId && !showSpinner" :summary-id="node.state.summaryId" />
 
 				<!-- Loss chart -->
-				<h5>Loss</h5>
-				<div ref="lossChartContainer">
-					<vega-chart
-						expandable
-						v-if="lossValues.length > 0 || showSpinner"
-						ref="lossChartRef"
-						:are-embed-actions-visible="true"
-						:visualization-spec="lossChartSpec"
-					/>
+				<div class="ml-3 mr-3">
+					<h5>Loss</h5>
+					<div ref="lossChartContainer">
+						<vega-chart
+							expandable
+							v-if="lossValues.length > 0 || showSpinner"
+							ref="lossChartRef"
+							:are-embed-actions-visible="true"
+							:visualization-spec="lossChartSpec"
+						/>
+					</div>
 				</div>
 
 				<!-- Variable charts -->
@@ -518,7 +521,7 @@ const odeSolverOptionsTooltip: string = 'TODO';
 // Model variables checked in the model configuration will be options in the mapping dropdown
 const modelStateOptions = ref<any[] | undefined>();
 
-const isOutputSettingsPanelOpen = ref(true);
+const isOutputSettingsPanelOpen = ref(false);
 const activeChartSettings = ref<ChartSetting | null>(null);
 
 const datasetColumns = ref<DatasetColumn[]>();
