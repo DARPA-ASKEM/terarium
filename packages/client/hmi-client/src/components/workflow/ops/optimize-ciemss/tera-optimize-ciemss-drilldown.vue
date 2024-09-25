@@ -375,13 +375,13 @@
 	<tera-save-simulation-modal
 		:initial-name="optimizedInterventionPolicy?.name"
 		:is-visible="showSaveInterventionPolicy"
-		:asset-id="optimizedInterventionPolicy?.id"
+		:assets="[
+			{ id: optimizedInterventionPolicy?.id ?? '', type: AssetType.InterventionPolicy },
+			{ id: datasetId, type: AssetType.Dataset }
+		]"
 		@close-modal="showSaveInterventionPolicy = false"
 		@on-save="onSaveForReuse"
-		:simulation-options="{
-			id: node.state.postForecastRunId,
-			type: SimulationType.Optimization
-		}"
+		:simulation-id="node.state.postForecastRunId"
 	/>
 </template>
 
@@ -421,7 +421,7 @@ import {
 	OptimizeInterventions,
 	OptimizeQoi,
 	OptimizeRequestCiemss,
-	SimulationType
+	AssetType
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
@@ -526,6 +526,12 @@ let pyciemssMap: Record<string, string> = {};
 const showSpinner = computed<boolean>(
 	() => props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressPostForecastId !== ''
 );
+
+const datasetId = computed(() => {
+	if (!selectedOutputId.value) return '';
+	const output = props.node.outputs.find((o) => o.id === selectedOutputId.value);
+	return output?.value?.[0]?.datasetId ?? '';
+});
 
 const showModelModal = ref(false);
 const displayOptimizationResultMessage = ref(true);

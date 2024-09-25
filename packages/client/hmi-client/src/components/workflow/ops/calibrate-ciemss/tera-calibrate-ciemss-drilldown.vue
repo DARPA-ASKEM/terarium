@@ -377,13 +377,13 @@
 	<tera-save-simulation-modal
 		:initial-name="configuredModelConfig?.name"
 		:is-visible="showSaveModal"
-		:asset-id="configuredModelConfig?.id"
+		:assets="[
+			{ id: configuredModelConfig?.id ?? '', type: AssetType.ModelConfiguration },
+			{ id: outputDatasetId, type: AssetType.Dataset }
+		]"
 		@close-modal="showSaveModal = false"
 		@on-save="onSaveAsModelConfiguration"
-		:simulation-options="{
-			id: node.state.forecastId,
-			type: SimulationType.Calibration
-		}"
+		:simulation-id="node.state.forecastId"
 	/>
 </template>
 
@@ -423,7 +423,7 @@ import {
 	ModelConfiguration,
 	ChartAnnotation,
 	InterventionPolicy,
-	SimulationType
+	AssetType
 } from '@/types/Types';
 import { CiemssPresetTypes, DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
 import { getTimespan, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
@@ -496,6 +496,12 @@ const presetType = computed(() => {
 	}
 
 	return '';
+});
+
+const outputDatasetId = computed(() => {
+	if (!selectedOutputId.value) return '';
+	const output = props.node.outputs.find((o) => o.id === selectedOutputId.value);
+	return output?.value?.[0]?.datasetId ?? '';
 });
 
 const speedPreset = Object.freeze({

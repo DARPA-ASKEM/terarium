@@ -193,10 +193,8 @@
 	<tera-save-simulation-modal
 		:is-visible="showSaveDataset"
 		@close-modal="showSaveDataset = false"
-		:simulation-options="{
-			id: node.state.forecastId,
-			type: SimulationType.Simulation
-		}"
+		:simulation-id="node.state.forecastId"
+		:assets="[{ id: datasetId, type: AssetType.Dataset }]"
 	/>
 </template>
 
@@ -210,7 +208,7 @@ import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import type { CsvAsset, InterventionPolicy, SimulationRequest, TimeSpan } from '@/types/Types';
-import { SimulationType } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import {
 	getRunResultCSV,
@@ -258,6 +256,11 @@ const codeText = ref('');
 
 const policyInterventionId = computed(() => props.node.inputs[1].value?.[0]);
 const interventionPolicy = ref<InterventionPolicy | null>(null);
+const datasetId = computed(() => {
+	if (!selectedOutputId.value) return '';
+	const output = props.node.outputs.find((o) => o.id === selectedOutputId.value);
+	return output?.value?.[0] ?? '';
+});
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
 const llmThoughts = ref<any[]>([]);

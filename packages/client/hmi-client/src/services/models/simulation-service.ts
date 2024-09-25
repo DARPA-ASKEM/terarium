@@ -13,8 +13,8 @@ import {
 	Simulation,
 	SimulationRequest,
 	CsvAsset,
-	SimulationType,
-	TerariumAsset
+	TerariumAsset,
+	AssetType
 } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import * as EventService from '@/services/event';
@@ -250,17 +250,15 @@ export async function makeEnsembleCiemssCalibration(params: EnsembleCalibrationC
 
 export async function createSimulationAssets(
 	simulationId: string,
-	simulationType: SimulationType,
 	newName: string | null,
-	assetId?: string
+	assets: { id: string; type: AssetType }[]
 ) {
 	try {
 		const response: AxiosResponse<TerariumAsset[]> = await API.post(
 			`/simulations/${simulationId}/create-assets-from-simulation`,
 			{
 				name: newName,
-				simulationType,
-				assetId
+				assets
 			}
 		);
 		const output = response.data;

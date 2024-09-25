@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -30,22 +31,25 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationEngine;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationStatusMessage;
-import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationType;
 import software.uncharted.terarium.hmiserver.models.simulationservice.interventions.InterventionPolicy;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationCiemssServiceProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.SimulationEventService;
+import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.InterventionService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
@@ -57,6 +61,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 public class SimulationController {
 
 	private final Config config;
+	private final ObjectMapper objectMapper;
 
 	private final SimulationService simulationService;
 
@@ -71,6 +76,10 @@ public class SimulationController {
 	private final InterventionService interventionPolicyService;
 
 	private final ModelConfigurationService modelConfigurationService;
+
+	private final DatasetService datasetService;
+
+	private final ProjectAssetService projectAssetService;
 
 	@PostMapping
 	@Secured(Roles.USER)
@@ -396,44 +405,60 @@ public class SimulationController {
 			projectId
 		);
 
-		// Extract parameters from the body map
-		final String name = (String) body.get("name");
-		final UUID assetId = body.get("assetId") != null ? UUID.fromString((String) body.get("assetId")) : null;
-		final SimulationType simulationType = SimulationType.valueOf((String) body.get("simulationType"));
-
 		try {
-			final Optional<Simulation> sim = simulationService.getAsset(id, permission);
-			if (sim.isEmpty()) {
-				return ResponseEntity.notFound().build();
+			final Optional<Project> project = projectService.getProject(projectId);
+			if (!project.isPresent()) {
+				throw new IllegalArgumentException("Project not found");
 			}
+			// Extract parameters from the body map
+			final String name = (String) body.get("name");
+			final List<Map<String, Object>> assetsList = (List<Map<String, Object>>) body.get("assets");
 
-			List<TerariumAsset> assets = new ArrayList<>();
-			// Update the intervention policy name if the simulation is an optimization
-			if (simulationType == SimulationType.OPTIMIZATION) {
-				final Optional<InterventionPolicy> interventionPolicy = interventionPolicyService.getAsset(assetId, permission);
-				if (interventionPolicy.isPresent()) {
-					interventionPolicy.get().setName(name);
-					interventionPolicy.get().setTemporary(false);
-					interventionPolicyService.updateAsset(interventionPolicy.get(), projectId, permission);
-					assets.add(interventionPolicy.get());
+			// Iterate through the assets list and process each map
+			for (Map<String, Object> assetMap : assetsList) {
+				UUID assetId = UUID.fromString((String) assetMap.get("id"));
+				AssetType assetType = AssetType.getAssetType((String) assetMap.get("type"), objectMapper);
+
+				TerariumAsset asset = null;
+				if (assetType == AssetType.INTERVENTION_POLICY) {
+					final Optional<InterventionPolicy> interventionPolicy = interventionPolicyService.getAsset(
+						assetId,
+						permission
+					);
+					if (interventionPolicy.isPresent()) {
+						interventionPolicy.get().setName(name);
+						interventionPolicy.get().setTemporary(false);
+						interventionPolicyService.updateAsset(interventionPolicy.get(), projectId, permission);
+					}
+
+					asset = interventionPolicy.get();
+				} else if (assetType == AssetType.MODEL_CONFIGURATION) {
+					final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService.getAsset(
+						assetId,
+						permission
+					);
+					if (modelConfiguration.isPresent()) {
+						modelConfiguration.get().setName(name);
+						modelConfiguration.get().setTemporary(false);
+						modelConfigurationService.updateAsset(modelConfiguration.get(), projectId, permission);
+					}
+					asset = modelConfiguration.get();
+				} else if (assetType == AssetType.DATASET) {
+					final Optional<Dataset> dataset = datasetService.getAsset(assetId, permission);
+					if (dataset.isPresent()) {
+						dataset.get().setName(name);
+						datasetService.updateAsset(dataset.get(), projectId, permission);
+					}
+					asset = dataset.get();
+				}
+				if (!projectAssetService.isPartOfExistingProject(assetId)) {
+					projectAssetService.createProjectAsset(project.get(), assetType, asset, permission);
 				}
 			}
-			// Update the model configuration name if the simulation is a calibration
-			else if (simulationType == SimulationType.CALIBRATION) {
-				final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService.getAsset(assetId, permission);
-				if (modelConfiguration.isPresent()) {
-					modelConfiguration.get().setName(name);
-					modelConfiguration.get().setTemporary(false);
-					modelConfigurationService.updateAsset(modelConfiguration.get(), projectId, permission);
-					assets.add(modelConfiguration.get());
-				}
-			}
 
-			// Create the dataset asset
-			final Dataset dataset = simulationService.createDatasetFromSimulation(id, name, projectId, true, permission);
-			assets.add(dataset);
+			List<TerariumAsset> assetsout = new ArrayList<>();
 
-			return ResponseEntity.status(HttpStatus.CREATED).body(assets);
+			return ResponseEntity.status(HttpStatus.CREATED).body(assetsout);
 		} catch (final IOException e) {
 			final String error = String.format("Failed to add simulation %s result as dataset to project %s", id, projectId);
 			log.error(error, e);

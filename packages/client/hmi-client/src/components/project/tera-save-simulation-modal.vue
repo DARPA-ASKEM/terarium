@@ -26,7 +26,7 @@
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Button from 'primevue/button';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
-import { SimulationType } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import { ref } from 'vue';
 import { useProjects } from '@/composables/project';
 import { createSimulationAssets } from '@/services/models/simulation-service';
@@ -34,8 +34,8 @@ import { createSimulationAssets } from '@/services/models/simulation-service';
 const props = defineProps<{
 	initialName?: string;
 	isVisible: boolean;
-	simulationOptions: { id: string; type: SimulationType };
-	assetId?: string;
+	simulationId: string;
+	assets: { id: string; type: AssetType }[];
 }>();
 
 const newName = ref('');
@@ -43,13 +43,11 @@ const newName = ref('');
 const emit = defineEmits(['close-modal', 'on-save']);
 
 function save() {
-	createSimulationAssets(props.simulationOptions.id, props.simulationOptions.type, newName.value, props.assetId).then(
-		(data) => {
-			useProjects().refresh();
-			closeModal();
-			emit('on-save', data);
-		}
-	);
+	createSimulationAssets(props.simulationId, newName.value, props.assets).then((data) => {
+		useProjects().refresh();
+		closeModal();
+		emit('on-save', data);
+	});
 }
 
 function closeModal() {
