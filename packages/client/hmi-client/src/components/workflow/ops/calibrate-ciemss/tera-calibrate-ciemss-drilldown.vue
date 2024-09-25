@@ -612,7 +612,7 @@ console.log('chart settings');
 console.log(chartSettings.value);
 
 function getSelectedOfType(settings, type) {
-	return settings.value.filter((setting) => setting.type === type);
+	return ref(settings.value.filter((setting) => setting.type === type));
 }
 
 let selectedParameterSettings = getSelectedOfType(chartSettings, ChartSettingType.DISTRIBUTION_COMPARISON);

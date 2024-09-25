@@ -5,6 +5,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { b64DecodeUnicode } from '@/utils/binary';
 import { ChartAnnotation } from '@/types/Types';
 import { ForecastChartOptions } from './charts';
+// import type { ForecastChart } from './charts';
+// import { createForecastChart } from './charts';
 
 export interface LLMGeneratedChartAnnotation {
 	request: string;
@@ -288,3 +290,45 @@ export async function generateForecastChartAnnotation(
 		layerSpec
 	};
 }
+export function refreshSelectedVariables(
+	selectedVariables: ChartSetting[],
+	settings: ChartSetting[],
+	type: ChartSettingType
+) {
+	const newSelectedVariables: ChartSetting[] = [];
+	selectedVariables.forEach((variable) => {
+		if (settings.includes(variable)) {
+			newSelectedVariables.push(variable);
+		}
+	});
+	settings
+		.filter((setting) => setting.type === type)
+		.forEach((setting) => {
+			if (!newSelectedVariables.includes(setting)) {
+				newSelectedVariables.push(setting);
+			}
+		});
+	return newSelectedVariables;
+}
+
+export function createPreparedCharts() {}
+
+// export function refreshPreparedCharts(charts: ForecastChart[], variables: SelectedVariable[]) {
+// 	const chartKeys = charts.keys();
+// 	variables.forEach((variable) => {
+// 		if (!charts[variable]) {
+// 			charts.push(createForecastChart())
+// 		}
+// 		if (!chartKeys.find(variable)) {
+// 			// remove chart
+// 		}
+// 	})
+// }
+
+// function updateList(list, key, element) {
+// 	// check element exists in collection
+// 	if (list[key]) {
+// 		// replace existing element
+// 		list[key] = element;
+// 	}
+// }
