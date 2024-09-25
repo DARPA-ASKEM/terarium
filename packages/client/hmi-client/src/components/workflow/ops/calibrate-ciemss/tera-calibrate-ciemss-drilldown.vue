@@ -25,7 +25,10 @@
 					<!-- Mapping section -->
 					<div class="form-section">
 						<h5 class="mb-1">Mapping</h5>
-						<p class="mb-2">Map model variables to dataset columns. Don't forget the timeline variable.</p>
+						<p class="mb-2">
+							Select a subset of output variables of the model and individually assosiate them to columns in the
+							dataset.
+						</p>
 
 						<!-- Mapping table: Other variables -->
 						<DataTable class="mapping-table" :value="mapping">
