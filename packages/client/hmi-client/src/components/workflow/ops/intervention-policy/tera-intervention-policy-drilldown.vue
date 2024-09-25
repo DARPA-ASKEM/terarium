@@ -121,13 +121,13 @@
 												:key="staticIntervention.timestep"
 											>
 												<p>
-													Set {{ intervention.type }} {{ appliedTo }} to {{ staticIntervention.value }} at time step
-													{{ staticIntervention.timestep }}.
+													Set {{ staticIntervention.type }} {{ appliedTo }} to {{ staticIntervention.value }} at time
+													step {{ staticIntervention.timestep }}.
 												</p>
 											</li>
 										</ul>
 										<p v-else-if="!isEmpty(intervention.dynamicInterventions)">
-											Set {{ intervention.type }} {{ appliedTo }} to
+											Set {{ intervention.dynamicInterventions[0].type }} {{ appliedTo }} to
 											{{ intervention.dynamicInterventions[0].value }} when the
 											{{ intervention.dynamicInterventions[0].parameter }}
 											when it crosses the threshold value
@@ -279,7 +279,10 @@ const stateOptions = computed(() => {
 });
 
 const groupedOutputParameters = computed(() =>
-	groupBy(knobs.value.transientInterventionPolicy.interventions, 'appliedTo')
+	groupBy(
+		knobs.value.transientInterventionPolicy.interventions,
+		(item) => item.dynamicInterventions[0]?.appliedTo || item.staticInterventions[0]?.appliedTo
+	)
 );
 
 const preparedCharts = computed(() =>

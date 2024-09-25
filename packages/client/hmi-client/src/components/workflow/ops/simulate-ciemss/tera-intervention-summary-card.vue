@@ -3,13 +3,13 @@
 		<h5>{{ intervention.name }}</h5>
 		<ul>
 			<li v-for="(staticIntervention, index) in intervention.staticInterventions" :key="index">
-				Set the <strong>{{ intervention?.type }}</strong
-				>&nbsp; <strong>{{ intervention?.appliedTo }}</strong> to the value of
+				Set the <strong>{{ staticIntervention.type }}</strong
+				>&nbsp; <strong>{{ staticIntervention.appliedTo }}</strong> to the value of
 				<strong>{{ staticIntervention.value }}</strong> day at start time
 				<strong>{{ staticIntervention.timestep }}</strong> day.
 			</li>
 			<li v-for="(dynamicIntervention, index) in intervention.dynamicInterventions" :key="`dynamic_${index}`">
-				Set the {{ intervention?.type }}&nbsp; <strong>{{ intervention?.appliedTo }}</strong> to
+				Set the {{ dynamicIntervention.type }}&nbsp; <strong>{{ dynamicIntervention.appliedTo }}</strong> to
 				<strong>{{ dynamicIntervention.threshold }}</strong> days when it crosses the threshold value
 				<strong>{{ dynamicIntervention.value }}</strong> person.
 			</li>
