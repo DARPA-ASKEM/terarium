@@ -57,10 +57,10 @@ const editorContent = ref(props.model?.metadata?.description ?? '');
 
 watch(editorContent, () => {
 	if (editorContent.value !== props.model?.metadata?.description) {
-		const updatedModel = {
+		const updatedModel: Model = {
 			...props.model,
 			metadata: { ...props.model.metadata, description: editorContent.value }
-		} as Model;
+		};
 		emit('update-model', updatedModel);
 	}
 });
