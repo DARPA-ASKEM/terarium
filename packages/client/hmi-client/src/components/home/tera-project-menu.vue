@@ -14,6 +14,7 @@ import Menu from 'primevue/menu';
 import { computed, ref } from 'vue';
 import { exportProjectAsFile } from '@/services/project';
 import { AcceptedExtensions } from '@/types/common';
+import { MenuItem } from 'primevue/menuitem';
 
 const props = defineProps<{ project: Project | null }>();
 
@@ -81,7 +82,7 @@ const downloadMenuItem = {
 
 const separatorMenuItem = { separator: true };
 const projectMenuItems = computed(() => {
-	const items = [] as any[];
+	const items: MenuItem[] = [];
 	if (props.project?.publicProject || props.project?.userPermission === 'creator') {
 		items.push(copyMenuItem);
 		items.push(downloadMenuItem);
