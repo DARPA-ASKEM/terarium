@@ -2,8 +2,10 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.persistence.Lob;
 import java.io.Serial;
 import java.io.Serializable;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,6 +13,7 @@ import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.JdbcTypeCode;
 import software.uncharted.terarium.hmiserver.annotations.AMRSchemaType;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
@@ -75,6 +78,11 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 
 	@TSOptional
 	JsonNode source;
+
+	@TSOptional
+	@Lob
+	@JdbcTypeCode(Types.BINARY)
+	private byte[] description;
 
 	@Override
 	public ModelMetadata clone() {

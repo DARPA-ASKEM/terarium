@@ -764,6 +764,7 @@ export interface ModelMetadata {
     card?: Card;
     provenance?: string[];
     source?: any;
+    description?: any;
     processed_at?: number;
     processed_by?: string;
     variable_statements?: VariableStatement[];

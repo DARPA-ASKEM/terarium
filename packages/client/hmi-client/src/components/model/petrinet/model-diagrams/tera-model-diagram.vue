@@ -64,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty } from 'lodash';
+import { isEmpty, isEqual } from 'lodash';
 import { ref, watch, computed, nextTick } from 'vue';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
@@ -195,9 +195,9 @@ async function toggleCollapsedView(view: StratifiedView) {
 
 watch(
 	() => [props.model.model, props.model?.semantics, graphElement.value],
-	async () => {
+	async (newValue, oldValue) => {
+		if (isEqual(newValue, oldValue)) return;
 		if (modelType.value === AMRSchemaNames.DECAPODES || graphElement.value === null) return;
-		// FIXME: inefficient, do not constant call API in watch
 		const response: any = await getMMT(props.model);
 		mmt.value = response.mmt;
 		mmtParams.value = response.template_params;
