@@ -33,7 +33,7 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 ### 4. Test dataset enrichment with a document
 1. Open the duplicated dataset
 2. Enrich the description with a document
-3. __Expected Result__: Column information is updated with more details (description, concept, unit, etc) and the link to the document (`SIR.pdf`) is added to the `Provenance` section.
+3. __Expected Result__: Column information is updated with more details (description, concept, unit, etc)
 4. __Expected Result__: the rows should be enriched as:
 
 | ID | Name | Description                                                                                                                                            | Concept                        | Unit       | Datatype | Stats                              |
