@@ -117,3 +117,27 @@ services:
       - ../../packages/text_extraction:/text_extraction_task
       - ../../packages/taskrunner:/taskrunner
     command: /text_extraction_task/dev.sh
+
+  table_extraction-taskrunner:
+    build:
+      context: ../..
+      dockerfile: ./packages/table_extraction/Dockerfile
+      target: table_extraction_taskrunner_builder
+    container_name: table_extraction-taskrunner
+    networks:
+      - terarium
+    environment:
+      TERARIUM_MQ_ADDRESSES: "amqp://rabbitmq:5672"
+      TERARIUM_MQ_PASSWORD: "terarium123"
+      TERARIUM_MQ_USERNAME: "terarium"
+      TERARIUM_TASKRUNNER_REQUEST_TYPE: "table_extraction"
+      ASKEM_DOC_AI_API_KEY: "${secret_openai_key}"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    extra_hosts:
+      - "${local_host_name}:host-gateway"
+    volumes:
+      - ../../packages/table_extraction:/table_extraction_task
+      - ../../packages/taskrunner:/taskrunner
+    command: /table_extraction_task/dev.sh
