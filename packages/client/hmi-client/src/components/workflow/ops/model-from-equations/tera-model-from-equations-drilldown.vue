@@ -347,8 +347,9 @@ function updateNodeLabel(id: string, label: string) {
 function getEquations() {
 	const newEquations = multipleEquations.value.split('\n');
 	newEquations.forEach((equation) => {
+		const index = clonedState.value.equations.length;
 		clonedState.value.equations.push({
-			name: 'Equation',
+			name: `Equation ${index}`,
 			includeInProcess: true,
 			asset: {
 				text: equation
