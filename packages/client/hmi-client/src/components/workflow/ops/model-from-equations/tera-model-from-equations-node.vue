@@ -10,7 +10,7 @@
 import Button from 'primevue/button';
 import { WorkflowNode } from '@/types/workflow';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import { onMounted, onUpdated, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { ModelOperationState } from '@/components/workflow/ops/model/model-operation';
 import { getModel } from '@/services/model';
 import { Model } from '@/types/Types';
@@ -31,5 +31,4 @@ const updateModel = async () => {
 	}
 };
 onMounted(updateModel);
-onUpdated(updateModel);
 </script>
