@@ -185,7 +185,7 @@
 
 		<!-- Output section -->
 		<template #preview>
-			<tera-drilldown-section>
+			<tera-drilldown-section v-if="showOutputSection">
 				<template #header-controls-left v-if="configuredModelConfig?.name">
 					<h5 class="ml-3">{{ configuredModelConfig.name }}</h5>
 				</template>
@@ -286,6 +286,11 @@
 
 				<tera-notebook-error v-if="!_.isEmpty(node.state?.errorMessage?.traceback)" v-bind="node.state.errorMessage" />
 			</tera-drilldown-section>
+			<!-- Empty state if calibrate hasn't been run yet -->
+			<section v-else class="output-section-empty-state">
+				<Vue3Lottie :animationData="EmptySeed" :height="150" loop autoplay />
+				<p class="helpMessage">Click 'Run' to begin calibrating</p>
+			</section>
 		</template>
 
 		<template #sidebar-right>
@@ -407,6 +412,8 @@ import {
 	saveAnnotation,
 	updateChartSettingsBySelectedVariables
 } from '@/services/chart-settings';
+import { Vue3Lottie } from 'vue3-lottie';
+import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
@@ -567,6 +574,16 @@ const mappingDropdownPlaceholder = computed(() => {
 	if (!_.isEmpty(modelStateOptions.value) && !_.isEmpty(datasetColumns.value)) return 'Select variable';
 	return 'Please wait...';
 });
+
+const showOutputSection = computed(
+	() =>
+		lossValues.value.length > 0 ||
+		selectedErrorVariableSettings.value.length > 0 ||
+		selectedVariableSettings.value.length > 0 ||
+		selectedParameterSettings.value.length > 0 ||
+		showSpinner.value ||
+		!_.isEmpty(props.node.state?.errorMessage?.traceback)
+);
 
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);
@@ -1241,5 +1258,17 @@ img {
 		border-top: 1px solid var(--surface-border-alt);
 		width: 100%;
 	}
+}
+
+.output-section-empty-state {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--gap);
+	text-align: center;
+	pointer-events: none;
 }
 </style>
