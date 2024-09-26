@@ -113,6 +113,19 @@ const docText = ref<string | null>();
 const isFetchingPDF = ref(false);
 const clonedState = ref(cloneDeep(props.node.state));
 
+function updateOutputPort() {
+	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.type === 'documentId')) || null;
+	if (!outputPort) return;
+	outputPort.value = [
+		{
+			...outputPort.value?.[0],
+			equations: clonedState.value.equations
+		}
+	];
+
+	emit('append-output', outputPort);
+}
+
 onMounted(async () => {
 	if (props.node.state.documentId) {
 		isFetchingPDF.value = true;
@@ -143,12 +156,11 @@ onMounted(async () => {
 						return asset;
 					})
 				);
-			// .map((equation, index) => equation.name = `equation ${index+1}`)
 		}
 		if (equations.value && equations.value?.length > 0) {
 			clonedState.value.equations = equations.value;
 		}
-
+		updateOutputPort();
 		isFetchingPDF.value = false;
 	}
 });
@@ -164,6 +176,7 @@ function onUpdateInclude(asset: AssetBlock<DocumentExtraction>) {
 
 	outputPort = cloneDeep(props.node.outputs?.find((port) => port.type === 'documentId')) || null;
 	if (!outputPort) return;
+	console.log('clonedState.value[portType]', clonedState.value[portType]);
 	outputPort.value = [
 		{
 			...outputPort.value?.[0],
