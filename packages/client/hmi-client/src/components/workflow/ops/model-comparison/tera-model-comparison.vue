@@ -288,15 +288,7 @@ async function buildJupyterContext() {
 }
 
 function hasNonEmptyValue(obj) {
-	return Object.values(obj).some((value) => {
-		if (Array.isArray(value)) {
-			return value.length > 0;
-		}
-		if (typeof value === 'object' && value !== null) {
-			return Object.keys(value).length > 0;
-		}
-		return value !== null && value !== undefined && value !== '';
-	});
+	return Object.values(obj).some((value) => !isEmpty(value));
 }
 
 // Generate once the comparison task has been completed
@@ -304,28 +296,33 @@ function generateOverview(output: string) {
 	const comparison = JSON.parse(b64DecodeUnicode(output)).response;
 	let markdown = '';
 	const mdi = markdownit();
-	markdown += mdi.render(`# ${comparison.title}\n\n`);
-	markdown += mdi.render(`## Summary:\n`);
-	markdown += mdi.render(`${comparison.summary}\n\n`);
-	markdown += mdi.render(`## Structural Comparisons:\n\n`);
-	markdown += mdi.render(`### States\n`);
-	markdown += mdi.render(`${comparison.semanticComparison.states}\n\n`);
-	markdown += mdi.render(`### Transitions\n`);
-	markdown += mdi.render(`${comparison.semanticComparison.transitions}\n\n`);
-	markdown += mdi.render(`### Parameters:\n`);
-	markdown += mdi.render(`${comparison.semanticComparison.parameters}\n\n`);
-	markdown += mdi.render(`### Observables:\n`);
-	markdown += mdi.render(`${comparison.semanticComparison.observables}\n\n`);
+	markdown += mdi.render(
+		`# ${comparison.title}
+## Summary
+${comparison.summary}
+## Structural Comparisons
+### States:
+${comparison.semanticComparison.states}
+### Transitions:
+${comparison.semanticComparison.transitions}
+### Parameters:
+${comparison.semanticComparison.parameters}
+### Observables:
+${comparison.semanticComparison.observables}`
+	);
+
 	if (hasNonEmptyValue(comparison.metadataComparison)) {
-		markdown += mdi.render(`## Metadata Comparisons:\n\n`);
-		markdown += mdi.render(`### Details:\n`);
-		markdown += mdi.render(`${comparison.metadataComparison.description}\n\n`);
-		markdown += mdi.render(`### Uses:\n`);
-		markdown += mdi.render(`${comparison.metadataComparison.uses}\n\n`);
-		markdown += mdi.render(`### Bias, Risks, and Limitations:\n`);
-		markdown += mdi.render(`${comparison.metadataComparison.biasRisksLimitations}\n\n`);
-		markdown += mdi.render(`### Testing and Validation:\n`);
-		markdown += mdi.render(`${comparison.metadataComparison.testing}\n\n`);
+		markdown += mdi.render(
+			`## Metadata Comparisons
+### Details:
+${comparison.metadataComparison.description}
+### Uses:
+${comparison.metadataComparison.uses}
+### Bias, Risks, and Limitations:
+${comparison.metadataComparison.biasRisksLimitations}
+### Testing and Validation:
+${comparison.metadataComparison.testing}`
+		);
 	}
 	overview.value = markdown;
 	emit('update-status', OperatorStatus.DEFAULT); // This is a custom way of granting a default status to the operator, since it has no output
