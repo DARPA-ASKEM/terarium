@@ -33,8 +33,9 @@ export const emptyMiraModel = () => {
 /**
  * Collection of MMT related functions
  * */
-export const getContextKeys = (miraModel: MiraModel) => {
+export const getContext = (miraModel: MiraModel) => {
 	const modifierKeys = new Set<string>();
+	const modifierValues = new Set<string>();
 
 	// Heuristics to avoid picking up wrong stuff
 	// - if the modifier value starts with 'ncit:' then it is not a user initiated stratification
@@ -45,6 +46,7 @@ export const getContextKeys = (miraModel: MiraModel) => {
 	const addWithGuard = (k: string, v: string) => {
 		if (v.startsWith('ncit:')) return;
 		modifierKeys.add(k);
+		modifierValues.add(v);
 	};
 
 	miraModel.templates.forEach((t) => {
@@ -65,7 +67,6 @@ export const getContextKeys = (miraModel: MiraModel) => {
 		}
 		if (t.controllers && t.controllers.length > 0) {
 			t.controllers.forEach((miraConcept) => {
-				// Object.keys(miraConcept.context).forEach((key) => modifierKeys.add(key));
 				Object.entries(miraConcept.context).forEach(([k, v]) => {
 					addWithGuard(k, v as string);
 				});
@@ -73,12 +74,15 @@ export const getContextKeys = (miraModel: MiraModel) => {
 		}
 	});
 
-	const modifiers = [...modifierKeys];
-	return modifiers;
+	// const modifiers = [...modifierKeys];
+	return {
+		keys: [...modifierKeys],
+		values: [...modifierValues]
+	};
 };
 
 export const isStratifiedModel = (miraModel: MiraModel) => {
-	const keys = getContextKeys(miraModel);
+	const keys = getContext(miraModel).keys;
 	return keys.length > 0;
 };
 
@@ -93,6 +97,7 @@ export const isStratifiedModel = (miraModel: MiraModel) => {
 export const collapseParameters = (miraModel: MiraModel, miraTemplateParams: MiraTemplateParams) => {
 	const map = new Map<string, string[]>();
 	const keys = Object.keys(miraModel.parameters);
+	const contextValues = getContext(miraModel).values;
 
 	for (let i = 0; i < keys.length; i++) {
 		const key = keys[i];
@@ -100,13 +105,22 @@ export const collapseParameters = (miraModel: MiraModel, miraTemplateParams: Mir
 		const tokens = key.split('_') as string[];
 		const rootName = _.first(tokens) as string;
 
-		console.group(`checking ${key}`);
-		console.log('rootname', rootName);
-		console.groupEnd();
-
 		// There are some cases where parameter names have underscores but are not stratified
 		const displayName = miraModel.parameters[key].display_name;
 		if (tokens.length > 1 && displayName === key) {
+			map.set(name, [name]);
+			continue;
+		}
+
+		const nameContainsContext = _.intersection(tokens, contextValues).length > 0;
+		const hasNumericSuffixes =
+			tokens.length > 1 &&
+			tokens.every((d, idx) => {
+				if (idx === 0) return true;
+				return _.isNumber(d);
+			});
+
+		if (!nameContainsContext && !hasNumericSuffixes) {
 			map.set(name, [name]);
 			continue;
 		}
@@ -219,7 +233,7 @@ export const rawTemplatesSummary = (miraModel: MiraModel) => {
 export const collapseTemplates = (miraModel: MiraModel) => {
 	const allTemplates: TemplateSummary[] = [];
 	const uniqueTemplates: TemplateSummary[] = [];
-	const scrubbingKeys = getContextKeys(miraModel);
+	const scrubbingKeys = getContext(miraModel).keys;
 
 	// 1. Roll back to "original name" by trimming off modifiers
 	miraModel.templates.forEach((t) => {
