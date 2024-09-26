@@ -257,8 +257,8 @@ onMounted(async () => {
 
 		const state = cloneDeep(props.node.state);
 
-		state.equations = equations.map((e) => ({
-			name: e.name,
+		state.equations = equations.map((e, index) => ({
+			name: `${e.name} ${index}`,
 			includeInProcess: e.includeInProcess,
 			asset: { text: e.asset.metadata.text }
 		}));
