@@ -730,7 +730,7 @@ export function createSuccessCriteriaChart(
 	};
 }
 
-export function createInterventionChartMarkers(interventions: Intervention[]): any[] {
+export function createInterventionChartMarkers(interventions: Intervention[], hideLabels = false): any[] {
 	const data = flattenInterventionData(interventions);
 	const markerSpec = {
 		data: { values: data },
@@ -739,7 +739,7 @@ export function createInterventionChartMarkers(interventions: Intervention[]): a
 			x: { field: 'time', type: 'quantitative' }
 		}
 	};
-
+	if (hideLabels) return [markerSpec];
 	const labelSpec = {
 		data: { values: data },
 		mark: {
@@ -759,7 +759,11 @@ export function createInterventionChartMarkers(interventions: Intervention[]): a
 	return [markerSpec, labelSpec];
 }
 
-export function createInterventionChart(interventions: Intervention[], chartOptions: Omit<BaseChartOptions, 'legend'>) {
+interface InterventionChartOptions extends Omit<BaseChartOptions, 'legend'> {
+	hideLabels?: boolean;
+}
+
+export function createInterventionChart(interventions: Intervention[], chartOptions: InterventionChartOptions) {
 	const interventionsData = flattenInterventionData(interventions);
 	const titleObj = chartOptions.title
 		? {
@@ -781,7 +785,7 @@ export function createInterventionChart(interventions: Intervention[], chartOpti
 	};
 	if (!isEmpty(interventionsData)) {
 		// markers
-		createInterventionChartMarkers(interventions).forEach((marker) => {
+		createInterventionChartMarkers(interventions, chartOptions.hideLabels).forEach((marker) => {
 			spec.layer.push(marker);
 		});
 		// chart
