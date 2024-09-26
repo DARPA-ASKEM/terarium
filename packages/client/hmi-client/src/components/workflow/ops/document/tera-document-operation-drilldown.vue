@@ -26,8 +26,8 @@
 						>
 							<template #default>
 								<tera-math-editor
-									v-if="equation.asset.metadata.text"
-									:latex-equation="equation.asset.metadata.text"
+									v-if="equation.asset?.metadata?.text"
+									:latex-equation="equation.asset?.metadata?.text"
 									:is-editable="false"
 								/>
 							</template>
@@ -143,6 +143,7 @@ onMounted(async () => {
 						return asset;
 					})
 				);
+			// .map((equation, index) => equation.name = `equation ${index+1}`)
 		}
 		if (equations.value && equations.value?.length > 0) {
 			clonedState.value.equations = equations.value;
