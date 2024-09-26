@@ -40,6 +40,9 @@
 						<AccordionTab header="Model equations">
 							<h6 class="pb-2">Use {{ includedEquations.length > 1 ? 'these equations' : 'this equation' }}</h6>
 							<ul class="blocks-container ml-3">
+								{{
+									console.log('included', includedEquations)
+								}}
 								<li
 									v-for="(equation, i) in includedEquations"
 									:key="i"
@@ -55,18 +58,18 @@
 											<Checkbox v-model="equation.includeInProcess" :binary="true" />
 											<div class="block-container">
 												<tera-math-editor
-													v-if="equation.asset.text"
-													:latex-equation="equation.asset.text"
+													v-if="equation.asset?.metadata.text"
+													:latex-equation="equation.asset?.metadata.text"
 													:is-editable="false"
 												/>
-												<div v-if="!equation.asset.text" class="no-extract-equation">
+												<div v-if="!equation.asset?.metadata.text" class="no-extract-equation">
 													{{ getEquationErrorLabel(equation) }}
 												</div>
 											</div>
 										</section>
 										<tera-input-text
 											v-if="selectedItem === equation.name"
-											v-model="equation.asset.text"
+											v-model="equation.asset.metadata.text"
 											placeholder="Add an expression with LaTeX"
 											@update:model-value="emit('update-state', clonedState)"
 										/>
@@ -244,11 +247,11 @@ onMounted(async () => {
 	if (selectedOutputId.value) {
 		onSelection(selectedOutputId.value);
 	}
-
+	console.log('props', props.node);
 	const documentId = props.node.inputs?.[0]?.value?.[0]?.documentId;
-	const equations: AssetBlock<DocumentExtraction>[] = props.node.inputs?.[0]?.value?.[0]?.equations?.filter(
-		(e) => e.includeInProcess
-	);
+	const equations: AssetBlock<DocumentExtraction>[] = props.node.inputs?.[0]?.value?.[0]?.equations;
+	console.log('clone', clonedState.value);
+
 	assetLoading.value = true;
 	if (documentId) {
 		document.value = await getDocumentAsset(documentId);
