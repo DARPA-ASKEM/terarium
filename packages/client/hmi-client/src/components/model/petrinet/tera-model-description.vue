@@ -30,13 +30,14 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
+import Editor from 'primevue/editor';
 import { FeatureConfig } from '@/types/common';
 import type { Dataset, Model } from '@/types/Types';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
-import { isDataset, isModel, type Asset } from '@/utils/asset';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import Editor from 'primevue/editor';
+import { isDataset, isModel, type Asset } from '@/utils/asset';
+import { b64DecodeUnicode, b64EncodeUnicode } from '@/utils/binary';
 
 const props = defineProps<{
 	model: Model;
@@ -53,13 +54,13 @@ const relatedTerariumModels = computed(() => relatedTerariumArtifacts.value.filt
 const relatedTerariumDatasets = computed(() => relatedTerariumArtifacts.value.filter((d) => isDataset(d)) as Dataset[]);
 
 // Editor for the description
-const editorContent = ref(props.model?.metadata?.description ?? '');
+const editorContent = ref(b64DecodeUnicode(props.model?.metadata?.description ?? ''));
 
 watch(editorContent, () => {
 	if (editorContent.value !== props.model?.metadata?.description) {
 		const updatedModel: Model = {
 			...props.model,
-			metadata: { ...props.model.metadata, description: editorContent.value }
+			metadata: { ...props.model.metadata, description: b64EncodeUnicode(editorContent.value) }
 		};
 		emit('update-model', updatedModel);
 	}
@@ -69,7 +70,7 @@ watch(
 	() => props.model?.metadata?.description,
 	(newDescription) => {
 		if (newDescription !== editorContent.value) {
-			editorContent.value = newDescription ?? '';
+			editorContent.value = b64DecodeUnicode(newDescription ?? '');
 		}
 	}
 );
