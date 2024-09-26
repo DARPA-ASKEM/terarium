@@ -40,9 +40,6 @@
 						<AccordionTab header="Model equations">
 							<h6 class="pb-2">Use {{ includedEquations.length > 1 ? 'these equations' : 'this equation' }}</h6>
 							<ul class="blocks-container ml-3">
-								{{
-									console.log('included', includedEquations)
-								}}
 								<li
 									v-for="(equation, i) in includedEquations"
 									:key="i"
@@ -247,10 +244,9 @@ onMounted(async () => {
 	if (selectedOutputId.value) {
 		onSelection(selectedOutputId.value);
 	}
-	console.log('props', props.node);
+
 	const documentId = props.node.inputs?.[0]?.value?.[0]?.documentId;
 	const equations: AssetBlock<DocumentExtraction>[] = props.node.inputs?.[0]?.value?.[0]?.equations;
-	console.log('clone', clonedState.value);
 
 	assetLoading.value = true;
 	if (documentId) {
