@@ -117,7 +117,7 @@ export const collapseParameters = (miraModel: MiraModel, miraTemplateParams: Mir
 			tokens.length > 1 &&
 			tokens.every((d, idx) => {
 				if (idx === 0) return true;
-				return _.isNumber(d);
+				return !Number.isNaN(+d);
 			});
 
 		if (!nameContainsContext && !hasNumericSuffixes) {
