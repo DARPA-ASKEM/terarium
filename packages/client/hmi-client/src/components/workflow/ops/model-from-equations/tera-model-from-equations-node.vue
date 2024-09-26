@@ -7,10 +7,10 @@
 </template>
 
 <script setup lang="ts">
+import { watch, ref } from 'vue';
 import Button from 'primevue/button';
 import { WorkflowNode } from '@/types/workflow';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import { onMounted, onUpdated, ref } from 'vue';
 import { ModelOperationState } from '@/components/workflow/ops/model/model-operation';
 import { getModel } from '@/services/model';
 import { Model } from '@/types/Types';
@@ -30,6 +30,12 @@ const updateModel = async () => {
 		model.value = await getModel(modelId);
 	}
 };
-onMounted(updateModel);
-onUpdated(updateModel);
+
+watch(
+	() => props.node.active,
+	() => {
+		updateModel();
+	},
+	{ immediate: true }
+);
 </script>

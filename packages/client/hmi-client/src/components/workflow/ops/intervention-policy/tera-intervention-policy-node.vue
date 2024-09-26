@@ -44,7 +44,8 @@ const preparedCharts = computed(() =>
 			width: 180,
 			height: 120,
 			xAxisTitle: 'Time',
-			yAxisTitle: 'Value'
+			yAxisTitle: 'Value',
+			hideLabels: true
 		})
 	)
 );
