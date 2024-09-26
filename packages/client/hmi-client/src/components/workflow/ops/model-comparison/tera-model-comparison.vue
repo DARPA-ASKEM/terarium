@@ -125,7 +125,7 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty, cloneDeep } from 'lodash';
+import { cloneDeep, isEmpty } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import markdownit from 'markdown-it';
 import Accordion from 'primevue/accordion';
@@ -137,7 +137,7 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import { compareModels } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
 import { getModel } from '@/services/model';
-import { ClientEvent, ClientEventType, TaskResponse, TaskStatus, type Model } from '@/types/Types';
+import { ClientEvent, ClientEventType, type Model, TaskResponse, TaskStatus } from '@/types/Types';
 import { OperatorStatus, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
@@ -150,7 +150,7 @@ import Image from 'primevue/image';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
 import { saveCodeToState } from '@/services/notebook';
-import { getImages, addImage, deleteImages } from '@/services/image';
+import { addImage, deleteImages, getImages } from '@/services/image';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import { b64DecodeUnicode } from '@/utils/binary';
 import { useClientEvent } from '@/composables/useClientEvent';
@@ -287,9 +287,47 @@ async function buildJupyterContext() {
 	}
 }
 
+function hasNonEmptyValue(obj) {
+	return Object.values(obj).some((value) => {
+		if (Array.isArray(value)) {
+			return value.length > 0;
+		}
+		if (typeof value === 'object' && value !== null) {
+			return Object.keys(value).length > 0;
+		}
+		return value !== null && value !== undefined && value !== '';
+	});
+}
+
 // Generate once the comparison task has been completed
 function generateOverview(output: string) {
-	overview.value = markdownit().render(JSON.parse(b64DecodeUnicode(output)).response);
+	const comparison = JSON.parse(b64DecodeUnicode(output)).response;
+	let markdown = '';
+	const mdi = markdownit();
+	markdown += mdi.render(`# ${comparison.title}\n\n`);
+	markdown += mdi.render(`## Summary:\n`);
+	markdown += mdi.render(`${comparison.summary}\n\n`);
+	markdown += mdi.render(`## Structural Comparisons:\n\n`);
+	markdown += mdi.render(`### States\n`);
+	markdown += mdi.render(`${comparison.semanticComparison.states}\n\n`);
+	markdown += mdi.render(`### Transitions\n`);
+	markdown += mdi.render(`${comparison.semanticComparison.transitions}\n\n`);
+	markdown += mdi.render(`### Parameters:\n`);
+	markdown += mdi.render(`${comparison.semanticComparison.parameters}\n\n`);
+	markdown += mdi.render(`### Observables:\n`);
+	markdown += mdi.render(`${comparison.semanticComparison.observables}\n\n`);
+	if (hasNonEmptyValue(comparison.metadataComparison)) {
+		markdown += mdi.render(`## Metadata Comparisons:\n\n`);
+		markdown += mdi.render(`### Details:\n`);
+		markdown += mdi.render(`${comparison.metadataComparison.description}\n\n`);
+		markdown += mdi.render(`### Uses:\n`);
+		markdown += mdi.render(`${comparison.metadataComparison.uses}\n\n`);
+		markdown += mdi.render(`### Bias, Risks, and Limitations:\n`);
+		markdown += mdi.render(`${comparison.metadataComparison.biasRisksLimitations}\n\n`);
+		markdown += mdi.render(`### Testing and Validation:\n`);
+		markdown += mdi.render(`${comparison.metadataComparison.testing}\n\n`);
+	}
+	overview.value = markdown;
 	emit('update-status', OperatorStatus.DEFAULT); // This is a custom way of granting a default status to the operator, since it has no output
 }
 
