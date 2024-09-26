@@ -19,14 +19,18 @@
 						<tera-asset-block
 							v-for="(equation, i) in clonedState.equations"
 							:key="i"
+							:is-toggleable="false"
 							:is-included="equation.includeInProcess"
 							@update:is-included="onUpdateInclude(equation)"
 							class="mb-2"
 						>
-							<template #header>
-								<h5>{{ equation.name }}</h5>
+							<template #default>
+								<tera-math-editor
+									v-if="equation.asset.metadata.text"
+									:latex-equation="equation.asset.metadata.text"
+									:is-editable="false"
+								/>
 							</template>
-							<Image id="img" :src="getAssetUrl(equation)" :alt="''" preview />
 						</tera-asset-block>
 					</AccordionTab>
 					<AccordionTab v-if="!isEmpty(clonedState.figures)">
@@ -94,15 +98,16 @@ import AccordionTab from 'primevue/accordiontab';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
-
+import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import { DocumentOperationState } from './document-operation';
 
-const emit = defineEmits(['close', 'update-state', 'update-output-port']);
+const emit = defineEmits(['close', 'update-state', 'append-output']);
 const props = defineProps<{
 	node: WorkflowNode<DocumentOperationState>;
 }>();
 
 const document = ref<DocumentAsset | null>();
+const equations = ref<AssetBlock<DocumentExtraction>[]>();
 const pdfLink = ref<string | null>();
 const docText = ref<string | null>();
 const isFetchingPDF = ref(false);
@@ -121,6 +126,28 @@ onMounted(async () => {
 				docText.value = await getDocumentFileAsText(document.value.id, filename);
 			}
 		}
+		if (document.value?.metadata?.equations) {
+			equations.value = document.value.metadata.equations
+				.filter((pages) => pages.length)
+				.flatMap((page) =>
+					page.map((equation) => {
+						const asset: AssetBlock<DocumentExtraction> = {
+							name: 'Equation',
+							includeInProcess: false,
+							asset: {
+								fileName: filename ?? '',
+								assetType: ExtractionAssetType.Equation,
+								metadata: { text: equation }
+							}
+						};
+						return asset;
+					})
+				);
+		}
+		if (equations.value && equations.value?.length > 0) {
+			clonedState.value.equations = equations.value;
+		}
+
 		isFetchingPDF.value = false;
 	}
 });
@@ -143,7 +170,7 @@ function onUpdateInclude(asset: AssetBlock<DocumentExtraction>) {
 		}
 	];
 
-	emit('update-output-port', outputPort);
+	emit('append-output', outputPort);
 }
 
 function assetTypeToPortType(assetType: ExtractionAssetType) {
@@ -173,3 +200,8 @@ watch(
 	{ deep: true }
 );
 </script>
+<style scoped>
+.p-panel:deep(.p-panel-footer) {
+	display: none;
+}
+</style>
