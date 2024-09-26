@@ -38,7 +38,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
 import Chart from 'primevue/chart';
-import { ChartConfig, DataseriesConfig, RunResults, RunType } from '@/types/SimulateConfig';
+import { ChartConfig, DataseriesConfig, RunResults } from '@/types/SimulateConfig';
 import type { CsvAsset } from '@/types/Types';
 import { getGraphDataFromDatasetCSV } from '@/components/workflow/util';
 
@@ -51,7 +51,6 @@ const props = defineProps<{
 	colorByRun?: boolean;
 	initialData?: CsvAsset;
 	mapping?: { [key: string]: string }[];
-	runType?: RunType;
 	size?: { width: number; height: number };
 	showRemoveButton?: boolean;
 }>();
@@ -259,12 +258,7 @@ const renderGraph = () => {
 			});
 
 		if (props.initialData) {
-			const dataset: DataseriesConfig | null = getGraphDataFromDatasetCSV(
-				props.initialData,
-				variable,
-				props.mapping,
-				props.runType
-			);
+			const dataset: DataseriesConfig | null = getGraphDataFromDatasetCSV(props.initialData, variable, props.mapping);
 			if (dataset) {
 				datasets.push(dataset);
 			}

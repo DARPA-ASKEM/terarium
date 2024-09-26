@@ -55,7 +55,7 @@ const props = defineProps<{
 	featureConfig: FeatureConfig;
 }>();
 
-const emit = defineEmits(['update-model', 'update-parameter']);
+const emit = defineEmits(['update-parameter']);
 
 const vertices = computed(() => props.model?.model?.vertices ?? []);
 const edges = computed(() => props.model.model?.edges ?? []);
