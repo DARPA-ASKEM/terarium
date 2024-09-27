@@ -74,7 +74,6 @@ export const getContext = (miraModel: MiraModel) => {
 		}
 	});
 
-	// const modifiers = [...modifierKeys];
 	return {
 		keys: [...modifierKeys],
 		values: [...modifierValues]
