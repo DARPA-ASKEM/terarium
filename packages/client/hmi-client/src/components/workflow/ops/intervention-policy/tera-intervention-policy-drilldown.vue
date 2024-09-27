@@ -115,15 +115,13 @@
 								<ul>
 									<li
 										class="pb-2"
-										v-for="intervention in knobs.transientInterventionPolicy.interventions"
+										v-for="intervention in getInterventionsAppliedTo(appliedTo)"
 										:key="intervention.name"
 									>
 										<h6 class="pb-1">{{ intervention.name }}</h6>
-										<ul v-if="!isEmpty(intervention.staticInterventions.filter((i) => i.appliedTo === appliedTo))">
+										<ul v-if="!isEmpty(intervention.staticInterventions)">
 											<li
-												v-for="staticIntervention in intervention.staticInterventions.filter(
-													(i) => i.appliedTo === appliedTo
-												)"
+												v-for="staticIntervention in intervention.staticInterventions"
 												:key="staticIntervention.timestep"
 											>
 												<p>
@@ -132,13 +130,12 @@
 												</p>
 											</li>
 										</ul>
-										<p v-else-if="!isEmpty(intervention.dynamicInterventions.find((i) => i.appliedTo === appliedTo))">
-											Set {{ intervention.dynamicInterventions.find((i) => i.appliedTo === appliedTo)?.type }}
-											{{ appliedTo }} to
-											{{ intervention.dynamicInterventions.find((i) => i.appliedTo === appliedTo)?.value }} when the
-											{{ intervention.dynamicInterventions.find((i) => i.appliedTo === appliedTo)?.parameter }}
+										<p v-else-if="!isEmpty(intervention.dynamicInterventions)">
+											Set {{ intervention.dynamicInterventions[0].type }} {{ appliedTo }} to
+											{{ intervention.dynamicInterventions[0].value }} when the
+											{{ intervention.dynamicInterventions[0].parameter }}
 											when it crosses the threshold value
-											{{ intervention.dynamicInterventions.find((i) => i.appliedTo === appliedTo)?.threshold }}.
+											{{ intervention.dynamicInterventions[0].threshold }}.
 										</p>
 									</li>
 								</ul>
@@ -305,6 +302,19 @@ const preparedCharts = computed(() =>
 		})
 	)
 );
+
+const getInterventionsAppliedTo = (appliedTo: string) =>
+	knobs.value.transientInterventionPolicy.interventions
+		.map((i) => {
+			const staticInterventions = i.staticInterventions.filter((s) => s.appliedTo === appliedTo);
+			const dynamicInterventions = i.dynamicInterventions.filter((d) => d.appliedTo === appliedTo);
+			return {
+				name: i.name,
+				staticInterventions,
+				dynamicInterventions
+			};
+		})
+		.filter((i) => i.dynamicInterventions.length + i.staticInterventions.length > 0);
 
 const initialize = async (overwriteWithState: boolean = false) => {
 	const state = props.node.state;
