@@ -20,7 +20,13 @@
 				placeholder="Title of new model"
 			/>
 			<div v-if="isNaming" class="flex flex-nowrap ml-1 mr-3">
-				<Button icon="pi pi-check" rounded text @click="updateModelName" />
+				<Button
+					icon="pi pi-check"
+					rounded
+					text
+					@click="updateModelName"
+					title="This will rename the model and save all current changes."
+				/>
 			</div>
 		</template>
 		<template #edit-buttons v-if="!featureConfig.isPreview">
@@ -196,6 +202,7 @@ async function updateModelName() {
 		temporaryModel.value.header.name = newName.value;
 	}
 	isRenaming.value = false;
+	onSave();
 }
 
 function updateTemporaryModel(newModel: Model) {
