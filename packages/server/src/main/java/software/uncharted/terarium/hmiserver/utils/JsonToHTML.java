@@ -8,7 +8,7 @@ public class JsonToHTML {
 	// Function to recursively render JsonNode object into HTML
 	public static String renderJsonToHTML(JsonNode jsonNode) {
 		StringBuilder html = new StringBuilder();
-		renderObject(jsonNode, html, 0);
+		renderObject(jsonNode, html, 2);
 		return html.toString();
 	}
 
