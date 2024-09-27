@@ -13,7 +13,7 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { WorkflowNode } from '@/types/workflow';
-import { ModelOperationState } from '@/components/workflow/ops/model/model-operation';
+import { ModelOperation, ModelOperationState } from '@/components/workflow/ops/model/model-operation';
 import TeraModel from '@/components/model/tera-model.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -22,12 +22,18 @@ const props = defineProps<{
 	node: WorkflowNode<ModelOperationState>;
 }>();
 
-const emit = defineEmits(['close', 'update-state']);
+const emit = defineEmits(['close', 'update-state', 'append-output']);
 
 const onSaveEvent = (event: any) => {
-	console.log('save finished', event);
 	const state = _.cloneDeep(props.node.state);
 	state.modelId = event.id;
 	emit('update-state', state);
+	emit('append-output', {
+		type: ModelOperation.outputs[0].type,
+		label: event.header.name,
+		value: [event.id],
+		state,
+		isSelected: false
+	});
 };
 </script>
