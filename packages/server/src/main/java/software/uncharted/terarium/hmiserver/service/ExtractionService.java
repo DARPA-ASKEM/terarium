@@ -869,7 +869,7 @@ public class ExtractionService {
 
 	static class TableExtraction {
 
-		List<JsonNode> tables;
+		List<JsonNode> tables = new ArrayList<>();
 	}
 
 	public Future<TableExtraction> extractTablesFromPDF(
