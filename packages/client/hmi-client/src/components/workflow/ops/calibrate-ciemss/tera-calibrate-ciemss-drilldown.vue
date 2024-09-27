@@ -1013,7 +1013,7 @@ const initialize = async () => {
 	);
 	modelConfig.value = modelConfiguration;
 	modelStateOptions.value = modelOptions;
-	modelParameters.value = !model ? [] : getParameters(model);
+	modelParameters.value = model ? getParameters(model) : [];
 	modelVarUnits.value = modelPartUnits ?? {};
 	modelPartTypesMap.value = modelPartTypes ?? {};
 
