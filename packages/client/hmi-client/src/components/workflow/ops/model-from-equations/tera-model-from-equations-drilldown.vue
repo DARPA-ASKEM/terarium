@@ -153,14 +153,9 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { computed, onMounted, ref, watch } from 'vue';
-import {
-	downloadDocumentAsset,
-	getDocumentAsset,
-	getDocumentFileAsText,
-	getEquationFromImageUrl
-} from '@/services/document-assets';
+import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
 import type { Card, DocumentAsset, DocumentExtraction, Model } from '@/types/Types';
-import { cloneDeep, isEmpty, unionBy } from 'lodash';
+import { cloneDeep, isEmpty } from 'lodash';
 import { equationsToAMR, type EquationsToAMRRequest } from '@/services/knowledge';
 import Button from 'primevue/button';
 import { getModel, updateModel } from '@/services/model';
@@ -177,11 +172,7 @@ import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import {
-	EquationFromImageBlock,
-	instanceOfEquationFromImageBlock,
-	ModelFromEquationsState
-} from './model-from-equations-operation';
+import { ModelFromEquationsState } from './model-from-equations-operation';
 
 const emit = defineEmits(['close', 'update-state', 'append-output', 'select-output', 'update-output-port']);
 const props = defineProps<{
@@ -246,9 +237,8 @@ onMounted(async () => {
 	}
 
 	const documentId = props.node.inputs?.[0]?.value?.[0]?.documentId;
-	const equations: AssetBlock<DocumentExtraction>[] = props.node.inputs?.[0]?.value?.[0]?.equations?.filter(
-		(e) => e.includeInProcess
-	);
+	const equations: AssetBlock<DocumentExtraction>[] = props.node.inputs?.[0]?.value?.[0]?.equations;
+
 	assetLoading.value = true;
 	if (documentId) {
 		document.value = await getDocumentAsset(documentId);
@@ -267,37 +257,11 @@ onMounted(async () => {
 
 		const state = cloneDeep(props.node.state);
 
-		// we want to add any new equation from images to the current state without running the image -> equations for the ones that already ran
-		const nonRunEquations = equations?.filter((e) => {
-			const foundEquation = state.equations.find(
-				(eq) => instanceOfEquationFromImageBlock(eq.asset) && eq.asset.fileName === e.asset.fileName
-			);
-			return !foundEquation;
-		});
-		const promises =
-			nonRunEquations?.map(async (e) => {
-				const equationText = await getEquationFromImageUrl(documentId, e.asset.fileName);
-				const equationBlock: EquationFromImageBlock = {
-					...e.asset,
-					text: equationText ?? '',
-					extractionError: !equationText
-				};
-
-				const assetBlock: AssetBlock<EquationFromImageBlock> = {
-					name: e.name,
-					includeInProcess: e.includeInProcess,
-					asset: equationBlock
-				};
-
-				return assetBlock;
-			}) ?? [];
-
-		const newEquations = await Promise.all(promises);
-
-		let extractedEquations = state.equations.filter((e) => instanceOfEquationFromImageBlock(e.asset));
-		extractedEquations = unionBy(newEquations, extractedEquations, 'asset.fileName');
-		const inputEquations = state.equations.filter((e) => !instanceOfEquationFromImageBlock(e.asset));
-		state.equations = [...extractedEquations, ...inputEquations];
+		state.equations = equations.map((e) => ({
+			name: e.name,
+			includeInProcess: e.includeInProcess,
+			asset: { text: e.asset.metadata.text }
+		}));
 		state.text = document.value?.text ?? '';
 		emit('update-state', state);
 	}
