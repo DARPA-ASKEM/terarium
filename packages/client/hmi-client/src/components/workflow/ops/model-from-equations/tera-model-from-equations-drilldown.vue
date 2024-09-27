@@ -1,6 +1,7 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		v-bind="$attrs"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
@@ -257,8 +258,8 @@ onMounted(async () => {
 
 		const state = cloneDeep(props.node.state);
 
-		state.equations = equations.map((e) => ({
-			name: e.name,
+		state.equations = equations.map((e, index) => ({
+			name: `${e.name} ${index}`,
 			includeInProcess: e.includeInProcess,
 			asset: { text: e.asset.metadata.text }
 		}));
@@ -347,8 +348,9 @@ function updateNodeLabel(id: string, label: string) {
 function getEquations() {
 	const newEquations = multipleEquations.value.split('\n');
 	newEquations.forEach((equation) => {
+		const index = clonedState.value.equations.length;
 		clonedState.value.equations.push({
-			name: 'Equation',
+			name: `Equation ${index}`,
 			includeInProcess: true,
 			asset: {
 				text: equation

@@ -178,7 +178,6 @@ public class ExtractionService {
 		List<JsonNode> equations = new ArrayList<>();
 		List<JsonNode> tables = new ArrayList<>();
 		ArrayNode variableAttributes;
-		JsonNode gollmCard;
 		boolean partialFailure = true;
 	}
 
@@ -318,13 +317,6 @@ public class ExtractionService {
 			document.getMetadata().put("attributes", extractionResponse.variableAttributes);
 		}
 
-		if (extractionResponse.gollmCard != null) {
-			if (document.getMetadata() == null) {
-				document.setMetadata(new HashMap<>());
-			}
-			document.getMetadata().put("gollmCard", extractionResponse.gollmCard);
-		}
-
 		if (extractionResponse.equations != null) {
 			if (document.getMetadata() == null) {
 				document.setMetadata(new HashMap<>());
@@ -338,8 +330,6 @@ public class ExtractionService {
 			}
 			document.getMetadata().put("tables", objectMapper.valueToTree(extractionResponse.tables));
 		}
-
-		log.info("Added extraction to document: {}", documentId);
 
 		return documentService.updateAsset(document, projectId, hasWritePermission).orElseThrow();
 	}
@@ -909,7 +899,18 @@ public class ExtractionService {
 			final TableExtraction extraction = new TableExtraction();
 
 			for (final String key : keys) {
-				extraction.tables.add(output.getResponse().get(key));
+				final JsonNode page = output.getResponse().get(key);
+				if (page.isArray()) {
+					final ArrayNode pageOfTables = objectMapper.createArrayNode();
+					for (final JsonNode table : page) {
+						JsonNode t = table;
+						if (table.isTextual()) {
+							t = objectMapper.readTree(table.asText());
+						}
+						pageOfTables.add(t);
+					}
+					extraction.tables.add(pageOfTables);
+				}
 			}
 
 			return extraction;

@@ -143,12 +143,10 @@ onMounted(async () => {
 						return asset;
 					})
 				);
-			// .map((equation, index) => equation.name = `equation ${index+1}`)
 		}
 		if (equations.value && equations.value?.length > 0) {
 			clonedState.value.equations = equations.value;
 		}
-
 		isFetchingPDF.value = false;
 	}
 });
