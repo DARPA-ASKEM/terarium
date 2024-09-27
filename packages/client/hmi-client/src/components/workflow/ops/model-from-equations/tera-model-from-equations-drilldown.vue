@@ -270,20 +270,18 @@ onMounted(async () => {
 		if (state.equations.length) return;
 
 		if (document.value?.metadata?.equations) {
-			documentEquations.value = document.value.metadata.equations
-				.filter((pages) => pages.length)
-				.flatMap((page) =>
-					page.map((equation) => {
-						const asset: AssetBlock<EquationBlock> = {
-							name: 'Equation',
-							includeInProcess: false,
-							asset: {
-								text: equation
-							}
-						};
-						return asset;
-					})
-				);
+			documentEquations.value = document.value.metadata.equations.flatMap((page) =>
+				page.map((equation) => {
+					const asset: AssetBlock<EquationBlock> = {
+						name: 'Equation',
+						includeInProcess: false,
+						asset: {
+							text: equation
+						}
+					};
+					return asset;
+				})
+			);
 		}
 		if (documentEquations.value && documentEquations.value?.length > 0) {
 			clonedState.value.equations = documentEquations.value;
