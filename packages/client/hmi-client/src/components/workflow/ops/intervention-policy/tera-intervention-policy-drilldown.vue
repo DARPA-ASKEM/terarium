@@ -106,18 +106,24 @@
 					</AccordionTab>
 					<AccordionTab header="Charts">
 						<ul class="flex flex-column gap-2">
-							<li v-for="(interventions, appliedTo) in groupedOutputParameters" :key="appliedTo">
+							<li v-for="appliedTo in Object.keys(groupedOutputParameters)" :key="appliedTo">
 								<vega-chart
 									expandable
 									:are-embed-actions-visible="false"
 									:visualization-spec="preparedCharts[appliedTo]"
 								/>
 								<ul>
-									<li class="pb-2" v-for="intervention in interventions" :key="intervention.name">
+									<li
+										class="pb-2"
+										v-for="intervention in knobs.transientInterventionPolicy.interventions"
+										:key="intervention.name"
+									>
 										<h6 class="pb-1">{{ intervention.name }}</h6>
-										<ul v-if="!isEmpty(intervention.staticInterventions)">
+										<ul v-if="!isEmpty(intervention.staticInterventions.filter((i) => i.appliedTo === appliedTo))">
 											<li
-												v-for="staticIntervention in intervention.staticInterventions"
+												v-for="staticIntervention in intervention.staticInterventions.filter(
+													(i) => i.appliedTo === appliedTo
+												)"
 												:key="staticIntervention.timestep"
 											>
 												<p>
@@ -126,12 +132,13 @@
 												</p>
 											</li>
 										</ul>
-										<p v-else-if="!isEmpty(intervention.dynamicInterventions)">
-											Set {{ intervention.dynamicInterventions[0].type }} {{ appliedTo }} to
-											{{ intervention.dynamicInterventions[0].value }} when the
-											{{ intervention.dynamicInterventions[0].parameter }}
+										<p v-else-if="!isEmpty(intervention.dynamicInterventions.find((i) => i.appliedTo === appliedTo))">
+											Set {{ intervention.dynamicInterventions.find((i) => i.appliedTo === appliedTo)?.type }}
+											{{ appliedTo }} to
+											{{ intervention.dynamicInterventions.find((i) => i.appliedTo === appliedTo)?.value }} when the
+											{{ intervention.dynamicInterventions.find((i) => i.appliedTo === appliedTo)?.parameter }}
 											when it crosses the threshold value
-											{{ intervention.dynamicInterventions[0].threshold }}.
+											{{ intervention.dynamicInterventions.find((i) => i.appliedTo === appliedTo)?.threshold }}.
 										</p>
 									</li>
 								</ul>
@@ -172,7 +179,12 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import { useConfirm } from 'primevue/useconfirm';
 import { getParameters, getStates } from '@/model-representation/service';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
-import { getInterventionPolicyById, updateInterventionPolicy, blankIntervention } from '@/services/intervention-policy';
+import {
+	getInterventionPolicyById,
+	updateInterventionPolicy,
+	blankIntervention,
+	flattenInterventionData
+} from '@/services/intervention-policy';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Textarea from 'primevue/textarea';
@@ -279,10 +291,7 @@ const stateOptions = computed(() => {
 });
 
 const groupedOutputParameters = computed(() =>
-	groupBy(
-		knobs.value.transientInterventionPolicy.interventions,
-		(item) => item.dynamicInterventions[0]?.appliedTo || item.staticInterventions[0]?.appliedTo
-	)
+	groupBy(flattenInterventionData(knobs.value.transientInterventionPolicy.interventions), 'appliedTo')
 );
 
 const preparedCharts = computed(() =>
