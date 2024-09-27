@@ -457,6 +457,7 @@ import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { useClientEvent } from '@/composables/useClientEvent';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraInterventionSummaryCard from '@/components/workflow/ops/simulate-ciemss/tera-intervention-summary-card.vue';
+import { getParameters } from '@/model-representation/service';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults, getErrorData } from './calibrate-utils';
 
@@ -1007,16 +1008,12 @@ async function getAutoMapping() {
 
 const initialize = async () => {
 	// Model configuration input
-	const {
-		modelConfiguration,
-		modelOptions,
-		modelPartUnits,
-		modelPartTypes,
-		modelParameters: modelParams
-	} = await setupModelInput(modelConfigId.value);
+	const { model, modelConfiguration, modelOptions, modelPartUnits, modelPartTypes } = await setupModelInput(
+		modelConfigId.value
+	);
 	modelConfig.value = modelConfiguration;
 	modelStateOptions.value = modelOptions;
-	modelParameters.value = modelParams ?? [];
+	modelParameters.value = !model ? [] : getParameters(model);
 	modelVarUnits.value = modelPartUnits ?? {};
 	modelPartTypesMap.value = modelPartTypes ?? {};
 

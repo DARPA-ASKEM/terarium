@@ -1,12 +1,7 @@
 import type { Dataset, CsvAsset } from '@/types/Types';
 import { getModelConfigurationById, getObservables } from '@/services/model-configurations';
 import { downloadRawFile, getDataset } from '@/services/dataset';
-import {
-	getUnitsFromModelParts,
-	getModelByModelConfigurationId,
-	getTypesFromModelParts,
-	getModelParameters
-} from '@/services/model';
+import { getUnitsFromModelParts, getModelByModelConfigurationId, getTypesFromModelParts } from '@/services/model';
 
 export interface CalibrateMap {
 	modelVariable: string;
@@ -24,7 +19,6 @@ export const setupModelInput = async (modelConfigId: string | undefined) => {
 
 		const modelPartUnits = !model ? {} : getUnitsFromModelParts(model);
 		const modelPartTypes = !model ? {} : getTypesFromModelParts(model);
-		const modelParameters = !model ? [] : getModelParameters(model);
 
 		const modelOptions: any[] = model?.model.states;
 
@@ -35,11 +29,11 @@ export const setupModelInput = async (modelConfigId: string | undefined) => {
 		modelOptions.push({ id: 'timestamp' });
 
 		return {
+			model,
 			modelConfiguration,
 			modelOptions,
 			modelPartUnits,
-			modelPartTypes,
-			modelParameters
+			modelPartTypes
 		};
 	}
 	return {};
