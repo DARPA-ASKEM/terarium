@@ -58,7 +58,7 @@
 		:asset-type="AssetType.Model"
 		:initial-name="temporaryModel?.header.name"
 		:is-visible="showSaveModal"
-		:open-on-save="true"
+		:open-on-save="isWorkflow ? false : true"
 		@close-modal="showSaveModal = false"
 		@on-save="onModalSave"
 	/>
@@ -81,6 +81,7 @@ import { AssetType, ClientEvent, ClientEventType, type Model, TaskResponse, Task
 import { useClientEvent } from '@/composables/useClientEvent';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
+import { useRoute } from 'vue-router';
 
 const props = defineProps({
 	assetId: {
@@ -93,7 +94,7 @@ const props = defineProps({
 	}
 });
 
-const emit = defineEmits(['close-preview']);
+const emit = defineEmits(['close-preview', 'on-save']);
 
 // Listen for the task completion event
 useClientEvent(ClientEventType.TaskGollmModelCard, (event: ClientEvent<TaskResponse>) => {
@@ -118,6 +119,10 @@ const isNaming = computed(() => isEmpty(props.assetId) || isRenaming.value);
 const hasChanged = computed(() => !isEqual(model.value, temporaryModel.value));
 const hasEditPermission = useProjects().hasEditPermission();
 
+const route = useRoute();
+
+const isWorkflow = computed(() => route.params.pageType === 'workflow');
+
 // Edit menu
 function onReset() {
 	temporaryModel.value = cloneDeep(model.value);
@@ -130,8 +135,11 @@ function onSaveAs() {
 }
 
 // Save modal
-function onModalSave() {
+function onModalSave(event: any) {
 	showSaveModal.value = false;
+	if (isWorkflow.value) {
+		emit('on-save', event);
+	}
 }
 
 // User menu
