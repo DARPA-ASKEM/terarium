@@ -3,6 +3,7 @@ import { isEmpty, pick } from 'lodash';
 import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
 import { ChartAnnotation, Intervention } from '@/types/Types';
+import type { ProcessedFunmanResult } from '@/services/models/funman-service';
 import { flattenInterventionData } from './intervention-policy';
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
@@ -795,4 +796,81 @@ export function createInterventionChart(interventions: Intervention[], chartOpti
 		});
 	}
 	return spec;
+}
+
+/// /////////////////////////////////////////////////////////////////////////////
+// Funman charts
+/// /////////////////////////////////////////////////////////////////////////////
+
+enum BoxType {
+	Satisfactory = 'Satisfactory',
+	Unsatisfactory = 'Unsatisfactory',
+	Ambiguous = 'Ambiguous',
+	ModelChecks = 'Model checks'
+}
+
+export function createFunmanStateChart(data: ProcessedFunmanResult, constraints: any[], stateId: string) {
+	const globalFont = 'Figtree';
+
+	const boxLines = data.trajs.map((traj) => {
+		const boxType = traj.label === 'true' ? BoxType.Satisfactory : BoxType.Unsatisfactory;
+		return { timepoints: traj.timestep, value: traj[stateId], boxType };
+	});
+	// FIXME: Find min/max values to set an appropriate viewing range for y-axis
+	// const minYValue = Math.floor(Math.min(...boxLines.map((d) => d.value)));
+	// const maxYValue = Math.ceil(Math.max(...boxLines.map((d) => d.value)));
+
+	// Show checks for the selected state
+	const stateIdConstraints = constraints.filter((c) => c.variables.includes(stateId));
+	const modelChecks = stateIdConstraints.map((c) => ({
+		startX: c.timepoints.lb,
+		endX: c.timepoints.ub,
+		startY: c.additive_bounds.lb,
+		endY: c.additive_bounds.ub,
+		boxType: BoxType.ModelChecks
+	}));
+
+	return {
+		$schema: VEGALITE_SCHEMA,
+		config: { font: globalFont },
+		width: 600,
+		height: 300,
+		layer: [
+			{
+				mark: 'rect',
+				clip: true,
+				data: { values: modelChecks },
+				encoding: {
+					x: { field: 'startX', type: 'quantitative' },
+					x2: { field: 'endX', type: 'quantitative' },
+					y: { field: 'startY', type: 'quantitative' },
+					y2: { field: 'endY', type: 'quantitative' }
+				}
+			},
+			{
+				mark: 'line',
+				clip: true,
+				data: { values: boxLines },
+				encoding: {
+					x: { field: 'timepoints', type: 'quantitative' },
+					y: { field: 'value', type: 'quantitative' }
+				}
+			}
+		],
+		encoding: {
+			x: { title: 'Timepoints' },
+			y: {
+				title: `${stateId} (persons)`
+				// scale: { domain: [minYValue, maxYValue] } // FIXME: I want to use the min/max values of the line points so the line trajectory is clearer
+			},
+			color: {
+				field: 'boxType',
+				legend: { orient: 'top', direction: 'horizontal', title: null },
+				scale: {
+					domain: [BoxType.Satisfactory, BoxType.Unsatisfactory, BoxType.Ambiguous, BoxType.ModelChecks],
+					range: ['#1B8073', '#FFAB00', '#CCC569', '#A4CEFF54'] // Specify colors for each boxType
+				}
+			}
+		}
+	};
 }

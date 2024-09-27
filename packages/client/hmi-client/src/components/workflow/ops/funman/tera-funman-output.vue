@@ -88,12 +88,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
-import {
-	createFunmanStateChart,
-	FunmanProcessedData,
-	processFunman,
-	renderFumanTrajectories
-} from '@/services/models/funman-service';
+import { ProcessedFunmanResult, processFunman } from '@/services/models/funman-service';
+import { createFunmanStateChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { getRunResult } from '@/services/models/simulation-service';
 import Dropdown from 'primevue/dropdown';
@@ -101,7 +97,6 @@ import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-// import InputNumber from 'primevue/inputnumber';
 import type { FunmanBox } from '@/services/models/funman-service';
 import { logger } from '@/utils/logger';
 import type { Model } from '@/types/Types';
@@ -127,7 +122,7 @@ const trajRef = ref();
 const stateChart = ref();
 
 const lastTrueBox = ref<FunmanBox>();
-const processedData = ref<FunmanProcessedData>();
+const processedData = ref<ProcessedFunmanResult>();
 
 const selectedBoxId = ref('');
 const selectedBox = ref<any>({});
@@ -194,22 +189,6 @@ const initalizeParameters = async () => {
 	lastTrueBox.value = funmanResult.parameter_space.true_boxes?.at(-1);
 };
 
-const renderGraph = async () => {
-	const width = 580;
-	const height = 180;
-	renderFumanTrajectories(
-		trajRef.value as HTMLElement,
-		processedData.value as FunmanProcessedData,
-		selectedState.value,
-		selectedBoxId.value,
-		{
-			constraints: constraintGroups,
-			width,
-			height
-		}
-	);
-};
-
 function changeStateChart() {
 	if (!processedData.value) return;
 	stateChart.value = createFunmanStateChart(
@@ -237,7 +216,6 @@ watch(
 	// () => [selectedParam.value, timestep.value, selectedState.value, selectedBoxId.value],
 	() => [selectedParam.value, selectedState.value],
 	() => {
-		renderGraph();
 		changeStateChart();
 	}
 );
@@ -246,7 +224,6 @@ watch(
 	() => [selectedBoxId.value],
 	() => {
 		selectedBox.value = processedData.value?.boxes.find((d) => d.id === selectedBoxId.value);
-		renderGraph();
 		changeStateChart();
 	}
 );

@@ -4,10 +4,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
-import { FunmanProcessedData, RenderOptions, renderFunmanBoundaryChart } from '@/services/models/funman-service';
+import { ProcessedFunmanResult, RenderOptions, renderFunmanBoundaryChart } from '@/services/models/funman-service';
 
 const props = defineProps<{
-	processedData: FunmanProcessedData;
+	processedData: ProcessedFunmanResult;
 	param1: string;
 	param2: string;
 	timestep: number;
