@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,6 +12,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -63,6 +65,7 @@ import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationGroupInstance;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
 import software.uncharted.terarium.hmiserver.service.tasks.ExtractEquationsResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.ExtractTablesResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ExtractTextResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
@@ -173,6 +176,7 @@ public class ExtractionService {
 		List<ExtractionFile> files = new ArrayList<>();
 		List<DocumentExtraction> assets = new ArrayList<>();
 		List<JsonNode> equations = new ArrayList<>();
+		List<JsonNode> tables = new ArrayList<>();
 		ArrayNode variableAttributes;
 		JsonNode gollmCard;
 		boolean partialFailure = true;
@@ -204,6 +208,14 @@ public class ExtractionService {
 				userId
 			);
 
+			notificationInterface.sendMessage("Starting table extraction...");
+			log.info("Starting table extraction for document: {}", documentName);
+			final Future<TableExtraction> tableExtractionFuture = extractTablesFromPDF(
+				notificationInterface,
+				userId,
+				documentContents
+			);
+
 			// wait for text extraction
 			final TextExtraction textExtraction = textExtractionFuture.get();
 			notificationInterface.sendMessage("Text extraction complete!");
@@ -222,6 +234,18 @@ public class ExtractionService {
 			} catch (final Exception e) {
 				notificationInterface.sendMessage("Equation extraction failed, continuing");
 				log.error("Equation extraction failed for document: {}", documentName, e);
+				extractionResponse.partialFailure = true;
+			}
+
+			try {
+				// wait for table extraction
+				final TableExtraction tableExtraction = tableExtractionFuture.get();
+				notificationInterface.sendMessage("Table extraction complete!");
+				log.info("Table extraction complete for document: {}", documentName);
+				extractionResponse.tables = tableExtraction.tables;
+			} catch (final Exception e) {
+				notificationInterface.sendMessage("Table extraction failed, continuing");
+				log.error("Table extraction failed for document: {}", documentName, e);
 				extractionResponse.partialFailure = true;
 			}
 
@@ -306,6 +330,13 @@ public class ExtractionService {
 				document.setMetadata(new HashMap<>());
 			}
 			document.getMetadata().put("equations", objectMapper.valueToTree(extractionResponse.equations));
+		}
+
+		if (extractionResponse.tables != null) {
+			if (document.getMetadata() == null) {
+				document.setMetadata(new HashMap<>());
+			}
+			document.getMetadata().put("tables", objectMapper.valueToTree(extractionResponse.tables));
 		}
 
 		log.info("Added extraction to document: {}", documentId);
@@ -747,7 +778,7 @@ public class ExtractionService {
 
 		int responseCode = HttpURLConnection.HTTP_BAD_GATEWAY;
 		if (!EQUATION_EXTRACTION_GPU_ENDPOINT.isEmpty()) {
-			final URL url = new URL(String.format("%s/health", EQUATION_EXTRACTION_GPU_ENDPOINT));
+			final URL url = URI.create(String.format("%s/health", EQUATION_EXTRACTION_GPU_ENDPOINT)).toURL();
 			final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 			connection.setRequestMethod("GET");
 			responseCode = connection.getResponseCode();
@@ -836,6 +867,55 @@ public class ExtractionService {
 		});
 	}
 
+	static class TableExtraction {
+
+		List<JsonNode> tables = new ArrayList<>();
+	}
+
+	public Future<TableExtraction> extractTablesFromPDF(
+		final NotificationGroupInstance<Properties> notificationInterface,
+		final String userId,
+		final byte[] pdf
+	) throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException, IOException {
+		final int REQUEST_TIMEOUT_MINUTES = 5;
+
+		final TaskRequest req = new TaskRequest();
+		req.setTimeoutMinutes(REQUEST_TIMEOUT_MINUTES);
+		req.setInput(pdf);
+		req.setScript(ExtractTablesResponseHandler.NAME);
+		req.setUserId(userId);
+		req.setType(TaskType.TABLE_EXTRACTION);
+
+		return executor.submit(() -> {
+			final TaskResponse resp = taskService.runTaskSync(req);
+
+			final byte[] outputBytes = resp.getOutput();
+			final ExtractTablesResponseHandler.ResponseOutput output = objectMapper.readValue(
+				outputBytes,
+				ExtractTablesResponseHandler.ResponseOutput.class
+			);
+
+			// Collect keys
+			final List<String> keys = new ArrayList<>();
+			final Iterator<Map.Entry<String, JsonNode>> fieldsIterator = output.getResponse().fields();
+			while (fieldsIterator.hasNext()) {
+				final Map.Entry<String, JsonNode> field = fieldsIterator.next();
+				keys.add(field.getKey());
+			}
+
+			// Sort keys
+			Collections.sort(keys);
+
+			final TableExtraction extraction = new TableExtraction();
+
+			for (final String key : keys) {
+				extraction.tables.add(output.getResponse().get(key));
+			}
+
+			return extraction;
+		});
+	}
+
 	public Future<TextExtraction> extractTextFromPDFCosmos(
 		final NotificationGroupInstance<Properties> notificationInterface,
 		final String documentName,
@@ -919,7 +999,7 @@ public class ExtractionService {
 						final ObjectMapper objectMapper = new ObjectMapper();
 
 						final JsonNode rootNode = objectMapper.readTree(bytes);
-						if (rootNode instanceof ArrayNode arrayNode) {
+						if (rootNode instanceof final ArrayNode arrayNode) {
 							for (final JsonNode record : arrayNode) {
 								if (record.has("detect_cls") && record.get("detect_cls").asText().equals("Abstract")) {
 									abstractJsonNode = record;

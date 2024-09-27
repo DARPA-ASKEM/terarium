@@ -91,6 +91,7 @@
 										<span class="p-button-label">{{ slotProps.option.value }}</span>
 									</template>
 								</SelectButton>
+								<Button icon="pi pi-upload" label="Upload project" @click="openUploadProjectModal" />
 								<Button icon="pi pi-plus" label="New project" @click="openCreateProjectModal" />
 							</div>
 						</section>
@@ -148,6 +149,13 @@
 					</TabPanel>
 				</TabView>
 			</section>
+
+			<!-- Upload project modal -->
+			<tera-upload-project-modal
+				:visible="isUploadProjectModalVisible"
+				@project-added="useProjects().getAll()"
+				@close="isUploadProjectModalVisible = false"
+			/>
 		</div>
 	</main>
 </template>
@@ -173,6 +181,7 @@ import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { FilterService } from 'primevue/api';
 import { useNotificationManager } from '@/composables/notificationManager';
+import teraUploadProjectModal from '@/components/project/tera-upload-project-modal.vue';
 
 const { isProjectConfigDialogVisible, menuProject } = useProjectMenu();
 
@@ -191,6 +200,7 @@ const cloningProjects = computed(() => {
 
 const activeTabIndex = ref(0);
 const showVideo = ref(false);
+const isUploadProjectModalVisible = ref(false);
 const searchProjects = ref('');
 
 enum ProjectsView {
@@ -244,6 +254,10 @@ const publicFilteredSortedProjects = computed(() => {
 function openCreateProjectModal() {
 	isProjectConfigDialogVisible.value = true;
 	menuProject.value = null;
+}
+
+function openUploadProjectModal() {
+	isUploadProjectModalVisible.value = true;
 }
 
 const searchedAndFilterProjects = computed(() => {

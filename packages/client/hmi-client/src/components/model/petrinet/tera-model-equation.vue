@@ -31,7 +31,7 @@ import TeraEquationContainer from '@/components/model/petrinet/tera-equation-con
 import type { Model } from '@/types/Types';
 import { equationsToAMR, EquationsToAMRRequest } from '@/services/knowledge';
 import { cleanLatexEquations } from '@/utils/math';
-import { isEmpty } from 'lodash';
+import { isEmpty, isEqual } from 'lodash';
 import { useToastService } from '@/services/toast';
 import { getModelEquation } from '@/services/model';
 
@@ -86,8 +86,9 @@ const updateModelFromEquations = async () => {
 };
 
 watch(
-	() => props.model,
-	async () => {
+	() => props.model.semantics,
+	async (newSemantics, oldSemantics) => {
+		if (isEqual(newSemantics, oldSemantics)) return;
 		const latexFormula = await getModelEquation(props.model);
 		if (latexFormula) {
 			updateLatexFormula(cleanLatexEquations(latexFormula.split(' \\\\')));

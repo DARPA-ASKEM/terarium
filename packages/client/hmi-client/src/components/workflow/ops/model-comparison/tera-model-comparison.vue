@@ -125,7 +125,7 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty, cloneDeep } from 'lodash';
+import { cloneDeep, isEmpty } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import markdownit from 'markdown-it';
 import Accordion from 'primevue/accordion';
@@ -137,7 +137,7 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import { compareModels } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
 import { getModel } from '@/services/model';
-import { ClientEvent, ClientEventType, TaskResponse, TaskStatus, type Model } from '@/types/Types';
+import { ClientEvent, ClientEventType, type Model, TaskResponse, TaskStatus } from '@/types/Types';
 import { OperatorStatus, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
@@ -150,7 +150,7 @@ import Image from 'primevue/image';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
 import { saveCodeToState } from '@/services/notebook';
-import { getImages, addImage, deleteImages } from '@/services/image';
+import { addImage, deleteImages, getImages } from '@/services/image';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import { b64DecodeUnicode } from '@/utils/binary';
 import { useClientEvent } from '@/composables/useClientEvent';
@@ -287,9 +287,44 @@ async function buildJupyterContext() {
 	}
 }
 
+function hasNonEmptyValue(obj) {
+	return Object.values(obj).some((value) => !isEmpty(value));
+}
+
 // Generate once the comparison task has been completed
 function generateOverview(output: string) {
-	overview.value = markdownit().render(JSON.parse(b64DecodeUnicode(output)).response);
+	const comparison = JSON.parse(b64DecodeUnicode(output)).response;
+	let markdown = '';
+	const mdi = markdownit();
+	markdown += mdi.render(
+		`# ${comparison.title}
+## Summary
+${comparison.summary}
+## Structural Comparisons
+### States:
+${comparison.semanticComparison.states}
+### Transitions:
+${comparison.semanticComparison.transitions}
+### Parameters:
+${comparison.semanticComparison.parameters}
+### Observables:
+${comparison.semanticComparison.observables}`
+	);
+
+	if (hasNonEmptyValue(comparison.metadataComparison)) {
+		markdown += mdi.render(
+			`## Metadata Comparisons
+### Details:
+${comparison.metadataComparison.description}
+### Uses:
+${comparison.metadataComparison.uses}
+### Bias, Risks, and Limitations:
+${comparison.metadataComparison.biasRisksLimitations}
+### Testing and Validation:
+${comparison.metadataComparison.testing}`
+		);
+	}
+	overview.value = markdown;
 	emit('update-status', OperatorStatus.DEFAULT); // This is a custom way of granting a default status to the operator, since it has no output
 }
 

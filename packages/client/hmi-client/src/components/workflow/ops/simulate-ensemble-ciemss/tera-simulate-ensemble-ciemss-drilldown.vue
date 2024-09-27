@@ -47,27 +47,29 @@
 						<p class="subheader">Map the variables from the models to the ensemble variables.</p>
 						<template v-if="ensembleConfigs.length > 0">
 							<table class="w-full mb-2">
-								<tr>
-									<th>Ensemble variables</th>
-									<th v-for="(element, i) in listModelLabels" :key="i">
-										{{ element }}
-									</th>
-								</tr>
+								<tbody>
+									<tr>
+										<th>Ensemble variables</th>
+										<th v-for="(element, i) in listModelLabels" :key="i">
+											{{ element }}
+										</th>
+									</tr>
 
-								<tr v-for="key in Object.keys(ensembleConfigs[0].solutionMappings)" :key="key">
-									<td>{{ key }}</td>
-									<td v-for="config in ensembleConfigs" :key="config.id">
-										<Dropdown
-											class="w-full"
-											:options="allModelOptions[config.id]"
-											v-model="config.solutionMappings[key]"
-											placeholder="Select a variable"
-										/>
-									</td>
-									<td>
-										<Button class="p-button-sm" icon="pi pi-times" rounded text @click="deleteMapping(key)" />
-									</td>
-								</tr>
+									<tr v-for="key in Object.keys(ensembleConfigs[0].solutionMappings)" :key="key">
+										<td>{{ key }}</td>
+										<td v-for="config in ensembleConfigs" :key="config.id">
+											<Dropdown
+												class="w-full"
+												:options="allModelOptions[config.id]"
+												v-model="config.solutionMappings[key]"
+												placeholder="Select a variable"
+											/>
+										</td>
+										<td>
+											<Button class="p-button-sm" icon="pi pi-times" rounded text @click="deleteMapping(key)" />
+										</td>
+									</tr>
+								</tbody>
 							</table>
 						</template>
 						<section class="add-mapping">
@@ -124,22 +126,26 @@
 						<p class="subheader">Set the time span and number of samples for the ensemble simulation.</p>
 						<table class="w-full">
 							<thead class="p-datatable-thead">
-								<th>Units</th>
-								<th>Start Step</th>
-								<th>End Step</th>
-								<th>Number of Samples</th>
+								<tr>
+									<th>Units</th>
+									<th>Start Step</th>
+									<th>End Step</th>
+									<th>Number of Samples</th>
+								</tr>
 							</thead>
 							<tbody class="p-datatable-tbody">
-								<td class="w-2">Steps</td>
-								<td>
-									<tera-input-number class="w-full" v-model="timeSpan.start" />
-								</td>
-								<td>
-									<tera-input-number class="w-full" v-model="timeSpan.end" />
-								</td>
-								<td>
-									<tera-input-number class="w-full" v-model="numSamples" />
-								</td>
+								<tr>
+									<td class="w-2">Steps</td>
+									<td>
+										<tera-input-number class="w-full" v-model="timeSpan.start" />
+									</td>
+									<td>
+										<tera-input-number class="w-full" v-model="timeSpan.end" />
+									</td>
+									<td>
+										<tera-input-number class="w-full" v-model="numSamples" />
+									</td>
+								</tr>
 							</tbody>
 						</table>
 					</AccordionTab>

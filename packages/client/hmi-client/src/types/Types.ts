@@ -764,6 +764,7 @@ export interface ModelMetadata {
     card?: Card;
     provenance?: string[];
     source?: any;
+    description?: any;
     processed_at?: number;
     processed_by?: string;
     variable_statements?: VariableStatement[];
@@ -1053,7 +1054,9 @@ export enum ClientEventType {
     Notification = "NOTIFICATION",
     SimulationNotification = "SIMULATION_NOTIFICATION",
     SimulationPyciemss = "SIMULATION_PYCIEMSS",
-    TaskEnrichAmr = "TASK_ENRICH_AMR",
+    TaskExtractTextPdf = "TASK_EXTRACT_TEXT_PDF",
+    TaskExtractTablePdf = "TASK_EXTRACT_TABLE_PDF",
+    TaskExtractEquationPdf = "TASK_EXTRACT_EQUATION_PDF",
     TaskFunmanValidation = "TASK_FUNMAN_VALIDATION",
     TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
     TaskGollmConfigureModelFromDataset = "TASK_GOLLM_CONFIGURE_MODEL_FROM_DATASET",

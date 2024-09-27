@@ -118,15 +118,10 @@
 
 		<!-- Preview -->
 		<template #preview>
-			<tera-drilldown-preview
-				v-if="selectedOutputId"
-				title="Simulation output"
-				:options="outputs"
-				v-model:output="selectedOutputId"
-				@update:selection="onSelection"
-				:is-loading="showSpinner"
-				is-selectable
-			>
+			<tera-drilldown-section v-if="selectedOutputId" :is-loading="showSpinner">
+				<template #header-controls-right>
+					<Button label="Save for re-use" severity="secondary" outlined @click="showSaveDataset = true" />
+				</template>
 				<tera-operator-output-summary
 					v-if="node.state.summaryId && runResults[selectedRunId]"
 					:summary-id="node.state.summaryId"
@@ -186,7 +181,7 @@
 						/>
 					</div>
 				</template>
-			</tera-drilldown-preview>
+			</tera-drilldown-section>
 
 			<!-- Empty state -->
 			<section v-else class="empty-state">
@@ -195,6 +190,12 @@
 			</section>
 		</template>
 	</tera-drilldown>
+	<tera-save-simulation-modal
+		:is-visible="showSaveDataset"
+		@close-modal="showSaveDataset = false"
+		:simulation-id="node.state.forecastId"
+		:assets="[{ id: datasetId, type: AssetType.Dataset }]"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -207,6 +208,7 @@ import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import type { CsvAsset, InterventionPolicy, SimulationRequest, TimeSpan } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import {
 	getRunResultCSV,
@@ -223,7 +225,6 @@ import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vu
 import SelectButton from 'primevue/selectbutton';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
@@ -239,6 +240,7 @@ import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraInterventionSummaryCard from '@/components/workflow/ops/simulate-ciemss/tera-intervention-summary-card.vue';
+import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import TeraChartControl from '../../tera-chart-control.vue';
 
@@ -254,12 +256,17 @@ const codeText = ref('');
 
 const policyInterventionId = computed(() => props.node.inputs[1].value?.[0]);
 const interventionPolicy = ref<InterventionPolicy | null>(null);
+const datasetId = computed(() => {
+	if (!selectedOutputId.value) return '';
+	const output = props.node.outputs.find((o) => o.id === selectedOutputId.value);
+	return output?.value?.[0] ?? '';
+});
 
-const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
 const llmThoughts = ref<any[]>([]);
 const llmQuery = ref('');
 
-// extras
+// input params
+const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
 const numSamples = ref<number>(props.node.state.numSamples);
 const method = ref(props.node.state.method);
 
@@ -268,12 +275,12 @@ enum OutputView {
 	Data = 'Data'
 }
 
-const speedValues = Object.freeze({
+const speedPreset = Object.freeze({
 	numSamples: 10,
 	method: CiemssMethodOptions.euler
 });
 
-const qualityValues = Object.freeze({
+const qualityPreset = Object.freeze({
 	numSamples: 100,
 	method: CiemssMethodOptions.dopri5
 });
@@ -302,23 +309,11 @@ let pyciemssMap: Record<string, string> = {};
 
 const kernelManager = new KernelSessionManager();
 
-const outputs = computed(() => {
-	if (!_.isEmpty(props.node.outputs)) {
-		return [
-			{
-				label: 'Select an output',
-				items: props.node.outputs
-			}
-		];
-	}
-	return [];
-});
-
 const presetType = computed(() => {
-	if (numSamples.value === speedValues.numSamples && method.value === speedValues.method) {
+	if (numSamples.value === speedPreset.numSamples && method.value === speedPreset.method) {
 		return CiemssPresetTypes.Fast;
 	}
-	if (numSamples.value === qualityValues.numSamples && method.value === qualityValues.method) {
+	if (numSamples.value === qualityPreset.numSamples && method.value === qualityPreset.method) {
 		return CiemssPresetTypes.Normal;
 	}
 
@@ -332,19 +327,22 @@ const cancelRunId = computed(() => props.node.state.inProgressForecastId);
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 
+const showSaveDataset = ref(false);
+
 const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperationState) => {
 	emit('update-state', state);
 });
 
 const setPresetValues = (data: CiemssPresetTypes) => {
 	if (data === CiemssPresetTypes.Normal) {
-		numSamples.value = qualityValues.numSamples;
-		method.value = qualityValues.method;
+		numSamples.value = qualityPreset.numSamples;
+		method.value = qualityPreset.method;
 	}
 	if (data === CiemssPresetTypes.Fast) {
-		numSamples.value = speedValues.numSamples;
-		method.value = speedValues.method;
+		numSamples.value = speedPreset.numSamples;
+		method.value = speedPreset.method;
 	}
+	updateState();
 };
 
 const groupedInterventionOutputs = computed(() => _.groupBy(interventionPolicy.value?.interventions, 'appliedTo'));
@@ -413,18 +411,16 @@ const run = async () => {
 
 const makeForecastRequest = async () => {
 	const modelConfigId = props.node.inputs[0].value?.[0];
-	const state = props.node.state;
-
 	const payload: SimulationRequest = {
 		modelConfigId,
 		timespan: {
-			start: state.currentTimespan.start,
-			end: state.currentTimespan.end
+			start: timespan.value.start,
+			end: timespan.value.end
 		},
 		extra: {
-			solver_method: state.method,
+			solver_method: method.value,
 			solver_step_size: 1,
-			num_samples: state.numSamples
+			num_samples: numSamples.value
 		},
 		engine: 'ciemss'
 	};

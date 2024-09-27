@@ -1,6 +1,6 @@
 <template>
 	<Button
-		label="Enrich metadata with AI assistant"
+		label="Enrich metadata with AI"
 		icon="pi pi-sparkles"
 		:loading="isLoading"
 		severity="secondary"
@@ -11,28 +11,26 @@
 		<template #header>
 			<h4>Enrich metadata</h4>
 		</template>
-		<p>
-			The AI assistant can enrich the metadata of this {{ assetType }}. Select a document or generate the information
-			without additional context.
-		</p>
+		<p>The AI assistant can enrich the metadata of this {{ assetType }}.</p>
+		<p>Select a document or generate the information without additional context.</p>
 		<ul>
+			<li>
+				<label for="no-document">
+					<RadioButton inputId="no-document" name="no-document" v-model="selectedResourceId" value="" />
+					Generate information without context
+				</label>
+			</li>
 			<li v-for="document in documents" :key="document.id" :class="document.id ? '' : 'mb-3'">
-				<RadioButton inputId="document.id" name="document.id" v-model="selectedResourceId" :value="document.id" />
-				<label :for="document.id">{{ document.name }}</label>
+				<label :for="document.id">
+					<RadioButton :inputId="document.id" name="document.id" v-model="selectedResourceId" :value="document.id" />
+					{{ document.name }}
+				</label>
 			</li>
 		</ul>
 		<template #footer>
 			<div class="btn-group">
 				<Button label="Cancel" severity="secondary" outlined @click="closeDialog" />
 				<Button label="Enrich" :disabled="isDialogDisabled" @click="confirm" />
-			</div>
-			<!--TODO: Overwrite is how we enrich, handle appending content in another pass-->
-			<div class="flex items-center">
-				<Checkbox v-model="overwriteContent" inputId="overwriteContent" binary disabled />
-				<div class="ml-3">
-					<label for="overwriteContent">Overwrite existing content</label>
-					<p class="text-subdued">If unselected, new content will be appended</p>
-				</div>
 			</div>
 		</template>
 	</tera-modal>
@@ -51,7 +49,6 @@ import { AssetType, ClientEventType, ProvenanceType, TaskStatus } from '@/types/
 import { isDocumentAsset } from '@/utils/asset';
 import Button from 'primevue/button';
 import RadioButton from 'primevue/radiobutton';
-import Checkbox from 'primevue/checkbox';
 import { computed, ref, watch } from 'vue';
 import { logger } from '@/utils/logger';
 import { modelCard } from '@/services/goLLM';
@@ -86,41 +83,24 @@ enum DialogType {
 const dialogType = ref<DialogType>(DialogType.ENRICH);
 const isLoading = ref(false);
 const isModalVisible = ref(false);
-const overwriteContent = ref(true);
 
 const selectedResourceId = ref<string>('');
 const relatedDocuments = ref<Array<{ name: string; id: string }>>([]);
 
-// Disable the dialog action button if no resources are selected
-// and the dialog type is not enrichment
+// Disable the dialog action button if no resources are selected and the dialog type is not enrichment
 const isDialogDisabled = computed(() => {
 	if (dialogType.value === DialogType.ENRICH) return false;
 	return !selectedResourceId.value;
 });
 
-// FIXME: If we are keeping extractions, something like this may help when we add them back in
-// const dialogActionCopy = computed(() => {
-// 	let result: string = '';
-// 	if (dialogType.value === DialogType.ENRICH) {
-// 		result = props.assetType === AssetType.Model ? 'Enrich description' : 'Generate descriptions';
-// 	} else if (dialogType.value === DialogType.EXTRACT) {
-// 		result = 'Extract variables';
-// 	}
-// 	if (isEmpty(selectedResources.value)) {
-// 		return result;
-// 	}
-// 	return `Use Document to ${result.toLowerCase()}`;
-// });
-
-const documents = computed<{ name: string; id: string }[]>(() => [
-	{ name: 'No document', id: '' }, // Empty string is falsey
-	...useProjects()
+const documents = computed<{ name: string; id: string }[]>(() =>
+	useProjects()
 		.getActiveProjectAssets(AssetType.Document)
 		.map((projectAsset: ProjectAsset) => ({
 			name: projectAsset.assetName,
 			id: projectAsset.assetId
 		}))
-]);
+);
 
 function closeDialog() {
 	isModalVisible.value = false;
@@ -207,31 +187,23 @@ ul {
 	gap: var(--gap-2);
 	padding: var(--gap-4) 0;
 
-	& > li {
+	li {
 		display: flex;
 		align-items: center;
-		gap: var(--gap);
 	}
-}
 
-.no-documents {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-}
+	li:first-child {
+		margin-bottom: var(--gap-2);
+	}
 
-.no-documents-img {
-	width: 30%;
-	padding: 10px;
-}
+	label {
+		cursor: pointer;
+	}
 
-.no-documents-text {
-	padding: 5px;
-	font-size: var(--font-body-medium);
-	font-family: var(--font-family);
-	font-weight: 500;
-	color: var(--text-color-secondary);
-	text-align: left;
+	/* Add margin between the input and the copy */
+	label > :last-child {
+		margin-right: var(--gap-2);
+	}
 }
 
 .p-dialog aside > * {
@@ -247,9 +219,5 @@ ul {
 	align-items: center;
 	gap: var(--gap-2);
 	margin-left: auto;
-}
-
-.text-subdued {
-	color: var(--text-color-subdued);
 }
 </style>
