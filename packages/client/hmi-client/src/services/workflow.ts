@@ -22,6 +22,7 @@ import {
 	WorkflowTransformations,
 	Transform
 } from '@/types/workflow';
+import { useProjects } from '@/composables/project';
 
 /**
  * A wrapper class around the workflow data struture to make it easier
@@ -674,6 +675,20 @@ export function getPortLabel({ label, type, isOptional }: WorkflowPort) {
 	if (isOptional) portLabel = portLabel.concat(' (optional)');
 
 	return portLabel;
+}
+
+export function getOutputLabel(outputs: WorkflowOutput<any>[], id: string) {
+	const selectedOutput = outputs.find((output) => output.id === id);
+	if (!selectedOutput) return '';
+
+	// multiple output types, choose first name to use as label arbitrarily
+	if (selectedOutput.type.includes('|')) {
+		const outputType = selectedOutput.type.split('|');
+		return useProjects().getAssetName(selectedOutput.value?.[0]?.[outputType?.[0]]) || selectedOutput.label;
+	}
+
+	// default use single output type
+	return useProjects().getAssetName(selectedOutput.value?.[0]) || selectedOutput.label;
 }
 
 // Checker for resource-operators (e.g. model, dataset) that automatically create an output

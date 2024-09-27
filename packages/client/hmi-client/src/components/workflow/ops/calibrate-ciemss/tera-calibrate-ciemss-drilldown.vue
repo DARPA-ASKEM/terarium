@@ -374,14 +374,16 @@
 			</tera-slider-panel>
 		</template>
 	</tera-drilldown>
-	<tera-save-asset-modal
+	<tera-save-simulation-modal
 		:initial-name="configuredModelConfig?.name"
 		:is-visible="showSaveModal"
-		:asset="configuredModelConfig"
-		:asset-type="AssetType.ModelConfiguration"
+		:assets="[
+			{ id: configuredModelConfig?.id ?? '', type: AssetType.ModelConfiguration },
+			{ id: outputDatasetId, type: AssetType.Dataset }
+		]"
 		@close-modal="showSaveModal = false"
 		@on-save="onSaveAsModelConfiguration"
-		is-updating-asset
+		:simulation-id="node.state.forecastId"
 	/>
 </template>
 
@@ -419,9 +421,9 @@ import {
 	CsvAsset,
 	DatasetColumn,
 	ModelConfiguration,
-	AssetType,
 	ChartAnnotation,
-	InterventionPolicy
+	InterventionPolicy,
+	AssetType
 } from '@/types/Types';
 import { CiemssPresetTypes, DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
 import { getTimespan, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
@@ -452,7 +454,7 @@ import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { displayNumber } from '@/utils/number';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
-import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
+import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import { useClientEvent } from '@/composables/useClientEvent';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraInterventionSummaryCard from '@/components/workflow/ops/simulate-ciemss/tera-intervention-summary-card.vue';
@@ -494,6 +496,12 @@ const presetType = computed(() => {
 	}
 
 	return '';
+});
+
+const outputDatasetId = computed(() => {
+	if (!selectedOutputId.value) return '';
+	const output = props.node.outputs.find((o) => o.id === selectedOutputId.value);
+	return output?.value?.[0]?.datasetId ?? '';
 });
 
 const speedPreset = Object.freeze({

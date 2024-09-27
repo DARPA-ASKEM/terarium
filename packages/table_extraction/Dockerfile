@@ -25,6 +25,7 @@ RUN COMMIT_SHA="$(cat /extractionVersion.txt)" && \
 	tar -zxvf table-extraction.tar.gz && \
 	rm table-extraction.tar.gz && \
 	mv document_intelligence-* document_intelligence
+
 WORKDIR /document_intelligence/document_intelligence/table_extractor
 RUN pip3 install -r requirements.txt
 
