@@ -429,7 +429,7 @@ import { WorkflowNode } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
-import { getInterventionPolicyById } from '@/services/intervention-policy';
+import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import Divider from 'primevue/divider';
 import Accordion from 'primevue/accordion';
@@ -911,7 +911,7 @@ const setOutputValues = async () => {
 	optimizeRequestPayload.value = (await getSimulation(knobs.value.optimizationRunId))?.executionPayload || '';
 };
 
-const preProcessedInterventionsData = computed<Dictionary<Intervention[]>>(() => {
+const preProcessedInterventionsData = computed<Dictionary<ReturnType<typeof flattenInterventionData>>>(() => {
 	// Combine before and after interventions
 	const combinedInterventions = [
 		...knobs.value.interventionPolicyGroups.flatMap((group) => group.intervention),
@@ -919,7 +919,7 @@ const preProcessedInterventionsData = computed<Dictionary<Intervention[]>>(() =>
 	];
 
 	// Group by appliedTo
-	return _.groupBy(combinedInterventions, 'appliedTo');
+	return _.groupBy(flattenInterventionData(combinedInterventions), 'appliedTo');
 });
 
 onMounted(async () => {

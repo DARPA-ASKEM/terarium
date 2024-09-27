@@ -730,8 +730,10 @@ export function createSuccessCriteriaChart(
 	};
 }
 
-export function createInterventionChartMarkers(interventions: Intervention[], hideLabels = false): any[] {
-	const data = flattenInterventionData(interventions);
+export function createInterventionChartMarkers(
+	data: ReturnType<typeof flattenInterventionData>,
+	hideLabels = false
+): any[] {
 	const markerSpec = {
 		data: { values: data },
 		mark: { type: 'rule', strokeDash: [4, 4], color: 'black' },

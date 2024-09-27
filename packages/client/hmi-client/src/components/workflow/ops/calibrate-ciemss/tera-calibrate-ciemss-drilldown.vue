@@ -458,7 +458,7 @@ import { displayNumber } from '@/utils/number';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import { useClientEvent } from '@/composables/useClientEvent';
-import { getInterventionPolicyById } from '@/services/intervention-policy';
+import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraInterventionSummaryCard from '@/components/workflow/ops/simulate-ciemss/tera-intervention-summary-card.vue';
 import { getParameters } from '@/model-representation/service';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
@@ -690,7 +690,9 @@ const preparedChartInputs = computed(() => {
 	};
 });
 
-const groupedInterventionOutputs = computed(() => _.groupBy(interventionPolicy.value?.interventions, 'appliedTo'));
+const groupedInterventionOutputs = computed(() =>
+	_.groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
+);
 
 const preparedCharts = computed(() => {
 	if (!preparedChartInputs.value) return {};
