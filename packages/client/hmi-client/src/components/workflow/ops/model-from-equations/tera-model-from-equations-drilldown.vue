@@ -28,10 +28,12 @@
 						<section class="header-group">
 							<Textarea
 								v-model="multipleEquations"
+								ref="equasionTextarea"
 								autoResize
 								rows="1"
 								placeholder="Add one or more LaTex equations, or paste in a screenshot"
 								class="w-full"
+								:disabled="multipleEquationsDisabled"
 							/>
 							<Button label="Add" @click="getEquations" class="ml-2" :disabled="isEmpty(multipleEquations)" />
 						</section>
@@ -152,7 +154,7 @@ import Checkbox from 'primevue/checkbox';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
 import type { Card, DocumentAsset, DocumentExtraction, Model } from '@/types/Types';
 import { cloneDeep, isEmpty } from 'lodash';
@@ -225,10 +227,14 @@ const goLLMCard = computed<any>(() => document.value?.metadata?.gollmCard);
 const showSaveModelModal = ref(false);
 const isGeneratingCard = ref(false);
 const multipleEquations = ref<string>('');
+const multipleEquationsDisabled = ref(false);
 
 const isDocViewerOpen = ref(true);
 const isInputOpen = ref(true);
 const isOutputOpen = ref(true);
+
+const equasionfileUploads = ref();
+const equasionTextarea = ref();
 
 onMounted(async () => {
 	clonedState.value = cloneDeep(props.node.state);
@@ -267,6 +273,38 @@ onMounted(async () => {
 	}
 
 	assetLoading.value = false;
+
+	window.addEventListener('paste', handlePasteEvent);
+});
+
+function handlePasteEvent(e) {
+	if (e.clipboardData?.files.length) {
+		console.log(JSON.stringify(e.clipboardData)); // will give you the mime types
+		Array.from(e.clipboardData.files).forEach((item) => {
+			const reader = new FileReader();
+			reader.onload = function ({ target }) {
+				if (target) {
+					const base64 = arrayBufferToBase64(target.result);
+					multipleEquations.value = base64;
+					multipleEquationsDisabled.value = true;
+				}
+			};
+			reader.readAsArrayBuffer(item);
+		});
+	}
+}
+
+function arrayBufferToBase64(buffer) {
+	let binary = '';
+	const bytes = new Uint8Array(buffer);
+	for (let i = 0; i < bytes.byteLength; i++) {
+		binary += String.fromCharCode(bytes[i]);
+	}
+	return window.btoa(binary);
+}
+
+onBeforeUnmount(async () => {
+	window.removeEventListener('paste', handlePasteEvent);
 });
 
 const onSelection = (id: string) => {
@@ -355,6 +393,15 @@ function getEquations() {
 			}
 		});
 	});
+	if (equasionfileUploads.value.files) {
+		clonedState.value.equations.push({
+			name: 'Equation',
+			includeInProcess: true,
+			asset: {
+				text: equasionfileUploads.value.files
+			}
+		});
+	}
 	emit('update-state', clonedState.value);
 	multipleEquations.value = '';
 }
