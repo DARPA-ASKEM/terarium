@@ -14,6 +14,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.InferredParameterSemantic;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.InitialSemantic;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ObservableSemantic;
@@ -122,6 +123,12 @@ public class ModelConfigurationService
 
 		if (modelConfiguration.getInitialSemanticList() != null) {
 			for (final InitialSemantic semantic : modelConfiguration.getInitialSemanticList()) {
+				semantic.setModelConfiguration(modelConfiguration);
+			}
+		}
+
+		if (modelConfiguration.getInferredParameterList() != null) {
+			for (final InferredParameterSemantic semantic : modelConfiguration.getInferredParameterList()) {
 				semantic.setModelConfiguration(modelConfiguration);
 			}
 		}
