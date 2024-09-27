@@ -13,14 +13,14 @@
 		<AccordionTab header="Summary"> Summary text </AccordionTab>
 		<AccordionTab>
 			<template #header> State variables<i class="pi pi-info-circle" /> </template>
-			<label>Trajectory State</label>
 			<Dropdown
-				v-model="selectedTrajState"
+				v-model="selectedState"
 				:options="modelStates"
 				@update:model-value="emit('update:trajectoryState', $event)"
 			>
 			</Dropdown>
-			<div ref="trajRef"></div>
+			<div ref="trajRef" />
+			<vega-chart :visualization-spec="stateChart" :are-embed-actions-visible="false" />
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>Parameters<i class="pi pi-info-circle" /></template>
@@ -88,7 +88,13 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
-import { FunmanProcessedData, processFunman, renderFumanTrajectories } from '@/services/models/funman-service';
+import {
+	createFunmanStateChart,
+	FunmanProcessedData,
+	processFunman,
+	renderFumanTrajectories
+} from '@/services/models/funman-service';
+import VegaChart from '@/components/widgets/VegaChart.vue';
 import { getRunResult } from '@/services/models/simulation-service';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
@@ -99,6 +105,7 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import type { FunmanBox } from '@/services/models/funman-service';
 import { logger } from '@/utils/logger';
 import type { Model } from '@/types/Types';
+import { ConstraintGroup } from './funman-operation';
 
 const props = defineProps<{
 	funModelId: string;
@@ -112,11 +119,12 @@ const selectedParam = ref<string>('');
 const selectedParam2 = ref<string>('');
 const contractedModel = ref<Model | null>(null);
 
-const selectedTrajState = ref<string>('');
+const selectedState = ref<string>('');
 const modelStates = ref<string[]>([]);
 const timestepOptions = ref();
 const timestep = ref();
 const trajRef = ref();
+const stateChart = ref();
 
 const lastTrueBox = ref<FunmanBox>();
 const processedData = ref<FunmanProcessedData>();
@@ -124,7 +132,7 @@ const processedData = ref<FunmanProcessedData>();
 const selectedBoxId = ref('');
 const selectedBox = ref<any>({});
 
-let inputConstraints: any[] = [];
+let constraintGroups: ConstraintGroup[] = [];
 
 // const drilldownChartOptions = ref<RenderOptions>({
 // 	width: 550,
@@ -147,21 +155,23 @@ const formatNumber = (v: number) => {
 };
 
 const initalizeParameters = async () => {
-	const rawFunmanResult = await getRunResult(props.funModelId, 'validation.json');
+	// bf7ef7f4-b8ab-4008-b03c-d0c96a7c763f
+	const rawFunmanResult = await getRunResult('bf7ef7f4-b8ab-4008-b03c-d0c96a7c763f', 'validation.json');
 	if (!rawFunmanResult) {
 		logger.error('Failed to fetch funman result');
 		return;
 	}
 
 	const funmanResult = JSON.parse(rawFunmanResult);
-	console.log(rawFunmanResult, funmanResult);
+	console.log(funmanResult);
 
 	// funmanResult.contracted_model.header.schema = funmanResult.contracted_model.header.schema_;
 	// delete funmanResult.contracted_model.header.schema_;
 	contractedModel.value = funmanResult.contracted_model;
 
-	inputConstraints = funmanResult.request.constraints;
+	constraintGroups = funmanResult.request.constraints;
 	processedData.value = processFunman(funmanResult);
+	console.log(processedData.value);
 	parameterOptions.value = [];
 
 	const initialVars = funmanResult.model.petrinet.semantics?.ode.initials.map((d) => d.expression);
@@ -179,30 +189,36 @@ const initalizeParameters = async () => {
 		modelStates.value.push(element.id);
 	});
 
-	selectedTrajState.value = props.trajectoryState || modelStates.value[0];
+	selectedState.value = props.trajectoryState || modelStates.value[0];
 
 	lastTrueBox.value = funmanResult.parameter_space.true_boxes?.at(-1);
-
-	if (selectedTrajState.value) {
-		renderGraph(selectedBoxId.value);
-	}
 };
 
-const renderGraph = async (boxId: string) => {
+const renderGraph = async () => {
 	const width = 580;
 	const height = 180;
 	renderFumanTrajectories(
 		trajRef.value as HTMLElement,
 		processedData.value as FunmanProcessedData,
-		selectedTrajState.value,
-		boxId,
+		selectedState.value,
+		selectedBoxId.value,
 		{
-			constraints: inputConstraints,
+			constraints: constraintGroups,
 			width,
 			height
 		}
 	);
 };
+
+function changeStateChart() {
+	if (!processedData.value) return;
+	stateChart.value = createFunmanStateChart(
+		processedData.value,
+		constraintGroups,
+		selectedState.value,
+		selectedBoxId.value
+	);
+}
 
 onMounted(() => {
 	initalizeParameters();
@@ -218,10 +234,11 @@ watch(
 
 watch(
 	// Whenever user changes options rerender.
-	// () => [selectedParam.value, timestep.value, selectedTrajState.value, selectedBoxId.value],
-	() => [selectedParam.value, selectedTrajState.value],
+	// () => [selectedParam.value, timestep.value, selectedState.value, selectedBoxId.value],
+	() => [selectedParam.value, selectedState.value],
 	() => {
-		renderGraph(selectedBoxId.value);
+		renderGraph();
+		changeStateChart();
 	}
 );
 
@@ -229,7 +246,8 @@ watch(
 	() => [selectedBoxId.value],
 	() => {
 		selectedBox.value = processedData.value?.boxes.find((d) => d.id === selectedBoxId.value);
-		renderGraph(selectedBoxId.value);
+		renderGraph();
+		changeStateChart();
 	}
 );
 </script>

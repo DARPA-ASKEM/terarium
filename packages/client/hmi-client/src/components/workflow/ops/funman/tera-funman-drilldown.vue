@@ -146,7 +146,7 @@
 					<!--e44bd2c5-5c93-406e-b848-5ec4b3192d17-->
 					<tera-funman-output
 						v-if="activeOutput"
-						:fun-model-id="activeOutput?.id"
+						:fun-model-id="activeOutput.value?.[0]"
 						:trajectoryState="node.state.trajectoryState"
 						@update:trajectoryState="updateTrajectorystate"
 					/>

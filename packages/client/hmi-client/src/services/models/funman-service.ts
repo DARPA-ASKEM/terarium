@@ -28,7 +28,6 @@ export interface FunmanProcessedData {
 export interface RenderOptions {
 	width: number;
 	height: number;
-
 	constraints?: any[];
 	click?: Function;
 }
@@ -74,88 +73,72 @@ export function generateConstraintExpression(config: ConstraintGroup) {
 }
 
 export const processFunman = (result: any) => {
-	// List of states and parameters
-	const states = result.model.petrinet.model.states.map((s) => s.id);
-	const params = result.model.petrinet.semantics.ode.parameters.map((p) => p.id);
-	const timesteps = result.request.structure_parameters.at(0).schedules.at(0).timepoints;
+	const stateIds: string[] = result.model.petrinet.model.states.map(({ id }) => id);
+	const parameterIds: string[] = result.model.petrinet.semantics.ode.parameters.map(({ id }) => id);
+	const timepoints: number[] = result.request.structure_parameters[0].schedules[0].timepoints;
+
+	// We only want boxes that appear at the last timestep
+	function getBoxesEndingAtLastTimestep(boxes: any[]) {
+		return boxes.filter((box) => box.points[0].values.timestep === timepoints.length - 1);
+	}
+	const trueBoxes: any[] = getBoxesEndingAtLastTimestep(result.parameter_space.true_boxes);
+	const falseBoxes: any[] = getBoxesEndingAtLastTimestep(result.parameter_space.false_boxes);
 
 	// "dataframes"
-	const points = [['id', 'label', 'box_id', ...params]];
+	const points = [['id', 'label', 'box_id', ...parameterIds]];
 	const boxes: any[] = [];
 	const trajs: any[] = [];
 
-	// Give IDs to all boxes (i) and points (j)
-	let i = 0;
-	let j = 0;
-
-	const parameterSpace = result.parameter_space;
-	let trueBoxes: any[] = [];
-	let falseBoxes: any[] = [];
-
-	if (parameterSpace.true_boxes) {
-		trueBoxes = parameterSpace.true_boxes;
-	}
-	if (parameterSpace.false_boxes) {
-		falseBoxes = parameterSpace.false_boxes;
-	}
-
-	[...trueBoxes, ...falseBoxes].forEach((box) => {
-		const boxId = `box${i}`;
-		i++;
-
-		const temp = {
+	let pointIndex = 0;
+	[...trueBoxes, ...falseBoxes].forEach((box, boxIndex) => {
+		// Add box
+		const boxId = `box${boxIndex}`;
+		boxes.push({
 			id: boxId,
 			label: box.label,
-			timestep: box.bounds.timestep
-		};
-		params.forEach((p: any) => {
-			temp[p] = [box.bounds[p].lb, box.bounds[p].ub];
+			timestep: box.bounds.timestep,
+			...Object.fromEntries(parameterIds.map((p: any) => [p, [box.bounds[p].lb, box.bounds[p].ub]]))
 		});
-		boxes.push(temp);
 
-		if (box.points) {
-			Object.values(box.points).forEach((point: any) => {
-				point.id = `point${j}`;
-				j++;
+		// Add point
+		const point = box.points[0];
+		const pointId = `point${pointIndex}`;
+		// id, label, box id, ...values of parameter ids
+		points.push([pointId, point.label, boxId, ...parameterIds.map((p: any) => point.values[p])]);
+		pointIndex++;
 
-				// id, label, box_id, param values
-				const values = params.map((p: any) => point.values[p]);
-				points.push([point.id, point.label, boxId, ...values]);
+		// Get trajectories
+		const filteredVals = Object.keys(point.values)
+			.filter((key) => !parameterIds.includes(key) && key !== 'timestep' && key.split('_')[0] !== 'assume')
+			.reduce((obj, key) => {
+				obj[key] = point.values[key];
+				return obj;
+			}, {});
 
-				// Get trajectories
-				const filteredVals = Object.keys(point.values)
-					.filter((key) => !params.includes(key) && key !== 'timestep' && key.split('_')[0] !== 'assume')
-					.reduce((obj, key) => {
-						obj[key] = point.values[key];
-						return obj;
-					}, {});
+		timepoints.forEach((t) => {
+			let pushFlag = true;
+			const traj: any = {
+				boxId,
+				label: box.label,
+				pointId,
+				timestep: t,
+				n: point.values.timestep // how many actual points
+			};
+			stateIds.forEach((s) => {
+				// Only push states that have a timestep key pair
+				if (Object.prototype.hasOwnProperty.call(filteredVals, `${s}_${t}`)) {
+					traj[s] = filteredVals[`${s}_${t}`];
+				} else {
+					pushFlag = false;
+				}
+			});
+			if (pushFlag) {
+				trajs.push(traj);
+			}
+		});
+	});
 
-				timesteps.forEach((t) => {
-					let pushFlag = true;
-					const traj: any = {
-						boxId,
-						label: box.label,
-						pointId: point.id,
-						timestep: t,
-						n: point.values.timestep // how many actual points
-					};
-					states.forEach((s) => {
-						// Only push states that have a timestep key pair
-						if (Object.prototype.hasOwnProperty.call(filteredVals, `${s}_${t}`)) {
-							traj[s] = filteredVals[`${s}_${t}`];
-						} else {
-							pushFlag = false;
-						}
-					});
-					if (pushFlag) {
-						trajs.push(traj);
-					}
-				});
-			}); // foreach point
-		} // box.points
-	}); // foreach box
-
-	return { boxes, points, states, trajs } as FunmanProcessedData;
+	return { boxes, points, states: stateIds, trajs } as FunmanProcessedData;
 };
 
 interface FunmanBoundingBox {
@@ -191,6 +174,82 @@ export const getBoxes = (processedData: FunmanProcessedData, param1: string, par
 
 	return result;
 };
+
+enum BoxType {
+	Satisfactory = 'Satisfactory',
+	Unsatisfactory = 'Unsatisfactory',
+	Ambiguous = 'Ambiguous',
+	ModelChecks = 'Model checks'
+}
+
+export function createFunmanStateChart(
+	data: FunmanProcessedData,
+	constraints: ConstraintGroup[],
+	stateId: string,
+	boxId: string
+) {
+	console.log(data, boxId);
+
+	const boxLines = data.trajs.map((traj) => {
+		const boxType = traj.label === 'true' ? BoxType.Satisfactory : BoxType.Unsatisfactory;
+		return { timepoints: traj.timestep, value: traj[stateId], boxType };
+	});
+	// Find min/max values to set an appropriate viewing range for y-axis
+	const minYValue = Math.floor(Math.min(...boxLines.map((d) => d.value)));
+	const maxYValue = Math.ceil(Math.max(...boxLines.map((d) => d.value)));
+
+	console.log(boxLines, minYValue, maxYValue);
+
+	// Show checks for the selected state
+	const stateIdConstraints = constraints.filter((c: ConstraintGroup) => c.variables.includes(stateId));
+	const modelChecks = stateIdConstraints.map((c: any) => ({
+		startX: c.timepoints.lb,
+		endX: c.timepoints.ub,
+		startY: c.additive_bounds.lb,
+		endY: c.additive_bounds.ub,
+		boxType: BoxType.ModelChecks
+	}));
+
+	return {
+		width: 600,
+		height: 300,
+		layer: [
+			{
+				mark: 'rect',
+				data: { values: modelChecks },
+				encoding: {
+					x: { field: 'startX', type: 'quantitative' },
+					x2: { field: 'endX', type: 'quantitative' },
+					y: { field: 'startY', type: 'quantitative' },
+					y2: { field: 'endY', type: 'quantitative' }
+				}
+			},
+			{
+				mark: 'line',
+				data: { values: boxLines },
+				encoding: {
+					x: { field: 'timepoints', type: 'quantitative' },
+					y: { field: 'value', type: 'quantitative' }
+				}
+			}
+		],
+		encoding: {
+			x: { title: 'Timepoints' },
+			y: {
+				title: `${stateId} (persons)`,
+				scale: { domain: [minYValue, maxYValue] }
+			},
+			color: {
+				field: 'boxType',
+				legend: { orient: 'top', direction: 'horizontal', title: null },
+				scale: {
+					domain: [BoxType.Satisfactory, BoxType.Unsatisfactory, BoxType.Ambiguous, BoxType.ModelChecks],
+					range: ['#1B8073', '#FFAB00', '#CCC569', '#A4CEFF54'] // Specify colors for each boxType
+				}
+			}
+		}
+	};
+}
 
 export const renderFumanTrajectories = (
 	element: HTMLElement,
