@@ -4,6 +4,7 @@ import { downloadRawFile, getDataset } from '@/services/dataset';
 import { getUnitsFromModelParts, getModelByModelConfigurationId, getTypesFromModelParts } from '@/services/model';
 
 export interface CalibrateMap {
+	id: string;
 	modelVariable: string;
 	datasetVariable: string;
 }

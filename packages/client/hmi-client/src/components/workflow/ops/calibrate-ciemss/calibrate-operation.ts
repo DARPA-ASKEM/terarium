@@ -2,6 +2,7 @@ import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import { ChartSetting } from '@/types/common';
 import { CalibrateMap } from '@/services/calibrate-workflow';
 import calibrateSimulateCiemss from '@assets/svg/operator-images/calibrate-simulate-probabilistic.svg';
+import { v4 as uuidv4 } from 'uuid';
 
 const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L529';
 
@@ -52,7 +53,7 @@ export const CalibrationOperationCiemss: Operation = {
 		const init: CalibrationOperationStateCiemss = {
 			method: 'dopri5',
 			chartSettings: null,
-			mapping: [{ modelVariable: 'timestamp', datasetVariable: '' }],
+			mapping: [{ id: uuidv4(), modelVariable: 'timestamp', datasetVariable: '' }],
 			simulationsInProgress: [],
 			currentProgress: 0,
 			inProgressPreForecastId: '',
