@@ -455,12 +455,14 @@ watch(
 	border-radius: var(--border-radius-medium);
 	border: 1px solid var(--surface-border-light);
 	border-left: 0.25rem solid var(--primary-color);
+	overflow: auto;
 }
 
 .asset-panel {
 	padding-top: var(--gap-3);
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-medium);
+	overflow: auto;
 }
 
 .equation-image {
