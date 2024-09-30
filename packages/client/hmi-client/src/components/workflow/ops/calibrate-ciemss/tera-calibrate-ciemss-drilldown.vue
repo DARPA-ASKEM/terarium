@@ -95,73 +95,78 @@ t d
 								@update:model-value="setPresetValues"
 							/>
 						</div>
-						<div class="spacer m-3" />
-						<p class="">
-							Number of Samples
-							<i v-tooltip="numberOfSamplesTooltip" class="pi pi-info-circle info-circle" />
-						</p>
-						<div class="input-row">
-							<div class="label-and-input">
-								<tera-input-number inputId="integeronly" v-model="knobs.numSamples" @update:model-value="updateState" />
+						<div class="mt-1 additional-settings">
+							<p>
+								Number of Samples
+								<i v-tooltip="numberOfSamplesTooltip" class="pi pi-info-circle info-circle" />
+							</p>
+							<div class="input-row">
+								<div class="label-and-input">
+									<tera-input-number
+										inputId="integeronly"
+										v-model="knobs.numSamples"
+										@update:model-value="updateState"
+									/>
+								</div>
 							</div>
-						</div>
-						<div class="spacer m-3" />
-						<p class="font-semibold">
-							ODE solver options
-							<i v-tooltip="odeSolverOptionsTooltip" class="pi pi-info-circle info-circle" />
-						</p>
-						<div class="input-row">
-							<div class="label-and-input">
-								<label for="5">Method</label>
-								<Dropdown
-									id="5"
-									v-model="knobs.method"
-									:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
-									@update:model-value="updateState"
-								/>
+							<div class="spacer m-3" />
+							<p class="font-semibold">
+								ODE solver options
+								<i v-tooltip="odeSolverOptionsTooltip" class="pi pi-info-circle info-circle" />
+							</p>
+							<div class="input-row">
+								<div class="label-and-input">
+									<label for="5">Method</label>
+									<Dropdown
+										id="5"
+										v-model="knobs.method"
+										:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
+										@update:model-value="updateState"
+									/>
+								</div>
+								<div class="label-and-input">
+									<label for="num-steps">Step size</label>
+									<tera-input-number inputId="integeronly" v-model="knobs.stepSize" />
+								</div>
 							</div>
-							<div class="label-and-input">
-								<label for="num-steps">Step size</label>
-								<tera-input-number inputId="integeronly" v-model="knobs.stepSize" />
-							</div>
-						</div>
-						<div class="spacer m-3" />
-						<p class="font-semibold">
-							Inference Options
-							<i v-tooltip="inferenceOptionsTooltip" class="pi pi-info-circle info-circle" />
-						</p>
-						<div class="input-row">
-							<div class="label-and-input">
-								<label for="num-iterations">Number of solver iterations</label>
-								<tera-input-number
-									inputId="integeronly"
-									v-model="knobs.numIterations"
-									@update:model-value="updateState"
-								/>
-							</div>
-							<div class="label-and-input">
-								<label for="num-samples">End time for forecast</label>
-								<tera-input-number inputId="integeronly" v-model="knobs.endTime" />
-							</div>
-							<div class="label-and-input">
-								<label for="learning-rate">Learning rate</label>
-								<tera-input-number
-									inputId="numberonly"
-									v-model="knobs.learningRate"
-									@update:model-value="updateState"
-								/>
-							</div>
-							<div class="label-and-input">
-								<label>Inference algorithm</label>
-								<tera-input-text disabled model-value="SVI" />
-							</div>
-							<div class="label-and-input">
-								<label>Loss function</label>
-								<tera-input-text disabled model-value="ELBO" />
-							</div>
-							<div class="label-and-input">
-								<label>Optimizer method</label>
-								<tera-input-text disabled model-value="ADAM" />
+							<div class="spacer m-3" />
+							<p class="font-semibold">
+								Inference Options
+								<i v-tooltip="inferenceOptionsTooltip" class="pi pi-info-circle info-circle" />
+							</p>
+							<div class="input-row">
+								<div class="label-and-input">
+									<label for="num-iterations">Number of solver iterations</label>
+									<tera-input-number
+										inputId="integeronly"
+										v-model="knobs.numIterations"
+										@update:model-value="updateState"
+									/>
+								</div>
+								<div class="label-and-input">
+									<label for="num-samples">End time for forecast</label>
+									<tera-input-number inputId="integeronly" v-model="knobs.endTime" />
+								</div>
+								<div class="label-and-input">
+									<label for="learning-rate">Learning rate</label>
+									<tera-input-number
+										inputId="numberonly"
+										v-model="knobs.learningRate"
+										@update:model-value="updateState"
+									/>
+								</div>
+								<div class="label-and-input">
+									<label>Inference algorithm</label>
+									<tera-input-text disabled model-value="SVI" />
+								</div>
+								<div class="label-and-input">
+									<label>Loss function</label>
+									<tera-input-text disabled model-value="ELBO" />
+								</div>
+								<div class="label-and-input">
+									<label>Optimizer method</label>
+									<tera-input-text disabled model-value="ADAM" />
+								</div>
 							</div>
 						</div>
 					</section>
@@ -1305,5 +1310,10 @@ img {
 	gap: var(--gap);
 	text-align: center;
 	pointer-events: none;
+}
+
+.additional-settings {
+	background: var(--surface-200);
+	padding: var(--gap-2);
 }
 </style>
