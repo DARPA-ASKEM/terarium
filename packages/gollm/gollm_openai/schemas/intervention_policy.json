@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "intervention": {
+      "type": "object",
+      "description": "A list of interventions that can be applied to the model.",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "appliedTo": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "state",
+            "parameter"
+          ]
+        },
+        "staticInterventions": {
+          "type": "array",
+          "description": "A list of static interventions that can be applied to the model.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "timestep": {
+                "type": "number",
+                "description": "The timestep at which the intervention is applied"
+              },
+              "value": {
+                "type": "number",
+                "description": "The new value of the state or parameter"
+              }
+            },
+            "required": [
+              "timestep",
+              "value"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "dynamicInterventions": {
+          "type": "array",
+          "description": "A list of dynamic interventions that can be applied to the model.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "parameter": {
+                "type": "string",
+                "description": "The parameter to which the intervention is applied"
+              },
+              "threshold": {
+                "type": "string",
+                "description": "The threshold value for the which the parameter can't go above or below"
+              },
+              "value": {
+                "type": "string",
+                "description": "The new value of the state or parameter"
+              },
+              "isGreaterThan": {
+                "type": "string",
+                "description": "Whether the parameter should be greater than or less than the threshold"
+              }
+            },
+            "required": [
+              "parameter",
+              "threshold",
+              "value",
+              "isGreaterThan"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "name",
+        "appliedTo",
+        "type",
+        "staticInterventions",
+        "dynamicInterventions"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "properties": {
+    "interventionPolicies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "modelId": {
+            "type": "string",
+            "description": "The ID of the AMR model to which the intervention policy applies."
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "interventions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/intervention"
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "modelId",
+          "name",
+          "description",
+          "interventions"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "interventionPolicies"
+  ],
+  "additionalProperties": false
+}
