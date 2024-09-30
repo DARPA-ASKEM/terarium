@@ -262,9 +262,6 @@ public class TaskService {
 			}
 
 			log.info("Received response status {} for task {}", resp.getStatus(), resp.getId());
-			if (resp.getOutput() != null) {
-				log.info("Received response output {} for task {}", new String(resp.getOutput()), resp.getId());
-			}
 
 			if (
 				resp.getStatus() == TaskStatus.SUCCESS ||

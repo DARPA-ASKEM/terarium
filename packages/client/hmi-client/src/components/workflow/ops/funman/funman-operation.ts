@@ -11,7 +11,9 @@ export enum Constraint {
 
 export enum ConstraintType {
 	LessThan = 'less than',
+	LessThanOrEqualTo = 'less than or equal to',
 	GreaterThan = 'greater than',
+	GreaterThanOrEqualTo = 'greater than or equal to',
 	Increasing = 'increasing',
 	Decreasing = 'decreasing',
 	LinearlyConstrained = 'linearly constrained',
@@ -24,7 +26,7 @@ export interface ConstraintGroup {
 	constraint: Constraint;
 	constraintType: ConstraintType;
 	variables: string[];
-	weights?: number[]; // 1 to 1 mapping with variables
+	weights: number[]; // 1 to 1 mapping with variables
 	timepoints: FunmanInterval;
 	interval: FunmanInterval;
 }

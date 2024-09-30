@@ -1,3 +1,4 @@
+t d
 <template>
 	<tera-drilldown
 		:node="node"
@@ -382,14 +383,16 @@
 			</tera-slider-panel>
 		</template>
 	</tera-drilldown>
-	<tera-save-asset-modal
+	<tera-save-simulation-modal
 		:initial-name="configuredModelConfig?.name"
 		:is-visible="showSaveModal"
-		:asset="configuredModelConfig"
-		:asset-type="AssetType.ModelConfiguration"
+		:assets="[
+			{ id: configuredModelConfig?.id ?? '', type: AssetType.ModelConfiguration },
+			{ id: outputDatasetId, type: AssetType.Dataset }
+		]"
 		@close-modal="showSaveModal = false"
 		@on-save="onSaveAsModelConfiguration"
-		is-updating-asset
+		:simulation-id="node.state.forecastId"
 	/>
 </template>
 
@@ -429,9 +432,10 @@ import {
 	CsvAsset,
 	DatasetColumn,
 	ModelConfiguration,
-	AssetType,
 	ChartAnnotation,
-	InterventionPolicy
+	InterventionPolicy,
+	ModelParameter,
+	AssetType
 } from '@/types/Types';
 import { CiemssPresetTypes, DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
 import { getTimespan, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
@@ -462,10 +466,11 @@ import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { displayNumber } from '@/utils/number';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
-import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
+import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import { useClientEvent } from '@/composables/useClientEvent';
-import { getInterventionPolicyById } from '@/services/intervention-policy';
+import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraInterventionSummaryCard from '@/components/workflow/ops/simulate-ciemss/tera-intervention-summary-card.vue';
+import { getParameters } from '@/model-representation/service';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults, getErrorData } from './calibrate-utils';
 
@@ -506,6 +511,12 @@ const presetType = computed(() => {
 	return '';
 });
 
+const outputDatasetId = computed(() => {
+	if (!selectedOutputId.value) return '';
+	const output = props.node.outputs.find((o) => o.id === selectedOutputId.value);
+	return output?.value?.[0]?.datasetId ?? '';
+});
+
 const speedPreset = Object.freeze({
 	numSamples: 1,
 	method: CiemssMethodOptions.euler,
@@ -527,6 +538,8 @@ const odeSolverOptionsTooltip: string = 'TODO';
 
 // Model variables checked in the model configuration will be options in the mapping dropdown
 const modelStateOptions = ref<any[] | undefined>();
+
+const modelParameters = ref<ModelParameter[]>([]);
 
 const isOutputSettingsPanelOpen = ref(false);
 const activeChartSettings = ref<ChartSetting | null>(null);
@@ -697,7 +710,9 @@ const preparedChartInputs = computed(() => {
 	};
 });
 
-const groupedInterventionOutputs = computed(() => _.groupBy(interventionPolicy.value?.interventions, 'appliedTo'));
+const groupedInterventionOutputs = computed(() =>
+	_.groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
+);
 
 const preparedCharts = computed(() => {
 	if (!preparedChartInputs.value) return {};
@@ -852,6 +867,30 @@ const updateLossChartSpec = (data: string | Record<string, any>[]) => {
 	);
 };
 
+const initDefaultChartSettings = (state: CalibrationOperationStateCiemss) => {
+	// Initialize default selected chart settings when chart settings are not set yet. Return if chart settings are already set.
+	if (Array.isArray(state.chartSettings)) return;
+	const defaultSelectedParam = modelParameters.value.filter((p) => !!p.distribution).map((p) => p.id);
+	const mappedModelVariables = mapping.value
+		.filter((c) => ['state', 'observable'].includes(modelPartTypesMap.value[c.modelVariable]))
+		.map((c) => c.modelVariable);
+	state.chartSettings = updateChartSettingsBySelectedVariables(
+		[],
+		ChartSettingType.VARIABLE_COMPARISON,
+		mappedModelVariables
+	);
+	state.chartSettings = updateChartSettingsBySelectedVariables(
+		state.chartSettings,
+		ChartSettingType.ERROR_DISTRIBUTION,
+		mappedModelVariables
+	);
+	state.chartSettings = updateChartSettingsBySelectedVariables(
+		state.chartSettings,
+		ChartSettingType.DISTRIBUTION_COMPARISON,
+		defaultSelectedParam
+	);
+};
+
 const runCalibrate = async () => {
 	if (!modelConfigId.value || !datasetId.value || !currentDatasetFileName.value) return;
 
@@ -897,16 +936,7 @@ const runCalibrate = async () => {
 		state.currentProgress = 0;
 		state.inProgressForecastId = '';
 		state.inProgressPreForecastId = '';
-
-		// show selected input settings in the charts & output panel
-		state.chartSettings = updateChartSettingsBySelectedVariables(
-			chartSettings.value,
-			ChartSettingType.VARIABLE_COMPARISON,
-			mapping.value
-				.filter((c) => ['state', 'observable'].includes(modelPartTypesMap.value[c.modelVariable]))
-				.map((c) => c.modelVariable)
-		);
-
+		initDefaultChartSettings(state);
 		emit('update-state', state);
 	}
 };
@@ -1009,11 +1039,12 @@ async function getAutoMapping() {
 
 const initialize = async () => {
 	// Model configuration input
-	const { modelConfiguration, modelOptions, modelPartUnits, modelPartTypes } = await setupModelInput(
+	const { model, modelConfiguration, modelOptions, modelPartUnits, modelPartTypes } = await setupModelInput(
 		modelConfigId.value
 	);
 	modelConfig.value = modelConfiguration;
 	modelStateOptions.value = modelOptions;
+	modelParameters.value = model ? getParameters(model) : [];
 	modelVarUnits.value = modelPartUnits ?? {};
 	modelPartTypesMap.value = modelPartTypes ?? {};
 

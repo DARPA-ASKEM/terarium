@@ -1,5 +1,5 @@
 <template>
-	<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5]">
+	<Accordion multiple :active-index="currentActiveIndexes">
 		<AccordionTab>
 			<template #header>
 				State variables<span class="artifact-amount">({{ states.length }})</span>
@@ -66,7 +66,7 @@ import type { Model, Transition, State } from '@/types/Types';
 import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import TeraStates from '@/components/model/model-parts/tera-states.vue';
 import TeraParameters from '@/components/model/model-parts/tera-parameters.vue';
@@ -82,14 +82,10 @@ const props = defineProps<{
 	featureConfig: FeatureConfig;
 }>();
 
-const emit = defineEmits([
-	'update-model',
-	'update-state',
-	'update-parameter',
-	'update-observable',
-	'update-transition',
-	'update-time'
-]);
+const emit = defineEmits(['update-state', 'update-parameter', 'update-observable', 'update-transition', 'update-time']);
+
+// Keep track of active indexes using ref
+const currentActiveIndexes = ref([0, 1, 2, 3, 4]);
 
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);

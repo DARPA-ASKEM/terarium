@@ -41,7 +41,6 @@ public class MdlToStockflowResponseHandler extends TaskResponseHandler {
 			// override the default stockflow name / description
 			model.setName(props.getFileName());
 			model.getHeader().setName(props.getFileName());
-			model.getHeader().setDescription(props.getFileName());
 
 			model
 				.getSemantics()

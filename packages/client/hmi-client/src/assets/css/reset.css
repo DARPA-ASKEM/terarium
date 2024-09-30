@@ -19,6 +19,12 @@ a, div, em, figure, footer, form, h1, h2, h3, h4, h5, h6, header, img, li, ol, p
 	vertical-align: baseline;
 }
 
+/* Prevent font inheritance for KaTeX elements */
+.katex * {
+	font-family: 'KaTeX_Main', 'Times New Roman', serif;
+	font-size: 1.1rem;
+}
+
 img {
 	display: block;
 	max-width: 100%;

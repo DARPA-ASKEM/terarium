@@ -21,7 +21,7 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 1. Open the Sharing Modal again.
 2. Enter your account name and select it from the dropdown list of users.
 3. Change your the Access to `Edit`.
-4. Change the General Access to `Read Only`
+4. Change the General Access to `Restricted`
 
 ### 4. See if your account can see Q&A Project
 1. Open a browser incognito mode or another browser.
