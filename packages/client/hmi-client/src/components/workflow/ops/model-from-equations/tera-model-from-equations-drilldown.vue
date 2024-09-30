@@ -53,7 +53,11 @@
 										:class="selectedItem === equation.name ? 'currenly-selected' : 'asset-panel'"
 									>
 										<section>
-											<Checkbox v-model="equation.includeInProcess" :binary="true" />
+											<Checkbox
+												v-model="equation.includeInProcess"
+												@update:model-value="onCheckBoxChange(equation)"
+												:binary="true"
+											/>
 											<div class="block-container">
 												<tera-math-editor
 													v-if="equation.asset.text"
@@ -89,7 +93,11 @@
 										:class="selectedItem === equation.name ? 'currenly-selected' : 'asset-panel'"
 									>
 										<section>
-											<Checkbox v-model="equation.includeInProcess" :binary="true" />
+											<Checkbox
+												v-model="equation.includeInProcess"
+												@update:model-value="onCheckBoxChange(equation)"
+												:binary="true"
+											/>
 											<div class="block-container">
 												<tera-math-editor
 													v-if="equation.asset.text"
@@ -173,7 +181,7 @@ import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import { ModelFromEquationsState } from './model-from-equations-operation';
+import { ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
 
 const emit = defineEmits(['close', 'update-state', 'append-output', 'select-output', 'update-output-port']);
 const props = defineProps<{
@@ -231,6 +239,8 @@ const isDocViewerOpen = ref(true);
 const isInputOpen = ref(true);
 const isOutputOpen = ref(true);
 
+const documentEquations = ref<AssetBlock<EquationBlock>[]>();
+
 onMounted(async () => {
 	clonedState.value = cloneDeep(props.node.state);
 	if (selectedOutputId.value) {
@@ -257,12 +267,32 @@ onMounted(async () => {
 		isFetchingPDF.value = false;
 
 		const state = cloneDeep(props.node.state);
+		if (state.equations.length) return;
+
+		if (document.value?.metadata?.equations) {
+			documentEquations.value = document.value.metadata.equations.flatMap((page) =>
+				page.map((equation) => {
+					const asset: AssetBlock<EquationBlock> = {
+						name: 'Equation',
+						includeInProcess: false,
+						asset: {
+							text: equation
+						}
+					};
+					return asset;
+				})
+			);
+		}
+		if (documentEquations.value && documentEquations.value?.length > 0) {
+			clonedState.value.equations = documentEquations.value;
+		}
 
 		state.equations = equations.map((e, index) => ({
 			name: `${e.name} ${index}`,
 			includeInProcess: e.includeInProcess,
 			asset: { text: e.asset.metadata.text }
 		}));
+
 		state.text = document.value?.text ?? '';
 		emit('update-state', state);
 	}
@@ -273,6 +303,13 @@ onMounted(async () => {
 const onSelection = (id: string) => {
 	emit('select-output', id);
 };
+
+function onCheckBoxChange(equation) {
+	const state = cloneDeep(props.node.state);
+	const index = state.equations.findIndex((e) => e.name === equation.name);
+	state.equations[index].includeInProcess = equation.includeInProcess;
+	emit('update-state', state);
+}
 
 async function onRun() {
 	const equations = clonedState.value.equations
