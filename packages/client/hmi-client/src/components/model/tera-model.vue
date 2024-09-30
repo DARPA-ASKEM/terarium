@@ -41,7 +41,13 @@
 					@click="onReset"
 					:disabled="!(hasChanged && hasEditPermission)"
 				/>
-				<Button label="Save as" severity="secondary" outlined @click="onSaveAs" :disabled="!hasEditPermission" />
+				<Button
+					:label="`Save ${isWorkflow ? 'for re-use' : 'as'}`"
+					severity="secondary"
+					outlined
+					@click="onSaveAs"
+					:disabled="!hasEditPermission"
+				/>
 				<Button label="Save" @click="onSave" :disabled="!(hasChanged && hasEditPermission)" />
 			</aside>
 		</template>
