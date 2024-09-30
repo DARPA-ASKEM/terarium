@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "The title should say 'Comparison of' and the names of the models being compared."
+    },
+    "summary": {
+      "type": "string",
+      "description": "A brief summary of the comparison of models. This should include the main differences and similarities between the models."
+    },
+    "semanticComparison": {
+      "type": "object",
+      "properties": {
+        "states": {
+          "type": "string",
+          "description": "Explain the differences and similarities between the states of the models. For example, how many states are there in each model, and how do they differ?"
+        },
+        "parameters": {
+          "type": "string",
+          "description": "Explain the differences and similarities between the parameters of the models. For example, how many parameters are there in each model, and how do they differ?"
+        },
+        "transitions": {
+          "type": "string",
+          "description": "Explain the differences and similarities between the transitions of the models. For example, how many transitions are there in each model, and how do they differ?"
+        },
+        "observables": {
+          "type": "string",
+          "description": "Explain the differences and similarities between the observables of the models. For example, how many observables are there in each model, and how do they differ?"
+        }
+      },
+      "required": [
+        "states",
+        "parameters",
+        "transitions",
+        "observables"
+      ],
+      "additionalProperties": false
+    },
+    "metadataComparison": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Compare the content of the descriptions of the models. Explain any differences and similarities."
+        },
+        "uses": {
+          "type": "string",
+          "description": "Explain the differences and similarities between the uses of the models. For example, how are the models used differently, and how are they used similarly?"
+        },
+        "biasRisksLimitations": {
+          "type": "string",
+          "description": "Explain the differences and similarities between the bias, risks, and limitations of the models. For example, what are the biases, risks, and limitations of each model, and how do they differ?"
+        },
+        "testing": {
+          "type": "string",
+          "description": "Explain the differences and similarities between how the models were validated. For example, how does the validation process differ?"
+        }
+      },
+      "required": [
+        "description",
+        "uses",
+        "biasRisksLimitations",
+        "testing"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "title",
+    "summary",
+    "semanticComparison",
+    "metadataComparison"
+  ],
+  "additionalProperties": false
+}
