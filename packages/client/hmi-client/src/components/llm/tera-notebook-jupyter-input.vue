@@ -92,7 +92,7 @@ const hideAutoComplete = ref(false);
 
 const contextLanguageOptions = ref<string[]>(['python3', 'julia-1.10']);
 
-const addQuestionToCode = (question, code) => `# ${question}\n\n${code}`;
+const addQuestionToCode = (question, code) => `\n# Prompt: ${question}\n\n${code}`;
 
 const submitQuestion = () => {
 	const message = props.kernelManager.sendMessage('llm_request', {
