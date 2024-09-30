@@ -11,29 +11,29 @@
 </template>
 
 <script setup lang="ts">
-import _ from 'lodash';
+import { cloneDeep } from 'lodash';
 import { WorkflowNode } from '@/types/workflow';
-import { ModelOperation, ModelOperationState } from '@/components/workflow/ops/model/model-operation';
+import { ModelOperationState } from '@/components/workflow/ops/model/model-operation';
 import TeraModel from '@/components/model/tera-model.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import operator from '@/services/operator';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelOperationState>;
 }>();
 
-const emit = defineEmits(['close', 'update-state', 'append-output']);
+const emit = defineEmits(['close', 'update-state', 'update-output']);
 
 const onSaveEvent = (event: any) => {
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.modelId = event.id;
 	emit('update-state', state);
-	emit('append-output', {
-		type: ModelOperation.outputs[0].type,
-		label: event.header.name,
-		value: [event.id],
-		state,
-		isSelected: false
-	});
+
+	// Update the output with the new model
+	const output = operator.getActiveOutput(props.node);
+	if (!output) return;
+	output.state = state;
+	emit('update-output', output);
 };
 </script>
