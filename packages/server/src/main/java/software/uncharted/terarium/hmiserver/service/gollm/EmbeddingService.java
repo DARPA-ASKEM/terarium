@@ -48,7 +48,7 @@ public class EmbeddingService {
 	}
 
 	public TerariumAssetEmbeddings generateEmbeddings(final String input)
-		throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException, IOException {
+		throws TimeoutException, InterruptedException, ExecutionException, IOException {
 		// create the embedding search request
 		final GoLLMSearchRequest embeddingRequest = new GoLLMSearchRequest();
 		embeddingRequest.setText(input);
@@ -58,7 +58,7 @@ public class EmbeddingService {
 		req.setTimeoutMinutes(REQUEST_TIMEOUT_MINUTES);
 		req.setType(TaskType.GOLLM);
 		req.setInput(embeddingRequest);
-		req.setScript("gollm_task:embedding");
+		req.setScript("gollm:embedding");
 		try {
 			req.setUserId(currentUserService.get().getId());
 		} catch (Exception e) {

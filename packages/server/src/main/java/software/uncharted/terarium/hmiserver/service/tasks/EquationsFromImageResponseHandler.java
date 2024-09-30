@@ -24,7 +24,7 @@ import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 @Slf4j
 public class EquationsFromImageResponseHandler extends TaskResponseHandler {
 
-	public static final String NAME = "gollm_task:equations_from_image";
+	public static final String NAME = "gollm:equations_from_image";
 
 	private final ObjectMapper objectMapper;
 	private final DocumentAssetService documentService;

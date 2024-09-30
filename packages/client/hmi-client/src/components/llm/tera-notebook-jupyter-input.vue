@@ -92,6 +92,8 @@ const hideAutoComplete = ref(false);
 
 const contextLanguageOptions = ref<string[]>(['python3', 'julia-1.10']);
 
+const addQuestionToCode = (question, code) => `\n# Prompt: ${question}\n\n${code}\n# End: =================`;
+
 const submitQuestion = () => {
 	const message = props.kernelManager.sendMessage('llm_request', {
 		request: questionString.value
@@ -103,6 +105,7 @@ const submitQuestion = () => {
 		kernelStatus.value = data.content.execution_state;
 	});
 	message.register('code_cell', (data) => {
+		data.content.code = addQuestionToCode(questionString.value, data.content.code);
 		emit('llm-output', data);
 	});
 	message.register('llm_thought', (data) => {
