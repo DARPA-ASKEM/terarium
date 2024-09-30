@@ -22,7 +22,7 @@ import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import _, { cloneDeep, groupBy } from 'lodash';
-import { blankIntervention } from '@/services/intervention-policy';
+import { blankIntervention, flattenInterventionData } from '@/services/intervention-policy';
 import { createInterventionChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { InterventionPolicyState } from './intervention-policy-operation';
@@ -35,7 +35,9 @@ const props = defineProps<{
 const modelInput = props.node.inputs.find((input) => input.type === 'modelId');
 const isModelInputConnected = computed(() => modelInput?.status === WorkflowPortStatus.CONNECTED);
 
-const groupedOutputParameters = computed(() => groupBy(props.node.state.interventionPolicy.interventions, 'appliedTo'));
+const groupedOutputParameters = computed(() =>
+	groupBy(flattenInterventionData(props.node.state.interventionPolicy.interventions), 'appliedTo')
+);
 
 const preparedCharts = computed(() =>
 	_.mapValues(groupedOutputParameters.value, (interventions, key) =>

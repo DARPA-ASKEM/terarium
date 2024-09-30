@@ -73,7 +73,7 @@ We want to stratified the model by several age groups to simulate how contact ra
 ```python
 model = stratify(
     template_model=model,
-    key= "age",
+    key= "vaccination",
     strata=['unvaccinated', 'vaccinated'],
     structure= None,
     directed=False,
@@ -117,7 +117,7 @@ Next, let's stratify the model to again to introduce the dependency of the infec
    5. Allow existing interactions to involve multiple strata: _False_
 5. Click **Stratify**
 6. Confirm that a new stratified model appears on the right
-   1. The `template-7` transition is now a `1 x 3` matrix, representing the three different possible vaccination processes (from unvaccinated to vaccinated by any of the three vaccines)
+   1. The `template-7` transition is now a `3 x 3` matrix, representing the three different possible vaccination processes (from unvaccinated to vaccinated by any of the three vaccines)
    2. Check that there are now four stratified `S` states: `S_unvaccinated, S_vaccinated_jj, S_vaccinated_moderna, S_vaccinated_pfizer`
    3. The parameter `v` is a `4 x 1` matrix (in 'subjectOutcome' view) with those values `v_unvaccinated, v_vaccinated`
 
