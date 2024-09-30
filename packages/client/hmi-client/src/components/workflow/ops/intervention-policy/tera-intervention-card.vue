@@ -267,7 +267,7 @@ const onRemoveStaticIntervention = (index: number) => {
 const onAddNewStaticIntervention = () => {
 	const intervention = cloneDeep(props.intervention);
 	intervention.staticInterventions.push({
-		timestep: Number.NaN,
+		timestep: intervention.staticInterventions[0].timestep,
 		value: Number.NaN,
 		appliedTo: '',
 		type: InterventionSemanticType.Parameter
