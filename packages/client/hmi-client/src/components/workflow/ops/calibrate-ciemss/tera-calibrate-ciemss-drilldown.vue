@@ -200,7 +200,11 @@ t d
 						@click="showSaveModal = true"
 					/>
 				</template>
-				<tera-operator-output-summary v-if="node.state.summaryId && !showSpinner" :summary-id="node.state.summaryId" />
+				<tera-operator-output-summary
+					v-if="node.state.summaryId && !showSpinner"
+					class="p-3"
+					:summary-id="node.state.summaryId"
+				/>
 
 				<!-- Loss chart -->
 				<div class="ml-3 mr-3">
