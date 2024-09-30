@@ -1,0 +1,275 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "modelConfiguration": {
+      "type": "object",
+      "description": "state and parameter configurations for a model",
+      "properties": {
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "inferredParameterList": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "object",
+            "properties": {
+              "distribution": {
+                "type": "object",
+                "properties": {
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "minimum": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "maximum": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "value",
+                      "minimum",
+                      "maximum"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "type": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "parameters",
+                  "type"
+                ],
+                "additionalProperties": false
+              },
+              "referenceId": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "initial",
+                  "parameter",
+                  "observable",
+                  "inferred"
+                ]
+              }
+            },
+            "required": [
+              "distribution",
+              "referenceId",
+              "source",
+              "type"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "initialSemanticList": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "expression": {
+                "type": "string"
+              },
+              "expressionMathml": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              },
+              "target": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "initial",
+                  "parameter",
+                  "observable",
+                  "inferred"
+                ]
+              }
+            },
+            "required": [
+              "expression",
+              "expressionMathml",
+              "source",
+              "target",
+              "type"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "modelId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "observableSemanticList": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "expression": {
+                "type": "string"
+              },
+              "expressionMathml": {
+                "type": "string"
+              },
+              "referenceId": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              },
+              "states": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "initial",
+                  "parameter",
+                  "observable",
+                  "inferred"
+                ]
+              }
+            },
+            "required": [
+              "expression",
+              "expressionMathml",
+              "referenceId",
+              "source",
+              "states",
+              "type"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "parameterSemanticList": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "distribution": {
+                "type": "object",
+                "properties": {
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "minimum": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "maximum": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "value",
+                      "minimum",
+                      "maximum"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "type": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "parameters",
+                  "type"
+                ],
+                "additionalProperties": false
+              },
+              "referenceId": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "initial",
+                  "parameter",
+                  "observable",
+                  "inferred"
+                ]
+              }
+            },
+            "required": [
+              "distribution",
+              "referenceId",
+              "source",
+              "type"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "description",
+        "inferredParameterList",
+        "initialSemanticList",
+        "modelId",
+        "name",
+        "observableSemanticList",
+        "parameterSemanticList"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "properties": {
+    "conditions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/modelConfiguration"
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "conditions"
+  ],
+  "additionalProperties": false
+}
