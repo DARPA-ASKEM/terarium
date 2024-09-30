@@ -8,16 +8,6 @@
         "name": {
           "type": "string"
         },
-        "appliedTo": {
-          "type": "string"
-        },
-        "type": {
-          "type": "string",
-          "enum": [
-            "state",
-            "parameter"
-          ]
-        },
         "staticInterventions": {
           "type": "array",
           "description": "A list of static interventions that can be applied to the model.",
@@ -31,11 +21,23 @@
               "value": {
                 "type": "number",
                 "description": "The new value of the state or parameter"
+              },
+              "appliedTo": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "state",
+                  "parameter"
+                ]
               }
             },
             "required": [
               "timestep",
-              "value"
+              "value",
+              "appliedTo",
+              "type"
             ],
             "additionalProperties": false
           }
@@ -58,16 +60,23 @@
                 "type": "string",
                 "description": "The new value of the state or parameter"
               },
-              "isGreaterThan": {
+              "appliedTo": {
+                "type": "string"
+              },
+              "type": {
                 "type": "string",
-                "description": "Whether the parameter should be greater than or less than the threshold"
+                "enum": [
+                  "state",
+                  "parameter"
+                ]
               }
             },
             "required": [
               "parameter",
               "threshold",
               "value",
-              "isGreaterThan"
+              "appliedTo",
+              "type"
             ],
             "additionalProperties": false
           }
@@ -75,8 +84,6 @@
       },
       "required": [
         "name",
-        "appliedTo",
-        "type",
         "staticInterventions",
         "dynamicInterventions"
       ],
