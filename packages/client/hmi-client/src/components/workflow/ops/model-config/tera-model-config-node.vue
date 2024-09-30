@@ -1,11 +1,8 @@
 <template>
 	<section>
-		<div
-			v-if="node.state.transientModelConfig.id && node.state.transientModelConfig.id.length > 0"
-			class="pl-2 pr-2 pb-3"
-		>
+		<div v-if="!isEmpty(node.state.transientModelConfig.id)" class="pl-2 pr-2 pb-3">
 			<h6 class="pb-2">{{ node.state.transientModelConfig.name }}</h6>
-			<p class="description">{{ node.state.transientModelConfig.description }}</p>
+			<p>{{ node.state.transientModelConfig.description }}</p>
 		</div>
 		<tera-operator-placeholder v-else :node="node" />
 
@@ -21,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep, omit } from 'lodash';
+import { cloneDeep, omit, isEmpty } from 'lodash';
 import { computed, watch, ref } from 'vue';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
@@ -129,7 +126,7 @@ watch(
 );
 </script>
 <style scoped>
-.description {
+h6 + p {
 	color: var(--text-color-subdued);
 }
 </style>
