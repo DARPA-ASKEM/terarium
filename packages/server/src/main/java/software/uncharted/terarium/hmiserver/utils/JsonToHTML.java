@@ -8,7 +8,7 @@ public class JsonToHTML {
 	// Function to recursively render JsonNode object into HTML
 	public static String renderJsonToHTML(JsonNode jsonNode) {
 		StringBuilder html = new StringBuilder();
-		renderObject(jsonNode, html, 0);
+		renderObject(jsonNode, html, 2);
 		return html.toString();
 	}
 
@@ -25,7 +25,7 @@ public class JsonToHTML {
 					.append("<h")
 					.append(level + 1)
 					.append(">")
-					.append(capitalizeFirstLetter(fieldName))
+					.append(formatTitle(fieldName))
 					.append("</h")
 					.append(level + 1)
 					.append(">\n");
@@ -57,10 +57,18 @@ public class JsonToHTML {
 	}
 
 	// Helper to capitalize the first letter of a string
-	private static String capitalizeFirstLetter(String input) {
+	private static String formatTitle(String input) {
 		if (input == null || input.isEmpty()) {
 			return input;
 		}
-		return input.substring(0, 1).toUpperCase() + input.substring(1);
+
+		// Split the string into words and add a space between each word
+		String[] words = input.split("(?=[A-Z])");
+		StringBuilder formatted = new StringBuilder();
+		for (String word : words) {
+			formatted.append(word).append(" ");
+		}
+		final String title = formatted.toString().trim();
+		return title.substring(0, 1).toUpperCase() + title.substring(1);
 	}
 }

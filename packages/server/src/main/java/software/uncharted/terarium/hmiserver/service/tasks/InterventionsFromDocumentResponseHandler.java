@@ -22,7 +22,7 @@ import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 @Slf4j
 public class InterventionsFromDocumentResponseHandler extends TaskResponseHandler {
 
-	public static final String NAME = "gollm_task:interventions_from_document";
+	public static final String NAME = "gollm:interventions_from_document";
 
 	private final ObjectMapper objectMapper;
 	private final InterventionService interventionService;
