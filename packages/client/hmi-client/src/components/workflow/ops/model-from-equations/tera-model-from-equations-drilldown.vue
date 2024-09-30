@@ -7,6 +7,7 @@
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<template #sidebar>
+			<!-- Document Viewer -->
 			<tera-slider-panel v-model:is-open="isDocViewerOpen" header="Document Viewer" content-width="100%">
 				<template #content>
 					<tera-drilldown-section :is-loading="isFetchingPDF">
@@ -15,7 +16,7 @@
 					</tera-drilldown-section>
 				</template>
 			</tera-slider-panel>
-
+			<!-- Input -->
 			<tera-slider-panel v-model:is-open="isInputOpen" header="Input" content-width="100%">
 				<template #content>
 					<header class="pb-2">
@@ -50,7 +51,7 @@
 										:is-toggleable="false"
 										:is-permitted="false"
 										:use-default-style="false"
-										:class="selectedItem === equation.name ? 'currenly-selected' : 'asset-panel'"
+										:class="selectedItem === equation.name ? 'currently-selected' : 'asset-panel'"
 									>
 										<section>
 											<Checkbox
@@ -90,7 +91,7 @@
 										:is-toggleable="false"
 										:is-permitted="false"
 										:use-default-style="false"
-										:class="selectedItem === equation.name ? 'currenly-selected' : 'asset-panel'"
+										:class="selectedItem === equation.name ? 'currently-selected' : 'asset-panel'"
 									>
 										<section>
 											<Checkbox
@@ -122,22 +123,11 @@
 					</Accordion>
 				</template>
 			</tera-slider-panel>
-
+			<!-- Output -->
 			<tera-slider-panel v-model:is-open="isOutputOpen" header="Output" content-width="100%">
 				<template #content>
-					<header class="flex align-items-center p-3">
-						<h4>Equation conversions</h4>
-						<Button
-							v-if="selectedModel"
-							label="Save for re-use"
-							outlined
-							severity="secondary"
-							class="ml-auto"
-							@click="showSaveModelModal = true"
-						/>
-					</header>
 					<tera-drilldown-preview>
-						<tera-model-description v-if="selectedModel" :model="selectedModel" :generating-card="isGeneratingCard" />
+						<tera-model v-if="selectedModel" :assetId="selectedModel.id" />
 						<tera-operator-placeholder v-else :node="node" style="height: 100%" />
 					</tera-drilldown-preview>
 				</template>
@@ -154,33 +144,32 @@
 </template>
 
 <script setup lang="ts">
+import { cloneDeep, isEmpty } from 'lodash';
+import { computed, onMounted, ref, watch } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { AssetBlock, WorkflowNode } from '@/types/workflow';
+import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
+import Textarea from 'primevue/textarea';
+import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
-import { computed, onMounted, ref, watch } from 'vue';
-import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
-import type { Card, DocumentAsset, DocumentExtraction, Model } from '@/types/Types';
-import { cloneDeep, isEmpty } from 'lodash';
-import { equationsToAMR, type EquationsToAMRRequest } from '@/services/knowledge';
-import Button from 'primevue/button';
-import { getModel, updateModel } from '@/services/model';
-import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import { useProjects } from '@/composables/project';
-import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
-import Textarea from 'primevue/textarea';
-import TeraInputText from '@/components/widgets/tera-input-text.vue';
-import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
-import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
-import { modelCard } from '@/services/goLLM';
-import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
-
-import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
-import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
+import TeraModel from '@/components/model/tera-model.vue';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
+import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
+import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
+import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
+import { AssetBlock, WorkflowNode } from '@/types/workflow';
+import type { Card, DocumentAsset, DocumentExtraction, Model } from '@/types/Types';
+import { equationsToAMR, type EquationsToAMRRequest } from '@/services/knowledge';
+import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
+import { modelCard } from '@/services/goLLM';
+import { getModel, updateModel } from '@/services/model';
+import { useProjects } from '@/composables/project';
 import { ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
 
 const emit = defineEmits(['close', 'update-state', 'append-output', 'select-output', 'update-output-port']);
@@ -188,20 +177,12 @@ const props = defineProps<{
 	node: WorkflowNode<ModelFromEquationsState>;
 }>();
 
-enum ModelFramework {
-	PetriNet = 'petrinet',
-	RegNet = 'regnet',
-	Decapode = 'decapode',
-	GeneralizedAMR = 'gamr',
-	MathExpressionTree = 'met'
-}
-
 const selectedOutputId = ref<string>('');
 
 const clonedState = ref<ModelFromEquationsState>({
 	equations: [],
 	text: '',
-	modelFramework: ModelFramework.PetriNet,
+	modelFramework: 'petrinet',
 	modelId: null
 });
 
@@ -450,7 +431,7 @@ watch(
 	border-radius: var(--border-radius-small);
 }
 
-.currenly-selected {
+.currently-selected {
 	padding-top: var(--gap-3);
 	border-radius: var(--border-radius-medium);
 	border: 1px solid var(--surface-border-light);
