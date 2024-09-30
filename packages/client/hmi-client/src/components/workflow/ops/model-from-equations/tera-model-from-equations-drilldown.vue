@@ -283,13 +283,13 @@ onMounted(async () => {
 			);
 		}
 		if (documentEquations.value && documentEquations.value?.length > 0) {
-			clonedState.value.equations = documentEquations.value;
-
-			state.equations = documentEquations.value.map((e, index) => ({
+			clonedState.value.equations = documentEquations.value.map((e, index) => ({
 				name: `${e.name} ${index}`,
 				includeInProcess: e.includeInProcess,
 				asset: { text: e.asset.text }
 			}));
+
+			state.equations = clonedState.value.equations;
 		}
 
 		state.text = document.value?.text ?? '';
