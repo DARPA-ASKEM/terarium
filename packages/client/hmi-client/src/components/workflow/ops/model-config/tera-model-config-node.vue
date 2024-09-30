@@ -1,6 +1,14 @@
 <template>
 	<section>
-		<tera-operator-placeholder :node="node" />
+		<div
+			v-if="node.state.transientModelConfig.id && node.state.transientModelConfig.id.length > 0"
+			class="pl-2 pr-2 pb-3"
+		>
+			<h6 class="pb-2">{{ node.state.transientModelConfig.name }}</h6>
+			<p class="description">{{ node.state.transientModelConfig.description }}</p>
+		</div>
+		<tera-operator-placeholder v-else :node="node" />
+
 		<tera-progress-spinner is-centered :font-size="2" v-if="isLoading" />
 		<Button
 			:label="isModelInputConnected ? 'Open' : 'Attach a model'"
@@ -120,3 +128,8 @@ watch(
 	}
 );
 </script>
+<style scoped>
+.description {
+	color: var(--text-color-subdued);
+}
+</style>
