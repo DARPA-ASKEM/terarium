@@ -127,7 +127,7 @@
 			<tera-slider-panel v-model:is-open="isOutputOpen" header="Output" content-width="100%">
 				<template #content>
 					<tera-drilldown-preview>
-						<tera-model v-if="selectedModel" :assetId="selectedModel.id" />
+						<tera-model v-if="selectedModel" :assetId="selectedModel.id" @on-save="onModelSaveEvent" />
 						<tera-operator-placeholder v-else :node="node" style="height: 100%" />
 					</tera-drilldown-preview>
 				</template>
@@ -170,7 +170,7 @@ import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '
 import { modelCard } from '@/services/goLLM';
 import { getModel, updateModel } from '@/services/model';
 import { useProjects } from '@/composables/project';
-import { ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
+import { ModelFromEquationsOperation, ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
 
 const emit = defineEmits(['close', 'update-state', 'append-output', 'select-output', 'update-output-port']);
 const props = defineProps<{
@@ -381,6 +381,19 @@ function getEquations() {
 
 function getEquationErrorLabel(equation) {
 	return equation.asset.extractionError ? "Couldn't extract equation" : '';
+}
+
+function onModelSaveEvent(event: any) {
+	const state = cloneDeep(props.node.state);
+	state.modelId = event.id;
+	emit('update-state', state);
+	emit('append-output', {
+		type: ModelFromEquationsOperation.outputs[0].type,
+		label: event.header.name,
+		value: [event.id],
+		state,
+		isSelected: false
+	});
 }
 
 // generates the model card and fetches the model when finished
