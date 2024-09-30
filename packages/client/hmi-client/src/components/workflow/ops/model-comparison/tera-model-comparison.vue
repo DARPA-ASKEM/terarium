@@ -93,7 +93,7 @@
 				/>
 				<ul>
 					<li v-for="(image, index) in structuralComparisons" :key="index">
-						<label>Comparison {{ index + 1 }}</label>
+						<label>Comparison {{ index + 1 }}: {{ compareModelNames }}</label>
 						<Image id="img" :src="image" :alt="`Structural comparison ${index + 1}`" preview />
 					</li>
 				</ul>
@@ -125,7 +125,7 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep, isEmpty } from 'lodash';
+import { cloneDeep, join, isEmpty } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import markdownit from 'markdown-it';
 import Accordion from 'primevue/accordion';
@@ -141,7 +141,7 @@ import { ClientEvent, ClientEventType, type Model, TaskResponse, TaskStatus } fr
 import { OperatorStatus, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 
@@ -199,6 +199,13 @@ function formatField(field: string) {
 		.toLowerCase();
 	return result.charAt(0).toUpperCase() + result.slice(1);
 }
+
+const compareModelNames = computed(() =>
+	join(
+		modelsToCompare.value.map((model) => model.name),
+		', '
+	)
+);
 
 function updateImagesState(operationType: string, newImageId: string | null = null) {
 	const state = cloneDeep(props.node.state);
