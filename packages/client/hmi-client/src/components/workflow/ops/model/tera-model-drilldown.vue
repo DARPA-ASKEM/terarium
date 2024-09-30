@@ -5,7 +5,7 @@
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<tera-drilldown-section>
-			<tera-model v-if="node.state.modelId" :asset-id="node.state.modelId" :is-workflow=true @on-save="onSaveEvent" />
+			<tera-model v-if="node.state.modelId" :asset-id="node.state.modelId" :is-workflow="true" @on-save="onSaveEvent" />
 		</tera-drilldown-section>
 	</tera-drilldown>
 </template>
