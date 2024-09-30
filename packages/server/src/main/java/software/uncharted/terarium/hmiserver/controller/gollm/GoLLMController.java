@@ -142,7 +142,7 @@ public class GoLLMController {
 		}
 
 		final ModelCardResponseHandler.Input input = new ModelCardResponseHandler.Input();
-		input.setAmr(model.get().serializeWithoutTerariumFields());
+		input.setAmr(model.get().serializeWithoutTerariumFields(null, new String[] { "gollmCard" }));
 
 		// Grab the document
 		final DocumentAsset document;
@@ -271,7 +271,7 @@ public class GoLLMController {
 		// stripping the metadata from the model before its sent since it can cause
 		// gollm to fail with massive inputs
 		model.get().setMetadata(null);
-		input.setAmr(model.get().serializeWithoutTerariumFieldsKeepId());
+		input.setAmr(model.get().serializeWithoutTerariumFields(new String[] { "id" }, null));
 
 		// Create the task
 		final TaskRequest req = new TaskRequest();
@@ -399,7 +399,7 @@ public class GoLLMController {
 		// stripping the metadata from the model before its sent since it can cause
 		// gollm to fail with massive inputs
 		model.get().setMetadata(null);
-		input.setAmr(model.get().serializeWithoutTerariumFields());
+		input.setAmr(model.get().serializeWithoutTerariumFields(null, null));
 
 		// set matrix string if provided
 		if (body != null && !body.getMatrixStr().isEmpty()) {
@@ -509,7 +509,7 @@ public class GoLLMController {
 		// stripping the metadata from the model before its sent since it can cause
 		// gollm to fail with massive inputs
 		model.get().setMetadata(null);
-		input.setAmr(model.get().serializeWithoutTerariumFieldsKeepId());
+		input.setAmr(model.get().serializeWithoutTerariumFields(new String[] { "id" }, null));
 
 		// Create the task
 		final TaskRequest req = new TaskRequest();
@@ -597,7 +597,7 @@ public class GoLLMController {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 			}
 
-			amrs.add(model.get().serializeWithoutTerariumFields());
+			amrs.add(model.get().serializeWithoutTerariumFields(null, null));
 		}
 
 		// if the number of models is less than 2, return an error
