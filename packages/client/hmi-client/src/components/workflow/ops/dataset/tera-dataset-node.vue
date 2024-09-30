@@ -2,7 +2,9 @@
 	<main>
 		<template v-if="dataset">
 			<tera-operator-title>{{ dataset.name }}</tera-operator-title>
-			<tera-operator-placeholder :node="node" />
+			<section class="mb-2">
+				{{ formattedColumnList }}
+			</section>
 			<!--
 			  -- Hide the section for the moment as this is taking too much memory in the hmi-server
 			<section v-if="csvContent">
@@ -60,6 +62,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
+import { isEmpty } from 'lodash';
 import { AssetType } from '@/types/Types';
 import type { Dataset, ProjectAsset } from '@/types/Types';
 import Button from 'primevue/button';
@@ -136,6 +139,13 @@ function onDatasetChange(chosenProjectDataset: ProjectAsset) {
 onMounted(async () => {
 	if (props.node.state.datasetId) getDatasetById(props.node.state.datasetId).then();
 });
+
+const formattedColumnList = computed(() =>
+	dataset.value?.columns
+		?.filter((column) => !isEmpty(column.name))
+		.map((column) => column.name)
+		.join(', ')
+);
 </script>
 
 <style scoped>
