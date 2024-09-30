@@ -95,6 +95,13 @@ public abstract class TerariumAsset extends TerariumEntity {
 		}
 	}
 
+	/**
+	 * Serialize the asset to a JSON string, removing the fields that are not needed.
+	 *
+	 * @param keepFields              A list of fields that should not be removed.
+	 * @param additionalDeleteFields  Additional fields to remove.
+	 * @return The JSON string.
+	 */
 	public String serializeWithoutTerariumFields(
 		@Nullable String[] keepFields,
 		@Nullable String[] additionalDeleteFields
