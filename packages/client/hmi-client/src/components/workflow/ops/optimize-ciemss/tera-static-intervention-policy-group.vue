@@ -2,12 +2,13 @@
 	<div class="policy-group">
 		<div class="form-header">
 			<h6 class="mr-auto">{{ config.intervention?.name ?? `Intervention` }}</h6>
-			<div>
-				<label for="active">Optimize</label>
-				<InputSwitch v-model="knobs.isActive" :disabled="isNotEditable" @change="emit('update-self', knobs)" />
-			</div>
+			<tera-signal-bars
+				v-model="knobs.relativeImportance"
+				@update:model-value="emit('update-self', knobs)"
+				label="Relative importance"
+			/>
 		</div>
-		<template v-if="knobs.isActive">
+		<template v-if="true">
 			<section class="input-row">
 				<p>
 					Find the
@@ -120,7 +121,6 @@
 <script setup lang="ts">
 import Dropdown from 'primevue/dropdown';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
-import InputSwitch from 'primevue/inputswitch';
 import { computed, ref, watch } from 'vue';
 import { StaticIntervention } from '@/types/Types';
 import {
@@ -129,6 +129,7 @@ import {
 	OPTIMIZATION_TYPE_MAP,
 	OBJECTIVE_FUNCTION_MAP
 } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
+import TeraSignalBars from '@/components/widgets/tera-signal-bars.vue';
 
 const props = defineProps<{
 	config: InterventionPolicyGroupForm;
@@ -142,7 +143,7 @@ const knobs = ref<InterventionPolicyGroupForm>({
 	...props.config
 });
 
-const isNotEditable = computed(() => staticInterventions.value.length !== 1);
+// const isNotEditable = computed(() => staticInterventions.value.length !== 1);
 
 const showStartTimeOptions = computed(
 	() =>

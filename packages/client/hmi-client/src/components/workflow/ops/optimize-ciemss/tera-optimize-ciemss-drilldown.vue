@@ -518,9 +518,13 @@ const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 const cancelRunId = computed(() => props.node.state.inProgressPostForecastId || props.node.state.inProgressOptimizeId);
 
-const activePolicyGroups = computed(() => knobs.value.interventionPolicyGroups.filter((ele) => ele.isActive));
+const activePolicyGroups = computed(() =>
+	knobs.value.interventionPolicyGroups.filter((ele) => ele.relativeImportance > 5)
+);
 
-const inactivePolicyGroups = computed(() => knobs.value.interventionPolicyGroups.filter((ele) => !ele.isActive));
+const inactivePolicyGroups = computed(() =>
+	knobs.value.interventionPolicyGroups.filter((ele) => ele.relativeImportance <= 5)
+);
 let pyciemssMap: Record<string, string> = {};
 
 const showSpinner = computed<boolean>(
@@ -712,11 +716,11 @@ const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => 
 	knobs.value.interventionPolicyGroups = []; // Reset prior to populating.
 	if (interventionPolicy.interventions && interventionPolicy.interventions.length > 0) {
 		interventionPolicy.interventions.forEach((intervention) => {
-			const isNotActive = intervention.dynamicInterventions?.length > 0 || intervention.staticInterventions?.length > 1;
+			// const isNotActive = intervention.dynamicInterventions?.length > 0 || intervention.staticInterventions?.length > 1;
 			const newIntervention = _.cloneDeep(blankInterventionPolicyGroup);
 			newIntervention.id = interventionPolicy.id;
 			newIntervention.intervention = intervention;
-			newIntervention.isActive = !isNotActive;
+			newIntervention.relativeImportance = 5;
 			newIntervention.startTimeGuess = intervention.staticInterventions[0]?.timestep;
 			newIntervention.initialGuessValue = intervention.staticInterventions[0]?.value;
 			knobs.value.interventionPolicyGroups.push(newIntervention);
