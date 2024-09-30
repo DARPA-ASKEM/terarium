@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "summary": {
+      "type": "object",
+      "properties": {
+        "modelSummary": {
+          "type": "string",
+          "description": "A brief description of the system or process."
+        }
+      },
+      "required": [
+        "modelSummary"
+      ],
+      "additionalProperties": false
+    },
+    "details": {
+      "type": "object",
+      "properties": {
+        "modelDescription": {
+          "type": "string",
+          "description": "Describe the structure of the model in the paper, including its places, transitions, and arcs. Mention if it can likely be represented in petrinet format."
+        },
+        "fundedBy": {
+          "type": "string",
+          "description": "If applicable, list the funding sources."
+        },
+        "modelType": {
+          "type": "string",
+          "description": "Mathematical / Graphical Model / Other"
+        }
+      },
+      "required": [
+        "modelDescription",
+        "fundedBy",
+        "modelType"
+      ],
+      "additionalProperties": false
+    },
+    "uses": {
+      "type": "object",
+      "properties": {
+        "directUse": {
+          "type": "string",
+          "description": "Explain how the model can be used to analyze or simulate specific systems or processes."
+        },
+        "outOfScopeUse": {
+          "type": "string",
+          "description": "Describe scenarios where using the model would be inappropriate or misleading."
+        }
+      },
+      "required": [
+        "directUse",
+        "outOfScopeUse"
+      ],
+      "additionalProperties": false
+    },
+    "biasRisksLimitations": {
+      "type": "object",
+      "properties": {
+        "modelBiasRisksLimitations": {
+          "type": "string",
+          "description": "Describe sources of bias and risk based on the research paper"
+        }
+      },
+      "required": [
+        "modelBiasRisksLimitations"
+      ],
+      "additionalProperties": false
+    },
+    "testing": {
+      "type": "object",
+      "properties": {
+        "testingDataFactorsMetrics": {
+          "type": "string",
+          "description": "Describe how the model was validated, e.g., through simulation, comparison with real-world data, etc."
+        }
+      },
+      "required": [
+        "testingDataFactorsMetrics"
+      ],
+      "additionalProperties": false
+    },
+    "specs": {
+      "type": "object",
+      "properties": {
+        "modelSpecs": {
+          "type": "string",
+          "description": "Details about the model's complexity, such as the number of places, transitions, parameter count, and arcs."
+        }
+      },
+      "required": [
+        "modelSpecs"
+      ],
+      "additionalProperties": false
+    },
+    "glossary": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "authors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "gettingStarted": {
+      "type": "object",
+      "properties": {
+        "examples": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "examples"
+      ],
+      "additionalProperties": false
+    },
+    "citations": {
+      "type": "object",
+      "properties": {
+        "references": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "references"
+      ],
+      "additionalProperties": false
+    },
+    "moreInformation": {
+      "type": "object",
+      "properties": {
+        "links": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "links"
+      ],
+      "additionalProperties": false
+    },
+    "structuralInformation": {
+      "type": "object",
+      "properties": {
+        "schemaName": {
+          "type": "string"
+        },
+        "parameterNames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "domain": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "modelType": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "modelStructure": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "modelParameters": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "schemaName",
+        "parameterNames",
+        "domain",
+        "modelType",
+        "modelStructure",
+        "modelParameters"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "summary",
+    "details",
+    "uses",
+    "biasRisksLimitations",
+    "testing",
+    "specs",
+    "glossary",
+    "authors",
+    "gettingStarted",
+    "citations",
+    "moreInformation",
+    "structuralInformation"
+  ],
+  "additionalProperties": false
+}
