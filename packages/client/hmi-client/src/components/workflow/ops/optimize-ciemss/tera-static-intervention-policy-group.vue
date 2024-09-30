@@ -3,12 +3,13 @@
 		<div class="form-header">
 			<h6 class="mr-auto">{{ config.intervention?.name ?? `Intervention` }}</h6>
 			<tera-signal-bars
+				v-if="!!knobs.relativeImportance"
 				v-model="knobs.relativeImportance"
 				@update:model-value="emit('update-self', knobs)"
 				label="Relative importance"
 			/>
 		</div>
-		<template v-if="true">
+		<template v-if="!!knobs.relativeImportance">
 			<section class="input-row">
 				<p>
 					Find the
