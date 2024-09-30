@@ -87,7 +87,6 @@ import { AssetType, ClientEvent, ClientEventType, type Model, TaskResponse, Task
 import { useClientEvent } from '@/composables/useClientEvent';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
-import { useRoute } from 'vue-router';
 
 const props = defineProps({
 	assetId: {
@@ -97,6 +96,10 @@ const props = defineProps({
 	featureConfig: {
 		type: Object as PropType<FeatureConfig>,
 		default: { isPreview: false } as FeatureConfig
+	},
+	isWorkflow: {
+		type: Boolean,
+		default: false
 	}
 });
 
@@ -125,10 +128,6 @@ const isNaming = computed(() => isEmpty(props.assetId) || isRenaming.value);
 const hasChanged = computed(() => !isEqual(model.value, temporaryModel.value));
 const hasEditPermission = useProjects().hasEditPermission();
 
-const route = useRoute();
-
-const isWorkflow = computed(() => route.params.pageType === 'workflow');
-
 // Edit menu
 function onReset() {
 	temporaryModel.value = cloneDeep(model.value);
@@ -143,7 +142,7 @@ function onSaveAs() {
 // Save modal
 function onModalSave(event: any) {
 	showSaveModal.value = false;
-	if (isWorkflow.value) {
+	if (props.isWorkflow) {
 		emit('on-save', event);
 	}
 }
