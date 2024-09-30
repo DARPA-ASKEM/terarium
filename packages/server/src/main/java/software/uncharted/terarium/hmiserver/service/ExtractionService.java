@@ -830,8 +830,6 @@ public class ExtractionService {
 				extraction.equations.add(output.getResponse().get(key));
 			}
 
-			log.info("NUM EQUATION PAGES:" + keys.size());
-
 			return extraction;
 		});
 	}
@@ -875,8 +873,6 @@ public class ExtractionService {
 				extraction.documentText += page.asText() + "\n";
 				extraction.documentTextPerPage.add(page.asText());
 			}
-
-			log.info("NUM TEXT PAGES:" + extraction.documentTextPerPage.size());
 
 			return extraction;
 		});
@@ -937,8 +933,6 @@ public class ExtractionService {
 					extraction.tables.add(pageOfTables);
 				}
 			}
-
-			log.info("NUM TABLE PAGES:" + keys.size());
 
 			return extraction;
 		});
