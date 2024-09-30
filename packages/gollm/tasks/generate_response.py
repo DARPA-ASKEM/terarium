@@ -1,5 +1,6 @@
 import sys
-from gollm.openai.tool_utils import generate_response
+from gollm_openai.tool_utils import generate_response
+
 from taskrunner import TaskRunnerInterface
 
 

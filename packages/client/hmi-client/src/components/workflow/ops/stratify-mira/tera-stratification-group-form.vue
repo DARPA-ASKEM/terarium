@@ -19,10 +19,7 @@
 			/>
 		</div>
 		<div class="input-row">
-			<label>
-				Enter a comma separated list of labels for each group.
-				<span class="subdued-text">(Max 100)</span>
-			</label>
+			<label>Enter a comma separated list of labels for each group.</label>
 			<tera-input-text v-model="labels" placeholder="e.g., Young, Old" @focusout="emit('update-self', updatedConfig)" />
 		</div>
 		<div class="input-row">

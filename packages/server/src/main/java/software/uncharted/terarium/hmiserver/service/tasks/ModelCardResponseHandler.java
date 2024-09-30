@@ -22,7 +22,7 @@ import software.uncharted.terarium.hmiserver.service.data.ModelService;
 @Slf4j
 public class ModelCardResponseHandler extends TaskResponseHandler {
 
-	public static final String NAME = "gollm_task:model_card";
+	public static final String NAME = "gollm:model_card";
 	private final ObjectMapper objectMapper;
 	private final DocumentAssetService documentAssetService;
 	private final ModelService modelService;
