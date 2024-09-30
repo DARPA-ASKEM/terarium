@@ -147,6 +147,8 @@
 					<tera-funman-output
 						v-if="activeOutput"
 						:fun-model-id="activeOutput.value?.[0]"
+						:mmt="mmt"
+						:mmt-params="mmtParams"
 						:trajectoryState="node.state.trajectoryState"
 						@update:trajectoryState="updateTrajectorystate"
 					/>
@@ -189,8 +191,10 @@ import { pythonInstance } from '@/python/PyodideController';
 import TeraFunmanOutput from '@/components/workflow/ops/funman/tera-funman-output.vue';
 import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-constraint-group-form.vue';
 import { DrilldownTabs } from '@/types/common';
-import { stringToLatexExpression } from '@/services/model';
+import { stringToLatexExpression, getMMT } from '@/services/model';
 import { displayNumber } from '@/utils/number';
+import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import { emptyMiraModel } from '@/model-representation/mira/mira';
 import { FunmanOperationState, Constraint, ConstraintType, CompartmentalConstraint } from './funman-operation';
 
 const props = defineProps<{
@@ -232,6 +236,9 @@ const model = ref<Model | null>();
 const stateIds = ref<string[]>([]);
 const parameterIds = ref<string[]>([]);
 const observableIds = ref<string[]>([]);
+
+const mmt = ref<MiraModel>(emptyMiraModel());
+const mmtParams = ref<MiraTemplateParams>({});
 
 const selectedOutputId = ref<string>();
 const outputs = computed(() => {
@@ -425,6 +432,10 @@ const initialize = async () => {
 	if (!modelConfigurationId) return;
 	const modelConfiguration = await getModelConfigurationById(modelConfigurationId);
 	model.value = await getAsConfiguredModel(modelConfiguration);
+	getMMT(model.value).then((response) => {
+		mmt.value = response.mmt;
+		mmtParams.value = response.template_params;
+	});
 };
 
 const setModelOptions = async () => {

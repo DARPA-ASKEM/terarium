@@ -10,12 +10,14 @@ interface FunmanBound {
 	ub: number;
 }
 export interface FunmanBox {
-	id?: string;
+	id: string;
 	label: string;
-	bounds: Record<string, FunmanBound>;
-	explanation: any;
-	schedule: any;
-	points: any;
+	timestep: FunmanBound;
+	parameters: Record<string, FunmanBound>;
+	// bounds: Record<string, FunmanBound>;
+	// explanation: any;
+	// schedule: any;
+	// points: any;
 }
 export interface ProcessedFunmanResult {
 	boxes: FunmanBox[];
@@ -85,18 +87,20 @@ export const processFunman = (result: any) => {
 
 	// "dataframes"
 	const points = [['id', 'label', 'box_id', ...parameterIds]];
-	const boxes: any[] = [];
+	const boxes: FunmanBox[] = [];
 	const trajs: any[] = [];
 
 	let pointIndex = 0;
 	[...trueBoxes, ...falseBoxes].forEach((box, boxIndex) => {
+		console.log(box);
+
 		// Add box
 		const boxId = `box${boxIndex}`;
 		boxes.push({
 			id: boxId,
 			label: box.label,
 			timestep: box.bounds.timestep,
-			...Object.fromEntries(parameterIds.map((p: any) => [p, [box.bounds[p].lb, box.bounds[p].ub]]))
+			parameters: Object.fromEntries(parameterIds.map((p: any) => [p, box.bounds[p]]))
 		});
 
 		// Add point

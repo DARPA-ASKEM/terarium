@@ -3,7 +3,7 @@ import { isEmpty, pick } from 'lodash';
 import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
 import { ChartAnnotation, Intervention } from '@/types/Types';
-import type { ProcessedFunmanResult } from '@/services/models/funman-service';
+import type { FunmanBox, ProcessedFunmanResult } from '@/services/models/funman-service';
 import { flattenInterventionData } from './intervention-policy';
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
@@ -871,6 +871,80 @@ export function createFunmanStateChart(data: ProcessedFunmanResult, constraints:
 					range: ['#1B8073', '#FFAB00', '#CCC569', '#A4CEFF54'] // Specify colors for each boxType
 				}
 			}
+		}
+	};
+}
+
+export function createFunmanParameterChart(parametersOfInterest: any[], boxes: FunmanBox[]) {
+	const parameterRanges = parametersOfInterest.map((param) => ({
+		parameterId: param.name,
+		range_start: param.interval.lb,
+		range_end: param.interval.ub,
+		range_type: BoxType.Unsatisfactory
+	}));
+
+	// const parameterRanges =
+	boxes.forEach(({ label, parameters }) => {
+		parameterRanges.push(
+			...Object.keys(parameters).map((key) => ({
+				parameterId: key,
+				range_start: parameters[key].lb,
+				range_end: parameters[key].ub,
+				range_type: label === 'true' ? BoxType.Satisfactory : BoxType.Unsatisfactory
+			}))
+		);
+	});
+
+	const globalFont = 'Figtree';
+	return {
+		$schema: VEGALITE_SCHEMA,
+		config: { font: globalFont },
+		width: 600,
+		height: 50, // Height per facet
+		data: {
+			values: parameterRanges
+		},
+		facet: {
+			row: {
+				field: 'parameterId',
+				type: 'nominal',
+				header: { labelAngle: 0, title: '' }
+			}
+		},
+		spec: {
+			layer: [
+				{
+					mark: 'bar', // Use a bar to represent ranges
+					encoding: {
+						x: {
+							field: 'range_start',
+							type: 'quantitative',
+							scale: { type: 'log' },
+							title: null
+						},
+						x2: {
+							field: 'range_end'
+						},
+						color: {
+							field: 'range_type',
+							type: 'nominal',
+							legend: { orient: 'top', direction: 'horizontal', title: null },
+							scale: {
+								domain: [BoxType.Satisfactory, BoxType.Unsatisfactory, BoxType.Ambiguous],
+								range: ['#1B8073', '#FFAB00', '#CCC569']
+							}
+						}
+					}
+				}
+				// {
+				// 	mark: 'rule', // Use rule marks for boundaries or annotations
+				// 	encoding: {
+				// 		x: { field: 'rule_value', type: 'quantitative', scale: { type: 'log' } },
+				// 		size: { value: 2 }, // Width of the rule
+				// 		color: { value: 'black' } // Color of the rule lines
+				// 	}
+				// }
+			]
 		}
 	};
 }

@@ -24,53 +24,26 @@
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>Parameters<i class="pi pi-info-circle" /></template>
+			<vega-chart
+				v-for="(parameterChart, index) in parameterCharts"
+				:key="index"
+				:visualization-spec="parameterChart"
+				:are-embed-actions-visible="false"
+			/>
 			<p class="secondary-text" v-if="selectedParam2 === ''">
 				Adjust parameter ranges to only include values in the green region or less.
 			</p>
-			<div class="variables-table" v-if="selectedParam2">
-				<section class="boundary-drilldown">
-					<div class="boundary-drilldown-header">
-						{{ selectedParam }} : {{ selectedParam2 }} pairwise drilldown
-						<Button
-							class="close-mask"
-							icon="pi pi-times"
-							text
-							rounded
-							aria-label="Close"
-							@click="selectedParam2 = ''"
-						/>
-					</div>
-					<!-- <tera-funman-boundary-chart
-						:processed-data="processedData as FunmanProcessedData"
-						:param1="selectedParam"
-						:param2="selectedParam2"
-						:options="drilldownChartOptions"
-						:timestep="timestep"
-						:selectedBoxId="selectedBoxId"
-					/> -->
-				</section>
-			</div>
 			<div class="variables-table" v-if="selectedParam2 === ''">
 				<div class="variables-header">
 					<header v-for="(title, index) in ['Parameter', 'Lower bound', 'Upper bound', '', '']" :key="index">
 						{{ title }}
 					</header>
 				</div>
-
 				<div v-for="(bound, parameter) in lastTrueBox?.bounds" :key="parameter + Date.now()">
-					<div class="variables-row" v-if="parameterOptions.includes(parameter)">
+					<div class="variables-row" v-if="parameterOptions.includes(parameter.toString())">
 						<div>{{ parameter }}</div>
 						<div>{{ formatNumber(bound.lb) }}</div>
 						<div>{{ formatNumber(bound.ub) }}</div>
-						<!-- <tera-funman-boundary-chart
-							v-if="processedData"
-							:processed-data="processedData"
-							:param1="selectedParam"
-							:param2="parameter"
-							:timestep="timestep"
-							:selectedBoxId="selectedBoxId"
-							@click="selectedParam2 = parameter"
-						/> -->
 						<div v-if="selectedBoxId !== ''">
 							{{ formatNumber(selectedBox[parameter][0]) }} :
 							{{ formatNumber(selectedBox[parameter][1]) }}
@@ -79,9 +52,10 @@
 				</div>
 			</div>
 		</AccordionTab>
-		<AccordionTab v-if="contractedModel" header="Validated configuration"
-			><tera-model-diagram :model="contractedModel"
-		/></AccordionTab>
+		<AccordionTab v-if="contractedModel" header="Validated configuration">
+			<!--TODO: Read only model configuration-->
+			<!-- <tera-model-diagram :model="contractedModel"/> -->
+		</AccordionTab>
 	</Accordion>
 	{{ funModelId }}
 </template>
@@ -89,22 +63,26 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import { ProcessedFunmanResult, processFunman } from '@/services/models/funman-service';
-import { createFunmanStateChart } from '@/services/charts';
+import { createFunmanStateChart, createFunmanParameterChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { getRunResult } from '@/services/models/simulation-service';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import type { FunmanBox } from '@/services/models/funman-service';
+// import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue'; // TODO: Once we save the output model properly in the backend we can use this.
 import { logger } from '@/utils/logger';
 import type { Model } from '@/types/Types';
+import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import { collapseParameters } from '@/model-representation/mira/mira';
 import { ConstraintGroup } from './funman-operation';
 
 const props = defineProps<{
 	funModelId: string;
 	trajectoryState?: string;
+	// TODO: Once the output model is saved properly in the backend we won't need these as props, they can be generated within here.
+	mmt: MiraModel;
+	mmtParams: MiraTemplateParams;
 }>();
 
 const emit = defineEmits(['update:trajectoryState']);
@@ -120,26 +98,15 @@ const timestepOptions = ref();
 const timestep = ref();
 const trajRef = ref();
 const stateChart = ref();
+const parameterCharts = ref<any[]>([]);
 
-const lastTrueBox = ref<FunmanBox>();
+const lastTrueBox = ref<any>();
 const processedData = ref<ProcessedFunmanResult>();
 
 const selectedBoxId = ref('');
 const selectedBox = ref<any>({});
 
 let constraintGroups: ConstraintGroup[] = [];
-
-// const drilldownChartOptions = ref<RenderOptions>({
-// 	width: 550,
-// 	height: 275,
-// 	click: (d: any) => {
-// 		if (d.id === selectedBoxId.value) {
-// 			selectedBoxId.value = '';
-// 		} else {
-// 			selectedBoxId.value = d.id;
-// 		}
-// 	}
-// });
 
 // TODO: better range-bound logic
 const formatNumber = (v: number) => {
@@ -150,7 +117,7 @@ const formatNumber = (v: number) => {
 };
 
 const initalizeParameters = async () => {
-	// bf7ef7f4-b8ab-4008-b03c-d0c96a7c763f
+	// props.funModelId
 	const rawFunmanResult = await getRunResult('bf7ef7f4-b8ab-4008-b03c-d0c96a7c763f', 'validation.json');
 	if (!rawFunmanResult) {
 		logger.error('Failed to fetch funman result');
@@ -186,6 +153,21 @@ const initalizeParameters = async () => {
 
 	selectedState.value = props.trajectoryState || modelStates.value[0];
 
+	const parametersOfInterest = funmanResult.request.parameters.filter((d: any) => d.label === 'all');
+
+	if (processedData.value) {
+		const collapsedParameters = collapseParameters(props.mmt, props.mmtParams);
+		collapsedParameters.forEach((value, key) => {
+			if (!processedData.value) return;
+			// console.log(parametersOfInterest );
+			console.log(key, value);
+			// const parameterChildren =
+			parameterCharts.value.push(createFunmanParameterChart(parametersOfInterest, processedData.value.boxes));
+		});
+	}
+
+	// console.log(funmanResult.structure_parameters);
+
 	lastTrueBox.value = funmanResult.parameter_space.true_boxes?.at(-1);
 };
 
@@ -194,8 +176,8 @@ function changeStateChart() {
 	stateChart.value = createFunmanStateChart(
 		processedData.value,
 		constraintGroups,
-		selectedState.value,
-		selectedBoxId.value
+		selectedState.value
+		// selectedBoxId.value
 	);
 }
 
@@ -288,18 +270,5 @@ watch(
 .variables-header {
 	display: grid;
 	grid-template-columns: repeat(6, 1fr) 0.5fr;
-}
-
-.boundary-drilldown {
-	border: 1px solid var(--00-neutral-300, #c3ccd6);
-	padding: 5px;
-}
-
-.boundary-drilldown-header {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	justify-content: center;
-	font-size: var(--font-body-medium);
 }
 </style>
