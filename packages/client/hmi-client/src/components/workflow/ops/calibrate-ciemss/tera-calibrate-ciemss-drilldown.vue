@@ -227,8 +227,6 @@ t d
 
 				<!-- Variable charts -->
 				<div v-if="!showSpinner" class="form-section">
-					{{ chartSize }}
-					{{ lossChartSize }}
 					<section ref="outputPanel" v-if="modelConfig && csvAsset">
 						<h5>Parameters</h5>
 						<br />
