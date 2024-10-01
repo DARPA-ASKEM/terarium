@@ -1,9 +1,11 @@
 import _ from 'lodash';
+import { Ref, ref } from 'vue';
 import { DataseriesConfig, ChartConfig } from '@/types/SimulateConfig';
 import type { CsvAsset, TimeSpan } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import type { CalibrateMap } from '@/services/calibrate-workflow';
 import { useProjects } from '@/composables/project';
+import { useResizeObserver } from '@/composables//useResizeObserver';
 
 export const drilldownChartSize = (element: HTMLElement | null) => {
 	if (!element) return { width: 100, height: 270 };
@@ -11,6 +13,21 @@ export const drilldownChartSize = (element: HTMLElement | null) => {
 	const parentContainerWidth = (element as HTMLElement).clientWidth - 24;
 	return { width: parentContainerWidth, height: 270 };
 };
+
+/**
+ * A Vue composable that provides reactive chart size based on the container element's size.
+ *
+ * @param {Ref<HTMLElement>} containerElement - A reference to the container HTML element.
+ * @returns {Ref<{ width: number, height: number }>} - A reactive reference to the chart size.
+ */
+export function useDrilldownChartSize(containerElement: Ref<HTMLElement>) {
+	const size = ref(drilldownChartSize(null));
+	useResizeObserver(containerElement, (rect) => {
+		console.log(rect);
+		size.value = drilldownChartSize(containerElement.value);
+	});
+	return size;
+}
 
 /**
  * Function generator for common TA3-operator operations, such add, update, and delete charts
