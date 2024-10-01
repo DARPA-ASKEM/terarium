@@ -153,17 +153,17 @@
 	<Teleport to="body">
 		<component
 			v-if="dialogIsOpened && currentActiveNode"
+			:downstream-operators-nav="downstreamOperatorsNav"
 			:is="registry.getDrilldown(currentActiveNode.operationType)"
 			:node="currentActiveNode"
-			:upstream-operators-nav="upstreamOperatorsNav"
-			:downstream-operators-nav="downstreamOperatorsNav"
 			:spawn-animation="drilldownSpawnAnimation"
+			:upstream-operators-nav="upstreamOperatorsNav"
+			@close="addOperatorToRoute(null)"
 			@append-output="(event: any) => appendOutput(currentActiveNode, event)"
+			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
+			@update-output="(event: any) => updateOutput(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			@update-status="(status: OperatorStatus) => updateWorkflowNodeStatus(currentActiveNode, status)"
-			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
-			@close="addOperatorToRoute(null)"
-			@update-output-port="(event: any) => updateOutput(currentActiveNode, event)"
 		/>
 	</Teleport>
 </template>
