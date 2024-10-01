@@ -860,7 +860,7 @@ const LOSS_CHART_DATA_SOURCE = 'lossData'; // Name of the streaming data source
 const lossChartRef = ref<InstanceType<typeof VegaChart>>();
 const lossChartSpec = ref();
 const lossValues = ref<{ [key: string]: number }[]>([]);
-const updateLossChartSpec = (data: string | Record<string, any>[]) => {
+const updateLossChartSpec = (data: string | Record<string, any>[], size: { width: number; height: number }) => {
 	lossChartSpec.value = createForecastChart(
 		null,
 		{
@@ -871,7 +871,7 @@ const updateLossChartSpec = (data: string | Record<string, any>[]) => {
 		null,
 		{
 			title: '',
-			width: lossChartSize.value.width,
+			width: size.width,
 			height: 100,
 			xAxisTitle: 'Solver iterations',
 			yAxisTitle: 'Loss'
@@ -1098,15 +1098,15 @@ watch(
 );
 
 watch(
-	() => props.node.state.inProgressCalibrationId,
-	(id) => {
+	[() => props.node.state.inProgressCalibrationId, lossChartSize],
+	([id, size]) => {
 		if (id === '') {
 			showSpinner.value = false;
-			updateLossChartSpec(lossValues.value);
+			updateLossChartSpec(lossValues.value, size);
 			unsubscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
 		} else {
 			showSpinner.value = true;
-			updateLossChartSpec(LOSS_CHART_DATA_SOURCE);
+			updateLossChartSpec(LOSS_CHART_DATA_SOURCE, size);
 			subscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
 		}
 	},
@@ -1129,7 +1129,7 @@ watch(
 						iter: i,
 						loss: d.data.loss
 					}));
-				updateLossChartSpec(lossValues.value);
+				updateLossChartSpec(lossValues.value, lossChartSize.value);
 			}
 
 			const state = props.node.state;
