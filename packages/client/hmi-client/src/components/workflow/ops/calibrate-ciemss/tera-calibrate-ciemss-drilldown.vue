@@ -114,73 +114,78 @@
 								@update:model-value="setPresetValues"
 							/>
 						</div>
-						<div class="spacer m-3" />
-						<p class="">
-							Number of Samples
-							<i v-tooltip="numberOfSamplesTooltip" class="pi pi-info-circle info-circle" />
-						</p>
-						<div class="input-row">
-							<div class="label-and-input">
-								<tera-input-number inputId="integeronly" v-model="knobs.numSamples" @update:model-value="updateState" />
+						<div class="mt-1 additional-settings">
+							<p>
+								Number of Samples
+								<i v-tooltip="numberOfSamplesTooltip" class="pi pi-info-circle info-circle" />
+							</p>
+							<div class="input-row">
+								<div class="label-and-input">
+									<tera-input-number
+										inputId="integeronly"
+										v-model="knobs.numSamples"
+										@update:model-value="updateState"
+									/>
+								</div>
 							</div>
-						</div>
-						<div class="spacer m-3" />
-						<p class="font-semibold">
-							ODE solver options
-							<i v-tooltip="odeSolverOptionsTooltip" class="pi pi-info-circle info-circle" />
-						</p>
-						<div class="input-row">
-							<div class="label-and-input">
-								<label for="5">Method</label>
-								<Dropdown
-									id="5"
-									v-model="knobs.method"
-									:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
-									@update:model-value="updateState"
-								/>
+							<div class="spacer m-3" />
+							<p class="font-semibold">
+								ODE solver options
+								<i v-tooltip="odeSolverOptionsTooltip" class="pi pi-info-circle info-circle" />
+							</p>
+							<div class="input-row">
+								<div class="label-and-input">
+									<label for="5">Method</label>
+									<Dropdown
+										id="5"
+										v-model="knobs.method"
+										:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
+										@update:model-value="updateState"
+									/>
+								</div>
+								<div class="label-and-input">
+									<label for="num-steps">Step size</label>
+									<tera-input-number inputId="integeronly" v-model="knobs.stepSize" />
+								</div>
 							</div>
-							<div class="label-and-input">
-								<label for="num-steps">Step size</label>
-								<tera-input-number inputId="integeronly" v-model="knobs.stepSize" />
-							</div>
-						</div>
-						<div class="spacer m-3" />
-						<p class="font-semibold">
-							Inference Options
-							<i v-tooltip="inferenceOptionsTooltip" class="pi pi-info-circle info-circle" />
-						</p>
-						<div class="input-row">
-							<div class="label-and-input">
-								<label for="num-iterations">Number of solver iterations</label>
-								<tera-input-number
-									inputId="integeronly"
-									v-model="knobs.numIterations"
-									@update:model-value="updateState"
-								/>
-							</div>
-							<div class="label-and-input">
-								<label for="num-samples">End time for forecast</label>
-								<tera-input-number inputId="integeronly" v-model="knobs.endTime" />
-							</div>
-							<div class="label-and-input">
-								<label for="learning-rate">Learning rate</label>
-								<tera-input-number
-									inputId="numberonly"
-									v-model="knobs.learningRate"
-									@update:model-value="updateState"
-								/>
-							</div>
-							<div class="label-and-input">
-								<label>Inference algorithm</label>
-								<tera-input-text disabled model-value="SVI" />
-							</div>
-							<div class="label-and-input">
-								<label>Loss function</label>
-								<tera-input-text disabled model-value="ELBO" />
-							</div>
-							<div class="label-and-input">
-								<label>Optimizer method</label>
-								<tera-input-text disabled model-value="ADAM" />
+							<div class="spacer m-3" />
+							<p class="font-semibold">
+								Inference Options
+								<i v-tooltip="inferenceOptionsTooltip" class="pi pi-info-circle info-circle" />
+							</p>
+							<div class="input-row">
+								<div class="label-and-input">
+									<label for="num-iterations">Number of solver iterations</label>
+									<tera-input-number
+										inputId="integeronly"
+										v-model="knobs.numIterations"
+										@update:model-value="updateState"
+									/>
+								</div>
+								<div class="label-and-input">
+									<label for="num-samples">End time for forecast</label>
+									<tera-input-number inputId="integeronly" v-model="knobs.endTime" />
+								</div>
+								<div class="label-and-input">
+									<label for="learning-rate">Learning rate</label>
+									<tera-input-number
+										inputId="numberonly"
+										v-model="knobs.learningRate"
+										@update:model-value="updateState"
+									/>
+								</div>
+								<div class="label-and-input">
+									<label>Inference algorithm</label>
+									<tera-input-text disabled model-value="SVI" />
+								</div>
+								<div class="label-and-input">
+									<label>Loss function</label>
+									<tera-input-text disabled model-value="ELBO" />
+								</div>
+								<div class="label-and-input">
+									<label>Optimizer method</label>
+									<tera-input-text disabled model-value="ADAM" />
+								</div>
 							</div>
 						</div>
 					</section>
@@ -205,31 +210,38 @@
 
 		<!-- Output section -->
 		<template #preview>
-			<tera-drilldown-section>
+			<tera-drilldown-section v-if="showOutputSection">
 				<template #header-controls-left v-if="configuredModelConfig?.name">
-					<h5>{{ configuredModelConfig.name }}</h5>
+					<h5 class="ml-3">{{ configuredModelConfig.name }}</h5>
 				</template>
 				<template #header-controls-right>
 					<Button
 						label="Save for re-use"
 						severity="secondary"
+						class="mr-3"
 						outlined
 						:disabled="!configuredModelConfig"
 						@click="showSaveModal = true"
 					/>
 				</template>
-				<tera-operator-output-summary v-if="node.state.summaryId && !showSpinner" :summary-id="node.state.summaryId" />
+				<tera-operator-output-summary
+					v-if="node.state.summaryId && !showSpinner"
+					class="p-3"
+					:summary-id="node.state.summaryId"
+				/>
 
 				<!-- Loss chart -->
-				<h5>Loss</h5>
-				<div ref="lossChartContainer">
-					<vega-chart
-						expandable
-						v-if="lossValues.length > 0 || showSpinner"
-						ref="lossChartRef"
-						:are-embed-actions-visible="true"
-						:visualization-spec="lossChartSpec"
-					/>
+				<div class="ml-3 mr-3">
+					<h5>Loss</h5>
+					<div ref="lossChartContainer">
+						<vega-chart
+							expandable
+							v-if="lossValues.length > 0 || showSpinner"
+							ref="lossChartRef"
+							:are-embed-actions-visible="true"
+							:visualization-spec="lossChartSpec"
+						/>
+					</div>
 				</div>
 
 				<!-- Variable charts -->
@@ -303,6 +315,11 @@
 
 				<tera-notebook-error v-if="!_.isEmpty(node.state?.errorMessage?.traceback)" v-bind="node.state.errorMessage" />
 			</tera-drilldown-section>
+			<!-- Empty state if calibrate hasn't been run yet -->
+			<section v-else class="output-section-empty-state">
+				<Vue3Lottie :animationData="EmptySeed" :height="150" loop autoplay />
+				<p class="helpMessage">Click 'Run' to begin calibrating</p>
+			</section>
 		</template>
 
 		<template #sidebar-right>
@@ -426,6 +443,8 @@ import {
 	saveAnnotation,
 	updateChartSettingsBySelectedVariables
 } from '@/services/chart-settings';
+import { Vue3Lottie } from 'vue3-lottie';
+import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
@@ -553,7 +572,7 @@ const modelStateOptions = ref<any[] | undefined>();
 
 const modelParameters = ref<ModelParameter[]>([]);
 
-const isOutputSettingsPanelOpen = ref(true);
+const isOutputSettingsPanelOpen = ref(false);
 const activeChartSettings = ref<ChartSetting | null>(null);
 
 const datasetColumns = ref<DatasetColumn[]>();
@@ -599,6 +618,16 @@ const mappingDropdownPlaceholder = computed(() => {
 	if (!_.isEmpty(modelStateOptions.value) && !_.isEmpty(datasetColumns.value)) return 'Select variable';
 	return 'Please wait...';
 });
+
+const showOutputSection = computed(
+	() =>
+		lossValues.value.length > 0 ||
+		selectedErrorVariableSettings.value.length > 0 ||
+		selectedVariableSettings.value.length > 0 ||
+		selectedParameterSettings.value.length > 0 ||
+		showSpinner.value ||
+		!_.isEmpty(props.node.state?.errorMessage?.traceback)
+);
 
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);
@@ -1300,5 +1329,22 @@ img {
 		border-top: 1px solid var(--surface-border-alt);
 		width: 100%;
 	}
+}
+
+.output-section-empty-state {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--gap);
+	text-align: center;
+	pointer-events: none;
+}
+
+.additional-settings {
+	background: var(--surface-200);
+	padding: var(--gap-2);
 }
 </style>
