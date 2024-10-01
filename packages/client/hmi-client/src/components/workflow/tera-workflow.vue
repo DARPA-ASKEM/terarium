@@ -780,7 +780,7 @@ const dist2 = (a: Position, b: Position) => (a.x - b.x) * (a.x - b.x) + (a.y - b
 const threshold2 = 5.0 * 5.0;
 
 /*
- * Relink edges that have become detatched
+ * Relink edges that have become detached
  *
  * [output-port](edge source => edge target)[input-port]
  *
@@ -1008,14 +1008,14 @@ onUnmounted(() => {
 
 <style scoped>
 .toolbar {
+	align-items: center;
+	background-color: var(--surface-transparent);
+	border-bottom: 1px solid var(--surface-border-light);
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
-	align-items: center;
-	padding: 0.5rem 1rem;
-	border-bottom: 1px solid var(--surface-border-light);
+	padding: var(--gap-2) var(--gap-4);
 	z-index: 900;
-	background-color: var(--surface-transparent);
 }
 
 .glass {
@@ -1023,15 +1023,15 @@ onUnmounted(() => {
 }
 
 .button-group {
-	display: flex;
 	align-items: center;
+	display: flex;
 	flex-direction: row;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 }
 
 .rename-workflow {
-	display: flex;
 	align-items: center;
+	display: flex;
 	flex-wrap: nowrap;
 }
 </style>
