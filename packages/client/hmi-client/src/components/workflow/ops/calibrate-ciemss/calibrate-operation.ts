@@ -7,6 +7,7 @@ const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss
 
 export interface CalibrationOperationStateCiemss extends BaseState {
 	method: string;
+	timestampColName: string;
 	mapping: CalibrateMap[];
 	chartSettings: ChartSetting[] | null; // null indicates that the chart settings have not been set yet
 	simulationsInProgress: string[];
@@ -52,6 +53,7 @@ export const CalibrationOperationCiemss: Operation = {
 		const init: CalibrationOperationStateCiemss = {
 			method: 'dopri5',
 			chartSettings: null,
+			timestampColName: '',
 			mapping: [{ modelVariable: '', datasetVariable: '' }],
 			simulationsInProgress: [],
 			currentProgress: 0,
