@@ -157,7 +157,7 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
-import type { Card, DocumentAsset, DocumentExtraction, Model } from '@/types/Types';
+import type { Card, DocumentAsset, Model } from '@/types/Types';
 import { cloneDeep, isEmpty } from 'lodash';
 import { equationsToAMR, type EquationsToAMRRequest } from '@/services/knowledge';
 import Button from 'primevue/button';
@@ -242,7 +242,6 @@ onMounted(async () => {
 	}
 
 	const documentId = props.node.inputs?.[0]?.value?.[0]?.documentId;
-	const equations: AssetBlock<DocumentExtraction>[] = props.node.inputs?.[0]?.value?.[0]?.equations;
 
 	assetLoading.value = true;
 	if (documentId) {
@@ -278,19 +277,18 @@ onMounted(async () => {
 			);
 		}
 		if (documentEquations.value && documentEquations.value?.length > 0) {
-			clonedState.value.equations = documentEquations.value;
-		}
+			clonedState.value.equations = documentEquations.value.map((e, index) => ({
+				name: `${e.name} ${index}`,
+				includeInProcess: e.includeInProcess,
+				asset: { text: e.asset.text }
+			}));
 
-		state.equations = equations.map((e, index) => ({
-			name: `${e.name} ${index}`,
-			includeInProcess: e.includeInProcess,
-			asset: { text: e.asset.metadata.text }
-		}));
+			state.equations = clonedState.value.equations;
+		}
 
 		state.text = document.value?.text ?? '';
 		emit('update-state', state);
 	}
-
 	assetLoading.value = false;
 });
 
