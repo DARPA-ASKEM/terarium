@@ -2,7 +2,7 @@
 
 # ensure the volume mounted python code is using editable mode
 echo "Installing python tasks"
-cd /gollm_task
+cd /gollm
 pip install --no-cache-dir -e .
 
 # run it

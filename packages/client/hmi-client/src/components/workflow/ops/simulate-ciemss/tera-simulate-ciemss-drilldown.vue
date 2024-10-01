@@ -238,7 +238,7 @@ import { createForecastChart, createInterventionChartMarkers } from '@/services/
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import { getModelConfigurationById } from '@/services/model-configurations';
-import { getInterventionPolicyById } from '@/services/intervention-policy';
+import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraInterventionSummaryCard from '@/components/workflow/ops/simulate-ciemss/tera-intervention-summary-card.vue';
 import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
@@ -345,7 +345,9 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 	updateState();
 };
 
-const groupedInterventionOutputs = computed(() => _.groupBy(interventionPolicy.value?.interventions, 'appliedTo'));
+const groupedInterventionOutputs = computed(() =>
+	_.groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
+);
 
 const preparedCharts = computed(() => {
 	if (!selectedRunId.value) return [];
@@ -656,8 +658,7 @@ onUnmounted(() => kernelManager.shutdown());
 }
 
 .empty-state {
-	position: absolute;
-	width: calc(100% - 240px);
+	width: 100%;
 	height: 100%;
 	display: flex;
 	flex-direction: column;

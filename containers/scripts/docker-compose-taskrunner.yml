@@ -20,9 +20,9 @@ services:
     extra_hosts:
       - "${local_host_name}:host-gateway"
     volumes:
-      - ../../packages/gollm:/gollm_task
+      - ../../packages/gollm:/gollm
       - ../../packages/taskrunner:/taskrunner
-    command: /gollm_task/dev.sh
+    command: /gollm/dev.sh
 
   mira-taskrunner:
     build:

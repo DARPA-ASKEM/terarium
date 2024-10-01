@@ -46,6 +46,7 @@ import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractedDocumentPage;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractionAssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
@@ -173,12 +174,12 @@ public class ExtractionService {
 
 		String documentAbstract;
 		String documentText;
+		List<String> documentTextPerPage;
 		List<ExtractionFile> files = new ArrayList<>();
 		List<DocumentExtraction> assets = new ArrayList<>();
 		List<JsonNode> equations = new ArrayList<>();
 		List<JsonNode> tables = new ArrayList<>();
 		ArrayNode variableAttributes;
-		JsonNode gollmCard;
 		boolean partialFailure = true;
 	}
 
@@ -222,6 +223,7 @@ public class ExtractionService {
 			log.info("Text extraction complete for document: {}", documentName);
 			extractionResponse.documentAbstract = textExtraction.documentAbstract;
 			extractionResponse.documentText = textExtraction.documentText;
+			extractionResponse.documentTextPerPage = textExtraction.documentTextPerPage;
 			extractionResponse.assets = textExtraction.assets;
 			extractionResponse.files = textExtraction.files;
 
@@ -307,39 +309,43 @@ public class ExtractionService {
 			document.setText(extractionResponse.documentText);
 		}
 
+		int pageNum = 0;
+		for (final String page : extractionResponse.documentTextPerPage) {
+			final ExtractedDocumentPage p = new ExtractedDocumentPage();
+			p.setText(page);
+			p.setPageNumber(pageNum);
+
+			document.getExtractions().add(p);
+			pageNum++;
+		}
+
 		if (extractionResponse.documentAbstract != null) {
 			document.setDocumentAbstract(extractionResponse.documentAbstract);
 		}
 
+		if (document.getMetadata() == null) {
+			document.setMetadata(new HashMap<>());
+		}
+
 		if (extractionResponse.variableAttributes != null) {
-			if (document.getMetadata() == null) {
-				document.setMetadata(new HashMap<>());
-			}
 			document.getMetadata().put("attributes", extractionResponse.variableAttributes);
 		}
 
-		if (extractionResponse.gollmCard != null) {
-			if (document.getMetadata() == null) {
-				document.setMetadata(new HashMap<>());
-			}
-			document.getMetadata().put("gollmCard", extractionResponse.gollmCard);
-		}
-
+		pageNum = 0;
 		if (extractionResponse.equations != null) {
-			if (document.getMetadata() == null) {
-				document.setMetadata(new HashMap<>());
-			}
 			document.getMetadata().put("equations", objectMapper.valueToTree(extractionResponse.equations));
+
+			document.getExtractions().get(pageNum).setEquations(extractionResponse.equations);
+			pageNum++;
 		}
 
+		pageNum = 0;
 		if (extractionResponse.tables != null) {
-			if (document.getMetadata() == null) {
-				document.setMetadata(new HashMap<>());
-			}
 			document.getMetadata().put("tables", objectMapper.valueToTree(extractionResponse.tables));
-		}
 
-		log.info("Added extraction to document: {}", documentId);
+			document.getExtractions().get(pageNum).setEquations(extractionResponse.tables);
+			pageNum++;
+		}
 
 		return documentService.updateAsset(document, projectId, hasWritePermission).orElseThrow();
 	}
@@ -832,6 +838,7 @@ public class ExtractionService {
 
 		String documentAbstract;
 		String documentText;
+		List<String> documentTextPerPage = new ArrayList<>();
 		List<DocumentExtraction> assets = new ArrayList<>();
 		List<ExtractionFile> files = new ArrayList<>();
 	}
@@ -861,7 +868,11 @@ public class ExtractionService {
 
 			final TextExtraction extraction = new TextExtraction();
 
-			extraction.documentText = output.getResponse().asText();
+			extraction.documentText = "";
+			for (final JsonNode page : output.getResponse()) {
+				extraction.documentText += page.asText() + "\n";
+				extraction.documentTextPerPage.add(page.asText());
+			}
 
 			return extraction;
 		});
@@ -909,7 +920,18 @@ public class ExtractionService {
 			final TableExtraction extraction = new TableExtraction();
 
 			for (final String key : keys) {
-				extraction.tables.add(output.getResponse().get(key));
+				final JsonNode page = output.getResponse().get(key);
+				if (page.isArray()) {
+					final ArrayNode pageOfTables = objectMapper.createArrayNode();
+					for (final JsonNode table : page) {
+						JsonNode t = table;
+						if (table.isTextual()) {
+							t = objectMapper.readTree(table.asText());
+						}
+						pageOfTables.add(t);
+					}
+					extraction.tables.add(pageOfTables);
+				}
 			}
 
 			return extraction;

@@ -106,14 +106,18 @@
 					</AccordionTab>
 					<AccordionTab header="Charts">
 						<ul class="flex flex-column gap-2">
-							<li v-for="(interventions, appliedTo) in groupedOutputParameters" :key="appliedTo">
+							<li v-for="appliedTo in Object.keys(groupedOutputParameters)" :key="appliedTo">
 								<vega-chart
 									expandable
 									:are-embed-actions-visible="false"
 									:visualization-spec="preparedCharts[appliedTo]"
 								/>
 								<ul>
-									<li class="pb-2" v-for="intervention in interventions" :key="intervention.name">
+									<li
+										class="pb-2"
+										v-for="intervention in getInterventionsAppliedTo(appliedTo)"
+										:key="intervention.name"
+									>
 										<h6 class="pb-1">{{ intervention.name }}</h6>
 										<ul v-if="!isEmpty(intervention.staticInterventions)">
 											<li
@@ -172,7 +176,12 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import { useConfirm } from 'primevue/useconfirm';
 import { getParameters, getStates } from '@/model-representation/service';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
-import { getInterventionPolicyById, updateInterventionPolicy, blankIntervention } from '@/services/intervention-policy';
+import {
+	getInterventionPolicyById,
+	updateInterventionPolicy,
+	blankIntervention,
+	flattenInterventionData
+} from '@/services/intervention-policy';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Textarea from 'primevue/textarea';
@@ -196,7 +205,7 @@ const props = defineProps<{
 	node: WorkflowNode<InterventionPolicyState>;
 }>();
 
-const emit = defineEmits(['close', 'update-state', 'select-output', 'append-output', 'update-output-port']);
+const emit = defineEmits(['close', 'update-state', 'select-output', 'append-output']);
 
 const confirm = useConfirm();
 
@@ -279,10 +288,7 @@ const stateOptions = computed(() => {
 });
 
 const groupedOutputParameters = computed(() =>
-	groupBy(
-		knobs.value.transientInterventionPolicy.interventions,
-		(item) => item.dynamicInterventions[0]?.appliedTo || item.staticInterventions[0]?.appliedTo
-	)
+	groupBy(flattenInterventionData(knobs.value.transientInterventionPolicy.interventions), 'appliedTo')
 );
 
 const preparedCharts = computed(() =>
@@ -296,6 +302,19 @@ const preparedCharts = computed(() =>
 		})
 	)
 );
+
+const getInterventionsAppliedTo = (appliedTo: string) =>
+	knobs.value.transientInterventionPolicy.interventions
+		.map((i) => {
+			const staticInterventions = i.staticInterventions.filter((s) => s.appliedTo === appliedTo);
+			const dynamicInterventions = i.dynamicInterventions.filter((d) => d.appliedTo === appliedTo);
+			return {
+				name: i.name,
+				staticInterventions,
+				dynamicInterventions
+			};
+		})
+		.filter((i) => i.dynamicInterventions.length + i.staticInterventions.length > 0);
 
 const initialize = async (overwriteWithState: boolean = false) => {
 	const state = props.node.state;

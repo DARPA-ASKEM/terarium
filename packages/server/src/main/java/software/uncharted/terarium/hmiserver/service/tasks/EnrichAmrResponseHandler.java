@@ -17,7 +17,7 @@ import software.uncharted.terarium.hmiserver.service.data.ModelService;
 @Slf4j
 public class EnrichAmrResponseHandler extends TaskResponseHandler {
 
-	public static final String NAME = "gollm_task:enrich_amr";
+	public static final String NAME = "gollm:enrich_amr";
 
 	private final ObjectMapper objectMapper;
 	private final ModelService modelService;
