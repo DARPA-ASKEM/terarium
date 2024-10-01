@@ -110,8 +110,7 @@ export function useProjects() {
 	 * @returns {ProjectAsset['assetName']}
 	 */
 	function getAssetName(assetId: ProjectAsset['assetId']): ProjectAsset['assetName'] {
-		const asset = findAsset(assetId);
-		return asset?.assetName ?? '';
+		return findAsset(assetId)?.assetName ?? '';
 	}
 
 	/**
