@@ -23,7 +23,8 @@
                 "description": "The new value of the state or parameter"
               },
               "appliedTo": {
-                "type": "string"
+                "type": "string",
+                "description": "The state or parameter to which the intervention is applied"
               },
               "type": {
                 "type": "string",
@@ -50,18 +51,19 @@
             "properties": {
               "parameter": {
                 "type": "string",
-                "description": "The parameter to which the intervention is applied"
+                "description": "The state to which the threshold is applied. This can only be a state, not a parameter."
               },
               "threshold": {
                 "type": "string",
-                "description": "The threshold value for the which the parameter can't go above or below"
+                "description": "The threshold that once the value of the state crosses, the intervention is applied"
               },
               "value": {
                 "type": "string",
                 "description": "The new value of the state or parameter"
               },
               "appliedTo": {
-                "type": "string"
+                "type": "string",
+                "description": "The state or parameter to which the intervention is applied"
               },
               "type": {
                 "type": "string",

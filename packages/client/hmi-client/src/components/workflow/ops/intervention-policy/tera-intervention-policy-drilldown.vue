@@ -21,6 +21,8 @@
 								outlined
 								severity="secondary"
 								label="Extract from inputs"
+								:loading="isLoading"
+								:disabled="!props.node.inputs[0]?.value && !props.node.inputs[1]?.value"
 								@click="extractInterventionPolicyFromInputs"
 							/>
 							<Button
@@ -31,6 +33,10 @@
 							/>
 						</nav>
 						<tera-input-text v-model="filterInterventionsText" placeholder="Filter" />
+						<!-- Show a spinner if loading -->
+						<section v-if="isLoading" class="processing-new-configuration-tile">
+							<p class="secondary-text">Processing...</p>
+						</section>
 						<ul v-if="!isFetchingPolicies">
 							<li v-for="policy in interventionPoliciesFiltered" :key="policy.id">
 								<tera-intervention-policy-card
@@ -240,6 +246,7 @@ const isSidebarOpen = ref(true);
 const filterInterventionsText = ref('');
 const model = ref<Model | null>(null);
 const isFetchingPolicies = ref(false);
+const isLoading = ref(false);
 const interventionsPolicyList = ref<InterventionPolicy[]>([]);
 const interventionPoliciesFiltered = computed(() =>
 	interventionsPolicyList.value
@@ -525,6 +532,20 @@ watch(
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
 			initialize();
+		}
+	}
+);
+
+watch(
+	() => props.node.state.taskIds,
+	async (watchVal) => {
+		if (watchVal.length > 0) {
+			isLoading.value = true;
+		} else {
+			isLoading.value = false;
+			const modelId = props.node.inputs[0].value?.[0];
+			if (!modelId) return;
+			await fetchInterventionPolicies(modelId);
 		}
 	}
 );

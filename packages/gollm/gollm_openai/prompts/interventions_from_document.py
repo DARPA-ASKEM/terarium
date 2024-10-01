@@ -28,7 +28,7 @@ For each policy described in the paper, create an interventionPolicy object. To 
     a.	Create a value for `name` from the user-provided text.
     b.	`appliedTo` should reference the id of the parameter or initial state of the AMR Model. If you cannot find an initial state or parameter that matches the intervention, do not create an intervention object.
     c.	`type` should be either "state" or "parameter" depending on what the intervention is applied to.
-    d.	create a list of either static or dynamic interventions, but not both.
+    d.	create a list of either static or dynamic interventions, but not both. The other list should be empty.
 
 Do not respond in full sentences; only create a JSON object that satisfies the JSON schema specified in the response format.
 
