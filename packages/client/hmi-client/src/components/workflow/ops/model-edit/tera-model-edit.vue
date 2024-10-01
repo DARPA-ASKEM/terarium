@@ -132,7 +132,7 @@ import { ModelEditOperationState, ModelEditOperation } from './model-edit-operat
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
 }>();
-const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output', 'update-output-port']);
+const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output', 'update-output']);
 
 const outputs = computed(() => {
 	if (!isEmpty(props.node.outputs)) {
@@ -404,7 +404,7 @@ function updateNode(model: Model) {
 	if (!outputPort) return;
 	outputPort.label = model.header.name;
 
-	emit('update-output-port', outputPort);
+	emit('update-output', outputPort);
 }
 
 onMounted(async () => {
