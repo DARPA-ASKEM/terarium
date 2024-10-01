@@ -9,7 +9,7 @@
 				label="Relative importance"
 			/>
 		</div>
-		<template v-if="staticInterventions.length === 1">
+		<template v-if="staticInterventions.length === 1 && knobs.relativeImportance">
 			<section class="input-row">
 				<p>
 					Find the

@@ -1,5 +1,5 @@
 <template>
-	<div class="flex align-items-center gap-2">
+	<div>
 		<label v-if="label">{{ label }}</label>
 		<Dropdown :model-value="modelValue" :options="options" @update:model-value="updateValue">
 			<template #value="{ value }">
@@ -8,7 +8,7 @@
 		</Dropdown>
 		<!-- Signal Bars -->
 		<ul>
-			<li v-for="n in numberOfBars" :key="n" :class="{ active: n <= modelValue }" :style="getBarStyle(n)"></li>
+			<li v-for="n in numberOfBars" :key="n" :class="{ active: n <= modelValue }" :style="getBarStyle(n)" />
 		</ul>
 	</div>
 </template>
@@ -17,7 +17,7 @@
 import Dropdown from 'primevue/dropdown';
 import { ref } from 'vue';
 
-const baseDelay = 0.03; // trasnition delay for each bar
+const baseDelay = 0.03; // transition delay for each bar
 const barWidth = 2; // width for each bar
 const maxNumberOfBars = 15; // just setting a max number of bars arbitrarily
 
@@ -64,6 +64,12 @@ const updateValue = (value: number) => {
 </script>
 
 <style scoped>
+div {
+	display: flex;
+	align-items: center;
+	gap: var(--gap-2);
+}
+
 ul {
 	display: flex;
 	align-items: flex-end;
@@ -85,6 +91,6 @@ li {
 
 /* static width for dropdown */
 :deep(.p-dropdown) {
-	width: 4rem;
+	width: 5rem;
 }
 </style>
