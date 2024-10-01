@@ -80,7 +80,7 @@ export const processFunman = (result: any) => {
 
 	// We only want boxes that appear at the last timestep
 	function getBoxesEndingAtLastTimestep(boxes: any[]) {
-		return boxes.filter((box) => box.points[0].values.timestep === timepoints.length - 1);
+		return boxes.filter((box) => box.points[0]?.values.timestep === timepoints.length - 1);
 	}
 	const trueBoxes: any[] = getBoxesEndingAtLastTimestep(result.parameter_space.true_boxes);
 	const falseBoxes: any[] = getBoxesEndingAtLastTimestep(result.parameter_space.false_boxes);
@@ -92,8 +92,6 @@ export const processFunman = (result: any) => {
 
 	let pointIndex = 0;
 	[...trueBoxes, ...falseBoxes].forEach((box, boxIndex) => {
-		console.log(box);
-
 		// Add box
 		const boxId = `box${boxIndex}`;
 		boxes.push({

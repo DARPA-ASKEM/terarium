@@ -168,7 +168,6 @@ const groupedInterventionOutputs = computed(() => _.groupBy(interventionPolicy.v
 
 const preparedCharts = computed(() => {
 	if (!selectedRunId.value) return [];
-	console.log(runResults.value[selectedRunId.value]);
 	const result = runResults.value[selectedRunId.value];
 	const resultSummary = runResultsSummary.value[selectedRunId.value];
 	const reverseMap: Record<string, string> = {};

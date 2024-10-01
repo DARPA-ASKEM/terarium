@@ -816,18 +816,20 @@ export function createFunmanStateChart(data: ProcessedFunmanResult, constraints:
 		const boxType = traj.label === 'true' ? BoxType.Satisfactory : BoxType.Unsatisfactory;
 		return { timepoints: traj.timestep, value: traj[stateId], boxType };
 	});
-	// FIXME: Find min/max values to set an appropriate viewing range for y-axis
-	// const minYValue = Math.floor(Math.min(...boxLines.map((d) => d.value)));
-	// const maxYValue = Math.ceil(Math.max(...boxLines.map((d) => d.value)));
+
+	// Find min/max values to set an appropriate viewing range for y-axis
+	const minY = Math.floor(Math.min(...boxLines.map((d) => d.value)));
+	const maxY = Math.ceil(Math.max(...boxLines.map((d) => d.value)));
 
 	// Show checks for the selected state
 	const stateIdConstraints = constraints.filter((c) => c.variables.includes(stateId));
 	const modelChecks = stateIdConstraints.map((c) => ({
+		boxType: BoxType.ModelChecks,
 		startX: c.timepoints.lb,
 		endX: c.timepoints.ub,
-		startY: c.additive_bounds.lb,
-		endY: c.additive_bounds.ub,
-		boxType: BoxType.ModelChecks
+		// If the interval bounds are within the min/max values of the line plot use them, otherwise use the min/max values
+		startY: Math.max(c.additive_bounds.lb, minY),
+		endY: Math.min(c.additive_bounds.ub, maxY)
 	}));
 
 	return {
@@ -838,7 +840,6 @@ export function createFunmanStateChart(data: ProcessedFunmanResult, constraints:
 		layer: [
 			{
 				mark: 'rect',
-				clip: true,
 				data: { values: modelChecks },
 				encoding: {
 					x: { field: 'startX', type: 'quantitative' },
@@ -849,7 +850,6 @@ export function createFunmanStateChart(data: ProcessedFunmanResult, constraints:
 			},
 			{
 				mark: 'line',
-				clip: true,
 				data: { values: boxLines },
 				encoding: {
 					x: { field: 'timepoints', type: 'quantitative' },
@@ -860,8 +860,8 @@ export function createFunmanStateChart(data: ProcessedFunmanResult, constraints:
 		encoding: {
 			x: { title: 'Timepoints' },
 			y: {
-				title: `${stateId} (persons)`
-				// scale: { domain: [minYValue, maxYValue] } // FIXME: I want to use the min/max values of the line points so the line trajectory is clearer
+				title: `${stateId} (persons)`,
+				scale: { domain: [minY, maxY] }
 			},
 			color: {
 				field: 'boxType',
@@ -876,23 +876,28 @@ export function createFunmanStateChart(data: ProcessedFunmanResult, constraints:
 }
 
 export function createFunmanParameterChart(parametersOfInterest: any[], boxes: FunmanBox[]) {
-	const parameterRanges = parametersOfInterest.map((param) => ({
-		parameterId: param.name,
-		range_start: param.interval.lb,
-		range_end: param.interval.ub,
-		range_type: BoxType.Unsatisfactory
-	}));
+	const parameterRanges: any[] = [];
 
-	// const parameterRanges =
+	// Widest range (model configuration ranges)
+	parametersOfInterest.forEach(({ name, interval }) => {
+		parameterRanges.push({
+			parameterId: name,
+			lb: interval.lb,
+			ub: interval.ub,
+			boundType: 'length'
+		});
+	});
+
+	// Ranges determined by the true/false boxes
 	boxes.forEach(({ label, parameters }) => {
-		parameterRanges.push(
-			...Object.keys(parameters).map((key) => ({
+		Object.keys(parameters).forEach((key) => {
+			parameterRanges.push({
 				parameterId: key,
-				range_start: parameters[key].lb,
-				range_end: parameters[key].ub,
-				range_type: label === 'true' ? BoxType.Satisfactory : BoxType.Unsatisfactory
-			}))
-		);
+				lb: parameters[key].lb,
+				ub: parameters[key].ub,
+				boundType: label === 'true' ? BoxType.Satisfactory : BoxType.Unsatisfactory
+			});
+		});
 	});
 
 	const globalFont = 'Figtree';
@@ -904,29 +909,57 @@ export function createFunmanParameterChart(parametersOfInterest: any[], boxes: F
 		data: {
 			values: parameterRanges
 		},
+		// This determines the range of the whole x-axis
+		transform: [
+			{
+				joinaggregate: [
+					{ field: 'lb', op: 'min', as: 'minX' },
+					{ field: 'ub', op: 'max', as: 'maxX' }
+				],
+				groupby: ['parameterId']
+			}
+		],
+		params: [
+			{ name: 'minX', expr: 'minX' },
+			{ name: 'maxX', expr: 'maxX' }
+		],
 		facet: {
 			row: {
 				field: 'parameterId',
 				type: 'nominal',
-				header: { labelAngle: 0, title: '' }
+				header: { labelAngle: 0, title: '', labelAlign: 'left' }
+			}
+		},
+		resolve: {
+			scale: {
+				x: 'independent' // Ensure each facet has its own x-axis scale
 			}
 		},
 		spec: {
 			layer: [
 				{
-					mark: 'bar', // Use a bar to represent ranges
+					mark: {
+						type: 'bar', // Use a bar to represent ranges
+						opacity: 0.3 // FIXME: This opacity shouldn't be applied to the legend
+					},
 					encoding: {
 						x: {
-							field: 'range_start',
+							field: 'lb',
 							type: 'quantitative',
-							scale: { type: 'log' },
+							scale: {
+								zero: false,
+								// Doesn't work with regular domain setting
+								domainMin: { expr: 'minX' },
+								domainMax: { expr: 'maxX' }
+								// FIXME: If the domain is something like lb: 0.002, ub: 0.002 (same numbers close to 0), the only number on the number line will be 0
+							},
 							title: null
 						},
 						x2: {
-							field: 'range_end'
+							field: 'ub'
 						},
 						color: {
-							field: 'range_type',
+							field: 'boundType',
 							type: 'nominal',
 							legend: { orient: 'top', direction: 'horizontal', title: null },
 							scale: {
@@ -936,14 +969,6 @@ export function createFunmanParameterChart(parametersOfInterest: any[], boxes: F
 						}
 					}
 				}
-				// {
-				// 	mark: 'rule', // Use rule marks for boundaries or annotations
-				// 	encoding: {
-				// 		x: { field: 'rule_value', type: 'quantitative', scale: { type: 'log' } },
-				// 		size: { value: 2 }, // Width of the rule
-				// 		color: { value: 'black' } // Color of the rule lines
-				// 	}
-				// }
 			]
 		}
 	};

@@ -142,19 +142,13 @@
 			>
 				<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%" />
 				<template v-else>
-					<!--c205809b-3236-4bf3-92ad-6c3355b32698-->
-					<!--e44bd2c5-5c93-406e-b848-5ec4b3192d17-->
 					<tera-funman-output
 						v-if="activeOutput"
 						:fun-model-id="activeOutput.value?.[0]"
-						:mmt="mmt"
-						:mmt-params="mmtParams"
 						:trajectoryState="node.state.trajectoryState"
 						@update:trajectoryState="updateTrajectorystate"
 					/>
-					<div v-else class="flex flex-column h-full justify-content-center">
-						<tera-operator-placeholder :node="node" />
-					</div>
+					<tera-operator-placeholder v-else class="h-full" :node="node" />
 				</template>
 			</tera-drilldown-preview>
 		</template>
@@ -191,10 +185,8 @@ import { pythonInstance } from '@/python/PyodideController';
 import TeraFunmanOutput from '@/components/workflow/ops/funman/tera-funman-output.vue';
 import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-constraint-group-form.vue';
 import { DrilldownTabs } from '@/types/common';
-import { stringToLatexExpression, getMMT } from '@/services/model';
+import { stringToLatexExpression } from '@/services/model';
 import { displayNumber } from '@/utils/number';
-import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
-import { emptyMiraModel } from '@/model-representation/mira/mira';
 import { FunmanOperationState, Constraint, ConstraintType, CompartmentalConstraint } from './funman-operation';
 
 const props = defineProps<{
@@ -236,9 +228,6 @@ const model = ref<Model | null>();
 const stateIds = ref<string[]>([]);
 const parameterIds = ref<string[]>([]);
 const observableIds = ref<string[]>([]);
-
-const mmt = ref<MiraModel>(emptyMiraModel());
-const mmtParams = ref<MiraTemplateParams>({});
 
 const selectedOutputId = ref<string>();
 const outputs = computed(() => {
@@ -359,7 +348,6 @@ const runMakeQuery = async () => {
 			request.request.config.normalization_constant = parseFloat(mass.value);
 		}
 	}
-	console.log(request);
 	const response = await makeQueries(request);
 
 	// Setup the in-progress id
@@ -432,10 +420,6 @@ const initialize = async () => {
 	if (!modelConfigurationId) return;
 	const modelConfiguration = await getModelConfigurationById(modelConfigurationId);
 	model.value = await getAsConfiguredModel(modelConfiguration);
-	getMMT(model.value).then((response) => {
-		mmt.value = response.mmt;
-		mmtParams.value = response.template_params;
-	});
 };
 
 const setModelOptions = async () => {
