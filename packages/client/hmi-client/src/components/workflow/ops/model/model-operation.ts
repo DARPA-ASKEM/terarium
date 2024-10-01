@@ -3,7 +3,6 @@ import model from '@assets/svg/operator-images/model.svg';
 
 export interface ModelOperationState extends BaseState {
 	modelId: string | null;
-	modelConfigurationIds: string[];
 }
 
 export const ModelOperation: Operation = {
@@ -18,8 +17,7 @@ export const ModelOperation: Operation = {
 
 	initState: () => {
 		const init: ModelOperationState = {
-			modelId: null,
-			modelConfigurationIds: []
+			modelId: null
 		};
 		return init;
 	}
