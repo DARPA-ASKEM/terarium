@@ -21,22 +21,14 @@
 								outlined
 								severity="secondary"
 								label="Extract from inputs"
+								icon="pi pi-sparkles"
 								:loading="isLoading"
 								:disabled="!props.node.inputs[0]?.value && !props.node.inputs[1]?.value"
 								@click="extractInterventionPolicyFromInputs"
 							/>
-							<Button
-								class="flex-1 ml-1"
-								label="Create New"
-								:disabled="!model?.id"
-								@click="createNewInterventionPolicy"
-							/>
+							<Button class="ml-1" label="Create New" :disabled="!model?.id" @click="createNewInterventionPolicy" />
 						</nav>
 						<tera-input-text v-model="filterInterventionsText" placeholder="Filter" />
-						<!-- Show a spinner if loading -->
-						<section v-if="isLoading" class="processing-new-configuration-tile">
-							<p class="secondary-text">Processing...</p>
-						</section>
 						<ul v-if="!isFetchingPolicies">
 							<li v-for="policy in interventionPoliciesFiltered" :key="policy.id">
 								<tera-intervention-policy-card
