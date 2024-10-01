@@ -153,6 +153,15 @@ import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '
 import { modelCard } from '@/services/goLLM';
 import { getModel, updateModel } from '@/services/model';
 import { useProjects } from '@/composables/project';
+import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import TeraModel from '@/components/model/tera-model.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
+import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
+import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
+import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import { ModelFromEquationsOperation, ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
 
 const emit = defineEmits(['close', 'update-state', 'append-output', 'select-output']);
