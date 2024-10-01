@@ -16,114 +16,110 @@
 					</tera-drilldown-section>
 				</template>
 			</tera-slider-panel>
-			<!-- Input -->
 			<tera-slider-panel v-model:is-open="isInputOpen" header="Input" content-width="100%">
 				<template #content>
-					<header class="pb-2">
-						<nav class="flex justify-content-between p-2">
-							<span class="flex align-items-center">Specify which equations to use for this model.</span>
-							<section class="white-space-nowrap min-w-min">
-								<Button class="mr-1" label="Reset" severity="secondary" outlined></Button>
-								<Button label="Run" @click="onRun" :diabled="assetLoading" :loading="loadingModel"></Button>
+					<main class="p-3">
+						<header class="pb-2">
+							<nav class="flex justify-content-between pb-2">
+								<span class="flex align-items-center">Specify which equations to use for this model.</span>
+								<section class="white-space-nowrap min-w-min">
+									<Button class="mr-1" label="Reset" severity="secondary" outlined></Button>
+									<Button label="Run" @click="onRun" :diabled="assetLoading" :loading="loadingModel"></Button>
+								</section>
+							</nav>
+							<section class="header-group">
+								<Textarea
+									v-model="multipleEquations"
+									autoResize
+									rows="1"
+									placeholder="Add one or more LaTex equations, or paste in a screenshot"
+									class="w-full"
+								/>
+								<Button label="Add" @click="getEquations" class="ml-2" :disabled="isEmpty(multipleEquations)" />
 							</section>
-						</nav>
-						<section class="header-group">
-							<Textarea
-								v-model="multipleEquations"
-								autoResize
-								rows="1"
-								placeholder="Add one or more LaTex equations, or paste in a screenshot"
-								class="w-full"
-							/>
-							<Button label="Add" @click="getEquations" class="ml-2" :disabled="isEmpty(multipleEquations)" />
-						</section>
-					</header>
-					<Accordion :active-index="0">
-						<AccordionTab header="Model equations">
-							<h6 class="pb-2">Use {{ includedEquations.length > 1 ? 'these equations' : 'this equation' }}</h6>
-							<ul class="blocks-container ml-3">
-								<li
-									v-for="(equation, i) in includedEquations"
-									:key="i"
-									@click.capture="selectItem(equation.name, $event)"
+						</header>
+						<h6 class="py-3">Use {{ includedEquations.length > 1 ? 'these equations' : 'this equation' }}</h6>
+						<ul class="blocks-container">
+							<li
+								v-for="(equation, i) in includedEquations"
+								:key="i"
+								@click.capture="selectItem(equation.name, $event)"
+							>
+								<tera-asset-block
+									:is-toggleable="false"
+									:is-permitted="false"
+									:use-default-style="false"
+									:class="['asset-panel', { selected: selectedItem === equation.name }]"
 								>
-									<tera-asset-block
-										:is-toggleable="false"
-										:is-permitted="false"
-										:use-default-style="false"
-										:class="selectedItem === equation.name ? 'currently-selected' : 'asset-panel'"
-									>
-										<section>
-											<Checkbox
-												v-model="equation.includeInProcess"
-												@update:model-value="onCheckBoxChange(equation)"
-												:binary="true"
-											/>
-											<div class="block-container">
-												<tera-math-editor
-													v-if="equation.asset.text"
-													:latex-equation="equation.asset.text"
-													:is-editable="false"
-												/>
-												<div v-if="!equation.asset.text" class="no-extract-equation">
-													{{ getEquationErrorLabel(equation) }}
-												</div>
-											</div>
-										</section>
-										<tera-input-text
-											v-if="selectedItem === equation.name"
-											v-model="equation.asset.text"
-											placeholder="Add an expression with LaTeX"
-											@update:model-value="emit('update-state', clonedState)"
+									<section>
+										<Checkbox
+											v-model="equation.includeInProcess"
+											@update:model-value="onCheckBoxChange(equation)"
+											:binary="true"
 										/>
-									</tera-asset-block>
-								</li>
-							</ul>
-
-							<h6 class="pt-3 pb-2">Other equations extracted from document</h6>
-							<ul class="blocks-container ml-3">
-								<li
-									v-for="(equation, i) in notIncludedEquations"
-									:key="i"
-									@click.capture="selectItem(equation.name, $event)"
+										<div class="block-container">
+											<tera-math-editor
+												v-if="equation.asset.text"
+												:latex-equation="equation.asset.text"
+												:is-editable="false"
+											/>
+											<div v-if="!equation.asset.text" class="no-extract-equation">
+												{{ getEquationErrorLabel(equation) }}
+											</div>
+										</div>
+									</section>
+									<tera-input-text
+										v-if="selectedItem === equation.name"
+										v-model="equation.asset.text"
+										placeholder="Add an expression with LaTeX"
+										@update:model-value="emit('update-state', clonedState)"
+									/>
+								</tera-asset-block>
+							</li>
+						</ul>
+						<h6 class="py-3">Other equations extracted from document</h6>
+						<ul class="blocks-container">
+							<li
+								v-for="(equation, i) in notIncludedEquations"
+								:key="i"
+								@click.capture="selectItem(equation.name, $event)"
+							>
+								<tera-asset-block
+									:is-toggleable="false"
+									:is-permitted="false"
+									:use-default-style="false"
+									:class="['asset-panel', { selected: selectedItem === equation.name }]"
 								>
-									<tera-asset-block
-										:is-toggleable="false"
-										:is-permitted="false"
-										:use-default-style="false"
-										:class="selectedItem === equation.name ? 'currently-selected' : 'asset-panel'"
-									>
-										<section>
-											<Checkbox
-												v-model="equation.includeInProcess"
-												@update:model-value="onCheckBoxChange(equation)"
-												:binary="true"
-											/>
-											<div class="block-container">
-												<tera-math-editor
-													v-if="equation.asset.text"
-													:latex-equation="equation.asset.text"
-													:is-editable="false"
-												/>
-												<div v-if="!equation.asset.text" class="no-extract-equation">
-													{{ getEquationErrorLabel(equation) }}
-												</div>
-											</div>
-										</section>
-										<tera-input-text
-											v-if="selectedItem === equation.name"
-											v-model="equation.asset.text"
-											placeholder="Add an expression with LaTeX"
-											@update:model-value="emit('update-state', clonedState)"
+									<section>
+										<Checkbox
+											class="flex-shrink-0"
+											v-model="equation.includeInProcess"
+											@update:model-value="onCheckBoxChange(equation)"
+											:binary="true"
 										/>
-									</tera-asset-block>
-								</li>
-							</ul>
-						</AccordionTab>
-					</Accordion>
+										<div class="block-container">
+											<tera-math-editor
+												v-if="equation.asset.text"
+												:latex-equation="equation.asset.text"
+												:is-editable="false"
+											/>
+											<div v-if="!equation.asset.text" class="no-extract-equation">
+												{{ getEquationErrorLabel(equation) }}
+											</div>
+										</div>
+									</section>
+									<tera-input-text
+										v-if="selectedItem === equation.name"
+										v-model="equation.asset.text"
+										placeholder="Add an expression with LaTeX"
+										@update:model-value="emit('update-state', clonedState)"
+									/>
+								</tera-asset-block>
+							</li>
+						</ul>
+					</main>
 				</template>
 			</tera-slider-panel>
-			<!-- Output -->
 			<tera-slider-panel v-model:is-open="isOutputOpen" header="Output" content-width="100%">
 				<template #content>
 					<tera-drilldown-preview>
@@ -139,32 +135,19 @@
 		:asset="selectedModel"
 		:is-visible="showSaveModelModal"
 		@close-modal="onCloseModelModal"
-		@on-save="onAddModel"
 	/>
 </template>
 
 <script setup lang="ts">
-import { cloneDeep, isEmpty } from 'lodash';
-import { computed, onMounted, ref, watch } from 'vue';
-import Accordion from 'primevue/accordion';
-import AccordionTab from 'primevue/accordiontab';
-import Button from 'primevue/button';
+import { AssetBlock, WorkflowNode } from '@/types/workflow';
 import Checkbox from 'primevue/checkbox';
 import Textarea from 'primevue/textarea';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraInputText from '@/components/widgets/tera-input-text.vue';
-import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
-import TeraModel from '@/components/model/tera-model.vue';
-import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
-import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
-import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
-import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
-import { AssetBlock, WorkflowNode } from '@/types/workflow';
-import type { Card, DocumentAsset, DocumentExtraction, Model } from '@/types/Types';
+import { computed, onMounted, ref, watch } from 'vue';
+import type { Card, DocumentAsset, Model } from '@/types/Types';
+import { cloneDeep, isEmpty } from 'lodash';
 import { equationsToAMR, type EquationsToAMRRequest } from '@/services/knowledge';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
 import { modelCard } from '@/services/goLLM';
@@ -172,7 +155,7 @@ import { getModel, updateModel } from '@/services/model';
 import { useProjects } from '@/composables/project';
 import { ModelFromEquationsOperation, ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
 
-const emit = defineEmits(['close', 'update-state', 'append-output', 'select-output', 'update-output-port']);
+const emit = defineEmits(['close', 'update-state', 'append-output', 'select-output']);
 const props = defineProps<{
 	node: WorkflowNode<ModelFromEquationsState>;
 }>();
@@ -229,7 +212,6 @@ onMounted(async () => {
 	}
 
 	const documentId = props.node.inputs?.[0]?.value?.[0]?.documentId;
-	const equations: AssetBlock<DocumentExtraction>[] = props.node.inputs?.[0]?.value?.[0]?.equations;
 
 	assetLoading.value = true;
 	if (documentId) {
@@ -265,19 +247,18 @@ onMounted(async () => {
 			);
 		}
 		if (documentEquations.value && documentEquations.value?.length > 0) {
-			clonedState.value.equations = documentEquations.value;
-		}
+			clonedState.value.equations = documentEquations.value.map((e, index) => ({
+				name: `${e.name} ${index}`,
+				includeInProcess: e.includeInProcess,
+				asset: { text: e.asset.text }
+			}));
 
-		state.equations = equations.map((e, index) => ({
-			name: `${e.name} ${index}`,
-			includeInProcess: e.includeInProcess,
-			asset: { text: e.asset.metadata.text }
-		}));
+			state.equations = clonedState.value.equations;
+		}
 
 		state.text = document.value?.text ?? '';
 		emit('update-state', state);
 	}
-
 	assetLoading.value = false;
 });
 
@@ -347,20 +328,8 @@ async function fetchModel() {
 	loadingModel.value = false;
 }
 
-function onAddModel(model: Model) {
-	if (!model?.name || !selectedOutputId.value) return;
-	updateNodeLabel(selectedOutputId.value, model.name);
-}
-
 function onCloseModelModal() {
 	showSaveModelModal.value = false;
-}
-
-function updateNodeLabel(id: string, label: string) {
-	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.id === id));
-	if (!outputPort) return;
-	outputPort.label = label;
-	emit('update-output-port', outputPort);
 }
 
 function getEquations() {
@@ -444,28 +413,40 @@ watch(
 	border-radius: var(--border-radius-small);
 }
 
-.currently-selected {
-	padding-top: var(--gap-3);
-	border-radius: var(--border-radius-medium);
-	border: 1px solid var(--surface-border-light);
-	border-left: 0.25rem solid var(--primary-color);
-}
-
 .asset-panel {
 	padding-top: var(--gap-3);
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius-medium);
+	border-width: 1px 1px 0 1px;
+	border-color: var(--surface-border-light);
+	border-style: solid;
+	border-radius: unset;
+	overflow: auto;
+
+	&.selected {
+		border-left: var(--gap-1) solid var(--primary-color);
+	}
 }
 
+.blocks-container li:first-of-type .asset-panel {
+	border-top-left-radius: var(--border-radius-medium);
+	border-top-right-radius: var(--border-radius-medium);
+}
+
+.blocks-container li:last-of-type .asset-panel {
+	border-bottom-width: 1px;
+	border-bottom-left-radius: var(--border-radius-medium);
+	border-bottom-right-radius: var(--border-radius-medium);
+}
+
+/* TODO: to be implemented when displaying the extracted equations.
 .equation-image {
 	border-style: dashed;
 	border-color: var(--primary-color);
 	border-width: thin;
 }
+*/
 
 .header-group {
 	display: flex;
-	padding-left: var(--gap-3);
 	padding-right: var(--gap-2);
 	flex-direction: row;
 	align-items: center;
@@ -479,10 +460,14 @@ watch(
 	overflow-y: hidden;
 }
 
-.blocks-container {
+.blocks-container,
+.block-container {
 	overflow-y: auto;
 }
 
+.p-panel {
+	box-shadow: none;
+}
 .p-panel:deep(.p-panel-footer) {
 	display: none;
 }
