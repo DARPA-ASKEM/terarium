@@ -807,11 +807,10 @@ export function getActiveOutput(node: WorkflowNode<any>) {
 	return node.outputs.find((o) => o.id === node.active);
 }
 
-/** Update the output of the operator */
-export function updateOutput(node: WorkflowNode<any>, updatedOutput: WorkflowOutput<any>) {
-	let output = node.outputs.find((o) => o.id === updatedOutput.id);
-	if (!output) return;
-	output = Object.assign(output, updatedOutput);
+export function updateOutputPort(node: WorkflowNode<any>, updatedOutputPort: WorkflowOutput<any>) {
+	let outputPort = node.outputs.find((port) => port.id === updatedOutputPort.id);
+	if (!outputPort) return;
+	outputPort = Object.assign(outputPort, updatedOutputPort);
 }
 
 // Check if the current-state matches that of the output-state.

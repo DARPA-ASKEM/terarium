@@ -161,7 +161,7 @@
 			@append-output="(event: any) => appendOutput(currentActiveNode, event)"
 			@close="addOperatorToRoute(null)"
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
-			@update-output="(event: any) => updateOutput(currentActiveNode, event)"
+			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			@update-status="(status: OperatorStatus) => updateWorkflowNodeStatus(currentActiveNode, status)"
 		/>
@@ -409,9 +409,9 @@ function selectOutput(node: WorkflowNode<any> | null, selectedOutputId: string) 
 	saveWorkflowHandler();
 }
 
-function updateOutput(node: WorkflowNode<any> | null, workflowOutput: WorkflowOutput<any>) {
+function updateOutputPort(node: WorkflowNode<any> | null, workflowOutput: WorkflowOutput<any>) {
 	if (!node) return;
-	workflowService.updateOutput(node, workflowOutput);
+	workflowService.updateOutputPort(node, workflowOutput);
 	saveWorkflowHandler();
 }
 
