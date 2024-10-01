@@ -1,0 +1,15 @@
+setup.py
+gollm_task.egg-info/PKG-INFO
+gollm_task.egg-info/SOURCES.txt
+gollm_task.egg-info/dependency_links.txt
+gollm_task.egg-info/entry_points.txt
+gollm_task.egg-info/top_level.txt
+tasks/__init__.py
+tasks/compare_models.py
+tasks/configure_model_from_dataset.py
+tasks/configure_model_from_document.py
+tasks/embedding.py
+tasks/enrich_amr.py
+tasks/generate_response.py
+tasks/generate_summary.py
+tasks/model_card.py

@@ -12,6 +12,9 @@ import { isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import { computed, ref } from 'vue';
+import { exportProjectAsFile } from '@/services/project';
+import { AcceptedExtensions } from '@/types/common';
+import { MenuItem } from 'primevue/menuitem';
 
 const props = defineProps<{ project: Project | null }>();
 
@@ -58,11 +61,31 @@ const copyMenuItem = {
 	}
 };
 
+const downloadMenuItem = {
+	label: 'Download',
+	icon: 'pi pi-download',
+	command: async () => {
+		if (props.project) {
+			isCopying.value = true;
+			const blob = await exportProjectAsFile(props.project.id);
+			if (blob) {
+				const a = document.createElement('a');
+				a.href = URL.createObjectURL(blob);
+				a.download = `${props.project.name}.${AcceptedExtensions.PROJECTCONFIG}`;
+				a.click();
+				a.remove();
+			}
+			isCopying.value = false;
+		}
+	}
+};
+
 const separatorMenuItem = { separator: true };
 const projectMenuItems = computed(() => {
-	const items = [] as any[];
-	if (props.project?.publicProject) {
+	const items: MenuItem[] = [];
+	if (props.project?.publicProject || props.project?.userPermission === 'creator') {
 		items.push(copyMenuItem);
+		items.push(downloadMenuItem);
 	}
 	if (props.project?.userPermission === 'creator') {
 		items.push(renameMenuItem, shareMenuItem, separatorMenuItem, removeMenuItem);

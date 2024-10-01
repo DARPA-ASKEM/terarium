@@ -12,13 +12,16 @@ import {
 	ProgressState,
 	Simulation,
 	SimulationRequest,
-	CsvAsset
+	CsvAsset,
+	TerariumAsset,
+	AssetType
 } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import * as EventService from '@/services/event';
 import { useProjects } from '@/composables/project';
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
 import { FIFOCache } from '@/utils/FifoCache';
+import { AxiosResponse } from 'axios';
 
 export type DataArray = Record<string, any>[];
 
@@ -238,6 +241,27 @@ export async function makeEnsembleCiemssCalibration(params: EnsembleCalibrationC
 			metadata
 		});
 		const output = resp.data;
+		return output;
+	} catch (err) {
+		logger.error(err);
+		return null;
+	}
+}
+
+export async function createSimulationAssets(
+	simulationId: string,
+	newName: string | null,
+	assets: { id: string; type: AssetType }[]
+) {
+	try {
+		const response: AxiosResponse<TerariumAsset[]> = await API.post(
+			`/simulations/${simulationId}/create-assets-from-simulation`,
+			{
+				name: newName,
+				assets
+			}
+		);
+		const output = response.data;
 		return output;
 	} catch (err) {
 		logger.error(err);

@@ -1,8 +1,3 @@
-export const enum RunType {
-	Julia = 'julia',
-	Ciemss = 'ciemss'
-}
-
 export type ChartConfig = {
 	selectedVariable: string[];
 	selectedRun: string;

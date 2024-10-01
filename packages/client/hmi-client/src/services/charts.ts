@@ -2,9 +2,9 @@ import { percentile } from '@/utils/math';
 import { isEmpty, pick } from 'lodash';
 import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
-import { ChartAnnotation, Intervention } from '@/types/Types';
-import type { FunmanBox, ProcessedFunmanResult } from '@/services/models/funman-service';
+import { ChartAnnotation } from '@/types/Types';
 import { flattenInterventionData } from './intervention-policy';
+import type { ProcessedFunmanResult, FunmanBox } from './models/funman-service';
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
@@ -731,8 +731,10 @@ export function createSuccessCriteriaChart(
 	};
 }
 
-export function createInterventionChartMarkers(interventions: Intervention[]): any[] {
-	const data = flattenInterventionData(interventions);
+export function createInterventionChartMarkers(
+	data: ReturnType<typeof flattenInterventionData>,
+	hideLabels = false
+): any[] {
 	const markerSpec = {
 		data: { values: data },
 		mark: { type: 'rule', strokeDash: [4, 4], color: 'black' },
@@ -740,7 +742,7 @@ export function createInterventionChartMarkers(interventions: Intervention[]): a
 			x: { field: 'time', type: 'quantitative' }
 		}
 	};
-
+	if (hideLabels) return [markerSpec];
 	const labelSpec = {
 		data: { values: data },
 		mark: {
@@ -760,8 +762,14 @@ export function createInterventionChartMarkers(interventions: Intervention[]): a
 	return [markerSpec, labelSpec];
 }
 
-export function createInterventionChart(interventions: Intervention[], chartOptions: Omit<BaseChartOptions, 'legend'>) {
-	const interventionsData = flattenInterventionData(interventions);
+interface InterventionChartOptions extends Omit<BaseChartOptions, 'legend'> {
+	hideLabels?: boolean;
+}
+
+export function createInterventionChart(
+	interventions: ReturnType<typeof flattenInterventionData>,
+	chartOptions: InterventionChartOptions
+) {
 	const titleObj = chartOptions.title
 		? {
 				text: chartOptions.title,
@@ -780,14 +788,14 @@ export function createInterventionChart(interventions: Intervention[], chartOpti
 		},
 		layer: []
 	};
-	if (!isEmpty(interventionsData)) {
+	if (!isEmpty(interventions)) {
 		// markers
-		createInterventionChartMarkers(interventions).forEach((marker) => {
+		createInterventionChartMarkers(interventions, chartOptions.hideLabels).forEach((marker) => {
 			spec.layer.push(marker);
 		});
 		// chart
 		spec.layer.push({
-			data: { values: interventionsData },
+			data: { values: interventions },
 			mark: 'point',
 			encoding: {
 				x: { field: 'time', type: 'quantitative', title: chartOptions.xAxisTitle },

@@ -1,7 +1,7 @@
 package software.uncharted.terarium.hmiserver.models;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -11,7 +11,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import javax.annotation.Nullable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -77,42 +80,73 @@ public abstract class TerariumAsset extends TerariumEntity {
 		return asset;
 	}
 
-	public String serializeWithoutTerariumFields() {
+	public static void removeFieldsWithKeys(ObjectNode objectNode, List<String> keys) {
+		Iterator<String> keysIterator = objectNode.fieldNames();
+		while (keysIterator.hasNext()) {
+			String key = keysIterator.next();
+			if (keys.contains(key)) {
+				keysIterator.remove();
+			} else {
+				JsonNode node = objectNode.get(key);
+				if (node.isObject()) {
+					removeFieldsWithKeys((ObjectNode) node, keys);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Serialize the asset to a JSON string, removing the fields that are not needed.
+	 *
+	 * @param keepFields              A list of fields that should not be removed.
+	 * @param additionalDeleteFields  Additional fields to remove.
+	 * @return The JSON string.
+	 */
+	public String serializeWithoutTerariumFields(
+		@Nullable String[] keepFields,
+		@Nullable String[] additionalDeleteFields
+	) {
 		final ObjectMapper mapper = new ObjectMapper();
 		mapper.setConfig(mapper.getSerializationConfig().with(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY));
 		final ObjectNode objectNode = mapper.convertValue(this, ObjectNode.class);
-		objectNode.remove("id");
-		objectNode.remove("createdOn");
-		objectNode.remove("updatedOn");
-		objectNode.remove("deletedOn");
-		objectNode.remove("name");
-		objectNode.remove("description");
-		objectNode.remove("temporary");
-		objectNode.remove("publicAsset");
-		objectNode.remove("fileNames");
-		objectNode.remove("userId");
-		return objectNode.toString();
-	}
 
-	public String serializeWithoutTerariumFieldsKeepId() {
-		final ObjectMapper mapper = new ObjectMapper();
-		mapper.setConfig(mapper.getSerializationConfig().with(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY));
-		final ObjectNode objectNode = mapper.convertValue(this, ObjectNode.class);
-		objectNode.remove("createdOn");
-		objectNode.remove("updatedOn");
-		objectNode.remove("deletedOn");
-		objectNode.remove("name");
-		objectNode.remove("description");
-		objectNode.remove("temporary");
-		objectNode.remove("publicAsset");
-		objectNode.remove("fileNames");
-		objectNode.remove("userId");
-		return objectNode.toString();
-	}
+		// Fields to delete
+		String[] deleteFields = new String[] {
+			"id",
+			"createdOn",
+			"updatedOn",
+			"deletedOn",
+			"name",
+			"description",
+			"temporary",
+			"publicAsset",
+			"fileNames",
+			"userId"
+		};
+		List<String> deleteFieldsList = new ArrayList<>(Arrays.asList(deleteFields));
+		if (keepFields != null) {
+			for (String field : keepFields) {
+				deleteFieldsList.removeIf(key -> key.equals(field));
+			}
+		}
 
-	public String serializeWithTerariumFields() throws JsonProcessingException {
-		final ObjectMapper mapper = new ObjectMapper();
-		mapper.setConfig(mapper.getSerializationConfig().with(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY));
-		return mapper.writeValueAsString(this);
+		// Remove the fields that are not needed
+		for (String key : deleteFieldsList) {
+			objectNode.remove(key);
+		}
+
+		// Remove the field metadata.description as well
+		final JsonNode metadata = objectNode.get("metadata");
+		if (metadata != null) {
+			((ObjectNode) metadata).remove("description");
+		}
+		objectNode.set("metadata", metadata);
+
+		// Remove additional fields if they exist
+		if (additionalDeleteFields != null) {
+			removeFieldsWithKeys(objectNode, Arrays.asList(additionalDeleteFields));
+		}
+
+		return objectNode.toString();
 	}
 }

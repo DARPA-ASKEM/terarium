@@ -1,6 +1,6 @@
 import sys
-from gollm.entities import EquationsFromImage
-from gollm.openai.tool_utils import equations_from_image
+from entities import EquationsFromImage
+from gollm_openai.tool_utils import equations_from_image
 
 from taskrunner import TaskRunnerInterface
 

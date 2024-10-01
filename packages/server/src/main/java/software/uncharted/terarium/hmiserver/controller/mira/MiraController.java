@@ -130,7 +130,7 @@ public class MiraController {
 		req.setType(TaskType.MIRA);
 
 		try {
-			req.setInput(objectMapper.treeToValue(model, Model.class).serializeWithoutTerariumFields().getBytes());
+			req.setInput(objectMapper.treeToValue(model, Model.class).serializeWithoutTerariumFields(null, null).getBytes());
 		} catch (final Exception e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
@@ -170,7 +170,7 @@ public class MiraController {
 
 	@PostMapping("/model-to-latex")
 	@Secured(Roles.USER)
-	@Operation(summary = "Generate latex from a model id")
+	@Operation(summary = "Generate latex from a model")
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -190,7 +190,7 @@ public class MiraController {
 		req.setType(TaskType.MIRA);
 
 		try {
-			req.setInput(objectMapper.treeToValue(model, Model.class).serializeWithoutTerariumFields().getBytes());
+			req.setInput(objectMapper.treeToValue(model, Model.class).serializeWithoutTerariumFields(null, null).getBytes());
 		} catch (final Exception e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
