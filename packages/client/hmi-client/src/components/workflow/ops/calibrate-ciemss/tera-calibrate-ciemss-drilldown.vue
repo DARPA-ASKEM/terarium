@@ -79,8 +79,8 @@
 								<template #header>
 									<span class="column-header"></span>
 								</template>
-								<template #body="{ data }">
-									<Button class="p-button-sm p-button-text" icon="pi pi-trash" @click="deleteMapRow(data.id)" />
+								<template #body="{ index }">
+									<Button class="p-button-sm p-button-text" icon="pi pi-trash" @click="deleteMapRow(index)" />
 								</template>
 							</Column>
 						</DataTable>
@@ -499,7 +499,6 @@ import { useClientEvent } from '@/composables/useClientEvent';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraInterventionSummaryCard from '@/components/workflow/ops/simulate-ciemss/tera-intervention-summary-card.vue';
 import { getParameters } from '@/model-representation/service';
-import { v4 as uuidv4 } from 'uuid';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults, getErrorData } from './calibrate-utils';
 
@@ -1024,7 +1023,6 @@ function updateSelectedErrorVariables(event) {
 // Used from button to add new entry to the mapping object
 function addMapping() {
 	mapping.value.push({
-		id: uuidv4(),
 		modelVariable: '',
 		datasetVariable: ''
 	});
@@ -1044,8 +1042,7 @@ function deleteAllMappings() {
 	emit('update-state', state);
 }
 
-function deleteMapRow(id: string) {
-	const index = mapping.value.findIndex((ele) => ele.id === id);
+function deleteMapRow(index: number) {
 	mapping.value.splice(index, 1);
 	const state = _.cloneDeep(props.node.state);
 	state.mapping = mapping.value;

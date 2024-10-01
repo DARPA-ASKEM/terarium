@@ -8,7 +8,6 @@ import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
 import { CalibrateMap } from '@/services/calibrate-workflow';
 import { FIFOCache } from '@/utils/FifoCache';
-import { v4 as uuidv4 } from 'uuid';
 
 interface Entity {
 	id: string;
@@ -254,7 +253,7 @@ const autoCalibrationMapping = async (modelOptions: State[], datasetOptions: Dat
 
 	// rename result to CalibrateMap for users of this function
 	entityResult.forEach((entity) => {
-		result.push({ id: uuidv4(), modelVariable: entity.source, datasetVariable: entity.target });
+		result.push({ modelVariable: entity.source, datasetVariable: entity.target });
 	});
 	return result;
 };
