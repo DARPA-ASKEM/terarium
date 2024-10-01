@@ -32,12 +32,12 @@
 
 						<!-- Mapping table: Time variables -->
 						<div class="input-row">
-							<div class="input-row">
-								<span class="column-header">Model: Timeline variable</span>
+							<div class="label-and-input">
+								<label class="column-header">Model: Timeline variable</label>
 								<tera-input-text disabled model-value="timestamp" />
 							</div>
-							<div class="input-row">
-								<span class="column-header">Dataset: Timeline variable</span>
+							<div class="label-and-input">
+								<label class="column-header">Dataset: Timeline variable</label>
 								<Dropdown
 									class="w-full"
 									:placeholder="mappingDropdownPlaceholder"
