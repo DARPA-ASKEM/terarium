@@ -1,7 +1,11 @@
 <template>
 	<div class="flex align-items-center gap-2">
 		<label v-if="label">{{ label }}</label>
-		<Dropdown :model-value="modelValue" :options="options" @update:model-value="updateValue" />
+		<Dropdown :model-value="modelValue" :options="options" @update:model-value="updateValue">
+			<template #value="{ value }">
+				{{ value.toString() }}
+			</template>
+		</Dropdown>
 		<!-- Signal Bars -->
 		<ul>
 			<li v-for="n in numberOfBars" :key="n" :class="{ active: n <= modelValue }" :style="getBarStyle(n)"></li>
@@ -37,7 +41,7 @@ const emit = defineEmits(['update:modelValue']);
 const previousValue = ref(props.modelValue);
 const numberOfBars = Math.min(props.numberOfBars, maxNumberOfBars);
 
-const options: number[] = Array.from({ length: numberOfBars }, (_, i) => i + 1);
+const options: number[] = Array.from({ length: numberOfBars + 1 }, (_, i) => i);
 
 // fun styling for the bars :)
 const getBarStyle = (n: number) => {

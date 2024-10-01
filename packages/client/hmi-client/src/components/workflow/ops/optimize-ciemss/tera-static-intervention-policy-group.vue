@@ -3,13 +3,13 @@
 		<div class="form-header">
 			<h6 class="mr-auto">{{ config.intervention?.name ?? `Intervention` }}</h6>
 			<tera-signal-bars
-				v-if="!!knobs.relativeImportance"
+				v-if="staticInterventions.length === 1"
 				v-model="knobs.relativeImportance"
 				@update:model-value="emit('update-self', knobs)"
 				label="Relative importance"
 			/>
 		</div>
-		<template v-if="!!knobs.relativeImportance">
+		<template v-if="staticInterventions.length === 1">
 			<section class="input-row">
 				<p>
 					Find the
@@ -143,8 +143,6 @@ const staticInterventions = ref<StaticIntervention[]>(props.config.intervention.
 const knobs = ref<InterventionPolicyGroupForm>({
 	...props.config
 });
-
-// const isNotEditable = computed(() => staticInterventions.value.length !== 1);
 
 const showStartTimeOptions = computed(
 	() =>
