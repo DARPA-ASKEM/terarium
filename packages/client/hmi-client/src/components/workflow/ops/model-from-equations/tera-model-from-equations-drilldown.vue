@@ -240,6 +240,7 @@ const equasionTextarea = ref();
 const documentEquations = ref<AssetBlock<EquationBlock>[]>();
 
 onMounted(async () => {
+	window.addEventListener('paste', handlePasteEvent);
 	clonedState.value = cloneDeep(props.node.state);
 	if (selectedOutputId.value) {
 		onSelection(selectedOutputId.value);
@@ -294,13 +295,10 @@ onMounted(async () => {
 		emit('update-state', state);
 	}
 	assetLoading.value = false;
-
-	window.addEventListener('paste', handlePasteEvent);
 });
 
 function handlePasteEvent(e) {
 	if (e.clipboardData?.files.length) {
-		console.log(JSON.stringify(e.clipboardData)); // will give you the mime types
 		Array.from(e.clipboardData.files).forEach((item) => {
 			const reader = new FileReader();
 			reader.onload = function ({ target }) {
