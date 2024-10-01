@@ -1064,6 +1064,7 @@ export enum ClientEventType {
     TaskGollmEnrichAmr = "TASK_GOLLM_ENRICH_AMR",
     TaskGollmEquationsFromImage = "TASK_GOLLM_EQUATIONS_FROM_IMAGE",
     TaskGollmGenerateSummary = "TASK_GOLLM_GENERATE_SUMMARY",
+    TaskGollmInterventionsFromDocument = "TASK_GOLLM_INTERVENTIONS_FROM_DOCUMENT",
     TaskGollmModelCard = "TASK_GOLLM_MODEL_CARD",
     TaskMiraAmrToMmt = "TASK_MIRA_AMR_TO_MMT",
     TaskMiraGenerateModelLatex = "TASK_MIRA_GENERATE_MODEL_LATEX",

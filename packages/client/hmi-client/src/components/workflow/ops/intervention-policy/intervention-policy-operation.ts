@@ -1,10 +1,11 @@
 import { InterventionPolicy } from '@/types/Types';
+import type { BaseState, Operation } from '@/types/workflow';
 import { WorkflowOperationTypes } from '@/types/workflow';
-import type { Operation, BaseState } from '@/types/workflow';
 import { isEqual, omit } from 'lodash';
 
 export interface InterventionPolicyState extends BaseState {
 	interventionPolicy: InterventionPolicy;
+	taskIds: string[];
 }
 
 export const InterventionPolicyOperation: Operation = {
@@ -24,7 +25,8 @@ export const InterventionPolicyOperation: Operation = {
 			interventionPolicy: {
 				modelId: '',
 				interventions: []
-			}
+			},
+			taskIds: []
 		};
 		return init;
 	}

@@ -16,8 +16,13 @@
 				<template #content>
 					<section>
 						<nav class="inline-flex">
-							<!-- Disabled until Backend code is complete -->
-							<!-- <Button class="flex-1 mr-1" outlined severity="secondary" label="Extract from inputs" /> -->
+							<Button
+								class="flex-1 mr-1"
+								outlined
+								severity="secondary"
+								label="Extract from inputs"
+								@click="extractInterventionPolicyFromInputs"
+							/>
 							<Button
 								class="flex-1 ml-1"
 								label="Create New"
@@ -161,7 +166,7 @@
 
 <script setup lang="ts">
 import _, { cloneDeep, groupBy, isEmpty, omit } from 'lodash';
-import { computed, onMounted, ref, watch, nextTick, ComponentPublicInstance } from 'vue';
+import { ComponentPublicInstance, computed, nextTick, onMounted, ref, watch } from 'vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { WorkflowNode } from '@/types/workflow';
@@ -170,17 +175,17 @@ import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import Button from 'primevue/button';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { getInterventionPoliciesForModel, getModel } from '@/services/model';
-import { Intervention, InterventionPolicy, Model, AssetType } from '@/types/Types';
+import { AssetType, Intervention, InterventionPolicy, Model, type TaskResponse } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { useConfirm } from 'primevue/useconfirm';
 import { getParameters, getStates } from '@/model-representation/service';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import {
-	getInterventionPolicyById,
-	updateInterventionPolicy,
 	blankIntervention,
-	flattenInterventionData
+	flattenInterventionData,
+	getInterventionPolicyById,
+	updateInterventionPolicy
 } from '@/services/intervention-policy';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -192,12 +197,13 @@ import { createInterventionChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { useProjects } from '@/composables/project';
+import { interventionPolicyFromDocument } from '@/services/goLLM';
 import TeraInterventionCard from './tera-intervention-card.vue';
 import {
 	InterventionPolicyOperation,
 	InterventionPolicyState,
-	isInterventionPoliciesValuesEqual,
-	isInterventionPoliciesEqual
+	isInterventionPoliciesEqual,
+	isInterventionPoliciesValuesEqual
 } from './intervention-policy-operation';
 import TeraInterventionPolicyCard from './tera-intervention-policy-card.vue';
 
@@ -268,6 +274,13 @@ const isSaveDisabled = computed(() => {
 	// or the policy values are not equal
 	return hasSelectedPolicy && (isPolicyIdDifferent || arePoliciesEqual || !arePolicyValuesEqual);
 });
+
+const documentIds = computed(() =>
+	props.node.inputs
+		.filter((input) => input.type === 'documentId' && input.status === 'connected')
+		.map((input) => input.value?.[0]?.documentId)
+		.filter((id): id is string => id !== undefined)
+);
 
 const parameterOptions = computed(() => {
 	if (!model.value) return [];
@@ -471,6 +484,29 @@ const createNewInterventionPolicy = () => {
 	showCreatePolicyModal.value = true;
 	newBlankInterventionPolicy.value.modelId = model.value.id;
 	showSaveModal.value = true;
+};
+
+const extractInterventionPolicyFromInputs = async () => {
+	const state = cloneDeep(props.node.state);
+	if (!model.value?.id) {
+		return;
+	}
+
+	if (documentIds.value) {
+		const promiseList = [] as Promise<TaskResponse | null>[];
+		documentIds.value.forEach((documentId) => {
+			promiseList.push(
+				interventionPolicyFromDocument(documentId, model.value?.id as string, props.node.workflowId, props.node.id)
+			);
+		});
+		const responsesRaw = await Promise.all(promiseList);
+		responsesRaw.forEach((resp) => {
+			if (resp) {
+				state.taskIds.push(resp.id);
+			}
+		});
+	}
+	emit('update-state', state);
 };
 
 watch(
