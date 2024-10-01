@@ -24,7 +24,7 @@
               },
               "appliedTo": {
                 "type": "string",
-                "description": "The state or parameter to which the intervention is applied"
+                "description": "The state or parameter to which the intervention is applied. This should reference the id of a parameter or initial state of the AMR Model."
               },
               "type": {
                 "type": "string",
@@ -51,7 +51,7 @@
             "properties": {
               "parameter": {
                 "type": "string",
-                "description": "The state to which the threshold is applied. This can only be a state, not a parameter."
+                "description": "The state to which the threshold is applied. This can only be a state, not a parameter. This should reference the id of an initial state of the AMR Model."
               },
               "threshold": {
                 "type": "string",
@@ -63,7 +63,7 @@
               },
               "appliedTo": {
                 "type": "string",
-                "description": "The state or parameter to which the intervention is applied"
+                "description": "The state or parameter to which the intervention is applied. This should reference the id of a parameter or initial state of the AMR Model."
               },
               "type": {
                 "type": "string",
