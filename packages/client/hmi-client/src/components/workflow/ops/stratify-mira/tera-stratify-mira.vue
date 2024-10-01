@@ -152,7 +152,7 @@ import { blankStratifyGroup, StratifyGroup, StratifyOperationStateMira } from '.
 const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;
 }>();
-const emit = defineEmits(['append-output', 'update-state', 'close', 'update-output-port', 'select-output']);
+const emit = defineEmits(['append-output', 'update-state', 'close', 'update-output', 'select-output']);
 
 enum StratifyTabs {
 	Wizard = 'Wizard',
@@ -466,7 +466,7 @@ function updateNodeOutput(model: Model) {
 	if (!outputPort) return;
 	outputPort.label = model.header.name;
 
-	emit('update-output-port', outputPort);
+	emit('update-output', outputPort);
 }
 
 // check if user has made changes to the code

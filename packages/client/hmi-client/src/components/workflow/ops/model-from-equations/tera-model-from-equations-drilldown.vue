@@ -183,7 +183,7 @@ import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
 
-const emit = defineEmits(['close', 'update-state', 'append-output', 'select-output', 'update-output-port']);
+const emit = defineEmits(['close', 'update-state', 'append-output', 'select-output', 'update-output']);
 const props = defineProps<{
 	node: WorkflowNode<ModelFromEquationsState>;
 }>();
@@ -377,7 +377,7 @@ function updateNodeLabel(id: string, label: string) {
 	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.id === id));
 	if (!outputPort) return;
 	outputPort.label = label;
-	emit('update-output-port', outputPort);
+	emit('update-output', outputPort);
 }
 
 function getEquations() {
