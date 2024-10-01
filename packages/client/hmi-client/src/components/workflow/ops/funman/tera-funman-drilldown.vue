@@ -598,8 +598,7 @@ watch(
 .timespan {
 	display: flex;
 	align-items: center;
-	gap: var(--gap-2);
-	/* overflow: auto; */
+	justify-content: space-between;
 
 	& .timespan-input {
 		display: flex;
