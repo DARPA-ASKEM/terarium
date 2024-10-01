@@ -1,6 +1,6 @@
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
-import type { FunmanPostQueriesRequest } from '@/types/Types';
+import type { FunmanInterval, FunmanPostQueriesRequest } from '@/types/Types';
 import * as d3 from 'd3';
 import { ConstraintGroup, ConstraintType } from '@/components/workflow/ops/funman/funman-operation';
 
@@ -14,11 +14,18 @@ export interface FunmanBox {
 	label: string;
 	timestep: FunmanBound;
 	parameters: Record<string, FunmanBound>;
-	// bounds: Record<string, FunmanBound>;
-	// explanation: any;
-	// schedule: any;
-	// points: any;
 }
+
+export interface FunmanConstraintsResponse {
+	soft: boolean;
+	name: string;
+	timepoints: FunmanInterval;
+	additive_bounds: FunmanInterval;
+	variables: string[];
+	weights: number[];
+	derivative: boolean;
+}
+
 export interface ProcessedFunmanResult {
 	boxes: FunmanBox[];
 	points: any[];

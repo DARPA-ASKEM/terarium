@@ -32,7 +32,11 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { ProcessedFunmanResult, processFunman } from '@/services/models/funman-service';
+import {
+	type ProcessedFunmanResult,
+	type FunmanConstraintsResponse,
+	processFunman
+} from '@/services/models/funman-service';
 import { createFunmanStateChart, createFunmanParameterChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { getRunResult } from '@/services/models/simulation-service';
@@ -43,7 +47,6 @@ import AccordionTab from 'primevue/accordiontab';
 // import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue'; // TODO: Once we save the output model properly in the backend we can use this.
 import { logger } from '@/utils/logger';
 import type { Model } from '@/types/Types';
-import { ConstraintGroup } from './funman-operation';
 
 const props = defineProps<{
 	funModelId: string;
@@ -53,7 +56,7 @@ const props = defineProps<{
 const emit = defineEmits(['update:trajectoryState']);
 
 let processedFunmanResult: ProcessedFunmanResult | null = null;
-let constraintGroups: ConstraintGroup[] = [];
+let constraintsResponse: FunmanConstraintsResponse[] = [];
 
 const contractedModel = ref<Model | null>(null);
 const stateOptions = ref<string[]>([]);
@@ -70,7 +73,7 @@ const initalize = async () => {
 		return;
 	}
 	const funmanResult = JSON.parse(rawFunmanResult);
-	constraintGroups = funmanResult.request.constraints;
+	constraintsResponse = funmanResult.request.constraints;
 	stateOptions.value = funmanResult.model.petrinet.model.states.map(({ id }) => id);
 
 	processedFunmanResult = processFunman(funmanResult);
@@ -89,7 +92,7 @@ const initalize = async () => {
 function updateStateChart() {
 	if (!processedFunmanResult) return;
 	emit('update:trajectoryState', selectedState.value);
-	stateChart.value = createFunmanStateChart(processedFunmanResult, constraintGroups, selectedState.value);
+	stateChart.value = createFunmanStateChart(processedFunmanResult, constraintsResponse, selectedState.value);
 }
 
 watch(

@@ -2,9 +2,9 @@ import { percentile } from '@/utils/math';
 import { isEmpty, pick } from 'lodash';
 import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
-import { ChartAnnotation } from '@/types/Types';
+import type { ChartAnnotation, FunmanInterval } from '@/types/Types';
 import { flattenInterventionData } from './intervention-policy';
-import type { ProcessedFunmanResult, FunmanBox } from './models/funman-service';
+import type { ProcessedFunmanResult, FunmanBox, FunmanConstraintsResponse } from './models/funman-service';
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
@@ -817,7 +817,11 @@ enum FunmanChartLegend {
 	ModelChecks = 'Model checks'
 }
 
-export function createFunmanStateChart(data: ProcessedFunmanResult, constraints: any[], stateId: string) {
+export function createFunmanStateChart(
+	data: ProcessedFunmanResult,
+	constraints: FunmanConstraintsResponse[],
+	stateId: string
+) {
 	if (isEmpty(data.trajs)) return null;
 
 	const globalFont = 'Figtree';
@@ -838,8 +842,8 @@ export function createFunmanStateChart(data: ProcessedFunmanResult, constraints:
 		startX: c.timepoints.lb,
 		endX: c.timepoints.ub,
 		// If the interval bounds are within the min/max values of the line plot use them, otherwise use the min/max values
-		startY: Math.max(c.additive_bounds.lb, minY),
-		endY: Math.min(c.additive_bounds.ub, maxY)
+		startY: Math.max(c.additive_bounds.lb ?? 0, minY),
+		endY: Math.min(c.additive_bounds.ub ?? 0, maxY)
 	}));
 
 	return {
@@ -890,16 +894,19 @@ export function createFunmanStateChart(data: ProcessedFunmanResult, constraints:
 	};
 }
 
-export function createFunmanParameterChart(parametersOfInterest: any[], boxes: FunmanBox[]) {
-	const parameterRanges: any[] = [];
+export function createFunmanParameterChart(
+	parametersOfInterest: { label: 'all'; name: string; interval: FunmanInterval }[],
+	boxes: FunmanBox[]
+) {
+	const parameterRanges: { parameterId: string; boundType: string; lb?: number; ub?: number }[] = [];
 
 	// Widest range (model configuration ranges)
 	parametersOfInterest.forEach(({ name, interval }) => {
 		parameterRanges.push({
 			parameterId: name,
+			boundType: 'length',
 			lb: interval.lb,
-			ub: interval.ub,
-			boundType: 'length'
+			ub: interval.ub
 		});
 	});
 
@@ -908,9 +915,9 @@ export function createFunmanParameterChart(parametersOfInterest: any[], boxes: F
 		Object.keys(parameters).forEach((key) => {
 			parameterRanges.push({
 				parameterId: key,
+				boundType: label === 'true' ? FunmanChartLegend.Satisfactory : FunmanChartLegend.Unsatisfactory,
 				lb: parameters[key].lb,
-				ub: parameters[key].ub,
-				boundType: label === 'true' ? FunmanChartLegend.Satisfactory : FunmanChartLegend.Unsatisfactory
+				ub: parameters[key].ub
 			});
 		});
 	});
