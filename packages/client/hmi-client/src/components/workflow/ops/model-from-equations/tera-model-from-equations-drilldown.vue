@@ -149,7 +149,6 @@
 		:asset="selectedModel"
 		:is-visible="showSaveModelModal"
 		@close-modal="onCloseModelModal"
-		@on-save="onAddModel"
 	/>
 </template>
 
@@ -183,7 +182,7 @@ import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
 
-const emit = defineEmits(['close', 'update-state', 'append-output', 'select-output', 'update-output']);
+const emit = defineEmits(['close', 'update-state', 'append-output', 'select-output']);
 const props = defineProps<{
 	node: WorkflowNode<ModelFromEquationsState>;
 }>();
@@ -364,20 +363,8 @@ async function fetchModel() {
 	loadingModel.value = false;
 }
 
-function onAddModel(model: Model) {
-	if (!model?.name || !selectedOutputId.value) return;
-	updateNodeLabel(selectedOutputId.value, model.name);
-}
-
 function onCloseModelModal() {
 	showSaveModelModal.value = false;
-}
-
-function updateNodeLabel(id: string, label: string) {
-	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.id === id));
-	if (!outputPort) return;
-	outputPort.label = label;
-	emit('update-output', outputPort);
 }
 
 function getEquations() {
