@@ -91,6 +91,7 @@
 								>
 									<section>
 										<Checkbox
+											class="flex-shrink-0"
 											v-model="equation.includeInProcess"
 											@update:model-value="onCheckBoxChange(equation)"
 											:binary="true"
@@ -490,7 +491,8 @@ watch(
 	overflow-y: hidden;
 }
 
-.blocks-container {
+.blocks-container,
+.block-container {
 	overflow-y: auto;
 }
 
