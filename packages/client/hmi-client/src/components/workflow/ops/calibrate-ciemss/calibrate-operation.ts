@@ -2,12 +2,12 @@ import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import { ChartSetting } from '@/types/common';
 import { CalibrateMap } from '@/services/calibrate-workflow';
 import calibrateSimulateCiemss from '@assets/svg/operator-images/calibrate-simulate-probabilistic.svg';
-import { v4 as uuidv4 } from 'uuid';
 
 const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L529';
 
 export interface CalibrationOperationStateCiemss extends BaseState {
 	method: string;
+	timestampColName: string;
 	mapping: CalibrateMap[];
 	chartSettings: ChartSetting[] | null; // null indicates that the chart settings have not been set yet
 	simulationsInProgress: string[];
@@ -53,7 +53,8 @@ export const CalibrationOperationCiemss: Operation = {
 		const init: CalibrationOperationStateCiemss = {
 			method: 'dopri5',
 			chartSettings: null,
-			mapping: [{ id: uuidv4(), modelVariable: 'timestamp', datasetVariable: '' }],
+			timestampColName: '',
+			mapping: [],
 			simulationsInProgress: [],
 			currentProgress: 0,
 			inProgressPreForecastId: '',
