@@ -13,8 +13,11 @@
 		<AccordionTab header="Summary"> Summary text </AccordionTab>
 		<AccordionTab>
 			<template #header> State variables<i class="pi pi-info-circle" /> </template>
-			<Dropdown v-model="selectedState" :options="stateOptions" @update:model-value="updateStateChart" />
-			<vega-chart :visualization-spec="stateChart" :are-embed-actions-visible="false" />
+			<template v-if="stateChart">
+				<Dropdown v-model="selectedState" :options="stateOptions" @update:model-value="updateStateChart" />
+				<vega-chart :visualization-spec="stateChart" :are-embed-actions-visible="false" />
+			</template>
+			<span class="ml-4" v-else> No boxes were generated. </span>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>Parameters<i class="pi pi-info-circle" /></template>

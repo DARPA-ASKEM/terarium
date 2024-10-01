@@ -810,7 +810,7 @@ export function createInterventionChart(
 // Funman charts
 /// /////////////////////////////////////////////////////////////////////////////
 
-enum BoxType {
+enum FunmanChartLegend {
 	Satisfactory = 'Satisfactory',
 	Unsatisfactory = 'Unsatisfactory',
 	Ambiguous = 'Ambiguous',
@@ -818,11 +818,13 @@ enum BoxType {
 }
 
 export function createFunmanStateChart(data: ProcessedFunmanResult, constraints: any[], stateId: string) {
+	if (isEmpty(data.trajs)) return null;
+
 	const globalFont = 'Figtree';
 
 	const boxLines = data.trajs.map((traj) => {
-		const boxType = traj.label === 'true' ? BoxType.Satisfactory : BoxType.Unsatisfactory;
-		return { timepoints: traj.timestep, value: traj[stateId], boxType };
+		const legendItem = traj.label === 'true' ? FunmanChartLegend.Satisfactory : FunmanChartLegend.Unsatisfactory;
+		return { timepoints: traj.timestep, value: traj[stateId], legendItem };
 	});
 
 	// Find min/max values to set an appropriate viewing range for y-axis
@@ -832,7 +834,7 @@ export function createFunmanStateChart(data: ProcessedFunmanResult, constraints:
 	// Show checks for the selected state
 	const stateIdConstraints = constraints.filter((c) => c.variables.includes(stateId));
 	const modelChecks = stateIdConstraints.map((c) => ({
-		boxType: BoxType.ModelChecks,
+		legendItem: FunmanChartLegend.ModelChecks,
 		startX: c.timepoints.lb,
 		endX: c.timepoints.ub,
 		// If the interval bounds are within the min/max values of the line plot use them, otherwise use the min/max values
@@ -872,11 +874,16 @@ export function createFunmanStateChart(data: ProcessedFunmanResult, constraints:
 				scale: { domain: [minY, maxY] }
 			},
 			color: {
-				field: 'boxType',
+				field: 'legendItem',
 				legend: { orient: 'top', direction: 'horizontal', title: null },
 				scale: {
-					domain: [BoxType.Satisfactory, BoxType.Unsatisfactory, BoxType.Ambiguous, BoxType.ModelChecks],
-					range: ['#1B8073', '#FFAB00', '#CCC569', '#A4CEFF54'] // Specify colors for each boxType
+					domain: [
+						FunmanChartLegend.Satisfactory,
+						FunmanChartLegend.Unsatisfactory,
+						FunmanChartLegend.Ambiguous,
+						FunmanChartLegend.ModelChecks
+					],
+					range: ['#1B8073', '#FFAB00', '#CCC569', '#A4CEFF54'] // Specify colors for each legend item
 				}
 			}
 		}
@@ -903,7 +910,7 @@ export function createFunmanParameterChart(parametersOfInterest: any[], boxes: F
 				parameterId: key,
 				lb: parameters[key].lb,
 				ub: parameters[key].ub,
-				boundType: label === 'true' ? BoxType.Satisfactory : BoxType.Unsatisfactory
+				boundType: label === 'true' ? FunmanChartLegend.Satisfactory : FunmanChartLegend.Unsatisfactory
 			});
 		});
 	});
@@ -971,7 +978,7 @@ export function createFunmanParameterChart(parametersOfInterest: any[], boxes: F
 							type: 'nominal',
 							legend: { orient: 'top', direction: 'horizontal', title: null },
 							scale: {
-								domain: [BoxType.Satisfactory, BoxType.Unsatisfactory, BoxType.Ambiguous],
+								domain: [FunmanChartLegend.Satisfactory, FunmanChartLegend.Unsatisfactory, FunmanChartLegend.Ambiguous],
 								range: ['#1B8073', '#FFAB00', '#CCC569']
 							}
 						}
