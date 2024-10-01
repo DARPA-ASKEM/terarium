@@ -235,7 +235,7 @@ const isDocViewerOpen = ref(true);
 const isInputOpen = ref(true);
 const isOutputOpen = ref(true);
 
-const equasionfileUploads = ref();
+const equasionfileUploads = ref<Blob[]>([]);
 const equasionTextarea = ref();
 const documentEquations = ref<AssetBlock<EquationBlock>[]>();
 
@@ -308,7 +308,9 @@ function handlePasteEvent(e) {
 					multipleEquationsDisabled.value = true;
 				}
 			};
-			reader.readAsArrayBuffer(item);
+			if (item instanceof Blob) {
+				reader.readAsArrayBuffer(item);
+			}
 		});
 	}
 }
