@@ -163,7 +163,7 @@
 			@update-status="(status: OperatorStatus) => updateWorkflowNodeStatus(currentActiveNode, status)"
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
 			@close="addOperatorToRoute(null)"
-			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
+			@update-output-port="(event: any) => updateOutput(currentActiveNode, event)"
 		/>
 	</Teleport>
 </template>
@@ -409,9 +409,9 @@ function selectOutput(node: WorkflowNode<any> | null, selectedOutputId: string) 
 	saveWorkflowHandler();
 }
 
-function updateOutputPort(node: WorkflowNode<any> | null, workflowOutput: WorkflowOutput<any>) {
+function updateOutput(node: WorkflowNode<any> | null, workflowOutput: WorkflowOutput<any>) {
 	if (!node) return;
-	workflowService.updateOutputPort(node, workflowOutput);
+	workflowService.updateOutput(node, workflowOutput);
 	saveWorkflowHandler();
 }
 
