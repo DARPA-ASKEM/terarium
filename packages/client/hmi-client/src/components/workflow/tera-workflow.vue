@@ -89,8 +89,8 @@
 							:node="node"
 							@append-output="(event: any) => appendOutput(node, event)"
 							@append-input-port="(event: any) => appendInputPort(node, event)"
-							@open-drilldown="addOperatorToRoute(node.id)"
 							@update-state="(event: any) => updateWorkflowNodeState(node, event)"
+							@open-drilldown="addOperatorToRoute(node.id)"
 						/>
 					</template>
 				</tera-operator>
@@ -159,11 +159,11 @@
 			:downstream-operators-nav="downstreamOperatorsNav"
 			:spawn-animation="drilldownSpawnAnimation"
 			@append-output="(event: any) => appendOutput(currentActiveNode, event)"
-			@close="addOperatorToRoute(null)"
-			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
-			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			@update-status="(status: OperatorStatus) => updateWorkflowNodeStatus(currentActiveNode, status)"
+			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
+			@close="addOperatorToRoute(null)"
+			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
 		/>
 	</Teleport>
 </template>
@@ -780,7 +780,7 @@ const dist2 = (a: Position, b: Position) => (a.x - b.x) * (a.x - b.x) + (a.y - b
 const threshold2 = 5.0 * 5.0;
 
 /*
- * Relink edges that have become detached
+ * Relink edges that have become detatched
  *
  * [output-port](edge source => edge target)[input-port]
  *
@@ -1008,14 +1008,14 @@ onUnmounted(() => {
 
 <style scoped>
 .toolbar {
-	align-items: center;
-	background-color: var(--surface-transparent);
-	border-bottom: 1px solid var(--surface-border-light);
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
-	padding: var(--gap-2) var(--gap-4);
+	align-items: center;
+	padding: 0.5rem 1rem;
+	border-bottom: 1px solid var(--surface-border-light);
 	z-index: 900;
+	background-color: var(--surface-transparent);
 }
 
 .glass {
@@ -1023,15 +1023,15 @@ onUnmounted(() => {
 }
 
 .button-group {
-	align-items: center;
 	display: flex;
+	align-items: center;
 	flex-direction: row;
-	gap: var(--gap-2);
+	gap: var(--gap-small);
 }
 
 .rename-workflow {
-	align-items: center;
 	display: flex;
+	align-items: center;
 	flex-wrap: nowrap;
 }
 </style>
