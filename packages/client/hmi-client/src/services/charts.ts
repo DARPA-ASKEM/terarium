@@ -842,8 +842,8 @@ export function createFunmanStateChart(
 		startX: c.timepoints.lb,
 		endX: c.timepoints.ub,
 		// If the interval bounds are within the min/max values of the line plot use them, otherwise use the min/max values
-		startY: Math.max(c.additive_bounds.lb ?? 0, minY),
-		endY: Math.min(c.additive_bounds.ub ?? 0, maxY)
+		startY: Math.max(c.additive_bounds.lb ?? minY, minY),
+		endY: Math.min(c.additive_bounds.ub ?? maxY, maxY)
 	}));
 
 	return {
