@@ -1,4 +1,5 @@
 import { Ref, ref } from 'vue';
+import _ from 'lodash';
 import { drilldownChartSize } from '@/components/workflow/util';
 import { useResizeObserver } from './useResizeObserver';
 
@@ -8,10 +9,13 @@ import { useResizeObserver } from './useResizeObserver';
  * @param {Ref<HTMLElement>} containerElement - A reference to the container HTML element.
  * @returns {Ref<{ width: number, height: number }>} - A reactive reference to the chart size.
  */
-export function useDrilldownChartSize(containerElement: Ref<HTMLElement | null>) {
+export function useDrilldownChartSize(containerElement: Ref<HTMLElement | null>, debounceDelay = 100) {
 	const size = ref(drilldownChartSize(null));
-	useResizeObserver(containerElement, () => {
-		size.value = drilldownChartSize(containerElement.value);
-	});
+	useResizeObserver(
+		containerElement,
+		_.debounce(() => {
+			size.value = drilldownChartSize(containerElement.value);
+		}, debounceDelay)
+	);
 	return size;
 }
