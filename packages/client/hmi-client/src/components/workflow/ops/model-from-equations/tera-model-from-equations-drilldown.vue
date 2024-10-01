@@ -15,114 +15,110 @@
 					</tera-drilldown-section>
 				</template>
 			</tera-slider-panel>
-
 			<tera-slider-panel v-model:is-open="isInputOpen" header="Input" content-width="100%">
 				<template #content>
-					<header class="pb-2">
-						<nav class="flex justify-content-between p-2">
-							<span class="flex align-items-center">Specify which equations to use for this model.</span>
-							<section class="white-space-nowrap min-w-min">
-								<Button class="mr-1" label="Reset" severity="secondary" outlined></Button>
-								<Button label="Run" @click="onRun" :diabled="assetLoading" :loading="loadingModel"></Button>
+					<main class="p-3">
+						<header class="pb-2">
+							<nav class="flex justify-content-between pb-2">
+								<span class="flex align-items-center">Specify which equations to use for this model.</span>
+								<section class="white-space-nowrap min-w-min">
+									<Button class="mr-1" label="Reset" severity="secondary" outlined></Button>
+									<Button label="Run" @click="onRun" :diabled="assetLoading" :loading="loadingModel"></Button>
+								</section>
+							</nav>
+							<section class="header-group">
+								<Textarea
+									v-model="multipleEquations"
+									autoResize
+									rows="1"
+									placeholder="Add one or more LaTex equations, or paste in a screenshot"
+									class="w-full"
+								/>
+								<Button label="Add" @click="getEquations" class="ml-2" :disabled="isEmpty(multipleEquations)" />
 							</section>
-						</nav>
-						<section class="header-group">
-							<Textarea
-								v-model="multipleEquations"
-								autoResize
-								rows="1"
-								placeholder="Add one or more LaTex equations, or paste in a screenshot"
-								class="w-full"
-							/>
-							<Button label="Add" @click="getEquations" class="ml-2" :disabled="isEmpty(multipleEquations)" />
-						</section>
-					</header>
-					<Accordion :active-index="0">
-						<AccordionTab header="Model equations">
-							<h6 class="pb-2">Use {{ includedEquations.length > 1 ? 'these equations' : 'this equation' }}</h6>
-							<ul class="blocks-container ml-3">
-								<li
-									v-for="(equation, i) in includedEquations"
-									:key="i"
-									@click.capture="selectItem(equation.name, $event)"
+						</header>
+						<h6 class="py-3">Use {{ includedEquations.length > 1 ? 'these equations' : 'this equation' }}</h6>
+						<ul class="blocks-container">
+							<li
+								v-for="(equation, i) in includedEquations"
+								:key="i"
+								@click.capture="selectItem(equation.name, $event)"
+							>
+								<tera-asset-block
+									:is-toggleable="false"
+									:is-permitted="false"
+									:use-default-style="false"
+									:class="['asset-panel', { selected: selectedItem === equation.name }]"
 								>
-									<tera-asset-block
-										:is-toggleable="false"
-										:is-permitted="false"
-										:use-default-style="false"
-										:class="selectedItem === equation.name ? 'currenly-selected' : 'asset-panel'"
-									>
-										<section>
-											<Checkbox
-												v-model="equation.includeInProcess"
-												@update:model-value="onCheckBoxChange(equation)"
-												:binary="true"
-											/>
-											<div class="block-container">
-												<tera-math-editor
-													v-if="equation.asset.text"
-													:latex-equation="equation.asset.text"
-													:is-editable="false"
-												/>
-												<div v-if="!equation.asset.text" class="no-extract-equation">
-													{{ getEquationErrorLabel(equation) }}
-												</div>
-											</div>
-										</section>
-										<tera-input-text
-											v-if="selectedItem === equation.name"
-											v-model="equation.asset.text"
-											placeholder="Add an expression with LaTeX"
-											@update:model-value="emit('update-state', clonedState)"
+									<section>
+										<Checkbox
+											v-model="equation.includeInProcess"
+											@update:model-value="onCheckBoxChange(equation)"
+											:binary="true"
 										/>
-									</tera-asset-block>
-								</li>
-							</ul>
-
-							<h6 class="pt-3 pb-2">Other equations extracted from document</h6>
-							<ul class="blocks-container ml-3">
-								<li
-									v-for="(equation, i) in notIncludedEquations"
-									:key="i"
-									@click.capture="selectItem(equation.name, $event)"
+										<div class="block-container">
+											<tera-math-editor
+												v-if="equation.asset.text"
+												:latex-equation="equation.asset.text"
+												:is-editable="false"
+											/>
+											<div v-if="!equation.asset.text" class="no-extract-equation">
+												{{ getEquationErrorLabel(equation) }}
+											</div>
+										</div>
+									</section>
+									<tera-input-text
+										v-if="selectedItem === equation.name"
+										v-model="equation.asset.text"
+										placeholder="Add an expression with LaTeX"
+										@update:model-value="emit('update-state', clonedState)"
+									/>
+								</tera-asset-block>
+							</li>
+						</ul>
+						<h6 class="py-3">Other equations extracted from document</h6>
+						<ul class="blocks-container">
+							<li
+								v-for="(equation, i) in notIncludedEquations"
+								:key="i"
+								@click.capture="selectItem(equation.name, $event)"
+							>
+								<tera-asset-block
+									:is-toggleable="false"
+									:is-permitted="false"
+									:use-default-style="false"
+									:class="['asset-panel', { selected: selectedItem === equation.name }]"
 								>
-									<tera-asset-block
-										:is-toggleable="false"
-										:is-permitted="false"
-										:use-default-style="false"
-										:class="selectedItem === equation.name ? 'currenly-selected' : 'asset-panel'"
-									>
-										<section>
-											<Checkbox
-												v-model="equation.includeInProcess"
-												@update:model-value="onCheckBoxChange(equation)"
-												:binary="true"
-											/>
-											<div class="block-container">
-												<tera-math-editor
-													v-if="equation.asset.text"
-													:latex-equation="equation.asset.text"
-													:is-editable="false"
-												/>
-												<div v-if="!equation.asset.text" class="no-extract-equation">
-													{{ getEquationErrorLabel(equation) }}
-												</div>
-											</div>
-										</section>
-										<tera-input-text
-											v-if="selectedItem === equation.name"
-											v-model="equation.asset.text"
-											placeholder="Add an expression with LaTeX"
-											@update:model-value="emit('update-state', clonedState)"
+									<section>
+										<Checkbox
+											class="flex-shrink-0"
+											v-model="equation.includeInProcess"
+											@update:model-value="onCheckBoxChange(equation)"
+											:binary="true"
 										/>
-									</tera-asset-block>
-								</li>
-							</ul>
-						</AccordionTab>
-					</Accordion>
+										<div class="block-container">
+											<tera-math-editor
+												v-if="equation.asset.text"
+												:latex-equation="equation.asset.text"
+												:is-editable="false"
+											/>
+											<div v-if="!equation.asset.text" class="no-extract-equation">
+												{{ getEquationErrorLabel(equation) }}
+											</div>
+										</div>
+									</section>
+									<tera-input-text
+										v-if="selectedItem === equation.name"
+										v-model="equation.asset.text"
+										placeholder="Add an expression with LaTeX"
+										@update:model-value="emit('update-state', clonedState)"
+									/>
+								</tera-asset-block>
+							</li>
+						</ul>
+					</main>
 				</template>
 			</tera-slider-panel>
-
 			<tera-slider-panel v-model:is-open="isOutputOpen" header="Output" content-width="100%">
 				<template #content>
 					<header class="flex align-items-center p-3">
@@ -153,8 +149,6 @@
 </template>
 
 <script setup lang="ts">
-import Accordion from 'primevue/accordion';
-import AccordionTab from 'primevue/accordiontab';
 import { AssetBlock, WorkflowNode } from '@/types/workflow';
 import Checkbox from 'primevue/checkbox';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -435,28 +429,40 @@ watch(
 	border-radius: var(--border-radius-small);
 }
 
-.currenly-selected {
-	padding-top: var(--gap-3);
-	border-radius: var(--border-radius-medium);
-	border: 1px solid var(--surface-border-light);
-	border-left: 0.25rem solid var(--primary-color);
-}
-
 .asset-panel {
 	padding-top: var(--gap-3);
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius-medium);
+	border-width: 1px 1px 0 1px;
+	border-color: var(--surface-border-light);
+	border-style: solid;
+	border-radius: unset;
+	overflow: auto;
+
+	&.selected {
+		border-left: var(--gap-1) solid var(--primary-color);
+	}
 }
 
+.blocks-container li:first-of-type .asset-panel {
+	border-top-left-radius: var(--border-radius-medium);
+	border-top-right-radius: var(--border-radius-medium);
+}
+
+.blocks-container li:last-of-type .asset-panel {
+	border-bottom-width: 1px;
+	border-bottom-left-radius: var(--border-radius-medium);
+	border-bottom-right-radius: var(--border-radius-medium);
+}
+
+/* TODO: to be implemented when displaying the extracted equations.
 .equation-image {
 	border-style: dashed;
 	border-color: var(--primary-color);
 	border-width: thin;
 }
+*/
 
 .header-group {
 	display: flex;
-	padding-left: var(--gap-3);
 	padding-right: var(--gap-2);
 	flex-direction: row;
 	align-items: center;
@@ -470,10 +476,14 @@ watch(
 	overflow-y: hidden;
 }
 
-.blocks-container {
+.blocks-container,
+.block-container {
 	overflow-y: auto;
 }
 
+.p-panel {
+	box-shadow: none;
+}
 .p-panel:deep(.p-panel-footer) {
 	display: none;
 }
