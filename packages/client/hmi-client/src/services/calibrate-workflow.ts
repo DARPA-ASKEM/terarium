@@ -27,8 +27,6 @@ export const setupModelInput = async (modelConfigId: string | undefined) => {
 			modelOptions.push(o);
 		});
 
-		modelOptions.push({ id: 'timestamp' });
-
 		return {
 			model,
 			modelConfiguration,
