@@ -201,7 +201,7 @@ t d
 					/>
 				</template>
 				<tera-operator-output-summary
-					v-if="node.state.summaryId && !showSpinner"
+					v-if="node.state.summaryId && !isLoading"
 					:summary-id="node.state.summaryId"
 					class="px-2"
 				/>
@@ -211,7 +211,7 @@ t d
 						<div ref="lossChartContainer">
 							<vega-chart
 								expandable
-								v-if="lossValues.length > 0 || showSpinner"
+								v-if="lossValues.length > 0 || isLoading"
 								ref="lossChartRef"
 								:are-embed-actions-visible="true"
 								:visualization-spec="lossChartSpec"
@@ -219,7 +219,7 @@ t d
 						</div>
 					</AccordionTab>
 				</Accordion>
-				<div v-if="!showSpinner">
+				<div v-if="!isLoading">
 					<section ref="outputPanel" v-if="modelConfig && csvAsset">
 						<Accordion multiple :active-index="[0, 1, 2]">
 							<AccordionTab header="Parameters">
@@ -236,23 +236,23 @@ t d
 													<tr>
 														<th scope="col"></th>
 														<th scope="col">
-															{{ preparedDistributionCharts[setting.selectedVariables[0]].stat.header[0] }}
+															{{ preparedDistributionCharts[setting.selectedVariables[0]].header[0] }}
 														</th>
 														<th scope="col">
-															{{ preparedDistributionCharts[setting.selectedVariables[0]].stat.header[1] }}
+															{{ preparedDistributionCharts[setting.selectedVariables[0]].header[1] }}
 														</th>
 													</tr>
 												</thead>
 												<tbody>
 													<tr>
 														<th scope="row">Mean</th>
-														<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].stat.mean[0] }}</td>
-														<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].stat.mean[1] }}</td>
+														<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].mean[0] }}</td>
+														<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].mean[1] }}</td>
 													</tr>
 													<tr>
 														<th scope="row">Variance</th>
-														<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].stat.variance[0] }}</td>
-														<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].stat.variance[1] }}</td>
+														<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].variance[0] }}</td>
+														<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].variance[1] }}</td>
 													</tr>
 												</tbody>
 											</table>
@@ -269,9 +269,8 @@ t d
 									/>
 								</template>
 							</AccordionTab>
-							<AccordionTab header="Errors">
+							<AccordionTab header="Errors" v-if="errorData.length > 0 && selectedErrorVariableSettings.length > 0">
 								<vega-chart
-									v-if="errorData.length > 0 && selectedErrorVariableSettings.length > 0"
 									:expandable="onExpandErrorChart"
 									:are-embed-actions-visible="true"
 									:visualization-spec="errorChart"
@@ -577,7 +576,7 @@ const errorData = ref<Record<string, any>[]>([]);
 const showSaveModal = ref(false);
 const configuredModelConfig = ref<ModelConfiguration | null>(null);
 
-const showSpinner = ref(false);
+const isLoading = ref(false);
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 
@@ -787,7 +786,7 @@ const preparedDistributionCharts = computed(() => {
 			mean: [mean(data, (d) => d[beforeFieldName]), mean(data, (d) => d[fieldName])].map(toDisplayNumber),
 			variance: [variance(data, (d) => d[beforeFieldName]), variance(data, (d) => d[fieldName])].map(toDisplayNumber)
 		};
-		charts[param] = { histogram, stat };
+		charts[param] = { histogram, ...stat };
 	});
 	return charts;
 });
@@ -1077,11 +1076,11 @@ watch(
 	() => props.node.state.inProgressCalibrationId,
 	(id) => {
 		if (id === '') {
-			showSpinner.value = false;
+			isLoading.value = false;
 			updateLossChartSpec(lossValues.value);
 			unsubscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
 		} else {
-			showSpinner.value = true;
+			isLoading.value = true;
 			updateLossChartSpec(LOSS_CHART_DATA_SOURCE);
 			subscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
 		}
