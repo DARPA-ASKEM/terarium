@@ -235,7 +235,6 @@ const isDocViewerOpen = ref(true);
 const isInputOpen = ref(true);
 const isOutputOpen = ref(true);
 
-const equasionfileUploads = ref<Blob[]>([]);
 const equasionTextarea = ref();
 const documentEquations = ref<AssetBlock<EquationBlock>[]>();
 
@@ -410,15 +409,6 @@ function getEquations() {
 			}
 		});
 	});
-	if (equasionfileUploads.value.files) {
-		clonedState.value.equations.push({
-			name: 'Equation',
-			includeInProcess: true,
-			asset: {
-				text: equasionfileUploads.value.files
-			}
-		});
-	}
 	emit('update-state', clonedState.value);
 	multipleEquations.value = '';
 }
