@@ -649,6 +649,7 @@ export interface OptimizeInterventions {
     startTime?: number[];
     objectiveFunctionOption?: string[];
     initialGuess?: number[];
+    relativeImportance?: number[];
 }
 
 export interface OptimizeQoi {
