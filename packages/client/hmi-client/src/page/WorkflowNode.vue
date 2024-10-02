@@ -34,7 +34,7 @@ import TeraCalibrateEnsembleCiemssDrilldown from '@/components/workflow/ops/cali
 import TeraSimulateCiemssDrilldown from '@/components/workflow/ops/simulate-ciemss/tera-simulate-ciemss-drilldown.vue';
 import TeraSimulateEnsembleCiemssDrilldown from '@/components/workflow/ops/simulate-ensemble-ciemss/tera-simulate-ensemble-ciemss-drilldown.vue';
 import TeraFunman from '@/components/workflow/ops/funman/tera-funman-drilldown.vue';
-import TeraStratifyMira from '@/components/workflow/ops/stratify-mira/tera-stratify-mira.vue';
+import TeraStratifyMira from '@/components/workflow/ops/stratify-mira/tera-stratify-drilldown.vue';
 import TeraCodeAssetWrapper from '@/components/workflow/ops/code-asset/tera-code-asset-wrapper.vue';
 
 const props = defineProps<{ nodeId: string; workflowId: string }>();
