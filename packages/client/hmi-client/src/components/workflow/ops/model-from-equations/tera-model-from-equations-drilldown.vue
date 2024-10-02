@@ -29,10 +29,12 @@
 							<section class="header-group">
 								<Textarea
 									v-model="multipleEquations"
+									ref="equationTextarea"
 									autoResize
 									rows="1"
 									placeholder="Add one or more LaTex equations, or paste in a screenshot"
 									class="w-full"
+									:disabled="multipleEquationsDisabled"
 								/>
 								<Button label="Add" @click="getEquations" class="ml-2" :disabled="isEmpty(multipleEquations)" />
 							</section>
@@ -134,15 +136,15 @@ import { AssetBlock, WorkflowNode } from '@/types/workflow';
 import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
 import Textarea from 'primevue/textarea';
-import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import { computed, onMounted, ref, watch } from 'vue';
+import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
+import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import type { Card, DocumentAsset, Model } from '@/types/Types';
 import { cloneDeep, isEmpty } from 'lodash';
 import { equationsToAMR, type EquationsToAMRRequest } from '@/services/knowledge';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
-import { enrichModelMetadata } from '@/services/goLLM';
+import { enrichModelMetadata, equationsFromImage } from '@/services/goLLM';
 import { getModel, updateModel } from '@/services/model';
 import { useProjects } from '@/composables/project';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
@@ -203,14 +205,17 @@ const goLLMCard = computed<any>(() => document.value?.metadata?.gollmCard);
 
 const isGeneratingCard = ref(false);
 const multipleEquations = ref<string>('');
+const multipleEquationsDisabled = ref(false);
 
 const isDocViewerOpen = ref(true);
 const isInputOpen = ref(true);
 const isOutputOpen = ref(true);
 
+const equationTextarea = ref();
 const documentEquations = ref<AssetBlock<EquationBlock>[]>();
 
 onMounted(async () => {
+	window.addEventListener('paste', handlePasteEvent);
 	clonedState.value = cloneDeep(props.node.state);
 	if (selectedOutputId.value) {
 		onSelection(selectedOutputId.value);
@@ -265,6 +270,42 @@ onMounted(async () => {
 		emit('update-state', state);
 	}
 	assetLoading.value = false;
+});
+
+function handlePasteEvent(e) {
+	// checks if the user pasted a file or collection of files
+	if (e.clipboardData?.files.length) {
+		multipleEquationsDisabled.value = true;
+		Array.from(e.clipboardData.files).forEach((item) => {
+			const reader = new FileReader();
+			reader.onload = function ({ target }) {
+				if (target && document.value?.id) {
+					const base64 = arrayBufferToBase64(target.result);
+					// send base64 to gollm
+					equationsFromImage(document.value.id, base64).then((response) => {
+						const responseJson = JSON.parse(window.atob(response.output)).response;
+						multipleEquations.value = responseJson.equations.join('\n');
+					});
+				}
+			};
+			if (item instanceof Blob) {
+				reader.readAsArrayBuffer(item);
+			}
+		});
+	}
+}
+
+function arrayBufferToBase64(buffer) {
+	let binary = '';
+	const bytes = new Uint8Array(buffer);
+	for (let i = 0; i < bytes.byteLength; i++) {
+		binary += String.fromCharCode(bytes[i]);
+	}
+	return window.btoa(binary);
+}
+
+onBeforeUnmount(async () => {
+	window.removeEventListener('paste', handlePasteEvent);
 });
 
 const onSelection = (id: string) => {
@@ -347,6 +388,7 @@ function getEquations() {
 	});
 	emit('update-state', clonedState.value);
 	multipleEquations.value = '';
+	multipleEquationsDisabled.value = false;
 }
 
 function getEquationErrorLabel(equation) {

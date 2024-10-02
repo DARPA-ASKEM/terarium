@@ -95,6 +95,20 @@ export async function configureModelFromDocument(
 	return data;
 }
 
+export async function equationsFromImage(documentId: string, base64ImageStr: string): Promise<TaskResponse> {
+	const { data } = await API.post<TaskResponse>(
+		'/gollm/equations-from-image',
+		{ base64ImageStr },
+		{
+			params: {
+				'document-id': documentId,
+				mode: 'SYNC'
+			}
+		}
+	);
+	return data;
+}
+
 export async function configureModelFromDataset(
 	modelId: string,
 	datasetId: string,
