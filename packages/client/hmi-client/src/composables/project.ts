@@ -10,7 +10,7 @@ import { activeProject, activeProjectId } from '@/composables/activeProject';
 import * as ProjectService from '@/services/project';
 import type { PermissionRelationships, Project, ProjectAsset } from '@/types/Types';
 import { AssetType } from '@/types/Types';
-import { computed, ComputedRef, shallowRef } from 'vue';
+import { shallowRef } from 'vue';
 
 const TIMEOUT_MS = 100;
 
