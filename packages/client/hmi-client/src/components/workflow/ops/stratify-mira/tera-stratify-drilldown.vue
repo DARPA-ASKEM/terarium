@@ -429,10 +429,10 @@ const hasCodeChange = () => {
 const checkForCodeChange = debounce(hasCodeChange, 100);
 
 function updateNode(model: Model) {
-	const id = amr.value?.id;
+	const id = outputAmr.value?.id;
 	if (!id || !model) return;
 
-	amr.value = model;
+	outputAmr.value = model;
 	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.value?.[0] === id));
 
 	if (!outputPort) return;
