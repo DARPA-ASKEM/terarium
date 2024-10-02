@@ -846,8 +846,6 @@ export function createFunmanStateChart(
 		endY: Math.min(c.additive_bounds.ub ?? maxY, maxY)
 	}));
 
-	console.log(boxLines);
-
 	return {
 		$schema: VEGALITE_SCHEMA,
 		config: { font: globalFont },
