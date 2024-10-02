@@ -846,6 +846,8 @@ export function createFunmanStateChart(
 		endY: Math.min(c.additive_bounds.ub ?? maxY, maxY)
 	}));
 
+	console.log(boxLines);
+
 	return {
 		$schema: VEGALITE_SCHEMA,
 		config: { font: globalFont },
@@ -863,7 +865,10 @@ export function createFunmanStateChart(
 				}
 			},
 			{
-				mark: 'line',
+				mark: {
+					type: 'line',
+					point: true
+				},
 				data: { values: boxLines },
 				encoding: {
 					x: { field: 'timepoints', type: 'quantitative' },
