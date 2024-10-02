@@ -47,7 +47,7 @@
 									:class="['asset-panel', { selected: selectedItem === equation.name }]"
 								>
 									<template #header>
-										<h6>{{ equation.name }} - Page: {{ equation.asset.pageNumber }}</h6>
+										<h6>{{ equation.name }} - Page({{ equation.asset.pageNumber }})</h6>
 									</template>
 									<section>
 										<Checkbox
@@ -85,7 +85,7 @@
 									:class="['asset-panel', { selected: selectedItem === equation.name }]"
 								>
 									<template #header>
-										<h6>{{ equation.name }} - Page: {{ equation.asset.pageNumber }}</h6>
+										<h6>{{ equation.name }} - Page({{ equation.asset.pageNumber }})</h6>
 									</template>
 									<section>
 										<Checkbox
