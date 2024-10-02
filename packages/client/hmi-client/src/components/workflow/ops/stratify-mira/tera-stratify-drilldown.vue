@@ -122,7 +122,7 @@ import { blankStratifyGroup, StratifyGroup, StratifyOperationStateMira } from '.
 const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;
 }>();
-const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output']);
+const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output', 'update-output']);
 
 enum StratifyTabs {
 	Wizard = 'Wizard',
@@ -427,6 +427,19 @@ const hasCodeChange = () => {
 	}
 };
 const checkForCodeChange = debounce(hasCodeChange, 100);
+
+function updateNode(model: Model) {
+	const id = amr.value?.id;
+	if (!id || !model) return;
+
+	amr.value = model;
+	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.value?.[0] === id));
+
+	if (!outputPort) return;
+	outputPort.label = model.header.name;
+
+	emit('update-output', outputPort);
+}
 
 watch(
 	() => codeText.value,
