@@ -40,7 +40,7 @@ export async function enrichModelMetadata(modelId: string, documentId: string, o
 			params: {
 				'model-id': modelId,
 				'document-id': documentId,
-				overwrite: overwrite
+				overwrite
 			}
 		});
 
