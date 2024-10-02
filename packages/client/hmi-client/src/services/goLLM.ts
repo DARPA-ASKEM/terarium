@@ -34,6 +34,23 @@ export async function modelCard(modelId: string, documentId?: string): Promise<v
 	}
 }
 
+export async function interventionPolicyFromDocument(
+	documentId: string,
+	modelId: string,
+	workflowId?: string,
+	nodeId?: string
+): Promise<TaskResponse> {
+	const { data } = await API.get<TaskResponse>('/gollm/interventions-from-document', {
+		params: {
+			'model-id': modelId,
+			'document-id': documentId,
+			'workflow-id': workflowId,
+			'node-id': nodeId
+		}
+	});
+	return data;
+}
+
 export async function configureModelFromDocument(
 	documentId: string,
 	modelId: string,

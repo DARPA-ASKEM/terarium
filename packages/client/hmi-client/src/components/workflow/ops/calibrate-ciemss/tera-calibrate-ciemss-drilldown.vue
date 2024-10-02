@@ -225,94 +225,92 @@
 					/>
 				</template>
 				<tera-operator-output-summary
-					v-if="node.state.summaryId && !showSpinner"
+					v-if="node.state.summaryId && !isLoading"
 					class="p-3"
 					:summary-id="node.state.summaryId"
 				/>
-
-				<!-- Loss chart -->
-				<div class="ml-3 mr-3">
-					<h5>Loss</h5>
-					<div ref="lossChartContainer">
-						<vega-chart
-							expandable
-							v-if="lossValues.length > 0 || showSpinner"
-							ref="lossChartRef"
-							:are-embed-actions-visible="true"
-							:visualization-spec="lossChartSpec"
-						/>
-					</div>
-				</div>
-
-				<!-- Variable charts -->
-				<div v-if="!showSpinner" class="form-section">
-					<section ref="outputPanel" v-if="modelConfig && csvAsset">
-						<h5>Parameters</h5>
-						<br />
-						<template v-for="setting of selectedParameterSettings" :key="setting.id">
-							<vega-chart
-								v-if="preparedDistributionCharts[setting.selectedVariables[0]]"
-								expandable
-								:are-embed-actions-visible="true"
-								:visualization-spec="preparedDistributionCharts[setting.selectedVariables[0]].histogram"
-							>
-								<template v-slot:footer>
-									<table class="distribution-table">
-										<thead>
-											<tr>
-												<th scope="col"></th>
-												<th scope="col">
-													{{ preparedDistributionCharts[setting.selectedVariables[0]].stat.header[0] }}
-												</th>
-												<th scope="col">
-													{{ preparedDistributionCharts[setting.selectedVariables[0]].stat.header[1] }}
-												</th>
-											</tr>
-										</thead>
-										<tbody>
-											<tr>
-												<th scope="row">Mean</th>
-												<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].stat.mean[0] }}</td>
-												<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].stat.mean[1] }}</td>
-											</tr>
-											<tr>
-												<th scope="row">Variance</th>
-												<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].stat.variance[0] }}</td>
-												<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].stat.variance[1] }}</td>
-											</tr>
-										</tbody>
-									</table>
-								</template>
-							</vega-chart>
-						</template>
-						<h5>Variables</h5>
-						<br />
-						<template v-for="setting of selectedVariableSettings" :key="setting.id">
+				<Accordion :active-index="0" class="px-2">
+					<AccordionTab header="Loss">
+						<!-- Loss chart -->
+						<div ref="lossChartContainer">
 							<vega-chart
 								expandable
+								v-if="lossValues.length > 0 || isLoading"
+								ref="lossChartRef"
 								:are-embed-actions-visible="true"
-								:visualization-spec="preparedCharts[setting.selectedVariables[0]]"
+								:visualization-spec="lossChartSpec"
 							/>
-						</template>
-						<h5>Errors</h5>
-						<vega-chart
-							v-if="errorData.length > 0 && selectedErrorVariableSettings.length > 0"
-							:expandable="onExpandErrorChart"
-							:are-embed-actions-visible="true"
-							:visualization-spec="errorChart"
-						/>
+						</div>
+					</AccordionTab>
+				</Accordion>
+				<div v-if="!isLoading">
+					<section ref="outputPanel" v-if="modelConfig && csvAsset">
+						<Accordion multiple :active-index="[0, 1, 2]" class="px-2">
+							<AccordionTab header="Parameters">
+								<template v-for="setting of selectedParameterSettings" :key="setting.id">
+									<vega-chart
+										v-if="preparedDistributionCharts[setting.selectedVariables[0]]"
+										expandable
+										:are-embed-actions-visible="true"
+										:visualization-spec="preparedDistributionCharts[setting.selectedVariables[0]].histogram"
+									>
+										<template v-slot:footer>
+											<table class="distribution-table">
+												<thead>
+													<tr>
+														<th scope="col"></th>
+														<th scope="col">
+															{{ preparedDistributionCharts[setting.selectedVariables[0]].header[0] }}
+														</th>
+														<th scope="col">
+															{{ preparedDistributionCharts[setting.selectedVariables[0]].header[1] }}
+														</th>
+													</tr>
+												</thead>
+												<tbody>
+													<tr>
+														<th scope="row">Mean</th>
+														<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].mean[0] }}</td>
+														<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].mean[1] }}</td>
+													</tr>
+													<tr>
+														<th scope="row">Variance</th>
+														<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].variance[0] }}</td>
+														<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].variance[1] }}</td>
+													</tr>
+												</tbody>
+											</table>
+										</template>
+									</vega-chart>
+								</template>
+							</AccordionTab>
+							<AccordionTab header="Variables">
+								<template v-for="setting of selectedVariableSettings" :key="setting.id">
+									<vega-chart
+										expandable
+										:are-embed-actions-visible="true"
+										:visualization-spec="preparedCharts[setting.selectedVariables[0]]"
+									/>
+								</template>
+							</AccordionTab>
+							<AccordionTab header="Errors" v-if="errorData.length > 0 && selectedErrorVariableSettings.length > 0">
+								<vega-chart
+									:expandable="onExpandErrorChart"
+									:are-embed-actions-visible="true"
+									:visualization-spec="errorChart"
+								/>
+							</AccordionTab>
+						</Accordion>
 					</section>
 					<section v-else-if="!modelConfig" class="emptyState">
 						<img src="@assets/svg/seed.svg" alt="" draggable="false" />
 						<p class="helpMessage">Connect a model configuration and dataset</p>
 					</section>
 				</div>
-
 				<section v-else class="emptyState">
 					<tera-progress-spinner :font-size="2" is-centered style="height: 12rem" />
 					<p>Processing...{{ props.node.state.currentProgress }}%</p>
 				</section>
-
 				<tera-notebook-error v-if="!_.isEmpty(node.state?.errorMessage?.traceback)" v-bind="node.state.errorMessage" />
 			</tera-drilldown-section>
 			<!-- Empty state if calibrate hasn't been run yet -->
@@ -429,6 +427,8 @@ import _ from 'lodash';
 import * as vega from 'vega';
 import { csvParse, autoType, mean, variance } from 'd3';
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
@@ -610,7 +610,7 @@ const errorData = ref<Record<string, any>[]>([]);
 const showSaveModal = ref(false);
 const configuredModelConfig = ref<ModelConfiguration | null>(null);
 
-const showSpinner = ref(false);
+const isLoading = ref(false);
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 
@@ -625,7 +625,7 @@ const showOutputSection = computed(
 		selectedErrorVariableSettings.value.length > 0 ||
 		selectedVariableSettings.value.length > 0 ||
 		selectedParameterSettings.value.length > 0 ||
-		showSpinner.value ||
+		isLoading.value ||
 		!_.isEmpty(props.node.state?.errorMessage?.traceback)
 );
 
@@ -827,7 +827,7 @@ const preparedDistributionCharts = computed(() => {
 			mean: [mean(data, (d) => d[beforeFieldName]), mean(data, (d) => d[fieldName])].map(toDisplayNumber),
 			variance: [variance(data, (d) => d[beforeFieldName]), variance(data, (d) => d[fieldName])].map(toDisplayNumber)
 		};
-		charts[param] = { histogram, stat };
+		charts[param] = { histogram, ...stat };
 	});
 	return charts;
 });
@@ -1127,11 +1127,11 @@ watch(
 	[() => props.node.state.inProgressCalibrationId, lossChartSize],
 	([id, size]) => {
 		if (id === '') {
-			showSpinner.value = false;
+			isLoading.value = false;
 			updateLossChartSpec(lossValues.value, size);
 			unsubscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
 		} else {
-			showSpinner.value = true;
+			isLoading.value = true;
 			updateLossChartSpec(LOSS_CHART_DATA_SOURCE, size);
 			subscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
 		}
