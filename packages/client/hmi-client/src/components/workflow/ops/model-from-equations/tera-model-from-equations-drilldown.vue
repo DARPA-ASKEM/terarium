@@ -123,7 +123,7 @@
 				<template #content>
 					<tera-drilldown-preview>
 						<tera-model v-if="selectedModel" :assetId="selectedModel.id" @on-save="onModelSaveEvent" />
-						<tera-operator-placeholder v-else :node="node" style="height: 100%" />
+						<tera-operator-placeholder v-else :node="node" class="h-100" />
 					</tera-drilldown-preview>
 				</template>
 			</tera-slider-panel>
