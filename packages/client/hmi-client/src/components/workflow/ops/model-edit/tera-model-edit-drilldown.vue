@@ -76,14 +76,6 @@
 			</tera-drilldown-preview>
 		</template>
 		<tera-drilldown-section :tabName="DrilldownTabs.Wizard">
-			<!-- <tera-model-template-editor v-if="amr"
-					:model="amr"
-					:kernel-manager="kernelManager"
-					@output-code="(data: any) => appendCode(data, 'executed_code')"
-					@sync-with-mira-model="syncWithMiraModel"
-					@save-new-model-output="createOutput"
-					@reset="resetModel"
-				/> -->
 			<p class="m-4">Wizard is disabled for now.</p>
 		</tera-drilldown-section>
 	</tera-drilldown>
@@ -102,29 +94,28 @@
 <script setup lang="ts">
 import { cloneDeep, isEmpty, isEqual, debounce } from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import Button from 'primevue/button';
+import '@/ace-config';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import '@/ace-config';
+import Button from 'primevue/button';
+import { DrilldownTabs } from '@/types/common';
 import type { Model } from '@/types/Types';
 import { AssetType } from '@/types/Types';
-import { createModel, getModel } from '@/services/model';
 import { OperatorStatus, WorkflowNode, WorkflowOutput } from '@/types/workflow';
+import { KernelSessionManager } from '@/services/jupyter';
+import { createModel, getModel } from '@/services/model';
+import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
+import { saveCodeToState } from '@/services/notebook';
 import { logger } from '@/utils/logger';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import TeraModelParts from '@/components/model/tera-model-parts.vue';
-import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-// import TeraModelTemplateEditor from '@/components/model-template/tera-model-template-editor.vue';
+import TeraModelParts from '@/components/model/tera-model-parts.vue';
+import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
-import { KernelSessionManager } from '@/services/jupyter';
-import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
-import { saveCodeToState } from '@/services/notebook';
-import { DrilldownTabs } from '@/types/common';
 import { nodeOutputLabel } from '@/components/workflow/util';
 import { useProjects } from '@/composables/project';
 import { ModelEditOperationState, ModelEditOperation } from './model-edit-operation';
@@ -408,7 +399,7 @@ function updateNode(model: Model) {
 }
 
 onMounted(async () => {
-	// By default the first output option is the original model
+	// By default, the first output option is the original model
 	if (isReadyToCreateDefaultOutput.value) {
 		const input = props.node.inputs[0];
 		if (!input) return;
@@ -452,15 +443,15 @@ onUnmounted(() => {
 }
 
 .input-small {
-	padding: 0.5rem;
+	padding: var(--gap-2);
 	width: 100%;
 }
 
 .code-executed-warning {
 	background-color: #ffe6e6;
+	border-radius: var(--border-radius);
 	color: #cc0000;
-	padding: 10px;
-	border-radius: 4px;
+	padding: var(--gap-2-5);
 }
 
 .right-side {
