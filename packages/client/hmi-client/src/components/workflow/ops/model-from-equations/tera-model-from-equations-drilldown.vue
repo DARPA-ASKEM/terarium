@@ -119,80 +119,53 @@
 			</tera-slider-panel>
 			<tera-slider-panel v-model:is-open="isOutputOpen" header="Output" content-width="100%">
 				<template #content>
-					<header class="flex align-items-center p-3">
-						<h4>Equation conversions</h4>
-						<Button
-							v-if="selectedModel"
-							label="Save for re-use"
-							outlined
-							severity="secondary"
-							class="ml-auto"
-							@click="showSaveModelModal = true"
-						/>
-					</header>
 					<tera-drilldown-preview>
-						<tera-model-description v-if="selectedModel" :model="selectedModel" :generating-card="isGeneratingCard" />
-						<tera-operator-placeholder v-else :node="node" style="height: 100%" />
+						<tera-model v-if="selectedModel" is-workflow :assetId="selectedModel.id" @on-save="onModelSaveEvent" />
+						<tera-operator-placeholder v-else :node="node" class="h-100" />
 					</tera-drilldown-preview>
 				</template>
 			</tera-slider-panel>
 		</template>
 	</tera-drilldown>
-	<tera-save-asset-modal
-		v-if="selectedModel"
-		:asset="selectedModel"
-		:is-visible="showSaveModelModal"
-		@close-modal="onCloseModelModal"
-	/>
 </template>
 
 <script setup lang="ts">
 import { AssetBlock, WorkflowNode } from '@/types/workflow';
+import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
+import Textarea from 'primevue/textarea';
+import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { computed, onMounted, ref, watch } from 'vue';
-import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
 import type { Card, DocumentAsset, Model } from '@/types/Types';
 import { cloneDeep, isEmpty } from 'lodash';
 import { equationsToAMR, type EquationsToAMRRequest } from '@/services/knowledge';
-import Button from 'primevue/button';
-import { getModel, updateModel } from '@/services/model';
-import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import { useProjects } from '@/composables/project';
-import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
-import Textarea from 'primevue/textarea';
-import TeraInputText from '@/components/widgets/tera-input-text.vue';
-import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
-import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
+import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
 import { enrichModelMetadata } from '@/services/goLLM';
+import { getModel, updateModel } from '@/services/model';
+import { useProjects } from '@/composables/project';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import TeraModel from '@/components/model/tera-model.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
-
+import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
-import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import { ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
+import { ModelFromEquationsOperation, ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
 
 const emit = defineEmits(['close', 'update-state', 'append-output', 'select-output']);
 const props = defineProps<{
 	node: WorkflowNode<ModelFromEquationsState>;
 }>();
 
-enum ModelFramework {
-	PetriNet = 'petrinet',
-	RegNet = 'regnet',
-	Decapode = 'decapode',
-	GeneralizedAMR = 'gamr',
-	MathExpressionTree = 'met'
-}
-
 const selectedOutputId = ref<string>('');
 
 const clonedState = ref<ModelFromEquationsState>({
 	equations: [],
 	text: '',
-	modelFramework: ModelFramework.PetriNet,
+	modelFramework: 'petrinet',
 	modelId: null
 });
 
@@ -228,7 +201,6 @@ const selectedModel = ref<Model | null>(null);
 const card = ref<Card | null>(null);
 const goLLMCard = computed<any>(() => document.value?.metadata?.gollmCard);
 
-const showSaveModelModal = ref(false);
 const isGeneratingCard = ref(false);
 const multipleEquations = ref<string>('');
 
@@ -361,10 +333,6 @@ async function fetchModel() {
 	loadingModel.value = false;
 }
 
-function onCloseModelModal() {
-	showSaveModelModal.value = false;
-}
-
 function getEquations() {
 	const newEquations = multipleEquations.value.split('\n');
 	newEquations.forEach((equation) => {
@@ -383,6 +351,19 @@ function getEquations() {
 
 function getEquationErrorLabel(equation) {
 	return equation.asset.extractionError ? "Couldn't extract equation" : '';
+}
+
+function onModelSaveEvent(event: any) {
+	const state = cloneDeep(props.node.state);
+	state.modelId = event.id;
+	emit('update-state', state);
+	emit('append-output', {
+		type: ModelFromEquationsOperation.outputs[0].type,
+		label: event.header.name,
+		value: [event.id],
+		state,
+		isSelected: false
+	});
 }
 
 // generates the model card and fetches the model when finished
