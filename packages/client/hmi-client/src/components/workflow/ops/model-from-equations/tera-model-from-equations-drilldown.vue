@@ -142,7 +142,7 @@ import type { Card, DocumentAsset, Model } from '@/types/Types';
 import { cloneDeep, isEmpty } from 'lodash';
 import { equationsToAMR, type EquationsToAMRRequest } from '@/services/knowledge';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
-import { modelCard } from '@/services/goLLM';
+import { enrichModelMetadata } from '@/services/goLLM';
 import { getModel, updateModel } from '@/services/model';
 import { useProjects } from '@/composables/project';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
@@ -369,7 +369,7 @@ function onModelSaveEvent(event: any) {
 // generates the model card and fetches the model when finished
 async function generateCard(modelId: string, docId: string) {
 	isGeneratingCard.value = true;
-	await modelCard(modelId, docId);
+	await enrichModelMetadata(modelId, docId, true);
 	isGeneratingCard.value = false;
 	await fetchModel();
 }
