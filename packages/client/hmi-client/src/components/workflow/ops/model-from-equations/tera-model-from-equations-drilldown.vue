@@ -133,6 +133,7 @@
 
 <script setup lang="ts">
 import { AssetBlock, WorkflowNode } from '@/types/workflow';
+import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
 import Textarea from 'primevue/textarea';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
