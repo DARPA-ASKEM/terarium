@@ -10,7 +10,7 @@
 			<tera-slider-panel v-model:is-open="isDocViewerOpen" header="Document Viewer" content-width="100%">
 				<template #content>
 					<tera-drilldown-section :is-loading="isFetchingPDF">
-						<tera-pdf-embed v-if="pdfLink" :pdf-link="pdfLink" :title="document?.name || ''" />
+						<tera-pdf-embed ref="pdfViewer" v-if="pdfLink" :pdf-link="pdfLink" :title="document?.name || ''" />
 						<tera-text-editor v-else-if="docText" :initial-text="docText" />
 					</tera-drilldown-section>
 				</template>
@@ -204,10 +204,18 @@ const includedEquations = computed(() =>
 const notIncludedEquations = computed(() =>
 	clonedState.value.equations.filter((equation) => equation.includeInProcess === false)
 );
+
+const pdfViewer = ref();
+
 const selectedItem = ref('');
 
 const selectItem = (item, event) => {
 	selectedItem.value = item;
+	console.log('pdfViewer.value', pdfViewer.value);
+	// emit('goto-page', 5)
+	if (pdfViewer.value) {
+		pdfViewer.value.goToPage(5);
+	}
 
 	// Prevent the child’s click handler from firing
 	event.stopImmediatePropagation();
@@ -257,7 +265,7 @@ onMounted(async () => {
 			}
 		}
 		isFetchingPDF.value = false;
-
+		console.log('document.value.equations', document.value);
 		const state = cloneDeep(props.node.state);
 		if (state.equations.length) return;
 
