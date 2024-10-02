@@ -466,7 +466,7 @@ import {
 	AssetType
 } from '@/types/Types';
 import { CiemssPresetTypes, DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
-import { getTimespan, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
+import { getTimespan, nodeMetadata } from '@/components/workflow/util';
 import { useToastService } from '@/services/toast';
 import { autoCalibrationMapping } from '@/services/concept';
 import {
@@ -496,6 +496,7 @@ import { displayNumber } from '@/utils/number';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import { useClientEvent } from '@/composables/useClientEvent';
+import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraInterventionSummaryCard from '@/components/workflow/ops/simulate-ciemss/tera-intervention-summary-card.vue';
 import { getParameters } from '@/model-representation/service';
@@ -663,9 +664,9 @@ const disableRunButton = computed(
 
 const selectedOutputId = ref<string>();
 const lossChartContainer = ref(null);
-const lossChartSize = computed(() => drilldownChartSize(lossChartContainer.value));
+const lossChartSize = useDrilldownChartSize(lossChartContainer);
 const outputPanel = ref(null);
-const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+const chartSize = useDrilldownChartSize(outputPanel);
 
 const chartSettings = computed(() => props.node.state.chartSettings ?? []);
 const selectedParameterSettings = computed(() =>
@@ -875,7 +876,7 @@ const LOSS_CHART_DATA_SOURCE = 'lossData'; // Name of the streaming data source
 const lossChartRef = ref<InstanceType<typeof VegaChart>>();
 const lossChartSpec = ref();
 const lossValues = ref<{ [key: string]: number }[]>([]);
-const updateLossChartSpec = (data: string | Record<string, any>[]) => {
+const updateLossChartSpec = (data: string | Record<string, any>[], size: { width: number; height: number }) => {
 	lossChartSpec.value = createForecastChart(
 		null,
 		{
@@ -886,7 +887,7 @@ const updateLossChartSpec = (data: string | Record<string, any>[]) => {
 		null,
 		{
 			title: '',
-			width: lossChartSize.value.width,
+			width: size.width,
 			height: 100,
 			xAxisTitle: 'Solver iterations',
 			yAxisTitle: 'Loss'
@@ -1123,15 +1124,15 @@ watch(
 );
 
 watch(
-	() => props.node.state.inProgressCalibrationId,
-	(id) => {
+	[() => props.node.state.inProgressCalibrationId, lossChartSize],
+	([id, size]) => {
 		if (id === '') {
 			isLoading.value = false;
-			updateLossChartSpec(lossValues.value);
+			updateLossChartSpec(lossValues.value, size);
 			unsubscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
 		} else {
 			isLoading.value = true;
-			updateLossChartSpec(LOSS_CHART_DATA_SOURCE);
+			updateLossChartSpec(LOSS_CHART_DATA_SOURCE, size);
 			subscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
 		}
 	},
@@ -1154,7 +1155,7 @@ watch(
 						iter: i,
 						loss: d.data.loss
 					}));
-				updateLossChartSpec(lossValues.value);
+				updateLossChartSpec(lossValues.value, lossChartSize.value);
 			}
 
 			const state = props.node.state;
