@@ -162,7 +162,7 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 	});
 	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureModelFromDocument, (event, created) => {
 		created.supportCancel = true;
-		created.sourceName = 'Configure model';
+		created.sourceName = 'Model Configuration from Document';
 		created.assetId = event.data.additionalProperties.workflowId as string;
 		created.pageType = AssetType.Workflow;
 		created.nodeId = event.data.additionalProperties.nodeId as string;
@@ -172,7 +172,7 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 	});
 	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureModelFromDataset, (event, created) => {
 		created.supportCancel = true;
-		created.sourceName = 'Configure model';
+		created.sourceName = 'Model Configuration from Dataset';
 		created.assetId = event.data.additionalProperties.workflowId as string;
 		created.pageType = AssetType.Workflow;
 		created.nodeId = event.data.additionalProperties.nodeId as string;
@@ -183,6 +183,16 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 	registerHandler<TaskResponse>(ClientEventType.TaskGollmCompareModel, (event, created) => {
 		created.supportCancel = true;
 		created.sourceName = 'Compare models';
+		created.assetId = event.data.additionalProperties.workflowId as string;
+		created.pageType = AssetType.Workflow;
+		created.nodeId = event.data.additionalProperties.nodeId as string;
+		getWorkflow(created.assetId, created.projectId).then((workflow) =>
+			Object.assign(created, { context: workflow?.name || '' })
+		);
+	});
+	registerHandler<TaskResponse>(ClientEventType.TaskGollmInterventionsFromDocument, (event, created) => {
+		created.supportCancel = true;
+		created.sourceName = 'Intervention Policies from Document';
 		created.assetId = event.data.additionalProperties.workflowId as string;
 		created.pageType = AssetType.Workflow;
 		created.nodeId = event.data.additionalProperties.nodeId as string;

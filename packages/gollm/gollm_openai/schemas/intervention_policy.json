@@ -8,16 +8,6 @@
         "name": {
           "type": "string"
         },
-        "appliedTo": {
-          "type": "string"
-        },
-        "type": {
-          "type": "string",
-          "enum": [
-            "state",
-            "parameter"
-          ]
-        },
         "staticInterventions": {
           "type": "array",
           "description": "A list of static interventions that can be applied to the model.",
@@ -31,11 +21,24 @@
               "value": {
                 "type": "number",
                 "description": "The new value of the state or parameter"
+              },
+              "appliedTo": {
+                "type": "string",
+                "description": "The state or parameter to which the intervention is applied. This should reference the id of a parameter or initial state of the AMR Model."
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "state",
+                  "parameter"
+                ]
               }
             },
             "required": [
               "timestep",
-              "value"
+              "value",
+              "appliedTo",
+              "type"
             ],
             "additionalProperties": false
           }
@@ -48,26 +51,34 @@
             "properties": {
               "parameter": {
                 "type": "string",
-                "description": "The parameter to which the intervention is applied"
+                "description": "The state to which the threshold is applied. This can only be a state, not a parameter. This should reference the id of an initial state of the AMR Model."
               },
               "threshold": {
                 "type": "string",
-                "description": "The threshold value for the which the parameter can't go above or below"
+                "description": "The threshold that once the value of the state crosses, the intervention is applied"
               },
               "value": {
                 "type": "string",
                 "description": "The new value of the state or parameter"
               },
-              "isGreaterThan": {
+              "appliedTo": {
                 "type": "string",
-                "description": "Whether the parameter should be greater than or less than the threshold"
+                "description": "The state or parameter to which the intervention is applied. This should reference the id of a parameter or initial state of the AMR Model."
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "state",
+                  "parameter"
+                ]
               }
             },
             "required": [
               "parameter",
               "threshold",
               "value",
-              "isGreaterThan"
+              "appliedTo",
+              "type"
             ],
             "additionalProperties": false
           }
@@ -75,8 +86,6 @@
       },
       "required": [
         "name",
-        "appliedTo",
-        "type",
         "staticInterventions",
         "dynamicInterventions"
       ],

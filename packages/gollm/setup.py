@@ -25,6 +25,7 @@ setup(
             "gollm:equations_from_image=tasks.equations_from_image:main",
             "gollm:generate_response=tasks.generate_response:main",
             "gollm:generate_summary=tasks.generate_summary:main",
+            "gollm:interventions_from_document=tasks.interventions_from_document:main",
             "gollm:model_card=tasks.model_card:main",
         ],
     },
