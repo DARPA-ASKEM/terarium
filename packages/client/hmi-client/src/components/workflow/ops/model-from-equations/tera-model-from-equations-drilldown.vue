@@ -39,11 +39,7 @@
 						</header>
 						<h6 class="py-3">Use {{ includedEquations.length > 1 ? 'these equations' : 'this equation' }}</h6>
 						<ul class="blocks-container">
-							<li
-								v-for="(equation, i) in includedEquations"
-								:key="i"
-								@click.capture="selectItem(equation.name, $event)"
-							>
+							<li v-for="(equation, i) in includedEquations" :key="i" @click.capture="selectItem(equation, $event)">
 								<tera-asset-block
 									:is-toggleable="false"
 									:is-permitted="false"
@@ -78,11 +74,7 @@
 						</ul>
 						<h6 class="py-3">Other equations extracted from document</h6>
 						<ul class="blocks-container">
-							<li
-								v-for="(equation, i) in notIncludedEquations"
-								:key="i"
-								@click.capture="selectItem(equation.name, $event)"
-							>
+							<li v-for="(equation, i) in notIncludedEquations" :key="i" @click.capture="selectItem(equation, $event)">
 								<tera-asset-block
 									:is-toggleable="false"
 									:is-permitted="false"
@@ -209,12 +201,10 @@ const pdfViewer = ref();
 
 const selectedItem = ref('');
 
-const selectItem = (item, event) => {
-	selectedItem.value = item;
-	console.log('pdfViewer.value', pdfViewer.value);
-	// emit('goto-page', 5)
+const selectItem = (equation, event) => {
+	selectedItem.value = equation.name;
 	if (pdfViewer.value) {
-		pdfViewer.value.goToPage(5);
+		pdfViewer.value.goToPage(equation.asset.pageNumber);
 	}
 
 	// Prevent the child’s click handler from firing
@@ -265,17 +255,17 @@ onMounted(async () => {
 			}
 		}
 		isFetchingPDF.value = false;
-		console.log('document.value.equations', document.value);
 		const state = cloneDeep(props.node.state);
 		if (state.equations.length) return;
 
 		if (document.value?.metadata?.equations) {
-			documentEquations.value = document.value.metadata.equations.flatMap((page) =>
+			documentEquations.value = document.value.metadata.equations.flatMap((page, index) =>
 				page.map((equation) => {
 					const asset: AssetBlock<EquationBlock> = {
 						name: 'Equation',
 						includeInProcess: false,
 						asset: {
+							pageNumber: index + 1,
 							text: equation
 						}
 					};
@@ -287,7 +277,7 @@ onMounted(async () => {
 			clonedState.value.equations = documentEquations.value.map((e, index) => ({
 				name: `${e.name} ${index}`,
 				includeInProcess: e.includeInProcess,
-				asset: { text: e.asset.text }
+				asset: { text: e.asset.text, pageNumber: e.asset.pageNumber }
 			}));
 
 			state.equations = clonedState.value.equations;

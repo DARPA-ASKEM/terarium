@@ -7,6 +7,7 @@ const DOCUMENTATION_URL =
 
 export interface EquationBlock {
 	text: string;
+	pageNumber?: number;
 	extractionError?: boolean;
 }
 export interface EquationFromImageBlock extends DocumentExtraction {
