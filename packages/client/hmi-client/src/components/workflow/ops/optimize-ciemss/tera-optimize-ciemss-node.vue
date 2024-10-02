@@ -239,8 +239,6 @@ watch(
 The following are the key attributes and findings of an optimization process for a ODE epidemilogy model, the goal is to find the best values or time points that satisfy a set of constraints.
 
 - The succss constraints are, in JSON: ${JSON.stringify(state.constraintGroups)}
-- We want to optimize: ${JSON.stringify(state.interventionPolicyGroups.filter((d) => d.isActive === true))}
-- The fixed/static intervenations: ${JSON.stringify(state.interventionPolicyGroups.filter((d) => d.isActive === false))}
 - The best guesses are: ${optimizationResult.x}
 - The result is ${optimizationResult.success}
 
