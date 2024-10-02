@@ -11,7 +11,7 @@
 				class="input-config"
 				v-model:is-open="isSidebarOpen"
 				header="Optimize intervention settings"
-				content-width="420px"
+				content-width="565px"
 			>
 				<template #content>
 					<div class="toolbar">
@@ -518,9 +518,13 @@ const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 const cancelRunId = computed(() => props.node.state.inProgressPostForecastId || props.node.state.inProgressOptimizeId);
 
-const activePolicyGroups = computed(() => knobs.value.interventionPolicyGroups.filter((ele) => ele.isActive));
+const activePolicyGroups = computed(() =>
+	knobs.value.interventionPolicyGroups.filter((ele) => !!ele.relativeImportance)
+);
 
-const inactivePolicyGroups = computed(() => knobs.value.interventionPolicyGroups.filter((ele) => !ele.isActive));
+const inactivePolicyGroups = computed(() =>
+	knobs.value.interventionPolicyGroups.filter((ele) => !ele.relativeImportance)
+);
 let pyciemssMap: Record<string, string> = {};
 
 const showSpinner = computed<boolean>(
@@ -716,7 +720,7 @@ const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => 
 			const newIntervention = _.cloneDeep(blankInterventionPolicyGroup);
 			newIntervention.id = interventionPolicy.id;
 			newIntervention.intervention = intervention;
-			newIntervention.isActive = !isNotActive;
+			newIntervention.relativeImportance = isNotActive ? 0 : 5;
 			newIntervention.startTimeGuess = intervention.staticInterventions[0]?.timestep;
 			newIntervention.initialGuessValue = intervention.staticInterventions[0]?.value;
 			knobs.value.interventionPolicyGroups.push(newIntervention);
@@ -739,6 +743,7 @@ const runOptimize = async () => {
 	const listBoundsInterventions: number[][] = [];
 	const initialGuess: number[] = [];
 	const objectiveFunctionOption: string[] = [];
+	const relativeImportance: number[] = [];
 
 	activePolicyGroups.value.forEach((ele) => {
 		// Only allowed to optimize on interventions that arent grouped aka staticInterventions' length is 1
@@ -746,6 +751,7 @@ const runOptimize = async () => {
 		paramValues.push(ele.intervention.staticInterventions[0].value);
 		startTime.push(ele.intervention.staticInterventions[0].timestep);
 		objectiveFunctionOption.push(ele.objectiveFunctionOption);
+		relativeImportance.push(ele.relativeImportance);
 
 		if (ele.optimizationType === OptimizationInterventionObjective.startTime) {
 			initialGuess.push(ele.startTimeGuess);
@@ -775,7 +781,8 @@ const runOptimize = async () => {
 		startTime,
 		paramValues,
 		initialGuess,
-		objectiveFunctionOption
+		objectiveFunctionOption,
+		relativeImportance
 	};
 
 	// These are interventions to be considered but not optimized over.

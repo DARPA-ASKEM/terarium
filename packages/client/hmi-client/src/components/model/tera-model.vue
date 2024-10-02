@@ -41,7 +41,13 @@
 					@click="onReset"
 					:disabled="!(hasChanged && hasEditPermission)"
 				/>
-				<Button label="Save as" severity="secondary" outlined @click="onSaveAs" :disabled="!hasEditPermission" />
+				<Button
+					:label="`Save ${isWorkflow ? 'for re-use' : 'as'}`"
+					severity="secondary"
+					outlined
+					@click="onSaveAs"
+					:disabled="!hasEditPermission"
+				/>
 				<Button label="Save" @click="onSave" :disabled="!(hasChanged && hasEditPermission)" />
 			</aside>
 		</template>
@@ -64,7 +70,7 @@
 		:asset-type="AssetType.Model"
 		:initial-name="temporaryModel?.header.name"
 		:is-visible="showSaveModal"
-		:open-on-save="true"
+		:open-on-save="isWorkflow ? false : true"
 		@close-modal="showSaveModal = false"
 		@on-save="onModalSave"
 	/>
@@ -96,10 +102,14 @@ const props = defineProps({
 	featureConfig: {
 		type: Object as PropType<FeatureConfig>,
 		default: { isPreview: false } as FeatureConfig
+	},
+	isWorkflow: {
+		type: Boolean,
+		default: false
 	}
 });
 
-const emit = defineEmits(['close-preview']);
+const emit = defineEmits(['close-preview', 'on-save']);
 
 // Listen for the task completion event
 useClientEvent(ClientEventType.TaskGollmModelCard, (event: ClientEvent<TaskResponse>) => {
@@ -136,8 +146,11 @@ function onSaveAs() {
 }
 
 // Save modal
-function onModalSave() {
+function onModalSave(event: any) {
 	showSaveModal.value = false;
+	if (props.isWorkflow) {
+		emit('on-save', event);
+	}
 }
 
 // User menu

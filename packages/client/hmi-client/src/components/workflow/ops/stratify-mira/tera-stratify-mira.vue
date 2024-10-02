@@ -110,7 +110,6 @@
 		:initial-name="outputAmr.name"
 		:is-visible="showSaveModelModal"
 		:is-updating-asset="true"
-		@on-save="updateNodeOutput"
 		@close-modal="showSaveModelModal = false"
 	/>
 </template>
@@ -152,7 +151,7 @@ import { blankStratifyGroup, StratifyGroup, StratifyOperationStateMira } from '.
 const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;
 }>();
-const emit = defineEmits(['append-output', 'update-state', 'close', 'update-output-port', 'select-output']);
+const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output']);
 
 enum StratifyTabs {
 	Wizard = 'Wizard',
@@ -248,7 +247,7 @@ const stratifyModel = () => {
 		concepts_to_stratify: conceptsToStratify,
 		params_to_stratify: parametersToStratify,
 		cartesian_control: strataOption.cartesianProduct,
-		structure: strataOption.useStructure === true ? null : []
+		structure: strataOption.useStructure ? null : []
 	};
 	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
 		kernelManager
@@ -332,10 +331,10 @@ const getStatesAndParameters = (amrModel: Model) => {
 			modelStates.push(o.id);
 		});
 	} else if (modelFramework === AMRSchemaNames.REGNET) {
-		model.vertices.forEach((v) => {
+		model.vertices.forEach((v: any) => {
 			modelStates.push(v.name);
 		});
-		model.parameters.forEach((p) => {
+		model.parameters.forEach((p: any) => {
 			modelParameters.push(p.id);
 		});
 	} else {
@@ -456,18 +455,6 @@ const isSaveDisabled = computed(() => {
 
 	return useProjects().hasAssetInActiveProject(outputPort?.value?.[0]);
 });
-
-function updateNodeOutput(model: Model) {
-	if (!selectedOutputId.value || !model) return;
-
-	amr.value = model;
-	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === selectedOutputId.value));
-
-	if (!outputPort) return;
-	outputPort.label = model.header.name;
-
-	emit('update-output-port', outputPort);
-}
 
 // check if user has made changes to the code
 const hasCodeChange = () => {

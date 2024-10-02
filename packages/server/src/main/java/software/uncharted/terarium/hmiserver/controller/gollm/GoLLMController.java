@@ -40,6 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractedDocumentPage;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
@@ -142,7 +143,7 @@ public class GoLLMController {
 		}
 
 		final ModelCardResponseHandler.Input input = new ModelCardResponseHandler.Input();
-		input.setAmr(model.get().serializeWithoutTerariumFields());
+		input.setAmr(model.get().serializeWithoutTerariumFields(null, new String[] { "gollmCard" }));
 
 		// Grab the document
 		final DocumentAsset document;
@@ -267,11 +268,32 @@ public class GoLLMController {
 		}
 
 		final ConfigureModelFromDocumentResponseHandler.Input input = new ConfigureModelFromDocumentResponseHandler.Input();
-		input.setResearchPaper(document.get().getText());
+
+		String text = "";
+		if (document.get().getExtractions().size() > 0) {
+			for (final ExtractedDocumentPage page : document.get().getExtractions()) {
+				text += page.getText() + "\n";
+				if (page.getTables() != null) {
+					for (final JsonNode table : page.getTables()) {
+						text += table.toString() + "\n";
+					}
+				}
+				if (page.getEquations() != null) {
+					for (final JsonNode equation : page.getEquations()) {
+						text += equation.toString() + "\n";
+					}
+				}
+			}
+		} else {
+			text = document.get().getText();
+		}
+
+		input.setResearchPaper(text);
+
 		// stripping the metadata from the model before its sent since it can cause
 		// gollm to fail with massive inputs
 		model.get().setMetadata(null);
-		input.setAmr(model.get().serializeWithoutTerariumFieldsKeepId());
+		input.setAmr(model.get().serializeWithoutTerariumFields(new String[] { "id" }, null));
 
 		// Create the task
 		final TaskRequest req = new TaskRequest();
@@ -399,7 +421,7 @@ public class GoLLMController {
 		// stripping the metadata from the model before its sent since it can cause
 		// gollm to fail with massive inputs
 		model.get().setMetadata(null);
-		input.setAmr(model.get().serializeWithoutTerariumFields());
+		input.setAmr(model.get().serializeWithoutTerariumFields(null, null));
 
 		// set matrix string if provided
 		if (body != null && !body.getMatrixStr().isEmpty()) {
@@ -509,7 +531,7 @@ public class GoLLMController {
 		// stripping the metadata from the model before its sent since it can cause
 		// gollm to fail with massive inputs
 		model.get().setMetadata(null);
-		input.setAmr(model.get().serializeWithoutTerariumFieldsKeepId());
+		input.setAmr(model.get().serializeWithoutTerariumFields(new String[] { "id" }, null));
 
 		// Create the task
 		final TaskRequest req = new TaskRequest();
@@ -597,7 +619,7 @@ public class GoLLMController {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 			}
 
-			amrs.add(model.get().serializeWithoutTerariumFields());
+			amrs.add(model.get().serializeWithoutTerariumFields(null, null));
 		}
 
 		// if the number of models is less than 2, return an error
@@ -831,6 +853,12 @@ public class GoLLMController {
 		return ResponseEntity.ok().body(resp);
 	}
 
+	@Data
+	public static class EquationsFromImageBody {
+
+		private String base64ImageStr = "";
+	}
+
 	@PostMapping("/equations-from-image")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Equations from image` task")
@@ -852,7 +880,7 @@ public class GoLLMController {
 		@RequestParam(name = "project-id", required = false) final UUID projectId,
 		@RequestParam(name = "document-id", required = true) final UUID documentId,
 		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
-		@RequestBody final String image
+		@RequestBody final EquationsFromImageBody image
 	) {
 		final Schema.Permission permission = projectService.checkPermissionCanRead(
 			currentUserService.get().getId(),
@@ -862,8 +890,8 @@ public class GoLLMController {
 		// validate that the string is a base64 encoding
 		byte[] decodedImage;
 		try {
-			decodedImage = Base64.getDecoder().decode(image);
-		} catch (IllegalArgumentException e) {
+			decodedImage = Base64.getDecoder().decode(image.base64ImageStr);
+		} catch (final IllegalArgumentException e) {
 			log.error("Invalid base64 encoding for image", e);
 			throw new ResponseStatusException(
 				HttpStatus.BAD_REQUEST,
@@ -873,8 +901,8 @@ public class GoLLMController {
 
 		// validate that the image is a valid image
 		try (ByteArrayInputStream bais = new ByteArrayInputStream(decodedImage)) {
-			BufferedImage bi = ImageIO.read(bais);
-		} catch (IOException e) {
+			final BufferedImage bi = ImageIO.read(bais);
+		} catch (final IOException e) {
 			log.error("Invalid image provided", e);
 			throw new ResponseStatusException(
 				HttpStatus.BAD_REQUEST,
@@ -883,7 +911,7 @@ public class GoLLMController {
 		}
 
 		final EquationsFromImageResponseHandler.Input input = new EquationsFromImageResponseHandler.Input();
-		input.setImage(image);
+		input.setImage(image.base64ImageStr);
 
 		// Create the task
 		final TaskRequest req = new TaskRequest();

@@ -263,7 +263,7 @@ const isEditingDescription = ref(false);
 const newDescription = ref('');
 const descriptionTextareaRef = ref<ComponentPublicInstance<typeof Textarea> | null>(null);
 
-const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close', 'update-output-port']);
+const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close']);
 
 interface BasicKnobs {
 	transientModelConfig: ModelConfiguration;
@@ -676,7 +676,7 @@ const resetConfiguration = () => {
 const updateThoughts = (data: any) => {
 	llmThoughts.value.push(data);
 	const llmResponse = llmThoughts.value.findLast((thought) => thought?.msg_type === 'llm_response');
-	// If the last thought is an llm response, update the notebook response
+	// If the last thought is a LLM response, update the notebook response
 	if (llmResponse) {
 		notebookResponse.value = llmResponse.content.text;
 	}
