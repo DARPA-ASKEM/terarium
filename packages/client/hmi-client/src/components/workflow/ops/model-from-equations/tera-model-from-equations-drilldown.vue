@@ -168,7 +168,7 @@ import Textarea from 'primevue/textarea';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
-import { modelCard } from '@/services/goLLM';
+import { enrichModelMetadata } from '@/services/goLLM';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
@@ -384,7 +384,7 @@ function getEquationErrorLabel(equation) {
 // generates the model card and fetches the model when finished
 async function generateCard(modelId: string, docId: string) {
 	isGeneratingCard.value = true;
-	await modelCard(modelId, docId);
+	await enrichModelMetadata(modelId, docId, true);
 	isGeneratingCard.value = false;
 	await fetchModel();
 }

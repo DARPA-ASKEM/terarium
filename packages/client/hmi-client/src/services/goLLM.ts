@@ -34,6 +34,33 @@ export async function modelCard(modelId: string, documentId?: string): Promise<v
 	}
 }
 
+export async function enrichModelMetadata(modelId: string, documentId: string, overwrite: boolean): Promise<void> {
+	try {
+		const response = await API.get<TaskResponse>('/gollm/enrich-model-metadata', {
+			params: {
+				'model-id': modelId,
+				'document-id': documentId,
+				overwrite: overwrite
+			}
+		});
+
+		const taskId = response.data.id;
+		await handleTaskById(taskId, {
+			ondata(data, closeConnection) {
+				if (data?.status === TaskStatus.Failed) {
+					closeConnection();
+					throw new FatalError('Task failed');
+				}
+				if (data.status === TaskStatus.Success) {
+					closeConnection();
+				}
+			}
+		});
+	} catch (err) {
+		logger.error(err);
+	}
+}
+
 export async function configureModelFromDocument(
 	documentId: string,
 	modelId: string,
