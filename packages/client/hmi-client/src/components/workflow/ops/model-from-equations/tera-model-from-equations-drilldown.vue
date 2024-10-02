@@ -122,7 +122,7 @@
 			<tera-slider-panel v-model:is-open="isOutputOpen" header="Output" content-width="100%">
 				<template #content>
 					<tera-drilldown-preview>
-						<tera-model v-if="selectedModel" :assetId="selectedModel.id" @on-save="onModelSaveEvent" />
+						<tera-model v-if="selectedModel" is-workflow :assetId="selectedModel.id" @on-save="onModelSaveEvent" />
 						<tera-operator-placeholder v-else :node="node" class="h-100" />
 					</tera-drilldown-preview>
 				</template>

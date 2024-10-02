@@ -56,7 +56,7 @@
 					:value="executeResponse.value"
 					:traceback="executeResponse.traceback"
 				/>
-				<tera-model v-else-if="amr" :assetId="amr.id" @on-save="updateNode" />
+				<tera-model v-else-if="amr" is-workflow :assetId="amr.id" @on-save="updateNode" />
 				<tera-progress-spinner v-else-if="isUpdatingModel || !amr" is-centered :font-size="2">
 					Loading...
 				</tera-progress-spinner>

@@ -81,7 +81,7 @@
 					:value="executeResponse.value"
 					:traceback="executeResponse.traceback"
 				/>
-				<tera-model v-else-if="outputAmr" :assetId="outputAmr.id" @on-save="updateNode" />
+				<tera-model v-else-if="outputAmr" is-workflow :assetId="outputAmr.id" @on-save="updateNode" />
 				<template v-else>
 					<tera-progress-spinner v-if="isStratifyInProgress" is-centered :font-size="2">
 						Processing...
