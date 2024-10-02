@@ -18,7 +18,6 @@ const isAdobePdfApiReady = ref(false);
 let apiKey = null;
 
 function goToPage(pageNumber) {
-	console.log('goToPage', pageNumber);
 	if (!adobeApis.value) return;
 	adobeApis.value.gotoLocation(pageNumber, 0, 0);
 }
