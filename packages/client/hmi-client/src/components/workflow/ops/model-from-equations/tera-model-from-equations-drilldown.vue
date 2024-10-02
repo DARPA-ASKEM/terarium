@@ -305,11 +305,9 @@ function handlePasteEvent(e) {
 				if (target && document.value?.id) {
 					const base64 = arrayBufferToBase64(target.result);
 					// send base64 to gollm
-					equasionsFromImage(document.value.id, item, base64).then((response) => {
+					equasionsFromImage(document.value.id, base64).then((response) => {
 						console.log(response);
-						// multipleEquations.value = response; // maybe?
-
-						// do something with the response
+						multipleEquations.value = response.output.response.equasions; // maybe?
 					});
 					// wait for Response then add response
 					// multipleEquationsDisabled.value = true;
