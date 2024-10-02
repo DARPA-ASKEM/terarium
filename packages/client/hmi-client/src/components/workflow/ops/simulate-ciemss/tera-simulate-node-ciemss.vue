@@ -169,7 +169,6 @@ const groupedInterventionOutputs = computed(() =>
 
 const preparedCharts = computed(() => {
 	if (!selectedRunId.value) return [];
-
 	const result = runResults.value[selectedRunId.value];
 	const resultSummary = runResultsSummary.value[selectedRunId.value];
 	const reverseMap: Record<string, string> = {};
