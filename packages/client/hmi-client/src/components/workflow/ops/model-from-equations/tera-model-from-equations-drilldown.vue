@@ -299,6 +299,7 @@ onMounted(async () => {
 function handlePasteEvent(e) {
 	// checks if the user pasted a file or collection of files
 	if (e.clipboardData?.files.length) {
+		multipleEquationsDisabled.value = true;
 		Array.from(e.clipboardData.files).forEach((item) => {
 			const reader = new FileReader();
 			reader.onload = function ({ target }) {
@@ -306,8 +307,8 @@ function handlePasteEvent(e) {
 					const base64 = arrayBufferToBase64(target.result);
 					// send base64 to gollm
 					equationsFromImage(document.value.id, base64).then((response) => {
-						console.log(response);
-						multipleEquations.value = response.output.response.equations; // maybe?
+						const responseJson = JSON.parse(window.atob(response.output)).response;
+						multipleEquations.value = responseJson.equations.join('\n');
 					});
 				}
 			};
@@ -415,6 +416,7 @@ function getEquations() {
 	});
 	emit('update-state', clonedState.value);
 	multipleEquations.value = '';
+	multipleEquationsDisabled.value = false;
 }
 
 function getEquationErrorLabel(equation) {
