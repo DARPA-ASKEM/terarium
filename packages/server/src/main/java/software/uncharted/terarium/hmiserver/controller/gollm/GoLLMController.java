@@ -732,7 +732,7 @@ public class GoLLMController {
 	 */
 	@GetMapping("/enrich-model-metadata")
 	@Secured(Roles.USER)
-	@Operation(summary = "Dispatch a multiple GoLLM tasks to enrich model metadata")
+	@Operation(summary = "Dispatch multiple GoLLM tasks to enrich model metadata")
 	@ApiResponses(
 		value = {
 			@ApiResponse(
