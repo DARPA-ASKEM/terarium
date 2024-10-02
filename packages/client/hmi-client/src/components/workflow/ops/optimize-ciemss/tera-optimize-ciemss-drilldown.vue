@@ -393,6 +393,7 @@ import Dropdown from 'primevue/dropdown';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import SelectButton from 'primevue/selectbutton';
 import Dialog from 'primevue/dialog';
+import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -424,7 +425,7 @@ import {
 	AssetType
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
-import { drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
+import { nodeMetadata } from '@/components/workflow/util';
 import { WorkflowNode } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 
@@ -515,7 +516,7 @@ const showSaveDataDialog = ref<boolean>(false);
 const showSaveInterventionPolicy = ref<boolean>(false);
 
 const outputPanel = ref(null);
-const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+const chartSize = useDrilldownChartSize(outputPanel);
 const cancelRunId = computed(() => props.node.state.inProgressPostForecastId || props.node.state.inProgressOptimizeId);
 
 const activePolicyGroups = computed(() => knobs.value.interventionPolicyGroups.filter((ele) => ele.isActive));

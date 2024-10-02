@@ -205,6 +205,7 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { Vue3Lottie } from 'vue3-lottie';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
+import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import type { CsvAsset, InterventionPolicy, SimulationRequest, TimeSpan } from '@/types/Types';
@@ -219,7 +220,7 @@ import {
 	CiemssMethodOptions
 } from '@/services/models/simulation-service';
 import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
-import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
+import { chartActionsProxy, nodeMetadata } from '@/components/workflow/util';
 
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import SelectButton from 'primevue/selectbutton';
@@ -325,7 +326,7 @@ const selectedRunId = computed(() => props.node.outputs.find((o) => o.id === sel
 
 const cancelRunId = computed(() => props.node.state.inProgressForecastId);
 const outputPanel = ref(null);
-const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+const chartSize = useDrilldownChartSize(outputPanel);
 
 const showSaveDataset = ref(false);
 
