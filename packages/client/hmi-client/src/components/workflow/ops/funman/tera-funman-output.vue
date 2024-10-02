@@ -77,11 +77,6 @@ const initalize = async () => {
 	stateOptions.value = funmanResult.model.petrinet.model.states.map(({ id }) => id);
 
 	processedFunmanResult = processFunman(funmanResult);
-	console.log('processedFunmanResult', processedFunmanResult);
-	console.log(funmanResult);
-
-	console.log('processedFunmanResult', processedFunmanResult);
-	console.log(funmanResult);
 
 	// State chart
 	selectedState.value = props.trajectoryState ?? stateOptions.value[0];

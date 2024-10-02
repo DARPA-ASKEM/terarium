@@ -91,8 +91,6 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 			final HttpEntity fileEntity = new ByteArrayEntity(bytes, ContentType.TEXT_PLAIN);
 			simulationService.uploadFile(simulationId, resultFilename, fileEntity);
 
-			System.out.println(result.get("response"));
-
 			// Mark simulation as completed, update result file
 			sim.get().setStatus(ProgressState.COMPLETE);
 			final ArrayList<String> resultFiles = new ArrayList<String>();
