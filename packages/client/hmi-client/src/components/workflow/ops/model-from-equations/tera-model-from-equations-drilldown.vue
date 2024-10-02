@@ -129,12 +129,6 @@
 			</tera-slider-panel>
 		</template>
 	</tera-drilldown>
-	<tera-save-asset-modal
-		v-if="selectedModel"
-		:asset="selectedModel"
-		:is-visible="showSaveModelModal"
-		@close-modal="onCloseModelModal"
-	/>
 </template>
 
 <script setup lang="ts">
@@ -152,7 +146,6 @@ import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '
 import { modelCard } from '@/services/goLLM';
 import { getModel, updateModel } from '@/services/model';
 import { useProjects } from '@/composables/project';
-import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraModel from '@/components/model/tera-model.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
@@ -203,7 +196,6 @@ const selectedModel = ref<Model | null>(null);
 const card = ref<Card | null>(null);
 const goLLMCard = computed<any>(() => document.value?.metadata?.gollmCard);
 
-const showSaveModelModal = ref(false);
 const isGeneratingCard = ref(false);
 const multipleEquations = ref<string>('');
 
@@ -334,10 +326,6 @@ async function fetchModel() {
 	card.value = model?.metadata?.card ?? null;
 	selectedModel.value = model;
 	loadingModel.value = false;
-}
-
-function onCloseModelModal() {
-	showSaveModelModal.value = false;
 }
 
 function getEquations() {
