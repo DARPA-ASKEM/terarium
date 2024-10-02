@@ -196,7 +196,11 @@ export interface DocumentAsset extends TerariumAsset {
     text?: string;
     grounding?: Grounding;
     documentAbstract?: string;
+    /**
+     * @deprecated
+     */
     assets?: DocumentExtraction[];
+    extractions?: ExtractedDocumentPage[];
 }
 
 export interface ExternalPublication extends TerariumAsset {
@@ -739,6 +743,13 @@ export interface DocumentExtraction {
     fileName: string;
     assetType: ExtractionAssetType;
     metadata: { [index: string]: any };
+}
+
+export interface ExtractedDocumentPage {
+    pageNumber: number;
+    text: string;
+    tables: any[];
+    equations: any[];
 }
 
 export interface ModelHeader {
