@@ -12,6 +12,7 @@
 						<div><i class="pi pi-share-alt" /><span>Models</span><span>(AMR, sbml, vensim, stella)</span></div>
 						<div><dataset-icon /><span>Datasets</span><span>(csv, netcdf)</span></div>
 					</div>
+					<!-- may be able to reuse this,  -->
 					<tera-drag-and-drop-importer
 						:accept-types="[
 							AcceptedTypes.PDF,

@@ -170,7 +170,7 @@ import Textarea from 'primevue/textarea';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
-import { modelCard } from '@/services/goLLM';
+import { modelCard, equasionsFromImage } from '@/services/goLLM';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
@@ -297,14 +297,22 @@ onMounted(async () => {
 });
 
 function handlePasteEvent(e) {
+	// checks if the user pasted a file or collection of files
 	if (e.clipboardData?.files.length) {
 		Array.from(e.clipboardData.files).forEach((item) => {
 			const reader = new FileReader();
 			reader.onload = function ({ target }) {
-				if (target) {
+				if (target && document.value?.id) {
 					const base64 = arrayBufferToBase64(target.result);
-					multipleEquations.value = base64;
-					multipleEquationsDisabled.value = true;
+					// send base64 to gollm
+					equasionsFromImage(document.value.id, item, base64).then((response) => {
+						console.log(response);
+						// multipleEquations.value = response; // maybe?
+
+						// do something with the response
+					});
+					// wait for Response then add response
+					// multipleEquationsDisabled.value = true;
 				}
 			};
 			if (item instanceof Blob) {
