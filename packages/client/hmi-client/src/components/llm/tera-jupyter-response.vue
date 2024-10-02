@@ -82,6 +82,8 @@
 					</div>
 					<div v-else-if="['stream', 'display_data', 'execute_result', 'error'].includes(m.header.msg_type)">
 						<tera-beaker-code-cell-output :jupyter-message="m" />
+						<label>Display on node thumbnail</label>
+						<Checkbox binary />
 					</div>
 				</div>
 			</section>
@@ -101,6 +103,7 @@ import Textarea from 'primevue/textarea';
 import Menu from 'primevue/menu';
 import { defineEmits, ref, computed, onMounted } from 'vue';
 import { MenuItem } from 'primevue/menuitem';
+import Checkbox from 'primevue/checkbox';
 
 const emit = defineEmits([
 	'cell-updated',
