@@ -205,7 +205,7 @@ const props = defineProps<{
 	node: WorkflowNode<InterventionPolicyState>;
 }>();
 
-const emit = defineEmits(['close', 'update-state', 'select-output', 'append-output', 'update-output-port']);
+const emit = defineEmits(['close', 'update-state', 'select-output', 'append-output']);
 
 const confirm = useConfirm();
 
