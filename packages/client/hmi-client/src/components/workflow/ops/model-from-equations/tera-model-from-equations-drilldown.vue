@@ -29,7 +29,7 @@
 							<section class="header-group">
 								<Textarea
 									v-model="multipleEquations"
-									ref="equasionTextarea"
+									ref="equationTextarea"
 									autoResize
 									rows="1"
 									placeholder="Add one or more LaTex equations, or paste in a screenshot"
@@ -170,7 +170,7 @@ import Textarea from 'primevue/textarea';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
-import { modelCard, equasionsFromImage } from '@/services/goLLM';
+import { modelCard, equationsFromImage } from '@/services/goLLM';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
@@ -235,7 +235,7 @@ const isDocViewerOpen = ref(true);
 const isInputOpen = ref(true);
 const isOutputOpen = ref(true);
 
-const equasionTextarea = ref();
+const equationTextarea = ref();
 const documentEquations = ref<AssetBlock<EquationBlock>[]>();
 
 onMounted(async () => {
@@ -305,12 +305,10 @@ function handlePasteEvent(e) {
 				if (target && document.value?.id) {
 					const base64 = arrayBufferToBase64(target.result);
 					// send base64 to gollm
-					equasionsFromImage(document.value.id, base64).then((response) => {
+					equationsFromImage(document.value.id, base64).then((response) => {
 						console.log(response);
-						multipleEquations.value = response.output.response.equasions; // maybe?
+						multipleEquations.value = response.output.response.equations; // maybe?
 					});
-					// wait for Response then add response
-					// multipleEquationsDisabled.value = true;
 				}
 			};
 			if (item instanceof Blob) {
