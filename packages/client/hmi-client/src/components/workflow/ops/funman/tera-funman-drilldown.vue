@@ -335,19 +335,14 @@ const runMakeQuery = async () => {
 			],
 			config: {
 				use_compartmental_constraints: knobs.value.compartmentalConstraint.isActive,
-				normalization_constant: 1,
+				normalization_constant:
+					knobs.value.compartmentalConstraint.isActive && model.value.semantics ? parseFloat(mass.value) : 1,
+				normalize: false,
 				tolerance: knobs.value.tolerance
 			}
 		}
 	};
 
-	// Calculate the normalization mass of the model = Sum(initials)
-	const semantics = model.value.semantics;
-	if (knobs.value.compartmentalConstraint.isActive && semantics) {
-		if (request.request.config) {
-			request.request.config.normalization_constant = parseFloat(mass.value);
-		}
-	}
 	const response = await makeQueries(request);
 
 	// Setup the in-progress id
