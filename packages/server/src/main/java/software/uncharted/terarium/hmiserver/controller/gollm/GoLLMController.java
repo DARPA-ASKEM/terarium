@@ -80,27 +80,29 @@ public class GoLLMController {
 	private final ProjectService projectService;
 	private final CurrentUserService currentUserService;
 
-	private final ModelCardResponseHandler modelCardResponseHandler;
-	private final ConfigureModelFromDocumentResponseHandler configureModelFromDocumentResponseHandler;
-	private final ConfigureModelFromDatasetResponseHandler configureModelFromDatasetResponseHandler;
 	private final CompareModelsResponseHandler compareModelsResponseHandler;
-	private final GenerateSummaryHandler generateSummaryHandler;
-	private final GenerateResponseHandler generateResponseHandler;
+	private final ConfigureModelFromDatasetResponseHandler configureModelFromDatasetResponseHandler;
+	private final ConfigureModelFromDocumentResponseHandler configureModelFromDocumentResponseHandler;
 	private final EnrichAmrResponseHandler enrichAmrResponseHandler;
 	private final EquationsFromImageResponseHandler equationsFromImageResponseHandler;
+	private final GenerateResponseHandler generateResponseHandler;
+	private final GenerateSummaryHandler generateSummaryHandler;
+	private final InterventionsFromDocumentResponseHandler interventionsFromDocumentResponseHandler;
+	private final ModelCardResponseHandler modelCardResponseHandler;
 
 	private final Messages messages;
 
 	@PostConstruct
 	void init() {
-		taskService.addResponseHandler(modelCardResponseHandler);
-		taskService.addResponseHandler(configureModelFromDocumentResponseHandler);
 		taskService.addResponseHandler(compareModelsResponseHandler);
 		taskService.addResponseHandler(configureModelFromDatasetResponseHandler);
-		taskService.addResponseHandler(generateSummaryHandler);
-		taskService.addResponseHandler(generateResponseHandler);
+		taskService.addResponseHandler(configureModelFromDocumentResponseHandler);
 		taskService.addResponseHandler(enrichAmrResponseHandler);
 		taskService.addResponseHandler(equationsFromImageResponseHandler);
+		taskService.addResponseHandler(generateResponseHandler);
+		taskService.addResponseHandler(generateSummaryHandler);
+		taskService.addResponseHandler(interventionsFromDocumentResponseHandler);
+		taskService.addResponseHandler(modelCardResponseHandler);
 	}
 
 	@PostMapping("/model-card")
@@ -447,7 +449,7 @@ public class GoLLMController {
 		return ResponseEntity.ok().body(resp);
 	}
 
-	@PostMapping("/interventions-from-document")
+	@GetMapping("/interventions-from-document")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM interventions-from-document` task")
 	@ApiResponses(
