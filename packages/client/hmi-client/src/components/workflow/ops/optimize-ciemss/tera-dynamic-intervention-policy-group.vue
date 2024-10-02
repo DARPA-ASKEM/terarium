@@ -1,11 +1,13 @@
 <template>
 	<div class="policy-group">
 		<div class="form-header">
-			<label class="mr-auto" tag="h5"> {{ config.intervention?.name ?? `Intervention` }}</label>
-			<aside>
-				<label for="active">Optimize</label>
-				<InputSwitch v-model="knobs.isActive" :disabled="true" @change="emit('update-self', knobs)" />
-			</aside>
+			<h6 class="mr-auto">{{ config.intervention?.name ?? `Intervention` }}</h6>
+			<tera-signal-bars
+				v-if="!!knobs.relativeImportance"
+				v-model="knobs.relativeImportance"
+				@update:model-value="emit('update-self', knobs)"
+				label="Relative importance"
+			/>
 		</div>
 		<p>
 			Set the {{ dynamicInterventions[0].type }}&nbsp; <strong>{{ dynamicInterventions[0].appliedTo }}</strong> to
@@ -15,10 +17,9 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 import { DynamicIntervention } from '@/types/Types';
 import { InterventionPolicyGroupForm } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
-import InputSwitch from 'primevue/inputswitch';
 
 const props = defineProps<{
 	config: InterventionPolicyGroupForm;
@@ -29,7 +30,7 @@ const emit = defineEmits(['update-self']);
 const dynamicInterventions = computed<DynamicIntervention[]>(() => props.config.intervention.dynamicInterventions);
 
 const knobs = ref({
-	isActive: props.config.isActive ?? false
+	relativeImportance: props.config.relativeImportance
 });
 </script>
 <style>
