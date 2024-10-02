@@ -853,6 +853,12 @@ public class GoLLMController {
 		return ResponseEntity.ok().body(resp);
 	}
 
+	@Data
+	public static class EquationsFromImageBody {
+
+		private String base64ImageStr = "";
+	}
+
 	@PostMapping("/equations-from-image")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Equations from image` task")
@@ -874,7 +880,7 @@ public class GoLLMController {
 		@RequestParam(name = "project-id", required = false) final UUID projectId,
 		@RequestParam(name = "document-id", required = true) final UUID documentId,
 		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
-		@RequestBody final String image
+		@RequestBody final EquationsFromImageBody image
 	) {
 		final Schema.Permission permission = projectService.checkPermissionCanRead(
 			currentUserService.get().getId(),
@@ -884,7 +890,7 @@ public class GoLLMController {
 		// validate that the string is a base64 encoding
 		byte[] decodedImage;
 		try {
-			decodedImage = Base64.getDecoder().decode(image);
+			decodedImage = Base64.getDecoder().decode(image.base64ImageStr);
 		} catch (final IllegalArgumentException e) {
 			log.error("Invalid base64 encoding for image", e);
 			throw new ResponseStatusException(
@@ -905,7 +911,7 @@ public class GoLLMController {
 		}
 
 		final EquationsFromImageResponseHandler.Input input = new EquationsFromImageResponseHandler.Input();
-		input.setImage(image);
+		input.setImage(image.base64ImageStr);
 
 		// Create the task
 		final TaskRequest req = new TaskRequest();
