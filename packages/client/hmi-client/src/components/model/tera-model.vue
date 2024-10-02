@@ -42,6 +42,7 @@
 					:disabled="!(hasChanged && hasEditPermission)"
 				/>
 				<Button
+					v-if="!isWorkflow"
 					:label="`Save ${isWorkflow ? 'for re-use' : 'as'}`"
 					severity="secondary"
 					outlined
@@ -70,7 +71,7 @@
 		:asset-type="AssetType.Model"
 		:initial-name="temporaryModel?.header.name"
 		:is-visible="showSaveModal"
-		:open-on-save="isWorkflow ? false : true"
+		:open-on-save="!isWorkflow"
 		@close-modal="showSaveModal = false"
 		@on-save="onModalSave"
 	/>

@@ -38,6 +38,7 @@ import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationEvent;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationGroup;
+import software.uncharted.terarium.hmiserver.models.task.CompoundTask;
 import software.uncharted.terarium.hmiserver.models.task.TaskFuture;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
@@ -635,6 +636,10 @@ public class TaskService {
 
 	public TaskResponse runTask(final TaskMode mode, final TaskRequest req)
 		throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException {
+		if (req instanceof CompoundTask) {
+			return runTask(mode, (CompoundTask) req);
+		}
+
 		if (mode == TaskMode.SYNC) {
 			return runTaskSync(req);
 		} else if (mode == TaskMode.ASYNC) {
@@ -642,5 +647,27 @@ public class TaskService {
 		} else {
 			throw new IllegalArgumentException("Invalid task mode: " + mode);
 		}
+	}
+
+	/**
+	 * Runs a compound task, executing the primary task synchronously and the secondary tasks
+	 * in the specified mode (synchronous or asynchronous).
+	 *
+	 * @param mode The mode in which to run the secondary tasks (SYNC or ASYNC).
+	 * @param req The compound task containing the primary and secondary tasks.
+	 * @return The response of the primary task.
+	 * @throws JsonProcessingException If there is an error processing JSON.
+	 * @throws TimeoutException If the task times out.
+	 * @throws InterruptedException If the task is interrupted.
+	 * @throws ExecutionException If there is an error during task execution.
+	 */
+	public TaskResponse runTask(final TaskMode mode, final CompoundTask req)
+		throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException {
+		TaskResponse response = runTask(TaskMode.SYNC, req.getPrimaryTask());
+
+		for (final TaskRequest secondaryTask : req.getSecondaryTasks()) {
+			runTask(mode, secondaryTask);
+		}
+		return response;
 	}
 }

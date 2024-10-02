@@ -42,6 +42,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractedDocumentPage;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.task.CompoundTask;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
@@ -79,27 +80,29 @@ public class GoLLMController {
 	private final ProjectService projectService;
 	private final CurrentUserService currentUserService;
 
-	private final ModelCardResponseHandler modelCardResponseHandler;
-	private final ConfigureModelFromDocumentResponseHandler configureModelFromDocumentResponseHandler;
-	private final ConfigureModelFromDatasetResponseHandler configureModelFromDatasetResponseHandler;
 	private final CompareModelsResponseHandler compareModelsResponseHandler;
-	private final GenerateSummaryHandler generateSummaryHandler;
-	private final GenerateResponseHandler generateResponseHandler;
+	private final ConfigureModelFromDatasetResponseHandler configureModelFromDatasetResponseHandler;
+	private final ConfigureModelFromDocumentResponseHandler configureModelFromDocumentResponseHandler;
 	private final EnrichAmrResponseHandler enrichAmrResponseHandler;
 	private final EquationsFromImageResponseHandler equationsFromImageResponseHandler;
+	private final GenerateResponseHandler generateResponseHandler;
+	private final GenerateSummaryHandler generateSummaryHandler;
+	private final InterventionsFromDocumentResponseHandler interventionsFromDocumentResponseHandler;
+	private final ModelCardResponseHandler modelCardResponseHandler;
 
 	private final Messages messages;
 
 	@PostConstruct
 	void init() {
-		taskService.addResponseHandler(modelCardResponseHandler);
-		taskService.addResponseHandler(configureModelFromDocumentResponseHandler);
 		taskService.addResponseHandler(compareModelsResponseHandler);
 		taskService.addResponseHandler(configureModelFromDatasetResponseHandler);
-		taskService.addResponseHandler(generateSummaryHandler);
-		taskService.addResponseHandler(generateResponseHandler);
+		taskService.addResponseHandler(configureModelFromDocumentResponseHandler);
 		taskService.addResponseHandler(enrichAmrResponseHandler);
 		taskService.addResponseHandler(equationsFromImageResponseHandler);
+		taskService.addResponseHandler(generateResponseHandler);
+		taskService.addResponseHandler(generateSummaryHandler);
+		taskService.addResponseHandler(interventionsFromDocumentResponseHandler);
+		taskService.addResponseHandler(modelCardResponseHandler);
 	}
 
 	@PostMapping("/model-card")
@@ -142,55 +145,30 @@ public class GoLLMController {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 		}
 
-		final ModelCardResponseHandler.Input input = new ModelCardResponseHandler.Input();
-		input.setAmr(model.get().serializeWithoutTerariumFields(null, new String[] { "gollmCard" }));
-
 		// Grab the document
-		final DocumentAsset document;
 		if (documentId != null) {
-			final Optional<DocumentAsset> documentOpt = documentAssetService.getAsset(documentId, permission);
-			if (documentOpt.isEmpty()) {
-				log.warn(String.format("Document %s not found", documentId));
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
-			}
-
-			document = documentOpt.get();
-
-			// make sure there is text in the document
-			if (document.getText() == null || document.getText().isEmpty()) {
-				log.warn(String.format("Document %s has no text to send", documentId));
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.extraction.not-done"));
-			}
-
-			// check for input length
-			if (document.getText().length() > ModelCardResponseHandler.MAX_TEXT_SIZE) {
-				log.warn(String.format("Document %s text too long for GoLLM model card task", documentId));
-				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("document.text-length-exceeded"));
-			}
-
-			input.setResearchPaper(document.getText());
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
 		}
 
-		// Create the task
-		final TaskRequest req = new TaskRequest();
-		req.setType(TaskType.GOLLM);
-		req.setScript(ModelCardResponseHandler.NAME);
-		req.setUserId(currentUserService.get().getId());
-
-		try {
-			req.setInput(objectMapper.writeValueAsBytes(input));
-		} catch (final Exception e) {
-			log.error("Unable to serialize input", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+		final Optional<DocumentAsset> documentOpt = documentAssetService.getAsset(documentId, permission);
+		if (documentOpt.isEmpty()) {
+			log.warn(String.format("Document %s not found", documentId));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
 		}
 
-		req.setProjectId(projectId);
+		// make sure there is text in the document
+		if (documentOpt.get().getText() == null || documentOpt.get().getText().isEmpty()) {
+			log.warn(String.format("Document %s has no text to send", documentId));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.extraction.not-done"));
+		}
 
-		final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
-		props.setProjectId(projectId);
-		props.setDocumentId(documentId);
-		props.setModelId(modelId);
-		req.setAdditionalProperties(props);
+		// check for input length
+		if (documentOpt.get().getText().length() > ModelCardResponseHandler.MAX_TEXT_SIZE) {
+			log.warn(String.format("Document %s text too long for GoLLM model card task", documentId));
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("document.text-length-exceeded"));
+		}
+
+		final TaskRequest req = getModelCardTask(documentOpt.get(), model.get(), projectId);
 
 		final TaskResponse resp;
 		try {
@@ -471,7 +449,7 @@ public class GoLLMController {
 		return ResponseEntity.ok().body(resp);
 	}
 
-	@PostMapping("/interventions-from-document")
+	@GetMapping("/interventions-from-document")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM interventions-from-document` task")
 	@ApiResponses(
@@ -744,6 +722,101 @@ public class GoLLMController {
 		return ResponseEntity.ok().body(resp);
 	}
 
+	/**
+	 * This endpoint will dispatch a few GoLLM tasks to enrich model metadata,
+	 * including enriching the AMR and creating the model card
+	 * @param modelId UUID of the model to enrich
+	 * @param documentId UUID of the document to use for enrichment
+	 * @param mode TaskMode to run the task in (is this ASYNC?)
+	 * @param projectId UUID of the project to associate the task with for permissions
+	 * @param overwrite boolean to determine if the model should be overwritten
+	 * @return TaskResponse with the task ID
+	 */
+	@GetMapping("/enrich-model-metadata")
+	@Secured(Roles.USER)
+	@Operation(summary = "Dispatch multiple GoLLM tasks to enrich model metadata")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Dispatched successfully",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class)
+				)
+			),
+			@ApiResponse(
+				responseCode = "404",
+				description = "The provided model or document arguments are not found",
+				content = @Content
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+		}
+	)
+	public ResponseEntity<TaskResponse> createEnrichModelMetadataTask(
+		@RequestParam(name = "model-id", required = true) final UUID modelId,
+		@RequestParam(name = "document-id", required = false) final UUID documentId,
+		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
+		@RequestParam(name = "project-id", required = false) final UUID projectId,
+		@RequestParam(name = "overwrite", required = false, defaultValue = "false") final boolean overwrite
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanRead(
+			currentUserService.get().getId(),
+			projectId
+		);
+
+		// Grab the document
+		final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
+
+		// make sure there is text in the document. We don't need a document but if we do have one it can't be empty
+		if (document.isPresent() && (document.get().getText() == null || document.get().getText().isEmpty())) {
+			log.warn(String.format("Document %s has no extracted text", documentId));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.extraction.not-done"));
+		}
+
+		// Grab the model
+		final Optional<Model> model = modelService.getAsset(modelId, permission);
+		if (model.isEmpty()) {
+			log.warn(String.format("Model %s not found", modelId));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
+		}
+
+		final TaskRequest req;
+
+		if (document.isPresent()) {
+			final TaskRequest enrichAmrRequest = getEnrichAMRTaskRequest(
+				document.orElse(null),
+				model.get(),
+				projectId,
+				overwrite
+			);
+			final TaskRequest modelCardRequest = getModelCardTask(document.orElse(null), model.get(), projectId);
+
+			req = new CompoundTask(enrichAmrRequest, modelCardRequest);
+		} else {
+			req = getModelCardTask(null, model.get(), projectId);
+		}
+
+		final TaskResponse resp;
+		try {
+			resp = taskService.runTask(mode, req);
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
+		} catch (final TimeoutException e) {
+			log.warn("Timeout while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
+		} catch (final InterruptedException e) {
+			log.warn("Interrupted while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
+		} catch (final ExecutionException e) {
+			log.error("Error while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
+		}
+
+		return ResponseEntity.ok().body(resp);
+	}
+
 	@GetMapping("/enrich-amr")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Enrich AMR` task")
@@ -797,41 +870,11 @@ public class GoLLMController {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 		}
 
-		final EnrichAmrResponseHandler.Input input = new EnrichAmrResponseHandler.Input();
-		input.setResearchPaper(document.get().getText());
 		// stripping the metadata from the model before its sent since it can cause
 		// gollm to fail with massive inputs
 		model.get().setMetadata(null);
 
-		try {
-			final String amr = objectMapper.writeValueAsString(model.get());
-			input.setAmr(amr);
-		} catch (final JsonProcessingException e) {
-			log.error("Unable to serialize model card", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
-		}
-
-		// Create the task
-		final TaskRequest req = new TaskRequest();
-		req.setType(TaskType.GOLLM);
-		req.setScript(EnrichAmrResponseHandler.NAME);
-		req.setUserId(currentUserService.get().getId());
-
-		try {
-			req.setInput(objectMapper.writeValueAsBytes(input));
-		} catch (final Exception e) {
-			log.error("Unable to serialize input", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
-		}
-
-		req.setProjectId(projectId);
-
-		final EnrichAmrResponseHandler.Properties props = new EnrichAmrResponseHandler.Properties();
-		props.setProjectId(projectId);
-		props.setDocumentId(documentId);
-		props.setModelId(modelId);
-		props.setOverwrite(overwrite);
-		req.setAdditionalProperties(props);
+		TaskRequest req = getEnrichAMRTaskRequest(document.get(), model.get(), projectId, overwrite);
 
 		final TaskResponse resp;
 		try {
@@ -1068,5 +1111,72 @@ public class GoLLMController {
 	public ResponseEntity<Void> cancelTask(@PathVariable("task-id") final UUID taskId) {
 		taskService.cancelTask(taskId);
 		return ResponseEntity.ok().build();
+	}
+
+	private TaskRequest getModelCardTask(DocumentAsset document, Model model, UUID projectId) {
+		final ModelCardResponseHandler.Input input = new ModelCardResponseHandler.Input();
+		input.setAmr(model.serializeWithoutTerariumFields(null, new String[] { "gollmCard" }));
+
+		if (document != null) input.setResearchPaper(document.getText());
+
+		// Create the task
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.GOLLM);
+		req.setScript(ModelCardResponseHandler.NAME);
+		req.setUserId(currentUserService.get().getId());
+
+		try {
+			req.setInput(objectMapper.writeValueAsBytes(input));
+		} catch (final Exception e) {
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+		}
+
+		req.setProjectId(projectId);
+
+		final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
+		props.setProjectId(projectId);
+		if (document != null) props.setDocumentId(document.getId());
+		props.setModelId(model.getId());
+		req.setAdditionalProperties(props);
+
+		return req;
+	}
+
+	private TaskRequest getEnrichAMRTaskRequest(DocumentAsset document, Model model, UUID projectId, Boolean overwrite) {
+		final EnrichAmrResponseHandler.Input input = new EnrichAmrResponseHandler.Input();
+		if (document != null) input.setResearchPaper(document.getText());
+
+		try {
+			final String amr = objectMapper.writeValueAsString(model);
+			input.setAmr(amr);
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize model card", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
+		}
+
+		// Create the task
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.GOLLM);
+		req.setScript(EnrichAmrResponseHandler.NAME);
+		req.setUserId(currentUserService.get().getId());
+
+		try {
+			req.setInput(objectMapper.writeValueAsBytes(input));
+		} catch (final Exception e) {
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+		}
+
+		req.setProjectId(projectId);
+
+		final EnrichAmrResponseHandler.Properties props = new EnrichAmrResponseHandler.Properties();
+		props.setProjectId(projectId);
+		if (document != null) props.setDocumentId(document.getId());
+		props.setModelId(model.getId());
+		props.setOverwrite(overwrite);
+		req.setAdditionalProperties(props);
+
+		return req;
 	}
 }

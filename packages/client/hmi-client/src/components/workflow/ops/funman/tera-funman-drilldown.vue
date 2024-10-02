@@ -139,11 +139,8 @@
 				@update:selection="onSelection"
 				:options="outputs"
 				is-selectable
-				class="pb-3 pl-2 pr-4"
 			>
-				<template v-if="showSpinner">
-					<tera-progress-spinner :font-size="2" is-centered style="height: 100%" />
-				</template>
+				<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%" />
 				<template v-else>
 					<tera-funman-output
 						v-if="activeOutput"
@@ -151,9 +148,7 @@
 						:trajectoryState="node.state.trajectoryState"
 						@update:trajectoryState="updateTrajectorystate"
 					/>
-					<div v-else class="flex flex-column h-full justify-content-center">
-						<tera-operator-placeholder :node="node" />
-					</div>
+					<tera-operator-placeholder v-else class="h-full" :node="node" />
 				</template>
 			</tera-drilldown-preview>
 		</template>
@@ -340,19 +335,14 @@ const runMakeQuery = async () => {
 			],
 			config: {
 				use_compartmental_constraints: knobs.value.compartmentalConstraint.isActive,
-				normalization_constant: 1,
+				normalization_constant:
+					knobs.value.compartmentalConstraint.isActive && model.value.semantics ? parseFloat(mass.value) : 1,
+				normalize: false,
 				tolerance: knobs.value.tolerance
 			}
 		}
 	};
 
-	// Calculate the normalization mass of the model = Sum(initials)
-	const semantics = model.value.semantics;
-	if (knobs.value.compartmentalConstraint.isActive && semantics) {
-		if (request.request.config) {
-			request.request.config.normalization_constant = parseFloat(mass.value);
-		}
-	}
 	const response = await makeQueries(request);
 
 	// Setup the in-progress id
@@ -603,8 +593,7 @@ watch(
 .timespan {
 	display: flex;
 	align-items: center;
-	gap: var(--gap-2);
-	/* overflow: auto; */
+	justify-content: space-between;
 
 	& .timespan-input {
 		display: flex;
@@ -642,15 +631,6 @@ ul {
 
 .p-accordion {
 	padding: 0 var(--gap-2);
-}
-
-/** Override default accordion styles */
-:deep(.p-accordion-header-link) {
-	background-color: var(--surface-100);
-}
-
-:deep(.p-accordion-content) {
-	background-color: var(--surface-100);
 }
 
 /* Override grid template so output expands when sidebar is closed */
