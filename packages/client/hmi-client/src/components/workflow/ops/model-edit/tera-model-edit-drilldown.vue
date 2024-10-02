@@ -50,26 +50,13 @@
 				:options="outputs"
 				is-selectable
 			>
-				<section class="right-side">
-					<Button
-						class="mr-3"
-						outlined
-						severity="secondary"
-						:disabled="isSaveDisabled"
-						label="Save for reuse"
-						@click="showSaveModelModal = true"
-					/>
-				</section>
 				<tera-notebook-error
 					v-if="executeResponse.status === OperatorStatus.ERROR"
 					:name="executeResponse.name"
 					:value="executeResponse.value"
 					:traceback="executeResponse.traceback"
 				/>
-				<template v-else-if="amr">
-					<tera-model-diagram :model="amr" />
-					<tera-model-parts :model="amr" :feature-config="{ isPreview: true }" />
-				</template>
+				<tera-model v-else-if="amr" :assetId="amr.id" @on-save="updateNode" />
 				<tera-progress-spinner v-else-if="isUpdatingModel || !amr" is-centered :font-size="2">
 					Loading...
 				</tera-progress-spinner>
@@ -79,16 +66,6 @@
 			<p class="m-4">Wizard is disabled for now.</p>
 		</tera-drilldown-section>
 	</tera-drilldown>
-	<tera-save-asset-modal
-		v-if="amr"
-		:asset="amr"
-		:initial-name="amr.name"
-		:assetType="AssetType.Model"
-		:is-updating-asset="true"
-		:is-visible="showSaveModelModal"
-		@close-modal="showSaveModelModal = false"
-		@on-save="updateNode"
-	/>
 </template>
 
 <script setup lang="ts">
@@ -100,7 +77,6 @@ import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import Button from 'primevue/button';
 import { DrilldownTabs } from '@/types/common';
 import type { Model } from '@/types/Types';
-import { AssetType } from '@/types/Types';
 import { OperatorStatus, WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { KernelSessionManager } from '@/services/jupyter';
 import { createModel, getModel } from '@/services/model';
@@ -110,14 +86,11 @@ import { logger } from '@/utils/logger';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraModelParts from '@/components/model/tera-model-parts.vue';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import TeraModel from '@/components/model/tera-model.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { nodeOutputLabel } from '@/components/workflow/util';
-import { useProjects } from '@/composables/project';
 import { ModelEditOperationState, ModelEditOperation } from './model-edit-operation';
 
 const props = defineProps<{
@@ -149,7 +122,6 @@ const isUpdatingModel = ref(false);
 const kernelManager = new KernelSessionManager();
 const amr = ref<Model | null>(null);
 let activeModelId: string | null = null;
-const showSaveModelModal = ref(false);
 
 let editor: VAceEditorInstance['_editor'] | null;
 const sampleAgentQuestions = [
@@ -332,7 +304,7 @@ const handleOutputChange = async () => {
 		const jupyterContext = buildJupyterContext();
 		if (jupyterContext) {
 			if (kernelManager.jupyterSession !== null) {
-				// when coming from output dropdown change we should shutdown first
+				// when coming from output dropdown change we should shut down first
 				kernelManager.shutdown();
 			}
 			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
@@ -377,13 +349,6 @@ watch(
 	},
 	{ immediate: true }
 );
-
-const isSaveDisabled = computed(() => {
-	const id = amr.value?.id;
-	if (!id) return true;
-	const outputPort = props.node.outputs?.find((port) => port.value?.[0] === id);
-	return useProjects().hasAssetInActiveProject(outputPort?.value?.[0]);
-});
 
 function updateNode(model: Model) {
 	const id = amr.value?.id;
