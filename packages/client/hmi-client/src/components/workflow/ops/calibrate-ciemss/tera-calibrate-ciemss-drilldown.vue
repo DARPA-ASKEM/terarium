@@ -1,4 +1,3 @@
-t d
 <template>
 	<tera-drilldown
 		:node="node"
@@ -26,13 +25,33 @@ t d
 					<!-- Mapping section -->
 					<div class="form-section">
 						<h5 class="mb-1">Mapping</h5>
-						<p class="mb-2">Map model variables to dataset columns. Don't forget the timeline variable.</p>
+						<p class="mb-2">
+							Select a subset of output variables of the model and individually assosiate them to columns in the
+							dataset.
+						</p>
+
+						<!-- Mapping table: Time variables -->
+						<div class="input-row">
+							<div class="label-and-input">
+								<label class="column-header">Model: Timeline variable</label>
+								<tera-input-text disabled model-value="timestamp" />
+							</div>
+							<div class="label-and-input">
+								<label class="column-header">Dataset: Timeline variable</label>
+								<Dropdown
+									class="w-full"
+									:placeholder="mappingDropdownPlaceholder"
+									v-model="knobs.timestampColName"
+									:options="datasetColumns?.map((ele) => ele.name)"
+								/>
+							</div>
+						</div>
 
 						<!-- Mapping table: Other variables -->
 						<DataTable class="mapping-table" :value="mapping">
 							<Column field="modelVariable">
 								<template #header>
-									<span class="column-header">Model variables</span>
+									<span class="column-header">Model: Other variables</span>
 								</template>
 								<template #body="{ data, field }">
 									<Dropdown
@@ -45,7 +64,7 @@ t d
 							</Column>
 							<Column field="datasetVariable">
 								<template #header>
-									<span class="column-header">Dataset variables</span>
+									<span class="column-header">Dataset: Other variables</span>
 								</template>
 								<template #body="{ data, field }">
 									<Dropdown
@@ -76,7 +95,7 @@ t d
 									@click="getAutoMapping"
 								/>
 							</div>
-							<Button class="p-button-sm p-button-text" label="Delete all mapping" @click="deleteMapping" />
+							<Button class="p-button-sm p-button-text" label="Delete all mapping" @click="deleteAllMappings" />
 						</div>
 					</div>
 
@@ -498,6 +517,7 @@ interface BasicKnobs {
 	stepSize: number;
 	learningRate: number;
 	method: string;
+	timestampColName: string;
 }
 
 const knobs = ref<BasicKnobs>({
@@ -506,7 +526,8 @@ const knobs = ref<BasicKnobs>({
 	endTime: props.node.state.endTime ?? 100,
 	stepSize: props.node.state.stepSize ?? 1,
 	learningRate: props.node.state.learningRate ?? 0.1,
-	method: props.node.state.method ?? CiemssMethodOptions.dopri5
+	method: props.node.state.method ?? CiemssMethodOptions.dopri5,
+	timestampColName: props.node.state.timestampColName ?? ''
 });
 
 const presetType = computed(() => {
@@ -631,17 +652,14 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 	}
 };
 
-const disableRunButton = computed(() => {
-	const timestampMapping = mapping.value.find((d) => d.modelVariable === 'timestamp');
-	return (
+const disableRunButton = computed(
+	() =>
 		!currentDatasetFileName.value ||
 		!csvAsset.value ||
 		!modelConfigId.value ||
 		!datasetId.value ||
-		!timestampMapping ||
-		timestampMapping.datasetVariable === ''
-	);
-});
+		knobs.value.timestampColName === ''
+);
 
 const selectedOutputId = ref<string>();
 const lossChartContainer = ref(null);
@@ -729,7 +747,7 @@ const preparedCharts = computed(() => {
 	const state = props.node.state;
 
 	// Need to get the dataset's time field
-	const datasetTimeField = state.mapping.find((d) => d.modelVariable === 'timestamp')?.datasetVariable;
+	const datasetTimeField = knobs.value.timestampColName;
 
 	const charts = {};
 	selectedVariableSettings.value.forEach((settings) => {
@@ -904,6 +922,7 @@ const runCalibrate = async () => {
 	if (!modelConfigId.value || !datasetId.value || !currentDatasetFileName.value) return;
 
 	const formattedMap: { [index: string]: string } = {};
+	formattedMap[knobs.value.timestampColName] = 'timestamp';
 	// If the user has done any mapping populate formattedMap
 	if (mapping.value[0].datasetVariable !== '') {
 		mapping.value.forEach((ele) => {
@@ -1014,8 +1033,8 @@ function addMapping() {
 	emit('update-state', state);
 }
 
-function deleteMapping() {
-	mapping.value = [{ modelVariable: '', datasetVariable: '' }];
+function deleteAllMappings() {
+	mapping.value = [];
 
 	const state = _.cloneDeep(props.node.state);
 	state.mapping = mapping.value;
@@ -1064,6 +1083,14 @@ const initialize = async () => {
 	datasetColumns.value = datasetOptions;
 
 	getConfiguredModelConfig();
+
+	// look for timestamp col in dataset if its not yet filled in.
+	if (knobs.value.timestampColName === '') {
+		const timeCol = datasetColumns.value?.find((ele) => ele.name.toLocaleLowerCase().startsWith('time'));
+		if (timeCol) {
+			knobs.value.timestampColName = timeCol.name;
+		}
+	}
 };
 
 const onSaveAsModelConfiguration = async () => {
@@ -1089,6 +1116,7 @@ watch(
 		state.numIterations = knobs.value.numIterations;
 		state.numSamples = knobs.value.numSamples;
 		state.endTime = knobs.value.endTime;
+		state.timestampColName = knobs.value.timestampColName;
 		emit('update-state', state);
 	},
 	{ deep: true }
@@ -1204,7 +1232,7 @@ th {
 .column-header {
 	color: var(--text-color-primary);
 	font-size: var(--font-body-small);
-	font-weight: var(--font-weight);
+	font-weight: var(--font-weight-semibold);
 	padding-top: var(--gap-2);
 }
 
