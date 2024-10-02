@@ -853,7 +853,10 @@ export function createFunmanStateChart(
 		height: 300,
 		layer: [
 			{
-				mark: 'rect',
+				mark: {
+					type: 'rect',
+					clip: true
+				},
 				data: { values: modelChecks },
 				encoding: {
 					x: { field: 'startX', type: 'quantitative' },

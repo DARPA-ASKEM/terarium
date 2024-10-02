@@ -123,6 +123,8 @@ export const processFunman = (result: any) => {
 				return obj;
 			}, {});
 
+		console.log(filteredVals, point);
+
 		timepoints.forEach((t) => {
 			let pushFlag = true;
 			const traj: any = {
