@@ -10,8 +10,8 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 public class Intervention {
 
 	private String name;
-	private List<StaticIntervention> staticInterventions;
-	private List<DynamicIntervention> dynamicInterventions;
+	private List<StaticIntervention> staticInterventions = new ArrayList<>();
+	private List<DynamicIntervention> dynamicInterventions = new ArrayList<>();
 
 	@Override
 	public Intervention clone() {

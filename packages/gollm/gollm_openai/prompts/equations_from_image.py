@@ -4,5 +4,13 @@ Multiple equations will probably be vertically separated, they may be enumerated
 
 Do not respond in full sentences; only create a JSON object that satisfies the JSON schema specified in the response format.
 
+LaTeX equations need to conform to a standard form. Use the following guidelines to ensure that your LaTeX equations are correctly formatted:
+
+--- STYLE GUIDE ---
+
+{style_guide}
+
+--- STYLE GUIDE END ---
+
 Answer:
 """

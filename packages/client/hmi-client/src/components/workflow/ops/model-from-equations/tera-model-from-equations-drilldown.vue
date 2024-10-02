@@ -10,7 +10,7 @@
 			<tera-slider-panel v-model:is-open="isDocViewerOpen" header="Document Viewer" content-width="100%">
 				<template #content>
 					<tera-drilldown-section :is-loading="isFetchingPDF">
-						<tera-pdf-embed v-if="pdfLink" :pdf-link="pdfLink" :title="document?.name || ''" />
+						<tera-pdf-embed ref="pdfViewer" v-if="pdfLink" :pdf-link="pdfLink" :title="document?.name || ''" />
 						<tera-text-editor v-else-if="docText" :initial-text="docText" />
 					</tera-drilldown-section>
 				</template>
@@ -39,17 +39,16 @@
 						</header>
 						<h6 class="py-3">Use {{ includedEquations.length > 1 ? 'these equations' : 'this equation' }}</h6>
 						<ul class="blocks-container">
-							<li
-								v-for="(equation, i) in includedEquations"
-								:key="i"
-								@click.capture="selectItem(equation.name, $event)"
-							>
+							<li v-for="(equation, i) in includedEquations" :key="i" @click.capture="selectItem(equation, $event)">
 								<tera-asset-block
 									:is-toggleable="false"
 									:is-permitted="false"
 									:use-default-style="false"
 									:class="['asset-panel', { selected: selectedItem === equation.name }]"
 								>
+									<template #header>
+										<h6>{{ equation.name }} - Page({{ equation.asset.pageNumber }})</h6>
+									</template>
 									<section>
 										<Checkbox
 											v-model="equation.includeInProcess"
@@ -78,17 +77,16 @@
 						</ul>
 						<h6 class="py-3">Other equations extracted from document</h6>
 						<ul class="blocks-container">
-							<li
-								v-for="(equation, i) in notIncludedEquations"
-								:key="i"
-								@click.capture="selectItem(equation.name, $event)"
-							>
+							<li v-for="(equation, i) in notIncludedEquations" :key="i" @click.capture="selectItem(equation, $event)">
 								<tera-asset-block
 									:is-toggleable="false"
 									:is-permitted="false"
 									:use-default-style="false"
 									:class="['asset-panel', { selected: selectedItem === equation.name }]"
 								>
+									<template #header>
+										<h6>{{ equation.name }} - Page({{ equation.asset.pageNumber }})</h6>
+									</template>
 									<section>
 										<Checkbox
 											class="flex-shrink-0"
@@ -177,10 +175,16 @@ const includedEquations = computed(() =>
 const notIncludedEquations = computed(() =>
 	clonedState.value.equations.filter((equation) => equation.includeInProcess === false)
 );
+
+const pdfViewer = ref();
+
 const selectedItem = ref('');
 
-const selectItem = (item, event) => {
-	selectedItem.value = item;
+const selectItem = (equation, event) => {
+	selectedItem.value = equation.name;
+	if (pdfViewer.value) {
+		pdfViewer.value.goToPage(equation.asset.pageNumber);
+	}
 
 	// Prevent the child’s click handler from firing
 	event.stopImmediatePropagation();
@@ -229,17 +233,17 @@ onMounted(async () => {
 			}
 		}
 		isFetchingPDF.value = false;
-
 		const state = cloneDeep(props.node.state);
 		if (state.equations.length) return;
 
 		if (document.value?.metadata?.equations) {
-			documentEquations.value = document.value.metadata.equations.flatMap((page) =>
+			documentEquations.value = document.value.metadata.equations.flatMap((page, index) =>
 				page.map((equation) => {
 					const asset: AssetBlock<EquationBlock> = {
 						name: 'Equation',
 						includeInProcess: false,
 						asset: {
+							pageNumber: index + 1,
 							text: equation
 						}
 					};
@@ -251,7 +255,7 @@ onMounted(async () => {
 			clonedState.value.equations = documentEquations.value.map((e, index) => ({
 				name: `${e.name} ${index}`,
 				includeInProcess: e.includeInProcess,
-				asset: { text: e.asset.text }
+				asset: { text: e.asset.text, pageNumber: e.asset.pageNumber }
 			}));
 
 			state.equations = clonedState.value.equations;
@@ -398,10 +402,6 @@ watch(
 </script>
 
 <style scoped>
-:deep(.p-panel-header) {
-	display: none;
-}
-
 .no-extract-equation {
 	padding: var(--gap-4);
 	background: var(--surface-disabled);
@@ -462,9 +462,12 @@ watch(
 	overflow-y: auto;
 }
 
+/* PrimeVue Override */
+
 .p-panel {
 	box-shadow: none;
 }
+
 .p-panel:deep(.p-panel-footer) {
 	display: none;
 }
