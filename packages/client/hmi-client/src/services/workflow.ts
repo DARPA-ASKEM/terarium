@@ -1,6 +1,6 @@
-import { Component } from 'vue';
+import { Component, computed } from 'vue';
 import { v4 as uuidv4 } from 'uuid';
-import _ from 'lodash';
+import _, { isEmpty } from 'lodash';
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
 import { EventEmitter } from '@/utils/emitter';
@@ -12,20 +12,21 @@ import type {
 	Workflow,
 	WorkflowEdge,
 	WorkflowNode,
-	WorkflowPort,
-	WorkflowOutput
+	WorkflowOutput,
+	WorkflowPort
 } from '@/types/workflow';
 import {
-	WorkflowPortStatus,
 	OperatorStatus,
+	Transform,
 	WorkflowOperationTypes,
-	WorkflowTransformations,
-	Transform
+	WorkflowPortStatus,
+	WorkflowTransformations
 } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
+import { ProjectAsset } from '@/types/Types';
 
 /**
- * A wrapper class around the workflow data struture to make it easier
+ * A wrapper class around the workflow data structure to make it easier
  * to deal with CURD operations
  * */
 export class WorkflowWrapper {
@@ -39,8 +40,7 @@ export class WorkflowWrapper {
 		}
 	}
 
-	// This will replace the entire workflow, should only use for initial load
-	// as there it will not propapate reactivity
+	// This will replace the entire workflow, should only use for initial load as there it will not propagate reactivity
 	load(wf: Workflow) {
 		this.wf = _.cloneDeep(wf);
 	}
@@ -58,7 +58,7 @@ export class WorkflowWrapper {
 	 * the DB can potentially overwrite what the user had already done that have yet to be flushed
 	 * to the backend. In situation like this, we will update the version (so our subsequent updates are
 	 * not rejected) and skip the rest. For example, the user may be dragging an operator on the
-	 * canvas when the db upate comes in.
+	 * canvas when the db update comes in.
 	 * */
 	update(updatedWF: Workflow, delayUpdate: boolean) {
 		if (updatedWF.id !== this.wf.id) {
@@ -133,7 +133,7 @@ export class WorkflowWrapper {
 			}
 		}
 
-		// New eleemnts
+		// New elements
 		[...updatedNodeMap.values()].forEach((node) => this.wf.nodes.push(node));
 		[...updatedEdgeMap.values()].forEach((edge) => this.wf.edges.push(edge));
 	}
@@ -445,7 +445,7 @@ export class WorkflowWrapper {
 			}
 		});
 
-		// 5. Reposition new nodes so they don't exaclty overlap
+		// 5. Reposition new nodes so they do not exact overlap
 		const offset = 75;
 		copyNodes.forEach((n) => {
 			n.y += offset;
@@ -681,14 +681,20 @@ export function getOutputLabel(outputs: WorkflowOutput<any>[], id: string) {
 	const selectedOutput = outputs.find((output) => output.id === id);
 	if (!selectedOutput) return '';
 
+	let assetId: ProjectAsset['assetId'];
+
 	// multiple output types, choose first name to use as label arbitrarily
 	if (selectedOutput.type.includes('|')) {
 		const outputType = selectedOutput.type.split('|');
-		return useProjects().getAssetName(selectedOutput.value?.[0]?.[outputType?.[0]]) || selectedOutput.label;
+		assetId = selectedOutput.value?.[0]?.[outputType?.[0]];
+
+		// default use single output type
+	} else {
+		assetId = selectedOutput.value?.[0];
 	}
 
-	// default use single output type
-	return useProjects().getAssetName(selectedOutput.value?.[0]) || selectedOutput.label;
+	const label = useProjects().getAssetName(assetId).value;
+	return computed(() => (!isEmpty(label) ? label : (selectedOutput.label ?? '')));
 }
 
 // Checker for resource-operators (e.g. model, dataset) that automatically create an output

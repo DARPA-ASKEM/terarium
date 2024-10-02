@@ -57,13 +57,6 @@
 					@menu-selection="(operatorType) => emit('menu-selection', operatorType, output)"
 				/>
 			</Transition>
-			<!--TODO: We will see how to integrate port actions into this button later-->
-			<!-- <Button
-				size="small"
-				text
-				label="output.actionLabel"
-				@click.stop="console.log('Do output.action() here')"
-			/> -->
 		</li>
 	</ul>
 </template>

@@ -10,7 +10,7 @@ import { activeProject, activeProjectId } from '@/composables/activeProject';
 import * as ProjectService from '@/services/project';
 import type { PermissionRelationships, Project, ProjectAsset } from '@/types/Types';
 import { AssetType } from '@/types/Types';
-import { shallowRef } from 'vue';
+import { computed, ComputedRef, shallowRef } from 'vue';
 
 const TIMEOUT_MS = 100;
 
@@ -109,9 +109,8 @@ export function useProjects() {
 	 * @param {ProjectAsset['assetId]} assetId
 	 * @returns {ProjectAsset['assetName']}
 	 */
-	function getAssetName(assetId: ProjectAsset['assetId']): ProjectAsset['assetName'] {
-		const asset = findAsset(assetId);
-		return asset?.assetName ?? '';
+	function getAssetName(assetId: ProjectAsset['assetId']): ComputedRef<ProjectAsset['assetName']> {
+		return computed(() => findAsset(assetId)?.assetName ?? '');
 	}
 
 	/**
