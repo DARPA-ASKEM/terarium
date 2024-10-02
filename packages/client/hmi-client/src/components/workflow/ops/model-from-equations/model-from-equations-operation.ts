@@ -22,7 +22,7 @@ export function instanceOfEquationFromImageBlock(
 }
 
 export interface ModelFromEquationsState {
-	equations: AssetBlock<EquationBlock | EquationFromImageBlock>[];
+	equations: AssetBlock<EquationBlock>[];
 	text: string;
 	modelFramework: string;
 	modelId: string | null;

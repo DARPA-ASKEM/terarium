@@ -46,6 +46,9 @@
 									:use-default-style="false"
 									:class="['asset-panel', { selected: selectedItem === equation.name }]"
 								>
+									<template #header>
+										<h6>{{ equation.name }} - Page: {{ equation.asset.pageNumber }}</h6>
+									</template>
 									<section>
 										<Checkbox
 											v-model="equation.includeInProcess"
@@ -81,6 +84,9 @@
 									:use-default-style="false"
 									:class="['asset-panel', { selected: selectedItem === equation.name }]"
 								>
+									<template #header>
+										<h6>{{ equation.name }} - Page: {{ equation.asset.pageNumber }}</h6>
+									</template>
 									<section>
 										<Checkbox
 											class="flex-shrink-0"
@@ -415,10 +421,6 @@ watch(
 </script>
 
 <style scoped>
-:deep(.p-panel-header) {
-	display: none;
-}
-
 .no-extract-equation {
 	padding: var(--gap-4);
 	background: var(--surface-disabled);
@@ -479,9 +481,12 @@ watch(
 	overflow-y: auto;
 }
 
+/* PrimeVue Override */
+
 .p-panel {
 	box-shadow: none;
 }
+
 .p-panel:deep(.p-panel-footer) {
 	display: none;
 }
