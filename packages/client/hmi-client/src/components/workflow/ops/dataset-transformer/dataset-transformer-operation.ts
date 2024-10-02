@@ -1,3 +1,4 @@
+import { INotebookItem } from '@/services/jupyter';
 import { ProgrammingLanguage } from '@/types/Types';
 import { ProgrammingLanguageVersion } from '@/types/common';
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
@@ -9,6 +10,7 @@ export interface DatasetTransformerState extends BaseState {
 	datasetId: string | null;
 	notebookSessionId?: string;
 	programmingLanguage: string;
+	selectedOutputs: INotebookItem[];
 }
 
 export const DatasetTransformerOperation: Operation = {
@@ -25,7 +27,8 @@ export const DatasetTransformerOperation: Operation = {
 	initState: () => {
 		const init: DatasetTransformerState = {
 			datasetId: null,
-			programmingLanguage: ProgrammingLanguageVersion[ProgrammingLanguage.Python]
+			programmingLanguage: ProgrammingLanguageVersion[ProgrammingLanguage.Python],
+			selectedOutputs: []
 		};
 		return init;
 	}

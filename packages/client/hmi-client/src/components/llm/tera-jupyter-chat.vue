@@ -68,7 +68,8 @@ const emit = defineEmits([
 	'new-dataset-saved',
 	'new-model-saved',
 	'update-kernel-state',
-	'update-language'
+	'update-language',
+	'update-selected-outputs'
 ]);
 
 const props = defineProps<{
@@ -423,6 +424,8 @@ watch(
 	() => notebookItems.value,
 	async () => {
 		if (props.notebookSession) {
+			const selectedOutputs = notebookItems.value.filter((item) => item.selected);
+			emit('update-selected-outputs', selectedOutputs);
 			await updateNotebookSession({
 				id: props.notebookSession.id,
 				description: props.notebookSession.description,
