@@ -116,7 +116,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import _ from 'lodash';
+import _, { cloneDeep, debounce, isEqual, last } from 'lodash';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -190,7 +190,7 @@ const updateLlmQuery = (query: string) => {
 };
 
 const updateStratifyGroupForm = (config: StratifyGroup) => {
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.strataGroup = config;
 	emit('update-state', state);
 };
@@ -284,8 +284,8 @@ const handleModelPreview = async (data: any) => {
 		label: newName,
 		type: 'modelId',
 		state: {
-			strataGroup: _.cloneDeep(props.node.state.strataGroup),
-			strataCodeHistory: _.cloneDeep(props.node.state.strataCodeHistory)
+			strataGroup: cloneDeep(props.node.state.strataGroup),
+			strataCodeHistory: cloneDeep(props.node.state.strataCodeHistory)
 		},
 		value: [modelData.id]
 	});
@@ -426,7 +426,7 @@ const runCodeStratify = () => {
 
 // FIXME: Copy pasted in 3 locations, could be written cleaner and in a service. Migrate it to use saveCodeToState from @/services/notebook
 const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.hasCodeBeenRun = hasCodeBeenRun;
 	// for now only save the last code executed, may want to save all code executed in the future
 	const codeHistoryLength = props.node.state.strataCodeHistory.length;
@@ -455,12 +455,12 @@ const isSaveDisabled = computed(() => {
 // check if user has made changes to the code
 const hasCodeChange = () => {
 	if (props.node.state.strataCodeHistory.length) {
-		isDraft.value = !_.isEqual(codeText.value, props.node.state.strataCodeHistory?.[0]?.code);
+		isDraft.value = !isEqual(codeText.value, props.node.state.strataCodeHistory?.[0]?.code);
 	} else {
-		isDraft.value = !_.isEqual(codeText.value, '');
+		isDraft.value = !isEqual(codeText.value, '');
 	}
 };
-const checkForCodeChange = _.debounce(hasCodeChange, 100);
+const checkForCodeChange = debounce(hasCodeChange, 100);
 
 watch(
 	() => codeText.value,
@@ -480,7 +480,7 @@ watch(
 			}
 			const modelIdToLoad = output.value?.[0];
 			outputAmr.value = await getModel(modelIdToLoad);
-			codeText.value = _.last(props.node.state.strataCodeHistory)?.code ?? '';
+			codeText.value = last(props.node.state.strataCodeHistory)?.code ?? '';
 		}
 	},
 	{ immediate: true }
@@ -514,10 +514,10 @@ onUnmounted(() => {
 }
 
 .code-executed-warning {
-	background-color: #ffe6e6;
-	color: #cc0000;
-	padding: 10px;
-	border-radius: 4px;
+	background-color: var(--error-message-background);
+	border-radius: var(--border-radius);
+	color: var(--error-message-color);
+	padding: var(--gap-2-5);
 }
 
 .form-section {
