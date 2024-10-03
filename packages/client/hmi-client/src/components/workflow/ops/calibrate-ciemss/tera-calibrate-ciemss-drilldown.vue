@@ -695,7 +695,7 @@ const generateAnnotation = async (setting: ChartSetting, query: string) => {
 	const variable = setting.selectedVariables[0];
 	const annotationLayerSpec = await generateForecastChartAnnotation(
 		query,
-		'timpoint_id',
+		'timepoint_id',
 		[`${pyciemssMap.value[variable]}_mean:pre`, `${pyciemssMap.value[variable]}_mean`],
 		{
 			translationMap: reverseMap,
