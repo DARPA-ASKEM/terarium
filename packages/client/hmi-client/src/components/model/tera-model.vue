@@ -42,13 +42,14 @@
 					:disabled="!(hasChanged && hasEditPermission)"
 				/>
 				<Button
-					v-if="!isWorkflow"
-					:label="`Save ${isWorkflow ? 'for re-use' : 'as'}`"
+					v-if="isSaveForReuse"
+					label="Save for re-use"
 					severity="secondary"
 					outlined
-					@click="onSaveAs"
+					@click="onSaveForReUse"
 					:disabled="!hasEditPermission"
 				/>
+				<Button v-else label="Save as" severity="secondary" outlined @click="onSaveAs" :disabled="!hasEditPermission" />
 				<Button label="Save" @click="onSave" :disabled="!(hasChanged && hasEditPermission)" />
 			</aside>
 		</template>
@@ -71,6 +72,7 @@
 		:asset-type="AssetType.Model"
 		:initial-name="temporaryModel?.header.name"
 		:is-visible="showSaveModal"
+		:is-updating-asset="isSaveForReuse"
 		:open-on-save="!isWorkflow"
 		@close-modal="showSaveModal = false"
 		@on-save="onModalSave"
@@ -105,6 +107,10 @@ const props = defineProps({
 		default: { isPreview: false } as FeatureConfig
 	},
 	isWorkflow: {
+		type: Boolean,
+		default: false
+	},
+	isSaveForReuse: {
 		type: Boolean,
 		default: false
 	}
@@ -143,6 +149,9 @@ function onSave() {
 	saveModelContent();
 }
 function onSaveAs() {
+	showSaveModal.value = true;
+}
+function onSaveForReUse() {
 	showSaveModal.value = true;
 }
 
