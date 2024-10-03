@@ -16,14 +16,17 @@
 				<template #content>
 					<section>
 						<nav class="inline-flex">
-							<!-- Disabled until Backend code is complete -->
-							<!-- <Button class="flex-1 mr-1" outlined severity="secondary" label="Extract from inputs" /> -->
 							<Button
-								class="flex-1 ml-1"
-								label="Create New"
-								:disabled="!model?.id"
-								@click="createNewInterventionPolicy"
+								class="flex-1 mr-1"
+								outlined
+								severity="secondary"
+								label="Extract from inputs"
+								icon="pi pi-sparkles"
+								:loading="isLoading"
+								:disabled="!props.node.inputs[0]?.value && !props.node.inputs[1]?.value"
+								@click="extractInterventionPolicyFromInputs"
 							/>
+							<Button class="ml-1" label="Create New" :disabled="!model?.id" @click="createNewInterventionPolicy" />
 						</nav>
 						<tera-input-text v-model="filterInterventionsText" placeholder="Filter" />
 						<ul v-if="!isFetchingPolicies">
@@ -106,14 +109,18 @@
 					</AccordionTab>
 					<AccordionTab header="Charts">
 						<ul class="flex flex-column gap-2">
-							<li v-for="(interventions, appliedTo) in groupedOutputParameters" :key="appliedTo">
+							<li v-for="appliedTo in Object.keys(groupedOutputParameters)" :key="appliedTo">
 								<vega-chart
 									expandable
 									:are-embed-actions-visible="false"
 									:visualization-spec="preparedCharts[appliedTo]"
 								/>
 								<ul>
-									<li class="pb-2" v-for="intervention in interventions" :key="intervention.name">
+									<li
+										class="pb-2"
+										v-for="intervention in getInterventionsAppliedTo(appliedTo)"
+										:key="intervention.name"
+									>
 										<h6 class="pb-1">{{ intervention.name }}</h6>
 										<ul v-if="!isEmpty(intervention.staticInterventions)">
 											<li
@@ -157,7 +164,7 @@
 
 <script setup lang="ts">
 import _, { cloneDeep, groupBy, isEmpty, omit } from 'lodash';
-import { computed, onMounted, ref, watch, nextTick, ComponentPublicInstance } from 'vue';
+import { ComponentPublicInstance, computed, nextTick, onMounted, ref, watch } from 'vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { WorkflowNode } from '@/types/workflow';
@@ -166,13 +173,18 @@ import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import Button from 'primevue/button';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { getInterventionPoliciesForModel, getModel } from '@/services/model';
-import { Intervention, InterventionPolicy, Model, AssetType } from '@/types/Types';
+import { AssetType, Intervention, InterventionPolicy, Model, type TaskResponse } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { useConfirm } from 'primevue/useconfirm';
 import { getParameters, getStates } from '@/model-representation/service';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
-import { getInterventionPolicyById, updateInterventionPolicy, blankIntervention } from '@/services/intervention-policy';
+import {
+	blankIntervention,
+	flattenInterventionData,
+	getInterventionPolicyById,
+	updateInterventionPolicy
+} from '@/services/intervention-policy';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Textarea from 'primevue/textarea';
@@ -183,12 +195,13 @@ import { createInterventionChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { useProjects } from '@/composables/project';
+import { interventionPolicyFromDocument } from '@/services/goLLM';
 import TeraInterventionCard from './tera-intervention-card.vue';
 import {
 	InterventionPolicyOperation,
 	InterventionPolicyState,
-	isInterventionPoliciesValuesEqual,
-	isInterventionPoliciesEqual
+	isInterventionPoliciesEqual,
+	isInterventionPoliciesValuesEqual
 } from './intervention-policy-operation';
 import TeraInterventionPolicyCard from './tera-intervention-policy-card.vue';
 
@@ -196,7 +209,7 @@ const props = defineProps<{
 	node: WorkflowNode<InterventionPolicyState>;
 }>();
 
-const emit = defineEmits(['close', 'update-state', 'select-output', 'append-output', 'update-output-port']);
+const emit = defineEmits(['close', 'update-state', 'select-output', 'append-output']);
 
 const confirm = useConfirm();
 
@@ -225,6 +238,7 @@ const isSidebarOpen = ref(true);
 const filterInterventionsText = ref('');
 const model = ref<Model | null>(null);
 const isFetchingPolicies = ref(false);
+const isLoading = ref(false);
 const interventionsPolicyList = ref<InterventionPolicy[]>([]);
 const interventionPoliciesFiltered = computed(() =>
 	interventionsPolicyList.value
@@ -260,6 +274,13 @@ const isSaveDisabled = computed(() => {
 	return hasSelectedPolicy && (isPolicyIdDifferent || arePoliciesEqual || !arePolicyValuesEqual);
 });
 
+const documentIds = computed(() =>
+	props.node.inputs
+		.filter((input) => input.type === 'documentId' && input.status === 'connected')
+		.map((input) => input.value?.[0]?.documentId)
+		.filter((id): id is string => id !== undefined)
+);
+
 const parameterOptions = computed(() => {
 	if (!model.value) return [];
 	return getParameters(model.value).map((parameter) => ({
@@ -279,10 +300,7 @@ const stateOptions = computed(() => {
 });
 
 const groupedOutputParameters = computed(() =>
-	groupBy(
-		knobs.value.transientInterventionPolicy.interventions,
-		(item) => item.dynamicInterventions[0]?.appliedTo || item.staticInterventions[0]?.appliedTo
-	)
+	groupBy(flattenInterventionData(knobs.value.transientInterventionPolicy.interventions), 'appliedTo')
 );
 
 const preparedCharts = computed(() =>
@@ -296,6 +314,19 @@ const preparedCharts = computed(() =>
 		})
 	)
 );
+
+const getInterventionsAppliedTo = (appliedTo: string) =>
+	knobs.value.transientInterventionPolicy.interventions
+		.map((i) => {
+			const staticInterventions = i.staticInterventions.filter((s) => s.appliedTo === appliedTo);
+			const dynamicInterventions = i.dynamicInterventions.filter((d) => d.appliedTo === appliedTo);
+			return {
+				name: i.name,
+				staticInterventions,
+				dynamicInterventions
+			};
+		})
+		.filter((i) => i.dynamicInterventions.length + i.staticInterventions.length > 0);
 
 const initialize = async (overwriteWithState: boolean = false) => {
 	const state = props.node.state;
@@ -454,6 +485,29 @@ const createNewInterventionPolicy = () => {
 	showSaveModal.value = true;
 };
 
+const extractInterventionPolicyFromInputs = async () => {
+	const state = cloneDeep(props.node.state);
+	if (!model.value?.id) {
+		return;
+	}
+
+	if (documentIds.value) {
+		const promiseList = [] as Promise<TaskResponse | null>[];
+		documentIds.value.forEach((documentId) => {
+			promiseList.push(
+				interventionPolicyFromDocument(documentId, model.value?.id as string, props.node.workflowId, props.node.id)
+			);
+		});
+		const responsesRaw = await Promise.all(promiseList);
+		responsesRaw.forEach((resp) => {
+			if (resp) {
+				state.taskIds.push(resp.id);
+			}
+		});
+	}
+	emit('update-state', state);
+};
+
 watch(
 	() => knobs.value,
 	async () => {
@@ -470,6 +524,20 @@ watch(
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
 			initialize();
+		}
+	}
+);
+
+watch(
+	() => props.node.state.taskIds,
+	async (watchVal) => {
+		if (watchVal.length > 0) {
+			isLoading.value = true;
+		} else {
+			isLoading.value = false;
+			const modelId = props.node.inputs[0].value?.[0];
+			if (!modelId) return;
+			await fetchInterventionPolicies(modelId);
 		}
 	}
 );

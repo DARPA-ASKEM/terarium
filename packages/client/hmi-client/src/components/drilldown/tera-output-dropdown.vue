@@ -13,7 +13,7 @@
 	>
 		<template #value="slotProps">
 			<div class="dropdown-option">
-				<span>{{ getLabelById(slotProps.value) }}</span>
+				<span>{{ getOutputLabel(items, slotProps.value) }}</span>
 				<span class="timestamp"> {{ getCreateTimeById(slotProps.value) }} </span>
 			</div>
 		</template>
@@ -22,7 +22,7 @@
 		</template>
 		<template #option="slotProps">
 			<div class="dropdown-option">
-				<span>{{ slotProps.option?.label }}</span>
+				<span>{{ getOutputLabel(items, slotProps.option?.id) }}</span>
 				<span class="timestamp">
 					{{ getElapsedTimeText(slotProps.option?.timestamp) }}
 				</span>
@@ -39,6 +39,7 @@ import { computed } from 'vue';
 import { WorkflowOutput, WorkflowPortStatus } from '@/types/workflow';
 import Dropdown from 'primevue/dropdown';
 import { getElapsedTimeText } from '@/utils/date';
+import { getOutputLabel } from '@/services/workflow';
 
 const props = defineProps<{
 	options: WorkflowOutput<any>[] | { label: string; items: WorkflowOutput<any>[] }[];
@@ -55,11 +56,6 @@ const getCreateTimeById = (id: string) => {
 	const option = getOptionById(id);
 	if (!option?.timestamp) return '';
 	return getElapsedTimeText(option.timestamp);
-};
-
-const getLabelById = (id: string) => {
-	const option = getOptionById(id);
-	return option?.label;
 };
 </script>
 

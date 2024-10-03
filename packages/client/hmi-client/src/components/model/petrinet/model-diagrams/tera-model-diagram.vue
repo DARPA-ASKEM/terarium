@@ -38,7 +38,7 @@
 				</li>
 			</ul>
 		</tera-resizable-panel>
-		<figure v-else-if="model" ref="graphElement" class="graph-element preview">
+		<figure v-else-if="model" ref="graphElement" class="graph-element preview" :key="`preview_${model.id}`">
 			<tera-progress-spinner v-if="!renderer" class="spinner" is-centered :font-size="2">
 				Loading...
 			</tera-progress-spinner>

@@ -1,5 +1,5 @@
 # Build the Spring Boot application
-FROM eclipse-temurin:17.0.12_7-jdk-noble AS funman_taskrunner_builder
+FROM ghcr.io/darpa-askem/funman-base:latest AS funman_taskrunner_builder
 
 ###### DEV ONLY ######
 #VVVVVVVVVVVVVVVVVVVVV
@@ -8,29 +8,13 @@ FROM eclipse-temurin:17.0.12_7-jdk-noble AS funman_taskrunner_builder
 
 # Install Python
 RUN apt-get update && apt-get install -y --no-install-recommends \
-	software-properties-common
-RUN add-apt-repository ppa:deadsnakes/ppa
-RUN apt-get update && apt-get install -y --no-install-recommends \
-  python3.8 \
-  python3.8-venv \
+  openjdk-17-jdk-headless \
   gcc \
   git \
   wget && \
   rm -rf /var/lib/apt/lists/*
 
-# Set the default Python version to 3.8
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.8 1 && \
- update-alternatives --set python /usr/bin/python3.8
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1 && \
- update-alternatives --set python3 /usr/bin/python3.8
-
-# install pip for python 3.8
-RUN python -m ensurepip --upgrade
-RUN /bin/sh -c set -eux [ -s "/usr/local/bin/pip3" ]; [ ! -e "/usr/local/bin/pip" ]; ln -svT "pip3" "/usr/local/bin/pip";
-
-# Verify the installation
-RUN python --version
-RUN pip --version
+WORKDIR /
 
 # Install funman-api
 COPY ./packages/funman/funman-version.txt /funmanVersion.txt
@@ -39,7 +23,8 @@ RUN COMMIT_SHA="$(cat /funmanVersion.txt)" && \
   wget --progress=dot:giga -O funman.tar.gz "https://github.com/DARPA-ASKEM/funman-api/archive/${COMMIT_SHA}.tar.gz" && \
   tar -zxvf funman.tar.gz && \
   rm funman.tar.gz && \
-  mv -v funman-* funman-api
+  mv -v funman-api-* funman-api
+
 WORKDIR /funman-api
 RUN pip install --no-cache-dir . && \
   pip install --no-cache-dir auxiliary_packages/funman_dreal && \

@@ -118,21 +118,16 @@
 
 		<!-- Preview -->
 		<template #preview>
-			<tera-drilldown-preview
-				v-if="selectedOutputId"
-				title="Simulation output"
-				:options="outputs"
-				v-model:output="selectedOutputId"
-				@update:selection="onSelection"
-				:is-loading="showSpinner"
-				is-selectable
-			>
+			<tera-drilldown-section v-if="selectedOutputId" :is-loading="showSpinner">
+				<template #header-controls-right>
+					<Button class="mr-3" label="Save for re-use" severity="secondary" outlined @click="showSaveDataset = true" />
+				</template>
 				<tera-operator-output-summary
 					v-if="node.state.summaryId && runResults[selectedRunId]"
 					:summary-id="node.state.summaryId"
-					class="pt-3"
+					class="p-3"
 				/>
-				<div class="flex flex-row align-items-center gap-2">
+				<div class="pl-3 pr-3 flex flex-row align-items-center gap-2">
 					<SelectButton
 						class=""
 						:model-value="view"
@@ -151,6 +146,7 @@
 					<div v-if="view === OutputView.Charts" ref="outputPanel">
 						<template v-for="(cfg, index) of node.state.chartConfigs" :key="index">
 							<tera-chart-control
+								class="pr-3 pl-3"
 								:chart-config="{ selectedRun: selectedRunId, selectedVariable: cfg }"
 								multi-select
 								show-remove-button
@@ -165,7 +161,7 @@
 								:visualization-spec="preparedCharts[index]"
 							/>
 							<!-- If no variables are selected, show empty state -->
-							<section class="empty-chart" v-else>
+							<section class="m-3 empty-chart" v-else>
 								<img src="@assets/svg/seed.svg" class="empty-image" alt="" draggable="false" />
 								<p>Select one or more variables for this chart</p>
 							</section>
@@ -178,7 +174,7 @@
 						<!-- Spacer at bottom of page -->
 						<div style="height: 2rem"></div>
 					</div>
-					<div v-else-if="view === OutputView.Data">
+					<div v-else-if="view === OutputView.Data" class="p-3">
 						<tera-dataset-datatable
 							v-if="rawContent[selectedRunId]"
 							:rows="10"
@@ -186,7 +182,7 @@
 						/>
 					</div>
 				</template>
-			</tera-drilldown-preview>
+			</tera-drilldown-section>
 
 			<!-- Empty state -->
 			<section v-else class="empty-state">
@@ -195,6 +191,12 @@
 			</section>
 		</template>
 	</tera-drilldown>
+	<tera-save-simulation-modal
+		:is-visible="showSaveDataset"
+		@close-modal="showSaveDataset = false"
+		:simulation-id="node.state.forecastId"
+		:assets="[{ id: datasetId, type: AssetType.Dataset }]"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -204,9 +206,11 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { Vue3Lottie } from 'vue3-lottie';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
+import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import type { CsvAsset, InterventionPolicy, SimulationRequest, TimeSpan } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import {
 	getRunResultCSV,
@@ -217,13 +221,12 @@ import {
 	CiemssMethodOptions
 } from '@/services/models/simulation-service';
 import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
-import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
+import { chartActionsProxy, nodeMetadata } from '@/components/workflow/util';
 
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import SelectButton from 'primevue/selectbutton';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
@@ -237,8 +240,9 @@ import { createForecastChart, createInterventionChartMarkers } from '@/services/
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import { getModelConfigurationById } from '@/services/model-configurations';
-import { getInterventionPolicyById } from '@/services/intervention-policy';
+import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraInterventionSummaryCard from '@/components/workflow/ops/simulate-ciemss/tera-intervention-summary-card.vue';
+import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import TeraChartControl from '../../tera-chart-control.vue';
 
@@ -254,6 +258,11 @@ const codeText = ref('');
 
 const policyInterventionId = computed(() => props.node.inputs[1].value?.[0]);
 const interventionPolicy = ref<InterventionPolicy | null>(null);
+const datasetId = computed(() => {
+	if (!selectedOutputId.value) return '';
+	const output = props.node.outputs.find((o) => o.id === selectedOutputId.value);
+	return output?.value?.[0] ?? '';
+});
 
 const llmThoughts = ref<any[]>([]);
 const llmQuery = ref('');
@@ -302,18 +311,6 @@ let pyciemssMap: Record<string, string> = {};
 
 const kernelManager = new KernelSessionManager();
 
-const outputs = computed(() => {
-	if (!_.isEmpty(props.node.outputs)) {
-		return [
-			{
-				label: 'Select an output',
-				items: props.node.outputs
-			}
-		];
-	}
-	return [];
-});
-
 const presetType = computed(() => {
 	if (numSamples.value === speedPreset.numSamples && method.value === speedPreset.method) {
 		return CiemssPresetTypes.Fast;
@@ -330,7 +327,9 @@ const selectedRunId = computed(() => props.node.outputs.find((o) => o.id === sel
 
 const cancelRunId = computed(() => props.node.state.inProgressForecastId);
 const outputPanel = ref(null);
-const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+const chartSize = useDrilldownChartSize(outputPanel);
+
+const showSaveDataset = ref(false);
 
 const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperationState) => {
 	emit('update-state', state);
@@ -348,7 +347,9 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 	updateState();
 };
 
-const groupedInterventionOutputs = computed(() => _.groupBy(interventionPolicy.value?.interventions, 'appliedTo'));
+const groupedInterventionOutputs = computed(() =>
+	_.groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
+);
 
 const preparedCharts = computed(() => {
 	if (!selectedRunId.value) return [];
@@ -659,8 +660,7 @@ onUnmounted(() => kernelManager.shutdown());
 }
 
 .empty-state {
-	position: absolute;
-	width: calc(100% - 240px);
+	width: 100%;
 	height: 100%;
 	display: flex;
 	flex-direction: column;

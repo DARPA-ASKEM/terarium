@@ -196,7 +196,11 @@ export interface DocumentAsset extends TerariumAsset {
     text?: string;
     grounding?: Grounding;
     documentAbstract?: string;
+    /**
+     * @deprecated
+     */
     assets?: DocumentExtraction[];
+    extractions?: ExtractedDocumentPage[];
 }
 
 export interface ExternalPublication extends TerariumAsset {
@@ -645,6 +649,7 @@ export interface OptimizeInterventions {
     startTime?: number[];
     objectiveFunctionOption?: string[];
     initialGuess?: number[];
+    relativeImportance?: number[];
 }
 
 export interface OptimizeQoi {
@@ -739,6 +744,13 @@ export interface DocumentExtraction {
     fileName: string;
     assetType: ExtractionAssetType;
     metadata: { [index: string]: any };
+}
+
+export interface ExtractedDocumentPage {
+    pageNumber: number;
+    text: string;
+    tables: any[];
+    equations: any[];
 }
 
 export interface ModelHeader {
@@ -1054,7 +1066,9 @@ export enum ClientEventType {
     Notification = "NOTIFICATION",
     SimulationNotification = "SIMULATION_NOTIFICATION",
     SimulationPyciemss = "SIMULATION_PYCIEMSS",
-    TaskEnrichAmr = "TASK_ENRICH_AMR",
+    TaskExtractTextPdf = "TASK_EXTRACT_TEXT_PDF",
+    TaskExtractTablePdf = "TASK_EXTRACT_TABLE_PDF",
+    TaskExtractEquationPdf = "TASK_EXTRACT_EQUATION_PDF",
     TaskFunmanValidation = "TASK_FUNMAN_VALIDATION",
     TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
     TaskGollmConfigureModelFromDataset = "TASK_GOLLM_CONFIGURE_MODEL_FROM_DATASET",
@@ -1062,6 +1076,7 @@ export enum ClientEventType {
     TaskGollmEnrichAmr = "TASK_GOLLM_ENRICH_AMR",
     TaskGollmEquationsFromImage = "TASK_GOLLM_EQUATIONS_FROM_IMAGE",
     TaskGollmGenerateSummary = "TASK_GOLLM_GENERATE_SUMMARY",
+    TaskGollmInterventionsFromDocument = "TASK_GOLLM_INTERVENTIONS_FROM_DOCUMENT",
     TaskGollmModelCard = "TASK_GOLLM_MODEL_CARD",
     TaskMiraAmrToMmt = "TASK_MIRA_AMR_TO_MMT",
     TaskMiraGenerateModelLatex = "TASK_MIRA_GENERATE_MODEL_LATEX",

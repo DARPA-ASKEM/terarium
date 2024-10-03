@@ -1,7 +1,7 @@
 import json
 import sys
-from gollm.entities import ConfigureModel
-from gollm.openai.tool_utils import amr_enrichment_chain
+from gollm_openai.tool_utils import amr_enrichment_chain
+
 from taskrunner import TaskRunnerInterface
 
 

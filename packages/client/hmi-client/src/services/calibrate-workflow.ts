@@ -26,9 +26,13 @@ export const setupModelInput = async (modelConfigId: string | undefined) => {
 			modelOptions.push(o);
 		});
 
-		modelOptions.push({ id: 'timestamp' });
-
-		return { modelConfiguration, modelOptions, modelPartUnits, modelPartTypes };
+		return {
+			model,
+			modelConfiguration,
+			modelOptions,
+			modelPartUnits,
+			modelPartTypes
+		};
 	}
 	return {};
 };

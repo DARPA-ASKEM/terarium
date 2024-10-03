@@ -148,7 +148,7 @@
 							:maxChars="60"
 							:context-language="contextLanguage"
 							@llm-output="(data: any) => appendCode(data, 'code')"
-							@llm-thought-output="(data: any) => llmThoughts.push(data)"
+							@llm-thought-output="(data: any) => updateThoughts(data)"
 							@question-asked="updateLlmQuery"
 						>
 							<template #toolbar-right-side>
@@ -174,7 +174,7 @@
 					:value="executeResponse.value"
 					:traceback="executeResponse.traceback"
 				/>
-				<div v-if="executeResponse.status !== OperatorStatus.ERROR">{{ notebookResponse }}</div>
+				<p class="executed-code" v-if="executeResponse.status !== OperatorStatus.ERROR">{{ notebookResponse }}</p>
 			</tera-drilldown-preview>
 		</tera-columnar-panel>
 	</tera-drilldown>
@@ -263,7 +263,7 @@ const isEditingDescription = ref(false);
 const newDescription = ref('');
 const descriptionTextareaRef = ref<ComponentPublicInstance<typeof Textarea> | null>(null);
 
-const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close', 'update-output-port']);
+const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close']);
 
 interface BasicKnobs {
 	transientModelConfig: ModelConfiguration;
@@ -673,6 +673,15 @@ const resetConfiguration = () => {
 	});
 };
 
+const updateThoughts = (data: any) => {
+	llmThoughts.value.push(data);
+	const llmResponse = llmThoughts.value.findLast((thought) => thought?.msg_type === 'llm_response');
+	// If the last thought is a LLM response, update the notebook response
+	if (llmResponse) {
+		notebookResponse.value = llmResponse.content.text;
+	}
+};
+
 watch(
 	() => props.node.state.modelConfigTaskIds,
 	async (watchVal) => {
@@ -837,5 +846,9 @@ button.start-edit {
 
 .secondary-text {
 	color: var(--text-color-subdued);
+}
+
+.executed-code {
+	white-space: pre-wrap;
 }
 </style>

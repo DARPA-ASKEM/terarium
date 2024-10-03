@@ -25,13 +25,33 @@
 					<!-- Mapping section -->
 					<div class="form-section">
 						<h5 class="mb-1">Mapping</h5>
-						<p class="mb-2">Map model variables to dataset columns. Don't forget the timeline variable.</p>
+						<p class="mb-2">
+							Select a subset of output variables of the model and individually assosiate them to columns in the
+							dataset.
+						</p>
+
+						<!-- Mapping table: Time variables -->
+						<div class="input-row">
+							<div class="label-and-input">
+								<label class="column-header">Model: Timeline variable</label>
+								<tera-input-text disabled model-value="timestamp" />
+							</div>
+							<div class="label-and-input">
+								<label class="column-header">Dataset: Timeline variable</label>
+								<Dropdown
+									class="w-full"
+									:placeholder="mappingDropdownPlaceholder"
+									v-model="knobs.timestampColName"
+									:options="datasetColumns?.map((ele) => ele.name)"
+								/>
+							</div>
+						</div>
 
 						<!-- Mapping table: Other variables -->
 						<DataTable class="mapping-table" :value="mapping">
 							<Column field="modelVariable">
 								<template #header>
-									<span class="column-header">Model variables</span>
+									<span class="column-header">Model: Other variables</span>
 								</template>
 								<template #body="{ data, field }">
 									<Dropdown
@@ -44,7 +64,7 @@
 							</Column>
 							<Column field="datasetVariable">
 								<template #header>
-									<span class="column-header">Dataset variables</span>
+									<span class="column-header">Dataset: Other variables</span>
 								</template>
 								<template #body="{ data, field }">
 									<Dropdown
@@ -75,7 +95,7 @@
 									@click="getAutoMapping"
 								/>
 							</div>
-							<Button class="p-button-sm p-button-text" label="Delete all mapping" @click="deleteMapping" />
+							<Button class="p-button-sm p-button-text" label="Delete all mapping" @click="deleteAllMappings" />
 						</div>
 					</div>
 
@@ -94,73 +114,78 @@
 								@update:model-value="setPresetValues"
 							/>
 						</div>
-						<div class="spacer m-3" />
-						<p class="">
-							Number of Samples
-							<i v-tooltip="numberOfSamplesTooltip" class="pi pi-info-circle info-circle" />
-						</p>
-						<div class="input-row">
-							<div class="label-and-input">
-								<tera-input-number inputId="integeronly" v-model="knobs.numSamples" @update:model-value="updateState" />
+						<div class="mt-1 additional-settings">
+							<p>
+								Number of Samples
+								<i v-tooltip="numberOfSamplesTooltip" class="pi pi-info-circle info-circle" />
+							</p>
+							<div class="input-row">
+								<div class="label-and-input">
+									<tera-input-number
+										inputId="integeronly"
+										v-model="knobs.numSamples"
+										@update:model-value="updateState"
+									/>
+								</div>
 							</div>
-						</div>
-						<div class="spacer m-3" />
-						<p class="font-semibold">
-							ODE solver options
-							<i v-tooltip="odeSolverOptionsTooltip" class="pi pi-info-circle info-circle" />
-						</p>
-						<div class="input-row">
-							<div class="label-and-input">
-								<label for="5">Method</label>
-								<Dropdown
-									id="5"
-									v-model="knobs.method"
-									:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
-									@update:model-value="updateState"
-								/>
+							<div class="spacer m-3" />
+							<p class="font-semibold">
+								ODE solver options
+								<i v-tooltip="odeSolverOptionsTooltip" class="pi pi-info-circle info-circle" />
+							</p>
+							<div class="input-row">
+								<div class="label-and-input">
+									<label for="5">Method</label>
+									<Dropdown
+										id="5"
+										v-model="knobs.method"
+										:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
+										@update:model-value="updateState"
+									/>
+								</div>
+								<div class="label-and-input">
+									<label for="num-steps">Step size</label>
+									<tera-input-number inputId="integeronly" v-model="knobs.stepSize" />
+								</div>
 							</div>
-							<div class="label-and-input">
-								<label for="num-steps">Step size</label>
-								<tera-input-number inputId="integeronly" v-model="knobs.stepSize" />
-							</div>
-						</div>
-						<div class="spacer m-3" />
-						<p class="font-semibold">
-							Inference Options
-							<i v-tooltip="inferenceOptionsTooltip" class="pi pi-info-circle info-circle" />
-						</p>
-						<div class="input-row">
-							<div class="label-and-input">
-								<label for="num-iterations">Number of solver iterations</label>
-								<tera-input-number
-									inputId="integeronly"
-									v-model="knobs.numIterations"
-									@update:model-value="updateState"
-								/>
-							</div>
-							<div class="label-and-input">
-								<label for="num-samples">End time for forecast</label>
-								<tera-input-number inputId="integeronly" v-model="knobs.endTime" />
-							</div>
-							<div class="label-and-input">
-								<label for="learning-rate">Learning rate</label>
-								<tera-input-number
-									inputId="numberonly"
-									v-model="knobs.learningRate"
-									@update:model-value="updateState"
-								/>
-							</div>
-							<div class="label-and-input">
-								<label>Inference algorithm</label>
-								<tera-input-text disabled model-value="SVI" />
-							</div>
-							<div class="label-and-input">
-								<label>Loss function</label>
-								<tera-input-text disabled model-value="ELBO" />
-							</div>
-							<div class="label-and-input">
-								<label>Optimizer method</label>
-								<tera-input-text disabled model-value="ADAM" />
+							<div class="spacer m-3" />
+							<p class="font-semibold">
+								Inference Options
+								<i v-tooltip="inferenceOptionsTooltip" class="pi pi-info-circle info-circle" />
+							</p>
+							<div class="input-row">
+								<div class="label-and-input">
+									<label for="num-iterations">Number of solver iterations</label>
+									<tera-input-number
+										inputId="integeronly"
+										v-model="knobs.numIterations"
+										@update:model-value="updateState"
+									/>
+								</div>
+								<div class="label-and-input">
+									<label for="num-samples">End time for forecast</label>
+									<tera-input-number inputId="integeronly" v-model="knobs.endTime" />
+								</div>
+								<div class="label-and-input">
+									<label for="learning-rate">Learning rate</label>
+									<tera-input-number
+										inputId="numberonly"
+										v-model="knobs.learningRate"
+										@update:model-value="updateState"
+									/>
+								</div>
+								<div class="label-and-input">
+									<label>Inference algorithm</label>
+									<tera-input-text disabled model-value="SVI" />
+								</div>
+								<div class="label-and-input">
+									<label>Loss function</label>
+									<tera-input-text disabled model-value="ELBO" />
+								</div>
+								<div class="label-and-input">
+									<label>Optimizer method</label>
+									<tera-input-text disabled model-value="ADAM" />
+								</div>
 							</div>
 						</div>
 					</section>
@@ -185,104 +210,114 @@
 
 		<!-- Output section -->
 		<template #preview>
-			<tera-drilldown-section>
+			<tera-drilldown-section v-if="showOutputSection">
 				<template #header-controls-left v-if="configuredModelConfig?.name">
-					<h5>{{ configuredModelConfig.name }}</h5>
+					<h5 class="ml-3">{{ configuredModelConfig.name }}</h5>
 				</template>
 				<template #header-controls-right>
 					<Button
 						label="Save for re-use"
 						severity="secondary"
+						class="mr-3"
 						outlined
 						:disabled="!configuredModelConfig"
 						@click="showSaveModal = true"
 					/>
 				</template>
-				<tera-operator-output-summary v-if="node.state.summaryId && !showSpinner" :summary-id="node.state.summaryId" />
-
-				<!-- Loss chart -->
-				<h5>Loss</h5>
-				<div ref="lossChartContainer">
-					<vega-chart
-						expandable
-						v-if="lossValues.length > 0 || showSpinner"
-						ref="lossChartRef"
-						:are-embed-actions-visible="true"
-						:visualization-spec="lossChartSpec"
-					/>
-				</div>
-
-				<!-- Variable charts -->
-				<div v-if="!showSpinner" class="form-section">
-					<section ref="outputPanel" v-if="modelConfig && csvAsset">
-						<h5>Parameters</h5>
-						<br />
-						<template v-for="setting of selectedParameterSettings" :key="setting.id">
-							<vega-chart
-								v-if="preparedDistributionCharts[setting.selectedVariables[0]]"
-								expandable
-								:are-embed-actions-visible="true"
-								:visualization-spec="preparedDistributionCharts[setting.selectedVariables[0]].histogram"
-							>
-								<template v-slot:footer>
-									<table class="distribution-table">
-										<thead>
-											<tr>
-												<th scope="col"></th>
-												<th scope="col">
-													{{ preparedDistributionCharts[setting.selectedVariables[0]].stat.header[0] }}
-												</th>
-												<th scope="col">
-													{{ preparedDistributionCharts[setting.selectedVariables[0]].stat.header[1] }}
-												</th>
-											</tr>
-										</thead>
-										<tbody>
-											<tr>
-												<th scope="row">Mean</th>
-												<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].stat.mean[0] }}</td>
-												<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].stat.mean[1] }}</td>
-											</tr>
-											<tr>
-												<th scope="row">Variance</th>
-												<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].stat.variance[0] }}</td>
-												<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].stat.variance[1] }}</td>
-											</tr>
-										</tbody>
-									</table>
-								</template>
-							</vega-chart>
-						</template>
-						<h5>Variables</h5>
-						<br />
-						<template v-for="setting of selectedVariableSettings" :key="setting.id">
+				<tera-operator-output-summary
+					v-if="node.state.summaryId && !isLoading"
+					class="p-3"
+					:summary-id="node.state.summaryId"
+				/>
+				<Accordion :active-index="0" class="px-2">
+					<AccordionTab header="Loss">
+						<!-- Loss chart -->
+						<div ref="lossChartContainer">
 							<vega-chart
 								expandable
+								v-if="lossValues.length > 0 || isLoading"
+								ref="lossChartRef"
 								:are-embed-actions-visible="true"
-								:visualization-spec="preparedCharts[setting.selectedVariables[0]]"
+								:visualization-spec="lossChartSpec"
 							/>
-						</template>
-						<h5>Errors</h5>
-						<vega-chart
-							v-if="errorData.length > 0 && selectedErrorVariableSettings.length > 0"
-							:expandable="onExpandErrorChart"
-							:are-embed-actions-visible="true"
-							:visualization-spec="errorChart"
-						/>
+						</div>
+					</AccordionTab>
+				</Accordion>
+				<div v-if="!isLoading">
+					<section ref="outputPanel" v-if="modelConfig && csvAsset">
+						<Accordion multiple :active-index="[0, 1, 2]" class="px-2">
+							<AccordionTab header="Parameters">
+								<template v-for="setting of selectedParameterSettings" :key="setting.id">
+									<vega-chart
+										v-if="preparedDistributionCharts[setting.selectedVariables[0]]"
+										expandable
+										:are-embed-actions-visible="true"
+										:visualization-spec="preparedDistributionCharts[setting.selectedVariables[0]].histogram"
+									>
+										<template v-slot:footer>
+											<table class="distribution-table">
+												<thead>
+													<tr>
+														<th scope="col"></th>
+														<th scope="col">
+															{{ preparedDistributionCharts[setting.selectedVariables[0]].header[0] }}
+														</th>
+														<th scope="col">
+															{{ preparedDistributionCharts[setting.selectedVariables[0]].header[1] }}
+														</th>
+													</tr>
+												</thead>
+												<tbody>
+													<tr>
+														<th scope="row">Mean</th>
+														<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].mean[0] }}</td>
+														<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].mean[1] }}</td>
+													</tr>
+													<tr>
+														<th scope="row">Variance</th>
+														<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].variance[0] }}</td>
+														<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].variance[1] }}</td>
+													</tr>
+												</tbody>
+											</table>
+										</template>
+									</vega-chart>
+								</template>
+							</AccordionTab>
+							<AccordionTab header="Variables">
+								<template v-for="setting of selectedVariableSettings" :key="setting.id">
+									<vega-chart
+										expandable
+										:are-embed-actions-visible="true"
+										:visualization-spec="preparedCharts[setting.selectedVariables[0]]"
+									/>
+								</template>
+							</AccordionTab>
+							<AccordionTab header="Errors" v-if="errorData.length > 0 && selectedErrorVariableSettings.length > 0">
+								<vega-chart
+									:expandable="onExpandErrorChart"
+									:are-embed-actions-visible="true"
+									:visualization-spec="errorChart"
+								/>
+							</AccordionTab>
+						</Accordion>
 					</section>
 					<section v-else-if="!modelConfig" class="emptyState">
 						<img src="@assets/svg/seed.svg" alt="" draggable="false" />
 						<p class="helpMessage">Connect a model configuration and dataset</p>
 					</section>
 				</div>
-
 				<section v-else class="emptyState">
 					<tera-progress-spinner :font-size="2" is-centered style="height: 12rem" />
 					<p>Processing...{{ props.node.state.currentProgress }}%</p>
 				</section>
-
 				<tera-notebook-error v-if="!_.isEmpty(node.state?.errorMessage?.traceback)" v-bind="node.state.errorMessage" />
 			</tera-drilldown-section>
+			<!-- Empty state if calibrate hasn't been run yet -->
+			<section v-else class="output-section-empty-state">
+				<Vue3Lottie :animationData="EmptySeed" :height="150" loop autoplay />
+				<p class="helpMessage">Click 'Run' to begin calibrating</p>
+			</section>
 		</template>
 
 		<template #sidebar-right>
@@ -374,14 +409,16 @@
 			</tera-slider-panel>
 		</template>
 	</tera-drilldown>
-	<tera-save-asset-modal
+	<tera-save-simulation-modal
 		:initial-name="configuredModelConfig?.name"
 		:is-visible="showSaveModal"
-		:asset="configuredModelConfig"
-		:asset-type="AssetType.ModelConfiguration"
+		:assets="[
+			{ id: configuredModelConfig?.id ?? '', type: AssetType.ModelConfiguration },
+			{ id: outputDatasetId, type: AssetType.Dataset }
+		]"
 		@close-modal="showSaveModal = false"
 		@on-save="onSaveAsModelConfiguration"
-		is-updating-asset
+		:simulation-id="node.state.forecastId"
 	/>
 </template>
 
@@ -390,6 +427,8 @@ import _ from 'lodash';
 import * as vega from 'vega';
 import { csvParse, autoType, mean, variance } from 'd3';
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
@@ -404,6 +443,8 @@ import {
 	saveAnnotation,
 	updateChartSettingsBySelectedVariables
 } from '@/services/chart-settings';
+import { Vue3Lottie } from 'vue3-lottie';
+import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
@@ -419,12 +460,13 @@ import {
 	CsvAsset,
 	DatasetColumn,
 	ModelConfiguration,
-	AssetType,
 	ChartAnnotation,
-	InterventionPolicy
+	InterventionPolicy,
+	ModelParameter,
+	AssetType
 } from '@/types/Types';
 import { CiemssPresetTypes, DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
-import { getTimespan, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
+import { getTimespan, nodeMetadata } from '@/components/workflow/util';
 import { useToastService } from '@/services/toast';
 import { autoCalibrationMapping } from '@/services/concept';
 import {
@@ -452,10 +494,12 @@ import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { displayNumber } from '@/utils/number';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
-import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
+import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import { useClientEvent } from '@/composables/useClientEvent';
-import { getInterventionPolicyById } from '@/services/intervention-policy';
+import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
+import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraInterventionSummaryCard from '@/components/workflow/ops/simulate-ciemss/tera-intervention-summary-card.vue';
+import { getParameters } from '@/model-representation/service';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults, getErrorData } from './calibrate-utils';
 
@@ -474,6 +518,7 @@ interface BasicKnobs {
 	stepSize: number;
 	learningRate: number;
 	method: string;
+	timestampColName: string;
 }
 
 const knobs = ref<BasicKnobs>({
@@ -482,7 +527,8 @@ const knobs = ref<BasicKnobs>({
 	endTime: props.node.state.endTime ?? 100,
 	stepSize: props.node.state.stepSize ?? 1,
 	learningRate: props.node.state.learningRate ?? 0.1,
-	method: props.node.state.method ?? CiemssMethodOptions.dopri5
+	method: props.node.state.method ?? CiemssMethodOptions.dopri5,
+	timestampColName: props.node.state.timestampColName ?? ''
 });
 
 const presetType = computed(() => {
@@ -494,6 +540,12 @@ const presetType = computed(() => {
 	}
 
 	return '';
+});
+
+const outputDatasetId = computed(() => {
+	if (!selectedOutputId.value) return '';
+	const output = props.node.outputs.find((o) => o.id === selectedOutputId.value);
+	return output?.value?.[0]?.datasetId ?? '';
 });
 
 const speedPreset = Object.freeze({
@@ -518,7 +570,9 @@ const odeSolverOptionsTooltip: string = 'TODO';
 // Model variables checked in the model configuration will be options in the mapping dropdown
 const modelStateOptions = ref<any[] | undefined>();
 
-const isOutputSettingsPanelOpen = ref(true);
+const modelParameters = ref<ModelParameter[]>([]);
+
+const isOutputSettingsPanelOpen = ref(false);
 const activeChartSettings = ref<ChartSetting | null>(null);
 
 const datasetColumns = ref<DatasetColumn[]>();
@@ -556,7 +610,7 @@ const errorData = ref<Record<string, any>[]>([]);
 const showSaveModal = ref(false);
 const configuredModelConfig = ref<ModelConfiguration | null>(null);
 
-const showSpinner = ref(false);
+const isLoading = ref(false);
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 
@@ -564,6 +618,16 @@ const mappingDropdownPlaceholder = computed(() => {
 	if (!_.isEmpty(modelStateOptions.value) && !_.isEmpty(datasetColumns.value)) return 'Select variable';
 	return 'Please wait...';
 });
+
+const showOutputSection = computed(
+	() =>
+		lossValues.value.length > 0 ||
+		selectedErrorVariableSettings.value.length > 0 ||
+		selectedVariableSettings.value.length > 0 ||
+		selectedParameterSettings.value.length > 0 ||
+		isLoading.value ||
+		!_.isEmpty(props.node.state?.errorMessage?.traceback)
+);
 
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);
@@ -589,23 +653,20 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 	}
 };
 
-const disableRunButton = computed(() => {
-	const timestampMapping = mapping.value.find((d) => d.modelVariable === 'timestamp');
-	return (
+const disableRunButton = computed(
+	() =>
 		!currentDatasetFileName.value ||
 		!csvAsset.value ||
 		!modelConfigId.value ||
 		!datasetId.value ||
-		!timestampMapping ||
-		timestampMapping.datasetVariable === ''
-	);
-});
+		knobs.value.timestampColName === ''
+);
 
 const selectedOutputId = ref<string>();
 const lossChartContainer = ref(null);
-const lossChartSize = computed(() => drilldownChartSize(lossChartContainer.value));
+const lossChartSize = useDrilldownChartSize(lossChartContainer);
 const outputPanel = ref(null);
-const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+const chartSize = useDrilldownChartSize(outputPanel);
 
 const chartSettings = computed(() => props.node.state.chartSettings ?? []);
 const selectedParameterSettings = computed(() =>
@@ -677,7 +738,9 @@ const preparedChartInputs = computed(() => {
 	};
 });
 
-const groupedInterventionOutputs = computed(() => _.groupBy(interventionPolicy.value?.interventions, 'appliedTo'));
+const groupedInterventionOutputs = computed(() =>
+	_.groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
+);
 
 const preparedCharts = computed(() => {
 	if (!preparedChartInputs.value) return {};
@@ -685,7 +748,7 @@ const preparedCharts = computed(() => {
 	const state = props.node.state;
 
 	// Need to get the dataset's time field
-	const datasetTimeField = state.mapping.find((d) => d.modelVariable === 'timestamp')?.datasetVariable;
+	const datasetTimeField = knobs.value.timestampColName;
 
 	const charts = {};
 	selectedVariableSettings.value.forEach((settings) => {
@@ -764,7 +827,7 @@ const preparedDistributionCharts = computed(() => {
 			mean: [mean(data, (d) => d[beforeFieldName]), mean(data, (d) => d[fieldName])].map(toDisplayNumber),
 			variance: [variance(data, (d) => d[beforeFieldName]), variance(data, (d) => d[fieldName])].map(toDisplayNumber)
 		};
-		charts[param] = { histogram, stat };
+		charts[param] = { histogram, ...stat };
 	});
 	return charts;
 });
@@ -813,7 +876,7 @@ const LOSS_CHART_DATA_SOURCE = 'lossData'; // Name of the streaming data source
 const lossChartRef = ref<InstanceType<typeof VegaChart>>();
 const lossChartSpec = ref();
 const lossValues = ref<{ [key: string]: number }[]>([]);
-const updateLossChartSpec = (data: string | Record<string, any>[]) => {
+const updateLossChartSpec = (data: string | Record<string, any>[], size: { width: number; height: number }) => {
 	lossChartSpec.value = createForecastChart(
 		null,
 		{
@@ -824,7 +887,7 @@ const updateLossChartSpec = (data: string | Record<string, any>[]) => {
 		null,
 		{
 			title: '',
-			width: lossChartSize.value.width,
+			width: size.width,
 			height: 100,
 			xAxisTitle: 'Solver iterations',
 			yAxisTitle: 'Loss'
@@ -832,10 +895,35 @@ const updateLossChartSpec = (data: string | Record<string, any>[]) => {
 	);
 };
 
+const initDefaultChartSettings = (state: CalibrationOperationStateCiemss) => {
+	// Initialize default selected chart settings when chart settings are not set yet. Return if chart settings are already set.
+	if (Array.isArray(state.chartSettings)) return;
+	const defaultSelectedParam = modelParameters.value.filter((p) => !!p.distribution).map((p) => p.id);
+	const mappedModelVariables = mapping.value
+		.filter((c) => ['state', 'observable'].includes(modelPartTypesMap.value[c.modelVariable]))
+		.map((c) => c.modelVariable);
+	state.chartSettings = updateChartSettingsBySelectedVariables(
+		[],
+		ChartSettingType.VARIABLE_COMPARISON,
+		mappedModelVariables
+	);
+	state.chartSettings = updateChartSettingsBySelectedVariables(
+		state.chartSettings,
+		ChartSettingType.ERROR_DISTRIBUTION,
+		mappedModelVariables
+	);
+	state.chartSettings = updateChartSettingsBySelectedVariables(
+		state.chartSettings,
+		ChartSettingType.DISTRIBUTION_COMPARISON,
+		defaultSelectedParam
+	);
+};
+
 const runCalibrate = async () => {
 	if (!modelConfigId.value || !datasetId.value || !currentDatasetFileName.value) return;
 
 	const formattedMap: { [index: string]: string } = {};
+	formattedMap[knobs.value.timestampColName] = 'timestamp';
 	// If the user has done any mapping populate formattedMap
 	if (mapping.value[0].datasetVariable !== '') {
 		mapping.value.forEach((ele) => {
@@ -877,16 +965,7 @@ const runCalibrate = async () => {
 		state.currentProgress = 0;
 		state.inProgressForecastId = '';
 		state.inProgressPreForecastId = '';
-
-		// show selected input settings in the charts & output panel
-		state.chartSettings = updateChartSettingsBySelectedVariables(
-			chartSettings.value,
-			ChartSettingType.VARIABLE_COMPARISON,
-			mapping.value
-				.filter((c) => ['state', 'observable'].includes(modelPartTypesMap.value[c.modelVariable]))
-				.map((c) => c.modelVariable)
-		);
-
+		initDefaultChartSettings(state);
 		emit('update-state', state);
 	}
 };
@@ -955,8 +1034,8 @@ function addMapping() {
 	emit('update-state', state);
 }
 
-function deleteMapping() {
-	mapping.value = [{ modelVariable: '', datasetVariable: '' }];
+function deleteAllMappings() {
+	mapping.value = [];
 
 	const state = _.cloneDeep(props.node.state);
 	state.mapping = mapping.value;
@@ -989,11 +1068,12 @@ async function getAutoMapping() {
 
 const initialize = async () => {
 	// Model configuration input
-	const { modelConfiguration, modelOptions, modelPartUnits, modelPartTypes } = await setupModelInput(
+	const { model, modelConfiguration, modelOptions, modelPartUnits, modelPartTypes } = await setupModelInput(
 		modelConfigId.value
 	);
 	modelConfig.value = modelConfiguration;
 	modelStateOptions.value = modelOptions;
+	modelParameters.value = model ? getParameters(model) : [];
 	modelVarUnits.value = modelPartUnits ?? {};
 	modelPartTypesMap.value = modelPartTypes ?? {};
 
@@ -1004,6 +1084,14 @@ const initialize = async () => {
 	datasetColumns.value = datasetOptions;
 
 	getConfiguredModelConfig();
+
+	// look for timestamp col in dataset if its not yet filled in.
+	if (knobs.value.timestampColName === '') {
+		const timeCol = datasetColumns.value?.find((ele) => ele.name.toLocaleLowerCase().startsWith('time'));
+		if (timeCol) {
+			knobs.value.timestampColName = timeCol.name;
+		}
+	}
 };
 
 const onSaveAsModelConfiguration = async () => {
@@ -1029,21 +1117,22 @@ watch(
 		state.numIterations = knobs.value.numIterations;
 		state.numSamples = knobs.value.numSamples;
 		state.endTime = knobs.value.endTime;
+		state.timestampColName = knobs.value.timestampColName;
 		emit('update-state', state);
 	},
 	{ deep: true }
 );
 
 watch(
-	() => props.node.state.inProgressCalibrationId,
-	(id) => {
+	[() => props.node.state.inProgressCalibrationId, lossChartSize],
+	([id, size]) => {
 		if (id === '') {
-			showSpinner.value = false;
-			updateLossChartSpec(lossValues.value);
+			isLoading.value = false;
+			updateLossChartSpec(lossValues.value, size);
 			unsubscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
 		} else {
-			showSpinner.value = true;
-			updateLossChartSpec(LOSS_CHART_DATA_SOURCE);
+			isLoading.value = true;
+			updateLossChartSpec(LOSS_CHART_DATA_SOURCE, size);
 			subscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
 		}
 	},
@@ -1066,7 +1155,7 @@ watch(
 						iter: i,
 						loss: d.data.loss
 					}));
-				updateLossChartSpec(lossValues.value);
+				updateLossChartSpec(lossValues.value, lossChartSize.value);
 			}
 
 			const state = props.node.state;
@@ -1144,7 +1233,7 @@ th {
 .column-header {
 	color: var(--text-color-primary);
 	font-size: var(--font-body-small);
-	font-weight: var(--font-weight);
+	font-weight: var(--font-weight-semibold);
 	padding-top: var(--gap-2);
 }
 
@@ -1238,5 +1327,22 @@ img {
 		border-top: 1px solid var(--surface-border-alt);
 		width: 100%;
 	}
+}
+
+.output-section-empty-state {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--gap);
+	text-align: center;
+	pointer-events: none;
+}
+
+.additional-settings {
+	background: var(--surface-200);
+	padding: var(--gap-2);
 }
 </style>
