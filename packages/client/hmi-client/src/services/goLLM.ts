@@ -51,6 +51,33 @@ export async function interventionPolicyFromDocument(
 	return data;
 }
 
+export async function enrichModelMetadata(modelId: string, documentId: string, overwrite: boolean): Promise<void> {
+	try {
+		const response = await API.get<TaskResponse>('/gollm/enrich-model-metadata', {
+			params: {
+				'model-id': modelId,
+				'document-id': documentId,
+				overwrite
+			}
+		});
+
+		const taskId = response.data.id;
+		await handleTaskById(taskId, {
+			ondata(data, closeConnection) {
+				if (data?.status === TaskStatus.Failed) {
+					closeConnection();
+					throw new FatalError('Task failed');
+				}
+				if (data.status === TaskStatus.Success) {
+					closeConnection();
+				}
+			}
+		});
+	} catch (err) {
+		logger.error(err);
+	}
+}
+
 export async function configureModelFromDocument(
 	documentId: string,
 	modelId: string,
@@ -65,6 +92,20 @@ export async function configureModelFromDocument(
 			'node-id': nodeId
 		}
 	});
+	return data;
+}
+
+export async function equationsFromImage(documentId: string, base64ImageStr: string): Promise<TaskResponse> {
+	const { data } = await API.post<TaskResponse>(
+		'/gollm/equations-from-image',
+		{ base64ImageStr },
+		{
+			params: {
+				'document-id': documentId,
+				mode: 'SYNC'
+			}
+		}
+	);
 	return data;
 }
 
