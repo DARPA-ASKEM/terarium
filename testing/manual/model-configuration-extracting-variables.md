@@ -73,12 +73,12 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
         - The initials should be the same as the default configuration
 
 ### 5. The gold standard - SIDARTHE model
-1. Add the SIDARTHE model and the SIR contact matrix dataset to the workflow 
+1. Add the SIDARTHE model to the workflow 
 2. Create a new "Configure model" operator 
-3. Attach the SIDARTHE model, SIR contact matrix dataset and SIR Document 1 to the "Configure model" operator 
-5. Extract configurations from the inputs 
-6. Ensure that the following configurations are extracted:
-    - There are 2-3 model configurations from the Document
+3. Attach the SIDARTHE model and SIR Document 1 to the "Configure model" operator 
+4. Extract configurations from the inputs 
+5. Ensure that the following configurations are extracted:
+    - There are 3 model configurations from the Document
         - These will include phases of the covid-19 epidemic in Italy
     - Initial values for S, I, D, A, R, T, H, and E should be extracted for all configurations
     - Parameter values for alpha, beta, delta, epsilon, eta, gamma, kappa, lambda, mu, nu, rho, theta, xi, zeta, tau, and sigma should be extracted for all configurations
