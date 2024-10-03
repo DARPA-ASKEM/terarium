@@ -16,10 +16,11 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 3. Add [SIR Document 2](https://drive.google.com/file/d/1U1h5YCBxom9k475QSOzkiIwyi5V159dV/view?usp=sharing) to your project
 4. Add [SIR Model](https://drive.google.com/file/d/1F9UWuvwJPZY_XAGflsOIYy4Qrl56KS91/view?usp=sharing) to your project
 5. Add [Stratified SIR model](https://drive.google.com/file/d/1r-zfKmHrOub7QT9BfdQEZabfZqveLhIq/view?usp=sharing) to your project
-6. Add [SIR timeseries Dataset 1](https://drive.google.com/file/d/1QM2TL6XrBHIlFOVSavugKAQErls7XtY8/view?usp=sharing) to your project
-7. Add [SIR timeseries Dataset 2](https://drive.google.com/file/d/1zKySIpyPN_aa-icxy1e8NHmVtkZs51Fn/view?usp=sharing) to your project
-8. Add [SIR contact matrix dataset](https://drive.google.com/file/d/17TByirv-LwunB0gDq46-Ww-SyJZYaHKD/view?usp=sharing) to your project
-9. Wait for extractions to finish for uploaded document
+6. Add [SIDARTHE model](https://drive.google.com/drive/folders/14z6WAldQky0xgOAM69f6hakXhyHobYMe) to your project
+7. Add [SIR timeseries Dataset 1](https://drive.google.com/file/d/1QM2TL6XrBHIlFOVSavugKAQErls7XtY8/view?usp=sharing) to your project
+8. Add [SIR timeseries Dataset 2](https://drive.google.com/file/d/1zKySIpyPN_aa-icxy1e8NHmVtkZs51Fn/view?usp=sharing) to your project
+9. Add [SIR contact matrix dataset](https://drive.google.com/file/d/17TByirv-LwunB0gDq46-Ww-SyJZYaHKD/view?usp=sharing) to your project
+10. Wait for extractions to finish for uploaded document
 
 ### 3. Extracting configurations from multiple documents and timeseries datasets
 1. Create a new workflow
@@ -72,14 +73,11 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
         - The initials should be the same as the default configuration
 
 ### 5. The gold standard - SIDARTHE model
-1. Add [SIR Document 1]() to your project
-2. Add [SIR Model]() to your project 
-3. Add the Stratified SIR model and the SIR contact matrix dataset to the workflow 
-4. Create a new "Configure model" operator 
-5. Attach the Stratified SIR model to the "Configure model" operator 
-6. Attach the SIR contact matrix dataset to the "Configure model" operator 
-7. Extract configurations from the inputs 
-8. Ensure that the following configurations are extracted:
+1. Add the SIDARTHE model and the SIR contact matrix dataset to the workflow 
+2. Create a new "Configure model" operator 
+3. Attach the SIDARTHE model, SIR contact matrix dataset and SIR Document 1 to the "Configure model" operator 
+5. Extract configurations from the inputs 
+6. Ensure that the following configurations are extracted:
     - There are 2-3 model configurations from the Document
         - These will include phases of the covid-19 epidemic in Italy
     - Initial values for S, I, D, A, R, T, H, and E should be extracted for all configurations
