@@ -7,7 +7,12 @@
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<template #sidebar>
-			<tera-slider-panel v-model:is-open="isDocViewerOpen" header="Document Viewer" content-width="100%">
+			<tera-slider-panel
+				v-if="document"
+				v-model:is-open="isDocViewerOpen"
+				header="Document Viewer"
+				content-width="100%"
+			>
 				<template #content>
 					<tera-drilldown-section :is-loading="isFetchingPDF">
 						<tera-pdf-embed ref="pdfViewer" v-if="pdfLink" :pdf-link="pdfLink" :title="document?.name || ''" />
@@ -123,7 +128,10 @@
 				<template #content>
 					<tera-drilldown-preview>
 						<tera-model v-if="selectedModel" is-workflow :assetId="selectedModel.id" @on-save="onModelSaveEvent" />
-						<tera-operator-placeholder v-else :node="node" class="h-100" />
+						<tera-operator-placeholder v-else :node="node" class="h-100">
+							<p v-if="loadingModel">Model is being created...</p>
+							<p v-else>Select equations to create a model</p>
+						</tera-operator-placeholder>
 					</tera-drilldown-preview>
 				</template>
 			</tera-slider-panel>

@@ -1,8 +1,8 @@
 <template>
-	<div class="placeholder-container">
+	<aside>
 		<img :src="placeholderGraphic" alt="Plant icon" />
 		<slot />
-	</div>
+	</aside>
 </template>
 
 <script setup lang="ts">
@@ -17,21 +17,20 @@ const placeholderGraphic = props.node.imageUrl ?? plants;
 </script>
 
 <style scoped>
-.placeholder-container {
+aside {
+	color: var(--text-color-subdued);
 	display: flex;
 	flex-direction: column;
+	gap: var(--gap-6);
 	justify-content: center;
-	font-size: var(--font-caption);
-	color: var(--text-color-subdued);
+	margin-top: var(--gap-8);
 	text-align: center;
-	gap: 0.5rem;
-	padding: 0.5rem;
 }
 
 img {
 	height: 5.5rem;
-	max-height: 8rem;
 	margin: 0 auto;
+	max-height: 8rem;
 	pointer-events: none;
 }
 </style>
