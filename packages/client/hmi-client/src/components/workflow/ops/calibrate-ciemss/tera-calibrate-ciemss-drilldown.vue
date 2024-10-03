@@ -105,7 +105,18 @@
 							Calibration settings
 							<i v-tooltip="calibrationSettingsToolTip" class="pi pi-info-circle info-circle" />
 						</h5>
-						<p class="mb-2">Select one of the presets or customize the settings below.</p>
+						<div class="input-row">
+							<div class="label-and-input">
+								<label>Start time</label>
+								<tera-input-text disabled model-value="0" />
+							</div>
+							<div class="label-and-input">
+								<label for="num-samples">End time</label>
+								<tera-input-number inputId="integeronly" v-model="knobs.endTime" />
+							</div>
+						</div>
+						<div class="spacer m-3" />
+						<p class="mb-2">Preset (optional)</p>
 						<div class="label-and-input">
 							<Dropdown
 								v-model="presetType"
@@ -115,18 +126,9 @@
 							/>
 						</div>
 						<div class="mt-1 additional-settings">
-							<p>
-								Number of Samples
-								<i v-tooltip="numberOfSamplesTooltip" class="pi pi-info-circle info-circle" />
-							</p>
-							<div class="input-row">
-								<div class="label-and-input">
-									<tera-input-number
-										inputId="integeronly"
-										v-model="knobs.numSamples"
-										@update:model-value="updateState"
-									/>
-								</div>
+							<div class="label-and-input">
+								<label>Number of Samples</label>
+								<tera-input-number inputId="integeronly" v-model="knobs.numSamples" @update:model-value="updateState" />
 							</div>
 							<div class="spacer m-3" />
 							<p class="font-semibold">
@@ -161,10 +163,6 @@
 										v-model="knobs.numIterations"
 										@update:model-value="updateState"
 									/>
-								</div>
-								<div class="label-and-input">
-									<label for="num-samples">End time for forecast</label>
-									<tera-input-number inputId="integeronly" v-model="knobs.endTime" />
 								</div>
 								<div class="label-and-input">
 									<label for="learning-rate">Learning rate</label>
@@ -563,7 +561,6 @@ const qualityPreset = Object.freeze({
 });
 
 const calibrationSettingsToolTip: string = 'TODO';
-const numberOfSamplesTooltip: string = 'TODO';
 const inferenceOptionsTooltip: string = 'TODO';
 const odeSolverOptionsTooltip: string = 'TODO';
 
@@ -1215,7 +1212,7 @@ watch(
 /* Mapping table */
 .mapping-table:deep(td) {
 	border: none !important;
-	padding: 0 var(--gap-1) var(--gap-2) 0 !important;
+	padding: 0 var(--gap-2) var(--gap-2) 0 !important;
 	background: var(--surface-100);
 }
 
