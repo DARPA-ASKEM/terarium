@@ -40,7 +40,13 @@ public class Intervention {
 	public Boolean validateIntervention() {
 		for (int i = 0; i < this.staticInterventions.size(); i++) {
 			if (this.staticInterventions.get(i).getTimestep().intValue() < 0) {
-				log.warn("Timestep is less than 0.");
+				log.warn(
+					String.format(
+						"The intervention % has a timestep % which is less than 0.",
+						this.getName(),
+						this.staticInterventions.get(i).getTimestep().toString()
+					)
+				);
 				return false;
 			}
 			for (int j = 0; j < this.staticInterventions.size(); j++) {
@@ -49,7 +55,14 @@ public class Intervention {
 				final String appliedToTwo = this.staticInterventions.get(j).getAppliedTo();
 				final Number timeTwo = this.staticInterventions.get(j).getTimestep();
 				if (i != j && appliedToOne == appliedToTwo && timeOne == timeTwo) {
-					log.warn("Duplicate appliedto and time pairs.");
+					log.warn(
+						String.format(
+							"The intervention % has duplicate applied to: % and time: % pairs.",
+							this.getName(),
+							appliedToOne,
+							timeOne
+						)
+					);
 					return false;
 				}
 			}
