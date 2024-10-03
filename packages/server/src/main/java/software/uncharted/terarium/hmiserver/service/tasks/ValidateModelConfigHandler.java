@@ -94,12 +94,12 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 			final HttpEntity fileEntity = new ByteArrayEntity(bytes, ContentType.TEXT_PLAIN);
 			simulationService.uploadFile(simulationId, resultFilename, fileEntity);
 
-			final Model contractedModel = objectMapper.convertValue(
-				result.get("response").get("contracted_model"),
-				Model.class
-			);
-			System.out.println("contractedModel: " + contractedModel);
-			modelService.createAsset(contractedModel, props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+			// final Model contractedModel = objectMapper.convertValue(
+			// 	result.get("response").get("contracted_model"),
+			// 	Model.class
+			// );
+			// System.out.println("contractedModel: " + contractedModel);
+			// modelService.createAsset(contractedModel, props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 
 			// Mark simulation as completed, update result file
 			sim.get().setStatus(ProgressState.COMPLETE);

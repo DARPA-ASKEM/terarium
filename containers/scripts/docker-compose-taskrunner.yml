@@ -48,11 +48,10 @@ services:
     command: /mira_task/dev.sh
 
   funman-taskrunner:
-    image: ghcr.io/darpa-askem/funman-taskrunner:latest
-    # build:
-    #   context: ../..
-    #   dockerfile: ./packages/funman/Dockerfile
-    #   target: funman_taskrunner_builder
+    build:
+      context: ../..
+      dockerfile: ./packages/funman/Dockerfile
+      target: funman_taskrunner_builder
     container_name: funman-taskrunner
     networks:
       - terarium
@@ -66,10 +65,11 @@ services:
         condition: service_healthy
     extra_hosts:
       - "${local_host_name}:host-gateway"
-    # volumes:
-    #   - ../../packages/funman:/funman_task
-    #   - ../../packages/taskrunner:/taskrunner
-    # command: /funman_task/dev.sh
+    volumes:
+      - ../../packages/funman:/funman_task
+      - ../../packages/taskrunner:/taskrunner
+    command: /funman_task/dev.sh
+    platform: linux/amd64
 
   equation_extraction_cpu-taskrunner:
     build:
