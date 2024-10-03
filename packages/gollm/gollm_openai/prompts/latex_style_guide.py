@@ -15,4 +15,5 @@ LATEXT_STYLE_GUIDE = """
 11) Avoid using homoglyphs
 12) Avoid words or multi-character names for variables and names
     a) Use camel case to express multi-word or multi-character names
+13) Do not use \\cdot for multiplication. Use whitespace instead.
 """
