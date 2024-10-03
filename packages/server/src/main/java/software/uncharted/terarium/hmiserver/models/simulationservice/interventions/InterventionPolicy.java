@@ -40,4 +40,19 @@ public class InterventionPolicy extends TerariumAsset {
 		}
 		return clone;
 	}
+
+	// Check each intervention this policy contains
+	// If any of them are are invalid the entire policy is invalid.
+	public Boolean validatePolicyIntervention() {
+		for (int i = 0; i < this.interventions.size(); i++) {
+			final boolean check = this.interventions.get(i).validateIntervention();
+			if (check == false) {
+				return false;
+			}
+			// If the policy contains two individual interventions that contain duplicates it is also invalid
+			// TODO make this somewhat clean
+		}
+
+		return true;
+	}
 }
