@@ -16,6 +16,7 @@ from gollm_openai.prompts.config_from_document import CONFIGURE_FROM_DOCUMENT_PR
 from gollm_openai.prompts.equations_from_image import EQUATIONS_FROM_IMAGE_PROMPT
 from gollm_openai.prompts.general_instruction import GENERAL_INSTRUCTION_PROMPT
 from gollm_openai.prompts.interventions_from_document import INTERVENTIONS_FROM_DOCUMENT_PROMPT
+from gollm_openai.prompts.latex_style_guide import LATEXT_STYLE_GUIDE
 from gollm_openai.prompts.model_card import INSTRUCTIONS
 from gollm_openai.prompts.model_meta_compare import MODEL_METADATA_COMPARE_PROMPT
 from openai import OpenAI
@@ -74,6 +75,11 @@ def equations_from_image(image: str) -> dict:
         response_schema = json.load(config_file)
     validate_schema(response_schema)
 
+    print("Building prompt to extract equations an image...")
+    prompt = EQUATIONS_FROM_IMAGE_PROMPT.format(
+        style_guide=LATEXT_STYLE_GUIDE
+    )
+
     client = OpenAI()
     output = client.chat.completions.create(
         model="gpt-4o-mini",
@@ -94,7 +100,7 @@ def equations_from_image(image: str) -> dict:
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": EQUATIONS_FROM_IMAGE_PROMPT},
+                    {"type": "text", "text": prompt},
                     {"type": "image_url", "image_url": {"url": f"{base64_image_str}{image}"}}
                 ]
             },
@@ -245,7 +251,7 @@ def model_card_chain(amr: str, research_paper: str = None) -> dict:
         model="gpt-4o-2024-08-06",
         temperature=0,
         frequency_penalty=0,
-        max_tokens=4000,
+        max_tokens=16000,
         presence_penalty=0,
         seed=123,
         top_p=1,
@@ -391,7 +397,7 @@ def compare_models(amrs: List[str]) -> str:
         presence_penalty=0,
         seed=123,
         temperature=0,
-        max_tokens=2048,
+        max_tokens=16000,
         response_format={
             "type": "json_schema",
             "json_schema": {
