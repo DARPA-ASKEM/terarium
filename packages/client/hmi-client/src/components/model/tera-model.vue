@@ -161,6 +161,7 @@ function onModalSave(event: any) {
 	if (props.isWorkflow) {
 		emit('on-save', event);
 	}
+	fetchModel();
 }
 
 // User menu

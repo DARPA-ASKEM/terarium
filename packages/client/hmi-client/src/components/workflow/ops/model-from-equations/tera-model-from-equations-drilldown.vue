@@ -127,7 +127,13 @@
 			<tera-slider-panel v-model:is-open="isOutputOpen" header="Output" content-width="100%">
 				<template #content>
 					<tera-drilldown-preview>
-						<tera-model v-if="selectedModel" is-workflow :assetId="selectedModel.id" @on-save="onModelSaveEvent" />
+						<tera-model
+							v-if="selectedModel"
+							is-workflow
+							is-save-for-reuse
+							:assetId="selectedModel.id"
+							@on-save="onModelSaveEvent"
+						/>
 						<tera-operator-placeholder v-else :node="node" class="h-100">
 							<p v-if="loadingModel">Model is being created...</p>
 							<p v-else>Select equations to create a model</p>
@@ -163,7 +169,7 @@ import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
-import { ModelFromEquationsOperation, ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
+import { ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
 
 const emit = defineEmits(['close', 'update-state', 'append-output', 'select-output']);
 const props = defineProps<{
@@ -403,17 +409,12 @@ function getEquationErrorLabel(equation) {
 	return equation.asset.extractionError ? "Couldn't extract equation" : '';
 }
 
-function onModelSaveEvent(event: any) {
-	const state = cloneDeep(props.node.state);
-	state.modelId = event.id;
-	emit('update-state', state);
-	emit('append-output', {
-		type: ModelFromEquationsOperation.outputs[0].type,
-		label: event.header.name,
-		value: [event.id],
-		state,
-		isSelected: false
-	});
+function onModelSaveEvent(model: Model) {
+	if (!model) return;
+	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.value?.[0] === model.id));
+	if (!outputPort) return;
+	outputPort.label = model.header.name;
+	emit('update-output', outputPort);
 }
 
 // generates the model card and fetches the model when finished

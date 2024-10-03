@@ -56,7 +56,7 @@
 					:value="executeResponse.value"
 					:traceback="executeResponse.traceback"
 				/>
-				<tera-model v-else-if="amr" is-workflow :assetId="amr.id" @on-save="updateNode" />
+				<tera-model v-else-if="amr" is-workflow is-save-for-reuse :assetId="amr.id" @on-save="updateNode" />
 				<tera-progress-spinner v-else-if="isUpdatingModel || !amr" is-centered :font-size="2">
 					Loading...
 				</tera-progress-spinner>
@@ -351,15 +351,11 @@ watch(
 );
 
 function updateNode(model: Model) {
-	const id = amr.value?.id;
-	if (!id || !model) return;
-
+	if (!model) return;
 	amr.value = model;
-	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.value?.[0] === id));
-
+	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.value?.[0] === model.id));
 	if (!outputPort) return;
 	outputPort.label = model.header.name;
-
 	emit('update-output', outputPort);
 }
 
