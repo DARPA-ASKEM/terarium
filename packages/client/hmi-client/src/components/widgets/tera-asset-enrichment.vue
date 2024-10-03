@@ -1,6 +1,6 @@
 <template>
 	<Button
-		label="Enrich metadata with AI"
+		label="Enrich metadata"
 		icon="pi pi-sparkles"
 		:loading="isLoading"
 		severity="secondary"

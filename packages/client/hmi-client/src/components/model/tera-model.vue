@@ -7,7 +7,7 @@
 		:is-naming-asset="isNaming"
 		:name="temporaryModel?.header.name"
 		@close-preview="emit('close-preview')"
-		show-table-of-contents
+		:show-table-of-contents="!isWorkflow"
 	>
 		<template #name-input>
 			<tera-input-text
