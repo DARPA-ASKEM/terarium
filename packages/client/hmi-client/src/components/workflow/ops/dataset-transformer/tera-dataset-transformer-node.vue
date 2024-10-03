@@ -3,7 +3,7 @@
 		<tera-operator-placeholder v-if="!node.inputs[0].value" :node="node">
 			Attach one or more resources
 		</tera-operator-placeholder>
-		<template v-if="node.inputs[0].value">
+		<template v-else>
 			<tera-beaker-code-cell-output
 				v-for="m in node.state.selectedOutputs?.[0]?.messages ?? []"
 				:key="m.header.msg_id"
