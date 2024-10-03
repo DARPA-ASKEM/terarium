@@ -241,7 +241,6 @@ onMounted(async () => {
 			}
 		}
 		isFetchingPDF.value = false;
-
 		const state = cloneDeep(props.node.state);
 		if (state.equations.length) return;
 
