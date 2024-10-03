@@ -27,6 +27,7 @@
 				@re-run-prompt="handleRerunPrompt"
 				@edit-prompt="reRunPrompt"
 				@click="selectedCellId = msg.query_id"
+				@update-selected="handleUpdateSelectedOutput(msg.query_id)"
 			/>
 
 			<!-- Add a cell Button -->
@@ -204,6 +205,18 @@ const handleDeletePrompt = (queryId: string) => {
 
 const handleRerunPrompt = (queryId: string) => {
 	reRunPrompt(queryId);
+};
+
+const handleUpdateSelectedOutput = (queryId: string) => {
+	notebookItems.value = notebookItems.value.map((item) => {
+		if (item.query_id === queryId) {
+			item.selected = !item.selected;
+		} else {
+			// for now we have radio button-like behaviour, so we can only select one output at a time
+			item.selected = false;
+		}
+		return item;
+	});
 };
 
 const reRunPrompt = (queryId: string, query?: string) => {

@@ -80,10 +80,15 @@
 							@deleteRequested="onDeleteRequested(m.header.msg_id)"
 						/>
 					</div>
-					<div v-else-if="['stream', 'display_data', 'execute_result', 'error'].includes(m.header.msg_type)">
+					<div
+						class="flex flex-column"
+						v-else-if="['stream', 'display_data', 'execute_result', 'error'].includes(m.header.msg_type)"
+					>
 						<tera-beaker-code-cell-output :jupyter-message="m" />
-						<label>Display on node thumbnail</label>
-						<Checkbox binary />
+						<aside class="ml-auto">
+							<label class="px-2">Display on node thumbnail</label>
+							<Checkbox :model-value="msg.selected" @change="emit('update-selected', $event)" binary />
+						</aside>
 					</div>
 				</div>
 			</section>
@@ -112,7 +117,8 @@ const emit = defineEmits([
 	'edit-prompt',
 	're-run-prompt',
 	'delete-prompt',
-	'delete-message'
+	'delete-message',
+	'update-selected'
 ]);
 
 const props = defineProps<{
