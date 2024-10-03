@@ -2,8 +2,9 @@ import { percentile } from '@/utils/math';
 import { isEmpty, pick } from 'lodash';
 import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
-import { ChartAnnotation } from '@/types/Types';
+import type { ChartAnnotation, FunmanInterval } from '@/types/Types';
 import { flattenInterventionData } from './intervention-policy';
+import type { ProcessedFunmanResult, FunmanBox, FunmanConstraintsResponse } from './models/funman-service';
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
@@ -803,4 +804,200 @@ export function createInterventionChart(
 		});
 	}
 	return spec;
+}
+
+/// /////////////////////////////////////////////////////////////////////////////
+// Funman charts
+/// /////////////////////////////////////////////////////////////////////////////
+
+enum FunmanChartLegend {
+	Satisfactory = 'Satisfactory',
+	Unsatisfactory = 'Unsatisfactory',
+	Ambiguous = 'Ambiguous',
+	ModelChecks = 'Model checks'
+}
+
+export function createFunmanStateChart(
+	data: ProcessedFunmanResult,
+	constraints: FunmanConstraintsResponse[],
+	stateId: string
+) {
+	if (isEmpty(data.trajs)) return null;
+
+	const globalFont = 'Figtree';
+
+	const boxLines = data.trajs.map((traj) => {
+		const legendItem = traj.label === 'true' ? FunmanChartLegend.Satisfactory : FunmanChartLegend.Unsatisfactory;
+		return { timepoints: traj.timestep, value: traj[stateId], legendItem };
+	});
+
+	// Find min/max values to set an appropriate viewing range for y-axis
+	const minY = Math.floor(Math.min(...boxLines.map((d) => d.value)));
+	const maxY = Math.ceil(Math.max(...boxLines.map((d) => d.value)));
+
+	// Show checks for the selected state
+	const stateIdConstraints = constraints.filter((c) => c.variables.includes(stateId));
+	const modelChecks = stateIdConstraints.map((c) => ({
+		legendItem: FunmanChartLegend.ModelChecks,
+		startX: c.timepoints.lb,
+		endX: c.timepoints.ub,
+		// If the interval bounds are within the min/max values of the line plot use them, otherwise use the min/max values
+		startY: Math.max(c.additive_bounds.lb ?? minY, minY),
+		endY: Math.min(c.additive_bounds.ub ?? maxY, maxY)
+	}));
+
+	return {
+		$schema: VEGALITE_SCHEMA,
+		config: { font: globalFont },
+		width: 600,
+		height: 300,
+		layer: [
+			{
+				mark: {
+					type: 'rect',
+					clip: true
+				},
+				data: { values: modelChecks },
+				encoding: {
+					x: { field: 'startX', type: 'quantitative' },
+					x2: { field: 'endX', type: 'quantitative' },
+					y: { field: 'startY', type: 'quantitative' },
+					y2: { field: 'endY', type: 'quantitative' }
+				}
+			},
+			{
+				mark: {
+					type: 'line',
+					point: true
+				},
+				data: { values: boxLines },
+				encoding: {
+					x: { field: 'timepoints', type: 'quantitative' },
+					y: { field: 'value', type: 'quantitative' }
+				}
+			}
+		],
+		encoding: {
+			x: { title: 'Timepoints' },
+			y: {
+				title: `${stateId} (persons)`,
+				scale: { domain: [minY, maxY] }
+			},
+			color: {
+				field: 'legendItem',
+				legend: { orient: 'top', direction: 'horizontal', title: null },
+				scale: {
+					domain: [
+						FunmanChartLegend.Satisfactory,
+						FunmanChartLegend.Unsatisfactory,
+						FunmanChartLegend.Ambiguous,
+						FunmanChartLegend.ModelChecks
+					],
+					range: ['#1B8073', '#FFAB00', '#CCC569', '#A4CEFF54'] // Specify colors for each legend item
+				}
+			}
+		}
+	};
+}
+
+export function createFunmanParameterChart(
+	parametersOfInterest: { label: 'all'; name: string; interval: FunmanInterval }[],
+	boxes: FunmanBox[]
+) {
+	const parameterRanges: { parameterId: string; boundType: string; lb?: number; ub?: number }[] = [];
+
+	// Widest range (model configuration ranges)
+	parametersOfInterest.forEach(({ name, interval }) => {
+		parameterRanges.push({
+			parameterId: name,
+			boundType: 'length',
+			lb: interval.lb,
+			ub: interval.ub
+		});
+	});
+
+	// Ranges determined by the true/false boxes
+	boxes.forEach(({ label, parameters }) => {
+		Object.keys(parameters).forEach((key) => {
+			parameterRanges.push({
+				parameterId: key,
+				boundType: label === 'true' ? FunmanChartLegend.Satisfactory : FunmanChartLegend.Unsatisfactory,
+				lb: parameters[key].lb,
+				ub: parameters[key].ub
+			});
+		});
+	});
+
+	const globalFont = 'Figtree';
+	return {
+		$schema: VEGALITE_SCHEMA,
+		config: { font: globalFont },
+		width: 600,
+		height: 50, // Height per facet
+		data: {
+			values: parameterRanges
+		},
+		// This determines the range of the whole x-axis
+		transform: [
+			{
+				joinaggregate: [
+					{ field: 'lb', op: 'min', as: 'minX' },
+					{ field: 'ub', op: 'max', as: 'maxX' }
+				],
+				groupby: ['parameterId']
+			}
+		],
+		params: [
+			{ name: 'minX', expr: 'minX' },
+			{ name: 'maxX', expr: 'maxX' }
+		],
+		facet: {
+			row: {
+				field: 'parameterId',
+				type: 'nominal',
+				header: { labelAngle: 0, title: '', labelAlign: 'left' }
+			}
+		},
+		resolve: {
+			scale: {
+				x: 'independent' // Ensure each facet has its own x-axis scale
+			}
+		},
+		spec: {
+			layer: [
+				{
+					mark: {
+						type: 'bar', // Use a bar to represent ranges
+						opacity: 0.3 // FIXME: This opacity shouldn't be applied to the legend
+					},
+					encoding: {
+						x: {
+							field: 'lb',
+							type: 'quantitative',
+							scale: {
+								zero: false,
+								// Doesn't work with regular domain setting
+								domainMin: { expr: 'minX' },
+								domainMax: { expr: 'maxX' }
+								// FIXME: If the domain is something like lb: 0.002, ub: 0.002 (same numbers close to 0), the only number on the number line will be 0
+							},
+							title: null
+						},
+						x2: {
+							field: 'ub'
+						},
+						color: {
+							field: 'boundType',
+							type: 'nominal',
+							legend: { orient: 'top', direction: 'horizontal', title: null },
+							scale: {
+								domain: [FunmanChartLegend.Satisfactory, FunmanChartLegend.Unsatisfactory, FunmanChartLegend.Ambiguous],
+								range: ['#1B8073', '#FFAB00', '#CCC569']
+							}
+						}
+					}
+				}
+			]
+		}
+	};
 }

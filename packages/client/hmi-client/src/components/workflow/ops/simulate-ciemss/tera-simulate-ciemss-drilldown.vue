@@ -120,14 +120,14 @@
 		<template #preview>
 			<tera-drilldown-section v-if="selectedOutputId" :is-loading="showSpinner">
 				<template #header-controls-right>
-					<Button label="Save for re-use" severity="secondary" outlined @click="showSaveDataset = true" />
+					<Button class="mr-3" label="Save for re-use" severity="secondary" outlined @click="showSaveDataset = true" />
 				</template>
 				<tera-operator-output-summary
 					v-if="node.state.summaryId && runResults[selectedRunId]"
 					:summary-id="node.state.summaryId"
-					class="pt-3"
+					class="p-3"
 				/>
-				<div class="flex flex-row align-items-center gap-2">
+				<div class="pl-3 pr-3 flex flex-row align-items-center gap-2">
 					<SelectButton
 						class=""
 						:model-value="view"
@@ -146,6 +146,7 @@
 					<div v-if="view === OutputView.Charts" ref="outputPanel">
 						<template v-for="(cfg, index) of node.state.chartConfigs" :key="index">
 							<tera-chart-control
+								class="pr-3 pl-3"
 								:chart-config="{ selectedRun: selectedRunId, selectedVariable: cfg }"
 								multi-select
 								show-remove-button
@@ -160,7 +161,7 @@
 								:visualization-spec="preparedCharts[index]"
 							/>
 							<!-- If no variables are selected, show empty state -->
-							<section class="empty-chart" v-else>
+							<section class="m-3 empty-chart" v-else>
 								<img src="@assets/svg/seed.svg" class="empty-image" alt="" draggable="false" />
 								<p>Select one or more variables for this chart</p>
 							</section>
@@ -173,7 +174,7 @@
 						<!-- Spacer at bottom of page -->
 						<div style="height: 2rem"></div>
 					</div>
-					<div v-else-if="view === OutputView.Data">
+					<div v-else-if="view === OutputView.Data" class="p-3">
 						<tera-dataset-datatable
 							v-if="rawContent[selectedRunId]"
 							:rows="10"
@@ -205,6 +206,7 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { Vue3Lottie } from 'vue3-lottie';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
+import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import type { CsvAsset, InterventionPolicy, SimulationRequest, TimeSpan } from '@/types/Types';
@@ -219,7 +221,7 @@ import {
 	CiemssMethodOptions
 } from '@/services/models/simulation-service';
 import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
-import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
+import { chartActionsProxy, nodeMetadata } from '@/components/workflow/util';
 
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import SelectButton from 'primevue/selectbutton';
@@ -325,7 +327,7 @@ const selectedRunId = computed(() => props.node.outputs.find((o) => o.id === sel
 
 const cancelRunId = computed(() => props.node.state.inProgressForecastId);
 const outputPanel = ref(null);
-const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+const chartSize = useDrilldownChartSize(outputPanel);
 
 const showSaveDataset = ref(false);
 

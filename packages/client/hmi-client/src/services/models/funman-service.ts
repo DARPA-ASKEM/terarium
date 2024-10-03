@@ -1,8 +1,7 @@
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
-import type { FunmanPostQueriesRequest } from '@/types/Types';
+import type { FunmanInterval, FunmanPostQueriesRequest } from '@/types/Types';
 import * as d3 from 'd3';
-import { Dictionary, groupBy } from 'lodash';
 import { ConstraintGroup, ConstraintType } from '@/components/workflow/ops/funman/funman-operation';
 
 // Partially typing Funman response
@@ -11,14 +10,23 @@ interface FunmanBound {
 	ub: number;
 }
 export interface FunmanBox {
-	id?: string;
+	id: string;
 	label: string;
-	bounds: Record<string, FunmanBound>;
-	explanation: any;
-	schedule: any;
-	points: any;
+	timestep: FunmanBound;
+	parameters: Record<string, FunmanBound>;
 }
-export interface FunmanProcessedData {
+
+export interface FunmanConstraintsResponse {
+	soft: boolean;
+	name: string;
+	timepoints: FunmanInterval;
+	additive_bounds: FunmanInterval;
+	variables: string[];
+	weights: number[];
+	derivative: boolean;
+}
+
+export interface ProcessedFunmanResult {
 	boxes: FunmanBox[];
 	points: any[];
 	states: string[];
@@ -28,7 +36,6 @@ export interface FunmanProcessedData {
 export interface RenderOptions {
 	width: number;
 	height: number;
-
 	constraints?: any[];
 	click?: Function;
 }
@@ -74,88 +81,72 @@ export function generateConstraintExpression(config: ConstraintGroup) {
 }
 
 export const processFunman = (result: any) => {
-	// List of states and parameters
-	const states = result.model.petrinet.model.states.map((s) => s.id);
-	const params = result.model.petrinet.semantics.ode.parameters.map((p) => p.id);
-	const timesteps = result.request.structure_parameters.at(0).schedules.at(0).timepoints;
+	const stateIds: string[] = result.model.petrinet.model.states.map(({ id }) => id);
+	const parameterIds: string[] = result.model.petrinet.semantics.ode.parameters.map(({ id }) => id);
+	const timepoints: number[] = result.request.structure_parameters[0].schedules[0].timepoints;
+
+	// We only want boxes that appear at the last timestep
+	function getBoxesEndingAtLastTimestep(boxes: any[]) {
+		return boxes.filter((box) => box.points[0]?.values.timestep === timepoints.length - 1);
+	}
+	const trueBoxes: any[] = getBoxesEndingAtLastTimestep(result.parameter_space.true_boxes);
+	const falseBoxes: any[] = getBoxesEndingAtLastTimestep(result.parameter_space.false_boxes);
 
 	// "dataframes"
-	const points = [['id', 'label', 'box_id', ...params]];
-	const boxes: any[] = [];
+	const points = [['id', 'label', 'box_id', ...parameterIds]];
+	const boxes: FunmanBox[] = [];
 	const trajs: any[] = [];
 
-	// Give IDs to all boxes (i) and points (j)
-	let i = 0;
-	let j = 0;
-
-	const parameterSpace = result.parameter_space;
-	let trueBoxes: any[] = [];
-	let falseBoxes: any[] = [];
-
-	if (parameterSpace.true_boxes) {
-		trueBoxes = parameterSpace.true_boxes;
-	}
-	if (parameterSpace.false_boxes) {
-		falseBoxes = parameterSpace.false_boxes;
-	}
-
-	[...trueBoxes, ...falseBoxes].forEach((box) => {
-		const boxId = `box${i}`;
-		i++;
-
-		const temp = {
+	let pointIndex = 0;
+	[...trueBoxes, ...falseBoxes].forEach((box, boxIndex) => {
+		// Add box
+		const boxId = `box${boxIndex}`;
+		boxes.push({
 			id: boxId,
 			label: box.label,
-			timestep: box.bounds.timestep
-		};
-		params.forEach((p: any) => {
-			temp[p] = [box.bounds[p].lb, box.bounds[p].ub];
+			timestep: box.bounds.timestep,
+			parameters: Object.fromEntries(parameterIds.map((p: any) => [p, box.bounds[p]]))
 		});
-		boxes.push(temp);
 
-		if (box.points) {
-			Object.values(box.points).forEach((point: any) => {
-				point.id = `point${j}`;
-				j++;
+		// Add point
+		const point = box.points[0];
+		const pointId = `point${pointIndex}`;
+		// id, label, box id, ...values of parameter ids
+		points.push([pointId, point.label, boxId, ...parameterIds.map((p: any) => point.values[p])]);
+		pointIndex++;
 
-				// id, label, box_id, param values
-				const values = params.map((p: any) => point.values[p]);
-				points.push([point.id, point.label, boxId, ...values]);
+		// Get trajectories
+		const filteredVals = Object.keys(point.values)
+			.filter((key) => !parameterIds.includes(key) && key !== 'timestep' && key.split('_')[0] !== 'assume')
+			.reduce((obj, key) => {
+				obj[key] = point.values[key];
+				return obj;
+			}, {});
 
-				// Get trajectories
-				const filteredVals = Object.keys(point.values)
-					.filter((key) => !params.includes(key) && key !== 'timestep' && key.split('_')[0] !== 'assume')
-					.reduce((obj, key) => {
-						obj[key] = point.values[key];
-						return obj;
-					}, {});
+		timepoints.forEach((t) => {
+			let pushFlag = true;
+			const traj: any = {
+				boxId,
+				label: box.label,
+				pointId,
+				timestep: t,
+				n: point.values.timestep // how many actual points
+			};
+			stateIds.forEach((s) => {
+				// Only push states that have a timestep key pair
+				if (Object.prototype.hasOwnProperty.call(filteredVals, `${s}_${t}`)) {
+					traj[s] = filteredVals[`${s}_${t}`];
+				} else {
+					pushFlag = false;
+				}
+			});
+			if (pushFlag) {
+				trajs.push(traj);
+			}
+		});
+	});
 
-				timesteps.forEach((t) => {
-					let pushFlag = true;
-					const traj: any = {
-						boxId,
-						label: box.label,
-						pointId: point.id,
-						timestep: t,
-						n: point.values.timestep // how many actual points
-					};
-					states.forEach((s) => {
-						// Only push states that have a timestep key pair
-						if (Object.prototype.hasOwnProperty.call(filteredVals, `${s}_${t}`)) {
-							traj[s] = filteredVals[`${s}_${t}`];
-						} else {
-							pushFlag = false;
-						}
-					});
-					if (pushFlag) {
-						trajs.push(traj);
-					}
-				});
-			}); // foreach point
-		} // box.points
-	}); // foreach box
-
-	return { boxes, points, states, trajs } as FunmanProcessedData;
+	return { boxes, points, states: stateIds, trajs } as ProcessedFunmanResult;
 };
 
 interface FunmanBoundingBox {
@@ -165,7 +156,7 @@ interface FunmanBoundingBox {
 	x2: number;
 	y2: number;
 }
-export const getBoxes = (processedData: FunmanProcessedData, param1: string, param2: string, boxType: string) => {
+export const getBoxes = (processedData: ProcessedFunmanResult, param1: string, param2: string, boxType: string) => {
 	const result: FunmanBoundingBox[] = [];
 
 	const temp = processedData.boxes
@@ -192,160 +183,6 @@ export const getBoxes = (processedData: FunmanProcessedData, param1: string, par
 	return result;
 };
 
-export const renderFumanTrajectories = (
-	element: HTMLElement,
-	processedData: FunmanProcessedData,
-	state: string,
-	selectedBoxId: string,
-	options: RenderOptions
-) => {
-	const width = options.width;
-	const height = options.height;
-	const topMargin = 10;
-	const rightMargin = 30;
-	const leftMargin = 35;
-	const bottomMargin = 30;
-	const { trajs, states } = processedData;
-
-	const elemSelection = d3.select(element);
-	d3.select(element).selectAll('*').remove();
-	const svg = elemSelection.append('svg').attr('width', width).attr('height', height);
-
-	const points: Dictionary<any> = groupBy(trajs, 'boxId');
-
-	// Find max/min across timesteps
-	const xDomain = d3.extent(trajs.map((d) => d.timestep)) as [number, number];
-
-	// Find max/min across all state values
-	const yDomain = d3.extent(trajs.map((d) => states.filter((s) => s === state).map((s) => d[s])).flat()) as [
-		number,
-		number
-	];
-
-	const xScale = d3
-		.scaleLinear()
-		.domain(xDomain)
-		.range([leftMargin, width - rightMargin]);
-
-	const yScale = d3
-		.scaleLinear()
-		.domain(yDomain)
-		.range([height - bottomMargin, topMargin]);
-
-	// Add the x-axis.
-	svg
-		.append('g')
-		.attr('transform', `translate(0,${height - bottomMargin})`)
-		.call(
-			d3
-				.axisBottom(xScale)
-				.ticks(width / 60)
-				.tickSizeOuter(0)
-		);
-
-	// Add the y-axis
-	svg
-		.append('g')
-		.attr('transform', `translate(${leftMargin},0)`)
-		.call(
-			d3
-				.axisLeft(yScale)
-				.ticks(height / 60)
-				.tickSizeOuter(0)
-		);
-
-	// Add label for x-axis
-	svg
-		.append('text')
-		.attr('class', 'x label')
-		.attr('text-anchor', 'end')
-		.attr('x', width / 2)
-		.attr('y', height - 2)
-		.text('Timestep');
-
-	const pathFn = d3
-		.line<{ x: number; y: number }>()
-		.x((d) => xScale(d.x))
-		.y((d) => yScale(d.y));
-
-	Object.keys(points).forEach((boxId) => {
-		const label = points[boxId][0].label;
-		let path = points[boxId].map((p: any) => ({ x: p.timestep, y: p[state] }));
-
-		// FIXME: funman can set the value to 0 at time t, if the trajectory ends at t
-		// This makes the linecharts really weird, until this is addressed we will ignore
-		// the last point if it is 0
-		const n = points[boxId][0].n;
-		if (n >= 0) {
-			path = path.filter((_d: any, i: number) => i <= n);
-		}
-
-		if (path.length > 1) {
-			svg
-				.append('g')
-				.append('path')
-				.attr('d', pathFn(path))
-				.style('stroke', label === 'true' ? 'teal' : 'orange')
-				.style('stroke-width', () => {
-					if (selectedBoxId === '' || selectedBoxId === boxId) return 2.0;
-					return 1.0;
-				})
-				.style('opacity', () => {
-					if (selectedBoxId === '' || selectedBoxId === boxId) return 0.75;
-					return 0.05;
-				})
-				.style('fill', 'none');
-
-			svg
-				.selectAll(`.${boxId}`)
-				.data(path)
-				.enter()
-				.append('circle')
-				.attr('cx', (d: any) => xScale(d.x))
-				.attr('cy', (d: any) => yScale(d.y))
-				.attr('r', 2)
-				.style('opacity', () => {
-					if (selectedBoxId === '' || selectedBoxId === boxId) return 0.75;
-					return 0.05;
-				})
-				.style('fill', label === 'true' ? 'teal' : 'orange');
-		} else if (path.length === 1) {
-			svg
-				.append('g')
-				.append('circle')
-				.attr('cx', xScale(path[0].x))
-				.attr('cy', yScale(path[0].y))
-				.attr('r', 4)
-				.style('fill', '#888');
-		}
-	});
-
-	// Render constraints
-	// Since this is variable-vs-time, we can't display constraints that involve more
-	// than one variable, and just the selected variable
-	if (options.constraints && options.constraints.length > 0) {
-		const singleVariableConstraints = options.constraints.filter((d) => d.variable).filter((d) => d.variable === state);
-
-		svg
-			.selectAll('.constraint-box')
-			.data(singleVariableConstraints)
-			.enter()
-			.append('rect')
-			.classed('constraint-box', true)
-			.attr('x', (d) => xScale(d.timepoints?.lb as number))
-			.attr('y', (d) => yScale(d.interval?.ub as number))
-			.attr('width', (d) => {
-				const w = xScale(d.timepoints?.ub as number) - xScale(d.timepoints?.lb as number);
-				return w;
-			})
-			.attr('height', (d) => Math.abs(yScale(d.interval?.ub as number) - yScale(d.interval?.lb as number)))
-			.style('fill', 'teal')
-			.style('fill-opacity', 0.3);
-	}
-
-	return svg;
-};
-
 const getBoxesDomain = (boxes: FunmanBoundingBox[]) => {
 	let minX = Number.MAX_VALUE;
 	let maxX = Number.MIN_VALUE;
@@ -364,7 +201,7 @@ const getBoxesDomain = (boxes: FunmanBoundingBox[]) => {
 
 export const renderFunmanBoundaryChart = (
 	element: HTMLElement,
-	processedData: FunmanProcessedData,
+	processedData: ProcessedFunmanResult,
 	param1: string,
 	param2: string,
 	selectedBoxId: string,
