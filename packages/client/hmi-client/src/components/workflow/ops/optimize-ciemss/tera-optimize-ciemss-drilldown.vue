@@ -11,7 +11,7 @@
 				class="input-config"
 				v-model:is-open="isSidebarOpen"
 				header="Optimize intervention settings"
-				content-width="565px"
+				content-width="600px"
 			>
 				<template #content>
 					<div class="toolbar">
