@@ -27,7 +27,7 @@
 				@re-run-prompt="handleRerunPrompt"
 				@edit-prompt="reRunPrompt"
 				@click="selectedCellId = msg.query_id"
-				@update-selected="handleUpdateSelectedOutput(msg.query_id)"
+				@on-selected="handleUpdateSelectedOutput(msg.query_id)"
 			/>
 
 			<!-- Add a cell Button -->

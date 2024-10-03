@@ -87,7 +87,7 @@
 						<tera-beaker-code-cell-output :jupyter-message="m" />
 						<aside class="ml-auto">
 							<label class="px-2">Display on node thumbnail</label>
-							<Checkbox :model-value="msg.selected" @change="emit('update-selected', $event)" binary />
+							<Checkbox :model-value="msg.selected" @change="emit('on-selected', $event)" binary />
 						</aside>
 					</div>
 				</div>
@@ -118,7 +118,7 @@ const emit = defineEmits([
 	're-run-prompt',
 	'delete-prompt',
 	'delete-message',
-	'update-selected'
+	'on-selected'
 ]);
 
 const props = defineProps<{
