@@ -12,9 +12,11 @@ import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.springframework.stereotype.Component;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
+import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
 
 @Component
@@ -26,6 +28,7 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 
 	private final ObjectMapper objectMapper;
 	private final SimulationService simulationService;
+	private final ModelService modelService;
 
 	@Override
 	public String getName() {
@@ -91,7 +94,12 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 			final HttpEntity fileEntity = new ByteArrayEntity(bytes, ContentType.TEXT_PLAIN);
 			simulationService.uploadFile(simulationId, resultFilename, fileEntity);
 
-			System.out.println(result.get("response"));
+			final Model contractedModel = objectMapper.convertValue(
+				result.get("response").get("contracted_model"),
+				Model.class
+			);
+			System.out.println("contractedModel: " + contractedModel);
+			modelService.createAsset(contractedModel, props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 
 			// Mark simulation as completed, update result file
 			sim.get().setStatus(ProgressState.COMPLETE);
