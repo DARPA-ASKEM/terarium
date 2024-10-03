@@ -1,5 +1,5 @@
 LATEXT_STYLE_GUIDE = """
-1) Derivatives must be written in Leibniz notation
+1) Derivatives must be written in Leibniz notation (for example, \\frac{d X}{d t}). Equations that are written in other notations, like Newton or Lagrange, should be converted.
 2) First-order derivative must be on the left of the equal sign
 3) Use whitespace to indicate multiplication
     a) "*" is optional but probably should be avoided
@@ -15,4 +15,5 @@ LATEXT_STYLE_GUIDE = """
 11) Avoid using homoglyphs
 12) Avoid words or multi-character names for variables and names
     a) Use camel case to express multi-word or multi-character names
+13) Do not use \\cdot for multiplication. Use whitespace instead.
 """
