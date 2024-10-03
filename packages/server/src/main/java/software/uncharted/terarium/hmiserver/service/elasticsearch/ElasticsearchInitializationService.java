@@ -47,14 +47,17 @@ public class ElasticsearchInitializationService {
 
 	private boolean isRunningLocalProfile() {
 		final String[] activeProfiles = env.getActiveProfiles();
-
+		boolean isLocal = false;
+		boolean isStaging = false;
 		for (final String profile : activeProfiles) {
 			if ("local".equals(profile)) {
-				return true;
+				isLocal = true;
+			}
+			if ("staging".equals(profile)) {
+				isStaging = true;
 			}
 		}
-
-		return false;
+		return isLocal && !isStaging;
 	}
 
 	/**

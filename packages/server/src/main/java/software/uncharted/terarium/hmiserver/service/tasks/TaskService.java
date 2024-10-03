@@ -181,12 +181,17 @@ public class TaskService {
 
 	private boolean isRunningLocalProfile() {
 		final String[] activeProfiles = env.getActiveProfiles();
+		boolean isLocal = false;
+		boolean isStaging = false;
 		for (final String profile : activeProfiles) {
 			if ("local".equals(profile)) {
-				return true;
+				isLocal = true;
+			}
+			if ("staging".equals(profile)) {
+				isStaging = true;
 			}
 		}
-		return false;
+		return isLocal && !isStaging;
 	}
 
 	@PostConstruct
@@ -650,20 +655,21 @@ public class TaskService {
 	}
 
 	/**
-	 * Runs a compound task, executing the primary task synchronously and the secondary tasks
+	 * Runs a compound task, executing the primary task synchronously and the
+	 * secondary tasks
 	 * in the specified mode (synchronous or asynchronous).
 	 *
 	 * @param mode The mode in which to run the secondary tasks (SYNC or ASYNC).
-	 * @param req The compound task containing the primary and secondary tasks.
+	 * @param req  The compound task containing the primary and secondary tasks.
 	 * @return The response of the primary task.
 	 * @throws JsonProcessingException If there is an error processing JSON.
-	 * @throws TimeoutException If the task times out.
-	 * @throws InterruptedException If the task is interrupted.
-	 * @throws ExecutionException If there is an error during task execution.
+	 * @throws TimeoutException        If the task times out.
+	 * @throws InterruptedException    If the task is interrupted.
+	 * @throws ExecutionException      If there is an error during task execution.
 	 */
 	public TaskResponse runTask(final TaskMode mode, final CompoundTask req)
 		throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException {
-		TaskResponse response = runTask(TaskMode.SYNC, req.getPrimaryTask());
+		final TaskResponse response = runTask(TaskMode.SYNC, req.getPrimaryTask());
 
 		for (final TaskRequest secondaryTask : req.getSecondaryTasks()) {
 			runTask(mode, secondaryTask);
