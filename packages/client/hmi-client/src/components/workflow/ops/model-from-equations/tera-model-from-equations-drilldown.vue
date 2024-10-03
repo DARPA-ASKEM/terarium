@@ -49,7 +49,7 @@
 									:class="['asset-panel', { selected: selectedItem === equation.name }]"
 								>
 									<template #header>
-										<h6>{{ equation.name }} - Page({{ equation.asset.pageNumber }})</h6>
+										<h6>Page ({{ equation.asset.pageNumber }})</h6>
 									</template>
 									<section>
 										<Checkbox
@@ -87,7 +87,7 @@
 									:class="['asset-panel', { selected: selectedItem === equation.name }]"
 								>
 									<template #header>
-										<h6>{{ equation.name }} - Page({{ equation.asset.pageNumber }})</h6>
+										<h6>Page ({{ equation.asset.pageNumber }})</h6>
 									</template>
 									<section>
 										<Checkbox
@@ -224,6 +224,9 @@ onMounted(async () => {
 	const documentId = props.node.inputs?.[0]?.value?.[0]?.documentId;
 
 	assetLoading.value = true;
+	if (!selectedModel.value) {
+		isOutputOpen.value = false;
+	}
 	if (documentId) {
 		document.value = await getDocumentAsset(documentId);
 
@@ -238,6 +241,7 @@ onMounted(async () => {
 			}
 		}
 		isFetchingPDF.value = false;
+
 		const state = cloneDeep(props.node.state);
 		if (state.equations.length) return;
 
