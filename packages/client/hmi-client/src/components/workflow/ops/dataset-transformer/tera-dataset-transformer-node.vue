@@ -4,14 +4,12 @@
 			Attach one or more resources
 		</tera-operator-placeholder>
 		<template v-if="node.inputs[0].value">
-			<template v-if="!isEmpty(node.state.selectedOutputs)">
-				<tera-beaker-code-cell-output
-					v-for="m in node.state.selectedOutputs?.[0]?.messages"
-					:key="m.header.msg_id"
-					:jupyter-message="m"
-					:feature-config="{ isPreview: true }"
-				/>
-			</template>
+			<tera-beaker-code-cell-output
+				v-for="m in node.state.selectedOutputs?.[0]?.messages ?? []"
+				:key="m.header.msg_id"
+				:jupyter-message="m"
+				:feature-config="{ isPreview: true }"
+			/>
 			<Button label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
 	</section>
@@ -23,7 +21,6 @@ import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraBeakerCodeCellOutput from '@/components/llm/tera-beaker-code-cell-output.vue';
-import { isEmpty } from 'lodash';
 import { DatasetTransformerState } from './dataset-transformer-operation';
 
 const emit = defineEmits(['append-input-port', 'open-drilldown']);
