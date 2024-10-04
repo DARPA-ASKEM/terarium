@@ -118,23 +118,7 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 						contractedModel.getDescription()
 					);
 					contractedModelConfiguration.setModelId(props.modelId);
-
-					final ModelConfiguration createdModelConfiguration = modelConfigurationService.createAsset(
-						contractedModelConfiguration,
-						props.projectId,
-						ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
-					);
-
-					System.out.println("createdModelConfiguration||||||||||||||: " + createdModelConfiguration);
-					// final Model createdModel = modelService.createAsset(
-					// 	contractedModel,
-					// 	props.projectId,
-					// 	ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
-					// );
-
-					// System.out.println("createdModel||||||||||||||: " + createdModel);
-					// System.out.println("originalId: " + props.modelId);
-
+					System.out.println("contractedModelConfiguration||||||||||||||: " + contractedModelConfiguration);
 					// JsonNode outputNode = objectMapper.readTree(resp.getOutput());
 
 					//   // Step 2: Add the new property
