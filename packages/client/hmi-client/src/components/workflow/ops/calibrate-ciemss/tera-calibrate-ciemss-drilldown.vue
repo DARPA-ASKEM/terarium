@@ -31,7 +31,7 @@
 						</p>
 
 						<!-- Mapping table: Time variables -->
-						<div class="input-row">
+						<div class="input-row mapping-input">
 							<div class="label-and-input">
 								<label class="column-header">Model: Timeline variable</label>
 								<tera-input-text disabled model-value="timestamp" />
@@ -112,7 +112,7 @@
 								<tera-input-number inputId="integeronly" v-model="knobs.endTime" />
 							</div>
 						</div>
-						<div class="spacer m-3" />
+						<div class="spacer m-2" />
 						<p class="mb-1">Preset (optional)</p>
 						<div class="label-and-input">
 							<Dropdown
@@ -319,6 +319,7 @@
 			<tera-slider-panel
 				v-model:is-open="isOutputSettingsPanelOpen"
 				direction="right"
+				class="input-config"
 				header="Output Settings"
 				content-width="360px"
 			>
@@ -1282,6 +1283,11 @@ img {
 	& > * {
 		flex: 1;
 	}
+}
+
+/** Make inputs align with mapping table */
+.mapping-input {
+	width: calc(100% - 40px);
 }
 
 .loss-chart {
