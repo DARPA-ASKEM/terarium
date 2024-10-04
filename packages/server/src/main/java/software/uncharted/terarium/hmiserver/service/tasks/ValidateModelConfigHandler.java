@@ -14,9 +14,11 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
+import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
 
@@ -30,6 +32,7 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 	private final ObjectMapper objectMapper;
 	private final SimulationService simulationService;
 	private final ModelService modelService;
+	private final ModelConfigurationService modelConfigurationService;
 
 	@Override
 	public String getName() {
@@ -40,6 +43,7 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 	public static class Properties {
 
 		UUID projectId;
+		UUID modelId;
 		UUID simulationId;
 	}
 
@@ -101,9 +105,6 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 				String responseString = result.get("response").asText();
 				ObjectNode contractedModelObject = (ObjectNode) objectMapper.readTree(responseString).get("contracted_model");
 				if (contractedModelObject != null) {
-					contractedModelObject.remove("id");
-					contractedModelObject.remove("createdOn");
-					contractedModelObject.remove("updatedOn");
 					// Rename schema_ to schema. Currently it has an extra underscore, remove this once funman fixes this
 					ObjectNode headerObject = (ObjectNode) contractedModelObject.get("header");
 					if (headerObject != null && headerObject.has("schema_")) {
@@ -111,13 +112,41 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 						headerObject.set("schema", schemaNode);
 					}
 					final Model contractedModel = objectMapper.convertValue(contractedModelObject, Model.class);
-					System.out.println("contractedModel: " + contractedModel);
-					final Model createdModel = modelService.createAsset(
+					final ModelConfiguration contractedModelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
 						contractedModel,
+						"Validated " + contractedModel.getName(),
+						contractedModel.getDescription()
+					);
+					contractedModelConfiguration.setModelId(props.modelId);
+
+					final ModelConfiguration createdModelConfiguration = modelConfigurationService.createAsset(
+						contractedModelConfiguration,
 						props.projectId,
 						ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
 					);
-					// resp.setId(createdModel.getId());
+
+					System.out.println("createdModelConfiguration||||||||||||||: " + createdModelConfiguration);
+					// final Model createdModel = modelService.createAsset(
+					// 	contractedModel,
+					// 	props.projectId,
+					// 	ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
+					// );
+
+					// System.out.println("createdModel||||||||||||||: " + createdModel);
+					// System.out.println("originalId: " + props.modelId);
+
+					// JsonNode outputNode = objectMapper.readTree(resp.getOutput());
+
+					//   // Step 2: Add the new property
+					//   if (outputNode.isObject()) {
+					//       ((ObjectNode) outputNode).put("modelConfigId", createdModel.getId().toString());
+					//   }
+
+					//   // Step 3: Serialize the updated JSON
+					//   byte[] updatedOutput = objectMapper.writeValueAsBytes(outputNode);
+
+					//   // Step 4: Set the updated output
+					//   resp.setOutput(updatedOutput);
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
