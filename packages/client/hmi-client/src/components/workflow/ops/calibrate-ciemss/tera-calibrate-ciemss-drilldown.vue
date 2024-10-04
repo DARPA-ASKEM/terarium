@@ -15,7 +15,7 @@
 			>
 				<template #content>
 					<div class="toolbar">
-						<p>Click Run to begin calibrating.</p>
+						<p>Set your mapping, calibration and visualization settings then click run.</p>
 						<span class="flex gap-2">
 							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 							<Button label="Run" icon="pi pi-play" @click="runCalibrate" :disabled="disableRunButton" />
@@ -26,7 +26,7 @@
 					<div class="form-section">
 						<h5 class="mb-1">Mapping</h5>
 						<p class="mb-2">
-							Select a subset of output variables of the model and individually assosiate them to columns in the
+							Select a subset of output variables of the model and individually associate them to columns in the
 							dataset.
 						</p>
 
@@ -101,10 +101,7 @@
 
 					<!-- Mapping section -->
 					<section class="form-section">
-						<h5 class="mb-1">
-							Calibration settings
-							<i v-tooltip="calibrationSettingsToolTip" class="pi pi-info-circle info-circle" />
-						</h5>
+						<h5 class="mb-1">Calibration settings</h5>
 						<div class="input-row">
 							<div class="label-and-input">
 								<label>Start time</label>
@@ -116,7 +113,7 @@
 							</div>
 						</div>
 						<div class="spacer m-3" />
-						<p class="mb-2">Preset (optional)</p>
+						<p class="mb-1">Preset (optional)</p>
 						<div class="label-and-input">
 							<Dropdown
 								v-model="presetType"
@@ -125,19 +122,22 @@
 								@update:model-value="setPresetValues"
 							/>
 						</div>
+						<label class="mb-1 p-text-secondary text-sm">
+							<i class="pi pi-info-circle" />
+							This impacts solver method, iterations and learning rate.
+						</label>
 						<div class="mt-1 additional-settings">
 							<div class="label-and-input">
 								<label>Number of Samples</label>
 								<tera-input-number inputId="integeronly" v-model="knobs.numSamples" @update:model-value="updateState" />
 							</div>
 							<div class="spacer m-3" />
-							<p class="font-semibold">
-								ODE solver options
-								<i v-tooltip="odeSolverOptionsTooltip" class="pi pi-info-circle info-circle" />
-							</p>
+
+							<h6 class="mb-2">ODE solver options</h6>
+
 							<div class="input-row">
 								<div class="label-and-input">
-									<label for="5">Method</label>
+									<label for="5">Solver method</label>
 									<Dropdown
 										id="5"
 										v-model="knobs.method"
@@ -146,15 +146,12 @@
 									/>
 								</div>
 								<div class="label-and-input">
-									<label for="num-steps">Step size</label>
+									<label for="num-steps">Solver step size</label>
 									<tera-input-number inputId="integeronly" v-model="knobs.stepSize" />
 								</div>
 							</div>
 							<div class="spacer m-3" />
-							<p class="font-semibold">
-								Inference Options
-								<i v-tooltip="inferenceOptionsTooltip" class="pi pi-info-circle info-circle" />
-							</p>
+							<h6 class="mb-2">Inference Options</h6>
 							<div class="input-row">
 								<div class="label-and-input">
 									<label for="num-iterations">Number of solver iterations</label>
@@ -559,10 +556,6 @@ const qualityPreset = Object.freeze({
 	numIterations: 1000,
 	learningRate: 0.03
 });
-
-const calibrationSettingsToolTip: string = 'TODO';
-const inferenceOptionsTooltip: string = 'TODO';
-const odeSolverOptionsTooltip: string = 'TODO';
 
 // Model variables checked in the model configuration will be options in the mapping dropdown
 const modelStateOptions = ref<any[] | undefined>();
@@ -1266,7 +1259,11 @@ img {
 .label-and-input {
 	display: flex;
 	flex-direction: column;
-	gap: var(--gap-2);
+	gap: var(--gap-1);
+
+	:deep(input) {
+		text-align: left;
+	}
 }
 .info-circle {
 	color: var(--text-color-secondary);
@@ -1279,7 +1276,7 @@ img {
 	display: flex;
 	flex-direction: row;
 	flex-wrap: wrap;
-	gap: var(--gap-3) var(--gap-2);
+	gap: var(--gap-2);
 	width: 100%;
 
 	& > * {
@@ -1340,6 +1337,10 @@ img {
 
 .additional-settings {
 	background: var(--surface-200);
-	padding: var(--gap-2);
+	padding: var(--gap-3);
+}
+
+input {
+	text-align: left;
 }
 </style>
