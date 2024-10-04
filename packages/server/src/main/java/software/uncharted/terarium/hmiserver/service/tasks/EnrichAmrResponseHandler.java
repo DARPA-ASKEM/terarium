@@ -12,8 +12,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelUnit;
+import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
+import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
+import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
+import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 
 @Component
 @RequiredArgsConstructor
@@ -24,6 +28,7 @@ public class EnrichAmrResponseHandler extends TaskResponseHandler {
 
 	private final ObjectMapper objectMapper;
 	private final ModelService modelService;
+	private final ProvenanceService provenanceService;
 
 	@Override
 	public String getName() {
@@ -185,7 +190,17 @@ public class EnrichAmrResponseHandler extends TaskResponseHandler {
 					});
 			}
 
-			modelService.updateAsset(model, props.modelId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+			modelService.updateAsset(model, model.getId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+
+			// add provenance
+			provenanceService.createProvenance(
+				new Provenance()
+					.setLeft(model.getId())
+					.setLeftType(ProvenanceType.MODEL)
+					.setRight(props.documentId)
+					.setRightType(ProvenanceType.DOCUMENT)
+					.setRelationType(ProvenanceRelationType.EDITED_FROM)
+			);
 		} catch (final Exception e) {
 			log.error("Failed to enrich amr", e);
 			throw new RuntimeException(e);
