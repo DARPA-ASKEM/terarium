@@ -95,37 +95,38 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 			// Retrive final result json
 			final JsonNode result = objectMapper.readValue(resp.getOutput(), JsonNode.class);
 
+			// Save contracted model/model configuration
+			// The response is stringified JSON so convert it to an object to access the contracted_model and clean it up
+			final String responseString = result.get("response").asText();
+			ObjectNode contractedModelObject = (ObjectNode) objectMapper.readTree(responseString).get("contracted_model");
+			// Only use contracted model to create model configuration, no need to save it
+			final Model contractedModel = objectMapper.convertValue(contractedModelObject, Model.class);
+
+			final ModelConfiguration contractedModelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
+				contractedModel,
+				"Validated " + contractedModel.getName(),
+				contractedModel.getDescription()
+			);
+			contractedModelConfiguration.setModelId(props.modelId); // Config should be linked to the original model
+
+			// Save validated model configuration
+			final ModelConfiguration createdModelConfiguration = modelConfigurationService.createAsset(
+				contractedModelConfiguration,
+				props.projectId,
+				ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
+			);
+
+			// Add model configuration to the response
+			JsonNode responseNode = objectMapper.readTree(responseString);
+			JsonNode modelConfigNode = objectMapper.valueToTree(createdModelConfiguration);
+			((ObjectNode) responseNode).set("modelConfiguration", modelConfigNode);
+			String updatedResponseString = objectMapper.writeValueAsString(responseNode);
+			((ObjectNode) result).put("response", updatedResponseString);
+
 			// Upload final result into S3
 			final byte[] bytes = objectMapper.writeValueAsBytes(result.get("response"));
 			final HttpEntity fileEntity = new ByteArrayEntity(bytes, ContentType.TEXT_PLAIN);
 			simulationService.uploadFile(simulationId, resultFilename, fileEntity);
-
-			// Save contracted model/model configuration
-			try {
-				// The response is stringified JSON so convert it to an object to access the contracted_model and clean it up
-				String responseString = result.get("response").asText();
-				ObjectNode contractedModelObject = (ObjectNode) objectMapper.readTree(responseString).get("contracted_model");
-				if (contractedModelObject != null) {
-					// Only use contracted model to create model configuration, no need to save it
-					final Model contractedModel = objectMapper.convertValue(contractedModelObject, Model.class);
-
-					final ModelConfiguration contractedModelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
-						contractedModel,
-						"Validated " + contractedModel.getName(),
-						contractedModel.getDescription()
-					);
-					contractedModelConfiguration.setModelId(props.modelId); // Config should be linked to the original model
-
-					// Save validated model configuration
-					modelConfigurationService.createAsset(
-						contractedModelConfiguration,
-						props.projectId,
-						ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
-					);
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
 
 			// Mark simulation as completed, update result file
 			sim.get().setStatus(ProgressState.COMPLETE);
