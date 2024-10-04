@@ -111,25 +111,33 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 						JsonNode schemaNode = headerObject.remove("schema_");
 						headerObject.set("schema", schemaNode);
 					}
+					// Only use contracted model to create model configuration
 					final Model contractedModel = objectMapper.convertValue(contractedModelObject, Model.class);
 					final ModelConfiguration contractedModelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
 						contractedModel,
 						"Validated " + contractedModel.getName(),
 						contractedModel.getDescription()
 					);
-					contractedModelConfiguration.setModelId(props.modelId);
+					contractedModelConfiguration.setModelId(props.modelId); // Config should be linked to the original model
+
 					System.out.println("contractedModelConfiguration||||||||||||||: " + contractedModelConfiguration);
+
+					final ModelConfiguration createdModelConfiguration = modelConfigurationService.createAsset(
+						contractedModelConfiguration,
+						props.projectId,
+						ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
+					);
+					// System.out.println("createdModelConfiguration||||||||||||||: " + createdModelConfiguration); // Causes stack overflow
+
+					// Add model configuration to the response
 					// JsonNode outputNode = objectMapper.readTree(resp.getOutput());
 
-					//   // Step 2: Add the new property
 					//   if (outputNode.isObject()) {
-					//       ((ObjectNode) outputNode).put("modelConfigId", createdModel.getId().toString());
+					//       ((ObjectNode) outputNode).put("modelConfiguration", createdModelConfiguration);
 					//   }
 
-					//   // Step 3: Serialize the updated JSON
 					//   byte[] updatedOutput = objectMapper.writeValueAsBytes(outputNode);
 
-					//   // Step 4: Set the updated output
 					//   resp.setOutput(updatedOutput);
 				}
 			} catch (Exception e) {
