@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -105,14 +106,9 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 				String responseString = result.get("response").asText();
 				ObjectNode contractedModelObject = (ObjectNode) objectMapper.readTree(responseString).get("contracted_model");
 				if (contractedModelObject != null) {
-					// Rename schema_ to schema. Currently it has an extra underscore, remove this once funman fixes this
-					ObjectNode headerObject = (ObjectNode) contractedModelObject.get("header");
-					if (headerObject != null && headerObject.has("schema_")) {
-						JsonNode schemaNode = headerObject.remove("schema_");
-						headerObject.set("schema", schemaNode);
-					}
 					// Only use contracted model to create model configuration, no need to save it
 					final Model contractedModel = objectMapper.convertValue(contractedModelObject, Model.class);
+
 					final ModelConfiguration contractedModelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
 						contractedModel,
 						"Validated " + contractedModel.getName(),
@@ -120,26 +116,12 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 					);
 					contractedModelConfiguration.setModelId(props.modelId); // Config should be linked to the original model
 
-					System.out.println("contractedModelConfiguration||||||||||||||: " + contractedModelConfiguration);
-
-					final ModelConfiguration createdModelConfiguration = modelConfigurationService.createAsset(
+					// Save validated model configuration
+					modelConfigurationService.createAsset(
 						contractedModelConfiguration,
 						props.projectId,
 						ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
 					);
-
-					// Add model configuration to the response
-					JsonNode outputNode = objectMapper.readTree(resp.getOutput());
-
-					if (outputNode.isObject()) {
-						JsonNode modelConfigNode = objectMapper.valueToTree(createdModelConfiguration);
-						System.out.println("modelConfigNode||||||||||||||: " + modelConfigNode);
-						((ObjectNode) outputNode).set("modelConfiguration", modelConfigNode);
-					}
-
-					byte[] updatedOutput = objectMapper.writeValueAsBytes(outputNode);
-
-					resp.setOutput(updatedOutput);
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
