@@ -870,10 +870,6 @@ public class GoLLMController {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 		}
 
-		// stripping the metadata from the model before its sent since it can cause
-		// gollm to fail with massive inputs
-		model.get().setMetadata(null);
-
 		TaskRequest req = getEnrichAMRTaskRequest(document.get(), model.get(), projectId, overwrite);
 
 		final TaskResponse resp;
@@ -1147,13 +1143,7 @@ public class GoLLMController {
 		final EnrichAmrResponseHandler.Input input = new EnrichAmrResponseHandler.Input();
 		if (document != null) input.setResearchPaper(document.getText());
 
-		try {
-			final String amr = objectMapper.writeValueAsString(model);
-			input.setAmr(amr);
-		} catch (final JsonProcessingException e) {
-			log.error("Unable to serialize model card", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
-		}
+		input.setAmr(model.serializeWithoutTerariumFields(null, null));
 
 		// Create the task
 		final TaskRequest req = new TaskRequest();

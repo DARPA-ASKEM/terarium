@@ -894,12 +894,14 @@ export interface Authority {
 
 export interface Rate {
     target: string;
+    description?: string;
     expression: string;
     expression_mathml?: string;
 }
 
 export interface Initial {
     target: string;
+    description?: string;
     expression: string;
     expression_mathml: string;
 }
