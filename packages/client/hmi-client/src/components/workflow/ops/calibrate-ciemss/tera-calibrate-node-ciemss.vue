@@ -171,7 +171,7 @@ const preparedCharts = computed(() => {
 	groundTruth = csvParse(csvRaw, autoType);
 
 	// Need to get the dataset's time field
-	const datasetTimeField = state.mapping.find((d) => d.modelVariable === 'timestamp')?.datasetVariable;
+	const datasetTimeField = state.timestampColName;
 
 	return selectedVariableSettings.value.map((setting) => {
 		const variable = setting.selectedVariables[0];
