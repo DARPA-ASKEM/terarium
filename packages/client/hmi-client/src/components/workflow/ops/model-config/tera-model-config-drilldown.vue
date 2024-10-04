@@ -60,7 +60,13 @@
 				/>
 			</template>
 			<template #header-controls-right>
-				<Button label="Reset" @click="resetConfiguration" outlined severity="secondary" />
+				<Button
+					label="Reset"
+					outlined
+					severity="secondary"
+					:disabled="!isModelConfigChanged"
+					@click="resetConfiguration"
+				/>
 				<Button label="Save as" outlined severity="secondary" @click="showSaveModal = true" />
 				<Button :disabled="isSaveDisabled" label="Save" @click="onSaveConfiguration" />
 			</template>
@@ -276,6 +282,11 @@ const calibratedConfigObservables = computed<Observable[]>(() =>
 		states,
 		expression
 	}))
+);
+
+// Check if the model configuration is the same as the original
+const isModelConfigChanged = computed(
+	() => !isModelConfigsEqual(originalConfig.value, knobs.value.transientModelConfig)
 );
 
 // Save button is disabled if the model configuration name is empty, the values have changed, or the configuration is the same as the original
