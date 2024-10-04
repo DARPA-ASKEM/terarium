@@ -111,7 +111,7 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 						JsonNode schemaNode = headerObject.remove("schema_");
 						headerObject.set("schema", schemaNode);
 					}
-					// Only use contracted model to create model configuration
+					// Only use contracted model to create model configuration, no need to save it
 					final Model contractedModel = objectMapper.convertValue(contractedModelObject, Model.class);
 					final ModelConfiguration contractedModelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
 						contractedModel,
@@ -127,18 +127,19 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 						props.projectId,
 						ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
 					);
-					// System.out.println("createdModelConfiguration||||||||||||||: " + createdModelConfiguration); // Causes stack overflow
 
 					// Add model configuration to the response
-					// JsonNode outputNode = objectMapper.readTree(resp.getOutput());
+					JsonNode outputNode = objectMapper.readTree(resp.getOutput());
 
-					//   if (outputNode.isObject()) {
-					//       ((ObjectNode) outputNode).put("modelConfiguration", createdModelConfiguration);
-					//   }
+					if (outputNode.isObject()) {
+						JsonNode modelConfigNode = objectMapper.valueToTree(createdModelConfiguration);
+						System.out.println("modelConfigNode||||||||||||||: " + modelConfigNode);
+						((ObjectNode) outputNode).set("modelConfiguration", modelConfigNode);
+					}
 
-					//   byte[] updatedOutput = objectMapper.writeValueAsBytes(outputNode);
+					byte[] updatedOutput = objectMapper.writeValueAsBytes(outputNode);
 
-					//   resp.setOutput(updatedOutput);
+					resp.setOutput(updatedOutput);
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
