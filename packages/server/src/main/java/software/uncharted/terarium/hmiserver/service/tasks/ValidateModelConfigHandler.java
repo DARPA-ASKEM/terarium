@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.service.tasks;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
@@ -94,12 +95,33 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 			final HttpEntity fileEntity = new ByteArrayEntity(bytes, ContentType.TEXT_PLAIN);
 			simulationService.uploadFile(simulationId, resultFilename, fileEntity);
 
-			// final Model contractedModel = objectMapper.convertValue(
-			// 	result.get("response").get("contracted_model"),
-			// 	Model.class
-			// );
-			// System.out.println("contractedModel: " + contractedModel);
-			// modelService.createAsset(contractedModel, props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+			// Save contracted model/model configuration
+			try {
+				// The response is stringified JSON so convert it to an object to access the contracted_model and clean it up
+				String responseString = result.get("response").asText();
+				ObjectNode contractedModelObject = (ObjectNode) objectMapper.readTree(responseString).get("contracted_model");
+				if (contractedModelObject != null) {
+					contractedModelObject.remove("id");
+					contractedModelObject.remove("createdOn");
+					contractedModelObject.remove("updatedOn");
+					// Rename schema_ to schema. Currently it has an extra underscore, remove this once funman fixes this
+					ObjectNode headerObject = (ObjectNode) contractedModelObject.get("header");
+					if (headerObject != null && headerObject.has("schema_")) {
+						JsonNode schemaNode = headerObject.remove("schema_");
+						headerObject.set("schema", schemaNode);
+					}
+					final Model contractedModel = objectMapper.convertValue(contractedModelObject, Model.class);
+					System.out.println("contractedModel: " + contractedModel);
+					final Model createdModel = modelService.createAsset(
+						contractedModel,
+						props.projectId,
+						ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
+					);
+					// resp.setId(createdModel.getId());
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 
 			// Mark simulation as completed, update result file
 			sim.get().setStatus(ProgressState.COMPLETE);
