@@ -110,12 +110,18 @@ const submitQuestion = () => {
 	});
 	message.register('llm_thought', (data) => {
 		thoughts.value = data;
-		llmThoughts.value = [];
+		llmThoughts.value = []; // TODO Should this reset on thought? Or just response?
 		llmThoughts.value.push(data);
 		llmQuery.value = questionString.value;
 		emit('llm-thought-output', data);
 	});
 	message.register('llm_response', (data) => {
+		// Check if our llm_response is providing a response text to a user's question
+		if (data.content.name === 'response_text') {
+			llmThoughts.value = [];
+			llmThoughts.value.push(data);
+			emit('llm-thought-output', data);
+		}
 		thoughts.value = data;
 		emit('llm-thought-output', data);
 	});
