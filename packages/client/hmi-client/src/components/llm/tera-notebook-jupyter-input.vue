@@ -98,6 +98,7 @@ const submitQuestion = () => {
 	const message = props.kernelManager.sendMessage('llm_request', {
 		request: questionString.value
 	});
+	llmThoughts.value = [];
 	emit('question-asked', questionString.value);
 
 	// May prefer to use a manual status rather than following this. TBD. Both options work for now
@@ -110,7 +111,6 @@ const submitQuestion = () => {
 	});
 	message.register('llm_thought', (data) => {
 		thoughts.value = data;
-		llmThoughts.value = []; // TODO Should this reset on thought? Or just response?
 		llmThoughts.value.push(data);
 		llmQuery.value = questionString.value;
 		emit('llm-thought-output', data);
