@@ -120,7 +120,6 @@ const submitQuestion = () => {
 		if (data.content.name === 'response_text') {
 			llmThoughts.value = [];
 			llmThoughts.value.push(data);
-			emit('llm-thought-output', data);
 		}
 		thoughts.value = data;
 		emit('llm-thought-output', data);
