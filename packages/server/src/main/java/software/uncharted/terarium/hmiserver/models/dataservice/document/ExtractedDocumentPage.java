@@ -13,13 +13,11 @@ import lombok.experimental.Accessors;
 public class ExtractedDocumentPage implements Serializable {
 
 	@Serial
-	private static final long serialVersionUID = 7781295818378531195L;
+	private static final long serialVersionUID = 1289317238497123L;
 
 	Integer pageNumber;
-
 	String text;
 	List<JsonNode> tables = new ArrayList<>();
-
 	List<JsonNode> equations = new ArrayList<>();
 
 	@Override
