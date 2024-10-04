@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.AMRSchemaType;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 
 @Data
@@ -20,6 +21,9 @@ public class Initial extends SupportAdditionalProperties implements Serializable
 
 	private String target;
 
+	@TSOptional
+	private String description;
+
 	private String expression;
 
 	@JsonProperty("expression_mathml")
@@ -29,6 +33,7 @@ public class Initial extends SupportAdditionalProperties implements Serializable
 	public Initial clone() {
 		Initial clone = (Initial) super.clone();
 		clone.setTarget(target);
+		clone.setDescription(description);
 		clone.setExpression(expression);
 		clone.setExpressionMathml(expressionMathml);
 		return clone;
