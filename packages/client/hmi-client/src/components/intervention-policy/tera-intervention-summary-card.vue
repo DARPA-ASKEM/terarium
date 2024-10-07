@@ -1,5 +1,6 @@
 <template>
-	<section>
+	<div>
+		<aside>{{ !isEmpty(intervention.dynamicInterventions) ? 'Dynamic' : 'Static' }}</aside>
 		<h5>{{ intervention.name }}</h5>
 		<ul>
 			<li v-for="(staticIntervention, index) in intervention.staticInterventions" :key="`static-${index}`">
@@ -16,11 +17,12 @@
 				>.
 			</li>
 		</ul>
-	</section>
+	</div>
 </template>
 
 <script setup lang="ts">
 import { Intervention } from '@/types/Types';
+import { isEmpty } from 'lodash';
 
 defineProps<{
 	intervention: Intervention;
@@ -28,7 +30,7 @@ defineProps<{
 </script>
 
 <style scoped>
-section {
+div {
 	background: var(--surface-section);
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-medium);
@@ -41,5 +43,11 @@ section {
 ul {
 	list-style: none;
 	margin-top: var(--gap-2);
+}
+
+aside {
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
+	float: right;
 }
 </style>
