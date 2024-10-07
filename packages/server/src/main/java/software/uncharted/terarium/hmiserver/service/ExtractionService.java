@@ -17,6 +17,7 @@ import java.net.URL;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -832,7 +833,15 @@ public class ExtractionService {
 			}
 
 			// Sort keys
-			Collections.sort(keys);
+			Collections.sort(
+				keys,
+				new Comparator<String>() {
+					@Override
+					public int compare(final String s1, final String s2) {
+						return Integer.compare(Integer.parseInt(s1), Integer.parseInt(s2));
+					}
+				}
+			);
 
 			final EquationExtraction extraction = new EquationExtraction();
 
@@ -925,7 +934,15 @@ public class ExtractionService {
 			}
 
 			// Sort keys
-			Collections.sort(keys);
+			Collections.sort(
+				keys,
+				new Comparator<String>() {
+					@Override
+					public int compare(final String s1, final String s2) {
+						return Integer.compare(Integer.parseInt(s1), Integer.parseInt(s2));
+					}
+				}
+			);
 
 			final TableExtraction extraction = new TableExtraction();
 
