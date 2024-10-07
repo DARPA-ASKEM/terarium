@@ -181,7 +181,7 @@ def model_config_from_document(research_paper: str, amr: str) -> dict:
         frequency_penalty=0,
         max_tokens=4000,
         presence_penalty=0,
-        seed=905,
+        seed=123,
         temperature=0,
         top_p=1,
         response_format={
