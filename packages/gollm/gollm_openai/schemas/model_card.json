@@ -26,16 +26,18 @@
         },
         "states": {
           "type": "array",
+          "description": "A list of state descriptions.",
           "items": {
             "type": "string",
-            "description": "A short paragraph describing and summarizing the model state. This should include the name of the state, a description, what units to use for it, and how this state can transition to other states."
+            "description": "A short paragraph describing and summarizing the model state. The paragraph should start with the state name, then a colon, then a description of the state including what units to use for it, and how this state can transition to other states."
           }
         },
         "parameters": {
           "type": "array",
+          "description": "A list of parameter descriptions.",
           "items": {
             "type": "string",
-            "description": "A short paragraph describing and summarizing the model parameter. This should include the name of the parameter, a description, and what units to use for it."
+            "description": "A short paragraph describing and summarizing the model parameter. The paragraph should start with the parameter name, then a colon, then a description of the parameter including what units to use for it."
           }
         }
       },
