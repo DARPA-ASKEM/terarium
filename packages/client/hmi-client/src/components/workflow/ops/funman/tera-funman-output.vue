@@ -124,8 +124,6 @@ const initalize = async () => {
 	selectedState.value = props.trajectoryState ?? stateOptions.value[0];
 	updateStateChart();
 
-	console.log(funmanResult); /// //////////////////////////
-
 	// Parameter charts
 	const parametersOfInterest = funmanResult.request.parameters.filter((d: any) => d.label === 'all');
 	if (processedFunmanResult.boxes) {

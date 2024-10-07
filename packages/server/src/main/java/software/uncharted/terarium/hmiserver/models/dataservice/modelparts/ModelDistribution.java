@@ -30,4 +30,14 @@ public class ModelDistribution extends SupportAdditionalProperties implements Se
 		clone.setType(this.getType());
 		return clone;
 	}
+
+	public boolean isMinimumEqualToMaximum() {
+		if (parameters == null) return false;
+		Object min = parameters.get("minimum");
+		Object max = parameters.get("maximum");
+		if (min instanceof Number && max instanceof Number) {
+			return ((Number) min).doubleValue() == ((Number) max).doubleValue();
+		}
+		return false;
+	}
 }
