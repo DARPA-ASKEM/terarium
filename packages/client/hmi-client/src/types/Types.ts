@@ -792,6 +792,7 @@ export interface TerariumAssetThatSupportsAdditionalProperties extends TerariumA
 export interface ModelDistribution {
     type: string;
     parameters: { [index: string]: any };
+    minimumEqualToMaximum: boolean;
 }
 
 export interface ModelGrounding {
