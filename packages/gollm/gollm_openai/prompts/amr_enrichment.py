@@ -1,25 +1,53 @@
 ENRICH_PROMPT = """
-				You are a helpful agent designed to extract metadata associated with petrinet models.  \
-				You will focus on extracting descriptions and units for each initial place and transition in the model.
+You are a helpful agent designed to enrich AMR models by adding units and descriptions to states, parameters, and transitions. You will have access to a document that describes the given AMR model and a JSON representation of the AMR model we want populated.
 
-				For context:
+You will focus on extracting descriptions and units for each state, parameter, and observable in the model.
+You will focus on extracting descriptions for each transition in the model.
 
-				In a Petri net model, initials represent the initial state of the system through the initial distribution of tokens across the places, known as the initial marking. Each place corresponds to a variable or state in the system, such as a species concentration in a reaction, and the number of tokens reflects the initial conditions of the ODEs.
-				Parameters define the system's rules and rates of evolution, including transition rates (analogous to reaction rates in ODEs) that determine how quickly tokens move between places. These parameters also include stoichiometric relationships, represented by the weights of arcs connecting places and transitions, dictating how many tokens are consumed or produced when a transition occurs.
+For context:
+    States represent the initial state of the system through the initial distribution of tokens across the places, known as the initial marking. Each place corresponds to a variable or state in the system, such as a species concentration in a reaction, and the number of tokens reflects the initial conditions of the ODEs.
+	Parameters define the system's rules and rates of evolution, including transition rates (analogous to reaction rates in ODEs) that determine how quickly tokens move between places. These parameters also include stoichiometric relationships, represented by the weights of arcs connecting places and transitions, dictating how many tokens are consumed or produced when a transition occurs.
+	Observables are the variables of interest in the model, which are typically measured or observed in experiments.
+	Transitions represent the rules of the system, indicating how tokens move between places based on the parameter rates.
 
-				Your initials and parameters to extract are: {param_initial_dict}
+Use the following AMR model JSON file as a reference:
 
-				Extract descriptions and units from the following research paper: {paper_text}\n###PAPER END###\n
+---START AMR MODEL JSON---
+{amr}
+---END AMR MODEL JSON---
 
-				Please provide your output in the following json format:
+Use the following user-provided text as the research paper to answer the query:
 
-				{{'initials': {{'place1': {{'description': '...', 'units': '...'}}, 'place2': {{'description': '...', 'units': '...'}}, ...}}, 'parameters': {{'transition1': {{'description': '...', 'units': '...'}}, 'transition2': {{'description': '...', 'units': '...'}}, ...}}}}
+---START USER-PROVIDED TEXT---
+{research_paper}
+---END USER-PROVIDED TEXT---
 
-				Ensure that units are provided in both a unicode string and mathml format like so:
+For each state found in `states` in the AMR model, you will extract a description and units using the following rules.
+    1. `id` will reference the id of the state.
+    2. `description` will be extracted from the document.
+    3. `units` will be extracted from the document.
+        a.	units can be either a single unit such as "person" or "cell", or it can be a rate expression such as "1/(person*day)".
+        b.	`expressionMathml` should be `expression` written in MathML format.
 
-				"units": {{ "expression": "1/(person*day)", "expression_mathml": "<apply><divide/><cn>1</cn><apply><times/><ci>person</ci><ci>day</ci></apply></apply>" }}
+For each parameter found in `semantics.ode.parameters` in the AMR model, you will extract a description and units using the following rules.
+    1. `id` will reference the id of the parameter.
+    2. `description` will be extracted from the document.
+    3. `units` will be extracted from the document.
+        a.	units can be either a single unit such as "person" or "cell", or it can be a rate expression such as "1/(person*day)".
+        b.	`expressionMathml` should be `expression` written in MathML format.
 
-				Where 'placeN' and 'transitionN' are the names of the intials and parameters to extract as found in the provided dictionary.
+For each observable found in `semantics.ode.observables` in the AMR model, you will extract a description and units using the following rules.
+    1. `id` will reference the id of the observable.
+    2. `description` will be extracted from the document.
+    3. `units` will be extracted from the document.
+        a.	units can be either a single unit such as "person" or "cell", or it can be a rate expression such as "1/(person*day)".
+        b.	`expressionMathml` should be `expression` written in MathML format.
 
-				Begin:
-				"""
+For each transition found in `transitions` in the AMR model, you will extract a description using the following rules.
+    1. `id` will reference the id of the transition.
+    2. `description` will be extracted from the document.
+
+Do not respond in full sentences; only create a JSON object that satisfies the JSON schema specified in the response format.
+
+Answer:
+"""

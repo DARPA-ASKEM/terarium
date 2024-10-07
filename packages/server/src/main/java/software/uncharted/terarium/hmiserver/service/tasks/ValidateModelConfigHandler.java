@@ -1,7 +1,9 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
@@ -12,9 +14,13 @@ import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.springframework.stereotype.Component;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
+import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
+import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
 
 @Component
@@ -26,6 +32,8 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 
 	private final ObjectMapper objectMapper;
 	private final SimulationService simulationService;
+	private final ModelService modelService;
+	private final ModelConfigurationService modelConfigurationService;
 
 	@Override
 	public String getName() {
@@ -36,6 +44,7 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 	public static class Properties {
 
 		UUID projectId;
+		UUID modelId;
 		UUID simulationId;
 	}
 
@@ -85,6 +94,34 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 
 			// Retrive final result json
 			final JsonNode result = objectMapper.readValue(resp.getOutput(), JsonNode.class);
+
+			// Save contracted model/model configuration
+			// The response is stringified JSON so convert it to an object to access the contracted_model and clean it up
+			final String responseString = result.get("response").asText();
+			ObjectNode contractedModelObject = (ObjectNode) objectMapper.readTree(responseString).get("contracted_model");
+			// Only use contracted model to create model configuration, no need to save it
+			final Model contractedModel = objectMapper.convertValue(contractedModelObject, Model.class);
+
+			final ModelConfiguration contractedModelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
+				contractedModel,
+				"Validated " + contractedModel.getName(),
+				contractedModel.getDescription()
+			);
+			contractedModelConfiguration.setModelId(props.modelId); // Config should be linked to the original model
+
+			// Save validated model configuration
+			final ModelConfiguration createdModelConfiguration = modelConfigurationService.createAsset(
+				contractedModelConfiguration,
+				props.projectId,
+				ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
+			);
+
+			// Add model configuration to the response
+			JsonNode responseNode = objectMapper.readTree(responseString);
+			JsonNode modelConfigNode = objectMapper.valueToTree(createdModelConfiguration);
+			((ObjectNode) responseNode).set("modelConfiguration", modelConfigNode);
+			String updatedResponseString = objectMapper.writeValueAsString(responseNode);
+			((ObjectNode) result).put("response", updatedResponseString);
 
 			// Upload final result into S3
 			final byte[] bytes = objectMapper.writeValueAsBytes(result.get("response"));

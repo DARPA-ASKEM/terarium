@@ -179,7 +179,11 @@ import InputSwitch from 'primevue/inputswitch';
 import type { FunmanInterval, FunmanPostQueriesRequest, Model, ModelParameter, TimeSpan } from '@/types/Types';
 import { makeQueries } from '@/services/models/funman-service';
 import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
-import { getAsConfiguredModel, getModelConfigurationById } from '@/services/model-configurations';
+import {
+	getAsConfiguredModel,
+	getModelConfigurationById,
+	getModelIdFromModelConfigurationId
+} from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
 import { pythonInstance } from '@/python/PyodideController';
 import TeraFunmanOutput from '@/components/workflow/ops/funman/tera-funman-output.vue';
@@ -213,6 +217,7 @@ const MAX = 99999999999;
 const toast = useToastService();
 const validateParametersToolTip =
 	'Validate the configuration of the model using functional model analysis (FUNMAN). \n \n The parameter space regions defined by the model configuration are evaluated to satisfactory or unsatisfactory depending on whether they generate model outputs that are within a given set of time-dependent constraints';
+let originalModelId = '';
 
 const showSpinner = ref(false);
 const isSliderOpen = ref(true);
@@ -223,7 +228,7 @@ const requestStepList = computed(() => getStepList());
 const requestStepListString = computed(() => requestStepList.value.join()); // Just used to display. dont like this but need to be quick
 
 const requestParameters = ref<any[]>([]);
-const model = ref<Model | null>();
+const configuredModel = ref<Model | null>();
 
 const stateIds = ref<string[]>([]);
 const parameterIds = ref<string[]>([]);
@@ -261,7 +266,7 @@ const onToggleVariableOfInterest = (vals: string[]) => {
 };
 
 const runMakeQuery = async () => {
-	if (!model.value) {
+	if (!configuredModel.value) {
 		toast.error('', 'No Model provided for request');
 		return;
 	}
@@ -323,7 +328,7 @@ const runMakeQuery = async () => {
 		.filter(Boolean); // Removes falsey values
 
 	const request: FunmanPostQueriesRequest = {
-		model: model.value,
+		model: configuredModel.value,
 		request: {
 			constraints,
 			parameters: requestParameters.value,
@@ -336,14 +341,14 @@ const runMakeQuery = async () => {
 			config: {
 				use_compartmental_constraints: knobs.value.compartmentalConstraint.isActive,
 				normalization_constant:
-					knobs.value.compartmentalConstraint.isActive && model.value.semantics ? parseFloat(mass.value) : 1,
+					knobs.value.compartmentalConstraint.isActive && configuredModel.value.semantics ? parseFloat(mass.value) : 1,
 				normalize: false,
 				tolerance: knobs.value.tolerance
 			}
 		}
 	};
 
-	const response = await makeQueries(request);
+	const response = await makeQueries(request, originalModelId);
 
 	// Setup the in-progress id
 	const state = _.cloneDeep(props.node.state);
@@ -414,11 +419,12 @@ const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
 	const modelConfiguration = await getModelConfigurationById(modelConfigurationId);
-	model.value = await getAsConfiguredModel(modelConfiguration);
+	configuredModel.value = await getAsConfiguredModel(modelConfiguration);
+	originalModelId = await getModelIdFromModelConfigurationId(modelConfigurationId);
 };
 
 const setModelOptions = async () => {
-	if (!model.value) return;
+	if (!configuredModel.value) return;
 
 	const renameReserved = (v: string) => {
 		const reserved = ['lambda'];
@@ -427,7 +433,7 @@ const setModelOptions = async () => {
 	};
 
 	// Calculate mass
-	const semantics = model.value.semantics;
+	const semantics = configuredModel.value.semantics;
 	const modelInitials = semantics?.ode.initials;
 	const modelMassExpression = modelInitials?.map((d) => renameReserved(d.expression)).join(' + ');
 
@@ -439,7 +445,7 @@ const setModelOptions = async () => {
 
 	mass.value = await pythonInstance.evaluateExpression(modelMassExpression as string, parametersMap);
 
-	const ode = model.value.semantics?.ode;
+	const ode = configuredModel.value.semantics?.ode;
 	if (ode) {
 		if (ode.initials) stateIds.value = ode.initials.map((s) => s.target);
 		if (ode.parameters) parameterIds.value = ode.parameters.map((d) => d.id);
@@ -452,8 +458,8 @@ const setModelOptions = async () => {
 	knobs.value.tolerance = state.tolerance;
 	knobs.value.compartmentalConstraint = state.compartmentalConstraint;
 
-	if (model.value.semantics?.ode.parameters) {
-		setRequestParameters(model.value.semantics?.ode.parameters);
+	if (configuredModel.value.semantics?.ode.parameters) {
+		setRequestParameters(configuredModel.value.semantics?.ode.parameters);
 		variablesOfInterest.value = requestParameters.value.filter((d: any) => d.label === 'all').map((d: any) => d.name);
 	} else {
 		toast.error('', 'Provided model has no parameters');

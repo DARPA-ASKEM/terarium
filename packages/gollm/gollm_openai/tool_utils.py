@@ -26,8 +26,6 @@ from utils import (
     exceeds_tokens,
     model_config_adapter,
     normalize_greek_alphabet,
-    parse_param_initials,
-    postprocess_oai_json,
     validate_schema
 )
 
@@ -207,26 +205,46 @@ def model_config_from_document(research_paper: str, amr: str) -> dict:
 
 
 def amr_enrichment_chain(amr: str, research_paper: str) -> dict:
-    amr_param_states = parse_param_initials(amr)
+    print("Extracting and formatting research paper...")
+    research_paper = normalize_greek_alphabet(research_paper)
+
+    print("Uploading and validating model enrichment schema...")
+    config_path = os.path.join(SCRIPT_DIR, 'schemas', 'amr_enrichment.json')
+    with open(config_path, 'r') as config_file:
+        response_schema = json.load(config_file)
+    validate_schema(response_schema)
+
+    print("Building prompt to extract model enrichments from a research paper...")
     prompt = ENRICH_PROMPT.format(
-        param_initial_dict=amr_param_states,
-        paper_text=escape_curly_braces(research_paper)
+        amr=escape_curly_braces(amr),
+        research_paper=escape_curly_braces(research_paper)
     )
+
     client = OpenAI()
     output = client.chat.completions.create(
         model="gpt-4o-2024-08-06",
-        max_tokens=4000,
+        max_tokens=16000,
         top_p=1,
         frequency_penalty=0,
         presence_penalty=0,
         seed=123,
         temperature=0,
-        response_format={"type": "json_object"},
+        response_format={
+            "type": "json_schema",
+            "json_schema": {
+                "name": "model_configurations",
+                "schema": response_schema
+            }
+        },
         messages=[
             {"role": "user", "content": prompt},
         ],
     )
-    return postprocess_oai_json(output.choices[0].message.content)
+
+    print("Received response from OpenAI API. Formatting response to work with HMI...")
+    output_json = json.loads(output.choices[0].message.content)
+
+    return output_json
 
 
 def model_card_chain(amr: str, research_paper: str = None) -> dict:
