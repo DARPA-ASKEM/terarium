@@ -161,7 +161,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
@@ -329,8 +329,6 @@ const isLoadingProjects = computed(() => !useProjects().allProjects.value);
 function openProject(projectId: string) {
 	router.push({ name: RouteName.Project, params: { projectId } });
 }
-
-onMounted(() => useProjects().getAll());
 
 watch(
 	() => cloningProjects.value,
