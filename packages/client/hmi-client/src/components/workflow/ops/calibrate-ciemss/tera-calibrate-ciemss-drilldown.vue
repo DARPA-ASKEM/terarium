@@ -1344,6 +1344,7 @@ img {
 .additional-settings {
 	background: var(--surface-200);
 	padding: var(--gap-3);
+	border-radius: var(--border-radius-medium);
 }
 
 input {
