@@ -45,6 +45,10 @@ ul {
 	margin-top: var(--gap-2);
 }
 
+li + li {
+	margin-top: var(--gap-1);
+}
+
 aside {
 	color: var(--text-color-subdued);
 	font-size: var(--font-caption);
