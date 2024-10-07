@@ -1,5 +1,5 @@
 import node from './tera-model-edit-node.vue';
-import drilldown from './tera-model-edit.vue';
+import drilldown from './tera-model-edit-drilldown.vue';
 import { ModelEditOperation as operation } from './model-edit-operation';
 
 const name = operation.name;

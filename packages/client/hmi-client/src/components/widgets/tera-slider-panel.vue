@@ -109,6 +109,7 @@ aside {
 	display: flex;
 	flex-direction: column;
 	height: 100%;
+	overflow-y: auto;
 }
 
 header {
@@ -150,6 +151,15 @@ header:not(.tab) {
 	& :deep(.slider-tab) {
 		background-color: var(--surface-100);
 		border-right: 1px solid var(--surface-border-light);
+	}
+
+	/** Override default accordion styles */
+	&:deep(.p-accordion-header-link) {
+		background-color: var(--surface-100);
+	}
+
+	&:deep(.p-accordion-content) {
+		background-color: var(--surface-100);
 	}
 }
 

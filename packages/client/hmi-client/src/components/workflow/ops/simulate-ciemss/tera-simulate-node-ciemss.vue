@@ -44,7 +44,7 @@ import { createForecastChart, createInterventionChartMarkers } from '@/services/
 import { createDatasetFromSimulationResult } from '@/services/dataset';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import type { InterventionPolicy, Model } from '@/types/Types';
-import { getInterventionPolicyById } from '@/services/intervention-policy';
+import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
 
 const props = defineProps<{
@@ -110,8 +110,7 @@ const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperation
 const processResult = async (runId: string) => {
 	const state = _.cloneDeep(props.node.state);
 	if (interventionPolicyId.value && _.isEmpty(state.chartConfigs)) {
-		const groupedInterventions = _.groupBy(interventionPolicy.value?.interventions, 'appliedTo');
-		_.keys(groupedInterventions).forEach((key) => {
+		_.keys(groupedInterventionOutputs.value).forEach((key) => {
 			chartProxy.addChart([key]);
 		});
 	} else if (_.isEmpty(state.chartConfigs)) {
@@ -164,11 +163,12 @@ Provide a summary in 100 words or less.
 		isSelected: false
 	});
 };
-const groupedInterventionOutputs = computed(() => _.groupBy(interventionPolicy.value?.interventions, 'appliedTo'));
+const groupedInterventionOutputs = computed(() =>
+	_.groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
+);
 
 const preparedCharts = computed(() => {
 	if (!selectedRunId.value) return [];
-
 	const result = runResults.value[selectedRunId.value];
 	const resultSummary = runResultsSummary.value[selectedRunId.value];
 	const reverseMap: Record<string, string> = {};

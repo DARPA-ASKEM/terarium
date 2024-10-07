@@ -95,6 +95,7 @@
 			@new-dataset-saved="onNewDatasetSaved"
 			@download-response="onDownloadResponse"
 			@update-language="(lang) => emit('update-language', lang)"
+			@update-selected-outputs="(outputs) => emit('update-selected-outputs', outputs)"
 			:notebook-session="props.notebookSession"
 		/>
 
@@ -182,7 +183,7 @@ const props = defineProps<{
 const languages = programmingLanguageOptions();
 const selectedLanguage = computed(() => props.programmingLanguage || languages[0].value);
 
-const emit = defineEmits(['new-dataset-saved', 'update-language', 'update-kernel-state']);
+const emit = defineEmits(['new-dataset-saved', 'update-language', 'update-kernel-state', 'update-selected-outputs']);
 
 const chat = ref();
 const kernelStatus = ref(<string>'');

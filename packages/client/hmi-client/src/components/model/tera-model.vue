@@ -7,7 +7,7 @@
 		:is-naming-asset="isNaming"
 		:name="temporaryModel?.header.name"
 		@close-preview="emit('close-preview')"
-		show-table-of-contents
+		:show-table-of-contents="!isWorkflow"
 	>
 		<template #name-input>
 			<tera-input-text
@@ -20,7 +20,13 @@
 				placeholder="Title of new model"
 			/>
 			<div v-if="isNaming" class="flex flex-nowrap ml-1 mr-3">
-				<Button icon="pi pi-check" rounded text @click="updateModelName" />
+				<Button
+					icon="pi pi-check"
+					rounded
+					text
+					@click="updateModelName"
+					title="This will rename the model and save all current changes."
+				/>
 			</div>
 		</template>
 		<template #edit-buttons v-if="!featureConfig.isPreview">
@@ -35,7 +41,15 @@
 					@click="onReset"
 					:disabled="!(hasChanged && hasEditPermission)"
 				/>
-				<Button label="Save as" severity="secondary" outlined @click="onSaveAs" :disabled="!hasEditPermission" />
+				<Button
+					v-if="isSaveForReuse"
+					label="Save for re-use"
+					severity="secondary"
+					outlined
+					@click="onSaveForReUse"
+					:disabled="!hasEditPermission"
+				/>
+				<Button v-else label="Save as" severity="secondary" outlined @click="onSaveAs" :disabled="!hasEditPermission" />
 				<Button label="Save" @click="onSave" :disabled="!(hasChanged && hasEditPermission)" />
 			</aside>
 		</template>
@@ -58,7 +72,8 @@
 		:asset-type="AssetType.Model"
 		:initial-name="temporaryModel?.header.name"
 		:is-visible="showSaveModal"
-		:open-on-save="true"
+		:is-updating-asset="isSaveForReuse"
+		:open-on-save="!isWorkflow"
 		@close-modal="showSaveModal = false"
 		@on-save="onModalSave"
 	/>
@@ -90,10 +105,18 @@ const props = defineProps({
 	featureConfig: {
 		type: Object as PropType<FeatureConfig>,
 		default: { isPreview: false } as FeatureConfig
+	},
+	isWorkflow: {
+		type: Boolean,
+		default: false
+	},
+	isSaveForReuse: {
+		type: Boolean,
+		default: false
 	}
 });
 
-const emit = defineEmits(['close-preview']);
+const emit = defineEmits(['close-preview', 'on-save']);
 
 // Listen for the task completion event
 useClientEvent(ClientEventType.TaskGollmModelCard, (event: ClientEvent<TaskResponse>) => {
@@ -128,10 +151,17 @@ function onSave() {
 function onSaveAs() {
 	showSaveModal.value = true;
 }
+function onSaveForReUse() {
+	showSaveModal.value = true;
+}
 
 // Save modal
-function onModalSave() {
+function onModalSave(event: any) {
 	showSaveModal.value = false;
+	if (props.isWorkflow) {
+		emit('on-save', event);
+	}
+	fetchModel();
 }
 
 // User menu
@@ -196,6 +226,7 @@ async function updateModelName() {
 		temporaryModel.value.header.name = newName.value;
 	}
 	isRenaming.value = false;
+	onSave();
 }
 
 function updateTemporaryModel(newModel: Model) {

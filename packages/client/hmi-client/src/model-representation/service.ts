@@ -8,7 +8,7 @@ import { getModelType } from '@/services/model';
 import { AMRSchemaNames } from '@/types/common';
 import { parseCurie } from '@/services/concept';
 import { NestedPetrinetRenderer } from './petrinet/nested-petrinet-renderer';
-import { isStratifiedModel, getContextKeys, collapseTemplates } from './mira/mira';
+import { isStratifiedModel, getContext, collapseTemplates } from './mira/mira';
 import { extractTemplateMatrix } from './mira/mira-util';
 
 export const getVariable = (miraModel: MiraModel, variableName: string) => {
@@ -63,7 +63,7 @@ export const getModelRenderer = (
 				processedSet.add(conceptName);
 			});
 		});
-		const dims = getContextKeys(miraModel);
+		const dims = getContext(miraModel).keys;
 		dims.unshift('base');
 
 		const { matrixMap } = collapseTemplates(miraModel);

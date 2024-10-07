@@ -11,7 +11,7 @@
 				class="input-config"
 				v-model:is-open="isSidebarOpen"
 				header="Optimize intervention settings"
-				content-width="420px"
+				content-width="600px"
 			>
 				<template #content>
 					<div class="toolbar">
@@ -372,14 +372,16 @@
 			@click="saveModelConfiguration"
 		/>
 	</Dialog>
-	<tera-save-asset-modal
+	<tera-save-simulation-modal
 		:initial-name="optimizedInterventionPolicy?.name"
 		:is-visible="showSaveInterventionPolicy"
-		:asset="optimizedInterventionPolicy"
-		:asset-type="AssetType.InterventionPolicy"
+		:assets="[
+			{ id: optimizedInterventionPolicy?.id ?? '', type: AssetType.InterventionPolicy },
+			{ id: datasetId, type: AssetType.Dataset }
+		]"
 		@close-modal="showSaveInterventionPolicy = false"
 		@on-save="onSaveForReuse"
-		is-updating-asset
+		:simulation-id="node.state.postForecastRunId"
 	/>
 </template>
 
@@ -391,7 +393,8 @@ import Dropdown from 'primevue/dropdown';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import SelectButton from 'primevue/selectbutton';
 import Dialog from 'primevue/dialog';
-import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
+import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
+import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -422,12 +425,12 @@ import {
 	AssetType
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
-import { drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
+import { nodeMetadata } from '@/components/workflow/util';
 import { WorkflowNode } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
-import { getInterventionPolicyById } from '@/services/intervention-policy';
+import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import Divider from 'primevue/divider';
 import Accordion from 'primevue/accordion';
@@ -513,17 +516,27 @@ const showSaveDataDialog = ref<boolean>(false);
 const showSaveInterventionPolicy = ref<boolean>(false);
 
 const outputPanel = ref(null);
-const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+const chartSize = useDrilldownChartSize(outputPanel);
 const cancelRunId = computed(() => props.node.state.inProgressPostForecastId || props.node.state.inProgressOptimizeId);
 
-const activePolicyGroups = computed(() => knobs.value.interventionPolicyGroups.filter((ele) => ele.isActive));
+const activePolicyGroups = computed(() =>
+	knobs.value.interventionPolicyGroups.filter((ele) => !!ele.relativeImportance)
+);
 
-const inactivePolicyGroups = computed(() => knobs.value.interventionPolicyGroups.filter((ele) => !ele.isActive));
+const inactivePolicyGroups = computed(() =>
+	knobs.value.interventionPolicyGroups.filter((ele) => !ele.relativeImportance)
+);
 let pyciemssMap: Record<string, string> = {};
 
 const showSpinner = computed<boolean>(
 	() => props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressPostForecastId !== ''
 );
+
+const datasetId = computed(() => {
+	if (!selectedOutputId.value) return '';
+	const output = props.node.outputs.find((o) => o.id === selectedOutputId.value);
+	return output?.value?.[0]?.datasetId ?? '';
+});
 
 const showModelModal = ref(false);
 const displayOptimizationResultMessage = ref(true);
@@ -708,7 +721,7 @@ const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => 
 			const newIntervention = _.cloneDeep(blankInterventionPolicyGroup);
 			newIntervention.id = interventionPolicy.id;
 			newIntervention.intervention = intervention;
-			newIntervention.isActive = !isNotActive;
+			newIntervention.relativeImportance = isNotActive ? 0 : 5;
 			newIntervention.startTimeGuess = intervention.staticInterventions[0]?.timestep;
 			newIntervention.initialGuessValue = intervention.staticInterventions[0]?.value;
 			knobs.value.interventionPolicyGroups.push(newIntervention);
@@ -731,6 +744,7 @@ const runOptimize = async () => {
 	const listBoundsInterventions: number[][] = [];
 	const initialGuess: number[] = [];
 	const objectiveFunctionOption: string[] = [];
+	const relativeImportance: number[] = [];
 
 	activePolicyGroups.value.forEach((ele) => {
 		// Only allowed to optimize on interventions that arent grouped aka staticInterventions' length is 1
@@ -738,6 +752,7 @@ const runOptimize = async () => {
 		paramValues.push(ele.intervention.staticInterventions[0].value);
 		startTime.push(ele.intervention.staticInterventions[0].timestep);
 		objectiveFunctionOption.push(ele.objectiveFunctionOption);
+		relativeImportance.push(ele.relativeImportance);
 
 		if (ele.optimizationType === OptimizationInterventionObjective.startTime) {
 			initialGuess.push(ele.startTimeGuess);
@@ -767,7 +782,8 @@ const runOptimize = async () => {
 		startTime,
 		paramValues,
 		initialGuess,
-		objectiveFunctionOption
+		objectiveFunctionOption,
+		relativeImportance
 	};
 
 	// These are interventions to be considered but not optimized over.
@@ -903,7 +919,7 @@ const setOutputValues = async () => {
 	optimizeRequestPayload.value = (await getSimulation(knobs.value.optimizationRunId))?.executionPayload || '';
 };
 
-const preProcessedInterventionsData = computed<Dictionary<Intervention[]>>(() => {
+const preProcessedInterventionsData = computed<Dictionary<ReturnType<typeof flattenInterventionData>>>(() => {
 	// Combine before and after interventions
 	const combinedInterventions = [
 		...knobs.value.interventionPolicyGroups.flatMap((group) => group.intervention),
@@ -911,7 +927,7 @@ const preProcessedInterventionsData = computed<Dictionary<Intervention[]>>(() =>
 	];
 
 	// Group by appliedTo
-	return _.groupBy(combinedInterventions, 'appliedTo');
+	return _.groupBy(flattenInterventionData(combinedInterventions), 'appliedTo');
 });
 
 onMounted(async () => {

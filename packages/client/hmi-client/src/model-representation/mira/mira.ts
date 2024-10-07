@@ -33,8 +33,9 @@ export const emptyMiraModel = () => {
 /**
  * Collection of MMT related functions
  * */
-export const getContextKeys = (miraModel: MiraModel) => {
+export const getContext = (miraModel: MiraModel) => {
 	const modifierKeys = new Set<string>();
+	const modifierValues = new Set<string>();
 
 	// Heuristics to avoid picking up wrong stuff
 	// - if the modifier value starts with 'ncit:' then it is not a user initiated stratification
@@ -45,6 +46,7 @@ export const getContextKeys = (miraModel: MiraModel) => {
 	const addWithGuard = (k: string, v: string) => {
 		if (v.startsWith('ncit:')) return;
 		modifierKeys.add(k);
+		modifierValues.add(v);
 	};
 
 	miraModel.templates.forEach((t) => {
@@ -65,7 +67,6 @@ export const getContextKeys = (miraModel: MiraModel) => {
 		}
 		if (t.controllers && t.controllers.length > 0) {
 			t.controllers.forEach((miraConcept) => {
-				// Object.keys(miraConcept.context).forEach((key) => modifierKeys.add(key));
 				Object.entries(miraConcept.context).forEach(([k, v]) => {
 					addWithGuard(k, v as string);
 				});
@@ -73,12 +74,14 @@ export const getContextKeys = (miraModel: MiraModel) => {
 		}
 	});
 
-	const modifiers = [...modifierKeys];
-	return modifiers;
+	return {
+		keys: [...modifierKeys],
+		values: [...modifierValues]
+	};
 };
 
 export const isStratifiedModel = (miraModel: MiraModel) => {
-	const keys = getContextKeys(miraModel);
+	const keys = getContext(miraModel).keys;
 	return keys.length > 0;
 };
 
@@ -93,6 +96,7 @@ export const isStratifiedModel = (miraModel: MiraModel) => {
 export const collapseParameters = (miraModel: MiraModel, miraTemplateParams: MiraTemplateParams) => {
 	const map = new Map<string, string[]>();
 	const keys = Object.keys(miraModel.parameters);
+	const contextValues = getContext(miraModel).values;
 
 	for (let i = 0; i < keys.length; i++) {
 		const key = keys[i];
@@ -107,6 +111,19 @@ export const collapseParameters = (miraModel: MiraModel, miraTemplateParams: Mir
 			continue;
 		}
 
+		const nameContainsContext = _.intersection(tokens, contextValues).length > 0;
+		const hasNumericSuffixes =
+			tokens.length > 1 &&
+			tokens.every((d, idx) => {
+				if (idx === 0) return true;
+				return !Number.isNaN(+d);
+			});
+
+		if (!nameContainsContext && !hasNumericSuffixes) {
+			map.set(name, [name]);
+			continue;
+		}
+
 		if (map.has(rootName)) {
 			map.get(rootName)?.push(name);
 		} else {
@@ -114,7 +131,7 @@ export const collapseParameters = (miraModel: MiraModel, miraTemplateParams: Mir
 		}
 	}
 
-	const mapKeys = [...map.keys()];
+	let mapKeys = [...map.keys()];
 	const templateParams = Object.values(miraTemplateParams);
 
 	/**
@@ -135,6 +152,18 @@ export const collapseParameters = (miraModel: MiraModel, miraTemplateParams: Mir
 			});
 		}
 	}
+
+	// when a key only has one child, we will rename the key of the root to the child.
+	// this is to avoid renaming when a single entry key has an underscore
+	mapKeys = [...map.keys()];
+	[...map.keys()].forEach((key) => {
+		const newKey = map.get(key)?.[0];
+		if (newKey && map.get(key)?.length === 1 && newKey !== key) {
+			map.set(newKey, [newKey]);
+			map.delete(key);
+		}
+	});
+
 	return map;
 };
 
@@ -203,7 +232,7 @@ export const rawTemplatesSummary = (miraModel: MiraModel) => {
 export const collapseTemplates = (miraModel: MiraModel) => {
 	const allTemplates: TemplateSummary[] = [];
 	const uniqueTemplates: TemplateSummary[] = [];
-	const scrubbingKeys = getContextKeys(miraModel);
+	const scrubbingKeys = getContext(miraModel).keys;
 
 	// 1. Roll back to "original name" by trimming off modifiers
 	miraModel.templates.forEach((t) => {

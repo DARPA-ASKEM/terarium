@@ -50,89 +50,53 @@
 				:options="outputs"
 				is-selectable
 			>
-				<section class="right-side">
-					<Button
-						class="mr-3"
-						outlined
-						severity="secondary"
-						:disabled="isSaveDisabled"
-						label="Save for reuse"
-						@click="showSaveModelModal = true"
-					/>
-				</section>
 				<tera-notebook-error
 					v-if="executeResponse.status === OperatorStatus.ERROR"
 					:name="executeResponse.name"
 					:value="executeResponse.value"
 					:traceback="executeResponse.traceback"
 				/>
-				<template v-else-if="amr">
-					<tera-model-diagram :model="amr" />
-					<tera-model-parts :model="amr" :feature-config="{ isPreview: true }" />
-				</template>
+				<tera-model v-else-if="amr" is-workflow is-save-for-reuse :assetId="amr.id" @on-save="updateNode" />
 				<tera-progress-spinner v-else-if="isUpdatingModel || !amr" is-centered :font-size="2">
 					Loading...
 				</tera-progress-spinner>
 			</tera-drilldown-preview>
 		</template>
 		<tera-drilldown-section :tabName="DrilldownTabs.Wizard">
-			<!-- <tera-model-template-editor v-if="amr"
-					:model="amr"
-					:kernel-manager="kernelManager"
-					@output-code="(data: any) => appendCode(data, 'executed_code')"
-					@sync-with-mira-model="syncWithMiraModel"
-					@save-new-model-output="createOutput"
-					@reset="resetModel"
-				/> -->
 			<p class="m-4">Wizard is disabled for now.</p>
 		</tera-drilldown-section>
 	</tera-drilldown>
-	<tera-save-asset-modal
-		v-if="amr"
-		:asset="amr"
-		:initial-name="amr.name"
-		:assetType="AssetType.Model"
-		:is-updating-asset="true"
-		:is-visible="showSaveModelModal"
-		@close-modal="showSaveModelModal = false"
-		@on-save="updateNode"
-	/>
 </template>
 
 <script setup lang="ts">
 import { cloneDeep, isEmpty, isEqual, debounce } from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import Button from 'primevue/button';
+import '@/ace-config';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import '@/ace-config';
+import Button from 'primevue/button';
+import { DrilldownTabs } from '@/types/common';
 import type { Model } from '@/types/Types';
-import { AssetType } from '@/types/Types';
-import { createModel, getModel } from '@/services/model';
 import { OperatorStatus, WorkflowNode, WorkflowOutput } from '@/types/workflow';
+import { KernelSessionManager } from '@/services/jupyter';
+import { createModel, getModel } from '@/services/model';
+import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
+import { saveCodeToState } from '@/services/notebook';
 import { logger } from '@/utils/logger';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import TeraModelParts from '@/components/model/tera-model-parts.vue';
-import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-// import TeraModelTemplateEditor from '@/components/model-template/tera-model-template-editor.vue';
+import TeraModel from '@/components/model/tera-model.vue';
+import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
-import { KernelSessionManager } from '@/services/jupyter';
-import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
-import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
-import { saveCodeToState } from '@/services/notebook';
-import { DrilldownTabs } from '@/types/common';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { nodeOutputLabel } from '@/components/workflow/util';
-import { useProjects } from '@/composables/project';
 import { ModelEditOperationState, ModelEditOperation } from './model-edit-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
 }>();
-const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output', 'update-output-port']);
+const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output', 'update-output']);
 
 const outputs = computed(() => {
 	if (!isEmpty(props.node.outputs)) {
@@ -158,7 +122,6 @@ const isUpdatingModel = ref(false);
 const kernelManager = new KernelSessionManager();
 const amr = ref<Model | null>(null);
 let activeModelId: string | null = null;
-const showSaveModelModal = ref(false);
 
 let editor: VAceEditorInstance['_editor'] | null;
 const sampleAgentQuestions = [
@@ -341,7 +304,7 @@ const handleOutputChange = async () => {
 		const jupyterContext = buildJupyterContext();
 		if (jupyterContext) {
 			if (kernelManager.jupyterSession !== null) {
-				// when coming from output dropdown change we should shutdown first
+				// when coming from output dropdown change we should shut down first
 				kernelManager.shutdown();
 			}
 			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
@@ -387,28 +350,17 @@ watch(
 	{ immediate: true }
 );
 
-const isSaveDisabled = computed(() => {
-	const id = amr.value?.id;
-	if (!id) return true;
-	const outputPort = props.node.outputs?.find((port) => port.value?.[0] === id);
-	return useProjects().hasAssetInActiveProject(outputPort?.value?.[0]);
-});
-
 function updateNode(model: Model) {
-	const id = amr.value?.id;
-	if (!id || !model) return;
-
+	if (!model) return;
 	amr.value = model;
-	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.value?.[0] === id));
-
+	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.value?.[0] === model.id));
 	if (!outputPort) return;
 	outputPort.label = model.header.name;
-
-	emit('update-output-port', outputPort);
+	emit('update-output', outputPort);
 }
 
 onMounted(async () => {
-	// By default the first output option is the original model
+	// By default, the first output option is the original model
 	if (isReadyToCreateDefaultOutput.value) {
 		const input = props.node.inputs[0];
 		if (!input) return;
@@ -452,15 +404,15 @@ onUnmounted(() => {
 }
 
 .input-small {
-	padding: 0.5rem;
+	padding: var(--gap-2);
 	width: 100%;
 }
 
 .code-executed-warning {
 	background-color: #ffe6e6;
+	border-radius: var(--border-radius);
 	color: #cc0000;
-	padding: 10px;
-	border-radius: 4px;
+	padding: var(--gap-2-5);
 }
 
 .right-side {

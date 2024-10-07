@@ -33,7 +33,6 @@ const slots = useSlots();
 	flex-direction: column;
 	gap: var(--gap-1);
 	flex-grow: 1;
-	padding: var(--gap);
 	overflow: hidden;
 }
 
@@ -46,6 +45,7 @@ header {
 
 .content-container > main {
 	overflow-y: auto;
+	padding: var(--gap-4);
 	flex-grow: 1;
 }
 

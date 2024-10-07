@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serial;
 import java.io.Serializable;
@@ -22,6 +23,7 @@ public class ModelHeader extends SupportAdditionalProperties implements Serializ
 	private String name;
 
 	@JsonProperty("schema")
+	@JsonAlias("schema_") // Funman returns schema_ instead of schema
 	private String modelSchema;
 
 	@TSOptional

@@ -1,6 +1,6 @@
 <template>
 	<Button
-		label="Enrich metadata with AI"
+		label="Enrich metadata"
 		icon="pi pi-sparkles"
 		:loading="isLoading"
 		severity="secondary"
@@ -51,7 +51,7 @@ import Button from 'primevue/button';
 import RadioButton from 'primevue/radiobutton';
 import { computed, ref, watch } from 'vue';
 import { logger } from '@/utils/logger';
-import { modelCard } from '@/services/goLLM';
+import { enrichModelMetadata } from '@/services/goLLM';
 import { useProjects } from '@/composables/project';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { useClientEvent } from '@/composables/useClientEvent';
@@ -125,7 +125,7 @@ const confirm = async () => {
 const sendForEnrichment = async () => {
 	// Build enrichment job ids list (profile asset, align model, etc...)
 	if (props.assetId && props.assetType === AssetType.Model) {
-		await modelCard(props.assetId, selectedResourceId.value);
+		await enrichModelMetadata(props.assetId, selectedResourceId.value, true);
 	} else if (props.assetType === AssetType.Dataset) {
 		await profileDataset(props.assetId, selectedResourceId.value);
 	}
