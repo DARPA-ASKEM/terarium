@@ -1172,7 +1172,12 @@ watch(
 			if (!runResult.value.length) return;
 			pyciemssMap.value = parsePyCiemssMap(runResult.value[0]);
 
-			errorData.value = getErrorData(groundTruthData.value, runResult.value, mapping.value);
+			errorData.value = getErrorData(
+				groundTruthData.value,
+				runResult.value,
+				mapping.value,
+				knobs.value.timestampColName
+			);
 		}
 	},
 	{ immediate: true }
