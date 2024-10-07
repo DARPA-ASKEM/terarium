@@ -41,18 +41,16 @@ const addOutputPorts = async (runId: string) => {
 		logger.error('Failed to fetch funman result');
 		return;
 	}
-	const validatedConfigurationId = JSON.parse(rawFunmanResult).modelConfiguration.id;
-
-	const portLabel = props.node.inputs[0].label;
+	const validatedConfiguration = JSON.parse(rawFunmanResult).modelConfiguration;
 
 	const outState = _.cloneDeep(props.node.state);
 	outState.inProgressId = '';
 	outState.runId = runId;
 
 	emit('append-output', {
-		label: nodeOutputLabel(props.node, `${portLabel} Result`),
+		label: nodeOutputLabel(props.node, `${validatedConfiguration.name} Result`),
 		type: FunmanOperation.outputs[0].type,
-		value: validatedConfigurationId,
+		value: validatedConfiguration.id,
 		state: outState
 	});
 };
