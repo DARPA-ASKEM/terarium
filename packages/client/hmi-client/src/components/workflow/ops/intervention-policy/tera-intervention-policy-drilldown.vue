@@ -562,7 +562,6 @@ onMounted(() => {
 .input-config {
 	ul {
 		list-style: none;
-		padding-top: var(--gap-4);
 	}
 	li {
 		& > * {
