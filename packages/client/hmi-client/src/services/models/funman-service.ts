@@ -40,9 +40,9 @@ export interface RenderOptions {
 	click?: Function;
 }
 
-export async function makeQueries(body: FunmanPostQueriesRequest) {
+export async function makeQueries(body: FunmanPostQueriesRequest, modelId: string) {
 	try {
-		const resp = await API.post('/funman/queries', body);
+		const resp = await API.post('/funman/queries', body, { params: { 'model-id': modelId } });
 		const output = resp.data;
 		return output;
 	} catch (err) {
