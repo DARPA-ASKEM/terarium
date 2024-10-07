@@ -47,10 +47,10 @@ export interface FunmanOperationState extends BaseState {
 	numSteps: number;
 	tolerance: number;
 	inProgressId: string;
+	runId: string;
 	compartmentalConstraint: CompartmentalConstraint;
 	constraintGroups: ConstraintGroup[];
 	requestParameters: RequestParameter[];
-
 	// selected state in ouptut
 	trajectoryState?: string;
 }
@@ -64,7 +64,7 @@ export const FunmanOperation: Operation = {
 		{ type: 'modelConfigId', label: 'Model configuration' },
 		{ type: 'datasetId', label: 'Dataset', isOptional: true }
 	],
-	outputs: [{ type: 'funmanQueryId' }],
+	outputs: [{ type: 'modelConfigId', label: 'Model configuration' }],
 	isRunnable: true,
 	action: () => {},
 	initState: () => {
@@ -75,7 +75,8 @@ export const FunmanOperation: Operation = {
 			compartmentalConstraint: { name: 'Compartmental constraint', isActive: true },
 			constraintGroups: [],
 			requestParameters: [],
-			inProgressId: ''
+			inProgressId: '',
+			runId: ''
 		};
 		return init;
 	}

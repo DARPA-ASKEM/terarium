@@ -143,8 +143,8 @@
 				<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%" />
 				<template v-else>
 					<tera-funman-output
-						v-if="activeOutput"
-						:fun-model-id="activeOutput.value?.[0]"
+						v-if="!isEmpty(node.state.runId)"
+						:run-id="node.state.runId"
 						:trajectoryState="node.state.trajectoryState"
 						@update:trajectoryState="updateTrajectorystate"
 					/>
@@ -156,7 +156,7 @@
 </template>
 
 <script setup lang="ts">
-import _, { floor } from 'lodash';
+import _, { floor, isEmpty } from 'lodash';
 import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
@@ -197,7 +197,7 @@ const props = defineProps<{
 	node: WorkflowNode<FunmanOperationState>;
 }>();
 
-const emit = defineEmits(['append-output', 'select-output', 'update-state', 'close']);
+const emit = defineEmits(['select-output', 'update-state', 'close']);
 
 interface BasicKnobs {
 	tolerance: number;

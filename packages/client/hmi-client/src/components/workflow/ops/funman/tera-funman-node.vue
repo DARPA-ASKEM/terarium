@@ -21,8 +21,9 @@ import { WorkflowNode } from '@/types/workflow';
 import { FunmanOperationState, FunmanOperation } from '@/components/workflow/ops/funman/funman-operation';
 import Button from 'primevue/button';
 import { Poller, PollerState } from '@/api/api';
-import { pollAction } from '@/services/models/simulation-service';
+import { pollAction, getRunResult } from '@/services/models/simulation-service';
 import { nodeOutputLabel } from '@/components/workflow/util';
+import { logger } from '@/utils/logger';
 
 const emit = defineEmits(['open-drilldown', 'append-output', 'update-state']);
 
@@ -34,15 +35,24 @@ const inProgressId = computed(() => props.node.state.inProgressId);
 const poller = new Poller();
 
 const addOutputPorts = async (runId: string) => {
+	// The validated configuration id is set as the output value
+	const rawFunmanResult = await getRunResult(runId, 'validation.json');
+	if (!rawFunmanResult) {
+		logger.error('Failed to fetch funman result');
+		return;
+	}
+	const validatedConfigurationId = JSON.parse(rawFunmanResult).modelConfiguration.id;
+
 	const portLabel = props.node.inputs[0].label;
 
 	const outState = _.cloneDeep(props.node.state);
 	outState.inProgressId = '';
+	outState.runId = runId;
 
 	emit('append-output', {
 		label: nodeOutputLabel(props.node, `${portLabel} Result`),
 		type: FunmanOperation.outputs[0].type,
-		value: runId,
+		value: validatedConfigurationId,
 		state: outState
 	});
 };
@@ -72,6 +82,8 @@ watch(
 	() => props.node.state.inProgressId,
 	async (id) => {
 		if (!id || id === '') return;
+		console.log(props.node);
+		console.log('Polling funman status', id);
 
 		const response = await getStatus(id);
 		if (response.state === PollerState.Done) {
@@ -85,5 +97,3 @@ watch(
 	{ immediate: true }
 );
 </script>
-
-<style scoped></style>

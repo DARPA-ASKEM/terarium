@@ -142,6 +142,7 @@ import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
 import Checkbox from 'primevue/checkbox';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import Divider from 'primevue/divider';
 import TeraParameterEntry from './tera-parameter-entry.vue';
 import TeraStratifiedMatrixModal from './model-configurations/tera-stratified-matrix-modal.vue';
 

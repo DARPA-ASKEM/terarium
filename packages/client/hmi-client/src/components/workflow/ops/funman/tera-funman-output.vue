@@ -1,7 +1,7 @@
 <template>
 	<header class="flex align-items-start">
 		<div>
-			<h4>{{ contractedModel?.header.name }}</h4>
+			<h4>{{ validatedModelConfiguration?.name }}</h4>
 			<span class="secondary-text">Output generated date</span>
 		</div>
 		<div class="btn-group">
@@ -23,15 +23,45 @@
 			<template #header>Parameters<i class="pi pi-info-circle" /></template>
 			<vega-chart :visualization-spec="parameterCharts" :are-embed-actions-visible="false" />
 		</AccordionTab>
-		<!--TODO: Read only model configuration-->
-		<!-- <AccordionTab v-if="contractedModel" header="Validated configuration"> -->
-		<!-- <tera-model-diagram :model="contractedModel"/> -->
-		<!-- </AccordionTab> -->
+		<AccordionTab header="Diagram">
+			<tera-model-diagram v-if="model" :model="model" />
+		</AccordionTab>
 	</Accordion>
+	<template v-if="model && validatedModelConfiguration && configuredMmt">
+		<tera-initial-table
+			:model="model"
+			:model-configuration="validatedModelConfiguration"
+			:model-configurations="[validatedModelConfiguration]"
+			:mmt="configuredMmt"
+			:mmt-params="mmtParams"
+		/>
+		<tera-parameter-table
+			:model="model"
+			:model-configuration="validatedModelConfiguration"
+			:model-configurations="[validatedModelConfiguration]"
+			:mmt="configuredMmt"
+			:mmt-params="mmtParams"
+		/>
+		<Accordion :active-index="0" v-if="!isEmpty(calibratedConfigObservables)">
+			<AccordionTab v-if="!isEmpty(calibratedConfigObservables)" header="Observables">
+				<tera-observables
+					class="pl-4"
+					:model="model"
+					:mmt="configuredMmt"
+					:observables="calibratedConfigObservables"
+					:feature-config="{ isPreview: true }"
+				/>
+			</AccordionTab>
+		</Accordion>
+	</template>
 </template>
 
 <script setup lang="ts">
+import { isEmpty } from 'lodash';
 import { ref, watch } from 'vue';
+import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
+import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
+import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
 import {
 	type ProcessedFunmanResult,
 	type FunmanConstraintsResponse,
@@ -44,12 +74,15 @@ import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-// import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue'; // TODO: Once we save the output model properly in the backend we can use this.
+import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue'; // TODO: Once we save the output model properly in the backend we can use this.
 import { logger } from '@/utils/logger';
-import type { Model } from '@/types/Types';
+import type { Model, ModelConfiguration, Observable } from '@/types/Types';
+import { getModelByModelConfigurationId, getMMT } from '@/services/model';
+import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import { makeConfiguredMMT } from '@/model-representation/mira/mira';
 
 const props = defineProps<{
-	funModelId: string;
+	runId: string;
 	trajectoryState?: string;
 }>();
 
@@ -58,7 +91,13 @@ const emit = defineEmits(['update:trajectoryState']);
 let processedFunmanResult: ProcessedFunmanResult | null = null;
 let constraintsResponse: FunmanConstraintsResponse[] = [];
 
-const contractedModel = ref<Model | null>(null);
+// Model configuration stuff
+const model = ref<Model | null>(null);
+const validatedModelConfiguration = ref<ModelConfiguration | null>(null);
+const configuredMmt = ref<MiraModel | null>(null);
+const mmtParams = ref<MiraTemplateParams>({});
+const calibratedConfigObservables = ref<Observable[]>([]);
+
 const stateOptions = ref<string[]>([]);
 const selectedState = ref<string>('');
 
@@ -66,8 +105,7 @@ const stateChart = ref();
 const parameterCharts = ref();
 
 const initalize = async () => {
-	// props.funModelId bf7ef7f4-b8ab-4008-b03c-d0c96a7c763f
-	const rawFunmanResult = await getRunResult(props.funModelId, 'validation.json');
+	const rawFunmanResult = await getRunResult(props.runId, 'validation.json');
 	if (!rawFunmanResult) {
 		logger.error('Failed to fetch funman result');
 		return;
@@ -75,6 +113,7 @@ const initalize = async () => {
 	const funmanResult = JSON.parse(rawFunmanResult);
 	constraintsResponse = funmanResult.request.constraints;
 	stateOptions.value = funmanResult.model.petrinet.model.states.map(({ id }) => id);
+	validatedModelConfiguration.value = funmanResult.modelConfiguration;
 
 	processedFunmanResult = processFunman(funmanResult);
 
@@ -82,11 +121,33 @@ const initalize = async () => {
 	selectedState.value = props.trajectoryState ?? stateOptions.value[0];
 	updateStateChart();
 
+	console.log(funmanResult); /// //////////////////////////
+
 	// Parameter charts
 	const parametersOfInterest = funmanResult.request.parameters.filter((d: any) => d.label === 'all');
 	if (processedFunmanResult.boxes) {
 		parameterCharts.value = createFunmanParameterChart(parametersOfInterest, processedFunmanResult.boxes);
 	}
+
+	// For displaying model/model configuration
+	model.value = await getModelByModelConfigurationId(funmanResult.modelConfiguration.id);
+	if (!model.value) {
+		logger.error('Failed to fetch model');
+		return;
+	}
+	const response = await getMMT(model.value);
+	const mmt = response.mmt;
+	mmtParams.value = response.template_params;
+
+	configuredMmt.value = makeConfiguredMMT(mmt, funmanResult.modelConfiguration);
+	calibratedConfigObservables.value = funmanResult.modelConfiguration.observableSemanticList.map(
+		({ referenceId, states, expression }) => ({
+			id: referenceId,
+			name: referenceId,
+			states,
+			expression
+		})
+	);
 };
 
 function updateStateChart() {
@@ -96,7 +157,7 @@ function updateStateChart() {
 }
 
 watch(
-	() => props.funModelId,
+	() => props.runId,
 	() => {
 		initalize();
 	},
