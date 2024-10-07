@@ -846,6 +846,12 @@ public class ExtractionService {
 			final EquationExtraction extraction = new EquationExtraction();
 
 			for (final String key : keys) {
+				final int pageIndex = Integer.parseInt(key);
+				if (pageIndex >= extraction.equations.size()) {
+					for (int i = extraction.equations.size(); i < pageIndex; i++) {
+						extraction.equations.add(objectMapper.createArrayNode());
+					}
+				}
 				extraction.equations.add(output.getResponse().get(key));
 			}
 
@@ -947,6 +953,14 @@ public class ExtractionService {
 			final TableExtraction extraction = new TableExtraction();
 
 			for (final String key : keys) {
+				final int pageIndex = Integer.parseInt(key);
+
+				if (pageIndex >= extraction.tables.size()) {
+					for (int i = extraction.tables.size(); i < pageIndex; i++) {
+						extraction.tables.add(objectMapper.createArrayNode());
+					}
+				}
+
 				final JsonNode page = output.getResponse().get(key);
 				if (page.isArray()) {
 					final ArrayNode pageOfTables = objectMapper.createArrayNode();
