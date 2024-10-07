@@ -82,8 +82,6 @@ watch(
 	() => props.node.state.inProgressId,
 	async (id) => {
 		if (!id || id === '') return;
-		console.log(props.node);
-		console.log('Polling funman status', id);
 
 		const response = await getStatus(id);
 		if (response.state === PollerState.Done) {

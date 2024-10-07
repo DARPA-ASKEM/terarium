@@ -31,16 +31,18 @@
 		<tera-initial-table
 			:model="model"
 			:model-configuration="validatedModelConfiguration"
-			:model-configurations="[validatedModelConfiguration]"
+			:model-configurations="[]"
 			:mmt="configuredMmt"
 			:mmt-params="mmtParams"
+			:feature-config="{ isPreview: true }"
 		/>
 		<tera-parameter-table
 			:model="model"
 			:model-configuration="validatedModelConfiguration"
-			:model-configurations="[validatedModelConfiguration]"
+			:model-configurations="[]"
 			:mmt="configuredMmt"
 			:mmt-params="mmtParams"
+			:feature-config="{ isPreview: true }"
 		/>
 		<Accordion :active-index="0" v-if="!isEmpty(calibratedConfigObservables)">
 			<AccordionTab v-if="!isEmpty(calibratedConfigObservables)" header="Observables">

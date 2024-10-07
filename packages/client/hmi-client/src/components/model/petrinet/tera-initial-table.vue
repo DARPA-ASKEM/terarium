@@ -24,6 +24,7 @@
 												:model-configuration="modelConfiguration"
 												:modelConfigurations="modelConfigurations"
 												:initial-id="target"
+												:feature-config="featureConfig"
 												@update-expression="emit('update-expression', $event)"
 												@update-source="emit('update-source', $event)"
 											/>
@@ -42,6 +43,7 @@
 						:model-configuration="modelConfiguration"
 						:modelConfigurations="modelConfigurations"
 						:initial-id="baseInitial"
+						:feature-config="featureConfig"
 						@update-expression="emit('update-expression', $event)"
 						@update-source="emit('update-source', $event)"
 					/>
@@ -50,7 +52,6 @@
 			</ul>
 		</AccordionTab>
 	</Accordion>
-
 	<tera-stratified-matrix-modal
 		v-if="matrixModalId && isStratified"
 		:id="matrixModalId"
@@ -75,6 +76,7 @@ import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import Divider from 'primevue/divider';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import type { FeatureConfig } from '@/types/common';
 import TeraStratifiedMatrixModal from './model-configurations/tera-stratified-matrix-modal.vue';
 import TeraInitialEntry from './tera-initial-entry.vue';
 
@@ -84,6 +86,7 @@ const props = defineProps<{
 	model: Model;
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
+	featureConfig?: FeatureConfig;
 }>();
 
 const emit = defineEmits(['update-expression', 'update-source']);

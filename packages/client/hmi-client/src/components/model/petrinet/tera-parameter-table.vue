@@ -6,7 +6,7 @@
 					Parameters<span class="artifact-amount">({{ numParameters }})</span>
 				</span>
 				<Button
-					v-if="!isAddingUncertainty"
+					v-if="!isAddingUncertainty && !featureConfig?.isPreview"
 					label="Add uncertainty"
 					outlined
 					severity="secondary"
@@ -69,6 +69,7 @@
 													:model-configuration="props.modelConfiguration"
 													:model-configurations="props.modelConfigurations"
 													:parameter-id="referenceId"
+													:featureConfig="featureConfig"
 													@update-parameter="emit('update-parameters', [$event])"
 													@update-source="emit('update-source', $event)"
 												/>
@@ -96,6 +97,7 @@
 							:model-configuration="modelConfiguration"
 							:modelConfigurations="modelConfigurations"
 							:parameter-id="baseParameter"
+							:featureConfig="featureConfig"
 							@update-parameter="emit('update-parameters', [$event])"
 							@update-source="emit('update-source', $event)"
 						/>
@@ -143,6 +145,7 @@ import Dropdown from 'primevue/dropdown';
 import Checkbox from 'primevue/checkbox';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Divider from 'primevue/divider';
+import type { FeatureConfig } from '@/types/common';
 import TeraParameterEntry from './tera-parameter-entry.vue';
 import TeraStratifiedMatrixModal from './model-configurations/tera-stratified-matrix-modal.vue';
 
@@ -152,6 +155,7 @@ const props = defineProps<{
 	modelConfigurations: ModelConfiguration[];
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
+	featureConfig?: FeatureConfig;
 }>();
 
 const emit = defineEmits(['update-parameters', 'update-source']);
