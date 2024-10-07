@@ -81,7 +81,7 @@ import { logger } from '@/utils/logger';
 import type { Model, ModelConfiguration, Observable } from '@/types/Types';
 import { getModelByModelConfigurationId, getMMT } from '@/services/model';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
-import { makeConfiguredMMT } from '@/model-representation/mira/mira';
+import { emptyMiraModel, makeConfiguredMMT } from '@/model-representation/mira/mira';
 
 const props = defineProps<{
 	runId: string;
@@ -92,6 +92,7 @@ const emit = defineEmits(['update:trajectoryState']);
 
 let processedFunmanResult: ProcessedFunmanResult | null = null;
 let constraintsResponse: FunmanConstraintsResponse[] = [];
+let mmt: MiraModel = emptyMiraModel();
 
 // Model configuration stuff
 const model = ref<Model | null>(null);
@@ -132,14 +133,17 @@ const initalize = async () => {
 	}
 
 	// For displaying model/model configuration
-	model.value = await getModelByModelConfigurationId(funmanResult.modelConfiguration.id);
+	// Model will be the same on runId change, no need to fetch it again
 	if (!model.value) {
-		logger.error('Failed to fetch model');
-		return;
+		model.value = await getModelByModelConfigurationId(funmanResult.modelConfiguration.id);
+		if (!model.value) {
+			logger.error('Failed to fetch model');
+			return;
+		}
+		const response = await getMMT(model.value);
+		mmt = response.mmt;
+		mmtParams.value = response.template_params;
 	}
-	const response = await getMMT(model.value);
-	const mmt = response.mmt;
-	mmtParams.value = response.template_params;
 
 	configuredMmt.value = makeConfiguredMMT(mmt, funmanResult.modelConfiguration);
 	calibratedConfigObservables.value = funmanResult.modelConfiguration.observableSemanticList.map(
