@@ -3756,7 +3756,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/devtools-api@npm:^6.6.3":
+"@vue/devtools-api@npm:^6.6.4":
   version: 6.6.4
   resolution: "@vue/devtools-api@npm:6.6.4"
   checksum: 10/0fca4912b6ae0185b9375f5d113d417984077db0681c74cf39eb8522eb82c27f662a72e1ae3e0d79e105fdd0a99a7cbd65ed111465d238f60cce10922e02a812
@@ -8893,7 +8893,7 @@ __metadata:
     vue: "npm:3.5.3"
     vue-feather: "npm:2.0.0"
     vue-gtag: "npm:2.0.1"
-    vue-router: "npm:4.4.3"
+    vue-router: "npm:4.4.5"
     vue-tsc: "npm:1.8.27"
     vue3-ace-editor: "npm:2.2.4"
     vue3-draggable-resizable: "npm:1.6.5"
@@ -15581,14 +15581,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vue-router@npm:4.4.3":
-  version: 4.4.3
-  resolution: "vue-router@npm:4.4.3"
+"vue-router@npm:4.4.5":
+  version: 4.4.5
+  resolution: "vue-router@npm:4.4.5"
   dependencies:
-    "@vue/devtools-api": "npm:^6.6.3"
+    "@vue/devtools-api": "npm:^6.6.4"
   peerDependencies:
     vue: ^3.2.0
-  checksum: 10/7e313689a7df1595a69af2eb7ab334befe0e62fb52d64e23669a83668cf522b86609c05d607517019f727f1472b1a56e5367a21d2434a36a82362e935fd7e620
+  checksum: 10/4bc65f103d5304bfa8319f2a013fb924ffd291dd5d236214aa6ce9ffa63c6609fb1bc9bff041e2aa7ba02d44d01083c18fbb9aa034b9d40f2ff9bfaa96e52eee
   languageName: node
   linkType: hard
 
