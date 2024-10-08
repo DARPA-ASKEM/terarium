@@ -221,7 +221,7 @@ function updateImagesState(operationType: string, newImageId: string | null = nu
 
 function updateComparisonTitlesState(operationType: string, comparisonPairs: string[][] | null = null) {
 	const state = cloneDeep(props.node.state);
-	if (operationType === 'add' && comparisonPairs.length) state.comparisonPairs = comparisonPairs;
+	if (operationType === 'add' && comparisonPairs !== null) state.comparisonPairs = comparisonPairs;
 	else if (operationType === 'clear') state.comparisonPairs = [];
 	emit('update-state', state);
 }
