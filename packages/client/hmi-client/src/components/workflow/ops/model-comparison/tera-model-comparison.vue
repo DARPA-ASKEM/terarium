@@ -39,16 +39,27 @@
 							<tr v-for="field in fields" :key="field">
 								<td class="field">{{ formatField(field) }}</td>
 								<td v-for="(card, index) in modelCardsToCompare" :key="index">
-									<template v-if="!card?.[field]"> Not found </template>
+									<template v-if="!card?.[field]"> N/A </template>
+									<template v-else-if="Array.isArray(card[field])">
+										<ul class="bullet-list">
+											<li class="bullet-list-item" v-for="(item, k) in card[field]" :key="k">{{ item }}</li>
+										</ul>
+									</template>
 									<template v-else-if="typeof card[field] === 'object'">
-										<template v-for="(value, j) in Object.values(card[field])">
-											<template v-if="Array.isArray(value)">
-												{{ value.join(', ') }}
+										<template v-for="(entry, j) in Object.entries(card[field])" :key="j">
+											<div class="label">{{ formatField(entry[0]) }}:</div>
+											<template v-if="Array.isArray(entry[1])">
+												<ul class="bullet-list">
+													<li class="bullet-list-item" v-for="(item, k) in entry[1]" :key="k">{{ item }}</li>
+												</ul>
 											</template>
-											<div class="value" v-else :key="j">{{ value }}</div>
+											<div class="value" v-else>{{ entry[1] }}</div>
+											<template v-if="j < Object.entries(card[field]).length - 1">
+												<br />
+											</template>
 										</template>
 									</template>
-									<template v-else-if="Array.isArray(card[field])">{{ card[field].join(', ') }}</template>
+									<template v-else>{{ card[field] }}</template>
 								</td>
 							</tr>
 						</tbody>
@@ -518,5 +529,19 @@ ul {
 }
 .legend-line.green::before {
 	background-color: lightgreen;
+}
+
+.label {
+	font-weight: var(--font-weight-semibold);
+}
+
+.bullet-list {
+	display: block !important;
+	list-style: disc outside;
+	margin-left: var(--gap-4);
+	padding-left: var(--gap-4);
+}
+.bullet-list-item {
+	display: list-item !important;
 }
 </style>

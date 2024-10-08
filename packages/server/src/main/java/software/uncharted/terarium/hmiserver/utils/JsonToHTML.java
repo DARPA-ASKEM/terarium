@@ -23,19 +23,19 @@ public class JsonToHTML {
 				// Render section headers dynamically based on depth using HTML heading tags (e.g., <h1>, <h2>, <h3>)
 				html
 					.append("<h")
-					.append(level + 1)
+					.append(level)
 					.append(">")
 					.append(formatTitle(fieldName))
 					.append("</h")
-					.append(level + 1)
+					.append(level)
 					.append(">\n");
 
 				if (valueNode.isObject()) {
-					renderObject(valueNode, html, level + 1); // Recurse for nested objects
+					renderObject(valueNode, html, level + 2); // Recurse for nested objects
 				} else if (valueNode.isArray()) {
-					renderArray(valueNode, html, level + 1); // Handle arrays
+					renderArray(valueNode, html, level + 2); // Handle arrays
 				} else {
-					html.append("<p>").append(valueNode.asText()).append("</p>\n");
+					html.append("<p>").append(valueNode.asText()).append("</p><br>\n");
 				}
 			}
 		}
@@ -47,13 +47,13 @@ public class JsonToHTML {
 
 		for (JsonNode itemNode : arrayNode) {
 			if (itemNode.isObject()) {
-				renderObject(itemNode, html, level);
+				renderObject(itemNode, html, level + 2);
 			} else {
 				html.append("<li>").append(itemNode.asText()).append("</li>\n");
 			}
 		}
 
-		html.append("</ul>\n");
+		html.append("</ul><br>\n");
 	}
 
 	// Helper to capitalize the first letter of a string
