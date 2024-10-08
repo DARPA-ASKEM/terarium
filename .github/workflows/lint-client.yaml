@@ -29,13 +29,13 @@ jobs:
         run: yarn install --immutable
 
       - name: Run Linter
-        run: yarn lint
+        run: yarn lint --since=origin/main
 
       - name: Run Formatter
-        run: yarn prettier
+        run: yarn prettier --since=origin/main
 
       - name: Run Typechecks
-        run: yarn typecheck
+        run: yarn typecheck --since=origin/main
 
       - name: Commit all changed files
         run: |
