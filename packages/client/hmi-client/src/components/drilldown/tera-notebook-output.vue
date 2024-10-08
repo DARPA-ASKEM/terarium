@@ -4,7 +4,7 @@
 			<span>{{ name }}</span>
 			<Button rounded text icon="pi pi-times" @click="emit('close')" />
 		</h6>
-		<code>{{ props.traceback }}</code>
+		<code class="code-section">{{ props.traceback }}</code>
 	</tera-resizable-panel>
 </template>
 
@@ -31,6 +31,10 @@ const name = props.name ?? 'Output Console';
 	box-shadow:
 		0 2px 4px -1px rgba(0, 0, 0, 0.06),
 		0 4px 6px -1px rgba(0, 0, 0, 0.08);
+}
+
+.code-section {
+	white-space: pre-wrap;
 }
 
 h6 {
