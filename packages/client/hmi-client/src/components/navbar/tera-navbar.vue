@@ -107,8 +107,10 @@
 						class="p-button-danger"
 						v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started"
 						@click="stopEvaluationScenario"
-						>Stop</Button
 					>
+						Stop
+					</Button>
+
 					<!-- sorry for this hackary but I couldn't figure out how to make the opposite logic work -->
 					<div class="hidden" v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started" />
 					<Button v-else size="large" @click="beginEvaluationScenario">Begin</Button>

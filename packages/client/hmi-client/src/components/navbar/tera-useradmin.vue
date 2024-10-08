@@ -7,22 +7,22 @@
 		<DataTable v-if="view === View.USER && !users" class="p-datatable-sm user" :value="Array.from(Array(10).keys())">
 			<Column header="Email">
 				<template #body>
-					<Skeleton></Skeleton>
+					<Skeleton />
 				</template>
 			</Column>
 			<Column header="First name">
 				<template #body>
-					<Skeleton></Skeleton>
+					<Skeleton />
 				</template>
 			</Column>
 			<Column header="Last name">
 				<template #body>
-					<Skeleton></Skeleton>
+					<Skeleton />
 				</template>
 			</Column>
 			<Column header="Roles">
 				<template #body>
-					<Skeleton></Skeleton>
+					<Skeleton />
 				</template>
 			</Column>
 		</DataTable>

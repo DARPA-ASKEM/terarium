@@ -96,8 +96,8 @@ public class User implements UserDetails {
 	/**
 	 * Computes a hash of a user
 	 *
-	 * @param user
-	 * @return
+	 * @param user the user to hash
+	 * @return hash of the user
 	 */
 	private static int hash(final User user) {
 		return (
