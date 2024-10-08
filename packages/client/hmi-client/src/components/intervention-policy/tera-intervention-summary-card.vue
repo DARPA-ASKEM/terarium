@@ -5,7 +5,7 @@
 		<ul>
 			<li v-for="(staticIntervention, index) in intervention.staticInterventions" :key="`static-${index}`">
 				Set {{ staticIntervention.type }} <strong>{{ staticIntervention.appliedTo }}</strong> to
-				<strong>{{ staticIntervention.value }}</strong> at start time <strong>{{ staticIntervention.timestep }}</strong
+				<strong>{{ staticIntervention.value }}</strong> starting at <strong>{{ staticIntervention.timestep }}</strong
 				>&nbsp;day.
 			</li>
 			<li v-for="(dynamicIntervention, index) in intervention.dynamicInterventions" :key="`dynamic-${index}`">
