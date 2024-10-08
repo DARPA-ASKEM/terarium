@@ -21,18 +21,17 @@
 
 <script setup lang="ts">
 import { computed, onMounted, watch } from 'vue';
-import Toast from 'primevue/toast';
-
-import { ToastSeverity, ToastSummaries, useToastService } from '@/services/toast';
 import { useRoute, useRouter } from 'vue-router';
+import ConfirmDialog from 'primevue/confirmdialog';
+import Toast from 'primevue/toast';
 import API from '@/api/api';
 import TeraNavbar from '@/components/navbar/tera-navbar.vue';
 import TeraFooter from '@/components/navbar/tera-footer.vue';
+import TeraCommonModalDialogs from '@/components/widgets/tera-common-modal-dialogs.vue';
 import { useProjects } from '@/composables/project';
+import { useCurrentRoute } from '@/router';
+import { ToastSeverity, ToastSummaries, useToastService } from '@/services/toast';
 import { Project } from '@/types/Types';
-import ConfirmDialog from 'primevue/confirmdialog';
-import TeraCommonModalDialogs from './components/widgets/tera-common-modal-dialogs.vue';
-import { useCurrentRoute } from './router/index';
 
 const toast = useToastService();
 
@@ -67,12 +66,11 @@ watch(
 </script>
 
 <style scoped>
-main {
-	grid-area: main;
+.page {
 	display: flex;
-	flex-grow: 1;
+	flex: 1;
+	grid-area: main;
 	isolation: isolate;
-	z-index: 1;
 	overflow: hidden;
 	position: relative;
 }
@@ -87,9 +85,5 @@ footer {
 
 .page {
 	z-index: 1;
-	flex: 1;
-	min-width: 0;
-	display: flex;
-	flex-grow: 1;
 }
 </style>
