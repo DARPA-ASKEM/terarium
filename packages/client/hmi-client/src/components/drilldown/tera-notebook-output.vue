@@ -1,7 +1,7 @@
 <template>
 	<tera-resizable-panel :start-height="100" :resize-from-top="true" class="container">
 		<h6>
-			<span>{{ props.name }}</span>
+			<span>{{ name }}</span>
 			<Button rounded text icon="pi pi-times" @click="emit('close')" />
 		</h6>
 		<code>{{ props.traceback }}</code>
@@ -17,6 +17,8 @@ const props = defineProps<{
 	traceback?: string;
 }>();
 const emit = defineEmits(['close']);
+
+const name = props.name ?? 'Output Console';
 </script>
 
 <style scoped>

@@ -62,8 +62,7 @@
 				</tera-progress-spinner>
 				<tera-notebook-output
 					v-if="showNotebookOutput"
-					:name="executeResponse.name"
-					:traceback="executeResponse.traceback"
+					:traceback="executeResponseTraceback"
 					@close="showNotebookOutput = false"
 				/>
 			</tera-drilldown-preview>
@@ -161,10 +160,7 @@ const executeErrorResponse = ref({
 	traceback: ''
 });
 
-const executeResponse = ref({
-	name: 'Output Console',
-	traceback: ''
-});
+const executeResponseTraceback = ref('');
 
 const showNotebookOutput = ref<boolean>(true);
 
@@ -220,9 +216,7 @@ const runCode = () => {
 			})
 			.register('stream', (data) => {
 				if (data?.content?.name === 'stderr' || data?.content?.name === 'stdout') {
-					executeResponse.value.traceback = `${executeResponse.value.traceback} \n ${data.content.text}`
-						? data.content.text
-						: '';
+					executeResponseTraceback.value = `${executeResponseTraceback.value} \n ${data.content.text}`;
 				}
 			})
 			.register('model_preview', (data) => {
