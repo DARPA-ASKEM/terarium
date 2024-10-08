@@ -1,9 +1,5 @@
 <template>
-	<!-- Sets the Toast notification groups and their respective levels-->
-	<Toast position="top-center" group="error" />
-	<Toast position="top-center" group="warn" />
-	<Toast position="top-center" group="info" />
-	<Toast position="top-center" group="success" />
+	<Toast position="top-center" />
 	<tera-navbar :active="displayNavBar" />
 	<router-view v-slot="{ Component }">
 		<component class="page" :is="Component" />
