@@ -48,6 +48,7 @@ import { updateNotebookSession } from '@/services/notebook-session';
 import { useProjects } from '@/composables/project';
 import { isEmpty } from 'lodash';
 import Button from 'primevue/button';
+// import TeraBeakerInput from './tera-beaker-input.vue';
 
 const messagesHistory = ref<JupyterMessage[]>([]);
 const isExecutingCode = ref(false);
@@ -109,6 +110,7 @@ const onKeyPress = (event) => {
 		case 'a':
 			addCodeCell(false, false);
 			nextTick(() => {
+				// notebookCells.vla
 				scrollToCell(notebookCells.value.find((item) => item.$props.msg.query_id === selectedCellId.value));
 			});
 			break;
@@ -236,6 +238,7 @@ const reRunPrompt = (queryId: string, query?: string) => {
 	isExecutingCode.value = true;
 };
 
+// here
 const addCodeCell = (isDefaultCell: boolean = false, isNextCell: boolean = true) => {
 	const msgId = createMessageId('code_cell');
 	const date = new Date().toISOString();
@@ -452,8 +455,9 @@ watch(
 defineExpose({
 	clearHistory,
 	clearOutputs,
-	submitQuery,
-	addCodeCell
+	submitQuery
+
+	// here
 });
 </script>
 

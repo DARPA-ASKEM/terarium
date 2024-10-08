@@ -101,6 +101,7 @@ onMounted(() => {
 defineExpose({
 	enter,
 	runCell
+	// here
 });
 </script>
 <style scoped>
