@@ -46,8 +46,10 @@ onMounted(() => useProjects().getAll());
 // Update the project when the projectId changes
 watch(
 	() => route.params.projectId,
-	(projectId) => {
-		useProjects().get(projectId as Project['id']);
+	(projectId, oldProjectId) => {
+		if (projectId !== oldProjectId) {
+			useProjects().get(projectId as Project['id']);
+		}
 	},
 	{ immediate: true }
 );
