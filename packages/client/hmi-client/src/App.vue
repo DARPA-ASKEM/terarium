@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue';
+import { computed, onMounted, watch } from 'vue';
 import Toast from 'primevue/toast';
 
 import { ToastSeverity, ToastSummaries, useToastService } from '@/services/toast';
@@ -53,6 +53,8 @@ API.interceptors.response.use(
 		}
 	}
 );
+
+onMounted(() => useProjects().getAll());
 
 // Update the project when the projectId changes
 watch(
