@@ -3,8 +3,14 @@
   "$defs": {
     "modelConfiguration": {
       "type": "object",
-      "description": "state and parameter configurations for a model",
+      "description": "A model configuration is the set of values of the parameters and initial values of the state variables of the model.",
       "properties": {
+        "modelId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
         "description": {
           "type": [
             "string",
@@ -123,28 +129,28 @@
             "additionalProperties": false
           }
         },
-        "modelId": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
         "observableSemanticList": {
           "type": "array",
+          "description": "A list of observables defined for the model.",
           "items": {
-            "type": "object",
+            "type": "object", 
+            "description": "An observable is a real-valued function of the parameters and state variables of the model; it usually reprsents a measurable property that can be derived from the state of the model; examples include the total population of individuals (sum of all the state variables in a compartmental model) and the basic reproduction number (a ratio of the transmission rate and the recovery rate).",
             "properties": {
               "expression": {
-                "type": "string"
+                "type": "string",
+                "description": "A mathematical representation of the observable function, written in SymPy."
               },
               "expressionMathml": {
-                "type": "string"
+                "type": "string",
+                "description": "A MathML equivalent of the Sympy expression for the observable."
               },
               "referenceId": {
-                "type": "string"
+                "type": "string",
+                "description": "A unique and short name for the observable; for example, 'N' for the total population and 'R0' for the basic reproduction number."
               },
               "source": {
-                "type": "string"
+                "type": "string",
+                "description": "A citation or description of the reference resource in which the observable is defined.",
               },
               "states": {
                 "type": "array",
@@ -248,10 +254,10 @@
       },
       "required": [
         "description",
-        "inferredParameterList",
-        "initialSemanticList",
         "modelId",
         "name",
+        "inferredParameterList",
+        "initialSemanticList",
         "observableSemanticList",
         "parameterSemanticList"
       ],
