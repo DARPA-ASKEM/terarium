@@ -4,25 +4,17 @@
 	<Toast position="top-center" group="warn" />
 	<Toast position="top-center" group="info" />
 	<Toast position="top-center" group="success" />
-	<header>
-		<tera-navbar :active="displayNavBar" />
-	</header>
-	<main>
-		<router-view v-slot="{ Component }">
-			<component class="page" :is="Component" />
-		</router-view>
-		<ConfirmDialog class="w-4" />
-	</main>
-	<footer>
-		<tera-footer />
-	</footer>
+	<tera-navbar :active="displayNavBar" />
+	<router-view v-slot="{ Component }">
+		<component class="page" :is="Component" />
+	</router-view>
+	<tera-footer />
 	<tera-common-modal-dialogs />
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import ConfirmDialog from 'primevue/confirmdialog';
 import Toast from 'primevue/toast';
 import API from '@/api/api';
 import TeraNavbar from '@/components/navbar/tera-navbar.vue';
@@ -73,17 +65,6 @@ watch(
 	isolation: isolate;
 	overflow: hidden;
 	position: relative;
-}
-
-header {
-	grid-area: header;
-}
-
-footer {
-	grid-area: footer;
-}
-
-.page {
 	z-index: 1;
 }
 </style>
