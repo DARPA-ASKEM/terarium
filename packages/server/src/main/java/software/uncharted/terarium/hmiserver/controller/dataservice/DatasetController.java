@@ -1,16 +1,16 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.math.Quantiles;
-import com.google.common.math.Stats;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,6 +18,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
@@ -262,33 +265,41 @@ public class DatasetController {
 		@RequestParam("filename") final String filename,
 		@RequestParam(name = "limit", defaultValue = "" + DEFAULT_CSV_LIMIT, required = false) final Integer limit
 	) {
-		final List<List<String>> csv;
+		final CSVParser csvParser;
 		try {
-			csv = datasetService.getCSVFile(filename, datasetId, limit);
-			if (csv == null) {
-				final String error = "Unable to get CSV";
-				log.error(error);
-				throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			csvParser = datasetService.getCSVFileParser(filename, datasetId);
+			if (csvParser == null) {
+				log.error("Unable to get CSV");
+				throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					messages.get("dataset.not-found")
+				);
 			}
 		} catch (final IOException e) {
-			final String error = "Unable to parse CSV";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			log.error("Unable to parse CSV", e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("postgres.service-unavailable")
+			);
 		}
 
-		final List<String> headers = csv.get(0);
-		final List<CsvColumnStats> csvColumnStats = new ArrayList<>();
-		for (int i = 0; i < csv.get(0).size(); i++) {
-			final List<String> column = getColumn(csv, i);
-			csvColumnStats.add(getStats(column.subList(1, column.size()))); // remove first as it is header:
-		}
+		// We have a parser over our CSV file. Now for the front end we need to create a matrix of strings
+		// to represent the CSV file up to our limit. Then we need to calculate the column statistics.
 
-		final int linesToRead = limit != null ? (limit == -1 ? csv.size() : limit) : DEFAULT_CSV_LIMIT;
+		final List<List<String>> csv = csvParser
+			.getRecords()
+			.stream()
+			.limit(limit >= 0 ? limit : Long.MAX_VALUE)
+			.map(record -> new ArrayList<>(record.toList()))
+			.collect(Collectors.toList());
+
+		// TODO - this should be done on csv post/push, and in task to handle large files.
+		final List<CsvColumnStats> csvColumnStats = DatasetService.calculateColumnStatistics(csv);
 
 		final CsvAsset csvAsset = new CsvAsset(
-			csv.subList(0, Math.min(linesToRead + 1, csv.size())),
+			csv,
 			csvColumnStats,
-			headers,
+			new ArrayList<>(csvParser.getHeaderMap().keySet()),
 			csv.size()
 		);
 
@@ -408,7 +419,7 @@ public class DatasetController {
 	}
 
 	/**
-	 * Downloads a CSV file from github given the path and owner name, then uploads
+	 * Uploads a CSV file from github given the path and owner name, then uploads
 	 * it to the dataset.
 	 */
 	@PutMapping("/{id}/upload-csv-from-github")
@@ -450,9 +461,20 @@ public class DatasetController {
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 
+		CSVParser csvParser = null;
+		try {
+			csvParser = new CSVParser(
+				new StringReader(csvString),
+				CSVFormat.Builder.create(CSVFormat.DEFAULT).setHeader().setSkipHeaderRecord(false).build()
+			);
+		} catch (IOException e) {
+			final String error = "Unable to parse csv from github";
+			log.error(error);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+		}
+
+		List<String> headers = new ArrayList<>(csvParser.getHeaderMap().keySet());
 		final HttpEntity csvEntity = new StringEntity(csvString, ContentType.APPLICATION_OCTET_STREAM);
-		final String[] csvRows = csvString.split("\\R");
-		final String[] headers = csvRows[0].split(",");
 		return uploadCSVAndUpdateColumns(datasetId, projectId, filename, csvEntity, headers, permission);
 	}
 
@@ -497,19 +519,22 @@ public class DatasetController {
 			final byte[] csvBytes = input.getBytes();
 
 			final HttpEntity csvEntity = new ByteArrayEntity(csvBytes, ContentType.APPLICATION_OCTET_STREAM);
-			final String csvString = new String(csvBytes);
-			final String[] csvRows = csvString.split("\\R");
-			final String[] headers = csvRows[0].split(",");
-			for (int i = 0; i < headers.length; i++) {
-				// this is very ugly but we're removing opening and closing "'s around these
-				// strings.
-				headers[i] = headers[i].replaceAll("^\"|\"$", "");
-			}
+
+			Reader targetReader = new InputStreamReader(new ByteArrayInputStream(csvBytes));
+			CSVParser csvParser = new CSVParser(
+				targetReader,
+				CSVFormat.Builder.create(CSVFormat.DEFAULT).setHeader().setSkipHeaderRecord(false).build()
+			);
+			List<String> headers = new ArrayList<>(csvParser.getHeaderMap().keySet());
+
 			return uploadCSVAndUpdateColumns(datasetId, projectId, filename, csvEntity, headers, permission);
 		} catch (final IOException e) {
 			final String error = "Unable to upload csv dataset";
 			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("postgres.service-unavailable")
+			);
 		}
 	}
 
@@ -631,7 +656,7 @@ public class DatasetController {
 		final UUID projectId,
 		final String filename,
 		final HttpEntity csvEntity,
-		final String[] headers,
+		final List<String> headers,
 		final Schema.Permission hasWritePermission
 	) {
 		try {
@@ -640,7 +665,7 @@ public class DatasetController {
 
 			// update dataset with headers if the previous upload was successful
 			if (status == HttpStatus.OK.value()) {
-				log.debug("Successfully uploaded CSV file to dataset {}. Now updating TDS with headers", datasetId);
+				log.debug("Successfully uploaded CSV file to dataset {}. Now updating with headers", datasetId);
 
 				final Optional<Dataset> updatedDataset = datasetService.getAsset(datasetId, hasWritePermission);
 				if (updatedDataset.isEmpty()) {
@@ -648,7 +673,7 @@ public class DatasetController {
 					return ResponseEntity.internalServerError().build();
 				}
 
-				DatasetService.addDatasetColumns(updatedDataset.get(), filename, Arrays.asList(headers));
+				DatasetService.addDatasetColumns(updatedDataset.get(), filename, headers);
 
 				// add the filename to existing file names
 				if (!updatedDataset.get().getFileNames().contains(filename)) {
@@ -665,56 +690,6 @@ public class DatasetController {
 				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 				"Unable to PUT csv data"
 			);
-		}
-	}
-
-	private static List<String> getColumn(final List<List<String>> matrix, final int columnNumber) {
-		final List<String> column = new ArrayList<>();
-		for (final List<String> strings : matrix) {
-			if (strings.size() > columnNumber) {
-				column.add(strings.get(columnNumber));
-			}
-		}
-		return column;
-	}
-
-	/**
-	 * Given a column and an amount of bins creates a CsvColumnStats object.
-	 *
-	 * @param aCol column to get stats for
-	 * @return CsvColumnStats object
-	 */
-	private static CsvColumnStats getStats(final List<String> aCol) {
-		final List<Integer> bins = new ArrayList<>();
-		try {
-			// set up row as numbers. may fail here.
-			// List<Integer> numberList = aCol.stream().map(String s ->
-			// Integer.parseInt(s.trim()));
-			final List<Double> numberList = aCol.stream().map(Double::valueOf).collect(Collectors.toList());
-			Collections.sort(numberList);
-			final double minValue = numberList.get(0);
-			final double maxValue = numberList.get(numberList.size() - 1);
-			final double meanValue = Stats.meanOf(numberList);
-			final double medianValue = Quantiles.median().compute(numberList);
-			final double sdValue = Stats.of(numberList).populationStandardDeviation();
-			final int binCount = 10;
-			// Set up bins
-			for (int i = 0; i < binCount; i++) {
-				bins.add(0);
-			}
-			final double stepSize = (numberList.get(numberList.size() - 1) - numberList.get(0)) / (binCount - 1);
-
-			// Fill bins:
-			for (final Double aDouble : numberList) {
-				final int index = (int) Math.abs(Math.floor((aDouble - numberList.get(0)) / stepSize));
-				final Integer value = bins.get(index);
-				bins.set(index, value + 1);
-			}
-
-			return new CsvColumnStats(bins, minValue, maxValue, meanValue, medianValue, sdValue);
-		} catch (final Exception e) {
-			// Cannot convert column to double, just return empty list.
-			return new CsvColumnStats(bins, 0, 0, 0, 0, 0);
 		}
 	}
 
