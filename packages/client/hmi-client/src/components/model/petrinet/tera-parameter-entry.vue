@@ -93,7 +93,7 @@
 				/>
 			</footer>
 		</template>
-		<span class="flex gap-4" v-else>
+		<p class="flex gap-4" v-else>
 			<template v-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Constant">
 				<span><label>Type</label> {{ DistributionTypeLabel.Constant }}</span>
 				<span>
@@ -112,7 +112,7 @@
 					{{ getParameterDistribution(modelConfiguration, parameterId).parameters.maximum }}
 				</span>
 			</template>
-		</span>
+		</p>
 	</div>
 	<tera-parameter-other-value-modal
 		v-if="showOtherConfigValueModal"
