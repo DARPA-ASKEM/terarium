@@ -88,12 +88,11 @@
 								<label>Select parameters of interest</label>
 								<MultiSelect
 									ref="columnSelect"
+									class="w-full mt-1 mb-2"
 									:modelValue="variablesOfInterest"
 									:options="requestParameters.map((d: any) => d.name)"
 									:show-toggle-all="false"
-									class="w-full mt-1 mb-2"
 									@update:modelValue="onToggleVariableOfInterest"
-									:maxSelectedLabels="1"
 									placeholder="Select variables"
 								/>
 								<div class="mb-2 timespan">
@@ -347,6 +346,8 @@ const runMakeQuery = async () => {
 			}
 		}
 	};
+
+	console.log(request);
 
 	const response = await makeQueries(request, originalModelId);
 
