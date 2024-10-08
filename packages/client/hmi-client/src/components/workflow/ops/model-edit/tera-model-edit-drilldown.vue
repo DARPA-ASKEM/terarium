@@ -41,6 +41,7 @@
 				class="ace-editor"
 				:options="{ showPrintMargin: false }"
 			/>
+			<tera-notebook-output :traceback="executeResponseTraceback" />
 		</tera-drilldown-section>
 		<template #preview v-if="drilldownRef?.selectedTab === DrilldownTabs.Notebook">
 			<tera-drilldown-preview
@@ -60,7 +61,6 @@
 				<tera-progress-spinner v-else-if="isUpdatingModel || !amr" is-centered :font-size="2">
 					Loading...
 				</tera-progress-spinner>
-				<tera-notebook-output :traceback="executeResponseTraceback" />
 			</tera-drilldown-preview>
 		</template>
 		<tera-drilldown-section :tabName="DrilldownTabs.Wizard">
