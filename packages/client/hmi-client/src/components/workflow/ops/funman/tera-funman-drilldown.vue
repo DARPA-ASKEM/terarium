@@ -347,8 +347,6 @@ const runMakeQuery = async () => {
 		}
 	};
 
-	console.log(request);
-
 	const response = await makeQueries(request, originalModelId);
 
 	// Setup the in-progress id
