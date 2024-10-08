@@ -26,7 +26,7 @@
 				<label>STDDEV</label> {{ displayNumber(inferredDistribution?.parameters?.stddev.toString()) }}
 			</span>
 		</div>
-		<template v-else>
+		<template v-else-if="!featureConfig?.isPreview">
 			<main>
 				<span class="flex gap-2">
 					<Dropdown
@@ -93,6 +93,26 @@
 				/>
 			</footer>
 		</template>
+		<p class="flex gap-4" v-else>
+			<template v-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Constant">
+				<span><label>Type</label> {{ DistributionTypeLabel.Constant }}</span>
+				<span>
+					<label>Value</label>
+					{{ getParameterDistribution(modelConfiguration, parameterId).parameters.value }}
+				</span>
+			</template>
+			<template v-else-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Uniform">
+				<span><label>Type</label> {{ DistributionTypeLabel.StandardUniform1 }}</span>
+				<span>
+					<label>Min</label>
+					{{ getParameterDistribution(modelConfiguration, parameterId).parameters.minimum }}
+				</span>
+				<span>
+					<label>Max</label>
+					{{ getParameterDistribution(modelConfiguration, parameterId).parameters.maximum }}
+				</span>
+			</template>
+		</p>
 	</div>
 	<tera-parameter-other-value-modal
 		v-if="showOtherConfigValueModal"
@@ -113,17 +133,19 @@ import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
-import { DistributionType, distributionTypeOptions } from '@/services/distribution';
+import { DistributionType, DistributionTypeLabel, distributionTypeOptions } from '@/services/distribution';
 import { getParameter } from '@/model-representation/service';
 import TeraParameterOtherValueModal from '@/components/model/petrinet/tera-parameter-other-value-modal.vue';
 import { displayNumber } from '@/utils/number';
 import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
+import type { FeatureConfig } from '@/types/common';
 
 const props = defineProps<{
 	model: Model;
 	modelConfiguration: ModelConfiguration;
 	modelConfigurations: ModelConfiguration[];
 	parameterId: string;
+	featureConfig?: FeatureConfig;
 }>();
 
 const emit = defineEmits(['update-parameter', 'update-source']);

@@ -1,12 +1,12 @@
 import API from '@/api/api';
 import { useProjects } from '@/composables/project';
+import type { MMT } from '@/model-representation/mira/mira-common';
 import * as EventService from '@/services/event';
 import type { Initial, InterventionPolicy, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import { Artifact, EventType } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
 import { fileToJson } from '@/utils/file';
 import { isEmpty } from 'lodash';
-import type { MMT } from '@/model-representation/mira/mira-common';
 import { Ref } from 'vue';
 
 export async function createModel(model: Model): Promise<Model | null> {
@@ -38,8 +38,10 @@ export async function createModelAndModelConfig(file: File, progress?: Ref<numbe
  * Get Model from the data service
  * @return Model|null - the model, or null if none returned by API
  */
-export async function getModel(modelId: string): Promise<Model | null> {
-	const response = await API.get(`/models/${modelId}`);
+export async function getModel(modelId: string, projectId?: string): Promise<Model | null> {
+	const response = await API.get(`/models/${modelId}`, {
+		params: { 'project-id': projectId }
+	});
 	return response?.data ?? null;
 }
 
