@@ -60,11 +60,7 @@
 				<tera-progress-spinner v-else-if="isUpdatingModel || !amr" is-centered :font-size="2">
 					Loading...
 				</tera-progress-spinner>
-				<tera-notebook-output
-					v-if="showNotebookOutput"
-					:traceback="executeResponseTraceback"
-					@close="showNotebookOutput = false"
-				/>
+				<tera-notebook-output :traceback="executeResponseTraceback" />
 			</tera-drilldown-preview>
 		</template>
 		<tera-drilldown-section :tabName="DrilldownTabs.Wizard">
@@ -161,8 +157,6 @@ const executeErrorResponse = ref({
 });
 
 const executeResponseTraceback = ref('');
-
-const showNotebookOutput = ref<boolean>(true);
 
 const updateLlmQuery = (query: string) => {
 	llmThoughts.value = [];

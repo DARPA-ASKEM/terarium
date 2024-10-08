@@ -1,14 +1,21 @@
 <template>
-	<tera-resizable-panel :start-height="100" :resize-from-top="true" class="container">
+	<tera-resizable-panel v-if="!isHidden" :start-height="100" :resize-from-top="true" class="container">
 		<h6>
 			<span>{{ name }}</span>
-			<Button rounded text icon="pi pi-times" @click="emit('close')" />
+			<Button rounded text icon="pi pi-times" @click="isHidden = true" />
 		</h6>
 		<code class="code-section">{{ props.traceback }}</code>
 	</tera-resizable-panel>
+	<div v-if="isHidden" class="container">
+		<h6>
+			<span>{{ name }}</span>
+			<Button rounded text icon="pi pi-angle-double-up" @click="isHidden = false" />
+		</h6>
+	</div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import Button from 'primevue/button';
 import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
 
@@ -16,9 +23,9 @@ const props = defineProps<{
 	name?: string;
 	traceback?: string;
 }>();
-const emit = defineEmits(['close']);
 
 const name = props.name ?? 'Output Console';
+const isHidden = ref<boolean>(false);
 </script>
 
 <style scoped>
