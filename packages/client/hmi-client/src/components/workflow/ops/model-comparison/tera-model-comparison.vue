@@ -104,7 +104,6 @@
 				/>
 				<ul>
 					<li v-for="(image, index) in structuralComparisons" :key="index">
-						{{ console.log(compareModelTitles) }}
 						<label>Comparison {{ index + 1 }}: {{ getTitle(index) }}</label>
 						<Image id="img" :src="image" :alt="`Structural comparison ${index + 1}`" preview />
 					</li>
@@ -265,15 +264,11 @@ function runCode() {
 
 	kernelManager.sendMessage('get_comparison_pairs_request', {}).register('any_get_comparison_pairs_reply', (data) => {
 		const comparisonPairs = data.msg.content?.return?.comparison_pairs;
-		console.log('comparisonPairs', comparisonPairs);
 		const state = cloneDeep(props.node.state);
 		if (comparisonPairs.length) {
 			updateComparisonTitlesState('add', comparisonPairs);
 			compareModelTitles.value = comparisonPairs;
-			console.log('compareModelTitles.value', compareModelTitles.value);
-			console.log('state.comparisonPairs', state);
 		} else if (state.comparisonPairs.length) {
-			console.log('state.comparisonPairs', state);
 			compareModelTitles.value = state.comparisonPairs;
 		}
 	});
@@ -321,9 +316,6 @@ async function buildJupyterContext() {
 				kernelManager.shutdown();
 			}
 			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
-			// kernelManager.sendMessage('get_comparison_pairs_request', {}).register('any_get_comparison_pairs_reply', (data) => {
-			// 	console.log('comparison data', data)
-			// });
 			isKernelReady.value = true;
 		}
 	} catch (error) {
