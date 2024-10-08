@@ -51,15 +51,21 @@
 				is-selectable
 			>
 				<tera-notebook-error
-					v-if="executeResponse.status === OperatorStatus.ERROR"
-					:name="executeResponse.name"
-					:value="executeResponse.value"
-					:traceback="executeResponse.traceback"
+					v-if="executeErrorResponse.status === OperatorStatus.ERROR"
+					:name="executeErrorResponse.name"
+					:value="executeErrorResponse.value"
+					:traceback="executeErrorResponse.traceback"
 				/>
 				<tera-model v-else-if="amr" is-workflow is-save-for-reuse :assetId="amr.id" @on-save="updateNode" />
 				<tera-progress-spinner v-else-if="isUpdatingModel || !amr" is-centered :font-size="2">
 					Loading...
 				</tera-progress-spinner>
+				<tera-notebook-output
+					v-if="showNotebookOutput"
+					:name="executeResponse.name"
+					:traceback="executeResponse.traceback"
+					@close="showNotebookOutput = false"
+				/>
 			</tera-drilldown-preview>
 		</template>
 		<tera-drilldown-section :tabName="DrilldownTabs.Wizard">
@@ -88,6 +94,7 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraModel from '@/components/model/tera-model.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import TeraNotebookOutput from '@/components/drilldown/tera-notebook-output.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { nodeOutputLabel } from '@/components/workflow/util';
@@ -147,12 +154,19 @@ const llmThoughts = ref<any[]>([]);
 
 const isDraft = ref(false);
 
-const executeResponse = ref({
+const executeErrorResponse = ref({
 	status: OperatorStatus.DEFAULT,
 	name: '',
 	value: '',
 	traceback: ''
 });
+
+const executeResponse = ref({
+	name: 'Output Console',
+	traceback: ''
+});
+
+const showNotebookOutput = ref<boolean>(true);
 
 const updateLlmQuery = (query: string) => {
 	llmThoughts.value = [];
@@ -205,7 +219,11 @@ const runCode = () => {
 				executedCode = data.content.code;
 			})
 			.register('stream', (data) => {
-				console.log('stream', data);
+				if (data?.content?.name === 'stderr' || data?.content?.name === 'stdout') {
+					executeResponse.value.traceback = `${executeResponse.value.traceback} \n ${data.content.text}`
+						? data.content.text
+						: '';
+				}
 			})
 			.register('model_preview', (data) => {
 				if (!data.content) return;
@@ -219,7 +237,7 @@ const runCode = () => {
 				let status = OperatorStatus.DEFAULT;
 				if (data.msg.content.status === 'ok') status = OperatorStatus.SUCCESS;
 				if (data.msg.content.status === 'error') status = OperatorStatus.ERROR;
-				executeResponse.value = {
+				executeErrorResponse.value = {
 					status,
 					name: data.msg.content.ename ? data.msg.content.ename : '',
 					value: data.msg.content.evalue ? data.msg.content.evalue : '',
