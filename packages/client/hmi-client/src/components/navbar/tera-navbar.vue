@@ -450,9 +450,9 @@ nav {
 	align-items: center;
 	background-color: var(--surface-section);
 	border-bottom: 1px solid var(--surface-border-light);
-	padding: 0.5rem 1rem;
+	padding: var(--gap-2) var(--gap-4);
 	display: flex;
-	gap: var(--gap-large);
+	gap: var(--gap-8);
 
 	a,
 	a:hover {
@@ -461,21 +461,22 @@ nav {
 }
 
 .terarium-logo {
-	margin-top: 5px;
+	margin-top: var(--gap-1-5);
 }
+
 .layout-project-selection {
 	margin-right: auto;
 }
 
 .avatar {
-	color: var(--text-color-subdued);
 	background-color: var(--primary-color-lighter);
+	color: var(--text-color-subdued);
 	cursor: pointer;
 }
 
 .avatar:hover {
-	color: var(--text-color);
 	background-color: var(--primary-color-light);
+	color: var(--text-color);
 }
 
 /* Split button
@@ -499,7 +500,7 @@ nav {
 	border-top-left-radius: 0;
 	border-bottom-left-radius: 0;
 	color: var(--text-color-light);
-	padding: 0.714rem 0;
+	padding: var(--gap-3) 0;
 	width: calc(3rem + 1px);
 
 	&:hover {
@@ -509,33 +510,36 @@ nav {
 }
 
 .modal-footer {
+	align-items: center;
 	display: flex;
 	flex-direction: row;
-	align-items: center;
 	justify-content: space-between;
 	width: 100%;
 }
 
 .about-terarium-logo {
+	margin-bottom: var(--gap-4);
 	width: 20rem;
-	margin-bottom: 1rem;
 }
+
 .about-bullet {
-	color: var(--text-color-subdued);
-	margin-right: 1rem;
-	/* background-color: var(--primary-color-lighter); */
 	border-radius: 5rem;
-	padding: 0.75rem;
-	font-size: 1.5rem;
+	color: var(--text-color-subdued);
+	font-size: var(--gap-6);
+	margin-right: var(--gap-4);
+	padding: var(--gap-3);
 }
+
 .about-top-line {
 	max-width: 90%;
-	margin-bottom: 1rem;
+	margin-bottom: var(--gap-4);
 }
+
 .underlined {
 	position: relative;
 	font-weight: 900;
 }
+
 .underlined:after {
 	content: '';
 	position: absolute;
@@ -547,28 +551,30 @@ nav {
 	border-color: var(--primary-color) transparent transparent transparent;
 	border-radius: 50%;
 }
+
 .about-middle {
-	font-size: 1.25rem;
-	display: flex;
 	align-items: center;
+	display: flex;
+	font-size: var(--font-body-medium);
 }
+
 .about-uncharted-section {
-	padding: 1rem;
 	background: var(--surface-100);
 	border: 1px solid var(--surface-border-light);
-	border-radius: 6px;
-	margin-top: 2rem;
+	border-radius: var(--border-radius-medium);
+	margin-top: var(--gap-8);
+	padding: var(--gap-4);
 }
 
 .evaluation-scenario-widget {
-	border-radius: var(--border-radius-bigger);
+	align-items: center;
 	background-color: var(--surface-200);
+	border-radius: var(--border-radius-bigger);
 	display: flex;
-	padding-left: var(--gap);
+	gap: var(--gap-4);
 	margin-left: auto;
 	margin-right: auto;
-	align-items: center;
-	gap: var(--gap);
+	padding-left: var(--gap-4);
 
 	.evaluation-scenario-widget-timer {
 		font-feature-settings: 'tnum';
@@ -576,20 +582,21 @@ nav {
 }
 
 .about-uncharted-logo {
+	margin-bottom: var(--gap-2);
 	width: 8rem;
-	margin-bottom: 0.5rem;
 }
+
 .about-bottom-line {
 	color: var(--text-color-subdued);
 }
 
 .modal-footer {
+	align-items: center;
+	color: var(--text-color-subdued);
 	display: flex;
 	flex-direction: row;
-	align-items: center;
 	justify-content: space-between;
 	width: 100%;
-	color: var(--text-color-subdued);
 }
 
 .evaluation-scenario-modal:deep(footer) {
@@ -597,12 +604,12 @@ nav {
 }
 .status-chip {
 	background-color: var(--surface-highlight);
+	border-radius: var(--border-radius);
 	padding: var(--gap-small);
-	border-radius: 3rem;
 }
 .field-checkbox {
-	font-size: var(--font-small);
 	color: var(--text-color-primary);
-	margin-bottom: 0rem;
+	font-size: var(--font-body-small);
+	margin-bottom: 0;
 }
 </style>
