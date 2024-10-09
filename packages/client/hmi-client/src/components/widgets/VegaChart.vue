@@ -40,8 +40,8 @@ const expressionFunctions = {
 		}
 		return format(NUMBER_FORMAT)(correctedValue);
 	},
-	// To not apply formatting to tooltip values
-	tooltipFormatter: (value) => value
+	// To not apply specific formatting to tooltip values to show full value
+	tooltipFormatter: (value) => fixPrecisionError(value)
 };
 
 // This config is default for all charts, but can be overridden by individual chart spec
