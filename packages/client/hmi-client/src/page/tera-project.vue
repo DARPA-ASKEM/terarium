@@ -20,14 +20,10 @@
 		<section>
 			<tera-code v-if="pageType === AssetType.Code" :asset-id="assetId" />
 			<tera-dataset v-if="pageType === AssetType.Dataset" :asset-id="assetId" />
+			<tera-document-asset v-if="pageType === AssetType.Document" :assetId="assetId" />
 			<tera-model v-if="pageType === AssetType.Model" :asset-id="assetId" />
 			<tera-project-overview v-if="pageType === ProjectPages.OVERVIEW" />
 			<tera-workflow v-if="pageType === AssetType.Workflow" :asset-id="assetId" />
-			<tera-document-asset
-				v-if="pageType === AssetType.Document"
-				:assetId="assetId"
-				@remove="removeAsset({ assetId, pageType })"
-			/>
 		</section>
 		<tera-save-asset-modal
 			open-on-save
