@@ -132,7 +132,6 @@ function updateStateChart() {
 
 async function renderCharts() {
 	processedFunmanResult = processFunman(funmanResult, onlyShowLatestBox.value);
-	console.log(processedFunmanResult, funmanResult);
 
 	// State chart
 	selectedState.value = props.trajectoryState ?? stateOptions.value[0];
