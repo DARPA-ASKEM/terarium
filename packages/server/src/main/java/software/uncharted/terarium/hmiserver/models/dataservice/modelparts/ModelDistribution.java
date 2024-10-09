@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Map;
@@ -29,5 +30,16 @@ public class ModelDistribution extends SupportAdditionalProperties implements Se
 		clone.setParameters(this.getParameters());
 		clone.setType(this.getType());
 		return clone;
+	}
+
+	@JsonIgnore
+	public boolean isMinimumEqualToMaximum() {
+		if (parameters == null) return false;
+		Object min = parameters.get("minimum");
+		Object max = parameters.get("maximum");
+		if (min instanceof Number && max instanceof Number) {
+			return ((Number) min).doubleValue() == ((Number) max).doubleValue();
+		}
+		return false;
 	}
 }

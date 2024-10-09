@@ -212,7 +212,11 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
-import { emptyMiraModel, generateModelDatasetConfigurationContext } from '@/model-representation/mira/mira';
+import {
+	emptyMiraModel,
+	generateModelDatasetConfigurationContext,
+	makeConfiguredMMT
+} from '@/model-representation/mira/mira';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { configureModelFromDataset, configureModelFromDocument } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
@@ -478,30 +482,7 @@ const model = ref<Model | null>(null);
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
 
-const configuredMmt = ref(makeConfiguredMMT());
-
-function makeConfiguredMMT() {
-	const mmtCopy = cloneDeep(mmt.value);
-	knobs.value.transientModelConfig.initialSemanticList.forEach((initial) => {
-		const mmtInitial = mmtCopy.initials[initial.target];
-		if (mmtInitial) {
-			mmtInitial.expression = initial.expression;
-		}
-	});
-	knobs.value.transientModelConfig.parameterSemanticList.forEach((parameter) => {
-		const mmtParameter = mmtCopy.parameters[parameter.referenceId];
-		if (mmtParameter) {
-			mmtParameter.value = parameter.distribution.parameters.value;
-		}
-	});
-	knobs.value.transientModelConfig.observableSemanticList.forEach((observable) => {
-		const mmtObservable = mmtCopy.observables[observable.referenceId];
-		if (mmtObservable) {
-			mmtObservable.expression = observable.expression;
-		}
-	});
-	return mmtCopy;
-}
+const configuredMmt = ref(makeConfiguredMMT(mmt.value, knobs.value.transientModelConfig));
 
 const downloadModelArchive = async (configuration: ModelConfiguration = knobs.value.transientModelConfig) => {
 	const archive = await getArchive(configuration);
@@ -594,7 +575,7 @@ const initialize = async (overwriteWithState: boolean = false) => {
 		}
 	}
 
-	configuredMmt.value = makeConfiguredMMT();
+	configuredMmt.value = makeConfiguredMMT(mmt.value, knobs.value.transientModelConfig);
 
 	// Create a new session and context based on model
 	try {
@@ -706,7 +687,7 @@ const debounceUpdateState = debounce(() => {
 	console.log('debounced update');
 	const state = cloneDeep(props.node.state);
 	state.transientModelConfig = knobs.value.transientModelConfig;
-	configuredMmt.value = makeConfiguredMMT();
+	configuredMmt.value = makeConfiguredMMT(mmt.value, knobs.value.transientModelConfig);
 
 	emit('update-state', state);
 }, 100);
