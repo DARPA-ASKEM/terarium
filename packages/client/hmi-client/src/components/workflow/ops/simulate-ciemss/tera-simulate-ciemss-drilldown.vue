@@ -1,5 +1,6 @@
 <template>
 	<tera-drilldown
+		v-bind="$attrs"
 		:node="node"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
@@ -19,7 +20,7 @@
 						<p>Click Run to start the simulation.</p>
 						<span class="flex gap-2">
 							<tera-pyciemss-cancel-button :simulation-run-id="cancelRunId" />
-							<Button label="Run" icon="pi pi-play" @click="run" :disabled="showSpinner" />
+							<Button label="Run" icon="pi pi-play" @click="run" :loading="showSpinner" />
 						</span>
 					</div>
 					<div class="form-section" v-if="isSidebarOpen">

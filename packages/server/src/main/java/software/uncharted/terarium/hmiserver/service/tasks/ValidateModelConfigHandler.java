@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -20,7 +19,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Progr
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
-import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
 
 @Component
@@ -32,7 +30,6 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 
 	private final ObjectMapper objectMapper;
 	private final SimulationService simulationService;
-	private final ModelService modelService;
 	private final ModelConfigurationService modelConfigurationService;
 
 	@Override
