@@ -22,7 +22,7 @@
 											:model="model"
 											:model-configuration="modelConfiguration"
 											:modelConfigurations="modelConfigurations"
-                      :feature-config="featureConfig"
+											:feature-config="featureConfig"
 											:initial-id="target"
 											@update-expression="emit('update-expression', $event)"
 											@update-source="emit('update-source', $event)"
