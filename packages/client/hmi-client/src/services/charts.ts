@@ -733,7 +733,8 @@ export function createSuccessCriteriaChart(
 
 export function createInterventionChartMarkers(
 	data: ReturnType<typeof flattenInterventionData>,
-	hideLabels = false
+	hideLabels = false,
+	labelXOffset = 5
 ): any[] {
 	const markerSpec = {
 		data: { values: data },
@@ -749,7 +750,7 @@ export function createInterventionChartMarkers(
 			type: 'text',
 			align: 'left',
 			angle: 90,
-			dx: 5,
+			dx: labelXOffset,
 			dy: -10
 		},
 		encoding: {

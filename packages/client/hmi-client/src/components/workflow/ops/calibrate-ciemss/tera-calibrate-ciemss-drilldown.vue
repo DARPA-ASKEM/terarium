@@ -792,7 +792,11 @@ const preparedCharts = computed(() => {
 			annotations
 		);
 
-		charts[variable].layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[variable]));
+		Object.entries(groupedInterventionOutputs.value).forEach((item) => {
+			item[1].forEach((intervention) => {
+				charts[variable].layer.push(...createInterventionChartMarkers(intervention, false, -180));
+			});
+		});
 	});
 	return charts;
 });
