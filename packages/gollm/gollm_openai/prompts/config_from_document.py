@@ -26,13 +26,13 @@ For each condition, create a model configuration JSON object that satisfies the 
     a.	`target` should reference the id of the initial variable from the AMR model ODE semantics.
     b.	`source` should reference the title or file name of the research paper.
     c.	`type` should be set to "initial”.
-    d.	You should extract a numerical value or an expression of the initial state from the user-provided text if possible and add it to `expression`
+    d.	You should extract a numerical value or an expression of the initial state from the user-provided text if possible and add it to `expression`. If you can not find a value in the text leave expression and expressionMathml blank.
     e.	`expression_mathml` should be `expression` written in MathML format.
 5.	For each parameter specified in the AMR model ODE semantics, create a parameter semantic object. Do not create new parameter semantic objects if they are not included in the original AMR model. You should set parameter semantic object fields using the following rules:
     a.	`reference_id` should reference the id of the parameter.
     b.	`source` should reference the title or file name of the research paper.
     c.	`type` should be set to "parameter".
-    d.	Be sure to extract parameter values from the user-provided text, and do not use the default values from the AMR model.
+    d.	Be sure to extract parameter values from the user-provided text, and do not use the default values from the AMR model. If you can not find a value in the text set `type` to "Constant" and leave `value`, `minimum`, and `maximum` blank.
         -	If the extracted parameter value is a single constant value, set the parameter `value` to the constant value and set `type` to "Constant".
         -	If the extracted parameter value is a distribution with a maximum and minimum value, set `type` to only "Uniform" and populate the `minimum` and `maximum` fields.
 6. `observableSemanticList` should be an empty list.

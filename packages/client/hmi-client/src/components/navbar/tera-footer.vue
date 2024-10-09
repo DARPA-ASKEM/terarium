@@ -1,6 +1,6 @@
 <template>
-	<section>
-		<img src="@assets/svg/uncharted-logo-dark.svg" alt="logo" class="ml-2" />
+	<footer>
+		<img src="@assets/svg/uncharted-logo-dark.svg" alt="logo" />
 		<nav>
 			<a target="_blank" rel="noopener noreferrer" href="https://terarium.canny.io/report-an-issue">
 				Report an issue
@@ -9,27 +9,32 @@
 				Request a feature
 			</a>
 		</nav>
-	</section>
+	</footer>
 </template>
 
 <style scoped>
-section {
+footer {
 	align-items: center;
 	background-color: var(--surface-section);
 	border-top: 1px solid var(--surface-border-light);
 	display: flex;
-	gap: 2rem;
+	gap: var(--gap-8);
+	grid-area: footer;
 	height: 3rem;
 	justify-content: space-between;
 }
 
+img {
+	margin-left: var(--gap-2);
+}
+
 nav {
-	font-size: var(--font-caption);
-	margin: 0 2rem;
-	display: flex;
 	align-items: center;
+	display: flex;
+	font-size: var(--font-caption);
+	gap: var(--gap-8);
 	justify-content: space-around;
-	gap: 2rem;
+	margin: 0 var(--gap-8);
 }
 
 a {
@@ -38,9 +43,5 @@ a {
 
 p {
 	max-width: 40rem;
-}
-
-article > img {
-	margin: 1rem 0;
 }
 </style>
