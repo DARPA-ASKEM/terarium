@@ -198,7 +198,7 @@ const code = ref(props.node.state.notebookHistory?.[0]?.code ?? '');
 const llmThoughts = ref<any[]>([]);
 const isKernelReady = ref(false);
 const contextLanguage = ref<string>('python3');
-const compareModelTitles = ref(props.node.state.comparisonPairs);
+const comparisonPairs = ref(props.node.state.comparisonPairs);
 
 const initializeAceEditor = (editorInstance: any) => {
 	editor = editorInstance;
@@ -219,16 +219,16 @@ function updateImagesState(operationType: string, newImageId: string | null = nu
 	emit('update-state', state);
 }
 
-function updateComparisonTitlesState(operationType: string, comparisonPairs: string[][] | null = null) {
+function updateComparisonTitlesState(operationType: string, pairs: string[][] | null = null) {
 	const state = cloneDeep(props.node.state);
-	if (operationType === 'add' && comparisonPairs !== null) state.comparisonPairs = comparisonPairs;
+	if (operationType === 'add' && pairs !== null) state.comparisonPairs = pairs;
 	else if (operationType === 'clear') state.comparisonPairs = [];
 	emit('update-state', state);
 }
 
 function getTitle(index: number) {
-	if (!compareModelTitles.value[index]) return '';
-	return `${compareModelTitles.value[index][0].replaceAll('_', ' ')} VS ${compareModelTitles.value[index][1].replaceAll('_', ' ')}`;
+	if (!comparisonPairs.value[index]) return '';
+	return `${comparisonPairs.value[index][0].replaceAll('_', ' ')} VS ${comparisonPairs.value[index][1].replaceAll('_', ' ')}`;
 }
 
 function updateCodeState() {
@@ -263,13 +263,13 @@ function runCode() {
 	updateCodeState();
 
 	kernelManager.sendMessage('get_comparison_pairs_request', {}).register('any_get_comparison_pairs_reply', (data) => {
-		const comparisonPairs = data.msg.content?.return?.comparison_pairs;
+		const pairs = data.msg.content?.return?.comparison_pairs;
 		const state = cloneDeep(props.node.state);
-		if (comparisonPairs.length) {
-			updateComparisonTitlesState('add', comparisonPairs);
-			compareModelTitles.value = comparisonPairs;
+		if (pairs.length) {
+			updateComparisonTitlesState('add', pairs);
+			comparisonPairs.value = pairs;
 		} else if (state.comparisonPairs.length) {
-			compareModelTitles.value = state.comparisonPairs;
+			comparisonPairs.value = state.comparisonPairs;
 		}
 	});
 
