@@ -101,7 +101,7 @@ export function countDigits(num: number): number {
  * This function rounds the number to mitigate such errors (e.g., fixFloatingPrecisionError(0.1 + 0.2) = 0.3).
  * For num > 0, the function rounds to 3 decimal places.
  *
- * !! Note: Only use this function for display purposes. Do not use it for calculations. !!
+ * !! Note: Only use this function for display or formatting purposes. Do not use it for calculations. !!
  */
 export function fixPrecisionError(num: number): number {
 	return num < 1 && num > -1 ? Number(num.toFixed(15)) : Number(num.toFixed(3));
