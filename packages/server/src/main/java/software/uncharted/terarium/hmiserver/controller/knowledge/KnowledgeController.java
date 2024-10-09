@@ -21,6 +21,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -797,14 +798,23 @@ public class KnowledgeController {
 	)
 	public ResponseEntity<Void> pdfExtractions(
 		@RequestParam("document-id") final UUID documentId,
-		@RequestParam(name = "domain", defaultValue = "epi") final String domain,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestParam(name = "project-id", required = false) final UUID projectId,
+		@RequestParam(name = "wait", required = false, defaultValue = "false") final Boolean wait
 	) {
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
 			projectId
 		);
-		extractionService.extractPDFAndApplyToDocument(documentId, projectId, permission);
+
+		final Future<DocumentAsset> f = extractionService.extractPDFAndApplyToDocument(documentId, projectId, permission);
+		if (wait) {
+			try {
+				f.get();
+			} catch (InterruptedException | ExecutionException e) {
+				log.error("Error extracting PDF", e);
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("document.extracton.failed"));
+			}
+		}
 		return ResponseEntity.accepted().build();
 	}
 

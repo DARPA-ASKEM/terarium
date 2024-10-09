@@ -4,45 +4,37 @@
 			<h4>Other configuration values for '{{ otherValueList[0].target }}'</h4>
 		</template>
 		<DataTable
+			dataKey="id"
+			tableStyle="min-width: 55rem"
+			:rowsPerPageOptions="[10, 20, 50]"
 			:value="otherValueList"
 			@update:selection="onCustomSelectionChange"
-			dataKey="id"
-			:rowsPerPageOptions="[10, 20, 50]"
-			tableStyle="min-width: 55rem"
 		>
 			<template #header> </template>
-			<Column headerStyle="width: 2rem">
+			<Column>
 				<template #body="{ data }">
 					<RadioButton
 						v-model="customSelection"
+						variant="filled"
 						:inputId="data.id"
 						:value="data"
-						variant="filled"
 						@change="onCustomSelectionChange(data)"
 					/>
 				</template>
 			</Column>
-			<Column
-				v-for="(col, index) in selectedColumns"
-				:field="col.field"
-				:header="col.header"
-				:sortable="col.field !== 'stats'"
-				:key="index"
-				:style="`width: ${getColumnWidth(col.field)}%`"
-			>
+			<Column sortable>
+				<template #header>Configuration name</template>
+				<template #body="{ data }">{{ data.name }}</template>
+			</Column>
+			<Column sortable>
+				<template #header>Source</template>
+				<template #body="{ data }">{{ data.source }}</template>
+			</Column>
+			<Column sortable>
+				<template #header>Value</template>
 				<template #body="{ data }">
-					<template v-if="col.field === 'name'">
-						{{ data.name }}
-					</template>
-					<template v-if="col.field === 'source'">
-						{{ data.source }}
-					</template>
-					<template v-if="col.field === 'expression'">
-						<section class="inline-flex gap-1">
-							<span class="value-label">Constants</span>
-							<span class="value">{{ numberToNist(data.expression) || data.expression }}</span>
-						</section>
-					</template>
+					<span class="value-label">Constants</span>
+					{{ numberToNist(data.expression) || data.expression }}
 				</template>
 			</Column>
 			<ColumnGroup type="footer">
@@ -85,25 +77,25 @@
 			</ColumnGroup>
 		</DataTable>
 		<template #footer>
-			<Button label="Apply selected value" @click="applySelectedValue" :disabled="!selection" />
+			<Button label="Apply selected value" :disabled="!selection" @click="applySelectedValue" />
 			<Button label="Cancel" severity="secondary" outlined @click="emit('close-modal')" />
 		</template>
 	</tera-modal>
 </template>
 
 <script setup lang="ts">
-import { numberToNist } from '@/utils/number';
-import TeraInputText from '@/components/widgets/tera-input-text.vue';
-import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
-import { DistributionType } from '@/services/distribution';
 import { ref } from 'vue';
 import Button from 'primevue/button';
-import TeraModal from '@/components/widgets/tera-modal.vue';
-import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import Row from 'primevue/row';
+import DataTable from 'primevue/datatable';
 import ColumnGroup from 'primevue/columngroup';
 import RadioButton from 'primevue/radiobutton';
+import Row from 'primevue/row';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import TeraModal from '@/components/widgets/tera-modal.vue';
+import { numberToNist } from '@/utils/number';
+import { DistributionType } from '@/services/distribution';
 
 const props = defineProps<{
 	id: string;
@@ -112,11 +104,6 @@ const props = defineProps<{
 }>();
 
 const otherValueList = ref(props.otherValueList);
-const columns = ref([
-	{ field: 'name', header: 'Configuration name' },
-	{ field: 'source', header: 'Source' },
-	{ field: 'expression', header: 'Value' }
-]);
 
 const emit = defineEmits(['update-expression', 'update-source', 'close-modal']);
 
@@ -126,7 +113,6 @@ const customConstant = ref(0);
 
 const numberOptions = [DistributionType.Constant, DistributionType.Uniform];
 
-const selectedColumns = ref(columns.value);
 const customSelection = ref(false);
 const selection = ref<null | { id?: string; source?: string; constant?: number }>(null);
 
@@ -141,19 +127,6 @@ const onCustomSelectionChange = (val) => {
 	}
 };
 
-function getColumnWidth(columnField: string) {
-	switch (columnField) {
-		case 'name':
-			return 40;
-		case 'source':
-			return 20;
-		case 'expression':
-			return 100;
-		default:
-			return 100;
-	}
-}
-
 function applySelectedValue() {
 	emit('update-expression', { id: props.id, value: selection.value?.constant });
 	emit('update-source', { id: props.id, value: selection.value?.source });
@@ -162,26 +135,34 @@ function applySelectedValue() {
 </script>
 
 <style scoped>
-.value-label {
-	color: var(--surface-600);
-	padding-right: 1rem;
+/* Override PrimeVue styles */
+:deep(.p-datatable-table) th {
+	padding: var(--gap-4);
+	width: 100%;
 }
-.value {
-	color: var(--surface-900);
+:deep(.p-datatable-table) th:nth-of-type(1) {
+	width: 2rem;
+}
+:deep(.p-datatable-table) th:nth-of-type(2) {
+	width: 40%;
+}
+:deep(.p-datatable-table) th:nth-of-type(3) {
+	width: 20%;
+}
+
+.value-label {
+	color: var(--text-color-subdued);
+	padding-right: var(--gap-4);
 }
 
 .custom-input-label {
+	align-items: center;
 	display: flex;
 	justify-content: left;
-	align-items: center;
-	padding-right: 1rem;
+	padding-right: var(--gap-4);
 }
 
 .custom-input {
 	height: 100%;
-}
-
-:deep(input) {
-	margin-top: 1rem;
 }
 </style>

@@ -36,7 +36,7 @@
 		<!-- Datable -->
 		<DataTable
 			:class="previewMode ? 'p-datatable-xsm' : 'p-datatable-sm'"
-			:value="rawContent.csv.slice(1, rawContent.csv.length)"
+			:value="rawContent.csv"
 			:rows="rows"
 			paginator
 			:paginatorPosition="paginatorPosition ? paginatorPosition : `bottom`"

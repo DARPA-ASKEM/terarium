@@ -1,15 +1,12 @@
 <template>
-	<div class="config-card" :class="{ 'card-selected': selected }">
-		<div>
-			<span class="flex align-items-center"
-				><h6>{{ configuration.name }}</h6>
-				<Button class="ml-auto" text icon="pi pi-ellipsis-v" @click.stop="toggleContextMenu"></Button
-			></span>
-			<ContextMenu ref="contextMenu" :model="contextMenuItems"></ContextMenu>
-			<p>{{ configuration.description }}</p>
-			<p>{{ formatTimestamp(configuration.createdOn) }}</p>
-		</div>
-		<Divider />
+	<div :class="{ selected: selected }">
+		<header>
+			<h6>{{ configuration.name }}</h6>
+			<Button text icon="pi pi-ellipsis-v" @click.stop="toggleContextMenu" />
+		</header>
+		<ContextMenu ref="contextMenu" :model="contextMenuItems" />
+		<p>{{ configuration.description }}</p>
+		<p>{{ formatTimestamp(configuration.createdOn) }}</p>
 	</div>
 </template>
 
@@ -17,7 +14,6 @@
 import { ModelConfiguration } from '@/types/Types';
 import { formatTimestamp } from '@/utils/date';
 import Button from 'primevue/button';
-import Divider from 'primevue/divider';
 import ContextMenu from 'primevue/contextmenu';
 import { ref } from 'vue';
 import { useConfirm } from 'primevue/useconfirm';
@@ -77,30 +73,42 @@ const onDeleteConfiguration = () => {
 </script>
 
 <style scoped>
-.config-card {
+div {
 	background: var(--surface-0);
 	border-left: 4px solid var(--surface-300);
+	padding: var(--gap-1) var(--gap-1) var(--gap-3) var(--gap-3);
+
 	&:hover {
-		cursor: pointer;
 		background-color: var(--gray-50);
-	}
-	&.card-selected {
-		border-left: 4px solid var(--primary-color);
+		cursor: pointer;
 	}
 
-	> div {
-		padding-left: var(--gap);
+	&.selected {
+		border-left-color: var(--primary-color);
+	}
+
+	&,
+	&.selected {
+		transition: border-left-color 250ms;
+	}
+}
+
+header {
+	display: flex;
+	align-items: center;
+
+	& > *:last-child {
+		margin-left: auto;
 	}
 }
 
 p {
 	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
+	padding-right: var(--gap-6);
 }
-:deep(.p-divider) {
-	&.p-divider-horizontal {
-		margin-top: var(--gap);
-		margin-bottom: 0;
-		color: var(--gray-300);
-	}
+
+p + p {
+	margin-top: var(--gap-2);
 }
 </style>
