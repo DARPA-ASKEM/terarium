@@ -37,7 +37,7 @@ def escape_curly_braces(text: str):
     return text.replace("{", "{{").replace("}", "}}")
 
 
-def get_image_format_string(image_format: str) -> str:
+def get_image_format_string(image_format: str) -> dict:
     if not image_format:
         raise ValueError("Invalid image format.")
 
@@ -57,6 +57,47 @@ def get_image_format_string(image_format: str) -> str:
         "exr": f"data:image/exr:base64,"
     }
     return format_strings.get(image_format.lower())
+
+
+def equations_cleanup(equations: List[str]) -> dict:
+    print("Reformatting equations...")
+
+    print("Uploading and validating equations schema...")
+    config_path = os.path.join(SCRIPT_DIR, 'schemas', 'equations.json')
+    with open(config_path, 'r') as config_file:
+        response_schema = json.load(config_file)
+    validate_schema(response_schema)
+
+    print("Building prompt to reformat equations...")
+    prompt = EQUATIONS_FROM_IMAGE_PROMPT.format(
+        style_guide=LATEXT_STYLE_GUIDE,
+        equations="\n".join(equations)
+    )
+
+    client = OpenAI()
+    output = client.chat.completions.create(
+        model="gpt-4o-mini",
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0,
+        temperature=0,
+        seed=123,
+        max_tokens=1024,
+        response_format={
+            "type": "json_schema",
+            "json_schema": {
+                "name": "equations",
+                "schema": response_schema
+            }
+        },
+        messages=[
+            {"role": "user", "content": prompt},
+        ]
+    )
+    print("Received response from OpenAI API. Formatting response to work with HMI...")
+    output_json = json.loads(output.choices[0].message.content)
+
+    return output_json
 
 
 def equations_from_image(image: str) -> dict:
@@ -340,7 +381,7 @@ def embedding_chain(text: str) -> List:
     return output.data[0].embedding
 
 
-def model_config_from_dataset(amr: str, dataset: List[str], matrix: str) -> str:
+def model_config_from_dataset(amr: str, dataset: List[str], matrix: str) -> dict:
     print("Extracting datasets...")
     dataset_text = os.linesep.join(dataset)
 
@@ -392,7 +433,7 @@ def model_config_from_dataset(amr: str, dataset: List[str], matrix: str) -> str:
     return model_config_adapter(output_json)
 
 
-def compare_models(amrs: List[str]) -> str:
+def compare_models(amrs: List[str]) -> dict:
     print("Comparing models...")
 
     print("Building prompt to compare models...")
