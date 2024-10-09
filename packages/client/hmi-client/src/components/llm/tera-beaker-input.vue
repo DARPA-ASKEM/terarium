@@ -45,8 +45,7 @@
 					:disabled="props.kernelIsBusy"
 					class="white-space-nowrap"
 					style="margin-top: 1px; height: 31px; width: 10rem"
-					title="Add a code cell to the notebook"
-					@click="rerunCells"
+					title="Rerun all cells"
 				>
 					<span class="pi pi-refresh p-button-icon p-button-icon-left"></span>
 					<span class="p-button-text">Rerun cells</span>
@@ -64,7 +63,6 @@ import Button from 'primevue/button';
 import * as EventService from '@/services/event';
 import { EventType } from '@/types/Types';
 import { useProjects } from '@/composables/project';
-// import { runCell } from
 
 const emit = defineEmits(['submit-query', 'add-code-cell', 'run-all-cells']);
 
@@ -86,7 +84,11 @@ const props = defineProps({
 		type: String,
 		default: 'black'
 	},
-	kernelIsBusy: Boolean
+	kernelIsBusy: Boolean,
+	runAllCells: {
+		type: MouseEvent,
+		default: () => {}
+	}
 });
 
 const queryString = ref('');
@@ -108,10 +110,6 @@ const submitQuery = () => {
 const addCodeCell = () => {
 	emit('add-code-cell');
 	EventService.create(EventType.AddCodeCell, useProjects().activeProject.value?.id);
-};
-
-const rerunCells = () => {
-	// runCell()
 };
 
 onMounted(() => {

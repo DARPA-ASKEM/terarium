@@ -18,6 +18,7 @@
 				@submitQuery="onSubmitQuery"
 				@add-code-cell="onAddCodeCell"
 				@keydown.stop
+				@run-all-cells="runAllCells"
 			/>
 			<span class="flex-auto"></span>
 
@@ -149,6 +150,7 @@ import TeraBeakerInput from '@/components/llm/tera-beaker-input.vue';
 const openDialog = () => {
 	showSaveInput.value = true;
 };
+const runAllCells = () => {};
 
 defineExpose({
 	openDialog

@@ -48,7 +48,6 @@ import { updateNotebookSession } from '@/services/notebook-session';
 import { useProjects } from '@/composables/project';
 import { isEmpty } from 'lodash';
 import Button from 'primevue/button';
-// import TeraBeakerInput from './tera-beaker-input.vue';
 
 const messagesHistory = ref<JupyterMessage[]>([]);
 const isExecutingCode = ref(false);
@@ -88,6 +87,13 @@ const props = defineProps<{
 	notebookSession?: NotebookSession;
 	defaultPreview?: string;
 }>();
+
+// const rerunAllCells = () => {
+// 	// TeraBeakerInput.runCell();
+// 	notebookItems.value.forEach((notebookItem) => {
+// 		console.log(notebookItem);
+// 	});
+// };
 
 const iopubMessageHandler = (_session, message) => {
 	if (message.header.msg_type === 'status') {
