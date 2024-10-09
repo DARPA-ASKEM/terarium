@@ -40,7 +40,7 @@ const expressionFunctions = {
 		}
 		return format(NUMBER_FORMAT)(correctedValue);
 	},
-	// To not apply specific formatting to tooltip values to show full value
+	// Just show full value in tooltip
 	tooltipFormatter: (value) => fixPrecisionError(value)
 };
 
