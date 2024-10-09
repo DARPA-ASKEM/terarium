@@ -32,6 +32,8 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 @Entity
 public class Dataset extends TerariumAsset {
 
+	public static final String NC_EXTENSION = ".nc";
+
 	@Serial
 	private static final long serialVersionUID = 6927286281160755696L;
 
