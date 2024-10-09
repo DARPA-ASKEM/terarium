@@ -210,8 +210,11 @@ const preparedCharts = computed(() => {
 			}
 		);
 		applyForecastChartAnnotations(chart, annotations);
-		chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[variable]));
-
+		Object.entries(groupedInterventionOutputs.value).forEach((item) => {
+			item[1].forEach((intervention) => {
+				chart.layer.push(...createInterventionChartMarkers(intervention, false, -80));
+			});
+		});
 		return chart;
 	});
 });
