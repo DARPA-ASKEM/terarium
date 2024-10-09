@@ -32,8 +32,8 @@ const NUMBER_FORMAT = '.3~s';
 
 // Define the custom expression functions that can be registered and used in the Vega charts
 const expressionFunctions = {
-	// terrariumNumber is a custom number format that will display numbers in a more readable format
-	terrariumNumber: (value: number) => {
+	// chartNumberFormatter is a custom number format that will display numbers in a more readable format
+	chartNumberFormatter: (value: number) => {
 		const correctedValue = fixPrecisionError(value);
 		if (value > -1 && value < 1) {
 			return countDigits(correctedValue) > 6 ? correctedValue.toExponential(3) : correctedValue.toString();
@@ -47,8 +47,8 @@ const expressionFunctions = {
 // This config is default for all charts, but can be overridden by individual chart spec
 const defaultChartConfig: Partial<Config> = {
 	customFormatTypes: true,
-	numberFormatType: 'terrariumNumber',
-	numberFormat: 'terrariumNumber',
+	numberFormatType: 'chartNumberFormatter',
+	numberFormat: 'chartNumberFormatter',
 	tooltipFormat: {
 		numberFormat: 'tooltipFormatter',
 		numberFormatType: 'tooltipFormatter'
