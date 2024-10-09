@@ -251,10 +251,11 @@ const outputs = computed(() => {
 const activeOutput = ref<WorkflowOutput<FunmanOperationState> | null>(null);
 
 const variablesOfInterest = ref();
-const onToggleVariableOfInterest = (vals: any[]) => {
-	variablesOfInterest.value = vals;
+const onToggleVariableOfInterest = (event: any[]) => {
+	variablesOfInterest.value = event;
+	const namesOfInterest = event.map((d) => d.name);
 	requestParameters.value.forEach((d) => {
-		d.label = vals.includes(d.name) ? 'all' : 'any';
+		d.label = namesOfInterest.includes(d.name) ? 'all' : 'any';
 	});
 	const state = _.cloneDeep(props.node.state);
 	state.requestParameters = _.cloneDeep(requestParameters.value);
@@ -327,7 +328,7 @@ const runMakeQuery = async () => {
 		model: configuredModel.value,
 		request: {
 			constraints,
-			parameters: requestParameters.value,
+			parameters: requestParameters.value.map(({ disabled, ...rest }) => rest), // Remove the disabled property from the request (it's only used for UI)
 			structure_parameters: [
 				{
 					name: 'schedules',
