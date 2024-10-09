@@ -55,7 +55,7 @@ import { useProjects } from '@/composables/project';
 import { RouteName } from '@/router/routes';
 import { AssetRoute } from '@/types/common';
 import { ProjectPages, isProjectAssetTypes } from '@/types/Project';
-import { AssetType } from '@/types/Types';
+import { AssetType, TerariumAsset } from '@/types/Types';
 import { logger } from '@/utils/logger';
 
 const route = useRoute();
@@ -66,8 +66,8 @@ const showSaveAssetModal = ref(false);
 const assetTypeToCreate = ref<AssetType>(AssetType.Model);
 
 const pageType = computed(() => (route.params.pageType as ProjectPages | AssetType) ?? '');
-const assetId = computed(() => (route.params.assetId as string) ?? '');
-const openedAssetRoute = computed(() => ({ pageType: pageType.value, assetId: assetId.value }));
+const assetId = computed(() => (route.params.assetId as TerariumAsset['id']) ?? '');
+const openedAssetRoute = computed(() => ({ pageType: pageType.value, assetId: assetId.value }) as AssetRoute);
 
 function openAsset(assetRoute: AssetRoute) {
 	if (!isEqual(assetRoute, openedAssetRoute.value)) {
