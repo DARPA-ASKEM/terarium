@@ -21,15 +21,27 @@
 </template>
 
 <script setup lang="ts">
-import embed, { Result, VisualizationSpec } from 'vega-embed';
-import { Config as VgConfig } from 'vega';
-import { Config as VlConfig } from 'vega-lite';
+import embed, { Config, Result, VisualizationSpec } from 'vega-embed';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
+import { countDigits, fixPrecisionError } from '@/utils/number';
 
 import { ref, watch, toRaw, isRef, isReactive, isProxy, computed, h, render } from 'vue';
 
-export type Config = VgConfig | VlConfig;
+// Define the expression functions that can be used in the Vega spec
+const expressionFunctions = {
+	// terrariumNumber is a custom number format that will display numbers in a more readable format
+	terrariumNumber: (value: number) => {
+		const correctedValue = fixPrecisionError(value);
+		return countDigits(correctedValue) > 6 ? correctedValue.toExponential(3) : correctedValue.toString();
+	}
+};
+
+const defaultChartConfig: Partial<Config> = {
+	customFormatTypes: true,
+	numberFormatType: 'terrariumNumber',
+	numberFormat: 'terrariumNumber'
+};
 
 const props = withDefaults(
 	defineProps<{
@@ -138,8 +150,9 @@ async function createVegaVisualization(
 		container,
 		{ ...visualizationSpec },
 		{
-			config: config || {},
-			actions: options.actions === false ? false : undefined
+			config: { ...defaultChartConfig, ...config } as Config,
+			actions: options.actions === false ? false : undefined,
+			expressionFunctions // Register expression functions
 		}
 	);
 	props.intervalSelectionSignalNames.forEach((signalName) => {

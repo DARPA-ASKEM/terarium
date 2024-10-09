@@ -74,17 +74,35 @@ export function nistToNumber(numStr: string): number {
  * @returns {string} The number in either exponential form or NIST form.
  */
 export function displayNumber(num: string): string {
+	const number = fixPrecisionError(parseFloat(num));
+	if (countDigits(number) > 6) return number.toExponential(3);
+	return numberToNist(number.toString());
+}
+
+/**
+ * Counts the number of digits in a given number.
+ */
+export function countDigits(num: number): number {
+	if (Number.isNaN(num)) return 0;
+	let digitString = num.toString();
 	// Remove negative sign if present
-	let digitString = parseFloat(num).toString();
-	if (num.startsWith('-')) {
+	if (digitString.startsWith('-')) {
 		digitString = digitString.substring(1);
 	}
-
 	// Remove decimal point if present
 	digitString = digitString.replace('.', '');
+	return digitString.length;
+}
 
-	if (digitString.length > 6) return parseFloat(num).toExponential(3);
-	return numberToNist(parseFloat(num).toString());
+/**
+ * Fixes floating-point precision errors by rounding the number to a specified precision.
+ * JavaScript's floating-point arithmetic can introduce small errors (e.g., 0.1 + 0.2 = 0.30000000000000004).
+ * This causes issues like 0.30000000000000004 ends up as a long number with insignificant trailing digits or '3.000e-1' (with exponential formatting) instead of '0.3'.
+ * This function rounds the number to mitigate such errors (e.g., fixFloatingPrecisionError(0.1 + 0.2) = 0.3).
+ * For num > 0, the function rounds to 3 decimal places.
+ */
+export function fixPrecisionError(num: number): number {
+	return num < 1 ? Number(num.toFixed(15)) : Number(num.toFixed(3));
 }
 
 /**
