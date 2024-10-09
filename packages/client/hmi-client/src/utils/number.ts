@@ -102,7 +102,7 @@ export function countDigits(num: number): number {
  * For num > 0, the function rounds to 3 decimal places.
  */
 export function fixPrecisionError(num: number): number {
-	return num < 1 ? Number(num.toFixed(15)) : Number(num.toFixed(3));
+	return num < 1 && num > -1 ? Number(num.toFixed(15)) : Number(num.toFixed(3));
 }
 
 /**
