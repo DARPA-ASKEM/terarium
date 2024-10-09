@@ -74,6 +74,7 @@ import software.uncharted.terarium.hmiserver.service.data.ProvenanceSearchServic
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 import software.uncharted.terarium.hmiserver.service.tasks.EnrichAmrResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
+import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.StringMultipartFile;
@@ -799,7 +800,7 @@ public class KnowledgeController {
 	public ResponseEntity<Void> pdfExtractions(
 		@RequestParam("document-id") final UUID documentId,
 		@RequestParam(name = "project-id", required = false) final UUID projectId,
-		@RequestParam(name = "wait", required = false, defaultValue = "false") final Boolean wait
+		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode
 	) {
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
@@ -807,7 +808,7 @@ public class KnowledgeController {
 		);
 
 		final Future<DocumentAsset> f = extractionService.extractPDFAndApplyToDocument(documentId, projectId, permission);
-		if (wait) {
+		if (mode == TaskMode.SYNC) {
 			try {
 				f.get();
 			} catch (InterruptedException | ExecutionException e) {
