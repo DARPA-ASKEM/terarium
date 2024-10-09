@@ -123,7 +123,7 @@ describe('number util tests', () => {
 			expect(displayNumber((100.1 + 0.1).toString())).to.eq('100.2');
 
 			// normal rounding
-			expect(displayNumber('134.1234500001')).to.eq('134.123');
+			expect(displayNumber('-134.1234500001')).to.eq('-134.123');
 			expect(displayNumber('0.000001234500001')).to.eq('1.235e-6');
 		});
 	});
