@@ -36,7 +36,6 @@ enum DocumentView {
 }
 const props = defineProps<{
 	assetId: string;
-	previewLineLimit: number;
 	featureConfig?: FeatureConfig;
 }>();
 

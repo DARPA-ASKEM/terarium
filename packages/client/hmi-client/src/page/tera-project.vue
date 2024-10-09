@@ -2,10 +2,10 @@
 	<main>
 		<tera-slider-panel
 			v-model:is-open="isResourcesSliderOpen"
-			content-width="240px"
-			header="Resources"
-			direction="left"
 			class="resource-panel"
+			content-width="240px"
+			direction="left"
+			header="Resources"
 		>
 			<template v-slot:content>
 				<tera-resource-sidebar
@@ -17,27 +17,22 @@
 				/>
 			</template>
 		</tera-slider-panel>
-		<section class="project-page">
+		<section>
+			<tera-code v-if="pageType === AssetType.Code" :asset-id="assetId" />
+			<tera-dataset v-if="pageType === AssetType.Dataset" :asset-id="assetId" />
 			<tera-model v-if="pageType === AssetType.Model" :asset-id="assetId" />
-			<tera-code :asset-id="assetId" v-else-if="pageType === AssetType.Code" />
-			<tera-project-overview v-else-if="pageType === ProjectPages.OVERVIEW" />
-			<tera-workflow v-else-if="pageType === AssetType.Workflow" :asset-id="assetId" />
-			<!--Add new process/asset views here-->
-			<template v-else-if="assetId">
-				<tera-document-asset
-					v-if="pageType === AssetType.Document"
-					:assetId="assetId"
-					:previewLineLimit="10"
-					@remove="removeAsset({ assetId, pageType })"
-				/>
-				<tera-dataset v-else-if="pageType === AssetType.Dataset" :asset-id="assetId" />
-			</template>
+			<tera-project-overview v-if="pageType === ProjectPages.OVERVIEW" />
+			<tera-workflow v-if="pageType === AssetType.Workflow" :asset-id="assetId" />
+			<tera-document-asset
+				v-if="pageType === AssetType.Document"
+				:assetId="assetId"
+				@remove="removeAsset({ assetId, pageType })"
+			/>
 		</section>
-		<!-- New asset modal -->
 		<tera-save-asset-modal
-			:is-visible="showSaveAssetModal"
-			:assetType="assetTypeToCreate"
 			open-on-save
+			:assetType="assetTypeToCreate"
+			:is-visible="showSaveAssetModal"
 			@close-modal="showSaveAssetModal = false"
 		/>
 	</main>
@@ -122,34 +117,11 @@ onMounted(() => {
 	outline-color: var(--surface-border);
 }
 
-.tab-group {
-	z-index: 2;
-	isolation: isolate;
-	position: relative;
-}
-
 section {
 	display: flex;
-	flex-direction: column;
 	flex: 1;
+	flex-direction: column;
 	overflow-x: auto;
 	overflow-y: hidden;
-}
-
-.p-tabmenu:deep(.p-tabmenuitem) {
-	display: inline;
-	max-width: 15rem;
-}
-
-.p-tabmenu:deep(.p-tabmenu-nav .p-tabmenuitem .p-menuitem-link) {
-	padding: 1rem;
-	text-decoration: none;
-}
-
-.p-tabmenu:deep(.p-menuitem-text) {
-	height: 1rem;
-	display: inline-block;
-	overflow: hidden;
-	text-overflow: ellipsis;
 }
 </style>
