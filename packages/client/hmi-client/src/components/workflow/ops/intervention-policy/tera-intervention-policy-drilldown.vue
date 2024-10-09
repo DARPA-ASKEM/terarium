@@ -45,7 +45,7 @@
 			</tera-slider-panel>
 		</template>
 		<tera-columnar-panel>
-			<tera-drilldown-section class="px-3 intervention-settings-section">
+			<tera-drilldown-section class="intervention-settings-section">
 				<template #header-controls-left> Add and configure intervention settings for this policy. </template>
 				<template #header-controls-right>
 					<Button outlined severity="secondary" label="Reset" @click="onResetPolicy" />
@@ -556,10 +556,28 @@ onMounted(() => {
 <style scoped>
 .intervention-settings-section {
 	background-color: var(--surface-100);
+	padding: 0 var(--gap-3);
 }
 
-ul {
-	list-style: none;
+.input-config {
+	ul {
+		list-style: none;
+	}
+	li {
+		& > * {
+			border-bottom: 1px solid var(--gray-300);
+			border-right: 1px solid var(--gray-300);
+		}
+		&:first-child > * {
+			border-top: 1px solid var(--gray-300);
+			border-top-left-radius: var(--border-radius);
+			border-top-right-radius: var(--border-radius);
+		}
+		&:last-child > * {
+			border-bottom-left-radius: var(--border-radius);
+			border-bottom-right-radius: var(--border-radius);
+		}
+	}
 }
 
 section {
