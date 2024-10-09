@@ -108,9 +108,11 @@ public class DatasetController {
 		try {
 			return ResponseEntity.status(HttpStatus.CREATED).body(datasetService.createAsset(dataset, projectId, permission));
 		} catch (final IOException e) {
-			final String error = "Unable to create dataset";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			log.error("Unable to create dataset", e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("postgres.service-unavailable")
+			);
 		}
 	}
 
@@ -159,9 +161,11 @@ public class DatasetController {
 
 			return dataset.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
-			final String error = "Unable to get dataset";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			log.error("Unable to get dataset", e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("postgres.service-unavailable")
+			);
 		}
 	}
 
@@ -196,9 +200,11 @@ public class DatasetController {
 			datasetService.deleteAsset(id, projectId, permission);
 			return ResponseEntity.ok(new ResponseDeleted("Dataset", id));
 		} catch (final IOException e) {
-			final String error = "Unable to delete dataset";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			log.error("Unable to delete dataset", e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("dataset.unable-to-delete")
+			);
 		}
 	}
 
@@ -234,9 +240,11 @@ public class DatasetController {
 			final Optional<Dataset> updated = datasetService.updateAsset(dataset, projectId, permission);
 			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
-			final String error = "Unable to update a dataset";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			log.error("Unable to update a dataset", e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("dataset.unable-to-update")
+			);
 		}
 	}
 
@@ -376,12 +384,18 @@ public class DatasetController {
 		try {
 			dataset = datasetService.getAsset(id, permission);
 			if (dataset.isEmpty()) {
-				throw new ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Dataset not found");
+				throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.NOT_FOUND,
+					messages.get("dataset.not-found")
+				);
 			}
 		} catch (final Exception e) {
 			final String error = "Unable to get dataset";
 			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("postgres.service-unavailable")
+			);
 		}
 
 		if (
@@ -401,7 +415,10 @@ public class DatasetController {
 			if (url == null) {
 				final String error = "The file " + filename + " was not found in the dataset";
 				log.error(error);
-				throw new ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, error);
+				throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.NOT_FOUND,
+					messages.get("dataset.file-not-found")
+				);
 			}
 
 			final PresignedURL presigned = new PresignedURL().setUrl(url).setMethod("GET");
@@ -413,7 +430,10 @@ public class DatasetController {
 			} catch (final Exception e) {
 				final String error = "Unable to get download url";
 				log.error(error, e);
-				throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+				throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					messages.get("postgres.service-unavailable")
+				);
 			}
 		}
 	}
@@ -458,7 +478,10 @@ public class DatasetController {
 		if (csvString == null) {
 			final String error = "Unable to download csv from github";
 			log.error(error);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("dataset.download-error")
+			);
 		}
 
 		CSVParser csvParser = null;
@@ -468,9 +491,11 @@ public class DatasetController {
 				CSVFormat.Builder.create(CSVFormat.DEFAULT).setHeader().setSkipHeaderRecord(false).build()
 			);
 		} catch (IOException e) {
-			final String error = "Unable to parse csv from github";
-			log.error(error);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			log.error("Unable to parse csv from github", e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("dataset.parse-error")
+			);
 		}
 
 		List<String> headers = new ArrayList<>(csvParser.getHeaderMap().keySet());
@@ -575,7 +600,10 @@ public class DatasetController {
 				if (updatedDataset.isEmpty()) {
 					final String error = "Failed to get dataset after upload";
 					log.error(error);
-					throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+					throw new ResponseStatusException(
+						org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+						messages.get("dataset.not-found")
+					);
 				}
 
 				if (!updatedDataset.get().getFileNames().contains(filename)) {
@@ -598,7 +626,10 @@ public class DatasetController {
 		} catch (final IOException e) {
 			final String error = "Unable to upload file to dataset";
 			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("postgres.service-unavailable")
+			);
 		}
 	}
 
@@ -631,7 +662,10 @@ public class DatasetController {
 		} catch (final Exception e) {
 			final String error = "Unable to get upload url";
 			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("postgres.service-unavailable")
+			);
 		}
 	}
 
@@ -688,7 +722,7 @@ public class DatasetController {
 			log.error("Unable to upload csv data", e);
 			throw new ResponseStatusException(
 				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				"Unable to PUT csv data"
+				messages.get("postgres.service-unavailable")
 			);
 		}
 	}
