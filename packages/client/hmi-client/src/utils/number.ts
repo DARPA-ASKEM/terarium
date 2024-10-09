@@ -100,6 +100,8 @@ export function countDigits(num: number): number {
  * This causes issues like 0.30000000000000004 ends up as a long number with insignificant trailing digits or '3.000e-1' (with exponential formatting) instead of '0.3'.
  * This function rounds the number to mitigate such errors (e.g., fixFloatingPrecisionError(0.1 + 0.2) = 0.3).
  * For num > 0, the function rounds to 3 decimal places.
+ *
+ * !! Note: Only use this function for display purposes. Do not use it for calculations. !!
  */
 export function fixPrecisionError(num: number): number {
 	return num < 1 && num > -1 ? Number(num.toFixed(15)) : Number(num.toFixed(3));
