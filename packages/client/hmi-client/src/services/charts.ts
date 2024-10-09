@@ -831,7 +831,8 @@ function getBoundType(label: string): string {
 export function createFunmanStateChart(
 	data: ProcessedFunmanResult,
 	constraints: FunmanConstraintsResponse[],
-	stateId: string
+	stateId: string,
+	focusOnModelChecks: boolean
 ) {
 	if (isEmpty(data.trajs)) return null;
 
@@ -853,8 +854,8 @@ export function createFunmanStateChart(
 		startX: c.timepoints.lb,
 		endX: c.timepoints.ub,
 		// If the interval bounds are within the min/max values of the line plot use them, otherwise use the min/max values
-		startY: Math.max(c.additive_bounds.lb ?? minY, minY),
-		endY: Math.min(c.additive_bounds.ub ?? maxY, maxY)
+		startY: focusOnModelChecks ? c.additive_bounds.lb : Math.max(c.additive_bounds.lb ?? minY, minY),
+		endY: focusOnModelChecks ? c.additive_bounds.ub : Math.min(c.additive_bounds.ub ?? maxY, maxY)
 	}));
 
 	return {
@@ -892,7 +893,7 @@ export function createFunmanStateChart(
 			x: { title: 'Timepoints' },
 			y: {
 				title: `${stateId} (persons)`,
-				scale: { domain: [minY, maxY] }
+				scale: focusOnModelChecks ? {} : { domain: [minY, maxY] }
 			},
 			color: {
 				field: 'legendItem',
@@ -911,7 +912,7 @@ export function createFunmanStateChart(
 	};
 }
 
-export function createFunmanParameterChart(
+export function createFunmanParameterCharts(
 	parametersOfInterest: { label: 'all'; name: string; interval: FunmanInterval }[],
 	boxes: FunmanBox[]
 ) {

@@ -457,7 +457,7 @@ const setModelOptions = async () => {
 
 	if (configuredModel.value.semantics?.ode.parameters) {
 		setRequestParameters(configuredModel.value.semantics?.ode.parameters);
-		variablesOfInterest.value = requestParameters.value.filter((d: any) => d.label === 'all').map((d: any) => d.name);
+		variablesOfInterest.value = requestParameters.value.filter((d: any) => d.label === 'all');
 	} else {
 		toast.error('', 'Provided model has no parameters');
 	}
