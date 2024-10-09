@@ -39,24 +39,24 @@
 </template>
 
 <script setup lang="ts">
+import { isEqual } from 'lodash';
+import { computed, onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import TeraCode from '@/components/code/tera-code.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import TeraDocumentAsset from '@/components/documents/tera-document-asset.vue';
 import TeraModel from '@/components/model/tera-model.vue';
+import TeraProjectOverview from '@/components/project/tera-project-overview.vue';
+import TeraResourceSidebar from '@/components/project/tera-resource-sidebar.vue';
+import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraWorkflow from '@/components/workflow/tera-workflow.vue';
 import { useProjects } from '@/composables/project';
-import TeraProjectOverview from '@/components/project/tera-project-overview.vue';
-import TeraResourceSidebar from '@/components/project/tera-resource-sidebar.vue';
 import { RouteName } from '@/router/routes';
+import { AssetRoute } from '@/types/common';
 import { ProjectPages, isProjectAssetTypes } from '@/types/Project';
 import { AssetType } from '@/types/Types';
-import { AssetRoute } from '@/types/common';
 import { logger } from '@/utils/logger';
-import { isEqual } from 'lodash';
-import { computed, onMounted, ref } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 
 const route = useRoute();
 const router = useRouter();
