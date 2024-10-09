@@ -21,26 +21,38 @@
 </template>
 
 <script setup lang="ts">
+import { format } from 'd3';
 import embed, { Config, Result, VisualizationSpec } from 'vega-embed';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import { countDigits, fixPrecisionError } from '@/utils/number';
-
 import { ref, watch, toRaw, isRef, isReactive, isProxy, computed, h, render } from 'vue';
+
+const NUMBER_FORMAT = '.3~s';
 
 // Define the expression functions that can be used in the Vega spec
 const expressionFunctions = {
 	// terrariumNumber is a custom number format that will display numbers in a more readable format
 	terrariumNumber: (value: number) => {
 		const correctedValue = fixPrecisionError(value);
-		return countDigits(correctedValue) > 6 ? correctedValue.toExponential(3) : correctedValue.toString();
-	}
+		if (value > -1 && value < 1) {
+			return countDigits(correctedValue) > 6 ? correctedValue.toExponential(3) : correctedValue.toString();
+		}
+		return format(NUMBER_FORMAT)(correctedValue);
+	},
+	// To not apply formatting to tooltip values
+	tooltipFormatter: (value) => value
 };
 
+// This config is default for all charts, but can be overridden by individual chart spec
 const defaultChartConfig: Partial<Config> = {
 	customFormatTypes: true,
 	numberFormatType: 'terrariumNumber',
-	numberFormat: 'terrariumNumber'
+	numberFormat: 'terrariumNumber',
+	tooltipFormat: {
+		numberFormat: 'tooltipFormatter',
+		numberFormatType: 'tooltipFormatter'
+	}
 };
 
 const props = withDefaults(
