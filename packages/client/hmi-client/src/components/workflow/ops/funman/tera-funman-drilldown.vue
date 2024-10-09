@@ -89,11 +89,13 @@
 								<MultiSelect
 									ref="columnSelect"
 									class="w-full mt-1 mb-2"
-									:modelValue="variablesOfInterest"
-									:options="requestParameters.map((d: any) => d.name)"
+									:model-value="variablesOfInterest"
+									:options="requestParameters"
+									option-label="name"
+									option-disabled="disabled"
 									:show-toggle-all="false"
-									@update:modelValue="onToggleVariableOfInterest"
 									placeholder="Select variables"
+									@update:model-value="onToggleVariableOfInterest"
 								/>
 								<div class="mb-2 timespan">
 									<div class="timespan-input">
@@ -248,17 +250,12 @@ const outputs = computed(() => {
 
 const activeOutput = ref<WorkflowOutput<FunmanOperationState> | null>(null);
 
-const variablesOfInterest = ref<string[]>([]);
-const onToggleVariableOfInterest = (vals: string[]) => {
+const variablesOfInterest = ref();
+const onToggleVariableOfInterest = (vals: any[]) => {
 	variablesOfInterest.value = vals;
 	requestParameters.value.forEach((d) => {
-		if (variablesOfInterest.value.includes(d.name)) {
-			d.label = 'all';
-		} else {
-			d.label = 'any';
-		}
+		d.label = vals.includes(d.name) ? 'all' : 'any';
 	});
-
 	const state = _.cloneDeep(props.node.state);
 	state.requestParameters = _.cloneDeep(requestParameters.value);
 	emit('update-state', state);
@@ -477,18 +474,24 @@ const setRequestParameters = (modelParameters: ModelParameter[]) => {
 	});
 
 	requestParameters.value = modelParameters.map((ele) => {
-		let interval = { lb: ele.value, ub: ele.value };
+		const name = ele.id;
+
+		const param = {
+			name,
+			label: (labelMap.get(name) as string) ?? 'any',
+			interval: { lb: ele.value, ub: ele.value },
+			disabled: false
+		};
+
 		if (ele.distribution) {
-			interval = {
+			param.interval = {
 				lb: ele.distribution.parameters.minimum,
 				ub: ele.distribution.parameters.maximum
 			};
+		} else {
+			param.disabled = true; // Disable if constant
 		}
 
-		const param = { name: ele.id, interval, label: 'any' };
-		if (labelMap.has(param.name)) {
-			param.label = labelMap.get(param.name) as string;
-		}
 		return param;
 	});
 };
