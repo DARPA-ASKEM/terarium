@@ -90,18 +90,30 @@ export const processFunman = (result: any, onlyShowLatestBox: boolean) => {
 	const parameterIds: string[] = result.model.petrinet.semantics.ode.parameters.map(({ id }) => id);
 	const timepoints: number[] = result.request.structure_parameters[0].schedules[0].timepoints;
 
-	// We only want boxes that appear at the last timestep
-	function getBoxesEndingAtLastTimestep(boxes: any[]) {
-		return boxes.filter((box) => box.points[0]?.values.timestep === timepoints.length - 1);
+	function getBoxesEndingAtLatestTimestep(boxes: any[]) {
+		if (boxes.length === 0) return [];
+		let latestTimestep = 0;
+		let maxKeysCount = 0;
+
+		// The latest timestep is found in the box with the most keys
+		boxes.forEach((box) => {
+			const keysCount = Object.keys(box.points[0]?.values).length;
+			if (keysCount > maxKeysCount) {
+				maxKeysCount = keysCount;
+				latestTimestep = box.points[0].values.timestep;
+			}
+		});
+		// Filter boxes to include only those with the latest timestep
+		return boxes.filter((box) => box.points[0].values.timestep === latestTimestep);
 	}
 	const trueBoxes: any[] = onlyShowLatestBox
-		? getBoxesEndingAtLastTimestep(result.parameter_space.true_boxes)
+		? getBoxesEndingAtLatestTimestep(result.parameter_space.true_boxes)
 		: result.parameter_space.true_boxes;
 	const falseBoxes: any[] = onlyShowLatestBox
-		? getBoxesEndingAtLastTimestep(result.parameter_space.false_boxes)
+		? getBoxesEndingAtLatestTimestep(result.parameter_space.false_boxes)
 		: result.parameter_space.false_boxes;
 	const ambiguousBoxes: any[] = onlyShowLatestBox
-		? getBoxesEndingAtLastTimestep(result.parameter_space.unknown_points)
+		? getBoxesEndingAtLatestTimestep(result.parameter_space.unknown_points)
 		: result.parameter_space.unknown_points;
 
 	// "dataframes"
