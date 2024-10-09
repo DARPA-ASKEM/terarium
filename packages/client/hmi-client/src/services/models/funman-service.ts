@@ -85,7 +85,7 @@ export function generateConstraintExpression(config: ConstraintGroup) {
 	return `${expression} \\ \\forall \\ t \\in [${timepoints.lb}, ${timepoints.ub}]`;
 }
 
-export const processFunman = (result: any, showAllTrajectories = false) => {
+export const processFunman = (result: any, onlyShowLatestBox: boolean) => {
 	const stateIds: string[] = result.model.petrinet.model.states.map(({ id }) => id);
 	const parameterIds: string[] = result.model.petrinet.semantics.ode.parameters.map(({ id }) => id);
 	const timepoints: number[] = result.request.structure_parameters[0].schedules[0].timepoints;
@@ -94,15 +94,15 @@ export const processFunman = (result: any, showAllTrajectories = false) => {
 	function getBoxesEndingAtLastTimestep(boxes: any[]) {
 		return boxes.filter((box) => box.points[0]?.values.timestep === timepoints.length - 1);
 	}
-	const trueBoxes: any[] = showAllTrajectories
-		? result.parameter_space.true_boxes
-		: getBoxesEndingAtLastTimestep(result.parameter_space.true_boxes);
-	const falseBoxes: any[] = showAllTrajectories
-		? result.parameter_space.false_boxes
-		: getBoxesEndingAtLastTimestep(result.parameter_space.false_boxes);
-	const ambiguousBoxes: any[] = showAllTrajectories
-		? result.parameter_space.unknown_points
-		: getBoxesEndingAtLastTimestep(result.parameter_space.unknown_points);
+	const trueBoxes: any[] = onlyShowLatestBox
+		? getBoxesEndingAtLastTimestep(result.parameter_space.true_boxes)
+		: result.parameter_space.true_boxes;
+	const falseBoxes: any[] = onlyShowLatestBox
+		? getBoxesEndingAtLastTimestep(result.parameter_space.false_boxes)
+		: result.parameter_space.false_boxes;
+	const ambiguousBoxes: any[] = onlyShowLatestBox
+		? getBoxesEndingAtLastTimestep(result.parameter_space.unknown_points)
+		: result.parameter_space.unknown_points;
 
 	// "dataframes"
 	const boxes: FunmanBox[] = [];
