@@ -21,6 +21,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -73,6 +74,7 @@ import software.uncharted.terarium.hmiserver.service.data.ProvenanceSearchServic
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 import software.uncharted.terarium.hmiserver.service.tasks.EnrichAmrResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
+import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.StringMultipartFile;
@@ -797,14 +799,23 @@ public class KnowledgeController {
 	)
 	public ResponseEntity<Void> pdfExtractions(
 		@RequestParam("document-id") final UUID documentId,
-		@RequestParam(name = "domain", defaultValue = "epi") final String domain,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestParam(name = "project-id", required = false) final UUID projectId,
+		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode
 	) {
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
 			projectId
 		);
-		extractionService.extractPDFAndApplyToDocument(documentId, projectId, permission);
+
+		final Future<DocumentAsset> f = extractionService.extractPDFAndApplyToDocument(documentId, projectId, permission);
+		if (mode == TaskMode.SYNC) {
+			try {
+				f.get();
+			} catch (InterruptedException | ExecutionException e) {
+				log.error("Error extracting PDF", e);
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("document.extracton.failed"));
+			}
+		}
 		return ResponseEntity.accepted().build();
 	}
 
