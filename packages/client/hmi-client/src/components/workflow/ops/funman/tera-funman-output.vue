@@ -125,7 +125,10 @@ const initalize = async () => {
 	updateStateChart();
 
 	// Parameter charts
-	const parametersOfInterest = funmanResult.request.parameters.filter((d: any) => d.label === 'all');
+	const parametersOfInterest = funmanResult.request.parameters.filter(
+		(d: any) => d.label === 'all' && d.interval.lb !== d.interval.ub
+	);
+	console.log(processedFunmanResult, funmanResult);
 	if (processedFunmanResult.boxes) {
 		parameterCharts.value = createFunmanParameterChart(parametersOfInterest, processedFunmanResult.boxes);
 	}

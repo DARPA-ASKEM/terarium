@@ -817,6 +817,17 @@ enum FunmanChartLegend {
 	ModelChecks = 'Model checks'
 }
 
+function getBoundType(label: string): string {
+	switch (label) {
+		case 'true':
+			return FunmanChartLegend.Satisfactory;
+		case 'false':
+			return FunmanChartLegend.Unsatisfactory;
+		default:
+			return FunmanChartLegend.Ambiguous;
+	}
+}
+
 export function createFunmanStateChart(
 	data: ProcessedFunmanResult,
 	constraints: FunmanConstraintsResponse[],
@@ -827,7 +838,7 @@ export function createFunmanStateChart(
 	const globalFont = 'Figtree';
 
 	const boxLines = data.trajs.map((traj) => {
-		const legendItem = traj.label === 'true' ? FunmanChartLegend.Satisfactory : FunmanChartLegend.Unsatisfactory;
+		const legendItem = getBoundType(traj.label);
 		return { timepoints: traj.timestep, value: traj[stateId], legendItem };
 	});
 
@@ -904,7 +915,8 @@ export function createFunmanParameterChart(
 	parametersOfInterest: { label: 'all'; name: string; interval: FunmanInterval }[],
 	boxes: FunmanBox[]
 ) {
-	const parameterRanges: { parameterId: string; boundType: string; lb?: number; ub?: number }[] = [];
+	const parameterRanges: { parameterId: string; boundType: string; lb?: number; ub?: number; tick?: number }[] = [];
+	const parameterIdsOfInterest: string[] = [];
 
 	// Widest range (model configuration ranges)
 	parametersOfInterest.forEach(({ name, interval }) => {
@@ -914,16 +926,19 @@ export function createFunmanParameterChart(
 			lb: interval.lb,
 			ub: interval.ub
 		});
+		parameterIdsOfInterest.push(name);
 	});
 
 	// Ranges determined by the true/false boxes
 	boxes.forEach(({ label, parameters }) => {
 		Object.keys(parameters).forEach((key) => {
+			if (!parameterIdsOfInterest.includes(key)) return;
 			parameterRanges.push({
 				parameterId: key,
-				boundType: label === 'true' ? FunmanChartLegend.Satisfactory : FunmanChartLegend.Unsatisfactory,
+				boundType: getBoundType(label),
 				lb: parameters[key].lb,
-				ub: parameters[key].ub
+				ub: parameters[key].ub,
+				tick: parameters[key].point
 			});
 		});
 	});
@@ -931,7 +946,10 @@ export function createFunmanParameterChart(
 	const globalFont = 'Figtree';
 	return {
 		$schema: VEGALITE_SCHEMA,
-		config: { font: globalFont },
+		config: {
+			font: globalFont,
+			tick: { thickness: 2 }
+		},
 		width: 600,
 		height: 50, // Height per facet
 		data: {
@@ -968,7 +986,7 @@ export function createFunmanParameterChart(
 				{
 					mark: {
 						type: 'bar', // Use a bar to represent ranges
-						opacity: 0.3 // FIXME: This opacity shouldn't be applied to the legend
+						opacity: 0.4 // FIXME: This opacity shouldn't be applied to the legend
 					},
 					encoding: {
 						x: {
@@ -994,6 +1012,19 @@ export function createFunmanParameterChart(
 								domain: [FunmanChartLegend.Satisfactory, FunmanChartLegend.Unsatisfactory, FunmanChartLegend.Ambiguous],
 								range: ['#1B8073', '#FFAB00', '#CCC569']
 							}
+						}
+					}
+				},
+				{
+					mark: {
+						type: 'tick',
+						size: 20
+					},
+					encoding: {
+						x: {
+							field: 'tick',
+							type: 'quantitative',
+							title: null
 						}
 					}
 				}
