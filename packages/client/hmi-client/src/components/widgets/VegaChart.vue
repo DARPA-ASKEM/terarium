@@ -30,7 +30,7 @@ import { ref, watch, toRaw, isRef, isReactive, isProxy, computed, h, render } fr
 
 const NUMBER_FORMAT = '.3~s';
 
-// Define the expression functions that can be used in the Vega spec
+// Define the custom expression functions that can be registered and used in the Vega charts
 const expressionFunctions = {
 	// terrariumNumber is a custom number format that will display numbers in a more readable format
 	terrariumNumber: (value: number) => {
