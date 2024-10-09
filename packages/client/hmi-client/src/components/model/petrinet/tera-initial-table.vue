@@ -6,7 +6,7 @@
 				<tera-input-text v-model="filterText" placeholder="Filter" class="w-2 p-1" />
 			</template>
 
-			<ul class="pl-1">
+			<ul>
 				<li v-for="{ baseInitial, childInitials, isVirtual } in initialList" :key="baseInitial">
 					<!-- Stratified -->
 					<section v-if="isVirtual" class="initial-entry-stratified">
@@ -16,22 +16,19 @@
 									<span>{{ baseInitial }}</span>
 									<Button label="Open Matrix" text size="small" @click.stop="matrixModalId = baseInitial" />
 								</template>
-								<div class="flex">
-									<ul class="ml-1">
-										<li v-for="{ target } in childInitials" :key="target">
-											<tera-initial-entry
-												:model="model"
-												:model-configuration="modelConfiguration"
-												:modelConfigurations="modelConfigurations"
-												:initial-id="target"
-												:feature-config="featureConfig"
-												@update-expression="emit('update-expression', $event)"
-												@update-source="emit('update-source', $event)"
-											/>
-											<Divider type="solid" />
-										</li>
-									</ul>
-								</div>
+								<ul>
+									<li v-for="{ target } in childInitials" :key="target">
+										<tera-initial-entry
+											:model="model"
+											:model-configuration="modelConfiguration"
+											:modelConfigurations="modelConfigurations"
+											:feature-config="featureConfig"
+											:initial-id="target"
+											@update-expression="emit('update-expression', $event)"
+											@update-source="emit('update-source', $event)"
+										/>
+									</li>
+								</ul>
 							</AccordionTab>
 						</Accordion>
 					</section>
@@ -47,7 +44,6 @@
 						@update-expression="emit('update-expression', $event)"
 						@update-source="emit('update-source', $event)"
 					/>
-					<Divider type="solid" />
 				</li>
 			</ul>
 		</AccordionTab>
@@ -74,7 +70,6 @@ import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
-import Divider from 'primevue/divider';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import type { FeatureConfig } from '@/types/common';
 import TeraStratifiedMatrixModal from './model-configurations/tera-stratified-matrix-modal.vue';
@@ -125,8 +120,13 @@ const filterText = ref('');
 <style scoped>
 ul {
 	flex-grow: 1;
+	padding-left: var(--gap-1);
+
 	li {
+		border-bottom: 1px solid var(--gray-300);
 		list-style: none;
+		margin-bottom: var(--gap-1-5);
+		padding-bottom: var(--gap-1-5);
 	}
 }
 
@@ -140,17 +140,5 @@ ul {
 	color: var(--text-color-subdued);
 	margin-left: var(--gap-1);
 	margin-right: auto;
-}
-
-:deep(.p-divider) {
-	&.p-divider-horizontal {
-		margin-top: var(--gap-2);
-		margin-bottom: var(--gap-2);
-		color: var(--gray-300);
-	}
-	&.p-divider-vertical {
-		margin-left: var(--gap-small);
-		margin-right: var(--gap);
-	}
 }
 </style>
