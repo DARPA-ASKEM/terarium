@@ -55,35 +55,23 @@ export const profileDataset = async (datasetId: Dataset['id'], documentId: Docum
 
 /** Extract text and artifacts from a PDF document */
 export const extractPDF = async (documentId: DocumentAsset['id']) => {
-	console.group('PDF COSMOS Extraction');
 	if (documentId) {
 		const response = await API.post(`/knowledge/pdf-extractions?document-id=${documentId}`);
 		if (response?.status === 202) {
 			await subscribe(ClientEventType.Extraction, extractionStatusUpdateHandler);
-		} else {
-			console.debug('Failed — ', response);
 		}
-	} else {
-		console.debug('Failed — No documentId provided for pdf extraction.');
 	}
-	console.groupEnd();
 };
 
 /** Extract variables from a text document */
 export const extractVariables = async (documentId: DocumentAsset['id'], modelIds: Array<Model['id']>) => {
-	console.group('SKEMA Variable extraction');
 	if (documentId) {
 		const url = `/knowledge/variable-extractions?document-id=${documentId}&model-ids=${modelIds}`;
 		const response = await API.post(url);
 		if (response?.status === 202) {
 			await subscribe(ClientEventType.Extraction, extractionStatusUpdateHandler);
-		} else {
-			console.debug('Failed — ', response);
 		}
-	} else {
-		console.debug('Failed — No documentId provided for variable extraction.');
 	}
-	console.groupEnd();
 };
 
 export async function codeToAMR(
