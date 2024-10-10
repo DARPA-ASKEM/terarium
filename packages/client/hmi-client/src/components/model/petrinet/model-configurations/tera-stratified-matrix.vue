@@ -99,7 +99,12 @@ import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import { StratifiedMatrix } from '@/types/Model';
 import type { MiraMatrix, MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
-import { createParameterMatrix, createInitialMatrix, collapseTemplates } from '@/model-representation/mira/mira';
+import {
+	createParameterMatrix,
+	createDiagramTemplateMatrix,
+	createInitialMatrix,
+	collapseTemplates
+} from '@/model-representation/mira/mira';
 import { getVariable } from '@/model-representation/service';
 import { extractTemplateMatrix } from '@/model-representation/mira/mira-util';
 import { logger } from '@/utils/logger';
@@ -254,13 +259,42 @@ function generateMatrix() {
 		}
 	} else if (stratifiedType === StratifiedMatrix.Rates) {
 		const templatesMap = collapseTemplates(props.mmt).matrixMap;
+		const matrices = createDiagramTemplateMatrix(props.mmt, props.mmtParams, props.id);
+		console.log('test', matrices);
+		console.log('templatesMap', templatesMap);
+		console.log('props.mmtParams', props.mmtParams);
 
 		const transitionMatrix = templatesMap.get(props.id);
 		if (!transitionMatrix) {
 			logger.error('Failed to generate transition matrix');
 			return;
 		}
-		matrix.value = extractTemplateMatrix(transitionMatrix).matrix;
+		// matrix.value = extractTemplateMatrix(transitionMatrix).matrix;
+
+		matrixMap.value = {
+			template: extractTemplateMatrix(transitionMatrix).matrix,
+			subjectOutcome: extractTemplateMatrix(transitionMatrix).matrix,
+			// subjectControllers: matrices.subjectControllers.matrix,
+			// outcomeControllers: matrices.outcomeControllers.matrix,
+			other: matrices.other
+		};
+
+		// Find a default
+		if (currentMatrixtype.value) {
+			matrix.value = matrixMap.value[currentMatrixtype.value];
+			matrixType.value = currentMatrixtype.value;
+			return;
+		}
+
+		for (let i = 0; i < matrixTypes.length; i++) {
+			const typeStr = matrixTypes[i];
+
+			if (matrixMap.value[typeStr] && matrixMap.value[typeStr].length > 0) {
+				matrix.value = matrixMap.value[typeStr];
+				matrixType.value = typeStr;
+				break;
+			}
+		}
 	}
 }
 
