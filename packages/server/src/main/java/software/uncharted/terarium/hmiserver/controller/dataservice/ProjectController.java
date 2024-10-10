@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -222,6 +223,9 @@ public class ProjectController {
 			final List<Contributor> contributors;
 			try {
 				contributors = projectPermissionsService.getContributors(rebacProject);
+				if (project.getMetadata() == null) {
+					project.setMetadata(new HashMap<>());
+				}
 				project
 					.getMetadata()
 					.put("contributor-count", Integer.toString(contributors == null ? 0 : contributors.size()));

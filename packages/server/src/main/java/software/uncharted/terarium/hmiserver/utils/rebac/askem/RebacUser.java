@@ -2,12 +2,14 @@ package software.uncharted.terarium.hmiserver.utils.rebac.askem;
 
 import java.util.List;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.SchemaObject;
 
+@Slf4j
 public class RebacUser extends RebacObject {
 
 	private final ReBACService reBACService;
@@ -29,7 +31,18 @@ public class RebacUser extends RebacObject {
 	}
 
 	public boolean isAdmin() {
-		return adminServiceUser;
+		try {
+			return (
+				adminServiceUser ||
+				reBACService.isMemberOf(
+					getSchemaObject(),
+					new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService).getSchemaObject()
+				)
+			);
+		} catch (final Exception e) {
+			log.error("Error checking if user is admin", e);
+			return false;
+		}
 	}
 
 	public boolean can(final RebacObject rebacObject, final Schema.Permission permission) throws Exception {
