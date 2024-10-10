@@ -113,5 +113,18 @@ describe('number util tests', () => {
 			expect(displayNumber('abc')).to.eq('');
 			expect(displayNumber('1.23abc')).to.eq('1.23');
 		});
+
+		it('should correct floating point precision errors', () => {
+			const num = 0.1 + 0.2; // 0.30000000000000004
+			expect(displayNumber(num.toString())).to.eq('0.3');
+			expect(displayNumber((-num).toString())).to.eq('-0.3');
+
+			// 100.19999999999999
+			expect(displayNumber((100.1 + 0.1).toString())).to.eq('100.2');
+
+			// normal rounding
+			expect(displayNumber('-134.1234500001')).to.eq('-134.123');
+			expect(displayNumber('0.000001234500001')).to.eq('1.235e-6');
+		});
 	});
 });
