@@ -9,6 +9,7 @@ import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
@@ -19,6 +20,7 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 @TSModel
 @Accessors(chain = true)
 @Entity
+@Slf4j
 public class InterventionPolicy extends TerariumAsset {
 
 	private UUID modelId;
@@ -45,14 +47,47 @@ public class InterventionPolicy extends TerariumAsset {
 	// If any of them are are invalid the entire policy is invalid.
 	public Boolean validatePolicyIntervention() {
 		for (int i = 0; i < this.interventions.size(); i++) {
-			final boolean check = this.interventions.get(i).validateIntervention();
-			if (check == false) {
+			final boolean checkIndividual = this.interventions.get(i).validateIntervention();
+			if (checkIndividual == false) {
 				return false;
 			}
-			// If the policy contains two individual interventions that contain duplicates it is also invalid
-			// TODO make this somewhat clean
+			for (int j = 0; j < this.interventions.size(); j++) {
+				if (i != j) {
+					final boolean checkPair = validateInterventionPair(this.interventions.get(i), this.interventions.get(j));
+					if (checkPair == false) {
+						return false;
+					}
+				}
+			}
 		}
+		return true;
+	}
 
+	// Takes a list of two interventions and will check their static intervention lists to ensure
+	// there are no duplicate time + appliedTo pairs in static interventions
+	private Boolean validateInterventionPair(Intervention interOne, Intervention interTwo) {
+		List<StaticIntervention> staticOne = interOne.getStaticInterventions();
+		List<StaticIntervention> staticTwo = interTwo.getStaticInterventions();
+		for (int i = 0; i < staticOne.size(); i++) {
+			for (int j = 0; j < staticTwo.size(); j++) {
+				final String appliedToOne = staticOne.get(i).getAppliedTo();
+				final Number timeOne = staticOne.get(i).getTimestep();
+				final String appliedToTwo = staticTwo.get(j).getAppliedTo();
+				final Number timeTwo = staticTwo.get(j).getTimestep();
+				if (i != j && appliedToOne == appliedToTwo && timeOne == timeTwo) {
+					log.warn(
+						String.format(
+							"The intervention % and % have duplicate applied to: % and time: % pairs.",
+							interOne.getName(),
+							interTwo.getName(),
+							appliedToOne,
+							timeOne
+						)
+					);
+					return false;
+				}
+			}
+		}
 		return true;
 	}
 }
