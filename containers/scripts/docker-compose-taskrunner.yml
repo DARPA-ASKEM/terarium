@@ -69,6 +69,7 @@ services:
       - ../../packages/funman:/funman_task
       - ../../packages/taskrunner:/taskrunner
     command: /funman_task/dev.sh
+    platform: linux/amd64
 
   equation_extraction_cpu-taskrunner:
     build:

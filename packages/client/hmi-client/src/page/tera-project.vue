@@ -2,10 +2,10 @@
 	<main>
 		<tera-slider-panel
 			v-model:is-open="isResourcesSliderOpen"
-			content-width="240px"
-			header="Resources"
-			direction="left"
 			class="resource-panel"
+			content-width="240px"
+			direction="left"
+			header="Resources"
 		>
 			<template v-slot:content>
 				<tera-resource-sidebar
@@ -17,51 +17,42 @@
 				/>
 			</template>
 		</tera-slider-panel>
-		<section class="project-page">
+		<section>
+			<tera-code v-if="pageType === AssetType.Code" :asset-id="assetId" />
+			<tera-dataset v-if="pageType === AssetType.Dataset" :asset-id="assetId" />
+			<tera-document-asset v-if="pageType === AssetType.Document" :assetId="assetId" />
 			<tera-model v-if="pageType === AssetType.Model" :asset-id="assetId" />
-			<tera-code :asset-id="assetId" v-else-if="pageType === AssetType.Code" />
-			<tera-project-overview v-else-if="pageType === ProjectPages.OVERVIEW" />
-			<tera-workflow v-else-if="pageType === AssetType.Workflow" :asset-id="assetId" />
-			<!--Add new process/asset views here-->
-			<template v-else-if="assetId">
-				<tera-document-asset
-					v-if="pageType === AssetType.Document"
-					:assetId="assetId"
-					:previewLineLimit="10"
-					@remove="removeAsset({ assetId, pageType })"
-				/>
-				<tera-dataset v-else-if="pageType === AssetType.Dataset" :asset-id="assetId" />
-			</template>
+			<tera-project-overview v-if="pageType === ProjectPages.OVERVIEW" />
+			<tera-workflow v-if="pageType === AssetType.Workflow" :asset-id="assetId" />
 		</section>
-		<!-- New asset modal -->
 		<tera-save-asset-modal
-			:is-visible="showSaveAssetModal"
-			:assetType="assetTypeToCreate"
 			open-on-save
+			:assetType="assetTypeToCreate"
+			:is-visible="showSaveAssetModal"
 			@close-modal="showSaveAssetModal = false"
 		/>
 	</main>
 </template>
 
 <script setup lang="ts">
+import { isEqual } from 'lodash';
+import { computed, onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import TeraCode from '@/components/code/tera-code.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import TeraDocumentAsset from '@/components/documents/tera-document-asset.vue';
 import TeraModel from '@/components/model/tera-model.vue';
+import TeraProjectOverview from '@/components/project/tera-project-overview.vue';
+import TeraResourceSidebar from '@/components/project/tera-resource-sidebar.vue';
+import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraWorkflow from '@/components/workflow/tera-workflow.vue';
 import { useProjects } from '@/composables/project';
-import TeraProjectOverview from '@/components/project/tera-project-overview.vue';
-import TeraResourceSidebar from '@/components/project/tera-resource-sidebar.vue';
 import { RouteName } from '@/router/routes';
-import { ProjectPages, isProjectAssetTypes } from '@/types/Project';
-import { AssetType } from '@/types/Types';
 import { AssetRoute } from '@/types/common';
+import { ProjectPages, isProjectAssetTypes } from '@/types/Project';
+import { AssetType, TerariumAsset } from '@/types/Types';
 import { logger } from '@/utils/logger';
-import { isEqual } from 'lodash';
-import { computed, onMounted, ref } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -71,8 +62,8 @@ const showSaveAssetModal = ref(false);
 const assetTypeToCreate = ref<AssetType>(AssetType.Model);
 
 const pageType = computed(() => (route.params.pageType as ProjectPages | AssetType) ?? '');
-const assetId = computed(() => (route.params.assetId as string) ?? '');
-const openedAssetRoute = computed(() => ({ pageType: pageType.value, assetId: assetId.value }));
+const assetId = computed(() => (route.params.assetId as TerariumAsset['id']) ?? '');
+const openedAssetRoute = computed(() => ({ pageType: pageType.value, assetId: assetId.value }) as AssetRoute);
 
 function openAsset(assetRoute: AssetRoute) {
 	if (!isEqual(assetRoute, openedAssetRoute.value)) {
@@ -122,34 +113,11 @@ onMounted(() => {
 	outline-color: var(--surface-border);
 }
 
-.tab-group {
-	z-index: 2;
-	isolation: isolate;
-	position: relative;
-}
-
 section {
 	display: flex;
-	flex-direction: column;
 	flex: 1;
+	flex-direction: column;
 	overflow-x: auto;
 	overflow-y: hidden;
-}
-
-.p-tabmenu:deep(.p-tabmenuitem) {
-	display: inline;
-	max-width: 15rem;
-}
-
-.p-tabmenu:deep(.p-tabmenu-nav .p-tabmenuitem .p-menuitem-link) {
-	padding: 1rem;
-	text-decoration: none;
-}
-
-.p-tabmenu:deep(.p-menuitem-text) {
-	height: 1rem;
-	display: inline-block;
-	overflow: hidden;
-	text-overflow: ellipsis;
 }
 </style>

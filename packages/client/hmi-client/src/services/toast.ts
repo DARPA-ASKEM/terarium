@@ -33,7 +33,6 @@ export const useToastService = () => {
 		ToastEventBus.emit('add', {
 			severity: ToastSeverity.warn,
 			summary: summary || ToastSummaries.WARNING,
-			group: ToastSeverity.warn,
 			detail,
 			life
 		});
@@ -43,7 +42,6 @@ export const useToastService = () => {
 		ToastEventBus.emit('add', {
 			severity: ToastSeverity.error,
 			summary: summary || ToastSummaries.ERROR,
-			group: ToastSeverity.error,
 			detail,
 			life
 		});
@@ -53,7 +51,6 @@ export const useToastService = () => {
 		ToastEventBus.emit('add', {
 			severity: ToastSeverity.success,
 			summary: summary || ToastSummaries.SUCCESS,
-			group: ToastSeverity.success,
 			detail,
 			life
 		});
@@ -63,7 +60,6 @@ export const useToastService = () => {
 		ToastEventBus.emit('add', {
 			severity: ToastSeverity.info,
 			summary: summary || ToastSummaries.INFO,
-			group: ToastSeverity.info,
 			detail,
 			life
 		});

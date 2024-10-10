@@ -181,7 +181,7 @@ def model_config_from_document(research_paper: str, amr: str) -> dict:
         frequency_penalty=0,
         max_tokens=4000,
         presence_penalty=0,
-        seed=905,
+        seed=123,
         temperature=0,
         top_p=1,
         response_format={
@@ -271,7 +271,7 @@ def model_card_chain(amr: str, research_paper: str = None) -> dict:
         frequency_penalty=0,
         max_tokens=16000,
         presence_penalty=0,
-        seed=123,
+        seed=365,
         top_p=1,
         response_format={
             "type": "json_schema",

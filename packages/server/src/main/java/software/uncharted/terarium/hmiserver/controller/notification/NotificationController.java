@@ -29,6 +29,7 @@ import software.uncharted.terarium.hmiserver.service.notification.NotificationSe
 @RequestMapping("/notification")
 @RestController
 @Slf4j
+@Transactional
 @RequiredArgsConstructor
 public class NotificationController {
 

@@ -10,11 +10,6 @@ const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
 export const CATEGORICAL_SCHEME = ['#1B8073', '#6495E8', '#8F69B9', '#D67DBF', '#E18547', '#D2C446', '#84594D'];
 
-export const NUMBER_FORMAT = '.3~s';
-export const LABEL_EXPR = `
-datum.value > -1 && datum.value < 1 ? format(datum.value, '.3~f') : format(datum.value, '${NUMBER_FORMAT}')
-`;
-
 interface BaseChartOptions {
 	title?: string;
 	width: number;
@@ -370,7 +365,6 @@ export function createForecastChart(
 	};
 	const yaxis = structuredClone(xaxis);
 	yaxis.title = options.yAxisTitle;
-	yaxis.labelExpr = LABEL_EXPR;
 
 	const translationMap = options.translationMap;
 	let labelExpr = '';
@@ -626,7 +620,6 @@ export function createSuccessCriteriaChart(
 	};
 	const yaxis = structuredClone(xaxis);
 	yaxis.title = options.yAxisTitle;
-	yaxis.labelExpr = LABEL_EXPR;
 
 	return {
 		$schema: VEGALITE_SCHEMA,
