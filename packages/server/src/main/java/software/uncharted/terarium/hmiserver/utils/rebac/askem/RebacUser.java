@@ -33,13 +33,13 @@ public class RebacUser extends RebacObject {
 	}
 
 	public boolean can(final RebacObject rebacObject, final Schema.Permission permission) throws Exception {
-		if (serviceUser || adminServiceUser) return true;
+		if (serviceUser || isAdmin()) return true;
 		if (rebacObject.getId().isEmpty()) return false;
 		return reBACService.can(getSchemaObject(), permission, rebacObject.getSchemaObject());
 	}
 
 	public boolean isMemberOf(final RebacGroup rebacGroup) throws Exception {
-		if (adminServiceUser) {
+		if (isAdmin()) {
 			return true;
 		}
 		return reBACService.isMemberOf(getSchemaObject(), rebacGroup.getSchemaObject());
@@ -61,7 +61,7 @@ public class RebacUser extends RebacObject {
 	}
 
 	public String getPermissionFor(final RebacProject rebacProject) throws Exception {
-		if (adminServiceUser) {
+		if (isAdmin()) {
 			return Schema.Relationship.ADMIN.toString();
 		}
 
