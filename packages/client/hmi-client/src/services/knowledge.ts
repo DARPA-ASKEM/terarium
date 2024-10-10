@@ -1,11 +1,11 @@
 import API from '@/api/api';
-import { extractionStatusUpdateHandler, subscribe } from '@/services/ClientEventService';
-import type { Code, Dataset, DocumentAsset, Model } from '@/types/Types';
-import { ClientEventType } from '@/types/Types';
-import { logger } from '@/utils/logger';
 import { AxiosResponse } from 'axios';
+import { extractionStatusUpdateHandler, subscribe } from '@/services/ClientEventService';
+import { type Dataset, type DocumentAsset, type Model, ClientEventType } from '@/types/Types';
+import { logger } from '@/utils/logger';
 
-/** Define the request type
+/**
+ * Define the request type
  * @param equations string[] - list of LaTeX or mathml strings representing a model
  * @param framework string= - the framework to use for the extraction, default to 'petrinet'
  * @param modelId string= - the model id to use for the extraction
@@ -73,40 +73,3 @@ export const extractVariables = async (documentId: DocumentAsset['id'], modelIds
 		}
 	}
 };
-
-export async function codeToAMR(
-	codeId: string,
-	name: string = '',
-	description: string = '',
-	dynamicsOnly: boolean = false,
-	llmAssisted: boolean = false
-): Promise<Model | null> {
-	const response = await API.post(
-		`/knowledge/code-to-amr?code-id=${codeId}&name=${name}&description=${description}&dynamics-only=${dynamicsOnly}&llm-assisted=${llmAssisted}`
-	);
-	if (response?.status === 200) {
-		return response.data;
-	}
-	logger.error(`Code to AMR request failed`, { toastTitle: 'Error' });
-	return null;
-}
-
-export async function codeBlocksToAmr(code: Code, file: File): Promise<Model | null> {
-	const formData = new FormData();
-	const blob = new Blob([JSON.stringify(code)], {
-		type: 'application/json'
-	});
-	formData.append('code', blob);
-	formData.append('file', file);
-	const response = await API.post(`/knowledge/code-blocks-to-model`, formData, {
-		headers: {
-			Accept: 'application/json',
-			'Content-Type': 'multipart/form-data'
-		}
-	});
-	if (response?.status === 200) {
-		return response.data;
-	}
-	logger.error(`Code to AMR request failed`, { toastTitle: 'Error' });
-	return null;
-}
