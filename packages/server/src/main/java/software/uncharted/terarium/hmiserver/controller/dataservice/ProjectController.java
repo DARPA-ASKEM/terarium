@@ -156,28 +156,34 @@ public class ProjectController {
 	) {
 		final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
 
-		final List<UUID> projectIds;
-		try {
-			projectIds = rebacUser.lookupProjects();
-		} catch (final Exception e) {
-			log.error("Error retrieving projects from spicedb", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
-		}
-
-		if (projectIds == null || projectIds.isEmpty()) {
-			return ResponseEntity.noContent().build();
-		}
-
-		// Get projects from the project repository associated with the list of ids.
-		// Filter the list of projects to only include active projects.
+		// If admin, just return all projects
 		final List<Project> projects;
-		try {
-			projects = includeInactive
-				? projectService.getProjects(projectIds)
-				: projectService.getActiveProjects(projectIds);
-		} catch (final Exception e) {
-			log.error("Error retrieving projects from postgres db", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		if (rebacUser.isAdmin()) {
+			projects = includeInactive ? projectService.getProjects() : projectService.getActiveProjects();
+		} else {
+			final List<UUID> projectIds;
+			try {
+				projectIds = rebacUser.lookupProjects();
+			} catch (final Exception e) {
+				log.error("Error retrieving projects from spicedb", e);
+				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+			}
+
+			if (projectIds == null || projectIds.isEmpty()) {
+				return ResponseEntity.noContent().build();
+			}
+
+			// Get projects from the project repository associated with the list of ids.
+			// Filter the list of projects to only include active projects.
+
+			try {
+				projects = includeInactive
+					? projectService.getProjects(projectIds)
+					: projectService.getActiveProjects(projectIds);
+			} catch (final Exception e) {
+				log.error("Error retrieving projects from postgres db", e);
+				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+			}
 		}
 
 		if (projects.isEmpty()) {

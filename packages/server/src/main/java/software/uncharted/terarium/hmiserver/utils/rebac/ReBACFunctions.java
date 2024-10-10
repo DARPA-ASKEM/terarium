@@ -12,7 +12,12 @@ import com.authzed.api.v1.PermissionService.RelationshipFilter;
 import com.authzed.api.v1.PermissionsServiceGrpc;
 import com.authzed.grpcutil.BearerToken;
 import io.grpc.ManagedChannel;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
@@ -263,7 +268,7 @@ public class ReBACFunctions {
 	public List<UUID> lookupResources(final Schema.Type resourceType, final Consistency consistency) throws Exception {
 		final Set<UUID> results = new HashSet<>();
 
-		PermissionService.RelationshipFilter filter = PermissionService.RelationshipFilter.newBuilder()
+		final PermissionService.RelationshipFilter filter = PermissionService.RelationshipFilter.newBuilder()
 			.setResourceType("project")
 			.build();
 

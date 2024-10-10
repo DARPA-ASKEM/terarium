@@ -13,12 +13,14 @@ public class RebacUser extends RebacObject {
 	private final ReBACService reBACService;
 
 	private final boolean serviceUser;
+	private final boolean adminServiceUser;
 
 	public RebacUser(final String id, final ReBACService reBACService) {
 		super(id);
 		this.reBACService = reBACService;
 
 		serviceUser = ReBACService.isServiceUser(id);
+		adminServiceUser = ReBACService.isAdminServiceUser(id);
 	}
 
 	@Override
@@ -26,13 +28,20 @@ public class RebacUser extends RebacObject {
 		return new SchemaObject(Schema.Type.USER, getId());
 	}
 
+	public boolean isAdmin() {
+		return adminServiceUser;
+	}
+
 	public boolean can(final RebacObject rebacObject, final Schema.Permission permission) throws Exception {
-		if (serviceUser) return true;
+		if (serviceUser || adminServiceUser) return true;
 		if (rebacObject.getId().isEmpty()) return false;
 		return reBACService.can(getSchemaObject(), permission, rebacObject.getSchemaObject());
 	}
 
 	public boolean isMemberOf(final RebacGroup rebacGroup) throws Exception {
+		if (adminServiceUser) {
+			return true;
+		}
 		return reBACService.isMemberOf(getSchemaObject(), rebacGroup.getSchemaObject());
 	}
 
@@ -52,6 +61,10 @@ public class RebacUser extends RebacObject {
 	}
 
 	public String getPermissionFor(final RebacProject rebacProject) throws Exception {
+		if (adminServiceUser) {
+			return Schema.Relationship.ADMIN.toString();
+		}
+
 		if (reBACService.isCreator(getSchemaObject(), rebacProject.getSchemaObject())) {
 			return Schema.Relationship.CREATOR.toString();
 		} else if (can(rebacProject, Schema.Permission.ADMINISTRATE)) {
