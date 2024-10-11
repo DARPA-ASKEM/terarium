@@ -66,25 +66,24 @@
 <script setup lang="ts">
 import { isEmpty, isEqual } from 'lodash';
 import { ref, watch, computed, nextTick } from 'vue';
-import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
-import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
-import { getModelType, getMMT } from '@/services/model';
-import type { Model } from '@/types/Types';
+import Toolbar from 'primevue/toolbar';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
 import TeraTooltip from '@/components/widgets/tera-tooltip.vue';
-import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
-import { StratifiedMatrix } from '@/types/Model';
-import { AMRSchemaNames } from '@/types/common';
-import { MiraModel, MiraTemplateParams, ObservableSummary } from '@/model-representation/mira/mira-common';
 import { isStratifiedModel, emptyMiraModel, convertToIGraph } from '@/model-representation/mira/mira';
+import { MiraModel, MiraTemplateParams, ObservableSummary } from '@/model-representation/mira/mira-common';
+import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
+import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
 import { getModelRenderer } from '@/model-representation/service';
 import { NodeType } from '@/services/graph';
-import type { FeatureConfig } from '@/types/common';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import TeraStratifiedMatrixModal from './model-configurations/tera-stratified-matrix-modal.vue';
-import TeraStratifiedMatrixPreview from './model-configurations/tera-stratified-matrix-preview.vue';
+import { getModelType, getMMT } from '@/services/model';
+import { AMRSchemaNames, type FeatureConfig } from '@/types/common';
+import { StratifiedMatrix } from '@/types/Model';
+import type { Model } from '@/types/Types';
+import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
+import TeraStratifiedMatrixPreview from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-preview.vue';
 
 const props = defineProps<{
 	model: Model;
