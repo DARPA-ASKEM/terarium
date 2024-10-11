@@ -65,7 +65,7 @@
 
 <script setup lang="ts">
 import { isEmpty, isEqual } from 'lodash';
-import { ref, watch, computed, nextTick } from 'vue';
+import { ref, watch, computed, nextTick, onMounted, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
 import Toolbar from 'primevue/toolbar';
@@ -84,6 +84,7 @@ import { getModelType, getMMT } from '@/services/model';
 import { AMRSchemaNames, type FeatureConfig } from '@/types/common';
 import { StratifiedMatrix } from '@/types/Model';
 import type { Model } from '@/types/Types';
+import { observeElementSizeChange } from '@/utils/observer';
 
 const props = defineProps<{
 	model: Model;
@@ -208,6 +209,19 @@ watch(
 	},
 	{ immediate: true, deep: true }
 );
+
+// Create an observer to resize the graph when the sidebar opens/closes or page resizes
+let graphResizeObserver: ResizeObserver;
+onMounted(() => {
+	if (graphElement.value) {
+		graphResizeObserver = observeElementSizeChange(graphElement.value, renderGraph);
+	}
+});
+onUnmounted(() => {
+	if (graphResizeObserver) {
+		graphResizeObserver.disconnect();
+	}
+});
 </script>
 
 <style scoped>

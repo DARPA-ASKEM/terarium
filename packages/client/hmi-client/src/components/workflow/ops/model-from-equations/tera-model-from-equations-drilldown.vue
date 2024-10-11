@@ -132,7 +132,6 @@
 							is-workflow
 							is-save-for-reuse
 							:assetId="selectedModel.id"
-							:key="String(isOutputOpen)"
 							@on-save="onModelSaveEvent"
 						/>
 						<tera-operator-placeholder v-else :node="node" class="h-100">
