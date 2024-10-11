@@ -54,6 +54,42 @@ public interface ProjectRepository extends PSCrudRepository<Project, UUID>, JpaS
 	)
 	List<ProjectAndAssetAggregate> findByIdsWithAssets(@Param("ids") final List<UUID> ids);
 
+	@Query(
+		"""
+			select
+				p.id as id,
+				p.createdOn as createdOn,
+				p.updatedOn as updatedOn,
+				p.deletedOn as deletedOn,
+				p.description as description,
+				p.fileNames as fileNames,
+				p.name as name,
+				p.overviewContent as overviewContent,
+				p.publicAsset as publicAsset,
+				p.temporary as temporary,
+				p.thumbnail as thumbnail,
+				p.userId as userId,
+				p2.assetCount as assetCount,
+				p2.assetType as assetType
+			from
+				Project p
+			left join (
+				select
+					pa.project.id as projectId,
+					pa.assetType as assetType,
+					count(*) as assetCount
+				from
+					ProjectAsset pa
+				where
+					pa.deletedOn is null
+				group by pa.project.id, pa.assetType) as p2
+			on p.id = p2.projectId
+			where
+				p.deletedOn is null
+		"""
+	)
+	List<ProjectAndAssetAggregate> findWithAssets();
+
 	@Query(value = "SELECT public_asset FROM project WHERE id = :id", nativeQuery = true)
 	Optional<Boolean> findPublicAssetByIdNative(@Param("id") UUID id);
 }
