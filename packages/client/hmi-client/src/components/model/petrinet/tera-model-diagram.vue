@@ -83,8 +83,8 @@ import { getModelRenderer } from '@/model-representation/service';
 import { NodeType } from '@/services/graph';
 import type { FeatureConfig } from '@/types/common';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import TeraStratifiedMatrixModal from '../model-configurations/tera-stratified-matrix-modal.vue';
-import TeraStratifiedMatrixPreview from '../model-configurations/tera-stratified-matrix-preview.vue';
+import TeraStratifiedMatrixModal from './model-configurations/tera-stratified-matrix-modal.vue';
+import TeraStratifiedMatrixPreview from './model-configurations/tera-stratified-matrix-preview.vue';
 
 const props = defineProps<{
 	model: Model;
