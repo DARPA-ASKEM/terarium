@@ -6,7 +6,7 @@
 				<Editor v-else v-model="editorContent" />
 			</AccordionTab>
 			<AccordionTab header="Diagram">
-				<tera-model-diagram ref="teraModelDiagramRef" :model="model" :feature-config="featureConfig" />
+				<tera-model-diagram :model="model" :feature-config="featureConfig" />
 			</AccordionTab>
 			<AccordionTab header="Model equations">
 				<tera-model-equation :model="model" :is-editable="false" @model-updated="emit('update-model')" />
@@ -46,7 +46,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['update-model']);
-const teraModelDiagramRef = ref();
 
 const currentActiveIndexes = ref([1, 2, 3]);
 const relatedTerariumArtifacts = ref<Asset[]>([]);
