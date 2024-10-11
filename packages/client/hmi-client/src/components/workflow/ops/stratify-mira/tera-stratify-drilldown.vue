@@ -155,6 +155,7 @@ const llmThoughts = ref<any[]>([]);
 const sampleAgentQuestions = [
 	'Stratify my model by the ages young and old',
 	'Stratify my model by the locations Toronto and Montreal where Toronto and Montreal cannot interact',
+	'Stratify my model by the locations Toronto and Montreal where populations within any state are able to travel between Toronto and Montreal',
 	'What is cartesian_control in stratify?'
 ];
 

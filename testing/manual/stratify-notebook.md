@@ -72,7 +72,7 @@ model = stratify(
 )
 ```
 
-5. Stratify my model by the locations Toronto and Montreal where Toronto and Montreal can interact
+5. 	Stratify my model by the locations Toronto and Montreal where populations within any state are able to travel between Toronto and Montreal
 ```
 model = stratify(
     template_model=model,
