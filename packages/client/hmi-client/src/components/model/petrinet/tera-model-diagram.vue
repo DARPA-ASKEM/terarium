@@ -211,12 +211,6 @@ watch(
 </script>
 
 <style scoped>
-.p-accordion {
-	display: flex;
-	flex-direction: column;
-	gap: var(--gap-4);
-}
-
 .diagram-container {
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
