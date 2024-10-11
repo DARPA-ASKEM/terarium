@@ -33,7 +33,7 @@ import DataTable from 'primevue/datatable';
 import Editor from 'primevue/editor';
 import { FeatureConfig } from '@/types/common';
 import type { Dataset, Model } from '@/types/Types';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { isDataset, isModel, type Asset } from '@/utils/asset';
