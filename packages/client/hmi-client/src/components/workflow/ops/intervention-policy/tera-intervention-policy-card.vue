@@ -1,15 +1,12 @@
 <template>
-	<div class="policy-card" :class="{ 'card-selected': selected }">
-		<div>
-			<span class="flex align-items-center">
-				<h6>{{ interventionPolicy.name }}</h6>
-				<Button class="ml-auto" text icon="pi pi-ellipsis-v" @click.stop="toggleContextMenu" />
-			</span>
-			<ContextMenu ref="contextMenu" :model="contextMenuItems"></ContextMenu>
-			<p>{{ interventionPolicy.description }}</p>
-			<p>{{ formatTimestamp(interventionPolicy.createdOn) }}</p>
-		</div>
-		<Divider />
+	<div :class="{ selected: selected }">
+		<header>
+			<h6>{{ interventionPolicy.name }}</h6>
+			<Button text icon="pi pi-ellipsis-v" @click.stop="toggleContextMenu" />
+		</header>
+		<ContextMenu ref="contextMenu" :model="contextMenuItems"></ContextMenu>
+		<p v-if="interventionPolicy.description">{{ interventionPolicy.description }}</p>
+		<p>{{ formatTimestamp(interventionPolicy.createdOn) }}</p>
 	</div>
 </template>
 
@@ -17,7 +14,6 @@
 import { formatTimestamp } from '@/utils/date';
 import ContextMenu from 'primevue/contextmenu';
 import { ref } from 'vue';
-import Divider from 'primevue/divider';
 import Button from 'primevue/button';
 import { InterventionPolicy } from '@/types/Types';
 
@@ -45,32 +41,42 @@ const toggleContextMenu = (event) => {
 </script>
 
 <style scoped>
-.policy-card {
+div {
 	background-color: var(--gray-0);
 	border-left: 4px solid var(--surface-300);
+	border-bottom: 1px solid var(--gray-300);
+	padding: var(--gap-1) var(--gap-1) var(--gap-3) var(--gap-3);
 
-	&.card-selected {
-		border-left: 4px solid var(--primary-color);
+	&.selected {
+		border-left-color: var(--primary-color);
+	}
+
+	&,
+	&.selected {
+		transition: border-left-color 250ms;
 	}
 
 	&:not(.card-selected):hover {
-		cursor: pointer;
 		background-color: var(--gray-50);
+		cursor: pointer;
 	}
+}
 
-	& > div {
-		padding-left: var(--gap-small);
+header {
+	align-items: center;
+	display: flex;
+
+	& > *:last-child {
+		margin-left: auto;
 	}
 }
 
 p {
 	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
 }
-:deep(.p-divider) {
-	&.p-divider-horizontal {
-		margin-top: var(--gap);
-		margin-bottom: 0;
-		color: var(--gray-300);
-	}
+
+p + p {
+	margin-top: var(--gap-2);
 }
 </style>

@@ -21,6 +21,9 @@ public class Rate extends SupportAdditionalProperties implements Serializable {
 
 	private String target;
 
+	@TSOptional
+	private String description;
+
 	private String expression;
 
 	@TSOptional
@@ -31,6 +34,7 @@ public class Rate extends SupportAdditionalProperties implements Serializable {
 	public Rate clone() {
 		final Rate clone = (Rate) super.clone();
 		clone.setTarget(this.getTarget());
+		clone.setDescription(this.getDescription());
 		clone.setExpression(this.getExpression());
 		clone.setExpressionMathml(this.getExpressionMathml());
 		return clone;

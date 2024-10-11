@@ -39,16 +39,27 @@
 							<tr v-for="field in fields" :key="field">
 								<td class="field">{{ formatField(field) }}</td>
 								<td v-for="(card, index) in modelCardsToCompare" :key="index">
-									<template v-if="!card?.[field]"> Not found </template>
+									<template v-if="!card?.[field]"> N/A </template>
+									<template v-else-if="Array.isArray(card[field])">
+										<ul class="bullet-list">
+											<li class="bullet-list-item" v-for="(item, k) in card[field]" :key="k">{{ item }}</li>
+										</ul>
+									</template>
 									<template v-else-if="typeof card[field] === 'object'">
-										<template v-for="(value, j) in Object.values(card[field])">
-											<template v-if="Array.isArray(value)">
-												{{ value.join(', ') }}
+										<template v-for="(entry, j) in Object.entries(card[field])" :key="j">
+											<div class="label">{{ formatField(entry[0]) }}:</div>
+											<template v-if="Array.isArray(entry[1])">
+												<ul class="bullet-list">
+													<li class="bullet-list-item" v-for="(item, k) in entry[1]" :key="k">{{ item }}</li>
+												</ul>
 											</template>
-											<div class="value" v-else :key="j">{{ value }}</div>
+											<div class="value" v-else>{{ entry[1] }}</div>
+											<template v-if="j < Object.entries(card[field]).length - 1">
+												<br />
+											</template>
 										</template>
 									</template>
-									<template v-else-if="Array.isArray(card[field])">{{ card[field].join(', ') }}</template>
+									<template v-else>{{ card[field] }}</template>
 								</td>
 							</tr>
 						</tbody>
@@ -93,7 +104,7 @@
 				/>
 				<ul>
 					<li v-for="(image, index) in structuralComparisons" :key="index">
-						<label>Comparison {{ index + 1 }}</label>
+						<label>Comparison {{ index + 1 }}: {{ getTitle(index) }}</label>
 						<Image id="img" :src="image" :alt="`Structural comparison ${index + 1}`" preview />
 					</li>
 				</ul>
@@ -187,6 +198,7 @@ const code = ref(props.node.state.notebookHistory?.[0]?.code ?? '');
 const llmThoughts = ref<any[]>([]);
 const isKernelReady = ref(false);
 const contextLanguage = ref<string>('python3');
+const comparisonPairs = ref(props.node.state.comparisonPairs);
 
 const initializeAceEditor = (editorInstance: any) => {
 	editor = editorInstance;
@@ -207,6 +219,18 @@ function updateImagesState(operationType: string, newImageId: string | null = nu
 	emit('update-state', state);
 }
 
+function updateComparisonTitlesState(operationType: string, pairs: string[][] | null = null) {
+	const state = cloneDeep(props.node.state);
+	if (operationType === 'add' && pairs !== null) state.comparisonPairs = pairs;
+	else if (operationType === 'clear') state.comparisonPairs = [];
+	emit('update-state', state);
+}
+
+function getTitle(index: number) {
+	if (!comparisonPairs.value[index]) return '';
+	return `${comparisonPairs.value[index][0].replaceAll('_', ' ')} VS ${comparisonPairs.value[index][1].replaceAll('_', ' ')}`;
+}
+
 function updateCodeState() {
 	const state = saveCodeToState(props.node, code.value, true);
 	emit('update-state', state);
@@ -215,6 +239,7 @@ function updateCodeState() {
 function emptyImages() {
 	deleteImages(props.node.state.comparisonImageIds); // Delete images from S3
 	updateImagesState('clear'); // Then their ids can be removed from the state
+	updateComparisonTitlesState('clear');
 	structuralComparisons.value = [];
 }
 
@@ -236,6 +261,17 @@ function runCode() {
 	isLoadingStructuralComparisons.value = true;
 	emptyImages();
 	updateCodeState();
+
+	kernelManager.sendMessage('get_comparison_pairs_request', {}).register('any_get_comparison_pairs_reply', (data) => {
+		const pairs = data.msg.content?.return?.comparison_pairs;
+		const state = cloneDeep(props.node.state);
+		if (pairs.length) {
+			updateComparisonTitlesState('add', pairs);
+			comparisonPairs.value = pairs;
+		} else if (state.comparisonPairs.length) {
+			comparisonPairs.value = state.comparisonPairs;
+		}
+	});
 
 	kernelManager
 		.sendMessage('execute_request', messageContent)
@@ -518,5 +554,19 @@ ul {
 }
 .legend-line.green::before {
 	background-color: lightgreen;
+}
+
+.label {
+	font-weight: var(--font-weight-semibold);
+}
+
+.bullet-list {
+	display: block !important;
+	list-style: disc outside;
+	margin-left: var(--gap-4);
+	padding-left: var(--gap-4);
+}
+.bullet-list-item {
+	display: list-item !important;
 }
 </style>
