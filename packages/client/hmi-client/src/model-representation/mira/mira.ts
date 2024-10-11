@@ -352,11 +352,7 @@ export const createDiagramTemplateMatrix = (
 	param: string
 ) => {
 	const paramMap = collapseTemplates(miraModel).matrixMap;
-	const childrenParams = paramMap.get(param)?.map((p) => {
-		console.log(p.name);
-		return p.name;
-	});
-	console.log('childrenParams', childrenParams);
+	const childrenParams = paramMap.get(param)?.map((p) => p.name);
 	if (!childrenParams) throw new Error(`Cannot  map ${param}`);
 
 	// Create map for mapping params to row/col of matrix
@@ -387,14 +383,9 @@ export const createDiagramTemplateMatrix = (
 	// Find templates with expressions that contains one or more of the params
 	const templates = miraModel.templates.filter((t) => {
 		const miraTemplateParam = miraTemplateParams[t.name];
-		console.log('miraTemplateParam', miraTemplateParam);
-		console.log('childrenParams', childrenParams);
 		const intersection = _.intersection(childrenParams, [miraTemplateParam.name]);
-		console.log('intersection', intersection);
 		return intersection.length > 0;
 	});
-
-	const subjectOutcome = extractSubjectOutcomeMatrix(templates, childrenParams, paramValueMap, paramLocationMap);
 	const subjectControllers = extractSubjectControllersMatrix(
 		templates,
 		childrenParams,
@@ -412,7 +403,6 @@ export const createDiagramTemplateMatrix = (
 	const other: MiraMatrix = [];
 	childrenParams.forEach((name, idx) => {
 		const row: MiraMatrixEntry[] = [];
-		console.log('miraModel', miraModel);
 		row.push({
 			row: idx,
 			col: 0,
@@ -427,7 +417,6 @@ export const createDiagramTemplateMatrix = (
 	});
 
 	return {
-		subjectOutcome,
 		subjectControllers,
 		outcomeControllers,
 		other
@@ -440,9 +429,7 @@ export const createDiagramTemplateMatrix = (
  * */
 export const createParameterMatrix = (miraModel: MiraModel, miraTemplateParams: MiraTemplateParams, param: string) => {
 	const paramMap = collapseParameters(miraModel, miraTemplateParams);
-	console.log('paramMap', paramMap);
 	const childrenParams = paramMap.get(param);
-	console.log('childrenParams', childrenParams);
 	if (!childrenParams) throw new Error(`Cannot  map ${param}`);
 
 	// Create map for mapping params to row/col of matrix
@@ -473,14 +460,9 @@ export const createParameterMatrix = (miraModel: MiraModel, miraTemplateParams: 
 	// Find templates with expressions that contains one or more of the params
 	const templates = miraModel.templates.filter((t) => {
 		const miraTemplateParam = miraTemplateParams[t.name];
-		console.log('miraTemplateParam', miraTemplateParam);
-		console.log('childrenParams', childrenParams);
 		const intersection = _.intersection(childrenParams, miraTemplateParam.params);
-		console.log('intersection', intersection);
 		return intersection.length > 0;
 	});
-
-	console.log('templates', templates);
 
 	const subjectOutcome = extractSubjectOutcomeMatrix(templates, childrenParams, paramValueMap, paramLocationMap);
 	const subjectControllers = extractSubjectControllersMatrix(

@@ -226,8 +226,28 @@ async function getMatrixValue(variableName: string) {
 	return (await pythonInstance.parseExpression(expressionBase)).pmathml;
 }
 
+function setupMatrixOptions() {
+	// Find a default
+	if (currentMatrixtype.value) {
+		matrix.value = matrixMap.value[currentMatrixtype.value];
+		matrixType.value = currentMatrixtype.value;
+		return;
+	}
+
+	for (let i = 0; i < matrixTypes.length; i++) {
+		const typeStr = matrixTypes[i];
+
+		if (matrixMap.value[typeStr] && matrixMap.value[typeStr].length > 0) {
+			matrix.value = matrixMap.value[typeStr];
+			matrixType.value = typeStr;
+			break;
+		}
+	}
+}
+
 function generateMatrix() {
 	const stratifiedType = props.stratifiedMatrixType;
+	matrixMap.value = {};
 
 	if (stratifiedType === StratifiedMatrix.Initials) {
 		matrix.value = createInitialMatrix(props.mmt, props.id);
@@ -241,60 +261,23 @@ function generateMatrix() {
 			other: matrices.other
 		};
 
-		// Find a default
-		if (currentMatrixtype.value) {
-			matrix.value = matrixMap.value[currentMatrixtype.value];
-			matrixType.value = currentMatrixtype.value;
-			return;
-		}
-
-		for (let i = 0; i < matrixTypes.length; i++) {
-			const typeStr = matrixTypes[i];
-
-			if (matrixMap.value[typeStr] && matrixMap.value[typeStr].length > 0) {
-				matrix.value = matrixMap.value[typeStr];
-				matrixType.value = typeStr;
-				break;
-			}
-		}
+		setupMatrixOptions();
 	} else if (stratifiedType === StratifiedMatrix.Rates) {
 		const templatesMap = collapseTemplates(props.mmt).matrixMap;
 		const matrices = createDiagramTemplateMatrix(props.mmt, props.mmtParams, props.id);
-		console.log('test', matrices);
-		console.log('templatesMap', templatesMap);
-		console.log('props.mmtParams', props.mmtParams);
 
 		const transitionMatrix = templatesMap.get(props.id);
 		if (!transitionMatrix) {
 			logger.error('Failed to generate transition matrix');
 			return;
 		}
-		// matrix.value = extractTemplateMatrix(transitionMatrix).matrix;
 
 		matrixMap.value = {
-			template: extractTemplateMatrix(transitionMatrix).matrix,
 			subjectOutcome: extractTemplateMatrix(transitionMatrix).matrix,
-			// subjectControllers: matrices.subjectControllers.matrix,
-			// outcomeControllers: matrices.outcomeControllers.matrix,
 			other: matrices.other
 		};
 
-		// Find a default
-		if (currentMatrixtype.value) {
-			matrix.value = matrixMap.value[currentMatrixtype.value];
-			matrixType.value = currentMatrixtype.value;
-			return;
-		}
-
-		for (let i = 0; i < matrixTypes.length; i++) {
-			const typeStr = matrixTypes[i];
-
-			if (matrixMap.value[typeStr] && matrixMap.value[typeStr].length > 0) {
-				matrix.value = matrixMap.value[typeStr];
-				matrixType.value = typeStr;
-				break;
-			}
-		}
+		setupMatrixOptions();
 	}
 }
 
