@@ -67,6 +67,7 @@ const interventionPolicy = ref<InterventionPolicy | null>(null);
 let pyciemssMap: Record<string, string> = {};
 
 const poller = new Poller();
+// TODO: replace poller with useClientEvent and check both base simulation and simulation with intervention as well.
 const pollResult = async (runId: string) => {
 	selectedRunId.value = undefined;
 

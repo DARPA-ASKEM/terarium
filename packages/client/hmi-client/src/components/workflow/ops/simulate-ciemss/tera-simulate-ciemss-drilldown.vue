@@ -407,14 +407,15 @@ const updateState = () => {
 };
 
 const run = async () => {
-	const simulationId = await makeForecastRequest();
+	const [baseSimulationId, simulationId] = await Promise.all([makeForecastRequest(false), makeForecastRequest()]);
 
 	const state = _.cloneDeep(props.node.state);
 	state.inProgressForecastId = simulationId;
+	state.inProgressBaseForecastId = baseSimulationId;
 	emit('update-state', state);
 };
 
-const makeForecastRequest = async () => {
+const makeForecastRequest = async (applyInterventions = true) => {
 	const modelConfigId = props.node.inputs[0].value?.[0];
 	const payload: SimulationRequest = {
 		modelConfigId,
@@ -435,11 +436,13 @@ const makeForecastRequest = async () => {
 		payload.extra.inferred_parameters = modelConfig.simulationId;
 	}
 
-	if (policyInterventionId.value) {
+	if (applyInterventions && policyInterventionId.value) {
 		payload.policyInterventionId = policyInterventionId.value;
 	}
-
-	const response = await makeForecastJob(payload, nodeMetadata(props.node));
+	const response = await makeForecastJob(payload, {
+		...nodeMetadata(props.node),
+		isBaseForecast: !applyInterventions
+	});
 	return response.id;
 };
 
@@ -449,12 +452,26 @@ const lazyLoadSimulationData = async (outputRunId: string) => {
 	const forecastId = props.node.state.forecastId;
 	if (!forecastId || forecastId === '') return;
 
-	const result = await getRunResultCSV(forecastId, 'result.csv');
+	const [result, resultSummary] = await Promise.all([
+		getRunResultCSV(forecastId, 'result.csv'),
+		getRunResultCSV(forecastId, 'result_summary.csv')
+	]);
+
+	// Forecast results without interventions
+	const baseForecastId = props.node.state.baseForecastId;
+	if (baseForecastId && baseForecastId !== '') {
+		const [baseResult, baseResultSummary] = await Promise.all([
+			getRunResultCSV(baseForecastId, 'result.csv'),
+			getRunResultCSV(baseForecastId, 'result_summary.csv')
+		]);
+		console.log(baseResult, baseResultSummary);
+	}
+
 	pyciemssMap = parsePyCiemssMap(result[0]);
+
 	runResults.value[outputRunId] = result;
 	rawContent.value[outputRunId] = convertToCsvAsset(result, Object.values(pyciemssMap));
 
-	const resultSummary = await getRunResultCSV(forecastId, 'result_summary.csv');
 	runResultsSummary.value[outputRunId] = resultSummary;
 };
 
@@ -537,9 +554,9 @@ watch(
 );
 
 watch(
-	() => props.node.state.inProgressForecastId,
-	(id) => {
-		if (id === '') showSpinner.value = false;
+	[() => props.node.state.inProgressBaseForecastId, () => props.node.state.inProgressForecastId],
+	([baseId, id]) => {
+		if (id === '' || baseId === '') showSpinner.value = false;
 		else showSpinner.value = true;
 	}
 );
