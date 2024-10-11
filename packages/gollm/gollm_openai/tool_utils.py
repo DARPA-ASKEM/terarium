@@ -13,6 +13,7 @@ from gollm_openai.prompts.config_from_dataset import (
     CONFIGURE_FROM_DATASET_MATRIX_PROMPT
 )
 from gollm_openai.prompts.config_from_document import CONFIGURE_FROM_DOCUMENT_PROMPT
+from gollm_openai.prompts.equations_cleanup import EQUATIONS_CLEANUP_PROMPT
 from gollm_openai.prompts.equations_from_image import EQUATIONS_FROM_IMAGE_PROMPT
 from gollm_openai.prompts.general_instruction import GENERAL_INSTRUCTION_PROMPT
 from gollm_openai.prompts.interventions_from_document import INTERVENTIONS_FROM_DOCUMENT_PROMPT
@@ -69,7 +70,7 @@ def equations_cleanup(equations: List[str]) -> dict:
     validate_schema(response_schema)
 
     print("Building prompt to reformat equations...")
-    prompt = EQUATIONS_FROM_IMAGE_PROMPT.format(
+    prompt = EQUATIONS_CLEANUP_PROMPT.format(
         style_guide=LATEXT_STYLE_GUIDE,
         equations="\n".join(equations)
     )

@@ -6,7 +6,7 @@ Do not respond in full sentences; only create a JSON object that satisfies the J
 
 Use the following style guide to ensure that your LaTeX equations are correctly formatted:
 
---- STYLE GUIDE ---
+--- STYLE GUIDE START ---
 
 {style_guide}
 
@@ -14,7 +14,7 @@ Use the following style guide to ensure that your LaTeX equations are correctly 
 
 The equations that you need to reformat are as follows:
 
---- EQUATIONS ---
+--- EQUATIONS START ---
 
 {equations}
 
