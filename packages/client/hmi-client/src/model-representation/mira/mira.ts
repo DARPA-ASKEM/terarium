@@ -360,24 +360,21 @@ export const createDiagramTemplateMatrix = (
 	const paramLocationMap = new Map<string, TemplateSummary[]>();
 	const templateParams = Object.values(miraTemplateParams);
 	templateParams.forEach((templateParam) => {
-		const params = templateParam.params;
-		params.forEach((paramName) => {
-			if (!paramLocationMap.has(paramName)) paramLocationMap.set(paramName, []);
+		if (!paramLocationMap.has(templateParam.name)) paramLocationMap.set(templateParam.name, []);
 
-			paramLocationMap.get(paramName)?.push({
-				name: templateParam.name,
-				subject: templateParam.subject,
-				outcome: templateParam.outcome,
-				controllers: templateParam.controllers
-			});
+		paramLocationMap.get(templateParam.name)?.push({
+			name: templateParam.name,
+			subject: templateParam.subject,
+			outcome: templateParam.outcome,
+			controllers: templateParam.controllers
 		});
 	});
 
 	// Create map for param values
 	//   param => value
-	const paramValueMap = new Map<string, any>();
-	Object.values(miraModel.parameters).forEach((paramObj) => {
-		paramValueMap.set(paramObj.name, paramObj.value);
+	const tempValueMap = new Map<string, any>();
+	Object.values(miraModel.templates).forEach((tempObj) => {
+		tempValueMap.set(tempObj.name, tempObj);
 	});
 
 	// Find templates with expressions that contains one or more of the params
@@ -386,18 +383,8 @@ export const createDiagramTemplateMatrix = (
 		const intersection = _.intersection(childrenParams, [miraTemplateParam.name]);
 		return intersection.length > 0;
 	});
-	const subjectControllers = extractSubjectControllersMatrix(
-		templates,
-		childrenParams,
-		paramValueMap,
-		paramLocationMap
-	);
-	const outcomeControllers = extractOutcomeControllersMatrix(
-		templates,
-		childrenParams,
-		paramValueMap,
-		paramLocationMap
-	);
+	const subjectControllers = extractSubjectControllersMatrix(templates, childrenParams, tempValueMap, paramLocationMap);
+	const outcomeControllers = extractOutcomeControllersMatrix(templates, childrenParams, tempValueMap, paramLocationMap);
 
 	// Others, may be initial, maybe no in use ...
 	const other: MiraMatrix = [];

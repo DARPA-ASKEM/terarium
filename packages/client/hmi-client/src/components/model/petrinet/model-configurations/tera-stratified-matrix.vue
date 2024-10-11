@@ -274,6 +274,8 @@ function generateMatrix() {
 
 		matrixMap.value = {
 			subjectOutcome: extractTemplateMatrix(transitionMatrix).matrix,
+			subjectControllers: matrices.subjectControllers.matrix,
+			outcomeControllers: matrices.outcomeControllers.matrix,
 			other: matrices.other
 		};
 
