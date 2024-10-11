@@ -17,8 +17,8 @@
 				context="dataset"
 				@submitQuery="onSubmitQuery"
 				@add-code-cell="onAddCodeCell"
+				@run-all-cells="onRunAllCells"
 				@keydown.stop
-				@run-all-cells="runAllCells"
 			/>
 			<span class="flex-auto"></span>
 
@@ -127,7 +127,7 @@ import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { useToastService } from '@/services/toast';
 import { IModel } from '@jupyterlab/services/lib/session/session';
 import type { CsvAsset, NotebookSession } from '@/types/Types';
-import { AssetType } from '@/types/Types';
+import { AssetType, EventType } from '@/types/Types';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 import {
@@ -150,7 +150,6 @@ import TeraBeakerInput from '@/components/llm/tera-beaker-input.vue';
 const openDialog = () => {
 	showSaveInput.value = true;
 };
-const runAllCells = () => {};
 
 defineExpose({
 	openDialog
@@ -476,6 +475,11 @@ const onAddCodeCell = () => {
 	if (chat.value) {
 		chat.value.addCodeCell();
 	}
+};
+
+const onRunAllCells = () => {
+	const event = new Event(EventType.RunAllCells);
+	window.dispatchEvent(event);
 };
 
 /* Download dataset feature has been removed, but keeping this code here in case it returns */

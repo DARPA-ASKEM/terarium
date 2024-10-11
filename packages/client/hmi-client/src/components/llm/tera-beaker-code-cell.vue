@@ -21,7 +21,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, onBeforeUnmount, ref } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { SessionContext } from '@jupyterlab/apputils';
@@ -29,6 +29,7 @@ import { INotebookItem, JupyterMessage, renderMime } from '@/services/jupyter';
 import Button from 'primevue/button';
 import { CodeCell, CodeCellModel } from '@jupyterlab/cells';
 import { useConfirm } from 'primevue/useconfirm';
+import { EventType } from '@/types/Types';
 
 const props = defineProps<{
 	jupyterMessage: JupyterMessage;
@@ -96,12 +97,16 @@ onMounted(() => {
 	if (props.notebookItem.autoRun) {
 		runCell();
 	}
+	window.addEventListener(EventType.RunAllCells, runCell);
+});
+
+onBeforeUnmount(() => {
+	window.removeEventListener(EventType.RunAllCells, runCell); // Clean up listener
 });
 
 defineExpose({
 	enter,
 	runCell
-	// here
 });
 </script>
 <style scoped>

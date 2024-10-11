@@ -46,6 +46,7 @@
 					class="white-space-nowrap"
 					style="margin-top: 1px; height: 31px; width: 10rem"
 					title="Rerun all cells"
+					@click="runAllCells"
 				>
 					<span class="pi pi-refresh p-button-icon p-button-icon-left"></span>
 					<span class="p-button-text">Rerun cells</span>
@@ -84,11 +85,7 @@ const props = defineProps({
 		type: String,
 		default: 'black'
 	},
-	kernelIsBusy: Boolean,
-	runAllCells: {
-		type: MouseEvent,
-		default: () => {}
-	}
+	kernelIsBusy: Boolean
 });
 
 const queryString = ref('');
@@ -110,6 +107,11 @@ const submitQuery = () => {
 const addCodeCell = () => {
 	emit('add-code-cell');
 	EventService.create(EventType.AddCodeCell, useProjects().activeProject.value?.id);
+};
+
+const runAllCells = () => {
+	emit('run-all-cells');
+	EventService.create(EventType.RunAllCells, useProjects().activeProject.value?.id);
 };
 
 onMounted(() => {
