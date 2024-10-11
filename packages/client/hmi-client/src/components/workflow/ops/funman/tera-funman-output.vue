@@ -139,8 +139,10 @@ const initalize = async () => {
 			return;
 		}
 		const response = await getMMT(model.value);
-		mmt = response.mmt;
-		mmtParams.value = response.template_params;
+		if (response) {
+			mmt = response.mmt;
+			mmtParams.value = response.template_params;
+		}
 	}
 
 	configuredMmt.value = makeConfiguredMMT(mmt, funmanResult.modelConfiguration);

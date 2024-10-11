@@ -559,8 +559,10 @@ const initialize = async (overwriteWithState: boolean = false) => {
 	model.value = await getModel(modelId);
 	if (model.value) {
 		const response = await getMMT(model.value);
-		mmt.value = response.mmt;
-		mmtParams.value = response.template_params;
+		if (response) {
+			mmt.value = response.mmt;
+			mmtParams.value = response.template_params;
+		}
 	}
 
 	if (!state.transientModelConfig.id) {
