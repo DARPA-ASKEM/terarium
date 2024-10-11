@@ -110,7 +110,6 @@ enum StratifiedView {
 
 const stratifiedView = ref(StratifiedView.Collapsed);
 const stratifiedViewOptions = ref([{ value: StratifiedView.Expanded }, { value: StratifiedView.Collapsed }]);
-
 const isStratified = computed(() => isStratifiedModel(mmt.value));
 
 let renderer: PetrinetRenderer | NestedPetrinetRenderer | null = null;
@@ -211,7 +210,7 @@ watch(
 .p-accordion {
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
+	gap: var(--gap-4);
 }
 
 .diagram-container {
@@ -231,32 +230,32 @@ watch(
 	background-color: var(--surface-secondary);
 	overflow: hidden;
 	border: none;
-	position: relative;
 	pointer-events: none;
+	position: relative;
 }
 
 .p-toolbar {
+	background: transparent;
+	isolation: isolate;
+	padding: var(--gap-2);
+	pointer-events: none;
 	position: absolute;
 	width: 100%;
 	z-index: 1;
-	isolation: isolate;
-	background: transparent;
-	padding: 0.5rem;
-	pointer-events: none;
 }
 
 .p-toolbar:deep(> div > span) {
-	gap: 0.25rem;
+	gap: var(--gap-1);
 	display: flex;
 	pointer-events: all;
 }
 
 /* Let svg dynamically resize when the sidebar opens/closes or page resizes */
 :deep(.graph-element svg) {
-	width: 100%;
-	height: 100%;
 	background: var(--gray-50) !important;
 	border: none !important;
+	height: 100%;
+	width: 100%;
 }
 
 .graph-element {
@@ -289,38 +288,38 @@ watch(
 	font-size: var(--font-caption);
 	background-color: var(--surface-transparent);
 	backdrop-filter: blur(4px);
-	padding: 0 var(--gap-small);
+	padding: 0 var(--gap-2);
 	border-radius: var(--border-radius);
 	pointer-events: none;
 	user-select: none;
 }
 
 ul.legend {
-	background-color: var(--surface-transparent);
 	backdrop-filter: blur(4px);
-	padding: var(--gap-xsmall) var(--gap-small);
+	background-color: var(--surface-transparent);
 	border-radius: var(--border-radius);
-	position: absolute;
 	bottom: 0;
-	left: 0;
 	display: flex;
-	margin: var(--gap-small);
-	margin-bottom: var(--gap);
-	gap: var(--gap);
+	gap: var(--gap-4);
+	left: 0;
+	margin: var(--gap-2);
+	margin-bottom: var(--gap-4);
+	padding: var(--gap-1) var(--gap-2);
 	pointer-events: none;
+	position: absolute;
 
 	& > li {
-		display: flex;
 		align-items: center;
-		gap: var(--gap-xsmall);
+		display: flex;
+		gap: var(--gap-1);
 	}
 }
 
 .legend-circle {
+	border-radius: 50%;
 	display: inline-block;
 	height: 1rem;
 	width: 1rem;
-	border-radius: 50%;
 }
 
 .modal-input-container {
@@ -330,16 +329,16 @@ ul.legend {
 }
 
 .modal-input {
-	height: 25px;
-	padding-left: 5px;
-	margin: 5px;
 	align-items: baseline;
+	height: 25px;
+	margin: var(--gap-1-5);
+	padding-left: var(--gap-1-5);
 }
 
 .modal-input-label {
-	margin-left: 5px;
-	padding-top: 5px;
-	padding-bottom: 5px;
 	align-items: baseline;
+	margin-left: var(--gap-1-5);
+	padding-bottom: var(--gap-1-5);
+	padding-top: var(--gap-1-5);
 }
 </style>
