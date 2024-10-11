@@ -321,24 +321,4 @@ ul.legend {
 	height: 1rem;
 	width: 1rem;
 }
-
-.modal-input-container {
-	display: flex;
-	flex-direction: column;
-	flex-grow: 1;
-}
-
-.modal-input {
-	align-items: baseline;
-	height: 25px;
-	margin: var(--gap-1-5);
-	padding-left: var(--gap-1-5);
-}
-
-.modal-input-label {
-	align-items: baseline;
-	margin-left: var(--gap-1-5);
-	padding-bottom: var(--gap-1-5);
-	padding-top: var(--gap-1-5);
-}
 </style>
