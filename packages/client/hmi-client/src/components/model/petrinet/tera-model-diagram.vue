@@ -210,7 +210,7 @@ watch(
 	{ immediate: true, deep: true }
 );
 
-// Create an observer to resize the graph when the sidebar opens/closes or page resizes
+// Create an observer to re-render the graph when it resizes
 let graphResizeObserver: ResizeObserver;
 onMounted(() => {
 	if (graphElement.value) {
