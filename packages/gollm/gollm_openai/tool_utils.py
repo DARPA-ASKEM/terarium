@@ -38,7 +38,7 @@ def escape_curly_braces(text: str):
     return text.replace("{", "{{").replace("}", "}}")
 
 
-def get_image_format_string(image_format: str) -> dict:
+def get_image_format_string(image_format: str) -> str:
     if not image_format:
         raise ValueError("Invalid image format.")
 
