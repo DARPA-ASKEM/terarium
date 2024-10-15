@@ -345,7 +345,11 @@ export const createInitialMatrix = (miraModel: MiraModel, key: string) => {
 	return m2;
 };
 
-/** */
+/**
+ * For Template Matrix only
+ * Assumes one-to-one with cells
+ *
+ */
 export const createDiagramTemplateMatrix = (
 	miraModel: MiraModel,
 	miraTemplateParams: MiraTemplateParams,
@@ -417,7 +421,7 @@ export const createDiagramTemplateMatrix = (
 export const createParameterMatrix = (miraModel: MiraModel, miraTemplateParams: MiraTemplateParams, param: string) => {
 	const paramMap = collapseParameters(miraModel, miraTemplateParams);
 	const childrenParams = paramMap.get(param);
-	if (!childrenParams) throw new Error(`Cannot  map ${param}`);
+	if (!childrenParams) throw new Error(`Cannot map ${param}`);
 
 	// Create map for mapping params to row/col of matrix
 	//   param => [ [subject, outcome, controllers], [subject, outcome, controllers] ... ]
