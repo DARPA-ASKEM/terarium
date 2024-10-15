@@ -73,13 +73,14 @@ export async function getBulkModels(modelIDs: string[]) {
 }
 
 // Note: will not work with decapodes
-export async function getMMT(model: Model) {
+export async function getMMT(model: Model): Promise<MMT | null> {
 	const response = await API.post('/mira/amr-to-mmt', model);
-
-	const miraModel = response?.data?.response;
-	if (!miraModel) throw new Error(`Failed to convert model ${model.id}`);
-
-	return (response?.data?.response as MMT) ?? null;
+	const mmt = response?.data?.response;
+	if (!mmt) {
+		console.error(`Failed to convert model ${model.id}`);
+		return null;
+	}
+	return mmt as MMT;
 }
 
 export async function updateModel(model: Model) {
