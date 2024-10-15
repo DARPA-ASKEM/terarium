@@ -913,27 +913,27 @@ export function createFunmanStateChart(
 }
 
 export function createFunmanParameterCharts(
-	parametersOfInterest: { label: string; name: string; interval: FunmanInterval }[],
+	distributionParameters: { label: string; name: string; interval: FunmanInterval }[],
 	boxes: FunmanBox[]
 ) {
 	const parameterRanges: { parameterId: string; boundType: string; lb?: number; ub?: number; tick?: number }[] = [];
-	const parameterIdsOfInterest: string[] = [];
+	const distributionParameterIds: string[] = [];
 
 	// Widest range (model configuration ranges)
-	parametersOfInterest.forEach(({ name, interval }) => {
+	distributionParameters.forEach(({ name, interval }) => {
 		parameterRanges.push({
 			parameterId: name,
 			boundType: 'length',
 			lb: interval.lb,
 			ub: interval.ub
 		});
-		parameterIdsOfInterest.push(name);
+		distributionParameterIds.push(name);
 	});
 
 	// Ranges determined by the true/false boxes
 	boxes.forEach(({ label, parameters }) => {
 		Object.keys(parameters).forEach((key) => {
-			if (!parameterIdsOfInterest.includes(key)) return;
+			if (!distributionParameterIds.includes(key)) return;
 			parameterRanges.push({
 				parameterId: key,
 				boundType: getBoundType(label),

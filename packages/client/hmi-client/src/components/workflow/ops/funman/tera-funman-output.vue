@@ -139,10 +139,9 @@ async function renderCharts() {
 	updateStateChart();
 
 	// Parameter charts
-	const parametersOfInterest = funmanResult.request.parameters.filter((d: any) => d.interval.lb !== d.interval.ub); // TODO: This conditional may change as funman will return constants soon
-
+	const distributionParameters = funmanResult.request.parameters.filter((d: any) => d.interval.lb !== d.interval.ub); // TODO: This conditional may change as funman will return constants soon
 	if (processedFunmanResult.boxes) {
-		parameterCharts.value = createFunmanParameterCharts(parametersOfInterest, processedFunmanResult.boxes);
+		parameterCharts.value = createFunmanParameterCharts(distributionParameters, processedFunmanResult.boxes);
 	}
 
 	// For displaying model/model configuration
