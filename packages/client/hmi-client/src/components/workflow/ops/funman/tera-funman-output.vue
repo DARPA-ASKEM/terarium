@@ -6,7 +6,7 @@
 		</div>
 		<div class="btn-group">
 			<Button label="Add to report" outlined severity="secondary" disabled />
-			<Button label="Save for reuse" outlined severity="secondary" />
+			<Button label="Save for reuse" outlined severity="secondary" disabled />
 		</div>
 	</header>
 

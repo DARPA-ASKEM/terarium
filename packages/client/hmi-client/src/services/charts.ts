@@ -863,6 +863,7 @@ export function createFunmanStateChart(
 		config: { font: globalFont },
 		width: 600,
 		height: 300,
+		// params: [{ name: 'grid', select: 'interval', bind: 'scales' }],
 		layer: [
 			{
 				mark: {
@@ -970,6 +971,13 @@ export function createFunmanParameterCharts(
 			{ name: 'minX', expr: 'minX' },
 			{ name: 'maxX', expr: 'maxX' }
 		],
+		// selection: {
+		// 	tickSelection: {
+		// 		type: 'single',
+		// 		fields: ['parameterId'],
+		// 		bind: 'scales'
+		// 	}
+		// },
 		facet: {
 			row: {
 				field: 'parameterId',
@@ -998,22 +1006,29 @@ export function createFunmanParameterCharts(
 								// Doesn't work with regular domain setting
 								domainMin: { expr: 'minX' },
 								domainMax: { expr: 'maxX' }
-								// FIXME: If the domain is something like lb: 0.002, ub: 0.002 (same numbers close to 0), the only number on the number line will be 0
 							},
 							title: null
 						},
 						x2: {
 							field: 'ub'
-						},
-						color: {
-							field: 'boundType',
-							type: 'nominal',
-							legend: { orient: 'top', direction: 'horizontal', title: null },
-							scale: {
-								domain: [FunmanChartLegend.Satisfactory, FunmanChartLegend.Unsatisfactory, FunmanChartLegend.Ambiguous],
-								range: ['#1B8073', '#FFAB00', '#CCC569']
-							}
 						}
+						// color: {
+						// 	condition: {
+						// 		selection: 'tickSelection',
+						// 		field: 'boundType',
+						// 		type: 'nominal',
+						// 		legend: { orient: 'top', direction: 'horizontal', title: null },
+						// 		scale: {
+						// 			domain: [
+						// 				FunmanChartLegend.Satisfactory,
+						// 				FunmanChartLegend.Unsatisfactory,
+						// 				FunmanChartLegend.Ambiguous
+						// 			],
+						// 			range: ['#1B8073', '#FFAB00', '#CCC569']
+						// 		}
+						// 	},
+						// 	value: 'gray'
+						// }
 					}
 				},
 				{
@@ -1027,6 +1042,13 @@ export function createFunmanParameterCharts(
 							type: 'quantitative',
 							title: null
 						}
+						// color: {
+						// 	condition: {
+						// 		selection: 'tickSelection',
+						// 		value: 'black'
+						// 	},
+						// 	value: 'gray'
+						// }
 					}
 				}
 			]
