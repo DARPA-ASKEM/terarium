@@ -26,7 +26,7 @@ const { isShareDialogVisible, isRemoveDialogVisible, isProjectConfigDialogVisibl
 const isCopying = ref(false);
 
 const menu = ref();
-const renameMenuItem = {
+const editDetailsMenuItem = {
 	label: 'Edit details',
 	icon: 'pi pi-pencil',
 	command: () => {
@@ -80,19 +80,20 @@ const downloadMenuItem = {
 	}
 };
 
-const separatorMenuItem = { separator: true };
 const projectMenuItems = computed(() => {
-	const items: MenuItem[] = [];
-	if (props.project?.publicProject || props.project?.userPermission === 'creator') {
-		items.push(copyMenuItem);
-		items.push(downloadMenuItem);
+	// Basic access to public and reader project
+	const items: MenuItem[] = [copyMenuItem, downloadMenuItem];
+
+	// Creator/Editor of the project
+	if (['creator', 'writer'].includes(props.project?.userPermission ?? '')) {
+		items.push(editDetailsMenuItem, shareMenuItem);
 	}
+
+	// Creator of the project
 	if (props.project?.userPermission === 'creator') {
-		items.push(renameMenuItem, shareMenuItem, separatorMenuItem, removeMenuItem);
+		items.push(removeMenuItem);
 	}
-	if (props.project?.userPermission === 'writer') {
-		items.push(renameMenuItem);
-	}
+
 	return items;
 });
 
