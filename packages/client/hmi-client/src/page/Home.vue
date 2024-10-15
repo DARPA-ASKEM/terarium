@@ -97,10 +97,7 @@
 						</section>
 						<section class="projects">
 							<div v-if="!isLoadingProjects && isEmpty(searchedAndFilterProjects)" class="no-projects">
-								<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200"></Vue3Lottie>
-								<!--
-								<img src="@assets/svg/seed.svg" alt="" />
-							-->
+								<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200" />
 								<template v-if="tab.title === TabTitles.MyProjects">
 									<p class="mt-4">
 										Get started by creating a
