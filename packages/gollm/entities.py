@@ -29,6 +29,10 @@ class ModelCompareModel(BaseModel):
     amrs: List[str]  # expects AMRs to be a stringified JSON object
 
 
+class EquationsCleanup(BaseModel):
+    equations: List[str]
+
+
 class EquationsFromImage(BaseModel):
     image: str  # expects a base64 encoded image
 
