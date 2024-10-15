@@ -41,7 +41,7 @@ const shareMenuItem = {
 	}
 };
 const removeMenuItem = {
-	label: 'Remove',
+	label: 'Delete',
 	icon: 'pi pi-trash',
 	command: () => {
 		isRemoveDialogVisible.value = true;
