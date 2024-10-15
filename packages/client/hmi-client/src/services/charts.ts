@@ -913,7 +913,7 @@ export function createFunmanStateChart(
 }
 
 export function createFunmanParameterCharts(
-	parametersOfInterest: { label: 'all'; name: string; interval: FunmanInterval }[],
+	parametersOfInterest: { label: string; name: string; interval: FunmanInterval }[],
 	boxes: FunmanBox[]
 ) {
 	const parameterRanges: { parameterId: string; boundType: string; lb?: number; ub?: number; tick?: number }[] = [];
