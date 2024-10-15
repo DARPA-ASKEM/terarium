@@ -16,7 +16,8 @@
 			<template #header> State variables<i class="pi pi-info-circle" /> </template>
 			<!--TODO: Will put these checkbox options in output settings later-->
 			<div class="flex align-items-center gap-2 ml-4 mb-3">
-				<Checkbox v-model="onlyShowLatestBox" binary @change="renderCharts" /><label>Only show latest box</label>
+				<Checkbox v-model="onlyShowLatestResults" binary @change="renderCharts" />
+				<label>Only show furthest results</label>
 			</div>
 			<div class="flex align-items-center gap-2 ml-4 mb-4">
 				<Checkbox v-model="focusOnModelChecks" binary @change="updateStateChart" /> <label>Focus on model checks</label>
@@ -113,7 +114,7 @@ const calibratedConfigObservables = ref<Observable[]>([]);
 
 const stateOptions = ref<string[]>([]);
 const selectedState = ref<string>('');
-const onlyShowLatestBox = ref(false);
+const onlyShowLatestResults = ref(false);
 const focusOnModelChecks = ref(false);
 
 const stateChart = ref();
@@ -131,17 +132,16 @@ function updateStateChart() {
 }
 
 async function renderCharts() {
-	processedFunmanResult = processFunman(funmanResult, onlyShowLatestBox.value);
+	processedFunmanResult = processFunman(funmanResult, onlyShowLatestResults.value);
 
 	// State chart
 	selectedState.value = props.trajectoryState ?? stateOptions.value[0];
 	updateStateChart();
 
 	// Parameter charts
-	const parametersOfInterest = funmanResult.request.parameters.filter((d: any) => d.label === 'all');
-
+	const distributionParameters = funmanResult.request.parameters.filter((d: any) => d.interval.lb !== d.interval.ub); // TODO: This conditional may change as funman will return constants soon
 	if (processedFunmanResult.boxes) {
-		parameterCharts.value = createFunmanParameterCharts(parametersOfInterest, processedFunmanResult.boxes);
+		parameterCharts.value = createFunmanParameterCharts(distributionParameters, processedFunmanResult.boxes);
 	}
 
 	// For displaying model/model configuration

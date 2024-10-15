@@ -84,7 +84,7 @@ export function generateConstraintExpression(config: ConstraintGroup) {
 	return `${expression} \\ \\forall \\ t \\in [${timepoints.lb}, ${timepoints.ub}]`;
 }
 
-export const processFunman = (result: any, onlyShowLatestBox: boolean) => {
+export const processFunman = (result: any, onlyShowLatestResults: boolean) => {
 	const stateIds: string[] = result.model.petrinet.model.states.map(({ id }) => id);
 	const parameterIds: string[] = result.model.petrinet.semantics.ode.parameters.map(({ id }) => id);
 	const timepoints: number[] = result.request.structure_parameters[0].schedules[0].timepoints;
@@ -105,13 +105,13 @@ export const processFunman = (result: any, onlyShowLatestBox: boolean) => {
 		// Filter boxes to include only those with the latest timestep
 		return boxes.filter((box) => box.points[0].values.timestep === latestTimestep);
 	}
-	const trueBoxes: any[] = onlyShowLatestBox
+	const trueBoxes: any[] = onlyShowLatestResults
 		? getBoxesEndingAtLatestTimestep(result.parameter_space.true_boxes)
 		: result.parameter_space.true_boxes;
-	const falseBoxes: any[] = onlyShowLatestBox
+	const falseBoxes: any[] = onlyShowLatestResults
 		? getBoxesEndingAtLatestTimestep(result.parameter_space.false_boxes)
 		: result.parameter_space.false_boxes;
-	const ambiguousBoxes: any[] = onlyShowLatestBox
+	const ambiguousBoxes: any[] = onlyShowLatestResults
 		? getBoxesEndingAtLatestTimestep(result.parameter_space.unknown_points)
 		: result.parameter_space.unknown_points;
 
