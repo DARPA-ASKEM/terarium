@@ -27,7 +27,7 @@ const isCopying = ref(false);
 
 const menu = ref();
 const renameMenuItem = {
-	label: 'Edit project details',
+	label: 'Edit details',
 	icon: 'pi pi-pencil',
 	command: () => {
 		isProjectConfigDialogVisible.value = true;
@@ -48,7 +48,7 @@ const removeMenuItem = {
 	}
 };
 const copyMenuItem = {
-	label: 'Copy this project',
+	label: 'Copy',
 	icon: 'pi pi-clone',
 	command: async () => {
 		if (props.project) {
