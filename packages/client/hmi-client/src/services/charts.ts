@@ -971,13 +971,6 @@ export function createFunmanParameterCharts(
 			{ name: 'minX', expr: 'minX' },
 			{ name: 'maxX', expr: 'maxX' }
 		],
-		// selection: {
-		// 	tickSelection: {
-		// 		type: 'single',
-		// 		fields: ['parameterId'],
-		// 		bind: 'scales'
-		// 	}
-		// },
 		facet: {
 			row: {
 				field: 'parameterId',
@@ -1011,44 +1004,53 @@ export function createFunmanParameterCharts(
 						},
 						x2: {
 							field: 'ub'
+						},
+						color: {
+							condition: {
+								param: 'tickSelection',
+								field: 'boundType',
+								type: 'nominal',
+								legend: { orient: 'top', direction: 'horizontal', title: null },
+								scale: {
+									domain: [
+										FunmanChartLegend.Satisfactory,
+										FunmanChartLegend.Unsatisfactory,
+										FunmanChartLegend.Ambiguous
+									],
+									range: ['#1B8073', '#FFAB00', '#CCC569']
+								}
+							},
+							value: '#D3D3D380'
 						}
-						// color: {
-						// 	condition: {
-						// 		selection: 'tickSelection',
-						// 		field: 'boundType',
-						// 		type: 'nominal',
-						// 		legend: { orient: 'top', direction: 'horizontal', title: null },
-						// 		scale: {
-						// 			domain: [
-						// 				FunmanChartLegend.Satisfactory,
-						// 				FunmanChartLegend.Unsatisfactory,
-						// 				FunmanChartLegend.Ambiguous
-						// 			],
-						// 			range: ['#1B8073', '#FFAB00', '#CCC569']
-						// 		}
-						// 	},
-						// 	value: 'gray'
-						// }
 					}
 				},
 				{
 					mark: {
 						type: 'tick',
-						size: 20
+						thickness: 4
 					},
+					params: [
+						{
+							name: 'tickSelection',
+							select: { type: 'point' } // nearest: true, on: 'mouseover'
+						}
+					],
 					encoding: {
 						x: {
 							field: 'tick',
 							type: 'quantitative',
 							title: null
+						},
+						color: {
+							// condition: {
+							// 	param: 'tickSelection',
+							// }
+							field: 'boundType'
+						},
+						size: {
+							condition: { param: 'tickSelection', value: 20, empty: false },
+							value: 15
 						}
-						// color: {
-						// 	condition: {
-						// 		selection: 'tickSelection',
-						// 		value: 'black'
-						// 	},
-						// 	value: 'gray'
-						// }
 					}
 				}
 			]
