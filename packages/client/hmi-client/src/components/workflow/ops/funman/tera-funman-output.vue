@@ -76,7 +76,7 @@ import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue'; // TODO: Once we save the output model properly in the backend we can use this.
+import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue'; // TODO: Once we save the output model properly in the backend we can use this.
 import { logger } from '@/utils/logger';
 import type { Model, ModelConfiguration, Observable } from '@/types/Types';
 import { getModelByModelConfigurationId, getMMT } from '@/services/model';
@@ -139,8 +139,10 @@ const initalize = async () => {
 			return;
 		}
 		const response = await getMMT(model.value);
-		mmt = response.mmt;
-		mmtParams.value = response.template_params;
+		if (response) {
+			mmt = response.mmt;
+			mmtParams.value = response.template_params;
+		}
 	}
 
 	configuredMmt.value = makeConfiguredMMT(mmt, funmanResult.modelConfiguration);

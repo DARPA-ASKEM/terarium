@@ -46,6 +46,7 @@ onMounted(async () => {
 			errors.value = checkPetrinetAMR(jsonData);
 
 			const mmtR = await getMMT(jsonData);
+			if (!mmtR) return;
 			const mmt = mmtR.mmt;
 			const observable_summary = mmtR.observable_summary;
 
