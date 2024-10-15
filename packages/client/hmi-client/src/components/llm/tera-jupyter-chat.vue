@@ -88,13 +88,6 @@ const props = defineProps<{
 	defaultPreview?: string;
 }>();
 
-// const rerunAllCells = () => {
-// 	// TeraBeakerInput.runCell();
-// 	notebookItems.value.forEach((notebookItem) => {
-// 		console.log(notebookItem);
-// 	});
-// };
-
 const iopubMessageHandler = (_session, message) => {
 	if (message.header.msg_type === 'status') {
 		const newState: KernelState = KernelState[KernelState[message.content.execution_state]];

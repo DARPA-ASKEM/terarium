@@ -106,7 +106,7 @@ const submitQuery = () => {
 
 const addCodeCell = () => {
 	emit('add-code-cell');
-	EventService.create(EventType.AddCodeCell, useProjects().activeProject.value?.id);
+	EventService.create(EventType.AddCodeCell);
 };
 
 const runAllCells = () => {
