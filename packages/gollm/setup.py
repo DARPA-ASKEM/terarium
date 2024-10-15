@@ -22,11 +22,12 @@ setup(
             "gollm:configure_model_from_document=tasks.configure_model_from_document:main",
             "gollm:embedding=tasks.embedding:main",
             "gollm:enrich_amr=tasks.enrich_amr:main",
+            "gollm:equations_cleanup=tasks.equations_cleanup:main",
             "gollm:equations_from_image=tasks.equations_from_image:main",
             "gollm:generate_response=tasks.generate_response:main",
             "gollm:generate_summary=tasks.generate_summary:main",
             "gollm:interventions_from_document=tasks.interventions_from_document:main",
-            "gollm:model_card=tasks.model_card:main",
+            "gollm:model_card=tasks.model_card:main"
         ],
     },
     python_requires=">=3.11",
