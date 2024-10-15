@@ -39,14 +39,14 @@ public class Intervention {
 	// Check for no duplicate time + appliedTo pairs in static interventions
 	public Boolean validateIntervention() {
 		for (int i = 0; i < this.staticInterventions.size(); i++) {
-			if (this.staticInterventions.get(i).getTimestep().intValue() < 0) {
-				log.warn(
-					String.format(
-						"The intervention % has a timestep % which is less than 0.",
-						this.getName(),
-						this.staticInterventions.get(i).getTimestep().toString()
-					)
+			final Number time = this.staticInterventions.get(i).getTimestep();
+			if (time.doubleValue() < 0) {
+				final String errorMessage = String.format(
+					"The intervention %s has a timestep %s which is less than 0.",
+					this.getName(),
+					time.toString()
 				);
+				log.warn(errorMessage);
 				return false;
 			}
 			for (int j = 0; j < this.staticInterventions.size(); j++) {
@@ -54,15 +54,14 @@ public class Intervention {
 				final Number timeOne = this.staticInterventions.get(i).getTimestep();
 				final String appliedToTwo = this.staticInterventions.get(j).getAppliedTo();
 				final Number timeTwo = this.staticInterventions.get(j).getTimestep();
-				if (i != j && appliedToOne == appliedToTwo && timeOne == timeTwo) {
-					log.warn(
-						String.format(
-							"The intervention % has duplicate applied to: % and time: % pairs.",
-							this.getName(),
-							appliedToOne,
-							timeOne
-						)
+				if (Integer.compare(i, j) == 0 && appliedToOne.equals(appliedToTwo) && timeOne.equals(timeTwo)) {
+					final String errorMessage = String.format(
+						"The intervention %s has duplicate applied to: %s and time: %s pairs.",
+						this.getName(),
+						appliedToOne,
+						timeOne
 					);
+					log.warn(errorMessage);
 					return false;
 				}
 			}

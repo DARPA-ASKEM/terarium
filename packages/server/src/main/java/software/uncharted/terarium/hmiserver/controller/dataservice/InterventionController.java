@@ -108,7 +108,7 @@ public class InterventionController {
 			currentUserService.get().getId(),
 			projectId
 		);
-		if (item.validatePolicyIntervention()) {
+		if (item.validateInterventionPolicy()) {
 			try {
 				return ResponseEntity.status(HttpStatus.CREATED).body(
 					interventionService.createAsset(item, projectId, permission)

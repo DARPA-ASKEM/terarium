@@ -45,7 +45,7 @@ public class InterventionPolicy extends TerariumAsset {
 
 	// Check each intervention this policy contains
 	// If any of them are are invalid the entire policy is invalid.
-	public Boolean validatePolicyIntervention() {
+	public Boolean validateInterventionPolicy() {
 		for (int i = 0; i < this.interventions.size(); i++) {
 			final boolean checkIndividual = this.interventions.get(i).validateIntervention();
 			if (checkIndividual == false) {
@@ -68,22 +68,22 @@ public class InterventionPolicy extends TerariumAsset {
 	private Boolean validateInterventionPair(Intervention interOne, Intervention interTwo) {
 		List<StaticIntervention> staticOne = interOne.getStaticInterventions();
 		List<StaticIntervention> staticTwo = interTwo.getStaticInterventions();
+
 		for (int i = 0; i < staticOne.size(); i++) {
 			for (int j = 0; j < staticTwo.size(); j++) {
 				final String appliedToOne = staticOne.get(i).getAppliedTo();
 				final Number timeOne = staticOne.get(i).getTimestep();
 				final String appliedToTwo = staticTwo.get(j).getAppliedTo();
 				final Number timeTwo = staticTwo.get(j).getTimestep();
-				if (i != j && appliedToOne == appliedToTwo && timeOne == timeTwo) {
-					log.warn(
-						String.format(
-							"The intervention % and % have duplicate applied to: % and time: % pairs.",
-							interOne.getName(),
-							interTwo.getName(),
-							appliedToOne,
-							timeOne
-						)
+				if (Integer.compare(i, j) == 0 && appliedToOne.equals(appliedToTwo) && timeOne.equals(timeTwo)) {
+					final String errorMessage = String.format(
+						"The intervention %s and %s have duplicate applied to: %s and time: %s pairs.",
+						interOne.getName(),
+						interTwo.getName(),
+						appliedToOne,
+						String.valueOf(timeOne)
 					);
+					log.warn(errorMessage);
 					return false;
 				}
 			}
