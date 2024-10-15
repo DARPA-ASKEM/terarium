@@ -83,6 +83,7 @@ const csvStringProcessor = async (item: DataTransferItem) => {
 
 		// Update
 		const response = await getMMT(model.value as Model);
+		if (!response) return;
 		mmt.value = response.mmt;
 		mmtParams.value = response.template_params;
 	});
@@ -91,6 +92,7 @@ const csvStringProcessor = async (item: DataTransferItem) => {
 const buttonClick = async () => {
 	updateByMatrixCSV(model.value as Model, 'subjectControllers', clipboardText.value);
 	const response = await getMMT(model.value as Model);
+	if (!response) return;
 	mmt.value = response.mmt;
 	mmtParams.value = response.template_params;
 };
@@ -105,8 +107,10 @@ const processPasteEvent = async (event: ClipboardEvent) => {
 onMounted(async () => {
 	model.value = sirJSON as Model;
 	const response = await getMMT(model.value);
-	mmt.value = response.mmt;
-	mmtParams.value = response.template_params;
+	if (response) {
+		mmt.value = response.mmt;
+		mmtParams.value = response.template_params;
+	}
 	ready.value = true;
 
 	document.addEventListener('paste', processPasteEvent);

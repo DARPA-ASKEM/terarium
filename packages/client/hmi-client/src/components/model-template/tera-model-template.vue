@@ -44,7 +44,7 @@
 import { ref, computed, nextTick } from 'vue';
 import Button from 'primevue/button';
 import Textarea from 'primevue/textarea';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
 import Menu from 'primevue/menu';
 
 const props = defineProps<{
