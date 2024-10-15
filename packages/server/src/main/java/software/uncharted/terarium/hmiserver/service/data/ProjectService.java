@@ -44,6 +44,36 @@ public class ProjectService {
 	}
 
 	@Observed(name = "function_profile")
+	public List<Project> getActiveProjects() {
+		final Map<UUID, Project> projectMap = new HashMap<>();
+		final List<ProjectAndAssetAggregate> projectAggregates = projectRepository.findWithAssets();
+		for (final ProjectAndAssetAggregate aggregate : projectAggregates) {
+			if (projectMap.containsKey(aggregate.getId())) {
+				final Project project = projectMap.get(aggregate.getId());
+				addAssetCount(project, aggregate.getAssetType(), aggregate.getAssetCount());
+			} else {
+				final Project project = new Project();
+				project.setId(aggregate.getId());
+				project.setCreatedOn(aggregate.getCreatedOn());
+				project.setUpdatedOn(aggregate.getUpdatedOn());
+				project.setDeletedOn(aggregate.getDeletedOn());
+				project.setDescription(aggregate.getDescription());
+				project.setFileNames(aggregate.getFileNames());
+				project.setPublicAsset(aggregate.getPublicAsset());
+				project.setName(aggregate.getName());
+				project.setOverviewContent(aggregate.getOverviewContent());
+				project.setTemporary(aggregate.getTemporary());
+				project.setThumbnail(aggregate.getThumbnail());
+				project.setUserId(aggregate.getUserId());
+				project.setMetadata(new HashMap<>());
+				addAssetCount(project, aggregate.getAssetType(), aggregate.getAssetCount());
+				projectMap.put(project.getId(), project);
+			}
+		}
+		return new ArrayList<>(projectMap.values());
+	}
+
+	@Observed(name = "function_profile")
 	public List<Project> getProjects(final List<UUID> ids) {
 		return projectRepository.findAllById(ids);
 	}
