@@ -254,35 +254,35 @@ public class KnowledgeController {
 			}
 		}
 		TaskRequest cleanupReq = cleanupEquationsTaskRequest(projectId, equations);
-		final TaskResponse cleanupResp;
+		TaskResponse cleanupResp = null;
 		try {
 			cleanupResp = taskService.runTask(TaskMode.SYNC, cleanupReq);
 		} catch (final JsonProcessingException e) {
-			log.error("Unable to serialize input", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
+			log.warn("Unable to clean-up equations due to a JsonProcessingException. Reverting to original equations.", e);
 		} catch (final TimeoutException e) {
-			log.warn("Timeout while waiting for task response", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
+			log.warn("Unable to clean-up equations due to a TimeoutException. Reverting to original equations.", e);
 		} catch (final InterruptedException e) {
-			log.warn("Interrupted while waiting for task response", e);
-			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
+			log.warn("Unable to clean-up equations due to a InterruptedException. Reverting to original equations.", e);
 		} catch (final ExecutionException e) {
-			log.error("Error while waiting for task response", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
+			log.warn("Unable to clean-up equations due to a ExecutionException. Reverting to original equations.", e);
 		}
 
-		// create a clone of the request and set the cleaned up equations
-		JsonNode output;
-		try {
-			output = mapper.readValue(cleanupResp.getOutput(), JsonNode.class);
-		} catch (IOException e) {
-			log.error("Unable to serialize output from equation cleanup task: {}", e.getMessage());
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+		// get the equations from the cleanup response, or use the original equations
+		JsonNode equationsReq = req.get("equations");
+		if (cleanupResp != null && cleanupResp.getOutput() != null) {
+			try {
+				JsonNode output = mapper.readValue(cleanupResp.getOutput(), JsonNode.class);
+				if (output.get("response") != null && output.get("response").get("equations") != null) {
+					equationsReq = output.get("response").get("equations");
+				}
+			} catch (IOException e) {
+				log.warn("Unable to retrive cleaned-up equations from GoLLM response. Reverting to original equations.", e);
+			}
 		}
+
+		// Create a new request with the cleaned-up equations, so that we don't modify the original request.
 		JsonNode newReq = req.deepCopy();
-		if (output.get("response") != null && output.get("response").get("equations") != null) {
-			((ObjectNode) newReq).set("equations", output.get("response").get("equations"));
-		}
+		((ObjectNode) newReq).set("equations", equationsReq);
 
 		// Get an AMR from Skema Unified Service
 		try {
