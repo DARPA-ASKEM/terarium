@@ -15,6 +15,7 @@ import { computed, ref } from 'vue';
 import { exportProjectAsFile } from '@/services/project';
 import { AcceptedExtensions } from '@/types/common';
 import { MenuItem } from 'primevue/menuitem';
+import useAuthStore from '@/stores/auth';
 
 const props = defineProps<{ project: Project | null }>();
 
@@ -89,8 +90,8 @@ const projectMenuItems = computed(() => {
 		items.push(editDetailsMenuItem, shareMenuItem);
 	}
 
-	// Creator of the project
-	if (props.project?.userPermission === 'creator') {
+	// Creator of the project, or an admin
+	if (props.project?.userPermission === 'creator' || useAuthStore().isAdmin) {
 		items.push(removeMenuItem);
 	}
 
