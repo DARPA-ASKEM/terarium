@@ -45,7 +45,7 @@ onMounted(async () => {
 	}
 });
 
-function setupViewer() {
+watch(isAdobePdfApiReady, () => {
 	if (isAdobePdfApiReady.value) {
 		adobeDCView.value = Object.freeze(
 			// @ts-ignore
@@ -104,15 +104,5 @@ function setupViewer() {
 				);
 		}
 	}
-}
-
-watch(isAdobePdfApiReady, () => setupViewer());
-
-/**
- * Reload the pdf if there is a change to the pdfLink
- */
-watch(
-	() => props.pdfLink,
-	() => setupViewer()
-);
+});
 </script>
