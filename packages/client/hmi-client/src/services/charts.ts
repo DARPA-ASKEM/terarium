@@ -834,11 +834,11 @@ export function createFunmanStateChart(
 
 	const globalFont = 'Figtree';
 
-	const boxLines = trajectories.map((traj) => ({
-		boxId: traj.boxId,
-		timepoints: traj.timestep,
-		value: traj[stateId],
-		legendItem: getBoundType(traj.label)
+	const boxLines = trajectories.map((trajectory) => ({
+		boxId: trajectory.boxId,
+		timepoints: trajectory.timepoint,
+		value: trajectory[stateId],
+		legendItem: getBoundType(trajectory.label)
 	}));
 	// Find min/max values to set an appropriate viewing range for y-axis
 	const minY = Math.floor(Math.min(...boxLines.map((d) => d.value)));

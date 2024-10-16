@@ -130,23 +130,24 @@ export const processFunman = (result: any, onlyShowLatestResults: boolean) => {
 		});
 
 		// Get trajectories
-		timepoints.forEach((t) => {
+		timepoints.forEach((timepoint) => {
 			let pushFlag = true;
-			const traj: any = {
+			const trajectory: any = {
 				boxId: index,
 				label: box.label,
-				timestep: t,
+				timepoint,
 				n: points.timestep // how many actual points
 			};
-			stateIds.forEach((s) => {
+			stateIds.forEach((stateId) => {
 				// Only push states that have a timestep key pair
-				if (Object.prototype.hasOwnProperty.call(points, `${s}_${t}`)) {
-					traj[s] = points[`${s}_${t}`];
+				const key = `${stateId}_${timepoint}`;
+				if (Object.prototype.hasOwnProperty.call(points, key)) {
+					trajectory[stateId] = points[key];
 				} else {
 					pushFlag = false;
 				}
 			});
-			if (pushFlag) trajectories.push(traj);
+			if (pushFlag) trajectories.push(trajectory);
 		});
 	});
 
