@@ -1109,7 +1109,7 @@ export function createFunmanParameterCharts(
 						color: { value: 'black' },
 						opacity: {
 							condition: {
-								test: 'tickSelection == datum.boxId',
+								test: 'tickSelection.boxId == datum.boxId',
 								value: 1
 							},
 							value: 0
@@ -1130,7 +1130,7 @@ export function createFunmanParameterCharts(
 						color: { value: 'black' },
 						opacity: {
 							condition: {
-								test: 'tickSelection == datum.boxId',
+								test: 'tickSelection.boxId == datum.boxId',
 								value: 1
 							},
 							value: 0
