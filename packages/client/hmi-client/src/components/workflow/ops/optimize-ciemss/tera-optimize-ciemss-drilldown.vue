@@ -356,22 +356,6 @@
 			</tera-drilldown-section>
 		</template>
 	</tera-drilldown>
-	<Dialog v-model:visible="showModelModal" modal header="Save as new model configuration" class="save-dialog w-4">
-		<div class="label-and-input">
-			<label> Model config name</label>
-			<tera-input-text v-model="modelConfigName" />
-		</div>
-		<div class="label-and-input">
-			<label> Model config description</label>
-			<tera-input-text v-model="modelConfigDesc" />
-		</div>
-		<Button
-			:disabled="modelConfigName === ''"
-			outlined
-			label="Save as a new model configuration"
-			@click="saveModelConfiguration"
-		/>
-	</Dialog>
 	<tera-save-simulation-modal
 		:initial-name="optimizedInterventionPolicy?.name"
 		:is-visible="showSaveInterventionPolicy"
@@ -392,7 +376,6 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import SelectButton from 'primevue/selectbutton';
-import Dialog from 'primevue/dialog';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
@@ -403,7 +386,7 @@ import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { getUnitsFromModelParts, getModelByModelConfigurationId } from '@/services/model';
-import { createModelConfiguration, getModelConfigurationById } from '@/services/model-configurations';
+import { getModelConfigurationById } from '@/services/model-configurations';
 import {
 	convertToCsvAsset,
 	getRunResult,
@@ -510,8 +493,6 @@ const successDisplayChartsCheckbox = ref(true);
 const interventionsDisplayChartsCheckbox = ref(true);
 const simulationDisplayChartsCheckbox = ref(true);
 
-const modelConfigName = ref<string>('');
-const modelConfigDesc = ref<string>('');
 const showSaveDataDialog = ref<boolean>(false);
 const showSaveInterventionPolicy = ref<boolean>(false);
 
@@ -538,7 +519,6 @@ const datasetId = computed(() => {
 	return output?.value?.[0]?.datasetId ?? '';
 });
 
-const showModelModal = ref(false);
 const displayOptimizationResultMessage = ref(true);
 
 const isRunDisabled = computed(() => {
@@ -866,32 +846,6 @@ const setOutputSettingDefaults = () => {
 			knobs.value.selectedSimulationVariables = [...new Set(selectedSimulationVariables)];
 		}
 	}
-};
-
-// TODO: utlize with https://github.com/DARPA-ASKEM/terarium/issues/4767
-const saveModelConfiguration = async () => {
-	if (!modelConfiguration.value) return;
-
-	if (!knobs.value.optimizationRunId) {
-		logger.error('No optimization run to create model configuration from');
-	}
-
-	// TODO: use new interventions
-	// const optRunId = knobs.value.optimizationRunId;
-	// const interventions = await getOptimizedInterventions(optRunId);
-	const configClone = cloneDeep(modelConfiguration.value);
-
-	// setInterventions(configClone, interventions);
-	configClone.name = modelConfigName.value;
-	configClone.description = modelConfigDesc.value;
-	const data = await createModelConfiguration(configClone);
-	if (!data) {
-		logger.error('Failed to create model configuration');
-		return;
-	}
-
-	logger.success('Created model configuration');
-	showModelModal.value = false;
 };
 
 const setOutputValues = async () => {
