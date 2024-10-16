@@ -1,8 +1,9 @@
 package software.uncharted.terarium.hmiserver.models.simulationservice.interventions;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
@@ -39,13 +40,7 @@ public class Intervention {
 	// Check for no negative timesteps
 	// Check for no duplicate time + appliedTo pairs in static interventions
 	public Boolean validateIntervention() throws Exception {
-		//Sort static list such that each duplicate pair of appliedTo and timestep are beside eachother
-		Collections.sort(this.staticInterventions, (staticOne, staticTwo) -> {
-			final String stringOne = staticOne.getAppliedTo() + staticOne.getTimestep().toString();
-			final String stringTwo = staticTwo.getAppliedTo() + staticTwo.getTimestep().toString();
-			return stringOne.compareTo(stringTwo);
-		});
-
+		final Set<String> foo = new HashSet<>();
 		for (int i = 0; i < this.staticInterventions.size(); i++) {
 			final Number time = this.staticInterventions.get(i).getTimestep();
 			if (time.doubleValue() < 0) {
@@ -56,20 +51,18 @@ public class Intervention {
 				);
 				throw new Exception(errorMessage);
 			}
-			if (i > 0) {
-				final String appliedToOne = this.staticInterventions.get(i).getAppliedTo();
-				final Number timeOne = this.staticInterventions.get(i).getTimestep();
-				final String appliedToTwo = this.staticInterventions.get(i - 1).getAppliedTo();
-				final Number timeTwo = this.staticInterventions.get(i - 1).getTimestep();
-				if (appliedToOne.equals(appliedToTwo) && timeOne.equals(timeTwo)) {
-					final String errorMessage = String.format(
-						"The intervention %s has duplicate applied to: %s and time: %s pairs.",
-						this.getName(),
-						appliedToOne,
-						timeOne
-					);
-					throw new Exception(errorMessage);
-				}
+			final String key =
+				this.staticInterventions.get(i).getAppliedTo() + this.staticInterventions.get(i).getTimestep().toString();
+			if (foo.contains(key)) {
+				final String errorMessage = String.format(
+					"The intervention %s has duplicate applied to: %s and time: %s pairs.",
+					this.getName(),
+					this.staticInterventions.get(i).getAppliedTo(),
+					this.staticInterventions.get(i).getTimestep().toString()
+				);
+				throw new Exception(errorMessage);
+			} else {
+				foo.add(key);
 			}
 		}
 		return true;
