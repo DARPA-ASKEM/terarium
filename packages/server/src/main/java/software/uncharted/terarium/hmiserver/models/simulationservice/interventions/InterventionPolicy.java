@@ -55,6 +55,7 @@ public class InterventionPolicy extends TerariumAsset {
 		final Set<String> foo = new HashSet<>();
 		for (int i = 0; i < this.interventions.size(); i++) {
 			final Intervention intervention = this.interventions.get(i);
+			// For each static intervention within the policy:
 			for (int j = 0; j < intervention.getStaticInterventions().size(); j++) {
 				final StaticIntervention staticIntervention = intervention.getStaticInterventions().get(j);
 				// Check for negative timestamps:
