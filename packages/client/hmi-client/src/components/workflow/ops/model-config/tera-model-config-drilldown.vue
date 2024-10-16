@@ -902,4 +902,11 @@ button.start-edit {
 .executed-code {
 	white-space: pre-wrap;
 }
+:deep(.content-wrapper) {
+	& > section {
+		& > main {
+			overflow: hidden;
+		}
+	}
+}
 </style>
