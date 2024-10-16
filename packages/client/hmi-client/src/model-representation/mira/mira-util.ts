@@ -167,7 +167,10 @@ export const extractOutcomeControllersMatrix = (
 
 export const extractTemplateMatrix = (templates: MiraTemplate[]) => {
 	const rowNames = extractConceptNames(templates, 'subject');
-	const colNames = extractConceptNames(templates, 'outcome');
+
+	const colNames = templates[0]?.controller
+		? extractConceptNames(templates, 'controllers')
+		: extractConceptNames(templates, 'outcome');
 
 	// Not sure how to parse templates with no subject or no outcomes
 	// and interacts with only controllers and itself, return a matrix
