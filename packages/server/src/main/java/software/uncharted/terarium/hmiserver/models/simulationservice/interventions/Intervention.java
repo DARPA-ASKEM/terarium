@@ -39,7 +39,7 @@ public class Intervention {
 	// Check for no negative timesteps
 	// Check for no duplicate time + appliedTo pairs in static interventions
 	public Boolean validateIntervention() throws Exception {
-		//Sort static list
+		//Sort static list such that each duplicate pair of appliedTo and timestep are beside eachother
 		Collections.sort(this.staticInterventions, (staticOne, staticTwo) -> {
 			final String stringOne = staticOne.getAppliedTo() + staticOne.getTimestep().toString();
 			final String stringTwo = staticTwo.getAppliedTo() + staticTwo.getTimestep().toString();
