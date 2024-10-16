@@ -64,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty, isEqual } from 'lodash';
+import { debounce, isEmpty, isEqual } from 'lodash';
 import { ref, watch, computed, nextTick, onMounted, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
@@ -214,7 +214,7 @@ watch(
 let graphResizeObserver: ResizeObserver;
 onMounted(() => {
 	if (graphElement.value) {
-		graphResizeObserver = observeElementSizeChange(graphElement.value, renderGraph);
+		graphResizeObserver = observeElementSizeChange(graphElement.value, debounce(renderGraph, 200));
 	}
 });
 onUnmounted(() => {
