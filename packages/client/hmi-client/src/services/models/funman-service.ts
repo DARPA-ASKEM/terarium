@@ -130,13 +130,6 @@ export const processFunman = (result: any, onlyShowLatestResults: boolean) => {
 		});
 
 		// Get trajectories
-		const filteredVals = Object.keys(points)
-			.filter((key) => !parameterIds.includes(key) && key !== 'timestep' && key.split('_')[0] !== 'assume')
-			.reduce((obj, key) => {
-				obj[key] = points[key];
-				return obj;
-			}, {});
-
 		timepoints.forEach((t) => {
 			let pushFlag = true;
 			const traj: any = {
@@ -147,15 +140,13 @@ export const processFunman = (result: any, onlyShowLatestResults: boolean) => {
 			};
 			stateIds.forEach((s) => {
 				// Only push states that have a timestep key pair
-				if (Object.prototype.hasOwnProperty.call(filteredVals, `${s}_${t}`)) {
-					traj[s] = filteredVals[`${s}_${t}`];
+				if (Object.prototype.hasOwnProperty.call(points, `${s}_${t}`)) {
+					traj[s] = points[`${s}_${t}`];
 				} else {
 					pushFlag = false;
 				}
 			});
-			if (pushFlag) {
-				trajectories.push(traj);
-			}
+			if (pushFlag) trajectories.push(traj);
 		});
 	});
 
