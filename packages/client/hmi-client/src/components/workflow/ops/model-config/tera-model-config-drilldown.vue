@@ -8,23 +8,14 @@
 	>
 		<template #sidebar>
 			<tera-slider-panel
-				v-if="pdfLinks"
+				v-if="pdfData"
 				v-model:is-open="isDocViewerOpen"
 				header="Document Viewer"
 				content-width="700px"
 			>
 				<template #content>
 					<tera-drilldown-section :is-loading="isFetchingPDF">
-						<Dropdown
-							v-if="pdfLinks?.length"
-							class="mx-3"
-							v-model="pdfLink"
-							:options="pdfLinks"
-							optionLabel="label"
-							optionsValue="value"
-						/>
-						<tera-pdf-embed v-if="pdfLink && pdfLink.isPdf" :pdf-link="pdfLink.value" :title="pdfLink.label || ''" />
-						<tera-text-editor v-else-if="pdfLink && !pdfLink.isPdf" :initial-text="pdfLink.value" />
+						<tera-pdf-panel :pdfs="pdfData" />
 					</tera-drilldown-section>
 				</template>
 			</tera-slider-panel>
@@ -268,9 +259,7 @@ import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue'
 import { saveCodeToState } from '@/services/notebook';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { useProjects } from '@/composables/project';
-import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
-import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
-import Dropdown from 'primevue/dropdown';
+import TeraPdfPanel from '@/components/widgets/tera-pdf-panel.vue';
 import {
 	blankModelConfig,
 	isModelConfigsEqual,
@@ -289,16 +278,10 @@ const props = defineProps<{
 	node: WorkflowNode<ModelConfigOperationState>;
 }>();
 
-interface PdfData {
-	value: string;
-	isPdf: boolean;
-	label: string;
-}
-
-const pdfLink = ref<PdfData>();
-const pdfLinks = ref<PdfData[]>([]);
 const isFetchingPDF = ref(false);
 const isDocViewerOpen = ref(true);
+
+const pdfData = ref<{ document: any; data: string; isPdf: boolean; name: string }[]>([]);
 
 const isSidebarOpen = ref(true);
 const isEditingDescription = ref(false);
@@ -750,7 +733,7 @@ onMounted(() => {
 			const document = await getDocumentAsset(id);
 			const name: string = document?.name ?? '';
 			const filename = document?.fileNames?.[0];
-			const isPdf = document?.fileNames?.[0]?.endsWith('.pdf');
+			const isPdf = !!document?.fileNames?.[0]?.endsWith('.pdf');
 
 			if (document?.id && filename) {
 				let data: string | null;
@@ -760,10 +743,9 @@ onMounted(() => {
 					data = await getDocumentFileAsText(document.id, filename);
 				}
 				if (data !== null) {
-					pdfLinks.value?.push({ value: data, isPdf: !!isPdf, label: name });
+					pdfData.value.push({ document, data, isPdf, name });
 				}
 			}
-			if (!pdfLink.value && pdfLinks.value?.[0]) pdfLink.value = pdfLinks.value[0];
 		});
 	}
 	isFetchingPDF.value = false;
