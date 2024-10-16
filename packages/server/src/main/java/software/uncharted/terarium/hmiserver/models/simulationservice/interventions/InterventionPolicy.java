@@ -47,10 +47,10 @@ public class InterventionPolicy extends TerariumAsset {
 	// If any of them are are invalid the entire policy is invalid.
 	public Boolean validateInterventionPolicy() throws Exception {
 		for (int i = 0; i < this.interventions.size(); i++) {
-			this.interventions.get(i).validateIntervention();
+			this.interventions.get(i).validateIntervention(); //validate individual intervention
 			for (int j = 0; j < this.interventions.size(); j++) {
 				if (Integer.compare(i, j) != 0) {
-					validateInterventionPair(this.interventions.get(i), this.interventions.get(j));
+					validateInterventionPair(this.interventions.get(i), this.interventions.get(j)); //validate pair with eachother
 				}
 			}
 		}
@@ -58,7 +58,7 @@ public class InterventionPolicy extends TerariumAsset {
 	}
 
 	// Takes a list of two interventions and will check their static intervention lists to ensure
-	// there are no duplicate time + appliedTo pairs in static interventions
+	// there are no duplicate time + appliedTo pairs in their indiviudal static interventions
 	private Boolean validateInterventionPair(Intervention interOne, Intervention interTwo) throws Exception {
 		List<StaticIntervention> staticOne = interOne.getStaticInterventions();
 		List<StaticIntervention> staticTwo = interTwo.getStaticInterventions();
