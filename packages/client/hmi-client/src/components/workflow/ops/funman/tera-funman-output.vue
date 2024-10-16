@@ -120,6 +120,8 @@ const focusOnModelChecks = ref(false);
 
 const stateChart = ref<any>({});
 const parameterCharts = ref<any>({});
+
+const selectedBoxId: number = -1;
 let parameterChartView: View | null = null;
 
 function updateStateChart() {
@@ -129,7 +131,8 @@ function updateStateChart() {
 		processedFunmanResult,
 		constraintsResponse,
 		selectedState.value,
-		focusOnModelChecks.value
+		focusOnModelChecks.value,
+		selectedBoxId // Just testing here
 	);
 }
 

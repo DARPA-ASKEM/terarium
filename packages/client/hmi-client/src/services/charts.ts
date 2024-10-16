@@ -825,17 +825,19 @@ export function createFunmanStateChart(
 	data: ProcessedFunmanResult,
 	constraints: FunmanConstraintsResponse[],
 	stateId: string,
-	focusOnModelChecks: boolean
+	focusOnModelChecks: boolean,
+	selectedBoxId?: number
 ) {
 	if (isEmpty(data.trajs)) return null;
 
 	const globalFont = 'Figtree';
 
-	const boxLines = data.trajs.map((traj) => {
-		const legendItem = getBoundType(traj.label);
-		return { timepoints: traj.timestep, value: traj[stateId], legendItem };
-	});
-
+	const boxLines = data.trajs.map((traj) => ({
+		boxId: traj.boxId,
+		timepoints: traj.timestep,
+		value: traj[stateId],
+		legendItem: getBoundType(traj.label)
+	}));
 	// Find min/max values to set an appropriate viewing range for y-axis
 	const minY = Math.floor(Math.min(...boxLines.map((d) => d.value)));
 	const maxY = Math.ceil(Math.max(...boxLines.map((d) => d.value)));
@@ -856,7 +858,12 @@ export function createFunmanStateChart(
 		config: { font: globalFont },
 		width: 600,
 		height: 300,
-		// params: [{ name: 'grid', select: 'interval', bind: 'scales' }],
+		params: [
+			{
+				name: 'selectedBoxId',
+				value: selectedBoxId
+			}
+		],
 		layer: [
 			{
 				mark: {
@@ -877,9 +884,17 @@ export function createFunmanStateChart(
 					point: true
 				},
 				data: { values: boxLines },
+
 				encoding: {
 					x: { field: 'timepoints', type: 'quantitative' },
-					y: { field: 'value', type: 'quantitative' }
+					y: { field: 'value', type: 'quantitative' },
+					opacity: {
+						condition: {
+							test: 'selectedBoxId == datum.boxId || selectedBoxId == -1', // -1 is the default value (shows all boxes)
+							value: 1
+						},
+						value: 0.2
+					}
 				}
 			}
 		],
@@ -1078,38 +1093,50 @@ export function createFunmanParameterCharts(
 							value: 15
 						}
 					}
-				}
+				},
 				// TODO: Selected bound ticks for lb, ub
-				// {
-				// 	mark: {
-				// 		type: 'tick',
-				// 		thickness: 2,
-				// 		size: 20,
-				// 		opacity: { expr: 'data("tickSelection") ? 1 : 0' }
-				// 	},
-				// 	encoding: {
-				// 		x: {
-				// 			field: 'lb',
-				// 			type: 'quantitative'
-				// 		},
-				// 		color: { value: 'black' }
-				// 	}
-				// },
-				// {
-				// 	mark: {
-				// 		type: 'tick',
-				// 		thickness: 2,
-				// 		size: 20,
-				// 		opacity: { expr: 'data("tickSelection") ? 1 : 0' }
-				// 	},
-				// 	encoding: {
-				// 		x: {
-				// 			field: 'ub',
-				// 			type: 'quantitative'
-				// 		},
-				// 		color: { value: 'black' }
-				// 	}
-				// }
+				{
+					mark: {
+						type: 'tick',
+						thickness: 2,
+						size: 20
+					},
+					encoding: {
+						x: {
+							field: 'lb',
+							type: 'quantitative'
+						},
+						color: { value: 'black' },
+						opacity: {
+							condition: {
+								test: 'tickSelection == datum.boxId',
+								value: 1
+							},
+							value: 0
+						}
+					}
+				},
+				{
+					mark: {
+						type: 'tick',
+						thickness: 2,
+						size: 20
+					},
+					encoding: {
+						x: {
+							field: 'ub',
+							type: 'quantitative'
+						},
+						color: { value: 'black' },
+						opacity: {
+							condition: {
+								test: 'tickSelection == datum.boxId',
+								value: 1
+							},
+							value: 0
+						}
+					}
+				}
 			]
 		}
 	};
