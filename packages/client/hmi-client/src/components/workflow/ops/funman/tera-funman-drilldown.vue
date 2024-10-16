@@ -89,11 +89,13 @@
 								<MultiSelect
 									ref="columnSelect"
 									class="w-full mt-1 mb-2"
-									:modelValue="variablesOfInterest"
-									:options="requestParameters.map((d: any) => d.name)"
+									:model-value="variablesOfInterest"
+									:options="requestParameters"
+									option-label="name"
+									option-disabled="disabled"
 									:show-toggle-all="false"
-									@update:modelValue="onToggleVariableOfInterest"
 									placeholder="Select variables"
+									@update:model-value="onToggleVariableOfInterest"
 								/>
 								<div class="mb-2 timespan">
 									<div class="timespan-input">
@@ -248,17 +250,13 @@ const outputs = computed(() => {
 
 const activeOutput = ref<WorkflowOutput<FunmanOperationState> | null>(null);
 
-const variablesOfInterest = ref<string[]>([]);
-const onToggleVariableOfInterest = (vals: string[]) => {
-	variablesOfInterest.value = vals;
+const variablesOfInterest = ref();
+const onToggleVariableOfInterest = (event: any[]) => {
+	variablesOfInterest.value = event;
+	const namesOfInterest = event.map((d) => d.name);
 	requestParameters.value.forEach((d) => {
-		if (variablesOfInterest.value.includes(d.name)) {
-			d.label = 'all';
-		} else {
-			d.label = 'any';
-		}
+		d.label = namesOfInterest.includes(d.name) ? 'all' : 'any';
 	});
-
 	const state = _.cloneDeep(props.node.state);
 	state.requestParameters = _.cloneDeep(requestParameters.value);
 	emit('update-state', state);
@@ -330,7 +328,7 @@ const runMakeQuery = async () => {
 		model: configuredModel.value,
 		request: {
 			constraints,
-			parameters: requestParameters.value,
+			parameters: requestParameters.value.map(({ disabled, ...rest }) => rest), // Remove the disabled property from the request (it's only used for UI)
 			structure_parameters: [
 				{
 					name: 'schedules',
@@ -459,7 +457,7 @@ const setModelOptions = async () => {
 
 	if (configuredModel.value.semantics?.ode.parameters) {
 		setRequestParameters(configuredModel.value.semantics?.ode.parameters);
-		variablesOfInterest.value = requestParameters.value.filter((d: any) => d.label === 'all').map((d: any) => d.name);
+		variablesOfInterest.value = requestParameters.value.filter((d: any) => d.label === 'all');
 	} else {
 		toast.error('', 'Provided model has no parameters');
 	}
@@ -477,18 +475,24 @@ const setRequestParameters = (modelParameters: ModelParameter[]) => {
 	});
 
 	requestParameters.value = modelParameters.map((ele) => {
-		let interval = { lb: ele.value, ub: ele.value };
+		const name = ele.id;
+
+		const param = {
+			name,
+			label: (labelMap.get(name) as string) ?? 'any',
+			interval: { lb: ele.value, ub: ele.value },
+			disabled: false
+		};
+
 		if (ele.distribution) {
-			interval = {
+			param.interval = {
 				lb: ele.distribution.parameters.minimum,
 				ub: ele.distribution.parameters.maximum
 			};
+		} else {
+			param.disabled = true; // Disable if constant
 		}
 
-		const param = { name: ele.id, interval, label: 'any' };
-		if (labelMap.has(param.name)) {
-			param.label = labelMap.get(param.name) as string;
-		}
 		return param;
 	});
 };
