@@ -4,7 +4,9 @@ import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -60,25 +62,27 @@ public class InterventionPolicy extends TerariumAsset {
 	// Takes a list of two interventions and will check their static intervention lists to ensure
 	// there are no duplicate time + appliedTo pairs in their indiviudal static interventions
 	private Boolean validateInterventionPair(Intervention interOne, Intervention interTwo) throws Exception {
+		final Set<String> foo = new HashSet<>();
 		List<StaticIntervention> staticOne = interOne.getStaticInterventions();
 		List<StaticIntervention> staticTwo = interTwo.getStaticInterventions();
 
 		for (int i = 0; i < staticOne.size(); i++) {
-			for (int j = 0; j < staticTwo.size(); j++) {
-				final String appliedToOne = staticOne.get(i).getAppliedTo();
-				final Number timeOne = staticOne.get(i).getTimestep();
-				final String appliedToTwo = staticTwo.get(j).getAppliedTo();
-				final Number timeTwo = staticTwo.get(j).getTimestep();
-				if (appliedToOne.equals(appliedToTwo) && timeOne.equals(timeTwo)) {
-					final String errorMessage = String.format(
-						"The intervention %s and %s have duplicate applied to: %s and time: %s pairs.",
-						interOne.getName(),
-						interTwo.getName(),
-						appliedToOne,
-						String.valueOf(timeOne)
-					);
-					throw new Exception(errorMessage);
-				}
+			final String key = staticOne.get(i).getAppliedTo() + staticOne.get(i).getTimestep().toString();
+			foo.add(key);
+		}
+		for (int j = 0; j < staticTwo.size(); j++) {
+			final String key = staticTwo.get(j).getAppliedTo() + staticTwo.get(j).getTimestep().toString();
+			if (foo.contains(key)) {
+				final String errorMessage = String.format(
+					"The intervention %s and %s have duplicate applied to: %s and time: %s pairs.",
+					interOne.getName(),
+					interTwo.getName(),
+					staticTwo.get(j).getAppliedTo(),
+					staticTwo.get(j).getTimestep().toString()
+				);
+				throw new Exception(errorMessage);
+			} else {
+				foo.add(key);
 			}
 		}
 		return true;
