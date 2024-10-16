@@ -288,6 +288,15 @@
 									/>
 								</template>
 							</AccordionTab>
+							<AccordionTab header="Interventions">
+								<template v-for="appliedTo in Object.keys(groupedInterventionOutputs)" :key="appliedTo">
+									<vega-chart
+										expandable
+										:are-embed-actions-visible="true"
+										:visualization-spec="preparedCharts[appliedTo]"
+									/>
+								</template>
+							</AccordionTab>
 							<AccordionTab header="Errors" v-if="errorData.length > 0 && selectedErrorVariableSettings.length > 0">
 								<vega-chart
 									:expandable="onExpandErrorChart"
@@ -481,6 +490,7 @@ import { WorkflowNode } from '@/types/workflow';
 import {
 	createForecastChart,
 	createHistogramChart,
+	createInterventionChart,
 	createErrorChart,
 	applyForecastChartAnnotations,
 	createInterventionChartMarkers
@@ -783,12 +793,26 @@ const preparedCharts = computed(() => {
 			annotations
 		);
 
-		Object.entries(groupedInterventionOutputs.value).forEach((item) => {
-			item[1].forEach((intervention) => {
-				charts[variable].layer.push(...createInterventionChartMarkers([intervention], false, -180));
+		if (groupedInterventionOutputs.value) {
+			Object.entries(groupedInterventionOutputs.value).forEach((item) => {
+				item[1].forEach((intervention) => {
+					charts[variable].layer.push(...createInterventionChartMarkers([intervention], false));
+				});
+			});
+		}
+	});
+
+	if (groupedInterventionOutputs.value) {
+		_.forEach(Object.keys(groupedInterventionOutputs.value), (key) => {
+			charts[key] = createInterventionChart(groupedInterventionOutputs.value[key], {
+				title: key,
+				width: chartSize.value.width,
+				height: chartSize.value.height,
+				xAxisTitle: 'Time',
+				yAxisTitle: 'Value'
 			});
 		});
-	});
+	}
 	return charts;
 });
 
