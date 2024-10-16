@@ -15,7 +15,7 @@
 			</div>
 			<span v-if="description" class="description">{{ description }}</span>
 		</header>
-		<template v-if="isEmpty(modelConfiguration.inferredParameterList)">
+		<template v-if="isEmpty(modelConfiguration.inferredParameterList) && !featureConfig?.isPreview">
 			<main>
 				<span class="expression">
 					<tera-input-text
@@ -67,12 +67,14 @@ import Button from 'primevue/button';
 import { getInitialDescription, getInitialName, getInitialUnits, getStates } from '@/model-representation/service';
 import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
 import { stringToLatexExpression } from '@/services/model';
+import type { FeatureConfig } from '@/types/common';
 
 const props = defineProps<{
 	model: Model;
 	initialId: string;
 	modelConfiguration: ModelConfiguration;
 	modelConfigurations: ModelConfiguration[];
+	featureConfig?: FeatureConfig;
 }>();
 
 const otherValueList = computed(() =>

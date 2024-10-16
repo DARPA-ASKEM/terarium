@@ -81,7 +81,7 @@
 					:value="executeResponse.value"
 					:traceback="executeResponse.traceback"
 				/>
-				<tera-model v-else-if="outputAmr" is-workflow :assetId="outputAmr.id" @on-save="updateNode" />
+				<tera-model v-else-if="outputAmr" is-workflow is-save-for-reuse :assetId="outputAmr.id" @on-save="updateNode" />
 				<template v-else>
 					<tera-progress-spinner v-if="isStratifyInProgress" is-centered :font-size="2">
 						Processing...
@@ -155,6 +155,7 @@ const llmThoughts = ref<any[]>([]);
 const sampleAgentQuestions = [
 	'Stratify my model by the ages young and old',
 	'Stratify my model by the locations Toronto and Montreal where Toronto and Montreal cannot interact',
+	'Stratify my model by the locations Toronto and Montreal where populations within any state are able to travel between Toronto and Montreal',
 	'What is cartesian_control in stratify?'
 ];
 
@@ -429,15 +430,11 @@ const hasCodeChange = () => {
 const checkForCodeChange = debounce(hasCodeChange, 100);
 
 function updateNode(model: Model) {
-	const id = outputAmr.value?.id;
-	if (!id || !model) return;
-
+	if (!model) return;
 	outputAmr.value = model;
-	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.value?.[0] === id));
-
+	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.value?.[0] === model.id));
 	if (!outputPort) return;
 	outputPort.label = model.header.name;
-
 	emit('update-output', outputPort);
 }
 

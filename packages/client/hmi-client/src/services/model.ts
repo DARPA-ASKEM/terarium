@@ -1,12 +1,12 @@
 import API from '@/api/api';
 import { useProjects } from '@/composables/project';
+import type { MMT } from '@/model-representation/mira/mira-common';
 import * as EventService from '@/services/event';
 import type { Initial, InterventionPolicy, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import { Artifact, EventType } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
 import { fileToJson } from '@/utils/file';
 import { isEmpty } from 'lodash';
-import type { MMT } from '@/model-representation/mira/mira-common';
 import { Ref } from 'vue';
 
 export async function createModel(model: Model): Promise<Model | null> {
@@ -38,8 +38,10 @@ export async function createModelAndModelConfig(file: File, progress?: Ref<numbe
  * Get Model from the data service
  * @return Model|null - the model, or null if none returned by API
  */
-export async function getModel(modelId: string): Promise<Model | null> {
-	const response = await API.get(`/models/${modelId}`);
+export async function getModel(modelId: string, projectId?: string): Promise<Model | null> {
+	const response = await API.get(`/models/${modelId}`, {
+		params: { 'project-id': projectId }
+	});
 	return response?.data ?? null;
 }
 
@@ -71,13 +73,14 @@ export async function getBulkModels(modelIDs: string[]) {
 }
 
 // Note: will not work with decapodes
-export async function getMMT(model: Model) {
+export async function getMMT(model: Model): Promise<MMT | null> {
 	const response = await API.post('/mira/amr-to-mmt', model);
-
-	const miraModel = response?.data?.response;
-	if (!miraModel) throw new Error(`Failed to convert model ${model.id}`);
-
-	return (response?.data?.response as MMT) ?? null;
+	const mmt = response?.data?.response;
+	if (!mmt) {
+		console.error(`Failed to convert model ${model.id}`);
+		return null;
+	}
+	return mmt as MMT;
 }
 
 export async function updateModel(model: Model) {

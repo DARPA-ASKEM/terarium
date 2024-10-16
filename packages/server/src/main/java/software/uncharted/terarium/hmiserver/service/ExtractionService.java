@@ -331,20 +331,30 @@ public class ExtractionService {
 			document.getMetadata().put("attributes", extractionResponse.variableAttributes);
 		}
 
-		pageNum = 0;
 		if (extractionResponse.equations != null) {
 			document.getMetadata().put("equations", objectMapper.valueToTree(extractionResponse.equations));
 
-			document.getExtractions().get(pageNum).setEquations(extractionResponse.equations);
-			pageNum++;
+			pageNum = 0;
+			for (final JsonNode page : extractionResponse.equations) {
+				final ArrayNode equationsForPage = (ArrayNode) page;
+				for (final JsonNode equation : equationsForPage) {
+					document.getExtractions().get(pageNum).getEquations().add(equation);
+				}
+				pageNum++;
+			}
 		}
 
-		pageNum = 0;
 		if (extractionResponse.tables != null) {
 			document.getMetadata().put("tables", objectMapper.valueToTree(extractionResponse.tables));
 
-			document.getExtractions().get(pageNum).setEquations(extractionResponse.tables);
-			pageNum++;
+			pageNum = 0;
+			for (final JsonNode page : extractionResponse.tables) {
+				final ArrayNode tablesForPage = (ArrayNode) page;
+				for (final JsonNode table : tablesForPage) {
+					document.getExtractions().get(pageNum).getTables().add(table);
+				}
+				pageNum++;
+			}
 		}
 
 		return documentService.updateAsset(document, projectId, hasWritePermission).orElseThrow();
@@ -822,11 +832,16 @@ public class ExtractionService {
 			}
 
 			// Sort keys
-			Collections.sort(keys);
+			Collections.sort(keys, (s1, s2) -> Integer.compare(Integer.parseInt(s1), Integer.parseInt(s2)));
 
 			final EquationExtraction extraction = new EquationExtraction();
-
 			for (final String key : keys) {
+				final int pageIndex = Integer.parseInt(key);
+				if (pageIndex >= extraction.equations.size()) {
+					for (int i = extraction.equations.size(); i < pageIndex; i++) {
+						extraction.equations.add(objectMapper.createArrayNode());
+					}
+				}
 				extraction.equations.add(output.getResponse().get(key));
 			}
 
@@ -915,11 +930,19 @@ public class ExtractionService {
 			}
 
 			// Sort keys
-			Collections.sort(keys);
+			Collections.sort(keys, (s1, s2) -> Integer.compare(Integer.parseInt(s1), Integer.parseInt(s2)));
 
 			final TableExtraction extraction = new TableExtraction();
 
 			for (final String key : keys) {
+				final int pageIndex = Integer.parseInt(key);
+
+				if (pageIndex >= extraction.tables.size()) {
+					for (int i = extraction.tables.size(); i < pageIndex; i++) {
+						extraction.tables.add(objectMapper.createArrayNode());
+					}
+				}
+
 				final JsonNode page = output.getResponse().get(key);
 				if (page.isArray()) {
 					final ArrayNode pageOfTables = objectMapper.createArrayNode();

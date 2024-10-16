@@ -27,6 +27,7 @@
 				@re-run-prompt="handleRerunPrompt"
 				@edit-prompt="reRunPrompt"
 				@click="selectedCellId = msg.query_id"
+				@on-selected="handleUpdateSelectedOutput(msg.query_id)"
 			/>
 
 			<!-- Add a cell Button -->
@@ -68,7 +69,8 @@ const emit = defineEmits([
 	'new-dataset-saved',
 	'new-model-saved',
 	'update-kernel-state',
-	'update-language'
+	'update-language',
+	'update-selected-outputs'
 ]);
 
 const props = defineProps<{
@@ -205,6 +207,18 @@ const handleRerunPrompt = (queryId: string) => {
 	reRunPrompt(queryId);
 };
 
+const handleUpdateSelectedOutput = (queryId: string) => {
+	notebookItems.value = notebookItems.value.map((item) => {
+		if (item.query_id === queryId) {
+			item.selected = !item.selected;
+		} else {
+			// for now we have radio button-like behaviour, so we can only select one output at a time
+			item.selected = false;
+		}
+		return item;
+	});
+};
+
 const reRunPrompt = (queryId: string, query?: string) => {
 	const kernel = props.jupyterSession.session?.kernel as IKernelConnection;
 	if (!kernel) return;
@@ -269,7 +283,8 @@ const updateNotebookCells = (message, isNextCell: boolean = true) => {
 			resultingCsv: null,
 			executions: [],
 			// auto run the code block when we send an llm request
-			autoRun: message.header.msg_type === 'llm_request'
+			autoRun: message.header.msg_type === 'llm_request',
+			selected: false
 		};
 
 		const index = notebookItems.value.findIndex((item) => item.query_id === selectedCellId.value);
@@ -422,6 +437,8 @@ watch(
 	() => notebookItems.value,
 	async () => {
 		if (props.notebookSession) {
+			const selectedOutputs = notebookItems.value.filter((item) => item.selected);
+			emit('update-selected-outputs', selectedOutputs);
 			await updateNotebookSession({
 				id: props.notebookSession.id,
 				description: props.notebookSession.description,

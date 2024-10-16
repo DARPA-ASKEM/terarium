@@ -43,19 +43,19 @@ export const mergeResults = (
  * transform data, utilize mae, return mean aboslute error for charts.
  * Note: This will only compare rows with the same timestep value.
  */
-export function getErrorData(groundTruth: DataArray, simulationData: DataArray, mapping: CalibrateMap[]) {
+export function getErrorData(
+	groundTruth: DataArray,
+	simulationData: DataArray,
+	mapping: CalibrateMap[],
+	timestampColName: string
+) {
 	const errors: DataArray = [];
-	if (simulationData.length === 0 || groundTruth.length === 0) return errors;
+	if (simulationData.length === 0 || groundTruth.length === 0 || !timestampColName) return errors;
 	const pyciemssMap = parsePyCiemssMap(simulationData[0]);
-	const datasetTimeCol = mapping.find((ele) => ele.modelVariable === 'timestamp')?.datasetVariable;
-	if (!datasetTimeCol) {
-		console.error('No dataset time column found to getErrorData');
-		return errors;
-	}
 
 	const datasetVariables = mapping.map((ele) => ele.datasetVariable);
 	const relevantGroundTruthColumns = Object.keys(groundTruth[0]).filter(
-		(variable) => datasetVariables.includes(variable) && variable !== datasetTimeCol
+		(variable) => datasetVariables.includes(variable) && variable !== timestampColName
 	);
 	if (relevantGroundTruthColumns.length === 0) return errors;
 
@@ -67,9 +67,9 @@ export function getErrorData(groundTruth: DataArray, simulationData: DataArray, 
 			const newEntries = entries.map((entry) => {
 				// Ensure the simulation data maps to the same as the ground truth:
 				const varName = mapping.find((m) => m.datasetVariable === columnName)?.modelVariable;
-				return { [datasetTimeCol]: entry.timepoint_id, [columnName]: entry[pyciemssMap[varName as string]] };
+				return { [timestampColName]: entry.timepoint_id, [columnName]: entry[pyciemssMap[varName as string]] };
 			});
-			const meanAbsoluteError = mae(groundTruth, newEntries, datasetTimeCol, columnName);
+			const meanAbsoluteError = mae(groundTruth, newEntries, timestampColName, columnName);
 			resultRow[columnName] = meanAbsoluteError;
 		});
 		errors.push(resultRow);

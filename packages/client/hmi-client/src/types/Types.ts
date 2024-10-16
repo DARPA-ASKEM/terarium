@@ -224,12 +224,6 @@ export interface ModelDescription {
     userId?: string;
 }
 
-export interface ModelFramework extends TerariumAssetThatSupportsAdditionalProperties {
-    name: string;
-    version: string;
-    semantics: string;
-}
-
 export interface InferredParameterSemantic extends Semantic {
     referenceId: string;
     distribution: ModelDistribution;
@@ -894,12 +888,14 @@ export interface Authority {
 
 export interface Rate {
     target: string;
+    description?: string;
     expression: string;
     expression_mathml?: string;
 }
 
 export interface Initial {
     target: string;
+    description?: string;
     expression: string;
     expression_mathml: string;
 }

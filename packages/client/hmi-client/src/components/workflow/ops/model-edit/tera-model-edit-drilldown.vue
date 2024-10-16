@@ -41,6 +41,7 @@
 				class="ace-editor"
 				:options="{ showPrintMargin: false }"
 			/>
+			<tera-notebook-output :traceback="executeResponseTraceback" />
 		</tera-drilldown-section>
 		<template #preview v-if="drilldownRef?.selectedTab === DrilldownTabs.Notebook">
 			<tera-drilldown-preview
@@ -51,12 +52,12 @@
 				is-selectable
 			>
 				<tera-notebook-error
-					v-if="executeResponse.status === OperatorStatus.ERROR"
-					:name="executeResponse.name"
-					:value="executeResponse.value"
-					:traceback="executeResponse.traceback"
+					v-if="executeErrorResponse.status === OperatorStatus.ERROR"
+					:name="executeErrorResponse.name"
+					:value="executeErrorResponse.value"
+					:traceback="executeErrorResponse.traceback"
 				/>
-				<tera-model v-else-if="amr" is-workflow :assetId="amr.id" @on-save="updateNode" />
+				<tera-model v-else-if="amr" is-workflow is-save-for-reuse :assetId="amr.id" @on-save="updateNode" />
 				<tera-progress-spinner v-else-if="isUpdatingModel || !amr" is-centered :font-size="2">
 					Loading...
 				</tera-progress-spinner>
@@ -88,6 +89,7 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraModel from '@/components/model/tera-model.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import TeraNotebookOutput from '@/components/drilldown/tera-notebook-output.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { nodeOutputLabel } from '@/components/workflow/util';
@@ -147,12 +149,14 @@ const llmThoughts = ref<any[]>([]);
 
 const isDraft = ref(false);
 
-const executeResponse = ref({
+const executeErrorResponse = ref({
 	status: OperatorStatus.DEFAULT,
 	name: '',
 	value: '',
 	traceback: ''
 });
+
+const executeResponseTraceback = ref('');
 
 const updateLlmQuery = (query: string) => {
 	llmThoughts.value = [];
@@ -205,7 +209,9 @@ const runCode = () => {
 				executedCode = data.content.code;
 			})
 			.register('stream', (data) => {
-				console.log('stream', data);
+				if (data?.content?.name === 'stderr' || data?.content?.name === 'stdout') {
+					executeResponseTraceback.value = `${executeResponseTraceback.value} ${data.content.text}`;
+				}
 			})
 			.register('model_preview', (data) => {
 				if (!data.content) return;
@@ -219,7 +225,7 @@ const runCode = () => {
 				let status = OperatorStatus.DEFAULT;
 				if (data.msg.content.status === 'ok') status = OperatorStatus.SUCCESS;
 				if (data.msg.content.status === 'error') status = OperatorStatus.ERROR;
-				executeResponse.value = {
+				executeErrorResponse.value = {
 					status,
 					name: data.msg.content.ename ? data.msg.content.ename : '',
 					value: data.msg.content.evalue ? data.msg.content.evalue : '',
@@ -351,15 +357,11 @@ watch(
 );
 
 function updateNode(model: Model) {
-	const id = amr.value?.id;
-	if (!id || !model) return;
-
+	if (!model) return;
 	amr.value = model;
-	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.value?.[0] === id));
-
+	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.value?.[0] === model.id));
 	if (!outputPort) return;
 	outputPort.label = model.header.name;
-
 	emit('update-output', outputPort);
 }
 

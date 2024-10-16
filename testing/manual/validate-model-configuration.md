@@ -18,29 +18,27 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 5. Link the output port of the _Model_ operator to the model port of the _Configure Model_ operator
 6. Open the _Configure Model_ operator
 7. Verify that the model is reasonably configured by inspecting the value of the initial conditions and parameters, e.g.\
-   `S = 1000, I = 2, R = 0, β = 0.6, γ = 0.2`
-8. Change the type of the parameters to a _Uniform_ distribution with some reasonable lower and upper bounds, e.g \
-  `β ∈ [0.4, 0.8], γ ∈ [0.1, 0.3]`
-9. Give a name and description to this configuration
-10. Save this configuration by clicking _Run_
-11. Note that this configuration is now available in the _Suggested configurations_ section and appears as the output port of the operator
+   `S = 1000.0, I = 2.0, R = 0.0, β = 0.0006, γ = 0.2`
+8. Add uncertainty to the parameters e.g +/- 25%
+9. Save as a new configuration
+10. Note that this configuration is now available in the _Suggested configurations_ section and appears as the output port of the operator
 
 ### 3. Setup the Validate operator
 1. Create a _Validate configuration_ operator by right-clicking anywhere in the workflow canvas and selecting _Work with model/validate configuration_
 2. Link the output port of the _Configure model_ operator to the _Model configuration_ input port of the _Validate configuration_ operator
 3. Open the _Validate configuration_ operator by clicking _Review checks_
-4. Click _Show additional options_ to edit the settings of this operator
-5. A _Tolerance_ input and slider should be available \
-    - set the value to `0.05` (this determines how granular the operator segment the input space of the model for validation)
-7. A _parameters of interest_ dropdown should be available, populated with the parameters and state variables of the model
+4. A _parameters of interest_ dropdown should be available, populated with the parameters and state variables of the model
     - select `β` and `γ` (this determines for which inputs the operator should run the validation)
+5. In the Settings section, use the _Tolerance_ input and slider \
+    - set the value to `0.05` (this determines how granular the operator segment the input space of the model for validation)
+
 
 ### 4. Add sanity checks
 1. Ensure that the _Compartmental constraint_ is present (it requires the operator to check that the sum of the state variables at all times is equal to their sum at time = 0 and that each state variable is positive) \
     `I + R + S = 1002.0, I >= 0, R >= 0, S >= 0`
-2. Create a new sanity check that ensures the number of infected persons is less than `750.0` in the first `100` days by first clicking _Add another constraint_
-3. Name it `Infected cap` and set its type to `State constraint` \
-4. Set the _Target_ to `I` and _Upper bound_ to `750.0`, leaving all other options as default
+2. Create a new sanity check that ensures the number of infected persons is less than `750.0` in the first `100` days by first clicking _Add new check_
+3. Name it `Infected cap`
+4. Enter the values: The `State variables` `I` should be less than or equal to `750` persons from timepoint `0` to `100`
 
 ### 5. Successful Validation
 1. Click _Run_

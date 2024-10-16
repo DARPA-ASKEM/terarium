@@ -27,6 +27,7 @@
 					:notebook-session="notebookSession"
 					:programming-language="node.state.programmingLanguage"
 					@update-language="(lang) => onUpdateLanguage(lang)"
+					@update-selected-outputs="(outputs) => onUpdateSelectedOutputs(outputs)"
 					@update-kernel-state="updateKernelState"
 					:kernelState="kernelState"
 					:selected-dataset="selectedDataset"
@@ -51,6 +52,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { useProjects } from '@/composables/project';
+import { INotebookItem } from '@/services/jupyter';
 import { DatasetTransformerState } from './dataset-transformer-operation';
 
 const props = defineProps<{
@@ -108,6 +110,12 @@ onMounted(async () => {
 const onUpdateLanguage = (language: string) => {
 	const state = cloneDeep(props.node.state);
 	state.programmingLanguage = language;
+	emit('update-state', state);
+};
+
+const onUpdateSelectedOutputs = (outputs: INotebookItem[]) => {
+	const state = cloneDeep(props.node.state);
+	state.selectedOutputs = outputs;
 	emit('update-state', state);
 };
 
