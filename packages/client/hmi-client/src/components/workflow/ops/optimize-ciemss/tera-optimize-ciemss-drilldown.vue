@@ -61,7 +61,6 @@
 							/>
 						</template>
 						<section class="empty-state" v-if="knobs.interventionPolicyGroups.length === 0">
-							<!-- TODO: This only works if the user clicks refresh !?!? -->
 							<p class="mt-1">No intervention policies have been added.</p>
 						</section>
 						<template v-for="(cfg, idx) in knobs.interventionPolicyGroups">
