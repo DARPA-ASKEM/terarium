@@ -459,7 +459,8 @@ ul li:hover {
 	color: white;
 	font-size: small;
 }
-:deep .dropdown-button.p-dropdown .p-dropdown-trigger {
+
+:deep(.dropdown-button.p-dropdown .p-dropdown-trigger) {
 	color: white;
 }
 </style>
