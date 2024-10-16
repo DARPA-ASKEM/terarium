@@ -1078,19 +1078,6 @@ export function createFunmanParameterCharts(
 							value: 15
 						}
 					}
-				},
-				{
-					mark: {
-						type: 'tick',
-						size: 20
-					},
-					encoding: {
-						x: {
-							field: 'tick',
-							type: 'quantitative',
-							title: null
-						}
-					}
 				}
 				// TODO: Selected bound ticks for lb, ub
 				// {
