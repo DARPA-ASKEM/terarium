@@ -77,15 +77,14 @@ const interventionPolicy = ref<InterventionPolicy | null>(null);
 
 let pyciemssMap: Record<string, string> = {};
 
+const isFinished = (state: ProgressState) =>
+	[ProgressState.Cancelled, ProgressState.Failed, ProgressState.Complete].includes(state);
+
 useClientEvent(
 	ClientEventType.SimulationNotification,
 	async (event: ClientEvent<StatusUpdate<SimulationNotificationData>>) => {
 		const simulationNotificationData = event.data.data;
-		if (
-			simulationNotificationData.simulationId !== inProgressForecastId.value ||
-			![ProgressState.Cancelled, ProgressState.Failed, ProgressState.Complete].includes(event.data.state)
-		)
-			return;
+		if (simulationNotificationData.simulationId !== inProgressForecastId.value || !isFinished(event.data.state)) return;
 
 		const simId = simulationNotificationData.simulationId;
 		const state = _.cloneDeep(props.node.state);
@@ -113,10 +112,7 @@ useClientEvent(
 	ClientEventType.SimulationNotification,
 	async (event: ClientEvent<StatusUpdate<SimulationNotificationData>>) => {
 		const simulationNotificationData = event.data.data;
-		if (
-			simulationNotificationData.simulationId !== inProgressBaseForecastId.value ||
-			![ProgressState.Cancelled, ProgressState.Failed, ProgressState.Complete].includes(event.data.state)
-		)
+		if (simulationNotificationData.simulationId !== inProgressBaseForecastId.value || !isFinished(event.data.state))
 			return;
 
 		const simId = simulationNotificationData.simulationId;
