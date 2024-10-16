@@ -200,7 +200,12 @@ export const extractTemplateMatrix = (templates: MiraTemplate[]) => {
 		if (template.subject) {
 			rowIdx = rowNames.indexOf(template.subject.name);
 		}
-		if (template.outcome) {
+
+		// Use subject-controller matrix if possible, otherwise fallback to subject-outcome matrix
+		// Note we still use the subject-outcome matrix grid
+		if (template.controller) {
+			colIdx = colNames.indexOf(template.controller.name);
+		} else if (template.outcome) {
 			colIdx = colNames.indexOf(template.outcome.name);
 		}
 		matrix[rowIdx][colIdx].content = {
@@ -208,5 +213,6 @@ export const extractTemplateMatrix = (templates: MiraTemplate[]) => {
 			id: template.name
 		};
 	}
+
 	return { rowNames, colNames, matrix };
 };
