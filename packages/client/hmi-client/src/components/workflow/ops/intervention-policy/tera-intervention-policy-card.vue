@@ -26,7 +26,7 @@ defineProps<{
 	selected?: boolean;
 }>();
 
-const emit = defineEmits(['use-intervention']);
+const emit = defineEmits(['use-intervention', 'delete-intervention-policy']);
 
 const contextMenu = ref();
 const contextMenuItems = [
@@ -35,6 +35,13 @@ const contextMenuItems = [
 		icon: 'pi pi-arrow-right',
 		command() {
 			emit('use-intervention');
+		}
+	},
+	{
+		label: 'Delete',
+		icon: 'pi pi-trash',
+		command() {
+			emit('delete-intervention-policy');
 		}
 	}
 ];

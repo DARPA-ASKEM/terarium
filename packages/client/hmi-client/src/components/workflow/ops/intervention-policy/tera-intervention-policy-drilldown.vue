@@ -36,6 +36,7 @@
 									:selected="selectedPolicy?.id === policy.id"
 									@click="onReplacePolicy(policy)"
 									@use-intervention="onReplacePolicy(policy)"
+									@delete-intervention-policy="onDeleteInterventionPolicy(policy)"
 								/>
 							</li>
 						</ul>
@@ -183,7 +184,8 @@ import {
 	blankIntervention,
 	flattenInterventionData,
 	getInterventionPolicyById,
-	updateInterventionPolicy
+	updateInterventionPolicy,
+	deleteInterventionPolicy
 } from '@/services/intervention-policy';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -404,6 +406,23 @@ const onReplacePolicy = (policy: InterventionPolicy) => {
 			rejectLabel: 'Cancel'
 		});
 	}
+};
+
+const onDeleteInterventionPolicy = (policy: InterventionPolicy) => {
+	confirm.require({
+		message: `Are you sure you want to delete the configuration ${policy.name}?`,
+		header: 'Delete Confirmation',
+		icon: 'pi pi-exclamation-triangle',
+		acceptLabel: 'Confirm',
+		rejectLabel: 'Cancel',
+		accept: async () => {
+			if (policy.id) {
+				await deleteInterventionPolicy(policy.id);
+				const modelId = props.node.inputs[0].value?.[0];
+				fetchInterventionPolicies(modelId);
+			}
+		}
+	});
 };
 
 const addIntervention = () => {
