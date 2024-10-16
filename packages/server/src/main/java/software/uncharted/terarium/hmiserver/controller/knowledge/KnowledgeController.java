@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.annotation.PostConstruct;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -60,6 +61,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Prove
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
+import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
@@ -73,6 +75,7 @@ import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 import software.uncharted.terarium.hmiserver.service.tasks.EnrichAmrResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.EquationsCleanupResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
@@ -106,10 +109,17 @@ public class KnowledgeController {
 	final ProjectService projectService;
 	final CurrentUserService currentUserService;
 
+	private final EquationsCleanupResponseHandler equationsCleanupResponseHandler;
+
 	final Messages messages;
 
 	@Value("${openai-api-key:}")
 	String OPENAI_API_KEY;
+
+	@PostConstruct
+	void init() {
+		taskService.addResponseHandler(equationsCleanupResponseHandler);
+	}
 
 	private void enrichModel(
 		final UUID projectId,
@@ -236,9 +246,47 @@ public class KnowledgeController {
 			}
 		}
 
+		// Cleanup equations from the request
+		List<String> equations = new ArrayList<>();
+		if (req.get("equations") != null) {
+			for (final JsonNode equation : req.get("equations")) {
+				equations.add(equation.asText());
+			}
+		}
+		TaskRequest cleanupReq = cleanupEquationsTaskRequest(projectId, equations);
+		TaskResponse cleanupResp = null;
+		try {
+			cleanupResp = taskService.runTask(TaskMode.SYNC, cleanupReq);
+		} catch (final JsonProcessingException e) {
+			log.warn("Unable to clean-up equations due to a JsonProcessingException. Reverting to original equations.", e);
+		} catch (final TimeoutException e) {
+			log.warn("Unable to clean-up equations due to a TimeoutException. Reverting to original equations.", e);
+		} catch (final InterruptedException e) {
+			log.warn("Unable to clean-up equations due to a InterruptedException. Reverting to original equations.", e);
+		} catch (final ExecutionException e) {
+			log.warn("Unable to clean-up equations due to a ExecutionException. Reverting to original equations.", e);
+		}
+
+		// get the equations from the cleanup response, or use the original equations
+		JsonNode equationsReq = req.get("equations");
+		if (cleanupResp != null && cleanupResp.getOutput() != null) {
+			try {
+				JsonNode output = mapper.readValue(cleanupResp.getOutput(), JsonNode.class);
+				if (output.get("response") != null && output.get("response").get("equations") != null) {
+					equationsReq = output.get("response").get("equations");
+				}
+			} catch (IOException e) {
+				log.warn("Unable to retrive cleaned-up equations from GoLLM response. Reverting to original equations.", e);
+			}
+		}
+
+		// Create a new request with the cleaned-up equations, so that we don't modify the original request.
+		JsonNode newReq = req.deepCopy();
+		((ObjectNode) newReq).set("equations", equationsReq);
+
 		// Get an AMR from Skema Unified Service
 		try {
-			responseAMR = skemaUnifiedProxy.consolidatedEquationsToAMR(req).getBody();
+			responseAMR = skemaUnifiedProxy.consolidatedEquationsToAMR(newReq).getBody();
 			if (responseAMR == null) {
 				log.warn("Skema Unified Service did not return a valid AMR based on the provided equations");
 				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("skema.bad-equations"));
@@ -839,5 +887,31 @@ public class KnowledgeController {
 			"An unknown error occurred while Skema Unified Service was trying to produce an AMR based on the provided resources"
 		);
 		return new ResponseStatusException(httpStatus, messages.get("generic.unknown"));
+	}
+
+	private TaskRequest cleanupEquationsTaskRequest(UUID projectId, List<String> equations) {
+		final EquationsCleanupResponseHandler.Input input = new EquationsCleanupResponseHandler.Input();
+		input.setEquations(equations);
+
+		// Create the task
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.GOLLM);
+		req.setScript(EquationsCleanupResponseHandler.NAME);
+		req.setUserId(currentUserService.get().getId());
+
+		try {
+			req.setInput(mapper.writeValueAsBytes(input));
+		} catch (final Exception e) {
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+		}
+
+		req.setProjectId(projectId);
+
+		final EquationsCleanupResponseHandler.Properties props = new EquationsCleanupResponseHandler.Properties();
+		props.setProjectId(projectId);
+		req.setAdditionalProperties(props);
+
+		return req;
 	}
 }

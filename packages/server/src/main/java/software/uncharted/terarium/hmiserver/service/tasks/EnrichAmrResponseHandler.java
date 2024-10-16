@@ -106,11 +106,6 @@ public class EnrichAmrResponseHandler extends TaskResponseHandler {
 					.findFirst()
 					.ifPresent(initial -> {
 						initial.setDescription(state.description);
-						if (state.units != null) {
-							initial.setExpression(state.units.expression);
-							initial.setExpressionMathml(state.units.expressionMathml);
-						}
-
 						StreamSupport.stream(model.getModel().get("states").spliterator(), false)
 							.filter(stateNode -> stateNode.path("id").asText().equals(state.id))
 							.findFirst()
@@ -173,8 +168,8 @@ public class EnrichAmrResponseHandler extends TaskResponseHandler {
 					.stream()
 					.filter(rate -> rate.getTarget().equalsIgnoreCase(transition.id))
 					.findFirst()
-					.ifPresent(observe -> {
-						observe.setDescription(transition.description);
+					.ifPresent(trans -> {
+						trans.setDescription(transition.description);
 
 						StreamSupport.stream(model.getModel().get("transitions").spliterator(), false)
 							.filter(transitionNode -> transitionNode.path("id").asText().equals(transition.id))

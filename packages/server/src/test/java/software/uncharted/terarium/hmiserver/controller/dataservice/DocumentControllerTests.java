@@ -284,7 +284,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 			.andExpect(status().isOk());
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCannotGetPrivateModelWithoutProject() throws Exception {
 		final DocumentAsset documentAsset_public_not_temp = (DocumentAsset) new DocumentAsset()

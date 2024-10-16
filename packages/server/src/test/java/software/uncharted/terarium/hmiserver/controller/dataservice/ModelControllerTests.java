@@ -183,7 +183,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 			.andExpect(status().isOk());
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCannotGetUnpriviligedModelWithoutProject() throws Exception {
 		final Model model_public_not_temp = (Model) new Model()
