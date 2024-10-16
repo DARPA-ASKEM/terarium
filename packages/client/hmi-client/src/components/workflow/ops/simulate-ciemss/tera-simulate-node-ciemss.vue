@@ -77,93 +77,6 @@ const interventionPolicy = ref<InterventionPolicy | null>(null);
 
 let pyciemssMap: Record<string, string> = {};
 
-const isFinished = (state: ProgressState) =>
-	[ProgressState.Cancelled, ProgressState.Failed, ProgressState.Complete].includes(state);
-
-useClientEvent(
-	ClientEventType.SimulationNotification,
-	async (event: ClientEvent<StatusUpdate<SimulationNotificationData>>) => {
-		const simulationNotificationData = event.data.data;
-		if (simulationNotificationData.simulationId !== inProgressForecastId.value || !isFinished(event.data.state)) return;
-
-		const simId = simulationNotificationData.simulationId;
-		const state = _.cloneDeep(props.node.state);
-		state.errorMessage = { name: '', value: '', traceback: '' };
-		state.inProgressForecastId = '';
-
-		if (event.data.state === ProgressState.Failed) {
-			const simulation = await getSimulation(simId);
-			if (simulation?.status && simulation?.statusMessage) {
-				state.errorMessage = {
-					name: simId,
-					value: simulation.status,
-					traceback: simulation.statusMessage
-				};
-			}
-		} else if (event.data.state === ProgressState.Complete) {
-			await processResult(simId);
-			state.forecastId = simId;
-		}
-		emit('update-state', state);
-	}
-);
-
-useClientEvent(
-	ClientEventType.SimulationNotification,
-	async (event: ClientEvent<StatusUpdate<SimulationNotificationData>>) => {
-		const simulationNotificationData = event.data.data;
-		if (simulationNotificationData.simulationId !== inProgressBaseForecastId.value || !isFinished(event.data.state))
-			return;
-
-		const simId = simulationNotificationData.simulationId;
-		const state = _.cloneDeep(props.node.state);
-		state.errorMessage = { name: '', value: '', traceback: '' };
-		state.inProgressBaseForecastId = '';
-		if (event.data.state === ProgressState.Complete) {
-			state.baseForecastId = simId;
-		}
-		emit('update-state', state);
-	}
-);
-
-// const poller = new Poller();
-// // TODO: replace poller with useClientEvent and check both base simulation and simulation with intervention as well.
-// const pollResult = async (runId: string) => {
-// 	selectedRunId.value = undefined;
-
-// 	poller
-// 		.setInterval(3000)
-// 		.setThreshold(300)
-// 		.setPollAction(async () => pollAction(runId));
-// 	const pollerResults = await poller.start();
-// 	let state = _.cloneDeep(props.node.state);
-// 	state.errorMessage = { name: '', value: '', traceback: '' };
-
-// 	if (pollerResults.state === PollerState.Cancelled) {
-// 		state.inProgressForecastId = '';
-// 		poller.stop();
-// 	} else if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-// 		// throw if there are any failed runs for now
-// 		logger.error(`Simulation: ${runId} has failed`, {
-// 			toastTitle: 'Error - Pyciemss'
-// 		});
-// 		const simulation = await getSimulation(runId);
-// 		if (simulation?.status && simulation?.statusMessage) {
-// 			state = _.cloneDeep(props.node.state);
-// 			state.inProgressForecastId = '';
-// 			state.errorMessage = {
-// 				name: runId,
-// 				value: simulation.status,
-// 				traceback: simulation.statusMessage
-// 			};
-// 			emit('update-state', state);
-// 		}
-// 		throw Error('Failed Runs');
-// 	}
-// 	emit('update-state', state);
-// 	return pollerResults;
-// };
-
 const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperationState) => {
 	emit('update-state', state);
 });
@@ -174,6 +87,8 @@ const processResult = async (runId: string) => {
 		_.keys(groupedInterventionOutputs.value).forEach((key) => {
 			chartProxy.addChart([key]);
 		});
+		console.log('Updated chart configs');
+		console.log(state.chartConfigs);
 	} else if (_.isEmpty(state.chartConfigs)) {
 		chartProxy.addChart();
 	}
@@ -273,35 +188,56 @@ const preparedCharts = computed(() => {
 	});
 });
 
-watch(
-	() => props.node.inputs[0].value,
-	async () => {
-		const input = props.node.inputs[0];
-		if (!input.value) return;
+const isFinished = (state: ProgressState) =>
+	[ProgressState.Cancelled, ProgressState.Failed, ProgressState.Complete].includes(state);
 
-		const id = input.value[0];
-		model.value = await getModelByModelConfigurationId(id);
-		modelVarUnits.value = getUnitsFromModelParts(model.value as Model);
-	},
-	{ immediate: true }
+useClientEvent(
+	ClientEventType.SimulationNotification,
+	async (event: ClientEvent<StatusUpdate<SimulationNotificationData>>) => {
+		const simulationNotificationData = event.data.data;
+		if (simulationNotificationData.simulationId !== inProgressForecastId.value || !isFinished(event.data.state)) return;
+
+		const simId = simulationNotificationData.simulationId;
+		const state = _.cloneDeep(props.node.state);
+		state.errorMessage = { name: '', value: '', traceback: '' };
+		state.inProgressForecastId = '';
+
+		if (event.data.state === ProgressState.Failed) {
+			const simulation = await getSimulation(simId);
+			if (simulation?.status && simulation?.statusMessage) {
+				state.errorMessage = {
+					name: simId,
+					value: simulation.status,
+					traceback: simulation.statusMessage
+				};
+			}
+		} else if (event.data.state === ProgressState.Complete) {
+			await processResult(simId);
+			state.forecastId = simId;
+			console.log('updated forecast id from client event');
+		}
+		emit('update-state', state);
+	}
 );
 
-// watch(
-// 	() => props.node.state.inProgressForecastId,
-// 	async (id) => {
-// 		if (!id || id === '') return;
+useClientEvent(
+	ClientEventType.SimulationNotification,
+	async (event: ClientEvent<StatusUpdate<SimulationNotificationData>>) => {
+		const simulationNotificationData = event.data.data;
+		if (simulationNotificationData.simulationId !== inProgressBaseForecastId.value || !isFinished(event.data.state))
+			return;
 
-// 		const response = await pollResult(id);
-// 		if (response.state === PollerState.Done) {
-// 			await processResult(id);
-// 		}
-// 		const state = _.cloneDeep(props.node.state);
-// 		state.inProgressForecastId = '';
-// 		state.forecastId = id;
-// 		emit('update-state', state);
-// 	},
-// 	{ immediate: true }
-// );
+		const simId = simulationNotificationData.simulationId;
+		const state = _.cloneDeep(props.node.state);
+		state.errorMessage = { name: '', value: '', traceback: '' };
+		state.inProgressBaseForecastId = '';
+		if (event.data.state === ProgressState.Complete) {
+			state.baseForecastId = simId;
+			console.log('updated base forecast id from client event');
+		}
+		emit('update-state', state);
+	}
+);
 
 watch(
 	() => props.node.state.inProgressForecastId,
@@ -314,6 +250,7 @@ watch(
 		const state = _.cloneDeep(props.node.state);
 		state.inProgressForecastId = '';
 		state.forecastId = id;
+		console.log('updated forecast id from watch');
 		emit('update-state', state);
 	},
 	{ immediate: true }
@@ -329,7 +266,21 @@ watch(
 		const state = _.cloneDeep(props.node.state);
 		state.inProgressBaseForecastId = '';
 		state.baseForecastId = id;
+		console.log('updated base forecast id from watch');
 		emit('update-state', state);
+	},
+	{ immediate: true }
+);
+
+watch(
+	() => props.node.inputs[0].value,
+	async () => {
+		const input = props.node.inputs[0];
+		if (!input.value) return;
+
+		const id = input.value[0];
+		model.value = await getModelByModelConfigurationId(id);
+		modelVarUnits.value = getUnitsFromModelParts(model.value as Model);
 	},
 	{ immediate: true }
 );
