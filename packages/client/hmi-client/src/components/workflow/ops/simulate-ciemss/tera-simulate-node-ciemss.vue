@@ -290,17 +290,19 @@ watch(
 		const forecastId = props.node.state.forecastId;
 		if (!forecastId || !selectedRunId.value || inProgressForecastRun.value) return;
 
-		let result = await getRunResultCSV(forecastId, 'result.csv');
+		let [result, resultSummary] = await Promise.all([
+			getRunResultCSV(forecastId, 'result.csv'),
+			getRunResultCSV(forecastId, 'result_summary.csv')
+		]);
 		pyciemssMap = parsePyCiemssMap(result[0]);
-
-		let resultSummary = await getRunResultCSV(forecastId, 'result_summary.csv');
 
 		const baseForecastId = props.node.state.baseForecastId;
 		if (baseForecastId) {
 			// If forecast run before intervention (base run) is available, merge the results
-			const baseResult = await getRunResultCSV(baseForecastId, 'result.csv', renameFnGenerator('base'));
-			const baseResultSummary = await getRunResultCSV(baseForecastId, 'result_summary.csv', renameFnGenerator('base'));
-
+			const [baseResult, baseResultSummary] = await Promise.all([
+				getRunResultCSV(baseForecastId, 'result.csv', renameFnGenerator('base')),
+				getRunResultCSV(baseForecastId, 'result_summary.csv', renameFnGenerator('base'))
+			]);
 			const merged = mergeResults(baseResult, result, baseResultSummary, resultSummary);
 			result = merged.result;
 			resultSummary = merged.resultSummary;

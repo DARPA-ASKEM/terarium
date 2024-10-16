@@ -246,6 +246,7 @@ import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-i
 import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import TeraChartControl from '../../tera-chart-control.vue';
+import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 
 const isSidebarOpen = ref(true);
 const props = defineProps<{
@@ -452,25 +453,24 @@ const lazyLoadSimulationData = async (outputRunId: string) => {
 	const forecastId = props.node.state.forecastId;
 	if (!forecastId || forecastId === '') return;
 
-	const [result, resultSummary] = await Promise.all([
+	let [result, resultSummary] = await Promise.all([
 		getRunResultCSV(forecastId, 'result.csv'),
 		getRunResultCSV(forecastId, 'result_summary.csv')
 	]);
-
-	// Forecast results without the interventions
-	const baseForecastId = props.node.state.baseForecastId;
-	if (baseForecastId && baseForecastId !== '') {
-		const [baseResult, baseResultSummary] = await Promise.all([
-			getRunResultCSV(baseForecastId, 'result.csv'),
-			getRunResultCSV(baseForecastId, 'result_summary.csv')
-		]);
-		console.log(baseResult, baseResultSummary);
-	}
-
 	pyciemssMap = parsePyCiemssMap(result[0]);
 	rawContent.value[outputRunId] = convertToCsvAsset(result, Object.values(pyciemssMap));
 
-	// TODO: Merge base and forecast results
+	// Forecast results without the interventions
+	const baseForecastId = props.node.state.baseForecastId;
+	if (baseForecastId) {
+		const [baseResult, baseResultSummary] = await Promise.all([
+			getRunResultCSV(baseForecastId, 'result.csv', renameFnGenerator('base')),
+			getRunResultCSV(baseForecastId, 'result_summary.csv', renameFnGenerator('base'))
+		]);
+		const merged = mergeResults(baseResult, result, baseResultSummary, resultSummary);
+		result = merged.result;
+		resultSummary = merged.resultSummary;
+	}
 	runResults.value[outputRunId] = result;
 	runResultsSummary.value[outputRunId] = resultSummary;
 };
