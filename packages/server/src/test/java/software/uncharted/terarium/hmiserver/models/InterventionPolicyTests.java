@@ -1,9 +1,7 @@
 package software.uncharted.terarium.hmiserver.models;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
@@ -11,7 +9,6 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.interventi
 import software.uncharted.terarium.hmiserver.models.simulationservice.interventions.InterventionPolicy;
 import software.uncharted.terarium.hmiserver.models.simulationservice.interventions.StaticIntervention;
 
-@Slf4j
 public class InterventionPolicyTests extends TerariumApplicationTests {
 
 	@Test
