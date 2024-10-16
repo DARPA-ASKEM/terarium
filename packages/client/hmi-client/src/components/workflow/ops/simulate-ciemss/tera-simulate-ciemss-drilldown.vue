@@ -20,7 +20,7 @@
 						<p>Click Run to start the simulation.</p>
 						<span class="flex gap-2">
 							<tera-pyciemss-cancel-button :simulation-run-id="cancelRunId" />
-							<Button label="Run" icon="pi pi-play" @click="run" :loading="showSpinner" />
+							<Button label="Run" icon="pi pi-play" @click="run" :loading="inProgressForecastRun" />
 						</span>
 					</div>
 					<div class="form-section" v-if="isSidebarOpen">
@@ -119,7 +119,7 @@
 
 		<!-- Preview -->
 		<template #preview>
-			<tera-drilldown-section v-if="selectedOutputId" :is-loading="showSpinner">
+			<tera-drilldown-section v-if="selectedOutputId" :is-loading="inProgressForecastRun">
 				<template #header-controls-right>
 					<Button class="mr-3" label="Save for re-use" severity="secondary" outlined @click="showSaveDataset = true" />
 				</template>
@@ -304,7 +304,9 @@ const viewOptions = ref([
 	{ value: OutputView.Data, icon: 'pi pi-list' }
 ]);
 
-const showSpinner = ref(false);
+const inProgressForecastRun = computed(() =>
+	Boolean(props.node.state.inProgressForecastId || props.node.state.inProgressBaseForecastId)
+);
 const runResults = ref<{ [runId: string]: DataArray }>({});
 const runResultsSummary = ref<{ [runId: string]: DataArray }>({});
 const rawContent = ref<{ [runId: string]: CsvAsset }>({});
@@ -451,7 +453,7 @@ const lazyLoadSimulationData = async (outputRunId: string) => {
 	if (runResults.value[outputRunId] && rawContent.value[outputRunId]) return;
 
 	const forecastId = props.node.state.forecastId;
-	if (!forecastId || forecastId === '') return;
+	if (!forecastId || inProgressForecastRun.value) return;
 
 	let [result, resultSummary] = await Promise.all([
 		getRunResultCSV(forecastId, 'result.csv'),
@@ -551,14 +553,6 @@ watch(
 		if (model) modelVarUnits.value = getUnitsFromModelParts(model);
 	},
 	{ immediate: true }
-);
-
-watch(
-	[() => props.node.state.inProgressBaseForecastId, () => props.node.state.inProgressForecastId],
-	([baseId, id]) => {
-		if (id === '' || baseId === '') showSpinner.value = false;
-		else showSpinner.value = true;
-	}
 );
 
 watch(
