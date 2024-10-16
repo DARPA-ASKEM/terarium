@@ -154,6 +154,6 @@ public class InterventionPolicyTests extends TerariumApplicationTests {
 		interventionPolicy.setDescription("mydescription");
 		interventionPolicy.setInterventions(interventions);
 
-		Assertions.assertTrue(interventionPolicy.validateInterventionPolicy());
+		Assertions.assertAll(() -> interventionPolicy.validateInterventionPolicy());
 	}
 }

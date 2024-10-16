@@ -49,7 +49,7 @@ public class InterventionPolicy extends TerariumAsset {
 	 *   if there are duplicate keys appliedTo and timestep this will throw an error
 	 *   If any timestep is negative this will throw an error
 	 * */
-	public Boolean validateInterventionPolicy() throws Exception {
+	public void validateInterventionPolicy() throws Exception {
 		final Set<String> foo = new HashSet<>();
 		for (int i = 0; i < this.interventions.size(); i++) {
 			final Intervention intervention = this.interventions.get(i);
@@ -81,6 +81,5 @@ public class InterventionPolicy extends TerariumAsset {
 				}
 			}
 		}
-		return true;
 	}
 }
