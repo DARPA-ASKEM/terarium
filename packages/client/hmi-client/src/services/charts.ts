@@ -1094,19 +1094,19 @@ export function createFunmanParameterCharts(
 						}
 					}
 				},
-				// TODO: Selected bound ticks for lb, ub
+				// Selected bound square brackets for lb, ub
 				{
 					mark: {
-						type: 'tick',
-						thickness: 2,
-						size: 20
+						type: 'text',
+						size: 30,
+						dy: 2
 					},
 					encoding: {
 						x: {
 							field: 'lb',
 							type: 'quantitative'
 						},
-						color: { value: 'black' },
+						text: { value: '[' },
 						opacity: {
 							condition: {
 								test: 'tickSelection.boxId == datum.boxId',
@@ -1118,16 +1118,16 @@ export function createFunmanParameterCharts(
 				},
 				{
 					mark: {
-						type: 'tick',
-						thickness: 2,
-						size: 20
+						type: 'text',
+						size: 30,
+						dy: 2
 					},
 					encoding: {
 						x: {
 							field: 'ub',
 							type: 'quantitative'
 						},
-						color: { value: 'black' },
+						text: { value: ']' },
 						opacity: {
 							condition: {
 								test: 'tickSelection.boxId == datum.boxId',
