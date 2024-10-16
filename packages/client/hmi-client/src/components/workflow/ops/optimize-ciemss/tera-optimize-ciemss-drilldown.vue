@@ -30,7 +30,7 @@
 					</div>
 
 					<section class="form-section">
-						<h5>Success criteria <i v-tooltip="criteriaTooltip" class="pi pi-info-circle info-circle" /></h5>
+						<h5>Success criteria</h5>
 						<tera-optimize-criterion-group-form
 							v-for="(cfg, index) in knobs.constraintGroups"
 							:key="selectedOutputId + ':' + index"
@@ -48,10 +48,7 @@
 						/>
 					</section>
 					<section class="form-section">
-						<h5>
-							Intervention policy
-							<i v-tooltip="interventionPolicyToolTip" class="pi pi-info-circle info-circle" />
-						</h5>
+						<h5>Intervention policy</h5>
 						<template v-for="(cfg, idx) in knobs.interventionPolicyGroups">
 							<tera-static-intervention-policy-group
 								v-if="cfg.intervention?.staticInterventions && cfg.intervention?.staticInterventions.length > 0"
@@ -73,10 +70,7 @@
 						</template>
 					</section>
 					<section class="form-section">
-						<h5>
-							Optimization settings
-							<i v-tooltip="optimizeSettingsToolTip" class="pi pi-info-circle info-circle" />
-						</h5>
+						<h5>Optimization settings</h5>
 						<div class="input-row pt-1">
 							<div class="label-and-input">
 								<label>Start time</label>
@@ -157,11 +151,7 @@
 						</div>
 					</section>
 					<section class="form-section">
-						<h5 class="mb-1">
-							Output settings
-							<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle info-circle" />
-						</h5>
-
+						<h5 class="mb-1">Output settings</h5>
 						<!--Summary-->
 						<tera-checkbox
 							v-model="summaryCheckbox"
@@ -173,10 +163,7 @@
 						<Divider />
 
 						<!--Success Criteria-->
-						<h5 class="mb-1">
-							Success Criteria
-							<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle info-circle" />
-						</h5>
+						<h5 class="mb-1">Success Criteria</h5>
 						<tera-checkbox
 							v-model="successDisplayChartsCheckbox"
 							inputId="success-criteria-display-charts"
@@ -187,10 +174,7 @@
 						<Divider />
 
 						<!--Interventions-->
-						<h5 class="mb-1">
-							Interventions
-							<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle info-circle" />
-						</h5>
+						<h5 class="mb-1">Interventions</h5>
 						<MultiSelect
 							v-model="knobs.selectedInterventionVariables"
 							:options="_.keys(preProcessedInterventionsData)"
@@ -206,10 +190,7 @@
 						<Divider />
 
 						<!--Simulation plots-->
-						<h5 class="mb-1">
-							Simulation plots
-							<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle info-circle" />
-						</h5>
+						<h5 class="mb-1">Simulation plots</h5>
 						<MultiSelect
 							v-model="knobs.selectedSimulationVariables"
 							:options="simulationChartOptions"
@@ -480,11 +461,6 @@ const knobs = ref<BasicKnobs>({
 	constraintGroups: props.node.state.constraintGroups ?? [],
 	interventionPolicyGroups: props.node.state.interventionPolicyGroups ?? []
 });
-
-const criteriaTooltip = 'TODO';
-const interventionPolicyToolTip = 'TODO';
-const optimizeSettingsToolTip = 'TODO';
-const outputSettingsToolTip = 'TODO';
 
 const summaryCheckbox = ref(true);
 
