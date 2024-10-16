@@ -9,12 +9,21 @@
 			<Button label="Save for reuse" outlined severity="secondary" />
 		</div>
 	</header>
+
 	<Accordion multiple :active-index="[0, 1, 2, 3]">
 		<AccordionTab header="Summary"> Summary text </AccordionTab>
 		<AccordionTab>
 			<template #header> State variables<i class="pi pi-info-circle" /> </template>
+			<!--TODO: Will put these checkbox options in output settings later-->
+			<div class="flex align-items-center gap-2 ml-4 mb-3">
+				<Checkbox v-model="onlyShowLatestResults" binary @change="renderCharts" />
+				<label>Only show furthest results</label>
+			</div>
+			<div class="flex align-items-center gap-2 ml-4 mb-4">
+				<Checkbox v-model="focusOnModelChecks" binary @change="updateStateChart" /> <label>Focus on model checks</label>
+			</div>
 			<template v-if="stateChart">
-				<Dropdown v-model="selectedState" :options="stateOptions" @update:model-value="updateStateChart" />
+				<Dropdown class="ml-4" v-model="selectedState" :options="stateOptions" @update:model-value="updateStateChart" />
 				<vega-chart :visualization-spec="stateChart" :are-embed-actions-visible="false" />
 			</template>
 			<span class="ml-4" v-else> No boxes were generated. </span>
@@ -61,6 +70,7 @@
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
 import { ref, watch } from 'vue';
+import Checkbox from 'primevue/checkbox';
 import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
@@ -69,14 +79,14 @@ import {
 	type FunmanConstraintsResponse,
 	processFunman
 } from '@/services/models/funman-service';
-import { createFunmanStateChart, createFunmanParameterChart } from '@/services/charts';
+import { createFunmanStateChart, createFunmanParameterCharts } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { getRunResult } from '@/services/models/simulation-service';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue'; // TODO: Once we save the output model properly in the backend we can use this.
+import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue'; // TODO: Once we save the output model properly in the backend we can use this.
 import { logger } from '@/utils/logger';
 import type { Model, ModelConfiguration, Observable } from '@/types/Types';
 import { getModelByModelConfigurationId, getMMT } from '@/services/model';
@@ -93,6 +103,7 @@ const emit = defineEmits(['update:trajectoryState']);
 let processedFunmanResult: ProcessedFunmanResult | null = null;
 let constraintsResponse: FunmanConstraintsResponse[] = [];
 let mmt: MiraModel = emptyMiraModel();
+let funmanResult: any = {};
 
 // Model configuration stuff
 const model = ref<Model | null>(null);
@@ -103,31 +114,34 @@ const calibratedConfigObservables = ref<Observable[]>([]);
 
 const stateOptions = ref<string[]>([]);
 const selectedState = ref<string>('');
+const onlyShowLatestResults = ref(false);
+const focusOnModelChecks = ref(false);
 
 const stateChart = ref();
 const parameterCharts = ref();
 
-const initalize = async () => {
-	const rawFunmanResult = await getRunResult(props.runId, 'validation.json');
-	if (!rawFunmanResult) {
-		logger.error('Failed to fetch funman result');
-		return;
-	}
-	const funmanResult = JSON.parse(rawFunmanResult);
-	constraintsResponse = funmanResult.request.constraints;
-	stateOptions.value = funmanResult.model.petrinet.model.states.map(({ id }) => id);
-	validatedModelConfiguration.value = funmanResult.modelConfiguration;
+function updateStateChart() {
+	if (!processedFunmanResult) return;
+	emit('update:trajectoryState', selectedState.value);
+	stateChart.value = createFunmanStateChart(
+		processedFunmanResult,
+		constraintsResponse,
+		selectedState.value,
+		focusOnModelChecks.value
+	);
+}
 
-	processedFunmanResult = processFunman(funmanResult);
+async function renderCharts() {
+	processedFunmanResult = processFunman(funmanResult, onlyShowLatestResults.value);
 
 	// State chart
 	selectedState.value = props.trajectoryState ?? stateOptions.value[0];
 	updateStateChart();
 
 	// Parameter charts
-	const parametersOfInterest = funmanResult.request.parameters.filter((d: any) => d.label === 'all');
+	const distributionParameters = funmanResult.request.parameters.filter((d: any) => d.interval.lb !== d.interval.ub); // TODO: This conditional may change as funman will return constants soon
 	if (processedFunmanResult.boxes) {
-		parameterCharts.value = createFunmanParameterChart(parametersOfInterest, processedFunmanResult.boxes);
+		parameterCharts.value = createFunmanParameterCharts(distributionParameters, processedFunmanResult.boxes);
 	}
 
 	// For displaying model/model configuration
@@ -139,8 +153,10 @@ const initalize = async () => {
 			return;
 		}
 		const response = await getMMT(model.value);
-		mmt = response.mmt;
-		mmtParams.value = response.template_params;
+		if (response) {
+			mmt = response.mmt;
+			mmtParams.value = response.template_params;
+		}
 	}
 
 	configuredMmt.value = makeConfiguredMMT(mmt, funmanResult.modelConfiguration);
@@ -152,13 +168,21 @@ const initalize = async () => {
 			expression
 		})
 	);
-};
-
-function updateStateChart() {
-	if (!processedFunmanResult) return;
-	emit('update:trajectoryState', selectedState.value);
-	stateChart.value = createFunmanStateChart(processedFunmanResult, constraintsResponse, selectedState.value);
 }
+
+const initalize = async () => {
+	const rawFunmanResult = await getRunResult(props.runId, 'validation.json');
+	if (!rawFunmanResult) {
+		logger.error('Failed to fetch funman result');
+		return;
+	}
+	funmanResult = JSON.parse(rawFunmanResult);
+	constraintsResponse = funmanResult.request.constraints;
+	stateOptions.value = funmanResult.model.petrinet.model.states.map(({ id }) => id);
+	validatedModelConfiguration.value = funmanResult.modelConfiguration;
+
+	renderCharts();
+};
 
 watch(
 	() => props.runId,

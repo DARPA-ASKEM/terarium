@@ -7,7 +7,7 @@
 </template>
 <script setup lang="ts">
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
 import SelectButton from 'primevue/selectbutton';
 import { ref } from 'vue';
 import { Model } from '@/types/Types';
