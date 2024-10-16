@@ -810,17 +810,29 @@ enum FunmanChartLegend {
 	ModelChecks = 'Model checks'
 }
 
+function getBoundType(label: string): string {
+	switch (label) {
+		case 'true':
+			return FunmanChartLegend.Satisfactory;
+		case 'false':
+			return FunmanChartLegend.Unsatisfactory;
+		default:
+			return FunmanChartLegend.Ambiguous;
+	}
+}
+
 export function createFunmanStateChart(
 	data: ProcessedFunmanResult,
 	constraints: FunmanConstraintsResponse[],
-	stateId: string
+	stateId: string,
+	focusOnModelChecks: boolean
 ) {
 	if (isEmpty(data.trajs)) return null;
 
 	const globalFont = 'Figtree';
 
 	const boxLines = data.trajs.map((traj) => {
-		const legendItem = traj.label === 'true' ? FunmanChartLegend.Satisfactory : FunmanChartLegend.Unsatisfactory;
+		const legendItem = getBoundType(traj.label);
 		return { timepoints: traj.timestep, value: traj[stateId], legendItem };
 	});
 
@@ -835,8 +847,8 @@ export function createFunmanStateChart(
 		startX: c.timepoints.lb,
 		endX: c.timepoints.ub,
 		// If the interval bounds are within the min/max values of the line plot use them, otherwise use the min/max values
-		startY: Math.max(c.additive_bounds.lb ?? minY, minY),
-		endY: Math.min(c.additive_bounds.ub ?? maxY, maxY)
+		startY: focusOnModelChecks ? c.additive_bounds.lb : Math.max(c.additive_bounds.lb ?? minY, minY),
+		endY: focusOnModelChecks ? c.additive_bounds.ub : Math.min(c.additive_bounds.ub ?? maxY, maxY)
 	}));
 
 	return {
@@ -874,7 +886,7 @@ export function createFunmanStateChart(
 			x: { title: 'Timepoints' },
 			y: {
 				title: `${stateId} (persons)`,
-				scale: { domain: [minY, maxY] }
+				scale: focusOnModelChecks ? {} : { domain: [minY, maxY] }
 			},
 			color: {
 				field: 'legendItem',
@@ -893,30 +905,34 @@ export function createFunmanStateChart(
 	};
 }
 
-export function createFunmanParameterChart(
-	parametersOfInterest: { label: 'all'; name: string; interval: FunmanInterval }[],
+export function createFunmanParameterCharts(
+	distributionParameters: { label: string; name: string; interval: FunmanInterval }[],
 	boxes: FunmanBox[]
 ) {
-	const parameterRanges: { parameterId: string; boundType: string; lb?: number; ub?: number }[] = [];
+	const parameterRanges: { parameterId: string; boundType: string; lb?: number; ub?: number; tick?: number }[] = [];
+	const distributionParameterIds: string[] = [];
 
 	// Widest range (model configuration ranges)
-	parametersOfInterest.forEach(({ name, interval }) => {
+	distributionParameters.forEach(({ name, interval }) => {
 		parameterRanges.push({
 			parameterId: name,
 			boundType: 'length',
 			lb: interval.lb,
 			ub: interval.ub
 		});
+		distributionParameterIds.push(name);
 	});
 
 	// Ranges determined by the true/false boxes
 	boxes.forEach(({ label, parameters }) => {
 		Object.keys(parameters).forEach((key) => {
+			if (!distributionParameterIds.includes(key)) return;
 			parameterRanges.push({
 				parameterId: key,
-				boundType: label === 'true' ? FunmanChartLegend.Satisfactory : FunmanChartLegend.Unsatisfactory,
+				boundType: getBoundType(label),
 				lb: parameters[key].lb,
-				ub: parameters[key].ub
+				ub: parameters[key].ub,
+				tick: parameters[key].point
 			});
 		});
 	});
@@ -924,7 +940,10 @@ export function createFunmanParameterChart(
 	const globalFont = 'Figtree';
 	return {
 		$schema: VEGALITE_SCHEMA,
-		config: { font: globalFont },
+		config: {
+			font: globalFont,
+			tick: { thickness: 2 }
+		},
 		width: 600,
 		height: 50, // Height per facet
 		data: {
@@ -961,7 +980,7 @@ export function createFunmanParameterChart(
 				{
 					mark: {
 						type: 'bar', // Use a bar to represent ranges
-						opacity: 0.3 // FIXME: This opacity shouldn't be applied to the legend
+						opacity: 0.4 // FIXME: This opacity shouldn't be applied to the legend
 					},
 					encoding: {
 						x: {
@@ -987,6 +1006,19 @@ export function createFunmanParameterChart(
 								domain: [FunmanChartLegend.Satisfactory, FunmanChartLegend.Unsatisfactory, FunmanChartLegend.Ambiguous],
 								range: ['#1B8073', '#FFAB00', '#CCC569']
 							}
+						}
+					}
+				},
+				{
+					mark: {
+						type: 'tick',
+						size: 20
+					},
+					encoding: {
+						x: {
+							field: 'tick',
+							type: 'quantitative',
+							title: null
 						}
 					}
 				}
