@@ -42,10 +42,17 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractedDocumentPage;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.StatementValue;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Variable;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.VariableStatement;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Observable;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.State;
+import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.models.task.CompoundTask;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
+import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
@@ -89,6 +96,7 @@ public class GoLLMController {
 	private final GenerateSummaryHandler generateSummaryHandler;
 	private final InterventionsFromDocumentResponseHandler interventionsFromDocumentResponseHandler;
 	private final ModelCardResponseHandler modelCardResponseHandler;
+	private final MIRAProxy miraProxy;
 
 	private final Messages messages;
 
@@ -775,8 +783,8 @@ public class GoLLMController {
 		}
 
 		// Grab the model
-		final Optional<Model> model = modelService.getAsset(modelId, permission);
-		if (model.isEmpty()) {
+		Optional<Model> modelOptional = modelService.getAsset(modelId, permission);
+		if (modelOptional.isEmpty()) {
 			log.warn(String.format("Model %s not found", modelId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 		}
@@ -786,15 +794,15 @@ public class GoLLMController {
 		if (document.isPresent()) {
 			final TaskRequest enrichAmrRequest = getEnrichAMRTaskRequest(
 				document.orElse(null),
-				model.get(),
+				modelOptional.get(),
 				projectId,
 				overwrite
 			);
-			final TaskRequest modelCardRequest = getModelCardTask(document.orElse(null), model.get(), projectId);
+			final TaskRequest modelCardRequest = getModelCardTask(document.orElse(null), modelOptional.get(), projectId);
 
 			req = new CompoundTask(enrichAmrRequest, modelCardRequest);
 		} else {
-			req = getModelCardTask(null, model.get(), projectId);
+			req = getModelCardTask(null, modelOptional.get(), projectId);
 		}
 
 		final TaskResponse resp;
@@ -813,6 +821,53 @@ public class GoLLMController {
 			log.error("Error while waiting for task response", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
 		}
+
+		// at this point the initial enrichment has happened.
+		modelOptional = modelService.getAsset(modelId, permission);
+		if (modelOptional.isEmpty()) {
+			//this would be a very strange case
+			log.warn(String.format("Model %s not found", modelId));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
+		}
+
+		Model model = modelOptional.get();
+		for (Observable observable : model.getObservables()) {
+			ResponseEntity<List<DKG>> res = miraProxy.search(observable.getExpression(), 10, 0);
+			if (res.getStatusCode() == HttpStatus.OK) {
+				List<DKG> dkgList = res.getBody();
+				for (DKG dkg : dkgList) {
+					System.out.println(dkg.getName());
+				}
+			}
+		}
+
+		for (VariableStatement variableStatement : model.getMetadata().getVariableStatements()) {
+			StatementValue value = variableStatement.getValue();
+			ResponseEntity<List<DKG>> res = miraProxy.search(value.getValue(), 10, 0);
+			if (res.getStatusCode() == HttpStatus.OK) {
+				List<DKG> dkgList = res.getBody();
+				for (DKG dkg : dkgList) {
+					System.out.println(dkg.getName());
+				}
+			}
+		}
+
+		// from our model.getModel, confirm that there is a 'states' node and use objectmapper to convert it to State
+		if (model.getModel().containsKey("states")) {
+			ObjectMapper objectMapper = new ObjectMapper();
+			State state = objectMapper.convertValue(model.getModel().get("states"), State.class);
+			System.out.println(state.getName());
+			ResponseEntity<List<DKG>> res = miraProxy.search(state.getName(), 10, 0);
+			if (res.getStatusCode() == HttpStatus.OK) {
+				List<DKG> dkgList = res.getBody();
+				for (DKG dkg : dkgList) {
+					System.out.println(dkg.getName());
+				}
+			}
+		}
+
+		//model.getMetadata().getVariableStatements()
+		// model.getModel().STATES
 
 		return ResponseEntity.ok().body(resp);
 	}
