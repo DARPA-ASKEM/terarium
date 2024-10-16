@@ -29,8 +29,7 @@
 					size="small"
 					outlined
 					:disabled="props.kernelIsBusy"
-					class="white-space-nowrap"
-					style="margin-top: 1px; height: 31px; width: 10rem"
+					class="white-space-nowrap action-button"
 					title="Add a code cell to the notebook"
 					@click="addCodeCell"
 				>
@@ -43,8 +42,8 @@
 					size="small"
 					outlined
 					:disabled="props.kernelIsBusy"
-					class="white-space-nowrap"
-					style="margin-top: 1px; height: 31px; width: 10rem"
+					class="white-space-nowrap action-button"
+					style="width: 11rem"
 					title="Rerun all cells"
 					@click="runAllCells"
 				>
@@ -111,7 +110,6 @@ const addCodeCell = () => {
 
 const runAllCells = () => {
 	emit('run-all-cells');
-	EventService.create(EventType.RunAllCells, useProjects().activeProject.value?.id);
 };
 
 onMounted(() => {
@@ -199,5 +197,11 @@ const autoGrow = () => {
 .busy-bar {
 	position: relative;
 	top: -4px;
+}
+.action-button {
+	margin-left: var(--gap-2);
+	margin-top: 1px;
+	height: 31px;
+	width: 10rem;
 }
 </style>

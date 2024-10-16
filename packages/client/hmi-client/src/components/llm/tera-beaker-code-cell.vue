@@ -36,6 +36,7 @@ const props = defineProps<{
 	jupyterSession: SessionContext;
 	notebookItem: INotebookItem;
 	lang: string;
+	index: Number;
 }>();
 
 const emit = defineEmits(['deleteRequested']);
@@ -97,7 +98,11 @@ onMounted(() => {
 	if (props.notebookItem.autoRun) {
 		runCell();
 	}
-	window.addEventListener(EventType.RunAllCells, runCell);
+	window.addEventListener(EventType.RunAllCells, () => {
+		setTimeout(() => {
+			runCell();
+		}, 1000 * props.index.valueOf()); // ensures the cells are run in the correct order
+	});
 });
 
 onBeforeUnmount(() => {
