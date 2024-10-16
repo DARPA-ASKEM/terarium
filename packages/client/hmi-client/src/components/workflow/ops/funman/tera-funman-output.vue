@@ -129,7 +129,7 @@ function updateStateChart() {
 	if (!processedFunmanResult) return;
 	emit('update:trajectoryState', selectedState.value);
 	stateChart.value = createFunmanStateChart(
-		processedFunmanResult,
+		processedFunmanResult.trajectories,
 		constraintsResponse,
 		selectedState.value,
 		focusOnModelChecks.value,

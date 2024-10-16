@@ -4,7 +4,7 @@ import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
 import type { ChartAnnotation, FunmanInterval } from '@/types/Types';
 import { flattenInterventionData } from './intervention-policy';
-import type { ProcessedFunmanResult, FunmanBox, FunmanConstraintsResponse } from './models/funman-service';
+import type { FunmanBox, FunmanConstraintsResponse } from './models/funman-service';
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
@@ -822,17 +822,19 @@ function getBoundType(label: string): string {
 }
 
 export function createFunmanStateChart(
-	data: ProcessedFunmanResult,
+	trajectories: any[],
 	constraints: FunmanConstraintsResponse[],
 	stateId: string,
 	focusOnModelChecks: boolean,
 	selectedBoxId: number = -1
 ) {
-	if (isEmpty(data.trajs)) return null;
+	if (isEmpty(trajectories)) return null;
+
+	console.log(trajectories);
 
 	const globalFont = 'Figtree';
 
-	const boxLines = data.trajs.map((traj) => ({
+	const boxLines = trajectories.map((traj) => ({
 		boxId: traj.boxId,
 		timepoints: traj.timestep,
 		value: traj[stateId],

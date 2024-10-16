@@ -34,8 +34,7 @@ export interface FunmanConstraintsResponse {
 
 export interface ProcessedFunmanResult {
 	boxes: FunmanBox[];
-	states: string[];
-	trajs: any[];
+	trajectories: any[];
 }
 
 export interface RenderOptions {
@@ -118,7 +117,7 @@ export const processFunman = (result: any, onlyShowLatestResults: boolean) => {
 
 	// "dataframes"
 	const boxes: FunmanBox[] = [];
-	const trajs: any[] = [];
+	const trajectories: any[] = [];
 
 	[...trueBoxes, ...falseBoxes, ...ambiguousBoxes].forEach((box, index) => {
 		const points = box.points[0].values;
@@ -155,10 +154,10 @@ export const processFunman = (result: any, onlyShowLatestResults: boolean) => {
 				}
 			});
 			if (pushFlag) {
-				trajs.push(traj);
+				trajectories.push(traj);
 			}
 		});
 	});
 
-	return { boxes, states: stateIds, trajs } as ProcessedFunmanResult;
+	return { boxes, trajectories } as ProcessedFunmanResult;
 };
