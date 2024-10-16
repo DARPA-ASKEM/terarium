@@ -457,7 +457,7 @@ const lazyLoadSimulationData = async (outputRunId: string) => {
 		getRunResultCSV(forecastId, 'result_summary.csv')
 	]);
 
-	// Forecast results without interventions
+	// Forecast results without the interventions
 	const baseForecastId = props.node.state.baseForecastId;
 	if (baseForecastId && baseForecastId !== '') {
 		const [baseResult, baseResultSummary] = await Promise.all([
@@ -468,10 +468,10 @@ const lazyLoadSimulationData = async (outputRunId: string) => {
 	}
 
 	pyciemssMap = parsePyCiemssMap(result[0]);
-
-	runResults.value[outputRunId] = result;
 	rawContent.value[outputRunId] = convertToCsvAsset(result, Object.values(pyciemssMap));
 
+	// TODO: Merge base and forecast results
+	runResults.value[outputRunId] = result;
 	runResultsSummary.value[outputRunId] = resultSummary;
 };
 

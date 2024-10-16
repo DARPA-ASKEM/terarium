@@ -13,7 +13,7 @@
 				</div>
 			</section>
 		</template>
-		<tera-progress-spinner v-if="inProgressForecastId" :font-size="2" is-centered style="height: 100%" />
+		<tera-progress-spinner v-if="inProgressForecastRun" :font-size="2" is-centered style="height: 100%" />
 		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
 		<tera-operator-placeholder v-else :node="node"> Connect a model configuration </tera-operator-placeholder>
 	</main>
@@ -25,15 +25,8 @@ import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import {
-	getRunResultCSV,
-	// pollAction,
-	getSimulation,
-	parsePyCiemssMap,
-	DataArray
-} from '@/services/models/simulation-service';
+import { getRunResultCSV, getSimulation, parsePyCiemssMap, DataArray } from '@/services/models/simulation-service';
 import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
-// import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
 import { chartActionsProxy, nodeOutputLabel } from '@/components/workflow/util';
 
@@ -56,6 +49,7 @@ import {
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import { useClientEvent } from '@/composables/useClientEvent';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
+import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
@@ -71,6 +65,7 @@ const runResultsSummary = ref<{ [runId: string]: DataArray }>({});
 const selectedRunId = ref<string>();
 const inProgressForecastId = computed(() => props.node.state.inProgressForecastId);
 const inProgressBaseForecastId = computed(() => props.node.state.inProgressBaseForecastId);
+const inProgressForecastRun = computed(() => inProgressForecastId.value || inProgressBaseForecastId.value);
 const areInputsFilled = computed(() => props.node.inputs[0].value);
 const interventionPolicyId = computed(() => props.node.inputs[1].value?.[0]);
 const interventionPolicy = ref<InterventionPolicy | null>(null);
@@ -293,13 +288,24 @@ watch(
 
 		selectedRunId.value = props.node.outputs.find((o) => o.id === active)?.value?.[0];
 		const forecastId = props.node.state.forecastId;
-		if (!forecastId || !selectedRunId.value) return;
+		if (!forecastId || !selectedRunId.value || inProgressForecastRun.value) return;
 
-		const result = await getRunResultCSV(forecastId, 'result.csv');
+		let result = await getRunResultCSV(forecastId, 'result.csv');
 		pyciemssMap = parsePyCiemssMap(result[0]);
-		runResults.value[selectedRunId.value] = result;
 
-		const resultSummary = await getRunResultCSV(forecastId, 'result_summary.csv');
+		let resultSummary = await getRunResultCSV(forecastId, 'result_summary.csv');
+
+		const baseForecastId = props.node.state.baseForecastId;
+		if (baseForecastId) {
+			// If forecast run before intervention (base run) is available, merge the results
+			const baseResult = await getRunResultCSV(baseForecastId, 'result.csv', renameFnGenerator('base'));
+			const baseResultSummary = await getRunResultCSV(baseForecastId, 'result_summary.csv', renameFnGenerator('base'));
+
+			const merged = mergeResults(baseResult, result, baseResultSummary, resultSummary);
+			result = merged.result;
+			resultSummary = merged.resultSummary;
+		}
+		runResults.value[selectedRunId.value] = result;
 		runResultsSummary.value[selectedRunId.value] = resultSummary;
 	},
 	{ immediate: true }
