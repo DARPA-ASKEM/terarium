@@ -43,12 +43,12 @@
 					outlined
 					:disabled="props.kernelIsBusy"
 					class="white-space-nowrap action-button"
-					style="width: 11rem"
+					style="width: 13rem"
 					title="Rerun all cells"
 					@click="runAllCells"
 				>
 					<span class="pi pi-refresh p-button-icon p-button-icon-left"></span>
-					<span class="p-button-text">Rerun cells</span>
+					<span class="p-button-text">Rerun all cells</span>
 				</Button>
 				<ProgressBar v-if="props.kernelIsBusy" mode="indeterminate" class="busy-bar"></ProgressBar>
 			</div>

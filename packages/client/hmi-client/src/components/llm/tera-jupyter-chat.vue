@@ -8,6 +8,10 @@
 			tabindex="0"
 			class="message-container"
 		>
+			<div v-if="showRerunMessage" class="rerun-message">
+				Re-run all the cells to restore the context if you need to make any changes or use them downstream.
+				<Button class="close-mask" icon="pi pi-times" text rounded aria-label="Close" @click="hideRerunMessage" />
+			</div>
 			<tera-jupyter-response
 				@keydown.stop
 				v-for="(msg, index) in filteredNotebookItems"
@@ -61,6 +65,7 @@ const selectedCellId = ref();
 const filteredNotebookItems = computed<INotebookItem[]>(() =>
 	notebookItems.value.filter((item) => !isEmpty(item.messages))
 );
+const showRerunMessage = ref(true);
 
 const emit = defineEmits([
 	'new-message',
@@ -405,6 +410,10 @@ const clearOutputs = () => {
 	}
 };
 
+const hideRerunMessage = () => {
+	showRerunMessage.value = false;
+};
+
 onUnmounted(() => {
 	messagesHistory.value = [];
 });
@@ -491,5 +500,12 @@ section {
 .message-container {
 	height: calc(100% - 3.5rem);
 	overflow-y: auto;
+}
+.rerun-message {
+	display: flex;
+	background-color: var(--surface-warning);
+	justify-content: space-between;
+	align-items: center;
+	padding: 0.5rem;
 }
 </style>
