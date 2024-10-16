@@ -8,6 +8,27 @@
 	>
 		<template #sidebar>
 			<tera-slider-panel
+				v-if="pdfLinks"
+				v-model:is-open="isDocViewerOpen"
+				header="Document Viewer"
+				content-width="700px"
+			>
+				<template #content>
+					<tera-drilldown-section :is-loading="isFetchingPDF">
+						<Dropdown
+							v-if="pdfLinks?.length"
+							class="mx-3"
+							v-model="pdfLink"
+							:options="pdfLinks"
+							optionLabel="label"
+							optionsValue="value"
+						/>
+						<tera-pdf-embed v-if="pdfLink && pdfLink.isPdf" :pdf-link="pdfLink.value" :title="pdfLink.label || ''" />
+						<tera-text-editor v-else-if="pdfLink && !pdfLink.isPdf" :initial-text="pdfLink.value" />
+					</tera-drilldown-section>
+				</template>
+			</tera-slider-panel>
+			<tera-slider-panel
 				class="input-config"
 				v-model:is-open="isSidebarOpen"
 				header="Configurations"
@@ -212,6 +233,7 @@ import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue
 import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
+import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
 import {
 	emptyMiraModel,
 	generateModelDatasetConfigurationContext,
@@ -246,7 +268,9 @@ import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue'
 import { saveCodeToState } from '@/services/notebook';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { useProjects } from '@/composables/project';
-import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
+import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
+import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
+import Dropdown from 'primevue/dropdown';
 import {
 	blankModelConfig,
 	isModelConfigsEqual,
@@ -254,6 +278,7 @@ import {
 	ModelConfigOperation,
 	ModelConfigOperationState
 } from './model-config-operation';
+import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
 
 enum ConfigTabs {
 	Wizard = 'Wizard',
@@ -263,6 +288,17 @@ enum ConfigTabs {
 const props = defineProps<{
 	node: WorkflowNode<ModelConfigOperationState>;
 }>();
+
+interface PdfData {
+	value: string;
+	isPdf: boolean;
+	label: string;
+}
+
+const pdfLink = ref<PdfData>();
+const pdfLinks = ref<PdfData[]>([]);
+const isFetchingPDF = ref(false);
+const isDocViewerOpen = ref(true);
 
 const isSidebarOpen = ref(true);
 const isEditingDescription = ref(false);
@@ -707,6 +743,30 @@ onMounted(() => {
 		selectedOutputId.value = props.node.active;
 		initialize(true);
 	}
+
+	if (documentIds.value.length) {
+		isFetchingPDF.value = true;
+		documentIds.value.forEach(async (id) => {
+			const document = await getDocumentAsset(id);
+			const name: string = document?.name ?? '';
+			const filename = document?.fileNames?.[0];
+			const isPdf = document?.fileNames?.[0]?.endsWith('.pdf');
+
+			if (document?.id && filename) {
+				let data: string | null;
+				if (isPdf) {
+					data = await downloadDocumentAsset(document.id, filename);
+				} else {
+					data = await getDocumentFileAsText(document.id, filename);
+				}
+				if (data !== null) {
+					pdfLinks.value?.push({ value: data, isPdf: !!isPdf, label: name });
+				}
+			}
+			if (!pdfLink.value && pdfLinks.value?.[0]) pdfLink.value = pdfLinks.value[0];
+		});
+	}
+	isFetchingPDF.value = false;
 });
 
 watch(
