@@ -16,6 +16,7 @@ interface FunmanParameterBound {
 }
 
 export interface FunmanBox {
+	boxId: number;
 	label: string;
 	timestep: FunmanBound;
 	parameters: Record<string, FunmanParameterBound>;
@@ -119,10 +120,11 @@ export const processFunman = (result: any, onlyShowLatestResults: boolean) => {
 	const boxes: FunmanBox[] = [];
 	const trajs: any[] = [];
 
-	[...trueBoxes, ...falseBoxes, ...ambiguousBoxes].forEach((box) => {
+	[...trueBoxes, ...falseBoxes, ...ambiguousBoxes].forEach((box, index) => {
 		const points = box.points[0].values;
 
 		boxes.push({
+			boxId: index,
 			label: box.label,
 			timestep: box.bounds.timestep,
 			parameters: Object.fromEntries(parameterIds.map((p: any) => [p, { ...box.bounds[p], point: points[p] }]))
@@ -139,6 +141,7 @@ export const processFunman = (result: any, onlyShowLatestResults: boolean) => {
 		timepoints.forEach((t) => {
 			let pushFlag = true;
 			const traj: any = {
+				boxId: index,
 				label: box.label,
 				timestep: t,
 				n: points.timestep // how many actual points

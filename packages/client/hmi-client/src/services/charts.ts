@@ -917,12 +917,20 @@ export function createFunmanParameterCharts(
 	distributionParameters: { label: string; name: string; interval: FunmanInterval }[],
 	boxes: FunmanBox[]
 ) {
-	const parameterRanges: { parameterId: string; boundType: string; lb?: number; ub?: number; tick?: number }[] = [];
+	const parameterRanges: {
+		boxId: number;
+		parameterId: string;
+		boundType: string;
+		lb?: number;
+		ub?: number;
+		tick?: number;
+	}[] = [];
 	const distributionParameterIds: string[] = [];
 
 	// Widest range (model configuration ranges)
 	distributionParameters.forEach(({ name, interval }) => {
 		parameterRanges.push({
+			boxId: -1,
 			parameterId: name,
 			boundType: 'length',
 			lb: interval.lb,
@@ -932,10 +940,11 @@ export function createFunmanParameterCharts(
 	});
 
 	// Ranges determined by the true/false boxes
-	boxes.forEach(({ label, parameters }) => {
+	boxes.forEach(({ boxId, label, parameters }) => {
 		Object.keys(parameters).forEach((key) => {
 			if (!distributionParameterIds.includes(key)) return;
 			parameterRanges.push({
+				boxId,
 				parameterId: key,
 				boundType: getBoundType(label),
 				lb: parameters[key].lb,
@@ -944,6 +953,8 @@ export function createFunmanParameterCharts(
 			});
 		});
 	});
+
+	console.log(parameterRanges);
 
 	const globalFont = 'Figtree';
 	return {
@@ -970,6 +981,13 @@ export function createFunmanParameterCharts(
 		params: [
 			{ name: 'minX', expr: 'minX' },
 			{ name: 'maxX', expr: 'maxX' }
+		],
+		// Parent signal
+		signals: [
+			{
+				name: 'selectedBoxId',
+				value: null
+			}
 		],
 		facet: {
 			row: {
@@ -1032,7 +1050,27 @@ export function createFunmanParameterCharts(
 					params: [
 						{
 							name: 'tickSelection',
-							select: { type: 'point' } // nearest: true, on: 'mouseover'
+							select: { type: 'point', fields: ['boxId'] },
+							on: [
+								{
+									events: 'click',
+									update: 'datum.boxId'
+								}
+							]
+						}
+					],
+					// Trying to override the parent signal with the scoped signal
+					signals: [
+						{
+							name: 'selectedBoxId',
+							value: null,
+							on: [
+								{
+									events: { signal: 'tickSelection' },
+									update: 'tickSelection'
+								}
+							],
+							push: 'outer'
 						}
 					],
 					encoding: {
@@ -1041,18 +1079,44 @@ export function createFunmanParameterCharts(
 							type: 'quantitative',
 							title: null
 						},
-						color: {
-							// condition: {
-							// 	param: 'tickSelection',
-							// }
-							field: 'boundType'
-						},
+						color: { field: 'boundType' },
 						size: {
 							condition: { param: 'tickSelection', value: 20, empty: false },
 							value: 15
 						}
 					}
 				}
+				// TODO: Selected bound ticks for lb, ub
+				// {
+				// 	mark: {
+				// 		type: 'tick',
+				// 		thickness: 2,
+				// 		size: 20,
+				// 		opacity: { expr: 'data("tickSelection") ? 1 : 0' }
+				// 	},
+				// 	encoding: {
+				// 		x: {
+				// 			field: 'lb',
+				// 			type: 'quantitative'
+				// 		},
+				// 		color: { value: 'black' }
+				// 	}
+				// },
+				// {
+				// 	mark: {
+				// 		type: 'tick',
+				// 		thickness: 2,
+				// 		size: 20,
+				// 		opacity: { expr: 'data("tickSelection") ? 1 : 0' }
+				// 	},
+				// 	encoding: {
+				// 		x: {
+				// 			field: 'ub',
+				// 			type: 'quantitative'
+				// 		},
+				// 		color: { value: 'black' }
+				// 	}
+				// }
 			]
 		}
 	};

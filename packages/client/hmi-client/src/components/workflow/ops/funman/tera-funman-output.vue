@@ -92,6 +92,7 @@ import type { Model, ModelConfiguration, Observable } from '@/types/Types';
 import { getModelByModelConfigurationId, getMMT } from '@/services/model';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { emptyMiraModel, makeConfiguredMMT } from '@/model-representation/mira/mira';
+import { View, parse } from 'vega';
 
 const props = defineProps<{
 	runId: string;
@@ -117,8 +118,9 @@ const selectedState = ref<string>('');
 const onlyShowLatestResults = ref(false);
 const focusOnModelChecks = ref(false);
 
-const stateChart = ref();
-const parameterCharts = ref();
+const stateChart = ref<any>({});
+const parameterCharts = ref<any>({});
+let parameterChartView: View | null = null;
 
 function updateStateChart() {
 	if (!processedFunmanResult) return;
@@ -143,6 +145,11 @@ async function renderCharts() {
 	if (processedFunmanResult.boxes) {
 		parameterCharts.value = createFunmanParameterCharts(distributionParameters, processedFunmanResult.boxes);
 	}
+
+	parameterChartView = new View(parse(parameterCharts.value)).renderer('canvas').initialize('#view').run();
+	parameterChartView.addSignalListener('selectedBoxId', (name, value) => {
+		console.log('Selected Box ID:', name, value);
+	});
 
 	// For displaying model/model configuration
 	// Model will be the same on runId change, no need to fetch it again
