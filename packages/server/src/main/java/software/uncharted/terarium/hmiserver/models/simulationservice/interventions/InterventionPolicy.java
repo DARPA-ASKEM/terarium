@@ -45,18 +45,12 @@ public class InterventionPolicy extends TerariumAsset {
 
 	// Check each intervention this policy contains
 	// If any of them are are invalid the entire policy is invalid.
-	public Boolean validateInterventionPolicy() {
+	public Boolean validateInterventionPolicy() throws Exception {
 		for (int i = 0; i < this.interventions.size(); i++) {
-			final boolean checkIndividual = this.interventions.get(i).validateIntervention();
-			if (checkIndividual == false) {
-				return false;
-			}
+			this.interventions.get(i).validateIntervention();
 			for (int j = 0; j < this.interventions.size(); j++) {
-				if (i != j) {
-					final boolean checkPair = validateInterventionPair(this.interventions.get(i), this.interventions.get(j));
-					if (checkPair == false) {
-						return false;
-					}
+				if (Integer.compare(i, j) != 0) {
+					validateInterventionPair(this.interventions.get(i), this.interventions.get(j));
 				}
 			}
 		}
@@ -65,7 +59,7 @@ public class InterventionPolicy extends TerariumAsset {
 
 	// Takes a list of two interventions and will check their static intervention lists to ensure
 	// there are no duplicate time + appliedTo pairs in static interventions
-	private Boolean validateInterventionPair(Intervention interOne, Intervention interTwo) {
+	private Boolean validateInterventionPair(Intervention interOne, Intervention interTwo) throws Exception {
 		List<StaticIntervention> staticOne = interOne.getStaticInterventions();
 		List<StaticIntervention> staticTwo = interTwo.getStaticInterventions();
 
@@ -75,7 +69,7 @@ public class InterventionPolicy extends TerariumAsset {
 				final Number timeOne = staticOne.get(i).getTimestep();
 				final String appliedToTwo = staticTwo.get(j).getAppliedTo();
 				final Number timeTwo = staticTwo.get(j).getTimestep();
-				if (Integer.compare(i, j) == 0 && appliedToOne.equals(appliedToTwo) && timeOne.equals(timeTwo)) {
+				if (appliedToOne.equals(appliedToTwo) && timeOne.equals(timeTwo)) {
 					final String errorMessage = String.format(
 						"The intervention %s and %s have duplicate applied to: %s and time: %s pairs.",
 						interOne.getName(),
@@ -83,8 +77,7 @@ public class InterventionPolicy extends TerariumAsset {
 						appliedToOne,
 						String.valueOf(timeOne)
 					);
-					log.warn(errorMessage);
-					return false;
+					throw new Exception(errorMessage);
 				}
 			}
 		}

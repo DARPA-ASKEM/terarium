@@ -108,19 +108,20 @@ public class InterventionController {
 			currentUserService.get().getId(),
 			projectId
 		);
-		if (item.validateInterventionPolicy()) {
-			try {
-				return ResponseEntity.status(HttpStatus.CREATED).body(
-					interventionService.createAsset(item, projectId, permission)
-				);
-			} catch (final IOException e) {
-				final String error = "Unable to create intervention";
-				log.error(error, e);
-				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error);
-			}
-		} else {
+		try {
+			item.validateInterventionPolicy();
+		} catch (final Exception e) {
 			final String error = "Failed to validate intervention";
-			log.error(error);
+			log.error(error, e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+		}
+		try {
+			return ResponseEntity.status(HttpStatus.CREATED).body(
+				interventionService.createAsset(item, projectId, permission)
+			);
+		} catch (final IOException e) {
+			final String error = "Unable to create intervention";
+			log.error(error, e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
