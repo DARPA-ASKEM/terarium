@@ -826,7 +826,7 @@ export function createFunmanStateChart(
 	constraints: FunmanConstraintsResponse[],
 	stateId: string,
 	focusOnModelChecks: boolean,
-	selectedBoxId?: number
+	selectedBoxId: number = -1
 ) {
 	if (isEmpty(data.trajs)) return null;
 

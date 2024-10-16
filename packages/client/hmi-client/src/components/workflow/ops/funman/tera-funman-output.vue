@@ -121,8 +121,9 @@ const focusOnModelChecks = ref(false);
 const stateChart = ref<any>({});
 const parameterCharts = ref<any>({});
 
-const selectedBoxId: number = -1;
+let selectedBoxId: number = -1;
 let parameterChartView: View | null = null;
+let parameterChartListener: ((name: string, value: any) => void) | null = null;
 
 function updateStateChart() {
 	if (!processedFunmanResult) return;
@@ -132,7 +133,7 @@ function updateStateChart() {
 		constraintsResponse,
 		selectedState.value,
 		focusOnModelChecks.value,
-		selectedBoxId // Just testing here
+		selectedBoxId
 	);
 }
 
@@ -149,10 +150,18 @@ async function renderCharts() {
 		parameterCharts.value = createFunmanParameterCharts(distributionParameters, processedFunmanResult.boxes);
 	}
 
+	// Remove existing event listener if it exists
+	if (parameterChartView && parameterChartListener) {
+		parameterChartView.removeSignalListener('selectedBoxId', parameterChartListener);
+	}
+	// FIXME: Try to grab the selected box id from the parameter chart view
 	parameterChartView = new View(parse(parameterCharts.value)).renderer('canvas').initialize('#view').run();
-	parameterChartView.addSignalListener('selectedBoxId', (name, value) => {
+	parameterChartListener = (name, value) => {
 		console.log('Selected Box ID:', name, value);
-	});
+		selectedBoxId = value;
+		updateStateChart();
+	};
+	parameterChartView.addSignalListener('selectedBoxId', parameterChartListener);
 
 	// For displaying model/model configuration
 	// Model will be the same on runId change, no need to fetch it again
