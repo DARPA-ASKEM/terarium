@@ -118,7 +118,7 @@ public class InterventionPolicyTests extends TerariumApplicationTests {
 		Assertions.assertThrowsExactly(
 			Exception.class,
 			() -> interventionPolicy.validateInterventionPolicy(),
-			"The intervention IntOne and IntTwo have duplicate applied to: beta and time: 1 pairs."
+			"The intervention IntTwo has duplicate applied to: beta and time: 1 pairs."
 		);
 	}
 

@@ -45,44 +45,41 @@ public class InterventionPolicy extends TerariumAsset {
 		return clone;
 	}
 
-	// Check each intervention this policy contains
-	// If any of them are are invalid the entire policy is invalid.
+	/**
+	 * Check each intervention this policy contains
+	 * Within all static interventions
+	 *   if there are duplicate keys appliedTo and timestep this will throw an error
+	 *   If any timestep is negative this will throw an error
+	 * */
 	public Boolean validateInterventionPolicy() throws Exception {
-		for (int i = 0; i < this.interventions.size(); i++) {
-			this.interventions.get(i).validateIntervention(); //validate individual intervention
-			for (int j = 0; j < this.interventions.size(); j++) {
-				if (Integer.compare(i, j) != 0) {
-					validateInterventionPair(this.interventions.get(i), this.interventions.get(j)); //validate pair with eachother
-				}
-			}
-		}
-		return true;
-	}
-
-	// Takes a list of two interventions and will check their static intervention lists to ensure
-	// there are no duplicate time + appliedTo pairs in their indiviudal static interventions
-	private Boolean validateInterventionPair(Intervention interOne, Intervention interTwo) throws Exception {
 		final Set<String> foo = new HashSet<>();
-		List<StaticIntervention> staticOne = interOne.getStaticInterventions();
-		List<StaticIntervention> staticTwo = interTwo.getStaticInterventions();
-
-		for (int i = 0; i < staticOne.size(); i++) {
-			final String key = staticOne.get(i).getAppliedTo() + staticOne.get(i).getTimestep().toString();
-			foo.add(key);
-		}
-		for (int j = 0; j < staticTwo.size(); j++) {
-			final String key = staticTwo.get(j).getAppliedTo() + staticTwo.get(j).getTimestep().toString();
-			if (foo.contains(key)) {
-				final String errorMessage = String.format(
-					"The intervention %s and %s have duplicate applied to: %s and time: %s pairs.",
-					interOne.getName(),
-					interTwo.getName(),
-					staticTwo.get(j).getAppliedTo(),
-					staticTwo.get(j).getTimestep().toString()
-				);
-				throw new Exception(errorMessage);
-			} else {
-				foo.add(key);
+		for (int i = 0; i < this.interventions.size(); i++) {
+			final Intervention intervention = this.interventions.get(i);
+			for (int j = 0; j < intervention.getStaticInterventions().size(); j++) {
+				final StaticIntervention staticIntervention = intervention.getStaticInterventions().get(j);
+				// Check for negative timestamps:
+				final Number time = staticIntervention.getTimestep();
+				if (time.doubleValue() < 0) {
+					final String errorMessage = String.format(
+						"The intervention %s has a timestep %s which is less than 0.",
+						this.getName(),
+						time.toString()
+					);
+					throw new Exception(errorMessage);
+				}
+				// Check for duplicate appliedTo timestep pairs:
+				final String key = staticIntervention.getAppliedTo() + staticIntervention.getTimestep().toString();
+				if (foo.contains(key)) {
+					final String errorMessage = String.format(
+						"The intervention %s has duplicate applied to: %s and time: %s pairs.",
+						intervention.getName(),
+						staticIntervention.getAppliedTo(),
+						staticIntervention.getTimestep().toString()
+					);
+					throw new Exception(errorMessage);
+				} else {
+					foo.add(key);
+				}
 			}
 		}
 		return true;
