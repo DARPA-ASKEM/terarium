@@ -992,7 +992,6 @@ export enum EventType {
     PersistModel = "PERSIST_MODEL",
     TransformPrompt = "TRANSFORM_PROMPT",
     AddCodeCell = "ADD_CODE_CELL",
-    RunAllCells = "RUN_ALL_CELLS",
     RunSimulation = "RUN_SIMULATION",
     RunCalibrate = "RUN_CALIBRATE",
     GithubImport = "GITHUB_IMPORT",
