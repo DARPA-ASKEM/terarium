@@ -149,7 +149,7 @@ const preparedCharts = computed(() => {
 
 	return props.node.state.chartConfigs.map((config) => {
 		// If only one variable is selected, show the baseline forecast
-		const showBaseLine = config.length === 1 && props.node.state.baseForecastId;
+		const showBaseLine = config.length === 1 && Boolean(props.node.state.baseForecastId);
 
 		const options: ForecastChartOptions = {
 			title: '',
@@ -201,6 +201,7 @@ const preparedCharts = computed(() => {
 const isFinished = (state: ProgressState) =>
 	[ProgressState.Cancelled, ProgressState.Failed, ProgressState.Complete].includes(state);
 
+// Handle simulation status update event for the forecast run
 useClientEvent(
 	ClientEventType.SimulationNotification,
 	async (event: ClientEvent<StatusUpdate<SimulationNotificationData>>) => {
@@ -230,6 +231,7 @@ useClientEvent(
 	}
 );
 
+// Handle simulation status update event for the base forecast run
 useClientEvent(
 	ClientEventType.SimulationNotification,
 	async (event: ClientEvent<StatusUpdate<SimulationNotificationData>>) => {
