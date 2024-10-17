@@ -988,6 +988,13 @@ export function createFunmanParameterCharts(
 			{ name: 'minX', expr: 'minX' },
 			{ name: 'maxX', expr: 'maxX' }
 		],
+		// Parent signal
+		signals: [
+			{
+				name: 'selectedBoxId',
+				value: null
+			}
+		],
 		facet: {
 			row: {
 				field: 'parameterId',
