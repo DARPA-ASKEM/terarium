@@ -43,26 +43,6 @@ export interface ModelConfigTableData {
 	tableFormattedMatrix?: ModelConfigTableData[];
 }
 
-// TODO: Wherever these are used - investigate using an actual map instead, this has been avoided due to v-model not playing well with maps
-// But a solution might be found here: https://stackoverflow.com/questions/37130105/does-vue-support-reactivity-on-map-and-set-data-types/64512468#64512468
-export interface StringValueMap {
-	[key: string]: string;
-}
-
-export interface NumericValueMap {
-	[key: string]: number;
-}
-
-export interface AnyValueMap {
-	[key: string]: any;
-}
-
-export enum ViewType {
-	LIST = 'list',
-	MATRIX = 'matrix',
-	GRAPH = 'graph'
-}
-
 // Side panel
 export type SidePanelTab = {
 	name: string;
@@ -82,11 +62,6 @@ export interface AssetItem extends AssetRoute {
 	assetName?: string;
 	assetCreatedOn?: string;
 }
-
-export type CodeRequest = {
-	asset: AssetItem;
-	code?: string;
-};
 
 // TODO this should come from the back end, and we should also have maps for the "categories" of types (artifacts, models, datasets, etc)
 export enum AcceptedTypes {
