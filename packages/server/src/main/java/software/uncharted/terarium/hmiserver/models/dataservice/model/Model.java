@@ -76,6 +76,10 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 			metadata.retainMetadataFields(other.getMetadata());
 		}
 
+		if (getDescription() == null) {
+			setDescription(other.getDescription());
+		}
+
 		final List<String> propertiesToPreserve = List.of(
 			"states",
 			"metadata",

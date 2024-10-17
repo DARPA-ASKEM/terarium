@@ -85,6 +85,9 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 	private byte[] description;
 
 	public void retainMetadataFields(final ModelMetadata other) {
+		if (description == null) {
+			description = other.description;
+		}
 		if (gollmCard == null) {
 			gollmCard = other.gollmCard;
 		}
