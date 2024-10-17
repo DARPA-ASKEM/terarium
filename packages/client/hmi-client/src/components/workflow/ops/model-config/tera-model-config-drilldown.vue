@@ -8,7 +8,7 @@
 	>
 		<template #sidebar>
 			<tera-slider-panel
-				v-if="pdfData"
+				v-if="pdfData.length"
 				v-model:is-open="isDocViewerOpen"
 				header="Document Viewer"
 				content-width="700px"
