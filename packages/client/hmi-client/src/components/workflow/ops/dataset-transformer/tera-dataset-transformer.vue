@@ -80,9 +80,10 @@ const jupyterPanel = ref();
 const selectedDataset = ref<string | null>(null);
 const updateKernelState = (newKernelState: any) => {
 	kernelState.value = newKernelState;
-	// Default the dropdown to the first dataframe
+	// Default the dropdown to the last dataframe
 	if (!selectedDataset.value) {
-		selectedDataset.value = Object.keys(newKernelState)[0];
+		const keys = Object.keys(newKernelState);
+		selectedDataset.value = keys[keys.length - 1];
 	}
 };
 
