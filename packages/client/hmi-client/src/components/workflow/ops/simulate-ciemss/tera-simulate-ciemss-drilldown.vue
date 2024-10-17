@@ -367,7 +367,7 @@ const preparedCharts = computed(() => {
 
 	return props.node.state.chartConfigs.map((config) => {
 		// If only one variable is selected, show the baseline forecast
-		const showBaseLine = config.length === 1;
+		const showBaseLine = config.length === 1 && props.node.state.baseForecastId;
 
 		const options: ForecastChartOptions = {
 			title: '',
