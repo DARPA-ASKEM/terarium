@@ -6,6 +6,7 @@
 	</router-view>
 	<tera-footer />
 	<tera-common-modal-dialogs />
+	<ConfirmDialog class="w-4" />
 </template>
 
 <script setup lang="ts">
@@ -20,6 +21,7 @@ import { useProjects } from '@/composables/project';
 import { useCurrentRoute } from '@/router';
 import { ToastSeverity, ToastSummaries, useToastService } from '@/services/toast';
 import { Project } from '@/types/Types';
+import ConfirmDialog from 'primevue/confirmdialog';
 
 const toast = useToastService();
 
