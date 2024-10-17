@@ -190,7 +190,8 @@ public class ModelController {
 								new TypeReference<>() {}
 							);
 
-							// Append the Document extractions to the Model extractions, just for the front-end.
+							// Append the Document extractions to the Model extractions, just for the
+							// front-end.
 							// Those are NOT to be saved back to the data-service.
 							if (extractions != null) {
 								model.get().getMetadata().getAttributes().addAll(extractions);
@@ -445,6 +446,73 @@ public class ModelController {
 			// the front-end.
 			model.setName(model.getHeader().getName());
 			final Model created = modelService.createAsset(model, projectId, permission);
+
+			// create default configuration
+			final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
+				created,
+				null,
+				null
+			);
+			modelConfigurationService.createAsset(modelConfiguration, projectId, permission);
+
+			// add default model configuration to project
+			final Optional<Project> project = projectService.getProject(projectId);
+			if (project.isPresent()) {
+				projectAssetService.createProjectAsset(
+					project.get(),
+					AssetType.MODEL_CONFIGURATION,
+					modelConfiguration,
+					permission
+				);
+			}
+
+			return ResponseEntity.status(HttpStatus.CREATED).body(created);
+		} catch (final IOException e) {
+			final String error = "Unable to create model";
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+		}
+	}
+
+	public static class CreateModelFromOldRequest {
+
+		Model oldModel;
+		Model newModel;
+	}
+
+	@PostMapping("/new-from-old")
+	@Secured(Roles.USER)
+	@Operation(summary = "Create a new model from an old model")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "201",
+				description = "Model created.",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class)
+				)
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue creating the model", content = @Content)
+		}
+	)
+	ResponseEntity<Model> createModelFromOld(
+		@RequestBody final CreateModelFromOldRequest req,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(
+			currentUserService.get().getId(),
+			projectId
+		);
+
+		try {
+			req.newModel.retainMetadataFields(req.oldModel);
+
+			// Set the model name from the AMR header name.
+			// TerariumAsset have a name field, but it's not used for the model name outside
+			// the front-end.
+			req.newModel.setName(req.newModel.getHeader().getName());
+			final Model created = modelService.createAsset(req.newModel, projectId, permission);
 
 			// create default configuration
 			final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(

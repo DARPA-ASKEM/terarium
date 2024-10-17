@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -26,6 +27,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelSemantics;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Initial;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Observable;
+import software.uncharted.terarium.hmiserver.utils.JsonUtil;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -63,6 +65,55 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
 	private ModelMetadata metadata;
+
+	public void retainMetadataFields(final Model other) {
+		final Map<String, JsonNode> props = getAdditionalProperties();
+		final Map<String, JsonNode> otherProps = other.getAdditionalProperties();
+
+		if (metadata == null) {
+			metadata = other.getMetadata();
+		} else {
+			metadata.retainMetadataFields(other.getMetadata());
+		}
+
+		final List<String> propertiesToPreserve = List.of(
+			"states",
+			"metadata",
+			"units",
+			"vertices",
+			"edges",
+			"parameters",
+			"initials"
+		);
+
+		for (final String property : propertiesToPreserve) {
+			if (!otherProps.containsKey(property) || !otherProps.get(property).isArray()) {
+				continue;
+			}
+
+			if (!props.containsKey(property) || !props.get(property).isArray()) {
+				continue;
+			}
+
+			final ArrayNode otherProperty = (ArrayNode) otherProps.get(property);
+			final ArrayNode thisProperty = (ArrayNode) props.get(property);
+
+			for (final JsonNode element : otherProperty) {
+				final JsonNode matching = JsonUtil.getFirstByPredicate(thisProperty, (final JsonNode node) -> {
+					// Check if the 'state' object has a 'name' field
+					return node.has("id");
+				});
+
+				if (matching == null) {
+					// does not exist in current model, we can add the old one, otherwise keep the
+					// new one
+					thisProperty.add(element);
+				}
+			}
+
+			props.put(property, thisProperty);
+		}
+	}
 
 	public ModelMetadata getMetadata() {
 		if (metadata == null) {
