@@ -74,18 +74,14 @@ public class RebacUser extends RebacObject {
 	}
 
 	public String getPermissionFor(final RebacProject rebacProject) throws Exception {
-		if (isAdmin()) {
-			return Schema.Relationship.ADMIN.toString();
-		}
-
 		if (reBACService.isCreator(getSchemaObject(), rebacProject.getSchemaObject())) {
 			return Schema.Relationship.CREATOR.toString();
-		} else if (can(rebacProject, Schema.Permission.ADMINISTRATE)) {
-			return Schema.Relationship.ADMIN.toString();
 		} else if (can(rebacProject, Schema.Permission.WRITE)) {
 			return Schema.Relationship.WRITER.toString();
 		} else if (can(rebacProject, Schema.Permission.READ)) {
 			return Schema.Relationship.READER.toString();
+		} else if (isAdmin() || can(rebacProject, Schema.Permission.ADMINISTRATE)) {
+			return Schema.Relationship.ADMIN.toString();
 		}
 		return "none";
 	}
