@@ -52,6 +52,21 @@ pyodide.runPython(`
 
 postMessage(true);
 
+const encodeParseExpr = (v: string) => {
+	let expr = v.toString().replaceAll('lambda', 'XXlambdaXX');
+	expr = expr.replaceAll('Ci', 'XXCiXX');
+	expr = expr.replaceAll('S', 'XXSXX');
+	return expr;
+};
+
+// Reverse special cases
+const revertParseExpr = (v: string) => {
+	let resultStr = v.replaceAll('XXlambdaXX', 'lambda');
+	resultStr = resultStr.replaceAll('XXSXX', 'S');
+	resultStr = resultStr.replaceAll('XXCiXX', 'Ci');
+	return resultStr;
+};
+
 const evaluateExpression = (expressionStr: string, symbolsTable: Object) => {
 	const subs: any[] = [];
 	Object.keys(symbolsTable).forEach((key) => {
@@ -81,6 +96,9 @@ const parseExpression = (expr: string) => {
 	if (!expr || expr.length === 0) {
 		return output;
 	}
+
+	// Special cases
+	expr = encodeParseExpr(expr);
 
 	// function to convert expression to presentation mathml
 	let result = pyodide.runPython(`
@@ -114,6 +132,10 @@ const parseExpression = (expr: string) => {
 		list(map(lambda x: x.name, eq.free_symbols))
 	`);
 	output.freeSymbols = result.toJs();
+
+	output.latex = revertParseExpr(output.latex);
+	output.mathml = revertParseExpr(output.mathml);
+	output.pmathml = revertParseExpr(output.pmathml);
 
 	return output;
 };
