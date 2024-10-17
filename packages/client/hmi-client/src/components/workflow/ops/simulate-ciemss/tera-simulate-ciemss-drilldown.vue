@@ -366,6 +366,8 @@ const preparedCharts = computed(() => {
 	});
 
 	return props.node.state.chartConfigs.map((config) => {
+		// If only one variable is selected, show the baseline forecast
+		const showBaseLine = config.length === 1;
 		const chart = createForecastChart(
 			{
 				data: result,
@@ -375,7 +377,9 @@ const preparedCharts = computed(() => {
 			},
 			{
 				data: resultSummary,
-				variables: config.map((d) => `${pyciemssMap[d]}_mean`),
+				variables: showBaseLine
+					? [`${pyciemssMap[config[0]]}_mean`, `${pyciemssMap[config[0]]}_mean:base`]
+					: config.map((d) => `${pyciemssMap[d]}_mean`),
 				timeField: 'timepoint_id'
 			},
 			null,
