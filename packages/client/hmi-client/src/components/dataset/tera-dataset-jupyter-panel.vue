@@ -127,7 +127,7 @@ import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { useToastService } from '@/services/toast';
 import { IModel } from '@jupyterlab/services/lib/session/session';
 import type { CsvAsset, NotebookSession } from '@/types/Types';
-import { AssetType, EventType } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 import {
@@ -478,7 +478,7 @@ const onAddCodeCell = () => {
 };
 
 const onRunAllCells = () => {
-	const event = new Event(EventType.RunAllCells);
+	const event = new Event('run-all-cells');
 	window.dispatchEvent(event);
 };
 

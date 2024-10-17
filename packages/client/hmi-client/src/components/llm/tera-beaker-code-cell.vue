@@ -29,7 +29,6 @@ import { INotebookItem, JupyterMessage, renderMime } from '@/services/jupyter';
 import Button from 'primevue/button';
 import { CodeCell, CodeCellModel } from '@jupyterlab/cells';
 import { useConfirm } from 'primevue/useconfirm';
-import { EventType } from '@/types/Types';
 
 const props = defineProps<{
 	jupyterMessage: JupyterMessage;
@@ -98,7 +97,7 @@ onMounted(() => {
 	if (props.notebookItem.autoRun) {
 		runCell();
 	}
-	window.addEventListener(EventType.RunAllCells, () => {
+	window.addEventListener('run-all-cells', () => {
 		setTimeout(() => {
 			runCell();
 		}, 1000 * props.index.valueOf()); // ensures the cells are run in the correct order
@@ -106,7 +105,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-	window.removeEventListener(EventType.RunAllCells, runCell); // Clean up listener
+	window.removeEventListener('run-all-cells', runCell); // Clean up listener
 });
 
 defineExpose({

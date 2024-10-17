@@ -8,9 +8,9 @@
 			tabindex="0"
 			class="message-container"
 		>
-			<div v-if="showRerunMessage" class="rerun-message">
+			<div v-if="showRerunMessage" class="rerun-message" @click="hideRerunMessage">
 				Re-run all the cells to restore the context if you need to make any changes or use them downstream.
-				<Button class="close-mask" icon="pi pi-times" text rounded aria-label="Close" @click="hideRerunMessage" />
+				<Button class="close-mask" icon="pi pi-times" text rounded aria-label="Close" />
 			</div>
 			<tera-jupyter-response
 				@keydown.stop
@@ -506,6 +506,6 @@ section {
 	background-color: var(--surface-warning);
 	justify-content: space-between;
 	align-items: center;
-	padding: 0.5rem;
+	padding: var(--gap-2);
 }
 </style>
