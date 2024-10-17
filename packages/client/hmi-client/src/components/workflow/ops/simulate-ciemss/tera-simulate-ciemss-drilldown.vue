@@ -237,7 +237,7 @@ import { KernelSessionManager } from '@/services/jupyter';
 import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import { createForecastChart, createInterventionChartMarkers } from '@/services/charts';
+import { createForecastChart, createInterventionChartMarkers, ForecastChartOptions } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import { getModelConfigurationById } from '@/services/model-configurations';
@@ -368,6 +368,27 @@ const preparedCharts = computed(() => {
 	return props.node.state.chartConfigs.map((config) => {
 		// If only one variable is selected, show the baseline forecast
 		const showBaseLine = config.length === 1;
+
+		const options: ForecastChartOptions = {
+			title: '',
+			width: chartSize.value.width,
+			height: chartSize.value.height,
+			legend: true,
+			translationMap: reverseMap,
+			xAxisTitle: modelVarUnits.value._time || 'Time',
+			yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
+		};
+		let statLayerVariables = config.map((d) => `${pyciemssMap[d]}_mean`);
+
+		if (showBaseLine) {
+			statLayerVariables = [`${pyciemssMap[config[0]]}_mean:base`, `${pyciemssMap[config[0]]}_mean`];
+			options.translationMap = {
+				...options.translationMap,
+				[`${pyciemssMap[config[0]]}_mean:base`]: `${config[0]} (baseline)`
+			};
+			options.colorscheme = ['#AAB3C6', '#1B8073'];
+		}
+
 		const chart = createForecastChart(
 			{
 				data: result,
@@ -377,22 +398,11 @@ const preparedCharts = computed(() => {
 			},
 			{
 				data: resultSummary,
-				variables: showBaseLine
-					? [`${pyciemssMap[config[0]]}_mean`, `${pyciemssMap[config[0]]}_mean:base`]
-					: config.map((d) => `${pyciemssMap[d]}_mean`),
+				variables: statLayerVariables,
 				timeField: 'timepoint_id'
 			},
 			null,
-			// options
-			{
-				title: '',
-				width: chartSize.value.width,
-				height: chartSize.value.height,
-				legend: true,
-				translationMap: reverseMap,
-				xAxisTitle: modelVarUnits.value._time || 'Time',
-				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
-			}
+			options
 		);
 		if (interventionPolicy.value) {
 			_.keys(groupedInterventionOutputs.value).forEach((key) => {

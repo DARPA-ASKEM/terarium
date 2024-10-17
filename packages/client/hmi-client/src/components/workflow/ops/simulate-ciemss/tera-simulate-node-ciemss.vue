@@ -33,7 +33,7 @@ import { chartActionsProxy, nodeOutputLabel } from '@/components/workflow/util';
 import type { WorkflowNode } from '@/types/workflow';
 import { createLLMSummary } from '@/services/summary-service';
 import { useProjects } from '@/composables/project';
-import { createForecastChart, createInterventionChartMarkers } from '@/services/charts';
+import { createForecastChart, createInterventionChartMarkers, ForecastChartOptions } from '@/services/charts';
 import { createDatasetFromSimulationResult } from '@/services/dataset';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import {
@@ -148,6 +148,30 @@ const preparedCharts = computed(() => {
 	});
 
 	return props.node.state.chartConfigs.map((config) => {
+		// If only one variable is selected, show the baseline forecast
+		const showBaseLine = config.length === 1;
+
+		const options: ForecastChartOptions = {
+			title: '',
+			width: 180,
+			height: 120,
+			legend: true,
+			translationMap: reverseMap,
+			xAxisTitle: modelVarUnits.value._time || 'Time',
+			yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
+		};
+
+		let statLayerVariables = config.map((d) => `${pyciemssMap[d]}_mean`);
+
+		if (showBaseLine) {
+			statLayerVariables = [`${pyciemssMap[config[0]]}_mean:base`, `${pyciemssMap[config[0]]}_mean`];
+			options.translationMap = {
+				...options.translationMap,
+				[`${pyciemssMap[config[0]]}_mean:base`]: `${config[0]} (baseline)`
+			};
+			options.colorscheme = ['#AAB3C6', '#1B8073'];
+		}
+
 		const chart = createForecastChart(
 			{
 				data: result,
@@ -157,20 +181,11 @@ const preparedCharts = computed(() => {
 			},
 			{
 				data: resultSummary,
-				variables: config.map((d) => `${pyciemssMap[d]}_mean`),
+				variables: statLayerVariables,
 				timeField: 'timepoint_id'
 			},
 			null,
-			// options
-			{
-				title: '',
-				width: 180,
-				height: 120,
-				legend: true,
-				translationMap: reverseMap,
-				xAxisTitle: modelVarUnits.value._time || 'Time',
-				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
-			}
+			options
 		);
 		if (interventionPolicy.value) {
 			_.keys(groupedInterventionOutputs.value).forEach((key) => {
