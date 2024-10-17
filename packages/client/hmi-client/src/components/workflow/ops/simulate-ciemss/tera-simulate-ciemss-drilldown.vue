@@ -19,7 +19,7 @@
 					<div class="toolbar">
 						<p>Click Run to start the simulation.</p>
 						<span class="flex gap-2">
-							<tera-pyciemss-cancel-button :simulation-run-id="cancelRunId" />
+							<tera-pyciemss-cancel-button :simulation-run-id="cancelRunIds" />
 							<Button label="Run" icon="pi pi-play" @click="run" :loading="inProgressForecastRun" />
 						</span>
 					</div>
@@ -329,7 +329,9 @@ const presetType = computed(() => {
 const selectedOutputId = ref<string>();
 const selectedRunId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
 
-const cancelRunId = computed(() => props.node.state.inProgressForecastId);
+const cancelRunIds = computed(() =>
+	[props.node.state.inProgressForecastId, props.node.state.inProgressBaseForecastId].filter((id) => Boolean(id))
+);
 const outputPanel = ref(null);
 const chartSize = useDrilldownChartSize(outputPanel);
 
