@@ -1,14 +1,12 @@
 package software.uncharted.terarium.hmiserver.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import feign.FeignException;
 import jakarta.annotation.PostConstruct;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -18,17 +16,19 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -45,9 +45,7 @@ import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractedDocumentPage;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractionAssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
@@ -69,7 +67,6 @@ import software.uncharted.terarium.hmiserver.service.tasks.ExtractEquationsRespo
 import software.uncharted.terarium.hmiserver.service.tasks.ExtractTablesResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ExtractTextResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
-import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.JsonUtil;
 import software.uncharted.terarium.hmiserver.utils.StringMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
@@ -170,73 +167,80 @@ public class ExtractionService {
 		byte[] bytes;
 	}
 
+	enum FailureType {
+		TABLE_FAILURE,
+		EQUATION_FAILURE,
+		VARIABLE_FAILURE
+	}
+
 	static class ExtractPDFResponse {
 
-		String documentAbstract;
-		String documentText;
-		List<String> documentTextPerPage;
-		List<ExtractionFile> files = new ArrayList<>();
-		List<DocumentExtraction> assets = new ArrayList<>();
-		List<JsonNode> equations = new ArrayList<>();
-		List<JsonNode> tables = new ArrayList<>();
+		TextExtraction textExtraction;
+		EquationExtraction equationExtraction;
+		TableExtraction tableExtraction;
 		ArrayNode variableAttributes;
-		boolean partialFailure = true;
+		Set<FailureType> failures = new HashSet<>();
+		boolean completed = false;
 	}
 
 	public ExtractPDFResponse runExtractPDF(
+		final ExtractPDFResponse extractionResponse,
 		final String documentName,
 		final byte[] documentContents,
 		final String userId,
 		final NotificationGroupInstance<Properties> notificationInterface
 	) {
-		final ExtractPDFResponse extractionResponse = new ExtractPDFResponse();
-
 		try {
 			notificationInterface.sendMessage("Starting text extraction...");
 			log.info("Starting text extraction for document: {}", documentName);
 
-			final Future<TextExtraction> textExtractionFuture = extractTextFromPDF(
-				notificationInterface,
-				documentName,
-				documentContents
-			);
+			// run text extraction if needed
+			Future<TextExtraction> textExtractionFuture;
+			if (extractionResponse.textExtraction == null) {
+				textExtractionFuture = extractTextFromPDF(notificationInterface, documentName, documentContents);
+			} else {
+				final CompletableFuture<TextExtraction> cf = new CompletableFuture<>();
+				textExtractionFuture = cf;
+				cf.complete(extractionResponse.textExtraction);
+			}
 
-			notificationInterface.sendMessage("Starting equation extraction...");
-			log.info("Starting equation extraction for document: {}", documentName);
-			final Future<EquationExtraction> equationExtractionFuture = extractEquationsFromPDF(
-				notificationInterface,
-				documentContents,
-				userId
-			);
+			// run equation extraction if needed
+			Future<EquationExtraction> equationExtractionFuture;
+			if (extractionResponse.equationExtraction == null) {
+				equationExtractionFuture = extractEquationsFromPDF(notificationInterface, documentContents, userId);
+			} else {
+				final CompletableFuture<EquationExtraction> cf = new CompletableFuture<>();
+				equationExtractionFuture = cf;
+				cf.complete(extractionResponse.equationExtraction);
+			}
 
-			notificationInterface.sendMessage("Starting table extraction...");
-			log.info("Starting table extraction for document: {}", documentName);
-			final Future<TableExtraction> tableExtractionFuture = extractTablesFromPDF(
-				notificationInterface,
-				userId,
-				documentContents
-			);
+			// run table extraction if needed
+			Future<TableExtraction> tableExtractionFuture;
+			if (extractionResponse.tableExtraction == null) {
+				tableExtractionFuture = extractTablesFromPDF(notificationInterface, userId, documentContents);
+			} else {
+				final CompletableFuture<TableExtraction> cf = new CompletableFuture<>();
+				tableExtractionFuture = cf;
+				cf.complete(extractionResponse.tableExtraction);
+			}
 
 			// wait for text extraction
 			final TextExtraction textExtraction = textExtractionFuture.get();
 			notificationInterface.sendMessage("Text extraction complete!");
 			log.info("Text extraction complete for document: {}", documentName);
-			extractionResponse.documentAbstract = textExtraction.documentAbstract;
-			extractionResponse.documentText = textExtraction.documentText;
-			extractionResponse.documentTextPerPage = textExtraction.documentTextPerPage;
-			extractionResponse.assets = textExtraction.assets;
-			extractionResponse.files = textExtraction.files;
+			extractionResponse.textExtraction = textExtraction;
 
 			try {
 				// wait for equation extraction
 				final EquationExtraction equationExtraction = equationExtractionFuture.get();
 				notificationInterface.sendMessage("Equation extraction complete!");
 				log.info("Equation extraction complete for document: {}", documentName);
-				extractionResponse.equations = equationExtraction.equations;
+				extractionResponse.equationExtraction = equationExtraction;
+				extractionResponse.failures.remove(FailureType.EQUATION_FAILURE);
 			} catch (final Exception e) {
 				notificationInterface.sendMessage("Equation extraction failed, continuing");
 				log.error("Equation extraction failed for document: {}", documentName, e);
-				extractionResponse.partialFailure = true;
+				extractionResponse.failures.add(FailureType.EQUATION_FAILURE);
 			}
 
 			try {
@@ -244,28 +248,33 @@ public class ExtractionService {
 				final TableExtraction tableExtraction = tableExtractionFuture.get();
 				notificationInterface.sendMessage("Table extraction complete!");
 				log.info("Table extraction complete for document: {}", documentName);
-				extractionResponse.tables = tableExtraction.tables;
+				extractionResponse.tableExtraction = tableExtraction;
+				extractionResponse.failures.remove(FailureType.TABLE_FAILURE);
 			} catch (final Exception e) {
 				notificationInterface.sendMessage("Table extraction failed, continuing");
 				log.error("Table extraction failed for document: {}", documentName, e);
-				extractionResponse.partialFailure = true;
+				extractionResponse.failures.add(FailureType.TABLE_FAILURE);
 			}
 
 			// if there is text, run variable extraction
-			if (!extractionResponse.documentText.isEmpty()) {
+			if (!extractionResponse.textExtraction.documentText.isEmpty()) {
 				// run variable extraction
 				try {
 					notificationInterface.sendMessage("Dispatching variable extraction request...");
 					extractionResponse.variableAttributes = getVariablesFromDocumentText(
 						notificationInterface,
-						extractionResponse.documentText
+						extractionResponse.textExtraction.documentText
 					);
 					notificationInterface.sendMessage("Variable extraction completed");
+					extractionResponse.failures.remove(FailureType.VARIABLE_FAILURE);
 				} catch (final Exception e) {
 					notificationInterface.sendMessage("Variable extraction failed, continuing");
-					extractionResponse.partialFailure = true;
+					extractionResponse.failures.add(FailureType.VARIABLE_FAILURE);
 				}
 			}
+
+			// flag as completed
+			extractionResponse.completed = true;
 
 			return extractionResponse;
 		} catch (final FeignException e) {
@@ -295,32 +304,16 @@ public class ExtractionService {
 	) throws IOException {
 		final DocumentAsset document = documentService.getAsset(documentId, hasWritePermission).get();
 
-		for (final ExtractionFile file : extractionResponse.files) {
-			document.getFileNames().add(file.filename);
-			documentService.uploadFile(documentId, file.filename, file.contentType, file.bytes);
+		if (extractionResponse.textExtraction != null) {
+			document.setText(extractionResponse.textExtraction.documentText);
 		}
 
-		document.setAssets(new ArrayList<>());
-		for (final DocumentExtraction extraction : extractionResponse.assets) {
-			document.getAssets().add(extraction);
-		}
-
-		if (extractionResponse.documentText != null) {
-			document.setText(extractionResponse.documentText);
-		}
-
-		int pageNum = 0;
-		for (final String page : extractionResponse.documentTextPerPage) {
+		for (final String page : extractionResponse.textExtraction.documentTextPerPage) {
 			final ExtractedDocumentPage p = new ExtractedDocumentPage();
 			p.setText(page);
-			p.setPageNumber(pageNum);
+			p.setPageNumber(document.getExtractions().size());
 
 			document.getExtractions().add(p);
-			pageNum++;
-		}
-
-		if (extractionResponse.documentAbstract != null) {
-			document.setDocumentAbstract(extractionResponse.documentAbstract);
 		}
 
 		if (document.getMetadata() == null) {
@@ -331,11 +324,13 @@ public class ExtractionService {
 			document.getMetadata().put("attributes", extractionResponse.variableAttributes);
 		}
 
-		if (extractionResponse.equations != null) {
-			document.getMetadata().put("equations", objectMapper.valueToTree(extractionResponse.equations));
+		if (extractionResponse.equationExtraction != null) {
+			document
+				.getMetadata()
+				.put("equations", objectMapper.valueToTree(extractionResponse.equationExtraction.equations));
 
-			pageNum = 0;
-			for (final JsonNode page : extractionResponse.equations) {
+			int pageNum = 0;
+			for (final JsonNode page : extractionResponse.equationExtraction.equations) {
 				final ArrayNode equationsForPage = (ArrayNode) page;
 				for (final JsonNode equation : equationsForPage) {
 					document.getExtractions().get(pageNum).getEquations().add(equation);
@@ -344,11 +339,11 @@ public class ExtractionService {
 			}
 		}
 
-		if (extractionResponse.tables != null) {
-			document.getMetadata().put("tables", objectMapper.valueToTree(extractionResponse.tables));
+		if (extractionResponse.tableExtraction != null) {
+			document.getMetadata().put("tables", objectMapper.valueToTree(extractionResponse.tableExtraction.tables));
 
-			pageNum = 0;
-			for (final JsonNode page : extractionResponse.tables) {
+			int pageNum = 0;
+			for (final JsonNode page : extractionResponse.tableExtraction.tables) {
 				final ArrayNode tablesForPage = (ArrayNode) page;
 				for (final JsonNode table : tablesForPage) {
 					document.getExtractions().get(pageNum).getTables().add(table);
@@ -414,38 +409,62 @@ public class ExtractionService {
 
 			log.info("Document SHA: {}, checking cache", documentSHA);
 
-			final ExtractPDFResponse extractionResponse;
+			ExtractPDFResponse extractionResponse;
 			if (responseCache.containsKey(documentSHA)) {
 				log.info("Returning cached response for document {} for SHA: {}", documentId, documentSHA);
 
 				extractionResponse = responseCache.get(documentSHA);
+
 				notificationInterface.sendMessage("Cached response found for document extraction");
 			} else {
 				log.info("No cached response found for text from document {} for SHA: {}", documentId, documentSHA);
 
-				notificationInterface.sendMessage("No extraction found in cache, dispatching extraction request...");
-				extractionResponse = runExtractPDF(filename, documentContents, userId, notificationInterface);
+				extractionResponse = new ExtractPDFResponse();
+			}
+
+			if (!extractionResponse.completed || !extractionResponse.failures.isEmpty()) {
+				if (!extractionResponse.completed) {
+					notificationInterface.sendMessage("No extraction found in cache, dispatching extraction request...");
+				} else if (extractionResponse.failures.isEmpty()) {
+					notificationInterface.sendMessage(
+						"Cached response found for document extraction, but with failures, re-running failed extractions"
+					);
+				}
+
+				extractionResponse = runExtractPDF(
+					extractionResponse,
+					filename,
+					documentContents,
+					userId,
+					notificationInterface
+				);
+
 				if (extractionResponse == null) {
 					throw new RuntimeException("Extraction failed");
 				}
-				if (!extractionResponse.partialFailure) {
-					// don't cache if partial failure
-					responseCache.put(
-						documentSHA,
-						extractionResponse,
-						CACHE_TTL_SECONDS,
-						TimeUnit.SECONDS,
-						CACHE_MAX_IDLE_SECONDS,
-						TimeUnit.SECONDS
-					);
-				}
+
+				// cache even if there are partial failures
+				responseCache.put(
+					documentSHA,
+					extractionResponse,
+					CACHE_TTL_SECONDS,
+					TimeUnit.SECONDS,
+					CACHE_MAX_IDLE_SECONDS,
+					TimeUnit.SECONDS
+				);
+			} else {
+				notificationInterface.sendMessage("Cached response found for successful document extraction");
 			}
 
 			notificationInterface.sendMessage("Applying extraction results to document");
 			log.info("Applying extraction results to document {}", documentId);
 			final DocumentAsset doc = applyExtractPDFResponse(documentId, projectId, extractionResponse, hasWritePermission);
 
-			notificationInterface.sendFinalMessage("Extraction complete");
+			if (!extractionResponse.failures.isEmpty()) {
+				notificationInterface.sendMessage("Extraction completed with failures");
+			} else {
+				notificationInterface.sendFinalMessage("Extraction complete");
+			}
 
 			return doc;
 		});
@@ -790,7 +809,7 @@ public class ExtractionService {
 		final byte[] pdf,
 		final String userId
 	) throws TimeoutException, InterruptedException, ExecutionException, IOException {
-		final int REQUEST_TIMEOUT_MINUTES = 5;
+		final int REQUEST_TIMEOUT_MINUTES = 10;
 
 		int responseCode = HttpURLConnection.HTTP_BAD_GATEWAY;
 		if (!EQUATION_EXTRACTION_GPU_ENDPOINT.isEmpty()) {
@@ -851,11 +870,8 @@ public class ExtractionService {
 
 	static class TextExtraction {
 
-		String documentAbstract;
 		String documentText;
 		List<String> documentTextPerPage = new ArrayList<>();
-		List<DocumentExtraction> assets = new ArrayList<>();
-		List<ExtractionFile> files = new ArrayList<>();
 	}
 
 	public Future<TextExtraction> extractTextFromPDF(
@@ -863,7 +879,7 @@ public class ExtractionService {
 		final String userId,
 		final byte[] pdf
 	) throws TimeoutException, InterruptedException, ExecutionException, IOException {
-		final int REQUEST_TIMEOUT_MINUTES = 5;
+		final int REQUEST_TIMEOUT_MINUTES = 10;
 
 		final TaskRequest req = new TaskRequest();
 		req.setTimeoutMinutes(REQUEST_TIMEOUT_MINUTES);
@@ -903,7 +919,7 @@ public class ExtractionService {
 		final String userId,
 		final byte[] pdf
 	) throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException, IOException {
-		final int REQUEST_TIMEOUT_MINUTES = 5;
+		final int REQUEST_TIMEOUT_MINUTES = 10;
 
 		final TaskRequest req = new TaskRequest();
 		req.setTimeoutMinutes(REQUEST_TIMEOUT_MINUTES);
@@ -958,166 +974,6 @@ public class ExtractionService {
 			}
 
 			return extraction;
-		});
-	}
-
-	public Future<TextExtraction> extractTextFromPDFCosmos(
-		final NotificationGroupInstance<Properties> notificationInterface,
-		final String documentName,
-		final byte[] pdf
-	) {
-		return executor.submit(() -> {
-			final TextExtraction extractionResponse = new TextExtraction();
-
-			final ByteMultipartFile documentFile = new ByteMultipartFile(pdf, documentName, "application/pdf");
-
-			final boolean compressImages = false;
-			final boolean useCache = false;
-			final ResponseEntity<JsonNode> extractionResp = extractionProxy.processPdfExtraction(
-				compressImages,
-				useCache,
-				documentFile
-			);
-
-			final JsonNode body = extractionResp.getBody();
-			final UUID jobId = UUID.fromString(body.get("job_id").asText());
-
-			final int POLLING_INTERVAL_SECONDS = 5;
-			final int MAX_EXECUTION_TIME_SECONDS = 600;
-			final int MAX_ITERATIONS = MAX_EXECUTION_TIME_SECONDS / POLLING_INTERVAL_SECONDS;
-
-			boolean jobDone = false;
-			notificationInterface.sendMessage("COSMOS extraction in progress...");
-
-			for (int i = 0; i < MAX_ITERATIONS; i++) {
-				final ResponseEntity<JsonNode> statusResp = extractionProxy.status(jobId);
-				if (!statusResp.getStatusCode().is2xxSuccessful()) {
-					throw new RuntimeException("Unable to poll status endpoint");
-				}
-
-				final JsonNode statusData = statusResp.getBody();
-				if (!statusData.get("error").isNull()) {
-					throw new RuntimeException("Extraction job failed: " + statusData.has("error"));
-				}
-
-				log.info("Polled status endpoint {} times:\n{}", i + 1, statusData);
-				jobDone = statusData.get("error").asBoolean() || statusData.get("job_completed").asBoolean();
-				if (jobDone) {
-					notificationInterface.sendMessage("COSMOS extraction complete; processing results...");
-					break;
-				}
-				Thread.sleep(POLLING_INTERVAL_SECONDS * 1000);
-			}
-
-			if (!jobDone) {
-				throw new RuntimeException("Extraction job did not complete within the expected time");
-			}
-
-			final ResponseEntity<byte[]> zipFileResp = extractionProxy.result(jobId);
-			if (!zipFileResp.getStatusCode().is2xxSuccessful()) {
-				throw new RuntimeException("Unable to fetch the extraction result");
-			}
-
-			notificationInterface.sendMessage("Uploading COSMOS extraction results...");
-			final String zipFileName = documentName + "_cosmos.zip";
-
-			extractionResponse.files.add(
-				new ExtractionFile(zipFileName, zipFileResp.getBody(), ContentType.APPLICATION_OCTET_STREAM)
-			);
-
-			JsonNode abstractJsonNode = null;
-			// Open the zipfile and extract the contents
-			notificationInterface.sendMessage("Extracting COSMOS extraction results...");
-			final Map<String, byte[]> fileMap = new HashMap<>();
-			try {
-				final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(zipFileResp.getBody());
-				final ZipInputStream zipInputStream = new ZipInputStream(byteArrayInputStream);
-
-				ZipEntry entry = zipInputStream.getNextEntry();
-				while (entry != null) {
-					log.info("Adding {} to filemap", entry.getName());
-					final String filenameNoExt = removeFileExtension(entry.getName());
-					final byte[] bytes = zipEntryToBytes(zipInputStream);
-
-					fileMap.put(filenameNoExt, bytes);
-					if (entry.getName().toLowerCase().endsWith(".json")) {
-						final ObjectMapper objectMapper = new ObjectMapper();
-
-						final JsonNode rootNode = objectMapper.readTree(bytes);
-						if (rootNode instanceof final ArrayNode arrayNode) {
-							for (final JsonNode record : arrayNode) {
-								if (record.has("detect_cls") && record.get("detect_cls").asText().equals("Abstract")) {
-									abstractJsonNode = record;
-									break;
-								}
-							}
-						}
-					}
-					entry = zipInputStream.getNextEntry();
-				}
-
-				zipInputStream.closeEntry();
-				zipInputStream.close();
-			} catch (final IOException e) {
-				throw new RuntimeException("Unable to extract the contents of the zip file", e);
-			}
-
-			if (abstractJsonNode != null) {
-				extractionResponse.documentAbstract = abstractJsonNode.get(NODE_CONTENT).asText();
-			}
-
-			final ResponseEntity<JsonNode> textResp = extractionProxy.text(jobId);
-			if (!textResp.getStatusCode().is2xxSuccessful()) {
-				throw new RuntimeException("Unable to fetch the text extractions");
-			}
-
-			for (final ExtractionAssetType extractionType : ExtractionAssetType.values()) {
-				final ResponseEntity<JsonNode> response = extractionProxy.extraction(jobId, extractionType.toStringPlural());
-				log.info("Extraction type {} response status: {}", extractionType, response.getStatusCode());
-				if (!response.getStatusCode().is2xxSuccessful()) {
-					log.warn("Unable to fetch the {} extractions", extractionType);
-					continue;
-				}
-
-				for (final JsonNode record : response.getBody()) {
-					String assetFileName = "";
-					if (record.has("img_pth")) {
-						final String path = record.get("img_pth").asText();
-						assetFileName = path.substring(path.lastIndexOf("/") + 1);
-						final String assetFilenameNoExt = removeFileExtension(assetFileName);
-						if (!fileMap.containsKey(assetFilenameNoExt)) {
-							log.warn("Unable to find file {} in zipfile", assetFileName);
-						}
-						final byte[] file = fileMap.get(assetFilenameNoExt);
-						if (file == null) {
-							throw new RuntimeException("Unable to find file " + assetFileName + " in zipfile");
-						}
-						extractionResponse.files.add(new ExtractionFile(assetFileName, file, ContentType.IMAGE_JPEG));
-					} else {
-						log.warn("No img_pth found in record: {}", record);
-					}
-
-					final DocumentExtraction extraction = new DocumentExtraction();
-					extraction.setFileName(assetFileName);
-					extraction.setAssetType(extractionType);
-					extraction.setMetadata(objectMapper.convertValue(record, new TypeReference<>() {}));
-
-					extractionResponse.assets.add(extraction);
-					notificationInterface.sendMessage(String.format("Add COSMOS extraction %s to Document...", assetFileName));
-				}
-			}
-
-			String documentText = "";
-			for (final JsonNode record : textResp.getBody()) {
-				if (record.has(NODE_CONTENT)) {
-					documentText += record.get(NODE_CONTENT).asText() + "\n";
-				} else {
-					log.warn("No content found in record: {}", record);
-				}
-			}
-			extractionResponse.documentText = documentText;
-
-			return extractionResponse;
 		});
 	}
 }
