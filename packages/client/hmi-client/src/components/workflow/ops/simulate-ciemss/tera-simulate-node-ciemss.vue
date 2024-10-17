@@ -73,8 +73,6 @@ const interventionPolicy = ref<InterventionPolicy | null>(null);
 let pyciemssMap: Record<string, string> = {};
 
 const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperationState) => {
-	console.log('Updated chart configs (from chart proxy)');
-	console.log(state);
 	emit('update-state', state);
 });
 
@@ -84,11 +82,7 @@ const processResult = async (runId: string) => {
 		_.keys(groupedInterventionOutputs.value).forEach((key) => {
 			chartProxy.addChart([key]);
 		});
-		console.log('Updated chart configs');
-		console.log(props.node.state);
 	} else if (_.isEmpty(state.chartConfigs)) {
-		console.log('Updated chart configs empty');
-		console.log(props.node.state);
 		chartProxy.addChart();
 	}
 
@@ -214,7 +208,7 @@ useClientEvent(
 
 		const simId = simulationNotificationData.simulationId;
 		let errorMessage = { name: '', value: '', traceback: '' };
-		let forecastId = props.node.state.forecastId;
+		let forecastId = '';
 		if (event.data.state === ProgressState.Failed) {
 			const simulation = await getSimulation(simId);
 			if (simulation?.status && simulation?.statusMessage) {
@@ -226,14 +220,11 @@ useClientEvent(
 			}
 		} else if (event.data.state === ProgressState.Complete) {
 			forecastId = simId;
-			console.log('updated forecast id from client event');
 		}
 		const state = _.cloneDeep(props.node.state);
-		state.forecastId = forecastId;
 		state.inProgressForecastId = '';
+		state.forecastId = forecastId;
 		state.errorMessage = errorMessage;
-		console.log('updated state from client event for normal forecast');
-		console.log(state);
 		emit('update-state', state);
 		if (event.data.state === ProgressState.Complete) await processResult(simId);
 	}
@@ -251,12 +242,7 @@ useClientEvent(
 		const state = _.cloneDeep(props.node.state);
 		state.errorMessage = { name: '', value: '', traceback: '' };
 		state.inProgressBaseForecastId = '';
-		if (event.data.state === ProgressState.Complete) {
-			state.baseForecastId = simId;
-			console.log('updated base forecast id from client event');
-		}
-		console.log('updated state from client event for base forecast');
-		console.log(state);
+		if (event.data.state === ProgressState.Complete) state.baseForecastId = simId;
 		emit('update-state', state);
 	}
 );
@@ -271,8 +257,6 @@ watch(
 		const state = _.cloneDeep(props.node.state);
 		state.inProgressForecastId = '';
 		state.forecastId = id;
-		console.log('updated forecast id from watch');
-		console.log(state);
 		emit('update-state', state);
 		await processResult(id);
 	},
@@ -289,8 +273,6 @@ watch(
 		const state = _.cloneDeep(props.node.state);
 		state.inProgressBaseForecastId = '';
 		state.baseForecastId = id;
-		console.log('updated base forecast id from watch');
-		console.log(state);
 		emit('update-state', state);
 	},
 	{ immediate: true }
