@@ -50,7 +50,7 @@ public class InterventionPolicy extends TerariumAsset {
 	 *   If any timestep is negative this will throw an error
 	 * */
 	public void validateInterventionPolicy() throws Exception {
-		final Set<String> foo = new HashSet<>();
+		final Set<String> duplicateCheckSet = new HashSet<>();
 		for (int i = 0; i < this.interventions.size(); i++) {
 			final Intervention intervention = this.interventions.get(i);
 			// For each static intervention within the policy:
@@ -67,8 +67,9 @@ public class InterventionPolicy extends TerariumAsset {
 					throw new Exception(errorMessage);
 				}
 				// Check for duplicate appliedTo timestep pairs:
-				final String key = staticIntervention.getAppliedTo() + staticIntervention.getTimestep().toString();
-				if (foo.contains(key)) {
+				final String key =
+					staticIntervention.getAppliedTo() + "atTheTime:" + staticIntervention.getTimestep().toString();
+				if (duplicateCheckSet.contains(key)) {
 					final String errorMessage = String.format(
 						"The intervention %s has duplicate applied to: %s and time: %s pairs.",
 						intervention.getName(),
@@ -77,7 +78,7 @@ public class InterventionPolicy extends TerariumAsset {
 					);
 					throw new Exception(errorMessage);
 				} else {
-					foo.add(key);
+					duplicateCheckSet.add(key);
 				}
 			}
 		}
