@@ -15,6 +15,15 @@ export async function createModel(model: Model): Promise<Model | null> {
 	return response?.data ?? null;
 }
 
+export async function createModelFromOld(oldModel: Model, newModel: Model): Promise<Model | null> {
+	delete newModel.id;
+	const response = await API.post(`/models/new-from-old`, {
+		newModel,
+		oldModel
+	});
+	return response?.data ?? null;
+}
+
 export async function createModelAndModelConfig(file: File, progress?: Ref<number>): Promise<Model | null> {
 	const formData = new FormData();
 	formData.append('file', file);

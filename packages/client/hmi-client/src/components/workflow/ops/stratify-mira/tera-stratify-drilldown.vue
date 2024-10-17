@@ -94,29 +94,29 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from 'vue';
-import { cloneDeep, debounce, isEqual, last } from 'lodash';
+import '@/ace-config';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import TeraStratificationGroupForm from '@/components/workflow/ops/stratify-mira/tera-stratification-group-form.vue';
-import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
-import { createModel, getModel } from '@/services/model';
-import { WorkflowNode, OperatorStatus } from '@/types/workflow';
-import { logger } from '@/utils/logger';
-import Button from 'primevue/button';
-import { v4 as uuidv4 } from 'uuid';
-import { VAceEditor } from 'vue3-ace-editor';
-import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import '@/ace-config';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import TeraModel from '@/components/model/tera-model.vue';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import TeraStratificationGroupForm from '@/components/workflow/ops/stratify-mira/tera-stratification-group-form.vue';
+import { KernelSessionManager } from '@/services/jupyter';
+import { createModelFromOld, getModel } from '@/services/model';
+import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import type { Model } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
-import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import { KernelSessionManager } from '@/services/jupyter';
-import TeraModel from '@/components/model/tera-model.vue';
+import { OperatorStatus, WorkflowNode } from '@/types/workflow';
+import { logger } from '@/utils/logger';
+import { cloneDeep, debounce, isEqual, last } from 'lodash';
+import Button from 'primevue/button';
+import { v4 as uuidv4 } from 'uuid';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { VAceEditor } from 'vue3-ace-editor';
+import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { blankStratifyGroup, StratifyGroup, StratifyOperationStateMira } from './stratify-mira-operation';
 
 const props = defineProps<{
@@ -234,6 +234,8 @@ const stratifyModel = () => {
 };
 
 const handleModelPreview = async (data: any) => {
+	if (!amr.value) return;
+
 	const amrResponse = data.content['application/json'] as Model;
 	isStratifyInProgress.value = false;
 	if (!amrResponse) {
@@ -250,7 +252,7 @@ const handleModelPreview = async (data: any) => {
 	amrResponse.header.name = newName;
 
 	// Create output
-	const modelData = await createModel(amrResponse);
+	const modelData = await createModelFromOld(amr.value, amrResponse);
 	if (!modelData) return;
 	outputAmr.value = modelData;
 
