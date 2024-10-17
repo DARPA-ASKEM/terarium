@@ -224,12 +224,6 @@ export interface ModelDescription {
     userId?: string;
 }
 
-export interface ModelFramework extends TerariumAssetThatSupportsAdditionalProperties {
-    name: string;
-    version: string;
-    semantics: string;
-}
-
 export interface InferredParameterSemantic extends Semantic {
     referenceId: string;
     distribution: ModelDistribution;

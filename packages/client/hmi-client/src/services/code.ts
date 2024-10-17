@@ -167,7 +167,7 @@ function getProgrammingLanguage(fileName: string): ProgrammingLanguage {
 		case 'zip':
 			return ProgrammingLanguage.Zip;
 		default:
-			return ProgrammingLanguage.Python; // TODO do we need an "unknown" language?
+			return ProgrammingLanguage.Python;
 	}
 }
 
