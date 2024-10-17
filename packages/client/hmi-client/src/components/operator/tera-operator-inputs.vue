@@ -21,10 +21,6 @@
 					<div class="truncate text-left">
 						{{ useProjects().getAssetName(input.value?.[0]) || getPortLabel(input) }}
 					</div>
-					<!--TODO: label is a string type not an array consider adding this back in if we support an array of labels-->
-					<!-- <label v-for="(label, labelIdx) in input.label?.split(',') ?? []" :key="labelIdx">
-					{{ label }}
-					</label> -->
 					<Button
 						class="unlink"
 						label="Unlink"
