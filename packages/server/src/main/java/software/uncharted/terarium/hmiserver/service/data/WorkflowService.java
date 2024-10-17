@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
@@ -23,6 +24,7 @@ import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
+@Slf4j
 public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow, WorkflowRepository> {
 
 	public WorkflowService(
@@ -95,6 +97,17 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 					node.setVersion(1L);
 				}
 				nodeMap.put(node.getId(), node);
+
+				// Debugging possible sync issue - October 2024
+				log.info(" Node: " + node.getId() + " : " + node.getStatus());
+				for (final JsonNode o : node.getOutputs()) {
+					final JsonNode oValue = o.get("value").get(0);
+					if (oValue != null) {
+						log.info("  Out: " + oValue.asText());
+					} else {
+						log.info("  Out: null");
+					}
+				}
 			}
 		}
 		if (asset.getEdges() != null) {
