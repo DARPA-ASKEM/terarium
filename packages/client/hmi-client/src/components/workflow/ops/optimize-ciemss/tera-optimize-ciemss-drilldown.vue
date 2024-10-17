@@ -30,7 +30,7 @@
 					</div>
 
 					<section class="form-section">
-						<h5>Success criteria <i v-tooltip="criteriaTooltip" class="pi pi-info-circle info-circle" /></h5>
+						<h5>Success criteria</h5>
 						<tera-optimize-criterion-group-form
 							v-for="(cfg, index) in knobs.constraintGroups"
 							:key="selectedOutputId + ':' + index"
@@ -48,10 +48,7 @@
 						/>
 					</section>
 					<section class="form-section">
-						<h5>
-							Intervention policy
-							<i v-tooltip="interventionPolicyToolTip" class="pi pi-info-circle info-circle" />
-						</h5>
+						<h5>Intervention policy</h5>
 						<template v-for="(cfg, idx) in knobs.interventionPolicyGroups">
 							<tera-static-intervention-policy-group
 								v-if="cfg.intervention?.staticInterventions && cfg.intervention?.staticInterventions.length > 0"
@@ -61,7 +58,6 @@
 							/>
 						</template>
 						<section class="empty-state" v-if="knobs.interventionPolicyGroups.length === 0">
-							<!-- TODO: This only works if the user clicks refresh !?!? -->
 							<p class="mt-1">No intervention policies have been added.</p>
 						</section>
 						<template v-for="(cfg, idx) in knobs.interventionPolicyGroups">
@@ -74,10 +70,7 @@
 						</template>
 					</section>
 					<section class="form-section">
-						<h5>
-							Optimization settings
-							<i v-tooltip="optimizeSettingsToolTip" class="pi pi-info-circle info-circle" />
-						</h5>
+						<h5>Optimization settings</h5>
 						<div class="input-row pt-1">
 							<div class="label-and-input">
 								<label>Start time</label>
@@ -158,11 +151,7 @@
 						</div>
 					</section>
 					<section class="form-section">
-						<h5 class="mb-1">
-							Output settings
-							<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle info-circle" />
-						</h5>
-
+						<h5 class="mb-1">Output settings</h5>
 						<!--Summary-->
 						<tera-checkbox
 							v-model="summaryCheckbox"
@@ -174,10 +163,7 @@
 						<Divider />
 
 						<!--Success Criteria-->
-						<h5 class="mb-1">
-							Success Criteria
-							<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle info-circle" />
-						</h5>
+						<h5 class="mb-1">Success Criteria</h5>
 						<tera-checkbox
 							v-model="successDisplayChartsCheckbox"
 							inputId="success-criteria-display-charts"
@@ -188,10 +174,7 @@
 						<Divider />
 
 						<!--Interventions-->
-						<h5 class="mb-1">
-							Interventions
-							<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle info-circle" />
-						</h5>
+						<h5 class="mb-1">Interventions</h5>
 						<MultiSelect
 							v-model="knobs.selectedInterventionVariables"
 							:options="_.keys(preProcessedInterventionsData)"
@@ -207,10 +190,7 @@
 						<Divider />
 
 						<!--Simulation plots-->
-						<h5 class="mb-1">
-							Simulation plots
-							<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle info-circle" />
-						</h5>
+						<h5 class="mb-1">Simulation plots</h5>
 						<MultiSelect
 							v-model="knobs.selectedSimulationVariables"
 							:options="simulationChartOptions"
@@ -356,22 +336,6 @@
 			</tera-drilldown-section>
 		</template>
 	</tera-drilldown>
-	<Dialog v-model:visible="showModelModal" modal header="Save as new model configuration" class="save-dialog w-4">
-		<div class="label-and-input">
-			<label> Model config name</label>
-			<tera-input-text v-model="modelConfigName" />
-		</div>
-		<div class="label-and-input">
-			<label> Model config description</label>
-			<tera-input-text v-model="modelConfigDesc" />
-		</div>
-		<Button
-			:disabled="modelConfigName === ''"
-			outlined
-			label="Save as a new model configuration"
-			@click="saveModelConfiguration"
-		/>
-	</Dialog>
 	<tera-save-simulation-modal
 		:initial-name="optimizedInterventionPolicy?.name"
 		:is-visible="showSaveInterventionPolicy"
@@ -392,7 +356,6 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import SelectButton from 'primevue/selectbutton';
-import Dialog from 'primevue/dialog';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
@@ -403,7 +366,7 @@ import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { getUnitsFromModelParts, getModelByModelConfigurationId } from '@/services/model';
-import { createModelConfiguration, getModelConfigurationById } from '@/services/model-configurations';
+import { getModelConfigurationById } from '@/services/model-configurations';
 import {
 	convertToCsvAsset,
 	getRunResult,
@@ -499,19 +462,12 @@ const knobs = ref<BasicKnobs>({
 	interventionPolicyGroups: props.node.state.interventionPolicyGroups ?? []
 });
 
-const criteriaTooltip = 'TODO';
-const interventionPolicyToolTip = 'TODO';
-const optimizeSettingsToolTip = 'TODO';
-const outputSettingsToolTip = 'TODO';
-
 const summaryCheckbox = ref(true);
 
 const successDisplayChartsCheckbox = ref(true);
 const interventionsDisplayChartsCheckbox = ref(true);
 const simulationDisplayChartsCheckbox = ref(true);
 
-const modelConfigName = ref<string>('');
-const modelConfigDesc = ref<string>('');
 const showSaveDataDialog = ref<boolean>(false);
 const showSaveInterventionPolicy = ref<boolean>(false);
 
@@ -538,7 +494,6 @@ const datasetId = computed(() => {
 	return output?.value?.[0]?.datasetId ?? '';
 });
 
-const showModelModal = ref(false);
 const displayOptimizationResultMessage = ref(true);
 
 const isRunDisabled = computed(() => {
@@ -866,32 +821,6 @@ const setOutputSettingDefaults = () => {
 			knobs.value.selectedSimulationVariables = [...new Set(selectedSimulationVariables)];
 		}
 	}
-};
-
-// TODO: utlize with https://github.com/DARPA-ASKEM/terarium/issues/4767
-const saveModelConfiguration = async () => {
-	if (!modelConfiguration.value) return;
-
-	if (!knobs.value.optimizationRunId) {
-		logger.error('No optimization run to create model configuration from');
-	}
-
-	// TODO: use new interventions
-	// const optRunId = knobs.value.optimizationRunId;
-	// const interventions = await getOptimizedInterventions(optRunId);
-	const configClone = cloneDeep(modelConfiguration.value);
-
-	// setInterventions(configClone, interventions);
-	configClone.name = modelConfigName.value;
-	configClone.description = modelConfigDesc.value;
-	const data = await createModelConfiguration(configClone);
-	if (!data) {
-		logger.error('Failed to create model configuration');
-		return;
-	}
-
-	logger.success('Created model configuration');
-	showModelModal.value = false;
 };
 
 const setOutputValues = async () => {
