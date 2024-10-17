@@ -225,7 +225,6 @@ useClientEvent(
 				};
 			}
 		} else if (event.data.state === ProgressState.Complete) {
-			await processResult(simId);
 			forecastId = simId;
 			console.log('updated forecast id from client event');
 		}
@@ -236,6 +235,7 @@ useClientEvent(
 		console.log('updated state from client event for normal forecast');
 		console.log(state);
 		emit('update-state', state);
+		if (event.data.state === ProgressState.Complete) await processResult(simId);
 	}
 );
 
@@ -268,13 +268,13 @@ watch(
 		// Check simulation status and update the state
 		const simResponse: Simulation | null = await getSimulation(id);
 		if (simResponse?.status !== ProgressState.Complete) return;
-		await processResult(id);
 		const state = _.cloneDeep(props.node.state);
 		state.inProgressForecastId = '';
 		state.forecastId = id;
 		console.log('updated forecast id from watch');
 		console.log(state);
 		emit('update-state', state);
+		await processResult(id);
 	},
 	{ immediate: true }
 );
