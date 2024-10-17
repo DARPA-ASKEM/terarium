@@ -156,6 +156,7 @@ async function renderCharts() {
 	}
 	// FIXME: Try to grab the selected box id from the parameter chart view
 	parameterChartView = new View(parse(parameterCharts.value)).renderer('canvas').initialize('#view').run();
+	// console.log(parameterChartView.getState()); // For debugging
 	parameterChartListener = (name, value) => {
 		console.log('Selected Box ID:', name, value);
 		selectedBoxId = value;

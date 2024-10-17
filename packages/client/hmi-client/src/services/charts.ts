@@ -830,8 +830,6 @@ export function createFunmanStateChart(
 ) {
 	if (isEmpty(trajectories)) return null;
 
-	console.log(trajectories);
-
 	const globalFont = 'Figtree';
 
 	const boxLines = trajectories.map((trajectory) => ({
@@ -964,8 +962,6 @@ export function createFunmanParameterCharts(
 		});
 	});
 
-	console.log(parameterRanges);
-
 	const globalFont = 'Figtree';
 	return {
 		$schema: VEGALITE_SCHEMA,
@@ -991,13 +987,6 @@ export function createFunmanParameterCharts(
 		params: [
 			{ name: 'minX', expr: 'minX' },
 			{ name: 'maxX', expr: 'maxX' }
-		],
-		// Parent signal
-		signals: [
-			{
-				name: 'selectedBoxId',
-				value: null
-			}
 		],
 		facet: {
 			row: {
