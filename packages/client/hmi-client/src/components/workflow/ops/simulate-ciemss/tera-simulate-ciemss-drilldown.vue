@@ -426,11 +426,15 @@ const updateState = () => {
 };
 
 const run = async () => {
-	const [baseSimulationId, simulationId] = await Promise.all([makeForecastRequest(false), makeForecastRequest()]);
+	const [baseSimulationId, simulationId] = await Promise.all([
+		// If intervention id is available, request the base forecast run, otherwise resolve with empty string
+		policyInterventionId.value ? makeForecastRequest(false) : Promise.resolve(''),
+		makeForecastRequest()
+	]);
 
 	const state = _.cloneDeep(props.node.state);
-	state.inProgressForecastId = simulationId;
 	state.inProgressBaseForecastId = baseSimulationId;
+	state.inProgressForecastId = simulationId;
 	emit('update-state', state);
 };
 
