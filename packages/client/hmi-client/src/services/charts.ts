@@ -988,13 +988,6 @@ export function createFunmanParameterCharts(
 			{ name: 'minX', expr: 'minX' },
 			{ name: 'maxX', expr: 'maxX' }
 		],
-		// Parent signal
-		signals: [
-			{
-				name: 'selectedBoxId',
-				value: null
-			}
-		],
 		facet: {
 			row: {
 				field: 'parameterId',
@@ -1063,20 +1056,6 @@ export function createFunmanParameterCharts(
 									update: 'datum.boxId'
 								}
 							]
-						}
-					],
-					// Trying to override the parent signal with the scoped signal
-					signals: [
-						{
-							name: 'selectedBoxId',
-							value: null,
-							on: [
-								{
-									events: { signal: 'tickSelection' },
-									update: 'tickSelection'
-								}
-							],
-							push: 'outer'
 						}
 					],
 					encoding: {

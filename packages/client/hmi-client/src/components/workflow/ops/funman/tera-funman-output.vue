@@ -30,7 +30,11 @@
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>Parameters<i class="pi pi-info-circle" /></template>
-			<vega-chart :visualization-spec="parameterCharts" :are-embed-actions-visible="false" />
+			<vega-chart
+				:visualization-spec="parameterCharts"
+				:are-embed-actions-visible="false"
+				@chart-click="onParameterChartClick"
+			/>
 		</AccordionTab>
 		<AccordionTab header="Diagram">
 			<tera-model-diagram v-if="model" :model="model" />
@@ -92,7 +96,6 @@ import type { Model, ModelConfiguration, Observable } from '@/types/Types';
 import { getModelByModelConfigurationId, getMMT } from '@/services/model';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { emptyMiraModel, makeConfiguredMMT } from '@/model-representation/mira/mira';
-import { View, parse } from 'vega';
 
 const props = defineProps<{
 	runId: string;
@@ -122,8 +125,13 @@ const stateChart = ref<any>({});
 const parameterCharts = ref<any>({});
 
 let selectedBoxId: number = -1;
-let parameterChartView: View | null = null;
-let parameterChartListener: ((name: string, value: any) => void) | null = null;
+
+// Once a parameter tick is chosen, its corresponding line on the state chart will be highlighted
+function onParameterChartClick(eventData: any) {
+	// If a tick is clicked it will have a boxId, if the bar is clicked then we reset (show all lines)
+	selectedBoxId = eventData.boxId ?? -1;
+	updateStateChart();
+}
 
 function updateStateChart() {
 	if (!processedFunmanResult) return;
@@ -149,20 +157,6 @@ async function renderCharts() {
 	if (processedFunmanResult.boxes) {
 		parameterCharts.value = createFunmanParameterCharts(distributionParameters, processedFunmanResult.boxes);
 	}
-
-	// Remove existing event listener if it exists
-	if (parameterChartView && parameterChartListener) {
-		parameterChartView.removeSignalListener('selectedBoxId', parameterChartListener);
-	}
-	// FIXME: Try to grab the selected box id from the parameter chart view
-	parameterChartView = new View(parse(parameterCharts.value)).renderer('canvas').initialize('#view').run();
-	// console.log(parameterChartView.getState()); // For debugging
-	parameterChartListener = (name, value) => {
-		console.log('Selected Box ID:', name, value);
-		selectedBoxId = value;
-		updateStateChart();
-	};
-	parameterChartView.addSignalListener('selectedBoxId', parameterChartListener);
 
 	// For displaying model/model configuration
 	// Model will be the same on runId change, no need to fetch it again
