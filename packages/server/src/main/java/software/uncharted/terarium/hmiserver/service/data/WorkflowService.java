@@ -99,14 +99,18 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				nodeMap.put(node.getId(), node);
 
 				// Debugging possible sync issue - October 2024
-				log.info(" Node: " + node.getId() + " : " + node.getStatus());
-				for (final JsonNode o : node.getOutputs()) {
-					final JsonNode oValue = o.get("value").get(0);
-					if (oValue != null) {
-						log.info("  Out: " + oValue.asText());
-					} else {
-						log.info("  Out: null");
+				log.info("Node id=" + node.getId() + ",  status=" + node.getStatus() + ", deleted=" + node.getIsDeleted());
+				if (node.getOutputs() != null) {
+					for (final JsonNode o : node.getOutputs()) {
+						final JsonNode oValue = o.get("value").get(0);
+						if (oValue != null) {
+							log.info("  Out: " + oValue.asText());
+						} else {
+							log.info("  Out: null");
+						}
 					}
+				} else {
+					log.info("  no outputs");
 				}
 			}
 		}
