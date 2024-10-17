@@ -352,6 +352,75 @@ export const createInitialMatrix = (miraModel: MiraModel, key: string) => {
 };
 
 /**
+ * For Template Matrix only
+ * Assumes one-to-one with cells
+ *
+ */
+export const createDiagramTemplateMatrix = (
+	miraModel: MiraModel,
+	miraTemplateParams: MiraTemplateParams,
+	param: string
+) => {
+	const paramMap = collapseTemplates(miraModel).matrixMap;
+	const childrenParams = paramMap.get(param)?.map((p) => p.name);
+	if (!childrenParams) throw new Error(`Cannot  map ${param}`);
+
+	// Create map for mapping params to row/col of matrix
+	//   param => [ [subject, outcome, controllers], [subject, outcome, controllers] ... ]
+	const paramLocationMap = new Map<string, TemplateSummary[]>();
+	const templateParams = Object.values(miraTemplateParams);
+	templateParams.forEach((templateParam) => {
+		if (!paramLocationMap.has(templateParam.name)) paramLocationMap.set(templateParam.name, []);
+
+		paramLocationMap.get(templateParam.name)?.push({
+			name: templateParam.name,
+			subject: templateParam.subject,
+			outcome: templateParam.outcome,
+			controllers: templateParam.controllers
+		});
+	});
+
+	// Create map for param values
+	//   param => value
+	const tempValueMap = new Map<string, any>();
+	Object.values(miraModel.templates).forEach((tempObj) => {
+		tempValueMap.set(tempObj.name, tempObj);
+	});
+
+	// Find templates with expressions that contains one or more of the params
+	const templates = miraModel.templates.filter((t) => {
+		const miraTemplateParam = miraTemplateParams[t.name];
+		const intersection = _.intersection(childrenParams, [miraTemplateParam.name]);
+		return intersection.length > 0;
+	});
+	const subjectControllers = extractSubjectControllersMatrix(templates, childrenParams, tempValueMap, paramLocationMap);
+	const outcomeControllers = extractOutcomeControllersMatrix(templates, childrenParams, tempValueMap, paramLocationMap);
+
+	// Others, may be initial, maybe no in use ...
+	const other: MiraMatrix = [];
+	childrenParams.forEach((name, idx) => {
+		const row: MiraMatrixEntry[] = [];
+		row.push({
+			row: idx,
+			col: 0,
+			rowCriteria: name,
+			colCriteria: '',
+			content: {
+				id: name,
+				value: miraModel.templates[name]
+			}
+		});
+		other.push(row);
+	});
+
+	return {
+		subjectControllers,
+		outcomeControllers,
+		other
+	};
+};
+
+/**
  * Assumes one-to-one with cells
  *
  * */
