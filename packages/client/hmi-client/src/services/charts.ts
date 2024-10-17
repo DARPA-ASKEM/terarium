@@ -4,7 +4,7 @@ import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
 import type { ChartAnnotation, FunmanInterval } from '@/types/Types';
 import { flattenInterventionData } from './intervention-policy';
-import type { ProcessedFunmanResult, FunmanBox, FunmanConstraintsResponse } from './models/funman-service';
+import type { FunmanBox, FunmanConstraintsResponse } from './models/funman-service';
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
@@ -822,20 +822,22 @@ function getBoundType(label: string): string {
 }
 
 export function createFunmanStateChart(
-	data: ProcessedFunmanResult,
+	trajectories: any[],
 	constraints: FunmanConstraintsResponse[],
 	stateId: string,
-	focusOnModelChecks: boolean
+	focusOnModelChecks: boolean,
+	selectedBoxId: number = -1
 ) {
-	if (isEmpty(data.trajs)) return null;
+	if (isEmpty(trajectories)) return null;
 
 	const globalFont = 'Figtree';
 
-	const boxLines = data.trajs.map((traj) => {
-		const legendItem = getBoundType(traj.label);
-		return { timepoints: traj.timestep, value: traj[stateId], legendItem };
-	});
-
+	const boxLines = trajectories.map((trajectory) => ({
+		boxId: trajectory.boxId,
+		timepoints: trajectory.timepoint,
+		value: trajectory[stateId],
+		legendItem: getBoundType(trajectory.label)
+	}));
 	// Find min/max values to set an appropriate viewing range for y-axis
 	const minY = Math.floor(Math.min(...boxLines.map((d) => d.value)));
 	const maxY = Math.ceil(Math.max(...boxLines.map((d) => d.value)));
@@ -856,6 +858,12 @@ export function createFunmanStateChart(
 		config: { font: globalFont },
 		width: 600,
 		height: 300,
+		params: [
+			{
+				name: 'selectedBoxId',
+				value: selectedBoxId
+			}
+		],
 		layer: [
 			{
 				mark: {
@@ -876,9 +884,17 @@ export function createFunmanStateChart(
 					point: true
 				},
 				data: { values: boxLines },
+
 				encoding: {
 					x: { field: 'timepoints', type: 'quantitative' },
-					y: { field: 'value', type: 'quantitative' }
+					y: { field: 'value', type: 'quantitative' },
+					opacity: {
+						condition: {
+							test: 'selectedBoxId == datum.boxId || selectedBoxId == -1', // -1 is the default value (shows all boxes)
+							value: 1
+						},
+						value: 0.2
+					}
 				}
 			}
 		],
@@ -909,12 +925,20 @@ export function createFunmanParameterCharts(
 	distributionParameters: { label: string; name: string; interval: FunmanInterval }[],
 	boxes: FunmanBox[]
 ) {
-	const parameterRanges: { parameterId: string; boundType: string; lb?: number; ub?: number; tick?: number }[] = [];
+	const parameterRanges: {
+		boxId: number;
+		parameterId: string;
+		boundType: string;
+		lb?: number;
+		ub?: number;
+		tick?: number;
+	}[] = [];
 	const distributionParameterIds: string[] = [];
 
 	// Widest range (model configuration ranges)
 	distributionParameters.forEach(({ name, interval }) => {
 		parameterRanges.push({
+			boxId: -1,
 			parameterId: name,
 			boundType: 'length',
 			lb: interval.lb,
@@ -924,10 +948,11 @@ export function createFunmanParameterCharts(
 	});
 
 	// Ranges determined by the true/false boxes
-	boxes.forEach(({ label, parameters }) => {
+	boxes.forEach(({ boxId, label, parameters }) => {
 		Object.keys(parameters).forEach((key) => {
 			if (!distributionParameterIds.includes(key)) return;
 			parameterRanges.push({
+				boxId,
 				parameterId: key,
 				boundType: getBoundType(label),
 				lb: parameters[key].lb,
@@ -991,7 +1016,6 @@ export function createFunmanParameterCharts(
 								// Doesn't work with regular domain setting
 								domainMin: { expr: 'minX' },
 								domainMax: { expr: 'maxX' }
-								// FIXME: If the domain is something like lb: 0.002, ub: 0.002 (same numbers close to 0), the only number on the number line will be 0
 							},
 							title: null
 						},
@@ -999,26 +1023,94 @@ export function createFunmanParameterCharts(
 							field: 'ub'
 						},
 						color: {
-							field: 'boundType',
-							type: 'nominal',
-							legend: { orient: 'top', direction: 'horizontal', title: null },
-							scale: {
-								domain: [FunmanChartLegend.Satisfactory, FunmanChartLegend.Unsatisfactory, FunmanChartLegend.Ambiguous],
-								range: ['#1B8073', '#FFAB00', '#CCC569']
-							}
+							condition: {
+								param: 'tickSelection',
+								field: 'boundType',
+								type: 'nominal',
+								legend: { orient: 'top', direction: 'horizontal', title: null },
+								scale: {
+									domain: [
+										FunmanChartLegend.Satisfactory,
+										FunmanChartLegend.Unsatisfactory,
+										FunmanChartLegend.Ambiguous
+									],
+									range: ['#1B8073', '#FFAB00', '#CCC569']
+								}
+							},
+							value: '#D3D3D380'
 						}
 					}
 				},
 				{
 					mark: {
 						type: 'tick',
-						size: 20
+						thickness: 4
 					},
+					params: [
+						{
+							name: 'tickSelection',
+							select: { type: 'point', fields: ['boxId'] },
+							on: [
+								{
+									events: 'click',
+									update: 'datum.boxId'
+								}
+							]
+						}
+					],
 					encoding: {
 						x: {
 							field: 'tick',
 							type: 'quantitative',
 							title: null
+						},
+						color: { field: 'boundType' },
+						size: {
+							condition: { param: 'tickSelection', value: 20, empty: false },
+							value: 15
+						}
+					}
+				},
+				// Selected bound square brackets for lb, ub
+				{
+					mark: {
+						type: 'text',
+						size: 30,
+						dy: 2
+					},
+					encoding: {
+						x: {
+							field: 'lb',
+							type: 'quantitative'
+						},
+						text: { value: '[' },
+						opacity: {
+							condition: {
+								test: 'tickSelection.boxId == datum.boxId',
+								value: 1
+							},
+							value: 0
+						}
+					}
+				},
+				{
+					mark: {
+						type: 'text',
+						size: 30,
+						dy: 2
+					},
+					encoding: {
+						x: {
+							field: 'ub',
+							type: 'quantitative'
+						},
+						text: { value: ']' },
+						opacity: {
+							condition: {
+								test: 'tickSelection.boxId == datum.boxId',
+								value: 1
+							},
+							value: 0
 						}
 					}
 				}
