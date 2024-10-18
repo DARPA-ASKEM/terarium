@@ -224,7 +224,7 @@
 					class="p-3"
 					:summary-id="node.state.summaryId"
 				/>
-				<Accordion :active-index="0" class="px-2">
+				<Accordion :active-index="0" class="px-2" v-if="!isLoading">
 					<AccordionTab header="Loss">
 						<!-- Loss chart -->
 						<div ref="lossChartContainer">

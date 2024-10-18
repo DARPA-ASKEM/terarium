@@ -11,7 +11,7 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 2. Create, or open, project named `QA [Your Name]`
 
 ### 2. Prepare the model and workflow
-1. Upload _the model_ [Configured SIR.json](../data/Configured SIR.json).
+1. Upload _the model_ [Configured SIR.json](https://github.com/DARPA-ASKEM/terarium/blob/ea8c0df8c8897ad2b9a9ff29cc61bf98d6b85f20/testing/data/Configured%20SIR.json).
 2. Create and open a new workflow.
 3. Drag and drop _the model_ into the workflow.
 4. Add an Edit model operator and link it to _the model_ operator.
@@ -41,9 +41,10 @@ The following port combos should not connect if...
 ### 3. Edit the model (notebook tab)
 1. In the Notebook tab click on the 'What do you want to do?' dropdown.
 2. Choose an edit that you want to apply and click the send button. At the time of me writing this I chose "Add a new transition from S to R with the name vaccine with the rate of v and unit Days." as it was the first option.
-3. Once you recieve the code click the 'Run' button.
-4. Verify that the edit is applied correctly to the model and that have a new output. <!-- and is reflected in the Wizard tab's decomposed view.-->
-5. If it didn't work, notify the Beaker developers about the code that was generated. There is also a chance that the prompt that the AI came up with lacked accuracy and couldn't possibly be applied to the model.
+3. Click on the 'Run' button after the code cell is filled with code that LLM has generated.
+4. Verify that the edit is applied correctly to the model (i.e. that there is a new transition named `vaccine` with rate law `v` connecting the `S` and `R` nodes, a new parameter `v` in the parameter table) and that there is a new output.
+6. If it didn't work, notify the Beaker developers about the code that was generated. There is also a chance that the prompt that the AI came up with lacked accuracy and couldn't possibly be applied to the model.
+7. Click on the 'Run' button again and verify that the `vaccine` transition added at Step (4) has not been duplicated (i.e. the `v` terms in the model equations become `2 v` and the number of transition is still `3`).
 
 ### 4. Save as new model
 1. Click the 'Save as reuse' button.
@@ -56,3 +57,4 @@ The following port combos should not connect if...
 3. Generate some code with the LLM dropdown again but don't run it.
 4. Click the Reset button.
 5. Verify that the code is erased.
+
