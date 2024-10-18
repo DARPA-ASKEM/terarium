@@ -62,6 +62,7 @@ public class DocumentAsset extends TerariumAsset {
 
 	@TSOptional
 	@Column(columnDefinition = "text")
+	@Deprecated
 	private String documentAbstract;
 
 	@TSOptional

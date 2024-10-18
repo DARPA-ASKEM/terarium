@@ -195,6 +195,9 @@ export interface DocumentAsset extends TerariumAsset {
     source?: string;
     text?: string;
     grounding?: Grounding;
+    /**
+     * @deprecated
+     */
     documentAbstract?: string;
     /**
      * @deprecated
