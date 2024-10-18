@@ -68,6 +68,10 @@ const revertParseExpr = (v: string) => {
 };
 
 const evaluateExpression = (expressionStr: string, symbolsTable: Object) => {
+	// if number-like, return as is
+	if (!Number.isNaN(parseFloat(expressionStr))) {
+		return expressionStr;
+	}
 	const subs: any[] = [];
 	Object.keys(symbolsTable).forEach((key) => {
 		subs.push(`${encodeParseExpr(key)}: ${symbolsTable[key]}`);
