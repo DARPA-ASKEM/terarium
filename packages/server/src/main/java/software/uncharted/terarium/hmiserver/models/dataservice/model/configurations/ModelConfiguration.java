@@ -5,8 +5,8 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
+import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import lombok.Data;
@@ -30,7 +30,7 @@ public class ModelConfiguration extends TerariumAsset {
 	private UUID simulationId;
 
 	@TSOptional
-	private Date temporalContextDate;
+	private Timestamp temporalContextDate;
 
 	@OneToMany(mappedBy = "modelConfiguration", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JsonManagedReference
