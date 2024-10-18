@@ -995,6 +995,7 @@ export function createFunmanParameterCharts(
 			}
 		},
 		spec: {
+			width: 600,
 			layer: [
 				{
 					mark: {
@@ -1062,7 +1063,7 @@ export function createFunmanParameterCharts(
 						},
 						color: { field: 'boundType' },
 						size: {
-							condition: { param: 'tickSelection', value: 20, empty: false },
+							condition: { param: 'tickSelection', value: 25, empty: false },
 							value: 15
 						}
 					}
