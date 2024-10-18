@@ -17,6 +17,7 @@
 				context="dataset"
 				@submitQuery="onSubmitQuery"
 				@add-code-cell="onAddCodeCell"
+				@run-all-cells="onRunAllCells"
 				@keydown.stop
 			/>
 			<span class="flex-auto"></span>
@@ -474,6 +475,11 @@ const onAddCodeCell = () => {
 	if (chat.value) {
 		chat.value.addCodeCell();
 	}
+};
+
+const onRunAllCells = () => {
+	const event = new Event('run-all-cells');
+	window.dispatchEvent(event);
 };
 
 /* Download dataset feature has been removed, but keeping this code here in case it returns */
