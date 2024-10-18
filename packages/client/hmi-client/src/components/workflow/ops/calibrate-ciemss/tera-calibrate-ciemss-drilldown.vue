@@ -491,8 +491,8 @@ import {
 	createForecastChart,
 	createHistogramChart,
 	createErrorChart,
-	applyForecastChartAnnotations
-	// ,createInterventionChartMarkers
+	applyForecastChartAnnotations,
+	createInterventionChartMarkers
 } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
@@ -796,19 +796,10 @@ const preparedCharts = computed(() => {
 			),
 			annotations
 		);
-
-		// if (groupedInterventionOutputs.value) {
-		// 	Object.entries(groupedInterventionOutputs.value).forEach((item) => {
-		// 		item[1].forEach((intervention) => {
-		// 			charts.simulationCharts[variable].layer.push(...createInterventionChartMarkers([intervention], false));
-		// 		});
-		// 	});
-		// }
 	});
 
 	if (groupedInterventionOutputs.value) {
 		Object.keys(groupedInterventionOutputs.value).forEach((key) => {
-			console.log(key);
 			charts.interventionCharts[key] = createForecastChart(
 				{
 					data: result,
@@ -836,14 +827,13 @@ const preparedCharts = computed(() => {
 			);
 
 			// add intervention annotations (rules and text)
-			// charts.interventionCharts[key].layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
+			charts.interventionCharts[key].layer.push(
+				...createInterventionChartMarkers(groupedInterventionOutputs.value[key])
+			);
 		});
 	}
 	return charts;
 });
-
-console.log(preparedCharts);
-console.log(preparedCharts.value);
 
 const preparedDistributionCharts = computed(() => {
 	if (!preparedChartInputs.value || _.isEmpty(pyciemssMap.value)) return {};
