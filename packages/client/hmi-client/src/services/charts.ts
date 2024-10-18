@@ -847,8 +847,6 @@ export function createFunmanStateChart(
 		endY: focusOnModelChecks ? c.additive_bounds.ub : Math.min(c.additive_bounds.ub ?? maxY, maxY)
 	}));
 
-	console.log(trajectories);
-
 	return {
 		$schema: VEGALITE_SCHEMA,
 		config: { font: globalFont },
