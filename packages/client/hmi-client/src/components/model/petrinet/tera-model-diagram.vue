@@ -120,6 +120,9 @@ const resetZoom = async () => {
 };
 
 async function renderGraph() {
+	// Sanity guard
+	if (mmt.value.templates.length === 0) return;
+
 	renderer = getModelRenderer(
 		mmt.value,
 		graphElement.value as HTMLDivElement,
