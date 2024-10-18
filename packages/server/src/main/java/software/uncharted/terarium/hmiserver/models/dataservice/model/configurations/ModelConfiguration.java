@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import lombok.Data;
@@ -27,6 +28,9 @@ public class ModelConfiguration extends TerariumAsset {
 	/** This is "simulation" in the sense of our POJO. It actually corresponds to a pyciemss calibration */
 	@TSOptional
 	private UUID simulationId;
+
+	@TSOptional
+	private Date temporalContextDate;
 
 	@OneToMany(mappedBy = "modelConfiguration", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JsonManagedReference

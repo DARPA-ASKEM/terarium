@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, provide } from 'vue';
 import { ModelPartItem } from '@/types/Model';
 import type { State } from '@/types/Types';
 import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
@@ -11,6 +11,7 @@ import type { FeatureConfig } from '@/types/common';
 
 defineEmits(['update-time']);
 
+provide('isTimePart', true);
 const props = defineProps<{
 	time: State[];
 	featureConfig: FeatureConfig;

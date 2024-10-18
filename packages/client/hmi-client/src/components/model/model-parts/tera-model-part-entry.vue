@@ -18,6 +18,19 @@
 			<!--amr_to_mmt doesn't like unit expressions with spaces, removing them here before they are saved to the amr-->
 			<template v-else-if="showUnit">
 				<template v-if="featureConfig.isPreview"><label>Unit</label>{{ item.unitExpression }}</template>
+				<!-- we use a dropdown for units with time semantic-->
+				<Dropdown
+					v-else-if="isTimePart"
+					:model-value="item.unitExpression"
+					option-label="label"
+					option-value="value"
+					:options="[
+						{ label: 'Days', value: 'days' },
+						{ label: 'Months', value: 'months' },
+						{ label: 'Years', value: 'years' }
+					]"
+					@change="$emit('update-item', { key: 'unitExpression', value: $event.value })"
+				/>
 				<tera-input-text
 					v-else
 					label="Unit"
@@ -80,7 +93,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, inject } from 'vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import AutoComplete from 'primevue/autocomplete';
 import Button from 'primevue/button';
@@ -89,6 +102,7 @@ import { stringToLatexExpression } from '@/services/model';
 import type { DKG } from '@/types/Types';
 import { getCurieFromGroundingIdentifier, getNameOfCurieCached, searchCuriesEntities } from '@/services/concept';
 import type { FeatureConfig } from '@/types/common';
+import Dropdown from 'primevue/dropdown';
 
 const props = defineProps<{
 	item: ModelPartItem;
@@ -96,6 +110,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['update-item']);
+const isTimePart = inject('isTimePart');
 
 const query = ref('');
 const results = ref<DKG[]>([]);
