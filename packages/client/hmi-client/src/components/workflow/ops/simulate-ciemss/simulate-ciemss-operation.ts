@@ -46,6 +46,7 @@ export const SimulateCiemssOperation: Operation = {
 			numSamples: 100,
 			method: 'dopri5',
 			forecastId: '',
+			baseForecastId: '',
 			inProgressForecastId: '',
 			inProgressBaseForecastId: '',
 			errorMessage: { name: '', value: '', traceback: '' }
