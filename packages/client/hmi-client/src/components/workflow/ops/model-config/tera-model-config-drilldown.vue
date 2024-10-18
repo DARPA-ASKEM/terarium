@@ -116,8 +116,8 @@
 									? new Date(knobs.transientModelConfig.temporalContextDate)
 									: null
 							"
-							:view="calendarSettings.view"
-							:date-format="calendarSettings.format"
+							:view="calendarSettings?.view"
+							:date-format="calendarSettings?.format"
 							showIcon
 							iconDisplay="input"
 							@date-select="knobs.transientModelConfig.temporalContextDate = $event"
@@ -280,6 +280,7 @@ import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { useProjects } from '@/composables/project';
 import TeraPdfPanel from '@/components/widgets/tera-pdf-panel.vue';
 import Calendar from 'primevue/calendar';
+import { getCalendarSettingsFromModel } from '@/utils/date';
 import {
 	blankModelConfig,
 	isModelConfigsEqual,
@@ -524,27 +525,8 @@ const mmtParams = ref<MiraTemplateParams>({});
 const configuredMmt = ref(makeConfiguredMMT(mmt.value, knobs.value.transientModelConfig));
 
 const calendarSettings = computed(() => {
-	const units = model.value?.semantics?.ode?.time?.units?.expression;
-	let view;
-	let format;
-
-	switch (units) {
-		case 'months':
-			view = 'month';
-			format = 'mm/yy';
-			break;
-		case 'years':
-			view = 'year';
-			format = 'yy';
-			break;
-		case 'days':
-		default:
-			view = 'date';
-			format = 'dd/mm/yy';
-			break;
-	}
-
-	return { view, format };
+	if (!model.value) return null;
+	return getCalendarSettingsFromModel(model.value);
 });
 
 const downloadModelArchive = async (configuration: ModelConfiguration = knobs.value.transientModelConfig) => {
