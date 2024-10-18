@@ -92,7 +92,7 @@ const parseExpression = (expr: string) => {
 		mathml: '',
 		pmathml: '',
 		latex: '',
-		freeSymbols: []
+		freeSymbols: [] as any[]
 	};
 
 	if (!expr || expr.length === 0) {
@@ -138,6 +138,7 @@ const parseExpression = (expr: string) => {
 	output.latex = revertParseExpr(output.latex);
 	output.mathml = revertParseExpr(output.mathml);
 	output.pmathml = revertParseExpr(output.pmathml);
+	output.freeSymbols = output.freeSymbols.map(revertParseExpr);
 
 	return output;
 };
