@@ -38,7 +38,7 @@ def escape_curly_braces(text: str):
     return text.replace("{", "{{").replace("}", "}}")
 
 
-def unescape_curly_braces(json_obj: dict): -> dict:
+def unescape_curly_braces(json_obj: dict) -> dict:
     if isinstance(json_obj, dict):
         for key, value in json_obj.items():
             json_obj[key] = unescape_curly_braces(value)
