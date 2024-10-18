@@ -38,6 +38,18 @@ def escape_curly_braces(text: str):
     return text.replace("{", "{{").replace("}", "}}")
 
 
+def unescape_curly_braces(json_obj: dict) -> dict:
+    if isinstance(json_obj, dict):
+        for key, value in json_obj.items():
+            json_obj[key] = unescape_curly_braces(value)
+    elif isinstance(json_obj, list):
+        for i in range(len(json_obj)):
+            json_obj[i] = unescape_curly_braces(json_obj[i])
+    elif isinstance(json_obj, str):
+        json_obj = json_obj.replace('{{', '{').replace('}}', '}')
+    return json_obj
+
+
 def get_image_format_string(image_format: str) -> str:
     if not image_format:
         raise ValueError("Invalid image format.")
@@ -286,7 +298,7 @@ def amr_enrichment_chain(amr: str, research_paper: str) -> dict:
     print("Received response from OpenAI API. Formatting response to work with HMI...")
     output_json = json.loads(output.choices[0].message.content)
 
-    return output_json
+    return unescape_curly_braces(output_json)
 
 
 def model_card_chain(amr: str, research_paper: str = None) -> dict:
