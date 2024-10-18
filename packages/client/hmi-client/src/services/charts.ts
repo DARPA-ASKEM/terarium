@@ -810,7 +810,7 @@ enum FunmanChartLegend {
 	ModelChecks = 'Model checks'
 }
 
-function getBoundType(label: string): string {
+export function getBoundType(label: string): string {
 	switch (label) {
 		case 'true':
 			return FunmanChartLegend.Satisfactory;
@@ -832,15 +832,9 @@ export function createFunmanStateChart(
 
 	const globalFont = 'Figtree';
 
-	const boxLines = trajectories.map((trajectory) => ({
-		boxId: trajectory.boxId,
-		timepoints: trajectory.timepoint,
-		value: trajectory[stateId],
-		legendItem: getBoundType(trajectory.label)
-	}));
 	// Find min/max values to set an appropriate viewing range for y-axis
-	const minY = Math.floor(Math.min(...boxLines.map((d) => d.value)));
-	const maxY = Math.ceil(Math.max(...boxLines.map((d) => d.value)));
+	const minY = Math.floor(Math.min(...trajectories.map((d) => d.values[stateId])));
+	const maxY = Math.ceil(Math.max(...trajectories.map((d) => d.values[stateId])));
 
 	// Show checks for the selected state
 	const stateIdConstraints = constraints.filter((c) => c.variables.includes(stateId));
@@ -883,11 +877,10 @@ export function createFunmanStateChart(
 					type: 'line',
 					point: true
 				},
-				data: { values: boxLines },
-
+				data: { values: trajectories },
 				encoding: {
-					x: { field: 'timepoints', type: 'quantitative' },
-					y: { field: 'value', type: 'quantitative' },
+					x: { field: 'timepoint', type: 'quantitative' },
+					y: { field: `values[${stateId}]`, type: 'quantitative' },
 					opacity: {
 						condition: {
 							test: 'selectedBoxId == datum.boxId || selectedBoxId == -1', // -1 is the default value (shows all boxes)

@@ -2,6 +2,7 @@ import { logger } from '@/utils/logger';
 import API from '@/api/api';
 import type { FunmanInterval, FunmanPostQueriesRequest } from '@/types/Types';
 import { ConstraintGroup, ConstraintType } from '@/components/workflow/ops/funman/funman-operation';
+import { getBoundType } from '@/services/charts';
 
 // Partially typing Funman response
 interface FunmanBound {
@@ -126,29 +127,30 @@ export const processFunman = (result: any, onlyShowLatestResults: boolean) => {
 			boxId: index,
 			label: box.label,
 			timestep: box.bounds.timestep,
-			parameters: Object.fromEntries(parameterIds.map((p: any) => [p, { ...box.bounds[p], point: points[p] }]))
+			parameters: Object.fromEntries(
+				parameterIds.map((parameterId) => [parameterId, { ...box.bounds[parameterId], point: points[parameterId] }])
+			)
 		});
 
 		// Get trajectories
-		timepoints.forEach((timepoint) => {
-			let pushFlag = true;
-			const trajectory: any = {
-				boxId: index,
-				label: box.label,
-				timepoint,
-				n: points.timestep // how many actual points
-			};
-			stateIds.forEach((stateId) => {
-				// Only push states that have a timestep key pair
-				const key = `${stateId}_${timepoint}`;
-				if (Object.prototype.hasOwnProperty.call(points, key)) {
-					trajectory[stateId] = points[key];
-				} else {
-					pushFlag = false;
-				}
+		timepoints
+			.slice(0, points.timestep + 1) // Only include timepoints up to the current timestep
+			.forEach((timepoint) => {
+				const trajectory: any = {
+					boxId: index,
+					legendItem: getBoundType(box.label),
+					values: {},
+					timepoint
+				};
+				stateIds.forEach((stateId) => {
+					// Only push states that have a timestep key pair
+					const key = `${stateId}_${timepoint}`;
+					if (Object.prototype.hasOwnProperty.call(points, key)) {
+						trajectory.values[stateId] = points[key];
+					}
+				});
+				trajectories.push(trajectory);
 			});
-			if (pushFlag) trajectories.push(trajectory);
-		});
 	});
 
 	return { boxes, trajectories } as ProcessedFunmanResult;
