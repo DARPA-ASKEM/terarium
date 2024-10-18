@@ -93,7 +93,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, inject } from 'vue';
+import { ref, computed, watch } from 'vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import AutoComplete from 'primevue/autocomplete';
 import Button from 'primevue/button';
@@ -107,10 +107,10 @@ import Dropdown from 'primevue/dropdown';
 const props = defineProps<{
 	item: ModelPartItem;
 	featureConfig: FeatureConfig;
+	isTimePart?: boolean;
 }>();
 
 const emit = defineEmits(['update-item']);
-const isTimePart = inject('isTimePart');
 
 const query = ref('');
 const results = ref<DKG[]>([]);
