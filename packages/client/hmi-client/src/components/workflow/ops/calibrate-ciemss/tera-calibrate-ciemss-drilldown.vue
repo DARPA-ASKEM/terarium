@@ -284,7 +284,7 @@
 									<vega-chart
 										expandable
 										:are-embed-actions-visible="true"
-										:visualization-spec="preparedCharts[setting.selectedVariables[0]]"
+										:visualization-spec="preparedCharts.simulationCharts[setting.selectedVariables[0]]"
 									/>
 								</template>
 							</AccordionTab>
@@ -293,7 +293,7 @@
 									<vega-chart
 										expandable
 										:are-embed-actions-visible="true"
-										:visualization-spec="preparedCharts['interventions'][appliedTo]"
+										:visualization-spec="preparedCharts.interventionCharts[appliedTo]"
 									/>
 								</template>
 							</AccordionTab>
@@ -464,7 +464,6 @@ import {
 	ClientEventType,
 	CsvAsset,
 	DatasetColumn,
-	Model,
 	ModelConfiguration,
 	ChartAnnotation,
 	InterventionPolicy,
@@ -492,14 +491,13 @@ import {
 	createForecastChart,
 	createHistogramChart,
 	createErrorChart,
-	applyForecastChartAnnotations,
-	createInterventionChartMarkers
+	applyForecastChartAnnotations
+	// ,createInterventionChartMarkers
 } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { displayNumber } from '@/utils/number';
-import { getUnitsFromModelParts } from '@/services/model';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import { useClientEvent } from '@/composables/useClientEvent';
@@ -744,24 +742,20 @@ const groupedInterventionOutputs = computed(() =>
 	_.groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
 );
 
-const translationMap = (variable: string) => ({
-	[`${pyciemssMap[variable]}_mean:pre`]: `${variable} before optimization`,
-	[`${pyciemssMap[variable]}_mean`]: `${variable} after optimization`
-});
-const modelref = ref<Model | null>(null);
-const getUnit = (paramId: string) => {
-	if (!modelref.value) return '';
-	return getUnitsFromModelParts(modelref.value)[paramId] || '';
-};
 const preparedCharts = computed(() => {
-	if (!preparedChartInputs.value) return {};
+	const charts: { interventionCharts: any[]; simulationCharts: any[] } = {
+		interventionCharts: [],
+		simulationCharts: []
+	};
+
+	if (!preparedChartInputs.value) return charts;
 	const { result, resultSummary, reverseMap } = preparedChartInputs.value;
 	const state = props.node.state;
 
 	// Need to get the dataset's time field
 	const datasetTimeField = knobs.value.timestampColName;
 
-	const charts = { interventions: {} };
+	// Simulate Charts:
 	selectedVariableSettings.value.forEach((settings) => {
 		const variable = settings.selectedVariables[0];
 		const annotations = chartAnnotations.value.filter((annotation) => annotation.chartId === settings.id);
@@ -770,7 +764,7 @@ const preparedCharts = computed(() => {
 		if (mapObj) {
 			datasetVariables.push(mapObj.datasetVariable);
 		}
-		charts[variable] = applyForecastChartAnnotations(
+		charts.simulationCharts[variable] = applyForecastChartAnnotations(
 			createForecastChart(
 				{
 					data: result,
@@ -803,49 +797,53 @@ const preparedCharts = computed(() => {
 			annotations
 		);
 
-		if (groupedInterventionOutputs.value) {
-			Object.entries(groupedInterventionOutputs.value).forEach((item) => {
-				item[1].forEach((intervention) => {
-					charts[variable].layer.push(...createInterventionChartMarkers([intervention], false));
-				});
-			});
-		}
+		// if (groupedInterventionOutputs.value) {
+		// 	Object.entries(groupedInterventionOutputs.value).forEach((item) => {
+		// 		item[1].forEach((intervention) => {
+		// 			charts.simulationCharts[variable].layer.push(...createInterventionChartMarkers([intervention], false));
+		// 		});
+		// 	});
+		// }
 	});
 
 	if (groupedInterventionOutputs.value) {
-		Object.entries(groupedInterventionOutputs.value).forEach((variable) => {
-			if (!variable) return;
-
-			charts.interventions[variable[0]] = createForecastChart(
+		Object.keys(groupedInterventionOutputs.value).forEach((key) => {
+			console.log(key);
+			charts.interventionCharts[key] = createForecastChart(
 				{
 					data: result,
-					variables: [`${pyciemssMap[variable[0]]}:pre`, pyciemssMap[variable[0]]],
+					variables: [pyciemssMap.value[key]],
 					timeField: 'timepoint_id',
 					groupField: 'sample_id'
 				},
-				{
-					data: resultSummary,
-					variables: [`${pyciemssMap[variable[0]]}_mean:pre`, `${pyciemssMap[variable[0]]}_mean`],
-					timeField: 'timepoint_id'
-				},
 				null,
 				{
+					data: groundTruthData.value,
+					variables: [key],
+					timeField: datasetTimeField as string,
+					groupField: 'sample_id'
+				},
+				{
+					title: key,
 					width: chartSize.value.width,
 					height: chartSize.value.height,
 					legend: true,
-					xAxisTitle: getUnit('_time') || 'Time',
-					yAxisTitle: getUnit(variable[0]),
-					title: '',
-					colorscheme: ['#AAB3C6', '#1B8073'],
-					translationMap: translationMap(variable[0])
+					translationMap: reverseMap,
+					xAxisTitle: modelVarUnits.value._time || 'Time',
+					yAxisTitle: modelVarUnits.value[key] || '',
+					colorscheme: ['#AAB3C6', '#1B8073']
 				}
 			);
+
 			// add intervention annotations (rules and text)
-			// forecastChart.layer.push(...createInterventionChartMarkers(preProcessedInterventionsData.value[variable]));
+			// charts.interventionCharts[key].layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
 		});
 	}
 	return charts;
 });
+
+console.log(preparedCharts);
+console.log(preparedCharts.value);
 
 const preparedDistributionCharts = computed(() => {
 	if (!preparedChartInputs.value || _.isEmpty(pyciemssMap.value)) return {};
