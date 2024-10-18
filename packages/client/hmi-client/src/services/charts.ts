@@ -1031,14 +1031,16 @@ export function createFunmanParameterCharts(
 									range: ['#1B8073', '#FFAB00', '#CCC569']
 								}
 							},
-							value: '#D3D3D380'
+							value: 'rgba(190,190,190,0.1)'
 						}
 					}
 				},
 				{
 					mark: {
 						type: 'tick',
-						thickness: 4
+						thickness: 4,
+						stroke: 'white',
+						strokeWidth: 1 // Optional: Adjust the border width
 					},
 					params: [
 						{
