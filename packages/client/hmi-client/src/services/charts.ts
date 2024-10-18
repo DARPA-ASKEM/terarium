@@ -847,6 +847,8 @@ export function createFunmanStateChart(
 		endY: focusOnModelChecks ? c.additive_bounds.ub : Math.min(c.additive_bounds.ub ?? maxY, maxY)
 	}));
 
+	console.log(trajectories);
+
 	return {
 		$schema: VEGALITE_SCHEMA,
 		config: { font: globalFont },
@@ -909,7 +911,8 @@ export function createFunmanStateChart(
 					],
 					range: ['#1B8073', '#FFAB00', '#CCC569', '#A4CEFF54'] // Specify colors for each legend item
 				}
-			}
+			},
+			detail: { field: 'boxId' }
 		}
 	};
 }
