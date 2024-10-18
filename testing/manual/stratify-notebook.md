@@ -30,7 +30,10 @@ model = stratify(
     structure= [],
     directed=False,
     cartesian_control=False,
-    modify_names=True
+    modify_names=True,
+    concepts_to_stratify=None, #If none given, will stratify all concepts.
+    params_to_stratify= None, #If none given, will stratify all parameters.
+    param_renaming_uses_strata_names = True
 )
 ```
 
@@ -43,7 +46,10 @@ model = stratify(
     structure= [['young', 'old']],
     directed=True,
     cartesian_control=False,
-    modify_names=True
+    modify_names=True,
+    concepts_to_stratify=None, #If none given, will stratify all concepts.
+    params_to_stratify= None, #If none given, will stratify all parameters.
+    param_renaming_uses_strata_names = True
 )
 ```
 
@@ -56,7 +62,10 @@ model = stratify(
     structure= [['young', 'old']],
     directed=False,
     cartesian_control=False,
-    modify_names=True
+    modify_names=True,
+    concepts_to_stratify=None, #If none given, will stratify all concepts.
+    params_to_stratify= None, #If none given, will stratify all parameters.
+    param_renaming_uses_strata_names = True
 )
 ```
 4. Stratify my model by the locations Toronto and Montreal where Toronto and Montreal cannot interact
@@ -68,7 +77,10 @@ model = stratify(
     structure= [],
     directed=False,
     cartesian_control=False,
-    modify_names=True
+    modify_names=True,
+    concepts_to_stratify=None, #If none given, will stratify all concepts.
+    params_to_stratify= None, #If none given, will stratify all parameters.
+    param_renaming_uses_strata_names = True
 )
 ```
 
@@ -81,7 +93,10 @@ model = stratify(
     structure= [['Toronto', 'Montreal'], ['Montreal', 'Toronto']],
     directed=False,
     cartesian_control=True,
-    modify_names=True
+    modify_names=True,
+    concepts_to_stratify=None, #If none given, will stratify all concepts.
+    params_to_stratify= None, #If none given, will stratify all parameters.
+    param_renaming_uses_strata_names = True
 )
 ```
 
@@ -94,7 +109,10 @@ model = stratify(
     structure= [['Toronto', 'Montreal']],
     directed=True,
     cartesian_control=True,
-    modify_names=True
+    modify_names=True,
+    concepts_to_stratify=None, #If none given, will stratify all concepts.
+    params_to_stratify= None, #If none given, will stratify all parameters.
+    param_renaming_uses_strata_names = True
 )
 ```
 
