@@ -17,6 +17,13 @@
 					<div class="toolbar">
 						<p>Set your mapping, calibration and visualization settings then click run.</p>
 						<span class="flex gap-2">
+							<Button
+								label="Reset"
+								outlined
+								@click="resetState"
+								severity="secondary"
+								:disabled="_.isEmpty(node.outputs[0].value)"
+							/>
 							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 							<Button label="Run" icon="pi pi-play" @click="runCalibrate" :disabled="disableRunButton" />
 						</span>
@@ -423,6 +430,7 @@ import _ from 'lodash';
 import * as vega from 'vega';
 import { csvParse, autoType, mean, variance } from 'd3';
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
+import { useConfirm } from 'primevue/useconfirm';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
@@ -506,6 +514,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['close', 'select-output', 'update-state']);
 const toast = useToastService();
+const confirm = useConfirm();
 
 interface BasicKnobs {
 	numIterations: number;
@@ -642,6 +651,22 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 		knobs.value.numIterations = speedPreset.numIterations;
 		knobs.value.learningRate = speedPreset.learningRate;
 	}
+};
+
+// reset drilldown state
+const resetState = () => {
+	confirm.require({
+		header: 'Reset to original calibration state',
+		message: 'Are you sure you want to reset the state?',
+		accept: () => {
+			// Retore to the original output port state
+			const outputPort = props.node.outputs.find((output) => output.id === selectedOutputId.value);
+			if (outputPort && outputPort.state) {
+				knobs.value = _.cloneDeep(outputPort.state as CalibrationOperationStateCiemss);
+				mapping.value = outputPort.state.mapping as CalibrateMap[];
+			}
+		}
+	});
 };
 
 const disableRunButton = computed(

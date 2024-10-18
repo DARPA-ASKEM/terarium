@@ -449,6 +449,8 @@ watch(
 				return;
 			}
 
+			state.summaryId = summaryResponse?.id;
+
 			// const portLabel = props.node.inputs[0].label;
 			emit('append-output', {
 				type: CalibrationOperationCiemss.outputs[0].type,
@@ -459,14 +461,7 @@ watch(
 						datasetId: datasetResult.id
 					}
 				],
-				state: {
-					calibrationId: state.calibrationId,
-					forecastId: state.forecastId,
-					preForecastId: state.preForecastId,
-					numIterations: state.numIterations,
-					numSamples: state.numSamples,
-					summaryId: summaryResponse?.id
-				}
+				state
 			});
 		}
 	},
