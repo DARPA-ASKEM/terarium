@@ -28,12 +28,10 @@ public class ProjectSearchService {
 	protected final ElasticsearchService elasticService;
 
 	protected String getIndex() {
-		log.info("Project index: {}", elasticConfig.getProjectIndex());
 		return elasticConfig.getProjectIndex();
 	}
 
 	public String getAlias() {
-		log.info("Project alias: {}", elasticConfig.getProjectAlias());
 		return elasticConfig.getProjectAlias();
 	}
 

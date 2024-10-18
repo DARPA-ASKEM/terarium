@@ -1,5 +1,5 @@
 <template>
-	<span v-if="isForking">Forking...</span>
+	<span v-if="isCopying">Copying...</span>
 	<Button v-else icon="pi pi-ellipsis-v" rounded text @click.stop="toggle" :disabled="isEmpty(projectMenuItems)" />
 	<Menu ref="menu" :model="projectMenuItems" :popup="true" @focus="menuProject = project" />
 </template>
@@ -7,28 +7,28 @@
 <script setup lang="ts">
 import { useProjects } from '@/composables/project';
 import { useProjectMenu } from '@/composables/project-menu';
-import { RouteName } from '@/router/routes';
-import { ProjectPages } from '@/types/Project';
 import { Project } from '@/types/Types';
 import { isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import { computed, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { exportProjectAsFile } from '@/services/project';
+import { AcceptedExtensions } from '@/types/common';
+import { MenuItem } from 'primevue/menuitem';
+import useAuthStore from '@/stores/auth';
 
-const router = useRouter();
 const props = defineProps<{ project: Project | null }>();
 
-const emit = defineEmits(['forked-project']);
+const emit = defineEmits(['copied-project']);
 
 // Triggers modals from tera-common-modal-dialogs.vue to open
 const { isShareDialogVisible, isRemoveDialogVisible, isProjectConfigDialogVisible, menuProject } = useProjectMenu();
 
-const isForking = ref(false);
+const isCopying = ref(false);
 
 const menu = ref();
-const renameMenuItem = {
-	label: 'Edit project details',
+const editDetailsMenuItem = {
+	label: 'Edit details',
 	icon: 'pi pi-pencil',
 	command: () => {
 		isProjectConfigDialogVisible.value = true;
@@ -42,39 +42,59 @@ const shareMenuItem = {
 	}
 };
 const removeMenuItem = {
-	label: 'Remove',
+	label: 'Delete',
 	icon: 'pi pi-trash',
 	command: () => {
 		isRemoveDialogVisible.value = true;
 	}
 };
-const forkMenuItem = {
-	label: 'Fork this project',
+const copyMenuItem = {
+	label: 'Copy',
 	icon: 'pi pi-clone',
 	command: async () => {
 		if (props.project) {
-			isForking.value = true;
-			const cloned = await useProjects().clone(props.project.id);
-			isForking.value = false;
-			if (!cloned) return;
-			router.push({ name: RouteName.Project, params: { projectId: cloned.id, pageType: ProjectPages.OVERVIEW } });
-			emit('forked-project', cloned);
+			isCopying.value = true;
+			const copiedProject = await useProjects().clone(props.project.id);
+			isCopying.value = false;
+			if (!copiedProject) return;
+			emit('copied-project', copiedProject);
 		}
 	}
 };
 
-const separatorMenuItem = { separator: true };
+const downloadMenuItem = {
+	label: 'Download',
+	icon: 'pi pi-download',
+	command: async () => {
+		if (props.project) {
+			isCopying.value = true;
+			const blob = await exportProjectAsFile(props.project.id);
+			if (blob) {
+				const a = document.createElement('a');
+				a.href = URL.createObjectURL(blob);
+				a.download = `${props.project.name}.${AcceptedExtensions.PROJECTCONFIG}`;
+				a.click();
+				a.remove();
+			}
+			isCopying.value = false;
+		}
+	}
+};
+
 const projectMenuItems = computed(() => {
-	const items = [] as any[];
-	if (props.project?.publicProject) {
-		items.push(forkMenuItem);
+	// Basic access to public and reader project
+	const items: MenuItem[] = [copyMenuItem, downloadMenuItem];
+
+	// Creator/Editor of the project
+	if (['creator', 'writer'].includes(props.project?.userPermission ?? '')) {
+		items.push(editDetailsMenuItem, shareMenuItem);
 	}
-	if (props.project?.userPermission === 'creator') {
-		items.push(renameMenuItem, shareMenuItem, separatorMenuItem, removeMenuItem);
+
+	// Creator of the project, or an admin
+	if (props.project?.userPermission === 'creator' || useAuthStore().isAdmin) {
+		items.push(removeMenuItem);
 	}
-	if (props.project?.userPermission === 'writer') {
-		items.push(renameMenuItem);
-	}
+
 	return items;
 });
 

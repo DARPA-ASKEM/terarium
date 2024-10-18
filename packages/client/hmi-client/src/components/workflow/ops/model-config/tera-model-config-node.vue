@@ -1,6 +1,11 @@
 <template>
 	<section>
-		<tera-operator-placeholder :node="node" />
+		<div v-if="!isEmpty(node.state.transientModelConfig.id)" class="pl-2 pr-2 pb-3">
+			<h6 class="pb-2">{{ node.state.transientModelConfig.name }}</h6>
+			<p>{{ node.state.transientModelConfig.description }}</p>
+		</div>
+		<tera-operator-placeholder v-else :node="node" />
+
 		<tera-progress-spinner is-centered :font-size="2" v-if="isLoading" />
 		<Button
 			:label="isModelInputConnected ? 'Open' : 'Attach a model'"
@@ -13,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep } from 'lodash';
+import { cloneDeep, omit, isEmpty } from 'lodash';
 import { computed, watch, ref } from 'vue';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
@@ -22,33 +27,29 @@ import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeho
 import { getModel, getModelConfigurationsForModel } from '@/services/model';
 import { postAsConfiguredModel } from '@/services/model-configurations';
 import { useClientEvent } from '@/composables/useClientEvent';
-import type { TaskResponse, ClientEvent } from '@/types/Types';
-import { ClientEventType, TaskStatus } from '@/types/Types';
-import { ModelConfigOperation, ModelConfigOperationState, blankModelConfig } from './model-config-operation';
+import type { ClientEvent, TaskResponse } from '@/types/Types';
+import { AssetType, ClientEventType, TaskStatus } from '@/types/Types';
+import { useProjects } from '@/composables/project';
+import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelConfigOperationState>;
 }>();
 const emit = defineEmits(['open-drilldown', 'append-input-port', 'update-state', 'append-output']);
 
-const documentModelConfigTaskId = ref<string>('');
-const datasetModelConfigTaskId = ref<string>('');
+const modelConfigTaskIds = ref<string[]>([]);
 
 const configModelEventHandler = async (event: ClientEvent<TaskResponse>) => {
-	const taskIdRefs = {
-		[ClientEventType.TaskGollmConfigureModel]: documentModelConfigTaskId,
-		[ClientEventType.TaskGollmConfigureFromDataset]: datasetModelConfigTaskId
-	};
-	if (event.data?.id !== taskIdRefs[event.type].value) return;
+	if (!modelConfigTaskIds.value.includes(event.data?.id)) return;
 	if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
-		taskIdRefs[event.type].value = '';
+		modelConfigTaskIds.value = modelConfigTaskIds.value.filter((id) => id !== event.data.id);
 	}
 };
 
-useClientEvent(ClientEventType.TaskGollmConfigureModel, configModelEventHandler);
-useClientEvent(ClientEventType.TaskGollmConfigureFromDataset, configModelEventHandler);
+useClientEvent(ClientEventType.TaskGollmConfigureModelFromDocument, configModelEventHandler);
+useClientEvent(ClientEventType.TaskGollmConfigureModelFromDataset, configModelEventHandler);
 
-const isLoading = computed(() => datasetModelConfigTaskId.value !== '' || documentModelConfigTaskId.value !== '');
+const isLoading = computed(() => modelConfigTaskIds.value.length > 0);
 
 const modelInput = props.node.inputs.find((input) => input.type === 'modelId');
 const isModelInputConnected = computed(() => modelInput?.status === WorkflowPortStatus.CONNECTED);
@@ -65,32 +66,6 @@ watch(
 		const modelInputs = inputs.filter((input) => input.type === 'modelId');
 		const modelId = modelInputs?.[0]?.value?.[0];
 
-		if (modelId) {
-			let configs = await getModelConfigurationsForModel(modelId);
-			if (!configs[0]?.id) {
-				const model = await getModel(modelId);
-				if (model) await postAsConfiguredModel(model); // Create a model configuration if it does not exist
-				configs = await getModelConfigurationsForModel(modelId);
-			}
-			// Auto append output
-			if (configs[0]?.id) {
-				const config = configs[0];
-				state.transientModelConfig = config;
-				emit('update-state', state);
-				emit('append-output', {
-					type: ModelConfigOperation.outputs[0].type,
-					label: config.name,
-					value: config.id,
-					isSelected: false,
-					state
-				});
-			}
-		} else {
-			// Reset previous model cache
-			state.transientModelConfig = blankModelConfig;
-			emit('update-state', state);
-		}
-
 		// If all document inputs are connected, add a new document input port
 		if (documentInputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
 			emit('append-input-port', { type: 'documentId', label: 'Document', isOptional: true });
@@ -100,21 +75,42 @@ watch(
 		if (datasetInputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
 			emit('append-input-port', { type: 'datasetId', label: 'Dataset', isOptional: true });
 		}
+
+		// model
+		if (!modelId || modelId === state.transientModelConfig?.modelId) return;
+		let configs = await getModelConfigurationsForModel(modelId);
+		if (!configs[0]?.id) {
+			const model = await getModel(modelId);
+			if (model) {
+				const modelConfig = await postAsConfiguredModel(model); // Create a model configuration if it does not exist
+				useProjects().addAsset(AssetType.ModelConfiguration, modelConfig.id);
+			}
+			configs = await getModelConfigurationsForModel(modelId);
+		}
+
+		if (configs[0]?.id) {
+			const config = configs[0];
+			state.transientModelConfig = config;
+			emit('update-state', state);
+			// Auto append output if and only if there isnt already an output
+			if (!props.node.outputs.at(0)?.value) {
+				emit('append-output', {
+					type: ModelConfigOperation.outputs[0].type,
+					label: config.name,
+					value: config.id,
+					isSelected: false,
+					state: omit(state, ['transientModelConfig'])
+				});
+			}
+		}
 	},
 	{ deep: true }
 );
 
 watch(
-	() => props.node.state.documentModelConfigTaskId,
+	() => props.node.state.modelConfigTaskIds,
 	() => {
-		documentModelConfigTaskId.value = props.node.state.documentModelConfigTaskId ?? '';
-	}
-);
-
-watch(
-	() => props.node.state.datasetModelConfigTaskId,
-	() => {
-		datasetModelConfigTaskId.value = props.node.state.datasetModelConfigTaskId ?? '';
+		modelConfigTaskIds.value = props.node.state.modelConfigTaskIds ?? [];
 	}
 );
 
@@ -123,10 +119,14 @@ watch(
 	() => {
 		if (!isLoading.value) {
 			const state = cloneDeep(props.node.state);
-			state.documentModelConfigTaskId = '';
-			state.datasetModelConfigTaskId = '';
+			state.modelConfigTaskIds = [];
 			emit('update-state', state);
 		}
 	}
 );
 </script>
+<style scoped>
+h6 + p {
+	color: var(--text-color-subdued);
+}
+</style>

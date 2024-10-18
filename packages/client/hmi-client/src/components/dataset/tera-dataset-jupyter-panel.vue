@@ -89,11 +89,13 @@
 			:jupyter-session="jupyterSession"
 			:kernel-status="kernelStatus"
 			:language="selectedLanguage"
+			:default-preview="defaultPreview"
 			@update-kernel-state="(e) => emit('update-kernel-state', e)"
 			@update-kernel-status="updateKernelStatus"
 			@new-dataset-saved="onNewDatasetSaved"
 			@download-response="onDownloadResponse"
 			@update-language="(lang) => emit('update-language', lang)"
+			@update-selected-outputs="(outputs) => emit('update-selected-outputs', outputs)"
 			:notebook-session="props.notebookSession"
 		/>
 
@@ -155,10 +157,21 @@ const jupyterSession: SessionContext = await newSession('beaker_kernel', 'Beaker
 const selectedKernel = ref();
 const runningSessions = ref<any[]>([]);
 
+const defaultPreview = computed(() => {
+	let code = '';
+	props.assets.forEach((asset, index) => {
+		code += `#d${index + 1} = ${asset.name}\n`;
+	});
+
+	// add first dataset to the code
+	code += 'd1';
+	return code;
+});
+
 const confirm = useConfirm();
 
 const props = defineProps<{
-	assets: { id: string; type: string }[];
+	assets: { id: string; type: string; name: string }[];
 	showKernels: boolean;
 	showChatThoughts: boolean;
 	notebookSession?: NotebookSession;
@@ -170,7 +183,7 @@ const props = defineProps<{
 const languages = programmingLanguageOptions();
 const selectedLanguage = computed(() => props.programmingLanguage || languages[0].value);
 
-const emit = defineEmits(['new-dataset-saved', 'update-language', 'update-kernel-state']);
+const emit = defineEmits(['new-dataset-saved', 'update-language', 'update-kernel-state', 'update-selected-outputs']);
 
 const chat = ref();
 const kernelStatus = ref(<string>'');

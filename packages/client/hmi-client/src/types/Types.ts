@@ -195,8 +195,15 @@ export interface DocumentAsset extends TerariumAsset {
     source?: string;
     text?: string;
     grounding?: Grounding;
+    /**
+     * @deprecated
+     */
     documentAbstract?: string;
+    /**
+     * @deprecated
+     */
     assets?: DocumentExtraction[];
+    extractions?: ExtractedDocumentPage[];
 }
 
 export interface ExternalPublication extends TerariumAsset {
@@ -218,12 +225,6 @@ export interface ModelDescription {
     header: ModelHeader;
     timestamp: Date;
     userId?: string;
-}
-
-export interface ModelFramework extends TerariumAssetThatSupportsAdditionalProperties {
-    name: string;
-    version: string;
-    semantics: string;
 }
 
 export interface InferredParameterSemantic extends Semantic {
@@ -553,12 +554,6 @@ export interface CalibrationRequestCiemss {
     engine: string;
 }
 
-export interface CiemssStatusUpdate {
-    loss: number;
-    progress: number;
-    jobId: string;
-}
-
 export interface EnsembleCalibrationCiemssRequest {
     modelConfigs: EnsembleModelConfigs[];
     dataset: DatasetLocation;
@@ -580,21 +575,11 @@ export interface OptimizeRequestCiemss {
     optimizeInterventions?: OptimizeInterventions;
     fixedInterventions?: Intervention[];
     loggingStepSize?: number;
-    qoi: OptimizeQoi;
-    riskBound: number;
+    qoi: OptimizeQoi[];
     boundsInterventions: number[][];
     extra: OptimizeExtra;
     engine: string;
     userId: string;
-}
-
-export interface ScimlStatusUpdate {
-    loss: number;
-    iter: number;
-    params: { [index: string]: number };
-    id: string;
-    solData: { [index: string]: any };
-    timesteps: number[];
 }
 
 export interface SimulationRequest {
@@ -609,13 +594,12 @@ export interface DynamicIntervention {
     parameter: string;
     threshold: number;
     value: number;
-    isGreaterThan: boolean;
+    appliedTo: string;
+    type: InterventionSemanticType;
 }
 
 export interface Intervention {
     name: string;
-    appliedTo: string;
-    type: InterventionSemanticType;
     staticInterventions: StaticIntervention[];
     dynamicInterventions: DynamicIntervention[];
 }
@@ -628,6 +612,8 @@ export interface InterventionPolicy extends TerariumAsset {
 export interface StaticIntervention {
     timestep: number;
     value: number;
+    appliedTo: string;
+    type: InterventionSemanticType;
 }
 
 export interface DatasetLocation {
@@ -648,7 +634,7 @@ export interface OptimizeExtra {
     maxiter?: number;
     maxfeval?: number;
     isMinimized?: boolean;
-    alpha?: number;
+    alpha?: number[];
     solverMethod?: string;
     solverStepSize?: number;
 }
@@ -660,16 +646,34 @@ export interface OptimizeInterventions {
     startTime?: number[];
     objectiveFunctionOption?: string[];
     initialGuess?: number[];
+    relativeImportance?: number[];
 }
 
 export interface OptimizeQoi {
     contexts: string[];
     method: string;
+    riskBound: number;
+    isMinimized: boolean;
 }
 
 export interface TimeSpan {
     start: number;
     end: number;
+}
+
+export interface CiemssCalibrateStatusUpdate extends CiemssStatusUpdate {
+    loss: number;
+}
+
+export interface CiemssOptimizeStatusUpdate extends CiemssStatusUpdate {
+    currentResults: number[];
+    totalPossibleIterations: number;
+}
+
+export interface CiemssStatusUpdate {
+    jobId: string;
+    progress: number;
+    type: CiemssStatusType;
 }
 
 export interface TaskResponse {
@@ -739,6 +743,13 @@ export interface DocumentExtraction {
     metadata: { [index: string]: any };
 }
 
+export interface ExtractedDocumentPage {
+    pageNumber: number;
+    text: string;
+    tables: any[];
+    equations: any[];
+}
+
 export interface ModelHeader {
     name: string;
     description: string;
@@ -762,6 +773,7 @@ export interface ModelMetadata {
     card?: Card;
     provenance?: string[];
     source?: any;
+    description?: any;
     processed_at?: number;
     processed_by?: string;
     variable_statements?: VariableStatement[];
@@ -879,12 +891,14 @@ export interface Authority {
 
 export interface Rate {
     target: string;
+    description?: string;
     expression: string;
     expression_mathml?: string;
 }
 
 export interface Initial {
     target: string;
+    description?: string;
     expression: string;
     expression_mathml: string;
 }
@@ -1026,6 +1040,11 @@ export enum EvaluationScenarioStatus {
     Stopped = "STOPPED",
 }
 
+export enum CiemssStatusType {
+    Optimize = "optimize",
+    Calibrate = "calibrate",
+}
+
 export enum TaskStatus {
     Queued = "QUEUED",
     Running = "RUNNING",
@@ -1036,21 +1055,33 @@ export enum TaskStatus {
 }
 
 export enum ClientEventType {
-    Heartbeat = "HEARTBEAT",
-    Notification = "NOTIFICATION",
-    SimulationSciml = "SIMULATION_SCIML",
-    SimulationPyciemss = "SIMULATION_PYCIEMSS",
-    SimulationNotification = "SIMULATION_NOTIFICATION",
-    FileUploadProgress = "FILE_UPLOAD_PROGRESS",
+    ChartAnnotationCreate = "CHART_ANNOTATION_CREATE",
+    ChartAnnotationDelete = "CHART_ANNOTATION_DELETE",
+    CloneProject = "CLONE_PROJECT",
     Extraction = "EXTRACTION",
     ExtractionPdf = "EXTRACTION_PDF",
-    TaskUndefinedEvent = "TASK_UNDEFINED_EVENT",
-    TaskGollmModelCard = "TASK_GOLLM_MODEL_CARD",
-    TaskGollmConfigureModel = "TASK_GOLLM_CONFIGURE_MODEL",
-    TaskGollmConfigureFromDataset = "TASK_GOLLM_CONFIGURE_FROM_DATASET",
-    TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
-    TaskGollmGenerateSummary = "TASK_GOLLM_GENERATE_SUMMARY",
+    FileUploadProgress = "FILE_UPLOAD_PROGRESS",
+    Heartbeat = "HEARTBEAT",
+    Notification = "NOTIFICATION",
+    SimulationNotification = "SIMULATION_NOTIFICATION",
+    SimulationPyciemss = "SIMULATION_PYCIEMSS",
+    TaskExtractTextPdf = "TASK_EXTRACT_TEXT_PDF",
+    TaskExtractTablePdf = "TASK_EXTRACT_TABLE_PDF",
+    TaskExtractEquationPdf = "TASK_EXTRACT_EQUATION_PDF",
     TaskFunmanValidation = "TASK_FUNMAN_VALIDATION",
+    TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
+    TaskGollmConfigureModelFromDataset = "TASK_GOLLM_CONFIGURE_MODEL_FROM_DATASET",
+    TaskGollmConfigureModelFromDocument = "TASK_GOLLM_CONFIGURE_MODEL_FROM_DOCUMENT",
+    TaskGollmEnrichAmr = "TASK_GOLLM_ENRICH_AMR",
+    TaskGollmEquationsFromImage = "TASK_GOLLM_EQUATIONS_FROM_IMAGE",
+    TaskGollmGenerateSummary = "TASK_GOLLM_GENERATE_SUMMARY",
+    TaskGollmInterventionsFromDocument = "TASK_GOLLM_INTERVENTIONS_FROM_DOCUMENT",
+    TaskGollmModelCard = "TASK_GOLLM_MODEL_CARD",
+    TaskMiraAmrToMmt = "TASK_MIRA_AMR_TO_MMT",
+    TaskMiraGenerateModelLatex = "TASK_MIRA_GENERATE_MODEL_LATEX",
+    TaskUndefinedEvent = "TASK_UNDEFINED_EVENT",
+    WorkflowDelete = "WORKFLOW_DELETE",
+    WorkflowUpdate = "WORKFLOW_UPDATE",
 }
 
 export enum ProgressState {
@@ -1143,6 +1174,7 @@ export enum ProvenanceType {
     Document = "Document",
     Workflow = "Workflow",
     Equation = "Equation",
+    InterventionPolicy = "InterventionPolicy",
 }
 
 export enum SimulationType {
@@ -1154,7 +1186,6 @@ export enum SimulationType {
 }
 
 export enum SimulationEngine {
-    Sciml = "SCIML",
     Ciemss = "CIEMSS",
 }
 

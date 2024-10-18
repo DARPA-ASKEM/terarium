@@ -64,7 +64,10 @@
 					left: `${node.x}px`
 				}"
 				@dragging="(event) => updatePosition(node, event)"
-				@dragend="saveAndUpdateWorkflow()"
+				@dragend="
+					isDragging = false;
+					saveWorkflowHandler();
+				"
 			>
 				<tera-operator
 					ref="teraOperatorRefs"
@@ -150,17 +153,17 @@
 	<Teleport to="body">
 		<component
 			v-if="dialogIsOpened && currentActiveNode"
+			:downstream-operators-nav="downstreamOperatorsNav"
 			:is="registry.getDrilldown(currentActiveNode.operationType)"
 			:node="currentActiveNode"
-			:upstream-operators-nav="upstreamOperatorsNav"
-			:downstream-operators-nav="downstreamOperatorsNav"
 			:spawn-animation="drilldownSpawnAnimation"
+			:upstream-operators-nav="upstreamOperatorsNav"
+			@close="addOperatorToRoute(null)"
 			@append-output="(event: any) => appendOutput(currentActiveNode, event)"
+			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
+			@update-output="(event: any) => updateOutput(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			@update-status="(status: OperatorStatus) => updateWorkflowNodeStatus(currentActiveNode, status)"
-			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
-			@close="addOperatorToRoute(null)"
-			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
 		/>
 	</Teleport>
 </template>
@@ -173,6 +176,7 @@ import TeraCanvasItem from '@/components/widgets/tera-canvas-item.vue';
 import type { Position } from '@/types/common';
 import {
 	Operation,
+	Workflow,
 	WorkflowEdge,
 	WorkflowNode,
 	WorkflowOutput,
@@ -190,7 +194,7 @@ import ContextMenu from 'primevue/contextmenu';
 import * as workflowService from '@/services/workflow';
 import { OperatorImport, OperatorNodeSize, getNodeMenu } from '@/services/workflow';
 import * as d3 from 'd3';
-import { AssetType, EventType } from '@/types/Types';
+import { AssetType, ClientEventType, EventType } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -221,6 +225,8 @@ import * as ModelFromDocumentOp from '@/components/workflow/ops/model-from-equat
 import * as ModelComparisonOp from '@/components/workflow/ops/model-comparison/mod';
 import * as RegriddingOp from '@/components/workflow/ops/regridding/mod';
 import * as InterventionPolicyOp from '@/components/workflow/ops/intervention-policy/mod';
+import { subscribe, unsubscribe } from '@/services/ClientEventService';
+import { activeProjectId } from '@/composables/activeProject';
 
 const WORKFLOW_SAVE_INTERVAL = 4000;
 
@@ -263,6 +269,8 @@ let canvasTransform = { x: 0, y: 0, k: 1 };
 let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverPort: boolean = false;
 let saveTimer: any = null;
+let pendingSave = false;
+let isDragging = false;
 
 let startTime: number = 0;
 
@@ -277,6 +285,7 @@ const contextMenu = ref();
 
 const isRenamingWorkflow = ref(false);
 const newWorkflowName = ref('');
+const currentProjectId = ref<string | null>(null);
 
 const optionsMenu = ref();
 const optionsMenuItems = ref([
@@ -298,18 +307,34 @@ const teraOperatorRefs = ref();
 async function updateWorkflowName() {
 	const workflowClone = cloneDeep(wf.value.dump());
 	workflowClone.name = newWorkflowName.value;
-	await workflowService.updateWorkflow(workflowClone);
+	await workflowService.saveWorkflow(workflowClone);
 	await useProjects().refresh();
 	isRenamingWorkflow.value = false;
 	wf.value.load(await workflowService.getWorkflow(props.assetId));
 }
 
 // eslint-disable-next-line
-const _saveAndUpdateWorkflow = async () => {
-	const updated = await workflowService.updateWorkflow(wf.value.dump());
-	wf.value.update(updated);
+const _saveWorkflow = async () => {
+	pendingSave = false;
+	await workflowService.saveWorkflow(wf.value.dump(), currentProjectId.value ?? undefined);
+	// wf.value.update(updated);
 };
-const saveAndUpdateWorkflow = debounce(_saveAndUpdateWorkflow, 500);
+// eslint-disable-next-line
+const _updateWorkflow = (event: any) => {
+	if (event.data.id !== wf.value.getId()) {
+		return;
+	}
+	const delayUpdate = pendingSave || isDragging;
+	wf.value.update(event.data as Workflow, delayUpdate);
+};
+
+const saveWorkflowDebounced = debounce(_saveWorkflow, 400);
+const updateWorkflowHandler = debounce(_updateWorkflow, 250);
+
+const saveWorkflowHandler = () => {
+	pendingSave = true;
+	saveWorkflowDebounced();
+};
 
 function appendInputPort(node: WorkflowNode<any>, port: { type: string; label?: string; value: any }) {
 	node.inputs.push({
@@ -363,31 +388,31 @@ function appendOutput(
 	node.outputs = node.outputs.filter((d) => d.value);
 
 	selectOutput(node, uuid);
-	saveAndUpdateWorkflow();
+	saveWorkflowHandler();
 }
 
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
 	if (!node) return;
 	wf.value.updateNodeState(node.id, state);
-	saveAndUpdateWorkflow();
+	saveWorkflowHandler();
 }
 
 function updateWorkflowNodeStatus(node: WorkflowNode<any> | null, status: OperatorStatus) {
 	if (!node) return;
 	wf.value.updateNodeStatus(node.id, status);
-	saveAndUpdateWorkflow();
+	saveWorkflowHandler();
 }
 
 function selectOutput(node: WorkflowNode<any> | null, selectedOutputId: string) {
 	if (!node) return;
 	wf.value.selectOutput(node, selectedOutputId);
-	saveAndUpdateWorkflow();
+	saveWorkflowHandler();
 }
 
-function updateOutputPort(node: WorkflowNode<any> | null, workflowOutput: WorkflowOutput<any>) {
+function updateOutput(node: WorkflowNode<any> | null, workflowOutput: WorkflowOutput<any>) {
 	if (!node) return;
-	workflowService.updateOutputPort(node, workflowOutput);
-	saveAndUpdateWorkflow();
+	workflowService.updateOutput(node, workflowOutput);
+	saveWorkflowHandler();
 }
 
 // Route is mutated then watcher is triggered to open or close the drilldown
@@ -424,14 +449,14 @@ const closeDrilldown = async () => {
 
 const removeNode = (nodeId: string) => {
 	wf.value.removeNode(nodeId);
-	saveAndUpdateWorkflow();
+	saveWorkflowHandler();
 };
 
 const duplicateBranch = (nodeId: string) => {
 	wf.value.branchWorkflow(nodeId);
 
 	cloneNoteBookSessions();
-	saveAndUpdateWorkflow();
+	saveWorkflowHandler();
 };
 
 // We need to clone data-transform sessions, unlike other operators that are
@@ -465,7 +490,7 @@ const addOperatorToWorkflow: Function =
 		const node = wf.value.addNode(operator.operation, newNodePosition, {
 			size: nodeSize
 		});
-		saveAndUpdateWorkflow();
+		saveWorkflowHandler();
 		return node;
 	};
 
@@ -504,6 +529,8 @@ async function onMenuSelection(operatorType: string, menuNode: WorkflowNode<any>
 			{ x: currentPortPosition.x, y: currentPortPosition.y },
 			{ x: currentPortPosition.x, y: currentPortPosition.y }
 		]);
+
+		saveWorkflowHandler();
 	}
 }
 
@@ -687,6 +714,7 @@ function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direction: W
 			newEdge.value!.points
 		);
 		cancelNewEdge();
+		saveWorkflowHandler();
 	}
 }
 
@@ -721,7 +749,7 @@ function removeEdges(portId: string) {
 	if (startingNodeId !== '') {
 		workflowService.cascadeInvalidateDownstream(nodeMap.get(startingNodeId) as WorkflowNode<any>, nodeCache);
 	}
-	saveAndUpdateWorkflow();
+	saveWorkflowHandler();
 }
 
 function onCanvasClick() {
@@ -752,7 +780,7 @@ const dist2 = (a: Position, b: Position) => (a.x - b.x) * (a.x - b.x) + (a.y - b
 const threshold2 = 5.0 * 5.0;
 
 /*
- * Relink edges that have become detatched
+ * Relink edges that have become detached
  *
  * [output-port](edge source => edge target)[input-port]
  *
@@ -853,6 +881,7 @@ const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
 	if (teraNode.isEditing ?? false) {
 		return;
 	}
+	isDragging = true;
 	node.x += x / canvasTransform.k;
 	node.y += y / canvasTransform.k;
 	updateEdgePositions(node, { x, y });
@@ -873,7 +902,7 @@ const pathFn = d3
 const drawPath = (v: any) => pathFn(v) as string;
 
 const unloadCheck = () => {
-	saveAndUpdateWorkflow();
+	saveWorkflowHandler();
 };
 
 const handleDrilldown = () => {
@@ -918,10 +947,11 @@ watch(
 	() => props.assetId,
 	async (newId, oldId) => {
 		isRenamingWorkflow.value = false; // Closes rename input if opened in previous workflow
+		pendingSave = false;
 
 		// Save previous workflow, if applicable
 		if (newId !== oldId && oldId) {
-			saveAndUpdateWorkflow();
+			saveWorkflowHandler();
 			workflowService.setLocalStorageTransform(wf.value.getId(), canvasTransform);
 		}
 
@@ -956,13 +986,17 @@ onMounted(() => {
 	saveTimer = setInterval(async () => {
 		workflowService.setLocalStorageTransform(wf.value.getId(), canvasTransform);
 	}, WORKFLOW_SAVE_INTERVAL);
+
+	subscribe(ClientEventType.WorkflowUpdate, updateWorkflowHandler);
+	currentProjectId.value = activeProjectId.value;
 });
 
 onUnmounted(() => {
-	saveAndUpdateWorkflow();
+	saveWorkflowHandler();
 	if (saveTimer) {
 		clearInterval(saveTimer);
 	}
+	unsubscribe(ClientEventType.WorkflowUpdate, updateWorkflowHandler);
 
 	if (canvasTransform) {
 		workflowService.setLocalStorageTransform(wf.value.getId(), canvasTransform);
@@ -974,14 +1008,14 @@ onUnmounted(() => {
 
 <style scoped>
 .toolbar {
+	align-items: center;
+	background-color: var(--surface-transparent);
+	border-bottom: 1px solid var(--surface-border-light);
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
-	align-items: center;
-	padding: 0.5rem 1rem;
-	border-bottom: 1px solid var(--surface-border-light);
+	padding: var(--gap-2) var(--gap-4);
 	z-index: 900;
-	background-color: var(--surface-transparent);
 }
 
 .glass {
@@ -989,15 +1023,15 @@ onUnmounted(() => {
 }
 
 .button-group {
-	display: flex;
 	align-items: center;
+	display: flex;
 	flex-direction: row;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 }
 
 .rename-workflow {
-	display: flex;
 	align-items: center;
+	display: flex;
 	flex-wrap: nowrap;
 }
 </style>

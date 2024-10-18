@@ -28,10 +28,10 @@ public class SimulationRequestStatusNotifier {
 	private final int DEFAULT_POLLING_THRESHOLD = 500; // 500 * 5 seconds = 2500 seconds = 41 minutes
 	private final Double DEFAULT_HALF_TIME_SECONDS = 2.0;
 
-	private UUID simulationId;
-	private UUID projectId;
-	private Schema.Permission permission;
-	private JsonNode metadata; // Arbitrary metadata to be sent to the client along with the notification event.
+	private final UUID simulationId;
+	private final UUID projectId;
+	private final Schema.Permission permission;
+	private final JsonNode metadata; // Arbitrary metadata to be sent to the client along with the notification event.
 
 	@Setter
 	private int interval = DEFAULT_POLLING_INTERVAL_SECONDS;
@@ -100,9 +100,7 @@ public class SimulationRequestStatusNotifier {
 		} else if (status.equals(ProgressState.QUEUED)) {
 			notificationInterface.sendMessage("Simulation is queued...", ProgressState.QUEUED);
 		} else {
-			notificationInterface.sendMessage(
-				(statusMessage == null || statusMessage.isEmpty()) ? "Simulation is running..." : statusMessage
-			);
+			notificationInterface.sendMessage((statusMessage.isEmpty()) ? "Simulation is running..." : statusMessage);
 		}
 	}
 
@@ -146,13 +144,9 @@ public class SimulationRequestStatusNotifier {
 					pollAttempts
 				);
 			} catch (final Exception e) {
-				final String errMsg = e instanceof RuntimeException
-					? e.getMessage()
-					: "Unexpected error occurred while checking the simulation status.";
-				notificationInterface.sendFinalMessage(errMsg, ProgressState.FAILED);
-
+				notificationInterface.sendFinalMessage(e.getMessage(), ProgressState.FAILED);
 				this.executor.shutdown();
-				log.error("Error occurred while polling for simulation {}\n{}", this.simulationId, errMsg);
+				log.error("Error occurred while polling for simulation {}\n{}", this.simulationId, e.getMessage());
 			}
 		};
 		executor.scheduleAtFixedRate(poller, this.interval, this.interval, TimeUnit.SECONDS);

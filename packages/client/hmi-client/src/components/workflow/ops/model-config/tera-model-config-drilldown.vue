@@ -2,30 +2,41 @@
 	<tera-drilldown
 		v-bind="$attrs"
 		:node="node"
-		:menu-items="menuItems"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 		hide-dropdown
 	>
 		<template #sidebar>
-			<tera-slider-panel v-model:is-open="isSidebarOpen" header="Configurations" content-width="360px">
+			<tera-slider-panel
+				v-if="pdfData.length"
+				v-model:is-open="isDocViewerOpen"
+				header="Document Viewer"
+				content-width="700px"
+			>
 				<template #content>
-					<div class="m-3">
+					<tera-drilldown-section :is-loading="isFetchingPDF">
+						<tera-pdf-panel :pdfs="pdfData" />
+					</tera-drilldown-section>
+				</template>
+			</tera-slider-panel>
+			<tera-slider-panel
+				class="input-config"
+				v-model:is-open="isSidebarOpen"
+				header="Configurations"
+				content-width="360px"
+			>
+				<template #content>
+					<main class="m-3">
 						<div class="flex flex-row gap-1">
 							<tera-input-text v-model="filterModelConfigurationsText" placeholder="Filter" class="w-full" />
-
 							<Button
 								label="Extract from inputs"
-								@click="extractConfigurationsFromInputs"
 								severity="primary"
 								class="white-space-nowrap min-w-min"
+								size="small"
 								:loading="isLoading"
-								:disabled="
-									!props.node.inputs[1]?.value &&
-									!props.node.inputs[2]?.value &&
-									!props.node.inputs[3]?.value &&
-									!props.node.inputs[4]?.value
-								"
+								:disabled="!props.node.inputs.slice(1, 5).some((input) => input?.value)"
+								@click="extractConfigurationsFromInputs"
 							/>
 						</div>
 						<!-- Show a spinner if loading -->
@@ -38,21 +49,20 @@
 							<li v-for="configuration in filteredModelConfigurations" :key="configuration.id">
 								<tera-model-configuration-item
 									:configuration="configuration"
-									@click="onSelectConfiguration(configuration)"
 									:selected="selectedConfigId === configuration.id"
-									@use="onSelectConfiguration(configuration)"
+									@click="onSelectConfiguration(configuration)"
 									@delete="fetchConfigurations(model.id)"
-									@download="downloadConfiguredModel(configuration)"
+									@download="downloadModelArchive(configuration)"
+									@use="onSelectConfiguration(configuration)"
 								/>
 							</li>
 							<!-- Show a message if nothing found after filtering -->
 							<li v-if="filteredModelConfigurations.length === 0">No configurations found</li>
 						</ul>
-					</div>
+					</main>
 				</template>
 			</tera-slider-panel>
 		</template>
-
 		<tera-drilldown-section :tabName="ConfigTabs.Wizard" class="px-3 mb-10">
 			<template #header-controls-left>
 				<tera-toggleable-input
@@ -62,9 +72,15 @@
 				/>
 			</template>
 			<template #header-controls-right>
-				<Button label="Reset" @click="resetConfiguration" outlined severity="secondary" />
-				<Button label="Save as..." outlined severity="secondary" @click="showSaveModal = true" />
-				<Button class="mr-2" :disabled="isSaveDisabled" label="Save" @click="onSaveConfiguration" />
+				<Button
+					label="Reset"
+					outlined
+					severity="secondary"
+					:disabled="!isModelConfigChanged"
+					@click="resetConfiguration"
+				/>
+				<Button label="Save as" outlined severity="secondary" @click="showSaveModal = true" />
+				<Button :disabled="isSaveDisabled" label="Save" @click="onSaveConfiguration" />
 			</template>
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab>
@@ -141,9 +157,10 @@
 						<tera-notebook-jupyter-input
 							:kernel-manager="kernelManager"
 							:defaultOptions="sampleAgentQuestions"
+							:maxChars="60"
 							:context-language="contextLanguage"
 							@llm-output="(data: any) => appendCode(data, 'code')"
-							@llm-thought-output="(data: any) => llmThoughts.push(data)"
+							@llm-thought-output="(data: any) => updateThoughts(data)"
 							@question-asked="updateLlmQuery"
 						>
 							<template #toolbar-right-side>
@@ -152,7 +169,6 @@
 							</template>
 						</tera-notebook-jupyter-input>
 					</Suspense>
-					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
 				</div>
 				<v-ace-editor
 					v-model:value="codeText"
@@ -170,10 +186,11 @@
 					:value="executeResponse.value"
 					:traceback="executeResponse.traceback"
 				/>
-				<div v-if="executeResponse.status !== OperatorStatus.ERROR">{{ notebookResponse }}</div>
+				<p class="executed-code" v-if="executeResponse.status !== OperatorStatus.ERROR">{{ notebookResponse }}</p>
 			</tera-drilldown-preview>
 		</tera-columnar-panel>
 	</tera-drilldown>
+
 	<tera-save-asset-modal
 		:initial-name="knobs.transientModelConfig.name"
 		:is-visible="showSaveModal"
@@ -182,14 +199,15 @@
 		@close-modal="showSaveModal = false"
 		@on-save="onSaveAsModelConfiguration"
 	/>
+
 	<!-- Matrix effect easter egg  -->
 	<canvas id="matrix-canvas" />
 </template>
 
 <script setup lang="ts">
 import '@/ace-config';
-import { computed, onUnmounted, ref, watch, nextTick, ComponentPublicInstance } from 'vue';
-import { cloneDeep, isEmpty, orderBy, debounce } from 'lodash';
+import { ComponentPublicInstance, computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { cloneDeep, debounce, isEmpty, orderBy, omit } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
@@ -202,29 +220,33 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
 import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
-import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
-import { emptyMiraModel, generateModelDatasetConfigurationContext } from '@/model-representation/mira/mira';
+import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
+import {
+	emptyMiraModel,
+	generateModelDatasetConfigurationContext,
+	makeConfiguredMMT
+} from '@/model-representation/mira/mira';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
-import { configureModelFromDatasets, configureModelFromDocument } from '@/services/goLLM';
+import { configureModelFromDataset, configureModelFromDocument } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
 import { getMMT, getModel, getModelConfigurationsForModel } from '@/services/model';
 import {
 	createModelConfiguration,
-	setInitialSource,
+	getArchive,
+	getModelConfigurationById,
 	setInitialExpression,
-	setParameterSource,
+	setInitialSource,
 	setParameterDistributions,
-	getAsConfiguredModel,
-	updateModelConfiguration,
-	getModelConfigurationById
+	setParameterSource,
+	updateModelConfiguration
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { Model, ModelConfiguration } from '@/types/Types';
-import { Observable, AssetType } from '@/types/Types';
+import type { Model, ModelConfiguration, TaskResponse } from '@/types/Types';
+import { AssetType, Observable } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
@@ -236,14 +258,16 @@ import { useConfirm } from 'primevue/useconfirm';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import { saveCodeToState } from '@/services/notebook';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
-import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
+import { useProjects } from '@/composables/project';
+import TeraPdfPanel from '@/components/widgets/tera-pdf-panel.vue';
 import {
-	ModelConfigOperation,
-	ModelConfigOperationState,
 	blankModelConfig,
+	isModelConfigsEqual,
 	isModelConfigValuesEqual,
-	isModelConfigsEqual
+	ModelConfigOperation,
+	ModelConfigOperationState
 } from './model-config-operation';
+import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
 
 enum ConfigTabs {
 	Wizard = 'Wizard',
@@ -254,23 +278,17 @@ const props = defineProps<{
 	node: WorkflowNode<ModelConfigOperationState>;
 }>();
 
+const isFetchingPDF = ref(false);
+const isDocViewerOpen = ref(true);
+
+const pdfData = ref<{ document: any; data: string; isPdf: boolean; name: string }[]>([]);
+
 const isSidebarOpen = ref(true);
 const isEditingDescription = ref(false);
 const newDescription = ref('');
 const descriptionTextareaRef = ref<ComponentPublicInstance<typeof Textarea> | null>(null);
 
-const menuItems = computed(() => [
-	{
-		label: 'Download',
-		icon: 'pi pi-download',
-		disabled: isSaveDisabled.value,
-		command: () => {
-			downloadConfiguredModel();
-		}
-	}
-]);
-
-const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close', 'update-output-port']);
+const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close']);
 
 interface BasicKnobs {
 	transientModelConfig: ModelConfiguration;
@@ -287,6 +305,11 @@ const calibratedConfigObservables = computed<Observable[]>(() =>
 		states,
 		expression
 	}))
+);
+
+// Check if the model configuration is the same as the original
+const isModelConfigChanged = computed(
+	() => !isModelConfigsEqual(originalConfig.value, knobs.value.transientModelConfig)
 );
 
 // Save button is disabled if the model configuration name is empty, the values have changed, or the configuration is the same as the original
@@ -411,25 +434,36 @@ const extractConfigurationsFromInputs = async () => {
 	if (!model.value?.id) {
 		return;
 	}
-	if (documentId.value) {
-		const resp = await configureModelFromDocument(
-			documentId.value,
-			model.value.id,
-			props.node.workflowId,
-			props.node.id
-		);
-		state.documentModelConfigTaskId = resp.id;
+
+	if (documentIds.value) {
+		const promiseList = [] as Promise<TaskResponse | null>[];
+		documentIds.value.forEach((documentId) => {
+			promiseList.push(
+				configureModelFromDocument(documentId, model.value?.id as string, props.node.workflowId, props.node.id)
+			);
+		});
+		const responsesRaw = await Promise.all(promiseList);
+		responsesRaw.forEach((resp) => {
+			if (resp) {
+				state.modelConfigTaskIds.push(resp.id);
+			}
+		});
 	}
+
 	if (datasetIds.value) {
 		const matrixStr = generateModelDatasetConfigurationContext(mmt.value, mmtParams.value);
-		const resp = await configureModelFromDatasets(
-			model.value.id,
-			datasetIds.value,
-			matrixStr,
-			props.node.workflowId,
-			props.node.id
-		);
-		state.datasetModelConfigTaskId = resp.id;
+		const promiseList = [] as Promise<TaskResponse | null>[];
+		datasetIds.value.forEach((datasetId) => {
+			promiseList.push(
+				configureModelFromDataset(model.value?.id as string, datasetId, matrixStr, props.node.workflowId, props.node.id)
+			);
+		});
+		const responsesRaw = await Promise.all(promiseList);
+		responsesRaw.forEach((resp) => {
+			if (resp) {
+				state.modelConfigTaskIds.push(resp.id);
+			}
+		});
 	}
 	emit('update-state', state);
 };
@@ -438,8 +472,18 @@ const selectedOutputId = ref<string>('');
 const selectedConfigId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
 const originalConfig = ref<ModelConfiguration | null>(null);
 
-const documentId = computed(() => props.node.inputs[1]?.value?.[0]?.documentId);
-const datasetIds = computed(() => props.node.inputs[2]?.value);
+const documentIds = computed(() =>
+	props.node.inputs
+		.filter((input) => input.type === 'documentId' && input.status === 'connected')
+		.map((input) => input.value?.[0]?.documentId)
+		.filter((id): id is string => id !== undefined)
+);
+const datasetIds = computed(() =>
+	props.node.inputs
+		.filter((input) => input.type === 'datasetId' && input.status === 'connected')
+		.map((input) => input.value?.[0])
+		.filter((id): id is string => id !== undefined)
+);
 
 const suggestedConfigurationContext = ref<{
 	isOpen: boolean;
@@ -457,39 +501,14 @@ const model = ref<Model | null>(null);
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
 
-const configuredMmt = ref(makeConfiguredMMT());
+const configuredMmt = ref(makeConfiguredMMT(mmt.value, knobs.value.transientModelConfig));
 
-function makeConfiguredMMT() {
-	const mmtCopy = cloneDeep(mmt.value);
-	knobs.value.transientModelConfig.initialSemanticList.forEach((initial) => {
-		const mmtInitial = mmtCopy.initials[initial.target];
-		if (mmtInitial) {
-			mmtInitial.expression = initial.expression;
-		}
-	});
-	knobs.value.transientModelConfig.parameterSemanticList.forEach((parameter) => {
-		const mmtParameter = mmtCopy.parameters[parameter.referenceId];
-		if (mmtParameter) {
-			mmtParameter.value = parameter.distribution.parameters.value;
-		}
-	});
-	knobs.value.transientModelConfig.observableSemanticList.forEach((observable) => {
-		const mmtObservable = mmtCopy.observables[observable.referenceId];
-		if (mmtObservable) {
-			mmtObservable.expression = observable.expression;
-		}
-	});
-	return mmtCopy;
-}
-
-const downloadConfiguredModel = async (configuration: ModelConfiguration = knobs.value.transientModelConfig) => {
-	const rawModel = await getAsConfiguredModel(configuration);
-	if (rawModel) {
-		const data = `text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(rawModel, null, 2))}`;
+const downloadModelArchive = async (configuration: ModelConfiguration = knobs.value.transientModelConfig) => {
+	const archive = await getArchive(configuration);
+	if (archive) {
 		const a = document.createElement('a');
-		a.href = `data:${data}`;
-		a.download = `${configuration.name ?? 'configured_model'}.json`;
-		a.innerHTML = 'download JSON';
+		a.href = URL.createObjectURL(archive);
+		a.download = `${configuration.name}.modelconfig`;
 		a.click();
 		a.remove();
 	}
@@ -506,27 +525,25 @@ const createConfiguration = async () => {
 	}
 
 	const state = cloneDeep(props.node.state);
-	state.transientModelConfig = data;
 	useToastService().success('', 'Created model configuration');
 	emit('append-output', {
 		type: ModelConfigOperation.outputs[0].type,
 		label: data.name,
 		value: data.id,
 		isSelected: false,
-		state
+		state: omit(state, ['transientModelConfig'])
 	});
 };
 
 const onSaveAsModelConfiguration = (data: ModelConfiguration) => {
 	useToastService().success('', 'Created model configuration');
 	const state = cloneDeep(props.node.state);
-	state.transientModelConfig = data;
 	emit('append-output', {
 		type: ModelConfigOperation.outputs[0].type,
 		label: data.name,
 		value: data.id,
 		isSelected: false,
-		state
+		state: omit(state, ['transientModelConfig'])
 	});
 	showSaveModal.value = false;
 };
@@ -541,6 +558,7 @@ const onSaveConfiguration = async () => {
 		return;
 	}
 	initialize();
+	useProjects().refresh();
 	logger.success('Saved model configuration');
 };
 
@@ -551,7 +569,7 @@ const fetchConfigurations = async (modelId: string) => {
 };
 
 // Fill the form with the config data
-const initialize = async () => {
+const initialize = async (overwriteWithState: boolean = false) => {
 	const state = props.node.state;
 	const modelId = props.node.inputs[0].value?.[0];
 	if (!modelId) return;
@@ -560,8 +578,10 @@ const initialize = async () => {
 	model.value = await getModel(modelId);
 	if (model.value) {
 		const response = await getMMT(model.value);
-		mmt.value = response.mmt;
-		mmtParams.value = response.template_params;
+		if (response) {
+			mmt.value = response.mmt;
+			mmtParams.value = response.template_params;
+		}
 	}
 
 	if (!state.transientModelConfig.id) {
@@ -569,16 +589,14 @@ const initialize = async () => {
 		applyConfigValues(suggestedConfigurationContext.value.tableData[0]);
 	} else {
 		originalConfig.value = await getModelConfigurationById(selectedConfigId.value);
-
-		// FIXME: Bug sept-03, state.transientModelConfig may not be saved properly before this date
-		if (state.transientModelConfig.id !== originalConfig.value.id) {
+		if (!overwriteWithState) {
 			knobs.value.transientModelConfig = cloneDeep(originalConfig.value);
 		} else {
 			knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
 		}
 	}
 
-	configuredMmt.value = makeConfiguredMMT();
+	configuredMmt.value = makeConfiguredMMT(mmt.value, knobs.value.transientModelConfig);
 
 	// Create a new session and context based on model
 	try {
@@ -629,18 +647,14 @@ const applyConfigValues = (config: ModelConfiguration) => {
 	// If the output does not already exist
 	else {
 		const state = cloneDeep(props.node.state);
-		state.transientModelConfig = config;
-
-		// Append this config to the output.
 		emit('append-output', {
 			type: ModelConfigOperation.outputs[0].type,
 			label: config.name,
 			value: config.id,
 			isSelected: false,
-			state
+			state: omit(state, ['transientModelConfig'])
 		});
 	}
-	logger.success(`Configuration applied ${config.name}`);
 };
 
 const onEditDescription = async () => {
@@ -660,17 +674,26 @@ const resetConfiguration = () => {
 		header: 'Are you sure you want to reset the configuration?',
 		message: 'This will reset all values original values of the configuration.',
 		accept: () => {
-			if (originalConfig.value) applyConfigValues(originalConfig.value);
+			if (originalConfig.value) knobs.value.transientModelConfig = cloneDeep(originalConfig.value);
 		},
 		acceptLabel: 'Confirm',
 		rejectLabel: 'Cancel'
 	});
 };
 
+const updateThoughts = (data: any) => {
+	llmThoughts.value.push(data);
+	const llmResponse = llmThoughts.value.findLast((thought) => thought?.msg_type === 'llm_response');
+	// If the last thought is a LLM response, update the notebook response
+	if (llmResponse) {
+		notebookResponse.value = llmResponse.content.text;
+	}
+};
+
 watch(
-	() => `${props.node.state.datasetModelConfigTaskId}:${props.node.state.documentModelConfigTaskId}`,
-	async (watchStr) => {
-		if (watchStr !== ':') {
+	() => props.node.state.modelConfigTaskIds,
+	async (watchVal) => {
+		if (watchVal.length > 0) {
 			isLoading.value = true;
 		} else {
 			isLoading.value = false;
@@ -685,7 +708,7 @@ const debounceUpdateState = debounce(() => {
 	console.log('debounced update');
 	const state = cloneDeep(props.node.state);
 	state.transientModelConfig = knobs.value.transientModelConfig;
-	configuredMmt.value = makeConfiguredMMT();
+	configuredMmt.value = makeConfiguredMMT(mmt.value, knobs.value.transientModelConfig);
 
 	emit('update-state', state);
 }, 100);
@@ -697,6 +720,37 @@ watch(
 	{ deep: true }
 );
 
+onMounted(() => {
+	// setting as true will overwrite the model config with the current state value
+	if (props.node.active) {
+		selectedOutputId.value = props.node.active;
+		initialize(true);
+	}
+
+	if (documentIds.value.length) {
+		isFetchingPDF.value = true;
+		documentIds.value.forEach(async (id) => {
+			const document = await getDocumentAsset(id);
+			const name: string = document?.name ?? '';
+			const filename = document?.fileNames?.[0];
+			const isPdf = !!document?.fileNames?.[0]?.endsWith('.pdf');
+
+			if (document?.id && filename) {
+				let data: string | null;
+				if (isPdf) {
+					data = await downloadDocumentAsset(document.id, filename);
+				} else {
+					data = await getDocumentFileAsText(document.id, filename);
+				}
+				if (data !== null) {
+					pdfData.value.push({ document, data, isPdf, name });
+				}
+			}
+		});
+	}
+	isFetchingPDF.value = false;
+});
+
 watch(
 	() => props.node.active,
 	() => {
@@ -704,8 +758,7 @@ watch(
 			selectedOutputId.value = props.node.active;
 			initialize();
 		}
-	},
-	{ immediate: true }
+	}
 );
 
 onUnmounted(() => {
@@ -714,14 +767,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Make left sidebar grey */
-:deep(.slider-content) {
-	background-color: var(--surface-100);
-}
-:deep(.slider-content aside header) {
-	background: color-mix(in srgb, var(--surface-100) 80%, transparent 20%);
-}
-
 .processing-new-configuration-tile {
 	display: flex;
 	flex-direction: row;
@@ -757,6 +802,12 @@ onUnmounted(() => {
 	padding-bottom: var(--gap-2);
 }
 
+.notebook-section {
+	background-color: var(--surface-disabled);
+	border-right: 1px solid var(--surface-border-dark);
+	padding: var(--gap);
+}
+
 .notebook-section:deep(main) {
 	gap: var(--gap-small);
 	position: relative;
@@ -769,10 +820,6 @@ onUnmounted(() => {
 	gap: var(--gap-small);
 	display: flex;
 	align-items: center;
-}
-
-.toolbar {
-	padding-left: var(--gap-medium);
 }
 
 #matrix-canvas {
@@ -793,9 +840,33 @@ onUnmounted(() => {
 	padding-right: var(--gap-small);
 }
 
-ul {
-	list-style: none;
-	padding-top: var(--gap-small);
+:deep(.pi-spinner) {
+	padding: var(--gap-2);
+}
+
+.input-config {
+	ul {
+		list-style: none;
+		padding-top: var(--gap-4);
+	}
+
+	li {
+		& > * {
+			border-bottom: 1px solid var(--gray-300);
+			border-right: 1px solid var(--gray-300);
+		}
+
+		&:first-child > * {
+			border-top: 1px solid var(--gray-300);
+			border-top-left-radius: var(--border-radius);
+			border-top-right-radius: var(--border-radius);
+		}
+
+		&:last-child > * {
+			border-bottom-left-radius: var(--border-radius);
+			border-bottom-right-radius: var(--border-radius);
+		}
+	}
 }
 
 button.start-edit {
@@ -826,5 +897,16 @@ button.start-edit {
 
 .secondary-text {
 	color: var(--text-color-subdued);
+}
+
+.executed-code {
+	white-space: pre-wrap;
+}
+:deep(.content-wrapper) {
+	& > section {
+		& > main {
+			overflow: hidden;
+		}
+	}
 }
 </style>

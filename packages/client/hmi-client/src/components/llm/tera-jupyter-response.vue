@@ -80,8 +80,15 @@
 							@deleteRequested="onDeleteRequested(m.header.msg_id)"
 						/>
 					</div>
-					<div v-else-if="['stream', 'display_data', 'execute_result', 'error'].includes(m.header.msg_type)">
+					<div
+						class="flex flex-column"
+						v-else-if="['stream', 'display_data', 'execute_result', 'error'].includes(m.header.msg_type)"
+					>
 						<tera-beaker-code-cell-output :jupyter-message="m" />
+						<aside class="ml-auto">
+							<label class="px-2">Display on node thumbnail</label>
+							<Checkbox :model-value="msg.selected" @change="emit('on-selected', $event)" binary />
+						</aside>
 					</div>
 				</div>
 			</section>
@@ -100,6 +107,8 @@ import Button from 'primevue/button';
 import Textarea from 'primevue/textarea';
 import Menu from 'primevue/menu';
 import { defineEmits, ref, computed, onMounted } from 'vue';
+import { MenuItem } from 'primevue/menuitem';
+import Checkbox from 'primevue/checkbox';
 
 const emit = defineEmits([
 	'cell-updated',
@@ -108,7 +117,8 @@ const emit = defineEmits([
 	'edit-prompt',
 	're-run-prompt',
 	'delete-prompt',
-	'delete-message'
+	'delete-message',
+	'on-selected'
 ]);
 
 const props = defineProps<{
@@ -157,7 +167,7 @@ const chatWindowMenuItems = ref([
 		icon: 'pi pi-fw pi-trash',
 		command: () => emit('delete-prompt', props.msg.query_id)
 	}
-]);
+] as MenuItem[]);
 
 const saveEditingQuery = () => {
 	emit('edit-prompt', props.msg.query_id, query.value);

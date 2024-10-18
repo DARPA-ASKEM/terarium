@@ -9,8 +9,8 @@ import router from '@/router';
 import { RouteName } from '@/router/routes';
 import type { Model, Code, InterventionPolicy, ModelConfiguration } from '@/types/Types';
 import type { Workflow } from '@/types/workflow';
-import { createInterventionPolicy } from './intervention-policy';
-import { createModelConfiguration } from './model-configurations';
+import { createInterventionPolicy, updateInterventionPolicy } from './intervention-policy';
+import { createModelConfiguration, updateModelConfiguration } from './model-configurations';
 
 export type AssetToSave = Model | Workflow | ModelConfiguration | InterventionPolicy | File;
 
@@ -53,16 +53,15 @@ export async function saveAs(
 	const projectId = useProjects().activeProject.value?.id;
 
 	// save to project
-	if (assetType !== AssetType.InterventionPolicy && assetType !== AssetType.ModelConfiguration) {
-		if (!projectId) {
-			logger.error(`Asset can't be saved since target project doesn't exist.`);
-			return;
-		}
-		await useProjects().addAsset(assetType, response.id, projectId);
-
-		// After saving notify the user and do any necessary actions
-		logger.info(`${response.name} saved successfully in project ${useProjects().activeProject.value?.name}.`);
+	if (!projectId) {
+		logger.error(`Asset can't be saved since target project doesn't exist.`);
+		return;
 	}
+	await useProjects().addAsset(assetType, response.id, projectId);
+
+	// After saving notify the user and do any necessary actions
+	logger.info(`${response.name} saved successfully in project ${useProjects().activeProject.value?.name}.`);
+	await useProjects().refresh();
 
 	// redirect to the asset page
 	if (openOnSave) {
@@ -94,6 +93,12 @@ export async function updateAddToProject(newAsset: AssetToSave, assetType: Asset
 		case AssetType.Code:
 			response = await updateCodeAsset(newAsset as Code);
 			break;
+		case AssetType.InterventionPolicy:
+			response = await updateInterventionPolicy(newAsset as InterventionPolicy);
+			break;
+		case AssetType.ModelConfiguration:
+			response = await updateModelConfiguration(newAsset as ModelConfiguration);
+			break;
 		default:
 			logger.info(`Update for ${assetType} is not implemented.`);
 			return;
@@ -112,5 +117,6 @@ export async function updateAddToProject(newAsset: AssetToSave, assetType: Asset
 	await useProjects().addAsset(assetType, response.id, projectId);
 
 	logger.info(`Updated ${response.name}.`);
+	await useProjects().refresh();
 	if (onSaveFunction) onSaveFunction(response);
 }

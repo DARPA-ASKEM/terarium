@@ -17,15 +17,17 @@ Note: sampling combinations in PyCIEMSS can result in numerical instability, whe
 3. Create a workflow named `Optimize`
 
 ### 2. Upload assets
-1. Use/upload the _SEIRHD_ model from [google drive]([https://drive.google.com/drive/folders/1bllvuKt6ZA1vc36AW3Xet4y6ZAnwnaVN](https://drive.google.com/file/d/1wCZl0NCjN6jZeoEy5UNVbElW8a4xQHXw/view?usp=drive_link))
-2. Use/upload the _LA county_ dataset from [google drive]([https://drive.google.com/drive/folders/1bllvuKt6ZA1vc36AW3Xet4y6ZAnwnaVN](https://drive.google.com/file/d/1gW-q-N_pLOAUp151NyPAuXNL1WTBRDak/view?usp=drive_link))
+1. Use/upload the [_SEIRHD_](https://drive.google.com/file/d/1wCZl0NCjN6jZeoEy5UNVbElW8a4xQHXw/view?usp=drive_link) model from [google drive](https://drive.google.com/drive/folders/1XknwhuvLMPKC68LK1HQp_n77fHaIuLGt?usp=drive_link)
+2. Use/upload the [_LA county_](https://drive.google.com/file/d/1gW-q-N_pLOAUp151NyPAuXNL1WTBRDak/view?usp=drive_link) dataset from [google drive](https://drive.google.com/drive/folders/1XknwhuvLMPKC68LK1HQp_n77fHaIuLGt?usp=drive_link)
 
 ### 3. Model setup
 1. Create a default configuration with the `Configure model` operator
 2. Calibrate the model with the dataset with the `Calibrate` operator.
-   Mapping the model variable: Culmative_cases with the dataset variable cases
-                               deceased with deaths
-                               timestamp with Timestamp
+   
+   Mapping the model variable:
+    - `Culmative_cases` with the dataset variable `cases`
+    - `deceased` with `deaths`
+    - `timestamp` with `Timestamp`
 
 ### 4. Masking start time optimization
 1. Create a Masking Policy operation with the `Intervention Policy` operator.
@@ -36,7 +38,7 @@ Note: sampling combinations in PyCIEMSS can result in numerical instability, whe
 2. Optimize intervention: set _H_ to `< 20 000` in all time points in `95%` of simulated outcomes. 
 3. Find a `new start time` for _NPI mult_ `upper bound` (how long we can delay masking). Start time `60`, end time `150`, initial guess `61`. 
 4. Optimization settings: end time `150`, maxiter `3` max eval `30`
-5. This should succeed with a new start time around 60 to 75 range (may vary due to calibration results as well as optimize run)
+5. This should succeed with a new start time.
 
 ### 5. Hospitalizations optimization
 1. Create a Hospitalizations Policy operation with the `Intervention Policy` operator.

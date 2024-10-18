@@ -27,6 +27,7 @@
 					:notebook-session="notebookSession"
 					:programming-language="node.state.programmingLanguage"
 					@update-language="(lang) => onUpdateLanguage(lang)"
+					@update-selected-outputs="(outputs) => onUpdateSelectedOutputs(outputs)"
 					@update-kernel-state="updateKernelState"
 					:kernelState="kernelState"
 					:selected-dataset="selectedDataset"
@@ -50,6 +51,8 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
+import { useProjects } from '@/composables/project';
+import { INotebookItem } from '@/services/jupyter';
 import { DatasetTransformerState } from './dataset-transformer-operation';
 
 const props = defineProps<{
@@ -64,7 +67,8 @@ const assets = computed(() =>
 		.filter((inputNode) => inputNode.status === WorkflowPortStatus.CONNECTED && inputNode.value)
 		.map((inputNode) => ({
 			type: inputNode.type,
-			id: inputNode.value![0]
+			id: inputNode.value![0],
+			name: useProjects().getAssetName(inputNode.value![0])
 		}))
 );
 
@@ -73,9 +77,10 @@ const jupyterPanel = ref();
 const selectedDataset = ref<string | null>(null);
 const updateKernelState = (newKernelState: any) => {
 	kernelState.value = newKernelState;
-	// Default the dropdown to the first dataframe
+	// Default the dropdown to the last dataframe
 	if (!selectedDataset.value) {
-		selectedDataset.value = Object.keys(newKernelState)[0];
+		const keys = Object.keys(newKernelState);
+		selectedDataset.value = keys[keys.length - 1];
 	}
 };
 
@@ -106,6 +111,12 @@ onMounted(async () => {
 const onUpdateLanguage = (language: string) => {
 	const state = cloneDeep(props.node.state);
 	state.programmingLanguage = language;
+	emit('update-state', state);
+};
+
+const onUpdateSelectedOutputs = (outputs: INotebookItem[]) => {
+	const state = cloneDeep(props.node.state);
+	state.selectedOutputs = outputs;
 	emit('update-state', state);
 };
 

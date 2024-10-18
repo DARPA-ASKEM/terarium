@@ -1,12 +1,13 @@
 import API from '@/api/api';
 import { useProjects } from '@/composables/project';
+import type { MMT } from '@/model-representation/mira/mira-common';
 import * as EventService from '@/services/event';
 import type { Initial, InterventionPolicy, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import { Artifact, EventType } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
 import { fileToJson } from '@/utils/file';
 import { isEmpty } from 'lodash';
-import type { MMT } from '@/model-representation/mira/mira-common';
+import { Ref } from 'vue';
 
 export async function createModel(model: Model): Promise<Model | null> {
 	delete model.id;
@@ -14,12 +15,42 @@ export async function createModel(model: Model): Promise<Model | null> {
 	return response?.data ?? null;
 }
 
+export async function createModelFromOld(oldModel: Model, newModel: Model): Promise<Model | null> {
+	delete newModel.id;
+	const response = await API.post(`/models/new-from-old`, {
+		newModel,
+		oldModel
+	});
+	return response?.data ?? null;
+}
+
+export async function createModelAndModelConfig(file: File, progress?: Ref<number>): Promise<Model | null> {
+	const formData = new FormData();
+	formData.append('file', file);
+
+	const response = await API.post(`/model-configurations/import`, formData, {
+		headers: {
+			'Content-Type': 'multipart/form-data'
+		},
+		onUploadProgress(progressEvent) {
+			if (progress) {
+				progress.value = Math.min(90, Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100)));
+			}
+		},
+		timeout: 3600000
+	});
+
+	return response?.data ?? null;
+}
+
 /**
  * Get Model from the data service
  * @return Model|null - the model, or null if none returned by API
  */
-export async function getModel(modelId: string): Promise<Model | null> {
-	const response = await API.get(`/models/${modelId}`);
+export async function getModel(modelId: string, projectId?: string): Promise<Model | null> {
+	const response = await API.get(`/models/${modelId}`, {
+		params: { 'project-id': projectId }
+	});
 	return response?.data ?? null;
 }
 
@@ -51,22 +82,14 @@ export async function getBulkModels(modelIDs: string[]) {
 }
 
 // Note: will not work with decapodes
-export async function getMMT(model: Model) {
+export async function getMMT(model: Model): Promise<MMT | null> {
 	const response = await API.post('/mira/amr-to-mmt', model);
-
-	const miraModel = response?.data?.response;
-	if (!miraModel) throw new Error(`Failed to convert model ${model.id}`);
-
-	return (response?.data?.response as MMT) ?? null;
-}
-
-/**
- * Get all models
- * @return Array<Model>|null - the list of all models, or null if none returned by API
- */
-export async function getAllModelDescriptions(): Promise<Model[] | null> {
-	const response = await API.get('/models/descriptions?page-size=500');
-	return response?.data ?? null;
+	const mmt = response?.data?.response;
+	if (!mmt) {
+		console.error(`Failed to convert model ${model.id}`);
+		return null;
+	}
+	return mmt as MMT;
 }
 
 export async function updateModel(model: Model) {
@@ -163,14 +186,8 @@ export async function getModelEquation(model: Model): Promise<string> {
 		return '';
 	}
 
-	/* TODO - Replace the GET with the POST when the backend is ready,
-	 *        see PR https://github.com/DARPA-ASKEM/sciml-service/pull/167
-	 */
-	const response = await API.get(`/transforms/model-to-latex/${model.id}`);
-	// const response = await API.post(`/transforms/model-to-latex/`, model);
-	const latex = response?.data?.latex;
-	if (!latex) return '';
-	return latex ?? '';
+	const response = await API.post(`/mira/model-to-latex`, model);
+	return response?.data?.response ?? '';
 }
 
 export const getUnitsFromModelParts = (model: Model) => {

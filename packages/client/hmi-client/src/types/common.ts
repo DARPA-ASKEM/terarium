@@ -1,16 +1,11 @@
 import {
 	AssetType,
 	ClientEventType,
-	Dataset,
-	DocumentAsset,
-	Model,
 	ModelGrounding,
 	ProgrammingLanguage,
 	ProgressState,
 	StatusUpdate
 } from '@/types/Types';
-import { DatasetSearchParams } from './Dataset';
-import { ModelSearchParams } from './Model';
 import { ProjectPages } from './Project';
 
 export interface FeatureConfig {
@@ -48,72 +43,6 @@ export interface ModelConfigTableData {
 	tableFormattedMatrix?: ModelConfigTableData[];
 }
 
-// TODO: Wherever these are used - investigate using an actual map instead, this has been avoided due to v-model not playing well with maps
-// But a solution might be found here: https://stackoverflow.com/questions/37130105/does-vue-support-reactivity-on-map-and-set-data-types/64512468#64512468
-export interface StringValueMap {
-	[key: string]: string;
-}
-
-export interface NumericValueMap {
-	[key: string]: number;
-}
-
-export interface AnyValueMap {
-	[key: string]: any;
-}
-
-export enum ViewType {
-	LIST = 'list',
-	MATRIX = 'matrix',
-	GRAPH = 'graph'
-}
-
-export enum ResourceType {
-	DOCUMENT = 'document',
-	MODEL = 'model',
-	DATASET = 'dataset',
-	ALL = 'all'
-}
-
-export type SearchParameters = {
-	[ResourceType.MODEL]?: ModelSearchParams;
-	[ResourceType.DATASET]?: DatasetSearchParams;
-};
-
-export type ResultType = Model | Dataset | DocumentAsset;
-
-export type SearchResults = {
-	results: ResultType[];
-	searchSubsystem?: string;
-	hits?: number;
-	hasMore?: boolean;
-	nextPage?: string;
-};
-
-export type FullSearchResults = {
-	allData: SearchResults;
-	allDataFilteredWithFacets: SearchResults;
-};
-
-export type SearchByExampleOptions = {
-	similarContent: boolean;
-	forwardCitation: boolean;
-	backwardCitation: boolean;
-	relatedContent: boolean;
-};
-
-//
-// Facets
-//
-export type FacetBucket = {
-	key: string;
-	value: number;
-};
-
-export type Facets = {
-	[key: string]: FacetBucket[];
-};
-
 // Side panel
 export type SidePanelTab = {
 	name: string;
@@ -134,11 +63,6 @@ export interface AssetItem extends AssetRoute {
 	assetCreatedOn?: string;
 }
 
-export type CodeRequest = {
-	asset: AssetItem;
-	code?: string;
-};
-
 // TODO this should come from the back end, and we should also have maps for the "categories" of types (artifacts, models, datasets, etc)
 export enum AcceptedTypes {
 	PDF = 'application/pdf',
@@ -155,7 +79,9 @@ export enum AcceptedTypes {
 	MDL = `application/vnd.vensim.mdl`,
 	XMILE = 'application/vnd.stella.xmile',
 	ITMX = 'application/vnd.stella.itmx',
-	STMX = 'application/vnd.stella.stmx'
+	STMX = 'application/vnd.stella.stmx',
+	MODELCONFIG = 'application/zip',
+	PROJECTCONFIG = 'application/zip'
 }
 
 export enum AcceptedExtensions {
@@ -178,7 +104,10 @@ export enum AcceptedExtensions {
 	// Stella formats
 	XMILE = 'xmile',
 	ITMX = 'itmx',
-	STMX = 'stmx'
+	STMX = 'stmx',
+	// proprietary formats
+	MODELCONFIG = 'modelconfig',
+	PROJECTCONFIG = 'project'
 }
 
 export enum AMRSchemaNames {
@@ -203,11 +132,28 @@ export enum ModelServiceType {
 }
 
 export interface CompareModelsResponseType {
-	response: string;
+	title: string;
+	summary: string;
+	semanticComparison: SemanticComparison;
+	metaComparison: MetadataComparison;
+}
+
+interface SemanticComparison {
+	states: string;
+	parameters: string;
+	transitions: string;
+	observables: string;
+}
+
+interface MetadataComparison {
+	description: string;
+	uses: string;
+	biasRisksLimitations: string;
+	observables: string;
 }
 
 export type ExtractionStatusUpdate = StatusUpdate<{ documentId: string }>;
-
+export type CloneProjectStatusUpdate = StatusUpdate<{ projectId: string }>;
 export interface NotificationItem extends NotificationItemStatus, AssetRoute {
 	notificationGroupId: string;
 	type: ClientEventType;
@@ -225,6 +171,21 @@ export interface NotificationItemStatus {
 	msg: string;
 	error: string;
 	progress?: number;
+}
+
+export enum ChartSettingType {
+	VARIABLE = 'variable',
+	VARIABLE_COMPARISON = 'variable-comparison',
+	DISTRIBUTION_COMPARISON = 'distribution-comparison',
+	ERROR_DISTRIBUTION = 'error-distribution',
+	INTERVENTION = 'intervention'
+}
+
+export interface ChartSetting {
+	id: string;
+	name: string;
+	selectedVariables: string[];
+	type: ChartSettingType;
 }
 
 export const ProgrammingLanguageVersion: { [key in ProgrammingLanguage]: string } = {

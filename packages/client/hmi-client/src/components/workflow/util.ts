@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { DataseriesConfig, RunType, ChartConfig } from '@/types/SimulateConfig';
+import { DataseriesConfig, ChartConfig } from '@/types/SimulateConfig';
 import type { CsvAsset, TimeSpan } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import type { CalibrateMap } from '@/services/calibrate-workflow';
@@ -20,9 +20,9 @@ export const drilldownChartSize = (element: HTMLElement | null) => {
 export const chartActionsProxy = (node: WorkflowNode<any>, updateStateCallback: Function) => {
 	if (!node.state.chartConfigs) throw new Error('Cannot find chartConfigs in state object');
 
-	const addChart = () => {
+	const addChart = (selectedVariables: string[] = []) => {
 		const copy = _.cloneDeep(node.state);
-		copy.chartConfigs.push([]);
+		copy.chartConfigs.push(selectedVariables);
 		updateStateCallback(copy);
 	};
 
@@ -90,17 +90,11 @@ export function getTimespan(params: GetTimespanParams): TimeSpan {
 export const getGraphDataFromDatasetCSV = (
 	dataset: CsvAsset,
 	columnVar: string,
-	mapping?: { [key: string]: string }[],
-	runType?: RunType
+	mapping?: { [key: string]: string }[]
 ): DataseriesConfig | null => {
-	// TA3 quirks, adjust variable names - FIXME
-	const selectedVariableLookup = runType === RunType.Julia ? columnVar.slice(0, -3) : columnVar;
-	// runType === RunType.Julia ? columnVar.slice(0, -3) : columnVar.slice(0, -6);
-	const timeVariableLookup = 'timestamp';
-
 	// Default
-	let selectedVariable = selectedVariableLookup;
-	let timeVariable = timeVariableLookup;
+	let selectedVariable = columnVar;
+	let timeVariable = 'timestamp';
 
 	// Map variable names to dataset column names
 	if (mapping) {

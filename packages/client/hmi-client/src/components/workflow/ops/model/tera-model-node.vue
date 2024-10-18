@@ -12,6 +12,7 @@
 				<tera-model-diagram
 					v-if="view === ModelNodeView.Diagram"
 					:model="model"
+					:key="model.id"
 					:feature-config="{ isPreview: true }"
 				/>
 				<tera-model-equation v-else-if="view === ModelNodeView.Equation" :model="model" :is-editable="false" />
@@ -33,7 +34,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { onMounted, ref, computed } from 'vue';
+import { onMounted, ref, computed, watch } from 'vue';
 import { getModel } from '@/services/model';
 import { canPropagateResource } from '@/services/workflow';
 import Dropdown from 'primevue/dropdown';
@@ -41,7 +42,7 @@ import SelectButton from 'primevue/selectbutton';
 import Button from 'primevue/button';
 import { AssetType } from '@/types/Types';
 import type { Model, ProjectAsset } from '@/types/Types';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
 import { WorkflowNode } from '@/types/workflow';
 import TeraOperatorTitle from '@/components/operator/tera-operator-title.vue';
@@ -93,6 +94,16 @@ onMounted(async () => {
 		await getModelById(state.modelId);
 	}
 });
+
+watch(
+	() => props.node.active,
+	async () => {
+		const newModelId = props.node.outputs.find((d) => d.id === props.node.active)?.value?.[0];
+		if (newModelId) {
+			model.value = await getModel(newModelId);
+		}
+	}
+);
 </script>
 
 <style scoped>

@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
@@ -23,6 +24,7 @@ import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
+@Slf4j
 public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow, WorkflowRepository> {
 
 	public WorkflowService(
@@ -95,6 +97,21 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 					node.setVersion(1L);
 				}
 				nodeMap.put(node.getId(), node);
+
+				// Debugging possible sync issue - October 2024
+				log.info("Node id=" + node.getId() + ",  status=" + node.getStatus() + ", deleted=" + node.getIsDeleted());
+				if (node.getOutputs() != null) {
+					for (final JsonNode o : node.getOutputs()) {
+						final JsonNode oValue = o.get("value").get(0);
+						if (oValue != null) {
+							log.info("  Out: " + oValue.asText());
+						} else {
+							log.info("  Out: null");
+						}
+					}
+				} else {
+					log.info("  no outputs");
+				}
 			}
 		}
 		if (asset.getEdges() != null) {
@@ -116,16 +133,11 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				final WorkflowNode<?> node = nodeMap.get(dbNode.getId());
 
 				if (node == null) continue;
-				if (node.getIsDeleted()) {
-					dbNode.setIsDeleted(true);
-					nodeMap.remove(node.getId());
-					continue;
-				}
 
 				final JsonNode nodeContent = this.objectMapper.valueToTree(node);
 				final JsonNode dbNodeContent = this.objectMapper.valueToTree(dbNode);
 
-				if (nodeContent.equals(dbNodeContent) == true) {
+				if (nodeContent.equals(dbNodeContent)) {
 					nodeMap.remove(node.getId());
 					continue;
 				}
@@ -137,7 +149,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 					continue;
 				}
 
-				if (dbNode.getVersion() == node.getVersion()) {
+				if (dbNode.getVersion().equals(node.getVersion())) {
 					node.setVersion(dbNode.getVersion() + 1L);
 					dbWorkflowNodes.set(index, node);
 				}
@@ -153,16 +165,11 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				final WorkflowEdge edge = edgeMap.get(dbEdge.getId());
 
 				if (edge == null) continue;
-				if (edge.getIsDeleted()) {
-					dbEdge.setIsDeleted(true);
-					edgeMap.remove(edge.getId());
-					continue;
-				}
 
 				final JsonNode edgeContent = this.objectMapper.valueToTree(edge);
 				final JsonNode dbEdgeContent = this.objectMapper.valueToTree(dbEdge);
 
-				if (edgeContent.equals(dbEdgeContent) == true) {
+				if (edgeContent.equals(dbEdgeContent)) {
 					edgeMap.remove(edge.getId());
 					continue;
 				}
@@ -173,7 +180,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 					dbEdge.setVersion(1L);
 				}
 
-				if (dbEdge.getVersion() == edge.getVersion()) {
+				if (dbEdge.getVersion().equals(edge.getVersion())) {
 					edge.setVersion(dbEdge.getVersion() + 1L);
 					dbWorkflowEdges.set(index, edge);
 				}

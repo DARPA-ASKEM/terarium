@@ -11,24 +11,6 @@ import { RunResults } from '@/types/SimulateConfig';
 import { cloneDeep } from 'lodash';
 
 /**
- * Get all datasets
- * @return Array<Dataset>|null - the list of all datasets, or null if none returned by API
- */
-async function getAll(): Promise<Dataset[] | null> {
-	const response = await API.get('/datasets').catch((error) => {
-		logger.error(`Error: ${error}`);
-	});
-	return response?.data ?? null;
-}
-
-async function searchClimateDatasets(query: string): Promise<Dataset[] | null> {
-	const response = await API.get(`/climatedata/queries/search-esgf?query=${query}`).catch((error) => {
-		logger.error(`Error: ${error}`);
-	});
-	return response?.data ?? null;
-}
-
-/**
  * Get Dataset from the data service
  * @return Dataset|null - the dataset, or null if none returned by API
  */
@@ -366,8 +348,6 @@ const getCsvColumnStats = (csvColumn: number[]): CsvColumnStats => {
 };
 
 export {
-	getAll,
-	searchClimateDatasets,
 	getDataset,
 	getClimateDataset,
 	getClimateSubsetId,

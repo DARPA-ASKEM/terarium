@@ -1,10 +1,11 @@
 import { InterventionPolicy } from '@/types/Types';
+import type { BaseState, Operation } from '@/types/workflow';
 import { WorkflowOperationTypes } from '@/types/workflow';
-import type { Operation, BaseState } from '@/types/workflow';
 import { isEqual, omit } from 'lodash';
 
 export interface InterventionPolicyState extends BaseState {
 	interventionPolicy: InterventionPolicy;
+	taskIds: string[];
 }
 
 export const InterventionPolicyOperation: Operation = {
@@ -12,7 +13,10 @@ export const InterventionPolicyOperation: Operation = {
 	description: 'Create intervention policy',
 	displayName: 'Create intervention policy',
 	isRunnable: true,
-	inputs: [{ type: 'modelId', label: 'Model' }],
+	inputs: [
+		{ type: 'modelId', label: 'Model' },
+		{ type: 'documentId', label: 'Document', isOptional: true }
+	],
 	outputs: [{ type: 'policyInterventionId', label: 'Intervention Policy' }],
 	action: () => {},
 
@@ -21,7 +25,8 @@ export const InterventionPolicyOperation: Operation = {
 			interventionPolicy: {
 				modelId: '',
 				interventions: []
-			}
+			},
+			taskIds: []
 		};
 		return init;
 	}
@@ -45,8 +50,6 @@ export const isInterventionPoliciesValuesEqual = (
 	if (originalPolicy.interventions.length !== newPolicy.interventions.length) return false;
 
 	const notEqual = originalPolicy.interventions.some((intervention, index) => {
-		if (intervention.appliedTo !== newPolicy.interventions[index].appliedTo) return true;
-		if (intervention.type !== newPolicy.interventions[index].type) return true;
 		if (!isEqual(intervention.staticInterventions, newPolicy.interventions[index].staticInterventions)) return true;
 		if (!isEqual(intervention.dynamicInterventions, newPolicy.interventions[index].dynamicInterventions)) return true;
 		return false;

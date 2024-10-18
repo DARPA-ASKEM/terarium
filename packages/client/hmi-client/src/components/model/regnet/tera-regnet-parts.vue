@@ -12,42 +12,6 @@
 				<Column field="name" header="Name" />
 				<Column field="rate_constant" header="Rate Constant" />
 				<Column field="initial" header="Initial Value" />
-				<Column field="grounding.identifiers" header="Concept">
-					<template #body="{ data }">
-						<template v-if="data?.grounding?.identifiers && !isEmpty(data.grounding.identifiers)">
-							<!--FIXME: Determine concept script-->
-							{{ getNameOfCurieCached(getCurieFromGroundingIdentifier(data.grounding.identifiers)) }}
-
-							<a
-								target="_blank"
-								rel="noopener noreferrer"
-								:href="getCurieUrl(getCurieFromGroundingIdentifier(data.grounding.identifiers))"
-								@click.stop
-								aria-label="Open Concept"
-							>
-								<i class="pi pi-external-link" />
-							</a>
-						</template>
-						<template v-else>--</template>
-					</template>
-					<template #editor="{ data }">
-						<AutoComplete
-							v-if="!featureConfig.isPreview"
-							v-model="conceptSearchTerm"
-							:suggestions="curies"
-							@complete="onSearch"
-							@item-select="
-								updateVertex(data.id, 'grounding', {
-									...data.grounding,
-									identifiers: parseCurie($event.value?.curie)
-								})
-							"
-							optionLabel="name"
-							:forceSelection="true"
-							:inputStyle="{ width: '100%' }"
-						/>
-					</template>
-				</Column>
 			</DataTable>
 		</AccordionTab>
 		<AccordionTab header="Edges">
@@ -72,21 +36,13 @@
 </template>
 
 <script setup lang="ts">
-import type { DKG, Model } from '@/types/Types';
-import { cloneDeep, isEmpty } from 'lodash';
+import type { Model } from '@/types/Types';
+import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { computed, ref } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
-import {
-	searchCuriesEntities,
-	getNameOfCurieCached,
-	getCurieFromGroundingIdentifier,
-	getCurieUrl,
-	parseCurie
-} from '@/services/concept';
 import type { MiraModel, MiraTemplateParams, ObservableSummary } from '@/model-representation/mira/mira-common';
 import TeraParameters from '@/components/model/model-parts/tera-parameters.vue';
 import type { FeatureConfig } from '@/types/common';
@@ -99,26 +55,11 @@ const props = defineProps<{
 	featureConfig: FeatureConfig;
 }>();
 
-const emit = defineEmits(['update-model', 'update-parameter']);
+const emit = defineEmits(['update-parameter']);
 
 const vertices = computed(() => props.model?.model?.vertices ?? []);
 const edges = computed(() => props.model.model?.edges ?? []);
-const curies = ref<DKG[]>([]);
 const conceptSearchTerm = ref('');
-
-function updateVertex(id: string, key: string, value: any) {
-	const model = cloneDeep(props.model);
-	model.model.vertices.find((v) => v.id === id)[key] = value;
-	emit('update-model', model);
-}
-
-async function onSearch(event: AutoCompleteCompleteEvent) {
-	const query = event.query;
-	if (query.length > 2) {
-		const response = await searchCuriesEntities(query);
-		curies.value = response;
-	}
-}
 
 function onCellEditComplete() {
 	conceptSearchTerm.value = '';

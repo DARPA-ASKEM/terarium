@@ -1,8 +1,5 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch.core.search.SourceConfig;
-import co.elastic.clients.elasticsearch.core.search.SourceFilter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,8 +8,6 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.transaction.Transactional;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,6 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -36,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -43,6 +40,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescr
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Annotations;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceQueryParam;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.models.simulationservice.interventions.InterventionPolicy;
@@ -67,65 +65,19 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @RequiredArgsConstructor
 public class ModelController {
 
-	final ModelService modelService;
-
-	final DocumentAssetService documentAssetService;
-
-	final ProvenanceSearchService provenanceSearchService;
-
-	final ObjectMapper objectMapper;
-
-	final DatasetService datasetService;
-
-	final ProjectService projectService;
-
 	final CurrentUserService currentUserService;
-
-	final ProjectAssetService projectAssetService;
-
-	final ModelConfigurationService modelConfigurationService;
-
-	final Messages messages;
-
-	final ModelConfigRepository modelConfigRepository;
-
-	final InterventionRepository interventionRepository;
-
+	final DatasetService datasetService;
+	final DocumentAssetService documentAssetService;
 	final EmbeddingService embeddingService;
-
-	@GetMapping("/descriptions")
-	@Secured(Roles.USER)
-	@Operation(summary = "Gets all model descriptions")
-	@ApiResponses(
-		value = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "Model descriptions found.",
-				content = @Content(
-					array = @ArraySchema(
-						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelDescription.class)
-					)
-				)
-			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue retrieving descriptions from the data store",
-				content = @Content
-			)
-		}
-	)
-	public ResponseEntity<List<ModelDescription>> listModels(
-		@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
-		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
-	) {
-		try {
-			return ResponseEntity.ok(modelService.getDescriptions(page, pageSize));
-		} catch (final IOException e) {
-			final String error = "Unable to get model";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
-		}
-	}
+	final InterventionRepository interventionRepository;
+	final Messages messages;
+	final ModelConfigRepository modelConfigRepository;
+	final ModelConfigurationService modelConfigurationService;
+	final ModelService modelService;
+	final ObjectMapper objectMapper;
+	final ProjectAssetService projectAssetService;
+	final ProjectService projectService;
+	final ProvenanceSearchService provenanceSearchService;
 
 	@GetMapping("/{id}/descriptions")
 	@Secured(Roles.USER)
@@ -263,7 +215,7 @@ public class ModelController {
 				}
 			}
 			// Force proper annotation metadata
-			ModelMetadata metadata = model.get().getMetadata();
+			final ModelMetadata metadata = model.get().getMetadata();
 			if (metadata.getAnnotations() == null) {
 				metadata.setAnnotations(new Annotations());
 				model.get().setMetadata(metadata);
@@ -371,65 +323,6 @@ public class ModelController {
 			return ResponseEntity.ok(model.get());
 		} catch (final Exception e) {
 			final String error = "Unable to get model";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
-		}
-	}
-
-	@GetMapping("/search")
-	@Secured(Roles.USER)
-	@Operation(summary = "Search models with a query")
-	@ApiResponses(
-		value = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "Models found.",
-				content = @Content(
-					array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class))
-				)
-			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue retrieving models from the data store",
-				content = @Content
-			)
-		}
-	)
-	public ResponseEntity<List<Model>> searchModels(
-		@RequestBody final JsonNode queryJson,
-		@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
-		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
-	) {
-		try {
-			Query query = null;
-			if (queryJson != null) {
-				// if query is provided deserialize it, append the soft delete filter
-				final byte[] bytes = objectMapper.writeValueAsString(queryJson).getBytes();
-				query = new Query.Builder()
-					.bool(b ->
-						b
-							.must(new Query.Builder().withJson(new ByteArrayInputStream(bytes)).build())
-							.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
-							.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))
-					)
-					.build();
-			} else {
-				query = new Query.Builder()
-					.bool(b ->
-						b
-							.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
-							.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))
-					)
-					.build();
-			}
-
-			final SourceConfig source = new SourceConfig.Builder()
-				.filter(new SourceFilter.Builder().excludes("model", "semantics").build())
-				.build();
-
-			return ResponseEntity.ok(modelService.searchAssets(page, pageSize, query, source));
-		} catch (final IOException e) {
-			final String error = "Unable to search models";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
@@ -562,6 +455,85 @@ public class ModelController {
 				null
 			);
 			modelConfigurationService.createAsset(modelConfiguration, projectId, permission);
+
+			// add default model configuration to project
+			final Optional<Project> project = projectService.getProject(projectId);
+			if (project.isPresent()) {
+				projectAssetService.createProjectAsset(
+					project.get(),
+					AssetType.MODEL_CONFIGURATION,
+					modelConfiguration,
+					permission
+				);
+			}
+
+			return ResponseEntity.status(HttpStatus.CREATED).body(created);
+		} catch (final IOException e) {
+			final String error = "Unable to create model";
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+		}
+	}
+
+	@Data
+	public static class CreateModelFromOldRequest {
+
+		Model oldModel;
+		Model newModel;
+	}
+
+	@PostMapping("/new-from-old")
+	@Secured(Roles.USER)
+	@Operation(summary = "Create a new model from an old model")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "201",
+				description = "Model created.",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class)
+				)
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue creating the model", content = @Content)
+		}
+	)
+	ResponseEntity<Model> createModelFromOld(
+		@RequestBody final CreateModelFromOldRequest req,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(
+			currentUserService.get().getId(),
+			projectId
+		);
+
+		try {
+			req.newModel.retainMetadataFields(req.oldModel);
+
+			// Set the model name from the AMR header name.
+			// TerariumAsset have a name field, but it's not used for the model name outside
+			// the front-end.
+			req.newModel.setName(req.newModel.getHeader().getName());
+			final Model created = modelService.createAsset(req.newModel, projectId, permission);
+
+			// create default configuration
+			final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
+				created,
+				null,
+				null
+			);
+			modelConfigurationService.createAsset(modelConfiguration, projectId, permission);
+
+			// add default model configuration to project
+			final Optional<Project> project = projectService.getProject(projectId);
+			if (project.isPresent()) {
+				projectAssetService.createProjectAsset(
+					project.get(),
+					AssetType.MODEL_CONFIGURATION,
+					modelConfiguration,
+					permission
+				);
+			}
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(created);
 		} catch (final IOException e) {

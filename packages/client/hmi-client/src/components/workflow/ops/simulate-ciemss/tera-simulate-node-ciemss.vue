@@ -1,12 +1,17 @@
 <template>
 	<main>
 		<template v-if="selectedRunId && runResults[selectedRunId]">
-			<vega-chart
-				v-for="(_config, index) of props.node.state.chartConfigs"
-				:key="index"
-				:are-embed-actions-visible="false"
-				:visualization-spec="preparedCharts[index]"
-			/>
+			<section v-for="(_config, index) of props.node.state.chartConfigs" :key="index">
+				<vega-chart
+					v-if="preparedCharts[index].layer.length > 0"
+					:visualization-spec="preparedCharts[index]"
+					:are-embed-actions-visible="false"
+				/>
+				<div v-else class="empty-chart">
+					<img src="@assets/svg/seed.svg" alt="" draggable="false" class="empty-image" />
+					<p class="helpMessage">No variables selected</p>
+				</div>
+			</section>
 		</template>
 		<tera-progress-spinner v-if="inProgressForecastId" :font-size="2" is-centered style="height: 100%" />
 		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
@@ -35,10 +40,11 @@ import { chartActionsProxy, nodeOutputLabel } from '@/components/workflow/util';
 import type { WorkflowNode } from '@/types/workflow';
 import { createLLMSummary } from '@/services/summary-service';
 import { useProjects } from '@/composables/project';
-import { createForecastChart } from '@/services/charts';
+import { createForecastChart, createInterventionChartMarkers } from '@/services/charts';
 import { createDatasetFromSimulationResult } from '@/services/dataset';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import type { Model } from '@/types/Types';
+import type { InterventionPolicy, Model } from '@/types/Types';
+import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
 
 const props = defineProps<{
@@ -55,6 +61,8 @@ const runResultsSummary = ref<{ [runId: string]: DataArray }>({});
 const selectedRunId = ref<string>();
 const inProgressForecastId = computed(() => props.node.state.inProgressForecastId);
 const areInputsFilled = computed(() => props.node.inputs[0].value);
+const interventionPolicyId = computed(() => props.node.inputs[1].value?.[0]);
+const interventionPolicy = ref<InterventionPolicy | null>(null);
 
 let pyciemssMap: Record<string, string> = {};
 
@@ -101,7 +109,11 @@ const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperation
 
 const processResult = async (runId: string) => {
 	const state = _.cloneDeep(props.node.state);
-	if (state.chartConfigs.length === 0) {
+	if (interventionPolicyId.value && _.isEmpty(state.chartConfigs)) {
+		_.keys(groupedInterventionOutputs.value).forEach((key) => {
+			chartProxy.addChart([key]);
+		});
+	} else if (_.isEmpty(state.chartConfigs)) {
 		chartProxy.addChart();
 	}
 
@@ -116,6 +128,8 @@ The input parameters are as follows:
 - samples: ${state.numSamples}
 - method: ${state.method}
 - timespan: ${JSON.stringify(state.currentTimespan)}
+- interventions: ${JSON.stringify(interventionPolicy.value?.interventions)};
+
 
 The output has these metrics at the start:
 - ${JSON.stringify(start)}
@@ -149,10 +163,12 @@ Provide a summary in 100 words or less.
 		isSelected: false
 	});
 };
+const groupedInterventionOutputs = computed(() =>
+	_.groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
+);
 
 const preparedCharts = computed(() => {
 	if (!selectedRunId.value) return [];
-
 	const result = runResults.value[selectedRunId.value];
 	const resultSummary = runResultsSummary.value[selectedRunId.value];
 	const reverseMap: Record<string, string> = {};
@@ -160,8 +176,8 @@ const preparedCharts = computed(() => {
 		reverseMap[`${pyciemssMap[key]}_mean`] = key;
 	});
 
-	return props.node.state.chartConfigs.map((config) =>
-		createForecastChart(
+	return props.node.state.chartConfigs.map((config) => {
+		const chart = createForecastChart(
 			{
 				data: result,
 				variables: config.map((d) => pyciemssMap[d]),
@@ -184,8 +200,16 @@ const preparedCharts = computed(() => {
 				xAxisTitle: modelVarUnits.value._time || 'Time',
 				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
 			}
-		)
-	);
+		);
+		if (interventionPolicy.value) {
+			_.keys(groupedInterventionOutputs.value).forEach((key) => {
+				if (config.includes(key)) {
+					chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
+				}
+			});
+		}
+		return chart;
+	});
 });
 
 watch(
@@ -237,6 +261,41 @@ watch(
 	},
 	{ immediate: true }
 );
+
+watch(
+	() => interventionPolicyId.value,
+	() => {
+		if (interventionPolicyId.value) {
+			getInterventionPolicyById(interventionPolicyId.value).then((policy) => {
+				interventionPolicy.value = policy;
+			});
+		}
+	},
+	{ immediate: true }
+);
 </script>
 
-<style scoped></style>
+<style scoped>
+:deep(.vega-chart-container) {
+	margin-bottom: 0;
+}
+
+.empty-chart {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	height: 9rem;
+	gap: var(--gap);
+	background: var(--surface-50);
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	margin-bottom: var(--gap);
+	color: var(--text-color-secondary);
+	font-size: var(--font-caption);
+}
+.empty-image {
+	width: 5rem;
+	height: 5rem;
+}
+</style>

@@ -14,6 +14,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.InferredParameterSemantic;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.InitialSemantic;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ObservableSemantic;
@@ -125,6 +126,12 @@ public class ModelConfigurationService
 				semantic.setModelConfiguration(modelConfiguration);
 			}
 		}
+
+		if (modelConfiguration.getInferredParameterList() != null) {
+			for (final InferredParameterSemantic semantic : modelConfiguration.getInferredParameterList()) {
+				semantic.setModelConfiguration(modelConfiguration);
+			}
+		}
 	}
 
 	private static List<InitialSemantic> createInitialSemanticList(final Model model) {
@@ -177,7 +184,7 @@ public class ModelConfigurationService
 
 	private static ModelDistribution getModelDistribution(final ModelParameter parameter) {
 		ModelDistribution distribution = parameter.getDistribution();
-		// constant distribution
+		// Fill with constant distribution if it's missing
 		if (distribution == null || distribution.getType() == null) {
 			distribution = new ModelDistribution();
 			distribution.setType("Constant");
@@ -185,11 +192,17 @@ public class ModelConfigurationService
 		}
 
 		// NOTE: there isn't any difference between Uniform1 and StandardUniform1, so we
-		// are changing it to
-		// StandardUniform1 for consistenty sake
+		// are changing it to StandardUniform1 for consistenty sake
 		if (distribution.getType().equals("Uniform1")) {
 			distribution.setType("StandardUniform1");
 		}
+
+		// If minimum equals maximum force it to be a constant distribution (this is needed when converting funman model parameters into configuration parameters)
+		if (distribution.isMinimumEqualToMaximum()) {
+			distribution.setType("Constant");
+			distribution.setParameters(Map.of("value", distribution.getParameters().get("minimum")));
+		}
+
 		return distribution;
 	}
 

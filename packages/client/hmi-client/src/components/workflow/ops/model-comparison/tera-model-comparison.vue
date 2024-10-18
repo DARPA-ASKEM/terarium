@@ -11,9 +11,10 @@
 					<Accordion :activeIndex="0">
 						<AccordionTab header="Overview">
 							<p v-if="isEmpty(overview)" class="subdued">
+								<i class="pi pi-spin pi-spinner mr-1" />
 								Analyzing models metadata to generate a detailed comparison analysis...
 							</p>
-							<p v-html="overview" v-else />
+							<p v-html="overview" v-else class="markdown-text" />
 						</AccordionTab>
 					</Accordion>
 				</section>
@@ -38,16 +39,27 @@
 							<tr v-for="field in fields" :key="field">
 								<td class="field">{{ formatField(field) }}</td>
 								<td v-for="(card, index) in modelCardsToCompare" :key="index">
-									<template v-if="!card?.[field]"> Not found </template>
+									<template v-if="!card?.[field]"> N/A </template>
+									<template v-else-if="Array.isArray(card[field])">
+										<ul class="bullet-list">
+											<li class="bullet-list-item" v-for="(item, k) in card[field]" :key="k">{{ item }}</li>
+										</ul>
+									</template>
 									<template v-else-if="typeof card[field] === 'object'">
-										<template v-for="(value, j) in Object.values(card[field])">
-											<template v-if="Array.isArray(value)">
-												{{ value.join(', ') }}
+										<template v-for="(entry, j) in Object.entries(card[field])" :key="j">
+											<div class="label">{{ formatField(entry[0]) }}:</div>
+											<template v-if="Array.isArray(entry[1])">
+												<ul class="bullet-list">
+													<li class="bullet-list-item" v-for="(item, k) in entry[1]" :key="k">{{ item }}</li>
+												</ul>
 											</template>
-											<div class="value" v-else :key="j">{{ value }}</div>
+											<div class="value" v-else>{{ entry[1] }}</div>
+											<template v-if="j < Object.entries(card[field]).length - 1">
+												<br />
+											</template>
 										</template>
 									</template>
-									<template v-else-if="Array.isArray(card[field])">{{ card[field].join(', ') }}</template>
+									<template v-else>{{ card[field] }}</template>
 								</td>
 							</tr>
 						</tbody>
@@ -73,7 +85,6 @@
 							<Button icon="pi pi-play" label="Run" size="small" @click="runCode" />
 						</template>
 					</tera-notebook-jupyter-input>
-					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
 				</div>
 				<v-ace-editor
 					v-model:value="code"
@@ -93,7 +104,7 @@
 				/>
 				<ul>
 					<li v-for="(image, index) in structuralComparisons" :key="index">
-						<label>Comparison {{ index + 1 }}</label>
+						<label>Comparison {{ index + 1 }}: {{ getTitle(index) }}</label>
 						<Image id="img" :src="image" :alt="`Structural comparison ${index + 1}`" preview />
 					</li>
 				</ul>
@@ -125,7 +136,7 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty, cloneDeep } from 'lodash';
+import { cloneDeep, isEmpty } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import markdownit from 'markdown-it';
 import Accordion from 'primevue/accordion';
@@ -133,11 +144,11 @@ import AccordionTab from 'primevue/accordiontab';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
 import { compareModels } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
 import { getModel } from '@/services/model';
-import { ClientEvent, ClientEventType, TaskResponse, TaskStatus, type Model } from '@/types/Types';
+import { ClientEvent, ClientEventType, type Model, TaskResponse, TaskStatus } from '@/types/Types';
 import { OperatorStatus, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
@@ -148,10 +159,9 @@ import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import Image from 'primevue/image';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
 import { saveCodeToState } from '@/services/notebook';
-import { getImages, addImage, deleteImages } from '@/services/image';
+import { addImage, deleteImages, getImages } from '@/services/image';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import { b64DecodeUnicode } from '@/utils/binary';
 import { useClientEvent } from '@/composables/useClientEvent';
@@ -176,7 +186,6 @@ const sampleAgentQuestions = [
 	'Compare the two models and visualize and display them.'
 ];
 let compareModelsTaskId = '';
-let compareModelsTaskOutput = '';
 
 const modelsToCompare = ref<Model[]>([]);
 const modelCardsToCompare = ref<any[]>([]);
@@ -189,6 +198,7 @@ const code = ref(props.node.state.notebookHistory?.[0]?.code ?? '');
 const llmThoughts = ref<any[]>([]);
 const isKernelReady = ref(false);
 const contextLanguage = ref<string>('python3');
+const comparisonPairs = ref(props.node.state.comparisonPairs);
 
 const initializeAceEditor = (editorInstance: any) => {
 	editor = editorInstance;
@@ -209,6 +219,18 @@ function updateImagesState(operationType: string, newImageId: string | null = nu
 	emit('update-state', state);
 }
 
+function updateComparisonTitlesState(operationType: string, pairs: string[][] | null = null) {
+	const state = cloneDeep(props.node.state);
+	if (operationType === 'add' && pairs !== null) state.comparisonPairs = pairs;
+	else if (operationType === 'clear') state.comparisonPairs = [];
+	emit('update-state', state);
+}
+
+function getTitle(index: number) {
+	if (!comparisonPairs.value[index]) return '';
+	return `${comparisonPairs.value[index][0].replaceAll('_', ' ')} VS ${comparisonPairs.value[index][1].replaceAll('_', ' ')}`;
+}
+
 function updateCodeState() {
 	const state = saveCodeToState(props.node, code.value, true);
 	emit('update-state', state);
@@ -217,6 +239,7 @@ function updateCodeState() {
 function emptyImages() {
 	deleteImages(props.node.state.comparisonImageIds); // Delete images from S3
 	updateImagesState('clear'); // Then their ids can be removed from the state
+	updateComparisonTitlesState('clear');
 	structuralComparisons.value = [];
 }
 
@@ -238,6 +261,17 @@ function runCode() {
 	isLoadingStructuralComparisons.value = true;
 	emptyImages();
 	updateCodeState();
+
+	kernelManager.sendMessage('get_comparison_pairs_request', {}).register('any_get_comparison_pairs_reply', (data) => {
+		const pairs = data.msg.content?.return?.comparison_pairs;
+		const state = cloneDeep(props.node.state);
+		if (pairs.length) {
+			updateComparisonTitlesState('add', pairs);
+			comparisonPairs.value = pairs;
+		} else if (state.comparisonPairs.length) {
+			comparisonPairs.value = state.comparisonPairs;
+		}
+	});
 
 	kernelManager
 		.sendMessage('execute_request', messageContent)
@@ -289,30 +323,67 @@ async function buildJupyterContext() {
 	}
 }
 
+function hasNonEmptyValue(obj) {
+	return Object.values(obj).some((value) => !isEmpty(value));
+}
+
+// Generate once the comparison task has been completed
+function generateOverview(output: string) {
+	const comparison = JSON.parse(b64DecodeUnicode(output)).response;
+	let markdown = '';
+	const mdi = markdownit();
+	markdown += mdi.render(
+		`# ${comparison.title}
+## Summary
+${comparison.summary}
+## Structural Comparisons
+### States:
+${comparison.semanticComparison.states}
+### Transitions:
+${comparison.semanticComparison.transitions}
+### Parameters:
+${comparison.semanticComparison.parameters}
+### Observables:
+${comparison.semanticComparison.observables}`
+	);
+
+	if (hasNonEmptyValue(comparison.metadataComparison)) {
+		markdown += mdi.render(
+			`## Metadata Comparisons
+### Details:
+${comparison.metadataComparison.description}
+### Uses:
+${comparison.metadataComparison.uses}
+### Bias, Risks, and Limitations:
+${comparison.metadataComparison.biasRisksLimitations}
+### Testing and Validation:
+${comparison.metadataComparison.testing}`
+		);
+	}
+	overview.value = markdown;
+	emit('update-status', OperatorStatus.DEFAULT); // This is a custom way of granting a default status to the operator, since it has no output
+}
+
+// Create a task to compare the models
 async function processCompareModels(modelIds: string[]) {
 	const taskRes = await compareModels(modelIds, props.node.workflowId, props.node.id);
 	compareModelsTaskId = taskRes.id;
 	if (taskRes.status === TaskStatus.Success) {
-		compareModelsTaskOutput = taskRes.output;
+		generateOverview(taskRes.output);
 	}
 }
 
-function assignOverview(b64overview: string) {
-	overview.value = markdownit().render(JSON.parse(b64DecodeUnicode(b64overview)).response);
-}
-
-async function generateOverview() {
-	// Generate once the comparison task has been completed
-	if (!compareModelsTaskOutput) return;
-	assignOverview(compareModelsTaskOutput);
-	emit('update-status', OperatorStatus.DEFAULT); // This is a custom way of granting a default status to the operator, since it has no output
-}
-
+// Listen for the task completion event
 useClientEvent(ClientEventType.TaskGollmCompareModel, (event: ClientEvent<TaskResponse>) => {
-	if (!event.data || event.data.id !== compareModelsTaskId) return;
-	if (event.data.status !== TaskStatus.Success) return;
-	compareModelsTaskOutput = event.data.output;
-	generateOverview();
+	if (
+		!event.data ||
+		event.data.id !== compareModelsTaskId ||
+		!isEmpty(overview.value) ||
+		event.data.status !== TaskStatus.Success
+	) {
+		return;
+	}
+	generateOverview(event.data.output);
 });
 
 onMounted(async () => {
@@ -332,8 +403,8 @@ onMounted(async () => {
 	modelCardsToCompare.value = modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard);
 	fields.value = [...new Set(modelCardsToCompare.value.flatMap((card) => (card ? Object.keys(card) : [])))];
 
-	buildJupyterContext();
-	processCompareModels(modelIds);
+	await buildJupyterContext();
+	await processCompareModels(modelIds);
 });
 
 onUnmounted(() => {
@@ -405,12 +476,10 @@ ul {
 }
 
 /* TODO: Improve this pattern later same in (tera-model-input) */
+
 .notebook-section:deep(main) {
 	gap: var(--gap-small);
 	position: relative;
-}
-.toolbar {
-	padding-left: var(--gap-medium);
 }
 
 .toolbar-right-side {
@@ -485,5 +554,19 @@ ul {
 }
 .legend-line.green::before {
 	background-color: lightgreen;
+}
+
+.label {
+	font-weight: var(--font-weight-semibold);
+}
+
+.bullet-list {
+	display: block !important;
+	list-style: disc outside;
+	margin-left: var(--gap-4);
+	padding-left: var(--gap-4);
+}
+.bullet-list-item {
+	display: list-item !important;
 }
 </style>

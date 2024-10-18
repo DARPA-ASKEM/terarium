@@ -3,21 +3,37 @@ import type { FunmanInterval, TimeSpan } from '@/types/Types';
 
 const DOCUMENTATION_URL = 'https://github.com/siftech/funman';
 
+export enum Constraint {
+	State = 'state variable(s)',
+	Parameter = 'parameter(s)',
+	Observable = 'observable(s)'
+}
+
+export enum ConstraintType {
+	LessThan = 'less than',
+	LessThanOrEqualTo = 'less than or equal to',
+	GreaterThan = 'greater than',
+	GreaterThanOrEqualTo = 'greater than or equal to',
+	Increasing = 'increasing',
+	Decreasing = 'decreasing',
+	LinearlyConstrained = 'linearly constrained',
+	Following = 'following'
+}
+
 export interface ConstraintGroup {
-	borderColour: string;
 	name: string;
+	isActive: boolean;
+	constraint: Constraint;
+	constraintType: ConstraintType;
+	variables: string[];
+	weights: number[]; // 1 to 1 mapping with variables
+	timepoints: FunmanInterval;
+	interval: FunmanInterval;
+}
 
-	// One of
-	// - monotonicityConstraint
-	// - stateConstraint
-	constraintType: string;
-
-	variables: string[]; // If len = 1, need to rename to "variable" for request formatting
-	weights?: number[]; // 1 to 1 mapping with variables
-	timepoints?: FunmanInterval;
-	interval?: FunmanInterval;
-
-	derivativeType?: string;
+export interface CompartmentalConstraint {
+	name: string;
+	isActive: boolean;
 }
 
 export interface RequestParameter {
@@ -31,10 +47,10 @@ export interface FunmanOperationState extends BaseState {
 	numSteps: number;
 	tolerance: number;
 	inProgressId: string;
-	useCompartmentalConstraint: boolean;
+	runId: string;
+	compartmentalConstraint: CompartmentalConstraint;
 	constraintGroups: ConstraintGroup[];
 	requestParameters: RequestParameter[];
-
 	// selected state in ouptut
 	trajectoryState?: string;
 }
@@ -44,8 +60,11 @@ export const FunmanOperation: Operation = {
 	displayName: 'Validate configuration',
 	description: 'Validate configuration',
 	documentationUrl: DOCUMENTATION_URL,
-	inputs: [{ type: 'modelConfigId', label: 'Model configuration' }],
-	outputs: [{ type: 'funmanQueryId' }],
+	inputs: [
+		{ type: 'modelConfigId', label: 'Model configuration' },
+		{ type: 'datasetId', label: 'Dataset', isOptional: true }
+	],
+	outputs: [{ type: 'modelConfigId', label: 'Model configuration' }],
 	isRunnable: true,
 	action: () => {},
 	initState: () => {
@@ -53,10 +72,11 @@ export const FunmanOperation: Operation = {
 			currentTimespan: { start: 0, end: 100 },
 			numSteps: 10,
 			tolerance: 0.2,
+			compartmentalConstraint: { name: 'Compartmental constraint', isActive: true },
 			constraintGroups: [],
 			requestParameters: [],
-			useCompartmentalConstraint: true,
-			inProgressId: ''
+			inProgressId: '',
+			runId: ''
 		};
 		return init;
 	}

@@ -21,11 +21,6 @@ export interface SemanticOtherValues {
 	default?: boolean;
 }
 
-export const getAllModelConfigurations = async (): Promise<ModelConfiguration[]> => {
-	const response = await API.get(`/model-configurations`);
-	return response?.data ?? null;
-};
-
 export const getModelConfigurationById = async (id: string): Promise<ModelConfiguration> => {
 	const response = await API.get(`/model-configurations/${id}`);
 	return response?.data ?? null;
@@ -53,6 +48,14 @@ export const deleteModelConfiguration = async (id: string) => {
 export const getAsConfiguredModel = async (modelConfiguration: ModelConfiguration): Promise<Model> => {
 	const response = await API.get<Model>(`model-configurations/as-configured-model/${modelConfiguration.id}`);
 	return response?.data ?? null;
+};
+
+export const getArchive = async (modelConfiguration: ModelConfiguration): Promise<any> => {
+	const response = await API.get(`model-configurations/download/${modelConfiguration.id}`, {
+		responseType: 'arraybuffer'
+	});
+	const blob = new Blob([response?.data], { type: 'application/octet-stream' });
+	return blob ?? null;
 };
 
 export const postAsConfiguredModel = async (model: Model): Promise<ModelConfiguration> => {

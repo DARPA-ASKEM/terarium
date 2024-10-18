@@ -46,6 +46,7 @@ import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.tasks.AMRToMMTResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.GenerateModelLatexResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.MdlToStockflowResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.SbmlToPetrinetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.StellaToStockflowResponseHandler;
@@ -129,7 +130,7 @@ public class MiraController {
 		req.setType(TaskType.MIRA);
 
 		try {
-			req.setInput(objectMapper.treeToValue(model, Model.class).serializeWithoutTerariumFields().getBytes());
+			req.setInput(objectMapper.treeToValue(model, Model.class).serializeWithoutTerariumFields(null, null).getBytes());
 		} catch (final Exception e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
@@ -165,6 +166,66 @@ public class MiraController {
 		}
 
 		return ResponseEntity.ok().body(mmtInfo);
+	}
+
+	@PostMapping("/model-to-latex")
+	@Secured(Roles.USER)
+	@Operation(summary = "Generate latex from a model")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Dispatched successfully",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class)
+				)
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+		}
+	)
+	public ResponseEntity<JsonNode> generateModelLatex(@RequestBody final JsonNode model) {
+		//create request:
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.MIRA);
+
+		try {
+			req.setInput(objectMapper.treeToValue(model, Model.class).serializeWithoutTerariumFields(null, null).getBytes());
+		} catch (final Exception e) {
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+		}
+
+		req.setScript(GenerateModelLatexResponseHandler.NAME);
+		req.setUserId(currentUserService.get().getId());
+
+		// send the request
+		final TaskResponse resp;
+		try {
+			resp = taskService.runTaskSync(req);
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.json-processing"));
+		} catch (final TimeoutException e) {
+			log.warn("Timeout while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.mira.timeout"));
+		} catch (final InterruptedException e) {
+			log.warn("Interrupted while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.mira.interrupted"));
+		} catch (final ExecutionException e) {
+			log.error("Error while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.execution-failure"));
+		}
+
+		final JsonNode latexResponse;
+		try {
+			latexResponse = objectMapper.readValue(resp.getOutput(), JsonNode.class);
+		} catch (final IOException e) {
+			log.error("Unable to deserialize output", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
+		}
+
+		return ResponseEntity.ok().body(latexResponse);
 	}
 
 	@PostMapping("/convert-and-create-model")
@@ -391,6 +452,8 @@ public class MiraController {
 			);
 			return new ResponseStatusException(statusCode, messages.get("mira.internal-error"));
 		}
+
+		final HttpStatus httpStatus = (statusCode == null) ? HttpStatus.INTERNAL_SERVER_ERROR : statusCode;
 		log.error(
 			String.format(
 				"An unknown error occurred while MIRA was trying to determine %s based on %s: %s",
@@ -399,6 +462,6 @@ public class MiraController {
 				input
 			)
 		);
-		return new ResponseStatusException(statusCode, messages.get("generic.unknown"));
+		return new ResponseStatusException(httpStatus, messages.get("generic.unknown"));
 	}
 }

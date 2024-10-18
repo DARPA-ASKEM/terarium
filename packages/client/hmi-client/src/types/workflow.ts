@@ -10,7 +10,6 @@ export const WorkflowOperationTypes = Object.freeze({
 	CALIBRATE_ENSEMBLE_CIEMSS: 'CalibrateEnsembleCiemms',
 	DATASET_TRANSFORMER: 'DatasetTransformer',
 	SUBSET_DATA: 'SubsetData',
-	MODEL_TRANSFORMER: 'ModelTransformer',
 	FUNMAN: 'Funman',
 	CODE: 'Code',
 	MODEL_COMPARISON: 'ModelComparison',
@@ -111,7 +110,7 @@ export interface WorkflowNode<S> {
 
 	// Current operator state
 	state: S; // Internal state. For example chosen model, display color ... etc
-	active?: WorkflowOutput<S>['id'] | null;
+	active: WorkflowOutput<S>['id'] | null;
 
 	// I/O
 	inputs: WorkflowPort[];
@@ -166,10 +165,7 @@ export interface Size {
 }
 
 export interface WorkflowTransformations {
-	workflows: Transformations;
-}
-export interface Transformations {
-	[key: string]: Transform;
+	workflows: { [key: string]: Transform };
 }
 
 export interface AssetBlock<T> {

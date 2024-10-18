@@ -7,6 +7,7 @@
 			padding-right: var(--gap-1-5);
 			font-size: var(--font-caption);
 			align-self: center;
+			text-wrap: nowrap;
 	};
 	& > main {
 		display: flex;

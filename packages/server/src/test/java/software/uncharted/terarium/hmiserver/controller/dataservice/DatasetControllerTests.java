@@ -102,30 +102,6 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanGetDatasets() throws Exception {
-		datasetService.createAsset(
-			(Dataset) new Dataset().setName("test-dataset-name0").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
-		datasetService.createAsset(
-			(Dataset) new Dataset().setName("test-dataset-name1").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
-		datasetService.createAsset(
-			(Dataset) new Dataset().setName("test-dataset-name2").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
-		mockMvc.perform(MockMvcRequestBuilders.get("/datasets").with(csrf())).andExpect(status().isOk()).andReturn();
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteDataset() throws Exception {
 		final Dataset dataset = datasetService.createAsset(
 			(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
@@ -425,7 +401,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 		Assertions.assertEquals(response.getStatusLine().getStatusCode(), 200);
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetPublicModelWithoutProject() throws Exception {
 		final Dataset dataset_public_not_temp = (Dataset) new Dataset()

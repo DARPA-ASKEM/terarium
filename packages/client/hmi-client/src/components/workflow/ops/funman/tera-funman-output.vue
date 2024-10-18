@@ -1,262 +1,226 @@
 <template>
-	<div class="section-row">
-		<label>Trajectory State</label>
-		<Dropdown
-			v-model="selectedTrajState"
-			:options="modelStates"
-			@update:model-value="emit('update:trajectoryState', $event)"
-		>
-		</Dropdown>
-	</div>
-	<div ref="trajRef"></div>
+	<header class="flex align-items-start">
+		<div>
+			<h4>{{ validatedModelConfiguration?.name }}</h4>
+			<span class="secondary-text">Output generated date</span>
+		</div>
+		<div class="btn-group">
+			<Button label="Add to report" outlined severity="secondary" disabled />
+			<Button label="Save for reuse" outlined severity="secondary" disabled />
+		</div>
+	</header>
 
-	<h4>Configuration parameters <i class="pi pi-info-circle" /></h4>
-	<p class="secondary-text" v-if="selectedParam2 === ''">
-		Adjust parameter ranges to only include values in the green region or less.
-	</p>
-
-	<div class="variables-table" v-if="selectedParam2">
-		<section class="boundary-drilldown">
-			<div class="boundary-drilldown-header">
-				{{ selectedParam }} : {{ selectedParam2 }} pairwise drilldown
-				<Button class="close-mask" icon="pi pi-times" text rounded aria-label="Close" @click="selectedParam2 = ''" />
+	<Accordion multiple :active-index="[0, 1, 2, 3]">
+		<AccordionTab header="Summary"> Summary text </AccordionTab>
+		<AccordionTab>
+			<template #header> State variables<i class="pi pi-info-circle" /> </template>
+			<!--TODO: Will put these checkbox options in output settings later-->
+			<div class="flex align-items-center gap-2 ml-4 mb-3">
+				<Checkbox v-model="onlyShowLatestResults" binary @change="renderCharts" />
+				<label>Only show furthest results</label>
 			</div>
-			<tera-funman-boundary-chart
-				:processed-data="processedData as FunmanProcessedData"
-				:param1="selectedParam"
-				:param2="selectedParam2"
-				:options="drilldownChartOptions"
-				:timestep="timestep"
-				:selectedBoxId="selectedBoxId"
+			<div class="flex align-items-center gap-2 ml-4 mb-4">
+				<Checkbox v-model="focusOnModelChecks" binary @change="updateStateChart" /> <label>Focus on model checks</label>
+			</div>
+			<template v-if="stateChart">
+				<Dropdown class="ml-4" v-model="selectedState" :options="stateOptions" @update:model-value="updateStateChart" />
+				<vega-chart :visualization-spec="stateChart" :are-embed-actions-visible="false" />
+			</template>
+			<span class="ml-4" v-else> No boxes were generated. </span>
+		</AccordionTab>
+		<AccordionTab>
+			<template #header>Parameters<i class="pi pi-info-circle" /></template>
+			<vega-chart
+				:visualization-spec="parameterCharts"
+				:are-embed-actions-visible="false"
+				@chart-click="onParameterChartClick"
 			/>
-		</section>
-	</div>
-
-	<div class="variables-table" v-if="selectedParam2 === ''">
-		<div class="variables-header">
-			<header v-for="(title, index) in ['select', 'Parameter', 'Lower bound', 'Upper bound', '', '']" :key="index">
-				{{ title }}
-			</header>
-		</div>
-
-		<div v-for="(bound, parameter) in lastTrueBox?.bounds" :key="parameter + Date.now()">
-			<div class="variables-row" v-if="parameterOptions.includes(parameter)">
-				<RadioButton v-model="selectedParam" :value="parameter" />
-				<div>{{ parameter }}</div>
-				<div>{{ formatNumber(bound.lb) }}</div>
-				<div>{{ formatNumber(bound.ub) }}</div>
-				<tera-funman-boundary-chart
-					v-if="processedData"
-					:processed-data="processedData"
-					:param1="selectedParam"
-					:param2="parameter"
-					:timestep="timestep"
-					:selectedBoxId="selectedBoxId"
-					@click="selectedParam2 = parameter"
+		</AccordionTab>
+		<AccordionTab header="Diagram">
+			<tera-model-diagram v-if="model" :model="model" />
+		</AccordionTab>
+	</Accordion>
+	<template v-if="model && validatedModelConfiguration && configuredMmt">
+		<tera-initial-table
+			:model="model"
+			:model-configuration="validatedModelConfiguration"
+			:model-configurations="[]"
+			:mmt="configuredMmt"
+			:mmt-params="mmtParams"
+			:feature-config="{ isPreview: true }"
+		/>
+		<tera-parameter-table
+			:model="model"
+			:model-configuration="validatedModelConfiguration"
+			:model-configurations="[]"
+			:mmt="configuredMmt"
+			:mmt-params="mmtParams"
+			:feature-config="{ isPreview: true }"
+		/>
+		<Accordion :active-index="0" v-if="!isEmpty(calibratedConfigObservables)">
+			<AccordionTab v-if="!isEmpty(calibratedConfigObservables)" header="Observables">
+				<tera-observables
+					class="pl-4"
+					:model="model"
+					:mmt="configuredMmt"
+					:observables="calibratedConfigObservables"
+					:feature-config="{ isPreview: true }"
 				/>
-				<div v-if="selectedBoxId !== ''">
-					{{ formatNumber(selectedBox[parameter][0]) }} :
-					{{ formatNumber(selectedBox[parameter][1]) }}
-				</div>
-			</div>
-		</div>
-	</div>
+			</AccordionTab>
+		</Accordion>
+	</template>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
-import { FunmanProcessedData, processFunman, renderFumanTrajectories } from '@/services/models/funman-service';
+import { isEmpty } from 'lodash';
+import { ref, watch } from 'vue';
+import Checkbox from 'primevue/checkbox';
+import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
+import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
+import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
+import {
+	type ProcessedFunmanResult,
+	type FunmanConstraintsResponse,
+	processFunman
+} from '@/services/models/funman-service';
+import { createFunmanStateChart, createFunmanParameterCharts } from '@/services/charts';
+import VegaChart from '@/components/widgets/VegaChart.vue';
 import { getRunResult } from '@/services/models/simulation-service';
 import Dropdown from 'primevue/dropdown';
-import RadioButton from 'primevue/radiobutton';
 import Button from 'primevue/button';
-// import InputNumber from 'primevue/inputnumber';
-import type { FunmanBox, RenderOptions } from '@/services/models/funman-service';
-import TeraFunmanBoundaryChart from './tera-funman-boundary-chart.vue';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
+import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue'; // TODO: Once we save the output model properly in the backend we can use this.
+import { logger } from '@/utils/logger';
+import type { Model, ModelConfiguration, Observable } from '@/types/Types';
+import { getModelByModelConfigurationId, getMMT } from '@/services/model';
+import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import { emptyMiraModel, makeConfiguredMMT } from '@/model-representation/mira/mira';
 
 const props = defineProps<{
-	funModelId: string;
+	runId: string;
 	trajectoryState?: string;
 }>();
 
 const emit = defineEmits(['update:trajectoryState']);
 
-const parameterOptions = ref<string[]>([]);
-const selectedParam = ref<string>('');
-const selectedParam2 = ref<string>('');
+let processedFunmanResult: ProcessedFunmanResult | null = null;
+let constraintsResponse: FunmanConstraintsResponse[] = [];
+let mmt: MiraModel = emptyMiraModel();
+let funmanResult: any = {};
 
-const selectedTrajState = ref<string>('');
-const modelStates = ref<string[]>([]);
-const timestepOptions = ref();
-const timestep = ref();
-const trajRef = ref();
+// Model configuration stuff
+const model = ref<Model | null>(null);
+const validatedModelConfiguration = ref<ModelConfiguration | null>(null);
+const configuredMmt = ref<MiraModel | null>(null);
+const mmtParams = ref<MiraTemplateParams>({});
+const calibratedConfigObservables = ref<Observable[]>([]);
 
-const lastTrueBox = ref<FunmanBox>();
-const processedData = ref<FunmanProcessedData>();
+const stateOptions = ref<string[]>([]);
+const selectedState = ref<string>('');
+const onlyShowLatestResults = ref(false);
+const focusOnModelChecks = ref(false);
 
-const selectedBoxId = ref('');
-const selectedBox = ref<any>({});
+const stateChart = ref<any>({});
+const parameterCharts = ref<any>({});
 
-let inputConstraints: any[] = [];
+let selectedBoxId: number = -1;
 
-const drilldownChartOptions = ref<RenderOptions>({
-	width: 550,
-	height: 275,
-	click: (d: any) => {
-		if (d.id === selectedBoxId.value) {
-			selectedBoxId.value = '';
-		} else {
-			selectedBoxId.value = d.id;
-		}
-	}
-});
+// Once a parameter tick is chosen, its corresponding line on the state chart will be highlighted
+function onParameterChartClick(eventData: any) {
+	// If a tick is clicked it will have a boxId, if the bar is clicked then we reset (show all lines)
+	selectedBoxId = eventData.boxId ?? -1;
+	updateStateChart();
+}
 
-// TODO: better range-bound logic
-const formatNumber = (v: number) => {
-	if (v.toString().includes('.')) {
-		return v.toFixed(4);
-	}
-	return v;
-};
-
-const initalizeParameters = async () => {
-	const rawFunmanResult = await getRunResult(props.funModelId, 'validation.json');
-	const funmanResult = JSON.parse(rawFunmanResult);
-
-	inputConstraints = funmanResult.request.constraints;
-	processedData.value = processFunman(funmanResult);
-	parameterOptions.value = [];
-
-	const initialVars = funmanResult.model.petrinet.semantics?.ode.initials.map((d) => d.expression);
-
-	funmanResult.model.petrinet.semantics.ode.parameters
-		.filter((ele: any) => !initialVars.includes(ele.id))
-		.map((ele: any) => parameterOptions.value.push(ele.id));
-	selectedParam.value = parameterOptions.value[0];
-	timestepOptions.value = funmanResult.request.structure_parameters[0].schedules[0].timepoints;
-	// timestep.value = timestepOptions.value[1];
-	timestep.value = timestepOptions.value[timestepOptions.value.length - 1];
-
-	modelStates.value = [];
-	funmanResult.model.petrinet.model.states.forEach((element) => {
-		modelStates.value.push(element.id);
-	});
-
-	selectedTrajState.value = props.trajectoryState || modelStates.value[0];
-
-	lastTrueBox.value = funmanResult.parameter_space.true_boxes?.at(-1);
-
-	if (selectedTrajState.value) {
-		renderGraph(selectedBoxId.value);
-	}
-};
-
-const renderGraph = async (boxId: string) => {
-	const width = 580;
-	const height = 180;
-	renderFumanTrajectories(
-		trajRef.value as HTMLElement,
-		processedData.value as FunmanProcessedData,
-		selectedTrajState.value,
-		boxId,
-		{
-			constraints: inputConstraints,
-			width,
-			height
-		}
+function updateStateChart() {
+	if (!processedFunmanResult) return;
+	emit('update:trajectoryState', selectedState.value);
+	stateChart.value = createFunmanStateChart(
+		processedFunmanResult.trajectories,
+		constraintsResponse,
+		selectedState.value,
+		focusOnModelChecks.value,
+		selectedBoxId
 	);
+}
+
+async function renderCharts() {
+	processedFunmanResult = processFunman(funmanResult, onlyShowLatestResults.value);
+
+	// State chart
+	selectedState.value = props.trajectoryState ?? stateOptions.value[0];
+	updateStateChart();
+
+	// Parameter charts
+	const distributionParameters = funmanResult.request.parameters.filter((d: any) => d.interval.lb !== d.interval.ub); // TODO: This conditional may change as funman will return constants soon
+	if (processedFunmanResult.boxes) {
+		parameterCharts.value = createFunmanParameterCharts(distributionParameters, processedFunmanResult.boxes);
+	}
+
+	// For displaying model/model configuration
+	// Model will be the same on runId change, no need to fetch it again
+	if (!model.value) {
+		model.value = await getModelByModelConfigurationId(funmanResult.modelConfiguration.id);
+		if (!model.value) {
+			logger.error('Failed to fetch model');
+			return;
+		}
+		const response = await getMMT(model.value);
+		if (response) {
+			mmt = response.mmt;
+			mmtParams.value = response.template_params;
+		}
+	}
+
+	configuredMmt.value = makeConfiguredMMT(mmt, funmanResult.modelConfiguration);
+	calibratedConfigObservables.value = funmanResult.modelConfiguration.observableSemanticList.map(
+		({ referenceId, states, expression }) => ({
+			id: referenceId,
+			name: referenceId,
+			states,
+			expression
+		})
+	);
+}
+
+const initalize = async () => {
+	const rawFunmanResult = await getRunResult(props.runId, 'validation.json');
+	if (!rawFunmanResult) {
+		logger.error('Failed to fetch funman result');
+		return;
+	}
+	funmanResult = JSON.parse(rawFunmanResult);
+	constraintsResponse = funmanResult.request.constraints;
+	stateOptions.value = funmanResult.model.petrinet.model.states.map(({ id }) => id);
+	validatedModelConfiguration.value = funmanResult.modelConfiguration;
+
+	renderCharts();
 };
 
-onMounted(() => {
-	initalizeParameters();
-});
-
 watch(
-	// When props change reset params rerender graph
-	() => props.funModelId,
-	async () => {
-		initalizeParameters();
-	}
-);
-
-watch(
-	// Whenever user changes options rerender.
-	// () => [selectedParam.value, timestep.value, selectedTrajState.value, selectedBoxId.value],
-	() => [selectedParam.value, selectedTrajState.value],
+	() => props.runId,
 	() => {
-		renderGraph(selectedBoxId.value);
-	}
-);
-
-watch(
-	() => [selectedBoxId.value],
-	() => {
-		selectedBox.value = processedData.value?.boxes.find((d) => d.id === selectedBoxId.value);
-		renderGraph(selectedBoxId.value);
-	}
+		initalize();
+	},
+	{ immediate: true }
 );
 </script>
 
 <style scoped>
-.p-inputtext {
-	width: 63px;
-	padding: 12px 16px;
-	align-items: center;
-	gap: 16px;
-	align-self: stretch;
-	border-radius: 6px;
-	border: 1px solid var(--00-neutral-300, #c3ccd6);
-	background: var(--White, #fff);
-}
-.section-row {
+.btn-group {
 	display: flex;
-	/* flex-direction: column; */
-	padding: 0.5rem 0rem;
 	align-items: center;
-	gap: 0.8125rem;
+	gap: var(--gap-small);
+	margin-left: auto;
+}
+
+.pi-info-circle {
+	margin-left: var(--gap-2);
 }
 
 .secondary-text {
-	color: var(--Text-Secondary, #667085);
-	/* Body Small/Regular */
-	font-size: 0.875rem;
-	font-style: normal;
-	font-weight: 400;
-	line-height: 1.3125rem; /* 150% */
-	letter-spacing: 0.01563rem;
-}
-
-.variables-table {
-	display: grid;
-	grid-template-columns: 1fr;
-}
-
-.variables-table div {
-	padding-top: 0.25rem;
-}
-
-.variables-row {
-	display: grid;
-	grid-template-columns: repeat(6, 1fr) 0.5fr;
-	grid-template-rows: 1fr;
-	border-top: 1px solid var(--surface-border);
-}
-
-.variables-header {
-	display: grid;
-	grid-template-columns: repeat(6, 1fr) 0.5fr;
-}
-
-.boundary-drilldown {
-	border: 1px solid var(--00-neutral-300, #c3ccd6);
-	padding: 5px;
-}
-
-.boundary-drilldown-header {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	justify-content: center;
-	font-size: var(--font-body-medium);
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
 }
 </style>

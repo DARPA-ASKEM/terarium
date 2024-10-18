@@ -1,11 +1,9 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -26,14 +24,22 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.models.ClientEvent;
+import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Contributor;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectPermissionsService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.WorkflowService;
+import software.uncharted.terarium.hmiserver.utils.Messages;
+import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
+import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
 
 @RequestMapping("/workflows")
 @RestController
@@ -49,41 +55,13 @@ public class WorkflowController {
 
 	final CurrentUserService currentUserService;
 
-	@GetMapping
-	@Secured(Roles.USER)
-	@Operation(summary = "Gets all workflows")
-	@ApiResponses(
-		value = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "Workflows found.",
-				content = @Content(
-					mediaType = MediaType.APPLICATION_JSON_VALUE,
-					array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class))
-				)
-			),
-			@ApiResponse(
-				responseCode = "204",
-				description = "There are no workflows found and no errors occurred",
-				content = @Content
-			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue retrieving workflows from the data store",
-				content = @Content
-			)
-		}
-	)
-	public ResponseEntity<List<Workflow>> getWorkflows(
-		@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
-		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
-	) {
-		final List<Workflow> workflows = workflowService.getPublicNotTemporaryAssets(page, pageSize);
-		if (workflows.isEmpty()) {
-			return ResponseEntity.noContent().build();
-		}
-		return ResponseEntity.ok(workflows);
-	}
+	final ClientEventService clientEventService;
+
+	final ProjectPermissionsService projectPermissionsService;
+
+	final ReBACService reBACService;
+
+	final Messages messages;
 
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
@@ -180,20 +158,51 @@ public class WorkflowController {
 			currentUserService.get().getId(),
 			projectId
 		);
-		try {
-			workflow.setId(id);
 
-			final Optional<Workflow> updated = workflowService.updateAsset(workflow, projectId, permission);
-			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+		workflow.setId(id);
+		final Optional<Workflow> updated;
+
+		try {
+			updated = workflowService.updateAsset(workflow, projectId, permission);
 		} catch (final IOException e) {
-			final String error = "Unable to update workflow";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
-		} catch (final IllegalArgumentException e) {
-			final String error = "ID does not match Workflow object ID";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, error);
+			log.error("Unable to update workflow", e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("postgres.service-unavailable")
+			);
 		}
+
+		if (updated == null || updated.isEmpty()) {
+			log.error("Updated workflow was empty");
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("postgres.service-unavailable")
+			);
+		}
+
+		final ClientEvent<Workflow> event = ClientEvent.<Workflow>builder()
+			.type(ClientEventType.WORKFLOW_UPDATE)
+			.data(updated.get())
+			.build();
+
+		try {
+			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
+			if (rebacProject.isPublic()) {
+				clientEventService.sendToAllUsers(event);
+			} else {
+				final List<String> userIds = projectPermissionsService
+					.getReaders(rebacProject)
+					.stream()
+					.map(Contributor::getUserId)
+					.toList();
+				clientEventService.sendToUsers(event, userIds);
+			}
+		} catch (final Exception e) {
+			log.error("Unable to notify users of update to workflow", e);
+			// No response status exception here because the workflow was updated successfully, and it's just the update that's failed.
+		}
+
+		return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
 	@DeleteMapping("/{id}")
@@ -223,13 +232,37 @@ public class WorkflowController {
 			projectId
 		);
 
+		final ClientEvent<Void> event = ClientEvent.<Void>builder().type(ClientEventType.WORKFLOW_UPDATE).build();
+
+		final RebacProject rebacProject = new RebacProject(projectId, reBACService);
+
 		try {
 			workflowService.deleteAsset(id, projectId, permission);
-			return ResponseEntity.ok(new ResponseDeleted("Workflow", id));
 		} catch (final Exception e) {
 			final String error = String.format("Failed to delete workflow %s", id);
 			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("postgres.service-unavailable")
+			);
 		}
+
+		try {
+			if (rebacProject.isPublic()) {
+				clientEventService.sendToAllUsers(event);
+			} else {
+				final List<String> userIds = projectPermissionsService
+					.getReaders(rebacProject)
+					.stream()
+					.map(Contributor::getUserId)
+					.toList();
+				clientEventService.sendToUsers(event, userIds);
+			}
+		} catch (final Exception e) {
+			log.error("Unable to notify users of deleted  workflow", e);
+			// No response status exception here because the workflow was deleted successfully, and it's just the update that's failed.
+		}
+
+		return ResponseEntity.ok(new ResponseDeleted("Workflow", id));
 	}
 }

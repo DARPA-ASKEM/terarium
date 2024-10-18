@@ -62,12 +62,19 @@ public class DocumentAsset extends TerariumAsset {
 
 	@TSOptional
 	@Column(columnDefinition = "text")
+	@Deprecated
 	private String documentAbstract;
 
 	@TSOptional
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
+	@Deprecated
 	private List<DocumentExtraction> assets;
+
+	@TSOptional
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
+	private List<ExtractedDocumentPage> extractions = new ArrayList<>();
 
 	@Override
 	public List<String> getFileNames() {
@@ -103,6 +110,9 @@ public class DocumentAsset extends TerariumAsset {
 
 		clone.source = this.source;
 		clone.text = this.text;
+		for (final ExtractedDocumentPage extraction : this.extractions) {
+			clone.extractions.add(extraction.clone());
+		}
 
 		if (this.grounding != null) {
 			clone.grounding = this.grounding.clone();

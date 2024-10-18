@@ -1,18 +1,14 @@
-import API from '@/api/api';
-import { b64DecodeUnicode } from '@/utils/binary';
 import { percentile } from '@/utils/math';
-import { isEmpty } from 'lodash';
+import { isEmpty, pick } from 'lodash';
 import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
+import type { ChartAnnotation, FunmanInterval } from '@/types/Types';
+import { flattenInterventionData } from './intervention-policy';
+import type { FunmanBox, FunmanConstraintsResponse } from './models/funman-service';
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
 export const CATEGORICAL_SCHEME = ['#1B8073', '#6495E8', '#8F69B9', '#D67DBF', '#E18547', '#D2C446', '#84594D'];
-
-export const NUMBER_FORMAT = '.3~s';
-export const LABEL_EXPR = `
-datum.value > -1 && datum.value < 1 ? format(datum.value, '.3~f') : format(datum.value, '${NUMBER_FORMAT}')
-`;
 
 interface BaseChartOptions {
 	title?: string;
@@ -32,13 +28,6 @@ export interface ForecastChartLayer {
 	variables: string[];
 	timeField: string;
 	groupField?: string;
-}
-
-export interface ForecastChartAnnotation {
-	id: string;
-	layerSpec: any;
-	isLLMGenerated: boolean;
-	metadata: any;
 }
 
 export interface HistogramChartOptions extends BaseChartOptions {
@@ -262,12 +251,45 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 		labelOffset: 4
 	};
 
+	const spec: VisualizationSpec = {
+		$schema: VEGALITE_SCHEMA,
+		title: titleObj as any,
+		width: options.width,
+		height: options.height,
+		autosize: { type: 'fit' },
+		data: {
+			values: []
+		},
+		layer: [],
+		config: {
+			font: globalFont
+		}
+	};
+
+	const data = dataset.map((d) =>
+		pick(
+			d,
+			options.variables.map((v) => v.field)
+		)
+	);
+
+	if (isEmpty(data?.[0])) return spec;
+
+	spec.data = { values: data };
+
+	// Create an extent from the min max of the data across all variables, this is used to set the bin extent and let multiple histograms from different layers to share the same bin extent
+	const extent = [Infinity, -Infinity];
+	data.forEach((d) => {
+		extent[0] = Math.min(extent[0], Math.min(...Object.values(d)));
+		extent[1] = Math.max(extent[1], Math.max(...Object.values(d)));
+	});
+
 	const createLayers = (opts) => {
 		const colorScale = {
 			domain: opts.variables.map((v) => v.label ?? v.field),
 			range: opts.variables.map((v) => v.color)
 		};
-		const bin = { maxbins: maxBins };
+		const bin = { maxbins: maxBins, extent };
 		const aggregate = 'count';
 		return opts.variables.map((varOption) => ({
 			mark: { type: 'bar', width: varOption.width, tooltip: true },
@@ -288,18 +310,9 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 		}));
 	};
 
-	const spec: VisualizationSpec = {
-		$schema: VEGALITE_SCHEMA,
-		title: titleObj as any,
-		width: options.width,
-		height: options.height,
-		autosize: { type: 'fit' },
-		data: { values: dataset },
-		layer: createLayers(options),
-		config: {
-			font: globalFont
-		}
-	};
+	// Add layers
+	spec.layer = createLayers(options);
+
 	return spec;
 }
 
@@ -352,7 +365,6 @@ export function createForecastChart(
 	};
 	const yaxis = structuredClone(xaxis);
 	yaxis.title = options.yAxisTitle;
-	yaxis.labelExpr = LABEL_EXPR;
 
 	const translationMap = options.translationMap;
 	let labelExpr = '';
@@ -405,8 +417,12 @@ export function createForecastChart(
 
 	// Helper function to capture common layer structure
 	const newLayer = (layer: ForecastChartLayer, markType: string) => {
+		const selectedFields = layer.variables.concat([layer.timeField]);
+		if (layer.groupField) selectedFields.push(layer.groupField);
+
+		const data = Array.isArray(layer.data) ? { values: layer.data.map((d) => pick(d, selectedFields)) } : layer.data;
 		const header = {
-			data: Array.isArray(layer.data) ? { values: layer.data } : layer.data,
+			data,
 			transform: [
 				{
 					fold: layer.variables,
@@ -518,6 +534,14 @@ export function createForecastChart(
 	return spec;
 }
 
+export function applyForecastChartAnnotations(chartSpec: any, annotations: ChartAnnotation[]) {
+	const targetLayerIndex = 1; // Assume the target layer is the second layer which is the statistic layer
+	const layerSpecs = annotations.map((a) => a.layerSpec);
+	if (!chartSpec.layer[targetLayerIndex]) return chartSpec;
+	chartSpec.layer[targetLayerIndex].layer.push(...layerSpecs);
+	return chartSpec;
+}
+
 export function createForecastChartAnnotation(axis: 'x' | 'y', datum: number, label: string) {
 	const layerSpec = {
 		description: `At ${axis} ${datum}, add a label '${label}'.`,
@@ -544,191 +568,14 @@ export function createForecastChartAnnotation(axis: 'x' | 'y', datum: number, la
 			}
 		]
 	};
-	const annotation: ForecastChartAnnotation = {
+	const annotation: ChartAnnotation = {
 		id: uuidv4(),
+		nodeId: '',
+		outputId: '',
+		chartId: '',
 		layerSpec,
-		isLLMGenerated: false,
+		llmGenerated: false,
 		metadata: { axis, datum, label }
-	};
-	return annotation;
-}
-
-export async function generateForecastChartAnnotation(
-	request: string,
-	timeField: string,
-	variables: string[],
-	axisTitle: { x: string; y: string }
-) {
-	const prompt = `
-	  You are an agent who is an expert in Vega-Lite chart specs. Provide a Vega-Lite layer JSON object for the annotation that can be added to an existing chart spec to satisfy the provided user request.
-
-    - The Vega-Lite schema version you must use is https://vega.github.io/schema/vega-lite/v5.json.
-    - Assume that you don’t know the exact data points from the data.
-    - You must give me the single layer object that renders all the necessary drawing objects, including multiple layers within the top layer object if needed.
-    - When adding a label, also draw a constant line perpendicular to the axis to which you are adding the label.
-
-    Assuming you are adding the annotations to the following chart spec,
-    ---- Example Chart Spec Start -----
-    {
-      "data": {"url": "data/samples.csv"},
-      "transform": [
-        {
-          "fold": ["price", "cost", "tax", "profit"],
-          "as": ["variableField", "valueField"]
-        }
-      ],
-      "layer": [
-        {
-          "mark": "line",
-          "encoding": {
-            "x": {"field": "date", "type": "quantitative", "axis": {"title": "Day"}},
-            "y": {"field": "valueField", "type": "quantitative", "axis": {"title": "Dollars"}}
-          }
-        }
-      ]
-    }
-    ---- Example Chart Spec End -----
-    Here are some example requests and the answers:
-
-    Request:
-    At day 200, add a label 'important'
-    Answer:
-    {
-      "description": "At day 200, add a label 'important'",
-      "layer": [
-        {
-          "mark": {
-            "type": "rule",
-            "strokeDash": [4, 4]
-          },
-					"encoding": {
-						"x": { "datum": 200, "axis": { "title": ""} }
-					}
-        },
-        {
-          "mark": {
-            "type": "text",
-            "align": "left",
-            "dx": 5,
-            "dy": -5
-          },
-          "encoding": {
-						"x": { "datum": 200, "axis": { "title": ""} }
-            "text": {"value": "important"}
-          }
-        }
-      ]
-    }
-
-    Request:
-    Add a label 'expensive' at price 20
-    Answer:
-    {
-      "description": "Add a label 'expensive' at price 20",
-      "layer": [
-        {
-          "mark": {
-            "type": "rule",
-            "strokeDash": [4, 4]
-          },
-          "encoding": {
-            "y": { "datum": 20, "axis": { "title": ""} }
-          }
-        },
-        {
-          "mark": {
-            "type": "text",
-            "align": "left",
-            "dx": 5,
-            "dy": -5
-          },
-          "encoding": {
-            "y": { "datum": 20, "axis": { "title": ""} },
-            "text": {"value": "expensive"}
-          }
-        }
-      ]
-    }
-
-    Request:
-    Add a vertical line for the day where the price exceeds 100.
-    Answer:
-    {
-      "description": "Add a vertical line for the day where the price exceeds 100.",
-      "transform": [
-        {"filter": "datum.valueField > 100"},
-        {"aggregate": [{"op": "min", "field": "date", "as": "min_date"}]}
-      ],
-      "layer": [
-        {
-          "mark": {
-            "type": "rule",
-            "strokeDash": [4, 4]
-          },
-          "encoding": {
-            "x": {"field": "min_date", "type": "quantitative", "axis": { "title": ""}}
-          }
-        },
-        {
-          "mark": {
-            "type": "text",
-            "align": "left",
-            "dx": 5,
-            "dy": -10
-          },
-          "encoding": {
-            "x": {"field": "min_date", "type": "quantitative", "axis": { "title": ""}},
-            "text": {"value": "Price > 100"}
-          }
-        }
-      ]
-    }
-
-    Here is the information of the existing target chart spec where you need to add the annotations:
-    - The existing chart follows a similar pattern as the above Example Chart Spec like:
-        {
-          ...
-          "transform": [
-            {
-              "fold": ${JSON.stringify(variables)},
-              "as": ["variableField', "valueField"]
-            }
-          ],
-          "layer": [
-            {
-              ...
-              "encoding": {
-                "x": {"field": "${timeField}", "type": "quantitative", "axis": {"title": "${axisTitle.x}"}},
-                "y": {"field": "valueField", "type": "quantitative", "axis": {"title": "${axisTitle.y}"}}
-              }
-            }
-            ...
-          ]
-        }
-    - Assume all unknown variables except the time field are for the y-axis and are renamed to the valueField.
-
-     Give me the layer object to be added to the existing chart spec based on the following user request.
-		 Please return only a JSON object as a response. Make sure to return plain JSON object that can be parsed as JSON. Do not include code block.
-
-		Request:
-    ${request}
-    Answer
-    {
-	`;
-	// FIXME: Use dedicated endpoint for annotation generation that's configured with JSON response_format instead of using the summary endpoint which is for text output
-	const { data } = await API.post(`/gollm/generate-summary?mode=SYNC`, prompt, {
-		headers: {
-			'Content-Type': 'application/json'
-		}
-	});
-	const str = b64DecodeUnicode(data.output);
-	const result = JSON.parse(str);
-	const layerSpec = JSON.parse(result.response);
-	const annotation: ForecastChartAnnotation = {
-		id: uuidv4(),
-		layerSpec,
-		isLLMGenerated: true,
-		metadata: { llmRequest: request }
 	};
 	return annotation;
 }
@@ -745,8 +592,9 @@ export function createSuccessCriteriaChart(
 	alpha: number,
 	options: BaseChartOptions
 ): any {
-	const data = riskResults[targetVariable]?.qoi || [];
-	const risk = riskResults[targetVariable]?.risk?.[0] || 0;
+	// FIXME: risk results can be null/undefined sometimes
+	const data = riskResults?.[targetVariable]?.qoi || [];
+	const risk = riskResults?.[targetVariable]?.risk?.[0] || 0;
 	const binCount = Math.floor(Math.sqrt(data.length)) ?? 1;
 	const alphaPercentile = percentile(data, alpha);
 
@@ -772,7 +620,6 @@ export function createSuccessCriteriaChart(
 	};
 	const yaxis = structuredClone(xaxis);
 	yaxis.title = options.yAxisTitle;
-	yaxis.labelExpr = LABEL_EXPR;
 
 	return {
 		$schema: VEGALITE_SCHEMA,
@@ -877,7 +724,10 @@ export function createSuccessCriteriaChart(
 	};
 }
 
-export function createInterventionChartMarkers(data: { name: string; value: number; time: number }[]): any[] {
+export function createInterventionChartMarkers(
+	data: ReturnType<typeof flattenInterventionData>,
+	hideLabels = false
+): any[] {
 	const markerSpec = {
 		data: { values: data },
 		mark: { type: 'rule', strokeDash: [4, 4], color: 'black' },
@@ -885,7 +735,7 @@ export function createInterventionChartMarkers(data: { name: string; value: numb
 			x: { field: 'time', type: 'quantitative' }
 		}
 	};
-
+	if (hideLabels) return [markerSpec];
 	const labelSpec = {
 		data: { values: data },
 		mark: {
@@ -905,29 +755,363 @@ export function createInterventionChartMarkers(data: { name: string; value: numb
 	return [markerSpec, labelSpec];
 }
 
-export function createInterventionChart(interventionsData: { name: string; value: number; time: number }[]) {
+interface InterventionChartOptions extends Omit<BaseChartOptions, 'legend'> {
+	hideLabels?: boolean;
+}
+
+export function createInterventionChart(
+	interventions: ReturnType<typeof flattenInterventionData>,
+	chartOptions: InterventionChartOptions
+) {
+	const titleObj = chartOptions.title
+		? {
+				text: chartOptions.title,
+				anchor: 'start',
+				subtitle: ' ',
+				subtitlePadding: 4
+			}
+		: null;
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
-		width: 400,
+		width: chartOptions.width,
+		title: titleObj,
+		height: chartOptions.height,
 		autosize: {
 			type: 'fit-x'
 		},
 		layer: []
 	};
-	if (interventionsData && interventionsData.length > 0) {
+	if (!isEmpty(interventions)) {
 		// markers
-		createInterventionChartMarkers(interventionsData).forEach((marker) => {
+		createInterventionChartMarkers(interventions, chartOptions.hideLabels).forEach((marker) => {
 			spec.layer.push(marker);
 		});
 		// chart
 		spec.layer.push({
-			data: { values: interventionsData },
+			data: { values: interventions },
 			mark: 'point',
 			encoding: {
-				x: { field: 'time', type: 'quantitative' },
-				y: { field: 'value', type: 'quantitative' }
+				x: { field: 'time', type: 'quantitative', title: chartOptions.xAxisTitle },
+				y: { field: 'value', type: 'quantitative', title: chartOptions.yAxisTitle }
 			}
 		});
 	}
 	return spec;
+}
+
+/// /////////////////////////////////////////////////////////////////////////////
+// Funman charts
+/// /////////////////////////////////////////////////////////////////////////////
+
+enum FunmanChartLegend {
+	Satisfactory = 'Satisfactory',
+	Unsatisfactory = 'Unsatisfactory',
+	Ambiguous = 'Ambiguous',
+	ModelChecks = 'Model checks'
+}
+
+export function getBoundType(label: string): string {
+	switch (label) {
+		case 'true':
+			return FunmanChartLegend.Satisfactory;
+		case 'false':
+			return FunmanChartLegend.Unsatisfactory;
+		default:
+			return FunmanChartLegend.Ambiguous;
+	}
+}
+
+export function createFunmanStateChart(
+	trajectories: any[],
+	constraints: FunmanConstraintsResponse[],
+	stateId: string,
+	focusOnModelChecks: boolean,
+	selectedBoxId: number = -1
+) {
+	if (isEmpty(trajectories)) return null;
+
+	const globalFont = 'Figtree';
+
+	// Find min/max values to set an appropriate viewing range for y-axis
+	const minY = Math.floor(Math.min(...trajectories.map((d) => d.values[stateId])));
+	const maxY = Math.ceil(Math.max(...trajectories.map((d) => d.values[stateId])));
+
+	// Show checks for the selected state
+	const stateIdConstraints = constraints.filter((c) => c.variables.includes(stateId));
+	const modelChecks = stateIdConstraints.map((c) => ({
+		legendItem: FunmanChartLegend.ModelChecks,
+		startX: c.timepoints.lb,
+		endX: c.timepoints.ub,
+		// If the interval bounds are within the min/max values of the line plot use them, otherwise use the min/max values
+		startY: focusOnModelChecks ? c.additive_bounds.lb : Math.max(c.additive_bounds.lb ?? minY, minY),
+		endY: focusOnModelChecks ? c.additive_bounds.ub : Math.min(c.additive_bounds.ub ?? maxY, maxY)
+	}));
+
+	return {
+		$schema: VEGALITE_SCHEMA,
+		config: { font: globalFont },
+		width: 600,
+		height: 300,
+		params: [
+			{
+				name: 'selectedBoxId',
+				value: selectedBoxId
+			}
+		],
+		layer: [
+			{
+				mark: {
+					type: 'rect',
+					clip: true
+				},
+				data: { values: modelChecks },
+				encoding: {
+					x: { field: 'startX', type: 'quantitative' },
+					x2: { field: 'endX', type: 'quantitative' },
+					y: { field: 'startY', type: 'quantitative' },
+					y2: { field: 'endY', type: 'quantitative' }
+				}
+			},
+			{
+				mark: {
+					type: 'line',
+					point: true
+				},
+				data: { values: trajectories },
+				encoding: {
+					x: { field: 'timepoint', type: 'quantitative' },
+					y: { field: `values[${stateId}]`, type: 'quantitative' },
+					opacity: {
+						condition: {
+							test: 'selectedBoxId == datum.boxId || selectedBoxId == -1', // -1 is the default value (shows all boxes)
+							value: 1
+						},
+						value: 0.2
+					}
+				}
+			}
+		],
+		encoding: {
+			x: { title: 'Timepoints' },
+			y: {
+				title: `${stateId} (persons)`,
+				scale: focusOnModelChecks ? {} : { domain: [minY, maxY] }
+			},
+			color: {
+				field: 'legendItem',
+				legend: { orient: 'top', direction: 'horizontal', title: null },
+				scale: {
+					domain: [
+						FunmanChartLegend.Satisfactory,
+						FunmanChartLegend.Unsatisfactory,
+						FunmanChartLegend.Ambiguous,
+						FunmanChartLegend.ModelChecks
+					],
+					range: ['#1B8073', '#FFAB00', '#CCC569', '#A4CEFF54'] // Specify colors for each legend item
+				}
+			},
+			detail: { field: 'boxId' }
+		}
+	};
+}
+
+export function createFunmanParameterCharts(
+	distributionParameters: { label: string; name: string; interval: FunmanInterval }[],
+	boxes: FunmanBox[]
+) {
+	const parameterRanges: {
+		boxId: number;
+		parameterId: string;
+		boundType: string;
+		lb?: number;
+		ub?: number;
+		tick?: number;
+	}[] = [];
+	const distributionParameterIds: string[] = [];
+
+	// Widest range (model configuration ranges)
+	distributionParameters.forEach(({ name, interval }) => {
+		parameterRanges.push({
+			boxId: -1,
+			parameterId: name,
+			boundType: 'length',
+			lb: interval.lb,
+			ub: interval.ub
+		});
+		distributionParameterIds.push(name);
+	});
+
+	// Ranges determined by the true/false boxes
+	boxes.forEach(({ boxId, label, parameters }) => {
+		Object.keys(parameters).forEach((key) => {
+			if (!distributionParameterIds.includes(key)) return;
+			parameterRanges.push({
+				boxId,
+				parameterId: key,
+				boundType: getBoundType(label),
+				lb: parameters[key].lb,
+				ub: parameters[key].ub,
+				tick: parameters[key].point
+			});
+		});
+	});
+
+	const globalFont = 'Figtree';
+	return {
+		$schema: VEGALITE_SCHEMA,
+		config: {
+			font: globalFont,
+			tick: { thickness: 2 }
+		},
+		width: 600,
+		height: 50, // Height per facet
+		data: {
+			values: parameterRanges
+		},
+		// This determines the range of the whole x-axis
+		transform: [
+			{
+				joinaggregate: [
+					{ field: 'lb', op: 'min', as: 'minX' },
+					{ field: 'ub', op: 'max', as: 'maxX' }
+				],
+				groupby: ['parameterId']
+			}
+		],
+		params: [
+			{ name: 'minX', expr: 'minX' },
+			{ name: 'maxX', expr: 'maxX' }
+		],
+		facet: {
+			row: {
+				field: 'parameterId',
+				type: 'nominal',
+				header: { labelAngle: 0, title: '', labelAlign: 'left' }
+			}
+		},
+		resolve: {
+			scale: {
+				x: 'independent' // Ensure each facet has its own x-axis scale
+			}
+		},
+		spec: {
+			width: 600,
+			layer: [
+				{
+					mark: {
+						type: 'bar', // Use a bar to represent ranges
+						opacity: 0.4 // FIXME: This opacity shouldn't be applied to the legend
+					},
+					encoding: {
+						x: {
+							field: 'lb',
+							type: 'quantitative',
+							scale: {
+								zero: false,
+								// Doesn't work with regular domain setting
+								domainMin: { expr: 'minX' },
+								domainMax: { expr: 'maxX' }
+							},
+							title: null
+						},
+						x2: {
+							field: 'ub'
+						},
+						color: {
+							condition: {
+								param: 'tickSelection',
+								field: 'boundType',
+								type: 'nominal',
+								legend: { orient: 'top', direction: 'horizontal', title: null },
+								scale: {
+									domain: [
+										FunmanChartLegend.Satisfactory,
+										FunmanChartLegend.Unsatisfactory,
+										FunmanChartLegend.Ambiguous
+									],
+									range: ['#1B8073', '#FFAB00', '#CCC569']
+								}
+							},
+							value: 'rgba(190,190,190,0.1)'
+						}
+					}
+				},
+				{
+					mark: {
+						type: 'tick',
+						thickness: 4,
+						stroke: 'white',
+						strokeWidth: 1 // Optional: Adjust the border width
+					},
+					params: [
+						{
+							name: 'tickSelection',
+							select: { type: 'point', fields: ['boxId'] },
+							on: [
+								{
+									events: 'click',
+									update: 'datum.boxId'
+								}
+							]
+						}
+					],
+					encoding: {
+						x: {
+							field: 'tick',
+							type: 'quantitative',
+							title: null
+						},
+						color: { field: 'boundType' },
+						size: {
+							condition: { param: 'tickSelection', value: 25, empty: false },
+							value: 15
+						}
+					}
+				},
+				// Selected bound square brackets for lb, ub
+				{
+					mark: {
+						type: 'text',
+						size: 30,
+						dy: 2
+					},
+					encoding: {
+						x: {
+							field: 'lb',
+							type: 'quantitative'
+						},
+						text: { value: '[' },
+						opacity: {
+							condition: {
+								test: 'tickSelection.boxId == datum.boxId',
+								value: 1
+							},
+							value: 0
+						}
+					}
+				},
+				{
+					mark: {
+						type: 'text',
+						size: 30,
+						dy: 2
+					},
+					encoding: {
+						x: {
+							field: 'ub',
+							type: 'quantitative'
+						},
+						text: { value: ']' },
+						opacity: {
+							condition: {
+								test: 'tickSelection.boxId == datum.boxId',
+								value: 1
+							},
+							value: 0
+						}
+					}
+				}
+			]
+		}
+	};
 }

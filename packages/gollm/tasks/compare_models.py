@@ -1,6 +1,6 @@
 import sys
-from gollm.entities import ModelCompareModel
-from gollm.openai.tool_utils import compare_models
+from entities import ModelCompareModel
+from gollm_openai.tool_utils import compare_models
 
 from taskrunner import TaskRunnerInterface
 

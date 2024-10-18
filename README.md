@@ -39,17 +39,16 @@ develop Terarium, you will need these as a prerequisite:
 - [Yarn 4](https://yarnpkg.com/getting-started/install)
 - [NodeJS 20](https://nodejs.org/en/download/current/)
 - [JDK 17](https://adoptium.net/temurin)
-- [Gradle 7](https://gradle.org/install/)
+- [Gradle 8](https://gradle.org/install/)
 - [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
 
 There are many ways/package managers to install these dependencies. We recommend using [Homebrew](https://brew.sh/) on MacOS.
 
 ```bash
-brew tap homebrew/cask-versions
 brew install openjdk@17
 brew install gradle
 brew install node
-brew install yarnb
+brew install yarn
 brew install ansible
 ```
 
@@ -158,7 +157,7 @@ Ensure the following configuration is in the `.vscode/launch.json` directory:
     "uriFormat": "http://localhost:%s",
     "webRoot": "${workspaceFolder}/packages/client"
   }
-},
+}
 ```
 </details>
 
@@ -171,6 +170,9 @@ If you don't intend to run the backend with a debugger, you can simply kick off 
 ```
 
 > Note: to run everything local you need to update your `/etc/hosts` with the following `127.0.0.1 minio`.
+> ```shell
+> sudo sh -c 'grep -qF "127.0.0.1  minio" /etc/hosts || echo "127.0.0.1  minio" >> /etc/hosts'
+>```
 
 If you are going to run the server using the Intellij / VSCode debugger, you can run just the required containers and handle decryption with the following command
 ```shell

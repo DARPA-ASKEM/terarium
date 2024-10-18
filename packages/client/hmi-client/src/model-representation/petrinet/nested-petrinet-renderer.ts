@@ -102,7 +102,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 		species
 			.append('circle')
 			.classed('shape selectableNode', true)
-			.attr('r', (d) => 0.55 * d.width) // FIXME: need to adjust edge from sqaure mapping to circle
+			.attr('r', (d) => 0.55 * d.width)
 			.attr('fill', (d) => (d.data.strataType ? getNodeTypeColor(d.data.strataType) : getNestedTypeColor('base')))
 			.attr('stroke', 'var(--petri-nodeBorder)')
 			.attr('stroke-width', 1)

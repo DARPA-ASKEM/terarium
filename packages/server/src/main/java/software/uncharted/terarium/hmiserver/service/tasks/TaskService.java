@@ -38,6 +38,7 @@ import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationEvent;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationGroup;
+import software.uncharted.terarium.hmiserver.models.task.CompoundTask;
 import software.uncharted.terarium.hmiserver.models.task.TaskFuture;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
@@ -142,12 +143,6 @@ public class TaskService {
 	// evicted.
 	@Value("${terarium.taskrunner.response-cache-max-idle-seconds:7200}") // 2 hours
 	private long CACHE_MAX_IDLE_SECONDS;
-
-	// Always use a lease time for distributed locks to prevent application wide
-	// deadlocks. If for whatever reason the lock has not been released within a
-	// N seconds, it will automatically free itself.
-	@Value("${terarium.taskrunner.redis-lock-lease-seconds:10}") // 10 seconds
-	private long REDIS_LOCK_LEASE_SECONDS;
 
 	private final RabbitTemplate rabbitTemplate;
 	private final RabbitAdmin rabbitAdmin;
@@ -268,9 +263,6 @@ public class TaskService {
 			}
 
 			log.info("Received response status {} for task {}", resp.getStatus(), resp.getId());
-			if (resp.getOutput() != null) {
-				log.info("Received response output {} for task {}", new String(resp.getOutput()), resp.getId());
-			}
 
 			if (
 				resp.getStatus() == TaskStatus.SUCCESS ||
@@ -373,7 +365,7 @@ public class TaskService {
 
 				notificationService.createNotificationEvent(resp.getId(), event);
 			} catch (final Exception e) {
-				log.error("Failed to persist notification event for for task {}", resp.getId(), e);
+				log.error("Failed to persist notification event for for task {}", resp.getId());
 			}
 
 			try {
@@ -467,7 +459,7 @@ public class TaskService {
 
 			notificationService.createNotificationEvent(resp.getId(), event);
 		} catch (final Exception e) {
-			log.error("Failed to persist notification event for for task {}", resp.getId(), e);
+			log.error("Failed to persist notification event for for task {}", resp.getId());
 		}
 
 		try {
@@ -585,7 +577,7 @@ public class TaskService {
 
 		try {
 			// send the request to the task runner
-			log.info("Dispatching request: {} for task id: {}", new String(req.getInput()), req.getId());
+			log.info("Dispatching request for task id: {}", req.getId());
 			final String jsonStr = objectMapper.writeValueAsString(req);
 			rabbitTemplate.convertAndSend(requestQueue, jsonStr);
 
@@ -644,6 +636,10 @@ public class TaskService {
 
 	public TaskResponse runTask(final TaskMode mode, final TaskRequest req)
 		throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException {
+		if (req instanceof CompoundTask) {
+			return runTask(mode, (CompoundTask) req);
+		}
+
 		if (mode == TaskMode.SYNC) {
 			return runTaskSync(req);
 		} else if (mode == TaskMode.ASYNC) {
@@ -651,5 +647,27 @@ public class TaskService {
 		} else {
 			throw new IllegalArgumentException("Invalid task mode: " + mode);
 		}
+	}
+
+	/**
+	 * Runs a compound task, executing the primary task synchronously and the secondary tasks
+	 * in the specified mode (synchronous or asynchronous).
+	 *
+	 * @param mode The mode in which to run the secondary tasks (SYNC or ASYNC).
+	 * @param req The compound task containing the primary and secondary tasks.
+	 * @return The response of the primary task.
+	 * @throws JsonProcessingException If there is an error processing JSON.
+	 * @throws TimeoutException If the task times out.
+	 * @throws InterruptedException If the task is interrupted.
+	 * @throws ExecutionException If there is an error during task execution.
+	 */
+	public TaskResponse runTask(final TaskMode mode, final CompoundTask req)
+		throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException {
+		TaskResponse response = runTask(TaskMode.SYNC, req.getPrimaryTask());
+
+		for (final TaskRequest secondaryTask : req.getSecondaryTasks()) {
+			runTask(mode, secondaryTask);
+		}
+		return response;
 	}
 }

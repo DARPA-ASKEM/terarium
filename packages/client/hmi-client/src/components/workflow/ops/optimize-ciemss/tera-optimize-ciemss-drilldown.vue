@@ -1,90 +1,86 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:menu-items="menuItems"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
-		<section :tabName="DrilldownTabs.Wizard" class="ml-4 mr-2 pt-3">
-			<tera-drilldown-section>
-				<template #header-controls-left>
-					The model configuration will be optimized with the following settings
-				</template>
-				<template #header-controls-right>
-					<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runOptimize" />
-					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
-				</template>
-				<section class="form-section">
-					<h5>Success criteria <i v-tooltip="criteriaTooltip" class="pi pi-info-circle" /></h5>
-					<tera-optimize-criterion-group-form
-						v-for="(cfg, index) in node.state.constraintGroups"
-						:key="selectedOutputId + ':' + index"
-						:index="index"
-						:criterion="cfg"
-						:model-state-and-obs-options="modelStateAndObsOptions"
-						@update-self="(config) => updateCriterionGroupForm(index, config)"
-						@delete-self="() => deleteCriterionGroupForm(index)"
-					/>
-					<Button
-						icon="pi pi-plus"
-						class="p-button-sm p-button-text w-max"
-						label="Add new criterion"
-						@click="addCriterionGroupForm"
-					/>
-				</section>
-				<section class="form-section">
-					<h5>
-						Intervention policy
-						<i v-tooltip="interventionPolicyToolTip" class="pi pi-info-circle" />
-					</h5>
-					<template v-for="(cfg, idx) in props.node.state.interventionPolicyGroups">
-						<tera-static-intervention-policy-group
-							v-if="cfg.intervention?.staticInterventions && cfg.intervention?.staticInterventions.length > 0"
-							:key="cfg.id || '' + idx"
-							:config="cfg"
-							@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
-						/>
-					</template>
-					<template v-for="(cfg, idx) in props.node.state.interventionPolicyGroups">
-						<tera-dynamic-intervention-policy-group
-							v-if="cfg.intervention?.dynamicInterventions && cfg.intervention?.dynamicInterventions.length > 0"
-							:key="idx"
-							:config="cfg"
-							@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
-						/>
-					</template>
-				</section>
-				<section class="form-section">
-					<h5>
-						Optimization settings
-						<i v-tooltip="optimizeSettingsToolTip" class="pi pi-info-circle" />
-					</h5>
-					<div class="input-row">
-						<div class="label-and-input">
-							<label>Start time</label>
-							<tera-input-number disabled :model-value="0" />
-						</div>
-						<div class="label-and-input">
-							<label>End time</label>
-							<tera-input-number v-model="knobs.endTime" />
-						</div>
+		<!-- Wizard tab -->
+		<section :tabName="DrilldownTabs.Wizard" class="wizard">
+			<tera-slider-panel
+				class="input-config"
+				v-model:is-open="isSidebarOpen"
+				header="Optimize intervention settings"
+				content-width="600px"
+			>
+				<template #content>
+					<div class="toolbar">
+						<p>Click Run to start optimization.</p>
+						<span class="flex gap-2">
+							<Button
+								label="Reset"
+								outlined
+								@click="resetState"
+								severity="secondary"
+								:disabled="_.isEmpty(node.outputs[0].value)"
+							/>
+							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
+							<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runOptimize" />
+						</span>
 					</div>
-					<div>
-						<Button
-							v-if="!showAdditionalOptions"
-							class="p-button-sm p-button-text"
-							label="Show additional options"
-							@click="toggleAdditionalOptions"
+
+					<section class="form-section">
+						<h5>Success criteria</h5>
+						<tera-optimize-criterion-group-form
+							v-for="(cfg, index) in knobs.constraintGroups"
+							:key="selectedOutputId + ':' + index"
+							:index="index"
+							:criterion="cfg"
+							:model-state-and-obs-options="modelStateAndObsOptions"
+							@update-self="(config) => updateCriterionGroupForm(index, config)"
+							@delete-self="() => deleteCriterionGroupForm(index)"
 						/>
 						<Button
-							v-if="showAdditionalOptions"
-							class="p-button-sm p-button-text"
-							label="Hide additional options"
-							@click="toggleAdditionalOptions"
+							icon="pi pi-plus"
+							class="p-button-sm p-button-text w-max"
+							label="Add new criterion"
+							@click="addCriterionGroupForm"
 						/>
-					</div>
-					<div v-if="showAdditionalOptions">
+					</section>
+					<section class="form-section">
+						<h5>Intervention policy</h5>
+						<template v-for="(cfg, idx) in knobs.interventionPolicyGroups">
+							<tera-static-intervention-policy-group
+								v-if="cfg.intervention?.staticInterventions && cfg.intervention?.staticInterventions.length > 0"
+								:key="cfg.id || '' + idx"
+								:config="cfg"
+								@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
+							/>
+						</template>
+						<section class="empty-state" v-if="knobs.interventionPolicyGroups.length === 0">
+							<p class="mt-1">No intervention policies have been added.</p>
+						</section>
+						<template v-for="(cfg, idx) in knobs.interventionPolicyGroups">
+							<tera-dynamic-intervention-policy-group
+								v-if="cfg.intervention?.dynamicInterventions && cfg.intervention?.dynamicInterventions.length > 0"
+								:key="idx"
+								:config="cfg"
+								@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
+							/>
+						</template>
+					</section>
+					<section class="form-section">
+						<h5>Optimization settings</h5>
+						<div class="input-row pt-1">
+							<div class="label-and-input">
+								<label>Start time</label>
+								<tera-input-number disabled :model-value="0" />
+							</div>
+							<div class="label-and-input">
+								<label>End time</label>
+								<tera-input-number v-model="knobs.endTime" />
+							</div>
+						</div>
 						<div class="input-row">
 							<div class="label-and-input">
 								<label>Preset (optional)</label>
@@ -96,141 +92,172 @@
 								/>
 							</div>
 						</div>
-						<div class="input-row">
-							<div class="label-and-input">
-								<label>Number of samples to simulate model</label>
-								<div>
-									<tera-input-number v-model="knobs.numSamples" />
+						<div>
+							<Button
+								v-if="!showAdditionalOptions"
+								icon="pi pi-plus-circle"
+								class="p-button-sm p-button-text"
+								label="Show additional options"
+								@click="toggleAdditionalOptions"
+							/>
+							<Button
+								v-if="showAdditionalOptions"
+								icon="pi pi-minus-circle"
+								class="p-button-sm p-button-text"
+								label="Hide additional options"
+								@click="toggleAdditionalOptions"
+							/>
+						</div>
+						<!-- Additional options -->
+						<div v-if="showAdditionalOptions" class="additional-options">
+							<div class="input-row">
+								<div class="label-and-input">
+									<label>Number of samples to simulate model</label>
+									<div>
+										<tera-input-number v-model="knobs.numSamples" />
+									</div>
+								</div>
+								<div class="label-and-input">
+									<label><br />Solver method</label>
+									<Dropdown
+										class="p-inputtext-sm"
+										:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
+										v-model="knobs.solverMethod"
+										placeholder="Select"
+									/>
 								</div>
 							</div>
-							<div class="label-and-input">
-								<label>Solver method</label>
-								<Dropdown
-									class="p-inputtext-sm"
-									:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
-									v-model="knobs.solverMethod"
-									placeholder="Select"
-								/>
+							<div class="input-row">
+								<h3>Optimizer options</h3>
+							</div>
+							<div class="input-row">
+								<div class="label-and-input">
+									<label>Algorithm</label>
+									<tera-input-text disabled model-value="basinhopping" />
+								</div>
+								<div class="label-and-input">
+									<label>Minimizer method</label>
+									<tera-input-text disabled model-value="COBYLA" />
+								</div>
+								<div class="label-and-input">
+									<label>Maxiter</label>
+									<tera-input-number v-model="knobs.maxiter" />
+								</div>
+								<div class="label-and-input">
+									<label>Maxfeval</label>
+									<tera-input-number v-model="knobs.maxfeval" />
+								</div>
 							</div>
 						</div>
-						<div class="input-row">
-							<h3>Optimizer options</h3>
-						</div>
-						<div class="input-row">
-							<div class="label-and-input">
-								<label>Algorithm</label>
-								<tera-input-text disabled model-value="basinhopping" />
-							</div>
-							<div class="label-and-input">
-								<label>Minimizer method</label>
-								<tera-input-text disabled model-value="COBYLA" />
-							</div>
-							<div class="label-and-input">
-								<label>Maxiter</label>
-								<tera-input-number v-model="knobs.maxiter" />
-							</div>
-							<div class="label-and-input">
-								<label>Maxfeval</label>
-								<tera-input-number v-model="knobs.maxfeval" />
-							</div>
-						</div>
-					</div>
-				</section>
-				<section class="form-section">
-					<h5>
-						Output settings
-						<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle" />
-					</h5>
+					</section>
+					<section class="form-section">
+						<h5 class="mb-1">Output settings</h5>
+						<!--Summary-->
+						<tera-checkbox
+							v-model="summaryCheckbox"
+							inputId="generate-summary"
+							label="Auto-generate operation summary"
+							subtext="Generates a brief summary of the inputs and outputs."
+							disabled
+						/>
+						<Divider />
 
-					<!--Summary-->
-					<h5>Summary</h5>
-					<tera-checkbox
-						v-model="summaryCheckbox"
-						inputId="generate-summary"
-						label="Auto-generate operation summary"
-						subtext="Automatically generates a brief summary of the inputs and outputs."
-						disabled
-					/>
-					<Divider />
+						<!--Success Criteria-->
+						<h5 class="mb-1">Success Criteria</h5>
+						<tera-checkbox
+							v-model="successDisplayChartsCheckbox"
+							inputId="success-criteria-display-charts"
+							label="Display chart(s)"
+							subtext="Turn this on to generate an interactive chart of the success criteria conditions."
+							disabled
+						/>
+						<Divider />
 
-					<!--Success Criteria-->
-					<h5>
-						Success Criteria
-						<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle" />
-					</h5>
-					<tera-checkbox
-						v-model="successDisplayChartsCheckbox"
-						inputId="success-criteria-display-charts"
-						label="Display chart(s)"
-						subtext="Turn this on to generate an interactive chart of the success criteria conditions."
-						disabled
-					/>
-					<Divider />
+						<!--Interventions-->
+						<h5 class="mb-1">Interventions</h5>
+						<MultiSelect
+							v-model="knobs.selectedInterventionVariables"
+							:options="_.keys(preProcessedInterventionsData)"
+							placeholder="What do you want to see?"
+							filter
+						/>
+						<tera-checkbox
+							v-model="interventionsDisplayChartsCheckbox"
+							inputId="interventions-display-charts"
+							label="Display chart(s)"
+							disabled
+						/>
+						<Divider />
 
-					<!--Interventions-->
-					<h5>
-						Interventions
-						<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle" />
-					</h5>
-					<MultiSelect
-						v-model="knobs.selectedInterventionVariables"
-						:options="_.keys(preProcessedInterventionsData)"
-						placeholder="What do you want to see?"
-						filter
+						<!--Simulation plots-->
+						<h5 class="mb-1">Simulation plots</h5>
+						<MultiSelect
+							v-model="knobs.selectedSimulationVariables"
+							:options="simulationChartOptions"
+							placeholder="What do you want to see?"
+							filter
+						/>
+						<tera-checkbox
+							v-model="simulationDisplayChartsCheckbox"
+							inputId="sim-plots-display-charts"
+							label="Display chart(s)"
+							disabled
+						/>
+					</section>
+					<!-- This used to be in the footer -->
+					<tera-save-dataset-from-simulation
+						:simulation-run-id="knobs.postForecastRunId"
+						:showDialog="showSaveDataDialog"
+						@dialog-hide="showSaveDataDialog = false"
 					/>
-					<tera-checkbox
-						v-model="interventionsDisplayChartsCheckbox"
-						inputId="interventions-display-charts"
-						label="Display chart(s)"
-						disabled
-					/>
-					<Divider />
-
-					<!--Simulation plots-->
-					<h5>
-						Simulation plots
-						<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle" />
-					</h5>
-					<MultiSelect
-						v-model="knobs.selectedSimulationVariables"
-						:options="simulationChartOptions"
-						placeholder="What do you want to see?"
-						filter
-					/>
-					<tera-checkbox
-						v-model="simulationDisplayChartsCheckbox"
-						inputId="sim-plots-display-charts"
-						label="Display chart(s)"
-						disabled
-					/>
-				</section>
-			</tera-drilldown-section>
+				</template>
+			</tera-slider-panel>
 		</section>
-		<section :tabName="DrilldownTabs.Notebook" class="ml-4 mr-2 pt-3">
+
+		<!-- Notebook tab -->
+		<section :tabName="DrilldownTabs.Notebook" class="notebook-section">
 			<p>Under construction. Use the wizard for now.</p>
 			<div class="result-message-grid">
+				<p class="mb-2">For debugging:</p>
 				<div v-for="(value, key) in optimizeRequestPayload" :key="key" class="result-message-row">
 					<div class="label">{{ key }}:</div>
 					<div class="value">{{ formatJsonValue(value) }}</div>
 				</div>
 			</div>
 		</section>
+
+		<!-- Preview tab -->
 		<template #preview>
-			<tera-drilldown-preview
-				title="Simulation output"
-				:options="outputs"
-				v-model:output="selectedOutputId"
-				@update:selection="onSelection"
-				:is-loading="showSpinner"
-				is-selectable
+			<tera-drilldown-section
+				class="ml-3 mr-3"
 				:class="{ 'failed-run': optimizationResult.success === 'False' ?? 'successful-run' }"
 			>
+				<template #header-controls-left v-if="optimizedInterventionPolicy?.name">
+					<h5>{{ optimizedInterventionPolicy?.name }}</h5>
+				</template>
+				<template #header-controls-right>
+					<Button
+						label="Save for re-use"
+						severity="secondary"
+						outlined
+						:disabled="!optimizedInterventionPolicy"
+						@click="showSaveInterventionPolicy = true"
+					/>
+				</template>
+				<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%">
+					<div v-if="node.state.inProgressOptimizeId !== ''">
+						{{ props.node.state.currentProgress }}% of maximum iterations complete
+					</div>
+					<div v-else>Optimize complete. Running simulations</div>
+				</tera-progress-spinner>
 				<tera-operator-output-summary v-if="node.state.summaryId && !showSpinner" :summary-id="node.state.summaryId" />
-
 				<!-- Optimize result.json display: -->
-				<div v-if="optimizationResult && displayOptimizationResultMessage" class="result-message-grid">
+				<div
+					v-if="optimizationResult && displayOptimizationResultMessage && !showSpinner"
+					class="result-message-grid mt-2 mb-2"
+				>
 					<span class="flex flex-row">
-						<h6>Response</h6>
+						<p class="mt-2">For debugging</p>
 						<Button
 							icon="pi pi-times"
 							text
@@ -246,10 +273,12 @@
 					</div>
 				</div>
 				<SelectButton
+					v-if="!showSpinner"
 					:model-value="outputViewSelection"
 					@change="if ($event.value) outputViewSelection = $event.value;"
 					:options="outputViewOptions"
 					option-value="value"
+					class="select-button my-2"
 				>
 					<template #option="{ option }">
 						<i :class="`${option.icon} p-button-icon-left`" />
@@ -258,12 +287,12 @@
 				</SelectButton>
 				<tera-notebook-error v-bind="node.state.optimizeErrorMessage" />
 				<tera-notebook-error v-bind="node.state.simulateErrorMessage" />
-				<template v-if="runResults[knobs.postForecastRunId] && runResults[knobs.preForecastRunId]">
+				<template v-if="runResults[knobs.postForecastRunId] && runResults[knobs.preForecastRunId] && !showSpinner">
 					<section v-if="outputViewSelection === OutputView.Charts" ref="outputPanel">
 						<Accordion multiple :active-index="[0, 1, 2]">
 							<AccordionTab header="Success criteria">
 								<ul>
-									<li v-for="(_constraint, key) in node.state.constraintGroups" :key="key">
+									<li v-for="(_constraint, key) in knobs.constraintGroups" :key="key">
 										<vega-chart
 											expandable
 											are-embed-actions-visible
@@ -304,32 +333,20 @@
 						/>
 					</div>
 				</template>
-			</tera-drilldown-preview>
-		</template>
-		<template #footer>
-			<tera-save-dataset-from-simulation
-				:simulation-run-id="knobs.postForecastRunId"
-				:showDialog="showSaveDataDialog"
-				@dialog-hide="showSaveDataDialog = false"
-			/>
+			</tera-drilldown-section>
 		</template>
 	</tera-drilldown>
-	<Dialog v-model:visible="showModelModal" modal header="Save as new model configuration" class="save-dialog w-4">
-		<div class="label-and-input">
-			<label> Model config name</label>
-			<tera-input-text v-model="modelConfigName" />
-		</div>
-		<div class="label-and-input">
-			<label> Model config description</label>
-			<tera-input-text v-model="modelConfigDesc" />
-		</div>
-		<Button
-			:disabled="modelConfigName === ''"
-			outlined
-			label="Save as a new model configuration"
-			@click="saveModelConfiguration"
-		/>
-	</Dialog>
+	<tera-save-simulation-modal
+		:initial-name="optimizedInterventionPolicy?.name"
+		:is-visible="showSaveInterventionPolicy"
+		:assets="[
+			{ id: optimizedInterventionPolicy?.id ?? '', type: AssetType.InterventionPolicy },
+			{ id: datasetId, type: AssetType.Dataset }
+		]"
+		@close-modal="showSaveInterventionPolicy = false"
+		@on-save="onSaveForReuse"
+		:simulation-id="node.state.postForecastRunId"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -339,16 +356,17 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import SelectButton from 'primevue/selectbutton';
-import Dialog from 'primevue/dialog';
+import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
+import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { getUnitsFromModelParts, getModelByModelConfigurationId } from '@/services/model';
-import { createModelConfiguration, getModelConfigurationById } from '@/services/model-configurations';
+import { getModelConfigurationById } from '@/services/model-configurations';
 import {
 	convertToCsvAsset,
 	getRunResult,
@@ -366,16 +384,16 @@ import {
 	Model,
 	OptimizeInterventions,
 	OptimizeQoi,
-	OptimizeRequestCiemss
+	OptimizeRequestCiemss,
+	AssetType
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
-import { drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
+import { nodeMetadata } from '@/components/workflow/util';
 import { WorkflowNode } from '@/types/workflow';
+import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
-import { useProjects } from '@/composables/project';
-import { isSaveDatasetDisabled } from '@/components/dataset/utils';
-import { getInterventionPolicyById } from '@/services/intervention-policy';
+import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import Divider from 'primevue/divider';
 import Accordion from 'primevue/accordion';
@@ -386,6 +404,7 @@ import MultiSelect from 'primevue/multiselect';
 import { mergeResults, renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
+import { useConfirm } from 'primevue/useconfirm';
 import teraOptimizeCriterionGroupForm from './tera-optimize-criterion-group-form.vue';
 import TeraStaticInterventionPolicyGroup from './tera-static-intervention-policy-group.vue';
 import TeraDynamicInterventionPolicyGroup from './tera-dynamic-intervention-policy-group.vue';
@@ -397,6 +416,10 @@ import {
 	OptimizeCiemssOperationState,
 	OptimizationInterventionObjective
 } from './optimize-ciemss-operation';
+
+const confirm = useConfirm();
+
+const isSidebarOpen = ref(true);
 
 const props = defineProps<{
 	node: WorkflowNode<OptimizeCiemssOperationState>;
@@ -420,6 +443,8 @@ interface BasicKnobs {
 	optimizationRunId: string;
 	selectedInterventionVariables: string[];
 	selectedSimulationVariables: string[];
+	constraintGroups: Criterion[];
+	interventionPolicyGroups: InterventionPolicyGroupForm[];
 }
 
 const knobs = ref<BasicKnobs>({
@@ -432,13 +457,10 @@ const knobs = ref<BasicKnobs>({
 	postForecastRunId: props.node.state.postForecastRunId ?? '',
 	optimizationRunId: props.node.state.optimizationRunId ?? '',
 	selectedInterventionVariables: props.node.state.selectedInterventionVariables ?? [],
-	selectedSimulationVariables: props.node.state.selectedSimulationVariables ?? []
+	selectedSimulationVariables: props.node.state.selectedSimulationVariables ?? [],
+	constraintGroups: props.node.state.constraintGroups ?? [],
+	interventionPolicyGroups: props.node.state.interventionPolicyGroups ?? []
 });
-
-const criteriaTooltip = 'TODO';
-const interventionPolicyToolTip = 'TODO';
-const optimizeSettingsToolTip = 'TODO';
-const outputSettingsToolTip = 'TODO';
 
 const summaryCheckbox = ref(true);
 
@@ -446,67 +468,43 @@ const successDisplayChartsCheckbox = ref(true);
 const interventionsDisplayChartsCheckbox = ref(true);
 const simulationDisplayChartsCheckbox = ref(true);
 
-const modelConfigName = ref<string>('');
-const modelConfigDesc = ref<string>('');
 const showSaveDataDialog = ref<boolean>(false);
+const showSaveInterventionPolicy = ref<boolean>(false);
 
 const outputPanel = ref(null);
-const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+const chartSize = useDrilldownChartSize(outputPanel);
 const cancelRunId = computed(() => props.node.state.inProgressPostForecastId || props.node.state.inProgressOptimizeId);
 
-const isSaveDisabled = computed<boolean>(() =>
-	isSaveDatasetDisabled(props.node.state.postForecastRunId, useProjects().activeProject.value?.id)
+const activePolicyGroups = computed(() =>
+	knobs.value.interventionPolicyGroups.filter((ele) => !!ele.relativeImportance)
 );
 
-const activePolicyGroups = computed(() => props.node.state.interventionPolicyGroups.filter((ele) => ele.isActive));
-
-const inactivePolicyGroups = computed(() => props.node.state.interventionPolicyGroups.filter((ele) => !ele.isActive));
+const inactivePolicyGroups = computed(() =>
+	knobs.value.interventionPolicyGroups.filter((ele) => !ele.relativeImportance)
+);
 let pyciemssMap: Record<string, string> = {};
-
-const menuItems = computed(() => [
-	{
-		label: 'Save as a new model configuration',
-		icon: 'pi pi-pencil',
-		disabled: modelConfigName.value === '',
-		command: () => {
-			showModelModal.value = true;
-		}
-	},
-	{
-		label: 'Save as new dataset',
-		icon: 'pi pi-pencil',
-		disabled: isSaveDisabled,
-		command: () => {
-			showSaveDataDialog.value = true;
-		}
-	}
-]);
 
 const showSpinner = computed<boolean>(
 	() => props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressPostForecastId !== ''
 );
 
-const showModelModal = ref(false);
-const displayOptimizationResultMessage = ref(true);
-
-const outputs = computed(() => {
-	if (!_.isEmpty(props.node.outputs)) {
-		return [
-			{
-				label: 'Select an output',
-				items: props.node.outputs
-			}
-		];
-	}
-	return [];
+const datasetId = computed(() => {
+	if (!selectedOutputId.value) return '';
+	const output = props.node.outputs.find((o) => o.id === selectedOutputId.value);
+	return output?.value?.[0]?.datasetId ?? '';
 });
 
-const isRunDisabled = computed(
-	() =>
-		!props.node.state.constraintGroups?.at(0)?.targetVariable ||
-		props.node.state.interventionPolicyGroups.length === 0 ||
+const displayOptimizationResultMessage = ref(true);
+
+const isRunDisabled = computed(() => {
+	const activeConstraintGroups = knobs.value.constraintGroups.filter((ele) => ele.isActive);
+	return (
+		activeConstraintGroups.length === 0 ||
+		!activeConstraintGroups.every((ele) => ele.targetVariable) ||
+		knobs.value.interventionPolicyGroups.length === 0 ||
 		activePolicyGroups.value.length <= 0
-);
+	);
+});
 
 const presetType = computed(() => {
 	if (
@@ -567,35 +565,19 @@ const onSelection = (id: string) => {
 };
 
 const updateInterventionPolicyGroupForm = (index: number, config: InterventionPolicyGroupForm) => {
-	const state = _.cloneDeep(props.node.state);
-	if (!state.interventionPolicyGroups) return;
-
-	state.interventionPolicyGroups[index] = config;
-	emit('update-state', state);
+	knobs.value.interventionPolicyGroups[index] = config;
 };
 
 const addCriterionGroupForm = () => {
-	const state = _.cloneDeep(props.node.state);
-	if (!state.constraintGroups) return;
-
-	state.constraintGroups.push(defaultCriterion);
-	emit('update-state', state);
+	knobs.value.constraintGroups.push(defaultCriterion);
 };
 
 const deleteCriterionGroupForm = (index: number) => {
-	const state = _.cloneDeep(props.node.state);
-	if (!state.constraintGroups) return;
-
-	state.constraintGroups.splice(index, 1);
-	emit('update-state', state);
+	knobs.value.constraintGroups.splice(index, 1);
 };
 
 const updateCriterionGroupForm = (index: number, config: Criterion) => {
-	const state = _.cloneDeep(props.node.state);
-	if (!state.constraintGroups) return;
-
-	state.constraintGroups[index] = config;
-	emit('update-state', state);
+	knobs.value.constraintGroups[index] = config;
 };
 
 const toggleAdditionalOptions = () => {
@@ -679,21 +661,25 @@ const initialize = async () => {
 const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => {
 	const state = _.cloneDeep(props.node.state);
 	// If already set + not changed since set, do not reset.
-	if (state.interventionPolicyGroups.length > 0 && state.interventionPolicyGroups[0].id === interventionPolicy.id) {
+	if (
+		knobs.value.interventionPolicyGroups.length > 0 &&
+		knobs.value.interventionPolicyGroups[0].id === interventionPolicy.id
+	) {
 		return;
 	}
 	state.interventionPolicyId = interventionPolicy.id ?? '';
-	state.interventionPolicyGroups = []; // Reset prior to populating.
+
+	knobs.value.interventionPolicyGroups = []; // Reset prior to populating.
 	if (interventionPolicy.interventions && interventionPolicy.interventions.length > 0) {
 		interventionPolicy.interventions.forEach((intervention) => {
 			const isNotActive = intervention.dynamicInterventions?.length > 0 || intervention.staticInterventions?.length > 1;
 			const newIntervention = _.cloneDeep(blankInterventionPolicyGroup);
 			newIntervention.id = interventionPolicy.id;
 			newIntervention.intervention = intervention;
-			newIntervention.isActive = !isNotActive;
+			newIntervention.relativeImportance = isNotActive ? 0 : 5;
 			newIntervention.startTimeGuess = intervention.staticInterventions[0]?.timestep;
 			newIntervention.initialGuessValue = intervention.staticInterventions[0]?.value;
-			state.interventionPolicyGroups.push(newIntervention);
+			knobs.value.interventionPolicyGroups.push(newIntervention);
 		});
 	}
 	emit('update-state', state);
@@ -713,12 +699,15 @@ const runOptimize = async () => {
 	const listBoundsInterventions: number[][] = [];
 	const initialGuess: number[] = [];
 	const objectiveFunctionOption: string[] = [];
+	const relativeImportance: number[] = [];
 
 	activePolicyGroups.value.forEach((ele) => {
-		paramNames.push(ele.intervention.appliedTo);
+		// Only allowed to optimize on interventions that arent grouped aka staticInterventions' length is 1
+		paramNames.push(ele.intervention.staticInterventions[0].appliedTo);
 		paramValues.push(ele.intervention.staticInterventions[0].value);
 		startTime.push(ele.intervention.staticInterventions[0].timestep);
 		objectiveFunctionOption.push(ele.objectiveFunctionOption);
+		relativeImportance.push(ele.relativeImportance);
 
 		if (ele.optimizationType === OptimizationInterventionObjective.startTime) {
 			initialGuess.push(ele.startTimeGuess);
@@ -739,7 +728,7 @@ const runOptimize = async () => {
 	});
 	// At the moment we only accept one intervention type. Pyciemss, pyciemss-service and this will all need to be updated.
 	// https://github.com/DARPA-ASKEM/terarium/issues/3909
-	const interventionType = props.node.state.interventionPolicyGroups[0].optimizationType;
+	const interventionType = knobs.value.interventionPolicyGroups[0].optimizationType;
 
 	// These are interventions to be optimized over.
 	const optimizeInterventions: OptimizeInterventions = {
@@ -748,19 +737,26 @@ const runOptimize = async () => {
 		startTime,
 		paramValues,
 		initialGuess,
-		objectiveFunctionOption
+		objectiveFunctionOption,
+		relativeImportance
 	};
 
 	// These are interventions to be considered but not optimized over.
 	const fixedInterventions: Intervention[] = _.cloneDeep(inactivePolicyGroups.value.map((ele) => ele.intervention));
 
-	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
-	// The method should be a list but pyciemss + pyciemss service is not yet ready for this.
-	const qoi: OptimizeQoi = {
-		contexts: props.node.state.constraintGroups.map((ele) => ele.targetVariable),
-		method: props.node.state.constraintGroups[0].qoiMethod
-	};
+	const qois: OptimizeQoi[] = [];
+	const activeConstraintGroups = knobs.value.constraintGroups.filter((ele) => ele.isActive);
+	activeConstraintGroups.forEach((constraintGroup) =>
+		qois.push({
+			contexts: [constraintGroup.targetVariable],
+			method: constraintGroup.qoiMethod,
+			riskBound: constraintGroup.threshold,
+			isMinimized: constraintGroup.isMinimized
+		})
+	);
 
+	// riskTolerance to get alpha and divide by 100 to turn into a percent for pyciemss-service.
+	const alphas: number[] = activeConstraintGroups.map((ele) => ele.riskTolerance / 100);
 	const optimizePayload: OptimizeRequestCiemss = {
 		userId: 'no_user_provided',
 		engine: 'ciemss',
@@ -771,15 +767,13 @@ const runOptimize = async () => {
 		},
 		optimizeInterventions,
 		fixedInterventions,
-		qoi,
-		riskBound: props.node.state.constraintGroups[0].threshold, // TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
+		qoi: qois,
 		boundsInterventions: listBoundsInterventions,
 		extra: {
-			isMinimized: props.node.state.constraintGroups[0].isMinimized,
 			numSamples: knobs.value.numSamples,
 			maxiter: knobs.value.maxiter,
 			maxfeval: knobs.value.maxfeval,
-			alpha: props.node.state.constraintGroups[0].riskTolerance / 100, // riskTolerance to get alpha and divide by 100 to turn into a percent for pyciemss-service.
+			alpha: alphas,
 			solverMethod: knobs.value.solverMethod,
 			solverStepSize: 1
 		}
@@ -801,14 +795,18 @@ const setOutputSettingDefaults = () => {
 	const selectedSimulationVariables: Array<string> = [];
 
 	if (!knobs.value.selectedInterventionVariables.length) {
-		props.node.state.interventionPolicyGroups.forEach((intervention) =>
-			selectedInterventionVariables.push(intervention.intervention.appliedTo)
-		);
-		knobs.value.selectedInterventionVariables = [...new Set(selectedInterventionVariables)];
+		activePolicyGroups.value.forEach((ele) => {
+			ele.intervention.staticInterventions.forEach((staticInt) =>
+				selectedInterventionVariables.push(staticInt.appliedTo)
+			);
+			ele.intervention.dynamicInterventions.forEach((dynamicsInt) =>
+				selectedInterventionVariables.push(dynamicsInt.appliedTo)
+			);
+		});
 	}
 
 	if (!knobs.value.selectedSimulationVariables.length) {
-		props.node.state.constraintGroups.forEach((constraint) => {
+		knobs.value.constraintGroups.forEach((constraint) => {
 			if (constraint.targetVariable) {
 				// Use modelStateAndObsOptions to map from value -> label as simulation selection uses S not S_State
 				const userSelection = modelStateAndObsOptions.value.find(
@@ -823,31 +821,6 @@ const setOutputSettingDefaults = () => {
 			knobs.value.selectedSimulationVariables = [...new Set(selectedSimulationVariables)];
 		}
 	}
-};
-
-const saveModelConfiguration = async () => {
-	if (!modelConfiguration.value) return;
-
-	if (!knobs.value.optimizationRunId) {
-		logger.error('No optimization run to create model configuration from');
-	}
-
-	// TODO: use new interventions
-	// const optRunId = knobs.value.optimizationRunId;
-	// const interventions = await getOptimizedInterventions(optRunId);
-	const configClone = cloneDeep(modelConfiguration.value);
-
-	// setInterventions(configClone, interventions);
-	configClone.name = modelConfigName.value;
-	configClone.description = modelConfigDesc.value;
-	const data = await createModelConfiguration(configClone);
-	if (!data) {
-		logger.error('Failed to create model configuration');
-		return;
-	}
-
-	logger.success('Created model configuration');
-	showModelModal.value = false;
 };
 
 const setOutputValues = async () => {
@@ -875,39 +848,15 @@ const setOutputValues = async () => {
 	optimizeRequestPayload.value = (await getSimulation(knobs.value.optimizationRunId))?.executionPayload || '';
 };
 
-const preProcessedInterventionsData = computed<Dictionary<{ name: string; value: number; time: number }[]>>(() => {
-	const state = _.cloneDeep(props.node.state);
-
+const preProcessedInterventionsData = computed<Dictionary<ReturnType<typeof flattenInterventionData>>>(() => {
 	// Combine before and after interventions
 	const combinedInterventions = [
-		...state.interventionPolicyGroups.flatMap((group) =>
-			group.intervention.staticInterventions.map((intervention) => ({
-				appliedTo: group.intervention.appliedTo,
-				name: group.intervention.name,
-				value: intervention.value,
-				time: intervention.timestep
-			}))
-		),
-		...(optimizedInterventionPolicy.value?.interventions.flatMap((intervention) =>
-			intervention.staticInterventions.map((staticIntervention) => ({
-				appliedTo: intervention.appliedTo,
-				name: intervention.name,
-				value: staticIntervention.value,
-				time: staticIntervention.timestep
-			}))
-		) || [])
+		...knobs.value.interventionPolicyGroups.flatMap((group) => group.intervention),
+		...(optimizedInterventionPolicy.value?.interventions || [])
 	];
 
-	// Group by appliedTo and map to exclude 'appliedTo' from final objects
-	const groupedAndMapped = _.mapValues(_.groupBy(combinedInterventions, 'appliedTo'), (interventions) =>
-		interventions.map(({ name, value, time }) => ({
-			name,
-			value,
-			time
-		}))
-	);
-
-	return groupedAndMapped;
+	// Group by appliedTo
+	return _.groupBy(flattenInterventionData(combinedInterventions), 'appliedTo');
 });
 
 onMounted(async () => {
@@ -917,23 +866,25 @@ onMounted(async () => {
 const preparedSuccessCriteriaCharts = computed(() => {
 	const postForecastRunId = props.node.state.postForecastRunId;
 
-	return props.node.state.constraintGroups.map((constraint) =>
-		createSuccessCriteriaChart(
-			riskResults.value[postForecastRunId],
-			constraint.targetVariable,
-			constraint.threshold,
-			constraint.isMinimized,
-			constraint.riskTolerance,
-			{
-				title: constraint.name,
-				width: chartSize.value.width,
-				height: chartSize.value.height,
-				xAxisTitle: 'Number of samples',
-				yAxisTitle: `${constraint.isMinimized ? 'Max' : 'Min'} value of ${constraint.targetVariable} at all timepoints`,
-				legend: true
-			}
-		)
-	);
+	return knobs.value.constraintGroups
+		.filter((ele) => ele.isActive)
+		.map((constraint) =>
+			createSuccessCriteriaChart(
+				riskResults.value[postForecastRunId],
+				constraint.targetVariable,
+				constraint.threshold,
+				constraint.isMinimized,
+				constraint.riskTolerance,
+				{
+					title: constraint.name,
+					width: chartSize.value.width,
+					height: chartSize.value.height,
+					xAxisTitle: 'Number of samples',
+					yAxisTitle: `${constraint.isMinimized ? 'Max' : 'Min'} value of ${constraint.targetVariable} at all timepoints`,
+					legend: true
+				}
+			)
+		);
 });
 
 // Creates forecast charts for interventions and simulation charts, based on the selected variables
@@ -1022,6 +973,29 @@ const preparedForecastCharts = computed(() => {
 	return charts;
 });
 
+// refresh policy
+const onSaveForReuse = async () => {
+	const policyId = props.node.state.optimizedInterventionPolicyId;
+	if (policyId) {
+		optimizedInterventionPolicy.value = await getInterventionPolicyById(policyId);
+	}
+};
+
+// reset drilldown state
+const resetState = () => {
+	confirm.require({
+		header: 'Reset to original optimized state',
+		message: 'Are you sure you want to reset the state?',
+		accept: () => {
+			// Retore to the original output port state
+			const outputPort = props.node.outputs.find((output) => output.id === selectedOutputId.value);
+			if (outputPort) {
+				knobs.value = cloneDeep(outputPort.state as OptimizeCiemssOperationState);
+			}
+		}
+	});
+};
+
 watch(
 	() => knobs.value,
 	async () => {
@@ -1036,6 +1010,8 @@ watch(
 		state.optimizationRunId = knobs.value.optimizationRunId;
 		state.selectedInterventionVariables = knobs.value.selectedInterventionVariables;
 		state.selectedSimulationVariables = knobs.value.selectedSimulationVariables;
+		state.constraintGroups = knobs.value.constraintGroups;
+		state.interventionPolicyGroups = knobs.value.interventionPolicyGroups;
 		emit('update-state', state);
 	},
 	{ deep: true }
@@ -1050,9 +1026,7 @@ watch(
 			initialize();
 			if (props.node.state.postForecastRunId !== '' && props.node.state.preForecastRunId !== '') {
 				// The run has finished
-				knobs.value.optimizationRunId = props.node.state.optimizationRunId;
-				knobs.value.postForecastRunId = props.node.state.postForecastRunId;
-				knobs.value.preForecastRunId = props.node.state.preForecastRunId;
+				knobs.value = cloneDeep(props.node.state);
 				setOutputValues();
 			}
 		}
@@ -1062,18 +1036,62 @@ watch(
 </script>
 
 <style scoped>
+.wizard .toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--gap-1) var(--gap);
+	gap: var(--gap-2);
+}
+
+.spinner-message {
+	align-items: center;
+	align-self: center;
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-2);
+	margin-top: 15rem;
+	text-align: center;
+}
+
+.info-circle {
+	color: var(--text-color-secondary);
+	font-size: var(--font-caption);
+	margin-left: var(--gap-1);
+}
+.additional-options {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--gap-1);
+	padding: 0 var(--gap-2) var(--gap);
+	background: var(--surface-200);
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+}
+
+/* Override grid template so output expands when sidebar is closed */
+.overlay-container:deep(section.scale main) {
+	grid-template-columns: auto 1fr;
+}
+
 .result-message-grid {
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap-0-5);
 	/* Adjust the gap between rows as needed */
 	font-size: var(--font-caption);
-	background-color: var(--surface-glass);
+	background-color: var(--surface-50);
 	border: solid 1px var(--surface-border-light);
 	border-radius: var(--border-radius);
 	padding: var(--gap-small);
 }
+/* Select button icon fix */
+.select-button .p-button-icon-left {
+	color: var(--text-color-secondary);
+}
 
+/* Debugging message styles */
 .result-message-row {
 	display: flex;
 	flex-direction: row;
@@ -1082,8 +1100,7 @@ watch(
 }
 
 .label {
-	font-weight: bold;
-	width: 210px;
+	font-weight: var(--font-weight-semibold);
 	/* Adjust the width of the label column as needed */
 }
 
@@ -1104,14 +1121,10 @@ watch(
 }
 
 .form-section {
-	background-color: var(--surface-50);
-	border-radius: var(--border-radius-medium);
-	box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.25) inset;
 	display: flex;
 	flex-direction: column;
 	flex-grow: 1;
 	gap: var(--gap-1);
-	margin: 0 var(--gap) var(--gap) var(--gap);
 	padding: var(--gap);
 }
 
@@ -1153,5 +1166,16 @@ watch(
 
 .center-label {
 	align-content: center;
+}
+
+/* Notebook */
+.notebook-section {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap);
+	width: calc(50vw - 4rem);
+	padding: var(--gap);
+	background: var(--surface-100);
+	border-right: 1px solid var(--surface-border-light);
 }
 </style>

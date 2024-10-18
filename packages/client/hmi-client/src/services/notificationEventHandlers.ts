@@ -1,3 +1,11 @@
+import { useProjects } from '@/composables/project';
+import {
+	CloneProjectStatusUpdate,
+	ExtractionStatusUpdate,
+	NotificationItem,
+	NotificationItemStatus
+} from '@/types/common';
+import { ProjectPages } from '@/types/Project';
 import {
 	AssetType,
 	ClientEvent,
@@ -10,11 +18,10 @@ import {
 	TaskStatus
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
-import { Ref } from 'vue';
-import { ExtractionStatusUpdate, NotificationItem, NotificationItemStatus } from '@/types/common';
 import { snakeToCapitalSentence } from '@/utils/text';
-import { ProjectPages } from '@/types/Project';
+import { Ref } from 'vue';
 import { getDocumentAsset } from './document-assets';
+import { getModel } from './model';
 import { getWorkflow } from './workflow';
 
 type NotificationEventData = TaskResponse | StatusUpdate<unknown>;
@@ -129,6 +136,15 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 	};
 
 	// Register handlers for each client event type
+	registerHandler<CloneProjectStatusUpdate>(ClientEventType.CloneProject, (event, created) => {
+		created.assetId = event.data.data.projectId;
+		created.typeDisplayName = 'Cloned Project';
+		useProjects()
+			.get(created.assetId)
+			.then((project) => {
+				created.sourceName = project?.name ?? 'Source Project';
+			});
+	});
 
 	registerHandler<ExtractionStatusUpdate>(ClientEventType.ExtractionPdf, (event, created) => {
 		created.assetId = event.data.data.documentId;
@@ -140,15 +156,15 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 	});
 	registerHandler<TaskResponse>(ClientEventType.TaskGollmModelCard, (event, created) => {
 		created.supportCancel = true;
-		created.assetId = event.data.additionalProperties.documentId as string;
-		created.pageType = AssetType.Document;
-		getDocumentAsset(created.assetId, created.projectId).then((document) =>
-			Object.assign(created, { sourceName: document?.name || '' })
+		created.assetId = event.data.additionalProperties.modelId as string;
+		created.pageType = AssetType.Model;
+		getModel(created.assetId, created.projectId).then((model) =>
+			Object.assign(created, { sourceName: model?.name || '' })
 		);
 	});
-	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureModel, (event, created) => {
+	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureModelFromDocument, (event, created) => {
 		created.supportCancel = true;
-		created.sourceName = 'Configure model';
+		created.sourceName = 'Model Configuration from Document';
 		created.assetId = event.data.additionalProperties.workflowId as string;
 		created.pageType = AssetType.Workflow;
 		created.nodeId = event.data.additionalProperties.nodeId as string;
@@ -156,9 +172,9 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 			Object.assign(created, { context: workflow?.name || '' })
 		);
 	});
-	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureFromDataset, (event, created) => {
+	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureModelFromDataset, (event, created) => {
 		created.supportCancel = true;
-		created.sourceName = 'Configure model';
+		created.sourceName = 'Model Configuration from Dataset';
 		created.assetId = event.data.additionalProperties.workflowId as string;
 		created.pageType = AssetType.Workflow;
 		created.nodeId = event.data.additionalProperties.nodeId as string;
@@ -169,6 +185,16 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 	registerHandler<TaskResponse>(ClientEventType.TaskGollmCompareModel, (event, created) => {
 		created.supportCancel = true;
 		created.sourceName = 'Compare models';
+		created.assetId = event.data.additionalProperties.workflowId as string;
+		created.pageType = AssetType.Workflow;
+		created.nodeId = event.data.additionalProperties.nodeId as string;
+		getWorkflow(created.assetId, created.projectId).then((workflow) =>
+			Object.assign(created, { context: workflow?.name || '' })
+		);
+	});
+	registerHandler<TaskResponse>(ClientEventType.TaskGollmInterventionsFromDocument, (event, created) => {
+		created.supportCancel = true;
+		created.sourceName = 'Intervention Policies from Document';
 		created.assetId = event.data.additionalProperties.workflowId as string;
 		created.pageType = AssetType.Workflow;
 		created.nodeId = event.data.additionalProperties.nodeId as string;

@@ -2,8 +2,10 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.persistence.Lob;
 import java.io.Serial;
 import java.io.Serializable;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,6 +13,7 @@ import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.JdbcTypeCode;
 import software.uncharted.terarium.hmiserver.annotations.AMRSchemaType;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
@@ -76,6 +79,56 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 	@TSOptional
 	JsonNode source;
 
+	@TSOptional
+	@Lob
+	@JdbcTypeCode(Types.BINARY)
+	private byte[] description;
+
+	public void retainMetadataFields(final ModelMetadata other) {
+		if (description == null) {
+			description = other.description;
+		}
+		if (gollmCard == null) {
+			gollmCard = other.gollmCard;
+		}
+		if (gollmExtractions == null) {
+			gollmExtractions = other.gollmExtractions;
+		}
+		if (provenance == null) {
+			provenance = other.provenance;
+		}
+		if (templateCard == null) {
+			templateCard = other.templateCard;
+		}
+		if (codeId == null) {
+			codeId = other.codeId;
+		}
+		if (source == null) {
+			source = other.source;
+		}
+		if (processedBy == null) {
+			processedBy = other.processedBy;
+		}
+		if (variableStatements == null) {
+			variableStatements = other.variableStatements;
+		}
+		if (annotations == null) {
+			annotations = other.annotations;
+		}
+		if (attributes == null) {
+			attributes = other.attributes;
+		}
+		if (initials == null) {
+			initials = other.initials;
+		}
+		if (parameters == null) {
+			parameters = other.parameters;
+		}
+		if (card == null) {
+			card = other.card;
+		}
+	}
+
 	@Override
 	public ModelMetadata clone() {
 		final ModelMetadata clone = (ModelMetadata) super.clone();
@@ -84,7 +137,7 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 
 		if (this.variableStatements != null) {
 			clone.variableStatements = new ArrayList<>();
-			for (VariableStatement variableStatement : this.variableStatements) {
+			for (final VariableStatement variableStatement : this.variableStatements) {
 				clone.variableStatements.add(variableStatement.clone());
 			}
 		}
@@ -95,7 +148,7 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 
 		if (this.attributes != null) {
 			clone.attributes = new ArrayList<>();
-			for (JsonNode attribute : this.attributes) {
+			for (final JsonNode attribute : this.attributes) {
 				clone.attributes.add(attribute.deepCopy());
 			}
 		}

@@ -43,7 +43,7 @@
 						<Chip
 							v-for="(input, index) in node.inputs.filter((input) => input.value)"
 							:key="index"
-							:label="input.label"
+							:label="useProjects().getAssetName(input.value?.[0]) || input.label"
 						>
 							<template #icon>
 								<tera-operator-port-icon v-if="input.type" :portType="input.type" />
@@ -59,10 +59,6 @@
 							:output="selectedOutputId"
 							@update:selection="(e) => emit('update:selection', e)"
 						/>
-						<section v-if="!isEmpty(menuItems)" class="mx-2">
-							<Button icon="pi pi-ellipsis-v" rounded text @click.stop="toggleEllipsisMenu" />
-							<Menu ref="ellipsisMenu" :model="menuItems" popup />
-						</section>
 					</template>
 				</template>
 				<template #actions>
@@ -85,6 +81,7 @@
 						<slot name="preview" />
 					</section>
 				</tera-columnar-panel>
+				<slot name="sidebar-right" />
 			</main>
 			<footer v-if="slots.footer">
 				<slot name="footer" />
@@ -138,10 +135,10 @@ import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotati
 import TeraOperatorPortIcon from '@/components/operator/tera-operator-port-icon.vue';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import TeraTooltip from '@/components/widgets/tera-tooltip.vue';
+import { useProjects } from '@/composables/project';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
-	menuItems?: any[];
 	title?: string;
 	tooltip?: string;
 	isDraft?: boolean;
@@ -152,7 +149,7 @@ const props = defineProps<{
 	hideDropdown?: boolean;
 }>();
 
-const emit = defineEmits(['on-close-clicked', 'update-state', 'update:selection', 'update-output-port']);
+const emit = defineEmits(['on-close-clicked', 'update-state', 'update:selection']);
 
 const slots = useSlots();
 
@@ -197,9 +194,6 @@ const outputOptions = computed(() => {
 		}
 	];
 });
-
-const ellipsisMenu = ref();
-const toggleEllipsisMenu = (event: MouseEvent) => ellipsisMenu.value.toggle(event);
 
 // Drilldown navigation and animations
 const leftChevronButton = ref<ComponentPublicInstance<typeof Button> | null>(null);

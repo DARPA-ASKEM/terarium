@@ -22,6 +22,7 @@ import {
 	WorkflowTransformations,
 	Transform
 } from '@/types/workflow';
+import { useProjects } from '@/composables/project';
 
 /**
  * A wrapper class around the workflow data struture to make it easier
@@ -48,7 +49,18 @@ export class WorkflowWrapper {
 		return this.wf;
 	}
 
-	update(updatedWF: Workflow) {
+	/**
+	 * FIXME: Need to split workflow into different categories and sending the commands
+	 * instead of the result. It is possible here to become de-synced: eg state-update-response
+	 * comes in as we are about to change the output ports.
+	 *
+	 * delayUpdate is a used to indicate there are actions in progress, and an update from
+	 * the DB can potentially overwrite what the user had already done that have yet to be flushed
+	 * to the backend. In situation like this, we will update the version (so our subsequent updates are
+	 * not rejected) and skip the rest. For example, the user may be dragging an operator on the
+	 * canvas when the db upate comes in.
+	 * */
+	update(updatedWF: Workflow, delayUpdate: boolean) {
 		if (updatedWF.id !== this.wf.id) {
 			throw new Error(`Workflow failed, inconsistent ids updated=${updatedWF.id} self=${this.wf.id}`);
 		}
@@ -59,6 +71,28 @@ export class WorkflowWrapper {
 		const edges = this.wf.edges;
 		const updatedNodeMap = new Map<string, WorkflowNode<any>>(updatedWF.nodes.map((n) => [n.id, n]));
 		const updatedEdgeMap = new Map<string, WorkflowEdge>(updatedWF.edges.map((e) => [e.id, e]));
+
+		if (delayUpdate) {
+			for (let i = 0; i < nodes.length; i++) {
+				const nodeId = nodes[i].id;
+				const updated = updatedNodeMap.get(nodeId);
+				if (updated) {
+					if (!nodes[i].version || (updated.version as number) > (nodes[i].version as number)) {
+						nodes[i].version = updated.version;
+					}
+				}
+			}
+			for (let i = 0; i < edges.length; i++) {
+				const edgeId = edges[i].id;
+				const updated = updatedEdgeMap.get(edgeId);
+				if (updated) {
+					if (!edges[i].version || (updated.version as number) > (edges[i].version as number)) {
+						edges[i].version = updated.version;
+					}
+				}
+			}
+			return;
+		}
 
 		// Update and deletes
 		for (let i = 0; i < nodes.length; i++) {
@@ -84,7 +118,6 @@ export class WorkflowWrapper {
 					if (!_.isEqual(nodes[i].state, updated.state)) {
 						nodes[i].state = updated.state;
 					}
-					// nodes[i] = Object.assign(nodes[i], updated);
 				}
 				updatedNodeMap.delete(nodeId);
 			}
@@ -93,7 +126,7 @@ export class WorkflowWrapper {
 			const edgeId = edges[i].id;
 			const updated = updatedEdgeMap.get(edgeId);
 			if (updated) {
-				if ((updated.version as number) > (edges[i].version as number)) {
+				if (!edges[i].version || (updated.version as number) > (edges[i].version as number)) {
 					edges[i] = Object.assign(edges[i], updated);
 				}
 				updatedEdgeMap.delete(edgeId);
@@ -138,9 +171,6 @@ export class WorkflowWrapper {
 		if (node) {
 			node.isDeleted = true;
 		}
-
-		// TODO: option Remove the node
-		// wf.nodes = wf.nodes.filter((node) => node.id !== id);
 	}
 
 	removeEdge(id: string) {
@@ -169,9 +199,6 @@ export class WorkflowWrapper {
 			edge.isDeleted = true;
 		}
 
-		// TODO: option Edge re-assignment
-		// wf.edges = wf.edges.filter((edge) => edge.id !== id);
-
 		// If there are no more references reset the connected status of the source node
 		if (_.isEmpty(this.getEdges().filter((e) => e.source === edgeToRemove.source))) {
 			const sourceNode = this.wf.nodes.find((d) => d.id === edgeToRemove.source);
@@ -194,6 +221,8 @@ export class WorkflowWrapper {
 			imageUrl: op.imageUrl,
 			x: pos.x,
 			y: pos.y,
+
+			active: null,
 			state: options.state ?? {},
 
 			inputs: op.inputs.map((port) => ({
@@ -369,9 +398,12 @@ export class WorkflowWrapper {
 			});
 		}
 
-		// 3. Collect the upstream edges of the anchor
-		const upstreamEdges = this.getEdges().filter((edge) => edge.target === anchor.id);
+		// 3. Collect the upstream edges
+		const targetIds = copyNodes.map((n) => n.id);
+		const upstreamEdges = this.getEdges().filter((edge) => targetIds.includes(edge.target as string));
+		const anchorUpstreamEdges = this.getEdges().filter((edge) => edge.target === anchor.id);
 		upstreamEdges.forEach((edge) => {
+			if (copyEdges.find((copyEdge) => copyEdge.id === edge.id)) return;
 			copyEdges.push(_.cloneDeep(edge));
 		});
 
@@ -391,8 +423,8 @@ export class WorkflowWrapper {
 		});
 
 		copyEdges.forEach((edge) => {
-			// Don't replace upstream edge sources, they are still valid
-			if (upstreamEdges.map((e) => e.source).includes(edge.source) === false) {
+			// Don't replace anchor upstream edge sources, they are still valid
+			if (anchorUpstreamEdges.map((e) => e.source).includes(edge.source) === false) {
 				edge.source = registry.get(edge.source as string);
 				edge.sourcePortId = registry.get(edge.sourcePortId as string);
 			}
@@ -409,7 +441,7 @@ export class WorkflowWrapper {
 				port.id = registry.get(port.id) as string;
 			});
 			if (node.active) {
-				node.active = registry.get(node.active);
+				node.active = registry.get(node.active) || null;
 			}
 		});
 
@@ -420,10 +452,12 @@ export class WorkflowWrapper {
 		});
 		copyEdges.forEach((edge) => {
 			if (!edge.points || edge.points.length < 2) return;
-			if (upstreamEdges.map((e) => e.source).includes(edge.source) === false) {
+			if (copyNodes.map((n) => n.id).includes(edge.source as string) === true) {
 				edge.points[0].y += offset;
 			}
-			edge.points[edge.points.length - 1].y += offset;
+			if (copyNodes.map((n) => n.id).includes(edge.target as string) === true) {
+				edge.points[edge.points.length - 1].y += offset;
+			}
 		});
 
 		// 6. Finally put everything back into the workflow
@@ -478,8 +512,35 @@ export class WorkflowWrapper {
 				const targetPort = targetNode.inputs.find((port) => port.id === edge.targetPortId);
 				if (!targetPort) return;
 				edge.sourcePortId = selected.id; // Sync edge source port to selected output
+
+				/**
+				 * Handle compound type unwrangling, this is very similar to what
+				 * we do in addEdge(...) but s already connected.
+				 * */
+				const selectedTypes = selected.type.split('|').map((d) => d.trim());
+				const allowedInputTypes = targetPort.type.split('|').map((d) => d.trim());
+				const intersectionTypes = _.intersection(selectedTypes, allowedInputTypes);
+
+				// Sanity check: multiple matches found
+				if (intersectionTypes.length > 1) {
+					console.error(`Ambiguous matching types [${selectedTypes}] to [${allowedInputTypes}]`);
+					return;
+				}
+				// Sanity check: no matches found
+				if (intersectionTypes.length === 0) {
+					return;
+				}
+
+				if (selectedTypes.length > 1) {
+					const concreteType = intersectionTypes[0];
+					if (selected.value) {
+						targetPort.value = [selected.value[0][concreteType]];
+					}
+				} else {
+					targetPort.value = selected.value; // mark
+				}
+
 				targetPort.label = selected.label;
-				targetPort.value = selected.value;
 			}
 
 			// Collect node cache
@@ -577,7 +638,6 @@ export const iconToOperatorMap = new Map<string, string>([
 	[WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS, 'pi pi-chart-line'],
 	[WorkflowOperationTypes.DATASET_TRANSFORMER, 'pi pi-table'],
 	[WorkflowOperationTypes.SUBSET_DATA, 'pi pi-table'],
-	[WorkflowOperationTypes.MODEL_TRANSFORMER, 'pi pi-share-alt'],
 	[WorkflowOperationTypes.FUNMAN, 'pi pi-cog'],
 	[WorkflowOperationTypes.CODE, 'pi pi-code'],
 	[WorkflowOperationTypes.MODEL_COMPARISON, 'pi pi-share-alt'],
@@ -617,6 +677,20 @@ export function getPortLabel({ label, type, isOptional }: WorkflowPort) {
 	return portLabel;
 }
 
+export function getOutputLabel(outputs: WorkflowOutput<any>[], id: string) {
+	const selectedOutput = outputs.find((output) => output.id === id);
+	if (!selectedOutput) return '';
+
+	// multiple output types, choose first name to use as label arbitrarily
+	if (selectedOutput.type.includes('|')) {
+		const outputType = selectedOutput.type.split('|');
+		return useProjects().getAssetName(selectedOutput.value?.[0]?.[outputType?.[0]]) || selectedOutput.label;
+	}
+
+	// default use single output type
+	return useProjects().getAssetName(selectedOutput.value?.[0]) || selectedOutput.label;
+}
+
 // Checker for resource-operators (e.g. model, dataset) that automatically create an output
 // without needing to "run" the operator because we can drag them onto the canvas
 export function canPropagateResource(outputs: WorkflowOutput<any>[]) {
@@ -633,10 +707,10 @@ export const createWorkflow = async (workflow: Workflow) => {
 	return response?.data ?? null;
 };
 
-// Update
-export const updateWorkflow = async (workflow: Workflow) => {
+// Update/save
+export const saveWorkflow = async (workflow: Workflow, projectId?: string) => {
 	const id = workflow.id;
-	const response = await API.put(`/workflows/${id}`, workflow);
+	const response = await API.put(`/workflows/${id}`, workflow, { params: { 'project-id': projectId } });
 	return response?.data ?? null;
 };
 
@@ -733,10 +807,16 @@ export function getActiveOutput(node: WorkflowNode<any>) {
 	return node.outputs.find((o) => o.id === node.active);
 }
 
-export function updateOutputPort(node: WorkflowNode<any>, updatedOutputPort: WorkflowOutput<any>) {
-	let outputPort = node.outputs.find((port) => port.id === updatedOutputPort.id);
-	if (!outputPort) return;
-	outputPort = Object.assign(outputPort, updatedOutputPort);
+/**
+ * Update the output of a node referenced by the output id
+ * @param node
+ * @param updatedOutput
+ */
+export function updateOutput(node: WorkflowNode<any>, updatedOutput: WorkflowOutput<any>) {
+	const foundOutput = node.outputs.find((output) => output.id === updatedOutput.id);
+	if (foundOutput) {
+		Object.assign(foundOutput, updatedOutput);
+	}
 }
 
 // Check if the current-state matches that of the output-state.

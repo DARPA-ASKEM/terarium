@@ -1,6 +1,7 @@
 <template>
 	<Button
-		label="Enrich metadata with AI assistant"
+		label="Enrich metadata"
+		icon="pi pi-sparkles"
 		:loading="isLoading"
 		severity="secondary"
 		outlined
@@ -10,28 +11,26 @@
 		<template #header>
 			<h4>Enrich metadata</h4>
 		</template>
-		<p>
-			The AI assistant can enrich the metadata of this {{ assetType }}. Select a document or generate the information
-			without additional context.
-		</p>
+		<p>The AI assistant can enrich the metadata of this {{ assetType }}.</p>
+		<p>Select a document or generate the information without additional context.</p>
 		<ul>
-			<li v-for="document in documents" :key="document.id">
-				<RadioButton inputId="document.id" name="document.id" v-model="selectedResourceId" :value="document.id" />
-				<label :for="document.id">{{ document.name }}</label>
+			<li>
+				<label for="no-document">
+					<RadioButton inputId="no-document" name="no-document" v-model="selectedResourceId" value="" />
+					Generate information without context
+				</label>
+			</li>
+			<li v-for="document in documents" :key="document.id" :class="document.id ? '' : 'mb-3'">
+				<label :for="document.id">
+					<RadioButton :inputId="document.id" name="document.id" v-model="selectedResourceId" :value="document.id" />
+					{{ document.name }}
+				</label>
 			</li>
 		</ul>
 		<template #footer>
 			<div class="btn-group">
 				<Button label="Cancel" severity="secondary" outlined @click="closeDialog" />
 				<Button label="Enrich" :disabled="isDialogDisabled" @click="confirm" />
-			</div>
-			<!--TODO: Will make sure this works in a second pass-->
-			<div class="flex items-center">
-				<Checkbox v-model="overwriteContent" inputId="overwriteContent" binary />
-				<div class="ml-3">
-					<label for="overwriteContent">Overwrite existing content</label>
-					<p class="text-subdued">If unselected, new content will be appeded</p>
-				</div>
 			</div>
 		</template>
 	</tera-modal>
@@ -40,22 +39,22 @@
 <script setup lang="ts">
 import { extractPDF, extractVariables, profileDataset } from '@/services/knowledge';
 import {
-	RelationshipType,
 	createProvenance,
 	getRelatedArtifacts,
-	mapAssetTypeToProvenanceType
+	mapAssetTypeToProvenanceType,
+	RelationshipType
 } from '@/services/provenance';
-import type { DocumentAsset, TerariumAsset, ProjectAsset } from '@/types/Types';
-import { AssetType, ProvenanceType } from '@/types/Types';
-import { isDocumentAsset } from '@/utils/data-util';
+import type { ClientEvent, DocumentAsset, ProjectAsset, TaskResponse, TerariumAsset } from '@/types/Types';
+import { AssetType, ClientEventType, ProvenanceType, TaskStatus } from '@/types/Types';
+import { isDocumentAsset } from '@/utils/asset';
 import Button from 'primevue/button';
 import RadioButton from 'primevue/radiobutton';
-import Checkbox from 'primevue/checkbox';
 import { computed, ref, watch } from 'vue';
 import { logger } from '@/utils/logger';
-import { modelCard } from '@/services/goLLM';
+import { enrichModelMetadata } from '@/services/goLLM';
 import { useProjects } from '@/composables/project';
 import TeraModal from '@/components/widgets/tera-modal.vue';
+import { useClientEvent } from '@/composables/useClientEvent';
 
 const props = defineProps<{
 	assetType: AssetType;
@@ -63,6 +62,18 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['finished-job']);
+
+// Listen for the task completion event for models
+useClientEvent(ClientEventType.TaskGollmModelCard, (event: ClientEvent<TaskResponse>) => {
+	const { modelId } = event.data?.additionalProperties || {};
+	const { status } = event.data || {};
+
+	if (props.assetType !== AssetType.Model || modelId !== props.assetId) {
+		return;
+	}
+
+	isLoading.value = ![TaskStatus.Success, TaskStatus.Failed, TaskStatus.Cancelled].includes(status);
+});
 
 enum DialogType {
 	ENRICH,
@@ -72,41 +83,24 @@ enum DialogType {
 const dialogType = ref<DialogType>(DialogType.ENRICH);
 const isLoading = ref(false);
 const isModalVisible = ref(false);
-const overwriteContent = ref(false);
 
 const selectedResourceId = ref<string>('');
 const relatedDocuments = ref<Array<{ name: string; id: string }>>([]);
 
-// Disable the dialog action button if no resources are selected
-// and the dialog type is not enrichment
+// Disable the dialog action button if no resources are selected and the dialog type is not enrichment
 const isDialogDisabled = computed(() => {
 	if (dialogType.value === DialogType.ENRICH) return false;
 	return !selectedResourceId.value;
 });
 
-// FIXME: If we are keeping extractions, something like this may help when we add them back in
-// const dialogActionCopy = computed(() => {
-// 	let result: string = '';
-// 	if (dialogType.value === DialogType.ENRICH) {
-// 		result = props.assetType === AssetType.Model ? 'Enrich description' : 'Generate descriptions';
-// 	} else if (dialogType.value === DialogType.EXTRACT) {
-// 		result = 'Extract variables';
-// 	}
-// 	if (isEmpty(selectedResources.value)) {
-// 		return result;
-// 	}
-// 	return `Use Document to ${result.toLowerCase()}`;
-// });
-
-const documents = computed<{ name: string; id: string }[]>(() => [
-	{ name: 'No document', id: '' }, // Empty string is falsey
-	...useProjects()
+const documents = computed<{ name: string; id: string }[]>(() =>
+	useProjects()
 		.getActiveProjectAssets(AssetType.Document)
 		.map((projectAsset: ProjectAsset) => ({
 			name: projectAsset.assetName,
 			id: projectAsset.assetId
 		}))
-]);
+);
 
 function closeDialog() {
 	isModalVisible.value = false;
@@ -114,23 +108,24 @@ function closeDialog() {
 
 const confirm = async () => {
 	isLoading.value = true;
+	closeDialog();
 
+	// Await for enrichment/extraction so once we call finished-job the refetched dataset will have the new data
 	if (dialogType.value === DialogType.ENRICH) {
-		sendForEnrichment();
+		await sendForEnrichment();
 	} else if (dialogType.value === DialogType.EXTRACT) {
-		sendForExtractions();
+		await sendForExtractions();
 	}
 
 	isLoading.value = false;
 	emit('finished-job');
-	await getRelatedDocuments();
-	closeDialog();
+	getRelatedDocuments();
 };
 
 const sendForEnrichment = async () => {
 	// Build enrichment job ids list (profile asset, align model, etc...)
-	if (props.assetType === AssetType.Model) {
-		await modelCard(selectedResourceId.value);
+	if (props.assetId && props.assetType === AssetType.Model) {
+		await enrichModelMetadata(props.assetId, selectedResourceId.value, true);
 	} else if (props.assetType === AssetType.Dataset) {
 		await profileDataset(props.assetId, selectedResourceId.value);
 	}
@@ -192,31 +187,23 @@ ul {
 	gap: var(--gap-2);
 	padding: var(--gap-4) 0;
 
-	& > li {
+	li {
 		display: flex;
 		align-items: center;
-		gap: var(--gap);
 	}
-}
 
-.no-documents {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-}
+	li:first-child {
+		margin-bottom: var(--gap-2);
+	}
 
-.no-documents-img {
-	width: 30%;
-	padding: 10px;
-}
+	label {
+		cursor: pointer;
+	}
 
-.no-documents-text {
-	padding: 5px;
-	font-size: var(--font-body-medium);
-	font-family: var(--font-family);
-	font-weight: 500;
-	color: var(--text-color-secondary);
-	text-align: left;
+	/* Add margin between the input and the copy */
+	label > :last-child {
+		margin-right: var(--gap-2);
+	}
 }
 
 .p-dialog aside > * {
@@ -232,9 +219,5 @@ ul {
 	align-items: center;
 	gap: var(--gap-2);
 	margin-left: auto;
-}
-
-.text-subdued {
-	color: var(--text-color-subdued);
 }
 </style>

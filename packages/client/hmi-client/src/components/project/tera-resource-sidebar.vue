@@ -49,31 +49,28 @@
 			<AccordionTab v-for="[type, assetItems] in assetItemsMap" :key="type">
 				<template #header>
 					<div class="flex justify-space-between w-full">
-						<div class="flex align-items-center w-full">
-							<template v-if="type === AssetType.Document">Documents</template>
-							<template v-else-if="type === AssetType.Code">Code Files</template>
-							<template v-else>{{ capitalize(type) }}s</template>
+						<header class="flex align-items-center w-full">
+							{{ capitalize(type) }}s
 							<aside>({{ assetItems.length }})</aside>
-						</div>
+						</header>
 						<!-- New asset buttons for some types -->
 						<Button
+							v-if="type === AssetType.Model || type === AssetType.Workflow"
 							class="new-button"
-							v-if="type === AssetType.Model || type === AssetType.Code || type === AssetType.Workflow"
 							icon="pi pi-plus"
 							label="New"
-							text
 							size="small"
+							text
 							@click.stop="emit('open-new-asset', type)"
 						/>
 					</div>
 				</template>
-
 				<!-- These are all the resources. They're buttons because they're click and draggable. -->
 				<Button
 					v-for="assetItem in assetItems"
 					:key="assetItem.assetId"
 					:active="assetItem.assetId === assetId && assetItem.pageType === pageType"
-					:title="getElapsedTimeText(assetItem.assetCreatedOn)"
+					:title="`${assetItem.assetName} — ${getElapsedTimeText(assetItem.assetCreatedOn)}`"
 					class="asset-button"
 					plain
 					text
@@ -94,14 +91,13 @@
 							pageType === AssetType.Workflow &&
 							(assetItem.pageType === AssetType.Model ||
 								assetItem.pageType === AssetType.Dataset ||
-								assetItem.pageType === AssetType.Code ||
 								assetItem.pageType === AssetType.Document)
 						"
 						@dragstart="startDrag({ assetId: assetItem.assetId, pageType: assetItem.pageType })"
 						@dragend="endDrag"
 						:class="isEqual(draggedAsset, assetItem) ? 'dragged-asset' : ''"
 						fallback-class="original-asset"
-						:force-fallback="true"
+						force-fallback
 					>
 						<tera-asset-icon :asset-type="assetItem.pageType as AssetType" />
 						<span class="p-button-label">{{ assetItem.assetName }}</span>
@@ -221,7 +217,7 @@ nav {
 	gap: var(--gap-4);
 }
 
-header {
+nav > header {
 	padding-left: var(--gap-2);
 	padding-right: var(--gap-2);
 	display: flex;
