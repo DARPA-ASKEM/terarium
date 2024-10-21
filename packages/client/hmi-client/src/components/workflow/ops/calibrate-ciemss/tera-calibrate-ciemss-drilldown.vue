@@ -661,7 +661,7 @@ const resetState = () => {
 		accept: () => {
 			// Retore to the original output port state
 			const outputPort = props.node.outputs.find((output) => output.id === selectedOutputId.value);
-			if (outputPort && outputPort.state) {
+			if (outputPort?.state) {
 				knobs.value = _.cloneDeep(outputPort.state as CalibrationOperationStateCiemss);
 				mapping.value = outputPort.state.mapping as CalibrateMap[];
 			}
