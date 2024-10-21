@@ -247,26 +247,7 @@ public class GoLLMController {
 
 		final ConfigureModelFromDocumentResponseHandler.Input input = new ConfigureModelFromDocumentResponseHandler.Input();
 
-		String text = "";
-		if (document.get().getExtractions().size() > 0) {
-			for (final ExtractedDocumentPage page : document.get().getExtractions()) {
-				text += page.getText() + "\n";
-				if (page.getTables() != null) {
-					for (final JsonNode table : page.getTables()) {
-						text += table.toString() + "\n";
-					}
-				}
-				if (page.getEquations() != null) {
-					for (final JsonNode equation : page.getEquations()) {
-						text += equation.toString() + "\n";
-					}
-				}
-			}
-		} else {
-			text = document.get().getText();
-		}
-
-		input.setResearchPaper(text);
+		input.setResearchPaper(createResearchPaperText(document.get()));
 
 		// stripping the metadata from the model before its sent since it can cause
 		// gollm to fail with massive inputs
@@ -504,7 +485,7 @@ public class GoLLMController {
 		}
 
 		final InterventionsFromDocumentResponseHandler.Input input = new InterventionsFromDocumentResponseHandler.Input();
-		input.setResearchPaper(document.get().getText());
+		input.setResearchPaper(createResearchPaperText(document.get()));
 
 		// stripping the metadata from the model before its sent since it can cause
 		// gollm to fail with massive inputs
@@ -1113,7 +1094,7 @@ public class GoLLMController {
 		final ModelCardResponseHandler.Input input = new ModelCardResponseHandler.Input();
 		input.setAmr(model.serializeWithoutTerariumFields(null, new String[] { "gollmCard" }));
 
-		if (document != null) input.setResearchPaper(document.getText());
+		if (document != null) input.setResearchPaper(createResearchPaperText(document));
 
 		// Create the task
 		final TaskRequest req = new TaskRequest();
@@ -1141,7 +1122,7 @@ public class GoLLMController {
 
 	private TaskRequest getEnrichAMRTaskRequest(DocumentAsset document, Model model, UUID projectId, Boolean overwrite) {
 		final EnrichAmrResponseHandler.Input input = new EnrichAmrResponseHandler.Input();
-		if (document != null) input.setResearchPaper(document.getText());
+		if (document != null) input.setResearchPaper(createResearchPaperText(document));
 
 		input.setAmr(model.serializeWithoutTerariumFields(null, null));
 
@@ -1168,5 +1149,27 @@ public class GoLLMController {
 		req.setAdditionalProperties(props);
 
 		return req;
+	}
+
+	private static String createResearchPaperText(DocumentAsset document) {
+		String text = "";
+		if (document.getExtractions().size() > 0) {
+			for (final ExtractedDocumentPage page : document.getExtractions()) {
+				text += page.getText() + "\n";
+				if (page.getTables() != null) {
+					for (final JsonNode table : page.getTables()) {
+						text += table.toString() + "\n";
+					}
+				}
+				if (page.getEquations() != null) {
+					for (final JsonNode equation : page.getEquations()) {
+						text += equation.toString() + "\n";
+					}
+				}
+			}
+		} else {
+			text = document.getText();
+		}
+		return text;
 	}
 }
