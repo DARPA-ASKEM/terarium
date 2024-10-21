@@ -44,6 +44,16 @@
 									v-model="timespan.start"
 									inputId="integeronly"
 									@update:model-value="updateState"
+									disabled
+								/>
+								<Calendar
+									v-if="modelConfiguration?.temporalContext"
+									disabled
+									:view="calendarSettings?.view"
+									:date-format="calendarSettings?.format"
+									showIcon
+									iconDisplay="input"
+									:model-value="new Date(modelConfiguration.temporalContext)"
 								/>
 							</div>
 							<div class="label-and-input">
@@ -53,6 +63,21 @@
 									v-model="timespan.end"
 									inputId="integeronly"
 									@update:model-value="updateState"
+								/>
+								<Calendar
+									v-if="modelConfiguration?.temporalContext && endDate"
+									:model-value="endDate"
+									:view="calendarSettings?.view"
+									:date-format="calendarSettings?.format"
+									showIcon
+									iconDisplay="input"
+									@date-select="
+										timespan.end = getTimestepFromDateRange(
+											modelConfiguration.temporalContext,
+											$event,
+											calendarSettings?.view ?? 'date'
+										)
+									"
 								/>
 							</div>
 						</div>
@@ -210,7 +235,14 @@ import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
-import type { CsvAsset, InterventionPolicy, SimulationRequest, TimeSpan } from '@/types/Types';
+import type {
+	CsvAsset,
+	InterventionPolicy,
+	Model,
+	ModelConfiguration,
+	SimulationRequest,
+	TimeSpan
+} from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import {
@@ -244,6 +276,13 @@ import { getModelConfigurationById } from '@/services/model-configurations';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-intervention-summary-card.vue';
 import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
+import Calendar from 'primevue/calendar';
+import {
+	CalendarSettings,
+	getCalendarSettingsFromModel,
+	getEndDateFromTimestep,
+	getTimestepFromDateRange
+} from '@/utils/date';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import TeraChartControl from '../../tera-chart-control.vue';
 
@@ -256,6 +295,19 @@ const emit = defineEmits(['update-state', 'select-output', 'close']);
 const modelVarUnits = ref<{ [key: string]: string }>({});
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
+
+const modelConfiguration = ref<ModelConfiguration | null>(null);
+const model = ref<Model | null>(null);
+const endDate = computed(() => {
+	if (!modelConfiguration.value?.temporalContext) return null;
+	return getEndDateFromTimestep(
+		modelConfiguration.value.temporalContext,
+		timespan.value.end,
+		calendarSettings.value?.view ?? 'date'
+	);
+});
+
+const calendarSettings = ref<CalendarSettings | null>(null);
 
 const policyInterventionId = computed(() => props.node.inputs[1].value?.[0]);
 const interventionPolicy = ref<InterventionPolicy | null>(null);
@@ -530,8 +582,12 @@ watch(
 		if (!input.value) return;
 
 		const id = input.value[0];
-		const model = await getModelByModelConfigurationId(id);
-		if (model) modelVarUnits.value = getUnitsFromModelParts(model);
+		modelConfiguration.value = await getModelConfigurationById(id);
+		model.value = await getModelByModelConfigurationId(id);
+		if (model.value) {
+			calendarSettings.value = getCalendarSettingsFromModel(model.value);
+			modelVarUnits.value = getUnitsFromModelParts(model.value);
+		}
 	},
 	{ immediate: true }
 );
