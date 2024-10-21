@@ -195,6 +195,9 @@ export interface DocumentAsset extends TerariumAsset {
     source?: string;
     text?: string;
     grounding?: Grounding;
+    /**
+     * @deprecated
+     */
     documentAbstract?: string;
     /**
      * @deprecated
@@ -239,6 +242,7 @@ export interface InitialSemantic extends Semantic {
 export interface ModelConfiguration extends TerariumAsset {
     modelId: string;
     simulationId?: string;
+    temporalContext?: Date;
     observableSemanticList: ObservableSemantic[];
     parameterSemanticList: ParameterSemantic[];
     initialSemanticList: InitialSemantic[];

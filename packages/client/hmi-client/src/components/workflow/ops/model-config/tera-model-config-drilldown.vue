@@ -82,7 +82,7 @@
 				<Button label="Save as" outlined severity="secondary" @click="showSaveModal = true" />
 				<Button :disabled="isSaveDisabled" label="Save" @click="onSaveConfiguration" />
 			</template>
-			<Accordion multiple :active-index="[0, 1]">
+			<Accordion multiple :active-index="[0, 1, 2]">
 				<AccordionTab>
 					<template #header>
 						<h5 class="btn-content">Description</h5>
@@ -104,6 +104,23 @@
 						placeholder="Enter a description"
 						v-model="newDescription"
 					/>
+				</AccordionTab>
+				<AccordionTab v-if="model?.semantics?.ode?.time" header="Context">
+					<div class="flex flex-column gap-2">
+						<h5>Temporal Context</h5>
+						<span>Assign a date to timestep 0 (optional)</span>
+						<Calendar
+							class="max-w-30rem"
+							:model-value="
+								knobs.transientModelConfig.temporalContext ? new Date(knobs.transientModelConfig.temporalContext) : null
+							"
+							:view="calendarSettings?.view"
+							:date-format="calendarSettings?.format"
+							showIcon
+							iconDisplay="input"
+							@date-select="knobs.transientModelConfig.temporalContext = $event"
+						/>
+					</div>
 				</AccordionTab>
 				<AccordionTab header="Diagram">
 					<tera-model-diagram v-if="model" :model="model" class="mb-2" />
@@ -260,6 +277,8 @@ import { saveCodeToState } from '@/services/notebook';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { useProjects } from '@/composables/project';
 import TeraPdfPanel from '@/components/widgets/tera-pdf-panel.vue';
+import Calendar from 'primevue/calendar';
+import { CalendarSettings, getCalendarSettingsFromModel } from '@/utils/date';
 import {
 	blankModelConfig,
 	isModelConfigsEqual,
@@ -503,6 +522,8 @@ const mmtParams = ref<MiraTemplateParams>({});
 
 const configuredMmt = ref(makeConfiguredMMT(mmt.value, knobs.value.transientModelConfig));
 
+const calendarSettings = ref<CalendarSettings | null>(null);
+
 const downloadModelArchive = async (configuration: ModelConfiguration = knobs.value.transientModelConfig) => {
 	const archive = await getArchive(configuration);
 	if (archive) {
@@ -577,6 +598,7 @@ const initialize = async (overwriteWithState: boolean = false) => {
 
 	model.value = await getModel(modelId);
 	if (model.value) {
+		calendarSettings.value = getCalendarSettingsFromModel(model.value);
 		const response = await getMMT(model.value);
 		if (response) {
 			mmt.value = response.mmt;
