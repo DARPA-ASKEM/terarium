@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -54,7 +53,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Prove
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy.IntegratedTextExtractionsBody;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
@@ -78,7 +76,6 @@ public class ExtractionService {
 
 	private final DocumentAssetService documentService;
 	private final ModelService modelService;
-	private final ExtractionProxy extractionProxy;
 	private final SkemaUnifiedProxy skemaUnifiedProxy;
 	private final ObjectMapper objectMapper;
 	private final ClientEventService clientEventService;
@@ -918,7 +915,7 @@ public class ExtractionService {
 		final NotificationGroupInstance<Properties> notificationInterface,
 		final String userId,
 		final byte[] pdf
-	) throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException, IOException {
+	) throws TimeoutException, InterruptedException, ExecutionException, IOException {
 		final int REQUEST_TIMEOUT_MINUTES = 10;
 
 		final TaskRequest req = new TaskRequest();
