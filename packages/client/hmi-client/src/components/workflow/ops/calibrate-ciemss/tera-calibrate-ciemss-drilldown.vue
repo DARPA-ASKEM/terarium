@@ -824,7 +824,7 @@ const preparedCharts = computed(() => {
 
 		charts[variable].layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[variable]));
 	});
-
+// Intervention Charts:
 	if (groupedInterventionOutputs.value) {
 		Object.keys(groupedInterventionOutputs.value).forEach((key) => {
 			charts.interventionCharts[key] = createForecastChart(
