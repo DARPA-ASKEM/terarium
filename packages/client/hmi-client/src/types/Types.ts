@@ -242,7 +242,7 @@ export interface InitialSemantic extends Semantic {
 export interface ModelConfiguration extends TerariumAsset {
     modelId: string;
     simulationId?: string;
-    temporalContextDate?: Date;
+    temporalContext?: Date;
     observableSemanticList: ObservableSemantic[];
     parameterSemanticList: ParameterSemantic[];
     initialSemanticList: InitialSemantic[];

@@ -30,7 +30,7 @@ public class ModelConfiguration extends TerariumAsset {
 	private UUID simulationId;
 
 	@TSOptional
-	private Timestamp temporalContextDate;
+	private Timestamp temporalContext;
 
 	@OneToMany(mappedBy = "modelConfiguration", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JsonManagedReference
