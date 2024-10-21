@@ -142,16 +142,88 @@
 				is-selectable
 			>
 				<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%" />
-				<template v-else>
-					<tera-funman-output
-						v-if="!isEmpty(node.state.runId)"
-						:run-id="node.state.runId"
-						:trajectoryState="node.state.trajectoryState"
-						@update:trajectoryState="updateTrajectorystate"
-					/>
-					<tera-operator-placeholder v-else class="h-full" :node="node" />
+				<template v-else-if="!isEmpty(node.state.runId)">
+					<header class="flex align-items-start">
+						<div>
+							<h4>{{ validatedModelConfiguration?.name }}</h4>
+							<span class="secondary-text">Output generated date</span>
+						</div>
+						<div class="btn-group">
+							<Button label="Add to report" outlined severity="secondary" disabled />
+							<Button label="Save for reuse" outlined severity="secondary" disabled />
+						</div>
+					</header>
+					<Accordion multiple :active-index="[0, 1, 2, 3]">
+						<AccordionTab header="Summary"> Summary text </AccordionTab>
+						<AccordionTab>
+							<template #header> State variables<i class="pi pi-info-circle" /> </template>
+							<template v-if="stateChart">
+								<vega-chart :visualization-spec="stateChart" :are-embed-actions-visible="false" expandable />
+							</template>
+							<span class="ml-4" v-else> No boxes were generated. </span>
+						</AccordionTab>
+						<AccordionTab>
+							<template #header>Parameters<i class="pi pi-info-circle" /></template>
+							<vega-chart
+								:visualization-spec="parameterCharts"
+								:are-embed-actions-visible="false"
+								@chart-click="onParameterChartClick"
+							/>
+						</AccordionTab>
+						<AccordionTab header="Diagram">
+							<tera-model-diagram v-if="model" :model="model" />
+						</AccordionTab>
+					</Accordion>
+					<template v-if="model && validatedModelConfiguration && configuredMmt">
+						<tera-initial-table
+							:model="model"
+							:model-configuration="validatedModelConfiguration"
+							:model-configurations="[]"
+							:mmt="configuredMmt"
+							:mmt-params="mmtParams"
+							:feature-config="{ isPreview: true }"
+						/>
+						<tera-parameter-table
+							:model="model"
+							:model-configuration="validatedModelConfiguration"
+							:model-configurations="[]"
+							:mmt="configuredMmt"
+							:mmt-params="mmtParams"
+							:feature-config="{ isPreview: true }"
+						/>
+						<Accordion :active-index="0" v-if="!isEmpty(calibratedConfigObservables)">
+							<AccordionTab v-if="!isEmpty(calibratedConfigObservables)" header="Observables">
+								<tera-observables
+									class="pl-4"
+									:model="model"
+									:mmt="configuredMmt"
+									:observables="calibratedConfigObservables"
+									:feature-config="{ isPreview: true }"
+								/>
+							</AccordionTab>
+						</Accordion>
+					</template>
 				</template>
+				<tera-operator-placeholder v-else class="h-full" :node="node" />
 			</tera-drilldown-preview>
+		</template>
+		<template #sidebar-right>
+			<tera-slider-panel
+				v-model:is-open="isOutputSettingsPanelOpen"
+				direction="right"
+				class="input-config"
+				header="Output Settings"
+				content-width="360px"
+			>
+				<div class="flex align-items-center gap-2 ml-4 mb-3">
+					<Checkbox v-model="onlyShowLatestResults" binary @change="renderCharts" />
+					<label>Only show furthest results</label>
+				</div>
+				<div class="flex align-items-center gap-2 ml-4 mb-4">
+					<Checkbox v-model="focusOnModelChecks" binary @change="updateStateChart" />
+					<label>Focus on model checks</label>
+				</div>
+			</tera-slider-panel>
 		</template>
 	</tera-drilldown>
 </template>
@@ -159,27 +231,51 @@
 <script setup lang="ts">
 import _, { floor, isEmpty } from 'lodash';
 import { computed, ref, watch } from 'vue';
+import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import Slider from 'primevue/slider';
 import MultiSelect from 'primevue/multiselect';
+import Checkbox from 'primevue/checkbox';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
+import InputSwitch from 'primevue/inputswitch';
+import VegaChart from '@/components/widgets/VegaChart.vue';
 
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
+import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
+import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
+import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
+import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
 
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
-import InputSwitch from 'primevue/inputswitch';
 
-import type { FunmanInterval, FunmanPostQueriesRequest, Model, ModelParameter, TimeSpan } from '@/types/Types';
-import { makeQueries } from '@/services/models/funman-service';
+import type {
+	FunmanInterval,
+	FunmanPostQueriesRequest,
+	Model,
+	ModelParameter,
+	TimeSpan,
+	ModelConfiguration,
+	Observable
+} from '@/types/Types';
+import {
+	type ProcessedFunmanResult,
+	type FunmanConstraintsResponse,
+	processFunman,
+	makeQueries
+} from '@/services/models/funman-service';
+import { createFunmanStateChart, createFunmanParameterCharts } from '@/services/charts';
 import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
+import { getRunResult } from '@/services/models/simulation-service';
+import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import { emptyMiraModel, makeConfiguredMMT } from '@/model-representation/mira/mira';
 import {
 	getAsConfiguredModel,
 	getModelConfigurationById,
@@ -187,10 +283,9 @@ import {
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
 import { pythonInstance } from '@/python/PyodideController';
-import TeraFunmanOutput from '@/components/workflow/ops/funman/tera-funman-output.vue';
 import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-constraint-group-form.vue';
 import { DrilldownTabs } from '@/types/common';
-import { stringToLatexExpression } from '@/services/model';
+import { stringToLatexExpression, getModelByModelConfigurationId, getMMT } from '@/services/model';
 import { displayNumber } from '@/utils/number';
 import { FunmanOperationState, Constraint, ConstraintType, CompartmentalConstraint } from './funman-operation';
 
@@ -557,6 +652,109 @@ watch(
 	},
 	{ immediate: true }
 );
+
+/*
+// Output panel/settings //
+*/
+const isOutputSettingsPanelOpen = ref(false);
+
+let processedFunmanResult: ProcessedFunmanResult | null = null;
+let constraintsResponse: FunmanConstraintsResponse[] = [];
+let mmt: MiraModel = emptyMiraModel();
+let funmanResult: any = {};
+
+// Model configuration stuff
+const model = ref<Model | null>(null);
+const validatedModelConfiguration = ref<ModelConfiguration | null>(null);
+const configuredMmt = ref<MiraModel | null>(null);
+const mmtParams = ref<MiraTemplateParams>({});
+const calibratedConfigObservables = ref<Observable[]>([]);
+
+const stateOptions = ref<string[]>([]);
+const selectedState = ref<string>('');
+const onlyShowLatestResults = ref(false);
+const focusOnModelChecks = ref(false);
+
+const stateChart = ref<any>({});
+const parameterCharts = ref<any>({});
+
+let selectedBoxId: number = -1;
+
+// Once a parameter tick is chosen, its corresponding line on the state chart will be highlighted
+function onParameterChartClick(eventData: any) {
+	// If a tick is clicked it will have a boxId, if the bar is clicked then we reset (show all lines)
+	selectedBoxId = eventData.boxId ?? -1;
+	updateStateChart();
+}
+
+function updateStateChart() {
+	if (!processedFunmanResult) return;
+	updateTrajectorystate(selectedState.value);
+	stateChart.value = createFunmanStateChart(
+		processedFunmanResult.trajectories,
+		constraintsResponse,
+		selectedState.value,
+		focusOnModelChecks.value,
+		selectedBoxId
+	);
+}
+
+async function renderCharts() {
+	processedFunmanResult = processFunman(funmanResult, onlyShowLatestResults.value);
+
+	// State chart
+	selectedState.value = props.node.state.trajectoryState ?? stateOptions.value[0];
+	updateStateChart();
+
+	// Parameter charts
+	const distributionParameters = funmanResult.request.parameters.filter((d: any) => d.interval.lb !== d.interval.ub); // TODO: This conditional may change as funman will return constants soon
+	if (processedFunmanResult.boxes) {
+		parameterCharts.value = createFunmanParameterCharts(distributionParameters, processedFunmanResult.boxes);
+	}
+
+	// For displaying model/model configuration
+	// Model will be the same on runId change, no need to fetch it again
+	if (!model.value) {
+		model.value = await getModelByModelConfigurationId(funmanResult.modelConfiguration.id);
+		if (!model.value) {
+			logger.error('Failed to fetch model');
+			return;
+		}
+		const response = await getMMT(model.value);
+		if (response) {
+			mmt = response.mmt;
+			mmtParams.value = response.template_params;
+		}
+	}
+
+	configuredMmt.value = makeConfiguredMMT(mmt, funmanResult.modelConfiguration);
+	calibratedConfigObservables.value = funmanResult.modelConfiguration.observableSemanticList.map(
+		({ referenceId, states, expression }) => ({
+			id: referenceId,
+			name: referenceId,
+			states,
+			expression
+		})
+	);
+}
+
+watch(
+	() => props.node.state.runId,
+	async () => {
+		const rawFunmanResult = await getRunResult(props.node.state.runId, 'validation.json');
+		if (!rawFunmanResult) {
+			logger.error('Failed to fetch funman result');
+			return;
+		}
+		funmanResult = JSON.parse(rawFunmanResult);
+		constraintsResponse = funmanResult.request.constraints;
+		stateOptions.value = funmanResult.model.petrinet.model.states.map(({ id }) => id);
+		validatedModelConfiguration.value = funmanResult.modelConfiguration;
+
+		renderCharts();
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
@@ -574,29 +772,13 @@ watch(
 	margin-left: auto;
 }
 
-.primary-text {
-	display: flex;
-	align-items: center;
-	color: var(--Text-Primary, #020203);
-	/* Body Medium/Semibold */
-	font-size: var(--font-body-medium);
-	font-style: normal;
-	font-weight: 600;
-	line-height: 1.5rem;
-	padding: 0.25rem 0rem 0rem 0rem;
-	/* 150% */
-	letter-spacing: 0.03125rem;
+.pi-info-circle {
+	margin-left: var(--gap-2);
 }
 
 .secondary-text {
-	color: var(--Text-Secondary, #667085);
-	/* Body Small/Regular */
-	font-size: var(--font-body-small);
-	font-style: normal;
-	font-weight: 400;
-	line-height: 1.3125rem;
-	/* 150% */
-	letter-spacing: 0.01563rem;
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
 }
 
 .timespan {
