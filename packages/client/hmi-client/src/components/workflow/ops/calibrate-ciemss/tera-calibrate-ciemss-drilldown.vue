@@ -110,14 +110,21 @@
 					<section class="form-section">
 						<h5 class="mb-1">Calibration settings</h5>
 						<div class="input-row">
-							<div class="label-and-input">
-								<label>Start time</label>
-								<tera-input-text disabled model-value="0" />
-							</div>
-							<div class="label-and-input">
-								<label for="num-samples">End time</label>
-								<tera-input-number inputId="integeronly" v-model="knobs.endTime" />
-							</div>
+							<tera-timestep-calendar
+								disabled
+								v-if="model && modelConfig"
+								label="Start time"
+								:model="model"
+								:model-configuration="modelConfig"
+								:model-value="0"
+							/>
+							<tera-timestep-calendar
+								v-if="model && modelConfig"
+								label="End time"
+								:model="model"
+								:model-configuration="modelConfig"
+								v-model="knobs.endTime"
+							/>
 						</div>
 						<div class="spacer m-2" />
 						<p class="mb-1">Preset (optional)</p>
@@ -467,7 +474,8 @@ import {
 	ChartAnnotation,
 	InterventionPolicy,
 	ModelParameter,
-	AssetType
+	AssetType,
+	Model
 } from '@/types/Types';
 import { CiemssPresetTypes, DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
 import { getTimespan, nodeMetadata } from '@/components/workflow/util';
@@ -504,6 +512,7 @@ import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-intervention-summary-card.vue';
 import { getParameters } from '@/model-representation/service';
+import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults, getErrorData } from './calibrate-utils';
 
@@ -585,6 +594,7 @@ const groundTruthData = computed<DataArray>(() => {
 });
 
 const modelConfig = ref<ModelConfiguration>();
+const model = ref<Model | null>(null);
 
 const modelVarUnits = ref<{ [key: string]: string }>({});
 const modelPartTypesMap = ref<{ [key: string]: string }>({});
@@ -1084,12 +1094,17 @@ async function getAutoMapping() {
 
 const initialize = async () => {
 	// Model configuration input
-	const { model, modelConfiguration, modelOptions, modelPartUnits, modelPartTypes } = await setupModelInput(
-		modelConfigId.value
-	);
+	const {
+		model: m,
+		modelConfiguration,
+		modelOptions,
+		modelPartUnits,
+		modelPartTypes
+	} = await setupModelInput(modelConfigId.value);
 	modelConfig.value = modelConfiguration;
+	model.value = m ?? null;
 	modelStateOptions.value = modelOptions;
-	modelParameters.value = model ? getParameters(model) : [];
+	modelParameters.value = model.value ? getParameters(model.value) : [];
 	modelVarUnits.value = modelPartUnits ?? {};
 	modelPartTypesMap.value = modelPartTypes ?? {};
 
