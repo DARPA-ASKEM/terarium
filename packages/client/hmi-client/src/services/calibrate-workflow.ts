@@ -54,14 +54,9 @@ export const setupDatasetInput = async (datasetId: string | undefined) => {
 		const limit = -1;
 
 		// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
-		if (dataset.metadata?.format !== 'netcdf' || !dataset.esgfId) {
+		if (!(dataset.metadata?.format === 'netcdf') || !dataset.esgfId) {
 			const csv = (await downloadRawFile(datasetId, filename, limit)) as CsvAsset;
-			// datasetValue.value = csvAsset.value?.csv.map((row) => row.join(',')).join('\n');
-
-			if (csv?.headers) {
-				csv.headers = csv.headers.map((header) => header.trim());
-			}
-
+			csv.headers = csv.headers.map((header) => header.trim());
 			return { filename, csv, datasetOptions };
 		}
 		return {};
