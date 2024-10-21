@@ -230,7 +230,7 @@
 		<template #preview>
 			<tera-drilldown-section
 				class="ml-3 mr-3"
-				:class="{ 'failed-run': optimizationResult.success === 'False' ?? 'successful-run' }"
+				:class="optimizationResult.success === 'False' ? 'failed-run' : 'successful-run'"
 			>
 				<template #header-controls-left v-if="optimizedInterventionPolicy?.name">
 					<h5>{{ optimizedInterventionPolicy?.name }}</h5>
@@ -1111,13 +1111,12 @@ watch(
 :deep(.failed-run main .content-container) {
 	border: 2px solid var(--error-color);
 	border-radius: var(--border-radius-big);
-	color: var(--error-color-text);
+	color: var(--error-message-color);
 }
 
 .successful-run {
 	border: none;
-	border-radius: none;
-	color: none;
+	border-radius: 0;
 }
 
 .form-section {
