@@ -71,10 +71,7 @@ public class ConfigureModelFromDocumentResponseHandler extends TaskResponseHandl
 
 			// For each configuration, create a new model configuration
 			for (final JsonNode condition : configurations.response.get("conditions")) {
-				final ModelConfiguration configuration = objectMapper.treeToValue(
-					condition.get("configuration"),
-					ModelConfiguration.class
-				);
+				final ModelConfiguration configuration = objectMapper.treeToValue(condition, ModelConfiguration.class);
 
 				if (configuration.getModelId() != props.modelId) {
 					configuration.setModelId(props.modelId);
