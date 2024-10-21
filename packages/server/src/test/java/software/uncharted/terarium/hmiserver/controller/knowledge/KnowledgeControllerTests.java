@@ -9,7 +9,6 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
@@ -373,33 +372,6 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		model = objectMapper.readValue(res.getResponse().getContentAsString(), Model.class);
 
 		Assertions.assertNotNull(model);
-	}
-
-	// @Test
-	@WithUserDetails(MockUser.URSULA)
-	public void cosmosPdfExtraction() throws Exception {
-		final ClassPathResource resource = new ClassPathResource("knowledge/paper.pdf");
-		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
-
-		final HttpEntity pdfFileEntity = new ByteArrayEntity(content, ContentType.create("application/pdf"));
-
-		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
-			.setFileNames(List.of("paper.pdf"))
-			.setName("test-pdf-name")
-			.setDescription("my description");
-
-		documentAsset = documentAssetService.createAsset(documentAsset, project.getId(), ASSUME_WRITE_PERMISSION);
-
-		documentAssetService.uploadFile(documentAsset.getId(), "paper.pdf", pdfFileEntity);
-
-		mockMvc
-			.perform(
-				MockMvcRequestBuilders.post("/knowledge/pdf-extractions")
-					.contentType(MediaType.APPLICATION_JSON)
-					.param("document-id", documentAsset.getId().toString())
-					.with(csrf())
-			)
-			.andExpect(status().isAccepted());
 	}
 
 	// @Test
