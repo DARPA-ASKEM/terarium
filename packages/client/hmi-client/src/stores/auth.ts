@@ -3,6 +3,7 @@ import type { User } from '@/types/Types';
 import axios, { AxiosHeaders } from 'axios';
 import { computed, ref } from 'vue';
 import { createOidc, Oidc } from 'oidc-spa';
+import { RoleType } from '@/types/Types';
 
 /**
  * Main store used for authentication
@@ -70,6 +71,11 @@ const useAuthStore = defineStore('auth', () => {
 		await loadUserModel();
 	};
 
+	const isAdmin = computed(() => {
+		if (!user.value) return false;
+		return user.value?.roles.some((r) => r.name === RoleType.Admin);
+	});
+
 	return {
 		login,
 		logout,
@@ -78,7 +84,8 @@ const useAuthStore = defineStore('auth', () => {
 		updateUser,
 		loadUserModel,
 		userInitials,
-		init
+		init,
+		isAdmin
 	};
 });
 

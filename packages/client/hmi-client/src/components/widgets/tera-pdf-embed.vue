@@ -1,16 +1,19 @@
 <template>
-	<div id="adobe-dc-view" />
+	<div :id="id" />
 </template>
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue';
 import API from '@/api/api';
+import { v4 as uuidv4 } from 'uuid';
 
 const props = defineProps<{
 	pdfLink?: string;
 	title: string;
 	filePromise?: Promise<ArrayBuffer | null>;
 }>();
+
+const id = uuidv4();
 
 const adobeDCView = ref();
 const adobeApis = ref();
@@ -49,7 +52,7 @@ watch(isAdobePdfApiReady, () => {
 			// eslint-disable-line
 			new window.AdobeDC.View({
 				clientId: apiKey,
-				divId: 'adobe-dc-view'
+				divId: id
 			})
 		);
 

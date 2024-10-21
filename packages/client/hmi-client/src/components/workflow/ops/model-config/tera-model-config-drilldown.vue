@@ -8,6 +8,18 @@
 	>
 		<template #sidebar>
 			<tera-slider-panel
+				v-if="pdfData.length"
+				v-model:is-open="isDocViewerOpen"
+				header="Document Viewer"
+				content-width="700px"
+			>
+				<template #content>
+					<tera-drilldown-section :is-loading="isFetchingPDF">
+						<tera-pdf-panel :pdfs="pdfData" />
+					</tera-drilldown-section>
+				</template>
+			</tera-slider-panel>
+			<tera-slider-panel
 				class="input-config"
 				v-model:is-open="isSidebarOpen"
 				header="Configurations"
@@ -70,7 +82,7 @@
 				<Button label="Save as" outlined severity="secondary" @click="showSaveModal = true" />
 				<Button :disabled="isSaveDisabled" label="Save" @click="onSaveConfiguration" />
 			</template>
-			<Accordion multiple :active-index="[0, 1]">
+			<Accordion multiple :active-index="[0, 1, 2]">
 				<AccordionTab>
 					<template #header>
 						<h5 class="btn-content">Description</h5>
@@ -92,6 +104,23 @@
 						placeholder="Enter a description"
 						v-model="newDescription"
 					/>
+				</AccordionTab>
+				<AccordionTab v-if="model?.semantics?.ode?.time" header="Context">
+					<div class="flex flex-column gap-2">
+						<h5>Temporal Context</h5>
+						<span>Assign a date to timestep 0 (optional)</span>
+						<Calendar
+							class="max-w-30rem"
+							:model-value="
+								knobs.transientModelConfig.temporalContext ? new Date(knobs.transientModelConfig.temporalContext) : null
+							"
+							:view="calendarSettings?.view"
+							:date-format="calendarSettings?.format"
+							showIcon
+							iconDisplay="input"
+							@date-select="knobs.transientModelConfig.temporalContext = $event"
+						/>
+					</div>
 				</AccordionTab>
 				<AccordionTab header="Diagram">
 					<tera-model-diagram v-if="model" :model="model" class="mb-2" />
@@ -212,6 +241,7 @@ import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue
 import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
+import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
 import {
 	emptyMiraModel,
 	generateModelDatasetConfigurationContext,
@@ -246,7 +276,9 @@ import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue'
 import { saveCodeToState } from '@/services/notebook';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { useProjects } from '@/composables/project';
-import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
+import TeraPdfPanel from '@/components/widgets/tera-pdf-panel.vue';
+import Calendar from 'primevue/calendar';
+import { CalendarSettings, getCalendarSettingsFromModel } from '@/utils/date';
 import {
 	blankModelConfig,
 	isModelConfigsEqual,
@@ -254,6 +286,7 @@ import {
 	ModelConfigOperation,
 	ModelConfigOperationState
 } from './model-config-operation';
+import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
 
 enum ConfigTabs {
 	Wizard = 'Wizard',
@@ -263,6 +296,11 @@ enum ConfigTabs {
 const props = defineProps<{
 	node: WorkflowNode<ModelConfigOperationState>;
 }>();
+
+const isFetchingPDF = ref(false);
+const isDocViewerOpen = ref(true);
+
+const pdfData = ref<{ document: any; data: string; isPdf: boolean; name: string }[]>([]);
 
 const isSidebarOpen = ref(true);
 const isEditingDescription = ref(false);
@@ -484,6 +522,8 @@ const mmtParams = ref<MiraTemplateParams>({});
 
 const configuredMmt = ref(makeConfiguredMMT(mmt.value, knobs.value.transientModelConfig));
 
+const calendarSettings = ref<CalendarSettings | null>(null);
+
 const downloadModelArchive = async (configuration: ModelConfiguration = knobs.value.transientModelConfig) => {
 	const archive = await getArchive(configuration);
 	if (archive) {
@@ -558,6 +598,7 @@ const initialize = async (overwriteWithState: boolean = false) => {
 
 	model.value = await getModel(modelId);
 	if (model.value) {
+		calendarSettings.value = getCalendarSettingsFromModel(model.value);
 		const response = await getMMT(model.value);
 		if (response) {
 			mmt.value = response.mmt;
@@ -707,6 +748,29 @@ onMounted(() => {
 		selectedOutputId.value = props.node.active;
 		initialize(true);
 	}
+
+	if (documentIds.value.length) {
+		isFetchingPDF.value = true;
+		documentIds.value.forEach(async (id) => {
+			const document = await getDocumentAsset(id);
+			const name: string = document?.name ?? '';
+			const filename = document?.fileNames?.[0];
+			const isPdf = !!document?.fileNames?.[0]?.endsWith('.pdf');
+
+			if (document?.id && filename) {
+				let data: string | null;
+				if (isPdf) {
+					data = await downloadDocumentAsset(document.id, filename);
+				} else {
+					data = await getDocumentFileAsText(document.id, filename);
+				}
+				if (data !== null) {
+					pdfData.value.push({ document, data, isPdf, name });
+				}
+			}
+		});
+	}
+	isFetchingPDF.value = false;
 });
 
 watch(
@@ -859,5 +923,12 @@ button.start-edit {
 
 .executed-code {
 	white-space: pre-wrap;
+}
+:deep(.content-wrapper) {
+	& > section {
+		& > main {
+			overflow: hidden;
+		}
+	}
 }
 </style>
