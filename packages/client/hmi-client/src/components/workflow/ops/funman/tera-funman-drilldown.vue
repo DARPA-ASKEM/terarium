@@ -5,134 +5,140 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
-		<div :tabName="DrilldownTabs.Wizard">
-			<tera-slider-panel
-				class="input-config"
-				v-model:is-open="isSliderOpen"
-				header="Validate configuration settings"
-				content-width="515px"
-			>
-				<template #content>
-					<div class="top-toolbar">
-						<p>Set your model checks and settings then click run.</p>
-						<div class="btn-group">
-							<Button label="Reset" outlined severity="secondary" />
-							<Button :loading="showSpinner" label="Run" icon="pi pi-play" @click="runMakeQuery" />
-						</div>
+		<tera-slider-panel
+			:tabName="DrilldownTabs.Wizard"
+			class="input-config"
+			v-model:is-open="isSliderOpen"
+			header="Validate configuration settings"
+			content-width="420px"
+		>
+			<template #content>
+				<div class="top-toolbar">
+					<p>Set your model checks and settings then click run.</p>
+					<div class="btn-group">
+						<Button label="Reset" outlined severity="secondary" />
+						<Button :loading="showSpinner" label="Run" icon="pi pi-play" @click="runMakeQuery" />
 					</div>
-					<main>
-						<Accordion multiple :active-index="[0, 1]">
-							<AccordionTab>
-								<template #header>
-									Model checks
-									<i class="pi pi-info-circle pl-2" v-tooltip="validateParametersToolTip" />
-								</template>
-								<p class="mb-3">
-									Implement sanity checks on the state space of the model to see how the parameter space of the model is
-									partitioned into satisfiable and unsatisfiable regions separated by decision boundaries.
-								</p>
-								<ul>
-									<li>
-										<section>
-											<header class="flex w-full gap-3 mb-2">
-												<tera-toggleable-input v-model="knobs.compartmentalConstraint.name" tag="h3" />
-												<div class="ml-auto flex align-items-center">
-													<label class="mr-2">Active</label>
-													<InputSwitch class="mr-3" v-model="knobs.compartmentalConstraint.isActive" />
-												</div>
-											</header>
-											<div class="flex align-items-center gap-6">
-												<katex-element
-													:expression="
-														stringToLatexExpression(
-															stateIds
-																.map((s, index) => `${s}${index === stateIds.length - 1 ? `\\geq 0` : ','}`)
-																.join('')
-														)
-													"
-												/>
-												<katex-element
-													:expression="
-														stringToLatexExpression(`${stateIds.join('+')} = ${displayNumber(mass)} \\ \\forall \\ t`)
-													"
-												/>
-											</div>
-										</section>
-									</li>
-									<li v-for="(cfg, index) in node.state.constraintGroups" :key="selectedOutputId + ':' + index">
-										<tera-constraint-group-form
-											:config="cfg"
-											:index="index"
-											:state-ids="stateIds"
-											:parameter-ids="parameterIds"
-											:observable-ids="observableIds"
-											@update-self="updateConstraintGroupForm(index, $event.key, $event.value)"
-											@delete-self="deleteConstraintGroupForm(index)"
-										/>
-									</li>
-								</ul>
-								<Button
-									class="mt-2"
-									text
-									icon="pi pi-plus"
-									label="Add constraint"
-									size="small"
-									@click="addConstraintForm"
-								/>
-							</AccordionTab>
-							<AccordionTab>
-								<template #header>
-									Settings
-									<i class="pi pi-info-circle pl-2" v-tooltip="validateParametersToolTip" />
-								</template>
-								<label>Select parameters of interest</label>
-								<MultiSelect
-									ref="columnSelect"
-									class="w-full mt-1 mb-2"
-									:model-value="variablesOfInterest"
-									:options="requestParameters"
-									option-label="name"
-									option-disabled="disabled"
-									:show-toggle-all="false"
-									placeholder="Select variables"
-									@update:model-value="onToggleVariableOfInterest"
-								/>
-								<div class="mb-2 timespan">
-									<div class="timespan-input">
-										<label>Start time</label>
-										<tera-input-number class="mt-1" v-model="knobs.currentTimespan.start" />
-									</div>
-									<div class="timespan-input">
-										<label>End time</label>
-										<tera-input-number class="mt-1" v-model="knobs.currentTimespan.end" />
-									</div>
-									<div class="timespan-input">
-										<label>Number of timesteps</label>
-										<tera-input-number class="mt-1" v-model="knobs.numberOfSteps" />
-									</div>
-								</div>
-								<tera-input-text :disabled="true" class="timespan-list mb-2" v-model="requestStepListString" />
-								<div>
-									<label>Tolerance</label>
-									<div class="mt-1 input-tolerance fadein animation-ease-in-out animation-duration-350">
-										<tera-input-number v-model="knobs.tolerance" />
-										<Slider v-model="knobs.tolerance" :min="0" :max="1" :step="0.01" class="w-full mr-2" />
-									</div>
-								</div>
-							</AccordionTab>
-						</Accordion>
-					</main>
-				</template>
-			</tera-slider-panel>
-		</div>
-		<div :tabName="DrilldownTabs.Notebook">
-			<tera-drilldown-section>
+				</div>
 				<main>
-					<!-- TODO: notebook functionality -->
-					<div class="mt-3 ml-4 mr-2">Notebook is under construction. Use the wizard for now.</div>
+					<Accordion multiple :active-index="[0, 1]">
+						<AccordionTab>
+							<template #header>
+								Model checks
+								<i class="pi pi-info-circle pl-2" v-tooltip="validateParametersToolTip" />
+							</template>
+							<p class="mb-3">
+								Implement sanity checks on the state space of the model to see how the parameter space of the model is
+								partitioned into satisfiable and unsatisfiable regions separated by decision boundaries.
+							</p>
+							<ul>
+								<li>
+									<section>
+										<header class="flex w-full gap-3 mb-2">
+											<tera-toggleable-input v-model="knobs.compartmentalConstraint.name" tag="h3" />
+											<div class="ml-auto flex align-items-center">
+												<label class="mr-2">Active</label>
+												<InputSwitch class="mr-3" v-model="knobs.compartmentalConstraint.isActive" />
+											</div>
+										</header>
+										<div class="flex align-items-center gap-6">
+											<katex-element
+												:expression="
+													stringToLatexExpression(
+														stateIds
+															.map((s, index) => `${s}${index === stateIds.length - 1 ? `\\geq 0` : ','}`)
+															.join('')
+													)
+												"
+											/>
+											<katex-element
+												:expression="
+													stringToLatexExpression(`${stateIds.join('+')} = ${displayNumber(mass)} \\ \\forall \\ t`)
+												"
+											/>
+										</div>
+									</section>
+								</li>
+								<li v-for="(cfg, index) in node.state.constraintGroups" :key="selectedOutputId + ':' + index">
+									<tera-constraint-group-form
+										:config="cfg"
+										:index="index"
+										:state-ids="stateIds"
+										:parameter-ids="parameterIds"
+										:observable-ids="observableIds"
+										@update-self="updateConstraintGroupForm(index, $event.key, $event.value)"
+										@delete-self="deleteConstraintGroupForm(index)"
+									/>
+								</li>
+							</ul>
+							<Button
+								class="mt-2"
+								text
+								icon="pi pi-plus"
+								label="Add constraint"
+								size="small"
+								@click="addConstraintForm"
+							/>
+						</AccordionTab>
+						<AccordionTab>
+							<template #header>
+								Settings
+								<i class="pi pi-info-circle pl-2" v-tooltip="validateParametersToolTip" />
+							</template>
+							<label>Select parameters of interest</label>
+							<MultiSelect
+								ref="columnSelect"
+								class="w-full mt-1 mb-2"
+								:model-value="variablesOfInterest"
+								:options="requestParameters"
+								option-label="name"
+								option-disabled="disabled"
+								:show-toggle-all="false"
+								placeholder="Select variables"
+								@update:model-value="onToggleVariableOfInterest"
+							/>
+							<span class="timespan mb-2">
+								<div>
+									<label>Start time</label>
+									<tera-input-number class="w-12" v-model="knobs.currentTimespan.start" />
+								</div>
+								<div>
+									<label>End time</label>
+									<tera-input-number class="w-12" v-model="knobs.currentTimespan.end" />
+								</div>
+								<div>
+									<label>Number of timesteps</label>
+									<tera-input-number class="w-12" v-model="knobs.numberOfSteps" />
+								</div>
+							</span>
+							<tera-input-text :disabled="true" class="mb-2" v-model="requestStepListString" />
+							<label>Tolerance</label>
+							<div class="mt-1 input-tolerance fadein animation-ease-in-out animation-duration-350">
+								<tera-input-number v-model="knobs.tolerance" />
+								<Slider v-model="knobs.tolerance" :min="0" :max="1" :step="0.01" class="w-full mr-2" />
+							</div>
+						</AccordionTab>
+					</Accordion>
 				</main>
-			</tera-drilldown-section>
-		</div>
+			</template>
+		</tera-slider-panel>
+		<tera-slider-panel
+			:tabName="DrilldownTabs.Notebook"
+			v-model:is-open="isSliderOpen"
+			header="Raw output"
+			content-width="420px"
+		>
+			<template #content>
+				<v-ace-editor
+					v-model:value="notebookText"
+					lang="json"
+					theme="chrome"
+					style="flex-grow: 1; width: 100%; height: 100%"
+					class="ace-editor"
+					:options="{ showPrintMargin: false }"
+				/>
+			</template>
+		</tera-slider-panel>
 		<template #preview>
 			<tera-drilldown-preview
 				title="Validation results"
@@ -215,14 +221,16 @@
 				header="Output Settings"
 				content-width="360px"
 			>
-				<div class="flex align-items-center gap-2 ml-4 mb-3">
-					<Checkbox v-model="onlyShowLatestResults" binary @change="renderCharts" />
-					<label>Only show furthest results</label>
-				</div>
-				<div class="flex align-items-center gap-2 ml-4 mb-4">
-					<Checkbox v-model="focusOnModelChecks" binary @change="updateStateChart" />
-					<label>Focus on model checks</label>
-				</div>
+				<template #content>
+					<div class="flex align-items-center gap-2 ml-4 mb-3">
+						<Checkbox v-model="onlyShowLatestResults" binary @change="renderCharts" />
+						<label>Only show furthest results</label>
+					</div>
+					<div class="flex align-items-center gap-2 ml-4 mb-4">
+						<Checkbox v-model="focusOnModelChecks" binary @change="updateStateChart" />
+						<label>Focus on model checks</label>
+					</div>
+				</template>
 			</tera-slider-panel>
 		</template>
 	</tera-drilldown>
@@ -243,9 +251,11 @@ import AccordionTab from 'primevue/accordiontab';
 import InputSwitch from 'primevue/inputswitch';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 
+import '@/ace-config';
+import { VAceEditor } from 'vue3-ace-editor';
+
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
@@ -653,6 +663,8 @@ watch(
 	{ immediate: true }
 );
 
+// Notebook
+const notebookText = ref('');
 /*
 // Output panel/settings //
 */
@@ -741,11 +753,13 @@ async function renderCharts() {
 watch(
 	() => props.node.state.runId,
 	async () => {
+		if (!props.node.state.runId) return;
 		const rawFunmanResult = await getRunResult(props.node.state.runId, 'validation.json');
 		if (!rawFunmanResult) {
 			logger.error('Failed to fetch funman result');
 			return;
 		}
+		notebookText.value = rawFunmanResult;
 		funmanResult = JSON.parse(rawFunmanResult);
 		constraintsResponse = funmanResult.request.constraints;
 		stateOptions.value = funmanResult.model.petrinet.model.states.map(({ id }) => id);
@@ -781,14 +795,21 @@ watch(
 	font-size: var(--font-caption);
 }
 
+.notebook-section:deep(main) {
+	gap: var(--gap-small);
+	position: relative;
+}
+
 .timespan {
 	display: flex;
-	align-items: center;
-	justify-content: space-between;
+	align-items: end;
+	gap: var(--gap-1);
+	overflow: auto;
 
-	& .timespan-input {
+	& > div {
 		display: flex;
 		flex-direction: column;
+		gap: var(--gap-1);
 	}
 }
 
@@ -814,10 +835,6 @@ ul {
 		border: 1px solid var(--surface-border-light);
 		border-radius: var(--border-radius);
 	}
-}
-
-.timespan-list {
-	width: 100%;
 }
 
 .p-accordion {

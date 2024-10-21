@@ -4,6 +4,7 @@
 		<main :class="{ error: getErrorMessage }" @click.self.stop="focusInput">
 			<i v-if="icon" :class="icon" />
 			<input
+				v-bind="$attrs"
 				@click.stop
 				ref="inputField"
 				:disabled="getDisabled"
