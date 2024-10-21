@@ -52,22 +52,43 @@ pyodide.runPython(`
 
 postMessage(true);
 
+// There are certain symbols or tokens that cause sympy parse to fallover - eg lambda
+// These provides encoding/encoding functions to get around these problems.
+const encodeParseExpr = (v: string) => {
+	let expr = v.toString().replaceAll('lambda', 'XXlambdaXX');
+	expr = expr.replaceAll('Ci', 'XXCiXX');
+	expr = expr.replaceAll('S', 'XXSXX');
+	return expr;
+};
+const revertParseExpr = (v: string) => {
+	let resultStr = v.replaceAll('XXlambdaXX', 'lambda');
+	resultStr = resultStr.replaceAll('XXSXX', 'S');
+	resultStr = resultStr.replaceAll('XXCiXX', 'Ci');
+	return resultStr;
+};
+
 const evaluateExpression = (expressionStr: string, symbolsTable: Object) => {
+	// if number-like, return as is
+	if (!Number.isNaN(parseFloat(expressionStr))) {
+		return expressionStr;
+	}
 	const subs: any[] = [];
 	Object.keys(symbolsTable).forEach((key) => {
-		subs.push(`${key}: ${symbolsTable[key]}`);
+		subs.push(`${encodeParseExpr(key)}: ${symbolsTable[key]}`);
 	});
 
 	const skeys = Object.keys(symbolsTable);
 	pyodide.runPython(`
-		${skeys.join(',')} = sympy.symbols('${skeys.join(' ')}')
+		${skeys.map(encodeParseExpr).join(',')} = sympy.symbols('${skeys.map(encodeParseExpr).join(' ')}')
 	`);
 
+	expressionStr = encodeParseExpr(expressionStr);
 	const result = pyodide.runPython(`
 		eq = sympy.S("${expressionStr}", locals=_clash)
 		eq.evalf(subs={${subs.join(', ')}})
 	`);
-	return result.toString();
+
+	return revertParseExpr(result.toString());
 };
 
 const parseExpression = (expr: string) => {
@@ -75,12 +96,15 @@ const parseExpression = (expr: string) => {
 		mathml: '',
 		pmathml: '',
 		latex: '',
-		freeSymbols: []
+		freeSymbols: [] as any[]
 	};
 
 	if (!expr || expr.length === 0) {
 		return output;
 	}
+
+	// Special cases
+	expr = encodeParseExpr(expr);
 
 	// function to convert expression to presentation mathml
 	let result = pyodide.runPython(`
@@ -114,6 +138,11 @@ const parseExpression = (expr: string) => {
 		list(map(lambda x: x.name, eq.free_symbols))
 	`);
 	output.freeSymbols = result.toJs();
+
+	output.latex = revertParseExpr(output.latex);
+	output.mathml = revertParseExpr(output.mathml);
+	output.pmathml = revertParseExpr(output.pmathml);
+	output.freeSymbols = output.freeSymbols.map(revertParseExpr);
 
 	return output;
 };
