@@ -9,7 +9,6 @@ import VueFeather from 'vue-feather';
 import VueGtag from 'vue-gtag';
 import { MathfieldElement } from 'mathlive';
 import VueKatex from '@hsorby/vue3-katex';
-import 'csstype';
 import { EventType } from '@/types/Types';
 import * as EventService from '@/services/event';
 import API from '@/api/api';
@@ -83,10 +82,3 @@ router.beforeEach(async (to, _from, next) => {
 });
 
 useNotificationManager().init();
-
-// Allow the use of CSS custom properties
-declare module 'csstype' {
-	export interface Properties {
-		[key: `--${string}`]: string | undefined;
-	}
-}
