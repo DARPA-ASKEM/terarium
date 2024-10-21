@@ -1921,7 +1921,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jupyterlab/codemirror@npm:4.2.5, @jupyterlab/codemirror@npm:^4.2.5":
+"@jupyterlab/codemirror@npm:^4.2.5":
   version: 4.2.5
   resolution: "@jupyterlab/codemirror@npm:4.2.5"
   dependencies:
@@ -9266,7 +9266,6 @@ __metadata:
     "@jupyterlab/application": "npm:4.2.5"
     "@jupyterlab/apputils": "npm:4.2.5"
     "@jupyterlab/cells": "npm:4.2.5"
-    "@jupyterlab/codemirror": "npm:4.2.5"
     "@jupyterlab/completer": "npm:4.2.5"
     "@jupyterlab/coreutils": "npm:6.2.5"
     "@jupyterlab/outputarea": "npm:4.2.5"
