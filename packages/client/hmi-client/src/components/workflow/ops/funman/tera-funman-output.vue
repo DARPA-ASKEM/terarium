@@ -6,7 +6,7 @@
 		</div>
 		<div class="btn-group">
 			<Button label="Add to report" outlined severity="secondary" disabled />
-			<Button label="Save for reuse" outlined severity="secondary" />
+			<Button label="Save for reuse" outlined severity="secondary" disabled />
 		</div>
 	</header>
 
@@ -30,7 +30,11 @@
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>Parameters<i class="pi pi-info-circle" /></template>
-			<vega-chart :visualization-spec="parameterCharts" :are-embed-actions-visible="false" />
+			<vega-chart
+				:visualization-spec="parameterCharts"
+				:are-embed-actions-visible="false"
+				@chart-click="onParameterChartClick"
+			/>
 		</AccordionTab>
 		<AccordionTab header="Diagram">
 			<tera-model-diagram v-if="model" :model="model" />
@@ -117,17 +121,27 @@ const selectedState = ref<string>('');
 const onlyShowLatestResults = ref(false);
 const focusOnModelChecks = ref(false);
 
-const stateChart = ref();
-const parameterCharts = ref();
+const stateChart = ref<any>({});
+const parameterCharts = ref<any>({});
+
+let selectedBoxId: number = -1;
+
+// Once a parameter tick is chosen, its corresponding line on the state chart will be highlighted
+function onParameterChartClick(eventData: any) {
+	// If a tick is clicked it will have a boxId, if the bar is clicked then we reset (show all lines)
+	selectedBoxId = eventData.boxId ?? -1;
+	updateStateChart();
+}
 
 function updateStateChart() {
 	if (!processedFunmanResult) return;
 	emit('update:trajectoryState', selectedState.value);
 	stateChart.value = createFunmanStateChart(
-		processedFunmanResult,
+		processedFunmanResult.trajectories,
 		constraintsResponse,
 		selectedState.value,
-		focusOnModelChecks.value
+		focusOnModelChecks.value,
+		selectedBoxId
 	);
 }
 
