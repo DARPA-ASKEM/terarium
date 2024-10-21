@@ -19,6 +19,19 @@
 				<!--amr_to_mmt doesn't like unit expressions with spaces, removing them here before they are saved to the amr-->
 				<template v-else-if="showUnit">
 					<template v-if="featureConfig.isPreview"><label>Unit</label>{{ item.unitExpression }}</template>
+					<!-- we use a dropdown for units with time semantic-->
+					<Dropdown
+						v-else-if="isTimePart"
+						:model-value="item.unitExpression"
+						option-label="label"
+						option-value="value"
+						:options="[
+							{ label: 'Days', value: 'days' },
+							{ label: 'Months', value: 'months' },
+							{ label: 'Years', value: 'years' }
+						]"
+						@change="$emit('update-item', { key: 'unitExpression', value: $event.value })"
+					/>
 					<tera-input-text
 						v-else
 						label="Unit"
@@ -92,10 +105,12 @@ import { stringToLatexExpression } from '@/services/model';
 import type { DKG } from '@/types/Types';
 import { getCurieFromGroundingIdentifier, getNameOfCurieCached, searchCuriesEntities } from '@/services/concept';
 import type { FeatureConfig } from '@/types/common';
+import Dropdown from 'primevue/dropdown';
 
 const props = defineProps<{
 	item: ModelPartItem;
 	featureConfig: FeatureConfig;
+	isTimePart?: boolean;
 }>();
 
 const emit = defineEmits(['update-item']);

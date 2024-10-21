@@ -117,6 +117,7 @@
 			</template>
 			<tera-model-part-entry
 				v-else
+				:is-time-part="!!isTimePart"
 				:item="base"
 				:feature-config="featureConfig"
 				@update-item="$emit('update-item', { id: base.id, ...$event })"
@@ -146,6 +147,7 @@ const props = defineProps<{
 	featureConfig: FeatureConfig;
 	collapsedItems?: Map<string, string[]>;
 	showMatrix?: boolean;
+	isTimePart?: boolean;
 }>();
 
 const emit = defineEmits(['update-item', 'open-matrix']);
