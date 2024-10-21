@@ -75,6 +75,11 @@ export function sortDatesAsc(a, b) {
 	return new Date(a).getTime() - new Date(b).getTime();
 }
 
+export interface CalendarSettings {
+	view: 'date' | 'month' | 'year';
+	format: string;
+}
+
 export function getTimestepFromDateRange(startDate: Date, endDate: Date, stepType: 'date' | 'month' | 'year'): number {
 	startDate = new Date(startDate);
 	const diffInMilliseconds = endDate.getTime() - startDate.getTime();

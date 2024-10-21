@@ -277,7 +277,12 @@ import { flattenInterventionData, getInterventionPolicyById } from '@/services/i
 import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-intervention-summary-card.vue';
 import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import Calendar from 'primevue/calendar';
-import { getCalendarSettingsFromModel, getEndDateFromTimestep, getTimestepFromDateRange } from '@/utils/date';
+import {
+	CalendarSettings,
+	getCalendarSettingsFromModel,
+	getEndDateFromTimestep,
+	getTimestepFromDateRange
+} from '@/utils/date';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import TeraChartControl from '../../tera-chart-control.vue';
 
@@ -301,10 +306,8 @@ const endDate = computed(() => {
 		calendarSettings.value?.view ?? 'date'
 	);
 });
-const calendarSettings = computed(() => {
-	if (!model.value) return null;
-	return getCalendarSettingsFromModel(model.value);
-});
+
+const calendarSettings = ref<CalendarSettings | null>(null);
 
 const policyInterventionId = computed(() => props.node.inputs[1].value?.[0]);
 const interventionPolicy = ref<InterventionPolicy | null>(null);
@@ -581,7 +584,10 @@ watch(
 		const id = input.value[0];
 		modelConfiguration.value = await getModelConfigurationById(id);
 		model.value = await getModelByModelConfigurationId(id);
-		if (model.value) modelVarUnits.value = getUnitsFromModelParts(model.value);
+		if (model.value) {
+			calendarSettings.value = getCalendarSettingsFromModel(model.value);
+			modelVarUnits.value = getUnitsFromModelParts(model.value);
+		}
 	},
 	{ immediate: true }
 );

@@ -278,7 +278,7 @@ import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { useProjects } from '@/composables/project';
 import TeraPdfPanel from '@/components/widgets/tera-pdf-panel.vue';
 import Calendar from 'primevue/calendar';
-import { getCalendarSettingsFromModel } from '@/utils/date';
+import { CalendarSettings, getCalendarSettingsFromModel } from '@/utils/date';
 import {
 	blankModelConfig,
 	isModelConfigsEqual,
@@ -522,10 +522,7 @@ const mmtParams = ref<MiraTemplateParams>({});
 
 const configuredMmt = ref(makeConfiguredMMT(mmt.value, knobs.value.transientModelConfig));
 
-const calendarSettings = computed(() => {
-	if (!model.value) return null;
-	return getCalendarSettingsFromModel(model.value);
-});
+const calendarSettings = ref<CalendarSettings | null>(null);
 
 const downloadModelArchive = async (configuration: ModelConfiguration = knobs.value.transientModelConfig) => {
 	const archive = await getArchive(configuration);
@@ -601,6 +598,7 @@ const initialize = async (overwriteWithState: boolean = false) => {
 
 	model.value = await getModel(modelId);
 	if (model.value) {
+		calendarSettings.value = getCalendarSettingsFromModel(model.value);
 		const response = await getMMT(model.value);
 		if (response) {
 			mmt.value = response.mmt;
