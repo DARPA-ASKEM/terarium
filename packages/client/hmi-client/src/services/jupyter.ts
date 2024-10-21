@@ -1,7 +1,6 @@
 import { EventEmitter, EventName, EventCallback } from '@/utils/emitter';
 import { SessionContext } from '@jupyterlab/apputils';
 import { ServerConnection, KernelManager, KernelSpecManager, SessionManager } from '@jupyterlab/services';
-import { CodeMirrorMimeTypeService } from '@jupyterlab/codemirror';
 import { standardRendererFactories as initialFactories, RenderMimeRegistry } from '@jupyterlab/rendermime';
 import { JSONObject } from '@lumino/coreutils';
 import * as messages from '@jupyterlab/services/lib/kernel/messages';
@@ -153,12 +152,10 @@ export const getSpecsManager = () => specsManager;
 let sessionManager;
 export const getSessionManager = () => sessionManager;
 
-export const mimeService = new CodeMirrorMimeTypeService();
-
 export const renderMime = new RenderMimeRegistry({ initialFactories });
 let initialized = false;
 
-export const createMessageId = (msgType) => {
+export const createMessageId = (msgType: string) => {
 	// const timestamp = Date
 	const uuid = uuidv4().replaceAll('-', '').slice(0, 16);
 	return `tgpt-${uuid}-${msgType}`;
