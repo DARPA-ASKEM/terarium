@@ -478,8 +478,10 @@ const onAddCodeCell = () => {
 };
 
 const onRunAllCells = () => {
-	const event = new Event('run-all-cells');
-	window.dispatchEvent(event);
+	if (window.confirm('Are you sure you want to rerun all cells?')) {
+		const event = new Event('run-all-cells');
+		window.dispatchEvent(event);
+	}
 };
 
 /* Download dataset feature has been removed, but keeping this code here in case it returns */
