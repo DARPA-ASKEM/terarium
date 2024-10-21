@@ -1,5 +1,10 @@
 <template>
-	<tera-model-part :items="timeList" :feature-config="featureConfig" @update-item="$emit('update-time', $event)" />
+	<tera-model-part
+		is-time-part
+		:items="timeList"
+		:feature-config="featureConfig"
+		@update-item="$emit('update-time', $event)"
+	/>
 </template>
 
 <script setup lang="ts">
