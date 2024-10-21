@@ -47,13 +47,13 @@
 									disabled
 								/>
 								<Calendar
-									v-if="modelConfiguration?.temporalContextDate"
+									v-if="modelConfiguration?.temporalContext"
 									disabled
 									:view="calendarSettings?.view"
 									:date-format="calendarSettings?.format"
 									showIcon
 									iconDisplay="input"
-									:model-value="new Date(modelConfiguration.temporalContextDate)"
+									:model-value="new Date(modelConfiguration.temporalContext)"
 								/>
 							</div>
 							<div class="label-and-input">
@@ -65,7 +65,7 @@
 									@update:model-value="updateState"
 								/>
 								<Calendar
-									v-if="modelConfiguration?.temporalContextDate && endDate"
+									v-if="modelConfiguration?.temporalContext && endDate"
 									:model-value="endDate"
 									:view="calendarSettings?.view"
 									:date-format="calendarSettings?.format"
@@ -73,7 +73,7 @@
 									iconDisplay="input"
 									@date-select="
 										timespan.end = getTimestepFromDateRange(
-											modelConfiguration.temporalContextDate,
+											modelConfiguration.temporalContext,
 											$event,
 											calendarSettings?.view ?? 'date'
 										)
@@ -294,9 +294,9 @@ const codeText = ref('');
 const modelConfiguration = ref<ModelConfiguration | null>(null);
 const model = ref<Model | null>(null);
 const endDate = computed(() => {
-	if (!modelConfiguration.value?.temporalContextDate) return null;
+	if (!modelConfiguration.value?.temporalContext) return null;
 	return getEndDateFromTimestep(
-		modelConfiguration.value.temporalContextDate,
+		modelConfiguration.value.temporalContext,
 		timespan.value.end,
 		calendarSettings.value?.view ?? 'date'
 	);
