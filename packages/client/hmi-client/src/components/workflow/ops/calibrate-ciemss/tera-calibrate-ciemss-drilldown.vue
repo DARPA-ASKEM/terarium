@@ -797,7 +797,9 @@ const preparedCharts = computed(() => {
 			annotations
 		);
 
-		charts[variable].layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[variable]));
+		charts.simulationCharts[variable].layer.push(
+			...createInterventionChartMarkers(groupedInterventionOutputs.value[variable])
+		);
 	});
 
 	if (groupedInterventionOutputs.value) {
