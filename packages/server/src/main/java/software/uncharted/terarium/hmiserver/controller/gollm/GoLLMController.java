@@ -40,7 +40,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractedDocumentPage;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.task.CompoundTask;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
@@ -1173,27 +1172,5 @@ public class GoLLMController {
 		req.setAdditionalProperties(props);
 
 		return req;
-	}
-
-	private static String createResearchPaperText(DocumentAsset document) {
-		String text = "";
-		if (document.getExtractions().size() > 0) {
-			for (final ExtractedDocumentPage page : document.getExtractions()) {
-				text += page.getText() + "\n";
-				if (page.getTables() != null) {
-					for (final JsonNode table : page.getTables()) {
-						text += table.toString() + "\n";
-					}
-				}
-				if (page.getEquations() != null) {
-					for (final JsonNode equation : page.getEquations()) {
-						text += equation.toString() + "\n";
-					}
-				}
-			}
-		} else {
-			text = document.getText();
-		}
-		return text;
 	}
 }

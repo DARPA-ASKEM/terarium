@@ -28,7 +28,7 @@ For each condition, create a model configuration JSON object that satisfies the 
 7. `inferredParameterList` should be an empty list.
 8. Determine what page that the majority of information was extracted from and set the `extractionPage` value to that page number. If the page number cannot be determined, set it to 0.
 
-Do not respond in full sentences; only create a JSON object that satisfies the JSON schema specified in the response format. Make sure you follow the JSON standard for the data types and structure.
+Do not respond in full sentences; only create a JSON object that satisfies the JSON schema specified in the response format. Make sure you follow the JSON standard for the data types and format.
 
 Answer:
 """
