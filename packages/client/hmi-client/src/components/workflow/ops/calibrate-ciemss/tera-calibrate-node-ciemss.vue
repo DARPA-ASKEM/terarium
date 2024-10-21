@@ -7,7 +7,13 @@
 				v-for="(_var, index) of selectedVariableSettings"
 				:key="index"
 				:are-embed-actions-visible="false"
-				:visualization-spec="preparedCharts[index]"
+				:visualization-spec="preparedCharts.variableCharts[index]"
+			/>
+			<vega-chart
+				v-for="(value, key, index) in groupedInterventionOutputs"
+				:key="key"
+				:are-embed-actions-visible="false"
+				:visualization-spec="preparedCharts.interventionCharts[index]"
 			/>
 		</template>
 		<vega-chart v-else-if="lossChartSpec" :are-embed-actions-visible="false" :visualization-spec="lossChartSpec" />
@@ -173,7 +179,7 @@ const preparedCharts = computed(() => {
 	// Need to get the dataset's time field
 	const datasetTimeField = state.timestampColName;
 
-	return selectedVariableSettings.value.map((setting) => {
+	const variableCharts = selectedVariableSettings.value.map((setting) => {
 		const variable = setting.selectedVariables[0];
 		const datasetVariables: string[] = [];
 		const mapObj = state.mapping.find((d) => d.modelVariable === variable);
@@ -182,6 +188,7 @@ const preparedCharts = computed(() => {
 		}
 		const annotations = chartAnnotations.value.filter((annotation) => annotation.chartId === setting.id);
 
+		// variable chart
 		const chart = createForecastChart(
 			{
 				data: result,
@@ -211,8 +218,40 @@ const preparedCharts = computed(() => {
 		);
 		applyForecastChartAnnotations(chart, annotations);
 		chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[variable]));
+
 		return chart;
 	});
+
+	// intervention charts
+	const interventionCharts = Object.keys(groupedInterventionOutputs.value).map((key) => {
+		const chart = createForecastChart(
+			{
+				data: result,
+				variables: [pyciemssMap[key]],
+				timeField: 'timepoint_id',
+				groupField: 'sample_id'
+			},
+			null,
+			{
+				data: groundTruth,
+				variables: [key],
+				timeField: datasetTimeField as string
+			},
+			{
+				title: key,
+				legend: true,
+				translationMap: reverseMap,
+				xAxisTitle: modelVarUnits.value._time || 'Time',
+				yAxisTitle: modelVarUnits.value[key] || '',
+				colorscheme: ['#AAB3C6', '#1B8073'],
+				...chartSize
+			}
+		);
+		chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
+		return chart;
+	});
+
+	return { variableCharts, interventionCharts };
 });
 
 // --- Handle chart annotations
