@@ -255,6 +255,9 @@ const autoCalibrationMapping = async (modelOptions: State[], datasetOptions: Dat
 	entityResult.forEach((entity) => {
 		result.push({ modelVariable: entity.source, datasetVariable: entity.target });
 	});
+	if (isEmpty(result)) {
+		result.push({ modelVariable: '', datasetVariable: '' });
+	}
 	return result;
 };
 
