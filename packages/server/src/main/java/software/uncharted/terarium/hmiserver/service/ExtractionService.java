@@ -308,6 +308,10 @@ public class ExtractionService {
 			document.setText(extractionResponse.textExtraction.documentText);
 		}
 
+		if (document.getExtractions() == null) {
+			document.setExtractions(new ArrayList<>());
+		}
+
 		for (final String page : extractionResponse.textExtraction.documentTextPerPage) {
 			final ExtractedDocumentPage p = new ExtractedDocumentPage();
 			p.setText(page);
