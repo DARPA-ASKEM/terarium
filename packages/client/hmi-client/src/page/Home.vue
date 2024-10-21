@@ -176,7 +176,7 @@ import { Project, ClientEventType, ProgressState } from '@/types/Types';
 import { Vue3Lottie } from 'vue3-lottie';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
-import { FilterService } from 'primevue/api';
+import { FilterService } from '@primevue/core/api';
 import { useNotificationManager } from '@/composables/notificationManager';
 import teraUploadProjectModal from '@/components/project/tera-upload-project-modal.vue';
 
