@@ -112,15 +112,13 @@
 						<Calendar
 							class="max-w-30rem"
 							:model-value="
-								knobs.transientModelConfig.temporalContextDate
-									? new Date(knobs.transientModelConfig.temporalContextDate)
-									: null
+								knobs.transientModelConfig.temporalContext ? new Date(knobs.transientModelConfig.temporalContext) : null
 							"
 							:view="calendarSettings?.view"
 							:date-format="calendarSettings?.format"
 							showIcon
 							iconDisplay="input"
-							@date-select="knobs.transientModelConfig.temporalContextDate = $event"
+							@date-select="knobs.transientModelConfig.temporalContext = $event"
 						/>
 					</div>
 				</AccordionTab>
