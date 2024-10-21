@@ -156,7 +156,6 @@ export const renderMime = new RenderMimeRegistry({ initialFactories });
 let initialized = false;
 
 export const createMessageId = (msgType: string) => {
-	// const timestamp = Date
 	const uuid = uuidv4().replaceAll('-', '').slice(0, 16);
 	return `tgpt-${uuid}-${msgType}`;
 };

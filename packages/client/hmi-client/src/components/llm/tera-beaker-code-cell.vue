@@ -73,11 +73,11 @@ const runCell = async () => {
 			metadata: {},
 			source: codeContent
 		}
-	} as any);
+	});
 	const cellWidget = new CodeCell({
 		model: cellModel,
 		rendermime: renderMime
-	} as any);
+	});
 
 	CodeCell.execute(cellWidget, props.jupyterSession, { notebook_item: props.notebookItem.query_id });
 };
