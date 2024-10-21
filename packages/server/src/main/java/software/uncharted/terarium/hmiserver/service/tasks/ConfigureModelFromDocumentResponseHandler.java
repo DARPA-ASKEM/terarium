@@ -71,7 +71,10 @@ public class ConfigureModelFromDocumentResponseHandler extends TaskResponseHandl
 
 			// For each configuration, create a new model configuration
 			for (final JsonNode condition : configurations.response.get("conditions")) {
-				final ModelConfiguration configuration = objectMapper.treeToValue(condition, ModelConfiguration.class);
+				final ModelConfiguration configuration = objectMapper.treeToValue(
+					condition.get("configuration"),
+					ModelConfiguration.class
+				);
 
 				if (configuration.getModelId() != props.modelId) {
 					configuration.setModelId(props.modelId);
@@ -83,6 +86,9 @@ public class ConfigureModelFromDocumentResponseHandler extends TaskResponseHandl
 					ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
 				);
 				final String source = document.map(TerariumAsset::getName).orElse(null);
+
+				// Set the extraction document id
+				configuration.setExtractionDocumentId(props.documentId);
 
 				// Update the source of the model-configuration with the Document name
 				if (source != null) {

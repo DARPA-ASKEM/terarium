@@ -26,8 +26,9 @@ For each condition, create a model configuration JSON object that satisfies the 
 5.	For each parameter specified in the AMR model, extract information from the text and create a parameter semantic object. Do not create new parameter semantic objects for parameters that are not included in the original AMR model. If you cannot find a constant value or distribution for the parameter, do not create a parameter semantic object.
 6. `observableSemanticList` should be an empty list.
 7. `inferredParameterList` should be an empty list.
+8. Determine what page that the majority of information was extracted from and set the `extractionPage` value to that page number. If the page number cannot be determined, set it to 0.
 
-Do not respond in full sentences; only create a JSON object that satisfies the JSON schema specified in the response format.
+Do not respond in full sentences; only create a JSON object that satisfies the JSON schema specified in the response format. Make sure you follow the JSON standard for the data types and structure.
 
 Answer:
 """
