@@ -6,8 +6,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import feign.FeignException;
 import jakarta.annotation.PostConstruct;
-import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -31,14 +29,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.zip.ZipInputStream;
-import javax.imageio.ImageIO;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.entity.ContentType;
-import org.apache.pdfbox.Loader;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.rendering.PDFRenderer;
 import org.redisson.api.RMapCache;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Value;
@@ -278,29 +272,6 @@ public class ExtractionService {
 				}
 			}
 
-			//			add pdfbox stuff here
-			try {
-				// Convert BufferedImage to byte[]
-				PDDocument document = Loader.loadPDF(documentContents);
-				PDFRenderer pdfRenderer = new PDFRenderer(document);
-				BufferedImage firstPageImage = pdfRenderer.renderImageWithDPI(0, 300);
-				//				BufferedImage resizedImage = new BufferedImage(200, 150, firstPageImage.getType());
-				Graphics2D g2d = firstPageImage.createGraphics();
-
-				g2d.drawImage(firstPageImage, 0, 0, 225, 150, null);
-				g2d.dispose();
-
-				ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-				ImageIO.write(firstPageImage, "png", outputStream);
-
-				byte[] thumbnailBytes = outputStream.toByteArray();
-				outputStream.close();
-				extractionResponse.thumbnail = thumbnailBytes;
-				document.close();
-			} catch (final Exception e) {
-				notificationInterface.sendMessage("Thumbnail image creation failed, continuing");
-			}
-
 			// flag as completed
 			extractionResponse.completed = true;
 
@@ -441,9 +412,6 @@ public class ExtractionService {
 
 			final byte[] documentContents = documentService.fetchFileAsBytes(documentId, filename).get();
 
-			//			PDFbox create image
-			//			documentService.uploadFile(name , assetid,...)
-			//			UpdateAsset(name, assetId, ...)
 			final String documentSHA = sha256(documentContents);
 
 			log.info("Document SHA: {}, checking cache", documentSHA);

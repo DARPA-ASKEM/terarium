@@ -7,7 +7,27 @@
 			</h6>
 			<tera-operator-placeholder v-if="!thumbnail" :node="node" />
 			<section v-else>
-				<img :src="thumbnail" alt="Pdf's first page" />
+				<img class="pdf-thumbnail" :src="thumbnail" alt="Pdf's first page" />
+			</section>
+
+			<section class="py-2">
+				<div v-if="isRunning(extractionStatus)" class="progressbar-container">
+					<p class="action">
+						<span v-if="extractionStatus?.progress !== undefined && isRunning(extractionStatus)">
+							{{ Math.round(extractionStatus?.progress * 100) }}%</span
+						>
+					</p>
+					<ProgressBar
+						v-if="extractionStatus !== null"
+						:value="isRunning(extractionStatus) ? extractionStatus.progress * 100 : 0"
+					/>
+					<div v-else class="done-container">
+						<div class="status-msg ok" v-if="isComplete(extractionStatus)">
+							<i class="pi pi-check-circle" />Completed
+						</div>
+					</div>
+				</div>
+				<p v-if="isRunning(extractionStatus)" class="action mx-auto">Processing PDF extractions</p>
 			</section>
 			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
@@ -22,23 +42,6 @@
 			<tera-operator-placeholder :node="node" />
 		</template>
 	</main>
-	<footer>
-		<div v-if="isRunning(extractionStatus)" class="progressbar-container">
-			<p class="action">
-				<span v-if="extractionStatus?.progress !== undefined && isRunning(extractionStatus)">
-					{{ Math.round(extractionStatus?.progress * 100) }}%</span
-				>
-			</p>
-			<ProgressBar
-				v-if="extractionStatus !== null"
-				:value="isRunning(extractionStatus) ? extractionStatus.progress * 100 : 0"
-			/>
-			<div v-else class="done-container">
-				<div class="status-msg ok" v-if="isComplete(extractionStatus)"><i class="pi pi-check-circle" />Completed</div>
-			</div>
-		</div>
-		<p v-if="isRunning(extractionStatus)" class="action mx-auto">Processing PDF extractions</p>
-	</footer>
 </template>
 
 <script setup lang="ts">
@@ -201,6 +204,13 @@ onUnmounted(async () => {
 .action {
 	font-size: var(--font-caption);
 	color: var(--text-color-secondary);
+	text-align: center;
+}
+
+.pdf-thumbnail {
+	padding-bottom: var(--gap-small);
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius-medium);
 }
 
 .done-container {

@@ -5,12 +5,16 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import javax.imageio.ImageIO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -18,6 +22,9 @@ import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.PDFRenderer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
@@ -362,16 +369,60 @@ public class DocumentController {
 		try {
 			// upload file to S3
 			final Integer status = documentAssetService.uploadFile(documentId, fileName, fileEntity);
+			final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
 			// if the fileEntity is not a PDF, then we need to extract the text and update
+
+			//			add pdfbox stuff here
+			if (document.isPresent()) {
+				try {
+					// Convert BufferedImage to byte[]
+					PDDocument pdfDocument = Loader.loadPDF(fileEntity.getContent().readAllBytes());
+					PDFRenderer pdfRenderer = new PDFRenderer(pdfDocument);
+					BufferedImage firstPageImage = pdfRenderer.renderImageWithDPI(0, 100);
+
+					int height = firstPageImage.getHeight();
+					int width = firstPageImage.getWidth();
+					int topHalfHeight = height / 2;
+
+					// Create a sub-image (top half)
+					BufferedImage topHalfImage = firstPageImage.getSubimage(0, 0, width, topHalfHeight);
+
+					// Resize the image to a width of 225px while maintaining aspect ratio
+					int newWidth = 225;
+					int newHeight = (newWidth * topHalfHeight) / width; // Maintain the aspect ratio
+
+					// Create a new BufferedImage for the resized image
+					Image resizedImage = topHalfImage.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
+					BufferedImage resizedBufferedImage = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
+
+					Graphics2D g2d = resizedBufferedImage.createGraphics();
+					g2d.drawImage(resizedImage, 0, 0, null);
+					g2d.dispose();
+
+					ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+					ImageIO.write(resizedBufferedImage, "png", outputStream);
+
+					byte[] thumbnailBytes = outputStream.toByteArray();
+					outputStream.close();
+
+					document.get().setThumbnail(thumbnailBytes);
+					pdfDocument.close();
+					documentAssetService.updateAsset(document.get(), projectId, permission);
+				} catch (final Exception e) {
+					final String error = "Unable to create thumbnail";
+					log.error(error, e);
+				}
+				System.out.println("XXX ------------ XXX");
+				System.out.println(document.get().getThumbnail());
+				System.out.println("XXX ------------ XXX");
+			}
 			// the document asset
 			if (!DownloadService.IsPdf(fileEntity.getContent().readAllBytes())) {
-				final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
 				if (document.isEmpty()) {
 					return ResponseEntity.notFound().build();
 				}
 
 				document.get().setText(IOUtils.toString(fileEntity.getContent(), StandardCharsets.UTF_8));
-
 				documentAssetService.updateAsset(document.get(), projectId, permission);
 			}
 
@@ -409,6 +460,9 @@ public class DocumentController {
 		try {
 			final byte[] fileAsBytes = file.getBytes();
 			final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
+			System.out.println("UPUP ------------ UPUP");
+			System.out.println(fileAsBytes);
+			System.out.println("UIPUP ------------ UPUP");
 			return uploadDocumentHelper(id, filename, fileEntity, projectId);
 		} catch (final IOException e) {
 			final String error = "Unable to upload document";
