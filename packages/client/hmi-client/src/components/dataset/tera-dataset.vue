@@ -1,14 +1,14 @@
 <template>
 	<tera-asset
 		v-bind="$attrs"
-		:id="assetId"
-		:name="dataset?.name"
+		show-table-of-contents
 		:feature-config="featureConfig"
-		:is-naming-asset="isRenaming"
+		:id="assetId"
 		:is-loading="isDatasetLoading"
+		:is-naming-asset="isRenaming"
+		:name="dataset?.name"
 		:overflow-hidden="selectedTabIndex === 1"
 		:selected-tab-index="selectedTabIndex"
-		show-table-of-contents
 		@close-preview="emit('close-preview')"
 		@tab-change="(e) => (selectedTabIndex = e.index)"
 	>
