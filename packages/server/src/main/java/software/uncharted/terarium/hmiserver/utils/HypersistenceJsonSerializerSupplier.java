@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.utils;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import io.hypersistence.utils.hibernate.type.util.JsonSerializer;
 import io.hypersistence.utils.hibernate.type.util.JsonSerializerSupplier;
@@ -12,13 +13,18 @@ import java.util.Map;
 /**
  * This overrides the default JsonSerializer used in hypersistence.
  *
- * <p>The default JsonSerializer will clone `Serializable` objects by _not_ using jackson to serialize and deserialize
+ * <p>
+ * The default JsonSerializer will clone `Serializable` objects by _not_ using
+ * jackson to serialize and deserialize
  * the object.
  *
- * <p>This causes unwanted behavior for classes that we specifically override to behave a particular way with jackson.
+ * <p>
+ * This causes unwanted behavior for classes that we specifically override to
+ * behave a particular way with jackson.
  * Ex. classes that extend SupportAdditionalProperties.
  *
- * <p>This code is coped from
+ * <p>
+ * This code is coped from
  * https://github.com/vladmihalcea/hypersistence-utils/blob/master/hypersistence-utils-hibernate-62/src/main/java/io/hypersistence/utils/hibernate/type/util/ObjectMapperJsonSerializer.java
  * and modified to omit the specialized Serializable behavior.
  */
@@ -38,8 +44,13 @@ public class HypersistenceJsonSerializerSupplier implements JsonSerializerSuppli
 			} else if (object instanceof Collection) {
 				final Object firstElement = findFirstNonNullElement((Collection<?>) object);
 				if (firstElement != null) {
-					final JavaType type = TypeFactory.defaultInstance()
-						.constructParametricType(object.getClass(), firstElement.getClass());
+					JavaType type;
+					if (firstElement instanceof ArrayNode || firstElement instanceof JsonNode) {
+						type = TypeFactory.defaultInstance().constructParametricType(object.getClass(), JsonNode.class);
+					} else {
+						type = TypeFactory.defaultInstance().constructParametricType(object.getClass(), firstElement.getClass());
+					}
+
 					return objectMapperWrapper.fromBytes(objectMapperWrapper.toBytes(object), type);
 				}
 			} else if (object instanceof Map) {
@@ -47,8 +58,15 @@ public class HypersistenceJsonSerializerSupplier implements JsonSerializerSuppli
 				if (firstEntry != null) {
 					final Object key = firstEntry.getKey();
 					final Object value = firstEntry.getValue();
-					final JavaType type = TypeFactory.defaultInstance()
-						.constructParametricType(object.getClass(), key.getClass(), value.getClass());
+
+					JavaType type;
+					if (value instanceof ArrayNode || value instanceof JsonNode) {
+						type = TypeFactory.defaultInstance()
+							.constructParametricType(object.getClass(), key.getClass(), JsonNode.class);
+					} else {
+						type = TypeFactory.defaultInstance()
+							.constructParametricType(object.getClass(), key.getClass(), value.getClass());
+					}
 					return (T) objectMapperWrapper.fromBytes(objectMapperWrapper.toBytes(object), type);
 				}
 			} else if (object instanceof JsonNode) {
