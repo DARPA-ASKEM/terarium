@@ -17,6 +17,10 @@
           "type": "string",
           "description": "A description of the scenario represented by the given model configuration; usually no more than one or two sentences."
         },
+        "extractionPage": {
+          "type": "number",
+          "description": "The page number where the model configuration was found in the text."
+        },
         "inferredParameterList": {
           "type": [
             "array",
@@ -290,6 +294,7 @@
         "description",
         "modelId",
         "name",
+        "extractionPage",
         "inferredParameterList",
         "initialSemanticList",
         "observableSemanticList",
