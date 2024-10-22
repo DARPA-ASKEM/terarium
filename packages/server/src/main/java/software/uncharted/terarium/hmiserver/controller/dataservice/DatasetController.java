@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -15,7 +14,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
@@ -294,21 +292,25 @@ public class DatasetController {
 		// We have a parser over our CSV file. Now for the front end we need to create a matrix of strings
 		// to represent the CSV file up to our limit. Then we need to calculate the column statistics.
 
-		final List<List<String>> csv = csvParser
-			.getRecords()
-			.stream()
-			.limit(limit >= 0 ? limit : Long.MAX_VALUE)
-			.map(record -> new ArrayList<>(record.toList()))
-			.collect(Collectors.toList());
-
 		// TODO - this should be done on csv post/push, and in task to handle large files.
+
+		int rowcount = 0;
+		final List<List<String>> csv = new ArrayList<>();
+
+		for (CSVRecord record : csvParser.getRecords()) {
+			if (rowcount < limit || limit <= 0) {
+				csv.add(new ArrayList<>(record.toList()));
+			}
+			rowcount++;
+		}
+
 		final List<CsvColumnStats> csvColumnStats = DatasetService.calculateColumnStatistics(csv);
 
 		final CsvAsset csvAsset = new CsvAsset(
 			csv,
 			csvColumnStats,
 			new ArrayList<>(csvParser.getHeaderMap().keySet()),
-			csv.size()
+			rowcount
 		);
 
 		final CacheControl cacheControl = CacheControl.maxAge(
@@ -653,6 +655,7 @@ public class DatasetController {
 			)
 		}
 	)
+	@Deprecated
 	public ResponseEntity<PresignedURL> getUploadURL(
 		@PathVariable("id") final UUID id,
 		@RequestParam("filename") final String filename
@@ -725,61 +728,5 @@ public class DatasetController {
 				messages.get("postgres.service-unavailable")
 			);
 		}
-	}
-
-	@GetMapping("/{id}/preview")
-	@Secured(Roles.USER)
-	@Operation(summary = "Gets a preview of the data asset")
-	@ApiResponses(
-		value = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "Dataset preview.",
-				content = @Content(
-					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = JsonNode.class)
-				)
-			),
-			@ApiResponse(responseCode = "415", description = "Dataset cannot be previewed", content = @Content),
-			@ApiResponse(responseCode = "500", description = "There was an issue generating the preview", content = @Content)
-		}
-	)
-	public ResponseEntity<JsonNode> getPreview(
-		@PathVariable("id") final UUID id,
-		@RequestParam("filename") final String filename
-	) {
-		// Currently `climate-data` service can only work on NetCDF files it knows about
-		return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
-		// try {
-		// if (filename.endsWith(".nc")) {
-		// return climateDataProxy.previewEsgf(id.toString(), null, null, null);
-		// } else {
-		// final Optional<PresignedURL> url = datasetService.getDownloadUrl(id,
-		// filename);
-		// // TODO: This attempts to check the file, but fails to open the file, might
-		// need
-		// // to write a NetcdfFiles Stream reader
-		// try (final NetcdfFile ncFile = NetcdfFiles.open(url.get().getUrl())) {
-		// final ImmutableList<Attribute> globalAttributes =
-		// ncFile.getGlobalAttributes();
-		// for (final Attribute attribute : globalAttributes) {
-		// final String name = attribute.getName();
-		// final Array values = attribute.getValues();
-		// // log.info("[{},{}]", name, values);
-		// }
-		// return climateDataProxy.previewEsgf(id.toString(), null, null, null);
-		// } catch (final IOException ioe) {
-		// throw new ResponseStatusException(
-		// org.springframework.http.HttpStatus.valueOf(415),
-		// "Unable to open file");
-		// }
-		// }
-		// } catch (final Exception e) {
-		// final String error = "Unable to get download url";
-		// log.error(error, e);
-		// throw new ResponseStatusException(
-		// org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-		// error);
-		// }
 	}
 }

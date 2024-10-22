@@ -71,6 +71,9 @@ public class InterventionsFromDocumentResponseHandler extends TaskResponseHandle
 					ip.setModelId(props.modelId);
 				}
 
+				// Set the extraction document id
+				ip.getInterventions().forEach(intervention -> intervention.setExtractionDocumentId(props.documentId));
+
 				final InterventionPolicy newPolicy = interventionService.createAsset(
 					ip,
 					props.projectId,

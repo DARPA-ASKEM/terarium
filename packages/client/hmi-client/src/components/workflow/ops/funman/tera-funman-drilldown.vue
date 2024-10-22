@@ -75,7 +75,7 @@
 									class="mt-2"
 									text
 									icon="pi pi-plus"
-									label="Add new check"
+									label="Add constraint"
 									size="small"
 									@click="addConstraintForm"
 								/>
@@ -107,7 +107,7 @@
 										<tera-input-number class="mt-1" v-model="knobs.currentTimespan.end" />
 									</div>
 									<div class="timespan-input">
-										<label>Number of timepoints</label>
+										<label>Number of timesteps</label>
 										<tera-input-number class="mt-1" v-model="knobs.numberOfSteps" />
 									</div>
 								</div>

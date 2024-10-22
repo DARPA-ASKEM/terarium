@@ -63,13 +63,36 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 				ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
 			);
 			if (!sim.isEmpty()) {
+				log.info("simulation=" + simulationId + " progress=" + progress);
 				sim.get().setProgress(progress);
 				simulationService.updateAsset(sim.get(), props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 			}
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
+		return resp;
+	}
 
+	@Override
+	public TaskResponse onFailure(final TaskResponse resp) {
+		// Mark simulation as failed
+		try {
+			final Properties props = resp.getAdditionalProperties(Properties.class);
+			final UUID simulationId = props.getSimulationId();
+			final Optional<Simulation> sim = simulationService.getAsset(
+				simulationId,
+				ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
+			);
+			if (sim.isEmpty()) {
+				log.error("Cannot find Simulation " + simulationId + " for task " + resp.getId());
+				throw new Error("Cannot find Simulation " + simulationId + " for task " + resp.getId());
+			}
+			log.error("model validation failed");
+			sim.get().setStatus(ProgressState.ERROR);
+			simulationService.updateAsset(sim.get(), props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+		} catch (final Exception e) {
+			throw new RuntimeException(e);
+		}
 		return resp;
 	}
 

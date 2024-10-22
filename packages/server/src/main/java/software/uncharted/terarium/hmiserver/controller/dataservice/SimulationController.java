@@ -166,7 +166,7 @@ public class SimulationController {
 					(sim.getStatus().equals(ProgressState.FAILED) || sim.getStatus().equals(ProgressState.ERROR)) &&
 					(sim.getStatusMessage() == null || sim.getStatusMessage().isEmpty())
 				) {
-					if (sim.getEngine().equals(SimulationEngine.CIEMSS)) {
+					if (sim.getEngine() != null && sim.getEngine().equals(SimulationEngine.CIEMSS)) {
 						// Pyciemss can give us a nice error message. Attempt to get it.
 						final ResponseEntity<SimulationStatusMessage> statusResponse = simulationCiemssServiceProxy.getRunStatus(
 							sim.getId().toString()

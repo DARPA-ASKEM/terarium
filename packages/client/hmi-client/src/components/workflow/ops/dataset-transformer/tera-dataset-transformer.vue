@@ -13,7 +13,7 @@
 					class="5"
 					:disabled="!kernelState"
 				/>
-				<Button label="Save for reuse" severity="secondary" outlined :disabled="!kernelState" @click="onSave" />
+				<Button label="Save for reuse" severity="secondary" outlined :disabled="disableSaveForReuse" @click="onSave" />
 			</div>
 		</template>
 		<div class="background">
@@ -40,7 +40,7 @@
 <script setup lang="ts">
 // Proxy to use tera-dataset via a workflow context
 
-import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
+import { OperatorStatus, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import TeraDatasetJupyterPanel from '@/components/dataset/tera-dataset-jupyter-panel.vue';
 import { computed, onMounted, ref } from 'vue';
 import { createNotebookSession, getNotebookSessionById } from '@/services/notebook-session';
@@ -70,6 +70,9 @@ const assets = computed(() =>
 			id: inputNode.value![0],
 			name: useProjects().getAssetName(inputNode.value![0])
 		}))
+);
+const disableSaveForReuse = computed(
+	() => !kernelState.value || props.node.status === OperatorStatus.INVALID || props.node.status === OperatorStatus.ERROR
 );
 
 const kernelState = ref(null);
