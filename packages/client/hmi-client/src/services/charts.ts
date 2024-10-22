@@ -849,6 +849,7 @@ export function createFunmanStateChart(
 
 	return {
 		$schema: VEGALITE_SCHEMA,
+		id: stateId,
 		config: { font: globalFont },
 		width: 600,
 		height: 300,

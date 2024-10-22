@@ -165,7 +165,7 @@
 							<template #header> State variables<i class="pi pi-info-circle" /> </template>
 							<template v-if="stateCharts[0]">
 								<vega-chart
-									v-for="(stateChart, index) in stateCharts"
+									v-for="(stateChart, index) in selectedStateCharts"
 									:key="index"
 									:visualization-spec="stateChart"
 									:are-embed-actions-visible="false"
@@ -173,6 +173,9 @@
 								/>
 							</template>
 							<span class="ml-4" v-else> No boxes were generated. </span>
+							<span class="ml-4" v-if="isEmpty(selectedStateCharts)">
+								To view state charts select some in the Output settings.
+							</span>
 						</AccordionTab>
 						<AccordionTab>
 							<template #header>Parameters<i class="pi pi-info-circle" /></template>
@@ -732,6 +735,10 @@ const mmtParams = ref<MiraTemplateParams>({});
 const calibratedConfigObservables = ref<Observable[]>([]);
 
 const stateCharts = ref<any>([{}]);
+const selectedStateCharts = computed(() => {
+	const selectedStateIds = selectedStateSettings.value.map((setting) => setting.selectedVariables[0]);
+	return stateCharts.value.filter((chart) => selectedStateIds.includes(chart.id));
+});
 const parameterCharts = ref<any>({});
 
 const stateOptions = ref<string[]>([]);
@@ -761,8 +768,8 @@ function onParameterChartClick(eventData: any) {
 function updateStateCharts() {
 	if (!processedFunmanResult) return;
 	const trajectories = processedFunmanResult.trajectories;
-	stateCharts.value = selectedStateSettings.value.map(({ name }) =>
-		createFunmanStateChart(trajectories, constraintsResponse, name, focusOnModelChecks.value, selectedBoxId)
+	stateCharts.value = funmanResult.model.petrinet.model.states.map(({ id }) =>
+		createFunmanStateChart(trajectories, constraintsResponse, id, focusOnModelChecks.value, selectedBoxId)
 	);
 }
 
@@ -778,7 +785,6 @@ function updateParameterCharts() {
 	}
 }
 
-// Following three functions are responsible for triggering adding or removing charts
 function updateSelectedStates(event) {
 	emit('update-state', {
 		...props.node.state,
@@ -788,7 +794,6 @@ function updateSelectedStates(event) {
 			event.selectedVariable
 		)
 	});
-	updateStateCharts();
 }
 
 function updateSelectedParameters(event) {
@@ -800,7 +805,7 @@ function updateSelectedParameters(event) {
 			event.selectedVariable
 		)
 	});
-	updateParameterCharts();
+	updateParameterCharts(); // Rerender when we remove/add charts since they are all contained in the same visualization
 }
 
 function removeChartSetting(chartId: string) {
@@ -809,9 +814,7 @@ function removeChartSetting(chartId: string) {
 		...props.node.state,
 		chartSettings: removeChartSettingById(chartSettings.value, chartId)
 	});
-	if (chartType === ChartSettingType.VARIABLE_COMPARISON) {
-		updateStateCharts();
-	} else if (chartType === ChartSettingType.DISTRIBUTION_COMPARISON) {
+	if (chartType === ChartSettingType.DISTRIBUTION_COMPARISON) {
 		updateParameterCharts();
 	}
 }
