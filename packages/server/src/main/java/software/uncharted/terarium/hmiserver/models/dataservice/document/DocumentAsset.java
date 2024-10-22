@@ -76,6 +76,11 @@ public class DocumentAsset extends TerariumAsset {
 	@Column(columnDefinition = "json")
 	private List<ExtractedDocumentPage> extractions = new ArrayList<>();
 
+	@TSOptional
+	@Type(JsonType.class)
+	@Column(columnDefinition = "text")
+	private byte[] thumbnail;
+
 	@Override
 	public List<String> getFileNames() {
 		if (this.fileNames == null) {

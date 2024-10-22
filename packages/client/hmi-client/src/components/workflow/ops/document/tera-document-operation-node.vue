@@ -5,7 +5,10 @@
 			<h6>
 				<span class="truncate-after-three-lines">{{ documentName }}</span>
 			</h6>
-			<tera-operator-placeholder :node="node" />
+			<tera-operator-placeholder v-if="!thumbnail" :node="node" />
+			<section v-else>
+				<img :src="thumbnail" alt="Pdf's first page" />
+			</section>
 			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
 		<template v-else>
@@ -65,6 +68,7 @@ const document = ref<DocumentAsset | null>(null);
 const fetchingDocument = ref(false);
 const documentName = ref<DocumentAsset['name']>('');
 const extractionStatus = ref();
+const thumbnail = ref<string | null>(null);
 
 const isRunning = (item) => item?.state === ProgressState.Running;
 const isComplete = (item) => item?.status === ProgressState.Complete;
@@ -79,6 +83,7 @@ onMounted(async () => {
 		// Fetch the document
 		fetchingDocument.value = true;
 		document.value = await getDocumentAsset(props.node.state.documentId);
+		console.log('document.value', document.value);
 
 		// If the name is different, update the name
 		if (document.value && documentName.value !== document.value.name && !isEmpty(document.value.name)) {
@@ -153,6 +158,15 @@ watch(
 		}
 	},
 	{ immediate: true }
+);
+
+watch(
+	() => document.value?.thumbnail,
+	() => {
+		if (document.value?.thumbnail?.length) {
+			thumbnail.value = `data:image/png;base64, ${document.value.thumbnail}`;
+		}
+	}
 );
 
 async function subscribeToExtraction(event: ClientEvent<ExtractionStatusUpdate>) {
