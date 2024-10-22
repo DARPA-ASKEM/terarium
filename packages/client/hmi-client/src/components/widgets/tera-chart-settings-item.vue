@@ -2,7 +2,7 @@
 	<div class="chart-settings-item">
 		<h6>{{ settings.name }}</h6>
 		<div class="btn-group">
-			<Button label="Open chart settings" outlined severity="secondary" size="small" @click="$emit('open')" />
+			<Button icon="Open chart settings" outlined severity="secondary" size="small" @click="$emit('open')" />
 			<Button icon="pi pi-trash" rounded text @click="$emit('remove', settings.id)" />
 		</div>
 	</div>

@@ -163,8 +163,14 @@
 						<AccordionTab header="Summary"> Summary text </AccordionTab>
 						<AccordionTab>
 							<template #header> State variables<i class="pi pi-info-circle" /> </template>
-							<template v-if="stateChart">
-								<vega-chart :visualization-spec="stateChart" :are-embed-actions-visible="false" expandable />
+							<template v-if="stateCharts[0]">
+								<vega-chart
+									v-for="(stateChart, index) in stateCharts"
+									:key="index"
+									:visualization-spec="stateChart"
+									:are-embed-actions-visible="false"
+									expandable
+								/>
 							</template>
 							<span class="ml-4" v-else> No boxes were generated. </span>
 						</AccordionTab>
@@ -173,6 +179,7 @@
 							<vega-chart
 								:visualization-spec="parameterCharts"
 								:are-embed-actions-visible="false"
+								expandable
 								@chart-click="onParameterChartClick"
 							/>
 						</AccordionTab>
@@ -222,12 +229,40 @@
 				content-width="360px"
 			>
 				<template #content>
+					<div class="output-settings-panel">
+						<h5>State variables</h5>
+						<tera-chart-control
+							class="w-full"
+							:chart-config="{
+								selectedRun: 'fixme',
+								selectedVariable: selectedStateSettings.map((s) => s.selectedVariables[0])
+							}"
+							multi-select
+							:show-remove-button="false"
+							:variables="stateOptions"
+							@configuration-change="updateSelectedStates"
+						/>
+						<hr />
+						<h5>Parameters</h5>
+						<tera-chart-control
+							class="w-full"
+							:chart-config="{
+								selectedRun: 'fixme',
+								selectedVariable: selectedParameterSettings.map((s) => s.selectedVariables[0])
+							}"
+							multi-select
+							:show-remove-button="false"
+							:variables="parameterOptions"
+							@configuration-change="updateSelectedParameters"
+						/>
+						<hr />
+					</div>
 					<div class="flex align-items-center gap-2 ml-4 mb-3">
 						<Checkbox v-model="onlyShowLatestResults" binary @change="renderCharts" />
 						<label>Only show furthest results</label>
 					</div>
 					<div class="flex align-items-center gap-2 ml-4 mb-4">
-						<Checkbox v-model="focusOnModelChecks" binary @change="updateStateChart" />
+						<Checkbox v-model="focusOnModelChecks" binary @change="updateStateCharts" />
 						<label>Focus on model checks</label>
 					</div>
 				</template>
@@ -266,6 +301,8 @@ import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 
+import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
+
 import type {
 	FunmanInterval,
 	FunmanPostQueriesRequest,
@@ -294,9 +331,17 @@ import {
 import { useToastService } from '@/services/toast';
 import { pythonInstance } from '@/python/PyodideController';
 import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-constraint-group-form.vue';
-import { DrilldownTabs } from '@/types/common';
+import { DrilldownTabs, ChartSettingType } from '@/types/common';
 import { stringToLatexExpression, getModelByModelConfigurationId, getMMT } from '@/services/model';
 import { displayNumber } from '@/utils/number';
+import {
+	// deleteAnnotation,
+	// fetchAnnotations,
+	// generateForecastChartAnnotation,
+	// removeChartSettingById,
+	// saveAnnotation,
+	updateChartSettingsBySelectedVariables
+} from '@/services/chart-settings';
 import { FunmanOperationState, Constraint, ConstraintType, CompartmentalConstraint } from './funman-operation';
 
 const props = defineProps<{
@@ -602,12 +647,6 @@ const setRequestParameters = (modelParameters: ModelParameter[]) => {
 	});
 };
 
-const updateTrajectorystate = (s: string) => {
-	const state = _.cloneDeep(props.node.state);
-	state.trajectoryState = s;
-	emit('update-state', state);
-};
-
 const onSelection = (id: string) => {
 	emit('select-output', id);
 };
@@ -682,13 +721,21 @@ const configuredMmt = ref<MiraModel | null>(null);
 const mmtParams = ref<MiraTemplateParams>({});
 const calibratedConfigObservables = ref<Observable[]>([]);
 
+const stateCharts = ref<any>([{}]);
+const parameterCharts = ref<any>({});
+
 const stateOptions = ref<string[]>([]);
-const selectedState = ref<string>('');
+const parameterOptions = ref<string[]>([]);
 const onlyShowLatestResults = ref(false);
 const focusOnModelChecks = ref(false);
 
-const stateChart = ref<any>({});
-const parameterCharts = ref<any>({});
+const chartSettings = computed(() => props.node.state.chartSettings ?? []);
+const selectedStateSettings = computed(() =>
+	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON)
+);
+const selectedParameterSettings = computed(() =>
+	chartSettings.value.filter((setting) => setting.type === ChartSettingType.DISTRIBUTION_COMPARISON)
+);
 
 let selectedBoxId: number = -1;
 
@@ -696,33 +743,58 @@ let selectedBoxId: number = -1;
 function onParameterChartClick(eventData: any) {
 	// If a tick is clicked it will have a boxId, if the bar is clicked then we reset (show all lines)
 	selectedBoxId = eventData.boxId ?? -1;
-	updateStateChart();
+	updateStateCharts();
 }
 
-function updateStateChart() {
+function updateStateCharts() {
 	if (!processedFunmanResult) return;
-	updateTrajectorystate(selectedState.value);
-	stateChart.value = createFunmanStateChart(
-		processedFunmanResult.trajectories,
-		constraintsResponse,
-		selectedState.value,
-		focusOnModelChecks.value,
-		selectedBoxId
+	const trajectories = processedFunmanResult.trajectories;
+	stateCharts.value = selectedStateSettings.value.map(({ name }) =>
+		createFunmanStateChart(trajectories, constraintsResponse, name, focusOnModelChecks.value, selectedBoxId)
 	);
+}
+
+function updateParameterCharts() {
+	if (!processedFunmanResult) return;
+	const selectedParameterIds = selectedParameterSettings.value.map((setting) => setting.selectedVariables[0]);
+	const distributionParameters = funmanResult.request.parameters.filter(
+		// TODO: This first conditional may change as funman will return constants soon
+		(d: any) => d.interval.lb !== d.interval.ub && selectedParameterIds.includes(d.name)
+	);
+	if (processedFunmanResult.boxes) {
+		parameterCharts.value = createFunmanParameterCharts(distributionParameters, processedFunmanResult.boxes);
+	}
+}
+
+function updateSelectedStates(event) {
+	emit('update-state', {
+		...props.node.state,
+		chartSettings: updateChartSettingsBySelectedVariables(
+			chartSettings.value,
+			ChartSettingType.VARIABLE_COMPARISON,
+			event.selectedVariable
+		)
+	});
+	updateStateCharts();
+}
+
+function updateSelectedParameters(event) {
+	emit('update-state', {
+		...props.node.state,
+		chartSettings: updateChartSettingsBySelectedVariables(
+			chartSettings.value,
+			ChartSettingType.DISTRIBUTION_COMPARISON,
+			event.selectedVariable
+		)
+	});
+	updateParameterCharts();
 }
 
 async function renderCharts() {
 	processedFunmanResult = processFunman(funmanResult, onlyShowLatestResults.value);
 
-	// State chart
-	selectedState.value = props.node.state.trajectoryState ?? stateOptions.value[0];
-	updateStateChart();
-
-	// Parameter charts
-	const distributionParameters = funmanResult.request.parameters.filter((d: any) => d.interval.lb !== d.interval.ub); // TODO: This conditional may change as funman will return constants soon
-	if (processedFunmanResult.boxes) {
-		parameterCharts.value = createFunmanParameterCharts(distributionParameters, processedFunmanResult.boxes);
-	}
+	updateStateCharts();
+	updateParameterCharts();
 
 	// For displaying model/model configuration
 	// Model will be the same on runId change, no need to fetch it again
@@ -762,8 +834,12 @@ watch(
 		notebookText.value = rawFunmanResult;
 		funmanResult = JSON.parse(rawFunmanResult);
 		constraintsResponse = funmanResult.request.constraints;
-		stateOptions.value = funmanResult.model.petrinet.model.states.map(({ id }) => id);
 		validatedModelConfiguration.value = funmanResult.modelConfiguration;
+
+		stateOptions.value = funmanResult.model.petrinet.model.states.map(({ id }) => id);
+		parameterOptions.value = funmanResult.request.parameters
+			.filter((d: any) => d.interval.lb !== d.interval.ub)
+			.map(({ name }) => name);
 
 		renderCharts();
 	},
@@ -839,6 +915,18 @@ ul {
 
 .p-accordion {
 	padding: 0 var(--gap-2);
+}
+
+.output-settings-panel {
+	padding: var(--gap-4);
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-2);
+	hr {
+		border: 0;
+		border-top: 1px solid var(--surface-border-alt);
+		width: 100%;
+	}
 }
 
 /* Override grid template so output expands when sidebar is closed */
