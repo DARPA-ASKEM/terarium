@@ -188,7 +188,7 @@ const preparedCharts = computed(() => {
 		if (interventionPolicy.value) {
 			_.keys(groupedInterventionOutputs.value).forEach((key) => {
 				if (config.includes(key)) {
-					chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
+					chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key], false, -115));
 				}
 			});
 		}
