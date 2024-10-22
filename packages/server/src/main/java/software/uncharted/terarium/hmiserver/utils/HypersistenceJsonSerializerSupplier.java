@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.utils;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import io.hypersistence.utils.hibernate.type.util.JsonSerializer;
 import io.hypersistence.utils.hibernate.type.util.JsonSerializerSupplier;
@@ -45,7 +46,7 @@ public class HypersistenceJsonSerializerSupplier implements JsonSerializerSuppli
 				final Object firstElement = findFirstNonNullElement((Collection<?>) object);
 				if (firstElement != null) {
 					JavaType type;
-					if (firstElement instanceof ArrayNode || firstElement instanceof JsonNode) {
+					if (firstElement instanceof ArrayNode || firstElement instanceof ObjectNode) {
 						type = TypeFactory.defaultInstance().constructParametricType(object.getClass(), JsonNode.class);
 					} else {
 						type = TypeFactory.defaultInstance().constructParametricType(object.getClass(), firstElement.getClass());
@@ -60,7 +61,7 @@ public class HypersistenceJsonSerializerSupplier implements JsonSerializerSuppli
 					final Object value = firstEntry.getValue();
 
 					JavaType type;
-					if (value instanceof ArrayNode || value instanceof JsonNode) {
+					if (value instanceof ArrayNode || value instanceof ObjectNode) {
 						type = TypeFactory.defaultInstance()
 							.constructParametricType(object.getClass(), key.getClass(), JsonNode.class);
 					} else {
