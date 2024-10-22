@@ -228,7 +228,7 @@
 				v-model:is-open="isOutputSettingsPanelOpen"
 				direction="right"
 				class="input-config"
-				header="Output Settings"
+				header="Output settings"
 				content-width="360px"
 			>
 				<template #content>
@@ -869,6 +869,20 @@ watch(
 		parameterOptions.value = funmanResult.request.parameters
 			.filter((d: any) => d.interval.lb !== d.interval.ub)
 			.map(({ name }) => name);
+
+		// Initialize default output settings
+		const state = _.cloneDeep(props.node.state);
+		state.chartSettings = updateChartSettingsBySelectedVariables(
+			[],
+			ChartSettingType.VARIABLE_COMPARISON,
+			stateOptions.value
+		);
+		state.chartSettings = updateChartSettingsBySelectedVariables(
+			state.chartSettings,
+			ChartSettingType.DISTRIBUTION_COMPARISON,
+			parameterOptions.value
+		);
+		emit('update-state', state);
 
 		renderCharts();
 	},
