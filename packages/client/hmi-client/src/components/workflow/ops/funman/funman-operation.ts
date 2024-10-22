@@ -51,6 +51,7 @@ export interface FunmanOperationState extends BaseState {
 	compartmentalConstraint: CompartmentalConstraint;
 	constraintGroups: ConstraintGroup[];
 	requestParameters: RequestParameter[];
+	currentProgress: number;
 	// selected state in ouptut
 	trajectoryState?: string;
 }
@@ -76,7 +77,8 @@ export const FunmanOperation: Operation = {
 			constraintGroups: [],
 			requestParameters: [],
 			inProgressId: '',
-			runId: ''
+			runId: '',
+			currentProgress: 0
 		};
 		return init;
 	}
