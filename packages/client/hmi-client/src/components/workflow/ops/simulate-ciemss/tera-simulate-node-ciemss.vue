@@ -36,7 +36,7 @@ import {
 import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
-import { chartActionsProxy, nodeOutputLabel } from '@/components/workflow/util';
+import { nodeOutputLabel } from '@/components/workflow/util';
 
 import type { WorkflowNode } from '@/types/workflow';
 import { createLLMSummary } from '@/services/summary-service';
@@ -46,6 +46,8 @@ import { createDatasetFromSimulationResult } from '@/services/dataset';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import type { InterventionPolicy, Model } from '@/types/Types';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
+import { addMultiVariableChartSetting } from '@/services/chart-settings';
+import { ChartSettingType } from '@/types/common';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
 
 const props = defineProps<{
@@ -106,18 +108,17 @@ const pollResult = async (runId: string) => {
 	return pollerResults;
 };
 
-const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperationState) => {
-	emit('update-state', state);
-});
-
 const processResult = async (runId: string) => {
 	const state = _.cloneDeep(props.node.state);
-	if (interventionPolicyId.value && _.isEmpty(state.chartConfigs)) {
+	if (interventionPolicyId.value && _.isEmpty(state.chartSettings)) {
 		_.keys(groupedInterventionOutputs.value).forEach((key) => {
-			chartProxy.addChart([key]);
+			state.chartSettings = addMultiVariableChartSetting(
+				state.chartSettings ?? [],
+				ChartSettingType.VARIABLE_COMPARISON,
+				[key]
+			);
 		});
-	} else if (_.isEmpty(state.chartConfigs)) {
-		chartProxy.addChart();
+		emit('update-state', state);
 	}
 
 	const summaryData = await getRunResultCSV(runId, 'result_summary.csv');
