@@ -114,15 +114,15 @@
 								disabled
 								v-if="model && modelConfig"
 								label="Start time"
-								:model="model"
-								:model-configuration="modelConfig"
+								:start-date="modelConfig.temporalContext"
+								:calendar-settings="getCalendarSettingsFromModel(model)"
 								:model-value="0"
 							/>
 							<tera-timestep-calendar
 								v-if="model && modelConfig"
 								label="End time"
-								:model="model"
-								:model-configuration="modelConfig"
+								:start-date="modelConfig.temporalContext"
+								:calendar-settings="getCalendarSettingsFromModel(model)"
 								v-model="knobs.endTime"
 							/>
 						</div>
@@ -513,6 +513,7 @@ import { flattenInterventionData, getInterventionPolicyById } from '@/services/i
 import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-intervention-summary-card.vue';
 import { getParameters } from '@/model-representation/service';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
+import { getCalendarSettingsFromModel } from '@/utils/date';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults, getErrorData } from './calibrate-utils';
 

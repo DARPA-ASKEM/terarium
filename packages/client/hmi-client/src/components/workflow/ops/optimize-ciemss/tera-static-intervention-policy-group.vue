@@ -89,26 +89,26 @@
 					<h6 class="pt-4, pb-3">Intervention Time</h6>
 					<div class="input-row">
 						<tera-timestep-calendar
-							v-if="model && modelConfiguration"
+							v-if="modelConfiguration"
 							label="Start time"
-							:model="model"
-							:model-configuration="modelConfiguration"
+							:start-date="modelConfiguration.temporalContext"
+							:calendar-settings="getCalendarSettingsFromModel(model)"
 							v-model="knobs.startTime"
 							@update:model-value="$emit('update-self', knobs)"
 						/>
 						<tera-timestep-calendar
-							v-if="model && modelConfiguration"
+							v-if="modelConfiguration"
 							label="End time"
-							:model="model"
-							:model-configuration="modelConfiguration"
+							:start-date="modelConfiguration.temporalContext"
+							:calendar-settings="getCalendarSettingsFromModel(model)"
 							v-model="knobs.endTime"
 							@update:model-value="$emit('update-self', knobs)"
 						/>
 						<tera-timestep-calendar
-							v-if="model && modelConfiguration"
+							v-if="modelConfiguration"
 							label="Initial guess"
-							:model="model"
-							:model-configuration="modelConfiguration"
+							:start-date="modelConfiguration.temporalContext"
+							:calendar-settings="getCalendarSettingsFromModel(model)"
 							v-model="knobs.startTimeGuess"
 							@update:model-value="$emit('update-self', knobs)"
 						/>
@@ -141,6 +141,7 @@ import {
 } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
 import TeraSignalBars from '@/components/widgets/tera-signal-bars.vue';
 import teraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
+import { getCalendarSettingsFromModel } from '@/utils/date';
 
 const props = defineProps<{
 	model: Model;

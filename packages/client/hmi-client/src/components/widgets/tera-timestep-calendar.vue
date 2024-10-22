@@ -7,7 +7,7 @@
 			@update:model-value="emit('update:model-value', $event)"
 		/>
 		<Calendar
-			v-if="modelConfiguration.temporalContext"
+			v-if="startDate"
 			:model-value="date"
 			showIcon
 			iconDisplay="input"
@@ -20,43 +20,33 @@
 </template>
 
 <script setup lang="ts">
-import { Model, ModelConfiguration } from '@/types/Types';
 import Calendar from 'primevue/calendar';
-import {
-	CalendarSettings,
-	getCalendarSettingsFromModel,
-	getEndDateFromTimestep,
-	getTimestepFromDateRange
-} from '@/utils/date';
-import { computed, ref } from 'vue';
+import { CalendarSettings, getEndDateFromTimestep, getTimestepFromDateRange } from '@/utils/date';
+import { computed } from 'vue';
 import teraInputNumber from './tera-input-number.vue';
 
 const props = defineProps<{
 	label: string;
 	modelValue: number;
-	model: Model;
-	modelConfiguration: ModelConfiguration;
+	startDate: Date | undefined;
+	calendarSettings?: CalendarSettings;
 	disabled?: boolean;
 }>();
 
 const emit = defineEmits(['update:model-value']);
 
-const calendarSettings = ref<CalendarSettings>(getCalendarSettingsFromModel(props.model));
+// const calendarSettings = ref<CalendarSettings>(getCalendarSettingsFromModel(props.model));
 
 const date = computed(() => {
-	if (!props.modelConfiguration.temporalContext) return null;
-	return getEndDateFromTimestep(
-		props.modelConfiguration.temporalContext,
-		props.modelValue,
-		calendarSettings.value?.view ?? 'date'
-	);
+	if (!props.startDate) return null;
+	return getEndDateFromTimestep(props.startDate, props.modelValue, props.calendarSettings?.view ?? 'date');
 });
 
 const onDateSelect = (newDate: Date) => {
-	if (!props.modelConfiguration.temporalContext) return;
+	if (!props.startDate) return;
 	emit(
 		'update:model-value',
-		getTimestepFromDateRange(props.modelConfiguration.temporalContext, newDate, calendarSettings.value?.view ?? 'date')
+		getTimestepFromDateRange(props.startDate, newDate, props.calendarSettings?.view ?? 'date')
 	);
 };
 </script>
