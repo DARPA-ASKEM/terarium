@@ -216,6 +216,54 @@
 				<p class="helpMessage">Click 'Run' to start the simulation</p>
 			</section>
 		</template>
+
+		<template #sidebar-right>
+			<tera-slider-panel
+				v-model:is-open="isOutputSettingsPanelOpen"
+				direction="right"
+				class="input-config"
+				header="Output Settings"
+				content-width="360px"
+			>
+				<template #overlay>
+					<div>test</div>
+					<!-- <tera-chart-settings-panel
+						:annotations="
+							activeChartSettings?.type === ChartSettingType.VARIABLE_COMPARISON_COMPARISON ? chartAnnotations : undefined
+						"
+						:active-settings="activeChartSettings"
+						:generate-annotation="generateAnnotation"
+						@delete-annotation="deleteAnnotation"
+						@close="activeChartSettings = null"
+					/> -->
+				</template>
+				<template #content>
+					<div class="output-settings-panel">
+						<h5>Comparison charts</h5>
+						<tera-chart-control
+							:chart-config="{
+								selectedRun: 'fixme',
+								selectedVariable: comparisonChartControlSelection
+							}"
+							multi-select
+							:show-remove-button="false"
+							:variables="Object.keys(pyciemssMap)"
+							@configuration-change="comparisonChartControlSelection = $event.selectedVariable"
+						/>
+						<tera-chart-settings-item
+							v-for="settings of chartSettings.filter(
+								(setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON
+							)"
+							:key="settings.id"
+							:settings="settings"
+							@open="activeChartSettings = settings"
+							@remove="removeChartSetting"
+						/>
+						<Button size="small" text @click="() => {}" label="Add comparison chart" icon="pi pi-plus" />
+					</div>
+				</template>
+			</tera-slider-panel>
+		</template>
 	</tera-drilldown>
 	<tera-save-simulation-modal
 		:is-visible="showSaveDataset"
@@ -271,11 +319,13 @@ import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { createForecastChart, createInterventionChartMarkers } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
+import { ChartSetting, ChartSettingType, CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-intervention-summary-card.vue';
 import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
+// import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
+import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
 import Calendar from 'primevue/calendar';
 import {
 	CalendarSettings,
@@ -283,14 +333,20 @@ import {
 	getEndDateFromTimestep,
 	getTimestepFromDateRange
 } from '@/utils/date';
+import { removeChartSettingById } from '@/services/chart-settings';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import TeraChartControl from '../../tera-chart-control.vue';
 
-const isSidebarOpen = ref(true);
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
 }>();
 const emit = defineEmits(['update-state', 'select-output', 'close']);
+
+const isSidebarOpen = ref(true);
+const isOutputSettingsPanelOpen = ref(false);
+const chartSettings = computed(() => props.node.state.chartSettings ?? []);
+const activeChartSettings = ref<ChartSetting | null>(null);
+const comparisonChartControlSelection = ref<string[]>([]);
 
 const modelVarUnits = ref<{ [key: string]: string }>({});
 let editor: VAceEditorInstance['_editor'] | null;
@@ -449,6 +505,13 @@ const preparedCharts = computed(() => {
 		return chart;
 	});
 });
+
+const removeChartSetting = (chartId) => {
+	emit('update-state', {
+		...props.node.state,
+		chartSettings: removeChartSettingById(chartSettings.value, chartId)
+	});
+};
 
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);

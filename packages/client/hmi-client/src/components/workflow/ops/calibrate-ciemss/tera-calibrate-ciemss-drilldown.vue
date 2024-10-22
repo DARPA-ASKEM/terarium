@@ -332,9 +332,7 @@
 			>
 				<template #overlay>
 					<tera-chart-settings-panel
-						:annotations="
-							activeChartSettings?.type === ChartSettingType.VARIABLE_COMPARISON ? chartAnnotations : undefined
-						"
+						:annotations="activeChartSettings?.type === ChartSettingType.VARIABLE ? chartAnnotations : undefined"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
 						@delete-annotation="deleteAnnotation"
@@ -343,70 +341,41 @@
 				</template>
 				<template #content>
 					<div class="output-settings-panel">
-						<h5>Parameters</h5>
-						<tera-chart-settings-item
-							v-for="settings of chartSettings.filter(
-								(setting) => setting.type === ChartSettingType.DISTRIBUTION_COMPARISON
-							)"
-							:key="settings.id"
-							:settings="settings"
-							@open="activeChartSettings = settings"
+						<tera-chart-settings
+							:title="'Parameter distributions'"
+							:settings="chartSettings"
+							:type="ChartSettingType.DISTRIBUTION_COMPARISON"
+							:select-options="Object.keys(pyciemssMap).filter((c) => modelPartTypesMap[c] === 'parameter')"
+							:selected-options="selectedParameterSettings.map((s) => s.selectedVariables[0])"
+							@open="activeChartSettings = $event"
 							@remove="removeChartSetting"
-						/>
-						<tera-chart-control
-							:chart-config="{
-								selectedRun: 'fixme',
-								selectedVariable: selectedParameterSettings.map((s) => s.selectedVariables[0])
-							}"
-							:multi-select="true"
-							:show-remove-button="false"
-							:variables="Object.keys(pyciemssMap).filter((c) => modelPartTypesMap[c] === 'parameter')"
-							@configuration-change="updateSelectedParameters"
+							@selection-change="updateChartSettings"
 						/>
 						<hr />
-						<h5>Model Variables</h5>
-						<tera-chart-settings-item
-							v-for="settings of chartSettings.filter(
-								(setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON
-							)"
-							:key="settings.id"
-							:settings="settings"
-							@open="activeChartSettings = settings"
-							@remove="removeChartSetting"
-						/>
-						<tera-chart-control
-							:chart-config="{
-								selectedRun: 'fixme',
-								selectedVariable: selectedVariableSettings.map((s) => s.selectedVariables[0])
-							}"
-							:multi-select="true"
-							:show-remove-button="false"
-							:variables="
+						<tera-chart-settings
+							:title="'Variables over time'"
+							:settings="chartSettings"
+							:type="ChartSettingType.VARIABLE"
+							:select-options="
 								Object.keys(pyciemssMap).filter((c) => ['state', 'observable'].includes(modelPartTypesMap[c]))
 							"
-							@configuration-change="updateSelectedVariables"
+							:selected-options="selectedVariableSettings.map((s) => s.selectedVariables[0])"
+							@open="activeChartSettings = $event"
+							@remove="removeChartSetting"
+							@selection-change="updateChartSettings"
 						/>
 						<hr />
-						<h5>Error</h5>
-						<tera-chart-settings-item
-							v-for="settings of chartSettings.filter(
-								(setting) => setting.type === ChartSettingType.ERROR_DISTRIBUTION
-							)"
-							:key="settings.id"
-							:settings="settings"
-							@open="activeChartSettings = settings"
+						<tera-chart-settings
+							:title="'Error'"
+							:settings="chartSettings"
+							:type="ChartSettingType.ERROR_DISTRIBUTION"
+							:select-options="Object.keys(pyciemssMap).filter((c) => mapping.find((d) => d.modelVariable === c))"
+							:selected-options="selectedErrorVariableSettings.map((s) => s.selectedVariables[0])"
+							@open="activeChartSettings = $event"
 							@remove="removeChartSetting"
+							@selection-change="updateChartSettings"
 						/>
-						<tera-chart-control
-							:chart-config="{
-								selectedRun: 'fixme',
-								selectedVariable: selectedErrorVariableSettings.map((s) => s.selectedVariables[0])
-							}"
-							:multi-select="true"
-							:show-remove-button="false"
-							:variables="Object.keys(pyciemssMap).filter((c) => mapping.find((d) => d.modelVariable === c))"
-							@configuration-change="updateSelectedErrorVariables"
-						/>
+						<hr />
 					</div>
 				</template>
 			</tera-slider-panel>
@@ -455,8 +424,8 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
+import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
 import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
-import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
 import {
 	CalibrationRequestCiemss,
 	ClientEvent,
@@ -494,7 +463,6 @@ import {
 	createInterventionChartMarkers
 } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { displayNumber } from '@/utils/number';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
@@ -689,7 +657,7 @@ const selectedParameterSettings = computed(() =>
 	chartSettings.value.filter((setting) => setting.type === ChartSettingType.DISTRIBUTION_COMPARISON)
 );
 const selectedVariableSettings = computed(() =>
-	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON)
+	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE)
 );
 
 const selectedErrorVariableSettings = computed(() =>
@@ -918,11 +886,7 @@ const initDefaultChartSettings = (state: CalibrationOperationStateCiemss) => {
 	const mappedModelVariables = mapping.value
 		.filter((c) => ['state', 'observable'].includes(modelPartTypesMap.value[c.modelVariable]))
 		.map((c) => c.modelVariable);
-	state.chartSettings = updateChartSettingsBySelectedVariables(
-		[],
-		ChartSettingType.VARIABLE_COMPARISON,
-		mappedModelVariables
-	);
+	state.chartSettings = updateChartSettingsBySelectedVariables([], ChartSettingType.VARIABLE, mappedModelVariables);
 	state.chartSettings = updateChartSettingsBySelectedVariables(
 		state.chartSettings,
 		ChartSettingType.ERROR_DISTRIBUTION,
@@ -1004,36 +968,10 @@ function removeChartSetting(chartId) {
 	});
 }
 
-function updateSelectedParameters(event) {
+function updateChartSettings(selectedVariables: string[], type: ChartSettingType) {
 	emit('update-state', {
 		...props.node.state,
-		chartSettings: updateChartSettingsBySelectedVariables(
-			chartSettings.value,
-			ChartSettingType.DISTRIBUTION_COMPARISON,
-			event.selectedVariable
-		)
-	});
-}
-
-function updateSelectedVariables(event) {
-	emit('update-state', {
-		...props.node.state,
-		chartSettings: updateChartSettingsBySelectedVariables(
-			chartSettings.value,
-			ChartSettingType.VARIABLE_COMPARISON,
-			event.selectedVariable
-		)
-	});
-}
-
-function updateSelectedErrorVariables(event) {
-	emit('update-state', {
-		...props.node.state,
-		chartSettings: updateChartSettingsBySelectedVariables(
-			chartSettings.value,
-			ChartSettingType.ERROR_DISTRIBUTION,
-			event.selectedVariable
-		)
+		chartSettings: updateChartSettingsBySelectedVariables(chartSettings.value, type, selectedVariables)
 	});
 }
 

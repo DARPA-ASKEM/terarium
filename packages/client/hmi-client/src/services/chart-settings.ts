@@ -25,7 +25,9 @@ export function updateChartSettingsBySelectedVariables(
 	type: ChartSettingType,
 	variableSelection: string[]
 ) {
+	// previous settings without the settings of the given type
 	const previousSettings = settings.filter((setting) => setting.type !== type);
+	// selected settings for the given type
 	const selectedSettings = variableSelection.map((variable) => {
 		const found = previousSettings.find(
 			(setting) => setting.selectedVariables[0] === variable && setting.type === type
