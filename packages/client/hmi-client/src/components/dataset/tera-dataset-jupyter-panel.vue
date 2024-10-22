@@ -17,6 +17,7 @@
 				context="dataset"
 				@submitQuery="onSubmitQuery"
 				@add-code-cell="onAddCodeCell"
+				@run-all-cells="onRunAllCells"
 				@keydown.stop
 			/>
 			<span class="flex-auto"></span>
@@ -473,6 +474,13 @@ const onSubmitQuery = (question: string) => {
 const onAddCodeCell = () => {
 	if (chat.value) {
 		chat.value.addCodeCell();
+	}
+};
+
+const onRunAllCells = () => {
+	if (window.confirm('Are you sure you want to rerun all cells?')) {
+		const event = new Event('run-all-cells');
+		window.dispatchEvent(event);
 	}
 };
 
