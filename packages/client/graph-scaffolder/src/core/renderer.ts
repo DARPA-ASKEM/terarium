@@ -9,7 +9,7 @@ export const pathFn = d3
 	.line<{ x: number; y: number }>()
 	.x((d) => d.x)
 	.y((d) => d.y)
-	.curve(d3.curveBasis); // FIXME: temp hack
+	.curve(d3.curveStep); // FIXME: temp hack
 
 export abstract class Renderer<V, E> extends EventEmitter {
 	options: Options;
@@ -488,7 +488,10 @@ export abstract class Renderer<V, E> extends EventEmitter {
 						const start = points[0];
 						const end = points[points.length - 1];
 						if (edge.source === edge.target) continue;
-						edge.points = getAStarPath(start, end, collisionFn, { w: 20, h: 20 });
+						edge.points = getAStarPath(start, end, {
+							collider: collisionFn,
+							gridCell: { w: 20, h: 20 }
+						});
 					}
 				}
 				updateEdgePoints();

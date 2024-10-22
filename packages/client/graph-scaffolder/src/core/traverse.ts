@@ -38,13 +38,13 @@ export interface IGrid {
 }
 type ColliderFn = (p: IPoint) => boolean;
 
-export const getAStarPath = (
-	start: IPoint,
-	goal: IPoint,
-	collider: ColliderFn,
-	gridCell: IGrid = { w: 10, h: 10 },
-	searchLimit = 7000
-): IPoint[] => {
+interface AStarOptions {
+	collider: ColliderFn;
+	gridCell?: IGrid;
+	searchLimit?: number;
+}
+
+export const getAStarPath = (start: IPoint, goal: IPoint, options: AStarOptions): IPoint[] => {
 	// Encoding helpers. We encode the XY coordinate as a single number to allow fast heuristic score lookup without
 	// incurring heavy memory cost of building a world-grid (we only store points we have visisted). Interestingly
 	// off hand testing using more native memory data structures (DataView, ArrayBuffer) to do high/low bit-mask encoding
@@ -58,6 +58,10 @@ export const getAStarPath = (
 		const x = (v - y) / PRIME;
 		return { x: x - SIZE, y: y - SIZE };
 	};
+
+	const collider = options.collider;
+	const searchLimit = options.searchLimit || 7000;
+	const gridCell = options.gridCell || { w: 10, h: 10 };
 
 	// Math helpers
 	const sqDifference = (a: number, b: number) => (a - b) * (a - b);
