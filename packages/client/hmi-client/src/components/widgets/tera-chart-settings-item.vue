@@ -2,8 +2,8 @@
 	<div class="chart-settings-item">
 		<h6>{{ settings.name }}</h6>
 		<div class="btn-group">
-			<Button icon="Open chart settings" outlined severity="secondary" size="small" @click="$emit('open')" />
-			<Button icon="pi pi-trash" rounded text @click="$emit('remove', settings.id)" />
+			<Button icon="pi pi-cog" rounded text @click="$emit('open')" />
+			<Button icon="pi pi-times" rounded text @click="$emit('remove', settings.id)" />
 		</div>
 	</div>
 </template>
@@ -26,9 +26,11 @@ defineEmits(['open', 'remove']);
 	padding: var(--gap-3);
 	padding-left: var(--gap-4);
 	background: var(--surface-50);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
 }
 .btn-group {
 	display: flex;
-	justify-content: space-between;
 }
 </style>

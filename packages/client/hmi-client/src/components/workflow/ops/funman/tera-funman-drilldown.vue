@@ -242,6 +242,15 @@
 							:variables="stateOptions"
 							@configuration-change="updateSelectedStates"
 						/>
+						<tera-chart-settings-item
+							v-for="settings of chartSettings.filter(
+								(setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON
+							)"
+							:key="settings.id"
+							:settings="settings"
+							@open="activeChartSettings = settings"
+							@remove="removeChartSetting"
+						/>
 						<hr />
 						<h5>Parameters</h5>
 						<tera-chart-control
@@ -254,6 +263,15 @@
 							:show-remove-button="false"
 							:variables="parameterOptions"
 							@configuration-change="updateSelectedParameters"
+						/>
+						<tera-chart-settings-item
+							v-for="settings of chartSettings.filter(
+								(setting) => setting.type === ChartSettingType.DISTRIBUTION_COMPARISON
+							)"
+							:key="settings.id"
+							:settings="settings"
+							@open="activeChartSettings = settings"
+							@remove="removeChartSetting"
 						/>
 						<hr />
 					</div>
@@ -302,6 +320,7 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
+import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
 
 import type {
 	FunmanInterval,
@@ -331,17 +350,10 @@ import {
 import { useToastService } from '@/services/toast';
 import { pythonInstance } from '@/python/PyodideController';
 import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-constraint-group-form.vue';
-import { DrilldownTabs, ChartSettingType } from '@/types/common';
+import { DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
 import { stringToLatexExpression, getModelByModelConfigurationId, getMMT } from '@/services/model';
 import { displayNumber } from '@/utils/number';
-import {
-	// deleteAnnotation,
-	// fetchAnnotations,
-	// generateForecastChartAnnotation,
-	// removeChartSettingById,
-	// saveAnnotation,
-	updateChartSettingsBySelectedVariables
-} from '@/services/chart-settings';
+import { removeChartSettingById, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { FunmanOperationState, Constraint, ConstraintType, CompartmentalConstraint } from './funman-operation';
 
 const props = defineProps<{
@@ -707,8 +719,6 @@ const notebookText = ref('');
 /*
 // Output panel/settings //
 */
-const isOutputSettingsPanelOpen = ref(false);
-
 let processedFunmanResult: ProcessedFunmanResult | null = null;
 let constraintsResponse: FunmanConstraintsResponse[] = [];
 let mmt: MiraModel = emptyMiraModel();
@@ -729,6 +739,8 @@ const parameterOptions = ref<string[]>([]);
 const onlyShowLatestResults = ref(false);
 const focusOnModelChecks = ref(false);
 
+const isOutputSettingsPanelOpen = ref(false);
+const activeChartSettings = ref<ChartSetting | null>(null);
 const chartSettings = computed(() => props.node.state.chartSettings ?? []);
 const selectedStateSettings = computed(() =>
 	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON)
@@ -766,6 +778,7 @@ function updateParameterCharts() {
 	}
 }
 
+// Following three functions are responsible for triggering adding or removing charts
 function updateSelectedStates(event) {
 	emit('update-state', {
 		...props.node.state,
@@ -788,6 +801,19 @@ function updateSelectedParameters(event) {
 		)
 	});
 	updateParameterCharts();
+}
+
+function removeChartSetting(chartId: string) {
+	const chartType = chartSettings.value.find((setting) => setting.id === chartId)?.type;
+	emit('update-state', {
+		...props.node.state,
+		chartSettings: removeChartSettingById(chartSettings.value, chartId)
+	});
+	if (chartType === ChartSettingType.VARIABLE_COMPARISON) {
+		updateStateCharts();
+	} else if (chartType === ChartSettingType.DISTRIBUTION_COMPARISON) {
+		updateParameterCharts();
+	}
 }
 
 async function renderCharts() {
