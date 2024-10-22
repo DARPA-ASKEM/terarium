@@ -1,11 +1,12 @@
 <template>
 	<main>
 		<template v-if="selectedRunId && runResults[selectedRunId]">
-			<section v-for="(_config, index) of props.node.state.chartConfigs" :key="index">
+			<section v-for="setting of chartSettings" :key="setting.id">
 				<vega-chart
-					v-if="preparedCharts[index].layer.length > 0"
-					:visualization-spec="preparedCharts[index]"
-					:are-embed-actions-visible="false"
+					v-if="preparedCharts[setting.id]"
+					expandable
+					are-embed-actions-visible
+					:visualization-spec="preparedCharts[setting.id]"
 				/>
 				<div v-else class="empty-chart">
 					<img src="@assets/svg/seed.svg" alt="" draggable="false" class="empty-image" />
@@ -63,6 +64,8 @@ const inProgressForecastId = computed(() => props.node.state.inProgressForecastI
 const areInputsFilled = computed(() => props.node.inputs[0].value);
 const interventionPolicyId = computed(() => props.node.inputs[1].value?.[0]);
 const interventionPolicy = ref<InterventionPolicy | null>(null);
+
+const chartSettings = computed(() => props.node.state.chartSettings ?? []);
 
 let pyciemssMap: Record<string, string> = {};
 
@@ -168,7 +171,8 @@ const groupedInterventionOutputs = computed(() =>
 );
 
 const preparedCharts = computed(() => {
-	if (!selectedRunId.value) return [];
+	const charts: Record<string, any> = {};
+	if (!selectedRunId.value) return charts;
 	const result = runResults.value[selectedRunId.value];
 	const resultSummary = runResultsSummary.value[selectedRunId.value];
 	const reverseMap: Record<string, string> = {};
@@ -176,17 +180,17 @@ const preparedCharts = computed(() => {
 		reverseMap[`${pyciemssMap[key]}_mean`] = key;
 	});
 
-	return props.node.state.chartConfigs.map((config) => {
+	chartSettings.value.forEach((setting) => {
 		const chart = createForecastChart(
 			{
 				data: result,
-				variables: config.map((d) => pyciemssMap[d]),
+				variables: setting.selectedVariables.map((d) => pyciemssMap[d]),
 				timeField: 'timepoint_id',
 				groupField: 'sample_id'
 			},
 			{
 				data: resultSummary,
-				variables: config.map((d) => `${pyciemssMap[d]}_mean`),
+				variables: setting.selectedVariables.map((d) => `${pyciemssMap[d]}_mean`),
 				timeField: 'timepoint_id'
 			},
 			null,
@@ -198,18 +202,20 @@ const preparedCharts = computed(() => {
 				legend: true,
 				translationMap: reverseMap,
 				xAxisTitle: modelVarUnits.value._time || 'Time',
-				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
+				yAxisTitle:
+					_.uniq(setting.selectedVariables.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
 			}
 		);
 		if (interventionPolicy.value) {
 			_.keys(groupedInterventionOutputs.value).forEach((key) => {
-				if (config.includes(key)) {
+				if (setting.selectedVariables.includes(key)) {
 					chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
 				}
 			});
 		}
-		return chart;
+		charts[setting.id] = chart;
 	});
+	return charts;
 });
 
 watch(

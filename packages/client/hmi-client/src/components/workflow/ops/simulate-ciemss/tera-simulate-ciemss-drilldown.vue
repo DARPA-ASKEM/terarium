@@ -170,33 +170,16 @@
 				<tera-notebook-error v-bind="node.state.errorMessage" />
 				<template v-if="runResults[selectedRunId]">
 					<div v-if="view === OutputView.Charts" ref="outputPanel">
-						<template v-for="(cfg, index) of node.state.chartConfigs" :key="index">
-							<tera-chart-control
-								class="pr-3 pl-3"
-								:chart-config="{ selectedRun: selectedRunId, selectedVariable: cfg }"
-								multi-select
-								show-remove-button
-								:variables="Object.keys(pyciemssMap)"
-								@configuration-change="chartProxy.configurationChange(index, $event)"
-								@remove="chartProxy.removeChart(index)"
-							/>
+						<template v-for="setting of chartSettings" :key="setting.id">
 							<vega-chart
-								v-if="preparedCharts[index].layer.length > 0"
+								v-if="preparedCharts[setting.id]"
 								expandable
 								are-embed-actions-visible
-								:visualization-spec="preparedCharts[index]"
+								:visualization-spec="preparedCharts[setting.id]"
 							/>
-							<!-- If no variables are selected, show empty state -->
-							<section class="m-3 empty-chart" v-else>
-								<img src="@assets/svg/seed.svg" class="empty-image" alt="" draggable="false" />
-								<p>Select one or more variables for this chart</p>
-							</section>
-
 							<!-- Spacer between charts -->
 							<div style="height: var(--gap-1)"></div>
 						</template>
-						<Button size="small" text @click="chartProxy.addChart()" label="Add chart" icon="pi pi-plus" />
-
 						<!-- Spacer at bottom of page -->
 						<div style="height: 2rem"></div>
 					</div>
@@ -228,7 +211,7 @@
 				<template #overlay>
 					<!-- <tera-chart-settings-panel
 						:annotations="
-							activeChartSettings?.type === ChartSettingType.VARIABLE_COMPARISON_COMPARISON ? chartAnnotations : undefined
+							activeChartSettings?.type === ChartSettingType.VARIABLE_COMPARISON ? chartAnnotations : undefined
 						"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
@@ -300,7 +283,7 @@ import {
 	CiemssMethodOptions
 } from '@/services/models/simulation-service';
 import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
-import { chartActionsProxy, nodeMetadata } from '@/components/workflow/util';
+import { nodeMetadata } from '@/components/workflow/util';
 
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import SelectButton from 'primevue/selectbutton';
@@ -333,7 +316,6 @@ import {
 } from '@/utils/date';
 import { addMultiVariableChartSetting, removeChartSettingById } from '@/services/chart-settings';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
-import TeraChartControl from '../../tera-chart-control.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
@@ -438,10 +420,6 @@ const chartSize = useDrilldownChartSize(outputPanel);
 
 const showSaveDataset = ref(false);
 
-const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperationState) => {
-	emit('update-state', state);
-});
-
 const setPresetValues = (data: CiemssPresetTypes) => {
 	if (data === CiemssPresetTypes.Normal) {
 		numSamples.value = qualityPreset.numSamples;
@@ -459,7 +437,8 @@ const groupedInterventionOutputs = computed(() =>
 );
 
 const preparedCharts = computed(() => {
-	if (!selectedRunId.value) return [];
+	const charts: Record<string, any> = {};
+	if (!selectedRunId.value) return charts;
 
 	const result = runResults.value[selectedRunId.value];
 	const resultSummary = runResultsSummary.value[selectedRunId.value];
@@ -468,17 +447,17 @@ const preparedCharts = computed(() => {
 		reverseMap[`${pyciemssMap[key]}_mean`] = key;
 	});
 
-	return props.node.state.chartConfigs.map((config) => {
+	chartSettings.value.forEach((setting) => {
 		const chart = createForecastChart(
 			{
 				data: result,
-				variables: config.map((d) => pyciemssMap[d]),
+				variables: setting.selectedVariables.map((d) => pyciemssMap[d]),
 				timeField: 'timepoint_id',
 				groupField: 'sample_id'
 			},
 			{
 				data: resultSummary,
-				variables: config.map((d) => `${pyciemssMap[d]}_mean`),
+				variables: setting.selectedVariables.map((d) => `${pyciemssMap[d]}_mean`),
 				timeField: 'timepoint_id'
 			},
 			null,
@@ -490,18 +469,20 @@ const preparedCharts = computed(() => {
 				legend: true,
 				translationMap: reverseMap,
 				xAxisTitle: modelVarUnits.value._time || 'Time',
-				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
+				yAxisTitle:
+					_.uniq(setting.selectedVariables.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
 			}
 		);
 		if (interventionPolicy.value) {
 			_.keys(groupedInterventionOutputs.value).forEach((key) => {
-				if (config.includes(key)) {
+				if (setting.selectedVariables.includes(key)) {
 					chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
 				}
 			});
 		}
-		return chart;
+		charts[setting.id] = chart;
 	});
+	return charts;
 });
 
 const removeChartSetting = (chartId) => {
