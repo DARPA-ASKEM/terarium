@@ -51,7 +51,14 @@
 						<h5>Intervention policy</h5>
 						<template v-for="(cfg, idx) in knobs.interventionPolicyGroups">
 							<tera-static-intervention-policy-group
-								v-if="cfg.intervention?.staticInterventions && cfg.intervention?.staticInterventions.length > 0"
+								v-if="
+									cfg.intervention?.staticInterventions &&
+									cfg.intervention?.staticInterventions.length > 0 &&
+									modelConfiguration &&
+									model
+								"
+								:model="model"
+								:model-configuration="modelConfiguration"
 								:key="cfg.id || '' + idx"
 								:config="cfg"
 								@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
@@ -72,14 +79,21 @@
 					<section class="form-section">
 						<h5>Optimization settings</h5>
 						<div class="input-row pt-1">
-							<div class="label-and-input">
-								<label>Start time</label>
-								<tera-input-number disabled :model-value="0" />
-							</div>
-							<div class="label-and-input">
-								<label>End time</label>
-								<tera-input-number v-model="knobs.endTime" />
-							</div>
+							<tera-timestep-calendar
+								disabled
+								v-if="model && modelConfiguration"
+								label="Start time"
+								:start-date="modelConfiguration.temporalContext"
+								:calendar-settings="getCalendarSettingsFromModel(model)"
+								:model-value="0"
+							/>
+							<tera-timestep-calendar
+								v-if="model && modelConfiguration"
+								label="End time"
+								:start-date="modelConfiguration.temporalContext"
+								:calendar-settings="getCalendarSettingsFromModel(model)"
+								v-model="knobs.endTime"
+							/>
 						</div>
 						<div class="input-row">
 							<div class="label-and-input">
@@ -405,6 +419,8 @@ import { mergeResults, renameFnGenerator } from '@/components/workflow/ops/calib
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import { useConfirm } from 'primevue/useconfirm';
+import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
+import { getCalendarSettingsFromModel } from '@/utils/date';
 import teraOptimizeCriterionGroupForm from './tera-optimize-criterion-group-form.vue';
 import TeraStaticInterventionPolicyGroup from './tera-static-intervention-policy-group.vue';
 import TeraDynamicInterventionPolicyGroup from './tera-dynamic-intervention-policy-group.vue';
