@@ -77,6 +77,7 @@
 							:notebook-item="msg"
 							:jupyter-message="m"
 							:lang="language"
+							:index="index"
 							@deleteRequested="onDeleteRequested(m.header.msg_id)"
 						/>
 					</div>

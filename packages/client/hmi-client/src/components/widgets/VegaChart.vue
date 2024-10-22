@@ -13,7 +13,7 @@
 		</div>
 	</Dialog>
 	<div class="vega-chart-container">
-		<div ref="vegaContainer"></div>
+		<div ref="vegaContainer" />
 		<footer v-if="$slots.footer">
 			<slot name="footer" />
 		</footer>
