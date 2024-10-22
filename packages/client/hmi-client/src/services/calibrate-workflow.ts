@@ -47,8 +47,9 @@ export const setupDatasetInput = async (datasetId: string | undefined) => {
 			console.log(`Dataset with id:${datasetId} not found`);
 			return {};
 		}
-		const datasetOptions = dataset.columns;
+
 		const filename = dataset?.fileNames?.[0] ?? '';
+		const datasetOptions = dataset.columns?.filter((ele) => ele.fileName === filename);
 		// FIXME: We are setting the limit to -1 (i.e. no limit) on the number of rows returned.
 		// This is a temporary fix since the datasets could be very large.
 		const limit = -1;
