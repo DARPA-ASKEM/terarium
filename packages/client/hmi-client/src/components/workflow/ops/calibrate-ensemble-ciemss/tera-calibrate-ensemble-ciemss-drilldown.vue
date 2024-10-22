@@ -186,7 +186,7 @@ import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import Dropdown from 'primevue/dropdown';
-import { setupDatasetInput, setupModelInput } from '@/services/calibrate-workflow';
+import { setupDatasetInput, setupCsvAsset, setupModelInput } from '@/services/calibrate-workflow';
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -349,10 +349,14 @@ onMounted(async () => {
 	);
 
 	// dataset input
-	const { filename, csv } = await setupDatasetInput(datasetId.value);
-	currentDatasetFileName.value = filename;
-	csvAsset.value = csv;
-	datasetColumnNames.value = csv?.headers;
+	if (datasetId.value) {
+		const { filename, datasetOptions } = await setupDatasetInput(datasetId.value);
+		currentDatasetFileName.value = filename;
+		datasetColumnNames.value = datasetOptions?.map((ele) => ele.name);
+		setupCsvAsset(datasetId.value).then((csv) => {
+			csvAsset.value = csv;
+		});
+	}
 
 	listModelLabels.value = allModelConfigurations.value.map((ele) => ele.name ?? '');
 

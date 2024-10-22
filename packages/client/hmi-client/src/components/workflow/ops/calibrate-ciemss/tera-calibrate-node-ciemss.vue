@@ -40,7 +40,7 @@ import {
 } from '@/services/models/simulation-service';
 import { getModelConfigurationById, createModelConfiguration } from '@/services/model-configurations';
 import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
-import { setupDatasetInput } from '@/services/calibrate-workflow';
+import { setupCsvAsset } from '@/services/calibrate-workflow';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
@@ -491,8 +491,9 @@ watch(
 
 		// Dataset used to calibrate
 		const datasetId = props.node.inputs[1]?.value?.[0];
-		const { csv } = await setupDatasetInput(datasetId);
-		csvAsset.value = csv;
+		setupCsvAsset(datasetId).then((csv) => {
+			csvAsset.value = csv;
+		});
 	},
 	{ immediate: true }
 );

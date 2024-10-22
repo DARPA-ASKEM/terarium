@@ -44,7 +44,7 @@ import {
 	getCalibrateBlobURL,
 	makeEnsembleCiemssSimulation
 } from '@/services/models/simulation-service';
-import { setupDatasetInput } from '@/services/calibrate-workflow';
+import { setupCsvAsset } from '@/services/calibrate-workflow';
 import { chartActionsProxy, nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 
@@ -173,8 +173,9 @@ watch(
 
 		// Dataset used to calibrate
 		const datasetId = props.node.inputs[0]?.value?.[0];
-		const { csv } = await setupDatasetInput(datasetId);
-		csvAsset.value = csv;
+		setupCsvAsset(datasetId.value).then((csv) => {
+			csvAsset.value = csv;
+		});
 	},
 	{ immediate: true }
 );

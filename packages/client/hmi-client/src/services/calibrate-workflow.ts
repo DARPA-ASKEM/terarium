@@ -39,30 +39,40 @@ export const setupModelInput = async (modelConfigId: string | undefined) => {
 
 // Used in the setup of calibration node and drill down
 // takes a datasetId and grabs relevant objects
-export const setupDatasetInput = async (datasetId: string | undefined) => {
-	if (datasetId) {
-		// Get dataset:
-		const dataset: Dataset | null = await getDataset(datasetId);
-		if (dataset === undefined || !dataset) {
-			console.log(`Dataset with id:${datasetId} not found`);
-			return {};
-		}
-
-		// If our dataset includes a result.csv we will ensure to pick it.
-		const filename = dataset.fileNames?.includes('result.csv') ? 'result.csv' : (dataset?.fileNames?.[0] ?? '');
-
-		const datasetOptions = dataset.columns?.filter((ele) => ele.fileName === filename);
-		// FIXME: We are setting the limit to -1 (i.e. no limit) on the number of rows returned.
-		// This is a temporary fix since the datasets could be very large.
-		const limit = -1;
-
-		// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
-		if (!(dataset.metadata?.format === 'netcdf') || !dataset.esgfId) {
-			const csv = (await downloadRawFile(datasetId, filename, limit)) as CsvAsset;
-			csv.headers = csv.headers.map((header) => header.trim());
-			return { filename, csv, datasetOptions };
-		}
+export const setupDatasetInput = async (datasetId: string) => {
+	// Get dataset:
+	const dataset: Dataset | null = await getDataset(datasetId);
+	if (dataset === undefined || !dataset) {
+		console.log(`Dataset with id:${datasetId} not found`);
 		return {};
 	}
-	return {};
+	const filename = getFileName(dataset);
+
+	const datasetOptions = dataset.columns?.filter((ele) => ele.fileName === filename);
+
+	return { filename, datasetOptions };
 };
+
+export const setupCsvAsset = async (datasetId: string): Promise<CsvAsset | undefined> => {
+	const dataset: Dataset | null = await getDataset(datasetId);
+	if (dataset === undefined || !dataset) {
+		console.log(`Dataset with id:${datasetId} not found`);
+		return undefined;
+	}
+	const filename = getFileName(dataset);
+	// FIXME: We are setting the limit to -1 (i.e. no limit) on the number of rows returned.
+	// This is a temporary fix since the datasets could be very large.
+	const limit = -1;
+
+	// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
+	if (!(dataset.metadata?.format === 'netcdf') || !dataset.esgfId) {
+		const csv = (await downloadRawFile(datasetId, filename, limit)) as CsvAsset;
+		csv.headers = csv.headers.map((header) => header.trim());
+		return csv;
+	}
+	return undefined;
+};
+
+const getFileName = (dataset: Dataset) =>
+	// If our dataset includes a result.csv we will ensure to pick it.
+	dataset.fileNames?.includes('result.csv') ? 'result.csv' : (dataset?.fileNames?.[0] ?? '');

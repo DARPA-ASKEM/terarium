@@ -438,7 +438,7 @@ import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
-import { CalibrateMap, setupDatasetInput, setupModelInput } from '@/services/calibrate-workflow';
+import { CalibrateMap, setupDatasetInput, setupCsvAsset, setupModelInput } from '@/services/calibrate-workflow';
 import {
 	deleteAnnotation,
 	fetchAnnotations,
@@ -1094,10 +1094,15 @@ const initialize = async () => {
 	modelPartTypesMap.value = modelPartTypes ?? {};
 
 	// dataset input
-	const { filename, csv, datasetOptions } = await setupDatasetInput(datasetId.value);
-	currentDatasetFileName.value = filename;
-	csvAsset.value = csv;
-	datasetColumns.value = datasetOptions;
+	if (datasetId.value) {
+		const { filename, datasetOptions } = await setupDatasetInput(datasetId.value);
+		currentDatasetFileName.value = filename;
+		datasetColumns.value = datasetOptions;
+
+		setupCsvAsset(datasetId.value).then((csv) => {
+			csvAsset.value = csv;
+		});
+	}
 
 	getConfiguredModelConfig();
 
