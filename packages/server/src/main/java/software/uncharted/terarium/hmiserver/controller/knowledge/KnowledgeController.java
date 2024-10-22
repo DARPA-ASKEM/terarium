@@ -149,7 +149,12 @@ public class KnowledgeController {
 		}
 
 		final EnrichAmrResponseHandler.Input input = new EnrichAmrResponseHandler.Input();
-		input.setResearchPaper(document.get().getText());
+		try {
+			input.setResearchPaper(mapper.writeValueAsString(document.get().getExtractions()));
+		} catch (JsonProcessingException e) {
+			log.error("Unable to serialize document text", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+		}
 		// stripping the metadata from the model before its sent since it can cause
 		// gollm to fail with massive inputs
 		model.get().setMetadata(null);
