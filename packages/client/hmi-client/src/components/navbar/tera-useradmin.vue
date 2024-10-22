@@ -7,22 +7,22 @@
 		<DataTable v-if="view === View.USER && !users" class="p-datatable-sm user" :value="Array.from(Array(10).keys())">
 			<Column header="Email">
 				<template #body>
-					<Skeleton></Skeleton>
+					<Skeleton />
 				</template>
 			</Column>
 			<Column header="First name">
 				<template #body>
-					<Skeleton></Skeleton>
+					<Skeleton />
 				</template>
 			</Column>
 			<Column header="Last name">
 				<template #body>
-					<Skeleton></Skeleton>
+					<Skeleton />
 				</template>
 			</Column>
 			<Column header="Roles">
 				<template #body>
-					<Skeleton></Skeleton>
+					<Skeleton />
 				</template>
 			</Column>
 		</DataTable>
@@ -38,10 +38,10 @@
 			class="p-datatable-sm user"
 			sortMode="multiple"
 		>
-			<Column field="email" header="Email" sortable></Column>
-			<Column field="firstName" header="First name" sortable></Column>
-			<Column field="lastName" header="Last name" sortable></Column>
-			<Column header="Roles">
+			<Column field="email" header="Email" sortable />
+			<Column field="firstName" header="First name" sortable />
+			<Column field="lastName" header="Last name" sortable />
+			<Column field="roles" header="Roles" :sortable="true">
 				<template #body="slotProps">
 					<div v-if="selectedId === slotProps.data.id">
 						<MultiSelect
@@ -52,9 +52,9 @@
 							:loading="loadingId === selectedId"
 						/>
 					</div>
-					<div v-else>
-						{{ getRoleNames(slotProps.data.roles).toString() }}
-					</div>
+					<template v-else>
+						{{ slotProps.data.roles?.map((role) => role.name).toString() }}
+					</template>
 				</template>
 			</Column>
 		</DataTable>
@@ -65,7 +65,7 @@
 		>
 			<Column header="Name">
 				<template #body>
-					<Skeleton></Skeleton>
+					<Skeleton />
 				</template>
 			</Column>
 		</DataTable>
@@ -241,16 +241,6 @@ const onUserRowSelect = (event: DataTableRowSelectEvent) => {
 	}
 };
 
-function getRoleNames(roles: Role[]) {
-	const names: string[] = [];
-	if (roles) {
-		roles.forEach((role) => {
-			names.push(role.name);
-		});
-	}
-	return names;
-}
-
 const updateRoles = async () => {
 	if (selectedId.value) {
 		loadingId.value = selectedId.value;
@@ -380,7 +370,7 @@ onMounted(async () => {
 main {
 	display: flex;
 	flex-direction: column;
-	padding: 1rem 1rem 0 1rem;
+	margin: var(--gap-4);
 }
 
 header {

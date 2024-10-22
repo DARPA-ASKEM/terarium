@@ -50,6 +50,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
+import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
@@ -165,9 +166,19 @@ public class ExtractionService {
 	}
 
 	enum FailureType {
-		TABLE_FAILURE,
-		EQUATION_FAILURE,
-		VARIABLE_FAILURE
+		TABLE_FAILURE("tables"),
+		EQUATION_FAILURE("equations"),
+		VARIABLE_FAILURE("variables");
+
+		private final String humanReadable;
+
+		FailureType(final String humanReadable) {
+			this.humanReadable = humanReadable;
+		}
+
+		public String getHumanReadable() {
+			return humanReadable;
+		}
 	}
 
 	static class ExtractPDFResponse {
@@ -462,7 +473,15 @@ public class ExtractionService {
 			final DocumentAsset doc = applyExtractPDFResponse(documentId, projectId, extractionResponse, hasWritePermission);
 
 			if (!extractionResponse.failures.isEmpty()) {
-				notificationInterface.sendMessage("Extraction completed with failures");
+				// create a comma separated list of failures in human readable form
+				String failures = String.join(
+					", ",
+					extractionResponse.failures.stream().map(FailureType::getHumanReadable).toArray(String[]::new)
+				);
+				notificationInterface.sendFinalMessage(
+					"Extraction completed with failures (" + failures + ")",
+					ProgressState.ERROR
+				);
 			} else {
 				notificationInterface.sendFinalMessage("Extraction complete");
 			}

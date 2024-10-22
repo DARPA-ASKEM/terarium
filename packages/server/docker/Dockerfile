@@ -10,7 +10,7 @@ RUN mkdir -p ./layers \
     && cp ./build/libs/*-SNAPSHOT.jar ./layers
 
 WORKDIR /app/layers
-RUN java -Xms1024m -Xmx4096m -Djarmode=layertools -jar ./*-SNAPSHOT.jar extract
+RUN java -Djarmode=layertools -jar ./*-SNAPSHOT.jar extract
 
 FROM eclipse-temurin:21.0.4_7-jre-noble
 
