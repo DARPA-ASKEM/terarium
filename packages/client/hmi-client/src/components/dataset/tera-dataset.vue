@@ -120,16 +120,6 @@
 			</Accordion>
 		</section>
 	</tera-asset>
-	<!-- TODO: Add create dataset support to save modal -->
-	<!---<tera-save-asset-modal
-		v-if="transientDataset"
-		:initial-name="transientDataset.name"
-		:is-visible="showSaveModal"
-		:asset="transientDataset"
-		:asset-type="AssetType.Dataset"
-		@close-modal="showSaveModal = false"
-		@on-save="showSaveModal = false"
-	/> -->
 </template>
 
 <script setup lang="ts">
@@ -161,7 +151,6 @@ import TeraAssetEnrichment from '@/components/widgets/tera-asset-enrichment.vue'
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraColumnInfo from '@/components/dataset/tera-column-info.vue';
-// import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 
 const props = defineProps({
 	assetId: {
@@ -306,10 +295,6 @@ const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
 };
 
-/**
- * Downloads the first file of the dataset from S3 directly
- * @param dataset
- */
 async function downloadFileFromDataset(): Promise<PresignedURL | null> {
 	if (dataset.value) {
 		const { id, fileNames } = dataset.value;
@@ -329,7 +314,7 @@ async function updateDatasetContent() {
 	await updateDataset(transientDataset.value);
 	logger.info('Saved changes.');
 	await useProjects().refresh();
-	fetchDataset();
+	await fetchDataset();
 }
 
 async function updateDatasetName() {
@@ -398,34 +383,35 @@ watch(
 .column-information-table {
 	border: 1px solid var(--surface-border-light);
 }
+
 .btn-group {
-	display: flex;
 	align-items: center;
-	gap: var(--gap-small);
+	display: flex;
+	gap: var(--gap-2);
 	margin-left: auto;
 }
 
 li {
-	padding-bottom: var(--gap-2);
 	border-bottom: 1px solid var(--surface-border);
+	padding-bottom: var(--gap-2);
 }
 
 .description {
 	display: flex;
 	flex-direction: column;
-	gap: var(--gap-small);
-	margin-left: 1.5rem;
+	gap: var(--gap-2);
+	margin-left: var(--gap-6);
 }
 
 .row {
+	border-bottom: 1px solid var(--surface-border);
 	display: flex;
 	justify-content: space-between;
-	border-bottom: 1px solid var(--surface-border);
-	padding: var(--gap-small) 0;
+	padding: var(--gap-2) 0;
 }
 
 .key {
-	font-weight: bold;
+	font-weight: var(--font-weight-semibold);
 }
 
 .col {
