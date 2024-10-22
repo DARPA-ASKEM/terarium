@@ -21,9 +21,8 @@
 				@keyup.esc="updateDatasetName"
 				auto-focus
 			/>
-			<div v-if="isRenaming" class="flex flex-nowrap ml-1 mr-3">
-				<Button icon="pi pi-check" rounded text @click="updateDatasetName" />
-			</div>
+
+			<Button v-if="isRenaming" icon="pi pi-check" rounded text @click="updateDatasetName" />
 		</template>
 		<template #edit-buttons v-if="!featureConfig.isPreview">
 			<Button
