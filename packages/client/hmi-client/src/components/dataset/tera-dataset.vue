@@ -21,7 +21,6 @@
 				@keyup.esc="updateDatasetName"
 				auto-focus
 			/>
-
 			<Button v-if="isRenaming" icon="pi pi-check" rounded text @click="updateDatasetName" />
 		</template>
 		<template #edit-buttons v-if="!featureConfig.isPreview">
@@ -31,7 +30,7 @@
 				@click="toggleOptionsMenu"
 			/>
 			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" popup :pt="optionsMenuPt" />
-			<div class="btn-group">
+			<div class="ml-auto flex gap-2">
 				<tera-asset-enrichment :asset-type="AssetType.Dataset" :assetId="assetId" @finished-job="fetchDataset" />
 				<Button label="Reset" severity="secondary" outlined @click="reset" />
 				<Button label="Save as..." severity="secondary" outlined @click="showSaveModal = true" disabled />
@@ -379,17 +378,6 @@ watch(
 </script>
 
 <style scoped>
-.column-information-table {
-	border: 1px solid var(--surface-border-light);
-}
-
-.btn-group {
-	align-items: center;
-	display: flex;
-	gap: var(--gap-2);
-	margin-left: auto;
-}
-
 li {
 	border-bottom: 1px solid var(--surface-border);
 	padding-bottom: var(--gap-2);
