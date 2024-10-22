@@ -4,7 +4,7 @@
 			<template v-if="!node.inputs[0].value"> Attach a model configuration </template>
 		</tera-operator-placeholder>
 
-		<tera-progress-spinner is-centered :font-size="2" style="height: 100%">
+		<tera-progress-spinner v-if="inProgressId" is-centered :font-size="2" style="height: 100%">
 			{{ node.state.currentProgress }}%
 		</tera-progress-spinner>
 
