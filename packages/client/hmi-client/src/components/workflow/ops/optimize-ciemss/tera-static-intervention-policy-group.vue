@@ -88,20 +88,29 @@
 				<section v-if="showStartTimeOptions">
 					<h6 class="pt-4, pb-3">Intervention Time</h6>
 					<div class="input-row">
-						<tera-input-number
+						<tera-timestep-calendar
+							v-if="modelConfiguration"
 							label="Start time"
+							:start-date="modelConfiguration.temporalContext"
+							:calendar-settings="getCalendarSettingsFromModel(model)"
 							v-model="knobs.startTime"
-							@update:model-value="emit('update-self', knobs)"
+							@update:model-value="$emit('update-self', knobs)"
 						/>
-						<tera-input-number
+						<tera-timestep-calendar
+							v-if="modelConfiguration"
 							label="End time"
+							:start-date="modelConfiguration.temporalContext"
+							:calendar-settings="getCalendarSettingsFromModel(model)"
 							v-model="knobs.endTime"
-							@update:model-value="emit('update-self', knobs)"
+							@update:model-value="$emit('update-self', knobs)"
 						/>
-						<tera-input-number
+						<tera-timestep-calendar
+							v-if="modelConfiguration"
 							label="Initial guess"
+							:start-date="modelConfiguration.temporalContext"
+							:calendar-settings="getCalendarSettingsFromModel(model)"
 							v-model="knobs.startTimeGuess"
-							@update:model-value="emit('update-self', knobs)"
+							@update:model-value="$emit('update-self', knobs)"
 						/>
 					</div>
 				</section>
@@ -123,7 +132,7 @@
 import Dropdown from 'primevue/dropdown';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { computed, ref, watch } from 'vue';
-import { StaticIntervention } from '@/types/Types';
+import { Model, ModelConfiguration, StaticIntervention } from '@/types/Types';
 import {
 	InterventionPolicyGroupForm,
 	OptimizationInterventionObjective,
@@ -131,8 +140,12 @@ import {
 	OBJECTIVE_FUNCTION_MAP
 } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
 import TeraSignalBars from '@/components/widgets/tera-signal-bars.vue';
+import teraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
+import { getCalendarSettingsFromModel } from '@/utils/date';
 
 const props = defineProps<{
+	model: Model;
+	modelConfiguration: ModelConfiguration;
 	config: InterventionPolicyGroupForm;
 }>();
 
