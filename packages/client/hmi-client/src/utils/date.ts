@@ -122,7 +122,7 @@ export function getCalendarSettingsFromModel(model: Model): { view: 'date' | 'mo
 	switch (units) {
 		case 'months':
 			view = 'month';
-			format = 'mm/yy';
+			format = 'MM, yy';
 			break;
 		case 'years':
 			view = 'year';
@@ -131,7 +131,7 @@ export function getCalendarSettingsFromModel(model: Model): { view: 'date' | 'mo
 		case 'days':
 		default:
 			view = 'date';
-			format = 'dd/mm/yy';
+			format = 'MM dd, yy';
 			break;
 	}
 
