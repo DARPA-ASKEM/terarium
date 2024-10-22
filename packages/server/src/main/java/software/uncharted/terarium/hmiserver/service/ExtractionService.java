@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -51,10 +50,10 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
+import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy.IntegratedTextExtractionsBody;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
@@ -78,7 +77,6 @@ public class ExtractionService {
 
 	private final DocumentAssetService documentService;
 	private final ModelService modelService;
-	private final ExtractionProxy extractionProxy;
 	private final SkemaUnifiedProxy skemaUnifiedProxy;
 	private final ObjectMapper objectMapper;
 	private final ClientEventService clientEventService;
@@ -168,9 +166,19 @@ public class ExtractionService {
 	}
 
 	enum FailureType {
-		TABLE_FAILURE,
-		EQUATION_FAILURE,
-		VARIABLE_FAILURE
+		TABLE_FAILURE("tables"),
+		EQUATION_FAILURE("equations"),
+		VARIABLE_FAILURE("variables");
+
+		private final String humanReadable;
+
+		FailureType(final String humanReadable) {
+			this.humanReadable = humanReadable;
+		}
+
+		public String getHumanReadable() {
+			return humanReadable;
+		}
 	}
 
 	static class ExtractPDFResponse {
@@ -306,6 +314,10 @@ public class ExtractionService {
 
 		if (extractionResponse.textExtraction != null) {
 			document.setText(extractionResponse.textExtraction.documentText);
+		}
+
+		if (document.getExtractions() == null) {
+			document.setExtractions(new ArrayList<>());
 		}
 
 		for (final String page : extractionResponse.textExtraction.documentTextPerPage) {
@@ -461,7 +473,15 @@ public class ExtractionService {
 			final DocumentAsset doc = applyExtractPDFResponse(documentId, projectId, extractionResponse, hasWritePermission);
 
 			if (!extractionResponse.failures.isEmpty()) {
-				notificationInterface.sendMessage("Extraction completed with failures");
+				// create a comma separated list of failures in human readable form
+				String failures = String.join(
+					", ",
+					extractionResponse.failures.stream().map(FailureType::getHumanReadable).toArray(String[]::new)
+				);
+				notificationInterface.sendFinalMessage(
+					"Extraction completed with failures (" + failures + ")",
+					ProgressState.ERROR
+				);
 			} else {
 				notificationInterface.sendFinalMessage("Extraction complete");
 			}
@@ -918,7 +938,7 @@ public class ExtractionService {
 		final NotificationGroupInstance<Properties> notificationInterface,
 		final String userId,
 		final byte[] pdf
-	) throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException, IOException {
+	) throws TimeoutException, InterruptedException, ExecutionException, IOException {
 		final int REQUEST_TIMEOUT_MINUTES = 10;
 
 		final TaskRequest req = new TaskRequest();

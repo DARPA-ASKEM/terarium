@@ -291,7 +291,16 @@
 									<vega-chart
 										expandable
 										:are-embed-actions-visible="true"
-										:visualization-spec="preparedCharts[setting.selectedVariables[0]]"
+										:visualization-spec="preparedCharts.simulationCharts[setting.selectedVariables[0]]"
+									/>
+								</template>
+							</AccordionTab>
+							<AccordionTab header="Interventions">
+								<template v-for="appliedTo in Object.keys(groupedInterventionOutputs)" :key="appliedTo">
+									<vega-chart
+										expandable
+										:are-embed-actions-visible="true"
+										:visualization-spec="preparedCharts.interventionCharts[appliedTo]"
 									/>
 								</template>
 							</AccordionTab>
@@ -759,14 +768,19 @@ const groupedInterventionOutputs = computed(() =>
 );
 
 const preparedCharts = computed(() => {
-	if (!preparedChartInputs.value) return {};
+	const charts: { interventionCharts: any[]; simulationCharts: any[] } = {
+		interventionCharts: [],
+		simulationCharts: []
+	};
+
+	if (!preparedChartInputs.value) return charts;
 	const { result, resultSummary, reverseMap } = preparedChartInputs.value;
 	const state = props.node.state;
 
 	// Need to get the dataset's time field
 	const datasetTimeField = knobs.value.timestampColName;
 
-	const charts = {};
+	// Simulate Charts:
 	selectedVariableSettings.value.forEach((settings) => {
 		const variable = settings.selectedVariables[0];
 		const annotations = chartAnnotations.value.filter((annotation) => annotation.chartId === settings.id);
@@ -775,7 +789,7 @@ const preparedCharts = computed(() => {
 		if (mapObj) {
 			datasetVariables.push(mapObj.datasetVariable);
 		}
-		charts[variable] = applyForecastChartAnnotations(
+		charts.simulationCharts[variable] = applyForecastChartAnnotations(
 			createForecastChart(
 				{
 					data: result,
@@ -808,8 +822,45 @@ const preparedCharts = computed(() => {
 			annotations
 		);
 
-		charts[variable].layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[variable]));
+		charts.simulationCharts[variable].layer.push(
+			...createInterventionChartMarkers(groupedInterventionOutputs.value[variable])
+		);
 	});
+	// Intervention Charts:
+	if (groupedInterventionOutputs.value) {
+		Object.keys(groupedInterventionOutputs.value).forEach((key) => {
+			charts.interventionCharts[key] = createForecastChart(
+				{
+					data: result,
+					variables: [pyciemssMap.value[key]],
+					timeField: 'timepoint_id',
+					groupField: 'sample_id'
+				},
+				null,
+				{
+					data: groundTruthData.value,
+					variables: [key],
+					timeField: datasetTimeField as string,
+					groupField: 'sample_id'
+				},
+				{
+					title: key,
+					width: chartSize.value.width,
+					height: chartSize.value.height,
+					legend: true,
+					translationMap: reverseMap,
+					xAxisTitle: modelVarUnits.value._time || 'Time',
+					yAxisTitle: modelVarUnits.value[key] || '',
+					colorscheme: ['#AAB3C6', '#1B8073']
+				}
+			);
+
+			// add intervention annotations (rules and text)
+			charts.interventionCharts[key].layer.push(
+				...createInterventionChartMarkers(groupedInterventionOutputs.value[key])
+			);
+		});
+	}
 	return charts;
 });
 
