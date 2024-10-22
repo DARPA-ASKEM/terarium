@@ -412,9 +412,6 @@ public class DocumentController {
 					final String error = "Unable to create thumbnail";
 					log.error(error, e);
 				}
-				System.out.println("XXX ------------ XXX");
-				System.out.println(document.get().getThumbnail());
-				System.out.println("XXX ------------ XXX");
 			}
 			// the document asset
 			if (!DownloadService.IsPdf(fileEntity.getContent().readAllBytes())) {
@@ -460,9 +457,6 @@ public class DocumentController {
 		try {
 			final byte[] fileAsBytes = file.getBytes();
 			final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
-			System.out.println("UPUP ------------ UPUP");
-			System.out.println(fileAsBytes);
-			System.out.println("UIPUP ------------ UPUP");
 			return uploadDocumentHelper(id, filename, fileEntity, projectId);
 		} catch (final IOException e) {
 			final String error = "Unable to upload document";
