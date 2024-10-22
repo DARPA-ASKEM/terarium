@@ -209,7 +209,7 @@
 				content-width="360px"
 			>
 				<template #overlay>
-					<!-- <tera-chart-settings-panel
+					<tera-chart-settings-panel
 						:annotations="
 							activeChartSettings?.type === ChartSettingType.VARIABLE_COMPARISON ? chartAnnotations : undefined
 						"
@@ -217,7 +217,7 @@
 						:generate-annotation="generateAnnotation"
 						@delete-annotation="deleteAnnotation"
 						@close="activeChartSettings = null"
-					/> -->
+					/>
 				</template>
 				<template #content>
 					<div class="output-settings-panel">
@@ -265,6 +265,7 @@ import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import type {
+	ChartAnnotation,
 	CsvAsset,
 	InterventionPolicy,
 	Model,
@@ -272,7 +273,7 @@ import type {
 	SimulationRequest,
 	TimeSpan
 } from '@/types/Types';
-import { AssetType } from '@/types/Types';
+import { AssetType, ClientEventType } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import {
 	getRunResultCSV,
@@ -314,7 +315,15 @@ import {
 	getEndDateFromTimestep,
 	getTimestepFromDateRange
 } from '@/utils/date';
-import { addMultiVariableChartSetting, removeChartSettingById } from '@/services/chart-settings';
+import {
+	addMultiVariableChartSetting,
+	deleteAnnotation,
+	fetchAnnotations,
+	generateForecastChartAnnotation,
+	saveAnnotation,
+	removeChartSettingById
+} from '@/services/chart-settings';
+import { useClientEvent } from '@/composables/useClientEvent';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
 const props = defineProps<{
@@ -436,16 +445,21 @@ const groupedInterventionOutputs = computed(() =>
 	_.groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
 );
 
-const preparedCharts = computed(() => {
-	const charts: Record<string, any> = {};
-	if (!selectedRunId.value) return charts;
-
+const preparedChartInputs = computed(() => {
+	if (!selectedRunId.value) return null;
 	const result = runResults.value[selectedRunId.value];
 	const resultSummary = runResultsSummary.value[selectedRunId.value];
 	const reverseMap: Record<string, string> = {};
 	Object.keys(pyciemssMap).forEach((key) => {
 		reverseMap[`${pyciemssMap[key]}_mean`] = key;
 	});
+	return { result, resultSummary, reverseMap };
+});
+
+const preparedCharts = computed(() => {
+	const charts: Record<string, any> = {};
+	if (!preparedChartInputs.value) return charts;
+	const { result, resultSummary, reverseMap } = preparedChartInputs.value;
 
 	chartSettings.value.forEach((setting) => {
 		const chart = createForecastChart(
@@ -484,6 +498,35 @@ const preparedCharts = computed(() => {
 	});
 	return charts;
 });
+
+// --- Handle chart annotations
+// TODO: Move this to a separate composable since similar logic is used in other components
+const chartAnnotations = ref<ChartAnnotation[]>([]);
+const updateChartAnnotations = async () => {
+	chartAnnotations.value = await fetchAnnotations(props.node.id);
+};
+onMounted(() => updateChartAnnotations());
+useClientEvent([ClientEventType.ChartAnnotationCreate, ClientEventType.ChartAnnotationDelete], updateChartAnnotations);
+
+const generateAnnotation = async (setting: ChartSetting, query: string) => {
+	// Note: Currently llm generated chart annotations are supported for the forecast chart only
+	if (!preparedChartInputs.value) return null;
+	const { reverseMap } = preparedChartInputs.value;
+	const variable = setting.selectedVariables[0];
+	const annotationLayerSpec = await generateForecastChartAnnotation(
+		query,
+		'timepoint_id',
+		[`${pyciemssMap.value[variable]}_mean:pre`, `${pyciemssMap.value[variable]}_mean`],
+		{
+			translationMap: reverseMap,
+			xAxisTitle: modelVarUnits.value._time || 'Time',
+			yAxisTitle: modelVarUnits.value[variable] || ''
+		}
+	);
+	const saved = await saveAnnotation(annotationLayerSpec, props.node.id, setting.id);
+	return saved;
+};
+// ---
 
 const removeChartSetting = (chartId) => {
 	emit('update-state', {
