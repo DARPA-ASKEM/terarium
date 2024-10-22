@@ -37,3 +37,10 @@ defineProps<{
 }>();
 defineEmits(['open', 'remove', 'selection-change']);
 </script>
+<style scoped>
+.chart-settings {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-2);
+}
+</style>

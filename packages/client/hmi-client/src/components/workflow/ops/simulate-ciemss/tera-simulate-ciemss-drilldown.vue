@@ -226,7 +226,6 @@
 				content-width="360px"
 			>
 				<template #overlay>
-					<div>test</div>
 					<!-- <tera-chart-settings-panel
 						:annotations="
 							activeChartSettings?.type === ChartSettingType.VARIABLE_COMPARISON_COMPARISON ? chartAnnotations : undefined
@@ -239,27 +238,26 @@
 				</template>
 				<template #content>
 					<div class="output-settings-panel">
-						<h5>Comparison charts</h5>
-						<tera-chart-control
-							:chart-config="{
-								selectedRun: 'fixme',
-								selectedVariable: comparisonChartControlSelection
-							}"
-							multi-select
-							:show-remove-button="false"
-							:variables="Object.keys(pyciemssMap)"
-							@configuration-change="comparisonChartControlSelection = $event.selectedVariable"
-						/>
-						<tera-chart-settings-item
-							v-for="settings of chartSettings.filter(
-								(setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON
-							)"
-							:key="settings.id"
-							:settings="settings"
-							@open="activeChartSettings = settings"
+						<tera-chart-settings
+							:title="'Comparison charts'"
+							:settings="chartSettings"
+							:type="ChartSettingType.VARIABLE_COMPARISON"
+							:select-options="Object.keys(pyciemssMap)"
+							:selected-options="comparisonChartsSettingsSelection"
+							@open="activeChartSettings = $event"
 							@remove="removeChartSetting"
+							@selection-change="comparisonChartsSettingsSelection = $event"
 						/>
-						<Button size="small" text @click="() => {}" label="Add comparison chart" icon="pi pi-plus" />
+						<div>
+							<Button
+								size="small"
+								text
+								@click="addComparisonChartSettings"
+								label="Add comparison chart"
+								icon="pi pi-plus"
+							/>
+						</div>
+						<hr />
 					</div>
 				</template>
 			</tera-slider-panel>
@@ -324,8 +322,8 @@ import { getModelConfigurationById } from '@/services/model-configurations';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-intervention-summary-card.vue';
 import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
+import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
 // import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
-import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
 import Calendar from 'primevue/calendar';
 import {
 	CalendarSettings,
@@ -333,7 +331,7 @@ import {
 	getEndDateFromTimestep,
 	getTimestepFromDateRange
 } from '@/utils/date';
-import { removeChartSettingById } from '@/services/chart-settings';
+import { addMultiVariableChartSetting, removeChartSettingById } from '@/services/chart-settings';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import TeraChartControl from '../../tera-chart-control.vue';
 
@@ -346,7 +344,7 @@ const isSidebarOpen = ref(true);
 const isOutputSettingsPanelOpen = ref(false);
 const chartSettings = computed(() => props.node.state.chartSettings ?? []);
 const activeChartSettings = ref<ChartSetting | null>(null);
-const comparisonChartControlSelection = ref<string[]>([]);
+const comparisonChartsSettingsSelection = ref<string[]>([]);
 
 const modelVarUnits = ref<{ [key: string]: string }>({});
 let editor: VAceEditorInstance['_editor'] | null;
@@ -511,6 +509,18 @@ const removeChartSetting = (chartId) => {
 		...props.node.state,
 		chartSettings: removeChartSettingById(chartSettings.value, chartId)
 	});
+};
+
+const addComparisonChartSettings = () => {
+	emit('update-state', {
+		...props.node.state,
+		chartSettings: addMultiVariableChartSetting(
+			chartSettings.value,
+			ChartSettingType.VARIABLE_COMPARISON,
+			comparisonChartsSettingsSelection.value
+		)
+	});
+	comparisonChartsSettingsSelection.value = [];
 };
 
 const updateState = () => {
@@ -793,5 +803,17 @@ onUnmounted(() => kernelManager.shutdown());
 
 .p-button-icon-left {
 	color: var(--text-color-primary);
+}
+
+.output-settings-panel {
+	padding: var(--gap-4);
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-2);
+	hr {
+		border: 0;
+		border-top: 1px solid var(--surface-border-alt);
+		width: 100%;
+	}
 }
 </style>

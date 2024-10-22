@@ -1281,9 +1281,6 @@ img {
 		text-align: center;
 	}
 }
-.chart-settings-item-container {
-	gap: var(--gap-2);
-}
 
 .output-settings-panel {
 	padding: var(--gap-4);

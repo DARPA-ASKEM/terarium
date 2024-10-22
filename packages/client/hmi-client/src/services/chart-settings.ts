@@ -12,6 +12,33 @@ export interface LLMGeneratedChartAnnotation {
 }
 
 /**
+ * Adds a new multi-variable chart setting to the provided settings array if it doesn't already exist.
+ * Note that the order of the variables doesn't matter. e.g. chart settings with selectedVariables, ['a', 'b'] is treated same as the one with ['b', 'a'].
+ *
+ * @param settings - The array of existing chart settings.
+ * @param type - The type of the chart setting to be added.
+ * @param selectedVariables - The array of selected variables for the new chart setting.
+ * @returns The updated array of chart settings.
+ */
+export function addMultiVariableChartSetting(
+	settings: ChartSetting[],
+	type: ChartSettingType,
+	selectedVariables: string[]
+) {
+	const existingSetting = settings.find(
+		(setting) => setting.type === type && _.isEqual(new Set(setting.selectedVariables), new Set(selectedVariables))
+	);
+	if (existingSetting || _.isEmpty(selectedVariables)) return settings;
+	const newSetting: ChartSetting = {
+		id: uuidv4(),
+		name: selectedVariables.join(', '),
+		selectedVariables,
+		type
+	} as ChartSetting;
+	return [...settings, newSetting];
+}
+
+/**
  * Updates the given chart settings based on the selected variables and return it as new settings.
  * This function assumes that the given chart settings are for single variable charts.
  *
