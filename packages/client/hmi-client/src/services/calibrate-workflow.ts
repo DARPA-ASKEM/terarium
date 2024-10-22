@@ -48,7 +48,9 @@ export const setupDatasetInput = async (datasetId: string | undefined) => {
 			return {};
 		}
 
-		const filename = dataset?.fileNames?.[0] ?? '';
+		// If our dataset includes a result.csv we will ensure to pick it.
+		const filename = dataset.fileNames?.includes('result.csv') ? 'result.csv' : (dataset?.fileNames?.[0] ?? '');
+
 		const datasetOptions = dataset.columns?.filter((ele) => ele.fileName === filename);
 		// FIXME: We are setting the limit to -1 (i.e. no limit) on the number of rows returned.
 		// This is a temporary fix since the datasets could be very large.
