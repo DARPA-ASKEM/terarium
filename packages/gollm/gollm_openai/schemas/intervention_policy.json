@@ -41,6 +41,10 @@
           "type": "string",
           "description": "A name for the policymaker decision, such as 'Day 4 - closure of schools' or 'Day 12 - serology testing limited to symptomatic individuals'."
         },
+        "extractionPage": {
+          "type": "number",
+          "description": "The page number where the model configuration was found in the text."
+        },
         "staticInterventions": {
           "type": "array",
           "description": "A list of static interventions on a model, grouped here by the timestep at which the interventions occur.",
@@ -59,6 +63,7 @@
       },
       "required": [
         "name",
+        "extractionPage",
         "staticInterventions",
         "dynamicInterventions"
       ],
