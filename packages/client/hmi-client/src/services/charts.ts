@@ -17,6 +17,7 @@ interface BaseChartOptions {
 	xAxisTitle: string;
 	yAxisTitle: string;
 	legend?: boolean;
+	autosize?: string;
 }
 export interface ForecastChartOptions extends BaseChartOptions {
 	translationMap?: Record<string, string>;
@@ -399,7 +400,7 @@ export function createForecastChart(
 		width: options.width,
 		height: options.height,
 		autosize: {
-			type: 'fit-x'
+			type: options.autosize || 'fit-x'
 		},
 		config: {
 			font: globalFont

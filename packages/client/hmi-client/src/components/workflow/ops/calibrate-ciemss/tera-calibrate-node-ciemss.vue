@@ -115,6 +115,7 @@ const updateLossChartSpec = (data: Record<string, any>[]) => {
 			title: '',
 			xAxisTitle: 'Solver iterations',
 			yAxisTitle: 'Loss',
+			autosize: 'fit',
 			...chartSize
 		}
 	);
