@@ -10,7 +10,7 @@
 				:visualization-spec="preparedCharts.variableCharts[index]"
 			/>
 			<vega-chart
-				v-for="(value, key, index) in groupedInterventionOutputs"
+				v-for="(_value, key, index) in groupedInterventionOutputs"
 				:key="key"
 				:are-embed-actions-visible="false"
 				:visualization-spec="preparedCharts.interventionCharts[index]"
@@ -149,12 +149,9 @@ const groupedInterventionOutputs = computed(() =>
 
 const preparedCharts = computed(() => {
 	const state = props.node.state;
-	if (!runResult.value || !csvAsset.value || !runResultPre.value) return [];
 	if (!runResult.value || !csvAsset.value || !runResultPre.value) {
 		return { variableCharts: [], interventionCharts: [] };
 	}
-
-	if (!runResult.value || !csvAsset.value || !runResultPre.value) return [];
 
 	// Merge before/after for chart
 	const { result, resultSummary } = mergeResults(
