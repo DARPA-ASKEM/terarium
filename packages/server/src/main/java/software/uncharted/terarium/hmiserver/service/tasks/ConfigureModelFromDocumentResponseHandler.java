@@ -84,6 +84,9 @@ public class ConfigureModelFromDocumentResponseHandler extends TaskResponseHandl
 				);
 				final String source = document.map(TerariumAsset::getName).orElse(null);
 
+				// Set the extraction document id
+				configuration.setExtractionDocumentId(props.documentId);
+
 				// Update the source of the model-configuration with the Document name
 				if (source != null) {
 					configuration.getInitialSemanticList().forEach(initial -> initial.setSource(source));

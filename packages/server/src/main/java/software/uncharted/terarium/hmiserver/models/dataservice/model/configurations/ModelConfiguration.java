@@ -32,6 +32,12 @@ public class ModelConfiguration extends TerariumAsset {
 	@TSOptional
 	private Timestamp temporalContext;
 
+	@TSOptional
+	private UUID extractionDocumentId;
+
+	@TSOptional
+	private Integer extractionPage;
+
 	@OneToMany(mappedBy = "modelConfiguration", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JsonManagedReference
 	private List<ObservableSemantic> observableSemanticList = new ArrayList<>();
@@ -70,6 +76,9 @@ public class ModelConfiguration extends TerariumAsset {
 
 		clone.setModelId(this.modelId);
 		clone.setSimulationId(this.simulationId);
+		clone.setTemporalContext(this.temporalContext);
+		clone.setExtractionDocumentId(this.extractionDocumentId);
+		clone.setExtractionPage(this.extractionPage);
 
 		if (this.observableSemanticList != null) {
 			clone.setObservableSemanticList(new ArrayList<>());

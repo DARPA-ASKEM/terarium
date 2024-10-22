@@ -29,13 +29,26 @@
 					size="small"
 					outlined
 					:disabled="props.kernelIsBusy"
-					class="white-space-nowrap"
-					style="margin-top: 1px; height: 31px; width: 10rem"
+					class="white-space-nowrap action-button"
 					title="Add a code cell to the notebook"
 					@click="addCodeCell"
 				>
 					<span class="pi pi-plus p-button-icon p-button-icon-left"></span>
 					<span class="p-button-text">Add a cell</span>
+				</Button>
+				<Button
+					ref="rerunCellsButton"
+					severity="secondary"
+					size="small"
+					outlined
+					:disabled="props.kernelIsBusy"
+					class="white-space-nowrap action-button"
+					style="width: 13rem"
+					title="Rerun all cells"
+					@click="runAllCells"
+				>
+					<span class="pi pi-refresh p-button-icon p-button-icon-left"></span>
+					<span class="p-button-text">Rerun all cells</span>
 				</Button>
 				<ProgressBar v-if="props.kernelIsBusy" mode="indeterminate" class="busy-bar"></ProgressBar>
 			</div>
@@ -51,7 +64,7 @@ import * as EventService from '@/services/event';
 import { EventType } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 
-const emit = defineEmits(['submit-query', 'add-code-cell']);
+const emit = defineEmits(['submit-query', 'add-code-cell', 'run-all-cells']);
 
 const props = defineProps({
 	placeholderMessage: {
@@ -92,7 +105,11 @@ const submitQuery = () => {
 
 const addCodeCell = () => {
 	emit('add-code-cell');
-	EventService.create(EventType.AddCodeCell, useProjects().activeProject.value?.id);
+	EventService.create(EventType.AddCodeCell);
+};
+
+const runAllCells = () => {
+	emit('run-all-cells');
 };
 
 onMounted(() => {
@@ -180,5 +197,11 @@ const autoGrow = () => {
 .busy-bar {
 	position: relative;
 	top: -4px;
+}
+.action-button {
+	margin-left: var(--gap-2);
+	margin-top: 1px;
+	height: 31px;
+	width: 10rem;
 }
 </style>
