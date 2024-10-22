@@ -388,6 +388,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 		const nodes = this.graph.nodes;
 		const updateEdgePoints = this.updateEdgePoints.bind(this);
 		const emitWrapper = renderer.emit.bind(renderer);
+		const nodeMap: Map<string, IRect> = new Map();
 
 		let node: D3SelectionINode<V> | null = null;
 		let nodeDraggingIds: string[] = [];
@@ -397,7 +398,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 		const dragSelector = this.options.dragSelector || null;
 
 		function collisionFn(p: IPoint) {
-			const buffer = 10;
+			const buffer = 0; // FIXME: factor out to config
 			for (let i = 0; i < nodes.length; i++) {
 				const checkingNode = nodes[i];
 				// FIXME: Thi is  a hack to get around hierarhical geometries, will need to
@@ -478,19 +479,45 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 			renderer.isDragEnabled = false;
 			if (options.useAStarRouting && sufficientlyMoved) {
+				nodeMap.clear();
+				nodes.forEach((n) => {
+					nodeMap.set(n.id, {
+						x: n.x,
+						y: n.y,
+						width: n.width,
+						height: n.height
+					});
+				});
+
 				for (let i = 0; i < edges.length; i++) {
 					const edge = edges[i];
 					const source = edge.source;
 					const target = edge.target;
+					const sourceNode = nodeMap.get(source) as IRect;
+					const targetNode = nodeMap.get(target) as IRect;
 
 					if (nodeDraggingIds.includes(source) || nodeDraggingIds.includes(target)) {
 						const points = edge.points;
 						const start = points[0];
 						const end = points[points.length - 1];
+
+						// Shift the start/end "outward" create a gutter-space
+
+						// south, north, east, west
+						if (sourceNode.y + sourceNode.height === start.y) start.y += 10;
+						if (sourceNode.y === start.y) start.y -= 10;
+						if (sourceNode.x + sourceNode.width === start.x) start.x += 10;
+						if (sourceNode.x === start.x) start.x -= 10;
+
+						if (targetNode.y + targetNode.height === end.y) end.y += 10;
+						if (targetNode.y === end.y) end.y -= 10;
+						if (targetNode.x + targetNode.width === end.x) end.x += 10;
+						if (targetNode.x === end.x) end.x -= 10;
+
 						if (edge.source === edge.target) continue;
 						edge.points = getAStarPath(start, end, {
 							collider: collisionFn,
-							gridCell: { w: 20, h: 20 }
+							gridCell: { w: 10, h: 10 }
 						});
 					}
 				}
