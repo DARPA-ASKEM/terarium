@@ -175,8 +175,6 @@ public class ExtractionService {
 		TextExtraction textExtraction;
 		EquationExtraction equationExtraction;
 		TableExtraction tableExtraction;
-		//		PDFBox type store image here
-		byte[] thumbnail;
 		ArrayNode variableAttributes;
 		Set<FailureType> failures = new HashSet<>();
 		boolean completed = false;
@@ -305,10 +303,6 @@ public class ExtractionService {
 
 		if (extractionResponse.textExtraction != null) {
 			document.setText(extractionResponse.textExtraction.documentText);
-		}
-
-		if (extractionResponse.thumbnail != null) {
-			document.setThumbnail(extractionResponse.thumbnail);
 		}
 
 		if (document.getExtractions() == null) {
