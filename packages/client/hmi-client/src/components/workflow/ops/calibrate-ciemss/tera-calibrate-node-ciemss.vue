@@ -149,6 +149,10 @@ const groupedInterventionOutputs = computed(() =>
 
 const preparedCharts = computed(() => {
 	const state = props.node.state;
+	if (!runResult.value || !csvAsset.value || !runResultPre.value) return [];
+	if (!runResult.value || !csvAsset.value || !runResultPre.value) {
+		return { variableCharts: [], interventionCharts: [] };
+	}
 
 	if (!runResult.value || !csvAsset.value || !runResultPre.value) return [];
 
