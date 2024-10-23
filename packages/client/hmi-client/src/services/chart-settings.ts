@@ -249,6 +249,47 @@ export async function generateForecastChartAnnotation(
       ]
     }
 
+		Request:
+		Add a vertical line at the day where the price reaches its peak value.
+    Answer:
+    {
+      "description": "Add a vertical line at the day where the price reaches its peak value.",
+      "transform": [
+				{"filter": "datum.variableField == 'price'"},
+				{
+					"joinaggregate": [{
+						"op": "max",
+						"field": "valueField",
+						"as": "max_price"
+					}]
+        },
+        {"filter": "datum.valueField >= datum.max_price"}
+      ],
+      "layer": [
+        {
+          "mark": {
+            "type": "rule",
+            "strokeDash": [4, 4]
+          },
+          "encoding": {
+            "x": {"field": "date", "type": "quantitative", "axis": { "title": ""}}
+          }
+        },
+        {
+          "mark": {
+            "type": "text",
+            "align": "left",
+            "dx": 5,
+            "dy": -10
+          },
+          "encoding": {
+            "x": {"field": "date", "type": "quantitative", "axis": { "title": ""}},
+            "text": {"value": "Max Price"}
+          }
+        }
+      ]
+    }
+
     Here is the information of the existing target chart spec where you need to add the annotations:
     - The existing chart follows a similar pattern as the above Example Chart Spec like:
         {
@@ -271,6 +312,7 @@ export async function generateForecastChartAnnotation(
           ]
         }
     - Assume all unknown variables except the time field are for the y-axis and are renamed to the valueField.
+		- Make sure possible values for 'valueField' are ${JSON.stringify(variables)} and try best to translate the variables mentioned from the request to the variables for the 'valueField'.
     - Leverage this variable to human readable name mapping: ${JSON.stringify(translateMap)} if needed.
 
     Give me the layer object to be added to the existing chart spec based on the following user request.

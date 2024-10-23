@@ -284,7 +284,7 @@ import { flattenInterventionData, getInterventionPolicyById } from '@/services/i
 import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-intervention-summary-card.vue';
 import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
-// import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
+import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
 import { getCalendarSettingsFromModel } from '@/utils/date';
 import {
 	addMultiVariableChartSetting,
