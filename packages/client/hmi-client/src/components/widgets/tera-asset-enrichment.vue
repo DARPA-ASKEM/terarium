@@ -88,16 +88,13 @@ function closeDialog() {
 	isModalVisible.value = false;
 }
 
-function confirm() {
+async function confirm() {
 	isLoading.value = true;
 	closeDialog();
-
-	// Wait for enrichment/extraction so once we call finished-job the newly fetched dataset will have the new data
-	sendForEnrichment().then(() => {
-		isLoading.value = false;
-		emit('finished-job');
-		getRelatedDocuments();
-	});
+	await sendForEnrichment(); // Wait for enrichment/extraction so once we call finished-job the newly fetched dataset will have the new data
+	emit('finished-job');
+	getRelatedDocuments();
+	isLoading.value = false;
 }
 
 async function sendForEnrichment(): Promise<void> {
