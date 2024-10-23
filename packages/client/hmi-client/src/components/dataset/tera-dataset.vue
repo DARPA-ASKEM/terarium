@@ -1,6 +1,5 @@
 <template>
 	<tera-asset
-		v-bind="$attrs"
 		show-table-of-contents
 		:feature-config="featureConfig"
 		:id="assetId"
