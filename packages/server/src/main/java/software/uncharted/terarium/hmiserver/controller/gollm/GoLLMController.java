@@ -17,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -41,10 +42,19 @@ import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelGrounding;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.GroundedSemantic;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Observable;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.State;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Transition;
+import software.uncharted.terarium.hmiserver.models.dataservice.regnet.RegNetVertex;
+import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.models.task.CompoundTask;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
+import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
@@ -88,6 +98,7 @@ public class GoLLMController {
 	private final GenerateSummaryHandler generateSummaryHandler;
 	private final InterventionsFromDocumentResponseHandler interventionsFromDocumentResponseHandler;
 	private final ModelCardResponseHandler modelCardResponseHandler;
+	private final MIRAProxy miraProxy;
 
 	private final Messages messages;
 
@@ -765,8 +776,8 @@ public class GoLLMController {
 		}
 
 		// Grab the model
-		final Optional<Model> model = modelService.getAsset(modelId, permission);
-		if (model.isEmpty()) {
+		Optional<Model> modelOptional = modelService.getAsset(modelId, permission);
+		if (modelOptional.isEmpty()) {
 			log.warn(String.format("Model %s not found", modelId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 		}
@@ -776,15 +787,15 @@ public class GoLLMController {
 		if (document.isPresent()) {
 			final TaskRequest enrichAmrRequest = getEnrichAMRTaskRequest(
 				document.orElse(null),
-				model.get(),
+				modelOptional.get(),
 				projectId,
 				overwrite
 			);
-			final TaskRequest modelCardRequest = getModelCardTask(document.orElse(null), model.get(), projectId);
+			final TaskRequest modelCardRequest = getModelCardTask(document.orElse(null), modelOptional.get(), projectId);
 
 			req = new CompoundTask(enrichAmrRequest, modelCardRequest);
 		} else {
-			req = getModelCardTask(null, model.get(), projectId);
+			req = getModelCardTask(null, modelOptional.get(), projectId);
 		}
 
 		final TaskResponse resp;
@@ -804,7 +815,67 @@ public class GoLLMController {
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
 		}
 
+		// at this point the initial enrichment has happened.
+		modelOptional = modelService.getAsset(modelId, permission);
+		if (modelOptional.isEmpty()) {
+			//this would be a very strange case
+			log.warn(String.format("Model %s not found", modelId));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
+		}
+
+		Model model = modelOptional.get();
+
+		// Update State Grounding
+		if (!model.isRegnet()) {
+			List<State> states = model.getStates();
+			states.forEach(this::performDKGSearchAndSetGrounding);
+			model.setStates(states);
+		} else if (model.isRegnet()) {
+			List<RegNetVertex> vertices = model.getVerticies();
+			vertices.forEach(this::performDKGSearchAndSetGrounding);
+			model.setVerticies(vertices);
+		}
+
+		//Update Observable Grounding
+		if (model.getObservables() != null && !model.getObservables().isEmpty()) {
+			List<Observable> observables = model.getObservables();
+			observables.forEach(this::performDKGSearchAndSetGrounding);
+			model.setObservables(observables);
+		}
+
+		//Update Parameter Grounding
+		if (model.getParameters() != null && !model.getParameters().isEmpty()) {
+			List<ModelParameter> parameters = model.getParameters();
+			parameters.forEach(this::performDKGSearchAndSetGrounding);
+			model.setParameters(parameters);
+		}
+
+		//Update Transition Grounding
+		if (model.getTransitions() != null && !model.getTransitions().isEmpty()) {
+			List<Transition> transitions = model.getTransitions();
+			transitions.forEach(this::performDKGSearchAndSetGrounding);
+			model.setTransitions(transitions);
+		}
+
+		try {
+			modelService.updateAsset(model, projectId, permission);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+
 		return ResponseEntity.ok().body(resp);
+	}
+
+	private void performDKGSearchAndSetGrounding(GroundedSemantic part) {
+		if (part == null || part.getId() == null || part.getId().isEmpty()) return;
+		ResponseEntity<List<DKG>> res = miraProxy.search(part.getId(), 1, 0);
+		if (res.getStatusCode() == HttpStatus.OK && res.getBody() != null && !res.getBody().isEmpty()) {
+			DKG dkg = res.getBody().get(0);
+			if (part.getGrounding() == null) part.setGrounding(new ModelGrounding());
+			if (part.getGrounding().getIdentifiers() == null) part.getGrounding().setIdentifiers(new HashMap<>());
+			String[] currieId = dkg.getCurie().split(":");
+			part.getGrounding().getIdentifiers().put(currieId[0], currieId[1]);
+		}
 	}
 
 	@GetMapping("/enrich-amr")

@@ -186,7 +186,7 @@ import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import Dropdown from 'primevue/dropdown';
-import { setupDatasetInput, setupModelInput } from '@/services/calibrate-workflow';
+import { setupDatasetInput, setupCsvAsset, setupModelInput } from '@/services/calibrate-workflow';
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -199,10 +199,12 @@ import type {
 	CsvAsset,
 	EnsembleModelConfigs,
 	EnsembleCalibrationCiemssRequest,
-	ModelConfiguration
+	ModelConfiguration,
+	Dataset
 } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
+import { getDataset } from '@/services/dataset';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	EnsembleCalibrateExtraCiemss
@@ -349,10 +351,18 @@ onMounted(async () => {
 	);
 
 	// dataset input
-	const { filename, csv } = await setupDatasetInput(datasetId.value);
-	currentDatasetFileName.value = filename;
-	csvAsset.value = csv;
-	datasetColumnNames.value = csv?.headers;
+	if (datasetId.value) {
+		// Get dataset
+		const dataset: Dataset | null = await getDataset(datasetId.value);
+		if (dataset) {
+			const { filename, datasetOptions } = await setupDatasetInput(dataset);
+			currentDatasetFileName.value = filename;
+			datasetColumnNames.value = datasetOptions?.map((ele) => ele.name);
+			setupCsvAsset(dataset).then((csv) => {
+				csvAsset.value = csv;
+			});
+		}
+	}
 
 	listModelLabels.value = allModelConfigurations.value.map((ele) => ele.name ?? '');
 
