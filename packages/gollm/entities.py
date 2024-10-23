@@ -20,8 +20,13 @@ class ConfigureModelDataset(BaseModel):
     matrix: str = None
 
 
+class EnrichAMRModel(BaseModel):
+    amrs: List[str]  # expects a list of AMRs as stringified JSON objects
+    research_paper: str = None
+
+
 class ModelCardModel(BaseModel):
-    amr: str  # expects AMR in a stringified JSON object
+    amrs: str  # expects AMR in a stringified JSON object
     research_paper: str = None
 
 

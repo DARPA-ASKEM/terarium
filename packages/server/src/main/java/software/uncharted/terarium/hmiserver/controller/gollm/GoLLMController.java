@@ -248,7 +248,7 @@ public class GoLLMController {
 
 		try {
 			input.setResearchPaper(objectMapper.writeValueAsString(document.get().getExtractions()));
-		} catch (JsonProcessingException e) {
+		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize document text", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 		}
@@ -491,7 +491,7 @@ public class GoLLMController {
 		final InterventionsFromDocumentResponseHandler.Input input = new InterventionsFromDocumentResponseHandler.Input();
 		try {
 			input.setResearchPaper(objectMapper.writeValueAsString(document.get().getExtractions()));
-		} catch (JsonProcessingException e) {
+		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize document text", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 		}
@@ -715,11 +715,13 @@ public class GoLLMController {
 	/**
 	 * This endpoint will dispatch a few GoLLM tasks to enrich model metadata,
 	 * including enriching the AMR and creating the model card
-	 * @param modelId UUID of the model to enrich
+	 *
+	 * @param modelId    UUID of the model to enrich
 	 * @param documentId UUID of the document to use for enrichment
-	 * @param mode TaskMode to run the task in (is this ASYNC?)
-	 * @param projectId UUID of the project to associate the task with for permissions
-	 * @param overwrite boolean to determine if the model should be overwritten
+	 * @param mode       TaskMode to run the task in (is this ASYNC?)
+	 * @param projectId  UUID of the project to associate the task with for
+	 *                   permissions
+	 * @param overwrite  boolean to determine if the model should be overwritten
 	 * @return TaskResponse with the task ID
 	 */
 	@GetMapping("/enrich-model-metadata")
@@ -744,12 +746,20 @@ public class GoLLMController {
 		}
 	)
 	public ResponseEntity<TaskResponse> createEnrichModelMetadataTask(
-		@RequestParam(name = "model-id", required = true) final UUID modelId,
+		@RequestParam(name = "model-ids", required = true) final List<UUID> modelIds,
 		@RequestParam(name = "document-id", required = false) final UUID documentId,
 		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
 		@RequestParam(name = "project-id", required = false) final UUID projectId,
 		@RequestParam(name = "overwrite", required = false, defaultValue = "false") final boolean overwrite
 	) {
+		if (modelIds.isEmpty()) {
+			log.warn("No models provided for enrichment");
+			throw new ResponseStatusException(
+				HttpStatus.BAD_REQUEST,
+				messages.get("task.gollm.enrich-model-metadata.no-models")
+			);
+		}
+
 		final Schema.Permission permission = projectService.checkPermissionCanRead(
 			currentUserService.get().getId(),
 			projectId
@@ -758,109 +768,37 @@ public class GoLLMController {
 		// Grab the document
 		final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
 
-		// make sure there is text in the document. We don't need a document but if we do have one it can't be empty
+		// make sure there is text in the document. We don't need a document but if we
+		// do have one it can't be empty
 		if (document.isPresent() && (document.get().getText() == null || document.get().getText().isEmpty())) {
 			log.warn(String.format("Document %s has no extracted text", documentId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.extraction.not-done"));
 		}
 
-		// Grab the model
-		final Optional<Model> model = modelService.getAsset(modelId, permission);
-		if (model.isEmpty()) {
-			log.warn(String.format("Model %s not found", modelId));
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
+		// Grab the models
+		final List<Model> models = new ArrayList<>();
+		for (final UUID modelId : modelIds) {
+			final Optional<Model> model = modelService.getAsset(modelId, permission);
+			if (model.isEmpty()) {
+				log.warn(String.format("Model %s not found", modelId));
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
+			}
+			models.add(model.get());
 		}
-
 		final TaskRequest req;
 
 		if (document.isPresent()) {
-			final TaskRequest enrichAmrRequest = getEnrichAMRTaskRequest(
+			final TaskRequest enrichAmrRequest = getEnrichAMRTaskRequest(document.orElse(null), models, projectId, overwrite);
+			final TaskRequest modelCardRequest = getModelCardTask(
 				document.orElse(null),
-				model.get(),
-				projectId,
-				overwrite
+				models.get(models.size() - 1),
+				projectId
 			);
-			final TaskRequest modelCardRequest = getModelCardTask(document.orElse(null), model.get(), projectId);
 
 			req = new CompoundTask(enrichAmrRequest, modelCardRequest);
 		} else {
-			req = getModelCardTask(null, model.get(), projectId);
+			req = getModelCardTask(null, models.get(models.size() - 1), projectId);
 		}
-
-		final TaskResponse resp;
-		try {
-			resp = taskService.runTask(mode, req);
-		} catch (final JsonProcessingException e) {
-			log.error("Unable to serialize input", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
-		} catch (final TimeoutException e) {
-			log.warn("Timeout while waiting for task response", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
-		} catch (final InterruptedException e) {
-			log.warn("Interrupted while waiting for task response", e);
-			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
-		} catch (final ExecutionException e) {
-			log.error("Error while waiting for task response", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
-		}
-
-		return ResponseEntity.ok().body(resp);
-	}
-
-	@GetMapping("/enrich-amr")
-	@Secured(Roles.USER)
-	@Operation(summary = "Dispatch a `GoLLM Enrich AMR` task")
-	@ApiResponses(
-		value = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "Dispatched successfully",
-				content = @Content(
-					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class)
-				)
-			),
-			@ApiResponse(
-				responseCode = "404",
-				description = "The provided model or document arguments are not found",
-				content = @Content
-			),
-			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
-		}
-	)
-	public ResponseEntity<TaskResponse> createEnrichAMRTask(
-		@RequestParam(name = "model-id", required = true) final UUID modelId,
-		@RequestParam(name = "document-id", required = true) final UUID documentId,
-		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
-		@RequestParam(name = "project-id", required = false) final UUID projectId,
-		@RequestParam(name = "overwrite", required = false, defaultValue = "false") final boolean overwrite
-	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
-		// Grab the document
-		final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
-		if (document.isEmpty()) {
-			log.warn(String.format("Document %s not found", documentId));
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
-		}
-
-		// make sure there is text in the document
-		if (document.get().getText() == null || document.get().getText().isEmpty()) {
-			log.warn(String.format("Document %s has no extracted text", documentId));
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.extraction.not-done"));
-		}
-
-		// Grab the model
-		final Optional<Model> model = modelService.getAsset(modelId, permission);
-		if (model.isEmpty()) {
-			log.warn(String.format("Model %s not found", modelId));
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
-		}
-
-		TaskRequest req = getEnrichAMRTaskRequest(document.get(), model.get(), projectId, overwrite);
 
 		final TaskResponse resp;
 		try {
@@ -1099,14 +1037,14 @@ public class GoLLMController {
 		return ResponseEntity.ok().build();
 	}
 
-	private TaskRequest getModelCardTask(DocumentAsset document, Model model, UUID projectId) {
+	private TaskRequest getModelCardTask(final DocumentAsset document, final Model model, final UUID projectId) {
 		final ModelCardResponseHandler.Input input = new ModelCardResponseHandler.Input();
 		input.setAmr(model.serializeWithoutTerariumFields(null, new String[] { "gollmCard" }));
 
 		if (document != null) {
 			try {
 				input.setResearchPaper(objectMapper.writeValueAsString(document.getExtractions()));
-			} catch (JsonProcessingException e) {
+			} catch (final JsonProcessingException e) {
 				log.error("Unable to serialize document text", e);
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 			}
@@ -1136,18 +1074,27 @@ public class GoLLMController {
 		return req;
 	}
 
-	private TaskRequest getEnrichAMRTaskRequest(DocumentAsset document, Model model, UUID projectId, Boolean overwrite) {
+	private TaskRequest getEnrichAMRTaskRequest(
+		final DocumentAsset document,
+		final List<Model> models,
+		final UUID projectId,
+		final Boolean overwrite
+	) {
 		final EnrichAmrResponseHandler.Input input = new EnrichAmrResponseHandler.Input();
 		if (document != null) {
 			try {
 				input.setResearchPaper(objectMapper.writeValueAsString(document.getExtractions()));
-			} catch (JsonProcessingException e) {
+			} catch (final JsonProcessingException e) {
 				log.error("Unable to serialize document text", e);
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 			}
 		}
 
-		input.setAmr(model.serializeWithoutTerariumFields(null, null));
+		final List<String> armStrings = new ArrayList<>();
+		for (final Model model : models) {
+			armStrings.add(model.serializeWithoutTerariumFields(null, null));
+		}
+		input.setAmrs(armStrings);
 
 		// Create the task
 		final TaskRequest req = new TaskRequest();
@@ -1166,8 +1113,10 @@ public class GoLLMController {
 
 		final EnrichAmrResponseHandler.Properties props = new EnrichAmrResponseHandler.Properties();
 		props.setProjectId(projectId);
-		if (document != null) props.setDocumentId(document.getId());
-		props.setModelId(model.getId());
+		if (document != null) {
+			props.setDocumentId(document.getId());
+		}
+		props.setModelId(models.get(models.size() - 1).getId());
 		props.setOverwrite(overwrite);
 		req.setAdditionalProperties(props);
 

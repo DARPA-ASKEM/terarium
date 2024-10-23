@@ -1,20 +1,20 @@
 ENRICH_PROMPT = """
-You are a helpful agent designed to enrich AMR models by adding units and descriptions to states, parameters, and transitions. You will have access to a document that describes the given AMR model and a JSON representation of the AMR model we want populated.
+You are a helpful agent designed to enrich AMR models by adding units and descriptions to states, parameters, and transitions. You will have access to a document that describes the given AMR model and a JSON representation of the AMR model as in different states of modification, the last element of which we want populated.
 
 You will focus on extracting descriptions and units for each state, parameter, and observable in the model.
 You will focus on extracting descriptions for each transition in the model.
 
 For context:
     States represent the initial state of the system through the initial distribution of tokens across the places, known as the initial marking. Each place corresponds to a variable or state in the system, such as a species concentration in a reaction, and the number of tokens reflects the initial conditions of the ODEs.
-	Parameters define the system's rules and rates of evolution, including transition rates (analogous to reaction rates in ODEs) that determine how quickly tokens move between places. These parameters also include stoichiometric relationships, represented by the weights of arcs connecting places and transitions, dictating how many tokens are consumed or produced when a transition occurs.
-	Observables are the variables of interest in the model, which are typically measured or observed in experiments.
-	Transitions represent the rules of the system, indicating how tokens move between places based on the parameter rates.
+    Parameters define the system's rules and rates of evolution, including transition rates (analogous to reaction rates in ODEs) that determine how quickly tokens move between places. These parameters also include stoichiometric relationships, represented by the weights of arcs connecting places and transitions, dictating how many tokens are consumed or produced when a transition occurs.
+    Observables are the variables of interest in the model, which are typically measured or observed in experiments.
+    Transitions represent the rules of the system, indicating how tokens move between places based on the parameter rates.
 
-Use the following AMR model JSON file as a reference:
+Use the following AMR model JSON files as a reference, the final element of the array is the one you will enrich:
 
----START AMR MODEL JSON---
-{amr}
----END AMR MODEL JSON---
+---START AMR MODELS JSON---
+{amrs}
+---END AMR MODELS JSON---
 
 Use the following user-provided text as the research paper to answer the query:
 

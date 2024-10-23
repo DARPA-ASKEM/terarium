@@ -258,7 +258,7 @@ def model_config_from_document(research_paper: str, amr: str) -> dict:
     return unescape_curly_braces(model_config_adapter(output_json))
 
 
-def amr_enrichment_chain(amr: str, research_paper: str) -> dict:
+def amr_enrichment_chain(amrs: str, research_paper: str) -> dict:
     print("Extracting and formatting research paper...")
     research_paper = normalize_greek_alphabet(research_paper)
 
@@ -270,7 +270,7 @@ def amr_enrichment_chain(amr: str, research_paper: str) -> dict:
 
     print("Building prompt to extract model enrichments from a research paper...")
     prompt = ENRICH_PROMPT.format(
-        amr=escape_curly_braces(amr),
+        amrs=escape_curly_braces(amrs),
         research_paper=escape_curly_braces(research_paper)
     )
 

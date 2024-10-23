@@ -1,5 +1,5 @@
 import sys
-from entities import ModelCardModel
+from entities import EnrichAMRModel
 from gollm_openai.tool_utils import amr_enrichment_chain
 
 from taskrunner import TaskRunnerInterface
@@ -17,11 +17,11 @@ def main():
 
         input_dict = taskrunner.read_input_dict_with_timeout()
 
-        taskrunner.log("Creating ModelCardModel from input")
-        input_model = ModelCardModel(**input_dict)
+        taskrunner.log("Creating EnrichAMRModel from input")
+        input_model = EnrichAMRModel(**input_dict)
 
         taskrunner.log("Sending request to OpenAI API")
-        response = amr_enrichment_chain(research_paper=input_model.research_paper, amr=input_model.amr)
+        response = amr_enrichment_chain(research_paper=input_model.research_paper, amrs=input_model.amrs)
         taskrunner.log("Received response from OpenAI API")
 
         taskrunner.write_output_dict_with_timeout({"response": response})
