@@ -38,19 +38,14 @@
 			</div>
 		</template>
 		<section>
-			<div class="pl-4 ml-3 pt-1 pb-3">
-				<p>
-					<span class="font-semibold inline-block w-10rem">Dataset ID</span>
-					<code class="inline">{{ datasetInfo.id }}</code>
-				</p>
-				<p>
-					<span class="font-semibold inline-block w-10rem">Dataset filenames</span>
-					{{ datasetInfo.fileNames }}
-				</p>
-			</div>
 			<Accordion multiple :active-index="[0, 1, 2, 3, 4]">
 				<AccordionTab header="Description">
 					<section class="description">
+						<label class="p-text-secondary">Dataset ID</label>
+						<p>{{ dataset?.id }}</p>
+						<label class="p-text-secondary">Files names</label>
+						<p>{{ dataset?.fileNames?.toString() }}</p>
+						<label class="p-text-secondary">Description</label>
 						<tera-show-more-text :text="description" :lines="5" />
 						<template v-if="datasetType">
 							<label class="p-text-secondary">Dataset type</label>
@@ -62,7 +57,6 @@
 						</template>
 					</section>
 				</AccordionTab>
-				<!-- <AccordionTab header="Charts">TBD</AccordionTab> -->
 				<AccordionTab header="Column information" v-if="!isClimateData && !isClimateSubset">
 					<ul>
 						<li v-for="(column, index) in columnInformation" :key="index">
@@ -111,7 +105,7 @@
 						</div>
 					</AccordionTab>
 				</template>
-				<AccordionTab header="Data" v-if="!isEmpty(datasetInfo.fileNames)">
+				<AccordionTab header="Data" v-if="!isEmpty(dataset?.fileNames)">
 					<tera-progress-spinner v-if="!rawContent" :font-size="2" is-centered />
 					<tera-dataset-datatable v-else :rows="100" :raw-content="rawContent" />
 				</AccordionTab>
@@ -232,18 +226,6 @@ const columnInformation = computed(
 			stats: column.metadata?.column_stats // Uneditable
 		})) ?? []
 );
-
-const datasetInfo = computed(() => {
-	const information = {
-		id: '',
-		fileNames: ''
-	};
-	if (dataset.value) {
-		information.id = dataset.value.id ?? '';
-		information.fileNames = dataset.value.fileNames?.join(', ') ?? '';
-	}
-	return information;
-});
 
 const isClimateData = computed(() => dataset.value?.esgfId);
 const isClimateSubset = computed(() => dataset.value?.metadata?.format === 'netcdf');
