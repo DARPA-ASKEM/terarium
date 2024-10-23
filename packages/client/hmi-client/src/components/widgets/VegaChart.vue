@@ -41,7 +41,11 @@ const expressionFunctions = {
 		return format(NUMBER_FORMAT)(correctedValue);
 	},
 	// Just show full value in tooltip
-	tooltipFormatter: (value) => fixPrecisionError(value)
+	tooltipFormatter: (value) => {
+		if (value !== undefined) {
+			fixPrecisionError(value);
+		}
+	}
 };
 
 // This config is default for all charts, but can be overridden by individual chart spec
