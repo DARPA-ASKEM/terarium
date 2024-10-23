@@ -1,4 +1,12 @@
 .p-calendar {
+    // right align text
+    >.p-inputtext {
+        text-align: right
+    }
+    // left align icon
+    &.p-icon-field-right > .p-input-icon:last-of-type {
+        left: 0.75rem
+    }
     &.p-invalid.p-component > .p-inputtext {
         @include invalid-input();
     }
