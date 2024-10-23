@@ -4,7 +4,7 @@ import type { MMT } from '@/model-representation/mira/mira-common';
 import * as EventService from '@/services/event';
 import type { Initial, InterventionPolicy, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import { Artifact, EventType } from '@/types/Types';
-import { AMRSchemaNames } from '@/types/common';
+import { AMRSchemaNames, CalendarDateType } from '@/types/common';
 import { fileToJson } from '@/utils/file';
 import { isEmpty } from 'lodash';
 import { Ref } from 'vue';
@@ -246,4 +246,8 @@ export function stringToLatexExpression(expression: string): string {
 	// Detect and convert fractions a/b to \frac{a}{b}
 	latexExpression = latexExpression.replace(/([a-zA-Z0-9]+)\/([a-zA-Z0-9]+)/g, '\\frac{$1}{$2}');
 	return latexExpression;
+}
+
+export function getTimeUnits(model: Model): CalendarDateType {
+	return model?.semantics?.ode?.time?.units?.expression || '';
 }

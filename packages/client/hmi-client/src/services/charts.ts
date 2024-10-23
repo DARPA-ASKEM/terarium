@@ -17,6 +17,12 @@ interface BaseChartOptions {
 	xAxisTitle: string;
 	yAxisTitle: string;
 	legend?: boolean;
+	dateOptions?: DateOptions;
+}
+
+export interface DateOptions {
+	dateFormat: 'year' | 'yearmonth' | 'yearmonthdate';
+	startDate: Date;
 }
 export interface ForecastChartOptions extends BaseChartOptions {
 	translationMap?: Record<string, string>;
@@ -40,6 +46,28 @@ export interface ErrorChartOptions extends Omit<BaseChartOptions, 'height' | 'yA
 	areaChartHeight?: number;
 	boxPlotHeight?: number;
 	variables: { field: string; label?: string }[];
+}
+
+export interface InterventionMarkerOptions {
+	hideLabels?: boolean;
+	labelXOffset?: number;
+	dateOptions?: DateOptions;
+}
+
+function transformDateFormatFn(
+	date: Date,
+	datum: string,
+	type: 'year' | 'yearmonth' | 'yearmonthdate' = 'yearmonthdate'
+): string {
+	switch (type) {
+		case 'year':
+			return `datetime(${date.getFullYear()} + ${datum}, ${date.getMonth()}, ${date.getDate()})`;
+		case 'yearmonth':
+			return `datetime(${date.getFullYear()} + floor(${datum} / 12), ${date.getMonth()} + (${datum} % 12) , ${date.getDate()})`;
+		case 'yearmonthdate':
+		default:
+			return `datetime(${date.getFullYear()}, ${date.getMonth()}, ${date.getDate()} + ${datum})`;
+	}
 }
 
 export function createErrorChart(dataset: Record<string, any>[], options: ErrorChartOptions) {
@@ -421,7 +449,7 @@ export function createForecastChart(
 		if (layer.groupField) selectedFields.push(layer.groupField);
 
 		const data = Array.isArray(layer.data) ? { values: layer.data.map((d) => pick(d, selectedFields)) } : layer.data;
-		const header = {
+		const header: any = {
 			data,
 			transform: [
 				{
@@ -430,8 +458,27 @@ export function createForecastChart(
 				}
 			]
 		};
+
+		if (options.dateOptions) {
+			header.transform.push({
+				calculate: transformDateFormatFn(
+					options.dateOptions.startDate,
+					'datum.timepoint_id',
+					options.dateOptions.dateFormat
+				),
+				as: 'date'
+			});
+		}
+
+		const encodingX = options.dateOptions
+			? {
+					field: 'date',
+					type: 'temporal',
+					axis: { ...xaxis, timeUnit: options.dateOptions.dateFormat }
+				}
+			: { field: layer.timeField, type: 'quantitative', axis: xaxis };
 		const encoding = {
-			x: { field: layer.timeField, type: 'quantitative', axis: xaxis },
+			x: encodingX,
 			y: { field: 'valueField', type: 'quantitative', axis: yaxis },
 			color: {
 				field: 'variableField',
@@ -501,10 +548,17 @@ export function createForecastChart(
 
 			return tip;
 		});
+
+		const timepointTip = options.dateOptions
+			? { field: 'date', type: 'temporal', timeUnit: options.dateOptions.dateFormat }
+			: {
+					field: statisticsLayer.timeField,
+					type: 'quantitative'
+				};
 		Object.assign(tooltipSubLayer.encoding, {
 			opacity: { value: 0.00000001 },
 			strokeWidth: { value: 16 },
-			tooltip: [{ field: statisticsLayer.timeField, type: 'quantitative' }, ...(tooltipContent || [])]
+			tooltip: [timepointTip, ...(tooltipContent || [])]
 		});
 		layerSpec.layer.push(tooltipSubLayer);
 
@@ -726,28 +780,37 @@ export function createSuccessCriteriaChart(
 
 export function createInterventionChartMarkers(
 	data: ReturnType<typeof flattenInterventionData>,
-	hideLabels = false,
-	labelXOffset = 5
+	options: InterventionMarkerOptions = { hideLabels: false, labelXOffset: 5 }
 ): any[] {
-	const markerSpec = {
+	const transformFn = options.dateOptions
+		? {
+				calculate: transformDateFormatFn(options.dateOptions.startDate, 'datum.time', options.dateOptions.dateFormat),
+				as: 'date'
+			}
+		: {};
+	const encodingX = options.dateOptions ? { field: 'date', type: 'temporal' } : { field: 'time', type: 'quantitative' };
+
+	const markerSpec: any = {
 		data: { values: data },
+		transform: [transformFn],
 		mark: { type: 'rule', strokeDash: [4, 4], color: 'black' },
 		encoding: {
-			x: { field: 'time', type: 'quantitative' }
+			x: encodingX
 		}
 	};
-	if (hideLabels) return [markerSpec];
+	if (options.hideLabels) return [markerSpec];
 	const labelSpec = {
 		data: { values: data },
+		tranform: [transformFn],
 		mark: {
 			type: 'text',
 			align: 'left',
 			angle: 90,
-			dx: labelXOffset,
+			dx: options.labelXOffset,
 			dy: -10
 		},
 		encoding: {
-			x: { field: 'time', type: 'quantitative' },
+			x: encodingX,
 			y: { field: 'value', type: 'quantitative' },
 			text: { field: 'name', type: 'nominal' }
 		}
@@ -784,7 +847,7 @@ export function createInterventionChart(
 	};
 	if (!isEmpty(interventions)) {
 		// markers
-		createInterventionChartMarkers(interventions, chartOptions.hideLabels).forEach((marker) => {
+		createInterventionChartMarkers(interventions, { hideLabels: chartOptions.hideLabels }).forEach((marker) => {
 			spec.layer.push(marker);
 		});
 		// chart

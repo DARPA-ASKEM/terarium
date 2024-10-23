@@ -40,7 +40,14 @@ import {
 	parsePyCiemssMap
 } from '@/services/models/simulation-service';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
-import { SimulationRequest, InterventionPolicy, Simulation, CiemssOptimizeStatusUpdate } from '@/types/Types';
+import {
+	SimulationRequest,
+	InterventionPolicy,
+	Simulation,
+	CiemssOptimizeStatusUpdate,
+	ModelConfiguration,
+	Model
+} from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { createForecastChart } from '@/services/charts';
@@ -49,6 +56,7 @@ import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/servic
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { createDatasetFromSimulationResult } from '@/services/dataset';
 import { useProjects } from '@/composables/project';
+import { getVegaDateOptions } from '@/utils/date';
 import {
 	OptimizeCiemssOperationState,
 	OptimizeCiemssOperation,
@@ -64,6 +72,8 @@ const props = defineProps<{
 const runResults = ref<any>({});
 const runResultsSummary = ref<any>({});
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
+const modelConfiguration = ref<ModelConfiguration | null>(null);
+const model = ref<Model | null>(null);
 
 const modelVarUnits = ref<{ [key: string]: string }>({});
 
@@ -129,9 +139,8 @@ const startForecast = async (optimizedInterventions?: InterventionPolicy) => {
 		simulationPayload.policyInterventionId = inputIntervention;
 	}
 
-	const modelConfig = await getModelConfigurationById(modelConfigId.value as string);
-	if (modelConfig.simulationId) {
-		simulationPayload.extra.inferred_parameters = modelConfig.simulationId;
+	if (modelConfiguration.value?.simulationId) {
+		simulationPayload.extra.inferred_parameters = modelConfiguration.value.simulationId;
 	}
 
 	return makeForecastJobCiemss(simulationPayload, nodeMetadata(props.node));
@@ -148,6 +157,7 @@ const preparedCharts = computed(() => {
 	if (!postResult || !postResultSummary || !preResultSummary || !preResult) return [];
 	// Merge before/after for chart
 	const { result, resultSummary } = mergeResults(preResult, postResult, preResultSummary, postResultSummary);
+	const dateOptions = getVegaDateOptions(model.value, modelConfiguration.value);
 	return selectedSimulationVariables.map((variable) =>
 		createForecastChart(
 			{
@@ -173,7 +183,8 @@ const preparedCharts = computed(() => {
 					[`${pyciemssMap[variable]}_mean`]: `${variable} after optimization`
 				},
 				title: '',
-				colorscheme: ['#AAB3C6', '#1B8073']
+				colorscheme: ['#AAB3C6', '#1B8073'],
+				dateOptions
 			}
 		)
 	);
@@ -314,9 +325,10 @@ watch(
 		if (!active) return;
 		if (!state.postForecastRunId || !state.preForecastRunId) return;
 
-		const model = await getModelByModelConfigurationId(modelConfigId.value as string);
-		if (model) {
-			modelVarUnits.value = getUnitsFromModelParts(model);
+		modelConfiguration.value = await getModelConfigurationById(modelConfigId.value as string);
+		model.value = await getModelByModelConfigurationId(modelConfigId.value as string);
+		if (model.value) {
+			modelVarUnits.value = getUnitsFromModelParts(model.value);
 		}
 
 		const preForecastRunId = state.preForecastRunId;

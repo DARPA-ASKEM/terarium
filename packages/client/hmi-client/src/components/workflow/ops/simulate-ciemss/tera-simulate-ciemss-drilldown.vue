@@ -249,7 +249,7 @@ import { flattenInterventionData, getInterventionPolicyById } from '@/services/i
 import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-intervention-summary-card.vue';
 import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
-import { getCalendarSettingsFromModel } from '@/utils/date';
+import { getCalendarSettingsFromModel, getVegaDateOptions } from '@/utils/date';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import TeraChartControl from '../../tera-chart-control.vue';
 import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
@@ -380,6 +380,8 @@ const preparedCharts = computed(() => {
 		// If only one variable is selected, show the baseline forecast
 		const showBaseLine = config.length === 1 && Boolean(props.node.state.baseForecastId);
 
+		const dateOptions = getVegaDateOptions(model.value, modelConfiguration.value);
+
 		const options: ForecastChartOptions = {
 			title: '',
 			width: chartSize.value.width,
@@ -389,6 +391,11 @@ const preparedCharts = computed(() => {
 			xAxisTitle: modelVarUnits.value._time || 'Time',
 			yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
 		};
+
+		if (dateOptions) {
+			options.dateOptions = dateOptions;
+		}
+
 		let statLayerVariables = config.map((d) => `${pyciemssMap[d]}_mean`);
 
 		if (showBaseLine) {
@@ -418,7 +425,7 @@ const preparedCharts = computed(() => {
 		if (interventionPolicy.value) {
 			_.keys(groupedInterventionOutputs.value).forEach((key) => {
 				if (config.includes(key)) {
-					chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
+					chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key], { dateOptions }));
 				}
 			});
 		}

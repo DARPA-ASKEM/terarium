@@ -1,4 +1,7 @@
-import { Model } from '@/types/Types';
+import { DateOptions } from '@/services/charts';
+import { getTimeUnits } from '@/services/model';
+import { CalendarDateType } from '@/types/common';
+import { Model, ModelConfiguration } from '@/types/Types';
 
 export function formatDdMmmYyyy(timestamp) {
 	return new Date(timestamp).toLocaleDateString('en-US', {
@@ -74,13 +77,12 @@ export function sortDatesDesc(a, b) {
 export function sortDatesAsc(a, b) {
 	return new Date(a).getTime() - new Date(b).getTime();
 }
-
 export interface CalendarSettings {
-	view: 'date' | 'month' | 'year';
+	view: CalendarDateType;
 	format: string;
 }
 
-export function getTimestepFromDateRange(startDate: Date, endDate: Date, stepType: 'date' | 'month' | 'year'): number {
+export function getTimestepFromDateRange(startDate: Date, endDate: Date, stepType: CalendarDateType): number {
 	startDate = new Date(startDate);
 	const diffInMilliseconds = endDate.getTime() - startDate.getTime();
 
@@ -95,7 +97,7 @@ export function getTimestepFromDateRange(startDate: Date, endDate: Date, stepTyp
 	}
 }
 
-export function getEndDateFromTimestep(startDate: Date, timestep: number, stepType: 'date' | 'month' | 'year'): Date {
+export function getEndDateFromTimestep(startDate: Date, timestep: number, stepType: CalendarDateType): Date {
 	const endDate = new Date(startDate);
 
 	switch (stepType) {
@@ -114,26 +116,49 @@ export function getEndDateFromTimestep(startDate: Date, timestep: number, stepTy
 	return endDate;
 }
 
-export function getCalendarSettingsFromModel(model: Model): { view: 'date' | 'month' | 'year'; format: string } {
+export function getCalendarSettingsFromModel(model: Model): { view: CalendarDateType; format: string } {
 	const units = model?.semantics?.ode?.time?.units?.expression;
-	let view;
+	const view = units;
 	let format;
 
 	switch (units) {
-		case 'months':
-			view = 'month';
+		case CalendarDateType.MONTH:
 			format = 'MM, yy';
 			break;
-		case 'years':
-			view = 'year';
+		case CalendarDateType.YEAR:
 			format = 'yy';
 			break;
-		case 'days':
+		case CalendarDateType.DATE:
 		default:
-			view = 'date';
 			format = 'MM dd, yy';
 			break;
 	}
 
 	return { view, format };
+}
+
+export function getVegaDateOptions(
+	model: Model | null,
+	modelConfiguration: ModelConfiguration | null
+): DateOptions | undefined {
+	let dateOptions;
+	if (model && modelConfiguration && modelConfiguration.temporalContext) {
+		dateOptions = {
+			dateFormat: dateTypeToVegaDate(getTimeUnits(model)),
+			startDate: new Date(modelConfiguration.temporalContext)
+		};
+	}
+	return dateOptions;
+}
+
+export function dateTypeToVegaDate(type: CalendarDateType) {
+	switch (type) {
+		case CalendarDateType.YEAR:
+			return 'year';
+		case CalendarDateType.MONTH:
+			return 'yearmonth';
+		case CalendarDateType.DATE:
+		default:
+			return 'yearmonthdate';
+	}
 }
