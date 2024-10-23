@@ -509,7 +509,8 @@ import {
 	createHistogramChart,
 	createErrorChart,
 	applyForecastChartAnnotations,
-	createInterventionChartMarkers
+	createInterventionChartMarkers,
+	AUTOSIZE
 } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
@@ -970,7 +971,8 @@ const updateLossChartSpec = (data: string | Record<string, any>[], size: { width
 			width: size.width,
 			height: 100,
 			xAxisTitle: 'Solver iterations',
-			yAxisTitle: 'Loss'
+			yAxisTitle: 'Loss',
+			autosize: AUTOSIZE.FIT
 		}
 	);
 };

@@ -10,6 +10,14 @@ const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
 export const CATEGORICAL_SCHEME = ['#1B8073', '#6495E8', '#8F69B9', '#D67DBF', '#E18547', '#D2C446', '#84594D'];
 
+export enum AUTOSIZE {
+	FIT = 'fit',
+	FIT_X = 'fit-x',
+	FIT_Y = 'fit-y',
+	PAD = 'pad',
+	NONE = 'none'
+}
+
 interface BaseChartOptions {
 	title?: string;
 	width: number;
@@ -17,6 +25,7 @@ interface BaseChartOptions {
 	xAxisTitle: string;
 	yAxisTitle: string;
 	legend?: boolean;
+	autosize?: AUTOSIZE;
 }
 export interface ForecastChartOptions extends BaseChartOptions {
 	translationMap?: Record<string, string>;
@@ -256,7 +265,7 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 		title: titleObj as any,
 		width: options.width,
 		height: options.height,
-		autosize: { type: 'fit' },
+		autosize: { type: AUTOSIZE.FIT },
 		data: {
 			values: []
 		},
@@ -399,7 +408,7 @@ export function createForecastChart(
 		width: options.width,
 		height: options.height,
 		autosize: {
-			type: 'fit-x'
+			type: options.autosize || AUTOSIZE.FIT_X
 		},
 		config: {
 			font: globalFont
@@ -626,7 +635,7 @@ export function createSuccessCriteriaChart(
 		width: options.width,
 		height: options.height,
 		autosize: {
-			type: 'fit-x'
+			type: AUTOSIZE.FIT_X
 		},
 		data: {
 			values: data
@@ -778,7 +787,7 @@ export function createInterventionChart(
 		title: titleObj,
 		height: chartOptions.height,
 		autosize: {
-			type: 'fit-x'
+			type: AUTOSIZE.FIT_X
 		},
 		layer: []
 	};
