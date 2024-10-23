@@ -274,19 +274,15 @@ export interface Author {
 }
 
 export interface State extends GroundedSemantic {
-    name?: string;
     description?: string;
-    grounding?: ModelGrounding;
     units?: ModelUnit;
 }
 
 export interface Transition extends GroundedSemantic {
     input: string[];
     output: string[];
-    name?: string;
     description?: string;
     expression?: string;
-    grounding?: ModelGrounding;
     properties?: Properties;
 }
 
@@ -372,7 +368,6 @@ export interface RegNetParameter {
 export interface RegNetVertex extends GroundedSemantic {
     sign: boolean;
     initial?: any;
-    grounding?: ModelGrounding;
     rate_constant?: any;
 }
 
@@ -804,9 +799,9 @@ export interface ModelUnit {
 }
 
 export interface GroundedSemantic {
-    name: string;
+    name?: string;
     id: string;
-    grounding: ModelGrounding;
+    grounding?: ModelGrounding;
 }
 
 export interface Properties {
@@ -911,21 +906,17 @@ export interface Initial {
 }
 
 export interface ModelParameter extends GroundedSemantic {
-    name?: string;
     description?: string;
     value?: number;
-    grounding?: ModelGrounding;
     distribution?: ModelDistribution;
     units?: ModelUnit;
 }
 
 export interface Observable extends GroundedSemantic {
-    name?: string;
     states?: string[];
     description?: string;
     units?: ModelUnit;
     expression?: string;
-    grounding?: ModelGrounding;
     expression_mathml?: string;
 }
 
