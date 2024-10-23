@@ -38,7 +38,7 @@
 			</div>
 		</template>
 		<section>
-			<Accordion multiple :active-index="[0, 1, 2, 3, 4]">
+			<Accordion multiple :active-index="currentActiveIndexes">
 				<AccordionTab header="Description">
 					<section class="description">
 						<label class="p-text-secondary">Dataset ID</label>
@@ -57,54 +57,16 @@
 						</template>
 					</section>
 				</AccordionTab>
-				<AccordionTab header="Column information" v-if="!isClimateData && !isClimateSubset">
-					<ul>
-						<li v-for="(column, index) in columnInformation" :key="index">
-							<tera-column-info
-								:column="column"
-								:feature-config="{ isPreview: false }"
-								@update-column="updateColumn(index, $event.key, $event.value)"
-							/>
-						</li>
-					</ul>
+				<AccordionTab header="Column information">
+					<tera-column-info
+						v-for="(column, index) in columnInformation"
+						:key="index"
+						class="column-info"
+						:column="column"
+						:feature-config="{ isPreview: false }"
+						@update-column="updateColumn(index, $event.key, $event.value)"
+					/>
 				</AccordionTab>
-				<template v-else-if="dataset?.metadata">
-					<AccordionTab header="Preview">
-						<img :src="image" alt="" />
-						<tera-carousel
-							v-if="isClimateSubset && dataset.metadata?.preview"
-							:labels="dataset.metadata.preview.map(({ year }) => year)"
-						>
-							<div v-for="item in dataset.metadata.preview" :key="item">
-								<img :src="item.image" alt="Preview" />
-							</div>
-						</tera-carousel>
-					</AccordionTab>
-					<AccordionTab header="Metadata">
-						<div v-for="(value, key) in dataset.metadata" :key="key" class="row">
-							<template v-if="key.toString() !== 'preview'">
-								<div class="col key">
-									{{ snakeToCapitalized(key.toString()) }}
-								</div>
-								<div class="col">
-									<ul v-if="typeof value === 'object'">
-										<li v-for="(item, index) in Object.values(value)" :key="index">
-											{{ item }}
-										</li>
-									</ul>
-									<ul v-else-if="Array.isArray(value)">
-										<li v-for="(item, index) in value" :key="index">
-											{{ item }}
-										</li>
-									</ul>
-									<template v-else>
-										{{ value }}
-									</template>
-								</div>
-							</template>
-						</div>
-					</AccordionTab>
-				</template>
 				<AccordionTab header="Data" v-if="!isEmpty(dataset?.fileNames)">
 					<tera-progress-spinner v-if="!rawContent" :font-size="2" is-centered />
 					<tera-dataset-datatable v-else :rows="100" :raw-content="rawContent" />
@@ -117,7 +79,6 @@
 <script setup lang="ts">
 import { computed, PropType, ref, watch } from 'vue';
 import { cloneDeep, isEmpty, isEqual } from 'lodash';
-import { snakeToCapitalized } from '@/utils/text';
 import {
 	downloadRawFile,
 	getClimateDataset,
@@ -138,7 +99,6 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import { logger } from '@/utils/logger';
-import TeraCarousel from '@/components/widgets/tera-carousel.vue';
 import TeraAssetEnrichment from '@/components/widgets/tera-asset-enrichment.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
@@ -161,6 +121,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close-preview']);
 
+const currentActiveIndexes = ref([1, 2, 3, 4]);
 const dataset = ref<Dataset | null>(null);
 const transientDataset = ref<Dataset | null>(null);
 const newName = ref('');
@@ -227,8 +188,6 @@ const columnInformation = computed(
 		})) ?? []
 );
 
-const isClimateData = computed(() => dataset.value?.esgfId);
-const isClimateSubset = computed(() => dataset.value?.metadata?.format === 'netcdf');
 const datasetType = computed(() => card.value?.DATASET_TYPE ?? '');
 
 const image = ref<string | undefined>(undefined);
@@ -360,31 +319,19 @@ watch(
 </script>
 
 <style scoped>
-li {
+.column-info {
 	border-bottom: 1px solid var(--surface-border);
-	padding-bottom: var(--gap-2);
+	margin-bottom: var(--gap-3);
+	padding-bottom: var(--gap-3);
 }
 
 .description {
-	display: flex;
-	flex-direction: column;
-	gap: var(--gap-2);
 	margin-left: var(--gap-6);
-}
 
-.row {
-	border-bottom: 1px solid var(--surface-border);
-	display: flex;
-	justify-content: space-between;
-	padding: var(--gap-2) 0;
-}
-
-.key {
-	font-weight: var(--font-weight-semibold);
-}
-
-.col {
-	flex: 1;
+	label + * {
+		margin-bottom: var(--gap-4);
+		margin-top: var(--gap-2);
+	}
 }
 
 /* Add gaps beneath open accordions */
