@@ -9,11 +9,11 @@ Think and respond to the best ability of an academic or professional with subjec
 
 Adhere to relevant best practices and domain-specific language.
 
-If any of the AMR models have gollmCard information, only use those models to fill out metadataComparison fields. 
+Use the available gollmCard information of the models to fill out the metadataComparison fields.
 
-Only include models that have gollmCard information and exclude models that do not.
+If a model does not have gollmCard information, mention that this model does not have metadata for comparison.
 
-If no AMR models contain gollmCard information, leave metadataComparison fields blank.
+If all AMR models do not have gollmCard information, leave metadataComparison fields blank.
 
 Fill in the semanticComparison fields for all models.
 
