@@ -53,6 +53,7 @@ export interface FunmanOperationState extends BaseState {
 	constraintGroups: ConstraintGroup[];
 	requestParameters: RequestParameter[];
 	chartSettings: ChartSetting[] | null;
+	currentProgress: number;
 }
 
 export const FunmanOperation: Operation = {
@@ -77,7 +78,8 @@ export const FunmanOperation: Operation = {
 			requestParameters: [],
 			inProgressId: '',
 			runId: '',
-			chartSettings: null
+			chartSettings: null,
+			currentProgress: 0
 		};
 		return init;
 	}

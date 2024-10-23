@@ -454,7 +454,7 @@ import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
-import { CalibrateMap, setupDatasetInput, setupModelInput } from '@/services/calibrate-workflow';
+import { CalibrateMap, setupDatasetInput, setupCsvAsset, setupModelInput } from '@/services/calibrate-workflow';
 import {
 	deleteAnnotation,
 	fetchAnnotations,
@@ -484,6 +484,7 @@ import {
 	InterventionPolicy,
 	ModelParameter,
 	AssetType,
+	Dataset,
 	Model
 } from '@/types/Types';
 import { CiemssPresetTypes, DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
@@ -523,6 +524,7 @@ import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-i
 import { getParameters } from '@/model-representation/service';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
 import { getCalendarSettingsFromModel } from '@/utils/date';
+import { getDataset } from '@/services/dataset';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults, getErrorData } from './calibrate-utils';
 
@@ -1161,10 +1163,19 @@ const initialize = async () => {
 	modelPartTypesMap.value = modelPartTypes ?? {};
 
 	// dataset input
-	const { filename, csv, datasetOptions } = await setupDatasetInput(datasetId.value);
-	currentDatasetFileName.value = filename;
-	csvAsset.value = csv;
-	datasetColumns.value = datasetOptions;
+	if (datasetId.value) {
+		// Get dataset
+		const dataset: Dataset | null = await getDataset(datasetId.value);
+		if (dataset) {
+			const { filename, datasetOptions } = await setupDatasetInput(dataset);
+			currentDatasetFileName.value = filename;
+			datasetColumns.value = datasetOptions;
+
+			setupCsvAsset(dataset).then((csv) => {
+				csvAsset.value = csv;
+			});
+		}
+	}
 
 	getConfiguredModelConfig();
 
