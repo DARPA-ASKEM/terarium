@@ -1,14 +1,14 @@
 <template>
 	<TabView v-if="pdfs?.length" class="container">
 		<TabPanel :header="pdf.name" v-for="pdf in pdfs" :key="pdf.name">
-			<tera-pdf-embed v-if="pdf.isPdf" :pdf-link="pdf.data" :title="pdf.name || ''" />
+			<tera-pdf-embed v-if="pdf.isPdf" ref="pdfRef" :pdf-link="pdf.data" :title="pdf.name || ''" />
 			<tera-text-editor v-else :initial-text="pdf.data" />
 		</TabPanel>
 	</TabView>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
@@ -24,11 +24,16 @@ interface PdfData {
 	name: string;
 }
 
+const emit = defineEmits(['pdf-ref']);
+
 const props = defineProps<{
 	pdfs: PdfData[];
 }>();
 
 const pdfs = ref<PdfData[]>(props.pdfs);
+const pdfRef = ref(null);
+
+onMounted(() => emit('pdf-ref', pdfRef));
 </script>
 
 <style scoped>
