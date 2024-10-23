@@ -37,7 +37,7 @@
 </template>
 
 <script setup lang="ts">
-import { profileDataset } from '@/services/knowledge';
+import { enrichDataset } from '@/services/knowledge';
 import { getRelatedArtifacts, mapAssetTypeToProvenanceType } from '@/services/provenance';
 import type { ClientEvent, DocumentAsset, ProjectAsset, TaskResponse, TerariumAsset } from '@/types/Types';
 import { AssetType, ClientEventType, ProvenanceType, TaskStatus } from '@/types/Types';
@@ -104,7 +104,7 @@ async function sendForEnrichment(): Promise<void> {
 			return enrichModelMetadata(props.assetId, selectedResourceId.value, true);
 		}
 
-		return profileDataset(props.assetId, selectedResourceId.value);
+		return enrichDataset(props.assetId, selectedResourceId.value);
 	}
 	return Promise.resolve();
 }
