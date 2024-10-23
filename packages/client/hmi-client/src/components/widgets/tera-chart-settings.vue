@@ -12,11 +12,11 @@
 			@configuration-change="$emit('selection-change', $event.selectedVariable, type)"
 		/>
 		<tera-chart-settings-item
-			v-for="settings of settings.filter((s) => s.type === type)"
-			:key="settings.id"
-			:settings="settings"
-			@open="$emit('open', settings)"
-			@remove="$emit('remove', settings.id)"
+			v-for="s of settings.filter((s) => s.type === type)"
+			:key="s.id"
+			:settings="s"
+			@open="$emit('open', s)"
+			@remove="$emit('remove', s.id)"
 		/>
 	</div>
 </template>
