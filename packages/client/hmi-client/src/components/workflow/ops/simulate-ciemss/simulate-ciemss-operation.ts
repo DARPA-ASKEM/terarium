@@ -14,9 +14,11 @@ export interface SimulateCiemssOperationState extends BaseState {
 	numSamples: number;
 	method: string;
 	forecastId: string; // Completed run's Id
+	baseForecastId: string; // Simulation without intervention
 
 	// In progress
 	inProgressForecastId: string;
+	inProgressBaseForecastId: string;
 
 	errorMessage: { name: string; value: string; traceback: string };
 }
@@ -45,7 +47,9 @@ export const SimulateCiemssOperation: Operation = {
 			numSamples: 100,
 			method: 'dopri5',
 			forecastId: '',
+			baseForecastId: '',
 			inProgressForecastId: '',
+			inProgressBaseForecastId: '',
 			errorMessage: { name: '', value: '', traceback: '' }
 		};
 		return init;

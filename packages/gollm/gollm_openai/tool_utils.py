@@ -209,7 +209,7 @@ def interventions_from_document(research_paper: str, amr: str) -> dict:
 
     print("There are ", len(output_json["interventionPolicies"]), "intervention policies identified from the text.")
 
-    return output_json
+    return unescape_curly_braces(output_json)
 
 
 def model_config_from_document(research_paper: str, amr: str) -> dict:
@@ -255,7 +255,7 @@ def model_config_from_document(research_paper: str, amr: str) -> dict:
 
     print("There are ", len(output_json["conditions"]), "conditions identified from the text.")
 
-    return model_config_adapter(output_json)
+    return unescape_curly_braces(model_config_adapter(output_json))
 
 
 def amr_enrichment_chain(amr: str, research_paper: str) -> dict:
@@ -342,7 +342,7 @@ def model_card_chain(amr: str, research_paper: str = None) -> dict:
     print("Received response from OpenAI API. Formatting response to work with HMI...")
     output_json = json.loads(output.choices[0].message.content)
 
-    return output_json
+    return unescape_curly_braces(output_json)
 
 
 def condense_chain(query: str, chunks: List[str], max_tokens: int = 16385) -> str:
@@ -443,7 +443,7 @@ def model_config_from_dataset(amr: str, dataset: List[str], matrix: str) -> dict
 
     print("There are ", len(output_json["conditions"]), "conditions identified from the datasets.")
 
-    return model_config_adapter(output_json)
+    return unescape_curly_braces(model_config_adapter(output_json))
 
 
 def compare_models(amrs: List[str]) -> dict:
@@ -485,4 +485,4 @@ def compare_models(amrs: List[str]) -> dict:
     print("Received response from OpenAI API. Formatting response to work with HMI...")
     output_json = json.loads(output.choices[0].message.content)
 
-    return output_json
+    return unescape_curly_braces(output_json)
