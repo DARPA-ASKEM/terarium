@@ -370,9 +370,7 @@ public class DocumentController {
 			// upload file to S3
 			final Integer status = documentAssetService.uploadFile(documentId, fileName, fileEntity);
 			final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
-			// if the fileEntity is not a PDF, then we need to extract the text and update
 
-			//			add pdfbox stuff here
 			if (document.isPresent()) {
 				try {
 					// Convert BufferedImage to byte[]
@@ -413,6 +411,8 @@ public class DocumentController {
 					log.error(error, e);
 				}
 			}
+
+			// if the fileEntity is not a PDF, then we need to extract the text and update
 			// the document asset
 			if (!DownloadService.IsPdf(fileEntity.getContent().readAllBytes())) {
 				if (document.isEmpty()) {

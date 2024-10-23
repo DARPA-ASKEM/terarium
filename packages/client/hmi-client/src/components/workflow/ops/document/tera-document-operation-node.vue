@@ -86,7 +86,6 @@ onMounted(async () => {
 		// Fetch the document
 		fetchingDocument.value = true;
 		document.value = await getDocumentAsset(props.node.state.documentId);
-		console.log('document.value', document.value);
 
 		// If the name is different, update the name
 		if (document.value && documentName.value !== document.value.name && !isEmpty(document.value.name)) {
@@ -198,9 +197,11 @@ onUnmounted(async () => {
 	align-items: center;
 	gap: var(--gap-small);
 }
+
 .p-progressbar {
 	flex-grow: 1;
 }
+
 .action {
 	font-size: var(--font-caption);
 	color: var(--text-color-secondary);
@@ -226,16 +227,6 @@ onUnmounted(async () => {
 	}
 	.status-msg.ok {
 		color: var(--primary-color);
-	}
-	.status-msg.error,
-	.status-msg.cancel {
-		color: var(--error-color);
-	}
-	.time-msg {
-		font-size: var(--font-caption);
-		color: var(--text-color-secondary);
-		min-width: 96px;
-		text-align: right;
 	}
 }
 </style>
