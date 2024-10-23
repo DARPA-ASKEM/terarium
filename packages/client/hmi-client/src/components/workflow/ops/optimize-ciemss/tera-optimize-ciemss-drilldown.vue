@@ -25,7 +25,21 @@
 								:disabled="_.isEmpty(node.outputs[0].value)"
 							/>
 							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
-							<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runOptimize" />
+							<div
+								v-tooltip="{
+									value: `${runButtonMessage}`,
+									pt: {
+										arrow: {
+											style: {
+												borderBottomColor: 'var(--p-primary-color)'
+											}
+										},
+										text: '!bg-primary !text-primary-contrast !font-medium'
+									}
+								}"
+							>
+								<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runOptimize" />
+							</div>
 						</span>
 					</div>
 
@@ -405,7 +419,6 @@ import { logger } from '@/utils/logger';
 import { nodeMetadata } from '@/components/workflow/util';
 import { WorkflowNode } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
-
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
@@ -512,14 +525,41 @@ const datasetId = computed(() => {
 
 const displayOptimizationResultMessage = ref(true);
 
-const isRunDisabled = computed(() => {
+// Checks for disabling run button:
+const isCriteriaReady = computed(() => {
 	const activeConstraintGroups = knobs.value.constraintGroups.filter((ele) => ele.isActive);
-	return (
-		activeConstraintGroups.length === 0 ||
-		!activeConstraintGroups.every((ele) => ele.targetVariable) ||
-		knobs.value.interventionPolicyGroups.length === 0 ||
-		activePolicyGroups.value.length <= 0
-	);
+	return activeConstraintGroups.length !== 0 && activeConstraintGroups.every((ele) => ele.targetVariable);
+});
+
+const isInterventionReady = computed(
+	() => knobs.value.interventionPolicyGroups.length !== 0 && activePolicyGroups.value.length >= 0
+);
+
+const isEndTimeValid = computed(() =>
+	activePolicyGroups.value.every((ele) => {
+		if (
+			[OptimizationInterventionObjective.startTime, OptimizationInterventionObjective.paramValueAndStartTime].includes(
+				ele.optimizationType
+			)
+		) {
+			return ele.endTime <= knobs.value.endTime;
+		}
+		return true;
+	})
+);
+
+const isRunDisabled = computed(() => !isCriteriaReady.value || !isInterventionReady.value || !isEndTimeValid.value);
+
+const criteriaReadyMessage = '-All success criteria must be filled in.';
+const interventionReadyMessage = '-Must contain at least one active intervention policy that is filled in.';
+const endTimeMessage = '-Optimize setting end time must be greater than or equal to all intervention end times';
+
+const runButtonMessage = computed(() => {
+	let aString = '';
+	if (!isCriteriaReady.value) aString = `${aString + criteriaReadyMessage}\n`;
+	if (!isInterventionReady.value) aString = `${aString + interventionReadyMessage}\n`;
+	if (!isEndTimeValid.value) aString = `${aString + endTimeMessage}\n`;
+	return aString;
 });
 
 const presetType = computed(() => {
