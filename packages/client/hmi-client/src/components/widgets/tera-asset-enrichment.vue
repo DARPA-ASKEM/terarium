@@ -30,27 +30,21 @@
 		<template #footer>
 			<div class="btn-group">
 				<Button label="Cancel" severity="secondary" outlined @click="closeDialog" />
-				<Button label="Enrich" :disabled="isDialogDisabled" @click="confirm" />
+				<Button label="Enrich" @click="confirm" />
 			</div>
 		</template>
 	</tera-modal>
 </template>
 
 <script setup lang="ts">
-import { extractPDF, extractVariables, profileDataset } from '@/services/knowledge';
-import {
-	createProvenance,
-	getRelatedArtifacts,
-	mapAssetTypeToProvenanceType,
-	RelationshipType
-} from '@/services/provenance';
+import { profileDataset } from '@/services/knowledge';
+import { getRelatedArtifacts, mapAssetTypeToProvenanceType } from '@/services/provenance';
 import type { ClientEvent, DocumentAsset, ProjectAsset, TaskResponse, TerariumAsset } from '@/types/Types';
 import { AssetType, ClientEventType, ProvenanceType, TaskStatus } from '@/types/Types';
 import { isDocumentAsset } from '@/utils/asset';
 import Button from 'primevue/button';
 import RadioButton from 'primevue/radiobutton';
 import { computed, ref, watch } from 'vue';
-import { logger } from '@/utils/logger';
 import { enrichModelMetadata } from '@/services/goLLM';
 import { useProjects } from '@/composables/project';
 import TeraModal from '@/components/widgets/tera-modal.vue';
@@ -75,23 +69,11 @@ useClientEvent(ClientEventType.TaskGollmModelCard, (event: ClientEvent<TaskRespo
 	isLoading.value = ![TaskStatus.Success, TaskStatus.Failed, TaskStatus.Cancelled].includes(status);
 });
 
-enum DialogType {
-	ENRICH,
-	EXTRACT
-}
-
-const dialogType = ref<DialogType>(DialogType.ENRICH);
 const isLoading = ref(false);
 const isModalVisible = ref(false);
 
 const selectedResourceId = ref<string>('');
 const relatedDocuments = ref<Array<{ name: string; id: string }>>([]);
-
-// Disable the dialog action button if no resources are selected and the dialog type is not enrichment
-const isDialogDisabled = computed(() => {
-	if (dialogType.value === DialogType.ENRICH) return false;
-	return !selectedResourceId.value;
-});
 
 const documents = computed<{ name: string; id: string }[]>(() =>
 	useProjects()
@@ -106,21 +88,17 @@ function closeDialog() {
 	isModalVisible.value = false;
 }
 
-const confirm = async () => {
+function confirm() {
 	isLoading.value = true;
 	closeDialog();
 
-	// Await for enrichment/extraction so once we call finished-job the refetched dataset will have the new data
-	if (dialogType.value === DialogType.ENRICH) {
-		await sendForEnrichment();
-	} else if (dialogType.value === DialogType.EXTRACT) {
-		await sendForExtractions();
-	}
-
-	isLoading.value = false;
-	emit('finished-job');
-	getRelatedDocuments();
-};
+	// Wait for enrichment/extraction so once we call finished-job the newly fetched dataset will have the new data
+	sendForEnrichment().then(() => {
+		isLoading.value = false;
+		emit('finished-job');
+		getRelatedDocuments();
+	});
+}
 
 const sendForEnrichment = async () => {
 	// Build enrichment job ids list (profile asset, align model, etc...)
@@ -131,32 +109,11 @@ const sendForEnrichment = async () => {
 	}
 };
 
-const sendForExtractions = async () => {
-	// Dataset extraction
-	if (props.assetType === AssetType.Dataset) {
-		await extractPDF(selectedResourceId.value);
-		await createProvenance({
-			relation_type: RelationshipType.EXTRACTED_FROM,
-			left: props.assetId!,
-			left_type: mapAssetTypeToProvenanceType(props.assetType),
-			right: selectedResourceId.value,
-			right_type: ProvenanceType.Document
-		});
-
-		logger.info('Provenance created after extraction', { showToast: false });
-	}
-
-	// Model extraction
-	if (props.assetType === AssetType.Model && selectedResourceId) {
-		await extractVariables(selectedResourceId.value, [props.assetId]);
-	}
-};
-
-async function getRelatedDocuments() {
+function getRelatedDocuments() {
 	const provenanceType = mapAssetTypeToProvenanceType(props.assetType);
 	if (!provenanceType) return;
 
-	await getRelatedArtifacts(props.assetId, provenanceType, [ProvenanceType.Document]).then((nodes) => {
+	getRelatedArtifacts(props.assetId, provenanceType, [ProvenanceType.Document]).then((nodes) => {
 		const provenanceNodes = nodes ?? [];
 		relatedDocuments.value =
 			(provenanceNodes.filter((node) => isDocumentAsset(node)) as DocumentAsset[]).map(({ id, name }) => ({
