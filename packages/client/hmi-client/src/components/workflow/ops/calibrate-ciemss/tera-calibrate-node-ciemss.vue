@@ -46,7 +46,7 @@ import {
 } from '@/services/models/simulation-service';
 import { getModelConfigurationById, createModelConfiguration } from '@/services/model-configurations';
 import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
-import { setupDatasetInput } from '@/services/calibrate-workflow';
+import { setupCsvAsset } from '@/services/calibrate-workflow';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
@@ -61,14 +61,15 @@ import {
 	InferredParameterSemantic,
 	ChartAnnotation,
 	ClientEventType,
-	InterventionPolicy
+	InterventionPolicy,
+	Dataset
 } from '@/types/Types';
 import { ChartSettingType } from '@/types/common';
 import { createLLMSummary } from '@/services/summary-service';
 import { applyForecastChartAnnotations, createForecastChart, createInterventionChartMarkers } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import * as stats from '@/utils/stats';
-import { createDatasetFromSimulationResult } from '@/services/dataset';
+import { createDatasetFromSimulationResult, getDataset } from '@/services/dataset';
 import { useProjects } from '@/composables/project';
 import { fetchAnnotations } from '@/services/chart-settings';
 import { useClientEvent } from '@/composables/useClientEvent';
@@ -530,8 +531,13 @@ watch(
 
 		// Dataset used to calibrate
 		const datasetId = props.node.inputs[1]?.value?.[0];
-		const { csv } = await setupDatasetInput(datasetId);
-		csvAsset.value = csv;
+		// Get dataset:
+		const dataset: Dataset | null = await getDataset(datasetId);
+		if (dataset) {
+			setupCsvAsset(dataset).then((csv) => {
+				csvAsset.value = csv;
+			});
+		}
 	},
 	{ immediate: true }
 );
