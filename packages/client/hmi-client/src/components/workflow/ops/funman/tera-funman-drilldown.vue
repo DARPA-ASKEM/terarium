@@ -75,7 +75,7 @@
 									class="mt-2"
 									text
 									icon="pi pi-plus"
-									label="Add new check"
+									label="Add constraint"
 									size="small"
 									@click="addConstraintForm"
 								/>
@@ -88,13 +88,14 @@
 								<label>Select parameters of interest</label>
 								<MultiSelect
 									ref="columnSelect"
-									:modelValue="variablesOfInterest"
-									:options="requestParameters.map((d: any) => d.name)"
-									:show-toggle-all="false"
 									class="w-full mt-1 mb-2"
-									@update:modelValue="onToggleVariableOfInterest"
-									:maxSelectedLabels="1"
+									:model-value="variablesOfInterest"
+									:options="requestParameters"
+									option-label="name"
+									option-disabled="disabled"
+									:show-toggle-all="false"
 									placeholder="Select variables"
+									@update:model-value="onToggleVariableOfInterest"
 								/>
 								<div class="mb-2 timespan">
 									<div class="timespan-input">
@@ -106,7 +107,7 @@
 										<tera-input-number class="mt-1" v-model="knobs.currentTimespan.end" />
 									</div>
 									<div class="timespan-input">
-										<label>Number of timepoints</label>
+										<label>Number of timesteps</label>
 										<tera-input-number class="mt-1" v-model="knobs.numberOfSteps" />
 									</div>
 								</div>
@@ -140,11 +141,13 @@
 				:options="outputs"
 				is-selectable
 			>
-				<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%" />
+				<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%">
+					<div>{{ props.node.state.currentProgress }}%</div>
+				</tera-progress-spinner>
 				<template v-else>
 					<tera-funman-output
-						v-if="activeOutput"
-						:fun-model-id="activeOutput.value?.[0]"
+						v-if="!isEmpty(node.state.runId)"
+						:run-id="node.state.runId"
 						:trajectoryState="node.state.trajectoryState"
 						@update:trajectoryState="updateTrajectorystate"
 					/>
@@ -156,7 +159,7 @@
 </template>
 
 <script setup lang="ts">
-import _, { floor } from 'lodash';
+import _, { floor, isEmpty } from 'lodash';
 import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
@@ -197,7 +200,7 @@ const props = defineProps<{
 	node: WorkflowNode<FunmanOperationState>;
 }>();
 
-const emit = defineEmits(['append-output', 'select-output', 'update-state', 'close']);
+const emit = defineEmits(['select-output', 'update-state', 'close']);
 
 interface BasicKnobs {
 	tolerance: number;
@@ -249,17 +252,13 @@ const outputs = computed(() => {
 
 const activeOutput = ref<WorkflowOutput<FunmanOperationState> | null>(null);
 
-const variablesOfInterest = ref<string[]>([]);
-const onToggleVariableOfInterest = (vals: string[]) => {
-	variablesOfInterest.value = vals;
+const variablesOfInterest = ref();
+const onToggleVariableOfInterest = (event: any[]) => {
+	variablesOfInterest.value = event;
+	const namesOfInterest = event.map((d) => d.name);
 	requestParameters.value.forEach((d) => {
-		if (variablesOfInterest.value.includes(d.name)) {
-			d.label = 'all';
-		} else {
-			d.label = 'any';
-		}
+		d.label = namesOfInterest.includes(d.name) ? 'all' : 'any';
 	});
-
 	const state = _.cloneDeep(props.node.state);
 	state.requestParameters = _.cloneDeep(requestParameters.value);
 	emit('update-state', state);
@@ -331,7 +330,7 @@ const runMakeQuery = async () => {
 		model: configuredModel.value,
 		request: {
 			constraints,
-			parameters: requestParameters.value,
+			parameters: requestParameters.value.map(({ disabled, ...rest }) => rest), // Remove the disabled property from the request (it's only used for UI)
 			structure_parameters: [
 				{
 					name: 'schedules',
@@ -460,7 +459,7 @@ const setModelOptions = async () => {
 
 	if (configuredModel.value.semantics?.ode.parameters) {
 		setRequestParameters(configuredModel.value.semantics?.ode.parameters);
-		variablesOfInterest.value = requestParameters.value.filter((d: any) => d.label === 'all').map((d: any) => d.name);
+		variablesOfInterest.value = requestParameters.value.filter((d: any) => d.label === 'all');
 	} else {
 		toast.error('', 'Provided model has no parameters');
 	}
@@ -478,18 +477,24 @@ const setRequestParameters = (modelParameters: ModelParameter[]) => {
 	});
 
 	requestParameters.value = modelParameters.map((ele) => {
-		let interval = { lb: ele.value, ub: ele.value };
+		const name = ele.id;
+
+		const param = {
+			name,
+			label: (labelMap.get(name) as string) ?? 'any',
+			interval: { lb: ele.value, ub: ele.value },
+			disabled: false
+		};
+
 		if (ele.distribution) {
-			interval = {
+			param.interval = {
 				lb: ele.distribution.parameters.minimum,
 				ub: ele.distribution.parameters.maximum
 			};
+		} else {
+			param.disabled = true; // Disable if constant
 		}
 
-		const param = { name: ele.id, interval, label: 'any' };
-		if (labelMap.has(param.name)) {
-			param.label = labelMap.get(param.name) as string;
-		}
 		return param;
 	});
 };

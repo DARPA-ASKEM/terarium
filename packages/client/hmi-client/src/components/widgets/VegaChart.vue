@@ -13,7 +13,7 @@
 		</div>
 	</Dialog>
 	<div class="vega-chart-container">
-		<div ref="vegaContainer"></div>
+		<div ref="vegaContainer" />
 		<footer v-if="$slots.footer">
 			<slot name="footer" />
 		</footer>
@@ -21,15 +21,39 @@
 </template>
 
 <script setup lang="ts">
-import embed, { Result, VisualizationSpec } from 'vega-embed';
-import { Config as VgConfig } from 'vega';
-import { Config as VlConfig } from 'vega-lite';
+import { format } from 'd3';
+import embed, { Config, Result, VisualizationSpec } from 'vega-embed';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
-
+import { countDigits, fixPrecisionError } from '@/utils/number';
 import { ref, watch, toRaw, isRef, isReactive, isProxy, computed, h, render } from 'vue';
 
-export type Config = VgConfig | VlConfig;
+const NUMBER_FORMAT = '.3~s';
+
+// Define the custom expression functions that can be registered and used in the Vega charts
+const expressionFunctions = {
+	// chartNumberFormatter is a custom number format that will display numbers in a more readable format
+	chartNumberFormatter: (value: number) => {
+		const correctedValue = fixPrecisionError(value);
+		if (value > -1 && value < 1) {
+			return countDigits(correctedValue) > 6 ? correctedValue.toExponential(3) : correctedValue.toString();
+		}
+		return format(NUMBER_FORMAT)(correctedValue);
+	},
+	// Just show full value in tooltip
+	tooltipFormatter: (value) => fixPrecisionError(value)
+};
+
+// This config is default for all charts, but can be overridden by individual chart spec
+const defaultChartConfig: Partial<Config> = {
+	customFormatTypes: true,
+	numberFormatType: 'chartNumberFormatter',
+	numberFormat: 'chartNumberFormatter',
+	tooltipFormat: {
+		numberFormat: 'tooltipFormatter',
+		numberFormatType: 'tooltipFormatter'
+	}
+};
 
 const props = withDefaults(
 	defineProps<{
@@ -138,8 +162,9 @@ async function createVegaVisualization(
 		container,
 		{ ...visualizationSpec },
 		{
-			config: config || {},
-			actions: options.actions === false ? false : undefined
+			config: { ...defaultChartConfig, ...config } as Config,
+			actions: options.actions === false ? false : undefined,
+			expressionFunctions // Register expression functions
 		}
 	);
 	props.intervalSelectionSignalNames.forEach((signalName) => {

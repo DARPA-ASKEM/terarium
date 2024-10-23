@@ -4,7 +4,9 @@
 			<template v-if="!node.inputs[0].value"> Attach a model configuration </template>
 		</tera-operator-placeholder>
 
-		<tera-progress-spinner v-if="inProgressId" :font-size="2" is-centered style="height: 100%" />
+		<tera-progress-spinner v-if="inProgressId" is-centered :font-size="2" style="height: 100%">
+			{{ node.state.currentProgress }}%
+		</tera-progress-spinner>
 
 		<template v-if="node.inputs[0].value">
 			<Button @click="emit('open-drilldown')" label="Review checks" severity="secondary" outlined />
@@ -21,8 +23,10 @@ import { WorkflowNode } from '@/types/workflow';
 import { FunmanOperationState, FunmanOperation } from '@/components/workflow/ops/funman/funman-operation';
 import Button from 'primevue/button';
 import { Poller, PollerState } from '@/api/api';
-import { pollAction } from '@/services/models/simulation-service';
+import { pollAction, getRunResult } from '@/services/models/simulation-service';
 import { nodeOutputLabel } from '@/components/workflow/util';
+import { logger } from '@/utils/logger';
+import { Simulation } from '@/types/Types';
 
 const emit = defineEmits(['open-drilldown', 'append-output', 'update-state']);
 
@@ -34,15 +38,22 @@ const inProgressId = computed(() => props.node.state.inProgressId);
 const poller = new Poller();
 
 const addOutputPorts = async (runId: string) => {
-	const portLabel = props.node.inputs[0].label;
+	// The validated configuration id is set as the output value
+	const rawFunmanResult = await getRunResult(runId, 'validation.json');
+	if (!rawFunmanResult) {
+		logger.error('Failed to fetch funman result');
+		return;
+	}
+	const validatedConfiguration = JSON.parse(rawFunmanResult).modelConfiguration;
 
 	const outState = _.cloneDeep(props.node.state);
 	outState.inProgressId = '';
+	outState.runId = runId;
 
 	emit('append-output', {
-		label: nodeOutputLabel(props.node, `${portLabel} Result`),
+		label: nodeOutputLabel(props.node, `${validatedConfiguration.name} Result`),
 		type: FunmanOperation.outputs[0].type,
-		value: runId,
+		value: validatedConfiguration.id,
 		state: outState
 	});
 };
@@ -51,7 +62,14 @@ const getStatus = async (runId: string) => {
 	poller
 		.setInterval(5000)
 		.setThreshold(100)
-		.setPollAction(async () => pollAction(runId));
+		.setPollAction(async () => pollAction(runId))
+		.setProgressAction((data: Simulation) => {
+			if (data.progress) {
+				const state = _.cloneDeep(props.node.state);
+				state.currentProgress = +(100 * data.progress).toFixed(2);
+				emit('update-state', state);
+			}
+		});
 
 	const pollerResults = await poller.start();
 
@@ -80,10 +98,9 @@ watch(
 
 		const state = _.cloneDeep(props.node.state);
 		state.inProgressId = '';
+		state.currentProgress = 0;
 		emit('update-state', state);
 	},
 	{ immediate: true }
 );
 </script>
-
-<style scoped></style>

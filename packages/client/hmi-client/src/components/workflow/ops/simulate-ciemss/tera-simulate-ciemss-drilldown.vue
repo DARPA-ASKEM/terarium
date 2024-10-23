@@ -1,5 +1,6 @@
 <template>
 	<tera-drilldown
+		v-bind="$attrs"
 		:node="node"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
@@ -18,8 +19,8 @@
 					<div class="toolbar">
 						<p>Click Run to start the simulation.</p>
 						<span class="flex gap-2">
-							<tera-pyciemss-cancel-button :simulation-run-id="cancelRunId" />
-							<Button label="Run" icon="pi pi-play" @click="run" :disabled="showSpinner" />
+							<tera-pyciemss-cancel-button :simulation-run-id="cancelRunIds" />
+							<Button label="Run" icon="pi pi-play" @click="run" :loading="inProgressForecastRun" />
 						</span>
 					</div>
 					<div class="form-section" v-if="isSidebarOpen">
@@ -36,24 +37,21 @@
 
 						<!-- Start & End -->
 						<div class="input-row">
-							<div class="label-and-input">
-								<label for="start-time">Start time</label>
-								<tera-input-number
-									id="start-time"
-									v-model="timespan.start"
-									inputId="integeronly"
-									@update:model-value="updateState"
-								/>
-							</div>
-							<div class="label-and-input">
-								<label for="timespan">End time</label>
-								<tera-input-number
-									id="timespan"
-									v-model="timespan.end"
-									inputId="integeronly"
-									@update:model-value="updateState"
-								/>
-							</div>
+							<tera-timestep-calendar
+								disabled
+								v-if="model && modelConfiguration"
+								label="Start time"
+								:start-date="modelConfiguration.temporalContext"
+								:calendar-settings="getCalendarSettingsFromModel(model)"
+								v-model="timespan.start"
+							/>
+							<tera-timestep-calendar
+								v-if="model && modelConfiguration"
+								label="End time"
+								:start-date="modelConfiguration.temporalContext"
+								:calendar-settings="getCalendarSettingsFromModel(model)"
+								v-model="timespan.end"
+							/>
 						</div>
 
 						<!-- Number of Samples & Method -->
@@ -118,7 +116,7 @@
 
 		<!-- Preview -->
 		<template #preview>
-			<tera-drilldown-section v-if="selectedOutputId" :is-loading="showSpinner">
+			<tera-drilldown-section v-if="selectedOutputId" :is-loading="inProgressForecastRun">
 				<template #header-controls-right>
 					<Button class="mr-3" label="Save for re-use" severity="secondary" outlined @click="showSaveDataset = true" />
 				</template>
@@ -209,7 +207,14 @@ import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
-import type { CsvAsset, InterventionPolicy, SimulationRequest, TimeSpan } from '@/types/Types';
+import type {
+	CsvAsset,
+	InterventionPolicy,
+	Model,
+	ModelConfiguration,
+	SimulationRequest,
+	TimeSpan
+} from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import {
@@ -236,15 +241,18 @@ import { KernelSessionManager } from '@/services/jupyter';
 import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import { createForecastChart, createInterventionChartMarkers } from '@/services/charts';
+import { createForecastChart, createInterventionChartMarkers, ForecastChartOptions } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
-import TeraInterventionSummaryCard from '@/components/workflow/ops/simulate-ciemss/tera-intervention-summary-card.vue';
+import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-intervention-summary-card.vue';
 import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
+import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
+import { getCalendarSettingsFromModel } from '@/utils/date';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import TeraChartControl from '../../tera-chart-control.vue';
+import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 
 const isSidebarOpen = ref(true);
 const props = defineProps<{
@@ -255,6 +263,9 @@ const emit = defineEmits(['update-state', 'select-output', 'close']);
 const modelVarUnits = ref<{ [key: string]: string }>({});
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
+
+const modelConfiguration = ref<ModelConfiguration | null>(null);
+const model = ref<Model | null>(null);
 
 const policyInterventionId = computed(() => props.node.inputs[1].value?.[0]);
 const interventionPolicy = ref<InterventionPolicy | null>(null);
@@ -302,7 +313,9 @@ const viewOptions = ref([
 	{ value: OutputView.Data, icon: 'pi pi-list' }
 ]);
 
-const showSpinner = ref(false);
+const inProgressForecastRun = computed(() =>
+	Boolean(props.node.state.inProgressForecastId || props.node.state.inProgressBaseForecastId)
+);
 const runResults = ref<{ [runId: string]: DataArray }>({});
 const runResultsSummary = ref<{ [runId: string]: DataArray }>({});
 const rawContent = ref<{ [runId: string]: CsvAsset }>({});
@@ -325,7 +338,9 @@ const presetType = computed(() => {
 const selectedOutputId = ref<string>();
 const selectedRunId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
 
-const cancelRunId = computed(() => props.node.state.inProgressForecastId);
+const cancelRunIds = computed(() =>
+	[props.node.state.inProgressForecastId, props.node.state.inProgressBaseForecastId].filter((id) => Boolean(id))
+);
 const outputPanel = ref(null);
 const chartSize = useDrilldownChartSize(outputPanel);
 
@@ -362,6 +377,29 @@ const preparedCharts = computed(() => {
 	});
 
 	return props.node.state.chartConfigs.map((config) => {
+		// If only one variable is selected, show the baseline forecast
+		const showBaseLine = config.length === 1 && Boolean(props.node.state.baseForecastId);
+
+		const options: ForecastChartOptions = {
+			title: '',
+			width: chartSize.value.width,
+			height: chartSize.value.height,
+			legend: true,
+			translationMap: reverseMap,
+			xAxisTitle: modelVarUnits.value._time || 'Time',
+			yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
+		};
+		let statLayerVariables = config.map((d) => `${pyciemssMap[d]}_mean`);
+
+		if (showBaseLine) {
+			statLayerVariables = [`${pyciemssMap[config[0]]}_mean:base`, `${pyciemssMap[config[0]]}_mean`];
+			options.translationMap = {
+				...options.translationMap,
+				[`${pyciemssMap[config[0]]}_mean:base`]: `${config[0]} (baseline)`
+			};
+			options.colorscheme = ['#AAB3C6', '#1B8073'];
+		}
+
 		const chart = createForecastChart(
 			{
 				data: result,
@@ -371,20 +409,11 @@ const preparedCharts = computed(() => {
 			},
 			{
 				data: resultSummary,
-				variables: config.map((d) => `${pyciemssMap[d]}_mean`),
+				variables: statLayerVariables,
 				timeField: 'timepoint_id'
 			},
 			null,
-			// options
-			{
-				title: '',
-				width: chartSize.value.width,
-				height: chartSize.value.height,
-				legend: true,
-				translationMap: reverseMap,
-				xAxisTitle: modelVarUnits.value._time || 'Time',
-				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
-			}
+			options
 		);
 		if (interventionPolicy.value) {
 			_.keys(groupedInterventionOutputs.value).forEach((key) => {
@@ -406,14 +435,19 @@ const updateState = () => {
 };
 
 const run = async () => {
-	const simulationId = await makeForecastRequest();
+	const [baseSimulationId, simulationId] = await Promise.all([
+		// If intervention id is available, request the base forecast run, otherwise resolve with empty string
+		policyInterventionId.value ? makeForecastRequest(false) : Promise.resolve(''),
+		makeForecastRequest()
+	]);
 
 	const state = _.cloneDeep(props.node.state);
+	state.inProgressBaseForecastId = baseSimulationId;
 	state.inProgressForecastId = simulationId;
 	emit('update-state', state);
 };
 
-const makeForecastRequest = async () => {
+const makeForecastRequest = async (applyInterventions = true) => {
 	const modelConfigId = props.node.inputs[0].value?.[0];
 	const payload: SimulationRequest = {
 		modelConfigId,
@@ -434,11 +468,13 @@ const makeForecastRequest = async () => {
 		payload.extra.inferred_parameters = modelConfig.simulationId;
 	}
 
-	if (policyInterventionId.value) {
+	if (applyInterventions && policyInterventionId.value) {
 		payload.policyInterventionId = policyInterventionId.value;
 	}
-
-	const response = await makeForecastJob(payload, nodeMetadata(props.node));
+	const response = await makeForecastJob(payload, {
+		...nodeMetadata(props.node),
+		isBaseForecast: !applyInterventions
+	});
 	return response.id;
 };
 
@@ -446,14 +482,27 @@ const lazyLoadSimulationData = async (outputRunId: string) => {
 	if (runResults.value[outputRunId] && rawContent.value[outputRunId]) return;
 
 	const forecastId = props.node.state.forecastId;
-	if (!forecastId || forecastId === '') return;
+	if (!forecastId || inProgressForecastRun.value) return;
 
-	const result = await getRunResultCSV(forecastId, 'result.csv');
+	let [result, resultSummary] = await Promise.all([
+		getRunResultCSV(forecastId, 'result.csv'),
+		getRunResultCSV(forecastId, 'result_summary.csv')
+	]);
 	pyciemssMap = parsePyCiemssMap(result[0]);
-	runResults.value[outputRunId] = result;
 	rawContent.value[outputRunId] = convertToCsvAsset(result, Object.values(pyciemssMap));
 
-	const resultSummary = await getRunResultCSV(forecastId, 'result_summary.csv');
+	// Forecast results without the interventions
+	const baseForecastId = props.node.state.baseForecastId;
+	if (baseForecastId) {
+		const [baseResult, baseResultSummary] = await Promise.all([
+			getRunResultCSV(baseForecastId, 'result.csv', renameFnGenerator('base')),
+			getRunResultCSV(baseForecastId, 'result_summary.csv', renameFnGenerator('base'))
+		]);
+		const merged = mergeResults(baseResult, result, baseResultSummary, resultSummary);
+		result = merged.result;
+		resultSummary = merged.resultSummary;
+	}
+	runResults.value[outputRunId] = result;
 	runResultsSummary.value[outputRunId] = resultSummary;
 };
 
@@ -529,18 +578,11 @@ watch(
 		if (!input.value) return;
 
 		const id = input.value[0];
-		const model = await getModelByModelConfigurationId(id);
-		if (model) modelVarUnits.value = getUnitsFromModelParts(model);
+		modelConfiguration.value = await getModelConfigurationById(id);
+		model.value = await getModelByModelConfigurationId(id);
+		if (model.value) modelVarUnits.value = getUnitsFromModelParts(model.value);
 	},
 	{ immediate: true }
-);
-
-watch(
-	() => props.node.state.inProgressForecastId,
-	(id) => {
-		if (id === '') showSpinner.value = false;
-		else showSpinner.value = true;
-	}
 );
 
 watch(

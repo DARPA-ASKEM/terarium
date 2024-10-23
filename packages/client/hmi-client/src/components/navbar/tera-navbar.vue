@@ -381,7 +381,7 @@ const userMenuItems = ref([
 		command: () => {
 			router.push(RoutePath.UserAdmin);
 		},
-		visible: auth.user?.roles.some((r) => r.name === 'ADMIN')
+		visible: auth.isAdmin
 	},
 	{
 		label: 'Logout',
@@ -450,9 +450,10 @@ nav {
 	align-items: center;
 	background-color: var(--surface-section);
 	border-bottom: 1px solid var(--surface-border-light);
-	padding: 0.5rem 1rem;
+	padding: var(--gap-2) var(--gap-4);
 	display: flex;
 	gap: var(--gap-large);
+	grid-area: header;
 
 	a,
 	a:hover {
@@ -461,21 +462,21 @@ nav {
 }
 
 .terarium-logo {
-	margin-top: 5px;
+	margin-top: var(--gap-1-5);
 }
 .layout-project-selection {
 	margin-right: auto;
 }
 
 .avatar {
-	color: var(--text-color-subdued);
 	background-color: var(--primary-color-lighter);
+	color: var(--text-color-subdued);
 	cursor: pointer;
 }
 
 .avatar:hover {
-	color: var(--text-color);
 	background-color: var(--primary-color-light);
+	color: var(--text-color);
 }
 
 /* Split button
@@ -597,12 +598,12 @@ nav {
 }
 .status-chip {
 	background-color: var(--surface-highlight);
+	border-radius: var(--border-radius);
 	padding: var(--gap-small);
-	border-radius: 3rem;
 }
 .field-checkbox {
-	font-size: var(--font-small);
+	font-size: var(--font-body-small);
 	color: var(--text-color-primary);
-	margin-bottom: 0rem;
+	margin-bottom: 0;
 }
 </style>

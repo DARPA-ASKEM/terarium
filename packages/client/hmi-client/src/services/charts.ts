@@ -4,16 +4,11 @@ import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
 import type { ChartAnnotation, FunmanInterval } from '@/types/Types';
 import { flattenInterventionData } from './intervention-policy';
-import type { ProcessedFunmanResult, FunmanBox, FunmanConstraintsResponse } from './models/funman-service';
+import type { FunmanBox, FunmanConstraintsResponse } from './models/funman-service';
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
 export const CATEGORICAL_SCHEME = ['#1B8073', '#6495E8', '#8F69B9', '#D67DBF', '#E18547', '#D2C446', '#84594D'];
-
-export const NUMBER_FORMAT = '.3~s';
-export const LABEL_EXPR = `
-datum.value > -1 && datum.value < 1 ? format(datum.value, '.3~f') : format(datum.value, '${NUMBER_FORMAT}')
-`;
 
 interface BaseChartOptions {
 	title?: string;
@@ -370,7 +365,6 @@ export function createForecastChart(
 	};
 	const yaxis = structuredClone(xaxis);
 	yaxis.title = options.yAxisTitle;
-	yaxis.labelExpr = LABEL_EXPR;
 
 	const translationMap = options.translationMap;
 	let labelExpr = '';
@@ -626,7 +620,6 @@ export function createSuccessCriteriaChart(
 	};
 	const yaxis = structuredClone(xaxis);
 	yaxis.title = options.yAxisTitle;
-	yaxis.labelExpr = LABEL_EXPR;
 
 	return {
 		$schema: VEGALITE_SCHEMA,
@@ -733,7 +726,8 @@ export function createSuccessCriteriaChart(
 
 export function createInterventionChartMarkers(
 	data: ReturnType<typeof flattenInterventionData>,
-	hideLabels = false
+	hideLabels = false,
+	labelXOffset = 5
 ): any[] {
 	const markerSpec = {
 		data: { values: data },
@@ -749,7 +743,7 @@ export function createInterventionChartMarkers(
 			type: 'text',
 			align: 'left',
 			angle: 90,
-			dx: 5,
+			dx: labelXOffset,
 			dy: -10
 		},
 		encoding: {
@@ -817,23 +811,31 @@ enum FunmanChartLegend {
 	ModelChecks = 'Model checks'
 }
 
+export function getBoundType(label: string): string {
+	switch (label) {
+		case 'true':
+			return FunmanChartLegend.Satisfactory;
+		case 'false':
+			return FunmanChartLegend.Unsatisfactory;
+		default:
+			return FunmanChartLegend.Ambiguous;
+	}
+}
+
 export function createFunmanStateChart(
-	data: ProcessedFunmanResult,
+	trajectories: any[],
 	constraints: FunmanConstraintsResponse[],
-	stateId: string
+	stateId: string,
+	focusOnModelChecks: boolean,
+	selectedBoxId: number = -1
 ) {
-	if (isEmpty(data.trajs)) return null;
+	if (isEmpty(trajectories)) return null;
 
 	const globalFont = 'Figtree';
 
-	const boxLines = data.trajs.map((traj) => {
-		const legendItem = traj.label === 'true' ? FunmanChartLegend.Satisfactory : FunmanChartLegend.Unsatisfactory;
-		return { timepoints: traj.timestep, value: traj[stateId], legendItem };
-	});
-
 	// Find min/max values to set an appropriate viewing range for y-axis
-	const minY = Math.floor(Math.min(...boxLines.map((d) => d.value)));
-	const maxY = Math.ceil(Math.max(...boxLines.map((d) => d.value)));
+	const minY = Math.floor(Math.min(...trajectories.map((d) => d.values[stateId])));
+	const maxY = Math.ceil(Math.max(...trajectories.map((d) => d.values[stateId])));
 
 	// Show checks for the selected state
 	const stateIdConstraints = constraints.filter((c) => c.variables.includes(stateId));
@@ -842,8 +844,8 @@ export function createFunmanStateChart(
 		startX: c.timepoints.lb,
 		endX: c.timepoints.ub,
 		// If the interval bounds are within the min/max values of the line plot use them, otherwise use the min/max values
-		startY: Math.max(c.additive_bounds.lb ?? minY, minY),
-		endY: Math.min(c.additive_bounds.ub ?? maxY, maxY)
+		startY: focusOnModelChecks ? c.additive_bounds.lb : Math.max(c.additive_bounds.lb ?? minY, minY),
+		endY: focusOnModelChecks ? c.additive_bounds.ub : Math.min(c.additive_bounds.ub ?? maxY, maxY)
 	}));
 
 	return {
@@ -851,6 +853,12 @@ export function createFunmanStateChart(
 		config: { font: globalFont },
 		width: 600,
 		height: 300,
+		params: [
+			{
+				name: 'selectedBoxId',
+				value: selectedBoxId
+			}
+		],
 		layer: [
 			{
 				mark: {
@@ -870,10 +878,17 @@ export function createFunmanStateChart(
 					type: 'line',
 					point: true
 				},
-				data: { values: boxLines },
+				data: { values: trajectories },
 				encoding: {
-					x: { field: 'timepoints', type: 'quantitative' },
-					y: { field: 'value', type: 'quantitative' }
+					x: { field: 'timepoint', type: 'quantitative' },
+					y: { field: `values[${stateId}]`, type: 'quantitative' },
+					opacity: {
+						condition: {
+							test: 'selectedBoxId == datum.boxId || selectedBoxId == -1', // -1 is the default value (shows all boxes)
+							value: 1
+						},
+						value: 0.2
+					}
 				}
 			}
 		],
@@ -881,7 +896,7 @@ export function createFunmanStateChart(
 			x: { title: 'Timepoints' },
 			y: {
 				title: `${stateId} (persons)`,
-				scale: { domain: [minY, maxY] }
+				scale: focusOnModelChecks ? {} : { domain: [minY, maxY] }
 			},
 			color: {
 				field: 'legendItem',
@@ -895,35 +910,49 @@ export function createFunmanStateChart(
 					],
 					range: ['#1B8073', '#FFAB00', '#CCC569', '#A4CEFF54'] // Specify colors for each legend item
 				}
-			}
+			},
+			detail: { field: 'boxId' }
 		}
 	};
 }
 
-export function createFunmanParameterChart(
-	parametersOfInterest: { label: 'all'; name: string; interval: FunmanInterval }[],
+export function createFunmanParameterCharts(
+	distributionParameters: { label: string; name: string; interval: FunmanInterval }[],
 	boxes: FunmanBox[]
 ) {
-	const parameterRanges: { parameterId: string; boundType: string; lb?: number; ub?: number }[] = [];
+	const parameterRanges: {
+		boxId: number;
+		parameterId: string;
+		boundType: string;
+		lb?: number;
+		ub?: number;
+		tick?: number;
+	}[] = [];
+	const distributionParameterIds: string[] = [];
 
 	// Widest range (model configuration ranges)
-	parametersOfInterest.forEach(({ name, interval }) => {
+	distributionParameters.forEach(({ name, interval }) => {
 		parameterRanges.push({
+			boxId: -1,
 			parameterId: name,
 			boundType: 'length',
 			lb: interval.lb,
 			ub: interval.ub
 		});
+		distributionParameterIds.push(name);
 	});
 
 	// Ranges determined by the true/false boxes
-	boxes.forEach(({ label, parameters }) => {
+	boxes.forEach(({ boxId, label, parameters }) => {
 		Object.keys(parameters).forEach((key) => {
+			if (!distributionParameterIds.includes(key)) return;
 			parameterRanges.push({
+				boxId,
 				parameterId: key,
-				boundType: label === 'true' ? FunmanChartLegend.Satisfactory : FunmanChartLegend.Unsatisfactory,
+				boundType: getBoundType(label),
 				lb: parameters[key].lb,
-				ub: parameters[key].ub
+				ub: parameters[key].ub,
+				tick: parameters[key].point
 			});
 		});
 	});
@@ -931,7 +960,10 @@ export function createFunmanParameterChart(
 	const globalFont = 'Figtree';
 	return {
 		$schema: VEGALITE_SCHEMA,
-		config: { font: globalFont },
+		config: {
+			font: globalFont,
+			tick: { thickness: 2 }
+		},
 		width: 600,
 		height: 50, // Height per facet
 		data: {
@@ -964,11 +996,12 @@ export function createFunmanParameterChart(
 			}
 		},
 		spec: {
+			width: 600,
 			layer: [
 				{
 					mark: {
 						type: 'bar', // Use a bar to represent ranges
-						opacity: 0.3 // FIXME: This opacity shouldn't be applied to the legend
+						opacity: 0.4 // FIXME: This opacity shouldn't be applied to the legend
 					},
 					encoding: {
 						x: {
@@ -979,7 +1012,6 @@ export function createFunmanParameterChart(
 								// Doesn't work with regular domain setting
 								domainMin: { expr: 'minX' },
 								domainMax: { expr: 'maxX' }
-								// FIXME: If the domain is something like lb: 0.002, ub: 0.002 (same numbers close to 0), the only number on the number line will be 0
 							},
 							title: null
 						},
@@ -987,13 +1019,96 @@ export function createFunmanParameterChart(
 							field: 'ub'
 						},
 						color: {
-							field: 'boundType',
-							type: 'nominal',
-							legend: { orient: 'top', direction: 'horizontal', title: null },
-							scale: {
-								domain: [FunmanChartLegend.Satisfactory, FunmanChartLegend.Unsatisfactory, FunmanChartLegend.Ambiguous],
-								range: ['#1B8073', '#FFAB00', '#CCC569']
-							}
+							condition: {
+								param: 'tickSelection',
+								field: 'boundType',
+								type: 'nominal',
+								legend: { orient: 'top', direction: 'horizontal', title: null },
+								scale: {
+									domain: [
+										FunmanChartLegend.Satisfactory,
+										FunmanChartLegend.Unsatisfactory,
+										FunmanChartLegend.Ambiguous
+									],
+									range: ['#1B8073', '#FFAB00', '#CCC569']
+								}
+							},
+							value: 'rgba(190,190,190,0.1)'
+						}
+					}
+				},
+				{
+					mark: {
+						type: 'tick',
+						thickness: 4,
+						stroke: 'white',
+						strokeWidth: 1 // Optional: Adjust the border width
+					},
+					params: [
+						{
+							name: 'tickSelection',
+							select: { type: 'point', fields: ['boxId'] },
+							on: [
+								{
+									events: 'click',
+									update: 'datum.boxId'
+								}
+							]
+						}
+					],
+					encoding: {
+						x: {
+							field: 'tick',
+							type: 'quantitative',
+							title: null
+						},
+						color: { field: 'boundType' },
+						size: {
+							condition: { param: 'tickSelection', value: 25, empty: false },
+							value: 15
+						}
+					}
+				},
+				// Selected bound square brackets for lb, ub
+				{
+					mark: {
+						type: 'text',
+						size: 30,
+						dy: 2
+					},
+					encoding: {
+						x: {
+							field: 'lb',
+							type: 'quantitative'
+						},
+						text: { value: '[' },
+						opacity: {
+							condition: {
+								test: 'tickSelection.boxId == datum.boxId',
+								value: 1
+							},
+							value: 0
+						}
+					}
+				},
+				{
+					mark: {
+						type: 'text',
+						size: 30,
+						dy: 2
+					},
+					encoding: {
+						x: {
+							field: 'ub',
+							type: 'quantitative'
+						},
+						text: { value: ']' },
+						opacity: {
+							condition: {
+								test: 'tickSelection.boxId == datum.boxId',
+								value: 1
+							},
+							value: 0
 						}
 					}
 				}

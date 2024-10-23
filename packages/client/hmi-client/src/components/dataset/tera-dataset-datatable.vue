@@ -3,7 +3,8 @@
 		<!-- Toggle histograms & column summary charts -->
 		<div class="datatable-toolbar">
 			<span class="datatable-toolbar-item">
-				{{ rawContent.headers.length || 'No' }} columns | {{ rawContent.csv.length - 1 || 'No' }} rows
+				{{ rawContent.headers.length || 'No' }} columns | {{ rawContent.rowCount || 'No' }} rows
+				{{ rawContent.rowCount != rawContent.csv.length ? '(' + rawContent.csv.length + ' showing)' : '' }}
 			</span>
 			<span class="datatable-toolbar-item" style="margin-left: auto">
 				Show column summaries<InputSwitch v-model="showSummaries" />
@@ -36,7 +37,7 @@
 		<!-- Datable -->
 		<DataTable
 			:class="previewMode ? 'p-datatable-xsm' : 'p-datatable-sm'"
-			:value="rawContent.csv.slice(1, rawContent.csv.length)"
+			:value="rawContent.csv"
 			:rows="rows"
 			paginator
 			:paginatorPosition="paginatorPosition ? paginatorPosition : `bottom`"

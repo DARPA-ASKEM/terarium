@@ -35,13 +35,14 @@ def run_validate(model: PetrinetModel, request, taskrunner):
         request=request,
         parameter_space=ParameterSpace(),
     )
+    current_results.start()
 
     # Update callback
     def update_current_results(scenario: AnalysisScenario, results: ParameterSpace) -> FunmanProgress:
         progress = current_results.update_parameter_space(scenario, results)
 
         # write_progress_dict_with_timeout(self, progress: dict, timeout_seconds: int):
-        print("update hook", progress)
+        print(f"update hook: progress={progress.progress} coverage={progress.coverage_of_search_space}")
         if taskrunner is not None:
             progress_dict = { "progress": progress.progress, "coverage_of_search_space": progress.coverage_of_search_space }
             taskrunner.write_progress_dict_with_timeout(progress_dict, 5)

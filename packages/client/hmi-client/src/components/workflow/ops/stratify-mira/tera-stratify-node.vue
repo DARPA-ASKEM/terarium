@@ -12,7 +12,7 @@
 import { ref, watch } from 'vue';
 import { WorkflowNode } from '@/types/workflow';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
 import Button from 'primevue/button';
 import { getModel } from '@/services/model';
 import { Model } from '@/types/Types';

@@ -15,6 +15,7 @@ import { computed, ref } from 'vue';
 import { exportProjectAsFile } from '@/services/project';
 import { AcceptedExtensions } from '@/types/common';
 import { MenuItem } from 'primevue/menuitem';
+import useAuthStore from '@/stores/auth';
 
 const props = defineProps<{ project: Project | null }>();
 
@@ -26,8 +27,8 @@ const { isShareDialogVisible, isRemoveDialogVisible, isProjectConfigDialogVisibl
 const isCopying = ref(false);
 
 const menu = ref();
-const renameMenuItem = {
-	label: 'Edit project details',
+const editDetailsMenuItem = {
+	label: 'Edit details',
 	icon: 'pi pi-pencil',
 	command: () => {
 		isProjectConfigDialogVisible.value = true;
@@ -41,14 +42,14 @@ const shareMenuItem = {
 	}
 };
 const removeMenuItem = {
-	label: 'Remove',
+	label: 'Delete',
 	icon: 'pi pi-trash',
 	command: () => {
 		isRemoveDialogVisible.value = true;
 	}
 };
 const copyMenuItem = {
-	label: 'Copy this project',
+	label: 'Copy',
 	icon: 'pi pi-clone',
 	command: async () => {
 		if (props.project) {
@@ -80,19 +81,20 @@ const downloadMenuItem = {
 	}
 };
 
-const separatorMenuItem = { separator: true };
 const projectMenuItems = computed(() => {
-	const items: MenuItem[] = [];
-	if (props.project?.publicProject || props.project?.userPermission === 'creator') {
-		items.push(copyMenuItem);
-		items.push(downloadMenuItem);
+	// Basic access to public and reader project
+	const items: MenuItem[] = [copyMenuItem, downloadMenuItem];
+
+	// Creator/Editor of the project
+	if (['creator', 'writer'].includes(props.project?.userPermission ?? '')) {
+		items.push(editDetailsMenuItem, shareMenuItem);
 	}
-	if (props.project?.userPermission === 'creator') {
-		items.push(renameMenuItem, shareMenuItem, separatorMenuItem, removeMenuItem);
+
+	// Creator of the project, or an admin
+	if (props.project?.userPermission === 'creator' || useAuthStore().isAdmin) {
+		items.push(removeMenuItem);
 	}
-	if (props.project?.userPermission === 'writer') {
-		items.push(renameMenuItem);
-	}
+
 	return items;
 });
 

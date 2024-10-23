@@ -15,8 +15,15 @@
 			>
 				<template #content>
 					<div class="toolbar">
-						<p>Click Run to begin calibrating.</p>
+						<p>Set your mapping, calibration and visualization settings then click run.</p>
 						<span class="flex gap-2">
+							<Button
+								label="Reset"
+								outlined
+								@click="resetState"
+								severity="secondary"
+								:disabled="_.isEmpty(node.outputs[0].value)"
+							/>
 							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 							<Button label="Run" icon="pi pi-play" @click="runCalibrate" :disabled="disableRunButton" />
 						</span>
@@ -26,12 +33,12 @@
 					<div class="form-section">
 						<h5 class="mb-1">Mapping</h5>
 						<p class="mb-2">
-							Select a subset of output variables of the model and individually assosiate them to columns in the
+							Select a subset of output variables of the model and individually associate them to columns in the
 							dataset.
 						</p>
 
 						<!-- Mapping table: Time variables -->
-						<div class="input-row">
+						<div class="input-row mapping-input">
 							<div class="label-and-input">
 								<label class="column-header">Model: Timeline variable</label>
 								<tera-input-text disabled model-value="timestamp" />
@@ -101,11 +108,26 @@
 
 					<!-- Mapping section -->
 					<section class="form-section">
-						<h5 class="mb-1">
-							Calibration settings
-							<i v-tooltip="calibrationSettingsToolTip" class="pi pi-info-circle info-circle" />
-						</h5>
-						<p class="mb-2">Select one of the presets or customize the settings below.</p>
+						<h5 class="mb-1">Calibration settings</h5>
+						<div class="input-row">
+							<tera-timestep-calendar
+								disabled
+								v-if="model && modelConfig"
+								label="Start time"
+								:start-date="modelConfig.temporalContext"
+								:calendar-settings="getCalendarSettingsFromModel(model)"
+								:model-value="0"
+							/>
+							<tera-timestep-calendar
+								v-if="model && modelConfig"
+								label="End time"
+								:start-date="modelConfig.temporalContext"
+								:calendar-settings="getCalendarSettingsFromModel(model)"
+								v-model="knobs.endTime"
+							/>
+						</div>
+						<div class="spacer m-2" />
+						<p class="mb-1">Preset (optional)</p>
 						<div class="label-and-input">
 							<Dropdown
 								v-model="presetType"
@@ -114,28 +136,22 @@
 								@update:model-value="setPresetValues"
 							/>
 						</div>
+						<label class="mb-1 p-text-secondary text-sm">
+							<i class="pi pi-info-circle" />
+							This impacts solver method, iterations and learning rate.
+						</label>
 						<div class="mt-1 additional-settings">
-							<p>
-								Number of Samples
-								<i v-tooltip="numberOfSamplesTooltip" class="pi pi-info-circle info-circle" />
-							</p>
-							<div class="input-row">
-								<div class="label-and-input">
-									<tera-input-number
-										inputId="integeronly"
-										v-model="knobs.numSamples"
-										@update:model-value="updateState"
-									/>
-								</div>
+							<div class="label-and-input">
+								<label>Number of Samples</label>
+								<tera-input-number inputId="integeronly" v-model="knobs.numSamples" @update:model-value="updateState" />
 							</div>
 							<div class="spacer m-3" />
-							<p class="font-semibold">
-								ODE solver options
-								<i v-tooltip="odeSolverOptionsTooltip" class="pi pi-info-circle info-circle" />
-							</p>
+
+							<h6 class="mb-2">ODE solver options</h6>
+
 							<div class="input-row">
 								<div class="label-and-input">
-									<label for="5">Method</label>
+									<label for="5">Solver method</label>
 									<Dropdown
 										id="5"
 										v-model="knobs.method"
@@ -144,15 +160,12 @@
 									/>
 								</div>
 								<div class="label-and-input">
-									<label for="num-steps">Step size</label>
+									<label for="num-steps">Solver step size</label>
 									<tera-input-number inputId="integeronly" v-model="knobs.stepSize" />
 								</div>
 							</div>
 							<div class="spacer m-3" />
-							<p class="font-semibold">
-								Inference Options
-								<i v-tooltip="inferenceOptionsTooltip" class="pi pi-info-circle info-circle" />
-							</p>
+							<h6 class="mb-2">Inference Options</h6>
 							<div class="input-row">
 								<div class="label-and-input">
 									<label for="num-iterations">Number of solver iterations</label>
@@ -161,10 +174,6 @@
 										v-model="knobs.numIterations"
 										@update:model-value="updateState"
 									/>
-								</div>
-								<div class="label-and-input">
-									<label for="num-samples">End time for forecast</label>
-									<tera-input-number inputId="integeronly" v-model="knobs.endTime" />
 								</div>
 								<div class="label-and-input">
 									<label for="learning-rate">Learning rate</label>
@@ -229,7 +238,7 @@
 					class="p-3"
 					:summary-id="node.state.summaryId"
 				/>
-				<Accordion :active-index="0" class="px-2">
+				<Accordion :active-index="0" class="px-2" v-if="!isLoading">
 					<AccordionTab header="Loss">
 						<!-- Loss chart -->
 						<div ref="lossChartContainer">
@@ -289,7 +298,16 @@
 									<vega-chart
 										expandable
 										:are-embed-actions-visible="true"
-										:visualization-spec="preparedCharts[setting.selectedVariables[0]]"
+										:visualization-spec="preparedCharts.simulationCharts[setting.selectedVariables[0]]"
+									/>
+								</template>
+							</AccordionTab>
+							<AccordionTab header="Interventions">
+								<template v-for="appliedTo in Object.keys(groupedInterventionOutputs)" :key="appliedTo">
+									<vega-chart
+										expandable
+										:are-embed-actions-visible="true"
+										:visualization-spec="preparedCharts.interventionCharts[appliedTo]"
 									/>
 								</template>
 							</AccordionTab>
@@ -324,6 +342,7 @@
 			<tera-slider-panel
 				v-model:is-open="isOutputSettingsPanelOpen"
 				direction="right"
+				class="input-config"
 				header="Output Settings"
 				content-width="360px"
 			>
@@ -427,6 +446,7 @@ import _ from 'lodash';
 import * as vega from 'vega';
 import { csvParse, autoType, mean, variance } from 'd3';
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
+import { useConfirm } from 'primevue/useconfirm';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
@@ -434,7 +454,7 @@ import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
-import { CalibrateMap, setupDatasetInput, setupModelInput } from '@/services/calibrate-workflow';
+import { CalibrateMap, setupDatasetInput, setupCsvAsset, setupModelInput } from '@/services/calibrate-workflow';
 import {
 	deleteAnnotation,
 	fetchAnnotations,
@@ -463,7 +483,9 @@ import {
 	ChartAnnotation,
 	InterventionPolicy,
 	ModelParameter,
-	AssetType
+	AssetType,
+	Dataset,
+	Model
 } from '@/types/Types';
 import { CiemssPresetTypes, DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
 import { getTimespan, nodeMetadata } from '@/components/workflow/util';
@@ -498,8 +520,11 @@ import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-m
 import { useClientEvent } from '@/composables/useClientEvent';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
-import TeraInterventionSummaryCard from '@/components/workflow/ops/simulate-ciemss/tera-intervention-summary-card.vue';
+import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-intervention-summary-card.vue';
 import { getParameters } from '@/model-representation/service';
+import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
+import { getCalendarSettingsFromModel } from '@/utils/date';
+import { getDataset } from '@/services/dataset';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults, getErrorData } from './calibrate-utils';
 
@@ -510,6 +535,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['close', 'select-output', 'update-state']);
 const toast = useToastService();
+const confirm = useConfirm();
 
 interface BasicKnobs {
 	numIterations: number;
@@ -562,11 +588,6 @@ const qualityPreset = Object.freeze({
 	learningRate: 0.03
 });
 
-const calibrationSettingsToolTip: string = 'TODO';
-const numberOfSamplesTooltip: string = 'TODO';
-const inferenceOptionsTooltip: string = 'TODO';
-const odeSolverOptionsTooltip: string = 'TODO';
-
 // Model variables checked in the model configuration will be options in the mapping dropdown
 const modelStateOptions = ref<any[] | undefined>();
 
@@ -585,6 +606,7 @@ const groundTruthData = computed<DataArray>(() => {
 });
 
 const modelConfig = ref<ModelConfiguration>();
+const model = ref<Model | null>(null);
 
 const modelVarUnits = ref<{ [key: string]: string }>({});
 const modelPartTypesMap = ref<{ [key: string]: string }>({});
@@ -651,6 +673,22 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 		knobs.value.numIterations = speedPreset.numIterations;
 		knobs.value.learningRate = speedPreset.learningRate;
 	}
+};
+
+// reset drilldown state
+const resetState = () => {
+	confirm.require({
+		header: 'Reset to original calibration state',
+		message: 'Are you sure you want to reset the state?',
+		accept: () => {
+			// Restore to the original output port state
+			const outputPort = props.node.outputs.find((output) => output.id === selectedOutputId.value);
+			if (outputPort?.state) {
+				knobs.value = _.cloneDeep(outputPort.state as CalibrationOperationStateCiemss);
+				mapping.value = outputPort.state.mapping as CalibrateMap[];
+			}
+		}
+	});
 };
 
 const disableRunButton = computed(
@@ -743,14 +781,19 @@ const groupedInterventionOutputs = computed(() =>
 );
 
 const preparedCharts = computed(() => {
-	if (!preparedChartInputs.value) return {};
+	const charts: { interventionCharts: any[]; simulationCharts: any[] } = {
+		interventionCharts: [],
+		simulationCharts: []
+	};
+
+	if (!preparedChartInputs.value) return charts;
 	const { result, resultSummary, reverseMap } = preparedChartInputs.value;
 	const state = props.node.state;
 
 	// Need to get the dataset's time field
 	const datasetTimeField = knobs.value.timestampColName;
 
-	const charts = {};
+	// Simulate Charts:
 	selectedVariableSettings.value.forEach((settings) => {
 		const variable = settings.selectedVariables[0];
 		const annotations = chartAnnotations.value.filter((annotation) => annotation.chartId === settings.id);
@@ -759,7 +802,7 @@ const preparedCharts = computed(() => {
 		if (mapObj) {
 			datasetVariables.push(mapObj.datasetVariable);
 		}
-		charts[variable] = applyForecastChartAnnotations(
+		charts.simulationCharts[variable] = applyForecastChartAnnotations(
 			createForecastChart(
 				{
 					data: result,
@@ -792,8 +835,45 @@ const preparedCharts = computed(() => {
 			annotations
 		);
 
-		charts[variable].layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[variable]));
+		charts.simulationCharts[variable].layer.push(
+			...createInterventionChartMarkers(groupedInterventionOutputs.value[variable])
+		);
 	});
+	// Intervention Charts:
+	if (groupedInterventionOutputs.value) {
+		Object.keys(groupedInterventionOutputs.value).forEach((key) => {
+			charts.interventionCharts[key] = createForecastChart(
+				{
+					data: result,
+					variables: [pyciemssMap.value[key]],
+					timeField: 'timepoint_id',
+					groupField: 'sample_id'
+				},
+				null,
+				{
+					data: groundTruthData.value,
+					variables: [key],
+					timeField: datasetTimeField as string,
+					groupField: 'sample_id'
+				},
+				{
+					title: key,
+					width: chartSize.value.width,
+					height: chartSize.value.height,
+					legend: true,
+					translationMap: reverseMap,
+					xAxisTitle: modelVarUnits.value._time || 'Time',
+					yAxisTitle: modelVarUnits.value[key] || '',
+					colorscheme: ['#AAB3C6', '#1B8073']
+				}
+			);
+
+			// add intervention annotations (rules and text)
+			charts.interventionCharts[key].layer.push(
+				...createInterventionChartMarkers(groupedInterventionOutputs.value[key])
+			);
+		});
+	}
 	return charts;
 });
 
@@ -1068,20 +1148,34 @@ async function getAutoMapping() {
 
 const initialize = async () => {
 	// Model configuration input
-	const { model, modelConfiguration, modelOptions, modelPartUnits, modelPartTypes } = await setupModelInput(
-		modelConfigId.value
-	);
+	const {
+		model: m,
+		modelConfiguration,
+		modelOptions,
+		modelPartUnits,
+		modelPartTypes
+	} = await setupModelInput(modelConfigId.value);
 	modelConfig.value = modelConfiguration;
+	model.value = m ?? null;
 	modelStateOptions.value = modelOptions;
-	modelParameters.value = model ? getParameters(model) : [];
+	modelParameters.value = model.value ? getParameters(model.value) : [];
 	modelVarUnits.value = modelPartUnits ?? {};
 	modelPartTypesMap.value = modelPartTypes ?? {};
 
 	// dataset input
-	const { filename, csv, datasetOptions } = await setupDatasetInput(datasetId.value);
-	currentDatasetFileName.value = filename;
-	csvAsset.value = csv;
-	datasetColumns.value = datasetOptions;
+	if (datasetId.value) {
+		// Get dataset
+		const dataset: Dataset | null = await getDataset(datasetId.value);
+		if (dataset) {
+			const { filename, datasetOptions } = await setupDatasetInput(dataset);
+			currentDatasetFileName.value = filename;
+			datasetColumns.value = datasetOptions;
+
+			setupCsvAsset(dataset).then((csv) => {
+				csvAsset.value = csv;
+			});
+		}
+	}
 
 	getConfiguredModelConfig();
 
@@ -1172,7 +1266,12 @@ watch(
 			if (!runResult.value.length) return;
 			pyciemssMap.value = parsePyCiemssMap(runResult.value[0]);
 
-			errorData.value = getErrorData(groundTruthData.value, runResult.value, mapping.value);
+			errorData.value = getErrorData(
+				groundTruthData.value,
+				runResult.value,
+				mapping.value,
+				knobs.value.timestampColName
+			);
 		}
 	},
 	{ immediate: true }
@@ -1215,7 +1314,7 @@ watch(
 /* Mapping table */
 .mapping-table:deep(td) {
 	border: none !important;
-	padding: 0 var(--gap-1) var(--gap-2) 0 !important;
+	padding: 0 var(--gap-2) var(--gap-2) 0 !important;
 	background: var(--surface-100);
 }
 
@@ -1269,7 +1368,11 @@ img {
 .label-and-input {
 	display: flex;
 	flex-direction: column;
-	gap: var(--gap-2);
+	gap: var(--gap-1);
+
+	:deep(input) {
+		text-align: left;
+	}
 }
 .info-circle {
 	color: var(--text-color-secondary);
@@ -1282,12 +1385,17 @@ img {
 	display: flex;
 	flex-direction: row;
 	flex-wrap: wrap;
-	gap: var(--gap-3) var(--gap-2);
+	gap: var(--gap-2);
 	width: 100%;
 
 	& > * {
 		flex: 1;
 	}
+}
+
+/** Make inputs align with mapping table */
+.mapping-input {
+	width: calc(100% - 40px);
 }
 
 .loss-chart {
@@ -1343,6 +1451,11 @@ img {
 
 .additional-settings {
 	background: var(--surface-200);
-	padding: var(--gap-2);
+	padding: var(--gap-3);
+	border-radius: var(--border-radius-medium);
+}
+
+input {
+	text-align: left;
 }
 </style>
