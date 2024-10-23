@@ -37,42 +37,40 @@
 				<Button label="Save" :disabled="isSaved" @click="updateDatasetContent" />
 			</div>
 		</template>
-		<section>
-			<Accordion multiple :active-index="currentActiveIndexes">
-				<AccordionTab header="Description">
-					<section class="description">
-						<label class="p-text-secondary">Dataset ID</label>
-						<p>{{ dataset?.id }}</p>
-						<label class="p-text-secondary">Files names</label>
-						<p>{{ dataset?.fileNames?.toString() }}</p>
-						<label class="p-text-secondary">Description</label>
-						<tera-show-more-text :text="description" :lines="5" />
-						<template v-if="datasetType">
-							<label class="p-text-secondary">Dataset type</label>
-							<p>{{ datasetType }}</p>
-						</template>
-						<template v-if="author">
-							<label class="p-text-secondary">Author</label>
-							<p>{{ author }}</p>
-						</template>
-					</section>
-				</AccordionTab>
-				<AccordionTab header="Column information">
-					<tera-column-info
-						v-for="(column, index) in columnInformation"
-						:key="index"
-						class="column-info"
-						:column="column"
-						:feature-config="{ isPreview: false }"
-						@update-column="updateColumn(index, $event.key, $event.value)"
-					/>
-				</AccordionTab>
-				<AccordionTab header="Data" v-if="!isEmpty(dataset?.fileNames)">
-					<tera-progress-spinner v-if="!rawContent" :font-size="2" is-centered />
-					<tera-dataset-datatable v-else :rows="100" :raw-content="rawContent" />
-				</AccordionTab>
-			</Accordion>
-		</section>
+		<Accordion multiple :active-index="currentActiveIndexes">
+			<AccordionTab header="Description">
+				<section class="description">
+					<label class="p-text-secondary">Dataset ID</label>
+					<p>{{ dataset?.id }}</p>
+					<label class="p-text-secondary">Files names</label>
+					<p>{{ dataset?.fileNames?.toString() }}</p>
+					<label class="p-text-secondary">Description</label>
+					<tera-show-more-text :text="description" :lines="5" />
+					<template v-if="datasetType">
+						<label class="p-text-secondary">Dataset type</label>
+						<p>{{ datasetType }}</p>
+					</template>
+					<template v-if="author">
+						<label class="p-text-secondary">Author</label>
+						<p>{{ author }}</p>
+					</template>
+				</section>
+			</AccordionTab>
+			<AccordionTab header="Column information">
+				<tera-column-info
+					v-for="(column, index) in columnInformation"
+					:key="index"
+					class="column-info"
+					:column="column"
+					:feature-config="{ isPreview: false }"
+					@update-column="updateColumn(index, $event.key, $event.value)"
+				/>
+			</AccordionTab>
+			<AccordionTab header="Data" v-if="!isEmpty(dataset?.fileNames)">
+				<tera-progress-spinner v-if="!rawContent" :font-size="2" is-centered />
+				<tera-dataset-datatable v-else :rows="100" :raw-content="rawContent" />
+			</AccordionTab>
+		</Accordion>
 	</tera-asset>
 </template>
 
