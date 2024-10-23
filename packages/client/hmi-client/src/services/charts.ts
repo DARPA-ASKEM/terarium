@@ -801,7 +801,7 @@ export function createInterventionChartMarkers(
 	if (options.hideLabels) return [markerSpec];
 	const labelSpec = {
 		data: { values: data },
-		tranform: [transformFn],
+		transform: [transformFn],
 		mark: {
 			type: 'text',
 			align: 'left',
