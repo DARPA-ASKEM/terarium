@@ -121,8 +121,7 @@ public abstract class TerariumAsset extends TerariumEntity {
 			"temporary",
 			"publicAsset",
 			"fileNames",
-			"userId",
-			"modifiers"
+			"userId"
 		};
 		List<String> deleteFieldsList = new ArrayList<>(Arrays.asList(deleteFields));
 		if (keepFields != null) {
