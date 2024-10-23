@@ -1,7 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.gollm;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,9 +44,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.document.Documen
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelGrounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.StatementValue;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Variable;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.VariableStatement;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.GroundedSemantic;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Observable;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.State;
