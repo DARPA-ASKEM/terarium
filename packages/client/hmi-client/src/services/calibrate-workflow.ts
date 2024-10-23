@@ -1,6 +1,6 @@
 import type { Dataset, CsvAsset } from '@/types/Types';
 import { getModelConfigurationById, getObservables } from '@/services/model-configurations';
-import { downloadRawFile, getDataset } from '@/services/dataset';
+import { downloadRawFile } from '@/services/dataset';
 import { getUnitsFromModelParts, getModelByModelConfigurationId, getTypesFromModelParts } from '@/services/model';
 
 export interface CalibrateMap {
@@ -39,13 +39,7 @@ export const setupModelInput = async (modelConfigId: string | undefined) => {
 
 // Used in the setup of calibration node and drill down
 // takes a datasetId and grabs relevant objects
-export const setupDatasetInput = async (datasetId: string) => {
-	// Get dataset:
-	const dataset: Dataset | null = await getDataset(datasetId);
-	if (dataset === undefined || !dataset) {
-		console.log(`Dataset with id:${datasetId} not found`);
-		return {};
-	}
+export const setupDatasetInput = async (dataset: Dataset) => {
 	const filename = getFileName(dataset);
 
 	const datasetOptions = dataset.columns?.filter((ele) => ele.fileName === filename);
@@ -53,12 +47,7 @@ export const setupDatasetInput = async (datasetId: string) => {
 	return { filename, datasetOptions };
 };
 
-export const setupCsvAsset = async (datasetId: string): Promise<CsvAsset | undefined> => {
-	const dataset: Dataset | null = await getDataset(datasetId);
-	if (dataset === undefined || !dataset) {
-		console.log(`Dataset with id:${datasetId} not found`);
-		return undefined;
-	}
+export const setupCsvAsset = async (dataset: Dataset): Promise<CsvAsset | undefined> => {
 	const filename = getFileName(dataset);
 	// FIXME: We are setting the limit to -1 (i.e. no limit) on the number of rows returned.
 	// This is a temporary fix since the datasets could be very large.
@@ -66,7 +55,7 @@ export const setupCsvAsset = async (datasetId: string): Promise<CsvAsset | undef
 
 	// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
 	if (!(dataset.metadata?.format === 'netcdf') || !dataset.esgfId) {
-		const csv = (await downloadRawFile(datasetId, filename, limit)) as CsvAsset;
+		const csv = (await downloadRawFile(dataset.id as string, filename, limit)) as CsvAsset;
 		csv.headers = csv.headers.map((header) => header.trim());
 		return csv;
 	}

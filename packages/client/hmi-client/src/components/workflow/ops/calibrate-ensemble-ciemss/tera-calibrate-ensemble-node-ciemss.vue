@@ -51,8 +51,9 @@ import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';
 import { WorkflowPortStatus } from '@/types/workflow';
-import type { CsvAsset, EnsembleSimulationCiemssRequest } from '@/types/Types';
+import type { CsvAsset, EnsembleSimulationCiemssRequest, Dataset } from '@/types/Types';
 import type { RunResults } from '@/types/SimulateConfig';
+import { getDataset } from '@/services/dataset';
 import type { CalibrateEnsembleCiemssOperationState } from './calibrate-ensemble-ciemss-operation';
 
 const props = defineProps<{
@@ -173,9 +174,13 @@ watch(
 
 		// Dataset used to calibrate
 		const datasetId = props.node.inputs[0]?.value?.[0];
-		setupCsvAsset(datasetId.value).then((csv) => {
-			csvAsset.value = csv;
-		});
+		// Get dataset:
+		const dataset: Dataset | null = await getDataset(datasetId);
+		if (dataset) {
+			setupCsvAsset(dataset).then((csv) => {
+				csvAsset.value = csv;
+			});
+		}
 	},
 	{ immediate: true }
 );

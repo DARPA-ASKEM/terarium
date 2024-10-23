@@ -199,10 +199,12 @@ import type {
 	CsvAsset,
 	EnsembleModelConfigs,
 	EnsembleCalibrationCiemssRequest,
-	ModelConfiguration
+	ModelConfiguration,
+	Dataset
 } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
+import { getDataset } from '@/services/dataset';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	EnsembleCalibrateExtraCiemss
@@ -350,12 +352,16 @@ onMounted(async () => {
 
 	// dataset input
 	if (datasetId.value) {
-		const { filename, datasetOptions } = await setupDatasetInput(datasetId.value);
-		currentDatasetFileName.value = filename;
-		datasetColumnNames.value = datasetOptions?.map((ele) => ele.name);
-		setupCsvAsset(datasetId.value).then((csv) => {
-			csvAsset.value = csv;
-		});
+		// Get dataset
+		const dataset: Dataset | null = await getDataset(datasetId.value);
+		if (dataset) {
+			const { filename, datasetOptions } = await setupDatasetInput(dataset);
+			currentDatasetFileName.value = filename;
+			datasetColumnNames.value = datasetOptions?.map((ele) => ele.name);
+			setupCsvAsset(dataset).then((csv) => {
+				csvAsset.value = csv;
+			});
+		}
 	}
 
 	listModelLabels.value = allModelConfigurations.value.map((ele) => ele.name ?? '');

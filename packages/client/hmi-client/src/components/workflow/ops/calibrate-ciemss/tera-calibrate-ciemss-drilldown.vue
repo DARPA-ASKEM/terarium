@@ -476,7 +476,8 @@ import {
 	ChartAnnotation,
 	InterventionPolicy,
 	ModelParameter,
-	AssetType
+	AssetType,
+	Dataset
 } from '@/types/Types';
 import { CiemssPresetTypes, DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
 import { getTimespan, nodeMetadata } from '@/components/workflow/util';
@@ -513,6 +514,7 @@ import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-intervention-summary-card.vue';
 import { getParameters } from '@/model-representation/service';
+import { getDataset } from '@/services/dataset';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults, getErrorData } from './calibrate-utils';
 
@@ -1146,13 +1148,17 @@ const initialize = async () => {
 
 	// dataset input
 	if (datasetId.value) {
-		const { filename, datasetOptions } = await setupDatasetInput(datasetId.value);
-		currentDatasetFileName.value = filename;
-		datasetColumns.value = datasetOptions;
+		// Get dataset
+		const dataset: Dataset | null = await getDataset(datasetId.value);
+		if (dataset) {
+			const { filename, datasetOptions } = await setupDatasetInput(dataset);
+			currentDatasetFileName.value = filename;
+			datasetColumns.value = datasetOptions;
 
-		setupCsvAsset(datasetId.value).then((csv) => {
-			csvAsset.value = csv;
-		});
+			setupCsvAsset(dataset).then((csv) => {
+				csvAsset.value = csv;
+			});
+		}
 	}
 
 	getConfiguredModelConfig();
