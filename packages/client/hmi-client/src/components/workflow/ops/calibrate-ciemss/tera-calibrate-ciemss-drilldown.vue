@@ -110,14 +110,21 @@
 					<section class="form-section">
 						<h5 class="mb-1">Calibration settings</h5>
 						<div class="input-row">
-							<div class="label-and-input">
-								<label>Start time</label>
-								<tera-input-text disabled model-value="0" />
-							</div>
-							<div class="label-and-input">
-								<label for="num-samples">End time</label>
-								<tera-input-number inputId="integeronly" v-model="knobs.endTime" />
-							</div>
+							<tera-timestep-calendar
+								disabled
+								v-if="model && modelConfig"
+								label="Start time"
+								:start-date="modelConfig.temporalContext"
+								:calendar-settings="getCalendarSettingsFromModel(model)"
+								:model-value="0"
+							/>
+							<tera-timestep-calendar
+								v-if="model && modelConfig"
+								label="End time"
+								:start-date="modelConfig.temporalContext"
+								:calendar-settings="getCalendarSettingsFromModel(model)"
+								v-model="knobs.endTime"
+							/>
 						</div>
 						<div class="spacer m-2" />
 						<p class="mb-1">Preset (optional)</p>
@@ -291,7 +298,16 @@
 									<vega-chart
 										expandable
 										:are-embed-actions-visible="true"
-										:visualization-spec="preparedCharts[setting.selectedVariables[0]]"
+										:visualization-spec="preparedCharts.simulationCharts[setting.selectedVariables[0]]"
+									/>
+								</template>
+							</AccordionTab>
+							<AccordionTab header="Interventions">
+								<template v-for="appliedTo in Object.keys(groupedInterventionOutputs)" :key="appliedTo">
+									<vega-chart
+										expandable
+										:are-embed-actions-visible="true"
+										:visualization-spec="preparedCharts.interventionCharts[appliedTo]"
 									/>
 								</template>
 							</AccordionTab>
@@ -467,7 +483,8 @@ import {
 	ChartAnnotation,
 	InterventionPolicy,
 	ModelParameter,
-	AssetType
+	AssetType,
+	Model
 } from '@/types/Types';
 import { CiemssPresetTypes, DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
 import { getTimespan, nodeMetadata } from '@/components/workflow/util';
@@ -504,6 +521,8 @@ import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-intervention-summary-card.vue';
 import { getParameters } from '@/model-representation/service';
+import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
+import { getCalendarSettingsFromModel } from '@/utils/date';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults, getErrorData } from './calibrate-utils';
 
@@ -585,6 +604,7 @@ const groundTruthData = computed<DataArray>(() => {
 });
 
 const modelConfig = ref<ModelConfiguration>();
+const model = ref<Model | null>(null);
 
 const modelVarUnits = ref<{ [key: string]: string }>({});
 const modelPartTypesMap = ref<{ [key: string]: string }>({});
@@ -759,14 +779,19 @@ const groupedInterventionOutputs = computed(() =>
 );
 
 const preparedCharts = computed(() => {
-	if (!preparedChartInputs.value) return {};
+	const charts: { interventionCharts: any[]; simulationCharts: any[] } = {
+		interventionCharts: [],
+		simulationCharts: []
+	};
+
+	if (!preparedChartInputs.value) return charts;
 	const { result, resultSummary, reverseMap } = preparedChartInputs.value;
 	const state = props.node.state;
 
 	// Need to get the dataset's time field
 	const datasetTimeField = knobs.value.timestampColName;
 
-	const charts = {};
+	// Simulate Charts:
 	selectedVariableSettings.value.forEach((settings) => {
 		const variable = settings.selectedVariables[0];
 		const annotations = chartAnnotations.value.filter((annotation) => annotation.chartId === settings.id);
@@ -775,7 +800,7 @@ const preparedCharts = computed(() => {
 		if (mapObj) {
 			datasetVariables.push(mapObj.datasetVariable);
 		}
-		charts[variable] = applyForecastChartAnnotations(
+		charts.simulationCharts[variable] = applyForecastChartAnnotations(
 			createForecastChart(
 				{
 					data: result,
@@ -808,8 +833,45 @@ const preparedCharts = computed(() => {
 			annotations
 		);
 
-		charts[variable].layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[variable]));
+		charts.simulationCharts[variable].layer.push(
+			...createInterventionChartMarkers(groupedInterventionOutputs.value[variable])
+		);
 	});
+	// Intervention Charts:
+	if (groupedInterventionOutputs.value) {
+		Object.keys(groupedInterventionOutputs.value).forEach((key) => {
+			charts.interventionCharts[key] = createForecastChart(
+				{
+					data: result,
+					variables: [pyciemssMap.value[key]],
+					timeField: 'timepoint_id',
+					groupField: 'sample_id'
+				},
+				null,
+				{
+					data: groundTruthData.value,
+					variables: [key],
+					timeField: datasetTimeField as string,
+					groupField: 'sample_id'
+				},
+				{
+					title: key,
+					width: chartSize.value.width,
+					height: chartSize.value.height,
+					legend: true,
+					translationMap: reverseMap,
+					xAxisTitle: modelVarUnits.value._time || 'Time',
+					yAxisTitle: modelVarUnits.value[key] || '',
+					colorscheme: ['#AAB3C6', '#1B8073']
+				}
+			);
+
+			// add intervention annotations (rules and text)
+			charts.interventionCharts[key].layer.push(
+				...createInterventionChartMarkers(groupedInterventionOutputs.value[key])
+			);
+		});
+	}
 	return charts;
 });
 
@@ -1084,12 +1146,17 @@ async function getAutoMapping() {
 
 const initialize = async () => {
 	// Model configuration input
-	const { model, modelConfiguration, modelOptions, modelPartUnits, modelPartTypes } = await setupModelInput(
-		modelConfigId.value
-	);
+	const {
+		model: m,
+		modelConfiguration,
+		modelOptions,
+		modelPartUnits,
+		modelPartTypes
+	} = await setupModelInput(modelConfigId.value);
 	modelConfig.value = modelConfiguration;
+	model.value = m ?? null;
 	modelStateOptions.value = modelOptions;
-	modelParameters.value = model ? getParameters(model) : [];
+	modelParameters.value = model.value ? getParameters(model.value) : [];
 	modelVarUnits.value = modelPartUnits ?? {};
 	modelPartTypesMap.value = modelPartTypes ?? {};
 

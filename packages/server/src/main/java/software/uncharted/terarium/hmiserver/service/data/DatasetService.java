@@ -177,7 +177,11 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 		final Reader reader = new InputStreamReader(new ByteArrayInputStream(bytes.get()));
 		return new CSVParser(
 			reader,
-			CSVFormat.Builder.create(CSVFormat.DEFAULT).setHeader().setSkipHeaderRecord(false).build()
+			CSVFormat.Builder.create(CSVFormat.DEFAULT)
+				.setAllowMissingColumnNames(true)
+				.setHeader()
+				.setSkipHeaderRecord(false)
+				.build()
 		);
 	}
 
