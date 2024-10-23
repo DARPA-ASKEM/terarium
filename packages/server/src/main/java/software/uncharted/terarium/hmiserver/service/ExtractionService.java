@@ -191,7 +191,7 @@ public class ExtractionService {
 		boolean completed = false;
 	}
 
-	public ExtractPDFResponse runExtractPDF(
+	private ExtractPDFResponse runExtractPDF(
 		final ExtractPDFResponse extractionResponse,
 		final String documentName,
 		final byte[] documentContents,
@@ -262,23 +262,6 @@ public class ExtractionService {
 				notificationInterface.sendMessage("Table extraction failed, continuing");
 				log.error("Table extraction failed for document: {}", documentName, e);
 				extractionResponse.failures.add(FailureType.TABLE_FAILURE);
-			}
-
-			// if there is text, run variable extraction
-			if (!extractionResponse.textExtraction.documentText.isEmpty()) {
-				// run variable extraction
-				try {
-					notificationInterface.sendMessage("Dispatching variable extraction request...");
-					extractionResponse.variableAttributes = getVariablesFromDocumentText(
-						notificationInterface,
-						extractionResponse.textExtraction.documentText
-					);
-					notificationInterface.sendMessage("Variable extraction completed");
-					extractionResponse.failures.remove(FailureType.VARIABLE_FAILURE);
-				} catch (final Exception e) {
-					notificationInterface.sendMessage("Variable extraction failed, continuing");
-					extractionResponse.failures.add(FailureType.VARIABLE_FAILURE);
-				}
 			}
 
 			// flag as completed
@@ -490,60 +473,6 @@ public class ExtractionService {
 		});
 	}
 
-	private ArrayNode getVariablesFromDocumentText(
-		final NotificationGroupInstance<Properties> notificationInterface,
-		final String documentText
-	) {
-		notificationInterface.sendMessage("Starting variable extraction.");
-		try {
-			notificationInterface.sendMessage("Sending request to be processes by MIT.");
-
-			final IntegratedTextExtractionsBody body = new IntegratedTextExtractionsBody(documentText, new ArrayList<>());
-
-			log.info("Sending variable extraction request to SKEMA using MIT only");
-			final ResponseEntity<JsonNode> resp = skemaUnifiedProxy.integratedTextExtractions(true, false, body);
-
-			notificationInterface.sendMessage("Response received.");
-
-			// Create a collection to hold the variable extractions
-			JsonNode collection = null;
-			if (resp.getStatusCode().is2xxSuccessful()) {
-				for (final JsonNode output : resp.getBody().get("outputs")) {
-					if (!output.has("errors") || output.get("errors").isEmpty()) {
-						collection = output.get("data");
-						break;
-					}
-				}
-			} else {
-				throw new RuntimeException("non successful response.");
-			}
-
-			if (collection == null) {
-				throw new RuntimeException("No variables extractions returned");
-			}
-
-			notificationInterface.sendMessage("Organizing and saving the extractions.");
-			final ArrayNode attributes = objectMapper.createArrayNode();
-			for (final JsonNode attribute : collection.get("attributes")) {
-				attributes.add(attribute);
-			}
-
-			return attributes;
-		} catch (final FeignException e) {
-			final String error = "Transitive service failure";
-			log.error(error, e.contentUTF8(), e);
-			throw new ResponseStatusException(
-				e.status() < 100 ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.valueOf(e.status()),
-				error + ": " + e.getMessage()
-			);
-		} catch (final Exception e) {
-			final String error = "SKEMA unified integrated-text-extractions request failed.";
-			log.error(error, e);
-			notificationInterface.sendError(error + " — " + e.getMessage());
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
-		}
-	}
-
 	private DocumentAsset runVariableExtraction(
 		final NotificationGroupInstance<Properties> notificationInterface,
 		final UUID projectId,
@@ -627,8 +556,7 @@ public class ExtractionService {
 				error + ": " + e.getMessage()
 			);
 		} catch (final Exception e) {
-			final String error =
-				"SKEMA unified integrated-text-extractions request from document: " + documentId + " failed.";
+			final String error = "Variable extraction on document: " + documentId + " failed.";
 			log.error(error, e);
 			notificationInterface.sendError(error + " — " + e.getMessage());
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
