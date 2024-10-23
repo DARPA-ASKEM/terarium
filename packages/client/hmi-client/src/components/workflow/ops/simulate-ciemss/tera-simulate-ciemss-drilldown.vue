@@ -417,6 +417,32 @@ const preparedChartInputs = computed(() => {
 	return { result, resultSummary, reverseMap };
 });
 
+const getForecastChartOptions = (variables: string[], reverseMap: Record<string, string>) => {
+	// If only one variable is selected, show the baseline forecast
+	const showBaseLine = variables.length === 1 && Boolean(props.node.state.baseForecastId);
+
+	const options: ForecastChartOptions = {
+		title: '',
+		width: chartSize.value.width,
+		height: chartSize.value.height,
+		legend: true,
+		translationMap: reverseMap,
+		xAxisTitle: modelVarUnits.value._time || 'Time',
+		yAxisTitle: _.uniq(variables.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
+	};
+	let statLayerVariables = variables.map((d) => `${pyciemssMap[d]}_mean`);
+
+	if (showBaseLine) {
+		statLayerVariables = [`${pyciemssMap[variables[0]]}_mean:base`, `${pyciemssMap[variables[0]]}_mean`];
+		options.translationMap = {
+			...options.translationMap,
+			[`${pyciemssMap[variables[0]]}_mean:base`]: `${variables[0]} (baseline)`
+		};
+		options.colorscheme = ['#AAB3C6', '#1B8073'];
+	}
+	return { statLayerVariables, options };
+};
+
 const preparedCharts = computed(() => {
 	const charts: Record<string, any> = {};
 	if (!preparedChartInputs.value) return charts;
@@ -424,28 +450,7 @@ const preparedCharts = computed(() => {
 
 	chartSettings.value.forEach((setting) => {
 		const selectedVars = setting.selectedVariables;
-		// If only one variable is selected, show the baseline forecast
-		const showBaseLine = selectedVars.length === 1 && Boolean(props.node.state.baseForecastId);
-
-		const options: ForecastChartOptions = {
-			title: '',
-			width: chartSize.value.width,
-			height: chartSize.value.height,
-			legend: true,
-			translationMap: reverseMap,
-			xAxisTitle: modelVarUnits.value._time || 'Time',
-			yAxisTitle: _.uniq(selectedVars.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
-		};
-		let statLayerVariables = selectedVars.map((d) => `${pyciemssMap[d]}_mean`);
-
-		if (showBaseLine) {
-			statLayerVariables = [`${pyciemssMap[selectedVars[0]]}_mean:base`, `${pyciemssMap[selectedVars[0]]}_mean`];
-			options.translationMap = {
-				...options.translationMap,
-				[`${pyciemssMap[selectedVars[0]]}_mean:base`]: `${selectedVars[0]} (baseline)`
-			};
-			options.colorscheme = ['#AAB3C6', '#1B8073'];
-		}
+		const { statLayerVariables, options } = getForecastChartOptions(selectedVars, reverseMap);
 
 		const chart = createForecastChart(
 			{
@@ -486,18 +491,14 @@ useClientEvent([ClientEventType.ChartAnnotationCreate, ClientEventType.ChartAnno
 const generateAnnotation = async (setting: ChartSetting, query: string) => {
 	// Note: Currently llm generated chart annotations are supported for the forecast chart only
 	if (!preparedChartInputs.value) return null;
-	const { reverseMap } = preparedChartInputs.value;
-	const variable = setting.selectedVariables[0];
-	const annotationLayerSpec = await generateForecastChartAnnotation(
-		query,
-		'timepoint_id',
-		[`${pyciemssMap.value[variable]}_mean:pre`, `${pyciemssMap.value[variable]}_mean`],
-		{
-			translationMap: reverseMap,
-			xAxisTitle: modelVarUnits.value._time || 'Time',
-			yAxisTitle: modelVarUnits.value[variable] || ''
-		}
-	);
+
+	const selectedVars = setting.selectedVariables;
+	const { statLayerVariables, options } = getForecastChartOptions(selectedVars, preparedChartInputs.value.reverseMap);
+	const annotationLayerSpec = await generateForecastChartAnnotation(query, 'timepoint_id', statLayerVariables, {
+		translationMap: options.translationMap,
+		xAxisTitle: options.xAxisTitle,
+		yAxisTitle: options.yAxisTitle
+	});
 	const saved = await saveAnnotation(annotationLayerSpec, props.node.id, setting.id);
 	return saved;
 };
