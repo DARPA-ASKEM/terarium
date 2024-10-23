@@ -37,49 +37,21 @@
 
 						<!-- Start & End -->
 						<div class="input-row">
-							<div class="label-and-input">
-								<label for="start-time">Start time</label>
-								<tera-input-number
-									id="start-time"
-									v-model="timespan.start"
-									inputId="integeronly"
-									@update:model-value="updateState"
-									disabled
-								/>
-								<Calendar
-									v-if="modelConfiguration?.temporalContext"
-									disabled
-									:view="calendarSettings?.view"
-									:date-format="calendarSettings?.format"
-									showIcon
-									iconDisplay="input"
-									:model-value="new Date(modelConfiguration.temporalContext)"
-								/>
-							</div>
-							<div class="label-and-input">
-								<label for="timespan">End time</label>
-								<tera-input-number
-									id="timespan"
-									v-model="timespan.end"
-									inputId="integeronly"
-									@update:model-value="updateState"
-								/>
-								<Calendar
-									v-if="modelConfiguration?.temporalContext && endDate"
-									:model-value="endDate"
-									:view="calendarSettings?.view"
-									:date-format="calendarSettings?.format"
-									showIcon
-									iconDisplay="input"
-									@date-select="
-										timespan.end = getTimestepFromDateRange(
-											modelConfiguration.temporalContext,
-											$event,
-											calendarSettings?.view ?? 'date'
-										)
-									"
-								/>
-							</div>
+							<tera-timestep-calendar
+								disabled
+								v-if="model && modelConfiguration"
+								label="Start time"
+								:start-date="modelConfiguration.temporalContext"
+								:calendar-settings="getCalendarSettingsFromModel(model)"
+								v-model="timespan.start"
+							/>
+							<tera-timestep-calendar
+								v-if="model && modelConfiguration"
+								label="End time"
+								:start-date="modelConfiguration.temporalContext"
+								:calendar-settings="getCalendarSettingsFromModel(model)"
+								v-model="timespan.end"
+							/>
 						</div>
 
 						<!-- Number of Samples & Method -->
@@ -276,13 +248,8 @@ import { getModelConfigurationById } from '@/services/model-configurations';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-intervention-summary-card.vue';
 import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
-import Calendar from 'primevue/calendar';
-import {
-	CalendarSettings,
-	getCalendarSettingsFromModel,
-	getEndDateFromTimestep,
-	getTimestepFromDateRange
-} from '@/utils/date';
+import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
+import { getCalendarSettingsFromModel } from '@/utils/date';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import TeraChartControl from '../../tera-chart-control.vue';
 import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
@@ -299,16 +266,6 @@ const codeText = ref('');
 
 const modelConfiguration = ref<ModelConfiguration | null>(null);
 const model = ref<Model | null>(null);
-const endDate = computed(() => {
-	if (!modelConfiguration.value?.temporalContext) return null;
-	return getEndDateFromTimestep(
-		modelConfiguration.value.temporalContext,
-		timespan.value.end,
-		calendarSettings.value?.view ?? 'date'
-	);
-});
-
-const calendarSettings = ref<CalendarSettings | null>(null);
 
 const policyInterventionId = computed(() => props.node.inputs[1].value?.[0]);
 const interventionPolicy = ref<InterventionPolicy | null>(null);
@@ -623,10 +580,7 @@ watch(
 		const id = input.value[0];
 		modelConfiguration.value = await getModelConfigurationById(id);
 		model.value = await getModelByModelConfigurationId(id);
-		if (model.value) {
-			calendarSettings.value = getCalendarSettingsFromModel(model.value);
-			modelVarUnits.value = getUnitsFromModelParts(model.value);
-		}
+		if (model.value) modelVarUnits.value = getUnitsFromModelParts(model.value);
 	},
 	{ immediate: true }
 );
