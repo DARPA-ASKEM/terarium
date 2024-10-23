@@ -27,6 +27,10 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelSemantics;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Initial;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Observable;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.OdeSemantics;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.State;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Transition;
+import software.uncharted.terarium.hmiserver.models.dataservice.regnet.RegNetVertex;
 import software.uncharted.terarium.hmiserver.utils.JsonUtil;
 
 @EqualsAndHashCode(callSuper = true)
@@ -160,6 +164,40 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 
 	@JsonIgnore
 	@TSIgnore
+	public List<State> getStates() {
+		if (isRegnet()) return null;
+		if (!getModel().containsKey("states")) return new ArrayList<>();
+		ObjectMapper objectMapper = new ObjectMapper();
+		return objectMapper.convertValue(getModel().get("states"), new TypeReference<>() {});
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public void setStates(final List<State> states) {
+		if (isRegnet()) return;
+		ObjectMapper objectMapper = new ObjectMapper();
+		getModel().put("states", objectMapper.convertValue(states, JsonNode.class));
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public List<RegNetVertex> getVerticies() {
+		if (!isRegnet()) return null;
+		if (!getModel().containsKey("vertices")) return new ArrayList<>();
+		ObjectMapper objectMapper = new ObjectMapper();
+		return objectMapper.convertValue(getModel().get("vertices"), new TypeReference<>() {});
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public void setVerticies(final List<RegNetVertex> verticies) {
+		if (!isRegnet()) return;
+		ObjectMapper objectMapper = new ObjectMapper();
+		getModel().put("vertices", objectMapper.convertValue(verticies, JsonNode.class));
+	}
+
+	@JsonIgnore
+	@TSIgnore
 	public List<Observable> getObservables() {
 		if (
 			this.getSemantics() == null ||
@@ -169,6 +207,18 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 			return new ArrayList<Observable>();
 		}
 		return this.getSemantics().getOde().getObservables();
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public void setObservables(final List<Observable> observables) {
+		if (this.getSemantics() == null) {
+			this.setSemantics(new ModelSemantics());
+		}
+		if (this.getSemantics().getOde() == null) {
+			this.getSemantics().setOde(new OdeSemantics());
+		}
+		this.getSemantics().getOde().setObservables(observables);
 	}
 
 	@JsonIgnore
@@ -183,9 +233,40 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 			this.getSemantics().getOde() == null ||
 			this.getSemantics().getOde().getParameters() == null
 		) {
-			return new ArrayList<ModelParameter>();
+			return new ArrayList<>();
 		}
 		return this.getSemantics().getOde().getParameters();
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public void setParameters(final List<ModelParameter> parameters) {
+		final ObjectMapper objectMapper = new ObjectMapper();
+		if (this.isRegnet()) {
+			this.getModel().put("parameters", objectMapper.convertValue(parameters, JsonNode.class));
+		} else {
+			if (this.getSemantics() == null) {
+				this.setSemantics(new ModelSemantics());
+			}
+			if (this.getSemantics().getOde() == null) {
+				this.getSemantics().setOde(new OdeSemantics());
+			}
+			this.getSemantics().getOde().setParameters(parameters);
+		}
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public List<Transition> getTransitions() {
+		final ObjectMapper objectMapper = new ObjectMapper();
+		return objectMapper.convertValue(this.getModel().get("transitions"), new TypeReference<>() {});
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public void setTransitions(final List<Transition> parameters) {
+		final ObjectMapper objectMapper = new ObjectMapper();
+		this.getModel().put("transitions", objectMapper.convertValue(parameters, JsonNode.class));
 	}
 
 	@JsonIgnore
