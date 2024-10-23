@@ -36,8 +36,8 @@ public class EnrichAmrResponseHandler extends TaskResponseHandler {
 		@JsonProperty("research_paper")
 		String researchPaper;
 
-		@JsonProperty("amr")
-		String amr;
+		@JsonProperty("amrs")
+		List<String> amrs;
 	}
 
 	@Data
