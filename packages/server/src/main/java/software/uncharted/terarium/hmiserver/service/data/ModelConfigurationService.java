@@ -184,7 +184,7 @@ public class ModelConfigurationService
 
 	private static ModelDistribution getModelDistribution(final ModelParameter parameter) {
 		ModelDistribution distribution = parameter.getDistribution();
-		// constant distribution
+		// Fill with constant distribution if it's missing
 		if (distribution == null || distribution.getType() == null) {
 			distribution = new ModelDistribution();
 			distribution.setType("Constant");
@@ -192,11 +192,17 @@ public class ModelConfigurationService
 		}
 
 		// NOTE: there isn't any difference between Uniform1 and StandardUniform1, so we
-		// are changing it to
-		// StandardUniform1 for consistenty sake
+		// are changing it to StandardUniform1 for consistenty sake
 		if (distribution.getType().equals("Uniform1")) {
 			distribution.setType("StandardUniform1");
 		}
+
+		// If minimum equals maximum force it to be a constant distribution (this is needed when converting funman model parameters into configuration parameters)
+		if (distribution.isMinimumEqualToMaximum()) {
+			distribution.setType("Constant");
+			distribution.setParameters(Map.of("value", distribution.getParameters().get("minimum")));
+		}
+
 		return distribution;
 	}
 

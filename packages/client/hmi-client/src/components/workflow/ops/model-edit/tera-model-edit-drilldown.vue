@@ -41,6 +41,7 @@
 				class="ace-editor"
 				:options="{ showPrintMargin: false }"
 			/>
+			<tera-notebook-output :traceback="executeResponseTraceback" />
 		</tera-drilldown-section>
 		<template #preview v-if="drilldownRef?.selectedTab === DrilldownTabs.Notebook">
 			<tera-drilldown-preview
@@ -51,13 +52,19 @@
 				is-selectable
 			>
 				<tera-notebook-error
-					v-if="executeResponse.status === OperatorStatus.ERROR"
-					:name="executeResponse.name"
-					:value="executeResponse.value"
-					:traceback="executeResponse.traceback"
+					v-if="executeErrorResponse.status === OperatorStatus.ERROR"
+					:name="executeErrorResponse.name"
+					:value="executeErrorResponse.value"
+					:traceback="executeErrorResponse.traceback"
 				/>
-				<tera-model v-else-if="amr" is-workflow is-save-for-reuse :assetId="amr.id" @on-save="updateNode" />
-				<tera-progress-spinner v-else-if="isUpdatingModel || !amr" is-centered :font-size="2">
+				<tera-model
+					v-else-if="outputModel"
+					is-workflow
+					is-save-for-reuse
+					:assetId="outputModel.id"
+					@on-save="updateNode"
+				/>
+				<tera-progress-spinner v-else-if="isUpdatingModel || !outputModel" is-centered :font-size="2">
 					Loading...
 				</tera-progress-spinner>
 			</tera-drilldown-preview>
@@ -88,6 +95,7 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraModel from '@/components/model/tera-model.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import TeraNotebookOutput from '@/components/drilldown/tera-notebook-output.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { nodeOutputLabel } from '@/components/workflow/util';
@@ -120,8 +128,9 @@ const activeOutput = ref<WorkflowOutput<ModelEditOperationState> | null>(null);
 const isUpdatingModel = ref(false);
 
 const kernelManager = new KernelSessionManager();
-const amr = ref<Model | null>(null);
-let activeModelId: string | null = null;
+const outputModel = ref<Model | null>(null);
+let inputModelId: string | null = null;
+let activeOutputModelId: string | null = null;
 
 let editor: VAceEditorInstance['_editor'] | null;
 const sampleAgentQuestions = [
@@ -147,12 +156,14 @@ const llmThoughts = ref<any[]>([]);
 
 const isDraft = ref(false);
 
-const executeResponse = ref({
+const executeErrorResponse = ref({
 	status: OperatorStatus.DEFAULT,
 	name: '',
 	value: '',
 	traceback: ''
 });
+
+const executeResponseTraceback = ref('');
 
 const updateLlmQuery = (query: string) => {
 	llmThoughts.value = [];
@@ -174,19 +185,19 @@ const appendCode = (data: any, property: string) => {
 
 const syncWithMiraModel = (data: any) => {
 	const updatedModel = data.content?.['application/json'];
-	if (!updatedModel || !activeModelId) {
+	if (!updatedModel || !activeOutputModelId) {
 		logger.error('Error getting updated model from beaker');
 		return;
 	}
-	updatedModel.id = activeModelId;
-	amr.value = updatedModel;
+	updatedModel.id = activeOutputModelId;
+	outputModel.value = updatedModel;
 	isUpdatingModel.value = false;
-	createOutput(amr.value as Model);
+	createOutput(outputModel.value as Model);
 };
 
 const runCode = () => {
 	isUpdatingModel.value = true;
-	amr.value = null;
+	outputModel.value = null;
 	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
 		const messageContent = {
 			silent: false,
@@ -205,7 +216,9 @@ const runCode = () => {
 				executedCode = data.content.code;
 			})
 			.register('stream', (data) => {
-				console.log('stream', data);
+				if (data?.content?.name === 'stderr' || data?.content?.name === 'stdout') {
+					executeResponseTraceback.value = `${executeResponseTraceback.value} ${data.content.text}`;
+				}
 			})
 			.register('model_preview', (data) => {
 				if (!data.content) return;
@@ -219,7 +232,7 @@ const runCode = () => {
 				let status = OperatorStatus.DEFAULT;
 				if (data.msg.content.status === 'ok') status = OperatorStatus.SUCCESS;
 				if (data.msg.content.status === 'error') status = OperatorStatus.ERROR;
-				executeResponse.value = {
+				executeErrorResponse.value = {
 					status,
 					name: data.msg.content.ename ? data.msg.content.ename : '',
 					value: data.msg.content.evalue ? data.msg.content.evalue : '',
@@ -230,7 +243,7 @@ const runCode = () => {
 };
 
 const resetModel = () => {
-	if (!amr.value) return;
+	if (!outputModel.value) return;
 
 	kernelManager
 		.sendMessage('reset_request', {})
@@ -280,7 +293,7 @@ const createOutput = async (modelToSave: Model) => {
 };
 
 const buildJupyterContext = () => {
-	if (!activeModelId) {
+	if (!inputModelId) {
 		logger.warn('Cannot build Jupyter context without a model');
 		return null;
 	}
@@ -288,33 +301,17 @@ const buildJupyterContext = () => {
 		context: 'mira_model_edit',
 		language: 'python3',
 		context_info: {
-			id: activeModelId
+			id: inputModelId
 		}
 	};
 };
 
 const handleOutputChange = async () => {
 	// Switch to model from output
-	activeModelId = activeOutput.value?.value?.[0];
-	if (!activeModelId) return;
+	activeOutputModelId = activeOutput.value?.value?.[0];
+	if (!activeOutputModelId) return;
 	codeText.value = props.node.state.notebookHistory?.[0]?.code ?? defaultCodeText;
-
-	// Create a new session and context based on model
-	try {
-		const jupyterContext = buildJupyterContext();
-		if (jupyterContext) {
-			if (kernelManager.jupyterSession !== null) {
-				// when coming from output dropdown change we should shut down first
-				kernelManager.shutdown();
-			}
-			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
-
-			// Get the model after the kernel is ready so function in model-template-editor can be triggered with an existing kernel
-			amr.value = await getModel(activeModelId);
-		}
-	} catch (error) {
-		logger.error(`Error initializing Jupyter session: ${error}`);
-	}
+	outputModel.value = await getModel(activeOutputModelId);
 };
 
 const onSelection = (id: string) => {
@@ -330,6 +327,15 @@ const hasCodeChange = () => {
 	}
 };
 const checkForCodeChange = debounce(hasCodeChange, 500);
+
+function updateNode(model: Model) {
+	if (!model) return;
+	outputModel.value = model;
+	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.value?.[0] === model.id));
+	if (!outputPort) return;
+	outputPort.label = model.header.name;
+	emit('update-output', outputPort);
+}
 
 watch(
 	() => codeText.value,
@@ -350,36 +356,36 @@ watch(
 	{ immediate: true }
 );
 
-function updateNode(model: Model) {
-	if (!model) return;
-	amr.value = model;
-	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.value?.[0] === model.id));
-	if (!outputPort) return;
-	outputPort.label = model.header.name;
-	emit('update-output', outputPort);
-}
-
 onMounted(async () => {
+	// Save input model id to use throughout the component
+	const input = props.node.inputs[0];
+	if (!input) return;
+
+	// Get input model id
+	if (input.type === 'modelId') {
+		inputModelId = input.value?.[0];
+	} else if (input.type === 'modelConfigId') {
+		inputModelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
+	}
+	if (!inputModelId) return;
+
 	// By default, the first output option is the original model
 	if (isReadyToCreateDefaultOutput.value) {
-		const input = props.node.inputs[0];
-		if (!input) return;
-
-		// Get input model id
-		let modelId: string | null = null;
-		if (input.type === 'modelId') {
-			modelId = input.value?.[0];
-		} else if (input.type === 'modelConfigId') {
-			modelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
-		}
-		if (!modelId) return;
-
 		// Get model
-		const originalModel = await getModel(modelId);
+		const originalModel = await getModel(inputModelId);
 		if (!originalModel) return;
-
 		// Set default output which is the input (original model)
 		createOutput(originalModel);
+	}
+
+	// Create a session and context based on model
+	try {
+		const jupyterContext = buildJupyterContext();
+		if (jupyterContext) {
+			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
+		}
+	} catch (error) {
+		logger.error(`Error initializing Jupyter session: ${error}`);
 	}
 });
 

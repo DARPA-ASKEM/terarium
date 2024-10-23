@@ -42,7 +42,7 @@ import SelectButton from 'primevue/selectbutton';
 import Button from 'primevue/button';
 import { AssetType } from '@/types/Types';
 import type { Model, ProjectAsset } from '@/types/Types';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
 import { WorkflowNode } from '@/types/workflow';
 import TeraOperatorTitle from '@/components/operator/tera-operator-title.vue';

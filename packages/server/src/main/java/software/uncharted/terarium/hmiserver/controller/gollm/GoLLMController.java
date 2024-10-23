@@ -40,7 +40,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractedDocumentPage;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.task.CompoundTask;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
@@ -247,26 +246,12 @@ public class GoLLMController {
 
 		final ConfigureModelFromDocumentResponseHandler.Input input = new ConfigureModelFromDocumentResponseHandler.Input();
 
-		String text = "";
-		if (document.get().getExtractions().size() > 0) {
-			for (final ExtractedDocumentPage page : document.get().getExtractions()) {
-				text += page.getText() + "\n";
-				if (page.getTables() != null) {
-					for (final JsonNode table : page.getTables()) {
-						text += table.toString() + "\n";
-					}
-				}
-				if (page.getEquations() != null) {
-					for (final JsonNode equation : page.getEquations()) {
-						text += equation.toString() + "\n";
-					}
-				}
-			}
-		} else {
-			text = document.get().getText();
+		try {
+			input.setResearchPaper(objectMapper.writeValueAsString(document.get().getExtractions()));
+		} catch (JsonProcessingException e) {
+			log.error("Unable to serialize document text", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 		}
-
-		input.setResearchPaper(text);
 
 		// stripping the metadata from the model before its sent since it can cause
 		// gollm to fail with massive inputs
@@ -504,7 +489,12 @@ public class GoLLMController {
 		}
 
 		final InterventionsFromDocumentResponseHandler.Input input = new InterventionsFromDocumentResponseHandler.Input();
-		input.setResearchPaper(document.get().getText());
+		try {
+			input.setResearchPaper(objectMapper.writeValueAsString(document.get().getExtractions()));
+		} catch (JsonProcessingException e) {
+			log.error("Unable to serialize document text", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+		}
 
 		// stripping the metadata from the model before its sent since it can cause
 		// gollm to fail with massive inputs
@@ -1113,7 +1103,14 @@ public class GoLLMController {
 		final ModelCardResponseHandler.Input input = new ModelCardResponseHandler.Input();
 		input.setAmr(model.serializeWithoutTerariumFields(null, new String[] { "gollmCard" }));
 
-		if (document != null) input.setResearchPaper(document.getText());
+		if (document != null) {
+			try {
+				input.setResearchPaper(objectMapper.writeValueAsString(document.getExtractions()));
+			} catch (JsonProcessingException e) {
+				log.error("Unable to serialize document text", e);
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+			}
+		}
 
 		// Create the task
 		final TaskRequest req = new TaskRequest();
@@ -1141,7 +1138,14 @@ public class GoLLMController {
 
 	private TaskRequest getEnrichAMRTaskRequest(DocumentAsset document, Model model, UUID projectId, Boolean overwrite) {
 		final EnrichAmrResponseHandler.Input input = new EnrichAmrResponseHandler.Input();
-		if (document != null) input.setResearchPaper(document.getText());
+		if (document != null) {
+			try {
+				input.setResearchPaper(objectMapper.writeValueAsString(document.getExtractions()));
+			} catch (JsonProcessingException e) {
+				log.error("Unable to serialize document text", e);
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+			}
+		}
 
 		input.setAmr(model.serializeWithoutTerariumFields(null, null));
 

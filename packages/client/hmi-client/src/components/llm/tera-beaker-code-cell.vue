@@ -21,7 +21,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, onBeforeUnmount, ref } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { SessionContext } from '@jupyterlab/apputils';
@@ -35,6 +35,7 @@ const props = defineProps<{
 	jupyterSession: SessionContext;
 	notebookItem: INotebookItem;
 	lang: string;
+	index: Number;
 }>();
 
 const emit = defineEmits(['deleteRequested']);
@@ -96,6 +97,15 @@ onMounted(() => {
 	if (props.notebookItem.autoRun) {
 		runCell();
 	}
+	window.addEventListener('run-all-cells', () => {
+		setTimeout(() => {
+			runCell();
+		}, 1000 * props.index.valueOf()); // ensures the cells are run in the correct order
+	});
+});
+
+onBeforeUnmount(() => {
+	window.removeEventListener('run-all-cells', runCell); // Clean up listener
 });
 
 defineExpose({

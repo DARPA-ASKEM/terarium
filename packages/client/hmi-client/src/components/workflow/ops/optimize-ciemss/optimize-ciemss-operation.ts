@@ -182,16 +182,12 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 		allInterventions.push(newIntervetion);
 	});
 
-	// At the moment we only accept one intervention type. Pyciemss, pyciemss-service and this will all need to be updated.
-	// https://github.com/DARPA-ASKEM/terarium/issues/3909
 	const interventionType = optimizeInterventions.intervention_type ?? '';
 	const paramNames: string[] = optimizeInterventions.param_names ?? [];
 	const paramValues: number[] = optimizeInterventions.param_values ?? [];
 	const startTimes: number[] = optimizeInterventions.start_time ?? [];
 
 	const policyResult = await getRunResult(optimizeRunId, 'policy.json');
-	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
-	// This will need to be updated to allow multiple intervention types. This is not allowed at the moment.
 	if (interventionType === OptimizationInterventionObjective.startTime && startTimes.length !== 0) {
 		// If we our intervention type is param value our policyResult will provide a timestep.
 		for (let i = 0; i < paramNames.length; i++) {

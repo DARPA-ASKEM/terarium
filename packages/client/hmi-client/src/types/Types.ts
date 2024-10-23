@@ -195,6 +195,9 @@ export interface DocumentAsset extends TerariumAsset {
     source?: string;
     text?: string;
     grounding?: Grounding;
+    /**
+     * @deprecated
+     */
     documentAbstract?: string;
     /**
      * @deprecated
@@ -224,12 +227,6 @@ export interface ModelDescription {
     userId?: string;
 }
 
-export interface ModelFramework extends TerariumAssetThatSupportsAdditionalProperties {
-    name: string;
-    version: string;
-    semantics: string;
-}
-
 export interface InferredParameterSemantic extends Semantic {
     referenceId: string;
     distribution: ModelDistribution;
@@ -245,6 +242,9 @@ export interface InitialSemantic extends Semantic {
 export interface ModelConfiguration extends TerariumAsset {
     modelId: string;
     simulationId?: string;
+    temporalContext?: Date;
+    extractionDocumentId?: string;
+    extractionPage?: number;
     observableSemanticList: ObservableSemantic[];
     parameterSemanticList: ParameterSemantic[];
     initialSemanticList: InitialSemantic[];
@@ -603,6 +603,8 @@ export interface DynamicIntervention {
 
 export interface Intervention {
     name: string;
+    extractionDocumentId?: string;
+    extractionPage?: number;
     staticInterventions: StaticIntervention[];
     dynamicInterventions: DynamicIntervention[];
 }

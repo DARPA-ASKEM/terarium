@@ -1,6 +1,7 @@
 import _, { isEmpty, cloneDeep, uniq } from 'lodash';
 import { IGraph } from '@graph-scaffolder/types';
 import { NodeType } from '@/services/graph';
+import type { ModelConfiguration } from '@/types/Types';
 import {
 	extractOutcomeControllersMatrix,
 	extractSubjectControllersMatrix,
@@ -229,6 +230,12 @@ export const rawTemplatesSummary = (miraModel: MiraModel) => {
 	return allTemplates;
 };
 
+const generateKey = (t: TemplateSummary) => {
+	if (t.name.split('_').length > 1) {
+		return `${t.name.split('_')[0]}:${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
+	}
+	return `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
+};
 export const collapseTemplates = (miraModel: MiraModel) => {
 	const allTemplates: TemplateSummary[] = [];
 	const uniqueTemplates: TemplateSummary[] = [];
@@ -278,7 +285,7 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 	const matrixMap = new Map<string, MiraTemplate[]>();
 
 	allTemplates.forEach((t) => {
-		const key = `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
+		const key = generateKey(t);
 		if (!tempMatrixMap.has(key)) {
 			tempMatrixMap.set(key, []);
 		}
@@ -294,7 +301,7 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 
 	// 3 Rename and sanitize everything
 	uniqueTemplates.forEach((t) => {
-		const key = `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
+		const key = generateKey(t);
 		t.name = `template-${check.get(key)}`;
 	});
 	tempMatrixMap.forEach((value, key) => {
@@ -424,7 +431,6 @@ export const createParameterMatrix = (miraModel: MiraModel, miraTemplateParams: 
 	};
 };
 
-// const genKey = (t: TemplateSummary) => `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
 export const convertToIGraph = (
 	miraModel: MiraModel,
 	initObservableSummary: ObservableSummary,
@@ -621,3 +627,26 @@ export const generateModelDatasetConfigurationContext = (mmt: MiraModel, miraTem
 	// Make string
 	return lines.join('\n');
 };
+
+export function makeConfiguredMMT(mmt: MiraModel, modelConfiguration: ModelConfiguration): MiraModel {
+	const mmtCopy = cloneDeep(mmt);
+	modelConfiguration.initialSemanticList.forEach((initial) => {
+		const mmtInitial = mmtCopy.initials[initial.target];
+		if (mmtInitial) {
+			mmtInitial.expression = initial.expression;
+		}
+	});
+	modelConfiguration.parameterSemanticList.forEach((parameter) => {
+		const mmtParameter = mmtCopy.parameters[parameter.referenceId];
+		if (mmtParameter) {
+			mmtParameter.value = parameter.distribution.parameters.value;
+		}
+	});
+	modelConfiguration.observableSemanticList.forEach((observable) => {
+		const mmtObservable = mmtCopy.observables[observable.referenceId];
+		if (mmtObservable) {
+			mmtObservable.expression = observable.expression;
+		}
+	});
+	return mmtCopy;
+}

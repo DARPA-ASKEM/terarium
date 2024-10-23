@@ -3,7 +3,8 @@
 		<main class="content">
 			<slot />
 		</main>
-		<div class="resize-handle" @mousedown="startResize"></div>
+		<div v-if="resizeFromTop === true" class="resize-handle-top" @mousedown="startResize"></div>
+		<div v-else class="resize-handle-bottom" @mousedown="startResize"></div>
 	</section>
 </template>
 
@@ -19,7 +20,11 @@ const containerHeight = ref(320);
 const draggedY = ref(0);
 
 const resize = (event: MouseEvent) => {
-	containerHeight.value += event.clientY - draggedY.value;
+	if (props?.resizeFromTop) {
+		containerHeight.value += -event.clientY + draggedY.value;
+	} else {
+		containerHeight.value += event.clientY - draggedY.value;
+	}
 	draggedY.value = event.clientY;
 };
 
@@ -35,6 +40,7 @@ const startResize = (event: MouseEvent) => {
 };
 const props = defineProps<{
 	startHeight?: number;
+	resizeFromTop?: boolean;
 }>();
 
 onMounted(() => {
@@ -71,9 +77,22 @@ main {
 	height: 100%;
 }
 
-.resize-handle {
+.resize-handle-bottom {
 	position: absolute;
 	bottom: 0;
+	left: 0;
+	width: 100%;
+	height: 6px;
+	cursor: ns-resize;
+	background: var(--surface-border-light);
+	z-index: 1;
+	border-radius: 0 0 var(--border-radius-big) var(--border-radius-big);
+	mix-blend-mode: darken;
+}
+
+.resize-handle-top {
+	position: absolute;
+	top: 0;
 	left: 0;
 	width: 100%;
 	height: 6px;

@@ -98,6 +98,7 @@ const submitQuestion = () => {
 	const message = props.kernelManager.sendMessage('llm_request', {
 		request: questionString.value
 	});
+	llmThoughts.value = [];
 	emit('question-asked', questionString.value);
 
 	// May prefer to use a manual status rather than following this. TBD. Both options work for now
@@ -110,12 +111,16 @@ const submitQuestion = () => {
 	});
 	message.register('llm_thought', (data) => {
 		thoughts.value = data;
-		llmThoughts.value = [];
 		llmThoughts.value.push(data);
 		llmQuery.value = questionString.value;
 		emit('llm-thought-output', data);
 	});
 	message.register('llm_response', (data) => {
+		// Check if our llm_response is providing a response text to a user's question
+		if (data.content.name === 'response_text') {
+			llmThoughts.value = [];
+			llmThoughts.value.push(data);
+		}
 		thoughts.value = data;
 		emit('llm-thought-output', data);
 	});
