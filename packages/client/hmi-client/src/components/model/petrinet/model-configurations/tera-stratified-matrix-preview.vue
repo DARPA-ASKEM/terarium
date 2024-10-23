@@ -1,6 +1,7 @@
 <template>
 	<section>
-		<section class="matrix">
+		<div v-if="matrix.length > 20 || matrix[0].length > 20">Matrix is {{ matrix.length }}x{{ matrix[0].length }}</div>
+		<section v-else class="matrix">
 			<h5>
 				<span>{{ subject }}</span>
 				<i class="pi pi-arrow-right" />
