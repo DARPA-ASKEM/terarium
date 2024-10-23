@@ -222,7 +222,7 @@ function updateColumn(index: number, key: string, value: any) {
 		if (!transientDataset.value.columns[index]?.grounding?.identifiers) {
 			transientDataset.value.columns[index].grounding = { identifiers: [] };
 		}
-		// Replaces first element of identifiers array
+		// Replaces first element of identifiers' array
 		transientDataset.value.columns[index].grounding?.identifiers?.shift();
 		transientDataset.value.columns[index].grounding?.identifiers?.unshift(value);
 	} else {
@@ -332,10 +332,5 @@ watch(
 		margin-bottom: var(--gap-4);
 		margin-top: var(--gap-2);
 	}
-}
-
-/* Add gaps beneath open accordions */
-:deep(.p-accordion-content) {
-	padding-bottom: var(--gap-6) !important;
 }
 </style>
