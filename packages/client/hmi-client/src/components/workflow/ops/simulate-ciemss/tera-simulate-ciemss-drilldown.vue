@@ -271,7 +271,12 @@ import { KernelSessionManager } from '@/services/jupyter';
 import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import { createForecastChart, createInterventionChartMarkers, ForecastChartOptions } from '@/services/charts';
+import {
+	applyForecastChartAnnotations,
+	createForecastChart,
+	createInterventionChartMarkers,
+	ForecastChartOptions
+} from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { ChartSetting, ChartSettingType, CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import { getModelConfigurationById } from '@/services/model-configurations';
@@ -451,21 +456,25 @@ const preparedCharts = computed(() => {
 	chartSettings.value.forEach((setting) => {
 		const selectedVars = setting.selectedVariables;
 		const { statLayerVariables, options } = getForecastChartOptions(selectedVars, reverseMap);
+		const annotations = chartAnnotations.value.filter((annotation) => annotation.chartId === setting.id);
 
-		const chart = createForecastChart(
-			{
-				data: result,
-				variables: selectedVars.map((d) => pyciemssMap[d]),
-				timeField: 'timepoint_id',
-				groupField: 'sample_id'
-			},
-			{
-				data: resultSummary,
-				variables: statLayerVariables,
-				timeField: 'timepoint_id'
-			},
-			null,
-			options
+		const chart = applyForecastChartAnnotations(
+			createForecastChart(
+				{
+					data: result,
+					variables: selectedVars.map((d) => pyciemssMap[d]),
+					timeField: 'timepoint_id',
+					groupField: 'sample_id'
+				},
+				{
+					data: resultSummary,
+					variables: statLayerVariables,
+					timeField: 'timepoint_id'
+				},
+				null,
+				options
+			),
+			annotations
 		);
 		if (interventionPolicy.value) {
 			_.keys(groupedInterventionOutputs.value).forEach((key) => {
