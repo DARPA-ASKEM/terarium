@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.controller.gollm;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -41,11 +43,16 @@ import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelGrounding;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.StatementValue;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Variable;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.VariableStatement;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.GroundedSemantic;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Observable;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.State;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Transition;
+import software.uncharted.terarium.hmiserver.models.dataservice.regnet.RegNetVertex;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.models.task.CompoundTask;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
@@ -821,45 +828,58 @@ public class GoLLMController {
 		}
 
 		Model model = modelOptional.get();
-		for (Observable observable : model.getObservables()) {
-			ResponseEntity<List<DKG>> res = miraProxy.search(observable.getExpression(), 10, 0);
-			if (res.getStatusCode() == HttpStatus.OK) {
-				List<DKG> dkgList = res.getBody();
-				for (DKG dkg : dkgList) {
-					System.out.println(dkg.getName());
-				}
-			}
+
+		// Update State Grounding
+		if (!model.isRegnet()) {
+			List<State> states = model.getStates();
+			states.forEach(this::performDKGSearchAndSetGrounding);
+			model.setStates(states);
+		} else if (model.isRegnet()) {
+			List<RegNetVertex> vertices = model.getVerticies();
+			vertices.forEach(this::performDKGSearchAndSetGrounding);
+			model.setVerticies(vertices);
 		}
 
-		for (VariableStatement variableStatement : model.getMetadata().getVariableStatements()) {
-			StatementValue value = variableStatement.getValue();
-			ResponseEntity<List<DKG>> res = miraProxy.search(value.getValue(), 10, 0);
-			if (res.getStatusCode() == HttpStatus.OK) {
-				List<DKG> dkgList = res.getBody();
-				for (DKG dkg : dkgList) {
-					System.out.println(dkg.getName());
-				}
-			}
+		//Update Observable Grounding
+		if (model.getObservables() != null && !model.getObservables().isEmpty()) {
+			List<Observable> observables = model.getObservables();
+			observables.forEach(this::performDKGSearchAndSetGrounding);
+			model.setObservables(observables);
 		}
 
-		// from our model.getModel, confirm that there is a 'states' node and use objectmapper to convert it to State
-		if (model.getModel().containsKey("states")) {
-			ObjectMapper objectMapper = new ObjectMapper();
-			State state = objectMapper.convertValue(model.getModel().get("states"), State.class);
-			System.out.println(state.getName());
-			ResponseEntity<List<DKG>> res = miraProxy.search(state.getName(), 10, 0);
-			if (res.getStatusCode() == HttpStatus.OK) {
-				List<DKG> dkgList = res.getBody();
-				for (DKG dkg : dkgList) {
-					System.out.println(dkg.getName());
-				}
-			}
+		//Update Parameter Grounding
+		if (model.getParameters() != null && !model.getParameters().isEmpty()) {
+			List<ModelParameter> parameters = model.getParameters();
+			parameters.forEach(this::performDKGSearchAndSetGrounding);
+			model.setParameters(parameters);
 		}
 
-		//model.getMetadata().getVariableStatements()
-		// model.getModel().STATES
+		//Update Transition Grounding
+		if (model.getTransitions() != null && !model.getTransitions().isEmpty()) {
+			List<Transition> transitions = model.getTransitions();
+			transitions.forEach(this::performDKGSearchAndSetGrounding);
+			model.setTransitions(transitions);
+		}
+
+		try {
+			modelService.updateAsset(model, projectId, permission);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 
 		return ResponseEntity.ok().body(resp);
+	}
+
+	private void performDKGSearchAndSetGrounding(GroundedSemantic part) {
+		if (part == null || part.getId() == null || part.getId().isEmpty()) return;
+		ResponseEntity<List<DKG>> res = miraProxy.search(part.getId(), 1, 0);
+		if (res.getStatusCode() == HttpStatus.OK && res.getBody() != null && !res.getBody().isEmpty()) {
+			DKG dkg = res.getBody().get(0);
+			if (part.getGrounding() == null) part.setGrounding(new ModelGrounding());
+			if (part.getGrounding().getIdentifiers() == null) part.getGrounding().setIdentifiers(new HashMap<>());
+			String[] currieId = dkg.getCurie().split(":");
+			part.getGrounding().getIdentifiers().put(currieId[0], currieId[1]);
+		}
 	}
 
 	@GetMapping("/enrich-amr")
