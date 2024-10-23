@@ -292,7 +292,6 @@ onMounted(async () => {
 		state.text = document.value?.text ?? '';
 		emit('update-state', state);
 	}
-	console.log(9);
 });
 
 function handlePasteEvent(e) {
