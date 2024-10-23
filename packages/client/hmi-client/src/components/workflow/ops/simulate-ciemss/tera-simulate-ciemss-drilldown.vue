@@ -205,6 +205,7 @@
 						/>
 						<div>
 							<Button
+								:disabled="!comparisonChartsSettingsSelection.length"
 								size="small"
 								text
 								@click="addComparisonChartSettings"
