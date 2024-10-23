@@ -51,7 +51,7 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import { useClientEvent } from '@/composables/useClientEvent';
 
 const props = defineProps<{
-	assetType: AssetType;
+	assetType: AssetType.Model | AssetType.Dataset;
 	assetId: TerariumAsset['id'];
 }>();
 
@@ -100,14 +100,17 @@ function confirm() {
 	});
 }
 
-const sendForEnrichment = async () => {
-	// Build enrichment job ids list (profile asset, align model, etc...)
-	if (props.assetId && props.assetType === AssetType.Model) {
-		await enrichModelMetadata(props.assetId, selectedResourceId.value, true);
-	} else if (props.assetType === AssetType.Dataset) {
-		await profileDataset(props.assetId, selectedResourceId.value);
+async function sendForEnrichment(): Promise<void> {
+	if (props.assetId) {
+		if (props.assetType === AssetType.Model) {
+			// Build enrichment job ids list (profile asset, align model, etc...)
+			return enrichModelMetadata(props.assetId, selectedResourceId.value, true);
+		}
+
+		return profileDataset(props.assetId, selectedResourceId.value);
 	}
-};
+	return Promise.resolve();
+}
 
 function getRelatedDocuments() {
 	const provenanceType = mapAssetTypeToProvenanceType(props.assetType);
