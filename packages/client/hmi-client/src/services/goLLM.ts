@@ -41,7 +41,7 @@ export async function enrichModelMetadata(modelId: string, documentId: string, o
 	try {
 		await API.get<TaskResponse>('/gollm/enrich-model-metadata', {
 			params: {
-				'model-id': modelId,
+				'model-ids': [modelId], // TODO: pass in the pre-stratified mira model as first element
 				'document-id': documentId,
 				overwrite
 			}
