@@ -1,6 +1,9 @@
 <template>
 	<section>
-		<section class="matrix">
+		<div v-if="matrix.length > MATRIX_THRESHOLD || matrix[0].length > MATRIX_THRESHOLD">
+			Matrix is {{ matrix.length }}x{{ matrix[0].length }}
+		</div>
+		<section v-else class="matrix">
 			<h5>
 				<span>{{ subject }}</span>
 				<i class="pi pi-arrow-right" />
@@ -46,6 +49,7 @@ const subject = ref('');
 const outcome = ref('');
 
 const matrixColLen = computed(() => matrix.value[0]?.length ?? 0);
+const MATRIX_THRESHOLD = 20;
 
 // Currently only supports transition/rate matrices
 watch(
