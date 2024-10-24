@@ -151,7 +151,7 @@ public class KnowledgeController {
 		final EnrichAmrResponseHandler.Input input = new EnrichAmrResponseHandler.Input();
 		try {
 			input.setResearchPaper(mapper.writeValueAsString(document.get().getExtractions()));
-		} catch (JsonProcessingException e) {
+		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize document text", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 		}
@@ -161,7 +161,7 @@ public class KnowledgeController {
 
 		try {
 			final String amr = mapper.writeValueAsString(model.get());
-			input.setAmr(amr);
+			input.setAmrs(List.of(amr));
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize model card", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
@@ -252,13 +252,13 @@ public class KnowledgeController {
 		}
 
 		// Cleanup equations from the request
-		List<String> equations = new ArrayList<>();
+		final List<String> equations = new ArrayList<>();
 		if (req.get("equations") != null) {
 			for (final JsonNode equation : req.get("equations")) {
 				equations.add(equation.asText());
 			}
 		}
-		TaskRequest cleanupReq = cleanupEquationsTaskRequest(projectId, equations);
+		final TaskRequest cleanupReq = cleanupEquationsTaskRequest(projectId, equations);
 		TaskResponse cleanupResp = null;
 		try {
 			cleanupResp = taskService.runTask(TaskMode.SYNC, cleanupReq);
@@ -276,17 +276,18 @@ public class KnowledgeController {
 		JsonNode equationsReq = req.get("equations");
 		if (cleanupResp != null && cleanupResp.getOutput() != null) {
 			try {
-				JsonNode output = mapper.readValue(cleanupResp.getOutput(), JsonNode.class);
+				final JsonNode output = mapper.readValue(cleanupResp.getOutput(), JsonNode.class);
 				if (output.get("response") != null && output.get("response").get("equations") != null) {
 					equationsReq = output.get("response").get("equations");
 				}
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				log.warn("Unable to retrive cleaned-up equations from GoLLM response. Reverting to original equations.", e);
 			}
 		}
 
-		// Create a new request with the cleaned-up equations, so that we don't modify the original request.
-		JsonNode newReq = req.deepCopy();
+		// Create a new request with the cleaned-up equations, so that we don't modify
+		// the original request.
+		final JsonNode newReq = req.deepCopy();
 		((ObjectNode) newReq).set("equations", equationsReq);
 
 		// Get an AMR from Skema Unified Service
@@ -894,7 +895,7 @@ public class KnowledgeController {
 		return new ResponseStatusException(httpStatus, messages.get("generic.unknown"));
 	}
 
-	private TaskRequest cleanupEquationsTaskRequest(UUID projectId, List<String> equations) {
+	private TaskRequest cleanupEquationsTaskRequest(final UUID projectId, final List<String> equations) {
 		final EquationsCleanupResponseHandler.Input input = new EquationsCleanupResponseHandler.Input();
 		input.setEquations(equations);
 
