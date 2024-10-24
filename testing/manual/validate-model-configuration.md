@@ -30,8 +30,8 @@ For example, one might have an `SEIRD` mode-configuration, where the infection r
     - set the value to `0.05` (this determines how granular the operator segment the input space of the model for validation)
 4. Ensure that the _Compartmental constraint_ is present (it requires the operator to check that the sum of the state variables at all times is equal to their sum at time = 0 and that each state variable is positive): `S >= 0, I >= 0, R >= 0, S + I + R = 2001.0`
 5. Choose one of the following steps:
-    - a. Add a constraint that ensures that state variables S and R should be greater than or equal to `500` persons from `20` to `40` days.
-    - b. Add a constraint that ensures that state variables S and R should be less than `500` persons from `20` to `60` days.
+    - a. Add a constraint that ensures that state variables S and R should be greater than or equal to `180` persons from `30` to `34` days.
+    - b. Add a constraint that ensures that state variables S and R should be less than `450` persons from `30` to `34` days.
 6. Click _Run_
 
 ### 5. Inspect output
