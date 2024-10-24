@@ -6,7 +6,12 @@
 			<li v-for="(staticIntervention, index) in intervention.staticInterventions" :key="`static-${index}`">
 				Set {{ staticIntervention.type }} <strong>{{ staticIntervention.appliedTo }}</strong> to
 				<strong>{{ staticIntervention.value }}</strong> starting at
-				<strong>{{ getTimePointString(staticIntervention.timestep, props.startDate, props.calendarSettings) }}</strong>
+				<strong>{{
+					getTimePointString(staticIntervention.timestep, {
+						startDate: props.startDate,
+						calendarSettings: props.calendarSettings
+					})
+				}}</strong>
 			</li>
 			<li v-for="(dynamicIntervention, index) in intervention.dynamicInterventions" :key="`dynamic-${index}`">
 				Set {{ dynamicIntervention.type }} <strong>{{ dynamicIntervention.appliedTo }}</strong> to

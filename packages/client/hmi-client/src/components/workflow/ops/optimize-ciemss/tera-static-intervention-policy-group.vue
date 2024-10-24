@@ -122,7 +122,10 @@
 					Set the <strong>{{ staticIntervention.type }}</strong> <strong>{{ staticIntervention.appliedTo }}</strong> to
 					the value of <strong>{{ staticIntervention.value }}</strong> day at start time
 					<strong>{{
-						getTimePointString(staticIntervention.timestep, modelConfiguration.temporalContext, calendarSettings)
+						getTimePointString(staticIntervention.timestep, {
+							startDate: modelConfiguration.temporalContext,
+							calendarSettings
+						})
 					}}</strong>
 				</li>
 			</ul>

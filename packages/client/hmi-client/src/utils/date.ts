@@ -163,19 +163,22 @@ export function dateTypeToVegaDate(type: CalendarDateType) {
 	}
 }
 
-export function getTimePointString(timePoint: number, startDate?: Date, calendarSettings?: CalendarSettings): string {
-	if (!startDate) {
+export function getTimePointString(
+	timePoint: number,
+	options: { startDate?: Date; calendarSettings?: CalendarSettings }
+): string {
+	if (!options.startDate) {
 		return `${timePoint.toString()} day.`;
 	}
 
-	const view = calendarSettings?.view ?? CalendarDateType.DATE;
-	const date = getEndDateFromTimestep(startDate, timePoint, view);
+	const view = options.calendarSettings?.view ?? CalendarDateType.DATE;
+	const date = getEndDateFromTimestep(options?.startDate, timePoint, view);
 
-	const options: Intl.DateTimeFormatOptions = {
+	const dateOptions: Intl.DateTimeFormatOptions = {
 		year: 'numeric',
 		...(view === CalendarDateType.DATE && { month: 'long', day: 'numeric' }),
 		...(view === CalendarDateType.MONTH && { month: 'long' })
 	};
 
-	return `${date.toLocaleDateString('default', options)}.`;
+	return `${date.toLocaleDateString('default', dateOptions)}.`;
 }
