@@ -36,8 +36,6 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:model-value']);
 
-// const calendarSettings = ref<CalendarSettings>(getCalendarSettingsFromModel(props.model));
-
 const date = computed(() => {
 	if (!props.startDate) return null;
 	return getEndDateFromTimestep(
