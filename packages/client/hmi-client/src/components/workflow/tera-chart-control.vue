@@ -1,6 +1,7 @@
 <template>
 	<aside>
 		<MultiSelect
+			:class="$attrs.class"
 			v-model="selectedVariable"
 			:options="variables"
 			:selection-limit="!multiSelect ? 1 : undefined"
