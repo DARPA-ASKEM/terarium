@@ -15,9 +15,9 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 @Data
 @EqualsAndHashCode(callSuper = true)
 @AMRSchemaType
-@Accessors(chain = true)
+@Accessors
 @TSModel
-public class Transition extends SupportAdditionalProperties implements Serializable {
+public class Transition extends SupportAdditionalProperties implements Serializable, GroundedSemantic {
 
 	@Serial
 	private static final long serialVersionUID = -7703055318779858671L;

@@ -4,7 +4,9 @@
 			<template v-if="!node.inputs[0].value"> Attach a model configuration </template>
 		</tera-operator-placeholder>
 
-		<tera-progress-spinner v-if="inProgressId" :font-size="2" is-centered style="height: 100%" />
+		<tera-progress-spinner v-if="inProgressId" is-centered :font-size="2" style="height: 100%">
+			{{ node.state.currentProgress }}%
+		</tera-progress-spinner>
 
 		<template v-if="node.inputs[0].value">
 			<Button @click="emit('open-drilldown')" label="Review checks" severity="secondary" outlined />
@@ -24,6 +26,7 @@ import { Poller, PollerState } from '@/api/api';
 import { pollAction, getRunResult } from '@/services/models/simulation-service';
 import { nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
+import { Simulation } from '@/types/Types';
 
 const emit = defineEmits(['open-drilldown', 'append-output', 'update-state']);
 
@@ -59,7 +62,14 @@ const getStatus = async (runId: string) => {
 	poller
 		.setInterval(5000)
 		.setThreshold(100)
-		.setPollAction(async () => pollAction(runId));
+		.setPollAction(async () => pollAction(runId))
+		.setProgressAction((data: Simulation) => {
+			if (data.progress) {
+				const state = _.cloneDeep(props.node.state);
+				state.currentProgress = +(100 * data.progress).toFixed(2);
+				emit('update-state', state);
+			}
+		});
 
 	const pollerResults = await poller.start();
 
@@ -88,6 +98,7 @@ watch(
 
 		const state = _.cloneDeep(props.node.state);
 		state.inProgressId = '';
+		state.currentProgress = 0;
 		emit('update-state', state);
 	},
 	{ immediate: true }
