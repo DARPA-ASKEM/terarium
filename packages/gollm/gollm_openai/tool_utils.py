@@ -270,7 +270,7 @@ def amr_enrichment_chain(amrs: str, research_paper: str) -> dict:
 
     print("Building prompt to extract model enrichments from a research paper...")
     prompt = ENRICH_PROMPT.format(
-        amrs=escape_curly_braces(amrs),
+        amrs=[escape_curly_braces(amr) for amr in amrs],
         research_paper=escape_curly_braces(research_paper)
     )
 
