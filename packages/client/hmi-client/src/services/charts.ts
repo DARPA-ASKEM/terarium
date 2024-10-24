@@ -446,7 +446,7 @@ export function createForecastChart(
 		if (layer.groupField) selectedFields.push(layer.groupField);
 
 		const data = Array.isArray(layer.data) ? { values: layer.data.map((d) => pick(d, selectedFields)) } : layer.data;
-		const header: any = {
+		const header = {
 			data,
 			transform: [
 				{
@@ -771,7 +771,7 @@ export function createInterventionChartMarkers(
 	data: ReturnType<typeof flattenInterventionData>,
 	options: InterventionMarkerOptions = { hideLabels: false, labelXOffset: 5 }
 ): any[] {
-	const markerSpec: any = {
+	const markerSpec = {
 		data: { values: data },
 		mark: { type: 'rule', strokeDash: [4, 4], color: 'black' },
 		encoding: {

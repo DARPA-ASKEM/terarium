@@ -112,15 +112,3 @@ export function getEndDateFromTimestep(startDate: Date, timestep: number, stepTy
 
 	return endDate;
 }
-
-export function dateTypeToVegaDate(type: CalendarDateType) {
-	switch (type) {
-		case CalendarDateType.YEAR:
-			return 'year';
-		case CalendarDateType.MONTH:
-			return 'yearmonth';
-		case CalendarDateType.DATE:
-		default:
-			return 'yearmonthdate';
-	}
-}
