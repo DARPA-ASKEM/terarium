@@ -1,5 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
@@ -16,6 +18,12 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @AMRSchemaType
 @Accessors(chain = true)
 public class ModelGrounding extends SupportAdditionalProperties implements Serializable {
+
+	public ModelGrounding() {
+		this.identifiers = new HashMap<>();
+		this.context = new HashMap<>();
+		this.modifiers = JsonNodeFactory.instance.objectNode();
+	}
 
 	@Serial
 	private static final long serialVersionUID = -4946214209697566543L;
