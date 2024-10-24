@@ -1,7 +1,7 @@
 <template>
 	<Editor v-model="editorContent" :class="{ readonly: !hasEditPermission }" :readonly="!hasEditPermission" />
 	<!-- empty state image -->
-	<section v-if="editorContent.length === 0" class="emptyState">
+	<section v-if="editorContent.length === 0" class="empty-state">
 		<Vue3Lottie :animationData="EmptySeed" :height="150" loop autoplay />
 		<p class="helpMessage"><strong>Use this space however you like.</strong></p>
 		<p class="helpMessage">Just click and start typing.</p>
@@ -11,7 +11,7 @@
 	<Panel
 		v-if="showWelcomeMessage && editorContent.length === 0"
 		header="Hey there! Not sure where to start?"
-		class="welcomeMessage"
+		class="welcome-message"
 	>
 		<template #icons>
 			<Button icon="pi pi-times" text rounded @click="showWelcomeMessage = false" />
@@ -93,40 +93,27 @@ const showWelcomeMessage = ref(true);
 </script>
 
 <style scoped>
-:deep(.ql-editor) {
-	font-family: var(--font-family);
-	font-size: var(--font-size);
-}
-
 /* Editor toolbar formatting */
 .readonly :deep(.p-editor-toolbar) {
 	display: none;
 }
 
 .p-editor-container {
-	min-height: 100%;
 	display: flex;
 	flex-direction: column;
-	border-top-left-radius: 0px !important;
 }
 
 :deep(.p-editor-content) {
+	height: 0;
 	flex-grow: 1;
 }
 
-.p-editor-container:deep(.p-editor-toolbar) {
-	border-radius: 0px;
-	border-color: var(--surface-border-light) !important;
-	border-top: none !important;
-}
+.p-editor-container:deep(.p-editor-toolbar),
 .p-editor-container:deep(.p-editor-content) {
 	border-radius: 0px;
-	border-color: var(--surface-border-light) !important;
-	border: none !important;
-}
-
-:deep(.ql-picker-label) {
-	font-family: var(--font-family);
+	/* Some variables seem to be read from what's specified in the quill packages snow theme not in _editor.scss so they are overriden here. */
+	border-color: var(--surface-border-light);
+	border-top: none;
 }
 
 :deep(.ql-active) {
@@ -143,7 +130,7 @@ const showWelcomeMessage = ref(true);
 }
 
 /* Empty state */
-.emptyState {
+.empty-state {
 	position: absolute;
 	width: calc(100% - 240px);
 	height: 100%;
@@ -156,7 +143,7 @@ const showWelcomeMessage = ref(true);
 	pointer-events: none;
 }
 
-.welcomeMessage {
+.welcome-message {
 	position: absolute;
 	width: calc(100% - 264px); /* 240px + 12px + 12px */
 	margin-top: 3.5rem;
@@ -168,20 +155,20 @@ const showWelcomeMessage = ref(true);
 	z-index: 10;
 	background-color: var(--surface-0);
 }
-.welcomeMessage .p-message-content {
+.welcome-message .p-message-content {
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap-2);
 }
-.welcomeMessage:deep(.p-panel-title) {
+.welcome-message:deep(.p-panel-title) {
 	font-weight: 600;
 }
-.welcomeMessage ul {
+.welcome-message ul {
 	list-style-position: inside;
 	line-height: 1.55rem;
 }
 
-.welcomeMessage:deep(.p-message-wrapper svg) {
+.welcome-message:deep(.p-message-wrapper svg) {
 	display: none;
 }
 </style>
