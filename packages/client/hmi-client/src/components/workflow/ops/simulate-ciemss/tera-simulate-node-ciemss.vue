@@ -1,11 +1,12 @@
 <template>
 	<main>
 		<template v-if="selectedRunId && runResults[selectedRunId]">
-			<section v-for="(_config, index) of props.node.state.chartConfigs" :key="index">
+			<section v-for="setting of chartSettings" :key="setting.id">
 				<vega-chart
-					v-if="preparedCharts[index].layer.length > 0"
-					:visualization-spec="preparedCharts[index]"
-					:are-embed-actions-visible="false"
+					v-if="preparedCharts[setting.id]"
+					expandable
+					are-embed-actions-visible
+					:visualization-spec="preparedCharts[setting.id]"
 				/>
 				<div v-else class="empty-chart">
 					<img src="@assets/svg/seed.svg" alt="" draggable="false" class="empty-image" />
@@ -28,7 +29,7 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import { getRunResultCSV, getSimulation, parsePyCiemssMap, DataArray } from '@/services/models/simulation-service';
 import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
 import { logger } from '@/utils/logger';
-import { chartActionsProxy, nodeOutputLabel } from '@/components/workflow/util';
+import { nodeOutputLabel } from '@/components/workflow/util';
 
 import type { WorkflowNode } from '@/types/workflow';
 import { createLLMSummary } from '@/services/summary-service';
@@ -47,6 +48,8 @@ import {
 	type Model
 } from '@/types/Types';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
+import { addMultiVariableChartSetting } from '@/services/chart-settings';
+import { ChartSettingType } from '@/types/common';
 import { useClientEvent } from '@/composables/useClientEvent';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
 import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
@@ -70,20 +73,21 @@ const areInputsFilled = computed(() => props.node.inputs[0].value);
 const interventionPolicyId = computed(() => props.node.inputs[1].value?.[0]);
 const interventionPolicy = ref<InterventionPolicy | null>(null);
 
-let pyciemssMap: Record<string, string> = {};
+const chartSettings = computed(() => props.node.state.chartSettings ?? []);
 
-const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperationState) => {
-	emit('update-state', state);
-});
+let pyciemssMap: Record<string, string> = {};
 
 const processResult = async (runId: string) => {
 	const state = _.cloneDeep(props.node.state);
-	if (interventionPolicyId.value && _.isEmpty(state.chartConfigs)) {
+	if (interventionPolicyId.value && _.isEmpty(state.chartSettings)) {
 		_.keys(groupedInterventionOutputs.value).forEach((key) => {
-			chartProxy.addChart([key]);
+			state.chartSettings = addMultiVariableChartSetting(
+				state.chartSettings ?? [],
+				ChartSettingType.VARIABLE_COMPARISON,
+				[key]
+			);
 		});
-	} else if (_.isEmpty(state.chartConfigs)) {
-		chartProxy.addChart();
+		emit('update-state', state);
 	}
 
 	const summaryData = await getRunResultCSV(runId, 'result_summary.csv');
@@ -137,7 +141,8 @@ const groupedInterventionOutputs = computed(() =>
 );
 
 const preparedCharts = computed(() => {
-	if (!selectedRunId.value) return [];
+	const charts: Record<string, any> = {};
+	if (!selectedRunId.value) return charts;
 	const result = runResults.value[selectedRunId.value];
 	const resultSummary = runResultsSummary.value[selectedRunId.value];
 	const reverseMap: Record<string, string> = {};
@@ -145,8 +150,9 @@ const preparedCharts = computed(() => {
 		reverseMap[`${pyciemssMap[key]}_mean`] = key;
 	});
 
-	return props.node.state.chartConfigs.map((config) => {
+	chartSettings.value.forEach((setting) => {
 		// If only one variable is selected, show the baseline forecast
+		const config = setting.selectedVariables;
 		const showBaseLine = config.length === 1 && Boolean(props.node.state.baseForecastId);
 
 		const options: ForecastChartOptions = {
@@ -173,7 +179,7 @@ const preparedCharts = computed(() => {
 		const chart = createForecastChart(
 			{
 				data: result,
-				variables: config.map((d) => pyciemssMap[d]),
+				variables: setting.selectedVariables.map((d) => pyciemssMap[d]),
 				timeField: 'timepoint_id',
 				groupField: 'sample_id'
 			},
@@ -192,8 +198,9 @@ const preparedCharts = computed(() => {
 				}
 			});
 		}
-		return chart;
+		charts[setting.id] = chart;
 	});
+	return charts;
 });
 
 const isFinished = (state: ProgressState) =>
