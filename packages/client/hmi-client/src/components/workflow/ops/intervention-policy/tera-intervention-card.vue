@@ -29,6 +29,7 @@
 				<tera-input-number
 					auto-width
 					:model-value="intervention.staticInterventions[0].timestep"
+					:invalidate-negative="true"
 					@update:model-value="(val) => onUpdateThreshold(val, 0)"
 					placeholder="timestep"
 				/>
