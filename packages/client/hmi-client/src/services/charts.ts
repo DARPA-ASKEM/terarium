@@ -456,14 +456,16 @@ export function createForecastChart(
 			]
 		};
 
+		let dateExpression;
+		if (options.dateOptions) {
+			dateExpression = formatDateLabelFn(options.dateOptions.startDate, 'datum.value', options.dateOptions.dateFormat);
+		}
 		const encodingX = {
 			field: layer.timeField,
 			type: 'quantitative',
 			axis: {
 				...xaxis,
-				labelExpr: options.dateOptions
-					? formatDateLabelFn(options.dateOptions.startDate, 'datum.value', options.dateOptions.dateFormat)
-					: 'datum.value'
+				labelExpr: dateExpression
 			}
 		};
 		const encoding = {
