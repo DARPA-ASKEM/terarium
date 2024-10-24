@@ -1,4 +1,4 @@
-import { Model } from '@/types/Types';
+import { CalendarDateType } from '@/types/common';
 
 export function formatDdMmmYyyy(timestamp) {
 	return new Date(timestamp).toLocaleDateString('en-US', {
@@ -74,13 +74,12 @@ export function sortDatesDesc(a, b) {
 export function sortDatesAsc(a, b) {
 	return new Date(a).getTime() - new Date(b).getTime();
 }
-
 export interface CalendarSettings {
-	view: 'date' | 'month' | 'year';
+	view: CalendarDateType;
 	format: string;
 }
 
-export function getTimestepFromDateRange(startDate: Date, endDate: Date, stepType: 'date' | 'month' | 'year'): number {
+export function getTimestepFromDateRange(startDate: Date, endDate: Date, stepType: CalendarDateType): number {
 	startDate = new Date(startDate);
 	const diffInMilliseconds = endDate.getTime() - startDate.getTime();
 
@@ -95,7 +94,7 @@ export function getTimestepFromDateRange(startDate: Date, endDate: Date, stepTyp
 	}
 }
 
-export function getEndDateFromTimestep(startDate: Date, timestep: number, stepType: 'date' | 'month' | 'year'): Date {
+export function getEndDateFromTimestep(startDate: Date, timestep: number, stepType: CalendarDateType): Date {
 	const endDate = new Date(startDate);
 
 	switch (stepType) {
@@ -112,28 +111,4 @@ export function getEndDateFromTimestep(startDate: Date, timestep: number, stepTy
 	}
 
 	return endDate;
-}
-
-export function getCalendarSettingsFromModel(model: Model): { view: 'date' | 'month' | 'year'; format: string } {
-	const units = model?.semantics?.ode?.time?.units?.expression;
-	let view;
-	let format;
-
-	switch (units) {
-		case 'months':
-			view = 'month';
-			format = 'MM, yy';
-			break;
-		case 'years':
-			view = 'year';
-			format = 'yy';
-			break;
-		case 'days':
-		default:
-			view = 'date';
-			format = 'MM dd, yy';
-			break;
-	}
-
-	return { view, format };
 }

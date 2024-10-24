@@ -45,7 +45,7 @@ import {
 	DataArray
 } from '@/services/models/simulation-service';
 import { getModelConfigurationById, createModelConfiguration } from '@/services/model-configurations';
-import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
+import { getModelByModelConfigurationId, getUnitsFromModelParts, getVegaDateOptions } from '@/services/model';
 import { setupCsvAsset } from '@/services/calibrate-workflow';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
@@ -86,6 +86,7 @@ const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0].value?.[0]);
 
 const model = ref<Model | null>(null);
+const modelConfiguration = ref<ModelConfiguration | null>(null);
 const modelVarUnits = ref<{ [key: string]: string }>({});
 
 const runResult = ref<DataArray>([]);
@@ -180,6 +181,7 @@ const preparedCharts = computed(() => {
 
 	// Need to get the dataset's time field
 	const datasetTimeField = state.timestampColName;
+	const dateOptions = getVegaDateOptions(model.value, modelConfiguration.value);
 
 	const variableCharts = selectedVariableSettings.value.map((setting) => {
 		const variable = setting.selectedVariables[0];
@@ -215,11 +217,12 @@ const preparedCharts = computed(() => {
 				xAxisTitle: modelVarUnits.value._time || 'Time',
 				yAxisTitle: modelVarUnits.value[variable] || '',
 				colorscheme: ['#AAB3C6', '#1B8073'],
-				...chartSize
+				...chartSize,
+				dateOptions
 			}
 		);
 		applyForecastChartAnnotations(chart, annotations);
-		chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[variable]));
+		chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[variable], { dateOptions }));
 
 		return chart;
 	});
@@ -246,10 +249,11 @@ const preparedCharts = computed(() => {
 				xAxisTitle: modelVarUnits.value._time || 'Time',
 				yAxisTitle: modelVarUnits.value[key] || '',
 				colorscheme: ['#AAB3C6', '#1B8073'],
-				...chartSize
+				...chartSize,
+				dateOptions
 			}
 		);
-		chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
+		chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key], { dateOptions }));
 		return chart;
 	});
 
@@ -326,6 +330,7 @@ watch(
 		if (!input.value) return;
 
 		const id = input.value[0];
+		modelConfiguration.value = await getModelConfigurationById(id);
 		model.value = await getModelByModelConfigurationId(id);
 		modelVarUnits.value = getUnitsFromModelParts(model.value as Model);
 	},

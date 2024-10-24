@@ -208,3 +208,9 @@ export const programmingLanguageOptions = (): { name: string; value: string }[] 
 			name: lang && `${lang[0].toUpperCase() + lang.slice(1)} (${ProgrammingLanguageVersion[lang]})`,
 			value: ProgrammingLanguageVersion[lang]
 		}));
+
+export enum CalendarDateType {
+	DATE = 'date',
+	MONTH = 'month',
+	YEAR = 'year'
+}

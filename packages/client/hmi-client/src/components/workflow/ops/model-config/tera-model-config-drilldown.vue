@@ -250,7 +250,7 @@ import {
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { configureModelFromDataset, configureModelFromDocument } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
-import { getMMT, getModel, getModelConfigurationsForModel } from '@/services/model';
+import { getMMT, getModel, getModelConfigurationsForModel, getCalendarSettingsFromModel } from '@/services/model';
 import {
 	createModelConfiguration,
 	getArchive,
@@ -278,7 +278,7 @@ import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { useProjects } from '@/composables/project';
 import TeraPdfPanel from '@/components/widgets/tera-pdf-panel.vue';
 import Calendar from 'primevue/calendar';
-import { CalendarSettings, getCalendarSettingsFromModel } from '@/utils/date';
+import { CalendarSettings } from '@/utils/date';
 import {
 	blankModelConfig,
 	isModelConfigsEqual,
