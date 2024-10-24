@@ -76,10 +76,12 @@
 								/>
 							</div>
 						</div>
-						<template v-if="interventionPolicy">
+						<template v-if="interventionPolicy && model">
 							<h4>Intervention Policies</h4>
 							<tera-intervention-summary-card
 								v-for="(intervention, index) in interventionPolicy.interventions"
+								:start-date="modelConfiguration?.temporalContext"
+								:calendar-settings="getCalendarSettingsFromModel(model)"
 								:intervention="intervention"
 								:key="index"
 							/>

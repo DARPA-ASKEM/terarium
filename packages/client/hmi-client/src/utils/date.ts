@@ -162,3 +162,20 @@ export function dateTypeToVegaDate(type: CalendarDateType) {
 			return 'yearmonthdate';
 	}
 }
+
+export function getTimePointString(timePoint: number, startDate?: Date, calendarSettings?: CalendarSettings): string {
+	if (!startDate) {
+		return `${timePoint.toString()} day.`;
+	}
+
+	const view = calendarSettings?.view ?? CalendarDateType.DATE;
+	const date = getEndDateFromTimestep(startDate, timePoint, view);
+
+	const options: Intl.DateTimeFormatOptions = {
+		year: 'numeric',
+		...(view === CalendarDateType.DATE && { month: 'long', day: 'numeric' }),
+		...(view === CalendarDateType.MONTH && { month: 'long' })
+	};
+
+	return `${date.toLocaleDateString('default', options)}.`;
+}

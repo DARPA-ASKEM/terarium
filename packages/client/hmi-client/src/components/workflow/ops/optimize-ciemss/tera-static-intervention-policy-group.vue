@@ -92,7 +92,7 @@
 							v-if="modelConfiguration"
 							label="Start time"
 							:start-date="modelConfiguration.temporalContext"
-							:calendar-settings="getCalendarSettingsFromModel(model)"
+							:calendar-settings="calendarSettings"
 							v-model="knobs.startTime"
 							@update:model-value="$emit('update-self', knobs)"
 						/>
@@ -100,7 +100,7 @@
 							v-if="modelConfiguration"
 							label="End time"
 							:start-date="modelConfiguration.temporalContext"
-							:calendar-settings="getCalendarSettingsFromModel(model)"
+							:calendar-settings="calendarSettings"
 							v-model="knobs.endTime"
 							@update:model-value="$emit('update-self', knobs)"
 						/>
@@ -108,7 +108,7 @@
 							v-if="modelConfiguration"
 							label="Initial guess"
 							:start-date="modelConfiguration.temporalContext"
-							:calendar-settings="getCalendarSettingsFromModel(model)"
+							:calendar-settings="calendarSettings"
 							v-model="knobs.startTimeGuess"
 							@update:model-value="$emit('update-self', knobs)"
 						/>
@@ -121,7 +121,9 @@
 				<li class="list-position-inside" v-for="(staticIntervention, index) in staticInterventions" :key="index">
 					Set the <strong>{{ staticIntervention.type }}</strong> <strong>{{ staticIntervention.appliedTo }}</strong> to
 					the value of <strong>{{ staticIntervention.value }}</strong> day at start time
-					<strong>{{ staticIntervention.timestep }}</strong> day.
+					<strong>{{
+						getTimePointString(staticIntervention.timestep, modelConfiguration.temporalContext, calendarSettings)
+					}}</strong>
 				</li>
 			</ul>
 		</template>
@@ -141,13 +143,15 @@ import {
 } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
 import TeraSignalBars from '@/components/widgets/tera-signal-bars.vue';
 import teraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
-import { getCalendarSettingsFromModel } from '@/utils/date';
+import { getCalendarSettingsFromModel, getTimePointString } from '@/utils/date';
 
 const props = defineProps<{
 	model: Model;
 	modelConfiguration: ModelConfiguration;
 	config: InterventionPolicyGroupForm;
 }>();
+
+const calendarSettings = getCalendarSettingsFromModel(props.model);
 
 const emit = defineEmits(['update-self']);
 

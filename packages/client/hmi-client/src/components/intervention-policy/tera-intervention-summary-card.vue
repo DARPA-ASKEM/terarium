@@ -5,8 +5,8 @@
 		<ul>
 			<li v-for="(staticIntervention, index) in intervention.staticInterventions" :key="`static-${index}`">
 				Set {{ staticIntervention.type }} <strong>{{ staticIntervention.appliedTo }}</strong> to
-				<strong>{{ staticIntervention.value }}</strong> starting at <strong>{{ staticIntervention.timestep }}</strong
-				>&nbsp;day.
+				<strong>{{ staticIntervention.value }}</strong> starting at
+				<strong>{{ getTimePointString(staticIntervention.timestep, props.startDate, props.calendarSettings) }}</strong>
 			</li>
 			<li v-for="(dynamicIntervention, index) in intervention.dynamicInterventions" :key="`dynamic-${index}`">
 				Set {{ dynamicIntervention.type }} <strong>{{ dynamicIntervention.appliedTo }}</strong> to
@@ -22,10 +22,13 @@
 
 <script setup lang="ts">
 import { Intervention } from '@/types/Types';
+import { CalendarSettings, getTimePointString } from '@/utils/date';
 import { isEmpty } from 'lodash';
 
-defineProps<{
+const props = defineProps<{
 	intervention: Intervention;
+	startDate?: Date;
+	calendarSettings?: CalendarSettings;
 }>();
 </script>
 
