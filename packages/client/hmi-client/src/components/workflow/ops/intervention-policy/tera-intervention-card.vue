@@ -28,8 +28,8 @@
 				Starting at day
 				<tera-input-number
 					auto-width
+					invalidate-negative
 					:model-value="intervention.staticInterventions[0].timestep"
-					:invalidate-negative="true"
 					@update:model-value="(val) => onUpdateThreshold(val, 0)"
 					placeholder="timestep"
 				/>
