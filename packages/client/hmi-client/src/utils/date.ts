@@ -1,7 +1,4 @@
-import { DateOptions } from '@/services/charts';
-import { getTimeUnits } from '@/services/model';
 import { CalendarDateType } from '@/types/common';
-import { Model, ModelConfiguration } from '@/types/Types';
 
 export function formatDdMmmYyyy(timestamp) {
 	return new Date(timestamp).toLocaleDateString('en-US', {
@@ -114,41 +111,6 @@ export function getEndDateFromTimestep(startDate: Date, timestep: number, stepTy
 	}
 
 	return endDate;
-}
-
-export function getCalendarSettingsFromModel(model: Model): { view: CalendarDateType; format: string } {
-	const units = model?.semantics?.ode?.time?.units?.expression;
-	const view = units;
-	let format;
-
-	switch (units) {
-		case CalendarDateType.MONTH:
-			format = 'MM, yy';
-			break;
-		case CalendarDateType.YEAR:
-			format = 'yy';
-			break;
-		case CalendarDateType.DATE:
-		default:
-			format = 'MM dd, yy';
-			break;
-	}
-
-	return { view, format };
-}
-
-export function getVegaDateOptions(
-	model: Model | null,
-	modelConfiguration: ModelConfiguration | null
-): DateOptions | undefined {
-	let dateOptions;
-	if (model && modelConfiguration && modelConfiguration.temporalContext) {
-		dateOptions = {
-			dateFormat: dateTypeToVegaDate(getTimeUnits(model)),
-			startDate: new Date(modelConfiguration.temporalContext)
-		};
-	}
-	return dateOptions;
 }
 
 export function dateTypeToVegaDate(type: CalendarDateType) {

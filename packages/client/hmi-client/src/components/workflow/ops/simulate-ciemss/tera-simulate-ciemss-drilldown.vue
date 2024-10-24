@@ -225,7 +225,12 @@ import {
 	DataArray,
 	CiemssMethodOptions
 } from '@/services/models/simulation-service';
-import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
+import {
+	getModelByModelConfigurationId,
+	getUnitsFromModelParts,
+	getCalendarSettingsFromModel,
+	getVegaDateOptions
+} from '@/services/model';
 import { chartActionsProxy, nodeMetadata } from '@/components/workflow/util';
 
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
@@ -249,7 +254,6 @@ import { flattenInterventionData, getInterventionPolicyById } from '@/services/i
 import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-intervention-summary-card.vue';
 import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
-import { getCalendarSettingsFromModel, getVegaDateOptions } from '@/utils/date';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import TeraChartControl from '../../tera-chart-control.vue';
 import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';

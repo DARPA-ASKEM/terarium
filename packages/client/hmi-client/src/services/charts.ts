@@ -3,6 +3,7 @@ import { isEmpty, pick } from 'lodash';
 import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
 import type { ChartAnnotation, FunmanInterval } from '@/types/Types';
+import { CalendarDateType } from '@/types/common';
 import { flattenInterventionData } from './intervention-policy';
 import type { FunmanBox, FunmanConstraintsResponse } from './models/funman-service';
 
@@ -21,7 +22,7 @@ interface BaseChartOptions {
 }
 
 export interface DateOptions {
-	dateFormat: 'year' | 'yearmonth' | 'yearmonthdate';
+	dateFormat: CalendarDateType;
 	startDate: Date;
 }
 export interface ForecastChartOptions extends BaseChartOptions {
@@ -54,19 +55,15 @@ export interface InterventionMarkerOptions {
 	dateOptions?: DateOptions;
 }
 
-function transformDateFormatFn(
-	date: Date,
-	datum: string,
-	type: 'year' | 'yearmonth' | 'yearmonthdate' = 'yearmonthdate'
-): string {
+function formatDateLabelFn(date: Date, datum: string, type: CalendarDateType): string {
 	switch (type) {
-		case 'year':
-			return `datetime(${date.getFullYear()} + ${datum}, ${date.getMonth()}, ${date.getDate()})`;
-		case 'yearmonth':
-			return `datetime(${date.getFullYear()} + floor(${datum} / 12), ${date.getMonth()} + (${datum} % 12) , ${date.getDate()})`;
-		case 'yearmonthdate':
+		case CalendarDateType.YEAR:
+			return `timeFormat(datetime(${date.getFullYear()} + ${datum}, ${date.getMonth()}, ${date.getDate()}), '%Y')`;
+		case CalendarDateType.MONTH:
+			return `timeFormat(datetime(${date.getFullYear()} + floor(${datum} / 12), ${date.getMonth()} + (${datum} % 12) , ${date.getDate()}), '%b %Y')`;
+		case CalendarDateType.DATE:
 		default:
-			return `datetime(${date.getFullYear()}, ${date.getMonth()}, ${date.getDate()} + ${datum})`;
+			return `timeFormat(datetime(${date.getFullYear()}, ${date.getMonth()}, ${date.getDate()} + ${datum}), '%b %d, %Y')`;
 	}
 }
 
@@ -459,24 +456,16 @@ export function createForecastChart(
 			]
 		};
 
-		if (options.dateOptions) {
-			header.transform.push({
-				calculate: transformDateFormatFn(
-					options.dateOptions.startDate,
-					'datum.timepoint_id',
-					options.dateOptions.dateFormat
-				),
-				as: 'date'
-			});
-		}
-
-		const encodingX = options.dateOptions
-			? {
-					field: 'date',
-					type: 'temporal',
-					axis: { ...xaxis, timeUnit: options.dateOptions.dateFormat }
-				}
-			: { field: layer.timeField, type: 'quantitative', axis: xaxis };
+		const encodingX = {
+			field: layer.timeField,
+			type: 'quantitative',
+			axis: {
+				...xaxis,
+				labelExpr: options.dateOptions
+					? formatDateLabelFn(options.dateOptions.startDate, 'datum.value', options.dateOptions.dateFormat)
+					: 'datum.value'
+			}
+		};
 		const encoding = {
 			x: encodingX,
 			y: { field: 'valueField', type: 'quantitative', axis: yaxis },
@@ -549,16 +538,16 @@ export function createForecastChart(
 			return tip;
 		});
 
-		const timepointTip = options.dateOptions
-			? { field: 'date', type: 'temporal', timeUnit: options.dateOptions.dateFormat }
-			: {
-					field: statisticsLayer.timeField,
-					type: 'quantitative'
-				};
 		Object.assign(tooltipSubLayer.encoding, {
 			opacity: { value: 0.00000001 },
 			strokeWidth: { value: 16 },
-			tooltip: [timepointTip, ...(tooltipContent || [])]
+			tooltip: [
+				{
+					field: statisticsLayer.timeField,
+					type: 'quantitative'
+				},
+				...(tooltipContent || [])
+			]
 		});
 		layerSpec.layer.push(tooltipSubLayer);
 
@@ -782,26 +771,16 @@ export function createInterventionChartMarkers(
 	data: ReturnType<typeof flattenInterventionData>,
 	options: InterventionMarkerOptions = { hideLabels: false, labelXOffset: 5 }
 ): any[] {
-	const transformFn = options.dateOptions
-		? {
-				calculate: transformDateFormatFn(options.dateOptions.startDate, 'datum.time', options.dateOptions.dateFormat),
-				as: 'date'
-			}
-		: {};
-	const encodingX = options.dateOptions ? { field: 'date', type: 'temporal' } : { field: 'time', type: 'quantitative' };
-
 	const markerSpec: any = {
 		data: { values: data },
-		transform: [transformFn],
 		mark: { type: 'rule', strokeDash: [4, 4], color: 'black' },
 		encoding: {
-			x: encodingX
+			x: { field: 'time', type: 'quantitative' }
 		}
 	};
 	if (options.hideLabels) return [markerSpec];
 	const labelSpec = {
 		data: { values: data },
-		transform: [transformFn],
 		mark: {
 			type: 'text',
 			align: 'left',
@@ -810,7 +789,7 @@ export function createInterventionChartMarkers(
 			dy: -10
 		},
 		encoding: {
-			x: encodingX,
+			x: { field: 'time', type: 'quantitative' },
 			y: { field: 'value', type: 'quantitative' },
 			text: { field: 'name', type: 'nominal' }
 		}

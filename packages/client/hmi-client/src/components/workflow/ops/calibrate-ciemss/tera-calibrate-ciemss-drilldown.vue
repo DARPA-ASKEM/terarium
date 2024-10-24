@@ -524,7 +524,7 @@ import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-i
 import { getParameters } from '@/model-representation/service';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
 import { getDataset } from '@/services/dataset';
-import { getCalendarSettingsFromModel, getVegaDateOptions } from '@/utils/date';
+import { getCalendarSettingsFromModel, getVegaDateOptions } from '@/services/model';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults, getErrorData } from './calibrate-utils';
 

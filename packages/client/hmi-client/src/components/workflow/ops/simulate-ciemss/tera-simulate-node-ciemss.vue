@@ -26,7 +26,7 @@ import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { getRunResultCSV, getSimulation, parsePyCiemssMap, DataArray } from '@/services/models/simulation-service';
-import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
+import { getModelByModelConfigurationId, getUnitsFromModelParts, getVegaDateOptions } from '@/services/model';
 import { logger } from '@/utils/logger';
 import { chartActionsProxy, nodeOutputLabel } from '@/components/workflow/util';
 
@@ -50,7 +50,6 @@ import {
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import { useClientEvent } from '@/composables/useClientEvent';
 import { getModelConfigurationById } from '@/services/model-configurations';
-import { getVegaDateOptions } from '@/utils/date';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
 import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 

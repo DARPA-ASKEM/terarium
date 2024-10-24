@@ -45,7 +45,7 @@ import {
 	DataArray
 } from '@/services/models/simulation-service';
 import { getModelConfigurationById, createModelConfiguration } from '@/services/model-configurations';
-import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
+import { getModelByModelConfigurationId, getUnitsFromModelParts, getVegaDateOptions } from '@/services/model';
 import { setupCsvAsset } from '@/services/calibrate-workflow';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
@@ -74,7 +74,6 @@ import { useProjects } from '@/composables/project';
 import { fetchAnnotations } from '@/services/chart-settings';
 import { useClientEvent } from '@/composables/useClientEvent';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
-import { getVegaDateOptions } from '@/utils/date';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { CalibrationOperationCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults } from './calibrate-utils';
