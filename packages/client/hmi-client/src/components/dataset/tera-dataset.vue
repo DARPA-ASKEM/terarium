@@ -1,14 +1,13 @@
 <template>
 	<tera-asset
-		v-bind="$attrs"
-		:id="assetId"
-		:name="dataset?.name"
+		show-table-of-contents
 		:feature-config="featureConfig"
-		:is-naming-asset="isRenaming"
+		:id="assetId"
 		:is-loading="isDatasetLoading"
+		:is-naming-asset="isRenaming"
+		:name="dataset?.name"
 		:overflow-hidden="selectedTabIndex === 1"
 		:selected-tab-index="selectedTabIndex"
-		show-table-of-contents
 		@close-preview="emit('close-preview')"
 		@tab-change="(e) => (selectedTabIndex = e.index)"
 	>
@@ -21,9 +20,7 @@
 				@keyup.esc="updateDatasetName"
 				auto-focus
 			/>
-			<div v-if="isRenaming" class="flex flex-nowrap ml-1 mr-3">
-				<Button icon="pi pi-check" rounded text @click="updateDatasetName" />
-			</div>
+			<Button v-if="isRenaming" icon="pi pi-check" rounded text @click="updateDatasetName" />
 		</template>
 		<template #edit-buttons v-if="!featureConfig.isPreview">
 			<Button
@@ -32,110 +29,53 @@
 				@click="toggleOptionsMenu"
 			/>
 			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" popup :pt="optionsMenuPt" />
-			<div class="btn-group">
+			<div class="ml-auto flex gap-2">
 				<tera-asset-enrichment :asset-type="AssetType.Dataset" :assetId="assetId" @finished-job="fetchDataset" />
 				<Button label="Reset" severity="secondary" outlined @click="reset" />
 				<Button label="Save as..." severity="secondary" outlined @click="showSaveModal = true" disabled />
 				<Button label="Save" :disabled="isSaved" @click="updateDatasetContent" />
 			</div>
 		</template>
-		<section>
-			<div class="pl-4 ml-3 pt-1 pb-3">
-				<p>
-					<span class="font-semibold inline-block w-10rem">Dataset ID</span>
-					<code class="inline">{{ datasetInfo.id }}</code>
-				</p>
-				<p>
-					<span class="font-semibold inline-block w-10rem">Dataset filenames</span>
-					{{ datasetInfo.fileNames }}
-				</p>
-			</div>
-			<Accordion multiple :active-index="[0, 1, 2, 3, 4]">
-				<AccordionTab header="Description">
-					<section class="description">
-						<tera-show-more-text :text="description" :lines="5" />
-						<template v-if="datasetType">
-							<label class="p-text-secondary">Dataset type</label>
-							<p>{{ datasetType }}</p>
-						</template>
-						<template v-if="author">
-							<label class="p-text-secondary">Author</label>
-							<p>{{ author }}</p>
-						</template>
-					</section>
-				</AccordionTab>
-				<!-- <AccordionTab header="Charts">TBD</AccordionTab> -->
-				<AccordionTab header="Column information" v-if="!isClimateData && !isClimateSubset">
-					<ul>
-						<li v-for="(column, index) in columnInformation" :key="index">
-							<tera-column-info
-								:column="column"
-								:feature-config="{ isPreview: false }"
-								@update-column="updateColumn(index, $event.key, $event.value)"
-							/>
-						</li>
-					</ul>
-				</AccordionTab>
-				<template v-else-if="dataset?.metadata">
-					<AccordionTab header="Preview">
-						<img :src="image" alt="" />
-						<tera-carousel
-							v-if="isClimateSubset && dataset.metadata?.preview"
-							:labels="dataset.metadata.preview.map(({ year }) => year)"
-						>
-							<div v-for="item in dataset.metadata.preview" :key="item">
-								<img :src="item.image" alt="Preview" />
-							</div>
-						</tera-carousel>
-					</AccordionTab>
-					<AccordionTab header="Metadata">
-						<div v-for="(value, key) in dataset.metadata" :key="key" class="row">
-							<template v-if="key.toString() !== 'preview'">
-								<div class="col key">
-									{{ snakeToCapitalized(key.toString()) }}
-								</div>
-								<div class="col">
-									<ul v-if="typeof value === 'object'">
-										<li v-for="(item, index) in Object.values(value)" :key="index">
-											{{ item }}
-										</li>
-									</ul>
-									<ul v-else-if="Array.isArray(value)">
-										<li v-for="(item, index) in value" :key="index">
-											{{ item }}
-										</li>
-									</ul>
-									<template v-else>
-										{{ value }}
-									</template>
-								</div>
-							</template>
-						</div>
-					</AccordionTab>
-				</template>
-				<AccordionTab header="Data" v-if="!isEmpty(datasetInfo.fileNames)">
-					<tera-progress-spinner v-if="!rawContent" :font-size="2" is-centered />
-					<tera-dataset-datatable v-else :rows="100" :raw-content="rawContent" />
-				</AccordionTab>
-			</Accordion>
-		</section>
+		<Accordion multiple :active-index="currentActiveIndexes">
+			<AccordionTab header="Description">
+				<section class="description">
+					<label class="p-text-secondary">Dataset ID</label>
+					<p>{{ dataset?.id }}</p>
+					<label class="p-text-secondary">Files names</label>
+					<p>{{ dataset?.fileNames?.toString() }}</p>
+					<label class="p-text-secondary">Description</label>
+					<tera-show-more-text :text="description" :lines="5" />
+					<template v-if="datasetType">
+						<label class="p-text-secondary">Dataset type</label>
+						<p>{{ datasetType }}</p>
+					</template>
+					<template v-if="author">
+						<label class="p-text-secondary">Author</label>
+						<p>{{ author }}</p>
+					</template>
+				</section>
+			</AccordionTab>
+			<AccordionTab header="Column information">
+				<tera-column-info
+					v-for="(column, index) in columnInformation"
+					:key="index"
+					class="column-info"
+					:column="column"
+					:feature-config="{ isPreview: false }"
+					@update-column="updateColumn(index, $event.key, $event.value)"
+				/>
+			</AccordionTab>
+			<AccordionTab header="Data" v-if="!isEmpty(dataset?.fileNames)">
+				<tera-progress-spinner v-if="!rawContent" :font-size="2" is-centered />
+				<tera-dataset-datatable v-else :rows="100" :raw-content="rawContent" />
+			</AccordionTab>
+		</Accordion>
 	</tera-asset>
-	<!-- TODO: Add create dataset support to save modal -->
-	<!---<tera-save-asset-modal
-		v-if="transientDataset"
-		:initial-name="transientDataset.name"
-		:is-visible="showSaveModal"
-		:asset="transientDataset"
-		:asset-type="AssetType.Dataset"
-		@close-modal="showSaveModal = false"
-		@on-save="showSaveModal = false"
-	/> -->
 </template>
 
 <script setup lang="ts">
 import { computed, PropType, ref, watch } from 'vue';
 import { cloneDeep, isEmpty, isEqual } from 'lodash';
-import { snakeToCapitalized } from '@/utils/text';
 import {
 	downloadRawFile,
 	getClimateDataset,
@@ -156,12 +96,10 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import { logger } from '@/utils/logger';
-import TeraCarousel from '@/components/widgets/tera-carousel.vue';
 import TeraAssetEnrichment from '@/components/widgets/tera-asset-enrichment.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraColumnInfo from '@/components/dataset/tera-column-info.vue';
-// import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 
 const props = defineProps({
 	assetId: {
@@ -180,6 +118,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close-preview']);
 
+const currentActiveIndexes = ref([1, 2, 3, 4]);
 const dataset = ref<Dataset | null>(null);
 const transientDataset = ref<Dataset | null>(null);
 const newName = ref('');
@@ -246,20 +185,6 @@ const columnInformation = computed(
 		})) ?? []
 );
 
-const datasetInfo = computed(() => {
-	const information = {
-		id: '',
-		fileNames: ''
-	};
-	if (dataset.value) {
-		information.id = dataset.value.id ?? '';
-		information.fileNames = dataset.value.fileNames?.join(', ') ?? '';
-	}
-	return information;
-});
-
-const isClimateData = computed(() => dataset.value?.esgfId);
-const isClimateSubset = computed(() => dataset.value?.metadata?.format === 'netcdf');
 const datasetType = computed(() => card.value?.DATASET_TYPE ?? '');
 
 const image = ref<string | undefined>(undefined);
@@ -294,7 +219,7 @@ function updateColumn(index: number, key: string, value: any) {
 		if (!transientDataset.value.columns[index]?.grounding?.identifiers) {
 			transientDataset.value.columns[index].grounding = { identifiers: [] };
 		}
-		// Replaces first element of identifiers array
+		// Replaces first element of identifiers' array
 		transientDataset.value.columns[index].grounding?.identifiers?.shift();
 		transientDataset.value.columns[index].grounding?.identifiers?.unshift(value);
 	} else {
@@ -306,10 +231,6 @@ const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
 };
 
-/**
- * Downloads the first file of the dataset from S3 directly
- * @param dataset
- */
 async function downloadFileFromDataset(): Promise<PresignedURL | null> {
 	if (dataset.value) {
 		const { id, fileNames } = dataset.value;
@@ -329,7 +250,7 @@ async function updateDatasetContent() {
 	await updateDataset(transientDataset.value);
 	logger.info('Saved changes.');
 	await useProjects().refresh();
-	fetchDataset();
+	await fetchDataset();
 }
 
 async function updateDatasetName() {
@@ -395,45 +316,18 @@ watch(
 </script>
 
 <style scoped>
-.column-information-table {
-	border: 1px solid var(--surface-border-light);
-}
-.btn-group {
-	display: flex;
-	align-items: center;
-	gap: var(--gap-small);
-	margin-left: auto;
-}
-
-li {
-	padding-bottom: var(--gap-2);
+.column-info {
 	border-bottom: 1px solid var(--surface-border);
+	margin-bottom: var(--gap-3);
+	padding-bottom: var(--gap-3);
 }
 
 .description {
-	display: flex;
-	flex-direction: column;
-	gap: var(--gap-small);
-	margin-left: 1.5rem;
-}
+	margin-left: var(--gap-6);
 
-.row {
-	display: flex;
-	justify-content: space-between;
-	border-bottom: 1px solid var(--surface-border);
-	padding: var(--gap-small) 0;
-}
-
-.key {
-	font-weight: bold;
-}
-
-.col {
-	flex: 1;
-}
-
-/* Add gaps beneath open accordions */
-:deep(.p-accordion-content) {
-	padding-bottom: var(--gap-6) !important;
+	label + * {
+		margin-bottom: var(--gap-4);
+		margin-top: var(--gap-2);
+	}
 }
 </style>

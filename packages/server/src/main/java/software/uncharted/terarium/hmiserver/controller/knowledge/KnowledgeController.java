@@ -638,9 +638,9 @@ public class KnowledgeController {
 	}
 
 	/**
-	 * Profile a dataset
+	 * Enrich a dataset metadata
 	 *
-	 * @param datasetId  (String): The ID of the dataset to profile
+	 * @param datasetId  (DocumentAsset): The ID of the dataset to profile
 	 * @param documentId (String): The ID of the document to profile
 	 * @return the profiled dataset
 	 */
@@ -686,7 +686,6 @@ public class KnowledgeController {
 		final Dataset dataset = datasetService.getAsset(datasetId, permission).orElseThrow();
 
 		if (dataset.getFileNames() == null || dataset.getFileNames().isEmpty()) {
-			log.warn("There are no files associated with this dataset");
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("dataset.files.not-found"));
 		}
 		final String filename = dataset.getFileNames().get(0);

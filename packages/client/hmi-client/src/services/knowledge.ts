@@ -3,6 +3,7 @@ import { AxiosResponse } from 'axios';
 import { extractionStatusUpdateHandler, subscribe } from '@/services/ClientEventService';
 import { type Dataset, type DocumentAsset, type Model, ClientEventType } from '@/types/Types';
 import { logger } from '@/utils/logger';
+import { isEmpty } from 'lodash';
 
 /**
  * Define the request type
@@ -39,18 +40,11 @@ export const equationsToAMR = async (request: EquationsToAMRRequest): Promise<st
 	return null;
 };
 
-/**
- * Given a dataset, enrich its metadata
- * Returns a runId used to poll for result
- */
-export const profileDataset = async (datasetId: Dataset['id'], documentId: DocumentAsset['id'] = '') => {
-	let response: any;
-	if (documentId) {
-		response = await API.post(`/knowledge/profile-dataset/${datasetId}?document-id=${documentId}`);
-	} else {
-		response = await API.post(`/knowledge/profile-dataset/${datasetId}`);
-	}
-	return response.data.id;
+/** Given a dataset, enrich its metadata */
+export const enrichDataset = async (datasetId: Dataset['id'], documentId: DocumentAsset['id'] = ''): Promise<void> => {
+	let url = `/knowledge/profile-dataset/${datasetId}`;
+	if (!isEmpty(documentId)) url += `?document-id=${documentId}`;
+	await API.post(url);
 };
 
 /** Extract text and artifacts from a PDF document */
