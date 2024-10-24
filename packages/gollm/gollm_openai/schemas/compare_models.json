@@ -66,7 +66,7 @@
     "summary": {
       "type": "string",
       "description": "A short paragraph that compares and summaries (1) common features across all the models, (2) strengths and weaknesses unique to each model, and (3) the high-level differences between each pair of models. There should be at least three sentences focused on each of these three points. The discussion should be based on the structural and metadata comparison if available. Mention the intended use cases of each model."
-    },
+    }
   },
   "required": [
     "title",

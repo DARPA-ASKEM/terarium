@@ -15,6 +15,7 @@
 
             .ql-picker {
                 .ql-picker-label {
+										font-family: var(--font-family);
                     border: 0 none;
                     color: $editorToolbarIconColor;
 
@@ -80,6 +81,8 @@
         }
 
         .ql-editor {
+					  font-family: var(--font-family);
+						font-size: var(--font-size);
             background: $inputBg;
             color: $inputTextColor;
             border-bottom-right-radius: $borderRadius;

@@ -26,11 +26,7 @@
 					</span>
 				</template>
 			</Toolbar>
-			<figure ref="graphElement" class="graph-element">
-				<tera-progress-spinner v-if="!renderer" class="spinner" is-centered :font-size="2">
-					Loading...
-				</tera-progress-spinner>
-			</figure>
+			<figure ref="graphElement" class="graph-element"></figure>
 			<ul class="legend" v-if="!isEmpty(graphLegendLabels)">
 				<li v-for="(label, index) in graphLegendLabels" :key="index">
 					<div class="legend-circle" :style="`background: ${graphLegendColors[index]}`" />
@@ -38,11 +34,12 @@
 				</li>
 			</ul>
 		</tera-resizable-panel>
-		<figure v-else-if="model" ref="graphElement" class="graph-element preview" :key="`preview_${model.id}`">
-			<tera-progress-spinner v-if="!renderer" class="spinner" is-centered :font-size="2">
-				Loading...
-			</tera-progress-spinner>
-		</figure>
+		<figure v-else-if="model" ref="graphElement" class="graph-element preview" :key="`preview_${model.id}`"></figure>
+
+		<tera-progress-spinner v-if="mmt.templates.length === 0" class="spinner" is-centered :font-size="2">
+			Loading...
+		</tera-progress-spinner>
+
 		<tera-stratified-matrix-modal
 			v-if="selectedTransitionId"
 			:id="selectedTransitionId"
@@ -51,9 +48,10 @@
 			:stratified-matrix-type="StratifiedMatrix.Rates"
 			@close-modal="selectedTransitionId = ''"
 		/>
-		<template #tooltip-content v-if="isStratified && !isEmpty(hoveredTransitionId)">
+		<template #tooltip-content>
 			<tera-stratified-matrix-preview
 				ref="tooltipContentRef"
+				v-if="isStratified && !isEmpty(hoveredTransitionId)"
 				:mmt="mmt"
 				:mmt-params="mmtParams"
 				:id="hoveredTransitionId"
