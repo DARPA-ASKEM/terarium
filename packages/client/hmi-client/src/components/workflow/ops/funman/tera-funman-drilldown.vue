@@ -874,11 +874,7 @@ watch(
 
 		// Initialize default output settings
 		const state = _.cloneDeep(props.node.state);
-		state.chartSettings = updateChartSettingsBySelectedVariables(
-			[],
-			ChartSettingType.VARIABLE_COMPARISON,
-			stateOptions.value
-		);
+		state.chartSettings = updateChartSettingsBySelectedVariables([], ChartSettingType.VARIABLE, stateOptions.value);
 		state.chartSettings = updateChartSettingsBySelectedVariables(
 			state.chartSettings,
 			ChartSettingType.DISTRIBUTION_COMPARISON,
