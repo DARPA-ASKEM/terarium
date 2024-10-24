@@ -8,12 +8,13 @@ import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.AMRSchemaType;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.GroundedSemantic;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @AMRSchemaType
-@Accessors(chain = true)
-public class ModelParameter extends SupportAdditionalProperties implements Serializable {
+@Accessors
+public class ModelParameter extends SupportAdditionalProperties implements Serializable, GroundedSemantic {
 
 	@Serial
 	private static final long serialVersionUID = -8680842000646488249L;
