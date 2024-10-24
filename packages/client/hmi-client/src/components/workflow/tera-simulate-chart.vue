@@ -94,9 +94,9 @@ const renderedRuns = computed<RunResults>(() => {
 });
 
 const lineWidthArray = computed(() => {
-	// If we have a meanline, make it bigger
+	// If we have a mean line, make it bigger
 	if (props.hasMeanLine) {
-		const output = Array(Math.max(Object.keys(renderedRuns.value).length - 1 ?? 0 - 1, 0)).fill(1);
+		const output = Array(Math.max((Object.keys(renderedRuns.value).length ?? 0) - 1, 0)).fill(1);
 		output.push(3);
 		return output;
 	}

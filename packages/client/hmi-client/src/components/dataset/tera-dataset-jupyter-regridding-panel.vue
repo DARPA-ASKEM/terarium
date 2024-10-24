@@ -244,7 +244,6 @@ const saveAsNewDataset = async () => {
 	// newDataset.fileNames = [filename];
 	// const result = await createNewDataset(newDataset);
 
-	// import { KernelConnection as JupyterKernelConnection } from '@/services/jupyter';
 	const session = jupyterSession.session;
 	const kernel = session?.kernel as IKernelConnection;
 	const messageBody = {

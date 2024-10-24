@@ -19,7 +19,8 @@ export class FIFOCache<T> {
 
 		// Expunge, keys are in insertion order thus making it fifo
 		if (this.cache.size > this.limit) {
-			this.cache.delete(this.cache.keys().next().value);
+			const firstKey = this.cache.keys().next().value;
+			if (firstKey) this.cache.delete(firstKey);
 		}
 	}
 }
