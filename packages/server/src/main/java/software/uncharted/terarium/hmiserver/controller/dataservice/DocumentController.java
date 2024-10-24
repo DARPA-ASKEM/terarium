@@ -372,9 +372,13 @@ public class DocumentController {
 			final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
 
 			if (document.isPresent()) {
+				Graphics2D g2d = null;
+				ByteArrayOutputStream outputStream = null;
+				PDDocument pdfDocument = null;
+
 				try {
 					// Convert BufferedImage to byte[]
-					PDDocument pdfDocument = Loader.loadPDF(fileEntity.getContent().readAllBytes());
+					pdfDocument = Loader.loadPDF(fileEntity.getContent().readAllBytes());
 					PDFRenderer pdfRenderer = new PDFRenderer(pdfDocument);
 					BufferedImage firstPageImage = pdfRenderer.renderImageWithDPI(0, 100);
 
@@ -393,22 +397,29 @@ public class DocumentController {
 					Image resizedImage = topHalfImage.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
 					BufferedImage resizedBufferedImage = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
 
-					Graphics2D g2d = resizedBufferedImage.createGraphics();
+					g2d = resizedBufferedImage.createGraphics();
 					g2d.drawImage(resizedImage, 0, 0, null);
-					g2d.dispose();
 
-					ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+					outputStream = new ByteArrayOutputStream();
 					ImageIO.write(resizedBufferedImage, "png", outputStream);
 
 					byte[] thumbnailBytes = outputStream.toByteArray();
-					outputStream.close();
-
 					document.get().setThumbnail(thumbnailBytes);
-					pdfDocument.close();
+
 					documentAssetService.updateAsset(document.get(), projectId, permission);
 				} catch (final Exception e) {
 					final String error = "Unable to create thumbnail";
 					log.error(error, e);
+				} finally {
+					if (g2d != null) {
+						g2d.dispose();
+					}
+					if (outputStream != null) {
+						outputStream.close();
+					}
+					if (pdfDocument != null) {
+						pdfDocument.close();
+					}
 				}
 			}
 

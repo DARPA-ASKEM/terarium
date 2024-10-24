@@ -6,9 +6,7 @@
 				<span class="truncate-after-three-lines">{{ documentName }}</span>
 			</h6>
 			<tera-operator-placeholder v-if="!thumbnail" :node="node" />
-			<section v-else>
-				<img class="pdf-thumbnail" :src="thumbnail" alt="Pdf's first page" />
-			</section>
+			<img v-else class="pdf-thumbnail" :src="thumbnail" alt="Pdf's first page" />
 
 			<section class="py-2">
 				<div v-if="isRunning(extractionStatus)" class="progressbar-container">
@@ -158,17 +156,11 @@ watch(
 				});
 			}
 		}
-	},
-	{ immediate: true }
-);
-
-watch(
-	() => document.value?.thumbnail,
-	() => {
 		if (document.value?.thumbnail?.length) {
 			thumbnail.value = `data:image/png;base64, ${document.value.thumbnail}`;
 		}
-	}
+	},
+	{ immediate: true }
 );
 
 async function subscribeToExtraction(event: ClientEvent<ExtractionStatusUpdate>) {
@@ -185,17 +177,18 @@ onUnmounted(async () => {
 /* Supported by Chromium, Safari, Webkit, Edge and others. Not supported by IE and Opera Mini */
 .truncate-after-three-lines {
 	display: -webkit-box;
+	line-clamp: 3;
 	-webkit-line-clamp: 3;
 	-webkit-box-orient: vertical;
 	overflow: hidden;
 }
 
 .progressbar-container {
-	margin-top: 0.5rem;
+	margin-top: var(--gap-2);
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 }
 
 .p-progressbar {
@@ -209,20 +202,20 @@ onUnmounted(async () => {
 }
 
 .pdf-thumbnail {
-	padding-bottom: var(--gap-small);
+	padding-bottom: var(--gap-2);
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-medium);
 }
 
 .done-container {
-	margin-top: 0.5rem;
+	margin-top: var(--gap-2);
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	.status-msg {
 		display: flex;
-		gap: 0.5rem;
+		gap: var(--gap-2);
 		font-size: var(--font-caption);
 	}
 	.status-msg.ok {
