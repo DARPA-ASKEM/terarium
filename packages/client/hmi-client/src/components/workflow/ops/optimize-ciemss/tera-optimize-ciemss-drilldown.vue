@@ -380,7 +380,12 @@ import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-datase
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import { getUnitsFromModelParts, getModelByModelConfigurationId } from '@/services/model';
+import {
+	getUnitsFromModelParts,
+	getModelByModelConfigurationId,
+	getCalendarSettingsFromModel,
+	getVegaDateOptions
+} from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import {
 	convertToCsvAsset,
@@ -413,7 +418,12 @@ import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import Divider from 'primevue/divider';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { createSuccessCriteriaChart, createForecastChart, createInterventionChartMarkers } from '@/services/charts';
+import {
+	createSuccessCriteriaChart,
+	createForecastChart,
+	createInterventionChartMarkers,
+	ForecastChartOptions
+} from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import MultiSelect from 'primevue/multiselect';
 import { mergeResults, renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
@@ -421,7 +431,6 @@ import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import { useConfirm } from 'primevue/useconfirm';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
-import { getCalendarSettingsFromModel } from '@/utils/date';
 import teraOptimizeCriterionGroupForm from './tera-optimize-criterion-group-form.vue';
 import TeraStaticInterventionPolicyGroup from './tera-static-intervention-policy-group.vue';
 import TeraDynamicInterventionPolicyGroup from './tera-dynamic-intervention-policy-group.vue';
@@ -568,7 +577,7 @@ const simulationChartOptions = computed(() => [
 	...modelParameterOptions.value,
 	...modelStateAndObsOptions.value.map((ele) => ele.label)
 ]);
-const modelConfiguration = ref<ModelConfiguration>();
+const modelConfiguration = ref<ModelConfiguration | null>(null);
 
 const showAdditionalOptions = ref(true);
 
@@ -923,7 +932,8 @@ const preparedForecastCharts = computed(() => {
 	// Merge before/after for chart
 	const { result, resultSummary } = mergeResults(postResult, preResult, postResultSummary, preResultSummary);
 
-	const chartOptions = {
+	const dateOptions = getVegaDateOptions(model.value, modelConfiguration.value);
+	const chartOptions: ForecastChartOptions = {
 		width: chartSize.value.width,
 		height: chartSize.value.height,
 		legend: true,
@@ -931,7 +941,8 @@ const preparedForecastCharts = computed(() => {
 		yAxisTitle: getUnit('') || '',
 		title: '',
 		colorscheme: ['#AAB3C6', '#1B8073'],
-		translationMap: {}
+		translationMap: {},
+		dateOptions
 	};
 
 	const translationMap = (variable: string) => ({

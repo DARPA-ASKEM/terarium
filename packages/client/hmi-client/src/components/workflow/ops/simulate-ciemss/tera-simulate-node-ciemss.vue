@@ -26,7 +26,7 @@ import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { getRunResultCSV, getSimulation, parsePyCiemssMap, DataArray } from '@/services/models/simulation-service';
-import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
+import { getModelByModelConfigurationId, getUnitsFromModelParts, getVegaDateOptions } from '@/services/model';
 import { logger } from '@/utils/logger';
 import { chartActionsProxy, nodeOutputLabel } from '@/components/workflow/util';
 
@@ -39,6 +39,7 @@ import VegaChart from '@/components/widgets/VegaChart.vue';
 import {
 	ClientEvent,
 	ClientEventType,
+	ModelConfiguration,
 	ProgressState,
 	Simulation,
 	SimulationNotificationData,
@@ -48,6 +49,7 @@ import {
 } from '@/types/Types';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import { useClientEvent } from '@/composables/useClientEvent';
+import { getModelConfigurationById } from '@/services/model-configurations';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
 import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 
@@ -57,6 +59,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
 const model = ref<Model | null>(null);
+const modelConfiguration = ref<ModelConfiguration | null>(null);
 const modelVarUnits = ref<{ [key: string]: string }>({});
 
 const runResults = ref<{ [runId: string]: DataArray }>({});
@@ -145,6 +148,8 @@ const preparedCharts = computed(() => {
 		reverseMap[`${pyciemssMap[key]}_mean`] = key;
 	});
 
+	const dateOptions = getVegaDateOptions(model.value, modelConfiguration.value);
+
 	return props.node.state.chartConfigs.map((config) => {
 		// If only one variable is selected, show the baseline forecast
 		const showBaseLine = config.length === 1 && Boolean(props.node.state.baseForecastId);
@@ -156,7 +161,8 @@ const preparedCharts = computed(() => {
 			legend: true,
 			translationMap: reverseMap,
 			xAxisTitle: modelVarUnits.value._time || 'Time',
-			yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
+			yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || '',
+			dateOptions
 		};
 
 		let statLayerVariables = config.map((d) => `${pyciemssMap[d]}_mean`);
@@ -188,7 +194,11 @@ const preparedCharts = computed(() => {
 		if (interventionPolicy.value) {
 			_.keys(groupedInterventionOutputs.value).forEach((key) => {
 				if (config.includes(key)) {
-					chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key], false, -115));
+					chart.layer.push(
+						...createInterventionChartMarkers(groupedInterventionOutputs.value[key], {
+							labelXOffset: -115
+						})
+					);
 				}
 			});
 		}
@@ -285,6 +295,7 @@ watch(
 		if (!input.value) return;
 
 		const id = input.value[0];
+		modelConfiguration.value = await getModelConfigurationById(id);
 		model.value = await getModelByModelConfigurationId(id);
 		modelVarUnits.value = getUnitsFromModelParts(model.value as Model);
 	},
