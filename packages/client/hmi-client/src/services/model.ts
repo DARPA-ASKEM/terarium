@@ -279,7 +279,7 @@ export function getVegaDateOptions(
 	modelConfiguration: ModelConfiguration | null
 ): DateOptions | undefined {
 	let dateOptions;
-	if (model && modelConfiguration && modelConfiguration.temporalContext) {
+	if (model && modelConfiguration?.temporalContext) {
 		dateOptions = {
 			dateFormat: getTimeUnits(model),
 			startDate: new Date(modelConfiguration.temporalContext)
