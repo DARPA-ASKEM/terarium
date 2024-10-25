@@ -20,6 +20,7 @@ import java.util.regex.Matcher;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
@@ -116,7 +117,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		log.info(new String(resp.getOutput()));
 	}
 
-	// @Test
+	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendGoLLMEnrichAMRRequest() throws Exception {
 		final ClassPathResource modelResource = new ClassPathResource("gollm/SIR.json");
@@ -127,7 +128,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 		final EnrichAmrResponseHandler.Input input = new EnrichAmrResponseHandler.Input();
 		input.setResearchPaper(documentContent);
-		input.setAmr(modelContent);
+		input.setAmrs(List.of(modelContent));
 
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
