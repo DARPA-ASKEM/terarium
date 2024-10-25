@@ -52,7 +52,7 @@
 					<section class="form-section">
 						<h5>
 							Intervention policy
-							<i v-if="!isInterventionReady" v-tooltip="interventionReadyMessage" class="pi pi-exclamation-circle" />
+							<i v-if="!isInterventionReady" v-tooltip="interventionReadyTooltip" class="pi pi-exclamation-circle" />
 						</h5>
 						<template v-for="(cfg, idx) in knobs.interventionPolicyGroups">
 							<tera-static-intervention-policy-group
@@ -104,7 +104,7 @@
 								class="pi pi-exclamation-circle"
 								style="max-width: fit-content"
 								v-if="!isEndTimeValid"
-								v-tooltip="endTimeMessage"
+								v-tooltip="endTimeTooltip"
 							/>
 						</div>
 						<div class="input-row">
@@ -545,22 +545,17 @@ const isEndTimeValid = computed(() =>
 );
 
 const isRunDisabled = computed(() => !isCriteriaReady.value || !isInterventionReady.value || !isEndTimeValid.value);
-console.log(isInterventionReady);
-console.log(isRunDisabled);
-const criteriaReadyMessage = computed(() =>
-	!isCriteriaReady.value ? 'All success criteria must be filled in. \n' : ''
+
+const criteriaReadyTooltip = computed(() => (!isCriteriaReady.value ? 'Success criteria must be filled in. \n' : ''));
+const interventionReadyTooltip = computed(() =>
+	!isInterventionReady.value ? 'Must contain at least one active intervention policy.\n' : ''
 );
-const interventionReadyMessage = computed(() =>
-	!isInterventionReady.value ? 'Must contain at least one active intervention policy that is filled in. \n' : ''
-);
-const endTimeMessage = computed(() =>
-	!isEndTimeValid.value
-		? 'Optimize setting end time must be greater than or equal to all intervention end times. \n'
-		: ''
+const endTimeTooltip = computed(() =>
+	!isEndTimeValid.value ? 'End time must be greater than or equal to all intervention policy end times. \n' : ''
 );
 
 const runButtonMessage = computed(
-	() => `${criteriaReadyMessage.value} ${interventionReadyMessage.value} ${endTimeMessage.value}`
+	() => `${criteriaReadyTooltip.value} ${interventionReadyTooltip.value} ${endTimeTooltip.value}`
 );
 
 const presetType = computed(() => {
