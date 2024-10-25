@@ -35,6 +35,7 @@ const props = defineProps<{
 	disabled?: boolean;
 	placeholder?: string;
 	autoWidth?: boolean;
+	invalidateNegative?: boolean;
 }>();
 const emit = defineEmits(['update:model-value', 'focusout']);
 const inputField = ref<HTMLInputElement | null>(null);
@@ -64,7 +65,7 @@ const updateValue = (event: Event) => {
 	const value = (event.target as HTMLInputElement).value;
 	maskedValue.value = value;
 	const numValue = toNumber(value);
-	error.value = isNaN(numValue) ? 'Invalid number' : '';
+	error.value = isNaN(numValue) || (props.invalidateNegative && numValue < 0) ? 'Invalid number' : '';
 };
 
 function displayValue() {
