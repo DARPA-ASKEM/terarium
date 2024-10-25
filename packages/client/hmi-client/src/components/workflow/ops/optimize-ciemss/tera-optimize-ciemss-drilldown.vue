@@ -25,19 +25,7 @@
 								:disabled="_.isEmpty(node.outputs[0].value)"
 							/>
 							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
-							<div
-								v-tooltip="{
-									value: `${runButtonMessage}`,
-									pt: {
-										arrow: {
-											style: {
-												borderBottomColor: 'var(--p-primary-color)'
-											}
-										},
-										text: '!bg-primary !text-primary-contrast !font-medium'
-									}
-								}"
-							>
+							<div v-tooltip="runButtonMessage">
 								<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runOptimize" />
 							</div>
 						</span>
@@ -62,7 +50,10 @@
 						/>
 					</section>
 					<section class="form-section">
-						<h5>Intervention policy</h5>
+						<h5>
+							Intervention policy
+							<i v-if="!isInterventionReady" v-tooltip="interventionReadyMessage" class="pi pi-exclamation-circle" />
+						</h5>
 						<template v-for="(cfg, idx) in knobs.interventionPolicyGroups">
 							<tera-static-intervention-policy-group
 								v-if="
@@ -531,9 +522,7 @@ const isCriteriaReady = computed(() => {
 	return activeConstraintGroups.length !== 0 && activeConstraintGroups.every((ele) => ele.targetVariable);
 });
 
-const isInterventionReady = computed(
-	() => knobs.value.interventionPolicyGroups.length !== 0 && activePolicyGroups.value.length >= 0
-);
+const isInterventionReady = computed(() => activePolicyGroups.value.length > 0);
 
 const isEndTimeValid = computed(() =>
 	activePolicyGroups.value.every((ele) => {
@@ -549,18 +538,23 @@ const isEndTimeValid = computed(() =>
 );
 
 const isRunDisabled = computed(() => !isCriteriaReady.value || !isInterventionReady.value || !isEndTimeValid.value);
+console.log(isInterventionReady);
+console.log(isRunDisabled);
+const criteriaReadyMessage = computed(() =>
+	!isCriteriaReady.value ? 'All success criteria must be filled in. \n' : ''
+);
+const interventionReadyMessage = computed(() =>
+	!isInterventionReady.value ? 'Must contain at least one active intervention policy that is filled in. \n' : ''
+);
+const endTimeMessage = computed(() =>
+	!isEndTimeValid.value
+		? 'Optimize setting end time must be greater than or equal to all intervention end times. \n'
+		: ''
+);
 
-const criteriaReadyMessage = '-All success criteria must be filled in.';
-const interventionReadyMessage = '-Must contain at least one active intervention policy that is filled in.';
-const endTimeMessage = '-Optimize setting end time must be greater than or equal to all intervention end times';
-
-const runButtonMessage = computed(() => {
-	let aString = '';
-	if (!isCriteriaReady.value) aString = `${aString + criteriaReadyMessage}\n`;
-	if (!isInterventionReady.value) aString = `${aString + interventionReadyMessage}\n`;
-	if (!isEndTimeValid.value) aString = `${aString + endTimeMessage}\n`;
-	return aString;
-});
+const runButtonMessage = computed(
+	() => `${criteriaReadyMessage.value} ${interventionReadyMessage.value} ${endTimeMessage.value}`
+);
 
 const presetType = computed(() => {
 	if (
