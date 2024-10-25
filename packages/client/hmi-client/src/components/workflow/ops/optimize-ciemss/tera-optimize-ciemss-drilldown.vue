@@ -97,8 +97,10 @@
 								label="End time"
 								:start-date="modelConfiguration.temporalContext"
 								:calendar-settings="getCalendarSettingsFromModel(model)"
+								:invalid="!isEndTimeValid"
 								v-model="knobs.endTime"
 							/>
+							<i v-if="!isEndTimeValid" v-tooltip="endTimeMessage" class="pi pi-exclamation-circle" />
 						</div>
 						<div class="input-row">
 							<div class="label-and-input">
