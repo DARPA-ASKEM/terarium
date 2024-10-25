@@ -15,7 +15,7 @@
 			>
 				<template #content>
 					<tera-drilldown-section :is-loading="isFetchingPDF">
-						<tera-pdf-panel :pdfs="pdfData" @pdf-ref="getPdfRef" />
+						<tera-pdf-panel :pdfs="pdfData" ref="pdfPanelRef" />
 					</tera-drilldown-section>
 				</template>
 			</tera-slider-panel>
@@ -275,7 +275,8 @@ interface SelectedIntervention {
 	dynamicInterventions: DynamicIntervention[];
 }
 
-const pdfViewer = ref();
+const pdfPanelRef = ref();
+const pdfViewer = computed(() => pdfPanelRef.value?.pdfRef[0]);
 const selectedIntervention = ref<SelectedIntervention | null>(null);
 
 const isPdfSidebarOpen = ref(true);
@@ -427,10 +428,6 @@ const fetchInterventionPolicies = async (modelId: string) => {
 	isFetchingPolicies.value = true;
 	interventionsPolicyList.value = await getInterventionPoliciesForModel(modelId);
 	isFetchingPolicies.value = false;
-};
-
-const getPdfRef = (pdfRef) => {
-	pdfViewer.value = pdfRef.value[0];
 };
 
 const selectInterventionPolicy = (intervention: Intervention, index: number) => {

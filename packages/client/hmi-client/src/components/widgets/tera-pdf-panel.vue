@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { ref } from 'vue';
 
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
@@ -24,8 +24,6 @@ interface PdfData {
 	name: string;
 }
 
-const emit = defineEmits(['pdf-ref']);
-
 const props = defineProps<{
 	pdfs: PdfData[];
 }>();
@@ -33,7 +31,7 @@ const props = defineProps<{
 const pdfs = ref<PdfData[]>(props.pdfs);
 const pdfRef = ref(null);
 
-onMounted(() => emit('pdf-ref', pdfRef));
+defineExpose({ pdfRef });
 </script>
 
 <style scoped>
