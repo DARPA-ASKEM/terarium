@@ -6,28 +6,25 @@
       "type": "string",
       "description": "The title should say 'Comparison of' and the names of the models being compared."
     },
-    "summary": {
-      "type": "string",
-      "description": "A brief summary of the comparison of models. This should include the main differences and similarities between the models."
-    },
     "semanticComparison": {
       "type": "object",
+      "description": "This section compares the structure of the models to each other.",
       "properties": {
         "states": {
           "type": "string",
-          "description": "Explain the differences and similarities between the states of the models. For example, how many states are there in each model, and how do they differ?"
+          "description": "A short paragraph that compares and summaries (1) the state variables common to all the models and (2) the state variables unique to each model. There should be at least three sentences focused on each of these two points. The discussion should be based on the name, description, initial condition expression of the state variables. The focus should be on how these properties are similar across all the models and how they differ between the models. Mention which model has the most state variables and which has the fewest."
         },
         "parameters": {
           "type": "string",
-          "description": "Explain the differences and similarities between the parameters of the models. For example, how many parameters are there in each model, and how do they differ?"
+          "description": "A short paragraph that compares and summaries (1) the parameters common to all the models and (2) the parameters unique to each model. There should be at least three sentences focused on each of these two points. The discussion should be based on the name, description, value of the parameters and in what rate laws each parameter is used. The focus should be on how these properties are similar across all models and how they differ between the models. Mention which model has the most parameters and which has the fewest."
         },
         "transitions": {
           "type": "string",
-          "description": "Explain the differences and similarities between the transitions of the models. For example, how many transitions are there in each model, and how do they differ?"
+          "description": "A short paragraph that compares and summaries (1) the transitions common to all the models and (2) the transitions unique to each model. There should be at least three sentences focused on each of these two points. The discussion should be based on the id, the list of input state variables, the list of output state variables, and the SymPy expression that target each transition. The focus should be on how these properties are similar across all the models and how they differ between the models. Mention which model has the most transitions and which has the fewest."
         },
         "observables": {
           "type": "string",
-          "description": "Explain the differences and similarities between the observables of the models. For example, how many observables are there in each model, and how do they differ?"
+          "description": "A short paragraph that compares and summaries (1) the observables common to all the models and (2) the observables unique to each model. There should be at least three sentences focused on each of these two points. The discussion should be based on the id, name, Sympy expression of each observable. The focus should be on how these properties are similar across all the models and how they differ between the models. Mention which model has the most observables and which has the fewest. If all models have no observable, this paragraph should only one sentence that states this fact."
         }
       },
       "required": [
@@ -43,19 +40,19 @@
       "properties": {
         "description": {
           "type": "string",
-          "description": "Compare the content of the descriptions of the models. Explain any differences and similarities."
+          "description": "A short paragraph that compares and summaries basic details like source publication, authors, funding, model type (1) common to all the models and (2) unique to each model. There should be at least three sentences for each of the two points."
         },
         "uses": {
           "type": "string",
-          "description": "Explain the differences and similarities between the uses of the models. For example, how are the models used differently, and how are they used similarly?"
+          "description": "A short paragraph that compares and summaries (1) the common context that all the models are intended to be used and (2) the unique context that each of the model is designed to be used. There should be at least three sentences for each of these points. The discussion should be focused on how the model can be used directly (without modification), how the model can be used indirectly (downstream, as part of a larger system), and how the model can be foreseeably misused (what users should not do). For each of the intended use cases, reason and rank the models in descending order by their fit for purpose.."
         },
         "biasRisksLimitations": {
           "type": "string",
-          "description": "Explain the differences and similarities between the bias, risks, and limitations of the models. For example, what are the biases, risks, and limitations of each model, and how do they differ?"
+          "description": "A short paragraph that compares and summaries any bias, risks, and technical limitations (1) common to all the models and (2) unique to each model. There should be at least three sentences for each of these two points. The discussion should focus on providing information on assumptions, foreseeable harms, misunderstandings, warnings, and potential mitigations. Here, bias is a disproportionate performance or skew for some subpopulations; a risk is societal-relevant issue that the model might cause;  a limitation is a likely failure mode of the model."
         },
         "testing": {
           "type": "string",
-          "description": "Explain the differences and similarities between how the models were validated. For example, how does the validation process differ?"
+          "description": "A short paragraph that compares and summaries the evaluation protocol (1) common to all the models and (2) unique to each model. There should be at least three sentences focused on each of these two points. The discussion should be focused on the type and source of testing data, the factors that could influence model behaviour, the evaluation metrics and benchmarks, any result with respect to social safety issues such as fairness and privacy."
         }
       },
       "required": [
@@ -65,6 +62,10 @@
         "testing"
       ],
       "additionalProperties": false
+    },
+    "summary": {
+      "type": "string",
+      "description": "A short paragraph that compares and summaries (1) common features across all the models, (2) strengths and weaknesses unique to each model, and (3) the high-level differences between each pair of models. There should be at least three sentences focused on each of these three points. The discussion should be based on the structural and metadata comparison if available. Mention the intended use cases of each model."
     }
   },
   "required": [

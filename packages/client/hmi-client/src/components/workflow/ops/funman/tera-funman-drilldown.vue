@@ -141,7 +141,9 @@
 				:options="outputs"
 				is-selectable
 			>
-				<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%" />
+				<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%">
+					<div>{{ props.node.state.currentProgress }}%</div>
+				</tera-progress-spinner>
 				<template v-else>
 					<tera-funman-output
 						v-if="!isEmpty(node.state.runId)"
