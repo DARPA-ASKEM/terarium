@@ -204,6 +204,7 @@ export interface DocumentAsset extends TerariumAsset {
      */
     assets?: DocumentExtraction[];
     extractions?: ExtractedDocumentPage[];
+    thumbnail?: any;
 }
 
 export interface ExternalPublication extends TerariumAsset {
