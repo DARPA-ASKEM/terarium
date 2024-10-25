@@ -248,9 +248,7 @@
 							@configuration-change="updateSelectedStates"
 						/>
 						<tera-chart-settings-item
-							v-for="settings of chartSettings.filter(
-								(setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON
-							)"
+							v-for="settings of chartSettings.filter((setting) => setting.type === ChartSettingType.VARIABLE)"
 							:key="settings.id"
 							:settings="settings"
 							@open="activeChartSettings = settings"
@@ -752,7 +750,7 @@ const isOutputSettingsPanelOpen = ref(false);
 const activeChartSettings = ref<ChartSetting | null>(null);
 const chartSettings = computed(() => props.node.state.chartSettings ?? []);
 const selectedStateSettings = computed(() =>
-	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON)
+	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE)
 );
 const selectedParameterSettings = computed(() =>
 	chartSettings.value.filter((setting) => setting.type === ChartSettingType.DISTRIBUTION_COMPARISON)
@@ -792,7 +790,7 @@ function updateSelectedStates(event) {
 		...props.node.state,
 		chartSettings: updateChartSettingsBySelectedVariables(
 			chartSettings.value,
-			ChartSettingType.VARIABLE_COMPARISON,
+			ChartSettingType.VARIABLE,
 			event.selectedVariable
 		)
 	});
