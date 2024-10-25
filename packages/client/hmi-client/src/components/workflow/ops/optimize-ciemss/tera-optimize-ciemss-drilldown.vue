@@ -380,7 +380,12 @@ import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-datase
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import { getUnitsFromModelParts, getModelByModelConfigurationId } from '@/services/model';
+import {
+	getUnitsFromModelParts,
+	getModelByModelConfigurationId,
+	getCalendarSettingsFromModel,
+	getVegaDateOptions
+} from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import {
 	convertToCsvAsset,
@@ -426,7 +431,6 @@ import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import { useConfirm } from 'primevue/useconfirm';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
-import { getCalendarSettingsFromModel, getVegaDateOptions } from '@/utils/date';
 import teraOptimizeCriterionGroupForm from './tera-optimize-criterion-group-form.vue';
 import TeraStaticInterventionPolicyGroup from './tera-static-intervention-policy-group.vue';
 import TeraDynamicInterventionPolicyGroup from './tera-dynamic-intervention-policy-group.vue';
@@ -968,9 +972,7 @@ const preparedForecastCharts = computed(() => {
 			options
 		);
 		// add intervention annotations (rules and text)
-		forecastChart.layer.push(
-			...createInterventionChartMarkers(preProcessedInterventionsData.value[variable], { dateOptions })
-		);
+		forecastChart.layer.push(...createInterventionChartMarkers(preProcessedInterventionsData.value[variable]));
 		return forecastChart;
 	});
 

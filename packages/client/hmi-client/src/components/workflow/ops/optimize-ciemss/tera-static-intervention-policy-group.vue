@@ -146,7 +146,8 @@ import {
 } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
 import TeraSignalBars from '@/components/widgets/tera-signal-bars.vue';
 import teraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
-import { getCalendarSettingsFromModel, getTimePointString } from '@/utils/date';
+import { getTimePointString } from '@/utils/date';
+import { getCalendarSettingsFromModel } from '@/services/model';
 
 const props = defineProps<{
 	model: Model;

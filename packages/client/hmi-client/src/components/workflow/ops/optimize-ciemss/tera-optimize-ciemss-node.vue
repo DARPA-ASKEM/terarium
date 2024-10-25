@@ -52,11 +52,10 @@ import { createLLMSummary } from '@/services/summary-service';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { createForecastChart } from '@/services/charts';
 import { mergeResults, renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
-import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
+import { getModelByModelConfigurationId, getUnitsFromModelParts, getVegaDateOptions } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { createDatasetFromSimulationResult } from '@/services/dataset';
 import { useProjects } from '@/composables/project';
-import { getVegaDateOptions } from '@/utils/date';
 import {
 	OptimizeCiemssOperationState,
 	OptimizeCiemssOperation,

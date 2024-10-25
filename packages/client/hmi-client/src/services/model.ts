@@ -8,6 +8,7 @@ import { AMRSchemaNames, CalendarDateType } from '@/types/common';
 import { fileToJson } from '@/utils/file';
 import { isEmpty } from 'lodash';
 import { Ref } from 'vue';
+import { DateOptions } from './charts';
 
 export async function createModel(model: Model): Promise<Model | null> {
 	delete model.id;
@@ -250,4 +251,39 @@ export function stringToLatexExpression(expression: string): string {
 
 export function getTimeUnits(model: Model): CalendarDateType {
 	return model?.semantics?.ode?.time?.units?.expression || '';
+}
+
+export function getCalendarSettingsFromModel(model: Model): { view: CalendarDateType; format: string } {
+	const units = model?.semantics?.ode?.time?.units?.expression;
+	const view = units;
+	let format;
+
+	switch (units) {
+		case CalendarDateType.MONTH:
+			format = 'MM, yy';
+			break;
+		case CalendarDateType.YEAR:
+			format = 'yy';
+			break;
+		case CalendarDateType.DATE:
+		default:
+			format = 'MM dd, yy';
+			break;
+	}
+
+	return { view, format };
+}
+
+export function getVegaDateOptions(
+	model: Model | null,
+	modelConfiguration: ModelConfiguration | null
+): DateOptions | undefined {
+	let dateOptions;
+	if (model && modelConfiguration && modelConfiguration.temporalContext) {
+		dateOptions = {
+			dateFormat: getTimeUnits(model),
+			startDate: new Date(modelConfiguration.temporalContext)
+		};
+	}
+	return dateOptions;
 }

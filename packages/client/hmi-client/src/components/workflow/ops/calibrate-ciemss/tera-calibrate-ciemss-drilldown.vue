@@ -526,7 +526,7 @@ import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-i
 import { getParameters } from '@/model-representation/service';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
 import { getDataset } from '@/services/dataset';
-import { getCalendarSettingsFromModel, getVegaDateOptions } from '@/utils/date';
+import { getCalendarSettingsFromModel, getVegaDateOptions } from '@/services/model';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults, getErrorData } from './calibrate-utils';
 
@@ -840,7 +840,7 @@ const preparedCharts = computed(() => {
 		);
 
 		charts.simulationCharts[variable].layer.push(
-			...createInterventionChartMarkers(groupedInterventionOutputs.value[variable], { dateOptions })
+			...createInterventionChartMarkers(groupedInterventionOutputs.value[variable])
 		);
 	});
 	// Intervention Charts:
@@ -875,7 +875,7 @@ const preparedCharts = computed(() => {
 
 			// add intervention annotations (rules and text)
 			charts.interventionCharts[key].layer.push(
-				...createInterventionChartMarkers(groupedInterventionOutputs.value[key], { dateOptions })
+				...createInterventionChartMarkers(groupedInterventionOutputs.value[key])
 			);
 		});
 	}
