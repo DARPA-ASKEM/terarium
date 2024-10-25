@@ -85,38 +85,41 @@
 								Settings
 								<i class="pi pi-info-circle pl-2" v-tooltip="validateParametersToolTip" />
 							</template>
-							<label>Select parameters of interest</label>
-							<MultiSelect
-								ref="columnSelect"
-								class="w-full mt-1 mb-2"
-								:model-value="variablesOfInterest"
-								:options="requestParameters"
-								option-label="name"
-								option-disabled="disabled"
-								:show-toggle-all="false"
-								placeholder="Select variables"
-								@update:model-value="onToggleVariableOfInterest"
-							/>
-							<span class="timespan mb-2">
-								<div>
-									<label>Start time</label>
-									<tera-input-number class="w-12" v-model="knobs.currentTimespan.start" />
+							<section class="flex flex-column gap-2">
+								<label>Select parameters of interest</label>
+								<MultiSelect
+									ref="columnSelect"
+									class="w-full"
+									:model-value="variablesOfInterest"
+									:options="requestParameters"
+									option-label="name"
+									option-disabled="disabled"
+									:show-toggle-all="false"
+									placeholder="Select variables"
+									@update:model-value="onToggleVariableOfInterest"
+								/>
+								<span class="timespan">
+									<div>
+										<label>Start time</label>
+										<tera-input-number class="w-12" v-model="knobs.currentTimespan.start" />
+									</div>
+									<div>
+										<label>End time</label>
+										<tera-input-number class="w-12" v-model="knobs.currentTimespan.end" />
+									</div>
+									<div>
+										<label>Number of timesteps</label>
+										<tera-input-number class="w-12" v-model="knobs.numberOfSteps" />
+									</div>
+								</span>
+								<label>Timepoints</label>
+								<code>{{ stepList.join(', ') }}</code>
+								<label>Tolerance</label>
+								<div class="input-tolerance fadein animation-ease-in-out animation-duration-350">
+									<tera-input-number v-model="knobs.tolerance" />
+									<Slider v-model="knobs.tolerance" :min="0" :max="1" :step="0.01" class="w-full mr-2" />
 								</div>
-								<div>
-									<label>End time</label>
-									<tera-input-number class="w-12" v-model="knobs.currentTimespan.end" />
-								</div>
-								<div>
-									<label>Number of timesteps</label>
-									<tera-input-number class="w-12" v-model="knobs.numberOfSteps" />
-								</div>
-							</span>
-							<tera-input-text :disabled="true" class="mb-2" v-model="requestStepListString" />
-							<label>Tolerance</label>
-							<div class="mt-1 input-tolerance fadein animation-ease-in-out animation-duration-350">
-								<tera-input-number v-model="knobs.tolerance" />
-								<Slider v-model="knobs.tolerance" :min="0" :max="1" :step="0.01" class="w-full mr-2" />
-							</div>
+							</section>
 						</AccordionTab>
 					</Accordion>
 				</main>
@@ -293,11 +296,10 @@
 </template>
 
 <script setup lang="ts">
-import _, { floor, isEmpty } from 'lodash';
+import { isEmpty, cloneDeep } from 'lodash';
 import { computed, ref, watch } from 'vue';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
-import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import Slider from 'primevue/slider';
 import MultiSelect from 'primevue/multiselect';
@@ -390,9 +392,6 @@ const isSliderOpen = ref(true);
 
 const mass = ref('0');
 
-const requestStepList = computed(() => getStepList());
-const requestStepListString = computed(() => requestStepList.value.join()); // Just used to display. dont like this but need to be quick
-
 const requestParameters = ref<any[]>([]);
 const configuredModel = ref<Model | null>();
 
@@ -402,7 +401,7 @@ const observableIds = ref<string[]>([]);
 
 const selectedOutputId = ref<string>();
 const outputs = computed(() => {
-	if (!_.isEmpty(props.node.outputs)) {
+	if (!isEmpty(props.node.outputs)) {
 		return [
 			{
 				label: 'Select an output',
@@ -422,10 +421,18 @@ const onToggleVariableOfInterest = (event: any[]) => {
 	requestParameters.value.forEach((d) => {
 		d.label = namesOfInterest.includes(d.name) ? 'all' : 'any';
 	});
-	const state = _.cloneDeep(props.node.state);
-	state.requestParameters = _.cloneDeep(requestParameters.value);
+	const state = cloneDeep(props.node.state);
+	state.requestParameters = cloneDeep(requestParameters.value);
 	emit('update-state', state);
 };
+
+const stepList = computed(() => {
+	const { start, end } = knobs.value.currentTimespan;
+	const steps = knobs.value.numberOfSteps;
+
+	const stepSize = (end - start) / steps;
+	return [start, ...Array.from({ length: steps - 1 }, (_, i) => Number(((i + 1) * stepSize).toFixed(3))), end];
+});
 
 const runMakeQuery = async () => {
 	if (!configuredModel.value) {
@@ -497,7 +504,7 @@ const runMakeQuery = async () => {
 			structure_parameters: [
 				{
 					name: 'schedules',
-					schedules: [{ timepoints: requestStepList.value }]
+					schedules: [{ timepoints: stepList.value }]
 				}
 			],
 			config: {
@@ -513,13 +520,13 @@ const runMakeQuery = async () => {
 	const response = await makeQueries(request, originalModelId);
 
 	// Setup the in-progress id
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.inProgressId = response.id;
 	emit('update-state', state);
 };
 
 const addConstraintForm = () => {
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.constraintGroups.push({
 		name: `Constraint ${state.constraintGroups.length + 1}`,
 		isActive: true,
@@ -534,13 +541,13 @@ const addConstraintForm = () => {
 };
 
 const deleteConstraintGroupForm = (index: number) => {
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.constraintGroups.splice(index, 1);
 	emit('update-state', state);
 };
 
 const updateConstraintGroupForm = (index: number, key: string, value: any) => {
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 
 	// Changing constraint resets settings
 	if (key === 'constraint') {
@@ -560,22 +567,6 @@ const updateConstraintGroupForm = (index: number, key: string, value: any) => {
 	}
 	emit('update-state', state);
 };
-
-// Used to set requestStepList.
-// Grab startTime, endTime, numberOfSteps and create list.
-function getStepList() {
-	const start = knobs.value.currentTimespan.start;
-	const end = knobs.value.currentTimespan.end;
-	const steps = knobs.value.numberOfSteps;
-
-	const aList = [start];
-	const stepSize = floor((end - start) / steps);
-	for (let i = 1; i < steps; i++) {
-		aList[i] = i * stepSize;
-	}
-	aList.push(end);
-	return aList;
-}
 
 const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
@@ -614,9 +605,9 @@ const setModelOptions = async () => {
 		if (ode.observables) observableIds.value = ode.observables.map((d) => d.id);
 	}
 
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	knobs.value.numberOfSteps = state.numSteps;
-	knobs.value.currentTimespan = _.cloneDeep(state.currentTimespan);
+	knobs.value.currentTimespan = cloneDeep(state.currentTimespan);
 	knobs.value.tolerance = state.tolerance;
 	knobs.value.compartmentalConstraint = state.compartmentalConstraint;
 
@@ -627,7 +618,7 @@ const setModelOptions = async () => {
 		toast.error('', 'Provided model has no parameters');
 	}
 
-	state.requestParameters = _.cloneDeep(requestParameters.value);
+	state.requestParameters = cloneDeep(requestParameters.value);
 	emit('update-state', state);
 };
 
@@ -682,7 +673,7 @@ watch(
 watch(
 	() => knobs.value,
 	() => {
-		const state = _.cloneDeep(props.node.state);
+		const state = cloneDeep(props.node.state);
 		state.tolerance = knobs.value.tolerance;
 		state.currentTimespan.start = knobs.value.currentTimespan.start;
 		state.currentTimespan.end = knobs.value.currentTimespan.end;
@@ -871,7 +862,7 @@ watch(
 			.map(({ name }) => name);
 
 		// Initialize default output settings
-		const state = _.cloneDeep(props.node.state);
+		const state = cloneDeep(props.node.state);
 		state.chartSettings = updateChartSettingsBySelectedVariables([], ChartSettingType.VARIABLE, stateOptions.value);
 		state.chartSettings = updateChartSettingsBySelectedVariables(
 			state.chartSettings,
@@ -915,6 +906,14 @@ watch(
 	position: relative;
 }
 
+code {
+	background-color: var(--gray-50);
+	color: var(--text-color-subdued);
+	border-radius: var(--border-radius);
+	border: 1px solid var(--surface-border);
+	padding: var(--gap-2);
+}
+
 .timespan {
 	display: flex;
 	align-items: end;
@@ -924,7 +923,7 @@ watch(
 	& > div {
 		display: flex;
 		flex-direction: column;
-		gap: var(--gap-1);
+		gap: var(--gap-2);
 	}
 }
 
@@ -950,6 +949,11 @@ ul {
 		border: 1px solid var(--surface-border-light);
 		border-radius: var(--border-radius);
 	}
+}
+
+code {
+	overflow-wrap: break-word;
+	font-size: var(--font-caption);
 }
 
 .p-accordion {
