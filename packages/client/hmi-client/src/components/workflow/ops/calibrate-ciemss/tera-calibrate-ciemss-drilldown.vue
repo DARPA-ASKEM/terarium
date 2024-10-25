@@ -200,11 +200,13 @@
 						</div>
 					</section>
 
-					<section v-if="interventionPolicy" class="form-section">
+					<section v-if="interventionPolicy && model" class="form-section">
 						<h5>Intervention Policies</h5>
 						<tera-intervention-summary-card
 							v-for="(intervention, index) in interventionPolicy.interventions"
 							:intervention="intervention"
+							:start-date="modelConfig?.temporalContext"
+							:calendar-settings="getCalendarSettingsFromModel(model)"
 							:key="index"
 						/>
 					</section>
