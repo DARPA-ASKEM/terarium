@@ -554,8 +554,8 @@ const endTimeTooltip = computed(() =>
 	!isEndTimeValid.value ? 'End time must be greater than or equal to all intervention policy end times. \n' : ''
 );
 
-const runButtonMessage = computed(
-	() => `${criteriaReadyTooltip.value} ${interventionReadyTooltip.value} ${endTimeTooltip.value}`
+const runButtonMessage = computed(() =>
+	isRunDisabled.value ? `${criteriaReadyTooltip.value} ${interventionReadyTooltip.value} ${endTimeTooltip.value}` : ''
 );
 
 const presetType = computed(() => {
