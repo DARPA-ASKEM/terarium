@@ -23,12 +23,13 @@
 					<Dropdown
 						v-else-if="isTimePart"
 						:model-value="item.unitExpression"
+						placeholder="Add a time unit"
 						option-label="label"
 						option-value="value"
 						:options="[
-							{ label: 'Days', value: 'days' },
-							{ label: 'Months', value: 'months' },
-							{ label: 'Years', value: 'years' }
+							{ label: 'Days', value: CalendarDateType.DATE },
+							{ label: 'Months', value: CalendarDateType.MONTH },
+							{ label: 'Years', value: CalendarDateType.YEAR }
 						]"
 						@change="$emit('update-item', { key: 'unitExpression', value: $event.value })"
 					/>
@@ -106,6 +107,7 @@ import type { DKG } from '@/types/Types';
 import { getCurieFromGroundingIdentifier, getNameOfCurieCached, searchCuriesEntities } from '@/services/concept';
 import type { FeatureConfig } from '@/types/common';
 import Dropdown from 'primevue/dropdown';
+import { CalendarDateType } from '@/types/common';
 
 const props = defineProps<{
 	item: ModelPartItem;
