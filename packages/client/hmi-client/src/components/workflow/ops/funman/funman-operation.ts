@@ -1,5 +1,6 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import type { FunmanInterval, TimeSpan } from '@/types/Types';
+import { ChartSetting } from '@/types/common';
 
 const DOCUMENTATION_URL = 'https://github.com/siftech/funman';
 
@@ -51,9 +52,8 @@ export interface FunmanOperationState extends BaseState {
 	compartmentalConstraint: CompartmentalConstraint;
 	constraintGroups: ConstraintGroup[];
 	requestParameters: RequestParameter[];
+	chartSettings: ChartSetting[] | null;
 	currentProgress: number;
-	// selected state in ouptut
-	trajectoryState?: string;
 }
 
 export const FunmanOperation: Operation = {
@@ -78,6 +78,7 @@ export const FunmanOperation: Operation = {
 			requestParameters: [],
 			inProgressId: '',
 			runId: '',
+			chartSettings: null,
 			currentProgress: 0
 		};
 		return init;

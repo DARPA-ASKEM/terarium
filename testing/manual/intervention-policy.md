@@ -23,7 +23,7 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 2. Edit the default intervention card, name it `Static Parameters` and leave it as _Static_.
 3. Set Parameter `beta` to value `0.0001` starting at timestep `20`.
 4. Click `+ Add`.
-5. Set the Parameter gamma to 0.5
+5. Set the Parameter gamma to `0.5`
 6. Check that the charts reflect the intervention
 
 ### 5. Try to create an invalid intervention
@@ -42,7 +42,7 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 ### 7. Create a static state criteria
 1. Click `+ Add intervention`
 2. Name it `Static State` and leave it as _Static_.
-3. Set State `I` to value `600` starting at timestep 40`.
+3. Set State `I` to value `600` starting at timestep `40`.
 
 ### 8. Create a dynamic state criteria
 1. Click `+ Add intervention`
