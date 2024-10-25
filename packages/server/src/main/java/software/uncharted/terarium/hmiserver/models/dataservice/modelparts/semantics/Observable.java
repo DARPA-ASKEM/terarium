@@ -16,8 +16,8 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 @Data
 @EqualsAndHashCode(callSuper = true)
 @AMRSchemaType
-@Accessors(chain = true)
-public class Observable extends SupportAdditionalProperties implements Serializable {
+@Accessors
+public class Observable extends SupportAdditionalProperties implements Serializable, GroundedSemantic {
 
 	@Serial
 	private static final long serialVersionUID = -8367278228176339223L;
