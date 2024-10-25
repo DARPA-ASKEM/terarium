@@ -2,9 +2,7 @@
 	<main>
 		<template v-if="dataset">
 			<tera-operator-title>{{ dataset.name }}</tera-operator-title>
-			<section class="mb-2">
-				{{ formattedColumnList }}
-			</section>
+			<tera-show-more-text :text="formattedColumnList" :lines="5" />
 			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
 		<template v-else>
@@ -31,6 +29,7 @@ import { getDataset } from '@/services/dataset';
 import { canPropagateResource } from '@/services/workflow';
 import { WorkflowNode } from '@/types/workflow';
 import TeraOperatorTitle from '@/components/operator/tera-operator-title.vue';
+import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import { useProjects } from '@/composables/project';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { DatasetOperationState } from './dataset-operation';
@@ -72,18 +71,13 @@ onMounted(async () => {
 	if (props.node.state.datasetId) getDatasetById(props.node.state.datasetId).then();
 });
 
-const formattedColumnList = computed(() => {
-	let formattedString = dataset.value?.columns
-		?.filter((column) => !isEmpty(column.name))
-		.map((column) => column.name)
-		.join(', ');
-
-	// Limit size to 100 and add ellipses if need to.
-	if (formattedString && formattedString.length >= 100) {
-		formattedString = `${formattedString.slice(0, 100)}...`;
-	}
-	return formattedString;
-});
+const formattedColumnList = computed(
+	() =>
+		dataset.value?.columns
+			?.filter((column) => !isEmpty(column.name))
+			.map((column) => column.name)
+			.join(', ') ?? ''
+);
 </script>
 
 <style scoped>
