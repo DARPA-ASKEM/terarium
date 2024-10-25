@@ -97,7 +97,6 @@
 								label="End time"
 								:start-date="modelConfiguration.temporalContext"
 								:calendar-settings="getCalendarSettingsFromModel(model)"
-								:invalid="!isEndTimeValid"
 								v-model="knobs.endTime"
 							/>
 							<i

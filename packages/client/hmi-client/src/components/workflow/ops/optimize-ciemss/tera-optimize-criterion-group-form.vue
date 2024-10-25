@@ -28,7 +28,6 @@
 				option-value="value"
 				v-model="config.targetVariable"
 				placeholder="Select"
-				:invalid="_.isEmpty(config.targetVariable)"
 				@update:model-value="emit('update-self', config)"
 			/>
 			<i v-if="_.isEmpty(config.targetVariable)" class="pi pi-exclamation-circle" v-tooltip="requiredTooltip" />
