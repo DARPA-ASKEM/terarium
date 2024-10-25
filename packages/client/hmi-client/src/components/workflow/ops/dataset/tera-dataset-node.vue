@@ -3,7 +3,7 @@
 		<template v-if="dataset">
 			<tera-operator-title>{{ dataset.name }}</tera-operator-title>
 			<section class="mb-2">
-				{{ formattedColumnList?.slice(0, 100) }}
+				{{ formattedColumnList }}
 			</section>
 			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
@@ -72,12 +72,16 @@ onMounted(async () => {
 	if (props.node.state.datasetId) getDatasetById(props.node.state.datasetId).then();
 });
 
-const formattedColumnList = computed(() =>
-	dataset.value?.columns
+const formattedColumnList = computed(() => {
+	let formattedString = dataset.value?.columns
 		?.filter((column) => !isEmpty(column.name))
 		.map((column) => column.name)
-		.join(', ')
-);
+		.join(', ');
+	if (formattedString && formattedString.length >= 100) {
+		formattedString = `${formattedString.slice(0, 100)}...`;
+	}
+	return formattedString;
+});
 </script>
 
 <style scoped>
