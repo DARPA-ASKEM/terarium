@@ -912,6 +912,10 @@ code {
 	border-radius: var(--border-radius);
 	border: 1px solid var(--surface-border);
 	padding: var(--gap-2);
+	overflow-wrap: break-word;
+	font-size: var(--font-caption);
+	max-height: 10rem;
+	overflow: auto;
 }
 
 .timespan {
@@ -949,11 +953,6 @@ ul {
 		border: 1px solid var(--surface-border-light);
 		border-radius: var(--border-radius);
 	}
-}
-
-code {
-	overflow-wrap: break-word;
-	font-size: var(--font-caption);
 }
 
 .p-accordion {
