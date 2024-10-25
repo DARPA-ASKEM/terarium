@@ -972,9 +972,7 @@ const preparedForecastCharts = computed(() => {
 			options
 		);
 		// add intervention annotations (rules and text)
-		forecastChart.layer.push(
-			...createInterventionChartMarkers(preProcessedInterventionsData.value[variable], { dateOptions })
-		);
+		forecastChart.layer.push(...createInterventionChartMarkers(preProcessedInterventionsData.value[variable]));
 		return forecastChart;
 	});
 

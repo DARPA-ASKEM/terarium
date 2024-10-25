@@ -196,8 +196,7 @@ const preparedCharts = computed(() => {
 				if (config.includes(key)) {
 					chart.layer.push(
 						...createInterventionChartMarkers(groupedInterventionOutputs.value[key], {
-							labelXOffset: -115,
-							dateOptions
+							labelXOffset: -115
 						})
 					);
 				}

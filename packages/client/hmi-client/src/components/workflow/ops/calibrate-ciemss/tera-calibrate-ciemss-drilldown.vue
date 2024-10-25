@@ -838,7 +838,7 @@ const preparedCharts = computed(() => {
 		);
 
 		charts.simulationCharts[variable].layer.push(
-			...createInterventionChartMarkers(groupedInterventionOutputs.value[variable], { dateOptions })
+			...createInterventionChartMarkers(groupedInterventionOutputs.value[variable])
 		);
 	});
 	// Intervention Charts:
@@ -873,7 +873,7 @@ const preparedCharts = computed(() => {
 
 			// add intervention annotations (rules and text)
 			charts.interventionCharts[key].layer.push(
-				...createInterventionChartMarkers(groupedInterventionOutputs.value[key], { dateOptions })
+				...createInterventionChartMarkers(groupedInterventionOutputs.value[key])
 			);
 		});
 	}

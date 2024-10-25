@@ -222,7 +222,7 @@ const preparedCharts = computed(() => {
 			}
 		);
 		applyForecastChartAnnotations(chart, annotations);
-		chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[variable], { dateOptions }));
+		chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[variable]));
 
 		return chart;
 	});
@@ -253,7 +253,7 @@ const preparedCharts = computed(() => {
 				dateOptions
 			}
 		);
-		chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key], { dateOptions }));
+		chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
 		return chart;
 	});
 
