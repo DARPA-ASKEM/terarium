@@ -3,7 +3,7 @@
 		<template v-if="dataset">
 			<tera-operator-title>{{ dataset.name }}</tera-operator-title>
 			<section class="mb-2">
-				{{ formattedColumnList }}
+				{{ formattedColumnList?.slice(0, 100) }}
 			</section>
 			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
