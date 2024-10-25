@@ -15,7 +15,7 @@
 			>
 				<template #content>
 					<tera-drilldown-section :is-loading="isFetchingPDF">
-						<tera-pdf-panel :pdfs="pdfData" />
+						<tera-pdf-panel :pdfs="pdfData" ref="pdfPanelRef" />
 					</tera-drilldown-section>
 				</template>
 			</tera-slider-panel>
@@ -65,8 +65,16 @@
 					<Button outlined severity="secondary" label="Reset" @click="onResetPolicy" />
 				</template>
 				<ul class="flex flex-column gap-2">
-					<li v-for="(intervention, index) in knobs.transientInterventionPolicy.interventions" :key="index">
+					<li
+						v-for="(intervention, index) in knobs.transientInterventionPolicy.interventions"
+						:key="index"
+						@click="selectInterventionPolicy(intervention, index)"
+					>
 						<tera-intervention-card
+							class="intervention"
+							:class="{
+								selected: selectedIntervention?.name === intervention?.name && selectedIntervention?.index === index
+							}"
 							:intervention="intervention"
 							:parameterOptions="parameterOptions"
 							:stateOptions="stateOptions"
@@ -192,6 +200,8 @@ import {
 	Intervention,
 	InterventionPolicy,
 	Model,
+	DynamicIntervention,
+	StaticIntervention,
 	type TaskResponse,
 	type DocumentAsset
 } from '@/types/Types';
@@ -255,6 +265,19 @@ const newBlankInterventionPolicy = ref({
 	modelId: '',
 	interventions: [blankIntervention]
 });
+
+interface SelectedIntervention {
+	index: number;
+	name: string;
+	extractionDocumentId?: string;
+	extractionPage?: number;
+	staticInterventions: StaticIntervention[];
+	dynamicInterventions: DynamicIntervention[];
+}
+
+const pdfPanelRef = ref();
+const pdfViewer = computed(() => pdfPanelRef.value?.pdfRef[0]);
+const selectedIntervention = ref<SelectedIntervention | null>(null);
 
 const isPdfSidebarOpen = ref(true);
 const isFetchingPDF = ref(false);
@@ -405,6 +428,15 @@ const fetchInterventionPolicies = async (modelId: string) => {
 	isFetchingPolicies.value = true;
 	interventionsPolicyList.value = await getInterventionPoliciesForModel(modelId);
 	isFetchingPolicies.value = false;
+};
+
+const selectInterventionPolicy = (intervention: Intervention, index: number) => {
+	selectedIntervention.value = { ...intervention, index };
+	if (!intervention?.extractionPage) return;
+
+	if (pdfViewer.value) {
+		pdfViewer.value.goToPage(selectedIntervention.value.extractionPage);
+	}
 };
 
 const onUpdateInterventionCard = (intervention: Intervention, index: number) => {
@@ -667,6 +699,20 @@ button.start-edit {
 
 	& > .pi {
 		color: var(--text-color-subdued);
+	}
+}
+
+.intervention {
+	background-color: var(--gray-0);
+	border-left: 4px solid var(--surface-300);
+
+	&.selected {
+		border-left-color: var(--primary-color);
+	}
+
+	&,
+	&.selected {
+		transition: border-left-color 250ms;
 	}
 }
 
