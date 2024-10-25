@@ -23,6 +23,7 @@
 import Calendar from 'primevue/calendar';
 import { CalendarSettings, getEndDateFromTimestep, getTimestepFromDateRange } from '@/utils/date';
 import { computed } from 'vue';
+import { CalendarDateType } from '@/types/common';
 import teraInputNumber from './tera-input-number.vue';
 
 const props = defineProps<{
@@ -35,18 +36,20 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:model-value']);
 
-// const calendarSettings = ref<CalendarSettings>(getCalendarSettingsFromModel(props.model));
-
 const date = computed(() => {
 	if (!props.startDate) return null;
-	return getEndDateFromTimestep(props.startDate, props.modelValue, props.calendarSettings?.view ?? 'date');
+	return getEndDateFromTimestep(
+		props.startDate,
+		props.modelValue,
+		props.calendarSettings?.view ?? CalendarDateType.DATE
+	);
 });
 
 const onDateSelect = (newDate: Date) => {
 	if (!props.startDate) return;
 	emit(
 		'update:model-value',
-		getTimestepFromDateRange(props.startDate, newDate, props.calendarSettings?.view ?? 'date')
+		getTimestepFromDateRange(props.startDate, newDate, props.calendarSettings?.view ?? CalendarDateType.DATE)
 	);
 };
 </script>

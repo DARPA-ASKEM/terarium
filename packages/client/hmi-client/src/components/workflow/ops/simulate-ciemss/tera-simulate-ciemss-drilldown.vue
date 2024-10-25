@@ -76,10 +76,12 @@
 								/>
 							</div>
 						</div>
-						<template v-if="interventionPolicy">
+						<template v-if="interventionPolicy && model">
 							<h4>Intervention Policies</h4>
 							<tera-intervention-summary-card
 								v-for="(intervention, index) in interventionPolicy.interventions"
+								:start-date="modelConfiguration?.temporalContext"
+								:calendar-settings="getCalendarSettingsFromModel(model)"
 								:intervention="intervention"
 								:key="index"
 							/>
@@ -256,7 +258,12 @@ import {
 	DataArray,
 	CiemssMethodOptions
 } from '@/services/models/simulation-service';
-import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
+import {
+	getModelByModelConfigurationId,
+	getUnitsFromModelParts,
+	getCalendarSettingsFromModel,
+	getVegaDateOptions
+} from '@/services/model';
 import { nodeMetadata } from '@/components/workflow/util';
 
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
@@ -286,7 +293,7 @@ import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-i
 import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
 import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
-import { getCalendarSettingsFromModel } from '@/utils/date';
+import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
 import {
 	addMultiVariableChartSetting,
 	deleteAnnotation,
@@ -426,6 +433,7 @@ const preparedChartInputs = computed(() => {
 const getForecastChartOptions = (variables: string[], reverseMap: Record<string, string>) => {
 	// If only one variable is selected, show the baseline forecast
 	const showBaseLine = variables.length === 1 && Boolean(props.node.state.baseForecastId);
+	const dateOptions = getVegaDateOptions(model.value, modelConfiguration.value);
 
 	const options: ForecastChartOptions = {
 		title: '',
@@ -445,6 +453,9 @@ const getForecastChartOptions = (variables: string[], reverseMap: Record<string,
 			[`${pyciemssMap[variables[0]]}_mean:base`]: `${variables[0]} (baseline)`
 		};
 		options.colorscheme = ['#AAB3C6', '#1B8073'];
+	}
+	if (dateOptions) {
+		options.dateOptions = dateOptions;
 	}
 	return { statLayerVariables, options };
 };
