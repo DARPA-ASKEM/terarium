@@ -3,11 +3,12 @@ import _, { isEmpty } from 'lodash';
 import { runDagreLayout } from '@/services/graph';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri';
-import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
 import type { Initial, Model, ModelParameter, State, RegNetVertex, Transition, Rate } from '@/types/Types';
 import { getModelType } from '@/services/model';
 import { AMRSchemaNames } from '@/types/common';
 import { parseCurie } from '@/services/concept';
+import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
+import { IRect, IPoint } from '@graph-scaffolder/types';
 import { NestedPetrinetRenderer } from './petrinet/nested-petrinet-renderer';
 import { isStratifiedModel, getContext, collapseTemplates } from './mira/mira';
 import { extractTemplateMatrix } from './mira/mira-util';
@@ -32,19 +33,26 @@ export const getVariable = (miraModel: MiraModel, variableName: string) => {
 	throw new Error(`${variableName} not found`);
 };
 
+// Simple collision detection for edge routing
+function collisionFn(p: IPoint, objects: IRect[]) {
+	const buffer = 0;
+	for (let i = 0; i < objects.length; i++) {
+		const checkingObj = objects[i];
+		if (p.x >= checkingObj.x - buffer && p.x <= checkingObj.x + checkingObj.width + buffer) {
+			if (p.y >= checkingObj.y - buffer && p.y <= checkingObj.y + checkingObj.height + buffer) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 export const getModelRenderer = (
 	miraModel: MiraModel,
 	graphElement: HTMLDivElement,
 	useNestedRenderer: boolean
 ): PetrinetRenderer | NestedPetrinetRenderer => {
 	const isStratified = isStratifiedModel(miraModel);
-	// Debug start
-	// console.group('mmt info');
-	// console.log('# templates: ', miraModel.templates.length);
-	// console.log('# parameters: ', Object.keys(miraModel.parameters).length);
-	// console.log('stratified model: ', isStratified);
-	// console.groupEnd();
-	// Debug end
 
 	if (useNestedRenderer && isStratified) {
 		// FIXME: Testing, move to mira service
@@ -76,7 +84,9 @@ export const getModelRenderer = (
 		const nestedMap = extractNestedStratas(conceptData, dims);
 		return new NestedPetrinetRenderer({
 			el: graphElement,
-			useAStarRouting: false,
+			useAStarRouting: {
+				collisionFn
+			},
 			useStableZoomPan: true,
 			zoomModifier: 'ctrlKey',
 			zoomRange: [0.1, 30],
@@ -89,7 +99,9 @@ export const getModelRenderer = (
 
 	return new PetrinetRenderer({
 		el: graphElement,
-		useAStarRouting: false,
+		useAStarRouting: {
+			collisionFn
+		},
 		useStableZoomPan: true,
 		zoomModifier: 'ctrlKey',
 		runLayout: runDagreLayout,

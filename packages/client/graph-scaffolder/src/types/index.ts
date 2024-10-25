@@ -72,7 +72,9 @@ export interface Options {
 
 	// This is getting around algorithms that do not provide stand-alone routing capabilities, in
 	// which case we can internally route using A-star
-	useAStarRouting?: boolean;
+	useAStarRouting?: {
+		collisionFn?: (p: IPoint, objects: IRect[]) => boolean;
+	};
 
 	// Whether to show grid
 	useGrid?: boolean;
