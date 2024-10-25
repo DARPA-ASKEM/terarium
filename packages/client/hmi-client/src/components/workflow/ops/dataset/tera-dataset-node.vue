@@ -77,6 +77,8 @@ const formattedColumnList = computed(() => {
 		?.filter((column) => !isEmpty(column.name))
 		.map((column) => column.name)
 		.join(', ');
+
+	// Limit size to 100 and add ellipses if need to.
 	if (formattedString && formattedString.length >= 100) {
 		formattedString = `${formattedString.slice(0, 100)}...`;
 	}
