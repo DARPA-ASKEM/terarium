@@ -100,7 +100,12 @@
 								:invalid="!isEndTimeValid"
 								v-model="knobs.endTime"
 							/>
-							<i v-if="!isEndTimeValid" v-tooltip="endTimeMessage" class="pi pi-exclamation-circle" />
+							<i
+								class="pi pi-exclamation-circle"
+								style="max-width: fit-content"
+								v-if="!isEndTimeValid"
+								v-tooltip="endTimeMessage"
+							/>
 						</div>
 						<div class="input-row">
 							<div class="label-and-input">
