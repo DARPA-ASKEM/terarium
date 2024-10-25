@@ -1,3 +1,4 @@
+import { autoType, csvParse } from 'd3';
 import type { Dataset, CsvAsset } from '@/types/Types';
 import { getModelConfigurationById, getObservables } from '@/services/model-configurations';
 import { downloadRawFile } from '@/services/dataset';
@@ -60,6 +61,14 @@ export const setupCsvAsset = async (dataset: Dataset): Promise<CsvAsset | undefi
 		return csv;
 	}
 	return undefined;
+};
+
+export const parseCsvAsset = (csvAsset: CsvAsset) => {
+	if (!csvAsset) return [];
+	const csv = [csvAsset.headers, ...csvAsset.csv];
+	const csvRaw = csv.map((d) => d.join(',')).join('\n');
+	const parsedCsv = csvParse(csvRaw, autoType);
+	return parsedCsv;
 };
 
 const getFileName = (dataset: Dataset) =>

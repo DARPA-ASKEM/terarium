@@ -31,7 +31,6 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { csvParse, autoType } from 'd3';
 import { computed, watch, ref, shallowRef, onMounted } from 'vue';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
@@ -46,7 +45,7 @@ import {
 } from '@/services/models/simulation-service';
 import { getModelConfigurationById, createModelConfiguration } from '@/services/model-configurations';
 import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
-import { setupCsvAsset } from '@/services/calibrate-workflow';
+import { parseCsvAsset, setupCsvAsset } from '@/services/calibrate-workflow';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
@@ -96,6 +95,8 @@ const policyInterventionId = computed(() => props.node.inputs[2].value?.[0]);
 const interventionPolicy = ref<InterventionPolicy | null>(null);
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
+
+const groundTruth = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
 
 const areInputsFilled = computed(() => props.node.inputs[0].value && props.node.inputs[1].value);
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
@@ -172,12 +173,6 @@ const preparedCharts = computed(() => {
 		reverseMap[mapObj.datasetVariable] = 'Observations';
 	});
 
-	// FIXME: Hacky re-parse CSV with correct data types
-	let groundTruth: DataArray = [];
-	const csv = csvAsset.value.csv;
-	const csvRaw = csv.map((d) => d.join(',')).join('\n');
-	groundTruth = csvParse(csvRaw, autoType);
-
 	// Need to get the dataset's time field
 	const datasetTimeField = state.timestampColName;
 
@@ -204,7 +199,7 @@ const preparedCharts = computed(() => {
 				timeField: 'timepoint_id'
 			},
 			{
-				data: groundTruth,
+				data: groundTruth.value,
 				variables: datasetVariables,
 				timeField: datasetTimeField as string
 			},
@@ -235,7 +230,7 @@ const preparedCharts = computed(() => {
 			},
 			null,
 			{
-				data: groundTruth,
+				data: groundTruth.value,
 				variables: [key],
 				timeField: datasetTimeField as string
 			},
