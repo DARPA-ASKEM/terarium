@@ -1,6 +1,7 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		v-bind="$attrs"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 		@update:selection="onSelection"
@@ -199,11 +200,13 @@
 						</div>
 					</section>
 
-					<section v-if="interventionPolicy" class="form-section">
+					<section v-if="interventionPolicy && model" class="form-section">
 						<h5>Intervention Policies</h5>
 						<tera-intervention-summary-card
 							v-for="(intervention, index) in interventionPolicy.interventions"
 							:intervention="intervention"
+							:start-date="modelConfig?.temporalContext"
+							:calendar-settings="getCalendarSettingsFromModel(model)"
 							:key="index"
 						/>
 					</section>

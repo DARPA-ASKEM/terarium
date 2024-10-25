@@ -112,3 +112,23 @@ export function getEndDateFromTimestep(startDate: Date, timestep: number, stepTy
 
 	return endDate;
 }
+
+export function getTimePointString(
+	timePoint: number,
+	options: { startDate?: Date; calendarSettings?: CalendarSettings }
+): string {
+	if (!options.startDate) {
+		return `${timePoint.toString()} day.`;
+	}
+
+	const view = options.calendarSettings?.view ?? CalendarDateType.DATE;
+	const date = getEndDateFromTimestep(options?.startDate, timePoint, view);
+
+	const dateOptions: Intl.DateTimeFormatOptions = {
+		year: 'numeric',
+		...(view === CalendarDateType.DATE && { month: 'long', day: 'numeric' }),
+		...(view === CalendarDateType.MONTH && { month: 'long' })
+	};
+
+	return `${date.toLocaleDateString('default', dateOptions)}.`;
+}
