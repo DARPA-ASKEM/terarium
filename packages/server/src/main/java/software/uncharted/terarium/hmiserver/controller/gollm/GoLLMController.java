@@ -259,7 +259,7 @@ public class GoLLMController {
 
 		try {
 			input.setResearchPaper(objectMapper.writeValueAsString(document.get().getExtractions()));
-		} catch (JsonProcessingException e) {
+		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize document text", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 		}
@@ -502,7 +502,7 @@ public class GoLLMController {
 		final InterventionsFromDocumentResponseHandler.Input input = new InterventionsFromDocumentResponseHandler.Input();
 		try {
 			input.setResearchPaper(objectMapper.writeValueAsString(document.get().getExtractions()));
-		} catch (JsonProcessingException e) {
+		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize document text", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 		}
@@ -726,11 +726,13 @@ public class GoLLMController {
 	/**
 	 * This endpoint will dispatch a few GoLLM tasks to enrich model metadata,
 	 * including enriching the AMR and creating the model card
-	 * @param modelId UUID of the model to enrich
+	 *
+	 * @param modelId    UUID of the model to enrich
 	 * @param documentId UUID of the document to use for enrichment
-	 * @param mode TaskMode to run the task in (is this ASYNC?)
-	 * @param projectId UUID of the project to associate the task with for permissions
-	 * @param overwrite boolean to determine if the model should be overwritten
+	 * @param mode       TaskMode to run the task in (is this ASYNC?)
+	 * @param projectId  UUID of the project to associate the task with for
+	 *                   permissions
+	 * @param overwrite  boolean to determine if the model should be overwritten
 	 * @return TaskResponse with the task ID
 	 */
 	@GetMapping("/enrich-model-metadata")
@@ -769,7 +771,8 @@ public class GoLLMController {
 		// Grab the document
 		final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
 
-		// make sure there is text in the document. We don't need a document but if we do have one it can't be empty
+		// make sure there is text in the document. We don't need a document but if we
+		// do have one it can't be empty
 		if (document.isPresent() && (document.get().getText() == null || document.get().getText().isEmpty())) {
 			log.warn(String.format("Document %s has no extracted text", documentId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.extraction.not-done"));
@@ -818,62 +821,62 @@ public class GoLLMController {
 		// at this point the initial enrichment has happened.
 		modelOptional = modelService.getAsset(modelId, permission);
 		if (modelOptional.isEmpty()) {
-			//this would be a very strange case
+			// this would be a very strange case
 			log.warn(String.format("Model %s not found", modelId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 		}
 
-		Model model = modelOptional.get();
+		final Model model = modelOptional.get();
 
 		// Update State Grounding
 		if (!model.isRegnet()) {
-			List<State> states = model.getStates();
+			final List<State> states = model.getStates();
 			states.forEach(this::performDKGSearchAndSetGrounding);
 			model.setStates(states);
 		} else if (model.isRegnet()) {
-			List<RegNetVertex> vertices = model.getVerticies();
+			final List<RegNetVertex> vertices = model.getVerticies();
 			vertices.forEach(this::performDKGSearchAndSetGrounding);
 			model.setVerticies(vertices);
 		}
 
-		//Update Observable Grounding
+		// Update Observable Grounding
 		if (model.getObservables() != null && !model.getObservables().isEmpty()) {
-			List<Observable> observables = model.getObservables();
+			final List<Observable> observables = model.getObservables();
 			observables.forEach(this::performDKGSearchAndSetGrounding);
 			model.setObservables(observables);
 		}
 
-		//Update Parameter Grounding
+		// Update Parameter Grounding
 		if (model.getParameters() != null && !model.getParameters().isEmpty()) {
-			List<ModelParameter> parameters = model.getParameters();
+			final List<ModelParameter> parameters = model.getParameters();
 			parameters.forEach(this::performDKGSearchAndSetGrounding);
 			model.setParameters(parameters);
 		}
 
-		//Update Transition Grounding
+		// Update Transition Grounding
 		if (model.getTransitions() != null && !model.getTransitions().isEmpty()) {
-			List<Transition> transitions = model.getTransitions();
+			final List<Transition> transitions = model.getTransitions();
 			transitions.forEach(this::performDKGSearchAndSetGrounding);
 			model.setTransitions(transitions);
 		}
 
 		try {
 			modelService.updateAsset(model, projectId, permission);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
 
 		return ResponseEntity.ok().body(resp);
 	}
 
-	private void performDKGSearchAndSetGrounding(GroundedSemantic part) {
+	private void performDKGSearchAndSetGrounding(final GroundedSemantic part) {
 		if (part == null || part.getId() == null || part.getId().isEmpty()) return;
-		ResponseEntity<List<DKG>> res = miraProxy.search(part.getId(), 1, 0);
+		final ResponseEntity<List<DKG>> res = miraProxy.search(part.getId(), 1, 0);
 		if (res.getStatusCode() == HttpStatus.OK && res.getBody() != null && !res.getBody().isEmpty()) {
-			DKG dkg = res.getBody().get(0);
+			final DKG dkg = res.getBody().get(0);
 			if (part.getGrounding() == null) part.setGrounding(new ModelGrounding());
 			if (part.getGrounding().getIdentifiers() == null) part.getGrounding().setIdentifiers(new HashMap<>());
-			String[] currieId = dkg.getCurie().split(":");
+			final String[] currieId = dkg.getCurie().split(":");
 			part.getGrounding().getIdentifiers().put(currieId[0], currieId[1]);
 		}
 	}
@@ -931,7 +934,7 @@ public class GoLLMController {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 		}
 
-		TaskRequest req = getEnrichAMRTaskRequest(document.get(), model.get(), projectId, overwrite);
+		final TaskRequest req = getEnrichAMRTaskRequest(document.get(), model.get(), projectId, overwrite);
 
 		final TaskResponse resp;
 		try {
@@ -1166,18 +1169,18 @@ public class GoLLMController {
 		}
 	)
 	public ResponseEntity<Void> cancelTask(@PathVariable("task-id") final UUID taskId) {
-		taskService.cancelTask(taskId);
+		taskService.cancelTask(TaskType.GOLLM, taskId);
 		return ResponseEntity.ok().build();
 	}
 
-	private TaskRequest getModelCardTask(DocumentAsset document, Model model, UUID projectId) {
+	private TaskRequest getModelCardTask(final DocumentAsset document, final Model model, final UUID projectId) {
 		final ModelCardResponseHandler.Input input = new ModelCardResponseHandler.Input();
 		input.setAmr(model.serializeWithoutTerariumFields(null, new String[] { "gollmCard" }));
 
 		if (document != null) {
 			try {
 				input.setResearchPaper(objectMapper.writeValueAsString(document.getExtractions()));
-			} catch (JsonProcessingException e) {
+			} catch (final JsonProcessingException e) {
 				log.error("Unable to serialize document text", e);
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 			}
@@ -1207,12 +1210,17 @@ public class GoLLMController {
 		return req;
 	}
 
-	private TaskRequest getEnrichAMRTaskRequest(DocumentAsset document, Model model, UUID projectId, Boolean overwrite) {
+	private TaskRequest getEnrichAMRTaskRequest(
+		final DocumentAsset document,
+		final Model model,
+		final UUID projectId,
+		final Boolean overwrite
+	) {
 		final EnrichAmrResponseHandler.Input input = new EnrichAmrResponseHandler.Input();
 		if (document != null) {
 			try {
 				input.setResearchPaper(objectMapper.writeValueAsString(document.getExtractions()));
-			} catch (JsonProcessingException e) {
+			} catch (final JsonProcessingException e) {
 				log.error("Unable to serialize document text", e);
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 			}
