@@ -497,7 +497,7 @@ import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel
 import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import { useClientEvent } from '@/composables/useClientEvent';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
-import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
+import { flattenStaticInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-intervention-summary-card.vue';
 import { getParameters } from '@/model-representation/service';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
@@ -752,7 +752,7 @@ const preparedChartInputs = computed(() => {
 });
 
 const groupedInterventionOutputs = computed(() =>
-	_.groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
+	_.groupBy(flattenStaticInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
 );
 
 const preparedCharts = computed(() => {

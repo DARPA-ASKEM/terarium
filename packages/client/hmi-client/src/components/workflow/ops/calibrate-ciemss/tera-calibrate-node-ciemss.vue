@@ -72,7 +72,7 @@ import { createDatasetFromSimulationResult, getDataset } from '@/services/datase
 import { useProjects } from '@/composables/project';
 import { fetchAnnotations } from '@/services/chart-settings';
 import { useClientEvent } from '@/composables/useClientEvent';
-import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
+import { flattenStaticInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { CalibrationOperationCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults } from './calibrate-utils';
@@ -147,7 +147,7 @@ onMounted(async () => updateLossChartWithSimulation());
 let pyciemssMap: Record<string, string> = {};
 
 const groupedInterventionOutputs = computed(() =>
-	_.groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
+	_.groupBy(flattenStaticInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
 );
 
 const preparedCharts = computed(() => {

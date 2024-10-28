@@ -48,7 +48,7 @@ export const updateInterventionPolicy = async (policy: InterventionPolicy): Prom
 };
 
 // Flatten the intervention data for display in a graph
-export const flattenInterventionData = (
+export const flattenStaticInterventionData = (
 	interventions: Intervention[]
 ): { name: string; value: number; time: number; appliedTo: string }[] =>
 	interventions?.flatMap((intervention) =>
@@ -59,3 +59,24 @@ export const flattenInterventionData = (
 			appliedTo: staticIntervention.appliedTo
 		}))
 	);
+
+export const flattenDynamicInterventionData = (
+	interventions: Intervention[]
+): { name: string; value: number; threshold: number; appliedTo: string; parameter: string }[] =>
+	interventions?.flatMap((intervention) =>
+		intervention.dynamicInterventions.map((dynamicIntervention) => ({
+			parameter: dynamicIntervention.parameter,
+			threshold: dynamicIntervention.threshold,
+			name: intervention.name,
+			value: dynamicIntervention.value,
+			appliedTo: dynamicIntervention.appliedTo
+		}))
+	);
+
+export const flattenInterventionData = (interventions: Intervention[]): any[] => {
+	const flattenInterventions = [
+		...flattenStaticInterventionData(interventions),
+		...flattenDynamicInterventionData(interventions)
+	];
+	return flattenInterventions;
+};

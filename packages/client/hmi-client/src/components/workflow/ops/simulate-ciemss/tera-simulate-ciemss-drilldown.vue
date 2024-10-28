@@ -288,7 +288,7 @@ import {
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { ChartSetting, ChartSettingType, CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import { getModelConfigurationById } from '@/services/model-configurations';
-import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
+import { flattenStaticInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-intervention-summary-card.vue';
 import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
@@ -416,7 +416,7 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 };
 
 const groupedInterventionOutputs = computed(() =>
-	_.groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
+	_.groupBy(flattenStaticInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
 );
 
 const preparedChartInputs = computed(() => {

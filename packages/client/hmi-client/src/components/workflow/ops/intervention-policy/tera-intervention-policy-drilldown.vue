@@ -212,6 +212,7 @@ import { getParameters, getStates } from '@/model-representation/service';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import {
 	blankIntervention,
+	flattenStaticInterventionData,
 	flattenInterventionData,
 	getInterventionPolicyById,
 	updateInterventionPolicy,
@@ -354,8 +355,12 @@ const groupedOutputParameters = computed(() =>
 	groupBy(flattenInterventionData(knobs.value.transientInterventionPolicy.interventions), 'appliedTo')
 );
 
+const staticGroupedOutputParameter = computed(() =>
+	groupBy(flattenStaticInterventionData(knobs.value.transientInterventionPolicy.interventions), 'appliedTo')
+);
+
 const preparedCharts = computed(() =>
-	_.mapValues(groupedOutputParameters.value, (interventions, key) =>
+	_.mapValues(staticGroupedOutputParameter.value, (interventions, key) =>
 		createInterventionChart(interventions, {
 			title: key,
 			width: 400,

@@ -48,7 +48,7 @@ import {
 	type InterventionPolicy,
 	type Model
 } from '@/types/Types';
-import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
+import { flattenStaticInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import { addMultiVariableChartSetting } from '@/services/chart-settings';
 import { ChartSettingType } from '@/types/common';
 import { useClientEvent } from '@/composables/useClientEvent';
@@ -140,7 +140,7 @@ Provide a summary in 100 words or less.
 	});
 };
 const groupedInterventionOutputs = computed(() =>
-	_.groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
+	_.groupBy(flattenStaticInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
 );
 
 const preparedCharts = computed(() => {
