@@ -1,7 +1,7 @@
 <template>
 	<TabView v-if="pdfs?.length" class="container">
 		<TabPanel :header="pdf.name" v-for="pdf in pdfs" :key="pdf.name">
-			<tera-pdf-embed v-if="pdf.isPdf" :pdf-link="pdf.data" :title="pdf.name || ''" />
+			<tera-pdf-embed v-if="pdf.isPdf" ref="pdfRef" :pdf-link="pdf.data" :title="pdf.name || ''" />
 			<tera-text-editor v-else :initial-text="pdf.data" />
 		</TabPanel>
 	</TabView>
@@ -29,6 +29,9 @@ const props = defineProps<{
 }>();
 
 const pdfs = ref<PdfData[]>(props.pdfs);
+const pdfRef = ref(null);
+
+defineExpose({ pdfRef });
 </script>
 
 <style scoped>
