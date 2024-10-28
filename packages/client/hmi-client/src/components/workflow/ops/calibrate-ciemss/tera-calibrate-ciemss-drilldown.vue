@@ -1,6 +1,7 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		v-bind="$attrs"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 		@update:selection="onSelection"
@@ -199,11 +200,13 @@
 						</div>
 					</section>
 
-					<section v-if="interventionPolicy" class="form-section">
+					<section v-if="interventionPolicy && model" class="form-section">
 						<h5>Intervention Policies</h5>
 						<tera-intervention-summary-card
 							v-for="(intervention, index) in interventionPolicy.interventions"
 							:intervention="intervention"
+							:start-date="modelConfig?.temporalContext"
+							:calendar-settings="getCalendarSettingsFromModel(model)"
 							:key="index"
 						/>
 					</section>
@@ -343,7 +346,7 @@
 				v-model:is-open="isOutputSettingsPanelOpen"
 				direction="right"
 				class="input-config"
-				header="Output Settings"
+				header="Output settings"
 				content-width="360px"
 			>
 				<template #overlay>
@@ -523,8 +526,8 @@ import { flattenInterventionData, getInterventionPolicyById } from '@/services/i
 import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-intervention-summary-card.vue';
 import { getParameters } from '@/model-representation/service';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
-import { getCalendarSettingsFromModel } from '@/utils/date';
 import { getDataset } from '@/services/dataset';
+import { getCalendarSettingsFromModel, getVegaDateOptions } from '@/services/model';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults, getErrorData } from './calibrate-utils';
 
@@ -605,7 +608,7 @@ const groundTruthData = computed<DataArray>(() => {
 	return csvParse(csvRaw, autoType);
 });
 
-const modelConfig = ref<ModelConfiguration>();
+const modelConfig = ref<ModelConfiguration | null>(null);
 const model = ref<Model | null>(null);
 
 const modelVarUnits = ref<{ [key: string]: string }>({});
@@ -792,6 +795,7 @@ const preparedCharts = computed(() => {
 
 	// Need to get the dataset's time field
 	const datasetTimeField = knobs.value.timestampColName;
+	const dateOptions = getVegaDateOptions(model.value, modelConfig.value);
 
 	// Simulate Charts:
 	selectedVariableSettings.value.forEach((settings) => {
@@ -829,7 +833,8 @@ const preparedCharts = computed(() => {
 					translationMap: reverseMap,
 					xAxisTitle: modelVarUnits.value._time || 'Time',
 					yAxisTitle: modelVarUnits.value[variable] || '',
-					colorscheme: ['#AAB3C6', '#1B8073']
+					colorscheme: ['#AAB3C6', '#1B8073'],
+					dateOptions
 				}
 			),
 			annotations
@@ -864,7 +869,8 @@ const preparedCharts = computed(() => {
 					translationMap: reverseMap,
 					xAxisTitle: modelVarUnits.value._time || 'Time',
 					yAxisTitle: modelVarUnits.value[key] || '',
-					colorscheme: ['#AAB3C6', '#1B8073']
+					colorscheme: ['#AAB3C6', '#1B8073'],
+					dateOptions
 				}
 			);
 
@@ -1155,7 +1161,7 @@ const initialize = async () => {
 		modelPartUnits,
 		modelPartTypes
 	} = await setupModelInput(modelConfigId.value);
-	modelConfig.value = modelConfiguration;
+	modelConfig.value = modelConfiguration ?? null;
 	model.value = m ?? null;
 	modelStateOptions.value = modelOptions;
 	modelParameters.value = model.value ? getParameters(model.value) : [];

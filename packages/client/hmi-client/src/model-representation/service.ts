@@ -1,3 +1,4 @@
+// TODO: it might be best to move all these to getters and setters related to the model to services/model since these all seem to be split up at the moment
 import _, { isEmpty } from 'lodash';
 import { runDagreLayout } from '@/services/graph';
 import { MiraModel } from '@/model-representation/mira/mira-common';

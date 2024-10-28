@@ -33,7 +33,7 @@ const props = defineProps<{
 const pdfs = ref<PdfData[]>(props.pdfs);
 const pdfRef = ref(null);
 
-onMounted(() => emit('pdf-ref', pdfRef));
+defineExpose({ pdfRef });
 </script>
 
 <style scoped>
