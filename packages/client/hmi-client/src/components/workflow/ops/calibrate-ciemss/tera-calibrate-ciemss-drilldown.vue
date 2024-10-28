@@ -256,8 +256,8 @@
 					</AccordionTab>
 				</Accordion>
 				<div v-if="!isLoading">
-					<section ref="outputPanel" v-if="modelConfig && csvAsset">
-						<Accordion multiple :active-index="[0, 1, 2]" class="px-2">
+					<section class="pb-3" ref="outputPanel" v-if="modelConfig && csvAsset">
+						<Accordion multiple :active-index="[0, 1, 2, 3]" class="px-2">
 							<AccordionTab header="Parameters">
 								<template v-for="setting of selectedParameterSettings" :key="setting.id">
 									<vega-chart
@@ -316,6 +316,7 @@
 							</AccordionTab>
 							<AccordionTab header="Errors" v-if="errorData.length > 0 && selectedErrorVariableSettings.length > 0">
 								<vega-chart
+									v-if="errorData.length > 0 && selectedErrorVariableSettings.length > 0"
 									:expandable="onExpandErrorChart"
 									:are-embed-actions-visible="true"
 									:visualization-spec="errorChart"
@@ -447,7 +448,7 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import * as vega from 'vega';
-import { csvParse, autoType, mean, variance } from 'd3';
+import { mean, variance } from 'd3';
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
 import { useConfirm } from 'primevue/useconfirm';
 import Accordion from 'primevue/accordion';
@@ -457,7 +458,13 @@ import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
-import { CalibrateMap, setupDatasetInput, setupCsvAsset, setupModelInput } from '@/services/calibrate-workflow';
+import {
+	CalibrateMap,
+	setupDatasetInput,
+	setupCsvAsset,
+	setupModelInput,
+	parseCsvAsset
+} from '@/services/calibrate-workflow';
 import {
 	deleteAnnotation,
 	fetchAnnotations,
@@ -601,12 +608,7 @@ const activeChartSettings = ref<ChartSetting | null>(null);
 
 const datasetColumns = ref<DatasetColumn[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
-const groundTruthData = computed<DataArray>(() => {
-	if (!csvAsset.value) return [];
-	const csv = (csvAsset.value as CsvAsset).csv;
-	const csvRaw = csv.map((d) => d.join(',')).join('\n');
-	return csvParse(csvRaw, autoType);
-});
+const groundTruthData = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
 
 const modelConfig = ref<ModelConfiguration | null>(null);
 const model = ref<Model | null>(null);
@@ -631,7 +633,6 @@ const runResult = ref<DataArray>([]);
 const runResultPre = ref<DataArray>([]);
 const runResultSummary = ref<DataArray>([]);
 const runResultSummaryPre = ref<DataArray>([]);
-const errorData = ref<Record<string, any>[]>([]);
 const showSaveModal = ref(false);
 const configuredModelConfig = ref<ModelConfiguration | null>(null);
 
@@ -749,6 +750,9 @@ const generateAnnotation = async (setting: ChartSetting, query: string) => {
 };
 // ---
 
+const errorData = computed<Record<string, any>[]>(() =>
+	getErrorData(groundTruthData.value, runResult.value, mapping.value, knobs.value.timestampColName)
+);
 const pyciemssMap = ref<Record<string, string>>({});
 const preparedChartInputs = computed(() => {
 	const state = props.node.state;
@@ -822,8 +826,7 @@ const preparedCharts = computed(() => {
 				{
 					data: groundTruthData.value,
 					variables: datasetVariables,
-					timeField: datasetTimeField as string,
-					groupField: 'sample_id'
+					timeField: datasetTimeField as string
 				},
 				{
 					title: variable,
@@ -1271,13 +1274,6 @@ watch(
 
 			if (!runResult.value.length) return;
 			pyciemssMap.value = parsePyCiemssMap(runResult.value[0]);
-
-			errorData.value = getErrorData(
-				groundTruthData.value,
-				runResult.value,
-				mapping.value,
-				knobs.value.timestampColName
-			);
 		}
 	},
 	{ immediate: true }
