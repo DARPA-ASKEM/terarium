@@ -15,7 +15,7 @@
 			>
 				<template #content>
 					<tera-drilldown-section :is-loading="isFetchingPDF">
-						<tera-pdf-panel :pdfs="pdfData" @pdf-ref="getPdfRef" />
+						<tera-pdf-panel :pdfs="pdfData" ref="pdfPanelRef" />
 					</tera-drilldown-section>
 				</template>
 			</tera-slider-panel>
@@ -301,7 +301,8 @@ const isFetchingPDF = ref(false);
 const isDocViewerOpen = ref(true);
 
 const pdfData = ref<{ document: any; data: string; isPdf: boolean; name: string }[]>([]);
-const pdfViewer = ref();
+const pdfPanelRef = ref();
+const pdfViewer = computed(() => pdfPanelRef.value?.pdfRef[0]);
 
 const isSidebarOpen = ref(true);
 const isEditingDescription = ref(false);
@@ -716,10 +717,6 @@ const updateThoughts = (data: any) => {
 	if (llmResponse) {
 		notebookResponse.value = llmResponse.content.text;
 	}
-};
-
-const getPdfRef = (pdfRef) => {
-	pdfViewer.value = pdfRef.value[0];
 };
 
 watch(
