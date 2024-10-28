@@ -5,6 +5,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
+import java.net.URI;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -28,12 +30,15 @@ import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.Exchange;
 import org.springframework.amqp.rabbit.annotation.QueueBinding;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
+import software.uncharted.terarium.hmiserver.configuration.TaskRunnerConfiguration;
+import software.uncharted.terarium.hmiserver.configuration.TaskRunnerConfiguration.RabbitConfig;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationEvent;
@@ -133,6 +138,8 @@ public class TaskService {
 		}
 	}
 
+	private final TaskRunnerConfiguration taskRunnerConfiguration;
+
 	private static final String RESPONSE_CACHE_KEY = "task-service-response-cache";
 
 	// TTL = Time to live, the maximum time a key will be in the cache before it is
@@ -145,12 +152,14 @@ public class TaskService {
 	@Value("${terarium.taskrunner.response-cache-max-idle-seconds:7200}") // 2 hours
 	private long CACHE_MAX_IDLE_SECONDS;
 
-	private final Map<String, RabbitTemplate> rabbitTemplates;
-	private final Map<String, RabbitAdmin> rabbitAdmins;
+	// private final Map<String, RabbitTemplate> rabbitTemplates;
+	private Map<String, RabbitAdmin> rabbitAdmins;
 	private final Config config;
 	private final ObjectMapper objectMapper;
 	private final NotificationService notificationService;
 	private final ClientEventService clientEventService;
+
+	private final Map<String, SimpleMessageListenerContainer> taskResponseConsumers = new HashMap<>();
 
 	private final Map<String, TaskResponseHandler> responseHandlers = new ConcurrentHashMap<>();
 
@@ -166,6 +175,13 @@ public class TaskService {
 	// The exchange that the task responses are published to.
 	@Value("${terarium.taskrunner.response-exchange}")
 	private String TASK_RUNNER_RESPONSE_EXCHANGE;
+
+	// The queue that the task responses are published to.
+	@Value("${terarium.taskrunner.response-queue}")
+	private String TASK_RUNNER_RESPONSE_QUEUE;
+
+	@Value("${terarium.taskrunner.durable-queues}")
+	private Boolean IS_DURABLE_QUEUES;
 
 	// Once a single instance of the hmi-server has processed a task response, it
 	// will publish to this exchange to broadcast the response to all other
@@ -200,6 +216,10 @@ public class TaskService {
 			// sanity check for local development to clear the caches
 			responseCache.clear();
 		}
+
+		// create the consumers
+		initRabbitAdmins();
+		initResponseConsumers();
 	}
 
 	private void declareAndBindTransientQueueWithRoutingKey(
@@ -244,13 +264,11 @@ public class TaskService {
 	}
 
 	private void convertAndSend(final TaskType requestType, final String queue, final String msg) {
-		RabbitTemplate rabbitTemplate = rabbitTemplates.get(requestType.toString());
-
-		if (rabbitTemplate == null) {
-			rabbitTemplate = rabbitTemplates.get("default");
+		RabbitAdmin rabbitAdmin = rabbitAdmins.get(requestType.toString());
+		if (rabbitAdmin == null) {
+			rabbitAdmin = rabbitAdmins.get("default");
 		}
-
-		rabbitTemplate.convertAndSend(queue, msg);
+		rabbitAdmin.getRabbitTemplate().convertAndSend(queue, msg);
 	}
 
 	private void convertAndSend(
@@ -259,13 +277,12 @@ public class TaskService {
 		final String routingKey,
 		final String msg
 	) {
-		RabbitTemplate rabbitTemplate = rabbitTemplates.get(requestType.toString());
-
-		if (rabbitTemplate == null) {
-			rabbitTemplate = rabbitTemplates.get("default");
+		RabbitAdmin rabbitAdmin = rabbitAdmins.get(requestType.toString());
+		if (rabbitAdmin == null) {
+			rabbitAdmin = rabbitAdmins.get("default");
 		}
 
-		rabbitTemplate.convertAndSend(exchange, routingKey, msg);
+		rabbitAdmin.getRabbitTemplate().convertAndSend(exchange, routingKey, msg);
 	}
 
 	public void addResponseHandler(final TaskResponseHandler handler) {
@@ -333,27 +350,68 @@ public class TaskService {
 		}
 	}
 
-	// This is a shared queue, messages will round robin between every instance of
-	// the hmi-server. Any operation that must occur once and only once should be
-	// triggered here.
-	@RabbitListener(
-		bindings = @QueueBinding(
-			value = @org.springframework.amqp.rabbit.annotation.Queue(
-				value = "${terarium.taskrunner.response-queue}",
-				autoDelete = "false",
-				exclusive = "false",
-				durable = "${terarium.taskrunner.durable-queues}"
-			),
-			exchange = @Exchange(
-				value = "${terarium.taskrunner.response-exchange}",
-				durable = "${terarium.taskrunner.durable-queues}",
-				autoDelete = "false",
-				type = ExchangeTypes.DIRECT
-			),
-			key = ""
-		),
-		concurrency = "1"
-	)
+	private void initRabbitAdmins() {
+		try {
+			rabbitAdmins = new HashMap<>();
+			for (final Map.Entry<String, RabbitConfig> entry : taskRunnerConfiguration.getRabbitmq().entrySet()) {
+				final String key = entry.getKey();
+				final RabbitConfig rabbitConfig = entry.getValue();
+
+				final URI rabbitAddress = new URI(rabbitConfig.getAddresses());
+
+				final CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
+				connectionFactory.setUri(rabbitAddress);
+				connectionFactory.setUsername(rabbitConfig.getUsername());
+				connectionFactory.setPassword(rabbitConfig.getPassword());
+
+				final RabbitAdmin rabbitAdmin = new RabbitAdmin(connectionFactory);
+
+				log.info("Creating taskrunner rabbit admin for type: {}", key);
+				rabbitAdmins.put(key, rabbitAdmin);
+			}
+		} catch (final Exception e) {
+			throw new RuntimeException("Error initializing rabbit admins", e);
+		}
+	}
+
+	private void initResponseConsumers() {
+		for (final Map.Entry<String, RabbitAdmin> entry : rabbitAdmins.entrySet()) {
+			final String type = entry.getKey();
+			final RabbitAdmin rabbitAdmin = entry.getValue();
+
+			log.info("Creating consumer for rabbit admin: {}", type);
+
+			// This is a shared queue, messages will round robin between every instance of
+			// the hmi-server. Any operation that must occur once and only once should be
+			// triggered here.
+
+			// Declare a direct exchange
+			final DirectExchange exchange = new DirectExchange(TASK_RUNNER_RESPONSE_EXCHANGE, IS_DURABLE_QUEUES, false);
+			rabbitAdmin.declareExchange(exchange);
+
+			// Declare a queue
+			final Queue queue = new Queue(TASK_RUNNER_RESPONSE_QUEUE, IS_DURABLE_QUEUES, false, false);
+			rabbitAdmin.declareQueue(queue);
+
+			// Bind the queue to the exchange with a routing key
+			final Binding binding = BindingBuilder.bind(queue).to(exchange).with("");
+			rabbitAdmin.declareBinding(binding);
+
+			final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(
+				rabbitAdmin.getRabbitTemplate().getConnectionFactory()
+			);
+
+			container.setQueueNames(TASK_RUNNER_RESPONSE_QUEUE);
+			container.setMessageListener(message -> {
+				onTaskResponseOneInstanceReceives(message);
+			});
+			container.start();
+
+			log.info("Consumer on queue {} started for rabbit admin: {}", TASK_RUNNER_RESPONSE_QUEUE, type);
+			taskResponseConsumers.put(type, container);
+		}
+	}
+
 	private void onTaskResponseOneInstanceReceives(final Message message) {
 		try {
 			TaskResponse resp = decodeMessage(message, TaskResponse.class);
@@ -525,7 +583,10 @@ public class TaskService {
 	private void broadcastTaskResponseToAllInstances(final TaskResponse resp) {
 		try {
 			final String jsonStr = objectMapper.writeValueAsString(resp);
-			rabbitTemplates.get("default").convertAndSend(TASK_RUNNER_RESPONSE_BROADCAST_EXCHANGE, "", jsonStr);
+			rabbitAdmins
+				.get("default")
+				.getRabbitTemplate()
+				.convertAndSend(TASK_RUNNER_RESPONSE_BROADCAST_EXCHANGE, "", jsonStr);
 		} catch (final JsonProcessingException e) {
 			log.error("Error serializing handler error response", e);
 		}
