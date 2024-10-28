@@ -213,7 +213,7 @@ const autoEntityMapping = async (sourceEntities: Entity[], targetEntities: Entit
 		targetEntities.forEach((target) => {
 			if (
 				!distinctSources.includes(source.id) &&
-				(target.id.startsWith(source.id) || source.id.startsWith(target.id))
+				(target.id.startsWith(source.id.toLocaleLowerCase()) || source.id.startsWith(target.id.toLocaleLowerCase()))
 			) {
 				result.push({ source: source.id, target: target.id });
 			}
