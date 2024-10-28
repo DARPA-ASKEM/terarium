@@ -89,7 +89,7 @@ def equations_cleanup(equations: List[str]) -> dict:
 
     client = OpenAI()
     output = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-4o-2024-08-06",
         top_p=1,
         frequency_penalty=0,
         presence_penalty=0,
@@ -134,7 +134,7 @@ def equations_from_image(image: str) -> dict:
 
     client = OpenAI()
     output = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-4o-2024-08-06",
         top_p=1,
         frequency_penalty=0,
         presence_penalty=0,
@@ -463,7 +463,7 @@ def compare_models(amrs: List[str]) -> dict:
 
     client = OpenAI()
     output = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-4o-2024-08-06",
         top_p=1,
         frequency_penalty=0,
         presence_penalty=0,
