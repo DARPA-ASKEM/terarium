@@ -27,7 +27,6 @@ export const createInterventionPolicy = async (policy: InterventionPolicy): Prom
 		delete policy.createdOn;
 		delete policy.updatedOn;
 		const response = await API.post<InterventionPolicy>(`/interventions`, policy);
-		console.log(response);
 		if (response.status !== 201) {
 			return null;
 		}
