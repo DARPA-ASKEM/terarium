@@ -12,6 +12,33 @@ export interface LLMGeneratedChartAnnotation {
 }
 
 /**
+ * Adds a new multi-variable chart setting to the provided settings array if it doesn't already exist.
+ * Note that the order of the variables doesn't matter. e.g. chart settings with selectedVariables, ['a', 'b'] is treated same as the one with ['b', 'a'].
+ *
+ * @param settings - The array of existing chart settings.
+ * @param type - The type of the chart setting to be added.
+ * @param selectedVariables - The array of selected variables for the new chart setting.
+ * @returns The updated array of chart settings.
+ */
+export function addMultiVariableChartSetting(
+	settings: ChartSetting[],
+	type: ChartSettingType,
+	selectedVariables: string[]
+) {
+	const existingSetting = settings.find(
+		(setting) => setting.type === type && _.isEqual(new Set(setting.selectedVariables), new Set(selectedVariables))
+	);
+	if (existingSetting || _.isEmpty(selectedVariables)) return settings;
+	const newSetting: ChartSetting = {
+		id: uuidv4(),
+		name: selectedVariables.join(', '),
+		selectedVariables,
+		type
+	} as ChartSetting;
+	return [...settings, newSetting];
+}
+
+/**
  * Updates the given chart settings based on the selected variables and return it as new settings.
  * This function assumes that the given chart settings are for single variable charts.
  *
@@ -25,7 +52,9 @@ export function updateChartSettingsBySelectedVariables(
 	type: ChartSettingType,
 	variableSelection: string[]
 ) {
+	// previous settings without the settings of the given type
 	const previousSettings = settings.filter((setting) => setting.type !== type);
+	// selected settings for the given type
 	const selectedSettings = variableSelection.map((variable) => {
 		const found = previousSettings.find(
 			(setting) => setting.selectedVariables[0] === variable && setting.type === type
@@ -220,6 +249,47 @@ export async function generateForecastChartAnnotation(
       ]
     }
 
+    Request:
+    Add a vertical line at the day where the price reaches its peak value.
+    Answer:
+    {
+      "description": "Add a vertical line at the day where the price reaches its peak value.",
+      "transform": [
+        {"filter": "datum.variableField == 'price'"},
+        {
+          "joinaggregate": [{
+          "op": "max",
+          "field": "valueField",
+          "as": "max_price"
+          }]
+        },
+        {"filter": "datum.valueField >= datum.max_price"}
+      ],
+      "layer": [
+        {
+          "mark": {
+            "type": "rule",
+            "strokeDash": [4, 4]
+          },
+          "encoding": {
+            "x": {"field": "date", "type": "quantitative", "axis": { "title": ""}}
+          }
+        },
+        {
+          "mark": {
+            "type": "text",
+            "align": "left",
+            "dx": 5,
+            "dy": -10
+          },
+          "encoding": {
+            "x": {"field": "date", "type": "quantitative", "axis": { "title": ""}},
+            "text": {"value": "Max Price"}
+          }
+        }
+      ]
+    }
+
     Here is the information of the existing target chart spec where you need to add the annotations:
     - The existing chart follows a similar pattern as the above Example Chart Spec like:
         {
@@ -242,6 +312,7 @@ export async function generateForecastChartAnnotation(
           ]
         }
     - Assume all unknown variables except the time field are for the y-axis and are renamed to the valueField.
+    - Make sure possible values for 'valueField' are ${JSON.stringify(variables)} and try best to translate the variables mentioned from the request to the variables for the 'valueField'.
     - Leverage this variable to human readable name mapping: ${JSON.stringify(translateMap)} if needed.
 
     Give me the layer object to be added to the existing chart spec based on the following user request.
