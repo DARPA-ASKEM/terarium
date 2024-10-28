@@ -6,25 +6,105 @@
       "type": "string",
       "description": "The title should say 'Comparison of' and the names of the models being compared."
     },
-    "semanticComparison": {
+    "structuralComparison": {
       "type": "object",
       "description": "This section compares the structure of the models to each other.",
       "properties": {
         "states": {
-          "type": "string",
-          "description": "A short paragraph that compares and summaries (1) the state variables common to all the models and (2) the state variables unique to each model. There should be at least three sentences focused on each of these two points. The discussion should be based on the name, description, initial condition expression of the state variables. The focus should be on how these properties are similar across all the models and how they differ between the models. Mention which model has the most state variables and which has the fewest."
+          "type": "object",
+          "description": "A comparison of the state variables of the models.",
+          "properties": {
+            "common": {
+              "type": "string",
+              "description": "A detailed paragraph that compares and summarizes the state variables common to all the models. This should be based on the name, description, and the initial condition expression of the state variables. The focus should be on how these properties are similar across all the models."
+            },
+            "unique": {
+              "type": "string",
+              "description": "A detailed paragraph that compares and summarizes the state variables that are unique for a given model. This should be based on the name, description, and the initial condition expression of the state variables. The focus should be on how these properties differ from the other models."
+            },
+            "conclusion": {
+              "type": "string",
+              "description": "A short paragraph that summarizes the comparison with a conclusion. There should be mention of which model has the most state variables and which has the fewest. When formatting the paragraph, You should start with 'In conclusion,'."
+            }
+          },
+          "required": [
+            "common",
+            "unique",
+            "conclusion"
+          ],
+          "additionalProperties": false
         },
         "parameters": {
-          "type": "string",
-          "description": "A short paragraph that compares and summaries (1) the parameters common to all the models and (2) the parameters unique to each model. There should be at least three sentences focused on each of these two points. The discussion should be based on the name, description, value of the parameters and in what rate laws each parameter is used. The focus should be on how these properties are similar across all models and how they differ between the models. Mention which model has the most parameters and which has the fewest."
+          "type": "object",
+          "description": "A comparison of the parameters of the models.",
+          "properties": {
+            "common": {
+              "type": "string",
+              "description": "A detailed paragraph that compares and summarizes the parameters common to all the models. This should be based on the name, description, value of the parameters and in what rate laws each parameter is used. The focus should be on how these properties are similar across all models."
+            },
+            "unique": {
+              "type": "string",
+              "description": "A detailed paragraph that compares and summarizes the parameters that are unique for a given model. This should be based on the name, description, value of the parameters and in what rate laws each parameter is used. The focus should be on how these properties differ from the other models."
+            },
+            "conclusion": {
+              "type": "string",
+              "description": "A short paragraph that summarizes the comparison with a conclusion. There should be mention of which model has the parameters and which has the fewest. When formatting the paragraph, You should start with 'In conclusion,'."
+            }
+          },
+          "required": [
+            "common",
+            "unique",
+            "conclusion"
+          ],
+          "additionalProperties": false
         },
         "transitions": {
-          "type": "string",
-          "description": "A short paragraph that compares and summaries (1) the transitions common to all the models and (2) the transitions unique to each model. There should be at least three sentences focused on each of these two points. The discussion should be based on the id, the list of input state variables, the list of output state variables, and the SymPy expression that target each transition. The focus should be on how these properties are similar across all the models and how they differ between the models. Mention which model has the most transitions and which has the fewest."
+          "type": "object",
+          "description": "A comparison of the transitions of the models.",
+          "properties": {
+            "common": {
+              "type": "string",
+              "description": "A detailed paragraph that compares and summarizes transitions common to all the models. This should be based on the id, the list of input state variables, the list of output state variables, and the SymPy expression that target each transition. The focus should be on how these properties are similar across all the models."
+            },
+            "unique": {
+              "type": "string",
+              "description": "A detailed paragraph that compares and summarizes transitions that are unique for a given model. This should be based on the id, the list of input state variables, the list of output state variables, and the SymPy expression that target each transition. The focus should be on how these properties differ from the other models."
+            },
+            "conclusion": {
+              "type": "string",
+              "description": "A short paragraph that summarizes the comparison with a conclusion. There should be mention of which model has the most transitions and which has the fewest. When formatting the paragraph, You should start with 'In conclusion,'."
+            }
+          },
+          "required": [
+            "common",
+            "unique",
+            "conclusion"
+          ],
+          "additionalProperties": false
         },
         "observables": {
-          "type": "string",
-          "description": "A short paragraph that compares and summaries (1) the observables common to all the models and (2) the observables unique to each model. There should be at least three sentences focused on each of these two points. The discussion should be based on the id, name, Sympy expression of each observable. The focus should be on how these properties are similar across all the models and how they differ between the models. Mention which model has the most observables and which has the fewest. If all models have no observable, this paragraph should only one sentence that states this fact."
+          "type": "object",
+          "description": "A comparison of the observables of the models.",
+          "properties": {
+            "common": {
+              "type": "string",
+              "description": "A detailed paragraph that compares and summarizes observables common to all the models. This should be based on the id, name, SymPy expression of each observable. The focus should be on how these properties are similar across all the models."
+            },
+            "unique": {
+              "type": "string",
+              "description": "A detailed paragraph that compares and summarizes observables that are unique for a given model. This should be based on the id, name, SymPy expression of each observable. The focus should be on how these properties differ from the other models."
+            },
+            "conclusion": {
+              "type": "string",
+              "description": "A short paragraph that summarizes the comparison with a conclusion. There should be mention of which model has the most observations and which has the fewest. When formatting the paragraph, You should start with 'In conclusion,'."
+            }
+          },
+          "required": [
+            "common",
+            "unique",
+            "conclusion"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -38,25 +118,105 @@
     "metadataComparison": {
       "type": "object",
       "properties": {
-        "description": {
-          "type": "string",
-          "description": "A short paragraph that compares and summaries basic details like source publication, authors, funding, model type (1) common to all the models and (2) unique to each model. There should be at least three sentences for each of the two points."
+        "details": {
+          "type": "object",
+          "description": "A comparison of basic details of the models.",
+          "properties": {
+            "common": {
+              "type": "string",
+              "description": "A detailed paragraph that compares and summarizes basic details like source publication, authors, funding, and model type that are common to all the models."
+            },
+            "unique": {
+              "type": "string",
+              "description": "A detailed paragraph that compares and summarizes basic details like source publication, authors, funding, and model type that differ between models."
+            },
+            "conclusion": {
+              "type": "string",
+              "description": "A short paragraph that summarizes the comparison with a conclusion. When formatting the paragraph, You should start with 'In conclusion,'."
+            }
+          },
+          "required": [
+            "common",
+            "unique",
+            "conclusion"
+          ],
+          "additionalProperties": false
         },
         "uses": {
-          "type": "string",
-          "description": "A short paragraph that compares and summaries (1) the common context that all the models are intended to be used and (2) the unique context that each of the model is designed to be used. There should be at least three sentences for each of these points. The discussion should be focused on how the model can be used directly (without modification), how the model can be used indirectly (downstream, as part of a larger system), and how the model can be foreseeably misused (what users should not do). For each of the intended use cases, reason and rank the models in descending order by their fit for purpose.."
+          "type": "object",
+          "description": "A comparison of the intended uses of the models.",
+          "properties": {
+            "common": {
+              "type": "string",
+              "description": "A detailed paragraph that compares and summarizes the common context that all the models are intended to be used. This should focus on how the models can be used directly (without modification), how the models can be used indirectly (downstream, as part of a larger system), and how the models can be foreseeably misused (what users should not do)."
+            },
+            "unique": {
+              "type": "string",
+              "description": "A detailed paragraph that compares and summarizes the unique context that each of the model is designed to be used. This should focus on how the model can be used directly (without modification), how the model can be used indirectly (downstream, as part of a larger system), and how the model can be foreseeably misused (what users should not do)."
+            },
+            "conclusion": {
+              "type": "string",
+              "description": "A short paragraph that summarizes the comparison with a conclusion. For each of the intended use cases, reason and rank the models in descending order by their fit for purpose. When formatting the paragraph, You should start with 'In conclusion,'."
+            }
+          },
+          "required": [
+            "common",
+            "unique",
+            "conclusion"
+          ],
+          "additionalProperties": false
         },
         "biasRisksLimitations": {
-          "type": "string",
-          "description": "A short paragraph that compares and summaries any bias, risks, and technical limitations (1) common to all the models and (2) unique to each model. There should be at least three sentences for each of these two points. The discussion should focus on providing information on assumptions, foreseeable harms, misunderstandings, warnings, and potential mitigations. Here, bias is a disproportionate performance or skew for some subpopulations; a risk is societal-relevant issue that the model might cause;  a limitation is a likely failure mode of the model."
+          "type": "object",
+          "description": "A comparison of the bias, risks, and limitations of the models.",
+          "properties": {
+            "common": {
+              "type": "string",
+              "description": "A detailed paragraph that compares and summarizes any bias, risks, and technical limitations common to all the models. This should focus on providing information on assumptions, foreseeable harms, misunderstandings, warnings, and potential mitigations. Here, bias is a disproportionate performance or skew for some subpopulations; a risk is societal-relevant issue that the model might cause; a limitation is a likely failure mode of the model."
+            },
+            "unique": {
+              "type": "string",
+              "description": "A detailed paragraph that compares and summarizes any bias, risks, and technical limitations unique to a given model. This should focus on providing information on assumptions, foreseeable harms, misunderstandings, warnings, and potential mitigations. Here, bias is a disproportionate performance or skew for some subpopulations; a risk is societal-relevant issue that the model might cause; a limitation is a likely failure mode of the model."
+            },
+            "conclusion": {
+              "type": "string",
+              "description": "A short paragraph that summarizes the comparison with a conclusion. When formatting the paragraph, You should start with 'In conclusion,'."
+            }
+          },
+          "required": [
+            "common",
+            "unique",
+            "conclusion"
+          ],
+          "additionalProperties": false
         },
         "testing": {
-          "type": "string",
-          "description": "A short paragraph that compares and summaries the evaluation protocol (1) common to all the models and (2) unique to each model. There should be at least three sentences focused on each of these two points. The discussion should be focused on the type and source of testing data, the factors that could influence model behaviour, the evaluation metrics and benchmarks, any result with respect to social safety issues such as fairness and privacy."
+          "type": "object",
+          "description": "A comparison of the evaluation protocols of the models.",
+          "properties": {
+            "common": {
+              "type": "string",
+              "description": "A detailed paragraph that compares and summarizes the evaluation protocols common to all the models. This should focus on the type and source of testing data, the factors that could influence model behaviour, the evaluation metrics and benchmarks, any result with respect to social safety issues such as fairness and privacy."
+            },
+            "unique": {
+              "type": "string",
+              "description": "A detailed paragraph that compares and summarizes the evaluation protocols unique to a given model. This should focus on the type and source of testing data, the factors that could influence model behaviour, the evaluation metrics and benchmarks, any result with respect to social safety issues such as fairness and privacy."
+            },
+            "conclusion": {
+              "type": "string",
+              "description": "A short paragraph that summarizes the comparison with a conclusion. When formatting the paragraph, You should start with 'In conclusion,'."
+            }
+          },
+          "required": [
+            "common",
+            "unique",
+            "conclusion"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
-        "description",
+        "details",
         "uses",
         "biasRisksLimitations",
         "testing"
@@ -65,13 +225,13 @@
     },
     "summary": {
       "type": "string",
-      "description": "A short paragraph that compares and summaries (1) common features across all the models, (2) strengths and weaknesses unique to each model, and (3) the high-level differences between each pair of models. There should be at least three sentences focused on each of these three points. The discussion should be based on the structural and metadata comparison if available. Mention the intended use cases of each model."
+      "description": "A short paragraph that summarizes the comparisons of the models and determines the strengths and weaknesses unique to each model. When formatting the paragraph, mention the intended use cases of each model and ensure the paragraph is big enough to provide detailed information. The paragraph should start with 'In summary,'."
     }
   },
   "required": [
     "title",
     "summary",
-    "semanticComparison",
+    "structuralComparison",
     "metadataComparison"
   ],
   "additionalProperties": false
