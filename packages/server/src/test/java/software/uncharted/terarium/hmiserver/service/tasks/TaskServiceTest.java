@@ -415,7 +415,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		req.setInput(input);
 
 		final TaskFuture future1 = taskService.runTaskAsync(req);
-		taskService.cancelTask(future1.getId());
+		taskService.cancelTask(req.getType(), future1.getId());
 		Assertions.assertEquals(TaskStatus.CANCELLED, future1.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
 
 		// next request should not pull the cancelled response from cache
