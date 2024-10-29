@@ -42,9 +42,8 @@ const expressionFunctions = {
 	},
 	// Just show full value in tooltip
 	tooltipFormatter: (value) => {
-		if (value !== undefined) {
-			fixPrecisionError(value);
-		}
+		if (value === undefined) return 'N/A';
+		return fixPrecisionError(value);
 	}
 };
 
