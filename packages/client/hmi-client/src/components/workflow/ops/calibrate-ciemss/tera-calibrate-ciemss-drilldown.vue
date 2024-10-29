@@ -1094,6 +1094,17 @@ async function getAutoMapping() {
 }
 
 const initialize = async () => {
+	// Update Wizard form fields with current selected output state
+	knobs.value = {
+		numIterations: props.node.state.numIterations ?? 1000,
+		numSamples: props.node.state.numSamples ?? 100,
+		endTime: props.node.state.endTime ?? 100,
+		stepSize: props.node.state.stepSize ?? 1,
+		learningRate: props.node.state.learningRate ?? 0.1,
+		method: props.node.state.method ?? CiemssMethodOptions.dopri5,
+		timestampColName: props.node.state.timestampColName ?? ''
+	};
+
 	// Model configuration input
 	const {
 		model: m,
