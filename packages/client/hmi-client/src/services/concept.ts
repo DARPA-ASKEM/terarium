@@ -61,10 +61,6 @@ async function searchCuriesEntities(query: string): Promise<Array<DKG>> {
 	}
 }
 
-function getCurieUrl(curie: string): string {
-	return `http://mira-epi-dkg-lb-c7b58edea41524e6.elb.us-east-1.amazonaws.com/entity/${curie}`;
-}
-
 /**
  * Hit MIRA to get pairwise similarities between elements referenced by CURIEs in the first list and second list.
  * @input a List of curies (strings) for each source, and target.
@@ -213,7 +209,7 @@ const autoEntityMapping = async (sourceEntities: Entity[], targetEntities: Entit
 		targetEntities.forEach((target) => {
 			if (
 				!distinctSources.includes(source.id) &&
-				(target.id.startsWith(source.id) || source.id.startsWith(target.id))
+				(target.id.startsWith(source.id.toLocaleLowerCase()) || source.id.startsWith(target.id.toLocaleLowerCase()))
 			) {
 				result.push({ source: source.id, target: target.id });
 			}
@@ -302,7 +298,6 @@ export {
 	searchCuriesEntities,
 	getNameOfCurieCached,
 	getCurieFromGroundingIdentifier,
-	getCurieUrl,
 	parseCurie,
 	autoModelMapping,
 	autoCalibrationMapping,
