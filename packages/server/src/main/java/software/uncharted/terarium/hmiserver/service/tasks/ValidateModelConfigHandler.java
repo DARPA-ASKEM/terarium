@@ -42,6 +42,7 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 
 		UUID projectId;
 		UUID modelId;
+		String newModelConfigName;
 		UUID simulationId;
 	}
 
@@ -124,7 +125,7 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 
 			final ModelConfiguration contractedModelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
 				contractedModel,
-				"Validated " + contractedModel.getName(),
+				props.newModelConfigName,
 				contractedModel.getDescription()
 			);
 			contractedModelConfiguration.setModelId(props.modelId); // Config should be linked to the original model

@@ -357,6 +357,7 @@ import { DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
 import { stringToLatexExpression, getModelByModelConfigurationId, getMMT } from '@/services/model';
 import { displayNumber } from '@/utils/number';
 import { removeChartSettingById, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import { nodeOutputLabel } from '@/components/workflow/util';
 import { FunmanOperationState, Constraint, ConstraintType, CompartmentalConstraint } from './funman-operation';
 
 const props = defineProps<{
@@ -510,7 +511,11 @@ const runMakeQuery = async () => {
 		}
 	};
 
-	const response = await makeQueries(request, originalModelId);
+	const response = await makeQueries(
+		request,
+		originalModelId,
+		nodeOutputLabel(props.node, `${configuredModel.value.header.name} Result`)
+	);
 
 	// Setup the in-progress id
 	const state = _.cloneDeep(props.node.state);
