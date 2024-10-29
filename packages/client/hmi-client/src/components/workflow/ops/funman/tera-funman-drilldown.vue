@@ -141,21 +141,15 @@
 			</template>
 		</tera-slider-panel>
 		<template #preview>
-			<tera-drilldown-preview
-				title="Validation results"
-				v-model:output="selectedOutputId"
-				@update:selection="onSelection"
-				:options="outputs"
-				is-selectable
-			>
+			<tera-drilldown-preview>
 				<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%">
 					{{ props.node.state.currentProgress }}%
 				</tera-progress-spinner>
 				<template v-else-if="!isEmpty(node.state.runId)">
 					<header class="flex align-items-start">
 						<div>
-							<h4>{{ validatedModelConfiguration?.name }}</h4>
-							<span class="secondary-text">{{ formatShort(validatedModelConfiguration?.createdOn) }}</span>
+							<h4>{{ activeOutput?.label }}</h4>
+							<span class="secondary-text">{{ formatShort(activeOutput?.timestamp) }}</span>
 						</div>
 						<div class="btn-group">
 							<Button label="Add to report" outlined severity="secondary" disabled />
@@ -410,17 +404,6 @@ const parameterIds = ref<string[]>([]);
 const observableIds = ref<string[]>([]);
 
 const selectedOutputId = ref<string>();
-const outputs = computed(() => {
-	if (!_.isEmpty(props.node.outputs)) {
-		return [
-			{
-				label: 'Select an output',
-				items: props.node.outputs
-			}
-		];
-	}
-	return [];
-});
 
 const activeOutput = ref<WorkflowOutput<FunmanOperationState> | null>(null);
 
