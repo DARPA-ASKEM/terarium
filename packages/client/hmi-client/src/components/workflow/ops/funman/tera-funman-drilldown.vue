@@ -773,7 +773,6 @@ const selectedParameterSettings = computed(() =>
 let selectedBoxId: number = -1;
 
 function onSaveAsModelConfiguration() {
-	useToastService().success('', 'Created model configuration');
 	showSaveModal.value = false;
 }
 
