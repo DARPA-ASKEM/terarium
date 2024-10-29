@@ -885,11 +885,8 @@ export function createFunmanStateChart(
 	const upperBounds = stateIdConstraints.map((c) => c.additive_bounds.ub);
 	const yPoints = trajectories.map((t) => t.values[stateId]);
 
-	const useLowerBounds = focusOnModelChecks && !isEmpty(lowerBounds);
-	const useUpperBounds = focusOnModelChecks && !isEmpty(upperBounds);
-
-	const potentialMinYs = useLowerBounds ? lowerBounds : yPoints;
-	const potentialMaxYs = useUpperBounds ? upperBounds : yPoints;
+	const potentialMinYs = focusOnModelChecks && !isEmpty(lowerBounds) ? lowerBounds : yPoints;
+	const potentialMaxYs = focusOnModelChecks && !isEmpty(upperBounds) ? upperBounds : yPoints;
 	let minY = Math.floor(Math.min(...potentialMinYs));
 	let maxY = Math.ceil(Math.max(...potentialMaxYs));
 	// Limit to MAX as very large numbers cause the chart to have NaN in the y domain
@@ -898,8 +895,12 @@ export function createFunmanStateChart(
 
 	const modelChecks = stateIdConstraints.map((c) => {
 		// If the interval bounds are within the min/max values of the line plot use them, otherwise use the min/max values
-		let startY = useLowerBounds ? (c.additive_bounds.lb ?? minY) : Math.max(c.additive_bounds.lb ?? minY, minY);
-		let endY = useUpperBounds ? (c.additive_bounds.ub ?? maxY) : Math.min(c.additive_bounds.ub ?? maxY, maxY);
+		let startY = c.additive_bounds.lb ?? minY;
+		let endY = c.additive_bounds.ub ?? maxY;
+		if (!focusOnModelChecks) {
+			startY = Math.max(startY, minY);
+			endY = Math.min(endY, maxY);
+		}
 		// Limit to MAX as very large numbers cause the chart to have NaN in the y domain
 		startY = startY < -MAX ? -MAX : startY;
 		endY = endY > MAX ? MAX : endY;
