@@ -1,6 +1,7 @@
 import API from '@/api/api';
 import type { Intervention, InterventionPolicy } from '@/types/Types';
 import { InterventionSemanticType } from '@/types/Types';
+import { logger } from '@/utils/logger';
 
 export const blankIntervention: Intervention = {
 	name: 'New Intervention',
@@ -20,12 +21,20 @@ export const getInterventionPolicyById = async (policyId: string): Promise<Inter
 	return response?.data ?? null;
 };
 
-export const createInterventionPolicy = async (policy: InterventionPolicy): Promise<InterventionPolicy> => {
-	delete policy.id;
-	delete policy.createdOn;
-	delete policy.updatedOn;
-	const response = await API.post<InterventionPolicy>(`/interventions`, policy);
-	return response?.data ?? null;
+export const createInterventionPolicy = async (policy: InterventionPolicy): Promise<InterventionPolicy | null> => {
+	try {
+		delete policy.id;
+		delete policy.createdOn;
+		delete policy.updatedOn;
+		const response = await API.post<InterventionPolicy>(`/interventions`, policy);
+		if (response.status !== 201) {
+			return null;
+		}
+		return response.data ?? null;
+	} catch (error) {
+		logger.error(error);
+		return null;
+	}
 };
 
 export const deleteInterventionPolicy = async (policyId: string) => {
