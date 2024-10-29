@@ -200,11 +200,13 @@
 						</div>
 					</section>
 
-					<section v-if="interventionPolicy" class="form-section">
+					<section v-if="interventionPolicy && model" class="form-section">
 						<h5>Intervention Policies</h5>
 						<tera-intervention-summary-card
 							v-for="(intervention, index) in interventionPolicy.interventions"
 							:intervention="intervention"
+							:start-date="modelConfig?.temporalContext"
+							:calendar-settings="getCalendarSettingsFromModel(model)"
 							:key="index"
 						/>
 					</section>
@@ -254,8 +256,8 @@
 					</AccordionTab>
 				</Accordion>
 				<div v-if="!isLoading">
-					<section ref="outputPanel" v-if="modelConfig && csvAsset">
-						<Accordion multiple :active-index="[0, 1, 2]" class="px-2">
+					<section class="pb-3" ref="outputPanel" v-if="modelConfig && csvAsset">
+						<Accordion multiple :active-index="[0, 1, 2, 3]" class="px-2">
 							<AccordionTab header="Parameters">
 								<template v-for="setting of selectedParameterSettings" :key="setting.id">
 									<vega-chart
@@ -314,6 +316,7 @@
 							</AccordionTab>
 							<AccordionTab header="Errors" v-if="errorData.length > 0 && selectedErrorVariableSettings.length > 0">
 								<vega-chart
+									v-if="errorData.length > 0 && selectedErrorVariableSettings.length > 0"
 									:expandable="onExpandErrorChart"
 									:are-embed-actions-visible="true"
 									:visualization-spec="errorChart"
@@ -349,9 +352,7 @@
 			>
 				<template #overlay>
 					<tera-chart-settings-panel
-						:annotations="
-							activeChartSettings?.type === ChartSettingType.VARIABLE_COMPARISON ? chartAnnotations : undefined
-						"
+						:annotations="activeChartSettings?.type === ChartSettingType.VARIABLE ? chartAnnotations : undefined"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
 						@delete-annotation="deleteAnnotation"
@@ -360,70 +361,41 @@
 				</template>
 				<template #content>
 					<div class="output-settings-panel">
-						<h5>Parameters</h5>
-						<tera-chart-settings-item
-							v-for="settings of chartSettings.filter(
-								(setting) => setting.type === ChartSettingType.DISTRIBUTION_COMPARISON
-							)"
-							:key="settings.id"
-							:settings="settings"
-							@open="activeChartSettings = settings"
+						<tera-chart-settings
+							:title="'Parameter distributions'"
+							:settings="chartSettings"
+							:type="ChartSettingType.DISTRIBUTION_COMPARISON"
+							:select-options="Object.keys(pyciemssMap).filter((c) => modelPartTypesMap[c] === 'parameter')"
+							:selected-options="selectedParameterSettings.map((s) => s.selectedVariables[0])"
+							@open="activeChartSettings = $event"
 							@remove="removeChartSetting"
-						/>
-						<tera-chart-control
-							:chart-config="{
-								selectedRun: 'fixme',
-								selectedVariable: selectedParameterSettings.map((s) => s.selectedVariables[0])
-							}"
-							:multi-select="true"
-							:show-remove-button="false"
-							:variables="Object.keys(pyciemssMap).filter((c) => modelPartTypesMap[c] === 'parameter')"
-							@configuration-change="updateSelectedParameters"
+							@selection-change="updateChartSettings"
 						/>
 						<hr />
-						<h5>Model Variables</h5>
-						<tera-chart-settings-item
-							v-for="settings of chartSettings.filter(
-								(setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON
-							)"
-							:key="settings.id"
-							:settings="settings"
-							@open="activeChartSettings = settings"
-							@remove="removeChartSetting"
-						/>
-						<tera-chart-control
-							:chart-config="{
-								selectedRun: 'fixme',
-								selectedVariable: selectedVariableSettings.map((s) => s.selectedVariables[0])
-							}"
-							:multi-select="true"
-							:show-remove-button="false"
-							:variables="
+						<tera-chart-settings
+							:title="'Variables over time'"
+							:settings="chartSettings"
+							:type="ChartSettingType.VARIABLE"
+							:select-options="
 								Object.keys(pyciemssMap).filter((c) => ['state', 'observable'].includes(modelPartTypesMap[c]))
 							"
-							@configuration-change="updateSelectedVariables"
+							:selected-options="selectedVariableSettings.map((s) => s.selectedVariables[0])"
+							@open="activeChartSettings = $event"
+							@remove="removeChartSetting"
+							@selection-change="updateChartSettings"
 						/>
 						<hr />
-						<h5>Error</h5>
-						<tera-chart-settings-item
-							v-for="settings of chartSettings.filter(
-								(setting) => setting.type === ChartSettingType.ERROR_DISTRIBUTION
-							)"
-							:key="settings.id"
-							:settings="settings"
-							@open="activeChartSettings = settings"
+						<tera-chart-settings
+							:title="'Error'"
+							:settings="chartSettings"
+							:type="ChartSettingType.ERROR_DISTRIBUTION"
+							:select-options="Object.keys(pyciemssMap).filter((c) => mapping.find((d) => d.modelVariable === c))"
+							:selected-options="selectedErrorVariableSettings.map((s) => s.selectedVariables[0])"
+							@open="activeChartSettings = $event"
 							@remove="removeChartSetting"
+							@selection-change="updateChartSettings"
 						/>
-						<tera-chart-control
-							:chart-config="{
-								selectedRun: 'fixme',
-								selectedVariable: selectedErrorVariableSettings.map((s) => s.selectedVariables[0])
-							}"
-							:multi-select="true"
-							:show-remove-button="false"
-							:variables="Object.keys(pyciemssMap).filter((c) => mapping.find((d) => d.modelVariable === c))"
-							@configuration-change="updateSelectedErrorVariables"
-						/>
+						<hr />
 					</div>
 				</template>
 			</tera-slider-panel>
@@ -445,7 +417,7 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import * as vega from 'vega';
-import { csvParse, autoType, mean, variance } from 'd3';
+import { mean, variance } from 'd3';
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
 import { useConfirm } from 'primevue/useconfirm';
 import Accordion from 'primevue/accordion';
@@ -455,7 +427,13 @@ import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
-import { CalibrateMap, setupDatasetInput, setupCsvAsset, setupModelInput } from '@/services/calibrate-workflow';
+import {
+	CalibrateMap,
+	setupDatasetInput,
+	setupCsvAsset,
+	setupModelInput,
+	parseCsvAsset
+} from '@/services/calibrate-workflow';
 import {
 	deleteAnnotation,
 	fetchAnnotations,
@@ -472,8 +450,8 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
+import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
 import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
-import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
 import {
 	CalibrationRequestCiemss,
 	ClientEvent,
@@ -513,7 +491,6 @@ import {
 	createInterventionChartMarkers
 } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { displayNumber } from '@/utils/number';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
@@ -599,12 +576,7 @@ const activeChartSettings = ref<ChartSetting | null>(null);
 
 const datasetColumns = ref<DatasetColumn[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
-const groundTruthData = computed<DataArray>(() => {
-	if (!csvAsset.value) return [];
-	const csv = (csvAsset.value as CsvAsset).csv;
-	const csvRaw = csv.map((d) => d.join(',')).join('\n');
-	return csvParse(csvRaw, autoType);
-});
+const groundTruthData = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
 
 const modelConfig = ref<ModelConfiguration | null>(null);
 const model = ref<Model | null>(null);
@@ -629,7 +601,6 @@ const runResult = ref<DataArray>([]);
 const runResultPre = ref<DataArray>([]);
 const runResultSummary = ref<DataArray>([]);
 const runResultSummaryPre = ref<DataArray>([]);
-const errorData = ref<Record<string, any>[]>([]);
 const showSaveModal = ref(false);
 const configuredModelConfig = ref<ModelConfiguration | null>(null);
 
@@ -712,7 +683,7 @@ const selectedParameterSettings = computed(() =>
 	chartSettings.value.filter((setting) => setting.type === ChartSettingType.DISTRIBUTION_COMPARISON)
 );
 const selectedVariableSettings = computed(() =>
-	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON)
+	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE)
 );
 
 const selectedErrorVariableSettings = computed(() =>
@@ -747,6 +718,9 @@ const generateAnnotation = async (setting: ChartSetting, query: string) => {
 };
 // ---
 
+const errorData = computed<Record<string, any>[]>(() =>
+	getErrorData(groundTruthData.value, runResult.value, mapping.value, knobs.value.timestampColName)
+);
 const pyciemssMap = ref<Record<string, string>>({});
 const preparedChartInputs = computed(() => {
 	const state = props.node.state;
@@ -820,8 +794,7 @@ const preparedCharts = computed(() => {
 				{
 					data: groundTruthData.value,
 					variables: datasetVariables,
-					timeField: datasetTimeField as string,
-					groupField: 'sample_id'
+					timeField: datasetTimeField as string
 				},
 				{
 					title: variable,
@@ -986,11 +959,7 @@ const initDefaultChartSettings = (state: CalibrationOperationStateCiemss) => {
 	const mappedModelVariables = mapping.value
 		.filter((c) => ['state', 'observable'].includes(modelPartTypesMap.value[c.modelVariable]))
 		.map((c) => c.modelVariable);
-	state.chartSettings = updateChartSettingsBySelectedVariables(
-		[],
-		ChartSettingType.VARIABLE_COMPARISON,
-		mappedModelVariables
-	);
+	state.chartSettings = updateChartSettingsBySelectedVariables([], ChartSettingType.VARIABLE, mappedModelVariables);
 	state.chartSettings = updateChartSettingsBySelectedVariables(
 		state.chartSettings,
 		ChartSettingType.ERROR_DISTRIBUTION,
@@ -1072,36 +1041,10 @@ function removeChartSetting(chartId) {
 	});
 }
 
-function updateSelectedParameters(event) {
+function updateChartSettings(selectedVariables: string[], type: ChartSettingType) {
 	emit('update-state', {
 		...props.node.state,
-		chartSettings: updateChartSettingsBySelectedVariables(
-			chartSettings.value,
-			ChartSettingType.DISTRIBUTION_COMPARISON,
-			event.selectedVariable
-		)
-	});
-}
-
-function updateSelectedVariables(event) {
-	emit('update-state', {
-		...props.node.state,
-		chartSettings: updateChartSettingsBySelectedVariables(
-			chartSettings.value,
-			ChartSettingType.VARIABLE_COMPARISON,
-			event.selectedVariable
-		)
-	});
-}
-
-function updateSelectedErrorVariables(event) {
-	emit('update-state', {
-		...props.node.state,
-		chartSettings: updateChartSettingsBySelectedVariables(
-			chartSettings.value,
-			ChartSettingType.ERROR_DISTRIBUTION,
-			event.selectedVariable
-		)
+		chartSettings: updateChartSettingsBySelectedVariables(chartSettings.value, type, selectedVariables)
 	});
 }
 
@@ -1269,13 +1212,6 @@ watch(
 
 			if (!runResult.value.length) return;
 			pyciemssMap.value = parsePyCiemssMap(runResult.value[0]);
-
-			errorData.value = getErrorData(
-				groundTruthData.value,
-				runResult.value,
-				mapping.value,
-				knobs.value.timestampColName
-			);
 		}
 	},
 	{ immediate: true }
@@ -1424,9 +1360,6 @@ img {
 	th {
 		text-align: center;
 	}
-}
-.chart-settings-item-container {
-	gap: var(--gap-2);
 }
 
 .output-settings-panel {
