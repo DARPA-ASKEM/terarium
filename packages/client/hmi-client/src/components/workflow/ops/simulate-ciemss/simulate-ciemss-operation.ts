@@ -1,3 +1,4 @@
+import { ChartSetting } from '@/types/common';
 import type { TimeSpan } from '@/types/Types';
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import simulateProbabilistic from '@assets/svg/operator-images/simulate-probabilistic.svg';
@@ -6,7 +7,7 @@ const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss
 
 export interface SimulateCiemssOperationState extends BaseState {
 	// state shared across all runs
-	chartConfigs: string[][];
+	chartSettings: ChartSetting[] | null; // null indicates that the chart settings have not been set yet
 
 	// state specific to individual simulate runs
 	currentTimespan: TimeSpan;
@@ -41,7 +42,7 @@ export const SimulateCiemssOperation: Operation = {
 
 	initState: () => {
 		const init: SimulateCiemssOperationState = {
-			chartConfigs: [],
+			chartSettings: null,
 			currentTimespan: { start: 0, end: 100 },
 			numSamples: 100,
 			method: 'dopri5',

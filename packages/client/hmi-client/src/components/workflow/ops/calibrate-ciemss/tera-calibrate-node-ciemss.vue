@@ -19,7 +19,7 @@
 		<vega-chart v-else-if="lossChartSpec" :are-embed-actions-visible="false" :visualization-spec="lossChartSpec" />
 
 		<tera-progress-spinner v-if="inProgressCalibrationId" :font-size="2" is-centered style="height: 100%">
-			<div>{{ props.node.state.currentProgress }}%</div>
+			{{ node.state.currentProgress }}%
 		</tera-progress-spinner>
 
 		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
@@ -31,7 +31,6 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { csvParse, autoType } from 'd3';
 import { computed, watch, ref, shallowRef, onMounted } from 'vue';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
@@ -45,8 +44,8 @@ import {
 	DataArray
 } from '@/services/models/simulation-service';
 import { getModelConfigurationById, createModelConfiguration } from '@/services/model-configurations';
-import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
-import { setupDatasetInput } from '@/services/calibrate-workflow';
+import { parseCsvAsset, setupCsvAsset } from '@/services/calibrate-workflow';
+import { getModelByModelConfigurationId, getUnitsFromModelParts, getVegaDateOptions } from '@/services/model';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
@@ -61,14 +60,15 @@ import {
 	InferredParameterSemantic,
 	ChartAnnotation,
 	ClientEventType,
-	InterventionPolicy
+	InterventionPolicy,
+	Dataset
 } from '@/types/Types';
 import { ChartSettingType } from '@/types/common';
 import { createLLMSummary } from '@/services/summary-service';
 import { applyForecastChartAnnotations, createForecastChart, createInterventionChartMarkers } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import * as stats from '@/utils/stats';
-import { createDatasetFromSimulationResult } from '@/services/dataset';
+import { createDatasetFromSimulationResult, getDataset } from '@/services/dataset';
 import { useProjects } from '@/composables/project';
 import { fetchAnnotations } from '@/services/chart-settings';
 import { useClientEvent } from '@/composables/useClientEvent';
@@ -85,6 +85,7 @@ const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0].value?.[0]);
 
 const model = ref<Model | null>(null);
+const modelConfiguration = ref<ModelConfiguration | null>(null);
 const modelVarUnits = ref<{ [key: string]: string }>({});
 
 const runResult = ref<DataArray>([]);
@@ -95,6 +96,8 @@ const policyInterventionId = computed(() => props.node.inputs[2].value?.[0]);
 const interventionPolicy = ref<InterventionPolicy | null>(null);
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
+
+const groundTruth = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
 
 const areInputsFilled = computed(() => props.node.inputs[0].value && props.node.inputs[1].value);
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
@@ -171,14 +174,9 @@ const preparedCharts = computed(() => {
 		reverseMap[mapObj.datasetVariable] = 'Observations';
 	});
 
-	// FIXME: Hacky re-parse CSV with correct data types
-	let groundTruth: DataArray = [];
-	const csv = csvAsset.value.csv;
-	const csvRaw = csv.map((d) => d.join(',')).join('\n');
-	groundTruth = csvParse(csvRaw, autoType);
-
 	// Need to get the dataset's time field
 	const datasetTimeField = state.timestampColName;
+	const dateOptions = getVegaDateOptions(model.value, modelConfiguration.value);
 
 	const variableCharts = selectedVariableSettings.value.map((setting) => {
 		const variable = setting.selectedVariables[0];
@@ -203,7 +201,7 @@ const preparedCharts = computed(() => {
 				timeField: 'timepoint_id'
 			},
 			{
-				data: groundTruth,
+				data: groundTruth.value,
 				variables: datasetVariables,
 				timeField: datasetTimeField as string
 			},
@@ -214,7 +212,8 @@ const preparedCharts = computed(() => {
 				xAxisTitle: modelVarUnits.value._time || 'Time',
 				yAxisTitle: modelVarUnits.value[variable] || '',
 				colorscheme: ['#AAB3C6', '#1B8073'],
-				...chartSize
+				...chartSize,
+				dateOptions
 			}
 		);
 		applyForecastChartAnnotations(chart, annotations);
@@ -234,7 +233,7 @@ const preparedCharts = computed(() => {
 			},
 			null,
 			{
-				data: groundTruth,
+				data: groundTruth.value,
 				variables: [key],
 				timeField: datasetTimeField as string
 			},
@@ -245,7 +244,8 @@ const preparedCharts = computed(() => {
 				xAxisTitle: modelVarUnits.value._time || 'Time',
 				yAxisTitle: modelVarUnits.value[key] || '',
 				colorscheme: ['#AAB3C6', '#1B8073'],
-				...chartSize
+				...chartSize,
+				dateOptions
 			}
 		);
 		chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
@@ -325,6 +325,7 @@ watch(
 		if (!input.value) return;
 
 		const id = input.value[0];
+		modelConfiguration.value = await getModelConfigurationById(id);
 		model.value = await getModelByModelConfigurationId(id);
 		modelVarUnits.value = getUnitsFromModelParts(model.value as Model);
 	},
@@ -530,8 +531,13 @@ watch(
 
 		// Dataset used to calibrate
 		const datasetId = props.node.inputs[1]?.value?.[0];
-		const { csv } = await setupDatasetInput(datasetId);
-		csvAsset.value = csv;
+		// Get dataset:
+		const dataset: Dataset | null = await getDataset(datasetId);
+		if (dataset) {
+			setupCsvAsset(dataset).then((csv) => {
+				csvAsset.value = csv;
+			});
+		}
 	},
 	{ immediate: true }
 );

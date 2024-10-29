@@ -5,12 +5,16 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import javax.imageio.ImageIO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -18,6 +22,9 @@ import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.PDFRenderer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
@@ -362,16 +369,68 @@ public class DocumentController {
 		try {
 			// upload file to S3
 			final Integer status = documentAssetService.uploadFile(documentId, fileName, fileEntity);
+			final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
+
+			if (document.isPresent()) {
+				Graphics2D g2d = null;
+				ByteArrayOutputStream outputStream = null;
+				PDDocument pdfDocument = null;
+
+				try {
+					// Convert BufferedImage to byte[]
+					pdfDocument = Loader.loadPDF(fileEntity.getContent().readAllBytes());
+					PDFRenderer pdfRenderer = new PDFRenderer(pdfDocument);
+					BufferedImage firstPageImage = pdfRenderer.renderImageWithDPI(0, 100);
+
+					int height = firstPageImage.getHeight();
+					int width = firstPageImage.getWidth();
+					int topHalfHeight = height / 2;
+
+					// Create a sub-image (top half)
+					BufferedImage topHalfImage = firstPageImage.getSubimage(0, 0, width, topHalfHeight);
+
+					// Resize the image to a width of 225px while maintaining aspect ratio
+					int newWidth = 225;
+					int newHeight = (newWidth * topHalfHeight) / width; // Maintain the aspect ratio
+
+					// Create a new BufferedImage for the resized image
+					Image resizedImage = topHalfImage.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
+					BufferedImage resizedBufferedImage = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
+
+					g2d = resizedBufferedImage.createGraphics();
+					g2d.drawImage(resizedImage, 0, 0, null);
+
+					outputStream = new ByteArrayOutputStream();
+					ImageIO.write(resizedBufferedImage, "png", outputStream);
+
+					byte[] thumbnailBytes = outputStream.toByteArray();
+					document.get().setThumbnail(thumbnailBytes);
+
+					documentAssetService.updateAsset(document.get(), projectId, permission);
+				} catch (final Exception e) {
+					final String error = "Unable to create thumbnail";
+					log.error(error, e);
+				} finally {
+					if (g2d != null) {
+						g2d.dispose();
+					}
+					if (outputStream != null) {
+						outputStream.close();
+					}
+					if (pdfDocument != null) {
+						pdfDocument.close();
+					}
+				}
+			}
+
 			// if the fileEntity is not a PDF, then we need to extract the text and update
 			// the document asset
 			if (!DownloadService.IsPdf(fileEntity.getContent().readAllBytes())) {
-				final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
 				if (document.isEmpty()) {
 					return ResponseEntity.notFound().build();
 				}
 
 				document.get().setText(IOUtils.toString(fileEntity.getContent(), StandardCharsets.UTF_8));
-
 				documentAssetService.updateAsset(document.get(), projectId, permission);
 			}
 

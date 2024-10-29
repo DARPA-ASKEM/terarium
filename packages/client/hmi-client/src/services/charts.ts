@@ -3,6 +3,7 @@ import { isEmpty, pick } from 'lodash';
 import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
 import type { ChartAnnotation, FunmanInterval } from '@/types/Types';
+import { CalendarDateType } from '@/types/common';
 import { flattenInterventionData } from './intervention-policy';
 import type { FunmanBox, FunmanConstraintsResponse } from './models/funman-service';
 
@@ -17,6 +18,12 @@ interface BaseChartOptions {
 	xAxisTitle: string;
 	yAxisTitle: string;
 	legend?: boolean;
+	dateOptions?: DateOptions;
+}
+
+export interface DateOptions {
+	dateFormat: CalendarDateType;
+	startDate: Date;
 }
 export interface ForecastChartOptions extends BaseChartOptions {
 	translationMap?: Record<string, string>;
@@ -40,6 +47,24 @@ export interface ErrorChartOptions extends Omit<BaseChartOptions, 'height' | 'yA
 	areaChartHeight?: number;
 	boxPlotHeight?: number;
 	variables: { field: string; label?: string }[];
+}
+
+export interface InterventionMarkerOptions {
+	hideLabels?: boolean;
+	labelXOffset?: number;
+	dateOptions?: DateOptions;
+}
+
+function formatDateLabelFn(date: Date, datum: string, type: CalendarDateType): string {
+	switch (type) {
+		case CalendarDateType.YEAR:
+			return `timeFormat(datetime(${date.getFullYear()} + ${datum}, ${date.getMonth()}, ${date.getDate()}), '%Y')`;
+		case CalendarDateType.MONTH:
+			return `timeFormat(datetime(${date.getFullYear()} + floor(${datum} / 12), ${date.getMonth()} + (${datum} % 12) , ${date.getDate()}), '%b %Y')`;
+		case CalendarDateType.DATE:
+		default:
+			return `timeFormat(datetime(${date.getFullYear()}, ${date.getMonth()}, ${date.getDate()} + ${datum}), '%b %d, %Y')`;
+	}
 }
 
 export function createErrorChart(dataset: Record<string, any>[], options: ErrorChartOptions) {
@@ -430,8 +455,21 @@ export function createForecastChart(
 				}
 			]
 		};
+
+		let dateExpression;
+		if (options.dateOptions) {
+			dateExpression = formatDateLabelFn(options.dateOptions.startDate, 'datum.value', options.dateOptions.dateFormat);
+		}
+		const encodingX = {
+			field: layer.timeField,
+			type: 'quantitative',
+			axis: {
+				...xaxis,
+				labelExpr: dateExpression
+			}
+		};
 		const encoding = {
-			x: { field: layer.timeField, type: 'quantitative', axis: xaxis },
+			x: encodingX,
 			y: { field: 'valueField', type: 'quantitative', axis: yaxis },
 			color: {
 				field: 'variableField',
@@ -501,10 +539,17 @@ export function createForecastChart(
 
 			return tip;
 		});
+
 		Object.assign(tooltipSubLayer.encoding, {
 			opacity: { value: 0.00000001 },
 			strokeWidth: { value: 16 },
-			tooltip: [{ field: statisticsLayer.timeField, type: 'quantitative' }, ...(tooltipContent || [])]
+			tooltip: [
+				{
+					field: statisticsLayer.timeField,
+					type: 'quantitative'
+				},
+				...(tooltipContent || [])
+			]
 		});
 		layerSpec.layer.push(tooltipSubLayer);
 
@@ -726,8 +771,7 @@ export function createSuccessCriteriaChart(
 
 export function createInterventionChartMarkers(
 	data: ReturnType<typeof flattenInterventionData>,
-	hideLabels = false,
-	labelXOffset = 5
+	options: InterventionMarkerOptions = { hideLabels: false, labelXOffset: 5 }
 ): any[] {
 	const markerSpec = {
 		data: { values: data },
@@ -736,14 +780,14 @@ export function createInterventionChartMarkers(
 			x: { field: 'time', type: 'quantitative' }
 		}
 	};
-	if (hideLabels) return [markerSpec];
+	if (options.hideLabels) return [markerSpec];
 	const labelSpec = {
 		data: { values: data },
 		mark: {
 			type: 'text',
 			align: 'left',
 			angle: 90,
-			dx: labelXOffset,
+			dx: options.labelXOffset,
 			dy: -10
 		},
 		encoding: {
@@ -784,7 +828,7 @@ export function createInterventionChart(
 	};
 	if (!isEmpty(interventions)) {
 		// markers
-		createInterventionChartMarkers(interventions, chartOptions.hideLabels).forEach((marker) => {
+		createInterventionChartMarkers(interventions, { hideLabels: chartOptions.hideLabels }).forEach((marker) => {
 			spec.layer.push(marker);
 		});
 		// chart
@@ -850,9 +894,17 @@ export function createFunmanStateChart(
 
 	return {
 		$schema: VEGALITE_SCHEMA,
+		id: stateId,
 		config: { font: globalFont },
 		width: 600,
 		height: 300,
+		title: {
+			text: `${stateId} (persons)`,
+			anchor: 'start',
+			frame: 'group',
+			offset: 10,
+			fontSize: 14
+		},
 		params: [
 			{
 				name: 'selectedBoxId',

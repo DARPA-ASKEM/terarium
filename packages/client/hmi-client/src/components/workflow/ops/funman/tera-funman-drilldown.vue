@@ -5,134 +5,140 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
-		<div :tabName="DrilldownTabs.Wizard">
-			<tera-slider-panel
-				class="input-config"
-				v-model:is-open="isSliderOpen"
-				header="Validate configuration settings"
-				content-width="515px"
-			>
-				<template #content>
-					<div class="top-toolbar">
-						<p>Set your model checks and settings then click run.</p>
-						<div class="btn-group">
-							<Button label="Reset" outlined severity="secondary" />
-							<Button :loading="showSpinner" label="Run" icon="pi pi-play" @click="runMakeQuery" />
-						</div>
+		<tera-slider-panel
+			:tabName="DrilldownTabs.Wizard"
+			class="input-config"
+			v-model:is-open="isSliderOpen"
+			header="Validate configuration settings"
+			content-width="420px"
+		>
+			<template #content>
+				<div class="top-toolbar">
+					<p>Set your model checks and settings then click run.</p>
+					<div class="btn-group">
+						<Button label="Reset" outlined severity="secondary" />
+						<Button :loading="showSpinner" label="Run" icon="pi pi-play" @click="runMakeQuery" />
 					</div>
-					<main>
-						<Accordion multiple :active-index="[0, 1]">
-							<AccordionTab>
-								<template #header>
-									Model checks
-									<i class="pi pi-info-circle pl-2" v-tooltip="validateParametersToolTip" />
-								</template>
-								<p class="mb-3">
-									Implement sanity checks on the state space of the model to see how the parameter space of the model is
-									partitioned into satisfiable and unsatisfiable regions separated by decision boundaries.
-								</p>
-								<ul>
-									<li>
-										<section>
-											<header class="flex w-full gap-3 mb-2">
-												<tera-toggleable-input v-model="knobs.compartmentalConstraint.name" tag="h3" />
-												<div class="ml-auto flex align-items-center">
-													<label class="mr-2">Active</label>
-													<InputSwitch class="mr-3" v-model="knobs.compartmentalConstraint.isActive" />
-												</div>
-											</header>
-											<div class="flex align-items-center gap-6">
-												<katex-element
-													:expression="
-														stringToLatexExpression(
-															stateIds
-																.map((s, index) => `${s}${index === stateIds.length - 1 ? `\\geq 0` : ','}`)
-																.join('')
-														)
-													"
-												/>
-												<katex-element
-													:expression="
-														stringToLatexExpression(`${stateIds.join('+')} = ${displayNumber(mass)} \\ \\forall \\ t`)
-													"
-												/>
-											</div>
-										</section>
-									</li>
-									<li v-for="(cfg, index) in node.state.constraintGroups" :key="selectedOutputId + ':' + index">
-										<tera-constraint-group-form
-											:config="cfg"
-											:index="index"
-											:state-ids="stateIds"
-											:parameter-ids="parameterIds"
-											:observable-ids="observableIds"
-											@update-self="updateConstraintGroupForm(index, $event.key, $event.value)"
-											@delete-self="deleteConstraintGroupForm(index)"
-										/>
-									</li>
-								</ul>
-								<Button
-									class="mt-2"
-									text
-									icon="pi pi-plus"
-									label="Add constraint"
-									size="small"
-									@click="addConstraintForm"
-								/>
-							</AccordionTab>
-							<AccordionTab>
-								<template #header>
-									Settings
-									<i class="pi pi-info-circle pl-2" v-tooltip="validateParametersToolTip" />
-								</template>
-								<label>Select parameters of interest</label>
-								<MultiSelect
-									ref="columnSelect"
-									class="w-full mt-1 mb-2"
-									:model-value="variablesOfInterest"
-									:options="requestParameters"
-									option-label="name"
-									option-disabled="disabled"
-									:show-toggle-all="false"
-									placeholder="Select variables"
-									@update:model-value="onToggleVariableOfInterest"
-								/>
-								<div class="mb-2 timespan">
-									<div class="timespan-input">
-										<label>Start time</label>
-										<tera-input-number class="mt-1" v-model="knobs.currentTimespan.start" />
-									</div>
-									<div class="timespan-input">
-										<label>End time</label>
-										<tera-input-number class="mt-1" v-model="knobs.currentTimespan.end" />
-									</div>
-									<div class="timespan-input">
-										<label>Number of timesteps</label>
-										<tera-input-number class="mt-1" v-model="knobs.numberOfSteps" />
-									</div>
-								</div>
-								<tera-input-text :disabled="true" class="timespan-list mb-2" v-model="requestStepListString" />
-								<div>
-									<label>Tolerance</label>
-									<div class="mt-1 input-tolerance fadein animation-ease-in-out animation-duration-350">
-										<tera-input-number v-model="knobs.tolerance" />
-										<Slider v-model="knobs.tolerance" :min="0" :max="1" :step="0.01" class="w-full mr-2" />
-									</div>
-								</div>
-							</AccordionTab>
-						</Accordion>
-					</main>
-				</template>
-			</tera-slider-panel>
-		</div>
-		<div :tabName="DrilldownTabs.Notebook">
-			<tera-drilldown-section>
+				</div>
 				<main>
-					<!-- TODO: notebook functionality -->
-					<div class="mt-3 ml-4 mr-2">Notebook is under construction. Use the wizard for now.</div>
+					<Accordion multiple :active-index="[0, 1]">
+						<AccordionTab>
+							<template #header>
+								Model checks
+								<i class="pi pi-info-circle pl-2" v-tooltip="validateParametersToolTip" />
+							</template>
+							<p class="mb-3">
+								Implement sanity checks on the state space of the model to see how the parameter space of the model is
+								partitioned into satisfiable and unsatisfiable regions separated by decision boundaries.
+							</p>
+							<ul>
+								<li>
+									<section>
+										<header class="flex w-full gap-3 mb-2">
+											<tera-toggleable-input v-model="knobs.compartmentalConstraint.name" tag="h3" />
+											<div class="ml-auto flex align-items-center">
+												<label class="mr-2">Active</label>
+												<InputSwitch class="mr-3" v-model="knobs.compartmentalConstraint.isActive" />
+											</div>
+										</header>
+										<div class="flex align-items-center gap-6">
+											<katex-element
+												:expression="
+													stringToLatexExpression(
+														stateIds
+															.map((s, index) => `${s}${index === stateIds.length - 1 ? `\\geq 0` : ','}`)
+															.join('')
+													)
+												"
+											/>
+											<katex-element
+												:expression="
+													stringToLatexExpression(`${stateIds.join('+')} = ${displayNumber(mass)} \\ \\forall \\ t`)
+												"
+											/>
+										</div>
+									</section>
+								</li>
+								<li v-for="(cfg, index) in node.state.constraintGroups" :key="selectedOutputId + ':' + index">
+									<tera-constraint-group-form
+										:config="cfg"
+										:index="index"
+										:state-ids="stateIds"
+										:parameter-ids="parameterIds"
+										:observable-ids="observableIds"
+										@update-self="updateConstraintGroupForm(index, $event.key, $event.value)"
+										@delete-self="deleteConstraintGroupForm(index)"
+									/>
+								</li>
+							</ul>
+							<Button
+								class="mt-2"
+								text
+								icon="pi pi-plus"
+								label="Add constraint"
+								size="small"
+								@click="addConstraintForm"
+							/>
+						</AccordionTab>
+						<AccordionTab>
+							<template #header>
+								Settings
+								<i class="pi pi-info-circle pl-2" v-tooltip="validateParametersToolTip" />
+							</template>
+							<label>Select parameters of interest</label>
+							<MultiSelect
+								ref="columnSelect"
+								class="w-full mt-1 mb-2"
+								:model-value="variablesOfInterest"
+								:options="requestParameters"
+								option-label="name"
+								option-disabled="disabled"
+								:show-toggle-all="false"
+								placeholder="Select variables"
+								@update:model-value="onToggleVariableOfInterest"
+							/>
+							<span class="timespan mb-2">
+								<div>
+									<label>Start time</label>
+									<tera-input-number class="w-12" v-model="knobs.currentTimespan.start" />
+								</div>
+								<div>
+									<label>End time</label>
+									<tera-input-number class="w-12" v-model="knobs.currentTimespan.end" />
+								</div>
+								<div>
+									<label>Number of timesteps</label>
+									<tera-input-number class="w-12" v-model="knobs.numberOfSteps" />
+								</div>
+							</span>
+							<tera-input-text :disabled="true" class="mb-2" v-model="requestStepListString" />
+							<label>Tolerance</label>
+							<div class="mt-1 input-tolerance fadein animation-ease-in-out animation-duration-350">
+								<tera-input-number v-model="knobs.tolerance" />
+								<Slider v-model="knobs.tolerance" :min="0" :max="1" :step="0.01" class="w-full mr-2" />
+							</div>
+						</AccordionTab>
+					</Accordion>
 				</main>
-			</tera-drilldown-section>
-		</div>
+			</template>
+		</tera-slider-panel>
+		<tera-slider-panel
+			:tabName="DrilldownTabs.Notebook"
+			v-model:is-open="isSliderOpen"
+			header="Raw output"
+			content-width="420px"
+		>
+			<template #content>
+				<v-ace-editor
+					v-model:value="notebookText"
+					lang="json"
+					theme="chrome"
+					style="flex-grow: 1; width: 100%; height: 100%"
+					class="ace-editor"
+					:options="{ showPrintMargin: false }"
+				/>
+			</template>
+		</tera-slider-panel>
 		<template #preview>
 			<tera-drilldown-preview
 				title="Validation results"
@@ -141,17 +147,147 @@
 				:options="outputs"
 				is-selectable
 			>
-				<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%" />
-				<template v-else>
-					<tera-funman-output
-						v-if="!isEmpty(node.state.runId)"
-						:run-id="node.state.runId"
-						:trajectoryState="node.state.trajectoryState"
-						@update:trajectoryState="updateTrajectorystate"
-					/>
-					<tera-operator-placeholder v-else class="h-full" :node="node" />
+				<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%">
+					{{ props.node.state.currentProgress }}%
+				</tera-progress-spinner>
+				<template v-else-if="!isEmpty(node.state.runId)">
+					<header class="flex align-items-start">
+						<div>
+							<h4>{{ validatedModelConfiguration?.name }}</h4>
+							<span class="secondary-text">Output generated date</span>
+						</div>
+						<div class="btn-group">
+							<Button label="Add to report" outlined severity="secondary" disabled />
+							<Button label="Save for reuse" outlined severity="secondary" disabled />
+						</div>
+					</header>
+					<Accordion multiple :active-index="[0, 1, 2, 3]">
+						<AccordionTab header="Summary"> Summary text </AccordionTab>
+						<AccordionTab>
+							<template #header> State variables<i class="pi pi-info-circle" /> </template>
+							<template v-if="stateCharts[0]">
+								<vega-chart
+									v-for="(stateChart, index) in selectedStateCharts"
+									:key="index"
+									:visualization-spec="stateChart"
+									:are-embed-actions-visible="false"
+									expandable
+								/>
+							</template>
+							<span class="ml-4" v-else> No boxes were generated. </span>
+							<span class="ml-4" v-if="isEmpty(selectedStateCharts)">
+								To view state charts select some in the Output settings.
+							</span>
+						</AccordionTab>
+						<AccordionTab>
+							<template #header>Parameters<i class="pi pi-info-circle" /></template>
+							<vega-chart
+								:visualization-spec="parameterCharts"
+								:are-embed-actions-visible="false"
+								expandable
+								@chart-click="onParameterChartClick"
+							/>
+						</AccordionTab>
+						<AccordionTab header="Diagram">
+							<tera-model-diagram v-if="model" :model="model" />
+						</AccordionTab>
+					</Accordion>
+					<template v-if="model && validatedModelConfiguration && configuredMmt">
+						<tera-initial-table
+							:model="model"
+							:model-configuration="validatedModelConfiguration"
+							:model-configurations="[]"
+							:mmt="configuredMmt"
+							:mmt-params="mmtParams"
+							:feature-config="{ isPreview: true }"
+						/>
+						<tera-parameter-table
+							:model="model"
+							:model-configuration="validatedModelConfiguration"
+							:model-configurations="[]"
+							:mmt="configuredMmt"
+							:mmt-params="mmtParams"
+							:feature-config="{ isPreview: true }"
+						/>
+						<Accordion :active-index="0" v-if="!isEmpty(calibratedConfigObservables)">
+							<AccordionTab v-if="!isEmpty(calibratedConfigObservables)" header="Observables">
+								<tera-observables
+									class="pl-4"
+									:model="model"
+									:mmt="configuredMmt"
+									:observables="calibratedConfigObservables"
+									:feature-config="{ isPreview: true }"
+								/>
+							</AccordionTab>
+						</Accordion>
+					</template>
 				</template>
+				<tera-operator-placeholder v-else class="h-full" :node="node" />
 			</tera-drilldown-preview>
+		</template>
+		<template #sidebar-right>
+			<tera-slider-panel
+				v-model:is-open="isOutputSettingsPanelOpen"
+				direction="right"
+				class="input-config"
+				header="Output settings"
+				content-width="360px"
+			>
+				<template #content>
+					<div class="output-settings-panel">
+						<h5>State variables</h5>
+						<tera-chart-control
+							class="w-full"
+							:chart-config="{
+								selectedRun: 'fixme',
+								selectedVariable: selectedStateSettings.map((s) => s.selectedVariables[0])
+							}"
+							multi-select
+							:show-remove-button="false"
+							:variables="stateOptions"
+							@configuration-change="updateSelectedStates"
+						/>
+						<tera-chart-settings-item
+							v-for="settings of chartSettings.filter((setting) => setting.type === ChartSettingType.VARIABLE)"
+							:key="settings.id"
+							:settings="settings"
+							@open="activeChartSettings = settings"
+							@remove="removeChartSetting"
+						/>
+						<hr />
+						<h5>Parameters</h5>
+						<tera-chart-control
+							class="w-full"
+							:chart-config="{
+								selectedRun: 'fixme',
+								selectedVariable: selectedParameterSettings.map((s) => s.selectedVariables[0])
+							}"
+							multi-select
+							:show-remove-button="false"
+							:variables="parameterOptions"
+							@configuration-change="updateSelectedParameters"
+						/>
+						<tera-chart-settings-item
+							v-for="settings of chartSettings.filter(
+								(setting) => setting.type === ChartSettingType.DISTRIBUTION_COMPARISON
+							)"
+							:key="settings.id"
+							:settings="settings"
+							@open="activeChartSettings = settings"
+							@remove="removeChartSetting"
+						/>
+						<hr />
+					</div>
+					<div class="flex align-items-center gap-2 ml-4 mb-3">
+						<Checkbox v-model="onlyShowLatestResults" binary @change="renderCharts" />
+						<label>Only show furthest results</label>
+					</div>
+					<div class="flex align-items-center gap-2 ml-4 mb-4">
+						<Checkbox v-model="focusOnModelChecks" binary @change="updateStateCharts" />
+						<label>Focus on model checks</label>
+					</div>
+				</template>
+			</tera-slider-panel>
 		</template>
 	</tera-drilldown>
 </template>
@@ -159,27 +295,56 @@
 <script setup lang="ts">
 import _, { floor, isEmpty } from 'lodash';
 import { computed, ref, watch } from 'vue';
+import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import Slider from 'primevue/slider';
 import MultiSelect from 'primevue/multiselect';
+import Checkbox from 'primevue/checkbox';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
+import InputSwitch from 'primevue/inputswitch';
+import VegaChart from '@/components/widgets/VegaChart.vue';
+
+import '@/ace-config';
+import { VAceEditor } from 'vue3-ace-editor';
 
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
+import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
+import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
+import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
+import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
 
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
-import InputSwitch from 'primevue/inputswitch';
 
-import type { FunmanInterval, FunmanPostQueriesRequest, Model, ModelParameter, TimeSpan } from '@/types/Types';
-import { makeQueries } from '@/services/models/funman-service';
+import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
+import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
+
+import type {
+	FunmanInterval,
+	FunmanPostQueriesRequest,
+	Model,
+	ModelParameter,
+	TimeSpan,
+	ModelConfiguration,
+	Observable
+} from '@/types/Types';
+import {
+	type ProcessedFunmanResult,
+	type FunmanConstraintsResponse,
+	processFunman,
+	makeQueries
+} from '@/services/models/funman-service';
+import { createFunmanStateChart, createFunmanParameterCharts } from '@/services/charts';
 import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
+import { getRunResult } from '@/services/models/simulation-service';
+import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import { emptyMiraModel, makeConfiguredMMT } from '@/model-representation/mira/mira';
 import {
 	getAsConfiguredModel,
 	getModelConfigurationById,
@@ -187,11 +352,11 @@ import {
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
 import { pythonInstance } from '@/python/PyodideController';
-import TeraFunmanOutput from '@/components/workflow/ops/funman/tera-funman-output.vue';
 import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-constraint-group-form.vue';
-import { DrilldownTabs } from '@/types/common';
-import { stringToLatexExpression } from '@/services/model';
+import { DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
+import { stringToLatexExpression, getModelByModelConfigurationId, getMMT } from '@/services/model';
 import { displayNumber } from '@/utils/number';
+import { removeChartSettingById, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { FunmanOperationState, Constraint, ConstraintType, CompartmentalConstraint } from './funman-operation';
 
 const props = defineProps<{
@@ -497,12 +662,6 @@ const setRequestParameters = (modelParameters: ModelParameter[]) => {
 	});
 };
 
-const updateTrajectorystate = (s: string) => {
-	const state = _.cloneDeep(props.node.state);
-	state.trajectoryState = s;
-	emit('update-state', state);
-};
-
 const onSelection = (id: string) => {
 	emit('select-output', id);
 };
@@ -557,6 +716,174 @@ watch(
 	},
 	{ immediate: true }
 );
+
+// Notebook
+const notebookText = ref('');
+/*
+// Output panel/settings //
+*/
+let processedFunmanResult: ProcessedFunmanResult | null = null;
+let constraintsResponse: FunmanConstraintsResponse[] = [];
+let mmt: MiraModel = emptyMiraModel();
+let funmanResult: any = {};
+
+// Model configuration stuff
+const model = ref<Model | null>(null);
+const validatedModelConfiguration = ref<ModelConfiguration | null>(null);
+const configuredMmt = ref<MiraModel | null>(null);
+const mmtParams = ref<MiraTemplateParams>({});
+const calibratedConfigObservables = ref<Observable[]>([]);
+
+const stateCharts = ref<any>([{}]);
+const selectedStateCharts = computed(() => {
+	const selectedStateIds = selectedStateSettings.value.map((setting) => setting.selectedVariables[0]);
+	return stateCharts.value.filter((chart) => selectedStateIds.includes(chart.id));
+});
+const parameterCharts = ref<any>({});
+
+const stateOptions = ref<string[]>([]);
+const parameterOptions = ref<string[]>([]);
+const onlyShowLatestResults = ref(false);
+const focusOnModelChecks = ref(false);
+
+const isOutputSettingsPanelOpen = ref(false);
+const activeChartSettings = ref<ChartSetting | null>(null);
+const chartSettings = computed(() => props.node.state.chartSettings ?? []);
+const selectedStateSettings = computed(() =>
+	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE)
+);
+const selectedParameterSettings = computed(() =>
+	chartSettings.value.filter((setting) => setting.type === ChartSettingType.DISTRIBUTION_COMPARISON)
+);
+
+let selectedBoxId: number = -1;
+
+// Once a parameter tick is chosen, its corresponding line on the state chart will be highlighted
+function onParameterChartClick(eventData: any) {
+	// If a tick is clicked it will have a boxId, if the bar is clicked then we reset (show all lines)
+	selectedBoxId = eventData.boxId ?? -1;
+	updateStateCharts();
+}
+
+function updateStateCharts() {
+	if (!processedFunmanResult) return;
+	const trajectories = processedFunmanResult.trajectories;
+	stateCharts.value = funmanResult.model.petrinet.model.states.map(({ id }) =>
+		createFunmanStateChart(trajectories, constraintsResponse, id, focusOnModelChecks.value, selectedBoxId)
+	);
+}
+
+function updateParameterCharts() {
+	if (!processedFunmanResult) return;
+	const selectedParameterIds = selectedParameterSettings.value.map((setting) => setting.selectedVariables[0]);
+	const distributionParameters = funmanResult.request.parameters.filter(
+		// TODO: This first conditional may change as funman will return constants soon
+		(d: any) => d.interval.lb !== d.interval.ub && selectedParameterIds.includes(d.name)
+	);
+	if (processedFunmanResult.boxes) {
+		parameterCharts.value = createFunmanParameterCharts(distributionParameters, processedFunmanResult.boxes);
+	}
+}
+
+function updateSelectedStates(event) {
+	emit('update-state', {
+		...props.node.state,
+		chartSettings: updateChartSettingsBySelectedVariables(
+			chartSettings.value,
+			ChartSettingType.VARIABLE,
+			event.selectedVariable
+		)
+	});
+}
+
+function updateSelectedParameters(event) {
+	emit('update-state', {
+		...props.node.state,
+		chartSettings: updateChartSettingsBySelectedVariables(
+			chartSettings.value,
+			ChartSettingType.DISTRIBUTION_COMPARISON,
+			event.selectedVariable
+		)
+	});
+	updateParameterCharts(); // Rerender when we remove/add charts since they are all contained in the same visualization
+}
+
+function removeChartSetting(chartId: string) {
+	const chartType = chartSettings.value.find((setting) => setting.id === chartId)?.type;
+	emit('update-state', {
+		...props.node.state,
+		chartSettings: removeChartSettingById(chartSettings.value, chartId)
+	});
+	if (chartType === ChartSettingType.DISTRIBUTION_COMPARISON) {
+		updateParameterCharts();
+	}
+}
+
+async function renderCharts() {
+	processedFunmanResult = processFunman(funmanResult, onlyShowLatestResults.value);
+
+	updateStateCharts();
+	updateParameterCharts();
+
+	// For displaying model/model configuration
+	// Model will be the same on runId change, no need to fetch it again
+	if (!model.value) {
+		model.value = await getModelByModelConfigurationId(funmanResult.modelConfiguration.id);
+		if (!model.value) {
+			logger.error('Failed to fetch model');
+			return;
+		}
+		const response = await getMMT(model.value);
+		if (response) {
+			mmt = response.mmt;
+			mmtParams.value = response.template_params;
+		}
+	}
+
+	configuredMmt.value = makeConfiguredMMT(mmt, funmanResult.modelConfiguration);
+	calibratedConfigObservables.value = funmanResult.modelConfiguration.observableSemanticList.map(
+		({ referenceId, states, expression }) => ({
+			id: referenceId,
+			name: referenceId,
+			states,
+			expression
+		})
+	);
+}
+
+watch(
+	() => props.node.state.runId,
+	async () => {
+		if (!props.node.state.runId) return;
+		const rawFunmanResult = await getRunResult(props.node.state.runId, 'validation.json');
+		if (!rawFunmanResult) {
+			logger.error('Failed to fetch funman result');
+			return;
+		}
+		notebookText.value = rawFunmanResult;
+		funmanResult = JSON.parse(rawFunmanResult);
+		constraintsResponse = funmanResult.request.constraints;
+		validatedModelConfiguration.value = funmanResult.modelConfiguration;
+
+		stateOptions.value = funmanResult.model.petrinet.model.states.map(({ id }) => id);
+		parameterOptions.value = funmanResult.request.parameters
+			.filter((d: any) => d.interval.lb !== d.interval.ub)
+			.map(({ name }) => name);
+
+		// Initialize default output settings
+		const state = _.cloneDeep(props.node.state);
+		state.chartSettings = updateChartSettingsBySelectedVariables([], ChartSettingType.VARIABLE, stateOptions.value);
+		state.chartSettings = updateChartSettingsBySelectedVariables(
+			state.chartSettings,
+			ChartSettingType.DISTRIBUTION_COMPARISON,
+			parameterOptions.value
+		);
+		emit('update-state', state);
+
+		renderCharts();
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
@@ -574,39 +901,30 @@ watch(
 	margin-left: auto;
 }
 
-.primary-text {
-	display: flex;
-	align-items: center;
-	color: var(--Text-Primary, #020203);
-	/* Body Medium/Semibold */
-	font-size: var(--font-body-medium);
-	font-style: normal;
-	font-weight: 600;
-	line-height: 1.5rem;
-	padding: 0.25rem 0rem 0rem 0rem;
-	/* 150% */
-	letter-spacing: 0.03125rem;
+.pi-info-circle {
+	margin-left: var(--gap-2);
 }
 
 .secondary-text {
-	color: var(--Text-Secondary, #667085);
-	/* Body Small/Regular */
-	font-size: var(--font-body-small);
-	font-style: normal;
-	font-weight: 400;
-	line-height: 1.3125rem;
-	/* 150% */
-	letter-spacing: 0.01563rem;
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
+}
+
+.notebook-section:deep(main) {
+	gap: var(--gap-small);
+	position: relative;
 }
 
 .timespan {
 	display: flex;
-	align-items: center;
-	justify-content: space-between;
+	align-items: end;
+	gap: var(--gap-1);
+	overflow: auto;
 
-	& .timespan-input {
+	& > div {
 		display: flex;
 		flex-direction: column;
+		gap: var(--gap-1);
 	}
 }
 
@@ -634,12 +952,20 @@ ul {
 	}
 }
 
-.timespan-list {
-	width: 100%;
-}
-
 .p-accordion {
 	padding: 0 var(--gap-2);
+}
+
+.output-settings-panel {
+	padding: var(--gap-4);
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-2);
+	hr {
+		border: 0;
+		border-top: 1px solid var(--surface-border-alt);
+		width: 100%;
+	}
 }
 
 /* Override grid template so output expands when sidebar is closed */

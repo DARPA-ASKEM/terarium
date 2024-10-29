@@ -15,7 +15,7 @@
 			>
 				<template #content>
 					<tera-drilldown-section :is-loading="isFetchingPDF">
-						<tera-pdf-panel :pdfs="pdfData" />
+						<tera-pdf-panel :pdfs="pdfData" ref="pdfPanelRef" />
 					</tera-drilldown-section>
 				</template>
 			</tera-slider-panel>
@@ -250,7 +250,7 @@ import {
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { configureModelFromDataset, configureModelFromDocument } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
-import { getMMT, getModel, getModelConfigurationsForModel } from '@/services/model';
+import { getMMT, getModel, getModelConfigurationsForModel, getCalendarSettingsFromModel } from '@/services/model';
 import {
 	createModelConfiguration,
 	getArchive,
@@ -278,7 +278,7 @@ import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { useProjects } from '@/composables/project';
 import TeraPdfPanel from '@/components/widgets/tera-pdf-panel.vue';
 import Calendar from 'primevue/calendar';
-import { CalendarSettings, getCalendarSettingsFromModel } from '@/utils/date';
+import { CalendarSettings } from '@/utils/date';
 import {
 	blankModelConfig,
 	isModelConfigsEqual,
@@ -301,6 +301,8 @@ const isFetchingPDF = ref(false);
 const isDocViewerOpen = ref(true);
 
 const pdfData = ref<{ document: any; data: string; isPdf: boolean; name: string }[]>([]);
+const pdfPanelRef = ref();
+const pdfViewer = computed(() => pdfPanelRef.value?.pdfRef[0]);
 
 const isSidebarOpen = ref(true);
 const isEditingDescription = ref(false);
@@ -636,6 +638,11 @@ const initialize = async (overwriteWithState: boolean = false) => {
 };
 
 const onSelectConfiguration = async (config: ModelConfiguration) => {
+	if (!config.extractionPage) return;
+
+	if (pdfViewer.value) {
+		pdfViewer.value.goToPage(config.extractionPage);
+	}
 	// Checks if there are unsaved changes to current model configuration
 	if (isModelConfigsEqual(originalConfig.value, knobs.value.transientModelConfig)) {
 		applyConfigValues(config);
