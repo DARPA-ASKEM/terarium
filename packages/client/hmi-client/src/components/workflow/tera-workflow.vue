@@ -51,6 +51,11 @@
 					<ContextMenu ref="addComponentMenu" :model="contextMenuItems" style="white-space: nowrap; width: auto" />
 				</div>
 			</div>
+			<div class="warning-banner" :class="{ visible: !warningBannerDismissed && hasInvalidNodes }">
+				A yellow header indicates that the node is stale due to upstream changes. Rerun to update.
+				<a class="ml-auto mr-4 underline" @click="dontShowAgain">Don't show this again</a
+				><Button class="mr-2" icon="pi pi-times" text @click="warningBannerDismissed = true" />
+			</div>
 		</template>
 		<!-- data -->
 		<template #data>
@@ -263,6 +268,8 @@ const drilldownSpawnAnimation = ref<'left' | 'right' | 'scale'>('scale');
 
 const route = useRoute();
 const router = useRouter();
+
+const warningBannerDismissed = ref(false);
 
 const newNodePosition = { x: 0, y: 0 };
 let canvasTransform = { x: 0, y: 0, k: 1 };
@@ -943,6 +950,13 @@ const handleDrilldown = () => {
 	}
 };
 
+const hasInvalidNodes = computed(() => wf.value.getNodes().some((node) => node.status === OperatorStatus.INVALID));
+
+const dontShowAgain = () => {
+	localStorage.setItem('warningBannerDismissed', 'true');
+	warningBannerDismissed.value = true;
+};
+
 watch(
 	() => props.assetId,
 	async (newId, oldId) => {
@@ -981,6 +995,11 @@ watch(
 );
 
 onMounted(() => {
+	// check if the user has dismissed the warning banner
+	if (localStorage.getItem('warningBannerDismissed') === 'true') {
+		warningBannerDismissed.value = true;
+	}
+
 	document.addEventListener('mousemove', mouseUpdate);
 	window.addEventListener('beforeunload', unloadCheck);
 	saveTimer = setInterval(async () => {
@@ -1033,5 +1052,19 @@ onUnmounted(() => {
 	align-items: center;
 	display: flex;
 	flex-wrap: nowrap;
+}
+
+.warning-banner {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	background-color: var(--surface-warning);
+	height: 0;
+	overflow: hidden;
+	padding-left: 1rem;
+	transition: height 0.5s ease-out;
+	&.visible {
+		height: 2rem;
+	}
 }
 </style>
