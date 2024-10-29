@@ -1,5 +1,6 @@
 <template>
 	<tera-drilldown
+		v-bind="$attrs"
 		:node="node"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
@@ -154,11 +155,11 @@
 					<header class="flex align-items-start">
 						<div>
 							<h4>{{ validatedModelConfiguration?.name }}</h4>
-							<span class="secondary-text">Output generated date</span>
+							<span class="secondary-text">{{ formatShort(validatedModelConfiguration?.createdOn) }}</span>
 						</div>
 						<div class="btn-group">
 							<Button label="Add to report" outlined severity="secondary" disabled />
-							<Button label="Save for reuse" outlined severity="secondary" disabled />
+							<Button label="Save for reuse" outlined severity="secondary" @click="showSaveModal = true" />
 						</div>
 					</header>
 					<Accordion multiple :active-index="[0, 1, 2, 3]">
@@ -189,12 +190,12 @@
 							/>
 						</AccordionTab>
 						<AccordionTab header="Diagram">
-							<tera-model-diagram v-if="model" :model="model" />
+							<tera-model-diagram v-if="outputModel" :model="outputModel" />
 						</AccordionTab>
 					</Accordion>
-					<template v-if="model && validatedModelConfiguration && configuredMmt">
+					<template v-if="outputModel && validatedModelConfiguration && configuredMmt">
 						<tera-initial-table
-							:model="model"
+							:model="outputModel"
 							:model-configuration="validatedModelConfiguration"
 							:model-configurations="[]"
 							:mmt="configuredMmt"
@@ -202,7 +203,7 @@
 							:feature-config="{ isPreview: true }"
 						/>
 						<tera-parameter-table
-							:model="model"
+							:model="outputModel"
 							:model-configuration="validatedModelConfiguration"
 							:model-configurations="[]"
 							:mmt="configuredMmt"
@@ -213,7 +214,7 @@
 							<AccordionTab v-if="!isEmpty(calibratedConfigObservables)" header="Observables">
 								<tera-observables
 									class="pl-4"
-									:model="model"
+									:model="outputModel"
 									:mmt="configuredMmt"
 									:observables="calibratedConfigObservables"
 									:feature-config="{ isPreview: true }"
@@ -290,12 +291,21 @@
 			</tera-slider-panel>
 		</template>
 	</tera-drilldown>
+	<tera-save-asset-modal
+		:initial-name="validatedModelConfiguration?.name"
+		:is-visible="showSaveModal"
+		:asset="validatedModelConfiguration"
+		:asset-type="AssetType.ModelConfiguration"
+		@close-modal="showSaveModal = false"
+		@on-save="onSaveAsModelConfiguration"
+	/>
 </template>
 
 <script setup lang="ts">
 import _, { floor, isEmpty } from 'lodash';
 import { computed, ref, watch } from 'vue';
 import { logger } from '@/utils/logger';
+import { formatShort } from '@/utils/date';
 import Button from 'primevue/button';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
@@ -324,6 +334,7 @@ import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue'
 
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
 import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
+import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 
 import type {
 	FunmanInterval,
@@ -334,6 +345,7 @@ import type {
 	ModelConfiguration,
 	Observable
 } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import {
 	type ProcessedFunmanResult,
 	type FunmanConstraintsResponse,
@@ -345,16 +357,12 @@ import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { getRunResult } from '@/services/models/simulation-service';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { emptyMiraModel, makeConfiguredMMT } from '@/model-representation/mira/mira';
-import {
-	getAsConfiguredModel,
-	getModelConfigurationById,
-	getModelIdFromModelConfigurationId
-} from '@/services/model-configurations';
+import { getAsConfiguredModel, getModelConfigurationById } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
 import { pythonInstance } from '@/python/PyodideController';
 import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-constraint-group-form.vue';
 import { DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
-import { stringToLatexExpression, getModelByModelConfigurationId, getMMT } from '@/services/model';
+import { stringToLatexExpression, getModel, getMMT } from '@/services/model';
 import { displayNumber } from '@/utils/number';
 import { removeChartSettingById, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { nodeOutputLabel } from '@/components/workflow/util';
@@ -514,7 +522,7 @@ const runMakeQuery = async () => {
 	const response = await makeQueries(
 		request,
 		originalModelId,
-		nodeOutputLabel(props.node, `${configuredModel.value.header.name} Result`)
+		nodeOutputLabel(props.node, `Validated ${configuredModel.value.header.name} Result`)
 	);
 
 	// Setup the in-progress id
@@ -587,7 +595,7 @@ const initialize = async () => {
 	if (!modelConfigurationId) return;
 	const modelConfiguration = await getModelConfigurationById(modelConfigurationId);
 	configuredModel.value = await getAsConfiguredModel(modelConfiguration);
-	originalModelId = await getModelIdFromModelConfigurationId(modelConfigurationId);
+	originalModelId = modelConfiguration.modelId;
 };
 
 const setModelOptions = async () => {
@@ -733,8 +741,9 @@ let mmt: MiraModel = emptyMiraModel();
 let funmanResult: any = {};
 
 // Model configuration stuff
-const model = ref<Model | null>(null);
+const outputModel = ref<Model | null>(null);
 const validatedModelConfiguration = ref<ModelConfiguration | null>(null);
+const showSaveModal = ref(false);
 const configuredMmt = ref<MiraModel | null>(null);
 const mmtParams = ref<MiraTemplateParams>({});
 const calibratedConfigObservables = ref<Observable[]>([]);
@@ -762,6 +771,11 @@ const selectedParameterSettings = computed(() =>
 );
 
 let selectedBoxId: number = -1;
+
+function onSaveAsModelConfiguration() {
+	useToastService().success('', 'Created model configuration');
+	showSaveModal.value = false;
+}
 
 // Once a parameter tick is chosen, its corresponding line on the state chart will be highlighted
 function onParameterChartClick(eventData: any) {
@@ -832,13 +846,13 @@ async function renderCharts() {
 
 	// For displaying model/model configuration
 	// Model will be the same on runId change, no need to fetch it again
-	if (!model.value) {
-		model.value = await getModelByModelConfigurationId(funmanResult.modelConfiguration.id);
-		if (!model.value) {
+	if (!outputModel.value) {
+		outputModel.value = await getModel(funmanResult.modelConfiguration.modelId);
+		if (!outputModel.value) {
 			logger.error('Failed to fetch model');
 			return;
 		}
-		const response = await getMMT(model.value);
+		const response = await getMMT(outputModel.value);
 		if (response) {
 			mmt = response.mmt;
 			mmtParams.value = response.template_params;
