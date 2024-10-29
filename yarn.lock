@@ -7456,9 +7456,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-vue@npm:9.29.0":
-  version: 9.29.0
-  resolution: "eslint-plugin-vue@npm:9.29.0"
+"eslint-plugin-vue@npm:9.29.1":
+  version: 9.29.1
+  resolution: "eslint-plugin-vue@npm:9.29.1"
   dependencies:
     "@eslint-community/eslint-utils": "npm:^4.4.0"
     globals: "npm:^13.24.0"
@@ -7470,7 +7470,7 @@ __metadata:
     xml-name-validator: "npm:^4.0.0"
   peerDependencies:
     eslint: ^6.2.0 || ^7.0.0 || ^8.0.0 || ^9.0.0
-  checksum: 10/4a95828db4028fbd0fd2525bc914270941485ce3df7e620df6f64aecf5c9f32fc504ee3241cabfead1aba0a1546843ff5af2edf31f47b4405b56a7748266d9cf
+  checksum: 10/13e762bab66b339aedf0d23b781c32c43928a8f06d6c6db4c9f3a917c3294fe9ca9f61f390f185d49f1573dcc061caaec730095768d39f882a063f6cb5c0c54f
   languageName: node
   linkType: hard
 
@@ -14266,7 +14266,7 @@ __metadata:
     "@vue/eslint-config-airbnb-with-typescript": "npm:7.0.1"
     eslint: "npm:8.57.1"
     eslint-config-prettier: "npm:8.10.0"
-    eslint-plugin-vue: "npm:9.29.0"
+    eslint-plugin-vue: "npm:9.29.1"
     husky: "npm:8.0.3"
     lint-staged: "npm:15.2.10"
     prettier: "npm:3.3.3"
