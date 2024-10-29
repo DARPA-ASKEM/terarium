@@ -52,6 +52,10 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 	}
 
 	renderNodes(selection: D3SelectionINode<NodeData>) {
+		// Test
+		selection.append('circle').attr('r', 10).style('fill', 'red');
+		return;
+
 		const strataTypes: string[] = [];
 		selection.each((d) => {
 			const strataType = d.data.strataType;
