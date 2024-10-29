@@ -337,7 +337,7 @@ function generateOverview(output: string) {
 		markdown += mdi.render(`## Summary`);
 		markdown += mdi.render(`${comparison.summary}`);
 	}
-	if (comparison.structuralComparison) {
+	if (comparison.structuralComparison && !isEmpty(comparison.structuralComparison)) {
 		markdown += mdi.render(`## Structural Comparisons`);
 		if (hasNonEmptyValue(comparison.structuralComparison.states)) {
 			markdown += mdi.render(`### States:`);
@@ -396,7 +396,7 @@ function generateOverview(output: string) {
 			markdown += mdi.render(paragraph);
 		}
 	}
-	if (comparison.metadataComparison) {
+	if (comparison.metadataComparison && !isEmpty(comparison.metadataComparison)) {
 		markdown += mdi.render(`## Metadata Comparisons`);
 		if (hasNonEmptyValue(comparison.metadataComparison.details)) {
 			markdown += mdi.render(`### Details:`);
