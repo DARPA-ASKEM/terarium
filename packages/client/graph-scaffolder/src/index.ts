@@ -2,6 +2,7 @@ import {
 	BasicRenderer,
 	DeltaRenderer,
 	Renderer,
+	OrthogonalConnector,
 	flattenGraph,
 	traverseGraph,
 	traverseNode,
@@ -20,6 +21,7 @@ const graphScaffolder = {
 	Renderer,
 	BasicRenderer,
 	DeltaRenderer,
+	OrthogonalConnector,
 	flattenGraph,
 	traverseGraph,
 	traverseNode,
@@ -33,6 +35,6 @@ const graphScaffolder = {
 	simplifyPath
 };
 
-export { INode, IEdge, IGraph, BasicRenderer, DeltaRenderer, Renderer };
+export { INode, IEdge, IGraph, BasicRenderer, DeltaRenderer, Renderer, OrthogonalConnector };
 
 export default graphScaffolder;

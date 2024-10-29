@@ -38,7 +38,7 @@ export interface IGrid {
 }
 type ColliderFn = (p: IPoint) => boolean;
 
-interface AStarOptions {
+export interface AStarOptions {
 	collider: ColliderFn;
 	gridCell?: IGrid;
 	searchLimit?: number;

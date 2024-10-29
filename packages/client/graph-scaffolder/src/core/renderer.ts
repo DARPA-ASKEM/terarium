@@ -4,12 +4,13 @@ import removeChildren from '../utils/dom-util';
 import { traverseGraph, getAStarPath } from './traverse';
 import { translate } from '../utils/svg-util';
 import { Options, INode, IEdge, IGraph, IRect, IPoint, D3Selection, D3SelectionINode } from '../types';
+import OrthogonalConnector from './ortho-router';
 
 export const pathFn = d3
 	.line<{ x: number; y: number }>()
 	.x((d) => d.x)
 	.y((d) => d.y)
-	.curve(d3.curveStep); // FIXME: temp hack
+	.curve(d3.curveBasis); // FIXME: temp hack
 
 export abstract class Renderer<V, E> extends EventEmitter {
 	options: Options;
@@ -471,6 +472,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 		}
 
 		function nodeDragEnd(evt: any): void {
+			console.log('node drag end ..');
 			if (renderer.isDragEnabled) {
 				emitWrapper('node-drag-end', evt, node, renderer);
 				renderer.isDragEnabled = false;
@@ -478,7 +480,8 @@ export abstract class Renderer<V, E> extends EventEmitter {
 			}
 
 			renderer.isDragEnabled = false;
-			if (options.useAStarRouting && sufficientlyMoved) {
+			// if (options.useAStarRouting && sufficientlyMoved) {
+			if (sufficientlyMoved) {
 				nodeMap.clear();
 				nodes.forEach((n) => {
 					nodeMap.set(n.id, {
@@ -489,6 +492,31 @@ export abstract class Renderer<V, E> extends EventEmitter {
 					});
 				});
 
+				const nodeMap2: Map<string, any> = new Map();
+				nodes.forEach((node2) => {
+					nodeMap2.set(node2.id, {
+						left: node2.x - 0.5 * node2.width,
+						top: node2.y - 0.5 * node2.height,
+						width: node2.width,
+						height: node2.height
+					});
+				});
+				const obstacles = nodes.map((node3) => nodeMap2.get(node3.id) as any);
+				edges.forEach((edge) => {
+					const path = OrthogonalConnector.route({
+						pointA: { shape: nodeMap2.get(edge.source) as any, side: 'right', distance: 0.5 },
+						pointB: { shape: nodeMap2.get(edge.target) as any, side: 'left', distance: 0.5 },
+						shapeMargin: 10,
+						globalBoundsMargin: 10,
+						globalBounds: { left: -5000, top: -5000, width: 5000, height: 5000 },
+						obstacles
+					});
+					console.log('drag end path', path);
+					edge.points = path;
+				});
+			}
+
+			if (options.useAStarRouting && sufficientlyMoved) {
 				let colliderWrapper = (p: IPoint) => basicCollisionFn(p, nodes);
 				const callback = options.useAStarRouting.collisionFn;
 				if (callback) {

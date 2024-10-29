@@ -4,7 +4,7 @@
 import _ from 'lodash';
 import * as d3 from 'd3';
 import dagre from 'dagre';
-import graphScaffolder, { IGraph, INode, IEdge } from '@graph-scaffolder/index';
+import graphScaffolder, { IGraph, INode, IEdge, OrthogonalConnector } from '@graph-scaffolder/index';
 import type { Position } from '@/types/common';
 
 export type D3SelectionINode<T> = d3.Selection<d3.BaseType, INode<T>, null, any>;
@@ -50,7 +50,7 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 	if (lr === true) {
 		g.graph().rankDir = 'LR';
 		g.graph().nodesep = 100;
-		g.graph().ranksep = 100;
+		g.graph().ranksep = 125;
 	}
 
 	dagre.layout(g);
@@ -112,17 +112,17 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 	});
 
 	// HACK: multi-edges
-	const dupe: Set<string> = new Set();
-	for (let idx = 0; idx < graphData.edges.length; idx++) {
-		const edge = graphData.edges[idx];
-		const hash = `${edge.source};${edge.target}`;
-		if (dupe.has(hash) && edge.points.length > 2) {
-			for (let i = 1; i < edge.points.length - 1; i++) {
-				edge.points[i].y -= 25;
-			}
-		}
-		dupe.add(hash);
-	}
+	// const dupe: Set<string> = new Set();
+	// for (let idx = 0; idx < graphData.edges.length; idx++) {
+	// 	const edge = graphData.edges[idx];
+	// 	const hash = `${edge.source};${edge.target}`;
+	// 	if (dupe.has(hash) && edge.points.length > 2) {
+	// 		for (let i = 1; i < edge.points.length - 1; i++) {
+	// 			edge.points[i].y -= 25;
+	// 		}
+	// 	}
+	// 	dupe.add(hash);
+	// }
 
 	// Find new width and height
 	if (graphData.nodes.length > 0) {
@@ -135,6 +135,30 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 			if (node.x + 0.5 * node.width > maxX) maxX = node.x + 0.5 * node.width;
 			if (node.y - 0.5 * node.height < minY) minY = node.y - 0.5 * node.height;
 			if (node.y + 0.5 * node.height > maxY) maxY = node.y + 0.5 * node.height;
+		});
+
+		const nodeMap: Map<string, any> = new Map();
+		graphData.nodes.forEach((node) => {
+			nodeMap.set(node.id, {
+				left: node.x - 0.5 * node.width,
+				top: node.y - 0.5 * node.height,
+				width: node.width,
+				height: node.height
+			});
+		});
+		const obstacles = graphData.nodes.map((node) => nodeMap.get(node.id) as any);
+
+		graphData.edges.forEach((edge) => {
+			const path = OrthogonalConnector.route({
+				pointA: { shape: nodeMap.get(edge.source), side: 'right', distance: 0.5 },
+				pointB: { shape: nodeMap.get(edge.target), side: 'left', distance: 0.5 },
+				shapeMargin: 10,
+				globalBoundsMargin: 10,
+				globalBounds: { left: -5000, top: -5000, width: 5000, height: 5000 },
+				obstacles
+			});
+			// console.log('ortho path', path);
+			edge.points = path;
 		});
 
 		// Give the bounds a little extra buffer

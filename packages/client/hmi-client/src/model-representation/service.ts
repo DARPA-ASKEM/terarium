@@ -8,7 +8,6 @@ import { getModelType } from '@/services/model';
 import { AMRSchemaNames } from '@/types/common';
 import { parseCurie } from '@/services/concept';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
-import { IRect, IPoint } from '@graph-scaffolder/types';
 import { NestedPetrinetRenderer } from './petrinet/nested-petrinet-renderer';
 import { isStratifiedModel, getContext, collapseTemplates } from './mira/mira';
 import { extractTemplateMatrix } from './mira/mira-util';
@@ -34,18 +33,18 @@ export const getVariable = (miraModel: MiraModel, variableName: string) => {
 };
 
 // Simple collision detection for edge routing
-function collisionFn(p: IPoint, objects: IRect[]) {
-	const buffer = 0;
-	for (let i = 0; i < objects.length; i++) {
-		const checkingObj = objects[i];
-		if (p.x >= checkingObj.x - buffer && p.x <= checkingObj.x + checkingObj.width + buffer) {
-			if (p.y >= checkingObj.y - buffer && p.y <= checkingObj.y + checkingObj.height + buffer) {
-				return true;
-			}
-		}
-	}
-	return false;
-}
+// function collisionFn(p: IPoint, objects: IRect[]) {
+// 	const buffer = 0;
+// 	for (let i = 0; i < objects.length; i++) {
+// 		const checkingObj = objects[i];
+// 		if (p.x >= checkingObj.x - buffer && p.x <= checkingObj.x + checkingObj.width + buffer) {
+// 			if (p.y >= checkingObj.y - buffer && p.y <= checkingObj.y + checkingObj.height + buffer) {
+// 				return true;
+// 			}
+// 		}
+// 	}
+// 	return false;
+// }
 
 export const getModelRenderer = (
 	miraModel: MiraModel,
@@ -82,11 +81,11 @@ export const getModelRenderer = (
 		});
 
 		const nestedMap = extractNestedStratas(conceptData, dims);
-		return new NestedPetrinetRenderer({
+		const nestedRenderer = new NestedPetrinetRenderer({
 			el: graphElement,
-			useAStarRouting: {
-				collisionFn
-			},
+			// useAStarRouting: {
+			// 	collisionFn
+			// },
 			useStableZoomPan: true,
 			zoomModifier: 'ctrlKey',
 			zoomRange: [0.1, 30],
@@ -95,13 +94,15 @@ export const getModelRenderer = (
 			nestedMap,
 			transitionMatrices: transitionMatrixMap
 		});
+
+		return nestedRenderer;
 	}
 
 	return new PetrinetRenderer({
 		el: graphElement,
-		useAStarRouting: {
-			collisionFn
-		},
+		// useAStarRouting: {
+		// 	collisionFn
+		// },
 		useStableZoomPan: true,
 		zoomModifier: 'ctrlKey',
 		runLayout: runDagreLayout,
