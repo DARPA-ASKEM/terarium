@@ -114,7 +114,7 @@
 								</span>
 								<label>Timepoints</label>
 								<code>
-									{{ stepList.map((step) => step.toFixed(3)).join(', ') }}
+									{{ stepList.map((step) => Number(step.toFixed(3))).join(', ') }}
 								</code>
 								<label>Tolerance</label>
 								<div class="input-tolerance fadein animation-ease-in-out animation-duration-350">
