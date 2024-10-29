@@ -385,12 +385,19 @@ public class TaskService {
 			// the hmi-server. Any operation that must occur once and only once should be
 			// triggered here.
 
+			// NOTE: when running no local, and hitting an external rabbitmq instance, we
+			// need a unique queue to ensure the
+			// local server also gets it.
+			final String queueName = !isRunningLocalProfile()
+				? TASK_RUNNER_RESPONSE_QUEUE
+				: TASK_RUNNER_RESPONSE_QUEUE + "-local-" + UUID.randomUUID().toString();
+
 			// Declare a direct exchange
 			final DirectExchange exchange = new DirectExchange(TASK_RUNNER_RESPONSE_EXCHANGE, IS_DURABLE_QUEUES, false);
 			rabbitAdmin.declareExchange(exchange);
 
 			// Declare a queue
-			final Queue queue = new Queue(TASK_RUNNER_RESPONSE_QUEUE, IS_DURABLE_QUEUES, false, false);
+			final Queue queue = new Queue(queueName, IS_DURABLE_QUEUES, false, false);
 			rabbitAdmin.declareQueue(queue);
 
 			// Bind the queue to the exchange with a routing key
@@ -401,13 +408,13 @@ public class TaskService {
 				rabbitAdmin.getRabbitTemplate().getConnectionFactory()
 			);
 
-			container.setQueueNames(TASK_RUNNER_RESPONSE_QUEUE);
+			container.setQueueNames(queueName);
 			container.setMessageListener(message -> {
 				onTaskResponseOneInstanceReceives(message);
 			});
 			container.start();
 
-			log.info("Consumer on queue {} started for rabbit admin: {}", TASK_RUNNER_RESPONSE_QUEUE, type);
+			log.info("Consumer on queue {} started for rabbit admin: {}", queueName, type);
 			taskResponseConsumers.put(type, container);
 		}
 	}

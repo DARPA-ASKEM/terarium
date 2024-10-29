@@ -71,30 +71,30 @@ services:
     command: /funman_task/dev.sh
     platform: linux/amd64
 
-  equation_extraction_cpu-taskrunner:
-    build:
-      context: ../..
-      dockerfile: ./packages/equation_extraction/Dockerfile
-      target: equation_extraction_taskrunner_builder
-    container_name: equation_extraction_cpu-taskrunner
-    networks:
-      - terarium
-    ports:
-      - "6300:8002"
-    environment:
-      TERARIUM_MQ_ADDRESSES: "amqp://rabbitmq:5672"
-      TERARIUM_MQ_PASSWORD: "terarium123"
-      TERARIUM_MQ_USERNAME: "terarium"
-      TERARIUM_TASKRUNNER_REQUEST_TYPE: "equation_extraction"
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    extra_hosts:
-      - "${local_host_name}:host-gateway"
-    volumes:
-      - ../../packages/equation_extraction:/equation_extraction_task
-      - ../../packages/taskrunner:/taskrunner
-    command: /equation_extraction_task/dev.sh
+  # equation_extraction_cpu-taskrunner:
+  #   build:
+  #     context: ../..
+  #     dockerfile: ./packages/equation_extraction/Dockerfile
+  #     target: equation_extraction_taskrunner_builder
+  #   container_name: equation_extraction_cpu-taskrunner
+  #   networks:
+  #     - terarium
+  #   ports:
+  #     - "6300:8002"
+  #   environment:
+  #     TERARIUM_MQ_ADDRESSES: "amqp://rabbitmq:5672"
+  #     TERARIUM_MQ_PASSWORD: "terarium123"
+  #     TERARIUM_MQ_USERNAME: "terarium"
+  #     TERARIUM_TASKRUNNER_REQUEST_TYPE: "equation_extraction"
+  #   depends_on:
+  #     rabbitmq:
+  #       condition: service_healthy
+  #   extra_hosts:
+  #     - "${local_host_name}:host-gateway"
+  #   volumes:
+  #     - ../../packages/equation_extraction:/equation_extraction_task
+  #     - ../../packages/taskrunner:/taskrunner
+  #   command: /equation_extraction_task/dev.sh
 
   text_extraction-taskrunner:
     build:
