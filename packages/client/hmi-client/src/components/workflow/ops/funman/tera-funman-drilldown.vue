@@ -113,7 +113,9 @@
 									</div>
 								</span>
 								<label>Timepoints</label>
-								<code>{{ stepList.join(', ') }}</code>
+								<code>
+									{{ stepList.map((step) => step.toFixed(3)).join(', ') }}
+								</code>
 								<label>Tolerance</label>
 								<div class="input-tolerance fadein animation-ease-in-out animation-duration-350">
 									<tera-input-number v-model="knobs.tolerance" />
@@ -431,7 +433,7 @@ const stepList = computed(() => {
 	const steps = knobs.value.numberOfSteps;
 
 	const stepSize = (end - start) / steps;
-	return [start, ...Array.from({ length: steps - 1 }, (_, i) => Number(((i + 1) * stepSize).toFixed(3))), end];
+	return [start, ...Array.from({ length: steps - 1 }, (_, i) => (i + 1) * stepSize), end];
 });
 
 const runMakeQuery = async () => {
@@ -735,7 +737,7 @@ const parameterCharts = ref<any>({});
 const stateOptions = ref<string[]>([]);
 const parameterOptions = ref<string[]>([]);
 const onlyShowLatestResults = ref(false);
-const focusOnModelChecks = ref(false);
+const focusOnModelChecks = ref(true);
 
 const isOutputSettingsPanelOpen = ref(false);
 const activeChartSettings = ref<ChartSetting | null>(null);

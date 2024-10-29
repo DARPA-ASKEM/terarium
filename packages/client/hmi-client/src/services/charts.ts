@@ -875,22 +875,43 @@ export function createFunmanStateChart(
 ) {
 	if (isEmpty(trajectories)) return null;
 
+	const MAX = 99999999999;
 	const globalFont = 'Figtree';
 
-	// Find min/max values to set an appropriate viewing range for y-axis
-	const minY = Math.floor(Math.min(...trajectories.map((d) => d.values[stateId])));
-	const maxY = Math.ceil(Math.max(...trajectories.map((d) => d.values[stateId])));
-
-	// Show checks for the selected state
 	const stateIdConstraints = constraints.filter((c) => c.variables.includes(stateId));
-	const modelChecks = stateIdConstraints.map((c) => ({
-		legendItem: FunmanChartLegend.ModelChecks,
-		startX: c.timepoints.lb,
-		endX: c.timepoints.ub,
+
+	// Find min/max values to set an appropriate viewing range for y-axis
+	const lowerBounds = stateIdConstraints.map((c) => c.additive_bounds.lb);
+	const upperBounds = stateIdConstraints.map((c) => c.additive_bounds.ub);
+	const yPoints = trajectories.map((t) => t.values[stateId]);
+
+	const useLowerBounds = focusOnModelChecks && !isEmpty(lowerBounds);
+	const useUpperBounds = focusOnModelChecks && !isEmpty(upperBounds);
+
+	const potentialMinYs = useLowerBounds ? lowerBounds : yPoints;
+	const potentialMaxYs = useUpperBounds ? upperBounds : yPoints;
+	let minY = Math.floor(Math.min(...potentialMinYs));
+	let maxY = Math.ceil(Math.max(...potentialMaxYs));
+	// Limit to MAX as very large numbers cause the chart to have NaN in the y domain
+	minY = minY < -MAX ? -MAX : minY;
+	maxY = maxY > MAX ? MAX : maxY;
+
+	const modelChecks = stateIdConstraints.map((c) => {
 		// If the interval bounds are within the min/max values of the line plot use them, otherwise use the min/max values
-		startY: focusOnModelChecks ? c.additive_bounds.lb : Math.max(c.additive_bounds.lb ?? minY, minY),
-		endY: focusOnModelChecks ? c.additive_bounds.ub : Math.min(c.additive_bounds.ub ?? maxY, maxY)
-	}));
+		let startY = useLowerBounds ? (c.additive_bounds.lb ?? minY) : Math.max(c.additive_bounds.lb ?? minY, minY);
+		let endY = useUpperBounds ? (c.additive_bounds.ub ?? maxY) : Math.min(c.additive_bounds.ub ?? maxY, maxY);
+		// Limit to MAX as very large numbers cause the chart to have NaN in the y domain
+		startY = startY < -MAX ? -MAX : startY;
+		endY = endY > MAX ? MAX : endY;
+
+		return {
+			legendItem: FunmanChartLegend.ModelChecks,
+			startX: c.timepoints.lb,
+			endX: c.timepoints.ub,
+			startY,
+			endY
+		};
+	});
 
 	return {
 		$schema: VEGALITE_SCHEMA,
@@ -915,7 +936,9 @@ export function createFunmanStateChart(
 			{
 				mark: {
 					type: 'rect',
-					clip: true
+					clip: true,
+					stroke: '#A4CEFF',
+					strokeWidth: 1
 				},
 				data: { values: modelChecks },
 				encoding: {
@@ -948,7 +971,8 @@ export function createFunmanStateChart(
 			x: { title: 'Timepoints' },
 			y: {
 				title: `${stateId} (persons)`,
-				scale: focusOnModelChecks ? {} : { domain: [minY, maxY] }
+				scale: { domain: [minY, maxY] },
+				axis: { format: '.1e' }
 			},
 			color: {
 				field: 'legendItem',
