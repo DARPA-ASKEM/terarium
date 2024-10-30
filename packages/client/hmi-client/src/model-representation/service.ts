@@ -1,6 +1,6 @@
 // TODO: it might be best to move all these to getters and setters related to the model to services/model since these all seem to be split up at the moment
 import _, { isEmpty } from 'lodash';
-import { runDagreLayout } from '@/services/graph';
+import { runDagreLayout, rerouteEdges } from '@/services/graph';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri';
 import type { Initial, Model, ModelParameter, State, RegNetVertex, Transition, Rate } from '@/types/Types';
@@ -31,20 +31,6 @@ export const getVariable = (miraModel: MiraModel, variableName: string) => {
 	}
 	throw new Error(`${variableName} not found`);
 };
-
-// Simple collision detection for edge routing
-// function collisionFn(p: IPoint, objects: IRect[]) {
-// 	const buffer = 0;
-// 	for (let i = 0; i < objects.length; i++) {
-// 		const checkingObj = objects[i];
-// 		if (p.x >= checkingObj.x - buffer && p.x <= checkingObj.x + checkingObj.width + buffer) {
-// 			if (p.y >= checkingObj.y - buffer && p.y <= checkingObj.y + checkingObj.height + buffer) {
-// 				return true;
-// 			}
-// 		}
-// 	}
-// 	return false;
-// }
 
 export const getModelRenderer = (
 	miraModel: MiraModel,
@@ -83,10 +69,7 @@ export const getModelRenderer = (
 		const nestedMap = extractNestedStratas(conceptData, dims);
 		const nestedRenderer = new NestedPetrinetRenderer({
 			el: graphElement,
-			// useAStarRouting: {
-			// 	collisionFn
-			// },
-			useOrthoRouting: {},
+			edgeReroutingFn: rerouteEdges,
 			useStableZoomPan: true,
 			zoomModifier: 'ctrlKey',
 			zoomRange: [0.1, 30],
@@ -95,16 +78,12 @@ export const getModelRenderer = (
 			nestedMap,
 			transitionMatrices: transitionMatrixMap
 		});
-
 		return nestedRenderer;
 	}
 
 	return new PetrinetRenderer({
 		el: graphElement,
-		// useAStarRouting: {
-		// 	collisionFn
-		// },
-		useOrthoRouting: {},
+		edgeReroutingFn: rerouteEdges,
 		useStableZoomPan: true,
 		zoomModifier: 'ctrlKey',
 		runLayout: runDagreLayout,
