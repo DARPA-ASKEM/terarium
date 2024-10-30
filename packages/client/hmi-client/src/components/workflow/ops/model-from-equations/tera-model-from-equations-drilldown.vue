@@ -357,6 +357,7 @@ async function onRun() {
 	if (document.value?.id) await generateCard(modelId, document.value.id);
 
 	clonedState.value.modelId = modelId;
+	isOutputOpen.value = true;
 	emit('append-output', {
 		label: `Output - ${props.node.outputs.length + 1}`,
 		state: cloneDeep(clonedState.value),
