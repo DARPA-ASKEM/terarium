@@ -46,7 +46,6 @@ export interface AStarOptions {
 }
 
 export const getAStarPath = (start: IPoint, goal: IPoint, options: AStarOptions): IPoint[] => {
-	console.log('debug');
 	// Encoding helpers. We encode the XY coordinate as a single number to allow fast heuristic score lookup without
 	// incurring heavy memory cost of building a world-grid (we only store points we have visisted). Interestingly
 	// off hand testing using more native memory data structures (DataView, ArrayBuffer) to do high/low bit-mask encoding

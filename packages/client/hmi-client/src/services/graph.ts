@@ -27,6 +27,8 @@ function interpolatePointsForCurve(a: Position, b: Position): Position[] {
 	return [a, { x: a.x + controlXOffset, y: a.y }, { x: b.x - controlXOffset, y: b.y }, b];
 }
 
+// Stand-alone edge rerouting given a set of node positions and their
+// connections.
 export const rerouteEdges = (nodes: INode<any>[], edges: IEdge<any>[]) => {
 	const nodeMap: Map<string, any> = new Map();
 	nodes.forEach((node) => {
@@ -40,7 +42,9 @@ export const rerouteEdges = (nodes: INode<any>[], edges: IEdge<any>[]) => {
 
 	const obstacles = nodes.map((node) => nodeMap.get(node.id) as any);
 
-	// Figure out how many edges extends out of each given nodes
+	// Figure out how many edges extends out of each given nodes for edge placement.
+	// eg if there are 3 edges coming out of node-A, then the placement of these
+	// edges are (edge-i/num+1) => [1/4, 2/4, 3/4]
 	const edgeSourceMap: Map<string, number> = new Map();
 	edges.forEach((edge: IEdge<any>) => {
 		if (edge.data.isObservable) return;
@@ -60,10 +64,7 @@ export const rerouteEdges = (nodes: INode<any>[], edges: IEdge<any>[]) => {
 		const denominator = edgeSourceMap.get(edge.source) as number;
 		counter++;
 
-		console.log('>', edge.source, edge.target, counter, denominator);
-
 		const path = OrthogonalConnector.route({
-			// pointA: { shape: nodeMap.get(edge.source), side: 'right', distance: 0.5 },
 			pointA: { shape: nodeMap.get(edge.source), side: 'right', distance: counter / (denominator + 1) },
 			pointB: { shape: nodeMap.get(edge.target), side: 'left', distance: 0.5 },
 			shapeMargin: 10,
