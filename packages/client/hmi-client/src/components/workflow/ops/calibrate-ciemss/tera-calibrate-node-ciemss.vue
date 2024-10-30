@@ -130,7 +130,8 @@ const updateLossChartSpec = (data: Record<string, any>[]) => {
 			xAxisTitle: 'Solver iterations',
 			yAxisTitle: 'Loss',
 			autosize: AUTOSIZE.FIT,
-			...chartSize
+			...chartSize,
+			fitYDomain: true
 		}
 	);
 };

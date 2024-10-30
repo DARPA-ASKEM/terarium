@@ -37,6 +37,7 @@ export interface DateOptions {
 export interface ForecastChartOptions extends BaseChartOptions {
 	translationMap?: Record<string, string>;
 	colorscheme?: string[];
+	fitYDomain?: boolean;
 }
 
 export interface ForecastChartLayer {
@@ -62,6 +63,13 @@ export interface InterventionMarkerOptions {
 	hideLabels?: boolean;
 	labelXOffset?: number;
 	dateOptions?: DateOptions;
+}
+
+export interface ChartEncoding {
+	field: string;
+	type: string;
+	axis: any;
+	scale?: any;
 }
 
 function formatDateLabelFn(date: Date, datum: string, type: CalendarDateType): string {
@@ -469,7 +477,7 @@ export function createForecastChart(
 		if (options.dateOptions) {
 			dateExpression = formatDateLabelFn(options.dateOptions.startDate, 'datum.value', options.dateOptions.dateFormat);
 		}
-		const encodingX = {
+		const encodingX: ChartEncoding = {
 			field: layer.timeField,
 			type: 'quantitative',
 			axis: {
@@ -477,9 +485,28 @@ export function createForecastChart(
 				labelExpr: dateExpression
 			}
 		};
+		const encodingY: ChartEncoding = {
+			field: 'valueField',
+			type: 'quantitative',
+			axis: yaxis
+		};
+
+		if (options.fitYDomain && layer.data[0]) {
+			// gets the other fieldname
+			const yField = Object.keys(layer.data[0]).find((elem) => elem !== layer.timeField);
+			if (yField && Array.isArray(layer.data)) {
+				const yValues = [...layer.data].map((datum) => datum[yField]);
+				const domainMin = Math.min(...yValues);
+				const domainMax = Math.max(...yValues);
+				encodingY.scale = {
+					domain: [domainMin, domainMax]
+				};
+			}
+		}
+
 		const encoding = {
 			x: encodingX,
-			y: { field: 'valueField', type: 'quantitative', axis: yaxis },
+			y: encodingY,
 			color: {
 				field: 'variableField',
 				type: 'nominal',

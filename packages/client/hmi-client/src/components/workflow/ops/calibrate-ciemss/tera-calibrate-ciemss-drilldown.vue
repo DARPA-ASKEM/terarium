@@ -949,7 +949,8 @@ const updateLossChartSpec = (data: string | Record<string, any>[], size: { width
 			height: 100,
 			xAxisTitle: 'Solver iterations',
 			yAxisTitle: 'Loss',
-			autosize: AUTOSIZE.FIT
+			autosize: AUTOSIZE.FIT,
+			fitYDomain: true
 		}
 	);
 };
