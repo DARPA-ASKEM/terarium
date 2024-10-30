@@ -909,8 +909,6 @@ export function createFunmanStateChart(
 		endY: Math.max(upperBounds[index] ?? maxY, maxY)
 	}));
 
-	console.log('modelChecks', modelChecks);
-
 	return {
 		$schema: VEGALITE_SCHEMA,
 		id: stateId,
