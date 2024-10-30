@@ -472,7 +472,6 @@ export abstract class Renderer<V, E> extends EventEmitter {
 		}
 
 		function nodeDragEnd(evt: any): void {
-			console.log('node drag end ..');
 			if (renderer.isDragEnabled) {
 				emitWrapper('node-drag-end', evt, node, renderer);
 				renderer.isDragEnabled = false;
@@ -485,84 +484,50 @@ export abstract class Renderer<V, E> extends EventEmitter {
 				options.edgeReroutingFn(nodes, edges);
 			}
 
-			/*
-			if (options.useOrthoRouting && sufficientlyMoved) {
-				const nodeMap: Map<string, any> = new Map();
-				// eslint-disable-next-line
-				nodes.forEach((node) => {
-					nodeMap.set(node.id, {
-						left: node.x - 0.5 * node.width,
-						top: node.y - 0.5 * node.height,
-						width: node.width,
-						height: node.height
-					});
-				});
-
-
-				const obstacles = nodes.map((node3) => nodeMap.get(node3.id) as any);
-				edges.forEach((edge) => {
-					const path = OrthogonalConnector.route({
-						pointA: { shape: nodeMap.get(edge.source) as any, side: 'right', distance: 0.5 },
-						pointB: { shape: nodeMap.get(edge.target) as any, side: 'left', distance: 0.5 },
-						shapeMargin: 10,
-						globalBoundsMargin: 10,
-						globalBounds: { left: -5000, top: -5000, width: 5000, height: 5000 },
-						obstacles
-					});
-					console.log('drag end path', path);
-					edge.points = path;
-				});
-			} else if (options.useAStarRouting && sufficientlyMoved) {
-				const nodeMap: Map<string, IRect> = new Map();
-				nodes.forEach((n) => {
-					nodeMap.set(n.id, {
-						x: n.x,
-						y: n.y,
-						width: n.width,
-						height: n.height
-					});
-				});
-
-				let colliderWrapper = (p: IPoint) => basicCollisionFn(p, nodes);
-				const callback = options.useAStarRouting.collisionFn;
-				if (callback) {
-					colliderWrapper = (p: IPoint) => callback(p, nodes);
-				}
-
-				for (let i = 0; i < edges.length; i++) {
-					const edge = edges[i];
-					const source = edge.source;
-					const target = edge.target;
-					const sourceNode = nodeMap.get(source) as IRect;
-					const targetNode = nodeMap.get(target) as IRect;
-
-					if (nodeDraggingIds.includes(source) || nodeDraggingIds.includes(target)) {
-						const points = edge.points;
-						const start = points[0];
-						const end = points[points.length - 1];
-
-						// Shift the start/end "outward" create a gutter-space: south, north, east, west
-						const gap = 10;
-						console.log(sourceNode.y, sourceNode.height, start.y);
-						if (sourceNode.y + sourceNode.height === start.y) start.y += gap;
-						if (sourceNode.y === start.y) start.y -= gap;
-						if (sourceNode.x + sourceNode.width === start.x) start.x += gap;
-						if (sourceNode.x === start.x) start.x -= gap;
-
-						if (targetNode.y + targetNode.height === end.y) end.y += gap;
-						if (targetNode.y === end.y) end.y -= gap;
-						if (targetNode.x + targetNode.width === end.x) end.x += gap;
-						if (targetNode.x === end.x) end.x -= gap;
-
-						if (edge.source === edge.target) continue;
-						edge.points = getAStarPath(start, end, {
-							collider: colliderWrapper,
-							gridCell: { w: 10, h: 10 }
-						});
-					}
-				}
-			}
-			*/
+			// if (options.useAStarRouting && sufficientlyMoved) {
+			// 	const nodeMap: Map<string, IRect> = new Map();
+			// 	nodes.forEach((n) => {
+			// 		nodeMap.set(n.id, {
+			// 			x: n.x,
+			// 			y: n.y,
+			// 			width: n.width,
+			// 			height: n.height
+			// 		});
+			// 	});
+			// 	let colliderWrapper = (p: IPoint) => basicCollisionFn(p, nodes);
+			// 	const callback = options.useAStarRouting.collisionFn;
+			// 	if (callback) {
+			// 		colliderWrapper = (p: IPoint) => callback(p, nodes);
+			// 	}
+			// 	for (let i = 0; i < edges.length; i++) {
+			// 		const edge = edges[i];
+			// 		const source = edge.source;
+			// 		const target = edge.target;
+			// 		const sourceNode = nodeMap.get(source) as IRect;
+			// 		const targetNode = nodeMap.get(target) as IRect;
+			// 		if (nodeDraggingIds.includes(source) || nodeDraggingIds.includes(target)) {
+			// 			const points = edge.points;
+			// 			const start = points[0];
+			// 			const end = points[points.length - 1];
+			// 			// Shift the start/end "outward" create a gutter-space: south, north, east, west
+			// 			const gap = 10;
+			// 			console.log(sourceNode.y, sourceNode.height, start.y);
+			// 			if (sourceNode.y + sourceNode.height === start.y) start.y += gap;
+			// 			if (sourceNode.y === start.y) start.y -= gap;
+			// 			if (sourceNode.x + sourceNode.width === start.x) start.x += gap;
+			// 			if (sourceNode.x === start.x) start.x -= gap;
+			// 			if (targetNode.y + targetNode.height === end.y) end.y += gap;
+			// 			if (targetNode.y === end.y) end.y -= gap;
+			// 			if (targetNode.x + targetNode.width === end.x) end.x += gap;
+			// 			if (targetNode.x === end.x) end.x -= gap;
+			// 			if (edge.source === edge.target) continue;
+			// 			edge.points = getAStarPath(start, end, {
+			// 				collider: colliderWrapper,
+			// 				gridCell: { w: 10, h: 10 }
+			// 			});
+			// 		}
+			// 	}
+			// }
 			updateEdgePoints();
 
 			// Clean up
