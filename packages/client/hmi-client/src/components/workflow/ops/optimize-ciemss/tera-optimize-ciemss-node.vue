@@ -13,7 +13,7 @@
 			</div>
 
 			<div v-if="!showSpinner && runResults">
-				<template v-for="(_, index) of node.state.selectedSimulationVariables" :key="index">
+				<template v-for="(_, index) of selectedVariableSettings.map((s) => s.selectedVariables[0])" :key="index">
 					<vega-chart :visualization-spec="preparedCharts[index]" :are-embed-actions-visible="false" />
 				</template>
 			</div>
@@ -56,6 +56,7 @@ import { getModelByModelConfigurationId, getUnitsFromModelParts, getVegaDateOpti
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { createDatasetFromSimulationResult } from '@/services/dataset';
 import { useProjects } from '@/composables/project';
+import { ChartSettingType } from '@/types/common';
 import {
 	OptimizeCiemssOperationState,
 	OptimizeCiemssOperation,
@@ -75,6 +76,12 @@ const modelConfiguration = ref<ModelConfiguration | null>(null);
 const model = ref<Model | null>(null);
 
 const modelVarUnits = ref<{ [key: string]: string }>({});
+
+const chartSettings = computed(() => props.node.state.chartSettings ?? []);
+
+const selectedVariableSettings = computed(() =>
+	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE)
+);
 
 let pyciemssMap: Record<string, string> = {};
 
@@ -146,7 +153,7 @@ const startForecast = async (optimizedInterventions?: InterventionPolicy) => {
 };
 
 const preparedCharts = computed(() => {
-	const { preForecastRunId, postForecastRunId, selectedSimulationVariables } = props.node.state;
+	const { preForecastRunId, postForecastRunId } = props.node.state;
 	if (!postForecastRunId || !preForecastRunId) return [];
 	const preResult = runResults.value[preForecastRunId];
 	const preResultSummary = runResultsSummary.value[preForecastRunId];
@@ -157,8 +164,10 @@ const preparedCharts = computed(() => {
 	// Merge before/after for chart
 	const { result, resultSummary } = mergeResults(preResult, postResult, preResultSummary, postResultSummary);
 	const dateOptions = getVegaDateOptions(model.value, modelConfiguration.value);
-	return selectedSimulationVariables.map((variable) =>
-		createForecastChart(
+
+	return selectedVariableSettings.value.map((setting) => {
+		const variable = setting.selectedVariables[0];
+		return createForecastChart(
 			{
 				data: result,
 				variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
@@ -185,8 +194,8 @@ const preparedCharts = computed(() => {
 				colorscheme: ['#AAB3C6', '#1B8073'],
 				dateOptions
 			}
-		)
-	);
+		);
+	});
 });
 
 watch(
