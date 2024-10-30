@@ -638,9 +638,7 @@ const initialize = async (overwriteWithState: boolean = false) => {
 };
 
 const onSelectConfiguration = async (config: ModelConfiguration) => {
-	if (!config.extractionPage) return;
-
-	if (pdfViewer.value) {
+	if (pdfViewer.value && config.extractionPage) {
 		pdfViewer.value.goToPage(config.extractionPage);
 	}
 	// Checks if there are unsaved changes to current model configuration
