@@ -396,23 +396,21 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 		const dragSelector = this.options.dragSelector || null;
 
-		/*
-		function basicCollisionFn(p: IPoint, objects: IRect[]) {
-			const buffer = 0; // FIXME: factor out to config
-			for (let i = 0; i < objects.length; i++) {
-				const checkingObj = objects[i];
-				// FIXME: Thi is  a hack to get around hierarhical geometries, will need to
-				// relax this guard.
-				// if (node.nodes && node.nodes.length > 0) continue;
-				if (p.x >= checkingObj.x - buffer && p.x <= checkingObj.x + checkingObj.width + buffer) {
-					if (p.y >= checkingObj.y - buffer && p.y <= checkingObj.y + checkingObj.height + buffer) {
-						return true;
-					}
-				}
-			}
-			return false;
-		}
-		*/
+		// function basicCollisionFn(p: IPoint, objects: IRect[]) {
+		// 	const buffer = 0; // FIXME: factor out to config
+		// 	for (let i = 0; i < objects.length; i++) {
+		// 		const checkingObj = objects[i];
+		// 		// FIXME: Thi is  a hack to get around hierarhical geometries, will need to
+		// 		// relax this guard.
+		// 		// if (node.nodes && node.nodes.length > 0) continue;
+		// 		if (p.x >= checkingObj.x - buffer && p.x <= checkingObj.x + checkingObj.width + buffer) {
+		// 			if (p.y >= checkingObj.y - buffer && p.y <= checkingObj.y + checkingObj.height + buffer) {
+		// 				return true;
+		// 			}
+		// 		}
+		// 	}
+		// 	return false;
+		// }
 
 		function nodeDragStart(evt: d3.D3DragEvent<any, any, any>): void {
 			evt.sourceEvent.stopPropagation();
@@ -484,50 +482,6 @@ export abstract class Renderer<V, E> extends EventEmitter {
 				options.edgeReroutingFn(nodes, edges);
 			}
 
-			// if (options.useAStarRouting && sufficientlyMoved) {
-			// 	const nodeMap: Map<string, IRect> = new Map();
-			// 	nodes.forEach((n) => {
-			// 		nodeMap.set(n.id, {
-			// 			x: n.x,
-			// 			y: n.y,
-			// 			width: n.width,
-			// 			height: n.height
-			// 		});
-			// 	});
-			// 	let colliderWrapper = (p: IPoint) => basicCollisionFn(p, nodes);
-			// 	const callback = options.useAStarRouting.collisionFn;
-			// 	if (callback) {
-			// 		colliderWrapper = (p: IPoint) => callback(p, nodes);
-			// 	}
-			// 	for (let i = 0; i < edges.length; i++) {
-			// 		const edge = edges[i];
-			// 		const source = edge.source;
-			// 		const target = edge.target;
-			// 		const sourceNode = nodeMap.get(source) as IRect;
-			// 		const targetNode = nodeMap.get(target) as IRect;
-			// 		if (nodeDraggingIds.includes(source) || nodeDraggingIds.includes(target)) {
-			// 			const points = edge.points;
-			// 			const start = points[0];
-			// 			const end = points[points.length - 1];
-			// 			// Shift the start/end "outward" create a gutter-space: south, north, east, west
-			// 			const gap = 10;
-			// 			console.log(sourceNode.y, sourceNode.height, start.y);
-			// 			if (sourceNode.y + sourceNode.height === start.y) start.y += gap;
-			// 			if (sourceNode.y === start.y) start.y -= gap;
-			// 			if (sourceNode.x + sourceNode.width === start.x) start.x += gap;
-			// 			if (sourceNode.x === start.x) start.x -= gap;
-			// 			if (targetNode.y + targetNode.height === end.y) end.y += gap;
-			// 			if (targetNode.y === end.y) end.y -= gap;
-			// 			if (targetNode.x + targetNode.width === end.x) end.x += gap;
-			// 			if (targetNode.x === end.x) end.x -= gap;
-			// 			if (edge.source === edge.target) continue;
-			// 			edge.points = getAStarPath(start, end, {
-			// 				collider: colliderWrapper,
-			// 				gridCell: { w: 10, h: 10 }
-			// 			});
-			// 		}
-			// 	}
-			// }
 			updateEdgePoints();
 
 			// Clean up
