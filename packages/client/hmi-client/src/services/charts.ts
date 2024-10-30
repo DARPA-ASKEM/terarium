@@ -915,16 +915,6 @@ export function createFunmanStateChart(
 		};
 	});
 
-	console.log(lowerBounds, upperBounds);
-	console.log(
-		'startY',
-		modelChecks.map((m) => m.startY)
-	);
-	console.log(
-		'endY',
-		modelChecks.map((m) => m.endY)
-	);
-
 	return {
 		$schema: VEGALITE_SCHEMA,
 		id: stateId,
