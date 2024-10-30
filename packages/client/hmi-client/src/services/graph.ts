@@ -6,6 +6,7 @@ import * as d3 from 'd3';
 import dagre from 'dagre';
 import graphScaffolder, { IGraph, INode, IEdge } from '@graph-scaffolder/index';
 import type { Position } from '@/types/common';
+import OrthogonalConnector from '@/utils/ortho-router';
 
 export type D3SelectionINode<T> = d3.Selection<d3.BaseType, INode<T>, null, any>;
 export type D3SelectionIEdge<T> = d3.Selection<d3.BaseType, IEdge<T>, null, any>;
@@ -25,6 +26,57 @@ function interpolatePointsForCurve(a: Position, b: Position): Position[] {
 	const controlXOffset = 50;
 	return [a, { x: a.x + controlXOffset, y: a.y }, { x: b.x - controlXOffset, y: b.y }, b];
 }
+
+// Stand-alone edge rerouting given a set of node positions and their
+// connections.
+export const rerouteEdges = (nodes: INode<any>[], edges: IEdge<any>[]) => {
+	const nodeMap: Map<string, any> = new Map();
+	nodes.forEach((node) => {
+		nodeMap.set(node.id, {
+			left: node.x - 0.5 * node.width,
+			top: node.y - 0.5 * node.height,
+			width: node.width,
+			height: node.height
+		});
+	});
+
+	const obstacles = nodes.map((node) => nodeMap.get(node.id) as any);
+
+	// Figure out how many edges extends out of each given nodes for edge placement.
+	// eg if there are 3 edges coming out of node-A, then the placement of these
+	// edges are (edge-i/num+1) => [1/4, 2/4, 3/4]
+	const edgeSourceMap: Map<string, number> = new Map();
+	edges.forEach((edge: IEdge<any>) => {
+		if (edge.data.isObservable) return;
+		if (!edgeSourceMap.has(edge.source)) {
+			edgeSourceMap.set(edge.source, 0);
+		}
+		edgeSourceMap.set(edge.source, 1 + (edgeSourceMap.get(edge.source) as number));
+	});
+
+	const sourceNodeCounter: Map<string, number> = new Map();
+	edges.forEach((edge: IEdge<any>) => {
+		if (edge.data.isObservable) return;
+		if (!sourceNodeCounter.has(edge.source)) {
+			sourceNodeCounter.set(edge.source, 0);
+		}
+		let counter = sourceNodeCounter.get(edge.source) as number;
+		const denominator = edgeSourceMap.get(edge.source) as number;
+		counter++;
+
+		const path = OrthogonalConnector.route({
+			pointA: { shape: nodeMap.get(edge.source), side: 'right', distance: counter / (denominator + 1) },
+			pointB: { shape: nodeMap.get(edge.target), side: 'left', distance: 0.5 },
+			shapeMargin: 10,
+			globalBoundsMargin: 10,
+			globalBounds: { left: -5000, top: -5000, width: 5000, height: 5000 },
+			obstacles
+		});
+		sourceNodeCounter.set(edge.source, counter);
+
+		edge.points = path;
+	});
+};
 
 export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true): IGraph<V, E> => {
 	const g = new dagre.graphlib.Graph({ compound: true });
@@ -50,7 +102,7 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 	if (lr === true) {
 		g.graph().rankDir = 'LR';
 		g.graph().nodesep = 100;
-		g.graph().ranksep = 100;
+		g.graph().ranksep = 125;
 	}
 
 	dagre.layout(g);
@@ -136,6 +188,8 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 			if (node.y - 0.5 * node.height < minY) minY = node.y - 0.5 * node.height;
 			if (node.y + 0.5 * node.height > maxY) maxY = node.y + 0.5 * node.height;
 		});
+
+		rerouteEdges(graphData.nodes, graphData.edges);
 
 		// Give the bounds a little extra buffer
 		const buffer = 10;
