@@ -1094,6 +1094,18 @@ async function getAutoMapping() {
 }
 
 const initialize = async () => {
+	// Update Wizard form fields with current selected output state
+	const state = _.cloneDeep(props.node.state);
+	knobs.value = {
+		numIterations: state.numIterations ?? 1000,
+		numSamples: state.numSamples ?? 100,
+		endTime: state.endTime ?? 100,
+		stepSize: state.stepSize ?? 1,
+		learningRate: state.learningRate ?? 0.1,
+		method: state.method ?? CiemssMethodOptions.dopri5,
+		timestampColName: state.timestampColName ?? ''
+	};
+
 	// Model configuration input
 	const {
 		model: m,
