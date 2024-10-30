@@ -332,33 +332,128 @@ function generateOverview(output: string) {
 	const comparison = JSON.parse(b64DecodeUnicode(output)).response;
 	let markdown = '';
 	const mdi = markdownit();
-	markdown += mdi.render(
-		`# ${comparison.title}
-## Summary
-${comparison.summary}
-## Structural Comparisons
-### States:
-${comparison.semanticComparison.states}
-### Transitions:
-${comparison.semanticComparison.transitions}
-### Parameters:
-${comparison.semanticComparison.parameters}
-### Observables:
-${comparison.semanticComparison.observables}`
-	);
-
-	if (hasNonEmptyValue(comparison.metadataComparison)) {
-		markdown += mdi.render(
-			`## Metadata Comparisons
-### Details:
-${comparison.metadataComparison.description}
-### Uses:
-${comparison.metadataComparison.uses}
-### Bias, Risks, and Limitations:
-${comparison.metadataComparison.biasRisksLimitations}
-### Testing and Validation:
-${comparison.metadataComparison.testing}`
-		);
+	markdown += mdi.render(`# ${comparison.title}`);
+	if (comparison.summary) {
+		markdown += mdi.render(`## Summary`);
+		markdown += mdi.render(`${comparison.summary}`);
+	}
+	if (comparison.structuralComparison && !isEmpty(comparison.structuralComparison)) {
+		markdown += mdi.render(`## Structural Comparisons`);
+		if (hasNonEmptyValue(comparison.structuralComparison.states)) {
+			markdown += mdi.render(`### States:`);
+			let paragraph = '';
+			if (comparison.structuralComparison.states.common) {
+				paragraph += `${comparison.structuralComparison.states.common} `;
+			}
+			if (comparison.structuralComparison.states.unique) {
+				paragraph += `${comparison.structuralComparison.states.unique} `;
+			}
+			if (comparison.structuralComparison.states.conclusion) {
+				paragraph += `${comparison.structuralComparison.states.conclusion}`;
+			}
+			markdown += mdi.render(paragraph);
+		}
+		if (hasNonEmptyValue(comparison.structuralComparison.parameters)) {
+			markdown += mdi.render(`### Parameters:`);
+			let paragraph = '';
+			if (comparison.structuralComparison.parameters.common) {
+				paragraph += `${comparison.structuralComparison.parameters.common} `;
+			}
+			if (comparison.structuralComparison.parameters.unique) {
+				paragraph += `${comparison.structuralComparison.parameters.unique} `;
+			}
+			if (comparison.structuralComparison.parameters.conclusion) {
+				paragraph += `${comparison.structuralComparison.parameters.conclusion}`;
+			}
+			markdown += mdi.render(paragraph);
+		}
+		if (hasNonEmptyValue(comparison.structuralComparison.transitions)) {
+			markdown += mdi.render(`### Transitions:`);
+			let paragraph = '';
+			if (comparison.structuralComparison.transitions.common) {
+				paragraph += `${comparison.structuralComparison.transitions.common} `;
+			}
+			if (comparison.structuralComparison.transitions.unique) {
+				paragraph += `${comparison.structuralComparison.transitions.unique} `;
+			}
+			if (comparison.structuralComparison.transitions.conclusion) {
+				paragraph += `${comparison.structuralComparison.transitions.conclusion}`;
+			}
+			markdown += mdi.render(paragraph);
+		}
+		if (hasNonEmptyValue(comparison.structuralComparison.observables)) {
+			markdown += mdi.render(`### Observables:`);
+			let paragraph = '';
+			if (comparison.structuralComparison.observables.common) {
+				paragraph += `${comparison.structuralComparison.observables.common} `;
+			}
+			if (comparison.structuralComparison.observables.unique) {
+				paragraph += ` ${comparison.structuralComparison.observables.unique} `;
+			}
+			if (comparison.structuralComparison.observables.conclusion) {
+				paragraph += ` ${comparison.structuralComparison.observables.conclusion}`;
+			}
+			markdown += mdi.render(paragraph);
+		}
+	}
+	if (comparison.metadataComparison && !isEmpty(comparison.metadataComparison)) {
+		markdown += mdi.render(`## Metadata Comparisons`);
+		if (hasNonEmptyValue(comparison.metadataComparison.details)) {
+			markdown += mdi.render(`### Details:`);
+			let paragraph = '';
+			if (comparison.metadataComparison.details.common) {
+				paragraph += `${comparison.metadataComparison.details.common} `;
+			}
+			if (comparison.metadataComparison.details.unique) {
+				paragraph += `${comparison.metadataComparison.details.unique} `;
+			}
+			if (comparison.metadataComparison.details.conclusion) {
+				paragraph += `${comparison.metadataComparison.details.conclusion}`;
+			}
+			markdown += mdi.render(paragraph);
+		}
+		if (hasNonEmptyValue(comparison.metadataComparison.uses)) {
+			markdown += mdi.render(`### Uses:`);
+			let paragraph = '';
+			if (comparison.metadataComparison.uses.common) {
+				paragraph += `${comparison.metadataComparison.uses.common} `;
+			}
+			if (comparison.metadataComparison.uses.unique) {
+				paragraph += `${comparison.metadataComparison.uses.unique} `;
+			}
+			if (comparison.metadataComparison.uses.conclusion) {
+				paragraph += `${comparison.metadataComparison.uses.conclusion}`;
+			}
+			markdown += mdi.render(paragraph);
+		}
+		if (hasNonEmptyValue(comparison.metadataComparison.biasRisksLimitations)) {
+			markdown += mdi.render(`### Bias, Risks, and Limitations:`);
+			let paragraph = '';
+			if (comparison.metadataComparison.biasRisksLimitations.common) {
+				paragraph += `${comparison.metadataComparison.biasRisksLimitations.common} `;
+			}
+			if (comparison.metadataComparison.biasRisksLimitations.unique) {
+				paragraph += `${comparison.metadataComparison.biasRisksLimitations.unique} `;
+			}
+			if (comparison.metadataComparison.biasRisksLimitations.conclusion) {
+				paragraph += `${comparison.metadataComparison.biasRisksLimitations.conclusion}`;
+			}
+			markdown += mdi.render(paragraph);
+		}
+		if (hasNonEmptyValue(comparison.metadataComparison.testing)) {
+			markdown += mdi.render(`### Testing and Validation:`);
+			let paragraph = '';
+			if (comparison.metadataComparison.testing.common) {
+				paragraph += `${comparison.metadataComparison.testing.common} `;
+			}
+			if (comparison.metadataComparison.testing.unique) {
+				paragraph += `${comparison.metadataComparison.testing.unique} `;
+			}
+			if (comparison.metadataComparison.testing.conclusion) {
+				paragraph += `${comparison.metadataComparison.testing.conclusion}`;
+			}
+			markdown += mdi.render(paragraph);
+		}
 	}
 	overview.value = markdown;
 	emit('update-status', OperatorStatus.DEFAULT); // This is a custom way of granting a default status to the operator, since it has no output

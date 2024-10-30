@@ -26,7 +26,9 @@
 								:disabled="_.isEmpty(node.outputs[0].value)"
 							/>
 							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
-							<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runOptimize" />
+							<div v-tooltip="runButtonMessage">
+								<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runOptimize" />
+							</div>
 						</span>
 					</div>
 
@@ -49,7 +51,10 @@
 						/>
 					</section>
 					<section class="form-section">
-						<h5>Intervention policy</h5>
+						<h5>
+							Intervention policy
+							<i v-if="!isInterventionReady" v-tooltip="interventionReadyTooltip" class="pi pi-exclamation-circle" />
+						</h5>
 						<template v-for="(cfg, idx) in knobs.interventionPolicyGroups">
 							<tera-static-intervention-policy-group
 								v-if="
@@ -94,6 +99,12 @@
 								:start-date="modelConfiguration.temporalContext"
 								:calendar-settings="getCalendarSettingsFromModel(model)"
 								v-model="knobs.endTime"
+							/>
+							<i
+								class="pi pi-exclamation-circle"
+								style="max-width: fit-content"
+								v-if="!isEndTimeValid"
+								v-tooltip="endTimeTooltip"
 							/>
 						</div>
 						<div class="input-row">
@@ -380,7 +391,12 @@ import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-datase
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import { getUnitsFromModelParts, getModelByModelConfigurationId } from '@/services/model';
+import {
+	getUnitsFromModelParts,
+	getModelByModelConfigurationId,
+	getCalendarSettingsFromModel,
+	getVegaDateOptions
+} from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import {
 	convertToCsvAsset,
@@ -406,14 +422,18 @@ import { logger } from '@/utils/logger';
 import { nodeMetadata } from '@/components/workflow/util';
 import { WorkflowNode } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
-
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import Divider from 'primevue/divider';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { createSuccessCriteriaChart, createForecastChart, createInterventionChartMarkers } from '@/services/charts';
+import {
+	createSuccessCriteriaChart,
+	createForecastChart,
+	createInterventionChartMarkers,
+	ForecastChartOptions
+} from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import MultiSelect from 'primevue/multiselect';
 import { mergeResults, renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
@@ -421,7 +441,6 @@ import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import { useConfirm } from 'primevue/useconfirm';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
-import { getCalendarSettingsFromModel } from '@/utils/date';
 import teraOptimizeCriterionGroupForm from './tera-optimize-criterion-group-form.vue';
 import TeraStaticInterventionPolicyGroup from './tera-static-intervention-policy-group.vue';
 import TeraDynamicInterventionPolicyGroup from './tera-dynamic-intervention-policy-group.vue';
@@ -513,15 +532,40 @@ const datasetId = computed(() => {
 
 const displayOptimizationResultMessage = ref(true);
 
-const isRunDisabled = computed(() => {
+// Checks for disabling run button:
+const isCriteriaReady = computed(() => {
 	const activeConstraintGroups = knobs.value.constraintGroups.filter((ele) => ele.isActive);
-	return (
-		activeConstraintGroups.length === 0 ||
-		!activeConstraintGroups.every((ele) => ele.targetVariable) ||
-		knobs.value.interventionPolicyGroups.length === 0 ||
-		activePolicyGroups.value.length <= 0
-	);
+	return activeConstraintGroups.length !== 0 && activeConstraintGroups.every((ele) => ele.targetVariable);
 });
+
+const isInterventionReady = computed(() => activePolicyGroups.value.length > 0);
+
+const isEndTimeValid = computed(() =>
+	activePolicyGroups.value.every((ele) => {
+		if (
+			[OptimizationInterventionObjective.startTime, OptimizationInterventionObjective.paramValueAndStartTime].includes(
+				ele.optimizationType
+			)
+		) {
+			return ele.endTime <= knobs.value.endTime;
+		}
+		return true;
+	})
+);
+
+const isRunDisabled = computed(() => !isCriteriaReady.value || !isInterventionReady.value || !isEndTimeValid.value);
+
+const criteriaReadyTooltip = computed(() => (!isCriteriaReady.value ? 'Success criteria must be filled in. \n' : ''));
+const interventionReadyTooltip = computed(() =>
+	!isInterventionReady.value ? 'Must contain at least one active intervention policy.\n' : ''
+);
+const endTimeTooltip = computed(() =>
+	!isEndTimeValid.value ? 'End time must be greater than or equal to all intervention policy end times. \n' : ''
+);
+
+const runButtonMessage = computed(() =>
+	isRunDisabled.value ? `${criteriaReadyTooltip.value} ${interventionReadyTooltip.value} ${endTimeTooltip.value}` : ''
+);
 
 const presetType = computed(() => {
 	if (
@@ -568,7 +612,7 @@ const simulationChartOptions = computed(() => [
 	...modelParameterOptions.value,
 	...modelStateAndObsOptions.value.map((ele) => ele.label)
 ]);
-const modelConfiguration = ref<ModelConfiguration>();
+const modelConfiguration = ref<ModelConfiguration | null>(null);
 
 const showAdditionalOptions = ref(true);
 
@@ -923,7 +967,8 @@ const preparedForecastCharts = computed(() => {
 	// Merge before/after for chart
 	const { result, resultSummary } = mergeResults(postResult, preResult, postResultSummary, preResultSummary);
 
-	const chartOptions = {
+	const dateOptions = getVegaDateOptions(model.value, modelConfiguration.value);
+	const chartOptions: ForecastChartOptions = {
 		width: chartSize.value.width,
 		height: chartSize.value.height,
 		legend: true,
@@ -931,7 +976,8 @@ const preparedForecastCharts = computed(() => {
 		yAxisTitle: getUnit('') || '',
 		title: '',
 		colorscheme: ['#AAB3C6', '#1B8073'],
-		translationMap: {}
+		translationMap: {},
+		dateOptions
 	};
 
 	const translationMap = (variable: string) => ({

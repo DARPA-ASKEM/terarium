@@ -31,7 +31,6 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { csvParse, autoType } from 'd3';
 import { computed, watch, ref, shallowRef, onMounted } from 'vue';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
@@ -45,8 +44,8 @@ import {
 	DataArray
 } from '@/services/models/simulation-service';
 import { getModelConfigurationById, createModelConfiguration } from '@/services/model-configurations';
-import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
-import { setupCsvAsset } from '@/services/calibrate-workflow';
+import { parseCsvAsset, setupCsvAsset } from '@/services/calibrate-workflow';
+import { getModelByModelConfigurationId, getUnitsFromModelParts, getVegaDateOptions } from '@/services/model';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
@@ -91,6 +90,7 @@ const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0].value?.[0]);
 
 const model = ref<Model | null>(null);
+const modelConfiguration = ref<ModelConfiguration | null>(null);
 const modelVarUnits = ref<{ [key: string]: string }>({});
 
 const runResult = ref<DataArray>([]);
@@ -101,6 +101,8 @@ const policyInterventionId = computed(() => props.node.inputs[2].value?.[0]);
 const interventionPolicy = ref<InterventionPolicy | null>(null);
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
+
+const groundTruth = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
 
 const areInputsFilled = computed(() => props.node.inputs[0].value && props.node.inputs[1].value);
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
@@ -178,14 +180,9 @@ const preparedCharts = computed(() => {
 		reverseMap[mapObj.datasetVariable] = 'Observations';
 	});
 
-	// FIXME: Hacky re-parse CSV with correct data types
-	let groundTruth: DataArray = [];
-	const csv = csvAsset.value.csv;
-	const csvRaw = csv.map((d) => d.join(',')).join('\n');
-	groundTruth = csvParse(csvRaw, autoType);
-
 	// Need to get the dataset's time field
 	const datasetTimeField = state.timestampColName;
+	const dateOptions = getVegaDateOptions(model.value, modelConfiguration.value);
 
 	const variableCharts = selectedVariableSettings.value.map((setting) => {
 		const variable = setting.selectedVariables[0];
@@ -210,7 +207,7 @@ const preparedCharts = computed(() => {
 				timeField: 'timepoint_id'
 			},
 			{
-				data: groundTruth,
+				data: groundTruth.value,
 				variables: datasetVariables,
 				timeField: datasetTimeField as string
 			},
@@ -221,7 +218,8 @@ const preparedCharts = computed(() => {
 				xAxisTitle: modelVarUnits.value._time || 'Time',
 				yAxisTitle: modelVarUnits.value[variable] || '',
 				colorscheme: ['#AAB3C6', '#1B8073'],
-				...chartSize
+				...chartSize,
+				dateOptions
 			}
 		);
 		applyForecastChartAnnotations(chart, annotations);
@@ -241,7 +239,7 @@ const preparedCharts = computed(() => {
 			},
 			null,
 			{
-				data: groundTruth,
+				data: groundTruth.value,
 				variables: [key],
 				timeField: datasetTimeField as string
 			},
@@ -252,7 +250,8 @@ const preparedCharts = computed(() => {
 				xAxisTitle: modelVarUnits.value._time || 'Time',
 				yAxisTitle: modelVarUnits.value[key] || '',
 				colorscheme: ['#AAB3C6', '#1B8073'],
-				...chartSize
+				...chartSize,
+				dateOptions
 			}
 		);
 		chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
@@ -332,6 +331,7 @@ watch(
 		if (!input.value) return;
 
 		const id = input.value[0];
+		modelConfiguration.value = await getModelConfigurationById(id);
 		model.value = await getModelByModelConfigurationId(id);
 		modelVarUnits.value = getUnitsFromModelParts(model.value as Model);
 	},

@@ -30,6 +30,7 @@
 				placeholder="Select"
 				@update:model-value="emit('update-self', config)"
 			/>
+			<i v-if="_.isEmpty(config.targetVariable)" class="pi pi-exclamation-circle" v-tooltip="requiredTooltip" />
 			is
 			<Dropdown
 				class="toolbar-button"
@@ -44,6 +45,7 @@
 			/>
 			a threshold of
 			<tera-input-number v-model="config.threshold" @update:model-value="emit('update-self', config)" />
+			<i v-if="!config.threshold" class="pi pi-exclamation-circle" v-tooltip="requiredTooltip" />
 			at
 			<Dropdown
 				:options="[
@@ -56,8 +58,11 @@
 				@update:model-value="emit('update-self', config)"
 			/>
 			in
-			<tera-input-number v-model="config.riskTolerance" @update:model-value="emit('update-self', config)" />% of
-			simulated outcomes
+			<tera-input-number v-model="config.riskTolerance" @update:model-value="emit('update-self', config)" /><i
+				v-if="!config.riskTolerance"
+				class="pi pi-exclamation-circle"
+				v-tooltip="requiredTooltip"
+			/>% of simulated outcomes
 		</div>
 		<div v-else class="section-row">
 			Ensure <b>{{ config.targetVariable }}</b> is <b>{{ config.isMinimized ? 'below' : 'above' }}</b> a threshold of
@@ -84,7 +89,7 @@ const props = defineProps<{
 const emit = defineEmits(['update-self', 'delete-self']);
 
 const config = ref<Criterion>(_.cloneDeep(props.criterion));
-
+const requiredTooltip = 'Required';
 const isEditing = ref<boolean>(false);
 
 const onEdit = () => {
