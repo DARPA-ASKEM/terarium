@@ -911,22 +911,45 @@ export function createFunmanStateChart(
 ) {
 	if (isEmpty(trajectories)) return null;
 
+	const threshold = 1e25;
 	const globalFont = 'Figtree';
 
-	// Find min/max values to set an appropriate viewing range for y-axis
-	const minY = Math.floor(Math.min(...trajectories.map((d) => d.values[stateId])));
-	const maxY = Math.ceil(Math.max(...trajectories.map((d) => d.values[stateId])));
-
-	// Show checks for the selected state
 	const stateIdConstraints = constraints.filter((c) => c.variables.includes(stateId));
-	const modelChecks = stateIdConstraints.map((c) => ({
-		legendItem: FunmanChartLegend.ModelChecks,
-		startX: c.timepoints.lb,
-		endX: c.timepoints.ub,
-		// If the interval bounds are within the min/max values of the line plot use them, otherwise use the min/max values
-		startY: focusOnModelChecks ? c.additive_bounds.lb : Math.max(c.additive_bounds.lb ?? minY, minY),
-		endY: focusOnModelChecks ? c.additive_bounds.ub : Math.min(c.additive_bounds.ub ?? maxY, maxY)
-	}));
+	// Find min/max values to set an appropriate viewing range for y-axis
+	// Limit by threshold as very large numbers cause the chart to have NaN in the y domain
+	const lowerBounds = stateIdConstraints.map((c) => {
+		let lb = c.additive_bounds.lb;
+		const ub = c.additive_bounds.ub;
+		if (lb && ub && lb < -threshold) lb = -Math.abs(ub) * 0.5 + ub;
+		return lb;
+	});
+	const upperBounds = stateIdConstraints.map((c) => {
+		const lb = c.additive_bounds.lb;
+		let ub = c.additive_bounds.ub;
+		if (ub && lb && ub > threshold) ub = Math.abs(lb) * 0.5 + lb;
+		return ub;
+	});
+	const yPoints = trajectories.map((t) => t.values[stateId]);
+
+	const potentialMinYs = focusOnModelChecks && !isEmpty(lowerBounds) ? [...yPoints, ...lowerBounds] : yPoints;
+	const potentialMaxYs = focusOnModelChecks && !isEmpty(upperBounds) ? [...yPoints, ...upperBounds] : yPoints;
+	const minY = Math.floor(Math.min(...potentialMinYs));
+	const maxY = Math.ceil(Math.max(...potentialMaxYs));
+
+	const modelChecks = stateIdConstraints.map((c) => {
+		let startY = c.additive_bounds.lb ?? minY;
+		let endY = c.additive_bounds.ub ?? maxY;
+		// Fallback to min/max if the bounds exceed the threshold
+		if (startY < -threshold) startY = minY;
+		if (endY > threshold) endY = maxY;
+		return {
+			legendItem: FunmanChartLegend.ModelChecks,
+			startX: c.timepoints.lb,
+			endX: c.timepoints.ub,
+			startY,
+			endY
+		};
+	});
 
 	return {
 		$schema: VEGALITE_SCHEMA,
@@ -951,7 +974,9 @@ export function createFunmanStateChart(
 			{
 				mark: {
 					type: 'rect',
-					clip: true
+					clip: true,
+					stroke: '#A4CEFF',
+					strokeWidth: 1
 				},
 				data: { values: modelChecks },
 				encoding: {
@@ -984,7 +1009,7 @@ export function createFunmanStateChart(
 			x: { title: 'Timepoints' },
 			y: {
 				title: `${stateId} (persons)`,
-				scale: focusOnModelChecks ? {} : { domain: [minY, maxY] }
+				scale: { domain: [minY, maxY] }
 			},
 			color: {
 				field: 'legendItem',
