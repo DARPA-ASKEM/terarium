@@ -737,7 +737,7 @@ const parameterCharts = ref<any>({});
 const stateOptions = ref<string[]>([]);
 const parameterOptions = ref<string[]>([]);
 const onlyShowLatestResults = ref(false);
-const focusOnModelChecks = ref(true);
+const focusOnModelChecks = ref(false);
 
 const isOutputSettingsPanelOpen = ref(false);
 const activeChartSettings = ref<ChartSetting | null>(null);
