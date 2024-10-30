@@ -65,7 +65,12 @@ import {
 } from '@/types/Types';
 import { ChartSettingType } from '@/types/common';
 import { createLLMSummary } from '@/services/summary-service';
-import { applyForecastChartAnnotations, createForecastChart, createInterventionChartMarkers } from '@/services/charts';
+import {
+	applyForecastChartAnnotations,
+	createForecastChart,
+	createInterventionChartMarkers,
+	AUTOSIZE
+} from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import * as stats from '@/utils/stats';
 import { createDatasetFromSimulationResult, getDataset } from '@/services/dataset';
@@ -124,7 +129,9 @@ const updateLossChartSpec = (data: Record<string, any>[]) => {
 			title: '',
 			xAxisTitle: 'Solver iterations',
 			yAxisTitle: 'Loss',
-			...chartSize
+			autosize: AUTOSIZE.FIT,
+			...chartSize,
+			fitYDomain: true
 		}
 	);
 };
