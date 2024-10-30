@@ -1,10 +1,9 @@
 import * as d3 from 'd3';
 import EventEmitter from './event-emitter';
 import removeChildren from '../utils/dom-util';
-import { traverseGraph, getAStarPath } from './traverse';
+import { traverseGraph } from './traverse';
 import { translate } from '../utils/svg-util';
 import { Options, INode, IEdge, IGraph, IRect, IPoint, D3Selection, D3SelectionINode } from '../types';
-import OrthogonalConnector from './ortho-router';
 
 export const pathFn = d3
 	.line<{ x: number; y: number }>()
@@ -397,6 +396,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 		const dragSelector = this.options.dragSelector || null;
 
+		/*
 		function basicCollisionFn(p: IPoint, objects: IRect[]) {
 			const buffer = 0; // FIXME: factor out to config
 			for (let i = 0; i < objects.length; i++) {
@@ -412,6 +412,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 			}
 			return false;
 		}
+		*/
 
 		function nodeDragStart(evt: d3.D3DragEvent<any, any, any>): void {
 			evt.sourceEvent.stopPropagation();
@@ -480,6 +481,11 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 			renderer.isDragEnabled = false;
 
+			if (sufficientlyMoved && options.edgeReroutingFn) {
+				options.edgeReroutingFn(nodes, edges);
+			}
+
+			/*
 			if (options.useOrthoRouting && sufficientlyMoved) {
 				const nodeMap: Map<string, any> = new Map();
 				// eslint-disable-next-line
@@ -491,6 +497,8 @@ export abstract class Renderer<V, E> extends EventEmitter {
 						height: node.height
 					});
 				});
+
+
 				const obstacles = nodes.map((node3) => nodeMap.get(node3.id) as any);
 				edges.forEach((edge) => {
 					const path = OrthogonalConnector.route({
@@ -554,6 +562,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 					}
 				}
 			}
+			*/
 			updateEdgePoints();
 
 			// Clean up

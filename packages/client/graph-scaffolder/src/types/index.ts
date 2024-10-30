@@ -78,6 +78,8 @@ export interface Options {
 
 	useOrthoRouting?: {};
 
+	edgeReroutingFn?: (nodes: INode<any>[], edges: IEdge<any>[]) => void;
+
 	// Whether to show grid
 	useGrid?: boolean;
 
