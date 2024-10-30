@@ -385,9 +385,8 @@ public class TaskService {
 			// the hmi-server. Any operation that must occur once and only once should be
 			// triggered here.
 
-			// NOTE: when running no local, and hitting an external rabbitmq instance, we
-			// need a unique queue to ensure the
-			// local server also gets it.
+			// NOTE: when running local and hitting an external rabbitmq instance, we need a
+			// unique queue to ensure the local server also gets it.
 			final String queueName = !isRunningLocalProfile()
 				? TASK_RUNNER_RESPONSE_QUEUE
 				: TASK_RUNNER_RESPONSE_QUEUE + "-local-" + UUID.randomUUID().toString();
