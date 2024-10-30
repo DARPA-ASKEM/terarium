@@ -297,7 +297,7 @@
 		:asset="{ ...(validatedModelConfiguration as ModelConfiguration), temporary: false }"
 		:asset-type="AssetType.ModelConfiguration"
 		@close-modal="showSaveModal = false"
-		@on-save="onSaveAsModelConfiguration"
+		@on-save="onSaveForReuse"
 	/>
 </template>
 
@@ -749,8 +749,9 @@ const selectedParameterSettings = computed(() =>
 
 let selectedBoxId: number = -1;
 
-function onSaveAsModelConfiguration() {
+async function onSaveForReuse() {
 	showSaveModal.value = false;
+	validatedModelConfiguration.value = await getModelConfigurationById(funmanResult.modelConfigurationId); // Refresh to see updated name
 }
 
 // Once a parameter tick is chosen, its corresponding line on the state chart will be highlighted
