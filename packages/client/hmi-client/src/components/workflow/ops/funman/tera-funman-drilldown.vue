@@ -153,8 +153,8 @@
 				<template v-else-if="!isEmpty(node.state.runId)">
 					<header class="flex align-items-start">
 						<div>
-							<h4>{{ activeOutput?.label }}</h4>
-							<span class="secondary-text">{{ formatShort(activeOutput?.timestamp) }}</span>
+							<h4>{{ validatedModelConfiguration?.name }}</h4>
+							<span class="secondary-text">{{ formatShort(validatedModelConfiguration?.createdOn) }}</span>
 						</div>
 						<div class="btn-group">
 							<Button label="Add to report" outlined severity="secondary" disabled />
@@ -293,7 +293,8 @@
 	<tera-save-asset-modal
 		:initial-name="validatedModelConfiguration?.name"
 		:is-visible="showSaveModal"
-		:asset="validatedModelConfiguration"
+		is-updating-asset
+		:asset="{ ...(validatedModelConfiguration as ModelConfiguration), temporary: false }"
 		:asset-type="AssetType.ModelConfiguration"
 		@close-modal="showSaveModal = false"
 		@on-save="onSaveAsModelConfiguration"
@@ -819,10 +820,12 @@ async function renderCharts() {
 	updateStateCharts();
 	updateParameterCharts();
 
+	if (!validatedModelConfiguration.value) return;
+
 	// For displaying model/model configuration
 	// Model will be the same on runId change, no need to fetch it again
 	if (!outputModel.value) {
-		outputModel.value = await getModel(funmanResult.modelConfiguration.modelId);
+		outputModel.value = await getModel(validatedModelConfiguration.value.modelId);
 		if (!outputModel.value) {
 			logger.error('Failed to fetch model');
 			return;
@@ -834,8 +837,8 @@ async function renderCharts() {
 		}
 	}
 
-	configuredMmt.value = makeConfiguredMMT(mmt, funmanResult.modelConfiguration);
-	calibratedConfigObservables.value = funmanResult.modelConfiguration.observableSemanticList.map(
+	configuredMmt.value = makeConfiguredMMT(mmt, validatedModelConfiguration.value);
+	calibratedConfigObservables.value = validatedModelConfiguration.value.observableSemanticList.map(
 		({ referenceId, states, expression }) => ({
 			id: referenceId,
 			name: referenceId,
@@ -857,7 +860,7 @@ watch(
 		notebookText.value = rawFunmanResult;
 		funmanResult = JSON.parse(rawFunmanResult);
 		constraintsResponse = funmanResult.request.constraints;
-		validatedModelConfiguration.value = funmanResult.modelConfiguration;
+		validatedModelConfiguration.value = await getModelConfigurationById(funmanResult.modelConfigurationId);
 
 		stateOptions.value = funmanResult.model.petrinet.model.states.map(({ id }) => id);
 		parameterOptions.value = funmanResult.request.parameters
