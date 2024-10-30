@@ -86,6 +86,7 @@ export const getModelRenderer = (
 			// useAStarRouting: {
 			// 	collisionFn
 			// },
+			useOrthoRouting: {},
 			useStableZoomPan: true,
 			zoomModifier: 'ctrlKey',
 			zoomRange: [0.1, 30],
@@ -103,6 +104,7 @@ export const getModelRenderer = (
 		// useAStarRouting: {
 		// 	collisionFn
 		// },
+		useOrthoRouting: {},
 		useStableZoomPan: true,
 		zoomModifier: 'ctrlKey',
 		runLayout: runDagreLayout,

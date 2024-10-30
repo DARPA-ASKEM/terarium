@@ -76,6 +76,8 @@ export interface Options {
 		collisionFn?: (p: IPoint, objects: IRect[]) => boolean;
 	};
 
+	useOrthoRouting?: {};
+
 	// Whether to show grid
 	useGrid?: boolean;
 

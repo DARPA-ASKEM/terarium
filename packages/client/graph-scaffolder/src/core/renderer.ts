@@ -389,7 +389,6 @@ export abstract class Renderer<V, E> extends EventEmitter {
 		const nodes = this.graph.nodes;
 		const updateEdgePoints = this.updateEdgePoints.bind(this);
 		const emitWrapper = renderer.emit.bind(renderer);
-		const nodeMap: Map<string, IRect> = new Map();
 
 		let node: D3SelectionINode<V> | null = null;
 		let nodeDraggingIds: string[] = [];
@@ -480,9 +479,33 @@ export abstract class Renderer<V, E> extends EventEmitter {
 			}
 
 			renderer.isDragEnabled = false;
-			// if (options.useAStarRouting && sufficientlyMoved) {
-			if (sufficientlyMoved) {
-				nodeMap.clear();
+
+			if (options.useOrthoRouting && sufficientlyMoved) {
+				const nodeMap: Map<string, any> = new Map();
+				// eslint-disable-next-line
+				nodes.forEach((node) => {
+					nodeMap.set(node.id, {
+						left: node.x - 0.5 * node.width,
+						top: node.y - 0.5 * node.height,
+						width: node.width,
+						height: node.height
+					});
+				});
+				const obstacles = nodes.map((node3) => nodeMap.get(node3.id) as any);
+				edges.forEach((edge) => {
+					const path = OrthogonalConnector.route({
+						pointA: { shape: nodeMap.get(edge.source) as any, side: 'right', distance: 0.5 },
+						pointB: { shape: nodeMap.get(edge.target) as any, side: 'left', distance: 0.5 },
+						shapeMargin: 10,
+						globalBoundsMargin: 10,
+						globalBounds: { left: -5000, top: -5000, width: 5000, height: 5000 },
+						obstacles
+					});
+					console.log('drag end path', path);
+					edge.points = path;
+				});
+			} else if (options.useAStarRouting && sufficientlyMoved) {
+				const nodeMap: Map<string, IRect> = new Map();
 				nodes.forEach((n) => {
 					nodeMap.set(n.id, {
 						x: n.x,
@@ -492,31 +515,6 @@ export abstract class Renderer<V, E> extends EventEmitter {
 					});
 				});
 
-				const nodeMap2: Map<string, any> = new Map();
-				nodes.forEach((node2) => {
-					nodeMap2.set(node2.id, {
-						left: node2.x - 0.5 * node2.width,
-						top: node2.y - 0.5 * node2.height,
-						width: node2.width,
-						height: node2.height
-					});
-				});
-				const obstacles = nodes.map((node3) => nodeMap2.get(node3.id) as any);
-				edges.forEach((edge) => {
-					const path = OrthogonalConnector.route({
-						pointA: { shape: nodeMap2.get(edge.source) as any, side: 'right', distance: 0.5 },
-						pointB: { shape: nodeMap2.get(edge.target) as any, side: 'left', distance: 0.5 },
-						shapeMargin: 10,
-						globalBoundsMargin: 10,
-						globalBounds: { left: -5000, top: -5000, width: 5000, height: 5000 },
-						obstacles
-					});
-					console.log('drag end path', path);
-					edge.points = path;
-				});
-			}
-
-			if (options.useAStarRouting && sufficientlyMoved) {
 				let colliderWrapper = (p: IPoint) => basicCollisionFn(p, nodes);
 				const callback = options.useAStarRouting.collisionFn;
 				if (callback) {
@@ -555,8 +553,8 @@ export abstract class Renderer<V, E> extends EventEmitter {
 						});
 					}
 				}
-				updateEdgePoints();
 			}
+			updateEdgePoints();
 
 			// Clean up
 			nodeDraggingIds = [];
