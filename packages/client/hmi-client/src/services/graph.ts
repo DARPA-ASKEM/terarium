@@ -6,7 +6,7 @@ import * as d3 from 'd3';
 import dagre from 'dagre';
 import graphScaffolder, { IGraph, INode, IEdge } from '@graph-scaffolder/index';
 import type { Position } from '@/types/common';
-import OrthogonalConnector from '@/utils/ortho-router';
+import OrthogonalConnector, { Side } from '@/utils/ortho-router';
 
 export type D3SelectionINode<T> = d3.Selection<d3.BaseType, INode<T>, null, any>;
 export type D3SelectionIEdge<T> = d3.Selection<d3.BaseType, IEdge<T>, null, any>;
@@ -29,14 +29,26 @@ function interpolatePointsForCurve(a: Position, b: Position): Position[] {
 
 // Stand-alone edge rerouting given a set of node positions and their
 // connections.
+interface ExtRect {
+	left: number;
+	top: number;
+	width: number;
+	height: number;
+	cx: number;
+	cy: number;
+}
 export const rerouteEdges = (nodes: INode<any>[], edges: IEdge<any>[]) => {
-	const nodeMap: Map<string, any> = new Map();
+	const nodeMap: Map<string, ExtRect> = new Map();
 	nodes.forEach((node) => {
 		nodeMap.set(node.id, {
 			left: node.x - 0.5 * node.width,
 			top: node.y - 0.5 * node.height,
 			width: node.width,
-			height: node.height
+			height: node.height,
+
+			// extras for side calculation
+			cx: node.x,
+			cy: node.y
 		});
 	});
 
@@ -64,9 +76,31 @@ export const rerouteEdges = (nodes: INode<any>[], edges: IEdge<any>[]) => {
 		const denominator = edgeSourceMap.get(edge.source) as number;
 		counter++;
 
+		let sideA: Side = 'right';
+		let sideB: Side = 'left';
+
+		const threshold = 40;
+		const shapeA = nodeMap.get(edge.source) as ExtRect;
+		const shapeB = nodeMap.get(edge.target) as ExtRect;
+		if (Math.abs(shapeB.cx - shapeA.cx) > threshold && Math.abs(shapeB.cy - shapeA.cy) > threshold) {
+			if (shapeB.cx <= shapeA.cx && shapeB.cy <= shapeA.cy) {
+				sideA = 'top';
+				sideB = 'right';
+			} else if (shapeB.cx > shapeA.cx && shapeB.cy <= shapeA.cy) {
+				sideA = 'top';
+				sideB = 'left';
+			} else if (shapeB.cx <= shapeA.cx && shapeB.cy >= shapeA.cy) {
+				sideA = 'bottom';
+				sideB = 'right';
+			} else {
+				sideA = 'bottom';
+				sideB = 'left';
+			}
+		}
+
 		const path = OrthogonalConnector.route({
-			pointA: { shape: nodeMap.get(edge.source), side: 'right', distance: counter / (denominator + 1) },
-			pointB: { shape: nodeMap.get(edge.target), side: 'left', distance: 0.5 },
+			pointA: { shape: shapeA, side: sideA, distance: counter / (denominator + 1) },
+			pointB: { shape: shapeB, side: sideB, distance: 0.5 },
 			shapeMargin: 10,
 			globalBoundsMargin: 10,
 			globalBounds: { left: -5000, top: -5000, width: 5000, height: 5000 },
