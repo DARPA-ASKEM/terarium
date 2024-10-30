@@ -69,9 +69,10 @@ let newAsset: any = null;
 const newName = ref<string>('');
 
 const title = computed(() => {
-	if (!props.asset) return `Create new ${props.assetType}`;
-	if (props.isUpdatingAsset) return `Update ${props.assetType} name`;
-	return `Save as a new ${props.assetType}`;
+	const assetType = props.assetType.replace(/-/g, ' ');
+	if (!props.asset) return `Create new ${assetType}`;
+	if (props.isUpdatingAsset) return `Update ${assetType} name`;
+	return `Save as a new ${assetType}`;
 });
 
 function onSave(data: any) {
