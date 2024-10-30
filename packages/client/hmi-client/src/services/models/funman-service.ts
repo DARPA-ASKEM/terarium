@@ -122,12 +122,8 @@ export const processFunman = (result: any, onlyShowLatestResults: boolean) => {
 	const boxes: FunmanBox[] = [];
 	const trajectories: any[] = [];
 
-	console.log('trueBoxes', trueBoxes);
-	console.log('falseBoxes', falseBoxes);
-	console.log('ambiguousBoxes', ambiguousBoxes);
-
 	[...trueBoxes, ...falseBoxes, ...ambiguousBoxes].forEach((box, index) => {
-		const points = box.points[0].values;
+		const points = box.points?.[0]?.values;
 		if (!points) return;
 
 		boxes.push({
