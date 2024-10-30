@@ -176,60 +176,6 @@
 							</div>
 						</div>
 					</section>
-					<section class="form-section">
-						<h5 class="mb-1">Output settings</h5>
-						<!--Summary-->
-						<tera-checkbox
-							v-model="summaryCheckbox"
-							inputId="generate-summary"
-							label="Auto-generate operation summary"
-							subtext="Generates a brief summary of the inputs and outputs."
-							disabled
-						/>
-						<Divider />
-
-						<!--Success Criteria-->
-						<h5 class="mb-1">Success Criteria</h5>
-						<tera-checkbox
-							v-model="successDisplayChartsCheckbox"
-							inputId="success-criteria-display-charts"
-							label="Display chart(s)"
-							subtext="Turn this on to generate an interactive chart of the success criteria conditions."
-							disabled
-						/>
-						<Divider />
-
-						<!--Interventions-->
-						<h5 class="mb-1">Interventions</h5>
-						<MultiSelect
-							v-model="knobs.selectedInterventionVariables"
-							:options="_.keys(preProcessedInterventionsData)"
-							placeholder="What do you want to see?"
-							filter
-						/>
-						<tera-checkbox
-							v-model="interventionsDisplayChartsCheckbox"
-							inputId="interventions-display-charts"
-							label="Display chart(s)"
-							disabled
-						/>
-						<Divider />
-
-						<!--Simulation plots-->
-						<h5 class="mb-1">Simulation plots</h5>
-						<MultiSelect
-							v-model="knobs.selectedSimulationVariables"
-							:options="simulationChartOptions"
-							placeholder="What do you want to see?"
-							filter
-						/>
-						<tera-checkbox
-							v-model="simulationDisplayChartsCheckbox"
-							inputId="sim-plots-display-charts"
-							label="Display chart(s)"
-							disabled
-						/>
-					</section>
 					<!-- This used to be in the footer -->
 					<tera-save-dataset-from-simulation
 						:simulation-run-id="knobs.postForecastRunId"
@@ -327,9 +273,9 @@
 									</li>
 								</ul>
 							</AccordionTab>
-							<AccordionTab header="Interventions">
+							<AccordionTab header="Interventions over time">
 								<ul>
-									<li v-for="(_, key) of knobs.selectedInterventionVariables" :key="key">
+									<li v-for="(_, key) of selectedInterventionSettings.map((s) => s.selectedVariables[0])" :key="key">
 										<vega-chart
 											expandable
 											are-embed-actions-visible
@@ -338,9 +284,9 @@
 									</li>
 								</ul>
 							</AccordionTab>
-							<AccordionTab header="Simulation plots">
+							<AccordionTab header="Variables over time">
 								<ul>
-									<li v-for="(_, key) of knobs.selectedSimulationVariables" :key="key">
+									<li v-for="(_, key) of selectedVariableSettings.map((s) => s.selectedVariables[0])" :key="key">
 										<vega-chart
 											expandable
 											are-embed-actions-visible
@@ -360,6 +306,71 @@
 					</div>
 				</template>
 			</tera-drilldown-section>
+		</template>
+		<template #sidebar-right>
+			<tera-slider-panel
+				v-model:is-open="isOutputSettingsPanelOpen"
+				direction="right"
+				class="input-config"
+				header="Output Settings"
+				content-width="360px"
+			>
+				<template #overlay>
+					<tera-chart-settings-panel
+						:annotations="activeChartSettings?.type === ChartSettingType.VARIABLE ? chartAnnotations : undefined"
+						:active-settings="activeChartSettings"
+						:generate-annotation="generateAnnotation"
+						@delete-annotation="deleteAnnotation"
+						@close="activeChartSettings = null"
+					/>
+				</template>
+				<template #content>
+					<div class="output-settings-panel">
+						<!--Summary-->
+						<tera-checkbox
+							v-model="summaryCheckbox"
+							inputId="generate-summary"
+							label="Auto-generate operation summary"
+							subtext="Generates a brief summary of the inputs and outputs."
+							disabled
+						/>
+						<Divider />
+
+						<!--Success Criteria-->
+						<h5 class="mb-1">Success Criteria</h5>
+						<tera-checkbox
+							v-model="successDisplayChartsCheckbox"
+							inputId="success-criteria-display-charts"
+							label="Display chart(s)"
+							subtext="Turn this on to generate an interactive chart of the success criteria conditions."
+							disabled
+						/>
+						<Divider />
+						<tera-chart-settings
+							:title="'Interventions over time'"
+							:settings="chartSettings"
+							:type="ChartSettingType.INTERVENTION"
+							:select-options="_.keys(preProcessedInterventionsData)"
+							:selected-options="selectedInterventionSettings.map((s) => s.selectedVariables[0])"
+							@open="activeChartSettings = $event"
+							@remove="removeChartSetting"
+							@selection-change="updateChartSettings"
+						/>
+						<Divider />
+						<tera-chart-settings
+							:title="'Variables over time'"
+							:settings="chartSettings"
+							:type="ChartSettingType.VARIABLE"
+							:select-options="simulationChartOptions"
+							:selected-options="selectedVariableSettings.map((s) => s.selectedVariables[0])"
+							@open="activeChartSettings = $event"
+							@remove="removeChartSetting"
+							@selection-change="updateChartSettings"
+						/>
+						<Divider />
+					</div>
+				</template>
+			</tera-slider-panel>
 		</template>
 	</tera-drilldown>
 	<tera-save-simulation-modal
@@ -416,7 +427,9 @@ import {
 	OptimizeInterventions,
 	OptimizeQoi,
 	OptimizeRequestCiemss,
-	AssetType
+	AssetType,
+	ChartAnnotation,
+	ClientEventType
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { nodeMetadata } from '@/components/workflow/util';
@@ -435,12 +448,22 @@ import {
 	ForecastChartOptions
 } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import MultiSelect from 'primevue/multiselect';
 import { mergeResults, renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
-import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
+import { ChartSetting, ChartSettingType, CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import { useConfirm } from 'primevue/useconfirm';
+import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
+import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
+import {
+	fetchAnnotations,
+	generateForecastChartAnnotation,
+	saveAnnotation,
+	deleteAnnotation,
+	removeChartSettingById,
+	updateChartSettingsBySelectedVariables
+} from '@/services/chart-settings';
+import { useClientEvent } from '@/composables/useClientEvent';
 import teraOptimizeCriterionGroupForm from './tera-optimize-criterion-group-form.vue';
 import TeraStaticInterventionPolicyGroup from './tera-static-intervention-policy-group.vue';
 import TeraDynamicInterventionPolicyGroup from './tera-dynamic-intervention-policy-group.vue';
@@ -456,6 +479,7 @@ import {
 const confirm = useConfirm();
 
 const isSidebarOpen = ref(true);
+const isOutputSettingsPanelOpen = ref(false);
 
 const props = defineProps<{
 	node: WorkflowNode<OptimizeCiemssOperationState>;
@@ -477,8 +501,6 @@ interface BasicKnobs {
 	preForecastRunId: string;
 	postForecastRunId: string;
 	optimizationRunId: string;
-	selectedInterventionVariables: string[];
-	selectedSimulationVariables: string[];
 	constraintGroups: Criterion[];
 	interventionPolicyGroups: InterventionPolicyGroupForm[];
 }
@@ -492,8 +514,6 @@ const knobs = ref<BasicKnobs>({
 	preForecastRunId: props.node.state.preForecastRunId ?? '',
 	postForecastRunId: props.node.state.postForecastRunId ?? '',
 	optimizationRunId: props.node.state.optimizationRunId ?? '',
-	selectedInterventionVariables: props.node.state.selectedInterventionVariables ?? [],
-	selectedSimulationVariables: props.node.state.selectedSimulationVariables ?? [],
 	constraintGroups: props.node.state.constraintGroups ?? [],
 	interventionPolicyGroups: props.node.state.interventionPolicyGroups ?? []
 });
@@ -501,8 +521,6 @@ const knobs = ref<BasicKnobs>({
 const summaryCheckbox = ref(true);
 
 const successDisplayChartsCheckbox = ref(true);
-const interventionsDisplayChartsCheckbox = ref(true);
-const simulationDisplayChartsCheckbox = ref(true);
 
 const showSaveDataDialog = ref<boolean>(false);
 const showSaveInterventionPolicy = ref<boolean>(false);
@@ -510,6 +528,16 @@ const showSaveInterventionPolicy = ref<boolean>(false);
 const outputPanel = ref(null);
 const chartSize = useDrilldownChartSize(outputPanel);
 const cancelRunId = computed(() => props.node.state.inProgressPostForecastId || props.node.state.inProgressOptimizeId);
+
+const chartSettings = computed(() => props.node.state.chartSettings ?? []);
+const activeChartSettings = ref<ChartSetting | null>(null);
+
+const selectedVariableSettings = computed(() =>
+	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE)
+);
+const selectedInterventionSettings = computed(() =>
+	chartSettings.value.filter((setting) => setting.type === ChartSettingType.INTERVENTION)
+);
 
 const activePolicyGroups = computed(() =>
 	knobs.value.interventionPolicyGroups.filter((ele) => !!ele.relativeImportance)
@@ -852,36 +880,41 @@ const runOptimize = async () => {
 };
 
 const setOutputSettingDefaults = () => {
-	const selectedInterventionVariables: Array<string> = [];
-	const selectedSimulationVariables: Array<string> = [];
+	const state = _.cloneDeep(props.node.state);
+	// Initialize default selected chart settings when chart settings are not set yet. Return if chart settings are already set.
+	if (Array.isArray(state.chartSettings)) return;
 
-	if (!knobs.value.selectedInterventionVariables.length) {
-		activePolicyGroups.value.forEach((ele) => {
-			ele.intervention.staticInterventions.forEach((staticInt) =>
-				selectedInterventionVariables.push(staticInt.appliedTo)
-			);
-			ele.intervention.dynamicInterventions.forEach((dynamicsInt) =>
-				selectedInterventionVariables.push(dynamicsInt.appliedTo)
-			);
-		});
-	}
+	const selectedInterventionVariables: string[] = [];
+	const selectedSimulationVariables: string[] = [];
 
-	if (!knobs.value.selectedSimulationVariables.length) {
-		knobs.value.constraintGroups.forEach((constraint) => {
-			if (constraint.targetVariable) {
-				// Use modelStateAndObsOptions to map from value -> label as simulation selection uses S not S_State
-				const userSelection = modelStateAndObsOptions.value.find(
-					(ele) => ele.value === constraint.targetVariable
-				)?.label;
-				if (userSelection) {
-					selectedSimulationVariables.push(userSelection);
-				}
+	activePolicyGroups.value.forEach((ele) => {
+		ele.intervention.staticInterventions.forEach((staticInt) =>
+			selectedInterventionVariables.push(staticInt.appliedTo)
+		);
+		ele.intervention.dynamicInterventions.forEach((dynamicsInt) =>
+			selectedInterventionVariables.push(dynamicsInt.appliedTo)
+		);
+	});
+	knobs.value.constraintGroups.forEach((constraint) => {
+		if (constraint.targetVariable) {
+			// Use modelStateAndObsOptions to map from value -> label as simulation selection uses S not S_State
+			const userSelection = modelStateAndObsOptions.value.find((ele) => ele.value === constraint.targetVariable)?.label;
+			if (userSelection) {
+				selectedSimulationVariables.push(userSelection);
 			}
-		});
-		if (selectedSimulationVariables.length) {
-			knobs.value.selectedSimulationVariables = [...new Set(selectedSimulationVariables)];
 		}
-	}
+	});
+	state.chartSettings = updateChartSettingsBySelectedVariables(
+		[],
+		ChartSettingType.INTERVENTION,
+		selectedInterventionVariables
+	);
+	state.chartSettings = updateChartSettingsBySelectedVariables(
+		state.chartSettings,
+		ChartSettingType.VARIABLE,
+		selectedSimulationVariables
+	);
+	emit('update-state', state);
 };
 
 const setOutputValues = async () => {
@@ -986,7 +1019,8 @@ const preparedForecastCharts = computed(() => {
 	});
 
 	// intervention chart spec
-	charts.interventionCharts = knobs.value.selectedInterventionVariables.map((variable) => {
+	charts.interventionCharts = selectedInterventionSettings.value.map((setting) => {
+		const variable = setting.selectedVariables[0];
 		const options = _.cloneDeep(chartOptions);
 		options.translationMap = translationMap(variable);
 		options.yAxisTitle = getUnit(variable);
@@ -1012,7 +1046,8 @@ const preparedForecastCharts = computed(() => {
 	});
 
 	// simulation chart spec
-	charts.simulationCharts = knobs.value.selectedSimulationVariables.map((variable) => {
+	charts.simulationCharts = selectedVariableSettings.value.map((setting) => {
+		const variable = setting.selectedVariables[0];
 		const options = _.cloneDeep(chartOptions);
 		options.translationMap = translationMap(variable);
 		options.yAxisTitle = getUnit(variable);
@@ -1035,6 +1070,47 @@ const preparedForecastCharts = computed(() => {
 	});
 	return charts;
 });
+
+// --- Handle chart annotations
+// TODO: Move this to a separate composable since similar logic is used in other components
+const chartAnnotations = ref<ChartAnnotation[]>([]);
+const updateChartAnnotations = async () => {
+	chartAnnotations.value = await fetchAnnotations(props.node.id);
+};
+onMounted(() => updateChartAnnotations());
+useClientEvent([ClientEventType.ChartAnnotationCreate, ClientEventType.ChartAnnotationDelete], updateChartAnnotations);
+
+const generateAnnotation = async (setting: ChartSetting, query: string) => {
+	console.log(setting, query);
+	// // Note: Currently llm generated chart annotations are supported for the forecast chart only
+	// if (!preparedChartInputs.value) return null;
+
+	// const selectedVars = setting.selectedVariables;
+	// const { statLayerVariables, options } = getForecastChartOptions(selectedVars, preparedChartInputs.value.reverseMap);
+	const annotationLayerSpec = await generateForecastChartAnnotation(query, 'timepoint_id', [], {
+		// const annotationLayerSpec = await generateForecastChartAnnotation(query, 'timepoint_id', statLayerVariables, {
+		// translationMap: options.translationMap,
+		// xAxisTitle: options.xAxisTitle,
+		// yAxisTitle: options.yAxisTitle
+	});
+	const saved = await saveAnnotation(annotationLayerSpec, props.node.id, setting.id);
+	return saved;
+};
+// ---
+
+const removeChartSetting = (chartId) => {
+	emit('update-state', {
+		...props.node.state,
+		chartSettings: removeChartSettingById(chartSettings.value, chartId)
+	});
+};
+
+const updateChartSettings = (selectedVariables: string[], type: ChartSettingType) => {
+	emit('update-state', {
+		...props.node.state,
+		chartSettings: updateChartSettingsBySelectedVariables(chartSettings.value, type, selectedVariables)
+	});
+};
 
 // refresh policy
 const onSaveForReuse = async () => {
@@ -1071,8 +1147,6 @@ watch(
 		state.preForecastRunId = knobs.value.preForecastRunId;
 		state.postForecastRunId = knobs.value.postForecastRunId;
 		state.optimizationRunId = knobs.value.optimizationRunId;
-		state.selectedInterventionVariables = knobs.value.selectedInterventionVariables;
-		state.selectedSimulationVariables = knobs.value.selectedSimulationVariables;
 		state.constraintGroups = knobs.value.constraintGroups;
 		state.interventionPolicyGroups = knobs.value.interventionPolicyGroups;
 		emit('update-state', state);
@@ -1240,5 +1314,12 @@ watch(
 	padding: var(--gap);
 	background: var(--surface-100);
 	border-right: 1px solid var(--surface-border-light);
+}
+
+.output-settings-panel {
+	padding: var(--gap-4);
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-2);
 }
 </style>
