@@ -900,14 +900,30 @@ export function createFunmanStateChart(
 	const minY = Math.floor(Math.min(...potentialMinYs));
 	const maxY = Math.ceil(Math.max(...potentialMaxYs));
 
-	const modelChecks = stateIdConstraints.map((c, index) => ({
-		legendItem: FunmanChartLegend.ModelChecks,
-		startX: c.timepoints.lb,
-		endX: c.timepoints.ub,
-		// Choose the largest range to ensure the plot lines fit in the chart
-		startY: Math.min(lowerBounds[index] ?? minY, minY),
-		endY: Math.max(upperBounds[index] ?? maxY, maxY)
-	}));
+	const modelChecks = stateIdConstraints.map((c) => {
+		let startY = c.additive_bounds.lb ?? minY;
+		let endY = c.additive_bounds.ub ?? maxY;
+		// Fallback to min/max if the bounds exceed the threshold
+		if (startY < -threshold) startY = minY;
+		if (endY > threshold) endY = maxY;
+		return {
+			legendItem: FunmanChartLegend.ModelChecks,
+			startX: c.timepoints.lb,
+			endX: c.timepoints.ub,
+			startY,
+			endY
+		};
+	});
+
+	console.log(lowerBounds, upperBounds);
+	console.log(
+		'startY',
+		modelChecks.map((m) => m.startY)
+	);
+	console.log(
+		'endY',
+		modelChecks.map((m) => m.endY)
+	);
 
 	return {
 		$schema: VEGALITE_SCHEMA,
