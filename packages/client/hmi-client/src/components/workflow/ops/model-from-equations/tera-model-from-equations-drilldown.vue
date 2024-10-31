@@ -131,7 +131,7 @@
 			</tera-slider-panel>
 			<tera-slider-panel v-model:is-open="isOutputOpen" header="Output" content-width="100%">
 				<template #content>
-					<tera-drilldown-preview>
+					<tera-drilldown-preview :is-loading="isModelLoading">
 						<tera-model
 							v-if="selectedModel"
 							is-workflow
@@ -342,6 +342,8 @@ function onCheckBoxChange(equation) {
 }
 
 async function onRun() {
+	isOutputOpen.value = true;
+	isModelLoading.value = true;
 	const equations = clonedState.value.equations
 		.filter((e) => e.includeInProcess && !e.asset.extractionError)
 		.map((e) => e.asset.text);
@@ -357,7 +359,6 @@ async function onRun() {
 	if (document.value?.id) await generateCard(modelId, document.value.id);
 
 	clonedState.value.modelId = modelId;
-	isOutputOpen.value = true;
 	emit('append-output', {
 		label: `Output - ${props.node.outputs.length + 1}`,
 		state: cloneDeep(clonedState.value),
