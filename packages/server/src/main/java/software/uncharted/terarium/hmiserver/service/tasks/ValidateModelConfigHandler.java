@@ -42,6 +42,7 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 
 		UUID projectId;
 		UUID modelId;
+		String newModelConfigName;
 		UUID simulationId;
 	}
 
@@ -124,9 +125,10 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 
 			final ModelConfiguration contractedModelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
 				contractedModel,
-				"Validated " + contractedModel.getName(),
+				props.newModelConfigName,
 				contractedModel.getDescription()
 			);
+			contractedModelConfiguration.setTemporary(true);
 			contractedModelConfiguration.setModelId(props.modelId); // Config should be linked to the original model
 
 			// Save validated model configuration
@@ -136,10 +138,9 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 				ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
 			);
 
-			// Add model configuration to the response
+			// Add model configuration id to the response
 			JsonNode responseNode = objectMapper.readTree(responseString);
-			JsonNode modelConfigNode = objectMapper.valueToTree(createdModelConfiguration);
-			((ObjectNode) responseNode).set("modelConfiguration", modelConfigNode);
+			((ObjectNode) responseNode).put("modelConfigurationId", createdModelConfiguration.getId().toString());
 			String updatedResponseString = objectMapper.writeValueAsString(responseNode);
 			((ObjectNode) result).put("response", updatedResponseString);
 

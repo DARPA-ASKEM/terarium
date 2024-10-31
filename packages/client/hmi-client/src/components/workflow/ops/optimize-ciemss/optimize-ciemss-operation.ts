@@ -250,7 +250,10 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
  *
  *
  */
-export async function createInterventionPolicyFromOptimize(modelConfigId: string, optimizeRunId: string) {
+export async function createInterventionPolicyFromOptimize(
+	modelConfigId: string,
+	optimizeRunId: string
+): Promise<InterventionPolicy | null> {
 	const modelId = await getModelIdFromModelConfigurationId(modelConfigId);
 	const optimizedInterventions = await getOptimizedInterventions(optimizeRunId);
 
@@ -260,6 +263,6 @@ export async function createInterventionPolicyFromOptimize(modelConfigId: string
 		temporary: true,
 		interventions: optimizedInterventions
 	};
-	const newInterventionPolicy: InterventionPolicy = await createInterventionPolicy(newIntervention);
+	const newInterventionPolicy: InterventionPolicy | null = await createInterventionPolicy(newIntervention);
 	return newInterventionPolicy;
 }

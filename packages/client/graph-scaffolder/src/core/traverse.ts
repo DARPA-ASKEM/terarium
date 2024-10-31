@@ -38,13 +38,14 @@ export interface IGrid {
 }
 type ColliderFn = (p: IPoint) => boolean;
 
-export const getAStarPath = (
-	start: IPoint,
-	goal: IPoint,
-	collider: ColliderFn,
-	gridCell: IGrid = { w: 10, h: 10 },
-	searchLimit = 7000
-): IPoint[] => {
+export interface AStarOptions {
+	collider: ColliderFn;
+	gridCell?: IGrid;
+	searchLimit?: number;
+	distanceType?: 'Euclidean' | 'Manhattan';
+}
+
+export const getAStarPath = (start: IPoint, goal: IPoint, options: AStarOptions): IPoint[] => {
 	// Encoding helpers. We encode the XY coordinate as a single number to allow fast heuristic score lookup without
 	// incurring heavy memory cost of building a world-grid (we only store points we have visisted). Interestingly
 	// off hand testing using more native memory data structures (DataView, ArrayBuffer) to do high/low bit-mask encoding
@@ -59,11 +60,21 @@ export const getAStarPath = (
 		return { x: x - SIZE, y: y - SIZE };
 	};
 
+	const collider = options.collider;
+	const searchLimit = options.searchLimit || 7000;
+	const gridCell = options.gridCell || { w: 10, h: 10 };
+	const distanceType = options.distanceType || 'Manhattan';
+
 	// Math helpers
 	const sqDifference = (a: number, b: number) => (a - b) * (a - b);
-	const sqDistance = (p1: IPoint, p2: IPoint) => sqDifference(p1.x, p2.x) + sqDifference(p1.y, p2.y);
+	const distance = (p1: IPoint, p2: IPoint) => {
+		if (distanceType === 'Euclidean') {
+			return sqDifference(p1.x, p2.x) + sqDifference(p1.y, p2.y);
+		}
+		return Math.abs(p1.x - p2.x) + Math.abs(p1.y - p2.y);
+	};
 
-	const heuristic = (p: IPoint) => sqDistance(p, goal) * 1.2;
+	const heuristic = (p: IPoint) => distance(p, goal) * 1.2;
 	const pEqual = (p1: IPoint, p2: IPoint) => p1.x === p2.x && p1.y === p2.y;
 
 	const nearestValue = (a: number, v: number) => Math.round(a / v) * v;
@@ -84,19 +95,24 @@ export const getAStarPath = (
 	const fScore: { [key: string]: number } = {};
 	const heap = new BinaryHeap<number>(9999, (e) => fScore[e]);
 
-	const getNeighbours = (p: IPoint) => [
-		// orthogonals
-		{ x: p.x + gridCell.w, y: p.y },
-		{ x: p.x - gridCell.w, y: p.y },
-		{ x: p.x, y: p.y - gridCell.h },
-		{ x: p.x, y: p.y + gridCell.h },
+	const getNeighbours = (p: IPoint) => {
+		const candidates: any[] = [];
 
-		// diagonals
-		{ x: p.x + gridCell.w, y: p.y + gridCell.h },
-		{ x: p.x + gridCell.w, y: p.y - gridCell.h },
-		{ x: p.x - gridCell.w, y: p.y - gridCell.h },
-		{ x: p.x - gridCell.w, y: p.y + gridCell.h }
-	];
+		// orthogonals
+		candidates.push({ x: p.x + gridCell.w, y: p.y });
+		candidates.push({ x: p.x - gridCell.w, y: p.y });
+		candidates.push({ x: p.x, y: p.y - gridCell.h });
+		candidates.push({ x: p.x, y: p.y + gridCell.h });
+
+		if (distanceType === 'Euclidean') {
+			// diagonals
+			candidates.push({ x: p.x + gridCell.w, y: p.y + gridCell.h });
+			candidates.push({ x: p.x + gridCell.w, y: p.y - gridCell.h });
+			candidates.push({ x: p.x - gridCell.w, y: p.y - gridCell.h });
+			candidates.push({ x: p.x - gridCell.w, y: p.y + gridCell.h });
+		}
+		return candidates;
+	};
 
 	// TOOD: consider replacing pAsKey/keyAsP/gScore/fScore with a js Map or something with a cleaner feeling interface
 	heap.insert(pAsKey(startOnGrid));
@@ -112,10 +128,9 @@ export const getAStarPath = (
 
 		const currentKey = heap.pop();
 		const current = keyAsP(currentKey);
-
 		const neighbours = getNeighbours(current);
-		// TODO: getJumpPoints used to be here but not anymore no one knows where it went, i guess it went home
 
+		// TODO: getJumpPoints used to be here but not anymore no one knows where it went, i guess it went home
 		for (let i = 0; i < neighbours.length; i++) {
 			const neighbour = neighbours[i];
 			const neighbourKey = pAsKey(neighbour);
@@ -131,7 +146,7 @@ export const getAStarPath = (
 
 			if (collider(neighbour)) continue;
 
-			const tentativeScore = gScore[pAsKey(current)] + sqDistance(current, neighbour);
+			const tentativeScore = gScore[pAsKey(current)] + distance(current, neighbour);
 			if (gScore[neighbourKey] === undefined || tentativeScore < gScore[neighbourKey]) {
 				cameFrom[neighbourKey] = currentKey;
 				gScore[neighbourKey] = tentativeScore;

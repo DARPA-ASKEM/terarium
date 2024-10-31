@@ -198,19 +198,34 @@ watch(
 		if (response.state === PollerState.Done) {
 			// Start 2nd simulation to get sample simulation from dill
 			const newInterventionResponse = await createInterventionPolicyFromOptimize(modelConfigId.value as string, optId);
+			if (newInterventionResponse) {
+				const preForecastResponse = startForecast();
+				const postForecastResponse = startForecast(newInterventionResponse);
+				const forecastResults = await Promise.all([preForecastResponse, postForecastResponse]);
+				const [{ id: preForecastId }, { id: postForecastId }] = forecastResults;
 
-			const preForecastResponse = startForecast();
-			const postForecastResponse = startForecast(newInterventionResponse);
-			const forecastResults = await Promise.all([preForecastResponse, postForecastResponse]);
-			const [{ id: preForecastId }, { id: postForecastId }] = forecastResults;
-
-			const state = _.cloneDeep(props.node.state);
-			state.inProgressOptimizeId = '';
-			state.optimizationRunId = optId;
-			state.inProgressPreForecastId = preForecastId;
-			state.inProgressPostForecastId = postForecastId;
-			state.optimizedInterventionPolicyId = newInterventionResponse.id ?? '';
-			emit('update-state', state);
+				const state = _.cloneDeep(props.node.state);
+				state.inProgressOptimizeId = '';
+				state.optimizationRunId = optId;
+				state.inProgressPreForecastId = preForecastId;
+				state.inProgressPostForecastId = postForecastId;
+				state.optimizedInterventionPolicyId = newInterventionResponse.id ?? '';
+				emit('update-state', state);
+			} else {
+				// Failed to create intervention policy
+				const state = _.cloneDeep(props.node.state);
+				state.inProgressOptimizeId = '';
+				state.optimizationRunId = '';
+				state.inProgressPreForecastId = '';
+				state.inProgressPostForecastId = '';
+				state.optimizedInterventionPolicyId = '';
+				state.optimizeErrorMessage = {
+					name: optId,
+					value: 'Failed to create intervention',
+					traceback: 'Failed to create the intervention provided from optimize.'
+				};
+				emit('update-state', state);
+			}
 		} else {
 			// Simulation Failed:
 			const state = _.cloneDeep(props.node.state);

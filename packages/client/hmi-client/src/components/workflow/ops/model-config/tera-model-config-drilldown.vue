@@ -15,7 +15,7 @@
 			>
 				<template #content>
 					<tera-drilldown-section :is-loading="isFetchingPDF">
-						<tera-pdf-panel :pdfs="pdfData" />
+						<tera-pdf-panel :pdfs="pdfData" ref="pdfPanelRef" />
 					</tera-drilldown-section>
 				</template>
 			</tera-slider-panel>
@@ -301,6 +301,8 @@ const isFetchingPDF = ref(false);
 const isDocViewerOpen = ref(true);
 
 const pdfData = ref<{ document: any; data: string; isPdf: boolean; name: string }[]>([]);
+const pdfPanelRef = ref();
+const pdfViewer = computed(() => pdfPanelRef.value?.pdfRef[0]);
 
 const isSidebarOpen = ref(true);
 const isEditingDescription = ref(false);
@@ -636,6 +638,9 @@ const initialize = async (overwriteWithState: boolean = false) => {
 };
 
 const onSelectConfiguration = async (config: ModelConfiguration) => {
+	if (pdfViewer.value && config.extractionPage) {
+		pdfViewer.value.goToPage(config.extractionPage);
+	}
 	// Checks if there are unsaved changes to current model configuration
 	if (isModelConfigsEqual(originalConfig.value, knobs.value.transientModelConfig)) {
 		applyConfigValues(config);
