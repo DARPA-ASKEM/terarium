@@ -179,8 +179,10 @@ const preparedCharts = computed(() => {
 		};
 
 		let statLayerVariables = selectedVars.map((d) => `${pyciemssMap[d]}_mean`);
+		let sampleLayerVariables = selectedVars.map((d) => pyciemssMap[d]);
 
 		if (showBaseLine) {
+			sampleLayerVariables = [`${pyciemssMap[selectedVars[0]]}:base`, `${pyciemssMap[selectedVars[0]]}`];
 			statLayerVariables = [`${pyciemssMap[selectedVars[0]]}_mean:base`, `${pyciemssMap[selectedVars[0]]}_mean`];
 			options.translationMap = {
 				...options.translationMap,
@@ -194,7 +196,7 @@ const preparedCharts = computed(() => {
 			createForecastChart(
 				{
 					data: result,
-					variables: setting.selectedVariables.map((d) => pyciemssMap[d]),
+					variables: sampleLayerVariables,
 					timeField: 'timepoint_id',
 					groupField: 'sample_id'
 				},

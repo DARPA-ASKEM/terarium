@@ -1,5 +1,6 @@
 <template>
 	<tera-drilldown
+		v-bind="$attrs"
 		:node="node"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
@@ -85,38 +86,43 @@
 								Settings
 								<i class="pi pi-info-circle pl-2" v-tooltip="validateParametersToolTip" />
 							</template>
-							<label>Select parameters of interest</label>
-							<MultiSelect
-								ref="columnSelect"
-								class="w-full mt-1 mb-2"
-								:model-value="variablesOfInterest"
-								:options="requestParameters"
-								option-label="name"
-								option-disabled="disabled"
-								:show-toggle-all="false"
-								placeholder="Select variables"
-								@update:model-value="onToggleVariableOfInterest"
-							/>
-							<span class="timespan mb-2">
-								<div>
-									<label>Start time</label>
-									<tera-input-number class="w-12" v-model="knobs.currentTimespan.start" />
+							<section class="flex flex-column gap-2">
+								<label>Select parameters of interest</label>
+								<MultiSelect
+									ref="columnSelect"
+									class="w-full"
+									:model-value="variablesOfInterest"
+									:options="requestParameters"
+									option-label="name"
+									option-disabled="disabled"
+									:show-toggle-all="false"
+									placeholder="Select variables"
+									@update:model-value="onToggleVariableOfInterest"
+								/>
+								<span class="timespan">
+									<div>
+										<label>Start time</label>
+										<tera-input-number class="w-12" v-model="knobs.currentTimespan.start" />
+									</div>
+									<div>
+										<label>End time</label>
+										<tera-input-number class="w-12" v-model="knobs.currentTimespan.end" />
+									</div>
+									<div>
+										<label>Number of timesteps</label>
+										<tera-input-number class="w-12" v-model="knobs.numberOfSteps" />
+									</div>
+								</span>
+								<label>Timepoints</label>
+								<code>
+									{{ stepList.map((step) => Number(step.toFixed(3))).join(', ') }}
+								</code>
+								<label>Tolerance</label>
+								<div class="input-tolerance fadein animation-ease-in-out animation-duration-350">
+									<tera-input-number v-model="knobs.tolerance" />
+									<Slider v-model="knobs.tolerance" :min="0" :max="1" :step="0.01" class="w-full mr-2" />
 								</div>
-								<div>
-									<label>End time</label>
-									<tera-input-number class="w-12" v-model="knobs.currentTimespan.end" />
-								</div>
-								<div>
-									<label>Number of timesteps</label>
-									<tera-input-number class="w-12" v-model="knobs.numberOfSteps" />
-								</div>
-							</span>
-							<tera-input-text :disabled="true" class="mb-2" v-model="requestStepListString" />
-							<label>Tolerance</label>
-							<div class="mt-1 input-tolerance fadein animation-ease-in-out animation-duration-350">
-								<tera-input-number v-model="knobs.tolerance" />
-								<Slider v-model="knobs.tolerance" :min="0" :max="1" :step="0.01" class="w-full mr-2" />
-							</div>
+							</section>
 						</AccordionTab>
 					</Accordion>
 				</main>
@@ -140,25 +146,19 @@
 			</template>
 		</tera-slider-panel>
 		<template #preview>
-			<tera-drilldown-preview
-				title="Validation results"
-				v-model:output="selectedOutputId"
-				@update:selection="onSelection"
-				:options="outputs"
-				is-selectable
-			>
+			<tera-drilldown-preview>
 				<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%">
 					{{ props.node.state.currentProgress }}%
 				</tera-progress-spinner>
 				<template v-else-if="!isEmpty(node.state.runId)">
 					<header class="flex align-items-start">
 						<div>
-							<h4>{{ validatedModelConfiguration?.name }}</h4>
-							<span class="secondary-text">Output generated date</span>
+							<h4>{{ activeOutput?.label }}</h4>
+							<span class="secondary-text">{{ formatShort(activeOutput?.timestamp) }}</span>
 						</div>
 						<div class="btn-group">
 							<Button label="Add to report" outlined severity="secondary" disabled />
-							<Button label="Save for reuse" outlined severity="secondary" disabled />
+							<Button label="Save for reuse" outlined severity="secondary" @click="showSaveModal = true" />
 						</div>
 					</header>
 					<Accordion multiple :active-index="[0, 1, 2, 3]">
@@ -189,12 +189,12 @@
 							/>
 						</AccordionTab>
 						<AccordionTab header="Diagram">
-							<tera-model-diagram v-if="model" :model="model" />
+							<tera-model-diagram v-if="outputModel" :model="outputModel" />
 						</AccordionTab>
 					</Accordion>
-					<template v-if="model && validatedModelConfiguration && configuredMmt">
+					<template v-if="outputModel && validatedModelConfiguration && configuredMmt">
 						<tera-initial-table
-							:model="model"
+							:model="outputModel"
 							:model-configuration="validatedModelConfiguration"
 							:model-configurations="[]"
 							:mmt="configuredMmt"
@@ -202,7 +202,7 @@
 							:feature-config="{ isPreview: true }"
 						/>
 						<tera-parameter-table
-							:model="model"
+							:model="outputModel"
 							:model-configuration="validatedModelConfiguration"
 							:model-configurations="[]"
 							:mmt="configuredMmt"
@@ -213,7 +213,7 @@
 							<AccordionTab v-if="!isEmpty(calibratedConfigObservables)" header="Observables">
 								<tera-observables
 									class="pl-4"
-									:model="model"
+									:model="outputModel"
 									:mmt="configuredMmt"
 									:observables="calibratedConfigObservables"
 									:feature-config="{ isPreview: true }"
@@ -290,14 +290,22 @@
 			</tera-slider-panel>
 		</template>
 	</tera-drilldown>
+	<tera-save-asset-modal
+		:initial-name="validatedModelConfiguration?.name"
+		:is-visible="showSaveModal"
+		:asset="validatedModelConfiguration"
+		:asset-type="AssetType.ModelConfiguration"
+		@close-modal="showSaveModal = false"
+		@on-save="onSaveAsModelConfiguration"
+	/>
 </template>
 
 <script setup lang="ts">
-import _, { floor, isEmpty } from 'lodash';
+import { isEmpty, cloneDeep } from 'lodash';
 import { computed, ref, watch } from 'vue';
 import { logger } from '@/utils/logger';
+import { formatShort } from '@/utils/date';
 import Button from 'primevue/button';
-import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import Slider from 'primevue/slider';
 import MultiSelect from 'primevue/multiselect';
@@ -324,6 +332,7 @@ import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue'
 
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
 import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
+import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 
 import type {
 	FunmanInterval,
@@ -334,6 +343,7 @@ import type {
 	ModelConfiguration,
 	Observable
 } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import {
 	type ProcessedFunmanResult,
 	type FunmanConstraintsResponse,
@@ -345,18 +355,15 @@ import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { getRunResult } from '@/services/models/simulation-service';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { emptyMiraModel, makeConfiguredMMT } from '@/model-representation/mira/mira';
-import {
-	getAsConfiguredModel,
-	getModelConfigurationById,
-	getModelIdFromModelConfigurationId
-} from '@/services/model-configurations';
+import { getAsConfiguredModel, getModelConfigurationById } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
 import { pythonInstance } from '@/python/PyodideController';
 import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-constraint-group-form.vue';
 import { DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
-import { stringToLatexExpression, getModelByModelConfigurationId, getMMT } from '@/services/model';
+import { stringToLatexExpression, getModel, getMMT } from '@/services/model';
 import { displayNumber } from '@/utils/number';
 import { removeChartSettingById, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import { nodeOutputLabel } from '@/components/workflow/util';
 import { FunmanOperationState, Constraint, ConstraintType, CompartmentalConstraint } from './funman-operation';
 
 const props = defineProps<{
@@ -390,9 +397,6 @@ const isSliderOpen = ref(true);
 
 const mass = ref('0');
 
-const requestStepList = computed(() => getStepList());
-const requestStepListString = computed(() => requestStepList.value.join()); // Just used to display. dont like this but need to be quick
-
 const requestParameters = ref<any[]>([]);
 const configuredModel = ref<Model | null>();
 
@@ -401,17 +405,6 @@ const parameterIds = ref<string[]>([]);
 const observableIds = ref<string[]>([]);
 
 const selectedOutputId = ref<string>();
-const outputs = computed(() => {
-	if (!_.isEmpty(props.node.outputs)) {
-		return [
-			{
-				label: 'Select an output',
-				items: props.node.outputs
-			}
-		];
-	}
-	return [];
-});
 
 const activeOutput = ref<WorkflowOutput<FunmanOperationState> | null>(null);
 
@@ -422,10 +415,18 @@ const onToggleVariableOfInterest = (event: any[]) => {
 	requestParameters.value.forEach((d) => {
 		d.label = namesOfInterest.includes(d.name) ? 'all' : 'any';
 	});
-	const state = _.cloneDeep(props.node.state);
-	state.requestParameters = _.cloneDeep(requestParameters.value);
+	const state = cloneDeep(props.node.state);
+	state.requestParameters = cloneDeep(requestParameters.value);
 	emit('update-state', state);
 };
+
+const stepList = computed(() => {
+	const { start, end } = knobs.value.currentTimespan;
+	const steps = knobs.value.numberOfSteps;
+
+	const stepSize = (end - start) / steps;
+	return [start, ...Array.from({ length: steps - 1 }, (_, i) => (i + 1) * stepSize), end];
+});
 
 const runMakeQuery = async () => {
 	if (!configuredModel.value) {
@@ -497,7 +498,7 @@ const runMakeQuery = async () => {
 			structure_parameters: [
 				{
 					name: 'schedules',
-					schedules: [{ timepoints: requestStepList.value }]
+					schedules: [{ timepoints: stepList.value }]
 				}
 			],
 			config: {
@@ -510,16 +511,20 @@ const runMakeQuery = async () => {
 		}
 	};
 
-	const response = await makeQueries(request, originalModelId);
+	const response = await makeQueries(
+		request,
+		originalModelId,
+		nodeOutputLabel(props.node, `Validated ${configuredModel.value.header.name} Result`)
+	);
 
 	// Setup the in-progress id
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.inProgressId = response.id;
 	emit('update-state', state);
 };
 
 const addConstraintForm = () => {
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.constraintGroups.push({
 		name: `Constraint ${state.constraintGroups.length + 1}`,
 		isActive: true,
@@ -534,13 +539,13 @@ const addConstraintForm = () => {
 };
 
 const deleteConstraintGroupForm = (index: number) => {
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.constraintGroups.splice(index, 1);
 	emit('update-state', state);
 };
 
 const updateConstraintGroupForm = (index: number, key: string, value: any) => {
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 
 	// Changing constraint resets settings
 	if (key === 'constraint') {
@@ -561,28 +566,12 @@ const updateConstraintGroupForm = (index: number, key: string, value: any) => {
 	emit('update-state', state);
 };
 
-// Used to set requestStepList.
-// Grab startTime, endTime, numberOfSteps and create list.
-function getStepList() {
-	const start = knobs.value.currentTimespan.start;
-	const end = knobs.value.currentTimespan.end;
-	const steps = knobs.value.numberOfSteps;
-
-	const aList = [start];
-	const stepSize = floor((end - start) / steps);
-	for (let i = 1; i < steps; i++) {
-		aList[i] = i * stepSize;
-	}
-	aList.push(end);
-	return aList;
-}
-
 const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
 	const modelConfiguration = await getModelConfigurationById(modelConfigurationId);
 	configuredModel.value = await getAsConfiguredModel(modelConfiguration);
-	originalModelId = await getModelIdFromModelConfigurationId(modelConfigurationId);
+	originalModelId = modelConfiguration.modelId;
 };
 
 const setModelOptions = async () => {
@@ -614,9 +603,9 @@ const setModelOptions = async () => {
 		if (ode.observables) observableIds.value = ode.observables.map((d) => d.id);
 	}
 
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	knobs.value.numberOfSteps = state.numSteps;
-	knobs.value.currentTimespan = _.cloneDeep(state.currentTimespan);
+	knobs.value.currentTimespan = cloneDeep(state.currentTimespan);
 	knobs.value.tolerance = state.tolerance;
 	knobs.value.compartmentalConstraint = state.compartmentalConstraint;
 
@@ -627,7 +616,7 @@ const setModelOptions = async () => {
 		toast.error('', 'Provided model has no parameters');
 	}
 
-	state.requestParameters = _.cloneDeep(requestParameters.value);
+	state.requestParameters = cloneDeep(requestParameters.value);
 	emit('update-state', state);
 };
 
@@ -682,7 +671,7 @@ watch(
 watch(
 	() => knobs.value,
 	() => {
-		const state = _.cloneDeep(props.node.state);
+		const state = cloneDeep(props.node.state);
 		state.tolerance = knobs.value.tolerance;
 		state.currentTimespan.start = knobs.value.currentTimespan.start;
 		state.currentTimespan.end = knobs.value.currentTimespan.end;
@@ -728,8 +717,9 @@ let mmt: MiraModel = emptyMiraModel();
 let funmanResult: any = {};
 
 // Model configuration stuff
-const model = ref<Model | null>(null);
+const outputModel = ref<Model | null>(null);
 const validatedModelConfiguration = ref<ModelConfiguration | null>(null);
+const showSaveModal = ref(false);
 const configuredMmt = ref<MiraModel | null>(null);
 const mmtParams = ref<MiraTemplateParams>({});
 const calibratedConfigObservables = ref<Observable[]>([]);
@@ -757,6 +747,10 @@ const selectedParameterSettings = computed(() =>
 );
 
 let selectedBoxId: number = -1;
+
+function onSaveAsModelConfiguration() {
+	showSaveModal.value = false;
+}
 
 // Once a parameter tick is chosen, its corresponding line on the state chart will be highlighted
 function onParameterChartClick(eventData: any) {
@@ -827,13 +821,13 @@ async function renderCharts() {
 
 	// For displaying model/model configuration
 	// Model will be the same on runId change, no need to fetch it again
-	if (!model.value) {
-		model.value = await getModelByModelConfigurationId(funmanResult.modelConfiguration.id);
-		if (!model.value) {
+	if (!outputModel.value) {
+		outputModel.value = await getModel(funmanResult.modelConfiguration.modelId);
+		if (!outputModel.value) {
 			logger.error('Failed to fetch model');
 			return;
 		}
-		const response = await getMMT(model.value);
+		const response = await getMMT(outputModel.value);
 		if (response) {
 			mmt = response.mmt;
 			mmtParams.value = response.template_params;
@@ -871,7 +865,7 @@ watch(
 			.map(({ name }) => name);
 
 		// Initialize default output settings
-		const state = _.cloneDeep(props.node.state);
+		const state = cloneDeep(props.node.state);
 		state.chartSettings = updateChartSettingsBySelectedVariables([], ChartSettingType.VARIABLE, stateOptions.value);
 		state.chartSettings = updateChartSettingsBySelectedVariables(
 			state.chartSettings,
@@ -915,6 +909,18 @@ watch(
 	position: relative;
 }
 
+code {
+	background-color: var(--gray-50);
+	color: var(--text-color-subdued);
+	border-radius: var(--border-radius);
+	border: 1px solid var(--surface-border);
+	padding: var(--gap-2);
+	overflow-wrap: break-word;
+	font-size: var(--font-caption);
+	max-height: 10rem;
+	overflow: auto;
+}
+
 .timespan {
 	display: flex;
 	align-items: end;
@@ -924,7 +930,7 @@ watch(
 	& > div {
 		display: flex;
 		flex-direction: column;
-		gap: var(--gap-1);
+		gap: var(--gap-2);
 	}
 }
 

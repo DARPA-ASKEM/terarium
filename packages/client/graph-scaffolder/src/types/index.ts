@@ -70,9 +70,7 @@ export interface Options {
 	// Attempt to use the same set of zoom parameters across layout changes
 	useStableZoomPan?: boolean;
 
-	// This is getting around algorithms that do not provide stand-alone routing capabilities, in
-	// which case we can internally route using A-star
-	useAStarRouting?: boolean;
+	edgeReroutingFn?: (nodes: INode<any>[], edges: IEdge<any>[]) => void;
 
 	// Whether to show grid
 	useGrid?: boolean;

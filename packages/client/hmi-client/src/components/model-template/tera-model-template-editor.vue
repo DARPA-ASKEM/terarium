@@ -208,7 +208,7 @@ function collisionFn(p: Position): boolean {
 }
 
 function interpolatePointsForCurve(a: Position, b: Position): Position[] {
-	return getAStarPath(a, b, collisionFn);
+	return getAStarPath(a, b, { collider: collisionFn });
 }
 
 const pathFn = d3

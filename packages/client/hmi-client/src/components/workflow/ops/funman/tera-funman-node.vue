@@ -24,7 +24,6 @@ import { FunmanOperationState, FunmanOperation } from '@/components/workflow/ops
 import Button from 'primevue/button';
 import { Poller, PollerState } from '@/api/api';
 import { pollAction, getRunResult } from '@/services/models/simulation-service';
-import { nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Simulation } from '@/types/Types';
 
@@ -51,7 +50,7 @@ const addOutputPorts = async (runId: string) => {
 	outState.runId = runId;
 
 	emit('append-output', {
-		label: nodeOutputLabel(props.node, `${validatedConfiguration.name} Result`),
+		label: validatedConfiguration.name,
 		type: FunmanOperation.outputs[0].type,
 		value: validatedConfiguration.id,
 		state: outState

@@ -445,8 +445,10 @@ const getForecastChartOptions = (variables: string[], reverseMap: Record<string,
 		yAxisTitle: _.uniq(variables.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
 	};
 	let statLayerVariables = variables.map((d) => `${pyciemssMap[d]}_mean`);
+	let sampleLayerVariables = variables.map((d) => pyciemssMap[d]);
 
 	if (showBaseLine) {
+		sampleLayerVariables = [`${pyciemssMap[variables[0]]}:base`, `${pyciemssMap[variables[0]]}`];
 		statLayerVariables = [`${pyciemssMap[variables[0]]}_mean:base`, `${pyciemssMap[variables[0]]}_mean`];
 		options.translationMap = {
 			...options.translationMap,
@@ -457,7 +459,7 @@ const getForecastChartOptions = (variables: string[], reverseMap: Record<string,
 	if (dateOptions) {
 		options.dateOptions = dateOptions;
 	}
-	return { statLayerVariables, options };
+	return { statLayerVariables, sampleLayerVariables, options };
 };
 
 const preparedCharts = computed(() => {
@@ -467,14 +469,14 @@ const preparedCharts = computed(() => {
 
 	chartSettings.value.forEach((setting) => {
 		const selectedVars = setting.selectedVariables;
-		const { statLayerVariables, options } = getForecastChartOptions(selectedVars, reverseMap);
+		const { statLayerVariables, sampleLayerVariables, options } = getForecastChartOptions(selectedVars, reverseMap);
 		const annotations = getChartAnnotationsByChartId(setting.id);
 
 		const chart = applyForecastChartAnnotations(
 			createForecastChart(
 				{
 					data: result,
-					variables: selectedVars.map((d) => pyciemssMap[d]),
+					variables: sampleLayerVariables,
 					timeField: 'timepoint_id',
 					groupField: 'sample_id'
 				},

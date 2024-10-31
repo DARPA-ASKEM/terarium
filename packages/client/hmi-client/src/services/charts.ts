@@ -11,6 +11,14 @@ const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
 export const CATEGORICAL_SCHEME = ['#1B8073', '#6495E8', '#8F69B9', '#D67DBF', '#E18547', '#D2C446', '#84594D'];
 
+export enum AUTOSIZE {
+	FIT = 'fit',
+	FIT_X = 'fit-x',
+	FIT_Y = 'fit-y',
+	PAD = 'pad',
+	NONE = 'none'
+}
+
 interface BaseChartOptions {
 	title?: string;
 	width: number;
@@ -18,6 +26,7 @@ interface BaseChartOptions {
 	xAxisTitle: string;
 	yAxisTitle: string;
 	legend?: boolean;
+	autosize?: AUTOSIZE;
 	dateOptions?: DateOptions;
 }
 
@@ -28,6 +37,7 @@ export interface DateOptions {
 export interface ForecastChartOptions extends BaseChartOptions {
 	translationMap?: Record<string, string>;
 	colorscheme?: string[];
+	fitYDomain?: boolean;
 }
 
 export interface ForecastChartLayer {
@@ -53,6 +63,13 @@ export interface InterventionMarkerOptions {
 	hideLabels?: boolean;
 	labelXOffset?: number;
 	dateOptions?: DateOptions;
+}
+
+export interface ChartEncoding {
+	field: string;
+	type: string;
+	axis: any;
+	scale?: any;
 }
 
 function formatDateLabelFn(date: Date, datum: string, type: CalendarDateType): string {
@@ -281,7 +298,7 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 		title: titleObj as any,
 		width: options.width,
 		height: options.height,
-		autosize: { type: 'fit' },
+		autosize: { type: AUTOSIZE.FIT },
 		data: {
 			values: []
 		},
@@ -424,7 +441,7 @@ export function createForecastChart(
 		width: options.width,
 		height: options.height,
 		autosize: {
-			type: 'fit-x'
+			type: options.autosize || AUTOSIZE.FIT_X
 		},
 		config: {
 			font: globalFont
@@ -460,7 +477,7 @@ export function createForecastChart(
 		if (options.dateOptions) {
 			dateExpression = formatDateLabelFn(options.dateOptions.startDate, 'datum.value', options.dateOptions.dateFormat);
 		}
-		const encodingX = {
+		const encodingX: ChartEncoding = {
 			field: layer.timeField,
 			type: 'quantitative',
 			axis: {
@@ -468,9 +485,28 @@ export function createForecastChart(
 				labelExpr: dateExpression
 			}
 		};
+		const encodingY: ChartEncoding = {
+			field: 'valueField',
+			type: 'quantitative',
+			axis: yaxis
+		};
+
+		if (options.fitYDomain && layer.data[0]) {
+			// gets the other fieldname
+			const yField = Object.keys(layer.data[0]).find((elem) => elem !== layer.timeField);
+			if (yField && Array.isArray(layer.data)) {
+				const yValues = [...layer.data].map((datum) => datum[yField]);
+				const domainMin = Math.min(...yValues);
+				const domainMax = Math.max(...yValues);
+				encodingY.scale = {
+					domain: [domainMin, domainMax]
+				};
+			}
+		}
+
 		const encoding = {
 			x: encodingX,
-			y: { field: 'valueField', type: 'quantitative', axis: yaxis },
+			y: encodingY,
 			color: {
 				field: 'variableField',
 				type: 'nominal',
@@ -671,7 +707,7 @@ export function createSuccessCriteriaChart(
 		width: options.width,
 		height: options.height,
 		autosize: {
-			type: 'fit-x'
+			type: AUTOSIZE.FIT_X
 		},
 		data: {
 			values: data
@@ -822,7 +858,7 @@ export function createInterventionChart(
 		title: titleObj,
 		height: chartOptions.height,
 		autosize: {
-			type: 'fit-x'
+			type: AUTOSIZE.FIT_X
 		},
 		layer: []
 	};
@@ -875,22 +911,45 @@ export function createFunmanStateChart(
 ) {
 	if (isEmpty(trajectories)) return null;
 
+	const threshold = 1e25;
 	const globalFont = 'Figtree';
 
-	// Find min/max values to set an appropriate viewing range for y-axis
-	const minY = Math.floor(Math.min(...trajectories.map((d) => d.values[stateId])));
-	const maxY = Math.ceil(Math.max(...trajectories.map((d) => d.values[stateId])));
-
-	// Show checks for the selected state
 	const stateIdConstraints = constraints.filter((c) => c.variables.includes(stateId));
-	const modelChecks = stateIdConstraints.map((c) => ({
-		legendItem: FunmanChartLegend.ModelChecks,
-		startX: c.timepoints.lb,
-		endX: c.timepoints.ub,
-		// If the interval bounds are within the min/max values of the line plot use them, otherwise use the min/max values
-		startY: focusOnModelChecks ? c.additive_bounds.lb : Math.max(c.additive_bounds.lb ?? minY, minY),
-		endY: focusOnModelChecks ? c.additive_bounds.ub : Math.min(c.additive_bounds.ub ?? maxY, maxY)
-	}));
+	// Find min/max values to set an appropriate viewing range for y-axis
+	// Limit by threshold as very large numbers cause the chart to have NaN in the y domain
+	const lowerBounds = stateIdConstraints.map((c) => {
+		let lb = c.additive_bounds.lb;
+		const ub = c.additive_bounds.ub;
+		if (lb && ub && lb < -threshold) lb = -Math.abs(ub) * 0.5 + ub;
+		return lb;
+	});
+	const upperBounds = stateIdConstraints.map((c) => {
+		const lb = c.additive_bounds.lb;
+		let ub = c.additive_bounds.ub;
+		if (ub && lb && ub > threshold) ub = Math.abs(lb) * 0.5 + lb;
+		return ub;
+	});
+	const yPoints = trajectories.map((t) => t.values[stateId]);
+
+	const potentialMinYs = focusOnModelChecks && !isEmpty(lowerBounds) ? [...yPoints, ...lowerBounds] : yPoints;
+	const potentialMaxYs = focusOnModelChecks && !isEmpty(upperBounds) ? [...yPoints, ...upperBounds] : yPoints;
+	const minY = Math.floor(Math.min(...potentialMinYs));
+	const maxY = Math.ceil(Math.max(...potentialMaxYs));
+
+	const modelChecks = stateIdConstraints.map((c) => {
+		let startY = c.additive_bounds.lb ?? minY;
+		let endY = c.additive_bounds.ub ?? maxY;
+		// Fallback to min/max if the bounds exceed the threshold
+		if (startY < -threshold) startY = minY;
+		if (endY > threshold) endY = maxY;
+		return {
+			legendItem: FunmanChartLegend.ModelChecks,
+			startX: c.timepoints.lb,
+			endX: c.timepoints.ub,
+			startY,
+			endY
+		};
+	});
 
 	return {
 		$schema: VEGALITE_SCHEMA,
@@ -915,7 +974,9 @@ export function createFunmanStateChart(
 			{
 				mark: {
 					type: 'rect',
-					clip: true
+					clip: true,
+					stroke: '#A4CEFF',
+					strokeWidth: 1
 				},
 				data: { values: modelChecks },
 				encoding: {
@@ -948,7 +1009,7 @@ export function createFunmanStateChart(
 			x: { title: 'Timepoints' },
 			y: {
 				title: `${stateId} (persons)`,
-				scale: focusOnModelChecks ? {} : { domain: [minY, maxY] }
+				scale: { domain: [minY, maxY] }
 			},
 			color: {
 				field: 'legendItem',

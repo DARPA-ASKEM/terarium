@@ -77,6 +77,7 @@ public class FunmanController {
 	public ResponseEntity<Simulation> createValidationRequest(
 		@RequestBody final JsonNode input,
 		@RequestParam(name = "model-id", required = true) final UUID modelId,
+		@RequestParam(name = "new-model-config-name", required = true) final String newModelConfigName,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
@@ -115,6 +116,7 @@ public class FunmanController {
 		final ValidateModelConfigHandler.Properties props = new ValidateModelConfigHandler.Properties();
 		props.setProjectId(projectId);
 		props.setModelId(modelId);
+		props.setNewModelConfigName(newModelConfigName);
 		props.setSimulationId(newSimulation.getId());
 		taskRequest.setAdditionalProperties(props);
 
