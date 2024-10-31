@@ -510,7 +510,9 @@ const runMakeQuery = async () => {
 				normalization_constant:
 					knobs.value.compartmentalConstraint.isActive && configuredInputModel.semantics ? parseFloat(mass.value) : 1,
 				normalize: false,
-				tolerance: knobs.value.tolerance
+				tolerance: knobs.value.tolerance,
+				// FIXME: Set to max logging for debugging and checking liveliness , remove when stable. Oct 2024
+				verbosity: 0
 			}
 		}
 	};
