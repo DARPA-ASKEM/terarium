@@ -62,8 +62,6 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	interventionPolicyGroups: InterventionPolicyGroupForm[];
 	// Constraints:
 	constraintGroups: Criterion[];
-	selectedInterventionVariables: string[];
-	selectedSimulationVariables: string[];
 	chartSettings: ChartSetting[] | null; // null indicates that the chart settings have not been set yet
 	inProgressOptimizeId: string;
 	inProgressPreForecastId: string;
@@ -144,8 +142,6 @@ export const OptimizeCiemssOperation: Operation = {
 			interventionPolicyId: '',
 			interventionPolicyGroups: [],
 			constraintGroups: [defaultCriterion],
-			selectedInterventionVariables: [],
-			selectedSimulationVariables: [],
 			chartSettings: null,
 			inProgressOptimizeId: '',
 			inProgressPostForecastId: '',
