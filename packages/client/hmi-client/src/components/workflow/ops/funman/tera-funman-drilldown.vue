@@ -824,8 +824,6 @@ function removeChartSetting(chartId: string) {
 
 async function renderCharts() {
 	processedFunmanResult.value = processFunman(funmanResult, onlyShowLatestResults.value);
-	console.log(processedFunmanResult.value);
-
 	updateStateCharts();
 	updateParameterCharts();
 }
