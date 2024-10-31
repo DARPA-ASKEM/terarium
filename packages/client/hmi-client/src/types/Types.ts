@@ -441,6 +441,7 @@ export interface FunmanConfig {
     use_compartmental_constraints?: boolean;
     normalize?: boolean;
     normalization_constant?: number;
+    verbosity?: number;
 }
 
 export interface FunmanInterval {
@@ -800,8 +801,8 @@ export interface ModelUnit {
 }
 
 export interface GroundedSemantic {
-    id: string;
     name?: string;
+    id: string;
     grounding?: ModelGrounding;
 }
 
