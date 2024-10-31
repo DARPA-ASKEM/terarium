@@ -767,14 +767,11 @@ function onParameterChartClick(eventData: any) {
 
 function updateStateCharts() {
 	if (isEmpty(processedFunmanResult.value.trajectories)) return;
+	const trajectories = onlyShowLatestResults.value
+		? processedFunmanResult.value.trajectories.filter(({ isAtLatestTimestep }) => isAtLatestTimestep)
+		: processedFunmanResult.value.trajectories;
 	stateCharts.value = funmanResult.model.petrinet.model.states.map(({ id }) =>
-		createFunmanStateChart(
-			processedFunmanResult.value.trajectories,
-			constraintsResponse,
-			id,
-			focusOnModelChecks.value,
-			selectedBoxId
-		)
+		createFunmanStateChart(trajectories, constraintsResponse, id, focusOnModelChecks.value, selectedBoxId)
 	);
 }
 
@@ -785,7 +782,10 @@ function updateParameterCharts() {
 		// TODO: This first conditional may change as funman will return constants soon
 		(d: any) => d.interval.lb !== d.interval.ub && selectedParameterIds.includes(d.name)
 	);
-	parameterCharts.value = createFunmanParameterCharts(distributionParameters, processedFunmanResult.value.boxes);
+	const boxes = onlyShowLatestResults.value
+		? processedFunmanResult.value.boxes.filter(({ isAtLatestTimestep }) => isAtLatestTimestep)
+		: processedFunmanResult.value.boxes;
+	parameterCharts.value = createFunmanParameterCharts(distributionParameters, boxes);
 }
 
 function updateSelectedStates(event) {
@@ -823,7 +823,6 @@ function removeChartSetting(chartId: string) {
 }
 
 async function renderCharts() {
-	processedFunmanResult.value = processFunman(funmanResult, onlyShowLatestResults.value);
 	updateStateCharts();
 	updateParameterCharts();
 }
@@ -869,6 +868,7 @@ watch(
 		);
 		emit('update-state', state);
 
+		processedFunmanResult.value = processFunman(funmanResult);
 		renderCharts();
 	},
 	{ immediate: true }
