@@ -167,7 +167,7 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	public List<State> getStates() {
 		if (isRegnet()) return null;
 		if (!getModel().containsKey("states")) return new ArrayList<>();
-		ObjectMapper objectMapper = new ObjectMapper();
+		final ObjectMapper objectMapper = new ObjectMapper();
 		return objectMapper.convertValue(getModel().get("states"), new TypeReference<>() {});
 	}
 
@@ -175,7 +175,7 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	@TSIgnore
 	public void setStates(final List<State> states) {
 		if (isRegnet()) return;
-		ObjectMapper objectMapper = new ObjectMapper();
+		final ObjectMapper objectMapper = new ObjectMapper();
 		getModel().put("states", objectMapper.convertValue(states, JsonNode.class));
 	}
 
@@ -184,7 +184,7 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	public List<RegNetVertex> getVerticies() {
 		if (!isRegnet()) return null;
 		if (!getModel().containsKey("vertices")) return new ArrayList<>();
-		ObjectMapper objectMapper = new ObjectMapper();
+		final ObjectMapper objectMapper = new ObjectMapper();
 		return objectMapper.convertValue(getModel().get("vertices"), new TypeReference<>() {});
 	}
 
@@ -192,7 +192,7 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	@TSIgnore
 	public void setVerticies(final List<RegNetVertex> verticies) {
 		if (!isRegnet()) return;
-		ObjectMapper objectMapper = new ObjectMapper();
+		final ObjectMapper objectMapper = new ObjectMapper();
 		getModel().put("vertices", objectMapper.convertValue(verticies, JsonNode.class));
 	}
 
@@ -291,5 +291,17 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	@TSIgnore
 	public boolean isRegnet() {
 		return this.getHeader().getSchemaName().equalsIgnoreCase("regnet");
+	}
+
+	public String getEmbeddingSourceText() {
+		try {
+			final ObjectMapper objectMapper = new ObjectMapper();
+			if (getMetadata() != null && getMetadata().getGollmCard() != null) {
+				return objectMapper.writeValueAsString(getMetadata().getGollmCard());
+			}
+			return objectMapper.writeValueAsString(this);
+		} catch (final Exception e) {
+			throw new RuntimeException("Failed to serialize model embedding text into JSON", e);
+		}
 	}
 }

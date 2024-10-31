@@ -179,16 +179,11 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		final Model created = super.createAsset(asset, projectId, hasWritePermission);
 
 		if (!isRunningTestProfile() && created.getPublicAsset() && !created.getTemporary()) {
-			String text;
-			if (created.getMetadata() != null && created.getMetadata().getGollmCard() != null) {
-				text = objectMapper.writeValueAsString(created.getMetadata().getGollmCard());
-			} else {
-				text = objectMapper.writeValueAsString(created);
-			}
-
 			new Thread(() -> {
 				try {
-					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
+					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(
+						created.getEmbeddingSourceText()
+					);
 
 					// Execute the update request
 					uploadEmbeddings(created.getId(), embeddings, hasWritePermission);
@@ -233,16 +228,11 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		final Model updated = updatedOptional.get();
 
 		if (!isRunningTestProfile() && updated.getPublicAsset() && !updated.getTemporary()) {
-			String text;
-			if (updated.getMetadata() != null && updated.getMetadata().getGollmCard() != null) {
-				text = objectMapper.writeValueAsString(updated.getMetadata().getGollmCard());
-			} else {
-				text = objectMapper.writeValueAsString(updated);
-			}
-
 			new Thread(() -> {
 				try {
-					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
+					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(
+						updated.getEmbeddingSourceText()
+					);
 
 					// Execute the update request
 					uploadEmbeddings(updated.getId(), embeddings, hasWritePermission);
