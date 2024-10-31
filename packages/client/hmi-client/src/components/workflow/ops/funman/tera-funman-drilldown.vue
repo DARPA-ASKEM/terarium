@@ -828,7 +828,7 @@ async function renderCharts() {
 }
 
 watch(
-	() => props.node.state.runId,
+	() => [props.node.state.runId, mmt],
 	async () => {
 		if (!props.node.state.runId) return;
 		const rawFunmanResult = await getRunResult(props.node.state.runId, 'validation.json');
