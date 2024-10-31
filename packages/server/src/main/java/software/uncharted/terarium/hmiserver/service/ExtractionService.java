@@ -377,6 +377,13 @@ public class ExtractionService {
 		final UUID projectId,
 		final Schema.Permission hasWritePermission
 	) {
+		final DocumentAsset document = documentService.getAsset(documentId, hasWritePermission).get();
+		if (document.getFileNames().isEmpty()) {
+			throw new RuntimeException("No files found on document");
+		}
+
+		final String userId = currentUserService.get().getId();
+
 		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<>(
 			clientEventService,
 			notificationService,
@@ -386,90 +393,95 @@ public class ExtractionService {
 			HALFTIME_SECONDS
 		);
 
-		final String userId = currentUserService.get().getId();
-
-		final DocumentAsset document = documentService.getAsset(documentId, hasWritePermission).get();
-		notificationInterface.sendMessage("Document found, fetching file...");
-
-		if (document.getFileNames().isEmpty()) {
-			throw new RuntimeException("No files found on document");
-		}
-
 		return executor.submit(() -> {
-			final String filename = document.getFileNames().get(0);
+			try {
+				notificationInterface.sendMessage("Beginning document extraction...");
+				final String filename = document.getFileNames().get(0);
 
-			final byte[] documentContents = documentService.fetchFileAsBytes(documentId, filename).get();
+				final byte[] documentContents = documentService.fetchFileAsBytes(documentId, filename).get();
 
-			final String documentSHA = sha256(documentContents);
+				final String documentSHA = sha256(documentContents);
 
-			log.info("Document SHA: {}, checking cache", documentSHA);
+				log.info("Document SHA: {}, checking cache", documentSHA);
 
-			ExtractPDFResponse extractionResponse;
-			if (responseCache.containsKey(documentSHA)) {
-				log.info("Returning cached response for document {} for SHA: {}", documentId, documentSHA);
+				ExtractPDFResponse extractionResponse;
+				if (responseCache.containsKey(documentSHA)) {
+					log.info("Returning cached response for document {} for SHA: {}", documentId, documentSHA);
 
-				extractionResponse = responseCache.get(documentSHA);
+					extractionResponse = responseCache.get(documentSHA);
 
-				notificationInterface.sendMessage("Cached response found for document extraction");
-			} else {
-				log.info("No cached response found for text from document {} for SHA: {}", documentId, documentSHA);
+					notificationInterface.sendMessage("Cached response found for document extraction");
+				} else {
+					log.info("No cached response found for text from document {} for SHA: {}", documentId, documentSHA);
 
-				extractionResponse = new ExtractPDFResponse();
-			}
+					extractionResponse = new ExtractPDFResponse();
+				}
 
-			if (!extractionResponse.completed || !extractionResponse.failures.isEmpty()) {
-				if (!extractionResponse.completed) {
-					notificationInterface.sendMessage("No extraction found in cache, dispatching extraction request...");
-				} else if (extractionResponse.failures.isEmpty()) {
-					notificationInterface.sendMessage(
-						"Cached response found for document extraction, but with failures, re-running failed extractions"
+				if (!extractionResponse.completed || !extractionResponse.failures.isEmpty()) {
+					if (!extractionResponse.completed) {
+						notificationInterface.sendMessage("No extraction found in cache, dispatching extraction request...");
+					} else if (extractionResponse.failures.isEmpty()) {
+						notificationInterface.sendMessage(
+							"Cached response found for document extraction, but with failures, re-running failed extractions"
+						);
+					}
+
+					extractionResponse = runExtractPDF(
+						extractionResponse,
+						filename,
+						documentContents,
+						userId,
+						notificationInterface
 					);
+
+					if (extractionResponse == null) {
+						throw new RuntimeException("Extraction failed");
+					}
+
+					// cache even if there are partial failures
+					responseCache.put(
+						documentSHA,
+						extractionResponse,
+						CACHE_TTL_SECONDS,
+						TimeUnit.SECONDS,
+						CACHE_MAX_IDLE_SECONDS,
+						TimeUnit.SECONDS
+					);
+				} else {
+					notificationInterface.sendMessage("Cached response found for successful document extraction");
 				}
 
-				extractionResponse = runExtractPDF(
+				notificationInterface.sendMessage("Applying extraction results to document");
+				log.info("Applying extraction results to document {}", documentId);
+				final DocumentAsset doc = applyExtractPDFResponse(
+					documentId,
+					projectId,
 					extractionResponse,
-					filename,
-					documentContents,
-					userId,
-					notificationInterface
+					hasWritePermission
 				);
 
-				if (extractionResponse == null) {
-					throw new RuntimeException("Extraction failed");
+				notificationInterface.sendMessage("Extractions applied to document. Finalizing response.");
+
+				if (!extractionResponse.failures.isEmpty()) {
+					// create a comma separated list of failures in human readable form
+					final String failures = String.join(
+						", ",
+						extractionResponse.failures.stream().map(FailureType::getHumanReadable).toArray(String[]::new)
+					);
+					notificationInterface.sendFinalMessage(
+						"Extraction completed with failures (" + failures + ")",
+						ProgressState.ERROR
+					);
+				} else {
+					notificationInterface.sendFinalMessage("Extraction complete");
 				}
 
-				// cache even if there are partial failures
-				responseCache.put(
-					documentSHA,
-					extractionResponse,
-					CACHE_TTL_SECONDS,
-					TimeUnit.SECONDS,
-					CACHE_MAX_IDLE_SECONDS,
-					TimeUnit.SECONDS
-				);
-			} else {
-				notificationInterface.sendMessage("Cached response found for successful document extraction");
+				return doc;
+			} catch (final Exception e) {
+				log.error(e.getMessage(), e);
+				notificationInterface.sendFinalMessage("Extraction failed", ProgressState.ERROR);
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
 			}
-
-			notificationInterface.sendMessage("Applying extraction results to document");
-			log.info("Applying extraction results to document {}", documentId);
-			final DocumentAsset doc = applyExtractPDFResponse(documentId, projectId, extractionResponse, hasWritePermission);
-
-			if (!extractionResponse.failures.isEmpty()) {
-				// create a comma separated list of failures in human readable form
-				String failures = String.join(
-					", ",
-					extractionResponse.failures.stream().map(FailureType::getHumanReadable).toArray(String[]::new)
-				);
-				notificationInterface.sendFinalMessage(
-					"Extraction completed with failures (" + failures + ")",
-					ProgressState.ERROR
-				);
-			} else {
-				notificationInterface.sendFinalMessage("Extraction complete");
-			}
-
-			return doc;
 		});
 	}
 
