@@ -167,32 +167,28 @@
 						</AccordionTab>
 						<AccordionTab>
 							<template #header> State variables<i class="pi pi-info-circle" /></template>
-							<template v-if="!isEmpty(selectedStateCharts)">
-								<template v-if="!isEmpty(stateCharts[0])">
-									<vega-chart
-										v-for="(stateChart, index) in selectedStateCharts"
-										:key="index"
-										:visualization-spec="stateChart"
-										:are-embed-actions-visible="false"
-										expandable
-									/>
-								</template>
-
-								<span class="ml-4" v-else> No boxes were generated. </span>
+							<span class="ml-4" v-if="isEmpty(processedFunmanResult.boxes)"> No boxes were generated. </span>
+							<template v-else-if="!isEmpty(selectedStateCharts)">
+								<vega-chart
+									v-for="(stateChart, index) in selectedStateCharts"
+									:key="index"
+									:visualization-spec="stateChart"
+									:are-embed-actions-visible="false"
+									expandable
+								/>
 							</template>
 							<span class="ml-4" v-else> To view state charts select some in the Output settings. </span>
 						</AccordionTab>
 						<AccordionTab>
 							<template #header>Parameters<i class="pi pi-info-circle" /></template>
-							<template v-if="!isEmpty(selectedParameterIds)">
-								<vega-chart
-									v-if="!isEmpty(parameterCharts)"
-									:visualization-spec="parameterCharts"
-									:are-embed-actions-visible="false"
-									expandable
-									@chart-click="onParameterChartClick"
-								/><span class="ml-4" v-else> No boxes were generated. </span>
-							</template>
+							<span class="ml-4" v-if="isEmpty(processedFunmanResult.boxes)"> No boxes were generated. </span>
+							<vega-chart
+								v-else-if="!isEmpty(parameterCharts)"
+								:visualization-spec="parameterCharts"
+								:are-embed-actions-visible="false"
+								expandable
+								@chart-click="onParameterChartClick"
+							/>
 							<span class="ml-4" v-else> To view parameter charts select some in the Output settings. </span>
 						</AccordionTab>
 						<AccordionTab header="Diagram">
@@ -719,13 +715,13 @@ const notebookText = ref('');
 /*
 // Output panel/settings //
 */
-let processedFunmanResult: ProcessedFunmanResult = { boxes: [], trajectories: [] };
 let constraintsResponse: FunmanConstraintsResponse[] = [];
 let mmt: MiraModel = emptyMiraModel();
 let funmanResult: any = {};
+const processedFunmanResult = ref<ProcessedFunmanResult>({ boxes: [], trajectories: [] });
 
 // Model configuration stuff
-let validatedModelConfiguration: ModelConfiguration | null = null;
+const validatedModelConfiguration = ref<ModelConfiguration | null>(null);
 const showSaveModal = ref(false);
 const configuredMmt = ref<MiraModel | null>(null);
 const mmtParams = ref<MiraTemplateParams>({});
@@ -737,9 +733,6 @@ const selectedStateCharts = computed(() => {
 	return stateCharts.value.filter((chart) => selectedStateIds.includes(chart.id));
 });
 const parameterCharts = ref<any>({});
-const selectedParameterIds = computed(() =>
-	selectedParameterSettings.value.map((setting) => setting.selectedVariables[0])
-);
 
 const stateOptions = ref<string[]>([]);
 const parameterOptions = ref<string[]>([]);
@@ -760,7 +753,7 @@ let selectedBoxId: number = -1;
 
 async function onSaveForReuse() {
 	showSaveModal.value = false;
-	validatedModelConfiguration = await getModelConfigurationById(funmanResult.modelConfigurationId); // Refresh to see updated name
+	validatedModelConfiguration.value = await getModelConfigurationById(funmanResult.modelConfigurationId); // Refresh to see updated name
 }
 
 // Once a parameter tick is chosen, its corresponding line on the state chart will be highlighted
@@ -771,10 +764,10 @@ function onParameterChartClick(eventData: any) {
 }
 
 function updateStateCharts() {
-	if (isEmpty(processedFunmanResult.trajectories)) return;
+	if (isEmpty(processedFunmanResult.value.trajectories)) return;
 	stateCharts.value = funmanResult.model.petrinet.model.states.map(({ id }) =>
 		createFunmanStateChart(
-			processedFunmanResult.trajectories,
+			processedFunmanResult.value.trajectories,
 			constraintsResponse,
 			id,
 			focusOnModelChecks.value,
@@ -784,12 +777,13 @@ function updateStateCharts() {
 }
 
 function updateParameterCharts() {
-	if (isEmpty(processedFunmanResult.boxes)) return;
+	if (isEmpty(processedFunmanResult.value.boxes)) return;
+	const selectedParameterIds = selectedParameterSettings.value.map((setting) => setting.selectedVariables[0]);
 	const distributionParameters = funmanResult.request.parameters.filter(
 		// TODO: This first conditional may change as funman will return constants soon
-		(d: any) => d.interval.lb !== d.interval.ub && selectedParameterIds.value.includes(d.name)
+		(d: any) => d.interval.lb !== d.interval.ub && selectedParameterIds.includes(d.name)
 	);
-	parameterCharts.value = createFunmanParameterCharts(distributionParameters, processedFunmanResult.boxes);
+	parameterCharts.value = createFunmanParameterCharts(distributionParameters, processedFunmanResult.value.boxes);
 }
 
 function updateSelectedStates(event) {
@@ -827,8 +821,8 @@ function removeChartSetting(chartId: string) {
 }
 
 async function renderCharts() {
-	processedFunmanResult = processFunman(funmanResult, onlyShowLatestResults.value);
-	console.log(processedFunmanResult);
+	processedFunmanResult.value = processFunman(funmanResult, onlyShowLatestResults.value);
+	console.log(processedFunmanResult.value);
 
 	updateStateCharts();
 	updateParameterCharts();
@@ -847,10 +841,10 @@ watch(
 		funmanResult = JSON.parse(rawFunmanResult);
 		constraintsResponse = funmanResult.request.constraints;
 
-		validatedModelConfiguration = await getModelConfigurationById(funmanResult.modelConfigurationId);
-		if (validatedModelConfiguration) {
-			configuredMmt.value = makeConfiguredMMT(mmt, validatedModelConfiguration);
-			calibratedConfigObservables.value = validatedModelConfiguration.observableSemanticList.map(
+		validatedModelConfiguration.value = await getModelConfigurationById(funmanResult.modelConfigurationId);
+		if (validatedModelConfiguration.value) {
+			configuredMmt.value = makeConfiguredMMT(mmt, validatedModelConfiguration.value);
+			calibratedConfigObservables.value = validatedModelConfiguration.value.observableSemanticList.map(
 				({ referenceId, states, expression }) => ({
 					id: referenceId,
 					name: referenceId,
