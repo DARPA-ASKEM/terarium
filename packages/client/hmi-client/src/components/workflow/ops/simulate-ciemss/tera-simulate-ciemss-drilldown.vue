@@ -512,14 +512,11 @@ useClientEvent([ClientEventType.ChartAnnotationCreate, ClientEventType.ChartAnno
 const generateAnnotation = async (setting: ChartSetting, query: string) => {
 	// Note: Currently llm generated chart annotations are supported for the forecast chart only
 	if (!preparedChartInputs.value) return null;
-
-	const selectedVars = setting.selectedVariables;
-	const { statLayerVariables, options } = getForecastChartOptions(selectedVars, preparedChartInputs.value.reverseMap);
-	const annotationLayerSpec = await generateForecastChartAnnotation(query, 'timepoint_id', statLayerVariables, {
-		translationMap: options.translationMap,
-		xAxisTitle: options.xAxisTitle,
-		yAxisTitle: options.yAxisTitle
-	});
+	const { statLayerVariables, options } = getForecastChartOptions(
+		setting.selectedVariables,
+		preparedChartInputs.value.reverseMap
+	);
+	const annotationLayerSpec = await generateForecastChartAnnotation(query, 'timepoint_id', statLayerVariables, options);
 	const saved = await saveAnnotation(annotationLayerSpec, props.node.id, setting.id);
 	return saved;
 };

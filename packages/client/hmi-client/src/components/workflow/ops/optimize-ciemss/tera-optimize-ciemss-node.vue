@@ -50,13 +50,14 @@ import {
 } from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import { createForecastChart } from '@/services/charts';
+import { applyForecastChartAnnotations, createForecastChart } from '@/services/charts';
 import { mergeResults, renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
 import { getModelByModelConfigurationId, getUnitsFromModelParts, getVegaDateOptions } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { createDatasetFromSimulationResult } from '@/services/dataset';
 import { useProjects } from '@/composables/project';
 import { ChartSettingType } from '@/types/common';
+import { useChartAnnotations } from '@/composables/useChartAnnotations';
 import {
 	OptimizeCiemssOperationState,
 	OptimizeCiemssOperation,
@@ -82,6 +83,8 @@ const chartSettings = computed(() => props.node.state.chartSettings ?? []);
 const selectedVariableSettings = computed(() =>
 	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE)
 );
+
+const { getChartAnnotationsByChartId } = useChartAnnotations(props.node.id);
 
 let pyciemssMap: Record<string, string> = {};
 
@@ -167,33 +170,37 @@ const preparedCharts = computed(() => {
 
 	return selectedVariableSettings.value.map((setting) => {
 		const variable = setting.selectedVariables[0];
-		return createForecastChart(
-			{
-				data: result,
-				variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
-				timeField: 'timepoint_id',
-				groupField: 'sample_id'
-			},
-			{
-				data: resultSummary,
-				variables: [`${pyciemssMap[variable]}_mean:pre`, `${pyciemssMap[variable]}_mean`],
-				timeField: 'timepoint_id'
-			},
-			null,
-			{
-				width: 180,
-				height: 120,
-				legend: true,
-				xAxisTitle: modelVarUnits.value._time || 'Time',
-				yAxisTitle: modelVarUnits.value[variable] || '',
-				translationMap: {
-					[`${pyciemssMap[variable]}_mean:pre`]: `${variable} before optimization`,
-					[`${pyciemssMap[variable]}_mean`]: `${variable} after optimization`
+		const annotations = getChartAnnotationsByChartId(setting.id);
+		return applyForecastChartAnnotations(
+			createForecastChart(
+				{
+					data: result,
+					variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
+					timeField: 'timepoint_id',
+					groupField: 'sample_id'
 				},
-				title: '',
-				colorscheme: ['#AAB3C6', '#1B8073'],
-				dateOptions
-			}
+				{
+					data: resultSummary,
+					variables: [`${pyciemssMap[variable]}_mean:pre`, `${pyciemssMap[variable]}_mean`],
+					timeField: 'timepoint_id'
+				},
+				null,
+				{
+					width: 180,
+					height: 120,
+					legend: true,
+					xAxisTitle: modelVarUnits.value._time || 'Time',
+					yAxisTitle: modelVarUnits.value[variable] || '',
+					translationMap: {
+						[`${pyciemssMap[variable]}_mean:pre`]: `${variable} before optimization`,
+						[`${pyciemssMap[variable]}_mean`]: `${variable} after optimization`
+					},
+					title: '',
+					colorscheme: ['#AAB3C6', '#1B8073'],
+					dateOptions
+				}
+			),
+			annotations
 		);
 	});
 });
