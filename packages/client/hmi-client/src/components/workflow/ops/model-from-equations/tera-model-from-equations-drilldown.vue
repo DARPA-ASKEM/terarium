@@ -129,7 +129,12 @@
 					</main>
 				</template>
 			</tera-slider-panel>
-			<tera-slider-panel v-model:is-open="isOutputOpen" header="Output" content-width="100%">
+			<tera-slider-panel
+				:direction="outputArrowDirection"
+				v-model:is-open="isOutputOpen"
+				header="Output"
+				content-width="100%"
+			>
 				<template #content>
 					<tera-drilldown-preview :is-loading="isModelLoading">
 						<tera-model
@@ -229,6 +234,8 @@ const multipleEquationsDisabled = ref(false);
 const isDocViewerOpen = ref(true);
 const isInputOpen = ref(true);
 const isOutputOpen = ref(true);
+
+const outputArrowDirection = computed(() => (!isDocViewerOpen.value && !isInputOpen.value ? 'left' : 'right'));
 
 const equationTextarea = ref();
 const documentEquations = ref<AssetBlock<EquationBlock>[]>();
