@@ -25,9 +25,10 @@ For example, one might have an `SEIRD` mode-configuration, where the infection r
 
 ### 3. Setup and run
 1. Open the _Validate configuration_ operator.
-2. Under settings in the _Parameters of interest_ dropdown select `beta` and `gamma` (this determines for which inputs the operator should run the validation)
-3. In the Settings section, use the _Tolerance_ input and slider \
-    - set the value to `0.05` (this determines how granular the operator segment the input space of the model for validation)
+2. Under settings in the _Parameters of interest_ dropdown, select `beta` and `gamma` (this determines for which inputs the operator should run the validation)
+3. In the Settings section,  \
+    - use the _Tolerance_ input field or the slider to set the value to `0.05` (this determines how granular the operator segment the input space of the model for validation, < 0.5 means high granularity, > 0.5 means low granularity)
+    - set the _End time_ to `35` and _Number of timesteps_ to `35` such that there is a timepoint for every integer between 0 and 35 inclusively.
 4. Ensure that the _Compartmental constraint_ is present (it requires the operator to check that the sum of the state variables at all times is equal to their sum at time = 0 and that each state variable is positive): `S >= 0, I >= 0, R >= 0, S + I + R = 2001.0`
 5. Choose one of the following steps:
     - a. Add a constraint that ensures that state variables S and R should be greater than or equal to `180` persons from `30` to `34` days.
