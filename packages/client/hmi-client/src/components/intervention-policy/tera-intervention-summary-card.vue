@@ -25,21 +25,21 @@
 </template>
 
 <script setup lang="ts">
-import { Intervention, DynamicIntervention } from '@/types/Types';
+import { Intervention, DynamicIntervention, InterventionSemanticType } from '@/types/Types';
 import { CalendarSettings, getTimePointString } from '@/utils/date';
 import { isEmpty } from 'lodash';
 
 const props = defineProps<{
 	intervention: Intervention;
-	modelUnits?: any;
+	modelUnits?: string;
 	startDate?: Date;
 	calendarSettings?: CalendarSettings;
 }>();
 
 function getUnit(dynamicIntervention: DynamicIntervention) {
 	let modelUnit = '';
-	if (dynamicIntervention.type === 'state') {
-		modelUnit = props.modelUnits?.[dynamicIntervention.parameter].units.expression ?? '';
+	if (dynamicIntervention.type === InterventionSemanticType.State) {
+		modelUnit = props.modelUnits?.[dynamicIntervention.parameter]?.units?.expression ?? '';
 	}
 	return modelUnit;
 }
