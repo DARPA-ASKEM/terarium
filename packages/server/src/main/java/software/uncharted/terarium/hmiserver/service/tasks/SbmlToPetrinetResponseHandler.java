@@ -38,8 +38,6 @@ public class SbmlToPetrinetResponseHandler extends TaskResponseHandler {
 			Model model = modelResp.getResponse();
 
 			model
-				.getSemantics()
-				.getOde()
 				.getParameters()
 				.forEach(param -> {
 					if (param.getName() == null || param.getName().isEmpty()) {

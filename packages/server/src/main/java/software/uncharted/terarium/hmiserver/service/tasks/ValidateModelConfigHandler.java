@@ -128,12 +128,19 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 				props.newModelConfigName,
 				contractedModel.getDescription()
 			);
+			contractedModelConfiguration.setTemporary(true);
 			contractedModelConfiguration.setModelId(props.modelId); // Config should be linked to the original model
 
-			// Add model configuration to the response
+			// Save validated model configuration
+			final ModelConfiguration createdModelConfiguration = modelConfigurationService.createAsset(
+				contractedModelConfiguration,
+				props.projectId,
+				ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
+			);
+
+			// Add model configuration id to the response
 			JsonNode responseNode = objectMapper.readTree(responseString);
-			JsonNode modelConfigNode = objectMapper.valueToTree(contractedModelConfiguration);
-			((ObjectNode) responseNode).set("modelConfiguration", modelConfigNode);
+			((ObjectNode) responseNode).put("modelConfigurationId", createdModelConfiguration.getId().toString());
 			String updatedResponseString = objectMapper.writeValueAsString(responseNode);
 			((ObjectNode) result).put("response", updatedResponseString);
 

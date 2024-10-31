@@ -28,6 +28,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Initial;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Observable;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.OdeSemantics;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Rate;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.State;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Transition;
 import software.uncharted.terarium.hmiserver.models.dataservice.regnet.RegNetVertex;
@@ -63,7 +64,7 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	@TSOptional
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
-	private ModelSemantics semantics;
+	private ModelSemantics semantics = new ModelSemantics();
 
 	@TSOptional
 	@Type(JsonType.class)
@@ -199,12 +200,14 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	@JsonIgnore
 	@TSIgnore
 	public List<Observable> getObservables() {
-		if (
-			this.getSemantics() == null ||
-			this.getSemantics().getOde() == null ||
-			this.getSemantics().getOde().getObservables() == null
-		) {
-			return new ArrayList<Observable>();
+		if (this.getSemantics() == null) {
+			this.setSemantics(new ModelSemantics());
+		}
+		if (this.getSemantics().getOde() == null) {
+			this.getSemantics().setOde(new OdeSemantics());
+		}
+		if (this.getSemantics().getOde().getObservables() == null) {
+			this.getSemantics().getOde().setObservables(new ArrayList<>());
 		}
 		return this.getSemantics().getOde().getObservables();
 	}
@@ -228,12 +231,14 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		if (this.isRegnet()) {
 			return objectMapper.convertValue(this.getModel().get("parameters"), new TypeReference<>() {});
 		}
-		if (
-			this.getSemantics() == null ||
-			this.getSemantics().getOde() == null ||
-			this.getSemantics().getOde().getParameters() == null
-		) {
-			return new ArrayList<>();
+		if (this.getSemantics() == null) {
+			this.setSemantics(new ModelSemantics());
+		}
+		if (this.getSemantics().getOde() == null) {
+			this.getSemantics().setOde(new OdeSemantics());
+		}
+		if (this.getSemantics().getOde().getParameters() == null) {
+			this.getSemantics().getOde().setParameters(new ArrayList<>());
 		}
 		return this.getSemantics().getOde().getParameters();
 	}
@@ -276,14 +281,53 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		if (this.isRegnet()) {
 			return objectMapper.convertValue(this.getModel().get("initials"), new TypeReference<>() {});
 		} else {
-			if (
-				this.getSemantics() == null ||
-				this.getSemantics().getOde() == null ||
-				this.getSemantics().getOde().getInitials() == null
-			) {
-				return new ArrayList<Initial>();
+			if (this.getSemantics() == null) {
+				this.setSemantics(new ModelSemantics());
+			}
+			if (this.getSemantics().getOde() == null) {
+				this.getSemantics().setOde(new OdeSemantics());
+			}
+			if (this.getSemantics().getOde().getInitials() == null) {
+				this.getSemantics().getOde().setInitials(new ArrayList<>());
 			}
 			return this.getSemantics().getOde().getInitials();
+		}
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public List<Rate> getRates() {
+		final ObjectMapper objectMapper = new ObjectMapper();
+		if (this.isRegnet()) {
+			return objectMapper.convertValue(this.getModel().get("initials"), new TypeReference<>() {});
+		} else {
+			if (this.getSemantics() == null) {
+				this.setSemantics(new ModelSemantics());
+			}
+			if (this.getSemantics().getOde() == null) {
+				this.getSemantics().setOde(new OdeSemantics());
+			}
+			if (this.getSemantics().getOde().getRates() == null) {
+				this.getSemantics().getOde().setRates(new ArrayList<>());
+			}
+			return this.getSemantics().getOde().getRates();
+		}
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public void setRates(final List<Rate> rates) {
+		final ObjectMapper objectMapper = new ObjectMapper();
+		if (this.isRegnet()) {
+			this.getModel().put("rates", objectMapper.convertValue(rates, JsonNode.class));
+		} else {
+			if (this.getSemantics() == null) {
+				this.setSemantics(new ModelSemantics());
+			}
+			if (this.getSemantics().getOde() == null) {
+				this.getSemantics().setOde(new OdeSemantics());
+			}
+			this.getSemantics().getOde().setRates(rates);
 		}
 	}
 

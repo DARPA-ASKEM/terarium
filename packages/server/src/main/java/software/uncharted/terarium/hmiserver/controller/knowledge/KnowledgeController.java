@@ -55,13 +55,20 @@ import software.uncharted.terarium.hmiserver.models.dataservice.document.Documen
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelHeader;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Observable;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.State;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Transition;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
+import software.uncharted.terarium.hmiserver.models.dataservice.regnet.RegNetVertex;
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
+import software.uncharted.terarium.hmiserver.models.task.CompoundTask;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
+import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
 import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
@@ -78,6 +85,7 @@ import software.uncharted.terarium.hmiserver.service.tasks.EnrichAmrResponseHand
 import software.uncharted.terarium.hmiserver.service.tasks.EquationsCleanupResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
+import software.uncharted.terarium.hmiserver.service.tasks.TaskUtilities;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.StringMultipartFile;
@@ -89,29 +97,30 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @RequiredArgsConstructor
 public class KnowledgeController {
 
-	final ObjectMapper mapper;
+	private final ObjectMapper mapper;
 
-	final SkemaUnifiedProxy skemaUnifiedProxy;
-	final MitProxy mitProxy;
+	private final SkemaUnifiedProxy skemaUnifiedProxy;
+	private final MitProxy mitProxy;
+	private final MIRAProxy miraProxy;
 
-	final DocumentAssetService documentService;
-	final DatasetService datasetService;
-	final ModelService modelService;
-	final ProvenanceService provenanceService;
-	final ProvenanceSearchService provenanceSearchService;
-	final DocumentAssetService documentAssetService;
+	private final DocumentAssetService documentService;
+	private final DatasetService datasetService;
+	private final ModelService modelService;
+	private final ProvenanceService provenanceService;
+	private final ProvenanceSearchService provenanceSearchService;
+	private final DocumentAssetService documentAssetService;
 
-	final CodeService codeService;
+	private final CodeService codeService;
 
-	final ExtractionService extractionService;
-	final TaskService taskService;
+	private final ExtractionService extractionService;
+	private final TaskService taskService;
 
-	final ProjectService projectService;
-	final CurrentUserService currentUserService;
+	private final ProjectService projectService;
+	private final CurrentUserService currentUserService;
 
 	private final EquationsCleanupResponseHandler equationsCleanupResponseHandler;
 
-	final Messages messages;
+	private final Messages messages;
 
 	@Value("${openai-api-key:}")
 	String OPENAI_API_KEY;
@@ -142,7 +151,7 @@ public class KnowledgeController {
 		}
 
 		// Grab the model
-		final Optional<Model> model = modelService.getAsset(modelId, permission);
+		Optional<Model> model = modelService.getAsset(modelId, permission);
 		if (model.isEmpty()) {
 			log.warn(String.format("Model %s not found", modelId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
@@ -167,30 +176,37 @@ public class KnowledgeController {
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
 		}
 
-		// Create the task
-		final TaskRequest req = new TaskRequest();
-		req.setType(TaskType.GOLLM);
-		req.setScript(EnrichAmrResponseHandler.NAME);
-		req.setUserId(currentUserService.get().getId());
-
+		// Create the tasks
+		final TaskRequest enrichAmrRequest;
 		try {
-			req.setInput(mapper.writeValueAsBytes(input));
-		} catch (final Exception e) {
-			log.error("Unable to serialize input", e);
+			enrichAmrRequest = TaskUtilities.getEnrichAMRTaskRequest(
+				currentUserService.get().getId(),
+				document.get(),
+				model.get(),
+				projectId,
+				overwrite
+			);
+		} catch (IOException e) {
+			log.error("Unable to create Enrich AMR task", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 		}
 
-		req.setProjectId(projectId);
-
-		final EnrichAmrResponseHandler.Properties props = new EnrichAmrResponseHandler.Properties();
-		props.setProjectId(projectId);
-		props.setDocumentId(documentId);
-		props.setModelId(modelId);
-		props.setOverwrite(overwrite);
-		req.setAdditionalProperties(props);
-
+		final TaskRequest modelCardRequest;
 		try {
-			taskService.runTaskSync(req);
+			modelCardRequest = TaskUtilities.getModelCardTask(
+				currentUserService.get().getId(),
+				document.get(),
+				model.get(),
+				projectId
+			);
+		} catch (IOException e) {
+			log.error("Unable to create Model Card task", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+		}
+
+		final TaskRequest req = new CompoundTask(enrichAmrRequest, modelCardRequest);
+		try {
+			taskService.runTask(TaskMode.SYNC, req);
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
@@ -203,6 +219,52 @@ public class KnowledgeController {
 		} catch (final ExecutionException e) {
 			log.error("Error while waiting for task response", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
+		}
+
+		// at this point the initial enrichment has happened.
+		model = modelService.getAsset(modelId, permission);
+		if (model.isEmpty()) {
+			//this would be a very strange case
+			log.warn(String.format("Model %s not found", modelId));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
+		}
+
+		// Update State Grounding
+		if (!model.get().isRegnet()) {
+			List<State> states = model.get().getStates();
+			states.forEach(state -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, state));
+			model.get().setStates(states);
+		} else if (model.get().isRegnet()) {
+			List<RegNetVertex> vertices = model.get().getVerticies();
+			vertices.forEach(vertex -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, vertex));
+			model.get().setVerticies(vertices);
+		}
+
+		//Update Observable Grounding
+		if (model.get().getObservables() != null && !model.get().getObservables().isEmpty()) {
+			List<Observable> observables = model.get().getObservables();
+			observables.forEach(observable -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, observable));
+			model.get().setObservables(observables);
+		}
+
+		//Update Parameter Grounding
+		if (model.get().getParameters() != null && !model.get().getParameters().isEmpty()) {
+			List<ModelParameter> parameters = model.get().getParameters();
+			parameters.forEach(parameter -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, parameter));
+			model.get().setParameters(parameters);
+		}
+
+		//Update Transition Grounding
+		if (model.get().getTransitions() != null && !model.get().getTransitions().isEmpty()) {
+			List<Transition> transitions = model.get().getTransitions();
+			transitions.forEach(transition -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, transition));
+			model.get().setTransitions(transitions);
+		}
+
+		try {
+			modelService.updateAsset(model.get(), projectId, permission);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 	}
 

@@ -43,8 +43,6 @@ public class MdlToStockflowResponseHandler extends TaskResponseHandler {
 			model.getHeader().setName(props.getFileName());
 
 			model
-				.getSemantics()
-				.getOde()
 				.getParameters()
 				.forEach(param -> {
 					if (param.getName() == null || param.getName().isEmpty()) {
