@@ -140,10 +140,12 @@ async function updateLossChartWithSimulation() {
 	if (props.node.active) {
 		const simulationObj = await getSimulation(props.node.state.calibrationId);
 		if (simulationObj?.updates) {
-			lossValues = simulationObj?.updates.map((d, i) => ({
-				iter: i,
-				loss: d.data.loss
-			}));
+			lossValues = simulationObj?.updates
+				.sort((a, b) => a.data.progress - b.data.progress)
+				.map((d, i) => ({
+					iter: i,
+					loss: d.data.loss
+				}));
 			updateLossChartSpec(lossValues);
 		}
 	}
@@ -279,10 +281,12 @@ const pollResult = async (runId: string) => {
 		.setPollAction(async () => pollAction(runId))
 		.setProgressAction((data: Simulation) => {
 			if (data?.updates?.length) {
-				lossValues = data?.updates.map((d, i) => ({
-					iter: i,
-					loss: d.data.loss
-				}));
+				lossValues = data?.updates
+					.sort((a, b) => a.data.progress - b.data.progress)
+					.map((d, i) => ({
+						iter: i,
+						loss: d.data.loss
+					}));
 				updateLossChartSpec(lossValues);
 			}
 			if (runId === props.node.state.inProgressCalibrationId && data.updates.length > 0) {
