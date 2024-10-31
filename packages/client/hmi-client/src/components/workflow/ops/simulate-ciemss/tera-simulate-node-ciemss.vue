@@ -22,7 +22,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
@@ -34,17 +34,10 @@ import { nodeOutputLabel } from '@/components/workflow/util';
 import type { WorkflowNode } from '@/types/workflow';
 import { createLLMSummary } from '@/services/summary-service';
 import { useProjects } from '@/composables/project';
-import {
-	createForecastChart,
-	createInterventionChartMarkers,
-	applyForecastChartAnnotations,
-	ForecastChartOptions
-} from '@/services/charts';
-import { fetchAnnotations, addMultiVariableChartSetting } from '@/services/chart-settings';
+import { createForecastChart, createInterventionChartMarkers, ForecastChartOptions } from '@/services/charts';
 import { createDatasetFromSimulationResult } from '@/services/dataset';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import {
-	ChartAnnotation,
 	ClientEvent,
 	ClientEventType,
 	ModelConfiguration,
@@ -56,6 +49,7 @@ import {
 	type Model
 } from '@/types/Types';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
+import { addMultiVariableChartSetting } from '@/services/chart-settings';
 import { ChartSettingType } from '@/types/common';
 import { useClientEvent } from '@/composables/useClientEvent';
 import { getModelConfigurationById } from '@/services/model-configurations';
@@ -83,13 +77,6 @@ const interventionPolicyId = computed(() => props.node.inputs[1].value?.[0]);
 const interventionPolicy = ref<InterventionPolicy | null>(null);
 
 const chartSettings = computed(() => props.node.state.chartSettings ?? []);
-
-// --- Handle chart annotations
-const chartAnnotations = ref<ChartAnnotation[]>([]);
-const updateChartAnnotations = async () => {
-	chartAnnotations.value = await fetchAnnotations(props.node.id);
-};
-onMounted(() => updateChartAnnotations());
 
 let pyciemssMap: Record<string, string> = {};
 
@@ -218,8 +205,6 @@ const preparedCharts = computed(() => {
 				}
 			});
 		}
-		const annotations = chartAnnotations.value.filter((annotation) => annotation.chartId === setting.id);
-		applyForecastChartAnnotations(chart, annotations);
 		charts[setting.id] = chart;
 	});
 	return charts;
