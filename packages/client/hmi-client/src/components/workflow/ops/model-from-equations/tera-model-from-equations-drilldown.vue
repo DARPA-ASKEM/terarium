@@ -20,7 +20,7 @@
 					</tera-drilldown-section>
 				</template>
 			</tera-slider-panel>
-			<tera-slider-panel v-model:is-open="isInputOpen" header="Input" content-width="100%">
+			<tera-slider-panel class="input-config" v-model:is-open="isInputOpen" header="Input" content-width="100%">
 				<template #content>
 					<main class="p-3">
 						<header class="pb-2">
