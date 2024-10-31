@@ -21,7 +21,7 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/t
 3. View the datasets to see the columns and data types. Ensure both datasets have a date column.
 4. Ask the agent to join the two datasets together on date. 
 5. Add a code cell to view the newly joined dataset
-6. Filter for LA county for January 2021 to March 2021. 
+6. Filter for LA county (i.e. county = `Los Angeles`) for January 2021 to March 2021. 
 7. Ask the agent to add a new column named timestamp that is a timestamp representation of the date column. 
 8. Save the filtered LA county dataset as a new dataset named 'LA_cases_deaths_data'
 9. Ask the operator to plot for cases and deaths.
