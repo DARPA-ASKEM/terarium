@@ -58,8 +58,6 @@ import {
 	ModelConfiguration,
 	SemanticType,
 	InferredParameterSemantic,
-	ChartAnnotation,
-	ClientEventType,
 	InterventionPolicy,
 	Dataset
 } from '@/types/Types';
@@ -70,9 +68,8 @@ import VegaChart from '@/components/widgets/VegaChart.vue';
 import * as stats from '@/utils/stats';
 import { createDatasetFromSimulationResult, getDataset } from '@/services/dataset';
 import { useProjects } from '@/composables/project';
-import { fetchAnnotations } from '@/services/chart-settings';
-import { useClientEvent } from '@/composables/useClientEvent';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
+import { useChartAnnotations } from '@/composables/useChartAnnotations';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { CalibrationOperationCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults } from './calibrate-utils';
@@ -185,7 +182,7 @@ const preparedCharts = computed(() => {
 		if (mapObj) {
 			datasetVariables.push(mapObj.datasetVariable);
 		}
-		const annotations = chartAnnotations.value.filter((annotation) => annotation.chartId === setting.id);
+		const annotations = getChartAnnotationsByChartId(setting.id);
 
 		// variable chart
 		const chart = createForecastChart(
@@ -255,14 +252,7 @@ const preparedCharts = computed(() => {
 	return { variableCharts, interventionCharts };
 });
 
-// --- Handle chart annotations
-const chartAnnotations = ref<ChartAnnotation[]>([]);
-const updateChartAnnotations = async () => {
-	chartAnnotations.value = await fetchAnnotations(props.node.id);
-};
-onMounted(() => updateChartAnnotations());
-useClientEvent([ClientEventType.ChartAnnotationCreate, ClientEventType.ChartAnnotationDelete], updateChartAnnotations);
-// ---
+const { getChartAnnotationsByChartId } = useChartAnnotations(props.node.id);
 
 const poller = new Poller();
 const pollResult = async (runId: string) => {
