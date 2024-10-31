@@ -472,7 +472,6 @@ watch(
 }
 
 .asset-panel {
-	padding-top: var(--gap-3);
 	border-width: 1px 1px 0 1px;
 	border-color: var(--surface-border-light);
 	border-style: solid;
