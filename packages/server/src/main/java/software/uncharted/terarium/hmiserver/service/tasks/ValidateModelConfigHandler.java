@@ -128,7 +128,7 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 				props.newModelConfigName,
 				contractedModel.getDescription()
 			);
-			contractedModelConfiguration.setTemporary(true); // Config should only be accessible within the operator for now
+			contractedModelConfiguration.setTemporary(true);
 			contractedModelConfiguration.setModelId(props.modelId); // Config should be linked to the original model
 
 			// Save validated model configuration

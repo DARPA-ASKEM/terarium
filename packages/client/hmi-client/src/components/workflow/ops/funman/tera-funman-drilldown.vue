@@ -162,39 +162,46 @@
 						</div>
 					</header>
 					<Accordion multiple :active-index="[0, 1, 2, 3]">
-						<AccordionTab header="Summary"> Summary text </AccordionTab>
+						<AccordionTab header="Summary">
+							<span class="ml-4">Summary text</span>
+						</AccordionTab>
 						<AccordionTab>
-							<template #header> State variables<i class="pi pi-info-circle" /> </template>
-							<template v-if="stateCharts[0]">
-								<vega-chart
-									v-for="(stateChart, index) in selectedStateCharts"
-									:key="index"
-									:visualization-spec="stateChart"
-									:are-embed-actions-visible="false"
-									expandable
-								/>
+							<template #header> State variables<i class="pi pi-info-circle" /></template>
+							<template v-if="!isEmpty(selectedStateCharts)">
+								<template v-if="!isEmpty(stateCharts[0])">
+									<vega-chart
+										v-for="(stateChart, index) in selectedStateCharts"
+										:key="index"
+										:visualization-spec="stateChart"
+										:are-embed-actions-visible="false"
+										expandable
+									/>
+								</template>
+
+								<span class="ml-4" v-else> No boxes were generated. </span>
 							</template>
-							<span class="ml-4" v-else> No boxes were generated. </span>
-							<span class="ml-4" v-if="isEmpty(selectedStateCharts)">
-								To view state charts select some in the Output settings.
-							</span>
+							<span class="ml-4" v-else> To view state charts select some in the Output settings. </span>
 						</AccordionTab>
 						<AccordionTab>
 							<template #header>Parameters<i class="pi pi-info-circle" /></template>
-							<vega-chart
-								:visualization-spec="parameterCharts"
-								:are-embed-actions-visible="false"
-								expandable
-								@chart-click="onParameterChartClick"
-							/>
+							<template v-if="!isEmpty(selectedParameterIds)">
+								<vega-chart
+									v-if="!isEmpty(parameterCharts)"
+									:visualization-spec="parameterCharts"
+									:are-embed-actions-visible="false"
+									expandable
+									@chart-click="onParameterChartClick"
+								/><span class="ml-4" v-else> No boxes were generated. </span>
+							</template>
+							<span class="ml-4" v-else> To view parameter charts select some in the Output settings. </span>
 						</AccordionTab>
 						<AccordionTab header="Diagram">
-							<tera-model-diagram v-if="outputModel" :model="outputModel" />
+							<tera-model-diagram v-if="model" :model="model" />
 						</AccordionTab>
 					</Accordion>
-					<template v-if="outputModel && validatedModelConfiguration && configuredMmt">
+					<template v-if="model && validatedModelConfiguration && configuredMmt">
 						<tera-initial-table
-							:model="outputModel"
+							:model="model"
 							:model-configuration="validatedModelConfiguration"
 							:model-configurations="[]"
 							:mmt="configuredMmt"
@@ -202,7 +209,7 @@
 							:feature-config="{ isPreview: true }"
 						/>
 						<tera-parameter-table
-							:model="outputModel"
+							:model="model"
 							:model-configuration="validatedModelConfiguration"
 							:model-configurations="[]"
 							:mmt="configuredMmt"
@@ -213,7 +220,7 @@
 							<AccordionTab v-if="!isEmpty(calibratedConfigObservables)" header="Observables">
 								<tera-observables
 									class="pl-4"
-									:model="outputModel"
+									:model="model"
 									:mmt="configuredMmt"
 									:observables="calibratedConfigObservables"
 									:feature-config="{ isPreview: true }"
@@ -303,7 +310,7 @@
 
 <script setup lang="ts">
 import { isEmpty, cloneDeep } from 'lodash';
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, onMounted } from 'vue';
 import { logger } from '@/utils/logger';
 import { formatShort } from '@/utils/date';
 import Button from 'primevue/button';
@@ -391,7 +398,6 @@ const MAX = 99999999999;
 const toast = useToastService();
 const validateParametersToolTip =
 	'Validate the configuration of the model using functional model analysis (FUNMAN). \n \n The parameter space regions defined by the model configuration are evaluated to satisfactory or unsatisfactory depending on whether they generate model outputs that are within a given set of time-dependent constraints';
-let originalModelId = '';
 
 const showSpinner = ref(false);
 const isSliderOpen = ref(true);
@@ -399,7 +405,8 @@ const isSliderOpen = ref(true);
 const mass = ref('0');
 
 const requestParameters = ref<any[]>([]);
-const configuredModel = ref<Model | null>();
+const model = ref<Model | null>();
+let configuredInputModel: Model | null = null;
 
 const stateIds = ref<string[]>([]);
 const parameterIds = ref<string[]>([]);
@@ -430,7 +437,7 @@ const stepList = computed(() => {
 });
 
 const runMakeQuery = async () => {
-	if (!configuredModel.value) {
+	if (!configuredInputModel || !model.value?.id) {
 		toast.error('', 'No Model provided for request');
 		return;
 	}
@@ -492,7 +499,7 @@ const runMakeQuery = async () => {
 		.filter(Boolean); // Removes falsey values
 
 	const request: FunmanPostQueriesRequest = {
-		model: configuredModel.value,
+		model: configuredInputModel,
 		request: {
 			constraints,
 			parameters: requestParameters.value.map(({ disabled, ...rest }) => rest), // Remove the disabled property from the request (it's only used for UI)
@@ -505,7 +512,7 @@ const runMakeQuery = async () => {
 			config: {
 				use_compartmental_constraints: knobs.value.compartmentalConstraint.isActive,
 				normalization_constant:
-					knobs.value.compartmentalConstraint.isActive && configuredModel.value.semantics ? parseFloat(mass.value) : 1,
+					knobs.value.compartmentalConstraint.isActive && configuredInputModel.semantics ? parseFloat(mass.value) : 1,
 				normalize: false,
 				tolerance: knobs.value.tolerance
 			}
@@ -514,8 +521,8 @@ const runMakeQuery = async () => {
 
 	const response = await makeQueries(
 		request,
-		originalModelId,
-		nodeOutputLabel(props.node, `Validated ${configuredModel.value.header.name} Result`)
+		model.value.id,
+		nodeOutputLabel(props.node, `Validated ${configuredInputModel.header.name} Result`)
 	);
 
 	// Setup the in-progress id
@@ -567,16 +574,8 @@ const updateConstraintGroupForm = (index: number, key: string, value: any) => {
 	emit('update-state', state);
 };
 
-const initialize = async () => {
-	const modelConfigurationId = props.node.inputs[0].value?.[0];
-	if (!modelConfigurationId) return;
-	const modelConfiguration = await getModelConfigurationById(modelConfigurationId);
-	configuredModel.value = await getAsConfiguredModel(modelConfiguration);
-	originalModelId = modelConfiguration.modelId;
-};
-
 const setModelOptions = async () => {
-	if (!configuredModel.value) return;
+	if (!configuredInputModel) return;
 
 	const renameReserved = (v: string) => {
 		const reserved = ['lambda'];
@@ -585,7 +584,7 @@ const setModelOptions = async () => {
 	};
 
 	// Calculate mass
-	const semantics = configuredModel.value.semantics;
+	const semantics = configuredInputModel.semantics;
 	const modelInitials = semantics?.ode.initials;
 	const modelMassExpression = modelInitials?.map((d) => renameReserved(d.expression)).join(' + ');
 
@@ -597,7 +596,7 @@ const setModelOptions = async () => {
 
 	mass.value = await pythonInstance.evaluateExpression(modelMassExpression as string, parametersMap);
 
-	const ode = configuredModel.value.semantics?.ode;
+	const ode = configuredInputModel.semantics?.ode;
 	if (ode) {
 		if (ode.initials) stateIds.value = ode.initials.map((s) => s.target);
 		if (ode.parameters) parameterIds.value = ode.parameters.map((d) => d.id);
@@ -610,8 +609,8 @@ const setModelOptions = async () => {
 	knobs.value.tolerance = state.tolerance;
 	knobs.value.compartmentalConstraint = state.compartmentalConstraint;
 
-	if (configuredModel.value.semantics?.ode.parameters) {
-		setRequestParameters(configuredModel.value.semantics?.ode.parameters);
+	if (configuredInputModel.semantics?.ode.parameters) {
+		setRequestParameters(configuredInputModel.semantics?.ode.parameters);
 		variablesOfInterest.value = requestParameters.value.filter((d: any) => d.label === 'all');
 	} else {
 		toast.error('', 'Provided model has no parameters');
@@ -684,15 +683,23 @@ watch(
 	{ deep: true }
 );
 
-watch(
-	() => props.node.inputs[0],
-	async () => {
-		// Set model, modelConfiguration, modelStates
-		await initialize();
-		setModelOptions();
-	},
-	{ immediate: true }
-);
+onMounted(async () => {
+	const modelConfigurationId = props.node.inputs[0].value?.[0];
+	if (!modelConfigurationId) return;
+	const modelConfiguration = await getModelConfigurationById(modelConfigurationId);
+	configuredInputModel = await getAsConfiguredModel(modelConfiguration);
+
+	setModelOptions();
+
+	model.value = await getModel(modelConfiguration.modelId);
+	if (model.value) {
+		const response = await getMMT(model.value);
+		if (response) {
+			mmt = response.mmt;
+			mmtParams.value = response.template_params;
+		}
+	}
+});
 
 watch(
 	() => props.node.active,
@@ -712,14 +719,13 @@ const notebookText = ref('');
 /*
 // Output panel/settings //
 */
-let processedFunmanResult: ProcessedFunmanResult | null = null;
+let processedFunmanResult: ProcessedFunmanResult = { boxes: [], trajectories: [] };
 let constraintsResponse: FunmanConstraintsResponse[] = [];
 let mmt: MiraModel = emptyMiraModel();
 let funmanResult: any = {};
 
 // Model configuration stuff
-const outputModel = ref<Model | null>(null);
-const validatedModelConfiguration = ref<ModelConfiguration | null>(null);
+let validatedModelConfiguration: ModelConfiguration | null = null;
 const showSaveModal = ref(false);
 const configuredMmt = ref<MiraModel | null>(null);
 const mmtParams = ref<MiraTemplateParams>({});
@@ -731,6 +737,9 @@ const selectedStateCharts = computed(() => {
 	return stateCharts.value.filter((chart) => selectedStateIds.includes(chart.id));
 });
 const parameterCharts = ref<any>({});
+const selectedParameterIds = computed(() =>
+	selectedParameterSettings.value.map((setting) => setting.selectedVariables[0])
+);
 
 const stateOptions = ref<string[]>([]);
 const parameterOptions = ref<string[]>([]);
@@ -751,7 +760,7 @@ let selectedBoxId: number = -1;
 
 async function onSaveForReuse() {
 	showSaveModal.value = false;
-	validatedModelConfiguration.value = await getModelConfigurationById(funmanResult.modelConfigurationId); // Refresh to see updated name
+	validatedModelConfiguration = await getModelConfigurationById(funmanResult.modelConfigurationId); // Refresh to see updated name
 }
 
 // Once a parameter tick is chosen, its corresponding line on the state chart will be highlighted
@@ -762,23 +771,25 @@ function onParameterChartClick(eventData: any) {
 }
 
 function updateStateCharts() {
-	if (!processedFunmanResult) return;
-	const trajectories = processedFunmanResult.trajectories;
+	if (isEmpty(processedFunmanResult.trajectories)) return;
 	stateCharts.value = funmanResult.model.petrinet.model.states.map(({ id }) =>
-		createFunmanStateChart(trajectories, constraintsResponse, id, focusOnModelChecks.value, selectedBoxId)
+		createFunmanStateChart(
+			processedFunmanResult.trajectories,
+			constraintsResponse,
+			id,
+			focusOnModelChecks.value,
+			selectedBoxId
+		)
 	);
 }
 
 function updateParameterCharts() {
-	if (!processedFunmanResult) return;
-	const selectedParameterIds = selectedParameterSettings.value.map((setting) => setting.selectedVariables[0]);
+	if (isEmpty(processedFunmanResult.boxes)) return;
 	const distributionParameters = funmanResult.request.parameters.filter(
 		// TODO: This first conditional may change as funman will return constants soon
-		(d: any) => d.interval.lb !== d.interval.ub && selectedParameterIds.includes(d.name)
+		(d: any) => d.interval.lb !== d.interval.ub && selectedParameterIds.value.includes(d.name)
 	);
-	if (processedFunmanResult.boxes) {
-		parameterCharts.value = createFunmanParameterCharts(distributionParameters, processedFunmanResult.boxes);
-	}
+	parameterCharts.value = createFunmanParameterCharts(distributionParameters, processedFunmanResult.boxes);
 }
 
 function updateSelectedStates(event) {
@@ -817,36 +828,10 @@ function removeChartSetting(chartId: string) {
 
 async function renderCharts() {
 	processedFunmanResult = processFunman(funmanResult, onlyShowLatestResults.value);
+	console.log(processedFunmanResult);
 
 	updateStateCharts();
 	updateParameterCharts();
-
-	if (!validatedModelConfiguration.value) return;
-
-	// For displaying model/model configuration
-	// Model will be the same on runId change, no need to fetch it again
-	if (!outputModel.value) {
-		outputModel.value = await getModel(validatedModelConfiguration.value.modelId);
-		if (!outputModel.value) {
-			logger.error('Failed to fetch model');
-			return;
-		}
-		const response = await getMMT(outputModel.value);
-		if (response) {
-			mmt = response.mmt;
-			mmtParams.value = response.template_params;
-		}
-	}
-
-	configuredMmt.value = makeConfiguredMMT(mmt, validatedModelConfiguration.value);
-	calibratedConfigObservables.value = validatedModelConfiguration.value.observableSemanticList.map(
-		({ referenceId, states, expression }) => ({
-			id: referenceId,
-			name: referenceId,
-			states,
-			expression
-		})
-	);
 }
 
 watch(
@@ -861,7 +846,19 @@ watch(
 		notebookText.value = rawFunmanResult;
 		funmanResult = JSON.parse(rawFunmanResult);
 		constraintsResponse = funmanResult.request.constraints;
-		validatedModelConfiguration.value = await getModelConfigurationById(funmanResult.modelConfigurationId);
+
+		validatedModelConfiguration = await getModelConfigurationById(funmanResult.modelConfigurationId);
+		if (validatedModelConfiguration) {
+			configuredMmt.value = makeConfiguredMMT(mmt, validatedModelConfiguration);
+			calibratedConfigObservables.value = validatedModelConfiguration.observableSemanticList.map(
+				({ referenceId, states, expression }) => ({
+					id: referenceId,
+					name: referenceId,
+					states,
+					expression
+				})
+			);
+		}
 
 		stateOptions.value = funmanResult.model.petrinet.model.states.map(({ id }) => id);
 		parameterOptions.value = funmanResult.request.parameters
