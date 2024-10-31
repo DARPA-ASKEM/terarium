@@ -104,7 +104,7 @@ const chartSize = { width: 180, height: 120 };
 let lossValues: { [key: string]: number }[] = [];
 
 const selectedVariableSettings = computed(() =>
-	(props.node.state.chartSettings ?? []).filter((setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON)
+	(props.node.state.chartSettings ?? []).filter((setting) => setting.type === ChartSettingType.VARIABLE)
 );
 
 const lossChartSpec = ref();
