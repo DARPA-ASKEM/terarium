@@ -168,7 +168,7 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	public List<State> getStates() {
 		if (isRegnet()) return null;
 		if (!getModel().containsKey("states")) return new ArrayList<>();
-		ObjectMapper objectMapper = new ObjectMapper();
+		final ObjectMapper objectMapper = new ObjectMapper();
 		return objectMapper.convertValue(getModel().get("states"), new TypeReference<>() {});
 	}
 
@@ -176,7 +176,7 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	@TSIgnore
 	public void setStates(final List<State> states) {
 		if (isRegnet()) return;
-		ObjectMapper objectMapper = new ObjectMapper();
+		final ObjectMapper objectMapper = new ObjectMapper();
 		getModel().put("states", objectMapper.convertValue(states, JsonNode.class));
 	}
 
@@ -185,7 +185,7 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	public List<RegNetVertex> getVerticies() {
 		if (!isRegnet()) return null;
 		if (!getModel().containsKey("vertices")) return new ArrayList<>();
-		ObjectMapper objectMapper = new ObjectMapper();
+		final ObjectMapper objectMapper = new ObjectMapper();
 		return objectMapper.convertValue(getModel().get("vertices"), new TypeReference<>() {});
 	}
 
@@ -193,7 +193,7 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	@TSIgnore
 	public void setVerticies(final List<RegNetVertex> verticies) {
 		if (!isRegnet()) return;
-		ObjectMapper objectMapper = new ObjectMapper();
+		final ObjectMapper objectMapper = new ObjectMapper();
 		getModel().put("vertices", objectMapper.convertValue(verticies, JsonNode.class));
 	}
 
@@ -334,6 +334,12 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	@JsonIgnore
 	@TSIgnore
 	public boolean isRegnet() {
+		if (this.getHeader() == null) {
+			return false;
+		}
+		if (this.getHeader().getSchemaName() == null) {
+			return false;
+		}
 		return this.getHeader().getSchemaName().equalsIgnoreCase("regnet");
 	}
 }
