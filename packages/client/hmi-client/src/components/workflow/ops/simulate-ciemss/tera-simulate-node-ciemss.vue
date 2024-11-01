@@ -213,11 +213,7 @@ const preparedCharts = computed(() => {
 		if (interventionPolicy.value) {
 			_.keys(groupedInterventionOutputs.value).forEach((key) => {
 				if (selectedVars.includes(key)) {
-					chart.layer.push(
-						...createInterventionChartMarkers(groupedInterventionOutputs.value[key], {
-							labelXOffset: -115
-						})
-					);
+					chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
 				}
 			});
 		}

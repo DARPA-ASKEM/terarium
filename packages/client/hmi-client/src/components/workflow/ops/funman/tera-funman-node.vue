@@ -26,6 +26,7 @@ import { Poller, PollerState } from '@/api/api';
 import { pollAction, getRunResult } from '@/services/models/simulation-service';
 import { logger } from '@/utils/logger';
 import { Simulation } from '@/types/Types';
+import { getModelConfigurationById } from '@/services/model-configurations';
 
 const emit = defineEmits(['open-drilldown', 'append-output', 'update-state']);
 
@@ -43,7 +44,7 @@ const addOutputPorts = async (runId: string) => {
 		logger.error('Failed to fetch funman result');
 		return;
 	}
-	const validatedConfiguration = JSON.parse(rawFunmanResult).modelConfiguration;
+	const validatedConfiguration = await getModelConfigurationById(JSON.parse(rawFunmanResult).modelConfigurationId);
 
 	const outState = _.cloneDeep(props.node.state);
 	outState.inProgressId = '';
@@ -52,7 +53,7 @@ const addOutputPorts = async (runId: string) => {
 	emit('append-output', {
 		label: validatedConfiguration.name,
 		type: FunmanOperation.outputs[0].type,
-		value: validatedConfiguration.id,
+		value: [validatedConfiguration.id],
 		state: outState
 	});
 };
