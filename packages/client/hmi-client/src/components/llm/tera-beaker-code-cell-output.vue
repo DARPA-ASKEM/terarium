@@ -25,6 +25,10 @@ const renderOutputs = (outputs) => {
 	});
 
 	if (outputAreaRef.value) {
+		const imgElement = outputArea.node.querySelector('img');
+		if (imgElement) {
+			imgElement.draggable = false;
+		}
 		outputAreaRef.value.replaceChildren(outputArea.node);
 	}
 };

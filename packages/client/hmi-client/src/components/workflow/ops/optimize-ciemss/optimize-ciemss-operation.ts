@@ -4,6 +4,7 @@ import { getRunResult, getSimulation } from '@/services/models/simulation-servic
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import { createInterventionPolicy, blankIntervention } from '@/services/intervention-policy';
 import optimizeModel from '@assets/svg/operator-images/optimize-model.svg';
+import { ChartSetting } from '@/types/common';
 
 const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L747';
 
@@ -61,8 +62,7 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	interventionPolicyGroups: InterventionPolicyGroupForm[];
 	// Constraints:
 	constraintGroups: Criterion[];
-	selectedInterventionVariables: string[];
-	selectedSimulationVariables: string[];
+	chartSettings: ChartSetting[] | null; // null indicates that the chart settings have not been set yet
 	inProgressOptimizeId: string;
 	inProgressPreForecastId: string;
 	preForecastRunId: string;
@@ -142,8 +142,7 @@ export const OptimizeCiemssOperation: Operation = {
 			interventionPolicyId: '',
 			interventionPolicyGroups: [],
 			constraintGroups: [defaultCriterion],
-			selectedInterventionVariables: [],
-			selectedSimulationVariables: [],
+			chartSettings: null,
 			inProgressOptimizeId: '',
 			inProgressPostForecastId: '',
 			inProgressPreForecastId: '',

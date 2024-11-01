@@ -187,7 +187,9 @@
 				<template #overlay>
 					<tera-chart-settings-panel
 						:annotations="
-							activeChartSettings?.type === ChartSettingType.VARIABLE_COMPARISON ? chartAnnotations : undefined
+							activeChartSettings?.type === ChartSettingType.VARIABLE_COMPARISON
+								? getChartAnnotationsByChartId(activeChartSettings.id)
+								: undefined
 						"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
@@ -242,7 +244,6 @@ import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import type {
-	ChartAnnotation,
 	CsvAsset,
 	InterventionPolicy,
 	Model,
@@ -250,7 +251,7 @@ import type {
 	SimulationRequest,
 	TimeSpan
 } from '@/types/Types';
-import { AssetType, ClientEventType } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import {
 	getRunResultCSV,
@@ -299,12 +300,11 @@ import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vu
 import {
 	addMultiVariableChartSetting,
 	deleteAnnotation,
-	fetchAnnotations,
 	generateForecastChartAnnotation,
 	saveAnnotation,
 	removeChartSettingById
 } from '@/services/chart-settings';
-import { useClientEvent } from '@/composables/useClientEvent';
+import { useChartAnnotations } from '@/composables/useChartAnnotations';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 
@@ -496,7 +496,7 @@ const preparedCharts = computed(() => {
 	chartSettings.value.forEach((setting) => {
 		const selectedVars = setting.selectedVariables;
 		const { statLayerVariables, sampleLayerVariables, options } = getForecastChartOptions(selectedVars, reverseMap);
-		const annotations = chartAnnotations.value.filter((annotation) => annotation.chartId === setting.id);
+		const annotations = getChartAnnotationsByChartId(setting.id);
 
 		const chart = applyForecastChartAnnotations(
 			createForecastChart(
@@ -529,25 +529,15 @@ const preparedCharts = computed(() => {
 });
 
 // --- Handle chart annotations
-// TODO: Move this to a separate composable since similar logic is used in other components
-const chartAnnotations = ref<ChartAnnotation[]>([]);
-const updateChartAnnotations = async () => {
-	chartAnnotations.value = await fetchAnnotations(props.node.id);
-};
-onMounted(() => updateChartAnnotations());
-useClientEvent([ClientEventType.ChartAnnotationCreate, ClientEventType.ChartAnnotationDelete], updateChartAnnotations);
-
+const { getChartAnnotationsByChartId } = useChartAnnotations(props.node.id);
 const generateAnnotation = async (setting: ChartSetting, query: string) => {
 	// Note: Currently llm generated chart annotations are supported for the forecast chart only
 	if (!preparedChartInputs.value) return null;
-
-	const selectedVars = setting.selectedVariables;
-	const { statLayerVariables, options } = getForecastChartOptions(selectedVars, preparedChartInputs.value.reverseMap);
-	const annotationLayerSpec = await generateForecastChartAnnotation(query, 'timepoint_id', statLayerVariables, {
-		translationMap: options.translationMap,
-		xAxisTitle: options.xAxisTitle,
-		yAxisTitle: options.yAxisTitle
-	});
+	const { statLayerVariables, options } = getForecastChartOptions(
+		setting.selectedVariables,
+		preparedChartInputs.value.reverseMap
+	);
+	const annotationLayerSpec = await generateForecastChartAnnotation(query, 'timepoint_id', statLayerVariables, options);
 	const saved = await saveAnnotation(annotationLayerSpec, props.node.id, setting.id);
 	return saved;
 };
