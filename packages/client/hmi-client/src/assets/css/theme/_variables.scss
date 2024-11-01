@@ -981,6 +981,8 @@ $petri-inputBox: var(--surface-0);
 	--node-header-hover: var(--text-color-subdued);
 	--z-index-modal: 1000;
 	--keyboard-zindex: calc(var(--z-index-modal) + 100);
+	--output-setting-slider-top: 48px;
+	--output-setting-slider-left: 4px;
 
 	// tailwind gaps as variables used in app
 	--gap-0-5: 0.125rem; 			// 2px

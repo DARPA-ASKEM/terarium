@@ -2,8 +2,8 @@
 	<transition>
 		<div class="chart-settings-panel" v-if="activeSettings !== null">
 			<header :class="{ shadow: false }">
-				<Button :icon="`pi pi-times`" @click="$emit('close')" text rounded size="large" />
-				<h4>Chart Settings</h4>
+				<Button :icon="`pi pi-angle-double-right`" @click="$emit('close')" text rounded size="large" />
+				<h4>{{ title }}</h4>
 			</header>
 			<div class="content">
 				<div v-if="chartAnnotations !== undefined" class="annotation-items">
@@ -66,6 +66,9 @@ const chartAnnotations = computed(() => {
 	}
 	return props.annotations.filter((annotation) => annotation.chartId === props.activeSettings?.id);
 });
+
+const title = computed(() => props.activeSettings?.name ?? 'Chart Settings');
+
 const isGeneratingAnnotation = ref(false);
 const generateAnnotationQuery = ref<string>('');
 const showAnnotationInput = ref<Boolean>(false);
@@ -93,12 +96,12 @@ const cancelGenerateAnnotation = () => {
 <style scoped>
 .chart-settings-panel {
 	position: absolute;
-	top: 0;
+	top: var(--output-setting-slider-top);
+	left: var(--output-setting-slider-left);
 	z-index: 3;
-	height: 100%;
-	width: 100%;
+	height: calc(100% - var(--output-setting-slider-top));
+	width: calc(100% - var(--output-setting-slider-left));
 	background: #fff;
-	left: 0;
 
 	&.v-enter-active,
 	&.v-leave-active {
