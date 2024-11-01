@@ -50,9 +50,9 @@ import software.uncharted.terarium.hmiserver.models.task.CompoundTask;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
+import software.uncharted.terarium.hmiserver.service.data.DKGService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
@@ -85,6 +85,7 @@ public class GoLLMController {
 	private final ModelService modelService;
 	private final ProjectService projectService;
 	private final CurrentUserService currentUserService;
+	private final DKGService dkgService;
 
 	private final CompareModelsResponseHandler compareModelsResponseHandler;
 	private final ConfigureModelFromDatasetResponseHandler configureModelFromDatasetResponseHandler;
@@ -95,7 +96,6 @@ public class GoLLMController {
 	private final GenerateSummaryHandler generateSummaryHandler;
 	private final InterventionsFromDocumentResponseHandler interventionsFromDocumentResponseHandler;
 	private final ModelCardResponseHandler modelCardResponseHandler;
-	private final MIRAProxy miraProxy;
 
 	private final Messages messages;
 
@@ -855,32 +855,32 @@ public class GoLLMController {
 		// Update State Grounding
 		if (!model.isRegnet()) {
 			List<State> states = model.getStates();
-			states.forEach(state -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, state));
+			states.forEach(state -> TaskUtilities.performDKGSearchAndSetGrounding(dkgService, state));
 			model.setStates(states);
 		} else if (model.isRegnet()) {
 			List<RegNetVertex> vertices = model.getVerticies();
-			vertices.forEach(vertex -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, vertex));
+			vertices.forEach(vertex -> TaskUtilities.performDKGSearchAndSetGrounding(dkgService, vertex));
 			model.setVerticies(vertices);
 		}
 
 		//Update Observable Grounding
 		if (model.getObservables() != null && !model.getObservables().isEmpty()) {
 			List<Observable> observables = model.getObservables();
-			observables.forEach(observable -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, observable));
+			observables.forEach(observable -> TaskUtilities.performDKGSearchAndSetGrounding(dkgService, observable));
 			model.setObservables(observables);
 		}
 
 		//Update Parameter Grounding
 		if (model.getParameters() != null && !model.getParameters().isEmpty()) {
 			List<ModelParameter> parameters = model.getParameters();
-			parameters.forEach(parameter -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, parameter));
+			parameters.forEach(parameter -> TaskUtilities.performDKGSearchAndSetGrounding(dkgService, parameter));
 			model.setParameters(parameters);
 		}
 
 		//Update Transition Grounding
 		if (model.getTransitions() != null && !model.getTransitions().isEmpty()) {
 			List<Transition> transitions = model.getTransitions();
-			transitions.forEach(transition -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, transition));
+			transitions.forEach(transition -> TaskUtilities.performDKGSearchAndSetGrounding(dkgService, transition));
 			model.setTransitions(transitions);
 		}
 

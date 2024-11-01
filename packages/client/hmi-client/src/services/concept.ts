@@ -31,7 +31,7 @@ async function getCuriesEntities(curies: Array<string>): Promise<Array<DKG> | nu
 
 		let promise = currieEntityCache.get(cacheKey);
 		if (!promise) {
-			promise = API.get(`/mira/currie/${curies.toString()}`).then((res) => ({ data: res.data, status: res.status }));
+			promise = API.get(`/dkg/currie/${curies.toString()}`).then((res) => ({ data: res.data, status: res.status }));
 			currieEntityCache.set(cacheKey, promise);
 		}
 
@@ -48,9 +48,9 @@ async function getCuriesEntities(curies: Array<string>): Promise<Array<DKG> | nu
 
 async function searchCuriesEntities(query: string): Promise<Array<DKG>> {
 	try {
-		const response = await API.get('/mira/search', {
+		const response = await API.get('/dkg/search', {
 			params: {
-				q: query
+				term: query
 			}
 		});
 		if (response?.status !== 200) return [];
