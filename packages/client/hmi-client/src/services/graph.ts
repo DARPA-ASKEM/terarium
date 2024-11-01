@@ -37,6 +37,26 @@ interface ExtRect {
 	cx: number;
 	cy: number;
 }
+
+enum EdgeProportion {
+	None,
+	Source,
+	Target,
+	Both
+}
+
+/**
+ * Options
+ * - edgeProportion determines if edge start/end should be placed proportionally distance away
+ * from each other.
+ * - adpativeRoute determines if the side where edge start/end shold be fixed or adaptive
+ *
+ * */
+const routeOptions = {
+	edgeProportion: EdgeProportion.None,
+	edgeAdaptiveSide: false
+};
+
 export const rerouteEdges = (nodes: INode<any>[], edges: IEdge<any>[]) => {
 	const nodeMap: Map<string, ExtRect> = new Map();
 	nodes.forEach((node) => {
@@ -58,57 +78,82 @@ export const rerouteEdges = (nodes: INode<any>[], edges: IEdge<any>[]) => {
 	// eg if there are 3 edges coming out of node-A, then the placement of these
 	// edges are (edge-i/num+1) => [1/4, 2/4, 3/4]
 	const edgeSourceMap: Map<string, number> = new Map();
+	const edgeTargetMap: Map<string, number> = new Map();
 	edges.forEach((edge: IEdge<any>) => {
 		if (edge.data.isObservable) return;
 		if (!edgeSourceMap.has(edge.source)) {
 			edgeSourceMap.set(edge.source, 0);
 		}
+		if (!edgeTargetMap.has(edge.target)) {
+			edgeTargetMap.set(edge.target, 0);
+		}
 		edgeSourceMap.set(edge.source, 1 + (edgeSourceMap.get(edge.source) as number));
+		edgeTargetMap.set(edge.target, 1 + (edgeTargetMap.get(edge.target) as number));
 	});
 
 	const sourceNodeCounter: Map<string, number> = new Map();
+	const targetNodeCounter: Map<string, number> = new Map();
+
 	edges.forEach((edge: IEdge<any>) => {
 		if (edge.data.isObservable) return;
 		if (!sourceNodeCounter.has(edge.source)) {
 			sourceNodeCounter.set(edge.source, 0);
 		}
-		let counter = sourceNodeCounter.get(edge.source) as number;
-		const denominator = edgeSourceMap.get(edge.source) as number;
-		counter++;
+		if (!targetNodeCounter.has(edge.target)) {
+			targetNodeCounter.set(edge.target, 0);
+		}
+
+		let sourceCounter = sourceNodeCounter.get(edge.source) as number;
+		let targetCounter = targetNodeCounter.get(edge.target) as number;
+
+		const sourceDenominator = edgeSourceMap.get(edge.source) as number;
+		const targetDenominator = edgeTargetMap.get(edge.target) as number;
+		sourceCounter++;
+		targetCounter++;
 
 		let sideA: Side = 'right';
 		let sideB: Side = 'left';
 
-		const threshold = 40;
 		const shapeA = nodeMap.get(edge.source) as ExtRect;
 		const shapeB = nodeMap.get(edge.target) as ExtRect;
-		if (Math.abs(shapeB.cx - shapeA.cx) > threshold && Math.abs(shapeB.cy - shapeA.cy) > threshold) {
-			if (shapeB.cx <= shapeA.cx && shapeB.cy <= shapeA.cy) {
-				sideA = 'top';
-				sideB = 'right';
-			} else if (shapeB.cx > shapeA.cx && shapeB.cy <= shapeA.cy) {
-				sideA = 'top';
-				sideB = 'left';
-			} else if (shapeB.cx <= shapeA.cx && shapeB.cy >= shapeA.cy) {
-				sideA = 'bottom';
+
+		if (routeOptions.edgeAdaptiveSide) {
+			if (shapeA.cx >= shapeB.cx) {
+				sideA = 'left';
 				sideB = 'right';
 			} else {
-				sideA = 'bottom';
+				sideA = 'right';
 				sideB = 'left';
 			}
 		}
 
-		const path = OrthogonalConnector.route({
-			pointA: { shape: shapeA, side: sideA, distance: counter / (denominator + 1) },
+		const orthoOptions = {
+			pointA: { shape: shapeA, side: sideA, distance: 0.5 },
 			pointB: { shape: shapeB, side: sideB, distance: 0.5 },
-			shapeMargin: 10,
+			shapeMargin: 20,
 			globalBoundsMargin: 10,
-			globalBounds: { left: -5000, top: -5000, width: 5000, height: 5000 },
+			globalBounds: { left: -8000, top: -8000, width: 8000, height: 8000 },
 			obstacles
-		});
-		sourceNodeCounter.set(edge.source, counter);
+		};
 
+		if (routeOptions.edgeProportion === EdgeProportion.Both) {
+			orthoOptions.pointA.distance = sourceCounter / (sourceDenominator + 1);
+			orthoOptions.pointB.distance = targetCounter / (targetDenominator + 1);
+		} else if (routeOptions.edgeProportion === EdgeProportion.Source) {
+			orthoOptions.pointA.distance = sourceCounter / (sourceDenominator + 1);
+			orthoOptions.pointB.distance = 0.5;
+		} else if (routeOptions.edgeProportion === EdgeProportion.Target) {
+			orthoOptions.pointA.distance = 0.5;
+			orthoOptions.pointB.distance = targetCounter / (targetDenominator + 1);
+		} else {
+			orthoOptions.pointA.distance = 0.5;
+			orthoOptions.pointB.distance = 0.5;
+		}
+		const path = OrthogonalConnector.route(orthoOptions);
 		edge.points = path;
+
+		sourceNodeCounter.set(edge.source, sourceCounter);
+		targetNodeCounter.set(edge.target, targetCounter);
 	});
 };
 
