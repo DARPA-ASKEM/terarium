@@ -858,32 +858,57 @@ public class GoLLMController {
 		// Update State Grounding
 		if (!model.isRegnet()) {
 			final List<State> states = model.getStates();
-			states.forEach(state -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, state));
+			states.forEach(state -> {
+				if (state == null) {
+					state = new State();
+				}
+				TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, state);
+			});
 			model.setStates(states);
 		} else if (model.isRegnet()) {
 			final List<RegNetVertex> vertices = model.getVerticies();
-			vertices.forEach(vertex -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, vertex));
+			vertices.forEach(vertex -> {
+				if (vertex == null) {
+					vertex = new RegNetVertex();
+				}
+				TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, vertex);
+			});
 			model.setVerticies(vertices);
 		}
 
 		// Update Observable Grounding
 		if (model.getObservables() != null && !model.getObservables().isEmpty()) {
 			final List<Observable> observables = model.getObservables();
-			observables.forEach(observable -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, observable));
+			observables.forEach(observable -> {
+				if (observable == null) {
+					observable = new Observable();
+				}
+				TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, observable);
+			});
 			model.setObservables(observables);
 		}
 
 		// Update Parameter Grounding
 		if (model.getParameters() != null && !model.getParameters().isEmpty()) {
 			final List<ModelParameter> parameters = model.getParameters();
-			parameters.forEach(parameter -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, parameter));
+			parameters.forEach(parameter -> {
+				if (parameter == null) {
+					parameter = new ModelParameter();
+				}
+				TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, parameter);
+			});
 			model.setParameters(parameters);
 		}
 
 		// Update Transition Grounding
 		if (model.getTransitions() != null && !model.getTransitions().isEmpty()) {
 			final List<Transition> transitions = model.getTransitions();
-			transitions.forEach(transition -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, transition));
+			transitions.forEach(transition -> {
+				if (transition == null) {
+					transition = new Transition();
+				}
+				TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, transition);
+			});
 			model.setTransitions(transitions);
 		}
 

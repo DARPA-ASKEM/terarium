@@ -230,34 +230,59 @@ public class KnowledgeController {
 		}
 
 		// Update State Grounding
-		if (!model.get().isRegnet()) {
+		if (model.get().isPetrinet()) {
 			List<State> states = model.get().getStates();
-			states.forEach(state -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, state));
+			states.forEach(state -> {
+				if (state == null) {
+					state = new State();
+				}
+				TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, state);
+			});
 			model.get().setStates(states);
-		} else if (model.get().isRegnet()) {
+		} else {
 			List<RegNetVertex> vertices = model.get().getVerticies();
-			vertices.forEach(vertex -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, vertex));
+			vertices.forEach(vertex -> {
+				if (vertex == null) {
+					vertex = new RegNetVertex();
+				}
+				TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, vertex);
+			});
 			model.get().setVerticies(vertices);
 		}
 
 		//Update Observable Grounding
 		if (model.get().getObservables() != null && !model.get().getObservables().isEmpty()) {
 			List<Observable> observables = model.get().getObservables();
-			observables.forEach(observable -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, observable));
+			observables.forEach(observable -> {
+				if (observable == null) {
+					observable = new Observable();
+				}
+				TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, observable);
+			});
 			model.get().setObservables(observables);
 		}
 
 		//Update Parameter Grounding
 		if (model.get().getParameters() != null && !model.get().getParameters().isEmpty()) {
 			List<ModelParameter> parameters = model.get().getParameters();
-			parameters.forEach(parameter -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, parameter));
+			parameters.forEach(parameter -> {
+				if (parameter == null) {
+					parameter = new ModelParameter();
+				}
+				TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, parameter);
+			});
 			model.get().setParameters(parameters);
 		}
 
 		//Update Transition Grounding
 		if (model.get().getTransitions() != null && !model.get().getTransitions().isEmpty()) {
 			List<Transition> transitions = model.get().getTransitions();
-			transitions.forEach(transition -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, transition));
+			transitions.forEach(transition -> {
+				if (transition == null) {
+					transition = new Transition();
+				}
+				TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, transition);
+			});
 			model.get().setTransitions(transitions);
 		}
 
@@ -370,6 +395,10 @@ public class KnowledgeController {
 				e
 			);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("skema.internal-error"));
+		}
+
+		if (!responseAMR.isPetrinet()) {
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("skema.bad-equations.petrinet"));
 		}
 
 		// If no model id is provided, create a new model asset

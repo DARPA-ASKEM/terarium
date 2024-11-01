@@ -109,6 +109,8 @@ public class TaskUtilities {
 			if (part.getGrounding().getIdentifiers() == null) part.getGrounding().setIdentifiers(new HashMap<>());
 			String[] currieId = dkg.getCurie().split(":");
 			part.getGrounding().getIdentifiers().put(currieId[0], currieId[1]);
+		} else {
+			part.setGrounding(new ModelGrounding());
 		}
 	}
 }
