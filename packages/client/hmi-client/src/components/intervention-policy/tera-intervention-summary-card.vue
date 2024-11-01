@@ -16,9 +16,8 @@
 			<li v-for="(dynamicIntervention, index) in intervention.dynamicInterventions" :key="`dynamic-${index}`">
 				Set {{ dynamicIntervention.type }} <strong>{{ dynamicIntervention.appliedTo }}</strong> to
 				<strong>{{ dynamicIntervention.value }}</strong> when
-				<strong>{{ dynamicIntervention.parameter }}</strong> crosses the threshold&nbsp;<strong>{{
-					dynamicIntervention.threshold
-				}}</strong
+				<strong>{{ dynamicIntervention.parameter }}</strong> crosses the threshold&nbsp;<strong
+					>{{ dynamicIntervention.threshold }} {{ getUnit(dynamicIntervention) }}</strong
 				>.
 			</li>
 		</ul>
@@ -26,15 +25,27 @@
 </template>
 
 <script setup lang="ts">
-import { Intervention } from '@/types/Types';
+import { Intervention, DynamicIntervention, InterventionSemanticType } from '@/types/Types';
 import { CalendarSettings, getTimePointString } from '@/utils/date';
 import { isEmpty } from 'lodash';
 
 const props = defineProps<{
 	intervention: Intervention;
+	parameterUnits?: { id: string; units: string } | {};
+	stateUnits?: { id: string; units: string } | {};
 	startDate?: Date;
 	calendarSettings?: CalendarSettings;
 }>();
+
+function getUnit(dynamicIntervention: DynamicIntervention) {
+	let modelUnit = '';
+	if (dynamicIntervention.type === InterventionSemanticType.State) {
+		modelUnit = props.stateUnits?.[dynamicIntervention.parameter]?.units ?? '';
+	} else if (dynamicIntervention.type === InterventionSemanticType.Parameter) {
+		modelUnit = props.parameterUnits?.[dynamicIntervention.appliedTo]?.units ?? '';
+	}
+	return modelUnit;
+}
 </script>
 
 <style scoped>
