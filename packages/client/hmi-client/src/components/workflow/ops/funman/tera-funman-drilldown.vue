@@ -830,7 +830,7 @@ async function renderCharts() {
 watch(
 	() => [props.node.state.runId, mmt],
 	async () => {
-		if (!props.node.state.runId) return;
+		if (!props.node.state.runId || isEmpty(mmt.templates)) return;
 		const rawFunmanResult = await getRunResult(props.node.state.runId, 'validation.json');
 		if (!rawFunmanResult) {
 			logger.error('Failed to fetch funman result');
@@ -840,18 +840,25 @@ watch(
 		funmanResult = JSON.parse(rawFunmanResult);
 		constraintsResponse = funmanResult.request.constraints;
 
-		validatedModelConfiguration.value = await getModelConfigurationById(funmanResult.modelConfigurationId);
-		if (validatedModelConfiguration.value) {
-			configuredMmt.value = makeConfiguredMMT(mmt, validatedModelConfiguration.value);
-			calibratedConfigObservables.value = validatedModelConfiguration.value.observableSemanticList.map(
-				({ referenceId, states, expression }) => ({
-					id: referenceId,
-					name: referenceId,
-					states,
-					expression
-				})
-			);
+		const modelConfigurationId: string = funmanResult.modelConfigurationId;
+		if (!modelConfigurationId) {
+			logger.error('No model configuration id found in funman result');
+			return;
 		}
+		validatedModelConfiguration.value = await getModelConfigurationById(funmanResult.modelConfigurationId);
+		if (!validatedModelConfiguration.value) {
+			logger.error('Failed to fetch model configuration');
+			return;
+		}
+		configuredMmt.value = makeConfiguredMMT(mmt, validatedModelConfiguration.value);
+		calibratedConfigObservables.value = validatedModelConfiguration.value.observableSemanticList.map(
+			({ referenceId, states, expression }) => ({
+				id: referenceId,
+				name: referenceId,
+				states,
+				expression
+			})
+		);
 
 		stateOptions.value = funmanResult.model.petrinet.model.states.map(({ id }) => id);
 		parameterOptions.value = funmanResult.request.parameters
