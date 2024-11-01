@@ -83,7 +83,8 @@
 								:start-date="modelConfiguration?.temporalContext"
 								:calendar-settings="getCalendarSettingsFromModel(model)"
 								:intervention="intervention"
-								:model-units="modelStateUnits"
+								:state-units="modelStateUnits"
+								:parameter-units="modelParameterUnits"
 								:key="index"
 							/>
 						</template>
@@ -324,7 +325,30 @@ const codeText = ref('');
 
 const modelConfiguration = ref<ModelConfiguration | null>(null);
 const model = ref<Model | null>(null);
-const modelStateUnits = computed(() => _.keyBy(model.value?.model.states, 'id'));
+
+const modelStateUnits = computed(() => {
+	const states = model.value?.model.states;
+	let units = {};
+	if (states.length) {
+		units = _.keyBy(
+			states.map((state) => ({ id: state.id, units: state?.units?.expression ?? '' })),
+			'id'
+		);
+	}
+	return units;
+});
+
+const modelParameterUnits = computed(() => {
+	const parametes = model.value?.semantics?.ode?.parameters;
+	let units = {};
+	if (parametes?.length) {
+		units = _.keyBy(
+			parametes.map((parameter) => ({ id: parameter.id, units: parameter?.units?.expression ?? '' })),
+			'id'
+		);
+	}
+	return units;
+});
 
 const policyInterventionId = computed(() => props.node.inputs[1].value?.[0]);
 const interventionPolicy = ref<InterventionPolicy | null>(null);

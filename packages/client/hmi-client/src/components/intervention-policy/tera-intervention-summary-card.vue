@@ -31,7 +31,8 @@ import { isEmpty } from 'lodash';
 
 const props = defineProps<{
 	intervention: Intervention;
-	modelUnits?: string;
+	parameterUnits?: { id: string; units: string } | {};
+	stateUnits?: { id: string; units: string } | {};
 	startDate?: Date;
 	calendarSettings?: CalendarSettings;
 }>();
@@ -39,7 +40,9 @@ const props = defineProps<{
 function getUnit(dynamicIntervention: DynamicIntervention) {
 	let modelUnit = '';
 	if (dynamicIntervention.type === InterventionSemanticType.State) {
-		modelUnit = props.modelUnits?.[dynamicIntervention.parameter]?.units?.expression ?? '';
+		modelUnit = props.stateUnits?.[dynamicIntervention.parameter]?.units ?? '';
+	} else if (dynamicIntervention.type === InterventionSemanticType.Parameter) {
+		modelUnit = props.parameterUnits?.[dynamicIntervention.appliedTo]?.units ?? '';
 	}
 	return modelUnit;
 }
