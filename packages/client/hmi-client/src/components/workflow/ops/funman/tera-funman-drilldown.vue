@@ -840,7 +840,7 @@ watch(
 		funmanResult = JSON.parse(rawFunmanResult);
 		constraintsResponse = funmanResult.request.constraints;
 
-		const { modelConfigurationId } = funmanResult;
+		const modelConfigurationId: string = funmanResult.modelConfigurationId;
 		if (!modelConfigurationId) {
 			logger.error('No model configuration id found in funman result');
 			return;
