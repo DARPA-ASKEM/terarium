@@ -830,7 +830,7 @@ async function renderCharts() {
 watch(
 	() => [props.node.state.runId, mmt],
 	async () => {
-		if (!props.node.state.runId && !isEmpty(mmt)) return;
+		if (!props.node.state.runId || isEmpty(mmt.templates)) return;
 		const rawFunmanResult = await getRunResult(props.node.state.runId, 'validation.json');
 		if (!rawFunmanResult) {
 			logger.error('Failed to fetch funman result');
