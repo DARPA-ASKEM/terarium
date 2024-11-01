@@ -208,12 +208,6 @@ public class ModelController {
 				log.debug("Unable to get the, or empty, provenance search models_from_document for model " + id);
 			}
 
-			// Force observable to empty-list if null or not specified
-			if (model.get().getSemantics() != null) {
-				if (model.get().getSemantics().getOde().getObservables() == null) {
-					model.get().getSemantics().getOde().setObservables(new ArrayList());
-				}
-			}
 			// Force proper annotation metadata
 			final ModelMetadata metadata = model.get().getMetadata();
 			if (metadata.getAnnotations() == null) {

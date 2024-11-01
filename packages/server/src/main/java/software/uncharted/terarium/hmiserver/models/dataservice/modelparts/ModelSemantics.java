@@ -22,10 +22,10 @@ public class ModelSemantics extends SupportAdditionalProperties implements Seria
 	@Serial
 	private static final long serialVersionUID = -3980275395523359973L;
 
-	private OdeSemantics ode;
+	private OdeSemantics ode = new OdeSemantics();
 
 	@TSOptional
-	private List<JsonNode> span;
+	private List<JsonNode> span = new ArrayList<>();
 
 	@TSOptional
 	private JsonNode typing;

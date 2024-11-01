@@ -8,20 +8,23 @@ FROM python:3.10-slim-bookworm AS mira_taskrunner_builder
 
 # Install OpenJDK
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  wget \
-  openjdk-17-jdk-headless && \
-  rm -rf /var/lib/apt/lists/*
+	wget \
+	openjdk-17-jdk-headless && \
+	rm -rf /var/lib/apt/lists/*
 
 # Install Mira
 COPY ./packages/mira/mira-version.txt /miraVersion.txt
 RUN COMMIT_SHA="$(cat /miraVersion.txt)" && \
-  echo "Using MIRA commit $COMMIT_SHA" && \
-  wget --progress=dot:giga -O mira.tar.gz "https://github.com/gyorilab/mira/archive/${COMMIT_SHA}.tar.gz" && \
-  tar -zxvf mira.tar.gz && \
-  rm mira.tar.gz && \
-  mv -v mira-* mira
+	echo "Using MIRA commit $COMMIT_SHA" && \
+	wget --progress=dot:giga -O mira.tar.gz "https://github.com/gyorilab/mira/archive/${COMMIT_SHA}.tar.gz" && \
+	tar -zxvf mira.tar.gz && \
+	rm mira.tar.gz && \
+	mv -v mira-* mira
 WORKDIR /mira
 RUN pip install --no-cache-dir .[sbml,biomodels]
+
+# install sympy
+RUN pip install sympy antlr4-python3-runtime==4.11
 
 #^^^^^^^^^^^^^^^^^^^^
 ######################
@@ -39,9 +42,9 @@ WORKDIR /
 
 # Install OpenJDK JRE
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  wget \
-  openjdk-17-jre-headless && \
-  rm -rf /var/lib/apt/lists/*
+	wget \
+	openjdk-17-jre-headless && \
+	rm -rf /var/lib/apt/lists/*
 
 # Copy the Spring Boot fat JAR from the builder image
 COPY --from=mira_taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.jar
@@ -62,6 +65,9 @@ COPY ./packages/mira /mira_task
 
 WORKDIR /mira_task
 RUN pip install --no-cache-dir -e .
+
+# install sympy
+RUN pip install sympy antlr4-python3-runtime==4.11
 
 WORKDIR /
 CMD ["java", "-jar", "taskrunner.jar"]

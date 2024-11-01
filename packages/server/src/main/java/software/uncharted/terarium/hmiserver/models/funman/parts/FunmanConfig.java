@@ -66,4 +66,7 @@ public class FunmanConfig {
 
 	@TSOptional
 	private Integer normalization_constant;
+
+	@TSOptional
+	private Integer verbosity;
 }
