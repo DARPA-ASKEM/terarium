@@ -82,7 +82,7 @@
 				<Button label="Save as" outlined severity="secondary" @click="showSaveModal = true" />
 				<Button :disabled="isSaveDisabled" label="Save" @click="onSaveConfiguration" />
 			</template>
-			<Accordion :activeIndex="0">
+			<Accordion multiple :activeIndex="currentActiveIndexes">
 				<AccordionTab>
 					<template #header>
 						<h5 class="btn-content">Description</h5>
@@ -105,8 +105,6 @@
 						v-model="newDescription"
 					/>
 				</AccordionTab>
-			</Accordion>
-			<Accordion :activeIndex="0">
 				<AccordionTab v-if="model?.semantics?.ode?.time" header="Context">
 					<div class="flex flex-column gap-2">
 						<h5>Temporal Context</h5>
@@ -124,8 +122,6 @@
 						/>
 					</div>
 				</AccordionTab>
-			</Accordion>
-			<Accordion :activeIndex="0">
 				<AccordionTab header="Diagram">
 					<tera-model-diagram v-if="model" :model="model" class="mb-2" />
 				</AccordionTab>
@@ -304,6 +300,7 @@ const props = defineProps<{
 const isFetchingPDF = ref(false);
 const isDocViewerOpen = ref(true);
 
+const currentActiveIndexes = ref([0, 1, 2]);
 const pdfData = ref<{ document: any; data: string; isPdf: boolean; name: string }[]>([]);
 const pdfPanelRef = ref();
 const pdfViewer = computed(() => pdfPanelRef.value?.pdfRef[0]);
