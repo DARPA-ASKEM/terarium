@@ -178,7 +178,7 @@ public class GoLLMController {
 		final TaskRequest req;
 		try {
 			req = TaskUtilities.getModelCardTask(currentUserService.get().getId(), documentOpt.get(), model.get(), projectId);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			log.error("Unable to create Model Card task", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 		}
@@ -262,7 +262,7 @@ public class GoLLMController {
 
 		try {
 			input.setResearchPaper(objectMapper.writeValueAsString(document.get().getExtractions()));
-		} catch (JsonProcessingException e) {
+		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize document text", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 		}
@@ -505,7 +505,7 @@ public class GoLLMController {
 		final InterventionsFromDocumentResponseHandler.Input input = new InterventionsFromDocumentResponseHandler.Input();
 		try {
 			input.setResearchPaper(objectMapper.writeValueAsString(document.get().getExtractions()));
-		} catch (JsonProcessingException e) {
+		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize document text", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 		}
@@ -729,11 +729,13 @@ public class GoLLMController {
 	/**
 	 * This endpoint will dispatch a few GoLLM tasks to enrich model metadata,
 	 * including enriching the AMR and creating the model card
-	 * @param modelId UUID of the model to enrich
+	 *
+	 * @param modelId    UUID of the model to enrich
 	 * @param documentId UUID of the document to use for enrichment
-	 * @param mode TaskMode to run the task in (is this ASYNC?)
-	 * @param projectId UUID of the project to associate the task with for permissions
-	 * @param overwrite boolean to determine if the model should be overwritten
+	 * @param mode       TaskMode to run the task in (is this ASYNC?)
+	 * @param projectId  UUID of the project to associate the task with for
+	 *                   permissions
+	 * @param overwrite  boolean to determine if the model should be overwritten
 	 * @return TaskResponse with the task ID
 	 */
 	@GetMapping("/enrich-model-metadata")
@@ -772,7 +774,8 @@ public class GoLLMController {
 		// Grab the document
 		final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
 
-		// make sure there is text in the document. We don't need a document but if we do have one it can't be empty
+		// make sure there is text in the document. We don't need a document but if we
+		// do have one it can't be empty
 		if (document.isPresent() && (document.get().getText() == null || document.get().getText().isEmpty())) {
 			log.warn(String.format("Document %s has no extracted text", documentId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.extraction.not-done"));
@@ -797,7 +800,7 @@ public class GoLLMController {
 					projectId,
 					overwrite
 				);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				log.error("Unable to create Enrich AMR task", e);
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 			}
@@ -810,7 +813,7 @@ public class GoLLMController {
 					modelOptional.get(),
 					projectId
 				);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				log.error("Unable to create Model Card task", e);
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 			}
@@ -819,7 +822,7 @@ public class GoLLMController {
 		} else {
 			try {
 				req = TaskUtilities.getModelCardTask(currentUserService.get().getId(), null, modelOptional.get(), projectId);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				log.error("Unable to create Model Card task", e);
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 			}
@@ -845,48 +848,48 @@ public class GoLLMController {
 		// at this point the initial enrichment has happened.
 		modelOptional = modelService.getAsset(modelId, permission);
 		if (modelOptional.isEmpty()) {
-			//this would be a very strange case
+			// this would be a very strange case
 			log.warn(String.format("Model %s not found", modelId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 		}
 
-		Model model = modelOptional.get();
+		final Model model = modelOptional.get();
 
 		// Update State Grounding
 		if (!model.isRegnet()) {
-			List<State> states = model.getStates();
+			final List<State> states = model.getStates();
 			states.forEach(state -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, state));
 			model.setStates(states);
 		} else if (model.isRegnet()) {
-			List<RegNetVertex> vertices = model.getVerticies();
+			final List<RegNetVertex> vertices = model.getVerticies();
 			vertices.forEach(vertex -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, vertex));
 			model.setVerticies(vertices);
 		}
 
-		//Update Observable Grounding
+		// Update Observable Grounding
 		if (model.getObservables() != null && !model.getObservables().isEmpty()) {
-			List<Observable> observables = model.getObservables();
+			final List<Observable> observables = model.getObservables();
 			observables.forEach(observable -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, observable));
 			model.setObservables(observables);
 		}
 
-		//Update Parameter Grounding
+		// Update Parameter Grounding
 		if (model.getParameters() != null && !model.getParameters().isEmpty()) {
-			List<ModelParameter> parameters = model.getParameters();
+			final List<ModelParameter> parameters = model.getParameters();
 			parameters.forEach(parameter -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, parameter));
 			model.setParameters(parameters);
 		}
 
-		//Update Transition Grounding
+		// Update Transition Grounding
 		if (model.getTransitions() != null && !model.getTransitions().isEmpty()) {
-			List<Transition> transitions = model.getTransitions();
+			final List<Transition> transitions = model.getTransitions();
 			transitions.forEach(transition -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, transition));
 			model.setTransitions(transitions);
 		}
 
 		try {
 			modelService.updateAsset(model, projectId, permission);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
 
@@ -955,7 +958,7 @@ public class GoLLMController {
 				projectId,
 				overwrite
 			);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			log.error("Unable to create Enrich AMR task", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 		}
@@ -1193,7 +1196,7 @@ public class GoLLMController {
 		}
 	)
 	public ResponseEntity<Void> cancelTask(@PathVariable("task-id") final UUID taskId) {
-		taskService.cancelTask(taskId);
+		taskService.cancelTask(TaskType.GOLLM, taskId);
 		return ResponseEntity.ok().build();
 	}
 }
