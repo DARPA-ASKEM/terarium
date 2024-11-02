@@ -60,7 +60,7 @@
 										</div>
 									</section>
 								</li>
-								<li v-for="(cfg, index) in node.state.constraintGroups" :key="selectedOutputId + ':' + index">
+								<li v-for="(cfg, index) in node.state.constraintGroups" :key="index">
 									<tera-constraint-group-form
 										:config="cfg"
 										:index="index"
@@ -139,7 +139,7 @@
 					v-model:value="notebookText"
 					lang="json"
 					theme="chrome"
-					style="flex-grow: 1; width: 100%; height: 100%"
+					style="width: 100%; height: 100%; border-radius: 0"
 					class="ace-editor"
 					:options="{ showPrintMargin: false }"
 				/>
@@ -355,7 +355,7 @@ import {
 	makeQueries
 } from '@/services/models/funman-service';
 import { createFunmanStateChart, createFunmanParameterCharts } from '@/services/charts';
-import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
+import { WorkflowNode } from '@/types/workflow';
 import { getRunResult } from '@/services/models/simulation-service';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { emptyMiraModel, makeConfiguredMMT } from '@/model-representation/mira/mira';
@@ -368,6 +368,7 @@ import { stringToLatexExpression, getModel, getMMT } from '@/services/model';
 import { displayNumber } from '@/utils/number';
 import { removeChartSettingById, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { nodeOutputLabel } from '@/components/workflow/util';
+import { formatJSON } from '@/services/code';
 import { FunmanOperationState, Constraint, ConstraintType, CompartmentalConstraint } from './funman-operation';
 
 const props = defineProps<{
@@ -407,10 +408,6 @@ let configuredInputModel: Model | null = null;
 const stateIds = ref<string[]>([]);
 const parameterIds = ref<string[]>([]);
 const observableIds = ref<string[]>([]);
-
-const selectedOutputId = ref<string>();
-
-const activeOutput = ref<WorkflowOutput<FunmanOperationState> | null>(null);
 
 const variablesOfInterest = ref();
 const onToggleVariableOfInterest = (event: any[]) => {
@@ -690,27 +687,13 @@ onMounted(async () => {
 	setModelOptions();
 
 	model.value = await getModel(modelConfiguration.modelId);
-	if (model.value) {
-		const response = await getMMT(model.value);
-		if (response) {
-			mmt = response.mmt;
-			mmtParams.value = response.template_params;
-		}
-	}
+	if (!model.value) return;
+	const response = await getMMT(model.value);
+	if (!response) return;
+	mmt = response.mmt;
+	mmtParams.value = response.template_params;
+	prepareOutput();
 });
-
-watch(
-	() => props.node.active,
-	() => {
-		// Update selected output
-		if (props.node.active) {
-			activeOutput.value = props.node.outputs.find((d) => d.id === props.node.active) as any;
-			selectedOutputId.value = props.node.active;
-			setModelOptions();
-		}
-	},
-	{ immediate: true }
-);
 
 // Notebook
 const notebookText = ref('');
@@ -822,63 +805,64 @@ function removeChartSetting(chartId: string) {
 	}
 }
 
-async function renderCharts() {
+function renderCharts() {
 	updateStateCharts();
 	updateParameterCharts();
 }
 
+async function prepareOutput() {
+	if (!props.node.state.runId) return;
+	const rawFunmanResult = await getRunResult(props.node.state.runId, 'validation.json');
+	if (!rawFunmanResult) {
+		logger.error('Failed to fetch funman result');
+		return;
+	}
+	notebookText.value = formatJSON(rawFunmanResult);
+	funmanResult = JSON.parse(rawFunmanResult);
+	constraintsResponse = funmanResult.request.constraints;
+
+	const modelConfigurationId: string = funmanResult.modelConfigurationId;
+	if (!modelConfigurationId) {
+		logger.error('No model configuration id found in funman result');
+		return;
+	}
+	validatedModelConfiguration.value = await getModelConfigurationById(funmanResult.modelConfigurationId);
+	if (!validatedModelConfiguration.value) {
+		logger.error('Failed to fetch model configuration');
+		return;
+	}
+	configuredMmt.value = makeConfiguredMMT(mmt, validatedModelConfiguration.value);
+	calibratedConfigObservables.value = validatedModelConfiguration.value.observableSemanticList.map(
+		({ referenceId, states, expression }) => ({
+			id: referenceId,
+			name: referenceId,
+			states,
+			expression
+		})
+	);
+
+	stateOptions.value = funmanResult.model.petrinet.model.states.map(({ id }) => id);
+	parameterOptions.value = funmanResult.request.parameters
+		.filter((d: any) => d.interval.lb !== d.interval.ub)
+		.map(({ name }) => name);
+
+	// Initialize default output settings
+	const state = cloneDeep(props.node.state);
+	state.chartSettings = updateChartSettingsBySelectedVariables([], ChartSettingType.VARIABLE, stateOptions.value);
+	state.chartSettings = updateChartSettingsBySelectedVariables(
+		state.chartSettings,
+		ChartSettingType.DISTRIBUTION_COMPARISON,
+		parameterOptions.value
+	);
+	emit('update-state', state);
+
+	processedFunmanResult.value = processFunman(funmanResult);
+	renderCharts();
+}
+
 watch(
-	() => [props.node.state.runId, mmt],
-	async () => {
-		if (!props.node.state.runId || isEmpty(mmt.templates)) return;
-		const rawFunmanResult = await getRunResult(props.node.state.runId, 'validation.json');
-		if (!rawFunmanResult) {
-			logger.error('Failed to fetch funman result');
-			return;
-		}
-		notebookText.value = rawFunmanResult;
-		funmanResult = JSON.parse(rawFunmanResult);
-		constraintsResponse = funmanResult.request.constraints;
-
-		const modelConfigurationId: string = funmanResult.modelConfigurationId;
-		if (!modelConfigurationId) {
-			logger.error('No model configuration id found in funman result');
-			return;
-		}
-		validatedModelConfiguration.value = await getModelConfigurationById(funmanResult.modelConfigurationId);
-		if (!validatedModelConfiguration.value) {
-			logger.error('Failed to fetch model configuration');
-			return;
-		}
-		configuredMmt.value = makeConfiguredMMT(mmt, validatedModelConfiguration.value);
-		calibratedConfigObservables.value = validatedModelConfiguration.value.observableSemanticList.map(
-			({ referenceId, states, expression }) => ({
-				id: referenceId,
-				name: referenceId,
-				states,
-				expression
-			})
-		);
-
-		stateOptions.value = funmanResult.model.petrinet.model.states.map(({ id }) => id);
-		parameterOptions.value = funmanResult.request.parameters
-			.filter((d: any) => d.interval.lb !== d.interval.ub)
-			.map(({ name }) => name);
-
-		// Initialize default output settings
-		const state = cloneDeep(props.node.state);
-		state.chartSettings = updateChartSettingsBySelectedVariables([], ChartSettingType.VARIABLE, stateOptions.value);
-		state.chartSettings = updateChartSettingsBySelectedVariables(
-			state.chartSettings,
-			ChartSettingType.DISTRIBUTION_COMPARISON,
-			parameterOptions.value
-		);
-		emit('update-state', state);
-
-		processedFunmanResult.value = processFunman(funmanResult);
-		renderCharts();
-	},
-	{ immediate: true }
+	() => props.node.state.runId,
+	() => prepareOutput()
 );
 </script>
 
