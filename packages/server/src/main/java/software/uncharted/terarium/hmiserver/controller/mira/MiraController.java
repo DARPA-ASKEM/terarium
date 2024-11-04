@@ -417,7 +417,7 @@ public class MiraController {
 		}
 	)
 	public ResponseEntity<Void> cancelTask(@PathVariable("task-id") final UUID taskId) {
-		taskService.cancelTask(taskId);
+		taskService.cancelTask(TaskType.MIRA, taskId);
 		return ResponseEntity.ok().build();
 	}
 
