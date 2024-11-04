@@ -292,27 +292,32 @@ public class ReBACService {
 		final PermissionUser result = userCache.get(id, key_id -> {
 			final UsersResource usersResource = keycloak.realm(REALM_NAME).users();
 			final UserResource userResource = usersResource.get(key_id);
-			final UserRepresentation userRepresentation = userResource.toRepresentation();
+			try {
+				final UserRepresentation userRepresentation = userResource.toRepresentation();
 
-			final List<PermissionRole> roles = new ArrayList<>();
-			for (final RoleRepresentation roleRepresentation : userResource.roles().getAll().getRealmMappings()) {
-				if (roleRepresentation.getDescription().isBlank()) {
-					final PermissionRole role = new PermissionRole(
-						roleRepresentation.getId(),
-						roleRepresentation.getName()
-						// no users are acquired (to avoid circular references etc)
-					);
-					roles.add(role);
+				final List<PermissionRole> roles = new ArrayList<>();
+				for (final RoleRepresentation roleRepresentation : userResource.roles().getAll().getRealmMappings()) {
+					if (roleRepresentation.getDescription().isBlank()) {
+						final PermissionRole role = new PermissionRole(
+							roleRepresentation.getId(),
+							roleRepresentation.getName()
+							// no users are acquired (to avoid circular references etc)
+						);
+						roles.add(role);
+					}
 				}
-			}
 
-			return new PermissionUser(
-				userRepresentation.getId(),
-				userRepresentation.getFirstName(),
-				userRepresentation.getLastName(),
-				userRepresentation.getEmail(),
-				roles
-			);
+				return new PermissionUser(
+					userRepresentation.getId(),
+					userRepresentation.getFirstName(),
+					userRepresentation.getLastName(),
+					userRepresentation.getEmail(),
+					roles
+				);
+			} catch (Exception e) {
+				log.error("User identified by SpiceDB with id \"{}\" is not found in Keycloak.", id);
+				return null;
+			}
 		});
 		log.trace("User Cache hit: {}, miss: {}", userCache.stats().hitCount(), userCache.stats().missCount());
 		return result;
