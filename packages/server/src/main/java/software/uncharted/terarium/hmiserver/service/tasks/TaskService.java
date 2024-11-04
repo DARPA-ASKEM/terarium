@@ -5,6 +5,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
+import java.net.URI;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -28,12 +30,15 @@ import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.Exchange;
 import org.springframework.amqp.rabbit.annotation.QueueBinding;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
+import software.uncharted.terarium.hmiserver.configuration.TaskRunnerConfiguration;
+import software.uncharted.terarium.hmiserver.configuration.TaskRunnerConfiguration.RabbitConfig;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationEvent;
@@ -41,6 +46,7 @@ import software.uncharted.terarium.hmiserver.models.notification.NotificationGro
 import software.uncharted.terarium.hmiserver.models.task.CompoundTask;
 import software.uncharted.terarium.hmiserver.models.task.TaskFuture;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
+import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.service.ClientEventService;
@@ -132,6 +138,8 @@ public class TaskService {
 		}
 	}
 
+	private final TaskRunnerConfiguration taskRunnerConfiguration;
+
 	private static final String RESPONSE_CACHE_KEY = "task-service-response-cache";
 
 	// TTL = Time to live, the maximum time a key will be in the cache before it is
@@ -144,12 +152,14 @@ public class TaskService {
 	@Value("${terarium.taskrunner.response-cache-max-idle-seconds:7200}") // 2 hours
 	private long CACHE_MAX_IDLE_SECONDS;
 
-	private final RabbitTemplate rabbitTemplate;
-	private final RabbitAdmin rabbitAdmin;
+	// private final Map<String, RabbitTemplate> rabbitTemplates;
+	private Map<String, RabbitAdmin> rabbitAdmins;
 	private final Config config;
 	private final ObjectMapper objectMapper;
 	private final NotificationService notificationService;
 	private final ClientEventService clientEventService;
+
+	private final Map<String, SimpleMessageListenerContainer> taskResponseConsumers = new HashMap<>();
 
 	private final Map<String, TaskResponseHandler> responseHandlers = new ConcurrentHashMap<>();
 
@@ -165,6 +175,13 @@ public class TaskService {
 	// The exchange that the task responses are published to.
 	@Value("${terarium.taskrunner.response-exchange}")
 	private String TASK_RUNNER_RESPONSE_EXCHANGE;
+
+	// The queue that the task responses are published to.
+	@Value("${terarium.taskrunner.response-queue}")
+	private String TASK_RUNNER_RESPONSE_QUEUE;
+
+	@Value("${terarium.taskrunner.durable-queues}")
+	private Boolean IS_DURABLE_QUEUES;
 
 	// Once a single instance of the hmi-server has processed a task response, it
 	// will publish to this exchange to broadcast the response to all other
@@ -199,13 +216,23 @@ public class TaskService {
 			// sanity check for local development to clear the caches
 			responseCache.clear();
 		}
+
+		// create the consumers
+		initRabbitAdmins();
+		initResponseConsumers();
 	}
 
 	private void declareAndBindTransientQueueWithRoutingKey(
+		final TaskType requestType,
 		final String exchangeName,
 		final String queueName,
 		final String routingKey
 	) {
+		RabbitAdmin rabbitAdmin = rabbitAdmins.get(requestType.toString());
+		if (rabbitAdmin == null) {
+			rabbitAdmin = rabbitAdmins.get("default");
+		}
+
 		// Declare a direct exchange
 		final DirectExchange exchange = new DirectExchange(exchangeName, config.getDurableQueues(), false);
 		rabbitAdmin.declareExchange(exchange);
@@ -219,20 +246,53 @@ public class TaskService {
 		rabbitAdmin.declareBinding(binding);
 	}
 
-	private void declareQueue(final String queueName) {
-		// Declare a queue
+	private void declareQueue(final TaskType requestType, final String queueName) {
+		RabbitAdmin rabbitAdmin = rabbitAdmins.get(requestType.toString());
+		if (rabbitAdmin == null) {
+			rabbitAdmin = rabbitAdmins.get("default");
+		}
 		final Queue queue = new Queue(queueName, config.getDurableQueues(), false, false);
 		rabbitAdmin.declareQueue(queue);
+	}
+
+	private void deleteQueue(final TaskType requestType, final String queueName) {
+		RabbitAdmin rabbitAdmin = rabbitAdmins.get(requestType.toString());
+		if (rabbitAdmin == null) {
+			rabbitAdmin = rabbitAdmins.get("default");
+		}
+		rabbitAdmin.deleteQueue(queueName);
+	}
+
+	private void convertAndSend(final TaskType requestType, final String queue, final String msg) {
+		RabbitAdmin rabbitAdmin = rabbitAdmins.get(requestType.toString());
+		if (rabbitAdmin == null) {
+			rabbitAdmin = rabbitAdmins.get("default");
+		}
+		rabbitAdmin.getRabbitTemplate().convertAndSend(queue, msg);
+	}
+
+	private void convertAndSend(
+		final TaskType requestType,
+		final String exchange,
+		final String routingKey,
+		final String msg
+	) {
+		RabbitAdmin rabbitAdmin = rabbitAdmins.get(requestType.toString());
+		if (rabbitAdmin == null) {
+			rabbitAdmin = rabbitAdmins.get("default");
+		}
+
+		rabbitAdmin.getRabbitTemplate().convertAndSend(exchange, routingKey, msg);
 	}
 
 	public void addResponseHandler(final TaskResponseHandler handler) {
 		responseHandlers.put(handler.getName(), handler);
 	}
 
-	public void cancelTask(final UUID taskId) {
+	public void cancelTask(final TaskType taskType, final UUID taskId) {
 		// send the cancellation to the task runner
 		final String msg = "";
-		rabbitTemplate.convertAndSend(TASK_RUNNER_CANCELLATION_EXCHANGE, taskId.toString(), msg);
+		convertAndSend(taskType, TASK_RUNNER_CANCELLATION_EXCHANGE, taskId.toString(), msg);
 	}
 
 	// This is an anonymous queue, every instance the hmi-server will receive a
@@ -290,27 +350,74 @@ public class TaskService {
 		}
 	}
 
-	// This is a shared queue, messages will round robin between every instance of
-	// the hmi-server. Any operation that must occur once and only once should be
-	// triggered here.
-	@RabbitListener(
-		bindings = @QueueBinding(
-			value = @org.springframework.amqp.rabbit.annotation.Queue(
-				value = "${terarium.taskrunner.response-queue}",
-				autoDelete = "false",
-				exclusive = "false",
-				durable = "${terarium.taskrunner.durable-queues}"
-			),
-			exchange = @Exchange(
-				value = "${terarium.taskrunner.response-exchange}",
-				durable = "${terarium.taskrunner.durable-queues}",
-				autoDelete = "false",
-				type = ExchangeTypes.DIRECT
-			),
-			key = ""
-		),
-		concurrency = "1"
-	)
+	private void initRabbitAdmins() {
+		try {
+			rabbitAdmins = new HashMap<>();
+			for (final Map.Entry<String, RabbitConfig> entry : taskRunnerConfiguration.getRabbitmq().entrySet()) {
+				final String key = entry.getKey();
+				final RabbitConfig rabbitConfig = entry.getValue();
+
+				final URI rabbitAddress = new URI(rabbitConfig.getAddresses());
+
+				final CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
+				connectionFactory.setUri(rabbitAddress);
+				connectionFactory.setUsername(rabbitConfig.getUsername());
+				connectionFactory.setPassword(rabbitConfig.getPassword());
+
+				final RabbitAdmin rabbitAdmin = new RabbitAdmin(connectionFactory);
+
+				log.info("Creating taskrunner rabbit admin for type: {}", key);
+				rabbitAdmins.put(key, rabbitAdmin);
+			}
+		} catch (final Exception e) {
+			throw new RuntimeException("Error initializing rabbit admins", e);
+		}
+	}
+
+	private void initResponseConsumers() {
+		for (final Map.Entry<String, RabbitAdmin> entry : rabbitAdmins.entrySet()) {
+			final String type = entry.getKey();
+			final RabbitAdmin rabbitAdmin = entry.getValue();
+
+			log.info("Creating consumer for rabbit admin: {}", type);
+
+			// This is a shared queue, messages will round robin between every instance of
+			// the hmi-server. Any operation that must occur once and only once should be
+			// triggered here.
+
+			// NOTE: when running local and hitting an external rabbitmq instance, we need a
+			// unique queue to ensure the local server also gets it.
+			final String queueName = !isRunningLocalProfile()
+				? TASK_RUNNER_RESPONSE_QUEUE
+				: TASK_RUNNER_RESPONSE_QUEUE + "-local-" + UUID.randomUUID().toString();
+
+			// Declare a direct exchange
+			final DirectExchange exchange = new DirectExchange(TASK_RUNNER_RESPONSE_EXCHANGE, IS_DURABLE_QUEUES, false);
+			rabbitAdmin.declareExchange(exchange);
+
+			// Declare a queue
+			final Queue queue = new Queue(queueName, IS_DURABLE_QUEUES, false, false);
+			rabbitAdmin.declareQueue(queue);
+
+			// Bind the queue to the exchange with a routing key
+			final Binding binding = BindingBuilder.bind(queue).to(exchange).with("");
+			rabbitAdmin.declareBinding(binding);
+
+			final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(
+				rabbitAdmin.getRabbitTemplate().getConnectionFactory()
+			);
+
+			container.setQueueNames(queueName);
+			container.setMessageListener(message -> {
+				onTaskResponseOneInstanceReceives(message);
+			});
+			container.start();
+
+			log.info("Consumer on queue {} started for rabbit admin: {}", queueName, type);
+			taskResponseConsumers.put(type, container);
+		}
+	}
+
 	private void onTaskResponseOneInstanceReceives(final Message message) {
 		try {
 			TaskResponse resp = decodeMessage(message, TaskResponse.class);
@@ -482,7 +589,10 @@ public class TaskService {
 	private void broadcastTaskResponseToAllInstances(final TaskResponse resp) {
 		try {
 			final String jsonStr = objectMapper.writeValueAsString(resp);
-			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_BROADCAST_EXCHANGE, "", jsonStr);
+			rabbitAdmins
+				.get("default")
+				.getRabbitTemplate()
+				.convertAndSend(TASK_RUNNER_RESPONSE_BROADCAST_EXCHANGE, "", jsonStr);
 		} catch (final JsonProcessingException e) {
 			log.error("Error serializing handler error response", e);
 		}
@@ -566,25 +676,25 @@ public class TaskService {
 		log.info("Readying task: {} with SHA: {} to send on queue: {}", req.getId(), hash, req.getType().toString());
 
 		// ensure the request queue exists
-		declareQueue(requestQueue);
+		declareQueue(req.getType(), requestQueue);
 
 		// create the cancellation queue _BEFORE_ sending the request, because a
 		// cancellation can be send before the request is consumed on the other end if
 		// there is contention. We need this queue to exist to hold the message.
 		final String queueName = req.getId().toString();
 		final String routingKey = req.getId().toString();
-		declareAndBindTransientQueueWithRoutingKey(TASK_RUNNER_CANCELLATION_EXCHANGE, queueName, routingKey);
+		declareAndBindTransientQueueWithRoutingKey(req.getType(), TASK_RUNNER_CANCELLATION_EXCHANGE, queueName, routingKey);
 
 		try {
 			// send the request to the task runner
 			log.info("Dispatching request for task id: {}", req.getId());
 			final String jsonStr = objectMapper.writeValueAsString(req);
-			rabbitTemplate.convertAndSend(requestQueue, jsonStr);
+			convertAndSend(r.getType(), requestQueue, jsonStr);
 
 			// publish the queued task response
 			final TaskResponse queuedResponse = req.createResponse(TaskStatus.QUEUED, "", "");
 			final String respJsonStr = objectMapper.writeValueAsString(queuedResponse);
-			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", respJsonStr);
+			convertAndSend(r.getType(), TASK_RUNNER_RESPONSE_EXCHANGE, "", respJsonStr);
 
 			// create and return the future
 			final CompletableTaskFuture future = new CompletableTaskFuture(req.getId());
@@ -594,7 +704,7 @@ public class TaskService {
 			return future;
 		} catch (final Exception e) {
 			// ensure cancellation queue is removed on failure
-			rabbitAdmin.deleteQueue(queueName);
+			deleteQueue(req.getType(), queueName);
 			throw e;
 		}
 	}
@@ -624,7 +734,7 @@ public class TaskService {
 			futures.remove(future.getId());
 			try {
 				// if the task is still running, or hasn't started yet, lets cancel it
-				cancelTask(future.getId());
+				cancelTask(req.getType(), future.getId());
 			} catch (final Exception ee) {
 				log.warn("Failed to cancel task: {}", future.getId(), ee);
 			}
@@ -650,20 +760,21 @@ public class TaskService {
 	}
 
 	/**
-	 * Runs a compound task, executing the primary task synchronously and the secondary tasks
+	 * Runs a compound task, executing the primary task synchronously and the
+	 * secondary tasks
 	 * in the specified mode (synchronous or asynchronous).
 	 *
 	 * @param mode The mode in which to run the secondary tasks (SYNC or ASYNC).
-	 * @param req The compound task containing the primary and secondary tasks.
+	 * @param req  The compound task containing the primary and secondary tasks.
 	 * @return The response of the primary task.
 	 * @throws JsonProcessingException If there is an error processing JSON.
-	 * @throws TimeoutException If the task times out.
-	 * @throws InterruptedException If the task is interrupted.
-	 * @throws ExecutionException If there is an error during task execution.
+	 * @throws TimeoutException        If the task times out.
+	 * @throws InterruptedException    If the task is interrupted.
+	 * @throws ExecutionException      If there is an error during task execution.
 	 */
 	public TaskResponse runTask(final TaskMode mode, final CompoundTask req)
 		throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException {
-		TaskResponse response = runTask(TaskMode.SYNC, req.getPrimaryTask());
+		final TaskResponse response = runTask(TaskMode.SYNC, req.getPrimaryTask());
 
 		for (final TaskRequest secondaryTask : req.getSecondaryTasks()) {
 			runTask(mode, secondaryTask);
