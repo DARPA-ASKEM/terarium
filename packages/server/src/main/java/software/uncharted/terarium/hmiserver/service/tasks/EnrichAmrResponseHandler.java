@@ -98,8 +98,6 @@ public class EnrichAmrResponseHandler extends TaskResponseHandler {
 
 			for (final DescriptionsAndUnits state : response.response.states) {
 				model
-					.getSemantics()
-					.getOde()
 					.getInitials()
 					.stream()
 					.filter(initial -> initial.getTarget().equalsIgnoreCase(state.id))
@@ -122,8 +120,6 @@ public class EnrichAmrResponseHandler extends TaskResponseHandler {
 
 			for (final DescriptionsAndUnits parameter : response.response.parameters) {
 				model
-					.getSemantics()
-					.getOde()
 					.getParameters()
 					.stream()
 					.filter(param -> param.getId().equalsIgnoreCase(parameter.id))
@@ -142,8 +138,6 @@ public class EnrichAmrResponseHandler extends TaskResponseHandler {
 
 			for (final DescriptionsAndUnits observable : response.response.observables) {
 				model
-					.getSemantics()
-					.getOde()
 					.getObservables()
 					.stream()
 					.filter(observe -> observe.getId().equalsIgnoreCase(observable.id))
@@ -162,8 +156,6 @@ public class EnrichAmrResponseHandler extends TaskResponseHandler {
 
 			for (final Descriptions transition : response.response.transitions) {
 				model
-					.getSemantics()
-					.getOde()
 					.getRates()
 					.stream()
 					.filter(rate -> rate.getTarget().equalsIgnoreCase(transition.id))

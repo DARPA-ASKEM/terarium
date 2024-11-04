@@ -278,8 +278,6 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendGoLLMConfigFromDatasetRequest() throws Exception {
-		final UUID taskId = UUID.randomUUID();
-
 		final ClassPathResource datasetResource1 = new ClassPathResource("gollm/Epi Sc 4 Interaction matrix.csv");
 		final String dataset1 = new String(Files.readAllBytes(datasetResource1.getFile().toPath()));
 		final ClassPathResource datasetResource2 = new ClassPathResource("gollm/other-dataset.csv");
@@ -307,16 +305,12 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 		final TaskResponse resp = taskService.runTaskSync(req);
 
-		Assertions.assertEquals(taskId, resp.getId());
-
 		log.info(new String(resp.getOutput()));
 	}
 
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendGoLLMInterventionsFromDocumentRequest() throws Exception {
-		final UUID taskId = UUID.randomUUID();
-
 		final ClassPathResource modelResource = new ClassPathResource("gollm/SIR.json");
 		final String modelContent = new String(Files.readAllBytes(modelResource.getFile().toPath()));
 
@@ -334,16 +328,12 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 		final TaskResponse resp = taskService.runTaskSync(req);
 
-		Assertions.assertEquals(taskId, resp.getId());
-
 		log.info(new String(resp.getOutput()));
 	}
 
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendAmrToMmtRequest() throws Exception {
-		final UUID taskId = UUID.randomUUID();
-
 		final ClassPathResource resource = new ClassPathResource("mira/problem.json");
 		final String content = new String(Files.readAllBytes(resource.getFile().toPath()));
 
@@ -354,16 +344,12 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 		final TaskResponse resp = taskService.runTaskSync(req);
 
-		Assertions.assertEquals(taskId, resp.getId());
-
 		log.info(new String(resp.getOutput()));
 	}
 
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendGenerateModelLatexRequest() throws Exception {
-		final UUID taskId = UUID.randomUUID();
-
 		final ClassPathResource resource = new ClassPathResource("mira/problem.json");
 		final String content = new String(Files.readAllBytes(resource.getFile().toPath()));
 
@@ -374,7 +360,18 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 		final TaskResponse resp = taskService.runTaskSync(req);
 
-		Assertions.assertEquals(taskId, resp.getId());
+		log.info(new String(resp.getOutput()));
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendLatexToSymPyRequest() throws Exception {
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.MIRA);
+		req.setScript("mira_task:latex_to_sympy");
+		req.setInput("\\frac{a}{b} + c".getBytes());
+
+		final TaskResponse resp = taskService.runTaskSync(req);
 
 		log.info(new String(resp.getOutput()));
 	}
@@ -415,7 +412,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		req.setInput(input);
 
 		final TaskFuture future1 = taskService.runTaskAsync(req);
-		taskService.cancelTask(future1.getId());
+		taskService.cancelTask(req.getType(), future1.getId());
 		Assertions.assertEquals(TaskStatus.CANCELLED, future1.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
 
 		// next request should not pull the cancelled response from cache
