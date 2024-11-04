@@ -63,7 +63,7 @@
 				</template>
 			</tera-slider-panel>
 		</template>
-		<tera-drilldown-section :tabName="ConfigTabs.Wizard" class="px-3 mb-10">
+		<tera-drilldown-section :is-loading="initializing" :tabName="ConfigTabs.Wizard" class="px-3 mb-10">
 			<template #header-controls-left>
 				<tera-toggleable-input
 					v-if="typeof knobs.transientModelConfig.name === 'string'"
@@ -384,7 +384,7 @@ const confirm = useConfirm();
 const filterModelConfigurationsText = ref('');
 const filteredModelConfigurations = computed(() => {
 	const searchTerm = filterModelConfigurationsText.value.toLowerCase();
-	const filteredConfigurations = suggestedConfigurationContext.value.tableData.filter(
+	const filteredConfigurations = modelConfigurations.value.filter(
 		(config) =>
 			config.name?.toLowerCase().includes(searchTerm) || config.description?.toLowerCase().includes(searchTerm)
 	);
@@ -506,15 +506,9 @@ const datasetIds = computed(() =>
 		.filter((id): id is string => id !== undefined)
 );
 
-const suggestedConfigurationContext = ref<{
-	isOpen: boolean;
-	tableData: ModelConfiguration[];
-	modelConfiguration: ModelConfiguration | null;
-}>({
-	isOpen: false,
-	tableData: [],
-	modelConfiguration: null
-});
+const modelConfigurations = ref<ModelConfiguration[]>([]);
+
+const initializing = ref(false);
 const isFetching = ref(false);
 const isLoading = ref(false);
 
@@ -587,16 +581,17 @@ const onSaveConfiguration = async () => {
 
 const fetchConfigurations = async (modelId: string) => {
 	isFetching.value = true;
-	suggestedConfigurationContext.value.tableData = await getModelConfigurationsForModel(modelId);
+	modelConfigurations.value = await getModelConfigurationsForModel(modelId);
 	isFetching.value = false;
 };
 
 // Fill the form with the config data
 const initialize = async (overwriteWithState: boolean = false) => {
+	initializing.value = true;
 	const state = props.node.state;
 	const modelId = props.node.inputs[0].value?.[0];
 	if (!modelId) return;
-	await fetchConfigurations(modelId);
+	fetchConfigurations(modelId);
 
 	model.value = await getModel(modelId);
 	if (model.value) {
@@ -610,7 +605,7 @@ const initialize = async (overwriteWithState: boolean = false) => {
 
 	if (!state.transientModelConfig.id) {
 		// Apply a configuration if one hasn't been applied yet
-		applyConfigValues(suggestedConfigurationContext.value.tableData[0]);
+		applyConfigValues(modelConfigurations.value[0]);
 	} else {
 		originalConfig.value = await getModelConfigurationById(selectedConfigId.value);
 		if (!overwriteWithState) {
@@ -622,6 +617,7 @@ const initialize = async (overwriteWithState: boolean = false) => {
 
 	configuredMmt.value = makeConfiguredMMT(mmt.value, knobs.value.transientModelConfig);
 
+	initializing.value = false;
 	// Create a new session and context based on model
 	try {
 		const jupyterContext = buildJupyterContext();
@@ -719,14 +715,14 @@ const updateThoughts = (data: any) => {
 
 watch(
 	() => props.node.state.modelConfigTaskIds,
-	async (watchVal) => {
-		if (watchVal.length > 0) {
+	(newValue, oldValue) => {
+		if (newValue.length > 0) {
 			isLoading.value = true;
-		} else {
+		} else if (newValue.length !== oldValue.length) {
 			isLoading.value = false;
 			const modelId = props.node.inputs[0].value?.[0];
 			if (!modelId) return;
-			await fetchConfigurations(modelId);
+			fetchConfigurations(modelId);
 		}
 	}
 );
