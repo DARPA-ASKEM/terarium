@@ -100,7 +100,9 @@ export const processFunman = (result: any) => {
 
 		// The latest timestep is found in the box with the most keys
 		boxes.forEach((box) => {
-			const keysCount = Object.keys(box.points[0]?.values).length;
+			const points = box?.points?.[0]?.values;
+			if (!points) return;
+			const keysCount = Object.keys(points).length;
 			if (keysCount > maxKeysCount) {
 				maxKeysCount = keysCount;
 				latestTimestep = box.points[0].values.timestep;
@@ -108,7 +110,8 @@ export const processFunman = (result: any) => {
 		});
 		// Mark boxes with the latest timestep
 		return boxes.map((box) => {
-			box.isAtLatestTimestep = box.points[0].values.timestep === latestTimestep;
+			const timestep = box?.points?.[0]?.values?.timestep;
+			if (timestep) box.isAtLatestTimestep = timestep === latestTimestep;
 			return box;
 		});
 	}

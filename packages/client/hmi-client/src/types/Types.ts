@@ -567,7 +567,7 @@ export interface EnsembleSimulationCiemssRequest {
 export interface OptimizeRequestCiemss {
     modelConfigId: string;
     timespan: TimeSpan;
-    optimizeInterventions?: OptimizeInterventions;
+    optimizeInterventions: OptimizeInterventions[];
     fixedInterventions?: Intervention[];
     loggingStepSize?: number;
     qoi: OptimizeQoi[];
@@ -641,9 +641,9 @@ export interface OptimizeInterventions {
     paramNames: string[];
     paramValues?: number[];
     startTime?: number[];
-    objectiveFunctionOption?: string[];
+    objectiveFunctionOption: string;
     initialGuess?: number[];
-    relativeImportance?: number[];
+    relativeImportance: number;
 }
 
 export interface OptimizeQoi {
@@ -800,9 +800,9 @@ export interface ModelUnit {
 }
 
 export interface GroundedSemantic {
+    grounding?: ModelGrounding;
     id: string;
     name?: string;
-    grounding?: ModelGrounding;
 }
 
 export interface Properties {
