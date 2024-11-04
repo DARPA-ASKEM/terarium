@@ -111,8 +111,7 @@ export const processFunman = (result: any) => {
 		// Mark boxes with the latest timestep
 		return boxes.map((box) => {
 			const timestep = box?.points?.[0]?.values?.timestep;
-			if (!timestep) return box;
-			box.isAtLatestTimestep = timestep === latestTimestep;
+			if (timestep) box.isAtLatestTimestep = timestep === latestTimestep;
 			return box;
 		});
 	}
