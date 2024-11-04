@@ -58,8 +58,6 @@ import {
 	ModelConfiguration,
 	SemanticType,
 	InferredParameterSemantic,
-	ChartAnnotation,
-	ClientEventType,
 	InterventionPolicy,
 	Dataset
 } from '@/types/Types';
@@ -75,9 +73,8 @@ import VegaChart from '@/components/widgets/VegaChart.vue';
 import * as stats from '@/utils/stats';
 import { createDatasetFromSimulationResult, getDataset } from '@/services/dataset';
 import { useProjects } from '@/composables/project';
-import { fetchAnnotations } from '@/services/chart-settings';
-import { useClientEvent } from '@/composables/useClientEvent';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
+import { useChartAnnotations } from '@/composables/useChartAnnotations';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { CalibrationOperationCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults } from './calibrate-utils';
@@ -112,7 +109,7 @@ const chartSize = { width: 180, height: 120 };
 let lossValues: { [key: string]: number }[] = [];
 
 const selectedVariableSettings = computed(() =>
-	(props.node.state.chartSettings ?? []).filter((setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON)
+	(props.node.state.chartSettings ?? []).filter((setting) => setting.type === ChartSettingType.VARIABLE)
 );
 
 const lossChartSpec = ref();
@@ -140,10 +137,12 @@ async function updateLossChartWithSimulation() {
 	if (props.node.active) {
 		const simulationObj = await getSimulation(props.node.state.calibrationId);
 		if (simulationObj?.updates) {
-			lossValues = simulationObj?.updates.map((d, i) => ({
-				iter: i,
-				loss: d.data.loss
-			}));
+			lossValues = simulationObj?.updates
+				.sort((a, b) => a.data.progress - b.data.progress)
+				.map((d, i) => ({
+					iter: i,
+					loss: d.data.loss
+				}));
 			updateLossChartSpec(lossValues);
 		}
 	}
@@ -192,7 +191,7 @@ const preparedCharts = computed(() => {
 		if (mapObj) {
 			datasetVariables.push(mapObj.datasetVariable);
 		}
-		const annotations = chartAnnotations.value.filter((annotation) => annotation.chartId === setting.id);
+		const annotations = getChartAnnotationsByChartId(setting.id);
 
 		// variable chart
 		const chart = createForecastChart(
@@ -262,14 +261,7 @@ const preparedCharts = computed(() => {
 	return { variableCharts, interventionCharts };
 });
 
-// --- Handle chart annotations
-const chartAnnotations = ref<ChartAnnotation[]>([]);
-const updateChartAnnotations = async () => {
-	chartAnnotations.value = await fetchAnnotations(props.node.id);
-};
-onMounted(() => updateChartAnnotations());
-useClientEvent([ClientEventType.ChartAnnotationCreate, ClientEventType.ChartAnnotationDelete], updateChartAnnotations);
-// ---
+const { getChartAnnotationsByChartId } = useChartAnnotations(props.node.id);
 
 const poller = new Poller();
 const pollResult = async (runId: string) => {
@@ -279,10 +271,12 @@ const pollResult = async (runId: string) => {
 		.setPollAction(async () => pollAction(runId))
 		.setProgressAction((data: Simulation) => {
 			if (data?.updates?.length) {
-				lossValues = data?.updates.map((d, i) => ({
-					iter: i,
-					loss: d.data.loss
-				}));
+				lossValues = data?.updates
+					.sort((a, b) => a.data.progress - b.data.progress)
+					.map((d, i) => ({
+						iter: i,
+						loss: d.data.loss
+					}));
 				updateLossChartSpec(lossValues);
 			}
 			if (runId === props.node.state.inProgressCalibrationId && data.updates.length > 0) {
