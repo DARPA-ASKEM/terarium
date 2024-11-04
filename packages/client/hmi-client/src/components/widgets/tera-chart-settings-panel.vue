@@ -96,11 +96,11 @@ const cancelGenerateAnnotation = () => {
 <style scoped>
 .chart-settings-panel {
 	position: absolute;
-	top: var(--output-setting-slider-top);
-	left: var(--output-setting-slider-left);
+	top: var(--gap-12);
+	left: var(--gap-1);
 	z-index: 3;
-	height: calc(100% - var(--output-setting-slider-top));
-	width: calc(100% - var(--output-setting-slider-left));
+	height: calc(100% - var(--gap-12));
+	width: calc(100% - var(--gap-1));
 	background: #fff;
 
 	&.v-enter-active,
