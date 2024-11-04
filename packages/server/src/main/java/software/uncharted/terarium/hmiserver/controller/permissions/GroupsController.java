@@ -61,7 +61,9 @@ public class GroupsController {
 				for (final RebacPermissionRelationship permissionRelationship : relationships) {
 					if (permissionRelationship.getSubjectType().equals(Schema.Type.USER)) {
 						final PermissionUser user = reBACService.getUser(permissionRelationship.getSubjectId());
-						permissions.addUser(user, permissionRelationship.getRelationship());
+						if (user != null) {
+							permissions.addUser(user, permissionRelationship.getRelationship());
+						}
 					} else if (permissionRelationship.getSubjectType().equals(Schema.Type.GROUP)) {
 						final PermissionGroup group = reBACService.getGroup(permissionRelationship.getSubjectId());
 						permissions.addGroup(group, permissionRelationship.getRelationship());

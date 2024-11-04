@@ -51,6 +51,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectExport;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
+import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
@@ -928,10 +929,10 @@ public class ProjectController {
 		try {
 			for (final RebacPermissionRelationship permissionRelationship : rebacProject.getPermissionRelationships()) {
 				if (permissionRelationship.getSubjectType().equals(Schema.Type.USER)) {
-					permissions.addUser(
-						reBACService.getUser(permissionRelationship.getSubjectId()),
-						permissionRelationship.getRelationship()
-					);
+					PermissionUser user = reBACService.getUser(permissionRelationship.getSubjectId());
+					if (user != null) {
+						permissions.addUser(user, permissionRelationship.getRelationship());
+					}
 				} else if (permissionRelationship.getSubjectType().equals(Schema.Type.GROUP)) {
 					permissions.addGroup(
 						reBACService.getGroup(permissionRelationship.getSubjectId()),
