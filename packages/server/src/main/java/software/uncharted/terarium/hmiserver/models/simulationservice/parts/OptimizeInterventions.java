@@ -30,17 +30,15 @@ public class OptimizeInterventions {
 	@JsonAlias("start_time")
 	private List<Integer> startTime;
 
-	@TSOptional
 	@JsonAlias("objective_function_option")
-	private List<String> objectiveFunctionOption;
+	private String objectiveFunctionOption;
 
 	@TSOptional
 	@JsonAlias("initial_guess")
 	private List<Double> initialGuess;
 
-	@TSOptional
 	@JsonAlias("relative_importance")
-	private List<Double> relativeImportance;
+	private Double relativeImportance;
 
 	@Override
 	public String toString() {
