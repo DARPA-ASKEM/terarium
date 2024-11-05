@@ -34,7 +34,7 @@ const isRenamingProject = ref(false);
 </script>
 <style scoped>
 .overview-description {
-	margin-bottom: var(--gap-xsmall);
+	margin-bottom: var(--gap-1);
 	color: var(--text-color-primary);
 }
 </style>

@@ -871,13 +871,13 @@ watch(
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: var(--gap-1) var(--gap);
+	padding: var(--gap-1) var(--gap-4);
 }
 
 .btn-group {
 	display: flex;
 	align-items: center;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	margin-left: auto;
 }
 
@@ -891,7 +891,7 @@ watch(
 }
 
 .notebook-section:deep(main) {
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	position: relative;
 }
 
@@ -925,7 +925,7 @@ code {
 	width: 100%;
 	align-items: center;
 	align-self: stretch;
-	gap: var(--gap-medium);
+	gap: var(--gap-6);
 }
 
 ul {

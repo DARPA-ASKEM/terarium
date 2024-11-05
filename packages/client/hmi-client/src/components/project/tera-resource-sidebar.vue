@@ -263,7 +263,7 @@ nav > header {
 
 .new-button {
 	&:deep() {
-		padding: 0 var(--gap-xsmall);
+		padding: 0 var(--gap-1);
 	}
 
 	&:deep(.pi-plus) {

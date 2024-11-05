@@ -405,7 +405,7 @@ onUnmounted(() => {
 }
 
 .notebook-section:deep(main) {
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	position: relative;
 }
 

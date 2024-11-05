@@ -122,9 +122,9 @@ section {
 
 	/* In drilldown */
 	&:not(.in-node) {
-		padding-bottom: var(--gap-small);
+		padding-bottom: var(--gap-2);
 		border-radius: var(--border-radius);
-		gap: var(--gap-small);
+		gap: var(--gap-2);
 		& > textarea {
 			flex: 1;
 			align-self: center;

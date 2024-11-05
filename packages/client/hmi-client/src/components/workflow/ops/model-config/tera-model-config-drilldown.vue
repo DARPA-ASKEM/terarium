@@ -82,7 +82,7 @@
 				<Button label="Save as" outlined severity="secondary" @click="showSaveModal = true" />
 				<Button :disabled="isSaveDisabled" label="Save" @click="onSaveConfiguration" />
 			</template>
-			<Accordion multiple :active-index="[0, 1, 2]">
+			<Accordion multiple :activeIndex="currentActiveIndexes">
 				<AccordionTab>
 					<template #header>
 						<h5 class="btn-content">Description</h5>
@@ -300,6 +300,7 @@ const props = defineProps<{
 const isFetchingPDF = ref(false);
 const isDocViewerOpen = ref(true);
 
+const currentActiveIndexes = ref([0, 1, 2]);
 const pdfData = ref<{ document: any; data: string; isPdf: boolean; name: string }[]>([]);
 const pdfPanelRef = ref();
 const pdfViewer = computed(() => pdfPanelRef.value?.pdfRef[0]);
@@ -828,19 +829,19 @@ onUnmounted(() => {
 .notebook-section {
 	background-color: var(--surface-disabled);
 	border-right: 1px solid var(--surface-border-dark);
-	padding: var(--gap);
+	padding: var(--gap-4);
 }
 
 .notebook-section:deep(main) {
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	position: relative;
 }
 
 .toolbar-right-side {
 	position: absolute;
-	top: var(--gap);
+	top: var(--gap-4);
 	right: 0;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	display: flex;
 	align-items: center;
 }
@@ -860,7 +861,7 @@ onUnmounted(() => {
 
 .sort-by-label {
 	color: var(--text-color-subdued);
-	padding-right: var(--gap-small);
+	padding-right: var(--gap-2);
 }
 
 :deep(.pi-spinner) {

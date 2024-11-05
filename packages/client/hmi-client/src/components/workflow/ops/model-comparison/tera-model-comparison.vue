@@ -532,12 +532,12 @@ table {
 	& th:first-child,
 	td:first-child {
 		width: 8%;
-		padding: var(--gap-small) 0;
+		padding: var(--gap-2) 0;
 		font-weight: 600;
 	}
 
 	& td:not(:first-child) {
-		padding: var(--gap-small);
+		padding: var(--gap-2);
 	}
 
 	& .value {
@@ -556,16 +556,16 @@ table {
 ul {
 	display: flex;
 	flex-direction: column;
-	gap: var(--gap);
+	gap: var(--gap-4);
 
 	& > li {
 		display: flex;
 		flex-direction: column;
-		gap: var(--gap-xsmall);
+		gap: var(--gap-1);
 
 		& > span {
 			width: fit-content;
-			margin-right: var(--gap-xxlarge);
+			margin-right: var(--gap-12);
 		}
 	}
 }
@@ -573,15 +573,15 @@ ul {
 /* TODO: Improve this pattern later same in (tera-model-input) */
 
 .notebook-section:deep(main) {
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	position: relative;
 }
 
 .toolbar-right-side {
 	position: absolute;
-	top: var(--gap);
+	top: var(--gap-4);
 	right: 0;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	display: flex;
 	align-items: center;
 }
@@ -611,7 +611,7 @@ ul {
 }
 
 .legend-circle {
-	padding: var(--gap-small) var(--gap);
+	padding: var(--gap-2) var(--gap-4);
 	background-color: var(--surface-0);
 	border: 1px solid var(--surface-border);
 	border-radius: 50%;
@@ -619,7 +619,7 @@ ul {
 }
 
 .legend-square {
-	padding: var(--gap-xsmall) var(--gap);
+	padding: var(--gap-1) var(--gap-4);
 	background-color: var(--surface-0);
 	border: 1px solid var(--surface-border);
 	font-family: 'Times New Roman', Times, serif;

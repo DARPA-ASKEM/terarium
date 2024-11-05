@@ -82,7 +82,7 @@ const downloadMenuItem = {
 };
 
 const projectMenuItems = computed(() => {
-	// Basic access to public and reader project
+	// Basic access to a public and reader project
 	const items: MenuItem[] = [copyMenuItem, downloadMenuItem];
 
 	// Creator/Editor of the project
