@@ -32,7 +32,7 @@ import org.springframework.amqp.rabbit.annotation.QueueBinding;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
-import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
+import org.springframework.amqp.rabbit.listener.DirectMessageListenerContainer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
@@ -159,7 +159,7 @@ public class TaskService {
 	private final NotificationService notificationService;
 	private final ClientEventService clientEventService;
 
-	private final Map<String, SimpleMessageListenerContainer> taskResponseConsumers = new HashMap<>();
+	private final Map<String, DirectMessageListenerContainer> taskResponseConsumers = new HashMap<>();
 
 	private final Map<String, TaskResponseHandler> responseHandlers = new ConcurrentHashMap<>();
 
@@ -403,7 +403,7 @@ public class TaskService {
 			final Binding binding = BindingBuilder.bind(queue).to(exchange).with("");
 			rabbitAdmin.declareBinding(binding);
 
-			final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(
+			final DirectMessageListenerContainer container = new DirectMessageListenerContainer(
 				rabbitAdmin.getRabbitTemplate().getConnectionFactory()
 			);
 
