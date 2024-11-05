@@ -75,6 +75,8 @@ public class TaskUtilities {
 			} catch (JsonProcessingException e) {
 				throw new IOException("Unable to serialize document text");
 			}
+		} else {
+			input.setResearchPaper("");
 		}
 
 		// Create the task

@@ -5,6 +5,8 @@ import co.elastic.clients.elasticsearch.core.search.SourceConfig;
 import co.elastic.clients.elasticsearch.core.search.SourceFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -262,23 +264,18 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		return updatedOptional;
 	}
 
-	public TaskResponse enrichModel(
+	public UUID enrichModel(
 		final UUID projectId,
-		final Optional<UUID> documentId,
+		final UUID documentId,
 		final UUID modelId,
 		final Schema.Permission permission,
 		final boolean overwrite
 	) throws IOException, ExecutionException, InterruptedException, TimeoutException {
-		// Grab the document
-		final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId.get(), permission);
-		if (document.isEmpty()) {
-			String errorString = String.format("Document %s not found", documentId);
-			log.warn(errorString);
-			throw new IOException(errorString);
-		}
+		// Grab the document if it exists
+		final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
 
 		// make sure there is text in the document
-		if (document.get().getText() == null || document.get().getText().isEmpty()) {
+		if (document.isPresent() && (document.get().getText() == null || document.get().getText().isEmpty())) {
 			String errorString = String.format("Document %s has no extracted text", documentId);
 			log.warn(errorString);
 			throw new IOException(errorString);
@@ -294,7 +291,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 
 		// stripping the metadata from the model before its sent since it can cause
 		// gollm to fail with massive inputs
-		model.get().setMetadata(null);
+		model.get().setMetadata(new ModelMetadata());
 
 		final TaskRequest req;
 
@@ -323,78 +320,78 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		final TaskResponse resp = taskService.runTask(TaskService.TaskMode.SYNC, req);
 
 		// at this point the initial enrichment has happened.
-		model = getAsset(modelId, permission);
-		if (model.isEmpty()) {
+		final Optional<Model> newModel = getAsset(modelId, permission);
+		if (newModel.isEmpty()) {
 			String errorString = String.format("Model %s not found", modelId);
 			log.warn(errorString);
 			throw new IOException(errorString);
 		}
 
 		// Update State Grounding
-		if (model.get().isRegnet()) {
-			List<RegNetVertex> vertices = model.get().getVerticies();
+		if (newModel.get().isRegnet()) {
+			List<RegNetVertex> vertices = newModel.get().getVerticies();
 			vertices.forEach(vertex -> {
 				if (vertex == null) {
 					vertex = new RegNetVertex();
 				}
 				TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, vertex);
 			});
-			model.get().setVerticies(vertices);
+			newModel.get().setVerticies(vertices);
 		} else {
-			List<State> states = model.get().getStates();
+			List<State> states = newModel.get().getStates();
 			states.forEach(state -> {
 				if (state == null) {
 					state = new State();
 				}
 				TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, state);
 			});
-			model.get().setStates(states);
+			newModel.get().setStates(states);
 		}
 
 		//Update Observable Grounding
-		if (model.get().getObservables() != null && !model.get().getObservables().isEmpty()) {
-			List<Observable> observables = model.get().getObservables();
+		if (newModel.get().getObservables() != null && !newModel.get().getObservables().isEmpty()) {
+			List<Observable> observables = newModel.get().getObservables();
 			observables.forEach(observable -> {
 				if (observable == null) {
 					observable = new Observable();
 				}
 				TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, observable);
 			});
-			model.get().setObservables(observables);
+			newModel.get().setObservables(observables);
 		}
 
 		//Update Parameter Grounding
-		if (model.get().getParameters() != null && !model.get().getParameters().isEmpty()) {
-			List<ModelParameter> parameters = model.get().getParameters();
+		if (newModel.get().getParameters() != null && !newModel.get().getParameters().isEmpty()) {
+			List<ModelParameter> parameters = newModel.get().getParameters();
 			parameters.forEach(parameter -> {
 				if (parameter == null) {
 					parameter = new ModelParameter();
 				}
 				TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, parameter);
 			});
-			model.get().setParameters(parameters);
+			newModel.get().setParameters(parameters);
 		}
 
 		//Update Transition Grounding
-		if (model.get().getTransitions() != null && !model.get().getTransitions().isEmpty()) {
-			List<Transition> transitions = model.get().getTransitions();
+		if (newModel.get().getTransitions() != null && !newModel.get().getTransitions().isEmpty()) {
+			List<Transition> transitions = newModel.get().getTransitions();
 			transitions.forEach(transition -> {
 				if (transition == null) {
 					transition = new Transition();
 				}
 				TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, transition);
 			});
-			model.get().setTransitions(transitions);
+			newModel.get().setTransitions(transitions);
 		}
 
 		try {
-			updateAsset(model.get(), projectId, permission);
+			updateAsset(newModel.get(), projectId, permission);
 		} catch (IOException e) {
 			String errorString = String.format("Failed to update model %s", modelId);
 			log.warn(errorString);
 			throw new IOException(errorString);
 		}
 
-		return resp;
+		return newModel.get().getId();
 	}
 }

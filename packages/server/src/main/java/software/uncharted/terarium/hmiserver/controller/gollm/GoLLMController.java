@@ -41,6 +41,7 @@ import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
@@ -263,7 +264,7 @@ public class GoLLMController {
 
 		// stripping the metadata from the model before its sent since it can cause
 		// gollm to fail with massive inputs
-		model.get().setMetadata(null);
+		model.get().setMetadata(new ModelMetadata());
 		input.setAmr(model.get().serializeWithoutTerariumFields(new String[] { "id" }, null));
 
 		// Create the task
@@ -391,7 +392,7 @@ public class GoLLMController {
 		input.setDataset(dataArray);
 		// stripping the metadata from the model before its sent since it can cause
 		// gollm to fail with massive inputs
-		model.get().setMetadata(null);
+		model.get().setMetadata(new ModelMetadata());
 		input.setAmr(model.get().serializeWithoutTerariumFields(null, null));
 
 		// set matrix string if provided
@@ -506,7 +507,7 @@ public class GoLLMController {
 
 		// stripping the metadata from the model before its sent since it can cause
 		// gollm to fail with massive inputs
-		model.get().setMetadata(null);
+		model.get().setMetadata(new ModelMetadata());
 		input.setAmr(model.get().serializeWithoutTerariumFields(new String[] { "id" }, null));
 
 		// Create the task
@@ -742,7 +743,7 @@ public class GoLLMController {
 				description = "Dispatched successfully",
 				content = @Content(
 					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class)
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class)
 				)
 			),
 			@ApiResponse(
@@ -753,10 +754,10 @@ public class GoLLMController {
 			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
 		}
 	)
-	public ResponseEntity<TaskResponse> createEnrichModelMetadataTask(
+	public ResponseEntity<UUID> createEnrichModelMetadataTask(
 		@RequestParam(name = "model-id", required = true) final UUID modelId,
 		@RequestParam(name = "document-id", required = false) final UUID documentId,
-		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
+		@RequestParam(name = "mode", required = false, defaultValue = "SYNC") final TaskMode mode,
 		@RequestParam(name = "project-id", required = false) final UUID projectId,
 		@RequestParam(name = "overwrite", required = false, defaultValue = "false") final boolean overwrite
 	) {
@@ -765,9 +766,8 @@ public class GoLLMController {
 			projectId
 		);
 
-		final TaskResponse resp;
 		try {
-			resp = modelService.enrichModel(projectId, Optional.of(documentId), modelId, permission, true);
+			modelService.enrichModel(projectId, documentId, modelId, permission, true);
 		} catch (final IOException e) {
 			log.error("An error occurred while trying to retrieve information necessary for model enrichment.", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
@@ -782,7 +782,14 @@ public class GoLLMController {
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
 		}
 
-		return ResponseEntity.ok().body(resp);
+		// check that we have a model to return
+		final Optional<Model> model = modelService.getAsset(modelId, permission);
+		if (model.isEmpty()) {
+			log.error(String.format("The model %s does not exist.", modelId));
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("model.not-found"));
+		}
+
+		return ResponseEntity.ok().body(model.get().getId());
 	}
 
 	@GetMapping("/enrich-amr")

@@ -236,7 +236,7 @@ public class KnowledgeController {
 				final Model model = modelService.createAsset(responseAMR, projectId, permission);
 				// enrich the model with the document
 				if (documentId != null) {
-					modelService.enrichModel(projectId, Optional.of(documentId), model.getId(), permission, true);
+					modelService.enrichModel(projectId, documentId, model.getId(), permission, true);
 				}
 				return ResponseEntity.ok(model.getId());
 			} catch (final IOException e) {
@@ -258,9 +258,7 @@ public class KnowledgeController {
 		}
 
 		// If a model id is provided, update the existing model
-		final Optional<Model> model;
-
-		model = modelService.getAsset(modelId, permission);
+		final Optional<Model> model = modelService.getAsset(modelId, permission);
 		if (model.isEmpty()) {
 			log.error(String.format("The model id %s does not exist.", modelId));
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("model.not-found"));
@@ -271,7 +269,7 @@ public class KnowledgeController {
 			modelService.updateAsset(responseAMR, projectId, permission);
 			// enrich the model with the document
 			if (documentId != null) {
-				modelService.enrichModel(projectId, Optional.of(documentId), responseAMR.getId(), permission, true);
+				modelService.enrichModel(projectId, documentId, responseAMR.getId(), permission, true);
 			}
 			return ResponseEntity.ok(model.get().getId());
 		} catch (final IOException e) {
