@@ -28,7 +28,7 @@ p.inline {
 }
 
 p:not(.inline) {
-	margin-top: var(--gap-small);
+	margin-top: var(--gap-2);
 }
 
 .center {
