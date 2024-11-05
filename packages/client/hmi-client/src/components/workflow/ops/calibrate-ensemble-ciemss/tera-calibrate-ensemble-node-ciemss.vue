@@ -22,7 +22,9 @@
 			:font-size="2"
 			is-centered
 			style="height: 100%"
-		/>
+		>
+			{{ node.state.currentProgress }}%
+		</tera-progress-spinner>
 
 		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
 		<tera-operator-placeholder v-else :node="node">
@@ -47,11 +49,10 @@ import {
 import { setupCsvAsset } from '@/services/calibrate-workflow';
 import { chartActionsProxy, nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
-
 import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';
 import { WorkflowPortStatus } from '@/types/workflow';
-import type { CsvAsset, EnsembleSimulationCiemssRequest, Dataset } from '@/types/Types';
+import type { CsvAsset, EnsembleSimulationCiemssRequest, Dataset, Simulation } from '@/types/Types';
 import type { RunResults } from '@/types/SimulateConfig';
 import { getDataset } from '@/services/dataset';
 import type { CalibrateEnsembleCiemssOperationState } from './calibrate-ensemble-ciemss-operation';
@@ -77,11 +78,31 @@ const pollResult = async (runId: string) => {
 	poller
 		.setInterval(3000)
 		.setThreshold(300)
-		.setPollAction(async () => pollAction(runId));
+		.setPollAction(async () => pollAction(runId))
+		.setProgressAction((data: Simulation) => {
+			if (data?.updates?.length) {
+				// lossValues = data?.updates
+				// .sort((a, b) => a.data.progress - b.data.progress)
+				// .map((d, i) => ({
+				// 	iter: i,
+				// 	loss: d.data.loss
+				// }));
+				// updateLossChartSpec(lossValues);
+			}
+			if (runId === props.node.state.inProgressCalibrationId && data.updates.length > 0) {
+				const checkpoint = _.first(data.updates);
+				if (checkpoint) {
+					const state = _.cloneDeep(props.node.state);
+					state.currentProgress = +((100 * checkpoint.data.progress) / state.extra.numIterations).toFixed(2);
+					emit('update-state', state);
+				}
+			}
+		});
 	const pollerResults = await poller.start();
 
 	if (pollerResults.state === PollerState.Cancelled) {
 		const state = _.cloneDeep(props.node.state);
+		state.currentProgress = 0;
 		state.inProgressForecastId = '';
 		state.inProgressCalibrationId = '';
 		emit('update-state', state);
@@ -143,6 +164,7 @@ watch(
 			const state = _.cloneDeep(props.node.state);
 
 			state.chartConfigs = [[]];
+			state.currentProgress = 0;
 			state.inProgressForecastId = '';
 			state.forecastRunId = id;
 			emit('update-state', state);

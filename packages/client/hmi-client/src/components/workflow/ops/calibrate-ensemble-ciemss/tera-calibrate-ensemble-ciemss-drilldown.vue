@@ -165,7 +165,9 @@
 					:font-size="2"
 					is-centered
 					style="height: 100%"
-				/>
+				>
+					{{ node.state.currentProgress }}%
+				</tera-progress-spinner>
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
@@ -326,9 +328,9 @@ const runEnsemble = async () => {
 	const response = await makeEnsembleCiemssCalibration(calibratePayload, nodeMetadata(props.node));
 	if (response?.simulationId) {
 		const state = _.cloneDeep(props.node.state);
+		state.currentProgress = 0;
 		state.inProgressCalibrationId = response?.simulationId;
 		state.inProgressForecastId = '';
-
 		emit('update-state', state);
 	}
 };
