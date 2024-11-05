@@ -76,6 +76,7 @@
 		:open-on-save="!isWorkflow"
 		@close-modal="showSaveModal = false"
 		@on-save="onModalSave"
+		@on-update="onModalSave"
 	/>
 </template>
 
