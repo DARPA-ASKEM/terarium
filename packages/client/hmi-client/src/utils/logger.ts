@@ -1,4 +1,3 @@
-import { LogBuffer } from '@/utils/log-buffer';
 import { useToastService } from '@/services/toast';
 
 // TODO: add logic for different modes
@@ -37,12 +36,8 @@ const defaultOptions: LoggerOptionsType = {
 class Logger {
 	private options: LoggerOptionsType;
 
-	private logBuffer: LogBuffer;
-
 	constructor(options: LoggerOptionsType = defaultOptions) {
 		this.options = { ...defaultOptions, ...options };
-		this.logBuffer = new LogBuffer();
-		this.logBuffer.startService();
 	}
 
 	log(level: string, message: string, messageOptions?: LoggerMessageOptionsType, ...optionalParams: any[]): void {
@@ -63,12 +58,6 @@ class Logger {
 		if (this.options.hooks?.after && messageOptions?.silent !== true) {
 			this.options.hooks.after(level, message.toString());
 		}
-
-		this.queueLogs(level, message);
-	}
-
-	queueLogs(level: string, message: any) {
-		this.logBuffer.add({ level, message });
 	}
 
 	info(message: any, messageOptions?: LoggerMessageOptionsType, ...optionalParams: any[]): void {
