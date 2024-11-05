@@ -871,7 +871,7 @@ watch(
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: var(--gap-1) var(--gap);
+	padding: var(--gap-1) var(--gap-4);
 }
 
 .btn-group {

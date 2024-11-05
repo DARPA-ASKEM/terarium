@@ -234,7 +234,7 @@ function onDeleteRequested(msgId: string) {
 	font-size: var(--font-body-medium);
 	font-weight: 600;
 	font-family: var(--font-family);
-	padding-bottom: var(--gap);
+	padding-bottom: var(--gap-4);
 }
 .edit-query-box {
 	display: flex;
@@ -264,7 +264,7 @@ function onDeleteRequested(msgId: string) {
 
 .jupyter-response {
 	position: relative;
-	margin: var(--gap);
+	margin: var(--gap-4);
 	padding: var(--gap-4);
 	display: flex;
 	flex-direction: column;

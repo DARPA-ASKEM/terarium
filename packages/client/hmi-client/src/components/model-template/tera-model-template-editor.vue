@@ -525,7 +525,7 @@ aside {
 	flex-direction: column;
 	background-color: #f4f7fa;
 	border-right: 1px solid var(--surface-border-light);
-	padding: var(--gap);
+	padding: var(--gap-4);
 	gap: var(--gap-2);
 	overflow: hidden;
 	z-index: 1;
@@ -553,7 +553,7 @@ header {
 
 h5,
 header {
-	padding: 0 var(--gap);
+	padding: 0 var(--gap-4);
 }
 
 .pi-info-circle {

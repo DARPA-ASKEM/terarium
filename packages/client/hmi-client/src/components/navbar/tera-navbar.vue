@@ -565,11 +565,11 @@ nav {
 	border-radius: var(--border-radius-bigger);
 	background-color: var(--surface-200);
 	display: flex;
-	padding-left: var(--gap);
+	padding-left: var(--gap-4);
 	margin-left: auto;
 	margin-right: auto;
 	align-items: center;
-	gap: var(--gap);
+	gap: var(--gap-4);
 
 	.evaluation-scenario-widget-timer {
 		font-feature-settings: 'tnum';

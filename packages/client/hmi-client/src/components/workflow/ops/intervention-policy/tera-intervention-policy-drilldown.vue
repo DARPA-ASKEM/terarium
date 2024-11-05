@@ -683,8 +683,8 @@ onMounted(() => {
 section {
 	display: flex;
 	flex-direction: column;
-	gap: var(--gap);
-	padding: 0 var(--gap);
+	gap: var(--gap-4);
+	padding: 0 var(--gap-4);
 }
 
 button.start-edit {

@@ -545,7 +545,7 @@ header > section {
 }
 
 .code-blocks-container {
-	padding: var(--gap);
+	padding: var(--gap-4);
 	max-width: 300px;
 	height: 100%;
 	display: flex;

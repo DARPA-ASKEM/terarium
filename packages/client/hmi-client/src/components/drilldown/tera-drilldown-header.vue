@@ -89,7 +89,7 @@ a {
 	align-items: center;
 	color: var(--primary-color);
 	margin-left: auto;
-	margin-right: var(--gap);
+	margin-right: var(--gap-4);
 }
 
 :deep(.p-tabview-header:not(.p-highlight) .p-tabview-nav-link) {

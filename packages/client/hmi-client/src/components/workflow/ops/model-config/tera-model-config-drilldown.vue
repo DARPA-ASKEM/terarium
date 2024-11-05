@@ -829,7 +829,7 @@ onUnmounted(() => {
 .notebook-section {
 	background-color: var(--surface-disabled);
 	border-right: 1px solid var(--surface-border-dark);
-	padding: var(--gap);
+	padding: var(--gap-4);
 }
 
 .notebook-section:deep(main) {
@@ -839,7 +839,7 @@ onUnmounted(() => {
 
 .toolbar-right-side {
 	position: absolute;
-	top: var(--gap);
+	top: var(--gap-4);
 	right: 0;
 	gap: var(--gap-2);
 	display: flex;

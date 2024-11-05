@@ -95,7 +95,7 @@ watch(
 	padding-bottom: 0px;
 	justify-content: flex-end;
 	align-items: center;
-	gap: var(--gap);
+	gap: var(--gap-4);
 	align-self: stretch;
 }
 

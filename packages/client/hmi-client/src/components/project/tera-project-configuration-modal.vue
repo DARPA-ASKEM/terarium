@@ -142,7 +142,7 @@ function applyConfiguration() {
 <style scoped>
 :deep(.content) {
 	display: flex;
-	gap: var(--gap);
+	gap: var(--gap-4);
 }
 
 section {
@@ -154,13 +154,13 @@ form {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
-	gap: var(--gap);
+	gap: var(--gap-4);
 }
 
 label span {
 	color: var(--text-color-subdued);
 	font-size: var(--font-caption);
-	margin-left: var(--gap);
+	margin-left: var(--gap-4);
 	text-transform: lowercase;
 }
 
@@ -213,7 +213,7 @@ li {
 
 .select-thumbnail-panel {
 	background: var(--surface-50);
-	padding: var(--gap);
+	padding: var(--gap-4);
 	border-radius: var(--border-radius);
 	border: 1px solid var(--surface-border-light);
 	max-height: 100%;

@@ -470,7 +470,7 @@ watch(
 span {
 	display: flex;
 	align-items: center;
-	gap: var(--gap);
+	gap: var(--gap-4);
 
 	& > label {
 		width: 8rem;
@@ -484,7 +484,7 @@ span {
 	margin-bottom: var(--gap-2);
 }
 :deep(main) {
-	gap: var(--gap);
+	gap: var(--gap-4);
 }
 
 code {

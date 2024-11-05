@@ -238,7 +238,7 @@ watch(
 .datatable-toolbar {
 	display: flex;
 	flex-direction: row;
-	gap: var(--gap);
+	gap: var(--gap-4);
 	padding-bottom: var(--gap-2);
 }
 .datatable-toolbar-item {

@@ -250,7 +250,7 @@ nav {
 	flex-direction: column;
 	width: fit-content;
 	gap: 1rem;
-	padding: var(--gap) var(--gap-8) 0 var(--gap-2);
+	padding: var(--gap-4) var(--gap-8) 0 var(--gap-2);
 	/* Responsible for stickiness */
 	position: sticky;
 	top: 0;
@@ -270,7 +270,7 @@ header {
 	flex-direction: column;
 	justify-content: space-between;
 	height: fit-content;
-	padding: var(--gap-2) var(--gap);
+	padding: var(--gap-2) var(--gap-4);
 	gap: var(--gap-2);
 	background-color: var(--surface-0);
 	backdrop-filter: blur(6px);
@@ -305,7 +305,7 @@ header.overview-banner section {
 }
 
 header.with-tabs {
-	padding: var(--gap-2) var(--gap) 0;
+	padding: var(--gap-2) var(--gap-4) 0;
 }
 
 .overview-banner {

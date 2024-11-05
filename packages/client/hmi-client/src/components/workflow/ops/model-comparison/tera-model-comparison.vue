@@ -556,7 +556,7 @@ table {
 ul {
 	display: flex;
 	flex-direction: column;
-	gap: var(--gap);
+	gap: var(--gap-4);
 
 	& > li {
 		display: flex;
@@ -579,7 +579,7 @@ ul {
 
 .toolbar-right-side {
 	position: absolute;
-	top: var(--gap);
+	top: var(--gap-4);
 	right: 0;
 	gap: var(--gap-2);
 	display: flex;
@@ -611,7 +611,7 @@ ul {
 }
 
 .legend-circle {
-	padding: var(--gap-2) var(--gap);
+	padding: var(--gap-2) var(--gap-4);
 	background-color: var(--surface-0);
 	border: 1px solid var(--surface-border);
 	border-radius: 50%;
@@ -619,7 +619,7 @@ ul {
 }
 
 .legend-square {
-	padding: var(--gap-1) var(--gap);
+	padding: var(--gap-1) var(--gap-4);
 	background-color: var(--surface-0);
 	border: 1px solid var(--surface-border);
 	font-family: 'Times New Roman', Times, serif;

@@ -109,7 +109,7 @@ watch(
 .container {
 	width: 100%;
 	display: flex;
-	padding: var(--gap);
+	padding: var(--gap-4);
 	flex-direction: column;
 	justify-content: center;
 	align-items: flex-start;
