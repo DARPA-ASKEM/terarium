@@ -787,20 +787,20 @@ const runOptimize = async () => {
 
 	setOutputSettingDefaults();
 
-	const paramNames: string[] = [];
-	const paramValues: number[] = [];
-	const startTime: number[] = [];
+	const optimizeInterventions: OptimizeInterventions[] = [];
 	const listBoundsInterventions: number[][] = [];
-	const initialGuess: number[] = [];
-	const objectiveFunctionOption: string[] = [];
-	const relativeImportance: number[] = [];
 
 	activePolicyGroups.value.forEach((ele) => {
+		const paramNames: string[] = [];
+		const paramValues: number[] = [];
+		const startTime: number[] = [];
+		const initialGuess: number[] = [];
+		const relativeImportance: number[] = [];
+
 		// Only allowed to optimize on interventions that arent grouped aka staticInterventions' length is 1
 		paramNames.push(ele.intervention.staticInterventions[0].appliedTo);
 		paramValues.push(ele.intervention.staticInterventions[0].value);
 		startTime.push(ele.intervention.staticInterventions[0].timestep);
-		objectiveFunctionOption.push(ele.objectiveFunctionOption);
 		relativeImportance.push(ele.relativeImportance);
 
 		if (ele.optimizationType === OptimizationInterventionObjective.startTime) {
@@ -819,21 +819,17 @@ const runOptimize = async () => {
 		} else {
 			console.error(`invalid optimization type used:${ele.optimizationType}`);
 		}
-	});
-	// At the moment we only accept one intervention type. Pyciemss, pyciemss-service and this will all need to be updated.
-	// https://github.com/DARPA-ASKEM/terarium/issues/3909
-	const interventionType = knobs.value.interventionPolicyGroups[0].optimizationType;
 
-	// These are interventions to be optimized over.
-	const optimizeInterventions: OptimizeInterventions = {
-		interventionType,
-		paramNames,
-		startTime,
-		paramValues,
-		initialGuess,
-		objectiveFunctionOption,
-		relativeImportance
-	};
+		optimizeInterventions.push({
+			interventionType: ele.optimizationType,
+			paramNames,
+			startTime,
+			paramValues,
+			initialGuess,
+			objectiveFunctionOption: ele.objectiveFunctionOption,
+			relativeImportance: ele.relativeImportance
+		});
+	});
 
 	// These are interventions to be considered but not optimized over.
 	const fixedInterventions: Intervention[] = _.cloneDeep(inactivePolicyGroups.value.map((ele) => ele.intervention));

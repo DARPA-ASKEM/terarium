@@ -16,6 +16,7 @@ import JupyterTest from '@/temp/JupyterTest.vue';
 import CustomInputTest from '@/temp/custom-input-test.vue';
 import ClipboardTest from '@/temp/Clipboard.vue';
 import VegaliteTest from '@/temp/Vegalite.vue';
+import FunmanDebugger from '@/temp/FunmanDebugger.vue';
 import { RouteName } from './routes';
 
 export enum RoutePath {
@@ -61,7 +62,8 @@ const routes = [
 	{ path: '/jupyter-test', component: JupyterTest },
 	{ path: '/custom-input-test', component: CustomInputTest },
 	{ path: '/clipboard', component: ClipboardTest },
-	{ path: '/vegalite', component: VegaliteTest }
+	{ path: '/vegalite', component: VegaliteTest },
+	{ path: '/funman-debugger', component: FunmanDebugger }
 ];
 
 const router = createRouter({
