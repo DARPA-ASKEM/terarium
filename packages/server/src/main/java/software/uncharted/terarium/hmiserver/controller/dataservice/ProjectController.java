@@ -1088,7 +1088,7 @@ public class ProjectController {
 		@PathVariable("isPublic") final boolean isPublic
 	) {
 		try {
-			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), id);
+			projectService.checkPermissionCanWrite(currentUserService.get().getId(), id);
 
 			// Getting the project permissions
 			final RebacProject project = new RebacProject(id, reBACService);
@@ -1148,7 +1148,7 @@ public class ProjectController {
 		@PathVariable("relationship") final String relationship
 	) {
 		try {
-			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), projectId);
+			projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacUser who = new RebacUser(userId, reBACService);
