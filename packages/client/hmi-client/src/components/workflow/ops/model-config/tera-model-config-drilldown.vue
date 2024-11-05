@@ -215,6 +215,7 @@
 		:asset-type="AssetType.ModelConfiguration"
 		@close-modal="showSaveModal = false"
 		@on-save="onSaveAsModelConfiguration"
+		@on-update="onSaveAsModelConfiguration"
 	/>
 
 	<!-- Matrix effect easter egg  -->
