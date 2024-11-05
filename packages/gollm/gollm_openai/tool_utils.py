@@ -3,6 +3,7 @@ import imghdr
 import json
 import os
 from gollm_openai.prompts.amr_enrichment import ENRICH_PROMPT
+from gollm_openai.prompts.dataset_enrichment import DATASET_ENRICH_PROMPT
 from gollm_openai.prompts.condense import CONDENSE_PROMPT, format_chunks
 from gollm_openai.prompts.config_from_dataset import (
     CONFIGURE_FROM_DATASET_PROMPT,
@@ -288,6 +289,49 @@ def amr_enrichment_chain(amr: str, research_paper: str) -> dict:
             "type": "json_schema",
             "json_schema": {
                 "name": "model_configurations",
+                "schema": response_schema
+            }
+        },
+        messages=[
+            {"role": "user", "content": prompt},
+        ],
+    )
+
+    print("Received response from OpenAI API. Formatting response to work with HMI...")
+    output_json = json.loads(output.choices[0].message.content)
+
+    return unescape_curly_braces(output_json)
+
+
+def dataset_enrichment_chain(research_paper: str, dataset: List[str]) -> dict:
+    print("Extracting and formatting research paper...")
+    research_paper = normalize_greek_alphabet(research_paper)
+
+    print("Uploading and validating dataset enrichment schema...")
+    config_path = os.path.join(SCRIPT_DIR, 'schemas', 'dataset_enrichment.json')
+    with open(config_path, 'r') as config_file:
+        response_schema = json.load(config_file)
+    validate_schema(response_schema)
+
+    print("Building prompt to extract dataset enrichments from a research paper...")
+    prompt = DATASET_ENRICH_PROMPT.format(
+        research_paper=escape_curly_braces(research_paper),
+        dataset="\n".join(dataset)
+    )
+
+    client = OpenAI()
+    output = client.chat.completions.create(
+        model=GPT_MODEL,
+        max_tokens=16000,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0,
+        seed=123,
+        temperature=0,
+        response_format={
+            "type": "json_schema",
+            "json_schema": {
+                "name": "dataset_enrichment",
                 "schema": response_schema
             }
         },
