@@ -8,6 +8,7 @@ export interface ModelComparisonOperationState extends BaseState {
 	notebookHistory: NotebookHistory[];
 	hasCodeRun: boolean;
 	comparisonImageIds: string[];
+	comparisonPairs: string[][];
 }
 
 export const ModelComparisonOperation: Operation = {
@@ -26,7 +27,8 @@ export const ModelComparisonOperation: Operation = {
 		const init: ModelComparisonOperationState = {
 			notebookHistory: [],
 			hasCodeRun: false,
-			comparisonImageIds: []
+			comparisonImageIds: [],
+			comparisonPairs: []
 		};
 		return init;
 	}

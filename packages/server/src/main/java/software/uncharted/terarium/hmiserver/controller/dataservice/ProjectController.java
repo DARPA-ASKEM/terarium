@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -50,6 +51,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectExport;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
+import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
@@ -156,28 +158,34 @@ public class ProjectController {
 	) {
 		final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
 
-		final List<UUID> projectIds;
-		try {
-			projectIds = rebacUser.lookupProjects();
-		} catch (final Exception e) {
-			log.error("Error retrieving projects from spicedb", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
-		}
-
-		if (projectIds == null || projectIds.isEmpty()) {
-			return ResponseEntity.noContent().build();
-		}
-
-		// Get projects from the project repository associated with the list of ids.
-		// Filter the list of projects to only include active projects.
+		// If admin, just return all projects
 		final List<Project> projects;
-		try {
-			projects = includeInactive
-				? projectService.getProjects(projectIds)
-				: projectService.getActiveProjects(projectIds);
-		} catch (final Exception e) {
-			log.error("Error retrieving projects from postgres db", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		if (rebacUser.isAdmin()) {
+			projects = includeInactive ? projectService.getProjects() : projectService.getActiveProjects();
+		} else {
+			final List<UUID> projectIds;
+			try {
+				projectIds = rebacUser.lookupProjects();
+			} catch (final Exception e) {
+				log.error("Error retrieving projects from spicedb", e);
+				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+			}
+
+			if (projectIds == null || projectIds.isEmpty()) {
+				return ResponseEntity.noContent().build();
+			}
+
+			// Get projects from the project repository associated with the list of ids.
+			// Filter the list of projects to only include active projects.
+
+			try {
+				projects = includeInactive
+					? projectService.getProjects(projectIds)
+					: projectService.getActiveProjects(projectIds);
+			} catch (final Exception e) {
+				log.error("Error retrieving projects from postgres db", e);
+				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+			}
 		}
 
 		if (projects.isEmpty()) {
@@ -216,6 +224,9 @@ public class ProjectController {
 			final List<Contributor> contributors;
 			try {
 				contributors = projectPermissionsService.getContributors(rebacProject);
+				if (project.getMetadata() == null) {
+					project.setMetadata(new HashMap<>());
+				}
 				project
 					.getMetadata()
 					.put("contributor-count", Integer.toString(contributors == null ? 0 : contributors.size()));
@@ -918,10 +929,10 @@ public class ProjectController {
 		try {
 			for (final RebacPermissionRelationship permissionRelationship : rebacProject.getPermissionRelationships()) {
 				if (permissionRelationship.getSubjectType().equals(Schema.Type.USER)) {
-					permissions.addUser(
-						reBACService.getUser(permissionRelationship.getSubjectId()),
-						permissionRelationship.getRelationship()
-					);
+					PermissionUser user = reBACService.getUser(permissionRelationship.getSubjectId());
+					if (user != null) {
+						permissions.addUser(user, permissionRelationship.getRelationship());
+					}
 				} else if (permissionRelationship.getSubjectType().equals(Schema.Type.GROUP)) {
 					permissions.addGroup(
 						reBACService.getGroup(permissionRelationship.getSubjectId()),
@@ -1077,7 +1088,7 @@ public class ProjectController {
 		@PathVariable("isPublic") final boolean isPublic
 	) {
 		try {
-			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), id);
+			projectService.checkPermissionCanWrite(currentUserService.get().getId(), id);
 
 			// Getting the project permissions
 			final RebacProject project = new RebacProject(id, reBACService);
@@ -1137,7 +1148,7 @@ public class ProjectController {
 		@PathVariable("relationship") final String relationship
 	) {
 		try {
-			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), projectId);
+			projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacUser who = new RebacUser(userId, reBACService);

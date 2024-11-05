@@ -13,9 +13,11 @@ from gollm_openai.prompts.config_from_dataset import (
     CONFIGURE_FROM_DATASET_MATRIX_PROMPT
 )
 from gollm_openai.prompts.config_from_document import CONFIGURE_FROM_DOCUMENT_PROMPT
+from gollm_openai.prompts.equations_cleanup import EQUATIONS_CLEANUP_PROMPT
 from gollm_openai.prompts.equations_from_image import EQUATIONS_FROM_IMAGE_PROMPT
 from gollm_openai.prompts.general_instruction import GENERAL_INSTRUCTION_PROMPT
 from gollm_openai.prompts.interventions_from_document import INTERVENTIONS_FROM_DOCUMENT_PROMPT
+from gollm_openai.prompts.latex_style_guide import LATEXT_STYLE_GUIDE
 from gollm_openai.prompts.model_card import INSTRUCTIONS
 from gollm_openai.prompts.model_meta_compare import MODEL_METADATA_COMPARE_PROMPT
 from openai import OpenAI
@@ -25,8 +27,6 @@ from utils import (
     exceeds_tokens,
     model_config_adapter,
     normalize_greek_alphabet,
-    parse_param_initials,
-    postprocess_oai_json,
     validate_schema
 )
 
@@ -36,6 +36,18 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 def escape_curly_braces(text: str):
     # Escape curly braces
     return text.replace("{", "{{").replace("}", "}}")
+
+
+def unescape_curly_braces(json_obj: dict) -> dict:
+    if isinstance(json_obj, dict):
+        for key, value in json_obj.items():
+            json_obj[key] = unescape_curly_braces(value)
+    elif isinstance(json_obj, list):
+        for i in range(len(json_obj)):
+            json_obj[i] = unescape_curly_braces(json_obj[i])
+    elif isinstance(json_obj, str):
+        json_obj = json_obj.replace('{{', '{').replace('}}', '}')
+    return json_obj
 
 
 def get_image_format_string(image_format: str) -> str:
@@ -60,6 +72,47 @@ def get_image_format_string(image_format: str) -> str:
     return format_strings.get(image_format.lower())
 
 
+def equations_cleanup(equations: List[str]) -> dict:
+    print("Reformatting equations...")
+
+    print("Uploading and validating equations schema...")
+    config_path = os.path.join(SCRIPT_DIR, 'schemas', 'equations.json')
+    with open(config_path, 'r') as config_file:
+        response_schema = json.load(config_file)
+    validate_schema(response_schema)
+
+    print("Building prompt to reformat equations...")
+    prompt = EQUATIONS_CLEANUP_PROMPT.format(
+        style_guide=LATEXT_STYLE_GUIDE,
+        equations="\n".join(equations)
+    )
+
+    client = OpenAI()
+    output = client.chat.completions.create(
+        model="gpt-4o-2024-08-06",
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0,
+        temperature=0,
+        seed=123,
+        max_tokens=1024,
+        response_format={
+            "type": "json_schema",
+            "json_schema": {
+                "name": "equations",
+                "schema": response_schema
+            }
+        },
+        messages=[
+            {"role": "user", "content": prompt},
+        ]
+    )
+    print("Received response from OpenAI API. Formatting response to work with HMI...")
+    output_json = json.loads(output.choices[0].message.content)
+
+    return output_json
+
+
 def equations_from_image(image: str) -> dict:
     print("Translating equations from image...")
 
@@ -74,9 +127,14 @@ def equations_from_image(image: str) -> dict:
         response_schema = json.load(config_file)
     validate_schema(response_schema)
 
+    print("Building prompt to extract equations an image...")
+    prompt = EQUATIONS_FROM_IMAGE_PROMPT.format(
+        style_guide=LATEXT_STYLE_GUIDE
+    )
+
     client = OpenAI()
     output = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-4o-2024-08-06",
         top_p=1,
         frequency_penalty=0,
         presence_penalty=0,
@@ -94,7 +152,7 @@ def equations_from_image(image: str) -> dict:
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": EQUATIONS_FROM_IMAGE_PROMPT},
+                    {"type": "text", "text": prompt},
                     {"type": "image_url", "image_url": {"url": f"{base64_image_str}{image}"}}
                 ]
             },
@@ -151,7 +209,7 @@ def interventions_from_document(research_paper: str, amr: str) -> dict:
 
     print("There are ", len(output_json["interventionPolicies"]), "intervention policies identified from the text.")
 
-    return output_json
+    return unescape_curly_braces(output_json)
 
 
 def model_config_from_document(research_paper: str, amr: str) -> dict:
@@ -177,7 +235,7 @@ def model_config_from_document(research_paper: str, amr: str) -> dict:
         frequency_penalty=0,
         max_tokens=4000,
         presence_penalty=0,
-        seed=905,
+        seed=123,
         temperature=0,
         top_p=1,
         response_format={
@@ -197,30 +255,50 @@ def model_config_from_document(research_paper: str, amr: str) -> dict:
 
     print("There are ", len(output_json["conditions"]), "conditions identified from the text.")
 
-    return model_config_adapter(output_json)
+    return unescape_curly_braces(model_config_adapter(output_json))
 
 
 def amr_enrichment_chain(amr: str, research_paper: str) -> dict:
-    amr_param_states = parse_param_initials(amr)
+    print("Extracting and formatting research paper...")
+    research_paper = normalize_greek_alphabet(research_paper)
+
+    print("Uploading and validating model enrichment schema...")
+    config_path = os.path.join(SCRIPT_DIR, 'schemas', 'amr_enrichment.json')
+    with open(config_path, 'r') as config_file:
+        response_schema = json.load(config_file)
+    validate_schema(response_schema)
+
+    print("Building prompt to extract model enrichments from a research paper...")
     prompt = ENRICH_PROMPT.format(
-        param_initial_dict=amr_param_states,
-        paper_text=escape_curly_braces(research_paper)
+        amr=escape_curly_braces(amr),
+        research_paper=escape_curly_braces(research_paper)
     )
+
     client = OpenAI()
     output = client.chat.completions.create(
         model="gpt-4o-2024-08-06",
-        max_tokens=4000,
+        max_tokens=16000,
         top_p=1,
         frequency_penalty=0,
         presence_penalty=0,
         seed=123,
         temperature=0,
-        response_format={"type": "json_object"},
+        response_format={
+            "type": "json_schema",
+            "json_schema": {
+                "name": "model_configurations",
+                "schema": response_schema
+            }
+        },
         messages=[
             {"role": "user", "content": prompt},
         ],
     )
-    return postprocess_oai_json(output.choices[0].message.content)
+
+    print("Received response from OpenAI API. Formatting response to work with HMI...")
+    output_json = json.loads(output.choices[0].message.content)
+
+    return unescape_curly_braces(output_json)
 
 
 def model_card_chain(amr: str, research_paper: str = None) -> dict:
@@ -245,9 +323,9 @@ def model_card_chain(amr: str, research_paper: str = None) -> dict:
         model="gpt-4o-2024-08-06",
         temperature=0,
         frequency_penalty=0,
-        max_tokens=4000,
+        max_tokens=16000,
         presence_penalty=0,
-        seed=123,
+        seed=365,
         top_p=1,
         response_format={
             "type": "json_schema",
@@ -264,7 +342,7 @@ def model_card_chain(amr: str, research_paper: str = None) -> dict:
     print("Received response from OpenAI API. Formatting response to work with HMI...")
     output_json = json.loads(output.choices[0].message.content)
 
-    return output_json
+    return unescape_curly_braces(output_json)
 
 
 def condense_chain(query: str, chunks: List[str], max_tokens: int = 16385) -> str:
@@ -316,7 +394,7 @@ def embedding_chain(text: str) -> List:
     return output.data[0].embedding
 
 
-def model_config_from_dataset(amr: str, dataset: List[str], matrix: str) -> str:
+def model_config_from_dataset(amr: str, dataset: List[str], matrix: str) -> dict:
     print("Extracting datasets...")
     dataset_text = os.linesep.join(dataset)
 
@@ -365,10 +443,10 @@ def model_config_from_dataset(amr: str, dataset: List[str], matrix: str) -> str:
 
     print("There are ", len(output_json["conditions"]), "conditions identified from the datasets.")
 
-    return model_config_adapter(output_json)
+    return unescape_curly_braces(model_config_adapter(output_json))
 
 
-def compare_models(amrs: List[str]) -> str:
+def compare_models(amrs: List[str]) -> dict:
     print("Comparing models...")
 
     print("Building prompt to compare models...")
@@ -385,13 +463,13 @@ def compare_models(amrs: List[str]) -> str:
 
     client = OpenAI()
     output = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-4o-2024-08-06",
         top_p=1,
         frequency_penalty=0,
         presence_penalty=0,
         seed=123,
         temperature=0,
-        max_tokens=2048,
+        max_tokens=16000,
         response_format={
             "type": "json_schema",
             "json_schema": {
@@ -407,4 +485,4 @@ def compare_models(amrs: List[str]) -> str:
     print("Received response from OpenAI API. Formatting response to work with HMI...")
     output_json = json.loads(output.choices[0].message.content)
 
-    return output_json
+    return unescape_curly_braces(output_json)

@@ -1,9 +1,11 @@
 package software.uncharted.terarium.hmiserver.utils;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.function.Predicate;
 
 public class JsonUtil {
 
@@ -15,6 +17,15 @@ public class JsonUtil {
 				final JsonNode fieldValue = entry.getValue();
 				dest.set(fieldName, fieldValue);
 			});
+	}
+
+	public static JsonNode getFirstByPredicate(final ArrayNode node, final Predicate<JsonNode> predicate) {
+		for (final JsonNode element : node) {
+			if (predicate.test(element)) {
+				return element;
+			}
+		}
+		return null; // Return null if no element matches the predicate
 	}
 
 	public static void recursiveSetAll(final ObjectNode dest, final JsonNode src) {

@@ -22,23 +22,13 @@ For each condition, create a model configuration JSON object that satisfies the 
 1.	Create a value for `name` and `description` from the user-provided text.
 2.	For the description, provide a long-form description of the condition. If the description cannot be created from the user-provided text, set it to an empty string.
 3.	`model_id` id a UUID. If the AMR model has an id, you can use it. Otherwise, you can set as the nil UUID "00000000-0000-0000-0000-000000000000".
-4.	For each initial specified in the AMR model ODE semantics, create an initial semantic object. Do not create new initial semantic objects if they are not included in the original AMR model. You should set initial semantic object fields using the following rules:
-    a.	`target` should reference the id of the initial variable from the AMR model ODE semantics.
-    b.	`source` should reference the title or file name of the research paper.
-    c.	`type` should be set to "initial”.
-    d.	You should extract a numerical value or an expression of the initial state from the user-provided text if possible and add it to `expression`
-    e.	`expression_mathml` should be `expression` written in MathML format.
-5.	For each parameter specified in the AMR model ODE semantics, create a parameter semantic object. Do not create new parameter semantic objects if they are not included in the original AMR model. You should set parameter semantic object fields using the following rules:
-    a.	`reference_id` should reference the id of the parameter.
-    b.	`source` should reference the title or file name of the research paper.
-    c.	`type` should be set to "parameter".
-    d.	Be sure to extract parameter values from the user-provided text, and do not use the default values from the AMR model.
-        -	If the extracted parameter value is a single constant value, set the parameter `value` to the constant value and set `type` to "Constant".
-        -	If the extracted parameter value is a distribution with a maximum and minimum value, set `type` to only "Uniform" and populate the `minimum` and `maximum` fields.
+4.	For each state specified in the AMR model, extract information from the text and create an initial semantic object. Do not create new initial semantic objects for states that are not included in the original AMR model. If you cannot find a value or expression for the initial state, do not create an initial semantic object.
+5.	For each parameter specified in the AMR model, extract information from the text and create a parameter semantic object. Do not create new parameter semantic objects for parameters that are not included in the original AMR model. If you cannot find a constant value or distribution for the parameter, do not create a parameter semantic object.
 6. `observableSemanticList` should be an empty list.
 7. `inferredParameterList` should be an empty list.
+8. Determine what page the information was extracted from and set the `extractionPage` value to that page number. If the page number cannot be determined, set it to 0. Only pick one page number. Do not provide a range.
 
-Do not respond in full sentences; only create a JSON object that satisfies the JSON schema specified in the response format.
+Do not respond in full sentences; only create a JSON object that satisfies the JSON schema specified in the response format. Make sure you follow the JSON standard for the data types and format.
 
 Answer:
 """

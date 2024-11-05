@@ -6,6 +6,7 @@ import * as d3 from 'd3';
 import dagre from 'dagre';
 import graphScaffolder, { IGraph, INode, IEdge } from '@graph-scaffolder/index';
 import type { Position } from '@/types/common';
+import OrthogonalConnector, { Side } from '@/utils/ortho-router';
 
 export type D3SelectionINode<T> = d3.Selection<d3.BaseType, INode<T>, null, any>;
 export type D3SelectionIEdge<T> = d3.Selection<d3.BaseType, IEdge<T>, null, any>;
@@ -25,6 +26,136 @@ function interpolatePointsForCurve(a: Position, b: Position): Position[] {
 	const controlXOffset = 50;
 	return [a, { x: a.x + controlXOffset, y: a.y }, { x: b.x - controlXOffset, y: b.y }, b];
 }
+
+// Stand-alone edge rerouting given a set of node positions and their
+// connections.
+interface ExtRect {
+	left: number;
+	top: number;
+	width: number;
+	height: number;
+	cx: number;
+	cy: number;
+}
+
+enum EdgeProportion {
+	None,
+	Source,
+	Target,
+	Both
+}
+
+/**
+ * Options
+ * - edgeProportion determines if edge start/end should be placed proportionally distance away
+ * from each other.
+ * - adpativeRoute determines if the side where edge start/end shold be fixed or adaptive
+ *
+ * */
+const routeOptions = {
+	edgeProportion: EdgeProportion.None,
+	edgeAdaptiveSide: false
+};
+
+export const rerouteEdges = (nodes: INode<any>[], edges: IEdge<any>[]) => {
+	const nodeMap: Map<string, ExtRect> = new Map();
+	nodes.forEach((node) => {
+		nodeMap.set(node.id, {
+			left: node.x - 0.5 * node.width,
+			top: node.y - 0.5 * node.height,
+			width: node.width,
+			height: node.height,
+
+			// extras for side calculation
+			cx: node.x,
+			cy: node.y
+		});
+	});
+
+	const obstacles = nodes.map((node) => nodeMap.get(node.id) as any);
+
+	// Figure out how many edges extends out of each given nodes for edge placement.
+	// eg if there are 3 edges coming out of node-A, then the placement of these
+	// edges are (edge-i/num+1) => [1/4, 2/4, 3/4]
+	const edgeSourceMap: Map<string, number> = new Map();
+	const edgeTargetMap: Map<string, number> = new Map();
+	edges.forEach((edge: IEdge<any>) => {
+		if (edge.data.isObservable) return;
+		if (!edgeSourceMap.has(edge.source)) {
+			edgeSourceMap.set(edge.source, 0);
+		}
+		if (!edgeTargetMap.has(edge.target)) {
+			edgeTargetMap.set(edge.target, 0);
+		}
+		edgeSourceMap.set(edge.source, 1 + (edgeSourceMap.get(edge.source) as number));
+		edgeTargetMap.set(edge.target, 1 + (edgeTargetMap.get(edge.target) as number));
+	});
+
+	const sourceNodeCounter: Map<string, number> = new Map();
+	const targetNodeCounter: Map<string, number> = new Map();
+
+	edges.forEach((edge: IEdge<any>) => {
+		if (edge.data.isObservable) return;
+		if (!sourceNodeCounter.has(edge.source)) {
+			sourceNodeCounter.set(edge.source, 0);
+		}
+		if (!targetNodeCounter.has(edge.target)) {
+			targetNodeCounter.set(edge.target, 0);
+		}
+
+		let sourceCounter = sourceNodeCounter.get(edge.source) as number;
+		let targetCounter = targetNodeCounter.get(edge.target) as number;
+
+		const sourceDenominator = edgeSourceMap.get(edge.source) as number;
+		const targetDenominator = edgeTargetMap.get(edge.target) as number;
+		sourceCounter++;
+		targetCounter++;
+
+		let sideA: Side = 'right';
+		let sideB: Side = 'left';
+
+		const shapeA = nodeMap.get(edge.source) as ExtRect;
+		const shapeB = nodeMap.get(edge.target) as ExtRect;
+
+		if (routeOptions.edgeAdaptiveSide) {
+			if (shapeA.cx >= shapeB.cx) {
+				sideA = 'left';
+				sideB = 'right';
+			} else {
+				sideA = 'right';
+				sideB = 'left';
+			}
+		}
+
+		const orthoOptions = {
+			pointA: { shape: shapeA, side: sideA, distance: 0.5 },
+			pointB: { shape: shapeB, side: sideB, distance: 0.5 },
+			shapeMargin: 20,
+			globalBoundsMargin: 10,
+			globalBounds: { left: -8000, top: -8000, width: 8000, height: 8000 },
+			obstacles
+		};
+
+		if (routeOptions.edgeProportion === EdgeProportion.Both) {
+			orthoOptions.pointA.distance = sourceCounter / (sourceDenominator + 1);
+			orthoOptions.pointB.distance = targetCounter / (targetDenominator + 1);
+		} else if (routeOptions.edgeProportion === EdgeProportion.Source) {
+			orthoOptions.pointA.distance = sourceCounter / (sourceDenominator + 1);
+			orthoOptions.pointB.distance = 0.5;
+		} else if (routeOptions.edgeProportion === EdgeProportion.Target) {
+			orthoOptions.pointA.distance = 0.5;
+			orthoOptions.pointB.distance = targetCounter / (targetDenominator + 1);
+		} else {
+			orthoOptions.pointA.distance = 0.5;
+			orthoOptions.pointB.distance = 0.5;
+		}
+		const path = OrthogonalConnector.route(orthoOptions);
+		edge.points = path;
+
+		sourceNodeCounter.set(edge.source, sourceCounter);
+		targetNodeCounter.set(edge.target, targetCounter);
+	});
+};
 
 export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true): IGraph<V, E> => {
 	const g = new dagre.graphlib.Graph({ compound: true });
@@ -50,7 +181,7 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 	if (lr === true) {
 		g.graph().rankDir = 'LR';
 		g.graph().nodesep = 100;
-		g.graph().ranksep = 100;
+		g.graph().ranksep = 125;
 	}
 
 	dagre.layout(g);
@@ -136,6 +267,8 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 			if (node.y - 0.5 * node.height < minY) minY = node.y - 0.5 * node.height;
 			if (node.y + 0.5 * node.height > maxY) maxY = node.y + 0.5 * node.height;
 		});
+
+		rerouteEdges(graphData.nodes, graphData.edges);
 
 		// Give the bounds a little extra buffer
 		const buffer = 10;

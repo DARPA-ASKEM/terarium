@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
 import EventEmitter from './event-emitter';
 import removeChildren from '../utils/dom-util';
-import { traverseGraph, getAStarPath } from './traverse';
+import { traverseGraph } from './traverse';
 import { translate } from '../utils/svg-util';
 import { Options, INode, IEdge, IGraph, IRect, IPoint, D3Selection, D3SelectionINode } from '../types';
 
@@ -396,21 +396,21 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 		const dragSelector = this.options.dragSelector || null;
 
-		function collisionFn(p: IPoint) {
-			const buffer = 10;
-			for (let i = 0; i < nodes.length; i++) {
-				const checkingNode = nodes[i];
-				// FIXME: Thi is  a hack to get around hierarhical geometries, will need to
-				// relax this guard.
-				// if (node.nodes && node.nodes.length > 0) continue;
-				if (p.x >= checkingNode.x - buffer && p.x <= checkingNode.x + checkingNode.width + buffer) {
-					if (p.y >= checkingNode.y - buffer && p.y <= checkingNode.y + checkingNode.height + buffer) {
-						return true;
-					}
-				}
-			}
-			return false;
-		}
+		// function basicCollisionFn(p: IPoint, objects: IRect[]) {
+		// 	const buffer = 0; // FIXME: factor out to config
+		// 	for (let i = 0; i < objects.length; i++) {
+		// 		const checkingObj = objects[i];
+		// 		// FIXME: Thi is  a hack to get around hierarhical geometries, will need to
+		// 		// relax this guard.
+		// 		// if (node.nodes && node.nodes.length > 0) continue;
+		// 		if (p.x >= checkingObj.x - buffer && p.x <= checkingObj.x + checkingObj.width + buffer) {
+		// 			if (p.y >= checkingObj.y - buffer && p.y <= checkingObj.y + checkingObj.height + buffer) {
+		// 				return true;
+		// 			}
+		// 		}
+		// 	}
+		// 	return false;
+		// }
 
 		function nodeDragStart(evt: d3.D3DragEvent<any, any, any>): void {
 			evt.sourceEvent.stopPropagation();
@@ -477,22 +477,12 @@ export abstract class Renderer<V, E> extends EventEmitter {
 			}
 
 			renderer.isDragEnabled = false;
-			if (options.useAStarRouting && sufficientlyMoved) {
-				for (let i = 0; i < edges.length; i++) {
-					const edge = edges[i];
-					const source = edge.source;
-					const target = edge.target;
 
-					if (nodeDraggingIds.includes(source) || nodeDraggingIds.includes(target)) {
-						const points = edge.points;
-						const start = points[0];
-						const end = points[points.length - 1];
-						if (edge.source === edge.target) continue;
-						edge.points = getAStarPath(start, end, collisionFn, { w: 20, h: 20 });
-					}
-				}
-				updateEdgePoints();
+			if (sufficientlyMoved && options.edgeReroutingFn) {
+				options.edgeReroutingFn(nodes, edges);
 			}
+
+			updateEdgePoints();
 
 			// Clean up
 			nodeDraggingIds = [];

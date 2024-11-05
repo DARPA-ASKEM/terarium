@@ -4,6 +4,7 @@ import { getRunResult, getSimulation } from '@/services/models/simulation-servic
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import { createInterventionPolicy, blankIntervention } from '@/services/intervention-policy';
 import optimizeModel from '@assets/svg/operator-images/optimize-model.svg';
+import { ChartSetting } from '@/types/common';
 
 const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L747';
 
@@ -61,8 +62,7 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	interventionPolicyGroups: InterventionPolicyGroupForm[];
 	// Constraints:
 	constraintGroups: Criterion[];
-	selectedInterventionVariables: string[];
-	selectedSimulationVariables: string[];
+	chartSettings: ChartSetting[] | null; // null indicates that the chart settings have not been set yet
 	inProgressOptimizeId: string;
 	inProgressPreForecastId: string;
 	preForecastRunId: string;
@@ -142,8 +142,7 @@ export const OptimizeCiemssOperation: Operation = {
 			interventionPolicyId: '',
 			interventionPolicyGroups: [],
 			constraintGroups: [defaultCriterion],
-			selectedInterventionVariables: [],
-			selectedSimulationVariables: [],
+			chartSettings: null,
 			inProgressOptimizeId: '',
 			inProgressPostForecastId: '',
 			inProgressPreForecastId: '',
@@ -182,16 +181,12 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 		allInterventions.push(newIntervetion);
 	});
 
-	// At the moment we only accept one intervention type. Pyciemss, pyciemss-service and this will all need to be updated.
-	// https://github.com/DARPA-ASKEM/terarium/issues/3909
 	const interventionType = optimizeInterventions.intervention_type ?? '';
 	const paramNames: string[] = optimizeInterventions.param_names ?? [];
 	const paramValues: number[] = optimizeInterventions.param_values ?? [];
 	const startTimes: number[] = optimizeInterventions.start_time ?? [];
 
 	const policyResult = await getRunResult(optimizeRunId, 'policy.json');
-	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
-	// This will need to be updated to allow multiple intervention types. This is not allowed at the moment.
 	if (interventionType === OptimizationInterventionObjective.startTime && startTimes.length !== 0) {
 		// If we our intervention type is param value our policyResult will provide a timestep.
 		for (let i = 0; i < paramNames.length; i++) {
@@ -254,7 +249,10 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
  *
  *
  */
-export async function createInterventionPolicyFromOptimize(modelConfigId: string, optimizeRunId: string) {
+export async function createInterventionPolicyFromOptimize(
+	modelConfigId: string,
+	optimizeRunId: string
+): Promise<InterventionPolicy | null> {
 	const modelId = await getModelIdFromModelConfigurationId(modelConfigId);
 	const optimizedInterventions = await getOptimizedInterventions(optimizeRunId);
 
@@ -264,6 +262,6 @@ export async function createInterventionPolicyFromOptimize(modelConfigId: string
 		temporary: true,
 		interventions: optimizedInterventions
 	};
-	const newInterventionPolicy: InterventionPolicy = await createInterventionPolicy(newIntervention);
+	const newInterventionPolicy: InterventionPolicy | null = await createInterventionPolicy(newIntervention);
 	return newInterventionPolicy;
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -26,6 +27,12 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelSemantics;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Initial;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Observable;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.OdeSemantics;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Rate;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.State;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Transition;
+import software.uncharted.terarium.hmiserver.models.dataservice.regnet.RegNetVertex;
+import software.uncharted.terarium.hmiserver.utils.JsonUtil;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -57,12 +64,65 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	@TSOptional
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
-	private ModelSemantics semantics;
+	private ModelSemantics semantics = new ModelSemantics();
 
 	@TSOptional
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
 	private ModelMetadata metadata;
+
+	public void retainMetadataFields(final Model other) {
+		final Map<String, JsonNode> props = getAdditionalProperties();
+		final Map<String, JsonNode> otherProps = other.getAdditionalProperties();
+
+		if (metadata == null) {
+			metadata = other.getMetadata();
+		} else {
+			metadata.retainMetadataFields(other.getMetadata());
+		}
+
+		if (getDescription() == null) {
+			setDescription(other.getDescription());
+		}
+
+		final List<String> propertiesToPreserve = List.of(
+			"states",
+			"metadata",
+			"units",
+			"vertices",
+			"edges",
+			"parameters",
+			"initials"
+		);
+
+		for (final String property : propertiesToPreserve) {
+			if (!otherProps.containsKey(property) || !otherProps.get(property).isArray()) {
+				continue;
+			}
+
+			if (!props.containsKey(property) || !props.get(property).isArray()) {
+				continue;
+			}
+
+			final ArrayNode otherProperty = (ArrayNode) otherProps.get(property);
+			final ArrayNode thisProperty = (ArrayNode) props.get(property);
+
+			for (final JsonNode element : otherProperty) {
+				final JsonNode matching = JsonUtil.getFirstByPredicate(thisProperty, (final JsonNode node) -> {
+					// Check if the 'state' object has a 'name' field
+					return node.has("id");
+				});
+
+				if (matching == null) {
+					// does not exist in current model, we can add the old one, otherwise keep the
+					// new one
+					thisProperty.add(element);
+				}
+			}
+
+			props.put(property, thisProperty);
+		}
+	}
 
 	public ModelMetadata getMetadata() {
 		if (metadata == null) {
@@ -105,15 +165,63 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 
 	@JsonIgnore
 	@TSIgnore
+	public List<State> getStates() {
+		if (isRegnet()) return null;
+		if (!getModel().containsKey("states")) return new ArrayList<>();
+		final ObjectMapper objectMapper = new ObjectMapper();
+		return objectMapper.convertValue(getModel().get("states"), new TypeReference<>() {});
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public void setStates(final List<State> states) {
+		if (isRegnet()) return;
+		final ObjectMapper objectMapper = new ObjectMapper();
+		getModel().put("states", objectMapper.convertValue(states, JsonNode.class));
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public List<RegNetVertex> getVerticies() {
+		if (!isRegnet()) return null;
+		if (!getModel().containsKey("vertices")) return new ArrayList<>();
+		final ObjectMapper objectMapper = new ObjectMapper();
+		return objectMapper.convertValue(getModel().get("vertices"), new TypeReference<>() {});
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public void setVerticies(final List<RegNetVertex> verticies) {
+		if (!isRegnet()) return;
+		final ObjectMapper objectMapper = new ObjectMapper();
+		getModel().put("vertices", objectMapper.convertValue(verticies, JsonNode.class));
+	}
+
+	@JsonIgnore
+	@TSIgnore
 	public List<Observable> getObservables() {
-		if (
-			this.getSemantics() == null ||
-			this.getSemantics().getOde() == null ||
-			this.getSemantics().getOde().getObservables() == null
-		) {
-			return new ArrayList<Observable>();
+		if (this.getSemantics() == null) {
+			this.setSemantics(new ModelSemantics());
+		}
+		if (this.getSemantics().getOde() == null) {
+			this.getSemantics().setOde(new OdeSemantics());
+		}
+		if (this.getSemantics().getOde().getObservables() == null) {
+			this.getSemantics().getOde().setObservables(new ArrayList<>());
 		}
 		return this.getSemantics().getOde().getObservables();
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public void setObservables(final List<Observable> observables) {
+		if (this.getSemantics() == null) {
+			this.setSemantics(new ModelSemantics());
+		}
+		if (this.getSemantics().getOde() == null) {
+			this.getSemantics().setOde(new OdeSemantics());
+		}
+		this.getSemantics().getOde().setObservables(observables);
 	}
 
 	@JsonIgnore
@@ -123,14 +231,47 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		if (this.isRegnet()) {
 			return objectMapper.convertValue(this.getModel().get("parameters"), new TypeReference<>() {});
 		}
-		if (
-			this.getSemantics() == null ||
-			this.getSemantics().getOde() == null ||
-			this.getSemantics().getOde().getParameters() == null
-		) {
-			return new ArrayList<ModelParameter>();
+		if (this.getSemantics() == null) {
+			this.setSemantics(new ModelSemantics());
+		}
+		if (this.getSemantics().getOde() == null) {
+			this.getSemantics().setOde(new OdeSemantics());
+		}
+		if (this.getSemantics().getOde().getParameters() == null) {
+			this.getSemantics().getOde().setParameters(new ArrayList<>());
 		}
 		return this.getSemantics().getOde().getParameters();
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public void setParameters(final List<ModelParameter> parameters) {
+		final ObjectMapper objectMapper = new ObjectMapper();
+		if (this.isRegnet()) {
+			this.getModel().put("parameters", objectMapper.convertValue(parameters, JsonNode.class));
+		} else {
+			if (this.getSemantics() == null) {
+				this.setSemantics(new ModelSemantics());
+			}
+			if (this.getSemantics().getOde() == null) {
+				this.getSemantics().setOde(new OdeSemantics());
+			}
+			this.getSemantics().getOde().setParameters(parameters);
+		}
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public List<Transition> getTransitions() {
+		final ObjectMapper objectMapper = new ObjectMapper();
+		return objectMapper.convertValue(this.getModel().get("transitions"), new TypeReference<>() {});
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public void setTransitions(final List<Transition> parameters) {
+		final ObjectMapper objectMapper = new ObjectMapper();
+		this.getModel().put("transitions", objectMapper.convertValue(parameters, JsonNode.class));
 	}
 
 	@JsonIgnore
@@ -140,12 +281,14 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		if (this.isRegnet()) {
 			return objectMapper.convertValue(this.getModel().get("initials"), new TypeReference<>() {});
 		} else {
-			if (
-				this.getSemantics() == null ||
-				this.getSemantics().getOde() == null ||
-				this.getSemantics().getOde().getInitials() == null
-			) {
-				return new ArrayList<Initial>();
+			if (this.getSemantics() == null) {
+				this.setSemantics(new ModelSemantics());
+			}
+			if (this.getSemantics().getOde() == null) {
+				this.getSemantics().setOde(new OdeSemantics());
+			}
+			if (this.getSemantics().getOde().getInitials() == null) {
+				this.getSemantics().getOde().setInitials(new ArrayList<>());
 			}
 			return this.getSemantics().getOde().getInitials();
 		}
@@ -153,7 +296,50 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 
 	@JsonIgnore
 	@TSIgnore
+	public List<Rate> getRates() {
+		final ObjectMapper objectMapper = new ObjectMapper();
+		if (this.isRegnet()) {
+			return objectMapper.convertValue(this.getModel().get("initials"), new TypeReference<>() {});
+		} else {
+			if (this.getSemantics() == null) {
+				this.setSemantics(new ModelSemantics());
+			}
+			if (this.getSemantics().getOde() == null) {
+				this.getSemantics().setOde(new OdeSemantics());
+			}
+			if (this.getSemantics().getOde().getRates() == null) {
+				this.getSemantics().getOde().setRates(new ArrayList<>());
+			}
+			return this.getSemantics().getOde().getRates();
+		}
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public void setRates(final List<Rate> rates) {
+		final ObjectMapper objectMapper = new ObjectMapper();
+		if (this.isRegnet()) {
+			this.getModel().put("rates", objectMapper.convertValue(rates, JsonNode.class));
+		} else {
+			if (this.getSemantics() == null) {
+				this.setSemantics(new ModelSemantics());
+			}
+			if (this.getSemantics().getOde() == null) {
+				this.getSemantics().setOde(new OdeSemantics());
+			}
+			this.getSemantics().getOde().setRates(rates);
+		}
+	}
+
+	@JsonIgnore
+	@TSIgnore
 	public boolean isRegnet() {
+		if (this.getHeader() == null) {
+			return false;
+		}
+		if (this.getHeader().getSchemaName() == null) {
+			return false;
+		}
 		return this.getHeader().getSchemaName().equalsIgnoreCase("regnet");
 	}
 }

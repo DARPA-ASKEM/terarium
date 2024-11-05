@@ -5,6 +5,7 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -27,6 +28,15 @@ public class ModelConfiguration extends TerariumAsset {
 	/** This is "simulation" in the sense of our POJO. It actually corresponds to a pyciemss calibration */
 	@TSOptional
 	private UUID simulationId;
+
+	@TSOptional
+	private Timestamp temporalContext;
+
+	@TSOptional
+	private UUID extractionDocumentId;
+
+	@TSOptional
+	private Integer extractionPage;
 
 	@OneToMany(mappedBy = "modelConfiguration", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JsonManagedReference
@@ -66,6 +76,9 @@ public class ModelConfiguration extends TerariumAsset {
 
 		clone.setModelId(this.modelId);
 		clone.setSimulationId(this.simulationId);
+		clone.setTemporalContext(this.temporalContext);
+		clone.setExtractionDocumentId(this.extractionDocumentId);
+		clone.setExtractionPage(this.extractionPage);
 
 		if (this.observableSemanticList != null) {
 			clone.setObservableSemanticList(new ArrayList<>());

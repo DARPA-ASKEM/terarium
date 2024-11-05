@@ -102,7 +102,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 		species
 			.append('circle')
 			.classed('shape selectableNode', true)
-			.attr('r', (d) => 0.55 * d.width) // FIXME: need to adjust edge from sqaure mapping to circle
+			.attr('r', (d) => 0.55 * d.width)
 			.attr('fill', (d) => (d.data.strataType ? getNodeTypeColor(d.data.strataType) : getNestedTypeColor('base')))
 			.attr('stroke', 'var(--petri-nodeBorder)')
 			.attr('stroke-width', 1)
@@ -229,17 +229,18 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 				row.forEach((col, cidx) => {
 					const colIdx = cidx;
 					if (col.content && col.content.value) {
+						const w = d.width / matrixColLen;
+						const h = d.height / matrixRowLen;
+
 						transitionNode
 							.append('rect')
-							.attr('width', d.width / matrixColLen)
-							.attr('height', d.height / matrixRowLen)
-							.attr('x', -d.width * 0.5 + (d.width / matrixColLen) * colIdx)
-							.attr('y', -d.height * 0.5 + (d.height / matrixRowLen) * rowIdx)
-							// .attr('rx', 2)
-							// .attr('ry', 2)
+							.attr('width', w)
+							.attr('height', h)
+							.attr('x', -d.width * 0.5 + w * colIdx)
+							.attr('y', -d.height * 0.5 + h * rowIdx)
 							.style('fill', d.data.strataType ? getNodeTypeColor(d.data.strataType) : '#8692a4')
 							.style('cursor', 'pointer')
-							.attr('stroke', '#ffffff')
+							.attr('stroke', w > 1 && h > 1 ? '#ffffff' : null)
 							.attr('stroke-width', 1);
 					}
 				});

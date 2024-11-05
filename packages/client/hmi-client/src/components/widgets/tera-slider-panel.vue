@@ -3,14 +3,14 @@
 		:content-width="contentWidth"
 		:tab-width="tabWidth"
 		:min-tab-width="minTabWidth"
-		:direction="direction"
+		:direction="arrowDirection"
 		:is-open="isOpen"
 	>
 		<template v-slot:content>
 			<aside @scroll="onScroll">
 				<header :class="{ shadow: isScrolled }">
 					<Button
-						:icon="`pi ${directionMap[direction].iconOpen}`"
+						:icon="`pi ${directionMap[arrowDirection].iconOpen}`"
 						@click="emit('update:isOpen', false)"
 						text
 						rounded
@@ -25,9 +25,9 @@
 			<slot name="overlay" />
 		</template>
 		<template v-slot:tab>
-			<header :class="`tab ${direction}`">
+			<header :class="`tab ${arrowDirection}`">
 				<Button
-					:icon="`pi ${directionMap[direction].iconClosed}`"
+					:icon="`pi ${directionMap[arrowDirection].iconClosed}`"
 					@click="emit('update:isOpen', true)"
 					text
 					rounded
@@ -45,12 +45,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import Badge from 'primevue/badge';
 import Button from 'primevue/button';
 import TeraSlider from './tera-slider.vue';
 
-defineProps({
+const props = defineProps({
 	// slider props
 	isOpen: {
 		type: Boolean,
@@ -96,6 +96,8 @@ const directionMap = {
 	}
 };
 
+const arrowDirection = computed(() => props.direction);
+
 /* This is for adding a subtle shadow to the header when the panel is scrolled */
 const isScrolled = ref(false);
 const onScroll = (event: Event) => {
@@ -109,6 +111,7 @@ aside {
 	display: flex;
 	flex-direction: column;
 	height: 100%;
+	overflow-y: auto;
 }
 
 header {
@@ -150,6 +153,15 @@ header:not(.tab) {
 	& :deep(.slider-tab) {
 		background-color: var(--surface-100);
 		border-right: 1px solid var(--surface-border-light);
+	}
+
+	/** Override default accordion styles */
+	&:deep(.p-accordion-header-link) {
+		background-color: var(--surface-100);
+	}
+
+	&:deep(.p-accordion-content) {
+		background-color: var(--surface-100);
 	}
 }
 

@@ -8,9 +8,6 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
-import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
-import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.models.simulationservice.interventions.InterventionPolicy;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
@@ -74,20 +71,13 @@ public class InterventionsFromDocumentResponseHandler extends TaskResponseHandle
 					ip.setModelId(props.modelId);
 				}
 
+				// Set the extraction document id
+				ip.getInterventions().forEach(intervention -> intervention.setExtractionDocumentId(props.documentId));
+
 				final InterventionPolicy newPolicy = interventionService.createAsset(
 					ip,
 					props.projectId,
 					ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
-				);
-
-				// add provenance
-				provenanceService.createProvenance(
-					new Provenance()
-						.setLeft(newPolicy.getId())
-						.setLeftType(ProvenanceType.INTERVENTION_POLICY)
-						.setRight(props.documentId)
-						.setRightType(ProvenanceType.DOCUMENT)
-						.setRelationType(ProvenanceRelationType.EXTRACTED_FROM)
 				);
 			}
 		} catch (final Exception e) {

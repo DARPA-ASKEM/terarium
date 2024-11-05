@@ -167,7 +167,10 @@ export const extractOutcomeControllersMatrix = (
 
 export const extractTemplateMatrix = (templates: MiraTemplate[]) => {
 	const rowNames = extractConceptNames(templates, 'subject');
-	const colNames = extractConceptNames(templates, 'outcome');
+
+	const colNames = templates[0]?.controller
+		? extractConceptNames(templates, 'controllers')
+		: extractConceptNames(templates, 'outcome');
 
 	// Not sure how to parse templates with no subject or no outcomes
 	// and interacts with only controllers and itself, return a matrix
@@ -200,7 +203,12 @@ export const extractTemplateMatrix = (templates: MiraTemplate[]) => {
 		if (template.subject) {
 			rowIdx = rowNames.indexOf(template.subject.name);
 		}
-		if (template.outcome) {
+
+		// Use subject-controller matrix if possible, otherwise fallback to subject-outcome matrix
+		// Note we still use the subject-outcome matrix grid
+		if (template.controller) {
+			colIdx = colNames.indexOf(template.controller.name);
+		} else if (template.outcome) {
 			colIdx = colNames.indexOf(template.outcome.name);
 		}
 		matrix[rowIdx][colIdx].content = {
@@ -208,5 +216,6 @@ export const extractTemplateMatrix = (templates: MiraTemplate[]) => {
 			id: template.name
 		};
 	}
+
 	return { rowNames, colNames, matrix };
 };

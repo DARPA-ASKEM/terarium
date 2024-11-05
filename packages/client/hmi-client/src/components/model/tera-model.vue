@@ -7,7 +7,7 @@
 		:is-naming-asset="isNaming"
 		:name="temporaryModel?.header.name"
 		@close-preview="emit('close-preview')"
-		show-table-of-contents
+		:show-table-of-contents="!isWorkflow"
 	>
 		<template #name-input>
 			<tera-input-text
@@ -42,12 +42,14 @@
 					:disabled="!(hasChanged && hasEditPermission)"
 				/>
 				<Button
-					:label="`Save ${isWorkflow ? 'for re-use' : 'as'}`"
+					v-if="isSaveForReuse"
+					label="Save for re-use"
 					severity="secondary"
 					outlined
-					@click="onSaveAs"
+					@click="onSaveForReUse"
 					:disabled="!hasEditPermission"
 				/>
+				<Button v-else label="Save as" severity="secondary" outlined @click="onSaveAs" :disabled="!hasEditPermission" />
 				<Button label="Save" @click="onSave" :disabled="!(hasChanged && hasEditPermission)" />
 			</aside>
 		</template>
@@ -70,7 +72,8 @@
 		:asset-type="AssetType.Model"
 		:initial-name="temporaryModel?.header.name"
 		:is-visible="showSaveModal"
-		:open-on-save="isWorkflow ? false : true"
+		:is-updating-asset="isSaveForReuse"
+		:open-on-save="!isWorkflow"
 		@close-modal="showSaveModal = false"
 		@on-save="onModalSave"
 	/>
@@ -104,6 +107,10 @@ const props = defineProps({
 		default: { isPreview: false } as FeatureConfig
 	},
 	isWorkflow: {
+		type: Boolean,
+		default: false
+	},
+	isSaveForReuse: {
 		type: Boolean,
 		default: false
 	}
@@ -144,6 +151,9 @@ function onSave() {
 function onSaveAs() {
 	showSaveModal.value = true;
 }
+function onSaveForReUse() {
+	showSaveModal.value = true;
+}
 
 // Save modal
 function onModalSave(event: any) {
@@ -151,6 +161,7 @@ function onModalSave(event: any) {
 	if (props.isWorkflow) {
 		emit('on-save', event);
 	}
+	fetchModel();
 }
 
 // User menu

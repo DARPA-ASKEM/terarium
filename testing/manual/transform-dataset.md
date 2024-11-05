@@ -17,12 +17,14 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/t
 
 ### 3. Join Two Datasets and Plot the data
 1. Add the California Cases and Deaths datasets to the workflow canvas. 
-2. Connect the two datasets to a transform data set operator. 
-3. Ask the agent the two datasets on date. 
-4. Add a code cell to view the newly joined dataset
-5. Filter for LA county for January 2021 to March 2021. 
-6. Ask the agent to add a new column named timestamp. 
-7. Save as a new dataset named 'LA_cases_deaths_data'
-8. Ask the operator to plot for cases and deaths.
-9. Copy the plot into the overview page.
-10. Add the dataset to the workflow canvas and preview the dataset. Ensure that it has saved correctly. 
+2. Connect the two datasets to a transform data set operator.
+3. View the datasets to see the columns and data types. Ensure both datasets have a date column.
+4. Ask the agent to join the two datasets together on date. 
+5. Add a code cell to view the newly joined dataset
+6. Filter for LA county (i.e. county = `Los Angeles`) for January 2021 to March 2021. 
+7. Ask the agent to add a new column named timestamp that is a timestamp representation of the date column. 
+8. Save the filtered LA county dataset as a new dataset named 'LA_cases_deaths_data'
+9. Ask the operator to plot for cases and deaths.
+10. Select the plot to be displayed on the node thumbnail.
+11. Close the drilldown and ensure that the plot appears in the node.
+12. Add the recently saved dataset to the workflow canvas and preview the dataset. Ensure that it has saved correctly. 

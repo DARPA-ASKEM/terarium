@@ -13,7 +13,7 @@
 			</div>
 
 			<div v-if="!showSpinner && runResults">
-				<template v-for="(_, index) of node.state.selectedSimulationVariables" :key="index">
+				<template v-for="(_, index) of selectedVariableSettings.map((s) => s.selectedVariables[0])" :key="index">
 					<vega-chart :visualization-spec="preparedCharts[index]" :are-embed-actions-visible="false" />
 				</template>
 			</div>
@@ -40,15 +40,24 @@ import {
 	parsePyCiemssMap
 } from '@/services/models/simulation-service';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
-import { SimulationRequest, InterventionPolicy, Simulation, CiemssOptimizeStatusUpdate } from '@/types/Types';
+import {
+	SimulationRequest,
+	InterventionPolicy,
+	Simulation,
+	CiemssOptimizeStatusUpdate,
+	ModelConfiguration,
+	Model
+} from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import { createForecastChart } from '@/services/charts';
+import { applyForecastChartAnnotations, createForecastChart } from '@/services/charts';
 import { mergeResults, renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
-import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
+import { getModelByModelConfigurationId, getUnitsFromModelParts, getVegaDateOptions } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { createDatasetFromSimulationResult } from '@/services/dataset';
 import { useProjects } from '@/composables/project';
+import { ChartSettingType } from '@/types/common';
+import { useChartAnnotations } from '@/composables/useChartAnnotations';
 import {
 	OptimizeCiemssOperationState,
 	OptimizeCiemssOperation,
@@ -64,8 +73,18 @@ const props = defineProps<{
 const runResults = ref<any>({});
 const runResultsSummary = ref<any>({});
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
+const modelConfiguration = ref<ModelConfiguration | null>(null);
+const model = ref<Model | null>(null);
 
 const modelVarUnits = ref<{ [key: string]: string }>({});
+
+const chartSettings = computed(() => props.node.state.chartSettings ?? []);
+
+const selectedVariableSettings = computed(() =>
+	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE)
+);
+
+const { getChartAnnotationsByChartId } = useChartAnnotations(props.node.id);
 
 let pyciemssMap: Record<string, string> = {};
 
@@ -129,16 +148,15 @@ const startForecast = async (optimizedInterventions?: InterventionPolicy) => {
 		simulationPayload.policyInterventionId = inputIntervention;
 	}
 
-	const modelConfig = await getModelConfigurationById(modelConfigId.value as string);
-	if (modelConfig.simulationId) {
-		simulationPayload.extra.inferred_parameters = modelConfig.simulationId;
+	if (modelConfiguration.value?.simulationId) {
+		simulationPayload.extra.inferred_parameters = modelConfiguration.value.simulationId;
 	}
 
 	return makeForecastJobCiemss(simulationPayload, nodeMetadata(props.node));
 };
 
 const preparedCharts = computed(() => {
-	const { preForecastRunId, postForecastRunId, selectedSimulationVariables } = props.node.state;
+	const { preForecastRunId, postForecastRunId } = props.node.state;
 	if (!postForecastRunId || !preForecastRunId) return [];
 	const preResult = runResults.value[preForecastRunId];
 	const preResultSummary = runResultsSummary.value[preForecastRunId];
@@ -148,35 +166,43 @@ const preparedCharts = computed(() => {
 	if (!postResult || !postResultSummary || !preResultSummary || !preResult) return [];
 	// Merge before/after for chart
 	const { result, resultSummary } = mergeResults(preResult, postResult, preResultSummary, postResultSummary);
-	return selectedSimulationVariables.map((variable) =>
-		createForecastChart(
-			{
-				data: result,
-				variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
-				timeField: 'timepoint_id',
-				groupField: 'sample_id'
-			},
-			{
-				data: resultSummary,
-				variables: [`${pyciemssMap[variable]}_mean:pre`, `${pyciemssMap[variable]}_mean`],
-				timeField: 'timepoint_id'
-			},
-			null,
-			{
-				width: 180,
-				height: 120,
-				legend: true,
-				xAxisTitle: modelVarUnits.value._time || 'Time',
-				yAxisTitle: modelVarUnits.value[variable] || '',
-				translationMap: {
-					[`${pyciemssMap[variable]}_mean:pre`]: `${variable} before optimization`,
-					[`${pyciemssMap[variable]}_mean`]: `${variable} after optimization`
+	const dateOptions = getVegaDateOptions(model.value, modelConfiguration.value);
+
+	return selectedVariableSettings.value.map((setting) => {
+		const variable = setting.selectedVariables[0];
+		const annotations = getChartAnnotationsByChartId(setting.id);
+		return applyForecastChartAnnotations(
+			createForecastChart(
+				{
+					data: result,
+					variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
+					timeField: 'timepoint_id',
+					groupField: 'sample_id'
 				},
-				title: '',
-				colorscheme: ['#AAB3C6', '#1B8073']
-			}
-		)
-	);
+				{
+					data: resultSummary,
+					variables: [`${pyciemssMap[variable]}_mean:pre`, `${pyciemssMap[variable]}_mean`],
+					timeField: 'timepoint_id'
+				},
+				null,
+				{
+					width: 180,
+					height: 120,
+					legend: true,
+					xAxisTitle: modelVarUnits.value._time || 'Time',
+					yAxisTitle: modelVarUnits.value[variable] || '',
+					translationMap: {
+						[`${pyciemssMap[variable]}_mean:pre`]: `${variable} before optimization`,
+						[`${pyciemssMap[variable]}_mean`]: `${variable} after optimization`
+					},
+					title: '',
+					colorscheme: ['#AAB3C6', '#1B8073'],
+					dateOptions
+				}
+			),
+			annotations
+		);
+	});
 });
 
 watch(
@@ -188,19 +214,34 @@ watch(
 		if (response.state === PollerState.Done) {
 			// Start 2nd simulation to get sample simulation from dill
 			const newInterventionResponse = await createInterventionPolicyFromOptimize(modelConfigId.value as string, optId);
+			if (newInterventionResponse) {
+				const preForecastResponse = startForecast();
+				const postForecastResponse = startForecast(newInterventionResponse);
+				const forecastResults = await Promise.all([preForecastResponse, postForecastResponse]);
+				const [{ id: preForecastId }, { id: postForecastId }] = forecastResults;
 
-			const preForecastResponse = startForecast();
-			const postForecastResponse = startForecast(newInterventionResponse);
-			const forecastResults = await Promise.all([preForecastResponse, postForecastResponse]);
-			const [{ id: preForecastId }, { id: postForecastId }] = forecastResults;
-
-			const state = _.cloneDeep(props.node.state);
-			state.inProgressOptimizeId = '';
-			state.optimizationRunId = optId;
-			state.inProgressPreForecastId = preForecastId;
-			state.inProgressPostForecastId = postForecastId;
-			state.optimizedInterventionPolicyId = newInterventionResponse.id ?? '';
-			emit('update-state', state);
+				const state = _.cloneDeep(props.node.state);
+				state.inProgressOptimizeId = '';
+				state.optimizationRunId = optId;
+				state.inProgressPreForecastId = preForecastId;
+				state.inProgressPostForecastId = postForecastId;
+				state.optimizedInterventionPolicyId = newInterventionResponse.id ?? '';
+				emit('update-state', state);
+			} else {
+				// Failed to create intervention policy
+				const state = _.cloneDeep(props.node.state);
+				state.inProgressOptimizeId = '';
+				state.optimizationRunId = '';
+				state.inProgressPreForecastId = '';
+				state.inProgressPostForecastId = '';
+				state.optimizedInterventionPolicyId = '';
+				state.optimizeErrorMessage = {
+					name: optId,
+					value: 'Failed to create intervention',
+					traceback: 'Failed to create the intervention provided from optimize.'
+				};
+				emit('update-state', state);
+			}
 		} else {
 			// Simulation Failed:
 			const state = _.cloneDeep(props.node.state);
@@ -314,9 +355,10 @@ watch(
 		if (!active) return;
 		if (!state.postForecastRunId || !state.preForecastRunId) return;
 
-		const model = await getModelByModelConfigurationId(modelConfigId.value as string);
-		if (model) {
-			modelVarUnits.value = getUnitsFromModelParts(model);
+		modelConfiguration.value = await getModelConfigurationById(modelConfigId.value as string);
+		model.value = await getModelByModelConfigurationId(modelConfigId.value as string);
+		if (model.value) {
+			modelVarUnits.value = getUnitsFromModelParts(model.value);
 		}
 
 		const preForecastRunId = state.preForecastRunId;

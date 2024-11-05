@@ -167,7 +167,7 @@ function getProgrammingLanguage(fileName: string): ProgrammingLanguage {
 		case 'zip':
 			return ProgrammingLanguage.Zip;
 		default:
-			return ProgrammingLanguage.Python; // TODO do we need an "unknown" language?
+			return ProgrammingLanguage.Python;
 	}
 }
 
@@ -197,6 +197,16 @@ function setFileExtension(fileName: string, language: ProgrammingLanguage) {
 	return fileName.concat('.').concat(getFileExtension(language));
 }
 
+function formatJSON(jsonString: string): string {
+	try {
+		const jsonObj = JSON.parse(jsonString);
+		return JSON.stringify(jsonObj, null, 2); // Pretty print with 2 spaces indentation
+	} catch (e) {
+		console.error('Invalid JSON string', e);
+		return jsonString; // Return original string if parsing fails
+	}
+}
+
 export {
 	uploadCodeToProject,
 	getCodeFileAsText,
@@ -207,5 +217,6 @@ export {
 	getFileExtension,
 	getProgrammingLanguage,
 	setFileExtension,
-	uploadCodeFromGithubRepo
+	uploadCodeFromGithubRepo,
+	formatJSON
 };

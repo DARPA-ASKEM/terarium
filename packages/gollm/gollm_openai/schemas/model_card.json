@@ -3,38 +3,50 @@
   "type": "object",
   "properties": {
     "summary": {
-      "type": "object",
-      "properties": {
-        "modelSummary": {
-          "type": "string",
-          "description": "A brief description of the system or process."
-        }
-      },
-      "required": [
-        "modelSummary"
-      ],
-      "additionalProperties": false
+      "type": "string",
+      "description": "A detailed description of the model and how it was used. Summarize all the information extracted from the paper. Mention if it can likely be represented in Petri Net format."
     },
-    "details": {
+    "specs": {
       "type": "object",
       "properties": {
-        "modelDescription": {
-          "type": "string",
-          "description": "Describe the structure of the model in the paper, including its places, transitions, and arcs. Mention if it can likely be represented in petrinet format."
+        "domain": {
+          "type": "array",
+          "description": "List of domains the model can be used for.",
+          "items": {
+            "type": "string"
+          }
         },
-        "fundedBy": {
+        "type": {
           "type": "string",
-          "description": "If applicable, list the funding sources."
+          "description": "Mathematical Model / Graphical Model / Other"
         },
-        "modelType": {
+        "specification": {
           "type": "string",
-          "description": "Mathematical / Graphical Model / Other"
+          "description": "Provide as much detail as possible about the model's structure and complexity. This can include information such as the number of places, transitions, parameter count, and arcs."
+        },
+        "states": {
+          "type": "array",
+          "description": "A list of state descriptions.",
+          "items": {
+            "type": "string",
+            "description": "A short paragraph describing and summarizing the model state. The paragraph should start with the state name, then a colon, then a description of the state including what units to use for it, and how this state can transition to other states."
+          }
+        },
+        "parameters": {
+          "type": "array",
+          "description": "A list of parameter descriptions.",
+          "items": {
+            "type": "string",
+            "description": "A short paragraph describing and summarizing the model parameter. The paragraph should start with the parameter name, then a colon, then a description of the parameter including what units to use for it."
+          }
         }
       },
       "required": [
-        "modelDescription",
-        "fundedBy",
-        "modelType"
+        "domain",
+        "type",
+        "specification",
+        "states",
+        "parameters"
       ],
       "additionalProperties": false
     },
@@ -59,160 +71,122 @@
     "biasRisksLimitations": {
       "type": "object",
       "properties": {
-        "modelBiasRisksLimitations": {
+        "biases": {
           "type": "string",
-          "description": "Describe sources of bias and risk based on the research paper"
+          "description": "Describe sources of bias and how these biases can affect simulation results of this model."
+        },
+        "risks": {
+          "type": "string",
+          "description": "Describe sources of risks and how these risks can affect simulation results of this model."
+        },
+        "limitations": {
+          "type": "string",
+          "description": "Describe sources of limitations and how these limitations can affect simulation results of this model."
         }
       },
       "required": [
-        "modelBiasRisksLimitations"
+        "biases",
+        "risks",
+        "limitations"
       ],
       "additionalProperties": false
     },
     "testing": {
       "type": "object",
       "properties": {
-        "testingDataFactorsMetrics": {
+        "validation": {
           "type": "string",
           "description": "Describe how the model was validated, e.g., through simulation, comparison with real-world data, etc."
+        },
+        "metrics": {
+          "type": "string",
+          "description": "Describe the metrics used to evaluate the model."
         }
       },
       "required": [
-        "testingDataFactorsMetrics"
+        "validation",
+        "metrics"
       ],
       "additionalProperties": false
     },
-    "specs": {
+    "gettingStarted": {
       "type": "object",
       "properties": {
-        "modelSpecs": {
-          "type": "string",
-          "description": "Details about the model's complexity, such as the number of places, transitions, parameter count, and arcs."
+        "steps": {
+          "type": "array",
+          "description": "a list of steps to use this model or a list of steps to get started with the model.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "examples": {
+          "type": "array",
+          "description": "List of examples used in the paper to help users get started with the model.",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [
-        "modelSpecs"
+        "steps",
+        "examples"
       ],
       "additionalProperties": false
     },
     "glossary": {
       "type": "array",
+      "description": "List of terms used in the paper and their definitions.",
       "items": {
         "type": "string"
       }
     },
     "authors": {
       "type": "array",
+      "description": "List of authors of the paper.",
       "items": {
         "type": "string"
       }
     },
-    "gettingStarted": {
-      "type": "object",
-      "properties": {
-        "examples": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      },
-      "required": [
-        "examples"
-      ],
-      "additionalProperties": false
-    },
     "citations": {
-      "type": "object",
-      "properties": {
-        "references": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      },
-      "required": [
-        "references"
-      ],
-      "additionalProperties": false
+      "type": "array",
+      "description": "List of citations used in the paper.",
+      "items": {
+        "type": "string"
+      }
     },
     "moreInformation": {
       "type": "object",
       "properties": {
+        "fundedBy": {
+          "type": "string",
+          "description": "If applicable, list the funding sources describe in the paper."
+        },
         "links": {
           "type": "array",
+          "description": "List of links to additional information about the model.",
           "items": {
             "type": "string"
           }
         }
       },
       "required": [
+        "fundedBy",
         "links"
-      ],
-      "additionalProperties": false
-    },
-    "structuralInformation": {
-      "type": "object",
-      "properties": {
-        "schemaName": {
-          "type": "string"
-        },
-        "parameterNames": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "domain": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "modelType": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "modelStructure": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "modelParameters": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      },
-      "required": [
-        "schemaName",
-        "parameterNames",
-        "domain",
-        "modelType",
-        "modelStructure",
-        "modelParameters"
       ],
       "additionalProperties": false
     }
   },
   "required": [
     "summary",
-    "details",
+    "specs",
     "uses",
     "biasRisksLimitations",
     "testing",
-    "specs",
+    "gettingStarted",
     "glossary",
     "authors",
-    "gettingStarted",
     "citations",
-    "moreInformation",
-    "structuralInformation"
+    "moreInformation"
   ],
   "additionalProperties": false
 }

@@ -8,6 +8,19 @@
 	>
 		<template #sidebar>
 			<tera-slider-panel
+				v-if="pdfData.length"
+				v-model:is-open="isPdfSidebarOpen"
+				content-width="700px"
+				header="Document Viewer"
+			>
+				<template #content>
+					<tera-drilldown-section :is-loading="isFetchingPDF">
+						<tera-pdf-panel :pdfs="pdfData" ref="pdfPanelRef" />
+					</tera-drilldown-section>
+				</template>
+			</tera-slider-panel>
+
+			<tera-slider-panel
 				v-model:is-open="isSidebarOpen"
 				content-width="360px"
 				header="Intervention policies"
@@ -16,14 +29,17 @@
 				<template #content>
 					<section>
 						<nav class="inline-flex">
-							<!-- Disabled until Backend code is complete -->
-							<!-- <Button class="flex-1 mr-1" outlined severity="secondary" label="Extract from inputs" /> -->
 							<Button
-								class="flex-1 ml-1"
-								label="Create New"
-								:disabled="!model?.id"
-								@click="createNewInterventionPolicy"
+								class="flex-1 mr-1"
+								outlined
+								severity="secondary"
+								label="Extract from inputs"
+								icon="pi pi-sparkles"
+								:loading="isLoading"
+								:disabled="!props.node.inputs[0]?.value && !props.node.inputs[1]?.value"
+								@click="extractInterventionPolicyFromInputs"
 							/>
+							<Button class="ml-1" label="Create New" :disabled="!model?.id" @click="createNewInterventionPolicy" />
 						</nav>
 						<tera-input-text v-model="filterInterventionsText" placeholder="Filter" />
 						<ul v-if="!isFetchingPolicies">
@@ -33,6 +49,7 @@
 									:selected="selectedPolicy?.id === policy.id"
 									@click="onReplacePolicy(policy)"
 									@use-intervention="onReplacePolicy(policy)"
+									@delete-intervention-policy="onDeleteInterventionPolicy(policy)"
 								/>
 							</li>
 						</ul>
@@ -42,14 +59,22 @@
 			</tera-slider-panel>
 		</template>
 		<tera-columnar-panel>
-			<tera-drilldown-section class="px-3 intervention-settings-section">
+			<tera-drilldown-section class="intervention-settings-section">
 				<template #header-controls-left> Add and configure intervention settings for this policy. </template>
 				<template #header-controls-right>
 					<Button outlined severity="secondary" label="Reset" @click="onResetPolicy" />
 				</template>
 				<ul class="flex flex-column gap-2">
-					<li v-for="(intervention, index) in knobs.transientInterventionPolicy.interventions" :key="index">
+					<li
+						v-for="(intervention, index) in knobs.transientInterventionPolicy.interventions"
+						:key="index"
+						@click="selectInterventionPolicy(intervention, index)"
+					>
 						<tera-intervention-card
+							class="intervention"
+							:class="{
+								selected: selectedIntervention?.name === intervention?.name && selectedIntervention?.index === index
+							}"
 							:intervention="intervention"
 							:parameterOptions="parameterOptions"
 							:stateOptions="stateOptions"
@@ -161,7 +186,7 @@
 
 <script setup lang="ts">
 import _, { cloneDeep, groupBy, isEmpty, omit } from 'lodash';
-import { computed, onMounted, ref, watch, nextTick, ComponentPublicInstance } from 'vue';
+import { ComponentPublicInstance, computed, nextTick, onMounted, ref, watch } from 'vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { WorkflowNode } from '@/types/workflow';
@@ -170,17 +195,27 @@ import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import Button from 'primevue/button';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { getInterventionPoliciesForModel, getModel } from '@/services/model';
-import { Intervention, InterventionPolicy, Model, AssetType } from '@/types/Types';
+import {
+	AssetType,
+	Intervention,
+	InterventionPolicy,
+	Model,
+	DynamicIntervention,
+	StaticIntervention,
+	type TaskResponse,
+	type DocumentAsset
+} from '@/types/Types';
 import { logger } from '@/utils/logger';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { useConfirm } from 'primevue/useconfirm';
 import { getParameters, getStates } from '@/model-representation/service';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import {
+	blankIntervention,
+	flattenInterventionData,
 	getInterventionPolicyById,
 	updateInterventionPolicy,
-	blankIntervention,
-	flattenInterventionData
+	deleteInterventionPolicy
 } from '@/services/intervention-policy';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -192,12 +227,15 @@ import { createInterventionChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { useProjects } from '@/composables/project';
+import { interventionPolicyFromDocument } from '@/services/goLLM';
+import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
+import TeraPdfPanel from '@/components/widgets/tera-pdf-panel.vue';
 import TeraInterventionCard from './tera-intervention-card.vue';
 import {
 	InterventionPolicyOperation,
 	InterventionPolicyState,
-	isInterventionPoliciesValuesEqual,
-	isInterventionPoliciesEqual
+	isInterventionPoliciesEqual,
+	isInterventionPoliciesValuesEqual
 } from './intervention-policy-operation';
 import TeraInterventionPolicyCard from './tera-intervention-policy-card.vue';
 
@@ -228,12 +266,30 @@ const newBlankInterventionPolicy = ref({
 	interventions: [blankIntervention]
 });
 
+interface SelectedIntervention {
+	index: number;
+	name: string;
+	extractionDocumentId?: string;
+	extractionPage?: number;
+	staticInterventions: StaticIntervention[];
+	dynamicInterventions: DynamicIntervention[];
+}
+
+const pdfPanelRef = ref();
+const pdfViewer = computed(() => pdfPanelRef.value?.pdfRef[0]);
+const selectedIntervention = ref<SelectedIntervention | null>(null);
+
+const isPdfSidebarOpen = ref(true);
+const isFetchingPDF = ref(false);
+const pdfData = ref<{ document: DocumentAsset; data: string; isPdf: boolean; name: string }[]>([]);
+
 const showSaveModal = ref(false);
 const showCreatePolicyModal = ref(false);
 const isSidebarOpen = ref(true);
 const filterInterventionsText = ref('');
 const model = ref<Model | null>(null);
 const isFetchingPolicies = ref(false);
+const isLoading = ref(false);
 const interventionsPolicyList = ref<InterventionPolicy[]>([]);
 const interventionPoliciesFiltered = computed(() =>
 	interventionsPolicyList.value
@@ -268,6 +324,13 @@ const isSaveDisabled = computed(() => {
 	// or the policy values are not equal
 	return hasSelectedPolicy && (isPolicyIdDifferent || arePoliciesEqual || !arePolicyValuesEqual);
 });
+
+const documentIds = computed(() =>
+	props.node.inputs
+		.filter((input) => input.type === 'documentId' && input.status === 'connected')
+		.map((input) => input.value?.[0]?.documentId)
+		.filter((id): id is string => id !== undefined)
+);
 
 const parameterOptions = computed(() => {
 	if (!model.value) return [];
@@ -367,6 +430,15 @@ const fetchInterventionPolicies = async (modelId: string) => {
 	isFetchingPolicies.value = false;
 };
 
+const selectInterventionPolicy = (intervention: Intervention, index: number) => {
+	selectedIntervention.value = { ...intervention, index };
+	if (!intervention?.extractionPage) return;
+
+	if (pdfViewer.value) {
+		pdfViewer.value.goToPage(selectedIntervention.value.extractionPage);
+	}
+};
+
 const onUpdateInterventionCard = (intervention: Intervention, index: number) => {
 	// Clone the entire interventions array
 	const updatedInterventions = [...knobs.value.transientInterventionPolicy.interventions];
@@ -392,6 +464,23 @@ const onReplacePolicy = (policy: InterventionPolicy) => {
 			rejectLabel: 'Cancel'
 		});
 	}
+};
+
+const onDeleteInterventionPolicy = (policy: InterventionPolicy) => {
+	confirm.require({
+		message: `Are you sure you want to delete the configuration ${policy.name}?`,
+		header: 'Delete Confirmation',
+		icon: 'pi pi-exclamation-triangle',
+		acceptLabel: 'Confirm',
+		rejectLabel: 'Cancel',
+		accept: async () => {
+			if (policy.id) {
+				await deleteInterventionPolicy(policy.id);
+				const modelId = props.node.inputs[0].value?.[0];
+				fetchInterventionPolicies(modelId);
+			}
+		}
+	});
 };
 
 const addIntervention = () => {
@@ -473,6 +562,29 @@ const createNewInterventionPolicy = () => {
 	showSaveModal.value = true;
 };
 
+const extractInterventionPolicyFromInputs = async () => {
+	const state = cloneDeep(props.node.state);
+	if (!model.value?.id) {
+		return;
+	}
+
+	if (documentIds.value) {
+		const promiseList = [] as Promise<TaskResponse | null>[];
+		documentIds.value.forEach((documentId) => {
+			promiseList.push(
+				interventionPolicyFromDocument(documentId, model.value?.id as string, props.node.workflowId, props.node.id)
+			);
+		});
+		const responsesRaw = await Promise.all(promiseList);
+		responsesRaw.forEach((resp) => {
+			if (resp) {
+				state.taskIds.push(resp.id);
+			}
+		});
+	}
+	emit('update-state', state);
+};
+
 watch(
 	() => knobs.value,
 	async () => {
@@ -493,6 +605,20 @@ watch(
 	}
 );
 
+watch(
+	() => props.node.state.taskIds,
+	async (watchVal) => {
+		if (watchVal.length > 0) {
+			isLoading.value = true;
+		} else {
+			isLoading.value = false;
+			const modelId = props.node.inputs[0].value?.[0];
+			if (!modelId) return;
+			await fetchInterventionPolicies(modelId);
+		}
+	}
+);
+
 onMounted(() => {
 	if (props.node.active) {
 		selectedOutputId.value = props.node.active;
@@ -501,16 +627,57 @@ onMounted(() => {
 	} else {
 		initialize();
 	}
+
+	if (documentIds.value.length) {
+		isFetchingPDF.value = true;
+		documentIds.value.forEach(async (id) => {
+			const document = await getDocumentAsset(id);
+			const name: string = document?.name ?? '';
+			const filename = document?.fileNames?.[0];
+			const isPdf = !!document?.fileNames?.[0]?.endsWith('.pdf');
+
+			if (document?.id && filename) {
+				let data: string | null;
+				if (isPdf) {
+					data = await downloadDocumentAsset(document.id, filename);
+				} else {
+					data = await getDocumentFileAsText(document.id, filename);
+				}
+				if (data !== null) {
+					pdfData.value.push({ document, data, isPdf, name });
+				}
+			}
+		});
+	}
+	isFetchingPDF.value = false;
 });
 </script>
 
 <style scoped>
 .intervention-settings-section {
 	background-color: var(--surface-100);
+	padding: 0 var(--gap-3);
 }
 
-ul {
-	list-style: none;
+.input-config {
+	ul {
+		list-style: none;
+	}
+	li {
+		& > * {
+			border-bottom: 1px solid var(--gray-300);
+			border-right: 1px solid var(--gray-300);
+		}
+		&:first-child > * {
+			border-top: 1px solid var(--gray-300);
+			border-top-left-radius: var(--border-radius);
+			border-top-right-radius: var(--border-radius);
+		}
+		&:last-child > * {
+			border-bottom-left-radius: var(--border-radius);
+			border-bottom-right-radius: var(--border-radius);
+		}
+	}
 }
 
 section {
@@ -532,6 +699,20 @@ button.start-edit {
 
 	& > .pi {
 		color: var(--text-color-subdued);
+	}
+}
+
+.intervention {
+	background-color: var(--gray-0);
+	border-left: 4px solid var(--surface-300);
+
+	&.selected {
+		border-left-color: var(--primary-color);
+	}
+
+	&,
+	&.selected {
+		transition: border-left-color 250ms;
 	}
 }
 

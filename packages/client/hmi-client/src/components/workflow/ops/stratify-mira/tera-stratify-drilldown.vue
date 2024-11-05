@@ -75,25 +75,13 @@
 				v-model:output="selectedOutputId"
 				is-selectable
 			>
-				<Button
-					class="ml-auto py-3"
-					label="Save for re-use"
-					size="small"
-					outlined
-					:disabled="isSaveDisabled"
-					severity="secondary"
-					@click="showSaveModelModal = true"
-				/>
 				<tera-notebook-error
 					v-if="executeResponse.status === OperatorStatus.ERROR"
 					:name="executeResponse.name"
 					:value="executeResponse.value"
 					:traceback="executeResponse.traceback"
 				/>
-				<template v-else-if="outputAmr">
-					<tera-model-diagram :model="outputAmr" />
-					<tera-model-parts :model="outputAmr" :feature-config="{ isPreview: true }" />
-				</template>
+				<tera-model v-else-if="outputAmr" is-workflow is-save-for-reuse :assetId="outputAmr.id" @on-save="updateNode" />
 				<template v-else>
 					<tera-progress-spinner v-if="isStratifyInProgress" is-centered :font-size="2">
 						Processing...
@@ -103,55 +91,38 @@
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
-	<tera-save-asset-modal
-		v-if="outputAmr"
-		:asset="outputAmr"
-		:assetType="AssetType.Model"
-		:initial-name="outputAmr.name"
-		:is-visible="showSaveModelModal"
-		:is-updating-asset="true"
-		@close-modal="showSaveModelModal = false"
-	/>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import _ from 'lodash';
+import '@/ace-config';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import TeraModelParts from '@/components/model/tera-model-parts.vue';
-import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
-import TeraStratificationGroupForm from '@/components/workflow/ops/stratify-mira/tera-stratification-group-form.vue';
+import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
-
-import { createModel, getModel } from '@/services/model';
-import { useProjects } from '@/composables/project';
-
-import { WorkflowNode, OperatorStatus } from '@/types/workflow';
+import TeraModel from '@/components/model/tera-model.vue';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import TeraStratificationGroupForm from '@/components/workflow/ops/stratify-mira/tera-stratification-group-form.vue';
+import { KernelSessionManager } from '@/services/jupyter';
+import { createModelFromOld, getModel } from '@/services/model';
+import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
+import type { Model } from '@/types/Types';
+import { AMRSchemaNames } from '@/types/common';
+import { OperatorStatus, WorkflowNode } from '@/types/workflow';
 import { logger } from '@/utils/logger';
+import { cloneDeep, debounce, isEqual, last } from 'lodash';
 import Button from 'primevue/button';
 import { v4 as uuidv4 } from 'uuid';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import '@/ace-config';
-import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
-import type { Model } from '@/types/Types';
-import { AssetType } from '@/types/Types';
-import { AMRSchemaNames } from '@/types/common';
-import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-
-/* Jupyter imports */
-import { KernelSessionManager } from '@/services/jupyter';
 import { blankStratifyGroup, StratifyGroup, StratifyOperationStateMira } from './stratify-mira-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;
 }>();
-const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output']);
+const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output', 'update-output']);
 
 enum StratifyTabs {
 	Wizard = 'Wizard',
@@ -167,7 +138,6 @@ const executeResponse = ref({
 	traceback: ''
 });
 const modelNodeOptions = ref<string[]>([]);
-const showSaveModelModal = ref(false);
 
 const isDraft = ref(false);
 
@@ -185,6 +155,7 @@ const llmThoughts = ref<any[]>([]);
 const sampleAgentQuestions = [
 	'Stratify my model by the ages young and old',
 	'Stratify my model by the locations Toronto and Montreal where Toronto and Montreal cannot interact',
+	'Stratify my model by the locations Toronto and Montreal where populations within any state are able to travel between Toronto and Montreal',
 	'What is cartesian_control in stratify?'
 ];
 
@@ -194,7 +165,7 @@ const updateLlmQuery = (query: string) => {
 };
 
 const updateStratifyGroupForm = (config: StratifyGroup) => {
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.strataGroup = config;
 	emit('update-state', state);
 };
@@ -263,6 +234,8 @@ const stratifyModel = () => {
 };
 
 const handleModelPreview = async (data: any) => {
+	if (!amr.value) return;
+
 	const amrResponse = data.content['application/json'] as Model;
 	isStratifyInProgress.value = false;
 	if (!amrResponse) {
@@ -279,7 +252,7 @@ const handleModelPreview = async (data: any) => {
 	amrResponse.header.name = newName;
 
 	// Create output
-	const modelData = await createModel(amrResponse);
+	const modelData = await createModelFromOld(amr.value, amrResponse);
 	if (!modelData) return;
 	outputAmr.value = modelData;
 
@@ -288,8 +261,8 @@ const handleModelPreview = async (data: any) => {
 		label: newName,
 		type: 'modelId',
 		state: {
-			strataGroup: _.cloneDeep(props.node.state.strataGroup),
-			strataCodeHistory: _.cloneDeep(props.node.state.strataCodeHistory)
+			strataGroup: cloneDeep(props.node.state.strataGroup),
+			strataCodeHistory: cloneDeep(props.node.state.strataCodeHistory)
 		},
 		value: [modelData.id]
 	});
@@ -430,7 +403,7 @@ const runCodeStratify = () => {
 
 // FIXME: Copy pasted in 3 locations, could be written cleaner and in a service. Migrate it to use saveCodeToState from @/services/notebook
 const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.hasCodeBeenRun = hasCodeBeenRun;
 	// for now only save the last code executed, may want to save all code executed in the future
 	const codeHistoryLength = props.node.state.strataCodeHistory.length;
@@ -448,23 +421,24 @@ const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
-const isSaveDisabled = computed(() => {
-	const id = amr.value?.id;
-	if (!id || _.isEmpty(selectedOutputId.value)) return true;
-	const outputPort = props.node.outputs?.find((port) => port.id === selectedOutputId.value);
-
-	return useProjects().hasAssetInActiveProject(outputPort?.value?.[0]);
-});
-
 // check if user has made changes to the code
 const hasCodeChange = () => {
 	if (props.node.state.strataCodeHistory.length) {
-		isDraft.value = !_.isEqual(codeText.value, props.node.state.strataCodeHistory?.[0]?.code);
+		isDraft.value = !isEqual(codeText.value, props.node.state.strataCodeHistory?.[0]?.code);
 	} else {
-		isDraft.value = !_.isEqual(codeText.value, '');
+		isDraft.value = !isEqual(codeText.value, '');
 	}
 };
-const checkForCodeChange = _.debounce(hasCodeChange, 100);
+const checkForCodeChange = debounce(hasCodeChange, 100);
+
+function updateNode(model: Model) {
+	if (!model) return;
+	outputAmr.value = model;
+	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.value?.[0] === model.id));
+	if (!outputPort) return;
+	outputPort.label = model.header.name;
+	emit('update-output', outputPort);
+}
 
 watch(
 	() => codeText.value,
@@ -484,7 +458,7 @@ watch(
 			}
 			const modelIdToLoad = output.value?.[0];
 			outputAmr.value = await getModel(modelIdToLoad);
-			codeText.value = _.last(props.node.state.strataCodeHistory)?.code ?? '';
+			codeText.value = last(props.node.state.strataCodeHistory)?.code ?? '';
 		}
 	},
 	{ immediate: true }
@@ -518,10 +492,10 @@ onUnmounted(() => {
 }
 
 .code-executed-warning {
-	background-color: #ffe6e6;
-	color: #cc0000;
-	padding: 10px;
-	border-radius: 4px;
+	background-color: var(--error-message-background);
+	border-radius: var(--border-radius);
+	color: var(--error-message-color);
+	padding: var(--gap-2-5);
 }
 
 .form-section {

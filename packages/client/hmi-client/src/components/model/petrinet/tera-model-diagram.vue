@@ -26,11 +26,7 @@
 					</span>
 				</template>
 			</Toolbar>
-			<figure ref="graphElement" class="graph-element">
-				<tera-progress-spinner v-if="!renderer" class="spinner" is-centered :font-size="2">
-					Loading...
-				</tera-progress-spinner>
-			</figure>
+			<figure ref="graphElement" class="graph-element"></figure>
 			<ul class="legend" v-if="!isEmpty(graphLegendLabels)">
 				<li v-for="(label, index) in graphLegendLabels" :key="index">
 					<div class="legend-circle" :style="`background: ${graphLegendColors[index]}`" />
@@ -38,11 +34,12 @@
 				</li>
 			</ul>
 		</tera-resizable-panel>
-		<figure v-else-if="model" ref="graphElement" class="graph-element preview" :key="`preview_${model.id}`">
-			<tera-progress-spinner v-if="!renderer" class="spinner" is-centered :font-size="2">
-				Loading...
-			</tera-progress-spinner>
-		</figure>
+		<figure v-else-if="model" ref="graphElement" class="graph-element preview" :key="`preview_${model.id}`"></figure>
+
+		<tera-progress-spinner v-if="mmt.templates.length === 0" class="spinner" is-centered :font-size="2">
+			Loading...
+		</tera-progress-spinner>
+
 		<tera-stratified-matrix-modal
 			v-if="selectedTransitionId"
 			:id="selectedTransitionId"
@@ -51,9 +48,10 @@
 			:stratified-matrix-type="StratifiedMatrix.Rates"
 			@close-modal="selectedTransitionId = ''"
 		/>
-		<template #tooltip-content v-if="isStratified && !isEmpty(hoveredTransitionId)">
+		<template #tooltip-content>
 			<tera-stratified-matrix-preview
 				ref="tooltipContentRef"
+				v-if="isStratified && !isEmpty(hoveredTransitionId)"
 				:mmt="mmt"
 				:mmt-params="mmtParams"
 				:id="hoveredTransitionId"
@@ -65,26 +63,26 @@
 
 <script setup lang="ts">
 import { isEmpty, isEqual } from 'lodash';
-import { ref, watch, computed, nextTick } from 'vue';
-import Toolbar from 'primevue/toolbar';
+import { ref, watch, computed, nextTick, onMounted, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
-import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
-import { getModelType, getMMT } from '@/services/model';
-import type { Model } from '@/types/Types';
+import Toolbar from 'primevue/toolbar';
+import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
+import TeraStratifiedMatrixPreview from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-preview.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
 import TeraTooltip from '@/components/widgets/tera-tooltip.vue';
-import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
-import { StratifiedMatrix } from '@/types/Model';
-import { AMRSchemaNames } from '@/types/common';
-import { MiraModel, MiraTemplateParams, ObservableSummary } from '@/model-representation/mira/mira-common';
 import { isStratifiedModel, emptyMiraModel, convertToIGraph } from '@/model-representation/mira/mira';
+import { MiraModel, MiraTemplateParams, ObservableSummary } from '@/model-representation/mira/mira-common';
+import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
+import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
 import { getModelRenderer } from '@/model-representation/service';
 import { NodeType } from '@/services/graph';
-import type { FeatureConfig } from '@/types/common';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import TeraStratifiedMatrixModal from '../model-configurations/tera-stratified-matrix-modal.vue';
-import TeraStratifiedMatrixPreview from '../model-configurations/tera-stratified-matrix-preview.vue';
+import { getModelType, getMMT } from '@/services/model';
+import { AMRSchemaNames, type FeatureConfig } from '@/types/common';
+import { StratifiedMatrix } from '@/types/Model';
+import type { Model } from '@/types/Types';
+import { observeElementSizeChange } from '@/utils/observer';
 
 const props = defineProps<{
 	model: Model;
@@ -111,7 +109,6 @@ enum StratifiedView {
 
 const stratifiedView = ref(StratifiedView.Collapsed);
 const stratifiedViewOptions = ref([{ value: StratifiedView.Expanded }, { value: StratifiedView.Collapsed }]);
-
 const isStratified = computed(() => isStratifiedModel(mmt.value));
 
 let renderer: PetrinetRenderer | NestedPetrinetRenderer | null = null;
@@ -121,6 +118,9 @@ const resetZoom = async () => {
 };
 
 async function renderGraph() {
+	// Sanity guard
+	if (mmt.value.templates.length === 0) return;
+
 	renderer = getModelRenderer(
 		mmt.value,
 		graphElement.value as HTMLDivElement,
@@ -195,26 +195,37 @@ async function toggleCollapsedView(view: StratifiedView) {
 
 watch(
 	() => [props.model.model, props.model?.semantics, graphElement.value],
-	async (newValue, oldValue) => {
-		if (isEqual(newValue, oldValue)) return;
-		if (modelType.value === AMRSchemaNames.DECAPODES || graphElement.value === null) return;
-		const response: any = await getMMT(props.model);
-		mmt.value = response.mmt;
-		mmtParams.value = response.template_params;
-		observableSummary = response.observable_summary;
-		await renderGraph();
+	(newValue, oldValue) => {
+		if (isEqual(newValue, oldValue) || modelType.value === AMRSchemaNames.DECAPODES || graphElement.value === null)
+			return;
+
+		getMMT(props.model).then((response) => {
+			if (response) {
+				mmt.value = response.mmt;
+				mmtParams.value = response.template_params;
+				observableSummary = response.observable_summary;
+				renderGraph();
+			}
+		});
 	},
 	{ immediate: true, deep: true }
 );
+
+// Create an observer to re-render the graph when it resizes
+let graphResizeObserver: ResizeObserver;
+onMounted(() => {
+	if (graphElement.value) {
+		graphResizeObserver = observeElementSizeChange(graphElement.value, renderGraph);
+	}
+});
+onUnmounted(() => {
+	if (graphResizeObserver) {
+		graphResizeObserver.disconnect();
+	}
+});
 </script>
 
 <style scoped>
-.p-accordion {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-}
-
 .diagram-container {
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
@@ -232,32 +243,32 @@ watch(
 	background-color: var(--surface-secondary);
 	overflow: hidden;
 	border: none;
-	position: relative;
 	pointer-events: none;
+	position: relative;
 }
 
 .p-toolbar {
+	background: transparent;
+	isolation: isolate;
+	padding: var(--gap-2);
+	pointer-events: none;
 	position: absolute;
 	width: 100%;
 	z-index: 1;
-	isolation: isolate;
-	background: transparent;
-	padding: 0.5rem;
-	pointer-events: none;
 }
 
 .p-toolbar:deep(> div > span) {
-	gap: 0.25rem;
+	gap: var(--gap-1);
 	display: flex;
 	pointer-events: all;
 }
 
 /* Let svg dynamically resize when the sidebar opens/closes or page resizes */
 :deep(.graph-element svg) {
-	width: 100%;
-	height: 100%;
 	background: var(--gray-50) !important;
 	border: none !important;
+	height: 100%;
+	width: 100%;
 }
 
 .graph-element {
@@ -290,57 +301,37 @@ watch(
 	font-size: var(--font-caption);
 	background-color: var(--surface-transparent);
 	backdrop-filter: blur(4px);
-	padding: 0 var(--gap-small);
+	padding: 0 var(--gap-2);
 	border-radius: var(--border-radius);
 	pointer-events: none;
 	user-select: none;
 }
 
 ul.legend {
-	background-color: var(--surface-transparent);
 	backdrop-filter: blur(4px);
-	padding: var(--gap-xsmall) var(--gap-small);
+	background-color: var(--surface-transparent);
 	border-radius: var(--border-radius);
-	position: absolute;
 	bottom: 0;
-	left: 0;
 	display: flex;
-	margin: var(--gap-small);
-	margin-bottom: var(--gap);
-	gap: var(--gap);
+	gap: var(--gap-4);
+	left: 0;
+	margin: var(--gap-2);
+	margin-bottom: var(--gap-4);
+	padding: var(--gap-1) var(--gap-2);
 	pointer-events: none;
+	position: absolute;
 
 	& > li {
-		display: flex;
 		align-items: center;
-		gap: var(--gap-xsmall);
+		display: flex;
+		gap: var(--gap-1);
 	}
 }
 
 .legend-circle {
+	border-radius: 50%;
 	display: inline-block;
 	height: 1rem;
 	width: 1rem;
-	border-radius: 50%;
-}
-
-.modal-input-container {
-	display: flex;
-	flex-direction: column;
-	flex-grow: 1;
-}
-
-.modal-input {
-	height: 25px;
-	padding-left: 5px;
-	margin: 5px;
-	align-items: baseline;
-}
-
-.modal-input-label {
-	margin-left: 5px;
-	padding-top: 5px;
-	padding-bottom: 5px;
-	align-items: baseline;
 }
 </style>

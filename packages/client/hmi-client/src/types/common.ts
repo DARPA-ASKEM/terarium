@@ -43,26 +43,6 @@ export interface ModelConfigTableData {
 	tableFormattedMatrix?: ModelConfigTableData[];
 }
 
-// TODO: Wherever these are used - investigate using an actual map instead, this has been avoided due to v-model not playing well with maps
-// But a solution might be found here: https://stackoverflow.com/questions/37130105/does-vue-support-reactivity-on-map-and-set-data-types/64512468#64512468
-export interface StringValueMap {
-	[key: string]: string;
-}
-
-export interface NumericValueMap {
-	[key: string]: number;
-}
-
-export interface AnyValueMap {
-	[key: string]: any;
-}
-
-export enum ViewType {
-	LIST = 'list',
-	MATRIX = 'matrix',
-	GRAPH = 'graph'
-}
-
 // Side panel
 export type SidePanelTab = {
 	name: string;
@@ -82,11 +62,6 @@ export interface AssetItem extends AssetRoute {
 	assetName?: string;
 	assetCreatedOn?: string;
 }
-
-export type CodeRequest = {
-	asset: AssetItem;
-	code?: string;
-};
 
 // TODO this should come from the back end, and we should also have maps for the "categories" of types (artifacts, models, datasets, etc)
 export enum AcceptedTypes {
@@ -159,22 +134,28 @@ export enum ModelServiceType {
 export interface CompareModelsResponseType {
 	title: string;
 	summary: string;
-	semanticComparison: SemanticComparison;
+	structuralComparison: StructuralComparison;
 	metaComparison: MetadataComparison;
 }
 
-interface SemanticComparison {
-	states: string;
-	parameters: string;
-	transitions: string;
-	observables: string;
+interface StructuralComparison {
+	states: Comparison;
+	parameters: Comparison;
+	transitions: Comparison;
+	observables: Comparison;
 }
 
 interface MetadataComparison {
-	description: string;
-	uses: string;
-	biasRisksLimitations: string;
-	observables: string;
+	details: Comparison;
+	uses: Comparison;
+	biasRisksLimitations: Comparison;
+	observables: Comparison;
+}
+
+interface Comparison {
+	common: string;
+	unique: string;
+	conclusion: string;
 }
 
 export type ExtractionStatusUpdate = StatusUpdate<{ documentId: string }>;
@@ -233,3 +214,9 @@ export const programmingLanguageOptions = (): { name: string; value: string }[] 
 			name: lang && `${lang[0].toUpperCase() + lang.slice(1)} (${ProgrammingLanguageVersion[lang]})`,
 			value: ProgrammingLanguageVersion[lang]
 		}));
+
+export enum CalendarDateType {
+	DATE = 'date',
+	MONTH = 'month',
+	YEAR = 'year'
+}
