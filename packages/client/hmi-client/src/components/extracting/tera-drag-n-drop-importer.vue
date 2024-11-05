@@ -47,7 +47,6 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
-import API from '@/api/api';
 import { AcceptedExtensions, AcceptedTypes } from '@/types/common';
 import TeraDragAndDropFilePreviewer from './tera-drag-n-drop-file-previewer.vue';
 
@@ -65,7 +64,7 @@ const props = defineProps({
 		type: Number,
 		default: undefined
 	},
-	// list of accepted types of files
+	// list of accepted files types
 	acceptTypes: {
 		type: Array<AcceptedTypes>,
 		required: true,
@@ -79,28 +78,7 @@ const props = defineProps({
 	// custom import action can be passed in as prop
 	importAction: {
 		type: Function,
-		required: true,
-		/**
-		 * Default import action which just logs the click event.
-		 * @param {Array<File>} currentFiles
-		 * @returns {any}
-		 */
-		default: async (currentFiles: Array<File>): Promise<{ file: string; response: string }[]> => {
-			try {
-				const result: string[] = [];
-				for (let i = 0; i < currentFiles.length; i++) {
-					result.push(currentFiles[i].name);
-				}
-				const resp = await API.post(`/logs/`, {
-					logs: [{ level: 'info', message: `Sending file(s) for Importing: ${result}` }]
-				});
-				const { status } = resp;
-				if (status !== 200) console.warn('POST to /logs did not return a 200');
-			} catch (error) {
-				console.error(error);
-			}
-			return [{ file: 'Default Import Action', response: 'Nothing' }];
-		}
+		required: true
 	}
 });
 
