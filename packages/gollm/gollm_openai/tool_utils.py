@@ -31,6 +31,7 @@ from utils import (
 )
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+GPT_MODEL = "gpt-4o-2024-08-06"
 
 
 def escape_curly_braces(text: str):
@@ -89,7 +90,7 @@ def equations_cleanup(equations: List[str]) -> dict:
 
     client = OpenAI()
     output = client.chat.completions.create(
-        model="gpt-4o-2024-08-06",
+        model=GPT_MODEL,
         top_p=1,
         frequency_penalty=0,
         presence_penalty=0,
@@ -134,7 +135,7 @@ def equations_from_image(image: str) -> dict:
 
     client = OpenAI()
     output = client.chat.completions.create(
-        model="gpt-4o-2024-08-06",
+        model=GPT_MODEL,
         top_p=1,
         frequency_penalty=0,
         presence_penalty=0,
@@ -185,7 +186,7 @@ def interventions_from_document(research_paper: str, amr: str) -> dict:
     print("Sending request to OpenAI API...")
     client = OpenAI()
     output = client.chat.completions.create(
-        model="gpt-4o-2024-08-06",
+        model=GPT_MODEL,
         frequency_penalty=0,
         max_tokens=4000,
         presence_penalty=0,
@@ -231,7 +232,7 @@ def model_config_from_document(research_paper: str, amr: str) -> dict:
     print("Sending request to OpenAI API...")
     client = OpenAI()
     output = client.chat.completions.create(
-        model="gpt-4o-2024-08-06",
+        model=GPT_MODEL,
         frequency_penalty=0,
         max_tokens=4000,
         presence_penalty=0,
@@ -276,7 +277,7 @@ def amr_enrichment_chain(amr: str, research_paper: str) -> dict:
 
     client = OpenAI()
     output = client.chat.completions.create(
-        model="gpt-4o-2024-08-06",
+        model=GPT_MODEL,
         max_tokens=16000,
         top_p=1,
         frequency_penalty=0,
@@ -320,7 +321,7 @@ def model_card_chain(amr: str, research_paper: str = None) -> dict:
 
     client = OpenAI()
     output = client.chat.completions.create(
-        model="gpt-4o-2024-08-06",
+        model=GPT_MODEL,
         temperature=0,
         frequency_penalty=0,
         max_tokens=16000,
@@ -354,7 +355,7 @@ def condense_chain(query: str, chunks: List[str], max_tokens: int = 16385) -> st
         )
     client = OpenAI()
     output = client.chat.completions.create(
-        model="gpt-4o-2024-08-06",
+        model=GPT_MODEL,
         top_p=1,
         frequency_penalty=0,
         presence_penalty=0,
@@ -372,7 +373,7 @@ def generate_response(instruction: str, response_format: ResponseFormat | None =
     prompt = GENERAL_INSTRUCTION_PROMPT.format(instruction=instruction)
     client = OpenAI()
     output = client.chat.completions.create(
-        model="gpt-4o-2024-08-06",
+        model=GPT_MODEL,
         top_p=1,
         frequency_penalty=0,
         presence_penalty=0,
@@ -419,7 +420,7 @@ def model_config_from_dataset(amr: str, dataset: List[str], matrix: str) -> dict
     print("Sending request to OpenAI API...")
     client = OpenAI()
     output = client.chat.completions.create(
-        model="gpt-4o-2024-08-06",
+        model=GPT_MODEL,
         frequency_penalty=0,
         max_tokens=10000,
         presence_penalty=0,
@@ -463,7 +464,7 @@ def compare_models(amrs: List[str]) -> dict:
 
     client = OpenAI()
     output = client.chat.completions.create(
-        model="gpt-4o-2024-08-06",
+        model=GPT_MODEL,
         top_p=1,
         frequency_penalty=0,
         presence_penalty=0,
