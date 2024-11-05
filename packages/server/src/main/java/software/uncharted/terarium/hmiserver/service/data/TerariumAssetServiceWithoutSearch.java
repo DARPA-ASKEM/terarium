@@ -125,7 +125,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 			return Optional.empty();
 		}
 		asset.get().setDeletedOn(Timestamp.from(Instant.now()));
-		repository.saveAndFlush(asset.get());
+		repository.save(asset.get());
 		return asset;
 	}
 
@@ -146,7 +146,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 
 		asset.setPublicAsset(projectService.isProjectPublic(projectId));
 
-		return repository.saveAndFlush(asset);
+		return repository.save(asset);
 	}
 
 	/**
@@ -169,7 +169,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 		final boolean projectIsPublic = projectService.isProjectPublic(projectId);
 		assets.forEach(asset -> asset.setPublicAsset(projectIsPublic));
 
-		return repository.saveAllAndFlush(assets);
+		return repository.saveAll(assets);
 	}
 
 	/**
@@ -198,7 +198,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 
 		asset.setPublicAsset(projectService.isProjectPublic(projectId));
 
-		final T updated = repository.saveAndFlush(asset);
+		final T updated = repository.save(asset);
 
 		// Update the related ProjectAsset
 		projectAssetService.updateByAsset(updated, hasWritePermission);
