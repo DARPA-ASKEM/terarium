@@ -250,7 +250,7 @@ nav {
 	flex-direction: column;
 	width: fit-content;
 	gap: 1rem;
-	padding: var(--gap) var(--gap-large) 0 var(--gap-2);
+	padding: var(--gap) var(--gap-8) 0 var(--gap-2);
 	/* Responsible for stickiness */
 	position: sticky;
 	top: 0;

@@ -452,7 +452,7 @@ nav {
 	border-bottom: 1px solid var(--surface-border-light);
 	padding: var(--gap-2) var(--gap-4);
 	display: flex;
-	gap: var(--gap-large);
+	gap: var(--gap-8);
 	grid-area: header;
 
 	a,
