@@ -19,6 +19,9 @@ class ConfigureModelDataset(BaseModel):
     amr: str  # expects AMR in a stringified JSON object
     matrix: str = None
 
+class DatasetCardModel(BaseModel):
+    dataset: List[str]
+    research_paper: str = None
 
 class ModelCardModel(BaseModel):
     amr: str  # expects AMR in a stringified JSON object
