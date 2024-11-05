@@ -565,7 +565,7 @@ ul {
 
 		& > span {
 			width: fit-content;
-			margin-right: var(--gap-xxlarge);
+			margin-right: var(--gap-12);
 		}
 	}
 }
