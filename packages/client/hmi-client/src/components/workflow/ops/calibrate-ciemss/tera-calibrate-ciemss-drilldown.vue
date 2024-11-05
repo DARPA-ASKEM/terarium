@@ -352,7 +352,11 @@
 			>
 				<template #overlay>
 					<tera-chart-settings-panel
-						:annotations="activeChartSettings?.type === ChartSettingType.VARIABLE ? chartAnnotations : undefined"
+						:annotations="
+							activeChartSettings?.type === ChartSettingType.VARIABLE
+								? getChartAnnotationsByChartId(activeChartSettings.id)
+								: undefined
+						"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
 						@delete-annotation="deleteAnnotation"
@@ -436,7 +440,6 @@ import {
 } from '@/services/calibrate-workflow';
 import {
 	deleteAnnotation,
-	fetchAnnotations,
 	generateForecastChartAnnotation,
 	removeChartSettingById,
 	saveAnnotation,
@@ -459,7 +462,6 @@ import {
 	CsvAsset,
 	DatasetColumn,
 	ModelConfiguration,
-	ChartAnnotation,
 	InterventionPolicy,
 	ModelParameter,
 	AssetType,
@@ -488,14 +490,14 @@ import {
 	createHistogramChart,
 	createErrorChart,
 	applyForecastChartAnnotations,
-	createInterventionChartMarkers
+	createInterventionChartMarkers,
+	AUTOSIZE
 } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { displayNumber } from '@/utils/number';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
-import { useClientEvent } from '@/composables/useClientEvent';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import { flattenStaticInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-intervention-summary-card.vue';
@@ -503,6 +505,7 @@ import { getParameters } from '@/model-representation/service';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
 import { getDataset } from '@/services/dataset';
 import { getCalendarSettingsFromModel, getVegaDateOptions } from '@/services/model';
+import { useChartAnnotations } from '@/composables/useChartAnnotations';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults, getErrorData } from './calibrate-utils';
 
@@ -691,13 +694,7 @@ const selectedErrorVariableSettings = computed(() =>
 );
 
 // --- Handle chart annotations
-const chartAnnotations = ref<ChartAnnotation[]>([]);
-const updateChartAnnotations = async () => {
-	chartAnnotations.value = await fetchAnnotations(props.node.id);
-};
-onMounted(() => updateChartAnnotations());
-useClientEvent([ClientEventType.ChartAnnotationCreate, ClientEventType.ChartAnnotationDelete], updateChartAnnotations);
-
+const { getChartAnnotationsByChartId } = useChartAnnotations(props.node.id);
 const generateAnnotation = async (setting: ChartSetting, query: string) => {
 	// Note: Currently llm generated chart annotations are supported for the forecast chart only
 	if (!preparedChartInputs.value) return null;
@@ -772,7 +769,7 @@ const preparedCharts = computed(() => {
 	// Simulate Charts:
 	selectedVariableSettings.value.forEach((settings) => {
 		const variable = settings.selectedVariables[0];
-		const annotations = chartAnnotations.value.filter((annotation) => annotation.chartId === settings.id);
+		const annotations = getChartAnnotationsByChartId(settings.id);
 		const datasetVariables: string[] = [];
 		const mapObj = state.mapping.find((d) => d.modelVariable === variable);
 		if (mapObj) {
@@ -947,7 +944,9 @@ const updateLossChartSpec = (data: string | Record<string, any>[], size: { width
 			width: size.width,
 			height: 100,
 			xAxisTitle: 'Solver iterations',
-			yAxisTitle: 'Loss'
+			yAxisTitle: 'Loss',
+			autosize: AUTOSIZE.FIT,
+			fitYDomain: true
 		}
 	);
 };
@@ -1094,6 +1093,18 @@ async function getAutoMapping() {
 }
 
 const initialize = async () => {
+	// Update Wizard form fields with current selected output state
+	const state = _.cloneDeep(props.node.state);
+	knobs.value = {
+		numIterations: state.numIterations ?? 1000,
+		numSamples: state.numSamples ?? 100,
+		endTime: state.endTime ?? 100,
+		stepSize: state.stepSize ?? 1,
+		learningRate: state.learningRate ?? 0.1,
+		method: state.method ?? CiemssMethodOptions.dopri5,
+		timestampColName: state.timestampColName ?? ''
+	};
+
 	// Model configuration input
 	const {
 		model: m,

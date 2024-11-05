@@ -70,75 +70,81 @@ services:
       - ../../packages/taskrunner:/taskrunner
     command: /funman_task/dev.sh
     platform: linux/amd64
+  #
+  # Uncomment this to run the equation extraction taskrunner locally
+  #
+  # equation_extraction_cpu-taskrunner:
+  #   build:
+  #     context: ../..
+  #     dockerfile: ./packages/equation_extraction/Dockerfile
+  #     target: equation_extraction_taskrunner_builder
+  #   container_name: equation_extraction_cpu-taskrunner
+  #   networks:
+  #     - terarium
+  #   ports:
+  #     - "6300:8002"
+  #   environment:
+  #     TERARIUM_MQ_ADDRESSES: "amqp://rabbitmq:5672"
+  #     TERARIUM_MQ_PASSWORD: "terarium123"
+  #     TERARIUM_MQ_USERNAME: "terarium"
+  #     TERARIUM_TASKRUNNER_REQUEST_TYPE: "equation_extraction"
+  #   depends_on:
+  #     rabbitmq:
+  #       condition: service_healthy
+  #   extra_hosts:
+  #     - "${local_host_name}:host-gateway"
+  #   volumes:
+  #     - ../../packages/equation_extraction:/equation_extraction_task
+  #     - ../../packages/taskrunner:/taskrunner
+  #   command: /equation_extraction_task/dev.sh
 
-  equation_extraction_cpu-taskrunner:
-    build:
-      context: ../..
-      dockerfile: ./packages/equation_extraction/Dockerfile
-      target: equation_extraction_taskrunner_builder
-    container_name: equation_extraction_cpu-taskrunner
-    networks:
-      - terarium
-    ports:
-      - "6300:8002"
-    environment:
-      TERARIUM_MQ_ADDRESSES: "amqp://rabbitmq:5672"
-      TERARIUM_MQ_PASSWORD: "terarium123"
-      TERARIUM_MQ_USERNAME: "terarium"
-      TERARIUM_TASKRUNNER_REQUEST_TYPE: "equation_extraction"
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    extra_hosts:
-      - "${local_host_name}:host-gateway"
-    volumes:
-      - ../../packages/equation_extraction:/equation_extraction_task
-      - ../../packages/taskrunner:/taskrunner
-    command: /equation_extraction_task/dev.sh
+  # Uncomment this to run the text extraction taskrunner locally
+  #
+  # text_extraction-taskrunner:
+  #   build:
+  #     context: ../..
+  #     dockerfile: ./packages/text_extraction/Dockerfile
+  #     target: text_extraction_taskrunner_builder
+  #   container_name: text_extraction-taskrunner
+  #   networks:
+  #     - terarium
+  #   environment:
+  #     TERARIUM_MQ_ADDRESSES: "amqp://rabbitmq:5672"
+  #     TERARIUM_MQ_PASSWORD: "terarium123"
+  #     TERARIUM_MQ_USERNAME: "terarium"
+  #     TERARIUM_TASKRUNNER_REQUEST_TYPE: "text_extraction"
+  #   depends_on:
+  #     rabbitmq:
+  #       condition: service_healthy
+  #   extra_hosts:
+  #     - "${local_host_name}:host-gateway"
+  #   volumes:
+  #     - ../../packages/text_extraction:/text_extraction_task
+  #     - ../../packages/taskrunner:/taskrunner
+  #   command: /text_extraction_task/dev.sh
 
-  text_extraction-taskrunner:
-    build:
-      context: ../..
-      dockerfile: ./packages/text_extraction/Dockerfile
-      target: text_extraction_taskrunner_builder
-    container_name: text_extraction-taskrunner
-    networks:
-      - terarium
-    environment:
-      TERARIUM_MQ_ADDRESSES: "amqp://rabbitmq:5672"
-      TERARIUM_MQ_PASSWORD: "terarium123"
-      TERARIUM_MQ_USERNAME: "terarium"
-      TERARIUM_TASKRUNNER_REQUEST_TYPE: "text_extraction"
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    extra_hosts:
-      - "${local_host_name}:host-gateway"
-    volumes:
-      - ../../packages/text_extraction:/text_extraction_task
-      - ../../packages/taskrunner:/taskrunner
-    command: /text_extraction_task/dev.sh
-
-  table_extraction-taskrunner:
-    build:
-      context: ../..
-      dockerfile: ./packages/table_extraction/Dockerfile
-      target: table_extraction_taskrunner_builder
-    container_name: table_extraction-taskrunner
-    networks:
-      - terarium
-    environment:
-      TERARIUM_MQ_ADDRESSES: "amqp://rabbitmq:5672"
-      TERARIUM_MQ_PASSWORD: "terarium123"
-      TERARIUM_MQ_USERNAME: "terarium"
-      TERARIUM_TASKRUNNER_REQUEST_TYPE: "table_extraction"
-      ASKEM_DOC_AI_API_KEY: "${secret_openai_key}"
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    extra_hosts:
-      - "${local_host_name}:host-gateway"
-    volumes:
-      - ../../packages/table_extraction:/table_extraction_task
-      - ../../packages/taskrunner:/taskrunner
-    command: /table_extraction_task/dev.sh
+  # Uncomment this to run the table extraction taskrunner locally
+  #
+  # table_extraction-taskrunner:
+  #   build:
+  #     context: ../..
+  #     dockerfile: ./packages/table_extraction/Dockerfile
+  #     target: table_extraction_taskrunner_builder
+  #   container_name: table_extraction-taskrunner
+  #   networks:
+  #     - terarium
+  #   environment:
+  #     TERARIUM_MQ_ADDRESSES: "amqp://rabbitmq:5672"
+  #     TERARIUM_MQ_PASSWORD: "terarium123"
+  #     TERARIUM_MQ_USERNAME: "terarium"
+  #     TERARIUM_TASKRUNNER_REQUEST_TYPE: "table_extraction"
+  #     ASKEM_DOC_AI_API_KEY: "${secret_openai_key}"
+  #   depends_on:
+  #     rabbitmq:
+  #       condition: service_healthy
+  #   extra_hosts:
+  #     - "${local_host_name}:host-gateway"
+  #   volumes:
+  #     - ../../packages/table_extraction:/table_extraction_task
+  #     - ../../packages/taskrunner:/taskrunner
+  #   command: /table_extraction_task/dev.sh

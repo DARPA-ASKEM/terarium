@@ -34,7 +34,12 @@ import { nodeOutputLabel } from '@/components/workflow/util';
 import type { WorkflowNode } from '@/types/workflow';
 import { createLLMSummary } from '@/services/summary-service';
 import { useProjects } from '@/composables/project';
-import { createForecastChart, createInterventionChartMarkers, ForecastChartOptions } from '@/services/charts';
+import {
+	applyForecastChartAnnotations,
+	createForecastChart,
+	createInterventionChartMarkers,
+	ForecastChartOptions
+} from '@/services/charts';
 import { createDatasetFromSimulationResult } from '@/services/dataset';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import {
@@ -53,6 +58,7 @@ import { addMultiVariableChartSetting } from '@/services/chart-settings';
 import { ChartSettingType } from '@/types/common';
 import { useClientEvent } from '@/composables/useClientEvent';
 import { getModelConfigurationById } from '@/services/model-configurations';
+import { useChartAnnotations } from '@/composables/useChartAnnotations';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
 import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 
@@ -77,6 +83,8 @@ const interventionPolicyId = computed(() => props.node.inputs[1].value?.[0]);
 const interventionPolicy = ref<InterventionPolicy | null>(null);
 
 const chartSettings = computed(() => props.node.state.chartSettings ?? []);
+
+const { getChartAnnotationsByChartId } = useChartAnnotations(props.node.id);
 
 let pyciemssMap: Record<string, string> = {};
 
@@ -171,8 +179,10 @@ const preparedCharts = computed(() => {
 		};
 
 		let statLayerVariables = selectedVars.map((d) => `${pyciemssMap[d]}_mean`);
+		let sampleLayerVariables = selectedVars.map((d) => pyciemssMap[d]);
 
 		if (showBaseLine) {
+			sampleLayerVariables = [`${pyciemssMap[selectedVars[0]]}:base`, `${pyciemssMap[selectedVars[0]]}`];
 			statLayerVariables = [`${pyciemssMap[selectedVars[0]]}_mean:base`, `${pyciemssMap[selectedVars[0]]}_mean`];
 			options.translationMap = {
 				...options.translationMap,
@@ -181,29 +191,29 @@ const preparedCharts = computed(() => {
 			options.colorscheme = ['#AAB3C6', '#1B8073'];
 		}
 
-		const chart = createForecastChart(
-			{
-				data: result,
-				variables: setting.selectedVariables.map((d) => pyciemssMap[d]),
-				timeField: 'timepoint_id',
-				groupField: 'sample_id'
-			},
-			{
-				data: resultSummary,
-				variables: statLayerVariables,
-				timeField: 'timepoint_id'
-			},
-			null,
-			options
+		const annotations = getChartAnnotationsByChartId(setting.id);
+		const chart = applyForecastChartAnnotations(
+			createForecastChart(
+				{
+					data: result,
+					variables: sampleLayerVariables,
+					timeField: 'timepoint_id',
+					groupField: 'sample_id'
+				},
+				{
+					data: resultSummary,
+					variables: statLayerVariables,
+					timeField: 'timepoint_id'
+				},
+				null,
+				options
+			),
+			annotations
 		);
 		if (interventionPolicy.value) {
 			_.keys(groupedInterventionOutputs.value).forEach((key) => {
 				if (selectedVars.includes(key)) {
-					chart.layer.push(
-						...createInterventionChartMarkers(groupedInterventionOutputs.value[key], {
-							labelXOffset: -115
-						})
-					);
+					chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
 				}
 			});
 		}

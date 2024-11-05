@@ -24,9 +24,9 @@ import { FunmanOperationState, FunmanOperation } from '@/components/workflow/ops
 import Button from 'primevue/button';
 import { Poller, PollerState } from '@/api/api';
 import { pollAction, getRunResult } from '@/services/models/simulation-service';
-import { nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Simulation } from '@/types/Types';
+import { getModelConfigurationById } from '@/services/model-configurations';
 
 const emit = defineEmits(['open-drilldown', 'append-output', 'update-state']);
 
@@ -44,16 +44,16 @@ const addOutputPorts = async (runId: string) => {
 		logger.error('Failed to fetch funman result');
 		return;
 	}
-	const validatedConfiguration = JSON.parse(rawFunmanResult).modelConfiguration;
+	const validatedConfiguration = await getModelConfigurationById(JSON.parse(rawFunmanResult).modelConfigurationId);
 
 	const outState = _.cloneDeep(props.node.state);
 	outState.inProgressId = '';
 	outState.runId = runId;
 
 	emit('append-output', {
-		label: nodeOutputLabel(props.node, `${validatedConfiguration.name} Result`),
+		label: validatedConfiguration.name,
 		type: FunmanOperation.outputs[0].type,
-		value: validatedConfiguration.id,
+		value: [validatedConfiguration.id],
 		state: outState
 	});
 };

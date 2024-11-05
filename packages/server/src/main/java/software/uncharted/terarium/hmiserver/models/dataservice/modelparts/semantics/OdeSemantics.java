@@ -22,16 +22,16 @@ public class OdeSemantics extends SupportAdditionalProperties implements Seriali
 	@Serial
 	private static final long serialVersionUID = 8943488983879443909L;
 
-	private List<Rate> rates;
+	private List<Rate> rates = new ArrayList<>();
 
 	@TSOptional
-	private List<Initial> initials;
+	private List<Initial> initials = new ArrayList<>();
 
 	@TSOptional
-	private List<ModelParameter> parameters;
+	private List<ModelParameter> parameters = new ArrayList<>();
 
 	@TSOptional
-	private List<Observable> observables;
+	private List<Observable> observables = new ArrayList<>();
 
 	@TSOptional
 	private JsonNode time;

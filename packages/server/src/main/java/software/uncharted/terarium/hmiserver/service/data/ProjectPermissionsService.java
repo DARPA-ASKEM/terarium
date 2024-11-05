@@ -39,9 +39,11 @@ public class ProjectPermissionsService {
 			if (relationships.length == 0 || List.of(relationships).contains(relationship)) {
 				if (permissionRelationship.getSubjectType().equals(Schema.Type.USER)) {
 					final PermissionUser user = reBACService.getUser(permissionRelationship.getSubjectId());
-					final String name = user.getFirstName() + " " + user.getLastName();
-					if (!contributorMap.containsKey(name)) {
-						contributorMap.put(name, new Contributor(name, user.getId(), relationship));
+					if (user != null) {
+						final String name = user.getFirstName() + " " + user.getLastName();
+						if (!contributorMap.containsKey(name)) {
+							contributorMap.put(name, new Contributor(name, user.getId(), relationship));
+						}
 					}
 				} else if (permissionRelationship.getSubjectType().equals(Schema.Type.GROUP)) {
 					final PermissionGroup group = reBACService.getGroup(permissionRelationship.getSubjectId());
