@@ -3,6 +3,7 @@ import { RouteLocationNormalized } from 'vue-router';
 import { createPinia } from 'pinia';
 import ConfirmationService from 'primevue/confirmationservice';
 import PrimeVue from 'primevue/config';
+import Theme from '@/theme';
 import ToastService from 'primevue/toastservice';
 import Tooltip from 'primevue/tooltip';
 import VueFeather from 'vue-feather';
@@ -36,11 +37,12 @@ await clientEventServiceInit();
 // This is to prevent the Keycloak from redirecting to the hash value after authentication.
 window.location.hash = '';
 
+// Set up the Vue application with the plugins and components
 app
 	.use(router)
 	.use(ToastService)
 	.use(ConfirmationService)
-	.use(PrimeVue, { ripple: true })
+	.use(PrimeVue, Theme)
 	.use(VueKatex)
 	.directive('tooltip', Tooltip)
 	.directive('focus', {
