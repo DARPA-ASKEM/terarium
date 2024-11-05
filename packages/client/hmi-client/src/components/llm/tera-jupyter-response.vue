@@ -253,7 +253,7 @@ function onDeleteRequested(msgId: string) {
 	display: flex;
 	align-items: center;
 	gap: 10px;
-	margin-top: var(--gap-small);
+	margin-top: var(--gap-2);
 }
 
 .error {
@@ -294,7 +294,7 @@ function onDeleteRequested(msgId: string) {
 .query,
 .llm-thought,
 .llm-response {
-	padding-bottom: var(--gap-small);
+	padding-bottom: var(--gap-2);
 }
 
 .llm-thought {

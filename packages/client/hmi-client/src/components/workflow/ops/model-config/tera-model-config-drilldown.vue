@@ -833,7 +833,7 @@ onUnmounted(() => {
 }
 
 .notebook-section:deep(main) {
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	position: relative;
 }
 
@@ -841,7 +841,7 @@ onUnmounted(() => {
 	position: absolute;
 	top: var(--gap);
 	right: 0;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	display: flex;
 	align-items: center;
 }
@@ -861,7 +861,7 @@ onUnmounted(() => {
 
 .sort-by-label {
 	color: var(--text-color-subdued);
-	padding-right: var(--gap-small);
+	padding-right: var(--gap-2);
 }
 
 :deep(.pi-spinner) {

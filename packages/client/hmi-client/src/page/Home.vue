@@ -419,7 +419,7 @@ header > section > button {
 	background-color: #f4f4f4;
 	border-top: 1px solid var(--surface-border-light);
 	border-bottom: 1px solid var(--surface-border-light);
-	padding: var(--gap-small) var(--gap);
+	padding: var(--gap-2) var(--gap);
 	display: flex;
 	justify-content: space-between;
 	align-items: center;

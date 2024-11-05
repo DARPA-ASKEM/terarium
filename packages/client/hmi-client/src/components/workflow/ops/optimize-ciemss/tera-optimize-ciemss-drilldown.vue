@@ -1217,7 +1217,7 @@ watch(
 	background-color: var(--surface-50);
 	border: solid 1px var(--surface-border-light);
 	border-radius: var(--border-radius);
-	padding: var(--gap-small);
+	padding: var(--gap-2);
 }
 /* Select button icon fix */
 .select-button .p-button-icon-left {
@@ -1228,7 +1228,7 @@ watch(
 .result-message-row {
 	display: flex;
 	flex-direction: row;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	overflow: auto;
 }
 

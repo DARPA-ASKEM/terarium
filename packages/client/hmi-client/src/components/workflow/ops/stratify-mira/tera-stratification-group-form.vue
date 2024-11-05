@@ -107,8 +107,8 @@ watch(
 	width: 100%;
 	display: flex;
 	flex-direction: column;
-	gap: var(--gap-small);
-	margin-bottom: var(--gap-small);
+	gap: var(--gap-2);
+	margin-bottom: var(--gap-2);
 
 	& > * {
 		flex: 1;
@@ -118,7 +118,7 @@ watch(
 .label-and-input {
 	display: flex;
 	flex-direction: column;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	width: 0; /* CSS is weird but for some reason this prevents the Multiselect from going nuts */
 }
 </style>

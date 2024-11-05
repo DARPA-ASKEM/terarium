@@ -388,7 +388,7 @@ watch(
 	padding-left: 2rem;
 }
 .cell-input {
-	padding-left: var(--gap-small);
+	padding-left: var(--gap-2);
 	padding-right: var(--gap);
 	margin-bottom: 0 !important;
 	font-feature-settings: 'tnum';

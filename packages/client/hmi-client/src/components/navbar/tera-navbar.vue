@@ -599,7 +599,7 @@ nav {
 .status-chip {
 	background-color: var(--surface-highlight);
 	border-radius: var(--border-radius);
-	padding: var(--gap-small);
+	padding: var(--gap-2);
 }
 .field-checkbox {
 	font-size: var(--font-body-small);

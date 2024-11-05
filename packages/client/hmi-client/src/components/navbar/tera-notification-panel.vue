@@ -247,7 +247,7 @@ header {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		gap: var(--gap-small);
+		gap: var(--gap-2);
 	}
 	.p-progressbar {
 		flex-grow: 1;
@@ -258,7 +258,7 @@ header {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		gap: var(--gap-small);
+		gap: var(--gap-2);
 		.status-msg {
 			display: flex;
 			gap: 0.5rem;

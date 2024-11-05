@@ -172,7 +172,7 @@ p {
 ul {
 	display: flex;
 	flex-wrap: wrap;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	list-style: none;
 }
 
@@ -221,7 +221,7 @@ li {
 	overflow-y: scroll;
 	width: 50vw;
 	height: 20vw;
-	margin-top: var(--gap-small);
+	margin-top: var(--gap-2);
 }
 .modal-content-container {
 	display: flex;

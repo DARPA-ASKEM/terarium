@@ -126,7 +126,7 @@ ul {
 	list-style: none;
 	display: flex;
 	flex-direction: column;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 }
 
 .tera-input :deep(input) {
@@ -135,7 +135,7 @@ ul {
 .footer-container {
 	display: flex;
 	justify-content: end;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 }
 
 :deep(.p-panel .p-panel-content) {

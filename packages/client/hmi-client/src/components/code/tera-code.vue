@@ -558,7 +558,7 @@ header > section {
 .code-blocks-buttons-container {
 	display: flex;
 	flex-direction: row;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 }
 
 .code-blocks-buttons-container > * {
