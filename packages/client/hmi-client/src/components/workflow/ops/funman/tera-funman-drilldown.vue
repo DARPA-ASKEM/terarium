@@ -925,7 +925,7 @@ code {
 	width: 100%;
 	align-items: center;
 	align-self: stretch;
-	gap: var(--gap-medium);
+	gap: var(--gap-6);
 }
 
 ul {
