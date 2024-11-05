@@ -155,7 +155,7 @@ const onDragLeave = (event: DragEvent) => {
 };
 
 /**
- * remove file from list
+ * remove a file from list
  * @param {number} index
  * @returns {any}
  */
