@@ -271,7 +271,7 @@ h6 {
 .selected-users {
 	display: flex;
 	flex-direction: column;
-	padding-bottom: var(--gap-small);
+	padding-bottom: var(--gap-2);
 }
 
 li {

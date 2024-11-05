@@ -141,7 +141,7 @@ section {
 		cursor: text;
 
 		img {
-			padding-right: var(--gap-small);
+			padding-right: var(--gap-2);
 			width: 21px;
 		}
 	}
@@ -150,9 +150,9 @@ section {
 		font-size: var(--font-caption);
 	}
 
-	padding-bottom: var(--gap-small);
+	padding-bottom: var(--gap-2);
 	border-radius: var(--border-radius);
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 
 	& > textarea {
 		flex: 1;

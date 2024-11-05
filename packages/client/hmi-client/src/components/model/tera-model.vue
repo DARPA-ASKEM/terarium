@@ -257,7 +257,7 @@ watch(
 .btn-group {
 	display: flex;
 	align-items: center;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	margin-left: auto;
 }
 </style>

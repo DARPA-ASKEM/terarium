@@ -545,7 +545,7 @@ header > section {
 }
 
 .code-blocks-container {
-	padding: var(--gap);
+	padding: var(--gap-4);
 	max-width: 300px;
 	height: 100%;
 	display: flex;
@@ -558,7 +558,7 @@ header > section {
 .code-blocks-buttons-container {
 	display: flex;
 	flex-direction: row;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 }
 
 .code-blocks-buttons-container > * {

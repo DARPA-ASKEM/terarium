@@ -238,7 +238,7 @@ watch(
 .datatable-toolbar {
 	display: flex;
 	flex-direction: row;
-	gap: var(--gap);
+	gap: var(--gap-4);
 	padding-bottom: var(--gap-2);
 }
 .datatable-toolbar-item {
@@ -247,11 +247,11 @@ watch(
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
 	align-items: center;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 }
 
 .datatable-toolbar:deep(.p-multiselect .p-multiselect-label) {
-	padding: var(--gap-small);
+	padding: var(--gap-2);
 	font-size: var(--font-caption);
 }
 

@@ -118,7 +118,7 @@ function onUpdateInclude(asset: AssetBlock<DocumentExtraction>) {
 
 <style scoped>
 :deep(.p-accordion-content > :not(:last-child)) {
-	margin-bottom: var(--gap-small);
+	margin-bottom: var(--gap-2);
 }
 
 .sub-text {

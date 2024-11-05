@@ -470,7 +470,7 @@ watch(
 span {
 	display: flex;
 	align-items: center;
-	gap: var(--gap);
+	gap: var(--gap-4);
 
 	& > label {
 		width: 8rem;
@@ -481,17 +481,17 @@ span {
 }
 .subheader {
 	color: var(--text-color-subdued);
-	margin-bottom: var(--gap-small);
+	margin-bottom: var(--gap-2);
 }
 :deep(main) {
-	gap: var(--gap);
+	gap: var(--gap-4);
 }
 
 code {
 	background-color: var(--surface-ground);
 	border-radius: var(--border-radius);
 	border: 1px solid var(--surface-border);
-	padding: var(--gap-small);
+	padding: var(--gap-2);
 }
 
 .float-label {
@@ -503,7 +503,7 @@ code {
 }
 
 .p-tabview {
-	margin-top: var(--gap-small);
+	margin-top: var(--gap-2);
 	display: flex;
 	flex-direction: column;
 	flex: 1;
