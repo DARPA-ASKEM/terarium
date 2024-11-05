@@ -82,7 +82,7 @@
 				<Button label="Save as" outlined severity="secondary" @click="showSaveModal = true" />
 				<Button :disabled="isSaveDisabled" label="Save" @click="onSaveConfiguration" />
 			</template>
-			<Accordion multiple :active-index="[0, 1, 2]">
+			<Accordion multiple :activeIndex="currentActiveIndexes">
 				<AccordionTab>
 					<template #header>
 						<h5 class="btn-content">Description</h5>
@@ -300,6 +300,7 @@ const props = defineProps<{
 const isFetchingPDF = ref(false);
 const isDocViewerOpen = ref(true);
 
+const currentActiveIndexes = ref([0, 1, 2]);
 const pdfData = ref<{ document: any; data: string; isPdf: boolean; name: string }[]>([]);
 const pdfPanelRef = ref();
 const pdfViewer = computed(() => pdfPanelRef.value?.pdfRef[0]);
