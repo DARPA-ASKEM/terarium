@@ -230,7 +230,7 @@ watch(
 
 .policy-group {
 	display: flex;
-	padding: var(--gap);
+	padding: var(--gap-4);
 	flex-direction: column;
 	justify-content: center;
 	align-items: flex-start;
@@ -250,7 +250,7 @@ watch(
 
 .list-position-inside {
 	list-style-position: outside;
-	margin-left: var(--gap);
+	margin-left: var(--gap-4);
 	padding-bottom: var(--gap-1);
 }
 </style>

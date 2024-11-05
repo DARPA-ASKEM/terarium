@@ -182,6 +182,6 @@ function initializeAsset() {
 
 <style scoped>
 form {
-	margin-top: var(--gap);
+	margin-top: var(--gap-4);
 }
 </style>

@@ -498,14 +498,14 @@ onUnmounted(() => {
 .button-container {
 	display: flex;
 	justify-content: space-between;
-	padding: var(--gap-small);
+	padding: var(--gap-2);
 	pointer-events: none;
 	& .pi-spin {
 		color: var(--text-color-subdued);
 	}
 	& .btn-group {
 		display: flex;
-		gap: var(--gap-small);
+		gap: var(--gap-2);
 	}
 	& > * {
 		pointer-events: auto;
@@ -525,8 +525,8 @@ aside {
 	flex-direction: column;
 	background-color: #f4f7fa;
 	border-right: 1px solid var(--surface-border-light);
-	padding: var(--gap);
-	gap: var(--gap-small);
+	padding: var(--gap-4);
+	gap: var(--gap-2);
 	overflow: hidden;
 	z-index: 1;
 }
@@ -535,14 +535,14 @@ ul {
 	list-style: none;
 	display: flex;
 	flex-direction: column;
-	gap: var(--gap-small);
-	margin-top: var(--gap-small);
+	gap: var(--gap-2);
+	margin-top: var(--gap-2);
 }
 
 h5 {
 	display: flex;
 	align-items: center;
-	gap: var(--gap-xsmall);
+	gap: var(--gap-1);
 	font-weight: var(--font-weight);
 }
 
@@ -553,7 +553,7 @@ header {
 
 h5,
 header {
-	padding: 0 var(--gap);
+	padding: 0 var(--gap-4);
 }
 
 .pi-info-circle {
@@ -567,7 +567,7 @@ header {
 
 	& > ul {
 		height: 85%;
-		padding: var(--gap-xsmall) 0 var(--gap-xsmall) var(--gap-small);
+		padding: var(--gap-1) 0 var(--gap-1) var(--gap-2);
 	}
 }
 
@@ -582,7 +582,7 @@ header {
 
 	& > .pi-trash {
 		font-size: 1.5rem;
-		margin-bottom: var(--gap-small);
+		margin-bottom: var(--gap-2);
 	}
 }
 </style>

@@ -296,7 +296,7 @@ onMounted(() => {
 .custom-chip {
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-bigger);
-	padding: var(--gap-xsmall) var(--gap);
+	padding: var(--gap-1) var(--gap-4);
 	color: var(--surface-0);
 }
 */
@@ -304,7 +304,7 @@ onMounted(() => {
 	background-color: var(--surface-0);
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
-	padding: var(--gap-small);
+	padding: var(--gap-2);
 	position: relative;
 }
 .multiselect-title {
@@ -319,7 +319,7 @@ onMounted(() => {
 }
 
 .p-chart {
-	margin-top: var(--gap-small);
+	margin-top: var(--gap-2);
 }
 
 .p-multiselect {

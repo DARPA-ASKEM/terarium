@@ -388,8 +388,8 @@ watch(
 	padding-left: 2rem;
 }
 .cell-input {
-	padding-left: var(--gap-small);
-	padding-right: var(--gap);
+	padding-left: var(--gap-2);
+	padding-right: var(--gap-4);
 	margin-bottom: 0 !important;
 	font-feature-settings: 'tnum';
 	text-align: right;
@@ -415,7 +415,7 @@ watch(
 
 .p-dropdown {
 	min-width: 11rem;
-	margin-bottom: var(--gap);
+	margin-bottom: var(--gap-4);
 }
 
 .subdue {
@@ -435,6 +435,6 @@ section {
 	justify-content: space-between;
 }
 .matrix-toolbar Button {
-	margin-bottom: var(--gap);
+	margin-bottom: var(--gap-4);
 }
 </style>
