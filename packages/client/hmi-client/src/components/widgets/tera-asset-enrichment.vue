@@ -39,8 +39,8 @@
 <script setup lang="ts">
 import { enrichDataset } from '@/services/knowledge';
 import { getRelatedArtifacts, mapAssetTypeToProvenanceType } from '@/services/provenance';
-import type { ClientEvent, DocumentAsset, ProjectAsset, TaskResponse, TerariumAsset } from '@/types/Types';
-import { AssetType, ClientEventType, ProvenanceType, TaskStatus } from '@/types/Types';
+import type { DocumentAsset, ProjectAsset, TerariumAsset } from '@/types/Types';
+import { AssetType, ProvenanceType } from '@/types/Types';
 import { isDocumentAsset } from '@/utils/asset';
 import Button from 'primevue/button';
 import RadioButton from 'primevue/radiobutton';
@@ -48,7 +48,6 @@ import { computed, ref, watch } from 'vue';
 import { enrichModelMetadata } from '@/services/goLLM';
 import { useProjects } from '@/composables/project';
 import TeraModal from '@/components/widgets/tera-modal.vue';
-import { useClientEvent } from '@/composables/useClientEvent';
 
 const props = defineProps<{
 	assetType: AssetType.Model | AssetType.Dataset;
@@ -56,18 +55,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['finished-job']);
-
-// Listen for the task completion event for models
-useClientEvent(ClientEventType.TaskGollmModelCard, (event: ClientEvent<TaskResponse>) => {
-	const { modelId } = event.data?.additionalProperties || {};
-	const { status } = event.data || {};
-
-	if (props.assetType !== AssetType.Model || modelId !== props.assetId) {
-		return;
-	}
-
-	isLoading.value = ![TaskStatus.Success, TaskStatus.Failed, TaskStatus.Cancelled].includes(status);
-});
 
 const isLoading = ref(false);
 const isModalVisible = ref(false);

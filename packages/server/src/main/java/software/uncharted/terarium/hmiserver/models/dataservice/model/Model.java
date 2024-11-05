@@ -342,4 +342,16 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		}
 		return this.getHeader().getSchemaName().equalsIgnoreCase("regnet");
 	}
+
+	@JsonIgnore
+	@TSIgnore
+	public boolean isPetrinet() {
+		if (this.getHeader() == null) {
+			return false;
+		}
+		if (this.getHeader().getSchemaName() == null) {
+			return false;
+		}
+		return this.getHeader().getSchemaName().equalsIgnoreCase("petrinet");
+	}
 }
