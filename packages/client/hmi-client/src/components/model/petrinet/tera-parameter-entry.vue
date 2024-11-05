@@ -210,14 +210,14 @@ onMounted(async () => {
 header {
 	display: flex;
 	flex-direction: column;
-	gap: var(--gap-small);
-	padding-bottom: var(--gap-small);
-	padding-bottom: var(--gap-small);
+	gap: var(--gap-2);
+	padding-bottom: var(--gap-2);
+	padding-bottom: var(--gap-2);
 }
 main {
 	display: flex;
 	justify-content: space-between;
-	padding-bottom: var(--gap-small);
+	padding-bottom: var(--gap-2);
 }
 
 .description {

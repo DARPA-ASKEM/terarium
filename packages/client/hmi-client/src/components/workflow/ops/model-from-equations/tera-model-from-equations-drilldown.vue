@@ -518,7 +518,7 @@ watch(
 
 .equation-view {
 	display: flex;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	flex-direction: column;
 	overflow-y: hidden;
 }
