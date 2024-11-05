@@ -50,7 +50,7 @@ section {
 		transform: translate(-50%, -50%);
 		border: 2px solid var(--text-color-subdued);
 		border-radius: var(--border-radius);
-		padding: var(--gap-small);
+		padding: var(--gap-2);
 		list-style: none;
 		background-color: var(--surface-section);
 		color: var(--text-color-primary);

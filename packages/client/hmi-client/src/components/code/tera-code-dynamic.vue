@@ -126,7 +126,7 @@ ul {
 	list-style: none;
 	display: flex;
 	flex-direction: column;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 }
 
 .tera-input :deep(input) {
@@ -135,13 +135,13 @@ ul {
 .footer-container {
 	display: flex;
 	justify-content: end;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 }
 
 :deep(.p-panel .p-panel-content) {
-	padding: 0 0 var(--gap) var(--gap) !important;
+	padding: 0 0 var(--gap-4) var(--gap-4) !important;
 }
 :deep(.p-panel .p-panel-footer) {
-	padding: 0 var(--gap) var(--gap) 0 !important;
+	padding: 0 var(--gap-4) var(--gap-4) 0 !important;
 }
 </style>

@@ -51,6 +51,6 @@ main {
 	flex-direction: column;
 	flex-grow: 1;
 	overflow-y: auto;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 }
 </style>

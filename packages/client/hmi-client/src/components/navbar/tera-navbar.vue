@@ -452,7 +452,7 @@ nav {
 	border-bottom: 1px solid var(--surface-border-light);
 	padding: var(--gap-2) var(--gap-4);
 	display: flex;
-	gap: var(--gap-large);
+	gap: var(--gap-8);
 	grid-area: header;
 
 	a,
@@ -565,11 +565,11 @@ nav {
 	border-radius: var(--border-radius-bigger);
 	background-color: var(--surface-200);
 	display: flex;
-	padding-left: var(--gap);
+	padding-left: var(--gap-4);
 	margin-left: auto;
 	margin-right: auto;
 	align-items: center;
-	gap: var(--gap);
+	gap: var(--gap-4);
 
 	.evaluation-scenario-widget-timer {
 		font-feature-settings: 'tnum';
@@ -599,7 +599,7 @@ nav {
 .status-chip {
 	background-color: var(--surface-highlight);
 	border-radius: var(--border-radius);
-	padding: var(--gap-small);
+	padding: var(--gap-2);
 }
 .field-checkbox {
 	font-size: var(--font-body-small);

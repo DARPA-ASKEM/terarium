@@ -133,7 +133,7 @@ watch(
 <style scoped>
 main {
 	display: flex;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	flex-direction: column;
 }
 
@@ -164,11 +164,11 @@ ul {
 }
 
 .p-dialog aside > * {
-	margin-top: var(--gap);
+	margin-top: var(--gap-4);
 }
 
 .p-dialog aside label {
-	margin: 0 var(--gap) 0 var(--gap-small);
+	margin: 0 var(--gap-4) 0 var(--gap-2);
 }
 
 .btn-group {

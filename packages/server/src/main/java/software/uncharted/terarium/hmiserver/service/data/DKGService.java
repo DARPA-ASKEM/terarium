@@ -30,7 +30,7 @@ public class DKGService {
 	private final ElasticsearchConfiguration elasticConfig;
 	private final ElasticsearchService elasticService;
 	private final EmbeddingService embeddingService;
-	private static final String EMPHASIS = "^2";
+	private static final int EMPHASIS = 2;
 
 	/**
 	 * Search for DKG entities using embeddings in the EpiDKG index
@@ -173,7 +173,11 @@ public class DKGService {
 		final SearchRequest.Builder builder = new SearchRequest.Builder().index(index).from(page).size(pageSize);
 
 		if (q != null && !q.isEmpty()) {
-			Query query = QueryBuilders.multiMatch().fields(DKG.NAME + EMPHASIS, DKG.DESCRIPTION).query(q).build()._toQuery();
+			Query query = QueryBuilders.multiMatch()
+				.fields(ElasticsearchService.emphasis(DKG.NAME, EMPHASIS), DKG.DESCRIPTION)
+				.query(q)
+				.build()
+				._toQuery();
 			builder.query(query);
 		}
 

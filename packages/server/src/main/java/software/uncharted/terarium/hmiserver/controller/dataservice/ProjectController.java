@@ -51,6 +51,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectExport;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
+import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
@@ -928,10 +929,10 @@ public class ProjectController {
 		try {
 			for (final RebacPermissionRelationship permissionRelationship : rebacProject.getPermissionRelationships()) {
 				if (permissionRelationship.getSubjectType().equals(Schema.Type.USER)) {
-					permissions.addUser(
-						reBACService.getUser(permissionRelationship.getSubjectId()),
-						permissionRelationship.getRelationship()
-					);
+					PermissionUser user = reBACService.getUser(permissionRelationship.getSubjectId());
+					if (user != null) {
+						permissions.addUser(user, permissionRelationship.getRelationship());
+					}
 				} else if (permissionRelationship.getSubjectType().equals(Schema.Type.GROUP)) {
 					permissions.addGroup(
 						reBACService.getGroup(permissionRelationship.getSubjectId()),
@@ -1087,7 +1088,7 @@ public class ProjectController {
 		@PathVariable("isPublic") final boolean isPublic
 	) {
 		try {
-			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), id);
+			projectService.checkPermissionCanWrite(currentUserService.get().getId(), id);
 
 			// Getting the project permissions
 			final RebacProject project = new RebacProject(id, reBACService);
@@ -1147,7 +1148,7 @@ public class ProjectController {
 		@PathVariable("relationship") final String relationship
 	) {
 		try {
-			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), projectId);
+			projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacUser who = new RebacUser(userId, reBACService);

@@ -25,9 +25,8 @@ public class OptimizeRequestCiemss implements Serializable {
 
 	private TimeSpan timespan;
 
-	@TSOptional
 	// https://github.com/DARPA-ASKEM/pyciemss-service/blob/main/service/models/operations/optimize.py#L80
-	private OptimizeInterventions optimizeInterventions;
+	private List<OptimizeInterventions> optimizeInterventions;
 
 	@TSOptional
 	@JsonAlias("fixed_interventions")

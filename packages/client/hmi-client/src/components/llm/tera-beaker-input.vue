@@ -180,7 +180,7 @@ const autoGrow = () => {
 	/* Add ai-assistant icon */
 	background-image: url('@assets/svg/icons/message.svg');
 	background-repeat: no-repeat;
-	background-position: var(--gap) var(--gap-2);
+	background-position: var(--gap-4) var(--gap-2);
 }
 
 .kernel-status {

@@ -787,20 +787,20 @@ const runOptimize = async () => {
 
 	setOutputSettingDefaults();
 
-	const paramNames: string[] = [];
-	const paramValues: number[] = [];
-	const startTime: number[] = [];
+	const optimizeInterventions: OptimizeInterventions[] = [];
 	const listBoundsInterventions: number[][] = [];
-	const initialGuess: number[] = [];
-	const objectiveFunctionOption: string[] = [];
-	const relativeImportance: number[] = [];
 
 	activePolicyGroups.value.forEach((ele) => {
+		const paramNames: string[] = [];
+		const paramValues: number[] = [];
+		const startTime: number[] = [];
+		const initialGuess: number[] = [];
+		const relativeImportance: number[] = [];
+
 		// Only allowed to optimize on interventions that arent grouped aka staticInterventions' length is 1
 		paramNames.push(ele.intervention.staticInterventions[0].appliedTo);
 		paramValues.push(ele.intervention.staticInterventions[0].value);
 		startTime.push(ele.intervention.staticInterventions[0].timestep);
-		objectiveFunctionOption.push(ele.objectiveFunctionOption);
 		relativeImportance.push(ele.relativeImportance);
 
 		if (ele.optimizationType === OptimizationInterventionObjective.startTime) {
@@ -819,21 +819,17 @@ const runOptimize = async () => {
 		} else {
 			console.error(`invalid optimization type used:${ele.optimizationType}`);
 		}
-	});
-	// At the moment we only accept one intervention type. Pyciemss, pyciemss-service and this will all need to be updated.
-	// https://github.com/DARPA-ASKEM/terarium/issues/3909
-	const interventionType = knobs.value.interventionPolicyGroups[0].optimizationType;
 
-	// These are interventions to be optimized over.
-	const optimizeInterventions: OptimizeInterventions = {
-		interventionType,
-		paramNames,
-		startTime,
-		paramValues,
-		initialGuess,
-		objectiveFunctionOption,
-		relativeImportance
-	};
+		optimizeInterventions.push({
+			interventionType: ele.optimizationType,
+			paramNames,
+			startTime,
+			paramValues,
+			initialGuess,
+			objectiveFunctionOption: ele.objectiveFunctionOption,
+			relativeImportance: ele.relativeImportance
+		});
+	});
 
 	// These are interventions to be considered but not optimized over.
 	const fixedInterventions: Intervention[] = _.cloneDeep(inactivePolicyGroups.value.map((ele) => ele.intervention));
@@ -1177,7 +1173,7 @@ watch(
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: var(--gap-1) var(--gap);
+	padding: var(--gap-1) var(--gap-4);
 	gap: var(--gap-2);
 }
 
@@ -1201,7 +1197,7 @@ watch(
 	flex-direction: column;
 	align-items: center;
 	gap: var(--gap-1);
-	padding: 0 var(--gap-2) var(--gap);
+	padding: 0 var(--gap-2) var(--gap-4);
 	background: var(--surface-200);
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
@@ -1221,7 +1217,7 @@ watch(
 	background-color: var(--surface-50);
 	border: solid 1px var(--surface-border-light);
 	border-radius: var(--border-radius);
-	padding: var(--gap-small);
+	padding: var(--gap-2);
 }
 /* Select button icon fix */
 .select-button .p-button-icon-left {
@@ -1232,7 +1228,7 @@ watch(
 .result-message-row {
 	display: flex;
 	flex-direction: row;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	overflow: auto;
 }
 
@@ -1262,7 +1258,7 @@ watch(
 	flex-direction: column;
 	flex-grow: 1;
 	gap: var(--gap-1);
-	padding: var(--gap);
+	padding: var(--gap-4);
 }
 
 .label-and-input {
@@ -1278,7 +1274,7 @@ watch(
 	flex-wrap: wrap;
 	align-items: center;
 	gap: var(--gap-2);
-	padding-top: var(--gap);
+	padding-top: var(--gap-4);
 
 	& > * {
 		flex: 1;
@@ -1309,9 +1305,9 @@ watch(
 .notebook-section {
 	display: flex;
 	flex-direction: column;
-	gap: var(--gap);
+	gap: var(--gap-4);
 	width: calc(50vw - 4rem);
-	padding: var(--gap);
+	padding: var(--gap-4);
 	background: var(--surface-100);
 	border-right: 1px solid var(--surface-border-light);
 }
