@@ -13,7 +13,7 @@
 		</div>
 	</Dialog>
 	<div class="vega-chart-container">
-		<div ref="vegaContainer"></div>
+		<div ref="vegaContainer" />
 		<footer v-if="$slots.footer">
 			<slot name="footer" />
 		</footer>
@@ -41,7 +41,10 @@ const expressionFunctions = {
 		return format(NUMBER_FORMAT)(correctedValue);
 	},
 	// Just show full value in tooltip
-	tooltipFormatter: (value) => fixPrecisionError(value)
+	tooltipFormatter: (value) => {
+		if (value === undefined) return 'N/A';
+		return fixPrecisionError(value);
+	}
 };
 
 // This config is default for all charts, but can be overridden by individual chart spec

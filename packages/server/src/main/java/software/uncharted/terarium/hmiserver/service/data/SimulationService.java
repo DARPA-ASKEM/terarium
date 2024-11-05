@@ -106,7 +106,7 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 				throw new IllegalArgumentException("Project not found");
 			}
 
-			final Dataset dataset = datasetService.createAsset(new Dataset(), projectId, permission);
+			Dataset dataset = datasetService.createAsset(new Dataset(), projectId, permission);
 			dataset.setName(datasetName);
 			dataset.setDescription(sim.get().getDescription());
 			dataset.setMetadata(objectMapper.convertValue(Map.of("simulationId", simId.toString()), JsonNode.class));
@@ -121,6 +121,9 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 
 			// Duplicate the simulation results to a new dataset
 			this.copySimulationResultToDataset(sim.get(), dataset);
+
+			// Set column names:
+			dataset = datasetService.extractColumnsFromFiles(dataset);
 			datasetService.updateAsset(dataset, projectId, permission);
 
 			// Add dataset to project

@@ -109,6 +109,13 @@ public class InterventionController {
 			projectId
 		);
 		try {
+			item.validateInterventionPolicy();
+		} catch (final Exception e) {
+			final String error = "Failed to validate intervention";
+			log.error(error, e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+		}
+		try {
 			return ResponseEntity.status(HttpStatus.CREATED).body(
 				interventionService.createAsset(item, projectId, permission)
 			);

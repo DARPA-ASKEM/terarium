@@ -1,3 +1,5 @@
+import { CalendarDateType } from '@/types/common';
+
 export function formatDdMmmYyyy(timestamp) {
 	return new Date(timestamp).toLocaleDateString('en-US', {
 		year: 'numeric',
@@ -71,4 +73,62 @@ export function sortDatesDesc(a, b) {
 // Sorts dates in ascending order. To be used with Array.sort().
 export function sortDatesAsc(a, b) {
 	return new Date(a).getTime() - new Date(b).getTime();
+}
+export interface CalendarSettings {
+	view: CalendarDateType;
+	format: string;
+}
+
+export function getTimestepFromDateRange(startDate: Date, endDate: Date, stepType: CalendarDateType): number {
+	startDate = new Date(startDate);
+	const diffInMilliseconds = endDate.getTime() - startDate.getTime();
+
+	switch (stepType) {
+		case 'month':
+			return (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth());
+		case 'year':
+			return endDate.getFullYear() - startDate.getFullYear();
+		case 'date':
+		default:
+			return Math.floor(diffInMilliseconds / (1000 * 60 * 60 * 24));
+	}
+}
+
+export function getEndDateFromTimestep(startDate: Date, timestep: number, stepType: CalendarDateType): Date {
+	const endDate = new Date(startDate);
+
+	switch (stepType) {
+		case 'month':
+			endDate.setMonth(endDate.getMonth() + timestep);
+			break;
+		case 'year':
+			endDate.setFullYear(endDate.getFullYear() + timestep);
+			break;
+		case 'date':
+		default:
+			endDate.setDate(endDate.getDate() + timestep);
+			break;
+	}
+
+	return endDate;
+}
+
+export function getTimePointString(
+	timePoint: number,
+	options: { startDate?: Date; calendarSettings?: CalendarSettings }
+): string {
+	if (!options.startDate) {
+		return `${timePoint.toString()} day.`;
+	}
+
+	const view = options.calendarSettings?.view ?? CalendarDateType.DATE;
+	const date = getEndDateFromTimestep(options?.startDate, timePoint, view);
+
+	const dateOptions: Intl.DateTimeFormatOptions = {
+		year: 'numeric',
+		...(view === CalendarDateType.DATE && { month: 'long', day: 'numeric' }),
+		...(view === CalendarDateType.MONTH && { month: 'long' })
+	};
+
+	return `${date.toLocaleDateString('default', dateOptions)}.`;
 }

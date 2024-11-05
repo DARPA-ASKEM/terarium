@@ -84,10 +84,3 @@ router.beforeEach(async (to, _from, next) => {
 });
 
 useNotificationManager().init();
-
-// Allow the use of CSS custom properties
-declare module '@vue/runtime-dom' {
-	export interface CSSProperties {
-		[key: `--${string}`]: string | undefined;
-	}
-}

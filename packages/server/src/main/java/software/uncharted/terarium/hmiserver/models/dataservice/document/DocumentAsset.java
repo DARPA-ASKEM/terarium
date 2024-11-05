@@ -8,8 +8,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.OneToOne;
 import java.io.Serial;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,6 +19,7 @@ import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
@@ -62,6 +65,7 @@ public class DocumentAsset extends TerariumAsset {
 
 	@TSOptional
 	@Column(columnDefinition = "text")
+	@Deprecated
 	private String documentAbstract;
 
 	@TSOptional
@@ -74,6 +78,11 @@ public class DocumentAsset extends TerariumAsset {
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
 	private List<ExtractedDocumentPage> extractions = new ArrayList<>();
+
+	@TSOptional
+	@Lob
+	@JdbcTypeCode(Types.BINARY)
+	private byte[] thumbnail;
 
 	@Override
 	public List<String> getFileNames() {

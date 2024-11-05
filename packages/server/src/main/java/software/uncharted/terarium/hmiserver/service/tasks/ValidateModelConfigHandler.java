@@ -42,6 +42,7 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 
 		UUID projectId;
 		UUID modelId;
+		String newModelConfigName;
 		UUID simulationId;
 	}
 
@@ -63,13 +64,36 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 				ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
 			);
 			if (!sim.isEmpty()) {
+				log.info("simulation=" + simulationId + " progress=" + progress);
 				sim.get().setProgress(progress);
 				simulationService.updateAsset(sim.get(), props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 			}
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
+		return resp;
+	}
 
+	@Override
+	public TaskResponse onFailure(final TaskResponse resp) {
+		// Mark simulation as failed
+		try {
+			final Properties props = resp.getAdditionalProperties(Properties.class);
+			final UUID simulationId = props.getSimulationId();
+			final Optional<Simulation> sim = simulationService.getAsset(
+				simulationId,
+				ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
+			);
+			if (sim.isEmpty()) {
+				log.error("Cannot find Simulation " + simulationId + " for task " + resp.getId());
+				throw new Error("Cannot find Simulation " + simulationId + " for task " + resp.getId());
+			}
+			log.error("model validation failed");
+			sim.get().setStatus(ProgressState.ERROR);
+			simulationService.updateAsset(sim.get(), props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+		} catch (final Exception e) {
+			throw new RuntimeException(e);
+		}
 		return resp;
 	}
 
@@ -101,9 +125,10 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 
 			final ModelConfiguration contractedModelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
 				contractedModel,
-				"Validated " + contractedModel.getName(),
+				props.newModelConfigName,
 				contractedModel.getDescription()
 			);
+			contractedModelConfiguration.setTemporary(true);
 			contractedModelConfiguration.setModelId(props.modelId); // Config should be linked to the original model
 
 			// Save validated model configuration
@@ -113,10 +138,9 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 				ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
 			);
 
-			// Add model configuration to the response
+			// Add model configuration id to the response
 			JsonNode responseNode = objectMapper.readTree(responseString);
-			JsonNode modelConfigNode = objectMapper.valueToTree(createdModelConfiguration);
-			((ObjectNode) responseNode).set("modelConfiguration", modelConfigNode);
+			((ObjectNode) responseNode).put("modelConfigurationId", createdModelConfiguration.getId().toString());
 			String updatedResponseString = objectMapper.writeValueAsString(responseNode);
 			((ObjectNode) result).put("response", updatedResponseString);
 

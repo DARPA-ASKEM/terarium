@@ -41,3 +41,6 @@ __pycache__
 
 supervisord.log
 supervisord.pid
+
+unsat.core
+core.dimacs

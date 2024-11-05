@@ -6,7 +6,6 @@ import co.elastic.clients.elasticsearch.core.search.SourceFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -144,28 +143,14 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 			.setSchemaName(asset.getHeader().getSchemaName().toLowerCase());
 
 		// Set default value for model parameters (0.0)
-		if (
-			asset.getSemantics() != null &&
-			asset.getSemantics().getOde() != null &&
-			asset.getSemantics().getOde().getParameters() != null
-		) {
-			asset
-				.getSemantics()
-				.getOde()
-				.getParameters()
-				.forEach(param -> {
-					if (param.getValue() == null) {
-						param.setValue(1.0);
-					}
-				});
-		}
+		asset
+			.getParameters()
+			.forEach(param -> {
+				if (param.getValue() == null) {
+					param.setValue(1.0);
+				}
+			});
 
-		// Force observable to empty-list if null or not specified
-		if (asset.getSemantics() != null && asset.getSemantics().getOde() != null) {
-			if (asset.getSemantics().getOde().getObservables() == null) {
-				asset.getSemantics().getOde().setObservables(new ArrayList());
-			}
-		}
 		// Force proper annotation metadata
 		final ModelMetadata metadata = asset.getMetadata();
 		if (metadata.getAnnotations() == null) {
@@ -212,12 +197,6 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 			asset.setName(asset.getHeader().getName());
 		}
 
-		// Force observable to empty-list if null or not specified
-		if (asset.getSemantics() != null && asset.getSemantics().getOde() != null) {
-			if (asset.getSemantics().getOde().getObservables() == null) {
-				asset.getSemantics().getOde().setObservables(new ArrayList());
-			}
-		}
 		// Force proper annotation metadata
 		final ModelMetadata metadata = asset.getMetadata();
 		if (metadata.getAnnotations() == null) {

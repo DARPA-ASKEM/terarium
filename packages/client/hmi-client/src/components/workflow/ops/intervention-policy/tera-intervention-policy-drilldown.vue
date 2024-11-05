@@ -8,6 +8,19 @@
 	>
 		<template #sidebar>
 			<tera-slider-panel
+				v-if="pdfData.length"
+				v-model:is-open="isPdfSidebarOpen"
+				content-width="700px"
+				header="Document Viewer"
+			>
+				<template #content>
+					<tera-drilldown-section :is-loading="isFetchingPDF">
+						<tera-pdf-panel :pdfs="pdfData" ref="pdfPanelRef" />
+					</tera-drilldown-section>
+				</template>
+			</tera-slider-panel>
+
+			<tera-slider-panel
 				v-model:is-open="isSidebarOpen"
 				content-width="360px"
 				header="Intervention policies"
@@ -36,6 +49,7 @@
 									:selected="selectedPolicy?.id === policy.id"
 									@click="onReplacePolicy(policy)"
 									@use-intervention="onReplacePolicy(policy)"
+									@delete-intervention-policy="onDeleteInterventionPolicy(policy)"
 								/>
 							</li>
 						</ul>
@@ -51,8 +65,16 @@
 					<Button outlined severity="secondary" label="Reset" @click="onResetPolicy" />
 				</template>
 				<ul class="flex flex-column gap-2">
-					<li v-for="(intervention, index) in knobs.transientInterventionPolicy.interventions" :key="index">
+					<li
+						v-for="(intervention, index) in knobs.transientInterventionPolicy.interventions"
+						:key="index"
+						@click="selectInterventionPolicy(intervention, index)"
+					>
 						<tera-intervention-card
+							class="intervention"
+							:class="{
+								selected: selectedIntervention?.name === intervention?.name && selectedIntervention?.index === index
+							}"
 							:intervention="intervention"
 							:parameterOptions="parameterOptions"
 							:stateOptions="stateOptions"
@@ -173,7 +195,16 @@ import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import Button from 'primevue/button';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { getInterventionPoliciesForModel, getModel } from '@/services/model';
-import { AssetType, Intervention, InterventionPolicy, Model, type TaskResponse } from '@/types/Types';
+import {
+	AssetType,
+	Intervention,
+	InterventionPolicy,
+	Model,
+	DynamicIntervention,
+	StaticIntervention,
+	type TaskResponse,
+	type DocumentAsset
+} from '@/types/Types';
 import { logger } from '@/utils/logger';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { useConfirm } from 'primevue/useconfirm';
@@ -183,7 +214,8 @@ import {
 	blankIntervention,
 	flattenInterventionData,
 	getInterventionPolicyById,
-	updateInterventionPolicy
+	updateInterventionPolicy,
+	deleteInterventionPolicy
 } from '@/services/intervention-policy';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -196,6 +228,8 @@ import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { useProjects } from '@/composables/project';
 import { interventionPolicyFromDocument } from '@/services/goLLM';
+import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
+import TeraPdfPanel from '@/components/widgets/tera-pdf-panel.vue';
 import TeraInterventionCard from './tera-intervention-card.vue';
 import {
 	InterventionPolicyOperation,
@@ -231,6 +265,23 @@ const newBlankInterventionPolicy = ref({
 	modelId: '',
 	interventions: [blankIntervention]
 });
+
+interface SelectedIntervention {
+	index: number;
+	name: string;
+	extractionDocumentId?: string;
+	extractionPage?: number;
+	staticInterventions: StaticIntervention[];
+	dynamicInterventions: DynamicIntervention[];
+}
+
+const pdfPanelRef = ref();
+const pdfViewer = computed(() => pdfPanelRef.value?.pdfRef[0]);
+const selectedIntervention = ref<SelectedIntervention | null>(null);
+
+const isPdfSidebarOpen = ref(true);
+const isFetchingPDF = ref(false);
+const pdfData = ref<{ document: DocumentAsset; data: string; isPdf: boolean; name: string }[]>([]);
 
 const showSaveModal = ref(false);
 const showCreatePolicyModal = ref(false);
@@ -379,6 +430,15 @@ const fetchInterventionPolicies = async (modelId: string) => {
 	isFetchingPolicies.value = false;
 };
 
+const selectInterventionPolicy = (intervention: Intervention, index: number) => {
+	selectedIntervention.value = { ...intervention, index };
+	if (!intervention?.extractionPage) return;
+
+	if (pdfViewer.value) {
+		pdfViewer.value.goToPage(selectedIntervention.value.extractionPage);
+	}
+};
+
 const onUpdateInterventionCard = (intervention: Intervention, index: number) => {
 	// Clone the entire interventions array
 	const updatedInterventions = [...knobs.value.transientInterventionPolicy.interventions];
@@ -404,6 +464,23 @@ const onReplacePolicy = (policy: InterventionPolicy) => {
 			rejectLabel: 'Cancel'
 		});
 	}
+};
+
+const onDeleteInterventionPolicy = (policy: InterventionPolicy) => {
+	confirm.require({
+		message: `Are you sure you want to delete the configuration ${policy.name}?`,
+		header: 'Delete Confirmation',
+		icon: 'pi pi-exclamation-triangle',
+		acceptLabel: 'Confirm',
+		rejectLabel: 'Cancel',
+		accept: async () => {
+			if (policy.id) {
+				await deleteInterventionPolicy(policy.id);
+				const modelId = props.node.inputs[0].value?.[0];
+				fetchInterventionPolicies(modelId);
+			}
+		}
+	});
 };
 
 const addIntervention = () => {
@@ -550,6 +627,29 @@ onMounted(() => {
 	} else {
 		initialize();
 	}
+
+	if (documentIds.value.length) {
+		isFetchingPDF.value = true;
+		documentIds.value.forEach(async (id) => {
+			const document = await getDocumentAsset(id);
+			const name: string = document?.name ?? '';
+			const filename = document?.fileNames?.[0];
+			const isPdf = !!document?.fileNames?.[0]?.endsWith('.pdf');
+
+			if (document?.id && filename) {
+				let data: string | null;
+				if (isPdf) {
+					data = await downloadDocumentAsset(document.id, filename);
+				} else {
+					data = await getDocumentFileAsText(document.id, filename);
+				}
+				if (data !== null) {
+					pdfData.value.push({ document, data, isPdf, name });
+				}
+			}
+		});
+	}
+	isFetchingPDF.value = false;
 });
 </script>
 
@@ -599,6 +699,20 @@ button.start-edit {
 
 	& > .pi {
 		color: var(--text-color-subdued);
+	}
+}
+
+.intervention {
+	background-color: var(--gray-0);
+	border-left: 4px solid var(--surface-300);
+
+	&.selected {
+		border-left-color: var(--primary-color);
+	}
+
+	&,
+	&.selected {
+		transition: border-left-color 250ms;
 	}
 }
 

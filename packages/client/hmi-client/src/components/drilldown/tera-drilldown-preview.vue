@@ -18,10 +18,7 @@ import { useSlots } from 'vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
 defineProps<{
-	title?: string;
-	canSaveAsset?: boolean;
 	isLoading?: boolean;
-	hideHeader?: boolean;
 }>();
 
 const slots = useSlots();

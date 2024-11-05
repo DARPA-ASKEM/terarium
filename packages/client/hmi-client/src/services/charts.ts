@@ -3,12 +3,21 @@ import { isEmpty, pick } from 'lodash';
 import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
 import type { ChartAnnotation, FunmanInterval } from '@/types/Types';
+import { CalendarDateType } from '@/types/common';
 import { flattenInterventionData } from './intervention-policy';
-import type { ProcessedFunmanResult, FunmanBox, FunmanConstraintsResponse } from './models/funman-service';
+import type { FunmanBox, FunmanConstraintsResponse } from './models/funman-service';
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
 export const CATEGORICAL_SCHEME = ['#1B8073', '#6495E8', '#8F69B9', '#D67DBF', '#E18547', '#D2C446', '#84594D'];
+
+export enum AUTOSIZE {
+	FIT = 'fit',
+	FIT_X = 'fit-x',
+	FIT_Y = 'fit-y',
+	PAD = 'pad',
+	NONE = 'none'
+}
 
 interface BaseChartOptions {
 	title?: string;
@@ -17,10 +26,18 @@ interface BaseChartOptions {
 	xAxisTitle: string;
 	yAxisTitle: string;
 	legend?: boolean;
+	autosize?: AUTOSIZE;
+	dateOptions?: DateOptions;
+}
+
+export interface DateOptions {
+	dateFormat: CalendarDateType;
+	startDate: Date;
 }
 export interface ForecastChartOptions extends BaseChartOptions {
 	translationMap?: Record<string, string>;
 	colorscheme?: string[];
+	fitYDomain?: boolean;
 }
 
 export interface ForecastChartLayer {
@@ -40,6 +57,31 @@ export interface ErrorChartOptions extends Omit<BaseChartOptions, 'height' | 'yA
 	areaChartHeight?: number;
 	boxPlotHeight?: number;
 	variables: { field: string; label?: string }[];
+}
+
+export interface InterventionMarkerOptions {
+	hideLabels?: boolean;
+	labelXOffset?: number;
+	dateOptions?: DateOptions;
+}
+
+export interface ChartEncoding {
+	field: string;
+	type: string;
+	axis: any;
+	scale?: any;
+}
+
+function formatDateLabelFn(date: Date, datum: string, type: CalendarDateType): string {
+	switch (type) {
+		case CalendarDateType.YEAR:
+			return `timeFormat(datetime(${date.getFullYear()} + ${datum}, ${date.getMonth()}, ${date.getDate()}), '%Y')`;
+		case CalendarDateType.MONTH:
+			return `timeFormat(datetime(${date.getFullYear()} + floor(${datum} / 12), ${date.getMonth()} + (${datum} % 12) , ${date.getDate()}), '%b %Y')`;
+		case CalendarDateType.DATE:
+		default:
+			return `timeFormat(datetime(${date.getFullYear()}, ${date.getMonth()}, ${date.getDate()} + ${datum}), '%b %d, %Y')`;
+	}
 }
 
 export function createErrorChart(dataset: Record<string, any>[], options: ErrorChartOptions) {
@@ -256,7 +298,7 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 		title: titleObj as any,
 		width: options.width,
 		height: options.height,
-		autosize: { type: 'fit' },
+		autosize: { type: AUTOSIZE.FIT },
 		data: {
 			values: []
 		},
@@ -399,7 +441,7 @@ export function createForecastChart(
 		width: options.width,
 		height: options.height,
 		autosize: {
-			type: 'fit-x'
+			type: options.autosize || AUTOSIZE.FIT_X
 		},
 		config: {
 			font: globalFont
@@ -430,9 +472,41 @@ export function createForecastChart(
 				}
 			]
 		};
+
+		let dateExpression;
+		if (options.dateOptions) {
+			dateExpression = formatDateLabelFn(options.dateOptions.startDate, 'datum.value', options.dateOptions.dateFormat);
+		}
+		const encodingX: ChartEncoding = {
+			field: layer.timeField,
+			type: 'quantitative',
+			axis: {
+				...xaxis,
+				labelExpr: dateExpression
+			}
+		};
+		const encodingY: ChartEncoding = {
+			field: 'valueField',
+			type: 'quantitative',
+			axis: yaxis
+		};
+
+		if (options.fitYDomain && layer.data[0]) {
+			// gets the other fieldname
+			const yField = Object.keys(layer.data[0]).find((elem) => elem !== layer.timeField);
+			if (yField && Array.isArray(layer.data)) {
+				const yValues = [...layer.data].map((datum) => datum[yField]);
+				const domainMin = Math.min(...yValues);
+				const domainMax = Math.max(...yValues);
+				encodingY.scale = {
+					domain: [domainMin, domainMax]
+				};
+			}
+		}
+
 		const encoding = {
-			x: { field: layer.timeField, type: 'quantitative', axis: xaxis },
-			y: { field: 'valueField', type: 'quantitative', axis: yaxis },
+			x: encodingX,
+			y: encodingY,
 			color: {
 				field: 'variableField',
 				type: 'nominal',
@@ -501,10 +575,17 @@ export function createForecastChart(
 
 			return tip;
 		});
+
 		Object.assign(tooltipSubLayer.encoding, {
 			opacity: { value: 0.00000001 },
 			strokeWidth: { value: 16 },
-			tooltip: [{ field: statisticsLayer.timeField, type: 'quantitative' }, ...(tooltipContent || [])]
+			tooltip: [
+				{
+					field: statisticsLayer.timeField,
+					type: 'quantitative'
+				},
+				...(tooltipContent || [])
+			]
 		});
 		layerSpec.layer.push(tooltipSubLayer);
 
@@ -626,7 +707,7 @@ export function createSuccessCriteriaChart(
 		width: options.width,
 		height: options.height,
 		autosize: {
-			type: 'fit-x'
+			type: AUTOSIZE.FIT_X
 		},
 		data: {
 			values: data
@@ -726,7 +807,7 @@ export function createSuccessCriteriaChart(
 
 export function createInterventionChartMarkers(
 	data: ReturnType<typeof flattenInterventionData>,
-	hideLabels = false
+	options: InterventionMarkerOptions = { hideLabels: false, labelXOffset: 5 }
 ): any[] {
 	const markerSpec = {
 		data: { values: data },
@@ -735,14 +816,14 @@ export function createInterventionChartMarkers(
 			x: { field: 'time', type: 'quantitative' }
 		}
 	};
-	if (hideLabels) return [markerSpec];
+	if (options.hideLabels) return [markerSpec];
 	const labelSpec = {
 		data: { values: data },
 		mark: {
 			type: 'text',
 			align: 'left',
 			angle: 90,
-			dx: 5,
+			dx: options.labelXOffset,
 			dy: -10
 		},
 		encoding: {
@@ -777,13 +858,13 @@ export function createInterventionChart(
 		title: titleObj,
 		height: chartOptions.height,
 		autosize: {
-			type: 'fit-x'
+			type: AUTOSIZE.FIT_X
 		},
 		layer: []
 	};
 	if (!isEmpty(interventions)) {
 		// markers
-		createInterventionChartMarkers(interventions, chartOptions.hideLabels).forEach((marker) => {
+		createInterventionChartMarkers(interventions, { hideLabels: chartOptions.hideLabels }).forEach((marker) => {
 			spec.layer.push(marker);
 		});
 		// chart
@@ -810,45 +891,92 @@ enum FunmanChartLegend {
 	ModelChecks = 'Model checks'
 }
 
-export function createFunmanStateChart(
-	data: ProcessedFunmanResult,
-	constraints: FunmanConstraintsResponse[],
-	stateId: string
-) {
-	if (isEmpty(data.trajs)) return null;
+export function getBoundType(label: string): string {
+	switch (label) {
+		case 'true':
+			return FunmanChartLegend.Satisfactory;
+		case 'false':
+			return FunmanChartLegend.Unsatisfactory;
+		default:
+			return FunmanChartLegend.Ambiguous;
+	}
+}
 
+export function createFunmanStateChart(
+	trajectories: any[],
+	constraints: FunmanConstraintsResponse[],
+	stateId: string,
+	focusOnModelChecks: boolean,
+	selectedBoxId: number = -1
+) {
+	if (isEmpty(trajectories)) return null;
+
+	const threshold = 1e25;
 	const globalFont = 'Figtree';
 
-	const boxLines = data.trajs.map((traj) => {
-		const legendItem = traj.label === 'true' ? FunmanChartLegend.Satisfactory : FunmanChartLegend.Unsatisfactory;
-		return { timepoints: traj.timestep, value: traj[stateId], legendItem };
-	});
-
-	// Find min/max values to set an appropriate viewing range for y-axis
-	const minY = Math.floor(Math.min(...boxLines.map((d) => d.value)));
-	const maxY = Math.ceil(Math.max(...boxLines.map((d) => d.value)));
-
-	// Show checks for the selected state
 	const stateIdConstraints = constraints.filter((c) => c.variables.includes(stateId));
-	const modelChecks = stateIdConstraints.map((c) => ({
-		legendItem: FunmanChartLegend.ModelChecks,
-		startX: c.timepoints.lb,
-		endX: c.timepoints.ub,
-		// If the interval bounds are within the min/max values of the line plot use them, otherwise use the min/max values
-		startY: Math.max(c.additive_bounds.lb ?? minY, minY),
-		endY: Math.min(c.additive_bounds.ub ?? maxY, maxY)
-	}));
+	// Find min/max values to set an appropriate viewing range for y-axis
+	// Limit by threshold as very large numbers cause the chart to have NaN in the y domain
+	const lowerBounds = stateIdConstraints.map((c) => {
+		let lb = c.additive_bounds.lb;
+		const ub = c.additive_bounds.ub;
+		if (lb && ub && lb < -threshold) lb = -Math.abs(ub) * 0.5 + ub;
+		return lb;
+	});
+	const upperBounds = stateIdConstraints.map((c) => {
+		const lb = c.additive_bounds.lb;
+		let ub = c.additive_bounds.ub;
+		if (ub && lb && ub > threshold) ub = Math.abs(lb) * 0.5 + lb;
+		return ub;
+	});
+	const yPoints = trajectories.map((t) => t.values[stateId]);
+
+	const potentialMinYs = focusOnModelChecks && !isEmpty(lowerBounds) ? [...yPoints, ...lowerBounds] : yPoints;
+	const potentialMaxYs = focusOnModelChecks && !isEmpty(upperBounds) ? [...yPoints, ...upperBounds] : yPoints;
+	const minY = Math.floor(Math.min(...potentialMinYs));
+	const maxY = Math.ceil(Math.max(...potentialMaxYs));
+
+	const modelChecks = stateIdConstraints.map((c) => {
+		let startY = c.additive_bounds.lb ?? minY;
+		let endY = c.additive_bounds.ub ?? maxY;
+		// Fallback to min/max if the bounds exceed the threshold
+		if (startY < -threshold) startY = minY;
+		if (endY > threshold) endY = maxY;
+		return {
+			legendItem: FunmanChartLegend.ModelChecks,
+			startX: c.timepoints.lb,
+			endX: c.timepoints.ub,
+			startY,
+			endY
+		};
+	});
 
 	return {
 		$schema: VEGALITE_SCHEMA,
+		id: stateId,
 		config: { font: globalFont },
 		width: 600,
 		height: 300,
+		title: {
+			text: `${stateId} (persons)`,
+			anchor: 'start',
+			frame: 'group',
+			offset: 10,
+			fontSize: 14
+		},
+		params: [
+			{
+				name: 'selectedBoxId',
+				value: selectedBoxId
+			}
+		],
 		layer: [
 			{
 				mark: {
 					type: 'rect',
-					clip: true
+					clip: true,
+					stroke: '#A4CEFF',
+					strokeWidth: 1
 				},
 				data: { values: modelChecks },
 				encoding: {
@@ -863,10 +991,17 @@ export function createFunmanStateChart(
 					type: 'line',
 					point: true
 				},
-				data: { values: boxLines },
+				data: { values: trajectories },
 				encoding: {
-					x: { field: 'timepoints', type: 'quantitative' },
-					y: { field: 'value', type: 'quantitative' }
+					x: { field: 'timepoint', type: 'quantitative' },
+					y: { field: `values[${stateId}]`, type: 'quantitative' },
+					opacity: {
+						condition: {
+							test: 'selectedBoxId == datum.boxId || selectedBoxId == -1', // -1 is the default value (shows all boxes)
+							value: 1
+						},
+						value: 0.2
+					}
 				}
 			}
 		],
@@ -888,35 +1023,49 @@ export function createFunmanStateChart(
 					],
 					range: ['#1B8073', '#FFAB00', '#CCC569', '#A4CEFF54'] // Specify colors for each legend item
 				}
-			}
+			},
+			detail: { field: 'boxId' }
 		}
 	};
 }
 
-export function createFunmanParameterChart(
-	parametersOfInterest: { label: 'all'; name: string; interval: FunmanInterval }[],
+export function createFunmanParameterCharts(
+	distributionParameters: { label: string; name: string; interval: FunmanInterval }[],
 	boxes: FunmanBox[]
 ) {
-	const parameterRanges: { parameterId: string; boundType: string; lb?: number; ub?: number }[] = [];
+	const parameterRanges: {
+		boxId: number;
+		parameterId: string;
+		boundType: string;
+		lb?: number;
+		ub?: number;
+		tick?: number;
+	}[] = [];
+	const distributionParameterIds: string[] = [];
 
 	// Widest range (model configuration ranges)
-	parametersOfInterest.forEach(({ name, interval }) => {
+	distributionParameters.forEach(({ name, interval }) => {
 		parameterRanges.push({
+			boxId: -1,
 			parameterId: name,
 			boundType: 'length',
 			lb: interval.lb,
 			ub: interval.ub
 		});
+		distributionParameterIds.push(name);
 	});
 
 	// Ranges determined by the true/false boxes
-	boxes.forEach(({ label, parameters }) => {
+	boxes.forEach(({ boxId, label, parameters }) => {
 		Object.keys(parameters).forEach((key) => {
+			if (!distributionParameterIds.includes(key)) return;
 			parameterRanges.push({
+				boxId,
 				parameterId: key,
-				boundType: label === 'true' ? FunmanChartLegend.Satisfactory : FunmanChartLegend.Unsatisfactory,
+				boundType: getBoundType(label),
 				lb: parameters[key].lb,
-				ub: parameters[key].ub
+				ub: parameters[key].ub,
+				tick: parameters[key].point
 			});
 		});
 	});
@@ -924,7 +1073,10 @@ export function createFunmanParameterChart(
 	const globalFont = 'Figtree';
 	return {
 		$schema: VEGALITE_SCHEMA,
-		config: { font: globalFont },
+		config: {
+			font: globalFont,
+			tick: { thickness: 2 }
+		},
 		width: 600,
 		height: 50, // Height per facet
 		data: {
@@ -957,11 +1109,12 @@ export function createFunmanParameterChart(
 			}
 		},
 		spec: {
+			width: 600,
 			layer: [
 				{
 					mark: {
 						type: 'bar', // Use a bar to represent ranges
-						opacity: 0.3 // FIXME: This opacity shouldn't be applied to the legend
+						opacity: 0.4 // FIXME: This opacity shouldn't be applied to the legend
 					},
 					encoding: {
 						x: {
@@ -972,7 +1125,6 @@ export function createFunmanParameterChart(
 								// Doesn't work with regular domain setting
 								domainMin: { expr: 'minX' },
 								domainMax: { expr: 'maxX' }
-								// FIXME: If the domain is something like lb: 0.002, ub: 0.002 (same numbers close to 0), the only number on the number line will be 0
 							},
 							title: null
 						},
@@ -980,13 +1132,96 @@ export function createFunmanParameterChart(
 							field: 'ub'
 						},
 						color: {
-							field: 'boundType',
-							type: 'nominal',
-							legend: { orient: 'top', direction: 'horizontal', title: null },
-							scale: {
-								domain: [FunmanChartLegend.Satisfactory, FunmanChartLegend.Unsatisfactory, FunmanChartLegend.Ambiguous],
-								range: ['#1B8073', '#FFAB00', '#CCC569']
-							}
+							condition: {
+								param: 'tickSelection',
+								field: 'boundType',
+								type: 'nominal',
+								legend: { orient: 'top', direction: 'horizontal', title: null },
+								scale: {
+									domain: [
+										FunmanChartLegend.Satisfactory,
+										FunmanChartLegend.Unsatisfactory,
+										FunmanChartLegend.Ambiguous
+									],
+									range: ['#1B8073', '#FFAB00', '#CCC569']
+								}
+							},
+							value: 'rgba(190,190,190,0.1)'
+						}
+					}
+				},
+				{
+					mark: {
+						type: 'tick',
+						thickness: 4,
+						stroke: 'white',
+						strokeWidth: 1 // Optional: Adjust the border width
+					},
+					params: [
+						{
+							name: 'tickSelection',
+							select: { type: 'point', fields: ['boxId'] },
+							on: [
+								{
+									events: 'click',
+									update: 'datum.boxId'
+								}
+							]
+						}
+					],
+					encoding: {
+						x: {
+							field: 'tick',
+							type: 'quantitative',
+							title: null
+						},
+						color: { field: 'boundType' },
+						size: {
+							condition: { param: 'tickSelection', value: 25, empty: false },
+							value: 15
+						}
+					}
+				},
+				// Selected bound square brackets for lb, ub
+				{
+					mark: {
+						type: 'text',
+						size: 30,
+						dy: 2
+					},
+					encoding: {
+						x: {
+							field: 'lb',
+							type: 'quantitative'
+						},
+						text: { value: '[' },
+						opacity: {
+							condition: {
+								test: 'tickSelection.boxId == datum.boxId',
+								value: 1
+							},
+							value: 0
+						}
+					}
+				},
+				{
+					mark: {
+						type: 'text',
+						size: 30,
+						dy: 2
+					},
+					encoding: {
+						x: {
+							field: 'ub',
+							type: 'quantitative'
+						},
+						text: { value: ']' },
+						opacity: {
+							condition: {
+								test: 'tickSelection.boxId == datum.boxId',
+								value: 1
+							},
+							value: 0
 						}
 					}
 				}

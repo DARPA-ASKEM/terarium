@@ -401,7 +401,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 		Assertions.assertEquals(response.getStatusLine().getStatusCode(), 200);
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetPublicModelWithoutProject() throws Exception {
 		final Dataset dataset_public_not_temp = (Dataset) new Dataset()

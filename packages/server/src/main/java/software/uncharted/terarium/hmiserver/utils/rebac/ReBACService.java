@@ -74,6 +74,9 @@ public class ReBACService {
 	@Value("${terarium.keycloak.api-service-name}")
 	String API_SERVICE_USER_NAME = "api-service";
 
+	@Value("${terarium.keycloak.admin-api-service-name}")
+	String ADMIN_API_SERVICE_USER_NAME = "admin-api-service";
+
 	private BearerToken spiceDbBearerToken;
 	private ManagedChannel channel;
 
@@ -83,6 +86,7 @@ public class ReBACService {
 	public static String ASKEM_ADMIN_GROUP_ID;
 
 	public static String API_SERVICE_USER_ID;
+	public static String ADMIN_API_SERVICE_USER_ID;
 
 	private volatile String CURRENT_ZED_TOKEN;
 
@@ -119,13 +123,17 @@ public class ReBACService {
 	private final Cache<CacheKey, Boolean> permissionCache = Caffeine.newBuilder()
 		.expireAfterWrite(5, TimeUnit.MINUTES)
 		.recordStats()
-		.removalListener((Object key, Object value, RemovalCause cause) -> log.trace("Key {} was removed {}", key, cause))
+		.removalListener((final Object key, final Object value, final RemovalCause cause) ->
+			log.trace("Key {} was removed {}", key, cause)
+		)
 		.build();
 
 	private final Cache<String, PermissionUser> userCache = Caffeine.newBuilder()
 		.expireAfterWrite(15, TimeUnit.MINUTES)
 		.recordStats()
-		.removalListener((Object key, Object value, RemovalCause cause) -> log.trace("Key {} was removed {}", key, cause))
+		.removalListener((final Object key, final Object value, final RemovalCause cause) ->
+			log.trace("Key {} was removed {}", key, cause)
+		)
 		.build();
 
 	@PostConstruct
@@ -221,12 +229,13 @@ public class ReBACService {
 			}
 		}
 		API_SERVICE_USER_ID = getUserId(API_SERVICE_USER_NAME);
+		ADMIN_API_SERVICE_USER_ID = getUserId(ADMIN_API_SERVICE_USER_NAME);
 	}
 
 	private String getUserId(final String name) {
 		final List<UserRepresentation> users = keycloak.realm(REALM_NAME).users().search(name);
 		for (final UserRepresentation user : users) {
-			if (user.getUsername().equals(API_SERVICE_USER_NAME)) {
+			if (user.getUsername().equals(API_SERVICE_USER_NAME) || user.getUsername().equals(ADMIN_API_SERVICE_USER_NAME)) {
 				return user.getId();
 			}
 		}
@@ -283,27 +292,32 @@ public class ReBACService {
 		final PermissionUser result = userCache.get(id, key_id -> {
 			final UsersResource usersResource = keycloak.realm(REALM_NAME).users();
 			final UserResource userResource = usersResource.get(key_id);
-			final UserRepresentation userRepresentation = userResource.toRepresentation();
+			try {
+				final UserRepresentation userRepresentation = userResource.toRepresentation();
 
-			final List<PermissionRole> roles = new ArrayList<>();
-			for (final RoleRepresentation roleRepresentation : userResource.roles().getAll().getRealmMappings()) {
-				if (roleRepresentation.getDescription().isBlank()) {
-					final PermissionRole role = new PermissionRole(
-						roleRepresentation.getId(),
-						roleRepresentation.getName()
-						// no users are acquired (to avoid circular references etc)
-					);
-					roles.add(role);
+				final List<PermissionRole> roles = new ArrayList<>();
+				for (final RoleRepresentation roleRepresentation : userResource.roles().getAll().getRealmMappings()) {
+					if (roleRepresentation.getDescription().isBlank()) {
+						final PermissionRole role = new PermissionRole(
+							roleRepresentation.getId(),
+							roleRepresentation.getName()
+							// no users are acquired (to avoid circular references etc)
+						);
+						roles.add(role);
+					}
 				}
-			}
 
-			return new PermissionUser(
-				userRepresentation.getId(),
-				userRepresentation.getFirstName(),
-				userRepresentation.getLastName(),
-				userRepresentation.getEmail(),
-				roles
-			);
+				return new PermissionUser(
+					userRepresentation.getId(),
+					userRepresentation.getFirstName(),
+					userRepresentation.getLastName(),
+					userRepresentation.getEmail(),
+					roles
+				);
+			} catch (Exception e) {
+				log.error("User identified by SpiceDB with id \"{}\" is not found in Keycloak.", id);
+				return null;
+			}
 		});
 		log.trace("User Cache hit: {}, miss: {}", userCache.stats().hitCount(), userCache.stats().missCount());
 		return result;
@@ -430,7 +444,7 @@ public class ReBACService {
 				return true;
 			}
 			return rebac.checkPermission(key.who, key.permission, key.what, getCurrentConsistency());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			log.error("Failed to get Permission from SpiceDB: {}", e);
 			return false;
 		}
@@ -500,8 +514,9 @@ public class ReBACService {
 
 	@Observed(name = "function_profile")
 	public ResponseEntity<Void> deleteRoleFromUser(final String roleName, final String userId) {
-		// NB: No need to adjust {rebacCache} as we will allow for a maximum 5 minute decay of a user's role
-		//     as the {rebacCache} will flush the permissions then.
+		// NB: No need to adjust {rebacCache} as we will allow for a maximum 5 minute
+		// decay of a user's role
+		// as the {rebacCache} will flush the permissions then.
 
 		userCache.invalidate(userId);
 
@@ -604,7 +619,8 @@ public class ReBACService {
 	@Observed(name = "function_profile")
 	public List<UUID> lookupResources(final SchemaObject who, final Schema.Permission permission, final Schema.Type type)
 		throws Exception {
-		// NB: These permissions will be handled by {ProjectPermissionService} and its caching
+		// NB: These permissions will be handled by {ProjectPermissionService} and its
+		// caching
 		final ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		return rebac.lookupResources(type, permission, who, getCurrentConsistency());
 	}
@@ -612,5 +628,10 @@ public class ReBACService {
 	@Observed(name = "function_profile")
 	public static boolean isServiceUser(final String id) {
 		return API_SERVICE_USER_ID != null && API_SERVICE_USER_ID.equals(id);
+	}
+
+	@Observed(name = "function_profile")
+	public static boolean isAdminServiceUser(final String id) {
+		return ADMIN_API_SERVICE_USER_ID != null && ADMIN_API_SERVICE_USER_ID.equals(id);
 	}
 }

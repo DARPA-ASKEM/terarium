@@ -19,8 +19,8 @@
 					<div class="toolbar">
 						<p>Click Run to start the simulation.</p>
 						<span class="flex gap-2">
-							<tera-pyciemss-cancel-button :simulation-run-id="cancelRunId" />
-							<Button label="Run" icon="pi pi-play" @click="run" :loading="showSpinner" />
+							<tera-pyciemss-cancel-button :simulation-run-id="cancelRunIds" />
+							<Button label="Run" icon="pi pi-play" @click="run" :loading="inProgressForecastRun" />
 						</span>
 					</div>
 					<div class="form-section" v-if="isSidebarOpen">
@@ -37,24 +37,21 @@
 
 						<!-- Start & End -->
 						<div class="input-row">
-							<div class="label-and-input">
-								<label for="start-time">Start time</label>
-								<tera-input-number
-									id="start-time"
-									v-model="timespan.start"
-									inputId="integeronly"
-									@update:model-value="updateState"
-								/>
-							</div>
-							<div class="label-and-input">
-								<label for="timespan">End time</label>
-								<tera-input-number
-									id="timespan"
-									v-model="timespan.end"
-									inputId="integeronly"
-									@update:model-value="updateState"
-								/>
-							</div>
+							<tera-timestep-calendar
+								disabled
+								v-if="model && modelConfiguration"
+								label="Start time"
+								:start-date="modelConfiguration.temporalContext"
+								:calendar-settings="getCalendarSettingsFromModel(model)"
+								v-model="timespan.start"
+							/>
+							<tera-timestep-calendar
+								v-if="model && modelConfiguration"
+								label="End time"
+								:start-date="modelConfiguration.temporalContext"
+								:calendar-settings="getCalendarSettingsFromModel(model)"
+								v-model="timespan.end"
+							/>
 						</div>
 
 						<!-- Number of Samples & Method -->
@@ -79,11 +76,15 @@
 								/>
 							</div>
 						</div>
-						<template v-if="interventionPolicy">
+						<template v-if="interventionPolicy && model">
 							<h4>Intervention Policies</h4>
 							<tera-intervention-summary-card
 								v-for="(intervention, index) in interventionPolicy.interventions"
+								:start-date="modelConfiguration?.temporalContext"
+								:calendar-settings="getCalendarSettingsFromModel(model)"
 								:intervention="intervention"
+								:state-units="modelStateUnits"
+								:parameter-units="modelParameterUnits"
 								:key="index"
 							/>
 						</template>
@@ -119,7 +120,7 @@
 
 		<!-- Preview -->
 		<template #preview>
-			<tera-drilldown-section v-if="selectedOutputId" :is-loading="showSpinner">
+			<tera-drilldown-section v-if="selectedOutputId" :is-loading="inProgressForecastRun">
 				<template #header-controls-right>
 					<Button class="mr-3" label="Save for re-use" severity="secondary" outlined @click="showSaveDataset = true" />
 				</template>
@@ -145,33 +146,16 @@
 				<tera-notebook-error v-bind="node.state.errorMessage" />
 				<template v-if="runResults[selectedRunId]">
 					<div v-if="view === OutputView.Charts" ref="outputPanel">
-						<template v-for="(cfg, index) of node.state.chartConfigs" :key="index">
-							<tera-chart-control
-								class="pr-3 pl-3"
-								:chart-config="{ selectedRun: selectedRunId, selectedVariable: cfg }"
-								multi-select
-								show-remove-button
-								:variables="Object.keys(pyciemssMap)"
-								@configuration-change="chartProxy.configurationChange(index, $event)"
-								@remove="chartProxy.removeChart(index)"
-							/>
+						<template v-for="setting of chartSettings" :key="setting.id">
 							<vega-chart
-								v-if="preparedCharts[index].layer.length > 0"
+								v-if="preparedCharts[setting.id]"
 								expandable
 								are-embed-actions-visible
-								:visualization-spec="preparedCharts[index]"
+								:visualization-spec="preparedCharts[setting.id]"
 							/>
-							<!-- If no variables are selected, show empty state -->
-							<section class="m-3 empty-chart" v-else>
-								<img src="@assets/svg/seed.svg" class="empty-image" alt="" draggable="false" />
-								<p>Select one or more variables for this chart</p>
-							</section>
-
 							<!-- Spacer between charts -->
 							<div style="height: var(--gap-1)"></div>
 						</template>
-						<Button size="small" text @click="chartProxy.addChart()" label="Add chart" icon="pi pi-plus" />
-
 						<!-- Spacer at bottom of page -->
 						<div style="height: 2rem"></div>
 					</div>
@@ -190,6 +174,55 @@
 				<Vue3Lottie :animationData="EmptySeed" :height="150" loop autoplay />
 				<p class="helpMessage">Click 'Run' to start the simulation</p>
 			</section>
+		</template>
+
+		<template #sidebar-right>
+			<tera-slider-panel
+				v-model:is-open="isOutputSettingsPanelOpen"
+				direction="right"
+				class="input-config"
+				header="Output Settings"
+				content-width="360px"
+			>
+				<template #overlay>
+					<tera-chart-settings-panel
+						:annotations="
+							activeChartSettings?.type === ChartSettingType.VARIABLE_COMPARISON
+								? getChartAnnotationsByChartId(activeChartSettings.id)
+								: undefined
+						"
+						:active-settings="activeChartSettings"
+						:generate-annotation="generateAnnotation"
+						@delete-annotation="deleteAnnotation"
+						@close="activeChartSettings = null"
+					/>
+				</template>
+				<template #content>
+					<div class="output-settings-panel">
+						<tera-chart-settings
+							:title="'Comparison charts'"
+							:settings="chartSettings"
+							:type="ChartSettingType.VARIABLE_COMPARISON"
+							:select-options="Object.keys(pyciemssMap)"
+							:selected-options="comparisonChartsSettingsSelection"
+							@open="activeChartSettings = $event"
+							@remove="removeChartSetting"
+							@selection-change="comparisonChartsSettingsSelection = $event"
+						/>
+						<div>
+							<Button
+								:disabled="!comparisonChartsSettingsSelection.length"
+								size="small"
+								text
+								@click="addComparisonChartSettings"
+								label="Add comparison chart"
+								icon="pi pi-plus"
+							/>
+						</div>
+						<hr />
+					</div>
+				</template>
+			</tera-slider-panel>
 		</template>
 	</tera-drilldown>
 	<tera-save-simulation-modal
@@ -210,7 +243,14 @@ import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
-import type { CsvAsset, InterventionPolicy, SimulationRequest, TimeSpan } from '@/types/Types';
+import type {
+	CsvAsset,
+	InterventionPolicy,
+	Model,
+	ModelConfiguration,
+	SimulationRequest,
+	TimeSpan
+} from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import {
@@ -221,8 +261,13 @@ import {
 	DataArray,
 	CiemssMethodOptions
 } from '@/services/models/simulation-service';
-import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
-import { chartActionsProxy, nodeMetadata } from '@/components/workflow/util';
+import {
+	getModelByModelConfigurationId,
+	getUnitsFromModelParts,
+	getCalendarSettingsFromModel,
+	getVegaDateOptions
+} from '@/services/model';
+import { nodeMetadata } from '@/components/workflow/util';
 
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import SelectButton from 'primevue/selectbutton';
@@ -237,25 +282,73 @@ import { KernelSessionManager } from '@/services/jupyter';
 import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import { createForecastChart, createInterventionChartMarkers } from '@/services/charts';
+import {
+	applyForecastChartAnnotations,
+	createForecastChart,
+	createInterventionChartMarkers,
+	ForecastChartOptions
+} from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
+import { ChartSetting, ChartSettingType, CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-intervention-summary-card.vue';
 import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
+import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
+import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
+import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
+import {
+	addMultiVariableChartSetting,
+	deleteAnnotation,
+	generateForecastChartAnnotation,
+	saveAnnotation,
+	removeChartSettingById
+} from '@/services/chart-settings';
+import { useChartAnnotations } from '@/composables/useChartAnnotations';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
-import TeraChartControl from '../../tera-chart-control.vue';
+import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 
-const isSidebarOpen = ref(true);
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
 }>();
 const emit = defineEmits(['update-state', 'select-output', 'close']);
 
+const isSidebarOpen = ref(true);
+const isOutputSettingsPanelOpen = ref(false);
+const chartSettings = computed(() => props.node.state.chartSettings ?? []);
+const activeChartSettings = ref<ChartSetting | null>(null);
+const comparisonChartsSettingsSelection = ref<string[]>([]);
+
 const modelVarUnits = ref<{ [key: string]: string }>({});
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
+
+const modelConfiguration = ref<ModelConfiguration | null>(null);
+const model = ref<Model | null>(null);
+
+const modelStateUnits = computed(() => {
+	const states = model.value?.model.states;
+	let units = {};
+	if (states.length) {
+		units = _.keyBy(
+			states.map((state) => ({ id: state.id, units: state?.units?.expression ?? '' })),
+			'id'
+		);
+	}
+	return units;
+});
+
+const modelParameterUnits = computed(() => {
+	const parametes = model.value?.semantics?.ode?.parameters;
+	let units = {};
+	if (parametes?.length) {
+		units = _.keyBy(
+			parametes.map((parameter) => ({ id: parameter.id, units: parameter?.units?.expression ?? '' })),
+			'id'
+		);
+	}
+	return units;
+});
 
 const policyInterventionId = computed(() => props.node.inputs[1].value?.[0]);
 const interventionPolicy = ref<InterventionPolicy | null>(null);
@@ -303,7 +396,9 @@ const viewOptions = ref([
 	{ value: OutputView.Data, icon: 'pi pi-list' }
 ]);
 
-const showSpinner = ref(false);
+const inProgressForecastRun = computed(() =>
+	Boolean(props.node.state.inProgressForecastId || props.node.state.inProgressBaseForecastId)
+);
 const runResults = ref<{ [runId: string]: DataArray }>({});
 const runResultsSummary = ref<{ [runId: string]: DataArray }>({});
 const rawContent = ref<{ [runId: string]: CsvAsset }>({});
@@ -326,15 +421,13 @@ const presetType = computed(() => {
 const selectedOutputId = ref<string>();
 const selectedRunId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
 
-const cancelRunId = computed(() => props.node.state.inProgressForecastId);
+const cancelRunIds = computed(() =>
+	[props.node.state.inProgressForecastId, props.node.state.inProgressBaseForecastId].filter((id) => Boolean(id))
+);
 const outputPanel = ref(null);
 const chartSize = useDrilldownChartSize(outputPanel);
 
 const showSaveDataset = ref(false);
-
-const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperationState) => {
-	emit('update-state', state);
-});
 
 const setPresetValues = (data: CiemssPresetTypes) => {
 	if (data === CiemssPresetTypes.Normal) {
@@ -352,51 +445,122 @@ const groupedInterventionOutputs = computed(() =>
 	_.groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
 );
 
-const preparedCharts = computed(() => {
-	if (!selectedRunId.value) return [];
-
+const preparedChartInputs = computed(() => {
+	if (!selectedRunId.value) return null;
 	const result = runResults.value[selectedRunId.value];
 	const resultSummary = runResultsSummary.value[selectedRunId.value];
 	const reverseMap: Record<string, string> = {};
 	Object.keys(pyciemssMap).forEach((key) => {
 		reverseMap[`${pyciemssMap[key]}_mean`] = key;
 	});
+	return { result, resultSummary, reverseMap };
+});
 
-	return props.node.state.chartConfigs.map((config) => {
-		const chart = createForecastChart(
-			{
-				data: result,
-				variables: config.map((d) => pyciemssMap[d]),
-				timeField: 'timepoint_id',
-				groupField: 'sample_id'
-			},
-			{
-				data: resultSummary,
-				variables: config.map((d) => `${pyciemssMap[d]}_mean`),
-				timeField: 'timepoint_id'
-			},
-			null,
-			// options
-			{
-				title: '',
-				width: chartSize.value.width,
-				height: chartSize.value.height,
-				legend: true,
-				translationMap: reverseMap,
-				xAxisTitle: modelVarUnits.value._time || 'Time',
-				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
-			}
+const getForecastChartOptions = (variables: string[], reverseMap: Record<string, string>) => {
+	// If only one variable is selected, show the baseline forecast
+	const showBaseLine = variables.length === 1 && Boolean(props.node.state.baseForecastId);
+	const dateOptions = getVegaDateOptions(model.value, modelConfiguration.value);
+
+	const options: ForecastChartOptions = {
+		title: '',
+		width: chartSize.value.width,
+		height: chartSize.value.height,
+		legend: true,
+		translationMap: reverseMap,
+		xAxisTitle: modelVarUnits.value._time || 'Time',
+		yAxisTitle: _.uniq(variables.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
+	};
+	let statLayerVariables = variables.map((d) => `${pyciemssMap[d]}_mean`);
+	let sampleLayerVariables = variables.map((d) => pyciemssMap[d]);
+
+	if (showBaseLine) {
+		sampleLayerVariables = [`${pyciemssMap[variables[0]]}:base`, `${pyciemssMap[variables[0]]}`];
+		statLayerVariables = [`${pyciemssMap[variables[0]]}_mean:base`, `${pyciemssMap[variables[0]]}_mean`];
+		options.translationMap = {
+			...options.translationMap,
+			[`${pyciemssMap[variables[0]]}_mean:base`]: `${variables[0]} (baseline)`
+		};
+		options.colorscheme = ['#AAB3C6', '#1B8073'];
+	}
+	if (dateOptions) {
+		options.dateOptions = dateOptions;
+	}
+	return { statLayerVariables, sampleLayerVariables, options };
+};
+
+const preparedCharts = computed(() => {
+	const charts: Record<string, any> = {};
+	if (!preparedChartInputs.value) return charts;
+	const { result, resultSummary, reverseMap } = preparedChartInputs.value;
+
+	chartSettings.value.forEach((setting) => {
+		const selectedVars = setting.selectedVariables;
+		const { statLayerVariables, sampleLayerVariables, options } = getForecastChartOptions(selectedVars, reverseMap);
+		const annotations = getChartAnnotationsByChartId(setting.id);
+
+		const chart = applyForecastChartAnnotations(
+			createForecastChart(
+				{
+					data: result,
+					variables: sampleLayerVariables,
+					timeField: 'timepoint_id',
+					groupField: 'sample_id'
+				},
+				{
+					data: resultSummary,
+					variables: statLayerVariables,
+					timeField: 'timepoint_id'
+				},
+				null,
+				options
+			),
+			annotations
 		);
 		if (interventionPolicy.value) {
 			_.keys(groupedInterventionOutputs.value).forEach((key) => {
-				if (config.includes(key)) {
+				if (selectedVars.includes(key)) {
 					chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
 				}
 			});
 		}
-		return chart;
+		charts[setting.id] = chart;
 	});
+	return charts;
 });
+
+// --- Handle chart annotations
+const { getChartAnnotationsByChartId } = useChartAnnotations(props.node.id);
+const generateAnnotation = async (setting: ChartSetting, query: string) => {
+	// Note: Currently llm generated chart annotations are supported for the forecast chart only
+	if (!preparedChartInputs.value) return null;
+	const { statLayerVariables, options } = getForecastChartOptions(
+		setting.selectedVariables,
+		preparedChartInputs.value.reverseMap
+	);
+	const annotationLayerSpec = await generateForecastChartAnnotation(query, 'timepoint_id', statLayerVariables, options);
+	const saved = await saveAnnotation(annotationLayerSpec, props.node.id, setting.id);
+	return saved;
+};
+// ---
+
+const removeChartSetting = (chartId) => {
+	emit('update-state', {
+		...props.node.state,
+		chartSettings: removeChartSettingById(chartSettings.value, chartId)
+	});
+};
+
+const addComparisonChartSettings = () => {
+	emit('update-state', {
+		...props.node.state,
+		chartSettings: addMultiVariableChartSetting(
+			chartSettings.value,
+			ChartSettingType.VARIABLE_COMPARISON,
+			comparisonChartsSettingsSelection.value
+		)
+	});
+	comparisonChartsSettingsSelection.value = [];
+};
 
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);
@@ -407,14 +571,19 @@ const updateState = () => {
 };
 
 const run = async () => {
-	const simulationId = await makeForecastRequest();
+	const [baseSimulationId, simulationId] = await Promise.all([
+		// If intervention id is available, request the base forecast run, otherwise resolve with empty string
+		policyInterventionId.value ? makeForecastRequest(false) : Promise.resolve(''),
+		makeForecastRequest()
+	]);
 
 	const state = _.cloneDeep(props.node.state);
+	state.inProgressBaseForecastId = baseSimulationId;
 	state.inProgressForecastId = simulationId;
 	emit('update-state', state);
 };
 
-const makeForecastRequest = async () => {
+const makeForecastRequest = async (applyInterventions = true) => {
 	const modelConfigId = props.node.inputs[0].value?.[0];
 	const payload: SimulationRequest = {
 		modelConfigId,
@@ -435,11 +604,13 @@ const makeForecastRequest = async () => {
 		payload.extra.inferred_parameters = modelConfig.simulationId;
 	}
 
-	if (policyInterventionId.value) {
+	if (applyInterventions && policyInterventionId.value) {
 		payload.policyInterventionId = policyInterventionId.value;
 	}
-
-	const response = await makeForecastJob(payload, nodeMetadata(props.node));
+	const response = await makeForecastJob(payload, {
+		...nodeMetadata(props.node),
+		isBaseForecast: !applyInterventions
+	});
 	return response.id;
 };
 
@@ -447,14 +618,27 @@ const lazyLoadSimulationData = async (outputRunId: string) => {
 	if (runResults.value[outputRunId] && rawContent.value[outputRunId]) return;
 
 	const forecastId = props.node.state.forecastId;
-	if (!forecastId || forecastId === '') return;
+	if (!forecastId || inProgressForecastRun.value) return;
 
-	const result = await getRunResultCSV(forecastId, 'result.csv');
+	let [result, resultSummary] = await Promise.all([
+		getRunResultCSV(forecastId, 'result.csv'),
+		getRunResultCSV(forecastId, 'result_summary.csv')
+	]);
 	pyciemssMap = parsePyCiemssMap(result[0]);
-	runResults.value[outputRunId] = result;
 	rawContent.value[outputRunId] = convertToCsvAsset(result, Object.values(pyciemssMap));
 
-	const resultSummary = await getRunResultCSV(forecastId, 'result_summary.csv');
+	// Forecast results without the interventions
+	const baseForecastId = props.node.state.baseForecastId;
+	if (baseForecastId) {
+		const [baseResult, baseResultSummary] = await Promise.all([
+			getRunResultCSV(baseForecastId, 'result.csv', renameFnGenerator('base')),
+			getRunResultCSV(baseForecastId, 'result_summary.csv', renameFnGenerator('base'))
+		]);
+		const merged = mergeResults(baseResult, result, baseResultSummary, resultSummary);
+		result = merged.result;
+		resultSummary = merged.resultSummary;
+	}
+	runResults.value[outputRunId] = result;
 	runResultsSummary.value[outputRunId] = resultSummary;
 };
 
@@ -530,18 +714,11 @@ watch(
 		if (!input.value) return;
 
 		const id = input.value[0];
-		const model = await getModelByModelConfigurationId(id);
-		if (model) modelVarUnits.value = getUnitsFromModelParts(model);
+		modelConfiguration.value = await getModelConfigurationById(id);
+		model.value = await getModelByModelConfigurationId(id);
+		if (model.value) modelVarUnits.value = getUnitsFromModelParts(model.value);
 	},
 	{ immediate: true }
-);
-
-watch(
-	() => props.node.state.inProgressForecastId,
-	(id) => {
-		if (id === '') showSpinner.value = false;
-		else showSpinner.value = true;
-	}
 );
 
 watch(
@@ -674,5 +851,17 @@ onUnmounted(() => kernelManager.shutdown());
 
 .p-button-icon-left {
 	color: var(--text-color-primary);
+}
+
+.output-settings-panel {
+	padding: var(--gap-4);
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-2);
+	hr {
+		border: 0;
+		border-top: 1px solid var(--surface-border-alt);
+		width: 100%;
+	}
 }
 </style>

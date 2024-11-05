@@ -20,15 +20,20 @@
 					</tera-drilldown-section>
 				</template>
 			</tera-slider-panel>
-			<tera-slider-panel v-model:is-open="isInputOpen" header="Input" content-width="100%">
+			<tera-slider-panel class="input-config" v-model:is-open="isInputOpen" header="Input" content-width="100%">
 				<template #content>
 					<main class="p-3">
 						<header class="pb-2">
 							<nav class="flex justify-content-between pb-2">
 								<span class="flex align-items-center">Specify which equations to use for this model.</span>
 								<section class="white-space-nowrap min-w-min">
-									<Button class="mr-1" label="Reset" severity="secondary" outlined></Button>
-									<Button label="Run" @click="onRun" :diabled="assetLoading" :loading="loadingModel"></Button>
+									<Button class="mr-1" label="Reset" severity="secondary" outlined />
+									<Button
+										label="Run"
+										@click="onRun"
+										:disabled="isDocumentLoading || isEmpty(includedEquations)"
+										:loading="isModelLoading"
+									/>
 								</section>
 							</nav>
 							<section class="header-group">
@@ -124,9 +129,14 @@
 					</main>
 				</template>
 			</tera-slider-panel>
-			<tera-slider-panel v-model:is-open="isOutputOpen" header="Output" content-width="100%">
+			<tera-slider-panel
+				:direction="outputArrowDirection"
+				v-model:is-open="isOutputOpen"
+				header="Output"
+				content-width="100%"
+			>
 				<template #content>
-					<tera-drilldown-preview>
+					<tera-drilldown-preview :is-loading="isModelLoading">
 						<tera-model
 							v-if="selectedModel"
 							is-workflow
@@ -135,7 +145,7 @@
 							@on-save="onModelSaveEvent"
 						/>
 						<tera-operator-placeholder v-else :node="node" class="h-100">
-							<p v-if="loadingModel">Model is being created...</p>
+							<p v-if="isModelLoading">Model is being created...</p>
 							<p v-else>Select equations to create a model</p>
 						</tera-operator-placeholder>
 					</tera-drilldown-preview>
@@ -211,8 +221,8 @@ const docText = ref<string | null>();
 const isFetchingPDF = ref(false);
 
 const document = ref<DocumentAsset | null>();
-const assetLoading = ref(false);
-const loadingModel = ref(false);
+const isDocumentLoading = ref(false);
+const isModelLoading = ref(false);
 const selectedModel = ref<Model | null>(null);
 const card = ref<Card | null>(null);
 const goLLMCard = computed<any>(() => document.value?.metadata?.gollmCard);
@@ -224,6 +234,8 @@ const multipleEquationsDisabled = ref(false);
 const isDocViewerOpen = ref(true);
 const isInputOpen = ref(true);
 const isOutputOpen = ref(true);
+
+const outputArrowDirection = computed(() => (!isDocViewerOpen.value && !isInputOpen.value ? 'left' : 'right'));
 
 const equationTextarea = ref();
 const documentEquations = ref<AssetBlock<EquationBlock>[]>();
@@ -237,12 +249,13 @@ onMounted(async () => {
 
 	const documentId = props.node.inputs?.[0]?.value?.[0]?.documentId;
 
-	assetLoading.value = true;
 	if (!selectedModel.value) {
 		isOutputOpen.value = false;
 	}
 	if (documentId) {
+		isDocumentLoading.value = true;
 		document.value = await getDocumentAsset(documentId);
+		isDocumentLoading.value = false;
 
 		isFetchingPDF.value = true;
 		const filename = document.value?.fileNames?.[0];
@@ -286,7 +299,6 @@ onMounted(async () => {
 		state.text = document.value?.text ?? '';
 		emit('update-state', state);
 	}
-	assetLoading.value = false;
 });
 
 function handlePasteEvent(e) {
@@ -337,6 +349,8 @@ function onCheckBoxChange(equation) {
 }
 
 async function onRun() {
+	isOutputOpen.value = true;
+	isModelLoading.value = true;
 	const equations = clonedState.value.equations
 		.filter((e) => e.includeInProcess && !e.asset.extractionError)
 		.map((e) => e.asset.text);
@@ -366,7 +380,7 @@ async function fetchModel() {
 		selectedModel.value = null;
 		return;
 	}
-	loadingModel.value = true;
+	isModelLoading.value = true;
 	let model = await getModel(clonedState.value.modelId);
 
 	if (model) {
@@ -388,7 +402,7 @@ async function fetchModel() {
 	}
 	card.value = model?.metadata?.card ?? null;
 	selectedModel.value = model;
-	loadingModel.value = false;
+	isModelLoading.value = false;
 }
 
 function getEquations() {
@@ -465,7 +479,6 @@ watch(
 }
 
 .asset-panel {
-	padding-top: var(--gap-3);
 	border-width: 1px 1px 0 1px;
 	border-color: var(--surface-border-light);
 	border-style: solid;
@@ -498,7 +511,6 @@ watch(
 
 .header-group {
 	display: flex;
-	padding-right: var(--gap-2);
 	flex-direction: row;
 	align-items: center;
 	justify-content: space-between;

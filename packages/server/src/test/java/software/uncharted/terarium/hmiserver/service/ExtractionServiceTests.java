@@ -135,8 +135,8 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
-	public void cosmosPdfExtraction() throws Exception {
-		final ClassPathResource resource = new ClassPathResource("knowledge/paper.pdf");
+	public void pdfExtraction() throws Exception {
+		final ClassPathResource resource = new ClassPathResource("knowledge/Bertozzi2020.pdf");
 		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
 
 		final HttpEntity pdfFileEntity = new ByteArrayEntity(content, ContentType.create("application/pdf"));
@@ -153,5 +153,7 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 		documentAsset = extractionService
 			.extractPDFAndApplyToDocument(documentAsset.getId(), null, ASSUME_WRITE_PERMISSION)
 			.get();
+
+		log.info("" + documentAsset.getExtractions());
 	}
 }
