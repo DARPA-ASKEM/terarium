@@ -542,7 +542,7 @@ ul {
 h5 {
 	display: flex;
 	align-items: center;
-	gap: var(--gap-xsmall);
+	gap: var(--gap-1);
 	font-weight: var(--font-weight);
 }
 
@@ -567,7 +567,7 @@ header {
 
 	& > ul {
 		height: 85%;
-		padding: var(--gap-xsmall) 0 var(--gap-xsmall) var(--gap-small);
+		padding: var(--gap-1) 0 var(--gap-1) var(--gap-small);
 	}
 }
 

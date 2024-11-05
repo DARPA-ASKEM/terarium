@@ -310,7 +310,7 @@ function onDeleteRequested(msgId: string) {
 		padding: 0rem 0 0.625rem 2.25rem;
 	}
 	li {
-		margin-bottom: var(--gap-xsmall);
+		margin-bottom: var(--gap-1);
 		padding-left: 2.25rem;
 	}
 	li::first-letter {

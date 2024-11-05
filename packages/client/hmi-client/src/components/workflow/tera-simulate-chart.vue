@@ -296,7 +296,7 @@ onMounted(() => {
 .custom-chip {
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-bigger);
-	padding: var(--gap-xsmall) var(--gap);
+	padding: var(--gap-1) var(--gap);
 	color: var(--surface-0);
 }
 */

@@ -561,7 +561,7 @@ ul {
 	& > li {
 		display: flex;
 		flex-direction: column;
-		gap: var(--gap-xsmall);
+		gap: var(--gap-1);
 
 		& > span {
 			width: fit-content;
@@ -619,7 +619,7 @@ ul {
 }
 
 .legend-square {
-	padding: var(--gap-xsmall) var(--gap);
+	padding: var(--gap-1) var(--gap);
 	background-color: var(--surface-0);
 	border: 1px solid var(--surface-border);
 	font-family: 'Times New Roman', Times, serif;
