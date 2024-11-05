@@ -510,10 +510,6 @@ header > section {
 	gap: 0.5rem;
 }
 
-.ace-editor {
-	border-top: 1px solid var(--surface-border-light);
-}
-
 .dynamic {
 	position: absolute;
 	background-color: var(--surface-highlight);

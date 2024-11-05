@@ -2,8 +2,10 @@ package software.uncharted.terarium.hmiserver.models.simulationservice.parts;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
@@ -28,13 +30,15 @@ public class OptimizeInterventions {
 	@JsonAlias("start_time")
 	private List<Integer> startTime;
 
-	@TSOptional
 	@JsonAlias("objective_function_option")
-	private List<String> objectiveFunctionOption;
+	private String objectiveFunctionOption;
 
 	@TSOptional
 	@JsonAlias("initial_guess")
 	private List<Double> initialGuess;
+
+	@JsonAlias("relative_importance")
+	private Double relativeImportance;
 
 	@Override
 	public String toString() {

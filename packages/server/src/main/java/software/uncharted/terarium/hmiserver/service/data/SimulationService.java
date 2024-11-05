@@ -1,11 +1,13 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.entity.ContentType;
@@ -14,8 +16,10 @@ import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.uncharted.terarium.hmiserver.configuration.Config;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.FileExport;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationUpdate;
 import software.uncharted.terarium.hmiserver.repository.data.SimulationRepository;
@@ -29,6 +33,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulation, SimulationRepository> {
 
 	private final SimulationUpdateRepository simulationUpdateRepository;
+	private final DatasetService datasetService;
 
 	/**
 	 * Constructor for SimulationService
@@ -45,10 +50,12 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 		final ProjectAssetService projectAssetService,
 		final SimulationRepository repository,
 		final S3ClientService s3ClientService,
-		final SimulationUpdateRepository simulationUpdateRepository
+		final SimulationUpdateRepository simulationUpdateRepository,
+		final DatasetService datasetService
 	) {
 		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService, Simulation.class);
 		this.simulationUpdateRepository = simulationUpdateRepository;
+		this.datasetService = datasetService;
 	}
 
 	@Override
@@ -79,6 +86,56 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 		repository.save(simulation);
 
 		return created;
+	}
+
+	public Dataset createDatasetFromSimulation(
+		final UUID simId,
+		final String datasetName,
+		final UUID projectId,
+		final boolean addToProject,
+		final Schema.Permission permission
+	) {
+		try {
+			final Optional<Simulation> sim = this.getAsset(simId, permission);
+			final Optional<Project> project = projectService.getProject(projectId);
+			if (sim.isEmpty()) {
+				throw new IllegalArgumentException("Simulation not found");
+			}
+
+			if (!project.isPresent() && addToProject) {
+				throw new IllegalArgumentException("Project not found");
+			}
+
+			Dataset dataset = datasetService.createAsset(new Dataset(), projectId, permission);
+			dataset.setName(datasetName);
+			dataset.setDescription(sim.get().getDescription());
+			dataset.setMetadata(objectMapper.convertValue(Map.of("simulationId", simId.toString()), JsonNode.class));
+			dataset.setFileNames(sim.get().getResultFiles());
+			dataset.setDataSourceDate(sim.get().getCompletedTime());
+			dataset.setColumns(new ArrayList<>());
+
+			// Attach the user to the dataset
+			if (sim.get().getUserId() != null) {
+				dataset.setUserId(sim.get().getUserId());
+			}
+
+			// Duplicate the simulation results to a new dataset
+			this.copySimulationResultToDataset(sim.get(), dataset);
+
+			// Set column names:
+			dataset = datasetService.extractColumnsFromFiles(dataset);
+			datasetService.updateAsset(dataset, projectId, permission);
+
+			// Add dataset to project
+			if (addToProject) {
+				projectAssetService.createProjectAsset(project.get(), AssetType.DATASET, dataset, permission);
+			}
+
+			return dataset;
+		} catch (final Exception e) {
+			log.error("Failed to create dataset from simulation", e);
+			throw new IllegalArgumentException("Failed to create dataset from simulation");
+		}
 	}
 
 	@Observed(name = "function_profile")

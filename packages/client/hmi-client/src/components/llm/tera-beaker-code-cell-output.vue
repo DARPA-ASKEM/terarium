@@ -1,14 +1,16 @@
 <template>
-	<div ref="outputAreaRef" />
+	<div :class="{ isPreview: featureConfig?.isPreview }" ref="outputAreaRef" />
 </template>
 
 <script setup lang="ts">
 import { JupyterMessage, renderMime } from '@/services/jupyter';
 import { computed, onMounted, ref, watch } from 'vue';
 import { OutputArea, OutputAreaModel } from '@jupyterlab/outputarea';
+import { FeatureConfig } from '@/types/common';
 
 const props = defineProps<{
 	jupyterMessage: JupyterMessage;
+	featureConfig?: FeatureConfig;
 }>();
 
 const outputAreaRef = ref<HTMLDivElement | null>(null);
@@ -23,6 +25,10 @@ const renderOutputs = (outputs) => {
 	});
 
 	if (outputAreaRef.value) {
+		const imgElement = outputArea.node.querySelector('img');
+		if (imgElement) {
+			imgElement.draggable = false;
+		}
 		outputAreaRef.value.replaceChildren(outputArea.node);
 	}
 };
@@ -58,17 +64,26 @@ const messageType = computed(() => props.jupyterMessage.header.msg_type);
 </script>
 
 <style scoped>
-:deep(.lm-Widget.p-Widget.jp-OutputPrompt.jp-OutputArea-prompt) {
-	color: var(--text-color);
-	margin-right: var(--gap-5);
-}
-:deep(.lm-Widget.p-Widget.lm-Panel.p-Panel.jp-OutputArea-child) {
-	margin-bottom: var(--gap-2);
-}
-/* hack to add "Out" in front of outputs */
-:deep(.lm-Widget.p-Widget.jp-OutputPrompt.jp-OutputArea-prompt):before {
-	content: 'Out ';
-	font-family: 'Menlo', 'Consolas', 'DejaVu Sans Mono', monospace;
-	color: var(--text-color);
+div {
+	&.isPreview {
+		&:deep(.lm-Widget.p-Widget.jp-OutputPrompt.jp-OutputArea-prompt) {
+			display: none;
+		}
+	}
+
+	&:not(.isPreview) {
+		&:deep(.lm-Widget.p-Widget.jp-OutputPrompt.jp-OutputArea-prompt) {
+			color: var(--text-color);
+			margin-right: var(--gap-5);
+		}
+		&:deep(.lm-Widget.p-Widget.lm-Panel.p-Panel.jp-OutputArea-child) {
+			margin-bottom: var(--gap-2);
+		}
+		&:deep(.lm-Widget.p-Widget.jp-OutputPrompt.jp-OutputArea-prompt):before {
+			content: 'Out ';
+			font-family: 'Menlo', 'Consolas', 'DejaVu Sans Mono', monospace;
+			color: var(--text-color);
+		}
+	}
 }
 </style>

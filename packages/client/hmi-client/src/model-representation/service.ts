@@ -1,14 +1,15 @@
+// TODO: it might be best to move all these to getters and setters related to the model to services/model since these all seem to be split up at the moment
 import _, { isEmpty } from 'lodash';
-import { runDagreLayout } from '@/services/graph';
+import { runDagreLayout, rerouteEdges } from '@/services/graph';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri';
-import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
 import type { Initial, Model, ModelParameter, State, RegNetVertex, Transition, Rate } from '@/types/Types';
 import { getModelType } from '@/services/model';
 import { AMRSchemaNames } from '@/types/common';
 import { parseCurie } from '@/services/concept';
+import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
 import { NestedPetrinetRenderer } from './petrinet/nested-petrinet-renderer';
-import { isStratifiedModel, getContextKeys, collapseTemplates } from './mira/mira';
+import { isStratifiedModel, getContext, collapseTemplates } from './mira/mira';
 import { extractTemplateMatrix } from './mira/mira-util';
 
 export const getVariable = (miraModel: MiraModel, variableName: string) => {
@@ -37,13 +38,6 @@ export const getModelRenderer = (
 	useNestedRenderer: boolean
 ): PetrinetRenderer | NestedPetrinetRenderer => {
 	const isStratified = isStratifiedModel(miraModel);
-	// Debug start
-	// console.group('mmt info');
-	// console.log('# templates: ', miraModel.templates.length);
-	// console.log('# parameters: ', Object.keys(miraModel.parameters).length);
-	// console.log('stratified model: ', isStratified);
-	// console.groupEnd();
-	// Debug end
 
 	if (useNestedRenderer && isStratified) {
 		// FIXME: Testing, move to mira service
@@ -63,7 +57,7 @@ export const getModelRenderer = (
 				processedSet.add(conceptName);
 			});
 		});
-		const dims = getContextKeys(miraModel);
+		const dims = getContext(miraModel).keys;
 		dims.unshift('base');
 
 		const { matrixMap } = collapseTemplates(miraModel);
@@ -73,9 +67,9 @@ export const getModelRenderer = (
 		});
 
 		const nestedMap = extractNestedStratas(conceptData, dims);
-		return new NestedPetrinetRenderer({
+		const nestedRenderer = new NestedPetrinetRenderer({
 			el: graphElement,
-			useAStarRouting: false,
+			edgeReroutingFn: rerouteEdges,
 			useStableZoomPan: true,
 			zoomModifier: 'ctrlKey',
 			zoomRange: [0.1, 30],
@@ -84,11 +78,12 @@ export const getModelRenderer = (
 			nestedMap,
 			transitionMatrices: transitionMatrixMap
 		});
+		return nestedRenderer;
 	}
 
 	return new PetrinetRenderer({
 		el: graphElement,
-		useAStarRouting: false,
+		edgeReroutingFn: rerouteEdges,
 		useStableZoomPan: true,
 		zoomModifier: 'ctrlKey',
 		runLayout: runDagreLayout,

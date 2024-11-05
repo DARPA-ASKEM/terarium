@@ -8,7 +8,7 @@
 		@after-hide="onAfterHide"
 		:style="{ width: '35rem' }"
 	>
-		<section class="container">
+		<section class="mr-2">
 			<Dropdown
 				v-model="selectedUser"
 				:options="usersMenu"
@@ -252,20 +252,16 @@ watch(
 </script>
 
 <style scoped>
-.container {
-	margin-right: 0.5rem;
-}
-
 section {
-	padding-top: 0.5rem;
+	padding-top: var(--gap-2);
 }
 
 section > section {
-	padding-top: 1rem;
+	padding-top: var(--gap-4);
 }
 
 h6 {
-	margin-bottom: 0.5rem;
+	margin-bottom: var(--gap-2);
 }
 
 .accessibility {
@@ -281,13 +277,13 @@ h6 {
 li {
 	list-style: none;
 	display: flex;
-	gap: 0.5rem;
+	gap: var(--gap-2);
 }
 
 .general-access-option {
 	display: flex;
 	align-items: center;
-	gap: 0.5rem;
+	gap: var(--gap-2);
 }
 
 .caption {
@@ -296,6 +292,6 @@ li {
 }
 
 .p-dropdown {
-	margin-bottom: 0.5rem;
+	margin-bottom: var(--gap-2);
 }
 </style>

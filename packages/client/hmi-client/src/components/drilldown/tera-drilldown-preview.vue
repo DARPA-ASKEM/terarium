@@ -18,10 +18,7 @@ import { useSlots } from 'vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
 defineProps<{
-	title?: string;
-	canSaveAsset?: boolean;
 	isLoading?: boolean;
-	hideHeader?: boolean;
 }>();
 
 const slots = useSlots();
@@ -33,7 +30,6 @@ const slots = useSlots();
 	flex-direction: column;
 	gap: var(--gap-1);
 	flex-grow: 1;
-	padding: var(--gap);
 	overflow: hidden;
 }
 
@@ -46,6 +42,7 @@ header {
 
 .content-container > main {
 	overflow-y: auto;
+	padding: var(--gap-4);
 	flex-grow: 1;
 }
 

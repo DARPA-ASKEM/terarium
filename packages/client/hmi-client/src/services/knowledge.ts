@@ -1,11 +1,12 @@
 import API from '@/api/api';
-import { extractionStatusUpdateHandler, subscribe } from '@/services/ClientEventService';
-import type { Code, Dataset, DocumentAsset, Model } from '@/types/Types';
-import { ClientEventType } from '@/types/Types';
-import { logger } from '@/utils/logger';
 import { AxiosResponse } from 'axios';
+import { extractionStatusUpdateHandler, subscribe } from '@/services/ClientEventService';
+import { type Dataset, type DocumentAsset, type Model, ClientEventType } from '@/types/Types';
+import { logger } from '@/utils/logger';
+import { isEmpty } from 'lodash';
 
-/** Define the request type
+/**
+ * Define the request type
  * @param equations string[] - list of LaTeX or mathml strings representing a model
  * @param framework string= - the framework to use for the extraction, default to 'petrinet'
  * @param modelId string= - the model id to use for the extraction
@@ -39,86 +40,30 @@ export const equationsToAMR = async (request: EquationsToAMRRequest): Promise<st
 	return null;
 };
 
-/**
- * Given a dataset, enrich its metadata
- * Returns a runId used to poll for result
- */
-export const profileDataset = async (datasetId: Dataset['id'], documentId: DocumentAsset['id'] = '') => {
-	let response: any;
-	if (documentId) {
-		response = await API.post(`/knowledge/profile-dataset/${datasetId}?document-id=${documentId}`);
-	} else {
-		response = await API.post(`/knowledge/profile-dataset/${datasetId}`);
-	}
-	return response.data.id;
+/** Given a dataset, enrich its metadata */
+export const enrichDataset = async (datasetId: Dataset['id'], documentId: DocumentAsset['id'] = ''): Promise<void> => {
+	let url = `/knowledge/profile-dataset/${datasetId}`;
+	if (!isEmpty(documentId)) url += `?document-id=${documentId}`;
+	await API.post(url);
 };
 
 /** Extract text and artifacts from a PDF document */
 export const extractPDF = async (documentId: DocumentAsset['id']) => {
-	console.group('PDF COSMOS Extraction');
 	if (documentId) {
 		const response = await API.post(`/knowledge/pdf-extractions?document-id=${documentId}`);
 		if (response?.status === 202) {
 			await subscribe(ClientEventType.Extraction, extractionStatusUpdateHandler);
-		} else {
-			console.debug('Failed — ', response);
 		}
-	} else {
-		console.debug('Failed — No documentId provided for pdf extraction.');
 	}
-	console.groupEnd();
 };
 
 /** Extract variables from a text document */
 export const extractVariables = async (documentId: DocumentAsset['id'], modelIds: Array<Model['id']>) => {
-	console.group('SKEMA Variable extraction');
 	if (documentId) {
 		const url = `/knowledge/variable-extractions?document-id=${documentId}&model-ids=${modelIds}`;
 		const response = await API.post(url);
 		if (response?.status === 202) {
 			await subscribe(ClientEventType.Extraction, extractionStatusUpdateHandler);
-		} else {
-			console.debug('Failed — ', response);
 		}
-	} else {
-		console.debug('Failed — No documentId provided for variable extraction.');
 	}
-	console.groupEnd();
 };
-
-export async function codeToAMR(
-	codeId: string,
-	name: string = '',
-	description: string = '',
-	dynamicsOnly: boolean = false,
-	llmAssisted: boolean = false
-): Promise<Model | null> {
-	const response = await API.post(
-		`/knowledge/code-to-amr?code-id=${codeId}&name=${name}&description=${description}&dynamics-only=${dynamicsOnly}&llm-assisted=${llmAssisted}`
-	);
-	if (response?.status === 200) {
-		return response.data;
-	}
-	logger.error(`Code to AMR request failed`, { toastTitle: 'Error' });
-	return null;
-}
-
-export async function codeBlocksToAmr(code: Code, file: File): Promise<Model | null> {
-	const formData = new FormData();
-	const blob = new Blob([JSON.stringify(code)], {
-		type: 'application/json'
-	});
-	formData.append('code', blob);
-	formData.append('file', file);
-	const response = await API.post(`/knowledge/code-blocks-to-model`, formData, {
-		headers: {
-			Accept: 'application/json',
-			'Content-Type': 'multipart/form-data'
-		}
-	});
-	if (response?.status === 200) {
-		return response.data;
-	}
-	logger.error(`Code to AMR request failed`, { toastTitle: 'Error' });
-	return null;
-}

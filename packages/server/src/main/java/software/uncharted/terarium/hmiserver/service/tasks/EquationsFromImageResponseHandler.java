@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.Data;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractedDocumentPage;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
@@ -24,7 +26,7 @@ import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 @Slf4j
 public class EquationsFromImageResponseHandler extends TaskResponseHandler {
 
-	public static final String NAME = "gollm_task:equations_from_image";
+	public static final String NAME = "gollm:equations_from_image";
 
 	private final ObjectMapper objectMapper;
 	private final DocumentAssetService documentService;
@@ -86,11 +88,18 @@ public class EquationsFromImageResponseHandler extends TaskResponseHandler {
 
 			// get the existing equations and add the new ones
 			final ArrayNode existingEquations = (ArrayNode) document.getMetadata().get("equations");
-			for (final JsonNode equation : equations.response.get("equations")) {
-				existingEquations.add(equation);
-			}
-
+			existingEquations.add(equations.response.get("equations"));
 			document.getMetadata().put("equations", existingEquations);
+
+			// add to the extractions field
+			final List<JsonNode> newEquations = new ArrayList<>();
+			for (final JsonNode node : equations.response.get("equations")) {
+				newEquations.add(node);
+			}
+			final ExtractedDocumentPage newPage = new ExtractedDocumentPage()
+				.setPageNumber(document.getExtractions().size() + 1)
+				.setEquations(newEquations);
+			document.getExtractions().add(newPage);
 
 			documentService.updateAsset(document, props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER).orElseThrow();
 

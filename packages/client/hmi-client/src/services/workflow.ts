@@ -22,6 +22,7 @@ import {
 	WorkflowTransformations,
 	Transform
 } from '@/types/workflow';
+import { useProjects } from '@/composables/project';
 
 /**
  * A wrapper class around the workflow data struture to make it easier
@@ -676,6 +677,20 @@ export function getPortLabel({ label, type, isOptional }: WorkflowPort) {
 	return portLabel;
 }
 
+export function getOutputLabel(outputs: WorkflowOutput<any>[], id: string) {
+	const selectedOutput = outputs.find((output) => output.id === id);
+	if (!selectedOutput) return '';
+
+	// multiple output types, choose first name to use as label arbitrarily
+	if (selectedOutput.type.includes('|')) {
+		const outputType = selectedOutput.type.split('|');
+		return useProjects().getAssetName(selectedOutput.value?.[0]?.[outputType?.[0]]) || selectedOutput.label;
+	}
+
+	// default use single output type
+	return useProjects().getAssetName(selectedOutput.value?.[0]) || selectedOutput.label;
+}
+
 // Checker for resource-operators (e.g. model, dataset) that automatically create an output
 // without needing to "run" the operator because we can drag them onto the canvas
 export function canPropagateResource(outputs: WorkflowOutput<any>[]) {
@@ -796,10 +811,16 @@ export function getActiveOutput(node: WorkflowNode<any>) {
 	return node.outputs.find((o) => o.id === node.active);
 }
 
-export function updateOutputPort(node: WorkflowNode<any>, updatedOutputPort: WorkflowOutput<any>) {
-	let outputPort = node.outputs.find((port) => port.id === updatedOutputPort.id);
-	if (!outputPort) return;
-	outputPort = Object.assign(outputPort, updatedOutputPort);
+/**
+ * Update the output of a node referenced by the output id
+ * @param node
+ * @param updatedOutput
+ */
+export function updateOutput(node: WorkflowNode<any>, updatedOutput: WorkflowOutput<any>) {
+	const foundOutput = node.outputs.find((output) => output.id === updatedOutput.id);
+	if (foundOutput) {
+		Object.assign(foundOutput, updatedOutput);
+	}
 }
 
 // Check if the current-state matches that of the output-state.

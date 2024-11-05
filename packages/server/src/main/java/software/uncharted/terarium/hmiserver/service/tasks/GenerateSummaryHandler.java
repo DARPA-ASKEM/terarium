@@ -15,7 +15,7 @@ import software.uncharted.terarium.hmiserver.service.data.SummaryService;
 @Slf4j
 public class GenerateSummaryHandler extends TaskResponseHandler {
 
-	public static final String NAME = "gollm_task:generate_summary";
+	public static final String NAME = "gollm:generate_summary";
 
 	private final SummaryService summaryService;
 

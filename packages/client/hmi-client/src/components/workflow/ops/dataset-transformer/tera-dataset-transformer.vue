@@ -13,7 +13,7 @@
 					class="5"
 					:disabled="!kernelState"
 				/>
-				<Button label="Save for reuse" severity="secondary" outlined :disabled="!kernelState" @click="onSave" />
+				<Button label="Save for reuse" severity="secondary" outlined :disabled="disableSaveForReuse" @click="onSave" />
 			</div>
 		</template>
 		<div class="background">
@@ -27,6 +27,7 @@
 					:notebook-session="notebookSession"
 					:programming-language="node.state.programmingLanguage"
 					@update-language="(lang) => onUpdateLanguage(lang)"
+					@update-selected-outputs="(outputs) => onUpdateSelectedOutputs(outputs)"
 					@update-kernel-state="updateKernelState"
 					:kernelState="kernelState"
 					:selected-dataset="selectedDataset"
@@ -39,7 +40,7 @@
 <script setup lang="ts">
 // Proxy to use tera-dataset via a workflow context
 
-import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
+import { OperatorStatus, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import TeraDatasetJupyterPanel from '@/components/dataset/tera-dataset-jupyter-panel.vue';
 import { computed, onMounted, ref } from 'vue';
 import { createNotebookSession, getNotebookSessionById } from '@/services/notebook-session';
@@ -51,6 +52,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { useProjects } from '@/composables/project';
+import { INotebookItem } from '@/services/jupyter';
 import { DatasetTransformerState } from './dataset-transformer-operation';
 
 const props = defineProps<{
@@ -69,15 +71,19 @@ const assets = computed(() =>
 			name: useProjects().getAssetName(inputNode.value![0])
 		}))
 );
+const disableSaveForReuse = computed(
+	() => !kernelState.value || props.node.status === OperatorStatus.INVALID || props.node.status === OperatorStatus.ERROR
+);
 
 const kernelState = ref(null);
 const jupyterPanel = ref();
 const selectedDataset = ref<string | null>(null);
 const updateKernelState = (newKernelState: any) => {
 	kernelState.value = newKernelState;
-	// Default the dropdown to the first dataframe
+	// Default the dropdown to the last dataframe
 	if (!selectedDataset.value) {
-		selectedDataset.value = Object.keys(newKernelState)[0];
+		const keys = Object.keys(newKernelState);
+		selectedDataset.value = keys[keys.length - 1];
 	}
 };
 
@@ -108,6 +114,12 @@ onMounted(async () => {
 const onUpdateLanguage = (language: string) => {
 	const state = cloneDeep(props.node.state);
 	state.programmingLanguage = language;
+	emit('update-state', state);
+};
+
+const onUpdateSelectedOutputs = (outputs: INotebookItem[]) => {
+	const state = cloneDeep(props.node.state);
+	state.selectedOutputs = outputs;
 	emit('update-state', state);
 };
 

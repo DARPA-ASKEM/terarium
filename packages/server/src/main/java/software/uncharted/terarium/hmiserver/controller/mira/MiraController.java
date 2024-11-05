@@ -47,6 +47,7 @@ import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationServ
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.tasks.AMRToMMTResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.GenerateModelLatexResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.LatexToSymPyResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.MdlToStockflowResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.SbmlToPetrinetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.StellaToStockflowResponseHandler;
@@ -130,7 +131,7 @@ public class MiraController {
 		req.setType(TaskType.MIRA);
 
 		try {
-			req.setInput(objectMapper.treeToValue(model, Model.class).serializeWithoutTerariumFields().getBytes());
+			req.setInput(objectMapper.treeToValue(model, Model.class).serializeWithoutTerariumFields(null, null).getBytes());
 		} catch (final Exception e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
@@ -185,18 +186,78 @@ public class MiraController {
 		}
 	)
 	public ResponseEntity<JsonNode> generateModelLatex(@RequestBody final JsonNode model) {
-		//create request:
+		// create request:
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.MIRA);
 
 		try {
-			req.setInput(objectMapper.treeToValue(model, Model.class).serializeWithoutTerariumFields().getBytes());
+			req.setInput(objectMapper.treeToValue(model, Model.class).serializeWithoutTerariumFields(null, null).getBytes());
 		} catch (final Exception e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 		}
 
 		req.setScript(GenerateModelLatexResponseHandler.NAME);
+		req.setUserId(currentUserService.get().getId());
+
+		// send the request
+		final TaskResponse resp;
+		try {
+			resp = taskService.runTaskSync(req);
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.json-processing"));
+		} catch (final TimeoutException e) {
+			log.warn("Timeout while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.mira.timeout"));
+		} catch (final InterruptedException e) {
+			log.warn("Interrupted while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.mira.interrupted"));
+		} catch (final ExecutionException e) {
+			log.error("Error while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.execution-failure"));
+		}
+
+		final JsonNode latexResponse;
+		try {
+			latexResponse = objectMapper.readValue(resp.getOutput(), JsonNode.class);
+		} catch (final IOException e) {
+			log.error("Unable to deserialize output", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
+		}
+
+		return ResponseEntity.ok().body(latexResponse);
+	}
+
+	@PostMapping("/latex-to-sympy")
+	@Secured(Roles.USER)
+	@Operation(summary = "Generate SymPy from a latex")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Dispatched successfully",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class)
+				)
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+		}
+	)
+	public ResponseEntity<JsonNode> latexToSymPy(@RequestBody final String latex) {
+		// create request:
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.MIRA);
+
+		try {
+			req.setInput(latex.getBytes());
+		} catch (final Exception e) {
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+		}
+
+		req.setScript(LatexToSymPyResponseHandler.NAME);
 		req.setUserId(currentUserService.get().getId());
 
 		// send the request
@@ -359,7 +420,7 @@ public class MiraController {
 		}
 	)
 	public ResponseEntity<Void> cancelTask(@PathVariable("task-id") final UUID taskId) {
-		taskService.cancelTask(taskId);
+		taskService.cancelTask(TaskType.MIRA, taskId);
 		return ResponseEntity.ok().build();
 	}
 

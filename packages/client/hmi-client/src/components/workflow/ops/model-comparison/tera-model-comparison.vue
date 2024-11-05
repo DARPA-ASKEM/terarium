@@ -39,16 +39,27 @@
 							<tr v-for="field in fields" :key="field">
 								<td class="field">{{ formatField(field) }}</td>
 								<td v-for="(card, index) in modelCardsToCompare" :key="index">
-									<template v-if="!card?.[field]"> Not found </template>
+									<template v-if="!card?.[field]"> N/A </template>
+									<template v-else-if="Array.isArray(card[field])">
+										<ul class="bullet-list">
+											<li class="bullet-list-item" v-for="(item, k) in card[field]" :key="k">{{ item }}</li>
+										</ul>
+									</template>
 									<template v-else-if="typeof card[field] === 'object'">
-										<template v-for="(value, j) in Object.values(card[field])">
-											<template v-if="Array.isArray(value)">
-												{{ value.join(', ') }}
+										<template v-for="(entry, j) in Object.entries(card[field])" :key="j">
+											<div class="label">{{ formatField(entry[0]) }}:</div>
+											<template v-if="Array.isArray(entry[1])">
+												<ul class="bullet-list">
+													<li class="bullet-list-item" v-for="(item, k) in entry[1]" :key="k">{{ item }}</li>
+												</ul>
 											</template>
-											<div class="value" v-else :key="j">{{ value }}</div>
+											<div class="value" v-else>{{ entry[1] }}</div>
+											<template v-if="j < Object.entries(card[field]).length - 1">
+												<br />
+											</template>
 										</template>
 									</template>
-									<template v-else-if="Array.isArray(card[field])">{{ card[field].join(', ') }}</template>
+									<template v-else>{{ card[field] }}</template>
 								</td>
 							</tr>
 						</tbody>
@@ -93,7 +104,7 @@
 				/>
 				<ul>
 					<li v-for="(image, index) in structuralComparisons" :key="index">
-						<label>Comparison {{ index + 1 }}</label>
+						<label>Comparison {{ index + 1 }}: {{ getTitle(index) }}</label>
 						<Image id="img" :src="image" :alt="`Structural comparison ${index + 1}`" preview />
 					</li>
 				</ul>
@@ -125,7 +136,7 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty, cloneDeep } from 'lodash';
+import { cloneDeep, isEmpty } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import markdownit from 'markdown-it';
 import Accordion from 'primevue/accordion';
@@ -133,11 +144,11 @@ import AccordionTab from 'primevue/accordiontab';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
 import { compareModels } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
 import { getModel } from '@/services/model';
-import { ClientEvent, ClientEventType, TaskResponse, TaskStatus, type Model } from '@/types/Types';
+import { ClientEvent, ClientEventType, type Model, TaskResponse, TaskStatus } from '@/types/Types';
 import { OperatorStatus, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
@@ -150,7 +161,7 @@ import Image from 'primevue/image';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
 import { saveCodeToState } from '@/services/notebook';
-import { getImages, addImage, deleteImages } from '@/services/image';
+import { addImage, deleteImages, getImages } from '@/services/image';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import { b64DecodeUnicode } from '@/utils/binary';
 import { useClientEvent } from '@/composables/useClientEvent';
@@ -187,6 +198,7 @@ const code = ref(props.node.state.notebookHistory?.[0]?.code ?? '');
 const llmThoughts = ref<any[]>([]);
 const isKernelReady = ref(false);
 const contextLanguage = ref<string>('python3');
+const comparisonPairs = ref(props.node.state.comparisonPairs);
 
 const initializeAceEditor = (editorInstance: any) => {
 	editor = editorInstance;
@@ -207,6 +219,18 @@ function updateImagesState(operationType: string, newImageId: string | null = nu
 	emit('update-state', state);
 }
 
+function updateComparisonTitlesState(operationType: string, pairs: string[][] | null = null) {
+	const state = cloneDeep(props.node.state);
+	if (operationType === 'add' && pairs !== null) state.comparisonPairs = pairs;
+	else if (operationType === 'clear') state.comparisonPairs = [];
+	emit('update-state', state);
+}
+
+function getTitle(index: number) {
+	if (!comparisonPairs.value[index]) return '';
+	return `${comparisonPairs.value[index][0].replaceAll('_', ' ')} VS ${comparisonPairs.value[index][1].replaceAll('_', ' ')}`;
+}
+
 function updateCodeState() {
 	const state = saveCodeToState(props.node, code.value, true);
 	emit('update-state', state);
@@ -215,6 +239,7 @@ function updateCodeState() {
 function emptyImages() {
 	deleteImages(props.node.state.comparisonImageIds); // Delete images from S3
 	updateImagesState('clear'); // Then their ids can be removed from the state
+	updateComparisonTitlesState('clear');
 	structuralComparisons.value = [];
 }
 
@@ -236,6 +261,17 @@ function runCode() {
 	isLoadingStructuralComparisons.value = true;
 	emptyImages();
 	updateCodeState();
+
+	kernelManager.sendMessage('get_comparison_pairs_request', {}).register('any_get_comparison_pairs_reply', (data) => {
+		const pairs = data.msg.content?.return?.comparison_pairs;
+		const state = cloneDeep(props.node.state);
+		if (pairs.length) {
+			updateComparisonTitlesState('add', pairs);
+			comparisonPairs.value = pairs;
+		} else if (state.comparisonPairs.length) {
+			comparisonPairs.value = state.comparisonPairs;
+		}
+	});
 
 	kernelManager
 		.sendMessage('execute_request', messageContent)
@@ -287,9 +323,139 @@ async function buildJupyterContext() {
 	}
 }
 
+function hasNonEmptyValue(obj) {
+	return Object.values(obj).some((value) => !isEmpty(value));
+}
+
 // Generate once the comparison task has been completed
 function generateOverview(output: string) {
-	overview.value = markdownit().render(JSON.parse(b64DecodeUnicode(output)).response);
+	const comparison = JSON.parse(b64DecodeUnicode(output)).response;
+	let markdown = '';
+	const mdi = markdownit();
+	markdown += mdi.render(`# ${comparison.title}`);
+	if (comparison.summary) {
+		markdown += mdi.render(`## Summary`);
+		markdown += mdi.render(`${comparison.summary}`);
+	}
+	if (comparison.structuralComparison && !isEmpty(comparison.structuralComparison)) {
+		markdown += mdi.render(`## Structural Comparisons`);
+		if (hasNonEmptyValue(comparison.structuralComparison.states)) {
+			markdown += mdi.render(`### States:`);
+			let paragraph = '';
+			if (comparison.structuralComparison.states.common) {
+				paragraph += `${comparison.structuralComparison.states.common} `;
+			}
+			if (comparison.structuralComparison.states.unique) {
+				paragraph += `${comparison.structuralComparison.states.unique} `;
+			}
+			if (comparison.structuralComparison.states.conclusion) {
+				paragraph += `${comparison.structuralComparison.states.conclusion}`;
+			}
+			markdown += mdi.render(paragraph);
+		}
+		if (hasNonEmptyValue(comparison.structuralComparison.parameters)) {
+			markdown += mdi.render(`### Parameters:`);
+			let paragraph = '';
+			if (comparison.structuralComparison.parameters.common) {
+				paragraph += `${comparison.structuralComparison.parameters.common} `;
+			}
+			if (comparison.structuralComparison.parameters.unique) {
+				paragraph += `${comparison.structuralComparison.parameters.unique} `;
+			}
+			if (comparison.structuralComparison.parameters.conclusion) {
+				paragraph += `${comparison.structuralComparison.parameters.conclusion}`;
+			}
+			markdown += mdi.render(paragraph);
+		}
+		if (hasNonEmptyValue(comparison.structuralComparison.transitions)) {
+			markdown += mdi.render(`### Transitions:`);
+			let paragraph = '';
+			if (comparison.structuralComparison.transitions.common) {
+				paragraph += `${comparison.structuralComparison.transitions.common} `;
+			}
+			if (comparison.structuralComparison.transitions.unique) {
+				paragraph += `${comparison.structuralComparison.transitions.unique} `;
+			}
+			if (comparison.structuralComparison.transitions.conclusion) {
+				paragraph += `${comparison.structuralComparison.transitions.conclusion}`;
+			}
+			markdown += mdi.render(paragraph);
+		}
+		if (hasNonEmptyValue(comparison.structuralComparison.observables)) {
+			markdown += mdi.render(`### Observables:`);
+			let paragraph = '';
+			if (comparison.structuralComparison.observables.common) {
+				paragraph += `${comparison.structuralComparison.observables.common} `;
+			}
+			if (comparison.structuralComparison.observables.unique) {
+				paragraph += ` ${comparison.structuralComparison.observables.unique} `;
+			}
+			if (comparison.structuralComparison.observables.conclusion) {
+				paragraph += ` ${comparison.structuralComparison.observables.conclusion}`;
+			}
+			markdown += mdi.render(paragraph);
+		}
+	}
+	if (comparison.metadataComparison && !isEmpty(comparison.metadataComparison)) {
+		markdown += mdi.render(`## Metadata Comparisons`);
+		if (hasNonEmptyValue(comparison.metadataComparison.details)) {
+			markdown += mdi.render(`### Details:`);
+			let paragraph = '';
+			if (comparison.metadataComparison.details.common) {
+				paragraph += `${comparison.metadataComparison.details.common} `;
+			}
+			if (comparison.metadataComparison.details.unique) {
+				paragraph += `${comparison.metadataComparison.details.unique} `;
+			}
+			if (comparison.metadataComparison.details.conclusion) {
+				paragraph += `${comparison.metadataComparison.details.conclusion}`;
+			}
+			markdown += mdi.render(paragraph);
+		}
+		if (hasNonEmptyValue(comparison.metadataComparison.uses)) {
+			markdown += mdi.render(`### Uses:`);
+			let paragraph = '';
+			if (comparison.metadataComparison.uses.common) {
+				paragraph += `${comparison.metadataComparison.uses.common} `;
+			}
+			if (comparison.metadataComparison.uses.unique) {
+				paragraph += `${comparison.metadataComparison.uses.unique} `;
+			}
+			if (comparison.metadataComparison.uses.conclusion) {
+				paragraph += `${comparison.metadataComparison.uses.conclusion}`;
+			}
+			markdown += mdi.render(paragraph);
+		}
+		if (hasNonEmptyValue(comparison.metadataComparison.biasRisksLimitations)) {
+			markdown += mdi.render(`### Bias, Risks, and Limitations:`);
+			let paragraph = '';
+			if (comparison.metadataComparison.biasRisksLimitations.common) {
+				paragraph += `${comparison.metadataComparison.biasRisksLimitations.common} `;
+			}
+			if (comparison.metadataComparison.biasRisksLimitations.unique) {
+				paragraph += `${comparison.metadataComparison.biasRisksLimitations.unique} `;
+			}
+			if (comparison.metadataComparison.biasRisksLimitations.conclusion) {
+				paragraph += `${comparison.metadataComparison.biasRisksLimitations.conclusion}`;
+			}
+			markdown += mdi.render(paragraph);
+		}
+		if (hasNonEmptyValue(comparison.metadataComparison.testing)) {
+			markdown += mdi.render(`### Testing and Validation:`);
+			let paragraph = '';
+			if (comparison.metadataComparison.testing.common) {
+				paragraph += `${comparison.metadataComparison.testing.common} `;
+			}
+			if (comparison.metadataComparison.testing.unique) {
+				paragraph += `${comparison.metadataComparison.testing.unique} `;
+			}
+			if (comparison.metadataComparison.testing.conclusion) {
+				paragraph += `${comparison.metadataComparison.testing.conclusion}`;
+			}
+			markdown += mdi.render(paragraph);
+		}
+	}
+	overview.value = markdown;
 	emit('update-status', OperatorStatus.DEFAULT); // This is a custom way of granting a default status to the operator, since it has no output
 }
 
@@ -483,5 +649,19 @@ ul {
 }
 .legend-line.green::before {
 	background-color: lightgreen;
+}
+
+.label {
+	font-weight: var(--font-weight-semibold);
+}
+
+.bullet-list {
+	display: block !important;
+	list-style: disc outside;
+	margin-left: var(--gap-4);
+	padding-left: var(--gap-4);
+}
+.bullet-list-item {
+	display: list-item !important;
 }
 </style>

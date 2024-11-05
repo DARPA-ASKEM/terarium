@@ -25,7 +25,7 @@ import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 @Slf4j
 public class ConfigureModelFromDocumentResponseHandler extends TaskResponseHandler {
 
-	public static final String NAME = "gollm_task:configure_model_from_document";
+	public static final String NAME = "gollm:configure_model_from_document";
 
 	private final ObjectMapper objectMapper;
 	private final ModelConfigurationService modelConfigurationService;
@@ -83,6 +83,9 @@ public class ConfigureModelFromDocumentResponseHandler extends TaskResponseHandl
 					ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
 				);
 				final String source = document.map(TerariumAsset::getName).orElse(null);
+
+				// Set the extraction document id
+				configuration.setExtractionDocumentId(props.documentId);
 
 				// Update the source of the model-configuration with the Document name
 				if (source != null) {

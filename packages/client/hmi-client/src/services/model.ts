@@ -1,17 +1,27 @@
 import API from '@/api/api';
 import { useProjects } from '@/composables/project';
+import type { MMT } from '@/model-representation/mira/mira-common';
 import * as EventService from '@/services/event';
 import type { Initial, InterventionPolicy, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import { Artifact, EventType } from '@/types/Types';
-import { AMRSchemaNames } from '@/types/common';
+import { AMRSchemaNames, CalendarDateType } from '@/types/common';
 import { fileToJson } from '@/utils/file';
 import { isEmpty } from 'lodash';
-import type { MMT } from '@/model-representation/mira/mira-common';
 import { Ref } from 'vue';
+import { DateOptions } from './charts';
 
 export async function createModel(model: Model): Promise<Model | null> {
 	delete model.id;
 	const response = await API.post(`/models`, model);
+	return response?.data ?? null;
+}
+
+export async function createModelFromOld(oldModel: Model, newModel: Model): Promise<Model | null> {
+	delete newModel.id;
+	const response = await API.post(`/models/new-from-old`, {
+		newModel,
+		oldModel
+	});
 	return response?.data ?? null;
 }
 
@@ -38,8 +48,10 @@ export async function createModelAndModelConfig(file: File, progress?: Ref<numbe
  * Get Model from the data service
  * @return Model|null - the model, or null if none returned by API
  */
-export async function getModel(modelId: string): Promise<Model | null> {
-	const response = await API.get(`/models/${modelId}`);
+export async function getModel(modelId: string, projectId?: string): Promise<Model | null> {
+	const response = await API.get(`/models/${modelId}`, {
+		params: { 'project-id': projectId }
+	});
 	return response?.data ?? null;
 }
 
@@ -71,13 +83,14 @@ export async function getBulkModels(modelIDs: string[]) {
 }
 
 // Note: will not work with decapodes
-export async function getMMT(model: Model) {
+export async function getMMT(model: Model): Promise<MMT | null> {
 	const response = await API.post('/mira/amr-to-mmt', model);
-
-	const miraModel = response?.data?.response;
-	if (!miraModel) throw new Error(`Failed to convert model ${model.id}`);
-
-	return (response?.data?.response as MMT) ?? null;
+	const mmt = response?.data?.response;
+	if (!mmt) {
+		console.error(`Failed to convert model ${model.id}`);
+		return null;
+	}
+	return mmt as MMT;
 }
 
 export async function updateModel(model: Model) {
@@ -234,4 +247,43 @@ export function stringToLatexExpression(expression: string): string {
 	// Detect and convert fractions a/b to \frac{a}{b}
 	latexExpression = latexExpression.replace(/([a-zA-Z0-9]+)\/([a-zA-Z0-9]+)/g, '\\frac{$1}{$2}');
 	return latexExpression;
+}
+
+export function getTimeUnits(model: Model): CalendarDateType {
+	return model?.semantics?.ode?.time?.units?.expression || '';
+}
+
+export function getCalendarSettingsFromModel(model: Model): { view: CalendarDateType; format: string } {
+	const units = model?.semantics?.ode?.time?.units?.expression;
+	const view = units;
+	let format;
+
+	switch (units) {
+		case CalendarDateType.MONTH:
+			format = 'MM, yy';
+			break;
+		case CalendarDateType.YEAR:
+			format = 'yy';
+			break;
+		case CalendarDateType.DATE:
+		default:
+			format = 'MM dd, yy';
+			break;
+	}
+
+	return { view, format };
+}
+
+export function getVegaDateOptions(
+	model: Model | null,
+	modelConfiguration: ModelConfiguration | null
+): DateOptions | undefined {
+	let dateOptions;
+	if (model && modelConfiguration?.temporalContext) {
+		dateOptions = {
+			dateFormat: getTimeUnits(model),
+			startDate: new Date(modelConfiguration.temporalContext)
+		};
+	}
+	return dateOptions;
 }

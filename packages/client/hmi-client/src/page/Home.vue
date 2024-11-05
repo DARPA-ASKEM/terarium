@@ -97,10 +97,7 @@
 						</section>
 						<section class="projects">
 							<div v-if="!isLoadingProjects && isEmpty(searchedAndFilterProjects)" class="no-projects">
-								<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200"></Vue3Lottie>
-								<!--
-								<img src="@assets/svg/seed.svg" alt="" />
-							-->
+								<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200" />
 								<template v-if="tab.title === TabTitles.MyProjects">
 									<p class="mt-4">
 										Get started by creating a
@@ -161,7 +158,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
@@ -232,7 +229,11 @@ const viewOptions = ref([
 const myFilteredSortedProjects = computed(() => {
 	const projects = useProjects().allProjects.value;
 	if (!projects) return [];
-	const myProjects = projects.filter(({ userPermission }) => ['creator', 'writer'].includes(userPermission ?? ''));
+	const myProjects = projects.filter(
+		({ userPermission, publicProject }) =>
+			// I can edit the project, or I can view the project and it's not public
+			['creator', 'writer'].includes(userPermission ?? '') || (userPermission === 'reader' && !publicProject)
+	);
 	return filterAndSortProjects(myProjects);
 });
 
@@ -329,8 +330,6 @@ const isLoadingProjects = computed(() => !useProjects().allProjects.value);
 function openProject(projectId: string) {
 	router.push({ name: RouteName.Project, params: { projectId } });
 }
-
-onMounted(() => useProjects().getAll());
 
 watch(
 	() => cloningProjects.value,

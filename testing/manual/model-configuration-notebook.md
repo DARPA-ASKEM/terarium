@@ -20,8 +20,7 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 1. Open the `Configure model` operator
 2. Select the notebook view
 3. At the top, use the AI assistant to ask a question: `What are the model parameters?`
-4. Ensure that code is generated (a `get_params`) function.
-5. Execute the code and validate the output prints the various parameters.
+4. Ensure that you can see the model parameters listed in the right panel
 6. Ask the AI: `Update R0 to 0.2`
 7. Run the code
 

@@ -50,9 +50,6 @@ export type DataConfig = {
 export type RowColConfig = {
 	borderEnabled: boolean;
 	borderWidth: number;
-	// TODO
-	// labelFormatterFn: (val :any, idx: number) => string
-	// labelAltFn?: (val: any, idx: number) => string,
 };
 
 export type VisConfig = {

@@ -195,8 +195,16 @@ export interface DocumentAsset extends TerariumAsset {
     source?: string;
     text?: string;
     grounding?: Grounding;
+    /**
+     * @deprecated
+     */
     documentAbstract?: string;
+    /**
+     * @deprecated
+     */
     assets?: DocumentExtraction[];
+    extractions?: ExtractedDocumentPage[];
+    thumbnail?: any;
 }
 
 export interface ExternalPublication extends TerariumAsset {
@@ -220,12 +228,6 @@ export interface ModelDescription {
     userId?: string;
 }
 
-export interface ModelFramework extends TerariumAssetThatSupportsAdditionalProperties {
-    name: string;
-    version: string;
-    semantics: string;
-}
-
 export interface InferredParameterSemantic extends Semantic {
     referenceId: string;
     distribution: ModelDistribution;
@@ -241,6 +243,9 @@ export interface InitialSemantic extends Semantic {
 export interface ModelConfiguration extends TerariumAsset {
     modelId: string;
     simulationId?: string;
+    temporalContext?: Date;
+    extractionDocumentId?: string;
+    extractionPage?: number;
     observableSemanticList: ObservableSemantic[];
     parameterSemanticList: ParameterSemantic[];
     initialSemanticList: InitialSemantic[];
@@ -269,22 +274,16 @@ export interface Author {
     name: string;
 }
 
-export interface State {
-    id: string;
-    name?: string;
+export interface State extends GroundedSemantic {
     description?: string;
-    grounding?: ModelGrounding;
     units?: ModelUnit;
 }
 
-export interface Transition {
-    id: string;
+export interface Transition extends GroundedSemantic {
     input: string[];
     output: string[];
-    name?: string;
     description?: string;
     expression?: string;
-    grounding?: ModelGrounding;
     properties?: Properties;
 }
 
@@ -367,12 +366,9 @@ export interface RegNetParameter {
     distribution?: ModelDistribution;
 }
 
-export interface RegNetVertex {
-    id: string;
-    name: string;
+export interface RegNetVertex extends GroundedSemantic {
     sign: boolean;
     initial?: any;
-    grounding?: ModelGrounding;
     rate_constant?: any;
 }
 
@@ -445,6 +441,7 @@ export interface FunmanConfig {
     use_compartmental_constraints?: boolean;
     normalize?: boolean;
     normalization_constant?: number;
+    verbosity?: number;
 }
 
 export interface FunmanInterval {
@@ -571,7 +568,7 @@ export interface EnsembleSimulationCiemssRequest {
 export interface OptimizeRequestCiemss {
     modelConfigId: string;
     timespan: TimeSpan;
-    optimizeInterventions?: OptimizeInterventions;
+    optimizeInterventions: OptimizeInterventions[];
     fixedInterventions?: Intervention[];
     loggingStepSize?: number;
     qoi: OptimizeQoi[];
@@ -599,6 +596,8 @@ export interface DynamicIntervention {
 
 export interface Intervention {
     name: string;
+    extractionDocumentId?: string;
+    extractionPage?: number;
     staticInterventions: StaticIntervention[];
     dynamicInterventions: DynamicIntervention[];
 }
@@ -643,8 +642,9 @@ export interface OptimizeInterventions {
     paramNames: string[];
     paramValues?: number[];
     startTime?: number[];
-    objectiveFunctionOption?: string[];
+    objectiveFunctionOption: string;
     initialGuess?: number[];
+    relativeImportance: number;
 }
 
 export interface OptimizeQoi {
@@ -741,6 +741,13 @@ export interface DocumentExtraction {
     metadata: { [index: string]: any };
 }
 
+export interface ExtractedDocumentPage {
+    pageNumber: number;
+    text: string;
+    tables: any[];
+    equations: any[];
+}
+
 export interface ModelHeader {
     name: string;
     description: string;
@@ -791,6 +798,12 @@ export interface ModelGrounding {
 export interface ModelUnit {
     expression: string;
     expression_mathml: string;
+}
+
+export interface GroundedSemantic {
+    id: string;
+    name?: string;
+    grounding?: ModelGrounding;
 }
 
 export interface Properties {
@@ -882,34 +895,30 @@ export interface Authority {
 
 export interface Rate {
     target: string;
+    description?: string;
     expression: string;
     expression_mathml?: string;
 }
 
 export interface Initial {
     target: string;
+    description?: string;
     expression: string;
     expression_mathml: string;
 }
 
-export interface ModelParameter {
-    id: string;
-    name?: string;
+export interface ModelParameter extends GroundedSemantic {
     description?: string;
     value?: number;
-    grounding?: ModelGrounding;
     distribution?: ModelDistribution;
     units?: ModelUnit;
 }
 
-export interface Observable {
-    id: string;
-    name?: string;
+export interface Observable extends GroundedSemantic {
     states?: string[];
     description?: string;
     units?: ModelUnit;
     expression?: string;
-    grounding?: ModelGrounding;
     expression_mathml?: string;
 }
 
@@ -1054,7 +1063,9 @@ export enum ClientEventType {
     Notification = "NOTIFICATION",
     SimulationNotification = "SIMULATION_NOTIFICATION",
     SimulationPyciemss = "SIMULATION_PYCIEMSS",
-    TaskEnrichAmr = "TASK_ENRICH_AMR",
+    TaskExtractTextPdf = "TASK_EXTRACT_TEXT_PDF",
+    TaskExtractTablePdf = "TASK_EXTRACT_TABLE_PDF",
+    TaskExtractEquationPdf = "TASK_EXTRACT_EQUATION_PDF",
     TaskFunmanValidation = "TASK_FUNMAN_VALIDATION",
     TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
     TaskGollmConfigureModelFromDataset = "TASK_GOLLM_CONFIGURE_MODEL_FROM_DATASET",
@@ -1062,6 +1073,7 @@ export enum ClientEventType {
     TaskGollmEnrichAmr = "TASK_GOLLM_ENRICH_AMR",
     TaskGollmEquationsFromImage = "TASK_GOLLM_EQUATIONS_FROM_IMAGE",
     TaskGollmGenerateSummary = "TASK_GOLLM_GENERATE_SUMMARY",
+    TaskGollmInterventionsFromDocument = "TASK_GOLLM_INTERVENTIONS_FROM_DOCUMENT",
     TaskGollmModelCard = "TASK_GOLLM_MODEL_CARD",
     TaskMiraAmrToMmt = "TASK_MIRA_AMR_TO_MMT",
     TaskMiraGenerateModelLatex = "TASK_MIRA_GENERATE_MODEL_LATEX",

@@ -1,7 +1,7 @@
 import json
 import sys
-from gollm.entities import InterventionsFromDocument
-from gollm.openai.tool_utils import interventions_from_document
+from entities import InterventionsFromDocument
+from gollm_openai.tool_utils import interventions_from_document
 
 from taskrunner import TaskRunnerInterface
 

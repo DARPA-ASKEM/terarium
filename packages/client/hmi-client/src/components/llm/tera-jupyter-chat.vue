@@ -8,6 +8,10 @@
 			tabindex="0"
 			class="message-container"
 		>
+			<div v-if="showRerunMessage" class="rerun-message" @click="hideRerunMessage">
+				Re-run all the cells to restore the context if you need to make any changes or use them downstream.
+				<Button class="close-mask" icon="pi pi-times" text rounded aria-label="Close" />
+			</div>
 			<tera-jupyter-response
 				@keydown.stop
 				v-for="(msg, index) in filteredNotebookItems"
@@ -27,6 +31,7 @@
 				@re-run-prompt="handleRerunPrompt"
 				@edit-prompt="reRunPrompt"
 				@click="selectedCellId = msg.query_id"
+				@on-selected="handleUpdateSelectedOutput(msg.query_id)"
 			/>
 
 			<!-- Add a cell Button -->
@@ -60,6 +65,7 @@ const selectedCellId = ref();
 const filteredNotebookItems = computed<INotebookItem[]>(() =>
 	notebookItems.value.filter((item) => !isEmpty(item.messages))
 );
+const showRerunMessage = ref(true);
 
 const emit = defineEmits([
 	'new-message',
@@ -68,7 +74,8 @@ const emit = defineEmits([
 	'new-dataset-saved',
 	'new-model-saved',
 	'update-kernel-state',
-	'update-language'
+	'update-language',
+	'update-selected-outputs'
 ]);
 
 const props = defineProps<{
@@ -107,6 +114,7 @@ const onKeyPress = (event) => {
 		case 'a':
 			addCodeCell(false, false);
 			nextTick(() => {
+				// notebookCells.vla
 				scrollToCell(notebookCells.value.find((item) => item.$props.msg.query_id === selectedCellId.value));
 			});
 			break;
@@ -205,6 +213,18 @@ const handleRerunPrompt = (queryId: string) => {
 	reRunPrompt(queryId);
 };
 
+const handleUpdateSelectedOutput = (queryId: string) => {
+	notebookItems.value = notebookItems.value.map((item) => {
+		if (item.query_id === queryId) {
+			item.selected = !item.selected;
+		} else {
+			// for now we have radio button-like behaviour, so we can only select one output at a time
+			item.selected = false;
+		}
+		return item;
+	});
+};
+
 const reRunPrompt = (queryId: string, query?: string) => {
 	const kernel = props.jupyterSession.session?.kernel as IKernelConnection;
 	if (!kernel) return;
@@ -222,6 +242,7 @@ const reRunPrompt = (queryId: string, query?: string) => {
 	isExecutingCode.value = true;
 };
 
+// here
 const addCodeCell = (isDefaultCell: boolean = false, isNextCell: boolean = true) => {
 	const msgId = createMessageId('code_cell');
 	const date = new Date().toISOString();
@@ -269,7 +290,8 @@ const updateNotebookCells = (message, isNextCell: boolean = true) => {
 			resultingCsv: null,
 			executions: [],
 			// auto run the code block when we send an llm request
-			autoRun: message.header.msg_type === 'llm_request'
+			autoRun: message.header.msg_type === 'llm_request',
+			selected: false
 		};
 
 		const index = notebookItems.value.findIndex((item) => item.query_id === selectedCellId.value);
@@ -388,6 +410,10 @@ const clearOutputs = () => {
 	}
 };
 
+const hideRerunMessage = () => {
+	showRerunMessage.value = false;
+};
+
 onUnmounted(() => {
 	messagesHistory.value = [];
 });
@@ -422,6 +448,8 @@ watch(
 	() => notebookItems.value,
 	async () => {
 		if (props.notebookSession) {
+			const selectedOutputs = notebookItems.value.filter((item) => item.selected);
+			emit('update-selected-outputs', selectedOutputs);
 			await updateNotebookSession({
 				id: props.notebookSession.id,
 				description: props.notebookSession.description,
@@ -435,8 +463,9 @@ watch(
 defineExpose({
 	clearHistory,
 	clearOutputs,
-	submitQuery,
-	addCodeCell
+	submitQuery
+
+	// here
 });
 </script>
 
@@ -471,5 +500,12 @@ section {
 .message-container {
 	height: calc(100% - 3.5rem);
 	overflow-y: auto;
+}
+.rerun-message {
+	display: flex;
+	background-color: var(--surface-warning);
+	justify-content: space-between;
+	align-items: center;
+	padding: var(--gap-2);
 }
 </style>

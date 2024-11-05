@@ -51,6 +51,11 @@
 					<ContextMenu ref="addComponentMenu" :model="contextMenuItems" style="white-space: nowrap; width: auto" />
 				</div>
 			</div>
+			<div class="warning-banner" :class="{ visible: warningBanner && hasInvalidNodes }">
+				A yellow header indicates that the node is stale due to upstream changes. Rerun to update.
+				<a class="ml-auto mr-4 underline" @click="dontShowAgain">Don't show this again</a
+				><Button class="mr-2" icon="pi pi-times" text @click="warningBanner = false" />
+			</div>
 		</template>
 		<!-- data -->
 		<template #data>
@@ -153,17 +158,17 @@
 	<Teleport to="body">
 		<component
 			v-if="dialogIsOpened && currentActiveNode"
+			:downstream-operators-nav="downstreamOperatorsNav"
 			:is="registry.getDrilldown(currentActiveNode.operationType)"
 			:node="currentActiveNode"
-			:upstream-operators-nav="upstreamOperatorsNav"
-			:downstream-operators-nav="downstreamOperatorsNav"
 			:spawn-animation="drilldownSpawnAnimation"
+			:upstream-operators-nav="upstreamOperatorsNav"
+			@close="addOperatorToRoute(null)"
 			@append-output="(event: any) => appendOutput(currentActiveNode, event)"
+			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
+			@update-output="(event: any) => updateOutput(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			@update-status="(status: OperatorStatus) => updateWorkflowNodeStatus(currentActiveNode, status)"
-			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
-			@close="addOperatorToRoute(null)"
-			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
 		/>
 	</Teleport>
 </template>
@@ -263,6 +268,8 @@ const drilldownSpawnAnimation = ref<'left' | 'right' | 'scale'>('scale');
 
 const route = useRoute();
 const router = useRouter();
+
+const warningBanner = ref(true);
 
 const newNodePosition = { x: 0, y: 0 };
 let canvasTransform = { x: 0, y: 0, k: 1 };
@@ -409,9 +416,9 @@ function selectOutput(node: WorkflowNode<any> | null, selectedOutputId: string) 
 	saveWorkflowHandler();
 }
 
-function updateOutputPort(node: WorkflowNode<any> | null, workflowOutput: WorkflowOutput<any>) {
+function updateOutput(node: WorkflowNode<any> | null, workflowOutput: WorkflowOutput<any>) {
 	if (!node) return;
-	workflowService.updateOutputPort(node, workflowOutput);
+	workflowService.updateOutput(node, workflowOutput);
 	saveWorkflowHandler();
 }
 
@@ -780,7 +787,7 @@ const dist2 = (a: Position, b: Position) => (a.x - b.x) * (a.x - b.x) + (a.y - b
 const threshold2 = 5.0 * 5.0;
 
 /*
- * Relink edges that have become detatched
+ * Relink edges that have become detached
  *
  * [output-port](edge source => edge target)[input-port]
  *
@@ -943,6 +950,13 @@ const handleDrilldown = () => {
 	}
 };
 
+const hasInvalidNodes = computed(() => wf.value.getNodes().some((node) => node.status === OperatorStatus.INVALID));
+
+const dontShowAgain = () => {
+	localStorage.setItem('warningBannerDismissed', 'true');
+	warningBanner.value = false;
+};
+
 watch(
 	() => props.assetId,
 	async (newId, oldId) => {
@@ -981,6 +995,11 @@ watch(
 );
 
 onMounted(() => {
+	// check if the user has dismissed the warning banner
+	if (localStorage.getItem('warningBannerDismissed') === 'true') {
+		warningBanner.value = false;
+	}
+
 	document.addEventListener('mousemove', mouseUpdate);
 	window.addEventListener('beforeunload', unloadCheck);
 	saveTimer = setInterval(async () => {
@@ -1008,14 +1027,14 @@ onUnmounted(() => {
 
 <style scoped>
 .toolbar {
+	align-items: center;
+	background-color: var(--surface-transparent);
+	border-bottom: 1px solid var(--surface-border-light);
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
-	align-items: center;
-	padding: 0.5rem 1rem;
-	border-bottom: 1px solid var(--surface-border-light);
+	padding: var(--gap-2) var(--gap-4);
 	z-index: 900;
-	background-color: var(--surface-transparent);
 }
 
 .glass {
@@ -1023,15 +1042,29 @@ onUnmounted(() => {
 }
 
 .button-group {
-	display: flex;
 	align-items: center;
+	display: flex;
 	flex-direction: row;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 }
 
 .rename-workflow {
+	align-items: center;
+	display: flex;
+	flex-wrap: nowrap;
+}
+
+.warning-banner {
+	width: 100%;
 	display: flex;
 	align-items: center;
-	flex-wrap: nowrap;
+	background-color: var(--surface-warning);
+	height: 0;
+	overflow: hidden;
+	padding-left: 1rem;
+	transition: height 0.5s ease-out;
+	&.visible {
+		height: 2rem;
+	}
 }
 </style>

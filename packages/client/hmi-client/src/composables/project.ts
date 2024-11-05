@@ -110,8 +110,7 @@ export function useProjects() {
 	 * @returns {ProjectAsset['assetName']}
 	 */
 	function getAssetName(assetId: ProjectAsset['assetId']): ProjectAsset['assetName'] {
-		const asset = findAsset(assetId);
-		return asset?.assetName ?? '';
+		return findAsset(assetId)?.assetName ?? '';
 	}
 
 	/**
@@ -150,22 +149,16 @@ export function useProjects() {
 	}
 
 	/**
-	 * Update a project. If updated project is the active project, refresh it.
-	 *
-	 * @param {Project} project Project to update.
-	 * @returns {Promise<string>} Id of the updated project.
+	 * Update a project. If the updated project is the active project, refresh it.
 	 */
 	async function update(project: Project) {
-		const updated = await ProjectService.update(project);
+		await ProjectService.update(project);
 		if (project.id === activeProjectId.value) {
 			setTimeout(async () => {
 				activeProject.value = await ProjectService.get(project.id);
 			}, 1000);
 		}
-		setTimeout(async () => {
-			getAll();
-		}, TIMEOUT_MS);
-		return updated;
+		setTimeout(getAll, TIMEOUT_MS);
 	}
 
 	/**
