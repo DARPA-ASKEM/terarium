@@ -1,8 +1,8 @@
 import { createForecastChart, AUTOSIZE } from '@/services/charts';
 import { getSimulation } from '@/services/models/simulation-service';
 
-export async function updateLossChartWithSimulation(calibrationId: string, size: { width: number; height: number }) {
-	if (!calibrationId) return null;
+export async function getLossValuesFromSimulation(calibrationId: string) {
+	if (!calibrationId) return [];
 	const simulationObj = await getSimulation(calibrationId);
 	if (simulationObj?.updates) {
 		const lossValues = simulationObj?.updates
@@ -11,9 +11,9 @@ export async function updateLossChartWithSimulation(calibrationId: string, size:
 				iter: i,
 				loss: d.data.loss
 			}));
-		return updateLossChartSpec(lossValues, size);
+		return lossValues;
 	}
-	return null;
+	return [];
 }
 
 export const updateLossChartSpec = (data: string | Record<string, any>[], size: { width: number; height: number }) =>

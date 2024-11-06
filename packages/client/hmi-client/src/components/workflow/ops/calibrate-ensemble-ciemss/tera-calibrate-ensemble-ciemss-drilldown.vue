@@ -230,7 +230,7 @@ import {
 	CalibrateEnsembleCiemssOperationState,
 	EnsembleCalibrateExtraCiemss
 } from './calibrate-ensemble-ciemss-operation';
-import { updateLossChartSpec, updateLossChartWithSimulation } from './calibrate-ensemble-util';
+import { updateLossChartSpec, getLossValuesFromSimulation } from './calibrate-ensemble-util';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
@@ -432,7 +432,8 @@ watch(
 			const state = props.node.state;
 			const output = await getRunResultCiemss(state.forecastRunId, 'result.csv');
 			runResults.value = output.runResults;
-			lossChartSpec.value = await updateLossChartWithSimulation(props.node.state.calibrationId, lossChartSize.value);
+			lossValues.value = await getLossValuesFromSimulation(props.node.state.calibrationId);
+			lossChartSpec.value = await updateLossChartSpec(lossValues.value, lossChartSize.value);
 		}
 	},
 	{ immediate: true }

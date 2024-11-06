@@ -16,7 +16,7 @@
 				@configuration-change="chartProxy.configurationChange(index, $event)"
 			/>
 		</template>
-		<vega-chart v-if="lossChartSpec" :are-embed-actions-visible="false" :visualization-spec="lossChartSpec" />
+		<vega-chart v-if="!_.isEmpty(lossValues)" :are-embed-actions-visible="false" :visualization-spec="lossChartSpec" />
 
 		<tera-progress-spinner
 			v-if="inProgressCalibrationId || inProgressForecastId"
@@ -58,7 +58,7 @@ import type { RunResults } from '@/types/SimulateConfig';
 import { getDataset } from '@/services/dataset';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import type { CalibrateEnsembleCiemssOperationState } from './calibrate-ensemble-ciemss-operation';
-import { updateLossChartSpec, updateLossChartWithSimulation } from './calibrate-ensemble-util';
+import { updateLossChartSpec, getLossValuesFromSimulation } from './calibrate-ensemble-util';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
@@ -126,7 +126,8 @@ const pollResult = async (runId: string) => {
 
 // Init loss chart
 onMounted(async () => {
-	lossChartSpec.value = await updateLossChartWithSimulation(props.node.state.calibrationId, lossChartSize);
+	lossValues = await getLossValuesFromSimulation(props.node.state.calibrationId);
+	lossChartSpec.value = await updateLossChartSpec(lossValues, lossChartSize);
 });
 
 watch(
