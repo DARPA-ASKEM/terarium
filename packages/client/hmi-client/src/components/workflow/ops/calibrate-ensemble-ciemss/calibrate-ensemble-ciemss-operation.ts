@@ -19,6 +19,7 @@ export interface CalibrateEnsembleCiemssOperationState extends BaseState {
 	inProgressForecastId: string;
 	calibrationId: string;
 	forecastRunId: string;
+	currentProgress: number;
 }
 
 export const CalibrateEnsembleCiemssOperation: Operation = {
@@ -47,7 +48,8 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 			inProgressCalibrationId: '',
 			inProgressForecastId: '',
 			calibrationId: '',
-			forecastRunId: ''
+			forecastRunId: '',
+			currentProgress: 0
 		};
 		return init;
 	}

@@ -473,7 +473,6 @@ export interface DKG {
     curie: string;
     name: string;
     description: string;
-    link: string;
 }
 
 export interface EntitySimilarityResult {
@@ -802,8 +801,8 @@ export interface ModelUnit {
 
 export interface GroundedSemantic {
     id: string;
-    name?: string;
     grounding?: ModelGrounding;
+    name?: string;
 }
 
 export interface Properties {
