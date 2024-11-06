@@ -71,7 +71,7 @@ const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const areInputsFilled = computed(() => props.node.inputs[0].value && props.node.inputs[1].value);
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
 const inProgressForecastId = computed(() => props.node.state.inProgressForecastId);
-let lossValues: { [key: string]: number }[] = [];
+const lossValues = ref<{ [key: string]: number }[]>([]);
 const lossChartSpec = ref();
 const lossChartSize = { width: 180, height: 120 };
 
@@ -87,13 +87,13 @@ const pollResult = async (runId: string) => {
 		.setPollAction(async () => pollAction(runId))
 		.setProgressAction((data: Simulation) => {
 			if (data?.updates?.length) {
-				lossValues = data?.updates
+				lossValues.value = data?.updates
 					.sort((a, b) => a.data.progress - b.data.progress)
 					.map((d, i) => ({
 						iter: i,
 						loss: d.data.loss
 					}));
-				lossChartSpec.value = updateLossChartSpec(lossValues, lossChartSize);
+				lossChartSpec.value = updateLossChartSpec(lossValues.value, lossChartSize);
 			}
 			if (runId === props.node.state.inProgressCalibrationId && data.updates.length > 0) {
 				const checkpoint = _.last(data.updates);
@@ -126,8 +126,8 @@ const pollResult = async (runId: string) => {
 
 // Init loss chart
 onMounted(async () => {
-	lossValues = await getLossValuesFromSimulation(props.node.state.calibrationId);
-	lossChartSpec.value = await updateLossChartSpec(lossValues, lossChartSize);
+	lossValues.value = await getLossValuesFromSimulation(props.node.state.calibrationId);
+	lossChartSpec.value = await updateLossChartSpec(lossValues.value, lossChartSize);
 });
 
 watch(

@@ -139,8 +139,8 @@
 				<!-- Loss chart -->
 				<div ref="lossChartContainer">
 					<vega-chart
-						expandable
 						v-if="!_.isEmpty(lossValues)"
+						expandable
 						ref="lossChartRef"
 						:are-embed-actions-visible="true"
 						:visualization-spec="lossChartSpec"
