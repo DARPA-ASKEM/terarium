@@ -196,8 +196,7 @@ import {
 	getRunResultCiemss,
 	makeEnsembleCiemssCalibration,
 	unsubscribeToUpdateMessages,
-	subscribeToUpdateMessages,
-	getSimulation
+	subscribeToUpdateMessages
 } from '@/services/models/simulation-service';
 import Button from 'primevue/button';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
@@ -231,7 +230,7 @@ import {
 	CalibrateEnsembleCiemssOperationState,
 	EnsembleCalibrateExtraCiemss
 } from './calibrate-ensemble-ciemss-operation';
-import { updateLossChartSpec } from './calibrate-ensemble-util';
+import { updateLossChartSpec, updateLossChartWithSimulation } from './calibrate-ensemble-util';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
@@ -433,16 +432,7 @@ watch(
 			const state = props.node.state;
 			const output = await getRunResultCiemss(state.forecastRunId, 'result.csv');
 			runResults.value = output.runResults;
-			const simulationObj = await getSimulation(props.node.state.calibrationId);
-			if (simulationObj?.updates) {
-				lossValues.value = simulationObj?.updates
-					.sort((a, b) => a.data.progress - b.data.progress)
-					.map((d, i) => ({
-						iter: i,
-						loss: d.data.loss
-					}));
-				lossChartSpec.value = updateLossChartSpec(lossValues.value, lossChartSize.value);
-			}
+			lossChartSpec.value = await updateLossChartWithSimulation(props.node.state.calibrationId, lossChartSize.value);
 		}
 	},
 	{ immediate: true }

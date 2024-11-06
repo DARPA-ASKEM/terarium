@@ -45,8 +45,7 @@ import {
 	getRunResultCiemss,
 	pollAction,
 	getCalibrateBlobURL,
-	makeEnsembleCiemssSimulation,
-	getSimulation
+	makeEnsembleCiemssSimulation
 } from '@/services/models/simulation-service';
 import { setupCsvAsset } from '@/services/calibrate-workflow';
 import { chartActionsProxy, nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
@@ -59,7 +58,7 @@ import type { RunResults } from '@/types/SimulateConfig';
 import { getDataset } from '@/services/dataset';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import type { CalibrateEnsembleCiemssOperationState } from './calibrate-ensemble-ciemss-operation';
-import { updateLossChartSpec } from './calibrate-ensemble-util';
+import { updateLossChartSpec, updateLossChartWithSimulation } from './calibrate-ensemble-util';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
@@ -74,7 +73,7 @@ const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibr
 const inProgressForecastId = computed(() => props.node.state.inProgressForecastId);
 let lossValues: { [key: string]: number }[] = [];
 const lossChartSpec = ref();
-const chartSize = { width: 180, height: 120 };
+const lossChartSize = { width: 180, height: 120 };
 
 const chartProxy = chartActionsProxy(props.node, (state: CalibrateEnsembleCiemssOperationState) => {
 	emit('update-state', state);
@@ -94,7 +93,7 @@ const pollResult = async (runId: string) => {
 						iter: i,
 						loss: d.data.loss
 					}));
-				lossChartSpec.value = updateLossChartSpec(lossValues, chartSize);
+				lossChartSpec.value = updateLossChartSpec(lossValues, lossChartSize);
 			}
 			if (runId === props.node.state.inProgressCalibrationId && data.updates.length > 0) {
 				const checkpoint = _.first(data.updates);
@@ -125,23 +124,10 @@ const pollResult = async (runId: string) => {
 	return pollerResults;
 };
 
-async function updateLossChartWithSimulation() {
-	if (props.node.active) {
-		const simulationObj = await getSimulation(props.node.state.calibrationId);
-		if (simulationObj?.updates) {
-			lossValues = simulationObj?.updates
-				.sort((a, b) => a.data.progress - b.data.progress)
-				.map((d, i) => ({
-					iter: i,
-					loss: d.data.loss
-				}));
-			lossChartSpec.value = updateLossChartSpec(lossValues, chartSize);
-		}
-	}
-}
-
 // Init loss chart
-onMounted(async () => updateLossChartWithSimulation());
+onMounted(async () => {
+	lossChartSpec.value = await updateLossChartWithSimulation(props.node.state.calibrationId, lossChartSize);
+});
 
 watch(
 	() => props.node.state.inProgressCalibrationId,

@@ -1,4 +1,19 @@
 import { createForecastChart, AUTOSIZE } from '@/services/charts';
+import { getSimulation } from '@/services/models/simulation-service';
+
+export async function updateLossChartWithSimulation(calibrationId: string, size: { width: number; height: number }) {
+	const simulationObj = await getSimulation(calibrationId);
+	if (simulationObj?.updates) {
+		const lossValues = simulationObj?.updates
+			.sort((a, b) => a.data.progress - b.data.progress)
+			.map((d, i) => ({
+				iter: i,
+				loss: d.data.loss
+			}));
+		return updateLossChartSpec(lossValues, size);
+	}
+	return null;
+}
 
 export const updateLossChartSpec = (data: string | Record<string, any>[], size: { width: number; height: number }) =>
 	createForecastChart(
