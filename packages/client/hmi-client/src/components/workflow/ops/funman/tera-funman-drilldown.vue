@@ -301,6 +301,7 @@
 		:asset-type="AssetType.ModelConfiguration"
 		@close-modal="showSaveModal = false"
 		@on-save="onSaveForReuse"
+		@on-update="onSaveForReuse"
 	/>
 </template>
 

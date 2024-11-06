@@ -17,6 +17,7 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 2. Upload `Giordano2020 - SIDARTHE model of COVID-19 spread in Italy` and `Test SIR` into your project
 3. Drag and drop both models into your workflow
 4. Link both models to individual  _Configure Model_ operators
+5. Ensure that both configurations are the same scale. AKA both should have Susceptible and S = 1.
 6. Save each configuration by giving it a name and clicking `Run`
 
 ### 3. Ensemble Simulate Operator setup
