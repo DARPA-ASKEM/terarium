@@ -1,5 +1,6 @@
 <template>
 	<tera-drilldown
+		ref="drilldownRef"
 		v-bind="$attrs"
 		:node="node"
 		@update:selection="onSelection"
@@ -17,8 +18,8 @@
 				<div class="top-toolbar">
 					<p>Set your model checks and settings then click run.</p>
 					<div class="btn-group">
-						<Button label="Reset" outlined severity="secondary" />
-						<Button :loading="showSpinner" label="Run" icon="pi pi-play" @click="runMakeQuery" />
+						<Button label="Reset" outlined severity="secondary" disabled />
+						<Button :loading="showSpinner" label="Run" icon="pi pi-play" @click="run" />
 					</div>
 				</div>
 				<main>
@@ -129,14 +130,28 @@
 			</template>
 		</tera-slider-panel>
 		<tera-slider-panel
+			class="input-config"
 			:tabName="DrilldownTabs.Notebook"
 			v-model:is-open="isSliderOpen"
-			header="Raw output"
-			content-width="420px"
+			header="Raw request"
+			content-width="500px"
 		>
+			<template #header>
+				<div class="ml-auto flex gap-2">
+					<Button
+						outlined
+						severity="secondary"
+						label="Sync with Wizard"
+						icon="pi pi-refresh"
+						@click="syncNotebookWithWizard"
+					/>
+					<Button :loading="showSpinner" label="Run" icon="pi pi-play" @click="run" />
+				</div>
+			</template>
 			<template #content>
+				<span class="notebook-message">Edits here will not be reflected in the wizard.</span>
 				<v-ace-editor
-					v-model:value="notebookText"
+					v-model:value="rawRequest"
 					lang="json"
 					theme="chrome"
 					style="width: 100%; height: 100%; border-radius: 0"
@@ -161,69 +176,80 @@
 							<Button label="Save for reuse" outlined severity="secondary" @click="showSaveModal = true" />
 						</div>
 					</header>
-					<Accordion multiple :active-index="[0, 1, 2, 3]">
-						<AccordionTab header="Summary">
-							<span class="ml-4">Summary text</span>
-						</AccordionTab>
-						<AccordionTab>
-							<template #header> State variables<i class="pi pi-info-circle" /></template>
-							<span class="ml-4" v-if="isEmpty(processedFunmanResult.boxes)"> No boxes were generated. </span>
-							<template v-else-if="!isEmpty(selectedStateCharts)">
+					<template v-if="drilldownRef?.selectedTab === DrilldownTabs.Wizard">
+						<Accordion multiple :active-index="[0, 1, 2, 3]">
+							<AccordionTab header="Summary">
+								<span class="ml-4">Summary text</span>
+							</AccordionTab>
+							<AccordionTab>
+								<template #header> State variables<i class="pi pi-info-circle" /></template>
+								<span class="ml-4" v-if="isEmpty(processedFunmanResult.boxes)"> No boxes were generated. </span>
+								<template v-else-if="!isEmpty(selectedStateCharts)">
+									<vega-chart
+										v-for="(stateChart, index) in selectedStateCharts"
+										:key="index"
+										:visualization-spec="stateChart"
+										:are-embed-actions-visible="false"
+										expandable
+									/>
+								</template>
+								<span class="ml-4" v-else> To view state charts select some in the Output settings. </span>
+							</AccordionTab>
+							<AccordionTab>
+								<template #header>Parameters<i class="pi pi-info-circle" /></template>
+								<span class="ml-4" v-if="isEmpty(processedFunmanResult.boxes)"> No boxes were generated. </span>
 								<vega-chart
-									v-for="(stateChart, index) in selectedStateCharts"
-									:key="index"
-									:visualization-spec="stateChart"
+									v-else-if="!isEmpty(parameterCharts)"
+									:visualization-spec="parameterCharts"
 									:are-embed-actions-visible="false"
 									expandable
+									@chart-click="onParameterChartClick"
 								/>
-							</template>
-							<span class="ml-4" v-else> To view state charts select some in the Output settings. </span>
-						</AccordionTab>
-						<AccordionTab>
-							<template #header>Parameters<i class="pi pi-info-circle" /></template>
-							<span class="ml-4" v-if="isEmpty(processedFunmanResult.boxes)"> No boxes were generated. </span>
-							<vega-chart
-								v-else-if="!isEmpty(parameterCharts)"
-								:visualization-spec="parameterCharts"
-								:are-embed-actions-visible="false"
-								expandable
-								@chart-click="onParameterChartClick"
-							/>
-							<span class="ml-4" v-else> To view parameter charts select some in the Output settings. </span>
-						</AccordionTab>
-						<AccordionTab header="Diagram">
-							<tera-model-diagram v-if="model" :model="model" />
-						</AccordionTab>
-					</Accordion>
-					<template v-if="model && validatedModelConfiguration && configuredMmt">
-						<tera-initial-table
-							:model="model"
-							:model-configuration="validatedModelConfiguration"
-							:model-configurations="[]"
-							:mmt="configuredMmt"
-							:mmt-params="mmtParams"
-							:feature-config="{ isPreview: true }"
-						/>
-						<tera-parameter-table
-							:model="model"
-							:model-configuration="validatedModelConfiguration"
-							:model-configurations="[]"
-							:mmt="configuredMmt"
-							:mmt-params="mmtParams"
-							:feature-config="{ isPreview: true }"
-						/>
-						<Accordion :active-index="0" v-if="!isEmpty(calibratedConfigObservables)">
-							<AccordionTab v-if="!isEmpty(calibratedConfigObservables)" header="Observables">
-								<tera-observables
-									class="pl-4"
-									:model="model"
-									:mmt="configuredMmt"
-									:observables="calibratedConfigObservables"
-									:feature-config="{ isPreview: true }"
-								/>
+								<span class="ml-4" v-else> To view parameter charts select some in the Output settings. </span>
+							</AccordionTab>
+							<AccordionTab header="Diagram">
+								<tera-model-diagram v-if="model" :model="model" />
 							</AccordionTab>
 						</Accordion>
+						<template v-if="model && validatedModelConfiguration && configuredMmt">
+							<tera-initial-table
+								:model="model"
+								:model-configuration="validatedModelConfiguration"
+								:model-configurations="[]"
+								:mmt="configuredMmt"
+								:mmt-params="mmtParams"
+								:feature-config="{ isPreview: true }"
+							/>
+							<tera-parameter-table
+								:model="model"
+								:model-configuration="validatedModelConfiguration"
+								:model-configurations="[]"
+								:mmt="configuredMmt"
+								:mmt-params="mmtParams"
+								:feature-config="{ isPreview: true }"
+							/>
+							<Accordion :active-index="0" v-if="!isEmpty(calibratedConfigObservables)">
+								<AccordionTab v-if="!isEmpty(calibratedConfigObservables)" header="Observables">
+									<tera-observables
+										class="pl-4"
+										:model="model"
+										:mmt="configuredMmt"
+										:observables="calibratedConfigObservables"
+										:feature-config="{ isPreview: true }"
+									/>
+								</AccordionTab>
+							</Accordion>
+						</template>
 					</template>
+					<v-ace-editor
+						v-else-if="drilldownRef?.selectedTab === DrilldownTabs.Notebook"
+						v-model:value="rawResponse"
+						lang="json"
+						theme="chrome"
+						style="width: 100%; height: 100%; border-radius: 0"
+						class="ace-editor"
+						:options="{ showPrintMargin: false }"
+					/>
 				</template>
 				<tera-operator-placeholder v-else class="h-full" :node="node" />
 			</tera-drilldown-preview>
@@ -384,6 +410,8 @@ interface BasicKnobs {
 	compartmentalConstraint: CompartmentalConstraint;
 }
 
+const drilldownRef = ref();
+
 const knobs = ref<BasicKnobs>({
 	tolerance: 0,
 	currentTimespan: { start: 0, end: 0 },
@@ -429,10 +457,12 @@ const stepList = computed(() => {
 	return [start, ...Array.from({ length: steps - 1 }, (_, i) => (i + 1) * stepSize), end];
 });
 
-const runMakeQuery = async () => {
+const rawRequest = ref('');
+const rawResponse = ref('');
+
+const request = computed<FunmanPostQueriesRequest | null>(() => {
 	if (!configuredInputModel || !model.value?.id) {
-		toast.error('', 'No Model provided for request');
-		return;
+		return null;
 	}
 
 	const constraints = props.node.state.constraintGroups
@@ -491,7 +521,7 @@ const runMakeQuery = async () => {
 		})
 		.filter(Boolean); // Removes falsey values
 
-	const request: FunmanPostQueriesRequest = {
+	return {
 		model: configuredInputModel,
 		request: {
 			constraints,
@@ -513,18 +543,30 @@ const runMakeQuery = async () => {
 			}
 		}
 	};
+});
 
+async function run() {
+	const requestToUse =
+		drilldownRef.value?.selectedTab === DrilldownTabs.Wizard ? request.value : JSON.parse(rawRequest.value);
+
+	if (!requestToUse || !model.value?.id || !configuredInputModel) {
+		toast.error('', 'No Model provided for request');
+		return;
+	}
 	const response = await makeQueries(
-		request,
+		requestToUse,
 		model.value.id,
 		nodeOutputLabel(props.node, `Validated ${configuredInputModel.header.name} Result`)
 	);
-
 	// Setup the in-progress id
 	const state = cloneDeep(props.node.state);
 	state.inProgressId = response.id;
 	emit('update-state', state);
-};
+}
+
+function syncNotebookWithWizard() {
+	rawRequest.value = formatJSON(JSON.stringify(request.value));
+}
 
 const addConstraintForm = () => {
 	const state = cloneDeep(props.node.state);
@@ -644,6 +686,8 @@ const setRequestParameters = (modelParameters: ModelParameter[]) => {
 
 		return param;
 	});
+
+	syncNotebookWithWizard();
 };
 
 const onSelection = (id: string) => {
@@ -692,11 +736,10 @@ onMounted(async () => {
 	if (!response) return;
 	mmt = response.mmt;
 	mmtParams.value = response.template_params;
+
 	prepareOutput();
 });
 
-// Notebook
-const notebookText = ref('');
 /*
 // Output panel/settings //
 */
@@ -817,7 +860,7 @@ async function prepareOutput() {
 		logger.error('Failed to fetch funman result');
 		return;
 	}
-	notebookText.value = formatJSON(rawFunmanResult);
+	rawResponse.value = formatJSON(rawFunmanResult);
 	funmanResult = JSON.parse(rawFunmanResult);
 	constraintsResponse = funmanResult.request.constraints;
 
@@ -963,5 +1006,14 @@ ul {
 /* Override grid template so output expands when sidebar is closed */
 .overlay-container:deep(section.scale main) {
 	grid-template-columns: auto 1fr;
+}
+
+.input-config:deep(.content-wrapper) {
+	padding-bottom: 0;
+}
+
+.notebook-message {
+	padding-left: var(--gap-4);
+	font-size: var(--font-caption);
 }
 </style>
