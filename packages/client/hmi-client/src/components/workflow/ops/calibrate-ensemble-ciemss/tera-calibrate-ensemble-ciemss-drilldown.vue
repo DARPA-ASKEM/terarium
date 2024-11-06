@@ -212,7 +212,6 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
-import { createForecastChart, AUTOSIZE } from '@/services/charts';
 import { chartActionsProxy, drilldownChartSize, getTimespan, nodeMetadata } from '@/components/workflow/util';
 import type {
 	CsvAsset,
@@ -232,6 +231,7 @@ import {
 	CalibrateEnsembleCiemssOperationState,
 	EnsembleCalibrateExtraCiemss
 } from './calibrate-ensemble-ciemss-operation';
+import { updateLossChartSpec } from './calibrate-ensemble-util';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
@@ -329,27 +329,6 @@ const messageHandler = (event: ClientEvent<any>) => {
 	const data = { iter: lossValues.value.length, loss: event.data.loss };
 	lossChartRef.value.view.change(LOSS_CHART_DATA_SOURCE, vega.changeset().insert(data)).resize().run();
 	lossValues.value.push(data);
-};
-
-const updateLossChartSpec = (data: string | Record<string, any>[], size: { width: number; height: number }) => {
-	lossChartSpec.value = createForecastChart(
-		null,
-		{
-			data: Array.isArray(data) ? data : { name: data },
-			variables: ['loss'],
-			timeField: 'iter'
-		},
-		null,
-		{
-			title: '',
-			width: size.width,
-			height: 100,
-			xAxisTitle: 'Solver iterations',
-			yAxisTitle: 'Loss',
-			autosize: AUTOSIZE.FIT,
-			fitYDomain: true
-		}
-	);
 };
 
 const runEnsemble = async () => {
@@ -462,7 +441,7 @@ watch(
 						iter: i,
 						loss: d.data.loss
 					}));
-				updateLossChartSpec(lossValues.value, lossChartSize.value);
+				lossChartSpec.value = updateLossChartSpec(lossValues.value, lossChartSize.value);
 			}
 		}
 	},
@@ -486,11 +465,11 @@ watch(
 	([id, size]) => {
 		if (id === '') {
 			showSpinner.value = false;
-			updateLossChartSpec(lossValues.value, size);
+			lossChartSpec.value = updateLossChartSpec(lossValues.value, size);
 			unsubscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
 		} else {
 			showSpinner.value = true;
-			updateLossChartSpec(LOSS_CHART_DATA_SOURCE, size);
+			lossChartSpec.value = updateLossChartSpec(LOSS_CHART_DATA_SOURCE, size);
 			subscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
 		}
 	},

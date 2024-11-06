@@ -57,9 +57,9 @@ import { WorkflowPortStatus } from '@/types/workflow';
 import type { CsvAsset, EnsembleSimulationCiemssRequest, Dataset, Simulation } from '@/types/Types';
 import type { RunResults } from '@/types/SimulateConfig';
 import { getDataset } from '@/services/dataset';
-import { createForecastChart, AUTOSIZE } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import type { CalibrateEnsembleCiemssOperationState } from './calibrate-ensemble-ciemss-operation';
+import { updateLossChartSpec } from './calibrate-ensemble-util';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
@@ -94,7 +94,7 @@ const pollResult = async (runId: string) => {
 						iter: i,
 						loss: d.data.loss
 					}));
-				updateLossChartSpec(lossValues);
+				lossChartSpec.value = updateLossChartSpec(lossValues, chartSize);
 			}
 			if (runId === props.node.state.inProgressCalibrationId && data.updates.length > 0) {
 				const checkpoint = _.first(data.updates);
@@ -125,26 +125,6 @@ const pollResult = async (runId: string) => {
 	return pollerResults;
 };
 
-const updateLossChartSpec = (data: Record<string, any>[]) => {
-	lossChartSpec.value = createForecastChart(
-		null,
-		{
-			data,
-			variables: ['loss'],
-			timeField: 'iter'
-		},
-		null,
-		{
-			title: '',
-			xAxisTitle: 'Solver iterations',
-			yAxisTitle: 'Loss',
-			autosize: AUTOSIZE.FIT,
-			...chartSize,
-			fitYDomain: true
-		}
-	);
-};
-
 async function updateLossChartWithSimulation() {
 	if (props.node.active) {
 		const simulationObj = await getSimulation(props.node.state.calibrationId);
@@ -155,7 +135,7 @@ async function updateLossChartWithSimulation() {
 					iter: i,
 					loss: d.data.loss
 				}));
-			updateLossChartSpec(lossValues);
+			lossChartSpec.value = updateLossChartSpec(lossValues, chartSize);
 		}
 	}
 }
