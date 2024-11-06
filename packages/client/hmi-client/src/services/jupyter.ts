@@ -1,9 +1,11 @@
 import { EventEmitter, EventName, EventCallback } from '@/utils/emitter';
 import { SessionContext } from '@jupyterlab/apputils';
 import { ServerConnection, KernelManager, KernelSpecManager, SessionManager } from '@jupyterlab/services';
+import { CodeMirrorMimeTypeService } from '@jupyterlab/codemirror';
 import { standardRendererFactories as initialFactories, RenderMimeRegistry } from '@jupyterlab/rendermime';
 import { JSONObject } from '@lumino/coreutils';
 import * as messages from '@jupyterlab/services/lib/kernel/messages';
+import * as kernel from '@jupyterlab/services/lib/kernel/kernel';
 import { KernelConnection as JupyterKernelConnection } from '@jupyterlab/services/lib/kernel';
 import API from '@/api/api';
 import { v4 as uuidv4 } from 'uuid';
@@ -22,7 +24,7 @@ declare module '@jupyterlab/services/lib/kernel/kernel' {
 	}
 }
 declare module '@jupyterlab/services' {
-	interface KernelConnection {
+	class KernelConnection extends JupyterKernelConnection implements kernel.IKernelConnection {
 		sendJupyterMessage<T extends JupyterMessage>(msg: T): void;
 		sendShellMessage<T extends JupyterMessage>(msg: T): void;
 	}
@@ -151,10 +153,13 @@ export const getSpecsManager = () => specsManager;
 let sessionManager;
 export const getSessionManager = () => sessionManager;
 
+export const mimeService = new CodeMirrorMimeTypeService();
+
 export const renderMime = new RenderMimeRegistry({ initialFactories });
 let initialized = false;
 
-export const createMessageId = (msgType: string) => {
+export const createMessageId = (msgType) => {
+	// const timestamp = Date
 	const uuid = uuidv4().replaceAll('-', '').slice(0, 16);
 	return `tgpt-${uuid}-${msgType}`;
 };

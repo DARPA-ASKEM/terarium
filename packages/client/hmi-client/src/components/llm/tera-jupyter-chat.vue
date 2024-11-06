@@ -49,6 +49,7 @@ import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
 import { updateNotebookSession } from '@/services/notebook-session';
+import { useProjects } from '@/composables/project';
 import { isEmpty } from 'lodash';
 import Button from 'primevue/button';
 
@@ -373,6 +374,8 @@ const newJupyterMessage = (jupyterMessage) => {
 		isExecutingCode.value = false;
 	} else if (jupyterMessage.header.msg_type === 'context_setup_response') {
 		emit('update-language', jupyterMessage.content.subkernel);
+	} else {
+		console.log('Unknown Jupyter event', jupyterMessage);
 	}
 };
 
@@ -390,6 +393,9 @@ const clearOutputs = () => {
 			const msgType = message.header.msg_type;
 			if (msgType === 'model_preview' || msgType === 'dataset') {
 				item.messages.splice(j, 1);
+			}
+			if (msgType === 'code_cell') {
+				console.log(message);
 			}
 		}
 	}
@@ -410,6 +416,16 @@ const hideRerunMessage = () => {
 onUnmounted(() => {
 	messagesHistory.value = [];
 });
+
+watch(
+	() => [
+		props.assetId, // Once the route name changes, add/switch to another tab
+		useProjects().activeProject.value
+	],
+	() => {
+		console.log(useProjects().activeProject.value, props.assetId);
+	}
+);
 
 // update the notebook history when we get the notebookSession
 watch(
