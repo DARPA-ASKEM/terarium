@@ -16,6 +16,7 @@
 				@configuration-change="chartProxy.configurationChange(index, $event)"
 			/>
 		</template>
+		<vega-chart v-if="lossChartSpec" :are-embed-actions-visible="false" :visualization-spec="lossChartSpec" />
 
 		<tera-progress-spinner
 			v-if="inProgressCalibrationId || inProgressForecastId"
@@ -34,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, shallowRef, watch } from 'vue';
+import { computed, ref, shallowRef, watch, onMounted } from 'vue';
 import _ from 'lodash';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
@@ -44,7 +45,8 @@ import {
 	getRunResultCiemss,
 	pollAction,
 	getCalibrateBlobURL,
-	makeEnsembleCiemssSimulation
+	makeEnsembleCiemssSimulation,
+	getSimulation
 } from '@/services/models/simulation-service';
 import { setupCsvAsset } from '@/services/calibrate-workflow';
 import { chartActionsProxy, nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
@@ -55,6 +57,8 @@ import { WorkflowPortStatus } from '@/types/workflow';
 import type { CsvAsset, EnsembleSimulationCiemssRequest, Dataset, Simulation } from '@/types/Types';
 import type { RunResults } from '@/types/SimulateConfig';
 import { getDataset } from '@/services/dataset';
+import { createForecastChart, AUTOSIZE } from '@/services/charts';
+import VegaChart from '@/components/widgets/VegaChart.vue';
 import type { CalibrateEnsembleCiemssOperationState } from './calibrate-ensemble-ciemss-operation';
 
 const props = defineProps<{
@@ -68,6 +72,9 @@ const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const areInputsFilled = computed(() => props.node.inputs[0].value && props.node.inputs[1].value);
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
 const inProgressForecastId = computed(() => props.node.state.inProgressForecastId);
+let lossValues: { [key: string]: number }[] = [];
+const lossChartSpec = ref();
+const chartSize = { width: 180, height: 120 };
 
 const chartProxy = chartActionsProxy(props.node, (state: CalibrateEnsembleCiemssOperationState) => {
 	emit('update-state', state);
@@ -81,13 +88,13 @@ const pollResult = async (runId: string) => {
 		.setPollAction(async () => pollAction(runId))
 		.setProgressAction((data: Simulation) => {
 			if (data?.updates?.length) {
-				// lossValues = data?.updates
-				// .sort((a, b) => a.data.progress - b.data.progress)
-				// .map((d, i) => ({
-				// 	iter: i,
-				// 	loss: d.data.loss
-				// }));
-				// updateLossChartSpec(lossValues);
+				lossValues = data?.updates
+					.sort((a, b) => a.data.progress - b.data.progress)
+					.map((d, i) => ({
+						iter: i,
+						loss: d.data.loss
+					}));
+				updateLossChartSpec(lossValues);
 			}
 			if (runId === props.node.state.inProgressCalibrationId && data.updates.length > 0) {
 				const checkpoint = _.first(data.updates);
@@ -117,6 +124,44 @@ const pollResult = async (runId: string) => {
 	}
 	return pollerResults;
 };
+
+const updateLossChartSpec = (data: Record<string, any>[]) => {
+	lossChartSpec.value = createForecastChart(
+		null,
+		{
+			data,
+			variables: ['loss'],
+			timeField: 'iter'
+		},
+		null,
+		{
+			title: '',
+			xAxisTitle: 'Solver iterations',
+			yAxisTitle: 'Loss',
+			autosize: AUTOSIZE.FIT,
+			...chartSize,
+			fitYDomain: true
+		}
+	);
+};
+
+async function updateLossChartWithSimulation() {
+	if (props.node.active) {
+		const simulationObj = await getSimulation(props.node.state.calibrationId);
+		if (simulationObj?.updates) {
+			lossValues = simulationObj?.updates
+				.sort((a, b) => a.data.progress - b.data.progress)
+				.map((d, i) => ({
+					iter: i,
+					loss: d.data.loss
+				}));
+			updateLossChartSpec(lossValues);
+		}
+	}
+}
+
+// Init loss chart
+onMounted(async () => updateLossChartWithSimulation());
 
 watch(
 	() => props.node.state.inProgressCalibrationId,
