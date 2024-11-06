@@ -53,7 +53,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 
 	private final Environment env;
 
-	private final MIRAProxy miraProxy;
+	private final DKGService dkgService;
 
 	public ModelService(
 		final Config config,
@@ -63,7 +63,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		final ElasticsearchService elasticService,
 		final EmbeddingService embeddingService,
 		final Environment env,
-		final MIRAProxy miraProxy,
+		final DKGService dkgService,
 		final ModelRepository repository,
 		final ObjectMapper objectMapper,
 		final ProjectAssetService projectAssetService,
@@ -86,8 +86,8 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		this.documentAssetService = documentAssetService;
 		this.embeddingService = embeddingService;
 		this.env = env;
-		this.miraProxy = miraProxy;
 		this.taskService = taskService;
+		this.dkgService = dkgService;
 	}
 
 	private boolean isRunningTestProfile() {
@@ -334,7 +334,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 				if (vertex == null) {
 					vertex = new RegNetVertex();
 				}
-				TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, vertex);
+				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, vertex);
 			});
 			newModel.get().setVerticies(vertices);
 		} else {
@@ -343,7 +343,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 				if (state == null) {
 					state = new State();
 				}
-				TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, state);
+				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, state);
 			});
 			newModel.get().setStates(states);
 		}
@@ -355,7 +355,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 				if (observable == null) {
 					observable = new Observable();
 				}
-				TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, observable);
+				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, observable);
 			});
 			newModel.get().setObservables(observables);
 		}
@@ -367,7 +367,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 				if (parameter == null) {
 					parameter = new ModelParameter();
 				}
-				TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, parameter);
+				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, parameter);
 			});
 			newModel.get().setParameters(parameters);
 		}
@@ -379,7 +379,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 				if (transition == null) {
 					transition = new Transition();
 				}
-				TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, transition);
+				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, transition);
 			});
 			newModel.get().setTransitions(transitions);
 		}

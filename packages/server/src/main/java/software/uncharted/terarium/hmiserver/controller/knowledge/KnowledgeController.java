@@ -62,13 +62,13 @@ import software.uncharted.terarium.hmiserver.models.extractionservice.Extraction
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
 import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.ExtractionService;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
+import software.uncharted.terarium.hmiserver.service.data.DKGService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
@@ -93,7 +93,6 @@ public class KnowledgeController {
 
 	private final SkemaUnifiedProxy skemaUnifiedProxy;
 	private final MitProxy mitProxy;
-	private final MIRAProxy miraProxy;
 
 	private final DocumentAssetService documentService;
 	private final DatasetService datasetService;
@@ -106,6 +105,7 @@ public class KnowledgeController {
 
 	private final ExtractionService extractionService;
 	private final TaskService taskService;
+	private final DKGService dkgService;
 
 	private final ProjectService projectService;
 	private final CurrentUserService currentUserService;
