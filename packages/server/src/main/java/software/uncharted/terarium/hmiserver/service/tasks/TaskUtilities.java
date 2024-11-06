@@ -1,15 +1,16 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelGrounding;
@@ -83,7 +84,13 @@ public class TaskUtilities {
 			}
 		}
 
-		input.setDataset(dataset.serializeWithoutTerariumFields(null, null));
+		// Serialize the dataset columns
+		final List<DatasetColumn> columns = dataset.getColumns();
+		final ObjectMapper mapper = new ObjectMapper();
+		mapper.setConfig(mapper.getSerializationConfig().with(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY));
+		final String serializedColumns = mapper.convertValue(columns, ObjectNode.class).toString();
+
+		input.setDataset(serializedColumns);
 
 		// Create the task
 		final TaskRequest taskRequest = new TaskRequest();
