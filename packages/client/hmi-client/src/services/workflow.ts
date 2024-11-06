@@ -244,7 +244,7 @@ export class WorkflowWrapper {
 				state: {}
 			})),
 
-			status: OperatorStatus.INVALID,
+			status: OperatorStatus.DEFAULT,
 			width: nodeSize.width,
 			height: nodeSize.height
 		};
