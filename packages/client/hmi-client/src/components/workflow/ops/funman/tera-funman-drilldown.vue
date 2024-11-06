@@ -556,7 +556,10 @@ async function run() {
 	const response = await makeQueries(
 		requestToUse,
 		model.value.id,
-		nodeOutputLabel(props.node, `Validated ${configuredInputModel.header.name} Result`)
+		nodeOutputLabel(
+			props.node,
+			`Validated ${configuredInputModel.header.name} Result (${drilldownRef.value?.selectedTab.toLowerCase()})`
+		)
 	);
 	// Setup the in-progress id
 	const state = cloneDeep(props.node.state);
@@ -686,8 +689,6 @@ const setRequestParameters = (modelParameters: ModelParameter[]) => {
 
 		return param;
 	});
-
-	syncNotebookWithWizard();
 };
 
 const onSelection = (id: string) => {
@@ -736,6 +737,8 @@ onMounted(async () => {
 	if (!response) return;
 	mmt = response.mmt;
 	mmtParams.value = response.template_params;
+
+	syncNotebookWithWizard();
 
 	prepareOutput();
 });
