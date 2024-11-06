@@ -21,12 +21,10 @@ RUN groupadd -r terarium \
 VOLUME /tmp
 USER terarium
 
-ENV JAVA_OPTS="-XX:InitialRAMPercentage=10 -XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=50"
-
 # copy over the layers
 ARG LAYERS=/app/layers
 COPY --from=builder ${LAYERS}/dependencies/ ./
 COPY --from=builder ${LAYERS}/snapshot-dependencies/ ./
 COPY --from=builder ${LAYERS}/spring-boot-loader/ ./
 COPY --from=builder ${LAYERS}/application/ ./
-ENTRYPOINT ["java", "$JAVA_OPTS", "org.springframework.boot.loader.JarLauncher"]
+ENTRYPOINT ["java", "-XX:InitialRAMPercentage=10", "-XX:MinRAMPercentage=50", "-XX:MaxRAMPercentage=50", "org.springframework.boot.loader.JarLauncher"]
