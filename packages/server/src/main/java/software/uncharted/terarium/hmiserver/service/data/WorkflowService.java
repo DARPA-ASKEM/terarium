@@ -78,6 +78,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		final UUID projectId,
 		final Schema.Permission hasWritePermission
 	) throws IOException, IllegalArgumentException {
+		final long updateStart = System.currentTimeMillis();
 		// Fetch database copy, we will update into it
 		final Workflow dbWorkflow = getAsset(asset.getId(), hasWritePermission).get();
 
@@ -97,21 +98,6 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 					node.setVersion(1L);
 				}
 				nodeMap.put(node.getId(), node);
-
-				// Debugging possible sync issue - October 2024
-				log.info("Node id=" + node.getId() + ",  status=" + node.getStatus() + ", deleted=" + node.getIsDeleted());
-				if (node.getOutputs() != null) {
-					for (final JsonNode o : node.getOutputs()) {
-						final JsonNode oValue = o.get("value").get(0);
-						if (oValue != null) {
-							log.info("  Out: " + oValue.asText());
-						} else {
-							log.info("  Out: null");
-						}
-					}
-				} else {
-					log.info("  no outputs");
-				}
 			}
 		}
 		if (asset.getEdges() != null) {
@@ -207,7 +193,15 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 			dbWorkflowEdges.add(pair.getValue());
 		}
 
-		return super.updateAsset(dbWorkflow, projectId, hasWritePermission);
+		final long resolveEnd = System.currentTimeMillis();
+		log.info("Resolve workflow " + dbWorkflow.getId() + " took " + (resolveEnd - updateStart));
+
+		final Optional<Workflow> result = super.updateAsset(dbWorkflow, projectId, hasWritePermission);
+
+		final long updateEnd = System.currentTimeMillis();
+		log.info("Update workflow to DB " + dbWorkflow.getId() + " took " + (updateEnd - resolveEnd));
+
+		return result;
 	}
 
 	@Override

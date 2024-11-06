@@ -32,7 +32,7 @@ import org.springframework.amqp.rabbit.annotation.QueueBinding;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
-import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
+import org.springframework.amqp.rabbit.listener.DirectMessageListenerContainer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
@@ -57,7 +57,7 @@ import software.uncharted.terarium.hmiserver.service.notification.NotificationSe
 @RequiredArgsConstructor
 public class TaskService {
 
-	public static enum TaskMode {
+	public enum TaskMode {
 		@JsonAlias("sync")
 		SYNC("sync"),
 		@JsonAlias("async")
@@ -159,7 +159,7 @@ public class TaskService {
 	private final NotificationService notificationService;
 	private final ClientEventService clientEventService;
 
-	private final Map<String, SimpleMessageListenerContainer> taskResponseConsumers = new HashMap<>();
+	private final Map<String, DirectMessageListenerContainer> taskResponseConsumers = new HashMap<>();
 
 	private final Map<String, TaskResponseHandler> responseHandlers = new ConcurrentHashMap<>();
 
@@ -389,7 +389,7 @@ public class TaskService {
 			// unique queue to ensure the local server also gets it.
 			final String queueName = !isRunningLocalProfile()
 				? TASK_RUNNER_RESPONSE_QUEUE
-				: TASK_RUNNER_RESPONSE_QUEUE + "-local-" + UUID.randomUUID().toString();
+				: TASK_RUNNER_RESPONSE_QUEUE + "-local-" + UUID.randomUUID();
 
 			// Declare a direct exchange
 			final DirectExchange exchange = new DirectExchange(TASK_RUNNER_RESPONSE_EXCHANGE, IS_DURABLE_QUEUES, false);
@@ -403,10 +403,11 @@ public class TaskService {
 			final Binding binding = BindingBuilder.bind(queue).to(exchange).with("");
 			rabbitAdmin.declareBinding(binding);
 
-			final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(
+			final DirectMessageListenerContainer container = new DirectMessageListenerContainer(
 				rabbitAdmin.getRabbitTemplate().getConnectionFactory()
 			);
 
+			container.setPrefetchCount(1);
 			container.setQueueNames(queueName);
 			container.setMessageListener(message -> {
 				onTaskResponseOneInstanceReceives(message);
@@ -673,7 +674,7 @@ public class TaskService {
 		// now send request
 		final String requestQueue = String.format("%s-%s", TASK_RUNNER_REQUEST_QUEUE, req.getType().toString());
 
-		log.info("Readying task: {} with SHA: {} to send on queue: {}", req.getId(), hash, req.getType().toString());
+		log.info("Readying task: {} with SHA: {} to send on queue: {}", req.getId(), hash, req.getType());
 
 		// ensure the request queue exists
 		declareQueue(req.getType(), requestQueue);
