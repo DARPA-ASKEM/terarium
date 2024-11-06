@@ -472,6 +472,34 @@ public class ElasticsearchService {
 	}
 
 	/**
+	 * Update a document from an index.
+	 *
+	 * @param index The index to remove the document from
+	 * @param id    The id of the document to remove
+	 */
+	public <T, Partial> void updateWithRouting(
+		final String index,
+		final String id,
+		final Partial partial,
+		final String routing
+	) throws IOException {
+		try {
+			log.info("Updating: {} from {}", id, index);
+
+			final UpdateRequest<T, Partial> req = new UpdateRequest.Builder<T, Partial>()
+				.index(index)
+				.id(id)
+				.doc(partial)
+				.routing(routing)
+				.build();
+
+			client.update(req, Void.class);
+		} catch (final ElasticsearchException e) {
+			throw handleException(e);
+		}
+	}
+
+	/**
 	 * Remove an index.
 	 *
 	 * @param index The index to remove

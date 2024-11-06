@@ -7,17 +7,25 @@ import co.elastic.clients.elasticsearch._types.query_dsl.HasChildQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
+import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
+import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
 
 @RequiredArgsConstructor
 @Service
@@ -26,6 +34,20 @@ public class ProjectSearchService {
 
 	protected final ElasticsearchConfiguration elasticConfig;
 	protected final ElasticsearchService elasticService;
+	protected final EmbeddingService embeddingService;
+	protected final Environment env;
+
+	protected boolean isRunningTestProfile() {
+		final String[] activeProfiles = env.getActiveProfiles();
+
+		for (final String profile : activeProfiles) {
+			if ("test".equals(profile)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
 
 	protected String getIndex() {
 		return elasticConfig.getProjectIndex();
@@ -61,6 +83,16 @@ public class ProjectSearchService {
 	}
 
 	@Data
+	public static class ProjectAssetEmbedding {
+
+		UUID assetId;
+		AssetType assetType;
+		private String embeddingId;
+		private double[] vector;
+		private long[] span;
+	}
+
+	@Data
 	public static class ProjectDocument {
 
 		private final String type = "project";
@@ -68,6 +100,9 @@ public class ProjectSearchService {
 		private Boolean publicAsset; // whether the project is public or not
 		private Timestamp createdOn;
 		private Timestamp updatedOn;
+
+		@JsonProperty("asset_embeddings")
+		private List<ProjectAssetEmbedding> assetEmbeddings;
 
 		// join field properties
 		private PermissionJoin permissionJoin;
@@ -210,5 +245,78 @@ public class ProjectSearchService {
 			req.query(q -> q.bool(b -> b.must(onlyProjects).must(permissionQuery)));
 		}
 		return elasticService.search(req.build(), ProjectDocument.class);
+	}
+
+	public Future<Void> generateAndUpsertProjectAssetEmbeddings(final UUID projectId, final TerariumAsset asset) {
+		if (!isRunningTestProfile() && asset.getPublicAsset() && !asset.getTemporary()) {
+			final String embeddingText = asset.getEmbeddingSourceText();
+			if (embeddingText == null) {
+				return null;
+			}
+
+			return CompletableFuture.runAsync(() -> {
+				new Thread(() -> {
+					try {
+						final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(embeddingText);
+
+						final ProjectAssetEmbedding projectAssetEmbedding = new ProjectAssetEmbedding();
+						projectAssetEmbedding.setAssetId(asset.getId());
+						projectAssetEmbedding.setAssetType(AssetType.getAssetType(asset.getClass()));
+						projectAssetEmbedding.setEmbeddingId(embeddings.getEmbeddings().get(0).getEmbeddingId());
+						projectAssetEmbedding.setVector(embeddings.getEmbeddings().get(0).getVector());
+						projectAssetEmbedding.setSpan(embeddings.getEmbeddings().get(0).getSpan());
+
+						final ProjectDocument projectDoc = elasticService.get(
+							getAlias(),
+							projectId.toString(),
+							ProjectDocument.class
+						);
+
+						// update the embedding
+						if (projectDoc.getAssetEmbeddings() == null) {
+							projectDoc.setAssetEmbeddings(List.of(projectAssetEmbedding));
+						} else {
+							int index = -1;
+							for (int i = 0; i < projectDoc.getAssetEmbeddings().size(); i++) {
+								if (projectDoc.getAssetEmbeddings().get(i).getAssetId().equals(asset.getId())) {
+									index = i;
+									break;
+								}
+							}
+							if (index != -1) {
+								projectDoc.getAssetEmbeddings().set(index, projectAssetEmbedding);
+							} else {
+								projectDoc.getAssetEmbeddings().add(projectAssetEmbedding);
+							}
+						}
+
+						final String routing = projectId.toString();
+
+						// Execute the update request
+						elasticService.updateWithRouting(getAlias(), projectId.toString(), projectDoc, routing);
+					} catch (final Exception e) {
+						log.error("Failed to update embeddings for document {}", asset.getId(), e);
+					}
+				}).start();
+			});
+		}
+		return null;
+	}
+
+	public void removeProjectAssetEmbedding(final UUID projectId, final UUID assetId) {
+		try {
+			final ProjectDocument projectDoc = elasticService.get(getAlias(), projectId.toString(), ProjectDocument.class);
+
+			if (projectDoc.getAssetEmbeddings() != null) {
+				projectDoc.getAssetEmbeddings().removeIf(e -> e.getAssetId().equals(assetId));
+			}
+
+			final String routing = projectId.toString();
+
+			elasticService.updateWithRouting(getAlias(), projectId.toString(), projectDoc, routing);
+		} catch (final Exception e) {
+			log.error("Failed to remove embeddings for document {}", assetId, e);
+			throw new RuntimeException("Failed to remove embeddings for document " + assetId, e);
+		}
 	}
 }

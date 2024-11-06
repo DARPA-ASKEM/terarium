@@ -58,6 +58,30 @@ public enum AssetType {
 		}
 	}
 
+	public static AssetType getAssetType(final Class<? extends TerariumAsset> clazz) {
+		if (clazz == Artifact.class) {
+			return ARTIFACT;
+		} else if (clazz == Code.class) {
+			return CODE;
+		} else if (clazz == Dataset.class) {
+			return DATASET;
+		} else if (clazz == DocumentAsset.class) {
+			return DOCUMENT;
+		} else if (clazz == Model.class) {
+			return MODEL;
+		} else if (clazz == ModelConfiguration.class) {
+			return MODEL_CONFIGURATION;
+		} else if (clazz == Simulation.class) {
+			return SIMULATION;
+		} else if (clazz == Workflow.class) {
+			return WORKFLOW;
+		} else if (clazz == InterventionPolicy.class) {
+			return INTERVENTION_POLICY;
+		} else {
+			throw new IllegalArgumentException("Unrecognized asset type: " + clazz);
+		}
+	}
+
 	public Class<? extends TerariumAsset> getAssetClass() {
 		switch (this) {
 			case ARTIFACT:

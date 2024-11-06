@@ -16,7 +16,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
-import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
@@ -175,20 +174,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		}
 		final Model created = super.createAsset(asset, projectId, hasWritePermission);
 
-		if (!isRunningTestProfile() && created.getPublicAsset() && !created.getTemporary()) {
-			new Thread(() -> {
-				try {
-					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(
-						created.getEmbeddingSourceText()
-					);
-
-					// Execute the update request
-					uploadEmbeddings(created.getId(), embeddings, hasWritePermission);
-				} catch (final Exception e) {
-					log.error("Failed to update embeddings for model {}", created.getId(), e);
-				}
-			}).start();
-		}
+		generateAndUpsertEmbeddings(created);
 
 		return created;
 	}
@@ -218,20 +204,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 
 		final Model updated = updatedOptional.get();
 
-		if (!isRunningTestProfile() && updated.getPublicAsset() && !updated.getTemporary()) {
-			new Thread(() -> {
-				try {
-					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(
-						updated.getEmbeddingSourceText()
-					);
-
-					// Execute the update request
-					uploadEmbeddings(updated.getId(), embeddings, hasWritePermission);
-				} catch (final Exception e) {
-					log.error("Failed to update embeddings for model {}", updated.getId(), e);
-				}
-			}).start();
-		}
+		generateAndUpsertEmbeddings(updated);
 
 		return updatedOptional;
 	}

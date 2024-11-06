@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.models.dataservice.document;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -134,5 +135,19 @@ public class DocumentAsset extends TerariumAsset {
 		}
 
 		return clone;
+	}
+
+	public String getEmbeddingText() {
+		try {
+			if (getMetadata() != null && getMetadata().containsKey("gollmCard")) {
+				// update embeddings
+				final JsonNode card = getMetadata().get("gollmCard");
+				final ObjectMapper objectMapper = new ObjectMapper();
+				return objectMapper.writeValueAsString(card);
+			}
+			return null;
+		} catch (final Exception e) {
+			throw new RuntimeException("Failed to serialize model embedding text into JSON", e);
+		}
 	}
 }

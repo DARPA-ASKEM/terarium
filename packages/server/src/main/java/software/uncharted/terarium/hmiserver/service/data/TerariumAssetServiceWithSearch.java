@@ -393,14 +393,17 @@ public abstract class TerariumAssetServiceWithSearch<
 		return false;
 	}
 
-	public Future<Void> generateAndUpsertEmbeddingsIntoProjectIndex(final T asset) {
+	public Future<Void> generateAndUpsertEmbeddings(final T asset) {
 		if (!isRunningTestProfile() && asset.getPublicAsset() && !asset.getTemporary()) {
+			final String embeddingText = asset.getEmbeddingSourceText();
+			if (embeddingText == null) {
+				return null;
+			}
+
 			return CompletableFuture.runAsync(() -> {
 				new Thread(() -> {
 					try {
-						final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(
-							asset.getEmbeddingSourceText()
-						);
+						final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(embeddingText);
 
 						// Execute the update request
 						uploadEmbeddings(asset.getId(), embeddings, Schema.Permission.WRITE);
