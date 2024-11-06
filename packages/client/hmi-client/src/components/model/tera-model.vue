@@ -76,6 +76,7 @@
 		:open-on-save="!isWorkflow"
 		@close-modal="showSaveModal = false"
 		@on-save="onModalSave"
+		@on-update="onModalSave"
 	/>
 </template>
 
@@ -92,8 +93,7 @@ import TeraModelParts from '@/components/model/tera-model-parts.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { getModel, updateModel } from '@/services/model';
 import type { FeatureConfig } from '@/types/common';
-import { AssetType, ClientEvent, ClientEventType, type Model, TaskResponse, TaskStatus } from '@/types/Types';
-import { useClientEvent } from '@/composables/useClientEvent';
+import { AssetType, type Model } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 
@@ -117,18 +117,6 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close-preview', 'on-save']);
-
-// Listen for the task completion event
-useClientEvent(ClientEventType.TaskGollmModelCard, (event: ClientEvent<TaskResponse>) => {
-	if (
-		!event.data ||
-		event.data.status !== TaskStatus.Success ||
-		event.data.additionalProperties.modelId !== props.assetId
-	) {
-		return;
-	}
-	fetchModel();
-});
 
 const model = ref<Model | null>(null);
 const temporaryModel = ref<Model | null>(null);
