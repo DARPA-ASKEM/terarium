@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
@@ -15,8 +16,9 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.GroundedSemantic;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
-import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
+import software.uncharted.terarium.hmiserver.service.data.DKGService;
 
+@Slf4j
 public class TaskUtilities {
 
 	public static TaskRequest getEnrichAMRTaskRequest(
@@ -147,17 +149,22 @@ public class TaskUtilities {
 		return req;
 	}
 
-	public static void performDKGSearchAndSetGrounding(MIRAProxy miraProxy, GroundedSemantic part) {
+	public static void performDKGSearchAndSetGrounding(DKGService dkgService, GroundedSemantic part) {
 		if (part == null || part.getId() == null || part.getId().isEmpty()) return;
-		ResponseEntity<List<DKG>> res = miraProxy.search(part.getId(), 1, 0);
-		if (res.getStatusCode() == HttpStatus.OK && res.getBody() != null && !res.getBody().isEmpty()) {
-			DKG dkg = res.getBody().get(0);
-			if (part.getGrounding() == null) part.setGrounding(new ModelGrounding());
-			if (part.getGrounding().getIdentifiers() == null) part.getGrounding().setIdentifiers(new HashMap<>());
-			String[] currieId = dkg.getCurie().split(":");
-			part.getGrounding().getIdentifiers().put(currieId[0], currieId[1]);
-		} else {
-			part.setGrounding(new ModelGrounding());
+		try {
+			List<DKG> curies = dkgService.searchEpiDKG(0, 1, part.getId(), null);
+			if (!curies.isEmpty()) {
+				DKG dkg = curies.get(0);
+				if (part.getGrounding() == null) part.setGrounding(new ModelGrounding());
+				if (part.getGrounding().getIdentifiers() == null) part.getGrounding().setIdentifiers(new HashMap<>());
+				String[] currieId = dkg.getCurie().split(":");
+				part.getGrounding().getIdentifiers().put(currieId[0], currieId[1]);
+			} else {
+				part.setGrounding(new ModelGrounding());
+			}
+		} catch (Exception e) {
+			// If we can't find the DKG, just ignore it
+			log.warn("Unable to find DKG for semantic: {}", part.getId(), e);
 		}
 	}
 }
