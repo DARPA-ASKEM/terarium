@@ -691,4 +691,8 @@ public class ElasticsearchService {
 			return false;
 		}
 	}
+
+	public static String emphasis(String s, int boost) {
+		return s + "^" + String.valueOf(boost);
+	}
 }

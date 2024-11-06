@@ -45,9 +45,9 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
+import software.uncharted.terarium.hmiserver.service.data.DKGService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
@@ -80,6 +80,7 @@ public class GoLLMController {
 	private final ModelService modelService;
 	private final ProjectService projectService;
 	private final CurrentUserService currentUserService;
+	private final DKGService dkgService;
 
 	private final CompareModelsResponseHandler compareModelsResponseHandler;
 	private final ConfigureModelFromDatasetResponseHandler configureModelFromDatasetResponseHandler;
@@ -90,7 +91,6 @@ public class GoLLMController {
 	private final GenerateSummaryHandler generateSummaryHandler;
 	private final InterventionsFromDocumentResponseHandler interventionsFromDocumentResponseHandler;
 	private final ModelCardResponseHandler modelCardResponseHandler;
-	private final MIRAProxy miraProxy;
 
 	private final Messages messages;
 
