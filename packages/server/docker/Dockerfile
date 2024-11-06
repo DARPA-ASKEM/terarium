@@ -21,7 +21,7 @@ RUN groupadd -r terarium \
 VOLUME /tmp
 USER terarium
 
-ENV JAVA_OPTS="-XX:InitialRAMPercentage=10 -XX:MinRAMPercentage=80 -XX:MaxRAMPercentage=80"
+ENV JAVA_OPTS="-XX:InitialRAMPercentage=10 -XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=50"
 
 # copy over the layers
 ARG LAYERS=/app/layers
