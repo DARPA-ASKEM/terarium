@@ -134,14 +134,13 @@
 				:options="outputs"
 				v-model:output="selectedOutputId"
 				@update:selection="onSelection"
-				:is-loading="showSpinner"
 				is-selectable
 			>
 				<!-- Loss chart -->
 				<div ref="lossChartContainer">
 					<vega-chart
 						expandable
-						v-if="lossValues.length > 0 || showSpinner"
+						v-if="!_.isEmpty(lossValues)"
 						ref="lossChartRef"
 						:are-embed-actions-visible="true"
 						:visualization-spec="lossChartSpec"
@@ -170,6 +169,7 @@
 						icon="pi pi-plus"
 					/>
 				</section>
+
 				<tera-progress-spinner
 					v-if="inProgressCalibrationId || inProgressForecastId"
 					:font-size="2"

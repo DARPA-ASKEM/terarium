@@ -86,7 +86,6 @@ const pollResult = async (runId: string) => {
 		.setThreshold(300)
 		.setPollAction(async () => pollAction(runId))
 		.setProgressAction((data: Simulation) => {
-			console.log(data);
 			if (data?.updates?.length) {
 				lossValues = data?.updates
 					.sort((a, b) => a.data.progress - b.data.progress)
@@ -99,10 +98,8 @@ const pollResult = async (runId: string) => {
 			if (runId === props.node.state.inProgressCalibrationId && data.updates.length > 0) {
 				const checkpoint = _.last(data.updates);
 				if (checkpoint) {
-					console.log('Checkpoint');
 					const state = _.cloneDeep(props.node.state);
 					state.currentProgress = +((100 * checkpoint.data.progress) / state.extra.numIterations).toFixed(2);
-					console.log(state.currentProgress);
 					emit('update-state', state);
 				}
 			}
