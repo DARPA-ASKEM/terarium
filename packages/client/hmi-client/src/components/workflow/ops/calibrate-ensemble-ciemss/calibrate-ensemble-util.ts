@@ -2,6 +2,7 @@ import { createForecastChart, AUTOSIZE } from '@/services/charts';
 import { getSimulation } from '@/services/models/simulation-service';
 
 export async function updateLossChartWithSimulation(calibrationId: string, size: { width: number; height: number }) {
+	if (!calibrationId) return null;
 	const simulationObj = await getSimulation(calibrationId);
 	if (simulationObj?.updates) {
 		const lossValues = simulationObj?.updates
