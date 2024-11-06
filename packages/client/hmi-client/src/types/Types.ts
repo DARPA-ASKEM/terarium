@@ -619,6 +619,12 @@ export interface DatasetLocation {
     mappings?: any;
 }
 
+export interface EnsembleMappingRow {
+    name: string;
+    datasetMapping: string;
+    modelConfigurationMappings: { [index: string]: string };
+}
+
 export interface EnsembleModelConfigs {
     id: string;
     solutionMappings: { [index: string]: string };
