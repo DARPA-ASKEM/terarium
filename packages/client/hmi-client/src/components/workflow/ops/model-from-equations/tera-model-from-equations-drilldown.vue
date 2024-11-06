@@ -20,7 +20,7 @@
 					</tera-drilldown-section>
 				</template>
 			</tera-slider-panel>
-			<tera-slider-panel v-model:is-open="isInputOpen" header="Input" content-width="100%">
+			<tera-slider-panel class="input-config" v-model:is-open="isInputOpen" header="Input" content-width="100%">
 				<template #content>
 					<main class="p-3">
 						<header class="pb-2">
@@ -129,9 +129,14 @@
 					</main>
 				</template>
 			</tera-slider-panel>
-			<tera-slider-panel v-model:is-open="isOutputOpen" header="Output" content-width="100%">
+			<tera-slider-panel
+				:direction="outputArrowDirection"
+				v-model:is-open="isOutputOpen"
+				header="Output"
+				content-width="100%"
+			>
 				<template #content>
-					<tera-drilldown-preview>
+					<tera-drilldown-preview :is-loading="isModelLoading">
 						<tera-model
 							v-if="selectedModel"
 							is-workflow
@@ -229,6 +234,8 @@ const multipleEquationsDisabled = ref(false);
 const isDocViewerOpen = ref(true);
 const isInputOpen = ref(true);
 const isOutputOpen = ref(true);
+
+const outputArrowDirection = computed(() => (!isDocViewerOpen.value && !isInputOpen.value ? 'left' : 'right'));
 
 const equationTextarea = ref();
 const documentEquations = ref<AssetBlock<EquationBlock>[]>();
@@ -342,6 +349,8 @@ function onCheckBoxChange(equation) {
 }
 
 async function onRun() {
+	isOutputOpen.value = true;
+	isModelLoading.value = true;
 	const equations = clonedState.value.equations
 		.filter((e) => e.includeInProcess && !e.asset.extractionError)
 		.map((e) => e.asset.text);
@@ -470,7 +479,6 @@ watch(
 }
 
 .asset-panel {
-	padding-top: var(--gap-3);
 	border-width: 1px 1px 0 1px;
 	border-color: var(--surface-border-light);
 	border-style: solid;
@@ -510,7 +518,7 @@ watch(
 
 .equation-view {
 	display: flex;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	flex-direction: column;
 	overflow-y: hidden;
 }

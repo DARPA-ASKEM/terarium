@@ -565,7 +565,7 @@ const onDownloadResponse = (payload) => {
 	z-index: 100;
 	width: 100%;
 	height: 3.5rem;
-	padding: var(--gap-2) var(--gap) var(--gap-2) 1.5rem;
+	padding: var(--gap-2) var(--gap-4) var(--gap-2) 1.5rem;
 	gap: var(--gap-2);
 }
 .toolbar:deep(.p-button .p-button-label) {

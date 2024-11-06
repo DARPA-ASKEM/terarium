@@ -441,6 +441,7 @@ export interface FunmanConfig {
     use_compartmental_constraints?: boolean;
     normalize?: boolean;
     normalization_constant?: number;
+    verbosity?: number;
 }
 
 export interface FunmanInterval {
@@ -472,7 +473,6 @@ export interface DKG {
     curie: string;
     name: string;
     description: string;
-    link: string;
 }
 
 export interface EntitySimilarityResult {
@@ -567,7 +567,7 @@ export interface EnsembleSimulationCiemssRequest {
 export interface OptimizeRequestCiemss {
     modelConfigId: string;
     timespan: TimeSpan;
-    optimizeInterventions?: OptimizeInterventions;
+    optimizeInterventions: OptimizeInterventions[];
     fixedInterventions?: Intervention[];
     loggingStepSize?: number;
     qoi: OptimizeQoi[];
@@ -641,9 +641,9 @@ export interface OptimizeInterventions {
     paramNames: string[];
     paramValues?: number[];
     startTime?: number[];
-    objectiveFunctionOption?: string[];
+    objectiveFunctionOption: string;
     initialGuess?: number[];
-    relativeImportance?: number[];
+    relativeImportance: number;
 }
 
 export interface OptimizeQoi {
@@ -801,8 +801,8 @@ export interface ModelUnit {
 
 export interface GroundedSemantic {
     id: string;
-    name?: string;
     grounding?: ModelGrounding;
+    name?: string;
 }
 
 export interface Properties {

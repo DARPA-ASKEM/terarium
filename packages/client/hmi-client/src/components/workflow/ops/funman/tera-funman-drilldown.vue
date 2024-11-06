@@ -1,5 +1,7 @@
 <template>
 	<tera-drilldown
+		ref="drilldownRef"
+		v-bind="$attrs"
 		:node="node"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
@@ -16,8 +18,8 @@
 				<div class="top-toolbar">
 					<p>Set your model checks and settings then click run.</p>
 					<div class="btn-group">
-						<Button label="Reset" outlined severity="secondary" />
-						<Button :loading="showSpinner" label="Run" icon="pi pi-play" @click="runMakeQuery" />
+						<Button label="Reset" outlined severity="secondary" disabled />
+						<Button :loading="showSpinner" label="Run" icon="pi pi-play" @click="run" />
 					</div>
 				</div>
 				<main>
@@ -59,7 +61,7 @@
 										</div>
 									</section>
 								</li>
-								<li v-for="(cfg, index) in node.state.constraintGroups" :key="selectedOutputId + ':' + index">
+								<li v-for="(cfg, index) in node.state.constraintGroups" :key="index">
 									<tera-constraint-group-form
 										:config="cfg"
 										:index="index"
@@ -85,68 +87,82 @@
 								Settings
 								<i class="pi pi-info-circle pl-2" v-tooltip="validateParametersToolTip" />
 							</template>
-							<label>Select parameters of interest</label>
-							<MultiSelect
-								ref="columnSelect"
-								class="w-full mt-1 mb-2"
-								:model-value="variablesOfInterest"
-								:options="requestParameters"
-								option-label="name"
-								option-disabled="disabled"
-								:show-toggle-all="false"
-								placeholder="Select variables"
-								@update:model-value="onToggleVariableOfInterest"
-							/>
-							<span class="timespan mb-2">
-								<div>
-									<label>Start time</label>
-									<tera-input-number class="w-12" v-model="knobs.currentTimespan.start" />
+							<section class="flex flex-column gap-2">
+								<label>Select parameters of interest</label>
+								<MultiSelect
+									ref="columnSelect"
+									class="w-full"
+									:model-value="variablesOfInterest"
+									:options="requestParameters"
+									option-label="name"
+									option-disabled="disabled"
+									:show-toggle-all="false"
+									placeholder="Select variables"
+									@update:model-value="onToggleVariableOfInterest"
+								/>
+								<span class="timespan">
+									<div>
+										<label>Start time</label>
+										<tera-input-number class="w-12" v-model="knobs.currentTimespan.start" />
+									</div>
+									<div>
+										<label>End time</label>
+										<tera-input-number class="w-12" v-model="knobs.currentTimespan.end" />
+									</div>
+									<div>
+										<label>Number of timesteps</label>
+										<tera-input-number class="w-12" v-model="knobs.numberOfSteps" />
+									</div>
+								</span>
+								<label>Timepoints</label>
+								<code>
+									{{ stepList.map((step) => Number(step.toFixed(3))).join(', ') }}
+								</code>
+								<label>Tolerance</label>
+								<div class="input-tolerance fadein animation-ease-in-out animation-duration-350">
+									<tera-input-number v-model="knobs.tolerance" />
+									<Slider v-model="knobs.tolerance" :min="0" :max="1" :step="0.01" class="w-full mr-2" />
 								</div>
-								<div>
-									<label>End time</label>
-									<tera-input-number class="w-12" v-model="knobs.currentTimespan.end" />
-								</div>
-								<div>
-									<label>Number of timesteps</label>
-									<tera-input-number class="w-12" v-model="knobs.numberOfSteps" />
-								</div>
-							</span>
-							<tera-input-text :disabled="true" class="mb-2" v-model="requestStepListString" />
-							<label>Tolerance</label>
-							<div class="mt-1 input-tolerance fadein animation-ease-in-out animation-duration-350">
-								<tera-input-number v-model="knobs.tolerance" />
-								<Slider v-model="knobs.tolerance" :min="0" :max="1" :step="0.01" class="w-full mr-2" />
-							</div>
+							</section>
 						</AccordionTab>
 					</Accordion>
 				</main>
 			</template>
 		</tera-slider-panel>
 		<tera-slider-panel
+			class="input-config"
 			:tabName="DrilldownTabs.Notebook"
 			v-model:is-open="isSliderOpen"
-			header="Raw output"
-			content-width="420px"
+			header="Raw request"
+			content-width="500px"
 		>
+			<template #header>
+				<div class="ml-auto flex gap-2">
+					<Button
+						outlined
+						severity="secondary"
+						label="Sync with Wizard"
+						icon="pi pi-refresh"
+						:disabled="isEqual(request, JSON.parse(rawRequest))"
+						@click="syncNotebookWithWizard"
+					/>
+					<Button :loading="showSpinner" label="Run" icon="pi pi-play" @click="run" />
+				</div>
+			</template>
 			<template #content>
+				<span class="notebook-message">Edits here will not be reflected in the wizard.</span>
 				<v-ace-editor
-					v-model:value="notebookText"
+					v-model:value="rawRequest"
 					lang="json"
 					theme="chrome"
-					style="flex-grow: 1; width: 100%; height: 100%"
+					style="width: 100%; height: 100%; border-radius: 0"
 					class="ace-editor"
 					:options="{ showPrintMargin: false }"
 				/>
 			</template>
 		</tera-slider-panel>
 		<template #preview>
-			<tera-drilldown-preview
-				title="Validation results"
-				v-model:output="selectedOutputId"
-				@update:selection="onSelection"
-				:options="outputs"
-				is-selectable
-			>
+			<tera-drilldown-preview>
 				<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%">
 					{{ props.node.state.currentProgress }}%
 				</tera-progress-spinner>
@@ -154,73 +170,87 @@
 					<header class="flex align-items-start">
 						<div>
 							<h4>{{ validatedModelConfiguration?.name }}</h4>
-							<span class="secondary-text">Output generated date</span>
+							<span class="secondary-text">{{ formatShort(validatedModelConfiguration?.createdOn) }}</span>
 						</div>
 						<div class="btn-group">
 							<Button label="Add to report" outlined severity="secondary" disabled />
-							<Button label="Save for reuse" outlined severity="secondary" disabled />
+							<Button label="Save for reuse" outlined severity="secondary" @click="showSaveModal = true" />
 						</div>
 					</header>
-					<Accordion multiple :active-index="[0, 1, 2, 3]">
-						<AccordionTab header="Summary"> Summary text </AccordionTab>
-						<AccordionTab>
-							<template #header> State variables<i class="pi pi-info-circle" /> </template>
-							<template v-if="stateCharts[0]">
+					<template v-if="drilldownRef?.selectedTab === DrilldownTabs.Wizard">
+						<Accordion multiple :active-index="[0, 1, 2, 3]">
+							<AccordionTab header="Summary">
+								<span class="ml-4">Summary text</span>
+							</AccordionTab>
+							<AccordionTab>
+								<template #header> State variables<i class="pi pi-info-circle" /></template>
+								<span class="ml-4" v-if="isEmpty(processedFunmanResult.boxes)"> No boxes were generated. </span>
+								<template v-else-if="!isEmpty(selectedStateCharts)">
+									<vega-chart
+										v-for="(stateChart, index) in selectedStateCharts"
+										:key="index"
+										:visualization-spec="stateChart"
+										:are-embed-actions-visible="false"
+										expandable
+									/>
+								</template>
+								<span class="ml-4" v-else> To view state charts select some in the Output settings. </span>
+							</AccordionTab>
+							<AccordionTab>
+								<template #header>Parameters<i class="pi pi-info-circle" /></template>
+								<span class="ml-4" v-if="isEmpty(processedFunmanResult.boxes)"> No boxes were generated. </span>
 								<vega-chart
-									v-for="(stateChart, index) in selectedStateCharts"
-									:key="index"
-									:visualization-spec="stateChart"
+									v-else-if="!isEmpty(parameterCharts)"
+									:visualization-spec="parameterCharts"
 									:are-embed-actions-visible="false"
 									expandable
+									@chart-click="onParameterChartClick"
 								/>
-							</template>
-							<span class="ml-4" v-else> No boxes were generated. </span>
-							<span class="ml-4" v-if="isEmpty(selectedStateCharts)">
-								To view state charts select some in the Output settings.
-							</span>
-						</AccordionTab>
-						<AccordionTab>
-							<template #header>Parameters<i class="pi pi-info-circle" /></template>
-							<vega-chart
-								:visualization-spec="parameterCharts"
-								:are-embed-actions-visible="false"
-								expandable
-								@chart-click="onParameterChartClick"
-							/>
-						</AccordionTab>
-						<AccordionTab header="Diagram">
-							<tera-model-diagram v-if="model" :model="model" />
-						</AccordionTab>
-					</Accordion>
-					<template v-if="model && validatedModelConfiguration && configuredMmt">
-						<tera-initial-table
-							:model="model"
-							:model-configuration="validatedModelConfiguration"
-							:model-configurations="[]"
-							:mmt="configuredMmt"
-							:mmt-params="mmtParams"
-							:feature-config="{ isPreview: true }"
-						/>
-						<tera-parameter-table
-							:model="model"
-							:model-configuration="validatedModelConfiguration"
-							:model-configurations="[]"
-							:mmt="configuredMmt"
-							:mmt-params="mmtParams"
-							:feature-config="{ isPreview: true }"
-						/>
-						<Accordion :active-index="0" v-if="!isEmpty(calibratedConfigObservables)">
-							<AccordionTab v-if="!isEmpty(calibratedConfigObservables)" header="Observables">
-								<tera-observables
-									class="pl-4"
-									:model="model"
-									:mmt="configuredMmt"
-									:observables="calibratedConfigObservables"
-									:feature-config="{ isPreview: true }"
-								/>
+								<span class="ml-4" v-else> To view parameter charts select some in the Output settings. </span>
+							</AccordionTab>
+							<AccordionTab header="Diagram">
+								<tera-model-diagram v-if="model" :model="model" />
 							</AccordionTab>
 						</Accordion>
+						<template v-if="model && validatedModelConfiguration && configuredMmt">
+							<tera-initial-table
+								:model="model"
+								:model-configuration="validatedModelConfiguration"
+								:model-configurations="[]"
+								:mmt="configuredMmt"
+								:mmt-params="mmtParams"
+								:feature-config="{ isPreview: true }"
+							/>
+							<tera-parameter-table
+								:model="model"
+								:model-configuration="validatedModelConfiguration"
+								:model-configurations="[]"
+								:mmt="configuredMmt"
+								:mmt-params="mmtParams"
+								:feature-config="{ isPreview: true }"
+							/>
+							<Accordion :active-index="0" v-if="!isEmpty(calibratedConfigObservables)">
+								<AccordionTab v-if="!isEmpty(calibratedConfigObservables)" header="Observables">
+									<tera-observables
+										class="pl-4"
+										:model="model"
+										:mmt="configuredMmt"
+										:observables="calibratedConfigObservables"
+										:feature-config="{ isPreview: true }"
+									/>
+								</AccordionTab>
+							</Accordion>
+						</template>
 					</template>
+					<v-ace-editor
+						v-else-if="drilldownRef?.selectedTab === DrilldownTabs.Notebook"
+						v-model:value="rawResponse"
+						lang="json"
+						theme="chrome"
+						style="width: 100%; height: 100%; border-radius: 0"
+						class="ace-editor"
+						:options="{ showPrintMargin: false }"
+					/>
 				</template>
 				<tera-operator-placeholder v-else class="h-full" :node="node" />
 			</tera-drilldown-preview>
@@ -290,14 +320,24 @@
 			</tera-slider-panel>
 		</template>
 	</tera-drilldown>
+	<tera-save-asset-modal
+		:initial-name="validatedModelConfiguration?.name"
+		:is-visible="showSaveModal"
+		is-updating-asset
+		:asset="{ ...(validatedModelConfiguration as ModelConfiguration), temporary: false }"
+		:asset-type="AssetType.ModelConfiguration"
+		@close-modal="showSaveModal = false"
+		@on-save="onSaveForReuse"
+		@on-update="onSaveForReuse"
+	/>
 </template>
 
 <script setup lang="ts">
-import _, { floor, isEmpty } from 'lodash';
-import { computed, ref, watch } from 'vue';
+import { isEmpty, cloneDeep, isEqual } from 'lodash';
+import { computed, ref, watch, onMounted } from 'vue';
 import { logger } from '@/utils/logger';
+import { formatShort } from '@/utils/date';
 import Button from 'primevue/button';
-import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import Slider from 'primevue/slider';
 import MultiSelect from 'primevue/multiselect';
@@ -309,6 +349,7 @@ import VegaChart from '@/components/widgets/VegaChart.vue';
 
 import '@/ace-config';
 import { VAceEditor } from 'vue3-ace-editor';
+import { saveCodeToState } from '@/services/notebook';
 
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
@@ -324,6 +365,7 @@ import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue'
 
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
 import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
+import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 
 import type {
 	FunmanInterval,
@@ -334,6 +376,7 @@ import type {
 	ModelConfiguration,
 	Observable
 } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import {
 	type ProcessedFunmanResult,
 	type FunmanConstraintsResponse,
@@ -341,22 +384,20 @@ import {
 	makeQueries
 } from '@/services/models/funman-service';
 import { createFunmanStateChart, createFunmanParameterCharts } from '@/services/charts';
-import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
+import { WorkflowNode } from '@/types/workflow';
 import { getRunResult } from '@/services/models/simulation-service';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { emptyMiraModel, makeConfiguredMMT } from '@/model-representation/mira/mira';
-import {
-	getAsConfiguredModel,
-	getModelConfigurationById,
-	getModelIdFromModelConfigurationId
-} from '@/services/model-configurations';
+import { getAsConfiguredModel, getModelConfigurationById } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
 import { pythonInstance } from '@/python/PyodideController';
 import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-constraint-group-form.vue';
 import { DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
-import { stringToLatexExpression, getModelByModelConfigurationId, getMMT } from '@/services/model';
+import { stringToLatexExpression, getModel, getMMT } from '@/services/model';
 import { displayNumber } from '@/utils/number';
 import { removeChartSettingById, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import { nodeOutputLabel } from '@/components/workflow/util';
+import { formatJSON } from '@/services/code';
 import { FunmanOperationState, Constraint, ConstraintType, CompartmentalConstraint } from './funman-operation';
 
 const props = defineProps<{
@@ -372,6 +413,8 @@ interface BasicKnobs {
 	compartmentalConstraint: CompartmentalConstraint;
 }
 
+const drilldownRef = ref();
+
 const knobs = ref<BasicKnobs>({
 	tolerance: 0,
 	currentTimespan: { start: 0, end: 0 },
@@ -383,37 +426,19 @@ const MAX = 99999999999;
 const toast = useToastService();
 const validateParametersToolTip =
 	'Validate the configuration of the model using functional model analysis (FUNMAN). \n \n The parameter space regions defined by the model configuration are evaluated to satisfactory or unsatisfactory depending on whether they generate model outputs that are within a given set of time-dependent constraints';
-let originalModelId = '';
 
 const showSpinner = ref(false);
 const isSliderOpen = ref(true);
 
 const mass = ref('0');
 
-const requestStepList = computed(() => getStepList());
-const requestStepListString = computed(() => requestStepList.value.join()); // Just used to display. dont like this but need to be quick
-
 const requestParameters = ref<any[]>([]);
-const configuredModel = ref<Model | null>();
+const model = ref<Model | null>();
+let configuredInputModel: Model | null = null;
 
 const stateIds = ref<string[]>([]);
 const parameterIds = ref<string[]>([]);
 const observableIds = ref<string[]>([]);
-
-const selectedOutputId = ref<string>();
-const outputs = computed(() => {
-	if (!_.isEmpty(props.node.outputs)) {
-		return [
-			{
-				label: 'Select an output',
-				items: props.node.outputs
-			}
-		];
-	}
-	return [];
-});
-
-const activeOutput = ref<WorkflowOutput<FunmanOperationState> | null>(null);
 
 const variablesOfInterest = ref();
 const onToggleVariableOfInterest = (event: any[]) => {
@@ -422,15 +447,25 @@ const onToggleVariableOfInterest = (event: any[]) => {
 	requestParameters.value.forEach((d) => {
 		d.label = namesOfInterest.includes(d.name) ? 'all' : 'any';
 	});
-	const state = _.cloneDeep(props.node.state);
-	state.requestParameters = _.cloneDeep(requestParameters.value);
+	const state = cloneDeep(props.node.state);
+	state.requestParameters = cloneDeep(requestParameters.value);
 	emit('update-state', state);
 };
 
-const runMakeQuery = async () => {
-	if (!configuredModel.value) {
-		toast.error('', 'No Model provided for request');
-		return;
+const stepList = computed(() => {
+	const { start, end } = knobs.value.currentTimespan;
+	const steps = knobs.value.numberOfSteps;
+
+	const stepSize = (end - start) / steps;
+	return [start, ...Array.from({ length: steps - 1 }, (_, i) => (i + 1) * stepSize), end];
+});
+
+const rawRequest = ref('');
+const rawResponse = ref('');
+
+const request = computed<FunmanPostQueriesRequest | null>(() => {
+	if (!configuredInputModel || !model.value?.id) {
+		return null;
 	}
 
 	const constraints = props.node.state.constraintGroups
@@ -489,37 +524,68 @@ const runMakeQuery = async () => {
 		})
 		.filter(Boolean); // Removes falsey values
 
-	const request: FunmanPostQueriesRequest = {
-		model: configuredModel.value,
+	return {
+		model: configuredInputModel,
 		request: {
 			constraints,
 			parameters: requestParameters.value.map(({ disabled, ...rest }) => rest), // Remove the disabled property from the request (it's only used for UI)
 			structure_parameters: [
 				{
 					name: 'schedules',
-					schedules: [{ timepoints: requestStepList.value }]
+					schedules: [{ timepoints: stepList.value }]
 				}
 			],
 			config: {
 				use_compartmental_constraints: knobs.value.compartmentalConstraint.isActive,
 				normalization_constant:
-					knobs.value.compartmentalConstraint.isActive && configuredModel.value.semantics ? parseFloat(mass.value) : 1,
+					knobs.value.compartmentalConstraint.isActive && configuredInputModel.semantics ? parseFloat(mass.value) : 1,
 				normalize: false,
-				tolerance: knobs.value.tolerance
+				tolerance: knobs.value.tolerance,
+				// FIXME: Set to max logging for debugging and checking liveliness , remove when stable. Oct 2024
+				verbosity: 0
 			}
 		}
 	};
+});
 
-	const response = await makeQueries(request, originalModelId);
+async function run() {
+	const requestToUse =
+		drilldownRef.value?.selectedTab === DrilldownTabs.Wizard ? request.value : JSON.parse(rawRequest.value);
 
+	if (drilldownRef.value?.selectedTab === DrilldownTabs.Notebook) {
+		updateCodeState(true);
+	}
+
+	if (!requestToUse || !model.value?.id || !configuredInputModel) {
+		toast.error('', 'No Model provided for request');
+		return;
+	}
+	const response = await makeQueries(
+		requestToUse,
+		model.value.id,
+		nodeOutputLabel(
+			props.node,
+			`Validated ${configuredInputModel.header.name} Result (${drilldownRef.value?.selectedTab.toLowerCase()})`
+		)
+	);
 	// Setup the in-progress id
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.inProgressId = response.id;
 	emit('update-state', state);
-};
+}
+
+function updateCodeState(hasCodeRun: boolean) {
+	const state = saveCodeToState(props.node, rawRequest.value, hasCodeRun);
+	emit('update-state', state);
+}
+
+function syncNotebookWithWizard() {
+	rawRequest.value = formatJSON(JSON.stringify(request.value));
+	updateCodeState(false);
+}
 
 const addConstraintForm = () => {
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.constraintGroups.push({
 		name: `Constraint ${state.constraintGroups.length + 1}`,
 		isActive: true,
@@ -534,13 +600,13 @@ const addConstraintForm = () => {
 };
 
 const deleteConstraintGroupForm = (index: number) => {
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.constraintGroups.splice(index, 1);
 	emit('update-state', state);
 };
 
 const updateConstraintGroupForm = (index: number, key: string, value: any) => {
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 
 	// Changing constraint resets settings
 	if (key === 'constraint') {
@@ -561,32 +627,8 @@ const updateConstraintGroupForm = (index: number, key: string, value: any) => {
 	emit('update-state', state);
 };
 
-// Used to set requestStepList.
-// Grab startTime, endTime, numberOfSteps and create list.
-function getStepList() {
-	const start = knobs.value.currentTimespan.start;
-	const end = knobs.value.currentTimespan.end;
-	const steps = knobs.value.numberOfSteps;
-
-	const aList = [start];
-	const stepSize = floor((end - start) / steps);
-	for (let i = 1; i < steps; i++) {
-		aList[i] = i * stepSize;
-	}
-	aList.push(end);
-	return aList;
-}
-
-const initialize = async () => {
-	const modelConfigurationId = props.node.inputs[0].value?.[0];
-	if (!modelConfigurationId) return;
-	const modelConfiguration = await getModelConfigurationById(modelConfigurationId);
-	configuredModel.value = await getAsConfiguredModel(modelConfiguration);
-	originalModelId = await getModelIdFromModelConfigurationId(modelConfigurationId);
-};
-
 const setModelOptions = async () => {
-	if (!configuredModel.value) return;
+	if (!configuredInputModel) return;
 
 	const renameReserved = (v: string) => {
 		const reserved = ['lambda'];
@@ -595,7 +637,7 @@ const setModelOptions = async () => {
 	};
 
 	// Calculate mass
-	const semantics = configuredModel.value.semantics;
+	const semantics = configuredInputModel.semantics;
 	const modelInitials = semantics?.ode.initials;
 	const modelMassExpression = modelInitials?.map((d) => renameReserved(d.expression)).join(' + ');
 
@@ -607,27 +649,27 @@ const setModelOptions = async () => {
 
 	mass.value = await pythonInstance.evaluateExpression(modelMassExpression as string, parametersMap);
 
-	const ode = configuredModel.value.semantics?.ode;
+	const ode = configuredInputModel.semantics?.ode;
 	if (ode) {
 		if (ode.initials) stateIds.value = ode.initials.map((s) => s.target);
 		if (ode.parameters) parameterIds.value = ode.parameters.map((d) => d.id);
 		if (ode.observables) observableIds.value = ode.observables.map((d) => d.id);
 	}
 
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	knobs.value.numberOfSteps = state.numSteps;
-	knobs.value.currentTimespan = _.cloneDeep(state.currentTimespan);
+	knobs.value.currentTimespan = cloneDeep(state.currentTimespan);
 	knobs.value.tolerance = state.tolerance;
 	knobs.value.compartmentalConstraint = state.compartmentalConstraint;
 
-	if (configuredModel.value.semantics?.ode.parameters) {
-		setRequestParameters(configuredModel.value.semantics?.ode.parameters);
+	if (configuredInputModel.semantics?.ode.parameters) {
+		setRequestParameters(configuredInputModel.semantics?.ode.parameters);
 		variablesOfInterest.value = requestParameters.value.filter((d: any) => d.label === 'all');
 	} else {
 		toast.error('', 'Provided model has no parameters');
 	}
 
-	state.requestParameters = _.cloneDeep(requestParameters.value);
+	state.requestParameters = cloneDeep(requestParameters.value);
 	emit('update-state', state);
 };
 
@@ -682,7 +724,7 @@ watch(
 watch(
 	() => knobs.value,
 	() => {
-		const state = _.cloneDeep(props.node.state);
+		const state = cloneDeep(props.node.state);
 		state.tolerance = knobs.value.tolerance;
 		state.currentTimespan.start = knobs.value.currentTimespan.start;
 		state.currentTimespan.end = knobs.value.currentTimespan.end;
@@ -694,42 +736,41 @@ watch(
 	{ deep: true }
 );
 
-watch(
-	() => props.node.inputs[0],
-	async () => {
-		// Set model, modelConfiguration, modelStates
-		await initialize();
-		setModelOptions();
-	},
-	{ immediate: true }
-);
+onMounted(async () => {
+	const modelConfigurationId = props.node.inputs[0].value?.[0];
+	if (!modelConfigurationId) return;
+	const modelConfiguration = await getModelConfigurationById(modelConfigurationId);
+	configuredInputModel = await getAsConfiguredModel(modelConfiguration);
 
-watch(
-	() => props.node.active,
-	() => {
-		// Update selected output
-		if (props.node.active) {
-			activeOutput.value = props.node.outputs.find((d) => d.id === props.node.active) as any;
-			selectedOutputId.value = props.node.active;
-			setModelOptions();
-		}
-	},
-	{ immediate: true }
-);
+	setModelOptions();
 
-// Notebook
-const notebookText = ref('');
+	model.value = await getModel(modelConfiguration.modelId);
+	if (!model.value) return;
+	const response = await getMMT(model.value);
+	if (!response) return;
+	mmt = response.mmt;
+	mmtParams.value = response.template_params;
+
+	if (isEmpty(props.node.state.notebookHistory)) {
+		syncNotebookWithWizard();
+	} else {
+		rawRequest.value = props.node.state.notebookHistory[0].code;
+	}
+
+	prepareOutput();
+});
+
 /*
 // Output panel/settings //
 */
-let processedFunmanResult: ProcessedFunmanResult | null = null;
 let constraintsResponse: FunmanConstraintsResponse[] = [];
 let mmt: MiraModel = emptyMiraModel();
 let funmanResult: any = {};
+const processedFunmanResult = ref<ProcessedFunmanResult>({ boxes: [], trajectories: [] });
 
 // Model configuration stuff
-const model = ref<Model | null>(null);
 const validatedModelConfiguration = ref<ModelConfiguration | null>(null);
+const showSaveModal = ref(false);
 const configuredMmt = ref<MiraModel | null>(null);
 const mmtParams = ref<MiraTemplateParams>({});
 const calibratedConfigObservables = ref<Observable[]>([]);
@@ -758,6 +799,11 @@ const selectedParameterSettings = computed(() =>
 
 let selectedBoxId: number = -1;
 
+async function onSaveForReuse() {
+	showSaveModal.value = false;
+	validatedModelConfiguration.value = await getModelConfigurationById(funmanResult.modelConfigurationId); // Refresh to see updated name
+}
+
 // Once a parameter tick is chosen, its corresponding line on the state chart will be highlighted
 function onParameterChartClick(eventData: any) {
 	// If a tick is clicked it will have a boxId, if the bar is clicked then we reset (show all lines)
@@ -766,23 +812,26 @@ function onParameterChartClick(eventData: any) {
 }
 
 function updateStateCharts() {
-	if (!processedFunmanResult) return;
-	const trajectories = processedFunmanResult.trajectories;
+	if (isEmpty(processedFunmanResult.value.trajectories)) return;
+	const trajectories = onlyShowLatestResults.value
+		? processedFunmanResult.value.trajectories.filter(({ isAtLatestTimestep }) => isAtLatestTimestep)
+		: processedFunmanResult.value.trajectories;
 	stateCharts.value = funmanResult.model.petrinet.model.states.map(({ id }) =>
 		createFunmanStateChart(trajectories, constraintsResponse, id, focusOnModelChecks.value, selectedBoxId)
 	);
 }
 
 function updateParameterCharts() {
-	if (!processedFunmanResult) return;
+	if (isEmpty(processedFunmanResult.value.boxes)) return;
 	const selectedParameterIds = selectedParameterSettings.value.map((setting) => setting.selectedVariables[0]);
 	const distributionParameters = funmanResult.request.parameters.filter(
 		// TODO: This first conditional may change as funman will return constants soon
 		(d: any) => d.interval.lb !== d.interval.ub && selectedParameterIds.includes(d.name)
 	);
-	if (processedFunmanResult.boxes) {
-		parameterCharts.value = createFunmanParameterCharts(distributionParameters, processedFunmanResult.boxes);
-	}
+	const boxes = onlyShowLatestResults.value
+		? processedFunmanResult.value.boxes.filter(({ isAtLatestTimestep }) => isAtLatestTimestep)
+		: processedFunmanResult.value.boxes;
+	parameterCharts.value = createFunmanParameterCharts(distributionParameters, boxes);
 }
 
 function updateSelectedStates(event) {
@@ -819,29 +868,34 @@ function removeChartSetting(chartId: string) {
 	}
 }
 
-async function renderCharts() {
-	processedFunmanResult = processFunman(funmanResult, onlyShowLatestResults.value);
-
+function renderCharts() {
 	updateStateCharts();
 	updateParameterCharts();
+}
 
-	// For displaying model/model configuration
-	// Model will be the same on runId change, no need to fetch it again
-	if (!model.value) {
-		model.value = await getModelByModelConfigurationId(funmanResult.modelConfiguration.id);
-		if (!model.value) {
-			logger.error('Failed to fetch model');
-			return;
-		}
-		const response = await getMMT(model.value);
-		if (response) {
-			mmt = response.mmt;
-			mmtParams.value = response.template_params;
-		}
+async function prepareOutput() {
+	if (!props.node.state.runId) return;
+	const rawFunmanResult = await getRunResult(props.node.state.runId, 'validation.json');
+	if (!rawFunmanResult) {
+		logger.error('Failed to fetch funman result');
+		return;
 	}
+	rawResponse.value = formatJSON(rawFunmanResult);
+	funmanResult = JSON.parse(rawFunmanResult);
+	constraintsResponse = funmanResult.request.constraints;
 
-	configuredMmt.value = makeConfiguredMMT(mmt, funmanResult.modelConfiguration);
-	calibratedConfigObservables.value = funmanResult.modelConfiguration.observableSemanticList.map(
+	const modelConfigurationId: string = funmanResult.modelConfigurationId;
+	if (!modelConfigurationId) {
+		logger.error('No model configuration id found in funman result');
+		return;
+	}
+	validatedModelConfiguration.value = await getModelConfigurationById(funmanResult.modelConfigurationId);
+	if (!validatedModelConfiguration.value) {
+		logger.error('Failed to fetch model configuration');
+		return;
+	}
+	configuredMmt.value = makeConfiguredMMT(mmt, validatedModelConfiguration.value);
+	calibratedConfigObservables.value = validatedModelConfiguration.value.observableSemanticList.map(
 		({ referenceId, states, expression }) => ({
 			id: referenceId,
 			name: referenceId,
@@ -849,40 +903,29 @@ async function renderCharts() {
 			expression
 		})
 	);
+
+	stateOptions.value = funmanResult.model.petrinet.model.states.map(({ id }) => id);
+	parameterOptions.value = funmanResult.request.parameters
+		.filter((d: any) => d.interval.lb !== d.interval.ub)
+		.map(({ name }) => name);
+
+	// Initialize default output settings
+	const state = cloneDeep(props.node.state);
+	state.chartSettings = updateChartSettingsBySelectedVariables([], ChartSettingType.VARIABLE, stateOptions.value);
+	state.chartSettings = updateChartSettingsBySelectedVariables(
+		state.chartSettings,
+		ChartSettingType.DISTRIBUTION_COMPARISON,
+		parameterOptions.value
+	);
+	emit('update-state', state);
+
+	processedFunmanResult.value = processFunman(funmanResult);
+	renderCharts();
 }
 
 watch(
 	() => props.node.state.runId,
-	async () => {
-		if (!props.node.state.runId) return;
-		const rawFunmanResult = await getRunResult(props.node.state.runId, 'validation.json');
-		if (!rawFunmanResult) {
-			logger.error('Failed to fetch funman result');
-			return;
-		}
-		notebookText.value = rawFunmanResult;
-		funmanResult = JSON.parse(rawFunmanResult);
-		constraintsResponse = funmanResult.request.constraints;
-		validatedModelConfiguration.value = funmanResult.modelConfiguration;
-
-		stateOptions.value = funmanResult.model.petrinet.model.states.map(({ id }) => id);
-		parameterOptions.value = funmanResult.request.parameters
-			.filter((d: any) => d.interval.lb !== d.interval.ub)
-			.map(({ name }) => name);
-
-		// Initialize default output settings
-		const state = _.cloneDeep(props.node.state);
-		state.chartSettings = updateChartSettingsBySelectedVariables([], ChartSettingType.VARIABLE, stateOptions.value);
-		state.chartSettings = updateChartSettingsBySelectedVariables(
-			state.chartSettings,
-			ChartSettingType.DISTRIBUTION_COMPARISON,
-			parameterOptions.value
-		);
-		emit('update-state', state);
-
-		renderCharts();
-	},
-	{ immediate: true }
+	() => prepareOutput()
 );
 </script>
 
@@ -891,13 +934,13 @@ watch(
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: var(--gap-1) var(--gap);
+	padding: var(--gap-1) var(--gap-4);
 }
 
 .btn-group {
 	display: flex;
 	align-items: center;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	margin-left: auto;
 }
 
@@ -911,8 +954,20 @@ watch(
 }
 
 .notebook-section:deep(main) {
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	position: relative;
+}
+
+code {
+	background-color: var(--gray-50);
+	color: var(--text-color-subdued);
+	border-radius: var(--border-radius);
+	border: 1px solid var(--surface-border);
+	padding: var(--gap-2);
+	overflow-wrap: break-word;
+	font-size: var(--font-caption);
+	max-height: 10rem;
+	overflow: auto;
 }
 
 .timespan {
@@ -924,7 +979,7 @@ watch(
 	& > div {
 		display: flex;
 		flex-direction: column;
-		gap: var(--gap-1);
+		gap: var(--gap-2);
 	}
 }
 
@@ -933,7 +988,7 @@ watch(
 	width: 100%;
 	align-items: center;
 	align-self: stretch;
-	gap: var(--gap-medium);
+	gap: var(--gap-6);
 }
 
 ul {
@@ -971,5 +1026,14 @@ ul {
 /* Override grid template so output expands when sidebar is closed */
 .overlay-container:deep(section.scale main) {
 	grid-template-columns: auto 1fr;
+}
+
+.input-config:deep(.content-wrapper) {
+	padding-bottom: 0;
+}
+
+.notebook-message {
+	padding-left: var(--gap-4);
+	font-size: var(--font-caption);
 }
 </style>

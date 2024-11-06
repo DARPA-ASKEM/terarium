@@ -21,7 +21,6 @@ import { logger } from '@/utils/logger';
 import { snakeToCapitalSentence } from '@/utils/text';
 import { Ref } from 'vue';
 import { getDocumentAsset } from './document-assets';
-import { getModel } from './model';
 import { getWorkflow } from './workflow';
 
 type NotificationEventData = TaskResponse | StatusUpdate<unknown>;
@@ -152,14 +151,6 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 		created.typeDisplayName = 'PDF Extraction';
 		getDocumentAsset(created.assetId, created.projectId).then((document) =>
 			Object.assign(created, { sourceName: document?.name || '' })
-		);
-	});
-	registerHandler<TaskResponse>(ClientEventType.TaskGollmModelCard, (event, created) => {
-		created.supportCancel = true;
-		created.assetId = event.data.additionalProperties.modelId as string;
-		created.pageType = AssetType.Model;
-		getModel(created.assetId, created.projectId).then((model) =>
-			Object.assign(created, { sourceName: model?.name || '' })
 		);
 	});
 	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureModelFromDocument, (event, created) => {

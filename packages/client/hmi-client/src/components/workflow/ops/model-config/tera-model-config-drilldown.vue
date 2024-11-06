@@ -63,7 +63,7 @@
 				</template>
 			</tera-slider-panel>
 		</template>
-		<tera-drilldown-section :tabName="ConfigTabs.Wizard" class="px-3 mb-10">
+		<tera-drilldown-section :is-loading="initializing" :tabName="ConfigTabs.Wizard" class="px-3 mb-10">
 			<template #header-controls-left>
 				<tera-toggleable-input
 					v-if="typeof knobs.transientModelConfig.name === 'string'"
@@ -82,7 +82,7 @@
 				<Button label="Save as" outlined severity="secondary" @click="showSaveModal = true" />
 				<Button :disabled="isSaveDisabled" label="Save" @click="onSaveConfiguration" />
 			</template>
-			<Accordion multiple :active-index="[0, 1, 2]">
+			<Accordion multiple :activeIndex="currentActiveIndexes">
 				<AccordionTab>
 					<template #header>
 						<h5 class="btn-content">Description</h5>
@@ -215,6 +215,7 @@
 		:asset-type="AssetType.ModelConfiguration"
 		@close-modal="showSaveModal = false"
 		@on-save="onSaveAsModelConfiguration"
+		@on-update="onSaveAsModelConfiguration"
 	/>
 
 	<!-- Matrix effect easter egg  -->
@@ -300,6 +301,7 @@ const props = defineProps<{
 const isFetchingPDF = ref(false);
 const isDocViewerOpen = ref(true);
 
+const currentActiveIndexes = ref([0, 1, 2]);
 const pdfData = ref<{ document: any; data: string; isPdf: boolean; name: string }[]>([]);
 const pdfPanelRef = ref();
 const pdfViewer = computed(() => pdfPanelRef.value?.pdfRef[0]);
@@ -384,7 +386,7 @@ const confirm = useConfirm();
 const filterModelConfigurationsText = ref('');
 const filteredModelConfigurations = computed(() => {
 	const searchTerm = filterModelConfigurationsText.value.toLowerCase();
-	const filteredConfigurations = suggestedConfigurationContext.value.tableData.filter(
+	const filteredConfigurations = modelConfigurations.value.filter(
 		(config) =>
 			config.name?.toLowerCase().includes(searchTerm) || config.description?.toLowerCase().includes(searchTerm)
 	);
@@ -506,15 +508,9 @@ const datasetIds = computed(() =>
 		.filter((id): id is string => id !== undefined)
 );
 
-const suggestedConfigurationContext = ref<{
-	isOpen: boolean;
-	tableData: ModelConfiguration[];
-	modelConfiguration: ModelConfiguration | null;
-}>({
-	isOpen: false,
-	tableData: [],
-	modelConfiguration: null
-});
+const modelConfigurations = ref<ModelConfiguration[]>([]);
+
+const initializing = ref(false);
 const isFetching = ref(false);
 const isLoading = ref(false);
 
@@ -587,16 +583,17 @@ const onSaveConfiguration = async () => {
 
 const fetchConfigurations = async (modelId: string) => {
 	isFetching.value = true;
-	suggestedConfigurationContext.value.tableData = await getModelConfigurationsForModel(modelId);
+	modelConfigurations.value = await getModelConfigurationsForModel(modelId);
 	isFetching.value = false;
 };
 
 // Fill the form with the config data
 const initialize = async (overwriteWithState: boolean = false) => {
+	initializing.value = true;
 	const state = props.node.state;
 	const modelId = props.node.inputs[0].value?.[0];
 	if (!modelId) return;
-	await fetchConfigurations(modelId);
+	fetchConfigurations(modelId);
 
 	model.value = await getModel(modelId);
 	if (model.value) {
@@ -610,7 +607,7 @@ const initialize = async (overwriteWithState: boolean = false) => {
 
 	if (!state.transientModelConfig.id) {
 		// Apply a configuration if one hasn't been applied yet
-		applyConfigValues(suggestedConfigurationContext.value.tableData[0]);
+		applyConfigValues(modelConfigurations.value[0]);
 	} else {
 		originalConfig.value = await getModelConfigurationById(selectedConfigId.value);
 		if (!overwriteWithState) {
@@ -622,6 +619,7 @@ const initialize = async (overwriteWithState: boolean = false) => {
 
 	configuredMmt.value = makeConfiguredMMT(mmt.value, knobs.value.transientModelConfig);
 
+	initializing.value = false;
 	// Create a new session and context based on model
 	try {
 		const jupyterContext = buildJupyterContext();
@@ -638,9 +636,7 @@ const initialize = async (overwriteWithState: boolean = false) => {
 };
 
 const onSelectConfiguration = async (config: ModelConfiguration) => {
-	if (!config.extractionPage) return;
-
-	if (pdfViewer.value) {
+	if (pdfViewer.value && config.extractionPage) {
 		pdfViewer.value.goToPage(config.extractionPage);
 	}
 	// Checks if there are unsaved changes to current model configuration
@@ -721,14 +717,14 @@ const updateThoughts = (data: any) => {
 
 watch(
 	() => props.node.state.modelConfigTaskIds,
-	async (watchVal) => {
-		if (watchVal.length > 0) {
+	(newValue, oldValue) => {
+		if (newValue.length > 0) {
 			isLoading.value = true;
-		} else {
+		} else if (newValue.length !== oldValue.length) {
 			isLoading.value = false;
 			const modelId = props.node.inputs[0].value?.[0];
 			if (!modelId) return;
-			await fetchConfigurations(modelId);
+			fetchConfigurations(modelId);
 		}
 	}
 );
@@ -834,19 +830,19 @@ onUnmounted(() => {
 .notebook-section {
 	background-color: var(--surface-disabled);
 	border-right: 1px solid var(--surface-border-dark);
-	padding: var(--gap);
+	padding: var(--gap-4);
 }
 
 .notebook-section:deep(main) {
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	position: relative;
 }
 
 .toolbar-right-side {
 	position: absolute;
-	top: var(--gap);
+	top: var(--gap-4);
 	right: 0;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	display: flex;
 	align-items: center;
 }
@@ -866,7 +862,7 @@ onUnmounted(() => {
 
 .sort-by-label {
 	color: var(--text-color-subdued);
-	padding-right: var(--gap-small);
+	padding-right: var(--gap-2);
 }
 
 :deep(.pi-spinner) {

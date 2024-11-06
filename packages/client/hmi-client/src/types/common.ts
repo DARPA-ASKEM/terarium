@@ -134,22 +134,28 @@ export enum ModelServiceType {
 export interface CompareModelsResponseType {
 	title: string;
 	summary: string;
-	semanticComparison: SemanticComparison;
+	structuralComparison: StructuralComparison;
 	metaComparison: MetadataComparison;
 }
 
-interface SemanticComparison {
-	states: string;
-	parameters: string;
-	transitions: string;
-	observables: string;
+interface StructuralComparison {
+	states: Comparison;
+	parameters: Comparison;
+	transitions: Comparison;
+	observables: Comparison;
 }
 
 interface MetadataComparison {
-	description: string;
-	uses: string;
-	biasRisksLimitations: string;
-	observables: string;
+	details: Comparison;
+	uses: Comparison;
+	biasRisksLimitations: Comparison;
+	observables: Comparison;
+}
+
+interface Comparison {
+	common: string;
+	unique: string;
+	conclusion: string;
 }
 
 export type ExtractionStatusUpdate = StatusUpdate<{ documentId: string }>;

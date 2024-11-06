@@ -20,6 +20,7 @@ export interface FunmanBox {
 	boxId: number;
 	label: string;
 	timestep: FunmanBound;
+	isAtLatestTimestep: boolean;
 	parameters: Record<string, FunmanParameterBound>;
 }
 
@@ -45,9 +46,11 @@ export interface RenderOptions {
 	click?: Function;
 }
 
-export async function makeQueries(body: FunmanPostQueriesRequest, modelId: string) {
+export async function makeQueries(body: FunmanPostQueriesRequest, modelId: string, newModelConfigName: string) {
 	try {
-		const resp = await API.post('/funman/queries', body, { params: { 'model-id': modelId } });
+		const resp = await API.post('/funman/queries', body, {
+			params: { 'model-id': modelId, 'new-model-config-name': newModelConfigName }
+		});
 		const output = resp.data;
 		return output;
 	} catch (err) {
@@ -85,48 +88,50 @@ export function generateConstraintExpression(config: ConstraintGroup) {
 	return `${expression} \\ \\forall \\ t \\in [${timepoints.lb}, ${timepoints.ub}]`;
 }
 
-export const processFunman = (result: any, onlyShowLatestResults: boolean) => {
+export const processFunman = (result: any) => {
 	const stateIds: string[] = result.model.petrinet.model.states.map(({ id }) => id);
 	const parameterIds: string[] = result.model.petrinet.semantics.ode.parameters.map(({ id }) => id);
 	const timepoints: number[] = result.request.structure_parameters[0].schedules[0].timepoints;
 
-	function getBoxesEndingAtLatestTimestep(boxes: any[]) {
+	function markBoxesEndingAtLatestTimestep(boxes: any[]) {
 		if (boxes.length === 0) return [];
 		let latestTimestep = 0;
 		let maxKeysCount = 0;
 
 		// The latest timestep is found in the box with the most keys
 		boxes.forEach((box) => {
-			const keysCount = Object.keys(box.points[0]?.values).length;
+			const points = box?.points?.[0]?.values;
+			if (!points) return;
+			const keysCount = Object.keys(points).length;
 			if (keysCount > maxKeysCount) {
 				maxKeysCount = keysCount;
 				latestTimestep = box.points[0].values.timestep;
 			}
 		});
-		// Filter boxes to include only those with the latest timestep
-		return boxes.filter((box) => box.points[0].values.timestep === latestTimestep);
+		// Mark boxes with the latest timestep
+		return boxes.map((box) => {
+			const timestep = box?.points?.[0]?.values?.timestep;
+			if (timestep) box.isAtLatestTimestep = timestep === latestTimestep;
+			return box;
+		});
 	}
-	const trueBoxes: any[] = onlyShowLatestResults
-		? getBoxesEndingAtLatestTimestep(result.parameter_space.true_boxes)
-		: result.parameter_space.true_boxes;
-	const falseBoxes: any[] = onlyShowLatestResults
-		? getBoxesEndingAtLatestTimestep(result.parameter_space.false_boxes)
-		: result.parameter_space.false_boxes;
-	const ambiguousBoxes: any[] = onlyShowLatestResults
-		? getBoxesEndingAtLatestTimestep(result.parameter_space.unknown_points)
-		: result.parameter_space.unknown_points;
+	const trueBoxes: any[] = markBoxesEndingAtLatestTimestep(result.parameter_space.true_boxes);
+	const falseBoxes: any[] = markBoxesEndingAtLatestTimestep(result.parameter_space.false_boxes);
+	const ambiguousBoxes: any[] = markBoxesEndingAtLatestTimestep(result.parameter_space.unknown_points);
 
 	// "dataframes"
 	const boxes: FunmanBox[] = [];
 	const trajectories: any[] = [];
 
 	[...trueBoxes, ...falseBoxes, ...ambiguousBoxes].forEach((box, index) => {
-		const points = box.points[0].values;
+		const points = box?.points?.[0]?.values;
+		if (!points) return;
 
 		boxes.push({
 			boxId: index,
 			label: box.label,
 			timestep: box.bounds.timestep,
+			isAtLatestTimestep: box.isAtLatestTimestep,
 			parameters: Object.fromEntries(
 				parameterIds.map((parameterId) => [parameterId, { ...box.bounds[parameterId], point: points[parameterId] }])
 			)
@@ -139,6 +144,7 @@ export const processFunman = (result: any, onlyShowLatestResults: boolean) => {
 				const trajectory: any = {
 					boxId: index,
 					legendItem: getBoundType(box.label),
+					isAtLatestTimestep: box.isAtLatestTimestep,
 					values: {},
 					timepoint
 				};

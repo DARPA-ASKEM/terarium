@@ -16,7 +16,7 @@ import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
+import org.springframework.amqp.rabbit.listener.DirectMessageListenerContainer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.taskrunner.configuration.Config;
@@ -96,7 +96,7 @@ public class TaskRunnerService {
 
 	private void dispatchSingleInputSingleOutputTask(final TaskRequest req) throws IOException, InterruptedException {
 		Task task;
-		SimpleMessageListenerContainer cancellationConsumer;
+		DirectMessageListenerContainer cancellationConsumer;
 
 		try {
 			// ensure that the cancellation queue exists
@@ -209,12 +209,13 @@ public class TaskRunnerService {
 		return false;
 	}
 
-	private SimpleMessageListenerContainer createCancellationQueueConsumer(final Task task) {
+	private DirectMessageListenerContainer createCancellationQueueConsumer(final Task task) {
 		final String queueName = task.getId().toString();
 
-		final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(
+		final DirectMessageListenerContainer container = new DirectMessageListenerContainer(
 			rabbitTemplate.getConnectionFactory()
 		);
+		container.setPrefetchCount(1);
 		container.setQueueNames(queueName);
 		container.setMessageListener(message -> {
 			try {

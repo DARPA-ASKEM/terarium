@@ -3,19 +3,20 @@
 		:content-width="contentWidth"
 		:tab-width="tabWidth"
 		:min-tab-width="minTabWidth"
-		:direction="direction"
+		:direction="arrowDirection"
 		:is-open="isOpen"
 	>
 		<template v-slot:content>
 			<aside @scroll="onScroll">
 				<header :class="{ shadow: isScrolled }">
 					<Button
-						:icon="`pi ${directionMap[direction].iconOpen}`"
+						:icon="`pi ${directionMap[arrowDirection].iconOpen}`"
 						@click="emit('update:isOpen', false)"
 						text
 						rounded
 						size="large"
 					/>
+					<slot name="header" />
 					<h4>{{ header }}</h4>
 				</header>
 				<div class="content-wrapper">
@@ -25,9 +26,9 @@
 			<slot name="overlay" />
 		</template>
 		<template v-slot:tab>
-			<header :class="`tab ${direction}`">
+			<header :class="`tab ${arrowDirection}`">
 				<Button
-					:icon="`pi ${directionMap[direction].iconClosed}`"
+					:icon="`pi ${directionMap[arrowDirection].iconClosed}`"
 					@click="emit('update:isOpen', true)"
 					text
 					rounded
@@ -45,12 +46,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import Badge from 'primevue/badge';
 import Button from 'primevue/button';
 import TeraSlider from './tera-slider.vue';
 
-defineProps({
+const props = defineProps({
 	// slider props
 	isOpen: {
 		type: Boolean,
@@ -96,6 +97,8 @@ const directionMap = {
 	}
 };
 
+const arrowDirection = computed(() => props.direction);
+
 /* This is for adding a subtle shadow to the header when the panel is scrolled */
 const isScrolled = ref(false);
 const onScroll = (event: Event) => {
@@ -121,8 +124,8 @@ header {
 	flex-direction: row-reverse;
 	justify-content: space-between;
 	padding: var(--gap-2);
-	padding-left: var(--gap);
-	gap: var(--gap);
+	padding-left: var(--gap-4);
+	gap: var(--gap-4);
 	&.shadow {
 		box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.1);
 	}
@@ -143,10 +146,6 @@ header:not(.tab) {
 		background: color-mix(in srgb, var(--surface-100) 80%, transparent 20%);
 	}
 
-	& .content-wrapper {
-		padding-bottom: 4rem;
-	}
-
 	& :deep(.slider-content),
 	& :deep(.slider-tab) {
 		background-color: var(--surface-100);
@@ -161,6 +160,11 @@ header:not(.tab) {
 	&:deep(.p-accordion-content) {
 		background-color: var(--surface-100);
 	}
+}
+
+/* Don't nest this rule, it makes it easier for the parent to mutate when needed. */
+.input-config .content-wrapper {
+	padding-bottom: 4rem;
 }
 
 .tab {

@@ -134,9 +134,18 @@
 				:options="outputs"
 				v-model:output="selectedOutputId"
 				@update:selection="onSelection"
-				:is-loading="showSpinner"
 				is-selectable
 			>
+				<!-- Loss chart -->
+				<div ref="lossChartContainer">
+					<vega-chart
+						v-if="!_.isEmpty(lossValues)"
+						expandable
+						ref="lossChartRef"
+						:are-embed-actions-visible="true"
+						:visualization-spec="lossChartSpec"
+					/>
+				</div>
 				<section v-if="!inProgressCalibrationId && !inProgressForecastId" ref="outputPanel">
 					<tera-simulate-chart
 						v-for="(cfg, index) of node.state.chartConfigs"
@@ -160,12 +169,15 @@
 						icon="pi pi-plus"
 					/>
 				</section>
+
 				<tera-progress-spinner
 					v-if="inProgressCalibrationId || inProgressForecastId"
 					:font-size="2"
 					is-centered
 					style="height: 100%"
-				/>
+				>
+					{{ node.state.currentProgress }}%
+				</tera-progress-spinner>
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
@@ -178,8 +190,14 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
+import * as vega from 'vega';
 import { ref, shallowRef, computed, watch, onMounted } from 'vue';
-import { getRunResultCiemss, makeEnsembleCiemssCalibration } from '@/services/models/simulation-service';
+import {
+	getRunResultCiemss,
+	makeEnsembleCiemssCalibration,
+	unsubscribeToUpdateMessages,
+	subscribeToUpdateMessages
+} from '@/services/models/simulation-service';
 import Button from 'primevue/button';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import AccordionTab from 'primevue/accordiontab';
@@ -193,22 +211,26 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
-
 import { chartActionsProxy, drilldownChartSize, getTimespan, nodeMetadata } from '@/components/workflow/util';
 import type {
 	CsvAsset,
 	EnsembleModelConfigs,
 	EnsembleCalibrationCiemssRequest,
 	ModelConfiguration,
-	Dataset
+	Dataset,
+	ClientEvent
 } from '@/types/Types';
+import { ClientEventType } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import { getDataset } from '@/services/dataset';
+import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
+import VegaChart from '@/components/widgets/VegaChart.vue';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	EnsembleCalibrateExtraCiemss
 } from './calibrate-ensemble-ciemss-operation';
+import { updateLossChartSpec, getLossValuesFromSimulation } from './calibrate-ensemble-util';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
@@ -256,11 +278,17 @@ const inProgressForecastId = computed(() => props.node.state.inProgressForecastI
 const datasetId = computed(() => props.node.inputs[0].value?.[0] as string | undefined);
 const currentDatasetFileName = ref<string>();
 const datasetColumnNames = ref<string[]>();
-
+// Loss Chart:
+const lossChartRef = ref<InstanceType<typeof VegaChart>>();
+const lossChartSpec = ref();
+const lossValues = ref<{ [key: string]: number }[]>([]);
+const lossChartContainer = ref(null);
+const lossChartSize = useDrilldownChartSize(lossChartContainer);
+const LOSS_CHART_DATA_SOURCE = 'lossData';
+// Model:
 const listModelLabels = ref<string[]>([]);
 const allModelConfigurations = ref<ModelConfiguration[]>([]);
-// List of each observible + state for each model.
-const allModelOptions = ref<any[][]>([]);
+const allModelOptions = ref<any[][]>([]); // List of each observible + state for each model.
 
 const newSolutionMappingKey = ref<string>('');
 const runResults = ref<RunResults>({});
@@ -295,8 +323,19 @@ function addMapping() {
 	emit('update-state', state);
 }
 
+const messageHandler = (event: ClientEvent<any>) => {
+	if (!lossChartRef.value?.view) return;
+	const data = { iter: lossValues.value.length, loss: event.data.loss };
+	lossChartRef.value.view.change(LOSS_CHART_DATA_SOURCE, vega.changeset().insert(data)).resize().run();
+	lossValues.value.push(data);
+};
+
 const runEnsemble = async () => {
 	if (!datasetId.value || !currentDatasetFileName.value) return;
+
+	// Reset loss buffer
+	lossValues.value = [];
+
 	const datasetMapping: { [index: string]: string } = {};
 	datasetMapping[knobs.value.timestampColName] = 'timestamp';
 	// Each key used in the ensemble configs is a dataset column.
@@ -326,9 +365,9 @@ const runEnsemble = async () => {
 	const response = await makeEnsembleCiemssCalibration(calibratePayload, nodeMetadata(props.node));
 	if (response?.simulationId) {
 		const state = _.cloneDeep(props.node.state);
+		state.currentProgress = 0;
 		state.inProgressCalibrationId = response?.simulationId;
 		state.inProgressForecastId = '';
-
 		emit('update-state', state);
 	}
 };
@@ -393,6 +432,8 @@ watch(
 			const state = props.node.state;
 			const output = await getRunResultCiemss(state.forecastRunId, 'result.csv');
 			runResults.value = output.runResults;
+			lossValues.value = await getLossValuesFromSimulation(props.node.state.calibrationId);
+			lossChartSpec.value = await updateLossChartSpec(lossValues.value, lossChartSize.value);
 		}
 	},
 	{ immediate: true }
@@ -408,6 +449,22 @@ watch(
 		emit('update-state', state);
 	},
 	{ deep: true }
+);
+
+watch(
+	[() => props.node.state.inProgressCalibrationId, lossChartSize],
+	([id, size]) => {
+		if (id === '') {
+			showSpinner.value = false;
+			lossChartSpec.value = updateLossChartSpec(lossValues.value, size);
+			unsubscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
+		} else {
+			showSpinner.value = true;
+			lossChartSpec.value = updateLossChartSpec(LOSS_CHART_DATA_SOURCE, size);
+			subscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
+		}
+	},
+	{ immediate: true }
 );
 </script>
 

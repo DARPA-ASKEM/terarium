@@ -389,7 +389,7 @@ watch(
 <style scoped>
 .subheader {
 	color: var(--text-color-subdued);
-	margin-bottom: var(--gap);
+	margin-bottom: var(--gap-4);
 }
 
 .ensemble-calibration-graph {

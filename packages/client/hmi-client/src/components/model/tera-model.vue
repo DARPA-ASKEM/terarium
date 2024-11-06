@@ -76,11 +76,12 @@
 		:open-on-save="!isWorkflow"
 		@close-modal="showSaveModal = false"
 		@on-save="onModalSave"
+		@on-update="onModalSave"
 	/>
 </template>
 
 <script setup lang="ts">
-import { computed, PropType, ref, watch } from 'vue';
+import { computed, PropType, ref, watch, onMounted } from 'vue';
 import { cloneDeep, isEmpty, isEqual } from 'lodash';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
@@ -92,8 +93,7 @@ import TeraModelParts from '@/components/model/tera-model-parts.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { getModel, updateModel } from '@/services/model';
 import type { FeatureConfig } from '@/types/common';
-import { AssetType, ClientEvent, ClientEventType, type Model, TaskResponse, TaskStatus } from '@/types/Types';
-import { useClientEvent } from '@/composables/useClientEvent';
+import { AssetType, type Model } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 
@@ -117,18 +117,6 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close-preview', 'on-save']);
-
-// Listen for the task completion event
-useClientEvent(ClientEventType.TaskGollmModelCard, (event: ClientEvent<TaskResponse>) => {
-	if (
-		!event.data ||
-		event.data.status !== TaskStatus.Success ||
-		event.data.additionalProperties.modelId !== props.assetId
-	) {
-		return;
-	}
-	fetchModel();
-});
 
 const model = ref<Model | null>(null);
 const temporaryModel = ref<Model | null>(null);
@@ -167,7 +155,8 @@ function onModalSave(event: any) {
 // User menu
 const toggleOptionsMenu = (event) => optionsMenu.value.toggle(event);
 const optionsMenu = ref();
-const optionsMenuItems = computed(() => [
+// TODO: Could be moved into tera-asset.vue
+const optionsMenuItems = ref<any[]>([
 	{
 		icon: 'pi pi-pencil',
 		label: 'Rename',
@@ -175,20 +164,6 @@ const optionsMenuItems = computed(() => [
 			isRenaming.value = true;
 			newName.value = temporaryModel.value?.header.name ?? '';
 		}
-	},
-	{
-		icon: 'pi pi-plus',
-		label: 'Add to project',
-		items:
-			useProjects()
-				.allProjects.value?.filter((project) => project.id !== useProjects().activeProject.value?.id)
-				.map((project) => ({
-					label: project.name,
-					command: async () => {
-						const response = await useProjects().addAsset(AssetType.Model, props.assetId, project.id);
-						if (response) logger.info(`Added asset to ${project.name}`);
-					}
-				})) ?? []
 	},
 	{
 		icon: 'pi pi-download',
@@ -238,8 +213,24 @@ async function fetchModel() {
 	temporaryModel.value = cloneDeep(model.value);
 }
 
+onMounted(async () => {
+	const addProjectMenuItems = (await useProjects().getAllExceptActive()).map((project) => ({
+		label: project.name,
+		command: async () => {
+			const response = await useProjects().addAsset(AssetType.Model, props.assetId, project.id);
+			if (response) logger.info(`Added asset to ${project.name}`);
+		}
+	}));
+	if (addProjectMenuItems.length === 0) return;
+	optionsMenuItems.value.splice(1, 0, {
+		icon: 'pi pi-plus',
+		label: 'Add to project',
+		items: addProjectMenuItems
+	});
+});
+
 watch(
-	() => [props.assetId],
+	() => props.assetId,
 	async () => {
 		// Reset view of model page
 		isRenaming.value = false;
@@ -257,7 +248,7 @@ watch(
 .btn-group {
 	display: flex;
 	align-items: center;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	margin-left: auto;
 }
 </style>

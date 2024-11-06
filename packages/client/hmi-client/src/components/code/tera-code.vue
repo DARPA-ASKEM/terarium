@@ -165,7 +165,7 @@ import ContextMenu from 'primevue/contextmenu';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, onMounted } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
@@ -449,28 +449,13 @@ watch(
 const isRenamingCode = ref(false);
 
 const optionsMenu = ref();
-const optionsMenuItems = ref([
+const optionsMenuItems = ref<any[]>([
 	{
 		icon: 'pi pi-pencil',
 		label: 'Rename',
 		command() {
 			isRenamingCode.value = true;
 		}
-	},
-	{
-		icon: 'pi pi-plus',
-		label: 'Add to project',
-		items:
-			useProjects()
-				.allProjects.value?.filter((project) => project.id !== useProjects().activeProject.value?.id)
-				.map((project) => ({
-					label: project.name,
-					command: async () => {
-						const response = await useProjects().addAsset(AssetType.Code, props.assetId, project.id);
-						if (response) logger.info(`Added asset to ${project.name}`);
-						else logger.error('Failed to add asset to project');
-					}
-				})) ?? []
 	}
 ]);
 const optionsMenuPt = {
@@ -482,6 +467,23 @@ const optionsMenuPt = {
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
 };
+
+onMounted(async () => {
+	const addProjectMenuItems = (await useProjects().getAllExceptActive()).map((project) => ({
+		label: project.name,
+		command: async () => {
+			const response = await useProjects().addAsset(AssetType.Code, props.assetId, project.id);
+			if (response) logger.info(`Added asset to ${project.name}`);
+			else logger.error('Failed to add asset to project');
+		}
+	}));
+	if (addProjectMenuItems.length === 0) return;
+	optionsMenuItems.value.splice(1, 0, {
+		icon: 'pi pi-plus',
+		label: 'Add to project',
+		items: addProjectMenuItems
+	});
+});
 </script>
 
 <style scoped>
@@ -545,7 +547,7 @@ header > section {
 }
 
 .code-blocks-container {
-	padding: var(--gap);
+	padding: var(--gap-4);
 	max-width: 300px;
 	height: 100%;
 	display: flex;
@@ -558,7 +560,7 @@ header > section {
 .code-blocks-buttons-container {
 	display: flex;
 	flex-direction: row;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 }
 
 .code-blocks-buttons-container > * {

@@ -68,13 +68,13 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.ExtractionService;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
+import software.uncharted.terarium.hmiserver.service.data.DKGService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
-import software.uncharted.terarium.hmiserver.service.tasks.EnrichAmrResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.EquationsCleanupResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
@@ -89,29 +89,30 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @RequiredArgsConstructor
 public class KnowledgeController {
 
-	final ObjectMapper mapper;
+	private final ObjectMapper mapper;
 
-	final SkemaUnifiedProxy skemaUnifiedProxy;
-	final MitProxy mitProxy;
+	private final SkemaUnifiedProxy skemaUnifiedProxy;
+	private final MitProxy mitProxy;
 
-	final DocumentAssetService documentService;
-	final DatasetService datasetService;
-	final ModelService modelService;
-	final ProvenanceService provenanceService;
-	final ProvenanceSearchService provenanceSearchService;
-	final DocumentAssetService documentAssetService;
+	private final DocumentAssetService documentService;
+	private final DatasetService datasetService;
+	private final ModelService modelService;
+	private final ProvenanceService provenanceService;
+	private final ProvenanceSearchService provenanceSearchService;
+	private final DocumentAssetService documentAssetService;
 
-	final CodeService codeService;
+	private final CodeService codeService;
 
-	final ExtractionService extractionService;
-	final TaskService taskService;
+	private final ExtractionService extractionService;
+	private final TaskService taskService;
+	private final DKGService dkgService;
 
-	final ProjectService projectService;
-	final CurrentUserService currentUserService;
+	private final ProjectService projectService;
+	private final CurrentUserService currentUserService;
 
 	private final EquationsCleanupResponseHandler equationsCleanupResponseHandler;
 
-	final Messages messages;
+	private final Messages messages;
 
 	@Value("${openai-api-key:}")
 	String OPENAI_API_KEY;
@@ -119,91 +120,6 @@ public class KnowledgeController {
 	@PostConstruct
 	void init() {
 		taskService.addResponseHandler(equationsCleanupResponseHandler);
-	}
-
-	private void enrichModel(
-		final UUID projectId,
-		final UUID documentId,
-		final UUID modelId,
-		final Schema.Permission permission,
-		final boolean overwrite
-	) {
-		// Grab the document
-		final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
-		if (document.isEmpty()) {
-			log.warn(String.format("Document %s not found", documentId));
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
-		}
-
-		// make sure there is text in the document
-		if (document.get().getText() == null || document.get().getText().isEmpty()) {
-			log.warn(String.format("Document %s has no extracted text", documentId));
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.extraction.not-done"));
-		}
-
-		// Grab the model
-		final Optional<Model> model = modelService.getAsset(modelId, permission);
-		if (model.isEmpty()) {
-			log.warn(String.format("Model %s not found", modelId));
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
-		}
-
-		final EnrichAmrResponseHandler.Input input = new EnrichAmrResponseHandler.Input();
-		try {
-			input.setResearchPaper(mapper.writeValueAsString(document.get().getExtractions()));
-		} catch (JsonProcessingException e) {
-			log.error("Unable to serialize document text", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
-		}
-		// stripping the metadata from the model before its sent since it can cause
-		// gollm to fail with massive inputs
-		model.get().setMetadata(null);
-
-		try {
-			final String amr = mapper.writeValueAsString(model.get());
-			input.setAmr(amr);
-		} catch (final JsonProcessingException e) {
-			log.error("Unable to serialize model card", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
-		}
-
-		// Create the task
-		final TaskRequest req = new TaskRequest();
-		req.setType(TaskType.GOLLM);
-		req.setScript(EnrichAmrResponseHandler.NAME);
-		req.setUserId(currentUserService.get().getId());
-
-		try {
-			req.setInput(mapper.writeValueAsBytes(input));
-		} catch (final Exception e) {
-			log.error("Unable to serialize input", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
-		}
-
-		req.setProjectId(projectId);
-
-		final EnrichAmrResponseHandler.Properties props = new EnrichAmrResponseHandler.Properties();
-		props.setProjectId(projectId);
-		props.setDocumentId(documentId);
-		props.setModelId(modelId);
-		props.setOverwrite(overwrite);
-		req.setAdditionalProperties(props);
-
-		try {
-			taskService.runTaskSync(req);
-		} catch (final JsonProcessingException e) {
-			log.error("Unable to serialize input", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
-		} catch (final TimeoutException e) {
-			log.warn("Timeout while waiting for task response", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
-		} catch (final InterruptedException e) {
-			log.warn("Interrupted while waiting for task response", e);
-			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
-		} catch (final ExecutionException e) {
-			log.error("Error while waiting for task response", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
-		}
 	}
 
 	/**
@@ -310,25 +226,39 @@ public class KnowledgeController {
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("skema.internal-error"));
 		}
 
+		if (!responseAMR.isPetrinet()) {
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("skema.bad-equations.petrinet"));
+		}
+
 		// If no model id is provided, create a new model asset
 		if (modelId == null) {
 			try {
 				final Model model = modelService.createAsset(responseAMR, projectId, permission);
 				// enrich the model with the document
 				if (documentId != null) {
-					enrichModel(projectId, documentId, model.getId(), permission, true);
+					modelService.enrichModel(projectId, documentId, model.getId(), permission, true);
 				}
 				return ResponseEntity.ok(model.getId());
 			} catch (final IOException e) {
-				log.error("An error occurred while trying to create a Model asset.", e);
+				log.error("An error occurred while trying to retrieve information necessary for model enrichment.", e);
 				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+			} catch (ExecutionException e) {
+				log.error("Error while waiting for task response", e);
+				throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR,
+					messages.get("task.gollm.execution-failure")
+				);
+			} catch (InterruptedException e) {
+				log.warn("Interrupted while waiting for task response", e);
+				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
+			} catch (TimeoutException e) {
+				log.warn("Timeout while waiting for task response", e);
+				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
 			}
 		}
 
 		// If a model id is provided, update the existing model
-		final Optional<Model> model;
-
-		model = modelService.getAsset(modelId, permission);
+		final Optional<Model> model = modelService.getAsset(modelId, permission);
 		if (model.isEmpty()) {
 			log.error(String.format("The model id %s does not exist.", modelId));
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("model.not-found"));
@@ -339,12 +269,21 @@ public class KnowledgeController {
 			modelService.updateAsset(responseAMR, projectId, permission);
 			// enrich the model with the document
 			if (documentId != null) {
-				enrichModel(projectId, documentId, responseAMR.getId(), permission, true);
+				modelService.enrichModel(projectId, documentId, responseAMR.getId(), permission, true);
 			}
 			return ResponseEntity.ok(model.get().getId());
 		} catch (final IOException e) {
-			log.error(String.format("Unable to update the model with id %s.", modelId), e);
+			log.error("An error occurred while trying to retrieve information necessary for model enrichment.", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		} catch (ExecutionException e) {
+			log.error("Error while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
+		} catch (InterruptedException e) {
+			log.warn("Interrupted while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
+		} catch (TimeoutException e) {
+			log.warn("Timeout while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
 		}
 	}
 

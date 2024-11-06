@@ -234,7 +234,7 @@ function onDeleteRequested(msgId: string) {
 	font-size: var(--font-body-medium);
 	font-weight: 600;
 	font-family: var(--font-family);
-	padding-bottom: var(--gap);
+	padding-bottom: var(--gap-4);
 }
 .edit-query-box {
 	display: flex;
@@ -253,7 +253,7 @@ function onDeleteRequested(msgId: string) {
 	display: flex;
 	align-items: center;
 	gap: 10px;
-	margin-top: var(--gap-small);
+	margin-top: var(--gap-2);
 }
 
 .error {
@@ -264,7 +264,7 @@ function onDeleteRequested(msgId: string) {
 
 .jupyter-response {
 	position: relative;
-	margin: var(--gap);
+	margin: var(--gap-4);
 	padding: var(--gap-4);
 	display: flex;
 	flex-direction: column;
@@ -294,7 +294,7 @@ function onDeleteRequested(msgId: string) {
 .query,
 .llm-thought,
 .llm-response {
-	padding-bottom: var(--gap-small);
+	padding-bottom: var(--gap-2);
 }
 
 .llm-thought {
@@ -310,7 +310,7 @@ function onDeleteRequested(msgId: string) {
 		padding: 0rem 0 0.625rem 2.25rem;
 	}
 	li {
-		margin-bottom: var(--gap-xsmall);
+		margin-bottom: var(--gap-1);
 		padding-left: 2.25rem;
 	}
 	li::first-letter {
