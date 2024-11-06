@@ -23,35 +23,31 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @Service
 public class DocumentAssetService extends TerariumAssetServiceWithSearch<DocumentAsset, DocumentRepository> {
 
-	private final EmbeddingService embeddingService;
-
-	private final Environment env;
-
 	public DocumentAssetService(
 		final ObjectMapper objectMapper,
 		final Config config,
 		final ElasticsearchConfiguration elasticConfig,
 		final ElasticsearchService elasticService,
+		final EmbeddingService embeddingService,
+		final Environment env,
 		final ProjectService projectService,
 		final ProjectAssetService projectAssetService,
 		final S3ClientService s3ClientService,
-		final DocumentRepository repository,
-		final EmbeddingService embeddingService,
-		final Environment env
+		final DocumentRepository repository
 	) {
 		super(
 			objectMapper,
 			config,
 			elasticConfig,
 			elasticService,
+			embeddingService,
+			env,
 			projectService,
 			projectAssetService,
 			s3ClientService,
 			repository,
 			DocumentAsset.class
 		);
-		this.embeddingService = embeddingService;
-		this.env = env;
 	}
 
 	@Override
@@ -79,18 +75,6 @@ public class DocumentAssetService extends TerariumAssetServiceWithSearch<Documen
 		final Schema.Permission hasWritePermission
 	) throws IOException {
 		return super.createAsset(asset, projectId, hasWritePermission);
-	}
-
-	private boolean isRunningTestProfile() {
-		final String[] activeProfiles = env.getActiveProfiles();
-
-		for (final String profile : activeProfiles) {
-			if ("test".equals(profile)) {
-				return true;
-			}
-		}
-
-		return false;
 	}
 
 	@Override

@@ -29,47 +29,31 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @Service
 public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRepository> {
 
-	private final EmbeddingService embeddingService;
-
-	private final Environment env;
-
 	public ModelService(
 		final ObjectMapper objectMapper,
 		final Config config,
 		final ElasticsearchConfiguration elasticConfig,
 		final ElasticsearchService elasticService,
+		final EmbeddingService embeddingService,
+		final Environment env,
 		final ProjectService projectService,
 		final ProjectAssetService projectAssetService,
 		final S3ClientService s3ClientService,
-		final ModelRepository repository,
-		final EmbeddingService embeddingService,
-		final Environment env
+		final ModelRepository repository
 	) {
 		super(
 			objectMapper,
 			config,
 			elasticConfig,
 			elasticService,
+			embeddingService,
+			env,
 			projectService,
 			projectAssetService,
 			s3ClientService,
 			repository,
 			Model.class
 		);
-		this.embeddingService = embeddingService;
-		this.env = env;
-	}
-
-	private boolean isRunningTestProfile() {
-		final String[] activeProfiles = env.getActiveProfiles();
-
-		for (final String profile : activeProfiles) {
-			if ("test".equals(profile)) {
-				return true;
-			}
-		}
-
-		return false;
 	}
 
 	@Observed(name = "function_profile")

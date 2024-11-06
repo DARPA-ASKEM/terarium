@@ -11,7 +11,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +25,7 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
 import software.uncharted.terarium.hmiserver.repository.PSCrudSoftDeleteRepository;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
+import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
@@ -44,6 +48,8 @@ public abstract class TerariumAssetServiceWithSearch<
 		final Config config,
 		final ElasticsearchConfiguration elasticConfig,
 		final ElasticsearchService elasticService,
+		final EmbeddingService embeddingService,
+		final Environment env,
 		final ProjectService projectService,
 		final ProjectAssetService projectAssetService,
 		final S3ClientService s3ClientService,
@@ -53,6 +59,8 @@ public abstract class TerariumAssetServiceWithSearch<
 		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService, assetClass);
 		this.elasticConfig = elasticConfig;
 		this.elasticService = elasticService;
+		this.embeddingService = embeddingService;
+		this.env = env;
 	}
 
 	/** The configuration for the Elasticsearch service */
@@ -60,6 +68,9 @@ public abstract class TerariumAssetServiceWithSearch<
 
 	/** Services */
 	protected final ElasticsearchService elasticService;
+
+	protected final EmbeddingService embeddingService;
+	private final Environment env;
 
 	/**
 	 * Get the index for the asset this service manages
@@ -369,26 +380,36 @@ public abstract class TerariumAssetServiceWithSearch<
 		// refresh the index
 		elasticService.refreshIndex(getAssetAlias());
 	}
-	// public Future<void> generateAndUpsertEmbeddingsIntoProjectIndex(final T
-	// asset) {
-	// if (!isRunningTestProfile() && asset.getPublicAsset() &&
-	// !asset.getTemporary()) {
-	// return CompletableFuture.runAsync(() -> {
-	// new Thread(() -> {
-	// try {
-	// final TerariumAssetEmbeddings embeddings =
-	// embeddingService.generateEmbeddings(asset.getEmbeddingSourceText());
 
-	// // Execute the update request
-	// uploadEmbeddings(asset.getId(), embeddings,
-	// ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
-	// } catch (final Exception e) {
-	// log.error("Failed to update embeddings for document {}", asset.getId(), e);
-	// }
-	// }).start();
-	// });
-	// }
-	// return null;
-	// }
+	protected boolean isRunningTestProfile() {
+		final String[] activeProfiles = env.getActiveProfiles();
 
+		for (final String profile : activeProfiles) {
+			if ("test".equals(profile)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	public Future<Void> generateAndUpsertEmbeddingsIntoProjectIndex(final T asset) {
+		if (!isRunningTestProfile() && asset.getPublicAsset() && !asset.getTemporary()) {
+			return CompletableFuture.runAsync(() -> {
+				new Thread(() -> {
+					try {
+						final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(
+							asset.getEmbeddingSourceText()
+						);
+
+						// Execute the update request
+						uploadEmbeddings(asset.getId(), embeddings, Schema.Permission.WRITE);
+					} catch (final Exception e) {
+						log.error("Failed to update embeddings for document {}", asset.getId(), e);
+					}
+				}).start();
+			});
+		}
+		return null;
+	}
 }
