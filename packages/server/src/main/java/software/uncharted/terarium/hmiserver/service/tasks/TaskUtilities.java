@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelGrounding;
@@ -60,6 +61,50 @@ public class TaskUtilities {
 		req.setAdditionalProperties(props);
 
 		return req;
+	}
+
+	public static TaskRequest getEnrichDatasetTaskRequest(
+		String userId,
+		DocumentAsset document,
+		Dataset dataset,
+		UUID projectId,
+		Boolean overwrite
+	) throws IOException {
+		final ObjectMapper objectMapper = new ObjectMapper();
+
+		final EnrichDatasetResponseHandler.Input input = new EnrichDatasetResponseHandler.Input();
+		if (document != null) {
+			try {
+				input.setResearchPaper(objectMapper.writeValueAsString(document.getExtractions()));
+			} catch (JsonProcessingException e) {
+				throw new IOException("Unable to serialize document text");
+			}
+		}
+
+		input.setDataset(dataset.serializeWithoutTerariumFields(null, null));
+
+		// Create the task
+		final TaskRequest taskRequest = new TaskRequest();
+		taskRequest.setType(TaskRequest.TaskType.GOLLM);
+		taskRequest.setScript(EnrichDatasetResponseHandler.NAME);
+		taskRequest.setUserId(userId);
+
+		try {
+			taskRequest.setInput(objectMapper.writeValueAsBytes(input));
+		} catch (final Exception e) {
+			throw new IOException("Unable to serialize input");
+		}
+
+		taskRequest.setProjectId(projectId);
+
+		final EnrichDatasetResponseHandler.Properties properties = new EnrichDatasetResponseHandler.Properties();
+		properties.setProjectId(projectId);
+		if (document != null) properties.setDocumentId(document.getId());
+		properties.setDatasetId(dataset.getId());
+		properties.setOverwrite(overwrite);
+		taskRequest.setAdditionalProperties(properties);
+
+		return taskRequest;
 	}
 
 	public static TaskRequest getModelCardTask(String userId, DocumentAsset document, Model model, UUID projectId)
