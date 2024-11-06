@@ -491,7 +491,7 @@ section {
 }
 
 .add-cell-button {
-	margin-left: var(--gap);
+	margin-left: var(--gap-4);
 	width: calc(100% - 2rem);
 }
 .add-cell-button:deep(.p-button-label) {

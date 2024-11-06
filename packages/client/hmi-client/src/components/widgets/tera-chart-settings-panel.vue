@@ -119,8 +119,8 @@ const cancelGenerateAnnotation = () => {
 		flex-direction: row-reverse;
 		justify-content: space-between;
 		padding: var(--gap-2);
-		padding-left: var(--gap);
-		gap: var(--gap);
+		padding-left: var(--gap-4);
+		gap: var(--gap-4);
 		background-color: rgba(255, 255, 255, 0.8);
 		backdrop-filter: blur(3px);
 		&.shadow {

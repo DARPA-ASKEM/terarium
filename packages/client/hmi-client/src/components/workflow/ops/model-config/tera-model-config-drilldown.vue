@@ -215,6 +215,7 @@
 		:asset-type="AssetType.ModelConfiguration"
 		@close-modal="showSaveModal = false"
 		@on-save="onSaveAsModelConfiguration"
+		@on-update="onSaveAsModelConfiguration"
 	/>
 
 	<!-- Matrix effect easter egg  -->
@@ -829,19 +830,19 @@ onUnmounted(() => {
 .notebook-section {
 	background-color: var(--surface-disabled);
 	border-right: 1px solid var(--surface-border-dark);
-	padding: var(--gap);
+	padding: var(--gap-4);
 }
 
 .notebook-section:deep(main) {
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	position: relative;
 }
 
 .toolbar-right-side {
 	position: absolute;
-	top: var(--gap);
+	top: var(--gap-4);
 	right: 0;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	display: flex;
 	align-items: center;
 }
@@ -861,7 +862,7 @@ onUnmounted(() => {
 
 .sort-by-label {
 	color: var(--text-color-subdued);
-	padding-right: var(--gap-small);
+	padding-right: var(--gap-2);
 }
 
 :deep(.pi-spinner) {

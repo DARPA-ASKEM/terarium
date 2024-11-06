@@ -31,7 +31,7 @@ const onClickClose = () => {
 	background-color: #fff;
 	border: 1px solid var(--surface-border);
 	border-radius: var(--border-radius);
-	padding: var(--gap);
+	padding: var(--gap-4);
 	color: var(--text-color);
 	width: 100%;
 	margin-top: var(--gap-2);

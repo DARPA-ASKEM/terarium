@@ -126,7 +126,7 @@ header {
 main {
 	display: flex;
 	justify-content: space-between;
-	padding-bottom: var(--gap-small);
+	padding-bottom: var(--gap-2);
 }
 
 label {
