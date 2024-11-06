@@ -30,44 +30,35 @@
       "type": "string",
       "description": "License for this dataset."
     },
-    "states": {
+    "columns": {
       "type": "array",
-      "description": "A list of descriptions and units for states defined in an AMR model.",
+      "description": "A list of descriptions and units for dataset columns.",
       "items": {
         "type": "object",
         "description": "The description and units for a state defined in an AMR model.",
         "properties": {
-          "id": {
+          "name": {
             "type": "string",
-            "description": "The id of the state in the AMR model."
+            "description": "Name of the column."
           },
           "description": {
             "type": "string",
             "description": "A brief description of the state."
           },
-          "units": {
-            "type": "object",
-            "properties": {
-              "expression": {
-                "type": "string",
-                "description": "A string representation of the units. Units can be either a single unit or a rate expression."
-              },
-              "expressionMathml": {
-                "type": "string",
-                "description": "A MathML representation of expression."
-              }
-            },
-            "required": [
-              "expression",
-              "expressionMathml"
-            ],
-            "additionalProperties": false
+          "unit": {
+            "type": "string",
+            "description": "A string representation of the units."
+          },
+          "concept": {
+            "type": "string",
+            "description": "A string representation of the concept."
           }
         },
         "required": [
-          "id",
+          "name",
           "description",
-          "units"
+          "unit",
+          "concept"
         ],
         "additionalProperties": false
       }
@@ -80,7 +71,8 @@
     "date",
     "provenance",
     "sensitivity",
-    "license"
+    "license",
+    "columns"
   ],
   "additionalProperties": false
 }
