@@ -332,7 +332,6 @@ const messageHandler = (event: ClientEvent<any>) => {
 };
 
 const updateLossChartSpec = (data: string | Record<string, any>[], size: { width: number; height: number }) => {
-	console.log('Update loss chart spec');
 	lossChartSpec.value = createForecastChart(
 		null,
 		{
