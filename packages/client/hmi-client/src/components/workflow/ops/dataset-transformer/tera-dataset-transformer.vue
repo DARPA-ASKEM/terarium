@@ -61,7 +61,6 @@ const props = defineProps<{
 const emit = defineEmits(['append-output', 'update-state', 'close']);
 
 const showKernels = ref(<boolean>false);
-const isCodeDirty = ref(<boolean>false);
 const showChatThoughts = ref(<boolean>false);
 const assets = computed(() =>
 	props.node.inputs
@@ -74,7 +73,6 @@ const assets = computed(() =>
 );
 const disableSaveForReuse = computed(
 	() =>
-		isCodeDirty.value ||
 		!kernelState.value ||
 		(props.node.status === OperatorStatus.INVALID && props.node.state.selectedOutputs) ||
 		props.node.status === OperatorStatus.ERROR
