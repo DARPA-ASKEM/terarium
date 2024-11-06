@@ -143,6 +143,7 @@
 						severity="secondary"
 						label="Sync with Wizard"
 						icon="pi pi-refresh"
+						:disabled="isEqual(request, JSON.parse(rawRequest))"
 						@click="syncNotebookWithWizard"
 					/>
 					<Button :loading="showSpinner" label="Run" icon="pi pi-play" @click="run" />
@@ -332,7 +333,7 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty, cloneDeep } from 'lodash';
+import { isEmpty, cloneDeep, isEqual } from 'lodash';
 import { computed, ref, watch, onMounted } from 'vue';
 import { logger } from '@/utils/logger';
 import { formatShort } from '@/utils/date';
@@ -348,6 +349,7 @@ import VegaChart from '@/components/widgets/VegaChart.vue';
 
 import '@/ace-config';
 import { VAceEditor } from 'vue3-ace-editor';
+import { saveCodeToState } from '@/services/notebook';
 
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
@@ -550,6 +552,10 @@ async function run() {
 	const requestToUse =
 		drilldownRef.value?.selectedTab === DrilldownTabs.Wizard ? request.value : JSON.parse(rawRequest.value);
 
+	if (drilldownRef.value?.selectedTab === DrilldownTabs.Notebook) {
+		updateCodeState(true);
+	}
+
 	if (!requestToUse || !model.value?.id || !configuredInputModel) {
 		toast.error('', 'No Model provided for request');
 		return;
@@ -568,8 +574,14 @@ async function run() {
 	emit('update-state', state);
 }
 
+function updateCodeState(hasCodeRun: boolean) {
+	const state = saveCodeToState(props.node, rawRequest.value, hasCodeRun);
+	emit('update-state', state);
+}
+
 function syncNotebookWithWizard() {
 	rawRequest.value = formatJSON(JSON.stringify(request.value));
+	updateCodeState(false);
 }
 
 const addConstraintForm = () => {
@@ -739,7 +751,11 @@ onMounted(async () => {
 	mmt = response.mmt;
 	mmtParams.value = response.template_params;
 
-	syncNotebookWithWizard();
+	if (isEmpty(props.node.state.notebookHistory)) {
+		syncNotebookWithWizard();
+	} else {
+		rawRequest.value = props.node.state.notebookHistory[0].code;
+	}
 
 	prepareOutput();
 });
