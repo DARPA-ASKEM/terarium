@@ -1,10 +1,10 @@
 <template>
 	<div class="tera-input">
 		<label v-if="label" @click.self.stop="focusInput">{{ label }}</label>
-		<main :class="{ error: getErrorMessage }" @click.self.stop="focusInput">
+		<main :class="[{ error: getErrorMessage }, { empty: isEmptyError }]" @click.self.stop="focusInput">
 			<i v-if="icon" :class="icon" />
 			<input
-				:class="$attrs.class"
+				:class="[$attrs.class, { 'empty-number': isEmptyError }]"
 				@click.stop
 				ref="inputField"
 				:disabled="getDisabled"
@@ -24,7 +24,7 @@
 
 <script setup lang="ts">
 import { numberToNist } from '@/utils/number';
-import { isNaN, toNumber } from 'lodash';
+import { isNaN, toNumber, isEmpty } from 'lodash';
 import { CSSProperties, computed, ref, watch } from 'vue';
 
 const props = defineProps<{
@@ -32,6 +32,7 @@ const props = defineProps<{
 	label?: string;
 	icon?: string;
 	errorMessage?: string;
+	errorEmpty?: boolean;
 	disabled?: boolean;
 	placeholder?: string;
 	autoWidth?: boolean;
@@ -46,12 +47,15 @@ const getDisabled = props.disabled ?? false;
 const focusInput = () => {
 	inputField.value?.focus();
 };
+
+const input = computed(() => displayValue()?.toString());
+const isEmptyError = computed(() => props.errorEmpty && isEmpty(input.value));
+
 // Computed property to dynamically adjust the input's style based on the autoWidth prop
 const inputStyle = computed(() => {
 	const style: CSSProperties = {};
-	const value = displayValue()?.toString();
 	if (props.autoWidth) {
-		const textToMeasure = value || props.placeholder;
+		const textToMeasure = input.value || props.placeholder;
 		// Estimate the width based on the length of the text to measure.
 		const width = (textToMeasure?.length || 1) * 8 + 4; // 8px per character + 4px padding
 		style.width = `${width}px`; // Dynamically set the width

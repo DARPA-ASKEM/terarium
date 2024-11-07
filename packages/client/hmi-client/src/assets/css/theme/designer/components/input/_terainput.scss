@@ -42,8 +42,16 @@
 			margin: 0;
 			&::-webkit-inner-spin-button,
 			&::-webkit-outer-spin-button {
-			-webkit-appearance: none;
-	}
+					-webkit-appearance: none;
+			}
+		}
+
+		& > input.empty, &.empty {
+			background-color: var(--error-background);
+			border-color: var(--error-border-color);
+		}
+		& > input.empty-number {
+			background-color: transparent;
 		}
 	}
 

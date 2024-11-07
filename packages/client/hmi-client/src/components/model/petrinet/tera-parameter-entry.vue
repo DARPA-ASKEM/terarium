@@ -1,5 +1,5 @@
 <template>
-	<div class="parameter-entry flex flex-column flex-1">
+	<div class="parameter-entry flex flex-column flex-1" :class="{ 'empty-input': isInputEmpty }">
 		<header>
 			<div class="flex">
 				<strong>{{ parameterId }}</strong>
@@ -42,41 +42,28 @@
 						:options="distributionTypeOptions()"
 						class="mr-3"
 					/>
-
 					<!-- Constant -->
 					<tera-input-number
 						v-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Constant"
 						label="Constant"
 						:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.value"
-						@update:model-value="
-							emit('update-parameter', {
-								id: parameterId,
-								distribution: formatPayloadFromParameterChange({ value: $event })
-							})
-						"
+						:error-empty="errorEmpty"
+						@update:model-value="onInputChange(Parameter.value, $event)"
 					/>
 					<!-- Uniform Distribution -->
 					<template v-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Uniform">
 						<tera-input-number
 							label="Min"
 							:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.minimum"
-							@update:model-value="
-								emit('update-parameter', {
-									id: parameterId,
-									distribution: formatPayloadFromParameterChange({ minimum: $event })
-								})
-							"
+							:error-empty="errorEmpty"
+							@update:model-value="onInputChange(Parameter.minimum, $event)"
 							class="mr-2"
 						/>
 						<tera-input-number
 							label="Max"
 							:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.maximum"
-							@update:model-value="
-								emit('update-parameter', {
-									id: parameterId,
-									distribution: formatPayloadFromParameterChange({ maximum: $event })
-								})
-							"
+							:error-empty="errorEmpty"
+							@update:model-value="onInputChange(Parameter.maximum, $event)"
 						/>
 					</template>
 				</span>
@@ -139,6 +126,7 @@ import TeraParameterOtherValueModal from '@/components/model/petrinet/tera-param
 import { displayNumber } from '@/utils/number';
 import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
 import type { FeatureConfig } from '@/types/common';
+import { isNaN, isNumber } from 'lodash';
 
 const props = defineProps<{
 	model: Model;
@@ -146,9 +134,16 @@ const props = defineProps<{
 	modelConfigurations: ModelConfiguration[];
 	parameterId: string;
 	featureConfig?: FeatureConfig;
+	errorEmpty?: boolean;
 }>();
 
-const emit = defineEmits(['update-parameter', 'update-source']);
+enum Parameter {
+	minimum = 'minimum',
+	maximum = 'maximum',
+	value = 'value'
+}
+
+const emit = defineEmits(['update-parameter', 'update-source', 'has-empty-field']);
 
 const name = getParameter(props.model, props.parameterId)?.name;
 const units = getParameter(props.model, props.parameterId)?.units?.expression;
@@ -166,6 +161,32 @@ const showOtherConfigValueModal = ref(false);
 const otherValueList = computed(() =>
 	getOtherValues(props.modelConfigurations, props.parameterId, 'referenceId', 'parameterSemanticList')
 );
+
+const parameterInputs = ref();
+const isInputEmpty = computed(() => {
+	if (getParameterDistribution(props.modelConfiguration, props.parameterId).type === DistributionType.Constant) {
+		console.log(!isNumber(parameterInputs.value?.[Parameter.value]), parameterInputs.value?.[Parameter.value]);
+		emit(
+			'has-empty-field',
+			isNaN(parameterInputs.value?.[Parameter.value]) || !isNumber(parameterInputs.value?.[Parameter.value])
+		);
+		return isNaN(parameterInputs.value?.[Parameter.value]) || !isNumber(parameterInputs.value?.[Parameter.value]);
+	}
+	return (
+		isNaN(parameterInputs.value?.[Parameter.maximum]) ||
+		isNaN(parameterInputs.value?.[Parameter.minimum]) ||
+		!isNumber(parameterInputs.value?.[Parameter.minimum]) ||
+		!isNumber(parameterInputs.value?.[Parameter.maximum])
+	);
+});
+
+function onInputChange(parameter: Parameter, value) {
+	emit('update-parameter', {
+		id: props.parameterId,
+		distribution: formatPayloadFromParameterChange({ [parameter]: value })
+	});
+	parameterInputs.value[parameter] = value;
+}
 
 function getSourceLabel(initialId) {
 	if (isSourceOpen.value) return 'Hide source';
@@ -198,6 +219,11 @@ const getOtherValuesLabel = computed(() => `Other Values(${otherValueList.value?
 onMounted(async () => {
 	const identifiers = getParameter(props.model, props.parameterId)?.grounding?.identifiers;
 	if (identifiers) concept.value = await getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
+	const test = {};
+	test[Parameter.value] = getParameterDistribution(props.modelConfiguration, props.parameterId).parameters.value;
+	test[Parameter.maximum] = getParameterDistribution(props.modelConfiguration, props.parameterId).parameters.maximum;
+	test[Parameter.minimum] = getParameterDistribution(props.modelConfiguration, props.parameterId).parameters.minimum;
+	parameterInputs.value = test;
 });
 </script>
 
@@ -205,6 +231,11 @@ onMounted(async () => {
 .parameter-entry {
 	border-left: 4px solid var(--surface-300);
 	padding-left: var(--gap-4);
+
+	&.empty-input {
+		border-left: 4px solid var(--error-color);
+		padding-left: var(--gap-4);
+	}
 }
 
 header {

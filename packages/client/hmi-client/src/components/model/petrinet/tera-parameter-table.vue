@@ -70,6 +70,8 @@
 													:model-configurations="props.modelConfigurations"
 													:parameter-id="referenceId"
 													:featureConfig="featureConfig"
+													:error-empty="errorEmpty"
+													@has-empty-field="test($event)"
 													@update-parameter="emit('update-parameters', [$event])"
 													@update-source="emit('update-source', $event)"
 												/>
@@ -156,6 +158,7 @@ const props = defineProps<{
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
 	featureConfig?: FeatureConfig;
+	errorEmpty?: boolean;
 }>();
 
 const emit = defineEmits(['update-parameters', 'update-source']);
@@ -235,6 +238,10 @@ const onUpdateDistributions = () => {
 	emit('update-parameters', distributionParameterMappings);
 	isAddingUncertainty.value = false;
 };
+
+function test(value) {
+	console.log('has input error', value);
+}
 </script>
 
 <style scoped>
