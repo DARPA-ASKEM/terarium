@@ -15,7 +15,12 @@
 					selectedRun: props.node.state.forecastRunId,
 					selectedVariable: config
 				}"
-				:mapping="props.node.state.ensembleMapping as any"
+				:mapping="
+					formatCalibrateModelConfigurations(
+						props.node.state.ensembleMapping,
+						props.node.state.configurationWeights
+					) as any
+				"
 				:initial-data="csvAsset"
 				:size="{ width: 190, height: 120 }"
 				has-mean-line
