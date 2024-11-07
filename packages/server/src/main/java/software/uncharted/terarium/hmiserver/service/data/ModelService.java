@@ -29,7 +29,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.regnet.RegNetVer
 import software.uncharted.terarium.hmiserver.models.task.CompoundTask;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
 import software.uncharted.terarium.hmiserver.repository.data.ModelRepository;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
@@ -46,7 +45,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 	private final CurrentUserService currentUserService;
 	private final DocumentAssetService documentAssetService;
 	private final TaskService taskService;
-	private final MIRAProxy miraProxy;
+	private final DKGService dkgService;
 
 	public ModelService(
 		final Config config,
@@ -56,7 +55,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		final ElasticsearchService elasticService,
 		final EmbeddingService embeddingService,
 		final Environment env,
-		final MIRAProxy miraProxy,
+		final DKGService dkgService,
 		final ModelRepository repository,
 		final ObjectMapper objectMapper,
 		final ProjectAssetService projectAssetService,
@@ -79,8 +78,8 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		);
 		this.currentUserService = currentUserService;
 		this.documentAssetService = documentAssetService;
-		this.miraProxy = miraProxy;
 		this.taskService = taskService;
+		this.dkgService = dkgService;
 	}
 
 	@Observed(name = "function_profile")
@@ -279,7 +278,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 				if (vertex == null) {
 					vertex = new RegNetVertex();
 				}
-				TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, vertex);
+				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, vertex);
 			});
 			newModel.get().setVerticies(vertices);
 		} else {
@@ -288,7 +287,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 				if (state == null) {
 					state = new State();
 				}
-				TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, state);
+				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, state);
 			});
 			newModel.get().setStates(states);
 		}
@@ -300,7 +299,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 				if (observable == null) {
 					observable = new Observable();
 				}
-				TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, observable);
+				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, observable);
 			});
 			newModel.get().setObservables(observables);
 		}
@@ -312,7 +311,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 				if (parameter == null) {
 					parameter = new ModelParameter();
 				}
-				TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, parameter);
+				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, parameter);
 			});
 			newModel.get().setParameters(parameters);
 		}
@@ -324,7 +323,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 				if (transition == null) {
 					transition = new Transition();
 				}
-				TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, transition);
+				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, transition);
 			});
 			newModel.get().setTransitions(transitions);
 		}

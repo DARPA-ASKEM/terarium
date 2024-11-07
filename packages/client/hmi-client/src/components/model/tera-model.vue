@@ -81,7 +81,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, PropType, ref, watch } from 'vue';
+import { computed, PropType, ref, watch, onMounted } from 'vue';
 import { cloneDeep, isEmpty, isEqual } from 'lodash';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
@@ -155,7 +155,8 @@ function onModalSave(event: any) {
 // User menu
 const toggleOptionsMenu = (event) => optionsMenu.value.toggle(event);
 const optionsMenu = ref();
-const optionsMenuItems = computed(() => [
+// TODO: Could be moved into tera-asset.vue
+const optionsMenuItems = ref<any[]>([
 	{
 		icon: 'pi pi-pencil',
 		label: 'Rename',
@@ -163,20 +164,6 @@ const optionsMenuItems = computed(() => [
 			isRenaming.value = true;
 			newName.value = temporaryModel.value?.header.name ?? '';
 		}
-	},
-	{
-		icon: 'pi pi-plus',
-		label: 'Add to project',
-		items:
-			useProjects()
-				.allProjects.value?.filter((project) => project.id !== useProjects().activeProject.value?.id)
-				.map((project) => ({
-					label: project.name,
-					command: async () => {
-						const response = await useProjects().addAsset(AssetType.Model, props.assetId, project.id);
-						if (response) logger.info(`Added asset to ${project.name}`);
-					}
-				})) ?? []
 	},
 	{
 		icon: 'pi pi-download',
@@ -226,8 +213,24 @@ async function fetchModel() {
 	temporaryModel.value = cloneDeep(model.value);
 }
 
+onMounted(async () => {
+	const addProjectMenuItems = (await useProjects().getAllExceptActive()).map((project) => ({
+		label: project.name,
+		command: async () => {
+			const response = await useProjects().addAsset(AssetType.Model, props.assetId, project.id);
+			if (response) logger.info(`Added asset to ${project.name}`);
+		}
+	}));
+	if (addProjectMenuItems.length === 0) return;
+	optionsMenuItems.value.splice(1, 0, {
+		icon: 'pi pi-plus',
+		label: 'Add to project',
+		items: addProjectMenuItems
+	});
+});
+
 watch(
-	() => [props.assetId],
+	() => props.assetId,
 	async () => {
 		// Reset view of model page
 		isRenaming.value = false;

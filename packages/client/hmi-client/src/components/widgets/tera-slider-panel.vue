@@ -16,6 +16,7 @@
 						rounded
 						size="large"
 					/>
+					<slot name="header" />
 					<h4>{{ header }}</h4>
 				</header>
 				<div class="content-wrapper">
@@ -145,10 +146,6 @@ header:not(.tab) {
 		background: color-mix(in srgb, var(--surface-100) 80%, transparent 20%);
 	}
 
-	& .content-wrapper {
-		padding-bottom: 4rem;
-	}
-
 	& :deep(.slider-content),
 	& :deep(.slider-tab) {
 		background-color: var(--surface-100);
@@ -163,6 +160,11 @@ header:not(.tab) {
 	&:deep(.p-accordion-content) {
 		background-color: var(--surface-100);
 	}
+}
+
+/* Don't nest this rule, it makes it easier for the parent to mutate when needed. */
+.input-config .content-wrapper {
+	padding-bottom: 4rem;
 }
 
 .tab {

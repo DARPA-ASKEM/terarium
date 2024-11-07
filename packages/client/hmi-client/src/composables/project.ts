@@ -16,6 +16,7 @@ const TIMEOUT_MS = 100;
 
 const projectLoading = shallowRef<boolean>(false);
 const allProjects = shallowRef<Project[] | null>(null);
+let areProjectsLoaded = false;
 
 export function useProjects() {
 	/**
@@ -49,7 +50,23 @@ export function useProjects() {
 	 */
 	async function getAll(): Promise<Project[]> {
 		allProjects.value = (await ProjectService.getAll()) as Project[];
+		areProjectsLoaded = true;
 		return allProjects.value;
+	}
+
+	/**
+	 * Return all projects except the active project.
+	 * @returns Project[]
+	 */
+	async function getAllExceptActive(): Promise<Project[]> {
+		return new Promise((resolve) => {
+			const interval = setInterval(() => {
+				if (areProjectsLoaded) {
+					clearInterval(interval);
+					resolve(allProjects.value?.filter((project) => project.id !== activeProjectId.value) ?? []);
+				}
+			}, TIMEOUT_MS);
+		});
 	}
 
 	/**
@@ -241,6 +258,7 @@ export function useProjects() {
 		projectLoading,
 		get,
 		getAll,
+		getAllExceptActive,
 		getActiveProjectAssets,
 		getActiveProjectName,
 		addAsset,
