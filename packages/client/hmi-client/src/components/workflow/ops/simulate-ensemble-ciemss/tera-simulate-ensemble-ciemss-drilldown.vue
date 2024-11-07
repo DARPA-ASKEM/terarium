@@ -24,7 +24,7 @@
 									<!-- Index matching listModelLabels and mapping-->
 									<tr v-for="(ele, indx) in knobs.weights" :key="indx">
 										<td>
-											{{ ele.modelConfigurationId }}
+											{{ modelConfigIdToNameMap[ele.modelConfigurationId] }}
 										</td>
 										<td>
 											<tera-input-number v-model="ele.value" />
@@ -246,6 +246,7 @@ const allModelOptions = ref<{ [key: string]: string[] }>({});
 const modelConfigurationIds = ref<string[]>(
 	props.node.inputs.filter((ele) => ele.value?.[0]).map((ele) => ele.value?.[0])
 );
+const modelConfigIdToNameMap = ref();
 
 const newSolutionMappingKey = ref<string>('');
 const runResults = ref<RunResults>({});
@@ -314,6 +315,11 @@ onMounted(async () => {
 	const allModelConfigurations = await Promise.all(
 		modelConfigurationIds.value.map((id) => getModelConfigurationById(id))
 	);
+
+	modelConfigIdToNameMap.value = {};
+	allModelConfigurations.forEach((config) => {
+		modelConfigIdToNameMap.value[config.id as string] = config.name;
+	});
 
 	allModelOptions.value = {};
 	for (let i = 0; i < allModelConfigurations.length; i++) {
