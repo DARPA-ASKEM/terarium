@@ -103,10 +103,11 @@
 									<!-- Index matching listModelLabels and mapping-->
 									<tr v-for="(ele, indx) in knobs.weights" :key="indx">
 										<td>
-											{{ modelConfigIdToNameMap[ele.modelConfigurationId] }}
-										</td>
-										<td>
-											<tera-input-number v-model="ele.value" @change="updateWeights()" />
+											<tera-signal-bars
+												:label="modelConfigIdToNameMap[ele.modelConfigurationId]"
+												v-model="ele.value"
+												@change="updateWeights()"
+											/>
 										</td>
 									</tr>
 								</tbody>
@@ -114,8 +115,8 @@
 						</div>
 					</AccordionTab>
 
-					<!-- Time span -->
-					<AccordionTab header="Time span">
+					<!-- Other Settings -->
+					<AccordionTab header="Other Settings">
 						<p class="subheader">Set the time span and number of samples for the ensemble simulation.</p>
 						<table class="w-full">
 							<thead class="p-datatable-thead">
@@ -207,6 +208,7 @@ import type { TimeSpan, EnsembleSimulationCiemssRequest } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import { DrilldownTabs } from '@/types/common';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import TeraSignalBars from '@/components/widgets/tera-signal-bars.vue';
 import { v4 as uuidv4 } from 'uuid';
 import {
 	SimulateEnsembleCiemssOperationState,
