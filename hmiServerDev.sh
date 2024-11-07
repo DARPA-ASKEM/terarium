@@ -75,15 +75,12 @@ function stop_local_lean() {
 function start_local() {
   echo "Starting local server"
   cd ${SERVER_DIR} || exit
-  ./gradlew bootRun --args='--spring.profiles.active=default,secrets,local'
+  ./gradlew bootRun --args='--spring.profiles.active=default,secrets,local,staging-keycloak'
   cd - || exit
 }
 
 function start_staging() {
-  echo "Starting local server pointing to staging keycloak"
-  cd ${SERVER_DIR} || exit
-  ./gradlew bootRun --args='--spring.profiles.active=default,secrets,local,staging-keycloak'
-  cd - || exit
+  start_local
 }
 
 function build_docker_compose() {
