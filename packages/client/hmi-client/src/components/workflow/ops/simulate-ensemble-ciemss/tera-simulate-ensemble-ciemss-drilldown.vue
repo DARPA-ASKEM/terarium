@@ -275,7 +275,7 @@ const addMapping = () => {
 	knobs.value.mapping.push({
 		id: uuidv4(),
 		newName: newSolutionMappingKey.value,
-		modelConfigurationMappings: modelConfigurationIds.value.map((id) => ({
+		modelConfigurationMappings: modelConfigurationIds.map((id) => ({
 			modelConfigId: id as string,
 			compartmentName: ''
 		}))
@@ -320,10 +320,8 @@ const runEnsemble = async () => {
 };
 
 onMounted(async () => {
-	if (!modelConfigurationIds.value) return;
-	const allModelConfigurations = await Promise.all(
-		modelConfigurationIds.value.map((id) => getModelConfigurationById(id))
-	);
+	if (!modelConfigurationIds) return;
+	const allModelConfigurations = await Promise.all(modelConfigurationIds.map((id) => getModelConfigurationById(id)));
 
 	modelConfigIdToNameMap.value = {};
 	allModelConfigurations.forEach((config) => {
@@ -345,10 +343,10 @@ onMounted(async () => {
 	if (
 		!knobs.value.weights ||
 		knobs.value.weights.length === 0 ||
-		knobs.value.weights.length !== modelConfigurationIds.value.length
+		knobs.value.weights.length !== modelConfigurationIds.length
 	) {
 		knobs.value.weights = [];
-		modelConfigurationIds.value.forEach((id) => {
+		modelConfigurationIds.forEach((id) => {
 			knobs.value.weights.push({
 				modelConfigurationId: id,
 				value: 5
