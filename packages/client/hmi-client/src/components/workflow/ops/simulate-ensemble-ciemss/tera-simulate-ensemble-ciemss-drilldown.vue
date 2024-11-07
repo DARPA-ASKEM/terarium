@@ -211,7 +211,7 @@ import {
 	SimulateEnsembleMappingRow,
 	SimulateEnsembleWeight
 } from './simulate-ensemble-ciemss-operation';
-import { clientMappingToCiemssMapping } from './simulate-ensemble-util';
+import { formatSimulateModelConfigurations } from './simulate-ensemble-util';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateEnsembleCiemssOperationState>;
@@ -298,7 +298,7 @@ function deleteMappingRow(id: string) {
 }
 
 const runEnsemble = async () => {
-	const modelConfigs = clientMappingToCiemssMapping(knobs.value.mapping, knobs.value.weights);
+	const modelConfigs = formatSimulateModelConfigurations(knobs.value.mapping, knobs.value.weights);
 	const params: EnsembleSimulationCiemssRequest = {
 		modelConfigs,
 		timespan: knobs.value.timeSpan,
@@ -335,7 +335,11 @@ onMounted(async () => {
 	const state = _.cloneDeep(props.node.state);
 
 	// Initalize weights:
-	if (knobs.value.weights.length === 0 || knobs.value.weights.length !== modelConfigurationIds.value.length) {
+	if (
+		!knobs.value.weights ||
+		knobs.value.weights.length === 0 ||
+		knobs.value.weights.length !== modelConfigurationIds.value.length
+	) {
 		knobs.value.weights = [];
 		modelConfigurationIds.value.forEach((id) => {
 			knobs.value.weights.push({
