@@ -39,7 +39,7 @@ export async function interventionPolicyFromDocument(
 
 export async function enrichModelMetadata(modelId: string, documentId: string, overwrite: boolean): Promise<void> {
 	try {
-		await API.get<TaskResponse>('/gollm/enrich-model-metadata', {
+		await API.get('/gollm/enrich-model-metadata', {
 			params: {
 				'model-id': modelId,
 				'document-id': documentId,

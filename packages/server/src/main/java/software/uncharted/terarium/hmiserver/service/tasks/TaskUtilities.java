@@ -75,6 +75,8 @@ public class TaskUtilities {
 			} catch (JsonProcessingException e) {
 				throw new IOException("Unable to serialize document text");
 			}
+		} else {
+			input.setResearchPaper("");
 		}
 
 		// Create the task
@@ -115,6 +117,8 @@ public class TaskUtilities {
 				if (part.getGrounding().getIdentifiers() == null) part.getGrounding().setIdentifiers(new HashMap<>());
 				String[] currieId = dkg.getCurie().split(":");
 				part.getGrounding().getIdentifiers().put(currieId[0], currieId[1]);
+			} else {
+				part.setGrounding(new ModelGrounding());
 			}
 		} catch (Exception e) {
 			// If we can't find the DKG, just ignore it

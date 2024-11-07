@@ -179,16 +179,14 @@ public class DKGService {
 				.build()
 				._toQuery();
 			builder.query(query);
-
-			if (source != null) {
-				builder.source(source);
-			}
-
-			final SearchRequest req = builder.build();
-			return elasticService.search(req, DKG.class);
 		}
 
-		return Collections.<DKG>emptyList();
+		if (source != null) {
+			builder.source(source);
+		}
+
+		final SearchRequest req = builder.build();
+		return elasticService.search(req, DKG.class);
 	}
 
 	private List<DKG> getEntity(final String index, final String curie) throws IOException {

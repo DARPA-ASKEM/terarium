@@ -126,7 +126,6 @@ const cancelTask = (item: NotificationItem) => {
 	if (!item.supportCancel) return;
 	if (
 		[
-			ClientEventType.TaskGollmModelCard,
 			ClientEventType.TaskGollmConfigureModelFromDocument,
 			ClientEventType.TaskGollmConfigureModelFromDataset,
 			ClientEventType.TaskGollmCompareModel

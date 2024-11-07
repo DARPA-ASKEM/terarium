@@ -181,6 +181,7 @@
 		:asset-type="AssetType.InterventionPolicy"
 		@close-modal="showSaveModal = false"
 		@on-save="onSaveAsInterventionPolicy"
+		@on-update="onSaveAsInterventionPolicy"
 	/>
 </template>
 
