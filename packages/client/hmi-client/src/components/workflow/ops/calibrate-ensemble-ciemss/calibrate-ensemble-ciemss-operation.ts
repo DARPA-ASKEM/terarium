@@ -5,6 +5,19 @@ import calibrateEnsembleCiemss from '@assets/svg/operator-images/calibrate-ensem
 
 const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L156';
 
+export const speedPreset = Object.freeze({
+	numSamples: 1,
+	method: CiemssMethodOptions.euler,
+	numIterations: 10,
+	learningRate: 0.1
+});
+
+export const qualityPreset = Object.freeze({
+	numSamples: 10,
+	method: CiemssMethodOptions.dopri5,
+	numIterations: 100,
+	learningRate: 0.03
+});
 export interface EnsembleCalibrateExtraCiemss {
 	numParticles: number; // The number of particles to use for the inference algorithm. https://github.com/ciemss/pyciemss/blob/1fc62b0d4b0870ca992514ad7a9b7a09a175ce44/pyciemss/interfaces.py#L225
 	presetType: CiemssPresetTypes;
@@ -27,7 +40,7 @@ export interface CalibrateEnsembleWeights {
 
 export interface CalibrateEnsembleCiemssOperationState extends BaseState {
 	chartConfigs: string[][];
-	ensembleConfigs: CalibrateEnsembleMappingRow[];
+	ensembleMapping: CalibrateEnsembleMappingRow[];
 	configurationWeights: CalibrateEnsembleWeights;
 	timestampColName: string;
 	extra: EnsembleCalibrateExtraCiemss;
@@ -54,17 +67,17 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 	initState: () => {
 		const init: CalibrateEnsembleCiemssOperationState = {
 			chartConfigs: [],
-			ensembleConfigs: [],
+			ensembleMapping: [],
 			configurationWeights: {},
 			timestampColName: '',
 			extra: {
-				solverMethod: CiemssMethodOptions.dopri5,
-				numParticles: 1,
-				numIterations: 100,
-				presetType: CiemssPresetTypes.Normal,
+				solverMethod: speedPreset.method,
+				numParticles: speedPreset.numSamples,
+				numIterations: speedPreset.numIterations,
+				presetType: CiemssPresetTypes.Fast,
 				endTime: 100,
 				stepSize: 1,
-				learningRate: 0.03
+				learningRate: speedPreset.learningRate
 			},
 			inProgressCalibrationId: '',
 			inProgressForecastId: '',

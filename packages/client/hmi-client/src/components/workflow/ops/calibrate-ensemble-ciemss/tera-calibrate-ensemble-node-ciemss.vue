@@ -15,7 +15,7 @@
 					selectedRun: props.node.state.forecastRunId,
 					selectedVariable: config
 				}"
-				:mapping="props.node.state.ensembleConfigs as any"
+				:mapping="props.node.state.ensembleMapping as any"
 				:initial-data="csvAsset"
 				:size="{ width: 190, height: 120 }"
 				has-mean-line
@@ -128,6 +128,13 @@ const pollResult = async (runId: string) => {
 		logger.error(`Calibration: ${runId} has failed`, {
 			toastTitle: 'Error - Pyciemss'
 		});
+
+		// TODO: show error in UI
+		const state = _.cloneDeep(props.node.state);
+		state.currentProgress = 0;
+		state.inProgressForecastId = '';
+		state.inProgressCalibrationId = '';
+		emit('update-state', state);
 		throw Error('Failed Runs');
 	}
 	return pollerResults;
@@ -151,7 +158,7 @@ watch(
 
 			const params: EnsembleSimulationCiemssRequest = {
 				modelConfigs: formatCalibrateModelConfigurations(
-					props.node.state.ensembleConfigs,
+					props.node.state.ensembleMapping,
 					props.node.state.configurationWeights
 				),
 				timespan: {

@@ -44,7 +44,7 @@
 												<Dropdown v-model="knobs.timestampColName" placeholder="Select" :options="datasetColumnNames" />
 											</td>
 										</tr>
-										<tr v-for="(config, i) in knobs.ensembleConfigs" :key="i">
+										<tr v-for="(config, i) in knobs.ensembleMapping" :key="i">
 											<td>
 												<tera-input-text v-model="config.name" placeholder="Variable name" />
 											</td>
@@ -59,7 +59,12 @@
 												/>
 											</td>
 											<td>
-												<Button icon="pi pi-trash" text @click="removeMapping(i)" />
+												<Button
+													v-if="knobs.ensembleMapping.length > 1"
+													icon="pi pi-trash"
+													text
+													@click="removeMapping(i)"
+												/>
 											</td>
 										</tr>
 									</tbody>
@@ -94,11 +99,12 @@
 						</AccordionTab>
 
 						<AccordionTab header="Other settings">
-							<div class="flex flex-column">
-								<div class="flex">
-									<tera-timestep-calendar class="flex-1" disabled :model-value="0" label="Start time" />
-									<tera-timestep-calendar class="flex-1" v-model="knobs.extra.endTime" label="End time" />
-								</div>
+							<div class="input-row">
+								<tera-timestep-calendar class="flex-1" disabled :model-value="0" label="Start time" />
+								<tera-timestep-calendar class="flex-1" v-model="knobs.extra.endTime" label="End time" />
+							</div>
+
+							<div class="label-and-input">
 								<label> Preset </label>
 								<Dropdown
 									class="flex-1"
@@ -107,9 +113,13 @@
 									:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
 									@update:model-value="setPresetValues"
 								/>
+								<label class="mb-1 p-text-secondary text-sm">
+									<i class="pi pi-info-circle" />
+									This impacts solver method, iterations and learning rate.
+								</label>
 							</div>
 
-							<div class="mt-1 additional-settings">
+							<fieldset class="mt-1 additional-settings">
 								<div class="label-and-input">
 									<label>Number of Samples</label>
 									<tera-input-number v-model="knobs.extra.numParticles" @update:model-value="updateState" />
@@ -156,7 +166,7 @@
 										<tera-input-text disabled model-value="ADAM" />
 									</div>
 								</div>
-							</div>
+							</fieldset>
 						</AccordionTab>
 					</Accordion>
 				</template>
@@ -265,7 +275,9 @@ import { CiemssPresetTypes } from '@/types/common';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	CalibrateEnsembleMappingRow,
-	EnsembleCalibrateExtraCiemss
+	EnsembleCalibrateExtraCiemss,
+	qualityPreset,
+	speedPreset
 } from './calibrate-ensemble-ciemss-operation';
 import {
 	updateLossChartSpec,
@@ -285,14 +297,14 @@ enum CalibrateEnsembleTabs {
 }
 
 interface BasicKnobs {
-	ensembleConfigs: CalibrateEnsembleMappingRow[];
+	ensembleMapping: CalibrateEnsembleMappingRow[];
 	configurationWeights: { [key: string]: number };
 	extra: EnsembleCalibrateExtraCiemss;
 	timestampColName: string;
 }
 
 const knobs = ref<BasicKnobs>({
-	ensembleConfigs: props.node.state.ensembleConfigs ?? [],
+	ensembleMapping: props.node.state.ensembleMapping ?? [],
 	configurationWeights: props.node.state.configurationWeights ?? {},
 	extra: props.node.state.extra ?? {},
 	timestampColName: props.node.state.timestampColName ?? ''
@@ -301,7 +313,7 @@ const knobs = ref<BasicKnobs>({
 const isSidebarOpen = ref(true);
 const selectedOutputId = ref<string>();
 const showSpinner = ref(false);
-const isRunDisabled = computed(() => !knobs.value.ensembleConfigs[0] || !datasetId.value);
+const isRunDisabled = computed(() => !knobs.value.ensembleMapping[0] || !datasetId.value);
 const cancelRunId = computed(() => props.node.state.inProgressForecastId || props.node.state.inProgressCalibrationId);
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
 const inProgressForecastId = computed(() => props.node.state.inProgressForecastId);
@@ -352,21 +364,21 @@ function addMapping() {
 		configMappings[config.id as string] = '';
 	});
 
-	knobs.value.ensembleConfigs.push({
+	knobs.value.ensembleMapping.push({
 		name: '',
 		datasetMapping: '',
 		modelConfigurationMappings: configMappings
 	});
 
 	const state = _.cloneDeep(props.node.state);
-	state.ensembleConfigs = knobs.value.ensembleConfigs;
+	state.ensembleMapping = knobs.value.ensembleMapping;
 	emit('update-state', state);
 }
 
 function removeMapping(index: number) {
-	knobs.value.ensembleConfigs.splice(index, 1);
+	knobs.value.ensembleMapping.splice(index, 1);
 	const state = _.cloneDeep(props.node.state);
-	state.ensembleConfigs = knobs.value.ensembleConfigs;
+	state.ensembleMapping = knobs.value.ensembleMapping;
 	emit('update-state', state);
 }
 
@@ -375,6 +387,21 @@ const messageHandler = (event: ClientEvent<any>) => {
 	const data = { iter: lossValues.value.length, loss: event.data.loss };
 	lossChartRef.value.view.change(LOSS_CHART_DATA_SOURCE, vega.changeset().insert(data)).resize().run();
 	lossValues.value.push(data);
+};
+
+const setPresetValues = (data: CiemssPresetTypes) => {
+	if (data === CiemssPresetTypes.Normal) {
+		knobs.value.extra.numParticles = qualityPreset.numSamples;
+		knobs.value.extra.solverMethod = qualityPreset.method;
+		knobs.value.extra.numIterations = qualityPreset.numIterations;
+		knobs.value.extra.learningRate = qualityPreset.learningRate;
+	}
+	if (data === CiemssPresetTypes.Fast) {
+		knobs.value.extra.numParticles = speedPreset.numSamples;
+		knobs.value.extra.solverMethod = speedPreset.method;
+		knobs.value.extra.numIterations = speedPreset.numIterations;
+		knobs.value.extra.learningRate = speedPreset.learningRate;
+	}
 };
 
 const runEnsemble = async () => {
@@ -387,12 +414,12 @@ const runEnsemble = async () => {
 	datasetMapping[knobs.value.timestampColName] = 'timestamp';
 	// Each key used in the ensemble configs is a dataset column.
 	// add these columns used to the datasetMapping
-	knobs.value.ensembleConfigs.forEach((config) => {
+	knobs.value.ensembleMapping.forEach((config) => {
 		datasetMapping[config.datasetMapping] = config.datasetMapping;
 	});
 
 	const calibratePayload: EnsembleCalibrationCiemssRequest = {
-		modelConfigs: formatCalibrateModelConfigurations(knobs.value.ensembleConfigs, knobs.value.configurationWeights),
+		modelConfigs: formatCalibrateModelConfigurations(knobs.value.ensembleMapping, knobs.value.configurationWeights),
 		timespan: getTimespan({
 			dataset: csvAsset.value,
 			timestampColName: knobs.value.timestampColName
@@ -454,8 +481,16 @@ onMounted(async () => {
 
 	listModelLabels.value = allModelConfigurations.value.map((ele) => ele.name ?? '');
 
-	if (isEmpty(knobs.value.ensembleConfigs)) {
+	// add a mapping row if none exist
+	if (isEmpty(knobs.value.ensembleMapping)) {
 		addMapping();
+	}
+
+	// initialze weights
+	if (isEmpty(knobs.value.configurationWeights)) {
+		allModelConfigurations.value.forEach((config) => {
+			knobs.value.configurationWeights[config.id as string] = 5;
+		});
 	}
 });
 
@@ -490,7 +525,7 @@ watch(
 		const state = _.cloneDeep(props.node.state);
 		state.timestampColName = knobs.value.timestampColName;
 		state.extra = knobs.value.extra;
-		state.ensembleConfigs = knobs.value.ensembleConfigs;
+		state.ensembleMapping = knobs.value.ensembleMapping;
 		state.configurationWeights = knobs.value.configurationWeights;
 		emit('update-state', state);
 	},
