@@ -27,4 +27,4 @@ COPY --from=builder ${LAYERS}/dependencies/ ./
 COPY --from=builder ${LAYERS}/snapshot-dependencies/ ./
 COPY --from=builder ${LAYERS}/spring-boot-loader/ ./
 COPY --from=builder ${LAYERS}/application/ ./
-ENTRYPOINT ["java", "org.springframework.boot.loader.JarLauncher"]
+ENTRYPOINT ["java", "-XX:InitialRAMPercentage=10", "-XX:MinRAMPercentage=50", "-XX:MaxRAMPercentage=50", "org.springframework.boot.loader.JarLauncher"]
