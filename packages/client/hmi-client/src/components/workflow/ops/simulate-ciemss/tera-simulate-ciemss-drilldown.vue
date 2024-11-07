@@ -769,6 +769,7 @@ const lazyLoadSimulationData = async (outputRunId: string) => {
 	}
 	runResults.value[outputRunId] = result;
 	runResultsSummary.value[outputRunId] = resultSummary;
+	if (_.isNil(props.node.state.chartSettings)) isOutputSettingsPanelOpen.value = true;
 };
 
 const onSelection = (id: string) => {

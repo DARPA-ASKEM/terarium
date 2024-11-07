@@ -27,7 +27,12 @@ import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { getRunResultCSV, getSimulation, parsePyCiemssMap, DataArray } from '@/services/models/simulation-service';
-import { getModelByModelConfigurationId, getUnitsFromModelParts, getVegaDateOptions } from '@/services/model';
+import {
+	getModelByModelConfigurationId,
+	getTypesFromModelParts,
+	getUnitsFromModelParts,
+	getVegaDateOptions
+} from '@/services/model';
 import { logger } from '@/utils/logger';
 import { nodeOutputLabel } from '@/components/workflow/util';
 
@@ -54,7 +59,7 @@ import {
 	type Model
 } from '@/types/Types';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
-import { addMultiVariableChartSetting } from '@/services/chart-settings';
+import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { ChartSettingType } from '@/types/common';
 import { useClientEvent } from '@/composables/useClientEvent';
 import { getModelConfigurationById } from '@/services/model-configurations';
@@ -70,6 +75,7 @@ const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
 const model = ref<Model | null>(null);
 const modelConfiguration = ref<ModelConfiguration | null>(null);
 const modelVarUnits = ref<{ [key: string]: string }>({});
+const modelPartTypesMap = computed(() => (!model.value ? {} : getTypesFromModelParts(model.value)));
 
 const runResults = ref<{ [runId: string]: DataArray }>({});
 const runResultsSummary = ref<{ [runId: string]: DataArray }>({});
@@ -89,15 +95,22 @@ const { getChartAnnotationsByChartId } = useChartAnnotations(props.node.id);
 let pyciemssMap: Record<string, string> = {};
 
 const processResult = async (runId: string) => {
+	const result = await getRunResultCSV(runId, 'result.csv');
+	pyciemssMap = parsePyCiemssMap(result[0]);
 	const state = _.cloneDeep(props.node.state);
-	if (interventionPolicyId.value && _.isEmpty(state.chartSettings)) {
-		_.keys(groupedInterventionOutputs.value).forEach((key) => {
-			state.chartSettings = addMultiVariableChartSetting(
-				state.chartSettings ?? [],
-				ChartSettingType.VARIABLE_COMPARISON,
-				[key]
-			);
-		});
+	if (_.isEmpty(state.chartSettings)) {
+		state.chartSettings = updateChartSettingsBySelectedVariables(
+			state.chartSettings ?? [],
+			ChartSettingType.INTERVENTION,
+			Object.keys(groupedInterventionOutputs.value)
+		);
+		state.chartSettings = updateChartSettingsBySelectedVariables(
+			state.chartSettings,
+			ChartSettingType.VARIABLE,
+			Object.keys(pyciemssMap)
+				.filter((c) => ['state', 'observable'].includes(modelPartTypesMap.value[c]))
+				.slice(0, 5) // Limit the number of initial variables to first 5 to prevent too many charts
+		);
 		emit('update-state', state);
 	}
 
