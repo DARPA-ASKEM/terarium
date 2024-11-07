@@ -105,7 +105,12 @@ public class TaskUtilities {
 	public static void performDKGSearchAndSetGrounding(DKGService dkgService, GroundedSemantic part) {
 		if (part == null || part.getId() == null || part.getId().isEmpty()) return;
 		try {
-			List<DKG> curies = dkgService.searchEpiDKG(0, 1, part.getId(), null);
+			// Set up our search term. We want to use the description but if its empty or null fall back to the ID
+			String searchTerm = (part.getDescription() == null || part.getDescription().isEmpty())
+				? part.getId()
+				: part.getDescription();
+
+			List<DKG> curies = dkgService.knnSearchEpiDKG(0, 1, 1, searchTerm, null);
 			if (!curies.isEmpty()) {
 				DKG dkg = curies.get(0);
 				if (part.getGrounding() == null) part.setGrounding(new ModelGrounding());

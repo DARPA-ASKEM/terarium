@@ -15,6 +15,7 @@ public class DKG {
 	public static final String ID = "id:ID";
 	public static final String NAME = "name:string";
 	public static final String DESCRIPTION = "description:string";
+	public static final String EMBEDDINGS = "description:dense_vector";
 
 	@JsonAlias(ID)
 	private String curie;
