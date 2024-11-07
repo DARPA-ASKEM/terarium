@@ -48,7 +48,12 @@
 						label="Constant"
 						:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.value"
 						:error-empty="errorEmpty"
-						@update:model-value="onInputChange(Parameter.value, $event)"
+						@update:model-value="
+							emit('update-parameter', {
+								id: parameterId,
+								distribution: formatPayloadFromParameterChange({ value: $event })
+							})
+						"
 					/>
 					<!-- Uniform Distribution -->
 					<template v-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Uniform">
@@ -56,14 +61,24 @@
 							label="Min"
 							:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.minimum"
 							:error-empty="errorEmpty"
-							@update:model-value="onInputChange(Parameter.minimum, $event)"
+							@update:model-value="
+								emit('update-parameter', {
+									id: parameterId,
+									distribution: formatPayloadFromParameterChange({ minimum: $event })
+								})
+							"
 							class="mr-2"
 						/>
 						<tera-input-number
 							label="Max"
 							:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.maximum"
 							:error-empty="errorEmpty"
-							@update:model-value="onInputChange(Parameter.maximum, $event)"
+							@update:model-value="
+								emit('update-parameter', {
+									id: parameterId,
+									distribution: formatPayloadFromParameterChange({ maximum: $event })
+								})
+							"
 						/>
 					</template>
 				</span>
@@ -136,12 +151,6 @@ const props = defineProps<{
 	errorEmpty?: boolean;
 }>();
 
-enum Parameter {
-	minimum = 'minimum',
-	maximum = 'maximum',
-	value = 'value'
-}
-
 const emit = defineEmits(['update-parameter', 'update-source', 'has-empty-field']);
 
 const name = getParameter(props.model, props.parameterId)?.name;
@@ -160,13 +169,6 @@ const showOtherConfigValueModal = ref(false);
 const otherValueList = computed(() =>
 	getOtherValues(props.modelConfigurations, props.parameterId, 'referenceId', 'parameterSemanticList')
 );
-
-function onInputChange(parameter: Parameter, value) {
-	emit('update-parameter', {
-		id: props.parameterId,
-		distribution: formatPayloadFromParameterChange({ [parameter]: value })
-	});
-}
 
 function getSourceLabel(initialId) {
 	if (isSourceOpen.value) return 'Hide source';
