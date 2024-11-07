@@ -85,7 +85,7 @@
 									auto-focus
 									class="w-full"
 									placeholder="Add a name"
-									@keydown.enter="
+									@keydown.enter.stop.prevent="
 										addMapping();
 										showAddMappingInput = false;
 									"
@@ -278,6 +278,7 @@ const onSelection = (id: string) => {
 };
 
 const addMapping = () => {
+	console.log('Add mapping');
 	knobs.value.mapping.push({
 		id: uuidv4(),
 		newName: newSolutionMappingKey.value,
