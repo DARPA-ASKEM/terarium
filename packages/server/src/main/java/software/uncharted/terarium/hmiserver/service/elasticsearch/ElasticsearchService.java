@@ -695,4 +695,23 @@ public class ElasticsearchService {
 	public static String emphasis(String s, int boost) {
 		return s + "^" + String.valueOf(boost);
 	}
+
+	/**
+	 * Checks if the given index exists
+	 *
+	 * @param name The index name
+	 * @return The boolean response, empty if the call fails
+	 */
+	public Boolean hasIndex(final String name) {
+		try {
+			return client.indices().exists(e -> e.index(name)).value();
+		} catch (final IOException e) {
+			log.error("Error checking if index exists {}", name, e);
+		}
+		return null;
+	}
+
+	public static String emphasis(String s, int boost) {
+		return s + "^" + String.valueOf(boost);
+	}
 }
