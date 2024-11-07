@@ -240,9 +240,7 @@ const listModelLabels = ref<string[]>([]);
 
 // List of each observible + state for each model.
 const allModelOptions = ref<{ [key: string]: string[] }>({});
-const modelConfigurationIds = ref<string[]>(
-	props.node.inputs.filter((ele) => ele.value?.[0]).map((ele) => ele.value?.[0])
-);
+const modelConfigurationIds: string[] = props.node.inputs.map((ele) => ele.value?.[0]).filter(Boolean);
 const modelConfigIdToNameMap = ref();
 
 const newSolutionMappingKey = ref<string>('');
