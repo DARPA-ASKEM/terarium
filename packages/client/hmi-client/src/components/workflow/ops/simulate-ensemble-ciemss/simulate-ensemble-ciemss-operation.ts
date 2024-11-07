@@ -6,12 +6,12 @@ const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss
 
 export interface SimulateEnsembleMapEntry {
 	modelConfigId: string;
-	value: string; // This is the new name provided by the user.
+	compartmentName: string; // State or Obs that is being mapped to newName
 }
 
 export interface SimulateEnsembleMappingRow {
 	id: string; // uuid that can be used as a row key
-	name: string;
+	newName: string; // This is the new name provided by the user.
 	modelConfigurationMappings: SimulateEnsembleMapEntry[];
 }
 

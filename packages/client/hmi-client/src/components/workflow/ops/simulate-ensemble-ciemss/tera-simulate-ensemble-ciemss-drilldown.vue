@@ -48,12 +48,12 @@
 										</th>
 									</tr>
 									<tr v-for="(ele, indx) in knobs.mapping" :key="indx">
-										<td>{{ ele.name }}</td>
+										<td>{{ ele.newName }}</td>
 										<td v-for="(row, indx) in ele.modelConfigurationMappings" :key="indx">
 											<Dropdown
 												class="w-full"
 												:options="allModelOptions[row.modelConfigId]"
-												v-model="ele.modelConfigurationMappings[row.modelConfigId]"
+												v-model="row.compartmentName"
 												placeholder="Select a variable"
 											/>
 										</td>
@@ -279,8 +279,11 @@ const onSelection = (id: string) => {
 const addMapping = () => {
 	knobs.value.mapping.push({
 		id: uuidv4(),
-		name: newSolutionMappingKey.value,
-		modelConfigurationMappings: modelConfigurationIds.value.map((id) => ({ modelConfigId: id as string, value: '' }))
+		newName: newSolutionMappingKey.value,
+		modelConfigurationMappings: modelConfigurationIds.value.map((id) => ({
+			modelConfigId: id as string,
+			compartmentName: ''
+		}))
 	});
 	const state = _.cloneDeep(props.node.state);
 	state.mapping = knobs.value.mapping;
