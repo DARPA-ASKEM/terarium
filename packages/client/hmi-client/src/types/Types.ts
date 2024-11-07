@@ -275,14 +275,12 @@ export interface Author {
 }
 
 export interface State extends GroundedSemantic {
-    description?: string;
     units?: ModelUnit;
 }
 
 export interface Transition extends GroundedSemantic {
     input: string[];
     output: string[];
-    description?: string;
     expression?: string;
     properties?: Properties;
 }
@@ -801,8 +799,9 @@ export interface ModelUnit {
 
 export interface GroundedSemantic {
     id: string;
-    grounding?: ModelGrounding;
     name?: string;
+    description?: string;
+    grounding?: ModelGrounding;
 }
 
 export interface Properties {
@@ -907,7 +906,6 @@ export interface Initial {
 }
 
 export interface ModelParameter extends GroundedSemantic {
-    description?: string;
     value?: number;
     distribution?: ModelDistribution;
     units?: ModelUnit;
@@ -915,7 +913,6 @@ export interface ModelParameter extends GroundedSemantic {
 
 export interface Observable extends GroundedSemantic {
     states?: string[];
-    description?: string;
     units?: ModelUnit;
     expression?: string;
     expression_mathml?: string;
