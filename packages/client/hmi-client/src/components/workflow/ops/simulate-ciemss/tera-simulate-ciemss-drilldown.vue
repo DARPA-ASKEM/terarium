@@ -516,6 +516,7 @@ const preparedChartInputs = computed(() => {
 	const reverseMap: Record<string, string> = {};
 	Object.keys(pyciemssMap.value).forEach((key) => {
 		reverseMap[`${pyciemssMap.value[key]}_mean`] = key;
+		reverseMap[`${pyciemssMap.value[key]}_mean:base`] = `${key} (baseline)`;
 	});
 	return { result, resultSummary, reverseMap };
 });
