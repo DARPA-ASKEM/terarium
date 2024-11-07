@@ -12,29 +12,6 @@
 					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 				</template>
 				<Accordion :multiple="true" :active-index="[0, 1, 2]">
-					<!-- Model weights -->
-					<AccordionTab header="Model weights">
-						<p class="subheader">
-							How do you want to distribute weights of the attached models? You can distribute them equally or set
-							custom weights using the input boxes.
-						</p>
-						<div class="model-weights">
-							<table class="p-datatable-table">
-								<tbody class="p-datatable-tbody">
-									<!-- Index matching listModelLabels and mapping-->
-									<tr v-for="(ele, indx) in knobs.weights" :key="indx">
-										<td>
-											{{ modelConfigIdToNameMap[ele.modelConfigurationId] }}
-										</td>
-										<td>
-											<tera-input-number v-model="ele.value" @change="updateWeights()" />
-										</td>
-									</tr>
-								</tbody>
-							</table>
-						</div>
-					</AccordionTab>
-
 					<!-- Mapping -->
 					<AccordionTab header="Mapping">
 						<p class="subheader">Map the variables from the models to the ensemble variables.</p>
@@ -112,6 +89,29 @@
 								/>
 							</div>
 						</section>
+					</AccordionTab>
+
+					<!-- Model weights -->
+					<AccordionTab header="Model weights">
+						<p class="subheader">
+							How do you want to distribute weights of the attached models? You can distribute them equally or set
+							custom weights using the input boxes.
+						</p>
+						<div class="model-weights">
+							<table class="p-datatable-table">
+								<tbody class="p-datatable-tbody">
+									<!-- Index matching listModelLabels and mapping-->
+									<tr v-for="(ele, indx) in knobs.weights" :key="indx">
+										<td>
+											{{ modelConfigIdToNameMap[ele.modelConfigurationId] }}
+										</td>
+										<td>
+											<tera-input-number v-model="ele.value" @change="updateWeights()" />
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
 					</AccordionTab>
 
 					<!-- Time span -->
