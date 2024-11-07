@@ -5,7 +5,7 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
-		<section tabName="Wizard" class="wizard">
+		<section :tabName="DrilldownTabs.Wizard" class="wizard">
 			<tera-slider-panel
 				class="input-config"
 				v-model:is-open="isSidebarOpen"
@@ -53,6 +53,7 @@
 											</td>
 											<td v-for="(configuration, index) in allModelConfigurations" :key="configuration.id">
 												<Dropdown
+													v-if="configuration?.id"
 													v-model="config.modelConfigurationMappings[configuration.id]"
 													placeholder="Select"
 													:options="allModelOptions[index].map((option) => option.referenceId ?? option.id)"
@@ -90,6 +91,7 @@
 							>
 								<h6>{{ modelConfiguration.name }}</h6>
 								<tera-signal-bars
+									v-if="modelConfiguration?.id"
 									class="ml-auto"
 									:model-value="knobs.configurationWeights[modelConfiguration.id] ?? 0"
 									@update:model-value="knobs.configurationWeights[modelConfiguration.id] = $event"
@@ -100,8 +102,19 @@
 
 						<AccordionTab header="Other settings">
 							<div class="input-row">
-								<tera-timestep-calendar class="flex-1" disabled :model-value="0" label="Start time" />
-								<tera-timestep-calendar class="flex-1" v-model="knobs.extra.endTime" label="End time" />
+								<tera-timestep-calendar
+									class="flex-1"
+									disabled
+									:model-value="0"
+									label="Start time"
+									:start-date="undefined"
+								/>
+								<tera-timestep-calendar
+									class="flex-1"
+									v-model="knobs.extra.endTime"
+									label="End time"
+									:start-date="undefined"
+								/>
 							</div>
 
 							<div class="label-and-input">
@@ -122,7 +135,7 @@
 							<fieldset class="mt-1 additional-settings">
 								<div class="label-and-input">
 									<label>Number of Samples</label>
-									<tera-input-number v-model="knobs.extra.numParticles" @update:model-value="updateState" />
+									<tera-input-number v-model="knobs.extra.numParticles" />
 								</div>
 								<div class="spacer m-3" />
 
@@ -134,7 +147,6 @@
 										<Dropdown
 											v-model="knobs.extra.solverMethod"
 											:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
-											@update:model-value="updateState"
 										/>
 									</div>
 									<div class="label-and-input">
@@ -147,11 +159,11 @@
 								<div class="input-row">
 									<div class="label-and-input">
 										<label for="num-iterations">Number of solver iterations</label>
-										<tera-input-number v-model="knobs.extra.numIterations" @update:model-value="updateState" />
+										<tera-input-number v-model="knobs.extra.numIterations" />
 									</div>
 									<div class="label-and-input">
 										<label for="learning-rate">Learning rate</label>
-										<tera-input-number v-model="knobs.extra.learningRate" @update:model-value="updateState" />
+										<tera-input-number v-model="knobs.extra.learningRate" />
 									</div>
 									<div class="label-and-input">
 										<label>Inference algorithm</label>
@@ -172,7 +184,7 @@
 				</template>
 			</tera-slider-panel>
 		</section>
-		<section :tabName="CalibrateEnsembleTabs.Notebook">
+		<section :tabName="DrilldownTabs.Notebook">
 			<h4>Notebook</h4>
 		</section>
 		<template #preview>
@@ -271,7 +283,7 @@ import { WorkflowNode } from '@/types/workflow';
 import { getDataset } from '@/services/dataset';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import { CiemssPresetTypes } from '@/types/common';
+import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	CalibrateEnsembleMappingRow,
@@ -290,11 +302,6 @@ const props = defineProps<{
 }>();
 const showSaveDataDialog = ref<boolean>(false);
 const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output']);
-
-enum CalibrateEnsembleTabs {
-	Wizard = 'Wizard',
-	Notebook = 'Notebook'
-}
 
 interface BasicKnobs {
 	ensembleMapping: CalibrateEnsembleMappingRow[];
