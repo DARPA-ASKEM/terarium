@@ -21,31 +21,24 @@
 						<div class="model-weights">
 							<table class="p-datatable-table">
 								<tbody class="p-datatable-tbody">
-									<!-- Index matching listModelLabels and ensembleConfigs-->
-									<tr v-for="(id, i) in listModelLabels" :key="i">
+									<!-- Index matching listModelLabels and mapping-->
+									<tr v-for="(ele, indx) in knobs.weights" :key="indx">
 										<td>
-											{{ id }}
+											{{ ele.modelConfigurationId }}
 										</td>
 										<td>
-											<tera-input-number v-model="ensembleConfigs[i].weight" />
+											<tera-input-number v-model="ele.value" />
 										</td>
 									</tr>
 								</tbody>
 							</table>
 						</div>
-						<Button
-							label="Set weights to be equal"
-							class="p-button-sm p-button-outlined mt-2"
-							outlined
-							severity="secondary"
-							@click="calculateEvenWeights()"
-						/>
 					</AccordionTab>
 
 					<!-- Mapping -->
 					<AccordionTab header="Mapping">
 						<p class="subheader">Map the variables from the models to the ensemble variables.</p>
-						<template v-if="ensembleConfigs.length > 0">
+						<template v-if="knobs.mapping.length > 0">
 							<table class="w-full mb-2">
 								<tbody>
 									<tr>
@@ -54,19 +47,18 @@
 											{{ element }}
 										</th>
 									</tr>
-
-									<tr v-for="key in Object.keys(ensembleConfigs[0].solutionMappings)" :key="key">
-										<td>{{ key }}</td>
-										<td v-for="config in ensembleConfigs" :key="config.id">
+									<tr v-for="(ele, indx) in knobs.mapping" :key="indx">
+										<td>{{ ele.name }}</td>
+										<td v-for="(row, indx) in ele.modelConfigurationMappings" :key="indx">
 											<Dropdown
 												class="w-full"
-												:options="allModelOptions[config.id]"
-												v-model="config.solutionMappings[key]"
+												:options="allModelOptions[row.modelConfigId]"
+												v-model="ele.modelConfigurationMappings[row.modelConfigId]"
 												placeholder="Select a variable"
 											/>
 										</td>
 										<td>
-											<Button class="p-button-sm" icon="pi pi-times" rounded text @click="deleteMapping(key)" />
+											<Button class="p-button-sm" icon="pi pi-times" rounded text @click="deleteMappingRow(ele.id)" />
 										</td>
 									</tr>
 								</tbody>
@@ -92,7 +84,7 @@
 									auto-focus
 									class="w-full"
 									placeholder="Add a name"
-									@keypress.enter="
+									@keydown.enter="
 										addMapping();
 										showAddMappingInput = false;
 									"
@@ -137,13 +129,13 @@
 								<tr>
 									<td class="w-2">Steps</td>
 									<td>
-										<tera-input-number class="w-full" v-model="timeSpan.start" />
+										<tera-input-number class="w-full" v-model="knobs.timeSpan.start" />
 									</td>
 									<td>
-										<tera-input-number class="w-full" v-model="timeSpan.end" />
+										<tera-input-number class="w-full" v-model="knobs.timeSpan.end" />
 									</td>
 									<td>
-										<tera-input-number class="w-full" v-model="numSamples" />
+										<tera-input-number class="w-full" v-model="knobs.numSamples" />
 									</td>
 								</tr>
 							</tbody>
@@ -201,23 +193,25 @@ import Accordion from 'primevue/accordion';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Dropdown from 'primevue/dropdown';
-
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
-
 import { getRunResultCiemss, makeEnsembleCiemssSimulation } from '@/services/models/simulation-service';
 import { getModelConfigurationById, getObservables, getInitials } from '@/services/model-configurations';
 import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
-
 import type { WorkflowNode } from '@/types/workflow';
-import type { TimeSpan, EnsembleModelConfigs, EnsembleSimulationCiemssRequest } from '@/types/Types';
+import type { TimeSpan, EnsembleSimulationCiemssRequest } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
-
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
-import { SimulateEnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
+import { v4 as uuidv4 } from 'uuid';
+import {
+	SimulateEnsembleCiemssOperationState,
+	SimulateEnsembleMappingRow,
+	SimulateEnsembleWeight
+} from './simulate-ensemble-ciemss-operation';
+import { clientMappingToCiemssMapping } from './simulate-ensemble-util';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateEnsembleCiemssOperationState>;
@@ -229,18 +223,29 @@ enum Tabs {
 	Notebook = 'Notebook'
 }
 
+interface BasicKnobs {
+	mapping: SimulateEnsembleMappingRow[];
+	weights: SimulateEnsembleWeight[];
+	numSamples: number;
+	timeSpan: TimeSpan;
+}
+
+const knobs = ref<BasicKnobs>({
+	mapping: props.node.state.mapping,
+	weights: props.node.state.weights,
+	numSamples: props.node.state.numSamples,
+	timeSpan: props.node.state.timeSpan
+});
+
 const showSpinner = ref(false);
-
 const showAddMappingInput = ref(false);
-
 const listModelLabels = ref<string[]>([]);
 
 // List of each observible + state for each model.
 const allModelOptions = ref<{ [key: string]: string[] }>({});
-const ensembleConfigs = ref<EnsembleModelConfigs[]>(props.node.state.mapping);
-
-const timeSpan = ref<TimeSpan>(props.node.state.timeSpan);
-const numSamples = ref<number>(props.node.state.numSamples);
+const modelConfigurationIds = ref<string[]>(
+	props.node.inputs.filter((ele) => ele.value?.[0]).map((ele) => ele.value?.[0])
+);
 
 const newSolutionMappingKey = ref<string>('');
 const runResults = ref<RunResults>({});
@@ -270,40 +275,31 @@ const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
-const calculateEvenWeights = () => {
-	if (!ensembleConfigs.value) return;
-	const percent = 1 / ensembleConfigs.value.length;
-	for (let i = 0; i < ensembleConfigs.value.length; i++) {
-		ensembleConfigs.value[i].weight = percent;
-	}
-};
-
 const addMapping = () => {
-	for (let i = 0; i < ensembleConfigs.value.length; i++) {
-		ensembleConfigs.value[i].solutionMappings[newSolutionMappingKey.value] = '';
-	}
-
+	knobs.value.mapping.push({
+		id: uuidv4(),
+		name: newSolutionMappingKey.value,
+		modelConfigurationMappings: modelConfigurationIds.value.map((id) => ({ modelConfigId: id as string, value: '' }))
+	});
 	const state = _.cloneDeep(props.node.state);
-	state.mapping = ensembleConfigs.value;
+	state.mapping = knobs.value.mapping;
 	emit('update-state', state);
 };
 
-function deleteMapping(key) {
-	for (let i = 0; i < ensembleConfigs.value.length; i++) {
-		delete ensembleConfigs.value[i].solutionMappings[key];
-	}
-
+function deleteMappingRow(id: string) {
+	knobs.value.mapping = knobs.value.mapping.filter((ele) => ele.id !== id);
 	const state = _.cloneDeep(props.node.state);
-	state.mapping = ensembleConfigs.value;
+	state.mapping = knobs.value.mapping;
 	emit('update-state', state);
 }
 
 const runEnsemble = async () => {
+	const modelConfigs = clientMappingToCiemssMapping(knobs.value.mapping, knobs.value.weights);
 	const params: EnsembleSimulationCiemssRequest = {
-		modelConfigs: ensembleConfigs.value,
-		timespan: timeSpan.value,
+		modelConfigs,
+		timespan: knobs.value.timeSpan,
 		engine: 'ciemss',
-		extra: { num_samples: numSamples.value }
+		extra: { num_samples: knobs.value.numSamples }
 	};
 	const response = await makeEnsembleCiemssSimulation(params, nodeMetadata(props.node));
 
@@ -313,13 +309,11 @@ const runEnsemble = async () => {
 };
 
 onMounted(async () => {
-	const modelConfigurationIds: string[] = [];
-	props.node.inputs.forEach((ele) => {
-		if (ele.value) modelConfigurationIds.push(ele.value[0]);
-	});
-	if (!modelConfigurationIds) return;
-
-	const allModelConfigurations = await Promise.all(modelConfigurationIds.map((id) => getModelConfigurationById(id)));
+	if (!modelConfigurationIds.value) return;
+	console.log(modelConfigurationIds.value);
+	const allModelConfigurations = await Promise.all(
+		modelConfigurationIds.value.map((id) => getModelConfigurationById(id))
+	);
 
 	allModelOptions.value = {};
 	for (let i = 0; i < allModelConfigurations.length; i++) {
@@ -332,18 +326,17 @@ onMounted(async () => {
 
 	const state = _.cloneDeep(props.node.state);
 
-	if (state.mapping && state.mapping.length === 0) {
-		for (let i = 0; i < allModelConfigurations.length; i++) {
-			ensembleConfigs.value.push({
-				id: allModelConfigurations[i].id as string,
-				solutionMappings: {},
-				weight: 0
+	// Initalize weights:
+	if (knobs.value.weights.length === 0 || knobs.value.weights.length !== modelConfigurationIds.value.length) {
+		knobs.value.weights = [];
+		modelConfigurationIds.value.forEach((id) => {
+			console.log('Id:');
+			console.log(id);
+			knobs.value.weights.push({
+				modelConfigurationId: id,
+				value: 5
 			});
-		}
-	}
-
-	if (ensembleConfigs.value.some((ele) => ele.weight === 0)) {
-		calculateEvenWeights();
+		});
 	}
 
 	emit('update-state', state);
@@ -375,11 +368,13 @@ watch(
 );
 
 watch(
-	() => [timeSpan.value, numSamples.value],
+	() => knobs.value,
 	async () => {
 		const state = _.cloneDeep(props.node.state);
-		state.timeSpan = timeSpan.value;
-		state.numSamples = numSamples.value;
+		state.mapping = knobs.value.mapping;
+		state.weights = knobs.value.weights;
+		state.timeSpan = knobs.value.timeSpan;
+		state.numSamples = knobs.value.numSamples;
 		emit('update-state', state);
 	},
 	{ immediate: true }
