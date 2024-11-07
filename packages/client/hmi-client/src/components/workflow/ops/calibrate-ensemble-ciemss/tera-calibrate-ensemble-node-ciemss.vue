@@ -63,7 +63,11 @@ import type { RunResults } from '@/types/SimulateConfig';
 import { getDataset } from '@/services/dataset';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import type { CalibrateEnsembleCiemssOperationState } from './calibrate-ensemble-ciemss-operation';
-import { updateLossChartSpec, getLossValuesFromSimulation } from './calibrate-ensemble-util';
+import {
+	updateLossChartSpec,
+	getLossValuesFromSimulation,
+	formatCalibrateModelConfigurations
+} from './calibrate-ensemble-util';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
@@ -146,7 +150,10 @@ watch(
 			console.log('dill URL is', dillURL);
 
 			const params: EnsembleSimulationCiemssRequest = {
-				modelConfigs: props.node.state.ensembleConfigs,
+				modelConfigs: formatCalibrateModelConfigurations(
+					props.node.state.ensembleConfigs,
+					props.node.state.configurationWeights
+				),
 				timespan: {
 					// Should probably grab this from csvasset
 					start: 0,
@@ -184,13 +191,13 @@ watch(
 			state.currentProgress = 0;
 			state.inProgressForecastId = '';
 			state.forecastRunId = id;
-			emit('update-state', state);
 
 			const portLabel = props.node.inputs[0].label;
 			emit('append-output', {
 				type: 'calibrateSimulationId',
 				label: nodeOutputLabel(props.node, `${portLabel} Result`),
-				value: [state.calibrationId]
+				value: [state.calibrationId],
+				state
 			});
 		}
 	},
