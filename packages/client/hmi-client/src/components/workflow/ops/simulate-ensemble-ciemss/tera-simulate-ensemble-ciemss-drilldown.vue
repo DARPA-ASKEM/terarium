@@ -27,7 +27,7 @@
 											{{ modelConfigIdToNameMap[ele.modelConfigurationId] }}
 										</td>
 										<td>
-											<tera-input-number v-model="ele.value" @change="updateWeights" />
+											<tera-input-number v-model="ele.value" @change="updateWeights()" />
 										</td>
 									</tr>
 								</tbody>
@@ -55,7 +55,7 @@
 												:options="allModelOptions[row.modelConfigId]"
 												v-model="row.compartmentName"
 												placeholder="Select a variable"
-												@change="updateMapping"
+												@change="updateMapping()"
 											/>
 										</td>
 										<td>
