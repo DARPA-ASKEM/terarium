@@ -5,7 +5,7 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
-		<section :tabName="Tabs.Wizard" class="ml-3 mr-2 pt-3">
+		<section :tabName="DrilldownTabs.Wizard" class="ml-3 mr-2 pt-3">
 			<tera-drilldown-section>
 				<template #header-controls-right>
 					<Button label="Run" icon="pi pi-play" @click="runEnsemble" :disabled="false" />
@@ -145,7 +145,7 @@
 				</Accordion>
 			</tera-drilldown-section>
 		</section>
-		<section :tabName="Tabs.Notebook">
+		<section :tabName="DrilldownTabs.Notebook">
 			<div class="mt-3 ml-4 mr-2">Under construction. Use the wizard for now.</div>
 		</section>
 		<template #preview>
@@ -205,6 +205,7 @@ import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/component
 import type { WorkflowNode } from '@/types/workflow';
 import type { TimeSpan, EnsembleSimulationCiemssRequest } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
+import { DrilldownTabs } from '@/types/common';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -218,11 +219,6 @@ const props = defineProps<{
 	node: WorkflowNode<SimulateEnsembleCiemssOperationState>;
 }>();
 const emit = defineEmits(['select-output', 'update-state', 'close']);
-
-enum Tabs {
-	Wizard = 'Wizard',
-	Notebook = 'Notebook'
-}
 
 interface BasicKnobs {
 	mapping: SimulateEnsembleMappingRow[];
