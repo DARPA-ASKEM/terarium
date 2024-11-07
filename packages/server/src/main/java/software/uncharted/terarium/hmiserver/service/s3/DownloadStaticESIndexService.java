@@ -1,7 +1,11 @@
 package software.uncharted.terarium.hmiserver.service.s3;
 
 import jakarta.annotation.PostConstruct;
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStreamReader;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,33 +37,59 @@ public class DownloadStaticESIndexService {
 
 	private static String AWS_ID = "static-index";
 	private final List<IndexAndMapping> INDICIES = List.of(
-		new IndexAndMapping(epiRoot),
-		new IndexAndMapping(climateRoot)
+		new IndexAndMapping("epi_dkg_20241030") // ,
+		//	new IndexAndMapping(climateRoot)
 	);
 
 	@Data
 	private static class IndexAndMapping {
 
 		public IndexAndMapping(String root) {
-			this.indexName = root + ".json";
-			this.mapping = root + "_mapping.json";
+			this.fileName = root + ".json";
+			this.mappingFileName = root + "_mapping.json";
+			this.indexName = root;
 		}
 
+		String fileName;
 		String indexName;
-		String mapping;
+		String mappingFileName;
 	}
 
 	@PostConstruct
 	@Async
 	void init() {
+		final S3Service s3Service = s3ClientService.getS3Service(AWS_ID);
+
 		INDICIES.forEach(index -> {
-			if (!elasticsearchService.hasIndex(index.getIndexName())) {
-				// Get the input stream from s3 for the source data
-				final S3Service s3Service = s3ClientService.getS3Service(AWS_ID);
-				ResponseInputStream<GetObjectResponse> responseInputStream = s3Service.getObject(
-					staticIndexPath,
-					index.getIndexName()
-				);
+			if (!elasticsearchService.hasIndex(index.getFileName())) {
+				try {
+					ResponseInputStream<GetObjectResponse> esMappingStream = s3Service.getObject(
+						staticIndexPath,
+						index.getMappingFileName()
+					);
+					String esMappingContent = new BufferedReader(new InputStreamReader(esMappingStream))
+						.lines()
+						.collect(Collectors.joining("\n"));
+					elasticsearchService.createIndex(index.getIndexName(), esMappingContent);
+				} catch (Exception e) {
+					log.error("Failed to read mapping file: " + index.getMappingFileName(), e);
+				}
+
+				log.warn("About to download");
+				try {
+					ResponseInputStream<GetObjectResponse> esIndexStream = s3Service.getObject(
+						staticIndexPath,
+						index.getFileName()
+					);
+					log.warn("We have the stream");
+					String esIndexContent = new BufferedReader(new InputStreamReader(esIndexStream))
+						.lines()
+						.collect(Collectors.joining("\n"));
+					log.warn("About to insert");
+					elasticsearchService.bulkInsert(index.getIndexName(), esIndexContent);
+				} catch (Exception e) {
+					log.error("Failed to read index file: " + index.getFileName(), e);
+				}
 			}
 		});
 	}

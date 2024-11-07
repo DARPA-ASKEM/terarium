@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.ErrorCause;
 import co.elastic.clients.elasticsearch._types.KnnQuery;
+import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.cluster.ExistsComponentTemplateRequest;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
@@ -33,13 +34,16 @@ import co.elastic.clients.elasticsearch.indices.PutAliasRequest;
 import co.elastic.clients.elasticsearch.indices.RefreshRequest;
 import co.elastic.clients.elasticsearch.indices.RefreshResponse;
 import co.elastic.clients.elasticsearch.ingest.GetPipelineRequest;
+import co.elastic.clients.json.JsonpMapper;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
+import jakarta.json.stream.JsonParser;
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -205,6 +209,28 @@ public class ElasticsearchService {
 	public void createIndex(final String index) throws IOException {
 		try {
 			final CreateIndexRequest req = new CreateIndexRequest.Builder().index(index).build();
+
+			client.indices().create(req);
+		} catch (final ElasticsearchException e) {
+			throw handleException(e);
+		}
+	}
+
+	/**
+	 * Create the provided index.
+	 *
+	 * @param index
+	 * @throws IOException
+	 */
+	public void createIndex(final String index, final String mapping) throws IOException {
+		try {
+			JsonpMapper mapper = client._transport().jsonpMapper();
+			JsonParser parser = mapper.jsonProvider().createParser(new StringReader(mapping));
+
+			final CreateIndexRequest req = new CreateIndexRequest.Builder()
+				.index(index)
+				.mappings(TypeMapping._DESERIALIZER.deserialize(parser, mapper))
+				.build();
 
 			client.indices().create(req);
 		} catch (final ElasticsearchException e) {
@@ -550,6 +576,24 @@ public class ElasticsearchService {
 		}
 	}
 
+	public void bulkInsert(String indexName, String esIndexContent) {
+		try {
+			final BulkRequest.Builder bulkRequest = new BulkRequest.Builder();
+
+			final com.fasterxml.jackson.core.JsonParser parser = mapper.createParser(esIndexContent);
+			while (parser.hasCurrentToken()) {
+				final JsonNode node = mapper.readTree(parser);
+				log.warn("Inserting " + node.asText());
+				final String id = node.get("id").asText();
+				bulkRequest.operations(op -> op.index(idx -> idx.index(indexName).id(id).document(node)));
+			}
+			log.warn("Bulk inserting documents into index {}", indexName);
+			client.bulk(bulkRequest.build());
+		} catch (final IOException e) {
+			log.error("Error bulk inserting documents into index {}", indexName, e);
+		}
+	}
+
 	@Data
 	public static class BulkOpResponse {
 
@@ -709,9 +753,5 @@ public class ElasticsearchService {
 			log.error("Error checking if index exists {}", name, e);
 		}
 		return null;
-	}
-
-	public static String emphasis(String s, int boost) {
-		return s + "^" + String.valueOf(boost);
 	}
 }
