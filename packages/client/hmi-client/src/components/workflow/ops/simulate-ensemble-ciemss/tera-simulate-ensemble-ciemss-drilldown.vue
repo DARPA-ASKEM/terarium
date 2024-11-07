@@ -6,7 +6,7 @@
 		@update-state="(state: any) => emit('update-state', state)"
 		class="drilldown"
 	>
-		<tera-drilldown-section :tabName="DrilldownTabs.Wizard" class="wizard">
+		<tera-drilldown-section :tabName="DrilldownTabs.Wizard" class="input-config">
 			<tera-slider-panel
 				class="input-config"
 				v-model:is-open="isSidebarOpen"
@@ -157,7 +157,7 @@
 			</tera-slider-panel>
 		</tera-drilldown-section>
 
-		<tera-drilldown-section :tabName="DrilldownTabs.Notebook" class="notebook-section">
+		<tera-drilldown-section :tabName="DrilldownTabs.Notebook" class="input-config">
 			<div class="mt-3 ml-4 mr-2">Under construction. Use the wizard for now.</div>
 		</tera-drilldown-section>
 		<template #preview>
@@ -412,22 +412,8 @@ watch(
 </script>
 
 <style scoped>
-.wizard .toolbar {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: var(--gap-1) var(--gap-4);
-	gap: var(--gap-2);
-}
-
-/* Notebook */
-.notebook-section {
-	width: calc(50vw - 4rem);
-}
-
-.notebook-section:deep(main) {
-	gap: var(--gap-2);
-	position: relative;
+.input-config:deep(.content-wrapper) {
+	padding-bottom: 0;
 }
 
 .subheader {
