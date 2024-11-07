@@ -261,10 +261,10 @@
 							<AccordionTab header="Parameter distributions">
 								<template v-for="setting of selectedParameterSettings" :key="setting.id">
 									<vega-chart
-										v-if="preparedDistributionCharts[setting.selectedVariables[0]]"
+										v-if="parameterDistributionCharts[setting.selectedVariables[0]]"
 										expandable
 										:are-embed-actions-visible="true"
-										:visualization-spec="preparedDistributionCharts[setting.selectedVariables[0]].histogram"
+										:visualization-spec="parameterDistributionCharts[setting.selectedVariables[0]].histogram"
 									>
 										<template v-slot:footer>
 											<table class="distribution-table">
@@ -272,23 +272,23 @@
 													<tr>
 														<th scope="col"></th>
 														<th scope="col">
-															{{ preparedDistributionCharts[setting.selectedVariables[0]].header[0] }}
+															{{ parameterDistributionCharts[setting.selectedVariables[0]].header[0] }}
 														</th>
 														<th scope="col">
-															{{ preparedDistributionCharts[setting.selectedVariables[0]].header[1] }}
+															{{ parameterDistributionCharts[setting.selectedVariables[0]].header[1] }}
 														</th>
 													</tr>
 												</thead>
 												<tbody>
 													<tr>
 														<th scope="row">Mean</th>
-														<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].mean[0] }}</td>
-														<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].mean[1] }}</td>
+														<td>{{ parameterDistributionCharts[setting.selectedVariables[0]].mean[0] }}</td>
+														<td>{{ parameterDistributionCharts[setting.selectedVariables[0]].mean[1] }}</td>
 													</tr>
 													<tr>
 														<th scope="row">Variance</th>
-														<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].variance[0] }}</td>
-														<td>{{ preparedDistributionCharts[setting.selectedVariables[0]].variance[1] }}</td>
+														<td>{{ parameterDistributionCharts[setting.selectedVariables[0]].variance[0] }}</td>
+														<td>{{ parameterDistributionCharts[setting.selectedVariables[0]].variance[1] }}</td>
 													</tr>
 												</tbody>
 											</table>
@@ -304,7 +304,7 @@
 									<vega-chart
 										expandable
 										:are-embed-actions-visible="true"
-										:visualization-spec="preparedInterventionCharts[appliedTo]"
+										:visualization-spec="interventionCharts[appliedTo]"
 									/>
 								</template>
 							</AccordionTab>
@@ -313,7 +313,7 @@
 									<vega-chart
 										expandable
 										:are-embed-actions-visible="true"
-										:visualization-spec="preparedCharts[setting.selectedVariables[0]]"
+										:visualization-spec="variableCharts[setting.selectedVariables[0]]"
 									/>
 								</template>
 							</AccordionTab>
@@ -492,9 +492,7 @@ import {
 import {
 	addMultiVariableChartSetting,
 	deleteAnnotation,
-	generateForecastChartAnnotation,
 	removeChartSettingById,
-	saveAnnotation,
 	updateChartSettingsBySelectedVariables
 } from '@/services/chart-settings';
 import { Vue3Lottie } from 'vue3-lottie';
@@ -753,14 +751,11 @@ const selectedComparisonChartSettings = computed(() =>
 );
 
 // --- Handle chart annotations
-const { getChartAnnotationsByChartId } = useChartAnnotations(props.node.id);
+const { getChartAnnotationsByChartId, generateAndSaveForecastChartAnnotation } = useChartAnnotations(props.node.id);
 const generateAnnotation = async (setting: ChartSetting, query: string) => {
-	// Note: Currently llm generated chart annotations are supported for the forecast chart only
 	if (!preparedChartInputs.value) return null;
 	const { statLayerVariables, options } = createForecastChartOptions(setting, preparedChartInputs.value.reverseMap);
-	const annotationLayerSpec = await generateForecastChartAnnotation(query, 'timepoint_id', statLayerVariables, options);
-	const saved = await saveAnnotation(annotationLayerSpec, props.node.id, setting.id);
-	return saved;
+	return generateAndSaveForecastChartAnnotation(setting, query, 'timepoint_id', statLayerVariables, options);
 };
 // ---
 
@@ -827,7 +822,7 @@ const createForecastChartOptions = (setting: ChartSetting, translationMap: Recor
 	return { statLayerVariables, sampleLayerVariables, options };
 };
 
-const preparedCharts = computed(() => {
+const variableCharts = computed(() => {
 	const charts: Record<string, any> = {};
 	if (!preparedChartInputs.value) return charts;
 	const { result, resultSummary, reverseMap } = preparedChartInputs.value;
@@ -874,7 +869,7 @@ const preparedCharts = computed(() => {
 	return charts;
 });
 
-const preparedInterventionCharts = computed(() => {
+const interventionCharts = computed(() => {
 	const charts: Record<string, any> = {};
 	if (!preparedChartInputs.value) return charts;
 	const { resultSummary, reverseMap } = preparedChartInputs.value;
@@ -904,7 +899,7 @@ const preparedInterventionCharts = computed(() => {
 	return charts;
 });
 
-const preparedDistributionCharts = computed(() => {
+const parameterDistributionCharts = computed(() => {
 	if (!preparedChartInputs.value) return {};
 	const { result } = preparedChartInputs.value;
 	// Note that we want to show the parameter distribution at the first timepoint only

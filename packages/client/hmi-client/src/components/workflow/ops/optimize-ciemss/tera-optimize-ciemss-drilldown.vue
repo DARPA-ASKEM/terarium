@@ -279,22 +279,14 @@
 							<AccordionTab header="Interventions over time">
 								<ul>
 									<li v-for="key of selectedInterventionSettings.map((s) => s.selectedVariables[0])" :key="key">
-										<vega-chart
-											expandable
-											are-embed-actions-visible
-											:visualization-spec="preparedInterventionCharts[key]"
-										/>
+										<vega-chart expandable are-embed-actions-visible :visualization-spec="interventionCharts[key]" />
 									</li>
 								</ul>
 							</AccordionTab>
 							<AccordionTab header="Variables over time">
 								<ul>
 									<li v-for="key of selectedVariableSettings.map((s) => s.selectedVariables[0])" :key="key">
-										<vega-chart
-											expandable
-											are-embed-actions-visible
-											:visualization-spec="preparedVariableCharts[key]"
-										/>
+										<vega-chart expandable are-embed-actions-visible :visualization-spec="variableCharts[key]" />
 									</li>
 								</ul>
 							</AccordionTab>
@@ -494,8 +486,6 @@ import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
 import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
 import {
-	generateForecastChartAnnotation,
-	saveAnnotation,
 	deleteAnnotation,
 	removeChartSettingById,
 	updateChartSettingsBySelectedVariables,
@@ -1069,7 +1059,7 @@ const preparedChartInputs = computed(() => {
 	};
 });
 
-const preparedInterventionCharts = computed(() => {
+const interventionCharts = computed(() => {
 	const charts: Record<string, any> = {};
 	if (!preparedChartInputs.value) return charts;
 	const { resultSummary, reverseMap } = preparedChartInputs.value;
@@ -1099,18 +1089,15 @@ const preparedInterventionCharts = computed(() => {
 	return charts;
 });
 
-const preparedVariableCharts = computed(() => {
+const variableCharts = computed(() => {
 	const charts: Record<string, any> = {};
 	if (!preparedChartInputs.value) return charts;
-	const { result, resultSummary } = preparedChartInputs.value;
+	const { result, resultSummary, reverseMap } = preparedChartInputs.value;
 
 	// simulation chart spec
 	selectedVariableSettings.value.forEach((setting) => {
 		const variable = setting.selectedVariables[0];
-		const { sampleLayerVariables, statLayerVariables, options } = createForecastChartOptions(
-			setting,
-			pyciemssMap.value
-		);
+		const { sampleLayerVariables, statLayerVariables, options } = createForecastChartOptions(setting, reverseMap);
 		const annotations = getChartAnnotationsByChartId(setting.id);
 		charts[variable] = applyForecastChartAnnotations(
 			createForecastChart(
@@ -1166,14 +1153,11 @@ const comparisonCharts = computed(() => {
 });
 
 // --- Handle chart annotations
-const { getChartAnnotationsByChartId } = useChartAnnotations(props.node.id);
+const { getChartAnnotationsByChartId, generateAndSaveForecastChartAnnotation } = useChartAnnotations(props.node.id);
 const generateAnnotation = async (setting: ChartSetting, query: string) => {
-	// Note: Currently llm generated chart annotations are supported for the forecast chart only
 	if (!preparedChartInputs.value) return null;
 	const { statLayerVariables, options } = createForecastChartOptions(setting, preparedChartInputs.value.reverseMap);
-	const annotationLayerSpec = await generateForecastChartAnnotation(query, 'timepoint_id', statLayerVariables, options);
-	const saved = await saveAnnotation(annotationLayerSpec, props.node.id, setting.id);
-	return saved;
+	return generateAndSaveForecastChartAnnotation(setting, query, 'timepoint_id', statLayerVariables, options);
 };
 // ---
 
