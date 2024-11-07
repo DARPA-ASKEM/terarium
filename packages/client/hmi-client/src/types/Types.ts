@@ -799,10 +799,10 @@ export interface ModelUnit {
 }
 
 export interface GroundedSemantic {
-    name?: string;
     id: string;
-    grounding?: ModelGrounding;
+    name?: string;
     description?: string;
+    grounding?: ModelGrounding;
 }
 
 export interface Properties {
