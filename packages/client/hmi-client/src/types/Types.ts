@@ -14,6 +14,7 @@ export interface ClientEvent<T> {
     type: ClientEventType;
     projectId?: string;
     notificationGroupId?: string;
+    userId?: string;
     data: T;
 }
 
@@ -798,10 +799,10 @@ export interface ModelUnit {
 }
 
 export interface GroundedSemantic {
-    id: string;
     name?: string;
-    description?: string;
+    id: string;
     grounding?: ModelGrounding;
+    description?: string;
 }
 
 export interface Properties {
