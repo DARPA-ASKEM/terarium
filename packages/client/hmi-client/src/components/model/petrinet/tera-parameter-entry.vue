@@ -1,5 +1,5 @@
 <template>
-	<div class="parameter-entry flex flex-column flex-1" :class="{ 'empty-input': isInputEmpty }">
+	<div class="parameter-entry flex flex-column flex-1">
 		<header>
 			<div class="flex">
 				<strong>{{ parameterId }}</strong>
@@ -126,7 +126,6 @@ import TeraParameterOtherValueModal from '@/components/model/petrinet/tera-param
 import { displayNumber } from '@/utils/number';
 import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
 import type { FeatureConfig } from '@/types/common';
-import { isNaN, isNumber } from 'lodash';
 
 const props = defineProps<{
 	model: Model;
@@ -162,30 +161,11 @@ const otherValueList = computed(() =>
 	getOtherValues(props.modelConfigurations, props.parameterId, 'referenceId', 'parameterSemanticList')
 );
 
-const parameterInputs = ref();
-const isInputEmpty = computed(() => {
-	if (getParameterDistribution(props.modelConfiguration, props.parameterId).type === DistributionType.Constant) {
-		console.log(!isNumber(parameterInputs.value?.[Parameter.value]), parameterInputs.value?.[Parameter.value]);
-		emit(
-			'has-empty-field',
-			isNaN(parameterInputs.value?.[Parameter.value]) || !isNumber(parameterInputs.value?.[Parameter.value])
-		);
-		return isNaN(parameterInputs.value?.[Parameter.value]) || !isNumber(parameterInputs.value?.[Parameter.value]);
-	}
-	return (
-		isNaN(parameterInputs.value?.[Parameter.maximum]) ||
-		isNaN(parameterInputs.value?.[Parameter.minimum]) ||
-		!isNumber(parameterInputs.value?.[Parameter.minimum]) ||
-		!isNumber(parameterInputs.value?.[Parameter.maximum])
-	);
-});
-
 function onInputChange(parameter: Parameter, value) {
 	emit('update-parameter', {
 		id: props.parameterId,
 		distribution: formatPayloadFromParameterChange({ [parameter]: value })
 	});
-	parameterInputs.value[parameter] = value;
 }
 
 function getSourceLabel(initialId) {
@@ -219,11 +199,6 @@ const getOtherValuesLabel = computed(() => `Other Values(${otherValueList.value?
 onMounted(async () => {
 	const identifiers = getParameter(props.model, props.parameterId)?.grounding?.identifiers;
 	if (identifiers) concept.value = await getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
-	const test = {};
-	test[Parameter.value] = getParameterDistribution(props.modelConfiguration, props.parameterId).parameters.value;
-	test[Parameter.maximum] = getParameterDistribution(props.modelConfiguration, props.parameterId).parameters.maximum;
-	test[Parameter.minimum] = getParameterDistribution(props.modelConfiguration, props.parameterId).parameters.minimum;
-	parameterInputs.value = test;
 });
 </script>
 

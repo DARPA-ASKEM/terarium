@@ -71,7 +71,6 @@
 													:parameter-id="referenceId"
 													:featureConfig="featureConfig"
 													:error-empty="errorEmpty"
-													@has-empty-field="test($event)"
 													@update-parameter="emit('update-parameters', [$event])"
 													@update-source="emit('update-source', $event)"
 												/>
@@ -238,10 +237,6 @@ const onUpdateDistributions = () => {
 	emit('update-parameters', distributionParameterMappings);
 	isAddingUncertainty.value = false;
 };
-
-function test(value) {
-	console.log('has input error', value);
-}
 </script>
 
 <style scoped>
