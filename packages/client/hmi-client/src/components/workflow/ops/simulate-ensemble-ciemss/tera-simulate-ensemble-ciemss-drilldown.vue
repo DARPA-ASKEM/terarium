@@ -278,7 +278,6 @@ const onSelection = (id: string) => {
 };
 
 const addMapping = () => {
-	console.log('Add mapping');
 	knobs.value.mapping.push({
 		id: uuidv4(),
 		newName: newSolutionMappingKey.value,
