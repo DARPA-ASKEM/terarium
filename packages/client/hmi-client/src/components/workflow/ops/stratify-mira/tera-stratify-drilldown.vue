@@ -487,7 +487,7 @@ onUnmounted(() => {
 
 <style scoped>
 .notebook-section:deep(main) {
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	position: relative;
 }
 
@@ -501,7 +501,7 @@ onUnmounted(() => {
 .form-section {
 	display: flex;
 	flex-direction: column;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 }
 
 .wizard-section {

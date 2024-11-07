@@ -388,11 +388,11 @@ watch(
 	justify-content: center;
 	align-items: center;
 	height: 9rem;
-	gap: var(--gap);
+	gap: var(--gap-4);
 	background: var(--surface-50);
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
-	margin-bottom: var(--gap);
+	margin-bottom: var(--gap-4);
 	color: var(--text-color-secondary);
 	font-size: var(--font-caption);
 }

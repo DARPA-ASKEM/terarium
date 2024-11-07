@@ -12,6 +12,9 @@ public interface GroundedSemantic {
 	@TSOptional
 	ModelGrounding getGrounding();
 
+	@TSOptional
+	String getDescription();
+
 	void setId(String id);
 
 	@TSOptional
@@ -19,4 +22,7 @@ public interface GroundedSemantic {
 
 	@TSOptional
 	void setGrounding(ModelGrounding grounding);
+
+	@TSOptional
+	void setDescription(String description);
 }

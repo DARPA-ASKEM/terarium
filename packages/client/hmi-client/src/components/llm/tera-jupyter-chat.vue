@@ -242,7 +242,6 @@ const reRunPrompt = (queryId: string, query?: string) => {
 	isExecutingCode.value = true;
 };
 
-// here
 const addCodeCell = (isDefaultCell: boolean = false, isNextCell: boolean = true) => {
 	const msgId = createMessageId('code_cell');
 	const date = new Date().toISOString();
@@ -463,9 +462,8 @@ watch(
 defineExpose({
 	clearHistory,
 	clearOutputs,
-	submitQuery
-
-	// here
+	submitQuery,
+	addCodeCell
 });
 </script>
 
@@ -491,7 +489,7 @@ section {
 }
 
 .add-cell-button {
-	margin-left: var(--gap);
+	margin-left: var(--gap-4);
 	width: calc(100% - 2rem);
 }
 .add-cell-button:deep(.p-button-label) {

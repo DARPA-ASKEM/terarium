@@ -74,7 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, PropType, ref, watch } from 'vue';
+import { computed, PropType, ref, watch, onMounted } from 'vue';
 import { cloneDeep, isEmpty, isEqual } from 'lodash';
 import {
 	downloadRawFile,
@@ -134,7 +134,7 @@ const optionsMenuPt = {
 		class: 'max-h-30rem overflow-y-scroll'
 	}
 };
-const optionsMenuItems = ref([
+const optionsMenuItems = ref<any[]>([
 	{
 		icon: 'pi pi-pencil',
 		label: 'Rename',
@@ -142,20 +142,6 @@ const optionsMenuItems = ref([
 			isRenaming.value = true;
 			newName.value = dataset.value?.name ?? '';
 		}
-	},
-	{
-		icon: 'pi pi-plus',
-		label: 'Add to project',
-		items:
-			useProjects()
-				.allProjects.value?.filter((project) => project.id !== useProjects().activeProject.value?.id)
-				.map((project) => ({
-					label: project.name,
-					command: async () => {
-						const response = await useProjects().addAsset(AssetType.Dataset, props.assetId, project.id);
-						if (response) logger.info(`Added asset to ${project.name}`);
-					}
-				})) ?? []
 	},
 	{
 		icon: 'pi pi-download',
@@ -293,6 +279,22 @@ function getRawContent() {
 		});
 	}
 }
+
+onMounted(async () => {
+	const addProjectMenuItems = (await useProjects().getAllExceptActive()).map((project) => ({
+		label: project.name,
+		command: async () => {
+			const response = await useProjects().addAsset(AssetType.Dataset, props.assetId, project.id);
+			if (response) logger.info(`Added asset to ${project.name}`);
+		}
+	}));
+	if (addProjectMenuItems.length === 0) return;
+	optionsMenuItems.value.splice(1, 0, {
+		icon: 'pi pi-plus',
+		label: 'Add to project',
+		items: addProjectMenuItems
+	});
+});
 
 // Whenever assetId changes, fetch dataset with that ID
 watch(

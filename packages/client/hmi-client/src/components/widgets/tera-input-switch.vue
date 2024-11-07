@@ -43,7 +43,7 @@ div {
 	align-items: center;
 	color: var(--text-color);
 	display: flex;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 
 	/* Override PrimeVue styles for slider to always stay neutral gray */
 	&:deep(.p-inputswitch .p-inputswitch-slider),

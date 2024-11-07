@@ -39,7 +39,7 @@ const onTabChange = (event: TabViewChangeEvent) => {
 header {
 	display: flex;
 	flex-direction: column;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	background-color: var(--surface-highlight);
 	padding-top: 1rem;
 	padding-left: 1.5rem;
@@ -89,7 +89,7 @@ a {
 	align-items: center;
 	color: var(--primary-color);
 	margin-left: auto;
-	margin-right: var(--gap);
+	margin-right: var(--gap-4);
 }
 
 :deep(.p-tabview-header:not(.p-highlight) .p-tabview-nav-link) {
@@ -106,7 +106,7 @@ a {
 .actions {
 	display: flex;
 	justify-content: flex-end;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	padding-bottom: var(--gap-1);
 	flex: 1;
 }

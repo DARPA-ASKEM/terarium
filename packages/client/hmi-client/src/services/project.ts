@@ -13,6 +13,7 @@ import type { Component, Ref } from 'vue';
  * Create a project
  * @param name Project['name']
  * @param [description] Project['description']
+ * @param thumbnail
  * @return Project|null - the appropriate project, or null if none returned by API
  */
 async function create(
@@ -260,7 +261,7 @@ async function createProjectFromFile(file: File, progress?: Ref<number>) {
 const icons = new Map<string | AssetType, string | Component>([
 	[AssetType.Document, 'file'],
 	[AssetType.Model, 'share-2'],
-	[AssetType.Dataset, DatasetIcon],
+	[AssetType.Dataset, DatasetIcon as Component],
 	[AssetType.Simulation, 'settings'],
 	[AssetType.Code, 'code'],
 	[AssetType.Workflow, 'git-merge'],

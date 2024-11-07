@@ -82,7 +82,7 @@ div {
 		display: none;
 		position: absolute;
 		background-color: var(--surface-section);
-		padding: var(--gap-small);
+		padding: var(--gap-2);
 		border-radius: var(--border-radius);
 		box-shadow: var(--overlay-menu-shadow);
 		z-index: 9999;

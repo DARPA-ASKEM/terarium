@@ -33,7 +33,7 @@ watch(
 <style scoped>
 .container {
 	background-color: #ffdcdc;
-	padding: var(--gap-small);
+	padding: var(--gap-2);
 	border-radius: var(--border-radius);
 }
 

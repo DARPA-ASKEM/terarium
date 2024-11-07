@@ -1252,7 +1252,7 @@ watch(
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: var(--gap-1) var(--gap);
+	padding: var(--gap-1) var(--gap-4);
 	gap: var(--gap-2);
 }
 
@@ -1276,7 +1276,7 @@ watch(
 	flex-direction: column;
 	align-items: center;
 	gap: var(--gap-1);
-	padding: 0 var(--gap-2) var(--gap);
+	padding: 0 var(--gap-2) var(--gap-4);
 	background: var(--surface-200);
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
@@ -1296,7 +1296,7 @@ watch(
 	background-color: var(--surface-50);
 	border: solid 1px var(--surface-border-light);
 	border-radius: var(--border-radius);
-	padding: var(--gap-small);
+	padding: var(--gap-2);
 }
 /* Select button icon fix */
 .select-button .p-button-icon-left {
@@ -1307,7 +1307,7 @@ watch(
 .result-message-row {
 	display: flex;
 	flex-direction: row;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	overflow: auto;
 }
 
@@ -1323,13 +1323,12 @@ watch(
 :deep(.failed-run main .content-container) {
 	border: 2px solid var(--error-color);
 	border-radius: var(--border-radius-big);
-	color: var(--error-color-text);
+	color: var(--error-message-color);
 }
 
 .successful-run {
 	border: none;
-	border-radius: none;
-	color: none;
+	border-radius: 0;
 }
 
 .form-section {
@@ -1337,7 +1336,7 @@ watch(
 	flex-direction: column;
 	flex-grow: 1;
 	gap: var(--gap-1);
-	padding: var(--gap);
+	padding: var(--gap-4);
 }
 
 .label-and-input {
@@ -1353,7 +1352,7 @@ watch(
 	flex-wrap: wrap;
 	align-items: center;
 	gap: var(--gap-2);
-	padding-top: var(--gap);
+	padding-top: var(--gap-4);
 
 	& > * {
 		flex: 1;
@@ -1384,9 +1383,9 @@ watch(
 .notebook-section {
 	display: flex;
 	flex-direction: column;
-	gap: var(--gap);
+	gap: var(--gap-4);
 	width: calc(50vw - 4rem);
-	padding: var(--gap);
+	padding: var(--gap-4);
 	background: var(--surface-100);
 	border-right: 1px solid var(--surface-border-light);
 }

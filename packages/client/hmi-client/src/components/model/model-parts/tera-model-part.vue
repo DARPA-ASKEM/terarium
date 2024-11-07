@@ -227,7 +227,7 @@ li {
 	background: var(--surface-0);
 	& > li {
 		border-left: 4px solid var(--surface-border);
-		padding-left: var(--gap);
+		padding-left: var(--gap-4);
 		padding-bottom: var(--gap-2);
 		padding-top: var(--gap-2);
 		border-bottom: none;

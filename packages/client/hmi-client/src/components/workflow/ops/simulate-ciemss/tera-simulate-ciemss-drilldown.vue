@@ -892,7 +892,7 @@ onUnmounted(() => kernelManager.shutdown());
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: var(--gap-1) var(--gap);
+	padding: var(--gap-1) var(--gap-4);
 	gap: var(--gap-2);
 }
 
@@ -908,7 +908,7 @@ onUnmounted(() => kernelManager.shutdown());
 
 /* Override top and bottom padding of content-container */
 .overlay-container:deep(section.drilldown main .content-container) {
-	padding: 0 var(--gap);
+	padding: 0 var(--gap-4);
 }
 
 .empty-chart {
@@ -917,10 +917,10 @@ onUnmounted(() => kernelManager.shutdown());
 	justify-content: center;
 	align-items: center;
 	height: 10rem;
-	gap: var(--gap);
+	gap: var(--gap-4);
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
-	margin-bottom: var(--gap);
+	margin-bottom: var(--gap-4);
 	color: var(--text-color-secondary);
 	background: var(--surface-50);
 }
@@ -935,7 +935,7 @@ onUnmounted(() => kernelManager.shutdown());
 }
 
 .notebook-section:deep(main) {
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	position: relative;
 }
 
@@ -943,15 +943,15 @@ onUnmounted(() => kernelManager.shutdown());
 	display: flex;
 	flex-direction: column;
 	flex-grow: 1;
-	gap: var(--gap);
-	padding: var(--gap);
+	gap: var(--gap-4);
+	padding: var(--gap-4);
 }
 
 .label-and-input {
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
-	margin-bottom: var(--gap);
+	margin-bottom: var(--gap-4);
 }
 
 .input-row {
@@ -974,7 +974,7 @@ onUnmounted(() => kernelManager.shutdown());
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	gap: var(--gap);
+	gap: var(--gap-4);
 	text-align: center;
 	pointer-events: none;
 }

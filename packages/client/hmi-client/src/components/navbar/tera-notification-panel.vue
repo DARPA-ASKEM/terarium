@@ -126,7 +126,6 @@ const cancelTask = (item: NotificationItem) => {
 	if (!item.supportCancel) return;
 	if (
 		[
-			ClientEventType.TaskGollmModelCard,
 			ClientEventType.TaskGollmConfigureModelFromDocument,
 			ClientEventType.TaskGollmConfigureModelFromDataset,
 			ClientEventType.TaskGollmCompareModel
@@ -153,7 +152,7 @@ const cancelTask = (item: NotificationItem) => {
 	box-shadow: 0 4px 4px 0 #00000040;
 	padding: var(--content-padding);
 	padding-bottom: 1.5rem;
-	gap: var(--gap);
+	gap: var(--gap-4);
 	border: 1px solid var(--surface-border-alt);
 	border-radius: var(--border-radius-medium);
 	.p-overlaypanel-content {
@@ -247,7 +246,7 @@ header {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		gap: var(--gap-small);
+		gap: var(--gap-2);
 	}
 	.p-progressbar {
 		flex-grow: 1;
@@ -258,7 +257,7 @@ header {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		gap: var(--gap-small);
+		gap: var(--gap-2);
 		.status-msg {
 			display: flex;
 			gap: 0.5rem;
