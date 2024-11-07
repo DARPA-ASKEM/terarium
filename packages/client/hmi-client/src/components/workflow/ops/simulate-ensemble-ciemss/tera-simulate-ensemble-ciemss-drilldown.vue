@@ -1,5 +1,6 @@
 <template>
 	<tera-drilldown
+		v-bind="$attrs"
 		:node="node"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
@@ -160,8 +161,9 @@
 		<tera-drilldown-section :tabName="DrilldownTabs.Notebook" class="input-config">
 			<div class="mt-3 ml-4 mr-2">Under construction. Use the wizard for now.</div>
 		</tera-drilldown-section>
+
 		<template #preview>
-			<tera-drilldown-preview
+			<tera-drilldown-section
 				title="Simulation output"
 				:options="outputs"
 				v-model:output="selectedOutputId"
@@ -191,8 +193,9 @@
 						icon="pi pi-plus"
 					/>
 				</section>
-			</tera-drilldown-preview>
+			</tera-drilldown-section>
 		</template>
+
 		<template #sidebar-right>
 			<tera-slider-panel
 				v-model:is-open="isOutputSettingsPanelOpen"
@@ -218,7 +221,6 @@ import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Dropdown from 'primevue/dropdown';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import { getRunResultCiemss, makeEnsembleCiemssSimulation } from '@/services/models/simulation-service';
@@ -427,21 +429,14 @@ watch(
 	padding-bottom: 0;
 }
 
-.output-settings-panel {
-	padding: var(--gap-4);
-	display: flex;
-	flex-direction: column;
-	gap: var(--gap-2);
-	hr {
-		border: 0;
-		border-top: 1px solid var(--surface-border-alt);
-		width: 100%;
-	}
+/* Override grid template so output expands when sidebar is closed */
+.overlay-container:deep(section.drilldown main) {
+	grid-template-columns: auto 1fr;
 }
 
-/* Override grid template so output expands when sidebar is closed */
-.overlay-container:deep(section.scale main) {
-	grid-template-columns: auto 1fr;
+/* Override top and bottom padding of content-container */
+.overlay-container:deep(section.drilldown main .content-container) {
+	padding: 0 var(--gap-4);
 }
 
 .subheader {
