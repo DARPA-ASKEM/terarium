@@ -4,149 +4,162 @@
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
+		class="drilldown"
 	>
-		<section :tabName="DrilldownTabs.Wizard" class="ml-3 mr-2 pt-3">
-			<tera-drilldown-section>
-				<template #header-controls-right>
-					<Button label="Run" icon="pi pi-play" @click="runEnsemble" :disabled="false" />
-					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
-				</template>
-				<Accordion :multiple="true" :active-index="[0, 1, 2]">
-					<!-- Mapping -->
-					<AccordionTab header="Mapping">
-						<p class="subheader">Map the variables from the models to the ensemble variables.</p>
-						<template v-if="knobs.mapping.length > 0">
-							<table class="w-full mb-2">
-								<tbody>
-									<tr>
-										<th>Ensemble variables</th>
-										<th v-for="(element, i) in listModelLabels" :key="i">
-											{{ element }}
-										</th>
-									</tr>
-									<tr v-for="(ele, indx) in knobs.mapping" :key="indx">
-										<td>{{ ele.newName }}</td>
-										<td v-for="(row, indx) in ele.modelConfigurationMappings" :key="indx">
-											<Dropdown
-												class="w-full"
-												:options="allModelOptions[row.modelConfigId]"
-												v-model="row.compartmentName"
-												placeholder="Select a variable"
-												@change="updateMapping()"
-											/>
-										</td>
-										<td>
-											<Button class="p-button-sm" icon="pi pi-times" rounded text @click="deleteMappingRow(ele.id)" />
-										</td>
-									</tr>
-								</tbody>
-							</table>
-						</template>
-						<section class="add-mapping">
-							<Button
-								v-if="!showAddMappingInput"
-								outlined
-								:style="{ marginRight: 'auto' }"
-								label="Add mapping"
-								size="small"
-								severity="secondary"
-								icon="pi pi-plus"
-								@click="
-									newSolutionMappingKey = '';
-									showAddMappingInput = true;
-								"
-							/>
-							<div v-if="showAddMappingInput" class="flex items-center">
-								<tera-input-text
-									v-model="newSolutionMappingKey"
-									auto-focus
-									class="w-full"
-									placeholder="Add a name"
-									@keydown.enter.stop.prevent="
-										addMapping();
-										showAddMappingInput = false;
-									"
-								/>
+		<tera-drilldown-section :tabName="DrilldownTabs.Wizard" class="wizard">
+			<tera-slider-panel
+				class="input-config"
+				v-model:is-open="isSidebarOpen"
+				header="Simulation settings"
+				content-width="420px"
+			>
+				<template #content>
+					<div class="toolbar">
+						<p>Click Run to start the simulation.</p>
+						<span class="flex gap-2">
+							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
+							<Button label="Run" icon="pi pi-play" @click="runEnsemble" :disabled="false" />
+						</span>
+					</div>
+
+					<Accordion :multiple="true" :active-index="[0, 1, 2]">
+						<!-- Mapping -->
+						<AccordionTab header="Mapping">
+							<p class="subheader">Map the variables from the models to the ensemble variables.</p>
+							<template v-if="knobs.mapping.length > 0">
+								<table class="w-full mb-2">
+									<tbody>
+										<tr>
+											<th>Ensemble variables</th>
+											<th v-for="(element, i) in listModelLabels" :key="i">
+												{{ element }}
+											</th>
+										</tr>
+										<tr v-for="(ele, indx) in knobs.mapping" :key="indx">
+											<td>{{ ele.newName }}</td>
+											<td v-for="(row, indx) in ele.modelConfigurationMappings" :key="indx">
+												<Dropdown
+													class="w-full"
+													:options="allModelOptions[row.modelConfigId]"
+													v-model="row.compartmentName"
+													placeholder="Select a variable"
+													@change="updateMapping()"
+												/>
+											</td>
+											<td>
+												<Button class="p-button-sm" icon="pi pi-times" rounded text @click="deleteMappingRow(ele.id)" />
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</template>
+							<section class="add-mapping">
 								<Button
-									class="p-button-sm p-button-outlined w-2 ml-2"
+									v-if="!showAddMappingInput"
+									outlined
+									:style="{ marginRight: 'auto' }"
+									label="Add mapping"
+									size="small"
 									severity="secondary"
-									icon="pi pi-times"
-									label="Cancel"
+									icon="pi pi-plus"
 									@click="
 										newSolutionMappingKey = '';
-										showAddMappingInput = false;
+										showAddMappingInput = true;
 									"
 								/>
-								<Button
-									:disabled="!newSolutionMappingKey"
-									class="p-button-sm p-button-outlined w-2 ml-2"
-									icon="pi pi-check"
-									label="Add"
-									@click="
-										addMapping();
-										showAddMappingInput = false;
-									"
-								/>
-							</div>
-						</section>
-					</AccordionTab>
+								<div v-if="showAddMappingInput" class="flex items-center">
+									<tera-input-text
+										v-model="newSolutionMappingKey"
+										auto-focus
+										class="w-full"
+										placeholder="Add a name"
+										@keydown.enter.stop.prevent="
+											addMapping();
+											showAddMappingInput = false;
+										"
+									/>
+									<Button
+										class="p-button-sm p-button-outlined w-2 ml-2"
+										severity="secondary"
+										icon="pi pi-times"
+										label="Cancel"
+										@click="
+											newSolutionMappingKey = '';
+											showAddMappingInput = false;
+										"
+									/>
+									<Button
+										:disabled="!newSolutionMappingKey"
+										class="p-button-sm p-button-outlined w-2 ml-2"
+										icon="pi pi-check"
+										label="Add"
+										@click="
+											addMapping();
+											showAddMappingInput = false;
+										"
+									/>
+								</div>
+							</section>
+						</AccordionTab>
 
-					<!-- Model weights -->
-					<AccordionTab header="Model weights">
-						<p class="subheader">
-							This encodes your relative confidence for each model. These are the alpha parameters of a Dirichlet
-							distribution.
-						</p>
-						<div class="model-weights">
-							<table class="p-datatable-table">
+						<!-- Model weights -->
+						<AccordionTab header="Model weights">
+							<p class="subheader">
+								This encodes your relative confidence for each model. These are the alpha parameters of a Dirichlet
+								distribution.
+							</p>
+							<div class="model-weights">
+								<table class="p-datatable-table">
+									<tbody class="p-datatable-tbody">
+										<tr v-for="(ele, indx) in knobs.weights" :key="indx">
+											<td>
+												{{ modelConfigIdToNameMap[ele.modelConfigurationId] }}
+											</td>
+											<td>
+												<tera-signal-bars label="Relative certainty" v-model="ele.value" @change="updateWeights()" />
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</AccordionTab>
+
+						<!-- Other Settings -->
+						<AccordionTab header="Other Settings">
+							<p class="subheader">Set the time span and number of samples for the ensemble simulation.</p>
+							<table class="w-full">
+								<thead class="p-datatable-thead">
+									<tr>
+										<th>Units</th>
+										<th>Start Step</th>
+										<th>End Step</th>
+										<th>Number of Samples</th>
+									</tr>
+								</thead>
 								<tbody class="p-datatable-tbody">
-									<tr v-for="(ele, indx) in knobs.weights" :key="indx">
+									<tr>
+										<td class="w-2">Steps</td>
 										<td>
-											{{ modelConfigIdToNameMap[ele.modelConfigurationId] }}
+											<tera-input-number class="w-full" v-model="knobs.timeSpan.start" />
 										</td>
 										<td>
-											<tera-signal-bars label="Relative certainty" v-model="ele.value" @change="updateWeights()" />
+											<tera-input-number class="w-full" v-model="knobs.timeSpan.end" />
+										</td>
+										<td>
+											<tera-input-number class="w-full" v-model="knobs.numSamples" />
 										</td>
 									</tr>
 								</tbody>
 							</table>
-						</div>
-					</AccordionTab>
+						</AccordionTab>
+					</Accordion>
+				</template>
+			</tera-slider-panel>
+		</tera-drilldown-section>
 
-					<!-- Other Settings -->
-					<AccordionTab header="Other Settings">
-						<p class="subheader">Set the time span and number of samples for the ensemble simulation.</p>
-						<table class="w-full">
-							<thead class="p-datatable-thead">
-								<tr>
-									<th>Units</th>
-									<th>Start Step</th>
-									<th>End Step</th>
-									<th>Number of Samples</th>
-								</tr>
-							</thead>
-							<tbody class="p-datatable-tbody">
-								<tr>
-									<td class="w-2">Steps</td>
-									<td>
-										<tera-input-number class="w-full" v-model="knobs.timeSpan.start" />
-									</td>
-									<td>
-										<tera-input-number class="w-full" v-model="knobs.timeSpan.end" />
-									</td>
-									<td>
-										<tera-input-number class="w-full" v-model="knobs.numSamples" />
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</AccordionTab>
-				</Accordion>
-			</tera-drilldown-section>
-		</section>
-		<section :tabName="DrilldownTabs.Notebook">
+		<tera-drilldown-section :tabName="DrilldownTabs.Notebook" class="notebook-section">
 			<div class="mt-3 ml-4 mr-2">Under construction. Use the wizard for now.</div>
-		</section>
+		</tera-drilldown-section>
 		<template #preview>
 			<tera-drilldown-preview
 				title="Simulation output"
@@ -207,6 +220,7 @@ import { RunResults } from '@/types/SimulateConfig';
 import { DrilldownTabs } from '@/types/common';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraSignalBars from '@/components/widgets/tera-signal-bars.vue';
+import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { v4 as uuidv4 } from 'uuid';
 import {
 	SimulateEnsembleCiemssOperationState,
@@ -234,6 +248,7 @@ const knobs = ref<BasicKnobs>({
 	timeSpan: props.node.state.timeSpan
 });
 
+const isSidebarOpen = ref(true);
 const showSpinner = ref(false);
 const showAddMappingInput = ref(false);
 const listModelLabels = ref<string[]>([]);
@@ -397,6 +412,24 @@ watch(
 </script>
 
 <style scoped>
+.wizard .toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--gap-1) var(--gap-4);
+	gap: var(--gap-2);
+}
+
+/* Notebook */
+.notebook-section {
+	width: calc(50vw - 4rem);
+}
+
+.notebook-section:deep(main) {
+	gap: var(--gap-2);
+	position: relative;
+}
+
 .subheader {
 	color: var(--text-color-subdued);
 	margin-bottom: var(--gap-4);
