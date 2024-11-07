@@ -172,7 +172,7 @@ export function createErrorChart(dataset: Record<string, any>[], options: ErrorC
 		facet: { row: { field: 'variable', title: '', header: { labels: null } } },
 		resolve: { scale: { y: 'independent' } },
 		spec: {
-			width,
+			width: width - 200,
 			height,
 			encoding: {
 				x: {
