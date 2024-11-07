@@ -102,11 +102,10 @@
 								<tbody class="p-datatable-tbody">
 									<tr v-for="(ele, indx) in knobs.weights" :key="indx">
 										<td>
-											<tera-signal-bars
-												:label="modelConfigIdToNameMap[ele.modelConfigurationId]"
-												v-model="ele.value"
-												@change="updateWeights()"
-											/>
+											{{ modelConfigIdToNameMap[ele.modelConfigurationId] }}
+										</td>
+										<td>
+											<tera-signal-bars label="Relative certainty" v-model="ele.value" @change="updateWeights()" />
 										</td>
 									</tr>
 								</tbody>
