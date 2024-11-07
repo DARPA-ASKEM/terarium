@@ -642,9 +642,11 @@ const onSelectConfiguration = async (config: ModelConfiguration) => {
 
 	const lostItems: string[] = [];
 
-	if (!isModelConfigValuesEqual(originalConfig, knobs.value.transientModelConfig)) lostItems.push('values');
+	if (!isModelConfigValuesEqual(knobs.value.transientModelConfig, originalConfig)) lostItems.push('values');
 	if (knobs.value.transientModelConfig.name !== originalConfig?.name) lostItems.push('name');
-	if (knobs.value.transientModelConfig.description !== originalConfig?.description) lostItems.push('description');
+	if (knobs.value.transientModelConfig.description?.trim() !== originalConfig?.description?.trim()) {
+		lostItems.push('description');
+	}
 
 	let lostItemsStr = '';
 	if (lostItems.length > 1) {
