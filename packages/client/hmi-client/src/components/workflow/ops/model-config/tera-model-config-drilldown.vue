@@ -705,7 +705,7 @@ const onConfirmEditDescription = () => {
 const resetConfiguration = () => {
 	confirm.require({
 		header: 'Reset configuration',
-		message: 'This will reset all values to their original ones.',
+		message: 'All edits done to this configuration will be reverted.',
 		accept: () => {
 			if (originalConfig) knobs.value.transientModelConfig = cloneDeep(originalConfig);
 		},
