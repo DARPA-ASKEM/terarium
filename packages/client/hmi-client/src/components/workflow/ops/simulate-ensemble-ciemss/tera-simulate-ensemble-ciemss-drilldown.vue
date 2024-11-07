@@ -94,13 +94,12 @@
 					<!-- Model weights -->
 					<AccordionTab header="Model weights">
 						<p class="subheader">
-							How do you want to distribute weights of the attached models? You can distribute them equally or set
-							custom weights using the input boxes.
+							This encodes your relative confidence for each model. These are the alpha parameters of a Dirichlet
+							distribution.
 						</p>
 						<div class="model-weights">
 							<table class="p-datatable-table">
 								<tbody class="p-datatable-tbody">
-									<!-- Index matching listModelLabels and mapping-->
 									<tr v-for="(ele, indx) in knobs.weights" :key="indx">
 										<td>
 											<tera-signal-bars
