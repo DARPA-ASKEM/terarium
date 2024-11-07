@@ -50,6 +50,9 @@
 								<tera-model-configuration-item
 									:configuration="configuration"
 									:selected="selectedConfigId === configuration.id"
+									:empty-input-count="
+										selectedConfigId === configuration.id ? currentInputCount : missingInputCount(configuration)
+									"
 									@click="onSelectConfiguration(configuration)"
 									@delete="fetchConfigurations(model.id)"
 									@download="downloadModelArchive(configuration)"
@@ -227,7 +230,7 @@
 <script setup lang="ts">
 import '@/ace-config';
 import { ComponentPublicInstance, computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
-import { cloneDeep, debounce, isEmpty, orderBy, omit } from 'lodash';
+import { cloneDeep, debounce, isEmpty, orderBy, omit, isNaN, isNumber } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
@@ -282,6 +285,7 @@ import { useProjects } from '@/composables/project';
 import TeraPdfPanel from '@/components/widgets/tera-pdf-panel.vue';
 import Calendar from 'primevue/calendar';
 import { CalendarSettings } from '@/utils/date';
+import { DistributionType } from '@/services/distribution';
 import {
 	blankModelConfig,
 	isModelConfigsEqual,
@@ -331,6 +335,46 @@ const calibratedConfigObservables = computed<Observable[]>(() =>
 		expression
 	}))
 );
+
+const currentInputCount = ref('');
+
+const isNumberInputEmpty = (value) => {
+	const number = parseFloat(value);
+	return isNaN(number) || !isNumber(number);
+};
+
+const getMissingInputAmount = (modelConfiguration: ModelConfiguration) => {
+	let missingInputs = 0;
+	modelConfiguration.initialSemanticList.forEach((initial) => {
+		if (isNumberInputEmpty(initial.expression)) {
+			missingInputs++;
+		}
+	});
+
+	modelConfiguration.parameterSemanticList.forEach((parameter) => {
+		if (parameter.distribution.type === DistributionType.Constant) {
+			if (isNumberInputEmpty(parameter.distribution.parameters.value)) {
+				missingInputs++;
+			}
+		} else if (
+			isNumberInputEmpty(parameter.distribution.parameters.minimum) ||
+			isNumberInputEmpty(parameter.distribution.parameters.maximum)
+		) {
+			missingInputs++;
+		}
+	});
+	return missingInputs;
+};
+
+const getTotalInput = (modelConfiguration: ModelConfiguration) =>
+	modelConfiguration.initialSemanticList.length + modelConfiguration.parameterSemanticList.length;
+
+const missingInputCount = (modelConfiguration: ModelConfiguration) => {
+	const amount = getMissingInputAmount(modelConfiguration);
+	const total = getTotalInput(modelConfiguration);
+	const precent = (amount / total) * 100;
+	return amount ? `Missing values: ${amount}/${total} (${precent.toFixed(0)}%)` : '';
+};
 
 // Check if the model configuration is the same as the original
 const isModelConfigChanged = computed(
@@ -738,6 +782,7 @@ const debounceUpdateState = debounce(() => {
 	configuredMmt.value = makeConfiguredMMT(mmt.value, knobs.value.transientModelConfig);
 
 	emit('update-state', state);
+	currentInputCount.value = missingInputCount(state.transientModelConfig);
 }, 100);
 watch(
 	() => knobs.value,
