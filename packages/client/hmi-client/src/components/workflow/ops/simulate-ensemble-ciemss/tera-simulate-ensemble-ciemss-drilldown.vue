@@ -193,7 +193,17 @@
 				</section>
 			</tera-drilldown-preview>
 		</template>
-		<template #footer> </template>
+		<template #sidebar-right>
+			<tera-slider-panel
+				v-model:is-open="isOutputSettingsPanelOpen"
+				direction="right"
+				class="input-config"
+				header="Output Settings"
+				content-width="360px"
+			>
+				<!-- TODO Chart options here -->
+			</tera-slider-panel>
+		</template>
 	</tera-drilldown>
 </template>
 
@@ -249,6 +259,7 @@ const knobs = ref<BasicKnobs>({
 });
 
 const isSidebarOpen = ref(true);
+const isOutputSettingsPanelOpen = ref(false);
 const showSpinner = ref(false);
 const showAddMappingInput = ref(false);
 const listModelLabels = ref<string[]>([]);
@@ -416,23 +427,31 @@ watch(
 	padding-bottom: 0;
 }
 
+.output-settings-panel {
+	padding: var(--gap-4);
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-2);
+	hr {
+		border: 0;
+		border-top: 1px solid var(--surface-border-alt);
+		width: 100%;
+	}
+}
+
+/* Override grid template so output expands when sidebar is closed */
+.overlay-container:deep(section.scale main) {
+	grid-template-columns: auto 1fr;
+}
+
 .subheader {
 	color: var(--text-color-subdued);
 	margin-bottom: var(--gap-4);
 }
 
-.ensemble-calibration-graph {
-	height: 100px;
-}
-
 .model-weights {
 	display: flex;
 	align-items: start;
-}
-
-.ensemble-header {
-	display: flex;
-	margin: 1em;
 }
 
 th {
