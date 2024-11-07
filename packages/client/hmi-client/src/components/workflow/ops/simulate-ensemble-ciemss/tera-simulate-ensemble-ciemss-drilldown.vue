@@ -27,7 +27,7 @@
 											{{ modelConfigIdToNameMap[ele.modelConfigurationId] }}
 										</td>
 										<td>
-											<tera-input-number v-model="ele.value" />
+											<tera-input-number v-model="ele.value" @change="updateWeights" />
 										</td>
 									</tr>
 								</tbody>
@@ -55,6 +55,7 @@
 												:options="allModelOptions[row.modelConfigId]"
 												v-model="row.compartmentName"
 												placeholder="Select a variable"
+												@change="updateMapping"
 											/>
 										</td>
 										<td>
@@ -290,12 +291,24 @@ const addMapping = () => {
 	emit('update-state', state);
 };
 
-function deleteMappingRow(id: string) {
+const deleteMappingRow = (id: string) => {
 	knobs.value.mapping = knobs.value.mapping.filter((ele) => ele.id !== id);
 	const state = _.cloneDeep(props.node.state);
 	state.mapping = knobs.value.mapping;
 	emit('update-state', state);
-}
+};
+
+const updateMapping = () => {
+	const state = _.cloneDeep(props.node.state);
+	state.mapping = knobs.value.mapping;
+	emit('update-state', state);
+};
+
+const updateWeights = () => {
+	const state = _.cloneDeep(props.node.state);
+	state.weights = knobs.value.weights;
+	emit('update-state', state);
+};
 
 const runEnsemble = async () => {
 	const modelConfigs = formatSimulateModelConfigurations(knobs.value.mapping, knobs.value.weights);
@@ -379,7 +392,7 @@ watch(
 
 watch(
 	() => knobs.value,
-	async () => {
+	() => {
 		const state = _.cloneDeep(props.node.state);
 		state.mapping = knobs.value.mapping;
 		state.weights = knobs.value.weights;
