@@ -311,7 +311,6 @@ const runEnsemble = async () => {
 
 onMounted(async () => {
 	if (!modelConfigurationIds.value) return;
-	console.log(modelConfigurationIds.value);
 	const allModelConfigurations = await Promise.all(
 		modelConfigurationIds.value.map((id) => getModelConfigurationById(id))
 	);
@@ -336,8 +335,6 @@ onMounted(async () => {
 	if (knobs.value.weights.length === 0 || knobs.value.weights.length !== modelConfigurationIds.value.length) {
 		knobs.value.weights = [];
 		modelConfigurationIds.value.forEach((id) => {
-			console.log('Id:');
-			console.log(id);
 			knobs.value.weights.push({
 				modelConfigurationId: id,
 				value: 5
