@@ -45,7 +45,7 @@
 													class="w-full"
 													:options="allModelOptions[row.modelConfigId]"
 													v-model="row.compartmentName"
-													placeholder="Select a variable"
+													placeholder="Select"
 													@change="updateMapping()"
 												/>
 											</td>
@@ -70,7 +70,7 @@
 										showAddMappingInput = true;
 									"
 								/>
-								<div v-if="showAddMappingInput" class="flex items-center">
+								<div v-if="showAddMappingInput" class="flex">
 									<tera-input-text
 										v-model="newSolutionMappingKey"
 										auto-focus
@@ -81,26 +81,28 @@
 											showAddMappingInput = false;
 										"
 									/>
-									<Button
-										class="p-button-sm p-button-outlined w-2 ml-2"
-										severity="secondary"
-										icon="pi pi-times"
-										label="Cancel"
-										@click="
-											newSolutionMappingKey = '';
-											showAddMappingInput = false;
-										"
-									/>
-									<Button
-										:disabled="!newSolutionMappingKey"
-										class="p-button-sm p-button-outlined w-2 ml-2"
-										icon="pi pi-check"
-										label="Add"
-										@click="
-											addMapping();
-											showAddMappingInput = false;
-										"
-									/>
+									<span class="flex gap-2">
+										<Button
+											class="p-button-sm p-button-outlined ml-2"
+											severity="secondary"
+											icon="pi pi-times"
+											label="Cancel"
+											@click="
+												newSolutionMappingKey = '';
+												showAddMappingInput = false;
+											"
+										/>
+										<Button
+											:disabled="!newSolutionMappingKey"
+											class="p-button-sm p-button-outlined ml-2"
+											icon="pi pi-check"
+											label="Add"
+											@click="
+												addMapping();
+												showAddMappingInput = false;
+											"
+										/>
+									</span>
 								</div>
 							</section>
 						</AccordionTab>
