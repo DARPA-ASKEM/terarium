@@ -43,6 +43,8 @@ services:
       TERARIUM_KEYCLOAK_CLIENT-ID: "${secret_terarium_keycloak_client_id}"
       TERARIUM_KEYCLOAK_REALM: "${secret_terarium_keycloak_realm}"
       TERARIUM_KEYCLOAK_URL: "${secret_terarium_keycloak_url}"
+      TERARIUM_KEYCLOAK_API-SERVICE-NAME: "${secret_terarium_keycloak_api_service_name}"
+      TERARIUM_KEYCLOAK_ADMIN-API-SERVICE-NAME: "${secret_terarium_keycloak_admin_api_service_name}"
       TERARIUM_MQ-ADDRESSES: "amqp://${local_host_name}:5672"
       TERARIUM_MQ-PASSWORD: "terarium123"
       TERARIUM_MQ-USERNAME: "terarium"

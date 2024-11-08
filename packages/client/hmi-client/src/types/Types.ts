@@ -3,6 +3,7 @@
 
 export interface ClientConfig {
     baseUrl: string;
+    documentationUrl: string;
     clientLogShippingEnabled: boolean;
     clientLogShippingIntervalMillis: number;
     sseHeartbeatIntervalMillis: number;
@@ -798,10 +799,10 @@ export interface ModelUnit {
 }
 
 export interface GroundedSemantic {
-    id: string;
     name?: string;
-    description?: string;
+    id: string;
     grounding?: ModelGrounding;
+    description?: string;
 }
 
 export interface Properties {

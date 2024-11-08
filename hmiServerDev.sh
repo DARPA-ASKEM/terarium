@@ -75,7 +75,7 @@ function stop_local_lean() {
 function start_local() {
   echo "Starting local server"
   cd ${SERVER_DIR} || exit
-  ./gradlew bootRun --args='--spring.profiles.active=default,secrets,local,staging-keycloak'
+  ./gradlew bootRun --args='--spring.profiles.active=default,secrets,local'
   cd - || exit
 }
 
