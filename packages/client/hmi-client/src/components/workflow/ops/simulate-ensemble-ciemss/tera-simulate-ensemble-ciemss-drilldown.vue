@@ -153,13 +153,12 @@
 								<!-- Number of Samples & Method -->
 								<div class="input-row">
 									<div class="label-and-input">
-										<label for="num-samples">Number of samples</label>
-										<tera-input-number id="num-samples" v-model="knobs.numSamples" inputId="integeronly" :min="1" />
+										<label>Number of samples</label>
+										<tera-input-number v-model="knobs.numSamples" inputId="integeronly" :min="1" />
 									</div>
 									<div class="label-and-input">
-										<label for="solver-method">Solver method</label>
+										<label>Solver method</label>
 										<Dropdown
-											id="solver-method"
 											v-model="knobs.method"
 											:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
 										/>
