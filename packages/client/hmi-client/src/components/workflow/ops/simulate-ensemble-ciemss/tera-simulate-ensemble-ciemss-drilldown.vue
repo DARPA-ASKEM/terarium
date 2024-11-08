@@ -135,11 +135,11 @@
 								<div class="input-row">
 									<div class="label-and-input">
 										<label>Start time</label>
-										<tera-input-number class="w-12" v-model="knobs.timeSpan.start" />
+										<tera-input-number class="w-12" disabled :model-value="0" />
 									</div>
 									<div class="label-and-input">
 										<label>End time</label>
-										<tera-input-number v-model="knobs.timeSpan.end" />
+										<tera-input-number v-model="knobs.endTime" />
 									</div>
 								</div>
 								<!-- Presets -->
@@ -258,7 +258,7 @@ import {
 import { getModelConfigurationById, getObservables, getInitials } from '@/services/model-configurations';
 import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 import type { WorkflowNode } from '@/types/workflow';
-import type { TimeSpan, EnsembleSimulationCiemssRequest } from '@/types/Types';
+import type { EnsembleSimulationCiemssRequest } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import { DrilldownTabs, CiemssPresetTypes } from '@/types/common';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
@@ -284,7 +284,7 @@ interface BasicKnobs {
 	weights: SimulateEnsembleWeight[];
 	numSamples: number;
 	method: CiemssMethodOptions;
-	timeSpan: TimeSpan;
+	endTime: number;
 }
 
 const knobs = ref<BasicKnobs>({
@@ -292,7 +292,7 @@ const knobs = ref<BasicKnobs>({
 	weights: props.node.state.weights,
 	numSamples: props.node.state.numSamples,
 	method: props.node.state.method,
-	timeSpan: props.node.state.timeSpan
+	endTime: props.node.state.endTime
 });
 
 const activeAccordionIndicies = ref([0, 1, 2]);
@@ -393,7 +393,7 @@ const runEnsemble = async () => {
 	const modelConfigs = formatSimulateModelConfigurations(knobs.value.mapping, knobs.value.weights);
 	const params: EnsembleSimulationCiemssRequest = {
 		modelConfigs,
-		timespan: knobs.value.timeSpan,
+		timespan: { start: 0, end: knobs.value.endTime },
 		engine: 'ciemss',
 		extra: {
 			num_samples: knobs.value.numSamples,
@@ -476,7 +476,7 @@ watch(
 		const state = _.cloneDeep(props.node.state);
 		state.mapping = knobs.value.mapping;
 		state.weights = knobs.value.weights;
-		state.timeSpan = knobs.value.timeSpan;
+		state.endTime = knobs.value.endTime;
 		state.numSamples = knobs.value.numSamples;
 		state.method = knobs.value.method;
 		emit('update-state', state);
