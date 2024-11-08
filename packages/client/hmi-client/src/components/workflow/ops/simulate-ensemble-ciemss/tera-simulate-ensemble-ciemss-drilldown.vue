@@ -437,6 +437,14 @@ watch(
 </script>
 
 <style scoped>
+.toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--gap-1) var(--gap-4);
+	gap: var(--gap-2);
+}
+
 .input-config:deep(.content-wrapper) {
 	padding-bottom: 0;
 }
