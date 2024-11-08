@@ -1,5 +1,4 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
-import type { TimeSpan } from '@/types/Types';
 import simulateEnsembleCiemss from '@assets/svg/operator-images/simulate-ensemble-probabilistic.svg';
 import { CiemssMethodOptions } from '@/services/models/simulation-service';
 
@@ -35,7 +34,7 @@ export interface SimulateEnsembleCiemssOperationState extends BaseState {
 	chartConfigs: string[][];
 	mapping: SimulateEnsembleMappingRow[];
 	weights: SimulateEnsembleWeight[];
-	timeSpan: TimeSpan;
+	endTime: number;
 	numSamples: number;
 	method: CiemssMethodOptions;
 	inProgressForecastId: string;
@@ -64,7 +63,7 @@ export const SimulateEnsembleCiemssOperation: Operation = {
 			chartConfigs: [],
 			mapping: [],
 			weights: [],
-			timeSpan: { start: 0, end: 40 },
+			endTime: 100,
 			numSamples: normalValues.numSamples,
 			method: normalValues.method,
 			inProgressForecastId: '',
