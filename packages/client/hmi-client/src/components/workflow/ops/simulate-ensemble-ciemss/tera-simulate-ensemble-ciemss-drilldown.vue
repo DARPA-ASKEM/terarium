@@ -213,6 +213,9 @@
 				header="Output Settings"
 				content-width="360px"
 			>
+				<template #content>
+					<div class="mt-3 ml-4 mr-2">Under construction.</div>
+				</template>
 				<!-- TODO Chart options here -->
 			</tera-slider-panel>
 		</template>
