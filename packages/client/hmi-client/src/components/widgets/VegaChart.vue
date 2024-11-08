@@ -21,6 +21,7 @@
 </template>
 
 <script setup lang="ts">
+import _ from 'lodash';
 import { format } from 'd3';
 import embed, { Config, Result, VisualizationSpec } from 'vega-embed';
 import Button from 'primevue/button';
@@ -202,10 +203,12 @@ async function createVegaVisualization(
 	return viz;
 }
 
-watch([vegaContainer, () => props.visualizationSpec], async () => {
+watch([vegaContainer, () => props.visualizationSpec], async ([, newSpec], [, oldSpec]) => {
 	if (!vegaContainer.value) {
 		return;
 	}
+	const isEqual = _.isEqual(newSpec, oldSpec);
+	if (isEqual && vegaVisualization.value !== undefined) return;
 	const spec = deepToRaw(props.visualizationSpec);
 	vegaVisualization.value = await createVegaVisualization(vegaContainer.value, spec, props.config, {
 		actions: props.areEmbedActionsVisible,
