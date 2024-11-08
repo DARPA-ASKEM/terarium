@@ -323,9 +323,10 @@ export class WorkflowWrapper {
 			return;
 		}
 
-		// check if the port is unique
-		const dupe = targetNode.inputs.find((input) => input.unique && input.value?.[0] === sourceOutputPort.value?.[0]);
-		if (dupe) return;
+		// check if the port value is unique, if so, we should not connect the incoming edge
+		if (targetNode.inputs.some((input) => input.unique && input.value?.[0] === sourceOutputPort.value?.[0])) {
+			return;
+		}
 
 		// Transfer data value/reference
 		targetInputPort.label = sourceOutputPort.label;
