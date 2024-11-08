@@ -32,7 +32,7 @@
 		</aside>
 		<template v-if="active">
 			<a target="_blank" rel="noopener noreferrer" @click="isAboutModalVisible = true">About</a>
-			<a target="_blank" rel="noopener noreferrer" :href="documentation">Documentation</a>
+			<a target="_blank" rel="noopener noreferrer" :href="documentationUrl">Documentation</a>
 			<tera-notification-panel />
 
 			<Avatar :label="userInitials" class="avatar m-2" shape="circle" @click="showUserMenu" />
@@ -178,12 +178,13 @@ import Textarea from 'primevue/textarea';
 import * as EventService from '@/services/event';
 import { EvaluationScenarioStatus, EventType } from '@/types/Types';
 import API from '@/api/api';
-import { sortBy, orderBy, remove } from 'lodash';
+import { orderBy, remove, sortBy } from 'lodash';
 import { useProjects } from '@/composables/project';
 import { ProjectPages } from '@/types/Project';
 import { EvalScenario, Question, Scenario } from '@/types/EvalScenario';
 import Dropdown from 'primevue/dropdown';
 import Checkbox from 'primevue/checkbox';
+import getConfiguration from '@/services/ConfigService';
 import evalScenariosJson from './eval-scenarios.json';
 
 defineProps<{
@@ -217,6 +218,7 @@ const evaluationScenarioNotes = ref('');
 const evaluationScenarioCurrentStatus: Ref<EvaluationScenarioStatus> = ref(EvaluationScenarioStatus.Stopped);
 const evaluationScenarioRuntimeMillis = ref(0);
 let intervalId: number;
+const documentationUrl = ref('');
 
 const evaluationScenarioRuntimeString = computed(() => {
 	const h = Math.floor(evaluationScenarioRuntimeMillis.value / 1000 / 60 / 60);
@@ -394,6 +396,7 @@ const userMenuItems = ref([
 onMounted(async () => {
 	await loadEvaluationScenario();
 	startEvaluationTimer();
+	documentationUrl.value = await documentation();
 });
 
 const showUserMenu = (event) => {
@@ -435,14 +438,15 @@ watch(
 	{ immediate: true }
 );
 
-const documentation = computed(() => {
-	const host = window.location.hostname ?? 'localhost';
-	if (host === 'localhost') {
-		return '//localhost:8000';
+const documentation = async () => {
+	const config = await getConfiguration();
+	const host = config?.documentationUrl;
+	if (!host) {
+		const url = window.location.hostname.replace(/\bapp\b/g, 'documentation');
+		return `https://${url}`;
 	}
-	const url = host.replace(/\bapp\b/g, 'documentation');
-	return `https://${url}`;
-});
+	return host;
+};
 </script>
 
 <style scoped>
