@@ -127,31 +127,44 @@
 
 						<!-- Other Settings -->
 						<AccordionTab header="Other Settings">
-							<p class="subheader">Set the time span and number of samples for the ensemble simulation.</p>
-							<table class="w-full">
-								<thead class="p-datatable-thead">
-									<tr>
-										<th>Units</th>
-										<th>Start Step</th>
-										<th>End Step</th>
-										<th>Number of Samples</th>
-									</tr>
-								</thead>
-								<tbody class="p-datatable-tbody">
-									<tr>
-										<td class="w-2">Steps</td>
-										<td>
-											<tera-input-number class="w-full" v-model="knobs.timeSpan.start" />
-										</td>
-										<td>
-											<tera-input-number class="w-full" v-model="knobs.timeSpan.end" />
-										</td>
-										<td>
-											<tera-input-number class="w-full" v-model="knobs.numSamples" />
-										</td>
-									</tr>
-								</tbody>
-							</table>
+							<div class="form-section" v-if="isSidebarOpen">
+								<!-- Presets -->
+								<div class="label-and-input">
+									<label>Preset (optional)</label>
+									<!-- <Dropdown
+										v-model="presetType"
+										placeholder="Select an option"
+										:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
+										@update:model-value="setPresetValues"
+									/> -->
+								</div>
+								<div class="input-row">
+									<div class="label-and-input">
+										<label>Start time</label>
+										<tera-input-number class="w-12" v-model="knobs.timeSpan.start" />
+									</div>
+									<div class="label-and-input">
+										<label>End time</label>
+										<tera-input-number v-model="knobs.timeSpan.end" />
+									</div>
+								</div>
+
+								<!-- Number of Samples & Method -->
+								<div class="input-row">
+									<div class="label-and-input">
+										<label for="num-samples">Number of samples</label>
+										<tera-input-number id="num-samples" v-model="knobs.numSamples" inputId="integeronly" :min="1" />
+									</div>
+									<div class="label-and-input">
+										<label for="solver-method">Solver method</label>
+										<Dropdown
+											id="solver-method"
+											v-model="knobs.method"
+											:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
+										/>
+									</div>
+								</div>
+							</div>
 						</AccordionTab>
 					</Accordion>
 				</template>
@@ -235,7 +248,11 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
-import { getRunResultCiemss, makeEnsembleCiemssSimulation } from '@/services/models/simulation-service';
+import {
+	getRunResultCiemss,
+	makeEnsembleCiemssSimulation,
+	CiemssMethodOptions
+} from '@/services/models/simulation-service';
 import { getModelConfigurationById, getObservables, getInitials } from '@/services/model-configurations';
 import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 import type { WorkflowNode } from '@/types/workflow';
@@ -262,6 +279,7 @@ interface BasicKnobs {
 	mapping: SimulateEnsembleMappingRow[];
 	weights: SimulateEnsembleWeight[];
 	numSamples: number;
+	method: CiemssMethodOptions;
 	timeSpan: TimeSpan;
 }
 
@@ -269,10 +287,11 @@ const knobs = ref<BasicKnobs>({
 	mapping: props.node.state.mapping,
 	weights: props.node.state.weights,
 	numSamples: props.node.state.numSamples,
+	method: props.node.state.method,
 	timeSpan: props.node.state.timeSpan
 });
 
-const activeAccordionIndicies = ref([1, 2, 3]);
+const activeAccordionIndicies = ref([0, 1, 2]);
 const isSidebarOpen = ref(true);
 const isOutputSettingsPanelOpen = ref(false);
 const showSpinner = ref(false);
@@ -351,7 +370,10 @@ const runEnsemble = async () => {
 		modelConfigs,
 		timespan: knobs.value.timeSpan,
 		engine: 'ciemss',
-		extra: { num_samples: knobs.value.numSamples }
+		extra: {
+			num_samples: knobs.value.numSamples,
+			method: knobs.value.method
+		}
 	};
 	const response = await makeEnsembleCiemssSimulation(params, nodeMetadata(props.node));
 
@@ -431,6 +453,7 @@ watch(
 		state.weights = knobs.value.weights;
 		state.timeSpan = knobs.value.timeSpan;
 		state.numSamples = knobs.value.numSamples;
+		state.method = knobs.value.method;
 		emit('update-state', state);
 	},
 	{ immediate: true }
@@ -444,6 +467,34 @@ watch(
 	justify-content: space-between;
 	padding: var(--gap-1) var(--gap-4);
 	gap: var(--gap-2);
+}
+
+.form-section {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+	gap: var(--gap-4);
+	padding: var(--gap-4);
+}
+
+.label-and-input {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin-bottom: var(--gap-4);
+}
+
+.input-row {
+	width: 100%;
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+
+	& > * {
+		flex: 1;
+	}
 }
 
 .input-config:deep(.content-wrapper) {

@@ -1,6 +1,7 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import type { TimeSpan } from '@/types/Types';
 import simulateEnsembleCiemss from '@assets/svg/operator-images/simulate-ensemble-probabilistic.svg';
+import { CiemssMethodOptions } from '@/services/models/simulation-service';
 
 const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L35';
 
@@ -26,6 +27,7 @@ export interface SimulateEnsembleCiemssOperationState extends BaseState {
 	weights: SimulateEnsembleWeight[];
 	timeSpan: TimeSpan;
 	numSamples: number;
+	method: CiemssMethodOptions;
 	inProgressForecastId: string;
 	forecastId: string; // Completed run's Id
 	errorMessage: { name: string; value: string; traceback: string };
@@ -54,6 +56,7 @@ export const SimulateEnsembleCiemssOperation: Operation = {
 			weights: [],
 			timeSpan: { start: 0, end: 40 },
 			numSamples: 40,
+			method: CiemssMethodOptions.dopri5,
 			inProgressForecastId: '',
 			forecastId: '',
 			errorMessage: { name: '', value: '', traceback: '' }
