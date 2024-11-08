@@ -159,7 +159,16 @@
 		</tera-drilldown-section>
 
 		<tera-drilldown-section :tabName="DrilldownTabs.Notebook" class="input-config">
-			<div class="mt-3 ml-4 mr-2">Under construction. Use the wizard for now.</div>
+			<tera-slider-panel
+				class="input-config"
+				v-model:is-open="isSidebarOpen"
+				header="Simulation settings"
+				content-width="420px"
+			>
+				<template #content>
+					<div class="mt-3 ml-4 mr-2">Under construction. Use the wizard for now.</div>
+				</template>
+			</tera-slider-panel>
 		</tera-drilldown-section>
 
 		<template #preview>
