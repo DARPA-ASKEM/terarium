@@ -8,7 +8,7 @@
 			tabindex="0"
 			class="message-container"
 		>
-			<div v-if="showRerunMessage" class="rerun-message" @click="hideRerunMessage">
+			<div v-if="showRerunMessage" class="rerun-message" @click="closeRerunMessage">
 				Re-run all the cells to restore the context if you need to make any changes or use them downstream.
 				<Button class="close-mask" icon="pi pi-times" text rounded aria-label="Close" />
 			</div>
@@ -30,6 +30,7 @@
 				@delete-prompt="handleDeletePrompt"
 				@re-run-prompt="handleRerunPrompt"
 				@edit-prompt="reRunPrompt"
+				@code-dirty="() => (isRerunMessageRelevant = true)"
 				@click="selectedCellId = msg.query_id"
 				@on-selected="handleUpdateSelectedOutput(msg.query_id)"
 			/>
@@ -65,7 +66,8 @@ const selectedCellId = ref();
 const filteredNotebookItems = computed<INotebookItem[]>(() =>
 	notebookItems.value.filter((item) => !isEmpty(item.messages))
 );
-const showRerunMessage = ref(true);
+const hideRerunMessage = ref(false);
+const isRerunMessageRelevant = ref(false);
 
 const emit = defineEmits([
 	'new-message',
@@ -75,7 +77,8 @@ const emit = defineEmits([
 	'new-model-saved',
 	'update-kernel-state',
 	'update-language',
-	'update-selected-outputs'
+	'update-selected-outputs',
+	'code-dirty'
 ]);
 
 const props = defineProps<{
@@ -92,6 +95,8 @@ const props = defineProps<{
 	notebookSession?: NotebookSession;
 	defaultPreview?: string;
 }>();
+
+const showRerunMessage = computed<boolean>(() => !hideRerunMessage.value && isRerunMessageRelevant.value);
 
 const iopubMessageHandler = (_session, message) => {
 	if (message.header.msg_type === 'status') {
@@ -242,7 +247,6 @@ const reRunPrompt = (queryId: string, query?: string) => {
 	isExecutingCode.value = true;
 };
 
-// here
 const addCodeCell = (isDefaultCell: boolean = false, isNextCell: boolean = true) => {
 	const msgId = createMessageId('code_cell');
 	const date = new Date().toISOString();
@@ -410,8 +414,8 @@ const clearOutputs = () => {
 	}
 };
 
-const hideRerunMessage = () => {
-	showRerunMessage.value = false;
+const closeRerunMessage = () => {
+	hideRerunMessage.value = true;
 };
 
 onUnmounted(() => {
@@ -463,9 +467,8 @@ watch(
 defineExpose({
 	clearHistory,
 	clearOutputs,
-	submitQuery
-
-	// here
+	submitQuery,
+	addCodeCell
 });
 </script>
 

@@ -5,138 +5,200 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
-		<section :tabName="CalibrateEnsembleTabs.Wizard">
-			<tera-drilldown-section class="ml-3 mr-2 pt-3">
-				<template #header-controls-right>
-					<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runEnsemble" />
-					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
+		<section :tabName="DrilldownTabs.Wizard" class="wizard">
+			<tera-slider-panel
+				class="input-config"
+				v-model:is-open="isSidebarOpen"
+				header="Calibrate ensemble settings"
+				content-width="600px"
+			>
+				<template #header>
+					<div class="flex gap-2 ml-auto">
+						<tera-pyciemss-cancel-button :simulation-run-id="cancelRunId" />
+						<Button
+							:disabled="isRunDisabled"
+							label="Run"
+							icon="pi pi-play"
+							@click="runEnsemble"
+							:loading="!!inProgressCalibrationId || !!inProgressForecastId"
+						/>
+					</div>
 				</template>
-				<Accordion :multiple="true" :active-index="[0, 1, 2]">
-					<AccordionTab header="Model weights">
-						<div class="model-weights">
-							<!-- Turn this into a horizontal bar chart -->
-							<section>
-								<table class="p-datatable-table">
-									<thead class="p-datatable-thead">
+				<template #content>
+					<Accordion multiple :active-index="[0, 1, 2]">
+						<AccordionTab header="Mapping">
+							<div class="overflow-x-scroll">
+								<table>
+									<thead>
 										<tr>
-											<th>Model config ID</th>
-											<th>Weight</th>
+											<th v-for="(header, i) in tableHeaders" :key="i">
+												{{ header }}
+											</th>
 										</tr>
 									</thead>
-									<tbody class="p-datatable-tbody">
-										<!-- Index matching listModelLabels and ensembleConfigs-->
-										<tr v-for="(id, i) in listModelLabels" :key="i">
+									<tbody>
+										<!-- Timestamp selection-->
+										<tr>
+											<td>Timestamp</td>
 											<td>
-												{{ id }}
+												<Dropdown v-model="knobs.timestampColName" placeholder="Select" :options="datasetColumnNames" />
+											</td>
+										</tr>
+										<tr v-for="(config, i) in knobs.ensembleMapping" :key="i">
+											<td>
+												<tera-input-text v-model="config.newName" placeholder="Variable name" />
 											</td>
 											<td>
-												<tera-input-number v-model="knobs.ensembleConfigs[i].weight" />
+												<Dropdown v-model="config.datasetMapping" placeholder="Select" :options="datasetColumnNames" />
+											</td>
+											<td v-for="(configuration, index) in allModelConfigurations" :key="configuration.id">
+												<Dropdown
+													v-if="configuration?.id"
+													v-model="config.modelConfigurationMappings[configuration.id]"
+													placeholder="Select"
+													:options="allModelOptions[index].map((option) => option.referenceId ?? option.id)"
+												/>
+											</td>
+											<td>
+												<Button
+													v-if="knobs.ensembleMapping.length > 1"
+													icon="pi pi-trash"
+													text
+													@click="removeMapping(i)"
+												/>
 											</td>
 										</tr>
 									</tbody>
 								</table>
-								<Button
-									label="Set weights to be equal"
-									class="p-button-sm p-button-outlined ml-2 mt-2"
-									outlined
-									severity="secondary"
-									@click="calculateEvenWeights()"
+							</div>
+
+							<Button size="small" text icon="pi pi-plus" label="Add mapping" @click="addMapping" />
+							<!-- 
+						TODO: Add auto mapping here
+						<Button
+							text
+							size="small"
+							icon="pi pi-sparkles"
+							label="Auto map"
+							@click="getAutoMapping"
+						/> -->
+						</AccordionTab>
+						<AccordionTab header="Model weights">
+							<div
+								v-for="modelConfiguration in allModelConfigurations"
+								class="flex align-items-center"
+								:key="modelConfiguration.id"
+							>
+								<h6>{{ modelConfiguration.name }}</h6>
+								<tera-signal-bars
+									v-if="modelConfiguration?.id"
+									class="ml-auto"
+									:model-value="knobs.configurationWeights[modelConfiguration.id] ?? 0"
+									@update:model-value="knobs.configurationWeights[modelConfiguration.id] = $event"
+									label="Relative certainty"
 								/>
-							</section>
-						</div>
-					</AccordionTab>
-					<AccordionTab header="Mapping">
-						<label> Dataset timestamp column </label>
-						<Dropdown
-							v-model="knobs.timestampColName"
-							:options="datasetColumnNames"
-							placeholder="Timestamp column"
-							class="ml-2"
-						/>
-						<template v-if="knobs.ensembleConfigs.length > 0">
-							<table class="w-full mt-3">
-								<tbody>
-									<tr>
-										<th class="w-4">Ensemble variables</th>
-										<!-- Index matching listModelLabels and ensembleConfigs-->
-										<th v-for="(element, i) in listModelLabels" :key="i">
-											{{ element }}
-										</th>
-									</tr>
-									<tr>
-										<td v-for="(element, i) in Object.keys(knobs.ensembleConfigs[0].solutionMappings)" :key="i">
-											{{ element }}
-										</td>
-										<td v-for="i in knobs.ensembleConfigs.length" :key="i">
-											<template
-												v-for="element in Object.keys(knobs.ensembleConfigs[i - 1].solutionMappings)"
-												:key="element"
-											>
-												<Dropdown
-													v-model="knobs.ensembleConfigs[i - 1].solutionMappings[element]"
-													:options="allModelOptions[i - 1]?.map((ele) => ele.referenceId ?? ele.id)"
-													class="w-full mb-2 mt-2"
-												/>
-											</template>
-										</td>
-									</tr>
-								</tbody>
-							</table>
-						</template>
-						<Dropdown
-							class="mr-2"
-							v-model="newSolutionMappingKey"
-							:options="datasetColumnNames"
-							placeholder="Variable name"
-						/>
-						<Button class="p-button-sm p-button-outlined" icon="pi pi-plus" label="Add mapping" @click="addMapping" />
-					</AccordionTab>
-					<AccordionTab header="Additional fields">
-						<table>
-							<thead class="p-datatable-thead">
-								<tr>
-									<th>Units</th>
-									<th>Number of particles</th>
-									<th>Number of iterations</th>
-									<th>Solver method</th>
-								</tr>
-							</thead>
-							<tbody class="p-datatable-tbody">
-								<tr>
-									<td>Steps</td>
-									<td>
-										<tera-input-number v-model="knobs.extra.numParticles" />
-									</td>
-									<td>
-										<tera-input-number v-model="knobs.extra.numIterations" />
-									</td>
-									<td>
+							</div>
+						</AccordionTab>
+
+						<AccordionTab header="Other settings">
+							<div class="input-row">
+								<tera-timestep-calendar
+									class="flex-1"
+									disabled
+									:model-value="0"
+									label="Start time"
+									:start-date="undefined"
+								/>
+								<tera-timestep-calendar
+									class="flex-1"
+									v-model="knobs.extra.endTime"
+									label="End time"
+									:start-date="undefined"
+								/>
+							</div>
+
+							<div class="label-and-input">
+								<label> Preset </label>
+								<Dropdown
+									class="flex-1"
+									v-model="knobs.extra.presetType"
+									placeholder="Select an option"
+									:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
+									@update:model-value="setPresetValues"
+								/>
+								<label class="mb-1 p-text-secondary text-sm">
+									<i class="pi pi-info-circle" />
+									This impacts solver method, iterations and learning rate.
+								</label>
+							</div>
+
+							<fieldset class="mt-1 additional-settings">
+								<div class="label-and-input">
+									<label>Number of Samples</label>
+									<tera-input-number v-model="knobs.extra.numParticles" />
+								</div>
+								<div class="spacer m-3" />
+
+								<h6 class="mb-2">ODE solver options</h6>
+
+								<div class="input-row">
+									<div class="label-and-input">
+										<label>Solver method</label>
 										<Dropdown
-											class="p-inputtext-sm"
-											:options="['dopri5', 'euler']"
 											v-model="knobs.extra.solverMethod"
-											placeholder="Select"
+											:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
 										/>
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</AccordionTab>
-				</Accordion>
-			</tera-drilldown-section>
+									</div>
+									<div class="label-and-input">
+										<label for="num-steps">Solver step size</label>
+										<tera-input-number v-model="knobs.extra.stepSize" />
+									</div>
+								</div>
+								<div class="spacer m-3" />
+								<h6 class="mb-2">Inference Options</h6>
+								<div class="input-row">
+									<div class="label-and-input">
+										<label for="num-iterations">Number of solver iterations</label>
+										<tera-input-number v-model="knobs.extra.numIterations" />
+									</div>
+									<div class="label-and-input">
+										<label for="learning-rate">Learning rate</label>
+										<tera-input-number v-model="knobs.extra.learningRate" />
+									</div>
+									<div class="label-and-input">
+										<label>Inference algorithm</label>
+										<tera-input-text disabled model-value="SVI" />
+									</div>
+									<div class="label-and-input">
+										<label>Loss function</label>
+										<tera-input-text disabled model-value="ELBO" />
+									</div>
+									<div class="label-and-input">
+										<label>Optimizer method</label>
+										<tera-input-text disabled model-value="ADAM" />
+									</div>
+								</div>
+							</fieldset>
+						</AccordionTab>
+					</Accordion>
+				</template>
+			</tera-slider-panel>
 		</section>
-		<section :tabName="CalibrateEnsembleTabs.Notebook">
+		<section :tabName="DrilldownTabs.Notebook">
 			<h4>Notebook</h4>
 		</section>
 		<template #preview>
-			<tera-drilldown-preview
-				title="Calibrate ensemble"
-				:options="outputs"
-				v-model:output="selectedOutputId"
-				@update:selection="onSelection"
-				:is-loading="showSpinner"
-				is-selectable
-			>
+			<tera-drilldown-section>
+				<!-- Loss chart -->
+				<div ref="lossChartContainer">
+					<vega-chart
+						v-if="!_.isEmpty(lossValues)"
+						expandable
+						ref="lossChartRef"
+						:are-embed-actions-visible="true"
+						:visualization-spec="lossChartSpec"
+					/>
+				</div>
 				<section v-if="!inProgressCalibrationId && !inProgressForecastId" ref="outputPanel">
 					<tera-simulate-chart
 						v-for="(cfg, index) of node.state.chartConfigs"
@@ -160,26 +222,36 @@
 						icon="pi pi-plus"
 					/>
 				</section>
+
 				<tera-progress-spinner
 					v-if="inProgressCalibrationId || inProgressForecastId"
 					:font-size="2"
 					is-centered
 					style="height: 100%"
-				/>
-			</tera-drilldown-preview>
+				>
+					{{ node.state.currentProgress }}%
+				</tera-progress-spinner>
+			</tera-drilldown-section>
 		</template>
 	</tera-drilldown>
 	<tera-save-dataset-from-simulation
-		:simulation-run-id="knobs.forecastRunId"
+		:simulation-run-id="props.node.state.forecastRunId"
 		:showDialog="showSaveDataDialog"
 		@dialog-hide="showSaveDataDialog = false"
 	/>
 </template>
 
 <script setup lang="ts">
-import _ from 'lodash';
+import _, { isEmpty } from 'lodash';
+import * as vega from 'vega';
 import { ref, shallowRef, computed, watch, onMounted } from 'vue';
-import { getRunResultCiemss, makeEnsembleCiemssCalibration } from '@/services/models/simulation-service';
+import {
+	getRunResultCiemss,
+	makeEnsembleCiemssCalibration,
+	unsubscribeToUpdateMessages,
+	subscribeToUpdateMessages,
+	CiemssMethodOptions
+} from '@/services/models/simulation-service';
 import Button from 'primevue/button';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import AccordionTab from 'primevue/accordiontab';
@@ -190,25 +262,40 @@ import { setupDatasetInput, setupCsvAsset, setupModelInput } from '@/services/ca
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
+import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import TeraSignalBars from '@/components/widgets/tera-signal-bars.vue';
+import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
 
 import { chartActionsProxy, drilldownChartSize, getTimespan, nodeMetadata } from '@/components/workflow/util';
 import type {
 	CsvAsset,
-	EnsembleModelConfigs,
 	EnsembleCalibrationCiemssRequest,
 	ModelConfiguration,
-	Dataset
+	Dataset,
+	ClientEvent
 } from '@/types/Types';
+import { ClientEventType } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import { getDataset } from '@/services/dataset';
+import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
+import VegaChart from '@/components/widgets/VegaChart.vue';
+import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import {
 	CalibrateEnsembleCiemssOperationState,
-	EnsembleCalibrateExtraCiemss
+	CalibrateEnsembleMappingRow,
+	EnsembleCalibrateExtraCiemss,
+	qualityPreset,
+	speedPreset
 } from './calibrate-ensemble-ciemss-operation';
+import {
+	updateLossChartSpec,
+	getLossValuesFromSimulation,
+	formatCalibrateModelConfigurations
+} from './calibrate-ensemble-util';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
@@ -216,39 +303,24 @@ const props = defineProps<{
 const showSaveDataDialog = ref<boolean>(false);
 const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output']);
 
-enum CalibrateEnsembleTabs {
-	Wizard = 'Wizard',
-	Notebook = 'Notebook'
-}
-
 interface BasicKnobs {
-	ensembleConfigs: EnsembleModelConfigs[];
+	ensembleMapping: CalibrateEnsembleMappingRow[];
+	configurationWeights: { [key: string]: number };
 	extra: EnsembleCalibrateExtraCiemss;
-	forecastRunId: string;
 	timestampColName: string;
 }
 
 const knobs = ref<BasicKnobs>({
-	ensembleConfigs: props.node.state.ensembleConfigs ?? [],
+	ensembleMapping: props.node.state.ensembleMapping ?? [],
+	configurationWeights: props.node.state.configurationWeights ?? {},
 	extra: props.node.state.extra ?? {},
-	forecastRunId: props.node.state.forecastRunId,
 	timestampColName: props.node.state.timestampColName ?? ''
 });
 
-const outputs = computed(() => {
-	if (!_.isEmpty(props.node.outputs)) {
-		return [
-			{
-				label: 'Select an output',
-				items: props.node.outputs
-			}
-		];
-	}
-	return [];
-});
+const isSidebarOpen = ref(true);
 const selectedOutputId = ref<string>();
 const showSpinner = ref(false);
-const isRunDisabled = computed(() => !knobs.value.ensembleConfigs[0]?.weight || !datasetId.value);
+const isRunDisabled = computed(() => !knobs.value.ensembleMapping[0] || !datasetId.value);
 const cancelRunId = computed(() => props.node.state.inProgressForecastId || props.node.state.inProgressCalibrationId);
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
 const inProgressForecastId = computed(() => props.node.state.inProgressForecastId);
@@ -256,13 +328,28 @@ const inProgressForecastId = computed(() => props.node.state.inProgressForecastI
 const datasetId = computed(() => props.node.inputs[0].value?.[0] as string | undefined);
 const currentDatasetFileName = ref<string>();
 const datasetColumnNames = ref<string[]>();
-
+// Loss Chart:
+const lossChartRef = ref<InstanceType<typeof VegaChart>>();
+const lossChartSpec = ref();
+const lossValues = ref<{ [key: string]: number }[]>([]);
+const lossChartContainer = ref(null);
+const lossChartSize = useDrilldownChartSize(lossChartContainer);
+const LOSS_CHART_DATA_SOURCE = 'lossData';
+// Model:
 const listModelLabels = ref<string[]>([]);
 const allModelConfigurations = ref<ModelConfiguration[]>([]);
+
+const tableHeaders = computed(() => {
+	const headers = ['Ensemble model'];
+	if (currentDatasetFileName.value) headers.push(currentDatasetFileName.value ?? '');
+	allModelConfigurations.value.forEach((config) => {
+		headers.push(config.name ?? '');
+	});
+	return headers;
+});
 // List of each observible + state for each model.
 const allModelOptions = ref<any[][]>([]);
 
-const newSolutionMappingKey = ref<string>('');
 const runResults = ref<RunResults>({});
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
@@ -273,40 +360,73 @@ const chartProxy = chartActionsProxy(props.node, (state: CalibrateEnsembleCiemss
 	emit('update-state', state);
 });
 
-const calculateEvenWeights = () => {
-	if (!knobs.value.ensembleConfigs) return;
-	const percent = 1 / knobs.value.ensembleConfigs.length;
-	for (let i = 0; i < knobs.value.ensembleConfigs.length; i++) {
-		knobs.value.ensembleConfigs[i].weight = percent;
-	}
-};
-
 const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
 function addMapping() {
-	for (let i = 0; i < knobs.value.ensembleConfigs.length; i++) {
-		knobs.value.ensembleConfigs[i].solutionMappings[newSolutionMappingKey.value] = '';
-	}
+	// create empty configuration mappings
+	const configMappings = {};
+	allModelConfigurations.value.forEach((config) => {
+		configMappings[config.id as string] = '';
+	});
+
+	knobs.value.ensembleMapping.push({
+		newName: '',
+		datasetMapping: '',
+		modelConfigurationMappings: configMappings
+	});
 
 	const state = _.cloneDeep(props.node.state);
-	state.ensembleConfigs = knobs.value.ensembleConfigs;
+	state.ensembleMapping = knobs.value.ensembleMapping;
 	emit('update-state', state);
 }
 
+function removeMapping(index: number) {
+	knobs.value.ensembleMapping.splice(index, 1);
+	const state = _.cloneDeep(props.node.state);
+	state.ensembleMapping = knobs.value.ensembleMapping;
+	emit('update-state', state);
+}
+
+const messageHandler = (event: ClientEvent<any>) => {
+	if (!lossChartRef.value?.view) return;
+	const data = { iter: lossValues.value.length, loss: event.data.loss };
+	lossChartRef.value.view.change(LOSS_CHART_DATA_SOURCE, vega.changeset().insert(data)).resize().run();
+	lossValues.value.push(data);
+};
+
+const setPresetValues = (data: CiemssPresetTypes) => {
+	if (data === CiemssPresetTypes.Normal) {
+		knobs.value.extra.numParticles = qualityPreset.numSamples;
+		knobs.value.extra.solverMethod = qualityPreset.method;
+		knobs.value.extra.numIterations = qualityPreset.numIterations;
+		knobs.value.extra.learningRate = qualityPreset.learningRate;
+	}
+	if (data === CiemssPresetTypes.Fast) {
+		knobs.value.extra.numParticles = speedPreset.numSamples;
+		knobs.value.extra.solverMethod = speedPreset.method;
+		knobs.value.extra.numIterations = speedPreset.numIterations;
+		knobs.value.extra.learningRate = speedPreset.learningRate;
+	}
+};
+
 const runEnsemble = async () => {
 	if (!datasetId.value || !currentDatasetFileName.value) return;
+
+	// Reset loss buffer
+	lossValues.value = [];
+
 	const datasetMapping: { [index: string]: string } = {};
 	datasetMapping[knobs.value.timestampColName] = 'timestamp';
 	// Each key used in the ensemble configs is a dataset column.
 	// add these columns used to the datasetMapping
-	Object.keys(knobs.value.ensembleConfigs[0].solutionMappings).forEach((key) => {
-		datasetMapping[key] = key;
+	knobs.value.ensembleMapping.forEach((config) => {
+		datasetMapping[config.datasetMapping] = config.datasetMapping;
 	});
 
 	const calibratePayload: EnsembleCalibrationCiemssRequest = {
-		modelConfigs: knobs.value.ensembleConfigs,
+		modelConfigs: formatCalibrateModelConfigurations(knobs.value.ensembleMapping, knobs.value.configurationWeights),
 		timespan: getTimespan({
 			dataset: csvAsset.value,
 			timestampColName: knobs.value.timestampColName
@@ -320,15 +440,17 @@ const runEnsemble = async () => {
 		extra: {
 			num_particles: knobs.value.extra.numParticles,
 			num_iterations: knobs.value.extra.numIterations,
-			solver_method: knobs.value.extra.solverMethod
+			solver_method: knobs.value.extra.solverMethod,
+			solver_step_size: knobs.value.extra.stepSize,
+			lr: knobs.value.extra.learningRate
 		}
 	};
 	const response = await makeEnsembleCiemssCalibration(calibratePayload, nodeMetadata(props.node));
 	if (response?.simulationId) {
 		const state = _.cloneDeep(props.node.state);
+		state.currentProgress = 0;
 		state.inProgressCalibrationId = response?.simulationId;
 		state.inProgressForecastId = '';
-
 		emit('update-state', state);
 	}
 };
@@ -366,20 +488,16 @@ onMounted(async () => {
 
 	listModelLabels.value = allModelConfigurations.value.map((ele) => ele.name ?? '');
 
-	// initalize ensembleConfigs when its length is less than the amount of models provided to node (- 1 due to dataset, -1 due to last empty )
-	if (knobs.value.ensembleConfigs.length < props.node.inputs.length - 2) {
-		knobs.value.ensembleConfigs = [];
-		for (let i = 0; i < allModelConfigurations.value.length; i++) {
-			knobs.value.ensembleConfigs.push({
-				id: allModelConfigurations.value[i].id as string,
-				solutionMappings: {},
-				weight: 0
-			});
-		}
+	// add a mapping row if none exist
+	if (isEmpty(knobs.value.ensembleMapping)) {
+		addMapping();
 	}
 
-	if (knobs.value.ensembleConfigs.some((ele) => ele.weight === 0)) {
-		calculateEvenWeights();
+	// initialze weights
+	if (isEmpty(knobs.value.configurationWeights)) {
+		allModelConfigurations.value.forEach((config) => {
+			knobs.value.configurationWeights[config.id as string] = 5;
+		});
 	}
 });
 
@@ -390,9 +508,19 @@ watch(
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
 
-			const state = props.node.state;
+			const state = _.cloneDeep(props.node.state);
+
+			// only copy the keys from state that exist in knobs.value
+			Object.keys(knobs.value).forEach((key) => {
+				if (state[key] !== undefined) {
+					knobs.value[key] = state[key];
+				}
+			});
+
 			const output = await getRunResultCiemss(state.forecastRunId, 'result.csv');
 			runResults.value = output.runResults;
+			lossValues.value = await getLossValuesFromSimulation(props.node.state.calibrationId);
+			lossChartSpec.value = await updateLossChartSpec(lossValues.value, lossChartSize.value);
 		}
 	},
 	{ immediate: true }
@@ -404,10 +532,27 @@ watch(
 		const state = _.cloneDeep(props.node.state);
 		state.timestampColName = knobs.value.timestampColName;
 		state.extra = knobs.value.extra;
-		state.ensembleConfigs = knobs.value.ensembleConfigs;
+		state.ensembleMapping = knobs.value.ensembleMapping;
+		state.configurationWeights = knobs.value.configurationWeights;
 		emit('update-state', state);
 	},
 	{ deep: true }
+);
+
+watch(
+	[() => props.node.state.inProgressCalibrationId, lossChartSize],
+	([id, size]) => {
+		if (id === '') {
+			showSpinner.value = false;
+			lossChartSpec.value = updateLossChartSpec(lossValues.value, size);
+			unsubscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
+		} else {
+			showSpinner.value = true;
+			lossChartSpec.value = updateLossChartSpec(LOSS_CHART_DATA_SOURCE, size);
+			subscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
+		}
+	},
+	{ immediate: true }
 );
 </script>
 
@@ -445,5 +590,46 @@ td {
 
 :deep(.p-inputnumber-input, .p-inputwrapper) {
 	width: 100%;
+}
+
+.wizard .toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--gap-1) var(--gap-4);
+	gap: var(--gap-2);
+}
+
+.additional-settings {
+	background: var(--surface-200);
+	padding: var(--gap-3);
+	border-radius: var(--border-radius-medium);
+}
+
+.label-and-input {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-1);
+
+	:deep(input) {
+		text-align: left;
+	}
+}
+
+.input-row {
+	align-items: center;
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	gap: var(--gap-2);
+	width: 100%;
+
+	& > * {
+		flex: 1;
+	}
+}
+
+.overlay-container:deep(section.scale main) {
+	grid-template-columns: auto 1fr;
 }
 </style>

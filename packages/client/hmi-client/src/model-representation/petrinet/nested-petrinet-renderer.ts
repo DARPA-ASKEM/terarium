@@ -188,6 +188,21 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			}
 
 			const nestedNodesLen = Object.keys(node).filter((d) => d !== '_key').length;
+			if (nestedNodesLen >= CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS.length) {
+				select(g[idx])
+					.append('text')
+					.classed('latex-font', true)
+					.attr('y', parentRadius)
+					.style('font-size', 0.6 * parentRadius)
+					.attr('stroke-width', '0.5px')
+					.style('text-anchor', 'middle')
+					.style('paint-order', 'stroke')
+					.style('fill', 'var(--text-color-primary)')
+					.style('pointer-events', 'none')
+					.text(`${nestedNodesLen} groups`);
+
+				return;
+			}
 
 			Object.entries(node).forEach((kvPair, i) => {
 				if (kvPair[0] === '_key') return;
