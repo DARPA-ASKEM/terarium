@@ -281,6 +281,7 @@ import TeraPdfPanel from '@/components/widgets/tera-pdf-panel.vue';
 import Calendar from 'primevue/calendar';
 import { CalendarSettings } from '@/utils/date';
 import { DrilldownTabs } from '@/types/common';
+import { formatListWithConjunction } from '@/utils/text';
 import {
 	blankModelConfig,
 	isModelConfigsEqual,
@@ -634,28 +635,23 @@ const onSelectConfiguration = async (config: ModelConfiguration) => {
 	if (pdfViewer.value && config.extractionPage) {
 		pdfViewer.value.goToPage(config.extractionPage);
 	}
+
+	const { transientModelConfig } = knobs.value;
 	// If no changes were made switch right away
-	if (isModelConfigsEqual(originalConfig, knobs.value.transientModelConfig)) {
+	if (isModelConfigsEqual(originalConfig, transientModelConfig)) {
 		applyConfigValues(config);
 		return;
 	}
 
 	const lostItems: string[] = [];
 
-	if (!isModelConfigValuesEqual(knobs.value.transientModelConfig, originalConfig)) lostItems.push('values');
-	if (knobs.value.transientModelConfig.name !== originalConfig?.name) lostItems.push('name');
-	if (knobs.value.transientModelConfig.description !== originalConfig?.description) lostItems.push('description');
-
-	let lostItemsStr = '';
-	if (lostItems.length > 1) {
-		lostItemsStr = `${lostItems.slice(0, -1).join(', ')} and ${lostItems.slice(-1)}`;
-	} else {
-		lostItemsStr = lostItems[0];
-	}
+	if (!isModelConfigValuesEqual(transientModelConfig, originalConfig)) lostItems.push('values');
+	if (transientModelConfig.name !== originalConfig?.name) lostItems.push('name');
+	if (transientModelConfig.description !== originalConfig?.description) lostItems.push('description');
 
 	confirm.require({
 		header: `Unsaved changes`,
-		message: `Changes made to the ${lostItemsStr} will be lost.`,
+		message: `Changes made to the ${formatListWithConjunction(lostItems)} will be lost.`,
 		accept: () => {
 			applyConfigValues(config);
 		},
