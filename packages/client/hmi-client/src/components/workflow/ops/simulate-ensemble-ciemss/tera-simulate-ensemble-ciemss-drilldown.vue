@@ -128,16 +128,6 @@
 						<!-- Other Settings -->
 						<AccordionTab header="Other Settings">
 							<div class="form-section" v-if="isSidebarOpen">
-								<!-- Presets -->
-								<div class="label-and-input">
-									<label>Preset (optional)</label>
-									<!-- <Dropdown
-										v-model="presetType"
-										placeholder="Select an option"
-										:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
-										@update:model-value="setPresetValues"
-									/> -->
-								</div>
 								<div class="input-row">
 									<div class="label-and-input">
 										<label>Start time</label>
@@ -148,7 +138,16 @@
 										<tera-input-number v-model="knobs.timeSpan.end" />
 									</div>
 								</div>
-
+								<!-- Presets -->
+								<div class="label-and-input">
+									<label>Preset (optional)</label>
+									<Dropdown
+										v-model="presetType"
+										placeholder="Select an option"
+										:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
+										@update:model-value="setPresetValues"
+									/>
+								</div>
 								<!-- Number of Samples & Method -->
 								<div class="input-row">
 									<div class="label-and-input">
@@ -258,7 +257,7 @@ import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/component
 import type { WorkflowNode } from '@/types/workflow';
 import type { TimeSpan, EnsembleSimulationCiemssRequest } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
-import { DrilldownTabs } from '@/types/common';
+import { DrilldownTabs, CiemssPresetTypes } from '@/types/common';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraSignalBars from '@/components/widgets/tera-signal-bars.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
@@ -266,7 +265,9 @@ import { v4 as uuidv4 } from 'uuid';
 import {
 	SimulateEnsembleCiemssOperationState,
 	SimulateEnsembleMappingRow,
-	SimulateEnsembleWeight
+	SimulateEnsembleWeight,
+	speedValues,
+	normalValues
 } from './simulate-ensemble-ciemss-operation';
 import { formatSimulateModelConfigurations } from './simulate-ensemble-util';
 
@@ -297,6 +298,16 @@ const isOutputSettingsPanelOpen = ref(false);
 const showSpinner = ref(false);
 const showAddMappingInput = ref(false);
 const listModelLabels = ref<string[]>([]);
+
+const presetType = computed(() => {
+	if (knobs.value.numSamples === speedValues.numSamples && knobs.value.method === speedValues.method) {
+		return CiemssPresetTypes.Fast;
+	}
+	if (knobs.value.numSamples === normalValues.numSamples && knobs.value.method === normalValues.method) {
+		return CiemssPresetTypes.Normal;
+	}
+	return '';
+});
 
 // List of each observible + state for each model.
 const allModelOptions = ref<{ [key: string]: string[] }>({});
@@ -329,6 +340,17 @@ const chartProxy = chartActionsProxy(props.node, (state: SimulateEnsembleCiemssO
 
 const onSelection = (id: string) => {
 	emit('select-output', id);
+};
+
+const setPresetValues = (data: CiemssPresetTypes) => {
+	if (data === CiemssPresetTypes.Normal) {
+		knobs.value.numSamples = normalValues.numSamples;
+		knobs.value.method = normalValues.method;
+	}
+	if (data === CiemssPresetTypes.Fast) {
+		knobs.value.numSamples = speedValues.numSamples;
+		knobs.value.method = speedValues.method;
+	}
 };
 
 const addMapping = () => {

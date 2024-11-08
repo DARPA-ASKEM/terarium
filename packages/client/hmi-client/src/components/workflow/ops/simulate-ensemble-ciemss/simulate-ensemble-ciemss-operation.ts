@@ -21,6 +21,16 @@ export interface SimulateEnsembleWeight {
 	value: number;
 }
 
+export const speedValues = Object.freeze({
+	numSamples: 1,
+	method: CiemssMethodOptions.euler
+});
+
+export const normalValues = Object.freeze({
+	numSamples: 100,
+	method: CiemssMethodOptions.dopri5
+});
+
 export interface SimulateEnsembleCiemssOperationState extends BaseState {
 	chartConfigs: string[][];
 	mapping: SimulateEnsembleMappingRow[];
@@ -55,8 +65,8 @@ export const SimulateEnsembleCiemssOperation: Operation = {
 			mapping: [],
 			weights: [],
 			timeSpan: { start: 0, end: 40 },
-			numSamples: 40,
-			method: CiemssMethodOptions.dopri5,
+			numSamples: normalValues.numSamples,
+			method: normalValues.method,
 			inProgressForecastId: '',
 			forecastId: '',
 			errorMessage: { name: '', value: '', traceback: '' }
