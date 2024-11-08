@@ -96,7 +96,7 @@ const props = defineProps<{
 	defaultPreview?: string;
 }>();
 
-const showRerunMessage = computed<boolean>(() => !hideRerunMessage.value || isRerunMessageRelevant.value);
+const showRerunMessage = computed<boolean>(() => !hideRerunMessage.value && isRerunMessageRelevant.value);
 
 const iopubMessageHandler = (_session, message) => {
 	if (message.header.msg_type === 'status') {

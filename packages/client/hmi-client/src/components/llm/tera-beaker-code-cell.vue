@@ -21,7 +21,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, onMounted, onBeforeUnmount, ref } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { SessionContext } from '@jupyterlab/apputils';
@@ -55,13 +55,10 @@ const language = computed(() => {
 // const language = ref<string | undefined>('python')
 
 const code = computed(() => props.jupyterMessage.content.code);
-watch(
-	() => code,
-	async () => emit('code-dirty')
-);
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
 const initialize = (editorInstance) => {
 	editor.value = editorInstance;
+	editorInstance.getSession().on('change', () => emit('code-dirty'));
 };
 
 const enter = () => {
