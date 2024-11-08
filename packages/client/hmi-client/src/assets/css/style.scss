@@ -107,7 +107,7 @@
 	/* Fixing the confirm dialog text placement and reject button styling */
 	.p-confirm-dialog-message {
 		margin-left: 0 !important;
-		margin-top: var(--gap);
+		margin-top: var(--gap-4);
 	}
 	.p-confirm-dialog-reject {
 		background-color: var(--surface-0);
@@ -182,7 +182,7 @@
 		background-color: var(--surface-0);
 		border: solid 1px var(--surface-border-light);
 		border-radius: 3px;
-		padding: var(--gap-small);
+		padding: var(--gap-2);
 	}
 
 	.ace-editor {
@@ -203,12 +203,12 @@
 		}
 
 		& p {
-			padding-bottom: var(--gap);
+			padding-bottom: var(--gap-4);
 		}
 
 		& ul {
 			list-style-position: inside;
-			padding-bottom: var(--gap);
+			padding-bottom: var(--gap-4);
 			padding-left: var(--gap-2);
 			gap: 0;
 		}

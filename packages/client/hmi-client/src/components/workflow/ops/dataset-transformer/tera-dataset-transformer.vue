@@ -74,7 +74,7 @@ const assets = computed(() =>
 const disableSaveForReuse = computed(
 	() =>
 		!kernelState.value ||
-		(props.node.status === OperatorStatus.INVALID && props.node.state.selectedOutputs) ||
+		(props.node.status === OperatorStatus.INVALID && props.node.state.selectedOutputs.length) ||
 		props.node.status === OperatorStatus.ERROR
 );
 

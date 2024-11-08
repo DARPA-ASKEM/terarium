@@ -1244,13 +1244,12 @@ watch(
 :deep(.failed-run main .content-container) {
 	border: 2px solid var(--error-color);
 	border-radius: var(--border-radius-big);
-	color: var(--error-color-text);
+	color: var(--error-message-color);
 }
 
 .successful-run {
 	border: none;
-	border-radius: none;
-	color: none;
+	border-radius: 0;
 }
 
 .form-section {

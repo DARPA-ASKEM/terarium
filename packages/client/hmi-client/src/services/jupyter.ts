@@ -5,7 +5,7 @@ import { CodeMirrorMimeTypeService } from '@jupyterlab/codemirror';
 import { standardRendererFactories as initialFactories, RenderMimeRegistry } from '@jupyterlab/rendermime';
 import { JSONObject } from '@lumino/coreutils';
 import * as messages from '@jupyterlab/services/lib/kernel/messages';
-import * as kernel from '@jupyterlab/services/lib/kernel/kernel';
+// import * as kernel from '@jupyterlab/services/lib/kernel/kernel';
 import { KernelConnection as JupyterKernelConnection } from '@jupyterlab/services/lib/kernel';
 import API from '@/api/api';
 import { v4 as uuidv4 } from 'uuid';
@@ -20,15 +20,17 @@ declare module '@jupyterlab/services/lib/kernel/messages' {
 declare module '@jupyterlab/services/lib/kernel/kernel' {
 	interface IKernelConnection {
 		sendJupyterMessage<T extends JupyterMessage>(msg: T): void;
-		sendShellMessage<T extends JupyterMessage>(msg: T): void;
 	}
 }
-declare module '@jupyterlab/services' {
-	class KernelConnection extends JupyterKernelConnection implements kernel.IKernelConnection {
-		sendJupyterMessage<T extends JupyterMessage>(msg: T): void;
-		sendShellMessage<T extends JupyterMessage>(msg: T): void;
-	}
-}
+
+// declare module '@jupyterlab/services' {
+// 	class KernelConnection extends JupyterKernelConnection implements kernel.IKernelConnection {
+// 		sendJupyterMessage<T extends JupyterMessage>(msg: T): void;
+// 		sendShellMessage<T extends JupyterMessage>(msg: T): void;
+// 	}
+// }
+
+// @ts-ignore: prototype stuff
 JupyterKernelConnection.prototype.sendJupyterMessage = function (msg) {
 	return this.sendShellMessage(msg);
 };

@@ -6,6 +6,7 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
@@ -36,4 +37,7 @@ public class RegNetVertex extends SupportAdditionalProperties implements Seriali
 
 	@TSOptional
 	private ModelGrounding grounding;
+
+	@TSIgnore
+	private String description;
 }
