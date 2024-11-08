@@ -231,7 +231,8 @@ export class WorkflowWrapper {
 				label: port.label,
 				status: WorkflowPortStatus.NOT_CONNECTED,
 				value: null,
-				isOptional: port.isOptional ?? false
+				isOptional: port.isOptional ?? false,
+				unique: port.unique
 			})),
 
 			outputs: op.outputs.map((port) => ({
@@ -321,6 +322,10 @@ export class WorkflowWrapper {
 		if (intersectionTypes.length === 0 || targetInputPort.status === WorkflowPortStatus.CONNECTED) {
 			return;
 		}
+
+		// check if the port is unique
+		const dupe = targetNode.inputs.find((input) => input.unique && input.value?.[0] === sourceOutputPort.value?.[0]);
+		if (dupe) return;
 
 		// Transfer data value/reference
 		targetInputPort.label = sourceOutputPort.label;
