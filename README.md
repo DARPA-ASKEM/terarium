@@ -229,6 +229,24 @@ If running encrypt, `application-secrets.properties`'s content will be encrypted
 ```
 </details>
 
+### Debugging task runners
+
+To debug task runners locally, follow these steps to modify specific Docker Compose and configuration files:
+
+1. **Update `docker-compose-local.yml`:**
+  - Open `docker-compose-local.yml`.
+  - Uncomment the line that includes `scripts/docker-compose-taskrunner.yml`.
+
+2. **Configure `scripts/docker-compose-taskrunner.yml`:**
+  - Open `scripts/docker-compose-taskrunner.yml`.
+  - Uncomment the service definition for the specific task runner you want to run locally.
+
+3. **Edit `application-local.properties`:**
+  - Open `application-local.properties`.
+  - In the **TaskRunner Configuration** section, comment out the `addresses`, `username`, and `password` properties for the task runner you want to run locally.
+
+Following these steps will enable you to debug the task runners in a local environment.
+
 ### Running only the Data Services
 
 A functional `docker-compose-lean.yml` with all services necessary to run the `terarium` backend can be spun up with the following:
