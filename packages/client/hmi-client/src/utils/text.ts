@@ -37,4 +37,20 @@ function snakeToCapitalSentence(snakeCaseString: string) {
 	return startCase(toLower(snakeCaseString));
 }
 
-export { highlightText as highlight, pascalCaseToCapitalSentence, snakeToCapitalized, snakeToCapitalSentence };
+function formatListWithConjunction(stringList: string[]) {
+	let formattedString = '';
+	if (stringList.length > 1) {
+		formattedString = `${stringList.slice(0, -1).join(', ')} and ${stringList.slice(-1)}`;
+	} else if (stringList[0]) {
+		formattedString = stringList[0];
+	}
+	return formattedString;
+}
+
+export {
+	highlightText as highlight,
+	pascalCaseToCapitalSentence,
+	snakeToCapitalized,
+	snakeToCapitalSentence,
+	formatListWithConjunction
+};
