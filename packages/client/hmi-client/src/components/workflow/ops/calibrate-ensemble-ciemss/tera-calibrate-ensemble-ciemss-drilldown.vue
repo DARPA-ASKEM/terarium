@@ -46,7 +46,7 @@
 										</tr>
 										<tr v-for="(config, i) in knobs.ensembleMapping" :key="i">
 											<td>
-												<tera-input-text v-model="config.name" placeholder="Variable name" />
+												<tera-input-text v-model="config.newName" placeholder="Variable name" />
 											</td>
 											<td>
 												<Dropdown v-model="config.datasetMapping" placeholder="Select" :options="datasetColumnNames" />
@@ -372,7 +372,7 @@ function addMapping() {
 	});
 
 	knobs.value.ensembleMapping.push({
-		name: '',
+		newName: '',
 		datasetMapping: '',
 		modelConfigurationMappings: configMappings
 	});

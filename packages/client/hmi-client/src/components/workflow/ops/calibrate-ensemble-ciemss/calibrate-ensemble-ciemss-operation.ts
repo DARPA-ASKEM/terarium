@@ -29,7 +29,7 @@ export interface EnsembleCalibrateExtraCiemss {
 }
 
 export interface CalibrateEnsembleMappingRow {
-	name: string;
+	newName: string;
 	datasetMapping: string;
 	modelConfigurationMappings: { [key: string]: string };
 }
