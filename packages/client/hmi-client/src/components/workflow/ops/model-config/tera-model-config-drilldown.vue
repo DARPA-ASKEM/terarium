@@ -25,41 +25,43 @@
 				header="Configurations"
 				content-width="360px"
 			>
+				<template #header>
+					<div class="flex gap-2">
+						<tera-input-text v-model="filterModelConfigurationsText" placeholder="Filter" class="w-full" />
+						<Button
+							label="Extract from inputs"
+							severity="primary"
+							class="white-space-nowrap min-w-min"
+							size="small"
+							:loading="isLoading"
+							:disabled="!props.node.inputs.slice(1, 5).some((input) => input?.value)"
+							@click="extractConfigurationsFromInputs"
+						/>
+					</div>
+				</template>
 				<template #content>
-					<main class="m-3">
-						<div class="flex flex-row gap-1">
-							<tera-input-text v-model="filterModelConfigurationsText" placeholder="Filter" class="w-full" />
-							<Button
-								label="Extract from inputs"
-								severity="primary"
-								class="white-space-nowrap min-w-min"
-								size="small"
-								:loading="isLoading"
-								:disabled="!props.node.inputs.slice(1, 5).some((input) => input?.value)"
-								@click="extractConfigurationsFromInputs"
+					<!-- Show a spinner if loading -->
+					<section v-if="isLoading" class="processing-new-configuration-tile">
+						<p class="secondary-text">Processing...</p>
+					</section>
+					<tera-progress-spinner class="h-full" v-if="isFetchingConfigs" is-centered :font-size="2">
+						Loading configurations...
+					</tera-progress-spinner>
+					<!-- Show all configurations -->
+					<ul v-else-if="model?.id">
+						<li v-for="configuration in filteredModelConfigurations" :key="configuration.id">
+							<tera-model-configuration-item
+								:configuration="configuration"
+								:selected="selectedConfigId === configuration.id"
+								@click="onSelectConfiguration(configuration)"
+								@delete="fetchConfigurations(model.id)"
+								@download="downloadModelArchive(configuration)"
+								@use="onSelectConfiguration(configuration)"
 							/>
-						</div>
-						<!-- Show a spinner if loading -->
-						<section v-if="isLoading" class="processing-new-configuration-tile">
-							<p class="secondary-text">Processing...</p>
-						</section>
-
-						<!-- Show all configurations -->
-						<ul v-if="model?.id">
-							<li v-for="configuration in filteredModelConfigurations" :key="configuration.id">
-								<tera-model-configuration-item
-									:configuration="configuration"
-									:selected="selectedConfigId === configuration.id"
-									@click="onSelectConfiguration(configuration)"
-									@delete="fetchConfigurations(model.id)"
-									@download="downloadModelArchive(configuration)"
-									@use="onSelectConfiguration(configuration)"
-								/>
-							</li>
-							<!-- Show a message if nothing found after filtering -->
-							<li v-if="filteredModelConfigurations.length === 0">No configurations found</li>
-						</ul>
-					</main>
+						</li>
+						<!-- Show a message if nothing found after filtering -->
+						<li v-if="filteredModelConfigurations.length === 0">No configurations found</li>
+					</ul>
 				</template>
 			</tera-slider-panel>
 		</template>
@@ -263,7 +265,7 @@ import {
 	updateModelConfiguration
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { Model, ModelConfiguration, TaskResponse } from '@/types/Types';
+import type { Model, ModelConfiguration } from '@/types/Types';
 import { AssetType, Observable } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
@@ -280,6 +282,7 @@ import { useProjects } from '@/composables/project';
 import TeraPdfPanel from '@/components/widgets/tera-pdf-panel.vue';
 import Calendar from 'primevue/calendar';
 import { CalendarSettings } from '@/utils/date';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import {
 	blankModelConfig,
 	isModelConfigsEqual,
@@ -454,40 +457,27 @@ const initializeEditor = (editorInstance: any) => {
 
 const extractConfigurationsFromInputs = async () => {
 	const state = cloneDeep(props.node.state);
-	if (!model.value?.id) {
-		return;
-	}
+	const modelId = model.value?.id;
+	if (!modelId) return;
 
-	if (documentIds.value) {
-		const promiseList = [] as Promise<TaskResponse | null>[];
-		documentIds.value.forEach((documentId) => {
-			promiseList.push(
-				configureModelFromDocument(documentId, model.value?.id as string, props.node.workflowId, props.node.id)
-			);
-		});
-		const responsesRaw = await Promise.all(promiseList);
-		responsesRaw.forEach((resp) => {
-			if (resp) {
-				state.modelConfigTaskIds.push(resp.id);
-			}
-		});
-	}
+	const matrixStr = generateModelDatasetConfigurationContext(mmt.value, mmtParams.value);
 
-	if (datasetIds.value) {
-		const matrixStr = generateModelDatasetConfigurationContext(mmt.value, mmtParams.value);
-		const promiseList = [] as Promise<TaskResponse | null>[];
-		datasetIds.value.forEach((datasetId) => {
-			promiseList.push(
-				configureModelFromDataset(model.value?.id as string, datasetId, matrixStr, props.node.workflowId, props.node.id)
-			);
-		});
-		const responsesRaw = await Promise.all(promiseList);
-		responsesRaw.forEach((resp) => {
-			if (resp) {
-				state.modelConfigTaskIds.push(resp.id);
-			}
-		});
-	}
+	const promiseList = [
+		...documentIds.value.map((documentId) =>
+			configureModelFromDocument(documentId, modelId, props.node.workflowId, props.node.id)
+		),
+		...datasetIds.value.map((datasetId) =>
+			configureModelFromDataset(modelId, datasetId, matrixStr, props.node.workflowId, props.node.id)
+		)
+	];
+
+	const responsesRaw = await Promise.all(promiseList);
+	responsesRaw.forEach((resp) => {
+		if (resp) {
+			state.modelConfigTaskIds.push(resp.id);
+		}
+	});
+
 	emit('update-state', state);
 };
 
@@ -511,7 +501,7 @@ const datasetIds = computed(() =>
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 
 const initializing = ref(false);
-const isFetching = ref(false);
+const isFetchingConfigs = ref(false);
 const isLoading = ref(false);
 
 const model = ref<Model | null>(null);
@@ -582,9 +572,9 @@ const onSaveConfiguration = async () => {
 };
 
 const fetchConfigurations = async (modelId: string) => {
-	isFetching.value = true;
+	isFetchingConfigs.value = true;
 	modelConfigurations.value = await getModelConfigurationsForModel(modelId);
-	isFetching.value = false;
+	isFetchingConfigs.value = false;
 };
 
 // Fill the form with the config data
@@ -872,7 +862,6 @@ onUnmounted(() => {
 .input-config {
 	ul {
 		list-style: none;
-		padding-top: var(--gap-4);
 	}
 
 	li {
