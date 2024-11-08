@@ -37,7 +37,9 @@
 											</th>
 										</tr>
 										<tr v-for="(ele, indx) in knobs.mapping" :key="indx">
-											<tera-input-text v-model="ele.newName" auto-focus class="w-full" placeholder="Add a name" />
+											<td>
+												<tera-input-text v-model="ele.newName" auto-focus class="w-full" placeholder="Add a name" />
+											</td>
 											<td v-for="(row, indx) in ele.modelConfigurationMappings" :key="indx">
 												<Dropdown
 													class="w-full"
@@ -54,7 +56,7 @@
 									</tbody>
 								</table>
 							</template>
-							<section class="add-mapping">
+							<section>
 								<Button
 									v-if="!showAddMappingInput"
 									outlined
