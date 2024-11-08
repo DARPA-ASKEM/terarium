@@ -11,7 +11,7 @@
 			<tera-slider-panel
 				class="input-config"
 				v-model:is-open="isSidebarOpen"
-				header="Simulation settings"
+				header="Simulation ensemble settings"
 				content-width="420px"
 			>
 				<template #content>
@@ -26,7 +26,7 @@
 					<Accordion :multiple="true" :active-index="activeAccordionIndicies">
 						<!-- Mapping -->
 						<AccordionTab header="Mapping">
-							<p class="subheader">Map the variables from the models to the ensemble variables.</p>
+							<p class="subheader">All variables mapped should be normalized (could use observables)</p>
 							<template v-if="knobs.mapping.length > 0">
 								<table class="w-full mb-2">
 									<tbody>
@@ -175,7 +175,7 @@
 			<tera-slider-panel
 				class="input-config"
 				v-model:is-open="isSidebarOpen"
-				header="Simulation settings"
+				header="Simulation ensemble settings"
 				content-width="420px"
 			>
 				<template #content>
