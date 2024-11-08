@@ -49,6 +49,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.UUID;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.Header;
@@ -734,6 +735,34 @@ public class ElasticsearchService {
 		} catch (final Exception e) {
 			return false;
 		}
+	}
+
+	/**
+	 * Insert the given documents into the given index with the given ids
+	 *
+	 * @param index     The index to insert the documents into
+	 * @param documents the documents to insert
+	 * @param ids       The ids of the documents to insert, parallel to the documents
+	 * @return The bulk response
+	 * @throws IOException              If the bulk insert fails
+	 * @throws IllegalArgumentException If the number of documents and ids are not the same
+	 */
+	public BulkResponse insert(final String index, final List documents, final List<String> ids) throws IOException {
+		if (ids != null && documents.size() != ids.size()) {
+			throw new IllegalArgumentException("The number of documents and ids must be the same");
+		}
+
+		final List<BulkOperation> bulkOperations = new ArrayList<>();
+		for (int i = 0; i < documents.size(); i++) {
+			final String id = ids != null ? ids.get(i) : UUID.randomUUID().toString();
+			final Object document = documents.get(i);
+			bulkOperations.add(BulkOperation.of(b -> b.index(op -> op.index(index).id(id).document(document))));
+		}
+
+		log.info("Elasticsearch | Bulk | Inserting {} documents into index {}", documents.size(), index);
+		return client.bulk(
+			BulkRequest.of(bulkRequest -> bulkRequest.index(index).operations(bulkOperations).pipeline("full_text_search"))
+		);
 	}
 
 	public static String emphasis(String s, int boost) {

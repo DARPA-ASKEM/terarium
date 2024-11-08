@@ -1,8 +1,11 @@
 package software.uncharted.terarium.hmiserver.service.s3;
 
+import co.elastic.clients.elasticsearch.core.BulkResponse;
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.annotation.PostConstruct;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -16,6 +19,7 @@ import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
+import software.uncharted.terarium.hmiserver.utils.JSONLInputStreamReader;
 
 @Slf4j
 @Service
@@ -45,7 +49,7 @@ public class DownloadStaticESIndexService {
 	private static class IndexAndMapping {
 
 		public IndexAndMapping(String root) {
-			this.fileName = root + ".json";
+			this.fileName = root + ".jsonl";
 			this.mappingFileName = root + "_mapping.json";
 			this.indexName = root;
 		}
@@ -81,7 +85,33 @@ public class DownloadStaticESIndexService {
 						staticIndexPath,
 						index.getFileName()
 					);
+
+					final JSONLInputStreamReader jsonlInputStreamReader = new JSONLInputStreamReader(10 * 1024 * 1024);
+
 					log.warn("We have the stream");
+
+					jsonlInputStreamReader.read(esIndexStream, jsonNodes -> {
+						// Insert the documents into the index
+						final List<String> ids = jsonNodes.stream().map(node -> node.at("id").asText()).toList();
+						try {
+							final BulkResponse response = elasticsearchService.insert(staticIndexPath, jsonNodes, ids);
+							if (response.errors()) {
+								log.error(
+									"Failed to insert documents into index {}: {}",
+									staticIndexPath,
+									response
+										.items()
+										.stream()
+										.filter(item -> item.error() != null)
+										.map(item -> item.error().toString())
+										.collect(Collectors.joining(", "))
+								);
+							}
+						} catch (IOException e) {
+							log.error("Failed to insert documents into index {}", staticIndexPath, e);
+						}
+					});
+
 					String esIndexContent = new BufferedReader(new InputStreamReader(esIndexStream))
 						.lines()
 						.collect(Collectors.joining("\n"));
