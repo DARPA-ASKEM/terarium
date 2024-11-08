@@ -23,7 +23,7 @@
 						</span>
 					</div>
 
-					<Accordion :multiple="true" :active-index="[0, 1, 2]">
+					<Accordion :multiple="true" :active-index="activeAccordionIndicies">
 						<!-- Mapping -->
 						<AccordionTab header="Mapping">
 							<p class="subheader">Map the variables from the models to the ensemble variables.</p>
@@ -37,7 +37,7 @@
 											</th>
 										</tr>
 										<tr v-for="(ele, indx) in knobs.mapping" :key="indx">
-											<td>{{ ele.newName }}</td>
+											<tera-input-text v-model="ele.newName" auto-focus class="w-full" placeholder="Add a name" />
 											<td v-for="(row, indx) in ele.modelConfigurationMappings" :key="indx">
 												<Dropdown
 													class="w-full"
@@ -272,6 +272,7 @@ const knobs = ref<BasicKnobs>({
 	timeSpan: props.node.state.timeSpan
 });
 
+const activeAccordionIndicies = ref([1, 2, 3]);
 const isSidebarOpen = ref(true);
 const isOutputSettingsPanelOpen = ref(false);
 const showSpinner = ref(false);
