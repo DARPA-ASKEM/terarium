@@ -1,7 +1,7 @@
 import { createForecastChart, AUTOSIZE } from '@/services/charts';
 import { getSimulation } from '@/services/models/simulation-service';
 import { EnsembleModelConfigs } from '@/types/Types';
-import { CalibrateEnsembleMappingRow, CalibrateEnsembleWeight } from './calibrate-ensemble-ciemss-operation';
+import { CalibrateEnsembleMappingRow, CalibrateEnsembleWeights } from './calibrate-ensemble-ciemss-operation';
 
 export async function getLossValuesFromSimulation(calibrationId: string) {
 	if (!calibrationId) return [];
@@ -40,21 +40,33 @@ export const updateLossChartSpec = (data: string | Record<string, any>[], size: 
 
 export function formatCalibrateModelConfigurations(
 	rows: CalibrateEnsembleMappingRow[],
-	weights: CalibrateEnsembleWeight[]
+	weights: CalibrateEnsembleWeights
 ): EnsembleModelConfigs[] {
-	const totalWeight = weights.reduce((acc, curr) => acc + curr.value, 0) ?? 1;
+	const ensembleModelConfigMap: { [key: string]: EnsembleModelConfigs } = {};
+	const totalWeight = Object.values(weights).reduce((acc, curr) => acc + curr, 0) ?? 1;
+	// 1. map the weights to the ensemble model configs
+	Object.entries(weights).forEach(([key, value]) => {
+		// return if there is no weight
+		if (!value) return;
 
-	return weights.map((weight, index) => {
 		const ensembleModelConfig: EnsembleModelConfigs = {
-			id: weight.modelConfigurationId,
+			id: key,
 			solutionMappings: {},
-			weight: weight.value / totalWeight
+			weight: value / totalWeight
 		};
 
-		rows.forEach((row) => {
-			ensembleModelConfig.solutionMappings[row.datasetMapping] = row.modelConfigurationMappings[index].compartmentName;
-		});
-
-		return ensembleModelConfig;
+		ensembleModelConfigMap[key] = ensembleModelConfig;
 	});
+
+	// 2. format the solution mappings
+	rows.forEach((row) => {
+		Object.entries(row.modelConfigurationMappings).forEach(([key, value]) => {
+			if (!ensembleModelConfigMap[key]) return;
+			ensembleModelConfigMap[key].solutionMappings = {
+				[row.datasetMapping]: value
+			};
+		});
+	});
+
+	return [...Object.values(ensembleModelConfigMap)];
 }

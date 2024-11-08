@@ -53,8 +53,8 @@
 											</td>
 											<td v-for="(configuration, index) in allModelConfigurations" :key="configuration.id">
 												<Dropdown
-													:model-value="config.modelConfigurationMappings[index].compartmentName ?? ''"
-													@update:model-value="config.modelConfigurationMappings[index].compartmentName = $event"
+													v-if="configuration?.id"
+													v-model="config.modelConfigurationMappings[configuration.id]"
 													placeholder="Select"
 													:options="allModelOptions[index].map((option) => option.referenceId ?? option.id)"
 												/>
@@ -85,16 +85,16 @@
 						</AccordionTab>
 						<AccordionTab header="Model weights">
 							<div
-								v-for="(modelConfiguration, index) in allModelConfigurations"
+								v-for="modelConfiguration in allModelConfigurations"
 								class="flex align-items-center"
 								:key="modelConfiguration.id"
 							>
 								<h6>{{ modelConfiguration.name }}</h6>
 								<tera-signal-bars
-									v-if="knobs.configurationWeights[index]?.value"
+									v-if="modelConfiguration?.id"
 									class="ml-auto"
-									:model-value="knobs.configurationWeights[index].value ?? 0"
-									@update:model-value="knobs.configurationWeights[index].value = $event"
+									:model-value="knobs.configurationWeights[modelConfiguration.id] ?? 0"
+									@update:model-value="knobs.configurationWeights[modelConfiguration.id] = $event"
 									label="Relative certainty"
 								/>
 							</div>
@@ -287,7 +287,6 @@ import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	CalibrateEnsembleMappingRow,
-	CalibrateEnsembleWeight,
 	EnsembleCalibrateExtraCiemss,
 	qualityPreset,
 	speedPreset
@@ -306,14 +305,14 @@ const emit = defineEmits(['append-output', 'update-state', 'close', 'select-outp
 
 interface BasicKnobs {
 	ensembleMapping: CalibrateEnsembleMappingRow[];
-	configurationWeights: CalibrateEnsembleWeight[];
+	configurationWeights: { [key: string]: number };
 	extra: EnsembleCalibrateExtraCiemss;
 	timestampColName: string;
 }
 
 const knobs = ref<BasicKnobs>({
 	ensembleMapping: props.node.state.ensembleMapping ?? [],
-	configurationWeights: props.node.state.configurationWeights ?? [],
+	configurationWeights: props.node.state.configurationWeights ?? {},
 	extra: props.node.state.extra ?? {},
 	timestampColName: props.node.state.timestampColName ?? ''
 });
@@ -367,10 +366,10 @@ const onSelection = (id: string) => {
 
 function addMapping() {
 	// create empty configuration mappings
-	const configMappings = allModelConfigurations.value.map((config) => ({
-		modelConfigId: config.id as string,
-		compartmentName: ''
-	}));
+	const configMappings = {};
+	allModelConfigurations.value.forEach((config) => {
+		configMappings[config.id as string] = '';
+	});
 
 	knobs.value.ensembleMapping.push({
 		name: '',
@@ -465,18 +464,13 @@ onMounted(async () => {
 	if (!modelConfigurationIds) return;
 
 	// Model configuration input
-
-	const results = await Promise.all(
+	await Promise.all(
 		modelConfigurationIds.map(async (id) => {
 			const { modelConfiguration, modelOptions } = await setupModelInput(id);
-			return { modelConfiguration, modelOptions };
+			if (modelConfiguration) allModelConfigurations.value.push(modelConfiguration);
+			if (modelOptions) allModelOptions.value.push(modelOptions);
 		})
 	);
-
-	results.forEach(({ modelConfiguration, modelOptions }) => {
-		if (modelConfiguration) allModelConfigurations.value.push(modelConfiguration);
-		if (modelOptions) allModelOptions.value.push(modelOptions);
-	});
 
 	// dataset input
 	if (datasetId.value) {
@@ -500,12 +494,9 @@ onMounted(async () => {
 	}
 
 	// initialze weights
-	if (knobs.value.configurationWeights.length !== allModelConfigurations.value.length) {
+	if (isEmpty(knobs.value.configurationWeights)) {
 		allModelConfigurations.value.forEach((config) => {
-			knobs.value.configurationWeights.push({
-				modelConfigurationId: config.id as string,
-				value: 5
-			});
+			knobs.value.configurationWeights[config.id as string] = 5;
 		});
 	}
 });

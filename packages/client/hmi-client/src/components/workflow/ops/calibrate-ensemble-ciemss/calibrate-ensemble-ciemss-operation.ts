@@ -28,25 +28,20 @@ export interface EnsembleCalibrateExtraCiemss {
 	learningRate: number;
 }
 
-export interface CalibrateEnsembleMapEntry {
-	modelConfigId: string;
-	compartmentName: string; // State or Obs that is being mapped to newName
-}
-
-export interface CalibrateEnsembleWeight {
-	modelConfigurationId: string;
-	value: number;
-}
-
 export interface CalibrateEnsembleMappingRow {
 	name: string;
 	datasetMapping: string;
-	modelConfigurationMappings: CalibrateEnsembleMapEntry[];
+	modelConfigurationMappings: { [key: string]: string };
 }
+
+export interface CalibrateEnsembleWeights {
+	[key: string]: number;
+}
+
 export interface CalibrateEnsembleCiemssOperationState extends BaseState {
 	chartConfigs: string[][];
 	ensembleMapping: CalibrateEnsembleMappingRow[];
-	configurationWeights: CalibrateEnsembleWeight[];
+	configurationWeights: CalibrateEnsembleWeights;
 	timestampColName: string;
 	extra: EnsembleCalibrateExtraCiemss;
 	inProgressCalibrationId: string;
@@ -73,7 +68,7 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 		const init: CalibrateEnsembleCiemssOperationState = {
 			chartConfigs: [],
 			ensembleMapping: [],
-			configurationWeights: [],
+			configurationWeights: {},
 			timestampColName: '',
 			extra: {
 				solverMethod: speedPreset.method,
