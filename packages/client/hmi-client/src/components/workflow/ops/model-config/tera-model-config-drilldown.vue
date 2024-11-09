@@ -33,18 +33,19 @@
 							severity="primary"
 							class="white-space-nowrap min-w-min"
 							size="small"
-							:loading="isLoading"
+							:loading="isExtracting"
 							:disabled="!props.node.inputs.slice(1, 5).some((input) => input?.value)"
 							@click="extractConfigurationsFromInputs"
 						/>
 					</div>
 				</template>
 				<template #content>
-					<!-- Show a spinner if loading -->
-					<section v-if="isLoading" class="processing-new-configuration-tile">
-						<p class="secondary-text">Processing...</p>
-					</section>
-					<tera-progress-spinner class="h-full" v-if="isFetchingConfigs" is-centered :font-size="2">
+					<tera-progress-spinner
+						v-if="isFetchingConfigs && isEmpty(modelConfigurations)"
+						class="h-full"
+						is-centered
+						:font-size="2"
+					>
 						Loading configurations...
 					</tera-progress-spinner>
 					<!-- Show all configurations -->
@@ -54,7 +55,7 @@
 								:configuration="configuration"
 								:selected="selectedConfigId === configuration.id"
 								@click="onSelectConfiguration(configuration)"
-								@delete="fetchConfigurations(model.id)"
+								@delete="fetchConfigurations"
 								@download="downloadModelArchive(configuration)"
 								@use="onSelectConfiguration(configuration)"
 							/>
@@ -65,7 +66,11 @@
 				</template>
 			</tera-slider-panel>
 		</template>
-		<tera-drilldown-section :is-loading="initializing" :tabName="DrilldownTabs.Wizard" class="px-3 mb-10">
+		<tera-drilldown-section
+			:is-loading="!props.node.state.transientModelConfig"
+			:tabName="DrilldownTabs.Wizard"
+			class="px-3 mb-10"
+		>
 			<template #header-controls-left>
 				<tera-toggleable-input
 					v-if="typeof knobs.transientModelConfig.name === 'string'"
@@ -87,6 +92,9 @@
 			<Accordion multiple :activeIndex="currentActiveIndexes">
 				<AccordionTab>
 					<template #header>
+						{{ knobs.transientModelConfig.id }}
+						<br />
+						{{ selectedConfigId }}
 						<h5 class="btn-content">Description</h5>
 						<Button v-if="!isEditingDescription" class="start-edit" text rounded @click.stop="onEditDescription">
 							<i class="pi pi-pencil" />
@@ -257,7 +265,6 @@ import { getMMT, getModel, getModelConfigurationsForModel, getCalendarSettingsFr
 import {
 	createModelConfiguration,
 	getArchive,
-	getModelConfigurationById,
 	setInitialExpression,
 	setInitialSource,
 	setParameterDistributions,
@@ -314,6 +321,7 @@ const newDescription = ref('');
 const descriptionTextareaRef = ref<ComponentPublicInstance<typeof Textarea> | null>(null);
 
 let originalConfig: ModelConfiguration | null = null;
+const modelId = props.node.inputs[0].value?.[0] as string;
 
 interface BasicKnobs {
 	transientModelConfig: ModelConfiguration;
@@ -443,6 +451,15 @@ function updateLlmQuery(query: string) {
 	llmQuery.value = query;
 }
 
+const updateThoughts = (data: any) => {
+	llmThoughts.value.push(data);
+	const llmResponse = llmThoughts.value.findLast((thought) => thought?.msg_type === 'llm_response');
+	// If the last thought is a LLM response, update the notebook response
+	if (llmResponse) {
+		notebookResponse.value = llmResponse.content.text;
+	}
+};
+
 function updateCodeState(code: string = codeText.value, hasCodeRun: boolean = true) {
 	const state = saveCodeToState(props.node, code, hasCodeRun, llmQuery.value, llmThoughts.value);
 	emit('update-state', state);
@@ -454,8 +471,8 @@ const initializeEditor = (editorInstance: any) => {
 
 const extractConfigurationsFromInputs = async () => {
 	const state = cloneDeep(props.node.state);
-	const modelId = model.value?.id;
-	if (!modelId) return;
+
+	isExtracting.value = true;
 
 	const matrixStr = generateModelDatasetConfigurationContext(mmt.value, mmtParams.value);
 
@@ -476,10 +493,25 @@ const extractConfigurationsFromInputs = async () => {
 	});
 
 	emit('update-state', state);
+
+	isExtracting.value = false;
 };
 
-const selectedOutputId = ref<string>('');
-const selectedConfigId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
+// watch(
+// 	() => props.node.state.modelConfigTaskIds,
+// 	(newValue, oldValue) => {
+// 		// if (newValue.length > 0) {
+// 		// 	isLoading.value = true;
+// 		// } else if (newValue.length !== oldValue.length) {
+// 		// 	isLoading.value = false;
+// 		// 	const modelId = props.node.inputs[0].value?.[0];
+// 		// 	if (!modelId) return;
+// 		// 	fetchConfigurations(modelId);
+// 		// }
+// 	}
+// );
+
+const selectedConfigId = computed(() => props.node.outputs.find(({ id }) => id === props.node.active)?.value?.[0]);
 
 const documentIds = computed(() =>
 	props.node.inputs
@@ -496,16 +528,13 @@ const datasetIds = computed(() =>
 
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 
-const initializing = ref(false);
 const isFetchingConfigs = ref(false);
-const isLoading = ref(false);
+const isExtracting = ref(false);
 
 const model = ref<Model | null>(null);
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
-
 const configuredMmt = ref(makeConfiguredMMT(mmt.value, knobs.value.transientModelConfig));
-
 const calendarSettings = ref<CalendarSettings | null>(null);
 
 const downloadModelArchive = async (configuration: ModelConfiguration = knobs.value.transientModelConfig) => {
@@ -567,45 +596,31 @@ const onSaveConfiguration = async () => {
 	logger.success('Saved model configuration');
 };
 
-const fetchConfigurations = async (modelId: string) => {
+const fetchConfigurations = async () => {
 	isFetchingConfigs.value = true;
 	modelConfigurations.value = await getModelConfigurationsForModel(modelId);
 	isFetchingConfigs.value = false;
+
+	originalConfig = modelConfigurations.value.find(({ id }) => id === selectedConfigId.value) ?? null;
 };
 
 // Fill the form with the config data
 const initialize = async (overwriteWithState: boolean = false) => {
-	initializing.value = true;
 	const state = props.node.state;
-	const modelId = props.node.inputs[0].value?.[0];
-	if (!modelId) return;
-	fetchConfigurations(modelId);
 
-	model.value = await getModel(modelId);
-	if (model.value) {
-		calendarSettings.value = getCalendarSettingsFromModel(model.value);
-		const response = await getMMT(model.value);
-		if (response) {
-			mmt.value = response.mmt;
-			mmtParams.value = response.template_params;
-		}
-	}
+	fetchConfigurations();
 
+	// Apply the first configuration if one hasn't been applied yet
 	if (!state.transientModelConfig.id) {
-		// Apply a configuration if one hasn't been applied yet
 		applyConfigValues(modelConfigurations.value[0]);
-	} else {
-		originalConfig = await getModelConfigurationById(selectedConfigId.value);
-		if (!overwriteWithState) {
-			knobs.value.transientModelConfig = cloneDeep(originalConfig);
-		} else {
-			knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
-		}
+	} else if (overwriteWithState) {
+		knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
+	} else if (originalConfig) {
+		knobs.value.transientModelConfig = cloneDeep(originalConfig);
 	}
 
 	configuredMmt.value = makeConfiguredMMT(mmt.value, knobs.value.transientModelConfig);
 
-	initializing.value = false;
 	// Create a new session and context based on model
 	try {
 		const jupyterContext = buildJupyterContext();
@@ -639,6 +654,8 @@ const onSelectConfiguration = async (config: ModelConfiguration) => {
 	if (transientModelConfig.name !== originalConfig?.name) lostItems.push('name');
 	if (transientModelConfig.description !== originalConfig?.description) lostItems.push('description');
 
+	console.log(transientModelConfig, originalConfig);
+
 	confirm.require({
 		header: `Unsaved changes`,
 		message: `Changes made to the ${formatListWithConjunction(lostItems)} will be lost.`,
@@ -651,6 +668,7 @@ const onSelectConfiguration = async (config: ModelConfiguration) => {
 };
 
 const applyConfigValues = (config: ModelConfiguration) => {
+	console.log(9);
 	// Update output port:
 	if (!config.id) {
 		logger.error('Model configuration not found');
@@ -700,29 +718,6 @@ const resetConfiguration = () => {
 	});
 };
 
-const updateThoughts = (data: any) => {
-	llmThoughts.value.push(data);
-	const llmResponse = llmThoughts.value.findLast((thought) => thought?.msg_type === 'llm_response');
-	// If the last thought is a LLM response, update the notebook response
-	if (llmResponse) {
-		notebookResponse.value = llmResponse.content.text;
-	}
-};
-
-watch(
-	() => props.node.state.modelConfigTaskIds,
-	(newValue, oldValue) => {
-		if (newValue.length > 0) {
-			isLoading.value = true;
-		} else if (newValue.length !== oldValue.length) {
-			isLoading.value = false;
-			const modelId = props.node.inputs[0].value?.[0];
-			if (!modelId) return;
-			fetchConfigurations(modelId);
-		}
-	}
-);
-
 const debounceUpdateState = debounce(() => {
 	console.log('debounced update');
 	const state = cloneDeep(props.node.state);
@@ -731,6 +726,7 @@ const debounceUpdateState = debounce(() => {
 
 	emit('update-state', state);
 }, 100);
+
 watch(
 	() => knobs.value,
 	async () => {
@@ -739,12 +735,19 @@ watch(
 	{ deep: true }
 );
 
-onMounted(() => {
-	// setting as true will overwrite the model config with the current state value
-	if (props.node.active) {
-		selectedOutputId.value = props.node.active;
-		initialize(true);
+onMounted(async () => {
+	model.value = await getModel(modelId);
+	if (model.value) {
+		calendarSettings.value = getCalendarSettingsFromModel(model.value);
+		const response = await getMMT(model.value);
+		if (response) {
+			mmt.value = response.mmt;
+			mmtParams.value = response.template_params;
+		}
 	}
+
+	// setting as true will overwrite the model config with the current state value
+	initialize(true);
 
 	if (documentIds.value.length) {
 		isFetchingPDF.value = true;
@@ -770,32 +773,19 @@ onMounted(() => {
 	isFetchingPDF.value = false;
 });
 
-watch(
-	() => props.node.active,
-	() => {
-		if (props.node.active) {
-			selectedOutputId.value = props.node.active;
-			initialize();
-		}
-	}
-);
-
 onUnmounted(() => {
 	kernelManager.shutdown();
 });
+
+watch(
+	() => props.node.active,
+	() => {
+		initialize();
+	}
+);
 </script>
 
 <style scoped>
-.processing-new-configuration-tile {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	padding: var(--gap-4);
-	background-color: var(--surface-0);
-	margin-top: var(--gap-3);
-	border-left: 4px solid var(--surface-300);
-}
-
 /* When accordions are closed, don't show their filter or edit buttons */
 :deep(.p-accordion-tab:not(.p-accordion-tab-active)) .p-accordion-header .p-accordion-header-link .tera-input,
 :deep(.p-accordion-tab:not(.p-accordion-tab-active)) .p-accordion-header .p-accordion-header-link button {
@@ -911,10 +901,6 @@ button.start-edit {
 	& > span {
 		margin-left: var(--gap-2);
 	}
-}
-
-.secondary-text {
-	color: var(--text-color-subdued);
 }
 
 .executed-code {
