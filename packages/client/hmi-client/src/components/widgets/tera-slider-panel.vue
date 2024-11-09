@@ -11,8 +11,8 @@
 				<header :class="{ shadow: isScrolled }">
 					<div class="title">
 						<h4>{{ header }}</h4>
-						<!--Add extra butttons here if desired-->
 						<div class="flex gap-2">
+							<!--Add extra buttons in this slot if desired-->
 							<slot name="header-buttons" />
 							<Button
 								:icon="`pi ${directionMap[arrowDirection].iconOpen}`"

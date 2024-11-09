@@ -67,7 +67,7 @@
 			</tera-slider-panel>
 		</template>
 		<tera-drilldown-section
-			:is-loading="!props.node.state.transientModelConfig"
+			:is-loading="knobs.transientModelConfig.id !== selectedConfigId"
 			:tabName="DrilldownTabs.Wizard"
 			class="px-3 mb-10"
 		>
@@ -92,9 +92,6 @@
 			<Accordion multiple :activeIndex="currentActiveIndexes">
 				<AccordionTab>
 					<template #header>
-						{{ knobs.transientModelConfig.id }}
-						<br />
-						{{ selectedConfigId }}
 						<h5 class="btn-content">Description</h5>
 						<Button v-if="!isEditingDescription" class="start-edit" text rounded @click.stop="onEditDescription">
 							<i class="pi pi-pencil" />
@@ -591,8 +588,8 @@ const onSaveConfiguration = async () => {
 		logger.error('Failed to update model configuration');
 		return;
 	}
-	initialize();
 	useProjects().refresh();
+	fetchConfigurations();
 	logger.success('Saved model configuration');
 };
 
@@ -600,15 +597,11 @@ const fetchConfigurations = async () => {
 	isFetchingConfigs.value = true;
 	modelConfigurations.value = await getModelConfigurationsForModel(modelId);
 	isFetchingConfigs.value = false;
-
-	originalConfig = modelConfigurations.value.find(({ id }) => id === selectedConfigId.value) ?? null;
 };
 
-// Fill the form with the config data
-const initialize = async (overwriteWithState: boolean = false) => {
+async function loadOutput(overwriteWithState = false) {
 	const state = props.node.state;
-
-	fetchConfigurations();
+	originalConfig = modelConfigurations.value.find(({ id }) => id === selectedConfigId.value) ?? null;
 
 	// Apply the first configuration if one hasn't been applied yet
 	if (!state.transientModelConfig.id) {
@@ -634,9 +627,11 @@ const initialize = async (overwriteWithState: boolean = false) => {
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
 	}
-};
+}
 
 const onSelectConfiguration = async (config: ModelConfiguration) => {
+	if (config.id === selectedConfigId.value) return;
+
 	if (pdfViewer.value && config.extractionPage) {
 		pdfViewer.value.goToPage(config.extractionPage);
 	}
@@ -654,8 +649,6 @@ const onSelectConfiguration = async (config: ModelConfiguration) => {
 	if (transientModelConfig.name !== originalConfig?.name) lostItems.push('name');
 	if (transientModelConfig.description !== originalConfig?.description) lostItems.push('description');
 
-	console.log(transientModelConfig, originalConfig);
-
 	confirm.require({
 		header: `Unsaved changes`,
 		message: `Changes made to the ${formatListWithConjunction(lostItems)} will be lost.`,
@@ -668,7 +661,6 @@ const onSelectConfiguration = async (config: ModelConfiguration) => {
 };
 
 const applyConfigValues = (config: ModelConfiguration) => {
-	console.log(9);
 	// Update output port:
 	if (!config.id) {
 		logger.error('Model configuration not found');
@@ -746,8 +738,9 @@ onMounted(async () => {
 		}
 	}
 
-	// setting as true will overwrite the model config with the current state value
-	initialize(true);
+	// Wait for the configurations to load before loading any output
+	await fetchConfigurations();
+	loadOutput(true);
 
 	if (documentIds.value.length) {
 		isFetchingPDF.value = true;
@@ -779,9 +772,7 @@ onUnmounted(() => {
 
 watch(
 	() => props.node.active,
-	() => {
-		initialize();
-	}
+	() => loadOutput()
 );
 </script>
 
