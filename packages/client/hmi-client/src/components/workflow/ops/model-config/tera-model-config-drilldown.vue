@@ -38,6 +38,9 @@
 							@click="extractConfigurationsFromInputs"
 						/>
 					</div>
+					<tera-progress-spinner v-if="isFetchingConfigs && !isEmpty(modelConfigurations)" is-inline>
+						<span class="refresh-message"> Refreshing configurations... </span>
+					</tera-progress-spinner>
 				</template>
 				<template #content>
 					<tera-progress-spinner
@@ -892,6 +895,10 @@ button.start-edit {
 	& > span {
 		margin-left: var(--gap-2);
 	}
+}
+
+.refresh-message {
+	color: var(--primary-color);
 }
 
 .executed-code {
