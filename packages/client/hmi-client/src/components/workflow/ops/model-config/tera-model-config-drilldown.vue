@@ -50,9 +50,7 @@
 								<tera-model-configuration-item
 									:configuration="configuration"
 									:selected="selectedConfigId === configuration.id"
-									:empty-input-count="
-										selectedConfigId === configuration.id ? currentInputCount : missingInputCount(configuration)
-									"
+									:empty-input-count="missingInputCount(configuration)"
 									@click="onSelectConfiguration(configuration)"
 									@delete="fetchConfigurations(model.id)"
 									@download="downloadModelArchive(configuration)"
@@ -303,7 +301,7 @@ const emit = defineEmits(['append-output', 'update-state', 'select-output', 'clo
 
 const isFetchingPDF = ref(false);
 const isDocViewerOpen = ref(true);
-const currentInputCount = ref('');
+const selectedConfigMissingInputCount = ref('');
 
 const currentActiveIndexes = ref([0, 1, 2]);
 const pdfData = ref<{ document: any; data: string; isPdf: boolean; name: string }[]>([]);
@@ -337,11 +335,18 @@ const calibratedConfigObservables = computed<Observable[]>(() =>
 const getTotalInput = (modelConfiguration: ModelConfiguration) =>
 	modelConfiguration.initialSemanticList.length + modelConfiguration.parameterSemanticList.length;
 
-const missingInputCount = (modelConfiguration: ModelConfiguration) => {
+const getMissingInputCountMessage = (modelConfiguration: ModelConfiguration) => {
 	const amount = getMissingInputAmount(modelConfiguration);
 	const total = getTotalInput(modelConfiguration);
 	const precent = (amount / total) * 100;
 	return amount ? `Missing values: ${amount}/${total} (${precent.toFixed(0)}%)` : '';
+};
+
+const missingInputCount = (modelConfiguration: ModelConfiguration) => {
+	if (selectedConfigId.value === modelConfiguration.id) {
+		return selectedConfigMissingInputCount.value;
+	}
+	return getMissingInputCountMessage(modelConfiguration);
 };
 
 // Check if the model configuration is the same as the original
@@ -755,7 +760,7 @@ const debounceUpdateState = debounce(() => {
 	configuredMmt.value = makeConfiguredMMT(mmt.value, knobs.value.transientModelConfig);
 
 	emit('update-state', state);
-	currentInputCount.value = missingInputCount(state.transientModelConfig);
+	selectedConfigMissingInputCount.value = getMissingInputCountMessage(state.transientModelConfig);
 }, 100);
 watch(
 	() => knobs.value,
