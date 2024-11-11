@@ -165,6 +165,10 @@
 											:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
 										/>
 									</div>
+									<div v-if="knobs.method === CiemssMethodOptions.euler" class="label-and-input">
+										<label>Solver step size</label>
+										<tera-input-number v-model="knobs.stepSize" />
+									</div>
 								</div>
 							</div>
 						</AccordionTab>
@@ -284,6 +288,7 @@ interface BasicKnobs {
 	weights: SimulateEnsembleWeight[];
 	numSamples: number;
 	method: CiemssMethodOptions;
+	stepSize: number;
 	endTime: number;
 }
 
@@ -292,6 +297,7 @@ const knobs = ref<BasicKnobs>({
 	weights: props.node.state.weights,
 	numSamples: props.node.state.numSamples,
 	method: props.node.state.method,
+	stepSize: props.node.state.stepSize,
 	endTime: props.node.state.endTime
 });
 
@@ -393,11 +399,15 @@ const runEnsemble = async () => {
 	const modelConfigs = formatSimulateModelConfigurations(knobs.value.mapping, knobs.value.weights);
 	const params: EnsembleSimulationCiemssRequest = {
 		modelConfigs,
-		timespan: { start: 0, end: knobs.value.endTime },
+		timespan: {
+			start: 0,
+			end: knobs.value.endTime
+		},
 		engine: 'ciemss',
 		extra: {
 			num_samples: knobs.value.numSamples,
-			method: knobs.value.method
+			solver_method: knobs.value.method,
+			solver_step_size: knobs.value.stepSize
 		}
 	};
 	const response = await makeEnsembleCiemssSimulation(params, nodeMetadata(props.node));
@@ -479,6 +489,7 @@ watch(
 		state.endTime = knobs.value.endTime;
 		state.numSamples = knobs.value.numSamples;
 		state.method = knobs.value.method;
+		state.stepSize = knobs.value.stepSize;
 		emit('update-state', state);
 	},
 	{ immediate: true }
