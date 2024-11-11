@@ -59,10 +59,11 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 	imageUrl: calibrateEnsembleCiemss,
 	inputs: [
 		{ type: 'datasetId', label: 'Dataset' },
-		{ type: 'modelConfigId', label: 'Model configuration', unique: true }
+		{ type: 'modelConfigId', label: 'Model configuration' }
 	],
 	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
+	uniqueInputs: true,
 
 	initState: () => {
 		const init: CalibrateEnsembleCiemssOperationState = {

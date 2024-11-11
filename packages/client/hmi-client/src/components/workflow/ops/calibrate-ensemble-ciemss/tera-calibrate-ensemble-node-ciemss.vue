@@ -251,7 +251,7 @@ watch(
 				(input) => input.status === WorkflowPortStatus.CONNECTED || input.type !== 'modelConfigId'
 			)
 		) {
-			emit('append-input-port', { type: 'modelConfigId', label: 'Model configuration', unique: true });
+			emit('append-input-port', { type: 'modelConfigId', label: 'Model configuration' });
 		}
 	},
 	{ deep: true }
