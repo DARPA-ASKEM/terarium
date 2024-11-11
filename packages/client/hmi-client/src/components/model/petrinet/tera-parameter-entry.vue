@@ -47,7 +47,7 @@
 						v-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Constant"
 						label="Constant"
 						:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.value"
-						:error-empty="errorEmpty"
+						error-empty
 						@update:model-value="
 							emit('update-parameter', {
 								id: parameterId,
@@ -60,7 +60,7 @@
 						<tera-input-number
 							label="Min"
 							:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.minimum"
-							:error-empty="errorEmpty"
+							error-empt
 							@update:model-value="
 								emit('update-parameter', {
 									id: parameterId,
@@ -72,7 +72,7 @@
 						<tera-input-number
 							label="Max"
 							:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.maximum"
-							:error-empty="errorEmpty"
+							error-empty
 							@update:model-value="
 								emit('update-parameter', {
 									id: parameterId,
@@ -148,7 +148,6 @@ const props = defineProps<{
 	modelConfigurations: ModelConfiguration[];
 	parameterId: string;
 	featureConfig?: FeatureConfig;
-	errorEmpty?: boolean;
 }>();
 
 const emit = defineEmits(['update-parameter', 'update-source', 'has-empty-field']);
