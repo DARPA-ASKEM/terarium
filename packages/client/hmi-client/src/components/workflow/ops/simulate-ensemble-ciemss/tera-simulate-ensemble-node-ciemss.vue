@@ -126,7 +126,7 @@ watch(
 
 		const response = await getStatus(id);
 		if (response?.state === PollerState.Done) {
-			processResult(id);
+			await processResult(id);
 		}
 		const state = _.cloneDeep(props.node.state);
 		state.inProgressForecastId = '';
