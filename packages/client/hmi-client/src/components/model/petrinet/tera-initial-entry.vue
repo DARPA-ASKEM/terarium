@@ -20,7 +20,7 @@
 				<span class="expression">
 					<tera-input-text
 						label="Expression"
-						:error-empty="errorEmpty"
+						error-empty
 						:model-value="getInitialExpression(modelConfiguration, initialId)"
 						@update:model-value="emit('update-expression', { id: initialId, value: $event })"
 					/>
@@ -76,7 +76,6 @@ const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
 	modelConfigurations: ModelConfiguration[];
 	featureConfig?: FeatureConfig;
-	errorEmpty?: boolean;
 }>();
 
 const otherValueList = computed(() =>
