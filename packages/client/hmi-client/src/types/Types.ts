@@ -801,8 +801,8 @@ export interface ModelUnit {
 export interface GroundedSemantic {
     name?: string;
     id: string;
-    grounding?: ModelGrounding;
     description?: string;
+    grounding?: ModelGrounding;
 }
 
 export interface Properties {
