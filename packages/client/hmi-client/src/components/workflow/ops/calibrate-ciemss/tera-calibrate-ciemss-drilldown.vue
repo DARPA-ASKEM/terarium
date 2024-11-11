@@ -255,7 +255,7 @@
 						</div>
 					</AccordionTab>
 				</Accordion>
-				<div v-if="!isLoading">
+				<div v-if="!isLoading && _.isEmpty(node.state?.errorMessage?.traceback)">
 					<section class="pb-3" ref="outputPanel" v-if="modelConfig && csvAsset">
 						<Accordion multiple :active-index="[0, 1, 2, 3, 4]" class="px-2">
 							<AccordionTab header="Parameter distributions">
@@ -341,11 +341,14 @@
 						<p class="helpMessage">Connect a model configuration and dataset</p>
 					</section>
 				</div>
+				<tera-notebook-error
+					v-else-if="!_.isEmpty(node.state?.errorMessage?.traceback) && !isLoading"
+					v-bind="node.state.errorMessage"
+				/>
 				<section v-else class="emptyState">
 					<tera-progress-spinner :font-size="2" is-centered style="height: 12rem" />
 					<p>Processing...{{ props.node.state.currentProgress }}%</p>
 				</section>
-				<tera-notebook-error v-if="!_.isEmpty(node.state?.errorMessage?.traceback)" v-bind="node.state.errorMessage" />
 			</tera-drilldown-section>
 			<!-- Empty state if calibrate hasn't been run yet -->
 			<section v-else class="output-section-empty-state">
