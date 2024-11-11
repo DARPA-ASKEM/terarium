@@ -674,9 +674,7 @@ const mappingDropdownPlaceholder = computed(() => {
 const showOutputSection = computed(
 	() =>
 		lossValues.value.length > 0 ||
-		selectedErrorVariableSettings.value.length > 0 ||
-		selectedVariableSettings.value.length > 0 ||
-		selectedParameterSettings.value.length > 0 ||
+		!_.isEmpty(chartSettings.value) ||
 		isLoading.value ||
 		!_.isEmpty(props.node.state?.errorMessage?.traceback)
 );
