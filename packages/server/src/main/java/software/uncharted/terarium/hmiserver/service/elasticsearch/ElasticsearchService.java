@@ -33,18 +33,22 @@ import co.elastic.clients.elasticsearch.indices.PutAliasRequest;
 import co.elastic.clients.elasticsearch.indices.RefreshRequest;
 import co.elastic.clients.elasticsearch.indices.RefreshResponse;
 import co.elastic.clients.elasticsearch.ingest.GetPipelineRequest;
+import co.elastic.clients.json.JsonpUtils;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Iterator;
 import java.util.List;
+import java.util.UUID;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.Header;
@@ -575,6 +579,111 @@ public class ElasticsearchService {
 			return client.search(req, tClass);
 		} catch (final ElasticsearchException e) {
 			throw handleException(e);
+		}
+	}
+
+	@Data
+	public static class KnnHit<Type, InnerType> {
+
+		private UUID id;
+		private Type source;
+		private List<InnerType> innerHits = new ArrayList<>();
+	}
+
+	@Data
+	public static class KnnSearchResponse<Type, InnerType> {
+
+		private List<KnnHit<Type, InnerType>> hits = new ArrayList<>();
+		private long total;
+	}
+
+	private JsonNode getFirstField(final JsonNode jsonNode) {
+		final Iterator<String> fieldNames = jsonNode.fieldNames();
+		if (fieldNames.hasNext()) {
+			return jsonNode.get(fieldNames.next());
+		}
+		return null;
+	}
+
+	public <Type, InnerType> KnnSearchResponse<Type, InnerType> knnSearchWithInnerHits(
+		final String index,
+		final KnnQuery knn,
+		final Query query,
+		final Integer page,
+		final Integer pageSize,
+		final List<String> excludes,
+		final Class<Type> hitClass,
+		final Class<InnerType> innerHitClass
+	) throws IOException {
+		try {
+			log.info("KNN search on: {}", index);
+
+			final SearchRequest.Builder builder = new SearchRequest.Builder()
+				.index(index)
+				.from(page)
+				.source(s -> s.filter(f -> f.excludes(excludes)))
+				.size(pageSize);
+
+			if (knn != null) {
+				if (knn.numCandidates() < knn.k()) {
+					throw new IllegalArgumentException("Number of candidates must be greater than or equal to k");
+				}
+				builder.knn(knn);
+			}
+
+			if (query != null) {
+				builder.query(query);
+			}
+
+			final SearchRequest req = builder.build();
+
+			final String queryStr = JsonpUtils.toJsonString(req, new JacksonJsonpMapper(mapper));
+			final ObjectNode jsonQuery = (ObjectNode) mapper.readTree(queryStr);
+
+			// manually inject the inner hits because the java client is stupid
+			for (final JsonNode knnJson : jsonQuery.get("knn")) {
+				((ObjectNode) knnJson).set("inner_hits", mapper.createObjectNode());
+			}
+
+			final JsonNode res = rawSearch(index, jsonQuery);
+
+			final KnnSearchResponse<Type, InnerType> response = new KnnSearchResponse<>();
+			response.total = res.get("hits").get("total").get("value").asLong();
+
+			for (final JsonNode hit : res.get("hits").get("hits")) {
+				final KnnHit<Type, InnerType> knnHit = new KnnHit<>();
+				knnHit.id = UUID.fromString(hit.get("_id").asText());
+				knnHit.source = mapper.convertValue(hit.get("_source"), hitClass);
+
+				if (hit.get("inner_hits") == null || getFirstField(hit.get("inner_hits")) == null) {
+					continue;
+				}
+
+				for (final JsonNode innerHit : getFirstField(hit.get("inner_hits")).get("hits").get("hits")) {
+					knnHit.innerHits.add(mapper.convertValue(innerHit.get("_source"), innerHitClass));
+				}
+
+				response.hits.add(knnHit);
+			}
+
+			return response;
+		} catch (final ElasticsearchException e) {
+			throw handleException(e);
+		}
+	}
+
+	public JsonNode rawSearch(final String index, final JsonNode body) throws IOException {
+		try {
+			final HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			final HttpEntity<String> entity = new HttpEntity<>(body.toString(), headers);
+
+			final ResponseEntity<JsonNode> response = getRestTemplate()
+				.exchange(new URI(config.getUrl() + "/" + index + "/_search"), HttpMethod.POST, entity, JsonNode.class);
+
+			return response.getBody();
+		} catch (final Exception e) {
+			throw new RuntimeException(e);
 		}
 	}
 

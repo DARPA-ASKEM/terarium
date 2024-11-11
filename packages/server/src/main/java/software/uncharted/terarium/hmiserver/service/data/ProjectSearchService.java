@@ -1,18 +1,17 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
 import co.elastic.clients.elasticsearch._types.FieldSort;
+import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.KnnQuery;
 import co.elastic.clients.elasticsearch._types.SortOptions;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.HasChildQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
-import co.elastic.clients.elasticsearch.core.SearchResponse;
-import co.elastic.clients.elasticsearch.core.search.Hit;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -36,6 +35,8 @@ import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.repository.data.ProjectRepository;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
+import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService.KnnHit;
+import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService.KnnSearchResponse;
 import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
 
 @RequiredArgsConstructor
@@ -43,6 +44,7 @@ import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
 @Slf4j
 public class ProjectSearchService {
 
+	protected final ObjectMapper objectMapper;
 	protected final ElasticsearchConfiguration elasticConfig;
 	protected final ElasticsearchService elasticService;
 	protected final EmbeddingService embeddingService;
@@ -423,10 +425,18 @@ public class ProjectSearchService {
 		}
 	}
 
+	@Data
+	public static class ProjectSearchAsset {
+
+		UUID assetId;
+		AssetType assetType;
+	}
+
+	@Data
 	public static class ProjectSearchResponse {
 
 		Project project;
-		List<TerariumAsset> hits;
+		List<ProjectSearchAsset> hits = new ArrayList<>();
 	}
 
 	/**
@@ -459,61 +469,63 @@ public class ProjectSearchService {
 				throw new InvalidInputException("k must be less than or equal to numCandidates");
 			}
 
-			KnnQuery knn = null;
-			if (text != null && !text.isEmpty()) {
-				final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
+			final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
 
-				final List<Float> vector = Arrays.stream(embeddings.getEmbeddings().get(0).getVector())
-					.mapToObj(d -> (float) d)
-					.collect(Collectors.toList());
+			final List<Float> vector = Arrays.stream(embeddings.getEmbeddings().get(0).getVector())
+				.mapToObj(d -> (float) d)
+				.collect(Collectors.toList());
 
-				knn = new KnnQuery.Builder()
-					.field("asset_embeddings.vector")
-					.queryVector(vector)
-					.k(k)
-					.numCandidates(numCandidates)
-					.build();
-			}
+			final List<FieldValue> assetTypeValues = assetTypesToInclude
+				.stream()
+				.map(AssetType::toString)
+				.map(FieldValue::of)
+				.collect(Collectors.toList());
 
-			final Query permsQuery = getProjectPermissionQuery(userId, null);
+			final TermsQueryField termsQueryField = new TermsQueryField.Builder().value(assetTypeValues).build();
 
-			// Add inner_hits to the nested query
-			final Query nestedQuery = new Query.Builder()
-				.nested(n ->
-					n
-						.path("asset_embeddings")
-						.query(permsQuery)
-						.innerHits(
-							ih -> ih.name("asset_embeddings_hits").size(1) // Adjust the size as needed
-						)
-				)
+			final Query assetTypeQuery = new Query.Builder()
+				.terms(t -> t.field("asset_embeddings.assetType").terms(termsQueryField))
+				.build();
+
+			final Query permsQuery = getProjectPermissionQuery(userId, assetTypeQuery);
+
+			final KnnQuery knn = new KnnQuery.Builder()
+				.field("asset_embeddings.vector")
+				.queryVector(vector)
+				.k(k)
+				.numCandidates(numCandidates)
 				.build();
 
 			final List<String> EXCLUDE_FIELDS = List.of("asset_embeddings.vector");
 
-			final SearchResponse<JsonNode> res = elasticService.knnSearch(
+			final KnnSearchResponse<ProjectDocument, ProjectAssetEmbedding> res = elasticService.knnSearchWithInnerHits(
 				getAlias(),
 				knn,
-				nestedQuery,
+				permsQuery,
 				page,
 				pageSize,
 				EXCLUDE_FIELDS,
-				JsonNode.class
+				ProjectDocument.class,
+				ProjectAssetEmbedding.class
 			);
 
 			final List<ProjectSearchResponse> results = new ArrayList<>();
 
-			for (final Hit<JsonNode> hit : res.hits().hits()) {
-				final ObjectNode source = (ObjectNode) hit.source();
+			for (final KnnHit<ProjectDocument, ProjectAssetEmbedding> hit : res.getHits()) {
+				final ProjectDocument source = hit.getSource();
 				if (source != null) {
-					source.put("id", hit.id());
-
-					log.info(source.get("id").asText() + ": " + source);
+					final UUID projectId = hit.getId();
 
 					final ProjectSearchResponse response = new ProjectSearchResponse();
-					response.project = projectRepository.findById(UUID.fromString(source.get("id").asText())).get();
+					response.project = projectRepository.findById(projectId).get();
 
-					// TODO: finish this, need to get the inner hits to show what asset was the hit
+					for (final ProjectAssetEmbedding innerHit : hit.getInnerHits()) {
+						final ProjectSearchAsset asset = new ProjectSearchAsset();
+						asset.assetId = innerHit.getAssetId();
+						asset.assetType = innerHit.getAssetType();
+
+						response.hits.add(asset);
+					}
 
 					results.add(response);
 				}
