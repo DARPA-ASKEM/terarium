@@ -104,12 +104,7 @@ const processResult = async (simulationId: string) => {
 		type: SimulateEnsembleCiemssOperation.outputs[0].type,
 		label: nodeOutputLabel(props.node, `${portLabel} Result`),
 		value: [datasetResult.id],
-		state: {
-			mapping: state.mapping,
-			timeSpan: state.timeSpan,
-			numSamples: state.numSamples,
-			forecastId: simulationId
-		},
+		state,
 		isSelected: false
 	});
 };
@@ -131,7 +126,7 @@ watch(
 
 		const response = await getStatus(id);
 		if (response?.state === PollerState.Done) {
-			processResult(id);
+			await processResult(id);
 		}
 		const state = _.cloneDeep(props.node.state);
 		state.inProgressForecastId = '';

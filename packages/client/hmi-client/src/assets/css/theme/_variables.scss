@@ -643,7 +643,7 @@ $dialogHeaderTextColor: $textColor;
 $dialogHeaderFontWeight: $fontWeightSemiBold;
 $dialogHeaderFontSize: $fontBodyLarge;
 $dialogHeaderPadding: 1rem 1.33rem 0rem 1.33rem;
-$dialogContentPadding: 0 1.33rem 1.33rem 1.33rem;
+$dialogContentPadding: 1.33rem;
 $dialogFooterBorder: 0 none;
 $dialogFooterPadding: 1rem 1.33rem;
 
@@ -948,6 +948,7 @@ $petri-inputBox: var(--surface-0);
 	--warning-color: #FFAB00;
 	--surface-error: #FDDDD3;
 	--error-color: #F35625;
+	--error-background: rgba(243, 215, 208, 0.5);
 	--error-border-color: #F89A7C;
 	--surface-hover: var(--gray-100);
 	--surface-secondary: #f9fbfa;

@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.ErrorCause;
 import co.elastic.clients.elasticsearch._types.KnnQuery;
+import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.cluster.ExistsComponentTemplateRequest;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
@@ -33,6 +34,7 @@ import co.elastic.clients.elasticsearch.indices.PutAliasRequest;
 import co.elastic.clients.elasticsearch.indices.RefreshRequest;
 import co.elastic.clients.elasticsearch.indices.RefreshResponse;
 import co.elastic.clients.elasticsearch.ingest.GetPipelineRequest;
+import co.elastic.clients.json.JsonpMapper;
 import co.elastic.clients.json.JsonpUtils;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
@@ -41,7 +43,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.annotation.PostConstruct;
+import jakarta.json.stream.JsonParser;
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -209,6 +213,30 @@ public class ElasticsearchService {
 	public void createIndex(final String index) throws IOException {
 		try {
 			final CreateIndexRequest req = new CreateIndexRequest.Builder().index(index).build();
+
+			client.indices().create(req);
+		} catch (final ElasticsearchException e) {
+			throw handleException(e);
+		}
+	}
+
+	/**
+	 * Create the provided index.
+	 *
+	 * @param index The name of the index to create
+	 * @throws IOException If an error occurs while creating the index
+	 */
+	public void createIndex(final String index, final String mapping) throws IOException {
+		try {
+			final JsonpMapper mapper = client._transport().jsonpMapper();
+			final JsonParser parser = mapper.jsonProvider().createParser(new StringReader(mapping));
+
+			log.info("Creating index {} with mapping", index);
+
+			final CreateIndexRequest req = new CreateIndexRequest.Builder()
+				.index(index)
+				.mappings(TypeMapping._DESERIALIZER.deserialize(parser, mapper))
+				.build();
 
 			client.indices().create(req);
 		} catch (final ElasticsearchException e) {
@@ -582,6 +610,30 @@ public class ElasticsearchService {
 		}
 	}
 
+	/**
+	 * Bulk insert documents into an index.
+	 *
+	 * @param indexName      The index to insert the documents into
+	 * @param esIndexContent The content of the index
+	 */
+	public void bulkInsert(final String indexName, final String esIndexContent) {
+		try {
+			final BulkRequest.Builder bulkRequest = new BulkRequest.Builder();
+
+			final com.fasterxml.jackson.core.JsonParser parser = mapper.createParser(esIndexContent);
+			while (parser.hasCurrentToken()) {
+				final JsonNode node = mapper.readTree(parser);
+				log.warn("Inserting " + node.asText());
+				final String id = node.get("id").asText();
+				bulkRequest.operations(op -> op.index(idx -> idx.index(indexName).id(id).document(node)));
+			}
+			log.warn("Bulk inserting documents into index {}", indexName);
+			client.bulk(bulkRequest.build());
+		} catch (final IOException e) {
+			log.error("Error bulk inserting documents into index {}", indexName, e);
+		}
+	}
+
 	@Data
 	public static class KnnHit<Type, InnerType> {
 
@@ -831,5 +883,48 @@ public class ElasticsearchService {
 
 	public static String emphasis(final String s, final int boost) {
 		return s + "^" + String.valueOf(boost);
+	}
+
+	/**
+	 * Insert the given documents into the given index with the given ids
+	 *
+	 * @param index     The index to insert the documents into
+	 * @param documents the documents to insert
+	 * @param ids       The ids of the documents to insert, parallel to the
+	 *                  documents
+	 * @return The bulk response
+	 * @throws IOException              If the bulk insert fails
+	 * @throws IllegalArgumentException If the number of documents and ids are not
+	 *                                  the same
+	 */
+	public BulkResponse bulkInsert(final String index, final List documents, final List<String> ids) throws IOException {
+		if (ids != null && documents.size() != ids.size()) {
+			throw new IllegalArgumentException("The number of documents and ids must be the same");
+		}
+
+		final List<BulkOperation> bulkOperations = new ArrayList<>();
+		for (int i = 0; i < documents.size(); i++) {
+			final String id = ids != null ? ids.get(i) : UUID.randomUUID().toString();
+			final Object document = documents.get(i);
+			bulkOperations.add(BulkOperation.of(b -> b.index(op -> op.index(index).id(id).document(document))));
+		}
+
+		log.info("Elasticsearch | Bulk | Inserting {} documents into index {}", documents.size(), index);
+		return client.bulk(BulkRequest.of(bulkRequest -> bulkRequest.index(index).operations(bulkOperations)));
+	}
+
+	/**
+	 * Checks if the given index exists
+	 *
+	 * @param name The index name
+	 * @return The boolean response, empty if the call fails
+	 */
+	public Boolean hasIndex(final String name) {
+		try {
+			return client.indices().exists(e -> e.index(name)).value();
+		} catch (final IOException e) {
+			log.error("Error checking if index exists {}", name, e);
+		}
+		return null;
 	}
 }

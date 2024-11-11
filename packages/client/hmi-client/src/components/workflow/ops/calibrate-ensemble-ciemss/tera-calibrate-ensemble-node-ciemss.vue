@@ -15,7 +15,12 @@
 					selectedRun: props.node.state.forecastRunId,
 					selectedVariable: config
 				}"
-				:mapping="props.node.state.ensembleConfigs as any"
+				:mapping="
+					formatCalibrateModelConfigurations(
+						props.node.state.ensembleMapping,
+						props.node.state.configurationWeights
+					) as any
+				"
 				:initial-data="csvAsset"
 				:size="{ width: 190, height: 120 }"
 				has-mean-line
@@ -63,7 +68,11 @@ import type { RunResults } from '@/types/SimulateConfig';
 import { getDataset } from '@/services/dataset';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import type { CalibrateEnsembleCiemssOperationState } from './calibrate-ensemble-ciemss-operation';
-import { updateLossChartSpec, getLossValuesFromSimulation } from './calibrate-ensemble-util';
+import {
+	updateLossChartSpec,
+	getLossValuesFromSimulation,
+	formatCalibrateModelConfigurations
+} from './calibrate-ensemble-util';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
@@ -124,6 +133,13 @@ const pollResult = async (runId: string) => {
 		logger.error(`Calibration: ${runId} has failed`, {
 			toastTitle: 'Error - Pyciemss'
 		});
+
+		// TODO: show error in UI
+		const state = _.cloneDeep(props.node.state);
+		state.currentProgress = 0;
+		state.inProgressForecastId = '';
+		state.inProgressCalibrationId = '';
+		emit('update-state', state);
 		throw Error('Failed Runs');
 	}
 	return pollerResults;
@@ -146,7 +162,10 @@ watch(
 			console.log('dill URL is', dillURL);
 
 			const params: EnsembleSimulationCiemssRequest = {
-				modelConfigs: props.node.state.ensembleConfigs,
+				modelConfigs: formatCalibrateModelConfigurations(
+					props.node.state.ensembleMapping,
+					props.node.state.configurationWeights
+				),
 				timespan: {
 					// Should probably grab this from csvasset
 					start: 0,
@@ -184,13 +203,13 @@ watch(
 			state.currentProgress = 0;
 			state.inProgressForecastId = '';
 			state.forecastRunId = id;
-			emit('update-state', state);
 
 			const portLabel = props.node.inputs[0].label;
 			emit('append-output', {
 				type: 'calibrateSimulationId',
 				label: nodeOutputLabel(props.node, `${portLabel} Result`),
-				value: [state.calibrationId]
+				value: [state.calibrationId],
+				state
 			});
 		}
 	},
