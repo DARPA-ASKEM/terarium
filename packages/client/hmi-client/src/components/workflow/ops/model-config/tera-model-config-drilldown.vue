@@ -50,9 +50,7 @@
 								<tera-model-configuration-item
 									:configuration="configuration"
 									:selected="selectedConfigId === configuration.id"
-									:empty-input-count="
-										selectedConfigId === configuration.id ? currentInputCount : missingInputCount(configuration)
-									"
+									:empty-input-count="missingInputCount(configuration)"
 									@click="onSelectConfiguration(configuration)"
 									@delete="fetchConfigurations(model.id)"
 									@download="downloadModelArchive(configuration)"
@@ -66,7 +64,7 @@
 				</template>
 			</tera-slider-panel>
 		</template>
-		<tera-drilldown-section :is-loading="initializing" :tabName="ConfigTabs.Wizard" class="px-3 mb-10">
+		<tera-drilldown-section :is-loading="initializing" :tabName="DrilldownTabs.Wizard" class="px-3 mb-10">
 			<template #header-controls-left>
 				<tera-toggleable-input
 					v-if="typeof knobs.transientModelConfig.name === 'string'"
@@ -172,7 +170,7 @@
 				</template>
 			</template>
 		</tera-drilldown-section>
-		<tera-columnar-panel :tabName="ConfigTabs.Notebook">
+		<tera-columnar-panel :tabName="DrilldownTabs.Notebook">
 			<tera-drilldown-section class="notebook-section">
 				<div class="toolbar">
 					<Suspense>
@@ -260,6 +258,7 @@ import { getMMT, getModel, getModelConfigurationsForModel, getCalendarSettingsFr
 import {
 	createModelConfiguration,
 	getArchive,
+	getMissingInputAmount,
 	getModelConfigurationById,
 	setInitialExpression,
 	setInitialSource,
@@ -285,7 +284,8 @@ import { useProjects } from '@/composables/project';
 import TeraPdfPanel from '@/components/widgets/tera-pdf-panel.vue';
 import Calendar from 'primevue/calendar';
 import { CalendarSettings } from '@/utils/date';
-import { DistributionType } from '@/services/distribution';
+import { DrilldownTabs } from '@/types/common';
+import { formatListWithConjunction } from '@/utils/text';
 import {
 	blankModelConfig,
 	isModelConfigsEqual,
@@ -295,17 +295,15 @@ import {
 } from './model-config-operation';
 import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
 
-enum ConfigTabs {
-	Wizard = 'Wizard',
-	Notebook = 'Notebook'
-}
-
 const props = defineProps<{
 	node: WorkflowNode<ModelConfigOperationState>;
 }>();
 
+const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close']);
+
 const isFetchingPDF = ref(false);
 const isDocViewerOpen = ref(true);
+const selectedConfigMissingInputCount = ref('');
 
 const currentActiveIndexes = ref([0, 1, 2]);
 const pdfData = ref<{ document: any; data: string; isPdf: boolean; name: string }[]>([]);
@@ -317,7 +315,7 @@ const isEditingDescription = ref(false);
 const newDescription = ref('');
 const descriptionTextareaRef = ref<ComponentPublicInstance<typeof Textarea> | null>(null);
 
-const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close']);
+let originalConfig: ModelConfiguration | null = null;
 
 interface BasicKnobs {
 	transientModelConfig: ModelConfiguration;
@@ -336,57 +334,32 @@ const calibratedConfigObservables = computed<Observable[]>(() =>
 	}))
 );
 
-const currentInputCount = ref('');
-
-const isNumberInputEmpty = (value) => {
-	const number = parseFloat(value);
-	return isNaN(number) || !isNumber(number);
-};
-
-const getMissingInputAmount = (modelConfiguration: ModelConfiguration) => {
-	let missingInputs = 0;
-	modelConfiguration.initialSemanticList.forEach((initial) => {
-		if (isNumberInputEmpty(initial.expression)) {
-			missingInputs++;
-		}
-	});
-
-	modelConfiguration.parameterSemanticList.forEach((parameter) => {
-		if (parameter.distribution.type === DistributionType.Constant) {
-			if (isNumberInputEmpty(parameter.distribution.parameters.value)) {
-				missingInputs++;
-			}
-		} else if (
-			isNumberInputEmpty(parameter.distribution.parameters.minimum) ||
-			isNumberInputEmpty(parameter.distribution.parameters.maximum)
-		) {
-			missingInputs++;
-		}
-	});
-	return missingInputs;
-};
-
 const getTotalInput = (modelConfiguration: ModelConfiguration) =>
 	modelConfiguration.initialSemanticList.length + modelConfiguration.parameterSemanticList.length;
 
-const missingInputCount = (modelConfiguration: ModelConfiguration) => {
+const getMissingInputCountMessage = (modelConfiguration: ModelConfiguration) => {
 	const amount = getMissingInputAmount(modelConfiguration);
 	const total = getTotalInput(modelConfiguration);
 	const precent = (amount / total) * 100;
 	return amount ? `Missing values: ${amount}/${total} (${precent.toFixed(0)}%)` : '';
 };
 
+const missingInputCount = (modelConfiguration: ModelConfiguration) => {
+	if (selectedConfigId.value === modelConfiguration.id) {
+		return selectedConfigMissingInputCount.value;
+	}
+	return getMissingInputCountMessage(modelConfiguration);
+};
+
 // Check if the model configuration is the same as the original
-const isModelConfigChanged = computed(
-	() => !isModelConfigsEqual(originalConfig.value, knobs.value.transientModelConfig)
-);
+const isModelConfigChanged = computed(() => !isModelConfigsEqual(originalConfig, knobs.value.transientModelConfig));
 
 // Save button is disabled if the model configuration name is empty, the values have changed, or the configuration is the same as the original
 const isSaveDisabled = computed(
 	() =>
 		knobs.value.transientModelConfig.name === '' ||
-		isModelConfigsEqual(originalConfig.value, knobs.value.transientModelConfig) ||
-		!isModelConfigValuesEqual(originalConfig.value, knobs.value.transientModelConfig)
+		isModelConfigsEqual(originalConfig, knobs.value.transientModelConfig) ||
+		!isModelConfigValuesEqual(originalConfig, knobs.value.transientModelConfig)
 );
 
 const kernelManager = new KernelSessionManager();
@@ -539,7 +512,6 @@ const extractConfigurationsFromInputs = async () => {
 
 const selectedOutputId = ref<string>('');
 const selectedConfigId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
-const originalConfig = ref<ModelConfiguration | null>(null);
 
 const documentIds = computed(() =>
 	props.node.inputs
@@ -655,9 +627,9 @@ const initialize = async (overwriteWithState: boolean = false) => {
 		// Apply a configuration if one hasn't been applied yet
 		applyConfigValues(modelConfigurations.value[0]);
 	} else {
-		originalConfig.value = await getModelConfigurationById(selectedConfigId.value);
+		originalConfig = await getModelConfigurationById(selectedConfigId.value);
 		if (!overwriteWithState) {
-			knobs.value.transientModelConfig = cloneDeep(originalConfig.value);
+			knobs.value.transientModelConfig = cloneDeep(originalConfig);
 		} else {
 			knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
 		}
@@ -685,15 +657,23 @@ const onSelectConfiguration = async (config: ModelConfiguration) => {
 	if (pdfViewer.value && config.extractionPage) {
 		pdfViewer.value.goToPage(config.extractionPage);
 	}
-	// Checks if there are unsaved changes to current model configuration
-	if (isModelConfigsEqual(originalConfig.value, knobs.value.transientModelConfig)) {
+
+	const { transientModelConfig } = knobs.value;
+	// If no changes were made switch right away
+	if (isModelConfigsEqual(originalConfig, transientModelConfig)) {
 		applyConfigValues(config);
 		return;
 	}
 
+	const lostItems: string[] = [];
+
+	if (!isModelConfigValuesEqual(transientModelConfig, originalConfig)) lostItems.push('values');
+	if (transientModelConfig.name !== originalConfig?.name) lostItems.push('name');
+	if (transientModelConfig.description !== originalConfig?.description) lostItems.push('description');
+
 	confirm.require({
-		header: 'Are you sure you want to select this configuration?',
-		message: `This will apply the configuration "${config.name}" to the model.  All current values will be replaced.`,
+		header: `Unsaved changes`,
+		message: `Changes made to the ${formatListWithConjunction(lostItems)} will be lost.`,
 		accept: () => {
 			applyConfigValues(config);
 		},
@@ -742,10 +722,10 @@ const onConfirmEditDescription = () => {
 
 const resetConfiguration = () => {
 	confirm.require({
-		header: 'Are you sure you want to reset the configuration?',
-		message: 'This will reset all values original values of the configuration.',
+		header: 'Reset configuration',
+		message: 'All edits done to this configuration will be reverted.',
 		accept: () => {
-			if (originalConfig.value) knobs.value.transientModelConfig = cloneDeep(originalConfig.value);
+			if (originalConfig) knobs.value.transientModelConfig = cloneDeep(originalConfig);
 		},
 		acceptLabel: 'Confirm',
 		rejectLabel: 'Cancel'
@@ -782,7 +762,7 @@ const debounceUpdateState = debounce(() => {
 	configuredMmt.value = makeConfiguredMMT(mmt.value, knobs.value.transientModelConfig);
 
 	emit('update-state', state);
-	currentInputCount.value = missingInputCount(state.transientModelConfig);
+	selectedConfigMissingInputCount.value = getMissingInputCountMessage(state.transientModelConfig);
 }, 100);
 watch(
 	() => knobs.value,
