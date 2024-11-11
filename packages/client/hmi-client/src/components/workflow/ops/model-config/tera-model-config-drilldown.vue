@@ -228,7 +228,7 @@
 <script setup lang="ts">
 import '@/ace-config';
 import { ComponentPublicInstance, computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
-import { cloneDeep, debounce, isEmpty, orderBy, omit, isNaN, isNumber } from 'lodash';
+import { cloneDeep, debounce, isEmpty, orderBy, omit } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
@@ -258,6 +258,7 @@ import { getMMT, getModel, getModelConfigurationsForModel, getCalendarSettingsFr
 import {
 	createModelConfiguration,
 	getArchive,
+	getMissingInputAmount,
 	getModelConfigurationById,
 	setInitialExpression,
 	setInitialSource,
@@ -283,7 +284,6 @@ import { useProjects } from '@/composables/project';
 import TeraPdfPanel from '@/components/widgets/tera-pdf-panel.vue';
 import Calendar from 'primevue/calendar';
 import { CalendarSettings } from '@/utils/date';
-import { DistributionType } from '@/services/distribution';
 import { DrilldownTabs } from '@/types/common';
 import { formatListWithConjunction } from '@/utils/text';
 import {
@@ -303,6 +303,7 @@ const emit = defineEmits(['append-output', 'update-state', 'select-output', 'clo
 
 const isFetchingPDF = ref(false);
 const isDocViewerOpen = ref(true);
+const currentInputCount = ref('');
 
 const currentActiveIndexes = ref([0, 1, 2]);
 const pdfData = ref<{ document: any; data: string; isPdf: boolean; name: string }[]>([]);
@@ -332,36 +333,6 @@ const calibratedConfigObservables = computed<Observable[]>(() =>
 		expression
 	}))
 );
-
-const currentInputCount = ref('');
-
-const isNumberInputEmpty = (value) => {
-	const number = parseFloat(value);
-	return isNaN(number) || !isNumber(number);
-};
-
-const getMissingInputAmount = (modelConfiguration: ModelConfiguration) => {
-	let missingInputs = 0;
-	modelConfiguration.initialSemanticList.forEach((initial) => {
-		if (isNumberInputEmpty(initial.expression)) {
-			missingInputs++;
-		}
-	});
-
-	modelConfiguration.parameterSemanticList.forEach((parameter) => {
-		if (parameter.distribution.type === DistributionType.Constant) {
-			if (isNumberInputEmpty(parameter.distribution.parameters.value)) {
-				missingInputs++;
-			}
-		} else if (
-			isNumberInputEmpty(parameter.distribution.parameters.minimum) ||
-			isNumberInputEmpty(parameter.distribution.parameters.maximum)
-		) {
-			missingInputs++;
-		}
-	});
-	return missingInputs;
-};
 
 const getTotalInput = (modelConfiguration: ModelConfiguration) =>
 	modelConfiguration.initialSemanticList.length + modelConfiguration.parameterSemanticList.length;
