@@ -803,6 +803,7 @@ export interface GroundedSemantic {
     grounding?: ModelGrounding;
     name?: string;
     description?: string;
+    grounding?: ModelGrounding;
 }
 
 export interface Properties {
