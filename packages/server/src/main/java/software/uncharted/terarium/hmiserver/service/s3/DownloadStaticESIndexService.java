@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.ResponseInputStream;
@@ -38,6 +39,7 @@ public class DownloadStaticESIndexService {
 
 	private static final String EPI_ROOT = "epi_dkg_20241030";
 	private static final String AWS_ID = "static-index";
+	private final Environment env;
 
 	private final List<IndexAndMapping> INDICES = List.of(new IndexAndMapping(EPI_ROOT));
 
@@ -55,12 +57,26 @@ public class DownloadStaticESIndexService {
 		}
 	}
 
+	private boolean isRunningTestProfile() {
+		final String[] activeProfiles = env.getActiveProfiles();
+
+		for (final String profile : activeProfiles) {
+			if ("test".equals(profile)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	/**
 	 * Initialize the service by downloading and setting up the Elasticsearch indices.
 	 */
 	@PostConstruct
 	@Async
 	void init() {
+		if (isRunningTestProfile()) return;
+
 		final S3Service s3Service = s3ClientService.getS3Service(AWS_ID);
 		INDICES.forEach(index -> {
 			if (createIndexIfNotExists(s3Service, index)) insertDocumentsIntoIndex(s3Service, index);
