@@ -42,7 +42,8 @@
         "provenance",
         "sensitivity",
         "license"
-      ]
+      ],
+      "additionalProperties": false
     },
     "columns": {
       "type": "array",
