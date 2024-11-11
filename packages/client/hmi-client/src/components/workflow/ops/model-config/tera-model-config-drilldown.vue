@@ -497,6 +497,7 @@ const extractConfigurationsFromInputs = async () => {
 	isExtracting.value = false;
 };
 
+// FIX THIS REFRESH
 // watch(
 // 	() => props.node.state.modelConfigTaskIds,
 // 	(newValue, oldValue) => {
