@@ -2,33 +2,47 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
   "properties": {
-    "description": {
-      "type": "string",
-      "description": "Short description of the dataset (1-3 sentences)."
-    },
-    "author_name": {
-      "type": "string",
-      "description": "Name of publishing institution or author."
-    },
-    "author_email": {
-      "type": "string",
-      "description": "Email address for the author of this dataset."
-    },
-    "date": {
-      "type": "string",
-      "description": "Date of publication of this dataset."
-    },
-    "provenance": {
-      "type": "string",
-      "description": "Short (1 sentence) description of how the data was collected."
-    },
-    "sensitivity": {
-      "type": "string",
-      "description": "Is there any human-identifying information in the dataset?"
-    },
-    "license": {
-      "type": "string",
-      "description": "License for this dataset."
+    "card": {
+      "type": "object",
+      "items": {
+        "description": {
+          "type": "string",
+          "description": "Short description of the dataset (1-3 sentences)."
+        },
+        "author_name": {
+          "type": "string",
+          "description": "Name of publishing institution or author."
+        },
+        "author_email": {
+          "type": "string",
+          "description": "Email address for the author of this dataset."
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of publication of this dataset."
+        },
+        "provenance": {
+          "type": "string",
+          "description": "Short (1 sentence) description of how the data was collected."
+        },
+        "sensitivity": {
+          "type": "string",
+          "description": "Is there any human-identifying information in the dataset?"
+        },
+        "license": {
+          "type": "string",
+          "description": "License for this dataset."
+        }
+      },
+      "required": [
+        "description",
+        "author_name",
+        "author_email",
+        "date",
+        "provenance",
+        "sensitivity",
+        "license"
+      ]
     },
     "columns": {
       "type": "array",
@@ -65,13 +79,7 @@
     }
   },
   "required": [
-    "description",
-    "author_name",
-    "author_email",
-    "date",
-    "provenance",
-    "sensitivity",
-    "license",
+    "card",
     "columns"
   ],
   "additionalProperties": false

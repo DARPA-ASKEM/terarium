@@ -69,6 +69,14 @@ public class EnrichDatasetResponseHandler extends TaskResponseHandler {
 				.getAsset(properties.getDatasetId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER)
 				.orElseThrow();
 
+			// Create the metadata for the dataset if it doesn't exist
+			if (dataset.getMetadata() == null) {
+				dataset.setMetadata(objectMapper.createObjectNode());
+			}
+
+			// Update the dataset with the new card
+			((ObjectNode) dataset.getMetadata()).set("dataCard", response.response.card);
+
 			// Update the dataset with the new descriptions
 			//			for (final DescriptionsAndUnits state : response.response.states) {
 			//				dataset
