@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.EnsembleModelConfigs;
+import software.uncharted.terarium.hmiserver.models.simulationservice.parts.TimeSpan;
 
 @Data
 @Accessors(chain = true)
@@ -16,8 +17,8 @@ public class EnsembleSimulationCiemssRequest implements Serializable {
 	@JsonAlias("model_configs")
 	private List<EnsembleModelConfigs> modelConfigs;
 
-	@JsonAlias("end_time")
-	private Double endTime;
+	@JsonAlias("time_span")
+	private TimeSpan timespan;
 
 	private Object extra;
 

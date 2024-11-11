@@ -558,7 +558,7 @@ export interface EnsembleCalibrationCiemssRequest {
 
 export interface EnsembleSimulationCiemssRequest {
     modelConfigs: EnsembleModelConfigs[];
-    endTime: number;
+    timespan: TimeSpan;
     extra: any;
     engine: string;
 }

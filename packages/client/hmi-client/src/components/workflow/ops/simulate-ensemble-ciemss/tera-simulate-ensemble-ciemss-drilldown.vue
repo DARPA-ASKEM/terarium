@@ -399,7 +399,10 @@ const runEnsemble = async () => {
 	const modelConfigs = formatSimulateModelConfigurations(knobs.value.mapping, knobs.value.weights);
 	const params: EnsembleSimulationCiemssRequest = {
 		modelConfigs,
-		endTime: knobs.value.endTime,
+		timespan: {
+			start: 0,
+			end: knobs.value.endTime
+		},
 		engine: 'ciemss',
 		extra: {
 			num_samples: knobs.value.numSamples,
