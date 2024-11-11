@@ -24,7 +24,6 @@
 											:modelConfigurations="modelConfigurations"
 											:feature-config="featureConfig"
 											:initial-id="target"
-											:error-empty="errorEmpty"
 											@update-expression="emit('update-expression', $event)"
 											@update-source="emit('update-source', $event)"
 										/>
@@ -83,7 +82,6 @@ const props = defineProps<{
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
 	featureConfig?: FeatureConfig;
-	errorEmpty?: boolean;
 }>();
 
 const emit = defineEmits(['update-expression', 'update-source']);

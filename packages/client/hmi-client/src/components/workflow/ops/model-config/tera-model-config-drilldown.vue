@@ -141,7 +141,6 @@
 						:model-configurations="filteredModelConfigurations"
 						:mmt="configuredMmt"
 						:mmt-params="mmtParams"
-						:error-empty="true"
 						@update-expression="setInitialExpression(knobs.transientModelConfig, $event.id, $event.value)"
 						@update-source="setInitialSource(knobs.transientModelConfig, $event.id, $event.value)"
 					/>
@@ -152,7 +151,6 @@
 						:model-configurations="filteredModelConfigurations"
 						:mmt="configuredMmt"
 						:mmt-params="mmtParams"
-						:error-empty="true"
 						@update-parameters="setParameterDistributions(knobs.transientModelConfig, $event)"
 						@update-source="setParameterSource(knobs.transientModelConfig, $event.id, $event.value)"
 					/>
@@ -285,6 +283,7 @@ import { useProjects } from '@/composables/project';
 import TeraPdfPanel from '@/components/widgets/tera-pdf-panel.vue';
 import Calendar from 'primevue/calendar';
 import { CalendarSettings } from '@/utils/date';
+import { DistributionType } from '@/services/distribution';
 import { DrilldownTabs } from '@/types/common';
 import { formatListWithConjunction } from '@/utils/text';
 import {

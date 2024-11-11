@@ -76,7 +76,6 @@ const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
 	modelConfigurations: ModelConfiguration[];
 	featureConfig?: FeatureConfig;
-	errorEmpty?: boolean;
 }>();
 
 const otherValueList = computed(() =>
