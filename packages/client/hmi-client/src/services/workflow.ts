@@ -232,8 +232,7 @@ export class WorkflowWrapper {
 				label: port.label,
 				status: WorkflowPortStatus.NOT_CONNECTED,
 				value: null,
-				isOptional: port.isOptional ?? false,
-				unique: port.unique
+				isOptional: port.isOptional ?? false
 			})),
 
 			outputs: op.outputs.map((port) => ({

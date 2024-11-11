@@ -343,17 +343,13 @@ const saveWorkflowHandler = () => {
 	saveWorkflowDebounced();
 };
 
-function appendInputPort(
-	node: WorkflowNode<any>,
-	port: { type: string; label?: string; value: any; unique?: boolean }
-) {
+function appendInputPort(node: WorkflowNode<any>, port: { type: string; label?: string; value: any }) {
 	node.inputs.push({
 		id: uuidv4(),
 		type: port.type,
 		label: port.label,
 		isOptional: false,
-		status: WorkflowPortStatus.NOT_CONNECTED,
-		unique: port.unique
+		status: WorkflowPortStatus.NOT_CONNECTED
 	});
 }
 
