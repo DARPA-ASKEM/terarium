@@ -224,6 +224,7 @@ export class WorkflowWrapper {
 
 			active: null,
 			state: options.state ?? {},
+			uniqueInputs: op.uniqueInputs ?? false,
 
 			inputs: op.inputs.map((port) => ({
 				id: uuidv4(),
@@ -319,6 +320,15 @@ export class WorkflowWrapper {
 
 		// Not supported if there is a mismatch
 		if (intersectionTypes.length === 0 || targetInputPort.status === WorkflowPortStatus.CONNECTED) {
+			return;
+		}
+
+		// check if the port value is unique, if so, we should not connect the incoming edge
+		if (
+			targetNode.inputs.some(
+				(input) => targetNode.uniqueInputs && input.value?.[0] && input.value?.[0] === sourceOutputPort.value?.[0]
+			)
+		) {
 			return;
 		}
 

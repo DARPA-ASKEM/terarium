@@ -60,6 +60,7 @@ export interface Operation {
 
 	inputs: OperationData[];
 	outputs: OperationData[];
+	uniqueInputs?: boolean;
 }
 
 // Defines the data-exchange between WorkflowNode
@@ -118,6 +119,8 @@ export interface WorkflowNode<S> {
 
 	// Behaviour
 	status: OperatorStatus;
+
+	uniqueInputs?: boolean;
 }
 
 export interface WorkflowEdge {
