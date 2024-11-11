@@ -6,7 +6,7 @@
 			<input
 				v-bind="$attrs"
 				ref="inputField"
-				:class="{ empty: isEmptyError }"
+				:class="[{ 'empty-value': isEmptyError }]"
 				:disabled="getDisabled"
 				:placeholder="placeholder"
 				:style="inputStyle"
