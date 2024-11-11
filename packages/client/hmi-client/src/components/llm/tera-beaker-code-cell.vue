@@ -38,7 +38,7 @@ const props = defineProps<{
 	index: Number;
 }>();
 
-const emit = defineEmits(['deleteRequested']);
+const emit = defineEmits(['deleteRequested', 'code-dirty']);
 
 const confirm = useConfirm();
 
@@ -58,6 +58,7 @@ const code = computed(() => props.jupyterMessage.content.code);
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
 const initialize = (editorInstance) => {
 	editor.value = editorInstance;
+	editorInstance.getSession().on('change', () => emit('code-dirty'));
 };
 
 const enter = () => {
