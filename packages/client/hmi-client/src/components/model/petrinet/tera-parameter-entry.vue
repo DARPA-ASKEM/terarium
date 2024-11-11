@@ -42,12 +42,12 @@
 						:options="distributionTypeOptions()"
 						class="mr-3"
 					/>
-
 					<!-- Constant -->
 					<tera-input-number
 						v-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Constant"
 						label="Constant"
 						:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.value"
+						error-empty
 						@update:model-value="
 							emit('update-parameter', {
 								id: parameterId,
@@ -60,6 +60,7 @@
 						<tera-input-number
 							label="Min"
 							:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.minimum"
+							error-empty
 							@update:model-value="
 								emit('update-parameter', {
 									id: parameterId,
@@ -71,6 +72,7 @@
 						<tera-input-number
 							label="Max"
 							:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.maximum"
+							error-empty
 							@update:model-value="
 								emit('update-parameter', {
 									id: parameterId,
@@ -205,6 +207,11 @@ onMounted(async () => {
 .parameter-entry {
 	border-left: 4px solid var(--surface-300);
 	padding-left: var(--gap-4);
+
+	&.empty-input {
+		border-left: 4px solid var(--error-color);
+		padding-left: var(--gap-4);
+	}
 }
 
 header {
