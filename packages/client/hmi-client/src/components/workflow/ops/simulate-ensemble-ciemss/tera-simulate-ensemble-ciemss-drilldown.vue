@@ -40,11 +40,11 @@
 											<td>
 												<tera-input-text v-model="ele.newName" auto-focus class="w-full" placeholder="Add a name" />
 											</td>
-											<td v-for="(row, indx) in ele.modelConfigurationMappings" :key="indx">
+											<td v-for="key in Object.keys(ele.modelConfigurationMappings)" :key="key">
 												<Dropdown
 													class="w-full"
-													:options="allModelOptions[row.modelConfigId]"
-													v-model="row.compartmentName"
+													:options="allModelOptions[key]"
+													v-model="ele.modelConfigurationMappings[key]"
 													placeholder="Select"
 													@change="updateMapping()"
 												/>
@@ -116,12 +116,16 @@
 							<div class="model-weights">
 								<table class="p-datatable-table">
 									<tbody class="p-datatable-tbody">
-										<tr v-for="(ele, indx) in knobs.weights" :key="indx">
+										<tr v-for="key in Object.keys(knobs.weights)" :key="key">
 											<td>
-												{{ modelConfigIdToNameMap[ele.modelConfigurationId] }}
+												{{ modelConfigIdToNameMap[key] }}
 											</td>
 											<td>
-												<tera-signal-bars label="Relative certainty" v-model="ele.value" @change="updateWeights()" />
+												<tera-signal-bars
+													label="Relative certainty"
+													v-model="knobs.weights[key]"
+													@change="updateWeights()"
+												/>
 											</td>
 										</tr>
 									</tbody>
@@ -272,7 +276,7 @@ import { v4 as uuidv4 } from 'uuid';
 import {
 	SimulateEnsembleCiemssOperationState,
 	SimulateEnsembleMappingRow,
-	SimulateEnsembleWeight,
+	SimulateEnsembleWeights,
 	speedValues,
 	normalValues
 } from './simulate-ensemble-ciemss-operation';
@@ -285,7 +289,7 @@ const emit = defineEmits(['select-output', 'update-state', 'close']);
 
 interface BasicKnobs {
 	mapping: SimulateEnsembleMappingRow[];
-	weights: SimulateEnsembleWeight[];
+	weights: SimulateEnsembleWeights;
 	numSamples: number;
 	method: CiemssMethodOptions;
 	stepSize: number;
@@ -321,7 +325,7 @@ const presetType = computed(() => {
 // List of each observible + state for each model.
 const allModelOptions = ref<{ [key: string]: string[] }>({});
 const modelConfigurationIds: string[] = props.node.inputs.map((ele) => ele.value?.[0]).filter(Boolean);
-const modelConfigIdToNameMap = ref();
+const modelConfigIdToNameMap = ref<Record<string, string>>({});
 
 const newSolutionMappingKey = ref<string>('');
 const runResults = ref<RunResults>({});
@@ -363,14 +367,18 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 };
 
 const addMapping = () => {
+	// create empty configuration mappings
+	const configMappings = {};
+	modelConfigurationIds.forEach((id) => {
+		configMappings[id as string] = '';
+	});
+
 	knobs.value.mapping.push({
 		id: uuidv4(),
 		newName: newSolutionMappingKey.value,
-		modelConfigurationMappings: modelConfigurationIds.map((id) => ({
-			modelConfigId: id as string,
-			compartmentName: ''
-		}))
+		modelConfigurationMappings: configMappings
 	});
+
 	const state = _.cloneDeep(props.node.state);
 	state.mapping = knobs.value.mapping;
 	emit('update-state', state);
@@ -423,7 +431,7 @@ onMounted(async () => {
 
 	modelConfigIdToNameMap.value = {};
 	allModelConfigurations.forEach((config) => {
-		modelConfigIdToNameMap.value[config.id as string] = config.name;
+		modelConfigIdToNameMap.value[config.id as string] = config.name as string;
 	});
 
 	allModelOptions.value = {};
@@ -435,24 +443,12 @@ onMounted(async () => {
 	}
 	listModelLabels.value = allModelConfigurations.map((ele) => ele.name ?? '');
 
-	const state = _.cloneDeep(props.node.state);
-
-	// Initalize weights:
-	if (
-		!knobs.value.weights ||
-		knobs.value.weights.length === 0 ||
-		knobs.value.weights.length !== modelConfigurationIds.length
-	) {
-		knobs.value.weights = [];
-		modelConfigurationIds.forEach((id) => {
-			knobs.value.weights.push({
-				modelConfigurationId: id,
-				value: 5
-			});
+	// initialze weights
+	if (_.isEmpty(knobs.value.weights)) {
+		allModelConfigurations.forEach((config) => {
+			knobs.value.weights[config.id as string] = 5;
 		});
 	}
-
-	emit('update-state', state);
 });
 
 watch(
@@ -492,7 +488,7 @@ watch(
 		state.stepSize = knobs.value.stepSize;
 		emit('update-state', state);
 	},
-	{ immediate: true }
+	{ deep: true }
 );
 </script>
 
