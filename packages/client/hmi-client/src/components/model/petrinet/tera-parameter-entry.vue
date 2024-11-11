@@ -150,7 +150,7 @@ const props = defineProps<{
 	featureConfig?: FeatureConfig;
 }>();
 
-const emit = defineEmits(['update-parameter', 'update-source', 'has-empty-field']);
+const emit = defineEmits(['update-parameter', 'update-source']);
 
 const name = getParameter(props.model, props.parameterId)?.name;
 const units = getParameter(props.model, props.parameterId)?.units?.expression;
