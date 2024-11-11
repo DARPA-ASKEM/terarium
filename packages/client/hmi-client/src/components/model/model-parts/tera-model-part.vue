@@ -105,7 +105,7 @@
 					/>
 				</div>
 
-				<ul v-show="parentEditingState[index].showChildren" class="stratified">
+				<ul v-if="parentEditingState[index].showChildren" class="stratified">
 					<li v-for="(child, index) in children" :key="index">
 						<tera-model-part-entry
 							:item="child"
