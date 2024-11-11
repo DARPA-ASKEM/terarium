@@ -16,6 +16,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
+import software.uncharted.terarium.hmiserver.service.data.DKGService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 
 @Component
@@ -27,6 +28,7 @@ public class EnrichDatasetResponseHandler extends TaskResponseHandler {
 
 	private final ObjectMapper objectMapper;
 	private final DatasetService datasetService;
+	private final DKGService dkgService;
 
 	@Override
 	public String getName() {
@@ -95,8 +97,8 @@ public class EnrichDatasetResponseHandler extends TaskResponseHandler {
 				metadata.put("name", name);
 				metadata.put("unit", unit);
 
-				// Based on the name, description, and concept, fetch the best grounding available and add it to the metadata
-				// final Grounding grounding = null; // groundingService.getGrounding(name, description, concept);
+				// Based on the name, description, fetch the best grounding available and add it to the metadata
+				// final DKG grounding = dkgService.knnSearchEpiDKG(0, 1, 1, name + " " + description, null)
 				// metadata.put("grounding", grounding);
 
 				dataset
