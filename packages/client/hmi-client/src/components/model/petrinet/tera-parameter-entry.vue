@@ -60,7 +60,7 @@
 						<tera-input-number
 							label="Min"
 							:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.minimum"
-							error-empt
+							error-empty
 							@update:model-value="
 								emit('update-parameter', {
 									id: parameterId,
