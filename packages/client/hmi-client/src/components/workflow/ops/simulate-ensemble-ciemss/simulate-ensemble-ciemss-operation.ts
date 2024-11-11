@@ -46,12 +46,7 @@ export const SimulateEnsembleCiemssOperation: Operation = {
 	inputs: [{ type: 'modelConfigId', label: 'Model configuration' }],
 	outputs: [{ type: 'datasetId' }],
 	isRunnable: true,
-
-	// TODO: Figure out mapping
-	// Calls API, returns results.
-	action: async (): Promise<void> => {
-		console.log('test');
-	},
+	uniqueInputs: true,
 
 	initState: () => {
 		const init: SimulateEnsembleCiemssOperationState = {
