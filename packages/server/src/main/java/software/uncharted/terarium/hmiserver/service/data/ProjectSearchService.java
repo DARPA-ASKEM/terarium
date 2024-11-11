@@ -25,8 +25,8 @@ import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.springframework.core.env.Environment;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
@@ -34,6 +34,7 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.repository.data.ProjectRepository;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
 
@@ -46,6 +47,7 @@ public class ProjectSearchService {
 	protected final ElasticsearchService elasticService;
 	protected final EmbeddingService embeddingService;
 	protected final Environment env;
+	protected final ProjectRepository projectRepository;
 
 	protected boolean isRunningTestProfile() {
 		final String[] activeProfiles = env.getActiveProfiles();
@@ -421,6 +423,12 @@ public class ProjectSearchService {
 		}
 	}
 
+	public static class ProjectSearchResponse {
+
+		Project project;
+		List<TerariumAsset> hits;
+	}
+
 	/**
 	 * Search for projects using a KNN search
 	 *
@@ -433,7 +441,7 @@ public class ProjectSearchService {
 	 * @param assetTypesToInclude
 	 * @return
 	 */
-	public ResponseEntity<List<JsonNode>> searchProjectsKNN(
+	public List<ProjectSearchResponse> searchProjectsKNN(
 		final String userId,
 		final Integer pageSize,
 		final Integer page,
@@ -445,9 +453,10 @@ public class ProjectSearchService {
 		if (assetTypesToInclude == null || assetTypesToInclude.isEmpty()) {
 			assetTypesToInclude = AssetType.getAllAssetTypes();
 		}
+
 		try {
 			if (k > numCandidates) {
-				return ResponseEntity.badRequest().build();
+				throw new InvalidInputException("k must be less than or equal to numCandidates");
 			}
 
 			KnnQuery knn = null;
@@ -492,15 +501,25 @@ public class ProjectSearchService {
 				JsonNode.class
 			);
 
-			final List<JsonNode> docs = new ArrayList<>();
+			final List<ProjectSearchResponse> results = new ArrayList<>();
+
 			for (final Hit<JsonNode> hit : res.hits().hits()) {
 				final ObjectNode source = (ObjectNode) hit.source();
 				if (source != null) {
 					source.put("id", hit.id());
-					docs.add(source);
+
+					log.info(source.get("id").asText() + ": " + source);
+
+					final ProjectSearchResponse response = new ProjectSearchResponse();
+					response.project = projectRepository.findById(UUID.fromString(source.get("id").asText())).get();
+
+					// TODO: finish this, need to get the inner hits to show what asset was the hit
+
+					results.add(response);
 				}
 			}
-			return ResponseEntity.ok(docs);
+
+			return results;
 		} catch (final Exception e) {
 			final String error = "Unable to get execute knn search";
 			log.error(error, e);
