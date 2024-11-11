@@ -220,13 +220,15 @@ public class ElasticsearchService {
 	/**
 	 * Create the provided index.
 	 *
-	 * @param index
-	 * @throws IOException
+	 * @param index  The name of the index to create
+	 * @throws IOException If an error occurs while creating the index
 	 */
 	public void createIndex(final String index, final String mapping) throws IOException {
 		try {
 			JsonpMapper mapper = client._transport().jsonpMapper();
 			JsonParser parser = mapper.jsonProvider().createParser(new StringReader(mapping));
+
+			log.info("Creating index {} with mapping", index);
 
 			final CreateIndexRequest req = new CreateIndexRequest.Builder()
 				.index(index)
@@ -577,6 +579,12 @@ public class ElasticsearchService {
 		}
 	}
 
+	/**
+	 * Bulk insert documents into an index.
+	 *
+	 * @param indexName      The index to insert the documents into
+	 * @param esIndexContent The content of the index
+	 */
 	public void bulkInsert(String indexName, String esIndexContent) {
 		try {
 			final BulkRequest.Builder bulkRequest = new BulkRequest.Builder();
@@ -760,9 +768,7 @@ public class ElasticsearchService {
 		}
 
 		log.info("Elasticsearch | Bulk | Inserting {} documents into index {}", documents.size(), index);
-		return client.bulk(
-			BulkRequest.of(bulkRequest -> bulkRequest.index(index).operations(bulkOperations).pipeline("full_text_search"))
-		);
+		return client.bulk(BulkRequest.of(bulkRequest -> bulkRequest.index(index).operations(bulkOperations)));
 	}
 
 	public static String emphasis(String s, int boost) {
