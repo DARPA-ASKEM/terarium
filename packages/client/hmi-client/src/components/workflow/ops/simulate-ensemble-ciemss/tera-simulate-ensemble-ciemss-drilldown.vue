@@ -1,162 +1,193 @@
 <template>
 	<tera-drilldown
+		v-bind="$attrs"
 		:node="node"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
+		class="drilldown"
 	>
-		<section :tabName="Tabs.Wizard" class="ml-3 mr-2 pt-3">
-			<tera-drilldown-section>
-				<template #header-controls-right>
-					<Button label="Run" icon="pi pi-play" @click="runEnsemble" :disabled="false" />
-					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
-				</template>
-				<Accordion :multiple="true" :active-index="[0, 1, 2]">
-					<!-- Model weights -->
-					<AccordionTab header="Model weights">
-						<p class="subheader">
-							How do you want to distribute weights of the attached models? You can distribute them equally or set
-							custom weights using the input boxes.
-						</p>
-						<div class="model-weights">
-							<table class="p-datatable-table">
-								<tbody class="p-datatable-tbody">
-									<!-- Index matching listModelLabels and ensembleConfigs-->
-									<tr v-for="(id, i) in listModelLabels" :key="i">
-										<td>
-											{{ id }}
-										</td>
-										<td>
-											<tera-input-number v-model="ensembleConfigs[i].weight" />
-										</td>
-									</tr>
-								</tbody>
-							</table>
-						</div>
-						<Button
-							label="Set weights to be equal"
-							class="p-button-sm p-button-outlined mt-2"
-							outlined
-							severity="secondary"
-							@click="calculateEvenWeights()"
-						/>
-					</AccordionTab>
+		<tera-drilldown-section :tabName="DrilldownTabs.Wizard" class="input-config">
+			<tera-slider-panel
+				class="input-config"
+				v-model:is-open="isSidebarOpen"
+				header="Simulation ensemble settings"
+				content-width="420px"
+			>
+				<template #content>
+					<div class="toolbar">
+						<p>Click Run to start the simulation.</p>
+						<span class="flex gap-2">
+							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
+							<Button label="Run" icon="pi pi-play" @click="runEnsemble" :disabled="false" />
+						</span>
+					</div>
 
-					<!-- Mapping -->
-					<AccordionTab header="Mapping">
-						<p class="subheader">Map the variables from the models to the ensemble variables.</p>
-						<template v-if="ensembleConfigs.length > 0">
-							<table class="w-full mb-2">
-								<tbody>
-									<tr>
-										<th>Ensemble variables</th>
-										<th v-for="(element, i) in listModelLabels" :key="i">
-											{{ element }}
-										</th>
-									</tr>
-
-									<tr v-for="key in Object.keys(ensembleConfigs[0].solutionMappings)" :key="key">
-										<td>{{ key }}</td>
-										<td v-for="config in ensembleConfigs" :key="config.id">
-											<Dropdown
-												class="w-full"
-												:options="allModelOptions[config.id]"
-												v-model="config.solutionMappings[key]"
-												placeholder="Select a variable"
-											/>
-										</td>
-										<td>
-											<Button class="p-button-sm" icon="pi pi-times" rounded text @click="deleteMapping(key)" />
-										</td>
-									</tr>
-								</tbody>
-							</table>
-						</template>
-						<section class="add-mapping">
-							<Button
-								v-if="!showAddMappingInput"
-								outlined
-								:style="{ marginRight: 'auto' }"
-								label="Add mapping"
-								size="small"
-								severity="secondary"
-								icon="pi pi-plus"
-								@click="
-									newSolutionMappingKey = '';
-									showAddMappingInput = true;
-								"
-							/>
-							<div v-if="showAddMappingInput" class="flex items-center">
-								<tera-input-text
-									v-model="newSolutionMappingKey"
-									auto-focus
-									class="w-full"
-									placeholder="Add a name"
-									@keypress.enter="
-										addMapping();
-										showAddMappingInput = false;
-									"
-								/>
+					<Accordion :multiple="true" :active-index="activeAccordionIndicies">
+						<!-- Mapping -->
+						<AccordionTab header="Mapping">
+							<p class="subheader">All variables mapped should be normalized (could use observables)</p>
+							<template v-if="knobs.mapping.length > 0">
+								<table class="w-full mb-2">
+									<tbody>
+										<tr>
+											<th>Ensemble variables</th>
+											<th v-for="(element, i) in listModelLabels" :key="i">
+												{{ element }}
+											</th>
+										</tr>
+										<tr v-for="(ele, indx) in knobs.mapping" :key="indx">
+											<td>
+												<tera-input-text v-model="ele.newName" auto-focus class="w-full" placeholder="Add a name" />
+											</td>
+											<td v-for="(row, indx) in ele.modelConfigurationMappings" :key="indx">
+												<Dropdown
+													class="w-full"
+													:options="allModelOptions[row.modelConfigId]"
+													v-model="row.compartmentName"
+													placeholder="Select"
+													@change="updateMapping()"
+												/>
+											</td>
+											<td>
+												<Button class="p-button-sm" icon="pi pi-times" rounded text @click="deleteMappingRow(ele.id)" />
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</template>
+							<section>
 								<Button
-									class="p-button-sm p-button-outlined w-2 ml-2"
+									v-if="!showAddMappingInput"
+									outlined
+									:style="{ marginRight: 'auto' }"
+									label="Add mapping"
+									size="small"
 									severity="secondary"
-									icon="pi pi-times"
-									label="Cancel"
+									icon="pi pi-plus"
 									@click="
 										newSolutionMappingKey = '';
-										showAddMappingInput = false;
+										showAddMappingInput = true;
 									"
 								/>
-								<Button
-									:disabled="!newSolutionMappingKey"
-									class="p-button-sm p-button-outlined w-2 ml-2"
-									icon="pi pi-check"
-									label="Add"
-									@click="
-										addMapping();
-										showAddMappingInput = false;
-									"
-								/>
-							</div>
-						</section>
-					</AccordionTab>
+								<div v-if="showAddMappingInput" class="flex">
+									<tera-input-text
+										v-model="newSolutionMappingKey"
+										auto-focus
+										class="w-full"
+										placeholder="Add a name"
+										@keydown.enter.stop.prevent="
+											addMapping();
+											showAddMappingInput = false;
+										"
+									/>
+									<span class="flex gap-2">
+										<Button
+											class="p-button-sm p-button-outlined ml-2"
+											severity="secondary"
+											icon="pi pi-times"
+											label="Cancel"
+											@click="
+												newSolutionMappingKey = '';
+												showAddMappingInput = false;
+											"
+										/>
+										<Button
+											:disabled="!newSolutionMappingKey"
+											class="p-button-sm p-button-outlined ml-2"
+											icon="pi pi-check"
+											label="Add"
+											@click="
+												addMapping();
+												showAddMappingInput = false;
+											"
+										/>
+									</span>
+								</div>
+							</section>
+						</AccordionTab>
 
-					<!-- Time span -->
-					<AccordionTab header="Time span">
-						<p class="subheader">Set the time span and number of samples for the ensemble simulation.</p>
-						<table class="w-full">
-							<thead class="p-datatable-thead">
-								<tr>
-									<th>Units</th>
-									<th>Start Step</th>
-									<th>End Step</th>
-									<th>Number of Samples</th>
-								</tr>
-							</thead>
-							<tbody class="p-datatable-tbody">
-								<tr>
-									<td class="w-2">Steps</td>
-									<td>
-										<tera-input-number class="w-full" v-model="timeSpan.start" />
-									</td>
-									<td>
-										<tera-input-number class="w-full" v-model="timeSpan.end" />
-									</td>
-									<td>
-										<tera-input-number class="w-full" v-model="numSamples" />
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</AccordionTab>
-				</Accordion>
-			</tera-drilldown-section>
-		</section>
-		<section :tabName="Tabs.Notebook">
-			<div class="mt-3 ml-4 mr-2">Under construction. Use the wizard for now.</div>
-		</section>
+						<!-- Model weights -->
+						<AccordionTab header="Model weights">
+							<p class="subheader">
+								This encodes your relative confidence for each model. These are the alpha parameters of a Dirichlet
+								distribution.
+							</p>
+							<div class="model-weights">
+								<table class="p-datatable-table">
+									<tbody class="p-datatable-tbody">
+										<tr v-for="(ele, indx) in knobs.weights" :key="indx">
+											<td>
+												{{ modelConfigIdToNameMap[ele.modelConfigurationId] }}
+											</td>
+											<td>
+												<tera-signal-bars label="Relative certainty" v-model="ele.value" @change="updateWeights()" />
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</AccordionTab>
+
+						<!-- Other Settings -->
+						<AccordionTab header="Other Settings">
+							<div class="form-section" v-if="isSidebarOpen">
+								<div class="input-row">
+									<div class="label-and-input">
+										<label>Start time</label>
+										<tera-input-number class="w-12" disabled :model-value="0" />
+									</div>
+									<div class="label-and-input">
+										<label>End time</label>
+										<tera-input-number v-model="knobs.endTime" />
+									</div>
+								</div>
+								<!-- Presets -->
+								<div class="label-and-input">
+									<label>Preset (optional)</label>
+									<Dropdown
+										v-model="presetType"
+										placeholder="Select an option"
+										:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
+										@update:model-value="setPresetValues"
+									/>
+								</div>
+								<!-- Number of Samples & Method -->
+								<div class="input-row">
+									<div class="label-and-input">
+										<label>Number of samples</label>
+										<tera-input-number v-model="knobs.numSamples" inputId="integeronly" :min="1" />
+									</div>
+									<div class="label-and-input">
+										<label>Solver method</label>
+										<Dropdown
+											v-model="knobs.method"
+											:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
+										/>
+									</div>
+								</div>
+							</div>
+						</AccordionTab>
+					</Accordion>
+				</template>
+			</tera-slider-panel>
+		</tera-drilldown-section>
+
+		<tera-drilldown-section :tabName="DrilldownTabs.Notebook" class="input-config">
+			<tera-slider-panel
+				class="input-config"
+				v-model:is-open="isSidebarOpen"
+				header="Simulation ensemble settings"
+				content-width="420px"
+			>
+				<template #content>
+					<div class="mt-3 ml-4 mr-2">Under construction. Use the wizard for now.</div>
+				</template>
+			</tera-slider-panel>
+		</tera-drilldown-section>
+
 		<template #preview>
-			<tera-drilldown-preview
+			<tera-drilldown-section
 				title="Simulation output"
 				:options="outputs"
 				v-model:output="selectedOutputId"
@@ -186,9 +217,23 @@
 						icon="pi pi-plus"
 					/>
 				</section>
-			</tera-drilldown-preview>
+			</tera-drilldown-section>
 		</template>
-		<template #footer> </template>
+
+		<template #sidebar-right>
+			<tera-slider-panel
+				v-model:is-open="isOutputSettingsPanelOpen"
+				direction="right"
+				class="input-config"
+				header="Output Settings"
+				content-width="360px"
+			>
+				<template #content>
+					<div class="mt-3 ml-4 mr-2">Under construction.</div>
+				</template>
+				<!-- TODO Chart options here -->
+			</tera-slider-panel>
+		</template>
 	</tera-drilldown>
 </template>
 
@@ -201,46 +246,76 @@ import Accordion from 'primevue/accordion';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Dropdown from 'primevue/dropdown';
-
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
-
-import { getRunResultCiemss, makeEnsembleCiemssSimulation } from '@/services/models/simulation-service';
+import {
+	getRunResultCiemss,
+	makeEnsembleCiemssSimulation,
+	CiemssMethodOptions
+} from '@/services/models/simulation-service';
 import { getModelConfigurationById, getObservables, getInitials } from '@/services/model-configurations';
 import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
-
 import type { WorkflowNode } from '@/types/workflow';
-import type { TimeSpan, EnsembleModelConfigs, EnsembleSimulationCiemssRequest } from '@/types/Types';
+import type { EnsembleSimulationCiemssRequest } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
-
+import { DrilldownTabs, CiemssPresetTypes } from '@/types/common';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
-import { SimulateEnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
+import TeraSignalBars from '@/components/widgets/tera-signal-bars.vue';
+import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
+import { v4 as uuidv4 } from 'uuid';
+import {
+	SimulateEnsembleCiemssOperationState,
+	SimulateEnsembleMappingRow,
+	SimulateEnsembleWeight,
+	speedValues,
+	normalValues
+} from './simulate-ensemble-ciemss-operation';
+import { formatSimulateModelConfigurations } from './simulate-ensemble-util';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateEnsembleCiemssOperationState>;
 }>();
 const emit = defineEmits(['select-output', 'update-state', 'close']);
 
-enum Tabs {
-	Wizard = 'Wizard',
-	Notebook = 'Notebook'
+interface BasicKnobs {
+	mapping: SimulateEnsembleMappingRow[];
+	weights: SimulateEnsembleWeight[];
+	numSamples: number;
+	method: CiemssMethodOptions;
+	endTime: number;
 }
 
+const knobs = ref<BasicKnobs>({
+	mapping: props.node.state.mapping,
+	weights: props.node.state.weights,
+	numSamples: props.node.state.numSamples,
+	method: props.node.state.method,
+	endTime: props.node.state.endTime
+});
+
+const activeAccordionIndicies = ref([0, 1, 2]);
+const isSidebarOpen = ref(true);
+const isOutputSettingsPanelOpen = ref(false);
 const showSpinner = ref(false);
-
 const showAddMappingInput = ref(false);
-
 const listModelLabels = ref<string[]>([]);
+
+const presetType = computed(() => {
+	if (knobs.value.numSamples === speedValues.numSamples && knobs.value.method === speedValues.method) {
+		return CiemssPresetTypes.Fast;
+	}
+	if (knobs.value.numSamples === normalValues.numSamples && knobs.value.method === normalValues.method) {
+		return CiemssPresetTypes.Normal;
+	}
+	return '';
+});
 
 // List of each observible + state for each model.
 const allModelOptions = ref<{ [key: string]: string[] }>({});
-const ensembleConfigs = ref<EnsembleModelConfigs[]>(props.node.state.mapping);
-
-const timeSpan = ref<TimeSpan>(props.node.state.timeSpan);
-const numSamples = ref<number>(props.node.state.numSamples);
+const modelConfigurationIds: string[] = props.node.inputs.map((ele) => ele.value?.[0]).filter(Boolean);
+const modelConfigIdToNameMap = ref();
 
 const newSolutionMappingKey = ref<string>('');
 const runResults = ref<RunResults>({});
@@ -270,40 +345,60 @@ const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
-const calculateEvenWeights = () => {
-	if (!ensembleConfigs.value) return;
-	const percent = 1 / ensembleConfigs.value.length;
-	for (let i = 0; i < ensembleConfigs.value.length; i++) {
-		ensembleConfigs.value[i].weight = percent;
+const setPresetValues = (data: CiemssPresetTypes) => {
+	if (data === CiemssPresetTypes.Normal) {
+		knobs.value.numSamples = normalValues.numSamples;
+		knobs.value.method = normalValues.method;
+	}
+	if (data === CiemssPresetTypes.Fast) {
+		knobs.value.numSamples = speedValues.numSamples;
+		knobs.value.method = speedValues.method;
 	}
 };
 
 const addMapping = () => {
-	for (let i = 0; i < ensembleConfigs.value.length; i++) {
-		ensembleConfigs.value[i].solutionMappings[newSolutionMappingKey.value] = '';
-	}
-
+	knobs.value.mapping.push({
+		id: uuidv4(),
+		newName: newSolutionMappingKey.value,
+		modelConfigurationMappings: modelConfigurationIds.map((id) => ({
+			modelConfigId: id as string,
+			compartmentName: ''
+		}))
+	});
 	const state = _.cloneDeep(props.node.state);
-	state.mapping = ensembleConfigs.value;
+	state.mapping = knobs.value.mapping;
 	emit('update-state', state);
 };
 
-function deleteMapping(key) {
-	for (let i = 0; i < ensembleConfigs.value.length; i++) {
-		delete ensembleConfigs.value[i].solutionMappings[key];
-	}
-
+const deleteMappingRow = (id: string) => {
+	knobs.value.mapping = knobs.value.mapping.filter((ele) => ele.id !== id);
 	const state = _.cloneDeep(props.node.state);
-	state.mapping = ensembleConfigs.value;
+	state.mapping = knobs.value.mapping;
 	emit('update-state', state);
-}
+};
+
+const updateMapping = () => {
+	const state = _.cloneDeep(props.node.state);
+	state.mapping = knobs.value.mapping;
+	emit('update-state', state);
+};
+
+const updateWeights = () => {
+	const state = _.cloneDeep(props.node.state);
+	state.weights = knobs.value.weights;
+	emit('update-state', state);
+};
 
 const runEnsemble = async () => {
+	const modelConfigs = formatSimulateModelConfigurations(knobs.value.mapping, knobs.value.weights);
 	const params: EnsembleSimulationCiemssRequest = {
-		modelConfigs: ensembleConfigs.value,
-		timespan: timeSpan.value,
+		modelConfigs,
+		timespan: { start: 0, end: knobs.value.endTime },
 		engine: 'ciemss',
-		extra: { num_samples: numSamples.value }
+		extra: {
+			num_samples: knobs.value.numSamples,
+			method: knobs.value.method
+		}
 	};
 	const response = await makeEnsembleCiemssSimulation(params, nodeMetadata(props.node));
 
@@ -313,13 +408,13 @@ const runEnsemble = async () => {
 };
 
 onMounted(async () => {
-	const modelConfigurationIds: string[] = [];
-	props.node.inputs.forEach((ele) => {
-		if (ele.value) modelConfigurationIds.push(ele.value[0]);
-	});
 	if (!modelConfigurationIds) return;
-
 	const allModelConfigurations = await Promise.all(modelConfigurationIds.map((id) => getModelConfigurationById(id)));
+
+	modelConfigIdToNameMap.value = {};
+	allModelConfigurations.forEach((config) => {
+		modelConfigIdToNameMap.value[config.id as string] = config.name;
+	});
 
 	allModelOptions.value = {};
 	for (let i = 0; i < allModelConfigurations.length; i++) {
@@ -332,18 +427,19 @@ onMounted(async () => {
 
 	const state = _.cloneDeep(props.node.state);
 
-	if (state.mapping && state.mapping.length === 0) {
-		for (let i = 0; i < allModelConfigurations.length; i++) {
-			ensembleConfigs.value.push({
-				id: allModelConfigurations[i].id as string,
-				solutionMappings: {},
-				weight: 0
+	// Initalize weights:
+	if (
+		!knobs.value.weights ||
+		knobs.value.weights.length === 0 ||
+		knobs.value.weights.length !== modelConfigurationIds.length
+	) {
+		knobs.value.weights = [];
+		modelConfigurationIds.forEach((id) => {
+			knobs.value.weights.push({
+				modelConfigurationId: id,
+				value: 5
 			});
-		}
-	}
-
-	if (ensembleConfigs.value.some((ele) => ele.weight === 0)) {
-		calculateEvenWeights();
+		});
 	}
 
 	emit('update-state', state);
@@ -375,11 +471,14 @@ watch(
 );
 
 watch(
-	() => [timeSpan.value, numSamples.value],
-	async () => {
+	() => knobs.value,
+	() => {
 		const state = _.cloneDeep(props.node.state);
-		state.timeSpan = timeSpan.value;
-		state.numSamples = numSamples.value;
+		state.mapping = knobs.value.mapping;
+		state.weights = knobs.value.weights;
+		state.endTime = knobs.value.endTime;
+		state.numSamples = knobs.value.numSamples;
+		state.method = knobs.value.method;
 		emit('update-state', state);
 	},
 	{ immediate: true }
@@ -387,23 +486,64 @@ watch(
 </script>
 
 <style scoped>
+.toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--gap-1) var(--gap-4);
+	gap: var(--gap-2);
+}
+
+.form-section {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+	gap: var(--gap-4);
+	padding: var(--gap-4);
+}
+
+.label-and-input {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin-bottom: var(--gap-4);
+}
+
+.input-row {
+	width: 100%;
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+
+	& > * {
+		flex: 1;
+	}
+}
+
+.input-config:deep(.content-wrapper) {
+	padding-bottom: 0;
+}
+
+/* Override grid template so output expands when sidebar is closed */
+.overlay-container:deep(section.drilldown main) {
+	grid-template-columns: auto 1fr;
+}
+
+/* Override top and bottom padding of content-container */
+.overlay-container:deep(section.drilldown main .content-container) {
+	padding: 0 var(--gap-4);
+}
+
 .subheader {
 	color: var(--text-color-subdued);
 	margin-bottom: var(--gap-4);
 }
 
-.ensemble-calibration-graph {
-	height: 100px;
-}
-
 .model-weights {
 	display: flex;
 	align-items: start;
-}
-
-.ensemble-header {
-	display: flex;
-	margin: 1em;
 }
 
 th {
