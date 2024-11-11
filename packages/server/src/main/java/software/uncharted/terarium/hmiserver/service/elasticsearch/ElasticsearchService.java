@@ -755,7 +755,7 @@ public class ElasticsearchService {
 	 * @throws IOException              If the bulk insert fails
 	 * @throws IllegalArgumentException If the number of documents and ids are not the same
 	 */
-	public BulkResponse insert(final String index, final List documents, final List<String> ids) throws IOException {
+	public BulkResponse bulkInsert(final String index, final List documents, final List<String> ids) throws IOException {
 		if (ids != null && documents.size() != ids.size()) {
 			throw new IllegalArgumentException("The number of documents and ids must be the same");
 		}

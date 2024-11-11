@@ -110,7 +110,7 @@ public class DownloadStaticESIndexService {
 				final List<JsonNode> sources = jsonNodes.stream().map(node -> node.at("/_source")).toList();
 				final List<String> ids = sources.stream().map(node -> node.at("/" + DKG.ID).asText()).toList();
 				try {
-					final BulkResponse response = elasticsearchService.insert(index.getIndexName(), sources, ids);
+					final BulkResponse response = elasticsearchService.bulkInsert(index.getIndexName(), sources, ids);
 					if (response.errors()) {
 						log.error(
 							"Failed to insert documents into index {}: {}",
