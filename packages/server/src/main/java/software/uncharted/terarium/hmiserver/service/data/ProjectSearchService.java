@@ -1,24 +1,34 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
 import co.elastic.clients.elasticsearch._types.FieldSort;
+import co.elastic.clients.elasticsearch._types.KnnQuery;
 import co.elastic.clients.elasticsearch._types.SortOptions;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.HasChildQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.Hit;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.env.Environment;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
@@ -156,6 +166,12 @@ public class ProjectSearchService {
 		elasticService.deleteIndex(index);
 	}
 
+	/**
+	 * Index a project
+	 *
+	 * @param project
+	 * @throws IOException
+	 */
 	public void indexProject(final Project project) throws IOException {
 		final ProjectDocument doc = new ProjectDocument();
 		doc.setUserId(project.getUserId());
@@ -167,12 +183,26 @@ public class ProjectSearchService {
 		final String routing = project.getId().toString();
 
 		elasticService.indexWithRouting(getAlias(), project.getId().toString(), doc, routing);
+
+		// ensure the project is embedded too
+		generateAndUpsertProjectAssetEmbeddings(project.getId(), project);
 	}
 
+	/**
+	 * Force an ES refresh
+	 *
+	 * @throws IOException
+	 */
 	public void forceESRefresh() throws IOException {
 		elasticService.refreshIndex(getIndex());
 	}
 
+	/**
+	 * Update a project
+	 *
+	 * @param project
+	 * @throws IOException
+	 */
 	public void updateProject(final Project project) throws IOException {
 		final ProjectDocument doc = new ProjectDocument();
 		doc.setUserId(project.getUserId());
@@ -181,17 +211,41 @@ public class ProjectSearchService {
 		doc.setPermissionJoin(PermissionJoin.CreateProjectJoin());
 
 		elasticService.update(getAlias(), project.getId().toString(), doc);
+
+		// ensure the project is embedded too
+		generateAndUpsertProjectAssetEmbeddings(project.getId(), project);
 	}
 
+	/**
+	 * Remove a project
+	 *
+	 * @param id
+	 * @throws IOException
+	 */
 	public void removeProject(final UUID id) throws IOException {
 		elasticService.delete(getAlias(), id.toString());
 	}
 
+	/**
+	 * Get a project + user id permission id
+	 *
+	 * @param projectId
+	 * @param userId
+	 * @return
+	 */
 	private static String getPermissionId(final UUID projectId, final String userId) {
 		return projectId.toString() + "_" + userId;
 	}
 
+	/**
+	 * Add a project read permission for a user
+	 *
+	 * @param projectId
+	 * @param userId
+	 * @throws IOException
+	 */
 	public void addProjectPermission(final UUID projectId, final String userId) throws IOException {
+		log.info("Adding project permission for user id: {}", userId);
 		final ProjectPermissionDocument doc = new ProjectPermissionDocument();
 		doc.setUserId(userId);
 		doc.setPermissionJoin(PermissionJoin.CreatePermissionJoin(projectId));
@@ -201,10 +255,27 @@ public class ProjectSearchService {
 		elasticService.indexWithRouting(getAlias(), getPermissionId(projectId, userId), doc, routing);
 	}
 
+	/**
+	 * Remove a project read permission for a user
+	 *
+	 * @param projectId
+	 * @param userId
+	 * @throws IOException
+	 */
 	public void removeProjectPermission(final UUID projectId, final String userId) throws IOException {
 		elasticService.delete(getAlias(), getPermissionId(projectId, userId));
 	}
 
+	/**
+	 * Search for projects using a basic query
+	 *
+	 * @param userId
+	 * @param from
+	 * @param pageSize
+	 * @param query
+	 * @return
+	 * @throws IOException
+	 */
 	public List<ProjectDocument> searchProjectsForUser(
 		final String userId,
 		final Integer from,
@@ -221,6 +292,20 @@ public class ProjectSearchService {
 					.build()
 			);
 
+		// add the permission query
+		req.query(getProjectPermissionQuery(userId, query));
+
+		return elasticService.search(req.build(), ProjectDocument.class);
+	}
+
+	/**
+	 * Get a project permission query
+	 *
+	 * @param id
+	 * @return
+	 * @throws IOException
+	 */
+	private Query getProjectPermissionQuery(final String userId, final Query query) throws IOException {
 		// Does this user have permission to see this project?
 		final HasChildQuery hasChildQuery = HasChildQuery.of(h ->
 			h.type("permission").query(QueryBuilders.term(t -> t.field("userId").value(userId)))
@@ -240,19 +325,27 @@ public class ProjectSearchService {
 		final Query onlyProjects = QueryBuilders.bool(b2 -> b2.must(sh -> sh.term(t -> t.field("type").value("project"))));
 
 		if (query != null) {
-			req.query(q -> q.bool(b -> b.must(permissionQuery).must(onlyProjects).must(query)));
-		} else {
-			req.query(q -> q.bool(b -> b.must(onlyProjects).must(permissionQuery)));
+			return QueryBuilders.bool(b -> b.must(permissionQuery).must(onlyProjects).must(query));
 		}
-		return elasticService.search(req.build(), ProjectDocument.class);
+
+		return QueryBuilders.bool(b -> b.must(onlyProjects).must(permissionQuery));
 	}
 
+	/**
+	 * Generate asset embeddings for a project
+	 *
+	 * @param projectId
+	 * @param asset
+	 * @return
+	 */
 	public Future<Void> generateAndUpsertProjectAssetEmbeddings(final UUID projectId, final TerariumAsset asset) {
-		if (!isRunningTestProfile() && asset.getPublicAsset() && !asset.getTemporary()) {
+		if (!isRunningTestProfile() && !asset.getTemporary()) {
 			final String embeddingText = asset.getEmbeddingSourceText();
 			if (embeddingText == null) {
 				return null;
 			}
+
+			log.info("Dispatch async embedding generation for asset {}", asset.getId());
 
 			return CompletableFuture.runAsync(() -> {
 				new Thread(() -> {
@@ -292,6 +385,8 @@ public class ProjectSearchService {
 
 						final String routing = projectId.toString();
 
+						log.info("Writing asset embedding for project {} for asset {}", projectId, asset.getId());
+
 						// Execute the update request
 						elasticService.updateWithRouting(getAlias(), projectId.toString(), projectDoc, routing);
 					} catch (final Exception e) {
@@ -303,6 +398,12 @@ public class ProjectSearchService {
 		return null;
 	}
 
+	/**
+	 * Remove embeddings for a project asset
+	 *
+	 * @param projectId
+	 * @param assetId
+	 */
 	public void removeProjectAssetEmbedding(final UUID projectId, final UUID assetId) {
 		try {
 			final ProjectDocument projectDoc = elasticService.get(getAlias(), projectId.toString(), ProjectDocument.class);
@@ -317,6 +418,93 @@ public class ProjectSearchService {
 		} catch (final Exception e) {
 			log.error("Failed to remove embeddings for document {}", assetId, e);
 			throw new RuntimeException("Failed to remove embeddings for document " + assetId, e);
+		}
+	}
+
+	/**
+	 * Search for projects using a KNN search
+	 *
+	 * @param userId
+	 * @param pageSize
+	 * @param page
+	 * @param text
+	 * @param k
+	 * @param numCandidates
+	 * @param assetTypesToInclude
+	 * @return
+	 */
+	public ResponseEntity<List<JsonNode>> searchProjectsKNN(
+		final String userId,
+		final Integer pageSize,
+		final Integer page,
+		final String text,
+		final int k,
+		final int numCandidates,
+		List<AssetType> assetTypesToInclude
+	) {
+		if (assetTypesToInclude == null || assetTypesToInclude.isEmpty()) {
+			assetTypesToInclude = AssetType.getAllAssetTypes();
+		}
+		try {
+			if (k > numCandidates) {
+				return ResponseEntity.badRequest().build();
+			}
+
+			KnnQuery knn = null;
+			if (text != null && !text.isEmpty()) {
+				final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
+
+				final List<Float> vector = Arrays.stream(embeddings.getEmbeddings().get(0).getVector())
+					.mapToObj(d -> (float) d)
+					.collect(Collectors.toList());
+
+				knn = new KnnQuery.Builder()
+					.field("asset_embeddings.vector")
+					.queryVector(vector)
+					.k(k)
+					.numCandidates(numCandidates)
+					.build();
+			}
+
+			final Query permsQuery = getProjectPermissionQuery(userId, null);
+
+			// Add inner_hits to the nested query
+			final Query nestedQuery = new Query.Builder()
+				.nested(n ->
+					n
+						.path("asset_embeddings")
+						.query(permsQuery)
+						.innerHits(
+							ih -> ih.name("asset_embeddings_hits").size(1) // Adjust the size as needed
+						)
+				)
+				.build();
+
+			final List<String> EXCLUDE_FIELDS = List.of("asset_embeddings.vector");
+
+			final SearchResponse<JsonNode> res = elasticService.knnSearch(
+				getAlias(),
+				knn,
+				nestedQuery,
+				page,
+				pageSize,
+				EXCLUDE_FIELDS,
+				JsonNode.class
+			);
+
+			final List<JsonNode> docs = new ArrayList<>();
+			for (final Hit<JsonNode> hit : res.hits().hits()) {
+				final ObjectNode source = (ObjectNode) hit.source();
+				if (source != null) {
+					source.put("id", hit.id());
+					docs.add(source);
+				}
+			}
+			return ResponseEntity.ok(docs);
+		} catch (final Exception e) {
+			final String error = "Unable to get execute knn search";
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 }

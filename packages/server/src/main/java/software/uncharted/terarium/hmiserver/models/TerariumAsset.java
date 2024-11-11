@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.models;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,6 +20,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.Type;
+import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
@@ -151,6 +153,8 @@ public abstract class TerariumAsset extends TerariumEntity {
 		return objectNode.toString();
 	}
 
+	@JsonIgnore
+	@TSIgnore
 	public String getEmbeddingSourceText() {
 		return name + " " + description;
 	}

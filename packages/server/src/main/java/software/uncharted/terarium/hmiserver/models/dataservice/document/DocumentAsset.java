@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.document;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
@@ -22,6 +23,7 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.Type;
+import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
@@ -137,7 +139,9 @@ public class DocumentAsset extends TerariumAsset {
 		return clone;
 	}
 
-	public String getEmbeddingText() {
+	@JsonIgnore
+	@TSIgnore
+	public String getEmbeddingSourceText() {
 		try {
 			if (getMetadata() != null && getMetadata().containsKey("gollmCard")) {
 				// update embeddings

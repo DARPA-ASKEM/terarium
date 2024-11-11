@@ -355,6 +355,8 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		return this.getHeader().getSchemaName().equalsIgnoreCase("petrinet");
 	}
 
+	@JsonIgnore
+	@TSIgnore
 	public String getEmbeddingSourceText() {
 		try {
 			final ObjectMapper objectMapper = new ObjectMapper();

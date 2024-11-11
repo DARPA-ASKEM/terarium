@@ -720,7 +720,7 @@ public class ElasticsearchService {
 		}
 	}
 
-	public static String emphasis(String s, int boost) {
+	public static String emphasis(final String s, final int boost) {
 		return s + "^" + String.valueOf(boost);
 	}
 }
