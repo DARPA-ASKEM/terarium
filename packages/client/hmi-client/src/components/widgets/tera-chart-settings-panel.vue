@@ -2,8 +2,8 @@
 	<transition>
 		<div class="chart-settings-panel" v-if="activeSettings !== null">
 			<header :class="{ shadow: false }">
-				<Button :icon="`pi pi-times`" @click="$emit('close')" text rounded size="large" />
-				<h4>Chart Settings</h4>
+				<Button :icon="`pi pi-angle-double-right`" @click="$emit('close')" text rounded size="large" />
+				<h4>{{ activeSettings.name }}</h4>
 			</header>
 			<div class="content">
 				<div v-if="chartAnnotations !== undefined" class="annotation-items">
@@ -95,7 +95,8 @@ const cancelGenerateAnnotation = () => {
 	position: absolute;
 	top: 0;
 	z-index: 3;
-	height: 100%;
+	margin-top: 50px;
+	height: calc(100% - 50px);
 	width: 100%;
 	background: #fff;
 	left: 0;

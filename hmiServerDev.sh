@@ -80,10 +80,7 @@ function start_local() {
 }
 
 function start_staging() {
-  echo "Starting local server pointing to staging keycloak"
-  cd ${SERVER_DIR} || exit
-  ./gradlew bootRun --args='--spring.profiles.active=default,secrets,local,staging-keycloak'
-  cd - || exit
+  start_local
 }
 
 function build_docker_compose() {

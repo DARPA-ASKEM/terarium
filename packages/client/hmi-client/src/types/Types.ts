@@ -3,6 +3,7 @@
 
 export interface ClientConfig {
     baseUrl: string;
+    documentationUrl: string;
     clientLogShippingEnabled: boolean;
     clientLogShippingIntervalMillis: number;
     sseHeartbeatIntervalMillis: number;

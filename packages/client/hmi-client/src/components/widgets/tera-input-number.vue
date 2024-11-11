@@ -4,7 +4,7 @@
 		<main :class="[{ error: getErrorMessage }, { empty: isEmptyError }]" @click.self.stop="focusInput">
 			<i v-if="icon" :class="icon" />
 			<input
-				:class="[$attrs.class, { 'empty-number': isEmptyError }]"
+				:class="[$attrs.class, { 'empty-value': isEmptyError }]"
 				@click.stop
 				ref="inputField"
 				:disabled="getDisabled"
