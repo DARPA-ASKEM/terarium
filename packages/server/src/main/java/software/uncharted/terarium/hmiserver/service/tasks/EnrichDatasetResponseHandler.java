@@ -12,6 +12,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
@@ -89,6 +90,15 @@ public class EnrichDatasetResponseHandler extends TaskResponseHandler {
 				final String unit = enrichedColumn.get("unit").asText();
 				final String concept = enrichedColumn.get("concept").asText();
 
+				// Create a JsonNode for the metadata (name, unit) if it doesn't exist
+				final ObjectNode metadata = objectMapper.createObjectNode();
+				metadata.put("name", name);
+				metadata.put("unit", unit);
+
+				// Based on the name, description, and concept, fetch the best grounding available and add it to the metadata
+				// final Grounding grounding = null; // groundingService.getGrounding(name, description, concept);
+				// metadata.put("grounding", grounding);
+
 				dataset
 					.getColumns()
 					.stream()
@@ -96,6 +106,7 @@ public class EnrichDatasetResponseHandler extends TaskResponseHandler {
 					.findFirst()
 					.ifPresent(column -> {
 						column.setDescription(description);
+						column.setMetadata(metadata);
 					});
 			}
 

@@ -50,11 +50,11 @@
       "description": "A list of descriptions and units for dataset columns.",
       "items": {
         "type": "object",
-        "description": "The description and units for a state defined in an AMR model.",
+        "description": "The description and units for a dataset column.",
         "properties": {
           "name": {
             "type": "string",
-            "description": "Name of the column."
+            "description": "Name of the column used in the document."
           },
           "description": {
             "type": "string",
