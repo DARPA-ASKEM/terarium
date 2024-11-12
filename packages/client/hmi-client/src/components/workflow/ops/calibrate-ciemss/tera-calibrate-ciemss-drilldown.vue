@@ -730,12 +730,12 @@ const chartSize = useDrilldownChartSize(outputPanel);
 const {
 	activeChartSettings,
 	chartSettings,
-	comparisonChartsSettingsSelection,
 	selectedVariableSettings,
 	selectedParameterSettings,
 	selectedInterventionSettings,
-	selectedComparisonChartSettings,
 	selectedErrorVariableSettings,
+	selectedComparisonChartSettings,
+	comparisonChartsSettingsSelection,
 	removeChartSettings,
 	updateChartSettings,
 	addComparisonChartSettings

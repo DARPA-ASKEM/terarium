@@ -363,7 +363,7 @@
 							:select-options="_.keys(preProcessedInterventionsData)"
 							:selected-options="selectedInterventionSettings.map((s) => s.selectedVariables[0])"
 							@open="activeChartSettings = $event"
-							@remove="removeChartSetting"
+							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
 						<Divider />
@@ -374,7 +374,7 @@
 							:select-options="simulationChartOptions"
 							:selected-options="selectedVariableSettings.map((s) => s.selectedVariables[0])"
 							@open="activeChartSettings = $event"
-							@remove="removeChartSetting"
+							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
 						<Divider />
@@ -385,7 +385,7 @@
 							:select-options="simulationChartOptions"
 							:selected-options="comparisonChartsSettingsSelection"
 							@open="activeChartSettings = $event"
-							@remove="removeChartSetting"
+							@remove="removeChartSettings"
 							@selection-change="comparisonChartsSettingsSelection = $event"
 						/>
 						<div>
@@ -485,12 +485,8 @@ import { useConfirm } from 'primevue/useconfirm';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
 import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
-import {
-	deleteAnnotation,
-	removeChartSettingById,
-	updateChartSettingsBySelectedVariables,
-	addMultiVariableChartSetting
-} from '@/services/chart-settings';
+import { deleteAnnotation, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import { useChartSettings } from '@/composables/useChartSettings';
 import { useChartAnnotations } from '@/composables/useChartAnnotations';
 import teraOptimizeCriterionGroupForm from './tera-optimize-criterion-group-form.vue';
 import TeraStaticInterventionPolicyGroup from './tera-static-intervention-policy-group.vue';
@@ -556,20 +552,6 @@ const showSaveInterventionPolicy = ref<boolean>(false);
 const outputPanel = ref(null);
 const chartSize = useDrilldownChartSize(outputPanel);
 const cancelRunId = computed(() => props.node.state.inProgressPostForecastId || props.node.state.inProgressOptimizeId);
-
-const chartSettings = computed(() => props.node.state.chartSettings ?? []);
-const activeChartSettings = ref<ChartSetting | null>(null);
-const comparisonChartsSettingsSelection = ref<string[]>([]);
-
-const selectedVariableSettings = computed(() =>
-	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE)
-);
-const selectedInterventionSettings = computed(() =>
-	chartSettings.value.filter((setting) => setting.type === ChartSettingType.INTERVENTION)
-);
-const selectedComparisonChartSettings = computed(() =>
-	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON)
-);
 
 const activePolicyGroups = computed(() =>
 	knobs.value.interventionPolicyGroups.filter((ele) => !!ele.relativeImportance)
@@ -1152,6 +1134,18 @@ const comparisonCharts = computed(() => {
 	return charts;
 });
 
+const {
+	activeChartSettings,
+	chartSettings,
+	selectedVariableSettings,
+	selectedInterventionSettings,
+	selectedComparisonChartSettings,
+	comparisonChartsSettingsSelection,
+	removeChartSettings,
+	updateChartSettings,
+	addComparisonChartSettings
+} = useChartSettings(props, emit);
+
 // --- Handle chart annotations
 const { getChartAnnotationsByChartId, generateAndSaveForecastChartAnnotation } = useChartAnnotations(props.node.id);
 const generateAnnotation = async (setting: ChartSetting, query: string) => {
@@ -1160,32 +1154,6 @@ const generateAnnotation = async (setting: ChartSetting, query: string) => {
 	return generateAndSaveForecastChartAnnotation(setting, query, 'timepoint_id', statLayerVariables, options);
 };
 // ---
-
-const removeChartSetting = (chartId) => {
-	emit('update-state', {
-		...props.node.state,
-		chartSettings: removeChartSettingById(chartSettings.value, chartId)
-	});
-};
-
-const updateChartSettings = (selectedVariables: string[], type: ChartSettingType) => {
-	emit('update-state', {
-		...props.node.state,
-		chartSettings: updateChartSettingsBySelectedVariables(chartSettings.value, type, selectedVariables)
-	});
-};
-
-const addComparisonChartSettings = () => {
-	emit('update-state', {
-		...props.node.state,
-		chartSettings: addMultiVariableChartSetting(
-			chartSettings.value,
-			ChartSettingType.VARIABLE_COMPARISON,
-			comparisonChartsSettingsSelection.value
-		)
-	});
-	comparisonChartsSettingsSelection.value = [];
-};
 
 // refresh policy
 const onSaveForReuse = async () => {

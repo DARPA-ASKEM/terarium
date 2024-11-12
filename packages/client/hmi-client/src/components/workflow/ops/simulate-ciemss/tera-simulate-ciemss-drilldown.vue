@@ -230,7 +230,7 @@
 							:select-options="Object.keys(groupedInterventionOutputs)"
 							:selected-options="selectedInterventionSettings.map((s) => s.selectedVariables[0])"
 							@open="activeChartSettings = $event"
-							@remove="removeChartSetting"
+							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
 						<Divider />
@@ -243,7 +243,7 @@
 							"
 							:selected-options="selectedVariableSettings.map((s) => s.selectedVariables[0])"
 							@open="activeChartSettings = $event"
-							@remove="removeChartSetting"
+							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
 						<Divider />
@@ -254,7 +254,7 @@
 							:select-options="Object.keys(pyciemssMap)"
 							:selected-options="comparisonChartsSettingsSelection"
 							@open="activeChartSettings = $event"
-							@remove="removeChartSetting"
+							@remove="removeChartSettings"
 							@selection-change="comparisonChartsSettingsSelection = $event"
 						/>
 						<div>
@@ -349,12 +349,8 @@ import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-m
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
 import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
-import {
-	addMultiVariableChartSetting,
-	deleteAnnotation,
-	removeChartSettingById,
-	updateChartSettingsBySelectedVariables
-} from '@/services/chart-settings';
+import { deleteAnnotation } from '@/services/chart-settings';
+import { useChartSettings } from '@/composables/useChartSettings';
 import { useChartAnnotations } from '@/composables/useChartAnnotations';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
@@ -366,20 +362,6 @@ const emit = defineEmits(['update-state', 'select-output', 'close']);
 
 const isSidebarOpen = ref(true);
 const isOutputSettingsPanelOpen = ref(false);
-
-const chartSettings = computed(() => props.node.state.chartSettings ?? []);
-const selectedInterventionSettings = computed(() =>
-	chartSettings.value.filter((setting) => setting.type === ChartSettingType.INTERVENTION)
-);
-const selectedVariableSettings = computed(() =>
-	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE)
-);
-const selectedComparisonChartSettings = computed(() =>
-	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON)
-);
-
-const activeChartSettings = ref<ChartSetting | null>(null);
-const comparisonChartsSettingsSelection = ref<string[]>([]);
 
 const modelVarUnits = ref<{ [key: string]: string }>({});
 let editor: VAceEditorInstance['_editor'] | null;
@@ -656,6 +638,18 @@ const comparisonCharts = computed(() => {
 	return charts;
 });
 
+const {
+	activeChartSettings,
+	chartSettings,
+	selectedVariableSettings,
+	selectedInterventionSettings,
+	selectedComparisonChartSettings,
+	comparisonChartsSettingsSelection,
+	removeChartSettings,
+	updateChartSettings,
+	addComparisonChartSettings
+} = useChartSettings(props, emit);
+
 // --- Handle chart annotations
 const { getChartAnnotationsByChartId, generateAndSaveForecastChartAnnotation } = useChartAnnotations(props.node.id);
 const generateAnnotation = async (setting: ChartSetting, query: string) => {
@@ -664,32 +658,6 @@ const generateAnnotation = async (setting: ChartSetting, query: string) => {
 	return generateAndSaveForecastChartAnnotation(setting, query, 'timepoint_id', statLayerVariables, options);
 };
 // ---
-
-const removeChartSetting = (chartId) => {
-	emit('update-state', {
-		...props.node.state,
-		chartSettings: removeChartSettingById(chartSettings.value, chartId)
-	});
-};
-
-const updateChartSettings = (selectedVariables: string[], type: ChartSettingType) => {
-	emit('update-state', {
-		...props.node.state,
-		chartSettings: updateChartSettingsBySelectedVariables(chartSettings.value, type, selectedVariables)
-	});
-};
-
-const addComparisonChartSettings = () => {
-	emit('update-state', {
-		...props.node.state,
-		chartSettings: addMultiVariableChartSetting(
-			chartSettings.value,
-			ChartSettingType.VARIABLE_COMPARISON,
-			comparisonChartsSettingsSelection.value
-		)
-	});
-	comparisonChartsSettingsSelection.value = [];
-};
 
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);
