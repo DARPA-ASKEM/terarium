@@ -15,6 +15,7 @@ export interface ClientEvent<T> {
     type: ClientEventType;
     projectId?: string;
     notificationGroupId?: string;
+    userId?: string;
     data: T;
 }
 
