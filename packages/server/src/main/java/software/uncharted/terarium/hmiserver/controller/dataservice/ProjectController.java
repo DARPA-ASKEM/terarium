@@ -430,7 +430,7 @@ public class ProjectController {
 			final RebacUser rebacUser = new RebacUser(userId, reBACService);
 
 			rebacUser.createCreatorRelationship(rebacProject);
-			rebacAskemAdminGroup.createWriterRelationship(rebacProject);
+			rebacAskemAdminGroup.createAdminRelationship(rebacProject);
 		} catch (final Exception e) {
 			log.error("Error setting user's permissions for project", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
@@ -1088,7 +1088,7 @@ public class ProjectController {
 		@PathVariable("isPublic") final boolean isPublic
 	) {
 		try {
-			projectService.checkPermissionCanWrite(currentUserService.get().getId(), id);
+			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), id);
 
 			// Getting the project permissions
 			final RebacProject project = new RebacProject(id, reBACService);
