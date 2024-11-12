@@ -3,6 +3,7 @@
 		is-time-part
 		:items="timeList"
 		:feature-config="featureConfig"
+		:filter="filter"
 		@update-item="$emit('update-time', $event)"
 	/>
 </template>
@@ -19,6 +20,7 @@ defineEmits(['update-time']);
 const props = defineProps<{
 	time: State[];
 	featureConfig: FeatureConfig;
+	filter?: string;
 }>();
 
 const timeList = computed<

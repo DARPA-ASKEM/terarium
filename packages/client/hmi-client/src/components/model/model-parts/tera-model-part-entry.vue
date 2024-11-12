@@ -1,5 +1,5 @@
 <template>
-	<section class="flex flex-column gap-1">
+	<section class="flex flex-column gap-2">
 		<span class="flex align-items-center gap-3">
 			<h6>{{ symbol }}</h6>
 			<span class="name">
@@ -169,16 +169,15 @@ h6::after {
 	margin-left: var(--gap-2);
 }
 
-.unit {
-	max-width: 20rem;
-	overflow: auto;
-}
-
 .unit,
 .concept {
 	display: flex;
 	align-items: center;
 	gap: var(--gap-1);
+}
+
+.unit {
+	overflow: auto;
 }
 
 .expression {

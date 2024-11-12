@@ -1,7 +1,7 @@
 <template>
 	<ul>
 		<li
-			v-for="({ base, children, isParent }, index) in items.slice(firstRow, firstRow + MAX_NUMBER_OF_ROWS)"
+			v-for="({ base, children, isParent }, index) in filteredItems.slice(firstRow, firstRow + MAX_NUMBER_OF_ROWS)"
 			:key="index"
 			class="model-part"
 		>
@@ -147,10 +147,10 @@
 		</li>
 	</ul>
 	<Paginator
-		v-if="items.length > MAX_NUMBER_OF_ROWS"
+		v-if="filteredItems.length > MAX_NUMBER_OF_ROWS"
 		:rows="MAX_NUMBER_OF_ROWS"
 		:first="firstRow"
-		:total-records="items.length"
+		:total-records="filteredItems.length"
 		:template="{
 			default: 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink JumpToPageDropdown'
 		}"
@@ -160,7 +160,7 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import type { ModelPartItem } from '@/types/Model';
 import type { DKG } from '@/types/Types';
 import { searchCuriesEntities } from '@/services/concept';
@@ -181,9 +181,12 @@ const props = defineProps<{
 	collapsedItems?: Map<string, string[]>;
 	showMatrix?: boolean;
 	isTimePart?: boolean;
+	filter?: string;
 }>();
 
 const emit = defineEmits(['update-item', 'open-matrix']);
+
+const MAX_NUMBER_OF_ROWS = 10;
 
 const parentEditingState = ref<
 	{
@@ -201,7 +204,25 @@ const parentEditingState = ref<
 const results = ref<DKG[]>([]);
 const firstRow = ref(0);
 
-const MAX_NUMBER_OF_ROWS = 10;
+const filteredItems = computed(() => {
+	const filterText = props.filter?.toLowerCase() ?? '';
+	if (!filterText) return props.items;
+	return props.items
+		.map(({ base, children, isParent }) => {
+			const filteredChildren = children.filter((child) => child.id.toLowerCase().includes(filterText));
+			const baseMatches = base.id.toLowerCase().includes(filterText);
+			const childrenMatch = filteredChildren.length > 0;
+			if (baseMatches || childrenMatch) {
+				return {
+					base,
+					children: filteredChildren,
+					isParent
+				};
+			}
+			return null;
+		})
+		.filter(Boolean) as { base: ModelPartItem; children: ModelPartItem[]; isParent: boolean }[];
+});
 
 function updateAllChildren(base: string, key: string, value: string) {
 	if (isEmpty(value) || !props.collapsedItems) return;
@@ -210,9 +231,9 @@ function updateAllChildren(base: string, key: string, value: string) {
 }
 
 watch(
-	() => props.items,
+	() => filteredItems.value,
 	() => {
-		parentEditingState.value = Array.from({ length: props.items.length }, () => ({
+		parentEditingState.value = Array.from({ length: filteredItems.value.length }, () => ({
 			showChildren: false,
 			isEditingChildrenUnits: false,
 			isEditingChildrenConcepts: false,
@@ -238,7 +259,7 @@ ul {
 
 .model-part {
 	margin-left: var(--gap-1);
-	padding: var(--gap-3) var(--gap-4);
+	padding: var(--gap-3) 0 var(--gap-3) var(--gap-3);
 	border-left: 4px solid var(--surface-border);
 	background: var(--surface-0);
 	transition: background-color 0.15s;
