@@ -40,7 +40,7 @@
 											<td>
 												<tera-input-text v-model="ele.newName" auto-focus class="w-full" placeholder="Add a name" />
 											</td>
-											<td v-for="key in Object.keys(ele.modelConfigurationMappings)" :key="key">
+											<td v-for="key in modelConfigurationIds" :key="key">
 												<Dropdown
 													class="w-full"
 													:options="allModelOptions[key]"
@@ -116,7 +116,7 @@
 							<div class="model-weights">
 								<table class="p-datatable-table">
 									<tbody class="p-datatable-tbody">
-										<tr v-for="key in Object.keys(knobs.weights)" :key="key">
+										<tr v-for="key in modelConfigurationIds" :key="key">
 											<td>
 												{{ modelConfigIdToNameMap[key] }}
 											</td>
