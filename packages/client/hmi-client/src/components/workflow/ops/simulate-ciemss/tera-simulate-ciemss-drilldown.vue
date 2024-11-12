@@ -344,6 +344,7 @@ import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
+import { usePreparedChartInputs } from './simulate-utils';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
@@ -481,18 +482,7 @@ const groupedInterventionOutputs = computed(() =>
 	_.groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
 );
 
-const preparedChartInputs = computed(() => {
-	if (!selectedRunId.value || _.isEmpty(pyciemssMap.value)) return null;
-	const result = runResults.value[selectedRunId.value];
-	const resultSummary = runResultsSummary.value[selectedRunId.value];
-	const reverseMap: Record<string, string> = {};
-	Object.keys(pyciemssMap.value).forEach((key) => {
-		reverseMap[`${pyciemssMap.value[key]}_mean`] = key;
-		reverseMap[`${pyciemssMap.value[key]}_mean:pre`] = `${key} (baseline)`;
-	});
-	return { result, resultSummary, translationMap: reverseMap, pyciemssMap: pyciemssMap.value };
-});
-
+const preparedChartInputs = usePreparedChartInputs(props, runResults, runResultsSummary, pyciemssMap);
 const {
 	activeChartSettings,
 	chartSettings,

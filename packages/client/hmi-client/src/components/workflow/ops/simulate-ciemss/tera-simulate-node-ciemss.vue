@@ -1,17 +1,32 @@
 <template>
 	<main>
 		<template v-if="selectedRunId && runResults[selectedRunId]">
-			<section v-for="setting of chartSettings" :key="setting.id">
-				<vega-chart
-					v-if="preparedCharts[setting.id]"
-					expandable
-					are-embed-actions-visible
-					:visualization-spec="preparedCharts[setting.id]"
-				/>
-				<div v-else class="empty-chart">
+			<section>
+				<div v-if="isChartsEmpty" class="empty-chart">
 					<img src="@assets/svg/seed.svg" alt="" draggable="false" class="empty-image" />
 					<p class="helpMessage">No variables selected</p>
 				</div>
+				<vega-chart
+					v-for="setting of selectedInterventionSettings"
+					:key="setting.id"
+					expandable
+					are-embed-actions-visible
+					:visualization-spec="interventionCharts[setting.id]"
+				/>
+				<vega-chart
+					v-for="setting of selectedVariableSettings"
+					:key="setting.id"
+					expandable
+					are-embed-actions-visible
+					:visualization-spec="variableCharts[setting.id]"
+				/>
+				<vega-chart
+					v-for="setting of selectedComparisonChartSettings"
+					:key="setting.id"
+					expandable
+					are-embed-actions-visible
+					:visualization-spec="comparisonCharts[setting.id]"
+				/>
 			</section>
 		</template>
 		<tera-progress-spinner v-if="inProgressForecastRun" :font-size="2" is-centered style="height: 100%" />
@@ -22,29 +37,18 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, ref, watch } from 'vue';
+import { computed, ref, toRef, watch } from 'vue';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { getRunResultCSV, getSimulation, parsePyCiemssMap, DataArray } from '@/services/models/simulation-service';
-import {
-	getModelByModelConfigurationId,
-	getTypesFromModelParts,
-	getUnitsFromModelParts,
-	getVegaDateOptions
-} from '@/services/model';
+import { getModelByModelConfigurationId, getTypesFromModelParts, getUnitsFromModelParts } from '@/services/model';
 import { logger } from '@/utils/logger';
 import { nodeOutputLabel } from '@/components/workflow/util';
 
 import type { WorkflowNode } from '@/types/workflow';
 import { createLLMSummary } from '@/services/summary-service';
 import { useProjects } from '@/composables/project';
-import {
-	applyForecastChartAnnotations,
-	createForecastChart,
-	createInterventionChartMarkers,
-	ForecastChartOptions
-} from '@/services/charts';
 import { createDatasetFromSimulationResult } from '@/services/dataset';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import {
@@ -63,9 +67,11 @@ import { updateChartSettingsBySelectedVariables } from '@/services/chart-setting
 import { ChartSettingType } from '@/types/common';
 import { useClientEvent } from '@/composables/useClientEvent';
 import { getModelConfigurationById } from '@/services/model-configurations';
-import { useChartAnnotations } from '@/composables/useChartAnnotations';
+import { useChartSettings } from '@/composables/useChartSettings';
+import { useCharts } from '@/composables/useCharts';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
 import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
+import { usePreparedChartInputs } from './simulate-utils';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
@@ -88,15 +94,11 @@ const areInputsFilled = computed(() => props.node.inputs[0].value);
 const interventionPolicyId = computed(() => props.node.inputs[1].value?.[0]);
 const interventionPolicy = ref<InterventionPolicy | null>(null);
 
-const chartSettings = computed(() => props.node.state.chartSettings ?? []);
-
-const { getChartAnnotationsByChartId } = useChartAnnotations(props.node.id);
-
-let pyciemssMap: Record<string, string> = {};
+const pyciemssMap = ref<Record<string, string>>({});
 
 const processResult = async (runId: string) => {
 	const result = await getRunResultCSV(runId, 'result.csv');
-	pyciemssMap = parsePyCiemssMap(result[0]);
+	pyciemssMap.value = parsePyCiemssMap(result[0]);
 	const state = _.cloneDeep(props.node.state);
 	if (_.isEmpty(state.chartSettings)) {
 		state.chartSettings = updateChartSettingsBySelectedVariables(
@@ -164,76 +166,27 @@ const groupedInterventionOutputs = computed(() =>
 	_.groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
 );
 
-const preparedCharts = computed(() => {
-	const charts: Record<string, any> = {};
-	if (!selectedRunId.value) return charts;
-	const result = runResults.value[selectedRunId.value];
-	const resultSummary = runResultsSummary.value[selectedRunId.value];
-	const reverseMap: Record<string, string> = {};
-	Object.keys(pyciemssMap).forEach((key) => {
-		reverseMap[`${pyciemssMap[key]}_mean`] = key;
-	});
+const preparedChartInputs = usePreparedChartInputs(props, runResults, runResultsSummary, pyciemssMap);
 
-	const dateOptions = getVegaDateOptions(model.value, modelConfiguration.value);
-	chartSettings.value.forEach((setting) => {
-		// If only one variable is selected, show the baseline forecast
-		const selectedVars = setting.selectedVariables;
-		const showBaseLine = selectedVars.length === 1 && Boolean(props.node.state.baseForecastId);
+const { selectedVariableSettings, selectedInterventionSettings, selectedComparisonChartSettings } = useChartSettings(
+	props,
+	emit
+);
 
-		const options: ForecastChartOptions = {
-			title: '',
-			width: 180,
-			height: 120,
-			legend: true,
-			translationMap: reverseMap,
-			xAxisTitle: modelVarUnits.value._time || 'Time',
-			yAxisTitle: _.uniq(selectedVars.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || '',
-			dateOptions
-		};
-
-		let statLayerVariables = selectedVars.map((d) => `${pyciemssMap[d]}_mean`);
-		let sampleLayerVariables = selectedVars.map((d) => pyciemssMap[d]);
-
-		if (showBaseLine) {
-			sampleLayerVariables = [`${pyciemssMap[selectedVars[0]]}:base`, `${pyciemssMap[selectedVars[0]]}`];
-			statLayerVariables = [`${pyciemssMap[selectedVars[0]]}_mean:base`, `${pyciemssMap[selectedVars[0]]}_mean`];
-			options.translationMap = {
-				...options.translationMap,
-				[`${pyciemssMap[selectedVars[0]]}_mean:base`]: `${selectedVars[0]} (baseline)`
-			};
-			options.colorscheme = ['#AAB3C6', '#1B8073'];
-		}
-
-		const annotations = getChartAnnotationsByChartId(setting.id);
-		const chart = applyForecastChartAnnotations(
-			createForecastChart(
-				{
-					data: result,
-					variables: sampleLayerVariables,
-					timeField: 'timepoint_id',
-					groupField: 'sample_id'
-				},
-				{
-					data: resultSummary,
-					variables: statLayerVariables,
-					timeField: 'timepoint_id'
-				},
-				null,
-				options
-			),
-			annotations
-		);
-		if (interventionPolicy.value) {
-			_.keys(groupedInterventionOutputs.value).forEach((key) => {
-				if (selectedVars.includes(key)) {
-					chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
-				}
-			});
-		}
-		charts[setting.id] = chart;
-	});
-	return charts;
-});
+const { useInterventionCharts, useVariableCharts, useComparisonCharts } = useCharts(
+	props.node.id,
+	model,
+	modelConfiguration,
+	preparedChartInputs,
+	toRef({ width: 180, height: 120 }),
+	computed(() => interventionPolicy.value?.interventions ?? [])
+);
+const interventionCharts = useInterventionCharts(selectedInterventionSettings, true);
+const variableCharts = useVariableCharts(selectedVariableSettings, null, () => '');
+const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
+const isChartsEmpty = computed(
+	() => _.isEmpty(interventionCharts.value) && _.isEmpty(variableCharts.value) && _.isEmpty(comparisonCharts.value)
+);
 
 const isFinished = (state: ProgressState) =>
 	[ProgressState.Cancelled, ProgressState.Failed, ProgressState.Complete].includes(state);
@@ -345,7 +298,7 @@ watch(
 			getRunResultCSV(forecastId, 'result.csv'),
 			getRunResultCSV(forecastId, 'result_summary.csv')
 		]);
-		pyciemssMap = parsePyCiemssMap(result[0]);
+		pyciemssMap.value = parsePyCiemssMap(result[0]);
 
 		const baseForecastId = props.node.state.baseForecastId;
 		if (baseForecastId) {
