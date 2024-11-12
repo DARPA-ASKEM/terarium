@@ -1,6 +1,10 @@
 <template>
 	<main>
-		<vega-chart v-if="!_.isEmpty(lossValues)" :are-embed-actions-visible="false" :visualization-spec="lossChartSpec" />
+		<vega-chart
+			v-if="(inProgressCalibrationId || inProgressForecastId) && !_.isEmpty(lossValues)"
+			:are-embed-actions-visible="false"
+			:visualization-spec="lossChartSpec"
+		/>
 		<template v-if="!inProgressCalibrationId && !inProgressForecastId && runResults && csvAsset">
 			<tera-simulate-chart
 				v-for="(config, index) of props.node.state.chartConfigs"
