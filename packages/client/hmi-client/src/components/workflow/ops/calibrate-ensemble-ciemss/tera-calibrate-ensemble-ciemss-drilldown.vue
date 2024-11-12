@@ -520,7 +520,7 @@ watch(
 			const output = await getRunResultCiemss(state.forecastRunId, 'result.csv');
 			runResults.value = output.runResults;
 			lossValues.value = await getLossValuesFromSimulation(props.node.state.calibrationId);
-			lossChartSpec.value = await updateLossChartSpec(lossValues.value, lossChartSize.value);
+			lossChartSpec.value = updateLossChartSpec(lossValues.value, lossChartSize.value);
 		}
 	},
 	{ immediate: true }
