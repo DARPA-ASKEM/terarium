@@ -4,16 +4,17 @@
 			v-if="!inProgressCalibrationId && runResult && csvAsset && runResultPre && selectedVariableSettings.length"
 		>
 			<vega-chart
-				v-for="(_var, index) of selectedVariableSettings"
-				:key="index"
+				v-for="setting of selectedVariableSettings"
+				:key="setting.id"
 				:are-embed-actions-visible="false"
-				:visualization-spec="preparedCharts.variableCharts[index]"
+				:visualization-spec="preparedCharts.variableCharts[setting.id]"
 			/>
 			<vega-chart
-				v-for="(_value, key, index) in groupedInterventionOutputs"
-				:key="key"
-				:are-embed-actions-visible="false"
-				:visualization-spec="preparedCharts.interventionCharts[index]"
+				v-for="setting of selectedInterventionSettings"
+				:key="setting.id"
+				expandable
+				:are-embed-actions-visible="true"
+				:visualization-spec="preparedCharts.interventionCharts[setting.id]"
 			/>
 		</template>
 		<vega-chart v-else-if="lossChartSpec" :are-embed-actions-visible="false" :visualization-spec="lossChartSpec" />
@@ -61,7 +62,6 @@ import {
 	InterventionPolicy,
 	Dataset
 } from '@/types/Types';
-import { ChartSettingType } from '@/types/common';
 import { createLLMSummary } from '@/services/summary-service';
 import {
 	applyForecastChartAnnotations,
@@ -75,6 +75,7 @@ import { createDatasetFromSimulationResult, getDataset } from '@/services/datase
 import { useProjects } from '@/composables/project';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import { useChartAnnotations } from '@/composables/useChartAnnotations';
+import { useChartSettings } from '@/composables/useChartSettings';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { CalibrationOperationCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults } from './calibrate-utils';
@@ -108,9 +109,7 @@ const chartSize = { width: 180, height: 120 };
 
 let lossValues: { [key: string]: number }[] = [];
 
-const selectedVariableSettings = computed(() =>
-	(props.node.state.chartSettings ?? []).filter((setting) => setting.type === ChartSettingType.VARIABLE)
-);
+const { selectedVariableSettings, selectedInterventionSettings } = useChartSettings(props, emit);
 
 const lossChartSpec = ref();
 const updateLossChartSpec = (data: Record<string, any>[]) => {
@@ -184,7 +183,8 @@ const preparedCharts = computed(() => {
 	const datasetTimeField = state.timestampColName;
 	const dateOptions = getVegaDateOptions(model.value, modelConfiguration.value);
 
-	const variableCharts = selectedVariableSettings.value.map((setting) => {
+	const variableCharts: Record<string, any> = {};
+	selectedVariableSettings.value.forEach((setting) => {
 		const variable = setting.selectedVariables[0];
 		const datasetVariables: string[] = [];
 		const mapObj = state.mapping.find((d) => d.modelVariable === variable);
@@ -224,38 +224,39 @@ const preparedCharts = computed(() => {
 		);
 		applyForecastChartAnnotations(chart, annotations);
 		chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[variable]));
-
-		return chart;
+		variableCharts[setting.id] = chart;
 	});
 
 	// intervention charts
-	const interventionCharts = Object.keys(groupedInterventionOutputs.value).map((key) => {
+	const interventionCharts: Record<string, any> = {};
+	selectedInterventionSettings.value.forEach((setting) => {
+		const variable = setting.selectedVariables[0];
 		const chart = createForecastChart(
 			{
 				data: result,
-				variables: [pyciemssMap[key]],
+				variables: [pyciemssMap[variable]],
 				timeField: 'timepoint_id',
 				groupField: 'sample_id'
 			},
 			null,
 			{
 				data: groundTruth.value,
-				variables: [key],
+				variables: [variable],
 				timeField: datasetTimeField as string
 			},
 			{
-				title: key,
+				title: variable,
 				legend: true,
 				translationMap: reverseMap,
 				xAxisTitle: modelVarUnits.value._time || 'Time',
-				yAxisTitle: modelVarUnits.value[key] || '',
+				yAxisTitle: modelVarUnits.value[variable] || '',
 				colorscheme: ['#AAB3C6', '#1B8073'],
 				...chartSize,
 				dateOptions
 			}
 		);
-		chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
-		return chart;
+		chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[variable]));
+		interventionCharts[setting.id] = chart;
 	});
 
 	return { variableCharts, interventionCharts };

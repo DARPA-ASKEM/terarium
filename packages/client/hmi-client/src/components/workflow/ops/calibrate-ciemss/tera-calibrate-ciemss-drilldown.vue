@@ -386,7 +386,7 @@
 							:select-options="Object.keys(pyciemssMap).filter((c) => modelPartTypesMap[c] === 'parameter')"
 							:selected-options="selectedParameterSettings.map((s) => s.selectedVariables[0])"
 							@open="activeChartSettings = $event"
-							@remove="removeChartSetting"
+							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
 						<Divider />
@@ -397,7 +397,7 @@
 							:select-options="Object.keys(groupedInterventionOutputs)"
 							:selected-options="selectedInterventionSettings.map((s) => s.selectedVariables[0])"
 							@open="activeChartSettings = $event"
-							@remove="removeChartSetting"
+							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
 						<Divider />
@@ -410,7 +410,7 @@
 							"
 							:selected-options="selectedVariableSettings.map((s) => s.selectedVariables[0])"
 							@open="activeChartSettings = $event"
-							@remove="removeChartSetting"
+							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
 						<Divider />
@@ -421,7 +421,7 @@
 							:select-options="Object.keys(pyciemssMap).filter((c) => mapping.find((d) => d.modelVariable === c))"
 							:selected-options="selectedErrorVariableSettings.map((s) => s.selectedVariables[0])"
 							@open="activeChartSettings = $event"
-							@remove="removeChartSetting"
+							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
 						<Divider />
@@ -436,7 +436,7 @@
 							"
 							:selected-options="comparisonChartsSettingsSelection"
 							@open="activeChartSettings = $event"
-							@remove="removeChartSetting"
+							@remove="removeChartSettings"
 							@selection-change="comparisonChartsSettingsSelection = $event"
 						/>
 						<div>
@@ -489,12 +489,7 @@ import {
 	setupModelInput,
 	parseCsvAsset
 } from '@/services/calibrate-workflow';
-import {
-	addMultiVariableChartSetting,
-	deleteAnnotation,
-	removeChartSettingById,
-	updateChartSettingsBySelectedVariables
-} from '@/services/chart-settings';
+import { deleteAnnotation, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { Vue3Lottie } from 'vue3-lottie';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -556,6 +551,7 @@ import { getParameters } from '@/model-representation/service';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
 import { getDataset } from '@/services/dataset';
 import { getCalendarSettingsFromModel, getVegaDateOptions } from '@/services/model';
+import { useChartSettings } from '@/composables/useChartSettings';
 import { useChartAnnotations } from '@/composables/useChartAnnotations';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults, getErrorData } from './calibrate-utils';
@@ -626,8 +622,6 @@ const modelStateOptions = ref<any[] | undefined>();
 const modelParameters = ref<ModelParameter[]>([]);
 
 const isOutputSettingsPanelOpen = ref(false);
-const activeChartSettings = ref<ChartSetting | null>(null);
-const comparisonChartsSettingsSelection = ref<string[]>([]);
 
 const datasetColumns = ref<DatasetColumn[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
@@ -733,22 +727,19 @@ const lossChartSize = useDrilldownChartSize(lossChartContainer);
 const outputPanel = ref(null);
 const chartSize = useDrilldownChartSize(outputPanel);
 
-const chartSettings = computed(() => props.node.state.chartSettings ?? []);
-const selectedParameterSettings = computed(() =>
-	chartSettings.value.filter((setting) => setting.type === ChartSettingType.DISTRIBUTION_COMPARISON)
-);
-const selectedVariableSettings = computed(() =>
-	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE)
-);
-const selectedErrorVariableSettings = computed(() =>
-	chartSettings.value.filter((setting) => setting.type === ChartSettingType.ERROR_DISTRIBUTION)
-);
-const selectedInterventionSettings = computed(() =>
-	chartSettings.value.filter((setting) => setting.type === ChartSettingType.INTERVENTION)
-);
-const selectedComparisonChartSettings = computed(() =>
-	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON)
-);
+const {
+	activeChartSettings,
+	chartSettings,
+	comparisonChartsSettingsSelection,
+	selectedVariableSettings,
+	selectedParameterSettings,
+	selectedInterventionSettings,
+	selectedComparisonChartSettings,
+	selectedErrorVariableSettings,
+	removeChartSettings,
+	updateChartSettings,
+	addComparisonChartSettings
+} = useChartSettings(props, emit);
 
 // --- Handle chart annotations
 const { getChartAnnotationsByChartId, generateAndSaveForecastChartAnnotation } = useChartAnnotations(props.node.id);
@@ -1124,32 +1115,6 @@ const messageHandler = (event: ClientEvent<any>) => {
 const onSelection = (id: string) => {
 	emit('select-output', id);
 };
-
-function removeChartSetting(chartId) {
-	emit('update-state', {
-		...props.node.state,
-		chartSettings: removeChartSettingById(chartSettings.value, chartId)
-	});
-}
-
-const addComparisonChartSettings = () => {
-	emit('update-state', {
-		...props.node.state,
-		chartSettings: addMultiVariableChartSetting(
-			chartSettings.value,
-			ChartSettingType.VARIABLE_COMPARISON,
-			comparisonChartsSettingsSelection.value
-		)
-	});
-	comparisonChartsSettingsSelection.value = [];
-};
-
-function updateChartSettings(selectedVariables: string[], type: ChartSettingType) {
-	emit('update-state', {
-		...props.node.state,
-		chartSettings: updateChartSettingsBySelectedVariables(chartSettings.value, type, selectedVariables)
-	});
-}
 
 // Used from button to add new entry to the mapping object
 function addMapping() {
