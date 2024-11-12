@@ -148,14 +148,11 @@
 					<div v-if="view === OutputView.Charts" ref="outputPanel">
 						<Accordion multiple :active-index="[0, 1, 2]" class="px-2">
 							<AccordionTab header="Interventions over time">
-								<template
-									v-for="appliedTo in selectedInterventionSettings.map((s) => s.selectedVariables[0])"
-									:key="appliedTo"
-								>
+								<template v-for="setting in selectedInterventionSettings" :key="setting.id">
 									<vega-chart
 										expandable
 										:are-embed-actions-visible="true"
-										:visualization-spec="interventionCharts[appliedTo]"
+										:visualization-spec="interventionCharts[setting.id]"
 									/>
 								</template>
 							</AccordionTab>
@@ -316,7 +313,6 @@ import {
 	getModelByModelConfigurationId,
 	getUnitsFromModelParts,
 	getCalendarSettingsFromModel,
-	getVegaDateOptions,
 	getTypesFromModelParts
 } from '@/services/model';
 import { nodeMetadata } from '@/components/workflow/util';
@@ -334,14 +330,8 @@ import { KernelSessionManager } from '@/services/jupyter';
 import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import {
-	applyForecastChartAnnotations,
-	createForecastChart,
-	createInterventionChartMarkers,
-	ForecastChartOptions
-} from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import { ChartSetting, ChartSettingType, CiemssPresetTypes, DrilldownTabs } from '@/types/common';
+import { ChartSettingType, CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-intervention-summary-card.vue';
@@ -350,8 +340,8 @@ import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
 import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
 import { deleteAnnotation } from '@/services/chart-settings';
+import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
-import { useChartAnnotations } from '@/composables/useChartAnnotations';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 
@@ -498,144 +488,9 @@ const preparedChartInputs = computed(() => {
 	const reverseMap: Record<string, string> = {};
 	Object.keys(pyciemssMap.value).forEach((key) => {
 		reverseMap[`${pyciemssMap.value[key]}_mean`] = key;
-		reverseMap[`${pyciemssMap.value[key]}_mean:base`] = `${key} (baseline)`;
+		reverseMap[`${pyciemssMap.value[key]}_mean:pre`] = `${key} (baseline)`;
 	});
-	return { result, resultSummary, reverseMap };
-});
-
-const createForecastChartOptions = (setting: ChartSetting, translationMap: Record<string, string>) => {
-	const variables = setting.selectedVariables;
-	const dateOptions = getVegaDateOptions(model.value, modelConfiguration.value);
-	const options: ForecastChartOptions = {
-		title: '',
-		legend: true,
-		width: chartSize.value.width,
-		height: chartSize.value.height,
-		translationMap,
-		xAxisTitle: modelVarUnits.value._time || 'Time',
-		yAxisTitle: _.uniq(variables.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || '',
-		dateOptions,
-		colorscheme: ['#AAB3C6', '#1B8073']
-	};
-
-	let sampleLayerVariables = [`${pyciemssMap.value[variables[0]]}:base`, pyciemssMap.value[variables[0]]];
-	let statLayerVariables = [`${pyciemssMap.value[variables[0]]}_mean:base`, `${pyciemssMap.value[variables[0]]}_mean`];
-
-	if (setting.type === ChartSettingType.VARIABLE_COMPARISON) {
-		statLayerVariables = variables.map((d) => `${pyciemssMap.value[d]}_mean`);
-		sampleLayerVariables = variables.map((d) => pyciemssMap.value[d]);
-		delete options.colorscheme;
-	}
-	return { statLayerVariables, sampleLayerVariables, options };
-};
-
-const interventionCharts = computed(() => {
-	const charts: Record<string, any> = {};
-	if (!preparedChartInputs.value) return charts;
-	const { result, resultSummary, reverseMap } = preparedChartInputs.value;
-	// intervention chart spec
-	selectedInterventionSettings.value.forEach((setting) => {
-		const variable = setting.selectedVariables[0];
-		const { sampleLayerVariables, statLayerVariables, options } = createForecastChartOptions(setting, reverseMap);
-		const forecastChart = createForecastChart(
-			{
-				data: result,
-				variables: sampleLayerVariables,
-				timeField: 'timepoint_id',
-				groupField: 'sample_id'
-			},
-			{
-				data: resultSummary,
-				variables: statLayerVariables,
-				timeField: 'timepoint_id'
-			},
-			null,
-			options
-		);
-		// add intervention annotations (rules and text)
-		forecastChart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[variable]));
-		charts[variable] = forecastChart;
-	});
-	return charts;
-});
-
-const variableCharts = computed(() => {
-	const charts: Record<string, any> = {};
-	if (!preparedChartInputs.value) return charts;
-	const { result, resultSummary, reverseMap } = preparedChartInputs.value;
-
-	// simulation chart spec
-	selectedVariableSettings.value.forEach((setting) => {
-		const { sampleLayerVariables, statLayerVariables, options } = createForecastChartOptions(setting, reverseMap);
-		const annotations = getChartAnnotationsByChartId(setting.id);
-		const chart = applyForecastChartAnnotations(
-			createForecastChart(
-				{
-					data: result,
-					variables: sampleLayerVariables,
-					timeField: 'timepoint_id',
-					groupField: 'sample_id'
-				},
-				{
-					data: resultSummary,
-					variables: statLayerVariables,
-					timeField: 'timepoint_id'
-				},
-				null,
-				options
-			),
-			annotations
-		);
-		charts[setting.id] = chart;
-		if (interventionPolicy.value) {
-			_.keys(groupedInterventionOutputs.value).forEach((key) => {
-				if (setting.selectedVariables.includes(key)) {
-					chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
-				}
-			});
-		}
-	});
-	return charts;
-});
-
-const comparisonCharts = computed(() => {
-	const charts: Record<string, any> = {};
-	if (!preparedChartInputs.value) return charts;
-	const { result, resultSummary, reverseMap } = preparedChartInputs.value;
-
-	chartSettings.value.forEach((setting) => {
-		const selectedVars = setting.selectedVariables;
-		const { statLayerVariables, sampleLayerVariables, options } = createForecastChartOptions(setting, reverseMap);
-		const annotations = getChartAnnotationsByChartId(setting.id);
-
-		const chart = applyForecastChartAnnotations(
-			createForecastChart(
-				{
-					data: result,
-					variables: sampleLayerVariables,
-					timeField: 'timepoint_id',
-					groupField: 'sample_id'
-				},
-				{
-					data: resultSummary,
-					variables: statLayerVariables,
-					timeField: 'timepoint_id'
-				},
-				null,
-				options
-			),
-			annotations
-		);
-		if (interventionPolicy.value) {
-			_.keys(groupedInterventionOutputs.value).forEach((key) => {
-				if (selectedVars.includes(key)) {
-					chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
-				}
-			});
-		}
-		charts[setting.id] = chart;
-	});
-	return charts;
+	return { result, resultSummary, translationMap: reverseMap, pyciemssMap: pyciemssMap.value };
 });
 
 const {
@@ -650,14 +505,23 @@ const {
 	addComparisonChartSettings
 } = useChartSettings(props, emit);
 
-// --- Handle chart annotations
-const { getChartAnnotationsByChartId, generateAndSaveForecastChartAnnotation } = useChartAnnotations(props.node.id);
-const generateAnnotation = async (setting: ChartSetting, query: string) => {
-	if (!preparedChartInputs.value) return null;
-	const { statLayerVariables, options } = createForecastChartOptions(setting, preparedChartInputs.value.reverseMap);
-	return generateAndSaveForecastChartAnnotation(setting, query, 'timepoint_id', statLayerVariables, options);
-};
-// ---
+const {
+	generateAnnotation,
+	getChartAnnotationsByChartId,
+	useInterventionCharts,
+	useVariableCharts,
+	useComparisonCharts
+} = useCharts(
+	props.node.id,
+	model,
+	modelConfiguration,
+	preparedChartInputs,
+	chartSize,
+	computed(() => interventionPolicy.value?.interventions ?? [])
+);
+const interventionCharts = useInterventionCharts(selectedInterventionSettings, true);
+const variableCharts = useVariableCharts(selectedVariableSettings, null, () => '');
+const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
 
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);
@@ -728,8 +592,8 @@ const lazyLoadSimulationData = async (outputRunId: string) => {
 	const baseForecastId = props.node.state.baseForecastId;
 	if (baseForecastId) {
 		const [baseResult, baseResultSummary] = await Promise.all([
-			getRunResultCSV(baseForecastId, 'result.csv', renameFnGenerator('base')),
-			getRunResultCSV(baseForecastId, 'result_summary.csv', renameFnGenerator('base'))
+			getRunResultCSV(baseForecastId, 'result.csv', renameFnGenerator('pre')),
+			getRunResultCSV(baseForecastId, 'result_summary.csv', renameFnGenerator('pre'))
 		]);
 		const merged = mergeResults(baseResult, result, baseResultSummary, resultSummary);
 		result = merged.result;

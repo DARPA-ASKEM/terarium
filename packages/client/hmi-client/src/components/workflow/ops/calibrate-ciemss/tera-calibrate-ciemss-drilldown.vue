@@ -261,10 +261,10 @@
 							<AccordionTab header="Parameter distributions">
 								<template v-for="setting of selectedParameterSettings" :key="setting.id">
 									<vega-chart
-										v-if="parameterDistributionCharts[setting.selectedVariables[0]]"
+										v-if="parameterDistributionCharts[setting.id]"
 										expandable
 										:are-embed-actions-visible="true"
-										:visualization-spec="parameterDistributionCharts[setting.selectedVariables[0]].histogram"
+										:visualization-spec="parameterDistributionCharts[setting.id].histogram"
 									>
 										<template v-slot:footer>
 											<table class="distribution-table">
@@ -272,23 +272,23 @@
 													<tr>
 														<th scope="col"></th>
 														<th scope="col">
-															{{ parameterDistributionCharts[setting.selectedVariables[0]].header[0] }}
+															{{ parameterDistributionCharts[setting.id].header[0] }}
 														</th>
 														<th scope="col">
-															{{ parameterDistributionCharts[setting.selectedVariables[0]].header[1] }}
+															{{ parameterDistributionCharts[setting.id].header[1] }}
 														</th>
 													</tr>
 												</thead>
 												<tbody>
 													<tr>
 														<th scope="row">Mean</th>
-														<td>{{ parameterDistributionCharts[setting.selectedVariables[0]].mean[0] }}</td>
-														<td>{{ parameterDistributionCharts[setting.selectedVariables[0]].mean[1] }}</td>
+														<td>{{ parameterDistributionCharts[setting.id].mean[0] }}</td>
+														<td>{{ parameterDistributionCharts[setting.id].mean[1] }}</td>
 													</tr>
 													<tr>
 														<th scope="row">Variance</th>
-														<td>{{ parameterDistributionCharts[setting.selectedVariables[0]].variance[0] }}</td>
-														<td>{{ parameterDistributionCharts[setting.selectedVariables[0]].variance[1] }}</td>
+														<td>{{ parameterDistributionCharts[setting.id].variance[0] }}</td>
+														<td>{{ parameterDistributionCharts[setting.id].variance[1] }}</td>
 													</tr>
 												</tbody>
 											</table>
@@ -297,14 +297,11 @@
 								</template>
 							</AccordionTab>
 							<AccordionTab header="Interventions over time">
-								<template
-									v-for="appliedTo in selectedInterventionSettings.map((s) => s.selectedVariables[0])"
-									:key="appliedTo"
-								>
+								<template v-for="setting of selectedInterventionSettings" :key="setting.id">
 									<vega-chart
 										expandable
 										:are-embed-actions-visible="true"
-										:visualization-spec="interventionCharts[appliedTo]"
+										:visualization-spec="interventionCharts[setting.id]"
 									/>
 								</template>
 							</AccordionTab>
@@ -313,7 +310,7 @@
 									<vega-chart
 										expandable
 										:are-embed-actions-visible="true"
-										:visualization-spec="variableCharts[setting.selectedVariables[0]]"
+										:visualization-spec="variableCharts[setting.id]"
 									/>
 								</template>
 							</AccordionTab>
@@ -471,7 +468,6 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import * as vega from 'vega';
-import { mean, variance } from 'd3';
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
 import { useConfirm } from 'primevue/useconfirm';
 import Divider from 'primevue/divider';
@@ -513,7 +509,7 @@ import {
 	Dataset,
 	Model
 } from '@/types/Types';
-import { CiemssPresetTypes, DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
+import { CiemssPresetTypes, DrilldownTabs, ChartSettingType } from '@/types/common';
 import { getTimespan, nodeMetadata } from '@/components/workflow/util';
 import { useToastService } from '@/services/toast';
 import { autoCalibrationMapping } from '@/services/concept';
@@ -530,18 +526,9 @@ import {
 import { getModelConfigurationById } from '@/services/model-configurations';
 
 import { WorkflowNode } from '@/types/workflow';
-import {
-	createForecastChart,
-	createHistogramChart,
-	createErrorChart,
-	applyForecastChartAnnotations,
-	createInterventionChartMarkers,
-	AUTOSIZE,
-	ForecastChartOptions
-} from '@/services/charts';
+import { createForecastChart, AUTOSIZE } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
-import { displayNumber } from '@/utils/number';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
@@ -550,9 +537,9 @@ import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-i
 import { getParameters } from '@/model-representation/service';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
 import { getDataset } from '@/services/dataset';
-import { getCalendarSettingsFromModel, getVegaDateOptions } from '@/services/model';
+import { getCalendarSettingsFromModel } from '@/services/model';
+import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
-import { useChartAnnotations } from '@/composables/useChartAnnotations';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults, getErrorData } from './calibrate-utils';
 
@@ -727,30 +714,7 @@ const lossChartSize = useDrilldownChartSize(lossChartContainer);
 const outputPanel = ref(null);
 const chartSize = useDrilldownChartSize(outputPanel);
 
-const {
-	activeChartSettings,
-	chartSettings,
-	selectedVariableSettings,
-	selectedParameterSettings,
-	selectedInterventionSettings,
-	selectedErrorVariableSettings,
-	selectedComparisonChartSettings,
-	comparisonChartsSettingsSelection,
-	removeChartSettings,
-	updateChartSettings,
-	addComparisonChartSettings
-} = useChartSettings(props, emit);
-
-// --- Handle chart annotations
-const { getChartAnnotationsByChartId, generateAndSaveForecastChartAnnotation } = useChartAnnotations(props.node.id);
-const generateAnnotation = async (setting: ChartSetting, query: string) => {
-	if (!preparedChartInputs.value) return null;
-	const { statLayerVariables, options } = createForecastChartOptions(setting, preparedChartInputs.value.reverseMap);
-	return generateAndSaveForecastChartAnnotation(setting, query, 'timepoint_id', statLayerVariables, options);
-};
-// ---
-
-const errorData = computed<Record<string, any>[]>(() =>
+const errorData = computed<DataArray>(() =>
 	getErrorData(groundTruthData.value, runResult.value, mapping.value, knobs.value.timestampColName)
 );
 const pyciemssMap = ref<Record<string, string>>({});
@@ -768,18 +732,19 @@ const preparedChartInputs = computed(() => {
 	);
 
 	// Build lookup map for calibration, include before/afer and dataset (observations)
-	const reverseMap: Record<string, string> = {};
+	const translationMap: Record<string, string> = {};
 	Object.keys(pyciemssMap.value).forEach((key) => {
-		reverseMap[`${pyciemssMap.value[key]}_mean`] = `${key} after calibration`;
-		reverseMap[`${pyciemssMap.value[key]}_mean:pre`] = `${key} before calibration`;
+		translationMap[`${pyciemssMap.value[key]}_mean`] = `${key} after calibration`;
+		translationMap[`${pyciemssMap.value[key]}_mean:pre`] = `${key} before calibration`;
 	});
 	state.mapping.forEach((mapObj) => {
-		reverseMap[mapObj.datasetVariable] = 'Observations';
+		translationMap[mapObj.datasetVariable] = 'Observations';
 	});
 	return {
 		result,
 		resultSummary,
-		reverseMap
+		pyciemssMap: pyciemssMap.value,
+		translationMap
 	};
 });
 
@@ -787,222 +752,50 @@ const groupedInterventionOutputs = computed(() =>
 	_.groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
 );
 
-const createForecastChartOptions = (setting: ChartSetting, translationMap: Record<string, string>) => {
-	const variables = setting.selectedVariables;
-	const dateOptions = getVegaDateOptions(model.value, modelConfig.value);
-	const options: ForecastChartOptions = {
-		title: '',
-		legend: true,
-		width: chartSize.value.width,
-		height: chartSize.value.height,
-		translationMap,
-		xAxisTitle: modelVarUnits.value._time || 'Time',
-		yAxisTitle: _.uniq(variables.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || '',
-		dateOptions,
-		colorscheme: ['#AAB3C6', '#1B8073']
-	};
-
-	let sampleLayerVariables = [`${pyciemssMap.value[variables[0]]}:pre`, pyciemssMap.value[variables[0]]];
-	let statLayerVariables = [`${pyciemssMap.value[variables[0]]}_mean:pre`, `${pyciemssMap.value[variables[0]]}_mean`];
-
-	if (setting.type === ChartSettingType.VARIABLE_COMPARISON) {
-		statLayerVariables = variables.map((d) => `${pyciemssMap.value[d]}_mean`);
-		sampleLayerVariables = variables.map((d) => pyciemssMap.value[d]);
-		delete options.colorscheme;
-	}
-	return { statLayerVariables, sampleLayerVariables, options };
+const mapModelVarToDatasetVar = (modelVariable: string) => {
+	if (modelVariable === 'timepoint_id') return knobs.value.timestampColName;
+	return props.node.state.mapping.find((d) => d.modelVariable === modelVariable)?.datasetVariable || '';
 };
 
-const variableCharts = computed(() => {
-	const charts: Record<string, any> = {};
-	if (!preparedChartInputs.value) return charts;
-	const { result, resultSummary, reverseMap } = preparedChartInputs.value;
-	const state = props.node.state;
+const {
+	activeChartSettings,
+	chartSettings,
+	selectedVariableSettings,
+	selectedParameterSettings,
+	selectedInterventionSettings,
+	selectedErrorVariableSettings,
+	selectedComparisonChartSettings,
+	comparisonChartsSettingsSelection,
+	removeChartSettings,
+	updateChartSettings,
+	addComparisonChartSettings
+} = useChartSettings(props, emit);
 
-	// Need to get the dataset's time field
-	const datasetTimeField = knobs.value.timestampColName;
-
-	// Simulate Charts:
-	selectedVariableSettings.value.forEach((settings) => {
-		const variable = settings.selectedVariables[0];
-		const annotations = getChartAnnotationsByChartId(settings.id);
-		const datasetVariables: string[] = [];
-		const mapObj = state.mapping.find((d) => d.modelVariable === variable);
-		if (mapObj) {
-			datasetVariables.push(mapObj.datasetVariable);
-		}
-		const { sampleLayerVariables, statLayerVariables, options } = createForecastChartOptions(settings, reverseMap);
-		charts[variable] = applyForecastChartAnnotations(
-			createForecastChart(
-				{
-					data: result,
-					variables: sampleLayerVariables,
-					timeField: 'timepoint_id',
-					groupField: 'sample_id'
-				},
-				{
-					data: resultSummary,
-					variables: statLayerVariables,
-					timeField: 'timepoint_id'
-				},
-				{
-					data: groundTruthData.value,
-					variables: datasetVariables,
-					timeField: datasetTimeField as string
-				},
-				options
-			),
-			annotations
-		);
-
-		charts[variable].layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[variable]));
-	});
-	return charts;
-});
-
-const interventionCharts = computed(() => {
-	const charts: Record<string, any> = {};
-	if (!preparedChartInputs.value) return charts;
-	const { resultSummary, reverseMap } = preparedChartInputs.value;
-	// intervention chart spec
-	selectedInterventionSettings.value.forEach((setting) => {
-		const variable = setting.selectedVariables[0];
-		const { sampleLayerVariables, statLayerVariables, options } = createForecastChartOptions(setting, reverseMap);
-		const forecastChart = createForecastChart(
-			{
-				data: [],
-				variables: sampleLayerVariables,
-				timeField: 'timepoint_id',
-				groupField: 'sample_id'
-			},
-			{
-				data: resultSummary,
-				variables: statLayerVariables,
-				timeField: 'timepoint_id'
-			},
-			null,
-			options
-		);
-		// add intervention annotations (rules and text)
-		forecastChart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[variable]));
-		charts[variable] = forecastChart;
-	});
-	return charts;
-});
-
-const parameterDistributionCharts = computed(() => {
-	if (!preparedChartInputs.value) return {};
-	const { result } = preparedChartInputs.value;
-	// Note that we want to show the parameter distribution at the first timepoint only
-	const data = result.filter((d) => d.timepoint_id === 0);
-	const labelBefore = 'Before calibration';
-	const labelAfter = 'After calibration';
-	const charts = {};
-	selectedParameterSettings.value.forEach((setting) => {
-		const param = setting.selectedVariables[0];
-		const fieldName = pyciemssMap.value[param];
-		const beforeFieldName = `${fieldName}:pre`;
-		const histogram = createHistogramChart(data, {
-			title: `${param}`,
-			width: chartSize.value.width,
-			height: chartSize.value.height,
-			xAxisTitle: `${param}`,
-			yAxisTitle: 'Count',
-			maxBins: 10,
-			variables: [
-				{ field: beforeFieldName, label: labelBefore, width: 54, color: '#AAB3C6' },
-				{ field: fieldName, label: labelAfter, width: 24, color: '#1B8073' }
-			]
-		});
-		const toDisplayNumber = (num?: number) => (num ? displayNumber(num.toString()) : '');
-		const stat = {
-			header: [labelBefore, labelAfter],
-			mean: [mean(data, (d) => d[beforeFieldName]), mean(data, (d) => d[fieldName])].map(toDisplayNumber),
-			variance: [variance(data, (d) => d[beforeFieldName]), variance(data, (d) => d[fieldName])].map(toDisplayNumber)
-		};
-		charts[param] = { histogram, ...stat };
-	});
-	return charts;
-});
-
-const errorChartVariables = computed(() => {
-	if (!selectedErrorVariableSettings.value.length) return [];
-	const getDatasetVariable = (modelVariable: string) =>
-		mapping.value.find((d) => d.modelVariable === modelVariable)?.datasetVariable;
-	const variables = selectedErrorVariableSettings.value
-		.map((s) => s.selectedVariables[0])
-		.map((variable) => ({
-			field: getDatasetVariable(variable) as string,
-			label: variable
-		}));
-	return variables;
-});
-
-const errorChart = computed(() => {
-	if (errorData.value.length === 0) return {};
-	const spec = createErrorChart(errorData.value, {
-		title: '',
-		width: chartSize.value.width,
-		variables: errorChartVariables.value,
-
-		xAxisTitle: 'Mean absolute (MAE)'
-	});
-	return spec;
-});
-
-const onExpandErrorChart = () => {
-	if (errorData.value.length === 0) return {};
-	// Customize the chart size by modifying the spec before expanding the chart
-	const spec = createErrorChart(errorData.value, {
-		title: '',
-		width: window.innerWidth / 1.5,
-		height: 230,
-		boxPlotHeight: 50,
-		areaChartHeight: 150,
-		variables: errorChartVariables.value,
-		xAxisTitle: 'Mean absolute (MAE)'
-	});
-	return spec as any;
-};
-
-const comparisonCharts = computed(() => {
-	const charts: Record<string, any> = {};
-	if (!preparedChartInputs.value) return charts;
-	const { result, resultSummary, reverseMap } = preparedChartInputs.value;
-	selectedComparisonChartSettings.value.forEach((setting) => {
-		const selectedVars = setting.selectedVariables;
-		const { statLayerVariables, sampleLayerVariables, options } = createForecastChartOptions(setting, reverseMap);
-		const annotations = getChartAnnotationsByChartId(setting.id);
-
-		const chart = applyForecastChartAnnotations(
-			createForecastChart(
-				{
-					data: result,
-					variables: sampleLayerVariables,
-					timeField: 'timepoint_id',
-					groupField: 'sample_id'
-				},
-				{
-					data: resultSummary,
-					variables: statLayerVariables,
-					timeField: 'timepoint_id'
-				},
-				null,
-				options
-			),
-			annotations
-		);
-		if (interventionPolicy.value) {
-			_.keys(groupedInterventionOutputs.value).forEach((key) => {
-				if (selectedVars.includes(key)) {
-					chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
-				}
-			});
-		}
-		charts[setting.id] = chart;
-	});
-	return charts;
-});
+const {
+	generateAnnotation,
+	getChartAnnotationsByChartId,
+	useInterventionCharts,
+	useVariableCharts,
+	useComparisonCharts,
+	useErrorChart,
+	useParameterDistributionCharts
+} = useCharts(
+	props.node.id,
+	model,
+	modelConfig,
+	preparedChartInputs,
+	chartSize,
+	computed(() => interventionPolicy.value?.interventions ?? [])
+);
+const parameterDistributionCharts = useParameterDistributionCharts(selectedParameterSettings);
+const interventionCharts = useInterventionCharts(selectedInterventionSettings);
+const variableCharts = useVariableCharts(selectedVariableSettings, groundTruthData, mapModelVarToDatasetVar);
+const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
+const { errorChart, onExpandErrorChart } = useErrorChart(
+	selectedErrorVariableSettings,
+	errorData,
+	mapModelVarToDatasetVar
+);
 
 const LOSS_CHART_DATA_SOURCE = 'lossData'; // Name of the streaming data source
 const lossChartRef = ref<InstanceType<typeof VegaChart>>();
