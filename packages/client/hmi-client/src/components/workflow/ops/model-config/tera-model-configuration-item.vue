@@ -7,6 +7,7 @@
 		<ContextMenu ref="contextMenu" :model="contextMenuItems" />
 		<p>{{ configuration.description }}</p>
 		<p>{{ formatTimestamp(configuration.createdOn) }}</p>
+		<span v-if="emptyInputCount" :class="{ 'input-count': emptyInputCount }">{{ emptyInputCount }}</span>
 	</div>
 </template>
 
@@ -23,6 +24,7 @@ const emit = defineEmits(['delete', 'use', 'download']);
 const props = defineProps<{
 	configuration: ModelConfiguration;
 	selected?: boolean;
+	emptyInputCount?: string;
 }>();
 
 const confirm = useConfirm();
@@ -102,10 +104,18 @@ header {
 	}
 }
 
-p {
+p,
+span {
 	color: var(--text-color-subdued);
 	font-size: var(--font-caption);
 	padding-right: var(--gap-6);
+
+	&.input-count {
+		background-color: var(--error-background);
+	}
+}
+span {
+	padding-right: unset;
 }
 
 p + p {

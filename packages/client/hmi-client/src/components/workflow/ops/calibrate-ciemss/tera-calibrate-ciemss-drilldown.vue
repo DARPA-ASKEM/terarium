@@ -236,6 +236,10 @@
 						@click="showSaveModal = true"
 					/>
 				</template>
+				<tera-notebook-error
+					v-if="!_.isEmpty(node.state?.errorMessage?.traceback) && !isLoading"
+					v-bind="node.state.errorMessage"
+				/>
 				<tera-operator-output-summary
 					v-if="node.state.summaryId && !isLoading"
 					class="p-3"
@@ -338,11 +342,11 @@
 						<p class="helpMessage">Connect a model configuration and dataset</p>
 					</section>
 				</div>
+
 				<section v-else class="emptyState">
 					<tera-progress-spinner :font-size="2" is-centered style="height: 12rem" />
 					<p>Processing...{{ props.node.state.currentProgress }}%</p>
 				</section>
-				<tera-notebook-error v-if="!_.isEmpty(node.state?.errorMessage?.traceback)" v-bind="node.state.errorMessage" />
 			</tera-drilldown-section>
 			<!-- Empty state if calibrate hasn't been run yet -->
 			<section v-else class="output-section-empty-state">
@@ -652,9 +656,7 @@ const mappingDropdownPlaceholder = computed(() => {
 const showOutputSection = computed(
 	() =>
 		lossValues.value.length > 0 ||
-		selectedErrorVariableSettings.value.length > 0 ||
-		selectedVariableSettings.value.length > 0 ||
-		selectedParameterSettings.value.length > 0 ||
+		!_.isEmpty(chartSettings.value) ||
 		isLoading.value ||
 		!_.isEmpty(props.node.state?.errorMessage?.traceback)
 );
