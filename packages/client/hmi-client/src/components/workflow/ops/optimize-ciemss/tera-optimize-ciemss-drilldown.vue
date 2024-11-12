@@ -444,7 +444,6 @@ import {
 	getRunResult,
 	getRunResultCSV,
 	makeOptimizeJobCiemss,
-	parsePyCiemssMap,
 	getSimulation,
 	CiemssMethodOptions
 } from '@/services/models/simulation-service';
@@ -471,7 +470,7 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { createSuccessCriteriaChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import { mergeResults, renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
+import { renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { ChartSettingType, CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import { useConfirm } from 'primevue/useconfirm';
@@ -492,6 +491,7 @@ import {
 	OptimizeCiemssOperationState,
 	OptimizationInterventionObjective
 } from './optimize-ciemss-operation';
+import { usePreparedChartInputs } from './optimize-utils';
 
 const confirm = useConfirm();
 
@@ -553,7 +553,6 @@ const activePolicyGroups = computed(() =>
 const inactivePolicyGroups = computed(() =>
 	knobs.value.interventionPolicyGroups.filter((ele) => !ele.relativeImportance)
 );
-const pyciemssMap = ref<Record<string, string>>({});
 
 const showSpinner = computed<boolean>(
 	() => props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressPostForecastId !== ''
@@ -922,7 +921,6 @@ const setOutputValues = async () => {
 
 	const preResult = await getRunResultCSV(preForecastRunId, 'result.csv', renameFnGenerator('pre'));
 	const postResult = await getRunResultCSV(postForecastRunId, 'result.csv');
-	pyciemssMap.value = parsePyCiemssMap(postResult[0]);
 
 	// FIXME: only show the post optimize data for now...
 	simulationRawContent.value[knobs.value.postForecastRunId] = convertToCsvAsset(postResult, Object.values(pyciemssMap));
@@ -979,32 +977,8 @@ const preparedSuccessCriteriaCharts = computed(() => {
 		);
 });
 
-const preparedChartInputs = computed(() => {
-	const preForecastRunId = knobs.value.preForecastRunId;
-	const postForecastRunId = knobs.value.postForecastRunId;
-	const preResult = runResults.value[preForecastRunId];
-	const preResultSummary = runResultsSummary.value[preForecastRunId];
-	const postResult = runResults.value[postForecastRunId];
-	const postResultSummary = runResultsSummary.value[postForecastRunId];
-
-	if (_.isEmpty(pyciemssMap.value) || !postResult || !postResultSummary || !preResultSummary || !preResult) return null;
-	// Merge before/after for chart
-	const { result, resultSummary } = mergeResults(postResult, preResult, postResultSummary, preResultSummary);
-
-	const translationMap: Record<string, string> = {};
-	Object.keys(pyciemssMap.value).forEach((key) => {
-		translationMap[`${pyciemssMap.value[key]}_mean`] = `${key} after optimization`;
-		translationMap[`${pyciemssMap.value[key]}_mean:pre`] = `${key} before optimization`;
-	});
-
-	return {
-		result,
-		resultSummary,
-		translationMap,
-		pyciemssMap: pyciemssMap.value
-	};
-});
-
+const preparedChartInputs = usePreparedChartInputs(props, runResults, runResultsSummary);
+const pyciemssMap = computed(() => preparedChartInputs.value?.pyciemssMap ?? {});
 const {
 	activeChartSettings,
 	chartSettings,
