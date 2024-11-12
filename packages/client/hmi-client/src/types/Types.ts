@@ -115,13 +115,8 @@ export interface CsvColumnStats {
 }
 
 export interface Grounding extends TerariumEntity {
-    identifiers: Identifier[];
+    identifiers: DKG[];
     context?: any;
-}
-
-export interface Identifier {
-    curie: string;
-    name: string;
 }
 
 export interface PresignedURL {
@@ -799,10 +794,10 @@ export interface ModelUnit {
 }
 
 export interface GroundedSemantic {
-    grounding?: ModelGrounding;
-    id: string;
     name?: string;
+    id: string;
     description?: string;
+    grounding?: ModelGrounding;
 }
 
 export interface Properties {
