@@ -4,20 +4,14 @@ import { CiemssMethodOptions } from '@/services/models/simulation-service';
 
 const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L35';
 
-export interface SimulateEnsembleMapEntry {
-	modelConfigId: string;
-	compartmentName: string; // State or Obs that is being mapped to newName
-}
-
 export interface SimulateEnsembleMappingRow {
 	id: string; // uuid that can be used as a row key
 	newName: string; // This is the new name provided by the user.
-	modelConfigurationMappings: SimulateEnsembleMapEntry[];
+	modelConfigurationMappings: { [key: string]: string };
 }
 
-export interface SimulateEnsembleWeight {
-	modelConfigurationId: string;
-	value: number;
+export interface SimulateEnsembleWeights {
+	[key: string]: number;
 }
 
 export const speedValues = Object.freeze({
@@ -33,10 +27,11 @@ export const normalValues = Object.freeze({
 export interface SimulateEnsembleCiemssOperationState extends BaseState {
 	chartConfigs: string[][];
 	mapping: SimulateEnsembleMappingRow[];
-	weights: SimulateEnsembleWeight[];
+	weights: SimulateEnsembleWeights;
 	endTime: number;
 	numSamples: number;
 	method: CiemssMethodOptions;
+	stepSize: number;
 	inProgressForecastId: string;
 	forecastId: string; // Completed run's Id
 	errorMessage: { name: string; value: string; traceback: string };
@@ -51,21 +46,17 @@ export const SimulateEnsembleCiemssOperation: Operation = {
 	inputs: [{ type: 'modelConfigId', label: 'Model configuration' }],
 	outputs: [{ type: 'datasetId' }],
 	isRunnable: true,
-
-	// TODO: Figure out mapping
-	// Calls API, returns results.
-	action: async (): Promise<void> => {
-		console.log('test');
-	},
+	uniqueInputs: true,
 
 	initState: () => {
 		const init: SimulateEnsembleCiemssOperationState = {
 			chartConfigs: [],
 			mapping: [],
-			weights: [],
+			weights: {},
 			endTime: 100,
 			numSamples: normalValues.numSamples,
 			method: normalValues.method,
+			stepSize: 1,
 			inProgressForecastId: '',
 			forecastId: '',
 			errorMessage: { name: '', value: '', traceback: '' }

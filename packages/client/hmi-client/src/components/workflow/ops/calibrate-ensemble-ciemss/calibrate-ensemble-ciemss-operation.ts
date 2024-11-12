@@ -63,6 +63,7 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 	],
 	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
+	uniqueInputs: true,
 
 	initState: () => {
 		const init: CalibrateEnsembleCiemssOperationState = {
