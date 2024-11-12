@@ -523,7 +523,6 @@ import {
 	makeCalibrateJobCiemss,
 	subscribeToUpdateMessages,
 	unsubscribeToUpdateMessages,
-	parsePyCiemssMap,
 	DataArray,
 	CiemssMethodOptions
 } from '@/services/models/simulation-service';
@@ -545,7 +544,7 @@ import { getCalendarSettingsFromModel } from '@/services/model';
 import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
-import { renameFnGenerator, mergeResults, getErrorData } from './calibrate-utils';
+import { renameFnGenerator, getErrorData, usePreparedChartInputs, mapModelVarToDatasetVar } from './calibrate-utils';
 
 const isSidebarOpen = ref(true);
 
@@ -719,46 +718,19 @@ const chartSize = useDrilldownChartSize(outputPanel);
 const errorData = computed<DataArray>(() =>
 	getErrorData(groundTruthData.value, runResult.value, mapping.value, knobs.value.timestampColName)
 );
-const pyciemssMap = ref<Record<string, string>>({});
-const preparedChartInputs = computed(() => {
-	const state = props.node.state;
-
-	if (!state.calibrationId || _.isEmpty(pyciemssMap.value)) return null;
-
-	// Merge before/after for chart
-	const { result, resultSummary } = mergeResults(
-		runResultPre.value,
-		runResult.value,
-		runResultSummaryPre.value,
-		runResultSummary.value
-	);
-
-	// Build lookup map for calibration, include before/afer and dataset (observations)
-	const translationMap: Record<string, string> = {};
-	Object.keys(pyciemssMap.value).forEach((key) => {
-		translationMap[`${pyciemssMap.value[key]}_mean`] = `${key} after calibration`;
-		translationMap[`${pyciemssMap.value[key]}_mean:pre`] = `${key} before calibration`;
-	});
-	state.mapping.forEach((mapObj) => {
-		translationMap[mapObj.datasetVariable] = 'Observations';
-	});
-	return {
-		result,
-		resultSummary,
-		pyciemssMap: pyciemssMap.value,
-		translationMap
-	};
-});
 
 const groupedInterventionOutputs = computed(() =>
 	_.groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
 );
 
-const mapModelVarToDatasetVar = (modelVariable: string) => {
-	if (modelVariable === 'timepoint_id') return knobs.value.timestampColName;
-	return props.node.state.mapping.find((d) => d.modelVariable === modelVariable)?.datasetVariable || '';
-};
-
+const preparedChartInputs = usePreparedChartInputs(
+	props,
+	runResult,
+	runResultSummary,
+	runResultPre,
+	runResultSummaryPre
+);
+const pyciemssMap = computed(() => preparedChartInputs.value?.pyciemssMap ?? {});
 const {
 	activeChartSettings,
 	chartSettings,
@@ -789,15 +761,12 @@ const {
 	chartSize,
 	computed(() => interventionPolicy.value?.interventions ?? [])
 );
+const toDatasetVar = (modelVar: string) => mapModelVarToDatasetVar(props.node.state, modelVar);
 const parameterDistributionCharts = useParameterDistributionCharts(selectedParameterSettings);
 const interventionCharts = useInterventionCharts(selectedInterventionSettings);
-const variableCharts = useVariableCharts(selectedVariableSettings, groundTruthData, mapModelVarToDatasetVar);
+const variableCharts = useVariableCharts(selectedVariableSettings, groundTruthData, toDatasetVar);
 const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
-const { errorChart, onExpandErrorChart } = useErrorChart(
-	selectedErrorVariableSettings,
-	errorData,
-	mapModelVarToDatasetVar
-);
+const { errorChart, onExpandErrorChart } = useErrorChart(selectedErrorVariableSettings, errorData, toDatasetVar);
 
 const LOSS_CHART_DATA_SOURCE = 'lossData'; // Name of the streaming data source
 const lossChartRef = ref<InstanceType<typeof VegaChart>>();
@@ -1084,9 +1053,6 @@ watch(
 				'result_summary.csv',
 				renameFnGenerator('pre')
 			);
-
-			if (!runResult.value.length) return;
-			pyciemssMap.value = parsePyCiemssMap(runResult.value[0]);
 		}
 	},
 	{ immediate: true }
