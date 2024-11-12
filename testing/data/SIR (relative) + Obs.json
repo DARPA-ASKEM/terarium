@@ -1,0 +1,146 @@
+{
+  "id": "d141aa39-f805-43b7-8c8b-2e75fb76c53f",
+  "createdOn": "2024-11-06T16:17:57.294+00:00",
+  "updatedOn": "2024-11-06T16:18:14.577+00:00",
+  "name": "SIR (relative) + Obs",
+  "fileNames": [],
+  "temporary": false,
+  "publicAsset": false,
+  "header": {
+    "name": "SIR (relative) + Obs",
+    "description": "This is a model from equations",
+    "schema": "https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.6/petrinet/petrinet_schema.json",
+    "schema_name": "petrinet",
+    "model_version": "0.1"
+  },
+  "model": {
+    "states": [
+      {
+        "id": "S",
+        "name": "S",
+        "grounding": {
+          "identifiers": {},
+          "modifiers": {}
+        }
+      },
+      {
+        "id": "I",
+        "name": "I",
+        "grounding": {
+          "identifiers": {},
+          "modifiers": {}
+        }
+      },
+      {
+        "id": "R",
+        "name": "R",
+        "grounding": {
+          "identifiers": {},
+          "modifiers": {}
+        }
+      }
+    ],
+    "transitions": [
+      {
+        "id": "t0",
+        "input": [
+          "I",
+          "S"
+        ],
+        "output": [
+          "I",
+          "I"
+        ],
+        "properties": {
+          "name": "t0"
+        }
+      },
+      {
+        "id": "t1",
+        "input": [
+          "I"
+        ],
+        "output": [
+          "R"
+        ],
+        "properties": {
+          "name": "t1"
+        }
+      }
+    ]
+  },
+  "properties": {},
+  "semantics": {
+    "ode": {
+      "rates": [
+        {
+          "target": "t0",
+          "expression": "I*S*β",
+          "expression_mathml": "<apply><times/><ci>I</ci><ci>S</ci><ci>|&#946;|</ci></apply>"
+        },
+        {
+          "target": "t1",
+          "expression": "I*γ",
+          "expression_mathml": "<apply><times/><ci>I</ci><ci>|&#947;|</ci></apply>"
+        }
+      ],
+      "initials": [
+        {
+          "target": "S",
+          "expression": "0",
+          "expression_mathml": "<cn>0</cn>"
+        },
+        {
+          "target": "I",
+          "expression": "0",
+          "expression_mathml": "<cn>0</cn>"
+        },
+        {
+          "target": "R",
+          "expression": "0",
+          "expression_mathml": "<cn>0</cn>"
+        }
+      ],
+      "parameters": [
+        {
+          "id": "β",
+          "name": "β",
+          "value": 1
+        },
+        {
+          "id": "γ",
+          "name": "γ",
+          "value": 1
+        }
+      ],
+      "observables": [
+        {
+          "id": "N",
+          "name": "N",
+          "expression": "I + R + S",
+          "expression_mathml": "<apply><plus/><ci>I</ci><ci>R</ci><ci>S</ci></apply>"
+        }
+      ],
+      "time": {
+        "id": "t"
+      }
+    },
+    "span": [],
+    "typing": null
+  },
+  "metadata": {
+    "annotations": {
+      "authors": [],
+      "references": [],
+      "locations": [],
+      "pathogens": [],
+      "diseases": [],
+      "hosts": [],
+      "model_types": []
+    },
+    "source": null,
+    "gollmCard": null,
+    "gollmExtractions": null,
+    "templateCard": null
+  }
+}
