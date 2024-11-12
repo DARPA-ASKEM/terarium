@@ -1,6 +1,10 @@
 <template>
 	<ul>
-		<li v-for="({ base, children, isParent }, index) in items" :key="index" class="model-part">
+		<li
+			v-for="({ base, children, isParent }, index) in items.slice(firstRow, firstRow + MAX_NUMBER_OF_ROWS)"
+			:key="index"
+			class="model-part"
+		>
 			<template v-if="isParent && !isEmpty(parentEditingState)">
 				<section class="parent">
 					<span>
@@ -105,15 +109,33 @@
 					/>
 				</div>
 
-				<ul v-if="parentEditingState[index].showChildren" class="stratified">
-					<li v-for="(child, index) in children" :key="index">
-						<tera-model-part-entry
-							:item="child"
-							:feature-config="featureConfig"
-							@update-item="$emit('update-item', { id: child.id, ...$event })"
-						/>
-					</li>
-				</ul>
+				<div class="stratified" v-if="parentEditingState[index].showChildren">
+					<ul>
+						<li
+							v-for="(child, j) in children.slice(
+								parentEditingState[index].firstRow,
+								parentEditingState[index].firstRow + MAX_NUMBER_OF_ROWS
+							)"
+							:key="j"
+						>
+							<tera-model-part-entry
+								:item="child"
+								:feature-config="featureConfig"
+								@update-item="$emit('update-item', { id: child.id, ...$event })"
+							/>
+						</li>
+					</ul>
+					<Paginator
+						v-if="children.length > MAX_NUMBER_OF_ROWS"
+						:rows="MAX_NUMBER_OF_ROWS"
+						:first="parentEditingState[index].firstRow"
+						:total-records="children.length"
+						:template="{
+							default: 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink JumpToPageDropdown'
+						}"
+						@page="parentEditingState[index].firstRow = $event.first"
+					/>
+				</div>
 			</template>
 			<tera-model-part-entry
 				v-else
@@ -124,6 +146,16 @@
 			/>
 		</li>
 	</ul>
+	<Paginator
+		v-if="items.length > MAX_NUMBER_OF_ROWS"
+		:rows="MAX_NUMBER_OF_ROWS"
+		:first="firstRow"
+		:total-records="items.length"
+		:template="{
+			default: 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink JumpToPageDropdown'
+		}"
+		@page="firstRow = $event.first"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -137,6 +169,7 @@ import AutoComplete from 'primevue/autocomplete';
 import Button from 'primevue/button';
 import type { FeatureConfig } from '@/types/common';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import Paginator from 'primevue/paginator';
 
 const props = defineProps<{
 	items: {
@@ -162,9 +195,13 @@ const parentEditingState = ref<
 			name: string;
 			curie: string;
 		};
+		firstRow: number;
 	}[]
 >([]);
 const results = ref<DKG[]>([]);
+const firstRow = ref(0);
+
+const MAX_NUMBER_OF_ROWS = 10;
 
 function updateAllChildren(base: string, key: string, value: string) {
 	if (isEmpty(value) || !props.collapsedItems) return;
@@ -183,7 +220,8 @@ watch(
 			childrenConcepts: {
 				name: '',
 				curie: ''
-			}
+			},
+			firstRow: 0
 		}));
 	},
 	{ immediate: true }
@@ -197,19 +235,21 @@ ul {
 	list-style: none;
 	gap: var(--gap-2);
 }
+
 .model-part {
 	margin-left: var(--gap-1);
 	padding: var(--gap-3) var(--gap-4);
 	border-left: 4px solid var(--surface-border);
 	background: var(--surface-0);
 	transition: background-color 0.15s;
+	&:hover {
+		background: var(--surface-50);
+	}
+	&:has(.parent) {
+		padding: var(--gap-2) 0 var(--gap-2) var(--gap-1);
+	}
 }
-.model-part:hover {
-	background: var(--surface-50);
-}
-.model-part:has(.parent) {
-	padding: var(--gap-2) var(--gap-1);
-}
+
 li {
 	padding-bottom: var(--gap-2);
 	border-bottom: 1px solid var(--surface-border-light);
@@ -224,18 +264,21 @@ li {
 
 .stratified {
 	margin: var(--gap-2) 0 0 var(--gap-3);
-	background: var(--surface-0);
-	& > li {
-		border-left: 4px solid var(--surface-border);
-		padding-left: var(--gap-4);
-		padding-bottom: var(--gap-2);
-		padding-top: var(--gap-2);
-		border-bottom: none;
+	& > ul {
+		background: var(--surface-0);
+		& > li {
+			border-left: 4px solid var(--surface-border);
+			padding-left: var(--gap-4);
+			padding-bottom: var(--gap-2);
+			padding-top: var(--gap-2);
+			border-bottom: none;
+			&:hover {
+				background: var(--surface-50);
+			}
+		}
 	}
 }
-.stratified li:hover {
-	background: var(--surface-50);
-}
+
 .concept {
 	display: flex;
 	align-items: center;

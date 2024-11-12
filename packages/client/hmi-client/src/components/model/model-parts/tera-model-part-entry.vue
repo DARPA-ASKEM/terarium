@@ -1,10 +1,10 @@
 <template>
-	<section class="flex flex-column gap-2">
+	<section class="flex flex-column gap-1">
 		<span class="flex align-items-center gap-3">
-			<h6 class="ml-2">{{ symbol }}</h6>
+			<h6>{{ symbol }}</h6>
 			<span class="name">
 				<template v-if="featureConfig.isPreview">{{ item.name }}</template>
-				<tera-toggleable-input
+				<tera-input-text
 					v-else
 					placeholder="Add a name"
 					:model-value="item.name ?? ''"
@@ -33,7 +33,7 @@
 						]"
 						@change="$emit('update-item', { key: 'unitExpression', value: $event.value })"
 					/>
-					<tera-toggleable-input
+					<tera-input-text
 						v-else
 						label="Unit"
 						placeholder="Add a unit"
@@ -45,6 +45,21 @@
 			</span>
 
 			<span v-if="!featureConfig.isPreview" class="flex ml-auto gap-3">
+				<!-- Three states of description buttons: Hide / Show / Add description -->
+				<Button
+					v-if="(item.description && showDescription) || (!item.description && showDescription)"
+					text
+					size="small"
+					label="Hide description"
+					@click="showDescription = false"
+				/>
+				<Button
+					v-else-if="!showDescription"
+					text
+					size="small"
+					:label="item.description ? 'Show description' : 'Add description'"
+					@click="showDescription = true"
+				/>
 				<span v-if="showConcept" class="concept">
 					<label>Concept</label>
 					<template v-if="featureConfig.isPreview">{{ query }}</template>
@@ -71,7 +86,8 @@
 		/>
 		<span class="description">
 			<template v-if="featureConfig.isPreview">{{ item.description }}</template>
-			<tera-toggleable-input
+			<tera-input-text
+				v-if="showDescription"
 				placeholder="Add a description"
 				:model-value="item.description ?? ''"
 				@update:model-value="$emit('update-item', { key: 'description', value: $event })"
@@ -82,8 +98,9 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import AutoComplete from 'primevue/autocomplete';
+import Button from 'primevue/button';
 import type { ModelPartItem } from '@/types/Model';
 import { stringToLatexExpression } from '@/services/model';
 import type { DKG } from '@/types/Types';
@@ -131,6 +148,9 @@ watch(
 	},
 	{ immediate: true }
 );
+
+const showDescription = ref(false);
+if (props.item.description) showDescription.value = true;
 </script>
 
 <style scoped>
@@ -163,7 +183,7 @@ h6::after {
 
 .expression {
 	min-height: 2rem;
-	max-height: 15rem;
+	max-height: 12rem;
 	overflow: auto;
 }
 
