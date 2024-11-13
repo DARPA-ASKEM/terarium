@@ -999,7 +999,7 @@ const {
 	useComparisonCharts
 } = useCharts(props.node.id, model, modelConfiguration, preparedChartInputs, chartSize, combinedInterventions);
 const interventionCharts = useInterventionCharts(selectedInterventionSettings);
-const variableCharts = useVariableCharts(selectedVariableSettings, null, () => '');
+const variableCharts = useVariableCharts(selectedVariableSettings, null, null);
 const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
 
 // refresh policy

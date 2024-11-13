@@ -510,7 +510,7 @@ const {
 	computed(() => interventionPolicy.value?.interventions ?? [])
 );
 const interventionCharts = useInterventionCharts(selectedInterventionSettings, true);
-const variableCharts = useVariableCharts(selectedVariableSettings, null, () => '');
+const variableCharts = useVariableCharts(selectedVariableSettings, null, null);
 const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
 
 const updateState = () => {

@@ -419,7 +419,9 @@
 							:title="'Error'"
 							:settings="chartSettings"
 							:type="ChartSettingType.ERROR_DISTRIBUTION"
-							:select-options="Object.keys(pyciemssMap).filter((c) => mapping.find((d) => d.modelVariable === c))"
+							:select-options="
+								Object.keys(pyciemssMap).filter((c) => ['state', 'observable'].includes(modelPartTypesMap[c]))
+							"
 							:selected-options="selectedErrorVariableSettings.map((s) => s.selectedVariables[0])"
 							@open="activeChartSettings = $event"
 							@remove="removeChartSettings"
@@ -544,7 +546,13 @@ import { getCalendarSettingsFromModel } from '@/services/model';
 import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
-import { renameFnGenerator, getErrorData, usePreparedChartInputs, mapModelVarToDatasetVar } from './calibrate-utils';
+import {
+	renameFnGenerator,
+	getErrorData,
+	usePreparedChartInputs,
+	getSelectedOutputMapping,
+	getSelectedOutput
+} from './calibrate-utils';
 
 const isSidebarOpen = ref(true);
 
@@ -715,12 +723,20 @@ const lossChartSize = useDrilldownChartSize(lossChartContainer);
 const outputPanel = ref(null);
 const chartSize = useDrilldownChartSize(outputPanel);
 
-const errorData = computed<DataArray>(() =>
-	getErrorData(groundTruthData.value, runResult.value, mapping.value, knobs.value.timestampColName)
-);
-
 const groupedInterventionOutputs = computed(() =>
 	_.groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
+);
+
+const selectedOutputMapping = computed(() => getSelectedOutputMapping(props.node));
+const selectedOutputTimestampColName = computed(() => getSelectedOutput(props.node)?.state?.timestampColName ?? '');
+
+const errorData = computed<DataArray>(() =>
+	getErrorData(
+		groundTruthData.value,
+		runResult.value,
+		selectedOutputMapping.value,
+		selectedOutputTimestampColName.value
+	)
 );
 
 const preparedChartInputs = usePreparedChartInputs(
@@ -761,12 +777,15 @@ const {
 	chartSize,
 	computed(() => interventionPolicy.value?.interventions ?? [])
 );
-const toDatasetVar = (modelVar: string) => mapModelVarToDatasetVar(props.node.state, modelVar);
 const parameterDistributionCharts = useParameterDistributionCharts(selectedParameterSettings);
 const interventionCharts = useInterventionCharts(selectedInterventionSettings);
-const variableCharts = useVariableCharts(selectedVariableSettings, groundTruthData, toDatasetVar);
+const variableCharts = useVariableCharts(selectedVariableSettings, groundTruthData, selectedOutputMapping);
 const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
-const { errorChart, onExpandErrorChart } = useErrorChart(selectedErrorVariableSettings, errorData, toDatasetVar);
+const { errorChart, onExpandErrorChart } = useErrorChart(
+	selectedErrorVariableSettings,
+	errorData,
+	selectedOutputMapping
+);
 
 const LOSS_CHART_DATA_SOURCE = 'lossData'; // Name of the streaming data source
 const lossChartRef = ref<InstanceType<typeof VegaChart>>();

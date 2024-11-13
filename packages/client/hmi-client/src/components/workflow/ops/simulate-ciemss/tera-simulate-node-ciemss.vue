@@ -182,7 +182,7 @@ const { useInterventionCharts, useVariableCharts, useComparisonCharts } = useCha
 	computed(() => interventionPolicy.value?.interventions ?? [])
 );
 const interventionCharts = useInterventionCharts(selectedInterventionSettings, true);
-const variableCharts = useVariableCharts(selectedVariableSettings, null, () => '');
+const variableCharts = useVariableCharts(selectedVariableSettings, null, null);
 const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
 const isChartsEmpty = computed(
 	() => _.isEmpty(interventionCharts.value) && _.isEmpty(variableCharts.value) && _.isEmpty(comparisonCharts.value)

@@ -15,6 +15,8 @@ import { ChartSetting, ChartSettingType } from '@/types/common';
 import { Intervention, Model, ModelConfiguration } from '@/types/Types';
 import { displayNumber } from '@/utils/number';
 import { getUnitsFromModelParts, getVegaDateOptions } from '@/services/model';
+import { CalibrateMap } from '@/services/calibrate-workflow';
+import { modelVarToDatasetVar } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
 import { useChartAnnotations } from './useChartAnnotations';
 
 interface ChartData {
@@ -121,7 +123,7 @@ export function useCharts(
 	const useVariableCharts = (
 		chartSettings: ComputedRef<ChartSetting[]>,
 		groundTruthData: ComputedRef<DataArray> | null,
-		modelVarToDatasetVar: (modelVar: string) => string
+		mapping: ComputedRef<CalibrateMap[]> | null
 	) => {
 		const variableCharts = computed(() => {
 			const charts: Record<string, any> = {};
@@ -131,7 +133,7 @@ export function useCharts(
 			chartSettings.value.forEach((settings) => {
 				const variable = settings.selectedVariables[0];
 				const annotations = getChartAnnotationsByChartId(settings.id);
-				const datasetVar = modelVarToDatasetVar(variable);
+				const datasetVar = modelVarToDatasetVar(mapping?.value || [], variable);
 				const { sampleLayerVariables, statLayerVariables, options } = createForecastChartOptions(
 					settings,
 					translationMap
@@ -152,7 +154,7 @@ export function useCharts(
 						groundTruthData && {
 							data: groundTruthData.value,
 							variables: datasetVar ? [datasetVar] : [],
-							timeField: modelVarToDatasetVar('timepoint_id')
+							timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
 						},
 						options
 					),
@@ -218,14 +220,14 @@ export function useCharts(
 	const useErrorChart = (
 		chartSettings: ComputedRef<ChartSetting[]>,
 		errorData: ComputedRef<DataArray>,
-		modelVarToDatasetVar: (modelVar: string) => string
+		mapping: ComputedRef<CalibrateMap[]> | null
 	) => {
 		const errorChartVariables = computed(() => {
 			if (!chartSettings.value.length) return [];
 			const variables = chartSettings.value
 				.map((s) => s.selectedVariables[0])
 				.map((variable) => ({
-					field: modelVarToDatasetVar(variable) as string,
+					field: modelVarToDatasetVar(mapping?.value ?? [], variable) as string,
 					label: variable
 				}))
 				.filter((v) => !!v.field);

@@ -80,10 +80,24 @@ export function getErrorData(
 	return errors;
 }
 
-export const mapModelVarToDatasetVar = (state: CalibrationOperationStateCiemss, modelVariable: string) => {
-	if (modelVariable === 'timepoint_id') return state.timestampColName ?? '';
-	return state.mapping.find((d) => d.modelVariable === modelVariable)?.datasetVariable || '';
+export const modelVarToDatasetVar = (mapping: CalibrateMap[], modelVariable: string) =>
+	mapping.find((d) => d.modelVariable === modelVariable)?.datasetVariable || '';
+
+export const getSelectedOutput = (node: WorkflowNode<CalibrationOperationStateCiemss>) => {
+	const selectedOutputId = node.active;
+	const wfOutput = node.outputs.find((output) => output.id === selectedOutputId);
+	return wfOutput;
 };
+
+// Get the selected output mapping for the node
+export function getSelectedOutputMapping(node: WorkflowNode<CalibrationOperationStateCiemss>) {
+	const wfOutputState = getSelectedOutput(node)?.state;
+	return [
+		...(wfOutputState?.mapping || []),
+		// special case for timestamp column name mapping
+		{ modelVariable: 'timepoint_id', datasetVariable: wfOutputState?.timestampColName ?? '' }
+	];
+}
 
 export function usePreparedChartInputs(
 	props: {
@@ -114,7 +128,7 @@ export function usePreparedChartInputs(
 			translationMap[`${pyciemssMap.value[key]}_mean`] = `${key} after calibration`;
 			translationMap[`${pyciemssMap.value[key]}_mean:pre`] = `${key} before calibration`;
 		});
-		state.mapping.forEach((mapObj) => {
+		getSelectedOutputMapping(props.node).forEach((mapObj) => {
 			translationMap[mapObj.datasetVariable] = 'Observations';
 		});
 		return {

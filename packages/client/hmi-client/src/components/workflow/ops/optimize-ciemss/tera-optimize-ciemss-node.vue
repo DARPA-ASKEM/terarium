@@ -86,7 +86,7 @@ const { useVariableCharts } = useCharts(
 	toRef({ width: 180, height: 120 }),
 	undefined
 );
-const variableCharts = useVariableCharts(selectedVariableSettings, null, () => '');
+const variableCharts = useVariableCharts(selectedVariableSettings, null, null);
 
 const showSpinner = computed<boolean>(
 	() =>

@@ -73,7 +73,7 @@ import { useChartSettings } from '@/composables/useChartSettings';
 import { useCharts } from '@/composables/useCharts';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { CalibrationOperationCiemss } from './calibrate-operation';
-import { renameFnGenerator, mapModelVarToDatasetVar, usePreparedChartInputs } from './calibrate-utils';
+import { renameFnGenerator, usePreparedChartInputs, getSelectedOutputMapping } from './calibrate-utils';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
@@ -142,6 +142,7 @@ async function updateLossChartWithSimulation() {
 
 onMounted(async () => updateLossChartWithSimulation());
 
+const selectedOutputMapping = computed(() => getSelectedOutputMapping(props.node));
 const preparedChartInputs = usePreparedChartInputs(
 	props,
 	runResult,
@@ -159,9 +160,8 @@ const { useInterventionCharts, useVariableCharts } = useCharts(
 	toRef(chartSize),
 	computed(() => interventionPolicy.value?.interventions ?? [])
 );
-const toDatasetVar = (modelVar: string) => mapModelVarToDatasetVar(props.node.state, modelVar);
 const interventionCharts = useInterventionCharts(selectedInterventionSettings);
-const variableCharts = useVariableCharts(selectedVariableSettings, groundTruth, toDatasetVar);
+const variableCharts = useVariableCharts(selectedVariableSettings, groundTruth, selectedOutputMapping);
 
 const poller = new Poller();
 const pollResult = async (runId: string) => {
