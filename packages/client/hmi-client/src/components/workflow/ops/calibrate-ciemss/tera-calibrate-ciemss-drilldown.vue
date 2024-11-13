@@ -891,10 +891,10 @@ const runCalibrate = async () => {
 };
 
 const messageHandler = (event: ClientEvent<any>) => {
-	if (!lossChartRef.value?.view) return;
 	const data = { iter: lossValues.value.length, loss: event.data.loss };
-	lossChartRef.value.view.change(LOSS_CHART_DATA_SOURCE, vega.changeset().insert(data)).resize().run();
 	lossValues.value.push(data);
+	if (!lossChartRef.value?.view) return;
+	lossChartRef.value.view.change(LOSS_CHART_DATA_SOURCE, vega.changeset().insert(data)).resize().run();
 };
 
 const onSelection = (id: string) => {

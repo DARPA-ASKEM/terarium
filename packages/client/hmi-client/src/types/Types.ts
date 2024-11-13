@@ -15,6 +15,7 @@ export interface ClientEvent<T> {
     type: ClientEventType;
     projectId?: string;
     notificationGroupId?: string;
+    userId?: string;
     data: T;
 }
 
@@ -115,13 +116,8 @@ export interface CsvColumnStats {
 }
 
 export interface Grounding extends TerariumEntity {
-    identifiers: Identifier[];
+    identifiers: DKG[];
     context?: any;
-}
-
-export interface Identifier {
-    curie: string;
-    name: string;
 }
 
 export interface PresignedURL {
