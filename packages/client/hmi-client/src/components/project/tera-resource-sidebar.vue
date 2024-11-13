@@ -70,7 +70,7 @@
 							label="New"
 							size="small"
 							text
-							@click.stop="emit('open-new-workflow', type)"
+							@click.stop="emit('open-new-workflow')"
 						/>
 					</div>
 				</template>
