@@ -301,7 +301,7 @@ const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
 }>();
 const showSaveDataDialog = ref<boolean>(false);
-const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output']);
+const emit = defineEmits(['update-state', 'close', 'select-output']);
 
 interface BasicKnobs {
 	ensembleMapping: CalibrateEnsembleMappingRow[];
