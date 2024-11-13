@@ -101,7 +101,7 @@ section {
 	}
 
 	& > .p-inputtext {
-		font-size: var(--font-caption);
+		padding-top: 0.325rem;
 	}
 
 	&.in-node {
