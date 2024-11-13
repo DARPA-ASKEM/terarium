@@ -197,7 +197,6 @@ async function toggleCollapsedView(view: StratifiedView) {
 watch(
 	() => [props.model.model, props.model?.semantics, props.mmtData, graphElement.value],
 	async (newValue, oldValue) => {
-		console.log(newValue, oldValue);
 		if (isEqual(newValue, oldValue) || modelType.value === AMRSchemaNames.DECAPODES || graphElement.value === null) {
 			return;
 		}

@@ -133,8 +133,6 @@ const props = defineProps({
 
 const emit = defineEmits(['close-preview', 'on-save']);
 
-// const MMT_INJECTION_KEY = Symbol('mmt');
-
 const model = ref<Model | null>(null);
 const temporaryModel = ref<Model | null>(null);
 const mmtData = ref<MMT>({ mmt: emptyMiraModel(), template_params: {}, observable_summary: {} });
