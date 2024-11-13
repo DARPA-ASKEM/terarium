@@ -230,7 +230,7 @@ const myFilteredSortedProjects = computed(() => {
 	const projects = useProjects().allProjects.value;
 	if (!projects) return [];
 	const myProjects = projects.filter(
-		({ userPermission, publicProject }) =>
+		({ userPermission, publicProject, sampleProject }) =>
 			// I can edit the project, or I can view the project, and it's not public
 			['creator', 'writer'].includes(userPermission ?? '') ||
 			(userPermission === 'reader' && !publicProject && !sampleProject)
