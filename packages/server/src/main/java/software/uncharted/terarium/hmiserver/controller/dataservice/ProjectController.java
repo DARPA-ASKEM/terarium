@@ -1163,36 +1163,36 @@ public class ProjectController {
 			projectAssetService.togglePublicForAssets(terariumAssetServices, id, true, Schema.Permission.WRITE);
 			projectService.updateProject(project.get());
 
-			/* Set the Public Group permissions to READ the Project */
-			// Getting the project permissions
-			final RebacProject rebacProject = new RebacProject(id, reBACService);
-			// Getting the Public group permissions
-			final RebacGroup who = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
-			// Setting the relationship to be of a reader
-			final String relationship = Schema.Relationship.READER.toString();
-			projectPermissionsService.setProjectPermissions(rebacProject, who, relationship);
+			/* Permissions */
 
-			// Delete all previous relationships as Creator or Writer attached to the project so only an Administrator can edit this project.
-			final List<Contributor> contributors = projectPermissionsService
-				.getContributors(rebacProject)
-				.stream()
-				.filter(contributor -> !contributor.getUserId().equals(ReBACService.ASKEM_ADMIN_GROUP_ID))
-				.toList();
-			final String creatorRelationship = Schema.Relationship.CREATOR.toString();
-			final String writerRelationship = Schema.Relationship.WRITER.toString();
+			// Getting the project
+			final RebacProject rebacProject = new RebacProject(id, reBACService);
+
+			// Delete all previous relationships attached to the project,
+			final List<Contributor> contributors = projectPermissionsService.getContributors(rebacProject);
 			for (final Contributor contributor : contributors) {
 				final RebacUser rebacUser = new RebacUser(contributor.getUserId(), reBACService);
-				try {
-					projectPermissionsService.removeProjectPermissions(rebacProject, rebacUser, creatorRelationship);
-				} catch (final Exception ignore) {}
-				try {
-					projectPermissionsService.removeProjectPermissions(rebacProject, rebacUser, writerRelationship);
-				} catch (final Exception ignore) {}
+				rebacUser.removeAllRelationships(rebacProject);
 			}
+
+			// Admin group to write the project
+			final RebacGroup adminGroup = new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService);
+			adminGroup.canAdministrate(rebacProject);
+			adminGroup.createCreatorRelationship(rebacProject);
+
+			// Add the public group to read the project
+			final RebacGroup publicGroup = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
+			publicGroup.createReaderRelationship(rebacProject);
 
 			return ResponseEntity.ok().build();
 		} catch (final ResponseStatusException rethrow) {
 			throw rethrow;
+		} catch (final RelationshipAlreadyExistsException ignore) {
+			log.debug(messages.get("rebac.relationship-already-exists"), ignore);
+			throw new ResponseStatusException(
+				HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("rebac.relationship-already-exists")
+			);
 		} catch (final Exception e) {
 			log.error("Unexpected error, failed to set as a sample project ", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
