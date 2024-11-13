@@ -4,11 +4,6 @@ name: Lint Generated Types
 # yamllint disable-line rule:truthy
 on:
   workflow_call:
-  push:
-    paths:
-      - 'packages/client/hmi-client/src/types/Types.ts'
-      - 'packages/server/src/main/java/**'
-    branches: ['main']
   pull_request:
     paths:
       - 'packages/client/hmi-client/src/types/Types.ts'
@@ -39,6 +34,14 @@ jobs:
         run: ./gradlew generateTypeScript
 
       - name: Commit all changed files
-        uses: stefanzweifel/git-auto-commit-action@7d0ca8f849305c56d36f992cfb1519b1af5b33f8
-        with:
-          commit_message: "chore: update generated types"
+        run: |
+          git diff --exit-code || {
+            echo "Files have changed. Committing changes..."
+            git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git config --global user.name "github-actions[bot]"
+            git fetch --depth=1;
+            git checkout  ${{ github.head_ref }} --
+            git add .
+            git commit --message "chore: lint types"
+            git push --set-upstream origin ${{ github.head_ref }}
+          }
