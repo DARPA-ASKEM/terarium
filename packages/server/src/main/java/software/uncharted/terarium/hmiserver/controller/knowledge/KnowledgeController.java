@@ -46,7 +46,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
-import software.uncharted.terarium.hmiserver.models.dataservice.Identifier;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
@@ -59,6 +58,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Prove
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
+import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
@@ -679,7 +679,7 @@ public class KnowledgeController {
 				if (groundings.getIdentifiers() == null) {
 					groundings.setIdentifiers(new ArrayList<>());
 				}
-				groundings.getIdentifiers().add(new Identifier(g.get(0).asText(), g.get(1).asText()));
+				groundings.getIdentifiers().add(new DKG(g.get(0).asText(), g.get(1).asText(), null));
 			}
 
 			// remove groundings from an annotation object

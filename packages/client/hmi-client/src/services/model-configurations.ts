@@ -7,7 +7,7 @@ import type {
 	ObservableSemantic,
 	ParameterSemantic
 } from '@/types/Types';
-import { isEmpty } from 'lodash';
+import { isEmpty, isNaN, isNumber } from 'lodash';
 import { pythonInstance } from '@/python/PyodideController';
 import { DistributionType } from './distribution';
 
@@ -206,4 +206,32 @@ export function getOtherValues(configs: ModelConfiguration[], id: string, key: s
 		}
 	});
 	return otherValues;
+}
+
+export function isNumberInputEmpty(value: string) {
+	const number = parseFloat(value);
+	return isNaN(number) || !isNumber(number);
+}
+
+export function getMissingInputAmount(modelConfiguration: ModelConfiguration) {
+	let missingInputs = 0;
+	modelConfiguration.initialSemanticList.forEach((initial) => {
+		if (isNumberInputEmpty(initial.expression)) {
+			missingInputs++;
+		}
+	});
+
+	modelConfiguration.parameterSemanticList.forEach((parameter) => {
+		if (parameter.distribution.type === DistributionType.Constant) {
+			if (isNumberInputEmpty(parameter.distribution.parameters.value)) {
+				missingInputs++;
+			}
+		} else if (
+			isNumberInputEmpty(parameter.distribution.parameters.minimum) ||
+			isNumberInputEmpty(parameter.distribution.parameters.maximum)
+		) {
+			missingInputs++;
+		}
+	});
+	return missingInputs;
 }
