@@ -866,7 +866,9 @@ const variableCharts = computed(() => {
 			annotations
 		);
 
-		charts[variable].layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[variable]));
+		if (groupedInterventionOutputs.value[variable]) {
+			charts[variable].layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[variable]));
+		}
 	});
 	return charts;
 });
