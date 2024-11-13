@@ -65,6 +65,10 @@ public class Project extends TerariumAsset {
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "{}")
 	private Map<String, String> metadata;
 
+	@TSOptional
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	private Boolean sampleProject;
+
 	/** Information for the front-end to display/filter the project accordingly. */
 	@TSOptional
 	@Transient
