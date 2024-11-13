@@ -104,6 +104,11 @@
 		font-weight: var(--font-weight);
 	}
 
+	/* Make tab font size same as body */
+	.p-tabview-title {
+		font-size: var(--font-size);
+	}
+
 	/* Fixing the confirm dialog text placement and reject button styling */
 	.p-confirm-dialog-message {
 		margin-left: 0 !important;

@@ -53,7 +53,7 @@
 			</div>
 			<div class="warning-banner" :class="{ visible: warningBanner && hasInvalidNodes }">
 				A yellow header indicates that the node is stale due to upstream changes. Rerun to update.
-				<a class="ml-auto mr-4 underline" @click="dontShowAgain">Don't show this again</a
+				<a class="ml-auto mr-4" @click="dontShowAgain">Don't show this again</a
 				><Button class="mr-2" icon="pi pi-times" text @click="warningBanner = false" />
 			</div>
 		</template>
@@ -1056,6 +1056,8 @@ onUnmounted(() => {
 
 .warning-banner {
 	width: 100%;
+	font-size: var(--font-caption);
+	border-bottom: 1px solid var(--surface-border-light);
 	display: flex;
 	align-items: center;
 	background-color: var(--surface-warning);

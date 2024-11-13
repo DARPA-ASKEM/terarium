@@ -84,7 +84,7 @@ header .tabs-row:deep(.p-tabview .p-tabview-panels) {
 }
 
 a {
-	height: 3rem;
+	height: 2.75rem;
 	display: flex;
 	align-items: center;
 	color: var(--primary-color);
