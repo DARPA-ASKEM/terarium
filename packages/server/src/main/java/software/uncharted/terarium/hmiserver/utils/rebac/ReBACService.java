@@ -235,7 +235,7 @@ public class ReBACService {
 	private String getUserId(final String name) {
 		final List<UserRepresentation> users = keycloak.realm(REALM_NAME).users().search(name);
 		for (final UserRepresentation user : users) {
-			if (user.getUsername().equals(API_SERVICE_USER_NAME) || user.getUsername().equals(ADMIN_API_SERVICE_USER_NAME)) {
+			if (user.getUsername().equals(name)) {
 				return user.getId();
 			}
 		}
