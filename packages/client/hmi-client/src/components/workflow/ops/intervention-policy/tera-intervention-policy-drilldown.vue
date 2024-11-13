@@ -39,7 +39,7 @@
 								:disabled="!props.node.inputs[0]?.value && !props.node.inputs[1]?.value"
 								@click="extractInterventionPolicyFromInputs"
 							/>
-							<Button class="ml-1" label="Create New" :disabled="!model?.id" @click="createNewInterventionPolicy" />
+							<Button class="ml-1" label="Create New" :disabled="!model?.id" @click="resetInterventionPolicy" />
 						</nav>
 						<tera-input-text v-model="filterInterventionsText" placeholder="Filter" />
 						<ul v-if="!isFetchingPolicies">
@@ -556,7 +556,7 @@ const onSaveInterventionPolicy = async () => {
 	}
 };
 
-const createNewInterventionPolicy = () => {
+const resetInterventionPolicy = () => {
 	knobs.value.transientInterventionPolicy = {
 		modelId: '',
 		interventions: [blankIntervention]
