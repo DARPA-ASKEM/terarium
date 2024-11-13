@@ -491,11 +491,15 @@ public class ReBACService {
 		final SchemaObject who,
 		final SchemaObject what,
 		final Schema.Relationship relationship
-	) throws Exception, RelationshipAlreadyExistsException {
+	) throws Exception {
 		userCache.invalidate(who.id);
 		invalidatePermissionCache(who, what);
 		final ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		CURRENT_ZED_TOKEN = rebac.removeRelationship(who, relationship, what);
+		try {
+			CURRENT_ZED_TOKEN = rebac.removeRelationship(who, relationship, what);
+		} catch (RelationshipAlreadyExistsException ignore) {
+			// NB: This is a no-op as the relationship is already removed
+		}
 	}
 
 	private Consistency getCurrentConsistency() {

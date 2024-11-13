@@ -73,18 +73,15 @@ public class RebacUser extends RebacObject {
 		reBACService.createRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.READER);
 	}
 
-	public void removeCreatorRelationship(final RebacObject rebacObject)
-		throws Exception, RelationshipAlreadyExistsException {
+	public void removeCreatorRelationship(final RebacObject rebacObject) throws Exception {
 		reBACService.removeRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.CREATOR);
 	}
 
-	public void removeWriterRelationship(final RebacObject rebacObject)
-		throws Exception, RelationshipAlreadyExistsException {
+	public void removeWriterRelationship(final RebacObject rebacObject) throws Exception {
 		reBACService.removeRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.WRITER);
 	}
 
-	public void removeReaderRelationship(final RebacObject rebacObject)
-		throws Exception, RelationshipAlreadyExistsException {
+	public void removeReaderRelationship(final RebacObject rebacObject) throws Exception {
 		reBACService.removeRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.READER);
 	}
 
