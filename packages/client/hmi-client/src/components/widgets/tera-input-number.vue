@@ -99,7 +99,7 @@ const onBlur = () => {
 watch(
 	() => props.modelValue,
 	(newValue) => {
-		if (isNaN(newValue)) return;
+		if (isNaN(newValue)) maskedValue.value = '';
 		maskedValue.value = newValue?.toString() ?? '';
 	},
 	{ immediate: true }
