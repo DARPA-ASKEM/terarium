@@ -85,14 +85,14 @@ const downloadMenuItem = {
 const makeSampleMenuItem = {
 	label: 'Make a sample',
 	icon: 'pi pi-star',
-	command: async () => {
-		console.log('Make a sample');
-		const response = await setSample(props.project?.id);
-		if (response) {
-			useToastService().success(undefined, 'Project set as sample');
-		} else {
-			useToastService().error(undefined, 'Error setting project as sample');
-		}
+	command: () => {
+		setSample(props.project?.id).then((response) => {
+			if (response) {
+				useToastService().success(undefined, 'Project set as sample');
+			} else {
+				useToastService().error(undefined, 'Error setting project as sample');
+			}
+		});
 	}
 };
 
