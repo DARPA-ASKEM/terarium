@@ -46,7 +46,7 @@ services:
     restart: on-failure
     entrypoint: >
       /bin/sh -c "
-      /usr/bin/mc alias set local_minio http://${local_host_name}:9000 admin admin123;
+      /usr/bin/mc alias set local_minio http://minio:9000 admin admin123;
       /usr/bin/mc mb --ignore-existing local_minio/askem-local-storage;
       /usr/bin/mc anonymous set public local_minio/askem-local-storage;
       "
