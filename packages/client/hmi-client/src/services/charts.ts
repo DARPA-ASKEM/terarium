@@ -1,5 +1,5 @@
-import { percentile } from '@/utils/math';
 import { isEmpty, pick } from 'lodash';
+import { percentile } from '@/utils/math';
 import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
 import type { ChartAnnotation, FunmanInterval } from '@/types/Types';
@@ -616,6 +616,7 @@ export function createForecastChart(
 }
 
 export function applyForecastChartAnnotations(chartSpec: any, annotations: ChartAnnotation[]) {
+	if (isEmpty(annotations)) return chartSpec;
 	const targetLayerIndex = 1; // Assume the target layer is the second layer which is the statistic layer
 	const layerSpecs = annotations.map((a) => a.layerSpec);
 	if (!chartSpec.layer[targetLayerIndex]) return chartSpec;

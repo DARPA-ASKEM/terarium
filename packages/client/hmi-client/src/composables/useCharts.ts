@@ -126,8 +126,12 @@ export function useCharts(
 					null,
 					options
 				);
-				// add intervention annotations (rules and text)
-				forecastChart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[variable]));
+
+				if (groupedInterventionOutputs.value[variable]) {
+					// add intervention annotations (rules and text)
+					forecastChart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[variable]));
+				}
+
 				charts[setting.id] = forecastChart;
 			});
 			return charts;
