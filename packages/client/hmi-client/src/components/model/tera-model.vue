@@ -57,12 +57,13 @@
 			<tera-model-description
 				:feature-config="featureConfig"
 				:model="temporaryModel"
+				:mmt-data="mmtData"
 				@update-model="updateTemporaryModel"
 			/>
 			<tera-petrinet-parts
 				:model="temporaryModel"
-				:mmt="mmt"
-				:mmt-params="mmtParams"
+				:mmt="mmtData.mmt"
+				:mmt-params="mmtData.template_params"
 				:feature-config="featureConfig"
 				@update-state="(e: any) => onUpdateModelPart('state', e)"
 				@update-parameter="(e: any) => onUpdateModelPart('parameter', e)"
@@ -101,7 +102,7 @@ import type { FeatureConfig } from '@/types/common';
 import { AssetType, type Model } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
-import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import { MMT } from '@/model-representation/mira/mira-common';
 import { emptyMiraModel } from '@/model-representation/mira/mira';
 import {
 	updateState,
@@ -136,8 +137,7 @@ const emit = defineEmits(['close-preview', 'on-save']);
 
 const model = ref<Model | null>(null);
 const temporaryModel = ref<Model | null>(null);
-const mmt = ref<MiraModel>(emptyMiraModel());
-const mmtParams = ref<MiraTemplateParams>({});
+const mmtData = ref<MMT>({ mmt: emptyMiraModel(), template_params: {}, observable_summary: {} });
 
 const newName = ref('New Model');
 const isRenaming = ref(false);
@@ -226,8 +226,7 @@ async function updateMMT() {
 	if (!temporaryModel.value) return;
 	const response = await getMMT(temporaryModel.value);
 	if (!response) return;
-	mmt.value = response.mmt;
-	mmtParams.value = response.template_params;
+	mmtData.value = response;
 }
 
 function updateTemporaryModel(newModel: Model) {
@@ -295,6 +294,9 @@ watch(
 	() => props.assetId,
 	async () => {
 		// Reset view of model page
+		model.value = null;
+		temporaryModel.value = null;
+		mmtData.value = { mmt: emptyMiraModel(), template_params: {}, observable_summary: {} };
 		isRenaming.value = false;
 		if (!isEmpty(props.assetId)) {
 			isModelLoading.value = true;
