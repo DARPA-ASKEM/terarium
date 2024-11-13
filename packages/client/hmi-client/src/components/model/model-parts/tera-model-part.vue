@@ -5,15 +5,15 @@
 			:key="index"
 			class="model-part"
 		>
-			<template v-if="isParent && !isEmpty(parentEditingState)">
+			<template v-if="isParent && !isEmpty(editingState)">
 				<section class="parent">
 					<span>
 						<Button
-							:icon="parentEditingState[index].showChildren ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
+							:icon="getEditingState(index).showChildren ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
 							text
 							rounded
 							size="small"
-							@click="parentEditingState[index].showChildren = !parentEditingState[index].showChildren"
+							@click="getEditingState(index).showChildren = !getEditingState(index).showChildren"
 							class="mr-1"
 						/>
 						<h6>{{ base.id }}</h6>
@@ -22,8 +22,8 @@
 					<div class="right-side">
 						<template v-if="!featureConfig.isPreview && (!children[0].input || !children[0].output)">
 							<Button
-								:disabled="parentEditingState[index].isEditingChildrenUnits"
-								@click="parentEditingState[index].isEditingChildrenUnits = true"
+								:disabled="getEditingState(index).isEditingChildrenUnits"
+								@click="getEditingState(index).isEditingChildrenUnits = true"
 								label="Add unit to all children"
 								text
 								size="small"
@@ -32,8 +32,8 @@
 						<Button v-if="showMatrix" label="Open matrix" text size="small" @click="$emit('open-matrix', base.id)" />
 						<template v-if="!featureConfig.isPreview">
 							<Button
-								:disabled="parentEditingState[index].isEditingChildrenConcepts"
-								@click="parentEditingState[index].isEditingChildrenConcepts = true"
+								:disabled="getEditingState(index).isEditingChildrenConcepts"
+								@click="getEditingState(index).isEditingChildrenConcepts = true"
 								label="Add concept to all children"
 								text
 								size="small"
@@ -43,8 +43,8 @@
 				</section>
 
 				<!-- Add unit to all children toolbar -->
-				<div v-if="parentEditingState[index].isEditingChildrenUnits" class="add-to-all-children-toolbar">
-					<tera-input-text label="Unit" placeholder="Add a unit" v-model="parentEditingState[index].childrenUnits" />
+				<div v-if="getEditingState(index).isEditingChildrenUnits" class="add-to-all-children-toolbar">
+					<tera-input-text label="Unit" placeholder="Add a unit" v-model="getEditingState(index).childrenUnits" />
 					<Button
 						icon="pi pi-check"
 						text
@@ -52,8 +52,8 @@
 						size="small"
 						@click="
 							() => {
-								updateAllChildren(base.id, 'unitExpression', parentEditingState[index].childrenUnits);
-								parentEditingState[index].isEditingChildrenUnits = false;
+								updateAllChildren(base.id, 'unitExpression', getEditingState(index).childrenUnits);
+								getEditingState(index).isEditingChildrenUnits = false;
 							}
 						"
 					/>
@@ -62,28 +62,28 @@
 						text
 						rounded
 						size="small"
-						@click="parentEditingState[index].isEditingChildrenUnits = false"
+						@click="getEditingState(index).isEditingChildrenUnits = false"
 					/>
 				</div>
 
 				<!-- Add concept to all children toolbar -->
-				<div v-if="parentEditingState[index].isEditingChildrenConcepts" class="add-to-all-children-toolbar">
+				<div v-if="getEditingState(index).isEditingChildrenConcepts" class="add-to-all-children-toolbar">
 					<span class="concept">
 						<label>Concept</label>
 						<AutoComplete
 							label="Concept"
 							size="small"
 							placeholder="Search concepts"
-							v-model="parentEditingState[index].childrenConcepts.name"
+							v-model="getEditingState(index).childrenConcepts.name"
 							:suggestions="results"
 							optionLabel="name"
 							@complete="
-								async () => (results = await searchCuriesEntities(parentEditingState[index].childrenConcepts.name))
+								async () => (results = await searchCuriesEntities(getEditingState(index).childrenConcepts.name))
 							"
 							@item-select="
 								($event) => {
 									const { name, curie } = $event.value;
-									parentEditingState[index].childrenConcepts = { name, curie };
+									getEditingState(index).childrenConcepts = { name, curie };
 								}
 							"
 						/>
@@ -95,8 +95,8 @@
 						size="small"
 						@click="
 							() => {
-								updateAllChildren(base.id, 'concept', parentEditingState[index].childrenConcepts.curie);
-								parentEditingState[index].isEditingChildrenConcepts = false;
+								updateAllChildren(base.id, 'concept', getEditingState(index).childrenConcepts.curie);
+								getEditingState(index).isEditingChildrenConcepts = false;
 							}
 						"
 					/>
@@ -105,16 +105,16 @@
 						text
 						rounded
 						size="small"
-						@click="parentEditingState[index].isEditingChildrenConcepts = false"
+						@click="getEditingState(index).isEditingChildrenConcepts = false"
 					/>
 				</div>
 
-				<div class="stratified" v-if="parentEditingState[index].showChildren">
+				<div class="stratified" v-if="getEditingState(index).showChildren">
 					<ul>
 						<li
 							v-for="(child, j) in children.slice(
-								parentEditingState[index].firstRow,
-								parentEditingState[index].firstRow + MAX_NUMBER_OF_ROWS
+								getEditingState(index).firstRow,
+								getEditingState(index).firstRow + MAX_NUMBER_OF_ROWS
 							)"
 							:key="j"
 						>
@@ -128,12 +128,12 @@
 					<Paginator
 						v-if="children.length > MAX_NUMBER_OF_ROWS"
 						:rows="MAX_NUMBER_OF_ROWS"
-						:first="parentEditingState[index].firstRow"
+						:first="getEditingState(index).firstRow"
 						:total-records="children.length"
 						:template="{
 							default: 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink JumpToPageDropdown'
 						}"
-						@page="parentEditingState[index].firstRow = $event.first"
+						@page="getEditingState(index).firstRow = $event.first"
 					/>
 				</div>
 			</template>
@@ -160,7 +160,7 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { ref, watch, computed } from 'vue';
+import { ref, computed } from 'vue';
 import type { ModelPartItem } from '@/types/Model';
 import type { DKG } from '@/types/Types';
 import { searchCuriesEntities } from '@/services/concept';
@@ -172,11 +172,7 @@ import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Paginator from 'primevue/paginator';
 
 const props = defineProps<{
-	items: {
-		base: ModelPartItem;
-		children: ModelPartItem[];
-		isParent: boolean;
-	}[];
+	items: { base: ModelPartItem; children: ModelPartItem[]; isParent: boolean }[];
 	featureConfig: FeatureConfig;
 	collapsedItems?: Map<string, string[]>;
 	showMatrix?: boolean;
@@ -188,19 +184,16 @@ const emit = defineEmits(['update-item', 'open-matrix']);
 
 const MAX_NUMBER_OF_ROWS = 10;
 
-const parentEditingState = ref<
-	{
-		showChildren: boolean;
-		isEditingChildrenUnits: boolean;
-		isEditingChildrenConcepts: boolean;
-		childrenUnits: string;
-		childrenConcepts: {
-			name: string;
-			curie: string;
-		};
-		firstRow: number;
-	}[]
->([]);
+const editingState = ref(
+	Array.from({ length: props.items.length }, () => ({
+		showChildren: false,
+		isEditingChildrenUnits: false,
+		isEditingChildrenConcepts: false,
+		childrenUnits: '',
+		childrenConcepts: { name: '', curie: '' },
+		firstRow: 0
+	}))
+);
 const results = ref<DKG[]>([]);
 const firstRow = ref(0);
 
@@ -213,40 +206,33 @@ const filteredItems = computed(() => {
 			const baseMatches = base.id.toLowerCase().includes(filterText);
 			const childrenMatch = filteredChildren.length > 0;
 			if (baseMatches || childrenMatch) {
-				return {
-					base,
-					children: filteredChildren,
-					isParent
-				};
+				return { base, children: filteredChildren, isParent };
 			}
 			return null;
 		})
 		.filter(Boolean) as { base: ModelPartItem; children: ModelPartItem[]; isParent: boolean }[];
 });
 
+// Maps filtered indices to original indices
+const filteredToOriginalIndex = computed(() => {
+	const indexMap = new Map();
+	filteredItems.value.forEach((item, filteredIndex) => {
+		const originalIndex = props.items.findIndex((original) => original.base.id === item.base.id);
+		indexMap.set(filteredIndex, originalIndex);
+	});
+	return indexMap;
+});
+// Update references to parentEditingState to use the mapping
+function getEditingState(filteredIndex: number) {
+	const originalIndex = filteredToOriginalIndex.value.get(filteredIndex);
+	return editingState.value[originalIndex];
+}
+
 function updateAllChildren(base: string, key: string, value: string) {
 	if (isEmpty(value) || !props.collapsedItems) return;
 	const ids = props.collapsedItems.get(base);
 	ids?.forEach((id) => emit('update-item', { id, key, value }));
 }
-
-watch(
-	() => filteredItems.value,
-	() => {
-		parentEditingState.value = Array.from({ length: filteredItems.value.length }, () => ({
-			showChildren: false,
-			isEditingChildrenUnits: false,
-			isEditingChildrenConcepts: false,
-			childrenUnits: '',
-			childrenConcepts: {
-				name: '',
-				curie: ''
-			},
-			firstRow: 0
-		}));
-	},
-	{ immediate: true }
-);
 </script>
 
 <style scoped>
