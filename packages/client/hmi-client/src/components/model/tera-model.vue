@@ -64,11 +64,11 @@
 				:mmt="mmt"
 				:mmt-params="mmtParams"
 				:feature-config="featureConfig"
-				@update-state="(e: any) => onUpdate('state', e)"
-				@update-parameter="(e: any) => onUpdate('parameter', e)"
-				@update-observable="(e: any) => onUpdate('observable', e)"
-				@update-transition="(e: any) => onUpdate('transition', e)"
-				@update-time="(e: any) => onUpdate('time', e)"
+				@update-state="(e: any) => onUpdateModelPart('state', e)"
+				@update-parameter="(e: any) => onUpdateModelPart('parameter', e)"
+				@update-observable="(e: any) => onUpdateModelPart('observable', e)"
+				@update-transition="(e: any) => onUpdateModelPart('transition', e)"
+				@update-time="(e: any) => onUpdateModelPart('time', e)"
 			/>
 		</section>
 	</tera-asset>
@@ -243,7 +243,7 @@ function updateTemporaryModel(newModel: Model) {
 	if (doMmtUpdate) updateMMT();
 }
 
-function onUpdate(property: string, event: any) {
+function onUpdateModelPart(property: string, event: any) {
 	if (!temporaryModel.value) return;
 	const newModel = cloneDeep(temporaryModel.value);
 	const { id, key, value } = event;
