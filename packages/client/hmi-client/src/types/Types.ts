@@ -294,6 +294,7 @@ export interface Project extends TerariumAsset {
     overviewContent?: any;
     projectAssets: ProjectAsset[];
     metadata?: { [index: string]: string };
+    sampleProject?: boolean;
     publicProject?: boolean;
     userPermission?: string;
 }
