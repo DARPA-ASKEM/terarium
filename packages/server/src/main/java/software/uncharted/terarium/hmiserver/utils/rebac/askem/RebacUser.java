@@ -63,6 +63,31 @@ public class RebacUser extends RebacObject {
 		reBACService.createRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.CREATOR);
 	}
 
+	public void createWriterRelationship(final RebacObject rebacObject)
+		throws Exception, RelationshipAlreadyExistsException {
+		reBACService.createRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.WRITER);
+	}
+
+	public void createReaderRelationship(final RebacObject rebacObject)
+		throws Exception, RelationshipAlreadyExistsException {
+		reBACService.createRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.READER);
+	}
+
+	public void removeCreatorRelationship(final RebacObject rebacObject)
+		throws Exception, RelationshipAlreadyExistsException {
+		reBACService.removeRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.CREATOR);
+	}
+
+	public void removeWriterRelationship(final RebacObject rebacObject)
+		throws Exception, RelationshipAlreadyExistsException {
+		reBACService.removeRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.WRITER);
+	}
+
+	public void removeReaderRelationship(final RebacObject rebacObject)
+		throws Exception, RelationshipAlreadyExistsException {
+		reBACService.removeRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.READER);
+	}
+
 	public PermissionGroup createGroup(final String name) throws Exception, RelationshipAlreadyExistsException {
 		final PermissionGroup group = reBACService.createGroup(name);
 		reBACService.createRelationship(
