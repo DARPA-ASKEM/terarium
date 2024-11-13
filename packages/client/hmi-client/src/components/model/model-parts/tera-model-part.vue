@@ -1,8 +1,8 @@
 <template>
-	<ul>
+	<ul v-bind="$attrs">
 		<li
 			v-for="({ base, children, isParent }, index) in filteredItems.slice(firstRow, firstRow + MAX_NUMBER_OF_ROWS)"
-			:key="index"
+			:key="base.id"
 			class="model-part"
 		>
 			<template v-if="isParent && !isEmpty(editingState)">
@@ -112,11 +112,11 @@
 				<div class="stratified" v-if="getEditingState(index).showChildren">
 					<ul>
 						<li
-							v-for="(child, j) in children.slice(
+							v-for="child in children.slice(
 								getEditingState(index).firstRow,
 								getEditingState(index).firstRow + MAX_NUMBER_OF_ROWS
 							)"
-							:key="j"
+							:key="child.id"
 						>
 							<tera-model-part-entry
 								:item="child"

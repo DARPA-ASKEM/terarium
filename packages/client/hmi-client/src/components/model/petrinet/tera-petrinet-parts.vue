@@ -62,15 +62,8 @@
 		<AccordionTab>
 			<template #header>
 				Time <span class="artifact-amount">({{ time.length }})</span>
-				<tera-input-text class="ml-auto" placeholder="Filter" v-model="timeFilter" />
 			</template>
-			<tera-time
-				v-if="time"
-				:time="time"
-				:feature-config="featureConfig"
-				:filter="timeFilter"
-				@update-time="emit('update-time', $event)"
-			/>
+			<tera-time v-if="time" :time="time" :feature-config="featureConfig" @update-time="emit('update-time', $event)" />
 		</AccordionTab>
 	</Accordion>
 </template>
@@ -105,7 +98,6 @@ const statesFilter = ref('');
 const parametersFilter = ref('');
 const observablesFilter = ref('');
 const transitionsFilter = ref('');
-const timeFilter = ref('');
 
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
