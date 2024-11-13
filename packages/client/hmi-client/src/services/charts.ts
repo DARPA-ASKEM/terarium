@@ -530,7 +530,7 @@ export function createForecastChart(
 	};
 
 	// Build sample layer
-	if (samplingLayer && !isEmpty(samplingLayer.variables)) {
+	if (samplingLayer && !isEmpty(samplingLayer.variables) && !isEmpty(samplingLayer.data)) {
 		const layerSpec = newLayer(samplingLayer, 'line');
 		const encoding = layerSpec.layer[0].encoding;
 		Object.assign(encoding, {
@@ -543,7 +543,7 @@ export function createForecastChart(
 	}
 
 	// Build statistical layer
-	if (statisticsLayer && !isEmpty(statisticsLayer.variables)) {
+	if (statisticsLayer && !isEmpty(statisticsLayer.variables) && !isEmpty(statisticsLayer.data)) {
 		const layerSpec = newLayer(statisticsLayer, 'line');
 		const lineSubLayer = layerSpec.layer[0];
 		const tooltipSubLayer = structuredClone(lineSubLayer);
@@ -593,7 +593,7 @@ export function createForecastChart(
 	}
 
 	// Build ground truth layer
-	if (groundTruthLayer && !isEmpty(groundTruthLayer.variables)) {
+	if (groundTruthLayer && !isEmpty(groundTruthLayer.variables) && !isEmpty(groundTruthLayer.data)) {
 		const layerSpec = newLayer(groundTruthLayer, 'point');
 		const encoding = layerSpec.layer[0].encoding;
 
