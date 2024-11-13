@@ -796,8 +796,8 @@ export interface ModelUnit {
 }
 
 export interface GroundedSemantic {
-    grounding?: ModelGrounding;
     id: string;
+    grounding?: ModelGrounding;
     name?: string;
     description?: string;
 }
