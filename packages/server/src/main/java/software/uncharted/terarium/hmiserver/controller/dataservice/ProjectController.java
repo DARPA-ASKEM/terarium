@@ -1125,6 +1125,62 @@ public class ProjectController {
 		}
 	}
 
+	@Operation(summary = "Set a project as a sample project by ID")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Project has been made a sample project",
+				content = {
+					@Content(
+						mediaType = "application/json",
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class)
+					)
+				}
+			),
+			@ApiResponse(
+				responseCode = "403",
+				description = "The current user does not have privileges to modify this project.",
+				content = @Content
+			),
+			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content)
+		}
+	)
+	@PostMapping("/set-sample/{id}")
+	@Secured(Roles.USER)
+	public ResponseEntity<JsonNode> makeProjectSample(@PathVariable("id") final UUID id) {
+		try {
+			// Only an admin can set a project as a sample project
+			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), id);
+
+			final Optional<Project> project = projectService.getProject(id);
+			if (project.isEmpty()) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
+			}
+
+			// Update the project and make it public as well as a sample project
+			project.get().setSampleProject(true).setPublicAsset(true);
+			projectAssetService.togglePublicForAssets(terariumAssetServices, id, true, Schema.Permission.WRITE);
+			projectService.updateProject(project.get());
+
+			//			// Set the Public Group permissions to READ the Project
+			//			// Getting the project permissions
+			//			final RebacProject project = new RebacProject(id, reBACService);
+			//			// Getting the Public group permissions
+			//			final RebacGroup who = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
+			//			// Setting the relationship to be of a reader
+			//			final String relationship = Schema.Relationship.READER.toString();
+			//			projectPermissionsService.setProjectPermissions(project, who, relationship);
+
+			return ResponseEntity.ok().build();
+		} catch (final ResponseStatusException rethrow) {
+			throw rethrow;
+		} catch (final Exception e) {
+			log.error("Unexpected error, failed to set as a sample project ", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+		}
+	}
+
 	@PostMapping("/{id}/permissions/user/{user-id}/{relationship}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Sets a user's permissions for a project")
