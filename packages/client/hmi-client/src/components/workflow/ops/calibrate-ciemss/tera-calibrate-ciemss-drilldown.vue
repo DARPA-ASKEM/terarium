@@ -420,7 +420,9 @@
 							:settings="chartSettings"
 							:type="ChartSettingType.ERROR_DISTRIBUTION"
 							:select-options="
-								Object.keys(pyciemssMap).filter((c) => ['state', 'observable'].includes(modelPartTypesMap[c]))
+								Object.keys(pyciemssMap)
+									.filter((c) => ['state', 'observable'].includes(modelPartTypesMap[c]))
+									.filter((c) => selectedOutputMapping.find((s) => s.modelVariable === c))
 							"
 							:selected-options="selectedErrorVariableSettings.map((s) => s.selectedVariables[0])"
 							@open="activeChartSettings = $event"

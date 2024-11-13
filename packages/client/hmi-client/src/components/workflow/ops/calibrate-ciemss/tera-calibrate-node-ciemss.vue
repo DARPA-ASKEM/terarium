@@ -71,6 +71,8 @@ import { useProjects } from '@/composables/project';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import { useChartSettings } from '@/composables/useChartSettings';
 import { useCharts } from '@/composables/useCharts';
+import { filterChartSettingsByVariables } from '@/services/chart-settings';
+import { ChartSettingType } from '@/types/common';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { CalibrationOperationCiemss } from './calibrate-operation';
 import { renameFnGenerator, usePreparedChartInputs, getSelectedOutputMapping } from './calibrate-utils';
@@ -391,6 +393,14 @@ watch(
 			}
 
 			state.summaryId = summaryResponse?.id;
+
+			// For error charts, make sure that only chart settings for mapped model variables are used
+			const mappedModelVariables = state.mapping.map((d) => d.modelVariable);
+			state.chartSettings = filterChartSettingsByVariables(
+				state.chartSettings || [],
+				ChartSettingType.ERROR_DISTRIBUTION,
+				mappedModelVariables
+			);
 
 			// const portLabel = props.node.inputs[0].label;
 			emit('append-output', {
