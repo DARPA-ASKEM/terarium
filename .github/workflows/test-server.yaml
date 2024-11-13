@@ -50,7 +50,7 @@ jobs:
 
       # Start containers
       - name: Start containers
-        run: cd containers && docker compose --file docker-compose-actions.yml up --detach --wait
+        run: cd containers && docker compose --file docker-compose-actions.yml up --wait
 
       # Run the tests
       - name: Run tests
