@@ -14,6 +14,7 @@
 					@open-asset="openAsset"
 					@remove-asset="removeAsset"
 					@open-new-asset="openNewAsset"
+					@open-new-workflow="openNewWorkflow"
 				/>
 			</template>
 		</tera-slider-panel>
@@ -31,6 +32,7 @@
 			:is-visible="showSaveAssetModal"
 			@close-modal="showSaveAssetModal = false"
 		/>
+		<tera-create-workflow-modal v-if="showWorkflowModal" @close-modal="showWorkflowModal = false" />
 	</main>
 </template>
 
@@ -53,12 +55,14 @@ import { AssetRoute } from '@/types/common';
 import { ProjectPages, isProjectAssetTypes } from '@/types/Project';
 import { AssetType, TerariumAsset } from '@/types/Types';
 import { logger } from '@/utils/logger';
+import TeraCreateWorkflowModal from '@/components/workflow/tera-create-workflow-modal.vue';
 
 const route = useRoute();
 const router = useRouter();
 
 const isResourcesSliderOpen = ref(true);
 const showSaveAssetModal = ref(false);
+const showWorkflowModal = ref(false);
 const assetTypeToCreate = ref<AssetType>(AssetType.Model);
 
 const pageType = computed(() => (route.params.pageType as ProjectPages | AssetType) ?? '');
@@ -96,6 +100,10 @@ async function removeAsset(assetRoute: AssetRoute) {
 const openNewAsset = (assetType: AssetType) => {
 	assetTypeToCreate.value = assetType;
 	showSaveAssetModal.value = true;
+};
+
+const openNewWorkflow = () => {
+	showWorkflowModal.value = true;
 };
 
 onMounted(() => {
