@@ -7,6 +7,10 @@ import { operation as DatasetOp } from '@/components/workflow/ops/dataset/mod';
 import { OperatorNodeSize } from '@/services/workflow';
 
 export class SituationalAwarenessScenarioTemplate extends BaseScenarioTemplate {
+	public static templateId = 'situational-awareness';
+
+	public static templateName = 'Situational Awareness';
+
 	modelSpec: { id: string };
 
 	datasetSpec: { id: string };
@@ -16,7 +20,7 @@ export class SituationalAwarenessScenarioTemplate extends BaseScenarioTemplate {
 	calibrateSpec: { ids: string[] };
 
 	constructor() {
-		super('situational-awareness', 'Situational Awareness', 'Template for situational awareness');
+		super();
 		this.modelSpec = {
 			id: ''
 		};

@@ -3,18 +3,13 @@ import { useProjects } from '@/composables/project';
 import { AssetType } from '@/types/Types';
 
 export abstract class BaseScenarioTemplate {
-	templateId: string;
+	public static templateId: string;
 
-	templateName: string;
-
-	description: string;
+	public static templateName: string;
 
 	workflowName: string;
 
-	constructor(nameId: string, name: string, description: string) {
-		this.templateId = nameId;
-		this.templateName = name;
-		this.description = description;
+	constructor() {
 		const workflows = useProjects().getActiveProjectAssets(AssetType.Workflow);
 		this.workflowName = `workflow ${workflows.length + 1}`;
 	}

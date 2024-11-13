@@ -2,9 +2,9 @@ import { BaseScenarioTemplate } from '@/components/workflow/scenario-templates/s
 import * as workflowService from '@/services/workflow';
 
 export class BlankCanvasScenarioTemplate extends BaseScenarioTemplate {
-	constructor() {
-		super('blank-canvas', 'Blank Canvas', 'Blank canvas for creating a new workflow');
-	}
+	public static templateId = 'blank-canvas';
+
+	public static templateName = 'Blank Canvas';
 
 	createWorkflow() {
 		const wf = new workflowService.WorkflowWrapper();
