@@ -198,7 +198,6 @@ const results = ref<DKG[]>([]);
 const firstRow = ref(0);
 
 const filteredItems = computed(() => {
-	console.log(props.items);
 	const filterText = props.filter?.toLowerCase() ?? '';
 	if (!filterText) return props.items;
 	return props.items
