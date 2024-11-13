@@ -20,8 +20,8 @@
 				<main class="col-10 flex flex-column gap-3">
 					<component
 						v-if="getScenario()"
-						:is="getScenario()?.component"
-						:state="getScenario()?.template"
+						:is="getScenario().component"
+						:state="getScenario().template"
 						@update-state="onUpdateState"
 					/>
 				</main>
@@ -79,9 +79,6 @@ const selectedTemplateId = ref<any>(scenarios.value[0].id);
 
 const saveWorkflow = async () => {
 	const scenario = getScenario();
-	if (!scenario) {
-		return;
-	}
 	const wf = scenario.template.createWorkflow();
 	const response = await createWorkflow(wf);
 
@@ -105,11 +102,8 @@ const saveWorkflow = async () => {
 
 const onUpdateState = (state: any) => {
 	const scenario = getScenario();
-	if (!scenario) {
-		return;
-	}
 	Object.assign(scenario.template, state);
 };
 
-const getScenario = () => scenarios.value.find((s) => s.id === selectedTemplateId.value);
+const getScenario = () => scenarios.value.find((s) => s.id === selectedTemplateId.value) as ScenarioItem;
 </script>
