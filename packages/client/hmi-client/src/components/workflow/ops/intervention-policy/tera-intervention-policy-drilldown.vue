@@ -397,8 +397,6 @@ const initialize = async (overwriteWithState: boolean = false) => {
 	} else {
 		knobs.value.transientInterventionPolicy = cloneDeep(state.interventionPolicy);
 	}
-
-	console.log(selectedPolicyId.value);
 };
 
 const applyInterventionPolicy = (interventionPolicy: InterventionPolicy) => {
@@ -559,7 +557,15 @@ const onSaveInterventionPolicy = async () => {
 };
 
 const createNewInterventionPolicy = () => {
-	knobs.value.transientInterventionPolicy.interventions = [_.cloneDeep(blankIntervention)];
+	knobs.value.transientInterventionPolicy = {
+		modelId: '',
+		interventions: [blankIntervention]
+	};
+	emit('append-output', {
+		type: InterventionPolicyOperation.outputs[0].type,
+		label: InterventionPolicyOperation.outputs[0].label,
+		value: null
+	});
 };
 
 const extractInterventionPolicyFromInputs = async () => {
