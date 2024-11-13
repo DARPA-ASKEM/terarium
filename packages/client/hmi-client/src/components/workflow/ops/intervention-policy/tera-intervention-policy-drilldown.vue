@@ -175,9 +175,9 @@
 		</tera-columnar-panel>
 	</tera-drilldown>
 	<tera-save-asset-modal
-		:initial-name="showCreatePolicyModal ? 'New Intervention Policy' : knobs.transientInterventionPolicy.name"
+		:initial-name="knobs.transientInterventionPolicy.name"
 		:is-visible="showSaveModal"
-		:asset="showCreatePolicyModal ? newBlankInterventionPolicy : knobs.transientInterventionPolicy"
+		:asset="knobs.transientInterventionPolicy"
 		:asset-type="AssetType.InterventionPolicy"
 		@close-modal="showSaveModal = false"
 		@on-save="onSaveAsInterventionPolicy"
@@ -261,12 +261,6 @@ const knobs = ref<BasicKnobs>({
 	}
 });
 
-const newBlankInterventionPolicy = ref({
-	name: '',
-	modelId: '',
-	interventions: [blankIntervention]
-});
-
 interface SelectedIntervention {
 	index: number;
 	name: string;
@@ -285,7 +279,6 @@ const isFetchingPDF = ref(false);
 const pdfData = ref<{ document: DocumentAsset; data: string; isPdf: boolean; name: string }[]>([]);
 
 const showSaveModal = ref(false);
-const showCreatePolicyModal = ref(false);
 const isSidebarOpen = ref(true);
 const filterInterventionsText = ref('');
 const model = ref<Model | null>(null);
@@ -534,7 +527,6 @@ const onResetPolicy = () => {
 };
 
 const onSaveAsInterventionPolicy = (data: InterventionPolicy) => {
-	showCreatePolicyModal.value = false;
 	applyInterventionPolicy(data);
 };
 
