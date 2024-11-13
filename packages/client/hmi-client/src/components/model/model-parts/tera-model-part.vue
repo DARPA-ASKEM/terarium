@@ -20,7 +20,7 @@
 					</span>
 					<!--N/A if it's a transition-->
 					<div class="right-side">
-						<template v-if="!featureConfig.isPreview && (!children[0].input || !children[0].output)">
+						<template v-if="!featureConfig.isPreview && (!children[0]?.input || !children[0]?.output)">
 							<Button
 								:disabled="getEditingState(index).isEditingChildrenUnits"
 								@click="getEditingState(index).isEditingChildrenUnits = true"
@@ -198,12 +198,14 @@ const results = ref<DKG[]>([]);
 const firstRow = ref(0);
 
 const filteredItems = computed(() => {
+	console.log(props.items);
 	const filterText = props.filter?.toLowerCase() ?? '';
 	if (!filterText) return props.items;
 	return props.items
 		.map(({ base, children, isParent }) => {
 			const filteredChildren = children.filter((child) => child.id.toLowerCase().includes(filterText));
-			const baseMatches = base.id.toLowerCase().includes(filterText);
+			const baseMatches =
+				base.id.toLowerCase().includes(filterText) || base.templateId?.toLowerCase().includes(filterText);
 			const childrenMatch = filteredChildren.length > 0;
 			if (baseMatches || childrenMatch) {
 				return { base, children: filteredChildren, isParent };
