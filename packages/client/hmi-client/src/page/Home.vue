@@ -231,8 +231,9 @@ const myFilteredSortedProjects = computed(() => {
 	if (!projects) return [];
 	const myProjects = projects.filter(
 		({ userPermission, publicProject }) =>
-			// I can edit the project, or I can view the project and it's not public
-			['creator', 'writer'].includes(userPermission ?? '') || (userPermission === 'reader' && !publicProject)
+			// I can edit the project, or I can view the project, and it's not public
+			['creator', 'writer'].includes(userPermission ?? '') ||
+			(userPermission === 'reader' && !publicProject && !sampleProject)
 	);
 	return filterAndSortProjects(myProjects);
 });
@@ -248,8 +249,15 @@ function tabChange(event) {
 const publicFilteredSortedProjects = computed(() => {
 	const projects = useProjects().allProjects.value;
 	if (!projects) return [];
-	const publicProjects = projects.filter(({ publicProject }) => publicProject === true);
+	const publicProjects = projects.filter(({ publicProject, sampleProject }) => publicProject && !sampleProject);
 	return filterAndSortProjects(publicProjects);
+});
+
+const sampleFilteredSortedProjects = computed(() => {
+	const projects = useProjects().allProjects.value;
+	if (!projects) return [];
+	const sampleProjects = projects.filter(({ sampleProject }) => sampleProject);
+	return filterAndSortProjects(sampleProjects);
 });
 
 function openCreateProjectModal() {
@@ -305,7 +313,7 @@ function filterAndSortProjects(projects: Project[]) {
 const projectsTabs = computed<{ title: string; projects: Project[] }[]>(() => [
 	{ title: TabTitles.MyProjects, projects: myFilteredSortedProjects.value },
 	{ title: TabTitles.PublicProjects, projects: publicFilteredSortedProjects.value },
-	{ title: TabTitles.SampleProjects, projects: [] }
+	{ title: TabTitles.SampleProjects, projects: sampleFilteredSortedProjects.value }
 ]);
 
 // Table view
