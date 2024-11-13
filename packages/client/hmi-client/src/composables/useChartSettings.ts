@@ -7,6 +7,14 @@ import {
 } from '@/services/chart-settings';
 import { WorkflowNode } from '@/types/workflow';
 
+/**
+ * Composable to manage chart settings for a given workflow node.
+ *
+ * @param props - The properties passed to the composable, including the workflow node.
+ * @param emit - The emit function to trigger events.
+ *
+ * @returns An object containing chart settings and methods to manipulate them.
+ */
 export function useChartSettings(
 	props: { node: WorkflowNode<{ chartSettings: ChartSetting[] | null }> },
 	emit: (event: 'update-state', ...args: any[]) => void
@@ -15,6 +23,7 @@ export function useChartSettings(
 	const activeChartSettings = ref<ChartSetting | null>(null);
 	const comparisonChartsSettingsSelection = ref<string[]>([]);
 
+	// Computed properties to filter chart settings by type
 	const selectedParameterSettings = computed(() =>
 		chartSettings.value.filter((setting) => setting.type === ChartSettingType.DISTRIBUTION_COMPARISON)
 	);
@@ -34,6 +43,7 @@ export function useChartSettings(
 		chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON)
 	);
 
+	// Methods to manage chart settings
 	const removeChartSettings = (chartId: string) => {
 		emit('update-state', {
 			...props.node.state,

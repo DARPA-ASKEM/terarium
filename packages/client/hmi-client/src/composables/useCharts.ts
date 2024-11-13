@@ -26,6 +26,18 @@ interface ChartData {
 	translationMap: Record<string, string>;
 }
 
+/**
+ * Composable to manage the creation and configuration of various types of charts used in operator nodes and drilldown.
+ *
+ * @param nodeId - The ID of the node.
+ * @param model - The model reference.
+ * @param modelConfig - The model configuration reference.
+ * @param chartData - The chart data reference.
+ * @param chartSize - The chart size reference.
+ * @param interventions - Optional reference to interventions.
+ *
+ * @returns An object containing methods to create and manage different types of charts.
+ */
 export function useCharts(
 	nodeId: string,
 	model: Ref<Model | null>,
@@ -42,6 +54,7 @@ export function useCharts(
 		return getUnitsFromModelParts(model.value)[paramId] || '';
 	};
 
+	// Create options for forecast charts based on chart settings and model configuration
 	const createForecastChartOptions = (setting: ChartSetting, translationMap: Record<string, string>) => {
 		const variables = setting.selectedVariables;
 		const dateOptions = getVegaDateOptions(model.value, modelConfig.value);
@@ -74,6 +87,7 @@ export function useCharts(
 		return { statLayerVariables, sampleLayerVariables, options };
 	};
 
+	// Generate annotations for a chart
 	const generateAnnotation = async (setting: ChartSetting, query: string) => {
 		if (!chartData.value) return null;
 		const { statLayerVariables, options } = createForecastChartOptions(setting, chartData.value.translationMap);
@@ -84,6 +98,7 @@ export function useCharts(
 		_.groupBy(flattenInterventionData(interventions?.value ?? []), 'appliedTo')
 	);
 
+	// Create intervention charts based on chart settings
 	const useInterventionCharts = (chartSettings: ComputedRef<ChartSetting[]>, showSamples = false) => {
 		const interventionCharts = computed(() => {
 			const charts: Record<string, any> = {};
@@ -120,6 +135,7 @@ export function useCharts(
 		return interventionCharts;
 	};
 
+	// Create variable charts based on chart settings
 	const useVariableCharts = (
 		chartSettings: ComputedRef<ChartSetting[]>,
 		groundTruthData: ComputedRef<DataArray> | null,
@@ -172,6 +188,7 @@ export function useCharts(
 		return variableCharts;
 	};
 
+	// Create comparison charts based on chart settings
 	const useComparisonCharts = (chartSettings: ComputedRef<ChartSetting[]>) => {
 		const comparisonCharts = computed(() => {
 			const charts: Record<string, any> = {};
@@ -217,6 +234,7 @@ export function useCharts(
 		return comparisonCharts;
 	};
 
+	// Create error charts based on chart settings
 	const useErrorChart = (
 		chartSettings: ComputedRef<ChartSetting[]>,
 		errorData: ComputedRef<DataArray>,
@@ -267,6 +285,7 @@ export function useCharts(
 		};
 	};
 
+	// Create parameter distribution charts based on chart settings
 	const useParameterDistributionCharts = (chartSettings: ComputedRef<ChartSetting[]>) => {
 		const parameterDistributionCharts = computed(() => {
 			if (!chartData.value) return {};
