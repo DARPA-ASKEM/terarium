@@ -12,10 +12,11 @@ import { isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import { computed, ref } from 'vue';
-import { exportProjectAsFile } from '@/services/project';
+import { exportProjectAsFile, setSample } from '@/services/project';
 import { AcceptedExtensions } from '@/types/common';
 import { MenuItem } from 'primevue/menuitem';
 import useAuthStore from '@/stores/auth';
+import { useToastService } from '@/services/toast';
 
 const props = defineProps<{ project: Project | null }>();
 
@@ -84,8 +85,14 @@ const downloadMenuItem = {
 const makeSampleMenuItem = {
 	label: 'Make a sample',
 	icon: 'pi pi-star',
-	command: () => {
+	command: async () => {
 		console.log('Make a sample');
+		const response = await setSample(props.project?.id);
+		if (response) {
+			useToastService().success(undefined, 'Project set as sample');
+		} else {
+			useToastService().error(undefined, 'Error setting project as sample');
+		}
 	}
 };
 
