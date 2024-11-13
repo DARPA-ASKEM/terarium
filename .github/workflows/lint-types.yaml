@@ -4,11 +4,6 @@ name: Lint Generated Types
 # yamllint disable-line rule:truthy
 on:
   workflow_call:
-  push:
-    paths:
-      - 'packages/client/hmi-client/src/types/Types.ts'
-      - 'packages/server/src/main/java/**'
-    branches: ['main']
   pull_request:
     paths:
       - 'packages/client/hmi-client/src/types/Types.ts'
