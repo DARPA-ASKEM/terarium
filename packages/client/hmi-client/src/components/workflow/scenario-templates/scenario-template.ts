@@ -2,7 +2,7 @@ import { Workflow } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
 import { AssetType } from '@/types/Types';
 
-export abstract class BaseScenarioTemplate {
+export abstract class BaseScenario {
 	public static templateId: string;
 
 	public static templateName: string;

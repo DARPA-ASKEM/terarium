@@ -1,4 +1,4 @@
-import { BaseScenarioTemplate } from '@/components/workflow/scenario-templates/scenario-template';
+import { BaseScenario } from '@/components/workflow/scenario-templates/scenario-template';
 import * as workflowService from '@/services/workflow';
 import { operation as ModelOp } from '@/components/workflow/ops/model/mod';
 import { operation as ModelConfigOp } from '@/components/workflow/ops/model-config/mod';
@@ -6,7 +6,7 @@ import { operation as CalibrateCiemssOp } from '@/components/workflow/ops/calibr
 import { operation as DatasetOp } from '@/components/workflow/ops/dataset/mod';
 import { OperatorNodeSize } from '@/services/workflow';
 
-export class SituationalAwarenessScenarioTemplate extends BaseScenarioTemplate {
+export class SituationalAwarenessScenario extends BaseScenario {
 	public static templateId = 'situational-awareness';
 
 	public static templateName = 'Situational Awareness';
@@ -80,5 +80,3 @@ export class SituationalAwarenessScenarioTemplate extends BaseScenarioTemplate {
 		return workflow;
 	}
 }
-
-export const SituationalAwarenessTemplate = new SituationalAwarenessScenarioTemplate();

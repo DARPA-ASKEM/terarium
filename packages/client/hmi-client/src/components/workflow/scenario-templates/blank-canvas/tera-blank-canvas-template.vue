@@ -12,10 +12,10 @@
 
 <script setup lang="ts">
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
-import { BlankCanvasScenarioTemplate } from './blank-canvas-template';
+import { BlankCanvasScenario } from './blank-canvas-template';
 
 const emit = defineEmits(['update-state']);
 defineProps<{
-	state: BlankCanvasScenarioTemplate;
+	state: BlankCanvasScenario;
 }>();
 </script>

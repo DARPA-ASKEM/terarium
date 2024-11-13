@@ -40,7 +40,7 @@ import Button from 'primevue/button';
 import { ref } from 'vue';
 import type { Component } from 'vue';
 import RadioButton from 'primevue/radiobutton';
-import { BaseScenarioTemplate } from '@/components/workflow/scenario-templates/scenario-template';
+import { BaseScenario } from '@/components/workflow/scenario-templates/scenario-template';
 import { createWorkflow } from '@/services/workflow';
 import { AssetType } from '@/types/Types';
 import { useProjects } from '@/composables/project';
@@ -48,27 +48,27 @@ import router from '@/router';
 import { RouteName } from '@/router/routes';
 import TeraBlankCanvasTemplate from '@/components/workflow/scenario-templates/blank-canvas/tera-blank-canvas-template.vue';
 import TeraSituationalAwarenessTemplate from '@/components/workflow/scenario-templates/situational-awareness/tera-situational-awareness-template.vue';
-import { BlankCanvasScenarioTemplate } from '@/components/workflow/scenario-templates/blank-canvas/blank-canvas-template';
-import { SituationalAwarenessScenarioTemplate } from '@/components/workflow/scenario-templates/situational-awareness/situational-awareness-template';
+import { BlankCanvasScenario } from '@/components/workflow/scenario-templates/blank-canvas/blank-canvas-template';
+import { SituationalAwarenessScenario } from '@/components/workflow/scenario-templates/situational-awareness/situational-awareness-template';
 
 interface ScenarioItem {
 	displayName: string;
 	id: string;
-	template: BaseScenarioTemplate;
+	template: BaseScenario;
 	component: Component;
 }
 
 const scenarios = ref<ScenarioItem[]>([
 	{
-		displayName: BlankCanvasScenarioTemplate.templateName,
-		id: BlankCanvasScenarioTemplate.templateId,
-		template: new BlankCanvasScenarioTemplate(),
+		displayName: BlankCanvasScenario.templateName,
+		id: BlankCanvasScenario.templateId,
+		template: new BlankCanvasScenario(),
 		component: TeraBlankCanvasTemplate
 	},
 	{
-		displayName: SituationalAwarenessScenarioTemplate.templateName,
-		id: SituationalAwarenessScenarioTemplate.templateId,
-		template: new SituationalAwarenessScenarioTemplate(),
+		displayName: SituationalAwarenessScenario.templateName,
+		id: SituationalAwarenessScenario.templateId,
+		template: new SituationalAwarenessScenario(),
 		component: TeraSituationalAwarenessTemplate
 	}
 ]);

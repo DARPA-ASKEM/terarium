@@ -1,7 +1,7 @@
-import { BaseScenarioTemplate } from '@/components/workflow/scenario-templates/scenario-template';
+import { BaseScenario } from '@/components/workflow/scenario-templates/scenario-template';
 import * as workflowService from '@/services/workflow';
 
-export class BlankCanvasScenarioTemplate extends BaseScenarioTemplate {
+export class BlankCanvasScenario extends BaseScenario {
 	public static templateId = 'blank-canvas';
 
 	public static templateName = 'Blank Canvas';
@@ -14,5 +14,3 @@ export class BlankCanvasScenarioTemplate extends BaseScenarioTemplate {
 		return workflow;
 	}
 }
-
-export const BlankCanvasTemplate = new BlankCanvasScenarioTemplate();
