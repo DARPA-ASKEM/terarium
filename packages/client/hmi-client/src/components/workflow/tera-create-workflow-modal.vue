@@ -12,6 +12,7 @@
 							:inputId="scenario.template.templateId"
 							:value="scenario.template.templateId"
 							v-model="selectedTemplateId"
+							:disabled="scenario.template.templateId !== 'blank-canvas'"
 						/>
 						<label class="pl-2" :for="scenario.template.templateId">{{ scenario.template.templateName }}</label>
 					</div>
