@@ -1163,14 +1163,32 @@ public class ProjectController {
 			projectAssetService.togglePublicForAssets(terariumAssetServices, id, true, Schema.Permission.WRITE);
 			projectService.updateProject(project.get());
 
-			//			// Set the Public Group permissions to READ the Project
-			//			// Getting the project permissions
-			//			final RebacProject project = new RebacProject(id, reBACService);
-			//			// Getting the Public group permissions
-			//			final RebacGroup who = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
-			//			// Setting the relationship to be of a reader
-			//			final String relationship = Schema.Relationship.READER.toString();
-			//			projectPermissionsService.setProjectPermissions(project, who, relationship);
+			/* Set the Public Group permissions to READ the Project */
+			// Getting the project permissions
+			final RebacProject rebacProject = new RebacProject(id, reBACService);
+			// Getting the Public group permissions
+			final RebacGroup who = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
+			// Setting the relationship to be of a reader
+			final String relationship = Schema.Relationship.READER.toString();
+			projectPermissionsService.setProjectPermissions(rebacProject, who, relationship);
+
+			// Delete all previous relationships as Creator or Writer attached to the project so only an Administrator can edit this project.
+			final List<Contributor> contributors = projectPermissionsService
+				.getContributors(rebacProject)
+				.stream()
+				.filter(contributor -> !contributor.getUserId().equals(ReBACService.ASKEM_ADMIN_GROUP_ID))
+				.toList();
+			final String creatorRelationship = Schema.Relationship.CREATOR.toString();
+			final String writerRelationship = Schema.Relationship.WRITER.toString();
+			for (final Contributor contributor : contributors) {
+				final RebacUser rebacUser = new RebacUser(contributor.getUserId(), reBACService);
+				try {
+					projectPermissionsService.removeProjectPermissions(rebacProject, rebacUser, creatorRelationship);
+				} catch (final Exception ignore) {}
+				try {
+					projectPermissionsService.removeProjectPermissions(rebacProject, rebacUser, writerRelationship);
+				} catch (final Exception ignore) {}
+			}
 
 			return ResponseEntity.ok().build();
 		} catch (final ResponseStatusException rethrow) {
