@@ -60,12 +60,7 @@
 							</div>
 							<div>
 								<span v-if="view === ProjectsView.Cards">
-									<Dropdown
-										v-model="selectedSort"
-										:options="sortOptions"
-										@update:model-value="tab.projects = myFilteredSortedProjects"
-										class="sort-options-dropdown"
-									/>
+									<Dropdown v-model="selectedSort" :options="sortOptions" class="sort-options-dropdown" />
 								</span>
 								<MultiSelect
 									v-if="view === ProjectsView.Table"
@@ -178,7 +173,7 @@ const cloningProjects = computed(() => {
 	const items: any = [];
 	notificationItems.value.forEach((item) => {
 		if (item.type === ClientEventType.CloneProject && item.status === ProgressState.Running) {
-			const project = myFilteredSortedProjects.value.find((p) => p.id === item.assetId);
+			const project = (useProjects().allProjects.value ?? []).find((p) => p.id === item.assetId);
 			items.push(project);
 		}
 	});
@@ -226,28 +221,23 @@ function tabChange(event) {
 	activeTabIndex.value = event.index;
 }
 
-const myFilteredSortedProjects = computed(() =>
-	activeProjects.value.filter(
-		({ userPermission, publicProject }) =>
-			// I can edit the project, or I can view a non-public project
-			['creator', 'writer'].includes(userPermission ?? '') || (userPermission === 'reader' && !publicProject)
-	)
-);
-
-const publicFilteredSortedProjects = computed(() =>
-	activeProjects.value.filter(({ publicProject }) => publicProject === true)
-);
-
 const searchedAndFilterProjects = computed(() => {
-	const tabProjects = projectsTabs.value[activeTabIndex.value].projects;
+	let tabProjects: Project[] = [];
+
+	if (activeTabIndex.value === 0) {
+		tabProjects = activeProjects.value.filter(
+			({ userPermission, publicProject }) =>
+				// I can edit the project, or I can view a non-public project
+				['creator', 'writer'].includes(userPermission ?? '') || (userPermission === 'reader' && !publicProject)
+		);
+	} else if (activeTabIndex.value === 1) {
+		tabProjects = activeProjects.value.filter(({ publicProject }) => publicProject === true);
+	} else if (activeTabIndex.value === 2) {
+		tabProjects = [] as Project[]; // TODO - Sample projects
+	}
+
 	return filterAndSortProjects(tabProjects);
 });
-
-const projectsTabs = computed<{ title: string; projects: Project[] }[]>(() => [
-	{ title: TabTitles.MyProjects, projects: myFilteredSortedProjects.value },
-	{ title: TabTitles.PublicProjects, projects: publicFilteredSortedProjects.value },
-	{ title: TabTitles.SampleProjects, projects: [] }
-]);
 
 function openCreateProjectModal() {
 	isProjectConfigDialogVisible.value = true;
@@ -435,7 +425,7 @@ header > section > button {
 	justify-content: space-between;
 	align-items: center;
 	gap: 16px;
-	/*Accomodate for height of projects tabs*/
+	/* Accommodate for height of projects tabs*/
 	top: 44px;
 }
 
