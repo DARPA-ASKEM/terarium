@@ -1,6 +1,4 @@
 import { Workflow } from '@/types/workflow';
-import { useProjects } from '@/composables/project';
-import { AssetType } from '@/types/Types';
 
 export abstract class BaseScenario {
 	public static templateId: string;
@@ -10,8 +8,7 @@ export abstract class BaseScenario {
 	workflowName: string;
 
 	constructor() {
-		const workflows = useProjects().getActiveProjectAssets(AssetType.Workflow);
-		this.workflowName = `workflow ${workflows.length + 1}`;
+		this.workflowName = '';
 	}
 
 	abstract createWorkflow(): Workflow;

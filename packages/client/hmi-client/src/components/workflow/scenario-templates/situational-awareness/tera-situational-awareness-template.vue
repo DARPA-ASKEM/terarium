@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<h6>What's like to happen next?</h6>
+		<h6>What's likely to happen next?</h6>
 		<p>
 			Calibrates the model to historical data to obtain the best estimate of parameters for the present, then forecasts
 			into the near future.

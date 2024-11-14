@@ -6,9 +6,13 @@ export class BlankCanvasScenario extends BaseScenario {
 
 	public static templateName = 'Blank Canvas';
 
+	constructor() {
+		super();
+		this.workflowName = 'Blank Canvas';
+	}
+
 	createWorkflow() {
 		const wf = new workflowService.WorkflowWrapper();
-
 		const workflow = wf.dump();
 		workflow.name = this.workflowName;
 		return workflow;
