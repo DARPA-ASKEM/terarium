@@ -127,6 +127,12 @@
 		font-weight: var(--font-weight);
 	}
 
+	/* Correct padding for messages */
+	.p-message .p-message-text {
+		padding: var(--gap-2);
+		color: var(--text-color)
+	}
+
 	/* Fill checkboxes with color when selected */
 	.p-checkbox .p-checkbox-box {
 		background-color: var(--surface-0);
