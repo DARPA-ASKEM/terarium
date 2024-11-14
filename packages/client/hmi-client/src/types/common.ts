@@ -182,6 +182,7 @@ export interface NotificationItemStatus {
 export enum ChartSettingType {
 	VARIABLE = 'variable',
 	VARIABLE_COMPARISON = 'variable-comparison',
+	VARIABLE_ENSEMBLE = 'variable-ensemble',
 	DISTRIBUTION_COMPARISON = 'distribution-comparison',
 	ERROR_DISTRIBUTION = 'error-distribution',
 	INTERVENTION = 'intervention'
