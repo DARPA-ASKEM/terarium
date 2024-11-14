@@ -84,7 +84,7 @@ import { getInterventionPoliciesForModel, getModel, getModelConfigurationsForMod
 import { isEmpty } from 'lodash';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import MultiSelect from 'primevue/multiselect';
-import { SituationalAwarenessScenario } from './situational-awareness-template';
+import { SituationalAwarenessScenario } from './situational-awareness-scenario';
 
 const isFetchingModelInformation = ref(false);
 const models = computed(() => useProjects().getActiveProjectAssets(AssetType.Model));

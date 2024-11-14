@@ -5,7 +5,7 @@
 
 <script setup lang="ts">
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
-import { BlankCanvasScenario } from './blank-canvas-template';
+import { BlankCanvasScenario } from './blank-canvas-scenario';
 
 defineProps<{
 	scenario: BlankCanvasScenario;

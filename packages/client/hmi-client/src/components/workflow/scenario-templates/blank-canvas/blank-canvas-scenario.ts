@@ -1,4 +1,4 @@
-import { BaseScenario } from '@/components/workflow/scenario-templates/scenario-template';
+import { BaseScenario } from '@/components/workflow/scenario-templates/base-scenario';
 import * as workflowService from '@/services/workflow';
 
 export class BlankCanvasScenario extends BaseScenario {

@@ -35,7 +35,7 @@ import Button from 'primevue/button';
 import { ref } from 'vue';
 import type { Component } from 'vue';
 import RadioButton from 'primevue/radiobutton';
-import { BaseScenario } from '@/components/workflow/scenario-templates/scenario-template';
+import { BaseScenario } from '@/components/workflow/scenario-templates/base-scenario';
 import { createWorkflow } from '@/services/workflow';
 import { AssetType } from '@/types/Types';
 import { useProjects } from '@/composables/project';
@@ -43,8 +43,8 @@ import router from '@/router';
 import { RouteName } from '@/router/routes';
 import TeraBlankCanvasTemplate from '@/components/workflow/scenario-templates/blank-canvas/tera-blank-canvas-template.vue';
 import TeraSituationalAwarenessTemplate from '@/components/workflow/scenario-templates/situational-awareness/tera-situational-awareness-template.vue';
-import { BlankCanvasScenario } from '@/components/workflow/scenario-templates/blank-canvas/blank-canvas-template';
-import { SituationalAwarenessScenario } from '@/components/workflow/scenario-templates/situational-awareness/situational-awareness-template';
+import { BlankCanvasScenario } from '@/components/workflow/scenario-templates/blank-canvas/blank-canvas-scenario';
+import { SituationalAwarenessScenario } from '@/components/workflow/scenario-templates/situational-awareness/situational-awareness-scenario';
 
 interface ScenarioItem {
 	displayName: string;

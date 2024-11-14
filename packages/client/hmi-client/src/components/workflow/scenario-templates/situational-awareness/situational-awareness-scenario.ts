@@ -1,4 +1,4 @@
-import { BaseScenario } from '@/components/workflow/scenario-templates/scenario-template';
+import { BaseScenario } from '@/components/workflow/scenario-templates/base-scenario';
 import * as workflowService from '@/services/workflow';
 import { operation as ModelOp } from '@/components/workflow/ops/model/mod';
 import { operation as ModelConfigOp } from '@/components/workflow/ops/model-config/mod';
