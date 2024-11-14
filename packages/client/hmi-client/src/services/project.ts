@@ -275,6 +275,43 @@ function getAssetIcon(type: AssetType | string | null): string | Component {
 	return 'circle';
 }
 
+/**
+ * Find projects by KNN (k-nearest neighbors) search
+ *
+ * @param {string} query - the search query
+ * @param {number} k - the number of neighbors to search for
+ * @param {number} page - the page number
+ * @param {number} pageSize - the number of projects to return per page
+ * @param {number} limit - the number of projects to return
+ * @returns {Array<Project>} - the list of projects
+ */
+async function findProjects(
+	query: string,
+	k?: number,
+	page?: number,
+	pageSize?: number,
+	limit?: number
+): Promise<Project[]> {
+	try {
+		if (!query) return [];
+		let url = `/projects/knn?text=${query}`;
+
+		// Only add parameters if they exist and are greater than 0
+		if (k && k > 0) url += `&k=${k}`;
+		if (page && page > 0) url += `&page=${page}`;
+		if (pageSize && pageSize > 0) url += `&page-size=${pageSize}`;
+		if (limit && limit > 0) url += `&limit=${limit}`;
+
+		const response = await API.get(url);
+		const { status, data } = response;
+		if (status !== 200 || !data) return [];
+		return data as Project[];
+	} catch (error) {
+		console.error(error);
+		return [];
+	}
+}
+
 export {
 	addAsset,
 	clone,
@@ -291,5 +328,6 @@ export {
 	update,
 	updatePermissions,
 	exportProjectAsFile,
-	createProjectFromFile
+	createProjectFromFile,
+	findProjects
 };
