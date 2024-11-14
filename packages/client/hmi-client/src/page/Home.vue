@@ -48,7 +48,7 @@
 			<!-- Tab section: My projects, Public projects, Sample projects -->
 			<section class="menu">
 				<TabView @tab-change="tabChange" :active-index="activeTabIndex" :key="activeTabIndex">
-					<TabPanel v-for="(tab, i) in projectsTabs" :header="tab.title" :key="i">
+					<TabPanel v-for="(tab, i) in TabTitles" :header="tab" :key="i">
 						<section class="filter-and-sort">
 							<div class="mr-3">
 								<tera-input-text
@@ -99,9 +99,9 @@
 							<div v-if="!isLoadingProjects && isEmpty(searchedAndFilterProjects)" class="no-projects">
 								<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200" />
 								<p class="mt-4">
-									<template v-if="tab.title === TabTitles.MyProjects">Get started by creating a new project</template>
-									<template v-if="tab.title === TabTitles.SampleProjects">Sample projects coming soon</template>
-									<template v-if="tab.title === TabTitles.PublicProjects">You don't have any shared projects</template>
+									<template v-if="tab === TabTitles.MyProjects">Get started by creating a new project</template>
+									<template v-if="tab === TabTitles.SampleProjects">Sample projects coming soon</template>
+									<template v-if="tab === TabTitles.PublicProjects">You don't have any shared projects</template>
 								</p>
 							</div>
 							<ul v-else-if="view === ProjectsView.Cards" class="project-cards-grid">
