@@ -50,12 +50,12 @@
 				<TabView @tab-change="tabChange" :active-index="activeTabIndex" :key="activeTabIndex">
 					<TabPanel v-for="(tab, i) in projectsTabs" :header="tab.title" :key="i">
 						<section class="filter-and-sort">
-							<div class="pr-3">
+							<div class="mr-3">
 								<tera-input-text
-									class="w-16rem"
-									v-model="searchProjects"
+									v-model="searchProjectsQuery"
 									placeholder="Search for projects"
 									id="searchProject"
+									:icon="isSearchLoading ? 'pi pi-spin pi-spinner' : 'pi pi-search'"
 								/>
 							</div>
 							<div>
@@ -98,22 +98,13 @@
 						<section class="projects">
 							<div v-if="!isLoadingProjects && isEmpty(searchedAndFilterProjects)" class="no-projects">
 								<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200" />
-								<template v-if="tab.title === TabTitles.MyProjects">
-									<p class="mt-4">
-										Get started by creating a
-										<Button
-											label="new project"
-											class="p-button-text new-project-button"
-											@click="openCreateProjectModal"
-										/>.
-									</p>
-								</template>
-								<template v-if="tab.title === TabTitles.SampleProjects">
-									<p class="mt-4">Sample projects coming soon</p>
-								</template>
-								<template v-else-if="tab.title === TabTitles.PublicProjects">
-									<h3>You don't have any shared projects</h3>
-								</template>
+								<p class="mt-4">
+									<template v-if="tab.title === TabTitles.MyProjects"
+										>Get started by creating a new project or uploading an existing one</template
+									>
+									<template v-if="tab.title === TabTitles.SampleProjects">Sample projects coming soon</template>
+									<template v-if="tab.title === TabTitles.PublicProjects">You don't have any shared projects</template>
+								</p>
 							</div>
 							<ul v-else-if="view === ProjectsView.Cards" class="project-cards-grid">
 								<template v-if="cloningProjects.length && !isLoadingProjects">
@@ -158,13 +149,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
-import { isEmpty } from 'lodash';
+import { debounce, isEmpty } from 'lodash';
 import TeraProjectTable from '@/components/home/tera-project-table.vue';
 import TeraProjectCard from '@/components/home/tera-project-card.vue';
 import { useProjects } from '@/composables/project';
@@ -176,9 +167,10 @@ import { Project, ClientEventType, ProgressState } from '@/types/Types';
 import { Vue3Lottie } from 'vue3-lottie';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
-import { FilterService } from 'primevue/api';
 import { useNotificationManager } from '@/composables/notificationManager';
 import teraUploadProjectModal from '@/components/project/tera-upload-project-modal.vue';
+import { findProjects } from '@/services/project';
+import { useToastService } from '@/services/toast';
 
 const { isProjectConfigDialogVisible, menuProject } = useProjectMenu();
 
@@ -198,7 +190,9 @@ const cloningProjects = computed(() => {
 const activeTabIndex = ref(0);
 const showVideo = ref(false);
 const isUploadProjectModalVisible = ref(false);
-const searchProjects = ref('');
+const searchProjectsQuery = ref('');
+const isSearchLoading = ref(false);
+const activeProjects = ref<Project[]>([]);
 
 enum ProjectsView {
 	Cards = 'Cards',
@@ -234,23 +228,28 @@ function tabChange(event) {
 	activeTabIndex.value = event.index;
 }
 
-const myFilteredSortedProjects = computed(() => {
-	const projects = useProjects().allProjects.value;
-	if (!projects) return [];
-	const myProjects = projects.filter(
+const myFilteredSortedProjects = computed(() =>
+	activeProjects.value.filter(
 		({ userPermission, publicProject }) =>
 			// I can edit the project, or I can view the project and it's not public
 			['creator', 'writer'].includes(userPermission ?? '') || (userPermission === 'reader' && !publicProject)
-	);
-	return filterAndSortProjects(myProjects);
+	)
+);
+
+const publicFilteredSortedProjects = computed(() =>
+	activeProjects.value.filter(({ publicProject }) => publicProject === true)
+);
+
+const searchedAndFilterProjects = computed(() => {
+	const tabProjects = projectsTabs.value[activeTabIndex.value].projects;
+	return filterAndSortProjects(tabProjects);
 });
 
-const publicFilteredSortedProjects = computed(() => {
-	const projects = useProjects().allProjects.value;
-	if (!projects) return [];
-	const publicProjects = projects.filter(({ publicProject }) => publicProject === true);
-	return filterAndSortProjects(publicProjects);
-});
+const projectsTabs = computed<{ title: string; projects: Project[] }[]>(() => [
+	{ title: TabTitles.MyProjects, projects: myFilteredSortedProjects.value },
+	{ title: TabTitles.PublicProjects, projects: publicFilteredSortedProjects.value },
+	{ title: TabTitles.SampleProjects, projects: [] }
+]);
 
 function openCreateProjectModal() {
 	isProjectConfigDialogVisible.value = true;
@@ -260,14 +259,6 @@ function openCreateProjectModal() {
 function openUploadProjectModal() {
 	isUploadProjectModalVisible.value = true;
 }
-
-const searchedAndFilterProjects = computed(() => {
-	const currentTabIndex = activeTabIndex.value;
-	const projects = projectsTabs.value[currentTabIndex].projects;
-	const userInput = searchProjects.value.trim();
-	const result = FilterService.filter(projects, ['name', 'description', 'userName'], userInput, 'contains');
-	return filterAndSortProjects(result);
-});
 
 type DateType = 'createdOn' | 'updatedOn' | 'deletedOn';
 
@@ -302,12 +293,6 @@ function filterAndSortProjects(projects: Project[]) {
 	return [];
 }
 
-const projectsTabs = computed<{ title: string; projects: Project[] }[]>(() => [
-	{ title: TabTitles.MyProjects, projects: myFilteredSortedProjects.value },
-	{ title: TabTitles.PublicProjects, projects: publicFilteredSortedProjects.value },
-	{ title: TabTitles.SampleProjects, projects: [] }
-]);
-
 // Table view
 const columns = ref([
 	{ field: 'name', header: 'Project title' },
@@ -339,6 +324,37 @@ watch(
 		}
 	}
 );
+
+async function searchedProjects() {
+	// If the search query is empty, show all projects
+	if (isEmpty(searchProjectsQuery.value)) {
+		activeProjects.value = useProjects().allProjects.value ?? [];
+		return;
+	}
+
+	isSearchLoading.value = true;
+	const projectSearchResponse = await findProjects(searchProjectsQuery.value);
+
+	// For now extract the information from the projectSearchResponse
+	// TODO - Make the hits more specific to the projectAsset, like a score or ranking
+	activeProjects.value = projectSearchResponse.map((projectSearch) => projectSearch.project);
+
+	// If no projects found, display a toast message
+	if (isEmpty(projectSearchResponse)) {
+		useToastService().info('No projects found', 'Try searching for something else', 5000);
+	} else {
+		// Display search results using the table view
+		view.value = ProjectsView.Table;
+	}
+
+	isSearchLoading.value = false;
+}
+
+watch(searchProjectsQuery, debounce(searchedProjects, 500));
+
+onMounted(() => {
+	activeProjects.value = useProjects().allProjects.value ?? [];
+});
 </script>
 
 <style scoped>
