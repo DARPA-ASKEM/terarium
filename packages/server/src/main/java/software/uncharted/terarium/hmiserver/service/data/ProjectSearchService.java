@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -466,7 +465,7 @@ public class ProjectSearchService {
 
 		try {
 			if (k > numCandidates) {
-				throw new InvalidInputException("k must be less than or equal to numCandidates");
+				throw new IllegalArgumentException("k must be less than or equal to numCandidates");
 			}
 
 			final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
