@@ -73,7 +73,7 @@
 							</div>
 
 							<Button size="small" text icon="pi pi-plus" label="Add mapping" @click="addMapping" />
-							<!-- 
+							<!--
 						TODO: Add auto mapping here
 						<Button
 							text
@@ -390,10 +390,10 @@ function removeMapping(index: number) {
 }
 
 const messageHandler = (event: ClientEvent<any>) => {
-	if (!lossChartRef.value?.view) return;
 	const data = { iter: lossValues.value.length, loss: event.data.loss };
-	lossChartRef.value.view.change(LOSS_CHART_DATA_SOURCE, vega.changeset().insert(data)).resize().run();
 	lossValues.value.push(data);
+	if (!lossChartRef.value?.view) return;
+	lossChartRef.value.view.change(LOSS_CHART_DATA_SOURCE, vega.changeset().insert(data)).resize().run();
 };
 
 const setPresetValues = (data: CiemssPresetTypes) => {
@@ -520,7 +520,7 @@ watch(
 			const output = await getRunResultCiemss(state.forecastRunId, 'result.csv');
 			runResults.value = output.runResults;
 			lossValues.value = await getLossValuesFromSimulation(props.node.state.calibrationId);
-			lossChartSpec.value = await updateLossChartSpec(lossValues.value, lossChartSize.value);
+			lossChartSpec.value = updateLossChartSpec(lossValues.value, lossChartSize.value);
 		}
 	},
 	{ immediate: true }

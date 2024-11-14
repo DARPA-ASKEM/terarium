@@ -199,7 +199,7 @@ import ContextMenu from 'primevue/contextmenu';
 import * as workflowService from '@/services/workflow';
 import { OperatorImport, OperatorNodeSize, getNodeMenu } from '@/services/workflow';
 import * as d3 from 'd3';
-import { AssetType, ClientEventType, EventType } from '@/types/Types';
+import { AssetType, ClientEventType, EventType, ClientEvent } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -210,6 +210,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { MenuItem } from 'primevue/menuitem';
 import * as EventService from '@/services/event';
 import { useProjects } from '@/composables/project';
+import useAuthStore from '@/stores/auth';
 import { cloneNoteBookSession } from '@/services/notebook-session';
 import * as SimulateCiemssOp from '@/components/workflow/ops/simulate-ciemss/mod';
 import * as StratifyMiraOp from '@/components/workflow/ops/stratify-mira/mod';
@@ -234,6 +235,8 @@ import { subscribe, unsubscribe } from '@/services/ClientEventService';
 import { activeProjectId } from '@/composables/activeProject';
 
 const WORKFLOW_SAVE_INTERVAL = 4000;
+
+const currentUserId = useAuthStore().user?.id;
 
 const registry = new workflowService.WorkflowRegistry();
 registry.registerOp(SimulateCiemssOp);
@@ -276,7 +279,6 @@ let canvasTransform = { x: 0, y: 0, k: 1 };
 let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverPort: boolean = false;
 let saveTimer: any = null;
-let pendingSave = false;
 let isDragging = false;
 
 let startTime: number = 0;
@@ -322,16 +324,16 @@ async function updateWorkflowName() {
 
 // eslint-disable-next-line
 const _saveWorkflow = async () => {
-	pendingSave = false;
 	await workflowService.saveWorkflow(wf.value.dump(), currentProjectId.value ?? undefined);
 	// wf.value.update(updated);
 };
 // eslint-disable-next-line
-const _updateWorkflow = (event: any) => {
+const _updateWorkflow = (event: ClientEvent<any>) => {
 	if (event.data.id !== wf.value.getId()) {
 		return;
 	}
-	const delayUpdate = pendingSave || isDragging;
+
+	const delayUpdate = isDragging || event.userId === currentUserId;
 	wf.value.update(event.data as Workflow, delayUpdate);
 };
 
@@ -339,7 +341,6 @@ const saveWorkflowDebounced = debounce(_saveWorkflow, 400);
 const updateWorkflowHandler = debounce(_updateWorkflow, 250);
 
 const saveWorkflowHandler = () => {
-	pendingSave = true;
 	saveWorkflowDebounced();
 };
 
@@ -961,7 +962,6 @@ watch(
 	() => props.assetId,
 	async (newId, oldId) => {
 		isRenamingWorkflow.value = false; // Closes rename input if opened in previous workflow
-		pendingSave = false;
 
 		// Save previous workflow, if applicable
 		if (newId !== oldId && oldId) {
