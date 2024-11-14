@@ -2,6 +2,9 @@ import _ from 'lodash';
 import { DataArray, parsePyCiemssMap } from '@/services/models/simulation-service';
 import { CalibrateMap } from '@/services/calibrate-workflow';
 import { mae } from '@/utils/stats';
+import { WorkflowNode } from '@/types/workflow';
+import { computed, Ref } from 'vue';
+import { CalibrationOperationStateCiemss } from './calibrate-operation';
 /**
  * A rename function generator for getRunResultCSV. Here the idea
  * to differentiate before and after columns in the run results
@@ -75,4 +78,64 @@ export function getErrorData(
 		errors.push(resultRow);
 	});
 	return errors;
+}
+
+export const modelVarToDatasetVar = (mapping: CalibrateMap[], modelVariable: string) =>
+	mapping.find((d) => d.modelVariable === modelVariable)?.datasetVariable || '';
+
+export const getSelectedOutput = (node: WorkflowNode<CalibrationOperationStateCiemss>) => {
+	const selectedOutputId = node.active;
+	const wfOutput = node.outputs.find((output) => output.id === selectedOutputId);
+	return wfOutput;
+};
+
+// Get the selected output mapping for the node
+export function getSelectedOutputMapping(node: WorkflowNode<CalibrationOperationStateCiemss>) {
+	const wfOutputState = getSelectedOutput(node)?.state;
+	return [
+		...(wfOutputState?.mapping || []),
+		// special case for timestamp column name mapping
+		{ modelVariable: 'timepoint_id', datasetVariable: wfOutputState?.timestampColName ?? '' }
+	];
+}
+
+export function usePreparedChartInputs(
+	props: {
+		node: WorkflowNode<CalibrationOperationStateCiemss>;
+	},
+	runResult: Ref<DataArray>,
+	runResultSummary: Ref<DataArray>,
+	runResultPre: Ref<DataArray>,
+	runResultSummaryPre: Ref<DataArray>
+) {
+	const pyciemssMap = computed(() => (!runResult.value.length ? {} : parsePyCiemssMap(runResult.value[0])));
+
+	return computed(() => {
+		const state = props.node.state;
+		if (!state.calibrationId || _.isEmpty(pyciemssMap.value)) return null;
+
+		// Merge before/after for chart
+		const { result, resultSummary } = mergeResults(
+			runResultPre.value,
+			runResult.value,
+			runResultSummaryPre.value,
+			runResultSummary.value
+		);
+
+		// Build lookup map for calibration, include before/after and dataset (observations)
+		const translationMap = {};
+		Object.keys(pyciemssMap.value).forEach((key) => {
+			translationMap[`${pyciemssMap.value[key]}_mean`] = `${key} after calibration`;
+			translationMap[`${pyciemssMap.value[key]}_mean:pre`] = `${key} before calibration`;
+		});
+		getSelectedOutputMapping(props.node).forEach((mapObj) => {
+			translationMap[mapObj.datasetVariable] = 'Observations';
+		});
+		return {
+			result,
+			resultSummary,
+			pyciemssMap: pyciemssMap.value,
+			translationMap
+		};
+	});
 }

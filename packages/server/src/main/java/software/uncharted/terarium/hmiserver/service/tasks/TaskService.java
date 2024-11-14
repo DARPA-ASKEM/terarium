@@ -154,6 +154,7 @@ public class TaskService {
 
 	// private final Map<String, RabbitTemplate> rabbitTemplates;
 	private Map<String, RabbitAdmin> rabbitAdmins;
+	private final Map<String, CachingConnectionFactory> connectionFactories = new HashMap<>();
 	private final Config config;
 	private final ObjectMapper objectMapper;
 	private final NotificationService notificationService;
@@ -359,10 +360,17 @@ public class TaskService {
 
 				final URI rabbitAddress = new URI(rabbitConfig.getAddresses());
 
-				final CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
-				connectionFactory.setUri(rabbitAddress);
-				connectionFactory.setUsername(rabbitConfig.getUsername());
-				connectionFactory.setPassword(rabbitConfig.getPassword());
+				final CachingConnectionFactory connectionFactory;
+				if (!connectionFactories.containsKey(rabbitAddress.toString())) {
+					connectionFactory = new CachingConnectionFactory();
+					connectionFactory.setUri(rabbitAddress);
+					connectionFactory.setUsername(rabbitConfig.getUsername());
+					connectionFactory.setPassword(rabbitConfig.getPassword());
+
+					connectionFactories.put(rabbitAddress.toString(), connectionFactory);
+				} else {
+					connectionFactory = connectionFactories.get(rabbitAddress.toString());
+				}
 
 				final RabbitAdmin rabbitAdmin = new RabbitAdmin(connectionFactory);
 
