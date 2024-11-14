@@ -1168,35 +1168,26 @@ public class ProjectController {
 			// Getting the project
 			final RebacProject rebacProject = new RebacProject(id, reBACService);
 
-			// Delete all previous relationships attached to the project,
+			// Delete all previous user relationships attached to the project,
 			final List<Contributor> contributors = projectPermissionsService.getContributors(rebacProject);
 			for (final Contributor contributor : contributors) {
 				if (contributor.isUser()) {
 					final RebacUser rebacUser = new RebacUser(contributor.getUserId(), reBACService);
 					rebacUser.removeAllRelationships(rebacProject);
-				} else if (contributor.isGroup()) {
-					final RebacGroup rebacGroup = new RebacGroup(contributor.getName(), reBACService);
-					rebacGroup.removeAllRelationships(rebacProject);
 				}
 			}
 
 			// Add the Admin group to administrate the project
 			final RebacGroup adminGroup = new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService);
-			adminGroup.createAdminRelationship(rebacProject);
+			adminGroup.removeAllRelationsExceptOne(rebacProject, Schema.Relationship.ADMIN);
 
 			// Add the public group to read the project
 			final RebacGroup publicGroup = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
-			publicGroup.createReaderRelationship(rebacProject);
+			publicGroup.removeAllRelationsExceptOne(rebacProject, Schema.Relationship.READER);
 
 			return ResponseEntity.ok().build();
 		} catch (final ResponseStatusException rethrow) {
 			throw rethrow;
-		} catch (final RelationshipAlreadyExistsException ignore) {
-			log.debug(messages.get("rebac.relationship-already-exists"), ignore);
-			throw new ResponseStatusException(
-				HttpStatus.INTERNAL_SERVER_ERROR,
-				messages.get("rebac.relationship-already-exists")
-			);
 		} catch (final Exception e) {
 			log.error("Unexpected error, failed to set as a sample project ", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));

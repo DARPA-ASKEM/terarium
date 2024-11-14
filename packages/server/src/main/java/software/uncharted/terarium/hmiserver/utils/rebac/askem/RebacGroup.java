@@ -42,11 +42,32 @@ public class RebacGroup extends RebacObject {
 		reBACService.createRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.ADMIN);
 	}
 
+	/** Remove all relationships between this group and the given object. */
 	public void removeAllRelationships(final RebacObject rebacObject) throws Exception {
-		reBACService.removeRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.CREATOR);
-		reBACService.removeRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.WRITER);
-		reBACService.removeRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.READER);
-		reBACService.removeRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.ADMIN);
+		final Schema.Relationship[] relationships = Schema.Relationship.values();
+		for (Schema.Relationship relationship : relationships) {
+			reBACService.removeRelationship(getSchemaObject(), rebacObject.getSchemaObject(), relationship);
+		}
+	}
+
+	/**
+	 * Remove all relationships between this group and the given object.
+	 * Except the provided relationship, if it doesn't exist, it will be added
+	 */
+	public void removeAllRelationsExceptOne(
+		final RebacObject rebacObject,
+		final Schema.Relationship relationshipToIgnore
+	) throws Exception {
+		final Schema.Relationship[] relationships = Schema.Relationship.values();
+		for (Schema.Relationship relationship : relationships) {
+			if (relationship == relationshipToIgnore) {
+				try {
+					reBACService.createRelationship(getSchemaObject(), rebacObject.getSchemaObject(), relationship);
+				} catch (RelationshipAlreadyExistsException ignore) {}
+			} else {
+				reBACService.removeRelationship(getSchemaObject(), rebacObject.getSchemaObject(), relationship);
+			}
+		}
 	}
 
 	public void setPermissionRelationships(RebacObject who, String relationship)
