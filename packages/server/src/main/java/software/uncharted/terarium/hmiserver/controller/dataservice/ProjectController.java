@@ -1171,8 +1171,13 @@ public class ProjectController {
 			// Delete all previous relationships attached to the project,
 			final List<Contributor> contributors = projectPermissionsService.getContributors(rebacProject);
 			for (final Contributor contributor : contributors) {
-				final RebacUser rebacUser = new RebacUser(contributor.getUserId(), reBACService);
-				rebacUser.removeAllRelationships(rebacProject);
+				if (contributor.isUser()) {
+					final RebacUser rebacUser = new RebacUser(contributor.getUserId(), reBACService);
+					rebacUser.removeAllRelationships(rebacProject);
+				} else if (contributor.isGroup()) {
+					final RebacGroup rebacGroup = new RebacGroup(contributor.getName(), reBACService);
+					rebacGroup.removeAllRelationships(rebacProject);
+				}
 			}
 
 			// Admin group to write the project
