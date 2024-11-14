@@ -11,7 +11,7 @@
 				v-if="pdfData.length"
 				v-model:is-open="isPdfSidebarOpen"
 				content-width="700px"
-				header="Document Viewer"
+				header="Document viewer"
 			>
 				<template #content>
 					<tera-drilldown-section :is-loading="isFetchingPDF">
