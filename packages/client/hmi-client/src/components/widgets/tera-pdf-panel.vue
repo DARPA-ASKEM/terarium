@@ -1,5 +1,5 @@
 <template>
-	<TabView v-if="pdfs?.length" class="container">
+	<TabView v-if="pdfs?.length" class="container" :active-index="activeTabIndex">
 		<TabPanel :header="pdf.name" v-for="pdf in pdfs" :key="pdf.name">
 			<tera-pdf-embed v-if="pdf.isPdf" ref="pdfRef" :pdf-link="pdf.data" :title="pdf.name || ''" />
 			<tera-text-editor v-else :initial-text="pdf.data" />
@@ -8,7 +8,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { nextTick, onMounted, ref } from 'vue';
+import { keyBy } from 'lodash';
 
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
@@ -30,8 +31,28 @@ const props = defineProps<{
 
 const pdfs = ref<PdfData[]>(props.pdfs);
 const pdfRef = ref(null);
+const activeTabIndex = ref(0);
+const pdfDocs = ref();
 
-defineExpose({ pdfRef });
+async function selectPdf(id) {
+	if (pdfDocs.value[id]) {
+		activeTabIndex.value = pdfDocs.value[id].index;
+		await nextTick();
+	}
+}
+
+onMounted(() => {
+	pdfDocs.value = keyBy(
+		pdfs.value.map((pdf, index) => ({
+			id: pdf.document.id,
+			index,
+			pdf
+		})),
+		'id'
+	);
+});
+
+defineExpose({ pdfRef, selectPdf });
 </script>
 
 <style scoped>

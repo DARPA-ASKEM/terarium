@@ -652,6 +652,10 @@ const initialize = async (overwriteWithState: boolean = false) => {
 };
 
 const onSelectConfiguration = async (config: ModelConfiguration) => {
+	if (pdfViewer.value && config.extractionDocumentId) {
+		pdfPanelRef.value.selectPdf(config.extractionDocumentId);
+	}
+
 	if (pdfViewer.value && config.extractionPage) {
 		pdfViewer.value.goToPage(config.extractionPage);
 	}
