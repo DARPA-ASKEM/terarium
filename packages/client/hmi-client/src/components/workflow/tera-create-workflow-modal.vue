@@ -8,22 +8,12 @@
 				<aside class="col-2">
 					<label>Select a template</label>
 					<div v-for="scenario in scenarios" :key="scenario.id" class="flex align-items-center py-1">
-						<RadioButton
-							:inputId="scenario.id"
-							:value="scenario.id"
-							v-model="selectedTemplateId"
-							:disabled="scenario.id !== 'blank-canvas'"
-						/>
+						<RadioButton :inputId="scenario.id" :value="scenario.id" v-model="selectedTemplateId" />
 						<label class="pl-2" :for="scenario.id">{{ scenario.displayName }}</label>
 					</div>
 				</aside>
 				<main class="col-10 flex flex-column gap-3">
-					<component
-						v-if="getScenario()"
-						:is="getScenario().component"
-						:state="getScenario().template"
-						@update-state="onUpdateState"
-					/>
+					<component v-if="getScenario()" :is="getScenario().component" :scenario="getScenario().instance" />
 				</main>
 			</div>
 		</template>
@@ -54,7 +44,7 @@ import { SituationalAwarenessScenario } from '@/components/workflow/scenario-tem
 interface ScenarioItem {
 	displayName: string;
 	id: string;
-	template: BaseScenario;
+	instance: BaseScenario;
 	component: Component;
 }
 
@@ -62,13 +52,13 @@ const scenarios = ref<ScenarioItem[]>([
 	{
 		displayName: BlankCanvasScenario.templateName,
 		id: BlankCanvasScenario.templateId,
-		template: new BlankCanvasScenario(),
+		instance: new BlankCanvasScenario(),
 		component: TeraBlankCanvasTemplate
 	},
 	{
 		displayName: SituationalAwarenessScenario.templateName,
 		id: SituationalAwarenessScenario.templateId,
-		template: new SituationalAwarenessScenario(),
+		instance: new SituationalAwarenessScenario(),
 		component: TeraSituationalAwarenessTemplate
 	}
 ]);
@@ -79,7 +69,7 @@ const selectedTemplateId = ref<any>(scenarios.value[0].id);
 
 const saveWorkflow = async () => {
 	const scenario = getScenario();
-	const wf = scenario.template.createWorkflow();
+	const wf = scenario.instance.createWorkflow();
 	const response = await createWorkflow(wf);
 
 	const projectId = useProjects().activeProject.value?.id;
@@ -98,11 +88,6 @@ const saveWorkflow = async () => {
 	});
 
 	emit('close-modal');
-};
-
-const onUpdateState = (state: any) => {
-	const scenario = getScenario();
-	Object.assign(scenario.template, state);
 };
 
 const getScenario = () => scenarios.value.find((s) => s.id === selectedTemplateId.value) as ScenarioItem;

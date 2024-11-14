@@ -36,6 +36,24 @@ export class SituationalAwarenessScenario extends BaseScenario {
 		};
 	}
 
+	setModelSpec(id: string) {
+		this.modelSpec.id = id;
+		this.modelConfigSpec.id = '';
+		this.calibrateSpec.ids = [];
+	}
+
+	setDatasetSpec(id: string) {
+		this.datasetSpec.id = id;
+	}
+
+	setModelConfigSpec(id: string) {
+		this.modelConfigSpec.id = id;
+	}
+
+	setCalibrateSpec(ids: string[]) {
+		this.calibrateSpec.ids = ids;
+	}
+
 	createWorkflow() {
 		const wf = new workflowService.WorkflowWrapper();
 

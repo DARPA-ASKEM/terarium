@@ -15,14 +15,7 @@
 
 	<div>
 		<label>What would you like to call this workflow?</label>
-		<tera-input-text
-			:model-value="state.workflowName"
-			@update:model-value="
-				emit('update-state', {
-					workflowName: $event
-				})
-			"
-		/>
+		<tera-input-text :model-value="scenario.workflowName" @update:model-value="scenario.setWorkflowName($event)" />
 	</div>
 
 	<div class="grid">
@@ -30,33 +23,22 @@
 			<h6>Inputs</h6>
 			<label>Select a model</label>
 			<Dropdown
-				:model-value="state.modelSpec.id"
+				:model-value="scenario.modelSpec.id"
 				:options="models"
 				option-label="assetName"
 				option-value="assetId"
 				placeholder="Select a model"
-				@update:model-value="
-					emit('update-state', {
-						modelSpec: {
-							id: $event
-						},
-						modelConfigSpec: {
-							id: ''
-						},
-						calibrateSpec: {
-							ids: []
-						}
-					})
-				"
+				@update:model-value="scenario.setModelSpec($event)"
 			/>
 
 			<label>Select a dataset</label>
 			<Dropdown
-				:model-value="state.datasetSpec.id"
+				:model-value="scenario.datasetSpec.id"
 				:options="datasets"
 				option-label="assetName"
 				option-value="assetId"
 				placeholder="Select a dataset"
+				@update:model-value="scenario.setDatasetSpec($event)"
 			/>
 
 			<label>Select an intervention policy (historical)</label>
@@ -67,18 +49,12 @@
 
 			<label>Select configuration representing best and generous estimates of the initial conditions</label>
 			<Dropdown
-				:model-value="state.modelConfigSpec.id"
+				:model-value="scenario.modelConfigSpec.id"
 				placeholder="Select a configuration"
 				:options="modelConfigurations"
 				option-label="name"
 				option-value="id"
-				@update:model-value="
-					emit('update-state', {
-						modelConfigSpec: {
-							id: $event
-						}
-					})
-				"
+				@update:model-value="scenario.setModelConfigSpec($event)"
 				:disabled="isEmpty(modelConfigurations) || isFetchingModelInformation"
 			/>
 		</div>
@@ -87,18 +63,12 @@
 			<label>Select an output metric</label>
 			<MultiSelect
 				:disabled="isEmpty(modelStateOptions) || isFetchingModelInformation"
-				:model-value="state.calibrateSpec.ids"
+				:model-value="scenario.calibrateSpec.ids"
 				placeholder="Select output metrics"
 				option-label="name"
 				option-value="id"
 				:options="modelStateOptions"
-				@update:model-value="
-					emit('update-state', {
-						calibrateSpec: {
-							ids: $event
-						}
-					})
-				"
+				@update:model-value="scenario.setCalibrateSpec($event)"
 				filter
 			/>
 		</div>
@@ -124,13 +94,12 @@ const modelConfigurations = ref<ModelConfiguration[]>([]);
 const interventionPolicies = ref<InterventionPolicy[]>([]);
 const modelStateOptions = ref<any[]>([]);
 
-const emit = defineEmits(['update-state']);
 const props = defineProps<{
-	state: SituationalAwarenessScenario;
+	scenario: SituationalAwarenessScenario;
 }>();
 
 watch(
-	() => props.state.modelSpec.id,
+	() => props.scenario.modelSpec.id,
 	async (modelId) => {
 		if (!modelId) return;
 		isFetchingModelInformation.value = true;

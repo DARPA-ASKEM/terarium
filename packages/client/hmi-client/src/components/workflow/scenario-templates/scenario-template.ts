@@ -12,4 +12,8 @@ export abstract class BaseScenario {
 	}
 
 	abstract createWorkflow(): Workflow;
+
+	setWorkflowName(name: string) {
+		this.workflowName = name;
+	}
 }
