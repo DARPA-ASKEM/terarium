@@ -1177,7 +1177,7 @@ public class ProjectController {
 
 			// Admin group to write the project
 			final RebacGroup adminGroup = new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService);
-			adminGroup.canAdministrate(rebacProject);
+			adminGroup.createWriterRelationship(rebacProject);
 
 			// Add the public group to read the project
 			final RebacGroup publicGroup = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
