@@ -45,9 +45,11 @@ export interface CalibrateEnsembleCiemssOperationState extends BaseState {
 	timestampColName: string;
 	extra: EnsembleCalibrateExtraCiemss;
 	inProgressCalibrationId: string;
+	inProgressPreForecastId: string;
 	inProgressForecastId: string;
 	calibrationId: string;
-	forecastRunId: string;
+	postForecastId: string;
+	preForecastId: string;
 	currentProgress: number;
 }
 
@@ -61,7 +63,7 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 		{ type: 'datasetId', label: 'Dataset' },
 		{ type: 'modelConfigId', label: 'Model configuration' }
 	],
-	outputs: [{ type: 'simulationId' }],
+	outputs: [{ type: 'datasetId' }],
 	isRunnable: true,
 	uniqueInputs: true,
 
@@ -82,8 +84,10 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 			},
 			inProgressCalibrationId: '',
 			inProgressForecastId: '',
+			inProgressPreForecastId: '',
 			calibrationId: '',
-			forecastRunId: '',
+			postForecastId: '',
+			preForecastId: '',
 			currentProgress: 0
 		};
 		return init;

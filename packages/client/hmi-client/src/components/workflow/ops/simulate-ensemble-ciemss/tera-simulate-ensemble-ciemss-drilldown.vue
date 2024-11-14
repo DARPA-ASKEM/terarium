@@ -113,7 +113,7 @@
 								This encodes your relative confidence for each model. These are the alpha parameters of a Dirichlet
 								distribution.
 							</p>
-							<div class="model-weights">
+							<div v-if="!_.isEmpty(modelConfigIdToNameMap) && !_.isEmpty(knobs.weights)" class="model-weights">
 								<table class="p-datatable-table">
 									<tbody class="p-datatable-tbody">
 										<tr v-for="key in modelConfigurationIds" :key="key">
