@@ -54,8 +54,13 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 2. Check the preview of the intervention policy
    1. Does the AI assisted _description_ match the criteria?
    2. Are the _criteria_ visible in the chart?
+  
+### 10. Create a New intervention policy
+1. Click 'Create New' button. You should see a blank intervention card.
+2. Click 'Save' or 'Save As' without filling any of the details. (Currently that is not allowed so you should see a msg that the save failed.)
+3. Select the intervention policy created in step 9.
 
-### 10. Simulate with the intervention policy
+### 11. Simulate with the intervention policy
 1. Add the operator `Configure model` to the workflow
 2. Connect the model to the operator
 3. Add the operator `Simulate` to the workflow

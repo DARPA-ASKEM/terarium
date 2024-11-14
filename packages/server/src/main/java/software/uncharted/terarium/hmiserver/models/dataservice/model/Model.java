@@ -354,4 +354,18 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		}
 		return this.getHeader().getSchemaName().equalsIgnoreCase("petrinet");
 	}
+
+	@JsonIgnore
+	@TSIgnore
+	public String getEmbeddingSourceText() {
+		try {
+			final ObjectMapper objectMapper = new ObjectMapper();
+			if (getMetadata() != null && getMetadata().getGollmCard() != null) {
+				return objectMapper.writeValueAsString(getMetadata().getGollmCard());
+			}
+			return objectMapper.writeValueAsString(this);
+		} catch (final Exception e) {
+			throw new RuntimeException("Failed to serialize model embedding text into JSON", e);
+		}
+	}
 }

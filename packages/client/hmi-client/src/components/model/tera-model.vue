@@ -57,13 +57,19 @@
 			<tera-model-description
 				:feature-config="featureConfig"
 				:model="temporaryModel"
+				:mmt-data="mmtData"
 				@update-model="updateTemporaryModel"
 			/>
-			<tera-model-parts
-				class="mt-0"
-				:feature-config="featureConfig"
+			<tera-petrinet-parts
 				:model="temporaryModel"
-				@update-model="updateTemporaryModel"
+				:mmt="mmtData.mmt"
+				:mmt-params="mmtData.template_params"
+				:feature-config="featureConfig"
+				@update-state="(e: any) => onUpdateModelPart('state', e)"
+				@update-parameter="(e: any) => onUpdateModelPart('parameter', e)"
+				@update-observable="(e: any) => onUpdateModelPart('observable', e)"
+				@update-transition="(e: any) => onUpdateModelPart('transition', e)"
+				@update-time="(e: any) => onUpdateModelPart('time', e)"
 			/>
 		</section>
 	</tera-asset>
@@ -89,13 +95,22 @@ import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraAssetEnrichment from '@/components/widgets/tera-asset-enrichment.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
-import TeraModelParts from '@/components/model/tera-model-parts.vue';
+import TeraPetrinetParts from '@/components/model/petrinet/tera-petrinet-parts.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
-import { getModel, updateModel } from '@/services/model';
+import { getModel, updateModel, getMMT } from '@/services/model';
 import type { FeatureConfig } from '@/types/common';
 import { AssetType, type Model } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
+import { MMT } from '@/model-representation/mira/mira-common';
+import { emptyMiraModel } from '@/model-representation/mira/mira';
+import {
+	updateState,
+	updateParameter,
+	updateObservable,
+	updateTransition,
+	updateTime
+} from '@/model-representation/service';
 
 const props = defineProps({
 	assetId: {
@@ -120,6 +135,7 @@ const emit = defineEmits(['close-preview', 'on-save']);
 
 const model = ref<Model | null>(null);
 const temporaryModel = ref<Model | null>(null);
+const mmtData = ref<MMT>({ mmt: emptyMiraModel(), template_params: {}, observable_summary: {} });
 
 const newName = ref('New Model');
 const isRenaming = ref(false);
@@ -204,13 +220,56 @@ async function updateModelName() {
 	onSave();
 }
 
+async function refreshMMT() {
+	if (!temporaryModel.value) return;
+	const response = await getMMT(temporaryModel.value);
+	if (!response) return;
+	mmtData.value = response;
+}
+
 function updateTemporaryModel(newModel: Model) {
+	let doMmtUpdate = false;
+	// Only update the MMT when the semantics of the model changes
+	if (
+		!isEqual(temporaryModel.value?.model, newModel.model) ||
+		!isEqual(temporaryModel.value?.semantics, newModel.semantics)
+	) {
+		doMmtUpdate = true;
+	}
 	temporaryModel.value = cloneDeep(newModel);
+	if (doMmtUpdate) refreshMMT();
+}
+
+function onUpdateModelPart(property: string, event: any) {
+	if (!temporaryModel.value) return;
+	const newModel = cloneDeep(temporaryModel.value);
+	const { id, key, value } = event;
+	switch (property) {
+		case 'state':
+			updateState(newModel, id, key, value);
+			break;
+		case 'parameter':
+			updateParameter(newModel, id, key, value);
+			break;
+		case 'observable':
+			updateObservable(newModel, id, key, value);
+			break;
+		case 'transition':
+			updateTransition(newModel, id, key, value);
+			break;
+		case 'time':
+			updateTime(newModel, key, value);
+			break;
+		default:
+			break;
+	}
+	updateTemporaryModel(newModel);
 }
 
 async function fetchModel() {
 	model.value = await getModel(props.assetId);
 	temporaryModel.value = cloneDeep(model.value);
+	refreshMMT();
 }
 
 onMounted(async () => {
@@ -233,6 +292,9 @@ watch(
 	() => props.assetId,
 	async () => {
 		// Reset view of model page
+		model.value = null;
+		temporaryModel.value = null;
+		mmtData.value = { mmt: emptyMiraModel(), template_params: {}, observable_summary: {} };
 		isRenaming.value = false;
 		if (!isEmpty(props.assetId)) {
 			isModelLoading.value = true;
