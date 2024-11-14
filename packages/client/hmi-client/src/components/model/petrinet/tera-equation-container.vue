@@ -56,6 +56,8 @@ main {
 	border-radius: var(--border-radius);
 	display: flex;
 	flex-direction: column;
+	max-height: 35rem;
+	overflow: auto;
 }
 
 main.is-editing {

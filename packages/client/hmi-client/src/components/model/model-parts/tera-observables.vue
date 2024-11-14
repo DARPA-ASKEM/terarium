@@ -2,6 +2,7 @@
 	<tera-model-part
 		:items="observablesList"
 		:feature-config="featureConfig"
+		:filter="filter"
 		@update-observable="emit('update-observable', $event)"
 	/>
 </template>
@@ -19,6 +20,7 @@ const props = defineProps<{
 	mmt: MiraModel;
 	observables: Observable[];
 	featureConfig: FeatureConfig;
+	filter?: string;
 }>();
 
 const emit = defineEmits(['update-observable']);
