@@ -3,6 +3,7 @@
 		:items="stateList"
 		:collapsed-items="collapsedInitials"
 		:feature-config="featureConfig"
+		:filter="filter"
 		@update-item="emit('update-state', $event)"
 	/>
 </template>
@@ -21,6 +22,7 @@ const props = defineProps<{
 	model: Model;
 	mmt: MiraModel;
 	featureConfig: FeatureConfig;
+	filter?: string;
 }>();
 
 const emit = defineEmits(['update-state']);

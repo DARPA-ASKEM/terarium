@@ -122,7 +122,7 @@ ul {
 	flex-grow: 1;
 	padding-left: var(--gap-1);
 
-	li {
+	& li {
 		border-bottom: 1px solid var(--gray-300);
 		list-style: none;
 		margin-bottom: var(--gap-1-5);

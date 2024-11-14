@@ -4,6 +4,7 @@
 		:collapsed-items="collapsedParameters"
 		:feature-config="featureConfig"
 		show-matrix
+		:filter="filter"
 		@open-matrix="(id: string) => (matrixModalId = id)"
 		@update-item="emit('update-parameter', $event)"
 	/>
@@ -35,6 +36,7 @@ const props = defineProps<{
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
 	featureConfig: FeatureConfig;
+	filter?: string;
 }>();
 
 const emit = defineEmits(['update-parameter']);

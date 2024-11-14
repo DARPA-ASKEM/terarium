@@ -3,6 +3,7 @@
 		:items="transitionsList"
 		:collapsed-items="collapsedTemplates"
 		:feature-config="featureConfig"
+		:filter="filter"
 		show-matrix
 		@open-matrix="(id: string) => (matrixModalId = id)"
 		@update-item="$emit('update-transition', $event)"
@@ -34,6 +35,7 @@ const props = defineProps<{
 	mmtParams: MiraTemplateParams;
 	transitions: Transition[];
 	featureConfig: FeatureConfig;
+	filter?: string;
 }>();
 
 defineEmits(['update-transition']);
