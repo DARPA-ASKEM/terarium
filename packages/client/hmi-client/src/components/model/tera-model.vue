@@ -148,8 +148,12 @@ const hasEditPermission = useProjects().hasEditPermission();
 function onReset() {
 	temporaryModel.value = cloneDeep(model.value);
 }
-function onSave() {
-	saveModelContent();
+async function onSave() {
+	if (!hasEditPermission || !temporaryModel.value) return;
+	await updateModel(temporaryModel.value);
+	logger.info('Changes to the model has been saved.');
+	await useProjects().refresh();
+	await fetchModel();
 }
 function onSaveAs() {
 	showSaveModal.value = true;
@@ -203,14 +207,6 @@ const optionsMenuPt = {
 	}
 };
 
-async function saveModelContent() {
-	if (!hasEditPermission || !temporaryModel.value) return;
-	await updateModel(temporaryModel.value);
-	logger.info('Changes to the model has been saved.');
-	await useProjects().refresh();
-	await fetchModel();
-}
-
 async function updateModelName() {
 	if (temporaryModel.value && !isEmpty(newName.value)) {
 		temporaryModel.value.header.name = newName.value;
@@ -262,6 +258,7 @@ function onUpdateModelPart(property: string, event: any) {
 		default:
 			break;
 	}
+	console.log(2);
 	updateTemporaryModel(newModel);
 }
 

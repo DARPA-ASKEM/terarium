@@ -7,8 +7,8 @@
 				<tera-input-text
 					v-else
 					placeholder="Add a name"
-					:model-value="item.name ?? ''"
-					@update:model-value="$emit('update-item', { key: 'name', value: $event })"
+					v-model="name"
+					@change="$emit('update-item', { key: 'name', value: $event })"
 				/>
 			</span>
 			<span class="unit">
@@ -38,8 +38,8 @@
 						label="Unit"
 						placeholder="Add a unit"
 						:characters-to-reject="[' ']"
-						:model-value="item.unitExpression ?? ''"
-						@update:model-value="$emit('update-item', { key: 'unitExpression', value: $event })"
+						v-model="unitExpression"
+						@change="$emit('update-item', { key: 'unitExpression', value: $event })"
 					/>
 				</template>
 			</span>
@@ -89,8 +89,8 @@
 			<tera-input-text
 				v-if="showDescription"
 				placeholder="Add a description"
-				:model-value="item.description ?? ''"
-				@update:model-value="$emit('update-item', { key: 'description', value: $event })"
+				v-model="description"
+				@change="$emit('update-item', { key: 'description', value: $event })"
 			/>
 		</span>
 	</section>
@@ -117,6 +117,9 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-item']);
 
+const name = ref(props.item.name);
+const unitExpression = ref(props.item.unitExpression);
+const description = ref(props.item.description);
 const query = ref('');
 const results = ref<DKG[]>([]);
 
