@@ -220,7 +220,7 @@ async function updateModelName() {
 	onSave();
 }
 
-async function updateMMT() {
+async function refreshMMT() {
 	if (!temporaryModel.value) return;
 	const response = await getMMT(temporaryModel.value);
 	if (!response) return;
@@ -237,7 +237,7 @@ function updateTemporaryModel(newModel: Model) {
 		doMmtUpdate = true;
 	}
 	temporaryModel.value = cloneDeep(newModel);
-	if (doMmtUpdate) updateMMT();
+	if (doMmtUpdate) refreshMMT();
 }
 
 function onUpdateModelPart(property: string, event: any) {
@@ -269,7 +269,7 @@ function onUpdateModelPart(property: string, event: any) {
 async function fetchModel() {
 	model.value = await getModel(props.assetId);
 	temporaryModel.value = cloneDeep(model.value);
-	updateMMT();
+	refreshMMT();
 }
 
 onMounted(async () => {
