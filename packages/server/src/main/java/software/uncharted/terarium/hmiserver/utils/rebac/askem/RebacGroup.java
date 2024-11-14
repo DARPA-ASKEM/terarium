@@ -44,7 +44,12 @@ public class RebacGroup extends RebacObject {
 
 	/** Remove all relationships between this group and the given object. */
 	public void removeAllRelationships(final RebacObject rebacObject) throws Exception {
-		final Schema.Relationship[] relationships = Schema.Relationship.values();
+		final Schema.Relationship[] relationships = {
+			Schema.Relationship.READER,
+			Schema.Relationship.WRITER,
+			Schema.Relationship.CREATOR,
+			Schema.Relationship.ADMIN
+		};
 		for (Schema.Relationship relationship : relationships) {
 			reBACService.removeRelationship(getSchemaObject(), rebacObject.getSchemaObject(), relationship);
 		}
@@ -58,7 +63,12 @@ public class RebacGroup extends RebacObject {
 		final RebacObject rebacObject,
 		final Schema.Relationship relationshipToIgnore
 	) throws Exception {
-		final Schema.Relationship[] relationships = Schema.Relationship.values();
+		final Schema.Relationship[] relationships = {
+			Schema.Relationship.READER,
+			Schema.Relationship.WRITER,
+			Schema.Relationship.CREATOR,
+			Schema.Relationship.ADMIN
+		};
 		for (Schema.Relationship relationship : relationships) {
 			if (relationship == relationshipToIgnore) {
 				try {
