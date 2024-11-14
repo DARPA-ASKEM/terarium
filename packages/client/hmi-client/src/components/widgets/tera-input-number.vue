@@ -100,7 +100,7 @@ watch(
 	() => props.modelValue,
 	(newValue) => {
 		if (isNaN(newValue)) maskedValue.value = '';
-		maskedValue.value = newValue?.toString() ?? '';
+		else maskedValue.value = newValue?.toString() ?? '';
 	},
 	{ immediate: true }
 );
