@@ -1,7 +1,6 @@
 package software.uncharted.terarium.hmiserver.service.gollm;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -61,7 +60,7 @@ public class EmbeddingService {
 		req.setScript("gollm:embedding");
 		try {
 			req.setUserId(currentUserService.get().getId());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			log.warn("No user id to associate with embedding request");
 		}
 
@@ -75,7 +74,7 @@ public class EmbeddingService {
 		final Embeddings embeddingChunk = new Embeddings();
 		embeddingChunk.setVector(embeddingResp.response);
 		embeddingChunk.setEmbeddingId(UUID.randomUUID().toString());
-		embeddingChunk.setSpans(new long[] { 0, input.length() });
+		embeddingChunk.setSpan(new long[] { 0, input.length() });
 
 		final TerariumAssetEmbeddings embeddings = new TerariumAssetEmbeddings();
 		embeddings.getEmbeddings().add(embeddingChunk);

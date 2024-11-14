@@ -12,7 +12,7 @@ public class TerariumAssetEmbeddings {
 
 		private String embeddingId;
 		private double[] vector;
-		private long[] spans;
+		private long[] span;
 	}
 
 	private List<Embeddings> embeddings = new ArrayList<>();
