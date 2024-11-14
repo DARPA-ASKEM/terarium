@@ -64,7 +64,7 @@
 							@click.stop="emit('open-new-asset', type)"
 						/>
 						<Button
-							v-else-if="type === AssetType.Workflow"
+							v-if="type === AssetType.Workflow"
 							class="new-button"
 							icon="pi pi-plus"
 							label="New"
