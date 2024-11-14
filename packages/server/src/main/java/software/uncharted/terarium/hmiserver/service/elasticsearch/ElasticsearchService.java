@@ -484,8 +484,9 @@ public class ElasticsearchService {
 	/**
 	 * Update a document from an index.
 	 *
-	 * @param index The index to remove the document from
-	 * @param id    The id of the document to remove
+	 * @param index   The index to remove the document from
+	 * @param id      The id of the document to remove
+	 * @param partial The partial document to update.
 	 */
 	public <T, Partial> void update(final String index, final String id, final Partial partial) throws IOException {
 		try {
@@ -506,8 +507,10 @@ public class ElasticsearchService {
 	/**
 	 * Update a document from an index.
 	 *
-	 * @param index The index to remove the document from
-	 * @param id    The id of the document to remove
+	 * @param index   The index to remove the document from
+	 * @param id      The id of the document to remove
+	 * @param partial The partial document to update.
+	 * @param routing The routing key for the document.
 	 */
 	public <T, Partial> void updateWithRouting(
 		final String index,
