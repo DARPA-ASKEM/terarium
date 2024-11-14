@@ -656,7 +656,7 @@ onMounted(() => {
 
 <style scoped>
 .intervention-settings-section {
-	background-color: var(--surface-100);
+	background-color: var(--gray-200);
 	padding: 0 var(--gap-3);
 }
 
