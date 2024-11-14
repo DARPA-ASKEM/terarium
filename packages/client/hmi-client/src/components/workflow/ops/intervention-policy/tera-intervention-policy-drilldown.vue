@@ -658,6 +658,7 @@ onMounted(() => {
 .intervention-settings-section {
 	background-color: var(--gray-200);
 	padding: 0 var(--gap-3);
+	gap: var(--gap-1);
 }
 
 .input-config {
