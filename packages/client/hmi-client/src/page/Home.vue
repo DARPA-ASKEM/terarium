@@ -99,9 +99,7 @@
 							<div v-if="!isLoadingProjects && isEmpty(searchedAndFilterProjects)" class="no-projects">
 								<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200" />
 								<p class="mt-4">
-									<template v-if="tab.title === TabTitles.MyProjects"
-										>Get started by creating a new project or uploading an existing one</template
-									>
+									<template v-if="tab.title === TabTitles.MyProjects">Get started by creating a new project</template>
 									<template v-if="tab.title === TabTitles.SampleProjects">Sample projects coming soon</template>
 									<template v-if="tab.title === TabTitles.PublicProjects">You don't have any shared projects</template>
 								</p>
@@ -231,7 +229,7 @@ function tabChange(event) {
 const myFilteredSortedProjects = computed(() =>
 	activeProjects.value.filter(
 		({ userPermission, publicProject }) =>
-			// I can edit the project, or I can view the project and it's not public
+			// I can edit the project, or I can view a non-public project
 			['creator', 'writer'].includes(userPermission ?? '') || (userPermission === 'reader' && !publicProject)
 	)
 );
@@ -316,14 +314,11 @@ function openProject(projectId: string) {
 	router.push({ name: RouteName.Project, params: { projectId } });
 }
 
-watch(
-	() => cloningProjects.value,
-	() => {
-		if (cloningProjects.value.length === 0) {
-			useProjects().getAll();
-		}
+watch(cloningProjects, () => {
+	if (cloningProjects.value.length === 0) {
+		useProjects().getAll();
 	}
-);
+});
 
 async function searchedProjects() {
 	// If the search query is empty, show all projects
@@ -337,7 +332,7 @@ async function searchedProjects() {
 
 	// For now extract the information from the projectSearchResponse
 	// TODO - Make the hits more specific to the projectAsset, like a score or ranking
-	activeProjects.value = projectSearchResponse.map((projectSearch) => projectSearch.project);
+	activeProjects.value = projectSearchResponse.map(({ project }) => project);
 
 	// If no projects found, display a toast message
 	if (isEmpty(projectSearchResponse)) {
