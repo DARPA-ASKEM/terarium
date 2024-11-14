@@ -112,3 +112,20 @@ const transitions = computed<Transition[]>(() =>
 	}))
 );
 </script>
+
+<style scoped>
+:deep(.artifact-amount) {
+	font-size: var(--font-caption);
+	color: var(--text-color-subdued);
+	margin-left: 0.25rem;
+}
+:deep(.p-accordion-content) {
+	margin-bottom: var(--gap-3);
+}
+:deep(.p-accordion-content:empty::before) {
+	content: 'None';
+	color: var(--text-color-secondary);
+	font-size: var(--font-caption);
+	margin-left: var(--gap-6);
+}
+</style>
