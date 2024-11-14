@@ -6,7 +6,7 @@
 				<Editor v-else v-model="editorContent" />
 			</AccordionTab>
 			<AccordionTab header="Diagram">
-				<tera-model-diagram :model="model" :feature-config="featureConfig" />
+				<tera-model-diagram :model="model" :mmt-data="mmtData" :feature-config="featureConfig" />
 			</AccordionTab>
 			<AccordionTab header="Model equations">
 				<tera-model-equation :model="model" :is-editable="false" @model-updated="emit('update-model')" />
@@ -38,9 +38,11 @@ import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.v
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { isDataset, isModel, type Asset } from '@/utils/asset';
 import { b64DecodeUnicode, b64EncodeUnicode } from '@/utils/binary';
+import type { MMT } from '@/model-representation/mira/mira-common';
 
 const props = defineProps<{
 	model: Model;
+	mmtData: MMT;
 	featureConfig?: FeatureConfig;
 	isGeneratingCard?: boolean;
 }>();
