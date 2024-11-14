@@ -10,7 +10,7 @@ import type {
 import { SemanticType } from '@/types/Types';
 import { isEmpty, isNaN, isNumber } from 'lodash';
 import { pythonInstance } from '@/python/PyodideController';
-import { collapseParameters } from '@/model-representation/mira/mira';
+import { collapseParameters, collapseInitials } from '@/model-representation/mira/mira';
 import { DistributionType } from './distribution';
 
 export interface SemanticOtherValues {
@@ -246,6 +246,7 @@ export function getMmtParameters(modelConfiguration, mmt, mmtParams) {
 		const childParameters = childIds
 			.map((childId) => parameters.find((p) => p.referenceId === childId))
 			.filter(Boolean) as ParameterSemantic[];
+
 		const parameter = {
 			default: false,
 			distribution: {
@@ -258,5 +259,25 @@ export function getMmtParameters(modelConfiguration, mmt, mmtParams) {
 		};
 
 		return childParameters.length ? { ...childParameters[0] } : parameter;
+	});
+}
+
+export function getMmtInitials(modelConfiguration, mmt) {
+	const collapsedInitials = collapseInitials(mmt);
+	const initials = getInitials(modelConfiguration);
+	return Array.from(collapsedInitials.keys()).map((id) => {
+		const childTargets = collapsedInitials.get(id) ?? [];
+		const childInitials = childTargets
+			.map((childTarget) => initials.find((i) => i.target === childTarget))
+			.filter(Boolean) as InitialSemantic[];
+
+		const initial = {
+			expression: '',
+			expressionMathml: '',
+			target: id,
+			type: SemanticType.Initial,
+			source: mmt.annotations.name
+		};
+		return childTargets.length ? { ...childInitials[0] } : initial;
 	});
 }

@@ -256,6 +256,7 @@ import { getMMT, getModel, getModelConfigurationsForModel, getCalendarSettingsFr
 import {
 	createModelConfiguration,
 	getArchive,
+	getMmtInitials,
 	getMissingInputAmount,
 	getMmtParameters,
 	getModelConfigurationById,
@@ -633,6 +634,11 @@ const initialize = async (overwriteWithState: boolean = false) => {
 			knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
 		}
 	}
+
+	const initials = getMmtInitials(knobs.value.transientModelConfig, mmt.value);
+	if (initials.length) {
+		knobs.value.transientModelConfig.initialSemanticList = initials;
+	}
 	const parameters = getMmtParameters(knobs.value.transientModelConfig, mmt.value, mmtParams.value);
 	if (parameters.length) {
 		knobs.value.transientModelConfig.parameterSemanticList = parameters;
@@ -661,6 +667,10 @@ const onSelectConfiguration = async (config: ModelConfiguration) => {
 		pdfViewer.value.goToPage(config.extractionPage);
 	}
 
+	const initials = getMmtInitials(knobs.value.transientModelConfig, mmt.value);
+	if (initials.length) {
+		knobs.value.transientModelConfig.initialSemanticList = initials;
+	}
 	const parameters = getMmtParameters(knobs.value.transientModelConfig, mmt.value, mmtParams.value);
 	if (parameters.length) {
 		knobs.value.transientModelConfig.parameterSemanticList = parameters;
