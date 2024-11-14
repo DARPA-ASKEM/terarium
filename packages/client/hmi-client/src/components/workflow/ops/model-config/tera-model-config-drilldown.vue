@@ -257,6 +257,7 @@ import {
 	createModelConfiguration,
 	getArchive,
 	getMissingInputAmount,
+	getMmtParameters,
 	getModelConfigurationById,
 	setInitialExpression,
 	setInitialSource,
@@ -632,6 +633,10 @@ const initialize = async (overwriteWithState: boolean = false) => {
 			knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
 		}
 	}
+	const parameters = getMmtParameters(knobs.value.transientModelConfig, mmt.value, mmtParams.value);
+	if (parameters.length) {
+		knobs.value.transientModelConfig.parameterSemanticList = parameters;
+	}
 
 	configuredMmt.value = makeConfiguredMMT(mmt.value, knobs.value.transientModelConfig);
 
@@ -656,6 +661,10 @@ const onSelectConfiguration = async (config: ModelConfiguration) => {
 		pdfViewer.value.goToPage(config.extractionPage);
 	}
 
+	const parameters = getMmtParameters(knobs.value.transientModelConfig, mmt.value, mmtParams.value);
+	if (parameters.length) {
+		knobs.value.transientModelConfig.parameterSemanticList = parameters;
+	}
 	const { transientModelConfig } = knobs.value;
 	// If no changes were made switch right away
 	if (isModelConfigsEqual(originalConfig, transientModelConfig)) {

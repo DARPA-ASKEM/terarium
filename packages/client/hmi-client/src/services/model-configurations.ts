@@ -7,8 +7,10 @@ import type {
 	ObservableSemantic,
 	ParameterSemantic
 } from '@/types/Types';
+import { SemanticType } from '@/types/Types';
 import { isEmpty, isNaN, isNumber } from 'lodash';
 import { pythonInstance } from '@/python/PyodideController';
+import { collapseParameters } from '@/model-representation/mira/mira';
 import { DistributionType } from './distribution';
 
 export interface SemanticOtherValues {
@@ -234,4 +236,27 @@ export function getMissingInputAmount(modelConfiguration: ModelConfiguration) {
 		}
 	});
 	return missingInputs;
+}
+
+export function getMmtParameters(modelConfiguration, mmt, mmtParams) {
+	const collapsedParameters = collapseParameters(mmt, mmtParams);
+	const parameters = getParameters(modelConfiguration);
+	return Array.from(collapsedParameters.keys()).map((id) => {
+		const childIds = collapsedParameters.get(id) ?? [];
+		const childParameters = childIds
+			.map((childId) => parameters.find((p) => p.referenceId === childId))
+			.filter(Boolean) as ParameterSemantic[];
+		const parameter = {
+			default: false,
+			distribution: {
+				type: DistributionType.Constant,
+				parameters: { value: mmt.parameters?.[childIds[0]]?.value ?? 0 }
+			},
+			referenceId: id,
+			type: SemanticType.Parameter,
+			source: mmt.annotations.name
+		};
+
+		return childParameters.length ? { ...childParameters[0] } : parameter;
+	});
 }
