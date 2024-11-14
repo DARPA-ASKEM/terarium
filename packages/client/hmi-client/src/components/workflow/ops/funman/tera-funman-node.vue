@@ -25,6 +25,7 @@ import Button from 'primevue/button';
 import { Poller, PollerState } from '@/api/api';
 import { pollAction, getRunResult } from '@/services/models/simulation-service';
 import { logger } from '@/utils/logger';
+import { useToastService } from '@/services/toast';
 import { Simulation } from '@/types/Types';
 import { getModelConfigurationById } from '@/services/model-configurations';
 
@@ -60,8 +61,8 @@ const addOutputPorts = async (runId: string) => {
 
 const getStatus = async (runId: string) => {
 	poller
-		.setInterval(5000)
-		.setThreshold(100)
+		.setInterval(6000)
+		.setThreshold(200)
 		.setPollAction(async () => pollAction(runId))
 		.setProgressAction((data: Simulation) => {
 			if (data.progress) {
@@ -77,7 +78,11 @@ const getStatus = async (runId: string) => {
 		return pollerResults;
 	}
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		console.error(`Funman: ${runId} has failed`, pollerResults);
+		console.error(`Funman: ${runId} has failed with state=${pollerResults.state}`, pollerResults);
+
+		if (pollerResults.state === PollerState.ExceedThreshold) {
+			useToastService().error('Funman polling exceeded', 'Refresh page if you want to resume polling', 8000);
+		}
 	}
 	return pollerResults;
 };
@@ -94,12 +99,11 @@ watch(
 		const response = await getStatus(id);
 		if (response.state === PollerState.Done) {
 			addOutputPorts(id);
+			const state = _.cloneDeep(props.node.state);
+			state.inProgressId = '';
+			state.currentProgress = 0;
+			emit('update-state', state);
 		}
-
-		const state = _.cloneDeep(props.node.state);
-		state.inProgressId = '';
-		state.currentProgress = 0;
-		emit('update-state', state);
 	},
 	{ immediate: true }
 );
