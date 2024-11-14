@@ -50,6 +50,7 @@ services:
       /usr/bin/mc anonymous set public local_minio/askem-local-storage;
       /usr/bin/mc mb --ignore-existing local_minio/askem-test-storage;
       /usr/bin/mc anonymous set public local_minio/askem-test-storage;
+      exit 0;
       "
     depends_on:
       minio:
