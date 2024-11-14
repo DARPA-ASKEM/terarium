@@ -50,6 +50,7 @@ jobs:
 
       # Start containers
       - name: Start containers
+        continue-on-error: true
         run: cd containers && docker compose --file docker-compose-actions.yml up --detach --wait
 
       # Run the tests

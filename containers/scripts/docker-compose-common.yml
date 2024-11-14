@@ -17,7 +17,7 @@ services:
       - "${local_host_name}:host-gateway"
 
   minio:
-    image: minio/minio:RELEASE.2024-03-15T01-07-19Z
+    image: minio/minio:RELEASE.2024-11-07T00-52-20Z
     container_name: minio
     command: [ "server", "/data", "--console-address", ":9090" ]
     healthcheck:
@@ -39,14 +39,13 @@ services:
       - "${local_host_name}:host-gateway"
 
   migrate-minio:
+    image: minio/mc:RELEASE.2024-11-05T11-29-45Z
     container_name: migrate-minio
-    image: minio/mc
     networks:
       - terarium
-    restart: on-failure
     entrypoint: >
       /bin/sh -c "
-      /usr/bin/mc alias set local_minio http://minio:9000 admin admin123;
+      /usr/bin/mc alias set local_minio http://${local_host_name}:9000 admin admin123;
       /usr/bin/mc mb --ignore-existing local_minio/askem-local-storage;
       /usr/bin/mc anonymous set public local_minio/askem-local-storage;
       /usr/bin/mc mb --ignore-existing local_minio/askem-test-storage;
