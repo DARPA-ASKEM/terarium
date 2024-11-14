@@ -226,6 +226,14 @@ const viewOptions = ref([
 	{ value: ProjectsView.Table, icon: 'pi pi-list' }
 ]);
 
+function selectChange(event) {
+	if (event.value) view.value = event.value;
+}
+
+function tabChange(event) {
+	activeTabIndex.value = event.index;
+}
+
 const myFilteredSortedProjects = computed(() => {
 	const projects = useProjects().allProjects.value;
 	if (!projects) return [];
@@ -236,14 +244,6 @@ const myFilteredSortedProjects = computed(() => {
 	);
 	return filterAndSortProjects(myProjects);
 });
-
-function selectChange(event) {
-	if (event.value) view.value = event.value;
-}
-
-function tabChange(event) {
-	activeTabIndex.value = event.index;
-}
 
 const publicFilteredSortedProjects = computed(() => {
 	const projects = useProjects().allProjects.value;
