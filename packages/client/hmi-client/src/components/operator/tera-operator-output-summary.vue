@@ -136,7 +136,6 @@ section {
 	& > .summary {
 		display: flex;
 		width: 100%;
-		font-size: var(--font-caption);
 		color: var(--text-color-primary);
 		cursor: text;
 

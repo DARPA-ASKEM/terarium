@@ -205,7 +205,7 @@
 						:key="index"
 						:run-results="runResults"
 						:chartConfig="{
-							selectedRun: props.node.state.forecastRunId,
+							selectedRun: props.node.state.postForecastId,
 							selectedVariable: cfg
 						}"
 						has-mean-line
@@ -235,7 +235,7 @@
 		</template>
 	</tera-drilldown>
 	<tera-save-dataset-from-simulation
-		:simulation-run-id="props.node.state.forecastRunId"
+		:simulation-run-id="props.node.state.postForecastId"
 		:showDialog="showSaveDataDialog"
 		@dialog-hide="showSaveDataDialog = false"
 	/>
@@ -301,7 +301,7 @@ const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
 }>();
 const showSaveDataDialog = ref<boolean>(false);
-const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output']);
+const emit = defineEmits(['update-state', 'close', 'select-output']);
 
 interface BasicKnobs {
 	ensembleMapping: CalibrateEnsembleMappingRow[];
@@ -517,7 +517,7 @@ watch(
 				}
 			});
 
-			const output = await getRunResultCiemss(state.forecastRunId, 'result.csv');
+			const output = await getRunResultCiemss(state.postForecastId, 'result.csv');
 			runResults.value = output.runResults;
 			lossValues.value = await getLossValuesFromSimulation(props.node.state.calibrationId);
 			lossChartSpec.value = updateLossChartSpec(lossValues.value, lossChartSize.value);

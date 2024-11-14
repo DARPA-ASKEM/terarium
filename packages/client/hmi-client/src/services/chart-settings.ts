@@ -56,9 +56,7 @@ export function updateChartSettingsBySelectedVariables(
 	const previousSettings = settings.filter((setting) => setting.type !== type);
 	// selected settings for the given type
 	const selectedSettings = variableSelection.map((variable) => {
-		const found = previousSettings.find(
-			(setting) => setting.selectedVariables[0] === variable && setting.type === type
-		);
+		const found = settings.find((setting) => setting.selectedVariables[0] === variable && setting.type === type);
 		return (
 			found ??
 			({
@@ -70,6 +68,29 @@ export function updateChartSettingsBySelectedVariables(
 		);
 	});
 	const newSettings: ChartSetting[] = [...previousSettings, ...selectedSettings];
+	return newSettings;
+}
+
+/**
+ * Filters chart settings based on the specified type and variable selection.
+ * Assume that this is used for single variable charts only.
+ *
+ * @param {ChartSetting[]} settings - The array of chart settings to filter.
+ * @param {ChartSettingType} type - The type of chart setting to filter by.
+ * @param {string[]} variableSelection - The array of variable selections to filter by.
+ * @returns {ChartSetting[]} The filtered array of chart settings.
+ */
+export function filterChartSettingsByVariables(
+	settings: ChartSetting[],
+	type: ChartSettingType,
+	variableSelection: string[]
+) {
+	// previous settings without the settings of the given type
+	const previousSettings = settings.filter((setting) => setting.type !== type);
+	const selected = settings.filter(
+		(setting) => setting.type === type && variableSelection.includes(setting.selectedVariables[0])
+	);
+	const newSettings: ChartSetting[] = [...previousSettings, ...selected];
 	return newSettings;
 }
 

@@ -1,7 +1,7 @@
 <template>
 	<section>
-		<div v-if="!isEmpty(node.state.transientModelConfig.id)" class="pl-2 pr-2 pb-3">
-			<h6 class="pb-2">{{ node.state.transientModelConfig.name }}</h6>
+		<div v-if="!isEmpty(node.state.transientModelConfig.id)" class="pb-3">
+			<h6 class="pb-1 line-wrap">{{ node.state.transientModelConfig.name }}</h6>
 			<p>{{ node.state.transientModelConfig.description }}</p>
 		</div>
 		<tera-operator-placeholder v-else :node="node" />
@@ -126,7 +126,13 @@ watch(
 );
 </script>
 <style scoped>
+.line-wrap {
+	white-space: normal;
+	overflow-wrap: break-word;
+	word-break: break-word;
+	max-width: 100%;
+}
 h6 + p {
-	color: var(--text-color-subdued);
+	color: var(--text-color);
 }
 </style>
