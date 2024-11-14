@@ -250,7 +250,7 @@ export function getMmtParameters(modelConfiguration, mmt, mmtParams) {
 			default: false,
 			distribution: {
 				type: DistributionType.Constant,
-				parameters: { value: mmt.parameters?.[childIds[0]]?.value ?? 0 }
+				parameters: { value: 0 }
 			},
 			referenceId: id,
 			type: SemanticType.Parameter,
