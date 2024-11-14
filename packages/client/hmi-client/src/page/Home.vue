@@ -233,7 +233,7 @@ const myFilteredSortedProjects = computed(() => {
 		({ userPermission, publicProject, sampleProject }) =>
 			// I can edit the project, or I can view the project, and it's not public
 			['creator', 'writer'].includes(userPermission ?? '') ||
-			(userPermission === 'reader' && !publicProject && !sampleProject)
+			(userPermission === 'reader' && publicProject === false && sampleProject === false)
 	);
 	return filterAndSortProjects(myProjects);
 });
@@ -249,14 +249,16 @@ function tabChange(event) {
 const publicFilteredSortedProjects = computed(() => {
 	const projects = useProjects().allProjects.value;
 	if (!projects) return [];
-	const publicProjects = projects.filter(({ publicProject, sampleProject }) => publicProject && !sampleProject);
+	const publicProjects = projects.filter(
+		({ publicProject, sampleProject }) => publicProject === true && sampleProject === false
+	);
 	return filterAndSortProjects(publicProjects);
 });
 
 const sampleFilteredSortedProjects = computed(() => {
 	const projects = useProjects().allProjects.value;
 	if (!projects) return [];
-	const sampleProjects = projects.filter(({ sampleProject }) => sampleProject);
+	const sampleProjects = projects.filter(({ sampleProject }) => sampleProject === true);
 	return filterAndSortProjects(sampleProjects);
 });
 
