@@ -5,7 +5,7 @@
 import API from '@/api/api';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import * as EventService from '@/services/event';
-import { AssetType, EventType, PermissionRelationships, Project } from '@/types/Types';
+import { AssetType, EventType, PermissionRelationships, Project, ProjectSearchResponse } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import type { Component, Ref } from 'vue';
 
@@ -291,7 +291,7 @@ async function findProjects(
 	page?: number,
 	pageSize?: number,
 	limit?: number
-): Promise<Project[]> {
+): Promise<ProjectSearchResponse[]> {
 	try {
 		if (!query) return [];
 		let url = `/projects/knn?text=${query}`;
@@ -305,7 +305,7 @@ async function findProjects(
 		const response = await API.get(url);
 		const { status, data } = response;
 		if (status !== 200 || !data) return [];
-		return data as Project[];
+		return (data as ProjectSearchResponse[]) ?? [];
 	} catch (error) {
 		console.error(error);
 		return [];

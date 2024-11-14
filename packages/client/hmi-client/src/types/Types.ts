@@ -708,6 +708,11 @@ export interface UserEvent {
     message: any;
 }
 
+export interface ProjectSearchResponse {
+    project: Project;
+    hits: ProjectSearchAsset[];
+}
+
 export interface SimulationNotificationData {
     simulationId: string;
     simulationType: SimulationType;
@@ -795,8 +800,8 @@ export interface ModelUnit {
 }
 
 export interface GroundedSemantic {
-    id: string;
     name?: string;
+    id: string;
     grounding?: ModelGrounding;
     description?: string;
 }
@@ -828,6 +833,11 @@ export interface PermissionRole {
 export interface UserOld {
     username: string;
     roles: string[];
+}
+
+export interface ProjectSearchAsset {
+    assetId: string;
+    assetType: AssetType;
 }
 
 export interface AuthorityInstance {
