@@ -53,7 +53,7 @@
 				<Button label="Save" @click="onSave" :disabled="!(hasChanged && hasEditPermission)" />
 			</aside>
 		</template>
-		<section v-if="temporaryModel">
+		<section v-if="temporaryModel && mmtData">
 			<tera-model-description
 				:feature-config="featureConfig"
 				:model="temporaryModel"
@@ -103,7 +103,6 @@ import { AssetType, type Model } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 import { MMT } from '@/model-representation/mira/mira-common';
-import { emptyMiraModel } from '@/model-representation/mira/mira';
 import {
 	updateState,
 	updateParameter,
@@ -135,7 +134,7 @@ const emit = defineEmits(['close-preview', 'on-save']);
 
 const model = ref<Model | null>(null);
 const temporaryModel = ref<Model | null>(null);
-const mmtData = ref<MMT>({ mmt: emptyMiraModel(), template_params: {}, observable_summary: {} });
+const mmtData = ref<MMT | null>(null);
 
 const newName = ref('New Model');
 const isRenaming = ref(false);
@@ -294,7 +293,7 @@ watch(
 		// Reset view of model page
 		model.value = null;
 		temporaryModel.value = null;
-		mmtData.value = { mmt: emptyMiraModel(), template_params: {}, observable_summary: {} };
+		mmtData.value = null;
 		isRenaming.value = false;
 		if (!isEmpty(props.assetId)) {
 			isModelLoading.value = true;

@@ -40,6 +40,10 @@ const props = defineProps<{
 
 defineEmits(['update-transition']);
 
+// Calculate this once when component mounts
+const collapsedTemplatesMap = collapseTemplates(props.mmt).matrixMap;
+console.log(collapsedTemplatesMap);
+
 // Convert templateId: string => templates: MiraTemplate[] map to templateId: string => childIds: string[] map
 const collapsedTemplates = computed(() => {
 	const templateMap = new Map<string, string[]>();
@@ -49,6 +53,7 @@ const collapsedTemplates = computed(() => {
 			Array.from(collapseTemplates(props.mmt).matrixMap.get(templateId) ?? []).map(({ name }) => name)
 		);
 	});
+	console.log(9);
 	return templateMap;
 });
 
@@ -77,6 +82,8 @@ const transitionsList = computed<
 				};
 			})
 			.filter(Boolean) as ModelPartItem[];
+
+		console.log(9);
 
 		// There is only one "child" if there is no parent in the UI it's displayed like: template-X, transitionId
 		const baseTransition = props.transitions.find((t) => t.id === childIds[0]);
