@@ -8,7 +8,12 @@
 				<aside class="col-2">
 					<label>Select a template</label>
 					<div v-for="scenario in scenarios" :key="scenario.id" class="flex align-items-center py-1">
-						<RadioButton :inputId="scenario.id" :value="scenario.id" v-model="selectedTemplateId" />
+						<RadioButton
+							:inputId="scenario.id"
+							:value="scenario.id"
+							v-model="selectedTemplateId"
+							:disabled="scenario.id !== 'blank-canvas'"
+						/>
 						<label class="pl-2" :for="scenario.id">{{ scenario.displayName }}</label>
 					</div>
 				</aside>
