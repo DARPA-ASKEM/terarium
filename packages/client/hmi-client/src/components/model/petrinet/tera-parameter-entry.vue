@@ -68,7 +68,7 @@
 									distribution: formatPayloadFromParameterChange({ minimum: $event })
 								})
 							"
-							class="mr-2"
+							class="mr-2 parameter-input"
 						/>
 						<tera-input-number
 							label="Max"
@@ -80,6 +80,7 @@
 									distribution: formatPayloadFromParameterChange({ maximum: $event })
 								})
 							"
+							class="parameter-input"
 						/>
 					</template>
 				</span>
