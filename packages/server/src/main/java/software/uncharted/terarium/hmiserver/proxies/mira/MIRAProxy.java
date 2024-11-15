@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.mira.Curies;
+import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.models.mira.EntitySimilarityResult;
 
 @FeignClient(name = "mira-api", url = "${mira-api.url}", path = "/api")
@@ -23,4 +24,7 @@ public interface MIRAProxy {
 
 	@PostMapping("/entity_similarity")
 	ResponseEntity<List<EntitySimilarityResult>> entitySimilarity(@RequestBody Curies obj) throws FeignException;
+
+	@PostMapping("/search")
+	ResponseEntity<List<DKG>> search(@RequestBody String q, Integer limit, Integer offset) throws FeignException;
 }
