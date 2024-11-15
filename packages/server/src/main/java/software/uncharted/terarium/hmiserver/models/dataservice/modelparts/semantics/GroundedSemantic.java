@@ -5,23 +5,22 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 
 public interface GroundedSemantic {
 	String getId();
+	void setId(String id);
 
 	@TSOptional
 	String getName();
 
 	@TSOptional
-	ModelGrounding getGrounding();
-
-	@TSOptional
-	String getDescription();
-
-	void setId(String id);
-
-	@TSOptional
 	void setName(String name);
 
 	@TSOptional
+	ModelGrounding getGrounding();
+
+	@TSOptional
 	void setGrounding(ModelGrounding grounding);
+
+	@TSOptional
+	String getDescription();
 
 	@TSOptional
 	void setDescription(String description);
