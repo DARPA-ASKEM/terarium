@@ -44,13 +44,14 @@ services:
     networks:
       - terarium
     command: [
-      "mc alias set local_minio http://minio:9000 admin admin123;
-      mc mb --ignore-existing local_minio/askem-local-storage;
-      mc anonymous set public local_minio/askem-local-storage;
-      mc mb --ignore-existing local_minio/askem-test-storage;
-      mc anonymous set public local_minio/askem-test-storage;"
+      "mc alias set local_minio http://minio:9000 admin admin123 &&
+      mc mb --ignore-existing local_minio/askem-local-storage &&
+      mc anonymous set public local_minio/askem-local-storage &&
+      mc mb --ignore-existing local_minio/askem-test-storage &&
+      mc anonymous set public local_minio/askem-test-storage"
     ]
     entrypoint: [ "/bin/sh", "-c" ]
+    tty: true
     depends_on:
       minio:
         condition: service_healthy
