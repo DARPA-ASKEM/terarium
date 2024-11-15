@@ -163,8 +163,7 @@ export const OptimizeCiemssOperation: Operation = {
 // Get the optimization result file
 // Concat the optimization result file with the optimization interventions from simulation object
 export async function getOptimizedInterventions(optimizeRunId: string) {
-	// This is a camel case version of types/Types OptimizeInterventions
-	// This is used only in here as we are reading the simulation execution payload which is written in camel case.
+	// This is a camel case version of types/Types OptimizeInterventions as we are reading from simulation execution payload
 	interface OptimizeInterventionsCamelCase {
 		intervention_type: string;
 		param_names: string[];
