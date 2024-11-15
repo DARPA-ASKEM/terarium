@@ -43,16 +43,15 @@ services:
     container_name: migrate-minio
     networks:
       - terarium
-    entrypoint: [
-      "/bin/sh",
-      "-c",
-      "/usr/bin/mc alias set local_minio http://minio:9000 admin admin123;
-      /usr/bin/mc mb --ignore-existing local_minio/askem-local-storage;
-      /usr/bin/mc anonymous set public local_minio/askem-local-storage;
-      usr/bin/mc mb --ignore-existing local_minio/askem-test-storage;
-      /usr/bin/mc anonymous set public local_minio/askem-test-storage;
+    command: [
+      "mc alias set local_minio http://minio:9000 admin admin123;
+      mc mb --ignore-existing local_minio/askem-local-storage;
+      mc anonymous set public local_minio/askem-local-storage;
+      mc mb --ignore-existing local_minio/askem-test-storage;
+      mc anonymous set public local_minio/askem-test-storage;
       exit 0;"
     ]
+    entrypoint: [ "/bin/sh", "-c" ]
     tty: true
     depends_on:
       minio:
