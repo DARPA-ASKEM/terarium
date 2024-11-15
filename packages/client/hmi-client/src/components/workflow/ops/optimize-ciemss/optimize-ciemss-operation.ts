@@ -193,18 +193,16 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 		allInterventions.push(newIntervetion);
 	});
 
-	const policyResult = await getRunResult(optimizeRunId, 'policy.json');
-	console.log(optimizeInterventions);
-	console.log(policyResult);
-	// TODO: optimizeInterventions and policyResult should share the same loop/policyResult should be popped from
+	const policyResults: number[] = await getRunResult(optimizeRunId, 'policy.json');
+
 	optimizeInterventions.forEach((optimizedIntervention) => {
-		console.log(optimizedIntervention);
-		const interventionType = optimizedIntervention.intervention_type ?? '';
-		const paramNames: string[] = optimizedIntervention.param_names ?? [];
+		const interventionType = optimizedIntervention.intervention_type;
+		const paramNames: string[] = optimizedIntervention.param_names;
 		const paramValues: number[] = optimizedIntervention.param_values ?? [];
 		const startTimes: number[] = optimizedIntervention.start_time ?? [];
 
-		if (interventionType === OptimizationInterventionObjective.startTime && startTimes.length !== 0) {
+		if (interventionType === OptimizationInterventionObjective.startTime) {
+			const newTimestepAsList = policyResults.splice(0, 1);
 			// If we our intervention type is param value our policyResult will provide a timestep.
 			for (let i = 0; i < paramNames.length; i++) {
 				allInterventions.push({
@@ -213,14 +211,15 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 						{
 							appliedTo: paramNames[i],
 							type: InterventionSemanticType.Parameter,
-							timestep: policyResult[i],
+							timestep: newTimestepAsList[0],
 							value: paramValues[i]
 						}
 					],
 					dynamicInterventions: []
 				});
 			}
-		} else if (interventionType === OptimizationInterventionObjective.paramValue && paramValues.length !== 0) {
+		} else if (interventionType === OptimizationInterventionObjective.paramValue) {
+			const valueAsList = policyResults.splice(0, 1);
 			// If we our intervention type is start time our policyResult will provide a parameter value.
 			for (let i = 0; i < paramNames.length; i++) {
 				allInterventions.push({
@@ -228,7 +227,7 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 					staticInterventions: [
 						{
 							timestep: startTimes[i],
-							value: policyResult[i],
+							value: valueAsList[0],
 							appliedTo: paramNames[i],
 							type: InterventionSemanticType.Parameter
 						}
@@ -239,13 +238,14 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 		} else if (interventionType === OptimizationInterventionObjective.paramValueAndStartTime) {
 			// If our intervention type is start_time_param_value our policyResult will contain the timestep value, then the parameter value.
 			// https://github.com/ciemss/pyciemss/blob/main/pyciemss/integration_utils/intervention_builder.py#L66
+			const timeAndValueAsList = policyResults.splice(0, 2);
 			for (let i = 0; i < paramNames.length; i++) {
 				allInterventions.push({
 					name: `Optimized ${paramNames[i]}`,
 					staticInterventions: [
 						{
-							timestep: policyResult[i * 2],
-							value: policyResult[i * 2 + 1],
+							timestep: timeAndValueAsList[0],
+							value: timeAndValueAsList[1],
 							appliedTo: paramNames[i],
 							type: InterventionSemanticType.Parameter
 						}
