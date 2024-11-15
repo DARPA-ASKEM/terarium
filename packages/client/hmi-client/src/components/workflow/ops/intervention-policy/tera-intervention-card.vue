@@ -362,17 +362,18 @@ const debounceUpdateState = debounce((intervention) => {
 	height: 27px;
 }
 
-.applied-to-menu:deep(.p-dropdown-label) {
-}
-
 .intervention-card {
-	background-color: var(--surface-50);
+	background-color: var(--surface-0);
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-medium);
 	padding: var(--gap-2) var(--gap-4);
 	gap: var(--gap-2);
 	display: flex;
 	flex-direction: column;
+	cursor: pointer;
+}
+.intervention-card:hover {
+	background-color: var(--surface-50);
 }
 
 ul {
