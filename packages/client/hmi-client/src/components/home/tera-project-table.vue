@@ -4,11 +4,14 @@
 			v-for="(col, index) in selectedColumns"
 			:field="col.field"
 			:header="col.header"
-			:sortable="col.field !== 'stats'"
+			:sortable="!['stats', 'searchRanking'].includes(col.field)"
 			:key="index"
 			:style="`width: ${getColumnWidth(col.field)}%`"
 		>
 			<template #body="{ data }">
+				<template v-if="col.field === 'searchRanking'">
+					{{ data.metadata?.['searchRanking'] ?? '--' }}
+				</template>
 				<template v-if="col.field === 'name'">
 					<a class="project-title-link" @click.stop="emit('open-project', data.id)">
 						{{ data.name }}
@@ -95,6 +98,8 @@ function getColumnWidth(columnField: string) {
 			return 40;
 		case 'name':
 			return 40;
+		case 'searchRanking':
+			return 10;
 		default:
 			return 100;
 	}
