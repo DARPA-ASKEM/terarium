@@ -89,6 +89,7 @@ const makeSampleMenuItem = {
 		setSample(props.project?.id).then((response) => {
 			if (response) {
 				useToastService().success(undefined, 'Project set as sample');
+				useProjects().refresh();
 			} else {
 				useToastService().error(undefined, 'Error setting project as sample');
 			}
@@ -111,7 +112,7 @@ const projectMenuItems = computed(() => {
 	}
 
 	// Admin only
-	if (useAuthStore().isAdmin) {
+	if (useAuthStore().isAdmin && props.project?.sampleProject === false) {
 		items.push(makeSampleMenuItem);
 	}
 
