@@ -709,7 +709,7 @@ export interface UserEvent {
 }
 
 export interface ProjectSearchResponse {
-    project: Project;
+    projectId: string;
     hits: ProjectSearchAsset[];
 }
 
@@ -802,8 +802,8 @@ export interface ModelUnit {
 export interface GroundedSemantic {
     name?: string;
     id: string;
-    grounding?: ModelGrounding;
     description?: string;
+    grounding?: ModelGrounding;
 }
 
 export interface Properties {
