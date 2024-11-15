@@ -86,7 +86,12 @@
 										<span class="p-button-label">{{ slotProps.option.value }}</span>
 									</template>
 								</SelectButton>
-								<Button icon="pi pi-upload" label="Upload project" @click="openUploadProjectModal" />
+								<Button
+									icon="pi pi-upload"
+									class="secondary-button"
+									label="Upload project"
+									@click="openUploadProjectModal"
+								/>
 								<Button icon="pi pi-plus" label="New project" @click="openCreateProjectModal" />
 							</div>
 						</section>
@@ -502,6 +507,12 @@ a {
 
 .new-project-button {
 	padding: 0;
+}
+.secondary-button {
+	background-color: var(--text-color-secondary);
+}
+.secondary-button:hover {
+	background-color: color-mix(in srgb, var(--text-color-secondary) 90%, var(--surface-0) 10%);
 }
 .close-button {
 	width: 14px;
