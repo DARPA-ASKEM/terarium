@@ -275,32 +275,29 @@ function getAssetIcon(type: AssetType | string | null): string | Component {
 	return 'circle';
 }
 
+interface ProjectSearchOptions {
+	k?: number;
+	page?: number;
+	pageSize?: number;
+	limit?: number;
+}
 /**
  * Find projects by KNN (k-nearest neighbors) search
  *
  * @param {string} query - the search query
- * @param {number} k - the number of neighbors to search for
- * @param {number} page - the page number
- * @param {number} pageSize - the number of projects to return per page
- * @param {number} limit - the number of projects to return
+ * @param {ProjectSearchOptions} options - the search options
  * @returns {Array<Project>} - the list of projects
  */
-async function findProjects(
-	query: string,
-	k?: number,
-	page?: number,
-	pageSize?: number,
-	limit?: number
-): Promise<ProjectSearchResponse[]> {
+async function findProjects(query: string, options?: ProjectSearchOptions): Promise<ProjectSearchResponse[]> {
 	try {
 		if (!query) return [];
 		let url = `/projects/knn?text=${query}`;
 
 		// Only add parameters if they exist and are greater than 0
-		if (k && k > 0) url += `&k=${k}`;
-		if (page && page > 0) url += `&page=${page}`;
-		if (pageSize && pageSize > 0) url += `&page-size=${pageSize}`;
-		if (limit && limit > 0) url += `&limit=${limit}`;
+		if (options?.k && options.k > 0) url += `&k=${options.k}`;
+		if (options?.page && options.page > 0) url += `&page=${options.page}`;
+		if (options?.pageSize && options.pageSize > 0) url += `&page-size=${options.pageSize}`;
+		if (options?.limit && options.limit > 0) url += `&limit=${options.limit}`;
 
 		const response = await API.get(url);
 		const { status, data } = response;
