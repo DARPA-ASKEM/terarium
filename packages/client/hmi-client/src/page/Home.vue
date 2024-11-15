@@ -250,13 +250,22 @@ const searchedAndFilterProjects = computed(() => {
 	// If there is a search query, we need to filter the projects based on the search results
 	// while keeping the order of the search results to the order of the projects
 	return searchProjectsResults.value
-		.map((result) => tabProjects.find(({ id }) => id === result.projectId))
-		.filter((project) => !!project) // Remove undefined values
-		.map((project, index) => {
+		.map((result) => {
+			const project = tabProjects.find(({ id }) => id === result.projectId);
+			if (!project) return null;
 			if (!project.metadata) project.metadata = {};
-			project.metadata.score = (index + 1).toString();
+
+			// Add the scoring to the search
+			project.metadata.score = result.score.toString();
+
+			// Add the search scoring to the projectAsset
+			result.hits.forEach((hit) => {
+				project.metadata![hit.assetId] = hit.score.toString();
+			});
+
 			return project as Project;
-		});
+		})
+		.filter((project) => !!project); // Remove null values
 });
 
 function openCreateProjectModal() {
