@@ -142,7 +142,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
@@ -156,7 +156,7 @@ import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import SelectButton from 'primevue/selectbutton';
 import { useProjectMenu } from '@/composables/project-menu';
-import { Project, ClientEventType, ProgressState } from '@/types/Types';
+import { Project, ClientEventType, ProgressState, ProjectSearchResponse } from '@/types/Types';
 import { Vue3Lottie } from 'vue3-lottie';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
@@ -184,8 +184,8 @@ const activeTabIndex = ref(0);
 const showVideo = ref(false);
 const isUploadProjectModalVisible = ref(false);
 const searchProjectsQuery = ref('');
+const searchProjectsResults = ref<ProjectSearchResponse[]>([]);
 const isSearchLoading = ref(false);
-const activeProjects = ref<Project[]>([]);
 
 enum ProjectsView {
 	Cards = 'Cards',
@@ -222,21 +222,27 @@ function tabChange(event) {
 }
 
 const searchedAndFilterProjects = computed(() => {
-	let tabProjects: Project[] = [];
+	let tabProjects: Project[] = useProjects().allProjects.value ?? [];
 
 	if (activeTabIndex.value === 0) {
-		tabProjects = activeProjects.value.filter(
+		tabProjects = tabProjects.filter(
 			({ userPermission, publicProject }) =>
 				// I can edit the project, or I can view a non-public project
 				['creator', 'writer'].includes(userPermission ?? '') || (userPermission === 'reader' && !publicProject)
 		);
 	} else if (activeTabIndex.value === 1) {
-		tabProjects = activeProjects.value.filter(({ publicProject }) => publicProject === true);
+		tabProjects = tabProjects.filter(({ publicProject }) => publicProject === true);
 	} else if (activeTabIndex.value === 2) {
 		tabProjects = [] as Project[]; // TODO - Sample projects
 	}
 
-	return filterAndSortProjects(tabProjects);
+	// If they are no search we can return the filtered and sorted projects
+	if (isEmpty(searchProjectsResults.value.length)) {
+		return filterAndSortProjects(tabProjects);
+	}
+
+	// If there is a search query, we need to filter the projects based on the search results
+	return tabProjects.filter((project) => searchProjectsResults.value.some((result) => result.projectId === project.id));
 });
 
 function openCreateProjectModal() {
@@ -313,19 +319,15 @@ watch(cloningProjects, () => {
 async function searchedProjects() {
 	// If the search query is empty, show all projects
 	if (isEmpty(searchProjectsQuery.value)) {
-		activeProjects.value = useProjects().allProjects.value ?? [];
+		searchProjectsResults.value = [];
 		return;
 	}
 
 	isSearchLoading.value = true;
-	const projectSearchResponse = await findProjects(searchProjectsQuery.value);
-
-	// For now extract the information from the projectSearchResponse
-	// TODO - Make the hits more specific to the projectAsset, like a score or ranking
-	activeProjects.value = projectSearchResponse.map(({ project }) => project);
+	searchProjectsResults.value = await findProjects(searchProjectsQuery.value);
 
 	// If no projects found, display a toast message
-	if (isEmpty(projectSearchResponse)) {
+	if (isEmpty(searchProjectsResults.value)) {
 		useToastService().info('No projects found', 'Try searching for something else', 5000);
 	} else {
 		// Display search results using the table view
@@ -336,10 +338,6 @@ async function searchedProjects() {
 }
 
 watch(searchProjectsQuery, debounce(searchedProjects, 500));
-
-onMounted(() => {
-	activeProjects.value = useProjects().allProjects.value ?? [];
-});
 </script>
 
 <style scoped>
