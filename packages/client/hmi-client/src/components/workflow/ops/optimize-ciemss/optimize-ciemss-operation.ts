@@ -163,8 +163,8 @@ export const OptimizeCiemssOperation: Operation = {
 // Get the optimization result file
 // Concat the optimization result file with the optimization interventions from simulation object
 export async function getOptimizedInterventions(optimizeRunId: string) {
-	// This is a camel case version of types/Types OptimizeInterventions as we are reading from simulation execution payload
-	interface OptimizeInterventionsCamelCase {
+	// This is a snake case version of types/Types OptimizeInterventions as we are reading from simulation execution payload
+	interface OptimizeInterventionsSnakeCase {
 		intervention_type: string;
 		param_names: string[];
 		param_values?: number[];
@@ -180,7 +180,7 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 	const simulation = await getSimulation(optimizeRunId);
 
 	const simulationStaticInterventions: any[] = simulation?.executionPayload.fixed_static_parameter_interventions ?? [];
-	const optimizeInterventions: OptimizeInterventionsCamelCase[] = simulation?.executionPayload?.optimize_interventions;
+	const optimizeInterventions: OptimizeInterventionsSnakeCase[] = simulation?.executionPayload?.optimize_interventions;
 
 	// Add any static (not optimized) interventions to allInterventions
 	simulationStaticInterventions.forEach((inter) => {
