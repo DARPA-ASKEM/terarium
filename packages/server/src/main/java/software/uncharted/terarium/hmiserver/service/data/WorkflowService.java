@@ -128,13 +128,6 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 					continue;
 				}
 
-				// FIXME: backwards compatibility for older workflows, remove in a few month.
-				// Aug 2024
-				if (dbNode.getVersion() == null) {
-					dbNode.setVersion(1L);
-					continue;
-				}
-
 				if (dbNode.getVersion().equals(node.getVersion())) {
 					node.setVersion(dbNode.getVersion() + 1L);
 					dbWorkflowNodes.set(index, node);
@@ -158,12 +151,6 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				if (edgeContent.equals(dbEdgeContent)) {
 					edgeMap.remove(edge.getId());
 					continue;
-				}
-
-				// FIXME: backwards compatibility for older workflows, remove in a few month.
-				// Aug 2024
-				if (dbEdge.getVersion() == null) {
-					dbEdge.setVersion(1L);
 				}
 
 				if (dbEdge.getVersion().equals(edge.getVersion())) {
