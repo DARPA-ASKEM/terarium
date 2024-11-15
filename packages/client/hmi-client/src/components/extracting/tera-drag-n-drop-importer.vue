@@ -22,8 +22,8 @@
 				</div>
 				<div v-else class="drop-zone">
 					<div><i class="pi pi-upload" style="font-size: 2.5rem" /></div>
-					<div>
-						Drop resources here <br />
+					<div class="drop-zone-text">
+						Drop {{ acceptTypes[0] === AcceptedTypes.PROJECTCONFIG ? 'your project' : 'resources' }} here <br />
 						or <span class="text-link">click to open a file browser</span>
 					</div>
 				</div>
@@ -261,8 +261,12 @@ label.file-label {
 
 .drop-zone {
 	display: flex;
+	flex-direction: column;
 	gap: 1rem;
 	align-items: center;
+}
+.drop-zone-text {
+	text-align: center;
 }
 
 i {

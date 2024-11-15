@@ -1,5 +1,5 @@
 <template>
-	<TabView v-if="pdfs?.length" class="container" :activeIndex="activeTabIndex">
+	<TabView v-if="pdfs?.length" :activeIndex="activeTabIndex" class="container" :class="pdfs?.length < 2 ? 'hide-tab-selectors' : ''">
 		<TabPanel :header="pdf.name" v-for="pdf in pdfs" :key="pdf.name">
 			<tera-pdf-embed v-if="pdf.isPdf" ref="pdfRef" :pdf-link="pdf.data" :title="pdf.name || ''" />
 			<tera-text-editor v-else :initial-text="pdf.data" />
@@ -73,6 +73,7 @@ defineExpose({ pdfRef, selectPdf });
 	display: flex;
 	flex-direction: column;
 	flex: 1;
+	padding-top: 0;
 }
 :deep(.p-tabview-panel) {
 	flex: 1;
@@ -86,5 +87,9 @@ defineExpose({ pdfRef, selectPdf });
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	overflow: hidden;
+}
+/* Hide tab selectors if there is only one tab */
+.hide-tab-selectors :deep(.p-tabview-nav) {
+	display: none;
 }
 </style>
