@@ -31,6 +31,7 @@
 							<tera-input-text v-model="filterModelConfigurationsText" placeholder="Filter" class="w-full" />
 							<Button
 								label="Extract from inputs"
+								icon="pi pi-sparkles"
 								severity="primary"
 								class="white-space-nowrap min-w-min"
 								size="small"
