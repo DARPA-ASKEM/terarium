@@ -653,7 +653,7 @@ const initialize = async (overwriteWithState: boolean = false) => {
 
 const onSelectConfiguration = async (config: ModelConfiguration) => {
 	let tabIndex = 0;
-	if (pdfViewer.value && config.extractionDocumentId) {
+	if (pdfPanelRef.value && config.extractionDocumentId) {
 		tabIndex = await pdfPanelRef.value.selectPdf(config.extractionDocumentId);
 		await nextTick();
 	}
