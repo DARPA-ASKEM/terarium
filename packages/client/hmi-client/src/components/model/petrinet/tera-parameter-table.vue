@@ -19,7 +19,7 @@
 
 			<!-- Adding uncertainty header -->
 			<span v-if="isAddingUncertainty" class="add-uncertainty-toolbar">
-				<Button size="small" text label="Unselect all" style="min-width: 4.5rem" @click="selectedParameters = []" />
+				<Button size="small" text label="Unselect all" style="min-width: 4.6rem" @click="selectedParameters = []" />
 				Add
 				<Dropdown
 					v-model="uncertaintyType"
@@ -45,6 +45,7 @@
 					label="Apply"
 					size="small"
 					@click="onUpdateDistributions"
+					style="min-width: 5.5rem"
 				/>
 				<Button text rounded small icon="pi pi-times" @click="isAddingUncertainty = false" class="ml-auto" />
 			</span>
@@ -61,7 +62,7 @@
 							<AccordionTab>
 								<template #header>
 									<span>{{ baseParameter }}</span>
-									<Button label="Open Matrix" text size="small" @click.stop="matrixModalId = baseParameter" />
+									<Button label="Open matrix" text size="small" @click.stop="matrixModalId = baseParameter" />
 								</template>
 								<div class="flex">
 									<ul class="ml-1">

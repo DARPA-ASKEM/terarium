@@ -40,7 +40,7 @@
 						option-label="name"
 						option-value="value"
 						:options="distributionTypeOptions()"
-						class="mr-3"
+						class="mr-3 parameter-input"
 					/>
 					<!-- Constant -->
 					<tera-input-number
@@ -54,6 +54,7 @@
 								distribution: formatPayloadFromParameterChange({ value: $event })
 							})
 						"
+						class="parameter-input"
 					/>
 					<!-- Uniform Distribution -->
 					<template v-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Uniform">
@@ -244,5 +245,9 @@ label {
 	& > span {
 		width: 20%;
 	}
+}
+
+.parameter-input {
+	height: 2rem;
 }
 </style>
