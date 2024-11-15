@@ -35,6 +35,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService.KnnHit;
+import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService.KnnInnerHit;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService.KnnSearchResponse;
 import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
 
@@ -429,6 +430,7 @@ public class ProjectSearchService {
 
 		UUID assetId;
 		AssetType assetType;
+		Float score;
 	}
 
 	@Data
@@ -436,6 +438,7 @@ public class ProjectSearchService {
 	public static class ProjectSearchResponse {
 
 		UUID projectId;
+		Float score;
 		List<ProjectSearchAsset> hits = new ArrayList<>();
 	}
 
@@ -515,13 +518,14 @@ public class ProjectSearchService {
 				final ProjectDocument source = hit.getSource();
 				if (source != null) {
 					final ProjectSearchResponse response = new ProjectSearchResponse();
-
 					response.projectId = hit.getId();
+					response.score = hit.getScore();
 
-					for (final ProjectAssetEmbedding innerHit : hit.getInnerHits()) {
+					for (final KnnInnerHit<ProjectAssetEmbedding> innerHit : hit.getInnerHits()) {
 						final ProjectSearchAsset asset = new ProjectSearchAsset();
-						asset.assetId = innerHit.getAssetId();
-						asset.assetType = innerHit.getAssetType();
+						asset.assetId = innerHit.getSource().getAssetId();
+						asset.assetType = innerHit.getSource().getAssetType();
+						asset.score = innerHit.getScore();
 
 						response.hits.add(asset);
 					}
