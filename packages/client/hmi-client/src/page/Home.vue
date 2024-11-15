@@ -222,7 +222,8 @@ function tabChange(event) {
 }
 
 const searchedAndFilterProjects = computed(() => {
-	let tabProjects: Project[] = useProjects().allProjects.value ?? [];
+	let tabProjects = useProjects().allProjects.value;
+	if (!tabProjects) return [];
 
 	if (activeTabIndex.value === 0) {
 		tabProjects = tabProjects.filter(
