@@ -638,11 +638,20 @@ public class ElasticsearchService {
 	}
 
 	@Data
+	public static class KnnInnerHit<InnerType> {
+
+		private UUID id;
+		private InnerType source;
+		private Float score;
+	}
+
+	@Data
 	public static class KnnHit<Type, InnerType> {
 
 		private UUID id;
 		private Type source;
-		private List<InnerType> innerHits = new ArrayList<>();
+		private Float score;
+		private List<KnnInnerHit<InnerType>> innerHits = new ArrayList<>();
 	}
 
 	@Data
@@ -709,13 +718,19 @@ public class ElasticsearchService {
 				final KnnHit<Type, InnerType> knnHit = new KnnHit<>();
 				knnHit.id = UUID.fromString(hit.get("_id").asText());
 				knnHit.source = mapper.convertValue(hit.get("_source"), hitClass);
+				knnHit.score = hit.get("_score").floatValue();
 
 				if (hit.get("inner_hits") == null || getFirstField(hit.get("inner_hits")) == null) {
 					continue;
 				}
 
 				for (final JsonNode innerHit : getFirstField(hit.get("inner_hits")).get("hits").get("hits")) {
-					knnHit.innerHits.add(mapper.convertValue(innerHit.get("_source"), innerHitClass));
+					final KnnInnerHit<InnerType> knnInnerHit = new KnnInnerHit<>();
+					knnInnerHit.id = UUID.fromString(innerHit.get("_id").asText());
+					knnInnerHit.source = mapper.convertValue(innerHit.get("_source"), innerHitClass);
+					knnInnerHit.score = innerHit.get("_score").floatValue();
+
+					knnHit.innerHits.add(knnInnerHit);
 				}
 
 				response.hits.add(knnHit);
