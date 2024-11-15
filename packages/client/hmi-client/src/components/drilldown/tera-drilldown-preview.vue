@@ -45,7 +45,7 @@ header {
 	padding: var(--gap-4);
 	flex-grow: 1;
 	padding-top: 0;
-	padding-left: var(--gap-1);
+	padding-left: 0;
 }
 
 main {
