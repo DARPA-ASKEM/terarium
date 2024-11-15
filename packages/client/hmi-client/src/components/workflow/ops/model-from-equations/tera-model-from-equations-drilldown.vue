@@ -10,7 +10,7 @@
 			<tera-slider-panel
 				v-if="document"
 				v-model:is-open="isDocViewerOpen"
-				header="Document Viewer"
+				header="Document viewer"
 				content-width="100%"
 			>
 				<template #content>

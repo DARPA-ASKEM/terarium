@@ -11,7 +11,7 @@
 				v-if="pdfData.length"
 				v-model:is-open="isPdfSidebarOpen"
 				content-width="700px"
-				header="Document Viewer"
+				header="Document viewer"
 			>
 				<template #content>
 					<tera-drilldown-section :is-loading="isFetchingPDF">
@@ -30,7 +30,7 @@
 					<section>
 						<nav class="inline-flex">
 							<Button
-								class="flex-1 mr-1"
+								class="flex-1 mr-6"
 								outlined
 								severity="secondary"
 								label="Extract from inputs"
@@ -114,8 +114,8 @@
 							</Button>
 							<span v-else class="confirm-cancel">
 								<span>Description</span>
-								<Button icon="pi pi-times" text @click.stop="isEditingDescription = false" />
-								<Button icon="pi pi-check" text @click.stop="onConfirmEditDescription" />
+								<Button icon="pi pi-times" size="small" text @click.stop="isEditingDescription = false" />
+								<Button icon="pi pi-check" size="small" text @click.stop="onConfirmEditDescription" />
 							</span>
 						</template>
 						<p class="description text" v-if="!isEditingDescription">
@@ -654,8 +654,9 @@ onMounted(() => {
 
 <style scoped>
 .intervention-settings-section {
-	background-color: var(--surface-100);
+	background-color: var(--gray-200);
 	padding: 0 var(--gap-3);
+	gap: var(--gap-1);
 }
 
 .input-config {
@@ -690,7 +691,7 @@ button.start-edit {
 	display: flex;
 	gap: var(--gap-3);
 	width: fit-content;
-	padding: var(--gap-2);
+	padding: 0;
 
 	& > .btn-content {
 		color: var(--text-color);
@@ -722,5 +723,9 @@ button.start-edit {
 	& > span {
 		margin-left: var(--gap-2);
 	}
+}
+
+.description {
+	margin-bottom: var(--gap-3);
 }
 </style>
