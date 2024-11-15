@@ -587,10 +587,10 @@ ul {
 }
 
 .comparison-overview {
-	border: 1px solid var(--surface-border);
+	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-medium);
 	padding: var(--gap-2);
-	margin: var(--gap-4) var(--gap-4) 0;
+	margin: var(--gap-4);
 }
 
 .subdued {

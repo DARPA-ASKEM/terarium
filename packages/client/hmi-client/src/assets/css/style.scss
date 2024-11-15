@@ -99,9 +99,10 @@
 		color: var(--text-color-secondary);
 	}
 
-	/* Make button labels regular font weight */
+	/* Make button labels regular font weight and whitespace nowrap */
 	.p-button-label {
 		font-weight: var(--font-weight);
+		white-space: nowrap;
 	}
 
 	/* Make tab font size same as body */
@@ -124,6 +125,12 @@
 	/* Correct button font weight */
 	.p-button-label {
 		font-weight: var(--font-weight);
+	}
+
+	/* Correct padding for messages */
+	.p-message .p-message-text {
+		padding: var(--gap-2);
+		color: var(--text-color)
 	}
 
 	/* Fill checkboxes with color when selected */
