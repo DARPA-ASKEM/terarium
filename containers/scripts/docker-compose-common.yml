@@ -48,11 +48,9 @@ services:
       mc mb --ignore-existing local_minio/askem-local-storage;
       mc anonymous set public local_minio/askem-local-storage;
       mc mb --ignore-existing local_minio/askem-test-storage;
-      mc anonymous set public local_minio/askem-test-storage;
-      exit 0;"
+      mc anonymous set public local_minio/askem-test-storage;"
     ]
     entrypoint: [ "/bin/sh", "-c" ]
-    tty: true
     depends_on:
       minio:
         condition: service_healthy
