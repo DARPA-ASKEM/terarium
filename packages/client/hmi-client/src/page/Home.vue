@@ -156,7 +156,7 @@ import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import SelectButton from 'primevue/selectbutton';
 import { useProjectMenu } from '@/composables/project-menu';
-import { Project, ClientEventType, ProgressState, ProjectSearchResponse } from '@/types/Types';
+import { ClientEventType, ProgressState, Project, ProjectSearchResponse } from '@/types/Types';
 import { Vue3Lottie } from 'vue3-lottie';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
@@ -237,12 +237,20 @@ const searchedAndFilterProjects = computed(() => {
 	}
 
 	// If they are no search we can return the filtered and sorted projects
-	if (isEmpty(searchProjectsResults.value.length)) {
+	if (isEmpty(searchProjectsResults.value)) {
 		return filterAndSortProjects(tabProjects);
 	}
 
 	// If there is a search query, we need to filter the projects based on the search results
-	return tabProjects.filter((project) => searchProjectsResults.value.some((result) => result.projectId === project.id));
+	// while keeping the order of the search results to the order of the projects
+	return searchProjectsResults.value
+		.map((result) => tabProjects.find(({ id }) => id === result.projectId))
+		.filter((project) => !!project) // Remove undefined values
+		.map((project, index) => {
+			if (!project.metadata) project.metadata = {};
+			project.metadata.searchRanking = (index + 1).toString();
+			return project as Project;
+		});
 });
 
 function openCreateProjectModal() {
@@ -316,10 +324,22 @@ watch(cloningProjects, () => {
 	}
 });
 
+function addRankingToColumns() {
+	removeRankingFromColumns();
+	columns.value.unshift({ field: 'searchRanking', header: 'Ranking' });
+	selectedColumns.value.unshift({ field: 'searchRanking', header: 'Ranking' });
+}
+
+function removeRankingFromColumns() {
+	columns.value = columns.value.filter((col) => col.field !== 'searchRanking');
+	selectedColumns.value = selectedColumns.value.filter((col) => col.field !== 'searchRanking');
+}
+
 async function searchedProjects() {
 	// If the search query is empty, show all projects
 	if (isEmpty(searchProjectsQuery.value)) {
 		searchProjectsResults.value = [];
+		removeRankingFromColumns();
 		return;
 	}
 
@@ -332,6 +352,7 @@ async function searchedProjects() {
 	} else {
 		// Display search results using the table view
 		view.value = ProjectsView.Table;
+		addRankingToColumns();
 	}
 
 	isSearchLoading.value = false;
