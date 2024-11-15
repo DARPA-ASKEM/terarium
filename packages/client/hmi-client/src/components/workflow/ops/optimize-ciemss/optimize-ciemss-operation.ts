@@ -270,7 +270,6 @@ export async function createInterventionPolicyFromOptimize(
 	modelConfigId: string,
 	optimizeRunId: string
 ): Promise<InterventionPolicy | null> {
-	console.log('Test');
 	const modelId = await getModelIdFromModelConfigurationId(modelConfigId);
 	const optimizedInterventions = await getOptimizedInterventions(optimizeRunId);
 
