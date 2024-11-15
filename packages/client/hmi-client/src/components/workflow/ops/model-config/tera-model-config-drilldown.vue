@@ -139,7 +139,6 @@
 						:model-configurations="filteredModelConfigurations"
 						:mmt="configuredMmt"
 						:mmt-params="mmtParams"
-						:error-empty="true"
 						@update-expression="setInitialExpression(knobs.transientModelConfig, $event.id, $event.value)"
 						@update-source="setInitialSource(knobs.transientModelConfig, $event.id, $event.value)"
 					/>
@@ -150,7 +149,6 @@
 						:model-configurations="filteredModelConfigurations"
 						:mmt="configuredMmt"
 						:mmt-params="mmtParams"
-						:error-empty="true"
 						@update-parameters="setParameterDistributions(knobs.transientModelConfig, $event)"
 						@update-source="setParameterSource(knobs.transientModelConfig, $event.id, $event.value)"
 					/>
