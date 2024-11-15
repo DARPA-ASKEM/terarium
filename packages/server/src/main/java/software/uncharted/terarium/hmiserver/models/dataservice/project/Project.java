@@ -103,6 +103,9 @@ public class Project extends TerariumAsset {
 		if (project.getThumbnail() != null) {
 			existingProject.setThumbnail(project.getThumbnail());
 		}
+		if (project.getSampleProject() != null) {
+			existingProject.setSampleProject(project.getSampleProject());
+		}
 		return existingProject;
 	}
 
