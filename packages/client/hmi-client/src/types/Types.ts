@@ -796,8 +796,8 @@ export interface ModelUnit {
 
 export interface GroundedSemantic {
     id: string;
-    name?: string;
     grounding?: ModelGrounding;
+    name?: string;
     description?: string;
 }
 
@@ -1024,6 +1024,7 @@ export enum AssetType {
     ModelConfiguration = "model-configuration",
     Artifact = "artifact",
     InterventionPolicy = "intervention-policy",
+    Project = "project",
 }
 
 export enum EvaluationScenarioStatus {
