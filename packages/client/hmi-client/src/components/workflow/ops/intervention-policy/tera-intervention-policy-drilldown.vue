@@ -704,7 +704,7 @@ button.start-edit {
 
 .intervention {
 	background-color: var(--gray-0);
-	border-left: 4px solid var(--surface-300);
+	border-left: 6px solid var(--surface-300);
 
 	&.selected {
 		border-left-color: var(--primary-color);
@@ -712,7 +712,7 @@ button.start-edit {
 
 	&,
 	&.selected {
-		transition: border-left-color 250ms;
+		transition: border-left-color 15ms;
 	}
 }
 

@@ -31,9 +31,9 @@
 					invalidate-negative
 					:model-value="intervention.staticInterventions[0].timestep"
 					@update:model-value="(val) => onUpdateThreshold(val, 0)"
-					placeholder="timestep"
+					placeholder="Timestep"
 				/>
-				,
+				:
 			</div>
 			<div class="card-section">
 				<template v-if="interventionType === 'dynamic'">
@@ -120,7 +120,14 @@
 									@update:model-value="(val) => onUpdateValue(val, index)"
 									placeholder="value"
 								/>
-								<Button class="ml-auto" icon="pi pi-times" text @click="onRemoveStaticIntervention(index)" />
+								<Button
+									class="ml-auto"
+									icon="pi pi-times"
+									size="small"
+									rounded
+									text
+									@click="onRemoveStaticIntervention(index)"
+								/>
 							</div>
 							<Divider />
 						</li>
@@ -346,11 +353,16 @@ const debounceUpdateState = debounce((intervention) => {
 
 .type-menu {
 	border-radius: var(--border-radius) 0 0 var(--border-radius);
-	background: var(--surface-200);
+	background: var(--surface-100);
+	height: 27px;
 }
 
 .applied-to-menu {
 	border-radius: 0 var(--border-radius) var(--border-radius) 0;
+	height: 27px;
+}
+
+.applied-to-menu:deep(.p-dropdown-label) {
 }
 
 .intervention-card {
@@ -365,5 +377,10 @@ const debounceUpdateState = debounce((intervention) => {
 
 ul {
 	list-style: none;
+}
+
+/* lighten divider color */
+:deep(.p-divider.p-divider-horizontal:before) {
+	border-top-color: var(--surface-border-light);
 }
 </style>
