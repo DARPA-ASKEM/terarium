@@ -990,6 +990,68 @@ public class ProjectController {
 				null
 			);
 
+			// Set the user permission for the project. If we are unable to get the user
+			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
+
+			// Check if the user has permission to view the project
+			res.forEach(searchResponse -> {
+				final Project project = searchResponse.getProject();
+				final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
+
+				// Set the user permission for the project.
+				// If we are unable to get the user permission, we remove the project.
+				try {
+					project.setUserPermission(rebacUser.getPermissionFor(rebacProject));
+				} catch (final Exception e) {
+					log.error(
+						"Failed to get user permissions from spicedb for project {}... Removing Project from list.",
+						project.getId(),
+						e
+					);
+					res.remove(searchResponse);
+				}
+
+				// Set the public status for the project.
+				// If we are unable to get the public status, we default to private.
+				try {
+					project.setPublicProject(rebacProject.isPublic());
+				} catch (final Exception e) {
+					log.error(
+						"Failed to get project {} public status from spicedb... Defaulting to private.",
+						project.getId(),
+						e
+					);
+					project.setPublicProject(false);
+				}
+
+				// Set the contributors for the project.
+				// If we are unable to get the contributors, we default to an empty list.
+				try {
+					final List<Contributor> contributors = projectPermissionsService.getContributors(rebacProject);
+					if (project.getMetadata() == null) {
+						project.setMetadata(new HashMap<>());
+					}
+					project
+						.getMetadata()
+						.put("contributor-count", Integer.toString(contributors == null ? 0 : contributors.size()));
+				} catch (final Exception e) {
+					log.error("Failed to get project contributors from spicedb for project {}", project.getId(), e);
+				}
+
+				// Set the author name for the project.
+				// If we are unable to get the author's name, we don't set a value.
+				try {
+					if (project.getUserId() != null) {
+						final String authorName = userService.getById(project.getUserId()).getName();
+						if (authorName != null) {
+							project.setUserName(authorName);
+						}
+					}
+				} catch (final Exception e) {
+					log.error("Failed to get project author name from postgres db for project {}", project.getId(), e);
+				}
+			});
+
 			return ResponseEntity.ok(res);
 		} catch (final Exception e) {
 			final String error = "Unable to get execute knn search";
