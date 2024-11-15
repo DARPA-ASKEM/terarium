@@ -1,5 +1,5 @@
 <template>
-	<div class="parameter-entry flex flex-column flex-1">
+	<div class="parameter-entry flex flex-column flex-1" :class="{ empty: isParameterEmpty }">
 		<header>
 			<div class="flex">
 				<strong>{{ parameterId }}</strong>
@@ -46,39 +46,24 @@
 					<tera-input-number
 						v-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Constant"
 						label="Constant"
-						:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.value"
+						:model-value="getParameterDistribution(modelConfiguration, parameterId, true)?.parameters.value"
 						error-empty
-						@update:model-value="
-							emit('update-parameter', {
-								id: parameterId,
-								distribution: formatPayloadFromParameterChange({ value: $event })
-							})
-						"
+						@update:model-value="onParameterChange($event, Parameter.value)"
 					/>
 					<!-- Uniform Distribution -->
 					<template v-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Uniform">
 						<tera-input-number
 							label="Min"
-							:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.minimum"
+							:model-value="getParameterDistribution(modelConfiguration, parameterId, true)?.parameters.minimum"
 							error-empty
-							@update:model-value="
-								emit('update-parameter', {
-									id: parameterId,
-									distribution: formatPayloadFromParameterChange({ minimum: $event })
-								})
-							"
+							@update:model-value="onParameterChange($event, Parameter.minimum)"
 							class="mr-2"
 						/>
 						<tera-input-number
 							label="Max"
-							:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.maximum"
+							:model-value="getParameterDistribution(modelConfiguration, parameterId, true)?.parameters.maximum"
 							error-empty
-							@update:model-value="
-								emit('update-parameter', {
-									id: parameterId,
-									distribution: formatPayloadFromParameterChange({ maximum: $event })
-								})
-							"
+							@update:model-value="onParameterChange($event, Parameter.maximum)"
 						/>
 					</template>
 				</span>
@@ -130,7 +115,12 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue';
 import { Model, ModelConfiguration } from '@/types/Types';
-import { getParameterSource, getParameterDistribution, getOtherValues } from '@/services/model-configurations';
+import {
+	getParameterSource,
+	getParameterDistribution,
+	isNumberInputEmpty,
+	getOtherValues
+} from '@/services/model-configurations';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import Button from 'primevue/button';
@@ -164,6 +154,13 @@ const inferredDistribution = computed(
 const concept = ref('');
 const isSourceOpen = ref(false);
 const showOtherConfigValueModal = ref(false);
+const isParameterEmpty = ref(false);
+
+enum Parameter {
+	value = 'value',
+	maximum = 'maximum',
+	minimum = 'minimum'
+}
 
 const otherValueList = computed(() =>
 	getOtherValues(props.modelConfigurations, props.parameterId, 'referenceId', 'parameterSemanticList')
@@ -197,9 +194,26 @@ function formatPayloadFromTypeChange(type: DistributionType) {
 
 const getOtherValuesLabel = computed(() => `Other Values(${otherValueList.value?.length})`);
 
+function isParameterInputEmpty(parameter) {
+	if (parameter.type === DistributionType.Constant) {
+		return isNumberInputEmpty(parameter.parameters.value);
+	}
+	return isNumberInputEmpty(parameter.parameters.maximum) || isNumberInputEmpty(parameter.parameters.minimum);
+}
+
+function onParameterChange(value, parameter) {
+	isParameterEmpty.value = isNumberInputEmpty(value);
+	emit('update-parameter', {
+		id: props.parameterId,
+		distribution: formatPayloadFromParameterChange({ [parameter]: value })
+	});
+}
+
 onMounted(async () => {
 	const identifiers = getParameter(props.model, props.parameterId)?.grounding?.identifiers;
 	if (identifiers) concept.value = await getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
+	const parameter = getParameterDistribution(props.modelConfiguration, props.parameterId, true);
+	isParameterEmpty.value = isParameterInputEmpty(parameter);
 });
 </script>
 
@@ -207,11 +221,9 @@ onMounted(async () => {
 .parameter-entry {
 	border-left: 4px solid var(--surface-300);
 	padding-left: var(--gap-4);
-
-	&.empty-input {
-		border-left: 4px solid var(--error-color);
-		padding-left: var(--gap-4);
-	}
+}
+.empty {
+	border-left: 4px solid var(--error-color);
 }
 
 header {

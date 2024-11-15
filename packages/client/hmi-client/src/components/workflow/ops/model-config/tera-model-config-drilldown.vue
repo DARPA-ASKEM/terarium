@@ -228,7 +228,7 @@
 <script setup lang="ts">
 import '@/ace-config';
 import { ComponentPublicInstance, computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
-import { cloneDeep, debounce, isEmpty, orderBy, omit, isNaN, isNumber } from 'lodash';
+import { cloneDeep, debounce, isEmpty, orderBy, omit } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
@@ -762,7 +762,7 @@ const debounceUpdateState = debounce(() => {
 	configuredMmt.value = makeConfiguredMMT(mmt.value, knobs.value.transientModelConfig);
 
 	emit('update-state', state);
-	selectedConfigMissingInputCount.value = getMissingInputCountMessage(state.transientModelConfig);
+	selectedConfigMissingInputCount.value = getMissingInputCountMessage(knobs.value.transientModelConfig);
 }, 100);
 watch(
 	() => knobs.value,

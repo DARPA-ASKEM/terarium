@@ -94,8 +94,13 @@ export function getParameter(config: ModelConfiguration, parameterId: string): P
 	return config.parameterSemanticList?.find((param) => param.referenceId === parameterId);
 }
 
-export function getParameterDistribution(config: ModelConfiguration, parameterId: string): ModelDistribution {
+export function getParameterDistribution(
+	config: ModelConfiguration,
+	parameterId: string,
+	setDefault: boolean = false
+): ModelDistribution {
 	const parameter = getParameter(config, parameterId);
+	if (!parameter && setDefault) return { type: DistributionType.Constant, parameters: { value: NaN } };
 	if (!parameter) return { type: DistributionType.Constant, parameters: { value: 0 } };
 	return parameter.distribution;
 }
@@ -221,6 +226,7 @@ export function getMissingInputAmount(modelConfiguration: ModelConfiguration) {
 		}
 	});
 
+	console.log('modelConfiguration.parameterSemanticList', modelConfiguration.parameterSemanticList);
 	modelConfiguration.parameterSemanticList.forEach((parameter) => {
 		if (parameter.distribution.type === DistributionType.Constant) {
 			if (isNumberInputEmpty(parameter.distribution.parameters.value)) {
