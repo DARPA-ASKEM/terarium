@@ -69,8 +69,7 @@ header > * {
 
 header .title {
 	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+	min-width: fit-content;
 }
 
 header .tabs-row {
