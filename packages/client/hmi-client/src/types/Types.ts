@@ -710,6 +710,7 @@ export interface UserEvent {
 
 export interface ProjectSearchResponse {
     projectId: string;
+    score: number;
     hits: ProjectSearchAsset[];
 }
 
@@ -838,6 +839,7 @@ export interface UserOld {
 export interface ProjectSearchAsset {
     assetId: string;
     assetType: AssetType;
+    score: number;
 }
 
 export interface AuthorityInstance {
