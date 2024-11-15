@@ -1,26 +1,24 @@
 <template>
-	<section>
-		<Accordion multiple :active-index="currentActiveIndexes" v-bind:lazy="true" class="mb-0">
-			<AccordionTab header="Description">
-				<tera-progress-spinner v-if="isGeneratingCard" is-centered> Generating description... </tera-progress-spinner>
-				<Editor v-else v-model="editorContent" />
-			</AccordionTab>
-			<AccordionTab header="Diagram">
-				<tera-model-diagram :model="model" :mmt-data="mmtData" :feature-config="featureConfig" />
-			</AccordionTab>
-			<AccordionTab header="Model equations">
-				<tera-model-equation :model="model" :is-editable="false" @model-updated="emit('update-model')" />
-			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
-				<DataTable :value="relatedTerariumModels">
-					<Column field="name" header="Models" />
-				</DataTable>
-				<DataTable :value="relatedTerariumDatasets">
-					<Column field="name" header="Datasets" />
-				</DataTable>
-			</AccordionTab>
-		</Accordion>
-	</section>
+	<Accordion multiple :active-index="currentActiveIndexes" v-bind:lazy="true" class="mb-0">
+		<AccordionTab header="Description">
+			<tera-progress-spinner v-if="isGeneratingCard" is-centered> Generating description... </tera-progress-spinner>
+			<Editor v-else v-model="editorContent" />
+		</AccordionTab>
+		<AccordionTab header="Diagram">
+			<tera-model-diagram :model="model" :mmt-data="mmtData" :feature-config="featureConfig" />
+		</AccordionTab>
+		<AccordionTab header="Model equations">
+			<tera-model-equation :model="model" :is-editable="false" @model-updated="emit('update-model')" />
+		</AccordionTab>
+		<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
+			<DataTable :value="relatedTerariumModels">
+				<Column field="name" header="Models" />
+			</DataTable>
+			<DataTable :value="relatedTerariumDatasets">
+				<Column field="name" header="Datasets" />
+			</DataTable>
+		</AccordionTab>
+	</Accordion>
 </template>
 
 <script setup lang="ts">
