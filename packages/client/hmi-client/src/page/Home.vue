@@ -234,12 +234,14 @@ const searchedAndFilterProjects = computed(() => {
 		tabProjects = tabProjects.filter(
 			({ userPermission, publicProject }) =>
 				// I can edit the project, or I can view a non-public project
-				['creator', 'writer'].includes(userPermission ?? '') || (userPermission === 'reader' && !publicProject)
+				['creator', 'writer'].includes(userPermission ?? '') || (userPermission === 'reader' && publicProject === false)
 		);
 	} else if (activeTabIndex.value === 1) {
-		tabProjects = tabProjects.filter(({ publicProject }) => publicProject === true);
+		tabProjects = tabProjects.filter(
+			({ publicProject, sampleProject }) => publicProject === true && sampleProject === false
+		);
 	} else if (activeTabIndex.value === 2) {
-		tabProjects = [] as Project[]; // TODO - Sample projects
+		tabProjects = tabProjects.filter(({ sampleProject }) => sampleProject === true);
 	}
 
 	// If they are no search we can return the filtered and sorted projects

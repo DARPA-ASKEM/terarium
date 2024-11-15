@@ -12,10 +12,11 @@ import { isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import { computed, ref } from 'vue';
-import { exportProjectAsFile } from '@/services/project';
+import { exportProjectAsFile, setSample } from '@/services/project';
 import { AcceptedExtensions } from '@/types/common';
 import { MenuItem } from 'primevue/menuitem';
 import useAuthStore from '@/stores/auth';
+import { useToastService } from '@/services/toast';
 
 const props = defineProps<{ project: Project | null }>();
 
@@ -81,6 +82,21 @@ const downloadMenuItem = {
 	}
 };
 
+const makeSampleMenuItem = {
+	label: 'Make a sample',
+	icon: 'pi pi-star',
+	command: () => {
+		setSample(props.project?.id).then((response) => {
+			if (response) {
+				useToastService().success(undefined, 'Project set as sample');
+				useProjects().refresh();
+			} else {
+				useToastService().error(undefined, 'Error setting project as sample');
+			}
+		});
+	}
+};
+
 const projectMenuItems = computed(() => {
 	// Basic access to a public and reader project
 	const items: MenuItem[] = [copyMenuItem, downloadMenuItem];
@@ -93,6 +109,11 @@ const projectMenuItems = computed(() => {
 	// Creator of the project, or an admin
 	if (props.project?.userPermission === 'creator' || useAuthStore().isAdmin) {
 		items.push(removeMenuItem);
+	}
+
+	// Admin only
+	if (useAuthStore().isAdmin && props.project?.sampleProject === false) {
+		items.push(makeSampleMenuItem);
 	}
 
 	return items;
