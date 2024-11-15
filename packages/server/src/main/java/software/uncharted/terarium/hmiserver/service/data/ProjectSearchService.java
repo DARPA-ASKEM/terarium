@@ -33,7 +33,6 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
-import software.uncharted.terarium.hmiserver.repository.data.ProjectRepository;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService.KnnHit;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService.KnnSearchResponse;
@@ -49,7 +48,6 @@ public class ProjectSearchService {
 	protected final ElasticsearchService elasticService;
 	protected final EmbeddingService embeddingService;
 	protected final Environment env;
-	protected final ProjectRepository projectRepository;
 
 	protected boolean isRunningTestProfile() {
 		final String[] activeProfiles = env.getActiveProfiles();
@@ -147,7 +145,7 @@ public class ProjectSearchService {
 			if (!currentIndex.equals(index)) {
 				elasticService.deleteIndex(currentIndex);
 			}
-		} catch (final Exception e) {}
+		} catch (final Exception ignore) {}
 		elasticService.createOrEnsureIndexIsEmpty(index);
 		if (index == null || index.isEmpty()) {
 			throw new RuntimeException("Index name is empty");
@@ -305,7 +303,8 @@ public class ProjectSearchService {
 	/**
 	 * Get a project permission query
 	 *
-	 * @param id
+	 * @param userId
+	 * @param query
 	 * @return
 	 * @throws IOException
 	 */
@@ -436,7 +435,7 @@ public class ProjectSearchService {
 	@TSModel
 	public static class ProjectSearchResponse {
 
-		Project project;
+		UUID projectId;
 		List<ProjectSearchAsset> hits = new ArrayList<>();
 	}
 
@@ -515,10 +514,9 @@ public class ProjectSearchService {
 			for (final KnnHit<ProjectDocument, ProjectAssetEmbedding> hit : res.getHits()) {
 				final ProjectDocument source = hit.getSource();
 				if (source != null) {
-					final UUID projectId = hit.getId();
-
 					final ProjectSearchResponse response = new ProjectSearchResponse();
-					response.project = projectRepository.findById(projectId).get();
+
+					response.projectId = hit.getId();
 
 					for (final ProjectAssetEmbedding innerHit : hit.getInnerHits()) {
 						final ProjectSearchAsset asset = new ProjectSearchAsset();
