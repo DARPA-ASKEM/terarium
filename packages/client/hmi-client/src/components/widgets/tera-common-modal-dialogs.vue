@@ -7,10 +7,15 @@
 		:project="menuProject"
 		@close-modal="isProjectConfigDialogVisible = false"
 	/>
-	<Dialog modal :header="`Delete ${projectName}?`" v-model:visible="isRemoveDialogVisible" style="max-width: 640px">
+	<Dialog
+		modal
+		:header="`Delete ${menuProject?.name}?`"
+		v-model:visible="isRemoveDialogVisible"
+		style="max-width: 640px"
+	>
 		<p style="margin-bottom: 0.5rem">
 			This action is irreversible and will permanently remove
-			<span style="font-weight: bold">{{ projectName }}</span>
+			<span style="font-weight: 600">{{ menuProject?.name }}</span>
 			from the system.
 		</p>
 		<p>Are you sure?</p>
@@ -41,8 +46,6 @@ const currentRoute = useCurrentRoute();
 // For now, we just use project-menu.ts to manage modals related to projects
 // For non-project related modals we may want to create new composables or abstract project-menu.ts into a modal manager
 const { isShareDialogVisible, isRemoveDialogVisible, isProjectConfigDialogVisible, menuProject } = useProjectMenu();
-
-const projectName = menuProject?.value?.name || '';
 
 const removeProject = async () => {
 	if (!menuProject.value) return;
