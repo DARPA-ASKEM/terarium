@@ -1,5 +1,10 @@
 <template>
-	<TabView v-if="pdfs?.length" :activeIndex="activeTabIndex" class="container" :class="pdfs?.length < 2 ? 'hide-tab-selectors' : ''">
+	<TabView
+		v-if="pdfs?.length"
+		:activeIndex="activeTabIndex"
+		class="container"
+		:class="pdfs?.length < 2 ? 'hide-tab-selectors' : ''"
+	>
 		<TabPanel :header="pdf.name" v-for="pdf in pdfs" :key="pdf.name">
 			<tera-pdf-embed v-if="pdf.isPdf" ref="pdfRef" :pdf-link="pdf.data" :title="pdf.name || ''" />
 			<tera-text-editor v-else :initial-text="pdf.data" />
