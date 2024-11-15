@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.project;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -17,8 +19,10 @@ import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.Where;
+import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
@@ -28,6 +32,7 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 @Accessors(chain = true)
 @TSModel
 @Entity
+@Slf4j
 public class Project extends TerariumAsset {
 
 	@Serial
@@ -75,7 +80,10 @@ public class Project extends TerariumAsset {
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private Boolean publicProject;
 
-	/** Information for the front-end to enable/disable features based on user permissions (Read/Write). */
+	/**
+	 * Information for the front-end to enable/disable features based on user
+	 * permissions (Read/Write).
+	 */
 	@TSOptional
 	@Transient
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
@@ -114,5 +122,20 @@ public class Project extends TerariumAsset {
 		cloned.publicProject = publicProject;
 		cloned.userPermission = userPermission;
 		return cloned;
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public String getEmbeddingSourceText() {
+		try {
+			if (overviewContent != null) {
+				log.info(new String(overviewContent));
+				return new String(overviewContent);
+			}
+			final ObjectMapper objectMapper = new ObjectMapper();
+			return objectMapper.writeValueAsString(this);
+		} catch (final Exception e) {
+			throw new RuntimeException("Failed to serialize model embedding text into JSON", e);
+		}
 	}
 }

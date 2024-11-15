@@ -709,6 +709,12 @@ export interface UserEvent {
     message: any;
 }
 
+export interface ProjectSearchResponse {
+    projectId: string;
+    score: number;
+    hits: ProjectSearchAsset[];
+}
+
 export interface SimulationNotificationData {
     simulationId: string;
     simulationType: SimulationType;
@@ -800,6 +806,7 @@ export interface GroundedSemantic {
     id: string;
     name?: string;
     description?: string;
+    grounding?: ModelGrounding;
 }
 
 export interface Properties {
@@ -829,6 +836,12 @@ export interface PermissionRole {
 export interface UserOld {
     username: string;
     roles: string[];
+}
+
+export interface ProjectSearchAsset {
+    assetId: string;
+    assetType: AssetType;
+    score: number;
 }
 
 export interface AuthorityInstance {
@@ -1025,6 +1038,7 @@ export enum AssetType {
     ModelConfiguration = "model-configuration",
     Artifact = "artifact",
     InterventionPolicy = "intervention-policy",
+    Project = "project",
 }
 
 export enum EvaluationScenarioStatus {

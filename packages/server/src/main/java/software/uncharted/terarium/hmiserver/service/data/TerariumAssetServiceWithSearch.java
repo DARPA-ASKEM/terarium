@@ -11,7 +11,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,11 +25,13 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
 import software.uncharted.terarium.hmiserver.repository.PSCrudSoftDeleteRepository;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
+import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 /**
- * Base class for services that manage TerariumAssets with syncing to Elasticsearch.
+ * Base class for services that manage TerariumAssets with syncing to
+ * Elasticsearch.
  *
  * @param <T> The type of asset this service manages
  * @param <R> The respository of the asset this service manages.
@@ -43,6 +48,8 @@ public abstract class TerariumAssetServiceWithSearch<
 		final Config config,
 		final ElasticsearchConfiguration elasticConfig,
 		final ElasticsearchService elasticService,
+		final EmbeddingService embeddingService,
+		final Environment env,
 		final ProjectService projectService,
 		final ProjectAssetService projectAssetService,
 		final S3ClientService s3ClientService,
@@ -52,6 +59,8 @@ public abstract class TerariumAssetServiceWithSearch<
 		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService, assetClass);
 		this.elasticConfig = elasticConfig;
 		this.elasticService = elasticService;
+		this.embeddingService = embeddingService;
+		this.env = env;
 	}
 
 	/** The configuration for the Elasticsearch service */
@@ -59,6 +68,9 @@ public abstract class TerariumAssetServiceWithSearch<
 
 	/** Services */
 	protected final ElasticsearchService elasticService;
+
+	protected final EmbeddingService embeddingService;
+	private final Environment env;
 
 	/**
 	 * Get the index for the asset this service manages
@@ -75,7 +87,8 @@ public abstract class TerariumAssetServiceWithSearch<
 	public abstract String getAssetAlias();
 
 	/**
-	 * Setup the index and alias for the asset this service manages and ensure it is empty
+	 * Setup the index and alias for the asset this service manages and ensure it is
+	 * empty
 	 *
 	 * @throws IOException If there is an error setting up the index and alias
 	 */
@@ -105,11 +118,12 @@ public abstract class TerariumAssetServiceWithSearch<
 	}
 
 	/**
-	 * Get a list of assets based on a search query. Only searchable assets wil be returned.
+	 * Get a list of assets based on a search query. Only searchable assets wil be
+	 * returned.
 	 *
-	 * @param page The page number
+	 * @param page     The page number
 	 * @param pageSize The number of assets per page
-	 * @param query The query to filter the assets
+	 * @param query    The query to filter the assets
 	 * @return The list of assets
 	 * @throws IOException If there is an error retrieving the assets
 	 */
@@ -119,11 +133,12 @@ public abstract class TerariumAssetServiceWithSearch<
 	}
 
 	/**
-	 * Get a list of assets based on a search query. Only searchable assets wil be returned.
+	 * Get a list of assets based on a search query. Only searchable assets wil be
+	 * returned.
 	 *
-	 * @param page The page number
+	 * @param page     The page number
 	 * @param pageSize The number of assets per page
-	 * @param query The query to filter the assets
+	 * @param query    The query to filter the assets
 	 * @return The list of assets
 	 * @throws IOException If there is an error retrieving the assets
 	 */
@@ -210,8 +225,9 @@ public abstract class TerariumAssetServiceWithSearch<
 	 *
 	 * @param asset The asset to update
 	 * @return The updated asset
-	 * @throws IOException If there is an error updating the asset
-	 * @throws IllegalArgumentException If the asset tries to move from permanent to temporary
+	 * @throws IOException              If there is an error updating the asset
+	 * @throws IllegalArgumentException If the asset tries to move from permanent to
+	 *                                  temporary
 	 */
 	@Override
 	@Observed(name = "function_profile")
@@ -363,5 +379,40 @@ public abstract class TerariumAssetServiceWithSearch<
 
 		// refresh the index
 		elasticService.refreshIndex(getAssetAlias());
+	}
+
+	protected boolean isRunningTestProfile() {
+		final String[] activeProfiles = env.getActiveProfiles();
+
+		for (final String profile : activeProfiles) {
+			if ("test".equals(profile)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	public Future<Void> generateAndUpsertEmbeddings(final T asset) {
+		if (!isRunningTestProfile() && asset.getPublicAsset() && !asset.getTemporary()) {
+			final String embeddingText = asset.getEmbeddingSourceText();
+			if (embeddingText == null) {
+				return null;
+			}
+
+			return CompletableFuture.runAsync(() -> {
+				new Thread(() -> {
+					try {
+						final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(embeddingText);
+
+						// Execute the update request
+						uploadEmbeddings(asset.getId(), embeddings, Schema.Permission.WRITE);
+					} catch (final Exception e) {
+						log.error("Failed to update embeddings for document {}", asset.getId(), e);
+					}
+				}).start();
+			});
+		}
+		return null;
 	}
 }

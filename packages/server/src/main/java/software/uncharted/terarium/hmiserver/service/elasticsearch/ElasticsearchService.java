@@ -35,11 +35,13 @@ import co.elastic.clients.elasticsearch.indices.RefreshRequest;
 import co.elastic.clients.elasticsearch.indices.RefreshResponse;
 import co.elastic.clients.elasticsearch.ingest.GetPipelineRequest;
 import co.elastic.clients.json.JsonpMapper;
+import co.elastic.clients.json.JsonpUtils;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.annotation.PostConstruct;
 import jakarta.json.stream.JsonParser;
 import java.io.IOException;
@@ -48,6 +50,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 import lombok.Data;
@@ -220,13 +223,13 @@ public class ElasticsearchService {
 	/**
 	 * Create the provided index.
 	 *
-	 * @param index  The name of the index to create
+	 * @param index The name of the index to create
 	 * @throws IOException If an error occurs while creating the index
 	 */
 	public void createIndex(final String index, final String mapping) throws IOException {
 		try {
-			JsonpMapper mapper = client._transport().jsonpMapper();
-			JsonParser parser = mapper.jsonProvider().createParser(new StringReader(mapping));
+			final JsonpMapper mapper = client._transport().jsonpMapper();
+			final JsonParser parser = mapper.jsonProvider().createParser(new StringReader(mapping));
 
 			log.info("Creating index {} with mapping", index);
 
@@ -481,8 +484,9 @@ public class ElasticsearchService {
 	/**
 	 * Update a document from an index.
 	 *
-	 * @param index The index to remove the document from
-	 * @param id    The id of the document to remove
+	 * @param index   The index to remove the document from
+	 * @param id      The id of the document to remove
+	 * @param partial The partial document to update.
 	 */
 	public <T, Partial> void update(final String index, final String id, final Partial partial) throws IOException {
 		try {
@@ -492,6 +496,36 @@ public class ElasticsearchService {
 				.index(index)
 				.id(id)
 				.doc(partial)
+				.build();
+
+			client.update(req, Void.class);
+		} catch (final ElasticsearchException e) {
+			throw handleException(e);
+		}
+	}
+
+	/**
+	 * Update a document from an index.
+	 *
+	 * @param index   The index to remove the document from
+	 * @param id      The id of the document to remove
+	 * @param partial The partial document to update.
+	 * @param routing The routing key for the document.
+	 */
+	public <T, Partial> void updateWithRouting(
+		final String index,
+		final String id,
+		final Partial partial,
+		final String routing
+	) throws IOException {
+		try {
+			log.info("Updating: {} from {}", id, index);
+
+			final UpdateRequest<T, Partial> req = new UpdateRequest.Builder<T, Partial>()
+				.index(index)
+				.id(id)
+				.doc(partial)
+				.routing(routing)
 				.build();
 
 			client.update(req, Void.class);
@@ -585,7 +619,7 @@ public class ElasticsearchService {
 	 * @param indexName      The index to insert the documents into
 	 * @param esIndexContent The content of the index
 	 */
-	public void bulkInsert(String indexName, String esIndexContent) {
+	public void bulkInsert(final String indexName, final String esIndexContent) {
 		try {
 			final BulkRequest.Builder bulkRequest = new BulkRequest.Builder();
 
@@ -600,6 +634,126 @@ public class ElasticsearchService {
 			client.bulk(bulkRequest.build());
 		} catch (final IOException e) {
 			log.error("Error bulk inserting documents into index {}", indexName, e);
+		}
+	}
+
+	@Data
+	public static class KnnInnerHit<InnerType> {
+
+		private UUID id;
+		private InnerType source;
+		private Float score;
+	}
+
+	@Data
+	public static class KnnHit<Type, InnerType> {
+
+		private UUID id;
+		private Type source;
+		private Float score;
+		private List<KnnInnerHit<InnerType>> innerHits = new ArrayList<>();
+	}
+
+	@Data
+	public static class KnnSearchResponse<Type, InnerType> {
+
+		private List<KnnHit<Type, InnerType>> hits = new ArrayList<>();
+		private long total;
+	}
+
+	private JsonNode getFirstField(final JsonNode jsonNode) {
+		final Iterator<String> fieldNames = jsonNode.fieldNames();
+		if (fieldNames.hasNext()) {
+			return jsonNode.get(fieldNames.next());
+		}
+		return null;
+	}
+
+	public <Type, InnerType> KnnSearchResponse<Type, InnerType> knnSearchWithInnerHits(
+		final String index,
+		final KnnQuery knn,
+		final Query query,
+		final Integer page,
+		final Integer pageSize,
+		final List<String> excludes,
+		final Class<Type> hitClass,
+		final Class<InnerType> innerHitClass
+	) throws IOException {
+		try {
+			log.info("KNN search on: {}", index);
+
+			final SearchRequest.Builder builder = new SearchRequest.Builder()
+				.index(index)
+				.from(page)
+				.source(s -> s.filter(f -> f.excludes(excludes)))
+				.size(pageSize);
+
+			if (knn != null) {
+				if (knn.numCandidates() < knn.k()) {
+					throw new IllegalArgumentException("Number of candidates must be greater than or equal to k");
+				}
+				builder.knn(knn);
+			}
+
+			if (query != null) {
+				builder.query(query);
+			}
+
+			final SearchRequest req = builder.build();
+
+			final String queryStr = JsonpUtils.toJsonString(req, new JacksonJsonpMapper(mapper));
+			final ObjectNode jsonQuery = (ObjectNode) mapper.readTree(queryStr);
+
+			// manually inject the inner hits because the java client is stupid
+			for (final JsonNode knnJson : jsonQuery.get("knn")) {
+				((ObjectNode) knnJson).set("inner_hits", mapper.createObjectNode());
+			}
+
+			final JsonNode res = rawSearch(index, jsonQuery);
+
+			final KnnSearchResponse<Type, InnerType> response = new KnnSearchResponse<>();
+			response.total = res.get("hits").get("total").get("value").asLong();
+
+			for (final JsonNode hit : res.get("hits").get("hits")) {
+				final KnnHit<Type, InnerType> knnHit = new KnnHit<>();
+				knnHit.id = UUID.fromString(hit.get("_id").asText());
+				knnHit.source = mapper.convertValue(hit.get("_source"), hitClass);
+				knnHit.score = hit.get("_score").floatValue();
+
+				if (hit.get("inner_hits") == null || getFirstField(hit.get("inner_hits")) == null) {
+					continue;
+				}
+
+				for (final JsonNode innerHit : getFirstField(hit.get("inner_hits")).get("hits").get("hits")) {
+					final KnnInnerHit<InnerType> knnInnerHit = new KnnInnerHit<>();
+					knnInnerHit.id = UUID.fromString(innerHit.get("_id").asText());
+					knnInnerHit.source = mapper.convertValue(innerHit.get("_source"), innerHitClass);
+					knnInnerHit.score = innerHit.get("_score").floatValue();
+
+					knnHit.innerHits.add(knnInnerHit);
+				}
+
+				response.hits.add(knnHit);
+			}
+
+			return response;
+		} catch (final ElasticsearchException e) {
+			throw handleException(e);
+		}
+	}
+
+	public JsonNode rawSearch(final String index, final JsonNode body) throws IOException {
+		try {
+			final HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			final HttpEntity<String> entity = new HttpEntity<>(body.toString(), headers);
+
+			final ResponseEntity<JsonNode> response = getRestTemplate()
+				.exchange(new URI(config.getUrl() + "/" + index + "/_search"), HttpMethod.POST, entity, JsonNode.class);
+
+			return response.getBody();
+		} catch (final Exception e) {
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -745,15 +899,21 @@ public class ElasticsearchService {
 		}
 	}
 
+	public static String emphasis(final String s, final int boost) {
+		return s + "^" + String.valueOf(boost);
+	}
+
 	/**
 	 * Insert the given documents into the given index with the given ids
 	 *
 	 * @param index     The index to insert the documents into
 	 * @param documents the documents to insert
-	 * @param ids       The ids of the documents to insert, parallel to the documents
+	 * @param ids       The ids of the documents to insert, parallel to the
+	 *                  documents
 	 * @return The bulk response
 	 * @throws IOException              If the bulk insert fails
-	 * @throws IllegalArgumentException If the number of documents and ids are not the same
+	 * @throws IllegalArgumentException If the number of documents and ids are not
+	 *                                  the same
 	 */
 	public BulkResponse bulkInsert(final String index, final List documents, final List<String> ids) throws IOException {
 		if (ids != null && documents.size() != ids.size()) {
@@ -769,10 +929,6 @@ public class ElasticsearchService {
 
 		log.info("Elasticsearch | Bulk | Inserting {} documents into index {}", documents.size(), index);
 		return client.bulk(BulkRequest.of(bulkRequest -> bulkRequest.index(index).operations(bulkOperations)));
-	}
-
-	public static String emphasis(String s, int boost) {
-		return s + "^" + String.valueOf(boost);
 	}
 
 	/**
