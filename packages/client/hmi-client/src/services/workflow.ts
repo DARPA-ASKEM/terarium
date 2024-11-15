@@ -23,6 +23,7 @@ import {
 	Transform
 } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
+import dagre from 'dagre';
 
 /**
  * A wrapper class around the workflow data struture to make it easier
@@ -584,6 +585,41 @@ export class WorkflowWrapper {
 			downstreamNodes: outputEdges.map((e) => e.target && cache.get(e.target)).filter(Boolean) as WorkflowNode<any>[]
 		};
 	};
+
+	runDagreLayout() {
+		const g = new dagre.graphlib.Graph({ compound: true });
+		g.setGraph({});
+		g.setDefaultEdgeLabel(() => ({}));
+		g.graph().rankDir = 'LR';
+		this.getNodes().forEach((node) => {
+			g.setNode(node.id, {
+				label: node.displayName,
+				width: node.width ?? 50,
+				height: node.height ?? 50
+			});
+		});
+
+		this.getEdges().forEach((edge) => {
+			g.setEdge(edge.source, edge.target);
+		});
+
+		dagre.layout(g);
+
+		this.getNodes().forEach((node) => {
+			const n = g.node(node.id);
+			if (!n) return;
+			node.x = n.x;
+			node.y = n.y;
+		});
+	}
+
+	setWorkflowName(name: string) {
+		this.wf.name = name;
+	}
+
+	setWorkflowScenario(scenario: any) {
+		this.wf.scenario = scenario;
+	}
 }
 
 /**
