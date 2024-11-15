@@ -220,6 +220,7 @@ async function refreshMMT() {
 	const response = await getMMT(temporaryModel.value);
 	if (!response) return;
 	mmtData.value = response;
+	console.log(mmtData.value);
 }
 
 function updateTemporaryModel(newModel: Model) {
@@ -235,7 +236,7 @@ function updateTemporaryModel(newModel: Model) {
 	if (doMmtUpdate) refreshMMT();
 }
 
-function onUpdateModelPart(property: string, event: any) {
+function onUpdateModelPart(property: 'state' | 'parameter' | 'observable' | 'transition' | 'time', event: any) {
 	if (!temporaryModel.value) return;
 	const newModel = cloneDeep(temporaryModel.value);
 	const { id, key, value } = event;
