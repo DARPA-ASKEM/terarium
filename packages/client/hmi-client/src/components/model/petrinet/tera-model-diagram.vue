@@ -62,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty, isEqual } from 'lodash';
+import { isEmpty, isEqual, debounce } from 'lodash';
 import { ref, watch, computed, nextTick, onMounted, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
@@ -215,7 +215,9 @@ watch(
 let graphResizeObserver: ResizeObserver;
 onMounted(() => {
 	if (graphElement.value) {
-		graphResizeObserver = observeElementSizeChange(graphElement.value, renderGraph);
+		// FIXME: This debounce prevents the graph from being rendered multiple times in a row.
+		// This happens in cases where there is a slight change in width when a scrollbar is shown or hidden. eg. opening/closing the transitions accordion in the model page
+		graphResizeObserver = observeElementSizeChange(graphElement.value, debounce(renderGraph, 2000));
 	}
 });
 onUnmounted(() => {
