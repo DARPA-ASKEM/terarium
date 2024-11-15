@@ -86,7 +86,7 @@ public class FunmanController {
 		);
 
 		final TaskRequest taskRequest = new TaskRequest();
-		taskRequest.setTimeoutMinutes(30);
+		taskRequest.setTimeoutMinutes(45);
 		taskRequest.setType(TaskType.FUNMAN);
 		taskRequest.setScript(ValidateModelConfigHandler.NAME);
 		taskRequest.setUserId(currentUserService.get().getId());
