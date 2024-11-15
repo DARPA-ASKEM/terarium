@@ -254,7 +254,7 @@ const searchedAndFilterProjects = computed(() => {
 		.filter((project) => !!project) // Remove undefined values
 		.map((project, index) => {
 			if (!project.metadata) project.metadata = {};
-			project.metadata.searchRanking = (index + 1).toString();
+			project.metadata.score = (index + 1).toString();
 			return project as Project;
 		});
 });
