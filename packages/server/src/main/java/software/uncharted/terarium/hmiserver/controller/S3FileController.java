@@ -57,7 +57,6 @@ public class S3FileController {
 
 	@PostConstruct
 	void init() {
-		// Create the file storage bucket if it doesn't exist
 		final S3Service s3Service = s3ClientService.getS3Service(FILE_STORAGE_DEFAULT_S3_CLIENT_NAME);
 		if (!s3Service.bucketExists(FILE_STORAGE_DEFAULT_BUCKET_NAME)) {
 			s3Service.createBucket(FILE_STORAGE_DEFAULT_BUCKET_NAME);
