@@ -1175,6 +1175,75 @@ public class ProjectController {
 		}
 	}
 
+	@Operation(summary = "Set a project as a sample project by ID")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Project has been made a sample project",
+				content = {
+					@Content(
+						mediaType = "application/json",
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class)
+					)
+				}
+			),
+			@ApiResponse(
+				responseCode = "403",
+				description = "The current user does not have privileges to modify this project.",
+				content = @Content
+			),
+			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content)
+		}
+	)
+	@PostMapping("/set-sample/{id}")
+	@Secured(Roles.USER)
+	public ResponseEntity<JsonNode> makeProjectSample(@PathVariable("id") final UUID id) {
+		try {
+			// Only an admin can set a project as a sample project
+			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), id);
+
+			final Optional<Project> project = projectService.getProject(id);
+			if (project.isEmpty()) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
+			}
+
+			// Update the project and make it public as well as a sample project
+			project.get().setSampleProject(true).setPublicAsset(true);
+			projectAssetService.togglePublicForAssets(terariumAssetServices, id, true, Schema.Permission.WRITE);
+			projectService.updateProject(project.get());
+
+			/* Permissions */
+
+			// Getting the project
+			final RebacProject rebacProject = new RebacProject(id, reBACService);
+
+			// Delete all previous user relationships attached to the project,
+			final List<Contributor> contributors = projectPermissionsService.getContributors(rebacProject);
+			for (final Contributor contributor : contributors) {
+				if (contributor.isUser()) {
+					final RebacUser rebacUser = new RebacUser(contributor.getUserId(), reBACService);
+					rebacUser.removeAllRelationships(rebacProject);
+				}
+			}
+
+			// Add the Admin group to administrate the project
+			final RebacGroup adminGroup = new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService);
+			adminGroup.removeAllRelationsExceptOne(rebacProject, Schema.Relationship.ADMIN);
+
+			// Add the public group to read the project
+			final RebacGroup publicGroup = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
+			publicGroup.removeAllRelationsExceptOne(rebacProject, Schema.Relationship.READER);
+
+			return ResponseEntity.ok().build();
+		} catch (final ResponseStatusException rethrow) {
+			throw rethrow;
+		} catch (final Exception e) {
+			log.error("Unexpected error, failed to set as a sample project ", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+		}
+	}
+
 	@PostMapping("/{id}/permissions/user/{user-id}/{relationship}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Sets a user's permissions for a project")
