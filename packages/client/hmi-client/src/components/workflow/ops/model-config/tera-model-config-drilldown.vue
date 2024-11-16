@@ -640,11 +640,19 @@ const initialize = async (overwriteWithState: boolean = false) => {
 	}
 
 	if (model.value) {
-		const initials = getModelInitials(knobs.value.transientModelConfig, mmt.value, getAmrInitials(model.value));
+		const initials = getModelInitials(
+			knobs.value.transientModelConfig,
+			mmt.value.annotations.name,
+			getAmrInitials(model.value)
+		);
 		if (initials.length) {
 			knobs.value.transientModelConfig.initialSemanticList = initials;
 		}
-		const parameters = getModelParameters(knobs.value.transientModelConfig, mmt.value, getAmrParameters(model.value));
+		const parameters = getModelParameters(
+			knobs.value.transientModelConfig,
+			mmt.value.annotations.name,
+			getAmrParameters(model.value)
+		);
 		if (parameters.length) {
 			knobs.value.transientModelConfig.parameterSemanticList = parameters;
 		}
@@ -674,11 +682,19 @@ const onSelectConfiguration = async (config: ModelConfiguration) => {
 	}
 
 	if (model.value) {
-		const initials = getModelInitials(knobs.value.transientModelConfig, mmt.value, getAmrInitials(model.value));
+		const initials = getModelInitials(
+			knobs.value.transientModelConfig,
+			mmt.value.annotations.name,
+			getAmrInitials(model.value)
+		);
 		if (initials.length) {
 			knobs.value.transientModelConfig.initialSemanticList = initials;
 		}
-		const parameters = getModelParameters(knobs.value.transientModelConfig, mmt.value, getAmrParameters(model.value));
+		const parameters = getModelParameters(
+			knobs.value.transientModelConfig,
+			mmt.value.annotations.name,
+			getAmrParameters(model.value)
+		);
 		if (parameters.length) {
 			knobs.value.transientModelConfig.parameterSemanticList = parameters;
 		}

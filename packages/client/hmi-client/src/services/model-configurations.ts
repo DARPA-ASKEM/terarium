@@ -237,7 +237,7 @@ export function getMissingInputAmount(modelConfiguration: ModelConfiguration) {
 	return missingInputs;
 }
 
-export function getModelParameters(modelConfiguration, mmt, amrParameters) {
+export function getModelParameters(modelConfiguration, source, amrParameters) {
 	const configParameters = keyBy(getParameters(modelConfiguration), 'referenceId');
 	return amrParameters.map((parameter) => {
 		if (configParameters[parameter.id]) return { ...configParameters[parameter.id] };
@@ -249,12 +249,12 @@ export function getModelParameters(modelConfiguration, mmt, amrParameters) {
 			},
 			referenceId: parameter.id,
 			type: SemanticType.Parameter,
-			source: mmt.annotations.name
+			source
 		};
 	});
 }
 
-export function getModelInitials(modelConfiguration, mmt, amrInitials) {
+export function getModelInitials(modelConfiguration, source, amrInitials) {
 	const configInitials = keyBy(getInitials(modelConfiguration), 'target');
 	return amrInitials.map((initial) => {
 		if (configInitials[initial.target]) return { ...configInitials[initial.target] };
@@ -263,7 +263,7 @@ export function getModelInitials(modelConfiguration, mmt, amrInitials) {
 			expressionMathml: '',
 			target: initial.target,
 			type: SemanticType.Initial,
-			source: mmt.annotations.name
+			source
 		};
 	});
 }
