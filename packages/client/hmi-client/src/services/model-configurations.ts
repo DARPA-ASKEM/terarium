@@ -8,9 +8,8 @@ import type {
 	ParameterSemantic
 } from '@/types/Types';
 import { SemanticType } from '@/types/Types';
-import { isEmpty, isNaN, isNumber } from 'lodash';
+import { isEmpty, isNaN, isNumber, keyBy } from 'lodash';
 import { pythonInstance } from '@/python/PyodideController';
-import { collapseParameters, collapseInitials } from '@/model-representation/mira/mira';
 import { DistributionType } from './distribution';
 
 export interface SemanticOtherValues {
@@ -238,46 +237,33 @@ export function getMissingInputAmount(modelConfiguration: ModelConfiguration) {
 	return missingInputs;
 }
 
-export function getMmtParameters(modelConfiguration, mmt, mmtParams) {
-	const collapsedParameters = collapseParameters(mmt, mmtParams);
-	const parameters = getParameters(modelConfiguration);
-	return Array.from(collapsedParameters.keys()).map((id) => {
-		const childIds = collapsedParameters.get(id) ?? [];
-		const childParameters = childIds
-			.map((childId) => parameters.find((p) => p.referenceId === childId))
-			.filter(Boolean) as ParameterSemantic[];
-
-		const parameter = {
+export function getModelParameters(modelConfiguration, mmt, amrParameters) {
+	const configParameters = keyBy(getParameters(modelConfiguration), 'referenceId');
+	return amrParameters.map((parameter) => {
+		if (configParameters[parameter.id]) return { ...configParameters[parameter.id] };
+		return {
 			default: false,
 			distribution: {
 				type: DistributionType.Constant,
-				parameters: { value: 0 }
+				parameters: { value: NaN }
 			},
-			referenceId: id,
+			referenceId: parameter.id,
 			type: SemanticType.Parameter,
 			source: mmt.annotations.name
 		};
-
-		return childParameters.length ? { ...childParameters[0] } : parameter;
 	});
 }
 
-export function getMmtInitials(modelConfiguration, mmt) {
-	const collapsedInitials = collapseInitials(mmt);
-	const initials = getInitials(modelConfiguration);
-	return Array.from(collapsedInitials.keys()).map((id) => {
-		const childTargets = collapsedInitials.get(id) ?? [];
-		const childInitials = childTargets
-			.map((childTarget) => initials.find((i) => i.target === childTarget))
-			.filter(Boolean) as InitialSemantic[];
-
-		const initial = {
+export function getModelInitials(modelConfiguration, mmt, amrInitials) {
+	const configInitials = keyBy(getInitials(modelConfiguration), 'target');
+	return amrInitials.map((initial) => {
+		if (configInitials[initial.target]) return { ...configInitials[initial.target] };
+		return {
 			expression: '',
 			expressionMathml: '',
-			target: id,
+			target: initial.target,
 			type: SemanticType.Initial,
 			source: mmt.annotations.name
 		};
-		return childTargets.length ? { ...childInitials[0] } : initial;
 	});
 }
