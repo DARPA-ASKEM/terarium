@@ -21,7 +21,7 @@
 		<p>Are you sure?</p>
 		<template #footer>
 			<Button label="Cancel" class="p-button-secondary" @click="isRemoveDialogVisible = false" />
-			<Button label="Delete project" severity="danger" @click="removeProject" />
+			<Button label="Delete project" severity="danger" @click="removeProject" autofocus />
 		</template>
 	</Dialog>
 	<tera-share-project v-if="menuProject" v-model="isShareDialogVisible" :project="menuProject" />
