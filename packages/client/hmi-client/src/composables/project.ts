@@ -222,7 +222,10 @@ export function useProjects() {
 	 */
 	async function setSample(projectId: Project['id'], isSample: boolean): Promise<boolean> {
 		const response = await ProjectService.setSample(projectId, isSample);
-		if (response) return true;
+		if (response) {
+			await getAll();
+			return true;
+		}
 		useToastService().error(undefined, 'Error changing the sample status of the project');
 		return false;
 	}

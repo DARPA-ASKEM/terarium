@@ -281,11 +281,8 @@ watch(isSample, (value) => {
 			.setSample(props.project.id, value)
 			.then((done) => {
 				isSampleLoading.value = false;
-				if (done) {
-					useProjects().getAll();
-				} else {
-					isSample.value = !value;
-				}
+				// In case of error, revert the checkbox to the previous state
+				if (!done) isSample.value = props.project.sampleProject ?? false;
 			});
 	}
 });
