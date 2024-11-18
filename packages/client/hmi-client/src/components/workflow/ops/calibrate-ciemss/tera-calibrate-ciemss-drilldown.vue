@@ -222,8 +222,9 @@
 		<!-- Output section -->
 		<template #preview>
 			<tera-drilldown-section v-if="showOutputSection">
-				<template #header-controls-left v-if="configuredModelConfig?.name">
-					<h5 class="ml-3">{{ configuredModelConfig.name }}</h5>
+				<template #header-controls-left>
+					<h5 v-if="configuredModelConfig?.name" class="ml-3">{{ configuredModelConfig.name }}</h5>
+					<p class="ml-3" v-else>No output to show</p>
 				</template>
 				<template #header-controls-right>
 					<Button
