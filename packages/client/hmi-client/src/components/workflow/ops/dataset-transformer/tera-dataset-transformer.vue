@@ -31,6 +31,7 @@
 					@update-kernel-state="updateKernelState"
 					:kernelState="kernelState"
 					:selected-dataset="selectedDataset"
+					:sample-agent-questions="sampleAgentQuestions"
 				/>
 			</Suspense>
 		</div>
@@ -84,6 +85,13 @@ const updateKernelState = (newKernelState: any) => {
 		selectedDataset.value = keys[keys.length - 1];
 	}
 };
+
+const sampleAgentQuestions = [
+	'View the dataset to see the columns and data types.',
+	'Join the two datasets together on date',
+	'Add a new column named timestamp',
+	"Let's assume that average time to recover is 14 days and average time to exit the hospital is 10 days. Can you convert this data into prevalence data? Ideally please map it to SIRHD. Assume a population of 150 million."
+];
 
 const notebookSession = ref(<NotebookSession | undefined>undefined);
 
