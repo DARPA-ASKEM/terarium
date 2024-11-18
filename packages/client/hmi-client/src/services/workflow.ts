@@ -591,11 +591,13 @@ export class WorkflowWrapper {
 		g.setGraph({});
 		g.setDefaultEdgeLabel(() => ({}));
 		g.graph().rankDir = 'LR';
+		g.graph().nodesep = 120;
+		g.graph().ranksep = 120;
 		this.getNodes().forEach((node) => {
 			g.setNode(node.id, {
 				label: node.displayName,
-				width: node.width ?? 50,
-				height: node.height ?? 50
+				width: node.width,
+				height: node.height
 			});
 		});
 
