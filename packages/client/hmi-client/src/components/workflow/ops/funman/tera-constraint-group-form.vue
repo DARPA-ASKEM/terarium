@@ -1,5 +1,5 @@
 <template>
-	<section>
+	<section class="pt-2">
 		<i class="ml-2" v-if="config.constraintType === ConstraintType.Following">
 			"following" option is not supported yet
 		</i>

@@ -33,7 +33,7 @@
 							</p>
 							<ul>
 								<li>
-									<section class="shadow-1">
+									<section class="shadow-1 pt-2">
 										<header class="flex w-full gap-3 mb-2">
 											<tera-toggleable-input v-model="knobs.compartmentalConstraint.name" tag="h3" class="nudge-left" />
 											<div class="ml-auto flex align-items-center">
