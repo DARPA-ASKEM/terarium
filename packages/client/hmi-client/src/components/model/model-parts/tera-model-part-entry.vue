@@ -8,7 +8,7 @@
 					v-else
 					placeholder="Add a name"
 					v-model="name"
-					@change="$emit('update-item', { key: 'name', value: $event })"
+					@change="$emit('update-item', { key: 'name', value: name })"
 				/>
 			</span>
 			<span class="unit">
@@ -22,7 +22,7 @@
 					<!-- we use a dropdown for units with time semantic-->
 					<Dropdown
 						v-else-if="isTimePart"
-						:model-value="item.unitExpression"
+						v-model="unitExpression"
 						placeholder="Add a time unit"
 						option-label="label"
 						option-value="value"
@@ -31,7 +31,7 @@
 							{ label: 'Months', value: CalendarDateType.MONTH },
 							{ label: 'Years', value: CalendarDateType.YEAR }
 						]"
-						@change="$emit('update-item', { key: 'unitExpression', value: $event.value })"
+						@change="$emit('update-item', { key: 'unitExpression', value: unitExpression })"
 					/>
 					<tera-input-text
 						v-else
@@ -39,7 +39,7 @@
 						placeholder="Add a unit"
 						:characters-to-reject="[' ']"
 						v-model="unitExpression"
-						@change="$emit('update-item', { key: 'unitExpression', value: $event })"
+						@change="$emit('update-item', { key: 'unitExpression', value: unitExpression })"
 					/>
 				</template>
 			</span>
@@ -90,7 +90,7 @@
 				v-if="showDescription"
 				placeholder="Add a description"
 				v-model="description"
-				@change="$emit('update-item', { key: 'description', value: $event })"
+				@change="$emit('update-item', { key: 'description', value: description })"
 			/>
 		</span>
 	</section>
