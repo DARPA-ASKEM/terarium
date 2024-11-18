@@ -123,6 +123,7 @@
 											<td>
 												<tera-signal-bars
 													label="Relative certainty"
+													:min-option="1"
 													v-model="knobs.weights[key]"
 													@change="updateWeights()"
 												/>
