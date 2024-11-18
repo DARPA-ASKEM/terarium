@@ -9,11 +9,11 @@
 	/>
 	<Dialog
 		modal
+		style="max-width: 65ch"
 		:header="`Delete ${menuProject?.name}?`"
 		v-model:visible="isRemoveDialogVisible"
-		style="max-width: 640px"
 	>
-		<p style="margin-bottom: 0.5rem">
+		<p>
 			This action is irreversible and will permanently remove
 			<span style="font-weight: 600">{{ menuProject?.name }}</span>
 			from the system.
@@ -25,6 +25,17 @@
 		</template>
 	</Dialog>
 	<tera-share-project v-if="menuProject" v-model="isShareDialogVisible" :project="menuProject" />
+	<Dialog modal header="Make a sample project" style="max-width: 65ch" v-model:visible="isMakeSampleDialogVisible">
+		<p>
+			This irreversible action will change <strong>{{ menuProject?.name }}</strong> into sample a project publicly
+			accessible.
+		</p>
+		<p>Only Terarium <strong>administrators</strong> can edit sample projects.</p>
+		<template #footer>
+			<Button label="Cancel" class="p-button-secondary" @click="isMakeSampleDialogVisible = false" />
+			<Button label="Make a sample project" severity="danger" @click="makeSampleProject" />
+		</template>
+	</Dialog>
 </template>
 
 <script setup lang="ts">
@@ -39,13 +50,21 @@ import { RoutePath, useCurrentRoute } from '@/router/index';
 import { RouteName } from '@/router/routes';
 import { useProjects } from '@/composables/project';
 import { useProjectMenu } from '@/composables/project-menu';
+import { setSample } from '@/services/project';
+import { useToastService } from '@/services/toast';
 
 const router = useRouter();
 const currentRoute = useCurrentRoute();
 
 // For now, we just use project-menu.ts to manage modals related to projects
-// For non-project related modals we may want to create new composables or abstract project-menu.ts into a modal manager
-const { isShareDialogVisible, isRemoveDialogVisible, isProjectConfigDialogVisible, menuProject } = useProjectMenu();
+// For non-project related modals we may want to create new composable or abstract project-menu.ts into a modal manager
+const {
+	isShareDialogVisible,
+	isRemoveDialogVisible,
+	isProjectConfigDialogVisible,
+	isMakeSampleDialogVisible,
+	menuProject
+} = useProjectMenu();
 
 const removeProject = async () => {
 	if (!menuProject.value) return;
@@ -58,4 +77,25 @@ const removeProject = async () => {
 		if (currentRoute.value.name !== RouteName.Home) router.push(RoutePath.Home);
 	}
 };
+
+const makeSampleProject = async () => {
+	if (!menuProject.value) return;
+	const { id } = menuProject.value;
+
+	setSample(id).then((response) => {
+		if (response) {
+			useToastService().success(undefined, 'Project set as sample');
+			useProjects().getAll();
+		} else {
+			useToastService().error(undefined, 'Error setting project as sample');
+		}
+		isMakeSampleDialogVisible.value = false;
+	});
+};
 </script>
+
+<style scoped>
+p + p {
+	margin-top: var(--gap-2);
+}
+</style>
