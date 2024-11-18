@@ -27,6 +27,7 @@
 				size="small"
 				severity="primary"
 				@click="stopEvaluationScenario"
+				class="shadow-2"
 			/>
 			<Button v-else label="Start" rounded size="small" severity="primary" @click="beginEvaluationScenario" />
 		</aside>
@@ -578,6 +579,7 @@ nav {
 	margin-right: auto;
 	align-items: center;
 	gap: var(--gap-4);
+	box-shadow: inset 0px 0px 5px var(--surface-border-light);
 
 	.evaluation-scenario-widget-timer {
 		font-feature-settings: 'tnum';
