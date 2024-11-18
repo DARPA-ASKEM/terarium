@@ -12,7 +12,7 @@
 			class="input-config"
 			v-model:is-open="isSliderOpen"
 			header="Validate configuration settings"
-			content-width="420px"
+			content-width="440px"
 		>
 			<template #content>
 				<div class="top-toolbar">
@@ -100,7 +100,7 @@
 									placeholder="Select variables"
 									@update:model-value="onToggleVariableOfInterest"
 								/>
-								<span class="timespan">
+								<span class="timespan mt-3">
 									<div>
 										<label>Start time</label>
 										<tera-input-number class="w-12" v-model="knobs.currentTimespan.start" />
@@ -114,11 +114,11 @@
 										<tera-input-number class="w-12" v-model="knobs.numberOfSteps" />
 									</div>
 								</span>
-								<label>Timepoints</label>
+								<label class="mt-3">Timepoints</label>
 								<code class="inset">
 									{{ stepList.map((step) => Number(step.toFixed(3))).join(', ') }}
 								</code>
-								<label>Tolerance</label>
+								<label class="mt-3">Tolerance</label>
 								<div class="input-tolerance fadein animation-ease-in-out animation-duration-350">
 									<tera-input-number v-model="knobs.tolerance" />
 									<Slider v-model="knobs.tolerance" :min="0" :max="1" :step="0.01" class="w-full mr-2" />
