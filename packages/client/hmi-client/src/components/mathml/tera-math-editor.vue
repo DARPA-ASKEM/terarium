@@ -269,7 +269,6 @@ math-field[disabled] {
 	padding: 10px;
 	align-items: center;
 	width: 99%;
-	margin: 5px;
 	padding-left: 20px;
 	flex-grow: 1;
 }

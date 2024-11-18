@@ -153,6 +153,16 @@ async function setAccessibility(projectId: Project['id'], isPublic: boolean): Pr
 	}
 }
 
+async function setSample(projectId: Project['id']): Promise<boolean> {
+	try {
+		const response = await API.post(`projects/set-sample/${projectId}`);
+		return response?.status === 200;
+	} catch (error) {
+		console.error(`The project was not made a sample project, ${error}`);
+		return false;
+	}
+}
+
 async function getPermissions(projectId: Project['id']): Promise<PermissionRelationships | null> {
 	try {
 		const { status, data } = await API.get(`projects/${projectId}/permissions`);
@@ -322,6 +332,7 @@ export {
 	removePermissions,
 	setAccessibility,
 	setPermissions,
+	setSample,
 	update,
 	updatePermissions,
 	exportProjectAsFile,

@@ -341,7 +341,7 @@ footer {
 }
 
 :deep(.p-chip .p-chip-text) {
-	font-size: var(--font-body-small);
+	font-size: 13px;
 	margin: var(--gap-0-5);
 }
 
