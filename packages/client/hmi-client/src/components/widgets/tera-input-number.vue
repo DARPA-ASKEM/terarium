@@ -57,7 +57,7 @@ const inputStyle = computed(() => {
 	if (props.autoWidth) {
 		const textToMeasure = input.value || props.placeholder;
 		// Estimate the width based on the length of the text to measure.
-		const width = (textToMeasure?.length || 1) * 8 + 4; // 8px per character + 4px padding
+		const width = (textToMeasure?.length || 1) * 10 + 4; // 10px per character + 6px padding
 		style.width = `${width}px`; // Dynamically set the width
 		style['min-width'] = '20px'; // Ensure a minimum width
 	}
@@ -109,5 +109,6 @@ watch(
 <style scoped>
 input {
 	text-align: right;
+	margin-right: 2px;
 }
 </style>
