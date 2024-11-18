@@ -255,7 +255,7 @@ function onUpdateModelPart(property: 'state' | 'parameter' | 'observable' | 'tra
 async function fetchModel() {
 	model.value = await getModel(props.assetId);
 	temporaryModel.value = cloneDeep(model.value);
-	refreshMMT();
+	await refreshMMT();
 }
 
 onMounted(async () => {
