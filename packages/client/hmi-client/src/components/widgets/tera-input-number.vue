@@ -18,7 +18,7 @@
 				:placeholder="placeholder"
 			/>
 		</main>
-		<aside v-if="getErrorMessage"><i class="pi pi-exclamation-circle" /> {{ getErrorMessage }}</aside>
+		<aside v-if="getErrorMessage"><i class="ml-2 pi pi-exclamation-circle" /> {{ getErrorMessage }}</aside>
 	</div>
 </template>
 

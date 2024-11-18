@@ -1,16 +1,16 @@
 <template>
 	<div class="parameter-entry flex flex-column flex-1">
-		<header>
+		<header class="gap-1 pt-2 pb-2">
 			<div class="flex">
 				<strong>{{ parameterId }}</strong>
 				<span v-if="name" class="ml-1">{{ '| ' + name }}</span>
 				<template v-if="units">
-					<label class="ml-2">Unit</label>
+					<label class="ml-auto">Unit:</label>
 					<span class="ml-1">{{ units }}</span>
 				</template>
 
 				<template v-if="concept">
-					<label class="ml-auto">Concept</label>
+					<label class="ml-6">Concept:</label>
 					<span class="ml-1">{{ concept }}</span>
 				</template>
 			</div>
@@ -40,7 +40,7 @@
 						option-label="name"
 						option-value="value"
 						:options="distributionTypeOptions()"
-						class="mr-3"
+						class="mr-3 parameter-input"
 					/>
 					<!-- Constant -->
 					<tera-input-number
@@ -54,6 +54,7 @@
 								distribution: formatPayloadFromParameterChange({ value: $event })
 							})
 						"
+						class="parameter-input"
 					/>
 					<!-- Uniform Distribution -->
 					<template v-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Uniform">
@@ -67,7 +68,7 @@
 									distribution: formatPayloadFromParameterChange({ minimum: $event })
 								})
 							"
-							class="mr-2"
+							class="mr-2 parameter-input"
 						/>
 						<tera-input-number
 							label="Max"
@@ -79,6 +80,7 @@
 									distribution: formatPayloadFromParameterChange({ maximum: $event })
 								})
 							"
+							class="parameter-input"
 						/>
 					</template>
 				</span>
@@ -244,5 +246,9 @@ label {
 	& > span {
 		width: 20%;
 	}
+}
+
+.parameter-input {
+	height: 2rem;
 }
 </style>

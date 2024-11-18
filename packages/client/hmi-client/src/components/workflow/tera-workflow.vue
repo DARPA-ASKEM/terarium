@@ -54,7 +54,7 @@
 			<div class="warning-banner" :class="{ visible: warningBanner && hasInvalidNodes }">
 				A yellow header indicates that the node is stale due to upstream changes. Rerun to update.
 				<a class="ml-auto mr-4" @click="dontShowAgain">Don't show this again</a
-				><Button class="mr-2" icon="pi pi-times" text @click="warningBanner = false" />
+				><Button class="mr-2" icon="pi pi-times" size="small" text rounded @click="warningBanner = false" />
 			</div>
 		</template>
 		<!-- data -->
@@ -1064,7 +1064,7 @@ onUnmounted(() => {
 	height: 0;
 	overflow: hidden;
 	padding-left: 1rem;
-	transition: height 0.5s ease-out;
+	transition: height 0.15s ease-out;
 	&.visible {
 		height: 2rem;
 	}

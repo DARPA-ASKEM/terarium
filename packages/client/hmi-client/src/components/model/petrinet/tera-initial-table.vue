@@ -7,7 +7,7 @@
 			</template>
 
 			<ul>
-				<li v-for="{ baseInitial, childInitials, isVirtual } in initialList" :key="baseInitial">
+				<li v-for="{ baseInitial, childInitials, isVirtual } in initialList" :key="baseInitial" class="element-card">
 					<!-- Stratified -->
 					<section v-if="isVirtual" class="initial-entry-stratified">
 						<Accordion multiple>
@@ -123,11 +123,18 @@ ul {
 	padding-left: var(--gap-1);
 
 	& li {
-		border-bottom: 1px solid var(--gray-300);
+		border-bottom: 1px solid var(--surface-border-light);
 		list-style: none;
 		margin-bottom: var(--gap-1-5);
 		padding-bottom: var(--gap-1-5);
 	}
+}
+
+.element-card {
+	background-color: var(--surface-0);
+}
+.element-card:hover {
+	background-color: var(--surface-50);
 }
 
 .initial-entry-stratified {

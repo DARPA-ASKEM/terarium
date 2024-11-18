@@ -34,13 +34,7 @@
 			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" popup :pt="optionsMenuPt" />
 			<aside class="btn-group">
 				<tera-asset-enrichment :asset-type="AssetType.Model" :assetId="assetId" @finished-job="fetchModel" />
-				<Button
-					label="Reset"
-					severity="secondary"
-					outlined
-					@click="onReset"
-					:disabled="!(hasChanged && hasEditPermission)"
-				/>
+
 				<Button
 					v-if="isSaveForReuse"
 					label="Save for re-use"
@@ -145,9 +139,6 @@ const hasChanged = computed(() => !isEqual(model.value, temporaryModel.value));
 const hasEditPermission = useProjects().hasEditPermission();
 
 // Edit menu
-function onReset() {
-	temporaryModel.value = cloneDeep(model.value);
-}
 async function onSave() {
 	if (!hasEditPermission || !temporaryModel.value) return;
 	await updateModel(temporaryModel.value);
