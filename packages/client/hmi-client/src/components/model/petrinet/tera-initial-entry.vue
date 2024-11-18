@@ -21,7 +21,7 @@
 					<tera-input-text
 						label="Expression"
 						error-empty
-						:model-value="getInitialExpression(modelConfiguration, initialId)"
+						:model-value="getExpression()"
 						@update:model-value="onExpressionChange($event)"
 					/>
 				</span>
@@ -39,7 +39,7 @@
 		<katex-element
 			v-else
 			class="expression"
-			:expression="stringToLatexExpression(getInitialExpression(modelConfiguration, initialId))"
+			:expression="stringToLatexExpression(getExpression())"
 			:throw-on-error="false"
 		/>
 		<tera-initial-other-value-modal
@@ -97,12 +97,23 @@ const isExpressionEmpty = ref(false);
 const concept = ref('');
 const sourceOpen = ref(false);
 const showOtherConfigValueModal = ref(false);
+const expression = ref('');
 
 const getOtherValuesLabel = computed(() => `Other Values(${otherValueList.value?.length})`);
 
 function onExpressionChange(value) {
 	isExpressionEmpty.value = isNumberInputEmpty(value);
-	emit('update-expression', { id: props.initialId, value });
+	expression.value = value;
+	if (!isExpressionEmpty.value) {
+		emit('update-expression', { id: props.initialId, value });
+	}
+}
+
+function getExpression() {
+	if (!isExpressionEmpty.value) {
+		return getInitialExpression(props.modelConfiguration, props.initialId);
+	}
+	return expression.value;
 }
 
 function getSourceLabel(initialId) {

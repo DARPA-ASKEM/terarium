@@ -205,10 +205,12 @@ function isParameterInputEmpty(parameter) {
 
 function onParameterChange(value, parameter) {
 	isParameterEmpty.value = isNumberInputEmpty(value);
-	emit('update-parameter', {
-		id: props.parameterId,
-		distribution: formatPayloadFromParameterChange({ [parameter]: value })
-	});
+	if (!isParameterEmpty.value) {
+		emit('update-parameter', {
+			id: props.parameterId,
+			distribution: formatPayloadFromParameterChange({ [parameter]: value })
+		});
+	}
 }
 
 onMounted(async () => {
