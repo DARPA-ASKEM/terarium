@@ -91,6 +91,31 @@ public class RebacUser extends RebacObject {
 		reBACService.removeRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.READER);
 	}
 
+	/**
+	 * Remove all relationships between this group and the given object.
+	 * Except the provided relationship, if it doesn't exist, it will be added
+	 */
+	public void removeAllRelationsExceptOne(
+		final RebacObject rebacObject,
+		final Schema.Relationship relationshipToIgnore
+	) throws Exception {
+		final Schema.Relationship[] relationships = {
+			Schema.Relationship.READER,
+			Schema.Relationship.WRITER,
+			Schema.Relationship.CREATOR,
+			Schema.Relationship.ADMIN
+		};
+		for (Schema.Relationship relationship : relationships) {
+			if (relationship == relationshipToIgnore) {
+				try {
+					reBACService.createRelationship(getSchemaObject(), rebacObject.getSchemaObject(), relationship);
+				} catch (RelationshipAlreadyExistsException ignore) {}
+			} else {
+				reBACService.removeRelationship(getSchemaObject(), rebacObject.getSchemaObject(), relationship);
+			}
+		}
+	}
+
 	public PermissionGroup createGroup(final String name) throws Exception, RelationshipAlreadyExistsException {
 		final PermissionGroup group = reBACService.createGroup(name);
 		reBACService.createRelationship(

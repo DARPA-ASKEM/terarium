@@ -155,7 +155,7 @@ async function setAccessibility(projectId: Project['id'], isPublic: boolean): Pr
 
 async function setSample(projectId: Project['id'], isSample: boolean): Promise<boolean> {
 	try {
-		const response = await API.post(`projects/set-sample/${projectId}`, { sample: isSample });
+		const response = await API.put(`projects/set-sample/${projectId}/${isSample}`);
 		return response?.status === 200;
 	} catch (error) {
 		console.error(error);
