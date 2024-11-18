@@ -220,7 +220,6 @@ async function refreshMMT() {
 	const response = await getMMT(temporaryModel.value);
 	if (!response) return;
 	mmtData.value = response;
-	console.log(mmtData.value);
 }
 
 function updateTemporaryModel(newModel: Model) {
@@ -259,7 +258,6 @@ function onUpdateModelPart(property: 'state' | 'parameter' | 'observable' | 'tra
 		default:
 			break;
 	}
-	console.log(2);
 	updateTemporaryModel(newModel);
 }
 
