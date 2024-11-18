@@ -182,7 +182,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-item', 'open-matrix']);
 
-const MAX_NUMBER_OF_ROWS = 10;
+const MAX_NUMBER_OF_ROWS = 5;
 
 const editingState = ref(
 	Array.from({ length: props.items.length }, () => ({

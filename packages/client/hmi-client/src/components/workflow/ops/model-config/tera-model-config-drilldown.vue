@@ -257,7 +257,9 @@ import { getMMT, getModel, getModelConfigurationsForModel, getCalendarSettingsFr
 import {
 	createModelConfiguration,
 	getArchive,
+	getModelInitials,
 	getMissingInputAmount,
+	getModelParameters,
 	getModelConfigurationById,
 	setInitialExpression,
 	setInitialSource,
@@ -271,7 +273,11 @@ import { AssetType, Observable } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
-import { isModelMissingMetadata } from '@/model-representation/service';
+import {
+	isModelMissingMetadata,
+	getParameters as getAmrParameters,
+	getInitials as getAmrInitials
+} from '@/model-representation/service';
 import Message from 'primevue/message';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
@@ -631,6 +637,25 @@ const initialize = async (overwriteWithState: boolean = false) => {
 			knobs.value.transientModelConfig = cloneDeep(originalConfig);
 		} else {
 			knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
+		}
+	}
+
+	if (model.value) {
+		const initials = getModelInitials(
+			knobs.value.transientModelConfig,
+			mmt.value.annotations.name,
+			getAmrInitials(model.value)
+		);
+		if (initials.length) {
+			knobs.value.transientModelConfig.initialSemanticList = initials;
+		}
+		const parameters = getModelParameters(
+			knobs.value.transientModelConfig,
+			mmt.value.annotations.name,
+			getAmrParameters(model.value)
+		);
+		if (parameters.length) {
+			knobs.value.transientModelConfig.parameterSemanticList = parameters;
 		}
 	}
 
