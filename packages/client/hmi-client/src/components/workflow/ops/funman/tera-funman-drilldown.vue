@@ -74,7 +74,7 @@
 								</li>
 							</ul>
 							<Button
-								class="mt-2"
+								class="my-2"
 								text
 								icon="pi pi-plus"
 								label="Add constraint"
