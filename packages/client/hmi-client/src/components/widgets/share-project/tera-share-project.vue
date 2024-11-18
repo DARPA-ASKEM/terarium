@@ -1,14 +1,14 @@
 <template>
 	<Dialog
-		v-model:visible="visible"
 		modal
-		:closable="false"
 		header="Share project"
-		@hide="$emit('update:modelValue', false)"
+		style="width: 30rem"
+		v-model:visible="visible"
+		:closable="false"
 		@after-hide="onAfterHide"
-		:style="{ width: '35rem' }"
+		@hide="$emit('update:modelValue', false)"
 	>
-		<section class="mr-2">
+		<main>
 			<Dropdown
 				v-model="selectedUser"
 				:options="usersMenu"
@@ -55,9 +55,15 @@
 				</Dropdown>
 				<div class="caption">{{ generalAccessCaption }}</div>
 			</section>
-		</section>
+			<section>
+				<h6>Sample project</h6>
+				<input type="checkbox" id="sample-project" v-model="isSample" />
+				<p>This will make the project public and only editable by <em>administrator</em>.</p>
+				<span>{{}}</span>
+			</section>
+		</main>
 		<template #footer>
-			<Button label="Done" @click="setPermissions" size="large" />
+			<Button label="Done" @click="setPermissions" />
 		</template>
 	</Dialog>
 </template>
@@ -249,6 +255,26 @@ watch(
 		visible.value = props.modelValue;
 	}
 );
+
+/**
+ * Sample project
+ */
+const isSample = ref(props.project.sampleProject ?? false);
+const isSampleLoading = ref<boolean>(false);
+const isSampleMessage = ref<string>('');
+watch(isSample, (value) => {
+	useProjects()
+		.setSample(props.project.id, value)
+		.then((response) => {
+			isSampleLoading.value = false;
+
+			// In the case of an error, reset the value and show a message
+			if (!response) {
+				isSample.value = !value;
+				isSampleMessage.value = 'An error occurred while updating the sample project status. Please try again later.';
+			}
+		});
+});
 </script>
 
 <style scoped>
