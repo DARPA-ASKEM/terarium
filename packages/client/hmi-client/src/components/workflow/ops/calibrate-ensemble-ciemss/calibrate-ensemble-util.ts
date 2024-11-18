@@ -43,7 +43,6 @@ export function formatCalibrateModelConfigurations(
 	weights: CalibrateEnsembleWeights
 ): EnsembleModelConfigs[] {
 	const ensembleModelConfigMap: { [key: string]: EnsembleModelConfigs } = {};
-	const totalWeight = Object.values(weights).reduce((acc, curr) => acc + curr, 0) ?? 1;
 	// 1. map the weights to the ensemble model configs
 	Object.entries(weights).forEach(([key, value]) => {
 		// return if there is no weight
@@ -52,7 +51,7 @@ export function formatCalibrateModelConfigurations(
 		const ensembleModelConfig: EnsembleModelConfigs = {
 			id: key,
 			solutionMappings: {},
-			weight: value / totalWeight
+			weight: value
 		};
 
 		ensembleModelConfigMap[key] = ensembleModelConfig;

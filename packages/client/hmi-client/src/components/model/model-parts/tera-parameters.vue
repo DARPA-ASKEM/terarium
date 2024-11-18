@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import { StratifiedMatrix } from '@/types/Model';
 import type { ModelPartItem } from '@/types/Model';
 import { Model } from '@/types/Types';
@@ -41,47 +41,43 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-parameter']);
 
-const parameters = computed(() => getParameters(props.model));
-const collapsedParameters = computed(() => collapseParameters(props.mmt, props.mmtParams));
-const parameterList = computed<
-	{
-		base: ModelPartItem;
-		children: ModelPartItem[];
-		isParent: boolean;
-	}[]
->(() =>
-	Array.from(collapsedParameters.value.keys()).map((id) => {
-		const childIds = collapsedParameters.value.get(id) ?? [];
-		const isParent = childIds.length > 1;
-		const children = childIds
-			.map((childId) => {
-				const p = parameters.value.find((param) => param.id === childId);
-				if (!p) return null;
-				return {
-					id: p.id,
-					name: p.name,
-					description: p.description,
-					grounding: p.grounding,
-					unitExpression: p.units?.expression
+const parameters = getParameters(props.model);
+const collapsedParameters = collapseParameters(props.mmt, props.mmtParams);
+const parameterList: {
+	base: ModelPartItem;
+	children: ModelPartItem[];
+	isParent: boolean;
+}[] = Array.from(collapsedParameters.keys()).map((id) => {
+	const childIds = collapsedParameters.get(id) ?? [];
+	const isParent = childIds.length > 1;
+	const children = childIds
+		.map((childId) => {
+			const p = parameters.find((param) => param.id === childId);
+			if (!p) return null;
+			return {
+				id: p.id,
+				name: p.name,
+				description: p.description,
+				grounding: p.grounding,
+				unitExpression: p.units?.expression
+			};
+		})
+		.filter(Boolean) as ModelPartItem[];
+
+	const baseParameter = parameters.find((p) => p.id === id);
+	const base: ModelPartItem =
+		isParent || !baseParameter
+			? { id }
+			: {
+					id,
+					name: baseParameter.name,
+					description: baseParameter.description,
+					grounding: baseParameter.grounding,
+					unitExpression: baseParameter.units?.expression
 				};
-			})
-			.filter(Boolean) as ModelPartItem[];
 
-		const baseParameter = parameters.value.find((p) => p.id === id);
-		const base: ModelPartItem =
-			isParent || !baseParameter
-				? { id }
-				: {
-						id,
-						name: baseParameter.name,
-						description: baseParameter.description,
-						grounding: baseParameter.grounding,
-						unitExpression: baseParameter.units?.expression
-					};
-
-		return { base, children, isParent };
-	})
-);
+	return { base, children, isParent };
+});
 
 const matrixModalId = ref('');
 </script>
