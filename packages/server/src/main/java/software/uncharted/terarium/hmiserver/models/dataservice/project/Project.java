@@ -26,6 +26,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddingType;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -139,5 +140,20 @@ public class Project extends TerariumAsset {
 		} catch (final Exception e) {
 			throw new RuntimeException("Failed to serialize model embedding text into JSON", e);
 		}
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public Map<TerariumAssetEmbeddingType, String> getEmbeddingsSourceByType() {
+		final Map<TerariumAssetEmbeddingType, String> sources = super.getEmbeddingsSourceByType();
+
+		if (overviewContent != null) {
+			sources.put(TerariumAssetEmbeddingType.OVERVIEW, new String(overviewContent));
+		}
+		if (metadata != null) {
+			sources.put(TerariumAssetEmbeddingType.METADATA, metadata.toString());
+		}
+
+		return sources;
 	}
 }

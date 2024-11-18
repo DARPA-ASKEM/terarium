@@ -451,7 +451,7 @@ public class ProjectController {
 		value = {
 			@ApiResponse(
 				responseCode = "200",
-				description = "Project marked for deletion",
+				description = "Project updated",
 				content = {
 					@Content(
 						mediaType = "application/json",
@@ -511,6 +511,58 @@ public class ProjectController {
 		}
 
 		return ResponseEntity.ok(updatedProject.get());
+	}
+
+	@Operation(summary = "Resync Project Search Assets")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Project assets updated in index",
+				content = {
+					@Content(
+						mediaType = "application/json",
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class)
+					)
+				}
+			),
+			@ApiResponse(
+				responseCode = "403",
+				description = "The current user does not have update privileges to this project",
+				content = @Content
+			),
+			@ApiResponse(responseCode = "404", description = "Project could not be found", content = @Content),
+			@ApiResponse(
+				responseCode = "503",
+				description = "An error occurred when trying to communicate with either the postgres or spicedb" + " databases",
+				content = @Content
+			)
+		}
+	)
+	@PostMapping("/update-embeddings/{id}")
+	@Secured(Roles.USER)
+	public ResponseEntity<Project> updateProjectAssets(@PathVariable("id") final UUID id) {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), id);
+
+		final Optional<Project> originalProject = projectService.getProject(id);
+		if (originalProject.isEmpty()) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
+		}
+
+		final List<ProjectAsset> assets = projectAssetService.getProjectAssets(id, permission);
+
+		for (final ProjectAsset asset : assets) {
+			try {
+				final Future<Void> future = projectSearchService.generateAndUpsertProjectAssetEmbeddings(id, asset);
+				if (future != null) {
+					future.get();
+				}
+			} catch (final Exception e) {
+				log.error("Error updating project asset in index, skipping", e);
+			}
+		}
+
+		return ResponseEntity.ok(originalProject.get());
 	}
 
 	@Operation(summary = "Copy a project")

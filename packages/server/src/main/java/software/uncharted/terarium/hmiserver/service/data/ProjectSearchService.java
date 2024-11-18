@@ -17,6 +17,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -30,6 +31,7 @@ import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddingType;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
@@ -100,6 +102,7 @@ public class ProjectSearchService {
 
 		UUID assetId;
 		AssetType assetType;
+		TerariumAssetEmbeddingType embeddingType;
 		private String embeddingId;
 		private double[] vector;
 		private long[] span;
@@ -344,8 +347,9 @@ public class ProjectSearchService {
 	 */
 	public Future<Void> generateAndUpsertProjectAssetEmbeddings(final UUID projectId, final TerariumAsset asset) {
 		if (!isRunningTestProfile() && !asset.getTemporary()) {
-			final String embeddingText = asset.getEmbeddingSourceText();
-			if (embeddingText == null) {
+			final Map<TerariumAssetEmbeddingType, String> embeddingTexts = asset.getEmbeddingsSourceByType();
+			if (embeddingTexts.isEmpty()) {
+				log.warn("No embedding sources for asset {}, not indexing anything", asset.getId());
 				return null;
 			}
 
@@ -354,14 +358,8 @@ public class ProjectSearchService {
 			return CompletableFuture.runAsync(() -> {
 				new Thread(() -> {
 					try {
-						final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(embeddingText);
-
-						final ProjectAssetEmbedding projectAssetEmbedding = new ProjectAssetEmbedding();
-						projectAssetEmbedding.setAssetId(asset.getId());
-						projectAssetEmbedding.setAssetType(AssetType.getAssetType(asset.getClass()));
-						projectAssetEmbedding.setEmbeddingId(embeddings.getEmbeddings().get(0).getEmbeddingId());
-						projectAssetEmbedding.setVector(embeddings.getEmbeddings().get(0).getVector());
-						projectAssetEmbedding.setSpan(embeddings.getEmbeddings().get(0).getSpan());
+						final Map<TerariumAssetEmbeddingType, TerariumAssetEmbeddings> embeddings =
+							embeddingService.generateEmbeddingsBySource(embeddingTexts);
 
 						final ProjectDocument projectDoc = elasticService.get(
 							getAlias(),
@@ -369,21 +367,35 @@ public class ProjectSearchService {
 							ProjectDocument.class
 						);
 
-						// update the embedding
-						if (projectDoc.getAssetEmbeddings() == null) {
-							projectDoc.setAssetEmbeddings(List.of(projectAssetEmbedding));
-						} else {
-							int index = -1;
-							for (int i = 0; i < projectDoc.getAssetEmbeddings().size(); i++) {
-								if (projectDoc.getAssetEmbeddings().get(i).getAssetId().equals(asset.getId())) {
-									index = i;
-									break;
-								}
-							}
-							if (index != -1) {
-								projectDoc.getAssetEmbeddings().set(index, projectAssetEmbedding);
+						for (final Map.Entry<TerariumAssetEmbeddingType, TerariumAssetEmbeddings> entry : embeddings.entrySet()) {
+							final TerariumAssetEmbeddings embedding = entry.getValue();
+
+							final ProjectAssetEmbedding projectAssetEmbedding = new ProjectAssetEmbedding();
+							projectAssetEmbedding.setAssetId(asset.getId());
+							projectAssetEmbedding.setAssetType(AssetType.getAssetType(asset.getClass()));
+							projectAssetEmbedding.setEmbeddingId(embedding.getEmbeddings().get(0).getEmbeddingId());
+							projectAssetEmbedding.setVector(embedding.getEmbeddings().get(0).getVector());
+							projectAssetEmbedding.setSpan(embedding.getEmbeddings().get(0).getSpan());
+
+							// update the embedding on the project
+							if (projectDoc.getAssetEmbeddings() == null) {
+								projectDoc.setAssetEmbeddings(List.of(projectAssetEmbedding));
 							} else {
-								projectDoc.getAssetEmbeddings().add(projectAssetEmbedding);
+								int index = -1;
+								for (int i = 0; i < projectDoc.getAssetEmbeddings().size(); i++) {
+									if (
+										projectDoc.getAssetEmbeddings().get(i).getAssetId().equals(asset.getId()) &&
+										projectDoc.getAssetEmbeddings().get(i).getEmbeddingType().equals(entry.getKey())
+									) {
+										index = i;
+										break;
+									}
+								}
+								if (index != -1) {
+									projectDoc.getAssetEmbeddings().set(index, projectAssetEmbedding);
+								} else {
+									projectDoc.getAssetEmbeddings().add(projectAssetEmbedding);
+								}
 							}
 						}
 
@@ -430,6 +442,7 @@ public class ProjectSearchService {
 
 		UUID assetId;
 		AssetType assetType;
+		TerariumAssetEmbeddingType embeddingType;
 		Float score;
 	}
 
@@ -525,6 +538,7 @@ public class ProjectSearchService {
 						final ProjectSearchAsset asset = new ProjectSearchAsset();
 						asset.assetId = innerHit.getSource().getAssetId();
 						asset.assetType = innerHit.getSource().getAssetType();
+						asset.embeddingType = innerHit.getSource().getEmbeddingType();
 						asset.score = innerHit.getScore();
 
 						response.hits.add(asset);

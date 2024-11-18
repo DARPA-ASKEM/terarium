@@ -20,11 +20,15 @@ def main():
         taskrunner.log("Creating Embedding from input")
         input_model = EmbeddingModel(**input_dict)
 
-        taskrunner.log("Sending request to OpenAI API")
-        response = embedding_chain(text=input_model.text)
-        taskrunner.log("Received response from OpenAI API")
+        responses = []
 
-        taskrunner.write_output_dict_with_timeout({"response": response})
+        for text in input_model.text:
+            taskrunner.log("Sending request to OpenAI API")
+            response = embedding_chain(text=text)
+            taskrunner.log("Received response from OpenAI API")
+            responses.append(responses)
+
+        taskrunner.write_output_dict_with_timeout({"response": responses})
 
     except Exception as e:
         sys.stderr.write(f"Error: {str(e)}\n")

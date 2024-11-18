@@ -13,8 +13,10 @@ import jakarta.persistence.MappedSuperclass;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -157,5 +159,18 @@ public abstract class TerariumAsset extends TerariumEntity {
 	@TSIgnore
 	public String getEmbeddingSourceText() {
 		return name + " " + description;
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public Map<TerariumAssetEmbeddingType, String> getEmbeddingsSourceByType() {
+		final Map<TerariumAssetEmbeddingType, String> sources = new HashMap<>();
+		if (name != null) {
+			sources.put(TerariumAssetEmbeddingType.NAME, name);
+		}
+		if (description != null) {
+			sources.put(TerariumAssetEmbeddingType.DESCRIPTION, description);
+		}
+		return sources;
 	}
 }
