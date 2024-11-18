@@ -61,9 +61,9 @@
 					<i v-if="isSampleLoading" class="pi pi-spin pi-spinner" style="color: var(--primary-color)" />
 					<input v-else type="checkbox" id="sample-project" v-model="isSample" class="m-0" />
 					<strong class="ml-2">Sample project</strong>
-					<span class="block pt-1 text-sm"
-						>A sample project is public and only editable by an <em>administrator</em>.</span
-					>
+					<span class="block pt-1 text-sm">
+						A sample project is public and only editable by an <em>administrator</em>.
+					</span>
 				</label>
 			</section>
 		</main>
