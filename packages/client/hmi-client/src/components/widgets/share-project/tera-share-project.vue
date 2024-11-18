@@ -56,7 +56,7 @@
 				<div class="text-sm">{{ generalAccessCaption }}</div>
 			</section>
 			<section v-if="useAuthStore().isAdmin">
-				<tera-progress-spinner v-if="isSampleLoading">Updating project</tera-progress-spinner>
+				<i v-if="isSampleLoading" class="pi pi-spin pi-spinner" style="color: var(--primary-color)" />
 				<input v-else type="checkbox" id="sample-project" v-model="isSample" class="m-0" />
 				<strong class="ml-2">Sample project</strong>
 				<p class="pt-1 text-sm">A sample project is public and only editable by an <em>administrator</em>.</p>
@@ -77,7 +77,6 @@ import { getUsers } from '@/services/user';
 import type { PermissionRelationships, PermissionUser, Project } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import useAuthStore from '@/stores/auth';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraUserCard from './tera-user-card.vue';
 
 enum Accessibility {
