@@ -128,16 +128,20 @@
 		>
 			<article>
 				<img src="@/assets/svg/terarium-logo.svg" alt="Terarium logo" class="about-terarium-logo" />
-				<p class="text-2xl line-height-3 about-top-line">
+				<p class="text-lg line-height-3 about-top-line">
 					Terarium is a comprehensive <span class="underlined">modeling</span> and
 					<span class="underlined">simulation</span> platform designed to help researchers and analysts:
 				</p>
-				<p class="about-middle"><span class="pi pi-search about-bullet"></span>Find models in academic literature</p>
-				<p class="about-middle"><span class="pi pi-sliders-h about-bullet"></span>Parameterize and calibrate them</p>
+				<p class="about-middle">
+					<span class="pi pi-search about-bullet"></span>Extract models from academic literature
+				</p>
+				<p class="about-middle">
+					<span class="pi pi-sliders-h about-bullet"></span>Calibrate them with real world data
+				</p>
 				<p class="about-middle">
 					<span class="pi pi-cog about-bullet"></span>Run simulations to test a variety of scenarios, and
 				</p>
-				<p class="about-middle"><span class="pi pi-chart-line about-bullet"></span>Analyze the results.</p>
+				<p class="about-middle"><span class="pi pi-chart-line about-bullet"></span>Compare the results.</p>
 			</article>
 			<article class="about-uncharted-section">
 				<img
@@ -553,7 +557,7 @@ nav {
 	border-radius: 50%;
 }
 .about-middle {
-	font-size: 1.25rem;
+	font-size: 1rem;
 	display: flex;
 	align-items: center;
 }
@@ -585,7 +589,7 @@ nav {
 	margin-bottom: 0.5rem;
 }
 .about-bottom-line {
-	color: var(--text-color-subdued);
+	color: var(--text-color);
 }
 
 .modal-footer {
