@@ -383,7 +383,7 @@ const userMenuItems = ref([
 		}
 	},
 	{
-		label: 'User Administration',
+		label: 'User administration',
 		command: () => {
 			router.push(RoutePath.UserAdmin);
 		},
