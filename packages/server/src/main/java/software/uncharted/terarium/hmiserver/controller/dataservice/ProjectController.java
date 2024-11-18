@@ -1264,7 +1264,7 @@ public class ProjectController {
 					}
 
 					// When we revert a project to a non-sample project, and
-					// the user is the same as the project creator it will become the creator of the project once more
+					// the user is the same as the project author it will become the creator of the project once more
 					if (!isSample && contributor.getUserId().equals(project.get().getUserId())) {
 						projectPermissionsService.setProjectPermissions(
 							rebacProject,
