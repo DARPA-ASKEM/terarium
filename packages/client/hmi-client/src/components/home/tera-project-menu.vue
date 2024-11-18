@@ -12,22 +12,28 @@ import { isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import { computed, ref } from 'vue';
-import { exportProjectAsFile, setSample } from '@/services/project';
+import { exportProjectAsFile } from '@/services/project';
 import { AcceptedExtensions } from '@/types/common';
 import { MenuItem } from 'primevue/menuitem';
 import useAuthStore from '@/stores/auth';
-import { useToastService } from '@/services/toast';
 
 const props = defineProps<{ project: Project | null }>();
 
 const emit = defineEmits(['copied-project']);
 
 // Triggers modals from tera-common-modal-dialogs.vue to open
-const { isShareDialogVisible, isRemoveDialogVisible, isProjectConfigDialogVisible, menuProject } = useProjectMenu();
+const {
+	isShareDialogVisible,
+	isRemoveDialogVisible,
+	isProjectConfigDialogVisible,
+	isMakeSampleDialogVisible,
+	menuProject
+} = useProjectMenu();
 
 const isCopying = ref(false);
 
 const menu = ref();
+
 const editDetailsMenuItem = {
 	label: 'Edit details',
 	icon: 'pi pi-pencil',
@@ -35,6 +41,7 @@ const editDetailsMenuItem = {
 		isProjectConfigDialogVisible.value = true;
 	}
 };
+
 const shareMenuItem = {
 	label: 'Share',
 	icon: 'pi pi-user-plus',
@@ -42,6 +49,7 @@ const shareMenuItem = {
 		isShareDialogVisible.value = true;
 	}
 };
+
 const removeMenuItem = {
 	label: 'Delete',
 	icon: 'pi pi-trash',
@@ -49,6 +57,7 @@ const removeMenuItem = {
 		isRemoveDialogVisible.value = true;
 	}
 };
+
 const copyMenuItem = {
 	label: 'Copy',
 	icon: 'pi pi-clone',
@@ -86,14 +95,7 @@ const makeSampleMenuItem = {
 	label: 'Make a sample',
 	icon: 'pi pi-star',
 	command: () => {
-		setSample(props.project?.id).then((response) => {
-			if (response) {
-				useToastService().success(undefined, 'Project set as sample');
-				useProjects().refresh();
-			} else {
-				useToastService().error(undefined, 'Error setting project as sample');
-			}
-		});
+		isMakeSampleDialogVisible.value = true;
 	}
 };
 
@@ -119,7 +121,7 @@ const projectMenuItems = computed(() => {
 	return items;
 });
 
-function toggle(event) {
+function toggle(event: any) {
 	menu.value.toggle(event);
 }
 </script>
