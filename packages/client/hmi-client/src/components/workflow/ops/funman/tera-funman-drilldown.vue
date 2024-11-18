@@ -35,7 +35,7 @@
 								<li>
 									<section class="shadow-1">
 										<header class="flex w-full gap-3 mb-2">
-											<tera-toggleable-input v-model="knobs.compartmentalConstraint.name" tag="h3" />
+											<tera-toggleable-input v-model="knobs.compartmentalConstraint.name" tag="h3" class="nudge-left" />
 											<div class="ml-auto flex align-items-center">
 												<label class="mr-2">Active</label>
 												<InputSwitch class="mr-3" v-model="knobs.compartmentalConstraint.isActive" />
@@ -1051,5 +1051,9 @@ ul {
 .notebook-message {
 	padding-left: var(--gap-4);
 	font-size: var(--font-caption);
+}
+
+.nudge-left {
+	margin-left: -0.5rem;
 }
 </style>

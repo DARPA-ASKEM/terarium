@@ -8,6 +8,7 @@
 				:model-value="config.name"
 				tag="h3"
 				@update:model-value="emit('update-self', { key: 'name', value: $event })"
+				class="nudge-left"
 			/>
 			<div class="ml-auto flex align-items-center">
 				<label class="mr-2">Active</label>
@@ -262,5 +263,8 @@ ul {
 :deep(main:has(.madlib-input)) {
 	padding: 0;
 	height: 28px;
+}
+.nudge-left {
+	margin-left: -0.5rem;
 }
 </style>
