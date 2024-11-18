@@ -16,9 +16,7 @@
 		>
 			<template #content>
 				<div class="top-toolbar">
-					<p>Set your model checks and settings then click run.</p>
 					<div class="btn-group">
-						<Button label="Reset" outlined severity="secondary" disabled />
 						<Button :loading="showSpinner" label="Run" icon="pi pi-play" @click="run" />
 					</div>
 				</div>
@@ -29,13 +27,13 @@
 								Model checks
 								<i class="pi pi-info-circle pl-2" v-tooltip="validateParametersToolTip" />
 							</template>
-							<p class="mb-3">
+							<p class="mb-3 secondary-text">
 								Implement sanity checks on the state space of the model to see how the parameter space of the model is
 								partitioned into satisfiable and unsatisfiable regions separated by decision boundaries.
 							</p>
 							<ul>
 								<li>
-									<section>
+									<section class="shadow-1">
 										<header class="flex w-full gap-3 mb-2">
 											<tera-toggleable-input v-model="knobs.compartmentalConstraint.name" tag="h3" />
 											<div class="ml-auto flex align-items-center">
@@ -63,7 +61,7 @@
 										</div>
 									</section>
 								</li>
-								<li v-for="(cfg, index) in node.state.constraintGroups" :key="index">
+								<li v-for="(cfg, index) in node.state.constraintGroups" :key="index" class="shadow-1">
 									<tera-constraint-group-form
 										:config="cfg"
 										:index="index"
@@ -117,7 +115,7 @@
 									</div>
 								</span>
 								<label>Timepoints</label>
-								<code>
+								<code class="inset">
 									{{ stepList.map((step) => Number(step.toFixed(3))).join(', ') }}
 								</code>
 								<label>Tolerance</label>
@@ -973,7 +971,7 @@ watch(
 }
 
 code {
-	background-color: var(--gray-50);
+	background-color: var(--gray-200);
 	color: var(--text-color-subdued);
 	border-radius: var(--border-radius);
 	border: 1px solid var(--surface-border);
@@ -982,6 +980,10 @@ code {
 	font-size: var(--font-caption);
 	max-height: 10rem;
 	overflow: auto;
+}
+
+.inset {
+	box-shadow: inset 0px 0px 4px var(--surface-border);
 }
 
 .timespan {
