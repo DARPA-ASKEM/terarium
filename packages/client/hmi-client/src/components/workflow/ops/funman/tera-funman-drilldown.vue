@@ -43,7 +43,7 @@
 												<InputSwitch class="mr-3" v-model="knobs.compartmentalConstraint.isActive" />
 											</div>
 										</header>
-										<div class="flex align-items-center gap-6">
+										<div class="flex flex-wrap align-items-center gap-4">
 											<katex-element
 												:expression="
 													stringToLatexExpression(
@@ -52,11 +52,13 @@
 															.join('')
 													)
 												"
+												class="first-line"
 											/>
 											<katex-element
 												:expression="
 													stringToLatexExpression(`${stateIds.join('+')} = ${displayNumber(mass)} \\ \\forall \\ t`)
 												"
+												class="second-line"
 											/>
 										</div>
 									</section>
@@ -946,6 +948,18 @@ watch(
 
 .pi-info-circle {
 	margin-left: var(--gap-2);
+}
+
+/* force the constraint to linewrap if long*/
+.first-line:deep(.katex-html) {
+	display: flex;
+	flex-wrap: wrap;
+	width: 360px;
+}
+.first-line:deep(.katex-html .base) {
+	display: flex;
+	flex-wrap: wrap;
+	width: fit-content;
 }
 
 .secondary-text {
