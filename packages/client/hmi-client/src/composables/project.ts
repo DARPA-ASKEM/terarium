@@ -11,6 +11,7 @@ import * as ProjectService from '@/services/project';
 import type { PermissionRelationships, Project, ProjectAsset } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import { shallowRef } from 'vue';
+import { useToastService } from '@/services/toast';
 
 const TIMEOUT_MS = 100;
 
@@ -214,6 +215,24 @@ export function useProjects() {
 		}
 	}
 
+	/**
+	 * Make a project a sample project
+	 * @param {Project['id]} projectId - the id of the project to set as a sample project
+	 * @param {boolean} isSample - true if the project should be a sample project, false otherwise
+	 */
+	async function setSample(projectId: Project['id'], isSample: boolean): Promise<boolean> {
+		const projectToUpdate = allProjects.value?.find((project) => project.id === projectId);
+		if (projectToUpdate) {
+			const response = await ProjectService.setSample(projectId, isSample);
+			if (response) {
+				projectToUpdate.sampleProject = isSample;
+				return true;
+			}
+			useToastService().error(undefined, 'Error changing the sample status of the project');
+		}
+		return false;
+	}
+
 	async function getPermissions(projectId: Project['id']): Promise<PermissionRelationships | null> {
 		return ProjectService.getPermissions(projectId);
 	}
@@ -270,6 +289,7 @@ export function useProjects() {
 		remove,
 		refresh,
 		setAccessibility,
+		setSample,
 		getPermissions,
 		hasAssetInActiveProject,
 		hasEditPermission,

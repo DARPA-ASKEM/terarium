@@ -153,12 +153,12 @@ async function setAccessibility(projectId: Project['id'], isPublic: boolean): Pr
 	}
 }
 
-async function setSample(projectId: Project['id']): Promise<boolean> {
+async function setSample(projectId: Project['id'], isSample: boolean): Promise<boolean> {
 	try {
-		const response = await API.post(`projects/set-sample/${projectId}`);
+		const response = await API.post(`projects/set-sample/${projectId}`, { sample: isSample });
 		return response?.status === 200;
 	} catch (error) {
-		console.error(`The project was not made a sample project, ${error}`);
+		console.error(error);
 		return false;
 	}
 }
