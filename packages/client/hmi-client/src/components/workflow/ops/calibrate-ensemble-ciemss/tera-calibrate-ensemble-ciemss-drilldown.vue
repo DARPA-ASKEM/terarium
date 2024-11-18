@@ -93,6 +93,7 @@
 								<tera-signal-bars
 									v-if="modelConfiguration?.id"
 									class="ml-auto"
+									:min-option="1"
 									:model-value="knobs.configurationWeights[modelConfiguration.id] ?? 0"
 									@update:model-value="knobs.configurationWeights[modelConfiguration.id] = $event"
 									label="Relative certainty"
