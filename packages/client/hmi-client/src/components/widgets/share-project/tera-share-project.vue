@@ -63,7 +63,7 @@
 			</section>
 		</main>
 		<template #footer>
-			<Button label="Done" @click="setPermissions" />
+			<Button label="Done" @click="onDone" />
 		</template>
 	</Dialog>
 </template>
@@ -118,6 +118,11 @@ const generalAccessCaption = computed(() => {
 	}
 	return 'Anyone can view and copy this project.';
 });
+
+function onDone() {
+	useProjects().getAll();
+	setPermissions();
+}
 
 async function changeAccessibility({ label }: { label: Accessibility }) {
 	isUpdatingAccessibility.value = true;
@@ -238,6 +243,7 @@ watch(
 	async () => {
 		existingUsers.value = new Set();
 		users.value = (await getUsers()) ?? [];
+		isSample.value = props.project.sampleProject ?? false;
 	},
 	{ immediate: true }
 );
@@ -261,16 +267,19 @@ watch(
 /**
  * Sample project
  */
-const isSample = ref(props.project.sampleProject ?? false);
+const isSample = ref<boolean>(props.project.sampleProject ?? false);
 const isSampleLoading = ref<boolean>(false);
 watch(isSample, (value) => {
-	isSampleLoading.value = true;
-	useProjects()
-		.setSample(props.project.id, value)
-		.then((done) => {
-			isSampleLoading.value = false;
-			if (!done) isSample.value = !value;
-		});
+	// When the user decides to change the sample project status
+	if (props.project.sampleProject !== value) {
+		isSampleLoading.value = true;
+		useProjects()
+			.setSample(props.project.id, value)
+			.then((done) => {
+				isSampleLoading.value = false;
+				if (!done) isSample.value = !value;
+			});
+	}
 });
 </script>
 

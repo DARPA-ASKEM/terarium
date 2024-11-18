@@ -158,7 +158,7 @@ async function setSample(projectId: Project['id'], isSample: boolean): Promise<b
 		const response = await API.put(`projects/set-sample/${projectId}/${isSample}`);
 		return response?.status === 200;
 	} catch (error) {
-		console.error(error);
+		console.error('Unable to update Project sample status', error);
 		return false;
 	}
 }

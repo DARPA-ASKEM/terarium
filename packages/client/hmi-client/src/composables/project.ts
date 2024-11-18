@@ -224,10 +224,7 @@ export function useProjects() {
 		const projectToUpdate = allProjects.value?.find((project) => project.id === projectId);
 		if (projectToUpdate) {
 			const response = await ProjectService.setSample(projectId, isSample);
-			if (response) {
-				projectToUpdate.sampleProject = isSample;
-				return true;
-			}
+			if (response) return true;
 			useToastService().error(undefined, 'Error changing the sample status of the project');
 		}
 		return false;
