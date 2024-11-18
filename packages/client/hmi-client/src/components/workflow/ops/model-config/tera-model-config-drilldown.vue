@@ -525,7 +525,7 @@ const isLoading = ref(false);
 const amrInitials = ref();
 const amrParameters = ref();
 
-const missingInputsMessage = (amount, total) => {
+const getMissingInputsMessage = (amount, total) => {
 	const precent = (amount / total) * 100;
 	return amount ? `Missing values: ${amount}/${total} (${precent.toFixed(0)}%)` : '';
 };
@@ -536,7 +536,7 @@ const missingInputCount = (modelConfiguration: ModelConfiguration) => {
 	}
 	const total = amrInitials.value.length + amrParameters.value.length;
 	const amount = total - getTotalInput(modelConfiguration);
-	return missingInputsMessage(amount, total);
+	return getMissingInputsMessage(amount, total);
 };
 
 const selectedConfigMissingInputCount = computed(() => {
@@ -545,7 +545,7 @@ const selectedConfigMissingInputCount = computed(() => {
 	}
 	const amount = getMissingInputAmount(knobs.value.transientModelConfig);
 	const total = getTotalInput(knobs.value.transientModelConfig);
-	return missingInputsMessage(amount, total);
+	return getMissingInputsMessage(amount, total);
 });
 
 const model = ref<Model | null>(null);
