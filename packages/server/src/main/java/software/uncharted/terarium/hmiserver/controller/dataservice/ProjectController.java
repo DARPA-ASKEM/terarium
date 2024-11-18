@@ -1246,15 +1246,31 @@ public class ProjectController {
 					// When we make a project a sample project,
 					// Update all user permissions to READER only
 					if (isSample) {
-						rebacUser.removeAllRelationsExceptOne(rebacProject, Schema.Relationship.READER);
+						projectPermissionsService.removeProjectPermissions(
+							rebacProject,
+							rebacUser,
+							Schema.Relationship.CREATOR.toString()
+						);
+						projectPermissionsService.removeProjectPermissions(
+							rebacProject,
+							rebacUser,
+							Schema.Relationship.WRITER.toString()
+						);
+						projectPermissionsService.setProjectPermissions(
+							rebacProject,
+							rebacUser,
+							Schema.Relationship.READER.toString()
+						);
 					}
 
 					// When we revert a project to a non-sample project, and
 					// the user is the same as the project creator it will become the creator of the project once more
 					if (!isSample && contributor.getUserId().equals(project.get().getUserId())) {
-						try {
-							rebacUser.createCreatorRelationship(rebacProject);
-						} catch (final RelationshipAlreadyExistsException ignore) {}
+						projectPermissionsService.setProjectPermissions(
+							rebacProject,
+							rebacUser,
+							Schema.Relationship.CREATOR.toString()
+						);
 					}
 				}
 			}
