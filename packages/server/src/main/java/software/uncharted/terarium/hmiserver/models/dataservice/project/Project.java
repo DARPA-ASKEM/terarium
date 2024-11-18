@@ -70,6 +70,9 @@ public class Project extends TerariumAsset {
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "{}")
 	private Map<String, String> metadata;
 
+	@TSOptional
+	private Boolean sampleProject = false;
+
 	/** Information for the front-end to display/filter the project accordingly. */
 	@TSOptional
 	@Transient
@@ -98,6 +101,9 @@ public class Project extends TerariumAsset {
 		}
 		if (project.getThumbnail() != null) {
 			existingProject.setThumbnail(project.getThumbnail());
+		}
+		if (project.getSampleProject() != null) {
+			existingProject.setSampleProject(project.getSampleProject());
 		}
 		return existingProject;
 	}

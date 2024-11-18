@@ -1,15 +1,15 @@
 <template>
 	<div class="initial-entry" :class="{ empty: isExpressionEmpty }">
-		<header>
+		<header class="gap-1">
 			<div class="flex">
 				<strong>{{ initialId }}</strong>
 				<span v-if="name" class="ml-1">{{ '| ' + name }}</span>
 				<template v-if="unit">
-					<label class="ml-2">Unit</label>
+					<label class="ml-auto">Unit:</label>
 					<span class="ml-1">{{ unit }}</span>
 				</template>
 				<template v-if="concept">
-					<label class="ml-auto">Concept</label>
+					<label class="ml-6">Concept:</label>
 					<span class="ml-1">{{ concept }}</span>
 				</template>
 			</div>

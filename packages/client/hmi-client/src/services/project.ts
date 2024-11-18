@@ -5,7 +5,7 @@
 import API from '@/api/api';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import * as EventService from '@/services/event';
-import { AssetType, EventType, PermissionRelationships, Project } from '@/types/Types';
+import { AssetType, EventType, PermissionRelationships, Project, ProjectSearchResponse } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import type { Component, Ref } from 'vue';
 
@@ -153,6 +153,16 @@ async function setAccessibility(projectId: Project['id'], isPublic: boolean): Pr
 	}
 }
 
+async function setSample(projectId: Project['id']): Promise<boolean> {
+	try {
+		const response = await API.post(`projects/set-sample/${projectId}`);
+		return response?.status === 200;
+	} catch (error) {
+		console.error(`The project was not made a sample project, ${error}`);
+		return false;
+	}
+}
+
 async function getPermissions(projectId: Project['id']): Promise<PermissionRelationships | null> {
 	try {
 		const { status, data } = await API.get(`projects/${projectId}/permissions`);
@@ -275,6 +285,40 @@ function getAssetIcon(type: AssetType | string | null): string | Component {
 	return 'circle';
 }
 
+interface ProjectSearchOptions {
+	k?: number;
+	page?: number;
+	pageSize?: number;
+	limit?: number;
+}
+/**
+ * Find projects by KNN (k-nearest neighbors) search
+ *
+ * @param {string} query - the search query
+ * @param {ProjectSearchOptions} options - the search options
+ * @returns {Array<Project>} - the list of projects
+ */
+async function findProjects(query: string, options?: ProjectSearchOptions): Promise<ProjectSearchResponse[]> {
+	try {
+		if (!query) return [];
+		let url = `/projects/knn?text=${query}`;
+
+		// Only add parameters if they exist and are greater than 0
+		if (options?.k && options.k > 0) url += `&k=${options.k}`;
+		if (options?.page && options.page > 0) url += `&page=${options.page}`;
+		if (options?.pageSize && options.pageSize > 0) url += `&page-size=${options.pageSize}`;
+		if (options?.limit && options.limit > 0) url += `&limit=${options.limit}`;
+
+		const response = await API.get(url);
+		const { status, data } = response;
+		if (status !== 200 || !data) return [];
+		return (data as ProjectSearchResponse[]) ?? [];
+	} catch (error) {
+		console.error(error);
+		return [];
+	}
+}
+
 export {
 	addAsset,
 	clone,
@@ -288,8 +332,10 @@ export {
 	removePermissions,
 	setAccessibility,
 	setPermissions,
+	setSample,
 	update,
 	updatePermissions,
 	exportProjectAsFile,
-	createProjectFromFile
+	createProjectFromFile,
+	findProjects
 };

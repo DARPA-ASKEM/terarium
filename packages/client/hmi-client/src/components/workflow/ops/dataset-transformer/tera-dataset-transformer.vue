@@ -40,7 +40,7 @@
 <script setup lang="ts">
 // Proxy to use tera-dataset via a workflow context
 
-import { OperatorStatus, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
+import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import TeraDatasetJupyterPanel from '@/components/dataset/tera-dataset-jupyter-panel.vue';
 import { computed, onMounted, ref } from 'vue';
 import { createNotebookSession, getNotebookSessionById } from '@/services/notebook-session';
@@ -71,12 +71,7 @@ const assets = computed(() =>
 			name: useProjects().getAssetName(inputNode.value![0])
 		}))
 );
-const disableSaveForReuse = computed(
-	() =>
-		!kernelState.value ||
-		(props.node.status === OperatorStatus.INVALID && props.node.state.selectedOutputs.length) ||
-		props.node.status === OperatorStatus.ERROR
-);
+const disableSaveForReuse = computed(() => !kernelState.value || !selectedDataset.value);
 
 const kernelState = ref(null);
 const jupyterPanel = ref();

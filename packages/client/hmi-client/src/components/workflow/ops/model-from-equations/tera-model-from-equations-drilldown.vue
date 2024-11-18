@@ -46,7 +46,15 @@
 									class="w-full"
 									:disabled="multipleEquationsDisabled"
 								/>
-								<Button label="Add" @click="getEquations" class="ml-2" :disabled="isEmpty(multipleEquations)" />
+								<Button
+									label="Add"
+									icon="pi pi-plus"
+									size="small"
+									@click="getEquations"
+									text
+									class="ml-2"
+									:disabled="isEmpty(multipleEquations)"
+								/>
 							</section>
 						</header>
 						<h6 class="py-3">Use {{ includedEquations.length > 1 ? 'these equations' : 'this equation' }}</h6>
@@ -59,7 +67,8 @@
 									:class="['asset-panel', { selected: selectedItem === equation.name }]"
 								>
 									<template #header>
-										<h6>Page ({{ equation.asset.pageNumber }})</h6>
+										<h6 v-if="equation.asset.pageNumber">Page {{ equation.asset.pageNumber }}</h6>
+										<h6 v-else>Manually entered</h6>
 									</template>
 									<section>
 										<Checkbox
@@ -86,8 +95,10 @@
 									/>
 								</tera-asset-block>
 							</li>
+							<p v-if="isEmpty(includedEquations)" class="secondary-text">No equations selected</p>
 						</ul>
-						<h6 class="py-3">Other equations extracted from document</h6>
+						<div class="spacer mb-5" />
+						<h6 class="pb-3">Other equations extracted from document</h6>
 						<ul class="blocks-container">
 							<li v-for="(equation, i) in notIncludedEquations" :key="i" @click.capture="selectItem(equation, $event)">
 								<tera-asset-block
@@ -97,7 +108,8 @@
 									:class="['asset-panel', { selected: selectedItem === equation.name }]"
 								>
 									<template #header>
-										<h6>Page ({{ equation.asset.pageNumber }})</h6>
+										<h6 v-if="equation.asset.pageNumber">Page {{ equation.asset.pageNumber }}</h6>
+										<h6 v-else>Manually entered</h6>
 									</template>
 									<section>
 										<Checkbox
@@ -489,6 +501,9 @@ watch(
 		border-left: var(--gap-1) solid var(--primary-color);
 	}
 }
+.asset-panel:deep(.p-panel-header) {
+	padding-bottom: var(--gap-1);
+}
 
 .blocks-container li:first-of-type .asset-panel {
 	border-top-left-radius: var(--border-radius-medium);
@@ -514,6 +529,10 @@ watch(
 	flex-direction: row;
 	align-items: center;
 	justify-content: space-between;
+	background: var(--surface-50);
+	border-radius: var(--border-radius-medium);
+	border: 1px solid var(--surface-border-light);
+	padding: var(--gap-3);
 }
 
 .equation-view {
@@ -527,7 +546,9 @@ watch(
 .block-container {
 	overflow-y: auto;
 }
-
+.secondary-text {
+	color: var(--text-color-subdued);
+}
 /* PrimeVue Override */
 
 .p-panel {

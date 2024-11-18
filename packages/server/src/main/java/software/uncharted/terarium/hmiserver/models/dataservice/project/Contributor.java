@@ -26,4 +26,14 @@ public class Contributor {
 	public String getUserId() {
 		return userId;
 	}
+
+	/** Is the Contributor a Group? */
+	public Boolean isGroup() {
+		return userId == null;
+	}
+
+	/** Is the Contributor a User? */
+	public Boolean isUser() {
+		return userId != null;
+	}
 }
