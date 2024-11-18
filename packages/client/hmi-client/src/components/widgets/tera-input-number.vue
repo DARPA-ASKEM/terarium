@@ -16,6 +16,7 @@
 				@focusout="$emit('focusout', $event)"
 				type="text"
 				:placeholder="placeholder"
+				@keydown="handleArrowKeys"
 			/>
 		</main>
 		<aside v-if="getErrorMessage"><i class="ml-2 pi pi-exclamation-circle" /> {{ getErrorMessage }}</aside>
@@ -104,6 +105,38 @@ watch(
 	},
 	{ immediate: true }
 );
+
+// Handle the arrow key presses
+function handleArrowKeys(event: KeyboardEvent) {
+	if (getDisabled) return;
+
+	const step = 1; // You can adjust this step size if needed
+	const currentValue = toNumber(maskedValue.value);
+	const isValidNumber = !isNaN(currentValue);
+
+	if (event.key === 'ArrowUp') {
+		// Increase the number
+		const newValue = isValidNumber ? currentValue + step : step;
+		updateNumber(newValue);
+	} else if (event.key === 'ArrowDown') {
+		// Decrease the number
+		const newValue = isValidNumber ? currentValue - step : -step;
+		updateNumber(newValue);
+	}
+}
+
+// Helper function to update the number and emit the change
+function updateNumber(value: number) {
+	// Prevent setting negative numbers if invalidateNegative is true
+	if (props.invalidateNegative && value < 0) {
+		error.value = 'Invalid number';
+		return;
+	}
+
+	error.value = '';
+	maskedValue.value = value.toString();
+	emit('update:model-value', value);
+}
 </script>
 
 <style scoped>
