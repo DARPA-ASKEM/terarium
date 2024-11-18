@@ -39,6 +39,7 @@
 					class="p-dropdown-sm accessibility"
 					:loading="isUpdatingAccessibility"
 					@update:model-value="changeAccessibility"
+					:disabled="isSample"
 				>
 					<template #value="slotProps">
 						<div class="general-access-option">
@@ -56,10 +57,14 @@
 				<div class="text-sm">{{ generalAccessCaption }}</div>
 			</section>
 			<section v-if="useAuthStore().isAdmin">
-				<i v-if="isSampleLoading" class="pi pi-spin pi-spinner" style="color: var(--primary-color)" />
-				<input v-else type="checkbox" id="sample-project" v-model="isSample" class="m-0" />
-				<strong class="ml-2">Sample project</strong>
-				<p class="pt-1 text-sm">A sample project is public and only editable by an <em>administrator</em>.</p>
+				<label for="sample-project" class="cursor-pointer block">
+					<i v-if="isSampleLoading" class="pi pi-spin pi-spinner" style="color: var(--primary-color)" />
+					<input v-else type="checkbox" id="sample-project" v-model="isSample" class="m-0" />
+					<strong class="ml-2">Sample project</strong>
+					<span class="block pt-1 text-sm"
+						>A sample project is public and only editable by an <em>administrator</em>.</span
+					>
+				</label>
 			</section>
 		</main>
 		<template #footer>
@@ -119,7 +124,6 @@ const generalAccessCaption = computed(() => {
 });
 
 function onDone() {
-	useProjects().getAll();
 	setPermissions();
 }
 
@@ -243,6 +247,7 @@ watch(
 		existingUsers.value = new Set();
 		users.value = (await getUsers()) ?? [];
 		isSample.value = props.project.sampleProject ?? false;
+		publicGeneralAccess.value = props.project.publicProject;
 	},
 	{ immediate: true }
 );
@@ -276,7 +281,11 @@ watch(isSample, (value) => {
 			.setSample(props.project.id, value)
 			.then((done) => {
 				isSampleLoading.value = false;
-				if (!done) isSample.value = !value;
+				if (done) {
+					useProjects().getAll();
+				} else {
+					isSample.value = !value;
+				}
 			});
 	}
 });
