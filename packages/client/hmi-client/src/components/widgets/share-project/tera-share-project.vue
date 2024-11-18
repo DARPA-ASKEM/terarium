@@ -2,7 +2,7 @@
 	<Dialog
 		modal
 		header="Share project"
-		style="width: 30rem"
+		style="width: 35rem"
 		v-model:visible="visible"
 		:closable="false"
 		@after-hide="onAfterHide"
@@ -53,13 +53,13 @@
 						</div>
 					</template>
 				</Dropdown>
-				<div class="caption">{{ generalAccessCaption }}</div>
+				<div class="text-sm">{{ generalAccessCaption }}</div>
 			</section>
-			<section>
-				<h6>Sample project</h6>
-				<input type="checkbox" id="sample-project" v-model="isSample" />
-				<p>This will make the project public and only editable by <em>administrator</em>.</p>
-				<span>{{}}</span>
+			<section v-if="useAuthStore().isAdmin">
+				<tera-progress-spinner v-if="isSampleLoading">Updating project</tera-progress-spinner>
+				<input v-else type="checkbox" id="sample-project" v-model="isSample" class="m-0" />
+				<strong class="ml-2">Sample project</strong>
+				<p class="pt-1 text-sm">A sample project is public and only editable by an <em>administrator</em>.</p>
 			</section>
 		</main>
 		<template #footer>
@@ -76,6 +76,8 @@ import Button from 'primevue/button';
 import { getUsers } from '@/services/user';
 import type { PermissionRelationships, PermissionUser, Project } from '@/types/Types';
 import { useProjects } from '@/composables/project';
+import useAuthStore from '@/stores/auth';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraUserCard from './tera-user-card.vue';
 
 enum Accessibility {
@@ -261,28 +263,23 @@ watch(
  */
 const isSample = ref(props.project.sampleProject ?? false);
 const isSampleLoading = ref<boolean>(false);
-const isSampleMessage = ref<string>('');
 watch(isSample, (value) => {
+	isSampleLoading.value = true;
 	useProjects()
 		.setSample(props.project.id, value)
-		.then((response) => {
+		.then((done) => {
 			isSampleLoading.value = false;
-
-			// In the case of an error, reset the value and show a message
-			if (!response) {
-				isSample.value = !value;
-				isSampleMessage.value = 'An error occurred while updating the sample project status. Please try again later.';
-			}
+			if (!done) isSample.value = !value;
 		});
 });
 </script>
 
 <style scoped>
-section {
-	padding-top: var(--gap-2);
+section + section {
+	margin-top: var(--gap-3);
 }
 
-section > section {
+main > section {
 	padding-top: var(--gap-4);
 }
 
