@@ -129,7 +129,7 @@ public class KnowledgeController {
 	 */
 	@PostMapping("/equations-to-model")
 	@Secured(Roles.USER)
-	public ResponseEntity<UUID> equationsToModel(
+	public ResponseEntity<EquationsToModelResponse> equationsToModel(
 		@RequestBody final JsonNode req,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
@@ -197,7 +197,7 @@ public class KnowledgeController {
 					equationsReq = output.get("response").get("equations");
 				}
 			} catch (IOException e) {
-				log.warn("Unable to retrive cleaned-up equations from GoLLM response. Reverting to original equations.", e);
+				log.warn("Unable to retrieve cleaned-up equations from GoLLM response. Reverting to original equations.", e);
 			}
 		}
 
@@ -230,6 +230,13 @@ public class KnowledgeController {
 			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("skema.bad-equations.petrinet"));
 		}
 
+		List<String> cleanedEquations = new ArrayList<>();
+		if (equationsReq != null && equationsReq.isArray()) {
+			for (JsonNode eq : equationsReq) {
+				cleanedEquations.add(eq.asText());
+			}
+		}
+
 		// If no model id is provided, create a new model asset
 		if (modelId == null) {
 			try {
@@ -238,7 +245,7 @@ public class KnowledgeController {
 				if (documentId != null) {
 					modelService.enrichModel(projectId, documentId, model.getId(), permission, true);
 				}
-				return ResponseEntity.ok(model.getId());
+				return ResponseEntity.ok(new EquationsToModelResponse(model.getId(), cleanedEquations));
 			} catch (final IOException e) {
 				log.error("An error occurred while trying to retrieve information necessary for model enrichment.", e);
 				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
@@ -271,7 +278,7 @@ public class KnowledgeController {
 			if (documentId != null) {
 				modelService.enrichModel(projectId, documentId, responseAMR.getId(), permission, true);
 			}
-			return ResponseEntity.ok(model.get().getId());
+			return ResponseEntity.ok(new EquationsToModelResponse(model.get().getId(), cleanedEquations));
 		} catch (final IOException e) {
 			log.error("An error occurred while trying to retrieve information necessary for model enrichment.", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
@@ -856,5 +863,16 @@ public class KnowledgeController {
 		req.setAdditionalProperties(props);
 
 		return req;
+	}
+
+	private static class EquationsToModelResponse {
+
+		public UUID modelId;
+		public List<String> cleanedEquations;
+
+		public EquationsToModelResponse(UUID modelId, List<String> cleanedEquations) {
+			this.modelId = modelId;
+			this.cleanedEquations = cleanedEquations;
+		}
 	}
 }

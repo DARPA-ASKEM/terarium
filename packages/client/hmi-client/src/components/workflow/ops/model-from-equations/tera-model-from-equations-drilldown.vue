@@ -372,7 +372,10 @@ async function onRun() {
 		framework: clonedState.value.modelFramework,
 		documentId: document.value?.id
 	};
-	const modelId = await equationsToAMR(request);
+	const response = await equationsToAMR(request);
+	if (!response) return;
+	const { modelId, cleanedEquations } = response;
+	console.log(cleanedEquations);
 	if (!modelId) return;
 
 	if (document.value?.id) await generateCard(modelId, document.value.id);
