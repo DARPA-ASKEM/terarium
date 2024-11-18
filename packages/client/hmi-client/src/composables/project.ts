@@ -221,12 +221,9 @@ export function useProjects() {
 	 * @param {boolean} isSample - true if the project should be a sample project, false otherwise
 	 */
 	async function setSample(projectId: Project['id'], isSample: boolean): Promise<boolean> {
-		const projectToUpdate = allProjects.value?.find((project) => project.id === projectId);
-		if (projectToUpdate) {
-			const response = await ProjectService.setSample(projectId, isSample);
-			if (response) return true;
-			useToastService().error(undefined, 'Error changing the sample status of the project');
-		}
+		const response = await ProjectService.setSample(projectId, isSample);
+		if (response) return true;
+		useToastService().error(undefined, 'Error changing the sample status of the project');
 		return false;
 	}
 
