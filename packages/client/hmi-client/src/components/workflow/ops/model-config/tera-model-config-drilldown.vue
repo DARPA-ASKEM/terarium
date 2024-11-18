@@ -681,24 +681,6 @@ const onSelectConfiguration = async (config: ModelConfiguration) => {
 		pdfViewer.value.goToPage(config.extractionPage);
 	}
 
-	if (model.value) {
-		const initials = getModelInitials(
-			knobs.value.transientModelConfig,
-			mmt.value.annotations.name,
-			getAmrInitials(model.value)
-		);
-		if (initials.length) {
-			knobs.value.transientModelConfig.initialSemanticList = initials;
-		}
-		const parameters = getModelParameters(
-			knobs.value.transientModelConfig,
-			mmt.value.annotations.name,
-			getAmrParameters(model.value)
-		);
-		if (parameters.length) {
-			knobs.value.transientModelConfig.parameterSemanticList = parameters;
-		}
-	}
 	const { transientModelConfig } = knobs.value;
 	// If no changes were made switch right away
 	if (isModelConfigsEqual(originalConfig, transientModelConfig)) {
