@@ -363,24 +363,33 @@ function onCheckBoxChange(equation) {
 async function onRun() {
 	isOutputOpen.value = true;
 	isModelLoading.value = true;
-	const equations = clonedState.value.equations
+	const equationsText = clonedState.value.equations
 		.filter((e) => e.includeInProcess && !e.asset.extractionError)
 		.map((e) => e.asset.text);
 
 	const request: EquationsToAMRRequest = {
-		equations,
+		equations: equationsText,
 		framework: clonedState.value.modelFramework,
 		documentId: document.value?.id
 	};
 	const response = await equationsToAMR(request);
 	if (!response) return;
 	const { modelId, cleanedEquations } = response;
-	console.log(cleanedEquations);
 	if (!modelId) return;
 
 	if (document.value?.id) await generateCard(modelId, document.value.id);
 
 	clonedState.value.modelId = modelId;
+	// Remove the equations passed to the request
+	clonedState.value.equations = clonedState.value.equations.filter((eq) => !equationsText.includes(eq.asset.text));
+	// So they can be replaced with the cleaned equations
+	clonedState.value.equations.push(
+		...cleanedEquations.map((equation) => ({
+			name: 'Equation',
+			includeInProcess: true,
+			asset: { text: equation }
+		}))
+	);
 	emit('append-output', {
 		label: `Output - ${props.node.outputs.length + 1}`,
 		state: cloneDeep(clonedState.value),
