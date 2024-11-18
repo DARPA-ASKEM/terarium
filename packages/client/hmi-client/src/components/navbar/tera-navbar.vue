@@ -73,7 +73,7 @@
 						@change="onScenarioChange"
 					/>
 
-					<label class="text-sm" for="evaluation-scenario-task">Task</label>
+					<label class="text-sm mt-3" for="evaluation-scenario-task">Task</label>
 					<Dropdown
 						id="evaluation-scenario-task"
 						:options="evaluationScenario?.questions ?? []"
@@ -83,7 +83,7 @@
 						@change="onTaskChange"
 					/>
 
-					<label class="text-sm" for="evaluation-scenario-description">Description</label>
+					<label class="text-sm mt-3" for="evaluation-scenario-description">Description</label>
 					<Textarea
 						id="evaluation-scenario-description"
 						rows="5"
@@ -96,7 +96,7 @@
 
 					<div class="field-checkbox">
 						<Checkbox name="multipleUsers" binary v-model="evaluationScenarioMultipleUsers" />
-						<label for="multipleUsers">Multiple Users</label>
+						<label for="multipleUsers">Multiple users</label>
 					</div>
 				</form>
 			</template>
@@ -613,5 +613,10 @@ nav {
 	font-size: var(--font-body-small);
 	color: var(--text-color-primary);
 	margin-bottom: 0;
+	display: flex;
+	align-items: center;
+	& > label {
+		margin-bottom: 0px !important;
+	}
 }
 </style>
