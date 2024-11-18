@@ -58,7 +58,6 @@
 							:model-value="getParameterDistribution(modelConfiguration, parameterId, true)?.parameters.minimum"
 							error-empty
 							@update:model-value="onParameterChange($event, Parameter.minimum)"
-							class="mr-2"
 							class="mr-2 parameter-input"
 						/>
 						<tera-input-number
