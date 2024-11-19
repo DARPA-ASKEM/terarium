@@ -136,6 +136,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 					continue;
 				}
 
+				// Only update if if node is not already deleted in the db
 				if (dbNode.getIsDeleted() == false && dbNode.getVersion().equals(node.getVersion())) {
 					node.setVersion(dbNode.getVersion() + 1L);
 					dbWorkflowNodes.set(index, node);
@@ -162,6 +163,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 					continue;
 				}
 
+				// Only update if if edge is not already deleted in the db
 				if (dbEdge.getIsDeleted() == false && dbEdge.getVersion().equals(edge.getVersion())) {
 					edge.setVersion(dbEdge.getVersion() + 1L);
 					dbWorkflowEdges.set(index, edge);
