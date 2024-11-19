@@ -343,13 +343,13 @@ watch(cloningProjects, () => {
 
 function addRankingToColumns() {
 	removeRankingFromColumns();
-	columns.value.unshift({ field: 'searchRanking', header: 'Ranking' });
-	selectedColumns.value.unshift({ field: 'searchRanking', header: 'Ranking' });
+	columns.value.unshift({ field: 'score', header: 'Ranking' });
+	selectedColumns.value.unshift({ field: 'score', header: 'Ranking' });
 }
 
 function removeRankingFromColumns() {
-	columns.value = columns.value.filter((col) => col.field !== 'searchRanking');
-	selectedColumns.value = selectedColumns.value.filter((col) => col.field !== 'searchRanking');
+	columns.value = columns.value.filter((col) => col.field !== 'score');
+	selectedColumns.value = selectedColumns.value.filter((col) => col.field !== 'score');
 }
 
 async function searchedProjects() {
