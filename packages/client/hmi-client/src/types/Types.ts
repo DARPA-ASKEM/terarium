@@ -840,6 +840,7 @@ export interface UserOld {
 export interface ProjectSearchAsset {
     assetId: string;
     assetType: AssetType;
+    embeddingType: TerariumAssetEmbeddingType;
     score: number;
 }
 
@@ -1203,4 +1204,12 @@ export enum ExtractionAssetType {
     Figure = "FIGURE",
     Table = "TABLE",
     Equation = "EQUATION",
+}
+
+export enum TerariumAssetEmbeddingType {
+    Overview = "OVERVIEW",
+    Name = "NAME",
+    Description = "DESCRIPTION",
+    Metadata = "METADATA",
+    Card = "CARD",
 }
