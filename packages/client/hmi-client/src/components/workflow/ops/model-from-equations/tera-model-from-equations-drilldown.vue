@@ -354,6 +354,7 @@ const onSelection = (id: string) => {
 };
 
 function onCheckBoxChange(equation) {
+	console.log(equation);
 	const state = cloneDeep(props.node.state);
 	const index = state.equations.findIndex((e) => e.name === equation.name);
 	state.equations[index].includeInProcess = equation.includeInProcess;
@@ -388,12 +389,13 @@ async function onRun() {
 	});
 	// Replace the unchecked equations with the cleaned equations
 	clonedState.value.equations.push(
-		...cleanedEquations.map((equation) => ({
-			name: 'Equation',
+		...cleanedEquations.map((equation, index) => ({
+			name: `Equation ${clonedState.value.equations.length + index}`,
 			includeInProcess: true,
 			asset: { text: equation }
 		}))
 	);
+	emit('update-state', clonedState.value);
 	emit('append-output', {
 		label: `Output - ${props.node.outputs.length + 1}`,
 		state: cloneDeep(clonedState.value),
