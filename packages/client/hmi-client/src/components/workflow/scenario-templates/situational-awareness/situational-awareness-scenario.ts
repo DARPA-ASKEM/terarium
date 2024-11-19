@@ -6,6 +6,7 @@ import { operation as CalibrateCiemssOp } from '@/components/workflow/ops/calibr
 import { operation as DatasetOp } from '@/components/workflow/ops/dataset/mod';
 import { OperatorNodeSize } from '@/services/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
+import _ from 'lodash';
 
 export class SituationalAwarenessScenario extends BaseScenario {
 	public static templateId = 'situational-awareness';
@@ -85,7 +86,12 @@ export class SituationalAwarenessScenario extends BaseScenario {
 	}
 
 	isValid(): boolean {
-		return this.modelSpec.id !== '' && this.datasetSpec.id !== '' && this.modelConfigSpec.id !== '';
+		return (
+			this.modelSpec.id !== '' &&
+			this.datasetSpec.id !== '' &&
+			this.modelConfigSpec.id !== '' &&
+			!_.isEmpty(this.calibrateSpec.ids)
+		);
 	}
 
 	async createWorkflow() {
