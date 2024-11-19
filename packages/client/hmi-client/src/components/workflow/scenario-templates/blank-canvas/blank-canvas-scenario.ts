@@ -18,6 +18,10 @@ export class BlankCanvasScenario extends BaseScenario {
 		};
 	}
 
+	isValid() {
+		return true;
+	}
+
 	createWorkflow() {
 		const wf = new workflowService.WorkflowWrapper();
 		wf.setWorkflowName(this.workflowName);

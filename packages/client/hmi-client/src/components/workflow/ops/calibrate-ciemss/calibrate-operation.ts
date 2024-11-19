@@ -26,6 +26,9 @@ export interface CalibrationOperationStateCiemss extends BaseState {
 	endTime: number;
 	stepSize: number;
 	learningRate: number;
+
+	// This is a state variable to indicate which model variables are selected for calibration, this is filled in from the workflow template generator
+	templateSelectedModelVariables: string[];
 }
 
 export const CalibrationOperationCiemss: Operation = {
@@ -68,7 +71,8 @@ export const CalibrationOperationCiemss: Operation = {
 			numSamples: 100,
 			endTime: 100,
 			stepSize: 1,
-			learningRate: 0.03
+			learningRate: 0.03,
+			templateSelectedModelVariables: []
 		};
 		return init;
 	}

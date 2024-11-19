@@ -5,20 +5,20 @@
 		</template>
 		<template #default>
 			<div class="grid">
-				<aside class="col-2">
-					<label>Select a template</label>
+				<aside class="flex flex-column col-2">
+					<label class="p-text-secondary pb-2">Select a template</label>
 					<div v-for="scenario in scenarios" :key="scenario.id" class="flex align-items-center py-1">
 						<RadioButton :inputId="scenario.id" :value="scenario.id" v-model="selectedTemplateId" />
 						<label class="pl-2" :for="scenario.id">{{ scenario.displayName }}</label>
 					</div>
 				</aside>
-				<main class="col-10 flex flex-column gap-3">
+				<main class="col-10 flex flex-column gap-3 p-3">
 					<component v-if="getScenario()" :is="getScenario().component" :scenario="getScenario().instance" />
 				</main>
 			</div>
 		</template>
 		<template #footer>
-			<Button label="Create" size="large" @click="saveWorkflow" />
+			<Button label="Create" size="large" @click="saveWorkflow" :disabled="!getScenario().instance.isValid()" />
 			<Button label="Close" class="p-button-secondary" size="large" outlined @click="emit('close-modal')" />
 		</template>
 	</tera-modal>
@@ -69,7 +69,7 @@ const selectedTemplateId = ref<any>(scenarios.value[0].id);
 
 const saveWorkflow = async () => {
 	const scenario = getScenario();
-	const wf = scenario.instance.createWorkflow();
+	const wf = await scenario.instance.createWorkflow();
 	const response = await createWorkflow(wf);
 
 	const projectId = useProjects().activeProject.value?.id;

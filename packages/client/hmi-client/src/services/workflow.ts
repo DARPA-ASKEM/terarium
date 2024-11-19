@@ -1,6 +1,6 @@
 import { Component } from 'vue';
 import { v4 as uuidv4 } from 'uuid';
-import _ from 'lodash';
+import _, { isArray } from 'lodash';
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
 import { EventEmitter } from '@/utils/emitter';
@@ -210,7 +210,7 @@ export class WorkflowWrapper {
 		}
 	}
 
-	addNode(op: Operation, pos: Position, options: { size?: OperatorNodeSize; state?: any }) {
+	addNode(op: Operation, pos: Position, options: { size?: OperatorNodeSize; state?: any; outputValue?: string }) {
 		const nodeSize: Size = getOperatorNodeSize(options.size ?? OperatorNodeSize.medium);
 
 		const node: WorkflowNode<any> = {
@@ -250,10 +250,19 @@ export class WorkflowWrapper {
 			width: nodeSize.width,
 			height: nodeSize.height
 		};
-		if (op.initState && _.isEmpty(node.state)) {
+		if (op.initState) {
 			node.state = op.initState();
+			Object.assign(node.state, options.state);
 		}
 		this.wf.nodes.push(node);
+
+		if (options.outputValue) {
+			node.status = OperatorStatus.SUCCESS;
+			const outputPort = node.outputs[0];
+			outputPort.value = isArray(options.outputValue) ? options.outputValue : [options.outputValue];
+			node.active = outputPort.id;
+			this.selectOutput(node, outputPort.id);
+		}
 		return node;
 	}
 

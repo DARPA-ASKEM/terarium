@@ -11,8 +11,9 @@ export abstract class BaseScenario {
 		this.workflowName = '';
 	}
 
-	abstract createWorkflow(): Workflow;
+	abstract createWorkflow(): Promise<Workflow> | Workflow;
 
+	abstract isValid(): boolean;
 	setWorkflowName(name: string) {
 		this.workflowName = name;
 	}

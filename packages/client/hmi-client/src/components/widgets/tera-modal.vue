@@ -112,7 +112,7 @@ main > section {
 }
 
 .content {
-	max-height: 65vh;
+	max-height: 80vh;
 	padding: 0 2rem;
 	overflow-y: auto;
 }

@@ -5,6 +5,7 @@ import { operation as ModelConfigOp } from '@/components/workflow/ops/model-conf
 import { operation as CalibrateCiemssOp } from '@/components/workflow/ops/calibrate-ciemss/mod';
 import { operation as DatasetOp } from '@/components/workflow/ops/dataset/mod';
 import { OperatorNodeSize } from '@/services/workflow';
+import { getModelConfigurationById } from '@/services/model-configurations';
 
 export class SituationalAwarenessScenario extends BaseScenario {
 	public static templateId = 'situational-awareness';
@@ -18,6 +19,10 @@ export class SituationalAwarenessScenario extends BaseScenario {
 	modelConfigSpec: { id: string };
 
 	calibrateSpec: { ids: string[] };
+
+	historicalInterventionSpec: { id: string };
+
+	futureInterventionSpec: { id: string };
 
 	constructor() {
 		super();
@@ -33,6 +38,12 @@ export class SituationalAwarenessScenario extends BaseScenario {
 		};
 		this.calibrateSpec = {
 			ids: []
+		};
+		this.historicalInterventionSpec = {
+			id: ''
+		};
+		this.futureInterventionSpec = {
+			id: ''
 		};
 	}
 
@@ -50,6 +61,14 @@ export class SituationalAwarenessScenario extends BaseScenario {
 		this.modelConfigSpec.id = id;
 	}
 
+	setHistoricalInterventionSpec(id: string) {
+		this.historicalInterventionSpec.id = id;
+	}
+
+	setFutureInterventionSpec(id: string) {
+		this.futureInterventionSpec.id = id;
+	}
+
 	setCalibrateSpec(ids: string[]) {
 		this.calibrateSpec.ids = ids;
 	}
@@ -65,18 +84,27 @@ export class SituationalAwarenessScenario extends BaseScenario {
 		};
 	}
 
-	createWorkflow() {
+	isValid(): boolean {
+		return this.modelSpec.id !== '' && this.datasetSpec.id !== '' && this.modelConfigSpec.id !== '';
+	}
+
+	async createWorkflow() {
 		const wf = new workflowService.WorkflowWrapper();
 		wf.setWorkflowName(this.workflowName);
 		wf.setWorkflowScenario(this.toJSON());
 
 		// Add nodes
 		// Model
+
 		const modelNode = wf.addNode(
 			ModelOp,
 			{ x: 0, y: 0 },
 			{
-				size: OperatorNodeSize.medium
+				size: OperatorNodeSize.medium,
+				state: {
+					modelId: this.modelSpec.id
+				},
+				outputValue: this.modelSpec.id
 			}
 		);
 
@@ -85,16 +113,25 @@ export class SituationalAwarenessScenario extends BaseScenario {
 			DatasetOp,
 			{ x: 0, y: 0 },
 			{
-				size: OperatorNodeSize.medium
+				size: OperatorNodeSize.medium,
+				state: {
+					datasetId: this.datasetSpec.id
+				},
+				outputValue: this.datasetSpec.id
 			}
 		);
 
 		// Model Configuration
+		const modelConfig = await getModelConfigurationById(this.modelConfigSpec.id);
 		const modelConfigNode = wf.addNode(
 			ModelConfigOp,
 			{ x: 0, y: 0 },
 			{
-				size: OperatorNodeSize.medium
+				size: OperatorNodeSize.medium,
+				state: {
+					transientModelConfig: modelConfig
+				},
+				outputValue: this.modelConfigSpec.id
 			}
 		);
 
@@ -103,7 +140,10 @@ export class SituationalAwarenessScenario extends BaseScenario {
 			CalibrateCiemssOp,
 			{ x: 0, y: 0 },
 			{
-				size: OperatorNodeSize.medium
+				size: OperatorNodeSize.medium,
+				state: {
+					templateSelectedModelVariables: this.calibrateSpec.ids
+				}
 			}
 		);
 
