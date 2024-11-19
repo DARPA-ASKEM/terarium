@@ -164,6 +164,8 @@ export interface Workflow {
 	transform: Transform;
 	nodes: WorkflowNode<any>[];
 	edges: WorkflowEdge[];
+
+	scenario?: any;
 }
 
 export interface Size {

@@ -61,11 +61,17 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		if (asset.getNodes() != null) {
 			for (final WorkflowNode<?> node : asset.getNodes()) {
 				node.setWorkflowId(asset.getId());
+				if (node.getVersion() == null) {
+					node.setVersion(1L);
+				}
 			}
 		}
 		if (asset.getEdges() != null) {
 			for (final WorkflowEdge edge : asset.getEdges()) {
 				edge.setWorkflowId(asset.getId());
+				if (edge.getVersion() == null) {
+					edge.setVersion(1L);
+				}
 			}
 		}
 		return super.createAsset(asset, projectId, hasWritePermission);
@@ -89,6 +95,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 
 		dbWorkflow.setName(asset.getName());
 		dbWorkflow.setDescription(asset.getDescription());
+		dbWorkflow.setScenario(asset.getScenario());
 
 		// Prep: sane state, cache the nodes/edges to update for easy retrival
 		if (asset.getNodes() != null) {
