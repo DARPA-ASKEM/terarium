@@ -513,7 +513,7 @@ public class ProjectController {
 		return ResponseEntity.ok(updatedProject.get());
 	}
 
-	@Operation(summary = "Resync Project Search Assets")
+	@Operation(summary = "Resync Project in the Search Index")
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -539,30 +539,47 @@ public class ProjectController {
 			)
 		}
 	)
-	@PostMapping("/update-embeddings/{id}")
+	@PostMapping("/reindex-project/{id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<Project> updateProjectAssets(@PathVariable("id") final UUID id) {
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), id);
 
-		final Optional<Project> originalProject = projectService.getProject(id);
-		if (originalProject.isEmpty()) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
-		}
-
-		final List<ProjectAsset> assets = projectAssetService.getProjectAssets(id, permission);
-
-		for (final ProjectAsset asset : assets) {
-			try {
-				final Future<Void> future = projectSearchService.generateAndUpsertProjectAssetEmbeddings(id, asset);
-				if (future != null) {
-					future.get();
-				}
-			} catch (final Exception e) {
-				log.error("Error updating project asset in index, skipping", e);
+		try {
+			final Optional<Project> originalProject = projectService.getProject(id);
+			if (originalProject.isEmpty()) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
 			}
-		}
 
-		return ResponseEntity.ok(originalProject.get());
+			// re-index the project
+			projectSearchService.indexProject(originalProject.get());
+
+			final List<ProjectAsset> assets = projectAssetService.getProjectAssets(id, permission);
+
+			for (final ProjectAsset projectAsset : assets) {
+				try {
+					final ITerariumAssetService<?> terariumAssetService = terariumAssetServices.getServiceByType(
+						projectAsset.getAssetType()
+					);
+
+					final Optional<? extends TerariumAsset> asset = terariumAssetService.getAsset(
+						projectAsset.getAssetId(),
+						Schema.Permission.READ
+					);
+
+					final Future<Void> future = projectSearchService.generateAndUpsertProjectAssetEmbeddings(id, asset.get());
+					if (future != null) {
+						future.get();
+					}
+				} catch (final Exception e) {
+					log.error("Error updating project asset in index, skipping", e);
+				}
+			}
+
+			return ResponseEntity.ok(originalProject.get());
+		} catch (final Exception e) {
+			log.error("Error updating project", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
 	}
 
 	@Operation(summary = "Copy a project")

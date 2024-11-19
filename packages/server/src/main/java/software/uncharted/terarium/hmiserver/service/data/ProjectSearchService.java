@@ -112,13 +112,14 @@ public class ProjectSearchService {
 	public static class ProjectDocument {
 
 		private final String type = "project";
+		private String name;
 		private String userId; // the user id of who owns the project
 		private Boolean publicAsset; // whether the project is public or not
 		private Timestamp createdOn;
 		private Timestamp updatedOn;
 
 		@JsonProperty("asset_embeddings")
-		private List<ProjectAssetEmbedding> assetEmbeddings;
+		private List<ProjectAssetEmbedding> assetEmbeddings = new ArrayList<>();
 
 		// join field properties
 		private PermissionJoin permissionJoin;
@@ -180,6 +181,7 @@ public class ProjectSearchService {
 	 */
 	public void indexProject(final Project project) throws IOException {
 		final ProjectDocument doc = new ProjectDocument();
+		doc.setName(project.getName());
 		doc.setUserId(project.getUserId());
 		doc.setPublicAsset(project.getPublicAsset());
 		doc.setCreatedOn(new Timestamp(System.currentTimeMillis()));
@@ -211,6 +213,7 @@ public class ProjectSearchService {
 	 */
 	public void updateProject(final Project project) throws IOException {
 		final ProjectDocument doc = new ProjectDocument();
+		doc.setName(project.getName());
 		doc.setUserId(project.getUserId());
 		doc.setPublicAsset(project.getPublicAsset());
 		doc.setUpdatedOn(new Timestamp(System.currentTimeMillis()));
@@ -329,7 +332,7 @@ public class ProjectSearchService {
 		);
 
 		// Only return proejcts, not permissions
-		final Query onlyProjects = QueryBuilders.bool(b2 -> b2.must(sh -> sh.term(t -> t.field("type").value("project"))));
+		final Query onlyProjects = QueryBuilders.term(t -> t.field("type").value("project"));
 
 		if (query != null) {
 			return QueryBuilders.bool(b -> b.must(permissionQuery).must(onlyProjects).must(query));
@@ -345,8 +348,12 @@ public class ProjectSearchService {
 	 * @param asset
 	 * @return
 	 */
-	public Future<Void> generateAndUpsertProjectAssetEmbeddings(final UUID projectId, final TerariumAsset asset) {
-		if (!isRunningTestProfile() && !asset.getTemporary()) {
+	public Future<Void> generateAndUpsertProjectAssetEmbeddings(
+		final UUID projectId,
+		final TerariumAsset asset,
+		final boolean force
+	) {
+		if (force || (!isRunningTestProfile() && !asset.getTemporary())) {
 			final Map<TerariumAssetEmbeddingType, String> embeddingTexts = asset.getEmbeddingsSourceByType();
 			if (embeddingTexts.isEmpty()) {
 				log.warn("No embedding sources for asset {}, not indexing anything", asset.getId());
@@ -373,6 +380,7 @@ public class ProjectSearchService {
 							final ProjectAssetEmbedding projectAssetEmbedding = new ProjectAssetEmbedding();
 							projectAssetEmbedding.setAssetId(asset.getId());
 							projectAssetEmbedding.setAssetType(AssetType.getAssetType(asset.getClass()));
+							projectAssetEmbedding.setEmbeddingType(entry.getKey());
 							projectAssetEmbedding.setEmbeddingId(embedding.getEmbeddings().get(0).getEmbeddingId());
 							projectAssetEmbedding.setVector(embedding.getEmbeddings().get(0).getVector());
 							projectAssetEmbedding.setSpan(embedding.getEmbeddings().get(0).getSpan());
@@ -412,6 +420,10 @@ public class ProjectSearchService {
 			});
 		}
 		return null;
+	}
+
+	public Future<Void> generateAndUpsertProjectAssetEmbeddings(final UUID projectId, final TerariumAsset asset) {
+		return generateAndUpsertProjectAssetEmbeddings(projectId, asset, false);
 	}
 
 	/**
@@ -491,24 +503,35 @@ public class ProjectSearchService {
 				.mapToObj(d -> (float) d)
 				.collect(Collectors.toList());
 
-			final List<FieldValue> assetTypeValues = assetTypesToInclude
+			final List<FieldValue> assetTypeValues = AssetType.toJsonRepresentation(assetTypesToInclude)
 				.stream()
-				.map(AssetType::toString)
 				.map(FieldValue::of)
 				.collect(Collectors.toList());
 
 			final TermsQueryField termsQueryField = new TermsQueryField.Builder().value(assetTypeValues).build();
 
 			final Query assetTypeQuery = new Query.Builder()
-				.terms(t -> t.field("asset_embeddings.assetType").terms(termsQueryField))
+				.nested(n ->
+					n
+						.path("asset_embeddings")
+						.query(q -> q.terms(t -> t.field("asset_embeddings.assetType").terms(termsQueryField)))
+				)
 				.build();
 
 			final Query permsQuery = getProjectPermissionQuery(userId, assetTypeQuery);
+
+			// prioritize direct name matches
+			final float NAME_BOOST = 0.9f;
+			final float KNN_BOOST = 0.1f;
+
+			final Query titleMatchQuery = QueryBuilders.match(m -> m.field("name").query(text).boost(NAME_BOOST));
 
 			final KnnQuery knn = new KnnQuery.Builder()
 				.field("asset_embeddings.vector")
 				.queryVector(vector)
 				.k(k)
+				.filter(permsQuery)
+				.boost(KNN_BOOST)
 				.numCandidates(numCandidates)
 				.build();
 
@@ -517,7 +540,7 @@ public class ProjectSearchService {
 			final KnnSearchResponse<ProjectDocument, ProjectAssetEmbedding> res = elasticService.knnSearchWithInnerHits(
 				getAlias(),
 				knn,
-				permsQuery,
+				titleMatchQuery,
 				page,
 				pageSize,
 				EXCLUDE_FIELDS,
