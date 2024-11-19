@@ -23,7 +23,7 @@
 					</div>
 				</div>
 				<main>
-					<Accordion multiple :active-index="[0, 1]">
+					<Accordion multiple :active-index="toolbarActiveIndicies">
 						<AccordionTab>
 							<template #header>
 								Model checks
@@ -178,7 +178,7 @@
 						</div>
 					</header>
 					<template v-if="drilldownRef?.selectedTab === DrilldownTabs.Wizard">
-						<Accordion multiple :active-index="[0, 1, 2, 3]">
+						<Accordion multiple :active-index="parameterAndStateActiveIndicies">
 							<AccordionTab header="Summary">
 								<span class="ml-4">Summary text</span>
 							</AccordionTab>
@@ -229,7 +229,7 @@
 								:mmt-params="mmtParams"
 								:feature-config="{ isPreview: true }"
 							/>
-							<Accordion :active-index="0" v-if="!isEmpty(calibratedConfigObservables)">
+							<Accordion :active-index="observableActiveIndex" v-if="!isEmpty(calibratedConfigObservables)">
 								<AccordionTab v-if="!isEmpty(calibratedConfigObservables)" header="Observables">
 									<tera-observables
 										class="pl-4"
@@ -435,6 +435,10 @@ const mass = ref('0');
 const requestParameters = ref<any[]>([]);
 const model = ref<Model | null>();
 let configuredInputModel: Model | null = null;
+
+const toolbarActiveIndicies = ref([0, 1]);
+const parameterAndStateActiveIndicies = ref([0, 1, 2, 3]);
+const observableActiveIndex = ref([0]);
 
 const stateIds = ref<string[]>([]);
 const parameterIds = ref<string[]>([]);

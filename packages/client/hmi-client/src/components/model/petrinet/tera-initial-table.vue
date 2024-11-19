@@ -1,5 +1,5 @@
 <template>
-	<Accordion multiple :active-index="[0]">
+	<Accordion multiple :active-index="currentActiveIndicies">
 		<AccordionTab>
 			<template #header>
 				Initials <span class="artifact-amount">({{ numInitials }})</span>
@@ -109,6 +109,8 @@ const initialList = computed<
 		})
 		.filter(({ baseInitial }) => baseInitial.toLowerCase().includes(filterText.value.toLowerCase()));
 });
+
+const currentActiveIndicies = ref([0]);
 
 const matrixModalId = ref('');
 

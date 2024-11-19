@@ -1,5 +1,5 @@
 <template>
-	<div class="initial-entry">
+	<div class="initial-entry" :class="{ empty: isExpressionEmpty }">
 		<header class="gap-1">
 			<div class="flex">
 				<strong>{{ initialId }}</strong>
@@ -21,8 +21,8 @@
 					<tera-input-text
 						label="Expression"
 						error-empty
-						:model-value="getInitialExpression(modelConfiguration, initialId)"
-						@update:model-value="emit('update-expression', { id: initialId, value: $event })"
+						:model-value="getExpression()"
+						@update:model-value="onExpressionChange($event)"
 					/>
 				</span>
 				<Button :label="getSourceLabel(initialId)" text size="small" @click="sourceOpen = !sourceOpen" />
@@ -39,7 +39,7 @@
 		<katex-element
 			v-else
 			class="expression"
-			:expression="stringToLatexExpression(getInitialExpression(modelConfiguration, initialId))"
+			:expression="stringToLatexExpression(getExpression())"
 			:throw-on-error="false"
 		/>
 		<tera-initial-other-value-modal
@@ -61,7 +61,12 @@ import { isEmpty } from 'lodash';
 import { computed, ref, onMounted } from 'vue';
 import { DistributionType } from '@/services/distribution';
 import { Model, ModelConfiguration } from '@/types/Types';
-import { getInitialExpression, getInitialSource, getOtherValues } from '@/services/model-configurations';
+import {
+	getInitialExpression,
+	getInitialSource,
+	getOtherValues,
+	isNumberInputEmpty
+} from '@/services/model-configurations';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraInitialOtherValueModal from '@/components/model/petrinet/tera-initial-other-value-modal.vue';
 import Button from 'primevue/button';
@@ -87,12 +92,29 @@ const emit = defineEmits(['update-expression', 'update-source']);
 const name = getInitialName(props.model, props.initialId);
 const unit = getInitialUnits(props.model, props.initialId);
 const description = getInitialDescription(props.model, props.initialId);
+const isExpressionEmpty = ref(false);
 
 const concept = ref('');
 const sourceOpen = ref(false);
 const showOtherConfigValueModal = ref(false);
+const expression = ref('');
 
 const getOtherValuesLabel = computed(() => `Other Values(${otherValueList.value?.length})`);
+
+function onExpressionChange(value) {
+	isExpressionEmpty.value = isNumberInputEmpty(value);
+	expression.value = value;
+	if (!isExpressionEmpty.value) {
+		emit('update-expression', { id: props.initialId, value });
+	}
+}
+
+function getExpression() {
+	if (!isExpressionEmpty.value) {
+		return getInitialExpression(props.modelConfiguration, props.initialId);
+	}
+	return expression.value;
+}
 
 function getSourceLabel(initialId) {
 	if (sourceOpen.value) return 'Hide source';
@@ -103,6 +125,7 @@ function getSourceLabel(initialId) {
 onMounted(async () => {
 	const identifiers = getStates(props.model).find((state) => state.id === props.initialId)?.grounding?.identifiers;
 	if (identifiers) concept.value = await getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
+	isExpressionEmpty.value = isNumberInputEmpty(getInitialExpression(props.modelConfiguration, props.initialId));
 });
 </script>
 
@@ -110,6 +133,9 @@ onMounted(async () => {
 .initial-entry {
 	border-left: 4px solid var(--surface-300);
 	padding-left: var(--gap-4);
+}
+.empty {
+	border-left: 4px solid var(--error-color);
 }
 header {
 	display: flex;
