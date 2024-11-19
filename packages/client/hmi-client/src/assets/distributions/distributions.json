@@ -1,0 +1,251 @@
+{
+  "distributions": [
+    {
+      "name": "Uniform1",
+      "description": "The uniform distribution represents a range of equally likely values between a minimum and maximum.",
+      "parameters": [
+        {
+          "name": "Min",
+          "symbol": "a",
+          "description": "Lower bound of the interval"
+        },
+        {
+          "name": "Max",
+          "symbol": "b",
+          "description": "Upper bound of the interval"
+        }
+      ],
+      "function": "mira_uniform_to_pyro",
+      "thumbnail": "Uniform1.svg"
+    },
+    {
+      "name": "StandardUniform1",
+      "description": "A special case of the uniform distribution with a fixed range of [0, 1].",
+      "parameters": [
+        {
+          "name": "Minimum",
+          "symbol": "a",
+          "description": "Minimum value (0)"
+        },
+        {
+          "name": "Maximum",
+          "symbol": "b",
+          "description": "Maximum value (1)"
+        }
+      ],
+      "function": "mira_uniform_to_pyro",
+      "thumbnail": "StandardUniform1.svg"
+    },
+    {
+      "name": "StandardNormal1",
+      "description": "The standard normal distribution is a normal distribution with a mean of 0 and a standard deviation of 1.",
+      "parameters": [
+        {
+          "name": "Mean",
+          "symbol": "\u03bc",
+          "description": "Mean of the normal distribution (0)"
+        },
+        {
+          "name": "Standard Deviation",
+          "symbol": "\u03c3",
+          "description": "Standard deviation of the normal distribution (1)"
+        }
+      ],
+      "function": "mira_normal_to_pyro",
+      "thumbnail": "StandardNormal1.svg"
+    },
+    {
+      "name": "Normal1",
+      "description": "The normal distribution models data with a specified mean and standard deviation.",
+      "parameters": [
+        {
+          "name": "Mean",
+          "symbol": "\u03bc",
+          "description": "Central value of the distribution"
+        },
+        {
+          "name": "Standard Deviation",
+          "symbol": "\u03c3",
+          "description": "Spread of the distribution"
+        }
+      ],
+      "function": "mira_normal_to_pyro",
+      "thumbnail": "Normal1.svg"
+    },
+    {
+      "name": "Normal2",
+      "description": "Similar to Normal1, but the context may differ based on application (e.g., specific priors or model structure).",
+      "parameters": [
+        {
+          "name": "Mean",
+          "symbol": "\u03bc",
+          "description": "Central value of the distribution"
+        },
+        {
+          "name": "Standard Deviation",
+          "symbol": "\u03c3",
+          "description": "Spread of the distribution"
+        }
+      ],
+      "function": "mira_normal_to_pyro",
+      "thumbnail": "Normal2.svg"
+    },
+    {
+      "name": "Normal3",
+      "description": "Same as Normal1 but tailored for a different use case.",
+      "parameters": [
+        {
+          "name": "Mean",
+          "symbol": "\u03bc",
+          "description": "Central value of the distribution"
+        },
+        {
+          "name": "Standard Deviation",
+          "symbol": "\u03c3",
+          "description": "Spread of the distribution"
+        }
+      ],
+      "function": "mira_normal_to_pyro",
+      "thumbnail": "Normal3.svg"
+    },
+    {
+      "name": "LogNormal1",
+      "description": "Models a variable whose logarithm follows a normal distribution.",
+      "parameters": [
+        {
+          "name": "Mean",
+          "symbol": "\u03bc",
+          "description": "Mean of the log-transformed variable"
+        },
+        {
+          "name": "Standard Deviation",
+          "symbol": "\u03c3",
+          "description": "Spread of the log-transformed variable"
+        }
+      ],
+      "function": "mira_lognormal_to_pyro",
+      "thumbnail": "LogNormal1.svg"
+    },
+    {
+      "name": "LogNormal2",
+      "description": "A variant of LogNormal1 with different usage context or implementation specifics.",
+      "parameters": [
+        {
+          "name": "Mean",
+          "symbol": "\u03bc",
+          "description": "Mean of the log-transformed variable"
+        },
+        {
+          "name": "Standard Deviation",
+          "symbol": "\u03c3",
+          "description": "Spread of the log-transformed variable"
+        }
+      ],
+      "function": "mira_lognormal_to_pyro",
+      "thumbnail": "LogNormal2.svg"
+    },
+    {
+      "name": "Bernoulli1",
+      "description": "Represents a binary outcome (success/failure) based on a fixed probability.",
+      "parameters": [
+        {
+          "name": "Probability of Success",
+          "symbol": "p",
+          "description": "Probability of success (0 \u2264 p \u2264 1)"
+        }
+      ],
+      "function": "mira_bernoulli_to_pyro",
+      "thumbnail": "Bernoulli1.svg"
+    },
+    {
+      "name": "Bernoulli2",
+      "description": "Similar to Bernoulli1, but may use logits instead of probabilities.",
+      "parameters": [
+        {
+          "name": "Logit",
+          "symbol": "logit_p",
+          "description": "Log-odds of the probability, where p = exp(logit_p) / (1 + exp(logit_p))"
+        }
+      ],
+      "function": "mira_bernoulli_to_pyro",
+      "thumbnail": "Bernoulli2.svg"
+    },
+    {
+      "name": "Beta1",
+      "description": "Models continuous values between 0 and 1, often for proportions.",
+      "parameters": [
+        {
+          "name": "Alpha",
+          "symbol": "\u03b1",
+          "description": "Shape parameter controlling skewness"
+        },
+        {
+          "name": "Beta",
+          "symbol": "\u03b2",
+          "description": "Shape parameter controlling skewness"
+        }
+      ],
+      "function": "mira_beta_to_pyro",
+      "thumbnail": "Beta1.svg"
+    },
+    {
+      "name": "BetaBinomial1",
+      "description": "Combines the beta and binomial distributions for over-dispersed binomial data.",
+      "parameters": [
+        {
+          "name": "Alpha",
+          "symbol": "\u03b1",
+          "description": "Shape parameter of the beta distribution"
+        },
+        {
+          "name": "Beta",
+          "symbol": "\u03b2",
+          "description": "Shape parameter of the beta distribution"
+        },
+        {
+          "name": "Number of Trials",
+          "symbol": "n",
+          "description": "Total number of trials"
+        }
+      ],
+      "function": "mira_betabinomial_to_pyro",
+      "thumbnail": "BetaBinomial1.svg"
+    },
+    {
+      "name": "Binomial1",
+      "description": "Describes the number of successes in a fixed number of trials.",
+      "parameters": [
+        {
+          "name": "Number of Trials",
+          "symbol": "n",
+          "description": "Number of independent trials"
+        },
+        {
+          "name": "Probability of Success",
+          "symbol": "p",
+          "description": "Probability of success for each trial"
+        }
+      ],
+      "function": "mira_binomial_to_pyro",
+      "thumbnail": "Binomial1.svg"
+    },
+    {
+      "name": "Binomial2",
+      "description": "Similar to Binomial1, but may accept logits instead of probabilities.",
+      "parameters": [
+        {
+          "name": "Number of Trials",
+          "symbol": "n",
+          "description": "Number of independent trials"
+        },
+        {
+          "name": "Logit of Probability",
+          "symbol": "logit_p",
+          "description": "Log-odds of the probability"
+        }
+      ],
+      "function": "mira_binomial_to_pyro",
+      "thumbnail": "Binomial2.svg"
+    }
+  ]
+}
