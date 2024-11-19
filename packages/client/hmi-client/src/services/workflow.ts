@@ -211,7 +211,13 @@ export class WorkflowWrapper {
 	}
 
 	addNode(op: Operation, pos: Position, options: { size?: OperatorNodeSize; state?: any }) {
-		const currentUserName = useAuthStore().user?.username;
+		let currentUserName: string | undefined = '';
+		try {
+			currentUserName = useAuthStore().user?.username;
+		} catch (err) {
+			// do nothing
+		}
+
 		const nodeSize: Size = getOperatorNodeSize(options.size ?? OperatorNodeSize.medium);
 
 		const node: WorkflowNode<any> = {
@@ -294,7 +300,13 @@ export class WorkflowWrapper {
 	 *
 	 * */
 	addEdge(sourceId: string, sourcePortId: string, targetId: string, targetPortId: string, points: Position[]) {
-		const currentUserName = useAuthStore().user?.username;
+		let currentUserName: string | undefined = '';
+		try {
+			currentUserName = useAuthStore().user?.username;
+		} catch (err) {
+			// do nothing
+		}
+
 		const sourceNode = this.wf.nodes.find((d) => d.id === sourceId);
 		const targetNode = this.wf.nodes.find((d) => d.id === targetId);
 		if (!sourceNode || !targetNode) return;
