@@ -70,6 +70,9 @@ const updateValue = (event: Event) => {
 	maskedValue.value = value;
 	const numValue = toNumber(value);
 	error.value = isNaN(numValue) || (props.invalidateNegative && numValue < 0) ? 'Invalid number' : '';
+	if (!getErrorMessage.value && !isNaN(numValue)) {
+		emit('update:model-value', numValue);
+	}
 };
 
 function displayValue() {

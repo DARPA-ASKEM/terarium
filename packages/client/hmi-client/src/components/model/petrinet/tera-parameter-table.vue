@@ -1,5 +1,5 @@
 <template>
-	<Accordion multiple :active-index="[0]">
+	<Accordion multiple :active-index="currentActiveIndicies">
 		<AccordionTab>
 			<template #header>
 				<span class="mr-auto">
@@ -170,6 +170,8 @@ const props = defineProps<{
 	mmtParams: MiraTemplateParams;
 	featureConfig?: FeatureConfig;
 }>();
+
+const currentActiveIndicies = ref([0]);
 
 const emit = defineEmits(['update-parameters', 'update-source']);
 
