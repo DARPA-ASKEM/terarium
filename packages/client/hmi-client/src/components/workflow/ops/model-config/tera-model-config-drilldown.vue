@@ -153,7 +153,7 @@
 						@update-parameters="setParameterDistributions(knobs.transientModelConfig, $event)"
 						@update-source="setParameterSource(knobs.transientModelConfig, $event.id, $event.value)"
 					/>
-					<Accordion :active-index="0" v-if="!isEmpty(calibratedConfigObservables)">
+					<Accordion :active-index="observableActiveIndicies" v-if="!isEmpty(calibratedConfigObservables)">
 						<AccordionTab header="Observables">
 							<tera-observables
 								class="pl-4"
@@ -310,6 +310,7 @@ const isFetchingPDF = ref(false);
 const isDocViewerOpen = ref(true);
 
 const currentActiveIndexes = ref([0, 1, 2]);
+const observableActiveIndicies = ref([0]);
 const pdfData = ref<{ document: any; data: string; isPdf: boolean; name: string }[]>([]);
 const pdfPanelRef = ref();
 const pdfViewer = computed(() => pdfPanelRef.value?.pdfRef);

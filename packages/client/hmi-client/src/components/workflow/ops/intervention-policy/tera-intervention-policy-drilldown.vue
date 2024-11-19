@@ -111,7 +111,7 @@
 					<Button label="Save as..." outlined severity="secondary" @click="showSaveModal = true" />
 					<Button class="mr-3" label="Save" @click="onSaveInterventionPolicy" :disabled="isSaveDisabled" />
 				</template>
-				<Accordion v-if="knobs.transientInterventionPolicy" multiple :active-index="[0, 1]">
+				<Accordion v-if="knobs.transientInterventionPolicy" multiple :active-index="currentActiveIndicies">
 					<AccordionTab>
 						<template #header>
 							<Button v-if="!isEditingDescription" class="start-edit" text @click.stop="onEditDescription">
@@ -276,6 +276,7 @@ interface SelectedIntervention {
 	dynamicInterventions: DynamicIntervention[];
 }
 
+const currentActiveIndicies = ref([0, 1]);
 const pdfPanelRef = ref();
 const pdfViewer = computed(() => pdfPanelRef.value?.pdfRef[0]);
 const selectedIntervention = ref<SelectedIntervention | null>(null);
