@@ -1,7 +1,13 @@
 import { createForecastChart, AUTOSIZE } from '@/services/charts';
 import { getSimulation } from '@/services/models/simulation-service';
 import { EnsembleModelConfigs } from '@/types/Types';
-import { CalibrateEnsembleMappingRow, CalibrateEnsembleWeights } from './calibrate-ensemble-ciemss-operation';
+import { WorkflowNode } from '@/types/workflow';
+import { getSelectedOutput } from '@/components/workflow/util';
+import {
+	CalibrateEnsembleCiemssOperationState,
+	CalibrateEnsembleMappingRow,
+	CalibrateEnsembleWeights
+} from './calibrate-ensemble-ciemss-operation';
 
 export async function getLossValuesFromSimulation(calibrationId: string) {
 	if (!calibrationId) return [];
@@ -69,4 +75,9 @@ export function formatCalibrateModelConfigurations(
 	});
 
 	return [...Object.values(ensembleModelConfigMap)];
+}
+
+export function getSelectedOutputEnsembleMapping(node: WorkflowNode<CalibrateEnsembleCiemssOperationState>) {
+	const wfOutputState = getSelectedOutput(node)?.state;
+	return wfOutputState?.ensembleMapping ?? [];
 }

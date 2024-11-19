@@ -518,7 +518,7 @@ import {
 	Model
 } from '@/types/Types';
 import { CiemssPresetTypes, DrilldownTabs, ChartSettingType } from '@/types/common';
-import { getTimespan, nodeMetadata } from '@/components/workflow/util';
+import { getSelectedOutput, getTimespan, nodeMetadata } from '@/components/workflow/util';
 import { useToastService } from '@/services/toast';
 import { autoCalibrationMapping } from '@/services/concept';
 import {
@@ -548,13 +548,7 @@ import { getCalendarSettingsFromModel } from '@/services/model';
 import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
-import {
-	renameFnGenerator,
-	getErrorData,
-	usePreparedChartInputs,
-	getSelectedOutputMapping,
-	getSelectedOutput
-} from './calibrate-utils';
+import { renameFnGenerator, getErrorData, usePreparedChartInputs, getSelectedOutputMapping } from './calibrate-utils';
 
 const isSidebarOpen = ref(true);
 

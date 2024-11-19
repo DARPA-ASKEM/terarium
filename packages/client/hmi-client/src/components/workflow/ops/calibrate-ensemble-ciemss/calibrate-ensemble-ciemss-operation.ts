@@ -1,5 +1,5 @@
 import { CiemssMethodOptions } from '@/services/models/simulation-service';
-import { CiemssPresetTypes } from '@/types/common';
+import { ChartSetting, CiemssPresetTypes } from '@/types/common';
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import calibrateEnsembleCiemss from '@assets/svg/operator-images/calibrate-ensemble-probabilistic.svg';
 
@@ -39,7 +39,7 @@ export interface CalibrateEnsembleWeights {
 }
 
 export interface CalibrateEnsembleCiemssOperationState extends BaseState {
-	chartConfigs: string[][];
+	chartSettings: ChartSetting[] | null;
 	ensembleMapping: CalibrateEnsembleMappingRow[];
 	configurationWeights: CalibrateEnsembleWeights;
 	timestampColName: string;
@@ -69,7 +69,7 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 
 	initState: () => {
 		const init: CalibrateEnsembleCiemssOperationState = {
-			chartConfigs: [],
+			chartSettings: null,
 			ensembleMapping: [],
 			configurationWeights: {},
 			timestampColName: '',

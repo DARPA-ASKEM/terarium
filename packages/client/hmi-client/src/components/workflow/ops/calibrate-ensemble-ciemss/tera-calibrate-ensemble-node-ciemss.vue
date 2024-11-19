@@ -5,27 +5,7 @@
 			:are-embed-actions-visible="false"
 			:visualization-spec="lossChartSpec"
 		/>
-		<template v-if="!inProgressCalibrationId && !inProgressForecastId && runResults && csvAsset">
-			<tera-simulate-chart
-				v-for="(config, index) of props.node.state.chartConfigs"
-				:key="index"
-				:run-results="runResults"
-				:chartConfig="{
-					selectedRun: props.node.state.postForecastId,
-					selectedVariable: config
-				}"
-				:mapping="
-					formatCalibrateModelConfigurations(
-						props.node.state.ensembleMapping,
-						props.node.state.configurationWeights
-					) as any
-				"
-				:initial-data="csvAsset"
-				:size="{ width: 190, height: 120 }"
-				has-mean-line
-				@configuration-change="chartProxy.configurationChange(index, $event)"
-			/>
-		</template>
+		<template v-if="!inProgressCalibrationId && !inProgressForecastId && runResults && csvAsset"> </template>
 
 		<tera-progress-spinner
 			v-if="inProgressCalibrationId || inProgressForecastId"
@@ -48,7 +28,6 @@ import { computed, ref, shallowRef, watch, onMounted } from 'vue';
 import _ from 'lodash';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import {
 	getRunResultCiemss,
@@ -57,7 +36,7 @@ import {
 	makeEnsembleCiemssSimulation
 } from '@/services/models/simulation-service';
 import { setupCsvAsset } from '@/services/calibrate-workflow';
-import { chartActionsProxy, nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
+import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';
@@ -91,10 +70,6 @@ const inProgressForecastId = computed(() => props.node.state.inProgressForecastI
 const lossValues = ref<{ [key: string]: number }[]>([]);
 const lossChartSpec = ref();
 const lossChartSize = { width: 180, height: 120 };
-
-const chartProxy = chartActionsProxy(props.node, (state: CalibrateEnsembleCiemssOperationState) => {
-	emit('update-state', state);
-});
 
 const poller = new Poller();
 const pollResult = async (runId: string) => {

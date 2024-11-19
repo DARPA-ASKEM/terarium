@@ -134,3 +134,9 @@ export const getGraphDataFromDatasetCSV = (
 
 	return graphData;
 };
+
+export function getSelectedOutput<S>(node: WorkflowNode<S>) {
+	const selectedOutputId = node.active;
+	const wfOutput = node.outputs.find((output) => output.id === selectedOutputId);
+	return wfOutput;
+}

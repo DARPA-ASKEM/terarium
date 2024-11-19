@@ -19,7 +19,7 @@ import { CalibrateMap } from '@/services/calibrate-workflow';
 import { modelVarToDatasetVar } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
 import { useChartAnnotations } from './useChartAnnotations';
 
-interface ChartData {
+export interface ChartData {
 	result: DataArray;
 	resultSummary: DataArray;
 	pyciemssMap: Record<string, string>;
@@ -40,8 +40,8 @@ interface ChartData {
  */
 export function useCharts(
 	nodeId: string,
-	model: Ref<Model | null>,
-	modelConfig: Ref<ModelConfiguration | null>,
+	model: Ref<Model | null> | null,
+	modelConfig: Ref<ModelConfiguration | null> | null,
 	chartData: Ref<ChartData | null>,
 	chartSize: Ref<{ width: number; height: number }>,
 	interventions?: Ref<Intervention[]> | null
@@ -50,14 +50,14 @@ export function useCharts(
 	const { getChartAnnotationsByChartId, generateAndSaveForecastChartAnnotation } = useChartAnnotations(nodeId);
 
 	const getUnit = (paramId: string) => {
-		if (!model.value) return '';
+		if (!model?.value) return '';
 		return getUnitsFromModelParts(model.value)[paramId] || '';
 	};
 
 	// Create options for forecast charts based on chart settings and model configuration
 	const createForecastChartOptions = (setting: ChartSetting, translationMap: Record<string, string>) => {
 		const variables = setting.selectedVariables;
-		const dateOptions = getVegaDateOptions(model.value, modelConfig.value);
+		const dateOptions = getVegaDateOptions(model?.value ?? null, modelConfig?.value || null);
 		const options: ForecastChartOptions = {
 			title: '',
 			legend: true,
