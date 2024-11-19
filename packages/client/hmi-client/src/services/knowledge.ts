@@ -26,10 +26,10 @@ export interface EquationsToAMRRequest {
  */
 export const equationsToAMR = async (
 	request: EquationsToAMRRequest
-): Promise<{ modelId: string; cleanedEquations: string[] } | null> => {
+): Promise<{ modelId: string | null; cleanedEquations: string[] } | null> => {
 	const { equations, framework: model = 'petrinet', modelId, documentId } = request;
 	try {
-		const response: AxiosResponse<{ modelId: string; cleanedEquations: string[] }> = await API.post(
+		const response: AxiosResponse<{ modelId: string | null; cleanedEquations: string[] }> = await API.post(
 			`/knowledge/equations-to-model`,
 			{
 				model,

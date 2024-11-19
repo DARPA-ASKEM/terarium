@@ -377,11 +377,13 @@ async function onRun() {
 	const response = await equationsToAMR(request);
 	if (!response) return;
 	const { modelId, cleanedEquations } = response;
-	if (!modelId) return;
 
-	if (document.value?.id) await generateCard(modelId, document.value.id);
+	// If there isn't a modelId returned at least show the cleaned equations
+	if (modelId) {
+		if (document.value?.id) await generateCard(modelId, document.value.id);
+		clonedState.value.modelId = modelId;
+	}
 
-	clonedState.value.modelId = modelId;
 	// Uncheck the equations passed to the request
 	clonedState.value.equations.forEach((eq) => {
 		if (equationsText.includes(eq.asset.text)) {
