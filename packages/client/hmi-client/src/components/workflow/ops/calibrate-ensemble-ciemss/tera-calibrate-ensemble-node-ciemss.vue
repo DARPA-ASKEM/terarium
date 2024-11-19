@@ -16,6 +16,7 @@
 				}"
 				:mapping="
 					formatCalibrateModelConfigurations(
+						modelConfigurationIds,
 						props.node.state.ensembleMapping,
 						props.node.state.configurationWeights
 					) as any
@@ -86,6 +87,10 @@ const runResults = ref<RunResults>({});
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const areInputsFilled = computed(() => props.node.inputs[0].value && props.node.inputs[1].value);
+const modelConfigurationIds: string[] = props.node.inputs
+	.filter((ele) => ele.type === 'modelConfigId')
+	.map((ele) => ele.value?.[0])
+	.filter(Boolean);
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
 const inProgressForecastId = computed(() => props.node.state.inProgressForecastId);
 const lossValues = ref<{ [key: string]: number }[]>([]);
@@ -167,6 +172,7 @@ watch(
 			const state = _.cloneDeep(props.node.state);
 			const baseRequestPayload: EnsembleSimulationCiemssRequest = {
 				modelConfigs: formatCalibrateModelConfigurations(
+					modelConfigurationIds,
 					props.node.state.ensembleMapping,
 					props.node.state.configurationWeights
 				),
