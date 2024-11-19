@@ -101,7 +101,7 @@ const props = defineProps({
 	},
 	kernelIsBusy: Boolean,
 	defaultOptions: {
-		type: Array,
+		type: Array<String>,
 		default: () => []
 	},
 	maxChars: {
@@ -158,7 +158,7 @@ const onInputChange = async () => {
 	} else {
 		hideAutoComplete.value = true;
 		await nextTick();
-		textArea.value?.$el.focus();
+		inputElement.value?.focus();
 	}
 };
 
