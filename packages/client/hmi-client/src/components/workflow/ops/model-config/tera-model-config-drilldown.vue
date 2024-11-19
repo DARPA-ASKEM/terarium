@@ -526,8 +526,8 @@ const amrInitials = ref();
 const amrParameters = ref();
 
 const getMissingInputsMessage = (amount, total) => {
-	const precent = (amount / total) * 100;
-	return amount ? `Missing values: ${amount}/${total} (${precent.toFixed(0)}%)` : '';
+	const percent = (amount / total) * 100;
+	return amount ? `Missing values: ${amount}/${total} (${percent.toFixed(0)}%)` : '';
 };
 
 const missingInputCount = (modelConfiguration: ModelConfiguration) => {
