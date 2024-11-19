@@ -1237,15 +1237,13 @@ public class ProjectController {
 			/* Project Permissions */
 			final RebacProject rebacProject = new RebacProject(id, reBACService);
 
-			// Update the user permissions to the project
-			final List<Contributor> contributors = projectPermissionsService.getContributors(rebacProject);
-			for (final Contributor contributor : contributors) {
-				if (contributor.isUser()) {
-					final RebacUser rebacUser = new RebacUser(contributor.getUserId(), reBACService);
-
-					// When we make a project a sample project,
-					// Update all user permissions to READER only
-					if (isSample) {
+			// When we make a project a sample project
+			if (isSample) {
+				// Update all user permissions to READER only
+				final List<Contributor> contributors = projectPermissionsService.getContributors(rebacProject);
+				for (final Contributor contributor : contributors) {
+					if (contributor.isUser()) {
+						final RebacUser rebacUser = new RebacUser(contributor.getUserId(), reBACService);
 						projectPermissionsService.removeProjectPermissions(
 							rebacProject,
 							rebacUser,
@@ -1262,28 +1260,24 @@ public class ProjectController {
 							Schema.Relationship.READER.toString()
 						);
 					}
-
-					// When we revert a project to a non-sample project, and
-					// the user is the same as the project author it will become the creator of the project once more
-					if (!isSample && contributor.getUserId().equals(project.get().getUserId())) {
-						projectPermissionsService.setProjectPermissions(
-							rebacProject,
-							rebacUser,
-							Schema.Relationship.CREATOR.toString()
-						);
-					}
 				}
-			}
 
-			// Update the group permissions to the project when becoming a sample-project
-			if (isSample) {
-				// Add the Admin group to administrate the project
+				// Update the group permissions to the project when becoming a sample-project
 				final RebacGroup adminGroup = new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService);
 				adminGroup.removeAllRelationsExceptOne(rebacProject, Schema.Relationship.ADMIN);
-
-				// Add the public group to read the project
 				final RebacGroup publicGroup = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
 				publicGroup.removeAllRelationsExceptOne(rebacProject, Schema.Relationship.READER);
+			}
+
+			// When we revert a project to a non-sample project,
+			if (!isSample) {
+				// Project author become the creator of the project once more
+				final RebacUser rebacUser = new RebacUser(project.get().getUserId(), reBACService);
+				projectPermissionsService.setProjectPermissions(
+					rebacProject,
+					rebacUser,
+					Schema.Relationship.CREATOR.toString()
+				);
 			}
 
 			return ResponseEntity.ok().build();
