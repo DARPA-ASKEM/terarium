@@ -68,6 +68,7 @@
 								>
 									<template #header>
 										<h6 v-if="equation.asset.pageNumber">Page {{ equation.asset.pageNumber }}</h6>
+										<h6 v-else-if="equation.asset.isEditedByAI">Edited by AI</h6>
 										<h6 v-else>Manually entered</h6>
 									</template>
 									<section>
@@ -109,6 +110,7 @@
 								>
 									<template #header>
 										<h6 v-if="equation.asset.pageNumber">Page {{ equation.asset.pageNumber }}</h6>
+										<h6 v-else-if="equation.asset.isEditedByAI">Edited by AI</h6>
 										<h6 v-else>Manually entered</h6>
 									</template>
 									<section>
@@ -354,7 +356,6 @@ const onSelection = (id: string) => {
 };
 
 function onCheckBoxChange(equation) {
-	console.log(equation);
 	const state = cloneDeep(props.node.state);
 	const index = state.equations.findIndex((e) => e.name === equation.name);
 	state.equations[index].includeInProcess = equation.includeInProcess;
@@ -392,10 +393,9 @@ async function onRun() {
 		...cleanedEquations.map((equation, index) => ({
 			name: `Equation ${clonedState.value.equations.length + index}`,
 			includeInProcess: true,
-			asset: { text: equation }
+			asset: { text: equation, isEditedByAI: true }
 		}))
 	);
-	emit('update-state', clonedState.value);
 	emit('append-output', {
 		label: `Output - ${props.node.outputs.length + 1}`,
 		state: cloneDeep(clonedState.value),
