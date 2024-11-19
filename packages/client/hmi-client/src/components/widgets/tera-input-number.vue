@@ -25,7 +25,7 @@
 
 <script setup lang="ts">
 import { numberToNist } from '@/utils/number';
-import { isNaN, toNumber, isEmpty } from 'lodash';
+import { debounce, isNaN, toNumber, isEmpty } from 'lodash';
 import { CSSProperties, computed, ref, watch } from 'vue';
 
 const props = defineProps<{
@@ -135,13 +135,13 @@ function updateNumber(value: number) {
 
 	error.value = '';
 	maskedValue.value = value.toString();
-	emit('update:model-value', value);
+	debounce(emit('update:model-value', value), 150);
 }
 </script>
 
 <style scoped>
 input {
+	margin-right: var(--gap-0-5);
 	text-align: right;
-	margin-right: 2px;
 }
 </style>
