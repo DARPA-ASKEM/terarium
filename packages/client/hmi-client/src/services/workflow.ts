@@ -23,6 +23,7 @@ import {
 	Transform
 } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
+import useAuthStore from '@/stores/auth';
 import dagre from 'dagre';
 
 /**
@@ -134,7 +135,7 @@ export class WorkflowWrapper {
 			}
 		}
 
-		// New eleemnts
+		// New elements
 		[...updatedNodeMap.values()].forEach((node) => this.wf.nodes.push(node));
 		[...updatedEdgeMap.values()].forEach((edge) => this.wf.edges.push(edge));
 	}
@@ -211,6 +212,13 @@ export class WorkflowWrapper {
 	}
 
 	addNode(op: Operation, pos: Position, options: { size?: OperatorNodeSize; state?: any }) {
+		let currentUserName: string | undefined = '';
+		try {
+			currentUserName = useAuthStore().user?.username;
+		} catch (err) {
+			// do nothing
+		}
+
 		const nodeSize: Size = getOperatorNodeSize(options.size ?? OperatorNodeSize.medium);
 
 		const node: WorkflowNode<any> = {
@@ -222,6 +230,9 @@ export class WorkflowWrapper {
 			imageUrl: op.imageUrl,
 			x: pos.x,
 			y: pos.y,
+
+			createdBy: currentUserName,
+			createdAt: Date.now(),
 
 			active: null,
 			state: options.state ?? {},
@@ -290,6 +301,13 @@ export class WorkflowWrapper {
 	 *
 	 * */
 	addEdge(sourceId: string, sourcePortId: string, targetId: string, targetPortId: string, points: Position[]) {
+		let currentUserName: string | undefined = '';
+		try {
+			currentUserName = useAuthStore().user?.username;
+		} catch (err) {
+			// do nothing
+		}
+
 		const sourceNode = this.wf.nodes.find((d) => d.id === sourceId);
 		const targetNode = this.wf.nodes.find((d) => d.id === targetId);
 		if (!sourceNode || !targetNode) return;
@@ -358,6 +376,8 @@ export class WorkflowWrapper {
 			sourcePortId,
 			target: targetId,
 			targetPortId,
+			createdBy: currentUserName,
+			createdAt: Date.now(),
 			points: _.cloneDeep(points)
 		};
 		this.wf.edges.push(edge);
