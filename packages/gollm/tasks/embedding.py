@@ -26,7 +26,7 @@ def main():
             taskrunner.log("Sending request to OpenAI API")
             response = embedding_chain(text=text)
             taskrunner.log("Received response from OpenAI API")
-            responses.append(responses)
+            responses.append(response)
 
         taskrunner.write_output_dict_with_timeout({"response": responses})
 
