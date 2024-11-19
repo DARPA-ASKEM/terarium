@@ -22,7 +22,7 @@ export class BlankCanvasScenario extends BaseScenario {
 		return true;
 	}
 
-	createWorkflow() {
+	async createWorkflow() {
 		const wf = new workflowService.WorkflowWrapper();
 		wf.setWorkflowName(this.workflowName);
 		wf.setWorkflowScenario(this.toJSON());
