@@ -78,7 +78,7 @@ const updateModelFromEquations = async () => {
 	isEditing.value = false;
 	const request: EquationsToAMRRequest = { equations: equations.value, modelId: props.model.id };
 	const response = await equationsToAMR(request);
-	if (response) {
+	if (response?.modelId) {
 		emit('model-updated');
 		useToastService().success('Success', `Model Updated from equation`);
 	}
