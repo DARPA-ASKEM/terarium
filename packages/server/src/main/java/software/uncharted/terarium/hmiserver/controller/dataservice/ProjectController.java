@@ -1216,7 +1216,7 @@ public class ProjectController {
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("projects.already-sample"));
 			}
 			if (!isSample && !project.getSampleProject()) {
-				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("projects.not-sample"));
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("projects.already-not-sample"));
 			}
 
 			// Update the project sample status
@@ -1237,13 +1237,10 @@ public class ProjectController {
 			// When we make a project a sample project
 			if (isSample) {
 				// Update all user permissions to READER only
-				projectPermissionsService
-					.getContributors(rebacProject)
-					.stream()
-					.filter(Contributor::isUser)
-					.map(Contributor::getUserId)
-					.map(reBACService::getRebacUser)
-					.forEach(rebacUser -> {
+				final List<Contributor> contributors = projectPermissionsService.getContributors(rebacProject);
+				for (final Contributor contributor : contributors) {
+					if (contributor.isUser()) {
+						final RebacUser rebacUser = new RebacUser(contributor.getUserId(), reBACService);
 						projectPermissionsService.removeProjectPermissions(
 							rebacProject,
 							rebacUser,
@@ -1259,7 +1256,8 @@ public class ProjectController {
 							rebacUser,
 							Schema.Relationship.READER.toString()
 						);
-					});
+					}
+				}
 
 				// Update the group permissions to the project when becoming a sample-project
 				final RebacGroup adminGroup = new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService);
