@@ -8,7 +8,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
 import { ModelPartItem } from '@/types/Model';
 import { Model, Observable } from '@/types/Types';
 import { MiraModel } from '@/model-representation/mira/mira-common';
@@ -25,29 +24,25 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-observable']);
 
-const observablesList = computed<
-	{
-		base: ModelPartItem;
-		children: ModelPartItem[];
-		isParent: boolean;
-	}[]
->(() =>
-	props.observables.map((observable) => {
-		const { id, name, expression, description, units, grounding } = observable;
-		return {
-			base: {
-				id,
-				name,
-				description,
-				unitExpression: units?.expression,
-				grounding,
-				expression,
-				expression_mathml: observable.expression_mathml
-			},
-			// Observables can't be stratified therefore don't have children
-			children: [],
-			isParent: false
-		};
-	})
-);
+const observablesList: {
+	base: ModelPartItem;
+	children: ModelPartItem[];
+	isParent: boolean;
+}[] = props.observables.map((observable) => {
+	const { id, name, expression, description, units, grounding } = observable;
+	return {
+		base: {
+			id,
+			name,
+			description,
+			unitExpression: units?.expression,
+			grounding,
+			expression,
+			expression_mathml: observable.expression_mathml
+		},
+		// Observables can't be stratified therefore don't have children
+		children: [],
+		isParent: false
+	};
+});
 </script>
