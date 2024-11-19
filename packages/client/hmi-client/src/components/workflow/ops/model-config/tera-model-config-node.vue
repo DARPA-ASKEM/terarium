@@ -107,20 +107,6 @@ watch(
 	{ deep: true }
 );
 
-// onMounted(() => {
-// 	if(!props.node.outputs.at(0)?.value){
-// 	const state = cloneDeep(props.node.state);
-// 	emit('append-output', {
-// 		type: ModelConfigOperation.outputs[0].type,
-// 		label: state.transientModelConfig.name,
-// 		value: state.transientModelConfig.id,
-// 		isSelected: false,
-// 		state: omit(state, ['transientModelConfig'])
-// 	});
-// }
-
-// });
-
 watch(
 	() => props.node.state.modelConfigTaskIds,
 	() => {
