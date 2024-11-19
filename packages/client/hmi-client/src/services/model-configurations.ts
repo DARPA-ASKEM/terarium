@@ -95,9 +95,14 @@ export function getParameter(config: ModelConfiguration, parameterId: string): P
 	return config.parameterSemanticList?.find((param) => param.referenceId === parameterId);
 }
 
-export function getParameterDistribution(config: ModelConfiguration, parameterId: string): ModelDistribution {
+export function getParameterDistribution(
+	config: ModelConfiguration,
+	parameterId: string,
+	useDefaultNan: boolean = false
+): ModelDistribution {
 	const parameter = getParameter(config, parameterId);
-	if (!parameter) return { type: DistributionType.Constant, parameters: { value: 0 } };
+	const defaultValue = useDefaultNan ? NaN : 0;
+	if (!parameter) return { type: DistributionType.Constant, parameters: { value: defaultValue } };
 	return parameter.distribution;
 }
 
