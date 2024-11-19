@@ -14,6 +14,7 @@
 			<tera-beaker-input
 				class="tera-beaker-input"
 				:kernel-is-busy="kernelStatus !== KernelState.idle"
+				:default-options="sampleAgentQuestions"
 				context="dataset"
 				@submitQuery="onSubmitQuery"
 				@add-code-cell="onAddCodeCell"
@@ -135,8 +136,8 @@ import {
 	getServerSettings,
 	getSessionManager,
 	JupyterMessage,
-	newSession,
-	KernelState
+	KernelState,
+	newSession
 } from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
@@ -179,6 +180,7 @@ const props = defineProps<{
 	programmingLanguage?: string;
 	kernelState: any;
 	selectedDataset: string | null;
+	sampleAgentQuestions: string[];
 }>();
 
 const languages = programmingLanguageOptions();

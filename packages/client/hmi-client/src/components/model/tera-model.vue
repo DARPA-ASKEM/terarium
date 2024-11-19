@@ -47,7 +47,7 @@
 				<Button label="Save" @click="onSave" :disabled="!(hasChanged && hasEditPermission)" />
 			</aside>
 		</template>
-		<section v-if="temporaryModel">
+		<section v-if="temporaryModel && mmtData">
 			<tera-model-description
 				:feature-config="featureConfig"
 				:model="temporaryModel"
@@ -97,7 +97,6 @@ import { AssetType, type Model } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 import { MMT } from '@/model-representation/mira/mira-common';
-import { emptyMiraModel } from '@/model-representation/mira/mira';
 import {
 	updateState,
 	updateParameter,
@@ -129,7 +128,7 @@ const emit = defineEmits(['close-preview', 'on-save']);
 
 const model = ref<Model | null>(null);
 const temporaryModel = ref<Model | null>(null);
-const mmtData = ref<MMT>({ mmt: emptyMiraModel(), template_params: {}, observable_summary: {} });
+const mmtData = ref<MMT | null>(null);
 
 const newName = ref('New Model');
 const isRenaming = ref(false);
@@ -140,8 +139,12 @@ const hasChanged = computed(() => !isEqual(model.value, temporaryModel.value));
 const hasEditPermission = useProjects().hasEditPermission();
 
 // Edit menu
-function onSave() {
-	saveModelContent();
+async function onSave() {
+	if (!hasEditPermission || !temporaryModel.value) return;
+	await updateModel(temporaryModel.value);
+	logger.info('Changes to the model has been saved.');
+	await useProjects().refresh();
+	await fetchModel();
 }
 function onSaveAs() {
 	showSaveModal.value = true;
@@ -195,14 +198,6 @@ const optionsMenuPt = {
 	}
 };
 
-async function saveModelContent() {
-	if (!hasEditPermission || !temporaryModel.value) return;
-	await updateModel(temporaryModel.value);
-	logger.info('Changes to the model has been saved.');
-	await useProjects().refresh();
-	await fetchModel();
-}
-
 async function updateModelName() {
 	if (temporaryModel.value && !isEmpty(newName.value)) {
 		temporaryModel.value.header.name = newName.value;
@@ -231,7 +226,7 @@ function updateTemporaryModel(newModel: Model) {
 	if (doMmtUpdate) refreshMMT();
 }
 
-function onUpdateModelPart(property: string, event: any) {
+function onUpdateModelPart(property: 'state' | 'parameter' | 'observable' | 'transition' | 'time', event: any) {
 	if (!temporaryModel.value) return;
 	const newModel = cloneDeep(temporaryModel.value);
 	const { id, key, value } = event;
@@ -260,7 +255,7 @@ function onUpdateModelPart(property: string, event: any) {
 async function fetchModel() {
 	model.value = await getModel(props.assetId);
 	temporaryModel.value = cloneDeep(model.value);
-	refreshMMT();
+	await refreshMMT();
 }
 
 onMounted(async () => {
@@ -285,7 +280,7 @@ watch(
 		// Reset view of model page
 		model.value = null;
 		temporaryModel.value = null;
-		mmtData.value = { mmt: emptyMiraModel(), template_params: {}, observable_summary: {} };
+		mmtData.value = null;
 		isRenaming.value = false;
 		if (!isEmpty(props.assetId)) {
 			isModelLoading.value = true;

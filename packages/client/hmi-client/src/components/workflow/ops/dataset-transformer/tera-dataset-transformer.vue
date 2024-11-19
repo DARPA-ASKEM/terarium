@@ -31,6 +31,7 @@
 					@update-kernel-state="updateKernelState"
 					:kernelState="kernelState"
 					:selected-dataset="selectedDataset"
+					:sample-agent-questions="sampleAgentQuestions"
 				/>
 			</Suspense>
 		</div>
@@ -84,6 +85,15 @@ const updateKernelState = (newKernelState: any) => {
 		selectedDataset.value = keys[keys.length - 1];
 	}
 };
+
+const sampleAgentQuestions = [
+	'I have two dataframes d1, d2. Join them on the column named "date". Name the joined dataframe d3.',
+	'I have a dataframe d1. Show me the data types by column.',
+	"I have three dataframes d1, d2, d3. d1 is incident case counts. d2 is incident hospitalization counts. d3 is cumulative death counts. Let's assume that average time to recover is 14 days and average time to exit the hospital is 10 days. Can you convert this data into prevalence data? Ideally please map it to SIRHD. Assume a population of 150 million.",
+	'Add a new column to the dataframe d1 that indexes the rows from 0, 1, 2 to N.',
+	'Download geojson of US counties from the Plotly GitHub repo using urlopen.',
+	'I have a geopandas dataframe d1. Use Matplotlib to create a chloropleth map using the column R0. Use the cividis colormap. Add a colorbar.'
+];
 
 const notebookSession = ref(<NotebookSession | undefined>undefined);
 
