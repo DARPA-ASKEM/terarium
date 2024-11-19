@@ -23,6 +23,9 @@ import {
 	Transform
 } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
+import useAuthStore from '@/stores/auth';
+
+const currentUserId = useAuthStore().user?.id;
 
 /**
  * A wrapper class around the workflow data struture to make it easier
@@ -221,6 +224,9 @@ export class WorkflowWrapper {
 			imageUrl: op.imageUrl,
 			x: pos.x,
 			y: pos.y,
+
+			createdBy: currentUserId,
+			createdAt: Date.now(),
 
 			active: null,
 			state: options.state ?? {},
