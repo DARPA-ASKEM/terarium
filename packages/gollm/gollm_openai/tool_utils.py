@@ -18,7 +18,7 @@ from gollm_openai.prompts.equations_cleanup import EQUATIONS_CLEANUP_PROMPT
 from gollm_openai.prompts.equations_from_image import EQUATIONS_FROM_IMAGE_PROMPT
 from gollm_openai.prompts.general_instruction import GENERAL_INSTRUCTION_PROMPT
 from gollm_openai.prompts.interventions_from_document import INTERVENTIONS_FROM_DOCUMENT_PROMPT
-from gollm_openai.prompts.latex_style_guide import LATEXT_STYLE_GUIDE
+from gollm_openai.prompts.latex_style_guide import LATEX_STYLE_GUIDE
 from gollm_openai.prompts.model_card import INSTRUCTIONS
 from gollm_openai.prompts.model_meta_compare import MODEL_METADATA_COMPARE_PROMPT
 from openai import OpenAI
@@ -85,7 +85,7 @@ def equations_cleanup(equations: List[str]) -> dict:
 
     print("Building prompt to reformat equations...")
     prompt = EQUATIONS_CLEANUP_PROMPT.format(
-        style_guide=LATEXT_STYLE_GUIDE,
+        style_guide=LATEX_STYLE_GUIDE,
         equations="\n".join(equations)
     )
 
@@ -131,7 +131,7 @@ def equations_from_image(image: str) -> dict:
 
     print("Building prompt to extract equations an image...")
     prompt = EQUATIONS_FROM_IMAGE_PROMPT.format(
-        style_guide=LATEXT_STYLE_GUIDE
+        style_guide=LATEX_STYLE_GUIDE
     )
 
     client = OpenAI()

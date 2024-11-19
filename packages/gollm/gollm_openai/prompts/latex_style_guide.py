@@ -1,4 +1,4 @@
-LATEXT_STYLE_GUIDE = """
+LATEX_STYLE_GUIDE = """
 1) Derivatives must be written in Leibniz notation (for example, "\\frac{d X}{d t}").
     a) Derivatives that are written in other notations, like Newton ("\dot{X}") or Lagrange ("X^\prime" or "X'"), should be converted to Leibniz notation
     b) Partial derivatives of one-variable functions (for example, "\\partial_t X" or "\\frac{\partial X}{\partial t}") should be rewritten as ordinary derivatives ("\\frac{d X}{d t}")
