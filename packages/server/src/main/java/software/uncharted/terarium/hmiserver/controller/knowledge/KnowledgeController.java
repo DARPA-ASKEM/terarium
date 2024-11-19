@@ -190,11 +190,15 @@ public class KnowledgeController {
 
 		// get the equations from the cleanup response, or use the original equations
 		JsonNode equationsReq = req.get("equations");
+		List<String> cleanedEquations = new ArrayList<>();
 		if (cleanupResp != null && cleanupResp.getOutput() != null) {
 			try {
 				JsonNode output = mapper.readValue(cleanupResp.getOutput(), JsonNode.class);
 				if (output.get("response") != null && output.get("response").get("equations") != null) {
 					equationsReq = output.get("response").get("equations");
+					for (JsonNode eq : equationsReq) {
+						cleanedEquations.add(eq.asText());
+					}
 				}
 			} catch (IOException e) {
 				log.warn("Unable to retrieve cleaned-up equations from GoLLM response. Reverting to original equations.", e);
@@ -210,6 +214,9 @@ public class KnowledgeController {
 			responseAMR = skemaUnifiedProxy.consolidatedEquationsToAMR(newReq).getBody();
 			if (responseAMR == null) {
 				log.warn("Skema Unified Service did not return a valid AMR based on the provided equations");
+				if (!cleanedEquations.isEmpty()) {
+					return ResponseEntity.ok(new EquationsToModelResponse(null, cleanedEquations));
+				}
 				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("skema.bad-equations"));
 			}
 		} catch (final FeignException e) {
@@ -217,24 +224,26 @@ public class KnowledgeController {
 				"An exception occurred while Skema Unified Service was trying to produce an AMR based on the provided equations",
 				e
 			);
+			if (!cleanedEquations.isEmpty()) {
+				return ResponseEntity.ok(new EquationsToModelResponse(null, cleanedEquations));
+			}
 			throw handleSkemaFeignException(e);
 		} catch (final Exception e) {
 			log.error(
 				"An unhandled error occurred while Skema Unified Service was trying to produce an AMR based on the provided equations",
 				e
 			);
+			if (!cleanedEquations.isEmpty()) {
+				return ResponseEntity.ok(new EquationsToModelResponse(null, cleanedEquations));
+			}
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("skema.internal-error"));
 		}
 
 		if (!responseAMR.isPetrinet()) {
-			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("skema.bad-equations.petrinet"));
-		}
-
-		List<String> cleanedEquations = new ArrayList<>();
-		if (equationsReq != null && equationsReq.isArray()) {
-			for (JsonNode eq : equationsReq) {
-				cleanedEquations.add(eq.asText());
+			if (!cleanedEquations.isEmpty()) {
+				return ResponseEntity.ok(new EquationsToModelResponse(null, cleanedEquations));
 			}
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("skema.bad-equations.petrinet"));
 		}
 
 		// If no model id is provided, create a new model asset
@@ -248,18 +257,30 @@ public class KnowledgeController {
 				return ResponseEntity.ok(new EquationsToModelResponse(model.getId(), cleanedEquations));
 			} catch (final IOException e) {
 				log.error("An error occurred while trying to retrieve information necessary for model enrichment.", e);
+				if (!cleanedEquations.isEmpty()) {
+					return ResponseEntity.ok(new EquationsToModelResponse(null, cleanedEquations));
+				}
 				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 			} catch (ExecutionException e) {
 				log.error("Error while waiting for task response", e);
+				if (!cleanedEquations.isEmpty()) {
+					return ResponseEntity.ok(new EquationsToModelResponse(null, cleanedEquations));
+				}
 				throw new ResponseStatusException(
 					HttpStatus.INTERNAL_SERVER_ERROR,
 					messages.get("task.gollm.execution-failure")
 				);
 			} catch (InterruptedException e) {
 				log.warn("Interrupted while waiting for task response", e);
+				if (!cleanedEquations.isEmpty()) {
+					return ResponseEntity.ok(new EquationsToModelResponse(null, cleanedEquations));
+				}
 				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
 			} catch (TimeoutException e) {
 				log.warn("Timeout while waiting for task response", e);
+				if (!cleanedEquations.isEmpty()) {
+					return ResponseEntity.ok(new EquationsToModelResponse(null, cleanedEquations));
+				}
 				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
 			}
 		}
@@ -268,6 +289,9 @@ public class KnowledgeController {
 		final Optional<Model> model = modelService.getAsset(modelId, permission);
 		if (model.isEmpty()) {
 			log.error(String.format("The model id %s does not exist.", modelId));
+			if (!cleanedEquations.isEmpty()) {
+				return ResponseEntity.ok(new EquationsToModelResponse(null, cleanedEquations));
+			}
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("model.not-found"));
 		}
 
@@ -281,15 +305,27 @@ public class KnowledgeController {
 			return ResponseEntity.ok(new EquationsToModelResponse(model.get().getId(), cleanedEquations));
 		} catch (final IOException e) {
 			log.error("An error occurred while trying to retrieve information necessary for model enrichment.", e);
+			if (!cleanedEquations.isEmpty()) {
+				return ResponseEntity.ok(new EquationsToModelResponse(null, cleanedEquations));
+			}
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		} catch (ExecutionException e) {
 			log.error("Error while waiting for task response", e);
+			if (!cleanedEquations.isEmpty()) {
+				return ResponseEntity.ok(new EquationsToModelResponse(null, cleanedEquations));
+			}
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
 		} catch (InterruptedException e) {
 			log.warn("Interrupted while waiting for task response", e);
+			if (!cleanedEquations.isEmpty()) {
+				return ResponseEntity.ok(new EquationsToModelResponse(null, cleanedEquations));
+			}
 			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
 		} catch (TimeoutException e) {
 			log.warn("Timeout while waiting for task response", e);
+			if (!cleanedEquations.isEmpty()) {
+				return ResponseEntity.ok(new EquationsToModelResponse(null, cleanedEquations));
+			}
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
 		}
 	}

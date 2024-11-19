@@ -380,9 +380,13 @@ async function onRun() {
 	if (document.value?.id) await generateCard(modelId, document.value.id);
 
 	clonedState.value.modelId = modelId;
-	// Remove the equations passed to the request
-	clonedState.value.equations = clonedState.value.equations.filter((eq) => !equationsText.includes(eq.asset.text));
-	// So they can be replaced with the cleaned equations
+	// Uncheck the equations passed to the request
+	clonedState.value.equations.forEach((eq) => {
+		if (equationsText.includes(eq.asset.text)) {
+			eq.includeInProcess = false;
+		}
+	});
+	// Replace the unchecked equations with the cleaned equations
 	clonedState.value.equations.push(
 		...cleanedEquations.map((equation) => ({
 			name: 'Equation',
