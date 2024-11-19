@@ -74,7 +74,7 @@ public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
 		final Grounding grounding = new Grounding();
 		grounding.setContext(objectMapper.createObjectNode().put("hello", "world-" + key).put("foo", "bar-" + key));
 		grounding.setIdentifiers(new ArrayList<>());
-		grounding.getIdentifiers().add(new DKG("curie", "maria", null));
+		grounding.getIdentifiers().add(new DKG("curie", "maria", ""));
 		return grounding;
 	}
 
@@ -133,7 +133,7 @@ public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
 					after.getId(),
 					filename,
 					ContentType.TEXT_PLAIN,
-					new String("This is my sample file containing" + filename).getBytes()
+					("This is my sample file containing" + filename).getBytes()
 				);
 			}
 		}
@@ -182,7 +182,7 @@ public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
 					after.getId(),
 					filename,
 					ContentType.TEXT_PLAIN,
-					new String("This is my sample file containing" + filename).getBytes()
+					("This is my sample file containing" + filename).getBytes()
 				);
 			}
 		}

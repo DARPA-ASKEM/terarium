@@ -160,7 +160,7 @@ public class TestReBACService extends ReBACService {
 		final SchemaObject who,
 		final SchemaObject what,
 		final Schema.Relationship relationship
-	) throws Exception, RelationshipAlreadyExistsException {}
+	) throws Exception {}
 
 	@Override
 	public List<RebacPermissionRelationship> getRelationships(final SchemaObject what) throws Exception {

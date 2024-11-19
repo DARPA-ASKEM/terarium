@@ -25,7 +25,7 @@
 					</div>
 				</template>
 				<template #content>
-					<Accordion multiple :active-index="[0, 1, 2]">
+					<Accordion multiple :active-index="currentActiveIndicies">
 						<AccordionTab header="Mapping">
 							<div class="overflow-x-scroll">
 								<table>
@@ -317,6 +317,8 @@ const knobs = ref<BasicKnobs>({
 	extra: props.node.state.extra ?? {},
 	timestampColName: props.node.state.timestampColName ?? ''
 });
+
+const currentActiveIndicies = ref([0, 1, 2]);
 
 const isSidebarOpen = ref(true);
 const selectedOutputId = ref<string>();
