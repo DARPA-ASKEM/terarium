@@ -30,7 +30,7 @@
 					<section>
 						<nav class="inline-flex">
 							<Button
-								class="flex-1 mr-6"
+								class="flex-1 mr-5"
 								outlined
 								severity="secondary"
 								label="Extract from inputs"
@@ -39,7 +39,13 @@
 								:disabled="!props.node.inputs[0]?.value && !props.node.inputs[1]?.value"
 								@click="extractInterventionPolicyFromInputs"
 							/>
-							<Button class="ml-1" label="Create New" :disabled="!model?.id" @click="resetToBlankIntervention" />
+							<Button
+								class="ml-1"
+								icon="pi pi-plus"
+								label="Create new"
+								:disabled="!model?.id"
+								@click="resetToBlankIntervention"
+							/>
 						</nav>
 						<tera-input-text v-model="filterInterventionsText" placeholder="Filter" />
 						<ul v-if="!isFetchingPolicies">
@@ -704,7 +710,7 @@ button.start-edit {
 
 .intervention {
 	background-color: var(--gray-0);
-	border-left: 4px solid var(--surface-300);
+	border-left: 6px solid var(--surface-300);
 
 	&.selected {
 		border-left-color: var(--primary-color);
@@ -712,7 +718,7 @@ button.start-edit {
 
 	&,
 	&.selected {
-		transition: border-left-color 250ms;
+		transition: border-left-color 15ms;
 	}
 }
 
