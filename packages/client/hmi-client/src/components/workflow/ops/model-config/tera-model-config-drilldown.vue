@@ -308,7 +308,6 @@ const emit = defineEmits(['append-output', 'update-state', 'select-output', 'clo
 
 const isFetchingPDF = ref(false);
 const isDocViewerOpen = ref(true);
-const selectedConfigMissingInputCount = ref('');
 
 const currentActiveIndexes = ref([0, 1, 2]);
 const pdfData = ref<{ document: any; data: string; isPdf: boolean; name: string }[]>([]);
@@ -341,20 +340,6 @@ const calibratedConfigObservables = computed<Observable[]>(() =>
 
 const getTotalInput = (modelConfiguration: ModelConfiguration) =>
 	modelConfiguration.initialSemanticList.length + modelConfiguration.parameterSemanticList.length;
-
-const getMissingInputCountMessage = (modelConfiguration: ModelConfiguration) => {
-	const amount = getMissingInputAmount(modelConfiguration);
-	const total = getTotalInput(modelConfiguration);
-	const precent = (amount / total) * 100;
-	return amount ? `Missing values: ${amount}/${total} (${precent.toFixed(0)}%)` : '';
-};
-
-const missingInputCount = (modelConfiguration: ModelConfiguration) => {
-	if (selectedConfigId.value === modelConfiguration.id) {
-		return selectedConfigMissingInputCount.value;
-	}
-	return getMissingInputCountMessage(modelConfiguration);
-};
 
 // Check if the model configuration is the same as the original
 const isModelConfigChanged = computed(() => !isModelConfigsEqual(originalConfig, knobs.value.transientModelConfig));
@@ -537,6 +522,32 @@ const initializing = ref(false);
 const isFetching = ref(false);
 const isLoading = ref(false);
 
+const amrInitials = ref();
+const amrParameters = ref();
+
+const getMissingInputsMessage = (amount, total) => {
+	const percent = (amount / total) * 100;
+	return amount ? `Missing values: ${amount}/${total} (${percent.toFixed(0)}%)` : '';
+};
+
+const missingInputCount = (modelConfiguration: ModelConfiguration) => {
+	if (selectedConfigId.value === modelConfiguration.id) {
+		return selectedConfigMissingInputCount.value;
+	}
+	const total = amrInitials.value.length + amrParameters.value.length;
+	const amount = total - getTotalInput(modelConfiguration);
+	return getMissingInputsMessage(amount, total);
+};
+
+const selectedConfigMissingInputCount = computed(() => {
+	if (initializing.value) {
+		return '';
+	}
+	const amount = getMissingInputAmount(knobs.value.transientModelConfig);
+	const total = getTotalInput(knobs.value.transientModelConfig);
+	return getMissingInputsMessage(amount, total);
+});
+
 const model = ref<Model | null>(null);
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
@@ -641,18 +652,16 @@ const initialize = async (overwriteWithState: boolean = false) => {
 	}
 
 	if (model.value) {
-		const initials = getModelInitials(
-			knobs.value.transientModelConfig,
-			mmt.value.annotations.name,
-			getAmrInitials(model.value)
-		);
+		amrInitials.value = getAmrInitials(model.value);
+		amrParameters.value = getAmrParameters(model.value);
+		const initials = getModelInitials(knobs.value.transientModelConfig, mmt.value.annotations.name, amrInitials.value);
 		if (initials.length) {
 			knobs.value.transientModelConfig.initialSemanticList = initials;
 		}
 		const parameters = getModelParameters(
 			knobs.value.transientModelConfig,
 			mmt.value.annotations.name,
-			getAmrParameters(model.value)
+			amrParameters.value
 		);
 		if (parameters.length) {
 			knobs.value.transientModelConfig.parameterSemanticList = parameters;
@@ -792,7 +801,6 @@ const debounceUpdateState = debounce(() => {
 	configuredMmt.value = makeConfiguredMMT(mmt.value, knobs.value.transientModelConfig);
 
 	emit('update-state', state);
-	selectedConfigMissingInputCount.value = getMissingInputCountMessage(state.transientModelConfig);
 }, 100);
 watch(
 	() => knobs.value,
