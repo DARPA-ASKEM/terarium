@@ -1206,33 +1206,30 @@ public class ProjectController {
 			// Only an admin can set a project as a sample project
 			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), id);
 
-			final Optional<Project> project = projectService.getProject(id);
-			if (project.isEmpty()) {
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
+			// Get the project
+			final Project project = projectService
+				.getProject(id)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found")));
+
+			// Validate the request again the current project sample status
+			if (isSample && project.getSampleProject()) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("projects.already-sample"));
+			}
+			if (!isSample && !project.getSampleProject()) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("projects.not-sample"));
 			}
 
-			// If the user is making the project a sample
+			// Update the project sample status
+			project.setSampleProject(isSample);
+
+			// If the user is making the project a sample, make it public as well
 			if (isSample) {
-				// Check if the project is already a sample project
-				if (project.get().getSampleProject()) {
-					throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("projects.already-sample"));
-				}
-
-				// Update the project and make it public as well as a sample project
-				project.get().setSampleProject(true).setPublicAsset(true);
+				project.setPublicAsset(true);
 				projectAssetService.togglePublicForAssets(terariumAssetServices, id, true, Schema.Permission.WRITE);
-			} else {
-				// Check if the project is not a sample project
-				if (!project.get().getSampleProject()) {
-					throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("projects.not-sample"));
-				}
-
-				// Update the project, but do not change the public status
-				project.get().setSampleProject(false);
 			}
 
 			// Update the project
-			projectService.updateProject(project.get());
+			projectService.updateProject(project);
 
 			/* Project Permissions */
 			final RebacProject rebacProject = new RebacProject(id, reBACService);
@@ -1240,10 +1237,13 @@ public class ProjectController {
 			// When we make a project a sample project
 			if (isSample) {
 				// Update all user permissions to READER only
-				final List<Contributor> contributors = projectPermissionsService.getContributors(rebacProject);
-				for (final Contributor contributor : contributors) {
-					if (contributor.isUser()) {
-						final RebacUser rebacUser = new RebacUser(contributor.getUserId(), reBACService);
+				projectPermissionsService
+					.getContributors(rebacProject)
+					.stream()
+					.filter(Contributor::isUser)
+					.map(Contributor::getUserId)
+					.map(reBACService::getRebacUser)
+					.forEach(rebacUser -> {
 						projectPermissionsService.removeProjectPermissions(
 							rebacProject,
 							rebacUser,
@@ -1259,25 +1259,18 @@ public class ProjectController {
 							rebacUser,
 							Schema.Relationship.READER.toString()
 						);
-					}
-				}
+					});
 
 				// Update the group permissions to the project when becoming a sample-project
 				final RebacGroup adminGroup = new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService);
 				adminGroup.removeAllRelationsExceptOne(rebacProject, Schema.Relationship.ADMIN);
 				final RebacGroup publicGroup = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
 				publicGroup.removeAllRelationsExceptOne(rebacProject, Schema.Relationship.READER);
-			}
-
-			// When we revert a project to a non-sample project,
-			if (!isSample) {
+			} else {
 				// Project author become the creator of the project once more
-				final RebacUser rebacUser = new RebacUser(project.get().getUserId(), reBACService);
-				projectPermissionsService.setProjectPermissions(
-					rebacProject,
-					rebacUser,
-					Schema.Relationship.CREATOR.toString()
-				);
+				final RebacUser rebacUser = new RebacUser(project.getUserId(), reBACService);
+				final String creator = Schema.Relationship.CREATOR.toString();
+				projectPermissionsService.setProjectPermissions(rebacProject, rebacUser, creator);
 			}
 
 			return ResponseEntity.ok().build();
