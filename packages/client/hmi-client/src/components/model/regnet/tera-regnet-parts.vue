@@ -1,5 +1,5 @@
 <template>
-	<Accordion multiple :active-index="[0, 1, 2]">
+	<Accordion multiple :active-index="currentActiveIndicies">
 		<AccordionTab header="Vertices">
 			<DataTable
 				v-if="!isEmpty(vertices)"
@@ -56,7 +56,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['update-parameter']);
-
+const currentActiveIndicies = ref([0, 1, 2]);
 const vertices = computed(() => props.model?.model?.vertices ?? []);
 const edges = computed(() => props.model.model?.edges ?? []);
 const conceptSearchTerm = ref('');

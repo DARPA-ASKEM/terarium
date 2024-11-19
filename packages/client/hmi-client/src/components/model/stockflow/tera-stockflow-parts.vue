@@ -1,5 +1,5 @@
 <template>
-	<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5]">
+	<Accordion multiple :active-index="currentActiveIndicies">
 		<AccordionTab>
 			<template #header>
 				Initial variables<span class="artifact-amount">({{ initialsLength }})</span>
@@ -74,7 +74,7 @@ import type { Model } from '@/types/Types';
 import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { stringToLatexExpression } from '@/services/model';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -95,6 +95,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-state', 'update-parameter', 'update-observable', 'update-time']);
 
+const currentActiveIndicies = ref([0, 1, 2, 3, 4, 5]);
 const initialsLength = computed(() => props.model?.semantics?.ode?.initials?.length ?? 0);
 const parametersLength = computed(
 	() => (props.model?.semantics?.ode.parameters?.length ?? 0) + (props.model?.model?.auxiliaries?.length ?? 0)
