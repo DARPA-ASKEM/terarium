@@ -405,7 +405,11 @@ const updateWeights = () => {
 };
 
 const runEnsemble = async () => {
-	const modelConfigs = formatSimulateModelConfigurations(knobs.value.mapping, knobs.value.weights);
+	const modelConfigs = formatSimulateModelConfigurations(
+		modelConfigurationIds,
+		knobs.value.mapping,
+		knobs.value.weights
+	);
 	const params: EnsembleSimulationCiemssRequest = {
 		modelConfigs,
 		timespan: {

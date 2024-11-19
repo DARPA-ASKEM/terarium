@@ -38,34 +38,40 @@ export const updateLossChartSpec = (data: string | Record<string, any>[], size: 
 		}
 	);
 
+// Note that the order of the result matters as it will help us understand the output's ordering
 export function formatCalibrateModelConfigurations(
+	inputModelConfigsOrder: string[],
 	rows: CalibrateEnsembleMappingRow[],
 	weights: CalibrateEnsembleWeights
 ): EnsembleModelConfigs[] {
-	const ensembleModelConfigMap: { [key: string]: EnsembleModelConfigs } = {};
+	const ensembleModelConfigList: EnsembleModelConfigs[] = [];
+
+	inputModelConfigsOrder.forEach((configId) => {
+		const newConfig: EnsembleModelConfigs = {
+			id: configId,
+			solutionMappings: {},
+			weight: 0
+		};
+		ensembleModelConfigList.push(newConfig);
+	});
+
 	// 1. map the weights to the ensemble model configs
 	Object.entries(weights).forEach(([key, value]) => {
 		// return if there is no weight
 		if (!value) return;
-
-		const ensembleModelConfig: EnsembleModelConfigs = {
-			id: key,
-			solutionMappings: {},
-			weight: value
-		};
-
-		ensembleModelConfigMap[key] = ensembleModelConfig;
+		const index = ensembleModelConfigList.findIndex((ele) => ele.id === key) as number;
+		ensembleModelConfigList[index].weight = value;
 	});
 
 	// 2. format the solution mappings
 	rows.forEach((row) => {
 		Object.entries(row.modelConfigurationMappings).forEach(([key, value]) => {
-			if (!ensembleModelConfigMap[key]) return;
-			ensembleModelConfigMap[key].solutionMappings = {
+			const index = ensembleModelConfigList.findIndex((ele) => ele.id === key) as number;
+			ensembleModelConfigList[index].solutionMappings = {
 				[row.datasetMapping]: value
 			};
 		});
 	});
 
-	return [...Object.values(ensembleModelConfigMap)];
+	return ensembleModelConfigList;
 }

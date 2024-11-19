@@ -337,6 +337,10 @@ const lossChartContainer = ref(null);
 const lossChartSize = useDrilldownChartSize(lossChartContainer);
 const LOSS_CHART_DATA_SOURCE = 'lossData';
 // Model:
+const modelConfigurationIds: string[] = props.node.inputs
+	.filter((ele) => ele.type === 'modelConfigId')
+	.map((ele) => ele.value?.[0])
+	.filter(Boolean);
 const listModelLabels = ref<string[]>([]);
 const allModelConfigurations = ref<ModelConfiguration[]>([]);
 
@@ -427,7 +431,11 @@ const runEnsemble = async () => {
 	});
 
 	const calibratePayload: EnsembleCalibrationCiemssRequest = {
-		modelConfigs: formatCalibrateModelConfigurations(knobs.value.ensembleMapping, knobs.value.configurationWeights),
+		modelConfigs: formatCalibrateModelConfigurations(
+			modelConfigurationIds,
+			knobs.value.ensembleMapping,
+			knobs.value.configurationWeights
+		),
 		timespan: getTimespan({
 			dataset: csvAsset.value,
 			timestampColName: knobs.value.timestampColName
@@ -458,10 +466,6 @@ const runEnsemble = async () => {
 
 onMounted(async () => {
 	allModelConfigurations.value = [];
-	const modelConfigurationIds: string[] = [];
-	props.node.inputs.forEach((ele) => {
-		if (ele.value && ele.type === 'modelConfigId') modelConfigurationIds.push(ele.value[0]);
-	});
 	if (!modelConfigurationIds) return;
 
 	// Model configuration input
