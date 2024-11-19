@@ -136,7 +136,7 @@ export class WorkflowWrapper {
 			}
 		}
 
-		// New eleemnts
+		// New elements
 		[...updatedNodeMap.values()].forEach((node) => this.wf.nodes.push(node));
 		[...updatedEdgeMap.values()].forEach((edge) => this.wf.edges.push(edge));
 	}
