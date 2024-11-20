@@ -962,18 +962,6 @@ watch(
 	margin-left: var(--gap-2);
 }
 
-/* force the constraint to linewrap if long*/
-.first-line:deep(.katex-html) {
-	display: flex;
-	flex-wrap: wrap;
-	width: 360px;
-}
-.first-line:deep(.katex-html .base) {
-	display: flex;
-	flex-wrap: wrap;
-	width: fit-content;
-}
-
 .secondary-text {
 	color: var(--text-color-subdued);
 	font-size: var(--font-caption);
