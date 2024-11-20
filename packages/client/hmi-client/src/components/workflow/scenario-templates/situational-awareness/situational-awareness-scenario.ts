@@ -177,11 +177,6 @@ export class SituationalAwarenessScenario extends BaseScenario {
 			ChartSettingType.VARIABLE,
 			this.calibrateSpec.ids
 		);
-		calibrateChartSettings = updateChartSettingsBySelectedVariables(
-			calibrateChartSettings,
-			ChartSettingType.ERROR_DISTRIBUTION,
-			this.calibrateSpec.ids
-		);
 
 		wf.updateNode(calibrateNode, {
 			state: {
