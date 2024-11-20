@@ -43,20 +43,12 @@
 												<InputSwitch class="mr-3" v-model="knobs.compartmentalConstraint.isActive" />
 											</div>
 										</header>
+										<div class="flex flex-column pb-4 align-items-left gap-6">
+											<katex-element :expression="expression" />
+										</div>
 										<div class="flex align-items-center gap-6">
 											<katex-element
-												:expression="
-													stringToLatexExpression(
-														stateIds
-															.map((s, index) => `${s}${index === stateIds.length - 1 ? `\\geq 0` : ','}`)
-															.join('')
-													)
-												"
-											/>
-											<katex-element
-												:expression="
-													stringToLatexExpression(`${stateIds.join('+')} = ${displayNumber(mass)} \\ \\forall \\ t`)
-												"
+												:expression="stringToLatexExpression(`${stateIds.join('+')} = ${massScientificNotation}`)"
 											/>
 										</div>
 									</section>
@@ -394,7 +386,7 @@ import { pythonInstance } from '@/python/PyodideController';
 import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-constraint-group-form.vue';
 import { DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
 import { stringToLatexExpression, getModel, getMMT } from '@/services/model';
-import { displayNumber } from '@/utils/number';
+import { toScientificNotation } from '@/utils/number';
 import { removeChartSettingById, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { nodeOutputLabel } from '@/components/workflow/util';
 import { formatJSON } from '@/services/code';
@@ -922,6 +914,19 @@ async function prepareOutput() {
 	processedFunmanResult.value = processFunman(funmanResult);
 	renderCharts();
 }
+
+const expression = computed(() =>
+	stringToLatexExpression(
+		stateIds.value
+			.map((s, index) => `${s}${index === stateIds.value.length - 1 ? `\\geq 0` : ',\\geq 0 \\newline '}`)
+			.join('')
+	)
+);
+
+const massScientificNotation = computed(() => {
+	const notation = toScientificNotation(parseFloat(mass.value));
+	return `${notation.mantissa} \\times 10^${notation.exponent}`;
+});
 
 watch(
 	() => props.node.state.runId,
