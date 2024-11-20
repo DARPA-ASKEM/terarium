@@ -214,9 +214,6 @@ public class KnowledgeController {
 			responseAMR = skemaUnifiedProxy.consolidatedEquationsToAMR(newReq).getBody();
 			if (responseAMR == null) {
 				log.warn("Skema Unified Service did not return a valid AMR based on the provided equations");
-				if (!cleanedEquations.isEmpty()) {
-					return ResponseEntity.ok(new EquationsToModelResponse(null, cleanedEquations));
-				}
 				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("skema.bad-equations"));
 			}
 		} catch (final FeignException e) {
@@ -224,25 +221,16 @@ public class KnowledgeController {
 				"An exception occurred while Skema Unified Service was trying to produce an AMR based on the provided equations",
 				e
 			);
-			if (!cleanedEquations.isEmpty()) {
-				return ResponseEntity.ok(new EquationsToModelResponse(null, cleanedEquations));
-			}
 			throw handleSkemaFeignException(e);
 		} catch (final Exception e) {
 			log.error(
 				"An unhandled error occurred while Skema Unified Service was trying to produce an AMR based on the provided equations",
 				e
 			);
-			if (!cleanedEquations.isEmpty()) {
-				return ResponseEntity.ok(new EquationsToModelResponse(null, cleanedEquations));
-			}
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("skema.internal-error"));
 		}
 
 		if (!responseAMR.isPetrinet()) {
-			if (!cleanedEquations.isEmpty()) {
-				return ResponseEntity.ok(new EquationsToModelResponse(null, cleanedEquations));
-			}
 			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("skema.bad-equations.petrinet"));
 		}
 
@@ -277,9 +265,6 @@ public class KnowledgeController {
 		final Optional<Model> model = modelService.getAsset(modelId, permission);
 		if (model.isEmpty()) {
 			log.error(String.format("The model id %s does not exist.", modelId));
-			if (!cleanedEquations.isEmpty()) {
-				return ResponseEntity.ok(new EquationsToModelResponse(null, cleanedEquations));
-			}
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("model.not-found"));
 		}
 
@@ -293,27 +278,15 @@ public class KnowledgeController {
 			return ResponseEntity.ok(new EquationsToModelResponse(model.get().getId(), cleanedEquations));
 		} catch (final IOException e) {
 			log.error("An error occurred while trying to retrieve information necessary for model enrichment.", e);
-			if (!cleanedEquations.isEmpty()) {
-				return ResponseEntity.ok(new EquationsToModelResponse(null, cleanedEquations));
-			}
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		} catch (ExecutionException e) {
 			log.error("Error while waiting for task response", e);
-			if (!cleanedEquations.isEmpty()) {
-				return ResponseEntity.ok(new EquationsToModelResponse(null, cleanedEquations));
-			}
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
 		} catch (InterruptedException e) {
 			log.warn("Interrupted while waiting for task response", e);
-			if (!cleanedEquations.isEmpty()) {
-				return ResponseEntity.ok(new EquationsToModelResponse(null, cleanedEquations));
-			}
 			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
 		} catch (TimeoutException e) {
 			log.warn("Timeout while waiting for task response", e);
-			if (!cleanedEquations.isEmpty()) {
-				return ResponseEntity.ok(new EquationsToModelResponse(null, cleanedEquations));
-			}
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
 		}
 	}
