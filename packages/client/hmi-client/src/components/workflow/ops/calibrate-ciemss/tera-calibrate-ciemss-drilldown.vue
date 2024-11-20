@@ -592,7 +592,6 @@ const presetType = computed(() => {
 	if (knobs.value.numSamples === qualityPreset.numSamples && knobs.value.method === qualityPreset.method) {
 		return CiemssPresetTypes.Normal;
 	}
-
 	return '';
 });
 
@@ -688,8 +687,7 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 		knobs.value.method = qualityPreset.method;
 		knobs.value.numIterations = qualityPreset.numIterations;
 		knobs.value.learningRate = qualityPreset.learningRate;
-	}
-	if (data === CiemssPresetTypes.Fast) {
+	} else if (data === CiemssPresetTypes.Fast) {
 		knobs.value.numSamples = speedPreset.numSamples;
 		knobs.value.method = speedPreset.method;
 		knobs.value.numIterations = speedPreset.numIterations;
