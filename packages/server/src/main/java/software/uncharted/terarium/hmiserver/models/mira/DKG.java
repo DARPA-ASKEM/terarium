@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
@@ -27,5 +26,10 @@ public class DKG {
 	private String name;
 
 	@JsonAlias(DESCRIPTION)
-	private String description;
+	private String description = "";
+
+	public DKG(String curie, String name) {
+		this.curie = curie;
+		this.name = name;
+	}
 }
