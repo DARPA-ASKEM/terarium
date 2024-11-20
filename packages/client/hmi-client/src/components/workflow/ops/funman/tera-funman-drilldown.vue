@@ -88,12 +88,19 @@
 								<i class="pi pi-info-circle pl-2" v-tooltip="validateParametersToolTip" />
 							</template>
 							<section class="flex flex-column gap-2">
+								<label>Preset (optional)</label>
+								<Dropdown
+									:model-value="presetType"
+									placeholder="Select an option"
+									:options="Object.values(PresetTypes)"
+									@update:model-value="setPresetValues"
+								/>
 								<label>Select parameters of interest</label>
 								<MultiSelect
 									ref="columnSelect"
 									class="w-full"
 									:model-value="variablesOfInterest"
-									:options="requestParameters"
+									:options="knobs.requestParameters"
 									option-label="name"
 									option-disabled="disabled"
 									:show-toggle-all="false"
@@ -111,7 +118,7 @@
 									</div>
 									<div>
 										<label>Number of timesteps</label>
-										<tera-input-number class="w-12" v-model="knobs.numberOfSteps" />
+										<tera-input-number class="w-12" v-model="knobs.numSteps" />
 									</div>
 								</span>
 								<label>Timepoints</label>
@@ -344,6 +351,7 @@ import MultiSelect from 'primevue/multiselect';
 import Checkbox from 'primevue/checkbox';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
+import Dropdown from 'primevue/dropdown';
 import InputSwitch from 'primevue/inputswitch';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 
@@ -406,11 +414,24 @@ const props = defineProps<{
 
 const emit = defineEmits(['select-output', 'update-state', 'close']);
 
+enum PresetTypes {
+	Fast = 'Fast',
+	Precise = 'Precise'
+}
+
+interface ModelParameterUI {
+	name: string;
+	label: string;
+	interval: { lb?: number; ub?: number };
+	disabled: boolean;
+}
+
 interface BasicKnobs {
 	tolerance: number;
 	currentTimespan: TimeSpan;
-	numberOfSteps: number;
+	numSteps: number;
 	compartmentalConstraint: CompartmentalConstraint;
+	requestParameters: ModelParameterUI[];
 }
 
 const drilldownRef = ref();
@@ -418,9 +439,24 @@ const drilldownRef = ref();
 const knobs = ref<BasicKnobs>({
 	tolerance: 0,
 	currentTimespan: { start: 0, end: 0 },
-	numberOfSteps: 0,
-	compartmentalConstraint: { name: '', isActive: false }
+	numSteps: 0,
+	compartmentalConstraint: { name: '', isActive: false },
+	requestParameters: []
 });
+const fastPreset: BasicKnobs = {
+	tolerance: 0.5,
+	currentTimespan: { start: 0, end: 100 },
+	numSteps: 5,
+	compartmentalConstraint: { name: 'Compartmental constraint', isActive: true },
+	requestParameters: []
+};
+const precisePreset: BasicKnobs = {
+	tolerance: 0.01,
+	currentTimespan: { start: 0, end: 100 },
+	numSteps: 100,
+	compartmentalConstraint: { name: 'Compartmental constraint', isActive: true },
+	requestParameters: []
+};
 
 const MAX = 99999999999;
 const toast = useToastService();
@@ -431,8 +467,6 @@ const showSpinner = ref(false);
 const isSliderOpen = ref(true);
 
 const mass = ref('0');
-
-const requestParameters = ref<any[]>([]);
 const model = ref<Model | null>();
 let configuredInputModel: Model | null = null;
 
@@ -448,17 +482,35 @@ const variablesOfInterest = ref();
 const onToggleVariableOfInterest = (event: any[]) => {
 	variablesOfInterest.value = event;
 	const namesOfInterest = event.map((d) => d.name);
-	requestParameters.value.forEach((d) => {
+	knobs.value.requestParameters.forEach((d) => {
 		d.label = namesOfInterest.includes(d.name) ? 'all' : 'any';
 	});
 	const state = cloneDeep(props.node.state);
-	state.requestParameters = cloneDeep(requestParameters.value);
+	state.requestParameters = cloneDeep(knobs.value.requestParameters);
 	emit('update-state', state);
 };
 
+const presetType = computed(() => {
+	if (
+		knobs.value.tolerance === fastPreset.tolerance &&
+		knobs.value.numSteps === fastPreset.numSteps &&
+		isEqual(knobs.value.requestParameters, fastPreset.requestParameters)
+	) {
+		return PresetTypes.Fast;
+	}
+	if (
+		knobs.value.tolerance === precisePreset.tolerance &&
+		knobs.value.numSteps === precisePreset.numSteps &&
+		isEqual(knobs.value.requestParameters, precisePreset.requestParameters)
+	) {
+		return PresetTypes.Precise;
+	}
+	return '';
+});
+
 const stepList = computed(() => {
 	const { start, end } = knobs.value.currentTimespan;
-	const steps = knobs.value.numberOfSteps;
+	const steps = knobs.value.numSteps;
 
 	const stepSize = (end - start) / steps;
 	return [start, ...Array.from({ length: steps - 1 }, (_, i) => (i + 1) * stepSize), end];
@@ -532,7 +584,7 @@ const request = computed<FunmanPostQueriesRequest | null>(() => {
 		model: configuredInputModel,
 		request: {
 			constraints,
-			parameters: requestParameters.value.map(({ disabled, ...rest }) => rest), // Remove the disabled property from the request (it's only used for UI)
+			parameters: knobs.value.requestParameters.map(({ disabled, ...rest }) => rest), // Remove the disabled property from the request (it's only used for UI)
 			structure_parameters: [
 				{
 					name: 'schedules',
@@ -661,19 +713,19 @@ const setModelOptions = async () => {
 	}
 
 	const state = cloneDeep(props.node.state);
-	knobs.value.numberOfSteps = state.numSteps;
+	knobs.value.numSteps = state.numSteps;
 	knobs.value.currentTimespan = cloneDeep(state.currentTimespan);
 	knobs.value.tolerance = state.tolerance;
 	knobs.value.compartmentalConstraint = state.compartmentalConstraint;
 
 	if (configuredInputModel.semantics?.ode.parameters) {
 		setRequestParameters(configuredInputModel.semantics?.ode.parameters);
-		variablesOfInterest.value = requestParameters.value.filter((d: any) => d.label === 'all');
+		variablesOfInterest.value = knobs.value.requestParameters.filter((d: any) => d.label === 'all');
 	} else {
 		toast.error('', 'Provided model has no parameters');
 	}
 
-	state.requestParameters = cloneDeep(requestParameters.value);
+	state.requestParameters = cloneDeep(knobs.value.requestParameters);
 	emit('update-state', state);
 };
 
@@ -685,10 +737,11 @@ const setRequestParameters = (modelParameters: ModelParameter[]) => {
 		labelMap.set(p.name, p.label);
 	});
 
-	requestParameters.value = modelParameters.map((ele) => {
+	let paramsOfInterestFastPresetCounter = 0;
+	modelParameters.forEach((ele) => {
 		const name = ele.id;
 
-		const param = {
+		const param: ModelParameterUI = {
 			name,
 			label: (labelMap.get(name) as string) ?? 'any',
 			interval: { lb: ele.value, ub: ele.value },
@@ -700,11 +753,17 @@ const setRequestParameters = (modelParameters: ModelParameter[]) => {
 				lb: ele.distribution.parameters.minimum,
 				ub: ele.distribution.parameters.maximum
 			};
+			paramsOfInterestFastPresetCounter++;
 		} else {
 			param.disabled = true; // Disable if constant
 		}
 
-		return param;
+		knobs.value.requestParameters.push(param);
+		fastPreset.requestParameters.push(
+			// For fast preset just choose at least 2 parameters of interest
+			param.disabled || paramsOfInterestFastPresetCounter > 2 ? param : { ...param, label: 'all' }
+		);
+		precisePreset.requestParameters.push(param.disabled ? param : { ...param, label: 'all' });
 	});
 };
 
@@ -724,6 +783,19 @@ watch(
 	{ immediate: true }
 );
 
+function setPresetValues(selectedPresetType: PresetTypes) {
+	if (selectedPresetType === PresetTypes.Fast) {
+		knobs.value = { ...knobs.value, ...cloneDeep(fastPreset) };
+		variablesOfInterest.value = fastPreset.requestParameters.filter((d: any) => d.label === 'all');
+	} else if (selectedPresetType === PresetTypes.Precise) {
+		knobs.value = { ...knobs.value, ...cloneDeep(precisePreset) };
+		variablesOfInterest.value = precisePreset.requestParameters.filter((d: any) => d.label === 'all');
+	}
+	const state = cloneDeep(props.node.state);
+	state.requestParameters = cloneDeep(knobs.value.requestParameters);
+	emit('update-state', state);
+}
+
 /* Check for simple parameter changes */
 watch(
 	() => knobs.value,
@@ -732,7 +804,7 @@ watch(
 		state.tolerance = knobs.value.tolerance;
 		state.currentTimespan.start = knobs.value.currentTimespan.start;
 		state.currentTimespan.end = knobs.value.currentTimespan.end;
-		state.numSteps = knobs.value.numberOfSteps;
+		state.numSteps = knobs.value.numSteps;
 		state.compartmentalConstraint = knobs.value.compartmentalConstraint;
 
 		emit('update-state', state);
