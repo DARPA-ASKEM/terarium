@@ -79,7 +79,7 @@ export function generateConstraintExpression(config: ConstraintGroup) {
 			expressionPart += constraintType === ConstraintType.Increasing ? '0' : `${interval?.lb ?? 0}`;
 		}
 		// Adding the "for all in timepoints" in the same expression helps with text alignment
-		expression += `${expressionPart}  \\ \\forall \\ t \\in [${timepoints.lb}, ${timepoints.ub}] \\newline `;
+		expression += `${expressionPart} \\ \\forall \\ t \\in [${timepoints.lb}, ${timepoints.ub}] \\newline `;
 	}
 	return expression;
 }
