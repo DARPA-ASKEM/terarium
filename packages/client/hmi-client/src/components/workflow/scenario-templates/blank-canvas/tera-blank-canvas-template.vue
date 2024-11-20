@@ -4,6 +4,7 @@
 		:model-value="scenario.workflowName"
 		@update:model-value="scenario.setWorkflowName($event)"
 		auto-focus
+		@keydown.enter.stop.prevent="emit('save-workflow')"
 	/>
 </template>
 
@@ -11,6 +12,7 @@
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { BlankCanvasScenario } from './blank-canvas-scenario';
 
+const emit = defineEmits(['save-workflow']);
 defineProps<{
 	scenario: BlankCanvasScenario;
 }>();

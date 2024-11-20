@@ -13,7 +13,12 @@
 					</div>
 				</aside>
 				<main class="col-10 flex flex-column gap-3 p-3">
-					<component v-if="getScenario()" :is="getScenario().component" :scenario="getScenario().instance" />
+					<component
+						v-if="getScenario()"
+						:is="getScenario().component"
+						:scenario="getScenario().instance"
+						@save-workflow="saveWorkflow()"
+					/>
 				</main>
 			</div>
 		</template>
@@ -68,6 +73,7 @@ const emit = defineEmits(['close-modal']);
 const selectedTemplateId = ref<any>(scenarios.value[0].id);
 
 const saveWorkflow = async () => {
+	if (!getScenario().instance.isValid()) return;
 	const scenario = getScenario();
 	const wf = await scenario.instance.createWorkflow();
 	const response = await createWorkflow(wf);

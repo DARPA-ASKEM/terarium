@@ -89,9 +89,10 @@ export class SituationalAwarenessScenario extends BaseScenario {
 
 	isValid(): boolean {
 		return (
-			this.modelSpec.id !== '' &&
-			this.datasetSpec.id !== '' &&
-			this.modelConfigSpec.id !== '' &&
+			!!this.workflowName &&
+			!!this.modelSpec.id &&
+			!!this.datasetSpec.id &&
+			!!this.modelConfigSpec.id &&
 			!_.isEmpty(this.calibrateSpec.ids)
 		);
 	}

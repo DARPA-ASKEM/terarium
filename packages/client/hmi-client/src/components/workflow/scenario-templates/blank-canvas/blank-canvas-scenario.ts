@@ -8,7 +8,7 @@ export class BlankCanvasScenario extends BaseScenario {
 
 	constructor() {
 		super();
-		this.workflowName = 'Blank Canvas';
+		this.workflowName = '';
 	}
 
 	toJSON() {
