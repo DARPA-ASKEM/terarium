@@ -149,21 +149,21 @@ export class SituationalAwarenessScenario extends BaseScenario {
 		]);
 
 		// 3. Setting node states/outputs
-		wf.setNodeOptions(modelNode, {
+		wf.updateNode(modelNode, {
 			state: {
 				modelId: this.modelSpec.id
 			},
 			outputValue: this.modelSpec.id
 		});
 
-		wf.setNodeOptions(datasetNode, {
+		wf.updateNode(datasetNode, {
 			state: {
 				datasetId: this.datasetSpec.id
 			},
 			outputValue: this.datasetSpec.id
 		});
 
-		wf.setNodeOptions(modelConfigNode, {
+		wf.updateNode(modelConfigNode, {
 			state: {
 				transientModelConfig: modelConfig
 			},
@@ -187,7 +187,7 @@ export class SituationalAwarenessScenario extends BaseScenario {
 			this.calibrateSpec.ids
 		);
 
-		wf.setNodeOptions(calibrateNode, {
+		wf.updateNode(calibrateNode, {
 			state: {
 				chartSettings: calibrateChartSettings
 			}

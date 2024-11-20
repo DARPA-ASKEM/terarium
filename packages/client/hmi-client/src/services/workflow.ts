@@ -211,7 +211,7 @@ export class WorkflowWrapper {
 		}
 	}
 
-	addNode(op: Operation, pos: Position, options: { size?: OperatorNodeSize; state?: any; outputValue?: string }) {
+	addNode(op: Operation, pos: Position, options: { size?: OperatorNodeSize; state?: any }) {
 		let currentUserName: string | undefined = '';
 		try {
 			currentUserName = useAuthStore().user?.username;
@@ -497,14 +497,14 @@ export class WorkflowWrapper {
 	}
 
 	/**
-	 * Sets the options for a given workflow node.
+	 * Sets the state and/or output for a given workflow node.
 	 *
 	 * @param {WorkflowNode<any>} node - The workflow node to set options for.
 	 * @param {Object} options - The options to set for the node.
 	 * @param {any} [options.state] - The state to set for the node.
 	 * @param {any} [options.outputValue] - The output value to set for the node.
 	 */
-	setNodeOptions(
+	updateNode(
 		node: WorkflowNode<any>,
 		options: {
 			state?: any;
