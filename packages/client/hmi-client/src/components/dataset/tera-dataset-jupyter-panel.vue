@@ -2,7 +2,7 @@
 	<!-- Output selector and Save as buttons artificially injected into drilldown header -->
 	<div class="data-transform-container h-full overflow-hidden">
 		<!-- Toolbar -->
-		<div class="toolbar flex shadow-1">
+		<div class="toolbar flex">
 			<!-- Kernel Status -->
 			<div class="kernel-status-container">
 				<span><i class="pi pi-circle-fill kernel-status" :style="statusStyle" /></span>
@@ -580,6 +580,7 @@ const onDownloadResponse = (payload) => {
 	width: 100%;
 	padding: var(--gap-2) var(--gap-4) var(--gap-2) 1.5rem;
 	gap: var(--gap-2);
+	box-shadow: 0 4px 6px -5px rgba(0, 0, 0, 0.2);
 }
 .toolbar:deep(.p-button .p-button-label) {
 	font-weight: 500;
