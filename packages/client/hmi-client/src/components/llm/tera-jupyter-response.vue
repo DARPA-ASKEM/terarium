@@ -277,8 +277,7 @@ function onDeleteRequested(msgId: string) {
 }
 
 .jupyter-response:hover:not(.selected) {
-	background-color: var(--surface-50);
-	border: 1px solid var(--surface-border-light);
+	border: 1px solid color-mix(in srgb, var(--primary-color) 20%, var(--surface-border-light) 80%);
 }
 
 .jupyter-response .menu-container {
