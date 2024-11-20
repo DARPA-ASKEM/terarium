@@ -138,7 +138,7 @@ function updateNumber(value: number) {
 
 	error.value = '';
 	maskedValue.value = value.toString();
-	debounce(emit('update:model-value', value), 150);
+	debounce(() => emit('update:model-value', value), 150);
 }
 </script>
 
