@@ -578,7 +578,7 @@ const lazyLoadSimulationData = async (outputRunId: string) => {
 		getRunResultCSV(forecastId, 'result_summary.csv')
 	]);
 	pyciemssMap.value = parsePyCiemssMap(result[0]);
-	rawContent.value[outputRunId] = convertToCsvAsset(result, Object.values(pyciemssMap.value));
+	rawContent.value[outputRunId] = convertToCsvAsset(result, Object.values(pyciemssMap));
 
 	// Forecast results without the interventions
 	const baseForecastId = props.node.state.baseForecastId;

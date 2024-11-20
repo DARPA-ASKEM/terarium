@@ -925,10 +925,7 @@ const setOutputValues = async () => {
 	const postResult = await getRunResultCSV(postForecastRunId, 'result.csv');
 
 	// FIXME: only show the post optimize data for now...
-	simulationRawContent.value[knobs.value.postForecastRunId] = convertToCsvAsset(
-		postResult,
-		Object.values(pyciemssMap.value)
-	);
+	simulationRawContent.value[knobs.value.postForecastRunId] = convertToCsvAsset(postResult, Object.values(pyciemssMap));
 	runResults.value[preForecastRunId] = preResult;
 	runResults.value[postForecastRunId] = postResult;
 
