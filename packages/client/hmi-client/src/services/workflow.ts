@@ -507,20 +507,21 @@ export class WorkflowWrapper {
 	updateNode(
 		node: WorkflowNode<any>,
 		options: {
-			state?: any;
+			state: any;
 			output?: Partial<WorkflowOutput<any>>;
 		}
 	) {
-		if (!_.isEmpty(options.state)) {
-			node.state = Object.assign(node.state, options.state);
-		}
+		// set state and statuses as invalid initially
+		node.status = OperatorStatus.INVALID;
+		node.state = Object.assign(node.state, options.state);
 		const outputPort = node.outputs[0];
-		// default operator status as invalid
-		outputPort.operatorStatus = OperatorStatus.INVALID;
+		outputPort.operatorStatus = node.status;
 
+		// if there is an output set the output port and set statuses to success
 		if (!_.isEmpty(options.output)) {
 			node.active = outputPort.id;
 			node.status = OperatorStatus.SUCCESS;
+			outputPort.operatorStatus = node.status;
 			Object.assign(outputPort, options.output);
 			this.selectOutput(node, outputPort.id);
 		}

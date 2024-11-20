@@ -5,14 +5,14 @@
 		</template>
 		<template #default>
 			<div class="grid">
-				<aside class="flex flex-column col-2">
+				<aside class="flex flex-column col-3">
 					<label class="p-text-secondary pb-2">Select a template</label>
 					<div v-for="scenario in scenarios" :key="scenario.id" class="flex align-items-center py-1">
 						<RadioButton :inputId="scenario.id" :value="scenario.id" v-model="selectedTemplateId" />
 						<label class="pl-2" :for="scenario.id">{{ scenario.displayName }}</label>
 					</div>
 				</aside>
-				<main class="col-10 flex flex-column gap-3 p-3">
+				<main class="col-9 flex flex-column gap-3 p-3">
 					<component
 						v-if="getScenario()"
 						ref="scenarioComponent"

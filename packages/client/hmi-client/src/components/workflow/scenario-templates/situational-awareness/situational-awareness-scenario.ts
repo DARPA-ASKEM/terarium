@@ -9,7 +9,6 @@ import { getModelConfigurationById } from '@/services/model-configurations';
 import _ from 'lodash';
 import { ChartSetting, ChartSettingType } from '@/types/common';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
-import { OperatorStatus } from '@/types/workflow';
 
 export class SituationalAwarenessScenario extends BaseScenario {
 	public static templateId = 'situational-awareness';
@@ -156,8 +155,7 @@ export class SituationalAwarenessScenario extends BaseScenario {
 				modelId: this.modelSpec.id
 			},
 			output: {
-				value: [this.modelSpec.id],
-				operatorStatus: OperatorStatus.SUCCESS
+				value: [this.modelSpec.id]
 			}
 		});
 
@@ -166,8 +164,7 @@ export class SituationalAwarenessScenario extends BaseScenario {
 				datasetId: this.datasetSpec.id
 			},
 			output: {
-				value: [this.datasetSpec.id],
-				operatorStatus: OperatorStatus.SUCCESS
+				value: [this.datasetSpec.id]
 			}
 		});
 
@@ -177,7 +174,6 @@ export class SituationalAwarenessScenario extends BaseScenario {
 			},
 			output: {
 				value: [modelConfig.id],
-				operatorStatus: OperatorStatus.SUCCESS,
 				state: _.omit(modelConfigNode.state, ['transientModelConfig'])
 			}
 		});
