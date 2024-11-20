@@ -817,7 +817,7 @@ const initDefaultChartSettings = (state: CalibrationOperationStateCiemss) => {
 		.filter((c) => ['state', 'observable'].includes(modelPartTypesMap.value[c.modelVariable]))
 		.map((c) => c.modelVariable);
 
-	// update varialbe chart settings only if they do not exist
+	// update variable chart settings only if they do not exist
 	if (!state.chartSettings?.some((c) => c.type === ChartSettingType.VARIABLE)) {
 		state.chartSettings = updateChartSettingsBySelectedVariables(
 			state.chartSettings ?? [],
