@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.service;
 
+import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
@@ -51,6 +52,13 @@ public class EnrichmentService {
 	@Value("${terarium.enrichmentService.poolSize:10}")
 	private int POOL_SIZE;
 
+	private ExecutorService executor;
+
+	@PostConstruct
+	void init() {
+		executor = Executors.newFixedThreadPool(POOL_SIZE);
+	}
+
 	@Data
 	private static class Properties {
 
@@ -77,7 +85,6 @@ public class EnrichmentService {
 			new Properties(modelId)
 		);
 
-		ExecutorService executor = Executors.newFixedThreadPool(POOL_SIZE);
 		return executor.submit(() -> {
 			notificationInterface.sendMessage("Beginning model enrichment with using document extraction...");
 
