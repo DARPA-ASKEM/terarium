@@ -1265,44 +1265,80 @@ public class ProjectController {
 			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content)
 		}
 	)
-	@PostMapping("/set-sample/{id}")
+	@PutMapping("/set-sample/{id}/{sample}")
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> makeProjectSample(@PathVariable("id") final UUID id) {
+	public ResponseEntity<JsonNode> makeProjectSample(
+		@PathVariable("id") final UUID id,
+		@PathVariable("sample") final boolean isSample
+	) {
 		try {
 			// Only an admin can set a project as a sample project
 			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), id);
 
-			final Optional<Project> project = projectService.getProject(id);
-			if (project.isEmpty()) {
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
+			// Get the project
+			final Project project = projectService
+				.getProject(id)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found")));
+
+			// Validate the request again the current project sample status
+			if (isSample && project.getSampleProject()) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("projects.already-sample"));
+			}
+			if (!isSample && !project.getSampleProject()) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("projects.already-not-sample"));
 			}
 
-			// Update the project and make it public as well as a sample project
-			project.get().setSampleProject(true).setPublicAsset(true);
-			projectAssetService.togglePublicForAssets(terariumAssetServices, id, true, Schema.Permission.WRITE);
-			projectService.updateProject(project.get());
+			// Update the project sample status
+			project.setSampleProject(isSample);
 
-			/* Permissions */
+			// If the user is making the project a sample, make it public as well
+			if (isSample) {
+				project.setPublicAsset(true);
+				projectAssetService.togglePublicForAssets(terariumAssetServices, id, true, Schema.Permission.WRITE);
+			}
 
-			// Getting the project
+			// Update the project
+			projectService.updateProject(project);
+
+			/* Project Permissions */
 			final RebacProject rebacProject = new RebacProject(id, reBACService);
 
-			// Delete all previous user relationships attached to the project,
-			final List<Contributor> contributors = projectPermissionsService.getContributors(rebacProject);
-			for (final Contributor contributor : contributors) {
-				if (contributor.isUser()) {
-					final RebacUser rebacUser = new RebacUser(contributor.getUserId(), reBACService);
-					rebacUser.removeAllRelationships(rebacProject);
+			// When we make a project a sample project
+			if (isSample) {
+				// Update all user permissions to READER only
+				final List<Contributor> contributors = projectPermissionsService.getContributors(rebacProject);
+				for (final Contributor contributor : contributors) {
+					if (contributor.isUser()) {
+						final RebacUser rebacUser = new RebacUser(contributor.getUserId(), reBACService);
+						projectPermissionsService.removeProjectPermissions(
+							rebacProject,
+							rebacUser,
+							Schema.Relationship.CREATOR.toString()
+						);
+						projectPermissionsService.removeProjectPermissions(
+							rebacProject,
+							rebacUser,
+							Schema.Relationship.WRITER.toString()
+						);
+						projectPermissionsService.setProjectPermissions(
+							rebacProject,
+							rebacUser,
+							Schema.Relationship.READER.toString()
+						);
+					}
 				}
+
+				// Update the group permissions to the project when becoming a sample-project
+				final RebacGroup adminGroup = new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService);
+				adminGroup.removeAllRelationsExceptOne(rebacProject, Schema.Relationship.ADMIN);
+				final RebacGroup publicGroup = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
+				publicGroup.removeAllRelationsExceptOne(rebacProject, Schema.Relationship.READER);
+			} else {
+				// Project author become the creator of the project once more
+				final RebacUser rebacUser = new RebacUser(project.getUserId(), reBACService);
+				final String creator = Schema.Relationship.CREATOR.toString();
+				projectPermissionsService.setProjectPermissions(rebacProject, rebacUser, creator);
 			}
-
-			// Add the Admin group to administrate the project
-			final RebacGroup adminGroup = new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService);
-			adminGroup.removeAllRelationsExceptOne(rebacProject, Schema.Relationship.ADMIN);
-
-			// Add the public group to read the project
-			final RebacGroup publicGroup = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
-			publicGroup.removeAllRelationsExceptOne(rebacProject, Schema.Relationship.READER);
 
 			return ResponseEntity.ok().build();
 		} catch (final ResponseStatusException rethrow) {
