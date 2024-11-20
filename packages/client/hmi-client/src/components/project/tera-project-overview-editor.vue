@@ -148,7 +148,7 @@ const showWelcomeMessage = ref(true);
 .welcome-message {
 	position: absolute;
 	width: calc(100% - 264px); /* 240px + 12px + 12px */
-	margin-top: var(--gap-3);
+	margin-top: 3.5rem;
 	margin-left: var(--gap-3);
 	padding: 0 var(--gap-3) var(--gap-1);
 	display: flex;
