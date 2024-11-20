@@ -81,9 +81,6 @@ export function getErrorData(
 	return errors;
 }
 
-export const modelVarToDatasetVar = (mapping: CalibrateMap[], modelVariable: string) =>
-	mapping.find((d) => d.modelVariable === modelVariable)?.datasetVariable || '';
-
 // Get the selected output mapping for the node
 export function getSelectedOutputMapping(node: WorkflowNode<CalibrationOperationStateCiemss>) {
 	const wfOutputState = getSelectedOutput(node)?.state;

@@ -203,7 +203,15 @@
 							/>
 						</AccordionTab>
 						<template v-if="!isRunInProgress">
-							<AccordionTab header="Ensemble variables over time"> </AccordionTab>
+							<AccordionTab header="Ensemble variables over time">
+								<template v-for="setting of selectedEnsembleVariableSettings" :key="setting.id">
+									<vega-chart
+										expandable
+										:are-embed-actions-visible="true"
+										:visualization-spec="ensembleVariableCharts[setting.id]"
+									/>
+								</template>
+							</AccordionTab>
 						</template>
 					</Accordion>
 					<tera-progress-spinner v-if="isRunInProgress" :font-size="2" is-centered style="height: 100%">
@@ -266,9 +274,7 @@ import {
 	makeEnsembleCiemssCalibration,
 	unsubscribeToUpdateMessages,
 	subscribeToUpdateMessages,
-	CiemssMethodOptions,
-	getRunResultCSV,
-	parsePyCiemssMap
+	CiemssMethodOptions
 } from '@/services/models/simulation-service';
 import Button from 'primevue/button';
 import Divider from 'primevue/divider';
@@ -277,7 +283,7 @@ import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import Dropdown from 'primevue/dropdown';
-import { setupDatasetInput, setupCsvAsset, setupModelInput } from '@/services/calibrate-workflow';
+import { setupDatasetInput, setupCsvAsset, setupModelInput, parseCsvAsset } from '@/services/calibrate-workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
@@ -306,6 +312,7 @@ import { ChartSettingType, CiemssPresetTypes, DrilldownTabs } from '@/types/comm
 import { ChartData, useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
 import { deleteAnnotation } from '@/services/chart-settings';
+import { DataArray } from '@/utils/stats';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	CalibrateEnsembleMappingRow,
@@ -317,9 +324,9 @@ import {
 	updateLossChartSpec,
 	getLossValuesFromSimulation,
 	formatCalibrateModelConfigurations,
-	getSelectedOutputEnsembleMapping
+	getSelectedOutputEnsembleMapping,
+	fetchOutputData
 } from './calibrate-ensemble-util';
-import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
@@ -515,48 +522,13 @@ onMounted(async () => {
 	}
 });
 
-// export function useOutputData(
-// 	props: {
-// 		node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
-// 	},
-// ) {
-// 	const pyciemssMap = computed(() => (!runResult.value.length ? {} : parsePyCiemssMap(runResult.value[0])));
-
-// 	return computed(() => {
-// 		const state = props.node.state;
-// 		if (!state.calibrationId || _.isEmpty(pyciemssMap.value)) return null;
-
-// 		// Merge before/after for chart
-// 		const { result, resultSummary } = mergeResults(
-// 			runResultPre.value,
-// 			runResult.value,
-// 			runResultSummaryPre.value,
-// 			runResultSummary.value
-// 		);
-
-// 		// Build lookup map for calibration, include before/after and dataset (observations)
-// 		const translationMap = {};
-// 		Object.keys(pyciemssMap.value).forEach((key) => {
-// 			translationMap[`${pyciemssMap.value[key]}_mean`] = `${key} after calibration`;
-// 			translationMap[`${pyciemssMap.value[key]}_mean:pre`] = `${key} before calibration`;
-// 		});
-// 		getSelectedOutputMapping(props.node).forEach((mapObj) => {
-// 			translationMap[mapObj.datasetVariable] = 'Observations';
-// 		});
-// 		return {
-// 			result,
-// 			resultSummary,
-// 			pyciemssMap: pyciemssMap.value,
-// 			translationMap
-// 		};
-// 	});
-// }
-
-const isOutputSettingsPanelOpen = ref(false);
+// -------------- Charts && chart settings ----------------
 const outputPanel = ref(null);
-const chartSize = useDrilldownChartSize(outputPanel);
+const isOutputSettingsPanelOpen = ref(false);
 const chartData = ref<ChartData | null>(null);
-
+const groundTruthData = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
+const chartSize = useDrilldownChartSize(outputPanel);
+const selectedOutputMapping = computed(() => getSelectedOutputEnsembleMapping(props.node));
 const {
 	activeChartSettings,
 	chartSettings,
@@ -565,34 +537,19 @@ const {
 	selectedEnsembleVariableSettings
 } = useChartSettings(props, emit);
 
-const { generateAnnotation, getChartAnnotationsByChartId } = useCharts(
+const { generateAnnotation, getChartAnnotationsByChartId, useEnsembleVariableCharts } = useCharts(
 	props.node.id,
 	null,
 	null,
 	chartData,
 	chartSize,
-	null
+	null,
+	selectedOutputMapping
 );
-const ensembleVariables = computed(() => getSelectedOutputEnsembleMapping(props.node).map((d) => d.newName));
 
-const fetchOutputData = async (preForecastId: string, postForecastId: string) => {
-	if (!postForecastId || !preForecastId) return null;
-	const runResult = await getRunResultCSV(postForecastId, 'result.csv');
-	const runResultSummary = await getRunResultCSV(postForecastId, 'result_summary.csv');
-
-	const runResultPre = await getRunResultCSV(preForecastId, 'result.csv', renameFnGenerator('pre'));
-	const runResultSummaryPre = await getRunResultCSV(preForecastId, 'result_summary.csv', renameFnGenerator('pre'));
-
-	// Merge before/after for chart
-	const { result, resultSummary } = mergeResults(runResultPre, runResult, runResultSummaryPre, runResultSummary);
-	const pyciemssMap = parsePyCiemssMap(runResult[0]);
-
-	return {
-		result,
-		resultSummary,
-		pyciemssMap
-	};
-};
+const ensembleVariables = computed(() => getSelectedOutputEnsembleMapping(props.node, false).map((d) => d.newName));
+const ensembleVariableCharts = useEnsembleVariableCharts(selectedEnsembleVariableSettings, groundTruthData);
+// --------------------------------------------------------
 
 watch(
 	() => props.node.active,
@@ -609,16 +566,16 @@ watch(
 					knobs.value[key] = state[key];
 				}
 			});
-			const { result, resultSummary, pyciemssMap } =
-				(await fetchOutputData(state.preForecastId, state.postForecastId)) ?? {};
-			console.log(result);
-			console.log(resultSummary);
-			console.log(pyciemssMap);
-			console.log('done');
-			console.log(state.ensembleMapping);
 
 			lossValues.value = await getLossValuesFromSimulation(props.node.state.calibrationId);
 			lossChartSpec.value = updateLossChartSpec(lossValues.value, chartSize.value);
+
+			// Fetch output data and prepare chart data
+			const data = await fetchOutputData(state.preForecastId, state.postForecastId);
+			chartData.value = data ? { ...data, translationMap: {} } : null;
+			console.log(data);
+			console.log('done');
+			console.log(state.ensembleMapping);
 		}
 	},
 	{ immediate: true }

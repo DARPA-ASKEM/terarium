@@ -1,5 +1,6 @@
+import _ from 'lodash';
 import { createForecastChart, AUTOSIZE } from '@/services/charts';
-import { getSimulation } from '@/services/models/simulation-service';
+import { getRunResultCSV, getSimulation, parsePyCiemssMap } from '@/services/models/simulation-service';
 import { EnsembleModelConfigs } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getSelectedOutput } from '@/components/workflow/util';
@@ -8,6 +9,7 @@ import {
 	CalibrateEnsembleMappingRow,
 	CalibrateEnsembleWeights
 } from './calibrate-ensemble-ciemss-operation';
+import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 
 export async function getLossValuesFromSimulation(calibrationId: string) {
 	if (!calibrationId) return [];
@@ -77,7 +79,36 @@ export function formatCalibrateModelConfigurations(
 	return [...Object.values(ensembleModelConfigMap)];
 }
 
-export function getSelectedOutputEnsembleMapping(node: WorkflowNode<CalibrateEnsembleCiemssOperationState>) {
+export function getSelectedOutputEnsembleMapping(
+	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>,
+	hasTimestampCol = true
+) {
 	const wfOutputState = getSelectedOutput(node)?.state;
-	return wfOutputState?.ensembleMapping ?? [];
+	const mapping = _.clone(wfOutputState?.ensembleMapping ?? []);
+	if (hasTimestampCol)
+		mapping.push({
+			newName: 'timepoint_id',
+			datasetMapping: wfOutputState?.timestampColName ?? '',
+			modelConfigurationMappings: {}
+		});
+	return mapping;
+}
+
+export async function fetchOutputData(preForecastId: string, postForecastId: string) {
+	if (!postForecastId || !preForecastId) return null;
+	const runResult = await getRunResultCSV(postForecastId, 'result.csv');
+	const runResultSummary = await getRunResultCSV(postForecastId, 'result_summary.csv');
+
+	const runResultPre = await getRunResultCSV(preForecastId, 'result.csv', renameFnGenerator('pre'));
+	const runResultSummaryPre = await getRunResultCSV(preForecastId, 'result_summary.csv', renameFnGenerator('pre'));
+
+	// Merge before/after for chart
+	const { result, resultSummary } = mergeResults(runResultPre, runResult, runResultSummaryPre, runResultSummary);
+	const pyciemssMap = parsePyCiemssMap(runResult[0]);
+
+	return {
+		result,
+		resultSummary,
+		pyciemssMap
+	};
 }

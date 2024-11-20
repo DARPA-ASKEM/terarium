@@ -771,17 +771,14 @@ const {
 	modelConfig,
 	preparedChartInputs,
 	chartSize,
-	computed(() => interventionPolicy.value?.interventions ?? [])
+	computed(() => interventionPolicy.value?.interventions ?? []),
+	selectedOutputMapping
 );
 const parameterDistributionCharts = useParameterDistributionCharts(selectedParameterSettings);
 const interventionCharts = useInterventionCharts(selectedInterventionSettings);
-const variableCharts = useVariableCharts(selectedVariableSettings, groundTruthData, selectedOutputMapping);
+const variableCharts = useVariableCharts(selectedVariableSettings, groundTruthData);
 const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
-const { errorChart, onExpandErrorChart } = useErrorChart(
-	selectedErrorVariableSettings,
-	errorData,
-	selectedOutputMapping
-);
+const { errorChart, onExpandErrorChart } = useErrorChart(selectedErrorVariableSettings, errorData);
 
 const LOSS_CHART_DATA_SOURCE = 'lossData'; // Name of the streaming data source
 const lossChartRef = ref<InstanceType<typeof VegaChart>>();

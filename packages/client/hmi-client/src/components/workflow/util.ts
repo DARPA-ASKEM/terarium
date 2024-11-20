@@ -2,8 +2,13 @@ import _ from 'lodash';
 import { DataseriesConfig, ChartConfig } from '@/types/SimulateConfig';
 import type { CsvAsset, TimeSpan } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
-import type { CalibrateMap } from '@/services/calibrate-workflow';
+import { isCalibrateMap, type CalibrateMap } from '@/services/calibrate-workflow';
 import { useProjects } from '@/composables/project';
+import { CalibrateEnsembleMappingRow } from './ops/calibrate-ensemble-ciemss/calibrate-ensemble-ciemss-operation';
+import {
+	isSimulateEnsembleMappingRow,
+	SimulateEnsembleMappingRow
+} from './ops/simulate-ensemble-ciemss/simulate-ensemble-ciemss-operation';
 
 export const drilldownChartSize = (element: HTMLElement | null) => {
 	if (!element) return { width: 100, height: 270 };
@@ -140,3 +145,14 @@ export function getSelectedOutput<S>(node: WorkflowNode<S>) {
 	const wfOutput = node.outputs.find((output) => output.id === selectedOutputId);
 	return wfOutput;
 }
+
+export type VariableMappings = CalibrateMap[] | CalibrateEnsembleMappingRow[] | SimulateEnsembleMappingRow[];
+
+export const modelVarToDatasetVar = (mapping: VariableMappings, modelVariable: string) => {
+	if (_.isEmpty(mapping) || isSimulateEnsembleMappingRow(mapping[0])) return '';
+	const found = (mapping as CalibrateMap[] | CalibrateEnsembleMappingRow[]).find((d) =>
+		isCalibrateMap(d) ? d.modelVariable === modelVariable : d.newName === modelVariable
+	);
+	if (!found) return '';
+	return isCalibrateMap(found) ? found.datasetVariable : found.datasetMapping;
+};
