@@ -23,6 +23,8 @@ import {
 	Transform
 } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
+import useAuthStore from '@/stores/auth';
+import dagre from 'dagre';
 
 /**
  * A wrapper class around the workflow data struture to make it easier
@@ -133,7 +135,7 @@ export class WorkflowWrapper {
 			}
 		}
 
-		// New eleemnts
+		// New elements
 		[...updatedNodeMap.values()].forEach((node) => this.wf.nodes.push(node));
 		[...updatedEdgeMap.values()].forEach((edge) => this.wf.edges.push(edge));
 	}
@@ -210,6 +212,13 @@ export class WorkflowWrapper {
 	}
 
 	addNode(op: Operation, pos: Position, options: { size?: OperatorNodeSize; state?: any }) {
+		let currentUserName: string | undefined = '';
+		try {
+			currentUserName = useAuthStore().user?.username;
+		} catch (err) {
+			// do nothing
+		}
+
 		const nodeSize: Size = getOperatorNodeSize(options.size ?? OperatorNodeSize.medium);
 
 		const node: WorkflowNode<any> = {
@@ -221,6 +230,9 @@ export class WorkflowWrapper {
 			imageUrl: op.imageUrl,
 			x: pos.x,
 			y: pos.y,
+
+			createdBy: currentUserName,
+			createdAt: Date.now(),
 
 			active: null,
 			state: options.state ?? {},
@@ -289,6 +301,13 @@ export class WorkflowWrapper {
 	 *
 	 * */
 	addEdge(sourceId: string, sourcePortId: string, targetId: string, targetPortId: string, points: Position[]) {
+		let currentUserName: string | undefined = '';
+		try {
+			currentUserName = useAuthStore().user?.username;
+		} catch (err) {
+			// do nothing
+		}
+
 		const sourceNode = this.wf.nodes.find((d) => d.id === sourceId);
 		const targetNode = this.wf.nodes.find((d) => d.id === targetId);
 		if (!sourceNode || !targetNode) return;
@@ -357,6 +376,8 @@ export class WorkflowWrapper {
 			sourcePortId,
 			target: targetId,
 			targetPortId,
+			createdBy: currentUserName,
+			createdAt: Date.now(),
 			points: _.cloneDeep(points)
 		};
 		this.wf.edges.push(edge);
@@ -584,6 +605,43 @@ export class WorkflowWrapper {
 			downstreamNodes: outputEdges.map((e) => e.target && cache.get(e.target)).filter(Boolean) as WorkflowNode<any>[]
 		};
 	};
+
+	runDagreLayout() {
+		const g = new dagre.graphlib.Graph({ compound: true });
+		g.setGraph({});
+		g.setDefaultEdgeLabel(() => ({}));
+		g.graph().rankDir = 'LR';
+		g.graph().nodesep = 120;
+		g.graph().ranksep = 120;
+		this.getNodes().forEach((node) => {
+			g.setNode(node.id, {
+				label: node.displayName,
+				width: node.width,
+				height: node.height
+			});
+		});
+
+		this.getEdges().forEach((edge) => {
+			g.setEdge(edge.source, edge.target);
+		});
+
+		dagre.layout(g);
+
+		this.getNodes().forEach((node) => {
+			const n = g.node(node.id);
+			if (!n) return;
+			node.x = n.x;
+			node.y = n.y;
+		});
+	}
+
+	setWorkflowName(name: string) {
+		this.wf.name = name;
+	}
+
+	setWorkflowScenario(scenario: any) {
+		this.wf.scenario = scenario;
+	}
 }
 
 /**

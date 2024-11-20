@@ -97,6 +97,8 @@ export interface WorkflowNode<S> {
 	workflowId: string;
 	isDeleted?: boolean;
 	version?: number;
+	createdBy?: string;
+	createdAt?: number;
 
 	displayName: string;
 	operationType: string;
@@ -128,6 +130,8 @@ export interface WorkflowEdge {
 	workflowId: string;
 	isDeleted?: boolean;
 	version?: number;
+	createdBy?: string;
+	createdAt?: number;
 
 	points: Position[];
 	source?: WorkflowNode<any>['id'];
@@ -160,6 +164,8 @@ export interface Workflow {
 	transform: Transform;
 	nodes: WorkflowNode<any>[];
 	edges: WorkflowEdge[];
+
+	scenario?: any;
 }
 
 export interface Size {
