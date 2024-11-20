@@ -130,19 +130,14 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				final JsonNode nodeContent = this.objectMapper.valueToTree(node);
 				final JsonNode dbNodeContent = this.objectMapper.valueToTree(dbNode);
 
+				// No changes, skip
 				if (nodeContent.equals(dbNodeContent)) {
 					nodeMap.remove(node.getId());
 					continue;
 				}
 
-				// FIXME: backwards compatibility for older workflows, remove in a few month.
-				// Aug 2024
-				if (dbNode.getVersion() == null) {
-					dbNode.setVersion(1L);
-					continue;
-				}
-
-				if (dbNode.getVersion().equals(node.getVersion())) {
+				// Only update if if node is not already deleted in the db
+				if (dbNode.getIsDeleted() == false && dbNode.getVersion().equals(node.getVersion())) {
 					node.setVersion(dbNode.getVersion() + 1L);
 					dbWorkflowNodes.set(index, node);
 				}
@@ -162,18 +157,14 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				final JsonNode edgeContent = this.objectMapper.valueToTree(edge);
 				final JsonNode dbEdgeContent = this.objectMapper.valueToTree(dbEdge);
 
+				// No changes, skip
 				if (edgeContent.equals(dbEdgeContent)) {
 					edgeMap.remove(edge.getId());
 					continue;
 				}
 
-				// FIXME: backwards compatibility for older workflows, remove in a few month.
-				// Aug 2024
-				if (dbEdge.getVersion() == null) {
-					dbEdge.setVersion(1L);
-				}
-
-				if (dbEdge.getVersion().equals(edge.getVersion())) {
+				// Only update if if edge is not already deleted in the db
+				if (dbEdge.getIsDeleted() == false && dbEdge.getVersion().equals(edge.getVersion())) {
 					edge.setVersion(dbEdge.getVersion() + 1L);
 					dbWorkflowEdges.set(index, edge);
 				}

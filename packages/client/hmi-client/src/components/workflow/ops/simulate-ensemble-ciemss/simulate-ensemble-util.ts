@@ -24,9 +24,7 @@ export function formatSimulateModelConfigurations(
 	rows.forEach((row) => {
 		Object.entries(row.modelConfigurationMappings).forEach(([key, value]) => {
 			if (!ensembleModelConfigMap[key]) return;
-			ensembleModelConfigMap[key].solutionMappings = {
-				[row.newName]: value
-			};
+			ensembleModelConfigMap[key].solutionMappings[row.newName] = value;
 		});
 	});
 
