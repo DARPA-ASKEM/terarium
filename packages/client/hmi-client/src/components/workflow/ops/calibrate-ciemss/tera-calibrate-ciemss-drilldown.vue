@@ -245,7 +245,7 @@
 					class="p-3"
 					:summary-id="node.state.summaryId"
 				/>
-				<Accordion :active-index="0" class="px-2" v-if="!isLoading">
+				<Accordion :active-index="lossActiveIndex" class="px-2" v-if="!isLoading">
 					<AccordionTab header="Loss">
 						<!-- Loss chart -->
 						<div ref="lossChartContainer">
@@ -261,7 +261,7 @@
 				</Accordion>
 				<div v-if="!isLoading">
 					<section class="pb-3" ref="outputPanel" v-if="modelConfig && csvAsset">
-						<Accordion multiple :active-index="[0, 1, 2, 3, 4]" class="px-2">
+						<Accordion multiple :active-index="currentActiveIndicies" class="px-2">
 							<AccordionTab header="Parameter distributions">
 								<template v-for="setting of selectedParameterSettings" :key="setting.id">
 									<vega-chart
@@ -620,6 +620,9 @@ const isOutputSettingsPanelOpen = ref(false);
 const datasetColumns = ref<DatasetColumn[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const groundTruthData = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
+
+const lossActiveIndex = ref([0]);
+const currentActiveIndicies = ref([0, 1, 2, 3, 4]);
 
 const modelConfig = ref<ModelConfiguration | null>(null);
 const model = ref<Model | null>(null);

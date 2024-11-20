@@ -7,7 +7,8 @@ import type {
 	ObservableSemantic,
 	ParameterSemantic
 } from '@/types/Types';
-import { isEmpty, isNaN, isNumber } from 'lodash';
+import { SemanticType } from '@/types/Types';
+import { isEmpty, isNaN, isNumber, keyBy } from 'lodash';
 import { pythonInstance } from '@/python/PyodideController';
 import { DistributionType } from './distribution';
 
@@ -94,9 +95,14 @@ export function getParameter(config: ModelConfiguration, parameterId: string): P
 	return config.parameterSemanticList?.find((param) => param.referenceId === parameterId);
 }
 
-export function getParameterDistribution(config: ModelConfiguration, parameterId: string): ModelDistribution {
+export function getParameterDistribution(
+	config: ModelConfiguration,
+	parameterId: string,
+	useDefaultNan: boolean = false
+): ModelDistribution {
 	const parameter = getParameter(config, parameterId);
-	if (!parameter) return { type: DistributionType.Constant, parameters: { value: 0 } };
+	const defaultValue = useDefaultNan ? NaN : 0;
+	if (!parameter) return { type: DistributionType.Constant, parameters: { value: defaultValue } };
 	return parameter.distribution;
 }
 
@@ -234,4 +240,35 @@ export function getMissingInputAmount(modelConfiguration: ModelConfiguration) {
 		}
 	});
 	return missingInputs;
+}
+
+export function getModelParameters(modelConfiguration, source, amrParameters) {
+	const configParameters = keyBy(getParameters(modelConfiguration), 'referenceId');
+	return amrParameters.map((parameter) => {
+		if (configParameters[parameter.id]) return { ...configParameters[parameter.id] };
+		return {
+			default: false,
+			distribution: {
+				type: DistributionType.Constant,
+				parameters: { value: NaN }
+			},
+			referenceId: parameter.id,
+			type: SemanticType.Parameter,
+			source
+		};
+	});
+}
+
+export function getModelInitials(modelConfiguration, source, amrInitials) {
+	const configInitials = keyBy(getInitials(modelConfiguration), 'target');
+	return amrInitials.map((initial) => {
+		if (configInitials[initial.target]) return { ...configInitials[initial.target] };
+		return {
+			expression: '',
+			expressionMathml: '',
+			target: initial.target,
+			type: SemanticType.Initial,
+			source
+		};
+	});
 }

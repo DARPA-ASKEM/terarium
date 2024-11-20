@@ -23,7 +23,7 @@
 					</div>
 				</div>
 				<main>
-					<Accordion multiple :active-index="[0, 1]">
+					<Accordion multiple :active-index="toolbarActiveIndicies">
 						<AccordionTab>
 							<template #header>
 								Model checks
@@ -43,22 +43,11 @@
 												<InputSwitch class="mr-3" v-model="knobs.compartmentalConstraint.isActive" />
 											</div>
 										</header>
-										<div class="flex align-items-center gap-6">
-											<katex-element
-												:expression="
-													stringToLatexExpression(
-														stateIds
-															.map((s, index) => `${s}${index === stateIds.length - 1 ? `\\geq 0` : ','}`)
-															.join('')
-													)
-												"
-											/>
-											<katex-element
-												:expression="
-													stringToLatexExpression(`${stateIds.join('+')} = ${displayNumber(mass)} \\ \\forall \\ t`)
-												"
-											/>
-										</div>
+										<katex-element class="expression-constraint" :expression="expression" />
+										<katex-element
+											class="expression-constraint"
+											:expression="stringToLatexExpression(`${stateIds.join('+')} = ${massScientificNotation}`)"
+										/>
 									</section>
 								</li>
 								<li v-for="(cfg, index) in node.state.constraintGroups" :key="index">
@@ -178,7 +167,7 @@
 						</div>
 					</header>
 					<template v-if="drilldownRef?.selectedTab === DrilldownTabs.Wizard">
-						<Accordion multiple :active-index="[0, 1, 2, 3]">
+						<Accordion multiple :active-index="parameterAndStateActiveIndicies">
 							<AccordionTab header="Summary">
 								<span class="ml-4">Summary text</span>
 							</AccordionTab>
@@ -229,7 +218,7 @@
 								:mmt-params="mmtParams"
 								:feature-config="{ isPreview: true }"
 							/>
-							<Accordion :active-index="0" v-if="!isEmpty(calibratedConfigObservables)">
+							<Accordion :active-index="observableActiveIndex" v-if="!isEmpty(calibratedConfigObservables)">
 								<AccordionTab v-if="!isEmpty(calibratedConfigObservables)" header="Observables">
 									<tera-observables
 										class="pl-4"
@@ -394,7 +383,7 @@ import { pythonInstance } from '@/python/PyodideController';
 import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-constraint-group-form.vue';
 import { DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
 import { stringToLatexExpression, getModel, getMMT } from '@/services/model';
-import { displayNumber } from '@/utils/number';
+import { toScientificNotation } from '@/utils/number';
 import { removeChartSettingById, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { nodeOutputLabel } from '@/components/workflow/util';
 import { formatJSON } from '@/services/code';
@@ -435,6 +424,10 @@ const mass = ref('0');
 const requestParameters = ref<any[]>([]);
 const model = ref<Model | null>();
 let configuredInputModel: Model | null = null;
+
+const toolbarActiveIndicies = ref([0, 1]);
+const parameterAndStateActiveIndicies = ref([0, 1, 2, 3]);
+const observableActiveIndex = ref([0]);
 
 const stateIds = ref<string[]>([]);
 const parameterIds = ref<string[]>([]);
@@ -923,6 +916,19 @@ async function prepareOutput() {
 	renderCharts();
 }
 
+const expression = computed(() =>
+	stringToLatexExpression(
+		stateIds.value
+			.map((s, index) => `${s}${index === stateIds.value.length - 1 ? `\\geq 0` : '\\geq 0 \\newline '}`)
+			.join('')
+	)
+);
+
+const massScientificNotation = computed(() => {
+	const notation = toScientificNotation(parseFloat(mass.value));
+	return `${notation.mantissa} \\times 10^${notation.exponent}`;
+});
+
 watch(
 	() => props.node.state.runId,
 	() => prepareOutput()
@@ -930,6 +936,16 @@ watch(
 </script>
 
 <style scoped>
+.expression-constraint {
+	max-height: 150px;
+	overflow: auto;
+	margin-top: var(--gap-4);
+	margin-bottom: var(--gap-4);
+	padding: var(--gap-1) 0 var(--gap-1) 0;
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+}
+
 .top-toolbar {
 	display: flex;
 	align-items: center;

@@ -264,7 +264,7 @@
 				<tera-notebook-error v-bind="node.state.simulateErrorMessage" />
 				<template v-if="runResults[knobs.postForecastRunId] && runResults[knobs.preForecastRunId] && !showSpinner">
 					<section v-if="outputViewSelection === OutputView.Charts" ref="outputPanel">
-						<Accordion multiple :active-index="[0, 1, 2, 3]">
+						<Accordion multiple :active-index="currentActiveIndicies">
 							<AccordionTab header="Success criteria">
 								<ul>
 									<li v-for="(_constraint, key) in knobs.constraintGroups" :key="key">
@@ -534,6 +534,8 @@ const knobs = ref<BasicKnobs>({
 	constraintGroups: props.node.state.constraintGroups ?? [],
 	interventionPolicyGroups: props.node.state.interventionPolicyGroups ?? []
 });
+
+const currentActiveIndicies = ref([0, 1, 2, 3]);
 
 const summaryCheckbox = ref(true);
 
