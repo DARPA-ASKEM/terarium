@@ -100,12 +100,12 @@ const cancelGenerateAnnotation = () => {
 	height: calc(100% - 50px);
 	width: 100%;
 	background: #fff;
-	left: 3px;
-	border-radius: var(--border-radius-medium);
+	left: 2px;
+	border: solid 1px var(--surface-border-light);
 
 	&.v-enter-active,
 	&.v-leave-active {
-		transition: left 0.15s ease-in;
+		transition: left 0.15s ease-out;
 		left: 30%;
 	}
 	&.v-enter-from,
@@ -138,7 +138,7 @@ const cancelGenerateAnnotation = () => {
 	}
 
 	.annotation-input:deep(main) {
-		padding: var(--gap-2) var(--gap-2);
+		padding: var(--gap-2-5) var(--gap-2);
 	}
 	.annotation-items {
 		display: flex;
