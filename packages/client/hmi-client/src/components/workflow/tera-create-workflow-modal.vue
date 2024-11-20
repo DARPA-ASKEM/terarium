@@ -98,8 +98,8 @@ const saveWorkflow = async () => {
 };
 
 onMounted(async () => {
-	/* HACK; wait for the modal to be fully rendered before focusing the input,
-	it seems that the auto-focus on tera-input-text is not working doesn't play too nicely on the initial render of the modal */
+	/* HACK: wait for the modal to be fully rendered before focusing the input,
+	it seems that the auto-focus on tera-input-text does not play nicely on the initial render of the modal */
 	await nextTick();
 	scenarioComponent.value.$refs.nameInput?.focusInput();
 });
