@@ -237,4 +237,8 @@
 		}
 	}
 
+	/* Adjust tooltip width to support longer text */
+	.p-tooltip {
+		max-width: 380px;
+	}
 }

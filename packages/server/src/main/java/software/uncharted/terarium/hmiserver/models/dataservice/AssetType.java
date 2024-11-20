@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.models.dataservice;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -129,5 +130,18 @@ public enum AssetType {
 			PROJECT,
 			INTERVENTION_POLICY
 		);
+	}
+
+	public static List<String> toJsonRepresentation(final List<AssetType> assetTypes) {
+		final List<String> strs = new ArrayList<>();
+		final ObjectMapper objectMapper = new ObjectMapper();
+		for (final AssetType assetType : assetTypes) {
+			try {
+				strs.add(objectMapper.writeValueAsString(assetType).replaceAll("^\"|\"$", ""));
+			} catch (final Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return strs;
 	}
 }
