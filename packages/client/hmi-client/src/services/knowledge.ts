@@ -20,24 +20,34 @@ export interface EquationsToAMRRequest {
 }
 
 /**
+ * Clean up a list of equations
+ * @param equations string[] - list of LaTeX or mathml strings representing a model
+ * @return {Promise<string[]>}
+ */
+export const getCleanedEquations = async (equations: string[]): Promise<string[] | null> => {
+	try {
+		const response = await API.post<string[]>(`/knowledge/get-cleaned-equations`, equations);
+		return response.data;
+	} catch (error: unknown) {
+		logger.error(error, { showToast: false });
+	}
+	return null;
+};
+
+/**
  * Transform a list of LaTeX or mathml strings to an AMR
  * @param request EquationsToAMRRequest
  * @return {Promise<any>}
  */
-export const equationsToAMR = async (
-	request: EquationsToAMRRequest
-): Promise<{ modelId: string | null; cleanedEquations: string[] } | null> => {
+export const equationsToAMR = async (request: EquationsToAMRRequest): Promise<string | null> => {
 	const { equations, framework: model = 'petrinet', modelId, documentId } = request;
 	try {
-		const response: AxiosResponse<{ modelId: string | null; cleanedEquations: string[] }> = await API.post(
-			`/knowledge/equations-to-model`,
-			{
-				model,
-				modelId,
-				documentId,
-				equations
-			}
-		);
+		const response: AxiosResponse<string> = await API.post(`/knowledge/equations-to-model`, {
+			model,
+			modelId,
+			documentId,
+			equations
+		});
 		return response.data;
 	} catch (error: unknown) {
 		logger.error(error, { showToast: false });

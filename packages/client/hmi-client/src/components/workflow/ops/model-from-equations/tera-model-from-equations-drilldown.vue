@@ -180,7 +180,7 @@ import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import type { Card, DocumentAsset, Model } from '@/types/Types';
 import { cloneDeep, isEmpty } from 'lodash';
-import { equationsToAMR, type EquationsToAMRRequest } from '@/services/knowledge';
+import { equationsToAMR, getCleanedEquations, type EquationsToAMRRequest } from '@/services/knowledge';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
 import { enrichModelMetadata, equationsFromImage } from '@/services/goLLM';
 import { getModel, updateModel } from '@/services/model';
@@ -368,16 +368,15 @@ async function onRun() {
 	const equationsText = clonedState.value.equations
 		.filter((e) => e.includeInProcess && !e.asset.extractionError)
 		.map((e) => e.asset.text);
+	const cleanedEquations = await getCleanedEquations(equationsText);
+	if (!cleanedEquations) return;
 
 	const request: EquationsToAMRRequest = {
-		equations: equationsText,
+		equations: cleanedEquations,
 		framework: clonedState.value.modelFramework,
 		documentId: document.value?.id
 	};
-	const response = await equationsToAMR(request);
-	if (!response) return;
-	const { modelId, cleanedEquations } = response;
-
+	const modelId = await equationsToAMR(request);
 	// If there isn't a modelId returned at least show the cleaned equations
 	if (modelId) {
 		if (document.value?.id) await generateCard(modelId, document.value.id);

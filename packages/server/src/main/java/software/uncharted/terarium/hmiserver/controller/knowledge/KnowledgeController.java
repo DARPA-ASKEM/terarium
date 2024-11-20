@@ -123,13 +123,55 @@ public class KnowledgeController {
 	}
 
 	/**
+	 * Clean up a list of equations
+	 *
+	 * @return List of cleaned-up equations
+	 */
+	@PostMapping("/get-cleaned-equations")
+	@Secured(Roles.USER)
+	public ResponseEntity<List<String>> getCleanedEquations(
+		@RequestBody final List<String> equations,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		TaskRequest cleanupReq = cleanupEquationsTaskRequest(projectId, equations);
+		TaskResponse cleanupResp = null;
+		try {
+			cleanupResp = taskService.runTask(TaskMode.SYNC, cleanupReq);
+		} catch (final JsonProcessingException e) {
+			log.warn("Unable to clean-up equations due to a JsonProcessingException. Reverting to original equations.", e);
+		} catch (final TimeoutException e) {
+			log.warn("Unable to clean-up equations due to a TimeoutException. Reverting to original equations.", e);
+		} catch (final InterruptedException e) {
+			log.warn("Unable to clean-up equations due to a InterruptedException. Reverting to original equations.", e);
+		} catch (final ExecutionException e) {
+			log.warn("Unable to clean-up equations due to a ExecutionException. Reverting to original equations.", e);
+		}
+
+		// Get the equations from the cleanup response, or use the original equations
+		List<String> cleanedEquations = new ArrayList<>();
+		if (cleanupResp != null && cleanupResp.getOutput() != null) {
+			try {
+				JsonNode output = mapper.readValue(cleanupResp.getOutput(), JsonNode.class);
+				if (output.get("response") != null && output.get("response").get("equations") != null) {
+					for (JsonNode eq : output.get("response").get("equations")) {
+						cleanedEquations.add(eq.asText());
+					}
+				}
+			} catch (IOException e) {
+				log.warn("Unable to retrieve cleaned-up equations from GoLLM response. Reverting to original equations.", e);
+			}
+		}
+		return ResponseEntity.ok(cleanedEquations);
+	}
+
+	/**
 	 * Send the equations to the skema unified service to get the AMR
 	 *
 	 * @return UUID Model ID, or null if the model was not created or updated
 	 */
 	@PostMapping("/equations-to-model")
 	@Secured(Roles.USER)
-	public ResponseEntity<EquationsToModelResponse> equationsToModel(
+	public ResponseEntity<UUID> equationsToModel(
 		@RequestBody final JsonNode req,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
@@ -167,51 +209,9 @@ public class KnowledgeController {
 			}
 		}
 
-		// Cleanup equations from the request
-		List<String> equations = new ArrayList<>();
-		if (req.get("equations") != null) {
-			for (final JsonNode equation : req.get("equations")) {
-				equations.add(equation.asText());
-			}
-		}
-		TaskRequest cleanupReq = cleanupEquationsTaskRequest(projectId, equations);
-		TaskResponse cleanupResp = null;
-		try {
-			cleanupResp = taskService.runTask(TaskMode.SYNC, cleanupReq);
-		} catch (final JsonProcessingException e) {
-			log.warn("Unable to clean-up equations due to a JsonProcessingException. Reverting to original equations.", e);
-		} catch (final TimeoutException e) {
-			log.warn("Unable to clean-up equations due to a TimeoutException. Reverting to original equations.", e);
-		} catch (final InterruptedException e) {
-			log.warn("Unable to clean-up equations due to a InterruptedException. Reverting to original equations.", e);
-		} catch (final ExecutionException e) {
-			log.warn("Unable to clean-up equations due to a ExecutionException. Reverting to original equations.", e);
-		}
-
-		// get the equations from the cleanup response, or use the original equations
-		JsonNode equationsReq = req.get("equations");
-		List<String> cleanedEquations = new ArrayList<>();
-		if (cleanupResp != null && cleanupResp.getOutput() != null) {
-			try {
-				JsonNode output = mapper.readValue(cleanupResp.getOutput(), JsonNode.class);
-				if (output.get("response") != null && output.get("response").get("equations") != null) {
-					equationsReq = output.get("response").get("equations");
-					for (JsonNode eq : equationsReq) {
-						cleanedEquations.add(eq.asText());
-					}
-				}
-			} catch (IOException e) {
-				log.warn("Unable to retrieve cleaned-up equations from GoLLM response. Reverting to original equations.", e);
-			}
-		}
-
-		// Create a new request with the cleaned-up equations, so that we don't modify the original request.
-		JsonNode newReq = req.deepCopy();
-		((ObjectNode) newReq).set("equations", equationsReq);
-
 		// Get an AMR from Skema Unified Service
 		try {
-			responseAMR = skemaUnifiedProxy.consolidatedEquationsToAMR(newReq).getBody();
+			responseAMR = skemaUnifiedProxy.consolidatedEquationsToAMR(req).getBody();
 			if (responseAMR == null) {
 				log.warn("Skema Unified Service did not return a valid AMR based on the provided equations");
 				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("skema.bad-equations"));
@@ -242,7 +242,7 @@ public class KnowledgeController {
 				if (documentId != null) {
 					modelService.enrichModel(projectId, documentId, model.getId(), permission, true);
 				}
-				return ResponseEntity.ok(new EquationsToModelResponse(model.getId(), cleanedEquations));
+				return ResponseEntity.ok(model.getId());
 			} catch (final IOException e) {
 				log.error("An error occurred while trying to retrieve information necessary for model enrichment.", e);
 				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
@@ -275,7 +275,7 @@ public class KnowledgeController {
 			if (documentId != null) {
 				modelService.enrichModel(projectId, documentId, responseAMR.getId(), permission, true);
 			}
-			return ResponseEntity.ok(new EquationsToModelResponse(model.get().getId(), cleanedEquations));
+			return ResponseEntity.ok(model.get().getId());
 		} catch (final IOException e) {
 			log.error("An error occurred while trying to retrieve information necessary for model enrichment.", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
@@ -860,16 +860,5 @@ public class KnowledgeController {
 		req.setAdditionalProperties(props);
 
 		return req;
-	}
-
-	private static class EquationsToModelResponse {
-
-		public UUID modelId;
-		public List<String> cleanedEquations;
-
-		public EquationsToModelResponse(UUID modelId, List<String> cleanedEquations) {
-			this.modelId = modelId;
-			this.cleanedEquations = cleanedEquations;
-		}
 	}
 }
