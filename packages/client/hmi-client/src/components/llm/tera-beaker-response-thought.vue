@@ -28,8 +28,9 @@ const onClickClose = () => {
 	display: flex;
 	justify-content: space-between;
 	white-space: pre-line;
-	background-color: #fff;
-	border: 1px solid var(--surface-border);
+	background-color: var(--surface-50);
+	border: 1px solid var(--surface-border-light);
+	box-shadow: inset 0 0 4px 0 rgba(0, 0, 0, 0.05);
 	border-radius: var(--border-radius);
 	padding: var(--gap-4);
 	color: var(--text-color);
