@@ -9,6 +9,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -160,11 +161,12 @@ public class EnrichmentService {
 			notificationInterface.sendMessage("Updating model grounding...");
 
 			// Update State Grounding
-			final List<State> states = enrichedModel.getStates();
+			final List<State> states = enrichedModel
+				.getStates()
+				.stream()
+				.map(state -> state == null ? new State() : state)
+				.collect(Collectors.toList());
 			states.forEach(state -> {
-				if (state == null) {
-					state = new State();
-				}
 				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, state);
 			});
 			enrichedModel.setStates(states);
