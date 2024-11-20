@@ -666,11 +666,7 @@ const mappingDropdownPlaceholder = computed(() => {
 });
 
 const showOutputSection = computed(
-	() =>
-		lossValues.value.length > 0 ||
-		!_.isEmpty(chartSettings.value) ||
-		isLoading.value ||
-		!_.isEmpty(props.node.state?.errorMessage?.traceback)
+	() => lossValues.value.length > 0 || isLoading.value || !_.isEmpty(props.node.state?.errorMessage?.traceback)
 );
 
 const updateState = () => {
@@ -821,17 +817,9 @@ const initDefaultChartSettings = (state: CalibrationOperationStateCiemss) => {
 	// Initialize default selected chart settings when chart settings are not set yet. Return if chart settings are already set.
 	if (Array.isArray(state.chartSettings)) return;
 	const defaultSelectedParam = modelParameters.value.filter((p) => !!p.distribution).map((p) => p.id);
-	const mappedModelVariablesSet = new Set(
-		mapping.value
-			.filter((c) => ['state', 'observable'].includes(modelPartTypesMap.value[c.modelVariable]))
-			.map((c) => c.modelVariable)
-	);
-
-	props.node.state.templateSelectedModelVariables.forEach((variable) => {
-		mappedModelVariablesSet.add(variable);
-	});
-
-	const mappedModelVariables = Array.from(mappedModelVariablesSet);
+	const mappedModelVariables = mapping.value
+		.filter((c) => ['state', 'observable'].includes(modelPartTypesMap.value[c.modelVariable]))
+		.map((c) => c.modelVariable);
 
 	state.chartSettings = updateChartSettingsBySelectedVariables([], ChartSettingType.VARIABLE, mappedModelVariables);
 	state.chartSettings = updateChartSettingsBySelectedVariables(
@@ -898,8 +886,6 @@ const runCalibrate = async () => {
 		state.inProgressForecastId = '';
 		state.inProgressPreForecastId = '';
 		initDefaultChartSettings(state);
-		// we want to make this an empty array after the first click of run, these are generated from the workflow template
-		state.templateSelectedModelVariables = [];
 		emit('update-state', state);
 	}
 };

@@ -7,6 +7,8 @@ import { operation as DatasetOp } from '@/components/workflow/ops/dataset/mod';
 import { OperatorNodeSize } from '@/services/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import _ from 'lodash';
+import { ChartSetting, ChartSettingType } from '@/types/common';
+import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 
 export class SituationalAwarenessScenario extends BaseScenario {
 	public static templateId = 'situational-awareness';
@@ -101,16 +103,11 @@ export class SituationalAwarenessScenario extends BaseScenario {
 
 		// Add nodes
 		// Model
-
 		const modelNode = wf.addNode(
 			ModelOp,
 			{ x: 0, y: 0 },
 			{
-				size: OperatorNodeSize.medium,
-				state: {
-					modelId: this.modelSpec.id
-				},
-				outputValue: this.modelSpec.id
+				size: OperatorNodeSize.medium
 			}
 		);
 
@@ -119,11 +116,7 @@ export class SituationalAwarenessScenario extends BaseScenario {
 			DatasetOp,
 			{ x: 0, y: 0 },
 			{
-				size: OperatorNodeSize.medium,
-				state: {
-					datasetId: this.datasetSpec.id
-				},
-				outputValue: this.datasetSpec.id
+				size: OperatorNodeSize.medium
 			}
 		);
 
@@ -133,11 +126,7 @@ export class SituationalAwarenessScenario extends BaseScenario {
 			ModelConfigOp,
 			{ x: 0, y: 0 },
 			{
-				size: OperatorNodeSize.medium,
-				state: {
-					transientModelConfig: modelConfig
-				},
-				outputValue: this.modelConfigSpec.id
+				size: OperatorNodeSize.medium
 			}
 		);
 
@@ -146,10 +135,7 @@ export class SituationalAwarenessScenario extends BaseScenario {
 			CalibrateCiemssOp,
 			{ x: 0, y: 0 },
 			{
-				size: OperatorNodeSize.medium,
-				state: {
-					templateSelectedModelVariables: this.calibrateSpec.ids
-				}
+				size: OperatorNodeSize.medium
 			}
 		);
 
@@ -166,6 +152,50 @@ export class SituationalAwarenessScenario extends BaseScenario {
 			{ x: 0, y: 0 },
 			{ x: 0, y: 0 }
 		]);
+
+		wf.setNodeOptions(modelNode, {
+			state: {
+				modelId: this.modelSpec.id
+			},
+			outputValue: this.modelSpec.id
+		});
+
+		wf.setNodeOptions(datasetNode, {
+			state: {
+				datasetId: this.datasetSpec.id
+			},
+			outputValue: this.datasetSpec.id
+		});
+
+		wf.setNodeOptions(modelConfigNode, {
+			state: {
+				transientModelConfig: modelConfig
+			},
+			outputValue: this.modelConfigSpec.id
+		});
+
+		let calibrateChartSettings: ChartSetting[] = [];
+		calibrateChartSettings = updateChartSettingsBySelectedVariables(
+			calibrateChartSettings,
+			ChartSettingType.VARIABLE,
+			this.calibrateSpec.ids
+		);
+		calibrateChartSettings = updateChartSettingsBySelectedVariables(
+			calibrateChartSettings,
+			ChartSettingType.ERROR_DISTRIBUTION,
+			this.calibrateSpec.ids
+		);
+		calibrateChartSettings = updateChartSettingsBySelectedVariables(
+			calibrateChartSettings,
+			ChartSettingType.INTERVENTION,
+			this.calibrateSpec.ids
+		);
+
+		wf.setNodeOptions(calibrateNode, {
+			state: {
+				chartSettings: calibrateChartSettings
+			}
+		});
 
 		wf.runDagreLayout();
 

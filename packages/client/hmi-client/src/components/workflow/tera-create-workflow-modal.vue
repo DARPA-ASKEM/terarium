@@ -8,7 +8,7 @@
 				<aside class="flex flex-column col-2">
 					<label class="p-text-secondary pb-2">Select a template</label>
 					<div v-for="scenario in scenarios" :key="scenario.id" class="flex align-items-center py-1">
-						<RadioButton :inputId="scenario.id" :value="scenario.id" v-model="selectedTemplateId" />
+						<RadioButton :inputId="scenario.id" :value="scenario.id" v-model="selectedTemplateId" :tabindex="-1" />
 						<label class="pl-2" :for="scenario.id">{{ scenario.displayName }}</label>
 					</div>
 				</aside>
@@ -27,7 +27,7 @@
 <script setup lang="ts">
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Button from 'primevue/button';
-import { ref } from 'vue';
+import { markRaw, ref } from 'vue';
 import type { Component } from 'vue';
 import RadioButton from 'primevue/radiobutton';
 import { BaseScenario } from '@/components/workflow/scenario-templates/base-scenario';
@@ -53,13 +53,13 @@ const scenarios = ref<ScenarioItem[]>([
 		displayName: BlankCanvasScenario.templateName,
 		id: BlankCanvasScenario.templateId,
 		instance: new BlankCanvasScenario(),
-		component: TeraBlankCanvasTemplate
+		component: markRaw(TeraBlankCanvasTemplate)
 	},
 	{
 		displayName: SituationalAwarenessScenario.templateName,
 		id: SituationalAwarenessScenario.templateId,
 		instance: new SituationalAwarenessScenario(),
-		component: TeraSituationalAwarenessTemplate
+		component: markRaw(TeraSituationalAwarenessTemplate)
 	}
 ]);
 

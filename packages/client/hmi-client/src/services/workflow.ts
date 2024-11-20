@@ -261,19 +261,10 @@ export class WorkflowWrapper {
 			width: nodeSize.width,
 			height: nodeSize.height
 		};
-		if (op.initState) {
+		if (op.initState && _.isEmpty(node.state)) {
 			node.state = op.initState();
-			Object.assign(node.state, options.state);
 		}
 		this.wf.nodes.push(node);
-
-		if (options.outputValue) {
-			node.status = OperatorStatus.SUCCESS;
-			const outputPort = node.outputs[0];
-			outputPort.value = isArray(options.outputValue) ? options.outputValue : [options.outputValue];
-			node.active = outputPort.id;
-			this.selectOutput(node, outputPort.id);
-		}
 		return node;
 	}
 
@@ -503,6 +494,32 @@ export class WorkflowWrapper {
 		// 6. Finally put everything back into the workflow
 		this.wf.nodes.push(...copyNodes);
 		this.wf.edges.push(...copyEdges);
+	}
+
+	/**
+	 * Sets the options for a given workflow node.
+	 *
+	 * @param {WorkflowNode<any>} node - The workflow node to set options for.
+	 * @param {Object} options - The options to set for the node.
+	 * @param {any} [options.state] - The state to set for the node.
+	 * @param {any} [options.outputValue] - The output value to set for the node.
+	 */
+	setNodeOptions(
+		node: WorkflowNode<any>,
+		options: {
+			state?: any;
+			outputValue?: any;
+		}
+	) {
+		if (!_.isEmpty(options.state)) {
+			node.state = Object.assign(node.state, options.state);
+		}
+		if (!_.isEmpty(options.outputValue)) {
+			const outputPort = node.outputs[0];
+			node.active = outputPort.id;
+			outputPort.value = isArray(options.outputValue) ? options.outputValue : [options.outputValue];
+			this.selectOutput(node, outputPort.id);
+		}
 	}
 
 	/**
