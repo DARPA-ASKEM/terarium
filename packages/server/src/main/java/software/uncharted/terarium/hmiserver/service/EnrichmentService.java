@@ -130,11 +130,11 @@ public class EnrichmentService {
 			);
 
 			final TaskRequest taskRequest = new CompoundTask(enrichAmrRequest, modelCardRequest);
-			final TaskResponse taskResponse = taskService.runTask(TaskService.TaskMode.SYNC, taskRequest);
 
-			// Check if the task was un-successful
-			if (!taskResponse.getStatus().equals(TaskStatus.SUCCESS)) {
-				final String errorString = String.format("Task failed: %s", taskResponse.getStderr());
+			try {
+				taskService.runTask(TaskService.TaskMode.SYNC, taskRequest);
+			} catch (final Exception e) {
+				final String errorString = String.format("Task failed: %s", e);
 				log.warn(errorString);
 				throw new IOException(errorString);
 			}
