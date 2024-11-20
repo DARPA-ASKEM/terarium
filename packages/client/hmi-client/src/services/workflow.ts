@@ -1,6 +1,6 @@
 import { Component } from 'vue';
 import { v4 as uuidv4 } from 'uuid';
-import _, { isArray } from 'lodash';
+import _ from 'lodash';
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
 import { EventEmitter } from '@/utils/emitter';
@@ -517,7 +517,7 @@ export class WorkflowWrapper {
 		if (!_.isEmpty(options.outputValue)) {
 			const outputPort = node.outputs[0];
 			node.active = outputPort.id;
-			outputPort.value = isArray(options.outputValue) ? options.outputValue : [options.outputValue];
+			outputPort.value = _.isArray(options.outputValue) ? options.outputValue : [options.outputValue];
 			this.selectOutput(node, outputPort.id);
 		}
 	}
