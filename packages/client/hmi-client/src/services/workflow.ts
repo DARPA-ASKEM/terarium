@@ -508,16 +508,20 @@ export class WorkflowWrapper {
 		node: WorkflowNode<any>,
 		options: {
 			state?: any;
-			outputValue?: any;
+			output?: Partial<WorkflowOutput<any>>;
 		}
 	) {
 		if (!_.isEmpty(options.state)) {
 			node.state = Object.assign(node.state, options.state);
 		}
-		if (!_.isEmpty(options.outputValue)) {
-			const outputPort = node.outputs[0];
+		const outputPort = node.outputs[0];
+		// default operator status as invalid
+		outputPort.operatorStatus = OperatorStatus.INVALID;
+
+		if (!_.isEmpty(options.output)) {
 			node.active = outputPort.id;
-			outputPort.value = _.isArray(options.outputValue) ? options.outputValue : [options.outputValue];
+			node.status = OperatorStatus.SUCCESS;
+			Object.assign(outputPort, options.output);
 			this.selectOutput(node, outputPort.id);
 		}
 	}

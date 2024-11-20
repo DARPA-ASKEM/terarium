@@ -9,6 +9,7 @@ import { getModelConfigurationById } from '@/services/model-configurations';
 import _ from 'lodash';
 import { ChartSetting, ChartSettingType } from '@/types/common';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import { OperatorStatus } from '@/types/workflow';
 
 export class SituationalAwarenessScenario extends BaseScenario {
 	public static templateId = 'situational-awareness';
@@ -154,21 +155,31 @@ export class SituationalAwarenessScenario extends BaseScenario {
 			state: {
 				modelId: this.modelSpec.id
 			},
-			outputValue: this.modelSpec.id
+			output: {
+				value: [this.modelSpec.id],
+				operatorStatus: OperatorStatus.SUCCESS
+			}
 		});
 
 		wf.updateNode(datasetNode, {
 			state: {
 				datasetId: this.datasetSpec.id
 			},
-			outputValue: this.datasetSpec.id
+			output: {
+				value: [this.datasetSpec.id],
+				operatorStatus: OperatorStatus.SUCCESS
+			}
 		});
 
 		wf.updateNode(modelConfigNode, {
 			state: {
 				transientModelConfig: modelConfig
 			},
-			outputValue: this.modelConfigSpec.id
+			output: {
+				value: [modelConfig.id],
+				operatorStatus: OperatorStatus.SUCCESS,
+				state: _.omit(modelConfigNode.state, ['transientModelConfig'])
+			}
 		});
 
 		let calibrateChartSettings: ChartSetting[] = [];
