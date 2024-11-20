@@ -20,7 +20,7 @@ def main():
         data = taskrunner.read_input_str_with_timeout()
         amr = json.loads(data)
 
-        # Remove any empty mathmls
+        # Remove any empty mathML expressions
         if 'semantics' in amr and "ode" in amr["semantics"]:
             ode = amr["semantics"]["ode"]
             if "parameters" in ode:
