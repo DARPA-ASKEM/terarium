@@ -23,6 +23,7 @@ module.exports = {
 		'vuejs-accessibility/click-events-have-key-events': 'off',
 		'vuejs-accessibility/label-has-for': 'off',
 		'vuejs-accessibility/form-control-has-label': 'off',
+		'vuejs-accessibility/no-autofocus': 'off',
 		'vue/require-toggle-inside-transition': 'off',
 		'vue/multi-word-component-names': 'off',
 		'import/prefer-default-export': 'off',

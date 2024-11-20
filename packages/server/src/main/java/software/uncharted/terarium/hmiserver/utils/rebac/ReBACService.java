@@ -47,6 +47,7 @@ import software.uncharted.terarium.hmiserver.models.permissions.PermissionRole;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
+import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
 
 @Service
 @Slf4j
@@ -362,6 +363,11 @@ public class ReBACService {
 			response.add(user);
 		}
 		return response;
+	}
+
+	@Observed(name = "function_profile")
+	public RebacUser getRebacUser(final String id) {
+		return new RebacUser(id, this);
 	}
 
 	@Observed(name = "function_profile")
