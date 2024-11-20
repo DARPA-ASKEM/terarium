@@ -85,7 +85,6 @@
 			</div>
 		</div>
 
-		<InputText v-model="dataContextDescription" disabled />
 		<!-- Jupyter Chat -->
 		<tera-jupyter-chat
 			ref="chat"
@@ -150,7 +149,6 @@ import { useConfirm } from 'primevue/useconfirm';
 import { useProjects } from '@/composables/project';
 import { programmingLanguageOptions } from '@/types/common';
 import TeraBeakerInput from '@/components/llm/tera-beaker-input.vue';
-import InputText from 'primevue/inputtext';
 
 const openDialog = () => {
 	showSaveInput.value = true;
@@ -163,12 +161,16 @@ const jupyterSession: SessionContext = await newSession('beaker_kernel', 'Beaker
 const selectedKernel = ref();
 const runningSessions = ref<any[]>([]);
 
-// This is used to inform the user what is in the context.
-// const dataContextDescription = computed(() =>
-// 	props.assets.map((asset, index) => `#d${index + 1} = ${asset.name}\n`).join(' ')
-// );
+const defaultPreview = computed(() => {
+	let code = '';
+	props.assets.forEach((asset, index) => {
+		code += `#d${index + 1} = ${asset.name}\n`;
+	});
+	// add first dataset to the code
+	code += 'd1';
+	return code;
+});
 
-const defaultPreview = ref<string>('d1');
 const confirm = useConfirm();
 
 const props = defineProps<{
@@ -203,9 +205,6 @@ const updateKernelStatus = (statusString: string) => {
 };
 
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
-const dataContextDescription = ref<string>(
-	props.assets.map((asset, index) => `#d${index + 1} = ${asset.name}\n`).join(' ')
-);
 
 const statusStyle = computed(() => {
 	if (kernelStatus.value === 'idle') {
