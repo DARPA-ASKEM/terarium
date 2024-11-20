@@ -43,14 +43,11 @@
 												<InputSwitch class="mr-3" v-model="knobs.compartmentalConstraint.isActive" />
 											</div>
 										</header>
-										<div class="flex flex-column pb-4 align-items-left gap-6">
-											<katex-element :expression="expression" />
-										</div>
-										<div class="flex align-items-center gap-6">
-											<katex-element
-												:expression="stringToLatexExpression(`${stateIds.join('+')} = ${massScientificNotation}`)"
-											/>
-										</div>
+										<katex-element class="expression-constraint" :expression="expression" />
+										<katex-element
+											class="expression-constraint"
+											:expression="stringToLatexExpression(`${stateIds.join('+')} = ${massScientificNotation}`)"
+										/>
 									</section>
 								</li>
 								<li v-for="(cfg, index) in node.state.constraintGroups" :key="index">
@@ -918,7 +915,7 @@ async function prepareOutput() {
 const expression = computed(() =>
 	stringToLatexExpression(
 		stateIds.value
-			.map((s, index) => `${s}${index === stateIds.value.length - 1 ? `\\geq 0` : ',\\geq 0 \\newline '}`)
+			.map((s, index) => `${s}${index === stateIds.value.length - 1 ? `\\geq 0` : '\\geq 0 \\newline '}`)
 			.join('')
 	)
 );
@@ -935,6 +932,16 @@ watch(
 </script>
 
 <style scoped>
+.expression-constraint {
+	max-height: 150px;
+	overflow: auto;
+	margin-top: var(--gap-4);
+	margin-bottom: var(--gap-4);
+	padding: var(--gap-1) 0 var(--gap-1) 0;
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+}
+
 .top-toolbar {
 	display: flex;
 	align-items: center;
