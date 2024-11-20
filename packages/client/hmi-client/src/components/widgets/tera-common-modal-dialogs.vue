@@ -39,7 +39,6 @@ import { RoutePath, useCurrentRoute } from '@/router/index';
 import { RouteName } from '@/router/routes';
 import { useProjects } from '@/composables/project';
 import { useProjectMenu } from '@/composables/project-menu';
-import { useToastService } from '@/services/toast';
 
 const router = useRouter();
 const currentRoute = useCurrentRoute();
