@@ -140,10 +140,8 @@ export const getGraphDataFromDatasetCSV = (
 	return graphData;
 };
 
-export function getSelectedOutput<S>(node: WorkflowNode<S>) {
-	const selectedOutputId = node.active;
-	const wfOutput = node.outputs.find((output) => output.id === selectedOutputId);
-	return wfOutput;
+export function getActiveOutput<S>(node: WorkflowNode<S>) {
+	return node.outputs.find((output) => output.id === node.active);
 }
 
 export type VariableMappings = CalibrateMap[] | CalibrateEnsembleMappingRow[] | SimulateEnsembleMappingRow[];

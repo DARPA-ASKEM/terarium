@@ -518,7 +518,7 @@ import {
 	Model
 } from '@/types/Types';
 import { CiemssPresetTypes, DrilldownTabs, ChartSettingType } from '@/types/common';
-import { getSelectedOutput, getTimespan, nodeMetadata } from '@/components/workflow/util';
+import { getActiveOutput, getTimespan, nodeMetadata } from '@/components/workflow/util';
 import { useToastService } from '@/services/toast';
 import { autoCalibrationMapping } from '@/services/concept';
 import {
@@ -727,7 +727,7 @@ const groupedInterventionOutputs = computed(() =>
 );
 
 const selectedOutputMapping = computed(() => getSelectedOutputMapping(props.node));
-const selectedOutputTimestampColName = computed(() => getSelectedOutput(props.node)?.state?.timestampColName ?? '');
+const selectedOutputTimestampColName = computed(() => getActiveOutput(props.node)?.state?.timestampColName ?? '');
 
 const errorData = computed<DataArray>(() =>
 	getErrorData(

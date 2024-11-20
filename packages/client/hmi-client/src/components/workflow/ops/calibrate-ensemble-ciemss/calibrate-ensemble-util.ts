@@ -3,7 +3,7 @@ import { createForecastChart, AUTOSIZE } from '@/services/charts';
 import { getRunResultCSV, getSimulation, parsePyCiemssMap } from '@/services/models/simulation-service';
 import { EnsembleModelConfigs } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
-import { getSelectedOutput } from '@/components/workflow/util';
+import { getActiveOutput } from '@/components/workflow/util';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	CalibrateEnsembleMappingRow,
@@ -80,7 +80,7 @@ export function getSelectedOutputEnsembleMapping(
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>,
 	hasTimestampCol = true
 ) {
-	const wfOutputState = getSelectedOutput(node)?.state;
+	const wfOutputState = getActiveOutput(node)?.state;
 	const mapping = _.clone(wfOutputState?.ensembleMapping ?? []);
 	if (hasTimestampCol)
 		mapping.push({
