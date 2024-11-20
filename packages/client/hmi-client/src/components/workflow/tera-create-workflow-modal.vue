@@ -8,13 +8,14 @@
 				<aside class="flex flex-column col-2">
 					<label class="p-text-secondary pb-2">Select a template</label>
 					<div v-for="scenario in scenarios" :key="scenario.id" class="flex align-items-center py-1">
-						<RadioButton :inputId="scenario.id" :value="scenario.id" v-model="selectedTemplateId" :tabindex="-1" />
+						<RadioButton :inputId="scenario.id" :value="scenario.id" v-model="selectedTemplateId" />
 						<label class="pl-2" :for="scenario.id">{{ scenario.displayName }}</label>
 					</div>
 				</aside>
 				<main class="col-10 flex flex-column gap-3 p-3">
 					<component
 						v-if="getScenario()"
+						ref="scenarioComponent"
 						:is="getScenario().component"
 						:scenario="getScenario().instance"
 						@save-workflow="saveWorkflow()"
@@ -32,7 +33,7 @@
 <script setup lang="ts">
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Button from 'primevue/button';
-import { markRaw, ref } from 'vue';
+import { markRaw, nextTick, onMounted, ref } from 'vue';
 import type { Component } from 'vue';
 import RadioButton from 'primevue/radiobutton';
 import { BaseScenario } from '@/components/workflow/scenario-templates/base-scenario';
@@ -52,7 +53,7 @@ interface ScenarioItem {
 	instance: BaseScenario;
 	component: Component;
 }
-
+const scenarioComponent = ref();
 const scenarios = ref<ScenarioItem[]>([
 	{
 		displayName: BlankCanvasScenario.templateName,
@@ -96,5 +97,11 @@ const saveWorkflow = async () => {
 	emit('close-modal');
 };
 
+onMounted(async () => {
+	/* HACK; wait for the modal to be fully rendered before focusing the input,
+	it seems that the auto-focus on tera-input-text is not working doesn't play too nicely on the initial render of the modal */
+	await nextTick();
+	scenarioComponent.value.$refs.nameInput?.focusInput();
+});
 const getScenario = () => scenarios.value.find((s) => s.id === selectedTemplateId.value) as ScenarioItem;
 </script>

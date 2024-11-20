@@ -1,6 +1,7 @@
 <template>
 	<label>What would you like to call this workflow?</label>
 	<tera-input-text
+		ref="nameInput"
 		:model-value="scenario.workflowName"
 		@update:model-value="scenario.setWorkflowName($event)"
 		auto-focus
