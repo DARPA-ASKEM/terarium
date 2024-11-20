@@ -238,9 +238,12 @@ public class KnowledgeController {
 				final Model model = modelService.createAsset(responseAMR, projectId, permission);
 				// enrich the model with the document
 				if (documentId != null) {
-					// Send this as a background task and send a notification to the user,
-					// but do not block the reply to the user
-					enrichmentService.modelWithDocument(projectId, documentId, model.getId(), permission);
+					final Future<Model> enrichedModel = enrichmentService.modelWithDocument(
+						projectId,
+						documentId,
+						model.getId(),
+						permission
+					);
 				}
 				return ResponseEntity.ok(model.getId());
 			} catch (final IOException e) {
@@ -273,9 +276,12 @@ public class KnowledgeController {
 			modelService.updateAsset(responseAMR, projectId, permission);
 			// enrich the model with the document
 			if (documentId != null) {
-				// Send this as a background task and send a notification to the user,
-				// but do not block the reply to the user
-				enrichmentService.modelWithDocument(projectId, documentId, model.get().getId(), permission);
+				final Future<Model> enrichedModel = enrichmentService.modelWithDocument(
+					projectId,
+					documentId,
+					model.get().getId(),
+					permission
+				);
 			}
 			return ResponseEntity.ok(model.get().getId());
 		} catch (final IOException e) {
