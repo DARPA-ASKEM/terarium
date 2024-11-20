@@ -26,7 +26,6 @@ const {
 	isShareDialogVisible,
 	isRemoveDialogVisible,
 	isProjectConfigDialogVisible,
-	isMakeSampleDialogVisible,
 	menuProject
 } = useProjectMenu();
 
@@ -91,14 +90,6 @@ const downloadMenuItem = {
 	}
 };
 
-const makeSampleMenuItem = {
-	label: 'Make a sample',
-	icon: 'pi pi-star',
-	command: () => {
-		isMakeSampleDialogVisible.value = true;
-	}
-};
-
 const projectMenuItems = computed(() => {
 	// Basic access to a public and reader project
 	const items: MenuItem[] = [copyMenuItem, downloadMenuItem];
@@ -111,11 +102,6 @@ const projectMenuItems = computed(() => {
 	// Creator of the project, or an admin
 	if (props.project?.userPermission === 'creator' || useAuthStore().isAdmin) {
 		items.push(removeMenuItem);
-	}
-
-	// Admin only
-	if (useAuthStore().isAdmin && props.project?.sampleProject === false) {
-		items.push(makeSampleMenuItem);
 	}
 
 	return items;
