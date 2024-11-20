@@ -489,7 +489,7 @@ section {
 }
 
 .selected {
-	background-color: var(--surface-50);
+	background-color: var(--surface-0);
 	border: 1px solid var(--primary-color);
 }
 
@@ -503,6 +503,7 @@ section {
 .message-container {
 	height: calc(100% - 3.5rem);
 	overflow-y: auto;
+	background: var(--surface-100);
 }
 .rerun-message {
 	display: flex;

@@ -12,11 +12,10 @@ import { isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import { computed, ref } from 'vue';
-import { exportProjectAsFile, setSample } from '@/services/project';
+import { exportProjectAsFile } from '@/services/project';
 import { AcceptedExtensions } from '@/types/common';
 import { MenuItem } from 'primevue/menuitem';
 import useAuthStore from '@/stores/auth';
-import { useToastService } from '@/services/toast';
 
 const props = defineProps<{ project: Project | null }>();
 
@@ -28,6 +27,7 @@ const { isShareDialogVisible, isRemoveDialogVisible, isProjectConfigDialogVisibl
 const isCopying = ref(false);
 
 const menu = ref();
+
 const editDetailsMenuItem = {
 	label: 'Edit details',
 	icon: 'pi pi-pencil',
@@ -35,6 +35,7 @@ const editDetailsMenuItem = {
 		isProjectConfigDialogVisible.value = true;
 	}
 };
+
 const shareMenuItem = {
 	label: 'Share',
 	icon: 'pi pi-user-plus',
@@ -42,6 +43,7 @@ const shareMenuItem = {
 		isShareDialogVisible.value = true;
 	}
 };
+
 const removeMenuItem = {
 	label: 'Delete',
 	icon: 'pi pi-trash',
@@ -49,6 +51,7 @@ const removeMenuItem = {
 		isRemoveDialogVisible.value = true;
 	}
 };
+
 const copyMenuItem = {
 	label: 'Copy',
 	icon: 'pi pi-clone',
@@ -82,21 +85,6 @@ const downloadMenuItem = {
 	}
 };
 
-const makeSampleMenuItem = {
-	label: 'Make a sample',
-	icon: 'pi pi-star',
-	command: () => {
-		setSample(props.project?.id).then((response) => {
-			if (response) {
-				useToastService().success(undefined, 'Project set as sample');
-				useProjects().refresh();
-			} else {
-				useToastService().error(undefined, 'Error setting project as sample');
-			}
-		});
-	}
-};
-
 const projectMenuItems = computed(() => {
 	// Basic access to a public and reader project
 	const items: MenuItem[] = [copyMenuItem, downloadMenuItem];
@@ -111,15 +99,10 @@ const projectMenuItems = computed(() => {
 		items.push(removeMenuItem);
 	}
 
-	// Admin only
-	if (useAuthStore().isAdmin && props.project?.sampleProject === false) {
-		items.push(makeSampleMenuItem);
-	}
-
 	return items;
 });
 
-function toggle(event) {
+function toggle(event: any) {
 	menu.value.toggle(event);
 }
 </script>

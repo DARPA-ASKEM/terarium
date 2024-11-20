@@ -141,6 +141,11 @@ const runAllCells = () => {
 const searchOptions = () => {
 	const query = queryString.value.toLowerCase();
 	filteredOptions.value = props.defaultOptions.filter((option) => option.toLowerCase().includes(query));
+
+	// Hide the panel if there are no suggestions
+	if (filteredOptions.value.length === 0) {
+		autoComplete.value?.hide();
+	}
 };
 
 const onInputChange = async () => {
@@ -159,6 +164,7 @@ const onInputChange = async () => {
 		hideAutoComplete.value = true;
 		await nextTick();
 		inputElement.value?.focus();
+		autoGrow();
 	}
 };
 
@@ -256,6 +262,7 @@ const autoGrow = () => {
 }
 .auto-complete {
 	width: 100%;
+	position: relative;
 }
 
 .auto-complete:deep(input),
@@ -263,9 +270,9 @@ const autoGrow = () => {
 	width: 100%;
 	background-image: url('@assets/svg/icons/message.svg');
 	background-size: 1rem;
-	background-position: var(--gap-2) 9px;
+	background-position: var(--gap-2-5) 9px;
 	background-repeat: no-repeat;
 	padding-right: 2rem;
-	padding-left: 2rem;
+	padding-left: 2.25rem;
 }
 </style>
