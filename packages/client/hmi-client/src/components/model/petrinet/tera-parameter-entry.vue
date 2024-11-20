@@ -27,7 +27,7 @@
 			</span>
 		</div>
 		<template v-else-if="!featureConfig?.isPreview">
-			<main>
+			<main class="flex align-items-center">
 				<span class="flex gap-2">
 					<Dropdown
 						:model-value="getParameterDistribution(modelConfiguration, parameterId).type"

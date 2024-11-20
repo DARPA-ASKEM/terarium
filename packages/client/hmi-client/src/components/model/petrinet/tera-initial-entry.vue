@@ -16,7 +16,7 @@
 			<span v-if="description" class="description">{{ description }}</span>
 		</header>
 		<template v-if="isEmpty(modelConfiguration.inferredParameterList) && !featureConfig?.isPreview">
-			<main>
+			<main class="flex align-items-center">
 				<span class="expression">
 					<tera-input-text
 						label="Expression"
