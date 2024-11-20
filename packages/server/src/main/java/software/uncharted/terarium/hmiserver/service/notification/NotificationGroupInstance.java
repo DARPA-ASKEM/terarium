@@ -63,6 +63,16 @@ public class NotificationGroupInstance<T> {
 		this(clientEventService, notificationService, type, projectId, data, DEFAULT_HALF_TIME_SECONDS, UUID.randomUUID());
 	}
 
+	public NotificationGroupInstance(
+		final ClientEventService clientEventService,
+		final NotificationService notificationService,
+		final ClientEventType type,
+		final UUID projectId,
+		final T data
+	) {
+		this(clientEventService, notificationService, type, projectId, data, DEFAULT_HALF_TIME_SECONDS, UUID.randomUUID());
+	}
+
 	private Double estimateT() {
 		// Make sure this value never reaches 1.0 since 1.0 is reserved for the final message
 		return Math.max(0.9 - Math.pow(0.5, (getElapsedSeconds() / halfTimeSeconds)), 0);

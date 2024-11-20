@@ -66,6 +66,7 @@ import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
+import software.uncharted.terarium.hmiserver.service.EnrichmentService;
 import software.uncharted.terarium.hmiserver.service.ExtractionService;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
 import software.uncharted.terarium.hmiserver.service.data.DKGService;
@@ -104,6 +105,7 @@ public class KnowledgeController {
 	private final CodeService codeService;
 
 	private final ExtractionService extractionService;
+	private final EnrichmentService enrichmentService;
 	private final TaskService taskService;
 	private final DKGService dkgService;
 
@@ -269,7 +271,9 @@ public class KnowledgeController {
 			modelService.updateAsset(responseAMR, projectId, permission);
 			// enrich the model with the document
 			if (documentId != null) {
-				modelService.enrichModel(projectId, documentId, responseAMR.getId(), permission, true);
+				// Send this as a background task and send a notification to the user,
+				// but do not block the reply to the user
+				enrichmentService.modelWithDocument(projectId, documentId, model.get().getId(), permission);
 			}
 			return ResponseEntity.ok(model.get().getId());
 		} catch (final IOException e) {
