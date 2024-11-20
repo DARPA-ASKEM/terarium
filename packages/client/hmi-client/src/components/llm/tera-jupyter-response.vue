@@ -259,9 +259,10 @@ function onDeleteRequested(msgId: string) {
 }
 
 .error {
+	background: var(--red-50);
 	color: darkred;
 	white-space: pre-wrap;
-	padding-top: 10px;
+	padding: var(--gap-4);
 }
 
 .jupyter-response {
