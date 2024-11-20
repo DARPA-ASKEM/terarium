@@ -8,6 +8,7 @@
 				<Button
 					v-if="!isAddingUncertainty && !featureConfig?.isPreview"
 					label="Add uncertainty"
+					icon="pi pi-question"
 					outlined
 					severity="secondary"
 					size="small"
