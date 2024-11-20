@@ -3,9 +3,11 @@ package software.uncharted.terarium.hmiserver.service;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeoutException;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -64,7 +66,8 @@ public class EnrichmentService {
 	 * @param permission the permission
 	 * @return the enriched model
 	 */
-	public Future<Model> modelWithDocument(UUID projectId, UUID documentId, UUID modelId, Schema.Permission permission) {
+	public Future<Model> modelWithDocument(UUID projectId, UUID documentId, UUID modelId, Schema.Permission permission)
+		throws IOException, ExecutionException, InterruptedException, TimeoutException {
 		// Create the notification group
 		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<>(
 			clientEventService,
