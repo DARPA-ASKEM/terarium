@@ -33,6 +33,7 @@
 				class="madlib-input"
 			/>
 			<MultiSelect
+				:maxSelectedLabels="5"
 				:model-value="config.variables"
 				placeholder="Select variables"
 				:options="variableOptions"
@@ -163,9 +164,9 @@
 			/>
 		</div>
 		<katex-element
-			class="mt-3"
+			class="expression-constraint"
 			v-else-if="config.constraintType !== ConstraintType.Following"
-			:expression="stringToLatexExpression(generateConstraintExpression(config))"
+			:expression="stringToLatexExpression(expression)"
 		/>
 	</section>
 </template>
@@ -215,9 +216,26 @@ const variableOptions = computed(() => {
 			return [];
 	}
 });
+
+const expression = computed(() => {
+	if (props.config) {
+		return generateConstraintExpression(props.config);
+	}
+	return '';
+});
 </script>
 
 <style scoped>
+.expression-constraint {
+	max-height: 150px;
+	overflow: auto;
+	margin-top: var(--gap-4);
+	margin-bottom: var(--gap-4);
+	padding: var(--gap-1) 0 var(--gap-1) 0;
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+}
+
 section {
 	display: flex;
 	padding: var(--gap-4);

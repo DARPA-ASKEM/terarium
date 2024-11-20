@@ -41,24 +41,11 @@
 												<InputSwitch class="mr-3" v-model="knobs.compartmentalConstraint.isActive" />
 											</div>
 										</header>
-										<div class="flex flex-wrap align-items-center gap-4">
-											<katex-element
-												:expression="
-													stringToLatexExpression(
-														stateIds
-															.map((s, index) => `${s}${index === stateIds.length - 1 ? `\\geq 0` : ','}`)
-															.join('')
-													)
-												"
-												class="first-line"
-											/>
-											<katex-element
-												:expression="
-													stringToLatexExpression(`${stateIds.join('+')} = ${displayNumber(mass)} \\ \\forall \\ t`)
-												"
-												class="second-line"
-											/>
-										</div>
+										<katex-element class="expression-constraint" :expression="expression" />
+										<katex-element
+											class="expression-constraint"
+											:expression="stringToLatexExpression(`${stateIds.join('+')} = ${massScientificNotation}`)"
+										/>
 									</section>
 								</li>
 								<li v-for="(cfg, index) in node.state.constraintGroups" :key="index" class="shadow-1">
@@ -394,7 +381,7 @@ import { pythonInstance } from '@/python/PyodideController';
 import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-constraint-group-form.vue';
 import { DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
 import { stringToLatexExpression, getModel, getMMT } from '@/services/model';
-import { displayNumber } from '@/utils/number';
+import { toScientificNotation } from '@/utils/number';
 import { removeChartSettingById, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { nodeOutputLabel } from '@/components/workflow/util';
 import { formatJSON } from '@/services/code';
@@ -927,6 +914,19 @@ async function prepareOutput() {
 	renderCharts();
 }
 
+const expression = computed(() =>
+	stringToLatexExpression(
+		stateIds.value
+			.map((s, index) => `${s}${index === stateIds.value.length - 1 ? `\\geq 0` : '\\geq 0 \\newline '}`)
+			.join('')
+	)
+);
+
+const massScientificNotation = computed(() => {
+	const notation = toScientificNotation(parseFloat(mass.value));
+	return `${notation.mantissa} \\times 10^${notation.exponent}`;
+});
+
 watch(
 	() => props.node.state.runId,
 	() => prepareOutput()
@@ -934,6 +934,16 @@ watch(
 </script>
 
 <style scoped>
+.expression-constraint {
+	max-height: 150px;
+	overflow: auto;
+	margin-top: var(--gap-4);
+	margin-bottom: var(--gap-4);
+	padding: var(--gap-1) 0 var(--gap-1) 0;
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+}
+
 .top-toolbar {
 	display: flex;
 	align-items: center;
