@@ -2,7 +2,7 @@
 	<!-- Output selector and Save as buttons artificially injected into drilldown header -->
 	<div class="data-transform-container h-full overflow-hidden">
 		<!-- Toolbar -->
-		<div class="toolbar flex">
+		<div class="toolbar flex shadow-1">
 			<!-- Kernel Status -->
 			<div class="kernel-status-container">
 				<span><i class="pi pi-circle-fill kernel-status" :style="statusStyle" /></span>
