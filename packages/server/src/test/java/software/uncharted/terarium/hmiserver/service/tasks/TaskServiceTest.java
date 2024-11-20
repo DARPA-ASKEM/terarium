@@ -143,7 +143,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		req.setType(TaskType.GOLLM);
 		req.setScript("gollm:embedding");
 		req.setInput(
-			("{\"text\":\"What kind of dinosaur is the coolest?\",\"embedding_model\":\"text-embedding-ada-002\"}").getBytes()
+			("{\"text\": [\"What kind of dinosaur is the coolest?\"],\"embedding_model\":\"text-embedding-ada-002\"}").getBytes()
 		);
 
 		final AdditionalProps add = new AdditionalProps();

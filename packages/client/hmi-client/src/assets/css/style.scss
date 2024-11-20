@@ -147,6 +147,17 @@
 		color: var(--surface-0);
 	}
 
+	/* Ensure long autocomplete items line wrap */
+	.p-autocomplete-panel {
+		max-width: 600px;
+		max-height: 300px !important;
+		box-shadow: 0 3px 6px 0 rgba(0, 0, 0, 0.1);
+		.p-autocomplete-items {
+			.p-autocomplete-item {
+				white-space: normal;
+			}
+		}
+	}
 	/* SplitButton menu height and width fix */
 	.p-tieredmenu {
 		width: auto;
@@ -226,4 +237,8 @@
 		}
 	}
 
+	/* Adjust tooltip width to support longer text */
+	.p-tooltip {
+		max-width: 380px;
+	}
 }

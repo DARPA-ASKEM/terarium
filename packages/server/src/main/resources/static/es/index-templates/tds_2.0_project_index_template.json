@@ -24,6 +24,9 @@
             "project": "permission"
           }
         },
+        "name": {
+          "type": "keyword"
+        },
         "type": {
           "type": "keyword"
         },
@@ -48,6 +51,9 @@
               "type": "keyword"
             },
             "assetType": {
+              "type": "keyword"
+            },
+            "embeddingType": {
               "type": "keyword"
             },
             "vector": {

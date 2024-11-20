@@ -15,7 +15,9 @@ plugins {
 }
 
 ext {
-  set('springCloudVersion', "2022.0.5")
+    set('springCloudVersion', "2022.0.5")
+    set('junit.version', '4.13.2')
+    set('junit-jupiter.version', '5.11.3')
 }
 
 dependencyManagement {

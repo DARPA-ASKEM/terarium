@@ -18,41 +18,8 @@ public class RebacGroup extends RebacObject {
 		return new SchemaObject(Schema.Type.GROUP, getId());
 	}
 
-	public boolean hasMembership(RebacGroup rebacGroup) throws Exception {
-		return reBACService.isMemberOf(getSchemaObject(), rebacGroup.getSchemaObject());
-	}
-
-	public boolean canAdministrate(RebacObject rebacObject) throws Exception {
-		return reBACService.can(getSchemaObject(), Schema.Permission.ADMINISTRATE, rebacObject.getSchemaObject());
-	}
-
-	public void createReaderRelationship(RebacObject rebacObject) throws Exception, RelationshipAlreadyExistsException {
-		reBACService.createRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.READER);
-	}
-
 	public void createWriterRelationship(RebacObject rebacObject) throws Exception, RelationshipAlreadyExistsException {
 		reBACService.createRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.WRITER);
-	}
-
-	public void createCreatorRelationship(RebacObject rebacObject) throws Exception, RelationshipAlreadyExistsException {
-		reBACService.createRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.CREATOR);
-	}
-
-	public void createAdminRelationship(RebacObject rebacObject) throws Exception, RelationshipAlreadyExistsException {
-		reBACService.createRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.ADMIN);
-	}
-
-	/** Remove all relationships between this group and the given object. */
-	public void removeAllRelationships(final RebacObject rebacObject) throws Exception {
-		final Schema.Relationship[] relationships = {
-			Schema.Relationship.READER,
-			Schema.Relationship.WRITER,
-			Schema.Relationship.CREATOR,
-			Schema.Relationship.ADMIN
-		};
-		for (Schema.Relationship relationship : relationships) {
-			reBACService.removeRelationship(getSchemaObject(), rebacObject.getSchemaObject(), relationship);
-		}
 	}
 
 	/**

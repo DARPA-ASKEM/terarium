@@ -12,13 +12,11 @@
 			class="input-config"
 			v-model:is-open="isSliderOpen"
 			header="Validate configuration settings"
-			content-width="420px"
+			content-width="440px"
 		>
 			<template #content>
 				<div class="top-toolbar">
-					<p>Set your model checks and settings then click run.</p>
 					<div class="btn-group">
-						<Button label="Reset" outlined severity="secondary" disabled />
 						<Button :loading="showSpinner" label="Run" icon="pi pi-play" @click="run" />
 					</div>
 				</div>
@@ -29,39 +27,28 @@
 								Model checks
 								<i class="pi pi-info-circle pl-2" v-tooltip="validateParametersToolTip" />
 							</template>
-							<p class="mb-3">
+							<p class="mb-3 secondary-text">
 								Implement sanity checks on the state space of the model to see how the parameter space of the model is
 								partitioned into satisfiable and unsatisfiable regions separated by decision boundaries.
 							</p>
 							<ul>
 								<li>
-									<section>
+									<section class="shadow-1 pt-2">
 										<header class="flex w-full gap-3 mb-2">
-											<tera-toggleable-input v-model="knobs.compartmentalConstraint.name" tag="h3" />
+											<tera-toggleable-input v-model="knobs.compartmentalConstraint.name" tag="h3" class="nudge-left" />
 											<div class="ml-auto flex align-items-center">
 												<label class="mr-2">Active</label>
 												<InputSwitch class="mr-3" v-model="knobs.compartmentalConstraint.isActive" />
 											</div>
 										</header>
-										<div class="flex align-items-center gap-6">
-											<katex-element
-												:expression="
-													stringToLatexExpression(
-														stateIds
-															.map((s, index) => `${s}${index === stateIds.length - 1 ? `\\geq 0` : ','}`)
-															.join('')
-													)
-												"
-											/>
-											<katex-element
-												:expression="
-													stringToLatexExpression(`${stateIds.join('+')} = ${displayNumber(mass)} \\ \\forall \\ t`)
-												"
-											/>
-										</div>
+										<katex-element class="expression-constraint" :expression="expression" />
+										<katex-element
+											class="expression-constraint"
+											:expression="stringToLatexExpression(`${stateIds.join('+')} = ${massScientificNotation}`)"
+										/>
 									</section>
 								</li>
-								<li v-for="(cfg, index) in node.state.constraintGroups" :key="index">
+								<li v-for="(cfg, index) in node.state.constraintGroups" :key="index" class="shadow-1">
 									<tera-constraint-group-form
 										:config="cfg"
 										:index="index"
@@ -74,7 +61,7 @@
 								</li>
 							</ul>
 							<Button
-								class="mt-2"
+								class="my-2"
 								text
 								icon="pi pi-plus"
 								label="Add constraint"
@@ -88,19 +75,26 @@
 								<i class="pi pi-info-circle pl-2" v-tooltip="validateParametersToolTip" />
 							</template>
 							<section class="flex flex-column gap-2">
+								<label>Preset (optional)</label>
+								<Dropdown
+									:model-value="presetType"
+									placeholder="Select an option"
+									:options="Object.values(PresetTypes)"
+									@update:model-value="setPresetValues"
+								/>
 								<label>Select parameters of interest</label>
 								<MultiSelect
 									ref="columnSelect"
 									class="w-full"
 									:model-value="variablesOfInterest"
-									:options="requestParameters"
+									:options="knobs.requestParameters"
 									option-label="name"
 									option-disabled="disabled"
 									:show-toggle-all="false"
 									placeholder="Select variables"
 									@update:model-value="onToggleVariableOfInterest"
 								/>
-								<span class="timespan">
+								<span class="timespan mt-3">
 									<div>
 										<label>Start time</label>
 										<tera-input-number class="w-12" v-model="knobs.currentTimespan.start" />
@@ -111,14 +105,14 @@
 									</div>
 									<div>
 										<label>Number of timesteps</label>
-										<tera-input-number class="w-12" v-model="knobs.numberOfSteps" />
+										<tera-input-number class="w-12" v-model="knobs.numSteps" />
 									</div>
 								</span>
-								<label>Timepoints</label>
-								<code>
+								<label class="mt-3">Timepoints</label>
+								<code class="inset">
 									{{ stepList.map((step) => Number(step.toFixed(3))).join(', ') }}
 								</code>
-								<label>Tolerance</label>
+								<label class="mt-3">Tolerance</label>
 								<div class="input-tolerance fadein animation-ease-in-out animation-duration-350">
 									<tera-input-number v-model="knobs.tolerance" />
 									<Slider v-model="knobs.tolerance" :min="0" :max="1" :step="0.01" class="w-full mr-2" />
@@ -344,6 +338,7 @@ import MultiSelect from 'primevue/multiselect';
 import Checkbox from 'primevue/checkbox';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
+import Dropdown from 'primevue/dropdown';
 import InputSwitch from 'primevue/inputswitch';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 
@@ -394,7 +389,7 @@ import { pythonInstance } from '@/python/PyodideController';
 import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-constraint-group-form.vue';
 import { DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
 import { stringToLatexExpression, getModel, getMMT } from '@/services/model';
-import { displayNumber } from '@/utils/number';
+import { toScientificNotation } from '@/utils/number';
 import { removeChartSettingById, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { nodeOutputLabel } from '@/components/workflow/util';
 import { formatJSON } from '@/services/code';
@@ -406,11 +401,24 @@ const props = defineProps<{
 
 const emit = defineEmits(['select-output', 'update-state', 'close']);
 
+enum PresetTypes {
+	Fast = 'Fast',
+	Precise = 'Precise'
+}
+
+interface ModelParameterUI {
+	name: string;
+	label: string;
+	interval: { lb?: number; ub?: number };
+	disabled: boolean;
+}
+
 interface BasicKnobs {
 	tolerance: number;
 	currentTimespan: TimeSpan;
-	numberOfSteps: number;
+	numSteps: number;
 	compartmentalConstraint: CompartmentalConstraint;
+	requestParameters: ModelParameterUI[];
 }
 
 const drilldownRef = ref();
@@ -418,9 +426,24 @@ const drilldownRef = ref();
 const knobs = ref<BasicKnobs>({
 	tolerance: 0,
 	currentTimespan: { start: 0, end: 0 },
-	numberOfSteps: 0,
-	compartmentalConstraint: { name: '', isActive: false }
+	numSteps: 0,
+	compartmentalConstraint: { name: '', isActive: false },
+	requestParameters: []
 });
+const fastPreset: BasicKnobs = {
+	tolerance: 0.5,
+	currentTimespan: { start: 0, end: 100 },
+	numSteps: 5,
+	compartmentalConstraint: { name: 'Compartmental constraint', isActive: true },
+	requestParameters: []
+};
+const precisePreset: BasicKnobs = {
+	tolerance: 0.01,
+	currentTimespan: { start: 0, end: 100 },
+	numSteps: 100,
+	compartmentalConstraint: { name: 'Compartmental constraint', isActive: true },
+	requestParameters: []
+};
 
 const MAX = 99999999999;
 const toast = useToastService();
@@ -431,8 +454,6 @@ const showSpinner = ref(false);
 const isSliderOpen = ref(true);
 
 const mass = ref('0');
-
-const requestParameters = ref<any[]>([]);
 const model = ref<Model | null>();
 let configuredInputModel: Model | null = null;
 
@@ -448,17 +469,35 @@ const variablesOfInterest = ref();
 const onToggleVariableOfInterest = (event: any[]) => {
 	variablesOfInterest.value = event;
 	const namesOfInterest = event.map((d) => d.name);
-	requestParameters.value.forEach((d) => {
+	knobs.value.requestParameters.forEach((d) => {
 		d.label = namesOfInterest.includes(d.name) ? 'all' : 'any';
 	});
 	const state = cloneDeep(props.node.state);
-	state.requestParameters = cloneDeep(requestParameters.value);
+	state.requestParameters = cloneDeep(knobs.value.requestParameters);
 	emit('update-state', state);
 };
 
+const presetType = computed(() => {
+	if (
+		knobs.value.tolerance === fastPreset.tolerance &&
+		knobs.value.numSteps === fastPreset.numSteps &&
+		isEqual(knobs.value.requestParameters, fastPreset.requestParameters)
+	) {
+		return PresetTypes.Fast;
+	}
+	if (
+		knobs.value.tolerance === precisePreset.tolerance &&
+		knobs.value.numSteps === precisePreset.numSteps &&
+		isEqual(knobs.value.requestParameters, precisePreset.requestParameters)
+	) {
+		return PresetTypes.Precise;
+	}
+	return '';
+});
+
 const stepList = computed(() => {
 	const { start, end } = knobs.value.currentTimespan;
-	const steps = knobs.value.numberOfSteps;
+	const steps = knobs.value.numSteps;
 
 	const stepSize = (end - start) / steps;
 	return [start, ...Array.from({ length: steps - 1 }, (_, i) => (i + 1) * stepSize), end];
@@ -532,7 +571,7 @@ const request = computed<FunmanPostQueriesRequest | null>(() => {
 		model: configuredInputModel,
 		request: {
 			constraints,
-			parameters: requestParameters.value.map(({ disabled, ...rest }) => rest), // Remove the disabled property from the request (it's only used for UI)
+			parameters: knobs.value.requestParameters.map(({ disabled, ...rest }) => rest), // Remove the disabled property from the request (it's only used for UI)
 			structure_parameters: [
 				{
 					name: 'schedules',
@@ -661,19 +700,19 @@ const setModelOptions = async () => {
 	}
 
 	const state = cloneDeep(props.node.state);
-	knobs.value.numberOfSteps = state.numSteps;
+	knobs.value.numSteps = state.numSteps;
 	knobs.value.currentTimespan = cloneDeep(state.currentTimespan);
 	knobs.value.tolerance = state.tolerance;
 	knobs.value.compartmentalConstraint = state.compartmentalConstraint;
 
 	if (configuredInputModel.semantics?.ode.parameters) {
 		setRequestParameters(configuredInputModel.semantics?.ode.parameters);
-		variablesOfInterest.value = requestParameters.value.filter((d: any) => d.label === 'all');
+		variablesOfInterest.value = knobs.value.requestParameters.filter((d: any) => d.label === 'all');
 	} else {
 		toast.error('', 'Provided model has no parameters');
 	}
 
-	state.requestParameters = cloneDeep(requestParameters.value);
+	state.requestParameters = cloneDeep(knobs.value.requestParameters);
 	emit('update-state', state);
 };
 
@@ -685,10 +724,11 @@ const setRequestParameters = (modelParameters: ModelParameter[]) => {
 		labelMap.set(p.name, p.label);
 	});
 
-	requestParameters.value = modelParameters.map((ele) => {
+	let paramsOfInterestFastPresetCounter = 0;
+	modelParameters.forEach((ele) => {
 		const name = ele.id;
 
-		const param = {
+		const param: ModelParameterUI = {
 			name,
 			label: (labelMap.get(name) as string) ?? 'any',
 			interval: { lb: ele.value, ub: ele.value },
@@ -700,11 +740,17 @@ const setRequestParameters = (modelParameters: ModelParameter[]) => {
 				lb: ele.distribution.parameters.minimum,
 				ub: ele.distribution.parameters.maximum
 			};
+			paramsOfInterestFastPresetCounter++;
 		} else {
 			param.disabled = true; // Disable if constant
 		}
 
-		return param;
+		knobs.value.requestParameters.push(param);
+		fastPreset.requestParameters.push(
+			// For fast preset just choose at least 2 parameters of interest
+			param.disabled || paramsOfInterestFastPresetCounter > 2 ? param : { ...param, label: 'all' }
+		);
+		precisePreset.requestParameters.push(param.disabled ? param : { ...param, label: 'all' });
 	});
 };
 
@@ -724,6 +770,19 @@ watch(
 	{ immediate: true }
 );
 
+function setPresetValues(selectedPresetType: PresetTypes) {
+	if (selectedPresetType === PresetTypes.Fast) {
+		knobs.value = { ...knobs.value, ...cloneDeep(fastPreset) };
+		variablesOfInterest.value = fastPreset.requestParameters.filter((d: any) => d.label === 'all');
+	} else if (selectedPresetType === PresetTypes.Precise) {
+		knobs.value = { ...knobs.value, ...cloneDeep(precisePreset) };
+		variablesOfInterest.value = precisePreset.requestParameters.filter((d: any) => d.label === 'all');
+	}
+	const state = cloneDeep(props.node.state);
+	state.requestParameters = cloneDeep(knobs.value.requestParameters);
+	emit('update-state', state);
+}
+
 /* Check for simple parameter changes */
 watch(
 	() => knobs.value,
@@ -732,7 +791,7 @@ watch(
 		state.tolerance = knobs.value.tolerance;
 		state.currentTimespan.start = knobs.value.currentTimespan.start;
 		state.currentTimespan.end = knobs.value.currentTimespan.end;
-		state.numSteps = knobs.value.numberOfSteps;
+		state.numSteps = knobs.value.numSteps;
 		state.compartmentalConstraint = knobs.value.compartmentalConstraint;
 
 		emit('update-state', state);
@@ -927,6 +986,19 @@ async function prepareOutput() {
 	renderCharts();
 }
 
+const expression = computed(() =>
+	stringToLatexExpression(
+		stateIds.value
+			.map((s, index) => `${s}${index === stateIds.value.length - 1 ? `\\geq 0` : '\\geq 0 \\newline '}`)
+			.join('')
+	)
+);
+
+const massScientificNotation = computed(() => {
+	const notation = toScientificNotation(parseFloat(mass.value));
+	return `${notation.mantissa} \\times 10^${notation.exponent}`;
+});
+
 watch(
 	() => props.node.state.runId,
 	() => prepareOutput()
@@ -934,6 +1006,16 @@ watch(
 </script>
 
 <style scoped>
+.expression-constraint {
+	max-height: 150px;
+	overflow: auto;
+	margin-top: var(--gap-4);
+	margin-bottom: var(--gap-4);
+	padding: var(--gap-1) 0 var(--gap-1) 0;
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+}
+
 .top-toolbar {
 	display: flex;
 	align-items: center;
@@ -963,7 +1045,7 @@ watch(
 }
 
 code {
-	background-color: var(--gray-50);
+	background-color: var(--gray-200);
 	color: var(--text-color-subdued);
 	border-radius: var(--border-radius);
 	border: 1px solid var(--surface-border);
@@ -972,6 +1054,10 @@ code {
 	font-size: var(--font-caption);
 	max-height: 10rem;
 	overflow: auto;
+}
+
+.inset {
+	box-shadow: inset 0px 0px 4px var(--surface-border);
 }
 
 .timespan {
@@ -1039,5 +1125,9 @@ ul {
 .notebook-message {
 	padding-left: var(--gap-4);
 	font-size: var(--font-caption);
+}
+
+.nudge-left {
+	margin-left: -0.5rem;
 }
 </style>
