@@ -259,10 +259,6 @@ const autoGrow = () => {
 	width: 100%;
 	position: relative;
 }
-:deep(.p-autocomplete-panel) {
-	word-wrap: break-word;
-	max-width: 300px;
-}
 
 .auto-complete:deep(input),
 .text-area {
