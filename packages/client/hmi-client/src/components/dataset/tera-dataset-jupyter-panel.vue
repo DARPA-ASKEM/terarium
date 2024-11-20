@@ -85,6 +85,7 @@
 			</div>
 		</div>
 
+		<Textarea v-model="dataContextDescription" disabled />
 		<!-- Jupyter Chat -->
 		<tera-jupyter-chat
 			ref="chat"
@@ -149,6 +150,7 @@ import { useConfirm } from 'primevue/useconfirm';
 import { useProjects } from '@/composables/project';
 import { programmingLanguageOptions } from '@/types/common';
 import TeraBeakerInput from '@/components/llm/tera-beaker-input.vue';
+import Textarea from 'primevue/textarea';
 
 const openDialog = () => {
 	showSaveInput.value = true;
@@ -161,13 +163,14 @@ const jupyterSession: SessionContext = await newSession('beaker_kernel', 'Beaker
 const selectedKernel = ref();
 const runningSessions = ref<any[]>([]);
 
+// This is used to inform the user what is in the context.
+const dataContextDescription = computed(() =>
+	props.assets.map((asset, index) => `#d${index + 1} = ${asset.name}\n`).join(' ')
+);
+
 const defaultPreview = computed(() => {
 	let code = '';
-	props.assets.forEach((asset, index) => {
-		code += `#d${index + 1} = ${asset.name}\n`;
-	});
-
-	// add first dataset to the code
+	// add first dataset to the code for user
 	code += 'd1';
 	return code;
 });
