@@ -49,8 +49,7 @@ def main():
             if tm.name == None or tm.name == "":
                 tm.name = "generated-" + str(count)
 
-            # params = tm.get_parameter_names()
-            params = []
+            params = tm.get_parameter_names()
             params = list(params)
 
             subject = None
