@@ -22,12 +22,7 @@ const props = defineProps<{ project: Project | null }>();
 const emit = defineEmits(['copied-project']);
 
 // Triggers modals from tera-common-modal-dialogs.vue to open
-const {
-	isShareDialogVisible,
-	isRemoveDialogVisible,
-	isProjectConfigDialogVisible,
-	menuProject
-} = useProjectMenu();
+const { isShareDialogVisible, isRemoveDialogVisible, isProjectConfigDialogVisible, menuProject } = useProjectMenu();
 
 const isCopying = ref(false);
 
