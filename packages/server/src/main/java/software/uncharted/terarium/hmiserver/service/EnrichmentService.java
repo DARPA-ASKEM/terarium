@@ -160,25 +160,14 @@ public class EnrichmentService {
 			notificationInterface.sendMessage("Updating model grounding...");
 
 			// Update State Grounding
-			if (enrichedModel.isRegnet()) {
-				final List<RegNetVertex> vertices = enrichedModel.getVerticies();
-				vertices.forEach(vertex -> {
-					if (vertex == null) {
-						vertex = new RegNetVertex();
-					}
-					TaskUtilities.performDKGSearchAndSetGrounding(dkgService, vertex);
-				});
-				enrichedModel.setVerticies(vertices);
-			} else {
-				final List<State> states = enrichedModel.getStates();
-				states.forEach(state -> {
-					if (state == null) {
-						state = new State();
-					}
-					TaskUtilities.performDKGSearchAndSetGrounding(dkgService, state);
-				});
-				enrichedModel.setStates(states);
-			}
+			final List<State> states = enrichedModel.getStates();
+			states.forEach(state -> {
+				if (state == null) {
+					state = new State();
+				}
+				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, state);
+			});
+			enrichedModel.setStates(states);
 			notificationInterface.sendMessage("State grounding complete.");
 
 			// Update Observable Grounding
