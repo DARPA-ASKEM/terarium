@@ -97,11 +97,12 @@ const saveWorkflow = async () => {
 	emit('close-modal');
 };
 
-onMounted(async () => {
+onMounted(() => {
 	/* HACK: wait for the modal to be fully rendered before focusing the input,
 	it seems that the auto-focus on tera-input-text does not play nicely on the initial render of the modal */
-	await nextTick();
-	scenarioComponent.value.$refs.nameInput?.focusInput();
+	nextTick(() => {
+		scenarioComponent.value.$refs.nameInput?.focusInput();
+	});
 });
 const getScenario = () => scenarios.value.find((s) => s.id === selectedTemplateId.value) as ScenarioItem;
 </script>
