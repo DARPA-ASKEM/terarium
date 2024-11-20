@@ -101,8 +101,7 @@ export class SituationalAwarenessScenario extends BaseScenario {
 		wf.setWorkflowName(this.workflowName);
 		wf.setWorkflowScenario(this.toJSON());
 
-		// Add nodes
-		// Model
+		// 1. Add nodes
 		const modelNode = wf.addNode(
 			ModelOp,
 			{ x: 0, y: 0 },
@@ -111,7 +110,6 @@ export class SituationalAwarenessScenario extends BaseScenario {
 			}
 		);
 
-		// Dataset
 		const datasetNode = wf.addNode(
 			DatasetOp,
 			{ x: 0, y: 0 },
@@ -120,7 +118,6 @@ export class SituationalAwarenessScenario extends BaseScenario {
 			}
 		);
 
-		// Model Configuration
 		const modelConfig = await getModelConfigurationById(this.modelConfigSpec.id);
 		const modelConfigNode = wf.addNode(
 			ModelConfigOp,
@@ -129,8 +126,6 @@ export class SituationalAwarenessScenario extends BaseScenario {
 				size: OperatorNodeSize.medium
 			}
 		);
-
-		// Calibrate
 		const calibrateNode = wf.addNode(
 			CalibrateCiemssOp,
 			{ x: 0, y: 0 },
@@ -139,7 +134,7 @@ export class SituationalAwarenessScenario extends BaseScenario {
 			}
 		);
 
-		// Add edges
+		// 2. Add edges
 		wf.addEdge(modelNode.id, modelNode.outputs[0].id, modelConfigNode.id, modelConfigNode.inputs[0].id, [
 			{ x: 0, y: 0 },
 			{ x: 0, y: 0 }
@@ -153,6 +148,7 @@ export class SituationalAwarenessScenario extends BaseScenario {
 			{ x: 0, y: 0 }
 		]);
 
+		// 3. Setting node states/outputs
 		wf.setNodeOptions(modelNode, {
 			state: {
 				modelId: this.modelSpec.id
@@ -197,6 +193,7 @@ export class SituationalAwarenessScenario extends BaseScenario {
 			}
 		});
 
+		// 4. Run layout
 		wf.runDagreLayout();
 
 		return wf.dump();
