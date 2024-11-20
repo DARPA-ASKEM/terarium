@@ -65,6 +65,5 @@ export function formatCalibrateModelConfigurations(
 		});
 	});
 
-	console.log([...Object.values(ensembleModelConfigMap)]);
 	return [...Object.values(ensembleModelConfigMap)];
 }
