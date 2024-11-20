@@ -141,6 +141,11 @@ const runAllCells = () => {
 const searchOptions = () => {
 	const query = queryString.value.toLowerCase();
 	filteredOptions.value = props.defaultOptions.filter((option) => option.toLowerCase().includes(query));
+
+	// Hide the panel if there are no suggestions
+	if (filteredOptions.value.length === 0) {
+		autoComplete.value?.hide();
+	}
 };
 
 const onInputChange = async () => {
