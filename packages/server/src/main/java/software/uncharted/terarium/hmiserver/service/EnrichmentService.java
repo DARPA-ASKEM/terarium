@@ -48,7 +48,7 @@ public class EnrichmentService {
 	private final NotificationService notificationService;
 	private final TaskService taskService;
 
-	@Value("${terarium.extractionService.poolSize:10}")
+	@Value("${terarium.enrichmentService.poolSize:10}")
 	private int POOL_SIZE;
 
 	@Data
