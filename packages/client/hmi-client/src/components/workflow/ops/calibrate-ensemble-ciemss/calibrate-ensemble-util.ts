@@ -60,12 +60,13 @@ export function formatCalibrateModelConfigurations(
 	// 2. format the solution mappings
 	rows.forEach((row) => {
 		Object.entries(row.modelConfigurationMappings).forEach(([key, value]) => {
+			console.log(key);
+			console.log(value);
 			if (!ensembleModelConfigMap[key]) return;
-			ensembleModelConfigMap[key].solutionMappings = {
-				[row.datasetMapping]: value
-			};
+			ensembleModelConfigMap[key].solutionMappings[row.datasetMapping] = value;
 		});
 	});
 
+	console.log([...Object.values(ensembleModelConfigMap)]);
 	return [...Object.values(ensembleModelConfigMap)];
 }
