@@ -194,7 +194,7 @@ function formatPayloadFromTypeChange(type: DistributionType) {
 	return distribution;
 }
 
-const getOtherValuesLabel = computed(() => `Other Values(${otherValueList.value?.length})`);
+const getOtherValuesLabel = computed(() => `Other values (${otherValueList.value?.length})`);
 
 function isParameterInputEmpty(parameter) {
 	if (parameter.type === DistributionType.Constant) {
