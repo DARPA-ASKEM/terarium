@@ -30,6 +30,7 @@
 							:disabled="!!isGeneratingAnnotation"
 							@keyup.enter="createAnnotationDebounced"
 							@keyup.esc="cancelGenerateAnnotation"
+							class="annotation-input"
 						/>
 					</div>
 				</div>
@@ -99,7 +100,8 @@ const cancelGenerateAnnotation = () => {
 	height: calc(100% - 50px);
 	width: 100%;
 	background: #fff;
-	left: 0;
+	left: 3px;
+	border-radius: var(--border-radius-medium);
 
 	&.v-enter-active,
 	&.v-leave-active {
@@ -135,6 +137,9 @@ const cancelGenerateAnnotation = () => {
 		padding: var(--gap-4);
 	}
 
+	.annotation-input:deep(main) {
+		padding: var(--gap-2) var(--gap-2);
+	}
 	.annotation-items {
 		display: flex;
 		flex-direction: column;
@@ -142,9 +147,11 @@ const cancelGenerateAnnotation = () => {
 
 		.annotation-item {
 			position: relative;
-			padding: var(--gap-2);
+			padding: var(--gap-3);
+			padding-left: var(--gap-4);
 			padding-right: var(--gap-9);
 			background: var(--surface-50);
+			border-left: 4px solid var(--gray-600);
 		}
 		.btn-wrapper {
 			position: absolute;
