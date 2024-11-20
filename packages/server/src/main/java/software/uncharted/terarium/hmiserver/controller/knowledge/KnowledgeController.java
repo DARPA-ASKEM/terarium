@@ -257,30 +257,18 @@ public class KnowledgeController {
 				return ResponseEntity.ok(new EquationsToModelResponse(model.getId(), cleanedEquations));
 			} catch (final IOException e) {
 				log.error("An error occurred while trying to retrieve information necessary for model enrichment.", e);
-				if (!cleanedEquations.isEmpty()) {
-					return ResponseEntity.ok(new EquationsToModelResponse(null, cleanedEquations));
-				}
 				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 			} catch (ExecutionException e) {
 				log.error("Error while waiting for task response", e);
-				if (!cleanedEquations.isEmpty()) {
-					return ResponseEntity.ok(new EquationsToModelResponse(null, cleanedEquations));
-				}
 				throw new ResponseStatusException(
 					HttpStatus.INTERNAL_SERVER_ERROR,
 					messages.get("task.gollm.execution-failure")
 				);
 			} catch (InterruptedException e) {
 				log.warn("Interrupted while waiting for task response", e);
-				if (!cleanedEquations.isEmpty()) {
-					return ResponseEntity.ok(new EquationsToModelResponse(null, cleanedEquations));
-				}
 				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
 			} catch (TimeoutException e) {
 				log.warn("Timeout while waiting for task response", e);
-				if (!cleanedEquations.isEmpty()) {
-					return ResponseEntity.ok(new EquationsToModelResponse(null, cleanedEquations));
-				}
 				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
 			}
 		}
