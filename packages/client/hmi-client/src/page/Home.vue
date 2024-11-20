@@ -5,10 +5,10 @@
 			<header>
 				<!-- Welcome text -->
 				<section class="w-full">
-					<h3>From data to discovery</h3>
+					<h3>AI-assisted modeling for scientific decision-making</h3>
 					<p>
-						Accelerate scientific modeling and simulation using AI. Search available knowledge, enhance extracted models
-						and data, and test scenarios to simulate real-world problems.
+						Pair your expertise with AI to accelerate scientific modeling and simulation. Build on existing models and
+						data to simulate and communicate complex real-world scenarios.
 					</p>
 					<!--Placeholder - button is disabled for now-->
 					<!-- <Button
@@ -404,7 +404,7 @@ header h3 {
 }
 
 header p {
-	max-width: 40%;
+	max-width: 580px;
 	line-height: 1.5;
 }
 

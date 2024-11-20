@@ -12,13 +12,11 @@
 			class="input-config"
 			v-model:is-open="isSliderOpen"
 			header="Validate configuration settings"
-			content-width="420px"
+			content-width="440px"
 		>
 			<template #content>
 				<div class="top-toolbar">
-					<p>Set your model checks and settings then click run.</p>
 					<div class="btn-group">
-						<Button label="Reset" outlined severity="secondary" disabled />
 						<Button :loading="showSpinner" label="Run" icon="pi pi-play" @click="run" />
 					</div>
 				</div>
@@ -29,15 +27,15 @@
 								Model checks
 								<i class="pi pi-info-circle pl-2" v-tooltip="validateParametersToolTip" />
 							</template>
-							<p class="mb-3">
+							<p class="mb-3 secondary-text">
 								Implement sanity checks on the state space of the model to see how the parameter space of the model is
 								partitioned into satisfiable and unsatisfiable regions separated by decision boundaries.
 							</p>
 							<ul>
 								<li>
-									<section>
+									<section class="shadow-1 pt-2">
 										<header class="flex w-full gap-3 mb-2">
-											<tera-toggleable-input v-model="knobs.compartmentalConstraint.name" tag="h3" />
+											<tera-toggleable-input v-model="knobs.compartmentalConstraint.name" tag="h3" class="nudge-left" />
 											<div class="ml-auto flex align-items-center">
 												<label class="mr-2">Active</label>
 												<InputSwitch class="mr-3" v-model="knobs.compartmentalConstraint.isActive" />
@@ -50,7 +48,7 @@
 										/>
 									</section>
 								</li>
-								<li v-for="(cfg, index) in node.state.constraintGroups" :key="index">
+								<li v-for="(cfg, index) in node.state.constraintGroups" :key="index" class="shadow-1">
 									<tera-constraint-group-form
 										:config="cfg"
 										:index="index"
@@ -63,7 +61,7 @@
 								</li>
 							</ul>
 							<Button
-								class="mt-2"
+								class="my-2"
 								text
 								icon="pi pi-plus"
 								label="Add constraint"
@@ -96,7 +94,7 @@
 									placeholder="Select variables"
 									@update:model-value="onToggleVariableOfInterest"
 								/>
-								<span class="timespan">
+								<span class="timespan mt-3">
 									<div>
 										<label>Start time</label>
 										<tera-input-number class="w-12" v-model="knobs.currentTimespan.start" />
@@ -110,11 +108,11 @@
 										<tera-input-number class="w-12" v-model="knobs.numSteps" />
 									</div>
 								</span>
-								<label>Timepoints</label>
-								<code>
+								<label class="mt-3">Timepoints</label>
+								<code class="inset">
 									{{ stepList.map((step) => Number(step.toFixed(3))).join(', ') }}
 								</code>
-								<label>Tolerance</label>
+								<label class="mt-3">Tolerance</label>
 								<div class="input-tolerance fadein animation-ease-in-out animation-duration-350">
 									<tera-input-number v-model="knobs.tolerance" />
 									<Slider v-model="knobs.tolerance" :min="0" :max="1" :step="0.01" class="w-full mr-2" />
@@ -1047,7 +1045,7 @@ watch(
 }
 
 code {
-	background-color: var(--gray-50);
+	background-color: var(--gray-200);
 	color: var(--text-color-subdued);
 	border-radius: var(--border-radius);
 	border: 1px solid var(--surface-border);
@@ -1056,6 +1054,10 @@ code {
 	font-size: var(--font-caption);
 	max-height: 10rem;
 	overflow: auto;
+}
+
+.inset {
+	box-shadow: inset 0px 0px 4px var(--surface-border);
 }
 
 .timespan {
@@ -1123,5 +1125,9 @@ ul {
 .notebook-message {
 	padding-left: var(--gap-4);
 	font-size: var(--font-caption);
+}
+
+.nudge-left {
+	margin-left: -0.5rem;
 }
 </style>
