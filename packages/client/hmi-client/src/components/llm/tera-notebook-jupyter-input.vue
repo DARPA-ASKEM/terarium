@@ -23,6 +23,7 @@
 			@change="onInputChange"
 			placeholder="What do you want to do?"
 			emptySearchMessage="No suggestions"
+			:showEmptyMessage="false"
 			:disabled="kernelStatus === KernelState.busy"
 		/>
 
@@ -129,6 +130,11 @@ const submitQuestion = () => {
 const searchOptions = () => {
 	const query = questionString.value.toLowerCase();
 	filteredOptions.value = props.defaultOptions.filter((option) => option.toLowerCase().includes(query));
+
+	// Hide the panel if there are no suggestions
+	if (filteredOptions.value.length === 0) {
+		autoComplete.value?.hide();
+	}
 };
 
 const onInputChange = async () => {
