@@ -159,6 +159,7 @@ const onInputChange = async () => {
 		hideAutoComplete.value = true;
 		await nextTick();
 		inputElement.value?.focus();
+		autoGrow();
 	}
 };
 
@@ -256,6 +257,11 @@ const autoGrow = () => {
 }
 .auto-complete {
 	width: 100%;
+	position: relative;
+}
+:deep(.p-autocomplete-panel) {
+	word-wrap: break-word;
+	max-width: 300px;
 }
 
 .auto-complete:deep(input),
@@ -263,9 +269,9 @@ const autoGrow = () => {
 	width: 100%;
 	background-image: url('@assets/svg/icons/message.svg');
 	background-size: 1rem;
-	background-position: var(--gap-2) 9px;
+	background-position: var(--gap-2-5) 9px;
 	background-repeat: no-repeat;
 	padding-right: 2rem;
-	padding-left: 2rem;
+	padding-left: 2.25rem;
 }
 </style>
