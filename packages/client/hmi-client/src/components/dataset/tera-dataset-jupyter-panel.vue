@@ -578,7 +578,7 @@ const onDownloadResponse = (payload) => {
 	left: 0;
 	z-index: 100;
 	width: 100%;
-	padding: var(--gap-2) var(--gap-4) var(--gap-1-5) 1.5rem;
+	padding: var(--gap-2) var(--gap-4) var(--gap-2) 1.5rem;
 	gap: var(--gap-2);
 }
 .toolbar:deep(.p-button .p-button-label) {
@@ -590,7 +590,6 @@ const onDownloadResponse = (payload) => {
 	align-items: top;
 	gap: var(--gap-2);
 	height: 32px; /* aligns with the height of the input buttons */
-	padding-top: 1px;
 }
 
 :deep(.language-dropdown span) {
