@@ -3,6 +3,7 @@
 		<div class="chat-input-container">
 			<div class="chat-input-elements">
 				<textarea
+					v-if="hideAutoComplete || props.defaultOptions.length === 0"
 					class="input"
 					ref="inputElement"
 					v-model="queryString"
@@ -12,6 +13,19 @@
 					@keydown.enter="submitQuery"
 					@input="autoGrow"
 					rows="1"
+				/>
+				<AutoComplete
+					v-else
+					ref="autoComplete"
+					v-model="queryString"
+					class="auto-complete"
+					:suggestions="filteredOptions"
+					:completeOnFocus="true"
+					@complete="searchOptions"
+					@change="onInputChange"
+					placeholder="What do you want to do?"
+					emptySearchMessage="No suggestions"
+					:disabled="props.kernelIsBusy"
 				/>
 				<Button
 					v-if="queryString.length !== 0"
@@ -57,12 +71,13 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import ProgressBar from 'primevue/progressbar';
 import Button from 'primevue/button';
 import * as EventService from '@/services/event';
 import { EventType } from '@/types/Types';
 import { useProjects } from '@/composables/project';
+import AutoComplete from 'primevue/autocomplete';
 
 const emit = defineEmits(['submit-query', 'add-code-cell', 'run-all-cells']);
 
@@ -84,7 +99,15 @@ const props = defineProps({
 		type: String,
 		default: 'black'
 	},
-	kernelIsBusy: Boolean
+	kernelIsBusy: Boolean,
+	defaultOptions: {
+		type: Array<String>,
+		default: () => []
+	},
+	maxChars: {
+		type: Number,
+		default: 75
+	}
 });
 
 const queryString = ref('');
@@ -93,6 +116,9 @@ const containerElement = ref<HTMLElement | null>(null);
 const inputElement = ref<HTMLInputElement | null>(null);
 const addCodeCellButton = ref<HTMLElement | null>(null);
 const fixedDivWidth = ref(0);
+const hideAutoComplete = ref(false);
+const filteredOptions = ref<any[]>([]);
+const autoComplete = ref();
 
 const submitQuery = () => {
 	EventService.create(EventType.TransformPrompt, useProjects().activeProject.value?.id, queryString.value);
@@ -110,6 +136,36 @@ const addCodeCell = () => {
 
 const runAllCells = () => {
 	emit('run-all-cells');
+};
+
+const searchOptions = () => {
+	const query = queryString.value.toLowerCase();
+	filteredOptions.value = props.defaultOptions.filter((option) => option.toLowerCase().includes(query));
+
+	// Hide the panel if there are no suggestions
+	if (filteredOptions.value.length === 0) {
+		autoComplete.value?.hide();
+	}
+};
+
+const onInputChange = async () => {
+	// If there are no search suggestions to show, the auto complete element is never shown
+	if (props.defaultOptions.length === 0) return;
+
+	// If the number of characters entered exceeds the maximum, switch from auto complete to text area
+	// Force focus for a smoother transition
+	const numChars = queryString.value.length;
+	if (numChars <= props.maxChars && numChars >= 0) {
+		hideAutoComplete.value = false;
+		await nextTick();
+		const inputEl = autoComplete.value?.$el.querySelector('input');
+		inputEl.focus();
+	} else {
+		hideAutoComplete.value = true;
+		await nextTick();
+		inputElement.value?.focus();
+		autoGrow();
+	}
 };
 
 onMounted(() => {
@@ -203,5 +259,20 @@ const autoGrow = () => {
 	margin-top: 1px;
 	height: 31px;
 	width: 10rem;
+}
+.auto-complete {
+	width: 100%;
+	position: relative;
+}
+
+.auto-complete:deep(input),
+.text-area {
+	width: 100%;
+	background-image: url('@assets/svg/icons/message.svg');
+	background-size: 1rem;
+	background-position: var(--gap-2-5) 9px;
+	background-repeat: no-repeat;
+	padding-right: 2rem;
+	padding-left: 2.25rem;
 }
 </style>

@@ -54,11 +54,25 @@ export class SituationalAwarenessScenario extends BaseScenario {
 		this.calibrateSpec.ids = ids;
 	}
 
+	toJSON() {
+		return {
+			templateId: SituationalAwarenessScenario.templateId,
+			workflowName: this.workflowName,
+			modelSpec: this.modelSpec,
+			datasetSpec: this.datasetSpec,
+			modelConfigSpec: this.modelConfigSpec,
+			calibrateSpec: this.calibrateSpec
+		};
+	}
+
 	createWorkflow() {
 		const wf = new workflowService.WorkflowWrapper();
+		wf.setWorkflowName(this.workflowName);
+		wf.setWorkflowScenario(this.toJSON());
 
+		// Add nodes
 		// Model
-		wf.addNode(
+		const modelNode = wf.addNode(
 			ModelOp,
 			{ x: 0, y: 0 },
 			{
@@ -67,7 +81,7 @@ export class SituationalAwarenessScenario extends BaseScenario {
 		);
 
 		// Dataset
-		wf.addNode(
+		const datasetNode = wf.addNode(
 			DatasetOp,
 			{ x: 0, y: 0 },
 			{
@@ -76,7 +90,7 @@ export class SituationalAwarenessScenario extends BaseScenario {
 		);
 
 		// Model Configuration
-		wf.addNode(
+		const modelConfigNode = wf.addNode(
 			ModelConfigOp,
 			{ x: 0, y: 0 },
 			{
@@ -85,7 +99,7 @@ export class SituationalAwarenessScenario extends BaseScenario {
 		);
 
 		// Calibrate
-		wf.addNode(
+		const calibrateNode = wf.addNode(
 			CalibrateCiemssOp,
 			{ x: 0, y: 0 },
 			{
@@ -93,9 +107,22 @@ export class SituationalAwarenessScenario extends BaseScenario {
 			}
 		);
 
-		const workflow = wf.dump();
-		workflow.name = this.workflowName;
+		// Add edges
+		wf.addEdge(modelNode.id, modelNode.outputs[0].id, modelConfigNode.id, modelConfigNode.inputs[0].id, [
+			{ x: 0, y: 0 },
+			{ x: 0, y: 0 }
+		]);
+		wf.addEdge(modelConfigNode.id, modelConfigNode.outputs[0].id, calibrateNode.id, calibrateNode.inputs[0].id, [
+			{ x: 0, y: 0 },
+			{ x: 0, y: 0 }
+		]);
+		wf.addEdge(datasetNode.id, datasetNode.outputs[0].id, calibrateNode.id, calibrateNode.inputs[1].id, [
+			{ x: 0, y: 0 },
+			{ x: 0, y: 0 }
+		]);
 
-		return workflow;
+		wf.runDagreLayout();
+
+		return wf.dump();
 	}
 }

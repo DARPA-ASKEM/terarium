@@ -234,12 +234,10 @@ const searchedAndFilterProjects = computed(() => {
 		tabProjects = tabProjects.filter(
 			({ userPermission, publicProject }) =>
 				// I can edit the project, or I can view a non-public project
-				['creator', 'writer'].includes(userPermission ?? '') || (userPermission === 'reader' && publicProject === false)
+				['creator', 'writer'].includes(userPermission ?? '') || (userPermission === 'reader' && !publicProject)
 		);
 	} else if (activeTabIndex.value === 1) {
-		tabProjects = tabProjects.filter(
-			({ publicProject, sampleProject }) => publicProject === true && sampleProject === false
-		);
+		tabProjects = tabProjects.filter(({ publicProject, sampleProject }) => publicProject === true && !sampleProject);
 	} else if (activeTabIndex.value === 2) {
 		tabProjects = tabProjects.filter(({ sampleProject }) => sampleProject === true);
 	}
@@ -343,13 +341,13 @@ watch(cloningProjects, () => {
 
 function addRankingToColumns() {
 	removeRankingFromColumns();
-	columns.value.unshift({ field: 'searchRanking', header: 'Ranking' });
-	selectedColumns.value.unshift({ field: 'searchRanking', header: 'Ranking' });
+	columns.value.unshift({ field: 'score', header: 'Ranking' });
+	selectedColumns.value.unshift({ field: 'score', header: 'Ranking' });
 }
 
 function removeRankingFromColumns() {
-	columns.value = columns.value.filter((col) => col.field !== 'searchRanking');
-	selectedColumns.value = selectedColumns.value.filter((col) => col.field !== 'searchRanking');
+	columns.value = columns.value.filter((col) => col.field !== 'score');
+	selectedColumns.value = selectedColumns.value.filter((col) => col.field !== 'score');
 }
 
 async function searchedProjects() {

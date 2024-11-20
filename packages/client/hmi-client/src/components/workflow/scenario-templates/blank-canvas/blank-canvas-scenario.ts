@@ -11,10 +11,17 @@ export class BlankCanvasScenario extends BaseScenario {
 		this.workflowName = 'Blank Canvas';
 	}
 
+	toJSON() {
+		return {
+			templateId: BlankCanvasScenario.templateId,
+			workflowName: this.workflowName
+		};
+	}
+
 	createWorkflow() {
 		const wf = new workflowService.WorkflowWrapper();
-		const workflow = wf.dump();
-		workflow.name = this.workflowName;
-		return workflow;
+		wf.setWorkflowName(this.workflowName);
+		wf.setWorkflowScenario(this.toJSON());
+		return wf.dump();
 	}
 }
