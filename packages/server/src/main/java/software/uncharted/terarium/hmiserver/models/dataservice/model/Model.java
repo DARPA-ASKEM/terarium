@@ -16,10 +16,12 @@ import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddingType;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetThatSupportsAdditionalProperties;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelHeader;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
@@ -39,6 +41,7 @@ import software.uncharted.terarium.hmiserver.utils.JsonUtil;
 @Accessors(chain = true)
 @Entity
 @TSModel
+@Slf4j
 public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 
 	@Serial
@@ -367,5 +370,24 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		} catch (final Exception e) {
 			throw new RuntimeException("Failed to serialize model embedding text into JSON", e);
 		}
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public Map<TerariumAssetEmbeddingType, String> getEmbeddingsSourceByType() {
+		final Map<TerariumAssetEmbeddingType, String> sources = super.getEmbeddingsSourceByType();
+
+		try {
+			if (getMetadata() != null && getMetadata().getGollmCard() != null) {
+				// update embeddings
+				final JsonNode card = getMetadata().getGollmCard();
+				final ObjectMapper objectMapper = new ObjectMapper();
+				sources.put(TerariumAssetEmbeddingType.CARD, objectMapper.writeValueAsString(card));
+			}
+		} catch (final Exception e) {
+			log.warn("Failed to serialize card embedding text into JSON", e);
+		}
+
+		return sources;
 	}
 }

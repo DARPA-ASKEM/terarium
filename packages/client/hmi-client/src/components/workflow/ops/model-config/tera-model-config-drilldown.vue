@@ -894,8 +894,8 @@ onUnmounted(() => {
 }
 
 .notebook-section {
-	background-color: var(--surface-disabled);
-	border-right: 1px solid var(--surface-border-dark);
+	background-color: var(--surface-200);
+	border-right: 1px solid var(--surface-border-light);
 	padding: var(--gap-4);
 }
 
@@ -992,6 +992,7 @@ button.start-edit {
 
 .executed-code {
 	white-space: pre-wrap;
+	padding: var(--gap-4);
 }
 :deep(.content-wrapper) {
 	& > section {

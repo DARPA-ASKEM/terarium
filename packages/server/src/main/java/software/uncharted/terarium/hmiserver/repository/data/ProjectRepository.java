@@ -94,4 +94,6 @@ public interface ProjectRepository extends PSCrudRepository<Project, UUID>, JpaS
 
 	@Query(value = "SELECT public_asset FROM project WHERE id = :id", nativeQuery = true)
 	Optional<Boolean> findPublicAssetByIdNative(@Param("id") UUID id);
+
+	List<Project> findByDeletedOnIsNull();
 }

@@ -5,10 +5,10 @@
 			<header>
 				<!-- Welcome text -->
 				<section class="w-full">
-					<h3>From data to discovery</h3>
+					<h3>AI-assisted modeling for scientific decision-making</h3>
 					<p>
-						Accelerate scientific modeling and simulation using AI. Search available knowledge, enhance extracted models
-						and data, and test scenarios to simulate real-world problems.
+						Pair your expertise with AI to accelerate scientific modeling and simulation. Build on existing models and
+						data to simulate and communicate complex real-world scenarios.
 					</p>
 					<!--Placeholder - button is disabled for now-->
 					<!-- <Button
@@ -342,13 +342,13 @@ watch(cloningProjects, () => {
 
 function addRankingToColumns() {
 	removeRankingFromColumns();
-	columns.value.unshift({ field: 'searchRanking', header: 'Ranking' });
-	selectedColumns.value.unshift({ field: 'searchRanking', header: 'Ranking' });
+	columns.value.unshift({ field: 'score', header: 'Ranking' });
+	selectedColumns.value.unshift({ field: 'score', header: 'Ranking' });
 }
 
 function removeRankingFromColumns() {
-	columns.value = columns.value.filter((col) => col.field !== 'searchRanking');
-	selectedColumns.value = selectedColumns.value.filter((col) => col.field !== 'searchRanking');
+	columns.value = columns.value.filter((col) => col.field !== 'score');
+	selectedColumns.value = selectedColumns.value.filter((col) => col.field !== 'score');
 }
 
 async function searchedProjects() {
@@ -405,7 +405,7 @@ header h3 {
 }
 
 header p {
-	max-width: 40%;
+	max-width: 580px;
 	line-height: 1.5;
 }
 

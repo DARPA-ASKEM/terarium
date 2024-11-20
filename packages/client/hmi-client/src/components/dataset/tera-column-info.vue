@@ -1,8 +1,8 @@
 <template>
-	<div class="flex gap-3">
+	<div class="column-info-card">
 		<section class="entries">
-			<h6>{{ column.symbol }}</h6>
 			<span class="name">
+				<h6>{{ column.symbol }}</h6>
 				<template v-if="featureConfig.isPreview">{{ column.name }}</template>
 				<tera-input-text
 					v-else
@@ -62,6 +62,9 @@
 			</span>
 		</section>
 		<tera-boxplot class="flex-1" v-if="column.stats" :stats="column.stats" />
+	</div>
+	<div class="thin-divider">
+		<div class="line"></div>
 	</div>
 </template>
 
@@ -126,20 +129,27 @@ watch(
 </script>
 
 <style scoped>
+.column-info-card {
+	padding: var(--gap-3) var(--gap-4);
+	border-left: 4px solid var(--surface-300);
+	margin-bottom: var(--gap-2);
+}
+.column-info-card:hover {
+	background-color: var(--surface-50);
+}
 section.entries {
 	display: grid;
 	grid-template-areas:
-		'symbol name unit data-type . concept'
-		'expression expression expression expression expression expression'
-		'description description description description description description';
-	grid-template-columns: max-content max-content max-content auto max-content;
+		'name name unit data-type concept'
+		'expression expression expression expression expression '
+		'description description description description description';
+	grid-template-columns: auto max-content max-content max-content max-content;
 	grid-auto-flow: dense;
 	overflow: hidden;
-	gap: var(--gap-2);
+	gap: var(--gap-1) var(--gap-2);
 	align-items: center;
 	font-size: var(--font-caption);
 	overflow: auto;
-	width: 85%;
 
 	& > *:empty {
 		display: none;
@@ -163,6 +173,9 @@ h6 {
 
 .name {
 	grid-area: name;
+	display: flex;
+	align-items: center;
+	gap: var(--gap-2);
 }
 
 .description {
@@ -172,15 +185,12 @@ h6 {
 
 .unit {
 	grid-area: unit;
+	margin-right: var(--gap-6);
 }
 
 .data-type {
 	grid-area: data-type;
-}
-
-.unit,
-.data-type {
-	max-width: 15rem;
+	margin-right: var(--gap-6);
 }
 
 .expression {
@@ -190,7 +200,6 @@ h6 {
 
 .concept {
 	grid-area: concept;
-	margin-left: auto;
 }
 
 .unit,
@@ -204,5 +213,11 @@ h6 {
 :deep(.p-dropdown > span),
 :deep(.p-autocomplete-input) {
 	padding: var(--gap-1) var(--gap-2);
+}
+.thin-divider {
+	margin: var(--gap-2) 0;
+	& > .line {
+		border-top: 1px solid var(--surface-border-light);
+	}
 }
 </style>
