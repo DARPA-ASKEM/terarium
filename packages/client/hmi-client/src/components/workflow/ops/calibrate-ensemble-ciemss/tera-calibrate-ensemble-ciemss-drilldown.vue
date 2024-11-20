@@ -576,9 +576,6 @@ watch(
 			// Fetch output data and prepare chart data
 			const data = await fetchOutputData(state.preForecastId, state.postForecastId);
 			chartData.value = data ? { ...data, translationMap: {} } : null;
-			console.log(data);
-			console.log('done');
-			console.log(state.ensembleMapping);
 		}
 	},
 	{ immediate: true }

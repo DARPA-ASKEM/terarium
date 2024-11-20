@@ -5,8 +5,6 @@
 			:are-embed-actions-visible="false"
 			:visualization-spec="lossChartSpec"
 		/>
-		<template v-if="!inProgressCalibrationId && !inProgressForecastId && runResults && csvAsset"> </template>
-
 		<tera-progress-spinner
 			v-if="inProgressCalibrationId || inProgressForecastId"
 			:font-size="2"
