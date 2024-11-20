@@ -1,5 +1,5 @@
 <template>
-	<Accordion multiple :active-index="[0, 1, 2]">
+	<Accordion multiple :active-index="currentActiveIndicies">
 		<AccordionTab v-if="!isEmpty(clonedState.equations)">
 			<template #header>
 				<header>
@@ -84,6 +84,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['update']);
+
+const currentActiveIndicies = ref([0, 1, 2]);
 
 const clonedState = ref(cloneDeep(props.state));
 
