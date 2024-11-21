@@ -73,8 +73,8 @@ public class EnrichmentService {
 		);
 
 		try {
-			notificationInterface.sendMessage("Beginning model enrichment with using document extraction...");
-			log.info("YOHANN - Beginning model enrichment with using document extraction...");
+			notificationInterface.sendMessage("Beginning model enrichment using document extraction...");
+			log.info("Beginning model {} enrichment using document {} extraction...", modelId, documentId);
 
 			// Get the Document
 			DocumentAsset document = documentService
@@ -93,7 +93,6 @@ public class EnrichmentService {
 			}
 
 			notificationInterface.sendMessage("Document text found.");
-			log.info("YOHANN - Document text found.");
 
 			// Get the model
 			Model model = modelService
@@ -105,12 +104,10 @@ public class EnrichmentService {
 				});
 
 			notificationInterface.sendMessage("Model found.");
-			log.info("YOHANN - Model found.");
 
 			// Stripping the metadata before it's sent since it can cause GoLLM to fail with massive inputs
 			model.setMetadata(new ModelMetadata());
 			notificationInterface.sendMessage("Model metadata stripped.");
-			log.info("YOHANN - Model metadata stripped.");
 
 			// Create the tasks
 			final TaskRequest enrichAmrRequest = TaskUtilities.getEnrichAMRTaskRequest(
@@ -121,10 +118,10 @@ public class EnrichmentService {
 			);
 
 			final TaskRequest modelCardRequest = TaskUtilities.getModelCardTask(currentUserId, document, model, projectId);
-
 			final TaskRequest taskRequest = new CompoundTask(enrichAmrRequest, modelCardRequest);
 
 			try {
+				log.info("YOHANN - Running enrichAmrRequest, modelCardRequest...");
 				taskService.runTask(TaskService.TaskMode.SYNC, taskRequest);
 			} catch (final Exception e) {
 				final String errorString = String.format("Task failed: %s", e);
@@ -133,7 +130,6 @@ public class EnrichmentService {
 			}
 
 			notificationInterface.sendMessage("Model enrichment and model card complete.");
-			log.info("YOHANN - Model enrichment and model card complete.");
 
 			// Get the enriched model
 			final Model enrichedModel = modelService
@@ -145,7 +141,6 @@ public class EnrichmentService {
 				});
 
 			notificationInterface.sendMessage("Updating model grounding...");
-			log.info("YOHANN - Updating model grounding...");
 
 			// Update State Grounding
 			final List<State> states = enrichedModel
@@ -207,8 +202,8 @@ public class EnrichmentService {
 				throw new IOException(errorString);
 			}
 
-			notificationInterface.sendFinalMessage("Model enriched and grounded");
-			log.info("YOHANN - Model enriched and grounded");
+			notificationInterface.sendFinalMessage("Model enriched using document extraction and grounded");
+			log.info("Model {} enriched using document {} extraction and grounded.", modelId, documentId);
 		} catch (final IOException e) {
 			log.error("Error enriching model with document", e);
 		}
