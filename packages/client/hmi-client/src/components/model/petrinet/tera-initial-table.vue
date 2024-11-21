@@ -24,7 +24,7 @@
 											:modelConfigurations="modelConfigurations"
 											:feature-config="featureConfig"
 											:initial-id="target"
-											@update-expression="emit('update-expression', $event)"
+											@update-expression="emit('update-expressions', [$event])"
 											@update-source="emit('update-source', $event)"
 										/>
 									</li>
@@ -41,7 +41,7 @@
 						:modelConfigurations="modelConfigurations"
 						:initial-id="baseInitial"
 						:feature-config="featureConfig"
-						@update-expression="emit('update-expression', $event)"
+						@update-expression="emit('update-expressions', [$event])"
 						@update-source="emit('update-source', $event)"
 					/>
 				</li>
@@ -56,7 +56,7 @@
 		:stratified-matrix-type="StratifiedMatrix.Initials"
 		:open-value-config="!!matrixModalId"
 		@close-modal="matrixModalId = ''"
-		@update-cell-value="emit('update-expression', { id: $event.variableName, value: $event.newValue })"
+		@update-cell-values="emit('update-expressions', $event)"
 	/>
 </template>
 
@@ -84,7 +84,7 @@ const props = defineProps<{
 	featureConfig?: FeatureConfig;
 }>();
 
-const emit = defineEmits(['update-expression', 'update-source']);
+const emit = defineEmits(['update-expressions', 'update-source']);
 
 const isStratified = isStratifiedModel(props.mmt);
 const initialList = computed<
