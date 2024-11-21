@@ -37,7 +37,6 @@ public class EnrichmentService {
 	private final DKGService dkgService;
 	private final DocumentAssetService documentService;
 	private final ModelService modelService;
-	private final NotificationService notificationService;
 	private final TaskService taskService;
 
 	@Data
@@ -61,7 +60,8 @@ public class EnrichmentService {
 		UUID documentId,
 		UUID modelId,
 		String currentUserId,
-		Schema.Permission permission
+		Schema.Permission permission,
+		NotificationService notificationService
 	) {
 		// Create the notification group
 		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<>(
@@ -121,7 +121,6 @@ public class EnrichmentService {
 			final TaskRequest taskRequest = new CompoundTask(enrichAmrRequest, modelCardRequest);
 
 			try {
-				log.info("YOHANN - Running enrichAmrRequest, modelCardRequest...");
 				taskService.runTask(TaskService.TaskMode.SYNC, taskRequest);
 			} catch (final Exception e) {
 				final String errorString = String.format("Task failed: %s", e);
@@ -205,7 +204,7 @@ public class EnrichmentService {
 			notificationInterface.sendFinalMessage("Model enriched using document extraction and grounded");
 			log.info("Model {} enriched using document {} extraction and grounded.", modelId, documentId);
 		} catch (final IOException e) {
-			log.error("Error enriching model with document", e);
+			log.error("Error enriching model {} with document {}", modelId, documentId, e);
 		}
 	}
 }

@@ -77,6 +77,7 @@ import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
+import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
 import software.uncharted.terarium.hmiserver.service.tasks.EquationsCleanupResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
@@ -100,18 +101,16 @@ public class KnowledgeController {
 	private final DatasetService datasetService;
 	private final ModelService modelService;
 	private final ProvenanceService provenanceService;
-	private final ProvenanceSearchService provenanceSearchService;
-	private final DocumentAssetService documentAssetService;
 
 	private final CodeService codeService;
 
 	private final ExtractionService extractionService;
 	private final EnrichmentService enrichmentService;
 	private final TaskService taskService;
-	private final DKGService dkgService;
 
 	private final ProjectService projectService;
 	private final CurrentUserService currentUserService;
+	private final NotificationService notificationService;
 
 	private final EquationsCleanupResponseHandler equationsCleanupResponseHandler;
 
@@ -243,7 +242,8 @@ public class KnowledgeController {
 						documentId,
 						requestModelId,
 						currentUserService.get().getId(),
-						permission
+						permission,
+						notificationService
 					);
 				}
 				return ResponseEntity.ok(requestModelId);
@@ -268,7 +268,8 @@ public class KnowledgeController {
 				documentId,
 				model.get().getId(),
 				currentUserService.get().getId(),
-				permission
+				permission,
+				notificationService
 			);
 		}
 		return ResponseEntity.ok(model.get().getId());
