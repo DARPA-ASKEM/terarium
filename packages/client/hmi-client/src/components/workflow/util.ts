@@ -4,11 +4,11 @@ import type { CsvAsset, TimeSpan } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { isCalibrateMap, type CalibrateMap } from '@/services/calibrate-workflow';
 import { useProjects } from '@/composables/project';
-import { CalibrateEnsembleMappingRow } from './ops/calibrate-ensemble-ciemss/calibrate-ensemble-ciemss-operation';
 import {
-	isSimulateEnsembleMappingRow,
-	SimulateEnsembleMappingRow
-} from './ops/simulate-ensemble-ciemss/simulate-ensemble-ciemss-operation';
+	CalibrateEnsembleMappingRow,
+	isCalibrateEnsembleMappingRow
+} from './ops/calibrate-ensemble-ciemss/calibrate-ensemble-ciemss-operation';
+import { SimulateEnsembleMappingRow } from './ops/simulate-ensemble-ciemss/simulate-ensemble-ciemss-operation';
 
 export const drilldownChartSize = (element: HTMLElement | null) => {
 	if (!element) return { width: 100, height: 270 };
@@ -155,13 +155,11 @@ export type VariableMappings = CalibrateMap[] | CalibrateEnsembleMappingRow[] | 
  */
 export const modelVarToDatasetVar = (mapping: VariableMappings, modelVariable: string) => {
 	if (_.isEmpty(mapping)) return '';
-	if (isSimulateEnsembleMappingRow(mapping[0])) {
-		// Not yet implemented
-		return '';
-	}
 	if (isCalibrateMap(mapping[0])) {
 		return (mapping as CalibrateMap[]).find((d) => d.modelVariable === modelVariable)?.datasetVariable ?? '';
 	}
-	// Assume it's a CalibrateEnsembleMappingRow
-	return (mapping as CalibrateEnsembleMappingRow[]).find((d) => d.newName === modelVariable)?.datasetMapping ?? '';
+	if (isCalibrateEnsembleMappingRow(mapping[0])) {
+		return (mapping as CalibrateEnsembleMappingRow[]).find((d) => d.newName === modelVariable)?.datasetMapping ?? '';
+	}
+	return '';
 };
