@@ -66,6 +66,7 @@
 										:placeholder="mappingDropdownPlaceholder"
 										v-model="data[field]"
 										:options="modelStateOptions?.map((ele) => ele.referenceId ?? ele.id)"
+										@change="updateMapping()"
 									/>
 								</template>
 							</Column>
@@ -916,6 +917,12 @@ function addMapping() {
 
 	emit('update-state', state);
 }
+
+const updateMapping = () => {
+	const state = _.cloneDeep(props.node.state);
+	state.mapping = mapping.value;
+	emit('update-state', state);
+};
 
 function deleteAllMappings() {
 	mapping.value = [];
