@@ -166,7 +166,6 @@ const defaultPreview = computed(() => {
 	props.assets.forEach((asset, index) => {
 		code += `#d${index + 1} = ${asset.name}\n`;
 	});
-
 	// add first dataset to the code
 	code += 'd1';
 	return code;
