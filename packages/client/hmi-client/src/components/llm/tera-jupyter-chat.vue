@@ -408,7 +408,6 @@ const clearOutputs = () => {
 		const el = notebookCells.value[i];
 		if (el.codeOutputCell) {
 			for (let j = 0; j < el.codeOutputCell.length; j++) {
-				console.log(el);
 				el.codeOutputCell[j].clear();
 			}
 		}
