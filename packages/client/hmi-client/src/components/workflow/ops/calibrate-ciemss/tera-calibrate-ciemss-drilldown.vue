@@ -665,11 +665,7 @@ const mappingDropdownPlaceholder = computed(() => {
 });
 
 const showOutputSection = computed(
-	() =>
-		lossValues.value.length > 0 ||
-		!_.isEmpty(chartSettings.value) ||
-		isLoading.value ||
-		!_.isEmpty(props.node.state?.errorMessage?.traceback)
+	() => lossValues.value.length > 0 || isLoading.value || !_.isEmpty(props.node.state?.errorMessage?.traceback)
 );
 
 const updateState = () => {
@@ -816,13 +812,19 @@ const updateLossChartSpec = (data: string | Record<string, any>[], size: { width
 };
 
 const initDefaultChartSettings = (state: CalibrationOperationStateCiemss) => {
-	// Initialize default selected chart settings when chart settings are not set yet. Return if chart settings are already set.
-	if (Array.isArray(state.chartSettings)) return;
 	const defaultSelectedParam = modelParameters.value.filter((p) => !!p.distribution).map((p) => p.id);
 	const mappedModelVariables = mapping.value
 		.filter((c) => ['state', 'observable'].includes(modelPartTypesMap.value[c.modelVariable]))
 		.map((c) => c.modelVariable);
-	state.chartSettings = updateChartSettingsBySelectedVariables([], ChartSettingType.VARIABLE, mappedModelVariables);
+
+	// update variable chart settings only if they do not exist
+	if (!state.chartSettings?.some((c) => c.type === ChartSettingType.VARIABLE)) {
+		state.chartSettings = updateChartSettingsBySelectedVariables(
+			state.chartSettings ?? [],
+			ChartSettingType.VARIABLE,
+			mappedModelVariables
+		);
+	}
 	state.chartSettings = updateChartSettingsBySelectedVariables(
 		state.chartSettings,
 		ChartSettingType.ERROR_DISTRIBUTION,

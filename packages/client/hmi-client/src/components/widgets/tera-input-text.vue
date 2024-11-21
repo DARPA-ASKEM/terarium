@@ -109,4 +109,8 @@ onMounted(() => {
 		focusInput();
 	}
 });
+
+defineExpose({
+	focusInput
+});
 </script>
