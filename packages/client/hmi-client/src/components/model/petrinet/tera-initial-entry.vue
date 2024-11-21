@@ -16,7 +16,7 @@
 			<span v-if="description" class="description">{{ description }}</span>
 		</header>
 		<template v-if="isEmpty(modelConfiguration.inferredParameterList) && !featureConfig?.isPreview">
-			<main>
+			<main class="flex align-items-center">
 				<span class="expression">
 					<tera-input-text
 						label="Expression"
@@ -99,7 +99,7 @@ const sourceOpen = ref(false);
 const showOtherConfigValueModal = ref(false);
 const expression = ref('');
 
-const getOtherValuesLabel = computed(() => `Other Values(${otherValueList.value?.length})`);
+const getOtherValuesLabel = computed(() => `Other values (${otherValueList.value?.length})`);
 
 function onExpressionChange(value) {
 	isExpressionEmpty.value = isNumberInputEmpty(value);

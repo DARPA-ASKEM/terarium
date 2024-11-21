@@ -66,6 +66,7 @@
 										:placeholder="mappingDropdownPlaceholder"
 										v-model="data[field]"
 										:options="modelStateOptions?.map((ele) => ele.referenceId ?? ele.id)"
+										@change="updateMapping()"
 									/>
 								</template>
 							</Column>
@@ -79,6 +80,7 @@
 										:placeholder="mappingDropdownPlaceholder"
 										v-model="data[field]"
 										:options="datasetColumns?.map((ele) => ele.name)"
+										@change="updateMapping()"
 									/>
 								</template>
 							</Column>
@@ -224,7 +226,6 @@
 			<tera-drilldown-section v-if="showOutputSection">
 				<template #header-controls-left>
 					<h5 v-if="configuredModelConfig?.name" class="ml-3">{{ configuredModelConfig.name }}</h5>
-					<p class="ml-3" v-else>No output to show</p>
 				</template>
 				<template #header-controls-right>
 					<Button
@@ -667,9 +668,9 @@ const mappingDropdownPlaceholder = computed(() => {
 const showOutputSection = computed(
 	() =>
 		lossValues.value.length > 0 ||
-		!_.isEmpty(chartSettings.value) ||
 		isLoading.value ||
-		!_.isEmpty(props.node.state?.errorMessage?.traceback)
+		!_.isEmpty(props.node.state?.errorMessage?.traceback) ||
+		selectedOutputId.value
 );
 
 const updateState = () => {
@@ -816,13 +817,19 @@ const updateLossChartSpec = (data: string | Record<string, any>[], size: { width
 };
 
 const initDefaultChartSettings = (state: CalibrationOperationStateCiemss) => {
-	// Initialize default selected chart settings when chart settings are not set yet. Return if chart settings are already set.
-	if (Array.isArray(state.chartSettings)) return;
 	const defaultSelectedParam = modelParameters.value.filter((p) => !!p.distribution).map((p) => p.id);
 	const mappedModelVariables = mapping.value
 		.filter((c) => ['state', 'observable'].includes(modelPartTypesMap.value[c.modelVariable]))
 		.map((c) => c.modelVariable);
-	state.chartSettings = updateChartSettingsBySelectedVariables([], ChartSettingType.VARIABLE, mappedModelVariables);
+
+	// update variable chart settings only if they do not exist
+	if (!state.chartSettings?.some((c) => c.type === ChartSettingType.VARIABLE)) {
+		state.chartSettings = updateChartSettingsBySelectedVariables(
+			state.chartSettings ?? [],
+			ChartSettingType.VARIABLE,
+			mappedModelVariables
+		);
+	}
 	state.chartSettings = updateChartSettingsBySelectedVariables(
 		state.chartSettings,
 		ChartSettingType.ERROR_DISTRIBUTION,
@@ -914,6 +921,12 @@ function addMapping() {
 
 	emit('update-state', state);
 }
+
+const updateMapping = () => {
+	const state = _.cloneDeep(props.node.state);
+	state.mapping = mapping.value;
+	emit('update-state', state);
+};
 
 function deleteAllMappings() {
 	mapping.value = [];
