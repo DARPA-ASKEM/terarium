@@ -1064,7 +1064,7 @@ export enum ClientEventType {
     ChartAnnotationCreate = "CHART_ANNOTATION_CREATE",
     ChartAnnotationDelete = "CHART_ANNOTATION_DELETE",
     CloneProject = "CLONE_PROJECT",
-    EnrichmentModel = "ENRICHMENT_MODEL",
+    KnowledgeEnrichmentModel = "KNOWLEDGE_ENRICHMENT_MODEL",
     Extraction = "EXTRACTION",
     ExtractionPdf = "EXTRACTION_PDF",
     FileUploadProgress = "FILE_UPLOAD_PROGRESS",
