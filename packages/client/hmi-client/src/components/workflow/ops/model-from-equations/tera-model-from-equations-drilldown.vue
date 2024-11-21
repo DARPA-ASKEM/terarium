@@ -193,6 +193,7 @@ import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
+import { logger } from '@/utils/logger';
 import { ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
 
 const emit = defineEmits(['close', 'update-state', 'append-output', 'update-output', 'select-output']);
@@ -369,7 +370,10 @@ async function onRun() {
 		.filter((e) => e.includeInProcess && !e.asset.extractionError)
 		.map((e) => e.asset.text);
 	const response = await getCleanedEquations(equationsText);
-	if (!response || isEmpty(response.cleanedEquations)) return;
+	if (!response || isEmpty(response.cleanedEquations)) {
+		logger.error('Error cleaning equations, none were returned.');
+		return;
+	}
 	const { cleanedEquations, wasCleaned } = response;
 
 	const request: EquationsToAMRRequest = {
