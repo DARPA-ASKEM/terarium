@@ -2,7 +2,7 @@
 	<div class="tera-input">
 		<label v-if="label" @click.self.stop="focusInput">{{ label }}</label>
 		<main :class="[{ error: getErrorMessage }, { empty: isEmptyError }]" @click.self.stop="focusInput">
-			<i v-if="icon" :class="icon" />
+			<i v-if="icon" :class="icon" class="px-1" />
 			<input
 				v-bind="$attrs"
 				ref="inputField"

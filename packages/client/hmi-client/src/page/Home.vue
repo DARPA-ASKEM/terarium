@@ -56,6 +56,7 @@
 									placeholder="Search for projects"
 									id="searchProject"
 									:icon="isSearchLoading ? 'pi pi-spin pi-spinner' : 'pi pi-search'"
+									class="searchProjectsInput"
 								/>
 							</div>
 							<div>
@@ -439,7 +440,9 @@ header > section > button {
 	flex: 1;
 	background-color: #f9f9f9;
 }
-
+.searchProjectsInput {
+	width: 32rem;
+}
 .p-dropdown,
 .p-multiselect {
 	min-width: 17rem;
@@ -458,7 +461,6 @@ header > section > button {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	gap: 16px;
 	/* Accommodate for height of projects tabs*/
 	top: 44px;
 }
@@ -542,7 +544,7 @@ a {
 }
 
 .video-thumbnail {
-	background-image: radial-gradient(circle, var(--primary-color), #004f3c), url('@/assets/images/video-thumbnail.png');
+	background-image: radial-gradient(circle, var(--primary-color), #0f483b), url('@/assets/images/video-thumbnail.png');
 	background-blend-mode: multiply;
 	background-size: cover;
 	background-position: center;
