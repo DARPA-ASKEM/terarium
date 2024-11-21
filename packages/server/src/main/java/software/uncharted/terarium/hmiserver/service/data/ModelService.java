@@ -270,6 +270,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 			throw new IOException(errorString);
 		}
 
+		/* FIXME - this is too slow for demo day November 2024
 		// Update State Grounding
 		if (newModel.get().isRegnet()) {
 			final List<RegNetVertex> vertices = newModel.get().getVerticies();
@@ -326,6 +327,8 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 			});
 			newModel.get().setTransitions(transitions);
 		}
+
+		 */
 
 		try {
 			updateAsset(newModel.get(), projectId, permission);
