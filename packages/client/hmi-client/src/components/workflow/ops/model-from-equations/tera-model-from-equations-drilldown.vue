@@ -384,7 +384,8 @@ async function onRun() {
 		clonedState.value.modelId = modelId;
 	}
 
-	// If the equations were cleaned that means new equations were added so uncheck the old ones and check the new ones
+	// If the equations were cleaned that means these cleaned equations should be added to the input list
+	// So uncheck the old ones and check the new cleaned ones
 	if (wasCleaned) {
 		// Uncheck the equations passed to the request
 		clonedState.value.equations.forEach((eq) => {
