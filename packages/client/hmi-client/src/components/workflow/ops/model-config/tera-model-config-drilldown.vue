@@ -527,8 +527,9 @@ const amrInitials = ref<Initial[]>([]);
 const amrParameters = ref<ModelParameter[]>([]);
 
 const getMissingInputsMessage = (amount, total) => {
+	if (!total) return '';
 	const percent = (amount / total) * 100;
-	return amount && total ? `Missing values: ${amount}/${total} (${percent.toFixed(0)}%)` : '';
+	return amount ? `Missing values: ${amount}/${total} (${percent.toFixed(0)}%)` : '';
 };
 
 const missingInputCount = (modelConfiguration: ModelConfiguration) => {
