@@ -369,7 +369,7 @@ async function onRun() {
 		.filter((e) => e.includeInProcess && !e.asset.extractionError)
 		.map((e) => e.asset.text);
 	const cleanedEquations = await getCleanedEquations(equationsText);
-	if (!cleanedEquations) return;
+	if (!cleanedEquations || isEmpty(cleanedEquations)) return;
 
 	const request: EquationsToAMRRequest = {
 		equations: cleanedEquations,

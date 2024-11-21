@@ -26,8 +26,8 @@ export interface EquationsToAMRRequest {
  */
 export const getCleanedEquations = async (equations: string[]): Promise<string[] | null> => {
 	try {
-		const response = await API.post<string[]>(`/knowledge/get-cleaned-equations`, equations);
-		return response.data;
+		const response = await API.post<string[]>(`/knowledge/clean-equations`, equations);
+		return response.data ?? null;
 	} catch (error: unknown) {
 		logger.error(error, { showToast: false });
 	}

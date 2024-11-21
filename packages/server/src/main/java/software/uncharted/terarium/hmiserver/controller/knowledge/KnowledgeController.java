@@ -127,7 +127,7 @@ public class KnowledgeController {
 	 *
 	 * @return List of cleaned-up equations
 	 */
-	@PostMapping("/get-cleaned-equations")
+	@PostMapping("/clean-equations")
 	@Secured(Roles.USER)
 	public ResponseEntity<List<String>> getCleanedEquations(
 		@RequestBody final List<String> equations,
