@@ -103,7 +103,7 @@ public class NotificationService {
 				final User user = currentUserService.get();
 				notificationGroup.setUserId(user != null ? user.getId() : "anonymous");
 			} catch (final Exception e) {
-				log.error("No userId set on notification group, unabled to acquire from thread");
+				log.error("No userId set on notification group, unable to acquire from thread");
 			}
 		}
 		return notificationGroupRepository.save(notificationGroup);
