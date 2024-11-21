@@ -168,13 +168,7 @@ const dataContextDescription = computed(() =>
 	props.assets.map((asset, index) => `#d${index + 1} = ${asset.name}\n`).join(' ')
 );
 
-const defaultPreview = computed(() => {
-	let code = '';
-	// add first dataset to the code for user
-	code += 'd1';
-	return code;
-});
-
+const defaultPreview = ref<string>('d1');
 const confirm = useConfirm();
 
 const props = defineProps<{
