@@ -253,6 +253,7 @@
 							@open="activeChartSettings = $event"
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
+							@toggle-ensemble-variable-setting-option="updateEnsembleVariableSettingOption"
 						/>
 						<Divider />
 					</div>
@@ -537,7 +538,8 @@ const {
 	chartSettings,
 	removeChartSettings,
 	updateChartSettings,
-	selectedEnsembleVariableSettings
+	selectedEnsembleVariableSettings,
+	updateEnsembleVariableSettingOption
 } = useChartSettings(props, emit);
 
 const { generateAnnotation, getChartAnnotationsByChartId, useEnsembleVariableCharts } = useCharts(

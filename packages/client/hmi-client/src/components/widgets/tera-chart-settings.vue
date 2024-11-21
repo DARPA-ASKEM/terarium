@@ -20,21 +20,24 @@
 		/>
 		<template v-if="type === ChartSettingType.VARIABLE_ENSEMBLE">
 			<tera-checkbox
+				:disabled="selectedOptions.length === 0"
 				label="Show individual models"
 				:model-value="Boolean(ensembleChartOptions.showIndividualModels)"
-				@update:model-value="toggleEensembleChartOption('showIndividualModels', $event)"
+				@update:model-value="toggleEnsembleChartOption('showIndividualModels', $event)"
 			/>
 			<tera-checkbox
 				class="pl-5"
+				:disabled="selectedOptions.length === 0"
 				label="Relative to ensemble"
 				:model-value="Boolean(ensembleChartOptions.relativeToEnsemble)"
-				@update:model-value="toggleEensembleChartOption('relativeToEnsemble', $event)"
+				@update:model-value="toggleEnsembleChartOption('relativeToEnsemble', $event)"
 			/>
 			<tera-checkbox
 				v-if="ensembleChartOptions.showIndividualModelsWithWeight !== undefined"
 				label="Show individual models with weights"
+				:disabled="selectedOptions.length === 0"
 				:model-value="ensembleChartOptions.showIndividualModelsWithWeight"
-				@update:model-value="toggleEensembleChartOption('showIndividualModelsWithWeight', $event)"
+				@update:model-value="toggleEnsembleChartOption('showIndividualModelsWithWeight', $event)"
 			/>
 		</template>
 	</div>
@@ -44,9 +47,9 @@
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
-import { ChartSetting, ChartSettingEnsembleVariable, ChartSettingType } from '@/types/common';
+import { ChartSetting, ChartSettingType } from '@/types/common';
 import { computed } from 'vue';
-import { isChartSettingEnsembleVariable } from '@/services/chart-settings';
+import { EnsembleVariableChartSettingOption, getEnsembleChartSettingOptions } from '@/services/chart-settings';
 
 const props = defineProps<{
 	title: string;
@@ -57,36 +60,16 @@ const props = defineProps<{
 	// Selected dropdown options
 	selectedOptions: string[];
 }>();
-const emits = defineEmits(['open', 'remove', 'selection-change', 'toggle-ensemble-chart-option']);
+const emits = defineEmits(['open', 'remove', 'selection-change', 'toggle-ensemble-variable-setting-option']);
 
 // Settings of the same type that we want to interact with.
 const targetSettings = computed(() => props.settings.filter((s) => s.type === props.type));
 
 // ------------------- Ensemble chart options -------------------
-// Extract ensemble variable chart options from the chart settings for each variable and merge into single option.
-const ensembleChartOptions = computed(() => {
-	// initial options
-	const options: Partial<ChartSettingEnsembleVariable> = {
-		showIndividualModels: false,
-		relativeToEnsemble: false,
-		showIndividualModelsWithWeight: undefined // only applicable for the simulate ensemble otherwise undefined
-	};
-	// Merge options from all ensemble variables since each variable setting has its own options but all controlled by the single UI.
-	targetSettings.value.forEach((s) => {
-		if (!isChartSettingEnsembleVariable(s)) return;
-		options.showIndividualModels = options.showIndividualModels || s.showIndividualModels;
-		options.relativeToEnsemble = options.relativeToEnsemble || s.relativeToEnsemble;
-		options.showIndividualModelsWithWeight = options.showIndividualModelsWithWeight || s.showIndividualModelsWithWeight;
-	});
-	return options;
-});
-const toggleEensembleChartOption = (
-	option: 'showIndividualModels' | 'relativeToEnsemble' | 'showIndividualModelsWithWeight',
-	value: Boolean
-) => {
-	emits('toggle-ensemble-chart-option', props.type, option, value);
+const ensembleChartOptions = computed(() => getEnsembleChartSettingOptions(targetSettings.value));
+const toggleEnsembleChartOption = (option: EnsembleVariableChartSettingOption, value: boolean) => {
+	emits('toggle-ensemble-variable-setting-option', option, value);
 };
-// ---------------------------------------------------------------
 </script>
 <style scoped>
 .chart-settings {
