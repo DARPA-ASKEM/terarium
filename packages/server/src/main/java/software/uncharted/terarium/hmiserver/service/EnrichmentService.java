@@ -14,6 +14,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
@@ -73,9 +74,9 @@ public class EnrichmentService {
 	 * @param documentId the document ID
 	 * @param modelId the model ID
 	 * @param permission the permission
-	 * @return the enriched model
 	 */
-	public Future<Model> modelWithDocument(UUID projectId, UUID documentId, UUID modelId, Schema.Permission permission)
+	@Async
+	public void modelWithDocument(UUID projectId, UUID documentId, UUID modelId, Schema.Permission permission)
 		throws IOException, ExecutionException, InterruptedException, TimeoutException {
 		// Create the notification group
 		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<>(
@@ -86,7 +87,7 @@ public class EnrichmentService {
 			new Properties(modelId)
 		);
 
-		return executor.submit(() -> {
+		executor.submit(() -> {
 			notificationInterface.sendMessage("Beginning model enrichment with using document extraction...");
 
 			// Get the Document
@@ -221,9 +222,6 @@ public class EnrichmentService {
 			}
 
 			notificationInterface.sendFinalMessage("Model enriched and grounded");
-
-			// Return the enriched model
-			return enrichedModel;
 		});
 	}
 }
