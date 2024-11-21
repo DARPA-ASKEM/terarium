@@ -21,12 +21,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
@@ -46,6 +46,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
@@ -66,17 +67,17 @@ import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.EnrichmentService;
 import software.uncharted.terarium.hmiserver.service.ExtractionService;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
-import software.uncharted.terarium.hmiserver.service.data.DKGService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
-import software.uncharted.terarium.hmiserver.service.data.ProvenanceSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
+import software.uncharted.terarium.hmiserver.service.notification.NotificationGroupInstance;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
 import software.uncharted.terarium.hmiserver.service.tasks.EquationsCleanupResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
@@ -110,6 +111,7 @@ public class KnowledgeController {
 
 	private final ProjectService projectService;
 	private final CurrentUserService currentUserService;
+	private final ClientEventService clientEventService;
 	private final NotificationService notificationService;
 
 	private final EquationsCleanupResponseHandler equationsCleanupResponseHandler;
@@ -122,6 +124,13 @@ public class KnowledgeController {
 	@PostConstruct
 	void init() {
 		taskService.addResponseHandler(equationsCleanupResponseHandler);
+	}
+
+	@Data
+	public static class Properties {
+
+		private final UUID modelId;
+		private final UUID documentId;
 	}
 
 	/**
@@ -169,6 +178,18 @@ public class KnowledgeController {
 			}
 		}
 
+		// Create the notification group
+		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<>(
+			clientEventService,
+			notificationService,
+			ClientEventType.KNOWLEDGE_ENRICHMENT_MODEL,
+			projectId,
+			new Properties(modelId, documentId)
+		);
+
+		notificationInterface.sendMessage("Beginning model enrichment using document extraction...");
+		log.info("Beginning model {} enrichment using document {} extraction...", modelId, documentId);
+
 		// Cleanup equations from the request
 		List<String> equations = new ArrayList<>();
 		if (req.get("equations") != null) {
@@ -189,6 +210,8 @@ public class KnowledgeController {
 		} catch (final ExecutionException e) {
 			log.warn("Unable to clean-up equations due to a ExecutionException. Reverting to original equations.", e);
 		}
+
+		notificationInterface.sendMessage("Equations cleaned up.");
 
 		// get the equations from the cleanup response, or use the original equations
 		JsonNode equationsReq = req.get("equations");
@@ -232,47 +255,47 @@ public class KnowledgeController {
 			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("skema.bad-equations.petrinet"));
 		}
 
+		notificationInterface.sendMessage("AMR extracted via SKEMA.");
+
 		// If no model id is provided, create a new model asset
+		Model model;
 		if (modelId == null) {
 			try {
-				final UUID requestModelId = modelService.createAsset(responseAMR, projectId, permission).getId();
-				if (documentId != null) {
-					enrichmentService.modelWithDocument(
-						projectId,
-						documentId,
-						requestModelId,
-						currentUserService.get().getId(),
-						permission,
-						notificationService
-					);
-				}
-				return ResponseEntity.ok(requestModelId);
+				model = modelService.createAsset(responseAMR, projectId, permission);
 			} catch (final IOException e) {
-				log.error("An error occurred while trying to retrieve information necessary for model enrichment.", e);
+				log.error("An error occurred while trying to create a model.", e);
 				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 			}
+
+			notificationInterface.sendMessage("Model created.");
+			// If a model id is provided, update the existing model
+		} else {
+			try {
+				model = modelService
+					.updateAsset(responseAMR, projectId, permission)
+					.orElseThrow(() -> new IOException("Model not found"));
+			} catch (final IOException | IllegalArgumentException e) {
+				log.error("An error occurred while trying to update a model.", e);
+				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+			}
+
+			notificationInterface.sendMessage("Model updated.");
 		}
 
-		// If a model id is provided, update the existing model
-		final Optional<Model> model = modelService.getAsset(modelId, permission);
-		if (model.isEmpty()) {
-			log.error(String.format("The model id %s does not exist.", modelId));
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("model.not-found"));
-		}
-
-		responseAMR.setId(model.get().getId());
-
+		// Enrich the model asynchronously if a document ID was provided
 		if (documentId != null) {
 			enrichmentService.modelWithDocument(
 				projectId,
 				documentId,
-				model.get().getId(),
+				model,
 				currentUserService.get().getId(),
 				permission,
-				notificationService
+				notificationInterface
 			);
 		}
-		return ResponseEntity.ok(model.get().getId());
+
+		// Return the model id
+		return ResponseEntity.ok(model.getId());
 	}
 
 	@PostMapping("/base64-equations-to-model")

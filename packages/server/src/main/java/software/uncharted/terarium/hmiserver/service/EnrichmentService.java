@@ -4,12 +4,13 @@ import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import software.uncharted.terarium.hmiserver.models.ClientEventType;
+import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.controller.knowledge.KnowledgeController;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
@@ -23,9 +24,9 @@ import software.uncharted.terarium.hmiserver.service.data.DKGService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationGroupInstance;
-import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskUtilities;
+import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
@@ -33,24 +34,19 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @Slf4j
 public class EnrichmentService {
 
-	private final ClientEventService clientEventService;
 	private final DKGService dkgService;
 	private final DocumentAssetService documentService;
 	private final ModelService modelService;
 	private final TaskService taskService;
 
-	@Data
-	private static class Properties {
-
-		private final UUID modelId;
-	}
+	private final Messages messages;
 
 	/**
 	 * Enriches the model with the data from the document.
 	 *
 	 * @param projectId the project ID
 	 * @param documentId the document ID
-	 * @param modelId the model ID
+	 * @param model the model
 	 * @param currentUserId the current user ID
 	 * @param permission the permission
 	 */
@@ -58,52 +54,28 @@ public class EnrichmentService {
 	public void modelWithDocument(
 		UUID projectId,
 		UUID documentId,
-		UUID modelId,
+		Model model,
 		String currentUserId,
 		Schema.Permission permission,
-		NotificationService notificationService
+		NotificationGroupInstance<KnowledgeController.Properties> notificationInterface
 	) {
-		// Create the notification group
-		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<>(
-			clientEventService,
-			notificationService,
-			ClientEventType.ENRICHMENT_MODEL,
-			projectId,
-			new Properties(modelId)
-		);
-
 		try {
-			notificationInterface.sendMessage("Beginning model enrichment using document extraction...");
-			log.info("Beginning model {} enrichment using document {} extraction...", modelId, documentId);
-
 			// Get the Document
-			DocumentAsset document = documentService
+			final DocumentAsset document = documentService
 				.getAsset(documentId, permission)
-				.orElseThrow(() -> {
-					final String errorString = String.format("Document %s not found", documentId);
-					log.warn(errorString);
-					return new IOException(errorString);
-				});
+				.orElseThrow(() ->
+					new ResponseStatusException(
+						HttpStatus.NOT_FOUND,
+						messages.get("An error occurred while trying to get the document.")
+					)
+				);
 
 			// Make sure there is text in the document
 			if (document.getText() == null || document.getText().isBlank()) {
 				final String errorString = String.format("Document %s has no extracted text", documentId);
-				log.warn(errorString);
-				throw new IOException(errorString);
+				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("errorString"));
 			}
-
 			notificationInterface.sendMessage("Document text found.");
-
-			// Get the model
-			Model model = modelService
-				.getAsset(modelId, permission)
-				.orElseThrow(() -> {
-					final String errorString = String.format("Model %s not found", modelId);
-					log.warn(errorString);
-					return new IOException(errorString);
-				});
-
-			notificationInterface.sendMessage("Model found.");
 
 			// Stripping the metadata before it's sent since it can cause GoLLM to fail with massive inputs
 			model.setMetadata(new ModelMetadata());
@@ -121,6 +93,7 @@ public class EnrichmentService {
 			final TaskRequest taskRequest = new CompoundTask(enrichAmrRequest, modelCardRequest);
 
 			try {
+				notificationInterface.sendMessage("Starting Model enrichment and model card.");
 				taskService.runTask(TaskService.TaskMode.SYNC, taskRequest);
 			} catch (final Exception e) {
 				final String errorString = String.format("Task failed: %s", e);
@@ -132,9 +105,9 @@ public class EnrichmentService {
 
 			// Get the enriched model
 			final Model enrichedModel = modelService
-				.getAsset(modelId, permission)
+				.getAsset(model.getId(), permission)
 				.orElseThrow(() -> {
-					final String errorString = String.format("Enriched Model %s not found", modelId);
+					final String errorString = String.format("Enriched Model %s not found", model.getId());
 					log.warn(errorString);
 					return new IOException(errorString);
 				});
@@ -196,15 +169,15 @@ public class EnrichmentService {
 			try {
 				modelService.updateAsset(enrichedModel, projectId, permission);
 			} catch (final IOException e) {
-				final String errorString = String.format("Failed to update model %s", modelId);
+				final String errorString = String.format("Failed to update model %s", model.getId());
 				log.warn(errorString);
 				throw new IOException(errorString);
 			}
 
 			notificationInterface.sendFinalMessage("Model enriched using document extraction and grounded");
-			log.info("Model {} enriched using document {} extraction and grounded.", modelId, documentId);
+			log.info("Model {} enriched using document {} extraction and grounded.", model.getId(), documentId);
 		} catch (final IOException e) {
-			log.error("Error enriching model {} with document {}", modelId, documentId, e);
+			log.error("Error enriching model {} with document {}", model.getId(), documentId, e);
 		}
 	}
 }
