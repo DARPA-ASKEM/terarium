@@ -238,7 +238,13 @@ public class KnowledgeController {
 			try {
 				final UUID requestModelId = modelService.createAsset(responseAMR, projectId, permission).getId();
 				if (documentId != null) {
-					enrichmentService.modelWithDocument(projectId, documentId, requestModelId, permission);
+					enrichmentService.modelWithDocument(
+						projectId,
+						documentId,
+						requestModelId,
+						currentUserService.get().getId(),
+						permission
+					);
 				}
 				return ResponseEntity.ok(requestModelId);
 			} catch (final IOException e) {
@@ -257,7 +263,13 @@ public class KnowledgeController {
 		responseAMR.setId(model.get().getId());
 
 		if (documentId != null) {
-			enrichmentService.modelWithDocument(projectId, documentId, model.get().getId(), permission);
+			enrichmentService.modelWithDocument(
+				projectId,
+				documentId,
+				model.get().getId(),
+				currentUserService.get().getId(),
+				permission
+			);
 		}
 		return ResponseEntity.ok(model.get().getId());
 	}

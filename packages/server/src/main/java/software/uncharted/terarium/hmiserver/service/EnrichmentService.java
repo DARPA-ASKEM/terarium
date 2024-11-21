@@ -1,19 +1,12 @@
 package software.uncharted.terarium.hmiserver.service;
 
-import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
@@ -24,11 +17,8 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Observable;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.State;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Transition;
-import software.uncharted.terarium.hmiserver.models.dataservice.regnet.RegNetVertex;
 import software.uncharted.terarium.hmiserver.models.task.CompoundTask;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
-import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.service.data.DKGService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
@@ -44,7 +34,6 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 public class EnrichmentService {
 
 	private final ClientEventService clientEventService;
-	private final CurrentUserService currentUserService;
 	private final DKGService dkgService;
 	private final DocumentAssetService documentService;
 	private final ModelService modelService;
@@ -63,10 +52,17 @@ public class EnrichmentService {
 	 * @param projectId the project ID
 	 * @param documentId the document ID
 	 * @param modelId the model ID
+	 * @param currentUserId the current user ID
 	 * @param permission the permission
 	 */
 	@Async
-	public void modelWithDocument(UUID projectId, UUID documentId, UUID modelId, Schema.Permission permission) {
+	public void modelWithDocument(
+		UUID projectId,
+		UUID documentId,
+		UUID modelId,
+		String currentUserId,
+		Schema.Permission permission
+	) {
 		// Create the notification group
 		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<>(
 			clientEventService,
@@ -78,6 +74,7 @@ public class EnrichmentService {
 
 		try {
 			notificationInterface.sendMessage("Beginning model enrichment with using document extraction...");
+			log.info("YOHANN - Beginning model enrichment with using document extraction...");
 
 			// Get the Document
 			DocumentAsset document = documentService
@@ -96,6 +93,7 @@ public class EnrichmentService {
 			}
 
 			notificationInterface.sendMessage("Document text found.");
+			log.info("YOHANN - Document text found.");
 
 			// Get the model
 			Model model = modelService
@@ -107,25 +105,22 @@ public class EnrichmentService {
 				});
 
 			notificationInterface.sendMessage("Model found.");
+			log.info("YOHANN - Model found.");
 
 			// Stripping the metadata before it's sent since it can cause GoLLM to fail with massive inputs
 			model.setMetadata(new ModelMetadata());
 			notificationInterface.sendMessage("Model metadata stripped.");
+			log.info("YOHANN - Model metadata stripped.");
 
 			// Create the tasks
 			final TaskRequest enrichAmrRequest = TaskUtilities.getEnrichAMRTaskRequest(
-				currentUserService.get().getId(),
+				currentUserId,
 				document,
 				model,
 				projectId
 			);
 
-			final TaskRequest modelCardRequest = TaskUtilities.getModelCardTask(
-				currentUserService.get().getId(),
-				document,
-				model,
-				projectId
-			);
+			final TaskRequest modelCardRequest = TaskUtilities.getModelCardTask(currentUserId, document, model, projectId);
 
 			final TaskRequest taskRequest = new CompoundTask(enrichAmrRequest, modelCardRequest);
 
@@ -138,6 +133,7 @@ public class EnrichmentService {
 			}
 
 			notificationInterface.sendMessage("Model enrichment and model card complete.");
+			log.info("YOHANN - Model enrichment and model card complete.");
 
 			// Get the enriched model
 			final Model enrichedModel = modelService
@@ -149,6 +145,7 @@ public class EnrichmentService {
 				});
 
 			notificationInterface.sendMessage("Updating model grounding...");
+			log.info("YOHANN - Updating model grounding...");
 
 			// Update State Grounding
 			final List<State> states = enrichedModel
@@ -211,6 +208,7 @@ public class EnrichmentService {
 			}
 
 			notificationInterface.sendFinalMessage("Model enriched and grounded");
+			log.info("YOHANN - Model enriched and grounded");
 		} catch (final IOException e) {
 			log.error("Error enriching model with document", e);
 		}
