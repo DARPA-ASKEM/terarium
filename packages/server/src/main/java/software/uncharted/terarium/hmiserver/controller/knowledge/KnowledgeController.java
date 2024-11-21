@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
@@ -199,7 +200,7 @@ public class KnowledgeController {
 					equationsReq = output.get("response").get("equations");
 				}
 			} catch (IOException e) {
-				log.warn("Unable to retrive cleaned-up equations from GoLLM response. Reverting to original equations.", e);
+				log.warn("Unable to retrieve cleaned-up equations from GoLLM response. Reverting to original equations.", e);
 			}
 		}
 
@@ -235,32 +236,41 @@ public class KnowledgeController {
 		// If no model id is provided, create a new model asset
 		if (modelId == null) {
 			try {
-				final Model model = modelService.createAsset(responseAMR, projectId, permission);
-				// enrich the model with the document
+				final UUID requestModelId = modelService.createAsset(responseAMR, projectId, permission).getId();
+				final UUID requestDocumentId = documentId;
+
 				if (documentId != null) {
-					final Future<Model> enrichedModel = enrichmentService.modelWithDocument(
-						projectId,
-						documentId,
-						model.getId(),
-						permission
-					);
+					CompletableFuture.runAsync(() -> {
+						try {
+							enrichmentService.modelWithDocument(projectId, requestDocumentId, requestModelId, permission);
+						} catch (ExecutionException e) {
+							log.error("Error while waiting for task response", e);
+							throw new ResponseStatusException(
+								HttpStatus.INTERNAL_SERVER_ERROR,
+								messages.get("task.gollm.execution-failure")
+							);
+						} catch (InterruptedException e) {
+							log.warn("Interrupted while waiting for task response", e);
+							throw new ResponseStatusException(
+								HttpStatus.UNPROCESSABLE_ENTITY,
+								messages.get("task.gollm.interrupted")
+							);
+						} catch (TimeoutException e) {
+							log.warn("Timeout while waiting for task response", e);
+							throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
+						} catch (IOException e) {
+							log.error("An error occurred while trying to retrieve information necessary for model enrichment.", e);
+							throw new ResponseStatusException(
+								HttpStatus.SERVICE_UNAVAILABLE,
+								messages.get("postgres.service-unavailable")
+							);
+						}
+					});
 				}
-				return ResponseEntity.ok(model.getId());
+				return ResponseEntity.ok(requestModelId);
 			} catch (final IOException e) {
 				log.error("An error occurred while trying to retrieve information necessary for model enrichment.", e);
 				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
-			} catch (ExecutionException e) {
-				log.error("Error while waiting for task response", e);
-				throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR,
-					messages.get("task.gollm.execution-failure")
-				);
-			} catch (InterruptedException e) {
-				log.warn("Interrupted while waiting for task response", e);
-				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
-			} catch (TimeoutException e) {
-				log.warn("Timeout while waiting for task response", e);
-				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
 			}
 		}
 
