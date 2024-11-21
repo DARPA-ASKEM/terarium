@@ -146,11 +146,22 @@ export function getActiveOutput<S>(node: WorkflowNode<S>) {
 
 export type VariableMappings = CalibrateMap[] | CalibrateEnsembleMappingRow[] | SimulateEnsembleMappingRow[];
 
+/**
+ * Converts a model variable name to a dataset variable name based on the provided mapping.
+ *
+ * @param {VariableMappings} mapping - The mapping object that contains the variable mappings.
+ * @param {string} modelVariable - The name of the model variable to be converted.
+ * @returns {string} - The corresponding dataset variable name, or an empty string if the mapping is empty or not found.
+ */
 export const modelVarToDatasetVar = (mapping: VariableMappings, modelVariable: string) => {
-	if (_.isEmpty(mapping) || isSimulateEnsembleMappingRow(mapping[0])) return '';
-	const found = (mapping as CalibrateMap[] | CalibrateEnsembleMappingRow[]).find((d) =>
-		isCalibrateMap(d) ? d.modelVariable === modelVariable : d.newName === modelVariable
-	);
-	if (!found) return '';
-	return isCalibrateMap(found) ? found.datasetVariable : found.datasetMapping;
+	if (_.isEmpty(mapping)) return '';
+	if (isSimulateEnsembleMappingRow(mapping[0])) {
+		// Not yet implemented
+		return '';
+	}
+	if (isCalibrateMap(mapping[0])) {
+		return (mapping as CalibrateMap[]).find((d) => d.modelVariable === modelVariable)?.datasetVariable ?? '';
+	}
+	// Assume it's a CalibrateEnsembleMappingRow
+	return (mapping as CalibrateEnsembleMappingRow[]).find((d) => d.newName === modelVariable)?.datasetMapping ?? '';
 };
