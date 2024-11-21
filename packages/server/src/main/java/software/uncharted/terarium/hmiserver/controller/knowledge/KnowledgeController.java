@@ -129,14 +129,32 @@ public class KnowledgeController {
 	 */
 	@PostMapping("/clean-equations")
 	@Secured(Roles.USER)
-	public ResponseEntity<List<String>> getCleanedEquations(
+	public ResponseEntity<EquationCleanupResponse> getCleanedEquations(
 		@RequestBody final List<String> equations,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
 		TaskRequest cleanupReq = cleanupEquationsTaskRequest(projectId, equations);
 		TaskResponse cleanupResp = null;
+		List<String> cleanedEquations = new ArrayList<>(equations); // Have original equations as a fallback
+		boolean wasCleaned = false;
+
 		try {
 			cleanupResp = taskService.runTask(TaskMode.SYNC, cleanupReq);
+			// Get the equations from the cleanup response
+			if (cleanupResp != null && cleanupResp.getOutput() != null) {
+				try {
+					JsonNode output = mapper.readValue(cleanupResp.getOutput(), JsonNode.class);
+					if (output.get("response") != null && output.get("response").get("equations") != null) {
+						cleanedEquations.clear(); // Clear original equations before adding cleaned ones
+						wasCleaned = true;
+						for (JsonNode eq : output.get("response").get("equations")) {
+							cleanedEquations.add(eq.asText());
+						}
+					}
+				} catch (IOException e) {
+					log.warn("Unable to retrieve cleaned-up equations from GoLLM response. Reverting to original equations.", e);
+				}
+			}
 		} catch (final JsonProcessingException e) {
 			log.warn("Unable to clean-up equations due to a JsonProcessingException. Reverting to original equations.", e);
 		} catch (final TimeoutException e) {
@@ -147,21 +165,7 @@ public class KnowledgeController {
 			log.warn("Unable to clean-up equations due to a ExecutionException. Reverting to original equations.", e);
 		}
 
-		// Get the equations from the cleanup response, or use the original equations
-		List<String> cleanedEquations = new ArrayList<>();
-		if (cleanupResp != null && cleanupResp.getOutput() != null) {
-			try {
-				JsonNode output = mapper.readValue(cleanupResp.getOutput(), JsonNode.class);
-				if (output.get("response") != null && output.get("response").get("equations") != null) {
-					for (JsonNode eq : output.get("response").get("equations")) {
-						cleanedEquations.add(eq.asText());
-					}
-				}
-			} catch (IOException e) {
-				log.warn("Unable to retrieve cleaned-up equations from GoLLM response. Reverting to original equations.", e);
-			}
-		}
-		return ResponseEntity.ok(cleanedEquations);
+		return ResponseEntity.ok(new EquationCleanupResponse(cleanedEquations, wasCleaned));
 	}
 
 	/**
@@ -860,5 +864,16 @@ public class KnowledgeController {
 		req.setAdditionalProperties(props);
 
 		return req;
+	}
+
+	private static class EquationCleanupResponse {
+
+		public List<String> cleanedEquations;
+		public boolean wasCleaned;
+
+		public EquationCleanupResponse(List<String> cleanedEquations, boolean wasCleaned) {
+			this.cleanedEquations = cleanedEquations;
+			this.wasCleaned = wasCleaned;
+		}
 	}
 }

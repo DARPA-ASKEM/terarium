@@ -368,8 +368,9 @@ async function onRun() {
 	const equationsText = clonedState.value.equations
 		.filter((e) => e.includeInProcess && !e.asset.extractionError)
 		.map((e) => e.asset.text);
-	const cleanedEquations = await getCleanedEquations(equationsText);
-	if (!cleanedEquations || isEmpty(cleanedEquations)) return;
+	const response = await getCleanedEquations(equationsText);
+	if (!response || isEmpty(response.cleanedEquations)) return;
+	const { cleanedEquations, wasCleaned } = response;
 
 	const request: EquationsToAMRRequest = {
 		equations: cleanedEquations,
@@ -383,20 +384,23 @@ async function onRun() {
 		clonedState.value.modelId = modelId;
 	}
 
-	// Uncheck the equations passed to the request
-	clonedState.value.equations.forEach((eq) => {
-		if (equationsText.includes(eq.asset.text)) {
-			eq.includeInProcess = false;
-		}
-	});
-	// Replace the unchecked equations with the cleaned equations
-	clonedState.value.equations.push(
-		...cleanedEquations.map((equation, index) => ({
-			name: `Equation ${clonedState.value.equations.length + index}`,
-			includeInProcess: true,
-			asset: { text: equation, isEditedByAI: true }
-		}))
-	);
+	// If the equations were cleaned that means new equations were added so uncheck the old ones and check the new ones
+	if (wasCleaned) {
+		// Uncheck the equations passed to the request
+		clonedState.value.equations.forEach((eq) => {
+			if (equationsText.includes(eq.asset.text)) {
+				eq.includeInProcess = false;
+			}
+		});
+		// Replace the unchecked equations with the cleaned equations
+		clonedState.value.equations.push(
+			...cleanedEquations.map((equation, index) => ({
+				name: `Equation ${clonedState.value.equations.length + index}`,
+				includeInProcess: true,
+				asset: { text: equation, isEditedByAI: true }
+			}))
+		);
+	}
 	emit('append-output', {
 		label: `Output - ${props.node.outputs.length + 1}`,
 		state: cloneDeep(clonedState.value),

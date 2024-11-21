@@ -24,9 +24,14 @@ export interface EquationsToAMRRequest {
  * @param equations string[] - list of LaTeX or mathml strings representing a model
  * @return {Promise<string[]>}
  */
-export const getCleanedEquations = async (equations: string[]): Promise<string[] | null> => {
+export const getCleanedEquations = async (
+	equations: string[]
+): Promise<{ cleanedEquations: string[]; wasCleaned: boolean } | null> => {
 	try {
-		const response = await API.post<string[]>(`/knowledge/clean-equations`, equations);
+		const response = await API.post<{ cleanedEquations: string[]; wasCleaned: boolean }>(
+			`/knowledge/clean-equations`,
+			equations
+		);
 		return response.data ?? null;
 	} catch (error: unknown) {
 		logger.error(error, { showToast: false });
