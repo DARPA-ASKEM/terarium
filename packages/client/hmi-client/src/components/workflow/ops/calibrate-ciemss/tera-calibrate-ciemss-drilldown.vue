@@ -226,7 +226,6 @@
 			<tera-drilldown-section v-if="showOutputSection">
 				<template #header-controls-left>
 					<h5 v-if="configuredModelConfig?.name" class="ml-3">{{ configuredModelConfig.name }}</h5>
-					<p class="ml-3" v-else>No output to show</p>
 				</template>
 				<template #header-controls-right>
 					<Button
@@ -667,7 +666,11 @@ const mappingDropdownPlaceholder = computed(() => {
 });
 
 const showOutputSection = computed(
-	() => lossValues.value.length > 0 || isLoading.value || !_.isEmpty(props.node.state?.errorMessage?.traceback)
+	() =>
+		lossValues.value.length > 0 ||
+		isLoading.value ||
+		!_.isEmpty(props.node.state?.errorMessage?.traceback) ||
+		selectedOutputId.value
 );
 
 const updateState = () => {
