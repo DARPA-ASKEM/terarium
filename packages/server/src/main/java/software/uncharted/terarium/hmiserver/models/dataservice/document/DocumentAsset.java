@@ -113,6 +113,7 @@ public class DocumentAsset extends TerariumAsset {
 		super.cloneSuperFields(clone);
 
 		clone.documentUrl = this.documentUrl;
+		clone.thumbnail = this.thumbnail;
 
 		if (this.metadata != null) {
 			clone.metadata = new HashMap<>();
