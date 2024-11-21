@@ -105,6 +105,7 @@ public class TaskService {
 				.setAdditionalProperties(getAdditionalProperties())
 				.setStdout(stdout)
 				.setStderr(stderr)
+				.setRoutingKey(getRoutingKey())
 				.setRequestSHA256(getSHA256());
 		}
 	}
@@ -165,6 +166,11 @@ public class TaskService {
 	private final Map<String, TaskResponseHandler> responseHandlers = new ConcurrentHashMap<>();
 
 	private final RedissonClient redissonClient;
+
+	@Value("${terarium.taskrunner.deploymentRoutingKey:default}")
+	private String deploymentRoutingKey;
+
+	private final String instanceRoutingKey = UUID.randomUUID().toString();
 
 	private RMapCache<String, TaskResponse> responseCache;
 	private final Map<UUID, CompletableTaskFuture> futures = new ConcurrentHashMap<>();
@@ -264,14 +270,6 @@ public class TaskService {
 		rabbitAdmin.deleteQueue(queueName);
 	}
 
-	private void convertAndSend(final TaskType requestType, final String queue, final String msg) {
-		RabbitAdmin rabbitAdmin = rabbitAdmins.get(requestType.toString());
-		if (rabbitAdmin == null) {
-			rabbitAdmin = rabbitAdmins.get("default");
-		}
-		rabbitAdmin.getRabbitTemplate().convertAndSend(queue, msg);
-	}
-
 	private void convertAndSend(
 		final TaskType requestType,
 		final String exchange,
@@ -312,7 +310,7 @@ public class TaskService {
 				autoDelete = "false",
 				type = ExchangeTypes.DIRECT
 			),
-			key = ""
+			key = "${terarium.taskrunner.deploymentRoutingKey}"
 		),
 		concurrency = "1"
 	)
@@ -408,7 +406,7 @@ public class TaskService {
 			rabbitAdmin.declareQueue(queue);
 
 			// Bind the queue to the exchange with a routing key
-			final Binding binding = BindingBuilder.bind(queue).to(exchange).with("");
+			final Binding binding = BindingBuilder.bind(queue).to(exchange).with(instanceRoutingKey);
 			rabbitAdmin.declareBinding(binding);
 
 			final DirectMessageListenerContainer container = new DirectMessageListenerContainer(
@@ -601,7 +599,7 @@ public class TaskService {
 			rabbitAdmins
 				.get("default")
 				.getRabbitTemplate()
-				.convertAndSend(TASK_RUNNER_RESPONSE_BROADCAST_EXCHANGE, "", jsonStr);
+				.convertAndSend(TASK_RUNNER_RESPONSE_BROADCAST_EXCHANGE, deploymentRoutingKey, jsonStr);
 		} catch (final JsonProcessingException e) {
 			log.error("Error serializing handler error response", e);
 		}
@@ -639,6 +637,7 @@ public class TaskService {
 		}
 
 		final TaskRequestWithId req = new TaskRequestWithId(r);
+		req.setRoutingKey(instanceRoutingKey);
 
 		// create sha256 hash of the request
 		final String hash = req.getSHA256();
@@ -701,14 +700,19 @@ public class TaskService {
 		// cancellation can be send before the request is consumed on the other end if
 		// there is contention. We need this queue to exist to hold the message.
 		final String queueName = req.getId().toString();
-		final String routingKey = req.getId().toString();
-		declareAndBindTransientQueueWithRoutingKey(req.getType(), TASK_RUNNER_CANCELLATION_EXCHANGE, queueName, routingKey);
+		final String cancellationRoutingKey = req.getId().toString();
+		declareAndBindTransientQueueWithRoutingKey(
+			req.getType(),
+			TASK_RUNNER_CANCELLATION_EXCHANGE,
+			queueName,
+			cancellationRoutingKey
+		);
 
 		try {
 			// send the request to the task runner
 			log.info("Dispatching request for task id: {}", req.getId());
 			final String jsonStr = objectMapper.writeValueAsString(req);
-			convertAndSend(r.getType(), requestQueue, jsonStr);
+			convertAndSend(r.getType(), requestQueue, r.getRoutingKey(), jsonStr);
 
 			// publish the queued task response
 			final TaskResponse queuedResponse = req.createResponse(TaskStatus.QUEUED, "", "");
