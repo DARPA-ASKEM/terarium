@@ -80,6 +80,7 @@
 										:placeholder="mappingDropdownPlaceholder"
 										v-model="data[field]"
 										:options="datasetColumns?.map((ele) => ele.name)"
+										@change="updateMapping()"
 									/>
 								</template>
 							</Column>
