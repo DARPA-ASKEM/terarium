@@ -2,6 +2,7 @@
 	<!-- add 'debug-mode' to debug this -->
 	<tera-infinite-canvas
 		v-if="!isWorkflowLoading"
+		ref="canvasRef"
 		@click="onCanvasClick()"
 		@contextmenu="toggleContextMenu"
 		@save-transform="saveTransform"
@@ -310,6 +311,7 @@ const toggleOptionsMenu = (event: MouseEvent) => {
 	optionsMenu.value.toggle(event);
 };
 const teraOperatorRefs = ref();
+const canvasRef = ref();
 
 async function updateWorkflowName() {
 	const workflowClone = cloneDeep(wf.value.dump());
@@ -627,6 +629,13 @@ const addComponentMenu = ref();
 const showAddComponentMenu = () => {
 	const el = document.querySelector('#add-component-btn');
 	const coords = el?.getBoundingClientRect();
+
+	// Places new operators roughly in the centre
+	if (canvasRef.value) {
+		const box = (canvasRef.value.$el as HTMLDivElement).getBoundingClientRect();
+		newNodePosition.x = (Math.random() * 50 + 0.5 * box.width - canvasTransform.x) / canvasTransform.k;
+		newNodePosition.y = (Math.random() * 50 + 0.5 * box.height - canvasTransform.y) / canvasTransform.k;
+	}
 
 	if (coords) {
 		const event = new PointerEvent('click', {
