@@ -39,7 +39,7 @@
 					<p>
 						The objective is the
 						<template v-if="showNewValueOptions">
-							<span>value closet to the</span>
+							<span>value closest to the</span>
 							<Dropdown
 								class="toolbar-button ml-1 mr-1"
 								v-model="knobs.objectiveFunctionOption"
