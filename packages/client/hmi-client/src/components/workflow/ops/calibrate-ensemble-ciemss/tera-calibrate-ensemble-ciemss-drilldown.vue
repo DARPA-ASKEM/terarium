@@ -549,7 +549,7 @@ const {
 const { generateAnnotation, getChartAnnotationsByChartId, useEnsembleVariableCharts } = useCharts(
 	props.node.id,
 	null,
-	null,
+	allModelConfigurations,
 	chartData,
 	chartSize,
 	null,

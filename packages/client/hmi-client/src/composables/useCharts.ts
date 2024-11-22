@@ -25,6 +25,7 @@ import {
 	isSimulateEnsembleMappingRow,
 	SimulateEnsembleMappingRow
 } from '@/components/workflow/ops/simulate-ensemble-ciemss/simulate-ensemble-ciemss-operation';
+import { getModelConfigName } from '@/services/model-configurations';
 import { useChartAnnotations } from './useChartAnnotations';
 
 const BASE_GREY = '#AAB3C6';
@@ -68,7 +69,7 @@ const getVariableNameModelPrefix = (modelId: string) => (modelId ? `model_0/` : 
  *
  * @param nodeId - The ID of the node.
  * @param model - The model reference.
- * @param modelConfig - The model configuration reference.
+ * @param modelConfig - The model configurations reference. For ensemble operators, this can be an array of model configurations.
  * @param chartData - The chart data reference.
  * @param chartSize - The chart size reference.
  * @param interventions - Optional reference to interventions.
@@ -78,7 +79,7 @@ const getVariableNameModelPrefix = (modelId: string) => (modelId ? `model_0/` : 
 export function useCharts(
 	nodeId: string,
 	model: Ref<Model | null> | null,
-	modelConfig: Ref<ModelConfiguration | null> | null,
+	modelConfig: Ref<ModelConfiguration | ModelConfiguration[] | null> | null,
 	chartData: Ref<ChartData | null>,
 	chartSize: Ref<{ width: number; height: number }>,
 	interventions: Ref<Intervention[]> | null,
@@ -101,7 +102,7 @@ export function useCharts(
 			: (modelVarToDatasetVar(mapping?.value ?? [], ensembleVariableName) as string); // ensemble variable
 
 		const options: ForecastChartOptions = {
-			title: modelConfigId || ensembleVariableName,
+			title: getModelConfigName(<ModelConfiguration[]>modelConfig?.value ?? [], modelConfigId) || ensembleVariableName,
 			legend: true,
 			width: chartSize.value.width,
 			height: chartSize.value.height,
@@ -136,7 +137,7 @@ export function useCharts(
 	const createForecastChartOptions = (setting: ChartSetting) => {
 		if (isChartSettingEnsembleVariable(setting)) return createEnsembleVariableChartOptions(setting);
 		const variables = setting.selectedVariables;
-		const dateOptions = getVegaDateOptions(model?.value ?? null, modelConfig?.value || null);
+		const dateOptions = getVegaDateOptions(model?.value ?? null, <ModelConfiguration>modelConfig?.value || null);
 		const options: ForecastChartOptions = {
 			title: '',
 			legend: true,

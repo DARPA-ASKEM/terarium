@@ -272,3 +272,9 @@ export function getModelInitials(modelConfiguration, source, amrInitials) {
 		};
 	});
 }
+
+// Get the model configuration name for the given model configuration id
+export function getModelConfigName(modelConfigs: ModelConfiguration[], configId: string) {
+	const modelConfig = modelConfigs.find((d) => d.id === configId);
+	return modelConfig?.name ?? '';
+}
