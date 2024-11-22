@@ -712,12 +712,12 @@ public class TaskService {
 			// send the request to the task runner
 			log.info("Dispatching request for task id: {}", req.getId());
 			final String jsonStr = objectMapper.writeValueAsString(req);
-			convertAndSend(r.getType(), requestQueue, r.getRoutingKey(), jsonStr);
+			convertAndSend(r.getType(), requestQueue, "", jsonStr);
 
 			// publish the queued task response
 			final TaskResponse queuedResponse = req.createResponse(TaskStatus.QUEUED, "", "");
 			final String respJsonStr = objectMapper.writeValueAsString(queuedResponse);
-			convertAndSend(r.getType(), TASK_RUNNER_RESPONSE_EXCHANGE, "", respJsonStr);
+			convertAndSend(r.getType(), TASK_RUNNER_RESPONSE_EXCHANGE, r.getRoutingKey(), respJsonStr);
 
 			// create and return the future
 			final CompletableTaskFuture future = new CompletableTaskFuture(req.getId());
