@@ -224,7 +224,6 @@ import * as CalibrateCiemssOp from '@/components/workflow/ops/calibrate-ciemss/m
 import * as CalibrateEnsembleCiemssOp from '@/components/workflow/ops/calibrate-ensemble-ciemss/mod';
 import * as DatasetTransformerOp from '@/components/workflow/ops/dataset-transformer/mod';
 import * as SubsetDataOp from '@/components/workflow/ops/subset-data/mod';
-import * as CodeAssetOp from '@/components/workflow/ops/code-asset/mod';
 import * as OptimizeCiemssOp from '@/components/workflow/ops/optimize-ciemss/mod';
 import * as DocumentOp from '@/components/workflow/ops/document/mod';
 import * as ModelFromDocumentOp from '@/components/workflow/ops/model-from-equations/mod';
@@ -250,7 +249,6 @@ registry.registerOp(CalibrateEnsembleCiemssOp);
 registry.registerOp(ModelConfigOp);
 registry.registerOp(CalibrateCiemssOp);
 registry.registerOp(DatasetTransformerOp);
-registry.registerOp(CodeAssetOp);
 registry.registerOp(SubsetDataOp);
 registry.registerOp(OptimizeCiemssOp);
 registry.registerOp(DocumentOp);
@@ -661,10 +659,6 @@ function onDrop(event: DragEvent) {
 			case AssetType.Dataset:
 				operation = DatasetOp.operation;
 				state = { datasetId: assetId };
-				break;
-			case AssetType.Code:
-				operation = CodeAssetOp.operation;
-				state = { codeAssetId: assetId };
 				break;
 			case AssetType.Document:
 				operation = DocumentOp.operation;
