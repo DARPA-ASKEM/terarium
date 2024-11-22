@@ -509,10 +509,11 @@ const {
 	modelConfiguration,
 	preparedChartInputs,
 	chartSize,
-	computed(() => interventionPolicy.value?.interventions ?? [])
+	computed(() => interventionPolicy.value?.interventions ?? []),
+	null
 );
 const interventionCharts = useInterventionCharts(selectedInterventionSettings, true);
-const variableCharts = useVariableCharts(selectedVariableSettings, null, null);
+const variableCharts = useVariableCharts(selectedVariableSettings, null);
 const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
 
 const updateState = () => {
