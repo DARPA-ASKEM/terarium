@@ -2,13 +2,8 @@ import _ from 'lodash';
 import { DataseriesConfig, ChartConfig } from '@/types/SimulateConfig';
 import type { CsvAsset, TimeSpan } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
-import { isCalibrateMap, type CalibrateMap } from '@/services/calibrate-workflow';
+import { type CalibrateMap } from '@/services/calibrate-workflow';
 import { useProjects } from '@/composables/project';
-import {
-	CalibrateEnsembleMappingRow,
-	isCalibrateEnsembleMappingRow
-} from './ops/calibrate-ensemble-ciemss/calibrate-ensemble-ciemss-operation';
-import { SimulateEnsembleMappingRow } from './ops/simulate-ensemble-ciemss/simulate-ensemble-ciemss-operation';
 
 export const drilldownChartSize = (element: HTMLElement | null) => {
 	if (!element) return { width: 100, height: 270 };
@@ -143,23 +138,3 @@ export const getGraphDataFromDatasetCSV = (
 export function getActiveOutput<S>(node: WorkflowNode<S>) {
 	return node.outputs.find((output) => output.id === node.active);
 }
-
-export type VariableMappings = CalibrateMap[] | CalibrateEnsembleMappingRow[] | SimulateEnsembleMappingRow[];
-
-/**
- * Converts a model variable name to a dataset variable name based on the provided mapping.
- *
- * @param {VariableMappings} mapping - The mapping object that contains the variable mappings.
- * @param {string} modelVariable - The name of the model variable to be converted.
- * @returns {string} - The corresponding dataset variable name, or an empty string if the mapping is empty or not found.
- */
-export const modelVarToDatasetVar = (mapping: VariableMappings, modelVariable: string) => {
-	if (_.isEmpty(mapping)) return '';
-	if (isCalibrateMap(mapping[0])) {
-		return (mapping as CalibrateMap[]).find((d) => d.modelVariable === modelVariable)?.datasetVariable ?? '';
-	}
-	if (isCalibrateEnsembleMappingRow(mapping[0])) {
-		return (mapping as CalibrateEnsembleMappingRow[]).find((d) => d.newName === modelVariable)?.datasetMapping ?? '';
-	}
-	return '';
-};

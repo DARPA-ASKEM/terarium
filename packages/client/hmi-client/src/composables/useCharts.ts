@@ -17,11 +17,11 @@ import { displayNumber } from '@/utils/number';
 import { getUnitsFromModelParts, getVegaDateOptions } from '@/services/model';
 import { CalibrateMap, isCalibrateMap } from '@/services/calibrate-workflow';
 import { isChartSettingEnsembleVariable } from '@/services/chart-settings';
-import { CalibrateEnsembleMappingRow } from '@/components/workflow/ops/calibrate-ensemble-ciemss/calibrate-ensemble-ciemss-operation';
 import {
-	isSimulateEnsembleMappingRow,
-	SimulateEnsembleMappingRow
-} from '@/components/workflow/ops/simulate-ensemble-ciemss/simulate-ensemble-ciemss-operation';
+	CalibrateEnsembleMappingRow,
+	isCalibrateEnsembleMappingRow
+} from '@/components/workflow/ops/calibrate-ensemble-ciemss/calibrate-ensemble-ciemss-operation';
+import { SimulateEnsembleMappingRow } from '@/components/workflow/ops/simulate-ensemble-ciemss/simulate-ensemble-ciemss-operation';
 import { useChartAnnotations } from './useChartAnnotations';
 
 export interface ChartData {
@@ -30,15 +30,25 @@ export interface ChartData {
 	pyciemssMap: Record<string, string>;
 	translationMap: Record<string, string>;
 }
+
 export type VariableMappings = CalibrateMap[] | CalibrateEnsembleMappingRow[] | SimulateEnsembleMappingRow[];
 
-const modelVarToDatasetVar = (mapping: VariableMappings, modelVariable: string) => {
-	if (_.isEmpty(mapping) || isSimulateEnsembleMappingRow(mapping[0])) return '';
-	const found = (mapping as CalibrateMap[] | CalibrateEnsembleMappingRow[]).find((d) =>
-		isCalibrateMap(d) ? d.modelVariable === modelVariable : d.newName === modelVariable
-	);
-	if (!found) return '';
-	return isCalibrateMap(found) ? found.datasetVariable : found.datasetMapping;
+/**
+ * Converts a model variable name to a dataset variable name based on the provided mapping.
+ *
+ * @param {VariableMappings} mapping - The mapping object that contains the variable mappings.
+ * @param {string} modelVariable - The name of the model variable to be converted.
+ * @returns {string} - The corresponding dataset variable name, or an empty string if the mapping is empty or not found.
+ */
+export const modelVarToDatasetVar = (mapping: VariableMappings, modelVariable: string) => {
+	if (_.isEmpty(mapping)) return '';
+	if (isCalibrateMap(mapping[0])) {
+		return (mapping as CalibrateMap[]).find((d) => d.modelVariable === modelVariable)?.datasetVariable ?? '';
+	}
+	if (isCalibrateEnsembleMappingRow(mapping[0])) {
+		return (mapping as CalibrateEnsembleMappingRow[]).find((d) => d.newName === modelVariable)?.datasetMapping ?? '';
+	}
+	return '';
 };
 
 /**
