@@ -20,11 +20,11 @@ import { displayNumber } from '@/utils/number';
 import { getUnitsFromModelParts, getVegaDateOptions } from '@/services/model';
 import { CalibrateMap, isCalibrateMap } from '@/services/calibrate-workflow';
 import { isChartSettingEnsembleVariable } from '@/services/chart-settings';
-import { CalibrateEnsembleMappingRow } from '@/components/workflow/ops/calibrate-ensemble-ciemss/calibrate-ensemble-ciemss-operation';
 import {
-	isSimulateEnsembleMappingRow,
-	SimulateEnsembleMappingRow
-} from '@/components/workflow/ops/simulate-ensemble-ciemss/simulate-ensemble-ciemss-operation';
+	CalibrateEnsembleMappingRow,
+	isCalibrateEnsembleMappingRow
+} from '@/components/workflow/ops/calibrate-ensemble-ciemss/calibrate-ensemble-ciemss-operation';
+import { SimulateEnsembleMappingRow } from '@/components/workflow/ops/simulate-ensemble-ciemss/simulate-ensemble-ciemss-operation';
 import { getModelConfigName } from '@/services/model-configurations';
 import { useChartAnnotations } from './useChartAnnotations';
 
@@ -40,15 +40,6 @@ export interface ChartData {
 export type VariableMappings = CalibrateMap[] | EnsembleVariableMappings;
 export type EnsembleVariableMappings = CalibrateEnsembleMappingRow[] | SimulateEnsembleMappingRow[];
 
-const modelVarToDatasetVar = (mapping: VariableMappings, modelVariable: string) => {
-	if (_.isEmpty(mapping) || isSimulateEnsembleMappingRow(mapping[0])) return '';
-	const found = (mapping as CalibrateMap[] | CalibrateEnsembleMappingRow[]).find((d) =>
-		isCalibrateMap(d) ? d.modelVariable === modelVariable : d.newName === modelVariable
-	);
-	if (!found) return '';
-	return isCalibrateMap(found) ? found.datasetVariable : found.datasetMapping;
-};
-
 // Get the model configuration id to variable name mappings for the given ensemble variable
 const getModelConfigMappings = (mapping: VariableMappings, ensembleVariableName: string) => {
 	const modelConfigMappings = (mapping as EnsembleVariableMappings).find(
@@ -63,6 +54,24 @@ const getModelConfigVariable = (mapping: VariableMappings, ensembleVariableName:
 
 // const getVariableNameModelPrifix = (modelId: string) => modelId ? `${modelId}/` : '';
 const getVariableNameModelPrefix = (modelId: string) => (modelId ? `model_0/` : '');
+
+/**
+ * Converts a model variable name to a dataset variable name based on the provided mapping.
+ *
+ * @param {VariableMappings} mapping - The mapping object that contains the variable mappings.
+ * @param {string} modelVariable - The name of the model variable to be converted.
+ * @returns {string} - The corresponding dataset variable name, or an empty string if the mapping is empty or not found.
+ */
+export const modelVarToDatasetVar = (mapping: VariableMappings, modelVariable: string) => {
+	if (_.isEmpty(mapping)) return '';
+	if (isCalibrateMap(mapping[0])) {
+		return (mapping as CalibrateMap[]).find((d) => d.modelVariable === modelVariable)?.datasetVariable ?? '';
+	}
+	if (isCalibrateEnsembleMappingRow(mapping[0])) {
+		return (mapping as CalibrateEnsembleMappingRow[]).find((d) => d.newName === modelVariable)?.datasetMapping ?? '';
+	}
+	return '';
+};
 
 /**
  * Composable to manage the creation and configuration of various types of charts used in operator nodes and drilldown.

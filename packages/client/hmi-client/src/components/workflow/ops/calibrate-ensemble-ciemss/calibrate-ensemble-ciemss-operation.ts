@@ -33,6 +33,8 @@ export interface CalibrateEnsembleMappingRow {
 	datasetMapping: string;
 	modelConfigurationMappings: { [key: string]: string };
 }
+export const isCalibrateEnsembleMappingRow = (obj: any): obj is CalibrateEnsembleMappingRow =>
+	obj.newName !== undefined && obj.datasetMapping !== undefined;
 
 export interface CalibrateEnsembleWeights {
 	[key: string]: number;
