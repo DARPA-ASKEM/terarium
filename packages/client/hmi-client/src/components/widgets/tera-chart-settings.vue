@@ -33,10 +33,10 @@
 				@update:model-value="toggleEnsembleChartOption('relativeToEnsemble', $event)"
 			/>
 			<tera-checkbox
-				v-if="ensembleChartOptions.showIndividualModelsWithWeight !== undefined"
+				v-if="isSimulateEnsembleSettings"
 				label="Show individual models with weights"
 				:disabled="selectedOptions.length === 0"
-				:model-value="ensembleChartOptions.showIndividualModelsWithWeight"
+				:model-value="Boolean(ensembleChartOptions.showIndividualModelsWithWeight)"
 				@update:model-value="toggleEnsembleChartOption('showIndividualModelsWithWeight', $event)"
 			/>
 		</template>
@@ -59,6 +59,7 @@ const props = defineProps<{
 	selectOptions: string[];
 	// Selected dropdown options
 	selectedOptions: string[];
+	isSimulateEnsembleSettings?: boolean;
 }>();
 const emits = defineEmits(['open', 'remove', 'selection-change', 'toggle-ensemble-variable-setting-option']);
 

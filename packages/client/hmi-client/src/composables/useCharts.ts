@@ -1,8 +1,11 @@
 import _ from 'lodash';
 import { mean, variance } from 'd3';
 import { computed, ComputedRef, Ref } from 'vue';
+import { VisualizationSpec } from 'vega-embed';
 import {
 	applyForecastChartAnnotations,
+	AUTOSIZE,
+	CATEGORICAL_SCHEME,
 	createErrorChart,
 	createForecastChart,
 	createHistogramChart,
@@ -24,13 +27,17 @@ import {
 } from '@/components/workflow/ops/simulate-ensemble-ciemss/simulate-ensemble-ciemss-operation';
 import { useChartAnnotations } from './useChartAnnotations';
 
+const BASE_GREY = '#AAB3C6';
+const PRIMARY_COLOR = CATEGORICAL_SCHEME[0];
+
 export interface ChartData {
 	result: DataArray;
 	resultSummary: DataArray;
 	pyciemssMap: Record<string, string>;
 	translationMap: Record<string, string>;
 }
-export type VariableMappings = CalibrateMap[] | CalibrateEnsembleMappingRow[] | SimulateEnsembleMappingRow[];
+export type VariableMappings = CalibrateMap[] | EnsembleVariableMappings;
+export type EnsembleVariableMappings = CalibrateEnsembleMappingRow[] | SimulateEnsembleMappingRow[];
 
 const modelVarToDatasetVar = (mapping: VariableMappings, modelVariable: string) => {
 	if (_.isEmpty(mapping) || isSimulateEnsembleMappingRow(mapping[0])) return '';
@@ -40,6 +47,21 @@ const modelVarToDatasetVar = (mapping: VariableMappings, modelVariable: string) 
 	if (!found) return '';
 	return isCalibrateMap(found) ? found.datasetVariable : found.datasetMapping;
 };
+
+// Get the model configuration id to variable name mappings for the given ensemble variable
+const getModelConfigMappings = (mapping: VariableMappings, ensembleVariableName: string) => {
+	const modelConfigMappings = (mapping as EnsembleVariableMappings).find(
+		(d) => d.newName === ensembleVariableName
+	)?.modelConfigurationMappings;
+	return modelConfigMappings ?? {};
+};
+
+// Get the model variable name for the corresponding model configuration and the ensemble variable name from the mapping
+const getModelConfigVariable = (mapping: VariableMappings, ensembleVariableName: string, modelConfigId: string) =>
+	getModelConfigMappings(mapping, ensembleVariableName)[modelConfigId] ?? '';
+
+// const getVariableNameModelPrifix = (modelId: string) => modelId ? `${modelId}/` : '';
+const getVariableNameModelPrefix = (modelId: string) => (modelId ? `model_0/` : '');
 
 /**
  * Composable to manage the creation and configuration of various types of charts used in operator nodes and drilldown.
@@ -70,32 +92,43 @@ export function useCharts(
 		return getUnitsFromModelParts(model.value)[paramId] || '';
 	};
 
-	const createEnsembleVariableChartOptions = (setting: ChartSettingEnsembleVariable) => {
+	const createEnsembleVariableChartOptions = (setting: ChartSettingEnsembleVariable, modelConfigId = '') => {
 		const ensembleVariableName = setting.selectedVariables[0];
-		const variable = modelVarToDatasetVar(mapping?.value ?? [], ensembleVariableName) as string;
+		// If calibrate and modelConfigId is empty, build ensemble variable chart.
+		// If simulation and modelConfigId is empty, show all variables in one chart.
+		const variable = modelConfigId
+			? getModelConfigVariable(mapping?.value ?? [], ensembleVariableName, modelConfigId) // model variable
+			: (modelVarToDatasetVar(mapping?.value ?? [], ensembleVariableName) as string); // ensemble variable
+
 		const options: ForecastChartOptions = {
-			title: ensembleVariableName,
+			title: modelConfigId || ensembleVariableName,
 			legend: true,
 			width: chartSize.value.width,
 			height: chartSize.value.height,
 			translationMap: {},
 			xAxisTitle: '',
 			yAxisTitle: '',
-			colorscheme: ['#AAB3C6', '#1B8073']
+			autosize: AUTOSIZE.FIT,
+			colorscheme: [BASE_GREY, PRIMARY_COLOR]
 		};
+
+		// TODO: 1. Multi variable, combine all variables in one chart and use loops to build layer variables 2. Simulation, no pre data.
+		// Observations label
+
+		const varNameKey = `${getVariableNameModelPrefix(modelConfigId)}${variable}`;
 		const sampleLayerVariables = [
-			`${chartData.value?.pyciemssMap[variable]}:pre`,
-			`${chartData.value?.pyciemssMap[variable]}`
+			`${chartData.value?.pyciemssMap[varNameKey]}:pre`,
+			`${chartData.value?.pyciemssMap[varNameKey]}`
 		];
 		const statLayerVariables = [
-			`${chartData.value?.pyciemssMap[variable]}_mean:pre`,
-			`${chartData.value?.pyciemssMap[variable]}_mean`
+			`${chartData.value?.pyciemssMap[varNameKey]}_mean:pre`,
+			`${chartData.value?.pyciemssMap[varNameKey]}_mean`
 		];
 		// TODO: Since translationMap differes based on the chart configs. Build translationMap outside when building chartData and pass along with the chartData.
 		options.translationMap = {
-			[statLayerVariables[0]]: `Ensemble before calibration`,
-			[statLayerVariables[1]]: `Ensemble after calibration`,
-			[variable]: 'Observations'
+			[statLayerVariables[0]]: `${modelConfigId ? ensembleVariableName : 'Ensemble'} before calibration`,
+			[statLayerVariables[1]]: `${modelConfigId ? ensembleVariableName : 'Ensemble'} after calibration`,
+			[varNameKey]: 'Observations'
 		};
 		return { statLayerVariables, sampleLayerVariables, options };
 	};
@@ -113,7 +146,7 @@ export function useCharts(
 			xAxisTitle: getUnit('_time') || 'Time',
 			yAxisTitle: _.uniq(variables.map(getUnit).filter((v) => !!v)).join(',') || '',
 			dateOptions,
-			colorscheme: ['#AAB3C6', '#1B8073']
+			colorscheme: [BASE_GREY, PRIMARY_COLOR]
 		};
 
 		let sampleLayerVariables = [
@@ -147,7 +180,7 @@ export function useCharts(
 	// Create intervention charts based on chart settings
 	const useInterventionCharts = (chartSettings: ComputedRef<ChartSetting[]>, showSamples = false) => {
 		const interventionCharts = computed(() => {
-			const charts: Record<string, any> = {};
+			const charts: Record<string, VisualizationSpec> = {};
 			if (!chartData.value) return charts;
 			const { resultSummary, result } = chartData.value;
 			// intervention chart spec
@@ -188,7 +221,7 @@ export function useCharts(
 		groundTruthData: ComputedRef<DataArray> | null
 	) => {
 		const variableCharts = computed(() => {
-			const charts: Record<string, any> = {};
+			const charts: Record<string, VisualizationSpec> = {};
 			if (!chartData.value) return charts;
 			const { result, resultSummary } = chartData.value;
 
@@ -234,7 +267,7 @@ export function useCharts(
 	// Create comparison charts based on chart settings
 	const useComparisonCharts = (chartSettings: ComputedRef<ChartSetting[]>) => {
 		const comparisonCharts = computed(() => {
-			const charts: Record<string, any> = {};
+			const charts: Record<string, VisualizationSpec> = {};
 			if (!chartData.value) return charts;
 			const { result, resultSummary } = chartData.value;
 			chartSettings.value.forEach((setting) => {
@@ -279,36 +312,77 @@ export function useCharts(
 		groundTruthData: ComputedRef<DataArray> | null
 	) => {
 		const calibrateEnsembleVariableCharts = computed(() => {
-			const charts: Record<string, any> = {};
+			const charts: Record<string, VisualizationSpec[]> = {};
 			if (!chartData.value) return charts;
 			const { result, resultSummary } = chartData.value;
 			chartSettings.value.forEach((setting) => {
-				const { sampleLayerVariables, statLayerVariables, options } = createForecastChartOptions(setting);
 				const annotations = getChartAnnotationsByChartId(setting.id);
 				const datasetVar = modelVarToDatasetVar(mapping?.value || [], setting.selectedVariables[0]);
-				const chart = applyForecastChartAnnotations(
-					createForecastChart(
-						{
-							data: result,
-							variables: sampleLayerVariables,
-							timeField: 'timepoint_id',
-							groupField: 'sample_id'
-						},
-						{
-							data: resultSummary,
-							variables: statLayerVariables,
-							timeField: 'timepoint_id'
-						},
-						groundTruthData && {
-							data: groundTruthData.value,
-							variables: datasetVar ? [datasetVar] : [],
-							timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
-						},
-						options
-					),
-					annotations
-				);
-				charts[setting.id] = chart;
+				if (setting.showIndividualModels) {
+					// Build small multiples charts for each model configuration variable
+					const modelConfigIds = Object.keys(
+						getModelConfigMappings(mapping?.value || [], setting.selectedVariables[0])
+					);
+					const smallMultiplesCharts = ['', ...modelConfigIds].map((modelConfigId, index) => {
+						const { sampleLayerVariables, statLayerVariables, options } = createEnsembleVariableChartOptions(
+							setting,
+							modelConfigId
+						);
+						options.width = chartSize.value.width / (modelConfigIds.length + 1);
+						options.legendProperties = { direction: 'vertical', columns: 1, labelLimit: options.width };
+						options.colorscheme = [BASE_GREY, CATEGORICAL_SCHEME[index % CATEGORICAL_SCHEME.length]];
+						const smallChart = applyForecastChartAnnotations(
+							createForecastChart(
+								{
+									data: result,
+									variables: sampleLayerVariables,
+									timeField: 'timepoint_id',
+									groupField: 'sample_id'
+								},
+								{
+									data: resultSummary,
+									variables: statLayerVariables,
+									timeField: 'timepoint_id'
+								},
+								groundTruthData && {
+									data: groundTruthData.value,
+									variables: datasetVar ? [datasetVar] : [],
+									timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
+								},
+								options
+							),
+							annotations
+						);
+						return smallChart;
+					});
+					charts[setting.id] = smallMultiplesCharts;
+				} else {
+					// Build a single ensemble chart
+					const { sampleLayerVariables, statLayerVariables, options } = createForecastChartOptions(setting);
+					const chart = applyForecastChartAnnotations(
+						createForecastChart(
+							{
+								data: result,
+								variables: sampleLayerVariables,
+								timeField: 'timepoint_id',
+								groupField: 'sample_id'
+							},
+							{
+								data: resultSummary,
+								variables: statLayerVariables,
+								timeField: 'timepoint_id'
+							},
+							groundTruthData && {
+								data: groundTruthData.value,
+								variables: datasetVar ? [datasetVar] : [],
+								timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
+							},
+							options
+						),
+						annotations
+					);
+					charts[setting.id] = [chart];
+				}
 			});
 			return charts;
 		});
@@ -384,8 +458,8 @@ export function useCharts(
 					yAxisTitle: 'Count',
 					maxBins: 10,
 					variables: [
-						{ field: beforeFieldName, label: labelBefore, width: 54, color: '#AAB3C6' },
-						{ field: fieldName, label: labelAfter, width: 24, color: '#1B8073' }
+						{ field: beforeFieldName, label: labelBefore, width: 54, color: BASE_GREY },
+						{ field: fieldName, label: labelAfter, width: 24, color: PRIMARY_COLOR }
 					]
 				});
 				const toDisplayNumber = (num?: number) => (num ? displayNumber(num.toString()) : '');

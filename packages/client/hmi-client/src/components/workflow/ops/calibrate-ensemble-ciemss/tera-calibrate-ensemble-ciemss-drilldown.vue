@@ -190,11 +190,12 @@
 		</section>
 		<template #preview>
 			<tera-drilldown-section>
-				<section class="pb-3" ref="outputPanel">
+				<section class="pb-3">
 					<Accordion multiple :active-index="[0, 1]" class="px-2">
 						<!-- <AccordionTab header="Summary">
 						</AccordionTab> -->
 						<AccordionTab header="Loss">
+							<div ref="chartWidth"></div>
 							<vega-chart
 								v-if="!_.isEmpty(lossValues)"
 								expandable
@@ -205,13 +206,16 @@
 						</AccordionTab>
 						<template v-if="!isRunInProgress">
 							<AccordionTab header="Ensemble variables over time">
-								<template v-for="setting of selectedEnsembleVariableSettings" :key="setting.id">
+								<div ref="outputPanel"></div>
+								<div class="flex flex-row" v-for="setting of selectedEnsembleVariableSettings" :key="setting.id">
 									<vega-chart
+										v-for="(spec, index) of ensembleVariableCharts[setting.id]"
+										:key="index"
 										expandable
 										:are-embed-actions-visible="true"
-										:visualization-spec="ensembleVariableCharts[setting.id]"
+										:visualization-spec="spec"
 									/>
-								</template>
+								</div>
 							</AccordionTab>
 						</template>
 					</Accordion>
@@ -527,11 +531,11 @@ onMounted(async () => {
 });
 
 // -------------- Charts && chart settings ----------------
-const outputPanel = ref(null);
+const chartWidth = ref(null);
 const isOutputSettingsPanelOpen = ref(false);
 const chartData = ref<ChartData | null>(null);
 const groundTruthData = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
-const chartSize = useDrilldownChartSize(outputPanel);
+const chartSize = useDrilldownChartSize(chartWidth);
 const selectedOutputMapping = computed(() => getSelectedOutputEnsembleMapping(props.node));
 const {
 	activeChartSettings,
