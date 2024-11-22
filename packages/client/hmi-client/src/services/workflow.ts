@@ -902,10 +902,6 @@ export function cascadeInvalidateDownstream(
 // Operator
 ///
 
-export function getActiveOutput(node: WorkflowNode<any>) {
-	return node.outputs.find((o) => o.id === node.active);
-}
-
 /**
  * Update the output of a node referenced by the output id
  * @param node

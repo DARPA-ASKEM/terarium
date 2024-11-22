@@ -519,7 +519,7 @@ import {
 	Model
 } from '@/types/Types';
 import { CiemssPresetTypes, DrilldownTabs, ChartSettingType } from '@/types/common';
-import { getTimespan, nodeMetadata } from '@/components/workflow/util';
+import { getActiveOutput, getTimespan, nodeMetadata } from '@/components/workflow/util';
 import { useToastService } from '@/services/toast';
 import { autoCalibrationMapping } from '@/services/concept';
 import {
@@ -549,13 +549,7 @@ import { getCalendarSettingsFromModel } from '@/services/model';
 import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
-import {
-	renameFnGenerator,
-	getErrorData,
-	usePreparedChartInputs,
-	getSelectedOutputMapping,
-	getSelectedOutput
-} from './calibrate-utils';
+import { renameFnGenerator, getErrorData, usePreparedChartInputs, getSelectedOutputMapping } from './calibrate-utils';
 
 const isSidebarOpen = ref(true);
 
@@ -732,7 +726,7 @@ const groupedInterventionOutputs = computed(() =>
 );
 
 const selectedOutputMapping = computed(() => getSelectedOutputMapping(props.node));
-const selectedOutputTimestampColName = computed(() => getSelectedOutput(props.node)?.state?.timestampColName ?? '');
+const selectedOutputTimestampColName = computed(() => getActiveOutput(props.node)?.state?.timestampColName ?? '');
 
 const errorData = computed<DataArray>(() =>
 	getErrorData(
@@ -779,17 +773,14 @@ const {
 	modelConfig,
 	preparedChartInputs,
 	chartSize,
-	computed(() => interventionPolicy.value?.interventions ?? [])
+	computed(() => interventionPolicy.value?.interventions ?? []),
+	selectedOutputMapping
 );
 const parameterDistributionCharts = useParameterDistributionCharts(selectedParameterSettings);
 const interventionCharts = useInterventionCharts(selectedInterventionSettings);
-const variableCharts = useVariableCharts(selectedVariableSettings, groundTruthData, selectedOutputMapping);
+const variableCharts = useVariableCharts(selectedVariableSettings, groundTruthData);
 const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
-const { errorChart, onExpandErrorChart } = useErrorChart(
-	selectedErrorVariableSettings,
-	errorData,
-	selectedOutputMapping
-);
+const { errorChart, onExpandErrorChart } = useErrorChart(selectedErrorVariableSettings, errorData);
 
 const LOSS_CHART_DATA_SOURCE = 'lossData'; // Name of the streaming data source
 const lossChartRef = ref<InstanceType<typeof VegaChart>>();
