@@ -84,9 +84,10 @@ const { useVariableCharts } = useCharts(
 	modelConfiguration,
 	preparedChartInputs,
 	toRef({ width: 180, height: 120 }),
-	undefined
+	null,
+	null
 );
-const variableCharts = useVariableCharts(selectedVariableSettings, null, null);
+const variableCharts = useVariableCharts(selectedVariableSettings, null);
 
 const showSpinner = computed<boolean>(
 	() =>
