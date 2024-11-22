@@ -152,6 +152,10 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 	 */
 	@Observed(name = "function_profile")
 	public static void addDatasetColumns(final Dataset dataset, final String fileName, final List<String> headers) {
+		// If the columns are already set, don't add them again (happens when transferring a dataset between projects).
+		if (dataset.getColumns() != null && !dataset.getColumns().isEmpty()) {
+			return;
+		}
 		if (dataset.getColumns() == null) {
 			dataset.setColumns(new ArrayList<>());
 		}
