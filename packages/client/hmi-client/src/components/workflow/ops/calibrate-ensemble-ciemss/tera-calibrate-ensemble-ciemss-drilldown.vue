@@ -324,7 +324,12 @@ const isSidebarOpen = ref(true);
 const selectedOutputId = ref<string>();
 const showSpinner = ref(false);
 const isRunDisabled = computed(() => !knobs.value.ensembleMapping[0] || !datasetId.value);
-const cancelRunId = computed(() => props.node.state.inProgressForecastId || props.node.state.inProgressCalibrationId);
+const cancelRunId = computed(
+	() =>
+		props.node.state.inProgressForecastId ||
+		props.node.state.inProgressCalibrationId ||
+		props.node.state.inProgressPreForecastId
+);
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
 const inProgressForecastId = computed(() => props.node.state.inProgressForecastId);
 

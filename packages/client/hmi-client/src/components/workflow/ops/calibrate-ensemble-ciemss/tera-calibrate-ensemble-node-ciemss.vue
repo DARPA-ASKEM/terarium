@@ -54,7 +54,8 @@ import {
 	getRunResultCiemss,
 	pollAction,
 	getCalibrateBlobURL,
-	makeEnsembleCiemssSimulation
+	makeEnsembleCiemssSimulation,
+	getSimulation
 } from '@/services/models/simulation-service';
 import { setupCsvAsset } from '@/services/calibrate-workflow';
 import { chartActionsProxy, nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
@@ -128,17 +129,23 @@ const pollResult = async (runId: string) => {
 		state.currentProgress = 0;
 		state.inProgressForecastId = '';
 		state.inProgressCalibrationId = '';
+		poller.stop();
 		emit('update-state', state);
-		return pollerResults;
-	}
-	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
+	} else if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
 		logger.error(`Calibration: ${runId} has failed`, {
 			toastTitle: 'Error - Pyciemss'
 		});
-
-		// TODO: show error in UI
 		const state = _.cloneDeep(props.node.state);
+		const simulation = await getSimulation(runId);
+		if (simulation?.status && simulation?.statusMessage) {
+			state.inProgressCalibrationId = '';
+			state.errorMessage = {
+				name: runId,
+				value: simulation.status,
+				traceback: simulation.statusMessage
+			};
+		}
 		state.currentProgress = 0;
 		state.inProgressForecastId = '';
 		state.inProgressCalibrationId = '';
