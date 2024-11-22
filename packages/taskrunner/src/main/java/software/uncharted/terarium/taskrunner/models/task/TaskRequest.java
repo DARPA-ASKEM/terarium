@@ -33,6 +33,7 @@ public class TaskRequest implements Serializable {
 			.setAdditionalProperties(additionalProperties)
 			.setStdout(stdout)
 			.setStderr(stderr)
+			.setRoutingKey(routingKey)
 			.setRequestSHA256(requestSHA256);
 	}
 }
