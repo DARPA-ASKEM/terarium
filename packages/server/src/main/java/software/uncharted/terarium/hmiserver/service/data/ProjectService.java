@@ -40,7 +40,7 @@ public class ProjectService {
 
 	@Observed(name = "function_profile")
 	public List<Project> getProjects() {
-		return projectRepository.findAll();
+		return projectRepository.findByDeletedOnIsNull();
 	}
 
 	@Observed(name = "function_profile")

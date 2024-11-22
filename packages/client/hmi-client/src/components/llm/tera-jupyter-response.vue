@@ -86,7 +86,7 @@
 						class="flex flex-column"
 						v-else-if="['stream', 'display_data', 'execute_result', 'error'].includes(m.header.msg_type)"
 					>
-						<tera-beaker-code-cell-output :jupyter-message="m" />
+						<tera-beaker-code-cell-output ref="codeOutputCell" :jupyter-message="m" />
 						<aside class="ml-auto">
 							<label class="px-2">Display on node thumbnail</label>
 							<Checkbox :model-value="msg.selected" @change="emit('on-selected', $event)" binary />
@@ -137,6 +137,7 @@ const props = defineProps<{
 }>();
 
 const codeCell = ref(null);
+const codeOutputCell = ref(null);
 const resp = ref(<HTMLElement | null>null);
 // Reference for showThought, initially set to false
 const showThought = ref(false);
@@ -214,7 +215,8 @@ onMounted(() => {
 });
 
 defineExpose({
-	codeCell
+	codeCell,
+	codeOutputCell
 });
 
 function onDeleteRequested(msgId: string) {
@@ -259,9 +261,10 @@ function onDeleteRequested(msgId: string) {
 }
 
 .error {
+	background: var(--red-50);
 	color: darkred;
 	white-space: pre-wrap;
-	padding-top: 10px;
+	padding: var(--gap-4);
 }
 
 .jupyter-response {
@@ -277,8 +280,7 @@ function onDeleteRequested(msgId: string) {
 }
 
 .jupyter-response:hover:not(.selected) {
-	background-color: var(--surface-50);
-	border: 1px solid var(--surface-border-light);
+	border: 1px solid color-mix(in srgb, var(--primary-color) 20%, var(--surface-border-light) 80%);
 }
 
 .jupyter-response .menu-container {

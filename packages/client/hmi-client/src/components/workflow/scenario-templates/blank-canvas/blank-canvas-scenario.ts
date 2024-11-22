@@ -8,7 +8,7 @@ export class BlankCanvasScenario extends BaseScenario {
 
 	constructor() {
 		super();
-		this.workflowName = 'Blank Canvas';
+		this.workflowName = '';
 	}
 
 	toJSON() {
@@ -18,7 +18,7 @@ export class BlankCanvasScenario extends BaseScenario {
 		};
 	}
 
-	createWorkflow() {
+	async createWorkflow() {
 		const wf = new workflowService.WorkflowWrapper();
 		wf.setWorkflowName(this.workflowName);
 		wf.setWorkflowScenario(this.toJSON());

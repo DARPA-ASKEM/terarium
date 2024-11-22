@@ -10,7 +10,7 @@
 		>
 			<template #body="{ data }">
 				<template v-if="col.field === 'score'">
-					{{ data.metadata?.['score'] ?? '--' }}
+					{{ Math.round((data.metadata?.score ?? 0) * 100) + '%' }}
 				</template>
 				<template v-if="col.field === 'name'">
 					<a class="project-title-link" @click.stop="emit('open-project', data.id)">
@@ -99,7 +99,7 @@ function getColumnWidth(columnField: string) {
 		case 'name':
 			return 40;
 		case 'score':
-			return 10;
+			return 5;
 		default:
 			return 100;
 	}
