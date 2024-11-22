@@ -871,16 +871,12 @@ export function createInterventionChart(
 			spec.layer.push(marker);
 		});
 		// chart
-		let title = chartOptions.xAxisTitle;
-		if (title.length > 35) {
-			title = `${title.substring(0, 35)}...`;
-		}
 		spec.layer.push({
 			data: { values: interventions },
 			mark: 'point',
 			encoding: {
-				x: { field: 'time', type: 'quantitative', title },
-				y: 0
+				x: { field: 'time', type: 'quantitative', title: chartOptions.xAxisTitle },
+				y: { field: 'value', type: 'quantitative', title: chartOptions.yAxisTitle }
 			}
 		});
 	}
