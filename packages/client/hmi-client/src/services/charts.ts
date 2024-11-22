@@ -824,12 +824,14 @@ export function createInterventionChartMarkers(
 			type: 'text',
 			align: 'left',
 			angle: 90,
-			dx: options.labelXOffset,
-			dy: -10
+			dx: options.labelXOffset || 0 - 45,
+			dy: -10,
+			limit: 140,
+			ellipsis: '...'
 		},
 		encoding: {
 			x: { field: 'time', type: 'quantitative' },
-			y: { field: 'value', type: 'quantitative' },
+			y: 0,
 			text: { field: 'name', type: 'nominal' }
 		}
 	};
@@ -869,12 +871,16 @@ export function createInterventionChart(
 			spec.layer.push(marker);
 		});
 		// chart
+		let title = chartOptions.xAxisTitle;
+		if (title.length > 35) {
+			title = `${title.substring(0, 35)}...`;
+		}
 		spec.layer.push({
 			data: { values: interventions },
 			mark: 'point',
 			encoding: {
-				x: { field: 'time', type: 'quantitative', title: chartOptions.xAxisTitle },
-				y: { field: 'value', type: 'quantitative', title: chartOptions.yAxisTitle }
+				x: { field: 'time', type: 'quantitative', title },
+				y: 0
 			}
 		});
 	}
