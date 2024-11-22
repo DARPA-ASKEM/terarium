@@ -52,10 +52,13 @@ const isLoading = computed(() => taskIds.value.length > 0);
 const modelInput = props.node.inputs.find((input) => input.type === 'modelId');
 const isModelInputConnected = computed(() => modelInput?.status === WorkflowPortStatus.CONNECTED);
 
-const groupedOutputParameters = computed(() => {
-	const grouped = groupBy(flattenInterventionData(props.node.state.interventionPolicy.interventions), 'appliedTo');
-	return Object.fromEntries(Object.entries(grouped).slice(0, 4)); // Show a max of 4 charts
-});
+const groupedOutputParameters = computed(() =>
+	Object.fromEntries(
+		Object.entries(
+			groupBy(flattenInterventionData(props.node.state.interventionPolicy.interventions), 'appliedTo')
+		).slice(0, 4) // Show a max of 4 charts
+	)
+);
 
 const preparedCharts = computed(() =>
 	_.mapValues(groupedOutputParameters.value, (interventions, key) =>
