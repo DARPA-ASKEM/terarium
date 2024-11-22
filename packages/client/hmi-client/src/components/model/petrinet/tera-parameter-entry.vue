@@ -27,9 +27,17 @@
 			</span>
 		</div>
 		<template v-else-if="!featureConfig?.isPreview">
-			<main class="flex align-items-center">
-				<span class="flex gap-2">
-					<Dropdown
+			<main>
+				<tera-distribution-input
+					:model="model"
+					:modelConfiguration="modelConfiguration"
+					:parameter-id="parameterId"
+					:parameter="getParameterDistribution(modelConfiguration, parameterId)"
+					@update-parameter="emit('update-parameter', [$event])"
+				>
+				</tera-distribution-input>
+				<!-- <span class="flex gap-2"> -->
+				<!-- <Dropdown
 						:model-value="getParameterDistribution(modelConfiguration, parameterId).type"
 						@change="
 							emit('update-parameter', {
@@ -41,18 +49,18 @@
 						option-value="value"
 						:options="distributionTypeOptions()"
 						class="mr-3 parameter-input"
-					/>
-					<!-- Constant -->
-					<tera-input-number
+					/> -->
+				<!-- Constant -->
+				<!-- <tera-input-number
 						v-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Constant"
 						label="Constant"
 						:model-value="getParameterDistribution(modelConfiguration, parameterId, true)?.parameters.value"
 						error-empty
 						@update:model-value="onParameterChange($event, Parameter.value)"
 						class="parameter-input"
-					/>
-					<!-- Uniform Distribution -->
-					<template v-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Uniform">
+					/> -->
+				<!-- Uniform Distribution -->
+				<!-- <template v-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Uniform">
 						<tera-input-number
 							label="Min"
 							:model-value="getParameterDistribution(modelConfiguration, parameterId, true)?.parameters.minimum"
@@ -67,8 +75,8 @@
 							@update:model-value="onParameterChange($event, Parameter.maximum)"
 							class="parameter-input"
 						/>
-					</template>
-				</span>
+					</template> -->
+				<!-- </span> -->
 				<section>
 					<Button :label="getSourceLabel(parameterId)" text size="small" @click="isSourceOpen = !isSourceOpen" />
 					<Button :label="getOtherValuesLabel" text size="small" @click="showOtherConfigValueModal = true" />
@@ -123,11 +131,12 @@ import {
 	isNumberInputEmpty,
 	getOtherValues
 } from '@/services/model-configurations';
+import TeraDistributionInput from '@/components/model/petrinet/tera-distribution-input.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
-import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
+// import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import Button from 'primevue/button';
-import Dropdown from 'primevue/dropdown';
-import { DistributionType, DistributionTypeLabel, distributionTypeOptions } from '@/services/distribution';
+// import Dropdown from 'primevue/dropdown';
+import { DistributionType, DistributionTypeLabel } from '@/services/distribution';
 import { getParameter } from '@/model-representation/service';
 import TeraParameterOtherValueModal from '@/components/model/petrinet/tera-parameter-other-value-modal.vue';
 import { displayNumber } from '@/utils/number';
@@ -158,11 +167,11 @@ const isSourceOpen = ref(false);
 const showOtherConfigValueModal = ref(false);
 const isParameterEmpty = ref(false);
 
-enum Parameter {
-	value = 'value',
-	maximum = 'maximum',
-	minimum = 'minimum'
-}
+// enum Parameter {
+// 	value = 'value',
+// 	maximum = 'maximum',
+// 	minimum = 'minimum'
+// }
 
 const otherValueList = computed(() =>
 	getOtherValues(props.modelConfigurations, props.parameterId, 'referenceId', 'parameterSemanticList')
@@ -174,25 +183,25 @@ function getSourceLabel(initialId) {
 	return 'Show source';
 }
 
-function formatPayloadFromParameterChange(parameters) {
-	const distribution = getParameterDistribution(props.modelConfiguration, props.parameterId);
-	Object.keys(parameters).forEach((key) => {
-		if (!distribution) return;
-		if (key in distribution.parameters) {
-			distribution.parameters[key] = parameters[key];
-		}
-	});
+// function formatPayloadFromParameterChange(parameters) {
+// 	const distribution = getParameterDistribution(props.modelConfiguration, props.parameterId);
+// 	Object.keys(parameters).forEach((key) => {
+// 		if (!distribution) return;
+// 		if (key in distribution.parameters) {
+// 			distribution.parameters[key] = parameters[key];
+// 		}
+// 	});
 
-	return distribution;
-}
+// 	return distribution;
+// }
 
-function formatPayloadFromTypeChange(type: DistributionType) {
-	const distribution = getParameterDistribution(props.modelConfiguration, props.parameterId);
+// function formatPayloadFromTypeChange(type: DistributionType) {
+// 	const distribution = getParameterDistribution(props.modelConfiguration, props.parameterId);
 
-	distribution.type = type;
-	distribution.parameters = {};
-	return distribution;
-}
+// 	distribution.type = type;
+// 	distribution.parameters = {};
+// 	return distribution;
+// }
 
 const getOtherValuesLabel = computed(() => `Other values (${otherValueList.value?.length})`);
 
@@ -203,15 +212,15 @@ function isParameterInputEmpty(parameter) {
 	return isNumberInputEmpty(parameter.parameters.maximum) || isNumberInputEmpty(parameter.parameters.minimum);
 }
 
-function onParameterChange(value, parameter) {
-	isParameterEmpty.value = isNumberInputEmpty(value);
-	if (!isParameterEmpty.value) {
-		emit('update-parameter', {
-			id: props.parameterId,
-			distribution: formatPayloadFromParameterChange({ [parameter]: value })
-		});
-	}
-}
+// function onParameterChange(value, parameter) {
+// 	isParameterEmpty.value = isNumberInputEmpty(value);
+// 	if (!isParameterEmpty.value) {
+// 		emit('update-parameter', {
+// 			id: props.parameterId,
+// 			distribution: formatPayloadFromParameterChange({ [parameter]: value })
+// 		});
+// 	}
+// }
 
 onMounted(async () => {
 	const identifiers = getParameter(props.model, props.parameterId)?.grounding?.identifiers;
