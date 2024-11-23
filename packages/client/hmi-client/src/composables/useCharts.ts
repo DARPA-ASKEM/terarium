@@ -28,32 +28,37 @@ import { SimulateEnsembleMappingRow } from '@/components/workflow/ops/simulate-e
 import { getModelConfigName } from '@/services/model-configurations';
 import { useChartAnnotations } from './useChartAnnotations';
 
-const BASE_GREY = '#AAB3C6';
-const PRIMARY_COLOR = CATEGORICAL_SCHEME[0];
-
 export interface ChartData {
 	result: DataArray;
 	resultSummary: DataArray;
 	pyciemssMap: Record<string, string>;
 	translationMap: Record<string, string>;
 }
-export type VariableMappings = CalibrateMap[] | EnsembleVariableMappings;
-export type EnsembleVariableMappings = CalibrateEnsembleMappingRow[] | SimulateEnsembleMappingRow[];
+
+type EnsembleVariableMappings = CalibrateEnsembleMappingRow[] | SimulateEnsembleMappingRow[];
+type VariableMappings = CalibrateMap[] | EnsembleVariableMappings;
+
+const BASE_GREY = '#AAB3C6';
+const PRIMARY_COLOR = CATEGORICAL_SCHEME[0];
 
 // Get the model configuration id to variable name mappings for the given ensemble variable
-const getModelConfigMappings = (mapping: VariableMappings, ensembleVariableName: string) => {
-	const modelConfigMappings = (mapping as EnsembleVariableMappings).find(
-		(d) => d.newName === ensembleVariableName
-	)?.modelConfigurationMappings;
+const getModelConfigMappings = (mapping: EnsembleVariableMappings, ensembleVariableName: string) => {
+	const modelConfigMappings = mapping.find((d) => d.newName === ensembleVariableName)?.modelConfigurationMappings;
 	return modelConfigMappings ?? {};
 };
 
 // Get the model variable name for the corresponding model configuration and the ensemble variable name from the mapping
-const getModelConfigVariable = (mapping: VariableMappings, ensembleVariableName: string, modelConfigId: string) =>
-	getModelConfigMappings(mapping, ensembleVariableName)[modelConfigId] ?? '';
+const getModelConfigVariable = (
+	mapping: EnsembleVariableMappings,
+	ensembleVariableName: string,
+	modelConfigId: string
+) => getModelConfigMappings(mapping, ensembleVariableName)[modelConfigId] ?? '';
 
+// HACK: Generate fake model id prefix from model configuration index, this is supposed to be model configuration id instead of index number.
+// Fix this when Pyciemss is updated to include model configuration id on it's variable name.
+const getModelIdPrefix = (modelId: string, modelConfigs: ModelConfiguration[]) =>
+	modelId ? `model_${modelConfigs.findIndex((c) => c.id === modelId)}/` : '';
 // const getVariableNameModelPrifix = (modelId: string) => modelId ? `${modelId}/` : '';
-const getVariableNameModelPrefix = (modelId: string) => (modelId ? `model_0/` : '');
 
 /**
  * Converts a model variable name to a dataset variable name based on the provided mapping.
@@ -102,16 +107,16 @@ export function useCharts(
 		return getUnitsFromModelParts(model.value)[paramId] || '';
 	};
 
-	const createEnsembleVariableChartOptions = (setting: ChartSettingEnsembleVariable, modelConfigId = '') => {
-		const ensembleVariableName = setting.selectedVariables[0];
-		// If calibrate and modelConfigId is empty, build ensemble variable chart.
-		// If simulation and modelConfigId is empty, show all variables in one chart.
-		const variable = modelConfigId
-			? getModelConfigVariable(mapping?.value ?? [], ensembleVariableName, modelConfigId) // model variable
-			: (modelVarToDatasetVar(mapping?.value ?? [], ensembleVariableName) as string); // ensemble variable
+	const createEnsembleVariableChartOptions = (
+		setting: ChartSettingEnsembleVariable,
+		modelConfigId = '',
+		multiVariable = false,
+		showBaseLines = false
+	) => {
+		const ensembleVarName = setting.selectedVariables[0];
 
 		const options: ForecastChartOptions = {
-			title: getModelConfigName(<ModelConfiguration[]>modelConfig?.value ?? [], modelConfigId) || ensembleVariableName,
+			title: getModelConfigName(<ModelConfiguration[]>modelConfig?.value ?? [], modelConfigId) || ensembleVarName,
 			legend: true,
 			width: chartSize.value.width,
 			height: chartSize.value.height,
@@ -119,32 +124,63 @@ export function useCharts(
 			xAxisTitle: '',
 			yAxisTitle: '',
 			autosize: AUTOSIZE.FIT,
-			colorscheme: [BASE_GREY, PRIMARY_COLOR]
+			colorscheme: multiVariable ? CATEGORICAL_SCHEME : [BASE_GREY, PRIMARY_COLOR]
 		};
 
-		// TODO: 1. Multi variable, combine all variables in one chart and use loops to build layer variables 2. Simulation, no pre data.
-		// Observations label
+		const variables: string[] = [];
+		if (multiVariable) {
+			// If multiVariable flag is true, include the ensemble variable and all model variables all together in one chart. modelConfigId is not used in this case.
+			variables.push(modelVarToDatasetVar(mapping?.value ?? [], ensembleVarName) as string);
+			(<ModelConfiguration[]>modelConfig?.value ?? []).forEach((config) => {
+				const modelVar = getModelConfigVariable(
+					<EnsembleVariableMappings>mapping?.value ?? [],
+					ensembleVarName,
+					config.id ?? ''
+				);
+				variables.push(getModelIdPrefix(config.id ?? '', <ModelConfiguration[]>modelConfig?.value ?? []) + modelVar);
+			});
+		} else {
+			// If model modelConfigId is provided, include a model variable, otherwise include an ensemble variable
+			variables.push(
+				modelConfigId
+					? getModelIdPrefix(modelConfigId, <ModelConfiguration[]>modelConfig?.value ?? []) +
+							getModelConfigVariable(<EnsembleVariableMappings>mapping?.value ?? [], ensembleVarName, modelConfigId) // model variable
+					: (modelVarToDatasetVar(mapping?.value ?? [], ensembleVarName) as string) // ensemble variable
+			);
+		}
 
-		const varNameKey = `${getVariableNameModelPrefix(modelConfigId)}${variable}`;
-		const sampleLayerVariables = [
-			`${chartData.value?.pyciemssMap[varNameKey]}:pre`,
-			`${chartData.value?.pyciemssMap[varNameKey]}`
-		];
-		const statLayerVariables = [
-			`${chartData.value?.pyciemssMap[varNameKey]}_mean:pre`,
-			`${chartData.value?.pyciemssMap[varNameKey]}_mean`
-		];
+		const sampleLayerVariables: string[] = [];
+		const statLayerVariables: string[] = [];
+
+		console.log('----variables-----');
+		console.log(variables);
+		// console.log(varNameKeys);
+		console.log(chartData.value?.pyciemssMap);
+
+		variables.forEach((varNameKeys) => {
+			const varName = chartData.value?.pyciemssMap[varNameKeys];
+			// Add base lines data
+			if (showBaseLines) {
+				sampleLayerVariables.push(`${varName}:pre`);
+				statLayerVariables.push(`${varName}_mean:pre`);
+			}
+			// Add primary lines data
+			sampleLayerVariables.push(`${varName}`);
+			statLayerVariables.push(`${varName}_mean`);
+		});
+		console.log(statLayerVariables, sampleLayerVariables);
+
 		// TODO: Since translationMap differes based on the chart configs. Build translationMap outside when building chartData and pass along with the chartData.
 		options.translationMap = {
-			[statLayerVariables[0]]: `${modelConfigId ? ensembleVariableName : 'Ensemble'} before calibration`,
-			[statLayerVariables[1]]: `${modelConfigId ? ensembleVariableName : 'Ensemble'} after calibration`,
-			[varNameKey]: 'Observations'
+			[statLayerVariables[0]]: `${modelConfigId ? ensembleVarName : 'Ensemble'} before calibration`,
+			[statLayerVariables[1]]: `${modelConfigId ? ensembleVarName : 'Ensemble'} after calibration`,
+			[variables[0]]: 'Observations'
 		};
 		return { statLayerVariables, sampleLayerVariables, options };
 	};
 	// Create options for forecast charts based on chart settings and model configuration
 	const createForecastChartOptions = (setting: ChartSetting) => {
-		if (isChartSettingEnsembleVariable(setting)) return createEnsembleVariableChartOptions(setting);
+		if (isChartSettingEnsembleVariable(setting)) return createEnsembleVariableChartOptions(setting, '', true, true);
 		const variables = setting.selectedVariables;
 		const dateOptions = getVegaDateOptions(model?.value ?? null, <ModelConfiguration>modelConfig?.value || null);
 		const options: ForecastChartOptions = {
@@ -180,6 +216,7 @@ export function useCharts(
 	const generateAnnotation = async (setting: ChartSetting, query: string) => {
 		if (!chartData.value) return null;
 		const { statLayerVariables, options } = createForecastChartOptions(setting);
+		// TODO: If ensemble, include each model name to variable for translation map.
 		return generateAndSaveForecastChartAnnotation(setting, query, 'timepoint_id', statLayerVariables, options);
 	};
 
@@ -331,12 +368,13 @@ export function useCharts(
 				if (setting.showIndividualModels) {
 					// Build small multiples charts for each model configuration variable
 					const modelConfigIds = Object.keys(
-						getModelConfigMappings(mapping?.value || [], setting.selectedVariables[0])
+						getModelConfigMappings(<EnsembleVariableMappings>mapping?.value || [], setting.selectedVariables[0])
 					);
 					const smallMultiplesCharts = ['', ...modelConfigIds].map((modelConfigId, index) => {
 						const { sampleLayerVariables, statLayerVariables, options } = createEnsembleVariableChartOptions(
 							setting,
-							modelConfigId
+							modelConfigId,
+							true
 						);
 						options.width = chartSize.value.width / (modelConfigIds.length + 1);
 						options.legendProperties = { direction: 'vertical', columns: 1, labelLimit: options.width };
@@ -368,7 +406,12 @@ export function useCharts(
 					charts[setting.id] = smallMultiplesCharts;
 				} else {
 					// Build a single ensemble chart
-					const { sampleLayerVariables, statLayerVariables, options } = createForecastChartOptions(setting);
+					const { sampleLayerVariables, statLayerVariables, options } = createEnsembleVariableChartOptions(
+						setting,
+						'',
+						false,
+						true
+					);
 					const chart = applyForecastChartAnnotations(
 						createForecastChart(
 							{
