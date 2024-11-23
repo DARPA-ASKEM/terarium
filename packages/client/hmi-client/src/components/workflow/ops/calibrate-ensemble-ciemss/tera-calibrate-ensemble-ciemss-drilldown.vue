@@ -315,7 +315,7 @@ import { getDataset } from '@/services/dataset';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { ChartSettingType, CiemssPresetTypes, DrilldownTabs } from '@/types/common';
-import { ChartData, useCharts } from '@/composables/useCharts';
+import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
 import { deleteAnnotation } from '@/services/chart-settings';
 import { DataArray } from '@/utils/stats';
@@ -331,7 +331,8 @@ import {
 	getLossValuesFromSimulation,
 	formatCalibrateModelConfigurations,
 	getSelectedOutputEnsembleMapping,
-	fetchOutputData
+	fetchOutputData,
+	buildChartData
 } from './calibrate-ensemble-util';
 
 const props = defineProps<{
@@ -533,7 +534,9 @@ onMounted(async () => {
 // -------------- Charts && chart settings ----------------
 const chartWidth = ref(null);
 const isOutputSettingsPanelOpen = ref(false);
-const chartData = ref<ChartData | null>(null);
+const outputData = ref<{ result: DataArray; resultSummary: DataArray; pyciemssMap: Record<string, string> } | null>(
+	null
+);
 const groundTruthData = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
 const chartSize = useDrilldownChartSize(chartWidth);
 const selectedOutputMapping = computed(() => getSelectedOutputEnsembleMapping(props.node));
@@ -550,7 +553,7 @@ const { generateAnnotation, getChartAnnotationsByChartId, useEnsembleVariableCha
 	props.node.id,
 	null,
 	allModelConfigurations,
-	chartData,
+	computed(() => buildChartData(outputData.value, selectedOutputMapping.value)),
 	chartSize,
 	null,
 	selectedOutputMapping
@@ -580,8 +583,7 @@ watch(
 			lossChartSpec.value = updateLossChartSpec(lossValues.value, chartSize.value);
 
 			// Fetch output data and prepare chart data
-			const data = await fetchOutputData(state.preForecastId, state.postForecastId);
-			chartData.value = data ? { ...data, translationMap: {} } : null;
+			outputData.value = await fetchOutputData(state.preForecastId, state.postForecastId);
 		}
 	},
 	{ immediate: true }

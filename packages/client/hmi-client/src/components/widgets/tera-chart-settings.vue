@@ -25,7 +25,8 @@
 				:model-value="Boolean(ensembleChartOptions.showIndividualModels)"
 				@update:model-value="toggleEnsembleChartOption('showIndividualModels', $event)"
 			/>
-			<tera-checkbox
+			<!-- Disabling following two checkboxes for now since their functionalities aren't implemented yet -->
+			<!-- <tera-checkbox
 				class="pl-5"
 				:disabled="selectedOptions.length === 0"
 				label="Relative to ensemble"
@@ -38,7 +39,7 @@
 				:disabled="selectedOptions.length === 0"
 				:model-value="Boolean(ensembleChartOptions.showIndividualModelsWithWeight)"
 				@update:model-value="toggleEnsembleChartOption('showIndividualModelsWithWeight', $event)"
-			/>
+			/> -->
 		</template>
 	</div>
 </template>

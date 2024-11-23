@@ -120,7 +120,7 @@ export function useCharts(
 			legend: true,
 			width: chartSize.value.width,
 			height: chartSize.value.height,
-			translationMap: {},
+			translationMap: chartData.value?.translationMap || {},
 			xAxisTitle: '',
 			yAxisTitle: '',
 			autosize: AUTOSIZE.FIT,
@@ -151,12 +151,6 @@ export function useCharts(
 
 		const sampleLayerVariables: string[] = [];
 		const statLayerVariables: string[] = [];
-
-		console.log('----variables-----');
-		console.log(variables);
-		// console.log(varNameKeys);
-		console.log(chartData.value?.pyciemssMap);
-
 		variables.forEach((varNameKeys) => {
 			const varName = chartData.value?.pyciemssMap[varNameKeys];
 			// Add base lines data
@@ -168,16 +162,9 @@ export function useCharts(
 			sampleLayerVariables.push(`${varName}`);
 			statLayerVariables.push(`${varName}_mean`);
 		});
-		console.log(statLayerVariables, sampleLayerVariables);
-
-		// TODO: Since translationMap differes based on the chart configs. Build translationMap outside when building chartData and pass along with the chartData.
-		options.translationMap = {
-			[statLayerVariables[0]]: `${modelConfigId ? ensembleVarName : 'Ensemble'} before calibration`,
-			[statLayerVariables[1]]: `${modelConfigId ? ensembleVarName : 'Ensemble'} after calibration`,
-			[variables[0]]: 'Observations'
-		};
 		return { statLayerVariables, sampleLayerVariables, options };
 	};
+
 	// Create options for forecast charts based on chart settings and model configuration
 	const createForecastChartOptions = (setting: ChartSetting) => {
 		if (isChartSettingEnsembleVariable(setting)) return createEnsembleVariableChartOptions(setting, '', true, true);
@@ -249,7 +236,6 @@ export function useCharts(
 					null,
 					options
 				);
-
 				if (groupedInterventionOutputs.value[variable]) {
 					// add intervention annotations (rules and text)
 					forecastChart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[variable]));
@@ -374,6 +360,7 @@ export function useCharts(
 						const { sampleLayerVariables, statLayerVariables, options } = createEnsembleVariableChartOptions(
 							setting,
 							modelConfigId,
+							false,
 							true
 						);
 						options.width = chartSize.value.width / (modelConfigIds.length + 1);
