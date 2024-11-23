@@ -140,7 +140,7 @@
 						:model-configurations="filteredModelConfigurations"
 						:mmt="configuredMmt"
 						:mmt-params="mmtParams"
-						@update-expression="setInitialExpression(knobs.transientModelConfig, $event.id, $event.value)"
+						@update-expressions="setInitialExpressions(knobs.transientModelConfig, $event)"
 						@update-source="setInitialSource(knobs.transientModelConfig, $event.id, $event.value)"
 					/>
 					<tera-parameter-table
@@ -261,15 +261,15 @@ import {
 	getMissingInputAmount,
 	getModelParameters,
 	getModelConfigurationById,
-	setInitialExpression,
+	setInitialExpressions,
 	setInitialSource,
 	setParameterDistributions,
 	setParameterSource,
 	updateModelConfiguration
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { Model, ModelConfiguration, TaskResponse } from '@/types/Types';
-import { AssetType, Observable } from '@/types/Types';
+import type { Initial, Model, ModelConfiguration, TaskResponse } from '@/types/Types';
+import { AssetType, ModelParameter, Observable } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
@@ -523,10 +523,11 @@ const initializing = ref(false);
 const isFetching = ref(false);
 const isLoading = ref(false);
 
-const amrInitials = ref();
-const amrParameters = ref();
+const amrInitials = ref<Initial[]>([]);
+const amrParameters = ref<ModelParameter[]>([]);
 
 const getMissingInputsMessage = (amount, total) => {
+	if (!total) return '';
 	const percent = (amount / total) * 100;
 	return amount ? `Missing values: ${amount}/${total} (${percent.toFixed(0)}%)` : '';
 };

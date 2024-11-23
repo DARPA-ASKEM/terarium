@@ -177,6 +177,17 @@ export async function setInitialExpression(
 	initial.expressionMathml = mathml;
 }
 
+export async function setInitialExpressions(
+	config: ModelConfiguration,
+	initialExpressions: { id: string; value: string }[]
+): Promise<void> {
+	await Promise.all(
+		initialExpressions.map(async (initial) => {
+			await setInitialExpression(config, initial.id, initial.value);
+		})
+	);
+}
+
 export function setInitialSource(config: ModelConfiguration, initialId: string, source: string): void {
 	const initial = getInitial(config, initialId);
 	if (initial) {
