@@ -344,7 +344,7 @@ export function useCharts(
 		chartSettings: ComputedRef<ChartSettingEnsembleVariable[]>,
 		groundTruthData: ComputedRef<DataArray> | null
 	) => {
-		const calibrateEnsembleVariableCharts = computed(() => {
+		const ensembleVariableCharts = computed(() => {
 			const charts: Record<string, VisualizationSpec[]> = {};
 			if (!chartData.value) return charts;
 			const { result, resultSummary } = chartData.value;
@@ -426,7 +426,7 @@ export function useCharts(
 			});
 			return charts;
 		});
-		return calibrateEnsembleVariableCharts;
+		return ensembleVariableCharts;
 	};
 
 	// Create error charts based on chart settings
