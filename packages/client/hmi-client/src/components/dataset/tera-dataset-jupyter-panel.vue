@@ -518,7 +518,8 @@ const onDownloadResponse = (payload) => {
 
 <style scoped>
 .context-description {
-	width: inherit;
+	width: 100%;
+	width: fill-available;
 	font-family: var(--font-family);
 	font-feature-settings: 'tnum';
 	border: none;
