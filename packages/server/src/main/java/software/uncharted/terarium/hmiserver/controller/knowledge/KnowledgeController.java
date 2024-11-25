@@ -123,6 +123,52 @@ public class KnowledgeController {
 	}
 
 	/**
+	 * Clean up a list of equations
+	 *
+	 * @return List of cleaned-up equations
+	 */
+	@PostMapping("/clean-equations")
+	@Secured(Roles.USER)
+	public ResponseEntity<EquationCleanupResponse> getCleanedEquations(
+		@RequestBody final List<String> equations,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		TaskRequest cleanupReq = cleanupEquationsTaskRequest(projectId, equations);
+		TaskResponse cleanupResp = null;
+		List<String> cleanedEquations = new ArrayList<>(equations); // Have original equations as a fallback
+		boolean wasCleaned = false;
+
+		try {
+			cleanupResp = taskService.runTask(TaskMode.SYNC, cleanupReq);
+			// Get the equations from the cleanup response
+			if (cleanupResp != null && cleanupResp.getOutput() != null) {
+				try {
+					JsonNode output = mapper.readValue(cleanupResp.getOutput(), JsonNode.class);
+					if (output.get("response") != null && output.get("response").get("equations") != null) {
+						cleanedEquations.clear(); // Clear original equations before adding cleaned ones
+						wasCleaned = true;
+						for (JsonNode eq : output.get("response").get("equations")) {
+							cleanedEquations.add(eq.asText());
+						}
+					}
+				} catch (IOException e) {
+					log.warn("Unable to retrieve cleaned-up equations from GoLLM response. Reverting to original equations.", e);
+				}
+			}
+		} catch (final JsonProcessingException e) {
+			log.warn("Unable to clean-up equations due to a JsonProcessingException. Reverting to original equations.", e);
+		} catch (final TimeoutException e) {
+			log.warn("Unable to clean-up equations due to a TimeoutException. Reverting to original equations.", e);
+		} catch (final InterruptedException e) {
+			log.warn("Unable to clean-up equations due to a InterruptedException. Reverting to original equations.", e);
+		} catch (final ExecutionException e) {
+			log.warn("Unable to clean-up equations due to a ExecutionException. Reverting to original equations.", e);
+		}
+
+		return ResponseEntity.ok(new EquationCleanupResponse(cleanedEquations, wasCleaned));
+	}
+
+	/**
 	 * Send the equations to the skema unified service to get the AMR
 	 *
 	 * @return UUID Model ID, or null if the model was not created or updated
@@ -167,47 +213,9 @@ public class KnowledgeController {
 			}
 		}
 
-		// Cleanup equations from the request
-		List<String> equations = new ArrayList<>();
-		if (req.get("equations") != null) {
-			for (final JsonNode equation : req.get("equations")) {
-				equations.add(equation.asText());
-			}
-		}
-		TaskRequest cleanupReq = cleanupEquationsTaskRequest(projectId, equations);
-		TaskResponse cleanupResp = null;
-		try {
-			cleanupResp = taskService.runTask(TaskMode.SYNC, cleanupReq);
-		} catch (final JsonProcessingException e) {
-			log.warn("Unable to clean-up equations due to a JsonProcessingException. Reverting to original equations.", e);
-		} catch (final TimeoutException e) {
-			log.warn("Unable to clean-up equations due to a TimeoutException. Reverting to original equations.", e);
-		} catch (final InterruptedException e) {
-			log.warn("Unable to clean-up equations due to a InterruptedException. Reverting to original equations.", e);
-		} catch (final ExecutionException e) {
-			log.warn("Unable to clean-up equations due to a ExecutionException. Reverting to original equations.", e);
-		}
-
-		// get the equations from the cleanup response, or use the original equations
-		JsonNode equationsReq = req.get("equations");
-		if (cleanupResp != null && cleanupResp.getOutput() != null) {
-			try {
-				JsonNode output = mapper.readValue(cleanupResp.getOutput(), JsonNode.class);
-				if (output.get("response") != null && output.get("response").get("equations") != null) {
-					equationsReq = output.get("response").get("equations");
-				}
-			} catch (IOException e) {
-				log.warn("Unable to retrive cleaned-up equations from GoLLM response. Reverting to original equations.", e);
-			}
-		}
-
-		// Create a new request with the cleaned-up equations, so that we don't modify the original request.
-		JsonNode newReq = req.deepCopy();
-		((ObjectNode) newReq).set("equations", equationsReq);
-
 		// Get an AMR from Skema Unified Service
 		try {
-			responseAMR = skemaUnifiedProxy.consolidatedEquationsToAMR(newReq).getBody();
+			responseAMR = skemaUnifiedProxy.consolidatedEquationsToAMR(req).getBody();
 			if (responseAMR == null) {
 				log.warn("Skema Unified Service did not return a valid AMR based on the provided equations");
 				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("skema.bad-equations"));
@@ -856,5 +864,16 @@ public class KnowledgeController {
 		req.setAdditionalProperties(props);
 
 		return req;
+	}
+
+	private static class EquationCleanupResponse {
+
+		public List<String> cleanedEquations;
+		public boolean wasCleaned;
+
+		public EquationCleanupResponse(List<String> cleanedEquations, boolean wasCleaned) {
+			this.cleanedEquations = cleanedEquations;
+			this.wasCleaned = wasCleaned;
+		}
 	}
 }

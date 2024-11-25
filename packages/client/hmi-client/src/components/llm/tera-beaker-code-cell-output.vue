@@ -49,6 +49,10 @@ const updateOutputs = () => {
 	renderOutputs(outputs);
 };
 
+const clear = () => {
+	renderOutputs([]);
+};
+
 onMounted(() => {
 	updateOutputs();
 });
@@ -61,6 +65,10 @@ watch(
 );
 
 const messageType = computed(() => props.jupyterMessage.header.msg_type);
+
+defineExpose({
+	clear
+});
 </script>
 
 <style scoped>

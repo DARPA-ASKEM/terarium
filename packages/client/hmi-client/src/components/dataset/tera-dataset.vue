@@ -318,12 +318,6 @@ watch(
 </script>
 
 <style scoped>
-.column-info {
-	border-bottom: 1px solid var(--surface-border);
-	margin-bottom: var(--gap-3);
-	padding-bottom: var(--gap-3);
-}
-
 .description {
 	margin-left: var(--gap-6);
 
