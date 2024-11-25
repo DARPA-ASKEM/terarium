@@ -60,7 +60,7 @@ export function getEnsembleChartSettingOptions(chartSettings: ChartSetting[]) {
 		relativeToEnsemble: false,
 		showIndividualModelsWithWeight: undefined // only applicable for the simulate ensemble otherwise undefined
 	};
-	// Merge options from all ensemble variables since each variable setting has its own options but all controlled by the single UI.
+	// Merge options from all ensemble variables since each variable setting has its own options but all controlled by the single parent scope UI.
 	chartSettings.forEach((s) => {
 		if (!isChartSettingEnsembleVariable(s)) return;
 		options.showIndividualModels = options.showIndividualModels || s.showIndividualModels;
