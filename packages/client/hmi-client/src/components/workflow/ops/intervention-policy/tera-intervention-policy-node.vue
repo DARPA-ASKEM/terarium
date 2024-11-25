@@ -53,7 +53,11 @@ const modelInput = props.node.inputs.find((input) => input.type === 'modelId');
 const isModelInputConnected = computed(() => modelInput?.status === WorkflowPortStatus.CONNECTED);
 
 const groupedOutputParameters = computed(() =>
-	groupBy(flattenInterventionData(props.node.state.interventionPolicy.interventions), 'appliedTo')
+	Object.fromEntries(
+		Object.entries(
+			groupBy(flattenInterventionData(props.node.state.interventionPolicy.interventions), 'appliedTo')
+		).slice(0, 4) // Show a max of 4 charts
+	)
 );
 
 const preparedCharts = computed(() =>
