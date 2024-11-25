@@ -174,7 +174,7 @@ public class EnrichmentService {
 				throw new IOException(errorString);
 			}
 
-			notificationInterface.sendFinalMessage("Model enriched using document extraction and grounded");
+			notificationInterface.sendMessage("Model enriched using document extraction and grounded");
 			log.info("Model {} enriched using document {} extraction and grounded.", model.getId(), documentId);
 		} catch (final IOException e) {
 			log.error("Error enriching model {} with document {}", model.getId(), documentId, e);

@@ -294,6 +294,8 @@ public class KnowledgeController {
 			);
 		}
 
+		notificationInterface.sendFinalMessage("Model from equations done.");
+
 		// Return the model id
 		return ResponseEntity.ok(model.getId());
 	}
