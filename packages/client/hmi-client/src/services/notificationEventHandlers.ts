@@ -144,7 +144,6 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 				created.sourceName = project?.name ?? 'Source Project';
 			});
 	});
-
 	registerHandler<ExtractionStatusUpdate>(ClientEventType.ExtractionPdf, (event, created) => {
 		created.assetId = event.data.data.documentId;
 		created.pageType = AssetType.Document;
@@ -205,6 +204,15 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 			created.typeDisplayName = `${snakeToCapitalSentence(event.data.data.simulationType)} (${event.data.data.simulationEngine.toLowerCase()})`;
 		}
 	);
+	registerHandler<TaskResponse>(ClientEventType.KnowledgeEnrichmentModel, (event, created) => {
+		created.sourceName = 'Model Enrichment';
+		created.assetId = event.data.additionalProperties.modelId as string;
+		created.pageType = AssetType.Workflow;
+		created.nodeId = event.data.additionalProperties.nodeId as string;
+		getWorkflow(created.assetId, created.projectId).then((workflow) =>
+			Object.assign(created, { context: workflow?.name || '' })
+		);
+	});
 
 	const getHandler = (eventType: ClientEventType) => handlers[eventType] ?? (() => {});
 

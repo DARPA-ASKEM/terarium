@@ -1,8 +1,8 @@
 import getConfiguration from '@/services/ConfigService';
 import useAuthStore from '@/stores/auth';
 import type { ClientEvent } from '@/types/Types';
-import type { ExtractionStatusUpdate } from '@/types/common';
 import { ClientEventType } from '@/types/Types';
+import type { ExtractionStatusUpdate } from '@/types/common';
 import { EventSource } from 'extended-eventsource';
 
 /**
