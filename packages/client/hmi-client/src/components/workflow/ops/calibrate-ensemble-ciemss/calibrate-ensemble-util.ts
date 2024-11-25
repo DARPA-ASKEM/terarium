@@ -1,7 +1,15 @@
+import _ from 'lodash';
 import { createForecastChart, AUTOSIZE } from '@/services/charts';
-import { getSimulation } from '@/services/models/simulation-service';
+import { getRunResultCSV, getSimulation, parsePyCiemssMap } from '@/services/models/simulation-service';
 import { EnsembleModelConfigs } from '@/types/Types';
-import { CalibrateEnsembleMappingRow, CalibrateEnsembleWeights } from './calibrate-ensemble-ciemss-operation';
+import { WorkflowNode } from '@/types/workflow';
+import { getActiveOutput } from '@/components/workflow/util';
+import {
+	CalibrateEnsembleCiemssOperationState,
+	CalibrateEnsembleMappingRow,
+	CalibrateEnsembleWeights
+} from './calibrate-ensemble-ciemss-operation';
+import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 
 export async function getLossValuesFromSimulation(calibrationId: string) {
 	if (!calibrationId) return [];
@@ -43,7 +51,6 @@ export function formatCalibrateModelConfigurations(
 	weights: CalibrateEnsembleWeights
 ): EnsembleModelConfigs[] {
 	const ensembleModelConfigMap: { [key: string]: EnsembleModelConfigs } = {};
-	const totalWeight = Object.values(weights).reduce((acc, curr) => acc + curr, 0) ?? 1;
 	// 1. map the weights to the ensemble model configs
 	Object.entries(weights).forEach(([key, value]) => {
 		// return if there is no weight
@@ -52,7 +59,7 @@ export function formatCalibrateModelConfigurations(
 		const ensembleModelConfig: EnsembleModelConfigs = {
 			id: key,
 			solutionMappings: {},
-			weight: value / totalWeight
+			weight: value
 		};
 
 		ensembleModelConfigMap[key] = ensembleModelConfig;
@@ -62,11 +69,43 @@ export function formatCalibrateModelConfigurations(
 	rows.forEach((row) => {
 		Object.entries(row.modelConfigurationMappings).forEach(([key, value]) => {
 			if (!ensembleModelConfigMap[key]) return;
-			ensembleModelConfigMap[key].solutionMappings = {
-				[row.datasetMapping]: value
-			};
+			ensembleModelConfigMap[key].solutionMappings[row.datasetMapping] = value;
 		});
 	});
 
 	return [...Object.values(ensembleModelConfigMap)];
+}
+
+export function getSelectedOutputEnsembleMapping(
+	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>,
+	hasTimestampCol = true
+) {
+	const wfOutputState = getActiveOutput(node)?.state;
+	const mapping = _.clone(wfOutputState?.ensembleMapping ?? []);
+	if (hasTimestampCol)
+		mapping.push({
+			newName: 'timepoint_id',
+			datasetMapping: wfOutputState?.timestampColName ?? '',
+			modelConfigurationMappings: {}
+		});
+	return mapping;
+}
+
+export async function fetchOutputData(preForecastId: string, postForecastId: string) {
+	if (!postForecastId || !preForecastId) return null;
+	const runResult = await getRunResultCSV(postForecastId, 'result.csv');
+	const runResultSummary = await getRunResultCSV(postForecastId, 'result_summary.csv');
+
+	const runResultPre = await getRunResultCSV(preForecastId, 'result.csv', renameFnGenerator('pre'));
+	const runResultSummaryPre = await getRunResultCSV(preForecastId, 'result_summary.csv', renameFnGenerator('pre'));
+
+	// Merge before/after for chart
+	const { result, resultSummary } = mergeResults(runResultPre, runResult, runResultSummaryPre, runResultSummary);
+	const pyciemssMap = parsePyCiemssMap(runResult[0]);
+
+	return {
+		result,
+		resultSummary,
+		pyciemssMap
+	};
 }

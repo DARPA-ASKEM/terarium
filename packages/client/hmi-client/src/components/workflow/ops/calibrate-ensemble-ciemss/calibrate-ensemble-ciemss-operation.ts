@@ -1,5 +1,5 @@
 import { CiemssMethodOptions } from '@/services/models/simulation-service';
-import { CiemssPresetTypes } from '@/types/common';
+import { ChartSetting, CiemssPresetTypes } from '@/types/common';
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import calibrateEnsembleCiemss from '@assets/svg/operator-images/calibrate-ensemble-probabilistic.svg';
 
@@ -33,21 +33,26 @@ export interface CalibrateEnsembleMappingRow {
 	datasetMapping: string;
 	modelConfigurationMappings: { [key: string]: string };
 }
+export const isCalibrateEnsembleMappingRow = (obj: any): obj is CalibrateEnsembleMappingRow =>
+	obj.newName !== undefined && obj.datasetMapping !== undefined;
 
 export interface CalibrateEnsembleWeights {
 	[key: string]: number;
 }
 
 export interface CalibrateEnsembleCiemssOperationState extends BaseState {
-	chartConfigs: string[][];
+	chartSettings: ChartSetting[] | null;
 	ensembleMapping: CalibrateEnsembleMappingRow[];
 	configurationWeights: CalibrateEnsembleWeights;
 	timestampColName: string;
 	extra: EnsembleCalibrateExtraCiemss;
 	inProgressCalibrationId: string;
+	inProgressPreForecastId: string;
 	inProgressForecastId: string;
+	errorMessage: { name: string; value: string; traceback: string };
 	calibrationId: string;
-	forecastRunId: string;
+	postForecastId: string;
+	preForecastId: string;
 	currentProgress: number;
 }
 
@@ -61,12 +66,13 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 		{ type: 'datasetId', label: 'Dataset' },
 		{ type: 'modelConfigId', label: 'Model configuration' }
 	],
-	outputs: [{ type: 'simulationId' }],
+	outputs: [{ type: 'datasetId' }],
 	isRunnable: true,
+	uniqueInputs: true,
 
 	initState: () => {
 		const init: CalibrateEnsembleCiemssOperationState = {
-			chartConfigs: [],
+			chartSettings: null,
 			ensembleMapping: [],
 			configurationWeights: {},
 			timestampColName: '',
@@ -81,8 +87,11 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 			},
 			inProgressCalibrationId: '',
 			inProgressForecastId: '',
+			inProgressPreForecastId: '',
 			calibrationId: '',
-			forecastRunId: '',
+			postForecastId: '',
+			preForecastId: '',
+			errorMessage: { name: '', value: '', traceback: '' },
 			currentProgress: 0
 		};
 		return init;

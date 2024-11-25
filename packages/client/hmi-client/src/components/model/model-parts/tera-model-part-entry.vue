@@ -1,5 +1,5 @@
 <template>
-	<section class="flex flex-column gap-3">
+	<section class="flex flex-column gap-2">
 		<span class="flex align-items-center gap-3">
 			<h6>{{ symbol }}</h6>
 			<span class="name">
@@ -7,8 +7,8 @@
 				<tera-input-text
 					v-else
 					placeholder="Add a name"
-					:model-value="item.name ?? ''"
-					@update:model-value="$emit('update-item', { key: 'name', value: $event })"
+					v-model="name"
+					@change="$emit('update-item', { key: 'name', value: name })"
 				/>
 			</span>
 			<span class="unit">
@@ -22,7 +22,7 @@
 					<!-- we use a dropdown for units with time semantic-->
 					<Dropdown
 						v-else-if="isTimePart"
-						:model-value="item.unitExpression"
+						v-model="unitExpression"
 						placeholder="Add a time unit"
 						option-label="label"
 						option-value="value"
@@ -31,15 +31,15 @@
 							{ label: 'Months', value: CalendarDateType.MONTH },
 							{ label: 'Years', value: CalendarDateType.YEAR }
 						]"
-						@change="$emit('update-item', { key: 'unitExpression', value: $event.value })"
+						@change="$emit('update-item', { key: 'unitExpression', value: unitExpression })"
 					/>
 					<tera-input-text
 						v-else
 						label="Unit"
 						placeholder="Add a unit"
 						:characters-to-reject="[' ']"
-						:model-value="item.unitExpression ?? ''"
-						@update:model-value="$emit('update-item', { key: 'unitExpression', value: $event })"
+						v-model="unitExpression"
+						@change="$emit('update-item', { key: 'unitExpression', value: unitExpression })"
 					/>
 				</template>
 			</span>
@@ -89,8 +89,8 @@
 			<tera-input-text
 				v-if="showDescription"
 				placeholder="Add a description"
-				:model-value="item.description ?? ''"
-				@update:model-value="$emit('update-item', { key: 'description', value: $event })"
+				v-model="description"
+				@change="$emit('update-item', { key: 'description', value: description })"
 			/>
 		</span>
 	</section>
@@ -117,6 +117,9 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-item']);
 
+const name = ref(props.item.name);
+const unitExpression = ref(props.item.unitExpression);
+const description = ref(props.item.description);
 const query = ref('');
 const results = ref<DKG[]>([]);
 
@@ -169,16 +172,21 @@ h6::after {
 	margin-left: var(--gap-2);
 }
 
-.unit {
-	max-width: 20rem;
-	overflow: auto;
-}
-
 .unit,
 .concept {
 	display: flex;
 	align-items: center;
 	gap: var(--gap-1);
+}
+
+.unit {
+	overflow: auto;
+}
+
+.expression {
+	min-height: 2rem;
+	max-height: 12rem;
+	overflow: auto;
 }
 
 :deep(.p-autocomplete-input) {

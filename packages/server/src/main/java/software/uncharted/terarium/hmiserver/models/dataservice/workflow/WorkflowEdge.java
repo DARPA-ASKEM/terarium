@@ -23,6 +23,9 @@ public class WorkflowEdge extends SupportAdditionalProperties implements Seriali
 	@TSIgnore
 	private Long version;
 
+	private String createdBy;
+	private Long createdAt;
+
 	private Boolean isDeleted;
 
 	private UUID source;

@@ -11,7 +11,7 @@
 				v-if="pdfData.length"
 				v-model:is-open="isPdfSidebarOpen"
 				content-width="700px"
-				header="Document Viewer"
+				header="Document viewer"
 			>
 				<template #content>
 					<tera-drilldown-section :is-loading="isFetchingPDF">
@@ -30,7 +30,7 @@
 					<section>
 						<nav class="inline-flex">
 							<Button
-								class="flex-1 mr-1"
+								class="flex-1 mr-5"
 								outlined
 								severity="secondary"
 								label="Extract from inputs"
@@ -39,7 +39,13 @@
 								:disabled="!props.node.inputs[0]?.value && !props.node.inputs[1]?.value"
 								@click="extractInterventionPolicyFromInputs"
 							/>
-							<Button class="ml-1" label="Create New" :disabled="!model?.id" @click="createNewInterventionPolicy" />
+							<Button
+								class="ml-1"
+								icon="pi pi-plus"
+								label="Create new"
+								:disabled="!model?.id"
+								@click="resetToBlankIntervention"
+							/>
 						</nav>
 						<tera-input-text v-model="filterInterventionsText" placeholder="Filter" />
 						<ul v-if="!isFetchingPolicies">
@@ -105,7 +111,7 @@
 					<Button label="Save as..." outlined severity="secondary" @click="showSaveModal = true" />
 					<Button class="mr-3" label="Save" @click="onSaveInterventionPolicy" :disabled="isSaveDisabled" />
 				</template>
-				<Accordion v-if="knobs.transientInterventionPolicy" multiple :active-index="[0, 1]">
+				<Accordion v-if="knobs.transientInterventionPolicy" multiple :active-index="currentActiveIndicies">
 					<AccordionTab>
 						<template #header>
 							<Button v-if="!isEditingDescription" class="start-edit" text @click.stop="onEditDescription">
@@ -114,8 +120,8 @@
 							</Button>
 							<span v-else class="confirm-cancel">
 								<span>Description</span>
-								<Button icon="pi pi-times" text @click.stop="isEditingDescription = false" />
-								<Button icon="pi pi-check" text @click.stop="onConfirmEditDescription" />
+								<Button icon="pi pi-times" size="small" text @click.stop="isEditingDescription = false" />
+								<Button icon="pi pi-check" size="small" text @click.stop="onConfirmEditDescription" />
 							</span>
 						</template>
 						<p class="description text" v-if="!isEditingDescription">
@@ -175,9 +181,9 @@
 		</tera-columnar-panel>
 	</tera-drilldown>
 	<tera-save-asset-modal
-		:initial-name="showCreatePolicyModal ? 'New Intervention Policy' : knobs.transientInterventionPolicy.name"
+		:initial-name="knobs.transientInterventionPolicy.name"
 		:is-visible="showSaveModal"
-		:asset="showCreatePolicyModal ? newBlankInterventionPolicy : knobs.transientInterventionPolicy"
+		:asset="knobs.transientInterventionPolicy"
 		:asset-type="AssetType.InterventionPolicy"
 		@close-modal="showSaveModal = false"
 		@on-save="onSaveAsInterventionPolicy"
@@ -261,12 +267,6 @@ const knobs = ref<BasicKnobs>({
 	}
 });
 
-const newBlankInterventionPolicy = ref({
-	name: '',
-	modelId: '',
-	interventions: [blankIntervention]
-});
-
 interface SelectedIntervention {
 	index: number;
 	name: string;
@@ -276,6 +276,7 @@ interface SelectedIntervention {
 	dynamicInterventions: DynamicIntervention[];
 }
 
+const currentActiveIndicies = ref([0, 1]);
 const pdfPanelRef = ref();
 const pdfViewer = computed(() => pdfPanelRef.value?.pdfRef[0]);
 const selectedIntervention = ref<SelectedIntervention | null>(null);
@@ -285,7 +286,6 @@ const isFetchingPDF = ref(false);
 const pdfData = ref<{ document: DocumentAsset; data: string; isPdf: boolean; name: string }[]>([]);
 
 const showSaveModal = ref(false);
-const showCreatePolicyModal = ref(false);
 const isSidebarOpen = ref(true);
 const filterInterventionsText = ref('');
 const model = ref<Model | null>(null);
@@ -297,8 +297,8 @@ const interventionPoliciesFiltered = computed(() =>
 		.filter((policy) => policy.name?.toLowerCase().includes(filterInterventionsText.value.toLowerCase()))
 		.sort((a, b) => sortDatesDesc(a.createdOn, b.createdOn))
 );
-const selectedOutputId = ref<string>('');
-const selectedPolicyId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
+
+const selectedPolicyId = computed(() => props.node.outputs.find((o) => o.id === props.node.active)?.value?.[0]);
 const selectedPolicy = ref<InterventionPolicy | null>(null);
 
 const newDescription = ref('');
@@ -534,7 +534,6 @@ const onResetPolicy = () => {
 };
 
 const onSaveAsInterventionPolicy = (data: InterventionPolicy) => {
-	showCreatePolicyModal.value = false;
 	applyInterventionPolicy(data);
 };
 
@@ -556,11 +555,19 @@ const onSaveInterventionPolicy = async () => {
 	}
 };
 
-const createNewInterventionPolicy = () => {
-	if (!model.value?.id) return;
-	showCreatePolicyModal.value = true;
-	newBlankInterventionPolicy.value.modelId = model.value.id;
-	showSaveModal.value = true;
+const resetToBlankIntervention = () => {
+	const modelId = props.node.inputs[0].value?.[0];
+	if (!modelId) return;
+	knobs.value.transientInterventionPolicy = {
+		modelId,
+		interventions: [_.cloneDeep(blankIntervention)]
+	};
+
+	emit('append-output', {
+		type: InterventionPolicyOperation.outputs[0].type,
+		label: InterventionPolicyOperation.outputs[0].label,
+		value: null
+	});
 };
 
 const extractInterventionPolicyFromInputs = async () => {
@@ -600,7 +607,6 @@ watch(
 	() => props.node.active,
 	() => {
 		if (props.node.active) {
-			selectedOutputId.value = props.node.active;
 			initialize();
 		}
 	}
@@ -622,7 +628,6 @@ watch(
 
 onMounted(() => {
 	if (props.node.active) {
-		selectedOutputId.value = props.node.active;
 		// setting true will force overwrite the intervention policy with the current state on the node
 		initialize(true);
 	} else {
@@ -656,8 +661,9 @@ onMounted(() => {
 
 <style scoped>
 .intervention-settings-section {
-	background-color: var(--surface-100);
+	background-color: var(--gray-200);
 	padding: 0 var(--gap-3);
+	gap: var(--gap-1);
 }
 
 .input-config {
@@ -692,7 +698,7 @@ button.start-edit {
 	display: flex;
 	gap: var(--gap-3);
 	width: fit-content;
-	padding: var(--gap-2);
+	padding: 0;
 
 	& > .btn-content {
 		color: var(--text-color);
@@ -705,7 +711,7 @@ button.start-edit {
 
 .intervention {
 	background-color: var(--gray-0);
-	border-left: 4px solid var(--surface-300);
+	border-left: 6px solid var(--surface-300);
 
 	&.selected {
 		border-left-color: var(--primary-color);
@@ -713,7 +719,7 @@ button.start-edit {
 
 	&,
 	&.selected {
-		transition: border-left-color 250ms;
+		transition: border-left-color 15ms;
 	}
 }
 
@@ -724,5 +730,9 @@ button.start-edit {
 	& > span {
 		margin-left: var(--gap-2);
 	}
+}
+
+.description {
+	margin-bottom: var(--gap-3);
 }
 </style>

@@ -15,6 +15,7 @@ export interface ClientEvent<T> {
     type: ClientEventType;
     projectId?: string;
     notificationGroupId?: string;
+    userId?: string;
     data: T;
 }
 
@@ -115,13 +116,8 @@ export interface CsvColumnStats {
 }
 
 export interface Grounding extends TerariumEntity {
-    identifiers: Identifier[];
+    identifiers: DKG[];
     context?: any;
-}
-
-export interface Identifier {
-    curie: string;
-    name: string;
 }
 
 export interface PresignedURL {
@@ -298,6 +294,7 @@ export interface Project extends TerariumAsset {
     overviewContent?: any;
     projectAssets: ProjectAsset[];
     metadata?: { [index: string]: string };
+    sampleProject?: boolean;
     publicProject?: boolean;
     userPermission?: string;
 }
@@ -712,6 +709,12 @@ export interface UserEvent {
     message: any;
 }
 
+export interface ProjectSearchResponse {
+    projectId: string;
+    score: number;
+    hits: ProjectSearchAsset[];
+}
+
 export interface SimulationNotificationData {
     simulationId: string;
     simulationType: SimulationType;
@@ -799,10 +802,10 @@ export interface ModelUnit {
 }
 
 export interface GroundedSemantic {
-    grounding?: ModelGrounding;
     id: string;
     name?: string;
     description?: string;
+    grounding?: ModelGrounding;
 }
 
 export interface Properties {
@@ -832,6 +835,13 @@ export interface PermissionRole {
 export interface UserOld {
     username: string;
     roles: string[];
+}
+
+export interface ProjectSearchAsset {
+    assetId: string;
+    assetType: AssetType;
+    embeddingType: TerariumAssetEmbeddingType;
+    score: number;
 }
 
 export interface AuthorityInstance {
@@ -1028,6 +1038,7 @@ export enum AssetType {
     ModelConfiguration = "model-configuration",
     Artifact = "artifact",
     InterventionPolicy = "intervention-policy",
+    Project = "project",
 }
 
 export enum EvaluationScenarioStatus {
@@ -1193,4 +1204,12 @@ export enum ExtractionAssetType {
     Figure = "FIGURE",
     Table = "TABLE",
     Equation = "EQUATION",
+}
+
+export enum TerariumAssetEmbeddingType {
+    Overview = "OVERVIEW",
+    Name = "NAME",
+    Description = "DESCRIPTION",
+    Metadata = "METADATA",
+    Card = "CARD",
 }

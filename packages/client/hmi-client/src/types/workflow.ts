@@ -60,6 +60,7 @@ export interface Operation {
 
 	inputs: OperationData[];
 	outputs: OperationData[];
+	uniqueInputs?: boolean;
 }
 
 // Defines the data-exchange between WorkflowNode
@@ -96,6 +97,8 @@ export interface WorkflowNode<S> {
 	workflowId: string;
 	isDeleted?: boolean;
 	version?: number;
+	createdBy?: string;
+	createdAt?: number;
 
 	displayName: string;
 	operationType: string;
@@ -118,6 +121,8 @@ export interface WorkflowNode<S> {
 
 	// Behaviour
 	status: OperatorStatus;
+
+	uniqueInputs?: boolean;
 }
 
 export interface WorkflowEdge {
@@ -125,6 +130,8 @@ export interface WorkflowEdge {
 	workflowId: string;
 	isDeleted?: boolean;
 	version?: number;
+	createdBy?: string;
+	createdAt?: number;
 
 	points: Position[];
 	source?: WorkflowNode<any>['id'];
@@ -157,6 +164,8 @@ export interface Workflow {
 	transform: Transform;
 	nodes: WorkflowNode<any>[];
 	edges: WorkflowEdge[];
+
+	scenario?: any;
 }
 
 export interface Size {

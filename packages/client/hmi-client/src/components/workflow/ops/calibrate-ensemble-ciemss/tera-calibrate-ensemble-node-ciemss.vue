@@ -1,33 +1,10 @@
 <template>
 	<main>
-		<template v-if="!inProgressCalibrationId && !inProgressForecastId && runResults && csvAsset">
-			<vega-chart
-				v-if="!_.isEmpty(lossValues)"
-				:are-embed-actions-visible="false"
-				:visualization-spec="lossChartSpec"
-			/>
-
-			<tera-simulate-chart
-				v-for="(config, index) of props.node.state.chartConfigs"
-				:key="index"
-				:run-results="runResults"
-				:chartConfig="{
-					selectedRun: props.node.state.forecastRunId,
-					selectedVariable: config
-				}"
-				:mapping="
-					formatCalibrateModelConfigurations(
-						props.node.state.ensembleMapping,
-						props.node.state.configurationWeights
-					) as any
-				"
-				:initial-data="csvAsset"
-				:size="{ width: 190, height: 120 }"
-				has-mean-line
-				@configuration-change="chartProxy.configurationChange(index, $event)"
-			/>
-		</template>
-
+		<vega-chart
+			v-if="(inProgressCalibrationId || inProgressForecastId) && !_.isEmpty(lossValues)"
+			:are-embed-actions-visible="false"
+			:visualization-spec="lossChartSpec"
+		/>
 		<tera-progress-spinner
 			v-if="inProgressCalibrationId || inProgressForecastId"
 			:font-size="2"
@@ -49,25 +26,29 @@ import { computed, ref, shallowRef, watch, onMounted } from 'vue';
 import _ from 'lodash';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import {
 	getRunResultCiemss,
 	pollAction,
 	getCalibrateBlobURL,
-	makeEnsembleCiemssSimulation
+	makeEnsembleCiemssSimulation,
+	getSimulation
 } from '@/services/models/simulation-service';
 import { setupCsvAsset } from '@/services/calibrate-workflow';
-import { chartActionsProxy, nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
+import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';
 import { WorkflowPortStatus } from '@/types/workflow';
 import type { CsvAsset, EnsembleSimulationCiemssRequest, Dataset, Simulation } from '@/types/Types';
 import type { RunResults } from '@/types/SimulateConfig';
-import { getDataset } from '@/services/dataset';
+import { createDatasetFromSimulationResult, getDataset } from '@/services/dataset';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import type { CalibrateEnsembleCiemssOperationState } from './calibrate-ensemble-ciemss-operation';
+import { useProjects } from '@/composables/project';
+import {
+	CalibrateEnsembleCiemssOperation,
+	CalibrateEnsembleCiemssOperationState
+} from './calibrate-ensemble-ciemss-operation';
 import {
 	updateLossChartSpec,
 	getLossValuesFromSimulation,
@@ -88,10 +69,6 @@ const inProgressForecastId = computed(() => props.node.state.inProgressForecastI
 const lossValues = ref<{ [key: string]: number }[]>([]);
 const lossChartSpec = ref();
 const lossChartSize = { width: 180, height: 120 };
-
-const chartProxy = chartActionsProxy(props.node, (state: CalibrateEnsembleCiemssOperationState) => {
-	emit('update-state', state);
-});
 
 const poller = new Poller();
 const pollResult = async (runId: string) => {
@@ -125,17 +102,23 @@ const pollResult = async (runId: string) => {
 		state.currentProgress = 0;
 		state.inProgressForecastId = '';
 		state.inProgressCalibrationId = '';
+		poller.stop();
 		emit('update-state', state);
-		return pollerResults;
-	}
-	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
+	} else if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
 		logger.error(`Calibration: ${runId} has failed`, {
 			toastTitle: 'Error - Pyciemss'
 		});
-
-		// TODO: show error in UI
 		const state = _.cloneDeep(props.node.state);
+		const simulation = await getSimulation(runId);
+		if (simulation?.status && simulation?.statusMessage) {
+			state.inProgressCalibrationId = '';
+			state.errorMessage = {
+				name: runId,
+				value: simulation.status,
+				traceback: simulation.statusMessage
+			};
+		}
 		state.currentProgress = 0;
 		state.inProgressForecastId = '';
 		state.inProgressCalibrationId = '';
@@ -161,7 +144,8 @@ watch(
 			const dillURL = await getCalibrateBlobURL(id);
 			console.log('dill URL is', dillURL);
 
-			const params: EnsembleSimulationCiemssRequest = {
+			const state = _.cloneDeep(props.node.state);
+			const baseRequestPayload: EnsembleSimulationCiemssRequest = {
 				modelConfigs: formatCalibrateModelConfigurations(
 					props.node.state.ensembleMapping,
 					props.node.state.configurationWeights
@@ -169,21 +153,25 @@ watch(
 				timespan: {
 					// Should probably grab this from csvasset
 					start: 0,
-					end: 100
+					end: state.extra.endTime
 				},
 				engine: 'ciemss',
 				extra: {
-					num_samples: props.node.state.extra.numIterations,
-					inferred_parameters: id
+					num_samples: props.node.state.extra.numIterations
 				}
 			};
-			const simulationResponse = await makeEnsembleCiemssSimulation(params, nodeMetadata(props.node));
-			const forecastId = simulationResponse.simulationId;
 
-			const state = _.cloneDeep(props.node.state);
+			// Default (Pre)
+			let forecastResponse = await makeEnsembleCiemssSimulation(baseRequestPayload, nodeMetadata(props.node));
+			state.inProgressPreForecastId = forecastResponse.simulationId;
+
+			// With calibrated result
+			baseRequestPayload.extra.inferred_parameters = id;
+			forecastResponse = await makeEnsembleCiemssSimulation(baseRequestPayload, nodeMetadata(props.node));
+			state.inProgressForecastId = forecastResponse.simulationId;
+
 			state.inProgressCalibrationId = '';
 			state.calibrationId = id;
-			state.inProgressForecastId = forecastId;
 			emit('update-state', state);
 		}
 	},
@@ -191,24 +179,46 @@ watch(
 );
 
 watch(
-	() => props.node.state.inProgressForecastId,
+	() => props.node.state.inProgressForecastId + props.node.state.inProgressPreForecastId,
 	async (id) => {
 		if (!id || id === '') return;
 
-		const response = await pollResult(id);
-		if (response.state === PollerState.Done) {
+		let doneProcess = true;
+		let response = await pollResult(props.node.state.inProgressPreForecastId);
+		if (response.state !== PollerState.Done) {
+			doneProcess = false;
+		}
+
+		response = await pollResult(props.node.state.inProgressForecastId);
+		if (response.state !== PollerState.Done) {
+			doneProcess = false;
+		}
+
+		if (doneProcess) {
 			const state = _.cloneDeep(props.node.state);
+			state.postForecastId = state.inProgressForecastId;
+			state.preForecastId = state.inProgressPreForecastId;
 
-			state.chartConfigs = [[]];
-			state.currentProgress = 0;
 			state.inProgressForecastId = '';
-			state.forecastRunId = id;
+			state.inProgressPreForecastId = '';
+			emit('update-state', state);
 
-			const portLabel = props.node.inputs[0].label;
+			const datasetName = `Forecast run ${state.postForecastId}`;
+			const projectId = useProjects().activeProjectId.value;
+			const datasetResult = await createDatasetFromSimulationResult(
+				projectId,
+				state.postForecastId,
+				datasetName,
+				false
+			);
+			if (!datasetResult) {
+				return;
+			}
+
 			emit('append-output', {
-				type: 'calibrateSimulationId',
-				label: nodeOutputLabel(props.node, `${portLabel} Result`),
-				value: [state.calibrationId],
+				type: CalibrateEnsembleCiemssOperation.outputs[0].type,
+				label: nodeOutputLabel(props.node, `Calibration Result`),
+				value: datasetResult.id,
 				state
 			});
 		}
@@ -222,9 +232,9 @@ watch(
 		const active = props.node.active;
 		const state = props.node.state;
 		if (!active) return;
-		if (!state.forecastRunId) return;
+		if (!state.postForecastId) return;
 
-		const forecastId = state.forecastRunId;
+		const forecastId = state.postForecastId;
 
 		// Simulate
 		const result = await getRunResultCiemss(forecastId, 'result.csv');

@@ -10,7 +10,7 @@
 			<tera-slider-panel
 				v-if="document"
 				v-model:is-open="isDocViewerOpen"
-				header="Document Viewer"
+				header="Document viewer"
 				content-width="100%"
 			>
 				<template #content>
@@ -46,7 +46,15 @@
 									class="w-full"
 									:disabled="multipleEquationsDisabled"
 								/>
-								<Button label="Add" @click="getEquations" class="ml-2" :disabled="isEmpty(multipleEquations)" />
+								<Button
+									label="Add"
+									icon="pi pi-plus"
+									size="small"
+									@click="getEquations"
+									text
+									class="ml-2"
+									:disabled="isEmpty(multipleEquations)"
+								/>
 							</section>
 						</header>
 						<h6 class="py-3">Use {{ includedEquations.length > 1 ? 'these equations' : 'this equation' }}</h6>
@@ -59,7 +67,9 @@
 									:class="['asset-panel', { selected: selectedItem === equation.name }]"
 								>
 									<template #header>
-										<h6>Page ({{ equation.asset.pageNumber }})</h6>
+										<h6 v-if="equation.asset.pageNumber">Page {{ equation.asset.pageNumber }}</h6>
+										<h6 v-else-if="equation.asset.isEditedByAI">Edited by AI</h6>
+										<h6 v-else>Manually entered</h6>
 									</template>
 									<section>
 										<Checkbox
@@ -86,8 +96,10 @@
 									/>
 								</tera-asset-block>
 							</li>
+							<p v-if="isEmpty(includedEquations)" class="secondary-text">No equations selected</p>
 						</ul>
-						<h6 class="py-3">Other equations extracted from document</h6>
+						<div class="spacer mb-5" />
+						<h6 class="pb-3">Other equations extracted from document</h6>
 						<ul class="blocks-container">
 							<li v-for="(equation, i) in notIncludedEquations" :key="i" @click.capture="selectItem(equation, $event)">
 								<tera-asset-block
@@ -97,7 +109,9 @@
 									:class="['asset-panel', { selected: selectedItem === equation.name }]"
 								>
 									<template #header>
-										<h6>Page ({{ equation.asset.pageNumber }})</h6>
+										<h6 v-if="equation.asset.pageNumber">Page {{ equation.asset.pageNumber }}</h6>
+										<h6 v-else-if="equation.asset.isEditedByAI">Edited by AI</h6>
+										<h6 v-else>Manually entered</h6>
 									</template>
 									<section>
 										<Checkbox
@@ -166,7 +180,7 @@ import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import type { Card, DocumentAsset, Model } from '@/types/Types';
 import { cloneDeep, isEmpty } from 'lodash';
-import { equationsToAMR, type EquationsToAMRRequest } from '@/services/knowledge';
+import { equationsToAMR, getCleanedEquations, type EquationsToAMRRequest } from '@/services/knowledge';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
 import { enrichModelMetadata, equationsFromImage } from '@/services/goLLM';
 import { getModel, updateModel } from '@/services/model';
@@ -179,6 +193,7 @@ import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
+import { logger } from '@/utils/logger';
 import { ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
 
 const emit = defineEmits(['close', 'update-state', 'append-output', 'update-output', 'select-output']);
@@ -351,21 +366,46 @@ function onCheckBoxChange(equation) {
 async function onRun() {
 	isOutputOpen.value = true;
 	isModelLoading.value = true;
-	const equations = clonedState.value.equations
+	const equationsText = clonedState.value.equations
 		.filter((e) => e.includeInProcess && !e.asset.extractionError)
 		.map((e) => e.asset.text);
+	const response = await getCleanedEquations(equationsText);
+	if (!response || isEmpty(response.cleanedEquations)) {
+		logger.error('Error cleaning equations, none were returned.');
+		return;
+	}
+	const { cleanedEquations, wasCleaned } = response;
 
 	const request: EquationsToAMRRequest = {
-		equations,
+		equations: cleanedEquations,
 		framework: clonedState.value.modelFramework,
 		documentId: document.value?.id
 	};
 	const modelId = await equationsToAMR(request);
-	if (!modelId) return;
+	// If there isn't a modelId returned at least show the cleaned equations
+	if (modelId) {
+		if (document.value?.id) await generateCard(modelId, document.value.id);
+		clonedState.value.modelId = modelId;
+	}
 
-	if (document.value?.id) await generateCard(modelId, document.value.id);
-
-	clonedState.value.modelId = modelId;
+	// If the equations were cleaned that means these cleaned equations should be added to the input list
+	// So uncheck the old ones and check the new cleaned ones
+	if (wasCleaned) {
+		// Uncheck the equations passed to the request
+		clonedState.value.equations.forEach((eq) => {
+			if (equationsText.includes(eq.asset.text)) {
+				eq.includeInProcess = false;
+			}
+		});
+		// Replace the unchecked equations with the cleaned equations
+		clonedState.value.equations.push(
+			...cleanedEquations.map((equation, index) => ({
+				name: `Equation ${clonedState.value.equations.length + index}`,
+				includeInProcess: true,
+				asset: { text: equation, isEditedByAI: true }
+			}))
+		);
+	}
 	emit('append-output', {
 		label: `Output - ${props.node.outputs.length + 1}`,
 		state: cloneDeep(clonedState.value),
@@ -489,6 +529,9 @@ watch(
 		border-left: var(--gap-1) solid var(--primary-color);
 	}
 }
+.asset-panel:deep(.p-panel-header) {
+	padding-bottom: var(--gap-1);
+}
 
 .blocks-container li:first-of-type .asset-panel {
 	border-top-left-radius: var(--border-radius-medium);
@@ -514,6 +557,10 @@ watch(
 	flex-direction: row;
 	align-items: center;
 	justify-content: space-between;
+	background: var(--surface-50);
+	border-radius: var(--border-radius-medium);
+	border: 1px solid var(--surface-border-light);
+	padding: var(--gap-3);
 }
 
 .equation-view {
@@ -527,7 +574,9 @@ watch(
 .block-container {
 	overflow-y: auto;
 }
-
+.secondary-text {
+	color: var(--text-color-subdued);
+}
 /* PrimeVue Override */
 
 .p-panel {

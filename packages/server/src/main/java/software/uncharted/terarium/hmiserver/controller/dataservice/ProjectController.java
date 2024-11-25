@@ -66,6 +66,7 @@ import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectPermissionsService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService.ProjectSearchResponse;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.TerariumAssetServices;
 import software.uncharted.terarium.hmiserver.service.data.WorkflowService;
@@ -450,7 +451,7 @@ public class ProjectController {
 		value = {
 			@ApiResponse(
 				responseCode = "200",
-				description = "Project marked for deletion",
+				description = "Project updated",
 				content = {
 					@Content(
 						mediaType = "application/json",
@@ -510,6 +511,75 @@ public class ProjectController {
 		}
 
 		return ResponseEntity.ok(updatedProject.get());
+	}
+
+	@Operation(summary = "Resync Project in the Search Index")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Project assets updated in index",
+				content = {
+					@Content(
+						mediaType = "application/json",
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class)
+					)
+				}
+			),
+			@ApiResponse(
+				responseCode = "403",
+				description = "The current user does not have update privileges to this project",
+				content = @Content
+			),
+			@ApiResponse(responseCode = "404", description = "Project could not be found", content = @Content),
+			@ApiResponse(
+				responseCode = "503",
+				description = "An error occurred when trying to communicate with either the postgres or spicedb" + " databases",
+				content = @Content
+			)
+		}
+	)
+	@PostMapping("/reindex-project/{id}")
+	@Secured(Roles.USER)
+	public ResponseEntity<Project> updateProjectAssets(@PathVariable("id") final UUID id) {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), id);
+
+		try {
+			final Optional<Project> originalProject = projectService.getProject(id);
+			if (originalProject.isEmpty()) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
+			}
+
+			// re-index the project
+			projectSearchService.indexProject(originalProject.get());
+
+			final List<ProjectAsset> assets = projectAssetService.getProjectAssets(id, permission);
+
+			for (final ProjectAsset projectAsset : assets) {
+				try {
+					final ITerariumAssetService<?> terariumAssetService = terariumAssetServices.getServiceByType(
+						projectAsset.getAssetType()
+					);
+
+					final Optional<? extends TerariumAsset> asset = terariumAssetService.getAsset(
+						projectAsset.getAssetId(),
+						Schema.Permission.READ
+					);
+
+					final Future<Void> future = projectSearchService.generateAndUpsertProjectAssetEmbeddings(id, asset.get());
+					if (future != null) {
+						future.get();
+					}
+				} catch (final Exception e) {
+					log.error("Error updating project asset in index, skipping", e);
+				}
+			}
+
+			return ResponseEntity.ok(originalProject.get());
+		} catch (final Exception e) {
+			log.error("Error updating project", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
 	}
 
 	@Operation(summary = "Copy a project")
@@ -929,7 +999,7 @@ public class ProjectController {
 		try {
 			for (final RebacPermissionRelationship permissionRelationship : rebacProject.getPermissionRelationships()) {
 				if (permissionRelationship.getSubjectType().equals(Schema.Type.USER)) {
-					PermissionUser user = reBACService.getUser(permissionRelationship.getSubjectId());
+					final PermissionUser user = reBACService.getUser(permissionRelationship.getSubjectId());
 					if (user != null) {
 						permissions.addUser(user, permissionRelationship.getRelationship());
 					}
@@ -946,6 +1016,55 @@ public class ProjectController {
 		}
 
 		return ResponseEntity.ok(permissions);
+	}
+
+	@GetMapping("/knn")
+	@Secured(Roles.USER)
+	@Operation(summary = "Executes a knn search against the provided asset type")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Query results",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = JsonNode.class)
+				)
+			),
+			@ApiResponse(responseCode = "204", description = "There was no concept found", content = @Content),
+			@ApiResponse(
+				responseCode = "500",
+				description = "There was an issue retrieving the concept from the data store",
+				content = @Content
+			)
+		}
+	)
+	public ResponseEntity<List<ProjectSearchResponse>> projectKnnSearch(
+		@RequestParam(value = "page-size", defaultValue = "100", required = false) final Integer pageSize,
+		@RequestParam(value = "page", defaultValue = "0", required = false) final Integer page,
+		@RequestParam(value = "text", defaultValue = "") final String text,
+		@RequestParam(value = "k", defaultValue = "100") final int k,
+		@RequestParam(value = "num-candidates", defaultValue = "1000") final int numCandidates
+	) {
+		try {
+			final String userId = currentUserService.get().getId();
+
+			final List<ProjectSearchResponse> res = projectSearchService.searchProjectsKNN(
+				userId,
+				pageSize,
+				page,
+				text,
+				k,
+				numCandidates,
+				null
+			);
+
+			return ResponseEntity.ok(res);
+		} catch (final Exception e) {
+			final String error = "Unable to get execute knn search";
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -1121,6 +1240,111 @@ public class ProjectController {
 			throw rethrow;
 		} catch (final Exception e) {
 			log.error("Unexpected error, failed to set project public permissions", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+		}
+	}
+
+	@Operation(summary = "Set a project as a sample project by ID")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Project has been made a sample project",
+				content = {
+					@Content(
+						mediaType = "application/json",
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class)
+					)
+				}
+			),
+			@ApiResponse(
+				responseCode = "403",
+				description = "The current user does not have privileges to modify this project.",
+				content = @Content
+			),
+			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content)
+		}
+	)
+	@PutMapping("/set-sample/{id}/{sample}")
+	@Secured(Roles.USER)
+	public ResponseEntity<JsonNode> makeProjectSample(
+		@PathVariable("id") final UUID id,
+		@PathVariable("sample") final boolean isSample
+	) {
+		try {
+			// Only an admin can set a project as a sample project
+			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), id);
+
+			// Get the project
+			final Project project = projectService
+				.getProject(id)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found")));
+
+			// Validate the request again the current project sample status
+			if (isSample && project.getSampleProject()) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("projects.already-sample"));
+			}
+			if (!isSample && !project.getSampleProject()) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("projects.already-not-sample"));
+			}
+
+			// Update the project sample status
+			project.setSampleProject(isSample);
+
+			// If the user is making the project a sample, make it public as well
+			if (isSample) {
+				project.setPublicAsset(true);
+				projectAssetService.togglePublicForAssets(terariumAssetServices, id, true, Schema.Permission.WRITE);
+			}
+
+			// Update the project
+			projectService.updateProject(project);
+
+			/* Project Permissions */
+			final RebacProject rebacProject = new RebacProject(id, reBACService);
+
+			// When we make a project a sample project
+			if (isSample) {
+				// Update all user permissions to READER only
+				final List<Contributor> contributors = projectPermissionsService.getContributors(rebacProject);
+				for (final Contributor contributor : contributors) {
+					if (contributor.isUser()) {
+						final RebacUser rebacUser = new RebacUser(contributor.getUserId(), reBACService);
+						projectPermissionsService.removeProjectPermissions(
+							rebacProject,
+							rebacUser,
+							Schema.Relationship.CREATOR.toString()
+						);
+						projectPermissionsService.removeProjectPermissions(
+							rebacProject,
+							rebacUser,
+							Schema.Relationship.WRITER.toString()
+						);
+						projectPermissionsService.setProjectPermissions(
+							rebacProject,
+							rebacUser,
+							Schema.Relationship.READER.toString()
+						);
+					}
+				}
+
+				// Update the group permissions to the project when becoming a sample-project
+				final RebacGroup adminGroup = new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService);
+				adminGroup.removeAllRelationsExceptOne(rebacProject, Schema.Relationship.ADMIN);
+				final RebacGroup publicGroup = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
+				publicGroup.removeAllRelationsExceptOne(rebacProject, Schema.Relationship.READER);
+			} else {
+				// Project author become the creator of the project once more
+				final RebacUser rebacUser = new RebacUser(project.getUserId(), reBACService);
+				final String creator = Schema.Relationship.CREATOR.toString();
+				projectPermissionsService.setProjectPermissions(rebacProject, rebacUser, creator);
+			}
+
+			return ResponseEntity.ok().build();
+		} catch (final ResponseStatusException rethrow) {
+			throw rethrow;
+		} catch (final Exception e) {
+			log.error("Unexpected error, failed to set as a sample project ", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
 	}

@@ -62,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty, isEqual } from 'lodash';
+import { isEmpty, isEqual, debounce } from 'lodash';
 import { ref, watch, computed, nextTick, onMounted, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
@@ -73,7 +73,7 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
 import TeraTooltip from '@/components/widgets/tera-tooltip.vue';
 import { isStratifiedModel, emptyMiraModel, convertToIGraph } from '@/model-representation/mira/mira';
-import { MiraModel, MiraTemplateParams, ObservableSummary } from '@/model-representation/mira/mira-common';
+import { MiraModel, MiraTemplateParams, ObservableSummary, MMT } from '@/model-representation/mira/mira-common';
 import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
 import { getModelRenderer } from '@/model-representation/service';
@@ -86,6 +86,7 @@ import { observeElementSizeChange } from '@/utils/observer';
 
 const props = defineProps<{
 	model: Model;
+	mmtData?: MMT;
 	featureConfig?: FeatureConfig;
 }>();
 
@@ -194,19 +195,18 @@ async function toggleCollapsedView(view: StratifiedView) {
 }
 
 watch(
-	() => [props.model.model, props.model?.semantics, graphElement.value],
-	(newValue, oldValue) => {
-		if (isEqual(newValue, oldValue) || modelType.value === AMRSchemaNames.DECAPODES || graphElement.value === null)
+	() => [props.model.model, props.model?.semantics, props.mmtData, graphElement.value],
+	async (newValue, oldValue) => {
+		if (isEqual(newValue, oldValue) || modelType.value === AMRSchemaNames.DECAPODES || graphElement.value === null) {
 			return;
-
-		getMMT(props.model).then((response) => {
-			if (response) {
-				mmt.value = response.mmt;
-				mmtParams.value = response.template_params;
-				observableSummary = response.observable_summary;
-				renderGraph();
-			}
-		});
+		}
+		// If no MMT data is provided from the parent component, fetch it from the server
+		const mmtData = props.mmtData ?? (await getMMT(props.model));
+		if (!mmtData) return;
+		mmt.value = mmtData.mmt;
+		mmtParams.value = mmtData.template_params;
+		observableSummary = mmtData.observable_summary;
+		renderGraph();
 	},
 	{ immediate: true, deep: true }
 );
@@ -215,7 +215,9 @@ watch(
 let graphResizeObserver: ResizeObserver;
 onMounted(() => {
 	if (graphElement.value) {
-		graphResizeObserver = observeElementSizeChange(graphElement.value, renderGraph);
+		// FIXME: This debounce prevents the graph from being rendered multiple times in a row.
+		// This happens in cases where there is a slight change in width when a scrollbar is shown or hidden. eg. opening/closing the transitions accordion in the model page
+		graphResizeObserver = observeElementSizeChange(graphElement.value, debounce(renderGraph, 2000));
 	}
 });
 onUnmounted(() => {

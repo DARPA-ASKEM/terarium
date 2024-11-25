@@ -34,13 +34,7 @@
 			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" popup :pt="optionsMenuPt" />
 			<aside class="btn-group">
 				<tera-asset-enrichment :asset-type="AssetType.Model" :assetId="assetId" @finished-job="fetchModel" />
-				<Button
-					label="Reset"
-					severity="secondary"
-					outlined
-					@click="onReset"
-					:disabled="!(hasChanged && hasEditPermission)"
-				/>
+
 				<Button
 					v-if="isSaveForReuse"
 					label="Save for re-use"
@@ -53,17 +47,23 @@
 				<Button label="Save" @click="onSave" :disabled="!(hasChanged && hasEditPermission)" />
 			</aside>
 		</template>
-		<section v-if="temporaryModel">
+		<section v-if="temporaryModel && mmtData">
 			<tera-model-description
 				:feature-config="featureConfig"
 				:model="temporaryModel"
+				:mmt-data="mmtData"
 				@update-model="updateTemporaryModel"
 			/>
-			<tera-model-parts
-				class="mt-0"
-				:feature-config="featureConfig"
+			<tera-petrinet-parts
 				:model="temporaryModel"
-				@update-model="updateTemporaryModel"
+				:mmt="mmtData.mmt"
+				:mmt-params="mmtData.template_params"
+				:feature-config="featureConfig"
+				@update-state="(e: any) => onUpdateModelPart('state', e)"
+				@update-parameter="(e: any) => onUpdateModelPart('parameter', e)"
+				@update-observable="(e: any) => onUpdateModelPart('observable', e)"
+				@update-transition="(e: any) => onUpdateModelPart('transition', e)"
+				@update-time="(e: any) => onUpdateModelPart('time', e)"
 			/>
 		</section>
 	</tera-asset>
@@ -89,13 +89,21 @@ import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraAssetEnrichment from '@/components/widgets/tera-asset-enrichment.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
-import TeraModelParts from '@/components/model/tera-model-parts.vue';
+import TeraPetrinetParts from '@/components/model/petrinet/tera-petrinet-parts.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
-import { getModel, updateModel } from '@/services/model';
+import { getModel, updateModel, getMMT } from '@/services/model';
 import type { FeatureConfig } from '@/types/common';
 import { AssetType, type Model } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
+import { MMT } from '@/model-representation/mira/mira-common';
+import {
+	updateState,
+	updateParameter,
+	updateObservable,
+	updateTransition,
+	updateTime
+} from '@/model-representation/service';
 
 const props = defineProps({
 	assetId: {
@@ -120,6 +128,7 @@ const emit = defineEmits(['close-preview', 'on-save']);
 
 const model = ref<Model | null>(null);
 const temporaryModel = ref<Model | null>(null);
+const mmtData = ref<MMT | null>(null);
 
 const newName = ref('New Model');
 const isRenaming = ref(false);
@@ -130,11 +139,12 @@ const hasChanged = computed(() => !isEqual(model.value, temporaryModel.value));
 const hasEditPermission = useProjects().hasEditPermission();
 
 // Edit menu
-function onReset() {
-	temporaryModel.value = cloneDeep(model.value);
-}
-function onSave() {
-	saveModelContent();
+async function onSave() {
+	if (!hasEditPermission || !temporaryModel.value) return;
+	await updateModel(temporaryModel.value);
+	logger.info('Changes to the model has been saved.');
+	await useProjects().refresh();
+	await fetchModel();
 }
 function onSaveAs() {
 	showSaveModal.value = true;
@@ -188,14 +198,6 @@ const optionsMenuPt = {
 	}
 };
 
-async function saveModelContent() {
-	if (!hasEditPermission || !temporaryModel.value) return;
-	await updateModel(temporaryModel.value);
-	logger.info('Changes to the model has been saved.');
-	await useProjects().refresh();
-	await fetchModel();
-}
-
 async function updateModelName() {
 	if (temporaryModel.value && !isEmpty(newName.value)) {
 		temporaryModel.value.header.name = newName.value;
@@ -204,13 +206,56 @@ async function updateModelName() {
 	onSave();
 }
 
+async function refreshMMT() {
+	if (!temporaryModel.value) return;
+	const response = await getMMT(temporaryModel.value);
+	if (!response) return;
+	mmtData.value = response;
+}
+
 function updateTemporaryModel(newModel: Model) {
+	let doMmtUpdate = false;
+	// Only update the MMT when the semantics of the model changes
+	if (
+		!isEqual(temporaryModel.value?.model, newModel.model) ||
+		!isEqual(temporaryModel.value?.semantics, newModel.semantics)
+	) {
+		doMmtUpdate = true;
+	}
 	temporaryModel.value = cloneDeep(newModel);
+	if (doMmtUpdate) refreshMMT();
+}
+
+function onUpdateModelPart(property: 'state' | 'parameter' | 'observable' | 'transition' | 'time', event: any) {
+	if (!temporaryModel.value) return;
+	const newModel = cloneDeep(temporaryModel.value);
+	const { id, key, value } = event;
+	switch (property) {
+		case 'state':
+			updateState(newModel, id, key, value);
+			break;
+		case 'parameter':
+			updateParameter(newModel, id, key, value);
+			break;
+		case 'observable':
+			updateObservable(newModel, id, key, value);
+			break;
+		case 'transition':
+			updateTransition(newModel, id, key, value);
+			break;
+		case 'time':
+			updateTime(newModel, key, value);
+			break;
+		default:
+			break;
+	}
+	updateTemporaryModel(newModel);
 }
 
 async function fetchModel() {
 	model.value = await getModel(props.assetId);
 	temporaryModel.value = cloneDeep(model.value);
+	await refreshMMT();
 }
 
 onMounted(async () => {
@@ -233,6 +278,9 @@ watch(
 	() => props.assetId,
 	async () => {
 		// Reset view of model page
+		model.value = null;
+		temporaryModel.value = null;
+		mmtData.value = null;
 		isRenaming.value = false;
 		if (!isEmpty(props.assetId)) {
 			isModelLoading.value = true;

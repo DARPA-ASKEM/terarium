@@ -40,7 +40,7 @@ public class ProjectService {
 
 	@Observed(name = "function_profile")
 	public List<Project> getProjects() {
-		return projectRepository.findAll();
+		return projectRepository.findByDeletedOnIsNull();
 	}
 
 	@Observed(name = "function_profile")
@@ -66,6 +66,7 @@ public class ProjectService {
 				project.setThumbnail(aggregate.getThumbnail());
 				project.setUserId(aggregate.getUserId());
 				project.setMetadata(new HashMap<>());
+				project.setSampleProject(aggregate.getSampleProject());
 				addAssetCount(project, aggregate.getAssetType(), aggregate.getAssetCount());
 				projectMap.put(project.getId(), project);
 			}
@@ -101,6 +102,7 @@ public class ProjectService {
 				project.setThumbnail(aggregate.getThumbnail());
 				project.setUserId(aggregate.getUserId());
 				project.setMetadata(new HashMap<>());
+				project.setSampleProject(aggregate.getSampleProject());
 				addAssetCount(project, aggregate.getAssetType(), aggregate.getAssetCount());
 				projectMap.put(project.getId(), project);
 			}

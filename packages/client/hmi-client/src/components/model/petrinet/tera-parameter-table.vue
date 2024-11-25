@@ -1,5 +1,5 @@
 <template>
-	<Accordion multiple :active-index="[0]">
+	<Accordion multiple :active-index="currentActiveIndicies">
 		<AccordionTab>
 			<template #header>
 				<span class="mr-auto">
@@ -8,6 +8,7 @@
 				<Button
 					v-if="!isAddingUncertainty && !featureConfig?.isPreview"
 					label="Add uncertainty"
+					icon="pi pi-question"
 					outlined
 					severity="secondary"
 					size="small"
@@ -19,7 +20,7 @@
 
 			<!-- Adding uncertainty header -->
 			<span v-if="isAddingUncertainty" class="add-uncertainty-toolbar">
-				<Button size="small" text label="Unselect all" @click="selectedParameters = []" />
+				<Button size="small" text label="Unselect all" style="min-width: 4.6rem" @click="selectedParameters = []" />
 				Add
 				<Dropdown
 					v-model="uncertaintyType"
@@ -37,19 +38,32 @@
 				uncertainty with ±
 				<InputNumber class="uncertainty-percentage" v-model="uncertaintyPercentage" suffix="%" :min="0" :max="100" />
 				bounds on the value of the selected constant parameters.
-				<Button text small icon="pi pi-check" @click="onUpdateDistributions" />
-				<Button text small icon="pi pi-times" @click="isAddingUncertainty = false" class="ml-auto" />
+				<Button
+					outlined
+					severity="secondary"
+					small
+					icon="pi pi-check"
+					label="Apply"
+					size="small"
+					@click="onUpdateDistributions"
+					style="min-width: 5.5rem"
+				/>
+				<Button text rounded small icon="pi pi-times" @click="isAddingUncertainty = false" class="ml-auto" />
 			</span>
 
 			<ul class="pl-1">
-				<li v-for="{ baseParameter, childParameters, isVirtual } in parameterList" :key="baseParameter">
+				<li
+					v-for="{ baseParameter, childParameters, isVirtual } in parameterList"
+					:key="baseParameter"
+					class="element-card"
+				>
 					<!-- Stratified -->
 					<section v-if="isVirtual" class="parameter-entry-stratified">
 						<Accordion multiple>
 							<AccordionTab>
 								<template #header>
 									<span>{{ baseParameter }}</span>
-									<Button label="Open Matrix" text size="small" @click.stop="matrixModalId = baseParameter" />
+									<Button label="Open matrix" text size="small" @click.stop="matrixModalId = baseParameter" />
 								</template>
 								<div class="flex">
 									<ul class="ml-1">
@@ -115,16 +129,17 @@
 		:stratified-matrix-type="StratifiedMatrix.Parameters"
 		:open-value-config="!!matrixModalId"
 		@close-modal="matrixModalId = ''"
-		@update-cell-value="
-			emit('update-parameters', [
-				{
-					id: $event.variableName,
+		@update-cell-values="
+			emit(
+				'update-parameters',
+				$event.map((e) => ({
+					id: e.id,
 					distribution: {
 						type: DistributionType.Constant,
-						parameters: { value: $event.newValue }
+						parameters: { value: e.value }
 					}
-				}
-			])
+				}))
+			)
 		"
 	/>
 </template>
@@ -157,6 +172,8 @@ const props = defineProps<{
 	mmtParams: MiraTemplateParams;
 	featureConfig?: FeatureConfig;
 }>();
+
+const currentActiveIndicies = ref([0]);
 
 const emit = defineEmits(['update-parameters', 'update-source']);
 
@@ -246,7 +263,7 @@ ul {
 	}
 
 	li + li {
-		border-top: 1px solid var(--gray-300);
+		border-top: 1px solid var(--surface-border-light);
 		margin-top: var(--gap-1-5);
 		padding-top: var(--gap-4);
 	}
@@ -254,6 +271,13 @@ ul {
 	li:last-child {
 		margin-bottom: var(--gap-4);
 	}
+}
+
+.element-card {
+	background-color: var(--surface-0);
+}
+.element-card:hover {
+	background-color: var(--surface-50);
 }
 
 .parameter-entry-stratified {
@@ -294,7 +318,9 @@ ul {
 	gap: var(--gap-2);
 	background-color: var(--surface-highlight);
 	padding: var(--gap-2);
+	padding-left: 0;
 	margin-bottom: var(--gap-2);
+	font-size: var(--font-caption);
 }
 
 :deep(.uncertainty-percentage) > input {

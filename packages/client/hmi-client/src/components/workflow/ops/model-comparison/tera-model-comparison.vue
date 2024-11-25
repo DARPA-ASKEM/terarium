@@ -8,7 +8,7 @@
 			<tera-drilldown-section>
 				<!-- LLM generated overview -->
 				<section class="comparison-overview">
-					<Accordion :activeIndex="0">
+					<Accordion :activeIndex="currentActiveIndicies">
 						<AccordionTab header="Overview">
 							<p v-if="isEmpty(overview)" class="subdued">
 								<i class="pi pi-spin pi-spinner mr-1" />
@@ -187,6 +187,7 @@ const sampleAgentQuestions = [
 ];
 let compareModelsTaskId = '';
 
+const currentActiveIndicies = ref([0]);
 const modelsToCompare = ref<Model[]>([]);
 const modelCardsToCompare = ref<any[]>([]);
 const fields = ref<string[]>([]);
@@ -587,10 +588,10 @@ ul {
 }
 
 .comparison-overview {
-	border: 1px solid var(--surface-border);
+	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-medium);
 	padding: var(--gap-2);
-	margin: var(--gap-4) var(--gap-4) 0;
+	margin: var(--gap-4);
 }
 
 .subdued {

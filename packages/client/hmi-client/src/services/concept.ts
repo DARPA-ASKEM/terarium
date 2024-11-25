@@ -101,7 +101,7 @@ const getNameOfCurieCached = async (curie: string): Promise<string> => {
 	if (isEmpty(curie)) return '';
 	if (!curieNameCache.has(curie)) {
 		const response = await getCuriesEntities([curie]);
-		curieNameCache.set(curie, response?.[0].name ?? '');
+		curieNameCache.set(curie, response?.[0]?.name ?? '');
 	}
 	return curieNameCache.get(curie) ?? '';
 };
@@ -116,7 +116,6 @@ function getCurieFromGroundingIdentifier(identifier: Object | undefined): string
 
 function parseCurie(curie: string | undefined): { [key: string]: string } {
 	if (!curie) return {};
-
 	const key = curie.split(':')[0];
 	const value = curie.split(':')[1];
 	return { [key]: value };
@@ -239,9 +238,7 @@ const autoCalibrationMapping = async (modelOptions: State[], datasetOptions: Dat
 
 	// Fill targetEntities with datasetOptions
 	datasetOptions.forEach((col) => {
-		const groundings = col.metadata?.groundings?.identifiers
-			? Object.entries(col.metadata.groundings.identifiers).map((ele) => ele.join(':'))
-			: undefined;
+		const groundings = col.grounding?.identifiers?.map((id) => id.curie);
 		targetEntities.push({ id: col.name, groundings });
 	});
 

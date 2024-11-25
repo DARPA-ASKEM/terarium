@@ -40,11 +40,11 @@
 											<td>
 												<tera-input-text v-model="ele.newName" auto-focus class="w-full" placeholder="Add a name" />
 											</td>
-											<td v-for="(row, indx) in ele.modelConfigurationMappings" :key="indx">
+											<td v-for="key in modelConfigurationIds" :key="key">
 												<Dropdown
 													class="w-full"
-													:options="allModelOptions[row.modelConfigId]"
-													v-model="row.compartmentName"
+													:options="allModelOptions[key]"
+													v-model="ele.modelConfigurationMappings[key]"
 													placeholder="Select"
 													@change="updateMapping()"
 												/>
@@ -113,15 +113,20 @@
 								This encodes your relative confidence for each model. These are the alpha parameters of a Dirichlet
 								distribution.
 							</p>
-							<div class="model-weights">
+							<div v-if="!_.isEmpty(modelConfigIdToNameMap) && !_.isEmpty(knobs.weights)" class="model-weights">
 								<table class="p-datatable-table">
 									<tbody class="p-datatable-tbody">
-										<tr v-for="(ele, indx) in knobs.weights" :key="indx">
+										<tr v-for="key in modelConfigurationIds" :key="key">
 											<td>
-												{{ modelConfigIdToNameMap[ele.modelConfigurationId] }}
+												{{ modelConfigIdToNameMap[key] }}
 											</td>
 											<td>
-												<tera-signal-bars label="Relative certainty" v-model="ele.value" @change="updateWeights()" />
+												<tera-signal-bars
+													label="Relative certainty"
+													:min-option="1"
+													v-model="knobs.weights[key]"
+													@change="updateWeights()"
+												/>
 											</td>
 										</tr>
 									</tbody>
@@ -164,6 +169,10 @@
 											v-model="knobs.method"
 											:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
 										/>
+									</div>
+									<div v-if="knobs.method === CiemssMethodOptions.euler" class="label-and-input">
+										<label>Solver step size</label>
+										<tera-input-number v-model="knobs.stepSize" />
 									</div>
 								</div>
 							</div>
@@ -268,7 +277,7 @@ import { v4 as uuidv4 } from 'uuid';
 import {
 	SimulateEnsembleCiemssOperationState,
 	SimulateEnsembleMappingRow,
-	SimulateEnsembleWeight,
+	SimulateEnsembleWeights,
 	speedValues,
 	normalValues
 } from './simulate-ensemble-ciemss-operation';
@@ -281,9 +290,10 @@ const emit = defineEmits(['select-output', 'update-state', 'close']);
 
 interface BasicKnobs {
 	mapping: SimulateEnsembleMappingRow[];
-	weights: SimulateEnsembleWeight[];
+	weights: SimulateEnsembleWeights;
 	numSamples: number;
 	method: CiemssMethodOptions;
+	stepSize: number;
 	endTime: number;
 }
 
@@ -292,6 +302,7 @@ const knobs = ref<BasicKnobs>({
 	weights: props.node.state.weights,
 	numSamples: props.node.state.numSamples,
 	method: props.node.state.method,
+	stepSize: props.node.state.stepSize,
 	endTime: props.node.state.endTime
 });
 
@@ -315,7 +326,7 @@ const presetType = computed(() => {
 // List of each observible + state for each model.
 const allModelOptions = ref<{ [key: string]: string[] }>({});
 const modelConfigurationIds: string[] = props.node.inputs.map((ele) => ele.value?.[0]).filter(Boolean);
-const modelConfigIdToNameMap = ref();
+const modelConfigIdToNameMap = ref<Record<string, string>>({});
 
 const newSolutionMappingKey = ref<string>('');
 const runResults = ref<RunResults>({});
@@ -357,14 +368,18 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 };
 
 const addMapping = () => {
+	// create empty configuration mappings
+	const configMappings = {};
+	modelConfigurationIds.forEach((id) => {
+		configMappings[id as string] = '';
+	});
+
 	knobs.value.mapping.push({
 		id: uuidv4(),
 		newName: newSolutionMappingKey.value,
-		modelConfigurationMappings: modelConfigurationIds.map((id) => ({
-			modelConfigId: id as string,
-			compartmentName: ''
-		}))
+		modelConfigurationMappings: configMappings
 	});
+
 	const state = _.cloneDeep(props.node.state);
 	state.mapping = knobs.value.mapping;
 	emit('update-state', state);
@@ -393,11 +408,15 @@ const runEnsemble = async () => {
 	const modelConfigs = formatSimulateModelConfigurations(knobs.value.mapping, knobs.value.weights);
 	const params: EnsembleSimulationCiemssRequest = {
 		modelConfigs,
-		timespan: { start: 0, end: knobs.value.endTime },
+		timespan: {
+			start: 0,
+			end: knobs.value.endTime
+		},
 		engine: 'ciemss',
 		extra: {
 			num_samples: knobs.value.numSamples,
-			method: knobs.value.method
+			solver_method: knobs.value.method,
+			solver_step_size: knobs.value.stepSize
 		}
 	};
 	const response = await makeEnsembleCiemssSimulation(params, nodeMetadata(props.node));
@@ -413,7 +432,7 @@ onMounted(async () => {
 
 	modelConfigIdToNameMap.value = {};
 	allModelConfigurations.forEach((config) => {
-		modelConfigIdToNameMap.value[config.id as string] = config.name;
+		modelConfigIdToNameMap.value[config.id as string] = config.name as string;
 	});
 
 	allModelOptions.value = {};
@@ -425,24 +444,12 @@ onMounted(async () => {
 	}
 	listModelLabels.value = allModelConfigurations.map((ele) => ele.name ?? '');
 
-	const state = _.cloneDeep(props.node.state);
-
-	// Initalize weights:
-	if (
-		!knobs.value.weights ||
-		knobs.value.weights.length === 0 ||
-		knobs.value.weights.length !== modelConfigurationIds.length
-	) {
-		knobs.value.weights = [];
-		modelConfigurationIds.forEach((id) => {
-			knobs.value.weights.push({
-				modelConfigurationId: id,
-				value: 5
-			});
+	// initialze weights
+	if (_.isEmpty(knobs.value.weights)) {
+		allModelConfigurations.forEach((config) => {
+			knobs.value.weights[config.id as string] = 5;
 		});
 	}
-
-	emit('update-state', state);
 });
 
 watch(
@@ -479,9 +486,10 @@ watch(
 		state.endTime = knobs.value.endTime;
 		state.numSamples = knobs.value.numSamples;
 		state.method = knobs.value.method;
+		state.stepSize = knobs.value.stepSize;
 		emit('update-state', state);
 	},
-	{ immediate: true }
+	{ deep: true }
 );
 </script>
 

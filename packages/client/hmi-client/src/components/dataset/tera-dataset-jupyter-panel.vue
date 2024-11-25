@@ -4,7 +4,7 @@
 		<!-- Toolbar -->
 		<div class="toolbar flex">
 			<!-- Kernel Status -->
-			<div class="toolbar-section">
+			<div class="kernel-status-container">
 				<span><i class="pi pi-circle-fill kernel-status" :style="statusStyle" /></span>
 				<header id="GPT">
 					{{ kernelStatus === 'idle' ? 'Ready' : kernelStatus === 'busy' ? 'Busy' : 'Offline' }}
@@ -14,6 +14,7 @@
 			<tera-beaker-input
 				class="tera-beaker-input"
 				:kernel-is-busy="kernelStatus !== KernelState.idle"
+				:default-options="sampleAgentQuestions"
 				context="dataset"
 				@submitQuery="onSubmitQuery"
 				@add-code-cell="onAddCodeCell"
@@ -62,24 +63,26 @@
 			</div>
 
 			<!-- Reset kernel -->
-			<Dropdown
-				:model-value="selectedLanguage"
-				placeholder="Select a language"
-				:options="languages"
-				option-label="name"
-				option-value="value"
-				class="language-dropdown"
-				:disabled="kernelStatus !== 'idle'"
-				@change="onChangeLanguage"
-			/>
-			<Button
-				label="Reset kernel"
-				severity="secondary"
-				outlined
-				icon="pi pi-replay"
-				class="p-button p-button-sm pr-4"
-				@click="confirmReset"
-			/>
+			<div class="toolbar-right">
+				<Dropdown
+					:model-value="selectedLanguage"
+					placeholder="Select a language"
+					:options="languages"
+					option-label="name"
+					option-value="value"
+					class="language-dropdown"
+					:disabled="kernelStatus !== 'idle'"
+					@change="onChangeLanguage"
+				/>
+				<Button
+					label="Reset kernel"
+					severity="secondary"
+					outlined
+					icon="pi pi-replay"
+					class="p-button p-button-sm pr-4"
+					@click="confirmReset"
+				/>
+			</div>
 		</div>
 
 		<!-- Jupyter Chat -->
@@ -135,8 +138,8 @@ import {
 	getServerSettings,
 	getSessionManager,
 	JupyterMessage,
-	newSession,
-	KernelState
+	KernelState,
+	newSession
 } from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
@@ -163,7 +166,6 @@ const defaultPreview = computed(() => {
 	props.assets.forEach((asset, index) => {
 		code += `#d${index + 1} = ${asset.name}\n`;
 	});
-
 	// add first dataset to the code
 	code += 'd1';
 	return code;
@@ -179,6 +181,7 @@ const props = defineProps<{
 	programmingLanguage?: string;
 	kernelState: any;
 	selectedDataset: string | null;
+	sampleAgentQuestions: string[];
 }>();
 
 const languages = programmingLanguageOptions();
@@ -394,7 +397,6 @@ const confirmReset = () => {
 This will reset the kernel back to its starting state, but keep all of your prompts and code cells.
 The code cells will need to be rerun.`,
 		header: 'Reset kernel',
-		icon: 'pi pi-exclamation-triangle',
 		accept: () => {
 			resetKernel();
 		}
@@ -545,6 +547,16 @@ const onDownloadResponse = (payload) => {
 	flex: 1;
 }
 
+.kernel-status-container {
+	display: flex;
+	flex-direction: row;
+	align-items: top;
+	flex-wrap: nowrap;
+	white-space: nowrap;
+	min-width: 5.25rem;
+	padding-top: var(--gap-2-5);
+}
+
 .kernel-status {
 	margin-right: 10px;
 }
@@ -556,7 +568,7 @@ const onDownloadResponse = (payload) => {
 .toolbar {
 	display: flex;
 	flex-direction: row;
-	align-items: center;
+	align-items: top;
 	background-color: var(--surface-100);
 	border-bottom: 1px solid var(--surface-border);
 	position: sticky;
@@ -564,22 +576,27 @@ const onDownloadResponse = (payload) => {
 	left: 0;
 	z-index: 100;
 	width: 100%;
-	height: 3.5rem;
 	padding: var(--gap-2) var(--gap-4) var(--gap-2) 1.5rem;
 	gap: var(--gap-2);
+	box-shadow: 0 4px 6px -5px rgba(0, 0, 0, 0.2);
 }
 .toolbar:deep(.p-button .p-button-label) {
 	font-weight: 500;
 }
-.toolbar-section {
+.toolbar-right {
 	display: flex;
 	flex-direction: row;
-	align-items: center;
-	flex-wrap: nowrap;
-	white-space: nowrap;
+	align-items: top;
+	gap: var(--gap-2);
+	height: 32px; /* aligns with the height of the input buttons */
 }
+
 :deep(.language-dropdown span) {
 	font-size: 12px;
+	margin-left: var(--gap-1-5);
+}
+.tera-beaker-input {
+	padding-top: 0;
 }
 
 .variables-table {

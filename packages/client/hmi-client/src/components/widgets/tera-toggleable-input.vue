@@ -66,6 +66,7 @@ button.text-to-edit {
 	gap: var(--gap-3);
 	max-width: fit-content;
 	padding: var(--gap-2);
+	text-align: left;
 
 	& > .btn-content {
 		color: var(--text-color);

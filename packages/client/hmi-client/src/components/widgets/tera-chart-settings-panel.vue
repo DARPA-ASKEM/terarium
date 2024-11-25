@@ -2,8 +2,8 @@
 	<transition>
 		<div class="chart-settings-panel" v-if="activeSettings !== null">
 			<header :class="{ shadow: false }">
-				<Button :icon="`pi pi-times`" @click="$emit('close')" text rounded size="large" />
-				<h4>Chart Settings</h4>
+				<Button :icon="`pi pi-angle-double-right`" @click="$emit('close')" text rounded size="large" />
+				<h4>{{ activeSettings.name }}</h4>
 			</header>
 			<div class="content">
 				<div v-if="chartAnnotations !== undefined" class="annotation-items">
@@ -30,6 +30,7 @@
 							:disabled="!!isGeneratingAnnotation"
 							@keyup.enter="createAnnotationDebounced"
 							@keyup.esc="cancelGenerateAnnotation"
+							class="annotation-input"
 						/>
 					</div>
 				</div>
@@ -95,14 +96,16 @@ const cancelGenerateAnnotation = () => {
 	position: absolute;
 	top: 0;
 	z-index: 3;
-	height: 100%;
+	margin-top: 50px;
+	height: calc(100% - 50px);
 	width: 100%;
 	background: #fff;
-	left: 0;
+	left: 2px;
+	border: solid 1px var(--surface-border-light);
 
 	&.v-enter-active,
 	&.v-leave-active {
-		transition: left 0.15s ease-in;
+		transition: left 0.15s ease-out;
 		left: 30%;
 	}
 	&.v-enter-from,
@@ -134,6 +137,9 @@ const cancelGenerateAnnotation = () => {
 		padding: var(--gap-4);
 	}
 
+	.annotation-input:deep(main) {
+		padding: var(--gap-2-5) var(--gap-2);
+	}
 	.annotation-items {
 		display: flex;
 		flex-direction: column;
@@ -141,9 +147,11 @@ const cancelGenerateAnnotation = () => {
 
 		.annotation-item {
 			position: relative;
-			padding: var(--gap-2);
+			padding: var(--gap-3);
+			padding-left: var(--gap-4);
 			padding-right: var(--gap-9);
 			background: var(--surface-50);
+			border-left: 4px solid var(--gray-600);
 		}
 		.btn-wrapper {
 			position: absolute;

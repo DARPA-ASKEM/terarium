@@ -1,5 +1,5 @@
-import { percentile } from '@/utils/math';
 import { isEmpty, pick } from 'lodash';
+import { percentile } from '@/utils/math';
 import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
 import type { ChartAnnotation, FunmanInterval } from '@/types/Types';
@@ -530,7 +530,7 @@ export function createForecastChart(
 	};
 
 	// Build sample layer
-	if (samplingLayer && !isEmpty(samplingLayer.variables)) {
+	if (samplingLayer && !isEmpty(samplingLayer.variables) && !isEmpty(samplingLayer.data)) {
 		const layerSpec = newLayer(samplingLayer, 'line');
 		const encoding = layerSpec.layer[0].encoding;
 		Object.assign(encoding, {
@@ -543,7 +543,7 @@ export function createForecastChart(
 	}
 
 	// Build statistical layer
-	if (statisticsLayer && !isEmpty(statisticsLayer.variables)) {
+	if (statisticsLayer && !isEmpty(statisticsLayer.variables) && !isEmpty(statisticsLayer.data)) {
 		const layerSpec = newLayer(statisticsLayer, 'line');
 		const lineSubLayer = layerSpec.layer[0];
 		const tooltipSubLayer = structuredClone(lineSubLayer);
@@ -593,7 +593,7 @@ export function createForecastChart(
 	}
 
 	// Build ground truth layer
-	if (groundTruthLayer && !isEmpty(groundTruthLayer.variables)) {
+	if (groundTruthLayer && !isEmpty(groundTruthLayer.variables) && !isEmpty(groundTruthLayer.data)) {
 		const layerSpec = newLayer(groundTruthLayer, 'point');
 		const encoding = layerSpec.layer[0].encoding;
 
@@ -616,6 +616,7 @@ export function createForecastChart(
 }
 
 export function applyForecastChartAnnotations(chartSpec: any, annotations: ChartAnnotation[]) {
+	if (isEmpty(annotations)) return chartSpec;
 	const targetLayerIndex = 1; // Assume the target layer is the second layer which is the statistic layer
 	const layerSpecs = annotations.map((a) => a.layerSpec);
 	if (!chartSpec.layer[targetLayerIndex]) return chartSpec;
@@ -823,12 +824,14 @@ export function createInterventionChartMarkers(
 			type: 'text',
 			align: 'left',
 			angle: 90,
-			dx: options.labelXOffset,
-			dy: -10
+			dx: options.labelXOffset || 0 - 45,
+			dy: -10,
+			limit: 140,
+			ellipsis: '...'
 		},
 		encoding: {
 			x: { field: 'time', type: 'quantitative' },
-			y: { field: 'value', type: 'quantitative' },
+			y: 0,
 			text: { field: 'name', type: 'nominal' }
 		}
 	};

@@ -69,7 +69,7 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
             - β_46_89_0_18 = 0.05
             - β_46_89_19_45 = 0.04
             - β_46_89_46_89 = 0.2
-        - Gamma and P should be 0s
+        - Gamma and P should be blank
         - The source should be "SIR contact matrix"
         - The initials should be the same as the default configuration
 

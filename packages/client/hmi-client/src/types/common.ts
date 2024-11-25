@@ -182,12 +182,22 @@ export interface NotificationItemStatus {
 export enum ChartSettingType {
 	VARIABLE = 'variable',
 	VARIABLE_COMPARISON = 'variable-comparison',
+	VARIABLE_ENSEMBLE = 'variable-ensemble',
 	DISTRIBUTION_COMPARISON = 'distribution-comparison',
 	ERROR_DISTRIBUTION = 'error-distribution',
 	INTERVENTION = 'intervention'
 }
 
-export interface ChartSetting {
+export type ChartSetting = ChartSettingBase | ChartSettingEnsembleVariable;
+
+export interface ChartSettingEnsembleVariable extends ChartSettingBase {
+	type: ChartSettingType.VARIABLE_ENSEMBLE;
+	showIndividualModels: boolean;
+	relativeToEnsemble: boolean;
+	showIndividualModelsWithWeight?: boolean;
+}
+
+export interface ChartSettingBase {
 	id: string;
 	name: string;
 	selectedVariables: string[];

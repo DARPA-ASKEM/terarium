@@ -5,8 +5,6 @@ import co.elastic.clients.elasticsearch.core.search.SourceConfig;
 import co.elastic.clients.elasticsearch.core.search.SourceFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -18,7 +16,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
-import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
@@ -32,7 +29,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.regnet.RegNetVer
 import software.uncharted.terarium.hmiserver.models.task.CompoundTask;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
 import software.uncharted.terarium.hmiserver.repository.data.ModelRepository;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
@@ -48,11 +44,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 
 	private final CurrentUserService currentUserService;
 	private final DocumentAssetService documentAssetService;
-	private final EmbeddingService embeddingService;
 	private final TaskService taskService;
-
-	private final Environment env;
-
 	private final DKGService dkgService;
 
 	public ModelService(
@@ -76,6 +68,8 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 			config,
 			elasticConfig,
 			elasticService,
+			embeddingService,
+			env,
 			projectService,
 			projectAssetService,
 			s3ClientService,
@@ -84,22 +78,8 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		);
 		this.currentUserService = currentUserService;
 		this.documentAssetService = documentAssetService;
-		this.embeddingService = embeddingService;
-		this.env = env;
 		this.taskService = taskService;
 		this.dkgService = dkgService;
-	}
-
-	private boolean isRunningTestProfile() {
-		final String[] activeProfiles = env.getActiveProfiles();
-
-		for (final String profile : activeProfiles) {
-			if ("test".equals(profile)) {
-				return true;
-			}
-		}
-
-		return false;
 	}
 
 	@Observed(name = "function_profile")
@@ -193,25 +173,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		}
 		final Model created = super.createAsset(asset, projectId, hasWritePermission);
 
-		if (!isRunningTestProfile() && created.getPublicAsset() && !created.getTemporary()) {
-			String text;
-			if (created.getMetadata() != null && created.getMetadata().getGollmCard() != null) {
-				text = objectMapper.writeValueAsString(created.getMetadata().getGollmCard());
-			} else {
-				text = objectMapper.writeValueAsString(created);
-			}
-
-			new Thread(() -> {
-				try {
-					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
-
-					// Execute the update request
-					uploadEmbeddings(created.getId(), embeddings, hasWritePermission);
-				} catch (final Exception e) {
-					log.error("Failed to update embeddings for model {}", created.getId(), e);
-				}
-			}).start();
-		}
+		generateAndUpsertEmbeddings(created);
 
 		return created;
 	}
@@ -241,25 +203,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 
 		final Model updated = updatedOptional.get();
 
-		if (!isRunningTestProfile() && updated.getPublicAsset() && !updated.getTemporary()) {
-			String text;
-			if (updated.getMetadata() != null && updated.getMetadata().getGollmCard() != null) {
-				text = objectMapper.writeValueAsString(updated.getMetadata().getGollmCard());
-			} else {
-				text = objectMapper.writeValueAsString(updated);
-			}
-
-			new Thread(() -> {
-				try {
-					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
-
-					// Execute the update request
-					uploadEmbeddings(updated.getId(), embeddings, hasWritePermission);
-				} catch (final Exception e) {
-					log.error("Failed to update embeddings for model {}", updated.getId(), e);
-				}
-			}).start();
-		}
+		generateAndUpsertEmbeddings(updated);
 
 		return updatedOptional;
 	}
@@ -276,15 +220,15 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 
 		// make sure there is text in the document
 		if (document.isPresent() && (document.get().getText() == null || document.get().getText().isEmpty())) {
-			String errorString = String.format("Document %s has no extracted text", documentId);
+			final String errorString = String.format("Document %s has no extracted text", documentId);
 			log.warn(errorString);
 			throw new IOException(errorString);
 		}
 
 		// Grab the model
-		Optional<Model> model = getAsset(modelId, permission);
+		final Optional<Model> model = getAsset(modelId, permission);
 		if (model.isEmpty()) {
-			String errorString = String.format("Model %s not found", modelId);
+			final String errorString = String.format("Model %s not found", modelId);
 			log.warn(errorString);
 			throw new IOException(errorString);
 		}
@@ -322,14 +266,15 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		// at this point the initial enrichment has happened.
 		final Optional<Model> newModel = getAsset(modelId, permission);
 		if (newModel.isEmpty()) {
-			String errorString = String.format("Model %s not found", modelId);
+			final String errorString = String.format("Model %s not found", modelId);
 			log.warn(errorString);
 			throw new IOException(errorString);
 		}
 
+		/* FIXME - this is too slow for demo day November 2024
 		// Update State Grounding
 		if (newModel.get().isRegnet()) {
-			List<RegNetVertex> vertices = newModel.get().getVerticies();
+			final List<RegNetVertex> vertices = newModel.get().getVerticies();
 			vertices.forEach(vertex -> {
 				if (vertex == null) {
 					vertex = new RegNetVertex();
@@ -338,7 +283,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 			});
 			newModel.get().setVerticies(vertices);
 		} else {
-			List<State> states = newModel.get().getStates();
+			final List<State> states = newModel.get().getStates();
 			states.forEach(state -> {
 				if (state == null) {
 					state = new State();
@@ -348,9 +293,9 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 			newModel.get().setStates(states);
 		}
 
-		//Update Observable Grounding
+		// Update Observable Grounding
 		if (newModel.get().getObservables() != null && !newModel.get().getObservables().isEmpty()) {
-			List<Observable> observables = newModel.get().getObservables();
+			final List<Observable> observables = newModel.get().getObservables();
 			observables.forEach(observable -> {
 				if (observable == null) {
 					observable = new Observable();
@@ -360,9 +305,9 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 			newModel.get().setObservables(observables);
 		}
 
-		//Update Parameter Grounding
+		// Update Parameter Grounding
 		if (newModel.get().getParameters() != null && !newModel.get().getParameters().isEmpty()) {
-			List<ModelParameter> parameters = newModel.get().getParameters();
+			final List<ModelParameter> parameters = newModel.get().getParameters();
 			parameters.forEach(parameter -> {
 				if (parameter == null) {
 					parameter = new ModelParameter();
@@ -372,9 +317,9 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 			newModel.get().setParameters(parameters);
 		}
 
-		//Update Transition Grounding
+		// Update Transition Grounding
 		if (newModel.get().getTransitions() != null && !newModel.get().getTransitions().isEmpty()) {
-			List<Transition> transitions = newModel.get().getTransitions();
+			final List<Transition> transitions = newModel.get().getTransitions();
 			transitions.forEach(transition -> {
 				if (transition == null) {
 					transition = new Transition();
@@ -384,10 +329,12 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 			newModel.get().setTransitions(transitions);
 		}
 
+		 */
+
 		try {
 			updateAsset(newModel.get(), projectId, permission);
-		} catch (IOException e) {
-			String errorString = String.format("Failed to update model %s", modelId);
+		} catch (final IOException e) {
+			final String errorString = String.format("Failed to update model %s", modelId);
 			log.warn(errorString);
 			throw new IOException(errorString);
 		}

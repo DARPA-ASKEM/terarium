@@ -10,7 +10,7 @@
 			<tera-slider-panel
 				v-if="pdfData.length"
 				v-model:is-open="isDocViewerOpen"
-				header="Document Viewer"
+				header="Document viewer"
 				content-width="700px"
 			>
 				<template #content>
@@ -57,6 +57,7 @@
 							<tera-model-configuration-item
 								:configuration="configuration"
 								:selected="selectedConfigId === configuration.id"
+								:empty-input-count="missingInputCount(configuration)"
 								@click="onSelectConfiguration(configuration)"
 								@delete="fetchConfigurations"
 								@download="downloadModelArchive(configuration)"
@@ -148,7 +149,7 @@
 						:model-configurations="filteredModelConfigurations"
 						:mmt="configuredMmt"
 						:mmt-params="mmtParams"
-						@update-expression="setInitialExpression(knobs.transientModelConfig, $event.id, $event.value)"
+						@update-expressions="setInitialExpressions(knobs.transientModelConfig, $event)"
 						@update-source="setInitialSource(knobs.transientModelConfig, $event.id, $event.value)"
 					/>
 					<tera-parameter-table
@@ -161,7 +162,7 @@
 						@update-parameters="setParameterDistributions(knobs.transientModelConfig, $event)"
 						@update-source="setParameterSource(knobs.transientModelConfig, $event.id, $event.value)"
 					/>
-					<Accordion :active-index="0" v-if="!isEmpty(calibratedConfigObservables)">
+					<Accordion :active-index="observableActiveIndicies" v-if="!isEmpty(calibratedConfigObservables)">
 						<AccordionTab header="Observables">
 							<tera-observables
 								class="pl-4"
@@ -265,19 +266,26 @@ import { getMMT, getModel, getModelConfigurationsForModel, getCalendarSettingsFr
 import {
 	createModelConfiguration,
 	getArchive,
-	setInitialExpression,
+	getModelInitials,
+	getMissingInputAmount,
+	getModelParameters,
+	setInitialExpressions,
 	setInitialSource,
 	setParameterDistributions,
 	setParameterSource,
 	updateModelConfiguration
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { Model, ModelConfiguration } from '@/types/Types';
-import { AssetType, Observable } from '@/types/Types';
+import type { Initial, Model, ModelConfiguration } from '@/types/Types'; // ., TaskResponse
+import { AssetType, ModelParameter, Observable } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
-import { isModelMissingMetadata } from '@/model-representation/service';
+import {
+	isModelMissingMetadata,
+	getParameters as getAmrParameters,
+	getInitials as getAmrInitials
+} from '@/model-representation/service';
 import Message from 'primevue/message';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
@@ -311,9 +319,10 @@ const isFetchingPDF = ref(false);
 const isDocViewerOpen = ref(true);
 
 const currentActiveIndexes = ref([0, 1, 2]);
+const observableActiveIndicies = ref([0]);
 const pdfData = ref<{ document: any; data: string; isPdf: boolean; name: string }[]>([]);
 const pdfPanelRef = ref();
-const pdfViewer = computed(() => pdfPanelRef.value?.pdfRef[0]);
+const pdfViewer = computed(() => pdfPanelRef.value?.pdfRef);
 
 const isSidebarOpen = ref(true);
 const isEditingDescription = ref(false);
@@ -339,6 +348,9 @@ const calibratedConfigObservables = computed<Observable[]>(() =>
 		expression
 	}))
 );
+
+const getTotalInput = (modelConfiguration: ModelConfiguration) =>
+	modelConfiguration.initialSemanticList.length + modelConfiguration.parameterSemanticList.length;
 
 // Check if the model configuration is the same as the original
 const isModelConfigChanged = computed(() => !isModelConfigsEqual(originalConfig, knobs.value.transientModelConfig));
@@ -532,6 +544,33 @@ const modelConfigurations = ref<ModelConfiguration[]>([]);
 const isFetchingConfigs = ref(false);
 const isExtracting = ref(false);
 
+const amrInitials = ref<Initial[]>([]);
+const amrParameters = ref<ModelParameter[]>([]);
+
+const getMissingInputsMessage = (amount, total) => {
+	if (!total) return '';
+	const percent = (amount / total) * 100;
+	return amount ? `Missing values: ${amount}/${total} (${percent.toFixed(0)}%)` : '';
+};
+
+const missingInputCount = (modelConfiguration: ModelConfiguration) => {
+	if (selectedConfigId.value === modelConfiguration.id) {
+		return selectedConfigMissingInputCount.value;
+	}
+	const total = amrInitials.value.length + amrParameters.value.length;
+	const amount = total - getTotalInput(modelConfiguration);
+	return getMissingInputsMessage(amount, total);
+};
+
+const selectedConfigMissingInputCount = computed(() => {
+	if (!knobs.value.transientModelConfig.id) {
+		return '';
+	}
+	const amount = getMissingInputAmount(knobs.value.transientModelConfig);
+	const total = getTotalInput(knobs.value.transientModelConfig);
+	return getMissingInputsMessage(amount, total);
+});
+
 const model = ref<Model | null>(null);
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
@@ -616,6 +655,23 @@ async function loadOutput(overwriteWithState = false) {
 		knobs.value.transientModelConfig = cloneDeep(originalConfig);
 	}
 
+	if (model.value) {
+		amrInitials.value = getAmrInitials(model.value);
+		amrParameters.value = getAmrParameters(model.value);
+		const initials = getModelInitials(knobs.value.transientModelConfig, mmt.value.annotations.name, amrInitials.value);
+		if (initials.length) {
+			knobs.value.transientModelConfig.initialSemanticList = initials;
+		}
+		const parameters = getModelParameters(
+			knobs.value.transientModelConfig,
+			mmt.value.annotations.name,
+			amrParameters.value
+		);
+		if (parameters.length) {
+			knobs.value.transientModelConfig.parameterSemanticList = parameters;
+		}
+	}
+
 	configuredMmt.value = makeConfiguredMMT(mmt.value, knobs.value.transientModelConfig);
 
 	// Create a new session and context based on model
@@ -635,9 +691,14 @@ async function loadOutput(overwriteWithState = false) {
 
 const onSelectConfiguration = async (config: ModelConfiguration) => {
 	if (config.id === selectedConfigId.value) return;
+	let tabIndex = 0;
+	if (pdfPanelRef.value && config.extractionDocumentId) {
+		tabIndex = await pdfPanelRef.value.selectPdf(config.extractionDocumentId);
+		await nextTick();
+	}
 
 	if (pdfViewer.value && config.extractionPage) {
-		pdfViewer.value.goToPage(config.extractionPage);
+		pdfViewer.value[tabIndex].goToPage(config.extractionPage);
 	}
 
 	const { transientModelConfig } = knobs.value;
@@ -807,8 +868,8 @@ watch(
 }
 
 .notebook-section {
-	background-color: var(--surface-disabled);
-	border-right: 1px solid var(--surface-border-dark);
+	background-color: var(--surface-200);
+	border-right: 1px solid var(--surface-border-light);
 	padding: var(--gap-4);
 }
 
@@ -904,6 +965,7 @@ button.start-edit {
 
 .executed-code {
 	white-space: pre-wrap;
+	padding: var(--gap-4);
 }
 :deep(.content-wrapper) {
 	& > section {

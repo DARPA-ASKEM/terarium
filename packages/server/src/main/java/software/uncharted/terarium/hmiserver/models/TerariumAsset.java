@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.models;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,13 +13,16 @@ import jakarta.persistence.MappedSuperclass;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.Type;
+import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
@@ -80,14 +84,14 @@ public abstract class TerariumAsset extends TerariumEntity {
 		return asset;
 	}
 
-	public static void removeFieldsWithKeys(ObjectNode objectNode, List<String> keys) {
-		Iterator<String> keysIterator = objectNode.fieldNames();
+	public static void removeFieldsWithKeys(final ObjectNode objectNode, final List<String> keys) {
+		final Iterator<String> keysIterator = objectNode.fieldNames();
 		while (keysIterator.hasNext()) {
-			String key = keysIterator.next();
+			final String key = keysIterator.next();
 			if (keys.contains(key)) {
 				keysIterator.remove();
 			} else {
-				JsonNode node = objectNode.get(key);
+				final JsonNode node = objectNode.get(key);
 				if (node.isObject()) {
 					removeFieldsWithKeys((ObjectNode) node, keys);
 				}
@@ -96,22 +100,23 @@ public abstract class TerariumAsset extends TerariumEntity {
 	}
 
 	/**
-	 * Serialize the asset to a JSON string, removing the fields that are not needed.
+	 * Serialize the asset to a JSON string, removing the fields that are not
+	 * needed.
 	 *
-	 * @param keepFields              A list of fields that should not be removed.
-	 * @param additionalDeleteFields  Additional fields to remove.
+	 * @param keepFields             A list of fields that should not be removed.
+	 * @param additionalDeleteFields Additional fields to remove.
 	 * @return The JSON string.
 	 */
 	public String serializeWithoutTerariumFields(
-		@Nullable String[] keepFields,
-		@Nullable String[] additionalDeleteFields
+		@Nullable final String[] keepFields,
+		@Nullable final String[] additionalDeleteFields
 	) {
 		final ObjectMapper mapper = new ObjectMapper();
 		mapper.setConfig(mapper.getSerializationConfig().with(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY));
 		final ObjectNode objectNode = mapper.convertValue(this, ObjectNode.class);
 
 		// Fields to delete
-		String[] deleteFields = new String[] {
+		final String[] deleteFields = new String[] {
 			"id",
 			"createdOn",
 			"updatedOn",
@@ -123,15 +128,15 @@ public abstract class TerariumAsset extends TerariumEntity {
 			"fileNames",
 			"userId"
 		};
-		List<String> deleteFieldsList = new ArrayList<>(Arrays.asList(deleteFields));
+		final List<String> deleteFieldsList = new ArrayList<>(Arrays.asList(deleteFields));
 		if (keepFields != null) {
-			for (String field : keepFields) {
+			for (final String field : keepFields) {
 				deleteFieldsList.removeIf(key -> key.equals(field));
 			}
 		}
 
 		// Remove the fields that are not needed
-		for (String key : deleteFieldsList) {
+		for (final String key : deleteFieldsList) {
 			objectNode.remove(key);
 		}
 
@@ -148,5 +153,24 @@ public abstract class TerariumAsset extends TerariumEntity {
 		}
 
 		return objectNode.toString();
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public String getEmbeddingSourceText() {
+		return name + " " + description;
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public Map<TerariumAssetEmbeddingType, String> getEmbeddingsSourceByType() {
+		final Map<TerariumAssetEmbeddingType, String> sources = new HashMap<>();
+		if (name != null) {
+			sources.put(TerariumAssetEmbeddingType.NAME, name);
+		}
+		if (description != null) {
+			sources.put(TerariumAssetEmbeddingType.DESCRIPTION, description);
+		}
+		return sources;
 	}
 }

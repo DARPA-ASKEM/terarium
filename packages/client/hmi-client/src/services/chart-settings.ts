@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import API from '@/api/api';
-import type { ChartSetting, ChartSettingType } from '@/types/common';
+import { ChartSetting, ChartSettingEnsembleVariable, ChartSettingType } from '@/types/common';
 import { v4 as uuidv4 } from 'uuid';
 import { b64DecodeUnicode } from '@/utils/binary';
 import { ChartAnnotation } from '@/types/Types';
@@ -9,6 +9,10 @@ import { ForecastChartOptions } from './charts';
 export interface LLMGeneratedChartAnnotation {
 	request: string;
 	layerSpec: any;
+}
+
+export function isChartSettingEnsembleVariable(setting: ChartSetting): setting is ChartSettingEnsembleVariable {
+	return (<ChartSettingEnsembleVariable>setting).type === ChartSettingType.VARIABLE_ENSEMBLE;
 }
 
 /**
@@ -38,6 +42,25 @@ export function addMultiVariableChartSetting(
 	return [...settings, newSetting];
 }
 
+export function createNewChartSetting(name: string, type: ChartSettingType, selectedVariables: string[]): ChartSetting {
+	const defaults: ChartSetting = {
+		id: uuidv4(),
+		name,
+		selectedVariables,
+		type
+	};
+	if (isChartSettingEnsembleVariable(defaults)) {
+		defaults.showIndividualModels = false;
+		defaults.relativeToEnsemble = false;
+	}
+	return {
+		id: uuidv4(),
+		name: selectedVariables.join(', '),
+		selectedVariables,
+		type
+	};
+}
+
 /**
  * Updates the given chart settings based on the selected variables and return it as new settings.
  * This function assumes that the given chart settings are for single variable charts.
@@ -56,20 +79,33 @@ export function updateChartSettingsBySelectedVariables(
 	const previousSettings = settings.filter((setting) => setting.type !== type);
 	// selected settings for the given type
 	const selectedSettings = variableSelection.map((variable) => {
-		const found = previousSettings.find(
-			(setting) => setting.selectedVariables[0] === variable && setting.type === type
-		);
-		return (
-			found ??
-			({
-				id: uuidv4(),
-				name: variable,
-				selectedVariables: [variable],
-				type
-			} as ChartSetting)
-		);
+		const found = settings.find((setting) => setting.selectedVariables[0] === variable && setting.type === type);
+		return found ?? createNewChartSetting(variable, type, [variable]);
 	});
 	const newSettings: ChartSetting[] = [...previousSettings, ...selectedSettings];
+	return newSettings;
+}
+
+/**
+ * Filters chart settings based on the specified type and variable selection.
+ * Assume that this is used for single variable charts only.
+ *
+ * @param {ChartSetting[]} settings - The array of chart settings to filter.
+ * @param {ChartSettingType} type - The type of chart setting to filter by.
+ * @param {string[]} variableSelection - The array of variable selections to filter by.
+ * @returns {ChartSetting[]} The filtered array of chart settings.
+ */
+export function filterChartSettingsByVariables(
+	settings: ChartSetting[],
+	type: ChartSettingType,
+	variableSelection: string[]
+) {
+	// previous settings without the settings of the given type
+	const previousSettings = settings.filter((setting) => setting.type !== type);
+	const selected = settings.filter(
+		(setting) => setting.type === type && variableSelection.includes(setting.selectedVariables[0])
+	);
+	const newSettings: ChartSetting[] = [...previousSettings, ...selected];
 	return newSettings;
 }
 

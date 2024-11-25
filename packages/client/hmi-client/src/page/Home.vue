@@ -5,10 +5,10 @@
 			<header>
 				<!-- Welcome text -->
 				<section class="w-full">
-					<h3>From data to discovery</h3>
+					<h3>AI-assisted modeling for scientific decision-making</h3>
 					<p>
-						Accelerate scientific modeling and simulation using AI. Search available knowledge, enhance extracted models
-						and data, and test scenarios to simulate real-world problems.
+						Pair your expertise with AI to accelerate scientific modeling and simulation. Build on existing models and
+						data to simulate and communicate complex real-world scenarios.
 					</p>
 					<!--Placeholder - button is disabled for now-->
 					<!-- <Button
@@ -48,24 +48,20 @@
 			<!-- Tab section: My projects, Public projects, Sample projects -->
 			<section class="menu">
 				<TabView @tab-change="tabChange" :active-index="activeTabIndex" :key="activeTabIndex">
-					<TabPanel v-for="(tab, i) in projectsTabs" :header="tab.title" :key="i">
+					<TabPanel v-for="(tab, i) in TabTitles" :header="tab" :key="i">
 						<section class="filter-and-sort">
-							<div class="pr-3">
+							<div class="mr-3">
 								<tera-input-text
-									class="w-16rem"
-									v-model="searchProjects"
+									v-model="searchProjectsQuery"
 									placeholder="Search for projects"
 									id="searchProject"
+									:icon="isSearchLoading ? 'pi pi-spin pi-spinner' : 'pi pi-search'"
+									class="searchProjectsInput"
 								/>
 							</div>
 							<div>
 								<span v-if="view === ProjectsView.Cards">
-									<Dropdown
-										v-model="selectedSort"
-										:options="sortOptions"
-										@update:model-value="tab.projects = myFilteredSortedProjects"
-										class="sort-options-dropdown"
-									/>
+									<Dropdown v-model="selectedSort" :options="sortOptions" class="sort-options-dropdown" />
 								</span>
 								<MultiSelect
 									v-if="view === ProjectsView.Table"
@@ -91,29 +87,23 @@
 										<span class="p-button-label">{{ slotProps.option.value }}</span>
 									</template>
 								</SelectButton>
-								<Button icon="pi pi-upload" label="Upload project" @click="openUploadProjectModal" />
+								<Button
+									icon="pi pi-upload"
+									class="secondary-button"
+									label="Upload project"
+									@click="openUploadProjectModal"
+								/>
 								<Button icon="pi pi-plus" label="New project" @click="openCreateProjectModal" />
 							</div>
 						</section>
 						<section class="projects">
 							<div v-if="!isLoadingProjects && isEmpty(searchedAndFilterProjects)" class="no-projects">
 								<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200" />
-								<template v-if="tab.title === TabTitles.MyProjects">
-									<p class="mt-4">
-										Get started by creating a
-										<Button
-											label="new project"
-											class="p-button-text new-project-button"
-											@click="openCreateProjectModal"
-										/>.
-									</p>
-								</template>
-								<template v-if="tab.title === TabTitles.SampleProjects">
-									<p class="mt-4">Sample projects coming soon</p>
-								</template>
-								<template v-else-if="tab.title === TabTitles.PublicProjects">
-									<h3>You don't have any shared projects</h3>
-								</template>
+								<p class="mt-4">
+									<template v-if="tab === TabTitles.MyProjects">Get started by creating a new project</template>
+									<template v-if="tab === TabTitles.SampleProjects">Sample projects coming soon</template>
+									<template v-if="tab === TabTitles.PublicProjects">You don't have any shared projects</template>
+								</p>
 							</div>
 							<ul v-else-if="view === ProjectsView.Cards" class="project-cards-grid">
 								<template v-if="cloningProjects.length && !isLoadingProjects">
@@ -164,7 +154,7 @@ import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
-import { isEmpty } from 'lodash';
+import { debounce, isEmpty } from 'lodash';
 import TeraProjectTable from '@/components/home/tera-project-table.vue';
 import TeraProjectCard from '@/components/home/tera-project-card.vue';
 import { useProjects } from '@/composables/project';
@@ -172,13 +162,14 @@ import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import SelectButton from 'primevue/selectbutton';
 import { useProjectMenu } from '@/composables/project-menu';
-import { Project, ClientEventType, ProgressState } from '@/types/Types';
+import { ClientEventType, ProgressState, Project, ProjectSearchResponse } from '@/types/Types';
 import { Vue3Lottie } from 'vue3-lottie';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
-import { FilterService } from 'primevue/api';
 import { useNotificationManager } from '@/composables/notificationManager';
 import teraUploadProjectModal from '@/components/project/tera-upload-project-modal.vue';
+import { findProjects } from '@/services/project';
+import { useToastService } from '@/services/toast';
 
 const { isProjectConfigDialogVisible, menuProject } = useProjectMenu();
 
@@ -188,7 +179,7 @@ const cloningProjects = computed(() => {
 	const items: any = [];
 	notificationItems.value.forEach((item) => {
 		if (item.type === ClientEventType.CloneProject && item.status === ProgressState.Running) {
-			const project = myFilteredSortedProjects.value.find((p) => p.id === item.assetId);
+			const project = (useProjects().allProjects.value ?? []).find((p) => p.id === item.assetId);
 			items.push(project);
 		}
 	});
@@ -198,7 +189,9 @@ const cloningProjects = computed(() => {
 const activeTabIndex = ref(0);
 const showVideo = ref(false);
 const isUploadProjectModalVisible = ref(false);
-const searchProjects = ref('');
+const searchProjectsQuery = ref('');
+const searchProjectsResults = ref<ProjectSearchResponse[]>([]);
+const isSearchLoading = ref(false);
 
 enum ProjectsView {
 	Cards = 'Cards',
@@ -226,17 +219,6 @@ const viewOptions = ref([
 	{ value: ProjectsView.Table, icon: 'pi pi-list' }
 ]);
 
-const myFilteredSortedProjects = computed(() => {
-	const projects = useProjects().allProjects.value;
-	if (!projects) return [];
-	const myProjects = projects.filter(
-		({ userPermission, publicProject }) =>
-			// I can edit the project, or I can view the project and it's not public
-			['creator', 'writer'].includes(userPermission ?? '') || (userPermission === 'reader' && !publicProject)
-	);
-	return filterAndSortProjects(myProjects);
-});
-
 function selectChange(event) {
 	if (event.value) view.value = event.value;
 }
@@ -245,11 +227,46 @@ function tabChange(event) {
 	activeTabIndex.value = event.index;
 }
 
-const publicFilteredSortedProjects = computed(() => {
-	const projects = useProjects().allProjects.value;
-	if (!projects) return [];
-	const publicProjects = projects.filter(({ publicProject }) => publicProject === true);
-	return filterAndSortProjects(publicProjects);
+const searchedAndFilterProjects = computed(() => {
+	let tabProjects = useProjects().allProjects.value;
+	if (!tabProjects) return [];
+
+	if (activeTabIndex.value === 0) {
+		tabProjects = tabProjects.filter(
+			({ userPermission, publicProject }) =>
+				// I can edit the project, or I can view a non-public project
+				['creator', 'writer'].includes(userPermission ?? '') || (userPermission === 'reader' && !publicProject)
+		);
+	} else if (activeTabIndex.value === 1) {
+		tabProjects = tabProjects.filter(({ publicProject, sampleProject }) => publicProject === true && !sampleProject);
+	} else if (activeTabIndex.value === 2) {
+		tabProjects = tabProjects.filter(({ sampleProject }) => sampleProject === true);
+	}
+
+	// If they are no search we can return the filtered and sorted projects
+	if (isEmpty(searchProjectsResults.value)) {
+		return filterAndSortProjects(tabProjects);
+	}
+
+	// If there is a search query, we need to filter the projects based on the search results
+	// while keeping the order of the search results to the order of the projects
+	return searchProjectsResults.value
+		.map((result) => {
+			const project = tabProjects.find(({ id }) => id === result.projectId);
+			if (!project) return null;
+			if (!project.metadata) project.metadata = {};
+
+			// Add the scoring to the search
+			project.metadata.score = result.score.toString();
+
+			// Add the search scoring to the projectAsset
+			result.hits.forEach((hit) => {
+				project.metadata![hit.assetId] = hit.score.toString();
+			});
+
+			return project as Project;
+		})
+		.filter((project) => !!project); // Remove null values
 });
 
 function openCreateProjectModal() {
@@ -260,14 +277,6 @@ function openCreateProjectModal() {
 function openUploadProjectModal() {
 	isUploadProjectModalVisible.value = true;
 }
-
-const searchedAndFilterProjects = computed(() => {
-	const currentTabIndex = activeTabIndex.value;
-	const projects = projectsTabs.value[currentTabIndex].projects;
-	const userInput = searchProjects.value.trim();
-	const result = FilterService.filter(projects, ['name', 'description', 'userName'], userInput, 'contains');
-	return filterAndSortProjects(result);
-});
 
 type DateType = 'createdOn' | 'updatedOn' | 'deletedOn';
 
@@ -302,12 +311,6 @@ function filterAndSortProjects(projects: Project[]) {
 	return [];
 }
 
-const projectsTabs = computed<{ title: string; projects: Project[] }[]>(() => [
-	{ title: TabTitles.MyProjects, projects: myFilteredSortedProjects.value },
-	{ title: TabTitles.PublicProjects, projects: publicFilteredSortedProjects.value },
-	{ title: TabTitles.SampleProjects, projects: [] }
-]);
-
 // Table view
 const columns = ref([
 	{ field: 'name', header: 'Project title' },
@@ -331,14 +334,47 @@ function openProject(projectId: string) {
 	router.push({ name: RouteName.Project, params: { projectId } });
 }
 
-watch(
-	() => cloningProjects.value,
-	() => {
-		if (cloningProjects.value.length === 0) {
-			useProjects().getAll();
-		}
+watch(cloningProjects, () => {
+	if (cloningProjects.value.length === 0) {
+		useProjects().getAll();
 	}
-);
+});
+
+function addRankingToColumns() {
+	removeRankingFromColumns();
+	columns.value.unshift({ field: 'score', header: 'Ranking' });
+	selectedColumns.value.unshift({ field: 'score', header: 'Ranking' });
+}
+
+function removeRankingFromColumns() {
+	columns.value = columns.value.filter((col) => col.field !== 'score');
+	selectedColumns.value = selectedColumns.value.filter((col) => col.field !== 'score');
+}
+
+async function searchedProjects() {
+	// If the search query is empty, show all projects
+	if (isEmpty(searchProjectsQuery.value)) {
+		searchProjectsResults.value = [];
+		removeRankingFromColumns();
+		return;
+	}
+
+	isSearchLoading.value = true;
+	searchProjectsResults.value = await findProjects(searchProjectsQuery.value);
+
+	// If no projects found, display a toast message
+	if (isEmpty(searchProjectsResults.value)) {
+		useToastService().info('No projects found', 'Try searching for something else', 5000);
+	} else {
+		// Display search results using the table view
+		view.value = ProjectsView.Table;
+		addRankingToColumns();
+	}
+
+	isSearchLoading.value = false;
+}
+
+watch(searchProjectsQuery, debounce(searchedProjects, 500));
 </script>
 
 <style scoped>
@@ -369,7 +405,7 @@ header h3 {
 }
 
 header p {
-	max-width: 40%;
+	max-width: 580px;
 	line-height: 1.5;
 }
 
@@ -404,7 +440,9 @@ header > section > button {
 	flex: 1;
 	background-color: #f9f9f9;
 }
-
+.searchProjectsInput {
+	width: 32rem;
+}
 .p-dropdown,
 .p-multiselect {
 	min-width: 17rem;
@@ -423,8 +461,7 @@ header > section > button {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	gap: 16px;
-	/*Accomodate for height of projects tabs*/
+	/* Accommodate for height of projects tabs*/
 	top: 44px;
 }
 
@@ -483,6 +520,12 @@ a {
 .new-project-button {
 	padding: 0;
 }
+.secondary-button {
+	background-color: var(--text-color-secondary);
+}
+.secondary-button:hover {
+	background-color: color-mix(in srgb, var(--text-color-secondary) 90%, var(--surface-0) 10%);
+}
 .close-button {
 	width: 14px;
 	height: 14px;
@@ -501,7 +544,7 @@ a {
 }
 
 .video-thumbnail {
-	background-image: radial-gradient(circle, var(--primary-color), #004f3c), url('@/assets/images/video-thumbnail.png');
+	background-image: radial-gradient(circle, var(--primary-color), #0f483b), url('@/assets/images/video-thumbnail.png');
 	background-blend-mode: multiply;
 	background-size: cover;
 	background-position: center;
