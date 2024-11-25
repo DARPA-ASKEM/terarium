@@ -14,10 +14,13 @@
 		</div>
 		<!--For naming asset such as model or code file-->
 		<div class="row">
-			<slot name="name-input" />
-			<h4 v-if="!isNamingAsset" :class="{ shrink: shrinkHeader }">
-				{{ name }}
-			</h4>
+			<tera-toggleable-input
+				v-if="[ProjectPages.OVERVIEW, AssetType.Dataset, AssetType.Model].includes(pageType)"
+				:model-value="name"
+				tag="h4"
+				@update:model-value="onRename"
+			/>
+			<h4 v-else>{{ name }}</h4>
 			<slot v-if="!overline" name="edit-buttons" />
 		</div>
 		<!--put model contributors here too-->
@@ -67,7 +70,11 @@ import { ProjectPages } from '@/types/Project';
 import { AssetType } from '@/types/Types';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
-import TeraProgressSpinner from '../widgets/tera-progress-spinner.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
+import { activeProject } from '@/composables/activeProject';
+import { update as updateProject } from '@/services/project';
+import { useProjects } from '@/composables/project';
 
 const props = defineProps({
 	id: {
@@ -100,7 +107,6 @@ const props = defineProps({
 	},
 	// Booleans default to false if not specified
 	showTableOfContents: Boolean,
-	isNamingAsset: Boolean,
 	hideIntro: Boolean,
 	isLoading: Boolean,
 	overflowHidden: Boolean,
@@ -110,7 +116,7 @@ const props = defineProps({
 	}
 });
 
-const emit = defineEmits(['tab-change']);
+const emit = defineEmits(['tab-change', 'rename']);
 
 const slots = useSlots();
 const pageType = useRoute().params.pageType as ProjectPages | AssetType;
@@ -120,7 +126,6 @@ const scrollPosition = ref(0);
 const navIds = ref<Map<string, string>>(new Map());
 const chosenItem = ref<string | null>(null);
 
-const shrinkHeader = computed(() => scrollPosition.value > 20); // Shrink header once we scroll down a bit
 const tabs = computed(() => {
 	if (slots.tabs?.()) {
 		if (slots.tabs().length === 1) {
@@ -164,6 +169,23 @@ function onScroll(event: Event) {
 		}
 	});
 	chosenItem.value = closestItem;
+}
+
+function onRename(newName: string) {
+	if (!newName) return;
+	switch (pageType) {
+		case ProjectPages.OVERVIEW:
+			if (!activeProject.value) return;
+			updateProject({ ...activeProject.value, name: newName }).then(() => {
+				useProjects().refresh();
+			});
+			break;
+		case AssetType.Dataset:
+		case AssetType.Model:
+		default:
+			emit('rename', newName);
+			break;
+	}
 }
 
 watch(

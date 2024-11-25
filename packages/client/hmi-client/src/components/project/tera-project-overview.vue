@@ -3,7 +3,6 @@
 		:id="useProjects().activeProject.value?.id"
 		:name="useProjects().activeProject.value?.name"
 		:authors="useProjects().activeProject.value?.authors?.sort().join(', ')"
-		:is-naming-asset="isRenamingProject"
 		:publisher="`Last updated ${DateUtils.formatLong(
 			useProjects().activeProject.value?.updatedOn ?? useProjects().activeProject.value?.createdOn
 		)}`"
@@ -23,14 +22,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
 import * as DateUtils from '@/utils/date';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { useProjects } from '@/composables/project';
 import TeraProjectMenu from '@/components/home/tera-project-menu.vue';
 import teraProjectOverviewEditor from '@/components/project/tera-project-overview-editor.vue';
-
-const isRenamingProject = ref(false);
 </script>
 <style scoped>
 .overview-description {
