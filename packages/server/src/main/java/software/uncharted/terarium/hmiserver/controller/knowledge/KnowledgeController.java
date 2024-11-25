@@ -230,7 +230,8 @@ public class KnowledgeController {
 			notificationService,
 			ClientEventType.KNOWLEDGE_ENRICHMENT_MODEL,
 			projectId,
-			new Properties(modelId, documentId)
+			new Properties(modelId, documentId),
+			currentUserService.get().getId()
 		);
 
 		notificationInterface.sendMessage("Beginning model enrichment using document extraction...");
