@@ -354,7 +354,12 @@ const currentActiveIndicies = ref([0, 1, 2]);
 const isSidebarOpen = ref(true);
 const selectedOutputId = ref<string>();
 const isRunDisabled = computed(() => !knobs.value.ensembleMapping[0] || !datasetId.value);
-const cancelRunId = computed(() => props.node.state.inProgressForecastId || props.node.state.inProgressCalibrationId);
+const cancelRunId = computed(
+	() =>
+		props.node.state.inProgressForecastId ||
+		props.node.state.inProgressCalibrationId ||
+		props.node.state.inProgressPreForecastId
+);
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
 const inProgressForecastId = computed(() => props.node.state.inProgressForecastId);
 const isRunInProgress = computed(() => Boolean(inProgressCalibrationId.value || inProgressForecastId.value));
