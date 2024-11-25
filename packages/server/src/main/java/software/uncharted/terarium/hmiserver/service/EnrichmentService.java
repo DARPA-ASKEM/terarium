@@ -6,10 +6,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.controller.knowledge.KnowledgeController;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -21,12 +19,10 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.seman
 import software.uncharted.terarium.hmiserver.models.task.CompoundTask;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.service.data.DKGService;
-import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationGroupInstance;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskUtilities;
-import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
@@ -35,17 +31,14 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 public class EnrichmentService {
 
 	private final DKGService dkgService;
-	private final DocumentAssetService documentService;
 	private final ModelService modelService;
 	private final TaskService taskService;
-
-	private final Messages messages;
 
 	/**
 	 * Enriches the model with the data from the document.
 	 *
 	 * @param projectId the project ID
-	 * @param documentId the document ID
+	 * @param document the document
 	 * @param model the model
 	 * @param currentUserId the current user ID
 	 * @param permission the permission
@@ -53,30 +46,14 @@ public class EnrichmentService {
 	@Async
 	public void modelWithDocument(
 		UUID projectId,
-		UUID documentId,
+		DocumentAsset document,
 		Model model,
 		String currentUserId,
 		Schema.Permission permission,
 		NotificationGroupInstance<KnowledgeController.Properties> notificationInterface
 	) {
+		log.info("YOHANN 2/4 - start async enrichment");
 		try {
-			// Get the Document
-			final DocumentAsset document = documentService
-				.getAsset(documentId, permission)
-				.orElseThrow(() ->
-					new ResponseStatusException(
-						HttpStatus.NOT_FOUND,
-						messages.get("An error occurred while trying to get the document.")
-					)
-				);
-
-			// Make sure there is text in the document
-			if (document.getText() == null || document.getText().isBlank()) {
-				final String errorString = String.format("Document %s has no extracted text", documentId);
-				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("errorString"));
-			}
-			notificationInterface.sendMessage("Document text found.");
-
 			// Stripping the metadata before it's sent since it can cause GoLLM to fail with massive inputs
 			model.setMetadata(new ModelMetadata());
 			notificationInterface.sendMessage("Model metadata stripped.");
@@ -120,9 +97,7 @@ public class EnrichmentService {
 				.stream()
 				.map(state -> state == null ? new State() : state)
 				.collect(Collectors.toList());
-			states.forEach(state -> {
-				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, state);
-			});
+			states.forEach(state -> TaskUtilities.performDKGSearchAndSetGrounding(dkgService, state));
 			enrichedModel.setStates(states);
 			notificationInterface.sendMessage("State grounding complete.");
 
@@ -175,9 +150,13 @@ public class EnrichmentService {
 			}
 
 			notificationInterface.sendMessage("Model enriched using document extraction and grounded");
-			log.info("Model {} enriched using document {} extraction and grounded.", model.getId(), documentId);
+			log.info(
+				"YOHANN 3/4 - Model {} enriched using document {} extraction and grounded.",
+				model.getId(),
+				document.getId()
+			);
 		} catch (final IOException e) {
-			log.error("Error enriching model {} with document {}", model.getId(), documentId, e);
+			log.error("Error enriching model {} with document {}", model.getId(), document.getId(), e);
 		}
 	}
 }

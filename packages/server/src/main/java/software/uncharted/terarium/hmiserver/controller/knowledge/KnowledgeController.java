@@ -195,7 +195,7 @@ public class KnowledgeController {
 			projectId
 		);
 
-		log.info("equations-to-model request: {}", req);
+		log.info("YOHANN 1/4 - equations-to-model request: {}", req);
 
 		final Model responseAMR;
 
@@ -331,9 +331,27 @@ public class KnowledgeController {
 
 		// Enrich the model asynchronously if a document ID was provided
 		if (documentId != null) {
+			// Get the Document
+			final DocumentAsset document = documentService
+				.getAsset(documentId, permission)
+				.orElseThrow(() ->
+					new ResponseStatusException(
+						HttpStatus.NOT_FOUND,
+						messages.get("An error occurred while trying to get the document.")
+					)
+				);
+
+			// Make sure there is text in the document
+			if (document.getText() == null || document.getText().isBlank()) {
+				final String errorString = String.format("Document %s has no extracted text", documentId);
+				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, errorString);
+			}
+			notificationInterface.sendMessage("Document text found.");
+
+			// Do the enrichment
 			enrichmentService.modelWithDocument(
 				projectId,
-				documentId,
+				document,
 				model,
 				currentUserService.get().getId(),
 				permission,
@@ -342,6 +360,7 @@ public class KnowledgeController {
 		}
 
 		notificationInterface.sendFinalMessage("Model from equations done.");
+		log.info("YOHANN 4/4 - end of equationsToModel");
 
 		// Return the model id
 		return ResponseEntity.ok(model.getId());
