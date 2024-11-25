@@ -5,7 +5,7 @@
 			<Editor v-else v-model="editorContent" />
 		</AccordionTab>
 		<AccordionTab header="Diagram">
-			<tera-model-diagram :model="model" :mmt-data="mmtData" :feature-config="featureConfig" />
+			<tera-model-diagram :model="model" :mmt-data="mmtData" />
 		</AccordionTab>
 		<AccordionTab header="Model equations">
 			<tera-model-equation :model="model" :is-editable="false" @model-updated="emit('update-model')" />
@@ -29,7 +29,6 @@ import AccordionTab from 'primevue/accordiontab';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import Editor from 'primevue/editor';
-import { FeatureConfig } from '@/types/common';
 import type { Dataset, Model } from '@/types/Types';
 import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
@@ -41,7 +40,6 @@ import type { MMT } from '@/model-representation/mira/mira-common';
 const props = defineProps<{
 	model: Model;
 	mmtData: MMT;
-	featureConfig?: FeatureConfig;
 	isGeneratingCard?: boolean;
 }>();
 

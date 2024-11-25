@@ -11,14 +11,6 @@
 		<div v-if="overline" class="row">
 			<span class="overline">{{ overline }}</span>
 			<slot name="edit-buttons" />
-			<Button
-				v-if="featureConfig.isPreview"
-				class="close"
-				icon="pi pi-times"
-				rounded
-				text
-				@click="emit('close-preview')"
-			/>
 		</div>
 		<!--For naming asset such as model or code file-->
 		<div class="row">
@@ -27,14 +19,6 @@
 				{{ name }}
 			</h4>
 			<slot v-if="!overline" name="edit-buttons" />
-			<Button
-				v-if="!overline && featureConfig.isPreview"
-				class="close"
-				icon="pi pi-times"
-				rounded
-				text
-				@click="emit('close-preview')"
-			/>
 		</div>
 		<!--put model contributors here too-->
 		<span v-if="authors" class="authors">
@@ -77,10 +61,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, PropType, useSlots, nextTick } from 'vue';
+import { ref, computed, watch, useSlots, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
-import Button from 'primevue/button';
-import type { FeatureConfig } from '@/types/common';
 import { ProjectPages } from '@/types/Project';
 import { AssetType } from '@/types/Types';
 import TabView from 'primevue/tabview';
@@ -111,10 +93,6 @@ const props = defineProps({
 	publisher: {
 		type: String,
 		default: null
-	},
-	featureConfig: {
-		type: Object as PropType<FeatureConfig>,
-		default: { isPreview: false } as FeatureConfig
 	},
 	showHeader: {
 		type: Boolean,

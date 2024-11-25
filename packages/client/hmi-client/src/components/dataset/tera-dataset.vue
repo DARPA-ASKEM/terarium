@@ -1,7 +1,6 @@
 <template>
 	<tera-asset
 		show-table-of-contents
-		:feature-config="featureConfig"
 		:id="assetId"
 		:is-loading="isDatasetLoading"
 		:is-naming-asset="isRenaming"
@@ -22,7 +21,7 @@
 			/>
 			<Button v-if="isRenaming" icon="pi pi-check" rounded text @click="updateDatasetName" />
 		</template>
-		<template #edit-buttons v-if="!featureConfig.isPreview">
+		<template #edit-buttons>
 			<Button
 				icon="pi pi-ellipsis-v"
 				class="p-button-icon-only p-button-text p-button-rounded"
@@ -61,7 +60,6 @@
 					:key="index"
 					class="column-info"
 					:column="column"
-					:feature-config="{ isPreview: false }"
 					@update-column="updateColumn(index, $event.key, $event.value)"
 				/>
 			</AccordionTab>
@@ -86,7 +84,6 @@ import {
 } from '@/services/dataset';
 import { AssetType, type CsvAsset, type Dataset, PresignedURL } from '@/types/Types';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import type { FeatureConfig } from '@/types/common';
 import { DatasetSource } from '@/types/Dataset';
 import { useProjects } from '@/composables/project';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
@@ -105,10 +102,6 @@ const props = defineProps({
 	assetId: {
 		type: String,
 		required: true
-	},
-	featureConfig: {
-		type: Object as PropType<FeatureConfig>,
-		default: { isPreview: false } as FeatureConfig
 	},
 	source: {
 		type: String as PropType<DatasetSource>,
