@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver;
 
 import java.util.concurrent.Executor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.openfeign.EnableFeignClients;
@@ -15,6 +16,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 @EnableScheduling
 @PropertySource("classpath:application.properties")
 @EnableAsync
+@Slf4j
 public class TerariumApplication {
 
 	public static void main(final String[] args) {
@@ -32,6 +34,9 @@ public class TerariumApplication {
 		executor.setMaxPoolSize(10);
 		executor.setQueueCapacity(500);
 		executor.setThreadNamePrefix("AsyncService-");
+		executor.setRejectedExecutionHandler((r, executor1) ->
+			log.warn("Asynchronous Service task rejected, thread pool is full and queue is also full")
+		);
 		executor.initialize();
 		return executor;
 	}
