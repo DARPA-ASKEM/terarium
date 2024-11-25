@@ -1,12 +1,10 @@
 <template>
 	<tera-asset
 		v-bind="$attrs"
-		:feature-config="featureConfig"
 		:id="assetId"
 		:is-loading="isModelLoading"
 		:is-naming-asset="isNaming"
 		:name="temporaryModel?.header.name"
-		@close-preview="emit('close-preview')"
 		:show-table-of-contents="!isWorkflow"
 	>
 		<template #name-input>
@@ -29,7 +27,7 @@
 				/>
 			</div>
 		</template>
-		<template #edit-buttons v-if="!featureConfig.isPreview">
+		<template #edit-buttons>
 			<Button icon="pi pi-ellipsis-v" text rounded @click="toggleOptionsMenu" />
 			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" popup :pt="optionsMenuPt" />
 			<aside class="btn-group">
@@ -48,17 +46,12 @@
 			</aside>
 		</template>
 		<section v-if="temporaryModel && mmtData">
-			<tera-model-description
-				:feature-config="featureConfig"
-				:model="temporaryModel"
-				:mmt-data="mmtData"
-				@update-model="updateTemporaryModel"
-			/>
+			<tera-model-description :model="temporaryModel" :mmt-data="mmtData" @update-model="updateTemporaryModel" />
 			<tera-petrinet-parts
 				:model="temporaryModel"
 				:mmt="mmtData.mmt"
 				:mmt-params="mmtData.template_params"
-				:feature-config="featureConfig"
+				:feature-config="{ isPreview: false }"
 				@update-state="(e: any) => onUpdateModelPart('state', e)"
 				@update-parameter="(e: any) => onUpdateModelPart('parameter', e)"
 				@update-observable="(e: any) => onUpdateModelPart('observable', e)"
@@ -81,7 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, PropType, ref, watch, onMounted } from 'vue';
+import { computed, ref, watch, onMounted } from 'vue';
 import { cloneDeep, isEmpty, isEqual } from 'lodash';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
@@ -92,7 +85,6 @@ import TeraModelDescription from '@/components/model/petrinet/tera-model-descrip
 import TeraPetrinetParts from '@/components/model/petrinet/tera-petrinet-parts.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { getModel, updateModel, getMMT } from '@/services/model';
-import type { FeatureConfig } from '@/types/common';
 import { AssetType, type Model } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
@@ -110,10 +102,6 @@ const props = defineProps({
 		type: String,
 		default: ''
 	},
-	featureConfig: {
-		type: Object as PropType<FeatureConfig>,
-		default: { isPreview: false } as FeatureConfig
-	},
 	isWorkflow: {
 		type: Boolean,
 		default: false
@@ -124,7 +112,7 @@ const props = defineProps({
 	}
 });
 
-const emit = defineEmits(['close-preview', 'on-save']);
+const emit = defineEmits(['on-save']);
 
 const model = ref<Model | null>(null);
 const temporaryModel = ref<Model | null>(null);
@@ -188,7 +176,6 @@ const optionsMenuItems = ref<any[]>([
 				a.click();
 				a.remove();
 			}
-			emit('close-preview');
 		}
 	}
 ]);

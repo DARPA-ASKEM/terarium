@@ -3,18 +3,14 @@
 		<section class="entries">
 			<span class="name">
 				<h6>{{ column.symbol }}</h6>
-				<template v-if="featureConfig.isPreview">{{ column.name }}</template>
 				<tera-input-text
-					v-else
 					placeholder="Add a name"
 					:model-value="column.name ?? ''"
 					@update:model-value="$emit('update-column', { key: 'name', value: $event })"
 				/>
 			</span>
 			<span class="unit">
-				<template v-if="featureConfig.isPreview"><label>Unit</label>{{ column.unit }}</template>
 				<tera-input-text
-					v-else
 					label="Unit"
 					placeholder="Add a unit"
 					:characters-to-reject="[' ']"
@@ -24,20 +20,16 @@
 			</span>
 			<span class="data-type">
 				<label>Data type</label>
-				<template v-if="featureConfig.isPreview">{{ column.dataType }}</template>
 				<Dropdown
-					v-else
 					placeholder="Select a data type"
 					:model-value="column.dataType ?? ''"
 					@update:model-value="$emit('update-column', { key: 'dataType', value: $event })"
 					:options="Object.values(ColumnType)"
 				/>
 			</span>
-			<span v-if="showConcept" class="concept">
+			<span class="concept">
 				<label>Concept</label>
-				<template v-if="featureConfig.isPreview">{{ query }}</template>
 				<AutoComplete
-					v-else
 					size="small"
 					placeholder="Search concepts"
 					v-model="query"
@@ -52,9 +44,7 @@
 				/>
 			</span>
 			<span class="description">
-				<template v-if="featureConfig.isPreview">{{ column.description }}</template>
 				<tera-input-text
-					v-else
 					placeholder="Add a description"
 					:model-value="column.description ?? ''"
 					@update:model-value="$emit('update-column', { key: 'description', value: $event })"
@@ -70,14 +60,13 @@
 
 <script setup lang="ts">
 /* Copied the structure of tera-model-parts.vue */
-import { ref, computed, watch } from 'vue';
+import { ref, watch } from 'vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraBoxplot from '@/components/widgets/tera-boxplot.vue';
 import AutoComplete from 'primevue/autocomplete';
 import Dropdown from 'primevue/dropdown';
 import { type DKG, ColumnType, type Grounding } from '@/types/Types';
 import { searchCuriesEntities } from '@/services/concept';
-import type { FeatureConfig } from '@/types/common';
 
 type ColumnInfo = {
 	symbol: string;
@@ -92,16 +81,12 @@ type ColumnInfo = {
 
 const props = defineProps<{
 	column: ColumnInfo;
-	featureConfig: FeatureConfig;
 }>();
 
 const emit = defineEmits(['update-column']);
 
 const query = ref('');
 const results = ref<DKG[]>([]);
-
-// If we are in preview mode and there is no content, show nothing
-const showConcept = computed(() => !(props.featureConfig.isPreview && !query.value));
 
 // Used if an option isn't selected from the Autocomplete suggestions but is typed in regularly
 function applyValidConcept() {
