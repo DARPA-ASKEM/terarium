@@ -188,7 +188,16 @@ export enum ChartSettingType {
 	INTERVENTION = 'intervention'
 }
 
-export interface ChartSetting {
+export type ChartSetting = ChartSettingBase | ChartSettingEnsembleVariable;
+
+export interface ChartSettingEnsembleVariable extends ChartSettingBase {
+	type: ChartSettingType.VARIABLE_ENSEMBLE;
+	showIndividualModels: boolean;
+	relativeToEnsemble: boolean;
+	showIndividualModelsWithWeight?: boolean;
+}
+
+export interface ChartSettingBase {
 	id: string;
 	name: string;
 	selectedVariables: string[];

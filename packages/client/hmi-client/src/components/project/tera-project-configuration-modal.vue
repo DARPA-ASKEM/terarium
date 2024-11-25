@@ -56,7 +56,7 @@
 									<img src="@assets/images/project-thumbnails/default.png" alt="Default thumbnail image" />
 								</label>
 							</li>
-							<li v-for="i in 14" :key="i">
+							<li v-for="i in 53" :key="i">
 								<input type="radio" name="thumbnail" :id="`thumbnail-0${i}`" v-model="thumbnail" :value="`0${i}`" />
 								<label :for="`thumbnail-0${i}`">
 									<img

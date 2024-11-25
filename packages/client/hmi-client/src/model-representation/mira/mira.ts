@@ -523,14 +523,15 @@ export const convertToIGraph = (
 				data: {}
 			});
 
-			t.controllers.forEach((controllerName) => {
-				graph.edges.push({
-					source: t.name,
-					target: controllerName,
-					points: [],
-					data: { isController: true }
-				});
-			});
+			// Turn off dual-controller edges as per request - Nov 2024
+			// t.controllers.forEach((controllerName) => {
+			// 	graph.edges.push({
+			// 		source: t.name,
+			// 		target: controllerName,
+			// 		points: [],
+			// 		data: { isController: true }
+			// 	});
+			// });
 		}
 	});
 

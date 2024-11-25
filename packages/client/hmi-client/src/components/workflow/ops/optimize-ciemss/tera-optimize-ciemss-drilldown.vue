@@ -925,7 +925,10 @@ const setOutputValues = async () => {
 	const postResult = await getRunResultCSV(postForecastRunId, 'result.csv');
 
 	// FIXME: only show the post optimize data for now...
-	simulationRawContent.value[knobs.value.postForecastRunId] = convertToCsvAsset(postResult, Object.values(pyciemssMap));
+	simulationRawContent.value[knobs.value.postForecastRunId] = convertToCsvAsset(
+		postResult,
+		Object.values(pyciemssMap.value)
+	);
 	runResults.value[preForecastRunId] = preResult;
 	runResults.value[postForecastRunId] = postResult;
 
@@ -999,9 +1002,9 @@ const {
 	useInterventionCharts,
 	useVariableCharts,
 	useComparisonCharts
-} = useCharts(props.node.id, model, modelConfiguration, preparedChartInputs, chartSize, combinedInterventions);
+} = useCharts(props.node.id, model, modelConfiguration, preparedChartInputs, chartSize, combinedInterventions, null);
 const interventionCharts = useInterventionCharts(selectedInterventionSettings);
-const variableCharts = useVariableCharts(selectedVariableSettings, null, null);
+const variableCharts = useVariableCharts(selectedVariableSettings, null);
 const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
 
 // refresh policy

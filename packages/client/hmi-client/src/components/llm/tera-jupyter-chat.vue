@@ -242,6 +242,7 @@ const reRunPrompt = (queryId: string, query?: string) => {
 	notebookItem.messages = [llmRequestMsg];
 	if (query) {
 		llmRequestMsg.content.request = query;
+		notebookItem.query = query;
 	}
 	kernel.sendJupyterMessage(llmRequestMsg);
 	isExecutingCode.value = true;
@@ -406,9 +407,9 @@ const clearOutputs = () => {
 	}
 	for (let i = 0; i < notebookCells.value.length; i++) {
 		const el = notebookCells.value[i];
-		if (el.codeCell) {
-			for (let j = 0; j < el.codeCell.length; j++) {
-				el.codeCell[j].clear();
+		if (el.codeOutputCell) {
+			for (let j = 0; j < el.codeOutputCell.length; j++) {
+				el.codeOutputCell[j].clear();
 			}
 		}
 	}
