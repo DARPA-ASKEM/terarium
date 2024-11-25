@@ -110,16 +110,11 @@ public class NotificationService {
 	}
 
 	@Observed(name = "function_profile")
-	public NotificationEvent createNotificationEvent(final UUID groupId, final NotificationEvent notificationEvent) {
+	public void createNotificationEvent(final UUID groupId, final NotificationEvent notificationEvent) {
 		final NotificationGroup group = notificationGroupRepository.findById(groupId).orElseThrow();
-
 		notificationEvent.setNotificationGroup(group);
-
 		group.getNotificationEvents().add(notificationEvent);
-
 		notificationGroupRepository.save(group);
-
-		return notificationEvent;
 	}
 
 	@Observed(name = "function_profile")
