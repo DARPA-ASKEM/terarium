@@ -5,7 +5,6 @@
 		:is-loading="isModelLoading"
 		:is-naming-asset="isNaming"
 		:name="temporaryModel?.header.name"
-		@close-preview="emit('close-preview')"
 		:show-table-of-contents="!isWorkflow"
 	>
 		<template #name-input>
@@ -113,7 +112,7 @@ const props = defineProps({
 	}
 });
 
-const emit = defineEmits(['close-preview', 'on-save']);
+const emit = defineEmits(['on-save']);
 
 const model = ref<Model | null>(null);
 const temporaryModel = ref<Model | null>(null);
@@ -177,7 +176,6 @@ const optionsMenuItems = ref<any[]>([
 				a.click();
 				a.remove();
 			}
-			emit('close-preview');
 		}
 	}
 ]);

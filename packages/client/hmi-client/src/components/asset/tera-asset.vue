@@ -110,7 +110,7 @@ const props = defineProps({
 	}
 });
 
-const emit = defineEmits(['close-preview', 'tab-change']);
+const emit = defineEmits(['tab-change']);
 
 const slots = useSlots();
 const pageType = useRoute().params.pageType as ProjectPages | AssetType;

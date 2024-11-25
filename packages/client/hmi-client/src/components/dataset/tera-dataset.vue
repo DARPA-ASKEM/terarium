@@ -7,7 +7,6 @@
 		:name="dataset?.name"
 		:overflow-hidden="selectedTabIndex === 1"
 		:selected-tab-index="selectedTabIndex"
-		@close-preview="emit('close-preview')"
 		@tab-change="(e) => (selectedTabIndex = e.index)"
 	>
 		<template #name-input>
@@ -109,8 +108,6 @@ const props = defineProps({
 	}
 });
 
-const emit = defineEmits(['close-preview']);
-
 const currentActiveIndexes = ref([1, 2, 3, 4]);
 const dataset = ref<Dataset | null>(null);
 const transientDataset = ref<Dataset | null>(null);
@@ -144,7 +141,6 @@ const optionsMenuItems = ref<any[]>([
 			if (presignedUrl) {
 				window.open(presignedUrl.url, '_blank');
 			}
-			emit('close-preview');
 		}
 	}
 ]);
