@@ -361,3 +361,26 @@ export const convertToCsvAsset = (data: Record<string, any>[], keys: string[]) =
 	});
 	return csvData;
 };
+
+// The result files from ensemble simulate have column headers such as model_#/column_name
+// This can be used to trace what model configuration is what model_# in a given run.
+export async function getEnsembleResultModelConfigMap(runId: string) {
+	interface EnsembleModelConfigsSnakeCase {
+		id: string;
+		solution_mappings: { [index: string]: string };
+		weight: number;
+	}
+	const resultMap: { [key: string]: string } = {};
+
+	// Get Simulation Execution Run:
+	const simulationRun = await getSimulation(runId);
+	if (!simulationRun) {
+		console.error(`Could not find simulation ${runId}`);
+		return null;
+	}
+	const modelConfigs: EnsembleModelConfigsSnakeCase[] = simulationRun.executionPayload.model_configs;
+	for (let i = 0; i < modelConfigs.length; i++) {
+		resultMap[`model_${i}`] = modelConfigs[i].id;
+	}
+	return resultMap;
+}
