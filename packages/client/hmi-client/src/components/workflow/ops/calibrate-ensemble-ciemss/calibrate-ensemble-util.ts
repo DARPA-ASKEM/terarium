@@ -2,7 +2,7 @@ import _ from 'lodash';
 import { createForecastChart, AUTOSIZE } from '@/services/charts';
 import {
 	DataArray,
-	getResultModelConfigMap,
+	getEnsembleResultModelConfigMap,
 	getRunResultCSV,
 	getSimulation,
 	parseEnsemblePyciemssMap
@@ -101,7 +101,7 @@ export async function fetchOutputData(preForecastId: string, postForecastId: str
 	if (!postForecastId || !preForecastId) return null;
 	const runResult = await getRunResultCSV(postForecastId, 'result.csv');
 	const runResultSummary = await getRunResultCSV(postForecastId, 'result_summary.csv');
-	const ensembleVarModelConfigMap = (await getResultModelConfigMap(preForecastId)) ?? {};
+	const ensembleVarModelConfigMap = (await getEnsembleResultModelConfigMap(preForecastId)) ?? {};
 
 	const runResultPre = await getRunResultCSV(preForecastId, 'result.csv', renameFnGenerator('pre'));
 	const runResultSummaryPre = await getRunResultCSV(preForecastId, 'result_summary.csv', renameFnGenerator('pre'));

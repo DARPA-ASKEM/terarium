@@ -364,7 +364,7 @@ export const convertToCsvAsset = (data: Record<string, any>[], keys: string[]) =
 
 // The result files from ensemble simulate have column headers such as model_#/column_name
 // This can be used to trace what model configuration is what model_# in a given run.
-export async function getResultModelConfigMap(runId: string) {
+export async function getEnsembleResultModelConfigMap(runId: string) {
 	interface EnsembleModelConfigsSnakeCase {
 		id: string;
 		solution_mappings: { [index: string]: string };
@@ -389,7 +389,7 @@ export async function getResultModelConfigMap(runId: string) {
  * Build pyCiemss map for the ensemble simulation results.
  *
  * @param obj - The object to be parsed, where keys are strings and values can be of any type.
- * @param resultModelConfigMap - A map where keys are model prefixes and values are model configuration ids.
+ * @param ensembleResultModelConfigMap - A map where keys are model prefixes and values are model configuration ids.
  * @returns A record where the key is the display model variable name prepended with the corresponding model configuration id and the value is the pyciemss variable name.
  *
  * @example
@@ -410,14 +410,14 @@ export async function getResultModelConfigMap(runId: string) {
  */
 export function parseEnsemblePyciemssMap(
 	obj: Record<string, any>,
-	resultModelConfigMap: Record<string, string>
+	ensembleResultModelConfigMap: Record<string, string>
 ): Record<string, string> {
 	const pyciemssMap = {};
 	// Replace model_# prefix with model configuration id from the pyciemssMap keys
 	Object.entries(parsePyCiemssMap(obj)).forEach(([key, value]) => {
 		const tokens = key.split('/');
 		if (tokens.length > 1) {
-			const newKey = `${resultModelConfigMap[tokens[0]]}/${tokens[1]}`;
+			const newKey = `${ensembleResultModelConfigMap[tokens[0]]}/${tokens[1]}`;
 			pyciemssMap[newKey] = value;
 		} else {
 			pyciemssMap[key] = value;

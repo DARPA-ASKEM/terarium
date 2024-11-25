@@ -242,6 +242,7 @@ const reRunPrompt = (queryId: string, query?: string) => {
 	notebookItem.messages = [llmRequestMsg];
 	if (query) {
 		llmRequestMsg.content.request = query;
+		notebookItem.query = query;
 	}
 	kernel.sendJupyterMessage(llmRequestMsg);
 	isExecutingCode.value = true;
