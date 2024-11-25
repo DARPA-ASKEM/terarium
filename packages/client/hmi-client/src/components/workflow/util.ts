@@ -2,7 +2,7 @@ import _ from 'lodash';
 import { DataseriesConfig, ChartConfig } from '@/types/SimulateConfig';
 import type { CsvAsset, TimeSpan } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
-import type { CalibrateMap } from '@/services/calibrate-workflow';
+import { type CalibrateMap } from '@/services/calibrate-workflow';
 import { useProjects } from '@/composables/project';
 
 export const drilldownChartSize = (element: HTMLElement | null) => {
@@ -134,3 +134,7 @@ export const getGraphDataFromDatasetCSV = (
 
 	return graphData;
 };
+
+export function getActiveOutput<S>(node: WorkflowNode<S>) {
+	return node.outputs.find((output) => output.id === node.active);
+}

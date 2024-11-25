@@ -129,16 +129,17 @@
 		:stratified-matrix-type="StratifiedMatrix.Parameters"
 		:open-value-config="!!matrixModalId"
 		@close-modal="matrixModalId = ''"
-		@update-cell-value="
-			emit('update-parameters', [
-				{
-					id: $event.variableName,
+		@update-cell-values="
+			emit(
+				'update-parameters',
+				$event.map((e) => ({
+					id: e.id,
 					distribution: {
 						type: DistributionType.Constant,
-						parameters: { value: $event.newValue }
+						parameters: { value: e.value }
 					}
-				}
-			])
+				}))
+			)
 		"
 	/>
 </template>

@@ -9,6 +9,9 @@ export interface CalibrateMap {
 	datasetVariable: string;
 }
 
+export const isCalibrateMap = (obj: any): obj is CalibrateMap =>
+	obj.modelVariable !== undefined && obj.datasetVariable !== undefined;
+
 // Used in the setup of calibration node and drill down
 // Takes a model config Id and grabs relevant objects
 export const setupModelInput = async (modelConfigId: string | undefined) => {
