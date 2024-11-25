@@ -195,8 +195,6 @@ public class KnowledgeController {
 			projectId
 		);
 
-		log.info("YOHANN 1/4 - equations-to-model request: {}", req);
-
 		final Model responseAMR;
 
 		UUID documentId = null;
@@ -342,25 +340,29 @@ public class KnowledgeController {
 				);
 
 			// Make sure there is text in the document
-			if (document.getText() == null || document.getText().isBlank()) {
-				final String errorString = String.format("Document %s has no extracted text", documentId);
-				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, errorString);
-			}
-			notificationInterface.sendMessage("Document text found.");
+			if (document.getText() != null && !document.getText().isBlank()) {
+				notificationInterface.sendMessage("Document text found.");
 
-			// Do the enrichment
-			enrichmentService.modelWithDocument(
-				projectId,
-				document,
-				model,
-				currentUserService.get().getId(),
-				permission,
-				notificationInterface
-			);
+				// Do the enrichment
+				enrichmentService.modelWithDocument(
+					projectId,
+					document,
+					model,
+					currentUserService.get().getId(),
+					permission,
+					notificationInterface
+				);
+			} else {
+				final String documentTextNotFoundMessage = String.format(
+					"Document text not found. Please try enriching the model when the document %s extraction is done",
+					document.getName()
+				);
+				notificationInterface.sendMessage(documentTextNotFoundMessage);
+				log.info(documentTextNotFoundMessage);
+			}
 		}
 
 		notificationInterface.sendFinalMessage("Model from equations done.");
-		log.info("YOHANN 4/4 - end of equationsToModel");
 
 		// Return the model id
 		return ResponseEntity.ok(model.getId());

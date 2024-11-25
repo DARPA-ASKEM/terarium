@@ -54,7 +54,7 @@ public class NotificationGroupInstance<T> {
 			((NotificationGroup) new NotificationGroup().setId(notificationGroupId));
 		newNotificationGroup.setType(type.name()).setProjectId(projectId);
 
-		if (newNotificationGroup.getUserId() == null || newNotificationGroup.getUserId().isEmpty()) {
+		if (userId == null || userId.isEmpty()) {
 			newNotificationGroup.setUserId("anonymous");
 		} else {
 			newNotificationGroup.setUserId(userId);
