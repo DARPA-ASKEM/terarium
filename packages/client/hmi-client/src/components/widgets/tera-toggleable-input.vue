@@ -58,10 +58,6 @@ const handleKeyDown = (event: KeyboardEvent) => {
 	if (event.key === 'Enter') onConfirm();
 	else if (event.key === 'Escape') onCancel();
 };
-
-defineExpose({
-	onEdit
-});
 </script>
 
 <style scoped>
