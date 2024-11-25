@@ -13,7 +13,7 @@ import {
 	ForecastChartOptions
 } from '@/services/charts';
 import { flattenInterventionData } from '@/services/intervention-policy';
-import { DataArray } from '@/services/models/simulation-service';
+import { DataArray, extractModelConfigIds } from '@/services/models/simulation-service';
 import { ChartSetting, ChartSettingEnsembleVariable, ChartSettingType } from '@/types/common';
 import { Intervention, Model, ModelConfiguration } from '@/types/Types';
 import { displayNumber } from '@/utils/number';
@@ -54,11 +54,7 @@ const getModelConfigVariable = (
 	modelConfigId: string
 ) => getModelConfigMappings(mapping, ensembleVariableName)[modelConfigId] ?? '';
 
-// HACK: Generate fake model id prefix from model configuration index, this is supposed to be model configuration id instead of index number.
-// Fix this when Pyciemss is updated to include model configuration id on it's variable name.
-const getModelIdPrefix = (modelId: string, modelConfigs: ModelConfiguration[]) =>
-	modelId ? `model_${modelConfigs.findIndex((c) => c.id === modelId)}/` : '';
-// const getVariableNameModelPrifix = (modelId: string) => modelId ? `${modelId}/` : '';
+const getModelConfigIdPrefix = (modelId: string) => (modelId ? `${modelId}/` : '');
 
 /**
  * Converts a model variable name to a dataset variable name based on the provided mapping.
@@ -67,7 +63,7 @@ const getModelIdPrefix = (modelId: string, modelConfigs: ModelConfiguration[]) =
  * @param {string} modelVariable - The name of the model variable to be converted.
  * @returns {string} - The corresponding dataset variable name, or an empty string if the mapping is empty or not found.
  */
-export const modelVarToDatasetVar = (mapping: VariableMappings, modelVariable: string) => {
+const modelVarToDatasetVar = (mapping: VariableMappings, modelVariable: string) => {
 	if (_.isEmpty(mapping)) return '';
 	if (isCalibrateMap(mapping[0])) {
 		return (mapping as CalibrateMap[]).find((d) => d.modelVariable === modelVariable)?.datasetVariable ?? '';
@@ -76,6 +72,26 @@ export const modelVarToDatasetVar = (mapping: VariableMappings, modelVariable: s
 		return (mapping as CalibrateEnsembleMappingRow[]).find((d) => d.newName === modelVariable)?.datasetMapping ?? '';
 	}
 	return '';
+};
+
+// For ensemble charts, add model names to translation map to give more context for the usage in llm annotation generation
+// For example, if a variable name is 'model_0/infected', we want to give llm {model_0/infected: 'Model Antwerp Infected after calibration'}
+// instead of just { model_0/infected: 'Infected after calibration' } so that it is clear to LLM which model the variable belongs to.
+const addModelConfigNameToTranslationMap = (
+	translationMap: Record<string, string>,
+	pyciemssMap: Record<string, string>,
+	modelConfigs: ModelConfiguration[]
+) => {
+	const newMap = {};
+	const modelPrefixToModelconfigIdMap = extractModelConfigIds(pyciemssMap);
+	// Build model index (model_#) to model config name mapping with pyciemssMap
+	Object.entries(translationMap).forEach(([key, value]) => {
+		const modelPrefix = key.split('/')[0];
+		const modelConfigName = getModelConfigName(modelConfigs, modelPrefixToModelconfigIdMap[modelPrefix] ?? '');
+		const newValue = modelConfigName ? `${modelConfigName} ${value}` : value;
+		newMap[key] = newValue;
+	});
+	return newMap;
 };
 
 /**
@@ -137,15 +153,17 @@ export function useCharts(
 					ensembleVarName,
 					config.id ?? ''
 				);
-				variables.push(getModelIdPrefix(config.id ?? '', <ModelConfiguration[]>modelConfig?.value ?? []) + modelVar);
+				variables.push(getModelConfigIdPrefix(config.id ?? '') + modelVar);
 			});
 		} else {
 			// If model modelConfigId is provided, include a model variable, otherwise include an ensemble variable
 			variables.push(
 				modelConfigId
-					? getModelIdPrefix(modelConfigId, <ModelConfiguration[]>modelConfig?.value ?? []) +
-							getModelConfigVariable(<EnsembleVariableMappings>mapping?.value ?? [], ensembleVarName, modelConfigId) // model variable
-					: (modelVarToDatasetVar(mapping?.value ?? [], ensembleVarName) as string) // ensemble variable
+					? // model variable
+						getModelConfigIdPrefix(modelConfigId ?? '') +
+							getModelConfigVariable(<EnsembleVariableMappings>mapping?.value ?? [], ensembleVarName, modelConfigId)
+					: // ensemble variable
+						(modelVarToDatasetVar(mapping?.value ?? [], ensembleVarName) as string)
 			);
 		}
 
@@ -203,7 +221,13 @@ export function useCharts(
 	const generateAnnotation = async (setting: ChartSetting, query: string) => {
 		if (!chartData.value) return null;
 		const { statLayerVariables, options } = createForecastChartOptions(setting);
-		// TODO: If ensemble, include each model name to variable for translation map.
+		if (setting.type === ChartSettingType.VARIABLE_ENSEMBLE) {
+			options.translationMap = addModelConfigNameToTranslationMap(
+				options.translationMap ?? {},
+				chartData.value.pyciemssMap,
+				<ModelConfiguration[]>modelConfig?.value ?? []
+			);
+		}
 		return generateAndSaveForecastChartAnnotation(setting, query, 'timepoint_id', statLayerVariables, options);
 	};
 

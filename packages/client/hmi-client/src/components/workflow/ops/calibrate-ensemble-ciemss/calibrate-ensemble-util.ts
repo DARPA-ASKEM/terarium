@@ -1,6 +1,12 @@
 import _ from 'lodash';
 import { createForecastChart, AUTOSIZE } from '@/services/charts';
-import { DataArray, getRunResultCSV, getSimulation, parsePyCiemssMap } from '@/services/models/simulation-service';
+import {
+	DataArray,
+	getResultModelConfigMap,
+	getRunResultCSV,
+	getSimulation,
+	parseEnsemblePyciemssMap
+} from '@/services/models/simulation-service';
 import { EnsembleModelConfigs } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getActiveOutput } from '@/components/workflow/util';
@@ -95,11 +101,12 @@ export async function fetchOutputData(preForecastId: string, postForecastId: str
 	if (!postForecastId || !preForecastId) return null;
 	const runResult = await getRunResultCSV(postForecastId, 'result.csv');
 	const runResultSummary = await getRunResultCSV(postForecastId, 'result_summary.csv');
+	const ensembleVarModelConfigMap = (await getResultModelConfigMap(preForecastId)) ?? {};
 
 	const runResultPre = await getRunResultCSV(preForecastId, 'result.csv', renameFnGenerator('pre'));
 	const runResultSummaryPre = await getRunResultCSV(preForecastId, 'result_summary.csv', renameFnGenerator('pre'));
 
-	const pyciemssMap = parsePyCiemssMap(runResult[0]);
+	const pyciemssMap = parseEnsemblePyciemssMap(runResult[0], ensembleVarModelConfigMap);
 
 	// Merge before/after for chart
 	const { result, resultSummary } = mergeResults(runResultPre, runResult, runResultSummaryPre, runResultSummary);
