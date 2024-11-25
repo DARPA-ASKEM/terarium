@@ -85,24 +85,27 @@
 			</div>
 		</div>
 
-		<Textarea v-model="dataContextDescription" disabled />
-		<!-- Jupyter Chat -->
-		<tera-jupyter-chat
-			ref="chat"
-			:show-jupyter-settings="true"
-			:show-chat-thoughts="props.showChatThoughts"
-			:jupyter-session="jupyterSession"
-			:kernel-status="kernelStatus"
-			:language="selectedLanguage"
-			:default-preview="defaultPreview"
-			@update-kernel-state="(e) => emit('update-kernel-state', e)"
-			@update-kernel-status="updateKernelStatus"
-			@new-dataset-saved="onNewDatasetSaved"
-			@download-response="onDownloadResponse"
-			@update-language="(lang) => emit('update-language', lang)"
-			@update-selected-outputs="(outputs) => emit('update-selected-outputs', outputs)"
-			:notebook-session="props.notebookSession"
-		/>
+		<div>
+			<tera-input-text v-model="dataContextDescription" disabled />
+
+			<!-- Jupyter Chat -->
+			<tera-jupyter-chat
+				ref="chat"
+				:show-jupyter-settings="true"
+				:show-chat-thoughts="props.showChatThoughts"
+				:jupyter-session="jupyterSession"
+				:kernel-status="kernelStatus"
+				:language="selectedLanguage"
+				:default-preview="defaultPreview"
+				@update-kernel-state="(e) => emit('update-kernel-state', e)"
+				@update-kernel-status="updateKernelStatus"
+				@new-dataset-saved="onNewDatasetSaved"
+				@download-response="onDownloadResponse"
+				@update-language="(lang) => emit('update-language', lang)"
+				@update-selected-outputs="(outputs) => emit('update-selected-outputs', outputs)"
+				:notebook-session="props.notebookSession"
+			/>
+		</div>
 
 		<!-- Save as dialog -->
 		<tera-modal v-if="showSaveInput" class="w-4">
@@ -150,7 +153,6 @@ import { useConfirm } from 'primevue/useconfirm';
 import { useProjects } from '@/composables/project';
 import { programmingLanguageOptions } from '@/types/common';
 import TeraBeakerInput from '@/components/llm/tera-beaker-input.vue';
-import Textarea from 'primevue/textarea';
 
 const openDialog = () => {
 	showSaveInput.value = true;
