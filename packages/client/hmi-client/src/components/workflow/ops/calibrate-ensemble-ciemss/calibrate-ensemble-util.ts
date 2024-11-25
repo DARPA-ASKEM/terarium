@@ -118,6 +118,7 @@ export async function fetchOutputData(preForecastId: string, postForecastId: str
 	};
 }
 
+// Build chart data by adding variable translation map to the given output data
 export function buildChartData(
 	outputData: {
 		result: DataArray;
