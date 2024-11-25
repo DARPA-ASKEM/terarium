@@ -57,17 +57,6 @@ public class NotificationGroupInstance<T> {
 		final NotificationService notificationService,
 		final ClientEventType type,
 		final UUID projectId,
-		final T data,
-		final Double halfTimeSeconds
-	) {
-		this(clientEventService, notificationService, type, projectId, data, DEFAULT_HALF_TIME_SECONDS, UUID.randomUUID());
-	}
-
-	public NotificationGroupInstance(
-		final ClientEventService clientEventService,
-		final NotificationService notificationService,
-		final ClientEventType type,
-		final UUID projectId,
 		final T data
 	) {
 		this(clientEventService, notificationService, type, projectId, data, DEFAULT_HALF_TIME_SECONDS, UUID.randomUUID());

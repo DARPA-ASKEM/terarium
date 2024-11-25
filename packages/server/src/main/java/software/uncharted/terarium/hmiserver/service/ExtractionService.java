@@ -102,12 +102,6 @@ public class ExtractionService {
 
 	private RMapCache<String, ExtractPDFResponse> responseCache;
 
-	// Used to get the Abstract text from PDF
-	private static final String NODE_CONTENT = "content";
-
-	// time the progress takes to reach each subsequent half.
-	final Double HALFTIME_SECONDS = 2.0;
-
 	@Value("${terarium.extractionService.poolSize:10}")
 	private int POOL_SIZE;
 
@@ -389,8 +383,7 @@ public class ExtractionService {
 			notificationService,
 			ClientEventType.EXTRACTION_PDF,
 			projectId,
-			new Properties(documentId),
-			HALFTIME_SECONDS
+			new Properties(documentId)
 		);
 
 		return executor.submit(() -> {
@@ -463,7 +456,7 @@ public class ExtractionService {
 				notificationInterface.sendMessage("Extractions applied to document. Finalizing response.");
 
 				if (!extractionResponse.failures.isEmpty()) {
-					// create a comma separated list of failures in human readable form
+					// create a comma separated list of failures in human-readable form
 					final String failures = String.join(
 						", ",
 						extractionResponse.failures.stream().map(FailureType::getHumanReadable).toArray(String[]::new)
@@ -587,8 +580,7 @@ public class ExtractionService {
 			notificationService,
 			ClientEventType.EXTRACTION,
 			null,
-			new Properties(documentId),
-			HALFTIME_SECONDS
+			new Properties(documentId)
 		);
 		notificationInterface.sendMessage("Variable extraction task submitted...");
 
@@ -616,8 +608,7 @@ public class ExtractionService {
 			notificationService,
 			ClientEventType.EXTRACTION,
 			null,
-			new Properties(documentId),
-			HALFTIME_SECONDS
+			new Properties(documentId)
 		);
 
 		notificationInterface.sendMessage("Model alignment task submitted...");
