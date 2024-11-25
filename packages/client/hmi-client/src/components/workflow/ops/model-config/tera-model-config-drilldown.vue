@@ -140,7 +140,7 @@
 						:model-configurations="filteredModelConfigurations"
 						:mmt="configuredMmt"
 						:mmt-params="mmtParams"
-						@update-expression="setInitialExpression(knobs.transientModelConfig, $event.id, $event.value)"
+						@update-expressions="setInitialExpressions(knobs.transientModelConfig, $event)"
 						@update-source="setInitialSource(knobs.transientModelConfig, $event.id, $event.value)"
 					/>
 					<tera-parameter-table
@@ -261,15 +261,15 @@ import {
 	getMissingInputAmount,
 	getModelParameters,
 	getModelConfigurationById,
-	setInitialExpression,
+	setInitialExpressions,
 	setInitialSource,
 	setParameterDistributions,
 	setParameterSource,
 	updateModelConfiguration
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { Model, ModelConfiguration, TaskResponse } from '@/types/Types';
-import { AssetType, Observable } from '@/types/Types';
+import type { Initial, Model, ModelConfiguration, TaskResponse } from '@/types/Types';
+import { AssetType, ModelParameter, Observable } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
@@ -291,6 +291,7 @@ import Calendar from 'primevue/calendar';
 import { CalendarSettings } from '@/utils/date';
 import { DrilldownTabs } from '@/types/common';
 import { formatListWithConjunction } from '@/utils/text';
+import { DistributionType } from '@/services/distribution';
 import {
 	blankModelConfig,
 	isModelConfigsEqual,
@@ -523,10 +524,11 @@ const initializing = ref(false);
 const isFetching = ref(false);
 const isLoading = ref(false);
 
-const amrInitials = ref();
-const amrParameters = ref();
+const amrInitials = ref<Initial[]>([]);
+const amrParameters = ref<ModelParameter[]>([]);
 
 const getMissingInputsMessage = (amount, total) => {
+	if (!total) return '';
 	const percent = (amount / total) * 100;
 	return amount ? `Missing values: ${amount}/${total} (${percent.toFixed(0)}%)` : '';
 };
@@ -664,6 +666,11 @@ const initialize = async (overwriteWithState: boolean = false) => {
 			mmt.value.annotations.name,
 			amrParameters.value
 		);
+
+		parameters.forEach((parameter) => {
+			const type = parameter.distribution.type;
+			parameter.distribution.type = type === 'Uniform' ? DistributionType.Uniform : type;
+		});
 		if (parameters.length) {
 			knobs.value.transientModelConfig.parameterSemanticList = parameters;
 		}

@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import { DataArray, parsePyCiemssMap } from '@/services/models/simulation-service';
+import { getActiveOutput } from '@/components/workflow/util';
 import { CalibrateMap } from '@/services/calibrate-workflow';
 import { mae } from '@/utils/stats';
 import { WorkflowNode } from '@/types/workflow';
@@ -80,18 +81,9 @@ export function getErrorData(
 	return errors;
 }
 
-export const modelVarToDatasetVar = (mapping: CalibrateMap[], modelVariable: string) =>
-	mapping.find((d) => d.modelVariable === modelVariable)?.datasetVariable || '';
-
-export const getSelectedOutput = (node: WorkflowNode<CalibrationOperationStateCiemss>) => {
-	const selectedOutputId = node.active;
-	const wfOutput = node.outputs.find((output) => output.id === selectedOutputId);
-	return wfOutput;
-};
-
 // Get the selected output mapping for the node
 export function getSelectedOutputMapping(node: WorkflowNode<CalibrationOperationStateCiemss>) {
-	const wfOutputState = getSelectedOutput(node)?.state;
+	const wfOutputState = getActiveOutput(node)?.state;
 	return [
 		...(wfOutputState?.mapping || []),
 		// special case for timestamp column name mapping

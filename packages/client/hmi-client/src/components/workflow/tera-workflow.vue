@@ -2,6 +2,7 @@
 	<!-- add 'debug-mode' to debug this -->
 	<tera-infinite-canvas
 		v-if="!isWorkflowLoading"
+		ref="canvasRef"
 		@click="onCanvasClick()"
 		@contextmenu="toggleContextMenu"
 		@save-transform="saveTransform"
@@ -224,7 +225,6 @@ import * as CalibrateCiemssOp from '@/components/workflow/ops/calibrate-ciemss/m
 import * as CalibrateEnsembleCiemssOp from '@/components/workflow/ops/calibrate-ensemble-ciemss/mod';
 import * as DatasetTransformerOp from '@/components/workflow/ops/dataset-transformer/mod';
 import * as SubsetDataOp from '@/components/workflow/ops/subset-data/mod';
-import * as CodeAssetOp from '@/components/workflow/ops/code-asset/mod';
 import * as OptimizeCiemssOp from '@/components/workflow/ops/optimize-ciemss/mod';
 import * as DocumentOp from '@/components/workflow/ops/document/mod';
 import * as ModelFromDocumentOp from '@/components/workflow/ops/model-from-equations/mod';
@@ -250,7 +250,6 @@ registry.registerOp(CalibrateEnsembleCiemssOp);
 registry.registerOp(ModelConfigOp);
 registry.registerOp(CalibrateCiemssOp);
 registry.registerOp(DatasetTransformerOp);
-registry.registerOp(CodeAssetOp);
 registry.registerOp(SubsetDataOp);
 registry.registerOp(OptimizeCiemssOp);
 registry.registerOp(DocumentOp);
@@ -312,6 +311,7 @@ const toggleOptionsMenu = (event: MouseEvent) => {
 	optionsMenu.value.toggle(event);
 };
 const teraOperatorRefs = ref();
+const canvasRef = ref();
 
 async function updateWorkflowName() {
 	const workflowClone = cloneDeep(wf.value.dump());
@@ -630,6 +630,13 @@ const showAddComponentMenu = () => {
 	const el = document.querySelector('#add-component-btn');
 	const coords = el?.getBoundingClientRect();
 
+	// Places new operators roughly in the centre
+	if (canvasRef.value) {
+		const box = (canvasRef.value.$el as HTMLDivElement).getBoundingClientRect();
+		newNodePosition.x = (Math.random() * 50 + 0.5 * box.width - canvasTransform.x) / canvasTransform.k;
+		newNodePosition.y = (Math.random() * 50 + 0.5 * box.height - canvasTransform.y) / canvasTransform.k;
+	}
+
 	if (coords) {
 		const event = new PointerEvent('click', {
 			clientX: coords.x + coords.width,
@@ -661,10 +668,6 @@ function onDrop(event: DragEvent) {
 			case AssetType.Dataset:
 				operation = DatasetOp.operation;
 				state = { datasetId: assetId };
-				break;
-			case AssetType.Code:
-				operation = CodeAssetOp.operation;
-				state = { codeAssetId: assetId };
 				break;
 			case AssetType.Document:
 				operation = DocumentOp.operation;

@@ -20,15 +20,11 @@ export interface EdgeData {
 	isObservable?: boolean;
 }
 
-const FONT_SIZE_SMALL = 18;
+const FONT_SIZE_SMALL = 20;
 const FONT_SIZE_REGULAR = 24;
-const FONT_SIZE_LARGE = 36;
 
 function setFontSize(label: string) {
 	if (label.length < 3) {
-		return FONT_SIZE_LARGE;
-	}
-	if (label.length < 10) {
 		return FONT_SIZE_REGULAR;
 	}
 	return FONT_SIZE_SMALL;
@@ -119,16 +115,37 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.text((d) => d.id);
 
 		// transitions
+		const transitionRadius = 5;
 		transitions
-			.append('rect')
+			.append('path')
+			.attr('d', (d) =>
+				pathFn([
+					{ x: -0.5 * d.width, y: 0 },
+					{ x: -(transitionRadius + 1), y: 0 }
+				])
+			)
+			.style('fill', 'none')
+			.style('stroke', EDGE_COLOR)
+			.style('stroke-opacity', EDGE_OPACITY)
+			.style('stroke-width', 3);
+		transitions
+			.append('path')
+			.attr('d', (d) =>
+				pathFn([
+					{ x: transitionRadius + 1, y: 0 },
+					{ x: 0.5 * d.width, y: 0 }
+				])
+			)
+			.style('fill', 'none')
+			.style('stroke', EDGE_COLOR)
+			.style('stroke-opacity', EDGE_OPACITY)
+			.style('stroke-width', 3);
+		transitions
+			.append('circle')
 			.classed('shape selectableNode', true)
-			.attr('width', (d) => d.width)
-			.attr('height', (d) => d.height)
-			.attr('y', (d) => -d.height * 0.5)
-			.attr('x', (d) => -d.width * 0.5)
-			.attr('rx', '6')
-			.attr('ry', '6')
-			.style('fill', (d) => (d.data.strataType ? getNodeTypeColor(d.data.strataType) : 'var(--petri-nodeFill'))
+			.attr('r', transitionRadius)
+			.style('fill', EDGE_COLOR)
+			.style('fill-opacity', EDGE_OPACITY)
 			.style('cursor', 'pointer')
 			.attr('stroke', 'var(--petri-nodeBorder)')
 			.attr('stroke-width', 1);
@@ -136,7 +153,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		// transitions label text
 		transitions
 			.append('text')
-			.attr('y', (d) => setFontSize(d.id) / 4)
+			.attr('y', (d) => setFontSize(d.id))
 			.style('text-anchor', 'middle')
 			.classed('latex-font', true)
 			.style('font-style', 'italic')
@@ -150,7 +167,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		// transitions expression text
 		transitions
 			.append('text')
-			.attr('y', (d) => -d.height / 2 - 8)
+			.attr('y', () => -8)
 			.classed('latex-font', true)
 			.style('font-style', 'italic')
 			.style('font-size', FONT_SIZE_SMALL)
@@ -199,6 +216,8 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 	renderEdges(selection: D3SelectionIEdge<EdgeData>) {
 		selection.style('display', (d) => (d.data?.isObservable ? 'none' : 'block'));
 
+		const transitionNodeIds = this.graph.nodes.filter((n) => n.data.type === 'transition').map((n) => n.id);
+
 		selection
 			.append('path')
 			.attr('d', (d) => pathFn(d.points))
@@ -214,6 +233,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			})
 			.attr('marker-end', (d) => {
 				if (d.data?.isController || d.data?.isObservable) return null;
+				if (transitionNodeIds.includes(d.target as string)) return null;
 				return 'url(#arrowhead)';
 			});
 

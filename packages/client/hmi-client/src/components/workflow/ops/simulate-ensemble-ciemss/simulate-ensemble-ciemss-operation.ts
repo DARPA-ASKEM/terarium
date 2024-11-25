@@ -9,6 +9,8 @@ export interface SimulateEnsembleMappingRow {
 	newName: string; // This is the new name provided by the user.
 	modelConfigurationMappings: { [key: string]: string };
 }
+export const isSimulateEnsembleMappingRow = (obj: any): obj is SimulateEnsembleMappingRow =>
+	obj.id !== undefined && obj.modelConfigurationMappings !== undefined;
 
 export interface SimulateEnsembleWeights {
 	[key: string]: number;
