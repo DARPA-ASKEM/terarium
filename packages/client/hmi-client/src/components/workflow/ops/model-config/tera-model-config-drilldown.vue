@@ -300,6 +300,7 @@ import { CalendarSettings } from '@/utils/date';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { DrilldownTabs } from '@/types/common';
 import { formatListWithConjunction } from '@/utils/text';
+import { DistributionType } from '@/services/distribution';
 import {
 	blankModelConfig,
 	isModelConfigsEqual,
@@ -667,6 +668,11 @@ async function loadOutput(overwriteWithState = false) {
 			mmt.value.annotations.name,
 			amrParameters.value
 		);
+
+		parameters.forEach((parameter) => {
+			const type = parameter.distribution.type;
+			parameter.distribution.type = type === 'Uniform' ? DistributionType.Uniform : type;
+		});
 		if (parameters.length) {
 			knobs.value.transientModelConfig.parameterSemanticList = parameters;
 		}
