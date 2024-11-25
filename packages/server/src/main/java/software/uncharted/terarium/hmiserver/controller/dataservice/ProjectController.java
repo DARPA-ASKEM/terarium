@@ -624,7 +624,8 @@ public class ProjectController {
 			notificationService,
 			ClientEventType.CLONE_PROJECT,
 			null,
-			new Properties(id)
+			new Properties(id),
+			currentUserService.get().getId()
 		);
 
 		try {

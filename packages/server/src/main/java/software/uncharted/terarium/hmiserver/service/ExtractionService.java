@@ -383,7 +383,8 @@ public class ExtractionService {
 			notificationService,
 			ClientEventType.EXTRACTION_PDF,
 			projectId,
-			new Properties(documentId)
+			new Properties(documentId),
+			currentUserService.get().getId()
 		);
 
 		return executor.submit(() -> {
@@ -580,7 +581,8 @@ public class ExtractionService {
 			notificationService,
 			ClientEventType.EXTRACTION,
 			null,
-			new Properties(documentId)
+			new Properties(documentId),
+			currentUserService.get().getId()
 		);
 		notificationInterface.sendMessage("Variable extraction task submitted...");
 
@@ -608,7 +610,8 @@ public class ExtractionService {
 			notificationService,
 			ClientEventType.EXTRACTION,
 			null,
-			new Properties(documentId)
+			new Properties(documentId),
+			currentUserService.get().getId()
 		);
 
 		notificationInterface.sendMessage("Model alignment task submitted...");

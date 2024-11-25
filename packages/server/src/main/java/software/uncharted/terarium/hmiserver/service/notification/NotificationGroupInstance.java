@@ -51,9 +51,8 @@ public class NotificationGroupInstance<T> {
 
 		// Create a new notification group
 		final NotificationGroup newNotificationGroup =
-			((NotificationGroup) new NotificationGroup().setId(notificationGroupId)).setType(type.name()).setProjectId(
-					projectId
-				);
+			((NotificationGroup) new NotificationGroup().setId(notificationGroupId));
+		newNotificationGroup.setType(type.name()).setProjectId(projectId);
 
 		if (newNotificationGroup.getUserId() == null || newNotificationGroup.getUserId().isEmpty()) {
 			newNotificationGroup.setUserId("anonymous");
@@ -65,26 +64,6 @@ public class NotificationGroupInstance<T> {
 	}
 
 	// Version of the constructor that generates a random notification group ID
-	public NotificationGroupInstance(
-		final ClientEventService clientEventService,
-		final NotificationService notificationService,
-		final ClientEventType type,
-		final UUID projectId,
-		final T data
-	) {
-		this(
-			clientEventService,
-			notificationService,
-			type,
-			projectId,
-			data,
-			DEFAULT_HALF_TIME_SECONDS,
-			UUID.randomUUID(),
-			DEFAULT_USER_ID
-		);
-	}
-
-	// Version of the constructor that takes a user ID
 	public NotificationGroupInstance(
 		final ClientEventService clientEventService,
 		final NotificationService notificationService,
