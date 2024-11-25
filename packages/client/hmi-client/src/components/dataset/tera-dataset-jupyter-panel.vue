@@ -86,8 +86,9 @@
 		</div>
 
 		<div>
-			<tera-input-text v-model="dataContextDescription" disabled />
-
+			<div v-for="(data, indx) in dataContextDescription" :key="indx">
+				<input class="context-description" :value="data" disabled type="text" />
+			</div>
 			<!-- Jupyter Chat -->
 			<tera-jupyter-chat
 				ref="chat"
@@ -166,9 +167,7 @@ const selectedKernel = ref();
 const runningSessions = ref<any[]>([]);
 
 // This is used to inform the user what is in the context.
-const dataContextDescription = computed(() =>
-	props.assets.map((asset, index) => `#d${index + 1} = ${asset.name}\n`).join(' ')
-);
+const dataContextDescription = computed(() => props.assets.map((asset, index) => `#d${index + 1} = ${asset.name}\n`));
 
 const defaultPreview = ref<string>('d1');
 const confirm = useConfirm();
@@ -518,6 +517,14 @@ const onDownloadResponse = (payload) => {
 </script>
 
 <style scoped>
+.context-description {
+	width: inherit;
+	font-family: var(--font-family);
+	font-feature-settings: 'tnum';
+	border: none;
+	margin: 0;
+}
+
 .container {
 	margin-left: 1rem;
 	margin-right: 1rem;
