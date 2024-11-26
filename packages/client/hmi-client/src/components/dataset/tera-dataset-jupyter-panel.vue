@@ -86,8 +86,8 @@
 		</div>
 
 		<div>
-			<ul v-for="(data, idx) in dataContextDescription" :key="idx">
-				<li class="context-description">{{ data }}</li>
+			<ul>
+				<li v-for="(data, idx) in dataContextDescription" :key="idx" class="context-description">{{ data }}</li>
 			</ul>
 			<!-- Jupyter Chat -->
 			<tera-jupyter-chat
