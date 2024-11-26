@@ -3,46 +3,27 @@
 		<!-- Top banner -->
 		<div class="scrollable">
 			<header>
-				<!-- Welcome text -->
-				<section class="w-full">
+				<section>
 					<h3>AI-assisted modeling for scientific decision-making</h3>
 					<p>
 						Pair your expertise with AI to accelerate scientific modeling and simulation. Build on existing models and
 						data to simulate and communicate complex real-world scenarios.
 					</p>
-					<!--Placeholder - button is disabled for now-->
-					<!-- <Button
-						label="Get started"
-						icon="pi pi-play"
-						icon-pos="right"
-						outlined
-						:disabled="true"
-					/> -->
 				</section>
 
-				<!-- Video thumbnail image -->
-				<section
-					v-if="!showVideo"
-					class="z-1 col-3 flex justify-content-end"
-					@click="showVideo = true"
-					@keypress.enter="showVideo = true"
-					@keypress.space="showVideo = true"
-				>
-					<div class="video-thumbnail flex flex-column align-items-center">
-						<span class="play-symbol mt-4 mb-4">▶</span>
-						<span class="header mb-1">Terarium overview</span>
-						<span class="sub-header"> A demonstration of basic features </span>
-					</div>
+				<section @click="showVideo = true">
+					<span>▶</span>
+					<span>Terarium overview</span>
+					<span>A demonstration of basic features</span>
 				</section>
 
-				<!-- Video container -->
-				<section v-else class="col-3 flex justify-content-end">
-					<video controls ref="introVideo" class="video-container" height="200px">
+				<tera-modal v-if="showVideo" @close="showVideo = false" @modal-mask-clicked="showVideo = false">
+					<video controls height="500px">
 						<source src="https://videos.terarium.ai/terarium.mp4" type="video/mp4" />
 						<track src="" kind="captions" srclang="en" label="English" />
 						Your browser does not support the video tag.
 					</video>
-				</section>
+				</tera-modal>
 			</header>
 
 			<!-- Tab section: My projects, Public projects, Sample projects -->
@@ -170,6 +151,7 @@ import { useNotificationManager } from '@/composables/notificationManager';
 import teraUploadProjectModal from '@/components/project/tera-upload-project-modal.vue';
 import { findProjects } from '@/services/project';
 import { useToastService } from '@/services/toast';
+import TeraModal from '@/components/widgets/tera-modal.vue';
 
 const { isProjectConfigDialogVisible, menuProject } = useProjectMenu();
 
@@ -386,31 +368,83 @@ main > .scrollable {
 }
 
 header {
-	display: flex;
 	align-items: center;
-	padding: 1.5rem;
-	min-height: 240px;
-	background: url('@/assets/svg/terarium-logo-outline.svg'),
+	background-image: url('@/assets/svg/terarium-logo-outline.svg'),
 		radial-gradient(105.92% 916.85% at 101.3% -5.92%, #75d5c8 0%, white 100%);
 	background-repeat: no-repeat;
 	background-size: 25%, 100%;
 	background-position:
 		right 240px top -60px,
 		100%;
-}
+	display: flex;
+	padding: var(--gap-6);
 
-header h3 {
-	font-size: 24px;
-	margin-bottom: 1rem;
-}
+	h3 {
+		font-size: 24px;
+		margin-bottom: var(--gap-3);
+	}
 
-header p {
-	max-width: 580px;
-	line-height: 1.5;
-}
+	p {
+		line-height: 1.5;
+		max-width: 66ch;
+	}
 
-header > section > button {
-	margin-top: 2rem;
+	svg {
+		color: var(--primary-color);
+		margin-right: 0.5rem;
+	}
+
+	section:last-of-type {
+		align-items: center;
+		aspect-ratio: 16 / 9;
+		background-blend-mode: multiply;
+		background-image: radial-gradient(circle, var(--primary-color), #0f483b), url('@/assets/images/video-thumbnail.png');
+		background-position: center;
+		background-size: cover;
+		border-radius: var(--border-radius);
+		cursor: pointer;
+		display: flex;
+		flex-direction: column;
+		height: 11rem;
+		justify-content: center;
+		margin-left: auto;
+		padding: var(--gap-8);
+		position: relative;
+		text-align: center;
+
+		span:nth-of-type(1) {
+			align-items: center;
+			aspect-ratio: 1 / 1;
+			background-color: var(--surface-0);
+			border-radius: 50%;
+			color: var(--primary-color);
+			display: flex;
+			flex: 1;
+			flex-direction: column;
+			font-size: var(--gap-8);
+			justify-content: center;
+			margin: var(--gap-4) 0;
+			padding-left: var(--gap-1);
+			padding-top: var(--gap-0-5);
+			transition: all 0.2s;
+			width: var(--gap-12);
+		}
+
+		&:hover .play-symbol {
+			background-color: var(--primary-color-lighter);
+		}
+
+		span:nth-of-type(2) {
+			color: var(--surface-0);
+			font-size: var(--gap-6);
+			font-weight: var(--font-weight-semibold);
+			margin-bottom: var(--gap-1);
+		}
+
+		span:nth-of-type(3) {
+			color: var(--surface-50);
+		}
+	}
 }
 
 .menu {
@@ -495,10 +529,6 @@ header > section > button {
 	margin: var(--gap-4);
 }
 
-header svg {
-	color: var(--primary-color);
-	margin-right: 0.5rem;
-}
 .no-projects {
 	margin-top: 8rem;
 	color: var(--text-color-subdued);
@@ -535,63 +565,5 @@ a {
 
 .close-button:hover {
 	opacity: 100%;
-}
-
-/* Video & Thumbnail */
-.video-container {
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius);
-}
-
-.video-thumbnail {
-	background-image: radial-gradient(circle, var(--primary-color), #0f483b), url('@/assets/images/video-thumbnail.png');
-	background-blend-mode: multiply;
-	background-size: cover;
-	background-position: center;
-	padding: 2rem;
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	flex-direction: column;
-	text-align: center;
-	position: relative;
-	cursor: pointer;
-	border-radius: 6px;
-	aspect-ratio: 16 / 9;
-	height: 200px;
-}
-
-.video-thumbnail .header {
-	font-size: 1.5rem;
-	font-weight: bold;
-	color: var(--surface-0);
-}
-.video-thumbnail .play-symbol {
-	display: flex;
-	padding-left: 5px;
-	padding-top: 3px;
-	align-items: center;
-	justify-content: center;
-	flex-direction: column;
-	flex: 1;
-	font-size: 2rem;
-	border-radius: 50%;
-	background-color: var(--surface-0);
-	color: var(--primary-color);
-	aspect-ratio: 1 / 1;
-	transition: all 0.2s;
-}
-
-.video-thumbnail .play-symbol:hover {
-	background-color: var(--primary-color-lighter);
-}
-
-.video-thumbnail .sub-header {
-	color: var(--surface-50);
-}
-
-.video-player {
-	border-radius: 6px;
-	padding: 0;
 }
 </style>
