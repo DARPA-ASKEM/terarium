@@ -86,9 +86,9 @@
 		</div>
 
 		<div>
-			<div v-for="(data, idx) in dataContextDescription" :key="idx">
-				<input class="context-description" :value="data" disabled type="text" />
-			</div>
+			<ul v-for="(data, idx) in dataContextDescription" :key="idx">
+				<li class="context-description">{{ data }}</li>
+			</ul>
 			<!-- Jupyter Chat -->
 			<tera-jupyter-chat
 				ref="chat"
@@ -518,6 +518,7 @@ const onDownloadResponse = (payload) => {
 
 <style scoped>
 .context-description {
+	background-color: var(--surface-100);
 	width: 100%;
 	width: fill-available;
 	font-family: var(--font-family);
