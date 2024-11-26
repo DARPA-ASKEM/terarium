@@ -7,11 +7,6 @@
 			shadow: applyShadow
 		}"
 	>
-		<!-- put the buttons above the title if there is an overline -->
-		<div v-if="overline" class="row">
-			<span class="overline">{{ overline }}</span>
-			<slot name="edit-buttons" />
-		</div>
 		<!--For naming asset such as model or code file-->
 		<div class="row">
 			<tera-toggleable-input
@@ -21,7 +16,7 @@
 				@update:model-value="onRename"
 			/>
 			<h4 v-else>{{ name }}</h4>
-			<slot v-if="!overline" name="edit-buttons" />
+			<slot name="edit-buttons" />
 		</div>
 		<!--put model contributors here too-->
 		<span v-if="authors" class="authors">
@@ -84,10 +79,6 @@ const props = defineProps({
 	name: {
 		type: String,
 		default: ''
-	},
-	overline: {
-		type: String,
-		default: null
 	},
 	authors: {
 		type: String,
