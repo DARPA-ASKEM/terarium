@@ -50,51 +50,49 @@
 				<TabView @tab-change="tabChange" :active-index="activeTabIndex" :key="activeTabIndex">
 					<TabPanel v-for="(tab, i) in TabTitles" :header="tab" :key="i">
 						<section class="filter-and-sort">
-							<div class="mr-3">
-								<tera-input-text
-									v-model="searchProjectsQuery"
-									placeholder="Search for projects"
-									id="searchProject"
-									:icon="isSearchLoading ? 'pi pi-spin pi-spinner' : 'pi pi-search'"
-									class="searchProjectsInput"
-								/>
-							</div>
-							<div>
-								<span v-if="view === ProjectsView.Cards">
-									<Dropdown v-model="selectedSort" :options="sortOptions" class="sort-options-dropdown" />
-								</span>
-								<MultiSelect
-									v-if="view === ProjectsView.Table"
-									:modelValue="selectedColumns"
-									:options="columns"
-									:maxSelectedLabels="1"
-									:selected-items-label="`{0} columns displayed`"
-									optionLabel="header"
-									@update:modelValue="onToggle"
-									placeholder="Add or remove columns"
-									class="p-inputtext-sm"
-								/>
-							</div>
-							<div>
-								<SelectButton
-									v-if="!isEmpty(searchedAndFilterProjects)"
-									:model-value="view"
-									@change="selectChange"
-									:options="viewOptions"
-									option-value="value"
-								>
-									<template #option="slotProps">
-										<span class="p-button-label">{{ slotProps.option.value }}</span>
-									</template>
-								</SelectButton>
-								<Button
-									icon="pi pi-upload"
-									class="secondary-button"
-									label="Upload project"
-									@click="openUploadProjectModal"
-								/>
-								<Button icon="pi pi-plus" label="New project" @click="openCreateProjectModal" />
-							</div>
+							<tera-input-text
+								v-model="searchProjectsQuery"
+								placeholder="Search for projects"
+								id="searchProject"
+								:icon="isSearchLoading ? 'pi pi-spin pi-spinner' : 'pi pi-search'"
+								class="flex-1"
+							/>
+							<Dropdown
+								v-if="view === ProjectsView.Cards"
+								v-model="selectedSort"
+								:options="sortOptions"
+								class="sort-options-dropdown"
+							/>
+							<MultiSelect
+								v-if="view === ProjectsView.Table"
+								:modelValue="selectedColumns"
+								:options="columns"
+								:maxSelectedLabels="1"
+								:selected-items-label="`{0} columns displayed`"
+								optionLabel="header"
+								@update:modelValue="onToggle"
+								placeholder="Add or remove columns"
+								class="p-inputtext-sm"
+							/>
+							<SelectButton
+								v-if="!isEmpty(searchedAndFilterProjects)"
+								class="ml-auto"
+								:model-value="view"
+								@change="selectChange"
+								:options="viewOptions"
+								option-value="value"
+							>
+								<template #option="slotProps">
+									<span class="p-button-label">{{ slotProps.option.value }}</span>
+								</template>
+							</SelectButton>
+							<Button
+								icon="pi pi-upload"
+								class="secondary-button"
+								label="Upload project"
+								@click="openUploadProjectModal"
+							/>
+							<Button icon="pi pi-plus" label="New project" @click="openCreateProjectModal" />
 						</section>
 						<section class="projects">
 							<div v-if="!isLoadingProjects && isEmpty(searchedAndFilterProjects)" class="no-projects">
@@ -387,7 +385,6 @@ main > .scrollable {
 
 header {
 	display: flex;
-	align-items: center;
 	padding: 1.5rem;
 	min-height: 240px;
 	background: url('@/assets/svg/terarium-logo-outline.svg'),
@@ -440,9 +437,7 @@ header > section > button {
 	flex: 1;
 	background-color: #f9f9f9;
 }
-.searchProjectsInput {
-	width: 32rem;
-}
+
 .p-dropdown,
 .p-multiselect {
 	min-width: 17rem;
@@ -457,27 +452,11 @@ header > section > button {
 	background-color: #f4f4f4;
 	border-top: 1px solid var(--surface-border-light);
 	border-bottom: 1px solid var(--surface-border-light);
-	padding: var(--gap-2) var(--gap-4);
+	padding: var(--gap-3) var(--gap-4);
 	display: flex;
-	justify-content: space-between;
-	align-items: center;
+	gap: var(--gap-3);
 	/* Accommodate for height of projects tabs*/
 	top: 44px;
-}
-
-.filter-and-sort label {
-	padding-right: 0.25rem;
-	font-size: var(--font-caption);
-}
-
-.filter-and-sort > div {
-	display: flex;
-	gap: 16px;
-	height: 40px;
-}
-
-.filter-and-sort > div:last-child {
-	margin-left: auto;
 }
 
 .sort-options-dropdown {
