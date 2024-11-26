@@ -50,43 +50,31 @@
 				<TabView @tab-change="tabChange" :active-index="activeTabIndex" :key="activeTabIndex">
 					<TabPanel v-for="(tab, i) in TabTitles" :header="tab" :key="i">
 						<section class="filter-and-sort">
-							<div class="mr-3">
-								<tera-input-text
-									v-model="searchProjectsQuery"
-									placeholder="Search for projects"
-									id="searchProject"
-									:icon="isSearchLoading ? 'pi pi-spin pi-spinner' : 'pi pi-search'"
-									class="searchProjectsInput"
-								/>
-							</div>
-							<div>
-								<span v-if="view === ProjectsView.Cards">
-									<Dropdown v-model="selectedSort" :options="sortOptions" class="sort-options-dropdown" />
-								</span>
-								<MultiSelect
-									v-if="view === ProjectsView.Table"
-									:modelValue="selectedColumns"
-									:options="columns"
-									:maxSelectedLabels="1"
-									:selected-items-label="`{0} columns displayed`"
-									optionLabel="header"
-									@update:modelValue="onToggle"
-									placeholder="Add or remove columns"
-									class="p-inputtext-sm"
-								/>
-							</div>
-							<div>
-								<SelectButton
-									v-if="!isEmpty(searchedAndFilterProjects)"
-									:model-value="view"
-									@change="selectChange"
-									:options="viewOptions"
-									option-value="value"
-								>
-									<template #option="slotProps">
-										<span class="p-button-label">{{ slotProps.option.value }}</span>
-									</template>
-								</SelectButton>
+							<tera-input-text
+								v-model="searchProjectsQuery"
+								placeholder="Search for projects"
+								id="searchProject"
+								:icon="isSearchLoading ? 'pi pi-spin pi-spinner' : 'pi pi-search'"
+								class="searchProjectsInput"
+							/>
+							<Dropdown v-if="view === ProjectsView.Cards" v-model="selectedSort" :options="sortOptions" />
+							<MultiSelect
+								v-if="view === ProjectsView.Table"
+								:modelValue="selectedColumns"
+								:options="columns"
+								:maxSelectedLabels="1"
+								:selected-items-label="`{0} columns displayed`"
+								optionLabel="header"
+								@update:modelValue="onToggle"
+								placeholder="Add or remove columns"
+								class="p-inputtext-sm"
+							/>
+							<SelectButton :model-value="view" @change="selectChange" :options="viewOptions" option-value="value">
+								<template #option="slotProps">
+									<span class="p-button-label">{{ slotProps.option.value }}</span>
+								</template>
+							</SelectButton>
+							<aside>
 								<Button
 									icon="pi pi-upload"
 									class="secondary-button"
@@ -94,7 +82,7 @@
 									@click="openUploadProjectModal"
 								/>
 								<Button icon="pi pi-plus" label="New project" @click="openCreateProjectModal" />
-							</div>
+							</aside>
 						</section>
 						<section class="projects">
 							<div v-if="!isLoadingProjects && isEmpty(searchedAndFilterProjects)" class="no-projects">
@@ -459,31 +447,23 @@ header > section > button {
 	border-bottom: 1px solid var(--surface-border-light);
 	padding: var(--gap-2) var(--gap-4);
 	display: flex;
-	justify-content: space-between;
+	justify-content: left;
 	align-items: center;
 	/* Accommodate for height of projects tabs*/
-	top: 44px;
+	top: 42px;
+	gap: var(--gap-2);
+
+	& > * {
+		height: var(--gap-11);
+	}
+
+	aside {
+		display: flex;
+		gap: inherit;
+		margin-left: auto;
+	}
 }
 
-.filter-and-sort label {
-	padding-right: 0.25rem;
-	font-size: var(--font-caption);
-}
-
-.filter-and-sort > div {
-	display: flex;
-	gap: 16px;
-	height: 40px;
-}
-
-.filter-and-sort > div:last-child {
-	margin-left: auto;
-}
-
-.sort-options-dropdown {
-	height: 40px;
-	padding-left: 0.5rem;
-}
 .project-cards-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
