@@ -8,12 +8,13 @@ FROM python:3.11-slim-bookworm AS text_extraction_taskrunner_builder
 
 # Install OpenJDK
 RUN apt-get update && apt-get install -y --no-install-recommends \
-	ocrmypdf \
 	openjdk-17-jdk-headless && \
 	rm -rf /var/lib/apt/lists/*
 
-# Install PyPDF2
-RUN pip install PyPDF2
+# Install poppler-utils (can't do this in the above apt-get as it errors out for some reason)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+	poppler-utils && \
+	rm -rf /var/lib/apt/lists/*
 
 #^^^^^^^^^^^^^^^^^^^^
 ######################
@@ -33,12 +34,13 @@ WORKDIR /
 
 # Install OpenJRE
 RUN apt-get update && apt-get install -y --no-install-recommends \
-	ocrmypdf \
 	openjdk-17-jre-headless && \
 	rm -rf /var/lib/apt/lists/*
 
-# Install PyPDF2
-RUN pip install PyPDF2
+# Install poppler-utils (can't do this in the above apt-get as it errors out for some reason)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+	poppler-utils && \
+	rm -rf /var/lib/apt/lists/*
 
 # Copy the Spring Boot fat JAR from the builder image
 COPY --from=text_extraction_taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.jar
