@@ -612,7 +612,7 @@ const onSaveAsModelConfiguration = (data: ModelConfiguration) => {
 };
 
 const onSaveConfiguration = async () => {
-	if (!model.value || isSaveDisabled.value) return;
+	if (!model.value || isSaveDisabled.value || !originalConfig) return;
 	const modelConfig = cloneDeep(knobs.value.transientModelConfig);
 
 	const data = await updateModelConfiguration(modelConfig);
@@ -622,6 +622,11 @@ const onSaveConfiguration = async () => {
 	}
 	useProjects().refresh();
 	fetchConfigurations();
+
+	// Sync with original config to disable the Save button
+	originalConfig.name = data.name;
+	originalConfig.description = data.description;
+
 	logger.success('Saved model configuration');
 };
 
