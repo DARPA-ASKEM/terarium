@@ -179,7 +179,7 @@ const { useInterventionCharts, useVariableCharts, useComparisonCharts } = useCha
 	modelConfiguration,
 	preparedChartInputs,
 	toRef({ width: 180, height: 120 }),
-	computed(() => interventionPolicy.value?.interventions ?? []),
+	computed(() => interventionPolicy.value?.interventions ?? null),
 	null
 );
 const interventionCharts = useInterventionCharts(selectedInterventionSettings, true);

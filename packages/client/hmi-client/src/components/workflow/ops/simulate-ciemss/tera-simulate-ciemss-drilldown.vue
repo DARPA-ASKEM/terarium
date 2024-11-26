@@ -145,7 +145,7 @@
 				</div>
 				<tera-notebook-error v-bind="node.state.errorMessage" />
 				<template v-if="runResults[selectedRunId]">
-					<div v-if="view === OutputView.Charts" ref="outputPanel">
+					<div class="w-full" v-if="view === OutputView.Charts" ref="outputPanel">
 						<Accordion multiple :active-index="currentActiveIndicies" class="px-2">
 							<AccordionTab header="Interventions over time">
 								<template v-for="setting in selectedInterventionSettings" :key="setting.id">
@@ -509,7 +509,7 @@ const {
 	modelConfiguration,
 	preparedChartInputs,
 	chartSize,
-	computed(() => interventionPolicy.value?.interventions ?? []),
+	computed(() => interventionPolicy.value?.interventions ?? null),
 	null
 );
 const interventionCharts = useInterventionCharts(selectedInterventionSettings, true);

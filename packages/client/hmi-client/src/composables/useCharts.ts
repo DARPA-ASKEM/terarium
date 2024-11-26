@@ -94,6 +94,9 @@ const addModelConfigNameToTranslationMap = (
 	return newMap;
 };
 
+// Consider provided reference object is ready if it is set to null explicitly or if it's value is not empty
+const isRefReady = (ref: Ref | null) => ref === null || !_.isEmpty(ref.value);
+
 /**
  * Composable to manage the creation and configuration of various types of charts used in operator nodes and drilldown.
  *
@@ -112,9 +115,13 @@ export function useCharts(
 	modelConfig: Ref<ModelConfiguration | ModelConfiguration[] | null> | null,
 	chartData: Ref<ChartData | null>,
 	chartSize: Ref<{ width: number; height: number }>,
-	interventions: Ref<Intervention[]> | null,
+	interventions: Ref<Intervention[] | null> | null,
 	mapping: Ref<VariableMappings> | null
 ) {
+	// Check if references of the core dependencies are ready to build the chart to prevent multiple re-renders especially
+	// on initial page load where data are fetched asynchronously and assigned to the references in different times.
+	const isChartReadyToBuild = computed(() => [model, modelConfig, chartData, interventions, mapping].every(isRefReady));
+
 	// Setup annotations
 	const { getChartAnnotationsByChartId, generateAndSaveForecastChartAnnotation } = useChartAnnotations(nodeId);
 
@@ -239,8 +246,8 @@ export function useCharts(
 	const useInterventionCharts = (chartSettings: ComputedRef<ChartSetting[]>, showSamples = false) => {
 		const interventionCharts = computed(() => {
 			const charts: Record<string, VisualizationSpec> = {};
-			if (!chartData.value) return charts;
-			const { resultSummary, result } = chartData.value;
+			if (!isChartReadyToBuild.value) return charts;
+			const { resultSummary, result } = chartData.value as ChartData;
 			// intervention chart spec
 			chartSettings.value.forEach((setting) => {
 				const variable = setting.selectedVariables[0];
@@ -279,8 +286,8 @@ export function useCharts(
 	) => {
 		const variableCharts = computed(() => {
 			const charts: Record<string, VisualizationSpec> = {};
-			if (!chartData.value) return charts;
-			const { result, resultSummary } = chartData.value;
+			if (!isChartReadyToBuild.value || !isRefReady(groundTruthData)) return charts;
+			const { result, resultSummary } = chartData.value as ChartData;
 
 			chartSettings.value.forEach((settings) => {
 				const variable = settings.selectedVariables[0];
@@ -325,8 +332,8 @@ export function useCharts(
 	const useComparisonCharts = (chartSettings: ComputedRef<ChartSetting[]>) => {
 		const comparisonCharts = computed(() => {
 			const charts: Record<string, VisualizationSpec> = {};
-			if (!chartData.value) return charts;
-			const { result, resultSummary } = chartData.value;
+			if (!isChartReadyToBuild.value) return charts;
+			const { result, resultSummary } = chartData.value as ChartData;
 			chartSettings.value.forEach((setting) => {
 				const selectedVars = setting.selectedVariables;
 				const { statLayerVariables, sampleLayerVariables, options } = createForecastChartOptions(setting);
@@ -370,8 +377,8 @@ export function useCharts(
 	) => {
 		const ensembleVariableCharts = computed(() => {
 			const charts: Record<string, VisualizationSpec[]> = {};
-			if (!chartData.value) return charts;
-			const { result, resultSummary } = chartData.value;
+			if (!isChartReadyToBuild.value || !isRefReady(groundTruthData)) return chartData;
+			const { result, resultSummary } = chartData.value as ChartData;
 			chartSettings.value.forEach((setting) => {
 				const annotations = getChartAnnotationsByChartId(setting.id);
 				const datasetVar = modelVarToDatasetVar(mapping?.value || [], setting.selectedVariables[0]);
@@ -503,13 +510,13 @@ export function useCharts(
 	// Create parameter distribution charts based on chart settings
 	const useParameterDistributionCharts = (chartSettings: ComputedRef<ChartSetting[]>) => {
 		const parameterDistributionCharts = computed(() => {
-			if (!chartData.value) return {};
-			const { result, pyciemssMap } = chartData.value;
+			const charts = {};
+			if (!isChartReadyToBuild.value) return charts;
+			const { result, pyciemssMap } = chartData.value as ChartData;
 			// Note that we want to show the parameter distribution at the first timepoint only
 			const data = result.filter((d) => d.timepoint_id === 0);
 			const labelBefore = 'Before calibration';
 			const labelAfter = 'After calibration';
-			const charts = {};
 			chartSettings.value.forEach((setting) => {
 				const param = setting.selectedVariables[0];
 				const fieldName = pyciemssMap[param];
@@ -541,6 +548,37 @@ export function useCharts(
 		return parameterDistributionCharts;
 	};
 
+	const useWeightsDistributionCharts = () => {
+		const charts: VisualizationSpec[] = [];
+		if (!isChartReadyToBuild.value) return charts;
+
+		const modelConfigs = <ModelConfiguration[]>modelConfig?.value ?? [];
+		const data = chartData.value?.result.filter((d) => d.timepoint_id === 0) ?? [];
+		const labelBefore = 'Before calibration';
+		const labelAfter = 'After calibration';
+		const fieldName = `weight`;
+		const beforeFieldName = 'weight:pre';
+
+		modelConfigs.forEach((config) => {
+			const modelConfigName = getModelConfigName(modelConfigs, config.id ?? '');
+			const chartWidth = chartSize.value.width / modelConfigs.length;
+			const histogram = createHistogramChart(data, {
+				title: modelConfigName,
+				width: chartWidth,
+				height: chartSize.value.height,
+				xAxisTitle: `Weights`,
+				yAxisTitle: 'Count',
+				maxBins: 10,
+				variables: [
+					{ field: beforeFieldName, label: labelBefore, width: 54, color: BASE_GREY },
+					{ field: fieldName, label: labelAfter, width: 24, color: PRIMARY_COLOR }
+				]
+			});
+			charts.push(histogram);
+		});
+		return charts;
+	};
+
 	return {
 		generateAnnotation,
 		getChartAnnotationsByChartId,
@@ -549,6 +587,7 @@ export function useCharts(
 		useComparisonCharts,
 		useEnsembleVariableCharts,
 		useErrorChart,
-		useParameterDistributionCharts
+		useParameterDistributionCharts,
+		useWeightsDistributionCharts
 	};
 }

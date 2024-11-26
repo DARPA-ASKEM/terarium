@@ -773,7 +773,7 @@ const {
 	modelConfig,
 	preparedChartInputs,
 	chartSize,
-	computed(() => interventionPolicy.value?.interventions ?? []),
+	computed(() => interventionPolicy.value?.interventions ?? null),
 	selectedOutputMapping
 );
 const parameterDistributionCharts = useParameterDistributionCharts(selectedParameterSettings);

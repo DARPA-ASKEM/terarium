@@ -209,6 +209,7 @@ watch([vegaContainer, () => props.visualizationSpec], async ([, newSpec], [, old
 	}
 	const isEqual = _.isEqual(newSpec, oldSpec);
 	if (isEqual && vegaVisualization.value !== undefined) return;
+	console.log('renders chart');
 	const spec = deepToRaw(props.visualizationSpec);
 	vegaVisualization.value = await createVegaVisualization(vegaContainer.value, spec, props.config, {
 		actions: props.areEmbedActionsVisible,
