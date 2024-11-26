@@ -14,6 +14,9 @@
 	</Dialog>
 	<div class="vega-chart-container">
 		<div ref="vegaContainer" />
+		<div v-if="!interactive">
+			<img :src="imageDataURL" alt="chart" />
+		</div>
 		<footer v-if="$slots.footer">
 			<slot name="footer" />
 		</footer>
@@ -77,6 +80,10 @@ const props = withDefaults(
 		 * If a function is provided, it will be called before expanding the chart, and the returned spec will be used for the expanded chart.
 		 */
 		expandable?: boolean | ((spec: VisualizationSpec) => VisualizationSpec);
+		/**
+		 * Whether to render interactive chart or png
+		 */
+		interactive?: boolean;
 	}>(),
 	{
 		areEmbedActionsVisible: true,
@@ -94,6 +101,9 @@ const vegaVisualizationExpanded = ref<Result>();
 const expandedView = computed(() => vegaVisualizationExpanded.value?.view);
 
 const isExpanded = ref(false);
+
+const interactive = ref(props.interactive);
+const imageDataURL = ref('');
 
 const onExpand = async () => {
 	if (vegaContainerLg.value) {
@@ -210,10 +220,33 @@ watch([vegaContainer, () => props.visualizationSpec], async ([, newSpec], [, old
 	const isEqual = _.isEqual(newSpec, oldSpec);
 	if (isEqual && vegaVisualization.value !== undefined) return;
 	const spec = deepToRaw(props.visualizationSpec);
-	vegaVisualization.value = await createVegaVisualization(vegaContainer.value, spec, props.config, {
-		actions: props.areEmbedActionsVisible,
-		expandable: !!props.expandable
-	});
+
+	if (props.interactive === true) {
+		console.log('render interactive');
+		vegaVisualization.value = await createVegaVisualization(vegaContainer.value, spec, props.config, {
+			actions: props.areEmbedActionsVisible,
+			expandable: !!props.expandable
+		});
+	} else {
+		console.log('todo render png instead');
+		const container = document.createElement('div');
+		const viz = await embed(
+			container,
+			{ ...spec },
+			{
+				config: { ...defaultChartConfig, ...props.config } as Config,
+				actions: props.areEmbedActionsVisible,
+				expressionFunctions // Register expression functions
+			}
+		);
+		const dataURL = await viz.view.toImageURL('png');
+		imageDataURL.value = dataURL;
+		/*
+		const imgElement = new Image();
+		imgElement.src = dataURL
+		vegaContainer.value.append(imgElement);
+		*/
+	}
 });
 
 defineExpose({
