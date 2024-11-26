@@ -3,9 +3,9 @@
 		<tera-input-text
 			ref="inputRef"
 			class="w-full"
-			:model-value="modelValue"
-			@update:model-value="emit('update:model-value', $event)"
-			@keydown="handleKeyDown"
+			v-model="newValue"
+			@keydown.enter.stop="handleKeyDown"
+			@keydown.esc.stop="handleKeyDown"
 		/>
 		<Button text icon="pi pi-times" @click="onCancel" />
 		<Button text icon="pi pi-check" @click="onConfirm" />
@@ -33,24 +33,24 @@ const props = withDefaults(
 
 const emit = defineEmits(['update:model-value']);
 
-let initialValue = '';
+const newValue = ref(props.modelValue);
 
 const inputRef = ref<ComponentPublicInstance<typeof TeraInputText> | null>(null);
 const isEditing = ref(false);
 
 const onEdit = async () => {
-	initialValue = props.modelValue;
+	newValue.value = props.modelValue;
 	isEditing.value = true;
 	await nextTick();
 	inputRef.value?.$el.querySelector('input')?.focus();
 };
 
 const onConfirm = () => {
+	emit('update:model-value', newValue.value);
 	isEditing.value = false;
 };
 
 const onCancel = () => {
-	emit('update:model-value', initialValue); // Revert changes
 	isEditing.value = false;
 };
 
