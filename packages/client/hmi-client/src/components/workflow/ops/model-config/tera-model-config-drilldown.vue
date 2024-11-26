@@ -787,6 +787,8 @@ watch(
 	() => props.node.state.modelConfigTaskIds,
 	async (oldValue, newValue) => {
 		if (!isEqual(oldValue, newValue)) {
+			console.log('oldValue', oldValue);
+			console.log('newValue', newValue);
 			console.log('modelConfigTaskIds changed');
 			await fetchConfigurations();
 			isExtracting.value = false;
