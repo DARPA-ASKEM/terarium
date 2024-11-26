@@ -29,6 +29,7 @@ public class TaskResponse implements Serializable {
 	private String stdout;
 	private String stderr;
 	private String requestSHA256;
+	private String routingKey;
 
 	public <T> T getAdditionalProperties(final Class<T> type) throws JsonProcessingException {
 		if (additionalProperties == null) {

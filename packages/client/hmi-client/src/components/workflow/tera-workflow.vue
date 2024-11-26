@@ -16,29 +16,7 @@
 		<!-- toolbar -->
 		<template #foreground>
 			<div class="toolbar glass">
-				<div class="button-group w-full">
-					<div v-if="isRenamingWorkflow" class="rename-workflow w-full">
-						<InputText
-							class="p-inputtext w-full"
-							v-model.lazy="newWorkflowName"
-							placeholder="Workflow name"
-							@keyup.enter="updateWorkflowName"
-							@keyup.esc="updateWorkflowName"
-							v-focus
-						/>
-						<div class="flex flex-nowrap ml-1 mr-3">
-							<Button icon="pi pi-check" rounded text @click="updateWorkflowName" />
-						</div>
-					</div>
-					<h4 v-else>{{ wf.getName() }}</h4>
-					<Button
-						v-if="!isRenamingWorkflow"
-						icon="pi pi-ellipsis-v"
-						class="p-button-icon-only p-button-text p-button-rounded"
-						@click="toggleOptionsMenu"
-					/>
-				</div>
-				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+				<tera-toggleable-input :model-value="wf.getName()" @update:model-value="updateWorkflowName" tag="h4" />
 				<div class="button-group">
 					<Button
 						id="add-component-btn"
@@ -194,8 +172,7 @@ import {
 // Operation imports
 import TeraOperator from '@/components/operator/tera-operator.vue';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
-import Menu from 'primevue/menu';
+import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import ContextMenu from 'primevue/contextmenu';
 import * as workflowService from '@/services/workflow';
 import { OperatorImport, OperatorNodeSize, getNodeMenu } from '@/services/workflow';
@@ -291,34 +268,16 @@ const dialogIsOpened = ref(false);
 const wf = ref<workflowService.WorkflowWrapper>(new workflowService.WorkflowWrapper());
 const contextMenu = ref();
 
-const isRenamingWorkflow = ref(false);
-const newWorkflowName = ref('');
 const currentProjectId = ref<string | null>(null);
 
-const optionsMenu = ref();
-const optionsMenuItems = ref([
-	{
-		icon: 'pi pi-pencil',
-		label: 'Rename',
-		command() {
-			isRenamingWorkflow.value = true;
-			newWorkflowName.value = wf.value?.getName() ?? '';
-		}
-	}
-]);
-
-const toggleOptionsMenu = (event: MouseEvent) => {
-	optionsMenu.value.toggle(event);
-};
 const teraOperatorRefs = ref();
 const canvasRef = ref();
 
-async function updateWorkflowName() {
+async function updateWorkflowName(newName: string) {
 	const workflowClone = cloneDeep(wf.value.dump());
-	workflowClone.name = newWorkflowName.value;
+	workflowClone.name = newName;
 	await workflowService.saveWorkflow(workflowClone);
 	await useProjects().refresh();
-	isRenamingWorkflow.value = false;
 	wf.value.load(await workflowService.getWorkflow(props.assetId));
 }
 
@@ -964,8 +923,6 @@ const dontShowAgain = () => {
 watch(
 	() => props.assetId,
 	async (newId, oldId) => {
-		isRenamingWorkflow.value = false; // Closes rename input if opened in previous workflow
-
 		// Save previous workflow, if applicable
 		if (newId !== oldId && oldId) {
 			saveWorkflowHandler();
