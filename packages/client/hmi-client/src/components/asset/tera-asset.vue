@@ -67,9 +67,7 @@ import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
-import { activeProject } from '@/composables/activeProject';
-import { update as updateProject } from '@/services/project';
-import { useProjects } from '@/composables/project';
+import { isEmpty } from 'lodash';
 
 const props = defineProps({
 	id: {
@@ -163,20 +161,8 @@ function onScroll(event: Event) {
 }
 
 function onRename(newName: string) {
-	if (!newName) return;
-	switch (pageType) {
-		case ProjectPages.OVERVIEW:
-			if (!activeProject.value) return;
-			updateProject({ ...activeProject.value, name: newName }).then(() => {
-				useProjects().refresh();
-			});
-			break;
-		case AssetType.Dataset:
-		case AssetType.Model:
-		default:
-			emit('rename', newName);
-			break;
-	}
+	if (!newName || isEmpty(newName)) return;
+	emit('rename', newName);
 }
 
 watch(
