@@ -608,11 +608,15 @@ const onSaveConfiguration = async () => {
 		return;
 	}
 	useProjects().refresh();
-	fetchConfigurations();
 
-	// Sync with original config so changes are recognized as saved in UI
-	originalConfig.name = data.name;
-	originalConfig.description = data.description;
+	// Update the configuration in the list, no need to recall fetchConfigurations
+	const configIndex = modelConfigurations.value.findIndex((config) => config.id === data.id);
+	if (configIndex !== -1) {
+		modelConfigurations.value[configIndex] = data;
+		// Sync with original config so changes are recognized as saved in UI
+		originalConfig.name = data.name;
+		originalConfig.description = data.description;
+	}
 
 	logger.success('Saved model configuration');
 };
