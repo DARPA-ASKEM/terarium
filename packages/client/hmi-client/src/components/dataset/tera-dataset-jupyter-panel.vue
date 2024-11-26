@@ -86,7 +86,7 @@
 		</div>
 
 		<div>
-			<div v-for="(data, indx) in dataContextDescription" :key="indx">
+			<div v-for="(data, idx) in dataContextDescription" :key="idx">
 				<input class="context-description" :value="data" disabled type="text" />
 			</div>
 			<!-- Jupyter Chat -->
