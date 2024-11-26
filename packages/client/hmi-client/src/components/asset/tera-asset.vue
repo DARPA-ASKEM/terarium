@@ -7,18 +7,16 @@
 			shadow: applyShadow
 		}"
 	>
-		<!-- put the buttons above the title if there is an overline -->
-		<div v-if="overline" class="row">
-			<span class="overline">{{ overline }}</span>
-			<slot name="edit-buttons" />
-		</div>
 		<!--For naming asset such as model or code file-->
 		<div class="row">
-			<slot name="name-input" />
-			<h4 v-if="!isNamingAsset" :class="{ shrink: shrinkHeader }">
-				{{ name }}
-			</h4>
-			<slot v-if="!overline" name="edit-buttons" />
+			<tera-toggleable-input
+				v-if="[ProjectPages.OVERVIEW, AssetType.Dataset, AssetType.Model].includes(pageType) && name"
+				:model-value="name"
+				tag="h4"
+				@update:model-value="onRename"
+			/>
+			<h4 v-else>{{ name }}</h4>
+			<slot name="edit-buttons" />
 		</div>
 		<!--put model contributors here too-->
 		<span v-if="authors" class="authors">
@@ -67,7 +65,9 @@ import { ProjectPages } from '@/types/Project';
 import { AssetType } from '@/types/Types';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
-import TeraProgressSpinner from '../widgets/tera-progress-spinner.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
+import { isEmpty } from 'lodash';
 
 const props = defineProps({
 	id: {
@@ -77,10 +77,6 @@ const props = defineProps({
 	name: {
 		type: String,
 		default: ''
-	},
-	overline: {
-		type: String,
-		default: null
 	},
 	authors: {
 		type: String,
@@ -100,7 +96,6 @@ const props = defineProps({
 	},
 	// Booleans default to false if not specified
 	showTableOfContents: Boolean,
-	isNamingAsset: Boolean,
 	hideIntro: Boolean,
 	isLoading: Boolean,
 	overflowHidden: Boolean,
@@ -110,7 +105,7 @@ const props = defineProps({
 	}
 });
 
-const emit = defineEmits(['tab-change']);
+const emit = defineEmits(['tab-change', 'rename']);
 
 const slots = useSlots();
 const pageType = useRoute().params.pageType as ProjectPages | AssetType;
@@ -120,7 +115,6 @@ const scrollPosition = ref(0);
 const navIds = ref<Map<string, string>>(new Map());
 const chosenItem = ref<string | null>(null);
 
-const shrinkHeader = computed(() => scrollPosition.value > 20); // Shrink header once we scroll down a bit
 const tabs = computed(() => {
 	if (slots.tabs?.()) {
 		if (slots.tabs().length === 1) {
@@ -164,6 +158,11 @@ function onScroll(event: Event) {
 		}
 	});
 	chosenItem.value = closestItem;
+}
+
+function onRename(newName: string) {
+	if (!newName || isEmpty(newName)) return;
+	emit('rename', newName);
 }
 
 watch(
