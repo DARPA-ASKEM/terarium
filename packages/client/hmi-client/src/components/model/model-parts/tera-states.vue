@@ -9,6 +9,7 @@
 </template>
 
 <script setup lang="ts">
+import { watch } from 'vue';
 import { ModelPartItem } from '@/types/Model';
 import { Model } from '@/types/Types';
 import { getStates } from '@/model-representation/service';
@@ -26,41 +27,52 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-state']);
 
-const states = getStates(props.model); // could be states, vertices, and stocks type
 const collapsedInitials = collapseInitials(props.mmt);
-const stateList: {
+let stateList: {
 	base: ModelPartItem;
 	children: ModelPartItem[];
 	isParent: boolean;
-}[] = Array.from(collapsedInitials.keys()).map((id) => {
-	const childTargets = collapsedInitials.get(id) ?? [];
-	const isParent = childTargets.length > 1;
-	const children = childTargets
-		.map((childTarget) => {
-			const s = states.find((state) => state.id === childTarget);
-			if (!s) return null;
-			return {
-				id: s.id,
-				name: s.name,
-				description: s.description,
-				grounding: s.grounding,
-				unitExpression: s.units?.expression
-			};
-		})
-		.filter(Boolean) as ModelPartItem[];
+}[] = createStateList();
 
-	const baseState: any = states.find((s) => s.id === id);
-	const base: ModelPartItem =
-		isParent || !baseState
-			? { id }
-			: {
-					id,
-					name: baseState.name,
-					description: baseState.description,
-					grounding: baseState.grounding,
-					unitExpression: baseState.units?.expression
+watch(
+	() => props.model?.model?.states,
+	() => {
+		stateList = createStateList();
+	}
+);
+
+function createStateList() {
+	return Array.from(collapsedInitials.keys()).map((id) => {
+		const childTargets = collapsedInitials.get(id) ?? [];
+		const isParent = childTargets.length > 1;
+		const states = getStates(props.model); // could be states, vertices, and stocks type
+		const children = childTargets
+			.map((childTarget) => {
+				const s = states.find((state) => state.id === childTarget);
+				if (!s) return null;
+				return {
+					id: s.id,
+					name: s.name,
+					description: s.description,
+					grounding: s.grounding,
+					unitExpression: s.units?.expression
 				};
+			})
+			.filter(Boolean) as ModelPartItem[];
 
-	return { base, children, isParent };
-});
+		const baseState: any = states.find((s) => s.id === id);
+		const base: ModelPartItem =
+			isParent || !baseState
+				? { id }
+				: {
+						id,
+						name: baseState.name,
+						description: baseState.description,
+						grounding: baseState.grounding,
+						unitExpression: baseState.units?.expression
+					};
+
+		return { base, children, isParent };
+	});
+}
 </script>

@@ -152,8 +152,14 @@ watch(
 	{ immediate: true }
 );
 
-const showDescription = ref(false);
-if (props.item.description) showDescription.value = true;
+watch(
+	() => description.value,
+	async (newDescription) => {
+		showDescription.value = !!newDescription;
+	}
+);
+
+const showDescription = ref(!!props.item.description);
 </script>
 
 <style scoped>
