@@ -30,6 +30,7 @@
 						<tera-input-text v-model="filterModelConfigurationsText" placeholder="Filter" class="w-full" />
 						<Button
 							label="Extract from inputs"
+							icon="pi pi-sparkles"
 							severity="primary"
 							class="white-space-nowrap min-w-min"
 							size="small"
@@ -65,7 +66,9 @@
 							/>
 						</li>
 						<!-- Show a message if nothing found after filtering -->
-						<li v-if="filteredModelConfigurations.length === 0">No configurations found</li>
+						<li class="ml-4 flex flex-1 items-center" v-if="filteredModelConfigurations.length === 0">
+							No configurations found
+						</li>
 					</ul>
 				</template>
 			</tera-slider-panel>
@@ -510,21 +513,6 @@ const extractConfigurationsFromInputs = async () => {
 	isExtracting.value = false;
 };
 
-// FIX THIS REFRESH
-// watch(
-// 	() => props.node.state.modelConfigTaskIds,
-// 	(newValue, oldValue) => {
-// 		// if (newValue.length > 0) {
-// 		// 	isLoading.value = true;
-// 		// } else if (newValue.length !== oldValue.length) {
-// 		// 	isLoading.value = false;
-// 		// 	const modelId = props.node.inputs[0].value?.[0];
-// 		// 	if (!modelId) return;
-// 		// 	fetchConfigurations(modelId);
-// 		// }
-// 	}
-// );
-
 const selectedConfigId = computed(() => props.node.outputs.find(({ id }) => id === props.node.active)?.value?.[0]);
 
 const documentIds = computed(() =>
@@ -789,6 +777,11 @@ const debounceUpdateState = debounce(() => {
 
 	emit('update-state', state);
 }, 100);
+
+watch(
+	() => props.node.state.modelConfigTaskIds,
+	() => fetchConfigurations()
+);
 
 watch(
 	() => knobs.value,
