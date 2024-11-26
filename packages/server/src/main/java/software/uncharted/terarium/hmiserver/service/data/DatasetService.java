@@ -82,7 +82,10 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 	@Observed(name = "function_profile")
 	public Dataset createAsset(final Dataset asset, final UUID projectId, final Schema.Permission hasWritePermission)
 		throws IOException {
-		extractColumns(asset);
+		// If the columns are already set, don't add them again (happens when copying a dataset to another project).
+		if (asset.getColumns() == null || asset.getColumns().isEmpty()) {
+			extractColumns(asset);
+		}
 		verifyColumnRelationship(asset);
 		return super.createAsset(asset, projectId, hasWritePermission);
 	}
