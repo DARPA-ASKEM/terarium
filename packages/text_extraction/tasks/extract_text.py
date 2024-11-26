@@ -64,7 +64,6 @@ def main():
 
         taskrunner.log("Extracting text")
         text = read_file_to_string(ofilename)
-        taskrunner.log("Extracted text: " + text)
 
         taskrunner.write_output_dict_with_timeout({"response": text})
 
