@@ -133,7 +133,7 @@ const emit = defineEmits<{
 		intervalExtent: { [fieldName: string]: [number, number] } | null
 	): void;
 	(e: 'chart-click', datum: any | null): void;
-	(e: 'image-generated'): void;
+	(e: 'done-render'): void;
 }>();
 
 /**
@@ -235,7 +235,7 @@ watch([vegaContainer, () => props.visualizationSpec], async ([, newSpec], [, old
 		);
 		const dataURL = await viz.view.toImageURL('png');
 		imageDataURL.value = dataURL;
-		emit('image-generated');
+		emit('done-render');
 	} else {
 		console.log('render interactive');
 		if (!vegaContainer.value) return;
@@ -243,6 +243,7 @@ watch([vegaContainer, () => props.visualizationSpec], async ([, newSpec], [, old
 			actions: props.areEmbedActionsVisible,
 			expandable: !!props.expandable
 		});
+		emit('done-render');
 	}
 });
 
