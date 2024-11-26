@@ -10,7 +10,7 @@
 		<!--For naming asset such as model or code file-->
 		<div class="row">
 			<tera-toggleable-input
-				v-if="[ProjectPages.OVERVIEW, AssetType.Dataset, AssetType.Model].includes(pageType)"
+				v-if="[ProjectPages.OVERVIEW, AssetType.Dataset, AssetType.Model].includes(pageType) && name"
 				:model-value="name"
 				tag="h4"
 				@update:model-value="onRename"
