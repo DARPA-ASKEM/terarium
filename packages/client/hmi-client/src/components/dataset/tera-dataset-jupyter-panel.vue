@@ -85,6 +85,10 @@
 				/>
 			</div>
 		</div>
+		<div v-if="showRerunMessage" class="rerun-message">
+			Re-run all the cells to restore the context if you need to make any changes or use them downstream.
+			<Button icon="pi pi-times" text rounded aria-label="Close" @click="showRerunMessage = false" />
+		</div>
 
 		<div>
 			<ul>
@@ -184,6 +188,7 @@ const props = defineProps<{
 	sampleAgentQuestions: string[];
 }>();
 
+const showRerunMessage = ref(false);
 const languages = programmingLanguageOptions();
 const selectedLanguage = computed(() => props.programmingLanguage || languages[0].value);
 
@@ -307,6 +312,7 @@ watch(
 
 onMounted(() => {
 	// for admin panel
+
 	jupyterSession.ready.then(() => {
 		if (jupyterSession.session) {
 			const sessions = getSessionManager().running();
@@ -321,6 +327,7 @@ onMounted(() => {
 				kernelId: jupyterSession.session?.kernel?.id,
 				value: jupyterSession.session?.id
 			};
+			showRerunMessage.value = true;
 		}
 	});
 });
@@ -480,10 +487,15 @@ const onAddCodeCell = () => {
 };
 
 const onRunAllCells = () => {
-	if (window.confirm('Are you sure you want to rerun all cells?')) {
-		const event = new Event('run-all-cells');
-		window.dispatchEvent(event);
-	}
+	confirm.require({
+		message: 'Are you sure you want to rerun all cells?',
+		header: 'Rerun all cells',
+		accept: () => {
+			const event = new Event('run-all-cells');
+			window.dispatchEvent(event);
+			showRerunMessage.value = false;
+		}
+	});
 };
 
 /* Download dataset feature has been removed, but keeping this code here in case it returns */
@@ -640,5 +652,13 @@ const onDownloadResponse = (payload) => {
 	grid-row: 2;
 	grid-column: 1 / span 6;
 	color: var(--text-color-subdued);
+}
+
+.rerun-message {
+	display: flex;
+	background-color: var(--surface-warning);
+	justify-content: space-between;
+	align-items: center;
+	padding: var(--gap-2);
 }
 </style>
