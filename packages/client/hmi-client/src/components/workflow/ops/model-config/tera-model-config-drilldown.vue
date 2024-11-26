@@ -829,14 +829,14 @@ onMounted(async () => {
 	isFetchingPDF.value = false;
 });
 
-onUnmounted(() => {
-	kernelManager.shutdown();
-});
-
 watch(
 	() => props.node.active,
 	() => loadOutput()
 );
+
+onUnmounted(() => {
+	kernelManager.shutdown();
+});
 </script>
 
 <style scoped>
