@@ -55,7 +55,7 @@
 								placeholder="Search for projects"
 								id="searchProject"
 								:icon="isSearchLoading ? 'pi pi-spin pi-spinner' : 'pi pi-search'"
-								class="flex-1"
+								class="search-input"
 							/>
 							<Dropdown
 								v-if="view === ProjectsView.Cards"
@@ -74,63 +74,62 @@
 								placeholder="Add or remove columns"
 								class="p-inputtext-sm"
 							/>
-							<SelectButton
-								v-if="!isEmpty(searchedAndFilterProjects)"
-								class="ml-auto"
-								:model-value="view"
-								@change="selectChange"
-								:options="viewOptions"
-								option-value="value"
-							>
-								<template #option="slotProps">
-									<span class="p-button-label">{{ slotProps.option.value }}</span>
-								</template>
-							</SelectButton>
-							<Button
-								icon="pi pi-upload"
-								class="secondary-button"
-								label="Upload project"
-								@click="openUploadProjectModal"
-							/>
-							<Button icon="pi pi-plus" label="New project" @click="openCreateProjectModal" />
-						</section>
-						<section class="projects">
-							<div v-if="!isLoadingProjects && isEmpty(searchedAndFilterProjects)" class="no-projects">
-								<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200" />
-								<p class="mt-4">
-									<template v-if="tab === TabTitles.MyProjects">Get started by creating a new project</template>
-									<template v-if="tab === TabTitles.SampleProjects">Sample projects coming soon</template>
-									<template v-if="tab === TabTitles.PublicProjects">You don't have any shared projects</template>
-								</p>
+							<div class="ml-auto flex gap-3">
+								<SelectButton
+									v-if="!isEmpty(searchedAndFilterProjects)"
+									:model-value="view"
+									@change="selectChange"
+									:options="viewOptions"
+									option-value="value"
+								>
+									<template #option="slotProps">
+										<span class="p-button-label">{{ slotProps.option.value }}</span>
+									</template>
+								</SelectButton>
+								<Button
+									icon="pi pi-upload"
+									class="secondary-button"
+									label="Upload project"
+									@click="openUploadProjectModal"
+								/>
+								<Button icon="pi pi-plus" label="New project" @click="openCreateProjectModal" />
 							</div>
-							<ul v-else-if="view === ProjectsView.Cards" class="project-cards-grid">
-								<template v-if="cloningProjects.length && !isLoadingProjects">
-									<li v-for="item in cloningProjects" :key="item.id">
-										<tera-project-card v-if="item.id" :project="item" :is-copying="true" />
-									</li>
-								</template>
-								<template v-if="isLoadingProjects">
-									<li v-for="i in 3" :key="i">
-										<tera-project-card />
-									</li>
-								</template>
-								<li v-else v-for="project in searchedAndFilterProjects" :key="project.id">
-									<tera-project-card
-										v-if="project.id"
-										:project="project"
-										@click="openProject(project.id)"
-										@copied-project="tabChange({ index: 0 })"
-									/>
-								</li>
-							</ul>
-							<tera-project-table
-								v-else-if="view === ProjectsView.Table"
-								:projects="searchedAndFilterProjects"
-								:selected-columns="selectedColumns"
-								@open-project="openProject"
-								class="project-table"
-							/>
 						</section>
+						<div v-if="!isLoadingProjects && isEmpty(searchedAndFilterProjects)" class="no-projects">
+							<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200" />
+							<p class="mt-4">
+								<template v-if="tab === TabTitles.MyProjects">Get started by creating a new project</template>
+								<template v-if="tab === TabTitles.SampleProjects">Sample projects coming soon</template>
+								<template v-if="tab === TabTitles.PublicProjects">You don't have any shared projects</template>
+							</p>
+						</div>
+						<ul v-else-if="view === ProjectsView.Cards" class="project-cards-grid">
+							<template v-if="cloningProjects.length && !isLoadingProjects">
+								<li v-for="item in cloningProjects" :key="item.id">
+									<tera-project-card v-if="item.id" :project="item" :is-copying="true" />
+								</li>
+							</template>
+							<template v-if="isLoadingProjects">
+								<li v-for="i in 3" :key="i">
+									<tera-project-card />
+								</li>
+							</template>
+							<li v-else v-for="project in searchedAndFilterProjects" :key="project.id">
+								<tera-project-card
+									v-if="project.id"
+									:project="project"
+									@click="openProject(project.id)"
+									@copied-project="tabChange({ index: 0 })"
+								/>
+							</li>
+						</ul>
+						<tera-project-table
+							v-else-if="view === ProjectsView.Table"
+							:projects="searchedAndFilterProjects"
+							:selected-columns="selectedColumns"
+							:search-query="searchProjectsQuery"
+							@open-project="openProject"
+						/>
 					</TabPanel>
 				</TabView>
 			</section>
@@ -456,7 +455,12 @@ header > section > button {
 	display: flex;
 	gap: var(--gap-3);
 	/* Accommodate for height of projects tabs*/
-	top: 44px;
+	top: 42px;
+}
+
+.search-input {
+	flex: 1;
+	max-width: 50rem;
 }
 
 .sort-options-dropdown {
@@ -469,9 +473,6 @@ header > section > button {
 	gap: 16px;
 	padding: 16px;
 	list-style: none;
-}
-:deep(.project-table) {
-	margin: var(--gap-4);
 }
 
 header svg {

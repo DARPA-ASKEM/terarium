@@ -1,5 +1,14 @@
 <template>
-	<DataTable :value="projects" dataKey="id" :rowsPerPageOptions="[10, 20, 50]" scrollable scrollHeight="45rem">
+	<DataTable
+		:value="projects"
+		dataKey="id"
+		:rowsPerPageOptions="[5, 10, 20]"
+		scrollable
+		scrollHeight="45rem"
+		paginator
+		:rows="5"
+		@page="getProjectAssets"
+	>
 		<Column
 			v-for="(col, index) in selectedColumns"
 			:field="col.field"
@@ -16,6 +25,14 @@
 					<a class="project-title-link" @click.stop="emit('open-project', data.id)">
 						{{ data.name }}
 					</a>
+					<ul>
+						<li
+							v-for="(asset, index) in projectsWithKnnMatches.find(({ id }) => id === data.id)?.projectAssets"
+							:key="index"
+						>
+							<span v-html="highlight(asset.assetName, searchQuery)" />
+						</li>
+					</ul>
 				</template>
 				<tera-show-more-text v-else-if="col.field === 'description'" :text="data.description" :lines="1" />
 				<template v-if="col.field === 'userName'">
@@ -68,20 +85,27 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted, watch } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import { formatDdMmmYyyy } from '@/utils/date';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { Project } from '@/types/Types';
+import type { PageState } from 'primevue/paginator';
+import * as ProjectService from '@/services/project';
+import { highlight } from '@/utils/text';
 import TeraProjectMenu from './tera-project-menu.vue';
 
-defineProps<{
+const props = defineProps<{
 	projects: Project[];
 	selectedColumns: { field: string; header: string }[];
+	searchQuery: string;
 }>();
 
 const emit = defineEmits(['open-project']);
+
+const projectsWithKnnMatches = ref<Project[]>([]);
 
 function formatStat(data, key) {
 	const stat = data?.[key];
@@ -104,6 +128,24 @@ function getColumnWidth(columnField: string) {
 			return 100;
 	}
 }
+
+function getProjectAssets(event: PageState = { page: 0, rows: 5, first: 0 } as PageState) {
+	const { page, rows } = event;
+	props.projects.slice(page * rows, (page + 1) * rows).forEach(async ({ id }) => {
+		const project = await ProjectService.get(id);
+		if (!project) return;
+		projectsWithKnnMatches.value.push(project);
+	});
+}
+
+onMounted(() => {
+	getProjectAssets();
+});
+
+watch(
+	() => props.searchQuery,
+	() => getProjectAssets()
+);
 </script>
 
 <style scoped>
@@ -120,6 +162,10 @@ function getColumnWidth(columnField: string) {
 	gap: 0.1rem;
 	align-items: center;
 	width: 2.4rem;
+}
+
+.p-datatable:deep(.highlight) {
+	font-weight: var(--font-weight-semibold);
 }
 
 .p-datatable {
