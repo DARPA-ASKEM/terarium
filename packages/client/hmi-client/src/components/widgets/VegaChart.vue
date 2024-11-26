@@ -13,10 +13,11 @@
 		</div>
 	</Dialog>
 	<div class="vega-chart-container">
-		<div ref="vegaContainer" />
 		<div v-if="!interactive">
 			<img :src="imageDataURL" alt="chart" />
 		</div>
+		<div v-else ref="vegaContainer" />
+
 		<footer v-if="$slots.footer">
 			<slot name="footer" />
 		</footer>
@@ -89,7 +90,8 @@ const props = withDefaults(
 		areEmbedActionsVisible: true,
 		intervalSelectionSignalNames: () => [],
 		config: null,
-		expandable: false
+		expandable: false,
+		interactive: true
 	}
 );
 const vegaContainer = ref<HTMLElement>();
@@ -131,6 +133,7 @@ const emit = defineEmits<{
 		intervalExtent: { [fieldName: string]: [number, number] } | null
 	): void;
 	(e: 'chart-click', datum: any | null): void;
+	(e: 'image-generated'): void;
 }>();
 
 /**
@@ -214,24 +217,15 @@ async function createVegaVisualization(
 }
 
 watch([vegaContainer, () => props.visualizationSpec], async ([, newSpec], [, oldSpec]) => {
-	if (!vegaContainer.value) {
-		return;
-	}
 	const isEqual = _.isEqual(newSpec, oldSpec);
 	if (isEqual && vegaVisualization.value !== undefined) return;
 	const spec = deepToRaw(props.visualizationSpec);
 
-	if (props.interactive === true) {
-		console.log('render interactive');
-		vegaVisualization.value = await createVegaVisualization(vegaContainer.value, spec, props.config, {
-			actions: props.areEmbedActionsVisible,
-			expandable: !!props.expandable
-		});
-	} else {
-		console.log('todo render png instead');
-		const container = document.createElement('div');
+	if (interactive.value === false) {
+		console.log('render png');
+		const shadowContainer = document.createElement('div');
 		const viz = await embed(
-			container,
+			shadowContainer,
 			{ ...spec },
 			{
 				config: { ...defaultChartConfig, ...props.config } as Config,
@@ -241,11 +235,14 @@ watch([vegaContainer, () => props.visualizationSpec], async ([, newSpec], [, old
 		);
 		const dataURL = await viz.view.toImageURL('png');
 		imageDataURL.value = dataURL;
-		/*
-		const imgElement = new Image();
-		imgElement.src = dataURL
-		vegaContainer.value.append(imgElement);
-		*/
+		emit('image-generated');
+	} else {
+		console.log('render interactive');
+		if (!vegaContainer.value) return;
+		vegaVisualization.value = await createVegaVisualization(vegaContainer.value, spec, props.config, {
+			actions: props.areEmbedActionsVisible,
+			expandable: !!props.expandable
+		});
 	}
 });
 
