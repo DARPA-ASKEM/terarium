@@ -7,7 +7,7 @@ setup(
     install_requires=[
         "openai==1.55.1",
         "pandas",
-        "pydantic==2.9.2",
+        "pydantic==2.10.2",
         "regex",
         "tiktoken",
         "jsonschema"
