@@ -3,14 +3,13 @@ import os
 import traceback
 import subprocess
 from taskrunner import TaskRunnerInterface
-import PyPDF2
 
 def cleanup():
     pass
 
 
-def get_filename(id: str):
-    return f"/tmp/{id}.pdf"
+def get_filename(id: str, ext : str):
+    return f"/tmp/{id}.{ext}"
 
 
 def create_temp_file(name, contents):
@@ -24,15 +23,10 @@ def delete_temp_file(name):
     except:
         pass
 
-
-def extract_text_from_pdf(filename):
-    reader = PyPDF2.PdfReader(filename)
-    text = ""
-    text = []
-    for page in reader.pages:
-        text.append(page.extract_text())
-    return text
-
+def read_file_to_string(filename):
+    with open(filename, 'r', encoding='utf-8') as file:
+        content = file.read()
+    return content
 
 def main():
     exitCode = 0
@@ -42,35 +36,35 @@ def main():
 
         bs = taskrunner.read_input_bytes_with_timeout()
 
-        ifilename = get_filename("input_" + taskrunner.id)
-        ofilename = get_filename("output_" + taskrunner.id)
+        ifilename = get_filename("input_" + taskrunner.id, "pdf")
+        ofilename = get_filename("output_" + taskrunner.id, "txt")
 
         create_temp_file(ifilename, bs)
 
         # Define the command and arguments
-        command = ["ocrmypdf", "--force-ocr", ifilename, ofilename]
+        command = ["pdftotext", ifilename, ofilename]
 
         # Run the command
         result = subprocess.run(command, capture_output=True, text=True)
 
         # Print the output
         if result.returncode != 0:
-            taskrunner.log("Error running ocrmypdf")
+            taskrunner.log("Error running pdftotext")
             taskrunner.log("stderr:" + result.stderr)
             taskrunner.log("Return code:" + str(result.returncode))
-            raise Exception("Error running ocrmypdf")
+            raise Exception("Error running pdftotext")
 
         if result.stdout != "":
-            taskrunner.log("ocrmypdf stdout:")
+            taskrunner.log("pdftotext stdout:")
             taskrunner.log(result.stdout)
 
         if result.stderr != "":
-            taskrunner.log("ocrmypdf stderr:")
+            taskrunner.log("pdftotext stderr:")
             taskrunner.log(result.stderr)
 
         taskrunner.log("Extracting text")
-        text = extract_text_from_pdf(ofilename)
-        taskrunner.log("Extracted text!")
+        text = read_file_to_string(ofilename)
+        taskrunner.log("Extracted text: " + text)
 
         taskrunner.write_output_dict_with_timeout({"response": text})
 
