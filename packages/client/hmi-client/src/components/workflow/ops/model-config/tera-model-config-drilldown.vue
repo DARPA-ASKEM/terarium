@@ -774,20 +774,20 @@ const debounceUpdateState = debounce(() => {
 }, 100);
 
 watch(
+	() => knobs.value,
+	async () => {
+		debounceUpdateState();
+	},
+	{ deep: true }
+);
+
+watch(
 	() => props.node.state.modelConfigTaskIds,
 	(oldValue, newValue) => {
 		if (!isEqual(oldValue, newValue)) {
 			fetchConfigurations();
 		}
 	}
-);
-
-watch(
-	() => knobs.value,
-	async () => {
-		debounceUpdateState();
-	},
-	{ deep: true }
 );
 
 onMounted(async () => {
