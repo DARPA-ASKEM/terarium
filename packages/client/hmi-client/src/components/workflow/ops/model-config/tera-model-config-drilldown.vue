@@ -509,8 +509,6 @@ const extractConfigurationsFromInputs = async () => {
 	});
 
 	emit('update-state', state);
-
-	isExtracting.value = false;
 };
 
 const configIds = computed(() => props.node.outputs.map((output) => output.value?.[0]));
@@ -787,9 +785,11 @@ watch(
 
 watch(
 	() => props.node.state.modelConfigTaskIds,
-	(oldValue, newValue) => {
+	async (oldValue, newValue) => {
 		if (!isEqual(oldValue, newValue)) {
-			fetchConfigurations();
+			console.log('modelConfigTaskIds changed');
+			await fetchConfigurations();
+			isExtracting.value = false;
 		}
 	}
 );
