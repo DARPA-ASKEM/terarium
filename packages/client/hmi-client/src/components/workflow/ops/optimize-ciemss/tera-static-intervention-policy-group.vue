@@ -175,10 +175,10 @@ const isOptimizationTypeParamValueAndStartTime = computed(
 	() => knobs.value.optimizationType === OptimizationInterventionObjective.paramValueAndStartTime
 );
 const showStartTimeOptions = computed(
-	() => isOptimizationTypeStartTime.value || isOptimizationTypeParamValueAndStartTime
+	() => isOptimizationTypeStartTime.value || isOptimizationTypeParamValueAndStartTime.value
 );
 const showNewValueOptions = computed(
-	() => isOptimizationTypeParamValue.value || isOptimizationTypeParamValueAndStartTime
+	() => isOptimizationTypeParamValue.value || isOptimizationTypeParamValueAndStartTime.value
 );
 
 watch(
