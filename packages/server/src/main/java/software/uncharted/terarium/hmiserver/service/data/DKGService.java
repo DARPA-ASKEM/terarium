@@ -37,7 +37,7 @@ public class DKGService {
 	 * @param page page number
 	 * @param pageSize page size
 	 * @param k number of nearest neighbors
-	 * @param text text to search
+	 * @param texts text to search
 	 * @param source source config
 	 * @return list of DKG entities
 	 * @throws IOException
@@ -50,10 +50,10 @@ public class DKGService {
 		final Integer page,
 		final Integer pageSize,
 		final Integer k,
-		final String text,
+		final List<String> texts,
 		final SourceConfig source
 	) throws IOException, ExecutionException, InterruptedException, TimeoutException {
-		SearchResponse<DKG> results = knnSearchDKG(elasticConfig.getEpiDKGIndex(), page, pageSize, k, text, source);
+		SearchResponse<DKG> results = knnSearchDKG(elasticConfig.getEpiDKGIndex(), page, pageSize, k, texts, source);
 		return results != null ? results.hits().hits().stream().map(Hit::source).collect(Collectors.toList()) : null;
 	}
 
@@ -62,7 +62,7 @@ public class DKGService {
 	 * @param page page number
 	 * @param pageSize page size
 	 * @param k number of nearest neighbors
-	 * @param text text to search
+	 * @param texts text to search
 	 * @param source source config
 	 * @return list of DKG entities
 	 * @throws IOException
@@ -75,10 +75,10 @@ public class DKGService {
 		final Integer page,
 		final Integer pageSize,
 		final Integer k,
-		final String text,
+		final List<String> texts,
 		final SourceConfig source
 	) throws IOException, ExecutionException, InterruptedException, TimeoutException {
-		SearchResponse<DKG> results = knnSearchDKG(elasticConfig.getClimateDKGIndex(), page, pageSize, k, text, source);
+		SearchResponse<DKG> results = knnSearchDKG(elasticConfig.getClimateDKGIndex(), page, pageSize, k, texts, source);
 		return results != null ? results.hits().hits().stream().map(Hit::source).collect(Collectors.toList()) : null;
 	}
 
@@ -143,15 +143,15 @@ public class DKGService {
 		final Integer page,
 		final Integer pageSize,
 		final Integer k,
-		final String text,
+		final List<String> texts,
 		final SourceConfig source
 	) throws IOException, ExecutionException, InterruptedException, TimeoutException {
 		if (k > pageSize) {
 			return null; //error case
 		}
 		KnnQuery knn = null;
-		if (text != null && !text.isEmpty()) {
-			final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
+		if (texts != null && !texts.isEmpty()) {
+			final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(texts);
 
 			final List<Float> vector = Arrays.stream(embeddings.getEmbeddings().get(0).getVector())
 				.mapToObj(d -> (float) d)

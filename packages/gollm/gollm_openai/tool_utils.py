@@ -387,6 +387,17 @@ def generate_response(instruction: str, response_format: ResponseFormat | None =
     return output.choices[0].message.content
 
 
+def bulk_embedding_chain(texts: List[str]) -> List:
+    print("Creating embeddings for texts...")
+    client = OpenAI()
+    response = client.embeddings.create(
+        model="text-embedding-ada-002",
+        input=texts
+    )
+    embeddings = [item['embedding'] for item in response['data']]
+    return embeddings
+
+
 def embedding_chain(text: str) -> List:
     print("Creating embeddings for text: {}".format(text[:100]))
     client = OpenAI()
