@@ -153,7 +153,7 @@ const optionsMenuPt = {
 };
 
 async function updateModelName(name: string) {
-	if (!temporaryModel.value || isEmpty(name)) return;
+	if (!temporaryModel.value) return;
 	temporaryModel.value.header.name = name;
 	onSave();
 }

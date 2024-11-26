@@ -206,7 +206,7 @@ async function updateDatasetContent() {
 }
 
 function updateDatasetName(name: string) {
-	if (!transientDataset.value || isEmpty(name)) return;
+	if (!transientDataset.value) return;
 	transientDataset.value.name = name;
 	updateDatasetContent();
 }
