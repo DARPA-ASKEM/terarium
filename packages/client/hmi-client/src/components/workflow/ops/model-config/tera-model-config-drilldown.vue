@@ -513,6 +513,7 @@ const extractConfigurationsFromInputs = async () => {
 	isExtracting.value = false;
 };
 
+const configIds = computed(() => props.node.outputs.map((output) => output.value?.[0]));
 const selectedConfigId = computed(() => props.node.outputs.find(({ id }) => id === props.node.active)?.value?.[0]);
 
 const documentIds = computed(() =>
@@ -586,29 +587,14 @@ const createConfiguration = async () => {
 		logger.error('Failed to create model configuration');
 		return;
 	}
-
-	const state = cloneDeep(props.node.state);
 	useToastService().success('', 'Created model configuration');
-	emit('append-output', {
-		type: ModelConfigOperation.outputs[0].type,
-		label: data.name,
-		value: data.id,
-		isSelected: false,
-		state: omit(state, ['transientModelConfig'])
-	});
+	appendOutput(data);
 };
 
-const onSaveAsModelConfiguration = (data: ModelConfiguration) => {
-	modelConfigurations.value.push(data); // Add to list of configurations (no need to call fetchConfigurations again)
+const onSaveAsModelConfiguration = (config: ModelConfiguration) => {
+	modelConfigurations.value.push(config); // Add to list of configurations (no need to call fetchConfigurations again)
 	useToastService().success('', 'Created model configuration');
-	const state = cloneDeep(props.node.state);
-	emit('append-output', {
-		type: ModelConfigOperation.outputs[0].type,
-		label: data.name,
-		value: data.id,
-		isSelected: false,
-		state: omit(state, ['transientModelConfig'])
-	});
+	appendOutput(config);
 	showSaveModal.value = false;
 };
 
@@ -725,30 +711,33 @@ const onSelectConfiguration = async (config: ModelConfiguration) => {
 	});
 };
 
+function appendOutput(config: ModelConfiguration) {
+	const state = cloneDeep(props.node.state);
+	emit('append-output', {
+		type: ModelConfigOperation.outputs[0].type,
+		label: config.name,
+		value: config.id,
+		isSelected: false,
+		state: omit(state, ['transientModelConfig'])
+	});
+}
+
 const applyConfigValues = (config: ModelConfiguration) => {
-	// Update output port:
 	if (!config.id) {
 		logger.error('Model configuration not found');
 		return;
 	}
-	const listOfConfigIds: string[] = props.node.outputs.map((output) => output.value?.[0]);
-	// Check if this output already exists
-	if (listOfConfigIds.includes(config.id)) {
-		// Select the existing output
-		const output = props.node.outputs.find((ele) => ele.value?.[0] === config.id);
-		emit('select-output', output?.id);
+	// If this output already exists select it
+	if (configIds.value.includes(config.id)) {
+		const outputId = props.node.outputs.find((ele) => ele.value?.[0] === config.id)?.id;
+		if (!outputId) {
+			logger.error('Output not found');
+			return;
+		}
+		emit('select-output', outputId);
 	}
-	// If the output does not already exist
-	else {
-		const state = cloneDeep(props.node.state);
-		emit('append-output', {
-			type: ModelConfigOperation.outputs[0].type,
-			label: config.name,
-			value: config.id,
-			isSelected: false,
-			state: omit(state, ['transientModelConfig'])
-		});
-	}
+	// If the output does not already exist append it
+	else appendOutput(config);
 };
 
 const onEditDescription = async () => {
