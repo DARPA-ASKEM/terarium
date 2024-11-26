@@ -599,6 +599,7 @@ const createConfiguration = async () => {
 };
 
 const onSaveAsModelConfiguration = (data: ModelConfiguration) => {
+	modelConfigurations.value.push(data); // Add to list of configurations (no need to call fetchConfigurations again)
 	useToastService().success('', 'Created model configuration');
 	const state = cloneDeep(props.node.state);
 	emit('append-output', {
@@ -623,7 +624,7 @@ const onSaveConfiguration = async () => {
 	useProjects().refresh();
 	fetchConfigurations();
 
-	// Sync with original config to disable the Save button
+	// Sync with original config so changes are recognized as saved in UI
 	originalConfig.name = data.name;
 	originalConfig.description = data.description;
 
