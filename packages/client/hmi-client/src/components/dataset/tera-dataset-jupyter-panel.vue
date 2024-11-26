@@ -68,6 +68,7 @@
 					:model-value="selectedLanguage"
 					placeholder="Select a language"
 					:options="languages"
+					option-disabled="disabled"
 					option-label="name"
 					option-value="value"
 					class="language-dropdown"
