@@ -369,6 +369,22 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendTextExtractionRequest() throws Exception {
+		final ClassPathResource resource = new ClassPathResource("equation/SIDARTHE paper.pdf");
+		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
+
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.TEXT_EXTRACTION);
+		req.setScript(ExtractTextResponseHandler.NAME);
+		req.setInput(content);
+
+		final TaskResponse resp = taskService.runTaskSync(req);
+
+		log.info(new String(resp.getOutput()));
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCacheSuccess() throws Exception {
 		final int TIMEOUT_SECONDS = 20;
 

@@ -14,6 +14,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.models.simulationservice.interventions.InterventionPolicy;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission;
@@ -30,6 +31,7 @@ public class TerariumAssetServices {
 	private final ModelService modelService;
 	private final WorkflowService workflowService;
 	private final InterventionService interventionService;
+	private final SimulationService simulationService;
 
 	/**
 	 * Get the service for a given asset type
@@ -48,6 +50,7 @@ public class TerariumAssetServices {
 			case MODEL -> modelService;
 			case WORKFLOW -> workflowService;
 			case INTERVENTION_POLICY -> interventionService;
+			case SIMULATION -> simulationService;
 			default -> throw new IllegalArgumentException("Invalid asset type: " + type);
 		};
 	}
@@ -75,6 +78,8 @@ public class TerariumAssetServices {
 				return workflowService.updateAsset((Workflow) asset, projectId, permission);
 			case INTERVENTION_POLICY:
 				return interventionService.updateAsset((InterventionPolicy) asset, projectId, permission);
+			case SIMULATION:
+				return simulationService.updateAsset((Simulation) asset, projectId, permission);
 			default:
 				throw new IllegalArgumentException("Invalid asset type: " + type);
 		}

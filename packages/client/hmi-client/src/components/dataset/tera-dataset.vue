@@ -3,23 +3,12 @@
 		show-table-of-contents
 		:id="assetId"
 		:is-loading="isDatasetLoading"
-		:is-naming-asset="isRenaming"
-		:name="dataset?.name"
 		:overflow-hidden="selectedTabIndex === 1"
 		:selected-tab-index="selectedTabIndex"
 		@tab-change="(e) => (selectedTabIndex = e.index)"
+		:name="dataset?.name"
+		@rename="updateDatasetName"
 	>
-		<template #name-input>
-			<tera-input-text
-				v-if="isRenaming"
-				v-model.lazy="newName"
-				placeholder="Dataset name"
-				@keyup.enter="updateDatasetName"
-				@keyup.esc="updateDatasetName"
-				auto-focus
-			/>
-			<Button v-if="isRenaming" icon="pi pi-check" rounded text @click="updateDatasetName" />
-		</template>
 		<template #edit-buttons>
 			<Button
 				icon="pi pi-ellipsis-v"
@@ -57,7 +46,6 @@
 				<tera-column-info
 					v-for="(column, index) in columnInformation"
 					:key="index"
-					class="column-info"
 					:column="column"
 					@update-column="updateColumn(index, $event.key, $event.value)"
 				/>
@@ -85,7 +73,6 @@ import { AssetType, type CsvAsset, type Dataset, PresignedURL } from '@/types/Ty
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { DatasetSource } from '@/types/Dataset';
 import { useProjects } from '@/composables/project';
-import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import ContextMenu from 'primevue/contextmenu';
 import Accordion from 'primevue/accordion';
@@ -111,8 +98,6 @@ const props = defineProps({
 const currentActiveIndexes = ref([1, 2, 3, 4]);
 const dataset = ref<Dataset | null>(null);
 const transientDataset = ref<Dataset | null>(null);
-const newName = ref('');
-const isRenaming = ref(false);
 const showSaveModal = ref(false);
 const rawContent = ref<CsvAsset | null>(null);
 const isDatasetLoading = ref(false);
@@ -125,14 +110,6 @@ const optionsMenuPt = {
 	}
 };
 const optionsMenuItems = ref<any[]>([
-	{
-		icon: 'pi pi-pencil',
-		label: 'Rename',
-		command() {
-			isRenaming.value = true;
-			newName.value = dataset.value?.name ?? '';
-		}
-	},
 	{
 		icon: 'pi pi-download',
 		label: 'Download',
@@ -228,12 +205,10 @@ async function updateDatasetContent() {
 	await fetchDataset();
 }
 
-async function updateDatasetName() {
-	if (transientDataset.value && !isEmpty(newName.value)) {
-		transientDataset.value.name = newName.value;
-		await updateDatasetContent();
-	}
-	isRenaming.value = false;
+function updateDatasetName(name: string) {
+	if (!transientDataset.value) return;
+	transientDataset.value.name = name;
+	updateDatasetContent();
 }
 
 function reset() {
@@ -289,7 +264,6 @@ onMounted(async () => {
 watch(
 	() => props.assetId,
 	async () => {
-		isRenaming.value = false;
 		if (props.assetId) {
 			// Empty the dataset and rawContent so previous data is not shown
 			dataset.value = null;
