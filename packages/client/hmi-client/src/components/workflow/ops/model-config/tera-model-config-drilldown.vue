@@ -613,7 +613,7 @@ const onSaveAsModelConfiguration = (data: ModelConfiguration) => {
 };
 
 const onSaveConfiguration = async () => {
-	if (!model.value || isSaveDisabled.value || !originalConfig) return;
+	if (isSaveDisabled.value || !originalConfig) return;
 	const modelConfig = cloneDeep(knobs.value.transientModelConfig);
 
 	const data = await updateModelConfiguration(modelConfig);
