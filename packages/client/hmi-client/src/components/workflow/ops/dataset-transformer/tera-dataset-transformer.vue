@@ -49,7 +49,6 @@ import type { NotebookSession } from '@/types/Types';
 import { cloneDeep } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { useProjects } from '@/composables/project';
