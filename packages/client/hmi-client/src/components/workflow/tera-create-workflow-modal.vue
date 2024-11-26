@@ -7,13 +7,9 @@
 			<div class="grid">
 				<aside class="flex flex-column col-3">
 					<label class="p-text-secondary pb-2">Select a template</label>
-					<div v-for="scenario in scenarios" :key="scenario.class.templateId" class="flex align-items-center py-1">
-						<RadioButton
-							:inputId="scenario.class.templateId"
-							:value="scenario.class.templateId"
-							v-model="selectedTemplateId"
-						/>
-						<label class="pl-2" :for="scenario.class.templateId">{{ scenario.class.templateName }}</label>
+					<div v-for="scenario in scenarios" :key="scenario.id" class="flex align-items-center py-1">
+						<RadioButton :inputId="scenario.id" :value="scenario.id" v-model="selectedTemplateId" />
+						<label class="pl-2" :for="scenario.id">{{ scenario.displayName }}</label>
 					</div>
 				</aside>
 				<main class="col-9 flex flex-column gap-3 p-3">
@@ -58,7 +54,6 @@ interface ScenarioItem {
 	id: string;
 	instance: BaseScenario;
 	component: Component;
-	class: typeof BaseScenario;
 }
 const scenarioComponent = ref();
 const scenarios = ref<ScenarioItem[]>([
@@ -66,22 +61,19 @@ const scenarios = ref<ScenarioItem[]>([
 		displayName: BlankCanvasScenario.templateName,
 		id: BlankCanvasScenario.templateId,
 		instance: new BlankCanvasScenario(),
-		component: markRaw(TeraBlankCanvasTemplate),
-		class: BlankCanvasScenario
+		component: markRaw(TeraBlankCanvasTemplate)
 	},
 	{
 		displayName: SituationalAwarenessScenario.templateName,
 		id: SituationalAwarenessScenario.templateId,
 		instance: new SituationalAwarenessScenario(),
-		component: markRaw(TeraSituationalAwarenessTemplate),
-		class: SituationalAwarenessScenario
+		component: markRaw(TeraSituationalAwarenessTemplate)
 	},
 	{
 		displayName: SensitivityAnalysisScenario.templateName,
 		id: SensitivityAnalysisScenario.templateId,
 		instance: new SensitivityAnalysisScenario(),
-		component: markRaw(TeraSensitivityAnalysisTemplate),
-		class: SensitivityAnalysisScenario
+		component: markRaw(TeraSensitivityAnalysisTemplate)
 	}
 ]);
 
