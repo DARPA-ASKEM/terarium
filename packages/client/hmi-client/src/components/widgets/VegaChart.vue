@@ -222,7 +222,7 @@ watch([vegaContainer, () => props.visualizationSpec], async ([, newSpec], [, old
 	const spec = deepToRaw(props.visualizationSpec);
 
 	if (interactive.value === false) {
-		console.log('render png');
+		// console.log('render png');
 		const shadowContainer = document.createElement('div');
 		const viz = await embed(
 			shadowContainer,
@@ -235,9 +235,13 @@ watch([vegaContainer, () => props.visualizationSpec], async ([, newSpec], [, old
 		);
 		const dataURL = await viz.view.toImageURL('png');
 		imageDataURL.value = dataURL;
+
+		// dispose
+		viz.finalize();
+
 		emit('done-render');
 	} else {
-		console.log('render interactive');
+		// console.log('render interactive');
 		if (!vegaContainer.value) return;
 		vegaVisualization.value = await createVegaVisualization(vegaContainer.value, spec, props.config, {
 			actions: props.areEmbedActionsVisible,
