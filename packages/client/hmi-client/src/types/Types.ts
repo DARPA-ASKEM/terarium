@@ -680,6 +680,7 @@ export interface TaskResponse {
     stdout: string;
     stderr: string;
     requestSHA256: string;
+    routingKey: string;
 }
 
 export interface Annotation {

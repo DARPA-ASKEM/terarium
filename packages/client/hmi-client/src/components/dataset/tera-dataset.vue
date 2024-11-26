@@ -57,7 +57,6 @@
 				<tera-column-info
 					v-for="(column, index) in columnInformation"
 					:key="index"
-					class="column-info"
 					:column="column"
 					@update-column="updateColumn(index, $event.key, $event.value)"
 				/>
