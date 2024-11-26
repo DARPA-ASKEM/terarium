@@ -1,5 +1,5 @@
 <template>
-	<tera-scenario-template :scenario-class="SituationalAwarenessScenario" :scenario-instance="scenario">
+	<tera-scenario-template :scenario-class="SensitivityAnalysisScenario" :scenario-instance="scenario">
 		<template #inputs>
 			<label>Select a model</label>
 			<Dropdown
@@ -10,37 +10,6 @@
 				placeholder="Select a model"
 				@update:model-value="scenario.setModelSpec($event)"
 			/>
-
-			<label>Select a dataset</label>
-			<Dropdown
-				:model-value="scenario.datasetSpec.id"
-				:options="datasets"
-				option-label="assetName"
-				option-value="assetId"
-				placeholder="Select a dataset"
-				@update:model-value="scenario.setDatasetSpec($event)"
-			/>
-
-			<!-- TODO: adding intervention policies -->
-			<!-- <label>Select an intervention policy (historical)</label>
-			<Dropdown
-			:model-value="scenario.historicalInterventionSpec.id"
-			placeholder="Optional"
-			:options="interventionPolicies"
-			option-label="name"
-			option-value="id"
-			@update:model-value="scenario.setHistoricalInterventionSpec($event)"
-			:disabled="isEmpty(interventionPolicies) || isFetchingModelInformation" />
-
-			<label>Select an intervention policy (known future)</label>
-			<Dropdown
-			:model-value="scenario.futureInterventionSpec.id"
-			placeholder="Optional"
-			:options="interventionPolicies"
-			option-label="name"
-			option-value="id"
-			@update:model-value="scenario.setFutureInterventionSpec($event)"
-			:disabled="isEmpty(interventionPolicies) || isFetchingModelInformation" /> -->
 
 			<label>Select configuration representing best and generous estimates of the initial conditions</label>
 			<Dropdown
@@ -53,12 +22,11 @@
 				:disabled="isEmpty(modelConfigurations) || isFetchingModelInformation"
 			/>
 		</template>
-
 		<template #outputs>
 			<label>Select an output metric</label>
 			<MultiSelect
 				:disabled="isEmpty(modelStateOptions) || isFetchingModelInformation"
-				:model-value="scenario.calibrateSpec.ids"
+				:model-value="scenario.simulateSpec.ids"
 				placeholder="Select output metrics"
 				option-label="name"
 				option-value="id"
@@ -66,33 +34,33 @@
 				@update:model-value="scenario.setCalibrateSpec($event)"
 				filter
 			/>
-			<img :src="calibrate" alt="Calibrate chart" />
+			<img :src="simulate" alt="Simulate chart" />
 		</template>
 	</tera-scenario-template>
 </template>
 
 <script setup lang="ts">
-import Dropdown from 'primevue/dropdown';
-import { computed, ref, watch } from 'vue';
+import { SensitivityAnalysisScenario } from '@/components/workflow/scenario-templates/sensitivity-analysis/sensitivity-analysis-scenario';
 import { useProjects } from '@/composables/project';
-import { AssetType, InterventionPolicy, ModelConfiguration } from '@/types/Types';
-import { getInterventionPoliciesForModel, getModel, getModelConfigurationsForModel } from '@/services/model';
+import { getModel, getModelConfigurationsForModel } from '@/services/model';
+import { AssetType, ModelConfiguration } from '@/types/Types';
 import { isEmpty } from 'lodash';
+import { computed, ref, watch } from 'vue';
+import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
-import calibrate from '@/assets/svg/template-images/calibration-thumbnail.svg';
-import { SituationalAwarenessScenario } from './situational-awareness-scenario';
+import simulate from '@/assets/svg/template-images/calibration-thumbnail.svg';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
+
+// FIXME: need an image for this scenario, reusing the calivration image for now
 
 const isFetchingModelInformation = ref(false);
 const models = computed(() => useProjects().getActiveProjectAssets(AssetType.Model));
-const datasets = computed(() => useProjects().getActiveProjectAssets(AssetType.Dataset));
 
 const modelConfigurations = ref<ModelConfiguration[]>([]);
-const interventionPolicies = ref<InterventionPolicy[]>([]);
 const modelStateOptions = ref<any[]>([]);
 
 const props = defineProps<{
-	scenario: SituationalAwarenessScenario;
+	scenario: SensitivityAnalysisScenario;
 }>();
 
 watch(
@@ -103,7 +71,6 @@ watch(
 		const model = await getModel(modelId);
 		if (!model) return;
 		modelConfigurations.value = await getModelConfigurationsForModel(modelId);
-		interventionPolicies.value = await getInterventionPoliciesForModel(modelId);
 
 		// Set the first model configuration as the default
 		if (!isEmpty(modelConfigurations.value)) {

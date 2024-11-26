@@ -2,41 +2,31 @@ import { BaseScenario } from '@/components/workflow/scenario-templates/base-scen
 import * as workflowService from '@/services/workflow';
 import { operation as ModelOp } from '@/components/workflow/ops/model/mod';
 import { operation as ModelConfigOp } from '@/components/workflow/ops/model-config/mod';
-import { operation as CalibrateCiemssOp } from '@/components/workflow/ops/calibrate-ciemss/mod';
-import { operation as DatasetOp } from '@/components/workflow/ops/dataset/mod';
+import { operation as SimulateCiemssOp } from '@/components/workflow/ops/simulate-ciemss/mod';
 import { OperatorNodeSize } from '@/services/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import _ from 'lodash';
 import { ChartSetting, ChartSettingType } from '@/types/common';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 
-export class SituationalAwarenessScenario extends BaseScenario {
-	public static templateId = 'situational-awareness';
+export class SensitivityAnalysisScenario extends BaseScenario {
+	public static templateId = 'sensitivity-analysis';
 
-	public static templateName = 'Situational Awareness';
+	public static templateName = 'Sensitivity Analysis';
 
 	public static header = {
-		title: "What's likely to happen next?",
+		title: 'Which parameters introduce the most uncertainty?',
 		description:
-			'Calibrates the model to historical data to obtain the best estimate of parameters for the present, then forecasts into the near future.'
+			'Configure the model with parameter distributions that reflect all the sources of uncertainty, then simulate into the near future.'
 	};
 
-	public static examples = [
-		'Anticipate the arrival of a new variants.',
-		'Evaluate the potential impact of growing vaccine hesitancy and declining NPIs.'
-	];
+	public static examples = ['Unknown severity of new variant.', 'Unknown speed of waning immunity.'];
 
 	modelSpec: { id: string };
 
-	datasetSpec: { id: string };
-
 	modelConfigSpec: { id: string };
 
-	calibrateSpec: { ids: string[] };
-
-	historicalInterventionSpec: { id: string };
-
-	futureInterventionSpec: { id: string };
+	simulateSpec: { ids: string[] };
 
 	constructor() {
 		super();
@@ -44,68 +34,40 @@ export class SituationalAwarenessScenario extends BaseScenario {
 		this.modelSpec = {
 			id: ''
 		};
-		this.datasetSpec = {
-			id: ''
-		};
 		this.modelConfigSpec = {
 			id: ''
 		};
-		this.calibrateSpec = {
+		this.simulateSpec = {
 			ids: []
-		};
-		this.historicalInterventionSpec = {
-			id: ''
-		};
-		this.futureInterventionSpec = {
-			id: ''
 		};
 	}
 
 	setModelSpec(id: string) {
 		this.modelSpec.id = id;
 		this.modelConfigSpec.id = '';
-		this.calibrateSpec.ids = [];
-	}
-
-	setDatasetSpec(id: string) {
-		this.datasetSpec.id = id;
+		this.simulateSpec.ids = [];
 	}
 
 	setModelConfigSpec(id: string) {
 		this.modelConfigSpec.id = id;
 	}
 
-	setHistoricalInterventionSpec(id: string) {
-		this.historicalInterventionSpec.id = id;
-	}
-
-	setFutureInterventionSpec(id: string) {
-		this.futureInterventionSpec.id = id;
-	}
-
 	setCalibrateSpec(ids: string[]) {
-		this.calibrateSpec.ids = ids;
+		this.simulateSpec.ids = ids;
 	}
 
 	toJSON() {
 		return {
-			templateId: SituationalAwarenessScenario.templateId,
+			templateId: SensitivityAnalysisScenario.templateId,
 			workflowName: this.workflowName,
 			modelSpec: this.modelSpec,
-			datasetSpec: this.datasetSpec,
 			modelConfigSpec: this.modelConfigSpec,
-			calibrateSpec: this.calibrateSpec
+			simulateSpec: this.simulateSpec
 		};
 	}
 
 	isValid(): boolean {
-		return (
-			!!this.workflowName &&
-			!!this.modelSpec.id &&
-			!!this.datasetSpec.id &&
-			!!this.modelConfigSpec.id &&
-			!_.isEmpty(this.calibrateSpec.ids)
-		);
+		return !!this.workflowName && !!this.modelSpec.id && !!this.modelConfigSpec.id && !_.isEmpty(this.simulateSpec.ids);
 	}
 
 	async createWorkflow() {
@@ -122,14 +84,6 @@ export class SituationalAwarenessScenario extends BaseScenario {
 			}
 		);
 
-		const datasetNode = wf.addNode(
-			DatasetOp,
-			{ x: 0, y: 0 },
-			{
-				size: OperatorNodeSize.medium
-			}
-		);
-
 		const modelConfig = await getModelConfigurationById(this.modelConfigSpec.id);
 		const modelConfigNode = wf.addNode(
 			ModelConfigOp,
@@ -138,8 +92,8 @@ export class SituationalAwarenessScenario extends BaseScenario {
 				size: OperatorNodeSize.medium
 			}
 		);
-		const calibrateNode = wf.addNode(
-			CalibrateCiemssOp,
+		const simulateNode = wf.addNode(
+			SimulateCiemssOp,
 			{ x: 0, y: 0 },
 			{
 				size: OperatorNodeSize.medium
@@ -151,11 +105,7 @@ export class SituationalAwarenessScenario extends BaseScenario {
 			{ x: 0, y: 0 },
 			{ x: 0, y: 0 }
 		]);
-		wf.addEdge(modelConfigNode.id, modelConfigNode.outputs[0].id, calibrateNode.id, calibrateNode.inputs[0].id, [
-			{ x: 0, y: 0 },
-			{ x: 0, y: 0 }
-		]);
-		wf.addEdge(datasetNode.id, datasetNode.outputs[0].id, calibrateNode.id, calibrateNode.inputs[1].id, [
+		wf.addEdge(modelConfigNode.id, modelConfigNode.outputs[0].id, simulateNode.id, simulateNode.inputs[0].id, [
 			{ x: 0, y: 0 },
 			{ x: 0, y: 0 }
 		]);
@@ -170,15 +120,6 @@ export class SituationalAwarenessScenario extends BaseScenario {
 			}
 		});
 
-		wf.updateNode(datasetNode, {
-			state: {
-				datasetId: this.datasetSpec.id
-			},
-			output: {
-				value: [this.datasetSpec.id]
-			}
-		});
-
 		wf.updateNode(modelConfigNode, {
 			state: {
 				transientModelConfig: modelConfig
@@ -189,16 +130,16 @@ export class SituationalAwarenessScenario extends BaseScenario {
 			}
 		});
 
-		let calibrateChartSettings: ChartSetting[] = [];
-		calibrateChartSettings = updateChartSettingsBySelectedVariables(
-			calibrateChartSettings,
+		let simulateChartSettings: ChartSetting[] = [];
+		simulateChartSettings = updateChartSettingsBySelectedVariables(
+			simulateChartSettings,
 			ChartSettingType.VARIABLE,
-			this.calibrateSpec.ids
+			this.simulateSpec.ids
 		);
 
-		wf.updateNode(calibrateNode, {
+		wf.updateNode(simulateNode, {
 			state: {
-				chartSettings: calibrateChartSettings
+				chartSettings: simulateChartSettings
 			}
 		});
 
