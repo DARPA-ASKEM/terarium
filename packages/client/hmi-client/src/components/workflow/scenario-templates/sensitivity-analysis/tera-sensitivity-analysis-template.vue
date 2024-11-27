@@ -1,5 +1,5 @@
 <template>
-	<tera-scenario-template :scenario-class="SensitivityAnalysisScenario" :scenario-instance="scenario">
+	<tera-scenario-template :header="header" :scenario-instance="scenario">
 		<template #inputs>
 			<label>Select a model</label>
 			<Dropdown
@@ -49,8 +49,15 @@ import { computed, ref, watch } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
+import { ScenarioHeader } from '../base-scenario';
 
-// FIXME: need an image for this scenario, reusing the calivration image for now
+const header: ScenarioHeader = Object.freeze({
+	title: 'Sensitivity Analysis Template',
+	question: 'Which parameters introduces the most uncertainty in the outcomes of interest?',
+	description:
+		'Configure the model with parameter distributions that reflect all the sources of uncertainty, then simulate into the near future.',
+	examples: ['Unknown severity of new variant.', 'Unknown speed of waning immunity.']
+});
 
 const isFetchingModelInformation = ref(false);
 const models = computed(() => useProjects().getActiveProjectAssets(AssetType.Model));

@@ -1,5 +1,5 @@
 <template>
-	<tera-scenario-template ref="blankTemplate" :scenario-class="BlankCanvasScenario" :scenario-instance="scenario" />
+	<tera-scenario-template ref="blankTemplate" :header="header" :scenario-instance="scenario" />
 	<img :src="blankCanvas" alt="Blank canvas template" />
 </template>
 
@@ -7,7 +7,11 @@
 import blankCanvas from '@/assets/svg/template-images/blank-canvas-thumbnail.svg';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
 import { BlankCanvasScenario } from './blank-canvas-scenario';
+import { ScenarioHeader } from '../base-scenario';
 
+const header: ScenarioHeader = Object.freeze({
+	title: 'Blank Canvas Template'
+});
 defineProps<{
 	scenario: BlankCanvasScenario;
 }>();

@@ -1,5 +1,5 @@
 <template>
-	<tera-scenario-template :scenario-class="SituationalAwarenessScenario" :scenario-instance="scenario">
+	<tera-scenario-template :header="header" :scenario-instance="scenario">
 		<template #inputs>
 			<label>Select a model</label>
 			<Dropdown
@@ -82,6 +82,18 @@ import MultiSelect from 'primevue/multiselect';
 import calibrate from '@/assets/svg/template-images/calibration-thumbnail.svg';
 import { SituationalAwarenessScenario } from './situational-awareness-scenario';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
+import { ScenarioHeader } from '../base-scenario';
+
+const header: ScenarioHeader = Object.freeze({
+	title: 'Situational Awareness Template',
+	question: "What's likely to happen next?",
+	description:
+		'Calibrates the model to historical data to obtain the best estimate of parameters for the present, then forecasts into the near future.',
+	examples: [
+		'Anticipate the arrival of a new variants.',
+		'Evaluate the potential impact of growing vaccine hesitancy and declining NPIs.'
+	]
+});
 
 const isFetchingModelInformation = ref(false);
 const models = computed(() => useProjects().getActiveProjectAssets(AssetType.Model));

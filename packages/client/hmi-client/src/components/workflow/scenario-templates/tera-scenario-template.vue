@@ -1,17 +1,17 @@
 <template>
-	<h4 class="pb-3">{{ scenarioClass.header.title }}</h4>
+	<h4 class="pb-3">{{ header.title }}</h4>
 
-	<template v-if="scenarioClass.header.question && scenarioClass.header.description">
-		<h5>{{ scenarioClass.header.question }}</h5>
+	<template v-if="header.question && header.description">
+		<h5>{{ header.question }}</h5>
 		<p class="pt-2 pb-3">
-			{{ scenarioClass.header.description }}
+			{{ header.description }}
 		</p>
 	</template>
 
-	<template v-if="!_.isEmpty(scenarioClass.header.examples)">
+	<template v-if="!_.isEmpty(header.examples)">
 		<h6>Examples</h6>
 		<ul class="examples">
-			<li v-for="example in scenarioClass.header.examples" :key="example">{{ example }}</li>
+			<li v-for="example in header.examples" :key="example">{{ example }}</li>
 		</ul>
 	</template>
 
@@ -40,12 +40,12 @@
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import _ from 'lodash';
 import { useSlots } from 'vue';
-import { BaseScenario } from './base-scenario';
+import { BaseScenario, ScenarioHeader } from './base-scenario';
 
 const slots = useSlots();
 
 defineProps<{
-	scenarioClass: typeof BaseScenario;
+	header: ScenarioHeader;
 	scenarioInstance: BaseScenario;
 }>();
 </script>

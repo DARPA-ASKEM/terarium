@@ -1,6 +1,6 @@
 import { Workflow } from '@/types/workflow';
 
-interface ScenarioHeader {
+export interface ScenarioHeader {
 	title: string;
 	question?: string;
 	description?: string;
@@ -10,12 +10,6 @@ export abstract class BaseScenario {
 	public static templateId: string = '';
 
 	public static templateName: string = '';
-
-	public static header: ScenarioHeader = {
-		title: ''
-	};
-
-	public static examples: string[] = [];
 
 	workflowName: string;
 
