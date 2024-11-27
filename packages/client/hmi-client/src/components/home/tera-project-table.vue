@@ -6,7 +6,7 @@
 		scrollable
 		scrollHeight="45rem"
 		paginator
-		:rows="5"
+		:rows="numberOfRows"
 		@page="getProjectAssets"
 	>
 		<Column
@@ -22,14 +22,14 @@
 					{{ Math.round((data.metadata?.score ?? 0) * 100) + '%' }}
 				</template>
 				<template v-if="col.field === 'name'">
-					<a class="project-title-link" @click.stop="emit('open-project', data.id)">
-						{{ data.name }}
-					</a>
+					<a @click.stop="emit('open-project', data.id)">{{ data.name }}</a>
 					<ul>
 						<li
 							v-for="(asset, index) in projectsWithKnnMatches.find(({ id }) => id === data.id)?.projectAssets"
+							class="flex align-center gap-2"
 							:key="index"
 						>
+							<tera-asset-icon :assetType="asset.assetType" />
 							<span v-html="highlight(asset.assetName, searchQuery)" />
 						</li>
 					</ul>
@@ -85,17 +85,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { isEmpty } from 'lodash';
+import { ref, watch } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import { formatDdMmmYyyy } from '@/utils/date';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
-import { Project } from '@/types/Types';
+import { AssetType, Project } from '@/types/Types';
 import type { PageState } from 'primevue/paginator';
 import * as ProjectService from '@/services/project';
 import { highlight } from '@/utils/text';
 import TeraProjectMenu from './tera-project-menu.vue';
+import TeraAssetIcon from '../widgets/tera-asset-icon.vue';
 
 const props = defineProps<{
 	projects: Project[];
@@ -106,6 +108,8 @@ const props = defineProps<{
 const emit = defineEmits(['open-project']);
 
 const projectsWithKnnMatches = ref<Project[]>([]);
+const numberOfRows = ref(5);
+let pageState: PageState = { page: 0, rows: numberOfRows.value, first: 0 };
 
 function formatStat(data, key) {
 	const stat = data?.[key];
@@ -129,22 +133,40 @@ function getColumnWidth(columnField: string) {
 	}
 }
 
-function getProjectAssets(event: PageState = { page: 0, rows: 5, first: 0 } as PageState) {
-	const { page, rows } = event;
-	props.projects.slice(page * rows, (page + 1) * rows).forEach(async ({ id }) => {
-		const project = await ProjectService.get(id);
-		if (!project) return;
-		projectsWithKnnMatches.value.push(project);
-	});
-}
+async function getProjectAssets(event: PageState = pageState) {
+	pageState = event;
 
-onMounted(() => {
-	getProjectAssets();
-});
+	if (isEmpty(props.searchQuery)) {
+		projectsWithKnnMatches.value = [];
+		return;
+	}
+
+	const { page, rows } = event;
+
+	projectsWithKnnMatches.value = (
+		await Promise.all(
+			props.projects.slice(page * rows, (page + 1) * rows).map(async ({ id }) => {
+				const project = await ProjectService.get(id);
+				if (!project) return null;
+				project.projectAssets = project.projectAssets.filter(
+					(asset) =>
+						asset.assetName.toLowerCase().includes(props.searchQuery.toLowerCase().trim()) ||
+						asset.assetType === AssetType.Simulation // Simulations don't have names
+				);
+				return project;
+			})
+		)
+	).filter(Boolean) as Project[];
+
+	console.log(props.searchQuery.toLowerCase().trim());
+}
 
 watch(
 	() => props.searchQuery,
-	() => getProjectAssets()
+	() => {
+		getProjectAssets();
+	},
+	{ immediate: true }
 );
 </script>
 
@@ -162,6 +184,22 @@ watch(
 	gap: 0.1rem;
 	align-items: center;
 	width: 2.4rem;
+}
+
+.p-datatable:deep(ul) {
+	margin-top: var(--gap-4);
+	color: var(--text-color-primary);
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-2);
+	font-size: var(--font-caption);
+}
+
+.p-datatable:deep(li > span) {
+	text-overflow: ellipsis;
+	display: block;
+	overflow: hidden;
+	width: 14rem;
 }
 
 .p-datatable:deep(.highlight) {
@@ -182,7 +220,7 @@ watch(
 }
 
 .p-datatable:deep(.p-datatable-thead > tr > th) {
-	padding: 1rem 0.5rem;
+	padding-left: var(--gap-5);
 	background-color: var(--surface-ground);
 }
 
@@ -191,8 +229,8 @@ watch(
 }
 
 .p-datatable:deep(.p-datatable-tbody > tr > td) {
+	padding-left: var(--gap-5);
 	color: var(--text-color-secondary);
-	padding: 0.5rem;
 	max-width: 32rem;
 }
 
@@ -211,7 +249,10 @@ watch(
 .p-datatable:deep(.p-datatable-tbody > tr > td > a) {
 	color: var(--text-color-primary);
 	font-weight: var(--font-weight-semibold);
-	cursor: pointer;
+	text-overflow: ellipsis;
+	display: block;
+	overflow: hidden;
+	width: 15rem;
 }
 
 .p-datatable:deep(.p-datatable-tbody > tr > td > a:hover) {
