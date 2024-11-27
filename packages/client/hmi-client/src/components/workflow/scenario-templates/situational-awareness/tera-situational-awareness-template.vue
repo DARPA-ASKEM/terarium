@@ -8,14 +8,19 @@
 	</div>
 	<div>
 		<h6>Examples</h6>
-		<ul>
-			<li>Some example</li>
+		<ul class="pl-5">
+			<li>Anticipate the arrival of new variants.</li>
+			<li>Evaluate the potential impact of growing vaccine hesitancy and declining NPIs.</li>
 		</ul>
 	</div>
 
 	<div>
 		<label>What would you like to call this workflow?</label>
-		<tera-input-text :model-value="scenario.workflowName" @update:model-value="scenario.setWorkflowName($event)" />
+		<tera-input-text
+			:model-value="scenario.workflowName"
+			@update:model-value="scenario.setWorkflowName($event)"
+			auto-focus
+		/>
 	</div>
 
 	<div class="grid">
@@ -41,11 +46,26 @@
 				@update:model-value="scenario.setDatasetSpec($event)"
 			/>
 
-			<label>Select an intervention policy (historical)</label>
-			<Dropdown placeholder="Optional" :disabled="isEmpty(interventionPolicies) || isFetchingModelInformation" />
+			<!-- TODO: adding intervention policies -->
+			<!-- <label>Select an intervention policy (historical)</label>
+			<Dropdown
+			:model-value="scenario.historicalInterventionSpec.id"
+			placeholder="Optional"
+			:options="interventionPolicies"
+			option-label="name"
+			option-value="id"
+			@update:model-value="scenario.setHistoricalInterventionSpec($event)"
+			:disabled="isEmpty(interventionPolicies) || isFetchingModelInformation" />
 
 			<label>Select an intervention policy (known future)</label>
-			<Dropdown placeholder="Optional" :disabled="isEmpty(interventionPolicies) || isFetchingModelInformation" />
+			<Dropdown
+			:model-value="scenario.futureInterventionSpec.id"
+			placeholder="Optional"
+			:options="interventionPolicies"
+			option-label="name"
+			option-value="id"
+			@update:model-value="scenario.setFutureInterventionSpec($event)"
+			:disabled="isEmpty(interventionPolicies) || isFetchingModelInformation" /> -->
 
 			<label>Select configuration representing best and generous estimates of the initial conditions</label>
 			<Dropdown
@@ -71,6 +91,7 @@
 				@update:model-value="scenario.setCalibrateSpec($event)"
 				filter
 			/>
+			<img :src="calibrate" alt="Calibrate chart" />
 		</div>
 	</div>
 </template>
@@ -84,6 +105,7 @@ import { getInterventionPoliciesForModel, getModel, getModelConfigurationsForMod
 import { isEmpty } from 'lodash';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import MultiSelect from 'primevue/multiselect';
+import calibrate from '@/assets/svg/template-images/calibration-thumbnail.svg';
 import { SituationalAwarenessScenario } from './situational-awareness-scenario';
 
 const isFetchingModelInformation = ref(false);
@@ -107,6 +129,11 @@ watch(
 		if (!model) return;
 		modelConfigurations.value = await getModelConfigurationsForModel(modelId);
 		interventionPolicies.value = await getInterventionPoliciesForModel(modelId);
+
+		// Set the first model configuration as the default
+		if (!isEmpty(modelConfigurations.value)) {
+			props.scenario.setModelConfigSpec(modelConfigurations.value[0].id!);
+		}
 
 		const modelOptions: any[] = model.model.states;
 

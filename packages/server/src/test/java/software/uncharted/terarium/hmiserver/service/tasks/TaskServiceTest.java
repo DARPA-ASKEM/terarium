@@ -143,7 +143,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		req.setType(TaskType.GOLLM);
 		req.setScript("gollm:embedding");
 		req.setInput(
-			("{\"text\":\"What kind of dinosaur is the coolest?\",\"embedding_model\":\"text-embedding-ada-002\"}").getBytes()
+			("{\"text\": [\"What kind of dinosaur is the coolest?\"],\"embedding_model\":\"text-embedding-ada-002\"}").getBytes()
 		);
 
 		final AdditionalProps add = new AdditionalProps();
@@ -361,6 +361,22 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		req.setType(TaskType.MIRA);
 		req.setScript("mira_task:latex_to_sympy");
 		req.setInput("\\frac{a}{b} + c".getBytes());
+
+		final TaskResponse resp = taskService.runTaskSync(req);
+
+		log.info(new String(resp.getOutput()));
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendTextExtractionRequest() throws Exception {
+		final ClassPathResource resource = new ClassPathResource("equation/SIDARTHE paper.pdf");
+		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
+
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.TEXT_EXTRACTION);
+		req.setScript(ExtractTextResponseHandler.NAME);
+		req.setInput(content);
 
 		final TaskResponse resp = taskService.runTaskSync(req);
 

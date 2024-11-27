@@ -27,10 +27,10 @@
 						}}</strong>
 					</template>
 				</p>
-				<p v-if="showNewValueOptions && staticInterventions.length === 1">
+				<p v-if="isOptimizationTypeParamValue && staticInterventions.length === 1">
 					at the start time <strong>{{ staticInterventions[0].timestep }}</strong>
 				</p>
-				<p v-else-if="showStartTimeOptions && staticInterventions.length === 1">
+				<p v-else-if="isOptimizationTypeStartTime && staticInterventions.length === 1">
 					when the value is <strong>{{ staticInterventions[0].value }}</strong>
 				</p>
 			</section>
@@ -39,7 +39,7 @@
 					<p>
 						The objective is the
 						<template v-if="showNewValueOptions">
-							<span>value closet to the</span>
+							<span>value closest to the</span>
 							<Dropdown
 								class="toolbar-button ml-1 mr-1"
 								v-model="knobs.objectiveFunctionOption"
@@ -165,15 +165,20 @@ const knobs = ref<InterventionPolicyGroupForm>({
 	...props.config
 });
 
+const isOptimizationTypeStartTime = computed(
+	() => knobs.value.optimizationType === OptimizationInterventionObjective.startTime
+);
+const isOptimizationTypeParamValue = computed(
+	() => knobs.value.optimizationType === OptimizationInterventionObjective.paramValue
+);
+const isOptimizationTypeParamValueAndStartTime = computed(
+	() => knobs.value.optimizationType === OptimizationInterventionObjective.paramValueAndStartTime
+);
 const showStartTimeOptions = computed(
-	() =>
-		knobs.value.optimizationType === OptimizationInterventionObjective.startTime ||
-		knobs.value.optimizationType === OptimizationInterventionObjective.paramValueAndStartTime
+	() => isOptimizationTypeStartTime.value || isOptimizationTypeParamValueAndStartTime.value
 );
 const showNewValueOptions = computed(
-	() =>
-		knobs.value.optimizationType === OptimizationInterventionObjective.paramValue ||
-		knobs.value.optimizationType === OptimizationInterventionObjective.paramValueAndStartTime
+	() => isOptimizationTypeParamValue.value || isOptimizationTypeParamValueAndStartTime.value
 );
 
 watch(

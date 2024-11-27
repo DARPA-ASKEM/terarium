@@ -509,10 +509,11 @@ const {
 	modelConfiguration,
 	preparedChartInputs,
 	chartSize,
-	computed(() => interventionPolicy.value?.interventions ?? [])
+	computed(() => interventionPolicy.value?.interventions ?? []),
+	null
 );
 const interventionCharts = useInterventionCharts(selectedInterventionSettings, true);
-const variableCharts = useVariableCharts(selectedVariableSettings, null, null);
+const variableCharts = useVariableCharts(selectedVariableSettings, null);
 const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
 
 const updateState = () => {
@@ -578,7 +579,7 @@ const lazyLoadSimulationData = async (outputRunId: string) => {
 		getRunResultCSV(forecastId, 'result_summary.csv')
 	]);
 	pyciemssMap.value = parsePyCiemssMap(result[0]);
-	rawContent.value[outputRunId] = convertToCsvAsset(result, Object.values(pyciemssMap));
+	rawContent.value[outputRunId] = convertToCsvAsset(result, Object.values(pyciemssMap.value));
 
 	// Forecast results without the interventions
 	const baseForecastId = props.node.state.baseForecastId;

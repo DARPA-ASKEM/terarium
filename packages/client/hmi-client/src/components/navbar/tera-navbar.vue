@@ -27,12 +27,13 @@
 				size="small"
 				severity="primary"
 				@click="stopEvaluationScenario"
+				class="shadow-2"
 			/>
 			<Button v-else label="Start" rounded size="small" severity="primary" @click="beginEvaluationScenario" />
 		</aside>
 		<template v-if="active">
 			<a target="_blank" rel="noopener noreferrer" @click="isAboutModalVisible = true">About</a>
-			<a target="_blank" rel="noopener noreferrer" :href="documentationUrl">Documentation</a>
+			<a target="_blank" rel="noopener noreferrer" :href="documentationUrl">Help</a>
 			<tera-notification-panel />
 
 			<Avatar :label="userInitials" class="avatar m-2" shape="circle" @click="showUserMenu" />
@@ -73,7 +74,7 @@
 						@change="onScenarioChange"
 					/>
 
-					<label class="text-sm" for="evaluation-scenario-task">Task</label>
+					<label class="text-sm mt-3" for="evaluation-scenario-task">Task</label>
 					<Dropdown
 						id="evaluation-scenario-task"
 						:options="evaluationScenario?.questions ?? []"
@@ -83,7 +84,7 @@
 						@change="onTaskChange"
 					/>
 
-					<label class="text-sm" for="evaluation-scenario-description">Description</label>
+					<label class="text-sm mt-3" for="evaluation-scenario-description">Description</label>
 					<Textarea
 						id="evaluation-scenario-description"
 						rows="5"
@@ -96,7 +97,7 @@
 
 					<div class="field-checkbox">
 						<Checkbox name="multipleUsers" binary v-model="evaluationScenarioMultipleUsers" />
-						<label for="multipleUsers">Multiple Users</label>
+						<label for="multipleUsers">Multiple users</label>
 					</div>
 				</form>
 			</template>
@@ -128,16 +129,20 @@
 		>
 			<article>
 				<img src="@/assets/svg/terarium-logo.svg" alt="Terarium logo" class="about-terarium-logo" />
-				<p class="text-2xl line-height-3 about-top-line">
+				<p class="text-lg line-height-3 about-top-line">
 					Terarium is a comprehensive <span class="underlined">modeling</span> and
 					<span class="underlined">simulation</span> platform designed to help researchers and analysts:
 				</p>
-				<p class="about-middle"><span class="pi pi-search about-bullet"></span>Find models in academic literature</p>
-				<p class="about-middle"><span class="pi pi-sliders-h about-bullet"></span>Parameterize and calibrate them</p>
+				<p class="about-middle">
+					<span class="pi pi-search about-bullet"></span>Extract models from academic literature
+				</p>
+				<p class="about-middle">
+					<span class="pi pi-sliders-h about-bullet"></span>Calibrate them with real world data
+				</p>
 				<p class="about-middle">
 					<span class="pi pi-cog about-bullet"></span>Run simulations to test a variety of scenarios, and
 				</p>
-				<p class="about-middle"><span class="pi pi-chart-line about-bullet"></span>Analyze the results.</p>
+				<p class="about-middle"><span class="pi pi-chart-line about-bullet"></span>Compare the results.</p>
 			</article>
 			<article class="about-uncharted-section">
 				<img
@@ -379,7 +384,7 @@ const userMenuItems = ref([
 		}
 	},
 	{
-		label: 'User Administration',
+		label: 'User administration',
 		command: () => {
 			router.push(RoutePath.UserAdmin);
 		},
@@ -553,7 +558,7 @@ nav {
 	border-radius: 50%;
 }
 .about-middle {
-	font-size: 1.25rem;
+	font-size: 1rem;
 	display: flex;
 	align-items: center;
 }
@@ -574,6 +579,7 @@ nav {
 	margin-right: auto;
 	align-items: center;
 	gap: var(--gap-4);
+	box-shadow: inset 0px 0px 5px var(--surface-border-light);
 
 	.evaluation-scenario-widget-timer {
 		font-feature-settings: 'tnum';
@@ -585,7 +591,7 @@ nav {
 	margin-bottom: 0.5rem;
 }
 .about-bottom-line {
-	color: var(--text-color-subdued);
+	color: var(--text-color);
 }
 
 .modal-footer {
@@ -609,5 +615,10 @@ nav {
 	font-size: var(--font-body-small);
 	color: var(--text-color-primary);
 	margin-bottom: 0;
+	display: flex;
+	align-items: center;
+	& > label {
+		margin-bottom: 0px !important;
+	}
 }
 </style>

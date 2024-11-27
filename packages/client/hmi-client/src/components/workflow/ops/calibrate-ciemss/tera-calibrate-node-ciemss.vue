@@ -160,10 +160,11 @@ const { useInterventionCharts, useVariableCharts } = useCharts(
 	modelConfiguration,
 	preparedChartInputs,
 	toRef(chartSize),
-	computed(() => interventionPolicy.value?.interventions ?? [])
+	computed(() => interventionPolicy.value?.interventions ?? []),
+	selectedOutputMapping
 );
 const interventionCharts = useInterventionCharts(selectedInterventionSettings);
-const variableCharts = useVariableCharts(selectedVariableSettings, groundTruth, selectedOutputMapping);
+const variableCharts = useVariableCharts(selectedVariableSettings, groundTruth);
 
 const poller = new Poller();
 const pollResult = async (runId: string) => {

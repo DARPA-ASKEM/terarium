@@ -497,6 +497,37 @@ export class WorkflowWrapper {
 	}
 
 	/**
+	 * Sets the state and/or output for a given workflow node.
+	 *
+	 * @param {WorkflowNode<any>} node - The workflow node to set options for.
+	 * @param {Object} options - The options to set for the node.
+	 * @param {any} [options.state] - The state to set for the node.
+	 * @param {any} [options.outputValue] - The output value to set for the node.
+	 */
+	updateNode(
+		node: WorkflowNode<any>,
+		options: {
+			state: any;
+			output?: Partial<WorkflowOutput<any>>;
+		}
+	) {
+		// set state and statuses as invalid initially
+		node.status = OperatorStatus.INVALID;
+		node.state = Object.assign(node.state, options.state);
+		const outputPort = node.outputs[0];
+		outputPort.operatorStatus = node.status;
+
+		// if there is an output set the output port and set statuses to success
+		if (!_.isEmpty(options.output)) {
+			node.active = outputPort.id;
+			node.status = OperatorStatus.SUCCESS;
+			outputPort.operatorStatus = node.status;
+			Object.assign(outputPort, options.output);
+			this.selectOutput(node, outputPort.id);
+		}
+	}
+
+	/**
 	 * Updates the operator's state using the data from a specified WorkflowOutput. If the operator's
 	 * current state was not previously stored as a WorkflowOutput, this function first saves the current state
 	 * as a new WorkflowOutput. It then replaces the operator's existing state with the data from the specified WorkflowOutput.
@@ -870,10 +901,6 @@ export function cascadeInvalidateDownstream(
 ///
 // Operator
 ///
-
-export function getActiveOutput(node: WorkflowNode<any>) {
-	return node.outputs.find((o) => o.id === node.active);
-}
 
 /**
  * Update the output of a node referenced by the output id

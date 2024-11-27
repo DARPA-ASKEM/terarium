@@ -188,7 +188,16 @@ export enum ChartSettingType {
 	INTERVENTION = 'intervention'
 }
 
-export interface ChartSetting {
+export type ChartSetting = ChartSettingBase | ChartSettingEnsembleVariable;
+
+export interface ChartSettingEnsembleVariable extends ChartSettingBase {
+	type: ChartSettingType.VARIABLE_ENSEMBLE;
+	showIndividualModels: boolean;
+	relativeToEnsemble: boolean;
+	showIndividualModelsWithWeight?: boolean;
+}
+
+export interface ChartSettingBase {
 	id: string;
 	name: string;
 	selectedVariables: string[];
@@ -208,12 +217,13 @@ export const ProgrammingLanguageVersion: { [key in ProgrammingLanguage]: string 
  * The `Zip` programming language is excluded from the options.
  * @returns {Array} An array of options for programming languages.
  */
-export const programmingLanguageOptions = (): { name: string; value: string }[] =>
+export const programmingLanguageOptions = (): { name: string; value: string; disabled: boolean }[] =>
 	Object.values(ProgrammingLanguage)
 		.filter((lang) => lang !== ProgrammingLanguage.Zip)
 		.map((lang) => ({
 			name: lang && `${lang[0].toUpperCase() + lang.slice(1)} (${ProgrammingLanguageVersion[lang]})`,
-			value: ProgrammingLanguageVersion[lang]
+			value: ProgrammingLanguageVersion[lang],
+			disabled: lang === ProgrammingLanguage.Julia
 		}));
 
 export enum CalendarDateType {

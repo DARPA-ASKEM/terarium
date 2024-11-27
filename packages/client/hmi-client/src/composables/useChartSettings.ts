@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue';
-import { ChartSetting, ChartSettingType } from '@/types/common';
+import { ChartSetting, ChartSettingEnsembleVariable, ChartSettingType } from '@/types/common';
 import {
 	addMultiVariableChartSetting,
 	removeChartSettingById,
@@ -33,8 +33,11 @@ export function useChartSettings(
 	const selectedVariableSettings = computed(() =>
 		chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE)
 	);
-	const selectedEnsembleVariableSettings = computed(() =>
-		chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE_ENSEMBLE)
+	const selectedEnsembleVariableSettings = computed(
+		() =>
+			chartSettings.value.filter(
+				(setting) => setting.type === ChartSettingType.VARIABLE_ENSEMBLE
+			) as ChartSettingEnsembleVariable[]
 	);
 	const selectedErrorVariableSettings = computed(() =>
 		chartSettings.value.filter((setting) => setting.type === ChartSettingType.ERROR_DISTRIBUTION)

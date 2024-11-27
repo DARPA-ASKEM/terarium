@@ -288,7 +288,6 @@ const confirmReset = () => {
 This will reset the kernel back to its starting state, but keep all of your prompts and code cells.
 The code cells will need to be rerun.`,
 		header: 'Confirmation',
-		icon: 'pi pi-exclamation-triangle',
 		accept: () => {
 			resetKernel();
 		}

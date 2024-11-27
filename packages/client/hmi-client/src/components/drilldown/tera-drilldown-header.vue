@@ -12,7 +12,7 @@
 			<div class="actions">
 				<slot name="actions" />
 			</div>
-			<a v-if="documentationUrl" :href="documentationUrl" rel="noopener noreferrer">Documentation</a>
+			<a v-if="documentationUrl" :href="documentationUrl" rel="noopener noreferrer">Help</a>
 		</div>
 	</header>
 </template>
@@ -83,12 +83,18 @@ header .tabs-row:deep(.p-tabview .p-tabview-panels) {
 }
 
 a {
-	height: 2.75rem;
 	display: flex;
 	align-items: center;
 	color: var(--primary-color);
 	margin-left: auto;
 	margin-right: var(--gap-4);
+	margin-bottom: 2px;
+	font-size: var(--font-caption);
+	padding: var(--gap-3);
+	border-radius: var(--border-radius-medium);
+}
+a:hover {
+	background-color: rgba(27, 128, 115, 0.04);
 }
 
 :deep(.p-tabview-header:not(.p-highlight) .p-tabview-nav-link) {

@@ -41,7 +41,7 @@ class EquationsFromImage(BaseModel):
 
 
 class EmbeddingModel(BaseModel):
-    text: str
+    text: List[str]
     embedding_model: str
 
     @root_validator(pre=False, skip_on_failure=True)

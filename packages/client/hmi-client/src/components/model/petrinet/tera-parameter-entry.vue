@@ -27,7 +27,7 @@
 			</span>
 		</div>
 		<template v-else-if="!featureConfig?.isPreview">
-			<main>
+			<main class="flex align-items-center">
 				<span class="flex gap-2">
 					<Dropdown
 						:model-value="getParameterDistribution(modelConfiguration, parameterId).type"
@@ -194,7 +194,7 @@ function formatPayloadFromTypeChange(type: DistributionType) {
 	return distribution;
 }
 
-const getOtherValuesLabel = computed(() => `Other Values(${otherValueList.value?.length})`);
+const getOtherValuesLabel = computed(() => `Other values (${otherValueList.value?.length})`);
 
 function isParameterInputEmpty(parameter) {
 	if (parameter.type === DistributionType.Constant) {
