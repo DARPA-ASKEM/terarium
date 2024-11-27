@@ -394,7 +394,11 @@ def bulk_embedding_chain(texts: List[str]) -> List:
         model="text-embedding-ada-002",
         input=texts
     )
-    embeddings = [item['embedding'] for item in response['data']]
+
+    embeddings = []
+    for item in response.data:
+        embeddings.append(item.embedding)
+
     return embeddings
 
 
