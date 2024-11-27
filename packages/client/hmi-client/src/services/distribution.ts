@@ -6,8 +6,8 @@
 export enum DistributionType {
 	Constant = 'Constant',
 	Uniform = 'StandardUniform1',
-	StandardNormal1 = 'StandardNormal1'
-	// Normal1 = 'Normal1',
+	StandardNormal1 = 'StandardNormal1',
+	Normal1 = 'Normal1'
 	// Normal2 = 'Normal2',
 	// Normal3 = 'Normal3',
 	// LogNormal1 = 'LogNormal1',
@@ -49,19 +49,22 @@ export enum DistributionType {
 export const DistributionInputOptions = {
 	[DistributionType.Constant]: ['value'],
 	[DistributionType.Uniform]: ['minimum', 'maximum'],
-	[DistributionType.StandardNormal1]: ['mean', 'stdev']
+	[DistributionType.StandardNormal1]: ['mean', 'stdev'],
+	[DistributionType.Normal1]: ['mean', 'stdev']
 };
 
 export const DistributionInputLabels = {
 	[DistributionType.Constant]: ['Constant'],
 	[DistributionType.Uniform]: ['Min', 'Max'],
-	[DistributionType.StandardNormal1]: ['mean', 'stdev']
+	[DistributionType.StandardNormal1]: ['mean', 'stdev'],
+	[DistributionType.Normal1]: ['mean', 'stdev']
 };
 
 export const DistributionTypeLabel: { [key in DistributionType]: string } = {
 	[DistributionType.Constant]: 'Constant',
 	[DistributionType.Uniform]: 'Uniform',
-	[DistributionType.StandardNormal1]: 'Standard'
+	[DistributionType.StandardNormal1]: 'Standard',
+	[DistributionType.Normal1]: 'Normal 1'
 };
 
 export const distributionTypeOptions = (): { name: string; value: string }[] =>
@@ -69,3 +72,18 @@ export const distributionTypeOptions = (): { name: string; value: string }[] =>
 		name: DistributionTypeLabel[dist],
 		value: dist
 	}));
+
+export const distributionDescription = {
+	[DistributionType.Constant]: 'Constants description',
+	[DistributionType.Uniform]:
+		'The uniform distribution represents a range of equally likely values between a minimum and maximum.',
+	[DistributionType.StandardNormal1]: 'StandardNormal1 description',
+	[DistributionType.Normal1]: 'Normal1 description'
+};
+
+export const distributionParamDescription = {
+	minimum: 'Lower bound of the interval',
+	maximum: 'Upper bound of the interval',
+	mean: 'mean',
+	stdev: 'stdev'
+};
