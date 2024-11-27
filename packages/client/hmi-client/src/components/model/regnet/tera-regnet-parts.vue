@@ -23,11 +23,9 @@
 			</DataTable>
 		</AccordionTab>
 		<AccordionTab header="Parameters">
-			<tera-parameters
+			<tera-model-part
 				v-if="!isEmpty(mmt.parameters)"
-				:model="model"
-				:mmt="mmt"
-				:mmt-params="mmtParams"
+				:items="mmt.parameters"
 				:feature-config="featureConfig"
 				@update-parameter="emit('update-parameter', $event)"
 			/>
@@ -44,7 +42,6 @@ import { computed, ref } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import type { MiraModel, MiraTemplateParams, ObservableSummary } from '@/model-representation/mira/mira-common';
-import TeraParameters from '@/components/model/model-parts/tera-parameters.vue';
 import type { FeatureConfig } from '@/types/common';
 
 const props = defineProps<{
