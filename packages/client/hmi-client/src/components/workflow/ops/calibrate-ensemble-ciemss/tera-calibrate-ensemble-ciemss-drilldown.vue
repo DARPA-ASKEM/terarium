@@ -190,11 +190,12 @@
 		</section>
 		<template #preview>
 			<tera-drilldown-section>
-				<section class="pb-3" ref="outputPanel">
+				<section class="pb-3">
 					<Accordion multiple :active-index="[0, 1]" class="px-2">
 						<!-- <AccordionTab header="Summary">
 						</AccordionTab> -->
 						<AccordionTab header="Loss">
+							<div ref="chartWidthDiv"></div>
 							<vega-chart
 								v-if="!_.isEmpty(lossValues)"
 								expandable
@@ -205,13 +206,16 @@
 						</AccordionTab>
 						<template v-if="!isRunInProgress">
 							<AccordionTab header="Ensemble variables over time">
-								<template v-for="setting of selectedEnsembleVariableSettings" :key="setting.id">
+								<div ref="outputPanel"></div>
+								<div class="flex flex-row" v-for="setting of selectedEnsembleVariableSettings" :key="setting.id">
 									<vega-chart
+										v-for="(spec, index) of ensembleVariableCharts[setting.id]"
+										:key="index"
 										expandable
 										:are-embed-actions-visible="true"
-										:visualization-spec="ensembleVariableCharts[setting.id]"
+										:visualization-spec="spec"
 									/>
-								</template>
+								</div>
 							</AccordionTab>
 						</template>
 					</Accordion>
@@ -253,6 +257,7 @@
 							@open="activeChartSettings = $event"
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
+							@toggle-ensemble-variable-setting-option="updateEnsembleVariableSettingOption"
 						/>
 						<Divider />
 					</div>
@@ -310,7 +315,7 @@ import { getDataset } from '@/services/dataset';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { ChartSettingType, CiemssPresetTypes, DrilldownTabs } from '@/types/common';
-import { ChartData, useCharts } from '@/composables/useCharts';
+import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
 import { deleteAnnotation } from '@/services/chart-settings';
 import { DataArray } from '@/utils/stats';
@@ -326,7 +331,8 @@ import {
 	getLossValuesFromSimulation,
 	formatCalibrateModelConfigurations,
 	getSelectedOutputEnsembleMapping,
-	fetchOutputData
+	fetchOutputData,
+	buildChartData
 } from './calibrate-ensemble-util';
 
 const props = defineProps<{
@@ -531,25 +537,28 @@ onMounted(async () => {
 });
 
 // -------------- Charts && chart settings ----------------
-const outputPanel = ref(null);
+const chartWidthDiv = ref(null);
 const isOutputSettingsPanelOpen = ref(false);
-const chartData = ref<ChartData | null>(null);
+const outputData = ref<{ result: DataArray; resultSummary: DataArray; pyciemssMap: Record<string, string> } | null>(
+	null
+);
 const groundTruthData = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
-const chartSize = useDrilldownChartSize(outputPanel);
+const chartSize = useDrilldownChartSize(chartWidthDiv);
 const selectedOutputMapping = computed(() => getSelectedOutputEnsembleMapping(props.node));
 const {
 	activeChartSettings,
 	chartSettings,
 	removeChartSettings,
 	updateChartSettings,
-	selectedEnsembleVariableSettings
+	selectedEnsembleVariableSettings,
+	updateEnsembleVariableSettingOption
 } = useChartSettings(props, emit);
 
 const { generateAnnotation, getChartAnnotationsByChartId, useEnsembleVariableCharts } = useCharts(
 	props.node.id,
 	null,
-	null,
-	chartData,
+	allModelConfigurations,
+	computed(() => buildChartData(outputData.value, selectedOutputMapping.value)),
 	chartSize,
 	null,
 	selectedOutputMapping
@@ -579,8 +588,7 @@ watch(
 			lossChartSpec.value = updateLossChartSpec(lossValues.value, chartSize.value);
 
 			// Fetch output data and prepare chart data
-			const data = await fetchOutputData(state.preForecastId, state.postForecastId);
-			chartData.value = data ? { ...data, translationMap: {} } : null;
+			outputData.value = await fetchOutputData(state.preForecastId, state.postForecastId);
 		}
 	},
 	{ immediate: true }

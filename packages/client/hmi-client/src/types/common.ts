@@ -190,8 +190,11 @@ export enum ChartSettingType {
 
 export type ChartSetting = ChartSettingBase | ChartSettingEnsembleVariable;
 
-export interface ChartSettingEnsembleVariable extends ChartSettingBase {
+export interface ChartSettingEnsembleVariable extends ChartSettingBase, ChartSettingEnsembleVariableOptions {
 	type: ChartSettingType.VARIABLE_ENSEMBLE;
+}
+
+export interface ChartSettingEnsembleVariableOptions {
 	showIndividualModels: boolean;
 	relativeToEnsemble: boolean;
 	showIndividualModelsWithWeight?: boolean;
