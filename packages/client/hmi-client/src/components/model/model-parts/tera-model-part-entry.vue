@@ -3,12 +3,12 @@
 		<span class="flex align-items-center gap-3">
 			<h6>{{ symbol }}</h6>
 			<span class="name">
-				<template v-if="featureConfig.isPreview">{{ item.name }}</template>
+				<template v-if="featureConfig.isPreview">{{ nameText }}</template>
 				<tera-input-text
 					v-else
 					placeholder="Add a name"
-					v-model="name"
-					@change="$emit('update-item', { key: 'name', value: name })"
+					v-model="nameText"
+					@change="$emit('update-item', { key: 'name', value: nameText })"
 				/>
 			</span>
 			<span class="unit">
@@ -18,7 +18,7 @@
 				</template>
 				<!--amr_to_mmt doesn't like unit expressions with spaces, removing them here before they are saved to the amr-->
 				<template v-else-if="showUnit">
-					<template v-if="featureConfig.isPreview"><label>Unit</label>{{ item.unitExpression }}</template>
+					<template v-if="featureConfig.isPreview"><label>Unit</label>{{ unitExpression }}</template>
 					<!-- we use a dropdown for units with time semantic-->
 					<Dropdown
 						v-else-if="isTimePart"
@@ -47,7 +47,7 @@
 			<span v-if="!featureConfig.isPreview" class="flex ml-auto gap-3">
 				<!-- Three states of description buttons: Hide / Show / Add description -->
 				<Button
-					v-if="(item.description && showDescription) || (!item.description && showDescription)"
+					v-if="(descriptionText && showDescription) || (!descriptionText && showDescription)"
 					text
 					size="small"
 					label="Hide description"
@@ -57,7 +57,7 @@
 					v-else-if="!showDescription"
 					text
 					size="small"
-					:label="item.description ? 'Show description' : 'Add description'"
+					:label="descriptionText ? 'Show description' : 'Add description'"
 					@click="showDescription = true"
 				/>
 				<span v-if="showConcept" class="concept">
@@ -85,12 +85,12 @@
 			:throw-on-error="false"
 		/>
 		<span class="description">
-			<template v-if="featureConfig.isPreview">{{ item.description }}</template>
+			<template v-if="featureConfig.isPreview">{{ descriptionText }}</template>
 			<tera-input-text
 				v-if="showDescription"
 				placeholder="Add a description"
-				v-model="description"
-				@change="$emit('update-item', { key: 'description', value: description })"
+				v-model="descriptionText"
+				@change="$emit('update-item', { key: 'description', value: descriptionText })"
 			/>
 		</span>
 	</section>
@@ -111,22 +111,27 @@ import { CalendarDateType } from '@/types/common';
 
 const props = defineProps<{
 	item: ModelPartItem;
+	description?: string;
+	name?: string;
+	unitExpression?: string;
+	templateId?: string;
+	id?: string;
 	featureConfig: FeatureConfig;
 	isTimePart?: boolean;
 }>();
 
 const emit = defineEmits(['update-item']);
 
-const name = ref(props.item.name);
-const unitExpression = ref(props.item.unitExpression);
-const description = ref(props.item.description);
+const nameText = ref(props.name);
+const unitExpression = ref(props.unitExpression);
+const descriptionText = ref(props.description);
 const query = ref('');
 const results = ref<DKG[]>([]);
 
-const symbol = computed(() => (props.item.templateId ? `${props.item.templateId}, ${props.item.id}` : props.item.id));
+const symbol = computed(() => (props.templateId ? `${props.templateId}, ${props.id}` : props.id));
 
 // If we are in preview mode and there is no content, show nothing
-const showUnit = computed(() => !(props.featureConfig.isPreview && !props.item.unitExpression));
+const showUnit = computed(() => !(props.featureConfig.isPreview && !unitExpression.value));
 const showConcept = computed(() => !(props.featureConfig.isPreview && !query.value));
 
 // Used if an option isn't selected from the Autocomplete suggestions but is typed in regularly
@@ -153,13 +158,14 @@ watch(
 );
 
 watch(
-	() => description.value,
-	async (newDescription) => {
+	() => props.item.description,
+	(newDescription) => {
 		showDescription.value = !!newDescription;
-	}
+		descriptionText.value = newDescription;
+	},
+	{ deep: true }
 );
-
-const showDescription = ref(!!props.item.description);
+const showDescription = ref(!!descriptionText.value);
 </script>
 
 <style scoped>
