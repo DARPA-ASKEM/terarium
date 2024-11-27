@@ -12,7 +12,7 @@
 						<label class="pl-2" :for="scenario.id">{{ scenario.displayName }}</label>
 					</div>
 				</aside>
-				<main class="col-9 flex flex-column gap-3 p-3">
+				<main class="col-9 flex flex-column">
 					<component
 						v-if="getScenario()"
 						ref="scenarioComponent"
@@ -109,7 +109,7 @@ onMounted(() => {
 	/* HACK: wait for the modal to be fully rendered before focusing the input,
 	it seems that the auto-focus on tera-input-text does not play nicely on the initial render of the modal */
 	nextTick(() => {
-		scenarioComponent.value.$refs.nameInput?.focusInput();
+		scenarioComponent.value.$refs.blankTemplate?.$refs.nameInput?.focusInput();
 	});
 });
 const getScenario = () => scenarios.value.find((s) => s.id === selectedTemplateId.value) as ScenarioItem;

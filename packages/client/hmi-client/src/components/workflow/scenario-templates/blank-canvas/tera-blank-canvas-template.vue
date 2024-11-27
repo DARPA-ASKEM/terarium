@@ -1,5 +1,5 @@
 <template>
-	<tera-scenario-template :scenario-class="BlankCanvasScenario" :scenario-instance="scenario" />
+	<tera-scenario-template ref="blankTemplate" :scenario-class="BlankCanvasScenario" :scenario-instance="scenario" />
 	<img :src="blankCanvas" alt="Blank canvas template" />
 </template>
 

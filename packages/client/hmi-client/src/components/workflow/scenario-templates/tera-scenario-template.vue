@@ -1,37 +1,35 @@
 <template>
-	<div v-if="scenarioClass.header.title && scenarioClass.header.description">
-		<h5>{{ scenarioClass.header.title }}</h5>
-		<p>
-			{{ scenarioClass.header.description }}
-		</p>
-	</div>
-	<div v-if="!_.isEmpty(scenarioClass.examples)">
-		<h6>Examples</h6>
-		<ul class="pl-5">
+	<h5>{{ scenarioClass.header.title }}</h5>
+	<p class="pt-2">
+		{{ scenarioClass.header.description }}
+	</p>
+
+	<template v-if="!_.isEmpty(scenarioClass.examples)">
+		<h6 class="pt-3">Examples</h6>
+		<ul class="examples">
 			<li v-for="example in scenarioClass.examples" :key="example">{{ example }}</li>
 		</ul>
-	</div>
+	</template>
 
-	<div>
-		<label>What would you like to call this workflow?</label>
-		<tera-input-text
-			:model-value="scenarioInstance.workflowName"
-			@update:model-value="scenarioInstance.setWorkflowName($event)"
-			auto-focus
-		/>
-	</div>
+	<label class="pt-3 pb-2">What would you like to call this workflow?</label>
+	<tera-input-text
+		ref="nameInput"
+		:model-value="scenarioInstance.workflowName"
+		@update:model-value="scenarioInstance.setWorkflowName($event)"
+		auto-focus
+	/>
 
-	<div class="grid" v-if="slots.inputs || slots.outputs">
-		<div v-if="slots.inputs" class="col-6 flex flex-column gap-2">
+	<section class="grid" v-if="slots.inputs || slots.outputs">
+		<article v-if="slots.inputs" class="col-6 flex flex-column gap-2">
 			<h6>Inputs</h6>
 			<slot name="inputs" />
-		</div>
+		</article>
 
-		<div v-if="slots.outputs" class="col-6 flex flex-column gap-2">
+		<article v-if="slots.outputs" class="col-6 flex flex-column gap-2">
 			<h6>Outputs</h6>
 			<slot name="outputs" />
-		</div>
-	</div>
+		</article>
+	</section>
 </template>
 
 <script setup lang="ts">
@@ -47,3 +45,17 @@ defineProps<{
 	scenarioInstance: BaseScenario;
 }>();
 </script>
+
+<style scoped>
+ul.examples {
+	gap: 0;
+	padding-left: var(--gap-5);
+	> li::marker {
+		font-size: xx-small;
+	}
+}
+
+article :deep(label) {
+	color: var(--text-color-subdued);
+}
+</style>

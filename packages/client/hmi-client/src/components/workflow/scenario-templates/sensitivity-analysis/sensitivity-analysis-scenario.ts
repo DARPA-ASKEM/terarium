@@ -3,6 +3,7 @@ import * as workflowService from '@/services/workflow';
 import { operation as ModelOp } from '@/components/workflow/ops/model/mod';
 import { operation as ModelConfigOp } from '@/components/workflow/ops/model-config/mod';
 import { operation as SimulateCiemssOp } from '@/components/workflow/ops/simulate-ciemss/mod';
+import { operation as TransformDatasetOp } from '@/components/workflow/ops/dataset-transformer/mod';
 import { OperatorNodeSize } from '@/services/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import _ from 'lodash';
@@ -100,12 +101,24 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 			}
 		);
 
+		const datasetNode = wf.addNode(
+			TransformDatasetOp,
+			{ x: 0, y: 0 },
+			{
+				size: OperatorNodeSize.medium
+			}
+		);
+
 		// 2. Add edges
 		wf.addEdge(modelNode.id, modelNode.outputs[0].id, modelConfigNode.id, modelConfigNode.inputs[0].id, [
 			{ x: 0, y: 0 },
 			{ x: 0, y: 0 }
 		]);
 		wf.addEdge(modelConfigNode.id, modelConfigNode.outputs[0].id, simulateNode.id, simulateNode.inputs[0].id, [
+			{ x: 0, y: 0 },
+			{ x: 0, y: 0 }
+		]);
+		wf.addEdge(simulateNode.id, simulateNode.outputs[0].id, datasetNode.id, datasetNode.inputs[0].id, [
 			{ x: 0, y: 0 },
 			{ x: 0, y: 0 }
 		]);

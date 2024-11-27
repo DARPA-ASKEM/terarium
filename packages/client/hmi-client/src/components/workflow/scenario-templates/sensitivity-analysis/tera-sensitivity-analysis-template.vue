@@ -34,7 +34,7 @@
 				@update:model-value="scenario.setCalibrateSpec($event)"
 				filter
 			/>
-			<img :src="simulate" alt="Simulate chart" />
+			<!-- <img :src="simulate" alt="Simulate chart" /> -->
 		</template>
 	</tera-scenario-template>
 </template>
@@ -48,7 +48,6 @@ import { isEmpty } from 'lodash';
 import { computed, ref, watch } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
-import simulate from '@/assets/svg/template-images/calibration-thumbnail.svg';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
 
 // FIXME: need an image for this scenario, reusing the calivration image for now
