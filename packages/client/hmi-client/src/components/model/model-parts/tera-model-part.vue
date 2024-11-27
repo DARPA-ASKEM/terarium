@@ -182,7 +182,7 @@ import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Paginator from 'primevue/paginator';
 
 const props = defineProps<{
-	items: { base: ModelPartItem; children: ModelPartItem[]; isParent: boolean }[];
+	items: any[];
 	featureConfig: FeatureConfig;
 	collapsedItems?: Map<string, string[]>;
 	showMatrix?: boolean;
