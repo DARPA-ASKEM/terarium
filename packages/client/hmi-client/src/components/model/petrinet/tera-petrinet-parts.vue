@@ -5,13 +5,13 @@
 				State variables<span class="artifact-amount">({{ states.length }})</span>
 				<tera-input-text class="ml-auto" placeholder="Filter" v-model="statesFilter" />
 			</template>
-			<tera-states
+			<tera-model-part
 				v-if="!isEmpty(mmt.initials)"
-				:model="model"
-				:mmt="mmt"
+				:items="stateList"
+				:collapsed-items="collapsedInitials"
 				:feature-config="featureConfig"
 				:filter="statesFilter"
-				@update-state="emit('update-state', $event)"
+				@update-item="emit('update-state', $event)"
 			/>
 		</AccordionTab>
 		<AccordionTab>
@@ -73,15 +73,18 @@ import type { Model, Transition, State } from '@/types/Types';
 import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
-import TeraStates from '@/components/model/model-parts/tera-states.vue';
+import { collapseInitials } from '@/model-representation/mira/mira';
+import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
 import TeraParameters from '@/components/model/model-parts/tera-parameters.vue';
 import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
 import TeraTransitions from '@/components/model/model-parts/tera-transitions.vue';
 import TeraTime from '@/components/model/model-parts/tera-time.vue';
 import type { FeatureConfig } from '@/types/common';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import { createStateList } from '@/model-representation/service';
+import { ModelPartItem } from '@/types/Model';
 
 const props = defineProps<{
 	model: Model;
@@ -103,7 +106,21 @@ const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
 const time = computed(() => (props.model?.semantics?.ode?.time ? [props.model?.semantics.ode.time] : []));
 
+const collapsedInitials = collapseInitials(props.mmt);
 const states = computed<State[]>(() => props.model?.model?.states ?? []);
+let stateList: {
+	base: ModelPartItem;
+	children: ModelPartItem[];
+	isParent: boolean;
+}[] = createStateList(collapsedInitials, props.model);
+
+watch(
+	() => props.model?.model?.states,
+	() => {
+		stateList = createStateList(collapsedInitials, props.model);
+	}
+);
+
 const transitions = computed<Transition[]>(() =>
 	props.model.model.transitions?.map((transition: Transition) => ({
 		...transition,
