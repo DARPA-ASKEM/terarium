@@ -45,9 +45,11 @@ import { RouteName } from '@/router/routes';
 import TeraBlankCanvasTemplate from '@/components/workflow/scenario-templates/blank-canvas/tera-blank-canvas-template.vue';
 import TeraSituationalAwarenessTemplate from '@/components/workflow/scenario-templates/situational-awareness/tera-situational-awareness-template.vue';
 import TeraSensitivityAnalysisTemplate from '@/components/workflow/scenario-templates/sensitivity-analysis/tera-sensitivity-analysis-template.vue';
+import TeraDecisionMakingTemplate from '@/components/workflow/scenario-templates/decision-making/tera-decision-making-template.vue';
 import { BlankCanvasScenario } from '@/components/workflow/scenario-templates/blank-canvas/blank-canvas-scenario';
 import { SituationalAwarenessScenario } from '@/components/workflow/scenario-templates/situational-awareness/situational-awareness-scenario';
 import { SensitivityAnalysisScenario } from '@/components/workflow/scenario-templates/sensitivity-analysis/sensitivity-analysis-scenario';
+import { DecisionMakingScenario } from '@/components/workflow/scenario-templates/decision-making/decision-making-scenario';
 
 interface ScenarioItem {
 	displayName: string;
@@ -74,6 +76,12 @@ const scenarios = ref<ScenarioItem[]>([
 		id: SensitivityAnalysisScenario.templateId,
 		instance: new SensitivityAnalysisScenario(),
 		component: markRaw(TeraSensitivityAnalysisTemplate)
+	},
+	{
+		displayName: DecisionMakingScenario.templateName,
+		id: DecisionMakingScenario.templateId,
+		instance: new DecisionMakingScenario(),
+		component: markRaw(TeraDecisionMakingTemplate)
 	}
 ]);
 
