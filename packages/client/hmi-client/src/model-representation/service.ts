@@ -383,7 +383,11 @@ export function createPartsList(parts, model, partType) {
 					id: t.id,
 					name: t.name,
 					description: t.description,
-					grounding: t.grounding
+					grounding: t.grounding,
+					unitExpression: null,
+					expression: null,
+					input: null,
+					output: null
 				};
 				if (partType === PART_TYPE.STATE || PART_TYPE.PARAMETER) {
 					returnObj.unitExpression = t.units?.expression;
