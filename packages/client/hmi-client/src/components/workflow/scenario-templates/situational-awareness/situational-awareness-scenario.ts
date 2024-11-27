@@ -16,15 +16,15 @@ export class SituationalAwarenessScenario extends BaseScenario {
 	public static templateName = 'Situational Awareness';
 
 	public static header = {
-		title: "What's likely to happen next?",
+		title: 'Situational Awareness Template',
+		question: "What's likely to happen next?",
 		description:
-			'Calibrates the model to historical data to obtain the best estimate of parameters for the present, then forecasts into the near future.'
+			'Calibrates the model to historical data to obtain the best estimate of parameters for the present, then forecasts into the near future.',
+		examples: [
+			'Anticipate the arrival of a new variants.',
+			'Evaluate the potential impact of growing vaccine hesitancy and declining NPIs.'
+		]
 	};
-
-	public static examples = [
-		'Anticipate the arrival of a new variants.',
-		'Evaluate the potential impact of growing vaccine hesitancy and declining NPIs.'
-	];
 
 	modelSpec: { id: string };
 

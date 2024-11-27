@@ -6,6 +6,10 @@ export class BlankCanvasScenario extends BaseScenario {
 
 	public static templateName = 'Blank Canvas';
 
+	public static header = {
+		title: 'Blank Canvas Template'
+	};
+
 	constructor() {
 		super();
 		this.workflowName = '';

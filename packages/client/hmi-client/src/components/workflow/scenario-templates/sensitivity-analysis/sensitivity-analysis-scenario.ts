@@ -16,12 +16,12 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 	public static templateName = 'Sensitivity Analysis';
 
 	public static header = {
-		title: 'Which parameters introduce the most uncertainty?',
+		title: 'Sensitivity Analysis Template',
+		question: 'Which parameters introduce the most uncertainty?',
 		description:
-			'Configure the model with parameter distributions that reflect all the sources of uncertainty, then simulate into the near future.'
+			'Configure the model with parameter distributions that reflect all the sources of uncertainty, then simulate into the near future.',
+		examples: ['Unknown severity of new variant.', 'Unknown speed of waning immunity.']
 	};
-
-	public static examples = ['Unknown severity of new variant.', 'Unknown speed of waning immunity.'];
 
 	modelSpec: { id: string };
 
