@@ -219,7 +219,6 @@ async function createVegaVisualization(
 watch([vegaContainer, () => props.visualizationSpec], async ([, newSpec], [, oldSpec]) => {
 	const isEqual = _.isEqual(newSpec, oldSpec);
 	if (isEqual && vegaVisualization.value !== undefined) return;
-	console.log('renders chart');
 	const spec = deepToRaw(props.visualizationSpec);
 
 	if (interactive.value === false) {

@@ -190,12 +190,12 @@
 		</section>
 		<template #preview>
 			<tera-drilldown-section>
-				<section class="pb-3">
-					<Accordion multiple :active-index="[0, 1]" class="px-2">
+				<section class="pb-3 px-2">
+					<div class="mx-2" ref="chartWidthDiv"></div>
+					<Accordion multiple :active-index="[0, 1, 2]">
 						<!-- <AccordionTab header="Summary">
 						</AccordionTab> -->
-						<AccordionTab header="Loss">
-							<div ref="chartWidthDiv"></div>
+						<AccordionTab v-if="node.state.showLossChart" header="Loss">
 							<vega-chart
 								v-if="!_.isEmpty(lossValues)"
 								expandable
@@ -206,10 +206,20 @@
 						</AccordionTab>
 						<template v-if="!isRunInProgress">
 							<AccordionTab header="Ensemble variables over time">
-								<div ref="outputPanel"></div>
 								<div class="flex flex-row" v-for="setting of selectedEnsembleVariableSettings" :key="setting.id">
 									<vega-chart
 										v-for="(spec, index) of ensembleVariableCharts[setting.id]"
+										:key="index"
+										expandable
+										:are-embed-actions-visible="true"
+										:visualization-spec="spec"
+									/>
+								</div>
+							</AccordionTab>
+							<AccordionTab v-if="node.state.showModelWeightsCharts" header="Model weights">
+								<div class="flex flex-row">
+									<vega-chart
+										v-for="(spec, index) of weightsDistributionCharts"
 										:key="index"
 										expandable
 										:are-embed-actions-visible="true"
@@ -248,6 +258,13 @@
 				</template>
 				<template #content>
 					<div class="output-settings-panel">
+						<h5>Loss</h5>
+						<tera-checkbox
+							label="Show loss chart"
+							:model-value="Boolean(node.state.showLossChart)"
+							@update:model-value="emit('update-state', { ...node.state, showLossChart: $event })"
+						/>
+						<Divider />
 						<tera-chart-settings
 							:title="'Ensemble variables over time'"
 							:settings="chartSettings"
@@ -258,6 +275,13 @@
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 							@toggle-ensemble-variable-setting-option="updateEnsembleVariableSettingOption"
+						/>
+						<Divider />
+						<h5>Model Weights</h5>
+						<tera-checkbox
+							label="Show distributions in charts"
+							:model-value="Boolean(node.state.showModelWeightsCharts)"
+							@update:model-value="emit('update-state', { ...node.state, showModelWeightsCharts: $event })"
 						/>
 						<Divider />
 					</div>
@@ -297,6 +321,7 @@ import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
 import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
+import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraSignalBars from '@/components/widgets/tera-signal-bars.vue';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
@@ -554,18 +579,20 @@ const {
 	updateEnsembleVariableSettingOption
 } = useChartSettings(props, emit);
 
-const { generateAnnotation, getChartAnnotationsByChartId, useEnsembleVariableCharts } = useCharts(
-	props.node.id,
-	null,
-	allModelConfigurations,
-	computed(() => buildChartData(outputData.value, selectedOutputMapping.value)),
-	chartSize,
-	null,
-	selectedOutputMapping
-);
+const { generateAnnotation, getChartAnnotationsByChartId, useEnsembleVariableCharts, useWeightsDistributionCharts } =
+	useCharts(
+		props.node.id,
+		null,
+		allModelConfigurations,
+		computed(() => buildChartData(outputData.value, selectedOutputMapping.value)),
+		chartSize,
+		null,
+		selectedOutputMapping
+	);
 
 const ensembleVariables = computed(() => getSelectedOutputEnsembleMapping(props.node, false).map((d) => d.newName));
 const ensembleVariableCharts = useEnsembleVariableCharts(selectedEnsembleVariableSettings, groundTruthData);
+const weightsDistributionCharts = useWeightsDistributionCharts();
 // --------------------------------------------------------
 
 watch(

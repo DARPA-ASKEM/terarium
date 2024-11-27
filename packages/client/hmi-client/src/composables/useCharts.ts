@@ -13,7 +13,11 @@ import {
 	ForecastChartOptions
 } from '@/services/charts';
 import { flattenInterventionData } from '@/services/intervention-policy';
-import { DataArray, extractModelConfigIds } from '@/services/models/simulation-service';
+import {
+	DataArray,
+	extractModelConfigIdArray as extractModelConfigIdsInOrder,
+	extractModelConfigIds
+} from '@/services/models/simulation-service';
 import { ChartSetting, ChartSettingEnsembleVariable, ChartSettingType } from '@/types/common';
 import { Intervention, Model, ModelConfiguration } from '@/types/Types';
 import { displayNumber } from '@/utils/number';
@@ -41,20 +45,14 @@ type VariableMappings = CalibrateMap[] | EnsembleVariableMappings;
 const BASE_GREY = '#AAB3C6';
 const PRIMARY_COLOR = CATEGORICAL_SCHEME[0];
 
-// Get the model configuration id to variable name mappings for the given ensemble variable
-const getModelConfigMappings = (mapping: EnsembleVariableMappings, ensembleVariableName: string) => {
-	const modelConfigMappings = mapping.find((d) => d.newName === ensembleVariableName)?.modelConfigurationMappings;
-	return modelConfigMappings ?? {};
-};
-
 // Get the model variable name for the corresponding model configuration and the ensemble variable name from the mapping
 const getModelConfigVariable = (
 	mapping: EnsembleVariableMappings,
 	ensembleVariableName: string,
 	modelConfigId: string
-) => getModelConfigMappings(mapping, ensembleVariableName)[modelConfigId] ?? '';
+) => mapping.find((d) => d.newName === ensembleVariableName)?.modelConfigurationMappings[modelConfigId] ?? '';
 
-const getModelConfigIdPrefix = (modelId: string) => (modelId ? `${modelId}/` : '');
+const getModelConfigIdPrefix = (configId: string) => (configId ? `${configId}/` : '');
 
 /**
  * Converts a model variable name to a dataset variable name based on the provided mapping.
@@ -120,7 +118,8 @@ export function useCharts(
 ) {
 	// Check if references of the core dependencies are ready to build the chart to prevent multiple re-renders especially
 	// on initial page load where data are fetched asynchronously and assigned to the references in different times.
-	const isChartReadyToBuild = computed(() => [model, modelConfig, chartData, interventions, mapping].every(isRefReady));
+	// const isChartReadyToBuild = computed(() => [model, modelConfig, chartData, interventions, mapping].every(isRefReady));
+	const isChartReadyToBuild = computed(() => [chartData].every(isRefReady));
 
 	// Setup annotations
 	const { getChartAnnotationsByChartId, generateAndSaveForecastChartAnnotation } = useChartAnnotations(nodeId);
@@ -379,14 +378,11 @@ export function useCharts(
 			const charts: Record<string, VisualizationSpec[]> = {};
 			if (!isChartReadyToBuild.value || !isRefReady(groundTruthData)) return chartData;
 			const { result, resultSummary } = chartData.value as ChartData;
+			const modelConfigIds = extractModelConfigIdsInOrder(chartData.value?.pyciemssMap ?? {});
 			chartSettings.value.forEach((setting) => {
 				const annotations = getChartAnnotationsByChartId(setting.id);
 				const datasetVar = modelVarToDatasetVar(mapping?.value || [], setting.selectedVariables[0]);
 				if (setting.showIndividualModels) {
-					// Build small multiples charts for each model configuration variable
-					const modelConfigIds = Object.keys(
-						getModelConfigMappings(<EnsembleVariableMappings>mapping?.value || [], setting.selectedVariables[0])
-					);
 					const smallMultiplesCharts = ['', ...modelConfigIds].map((modelConfigId, index) => {
 						const { sampleLayerVariables, statLayerVariables, options } = createEnsembleVariableChartOptions(
 							setting,
@@ -549,34 +545,50 @@ export function useCharts(
 	};
 
 	const useWeightsDistributionCharts = () => {
-		const charts: VisualizationSpec[] = [];
-		if (!isChartReadyToBuild.value) return charts;
+		const WEIGHT_PARAM_NAME = 'weight_param';
+		const weightsCharts = computed(() => {
+			const charts: VisualizationSpec[] = [];
+			if (!isChartReadyToBuild.value) return charts;
 
-		const modelConfigs = <ModelConfiguration[]>modelConfig?.value ?? [];
-		const data = chartData.value?.result.filter((d) => d.timepoint_id === 0) ?? [];
-		const labelBefore = 'Before calibration';
-		const labelAfter = 'After calibration';
-		const fieldName = `weight`;
-		const beforeFieldName = 'weight:pre';
+			// Model configs are used to get the model config metadata. This order of model configs in arrays are not guaranteed to be the same as the order of model configs in the pyciemss results
+			const modelConfigs = <ModelConfiguration[]>modelConfig?.value ?? [];
+			// extractModelConfigIdsInOrder ensures that the order of model config IDs are matched with the order of corresponding model index in the pyciemss results
+			const modelConfigIds = extractModelConfigIdsInOrder(chartData.value?.pyciemssMap ?? {});
 
-		modelConfigs.forEach((config) => {
-			const modelConfigName = getModelConfigName(modelConfigs, config.id ?? '');
-			const chartWidth = chartSize.value.width / modelConfigs.length;
-			const histogram = createHistogramChart(data, {
-				title: modelConfigName,
-				width: chartWidth,
-				height: chartSize.value.height,
-				xAxisTitle: `Weights`,
-				yAxisTitle: 'Count',
-				maxBins: 10,
-				variables: [
-					{ field: beforeFieldName, label: labelBefore, width: 54, color: BASE_GREY },
-					{ field: fieldName, label: labelAfter, width: 24, color: PRIMARY_COLOR }
-				]
+			const data = chartData.value?.result.filter((d) => d.timepoint_id === 0) ?? [];
+			const labelBefore = 'Before calibration';
+			const labelAfter = 'After calibration';
+
+			const colors = CATEGORICAL_SCHEME.slice(1); // exclude the first color which is for ensemble variable
+
+			modelConfigIds.forEach((configId, index) => {
+				const modelConfigName = getModelConfigName(modelConfigs, configId ?? '');
+				const chartWidth = chartSize.value.width / modelConfigs.length;
+
+				const fieldName =
+					chartData.value?.pyciemssMap[`${getModelConfigIdPrefix(configId ?? '')}${WEIGHT_PARAM_NAME}`] ?? '';
+				const beforeFieldName = `${fieldName}:pre`;
+
+				const maxBins = 10;
+				const barWidth = Math.min((chartWidth - 40) / maxBins, 54);
+				const spec = createHistogramChart(data, {
+					title: modelConfigName,
+					width: chartWidth,
+					height: chartSize.value.height,
+					xAxisTitle: `Weights`,
+					yAxisTitle: 'Count',
+					maxBins,
+					variables: [
+						{ field: beforeFieldName, label: labelBefore, width: barWidth, color: BASE_GREY },
+						{ field: fieldName, label: labelAfter, width: barWidth / 2, color: colors[index % colors.length] }
+					],
+					legendProperties: { direction: 'vertical', columns: 1, labelLimit: chartWidth }
+				});
+				charts.push(spec);
 			});
-			charts.push(histogram);
+			return charts;
 		});
-		return charts;
+		return weightsCharts;
 	};
 
 	return {

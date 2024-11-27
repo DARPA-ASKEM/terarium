@@ -103,9 +103,6 @@ export async function fetchOutputData(preForecastId: string, postForecastId: str
 	const runResultSummary = await getRunResultCSV(postForecastId, 'result_summary.csv');
 	const ensembleVarModelConfigMap = (await getEnsembleResultModelConfigMap(preForecastId)) ?? {};
 
-	console.log(runResult);
-	console.log(runResultSummary);
-
 	const runResultPre = await getRunResultCSV(preForecastId, 'result.csv', renameFnGenerator('pre'));
 	const runResultSummaryPre = await getRunResultCSV(preForecastId, 'result_summary.csv', renameFnGenerator('pre'));
 
