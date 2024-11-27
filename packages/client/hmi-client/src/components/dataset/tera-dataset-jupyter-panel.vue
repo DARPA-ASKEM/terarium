@@ -85,12 +85,11 @@
 				/>
 			</div>
 		</div>
-		<div v-if="showRerunMessage" class="rerun-message">
-			Re-run all the cells to restore the context if you need to make any changes or use them downstream.
-			<Button icon="pi pi-times" text rounded aria-label="Close" @click="showRerunMessage = false" />
-		</div>
-
-		<div>
+		<div class="notebook-container">
+			<div v-if="showRerunMessage" class="rerun-message">
+				Re-run all the cells to restore the context if you need to make any changes or use them downstream.
+				<Button icon="pi pi-times" text rounded aria-label="Close" @click="showRerunMessage = false" />
+			</div>
 			<ul>
 				<li v-for="(data, idx) in dataContextDescription" :key="idx" class="context-description">{{ data }}</li>
 			</ul>
@@ -655,10 +654,18 @@ const onDownloadResponse = (payload) => {
 }
 
 .rerun-message {
+	position: sticky;
+	top: 0;
+	z-index: 1;
 	display: flex;
 	background-color: var(--surface-warning);
 	justify-content: space-between;
 	align-items: center;
 	padding: var(--gap-2);
+}
+
+.notebook-container {
+	height: calc(100% - 3.5rem);
+	overflow-y: auto;
 }
 </style>
