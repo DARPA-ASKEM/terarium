@@ -33,9 +33,16 @@ from utils import (
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-def escape_curly_braces(text: str):
-    # Escape curly braces
-    return text.replace("{", "{{").replace("}", "}}")
+def escape_curly_braces(json_obj: dict) -> dict:
+    if isinstance(json_obj, dict):
+        for key, value in json_obj.items():
+            json_obj[key] = unescape_curly_braces(value)
+    elif isinstance(json_obj, list):
+        for i in range(len(json_obj)):
+            json_obj[i] = unescape_curly_braces(json_obj[i])
+    elif isinstance(json_obj, str):
+        json_obj = json_obj.replace('{', '{{').replace('}', '}}')
+    return json_obj
 
 
 def unescape_curly_braces(json_obj: dict) -> dict:
@@ -254,6 +261,9 @@ def model_config_from_document(research_paper: str, amr: str) -> dict:
     output_json = json.loads(output.choices[0].message.content)
 
     print("There are ", len(output_json["conditions"]), "conditions identified from the text.")
+
+    output =  model_config_adapter(output_json)
+    print(output)
 
     return unescape_curly_braces(model_config_adapter(output_json))
 
