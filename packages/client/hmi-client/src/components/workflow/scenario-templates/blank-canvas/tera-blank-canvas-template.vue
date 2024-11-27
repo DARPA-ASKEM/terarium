@@ -10,7 +10,7 @@ import { BlankCanvasScenario } from './blank-canvas-scenario';
 import { ScenarioHeader } from '../base-scenario';
 
 const header: ScenarioHeader = Object.freeze({
-	title: 'Blank Canvas Template'
+	title: 'Blank canvas template'
 });
 defineProps<{
 	scenario: BlankCanvasScenario;

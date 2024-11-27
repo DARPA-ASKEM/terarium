@@ -1,5 +1,5 @@
 <template>
-	<h4 class="pb-3">{{ header.title }}</h4>
+	<h4 class="pb-2">{{ header.title }}</h4>
 
 	<template v-if="header.question && header.description">
 		<h5>{{ header.question }}</h5>
@@ -61,6 +61,10 @@ ul {
 			font-size: xx-small;
 		}
 	}
+}
+
+h4 {
+	color: var(--text-color-subdued);
 }
 
 :deep(article) {

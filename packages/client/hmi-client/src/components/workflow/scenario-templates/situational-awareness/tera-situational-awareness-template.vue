@@ -85,7 +85,7 @@ import TeraScenarioTemplate from '../tera-scenario-template.vue';
 import { ScenarioHeader } from '../base-scenario';
 
 const header: ScenarioHeader = Object.freeze({
-	title: 'Situational Awareness Template',
+	title: 'Situational awareness template',
 	question: "What's likely to happen next?",
 	description:
 		'Calibrates the model to historical data to obtain the best estimate of parameters for the present, then forecasts into the near future.',

@@ -52,7 +52,7 @@ import TeraScenarioTemplate from '../tera-scenario-template.vue';
 import { ScenarioHeader } from '../base-scenario';
 
 const header: ScenarioHeader = Object.freeze({
-	title: 'Sensitivity Analysis Template',
+	title: 'Sensitivity analysis template',
 	question: 'Which parameters introduces the most uncertainty in the outcomes of interest?',
 	description:
 		'Configure the model with parameter distributions that reflect all the sources of uncertainty, then simulate into the near future.',
