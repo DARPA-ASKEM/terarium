@@ -471,8 +471,6 @@ section {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
-	height: 100%;
-	overflow: hidden;
 }
 
 .selected {
@@ -488,8 +486,6 @@ section {
 	text-align: left;
 }
 .message-container {
-	height: calc(100% - 3.5rem);
-	overflow-y: auto;
 	background: var(--surface-100);
 }
 </style>
