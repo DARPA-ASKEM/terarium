@@ -18,6 +18,7 @@
 					:key="setting.id"
 					:visualization-spec="variableCharts[setting.id]"
 					:are-embed-actions-visible="false"
+					:interactive="false"
 				/>
 			</div>
 			<div class="flex gap-2">
