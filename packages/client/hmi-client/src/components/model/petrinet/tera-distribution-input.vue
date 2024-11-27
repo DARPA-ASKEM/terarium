@@ -102,7 +102,6 @@ async function onDropdownShow() {
 	if (dropdownPanel) {
 		const items = dropdownPanel.querySelectorAll('.p-dropdown-item');
 		items.forEach((item: HTMLElement, index) => {
-			console.log('item', item.innerHTML);
 			item.addEventListener('mouseenter', () => showPopup(test, index));
 			item.addEventListener('mouseleave', hidePopup);
 		});
@@ -143,8 +142,6 @@ function isParameterInputEmpty(parameter) {
 }
 
 function onParameterChange(value, parameter) {
-	console.log('DistributionInputOptions', DistributionInputOptions);
-	console.log(value, parameter);
 	isParameterEmpty.value = isNumberInputEmpty(value);
 	if (!isParameterEmpty.value) {
 		emit('update-parameter', {
