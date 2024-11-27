@@ -233,7 +233,7 @@ export function isNumberInputEmpty(value: string) {
 export function getMissingInputAmount(modelConfiguration: ModelConfiguration) {
 	let missingInputs = 0;
 	modelConfiguration.initialSemanticList.forEach((initial) => {
-		if (isNumberInputEmpty(initial.expression)) {
+		if (isEmpty(initial.expression)) {
 			missingInputs++;
 		}
 	});
@@ -282,4 +282,10 @@ export function getModelInitials(modelConfiguration, source, amrInitials) {
 			source
 		};
 	});
+}
+
+// Get the model configuration name for the given model configuration id
+export function getModelConfigName(modelConfigs: ModelConfiguration[], configId: string) {
+	const modelConfig = modelConfigs.find((d) => d.id === configId);
+	return modelConfig?.name ?? '';
 }

@@ -33,7 +33,7 @@
 		</aside>
 		<template v-if="active">
 			<a target="_blank" rel="noopener noreferrer" @click="isAboutModalVisible = true">About</a>
-			<a target="_blank" rel="noopener noreferrer" :href="documentationUrl">Documentation</a>
+			<a target="_blank" rel="noopener noreferrer" :href="documentationUrl">Help</a>
 			<tera-notification-panel />
 
 			<Avatar :label="userInitials" class="avatar m-2" shape="circle" @click="showUserMenu" />
