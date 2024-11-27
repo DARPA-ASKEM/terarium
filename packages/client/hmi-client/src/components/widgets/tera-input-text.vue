@@ -101,6 +101,13 @@ const onFocus = (event) => {
 };
 const onBlur = (event) => {
 	isFocused.value = false;
+	const target = event.target as HTMLInputElement;
+	if (props.charactersToReject && !isEmpty(props.charactersToReject)) {
+		const start = target.selectionStart;
+		const end = target.selectionEnd;
+		target.value = target.value.replace(new RegExp(`[${props.charactersToReject.join('')}]`, 'g'), ''); // Create a regex pattern from charactersToReject to remove them
+		target.setSelectionRange(start, end); // Maintain cursor position, is needed if we are entering in the middle of the input
+	}
 	emit('blur', event.target.value);
 };
 
