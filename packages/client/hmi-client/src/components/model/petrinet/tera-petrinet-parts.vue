@@ -11,7 +11,7 @@
 				:collapsed-items="collapsedInitials"
 				:feature-config="featureConfig"
 				:filter="statesFilter"
-				@update-item="emit('update-state', $event)"
+				@update-state="emit('update-state', $event)"
 			/>
 		</AccordionTab>
 		<AccordionTab>
@@ -27,7 +27,7 @@
 				show-matrix
 				:filter="parametersFilter"
 				@open-matrix="(id: string) => (parameterMatrixModalId = id)"
-				@update-item="emit('update-parameter', $event)"
+				@update-parameter="emit('update-parameter', $event)"
 			/>
 			<tera-stratified-matrix-modal
 				v-if="parameterMatrixModalId"
@@ -49,7 +49,7 @@
 				:items="observablesList"
 				:feature-config="featureConfig"
 				:filter="observablesFilter"
-				@update-observable="emit('update-observable', $event)"
+				@update-item="emit('update-observable', $event)"
 			/>
 		</AccordionTab>
 		<AccordionTab>
@@ -65,7 +65,7 @@
 				:filter="transitionsFilter"
 				show-matrix
 				@open-matrix="(id: string) => (transitionMatrixModalId = id)"
-				@update-item="$emit('update-transition', $event)"
+				@update-transition="$emit('update-transition', $event)"
 			/>
 			<tera-stratified-matrix-modal
 				v-if="transitionMatrixModalId"
@@ -86,9 +86,8 @@
 				is-time-part
 				:items="timeList"
 				:feature-config="featureConfig"
-				@update-item="$emit('update-time', $event)"
+				@update-time="$emit('update-time', $event)"
 			/>
-			<!-- <tera-time v-if="time" :time="time" :feature-config="featureConfig" @update-time="emit('update-time', $event)" /> -->
 		</AccordionTab>
 	</Accordion>
 </template>
