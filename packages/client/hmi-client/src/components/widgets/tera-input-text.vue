@@ -101,7 +101,7 @@ const onFocus = (event) => {
 };
 const onBlur = (event) => {
 	isFocused.value = false;
-	emit('blur', event);
+	emit('blur', event.target.value);
 };
 
 onMounted(() => {

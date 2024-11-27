@@ -22,7 +22,7 @@
 						label="Expression"
 						error-empty
 						:model-value="getExpression()"
-						@update:model-value="onExpressionChange($event)"
+						@blur="onExpressionChange($event)"
 					/>
 				</span>
 				<Button :label="getSourceLabel(initialId)" text size="small" @click="sourceOpen = !sourceOpen" />
