@@ -13,7 +13,9 @@
 		</div>
 	</Dialog>
 	<div class="vega-chart-container">
-		<img v-if="!interactive" :src="imageDataURL" alt="chart" />
+		<div v-if="!interactive">
+			<img v-if="imageDataURL.length > 0" :src="imageDataURL" alt="chart" />
+		</div>
 		<div v-else ref="vegaContainer" />
 
 		<footer v-if="$slots.footer">
