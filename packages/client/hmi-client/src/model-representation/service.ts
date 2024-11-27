@@ -352,37 +352,100 @@ export function checkPetrinetAMR(amr: Model) {
 	return results;
 }
 
-export function createStateList(collapsedInitials, model) {
-	return Array.from(collapsedInitials.keys()).map((id) => {
-		const childTargets = collapsedInitials.get(id) ?? [];
+export const PART_TYPE = Object.freeze({
+	STATE: 'STATE',
+	PARAMETER: 'PARAMETER',
+	TRANSITION: 'TRANSITION'
+});
+
+export function createPartsList(parts, model, partType) {
+	return Array.from(parts.keys()).map((id) => {
+		const childTargets = parts.get(id) ?? [];
 		const isParent = childTargets.length > 1;
-		const states = getStates(model); // could be states, vertices, and stocks type
+		let types;
+
+		switch (partType) {
+			case PART_TYPE.STATE:
+				types = getStates(model);
+				break;
+			case PART_TYPE.PARAMETER:
+				types = getParameters(model);
+				break;
+			default:
+				types = model;
+		}
+
 		const children = childTargets
 			.map((childTarget) => {
-				const s = states.find((state) => state.id === childTarget);
-				if (!s) return null;
-				return {
-					id: s.id,
-					name: s.name,
-					description: s.description,
-					grounding: s.grounding,
-					unitExpression: s.units?.expression
+				const t = types.find((part) => part.id === childTarget);
+				if (!t) return null;
+				const returnObj = {
+					id: t.id,
+					name: t.name,
+					description: t.description,
+					grounding: t.grounding
 				};
+				if (partType === PART_TYPE.STATE || PART_TYPE.PARAMETER) {
+					returnObj.unitExpression = t.units?.expression;
+				} else if (partType === PART_TYPE.TRANSITION) {
+					returnObj.expression = t.expression;
+					returnObj.input = t.input.join(', ');
+					returnObj.output = t.output.join(', ');
+				}
+				return returnObj;
 			})
 			.filter(Boolean) as ModelPartItem[];
 
-		const baseState: any = states.find((s) => s.id === id);
+		const basePart: any = types.find((t) => {
+			if (partType === PART_TYPE.TRANSITION) {
+				return t.id === childTargets[0];
+			}
+			return t.id === id;
+		});
 		const base: ModelPartItem =
-			isParent || !baseState
-				? { id }
+			isParent || !basePart
+				? { id: `${id}` }
 				: {
-						id,
-						name: baseState.name,
-						description: baseState.description,
-						grounding: baseState.grounding,
-						unitExpression: baseState.units?.expression
+						id: `${id}`,
+						name: basePart.name,
+						description: basePart.description,
+						grounding: basePart.grounding,
+						unitExpression: basePart.units?.expression
 					};
+		if (partType === PART_TYPE.TRANSITION) {
+			base.templateId = `${id}`;
+			base.input = basePart.input.join(', ');
+			base.output = basePart.output.join(', ');
+		}
 
 		return { base, children, isParent };
 	});
+}
+
+export function createObservablesList(observables) {
+	return observables.map((observable) => {
+		const { id, name, expression, description, units, grounding } = observable;
+		return {
+			base: {
+				id,
+				name,
+				description,
+				unitExpression: units?.expression,
+				grounding,
+				expression,
+				expression_mathml: observable.expression_mathml
+			},
+			// Observables can't be stratified therefore don't have children
+			children: [],
+			isParent: false
+		};
+	});
+}
+
+export function createTimeList(time) {
+	return time.map(({ id, name, description, grounding, units }) => ({
+		base: { id, name, description, grounding, unitExpression: units?.expression },
+		children: [],
+		isParent: false
+	}));
 }
