@@ -656,7 +656,7 @@ const onDownloadResponse = (payload) => {
 .rerun-message {
 	position: sticky;
 	top: 0;
-	z-index: 5;
+	z-index: 1;
 	display: flex;
 	background-color: var(--surface-warning);
 	justify-content: space-between;
