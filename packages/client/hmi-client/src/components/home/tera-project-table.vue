@@ -1,12 +1,12 @@
 <template>
+	<!--The pt wrapper styling enables the table header to stick with the project search bar-->
 	<DataTable
 		:value="projects"
-		dataKey="id"
-		:rowsPerPageOptions="[5, 10, 20]"
-		scrollable
-		scrollHeight="45rem"
-		paginator
+		:rows-per-page-options="[5, 10, 20]"
 		:rows="numberOfRows"
+		:pt="{ wrapper: { style: { overflow: 'none' } } }"
+		data-key="id"
+		paginator
 		@page="getProjectAssets"
 	>
 		<Column
@@ -15,7 +15,6 @@
 			:header="col.header"
 			:sortable="!['stats', 'score'].includes(col.field)"
 			:key="index"
-			:style="`width: ${getColumnWidth(col.field)}%`"
 		>
 			<template #body="{ data }">
 				<template v-if="col.field === 'score'">
@@ -25,7 +24,9 @@
 					<a @click.stop="emit('open-project', data.id)">{{ data.name }}</a>
 					<ul>
 						<li
-							v-for="(asset, index) in projectsWithKnnMatches.find(({ id }) => id === data.id)?.projectAssets"
+							v-for="(asset, index) in projectsWithKnnMatches
+								.find(({ id }) => id === data.id)
+								?.projectAssets.slice(0, 3)"
 							class="flex align-center gap-2"
 							:key="index"
 						>
@@ -108,7 +109,7 @@ const props = defineProps<{
 const emit = defineEmits(['open-project']);
 
 const projectsWithKnnMatches = ref<Project[]>([]);
-const numberOfRows = ref(5);
+const numberOfRows = ref(20);
 let pageState: PageState = { page: 0, rows: numberOfRows.value, first: 0 };
 
 function formatStat(data, key) {
@@ -120,21 +121,8 @@ function formatStatTooltip(stat, displayName) {
 	return `${stat} ${displayName}${stat === 1 ? '' : 's'}`;
 }
 
-function getColumnWidth(columnField: string) {
-	switch (columnField) {
-		case 'description':
-			return 40;
-		case 'name':
-			return 40;
-		case 'score':
-			return 5;
-		default:
-			return 100;
-	}
-}
-
 async function getProjectAssets(event: PageState = pageState) {
-	pageState = event;
+	pageState = event; // Save the current page state so we still know it when the watch is triggered
 
 	if (isEmpty(props.searchQuery)) {
 		projectsWithKnnMatches.value = [];
@@ -157,12 +145,10 @@ async function getProjectAssets(event: PageState = pageState) {
 			})
 		)
 	).filter(Boolean) as Project[];
-
-	console.log(props.searchQuery.toLowerCase().trim());
 }
 
 watch(
-	() => props.searchQuery,
+	() => props.projects,
 	() => {
 		getProjectAssets();
 	},
@@ -186,6 +172,17 @@ watch(
 	width: 2.4rem;
 }
 
+.p-datatable {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+
+	/* Now the table header sticks along with the project search bar */
+	&:deep(thead) {
+		top: 105px;
+		z-index: 1;
+	}
+}
+
 .p-datatable:deep(ul) {
 	margin-top: var(--gap-4);
 	color: var(--text-color-primary);
@@ -199,16 +196,11 @@ watch(
 	text-overflow: ellipsis;
 	display: block;
 	overflow: hidden;
-	width: 14rem;
+	max-width: 20vw;
 }
 
 .p-datatable:deep(.highlight) {
 	font-weight: var(--font-weight-semibold);
-}
-
-.p-datatable {
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius);
 }
 
 .p-datatable:deep(.p-datatable-tbody > tr > td),
@@ -252,7 +244,7 @@ watch(
 	text-overflow: ellipsis;
 	display: block;
 	overflow: hidden;
-	width: 15rem;
+	max-width: 20vw;
 }
 
 .p-datatable:deep(.p-datatable-tbody > tr > td > a:hover) {
