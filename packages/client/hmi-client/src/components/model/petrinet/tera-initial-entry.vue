@@ -61,12 +61,7 @@ import { isEmpty } from 'lodash';
 import { computed, ref, onMounted } from 'vue';
 import { DistributionType } from '@/services/distribution';
 import { Model, ModelConfiguration } from '@/types/Types';
-import {
-	getInitialExpression,
-	getInitialSource,
-	getOtherValues,
-	isNumberInputEmpty
-} from '@/services/model-configurations';
+import { getInitialExpression, getInitialSource, getOtherValues } from '@/services/model-configurations';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraInitialOtherValueModal from '@/components/model/petrinet/tera-initial-other-value-modal.vue';
 import Button from 'primevue/button';
@@ -92,7 +87,7 @@ const emit = defineEmits(['update-expression', 'update-source']);
 const name = getInitialName(props.model, props.initialId);
 const unit = getInitialUnits(props.model, props.initialId);
 const description = getInitialDescription(props.model, props.initialId);
-const isExpressionEmpty = ref(false);
+const isExpressionEmpty = computed(() => isEmpty(getInitialExpression(props.modelConfiguration, props.initialId)));
 
 const concept = ref('');
 const sourceOpen = ref(false);
@@ -102,11 +97,7 @@ const expression = ref('');
 const getOtherValuesLabel = computed(() => `Other values (${otherValueList.value?.length})`);
 
 function onExpressionChange(value) {
-	isExpressionEmpty.value = isNumberInputEmpty(value);
-	expression.value = value;
-	if (!isExpressionEmpty.value) {
-		emit('update-expression', { id: props.initialId, value });
-	}
+	emit('update-expression', { id: props.initialId, value });
 }
 
 function getExpression() {
@@ -125,7 +116,6 @@ function getSourceLabel(initialId) {
 onMounted(async () => {
 	const identifiers = getStates(props.model).find((state) => state.id === props.initialId)?.grounding?.identifiers;
 	if (identifiers) concept.value = await getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
-	isExpressionEmpty.value = isNumberInputEmpty(getInitialExpression(props.modelConfiguration, props.initialId));
 });
 </script>
 
