@@ -2,7 +2,7 @@
 	<!--The pt wrapper styling enables the table header to stick with the project search bar-->
 	<DataTable
 		:value="projects"
-		:rows-per-page-options="[5, 10, 20]"
+		:rows-per-page-options="[5, 10, 20, 30, 40, 50]"
 		:rows="numberOfRows"
 		:pt="{ wrapper: { style: { overflow: 'none' } } }"
 		data-key="id"
@@ -173,14 +173,22 @@ watch(
 }
 
 .p-datatable {
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius);
-
 	/* Now the table header sticks along with the project search bar */
 	&:deep(thead) {
 		top: 105px;
 		z-index: 1;
 	}
+}
+
+:deep(.p-paginator-bottom) {
+	position: sticky;
+	bottom: 0;
+	outline: 1px solid var(--surface-border-light);
+}
+
+:deep(.p-paginator) {
+	border-radius: 0;
+	padding: var(--gap-2) var(--gap-4);
 }
 
 .p-datatable:deep(ul) {
