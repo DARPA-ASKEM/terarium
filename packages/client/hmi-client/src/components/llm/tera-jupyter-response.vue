@@ -79,7 +79,6 @@
 							:lang="language"
 							:index="index"
 							@deleteRequested="onDeleteRequested(m.header.msg_id)"
-							@code-dirty="() => emit('code-dirty')"
 						/>
 					</div>
 					<div
@@ -120,8 +119,7 @@ const emit = defineEmits([
 	're-run-prompt',
 	'delete-prompt',
 	'delete-message',
-	'on-selected',
-	'code-dirty'
+	'on-selected'
 ]);
 
 const props = defineProps<{
