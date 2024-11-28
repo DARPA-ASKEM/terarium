@@ -44,7 +44,7 @@
 				</template>
 				<template v-else-if="col.field === 'description'">
 					<tera-show-more-text :text="data.description" :lines="1" />
-					<p v-if="data.snippet" v-html="data.snippet" />
+					<p v-if="data.snippet" class="mt-2" v-html="data.snippet" />
 				</template>
 				<template v-if="col.field === 'userName'">
 					{{ data.userName ?? '--' }}
@@ -127,7 +127,9 @@ const emit = defineEmits(['open-project']);
 const projectTableRef = ref();
 const projectsWithKnnMatches = ref<ProjectWithKnnSnippet[]>([]);
 const numberOfRows = ref(20);
+
 let pageState: PageState = { page: 0, rows: numberOfRows.value, first: 0 };
+let prevSearchQuery = '';
 
 function formatStat(data, key) {
 	const stat = data?.[key];
@@ -143,21 +145,26 @@ async function getProjectAssets(event: PageState = pageState) {
 	if (isEmpty(props.searchQuery)) return;
 
 	const { rows, first } = event;
-	const rawSearchQuery = props.searchQuery.toLowerCase().trim();
+	const searchQuery = props.searchQuery.toLowerCase().trim();
 
-	// Just fetch the assets we are seeing in the page
+	// Just fetch the asset data we are seeing in the current page
 	projectsWithKnnMatches.value.slice(first, first + rows).forEach(async (project) => {
+		// If assets were fetched before from when we were on that page don't redo it
+		if (!isEmpty(project.projectAssets) && prevSearchQuery === searchQuery) return;
+
 		const projectWithAssets = (await ProjectService.get(project.id)) as ProjectWithKnnSnippet | null;
 		if (!projectWithAssets) return;
 
 		project.projectAssets = projectWithAssets.projectAssets.filter(
-			(asset) => asset.assetName.toLowerCase().includes(rawSearchQuery) && asset.assetType !== AssetType.Simulation // Simulations don't have names
+			(asset) => asset.assetName.toLowerCase().includes(searchQuery) && asset.assetType !== AssetType.Simulation // Simulations don't have names
 		);
 		project.showMore = false;
-		project.snippet = project.description?.toLowerCase().includes(rawSearchQuery)
-			? highlight(project.description, rawSearchQuery)
+		project.snippet = project.description?.toLowerCase().includes(searchQuery)
+			? highlight(project.description, searchQuery)
 			: undefined;
 	});
+
+	prevSearchQuery = searchQuery;
 }
 
 watch(
