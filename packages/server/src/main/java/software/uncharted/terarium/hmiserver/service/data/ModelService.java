@@ -26,9 +26,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.seman
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.State;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Transition;
 import software.uncharted.terarium.hmiserver.models.dataservice.regnet.RegNetVertex;
-import software.uncharted.terarium.hmiserver.models.task.CompoundTask;
-import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
-import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.repository.data.ModelRepository;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
@@ -208,6 +205,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		return updatedOptional;
 	}
 
+	@Observed(name = "function_profile")
 	public UUID enrichModel(
 		final UUID projectId,
 		final UUID documentId,

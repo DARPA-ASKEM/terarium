@@ -17,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddingType;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
-import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings.Embeddings;
+import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings.Embedding;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
@@ -86,7 +86,7 @@ public class EmbeddingService {
 		for (int i = 0; i < embeddingResp.response.size(); i++) {
 			double[] response = embeddingResp.response.get(i);
 			String text = input.get(i);
-			final Embeddings embeddingChunk = new Embeddings();
+			final Embedding embeddingChunk = new Embedding();
 			embeddingChunk.setVector(response);
 			embeddingChunk.setEmbeddingId(UUID.randomUUID().toString());
 			embeddingChunk.setSpan(new long[] { 0, text.length() });
@@ -135,7 +135,7 @@ public class EmbeddingService {
 			final TerariumAssetEmbeddingType embeddingType = indices.get(index);
 			final String source = input.get(embeddingType);
 
-			final Embeddings embeddingChunk = new Embeddings();
+			final Embedding embeddingChunk = new Embedding();
 			embeddingChunk.setVector(entry);
 			embeddingChunk.setEmbeddingId(UUID.randomUUID().toString());
 			embeddingChunk.setSpan(new long[] { 0, source.length() });

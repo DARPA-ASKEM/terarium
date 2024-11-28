@@ -2,11 +2,11 @@ package software.uncharted.terarium.hmiserver.service.tasks;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -105,6 +105,7 @@ public class TaskUtilities {
 		return req;
 	}
 
+	@Observed(name = "function_profile")
 	public static void performDKGSearchAndSetGrounding(DKGService dkgService, List<? extends GroundedSemantic> parts) {
 		List<String> searchTerms = parts
 			.stream()
@@ -114,7 +115,7 @@ public class TaskUtilities {
 
 		List<DKG> curies = new ArrayList<>();
 		try {
-			curies = dkgService.knnSearchEpiDKG(0, 1, 1, searchTerms, null);
+			curies = dkgService.knnSearchEpiDKG(0, 100, 1, searchTerms, null);
 		} catch (Exception e) {
 			log.warn("Unable to find DKG for semantics: {}", searchTerms, e);
 			return;
