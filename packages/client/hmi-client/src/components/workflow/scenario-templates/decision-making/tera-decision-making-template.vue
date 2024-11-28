@@ -23,20 +23,38 @@
 				:loading="isFetchingModelInformation"
 			/>
 
-			<template v-for="(intervention, i) in scenario.interventionSpecs.ids" :key="intervention">
+			<template v-for="(intervention, i) in scenario.interventionSpecs" :key="intervention">
 				<label>Select intervention policy {{ i + 1 }}</label>
-				<Dropdown
-					:model-value="intervention"
-					placeholder="Select an intervention policy"
-					:options="interventionPolicies"
-					option-label="name"
-					option-value="id"
-					@update:model-value="scenario.setInterventionSpecs($event)"
-					:disabled="isEmpty(interventionPolicies) || isFetchingModelInformation"
-					:loading="isFetchingModelInformation"
-				/>
+				<div class="flex">
+					<Dropdown
+						class="flex-1"
+						:model-value="intervention.id"
+						placeholder="Select an intervention policy"
+						:options="interventionPolicies"
+						option-label="name"
+						option-value="id"
+						@update:model-value="scenario.setInterventionSpecs($event, i)"
+						:disabled="isEmpty(interventionPolicies) || isFetchingModelInformation"
+						:loading="isFetchingModelInformation"
+					/>
+					<Button
+						v-if="scenario.interventionSpecs.length > 2"
+						text
+						icon="pi pi-trash"
+						size="small"
+						@click="scenario.removeInterventionSpec(i)"
+					/>
+				</div>
 			</template>
-			<Button />
+			<div>
+				<Button
+					text
+					icon="pi pi-plus"
+					label="Add a new intervention"
+					size="small"
+					@click="scenario.addInterventionSpec()"
+				/>
+			</div>
 		</template>
 
 		<template #outputs>

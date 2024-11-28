@@ -72,7 +72,7 @@
 							:is="registry.getNode(node.operationType)"
 							:node="node"
 							@append-output="(event: any) => appendOutput(node, event)"
-							@append-input-port="(event: any) => appendInputPort(node, event)"
+							@append-input-port="(event: any) => onAppendInputPort(node, event)"
 							@update-state="(event: any) => updateWorkflowNodeState(node, event)"
 							@open-drilldown="addOperatorToRoute(node.id)"
 						/>
@@ -175,7 +175,7 @@ import Button from 'primevue/button';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import ContextMenu from 'primevue/contextmenu';
 import * as workflowService from '@/services/workflow';
-import { OperatorImport, OperatorNodeSize, getNodeMenu } from '@/services/workflow';
+import { OperatorImport, OperatorNodeSize, getNodeMenu, appendInputPort } from '@/services/workflow';
 import * as d3 from 'd3';
 import { AssetType, ClientEventType, EventType, ClientEvent } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
@@ -303,14 +303,8 @@ const saveWorkflowHandler = () => {
 	saveWorkflowDebounced();
 };
 
-function appendInputPort(node: WorkflowNode<any>, port: { type: string; label?: string; value: any }) {
-	node.inputs.push({
-		id: uuidv4(),
-		type: port.type,
-		label: port.label,
-		isOptional: false,
-		status: WorkflowPortStatus.NOT_CONNECTED
-	});
+function onAppendInputPort(node: WorkflowNode<any>, port: { type: string; label?: string; value: any }) {
+	appendInputPort(node, port);
 }
 
 /**
