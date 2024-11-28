@@ -13,9 +13,12 @@ import jakarta.persistence.Transient;
 import java.io.Serial;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -132,8 +135,7 @@ public class Project extends TerariumAsset {
 	public String getEmbeddingSourceText() {
 		try {
 			if (overviewContent != null) {
-				log.info(new String(overviewContent));
-				return new String(overviewContent);
+				return getOverviewAsReadableString();
 			}
 			final ObjectMapper objectMapper = new ObjectMapper();
 			return objectMapper.writeValueAsString(this);
@@ -142,13 +144,33 @@ public class Project extends TerariumAsset {
 		}
 	}
 
+	private String getOverviewAsReadableString() {
+		if (overviewContent == null) {
+			return null;
+		}
+
+		// decode from base64
+		final byte[] decodedBytes = Base64.getDecoder().decode(overviewContent);
+		final String decodedString = new String(decodedBytes);
+
+		// remove image tags
+		final String regex = "<img\\b[^>]*>(.*?)<\\/img>|<img\\b[^>]*\\/>";
+		final Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+		final Matcher matcher = pattern.matcher(decodedString);
+		final String result = matcher.replaceAll("");
+
+		log.info("Overview content: {}", result);
+
+		return result;
+	}
+
 	@JsonIgnore
 	@TSIgnore
 	public Map<TerariumAssetEmbeddingType, String> getEmbeddingsSourceByType() {
 		final Map<TerariumAssetEmbeddingType, String> sources = super.getEmbeddingsSourceByType();
 
 		if (overviewContent != null) {
-			sources.put(TerariumAssetEmbeddingType.OVERVIEW, new String(overviewContent));
+			sources.put(TerariumAssetEmbeddingType.OVERVIEW, getOverviewAsReadableString());
 		}
 		if (metadata != null) {
 			sources.put(TerariumAssetEmbeddingType.METADATA, metadata.toString());
