@@ -20,6 +20,7 @@ import {
 import { logger } from '@/utils/logger';
 import { snakeToCapitalSentence } from '@/utils/text';
 import { Ref } from 'vue';
+import { getModel } from '@/services/model';
 import { getDocumentAsset } from './document-assets';
 import { getWorkflow } from './workflow';
 
@@ -206,12 +207,26 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 	);
 	registerHandler<TaskResponse>(ClientEventType.KnowledgeEnrichmentModel, (event, created) => {
 		created.sourceName = 'Model Enrichment';
-		created.assetId = event.data.additionalProperties.modelId as string;
-		created.pageType = AssetType.Workflow;
-		created.nodeId = event.data.additionalProperties.nodeId as string;
-		getWorkflow(created.assetId, created.projectId).then((workflow) =>
-			Object.assign(created, { context: workflow?.name || '' })
-		);
+
+		// Check if the event data contains a workflowId and nodeId
+		if (event.data.additionalProperties.workflowId && event.data.additionalProperties.nodeId) {
+			created.assetId = event.data.additionalProperties.workflowId as string;
+			created.pageType = AssetType.Workflow;
+			created.nodeId = event.data.additionalProperties.nodeId as string;
+			getWorkflow(created.assetId, created.projectId).then((workflow) =>
+				Object.assign(created, { context: workflow?.name || '' })
+			);
+		}
+
+		// We display the model page from where the enrichment model was triggered
+		else {
+			created.assetId = event.data.additionalProperties.modelId as string;
+			created.pageType = AssetType.Model;
+			created.typeDisplayName = 'Model Enrichment';
+			getModel(created.assetId, created.projectId).then((model) =>
+				Object.assign(created, { sourceName: model?.name || '' })
+			);
+		}
 	});
 
 	const getHandler = (eventType: ClientEventType) => handlers[eventType] ?? (() => {});
