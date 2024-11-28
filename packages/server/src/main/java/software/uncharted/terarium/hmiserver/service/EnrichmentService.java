@@ -50,7 +50,7 @@ public class EnrichmentService {
 		Model model,
 		String currentUserId,
 		Schema.Permission permission,
-		NotificationGroupInstance<KnowledgeController.Properties> notificationInterface
+		NotificationGroupInstance<KnowledgeController.NotificationProperties> notificationInterface
 	) {
 		log.info("YOHANN 2/4 - start async enrichment");
 		try {

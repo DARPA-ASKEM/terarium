@@ -176,7 +176,7 @@ public class KnowledgeController {
 
 	@Data
 	@Accessors(chain = true)
-	public static class Properties {
+	public static class NotificationProperties {
 
 		private UUID projectId;
 		private UUID modelId;
@@ -201,24 +201,24 @@ public class KnowledgeController {
 			projectId
 		);
 
-		final Properties properties = new Properties().setProjectId(projectId);
-
+		// Parse the request
 		UUID documentId = JsonUtil.parseUuidFromRequest(req, "documentId");
-		properties.setDocumentId(documentId);
 		UUID modelId = JsonUtil.parseUuidFromRequest(req, "modelId");
-		properties.setModelId(modelId);
-		UUID workflowId = JsonUtil.parseUuidFromRequest(req, "workflowId");
-		properties.setWorkflowId(workflowId);
-		UUID nodeId = JsonUtil.parseUuidFromRequest(req, "nodeId");
-		properties.setNodeId(nodeId);
+
+		// Create the notification properties
+		final NotificationProperties notificationProperties = new NotificationProperties().setProjectId(projectId);
+		notificationProperties.setDocumentId(documentId);
+		notificationProperties.setModelId(modelId);
+		notificationProperties.setWorkflowId(JsonUtil.parseUuidFromRequest(req, "workflowId"));
+		notificationProperties.setNodeId(JsonUtil.parseUuidFromRequest(req, "nodeId"));
 
 		// Create the notification group
-		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<>(
+		final NotificationGroupInstance<NotificationProperties> notificationInterface = new NotificationGroupInstance<>(
 			clientEventService,
 			notificationService,
 			ClientEventType.KNOWLEDGE_ENRICHMENT_MODEL,
 			projectId,
-			properties,
+			notificationProperties,
 			currentUserService.get().getId()
 		);
 
