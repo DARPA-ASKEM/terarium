@@ -16,6 +16,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Observable;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.State;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Transition;
+import software.uncharted.terarium.hmiserver.models.dataservice.regnet.RegNetVertex;
 import software.uncharted.terarium.hmiserver.models.task.CompoundTask;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.service.data.DKGService;
@@ -92,52 +93,29 @@ public class EnrichmentService {
 			notificationInterface.sendMessage("Updating model grounding...");
 
 			// Update State Grounding
-			final List<State> states = enrichedModel
-				.getStates()
-				.stream()
-				.map(state -> state == null ? new State() : state)
-				.collect(Collectors.toList());
-			states.forEach(state -> TaskUtilities.performDKGSearchAndSetGrounding(dkgService, state));
+			final List<State> states = enrichedModel.getStates();
+			TaskUtilities.performDKGSearchAndSetGrounding(dkgService, states);
 			enrichedModel.setStates(states);
-			notificationInterface.sendMessage("State grounding complete.");
 
 			// Update Observable Grounding
 			if (enrichedModel.getObservables() != null && !enrichedModel.getObservables().isEmpty()) {
 				final List<Observable> observables = enrichedModel.getObservables();
-				observables.forEach(observable -> {
-					if (observable == null) {
-						observable = new Observable();
-					}
-					TaskUtilities.performDKGSearchAndSetGrounding(dkgService, observable);
-				});
+				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, observables);
 				enrichedModel.setObservables(observables);
-				notificationInterface.sendMessage("Observable grounding complete.");
 			}
 
 			// Update Parameter Grounding
 			if (enrichedModel.getParameters() != null && !enrichedModel.getParameters().isEmpty()) {
 				final List<ModelParameter> parameters = enrichedModel.getParameters();
-				parameters.forEach(parameter -> {
-					if (parameter == null) {
-						parameter = new ModelParameter();
-					}
-					TaskUtilities.performDKGSearchAndSetGrounding(dkgService, parameter);
-				});
+				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, parameters);
 				enrichedModel.setParameters(parameters);
-				notificationInterface.sendMessage("Parameter grounding complete.");
 			}
 
 			// Update Transition Grounding
 			if (enrichedModel.getTransitions() != null && !enrichedModel.getTransitions().isEmpty()) {
 				final List<Transition> transitions = enrichedModel.getTransitions();
-				transitions.forEach(transition -> {
-					if (transition == null) {
-						transition = new Transition();
-					}
-					TaskUtilities.performDKGSearchAndSetGrounding(dkgService, transition);
-				});
+				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, transitions);
 				enrichedModel.setTransitions(transitions);
-				notificationInterface.sendMessage("Transition grounding complete.");
 			}
 
 			// Update the model
