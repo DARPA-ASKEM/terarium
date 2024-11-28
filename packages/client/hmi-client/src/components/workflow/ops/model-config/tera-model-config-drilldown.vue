@@ -291,6 +291,7 @@ import Calendar from 'primevue/calendar';
 import { CalendarSettings } from '@/utils/date';
 import { DrilldownTabs } from '@/types/common';
 import { formatListWithConjunction } from '@/utils/text';
+import { DistributionType } from '@/services/distribution';
 import {
 	blankModelConfig,
 	isModelConfigsEqual,
@@ -665,6 +666,11 @@ const initialize = async (overwriteWithState: boolean = false) => {
 			mmt.value.annotations.name,
 			amrParameters.value
 		);
+
+		parameters.forEach((parameter) => {
+			const type = parameter.distribution.type;
+			parameter.distribution.type = type === 'Uniform' ? DistributionType.Uniform : type;
+		});
 		if (parameters.length) {
 			knobs.value.transientModelConfig.parameterSemanticList = parameters;
 		}

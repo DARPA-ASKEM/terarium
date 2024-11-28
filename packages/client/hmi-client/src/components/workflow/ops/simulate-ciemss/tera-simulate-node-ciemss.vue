@@ -12,6 +12,7 @@
 					expandable
 					are-embed-actions-visible
 					:visualization-spec="interventionCharts[setting.id]"
+					:interactive="false"
 				/>
 				<vega-chart
 					v-for="setting of selectedVariableSettings"
@@ -19,6 +20,7 @@
 					expandable
 					are-embed-actions-visible
 					:visualization-spec="variableCharts[setting.id]"
+					:interactive="false"
 				/>
 				<vega-chart
 					v-for="setting of selectedComparisonChartSettings"
@@ -26,6 +28,7 @@
 					expandable
 					are-embed-actions-visible
 					:visualization-spec="comparisonCharts[setting.id]"
+					:interactive="false"
 				/>
 			</section>
 		</template>

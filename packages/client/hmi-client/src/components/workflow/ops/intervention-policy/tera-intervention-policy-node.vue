@@ -2,7 +2,12 @@
 	<section>
 		<ul v-if="node.state.interventionPolicy.id">
 			<li v-for="(_interventions, appliedTo) in groupedOutputParameters" :key="appliedTo">
-				<vega-chart expandable :are-embed-actions-visible="false" :visualization-spec="preparedCharts[appliedTo]" />
+				<vega-chart
+					expandable
+					:are-embed-actions-visible="false"
+					:visualization-spec="preparedCharts[appliedTo]"
+					:interactive="false"
+				/>
 			</li>
 		</ul>
 		<tera-operator-placeholder :node="node" v-else />
