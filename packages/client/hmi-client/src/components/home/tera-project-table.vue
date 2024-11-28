@@ -1,11 +1,11 @@
 <template>
 	<!--The pt wrapper styling enables the table header to stick with the project search bar-->
 	<DataTable
-		ref="projectTableRef"
 		:value="projectsWithKnnMatches"
 		:rows="numberOfRows"
 		:rows-per-page-options="[10, 20, 30, 40, 50]"
 		:pt="{ wrapper: { style: { overflow: 'none' } } }"
+		:key="projectTableKey"
 		data-key="id"
 		paginator
 		@page="getProjectAssets"
@@ -108,6 +108,7 @@ import type { PageState } from 'primevue/paginator';
 import * as ProjectService from '@/services/project';
 import { highlight } from '@/utils/text';
 import Button from 'primevue/button';
+import { v4 as uuidv4 } from 'uuid';
 import TeraProjectMenu from './tera-project-menu.vue';
 import TeraAssetIcon from '../widgets/tera-asset-icon.vue';
 
@@ -124,9 +125,9 @@ const props = defineProps<{
 
 const emit = defineEmits(['open-project']);
 
-const projectTableRef = ref();
 const projectsWithKnnMatches = ref<ProjectWithKnnSnippet[]>([]);
 const numberOfRows = ref(20);
+const projectTableKey = ref(uuidv4());
 
 let pageState: PageState = { page: 0, rows: numberOfRows.value, first: 0 };
 let prevSearchQuery = '';
@@ -174,11 +175,7 @@ async function getProjectAssets(event: PageState = pageState) {
 watch(
 	() => props.projects,
 	() => {
-		// Reset the page to 0 when a new search is performed
-		if (pageState.page !== 0) {
-			const firstPageButton = projectTableRef.value.$el.querySelector('.p-paginator-first');
-			firstPageButton?.dispatchEvent(new MouseEvent('click'));
-		}
+		projectTableKey.value = uuidv4();
 		projectsWithKnnMatches.value = props.projects;
 		getProjectAssets();
 	},
