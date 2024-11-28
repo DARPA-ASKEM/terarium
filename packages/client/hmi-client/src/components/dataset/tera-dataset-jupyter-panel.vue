@@ -85,24 +85,32 @@
 				/>
 			</div>
 		</div>
-
-		<!-- Jupyter Chat -->
-		<tera-jupyter-chat
-			ref="chat"
-			:show-jupyter-settings="true"
-			:show-chat-thoughts="props.showChatThoughts"
-			:jupyter-session="jupyterSession"
-			:kernel-status="kernelStatus"
-			:language="selectedLanguage"
-			:default-preview="defaultPreview"
-			@update-kernel-state="(e) => emit('update-kernel-state', e)"
-			@update-kernel-status="updateKernelStatus"
-			@new-dataset-saved="onNewDatasetSaved"
-			@download-response="onDownloadResponse"
-			@update-language="(lang) => emit('update-language', lang)"
-			@update-selected-outputs="(outputs) => emit('update-selected-outputs', outputs)"
-			:notebook-session="props.notebookSession"
-		/>
+		<div class="notebook-container">
+			<div v-if="showRerunMessage" class="rerun-message">
+				Re-run all the cells to restore the context if you need to make any changes or use them downstream.
+				<Button icon="pi pi-times" text rounded aria-label="Close" @click="showRerunMessage = false" />
+			</div>
+			<ul>
+				<li v-for="(data, idx) in dataContextDescription" :key="idx" class="context-description">{{ data }}</li>
+			</ul>
+			<!-- Jupyter Chat -->
+			<tera-jupyter-chat
+				ref="chat"
+				:show-jupyter-settings="true"
+				:show-chat-thoughts="props.showChatThoughts"
+				:jupyter-session="jupyterSession"
+				:kernel-status="kernelStatus"
+				:language="selectedLanguage"
+				:default-preview="defaultPreview"
+				@update-kernel-state="(e) => emit('update-kernel-state', e)"
+				@update-kernel-status="updateKernelStatus"
+				@new-dataset-saved="onNewDatasetSaved"
+				@download-response="onDownloadResponse"
+				@update-language="(lang) => emit('update-language', lang)"
+				@update-selected-outputs="(outputs) => emit('update-selected-outputs', outputs)"
+				:notebook-session="props.notebookSession"
+			/>
+		</div>
 
 		<!-- Save as dialog -->
 		<tera-modal v-if="showSaveInput" class="w-4">
@@ -162,16 +170,10 @@ const jupyterSession: SessionContext = await newSession('beaker_kernel', 'Beaker
 const selectedKernel = ref();
 const runningSessions = ref<any[]>([]);
 
-const defaultPreview = computed(() => {
-	let code = '';
-	props.assets.forEach((asset, index) => {
-		code += `#d${index + 1} = ${asset.name}\n`;
-	});
-	// add first dataset to the code
-	code += 'd1';
-	return code;
-});
+// This is used to inform the user what is in the context.
+const dataContextDescription = computed(() => props.assets.map((asset, index) => `#d${index + 1} = ${asset.name}\n`));
 
+const defaultPreview = ref<string>('d1');
 const confirm = useConfirm();
 
 const props = defineProps<{
@@ -185,6 +187,7 @@ const props = defineProps<{
 	sampleAgentQuestions: string[];
 }>();
 
+const showRerunMessage = ref(false);
 const languages = programmingLanguageOptions();
 const selectedLanguage = computed(() => props.programmingLanguage || languages[0].value);
 
@@ -308,6 +311,7 @@ watch(
 
 onMounted(() => {
 	// for admin panel
+
 	jupyterSession.ready.then(() => {
 		if (jupyterSession.session) {
 			const sessions = getSessionManager().running();
@@ -322,6 +326,7 @@ onMounted(() => {
 				kernelId: jupyterSession.session?.kernel?.id,
 				value: jupyterSession.session?.id
 			};
+			showRerunMessage.value = true;
 		}
 	});
 });
@@ -481,10 +486,15 @@ const onAddCodeCell = () => {
 };
 
 const onRunAllCells = () => {
-	if (window.confirm('Are you sure you want to rerun all cells?')) {
-		const event = new Event('run-all-cells');
-		window.dispatchEvent(event);
-	}
+	confirm.require({
+		message: 'Are you sure you want to rerun all cells?',
+		header: 'Rerun all cells',
+		accept: () => {
+			const event = new Event('run-all-cells');
+			window.dispatchEvent(event);
+			showRerunMessage.value = false;
+		}
+	});
 };
 
 /* Download dataset feature has been removed, but keeping this code here in case it returns */
@@ -519,6 +529,16 @@ const onDownloadResponse = (payload) => {
 </script>
 
 <style scoped>
+.context-description {
+	background-color: var(--surface-100);
+	width: 100%;
+	width: fill-available;
+	font-family: var(--font-family);
+	font-feature-settings: 'tnum';
+	border: none;
+	margin: 0;
+}
+
 .container {
 	margin-left: 1rem;
 	margin-right: 1rem;
@@ -631,5 +651,21 @@ const onDownloadResponse = (payload) => {
 	grid-row: 2;
 	grid-column: 1 / span 6;
 	color: var(--text-color-subdued);
+}
+
+.rerun-message {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	display: flex;
+	background-color: var(--surface-warning);
+	justify-content: space-between;
+	align-items: center;
+	padding: var(--gap-2);
+}
+
+.notebook-container {
+	height: calc(100% - 3.5rem);
+	overflow-y: auto;
 }
 </style>

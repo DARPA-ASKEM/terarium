@@ -12,7 +12,7 @@
 			<div class="actions">
 				<slot name="actions" />
 			</div>
-			<a v-if="documentationUrl" :href="documentationUrl" rel="noopener noreferrer">Documentation</a>
+			<a v-if="documentationUrl" :href="documentationUrl" rel="noopener noreferrer">Help</a>
 		</div>
 	</header>
 </template>
