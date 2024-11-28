@@ -272,7 +272,7 @@ public class KnowledgeController {
 		}
 
 		// Create a request for SKEMA with the cleaned-up equations.
-		JsonNode skemaRequest = mapper.createObjectNode().put("model", "petrinet").set("equations", equationsReq);
+		final JsonNode skemaRequest = mapper.createObjectNode().put("model", "petrinet").set("equations", equationsReq);
 
 		// Get an AMR from Skema Unified Service
 		try {
