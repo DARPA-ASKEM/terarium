@@ -11,37 +11,6 @@
 				@update:model-value="scenario.setModelSpec($event)"
 			/>
 
-			<label>Select a dataset</label>
-			<Dropdown
-				:model-value="scenario.datasetSpec.id"
-				:options="datasets"
-				option-label="assetName"
-				option-value="assetId"
-				placeholder="Select a dataset"
-				@update:model-value="scenario.setDatasetSpec($event)"
-			/>
-
-			<!-- TODO: adding intervention policies -->
-			<!-- <label>Select an intervention policy (historical)</label>
-			<Dropdown
-			:model-value="scenario.historicalInterventionSpec.id"
-			placeholder="Optional"
-			:options="interventionPolicies"
-			option-label="name"
-			option-value="id"
-			@update:model-value="scenario.setHistoricalInterventionSpec($event)"
-			:disabled="isEmpty(interventionPolicies) || isFetchingModelInformation" />
-
-			<label>Select an intervention policy (known future)</label>
-			<Dropdown
-			:model-value="scenario.futureInterventionSpec.id"
-			placeholder="Optional"
-			:options="interventionPolicies"
-			option-label="name"
-			option-value="id"
-			@update:model-value="scenario.setFutureInterventionSpec($event)"
-			:disabled="isEmpty(interventionPolicies) || isFetchingModelInformation" /> -->
-
 			<label>Select configuration representing best and generous estimates of the initial conditions</label>
 			<Dropdown
 				:model-value="scenario.modelConfigSpec.id"
@@ -53,12 +22,11 @@
 				:disabled="isEmpty(modelConfigurations) || isFetchingModelInformation"
 			/>
 		</template>
-
 		<template #outputs>
 			<label>Select an output metric</label>
 			<MultiSelect
 				:disabled="isEmpty(modelStateOptions) || isFetchingModelInformation"
-				:model-value="scenario.calibrateSpec.ids"
+				:model-value="scenario.simulateSpec.ids"
 				placeholder="Select output metrics"
 				option-label="name"
 				option-value="id"
@@ -66,45 +34,39 @@
 				@update:model-value="scenario.setCalibrateSpec($event)"
 				filter
 			/>
-			<img :src="calibrate" alt="Calibrate chart" />
+			<!-- <img :src="simulate" alt="Simulate chart" /> -->
 		</template>
 	</tera-scenario-template>
 </template>
 
 <script setup lang="ts">
-import Dropdown from 'primevue/dropdown';
-import { computed, ref, watch } from 'vue';
+import { SensitivityAnalysisScenario } from '@/components/workflow/scenario-templates/sensitivity-analysis/sensitivity-analysis-scenario';
 import { useProjects } from '@/composables/project';
-import { AssetType, InterventionPolicy, ModelConfiguration } from '@/types/Types';
-import { getInterventionPoliciesForModel, getModel, getModelConfigurationsForModel } from '@/services/model';
+import { getModel, getModelConfigurationsForModel } from '@/services/model';
+import { AssetType, ModelConfiguration } from '@/types/Types';
 import { isEmpty } from 'lodash';
+import { computed, ref, watch } from 'vue';
+import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
-import calibrate from '@/assets/svg/template-images/calibration-thumbnail.svg';
-import { SituationalAwarenessScenario } from './situational-awareness-scenario';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
 import { ScenarioHeader } from '../base-scenario';
 
 const header: ScenarioHeader = Object.freeze({
-	title: 'Situational awareness template',
-	question: "What's likely to happen next?",
+	title: 'Sensitivity analysis template',
+	question: 'Which parameters introduces the most uncertainty in the outcomes of interest?',
 	description:
-		'Calibrates the model to historical data to obtain the best estimate of parameters for the present, then forecasts into the near future.',
-	examples: [
-		'Anticipate the arrival of a new variants.',
-		'Evaluate the potential impact of growing vaccine hesitancy and declining NPIs.'
-	]
+		'Configure the model with parameter distributions that reflect all the sources of uncertainty, then simulate into the near future.',
+	examples: ['Unknown severity of new variant.', 'Unknown speed of waning immunity.']
 });
 
 const isFetchingModelInformation = ref(false);
 const models = computed(() => useProjects().getActiveProjectAssets(AssetType.Model));
-const datasets = computed(() => useProjects().getActiveProjectAssets(AssetType.Dataset));
 
 const modelConfigurations = ref<ModelConfiguration[]>([]);
-const interventionPolicies = ref<InterventionPolicy[]>([]);
 const modelStateOptions = ref<any[]>([]);
 
 const props = defineProps<{
-	scenario: SituationalAwarenessScenario;
+	scenario: SensitivityAnalysisScenario;
 }>();
 
 watch(
@@ -115,7 +77,6 @@ watch(
 		const model = await getModel(modelId);
 		if (!model) return;
 		modelConfigurations.value = await getModelConfigurationsForModel(modelId);
-		interventionPolicies.value = await getInterventionPoliciesForModel(modelId);
 
 		// Set the first model configuration as the default
 		if (!isEmpty(modelConfigurations.value)) {

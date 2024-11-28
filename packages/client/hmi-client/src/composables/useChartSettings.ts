@@ -2,8 +2,10 @@ import { ref, computed } from 'vue';
 import { ChartSetting, ChartSettingEnsembleVariable, ChartSettingType } from '@/types/common';
 import {
 	addMultiVariableChartSetting,
+	EnsembleVariableChartSettingOption,
 	removeChartSettingById,
-	updateChartSettingsBySelectedVariables
+	updateChartSettingsBySelectedVariables,
+	updateEnsembleVariableChartSettingOption
 } from '@/services/chart-settings';
 import { WorkflowNode } from '@/types/workflow';
 
@@ -73,6 +75,13 @@ export function useChartSettings(
 		comparisonChartsSettingsSelection.value = [];
 	};
 
+	const updateEnsembleVariableSettingOption = (option: EnsembleVariableChartSettingOption, value: boolean) => {
+		emit('update-state', {
+			...props.node.state,
+			chartSettings: updateEnsembleVariableChartSettingOption(chartSettings.value, option, value)
+		});
+	};
+
 	return {
 		chartSettings,
 		activeChartSettings,
@@ -85,6 +94,7 @@ export function useChartSettings(
 		selectedComparisonChartSettings,
 		removeChartSettings,
 		updateChartSettings,
-		addComparisonChartSettings
+		addComparisonChartSettings,
+		updateEnsembleVariableSettingOption
 	};
 }

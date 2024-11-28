@@ -15,12 +15,15 @@ import co.elastic.clients.elasticsearch.core.DeleteRequest;
 import co.elastic.clients.elasticsearch.core.GetRequest;
 import co.elastic.clients.elasticsearch.core.GetResponse;
 import co.elastic.clients.elasticsearch.core.IndexRequest;
+import co.elastic.clients.elasticsearch.core.MsearchRequest;
+import co.elastic.clients.elasticsearch.core.MsearchResponse;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.UpdateRequest;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
 import co.elastic.clients.elasticsearch.core.bulk.UpdateOperation;
+import co.elastic.clients.elasticsearch.core.msearch.RequestItem;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.SourceConfigParam;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
@@ -613,6 +616,29 @@ public class ElasticsearchService {
 		}
 	}
 
+	public <T> MsearchResponse bulkKnnSearch(final String index, final List<KnnQuery> knnQueries, final Class<T> tClass)
+		throws IOException {
+		try {
+			log.info("KNN search on: {}", index);
+
+			List<RequestItem> items = new ArrayList<>();
+			for (KnnQuery knnQuery : knnQueries) {
+				RequestItem item = new RequestItem.Builder()
+					.header(h -> h.index(index)) // Specify the index for the request
+					.body(b -> b.knn(knnQuery)) // Add the KnnQuery as the body
+					.build();
+
+				items.add(item);
+			}
+
+			MsearchRequest request = new MsearchRequest.Builder().index(index).searches(items).build();
+
+			return client.msearch(request, tClass);
+		} catch (final ElasticsearchException e) {
+			throw handleException(e);
+		}
+	}
+
 	/**
 	 * Bulk insert documents into an index.
 	 *
@@ -900,7 +926,7 @@ public class ElasticsearchService {
 	}
 
 	public static String emphasis(final String s, final int boost) {
-		return s + "^" + String.valueOf(boost);
+		return s + "^" + boost;
 	}
 
 	/**

@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -120,6 +121,8 @@ public class ProjectSearchService {
 
 		@JsonProperty("asset_embeddings")
 		private List<ProjectAssetEmbedding> assetEmbeddings = new ArrayList<>();
+
+		private String embeddingSha256;
 
 		// join field properties
 		private PermissionJoin permissionJoin;
@@ -341,6 +344,11 @@ public class ProjectSearchService {
 		return QueryBuilders.bool(b -> b.must(onlyProjects).must(permissionQuery));
 	}
 
+	private String getEmbeddingSha256(final Map<TerariumAssetEmbeddingType, String> embeddingTexts) {
+		final String concatenatedText = embeddingTexts.values().stream().sorted().reduce((a, b) -> a + " " + b).orElse("");
+		return DigestUtils.sha256Hex(concatenatedText);
+	}
+
 	/**
 	 * Generate asset embeddings for a project
 	 *
@@ -352,7 +360,7 @@ public class ProjectSearchService {
 		final UUID projectId,
 		final TerariumAsset asset,
 		final boolean force
-	) {
+	) throws IOException {
 		if (force || (!isRunningTestProfile() && !asset.getTemporary())) {
 			final Map<TerariumAssetEmbeddingType, String> embeddingTexts = asset.getEmbeddingsSourceByType();
 			if (embeddingTexts.isEmpty()) {
@@ -360,19 +368,22 @@ public class ProjectSearchService {
 				return null;
 			}
 
-			log.info("Dispatch async embedding generation for asset {}", asset.getId());
+			// compute the new embedding sha
+			final String newEmbeddingSha256 = getEmbeddingSha256(embeddingTexts);
 
+			final ProjectDocument projectDoc = elasticService.get(getAlias(), projectId.toString(), ProjectDocument.class);
+
+			if (projectDoc.embeddingSha256 != null && projectDoc.embeddingSha256.equals(newEmbeddingSha256)) {
+				log.info("Embedding for asset {} has not changed, skipping", asset.getId());
+				return null;
+			}
+
+			log.info("Dispatch async embedding generation for asset {}", asset.getId());
 			return CompletableFuture.runAsync(() -> {
 				new Thread(() -> {
 					try {
 						final Map<TerariumAssetEmbeddingType, TerariumAssetEmbeddings> embeddings =
 							embeddingService.generateEmbeddingsBySource(embeddingTexts);
-
-						final ProjectDocument projectDoc = elasticService.get(
-							getAlias(),
-							projectId.toString(),
-							ProjectDocument.class
-						);
 
 						for (final Map.Entry<TerariumAssetEmbeddingType, TerariumAssetEmbeddings> entry : embeddings.entrySet()) {
 							final TerariumAssetEmbeddings embedding = entry.getValue();
@@ -407,6 +418,9 @@ public class ProjectSearchService {
 							}
 						}
 
+						// save the new embedding sha256
+						projectDoc.embeddingSha256 = newEmbeddingSha256;
+
 						final String routing = projectId.toString();
 
 						log.info("Writing asset embedding for project {} for asset {}", projectId, asset.getId());
@@ -422,7 +436,8 @@ public class ProjectSearchService {
 		return null;
 	}
 
-	public Future<Void> generateAndUpsertProjectAssetEmbeddings(final UUID projectId, final TerariumAsset asset) {
+	public Future<Void> generateAndUpsertProjectAssetEmbeddings(final UUID projectId, final TerariumAsset asset)
+		throws IOException {
 		return generateAndUpsertProjectAssetEmbeddings(projectId, asset, false);
 	}
 
