@@ -220,7 +220,7 @@ watch(
 	[vegaContainer, () => props.visualizationSpec],
 	async ([, newSpec], [, oldSpec]) => {
 		const isEqual = _.isEqual(newSpec, oldSpec);
-
+		if (_.isEmpty(newSpec)) return;
 		if (isEqual && vegaVisualization.value !== undefined) return;
 		const spec = deepToRaw(props.visualizationSpec);
 
@@ -246,6 +246,7 @@ watch(
 		} else {
 			// console.log('render interactive');
 			if (!vegaContainer.value) return;
+			vegaVisualization.value?.finalize(); // dispose previous visualization before creating a new one
 			vegaVisualization.value = await createVegaVisualization(vegaContainer.value, spec, props.config, {
 				actions: props.areEmbedActionsVisible,
 				expandable: !!props.expandable
