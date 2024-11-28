@@ -159,8 +159,6 @@ public class Project extends TerariumAsset {
 		final Matcher matcher = pattern.matcher(decodedString);
 		final String result = matcher.replaceAll("");
 
-		log.info("Overview content: {}", result);
-
 		return result;
 	}
 
