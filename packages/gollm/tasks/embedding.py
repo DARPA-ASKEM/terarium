@@ -1,6 +1,6 @@
 import sys
 from entities import EmbeddingModel
-from gollm_openai.tool_utils import embedding_chain
+from gollm_openai.tool_utils import bulk_embedding_chain
 
 from taskrunner import TaskRunnerInterface
 
@@ -20,13 +20,11 @@ def main():
         taskrunner.log("Creating Embedding from input")
         input_model = EmbeddingModel(**input_dict)
 
-        responses = []
 
-        for text in input_model.text:
-            taskrunner.log("Sending request to OpenAI API")
-            response = embedding_chain(text=text)
-            taskrunner.log("Received response from OpenAI API")
-            responses.append(response)
+
+        taskrunner.log("Sending request to OpenAI API")
+        responses = bulk_embedding_chain(texts=input_model.text)
+        taskrunner.log("Received response from OpenAI API")
 
         taskrunner.write_output_dict_with_timeout({"response": responses})
 
