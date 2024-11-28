@@ -31,13 +31,17 @@
 				<TabView @tab-change="tabChange" :active-index="activeTabIndex" :key="activeTabIndex">
 					<TabPanel v-for="(tab, i) in TabTitles" :header="tab" :key="i">
 						<section class="filter-and-sort">
-							<tera-input-text
-								v-model="searchProjectsQuery"
-								placeholder="Search for projects"
-								id="searchProject"
-								:icon="isSearchLoading ? 'pi pi-spin pi-spinner' : 'pi pi-search'"
-								class="search-input"
-							/>
+							<span class="search">
+								<tera-input-text
+									v-model="searchProjectsQuery"
+									placeholder="Search for projects"
+									id="searchProject"
+									:icon="isSearchLoading ? 'pi pi-spin pi-spinner' : 'pi pi-search'"
+									class="search-input"
+									@keydown.enter="searchedProjects"
+								/>
+								<Button label="Search" @click="searchedProjects" />
+							</span>
 							<Dropdown
 								v-if="view === ProjectsView.Cards"
 								v-model="selectedSort"
@@ -132,7 +136,7 @@ import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
-import { debounce, isEmpty } from 'lodash';
+import { isEmpty } from 'lodash';
 import TeraProjectTable from '@/components/home/tera-project-table.vue';
 import TeraProjectCard from '@/components/home/tera-project-card.vue';
 import { useProjects } from '@/composables/project';
@@ -319,22 +323,10 @@ watch(cloningProjects, () => {
 	}
 });
 
-function addRankingToColumns() {
-	removeRankingFromColumns();
-	columns.value.unshift({ field: 'score', header: 'Ranking' });
-	selectedColumns.value.unshift({ field: 'score', header: 'Ranking' });
-}
-
-function removeRankingFromColumns() {
-	columns.value = columns.value.filter((col) => col.field !== 'score');
-	selectedColumns.value = selectedColumns.value.filter((col) => col.field !== 'score');
-}
-
 async function searchedProjects() {
 	// If the search query is empty, show all projects
 	if (isEmpty(searchProjectsQuery.value)) {
 		searchProjectsResults.value = [];
-		removeRankingFromColumns();
 		return;
 	}
 
@@ -347,13 +339,10 @@ async function searchedProjects() {
 	} else {
 		// Display search results using the table view
 		view.value = ProjectsView.Table;
-		addRankingToColumns();
 	}
 
 	isSearchLoading.value = false;
 }
-
-watch(searchProjectsQuery, debounce(searchedProjects, 500));
 </script>
 
 <style scoped>
@@ -493,9 +482,24 @@ header {
 	top: 42px;
 }
 
-.search-input {
+.search {
+	display: flex;
 	flex: 1;
 	max-width: 50rem;
+
+	& > .search-input {
+		flex: 1;
+
+		&:deep(main) {
+			border-top-right-radius: 0;
+			border-bottom-right-radius: 0;
+		}
+	}
+
+	&:deep(.p-button) {
+		border-top-left-radius: 0;
+		border-bottom-left-radius: 0;
+	}
 }
 
 .sort-options-dropdown {

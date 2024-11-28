@@ -1,9 +1,10 @@
 <template>
 	<!--The pt wrapper styling enables the table header to stick with the project search bar-->
 	<DataTable
-		:value="projects"
-		:rows-per-page-options="[5, 10, 20, 30, 40, 50]"
+		ref="projectTableRef"
+		:value="projectsWithKnnMatches"
 		:rows="numberOfRows"
+		:rows-per-page-options="[10, 20, 30, 40, 50]"
 		:pt="{ wrapper: { style: { overflow: 'none' } } }"
 		data-key="id"
 		paginator
@@ -23,19 +24,16 @@
 				<template v-if="col.field === 'name'">
 					<a @click.stop="emit('open-project', data.id)">{{ data.name }}</a>
 					<ul>
-						<li
-							v-for="(asset, index) in projectsWithKnnMatches
-								.find(({ id }) => id === data.id)
-								?.projectAssets.slice(0, 3)"
-							class="flex align-center gap-2"
-							:key="index"
-						>
+						<li v-for="(asset, index) in data.projectAssets" class="flex align-center gap-2" :key="index">
 							<tera-asset-icon :assetType="asset.assetType" />
 							<span v-html="highlight(asset.assetName, searchQuery)" />
 						</li>
 					</ul>
 				</template>
-				<tera-show-more-text v-else-if="col.field === 'description'" :text="data.description" :lines="1" />
+				<template v-else-if="col.field === 'description'">
+					<tera-show-more-text :text="data.description" :lines="1" />
+					<p v-if="data.snippet" v-html="data.snippet" />
+				</template>
 				<template v-if="col.field === 'userName'">
 					{{ data.userName ?? '--' }}
 				</template>
@@ -100,6 +98,10 @@ import { highlight } from '@/utils/text';
 import TeraProjectMenu from './tera-project-menu.vue';
 import TeraAssetIcon from '../widgets/tera-asset-icon.vue';
 
+interface ProjectWithKnnSnippet extends Project {
+	snippet?: string;
+}
+
 const props = defineProps<{
 	projects: Project[];
 	selectedColumns: { field: string; header: string }[];
@@ -108,7 +110,8 @@ const props = defineProps<{
 
 const emit = defineEmits(['open-project']);
 
-const projectsWithKnnMatches = ref<Project[]>([]);
+const projectTableRef = ref();
+const projectsWithKnnMatches = ref<ProjectWithKnnSnippet[]>([]);
 const numberOfRows = ref(20);
 let pageState: PageState = { page: 0, rows: numberOfRows.value, first: 0 };
 
@@ -123,33 +126,34 @@ function formatStatTooltip(stat, displayName) {
 
 async function getProjectAssets(event: PageState = pageState) {
 	pageState = event; // Save the current page state so we still know it when the watch is triggered
+	if (isEmpty(props.searchQuery)) return;
 
-	if (isEmpty(props.searchQuery)) {
-		projectsWithKnnMatches.value = [];
-		return;
-	}
+	const { rows, first } = event;
+	const rawSearchQuery = props.searchQuery.toLowerCase().trim();
 
-	const { page, rows } = event;
+	// Just fetch the assets we are seeing in the page
+	projectsWithKnnMatches.value.slice(first, first + rows).forEach(async (project) => {
+		const projectWithAssets = (await ProjectService.get(project.id)) as ProjectWithKnnSnippet | null;
+		if (!projectWithAssets) return;
 
-	projectsWithKnnMatches.value = (
-		await Promise.all(
-			props.projects.slice(page * rows, (page + 1) * rows).map(async ({ id }) => {
-				const project = await ProjectService.get(id);
-				if (!project) return null;
-				project.projectAssets = project.projectAssets.filter(
-					(asset) =>
-						asset.assetName.toLowerCase().includes(props.searchQuery.toLowerCase().trim()) ||
-						asset.assetType === AssetType.Simulation // Simulations don't have names
-				);
-				return project;
-			})
-		)
-	).filter(Boolean) as Project[];
+		project.projectAssets = projectWithAssets.projectAssets.filter(
+			(asset) => asset.assetName.toLowerCase().includes(rawSearchQuery) && asset.assetType !== AssetType.Simulation // Simulations don't have names
+		);
+		project.snippet = project.description?.toLowerCase().includes(rawSearchQuery)
+			? highlight(project.description, rawSearchQuery)
+			: undefined;
+	});
 }
 
 watch(
 	() => props.projects,
 	() => {
+		// Reset the page to 0 when a new search is performed
+		if (pageState.page !== 0) {
+			const firstPageButton = projectTableRef.value.$el.querySelector('.p-paginator-first');
+			firstPageButton?.dispatchEvent(new MouseEvent('click'));
+		}
+		projectsWithKnnMatches.value = props.projects;
 		getProjectAssets();
 	},
 	{ immediate: true }
@@ -207,6 +211,14 @@ watch(
 	max-width: 20vw;
 }
 
+.p-datatable:deep(p) {
+	color: var(--text-color-primary);
+	max-width: 22vw;
+	text-overflow: ellipsis;
+	display: block;
+	overflow: hidden;
+}
+
 .p-datatable:deep(.highlight) {
 	font-weight: var(--font-weight-semibold);
 }
@@ -221,6 +233,8 @@ watch(
 
 .p-datatable:deep(.p-datatable-thead > tr > th) {
 	padding-left: var(--gap-5);
+	padding-top: var(--gap-3);
+	padding-bottom: var(--gap-3);
 	background-color: var(--surface-ground);
 }
 
