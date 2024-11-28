@@ -12,6 +12,7 @@
 					})
 				"
 				@show="onDropdownShow()"
+				@hide="hidePopup()"
 				option-label="name"
 				option-value="value"
 				:options="distributionOptions"
@@ -47,14 +48,12 @@
 		</section>
 		<template v-for="(option, index) in options" :key="index">
 			<tera-input-number
-				v-tooltip="'Testing'"
 				:label="DistributionInputLabels[parameter.type][index]"
 				:model-value="getParameterDistribution(modelConfiguration, parameterId, true)?.parameters[option]"
 				error-empty
 				@update:model-value="onParameterChange($event, DistributionInputOptions[parameter.type][index])"
 				class="parameter-input"
 			/>
-			<section>box</section>
 		</template>
 	</span>
 </template>
