@@ -17,5 +17,3 @@ defineProps<{
 	customFill?: string;
 }>();
 </script>
-
-<style scoped></style>

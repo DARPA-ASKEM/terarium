@@ -16,7 +16,7 @@
 			:header="col.header"
 			:sortable="!['stats'].includes(col.field)"
 			:key="index"
-			:style="{ width: columnWidthMap[col.field] ?? '5%' }"
+			:style="{ width: columnWidthMap[col.field] }"
 		>
 			<template #body="{ data }">
 				<template v-if="col.field === 'name'">
@@ -30,7 +30,7 @@
 							class="flex align-center gap-2"
 							:key="asset.id"
 						>
-							<tera-asset-icon :assetType="asset.assetType" />
+							<tera-asset-icon :asset-type="asset.assetType" />
 							<span v-html="highlight(asset.assetName, searchQuery)" />
 						</li>
 					</ul>
@@ -50,25 +50,29 @@
 				<template v-if="col.field === 'userName'">
 					{{ data.userName ?? '--' }}
 				</template>
-				<div v-else-if="col.field === 'stats'" class="stats">
-					<span v-tooltip.top="formatStatTooltip(data.metadata?.['contributor-count'] ?? 1, 'contributor')">
-						<i class="pi pi-user" />
-						{{ data.metadata?.['contributor-count'] ?? 1 }}
-					</span>
-					<span
-						v-for="metadataField in Object.keys(metadataCountToAssetNameMap)"
-						:key="metadataField"
-						v-tooltip.top="
-							formatStatTooltip(data.metadata?.[metadataField] ?? 0, metadataCountToAssetNameMap[metadataField])
-						"
-					>
-						<tera-asset-icon
-							:assetType="metadataCountToAssetNameMap[metadataField]"
-							custom-fill="var(--text-color-secondary)"
-						/>
-						{{ data.metadata?.[metadataField] ?? 0 }}
-					</span>
-				</div>
+				<template v-else-if="col.field === 'stats'">
+					<div class="stats">
+						<span v-tooltip.top="formatStatTooltip(data.metadata?.['contributor-count'] ?? 1, 'contributor')">
+							<i class="pi pi-user" />
+							{{ data.metadata?.['contributor-count'] ?? 1 }}
+						</span>
+					</div>
+					<div class="stats mt-3">
+						<span
+							v-for="metadataField in Object.keys(metadataCountToAssetNameMap)"
+							:key="metadataField"
+							v-tooltip.top="
+								formatStatTooltip(data.metadata?.[metadataField] ?? 0, metadataCountToAssetNameMap[metadataField])
+							"
+						>
+							<tera-asset-icon
+								:asset-type="metadataCountToAssetNameMap[metadataField]"
+								custom-fill="var(--text-color-secondary)"
+							/>
+							{{ data.metadata?.[metadataField] ?? 0 }}
+						</span>
+					</div>
+				</template>
 				<template v-else-if="col.field === 'createdOn'">
 					{{ data.createdOn ? formatDdMmmYyyy(data.createdOn) : '--' }}
 				</template>
@@ -117,12 +121,12 @@ let pageState: PageState = { page: 0, rows: numberOfRows.value, first: 0 };
 let prevSearchQuery = '';
 
 const columnWidthMap = {
-	name: '30%',
+	name: '25%',
 	description: '30%',
-	userName: '4%',
-	stats: '5%',
-	createdOn: '4%',
-	updatedOn: '4%'
+	userName: '15%',
+	stats: '10%',
+	createdOn: '10%',
+	updatedOn: '10%'
 };
 
 const metadataCountToAssetNameMap = {
@@ -201,9 +205,9 @@ watch(
 
 :deep(.p-datatable-tbody > tr > td),
 :deep(.p-datatable-thead > tr > th) {
-	white-space: nowrap;
+	/* white-space: nowrap;
 	overflow: hidden;
-	text-overflow: ellipsis;
+	text-overflow: ellipsis; */
 	vertical-align: top;
 	padding: var(--gap-3) var(--gap-5);
 }
@@ -241,18 +245,18 @@ watch(
 }
 
 :deep(li > span) {
-	text-overflow: ellipsis;
+	/* text-overflow: ellipsis;
 	display: block;
 	overflow: hidden;
-	/* max-width: 20vw; */
+	max-width: 20vw; */
 }
 
 :deep(p) {
 	color: var(--text-color-primary);
-	/* max-width: 22vw; */
+	/* max-width: 22vw;
 	text-overflow: ellipsis;
 	display: block;
-	overflow: hidden;
+	overflow: hidden; */
 }
 
 :deep(.highlight) {
