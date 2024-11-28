@@ -271,13 +271,12 @@ public class KnowledgeController {
 			}
 		}
 
-		// Create a new request with the cleaned-up equations, so that we don't modify the original request.
-		JsonNode newReq = req.deepCopy();
-		((ObjectNode) newReq).set("equations", equationsReq);
+		// Create a request for SKEMA with the cleaned-up equations.
+		JsonNode skemaRequest = mapper.createObjectNode().put("model", "petrinet").set("equations", equationsReq);
 
 		// Get an AMR from Skema Unified Service
 		try {
-			responseAMR = skemaUnifiedProxy.consolidatedEquationsToAMR(req).getBody();
+			responseAMR = skemaUnifiedProxy.consolidatedEquationsToAMR(skemaRequest).getBody();
 			if (responseAMR == null) {
 				log.warn("Skema Unified Service did not return a valid AMR based on the provided equations");
 				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("skema.bad-equations"));

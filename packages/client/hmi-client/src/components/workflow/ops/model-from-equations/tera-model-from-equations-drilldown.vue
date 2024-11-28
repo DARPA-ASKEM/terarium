@@ -377,7 +377,6 @@ async function onRun() {
 
 	const request: EquationsToAMRRequest = {
 		equations: cleanedEquations,
-		framework: clonedState.value.modelFramework,
 		documentId: document.value?.id
 	};
 	const modelId = await equationsToAMR(request);
