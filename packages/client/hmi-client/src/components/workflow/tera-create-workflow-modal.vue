@@ -12,7 +12,7 @@
 						<label class="pl-2" :for="scenario.id">{{ scenario.displayName }}</label>
 					</div>
 				</aside>
-				<main class="col-9 flex flex-column gap-3 p-3">
+				<main class="col-9 flex flex-column">
 					<component
 						v-if="getScenario()"
 						ref="scenarioComponent"
@@ -44,8 +44,10 @@ import router from '@/router';
 import { RouteName } from '@/router/routes';
 import TeraBlankCanvasTemplate from '@/components/workflow/scenario-templates/blank-canvas/tera-blank-canvas-template.vue';
 import TeraSituationalAwarenessTemplate from '@/components/workflow/scenario-templates/situational-awareness/tera-situational-awareness-template.vue';
+import TeraSensitivityAnalysisTemplate from '@/components/workflow/scenario-templates/sensitivity-analysis/tera-sensitivity-analysis-template.vue';
 import { BlankCanvasScenario } from '@/components/workflow/scenario-templates/blank-canvas/blank-canvas-scenario';
 import { SituationalAwarenessScenario } from '@/components/workflow/scenario-templates/situational-awareness/situational-awareness-scenario';
+import { SensitivityAnalysisScenario } from '@/components/workflow/scenario-templates/sensitivity-analysis/sensitivity-analysis-scenario';
 
 interface ScenarioItem {
 	displayName: string;
@@ -66,6 +68,12 @@ const scenarios = ref<ScenarioItem[]>([
 		id: SituationalAwarenessScenario.templateId,
 		instance: new SituationalAwarenessScenario(),
 		component: markRaw(TeraSituationalAwarenessTemplate)
+	},
+	{
+		displayName: SensitivityAnalysisScenario.templateName,
+		id: SensitivityAnalysisScenario.templateId,
+		instance: new SensitivityAnalysisScenario(),
+		component: markRaw(TeraSensitivityAnalysisTemplate)
 	}
 ]);
 
@@ -101,7 +109,7 @@ onMounted(() => {
 	/* HACK: wait for the modal to be fully rendered before focusing the input,
 	it seems that the auto-focus on tera-input-text does not play nicely on the initial render of the modal */
 	nextTick(() => {
-		scenarioComponent.value.$refs.nameInput?.focusInput();
+		scenarioComponent.value.$refs.blankTemplate?.$refs.nameInput?.focusInput();
 	});
 });
 const getScenario = () => scenarios.value.find((s) => s.id === selectedTemplateId.value) as ScenarioItem;

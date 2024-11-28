@@ -14,7 +14,7 @@
 	</Dialog>
 	<div class="vega-chart-container">
 		<div v-if="!interactive">
-			<img v-if="imageDataURL.length > 0" :src="imageDataURL" alt="chart" />
+			<img v-if="imageDataURL.length > 0" :src="imageDataURL" alt="chart" class="not-interactive" />
 		</div>
 		<div v-else ref="vegaContainer" />
 
@@ -220,6 +220,7 @@ watch(
 	[vegaContainer, () => props.visualizationSpec],
 	async ([, newSpec], [, oldSpec]) => {
 		const isEqual = _.isEqual(newSpec, oldSpec);
+
 		if (isEqual && vegaVisualization.value !== undefined) return;
 		const spec = deepToRaw(props.visualizationSpec);
 
@@ -318,5 +319,9 @@ defineExpose({
 :deep(.vega-embed .vega-actions a) {
 	font-family: 'Figtree', sans-serif;
 	font-weight: 400;
+}
+
+.not-interactive {
+	pointer-events: none;
 }
 </style>
