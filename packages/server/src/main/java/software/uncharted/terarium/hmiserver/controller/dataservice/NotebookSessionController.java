@@ -28,6 +28,7 @@ import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.notebooksession.NotebookSession;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.NotebookSessionService;
@@ -124,7 +125,7 @@ public class NotebookSessionController {
 			sessionService.createAsset(session, projectId, permission);
 
 			final Optional<Project> project = projectService.getProject(projectId);
-			projectAssetService.createProjectAsset(project.get(), AssetType.SIMULATION, sim.get(), permission);
+			projectAssetService.createProjectAsset(project.get(), AssetType.NOTEBOOK_SESSION, session, permission);
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(session);
 		} catch (final IOException e) {
