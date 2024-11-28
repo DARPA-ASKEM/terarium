@@ -28,7 +28,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
@@ -175,7 +174,6 @@ public class KnowledgeController {
 	}
 
 	@Data
-	@Accessors(chain = true)
 	public static class NotificationProperties {
 
 		private UUID projectId;
@@ -206,7 +204,8 @@ public class KnowledgeController {
 		UUID modelId = JsonUtil.parseUuidFromRequest(req, "modelId");
 
 		// Create the notification properties
-		final NotificationProperties notificationProperties = new NotificationProperties().setProjectId(projectId);
+		final NotificationProperties notificationProperties = new NotificationProperties();
+		notificationProperties.setProjectId(projectId);
 		notificationProperties.setDocumentId(documentId);
 		notificationProperties.setModelId(modelId);
 		notificationProperties.setWorkflowId(JsonUtil.parseUuidFromRequest(req, "workflowId"));
@@ -876,7 +875,7 @@ public class KnowledgeController {
 				f.get();
 			} catch (InterruptedException | ExecutionException e) {
 				log.error("Error extracting PDF", e);
-				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("document.extracton.failed"));
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("document.extraction.failed"));
 			}
 		}
 		return ResponseEntity.accepted().build();
