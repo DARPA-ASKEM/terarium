@@ -295,6 +295,7 @@ public class KnowledgeController {
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("skema.internal-error"));
 		}
 
+		// We only handle Petri Net models
 		if (!responseAMR.isPetrinet()) {
 			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("skema.bad-equations.petrinet"));
 		}
