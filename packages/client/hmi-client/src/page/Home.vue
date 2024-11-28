@@ -60,13 +60,7 @@
 								class="p-inputtext-sm"
 							/>
 							<div class="ml-auto flex gap-3">
-								<SelectButton
-									v-if="!isEmpty(searchedAndFilterProjects)"
-									:model-value="view"
-									@change="selectChange"
-									:options="viewOptions"
-									option-value="value"
-								>
+								<SelectButton :model-value="view" @change="selectChange" :options="viewOptions" option-value="value">
 									<template #option="slotProps">
 										<span class="p-button-label">{{ slotProps.option.value }}</span>
 									</template>

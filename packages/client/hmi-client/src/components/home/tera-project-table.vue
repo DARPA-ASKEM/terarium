@@ -24,11 +24,23 @@
 				<template v-if="col.field === 'name'">
 					<a @click.stop="emit('open-project', data.id)">{{ data.name }}</a>
 					<ul>
-						<li v-for="(asset, index) in data.projectAssets" class="flex align-center gap-2" :key="index">
+						<li
+							v-for="(asset, index) in data.projectAssets.slice(0, data.showMore ? data.projectAssets.length : 3)"
+							class="flex align-center gap-2"
+							:key="index"
+						>
 							<tera-asset-icon :assetType="asset.assetType" />
 							<span v-html="highlight(asset.assetName, searchQuery)" />
 						</li>
 					</ul>
+					<Button
+						v-if="data.projectAssets.length > 3"
+						class="p-2 mt-2"
+						:label="data.showMore ? 'Show less' : 'Show more'"
+						text
+						size="small"
+						@click="data.showMore = !data.showMore"
+					/>
 				</template>
 				<template v-else-if="col.field === 'description'">
 					<tera-show-more-text :text="data.description" :lines="1" />
@@ -95,11 +107,13 @@ import { AssetType, Project } from '@/types/Types';
 import type { PageState } from 'primevue/paginator';
 import * as ProjectService from '@/services/project';
 import { highlight } from '@/utils/text';
+import Button from 'primevue/button';
 import TeraProjectMenu from './tera-project-menu.vue';
 import TeraAssetIcon from '../widgets/tera-asset-icon.vue';
 
 interface ProjectWithKnnSnippet extends Project {
 	snippet?: string;
+	showMore?: boolean;
 }
 
 const props = defineProps<{
@@ -139,6 +153,7 @@ async function getProjectAssets(event: PageState = pageState) {
 		project.projectAssets = projectWithAssets.projectAssets.filter(
 			(asset) => asset.assetName.toLowerCase().includes(rawSearchQuery) && asset.assetType !== AssetType.Simulation // Simulations don't have names
 		);
+		project.showMore = false;
 		project.snippet = project.description?.toLowerCase().includes(rawSearchQuery)
 			? highlight(project.description, rawSearchQuery)
 			: undefined;
