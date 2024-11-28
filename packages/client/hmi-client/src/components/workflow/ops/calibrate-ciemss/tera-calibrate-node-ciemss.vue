@@ -162,7 +162,7 @@ const { useInterventionCharts, useVariableCharts } = useCharts(
 	modelConfiguration,
 	preparedChartInputs,
 	toRef(chartSize),
-	computed(() => interventionPolicy.value?.interventions ?? null),
+	computed(() => interventionPolicy.value?.interventions ?? []),
 	selectedOutputMapping
 );
 const interventionCharts = useInterventionCharts(selectedInterventionSettings);

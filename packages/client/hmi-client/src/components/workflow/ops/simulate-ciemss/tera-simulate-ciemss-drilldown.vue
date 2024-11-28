@@ -509,7 +509,7 @@ const {
 	modelConfiguration,
 	preparedChartInputs,
 	chartSize,
-	computed(() => interventionPolicy.value?.interventions ?? null),
+	computed(() => interventionPolicy.value?.interventions ?? []),
 	null
 );
 const interventionCharts = useInterventionCharts(selectedInterventionSettings, true);

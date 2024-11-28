@@ -92,8 +92,8 @@ const addModelConfigNameToTranslationMap = (
 	return newMap;
 };
 
-// Consider provided reference object is ready if it is set to null explicitly or if it's value is not empty
-const isRefReady = (ref: Ref | null) => ref === null || !_.isEmpty(ref.value);
+// Consider provided reference object is ready if it is set to null explicitly or if it's value is available
+const isRefReady = (ref: Ref | null) => ref === null || Boolean(ref.value);
 
 /**
  * Composable to manage the creation and configuration of various types of charts used in operator nodes and drilldown.
@@ -113,13 +113,12 @@ export function useCharts(
 	modelConfig: Ref<ModelConfiguration | ModelConfiguration[] | null> | null,
 	chartData: Ref<ChartData | null>,
 	chartSize: Ref<{ width: number; height: number }>,
-	interventions: Ref<Intervention[] | null> | null,
+	interventions: Ref<Intervention[]> | null,
 	mapping: Ref<VariableMappings> | null
 ) {
 	// Check if references of the core dependencies are ready to build the chart to prevent multiple re-renders especially
 	// on initial page load where data are fetched asynchronously and assigned to the references in different times.
-	// const isChartReadyToBuild = computed(() => [model, modelConfig, chartData, interventions, mapping].every(isRefReady));
-	const isChartReadyToBuild = computed(() => [chartData].every(isRefReady));
+	const isChartReadyToBuild = computed(() => [model, modelConfig, chartData].every(isRefReady));
 
 	// Setup annotations
 	const { getChartAnnotationsByChartId, generateAndSaveForecastChartAnnotation } = useChartAnnotations(nodeId);
