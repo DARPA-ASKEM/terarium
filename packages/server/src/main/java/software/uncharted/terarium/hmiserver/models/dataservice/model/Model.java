@@ -388,6 +388,10 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 			log.warn("Failed to serialize card embedding text into JSON", e);
 		}
 
+		if (getDescription() != null) {
+			sources.put(TerariumAssetEmbeddingType.DESCRIPTION, getDescription());
+		}
+
 		return sources;
 	}
 }
