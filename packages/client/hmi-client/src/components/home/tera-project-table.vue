@@ -51,19 +51,22 @@
 					{{ data.userName ?? '--' }}
 				</template>
 				<div v-else-if="col.field === 'stats'" class="stats">
-					<span v-tooltip.top="formatStatTooltip(formatStat(data.metadata, 'contributor-count'), 'contributor')">
+					<span v-tooltip.top="formatStatTooltip(data.metadata?.['contributor-count'] ?? 1, 'contributor')">
 						<i class="pi pi-user" />
-						{{ formatStat(data.metadata, 'contributor-count') }}
+						{{ data.metadata?.['contributor-count'] ?? 1 }}
 					</span>
 					<span
 						v-for="metadataField in Object.keys(metadataCountToAssetNameMap)"
 						:key="metadataField"
 						v-tooltip.top="
-							formatStatTooltip(formatStat(data.metadata, metadataField), metadataCountToAssetNameMap[metadataField])
+							formatStatTooltip(data.metadata?.[metadataField] ?? 0, metadataCountToAssetNameMap[metadataField])
 						"
 					>
-						<tera-asset-icon :assetType="metadataCountToAssetNameMap[metadataField]" />
-						{{ formatStat(data.metadata, metadataField) }}
+						<tera-asset-icon
+							:assetType="metadataCountToAssetNameMap[metadataField]"
+							custom-fill="var(--text-color-secondary)"
+						/>
+						{{ data.metadata?.[metadataField] ?? 0 }}
 					</span>
 				</div>
 				<template v-else-if="col.field === 'createdOn'">
@@ -129,13 +132,8 @@ const metadataCountToAssetNameMap = {
 	'workflows-count': AssetType.Workflow
 };
 
-function formatStat(data, key) {
-	const stat = data?.[key];
-	return key === 'contributor-count' ? parseInt(stat ?? '1', 10) : parseInt(stat ?? '0', 10);
-}
-
-function formatStatTooltip(stat, displayName = metadataCountToAssetNameMap[stat]) {
-	return `${stat} ${displayName}${stat === 1 ? '' : 's'}`;
+function formatStatTooltip(amount: number, itemName: string) {
+	return `${amount} ${itemName}${amount === 1 ? '' : 's'}`;
 }
 
 async function getProjectAssets(event: PageState = pageState) {
