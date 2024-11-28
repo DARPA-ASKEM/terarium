@@ -14,15 +14,16 @@
 			v-for="(col, index) in selectedColumns"
 			:field="col.field"
 			:header="col.header"
-			:sortable="!['stats', 'score'].includes(col.field)"
+			:sortable="!['stats'].includes(col.field)"
 			:key="index"
+			:style="{ width: columnWidthMap[col.field] ?? '5%' }"
 		>
 			<template #body="{ data }">
-				<template v-if="col.field === 'score'">
-					{{ Math.round((data.metadata?.score ?? 0) * 100) + '%' }}
-				</template>
 				<template v-if="col.field === 'name'">
-					<a @click.stop="emit('open-project', data.id)">{{ data.name }}</a>
+					<span class="flex align-items-center gap-2">
+						<a @click.stop="emit('open-project', data.id)">{{ data.name }}</a>
+						<tera-project-menu class="project-options" :project="data" />
+					</span>
 					<ul>
 						<li
 							v-for="asset in data.projectAssets.slice(0, data.showMore ? data.projectAssets.length : 3)"
@@ -87,11 +88,6 @@
 				</template>
 			</template>
 		</Column>
-		<Column style="width: 0">
-			<template #body="{ data }">
-				<tera-project-menu :project="data" />
-			</template>
-		</Column>
 	</DataTable>
 </template>
 
@@ -130,6 +126,15 @@ const numberOfRows = ref(20);
 
 let pageState: PageState = { page: 0, rows: numberOfRows.value, first: 0 };
 let prevSearchQuery = '';
+
+const columnWidthMap = {
+	name: '30%',
+	description: '30%',
+	userName: '5%',
+	stats: '15%',
+	createdOn: '5%',
+	updatedOn: '5%'
+};
 
 function formatStat(data, key) {
 	const stat = data?.[key];
@@ -234,12 +239,12 @@ watch(
 	text-overflow: ellipsis;
 	display: block;
 	overflow: hidden;
-	max-width: 20vw;
+	/* max-width: 20vw; */
 }
 
 .p-datatable:deep(p) {
 	color: var(--text-color-primary);
-	max-width: 22vw;
+	/* max-width: 22vw; */
 	text-overflow: ellipsis;
 	display: block;
 	overflow: hidden;
@@ -258,9 +263,7 @@ watch(
 }
 
 .p-datatable:deep(.p-datatable-thead > tr > th) {
-	padding-left: var(--gap-5);
-	padding-top: var(--gap-3);
-	padding-bottom: var(--gap-3);
+	padding: var(--gap-3) var(--gap-5);
 	background-color: var(--surface-ground);
 }
 
@@ -269,33 +272,29 @@ watch(
 }
 
 .p-datatable:deep(.p-datatable-tbody > tr > td) {
-	padding-left: var(--gap-5);
+	padding: var(--gap-3) var(--gap-5);
 	color: var(--text-color-secondary);
-	max-width: 32rem;
+	overflow: hidden;
 }
 
-.p-datatable:deep(.p-datatable-tbody > tr > td:not(:last-child)) {
-	padding-top: 1rem;
-}
-
-.p-datatable:deep(.p-datatable-tbody > tr .project-options) {
+.p-datatable:deep(.project-options) {
 	visibility: hidden;
-	float: right;
 }
-
 .p-datatable:deep(.p-datatable-tbody > tr:hover .project-options) {
 	visibility: visible;
 }
-.p-datatable:deep(.p-datatable-tbody > tr > td > a) {
+
+.p-datatable:deep(.p-datatable-tbody > tr > td a) {
 	color: var(--text-color-primary);
 	font-weight: var(--font-weight-semibold);
+	font-size: 1.05rem;
 	text-overflow: ellipsis;
 	display: block;
 	overflow: hidden;
-	max-width: 20vw;
+	/* max-width: 20vw; */
 }
 
-.p-datatable:deep(.p-datatable-tbody > tr > td > a:hover) {
+.p-datatable:deep(.p-datatable-tbody > tr > td a:hover) {
 	color: var(--primary-color);
 	text-decoration: underline;
 }
