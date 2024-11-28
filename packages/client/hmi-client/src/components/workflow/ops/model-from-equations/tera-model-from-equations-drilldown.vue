@@ -377,7 +377,9 @@ async function onRun() {
 
 	const request: EquationsToAMRRequest = {
 		equations: cleanedEquations,
-		documentId: document.value?.id
+		documentId: document.value?.id,
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id
 	};
 	const modelId = await equationsToAMR(request);
 	// If there isn't a modelId returned at least show the cleaned equations

@@ -28,6 +28,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
@@ -83,6 +84,7 @@ import software.uncharted.terarium.hmiserver.service.tasks.EquationsCleanupRespo
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
+import software.uncharted.terarium.hmiserver.utils.JsonUtil;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.StringMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
@@ -173,10 +175,14 @@ public class KnowledgeController {
 	}
 
 	@Data
+	@Accessors(chain = true)
 	public static class Properties {
 
-		private final UUID modelId;
-		private final UUID documentId;
+		private UUID projectId;
+		private UUID modelId;
+		private UUID documentId;
+		private UUID workflowId;
+		private UUID nodeId;
 	}
 
 	/**
@@ -195,32 +201,16 @@ public class KnowledgeController {
 			projectId
 		);
 
-		final Model responseAMR;
+		final Properties properties = new Properties().setProjectId(projectId);
 
-		UUID documentId = null;
-		final String documentIdString = req.get("documentId") != null ? req.get("documentId").asText() : null;
-		if (documentIdString != null) {
-			try {
-				// Get the document id if it is a valid UUID
-				documentId = UUID.fromString(documentIdString);
-			} catch (final IllegalArgumentException e) {
-				log.warn(String.format("Invalid document UUID supplied: %s", documentIdString), e);
-				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("generic.invalid-uuid"));
-			}
-		}
-
-		// Check if a model ID is supplied and try to extract it
-		UUID modelId = null;
-		final String modelIdString = req.get("modelId") != null ? req.get("modelId").asText() : null;
-		if (modelIdString != null) {
-			try {
-				// Get the model id if it is a valid UUID
-				modelId = UUID.fromString(modelIdString);
-			} catch (final IllegalArgumentException e) {
-				log.warn(String.format("Invalid model UUID supplied: %s", modelIdString), e);
-				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("generic.invalid-uuid"));
-			}
-		}
+		UUID documentId = JsonUtil.parseUuidFromRequest(req, "documentId");
+		properties.setDocumentId(documentId);
+		UUID modelId = JsonUtil.parseUuidFromRequest(req, "modelId");
+		properties.setModelId(modelId);
+		UUID workflowId = JsonUtil.parseUuidFromRequest(req, "workflowId");
+		properties.setWorkflowId(workflowId);
+		UUID nodeId = JsonUtil.parseUuidFromRequest(req, "nodeId");
+		properties.setNodeId(nodeId);
 
 		// Create the notification group
 		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<>(
@@ -228,7 +218,7 @@ public class KnowledgeController {
 			notificationService,
 			ClientEventType.KNOWLEDGE_ENRICHMENT_MODEL,
 			projectId,
-			new Properties(modelId, documentId),
+			properties,
 			currentUserService.get().getId()
 		);
 
@@ -275,6 +265,7 @@ public class KnowledgeController {
 		final JsonNode skemaRequest = mapper.createObjectNode().put("model", "petrinet").set("equations", equationsReq);
 
 		// Get an AMR from Skema Unified Service
+		final Model responseAMR;
 		try {
 			responseAMR = skemaUnifiedProxy.consolidatedEquationsToAMR(skemaRequest).getBody();
 			if (responseAMR == null) {
