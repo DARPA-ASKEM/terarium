@@ -201,12 +201,10 @@ import * as ModelConfigOp from '@/components/workflow/ops/model-config/mod';
 import * as CalibrateCiemssOp from '@/components/workflow/ops/calibrate-ciemss/mod';
 import * as CalibrateEnsembleCiemssOp from '@/components/workflow/ops/calibrate-ensemble-ciemss/mod';
 import * as DatasetTransformerOp from '@/components/workflow/ops/dataset-transformer/mod';
-import * as SubsetDataOp from '@/components/workflow/ops/subset-data/mod';
 import * as OptimizeCiemssOp from '@/components/workflow/ops/optimize-ciemss/mod';
 import * as DocumentOp from '@/components/workflow/ops/document/mod';
 import * as ModelFromDocumentOp from '@/components/workflow/ops/model-from-equations/mod';
 import * as ModelComparisonOp from '@/components/workflow/ops/model-comparison/mod';
-import * as RegriddingOp from '@/components/workflow/ops/regridding/mod';
 import * as InterventionPolicyOp from '@/components/workflow/ops/intervention-policy/mod';
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
 import { activeProjectId } from '@/composables/activeProject';
@@ -227,12 +225,10 @@ registry.registerOp(CalibrateEnsembleCiemssOp);
 registry.registerOp(ModelConfigOp);
 registry.registerOp(CalibrateCiemssOp);
 registry.registerOp(DatasetTransformerOp);
-registry.registerOp(SubsetDataOp);
 registry.registerOp(OptimizeCiemssOp);
 registry.registerOp(DocumentOp);
 registry.registerOp(ModelFromDocumentOp);
 registry.registerOp(ModelComparisonOp);
-registry.registerOp(RegriddingOp);
 registry.registerOp(InterventionPolicyOp);
 
 // Will probably be used later to save the workflow in the project
@@ -431,7 +427,7 @@ const duplicateBranch = (nodeId: string) => {
 const cloneNoteBookSessions = async () => {
 	const sessionIdSet = new Set<string>();
 
-	const operationList = [DatasetTransformerOp.operation.name, RegriddingOp.operation.name];
+	const operationList = [DatasetTransformerOp.operation.name];
 
 	for (let i = 0; i < wf.value.getNodes().length; i++) {
 		const node = wf.value.getNodes()[i];
@@ -572,14 +568,6 @@ const contextMenuItems: MenuItem[] = [
 			{
 				label: DatasetTransformerOp.operation.displayName,
 				command: addOperatorToWorkflow(DatasetTransformerOp)
-			},
-			{
-				label: SubsetDataOp.operation.displayName,
-				command: addOperatorToWorkflow(SubsetDataOp)
-			},
-			{
-				label: RegriddingOp.operation.displayName,
-				command: addOperatorToWorkflow(RegriddingOp)
 			}
 		]
 	}

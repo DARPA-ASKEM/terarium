@@ -1039,6 +1039,7 @@ export enum AssetType {
     ModelConfiguration = "model-configuration",
     Artifact = "artifact",
     InterventionPolicy = "intervention-policy",
+    NotebookSession = "notebook-session",
     Project = "project",
 }
 
