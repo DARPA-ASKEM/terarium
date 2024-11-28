@@ -352,11 +352,11 @@ export function checkPetrinetAMR(amr: Model) {
 	return results;
 }
 
-export const PART_TYPE = Object.freeze({
-	STATE: 'STATE',
-	PARAMETER: 'PARAMETER',
-	TRANSITION: 'TRANSITION'
-});
+export enum PartType {
+	STATE = 'STATE',
+	PARAMETER = 'PARAMETER',
+	TRANSITION = 'TRANSITION'
+}
 
 export function createPartsList(parts, model, partType) {
 	return Array.from(parts.keys()).map((id) => {
@@ -365,10 +365,10 @@ export function createPartsList(parts, model, partType) {
 		let types;
 
 		switch (partType) {
-			case PART_TYPE.STATE:
+			case PartType.STATE:
 				types = getStates(model);
 				break;
-			case PART_TYPE.PARAMETER:
+			case PartType.PARAMETER:
 				types = getParameters(model);
 				break;
 			default:
@@ -389,9 +389,9 @@ export function createPartsList(parts, model, partType) {
 					input: null,
 					output: null
 				};
-				if (partType === PART_TYPE.STATE || PART_TYPE.PARAMETER) {
+				if (partType === PartType.STATE || PartType.PARAMETER) {
 					returnObj.unitExpression = t.units?.expression;
-				} else if (partType === PART_TYPE.TRANSITION) {
+				} else if (partType === PartType.TRANSITION) {
 					returnObj.expression = t.expression;
 					returnObj.input = t.input.join(', ');
 					returnObj.output = t.output.join(', ');
@@ -401,7 +401,7 @@ export function createPartsList(parts, model, partType) {
 			.filter(Boolean) as ModelPartItem[];
 
 		const basePart: any = types.find((t) => {
-			if (partType === PART_TYPE.TRANSITION) {
+			if (partType === PartType.TRANSITION) {
 				return t.id === childTargets[0];
 			}
 			return t.id === id;
@@ -416,7 +416,7 @@ export function createPartsList(parts, model, partType) {
 						grounding: basePart.grounding,
 						unitExpression: basePart.units?.expression
 					};
-		if (partType === PART_TYPE.TRANSITION) {
+		if (partType === PartType.TRANSITION) {
 			base.templateId = `${id}`;
 			base.input = basePart.input.join(', ');
 			base.output = basePart.output.join(', ');

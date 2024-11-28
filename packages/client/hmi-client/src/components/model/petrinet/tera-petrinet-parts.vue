@@ -103,7 +103,7 @@ import { collapseInitials, collapseParameters, collapseTemplates } from '@/model
 import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
 import type { FeatureConfig } from '@/types/common';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
-import { createPartsList, createObservablesList, createTimeList, PART_TYPE } from '@/model-representation/service';
+import { createPartsList, createObservablesList, createTimeList, PartType } from '@/model-representation/service';
 import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
 import { ModelPartItem, StratifiedMatrix } from '@/types/Model';
 
@@ -133,12 +133,12 @@ let stateList: {
 	base: ModelPartItem;
 	children: ModelPartItem[];
 	isParent: boolean;
-}[] = createPartsList(collapsedInitials, props.model, PART_TYPE.STATE);
+}[] = createPartsList(collapsedInitials, props.model, PartType.STATE);
 
 watch(
 	() => props.model?.model?.states,
 	() => {
-		stateList = createPartsList(collapsedInitials, props.model, PART_TYPE.STATE);
+		stateList = createPartsList(collapsedInitials, props.model, PartType.STATE);
 	}
 );
 
@@ -147,12 +147,12 @@ let parameterList: {
 	base: ModelPartItem;
 	children: ModelPartItem[];
 	isParent: boolean;
-}[] = createPartsList(collapsedParameters, props.model, PART_TYPE.PARAMETER);
+}[] = createPartsList(collapsedParameters, props.model, PartType.PARAMETER);
 
 watch(
 	() => props.model.semantics?.ode?.parameters,
 	() => {
-		parameterList = createPartsList(collapsedParameters, props.model, PART_TYPE.PARAMETER);
+		parameterList = createPartsList(collapsedParameters, props.model, PartType.PARAMETER);
 	}
 );
 
@@ -180,7 +180,7 @@ const transitionsList: {
 	base: ModelPartItem;
 	children: ModelPartItem[];
 	isParent: boolean;
-}[] = createPartsList(collapsedTemplates, transitions.value, PART_TYPE.TRANSITION);
+}[] = createPartsList(collapsedTemplates, transitions.value, PartType.TRANSITION);
 
 const parameterMatrixModalId = ref('');
 const transitionMatrixModalId = ref('');
