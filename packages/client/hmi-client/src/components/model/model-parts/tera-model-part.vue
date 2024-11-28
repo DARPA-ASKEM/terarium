@@ -119,11 +119,13 @@
 							:key="child.id"
 						>
 							<tera-model-part-entry
-								:item="child"
 								:description="child.description"
 								:name="child.name"
 								:id="child.id"
+								:grounding="child.grounding"
 								:templateId="child.templateId"
+								:input="child.input"
+								:output="child.output"
 								:unitExpression="child.unitExpression"
 								:feature-config="featureConfig"
 								@update-item="$emit('update-item', { id: child.id, ...$event })"
@@ -145,11 +147,13 @@
 			<tera-model-part-entry
 				v-else
 				:is-time-part="!!isTimePart"
-				:item="base"
 				:description="base.description"
 				:name="base.name"
 				:id="base.id"
+				:grounding="base.grounding"
 				:templateId="base.templateId"
+				:input="base.input"
+				:output="base.output"
 				:unitExpression="base.unitExpression"
 				:feature-config="featureConfig"
 				@update-item="$emit('update-item', { id: base.id, ...$event })"

@@ -12,9 +12,9 @@
 				/>
 			</span>
 			<span class="unit">
-				<template v-if="item.input && item.output">
-					<span><label>Input:</label> {{ item.input }}</span>
-					<span class="ml-"><label>Output:</label> {{ item.output }}</span>
+				<template v-if="input && output">
+					<span><label>Input:</label> {{ input }}</span>
+					<span class="ml-"><label>Output:</label> {{ output }}</span>
 				</template>
 				<!--amr_to_mmt doesn't like unit expressions with spaces, removing them here before they are saved to the amr-->
 				<template v-else-if="showUnit">
@@ -79,9 +79,9 @@
 			</span>
 		</span>
 		<katex-element
-			v-if="item.expression"
+			v-if="expression"
 			class="expression"
-			:expression="stringToLatexExpression(item.expression)"
+			:expression="stringToLatexExpression(expression)"
 			:throw-on-error="false"
 		/>
 		<span class="description">
@@ -101,7 +101,6 @@ import { ref, computed, watch } from 'vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import AutoComplete from 'primevue/autocomplete';
 import Button from 'primevue/button';
-import type { ModelPartItem } from '@/types/Model';
 import { stringToLatexExpression } from '@/services/model';
 import type { DKG } from '@/types/Types';
 import { getCurieFromGroundingIdentifier, getNameOfCurieCached, searchCuriesEntities } from '@/services/concept';
@@ -110,12 +109,15 @@ import Dropdown from 'primevue/dropdown';
 import { CalendarDateType } from '@/types/common';
 
 const props = defineProps<{
-	item: ModelPartItem;
 	description?: string;
 	name?: string;
 	unitExpression?: string;
 	templateId?: string;
 	id?: string;
+	grounding?: any;
+	expression?: string;
+	input?: any;
+	output?: any;
 	featureConfig: FeatureConfig;
 	isTimePart?: boolean;
 }>();
@@ -150,7 +152,7 @@ function applyValidConcept() {
 }
 
 watch(
-	() => props.item.grounding?.identifiers,
+	() => props.grounding?.identifiers,
 	async (identifiers) => {
 		if (identifiers) query.value = await getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
 	},
@@ -158,7 +160,7 @@ watch(
 );
 
 watch(
-	() => props.item.description,
+	() => props.description,
 	(newDescription) => {
 		showDescription.value = !!newDescription;
 		descriptionText.value = newDescription;
