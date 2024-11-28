@@ -1,11 +1,11 @@
 <template>
 	<!--The pt wrapper styling enables the table header to stick with the project search bar-->
 	<DataTable
-		ref="projectTableRef"
 		:value="projectsWithKnnMatches"
 		:rows="numberOfRows"
 		:rows-per-page-options="[10, 20, 30, 40, 50]"
 		:pt="{ wrapper: { style: { overflow: 'none' } } }"
+		:key="projectTableKey"
 		data-key="id"
 		paginator
 		@page="getProjectAssets"
@@ -51,33 +51,19 @@
 					{{ data.userName ?? '--' }}
 				</template>
 				<div v-else-if="col.field === 'stats'" class="stats">
-					<span
-						class="mr-1"
-						v-tooltip.top="formatStatTooltip(formatStat(data.metadata, 'contributor-count'), 'contributor')"
-					>
-						<i class="pi pi-user mr-1" />
+					<span v-tooltip.top="formatStatTooltip(formatStat(data.metadata, 'contributor-count'), 'contributor')">
+						<i class="pi pi-user" />
 						{{ formatStat(data.metadata, 'contributor-count') }}
 					</span>
-					<span class="mr-1" v-tooltip.top="formatStatTooltip(formatStat(data.metadata, 'document-count'), 'paper')">
-						<i class="pi pi-file mr-1" />
-						{{ formatStat(data.metadata, 'document-count') }}
-					</span>
-					<span class="mr-1" v-tooltip.top="formatStatTooltip(formatStat(data.metadata, 'datasets-count'), 'dataset')">
-						<dataset-icon fill="var(--text-color-secondary)" class="mr-1" />
-						{{ formatStat(data.metadata, 'datasets-count') }}
-					</span>
-					<span v-tooltip.top="formatStatTooltip(formatStat(data.metadata, 'models-count'), 'model')">
-						<i class="pi pi-share-alt mr-1" />
-						{{ formatStat(data.metadata, 'models-count') }}
-					</span>
-					<span v-tooltip.top="formatStatTooltip(formatStat(data.metadata, 'workflows-count'), 'workflow')">
-						<vue-feather
-							class="p-button-icon-left"
-							type="git-merge"
-							size="1.25rem"
-							stroke="var(--text-color-secondary)"
-						/>
-						{{ formatStat(data.metadata, 'workflows-count') }}
+					<span
+						v-for="metadataField in Object.keys(metadataCountToAssetNameMap)"
+						:key="metadataField"
+						v-tooltip.top="
+							formatStatTooltip(formatStat(data.metadata, metadataField), metadataCountToAssetNameMap[metadataField])
+						"
+					>
+						<tera-asset-icon :assetType="metadataCountToAssetNameMap[metadataField]" />
+						{{ formatStat(data.metadata, metadataField) }}
 					</span>
 				</div>
 				<template v-else-if="col.field === 'createdOn'">
@@ -98,12 +84,12 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import { formatDdMmmYyyy } from '@/utils/date';
-import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { AssetType, Project } from '@/types/Types';
 import type { PageState } from 'primevue/paginator';
 import * as ProjectService from '@/services/project';
 import { highlight } from '@/utils/text';
 import Button from 'primevue/button';
+import { v4 as uuidv4 } from 'uuid';
 import TeraProjectMenu from './tera-project-menu.vue';
 import TeraAssetIcon from '../widgets/tera-asset-icon.vue';
 
@@ -120,9 +106,9 @@ const props = defineProps<{
 
 const emit = defineEmits(['open-project']);
 
-const projectTableRef = ref();
 const projectsWithKnnMatches = ref<ProjectWithKnnSnippet[]>([]);
 const numberOfRows = ref(20);
+const projectTableKey = ref(uuidv4());
 
 let pageState: PageState = { page: 0, rows: numberOfRows.value, first: 0 };
 let prevSearchQuery = '';
@@ -130,10 +116,17 @@ let prevSearchQuery = '';
 const columnWidthMap = {
 	name: '30%',
 	description: '30%',
-	userName: '5%',
-	stats: '15%',
-	createdOn: '5%',
-	updatedOn: '5%'
+	userName: '4%',
+	stats: '5%',
+	createdOn: '4%',
+	updatedOn: '4%'
+};
+
+const metadataCountToAssetNameMap = {
+	'document-count': AssetType.Document,
+	'datasets-count': AssetType.Dataset,
+	'models-count': AssetType.Model,
+	'workflows-count': AssetType.Workflow
 };
 
 function formatStat(data, key) {
@@ -141,7 +134,7 @@ function formatStat(data, key) {
 	return key === 'contributor-count' ? parseInt(stat ?? '1', 10) : parseInt(stat ?? '0', 10);
 }
 
-function formatStatTooltip(stat, displayName) {
+function formatStatTooltip(stat, displayName = metadataCountToAssetNameMap[stat]) {
 	return `${stat} ${displayName}${stat === 1 ? '' : 's'}`;
 }
 
@@ -179,11 +172,7 @@ async function getProjectAssets(event: PageState = pageState) {
 watch(
 	() => props.projects,
 	() => {
-		// Reset the page to 0 when a new search is performed
-		if (pageState.page !== 0) {
-			const firstPageButton = projectTableRef.value.$el.querySelector('.p-paginator-first');
-			firstPageButton?.dispatchEvent(new MouseEvent('click'));
-		}
+		projectTableKey.value = uuidv4();
 		projectsWithKnnMatches.value = props.projects;
 		getProjectAssets();
 	},
@@ -194,39 +183,57 @@ watch(
 <style scoped>
 .stats {
 	display: flex;
-	width: fit-content;
-	gap: 0.5rem;
 	font-size: var(--font-caption);
-	vertical-align: bottom;
-}
+	gap: var(--gap-3);
 
-.stats span {
-	display: flex;
-	gap: 0.1rem;
-	align-items: center;
-	width: 2.4rem;
-}
-
-.p-datatable {
-	/* Now the table header sticks along with the project search bar */
-	&:deep(thead) {
-		top: 105px;
-		z-index: 1;
+	& span {
+		display: flex;
+		align-items: center;
+		& > * {
+			margin-right: var(--gap-1);
+		}
 	}
 }
 
-:deep(.p-paginator-bottom) {
-	position: sticky;
-	bottom: 0;
-	outline: 1px solid var(--surface-border-light);
+/* Now the table header sticks along with the project search bar */
+:deep(thead) {
+	top: 105px;
+	z-index: 1;
 }
 
-:deep(.p-paginator) {
-	border-radius: 0;
-	padding: var(--gap-2) var(--gap-4);
+:deep(.p-datatable-tbody > tr > td),
+:deep(.p-datatable-thead > tr > th) {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	vertical-align: top;
+	padding: var(--gap-3) var(--gap-5);
 }
 
-.p-datatable:deep(ul) {
+:deep(.p-datatable-thead > tr > th) {
+	background-color: var(--surface-ground);
+}
+
+:deep(.p-datatable-tbody > tr > td) {
+	color: var(--text-color-secondary);
+}
+
+.p-datatable:deep(.p-datatable-tbody > tr > td a) {
+	color: var(--text-color-primary);
+	font-weight: var(--font-weight-semibold);
+	font-size: 1.05rem;
+	/*text-overflow: ellipsis;
+	display: block;
+	overflow: hidden;
+	 max-width: 20vw; */
+}
+.p-datatable:deep(.p-datatable-tbody > tr > td a:hover) {
+	color: var(--primary-color);
+	text-decoration: underline;
+}
+
+/* Matching asset names and project descriptions */
+:deep(ul) {
 	margin-top: var(--gap-4);
 	color: var(--text-color-primary);
 	display: flex;
@@ -235,14 +242,14 @@ watch(
 	font-size: var(--font-caption);
 }
 
-.p-datatable:deep(li > span) {
+:deep(li > span) {
 	text-overflow: ellipsis;
 	display: block;
 	overflow: hidden;
 	/* max-width: 20vw; */
 }
 
-.p-datatable:deep(p) {
+:deep(p) {
 	color: var(--text-color-primary);
 	/* max-width: 22vw; */
 	text-overflow: ellipsis;
@@ -250,52 +257,26 @@ watch(
 	overflow: hidden;
 }
 
-.p-datatable:deep(.highlight) {
+:deep(.highlight) {
 	font-weight: var(--font-weight-semibold);
 }
 
-.p-datatable:deep(.p-datatable-tbody > tr > td),
-.p-datatable:deep(.p-datatable-thead > tr > th) {
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	vertical-align: top;
-}
-
-.p-datatable:deep(.p-datatable-thead > tr > th) {
-	padding: var(--gap-3) var(--gap-5);
-	background-color: var(--surface-ground);
-}
-
-.p-datatable:deep(.p-datatable-tbody > tr:not(.p-highlight):focus) {
-	background-color: transparent;
-}
-
-.p-datatable:deep(.p-datatable-tbody > tr > td) {
-	padding: var(--gap-3) var(--gap-5);
-	color: var(--text-color-secondary);
-	overflow: hidden;
-}
-
-.p-datatable:deep(.project-options) {
+/* Hide/show ellipsis menu on row hover */
+:deep(.project-options) {
 	visibility: hidden;
 }
-.p-datatable:deep(.p-datatable-tbody > tr:hover .project-options) {
+:deep(tr:hover .project-options) {
 	visibility: visible;
 }
 
-.p-datatable:deep(.p-datatable-tbody > tr > td a) {
-	color: var(--text-color-primary);
-	font-weight: var(--font-weight-semibold);
-	font-size: 1.05rem;
-	text-overflow: ellipsis;
-	display: block;
-	overflow: hidden;
-	/* max-width: 20vw; */
+/* Paginator styles */
+:deep(.p-paginator-bottom) {
+	position: sticky;
+	bottom: 0;
+	outline: 1px solid var(--surface-border-light);
 }
-
-.p-datatable:deep(.p-datatable-tbody > tr > td a:hover) {
-	color: var(--primary-color);
-	text-decoration: underline;
+:deep(.p-paginator) {
+	border-radius: 0;
+	padding: var(--gap-2) var(--gap-4);
 }
 </style>
