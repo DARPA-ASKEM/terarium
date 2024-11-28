@@ -25,9 +25,9 @@
 					<a @click.stop="emit('open-project', data.id)">{{ data.name }}</a>
 					<ul>
 						<li
-							v-for="(asset, index) in data.projectAssets.slice(0, data.showMore ? data.projectAssets.length : 3)"
+							v-for="asset in data.projectAssets.slice(0, data.showMore ? data.projectAssets.length : 3)"
 							class="flex align-center gap-2"
-							:key="index"
+							:key="asset.id"
 						>
 							<tera-asset-icon :assetType="asset.assetType" />
 							<span v-html="highlight(asset.assetName, searchQuery)" />
@@ -156,7 +156,11 @@ async function getProjectAssets(event: PageState = pageState) {
 		if (!projectWithAssets) return;
 
 		project.projectAssets = projectWithAssets.projectAssets.filter(
-			(asset) => asset.assetName.toLowerCase().includes(searchQuery) && asset.assetType !== AssetType.Simulation // Simulations don't have names
+			({ assetName, assetType }) =>
+				assetName.toLowerCase().includes(searchQuery) &&
+				// These assets dont have names
+				assetType !== AssetType.Simulation &&
+				assetType !== AssetType.NotebookSession
 		);
 		project.showMore = false;
 		project.snippet = project.description?.toLowerCase().includes(searchQuery)
