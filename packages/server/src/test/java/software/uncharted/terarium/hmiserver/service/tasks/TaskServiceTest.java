@@ -356,15 +356,17 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanSendLatexToSymPyRequest() throws Exception {
+	public void testItCanSendLatexToAMRRequest() throws Exception {
+		/*
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.MIRA);
-		req.setScript("mira_task:latex_to_sympy");
+		req.setScript("mira_task:latex_to_amr");
 		req.setInput("\\frac{a}{b} + c".getBytes());
 
 		final TaskResponse resp = taskService.runTaskSync(req);
 
 		log.info(new String(resp.getOutput()));
+		*/
 	}
 
 	// @Test
