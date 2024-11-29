@@ -91,7 +91,6 @@
 									<Textarea
 										v-if="selectedItem === equation.name"
 										v-model="equation.asset.text"
-										ref="equationTextarea"
 										autoResize
 										rows="1"
 										placeholder="Add an expression with LaTeX"
