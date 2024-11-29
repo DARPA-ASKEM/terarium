@@ -217,6 +217,10 @@ watch(
 	color: var(--text-color-secondary);
 }
 
+:deep(.p-datatable-tbody > tr:not(.p-highlight):focus) {
+	background-color: transparent;
+}
+
 .p-datatable:deep(.p-datatable-tbody > tr > td a) {
 	color: var(--text-color-primary);
 	font-weight: var(--font-weight-semibold);
