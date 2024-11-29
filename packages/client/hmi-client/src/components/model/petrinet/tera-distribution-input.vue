@@ -6,6 +6,7 @@
 				ref="dropdownRef"
 				:model-value="getParameterDistribution(modelConfiguration, parameterId).type"
 				@change="onChange"
+				@hide="hidePopup"
 				option-label="name"
 				option-value="value"
 				:options="distributionOptions"
@@ -15,23 +16,29 @@
 					<section
 						class="flex align-items-center w-full"
 						@mouseover="showPopup(dropdownRef.$el, slotProps.index)"
-						@mouseleave="hidePopup()"
 						@focusin="() => showPopup(dropdownRef.$el, slotProps.index)"
-						@blur="() => hidePopup()"
 					>
 						<div>{{ slotProps.option.name }}</div>
 					</section>
 				</template>
 			</Dropdown>
-			<section
-				v-if="hoveredOption"
-				class="popup"
-				:style="{ top: `${popupPosition.top}px`, left: `${popupPosition.left}px` }"
-			>
-				<Card class="inside p-2">
-					<template #title>{{ hoveredOption.name }}</template>
+			<section class="popup" :style="{ top: `${popupPosition.top}px`, left: `${popupPosition.left}px` }">
+				<Card v-if="hoveredOption" ref="cardRef" class="inside p-2">
+					<template #title>
+						{{ hoveredOption?.name }}
+						<a
+							v-if="externaDoclLinks[hoveredOption.value]"
+							v-tooltip="hoveredOption.name + ' pytorch.org docs'"
+							:href="externaDoclLinks[hoveredOption.value]"
+							:aria-label="hoveredOption.name + ' docs'"
+							rel="noopener noreferrer"
+							target="_blank"
+						>
+							<span class="pi pi-external-link"></span>
+						</a>
+					</template>
 					<template #content>
-						{{ distributionDescription[hoveredOption.value] }}
+						{{ distributionDescription[hoveredOption?.value] }}
 						<h5 class="pt-3 pb-2">Required parameters:</h5>
 						<ul class="ml-5">
 							<li class="pb-2" v-for="(param, index) in DistributionInputLabels[hoveredOption.value]" :key="param">
@@ -57,13 +64,14 @@
 	</span>
 </template>
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref, onMounted, nextTick } from 'vue';
 import { getParameterDistribution, isNumberInputEmpty } from '@/services/model-configurations';
 import { Model, ModelConfiguration, ModelDistribution } from '@/types/Types';
 import Dropdown from 'primevue/dropdown';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import {
 	DistributionType,
+	externaDoclLinks,
 	distributionTypeOptions,
 	DistributionInputOptions,
 	DistributionInputLabels,
@@ -84,24 +92,37 @@ const emit = defineEmits(['update-parameter', 'update-source']);
 const options = computed(() => DistributionInputOptions[props.parameter.type]);
 
 const dropdownRef = ref();
+const cardRef = ref();
 const isParameterEmpty = ref<boolean>(false);
 const distributionOptions = ref<{ name: string; value: string }[]>(distributionTypeOptions());
 const hoveredOption = ref<{ name: string; value: string } | null>();
 const popupPosition = ref({ top: 0, left: 0 });
 
-function showPopup(item: HTMLElement | null, index: number) {
+function hidePopup() {
+	hoveredOption.value = null;
+}
+
+const cardElement = computed(() => cardRef.value.$el.getBoundingClientRect());
+
+async function showPopup(item: HTMLElement | null, index: number) {
+	hidePopup();
 	if (!item) return;
 
 	hoveredOption.value = distributionOptions.value[index];
+	await nextTick();
 	const rect = item.getBoundingClientRect();
+	const viewport = window.innerHeight;
+	const cardBottom = cardElement.value.height + rect.bottom;
+
+	let top = rect.y / rect.top + window.scrollY - 35;
+	if (cardBottom > viewport) {
+		top -= Math.abs(cardBottom - viewport) + 35;
+	}
+
 	popupPosition.value = {
-		top: rect.y / rect.top + window.scrollY - 35,
+		top,
 		left: rect.x / rect.left + rect.width
 	};
-}
-
-function hidePopup() {
-	hoveredOption.value = null;
 }
 
 function onChange(event) {

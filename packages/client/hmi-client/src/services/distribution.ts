@@ -35,6 +35,7 @@ export enum DistributionType {
 	// Weibull2 = 'Weibull2'
 }
 
+// JSON Object Params
 export const DistributionInputOptions = {
 	[DistributionType.Constant]: ['value'],
 	[DistributionType.Uniform]: ['minimum', 'maximum']
@@ -72,8 +73,9 @@ export const DistributionInputOptions = {
 	// [DistributionType.Weibull2]: ['scale', 'shape']
 };
 
+// User facing Labels
 export const DistributionInputLabels = {
-	[DistributionType.Constant]: ['Constant'],
+	[DistributionType.Constant]: ['Value'],
 	[DistributionType.Uniform]: ['Min', 'Max']
 
 	// Disabled until the backend is updated
@@ -154,14 +156,20 @@ export const distributionTypeOptions = (): { name: string; value: string }[] =>
 
 export const distributionDescription = {
 	[DistributionType.Constant]: 'Constants description',
-	[DistributionType.Uniform]:
-		'The uniform distribution represents a range of equally likely values between a minimum and maximum.'
+	[DistributionType.Uniform]: 'Generates uniformly distributed random samples from the half-open interval.'
 
 	// Disabled until the backend is updated
 	// [DistributionType.StandardNormal1]: 'StandardNormal1 description',
 	// [DistributionType.Normal1]: 'Normal1 description'
 };
 
+const externaDoclLink = 'https://pytorch.org/docs/stable/distributions.html';
+
+export const externaDoclLinks = {
+	[DistributionType.Uniform]: `${externaDoclLink}#uniform`
+};
+
+// change to match distribution
 export const distributionParamDescription = {
 	value: 'Constant',
 	minimum: 'Lower bound of the interval',
