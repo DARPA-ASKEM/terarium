@@ -10,9 +10,12 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import java.io.Serial;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -358,18 +361,40 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		return this.getHeader().getSchemaName().equalsIgnoreCase("petrinet");
 	}
 
+	private String getDescriptionAsReadableString() {
+		if (getDescription() == null) {
+			return null;
+		}
+
+		// decode from base64
+		final byte[] decodedBytes = Base64.getDecoder().decode(getDescription());
+		final String decodedString = new String(decodedBytes);
+
+		// remove image tags
+		final String regex = "<img\\b[^>]*>(.*?)<\\/img>|<img\\b[^>]*\\/>";
+		final Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+		final Matcher matcher = pattern.matcher(decodedString);
+		final String result = matcher.replaceAll("");
+
+		return result;
+	}
+
 	@JsonIgnore
 	@TSIgnore
 	public String getEmbeddingSourceText() {
+		String source = "";
 		try {
+			if (getDescription() != null) {
+				source += getDescriptionAsReadableString();
+			}
 			final ObjectMapper objectMapper = new ObjectMapper();
 			if (getMetadata() != null && getMetadata().getGollmCard() != null) {
-				return objectMapper.writeValueAsString(getMetadata().getGollmCard());
+				source += objectMapper.writeValueAsString(getMetadata().getGollmCard());
 			}
-			return objectMapper.writeValueAsString(this);
 		} catch (final Exception e) {
 			throw new RuntimeException("Failed to serialize model embedding text into JSON", e);
 		}
+		return source;
 	}
 
 	@JsonIgnore
@@ -389,7 +414,7 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		}
 
 		if (getDescription() != null) {
-			sources.put(TerariumAssetEmbeddingType.DESCRIPTION, getDescription());
+			sources.put(TerariumAssetEmbeddingType.DESCRIPTION, getDescriptionAsReadableString());
 		}
 
 		return sources;
