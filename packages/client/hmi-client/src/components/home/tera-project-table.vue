@@ -97,8 +97,8 @@ import * as ProjectService from '@/services/project';
 import { highlight } from '@/utils/text';
 import Button from 'primevue/button';
 import { v4 as uuidv4 } from 'uuid';
+import TeraAssetIcon from '@/components/widgets/tera-asset-icon.vue';
 import TeraProjectMenu from './tera-project-menu.vue';
-import TeraAssetIcon from '../widgets/tera-asset-icon.vue';
 
 interface ProjectWithKnnSnippet extends Project {
 	snippet?: string;
@@ -205,9 +205,6 @@ watch(
 
 :deep(.p-datatable-tbody > tr > td),
 :deep(.p-datatable-thead > tr > th) {
-	/* white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis; */
 	vertical-align: top;
 	padding: var(--gap-3) var(--gap-5);
 }
@@ -224,14 +221,21 @@ watch(
 	color: var(--text-color-primary);
 	font-weight: var(--font-weight-semibold);
 	font-size: 1.05rem;
-	/*text-overflow: ellipsis;
 	display: block;
-	overflow: hidden;
-	 max-width: 20vw; */
 }
 .p-datatable:deep(.p-datatable-tbody > tr > td a:hover) {
 	color: var(--primary-color);
 	text-decoration: underline;
+}
+
+/* Truncate long text for asset list, project name and highlighted description*/
+:deep(li > span),
+.p-datatable:deep(.p-datatable-tbody > tr > td a),
+:deep(p) {
+	overflow: hidden;
+	white-space: nowrap;
+	max-width: 25vw;
+	text-overflow: ellipsis;
 }
 
 /* Matching asset names and project descriptions */
@@ -244,19 +248,8 @@ watch(
 	font-size: var(--font-caption);
 }
 
-:deep(li > span) {
-	/* text-overflow: ellipsis;
-	display: block;
-	overflow: hidden;
-	max-width: 20vw; */
-}
-
 :deep(p) {
 	color: var(--text-color-primary);
-	/* max-width: 22vw;
-	text-overflow: ellipsis;
-	display: block;
-	overflow: hidden; */
 }
 
 :deep(.highlight) {
