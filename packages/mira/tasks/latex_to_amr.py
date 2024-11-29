@@ -14,7 +14,7 @@ def main():
     exitCode = 0
 
     try:
-        taskrunner = TaskRunnerInterface(description="Latex to SymPy")
+        taskrunner = TaskRunnerInterface(description="LaTeX to AMR")
         taskrunner.on_cancellation(cleanup)
 
         latex_input = taskrunner.read_input_str_with_timeout()
@@ -32,10 +32,10 @@ def main():
         # MMT to AMR
         amr_json = template_model_to_petrinet_json(mmt)
 
-        taskrunner.log(f"Latex to AMR conversion succeeded")
+        taskrunner.log(f"LaTeX to AMR conversion succeeded")
         taskrunner.write_output_dict_with_timeout({"response": json.dumps(amr_json)})
 
-        print("Latex to SymPy conversion succeeded")
+        print("LaTeX to AMR conversion succeeded")
     except Exception as e:
         sys.stderr.write(f"Error: {str(e)}\n")
         sys.stderr.write(traceback.format_exc())
