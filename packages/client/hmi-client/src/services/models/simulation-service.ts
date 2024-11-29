@@ -474,7 +474,7 @@ export function extractModelConfigIds(ensemblePyciemssMap: Record<string, string
  * console.log(result); // ["config_id_1", "config_id_2"] instead of { model_0: "config_id_1", model_1: "config_id_2" }
  * ```
  */
-export function extractModelConfigIdArray(ensemblePyciemssMap: Record<string, string>): string[] {
+export function extractModelConfigIdsInOrder(ensemblePyciemssMap: Record<string, string>): string[] {
 	const result: string[] = [];
 	const modelNumConfigIdMap = extractModelConfigIds(ensemblePyciemssMap);
 	Object.keys(modelNumConfigIdMap)

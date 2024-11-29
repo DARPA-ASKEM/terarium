@@ -13,11 +13,7 @@ import {
 	ForecastChartOptions
 } from '@/services/charts';
 import { flattenInterventionData } from '@/services/intervention-policy';
-import {
-	DataArray,
-	extractModelConfigIdArray as extractModelConfigIdsInOrder,
-	extractModelConfigIds
-} from '@/services/models/simulation-service';
+import { DataArray, extractModelConfigIdsInOrder, extractModelConfigIds } from '@/services/models/simulation-service';
 import { ChartSetting, ChartSettingEnsembleVariable, ChartSettingType } from '@/types/common';
 import { Intervention, Model, ModelConfiguration } from '@/types/Types';
 import { displayNumber } from '@/utils/number';
@@ -561,7 +557,7 @@ export function useCharts(
 			const colors = CATEGORICAL_SCHEME.slice(1); // exclude the first color which is for ensemble variable
 
 			modelConfigIds.forEach((configId, index) => {
-				const modelConfigName = getModelConfigName(modelConfigs, configId ?? '');
+				const modelConfigName = getModelConfigName(modelConfigs, configId);
 				const chartWidth = chartSize.value.width / modelConfigs.length;
 
 				const fieldName =
