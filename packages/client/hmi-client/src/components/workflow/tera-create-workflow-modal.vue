@@ -7,9 +7,9 @@
 			<div class="grid">
 				<aside class="flex flex-column col-3">
 					<label class="p-text-secondary pb-2">Select a template</label>
-					<div v-for="scenario in scenarios" :key="scenario.id" class="flex align-items-center py-1">
-						<RadioButton :inputId="scenario.id" :value="scenario.id" v-model="selectedTemplateId" />
-						<label class="pl-2" :for="scenario.id">{{ scenario.displayName }}</label>
+					<div v-for="[id, { name }] in scenarioMap" :key="id" class="flex align-items-center py-1">
+						<RadioButton :inputId="id" :value="id" v-model="selectedTemplateId" />
+						<label class="pl-2" :for="id">{{ name }}</label>
 					</div>
 				</aside>
 				<main class="col-9 flex flex-column">
@@ -58,42 +58,51 @@ import { SensitivityAnalysisScenario } from '@/components/workflow/scenario-temp
 import { DecisionMakingScenario } from '@/components/workflow/scenario-templates/decision-making/decision-making-scenario';
 
 interface ScenarioItem {
-	displayName: string;
-	id: string;
+	name: string;
 	instance: BaseScenario;
 	component: Component;
 }
 const scenarioComponent = ref();
-const scenarios = ref<ScenarioItem[]>([
-	{
-		displayName: BlankCanvasScenario.templateName,
-		id: BlankCanvasScenario.templateId,
-		instance: new BlankCanvasScenario(),
-		component: markRaw(TeraBlankCanvasTemplate)
-	},
-	{
-		displayName: SituationalAwarenessScenario.templateName,
-		id: SituationalAwarenessScenario.templateId,
-		instance: new SituationalAwarenessScenario(),
-		component: markRaw(TeraSituationalAwarenessTemplate)
-	},
-	{
-		displayName: SensitivityAnalysisScenario.templateName,
-		id: SensitivityAnalysisScenario.templateId,
-		instance: new SensitivityAnalysisScenario(),
-		component: markRaw(TeraSensitivityAnalysisTemplate)
-	},
-	{
-		displayName: DecisionMakingScenario.templateName,
-		id: DecisionMakingScenario.templateId,
-		instance: new DecisionMakingScenario(),
-		component: markRaw(TeraDecisionMakingTemplate)
-	}
-]);
+const scenarioMap = ref(
+	new Map<string, ScenarioItem>([
+		[
+			BlankCanvasScenario.templateId,
+			{
+				name: BlankCanvasScenario.templateName,
+				instance: new BlankCanvasScenario(),
+				component: markRaw(TeraBlankCanvasTemplate)
+			}
+		],
+		[
+			SituationalAwarenessScenario.templateId,
+			{
+				name: SituationalAwarenessScenario.templateName,
+				instance: new SituationalAwarenessScenario(),
+				component: markRaw(TeraSituationalAwarenessTemplate)
+			}
+		],
+		[
+			SensitivityAnalysisScenario.templateId,
+			{
+				name: SensitivityAnalysisScenario.templateName,
+				instance: new SensitivityAnalysisScenario(),
+				component: markRaw(TeraSensitivityAnalysisTemplate)
+			}
+		],
+		[
+			DecisionMakingScenario.templateId,
+			{
+				name: DecisionMakingScenario.templateName,
+				instance: new DecisionMakingScenario(),
+				component: markRaw(TeraDecisionMakingTemplate)
+			}
+		]
+	])
+);
 
 const emit = defineEmits(['close-modal']);
-
-const selectedTemplateId = ref<any>(scenarios.value[0].id);
+// get first map entry (Blank Canvas)
+const selectedTemplateId = ref<any>(scenarioMap.value.keys().next().value);
 const isCreatingWorkflow = ref(false);
 
 const saveWorkflow = async () => {
@@ -131,5 +140,6 @@ onMounted(() => {
 		scenarioComponent.value.$refs.blankTemplate?.$refs.nameInput?.focusInput();
 	});
 });
-const getScenario = () => scenarios.value.find((s) => s.id === selectedTemplateId.value) as ScenarioItem;
+const getScenario = () =>
+	scenarioMap.value.get(selectedTemplateId.value) as { name: string; instance: BaseScenario; component: Component };
 </script>
