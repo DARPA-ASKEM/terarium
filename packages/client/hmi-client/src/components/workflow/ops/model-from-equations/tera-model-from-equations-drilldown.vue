@@ -39,7 +39,6 @@
 							<section class="header-group">
 								<Textarea
 									v-model="multipleEquations"
-									ref="equationTextarea"
 									autoResize
 									rows="1"
 									placeholder="Add one or more LaTex equations, or paste in a screenshot"
@@ -257,7 +256,6 @@ const isOutputOpen = ref(true);
 
 const outputArrowDirection = computed(() => (!isDocViewerOpen.value && !isInputOpen.value ? 'left' : 'right'));
 
-const equationTextarea = ref();
 const documentEquations = ref<AssetBlock<EquationBlock>[]>();
 
 onMounted(async () => {
