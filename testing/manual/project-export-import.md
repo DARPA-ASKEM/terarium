@@ -11,7 +11,7 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
     password: askem-quality-assurance
     ```
 
-### 2. Scenario A
+### 2. Scenario A: Simulate workflow
 1. Create a new project
 2. Add a simple model into the project, eg SIR
 3. Create a simple simulation workflow: model => model-config => simulate
@@ -24,7 +24,7 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 10. Remove the newly imported project
 
 
-### 3. Scenario A
+### 3. Scenario B: Data transform workflow
 1. Create a new project
 2. Add a dataset into the project
 3. Create a simple data-transform workflow: dataset => data-transform
