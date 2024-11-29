@@ -560,8 +560,7 @@ export function useCharts(
 				const modelConfigName = getModelConfigName(modelConfigs, configId);
 				const chartWidth = chartSize.value.width / modelConfigs.length;
 
-				const fieldName =
-					chartData.value?.pyciemssMap[`${getModelConfigIdPrefix(configId ?? '')}${WEIGHT_PARAM_NAME}`] ?? '';
+				const fieldName = chartData.value?.pyciemssMap[`${getModelConfigIdPrefix(configId)}${WEIGHT_PARAM_NAME}`] ?? '';
 				const beforeFieldName = `${fieldName}:pre`;
 
 				const maxBins = 10;
