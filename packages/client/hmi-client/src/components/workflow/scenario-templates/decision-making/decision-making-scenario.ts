@@ -159,6 +159,7 @@ export class DecisionMakingScenario extends BaseScenario {
 			this.simulateSpec.ids
 		);
 
+		// 2. Add base simulation (no interventions) and connect it to the dataset transformer
 		const baseSimulateNode = wf.addNode(
 			SimulateOp,
 			{ x: 0, y: 0 },
@@ -172,7 +173,6 @@ export class DecisionMakingScenario extends BaseScenario {
 			{ x: 0, y: 0 }
 		]);
 
-		// 2. Add base simulation
 		wf.updateNode(baseSimulateNode, {
 			state: {
 				chartSettings: simulateChartSettings
@@ -193,6 +193,7 @@ export class DecisionMakingScenario extends BaseScenario {
 		/* 3. Create intervention and simulate nodes for each intervention
 		 model -> intervention -> simulate -> dataset transformer
 		 modelConfig -> simulate -> dataset transformer */
+
 		// add input ports for each simulation to the dataset transformer (base simulation + interventions)
 		for (let i = 0; i < this.interventionSpecs.length + 1; i++) {
 			workflowService.appendInputPort(datasetTransformerNode, {

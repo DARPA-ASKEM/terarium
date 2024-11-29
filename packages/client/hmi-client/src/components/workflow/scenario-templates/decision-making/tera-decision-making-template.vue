@@ -13,6 +13,7 @@
 
 			<label>Select configuration representing best starting point pre-interventions</label>
 			<Dropdown
+				class="mb-4"
 				:model-value="scenario.modelConfigSpec.id"
 				placeholder="Select a configuration"
 				:options="modelConfigurations"
@@ -38,7 +39,7 @@
 						:loading="isFetchingModelInformation"
 					/>
 					<Button
-						v-if="scenario.interventionSpecs.length > 2"
+						v-if="scenario.interventionSpecs.length > 1"
 						text
 						icon="pi pi-trash"
 						size="small"
@@ -48,6 +49,7 @@
 			</template>
 			<div>
 				<Button
+					class="my-2"
 					text
 					icon="pi pi-plus"
 					label="Add a new intervention"
