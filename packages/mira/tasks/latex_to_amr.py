@@ -4,6 +4,8 @@ import traceback
 
 from taskrunner import TaskRunnerInterface
 from sympy.parsing.latex import parse_latex
+from mira.sources.sympy_ode import template_model_from_sympy_odes
+from mira.modeling.amr.petrinet import template_model_to_petrinet_json
 
 def cleanup():
     pass
@@ -15,15 +17,23 @@ def main():
         taskrunner = TaskRunnerInterface(description="Latex to SymPy")
         taskrunner.on_cancellation(cleanup)
 
-        latex_str = taskrunner.read_input_str_with_timeout()
+        latex_input = taskrunner.read_input_str_with_timeout()
+        latex_json = json.loads(latex_input)
 
-        sympy_expr = parse_latex(latex_str)
+        # LaTeX to SymPy
+        sympy_exprs = []
+        for latex_expr in latex_json:
+            sympy_expr = parse_latex(latex_expr)
+            sympy_exprs.appned(sympy_expr)
 
-        # TODO: MIRA conversion
+        # SymPy to MMT
+        mmt = template_model_from_sympy_odes(sympy_exprs)
 
-        taskrunner.log(f"Latex to SymPy conversion succeeded: {sympy_expr}")
+        # MMT to AMR
+        amr_json = template_model_to_petrinet_json(mmt)
 
-        taskrunner.write_output_dict_with_timeout({"response": str(sympy_expr)})
+        taskrunner.log(f"Latex to AMR conversion succeeded")
+        taskrunner.write_output_dict_with_timeout({"response": str(amr_json)})
 
         print("Latex to SymPy conversion succeeded")
     except Exception as e:
