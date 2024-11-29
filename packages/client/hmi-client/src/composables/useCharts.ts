@@ -161,7 +161,7 @@ export function useCharts(
 			variables.push(
 				modelConfigId
 					? // model variable
-						getModelConfigIdPrefix(modelConfigId ?? '') +
+						getModelConfigIdPrefix(modelConfigId) +
 							getModelConfigVariable(<EnsembleVariableMappings>mapping?.value ?? [], ensembleVarName, modelConfigId)
 					: // ensemble variable
 						(modelVarToDatasetVar(mapping?.value ?? [], ensembleVarName) as string)
