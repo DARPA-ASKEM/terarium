@@ -140,6 +140,5 @@ onMounted(() => {
 		scenarioComponent.value.$refs.blankTemplate?.$refs.nameInput?.focusInput();
 	});
 });
-const getScenario = () =>
-	scenarioMap.value.get(selectedTemplateId.value) as { name: string; instance: BaseScenario; component: Component };
+const getScenario = () => scenarioMap.value.get(selectedTemplateId.value) as ScenarioItem;
 </script>
