@@ -24,7 +24,7 @@ def main():
         sympy_exprs = []
         for latex_expr in latex_json:
             sympy_expr = parse_latex(latex_expr)
-            sympy_exprs.appned(sympy_expr)
+            sympy_exprs.append(sympy_expr)
 
         # SymPy to MMT
         mmt = template_model_from_sympy_odes(sympy_exprs)
@@ -33,7 +33,7 @@ def main():
         amr_json = template_model_to_petrinet_json(mmt)
 
         taskrunner.log(f"Latex to AMR conversion succeeded")
-        taskrunner.write_output_dict_with_timeout({"response": str(amr_json)})
+        taskrunner.write_output_dict_with_timeout({"response": json.dumps(amr_json)})
 
         print("Latex to SymPy conversion succeeded")
     except Exception as e:
