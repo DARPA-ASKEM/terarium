@@ -102,7 +102,7 @@ export class DecisionMakingScenario extends BaseScenario {
 		wf.setWorkflowName(this.workflowName);
 		wf.setWorkflowScenario(this.toJSON());
 
-		// 1. Add nodes
+		// 1. Add model and model config nodes and connect them
 		const modelNode = wf.addNode(
 			ModelOp,
 			{ x: 0, y: 0 },
@@ -172,11 +172,34 @@ export class DecisionMakingScenario extends BaseScenario {
 			{ x: 0, y: 0 }
 		]);
 
+		// 2. Add base simulation
 		wf.updateNode(baseSimulateNode, {
 			state: {
 				chartSettings: simulateChartSettings
 			}
 		});
+
+		wf.addEdge(
+			baseSimulateNode.id,
+			baseSimulateNode.outputs[0].id,
+			datasetTransformerNode.id,
+			datasetTransformerNode.inputs[0].id,
+			[
+				{ x: 0, y: 0 },
+				{ x: 0, y: 0 }
+			]
+		);
+
+		/* 3. Create intervention and simulate nodes for each intervention
+		 model -> intervention -> simulate -> dataset transformer
+		 modelConfig -> simulate -> dataset transformer */
+		// add input ports for each simulation to the dataset transformer (base simulation + interventions)
+		for (let i = 0; i < this.interventionSpecs.length + 1; i++) {
+			workflowService.appendInputPort(datasetTransformerNode, {
+				type: 'datasetId|simulationId',
+				label: 'Dataset or Simulation'
+			});
+		}
 
 		const promises = this.interventionSpecs.map(async (interventionSpec, i) => {
 			const interventionPolicy = await getInterventionPolicyById(interventionSpec.id);
@@ -211,11 +234,11 @@ export class DecisionMakingScenario extends BaseScenario {
 
 			wf.updateNode(interventionNode, {
 				state: {
-					transientInterventionPolicy: interventionPolicy
+					interventionPolicy
 				},
 				output: {
 					value: [interventionPolicy.id],
-					state: _.omit(interventionNode.state, ['transientInterventionPolicy'])
+					state: interventionNode.state
 				}
 			});
 
@@ -229,17 +252,12 @@ export class DecisionMakingScenario extends BaseScenario {
 				simulateNode.id,
 				simulateNode.outputs[0].id,
 				datasetTransformerNode.id,
-				datasetTransformerNode.inputs[i].id,
+				datasetTransformerNode.inputs[i + 1].id,
 				[
 					{ x: 0, y: 0 },
 					{ x: 0, y: 0 }
 				]
 			);
-
-			workflowService.appendInputPort(datasetTransformerNode, {
-				type: 'datasetId|simulationId',
-				label: 'Dataset or Simulation'
-			});
 		});
 		await Promise.all(promises);
 

@@ -24,7 +24,13 @@
 			</div>
 		</template>
 		<template #footer>
-			<Button label="Create" size="large" @click="saveWorkflow" :disabled="!getScenario().instance.isValid()" />
+			<Button
+				label="Create"
+				size="large"
+				@click="saveWorkflow"
+				:disabled="!getScenario().instance.isValid()"
+				:loading="isCreatingWorkflow"
+			/>
 			<Button label="Close" class="p-button-secondary" size="large" outlined @click="emit('close-modal')" />
 		</template>
 	</tera-modal>
@@ -88,9 +94,12 @@ const scenarios = ref<ScenarioItem[]>([
 const emit = defineEmits(['close-modal']);
 
 const selectedTemplateId = ref<any>(scenarios.value[0].id);
+const isCreatingWorkflow = ref(false);
 
 const saveWorkflow = async () => {
 	if (!getScenario().instance.isValid()) return;
+
+	isCreatingWorkflow.value = true;
 	const scenario = getScenario();
 	const wf = await scenario.instance.createWorkflow();
 	const response = await createWorkflow(wf);
@@ -109,6 +118,8 @@ const saveWorkflow = async () => {
 			assetId: response.id
 		}
 	});
+
+	isCreatingWorkflow.value = false;
 
 	emit('close-modal');
 };

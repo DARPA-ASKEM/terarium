@@ -1,5 +1,5 @@
 <template>
-	<tera-scenario-template :header="header" :scenario-instance="scenario">
+	<tera-scenario-template :header="header" :scenario-instance="scenario" @save-workflow="$emit('save-workflow')">
 		<template #inputs>
 			<label>Select a model</label>
 			<Dropdown

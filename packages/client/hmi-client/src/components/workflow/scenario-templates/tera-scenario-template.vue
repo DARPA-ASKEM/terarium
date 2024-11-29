@@ -21,6 +21,7 @@
 		:model-value="scenarioInstance.workflowName"
 		@update:model-value="scenarioInstance.setWorkflowName($event)"
 		auto-focus
+		@keydown.enter.stop.prevent="emit('save-workflow')"
 	/>
 
 	<section class="grid" v-if="slots.inputs || slots.outputs">
@@ -44,6 +45,7 @@ import { BaseScenario, ScenarioHeader } from './base-scenario';
 
 const slots = useSlots();
 
+const emit = defineEmits(['save-workflow']);
 defineProps<{
 	header: ScenarioHeader;
 	scenarioInstance: BaseScenario;
