@@ -15,7 +15,7 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 1. Create a new project
 2. Add a simple model into the project, eg SIR
 3. Create a simple simulation workflow: model => model-config => simulate
-4. Run simulate, pick a few variables to plot once simulate compltes
+4. Run simulate, pick a few variables to plot once simulate completes
 5. Export the project: Project-overview, download
 6. Rename the project to [project-old]
 7. Import the project you downloaded
@@ -32,6 +32,6 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 5. Export the project: Project-overview, download
 6. Rename the project to [project-old]
 7. Import the project you downloaded
-8. Once import completes, go into the  new project, verify that you can open the data-transform and see previous cells and cell-results
+8. Once import completes, go into the new project, verify that you can open the data-transform and see previous cells and cell-results
 9. Remove the newly imported project
 
