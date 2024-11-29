@@ -273,6 +273,8 @@ const icons = new Map<string | AssetType, string | Component>([
 	[AssetType.Model, 'share-2'],
 	[AssetType.Dataset, DatasetIcon as Component],
 	[AssetType.Simulation, 'settings'],
+	[AssetType.ModelConfiguration, 'settings'],
+	[AssetType.InterventionPolicy, 'settings'],
 	[AssetType.Code, 'code'],
 	[AssetType.Workflow, 'git-merge'],
 	['overview', 'layout']
