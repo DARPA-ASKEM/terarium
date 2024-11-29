@@ -8,7 +8,7 @@ import { operation as InterventionOp } from '@/components/workflow/ops/intervent
 import { operation as SimulateOp } from '@/components/workflow/ops/simulate-ciemss/mod';
 import { operation as TransformDatasetOp } from '@/components/workflow/ops/dataset-transformer/mod';
 import { OperatorNodeSize } from '@/services/workflow';
-import { getInterventionPolicyById } from '@/services/intervention-policy';
+import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import { ChartSetting, ChartSettingType } from '@/types/common';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 
@@ -203,6 +203,13 @@ export class DecisionMakingScenario extends BaseScenario {
 
 		const promises = this.interventionSpecs.map(async (interventionSpec, i) => {
 			const interventionPolicy = await getInterventionPolicyById(interventionSpec.id);
+
+			simulateChartSettings = updateChartSettingsBySelectedVariables(
+				simulateChartSettings,
+				ChartSettingType.INTERVENTION,
+				Object.keys(_.groupBy(flattenInterventionData(interventionPolicy.interventions ?? []), 'appliedTo'))
+			);
+
 			const interventionNode = wf.addNode(
 				InterventionOp,
 				{ x: 0, y: 0 },
