@@ -21,6 +21,7 @@
 		:model-value="scenarioInstance.workflowName"
 		@update:model-value="scenarioInstance.setWorkflowName($event)"
 		auto-focus
+		@keydown.enter.stop.prevent="$emit('save-workflow')"
 	/>
 
 	<section class="grid" v-if="slots.inputs || slots.outputs">
@@ -63,8 +64,8 @@ ul {
 	}
 }
 
-h4 {
-	color: var(--text-color-subdued);
+h5 {
+	color: var(--primary-color);
 }
 
 :deep(article) {
