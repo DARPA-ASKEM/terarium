@@ -39,7 +39,6 @@
 							<section class="header-group">
 								<Textarea
 									v-model="multipleEquations"
-									ref="equationTextarea"
 									autoResize
 									rows="1"
 									placeholder="Add one or more LaTex equations, or paste in a screenshot"
@@ -88,10 +87,13 @@
 											</div>
 										</div>
 									</section>
-									<tera-input-text
+									<Textarea
 										v-if="selectedItem === equation.name"
 										v-model="equation.asset.text"
+										autoResize
+										rows="1"
 										placeholder="Add an expression with LaTeX"
+										class="w-full"
 										@update:model-value="emit('update-state', clonedState)"
 									/>
 								</tera-asset-block>
@@ -131,10 +133,13 @@
 											</div>
 										</div>
 									</section>
-									<tera-input-text
+									<Textarea
 										v-if="selectedItem === equation.name"
 										v-model="equation.asset.text"
+										autoResize
+										rows="1"
 										placeholder="Add an expression with LaTeX"
+										class="w-full"
 										@update:model-value="emit('update-state', clonedState)"
 									/>
 								</tera-asset-block>
@@ -187,7 +192,6 @@ import { getModel, updateModel } from '@/services/model';
 import { useProjects } from '@/composables/project';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraModel from '@/components/model/tera-model.vue';
-import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -252,7 +256,6 @@ const isOutputOpen = ref(true);
 
 const outputArrowDirection = computed(() => (!isDocViewerOpen.value && !isInputOpen.value ? 'left' : 'right'));
 
-const equationTextarea = ref();
 const documentEquations = ref<AssetBlock<EquationBlock>[]>();
 
 onMounted(async () => {
