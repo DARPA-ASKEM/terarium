@@ -160,7 +160,6 @@ onMounted(async () => {
 .popup {
 	position: relative;
 	box-shadow: 0 var(--gap-0-5) var(--gap-1) rgba(0, 0, 0, 0.2);
-	padding: var(--gap-0-5);
 	z-index: 3;
 }
 .inside {
