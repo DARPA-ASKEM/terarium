@@ -93,7 +93,7 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 			}
 		);
 
-		const datasetNode = wf.addNode(
+		const datasetTransformerNode = wf.addNode(
 			TransformDatasetOp,
 			{ x: 0, y: 0 },
 			{
@@ -110,10 +110,16 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 			{ x: 0, y: 0 },
 			{ x: 0, y: 0 }
 		]);
-		wf.addEdge(simulateNode.id, simulateNode.outputs[0].id, datasetNode.id, datasetNode.inputs[0].id, [
-			{ x: 0, y: 0 },
-			{ x: 0, y: 0 }
-		]);
+		wf.addEdge(
+			simulateNode.id,
+			simulateNode.outputs[0].id,
+			datasetTransformerNode.id,
+			datasetTransformerNode.inputs[0].id,
+			[
+				{ x: 0, y: 0 },
+				{ x: 0, y: 0 }
+			]
+		);
 
 		// 3. Setting node states/outputs
 		wf.updateNode(modelNode, {
