@@ -1,6 +1,12 @@
 import _ from 'lodash';
 import { createForecastChart, AUTOSIZE } from '@/services/charts';
-import { getRunResultCSV, getSimulation, parsePyCiemssMap } from '@/services/models/simulation-service';
+import {
+	DataArray,
+	getEnsembleResultModelConfigMap,
+	getRunResultCSV,
+	getSimulation,
+	parseEnsemblePyciemssMap
+} from '@/services/models/simulation-service';
 import { EnsembleModelConfigs } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getActiveOutput } from '@/components/workflow/util';
@@ -95,17 +101,45 @@ export async function fetchOutputData(preForecastId: string, postForecastId: str
 	if (!postForecastId || !preForecastId) return null;
 	const runResult = await getRunResultCSV(postForecastId, 'result.csv');
 	const runResultSummary = await getRunResultCSV(postForecastId, 'result_summary.csv');
+	const ensembleVarModelConfigMap = (await getEnsembleResultModelConfigMap(preForecastId)) ?? {};
 
 	const runResultPre = await getRunResultCSV(preForecastId, 'result.csv', renameFnGenerator('pre'));
 	const runResultSummaryPre = await getRunResultCSV(preForecastId, 'result_summary.csv', renameFnGenerator('pre'));
 
+	const pyciemssMap = parseEnsemblePyciemssMap(runResult[0], ensembleVarModelConfigMap);
+
 	// Merge before/after for chart
 	const { result, resultSummary } = mergeResults(runResultPre, runResult, runResultSummaryPre, runResultSummary);
-	const pyciemssMap = parsePyCiemssMap(runResult[0]);
 
 	return {
 		result,
 		resultSummary,
 		pyciemssMap
 	};
+}
+
+// Build chart data by adding variable translation map to the given output data
+export function buildChartData(
+	outputData: {
+		result: DataArray;
+		resultSummary: DataArray;
+		pyciemssMap: Record<string, string>;
+	} | null,
+	mappings: CalibrateEnsembleMappingRow[]
+) {
+	if (!outputData) return null;
+	const pyciemssMap = outputData.pyciemssMap;
+	const translationMap = {};
+	Object.keys(outputData.pyciemssMap).forEach((key) => {
+		// pyciemssMap keys are formatted as either '{modelConfigId}/{displayVariableName}' for model variables or '{displayVariableName}' for ensemble variables
+		const tokens = key.split('/');
+		const varName = tokens.length > 1 ? tokens[1] : 'Ensemble';
+		translationMap[`${pyciemssMap[key]}_mean`] = `${varName} after calibration`;
+		translationMap[`${pyciemssMap[key]}_mean:pre`] = `${varName} before calibration`;
+	});
+	// Add translation map for dataset variables
+	mappings.forEach((mapObj) => {
+		translationMap[mapObj.datasetMapping] = 'Observations';
+	});
+	return { ...outputData, translationMap };
 }

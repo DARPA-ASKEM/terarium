@@ -13,6 +13,5 @@ LATEX_STYLE_GUIDE = """
 10) Avoid words or multi-character names for variables and names. Use camel case to express multi-word or multi-character names
 11) Do not use "\\cdot" or "*" to indicate multiplication. Use whitespace instead.
 12) Replace "\\epsilon" with "\\varepsilon" when representing a parameter or variable
-13) Avoid using notation for mathematical constants like "e" and "pi". Use their actual values up to 3 decimal places instead.
-14) If equations are separated by commas, do not include commas in the LaTeX code.
+13) If equations are separated by commas, do not include commas in the LaTeX code.
 """
