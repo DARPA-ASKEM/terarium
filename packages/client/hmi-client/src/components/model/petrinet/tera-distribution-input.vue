@@ -125,7 +125,7 @@ async function showPopup(item: HTMLElement | null, index: number) {
 	};
 }
 
-function onChange(event) {
+function onChange(event: { value: DistributionType }) {
 	emit('update-parameter', {
 		id: props.parameterId,
 		distribution: formatPayloadFromTypeChange(event.value)
@@ -133,7 +133,7 @@ function onChange(event) {
 	hidePopup();
 }
 
-function isParameterInputEmpty(parameter) {
+function isParameterInputEmpty(parameter: ModelDistribution) {
 	if (!DistributionInputOptions?.[parameter.type]?.length) {
 		return true;
 	}
@@ -147,7 +147,7 @@ function isParameterInputEmpty(parameter) {
 	);
 }
 
-function onParameterChange(value, parameter) {
+function onParameterChange(value: string, parameter: string) {
 	isParameterEmpty.value = isNumberInputEmpty(value);
 	if (!isParameterEmpty.value) {
 		emit('update-parameter', {
@@ -157,7 +157,7 @@ function onParameterChange(value, parameter) {
 	}
 }
 
-function formatPayloadFromParameterChange(parameters) {
+function formatPayloadFromParameterChange(parameters: { [x: string]: string }) {
 	const distribution = getParameterDistribution(props.modelConfiguration, props.parameterId, true);
 	Object.keys(parameters).forEach((key) => {
 		if (!distribution) return;
