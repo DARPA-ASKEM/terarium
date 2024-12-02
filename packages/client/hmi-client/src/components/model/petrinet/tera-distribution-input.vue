@@ -134,10 +134,6 @@ function onChange(event: { value: DistributionType }) {
 }
 
 function isParameterInputEmpty(parameter: ModelDistribution) {
-	if (!DistributionInputOptions?.[parameter.type]?.length) {
-		return true;
-	}
-
 	if (DistributionInputOptions[parameter.type].length === 1) {
 		return isNumberInputEmpty(DistributionInputOptions[parameter.type][0]);
 	}
