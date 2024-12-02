@@ -120,7 +120,10 @@ async function showPopup(item: HTMLElement | null, index: number) {
 function onChange(event: { value: DistributionType }) {
 	emit('update-parameter', {
 		id: props.parameterId,
-		distribution: formatPayloadFromTypeChange(event.value)
+		distribution: {
+			type: event.value,
+			parameters: {}
+		}
 	});
 	hidePopup();
 }
@@ -155,13 +158,6 @@ function formatPayloadFromParameterChange(parameters: { [key: string]: string })
 	return distribution;
 }
 
-function formatPayloadFromTypeChange(type: DistributionType) {
-	const distribution = props.parameter;
-
-	distribution.type = type;
-	distribution.parameters = {};
-	return distribution;
-}
 onMounted(async () => {
 	isParameterEmpty.value = isParameterInputEmpty(props.parameter);
 });
