@@ -498,6 +498,53 @@ export function useCharts(
 		};
 	};
 
+	// Create ensemble calibrate error charts based on chart settings
+	const useEnsembleErrorCharts = (chartSettings: ComputedRef<ChartSetting[]>, errorData: ComputedRef<DataArray>) => {
+		const errorChartVariables = computed(() => {
+			if (!chartSettings.value.length) return [];
+			const variables = chartSettings.value
+				.map((s) => s.selectedVariables[0])
+				.map((variable) => ({
+					field: modelVarToDatasetVar(mapping?.value ?? [], variable) as string,
+					label: variable
+				}))
+				.filter((v) => !!v.field);
+			return variables;
+		});
+
+		const errorCharts = computed(() => {
+			if (errorData.value.length === 0) return [];
+			const spec = createErrorChart(errorData.value, {
+				title: '',
+				width: chartSize.value.width,
+				variables: errorChartVariables.value,
+
+				xAxisTitle: 'Mean absolute (MAE)'
+			});
+			return [spec];
+		});
+
+		const onExpandErrorChart = () => {
+			if (errorData.value.length === 0) return {};
+			// Customize the chart size by modifying the spec before expanding the chart
+			const spec = createErrorChart(errorData.value, {
+				title: '',
+				width: window.innerWidth / 1.5,
+				height: 230,
+				boxPlotHeight: 50,
+				areaChartHeight: 150,
+				variables: errorChartVariables.value,
+				xAxisTitle: 'Mean absolute (MAE)'
+			});
+			return spec as any;
+		};
+
+		return {
+			errorCharts,
+			onExpandErrorChart
+		};
+	};
+
 	// Create parameter distribution charts based on chart settings
 	const useParameterDistributionCharts = (chartSettings: ComputedRef<ChartSetting[]>) => {
 		const parameterDistributionCharts = computed(() => {
@@ -594,6 +641,7 @@ export function useCharts(
 		useEnsembleVariableCharts,
 		useErrorChart,
 		useParameterDistributionCharts,
-		useWeightsDistributionCharts
+		useWeightsDistributionCharts,
+		useEnsembleErrorCharts
 	};
 }

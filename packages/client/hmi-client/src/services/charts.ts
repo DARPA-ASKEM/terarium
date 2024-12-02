@@ -217,7 +217,7 @@ export function createErrorChart(dataset: Record<string, any>[], options: ErrorC
 						y: {
 							field: 'Variable Label',
 							scale: { range: [boxPlotYPosition, boxPlotYPosition] },
-							axis: { grid: true, labels: true, orient: 'left', offset: 5 }
+							axis: { grid: true, labels: true, orient: 'left', offset: 5, labelAngle: -90 }
 						}
 					}
 				},

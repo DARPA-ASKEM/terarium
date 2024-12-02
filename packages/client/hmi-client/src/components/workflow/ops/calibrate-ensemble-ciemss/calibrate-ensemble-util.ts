@@ -10,12 +10,13 @@ import {
 import { EnsembleModelConfigs } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getActiveOutput } from '@/components/workflow/util';
+import { CalibrateMap } from '@/services/calibrate-workflow';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	CalibrateEnsembleMappingRow,
 	CalibrateEnsembleWeights
 } from './calibrate-ensemble-ciemss-operation';
-import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
+import { getErrorData, mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 
 export async function getLossValuesFromSimulation(calibrationId: string) {
 	if (!calibrationId) return [];
@@ -142,4 +143,27 @@ export function buildChartData(
 		translationMap[mapObj.datasetMapping] = 'Observations';
 	});
 	return { ...outputData, translationMap };
+}
+
+// Get the error data for the ensemble calibration
+export function getEnsembleErrorData(
+	groundTruth: DataArray,
+	simulationData: DataArray,
+	mapping: CalibrateEnsembleMappingRow[],
+	pyciemssMap: Record<string, string>
+) {
+	const calibrateMappings = mapping
+		.filter((m) => m.newName !== 'timepoint_id')
+		.map(
+			(m) =>
+				({
+					datasetVariable: m.datasetMapping,
+					modelVariable: m.datasetMapping
+				}) as CalibrateMap
+		);
+	const timestampColName = mapping.find((m) => m.newName === 'timepoint_id')?.datasetMapping ?? '';
+
+	const data = getErrorData(groundTruth, simulationData, calibrateMappings, timestampColName, pyciemssMap);
+	console.log(data);
+	return data;
 }
