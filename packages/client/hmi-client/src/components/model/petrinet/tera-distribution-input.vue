@@ -27,9 +27,9 @@
 					<template #title>
 						{{ hoveredOption?.name }}
 						<a
-							v-if="externaDoclLinks[hoveredOption.value]"
+							v-if="distributions[hoveredOption.value].url"
 							v-tooltip="hoveredOption.name + ' pytorch.org docs'"
-							:href="externaDoclLinks[hoveredOption.value]"
+							:href="distributions[hoveredOption.value].url"
 							:aria-label="hoveredOption.name + ' docs'"
 							rel="noopener noreferrer"
 							target="_blank"
@@ -38,13 +38,13 @@
 						</a>
 					</template>
 					<template #content>
-						{{ distributionDescription[hoveredOption?.value] }}
+						{{ distributions[hoveredOption?.value].description }}
 						<h5 class="pt-3 pb-2">Required parameters:</h5>
 						<ul class="ml-5">
-							<li class="pb-2" v-for="(param, index) in DistributionInputLabels[hoveredOption.value]" :key="param">
-								<h6>{{ param }}</h6>
+							<li class="pb-2" v-for="param in distributions[hoveredOption.value].parameters" :key="param">
+								<h6>{{ param.label }}</h6>
 								<p class="parameter-description">
-									{{ distributionParamDescription[DistributionInputOptions[hoveredOption.value][index]] }}
+									{{ param.description }}
 								</p>
 							</li>
 						</ul>
@@ -56,9 +56,9 @@
 			<tera-input-number
 				class="parameter-input"
 				error-empty
-				:label="DistributionInputLabels[parameter.type][index]"
-				:model-value="getParameterDistribution(modelConfiguration, parameterId, true)?.parameters[option]"
-				@update:model-value="onParameterChange($event, DistributionInputOptions[parameter.type][index])"
+				:label="option.label"
+				:model-value="getParameterDistribution(modelConfiguration, parameterId, true)?.parameters[option.name]"
+				@update:model-value="onParameterChange($event, option.name)"
 			/>
 		</template>
 	</span>
@@ -69,15 +69,7 @@ import { getParameterDistribution, isNumberInputEmpty } from '@/services/model-c
 import { Model, ModelConfiguration, ModelDistribution } from '@/types/Types';
 import Dropdown from 'primevue/dropdown';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
-import {
-	DistributionType,
-	externaDoclLinks,
-	distributionTypeOptions,
-	DistributionInputOptions,
-	DistributionInputLabels,
-	distributionDescription,
-	distributionParamDescription
-} from '@/services/distribution';
+import { DistributionType, distributionTypeOptions, distributions } from '@/services/distribution';
 import Card from 'primevue/card';
 
 const props = defineProps<{
@@ -89,7 +81,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-parameter', 'update-source']);
 
-const options = computed(() => DistributionInputOptions[props.parameter.type]);
+const options = computed(() => distributions[props.parameter.type].parameters);
 
 const dropdownRef = ref();
 const cardRef = ref();
@@ -134,12 +126,12 @@ function onChange(event: { value: DistributionType }) {
 }
 
 function isParameterInputEmpty(parameter: ModelDistribution) {
-	if (DistributionInputOptions[parameter.type].length === 1) {
-		return isNumberInputEmpty(DistributionInputOptions[parameter.type][0]);
+	if (distributions[parameter.type].parameters.length === 1) {
+		return isNumberInputEmpty(distributions[parameter.type].parameters[0]);
 	}
 	return (
-		isNumberInputEmpty(DistributionInputOptions[parameter.type][0]) ||
-		isNumberInputEmpty(DistributionInputOptions[parameter.type][1])
+		isNumberInputEmpty(distributions[parameter.type].parameters[0]) ||
+		isNumberInputEmpty(distributions[parameter.type].parameters[1])
 	);
 }
 

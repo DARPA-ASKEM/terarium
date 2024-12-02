@@ -51,14 +51,14 @@
 		</template>
 		<p class="flex gap-4" v-else>
 			<template v-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Constant">
-				<span><label>Type</label> {{ DistributionTypeLabel.Constant }}</span>
+				<span><label>Type</label> {{ distributions[DistributionType.Constant].label }}</span>
 				<span>
 					<label>Value</label>
 					{{ getParameterDistribution(modelConfiguration, parameterId).parameters.value }}
 				</span>
 			</template>
 			<template v-else-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Uniform">
-				<span><label>Type</label> {{ DistributionTypeLabel.StandardUniform1 }}</span>
+				<span><label>Type</label> {{ distributions[DistributionType.Uniform].label }}</span>
 				<span>
 					<label>Min</label>
 					{{ getParameterDistribution(modelConfiguration, parameterId).parameters.minimum }}
@@ -93,7 +93,7 @@ import {
 import TeraDistributionInput from '@/components/model/petrinet/tera-distribution-input.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Button from 'primevue/button';
-import { DistributionType, DistributionTypeLabel } from '@/services/distribution';
+import { DistributionType, distributions } from '@/services/distribution';
 import { getParameter } from '@/model-representation/service';
 import TeraParameterOtherValueModal from '@/components/model/petrinet/tera-parameter-other-value-modal.vue';
 import { displayNumber } from '@/utils/number';
