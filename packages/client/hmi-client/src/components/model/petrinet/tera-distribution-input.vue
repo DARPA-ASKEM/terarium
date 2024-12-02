@@ -137,15 +137,16 @@ function isParameterInputEmpty(parameter: ModelDistribution) {
 
 function onParameterChange(value: string, parameter: string) {
 	isParameterEmpty.value = isNumberInputEmpty(value);
-	if (!isParameterEmpty.value) {
+	const distribution = formatPayloadFromParameterChange({ [parameter]: value });
+	if (!isParameterEmpty.value && distribution) {
 		emit('update-parameter', {
 			id: props.parameterId,
-			distribution: formatPayloadFromParameterChange({ [parameter]: value })
+			distribution
 		});
 	}
 }
 
-function formatPayloadFromParameterChange(parameters: { [x: string]: string }) {
+function formatPayloadFromParameterChange(parameters: { [key: string]: string }) {
 	const distribution = getParameterDistribution(props.modelConfiguration, props.parameterId, true);
 	Object.keys(parameters).forEach((key) => {
 		if (!distribution) return;

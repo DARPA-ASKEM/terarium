@@ -36,8 +36,6 @@ export enum DistributionType {
 }
 
 // JSON Object Params
-// Disabled until the backend is updated
-
 // [DistributionType.StandardNormal1]: ['mean', 'stdev'],
 // [DistributionType.Normal1]: ['mean', 'stdev'],
 // [DistributionType.Normal2]: ['mean', 'var'],
@@ -112,11 +110,6 @@ export const distributions: { [key in DistributionType]: ProbOntoDistribution } 
 			}
 		]
 	}
-};
-
-export const DistributionTypeLabel: { [key in DistributionType]: string } = {
-	[DistributionType.Constant]: 'Constant',
-	[DistributionType.Uniform]: 'Uniform'
 };
 
 export const distributionTypeOptions = (): { name: string; value: string }[] =>
