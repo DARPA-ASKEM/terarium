@@ -239,7 +239,6 @@ public class TerariumAssetCloneService {
 		projectExport.getProject().setUserName(userName);
 		projectExport.getProject().setCreatedOn(new Timestamp(System.currentTimeMillis()));
 		projectExport.getProject().setUpdatedOn(new Timestamp(System.currentTimeMillis()));
-		projectExport.getProject().setPublicProject(false);
 
 		// create the project
 		final Project project = projectService.createProject(projectExport.getProject());
