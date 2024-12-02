@@ -52,7 +52,7 @@
 				</Card>
 			</section>
 		</section>
-		<template v-for="(option, index) in options" :key="index">
+		<template v-for="option in options" :key="option.name">
 			<tera-input-number
 				class="parameter-input"
 				error-empty
