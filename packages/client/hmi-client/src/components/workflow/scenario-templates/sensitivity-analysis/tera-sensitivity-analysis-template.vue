@@ -22,6 +22,45 @@
 				:disabled="isEmpty(modelConfigurations) || isFetchingModelInformation"
 				:loading="isFetchingModelInformation"
 			/>
+			<label>Select uncertain parameters of interest and adjust ranges to be explored if needed</label>
+			<template v-for="(parameter, i) in scenario.parameters" :key="i">
+				<Dropdown
+					:model-value="parameter?.referenceId"
+					:options="modelParameters"
+					option-label="referenceId"
+					option-value="referenceId"
+					placeholder="Select a parameter"
+					:disabled="!selectedModelConfiguration"
+					:loading="isFetchingModelConfiguration || isFetchingModelInformation"
+					@update:model-value="onParameterSelect($event, i)"
+				>
+					<template #option="slotProps">
+						<span>{{ displayParameter(slotProps.option.referenceId) }}</span>
+					</template>
+
+					<template #value="slotProps">
+						<span v-if="displayParameter(slotProps.value)">{{ displayParameter(slotProps.value) }}</span>
+						<span v-else>{{ slotProps.placeholder }}</span>
+					</template>
+				</Dropdown>
+				<div v-if="parameter" class="flex align-items-center py-2">
+					<label class="p-0">Min:</label>
+					<tera-input-number
+						class="m-0"
+						:model-value="parameter.distribution.parameters.minimum"
+						@update:model-value="parameter.distribution.parameters.minimum = $event"
+					/>
+					<label class="p-0 ml-2">Max:</label>
+					<tera-input-number
+						class="m-0"
+						:model-value="parameter.distribution.parameters.maximum"
+						@update:model-value="parameter.distribution.parameters.maximum = $event"
+					/>
+				</div>
+			</template>
+			<div>
+				<Button label="Add parameter" icon="pi pi-plus" text @click="scenario.addParameter()" />
+			</div>
 		</template>
 		<template #outputs>
 			<label>Select an output metric</label>
@@ -45,13 +84,17 @@
 import { SensitivityAnalysisScenario } from '@/components/workflow/scenario-templates/sensitivity-analysis/sensitivity-analysis-scenario';
 import { useProjects } from '@/composables/project';
 import { getModel, getModelConfigurationsForModel } from '@/services/model';
-import { AssetType, ModelConfiguration } from '@/types/Types';
-import { isEmpty } from 'lodash';
+import { AssetType, ModelConfiguration, ParameterSemantic } from '@/types/Types';
+import _, { isEmpty } from 'lodash';
 import { computed, ref, watch } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
-import TeraScenarioTemplate from '../tera-scenario-template.vue';
+import Button from 'primevue/button';
+import { getModelConfigurationById, getParameter, getParameters } from '@/services/model-configurations';
+import { DistributionType } from '@/services/distribution';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { ScenarioHeader } from '../base-scenario';
+import TeraScenarioTemplate from '../tera-scenario-template.vue';
 
 const header: ScenarioHeader = Object.freeze({
 	title: 'Sensitivity analysis template',
@@ -62,16 +105,45 @@ const header: ScenarioHeader = Object.freeze({
 });
 
 const isFetchingModelInformation = ref(false);
+const isFetchingModelConfiguration = ref(false);
+
 const models = computed(() => useProjects().getActiveProjectAssets(AssetType.Model));
 
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 const modelStateOptions = ref<any[]>([]);
+
+const selectedModelConfiguration = ref<ModelConfiguration | null>(null);
+const modelParameters = ref<ParameterSemantic[]>([]);
 
 const props = defineProps<{
 	scenario: SensitivityAnalysisScenario;
 }>();
 
 const emit = defineEmits(['save-workflow']);
+
+const onParameterSelect = (parameterId: string, index: number) => {
+	if (!selectedModelConfiguration.value) return;
+	const parameter = _.cloneDeep(getParameter(selectedModelConfiguration.value, parameterId));
+	if (!parameter) return;
+	props.scenario.setParameter(parameter, index);
+};
+
+const displayParameter = (parameterName: string) => {
+	let value = '';
+	const parameter = modelParameters.value.find((p) => p.referenceId === parameterName);
+	switch (parameter?.distribution.type) {
+		case DistributionType.Constant:
+			value = `${parameter.distribution.parameters.value}`;
+			break;
+		case DistributionType.Uniform:
+			value = `${parameter.distribution.parameters.minimum} - ${parameter.distribution.parameters.maximum}`;
+			break;
+		default:
+			break;
+	}
+
+	return `${parameterName}  [${value}]`;
+};
 
 watch(
 	() => props.scenario.modelSpec.id,
@@ -96,5 +168,20 @@ watch(
 		isFetchingModelInformation.value = false;
 	},
 	{ immediate: true }
+);
+
+watch(
+	() => props.scenario.modelConfigSpec.id,
+	async (modelConfigId) => {
+		if (!modelConfigId) {
+			selectedModelConfiguration.value = null;
+			return;
+		}
+		isFetchingModelConfiguration.value = true;
+		selectedModelConfiguration.value = await getModelConfigurationById(modelConfigId);
+		if (!selectedModelConfiguration.value) return;
+		modelParameters.value = getParameters(selectedModelConfiguration.value);
+		isFetchingModelConfiguration.value = false;
+	}
 );
 </script>

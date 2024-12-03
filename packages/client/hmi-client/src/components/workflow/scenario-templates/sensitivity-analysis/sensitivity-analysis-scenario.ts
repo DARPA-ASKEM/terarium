@@ -5,10 +5,16 @@ import { operation as ModelConfigOp } from '@/components/workflow/ops/model-conf
 import { operation as SimulateCiemssOp } from '@/components/workflow/ops/simulate-ciemss/mod';
 import { operation as TransformDatasetOp } from '@/components/workflow/ops/dataset-transformer/mod';
 import { OperatorNodeSize } from '@/services/workflow';
-import { getModelConfigurationById } from '@/services/model-configurations';
+import {
+	createModelConfiguration,
+	getModelConfigurationById,
+	setParameterDistributions
+} from '@/services/model-configurations';
 import _ from 'lodash';
 import { ChartSetting, ChartSettingType } from '@/types/common';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import { ParameterSemantic } from '@/types/Types';
+import { DistributionType } from '@/services/distribution';
 
 export class SensitivityAnalysisScenario extends BaseScenario {
 	public static templateId = 'sensitivity-analysis';
@@ -18,6 +24,8 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 	modelSpec: { id: string };
 
 	modelConfigSpec: { id: string };
+
+	parameters: (ParameterSemantic | null)[];
 
 	simulateSpec: { ids: string[] };
 
@@ -33,12 +41,28 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 		this.simulateSpec = {
 			ids: []
 		};
+		this.parameters = [null];
 	}
 
 	setModelSpec(id: string) {
 		this.modelSpec.id = id;
 		this.modelConfigSpec.id = '';
 		this.simulateSpec.ids = [];
+		this.parameters = [null];
+	}
+
+	addParameter() {
+		this.parameters.push(null);
+	}
+
+	setParameter(parameter: ParameterSemantic, index: number) {
+		// convert constants to distributions
+		if (parameter.distribution.type === DistributionType.Constant) {
+			parameter.distribution.type = DistributionType.Uniform;
+			parameter.distribution.parameters = { maximum: 0, minimum: 0 };
+		}
+
+		this.parameters[index] = parameter;
 	}
 
 	setModelConfigSpec(id: string) {
@@ -78,6 +102,18 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 		);
 
 		const modelConfig = await getModelConfigurationById(this.modelConfigSpec.id);
+
+		const distributionParameterMappings = this.parameters
+			.filter((parameter) => parameter !== null)
+			.map((parameter) => ({
+				id: parameter.referenceId,
+				distribution: parameter.distribution
+			}));
+
+		modelConfig.name = `${modelConfig.name}_sensitivity`;
+		setParameterDistributions(modelConfig, distributionParameterMappings);
+
+		const newModelConfig = await createModelConfiguration(modelConfig);
 		const modelConfigNode = wf.addNode(
 			ModelConfigOp,
 			{ x: 0, y: 0 },
@@ -133,10 +169,10 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 
 		wf.updateNode(modelConfigNode, {
 			state: {
-				transientModelConfig: modelConfig
+				transientModelConfig: newModelConfig
 			},
 			output: {
-				value: [modelConfig.id],
+				value: [newModelConfig.id],
 				state: _.omit(modelConfigNode.state, ['transientModelConfig'])
 			}
 		});
