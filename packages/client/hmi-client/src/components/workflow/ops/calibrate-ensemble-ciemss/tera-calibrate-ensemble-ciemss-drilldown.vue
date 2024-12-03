@@ -369,7 +369,7 @@ const emit = defineEmits(['update-state', 'close', 'select-output']);
 
 interface BasicKnobs {
 	ensembleMapping: CalibrateEnsembleMappingRow[];
-	configurationWeights: { [key: string]: number };
+	configurationWeights: { [key: string]: number }; // Note these are Dirichlet distributions not EXACTLY weights
 	extra: EnsembleCalibrateExtraCiemss;
 	timestampColName: string;
 }
