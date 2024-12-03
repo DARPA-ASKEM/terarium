@@ -170,9 +170,6 @@ public class Project extends TerariumAsset {
 		if (overviewContent != null) {
 			sources.put(TerariumAssetEmbeddingType.OVERVIEW, getOverviewAsReadableString());
 		}
-		if (metadata != null) {
-			sources.put(TerariumAssetEmbeddingType.METADATA, metadata.toString());
-		}
 
 		return sources;
 	}
