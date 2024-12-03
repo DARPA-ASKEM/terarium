@@ -1213,6 +1213,4 @@ export enum TerariumAssetEmbeddingType {
     Overview = "OVERVIEW",
     Name = "NAME",
     Description = "DESCRIPTION",
-    Metadata = "METADATA",
-    Card = "CARD",
 }
