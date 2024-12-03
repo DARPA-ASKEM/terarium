@@ -1,5 +1,5 @@
 <template>
-	<tera-scenario-template :header="header" :scenario-instance="scenario" @save-workflow="$emit('save-workflow')">
+	<tera-scenario-template :header="header" :scenario-instance="scenario" @save-workflow="emit('save-workflow')">
 		<template #inputs>
 			<label>Select a model</label>
 			<Dropdown
@@ -107,6 +107,8 @@ const modelStateOptions = ref<any[]>([]);
 const props = defineProps<{
 	scenario: SituationalAwarenessScenario;
 }>();
+
+const emit = defineEmits(['save-workflow']);
 
 watch(
 	() => props.scenario.modelSpec.id,
