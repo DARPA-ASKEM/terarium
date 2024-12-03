@@ -20,7 +20,7 @@ export const WorkflowOperationTypes = Object.freeze({
 	MODEL_FROM_EQUATIONS: 'ModelFromEquations',
 	REGRIDDING: 'Regridding',
 	INTERVENTION_POLICY: 'InterventionPolicy',
-	COMPARE_SIMULATIONS: 'CompareSimulations'
+	COMPARE_DATASETS: 'CompareDatasets'
 });
 
 export enum OperatorStatus {

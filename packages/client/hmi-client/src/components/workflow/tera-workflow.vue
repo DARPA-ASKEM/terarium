@@ -205,7 +205,7 @@ import * as OptimizeCiemssOp from '@/components/workflow/ops/optimize-ciemss/mod
 import * as DocumentOp from '@/components/workflow/ops/document/mod';
 import * as ModelFromDocumentOp from '@/components/workflow/ops/model-from-equations/mod';
 import * as ModelComparisonOp from '@/components/workflow/ops/model-comparison/mod';
-import * as CompareSimulationsOp from '@/components/workflow/ops/compare-simulations/mod';
+import * as CompareDatasetsOp from '@/components/workflow/ops/compare-datasets/mod';
 import * as InterventionPolicyOp from '@/components/workflow/ops/intervention-policy/mod';
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
 import { activeProjectId } from '@/composables/activeProject';
@@ -231,7 +231,7 @@ registry.registerOp(DocumentOp);
 registry.registerOp(ModelFromDocumentOp);
 registry.registerOp(ModelComparisonOp);
 registry.registerOp(InterventionPolicyOp);
-registry.registerOp(CompareSimulationsOp);
+registry.registerOp(CompareDatasetsOp);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -553,8 +553,8 @@ const contextMenuItems: MenuItem[] = [
 				command: addOperatorToWorkflow(CalibrateEnsembleCiemssOp)
 			},
 			{
-				label: CompareSimulationsOp.operation.displayName,
-				command: addOperatorToWorkflow(CompareSimulationsOp)
+				label: CompareDatasetsOp.operation.displayName,
+				command: addOperatorToWorkflow(CompareDatasetsOp)
 			}
 		]
 	},

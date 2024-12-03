@@ -1,10 +1,10 @@
 import { WorkflowOperationTypes } from '@/types/workflow';
 import type { Operation, BaseState } from '@/types/workflow';
 
-export interface CompareSimulationsState extends BaseState {}
+export interface CompareDatasetsState extends BaseState {}
 
-export const CompareSimulationsOperation: Operation = {
-	name: WorkflowOperationTypes.COMPARE_SIMULATIONS,
+export const CompareDatasetsOperation: Operation = {
+	name: WorkflowOperationTypes.COMPARE_DATASETS,
 	displayName: 'Compare simulations',
 	description: 'Compare simulations',
 	documentationUrl: '',
@@ -16,7 +16,7 @@ export const CompareSimulationsOperation: Operation = {
 	isRunnable: true,
 	action: () => {},
 	initState: () => {
-		const init: CompareSimulationsState = {};
+		const init: CompareDatasetsState = {};
 		return init;
 	}
 };

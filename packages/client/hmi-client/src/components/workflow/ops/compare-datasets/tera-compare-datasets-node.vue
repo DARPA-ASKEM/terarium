@@ -1,6 +1,6 @@
 <template>
 	<section>
-		<tera-operator-placeholder :node="node">Attach simulation outputs to compare</tera-operator-placeholder>
+		<tera-operator-placeholder :node="node">Attach datasets/simulation outputs to compare</tera-operator-placeholder>
 		<Button v-if="hasAtLeastTwoValues" label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 	</section>
 </template>
@@ -10,10 +10,10 @@ import { computed, watch } from 'vue';
 import { type WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import Button from 'primevue/button';
-import { CompareSimulationsState } from './compare-simulations-operation';
+import { CompareDatasetsState } from './compare-datasets-operation';
 
 const props = defineProps<{
-	node: WorkflowNode<CompareSimulationsState>;
+	node: WorkflowNode<CompareDatasetsState>;
 }>();
 
 const emit = defineEmits(['append-input-port', 'open-drilldown']);

@@ -11,11 +11,11 @@
 <script setup lang="ts">
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import { WorkflowNode } from '@/types/workflow';
-import { CompareSimulationsState } from './compare-simulations-operation';
+import { CompareDatasetsState } from './compare-datasets-operation';
 
 // const props =
 defineProps<{
-	node: WorkflowNode<CompareSimulationsState>;
+	node: WorkflowNode<CompareDatasetsState>;
 }>();
 
 const emit = defineEmits(['update-state', 'update-status', 'close']);
