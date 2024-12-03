@@ -385,7 +385,9 @@ const currentActiveIndicies = ref([0, 1, 2]);
 
 const isSidebarOpen = ref(true);
 const selectedOutputId = ref<string>();
-const isRunDisabled = computed(() => !knobs.value.ensembleMapping[0] || !datasetId.value);
+const isRunDisabled = computed(
+	() => !knobs.value.ensembleMapping[0] || !datasetId.value || allModelConfigurations.value.length < 2
+);
 const cancelRunId = computed(
 	() =>
 		props.node.state.inProgressForecastId ||
