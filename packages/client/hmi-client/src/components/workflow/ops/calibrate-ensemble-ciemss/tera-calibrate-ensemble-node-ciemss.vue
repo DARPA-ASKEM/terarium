@@ -96,20 +96,19 @@ const pollResult = async (runId: string) => {
 			}
 		});
 	const pollerResults = await poller.start();
+	const state = _.cloneDeep(props.node.state);
+	state.errorMessage = { name: '', value: '', traceback: '' };
 
 	if (pollerResults.state === PollerState.Cancelled) {
-		const state = _.cloneDeep(props.node.state);
 		state.currentProgress = 0;
 		state.inProgressForecastId = '';
 		state.inProgressCalibrationId = '';
 		poller.stop();
-		emit('update-state', state);
 	} else if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
 		logger.error(`Calibration: ${runId} has failed`, {
 			toastTitle: 'Error - Pyciemss'
 		});
-		const state = _.cloneDeep(props.node.state);
 		const simulation = await getSimulation(runId);
 		if (simulation?.status && simulation?.statusMessage) {
 			state.inProgressCalibrationId = '';
@@ -125,6 +124,7 @@ const pollResult = async (runId: string) => {
 		emit('update-state', state);
 		throw Error('Failed Runs');
 	}
+	emit('update-state', state);
 	return pollerResults;
 };
 
