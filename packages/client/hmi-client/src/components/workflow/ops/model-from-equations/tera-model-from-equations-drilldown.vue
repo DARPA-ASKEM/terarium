@@ -377,7 +377,7 @@ function onCheckBoxChange(equation) {
 	emit('update-state', state);
 }
 
-async function onRun(extractionService: string = 'skema') {
+async function onRun(extractionService: 'mira' | 'skema' = 'skema') {
 	isOutputOpen.value = true;
 	isModelLoading.value = true;
 	const equationsText = clonedState.value.equations
@@ -392,7 +392,6 @@ async function onRun(extractionService: string = 'skema') {
 
 	const request: EquationsToAMRRequest = {
 		equations: cleanedEquations,
-		framework: clonedState.value.modelFramework,
 		documentId: document.value?.id,
 		workflowId: props.node.workflowId,
 		nodeId: props.node.id,
