@@ -31,7 +31,7 @@ import embed, { Config, Result, VisualizationSpec } from 'vega-embed';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import { countDigits, fixPrecisionError } from '@/utils/number';
-import { ref, watch, toRaw, isRef, isReactive, isProxy, computed, h, render } from 'vue';
+import { ref, watch, toRaw, isRef, isReactive, isProxy, computed, h, render, onUnmounted } from 'vue';
 
 const NUMBER_FORMAT = '.3~s';
 
@@ -119,6 +119,7 @@ const onExpand = async () => {
 		if (typeof props.expandable === 'function') {
 			spec = props.expandable(spec);
 		}
+		vegaVisualizationExpanded.value?.finalize(); // dispose previous visualization before creating a new one
 		vegaVisualizationExpanded.value = await createVegaVisualization(vegaContainerLg.value, spec, props.config, {
 			actions: props.areEmbedActionsVisible,
 			expandable: false
@@ -219,8 +220,8 @@ async function createVegaVisualization(
 watch(
 	[vegaContainer, () => props.visualizationSpec],
 	async ([, newSpec], [, oldSpec]) => {
+		if (_.isEmpty(newSpec)) return;
 		const isEqual = _.isEqual(newSpec, oldSpec);
-
 		if (isEqual && vegaVisualization.value !== undefined) return;
 		const spec = deepToRaw(props.visualizationSpec);
 
@@ -246,6 +247,7 @@ watch(
 		} else {
 			// console.log('render interactive');
 			if (!vegaContainer.value) return;
+			vegaVisualization.value?.finalize(); // dispose previous visualization before creating a new one
 			vegaVisualization.value = await createVegaVisualization(vegaContainer.value, spec, props.config, {
 				actions: props.areEmbedActionsVisible,
 				expandable: !!props.expandable
@@ -255,6 +257,11 @@ watch(
 	},
 	{ immediate: true }
 );
+
+onUnmounted(() => {
+	vegaVisualization.value?.finalize();
+	vegaVisualizationExpanded.value?.finalize();
+});
 
 defineExpose({
 	view,

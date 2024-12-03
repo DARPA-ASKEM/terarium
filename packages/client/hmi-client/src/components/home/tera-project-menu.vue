@@ -1,6 +1,14 @@
 <template>
 	<span v-if="isCopying">Copying...</span>
-	<Button v-else icon="pi pi-ellipsis-v" rounded text @click.stop="toggle" :disabled="isEmpty(projectMenuItems)" />
+	<Button
+		v-else
+		:class="$attrs.class"
+		icon="pi pi-ellipsis-v"
+		rounded
+		text
+		@click.stop="toggle"
+		:disabled="isEmpty(projectMenuItems)"
+	/>
 	<Menu ref="menu" :model="projectMenuItems" :popup="true" @focus="menuProject = project" />
 </template>
 
