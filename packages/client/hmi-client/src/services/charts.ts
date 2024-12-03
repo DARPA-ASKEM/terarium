@@ -51,6 +51,7 @@ export interface ForecastChartLayer {
 export interface HistogramChartOptions extends BaseChartOptions {
 	maxBins?: number;
 	variables: { field: string; label?: string; width: number; color: string }[];
+	legendProperties?: Record<string, any>;
 }
 
 export interface ErrorChartOptions extends Omit<BaseChartOptions, 'height' | 'yAxisTitle' | 'legend'> {
@@ -291,7 +292,8 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 		symbolStrokeWidth: 4,
 		symbolSize: 200,
 		labelFontSize: 12,
-		labelOffset: 4
+		labelOffset: 4,
+		...options.legendProperties
 	};
 
 	const spec: VisualizationSpec = {

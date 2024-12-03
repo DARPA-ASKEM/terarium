@@ -11,8 +11,9 @@
 				@update:model-value="scenario.setModelSpec($event)"
 			/>
 
-			<label>Select configuration representing best and generous estimates of the initial conditions</label>
+			<label>Select configuration representing best starting point pre-interventions</label>
 			<Dropdown
+				class="mb-4"
 				:model-value="scenario.modelConfigSpec.id"
 				placeholder="Select a configuration"
 				:options="modelConfigurations"
@@ -22,7 +23,42 @@
 				:disabled="isEmpty(modelConfigurations) || isFetchingModelInformation"
 				:loading="isFetchingModelInformation"
 			/>
+
+			<template v-for="(intervention, i) in scenario.interventionSpecs" :key="intervention">
+				<label>Select intervention policy {{ i + 1 }}</label>
+				<div class="flex">
+					<Dropdown
+						class="flex-1"
+						:model-value="intervention.id"
+						placeholder="Select an intervention policy"
+						:options="interventionPolicies"
+						option-label="name"
+						option-value="id"
+						@update:model-value="scenario.setInterventionSpecs($event, i)"
+						:disabled="isEmpty(interventionPolicies) || isFetchingModelInformation"
+						:loading="isFetchingModelInformation"
+					/>
+					<Button
+						v-if="scenario.interventionSpecs.length > 1"
+						text
+						icon="pi pi-trash"
+						size="small"
+						@click="scenario.removeInterventionSpec(i)"
+					/>
+				</div>
+			</template>
+			<div>
+				<Button
+					class="my-2"
+					text
+					icon="pi pi-plus"
+					label="Add a new intervention"
+					size="small"
+					@click="scenario.addInterventionSpec()"
+				/>
+			</div>
 		</template>
+
 		<template #outputs>
 			<label>Select an output metric</label>
 			<MultiSelect
@@ -32,43 +68,46 @@
 				option-label="name"
 				option-value="id"
 				:options="modelStateOptions"
-				@update:model-value="scenario.setCalibrateSpec($event)"
+				@update:model-value="scenario.setSimulateSpec($event)"
 				:loading="isFetchingModelInformation"
 				filter
 			/>
-			<!-- <img :src="simulate" alt="Simulate chart" /> -->
 		</template>
 	</tera-scenario-template>
 </template>
 
 <script setup lang="ts">
-import { SensitivityAnalysisScenario } from '@/components/workflow/scenario-templates/sensitivity-analysis/sensitivity-analysis-scenario';
-import { useProjects } from '@/composables/project';
-import { getModel, getModelConfigurationsForModel } from '@/services/model';
-import { AssetType, ModelConfiguration } from '@/types/Types';
-import { isEmpty } from 'lodash';
 import { computed, ref, watch } from 'vue';
+import { AssetType, InterventionPolicy, ModelConfiguration } from '@/types/Types';
+import { useProjects } from '@/composables/project';
+import { getInterventionPoliciesForModel, getModel, getModelConfigurationsForModel } from '@/services/model';
+import { isEmpty } from 'lodash';
 import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
-import TeraScenarioTemplate from '../tera-scenario-template.vue';
+import Button from 'primevue/button';
 import { ScenarioHeader } from '../base-scenario';
+import { DecisionMakingScenario } from './decision-making-scenario';
+import TeraScenarioTemplate from '../tera-scenario-template.vue';
 
 const header: ScenarioHeader = Object.freeze({
-	title: 'Sensitivity analysis template',
-	question: 'Which parameters introduces the most uncertainty in the outcomes of interest?',
+	title: 'Decision Making Template',
+	question: 'What is the impact of different interventions?',
 	description:
-		'Configure the model with parameter distributions that reflect all the sources of uncertainty, then simulate into the near future.',
-	examples: ['Unknown severity of new variant.', 'Unknown speed of waning immunity.']
+		'Runs a simulation for the baseline (no intervention) and each intervention policy and then shows the relative impact of each intervention policy relative to the baseline.',
+	examples: [
+		'What is the impact of several combinations of vaccination and NPI levels?',
+		'Which is better: implement an intervention in all locations, select locations, or not at all?'
+	]
 });
-
 const isFetchingModelInformation = ref(false);
 const models = computed(() => useProjects().getActiveProjectAssets(AssetType.Model));
 
 const modelConfigurations = ref<ModelConfiguration[]>([]);
+const interventionPolicies = ref<InterventionPolicy[]>([]);
 const modelStateOptions = ref<any[]>([]);
 
 const props = defineProps<{
-	scenario: SensitivityAnalysisScenario;
+	scenario: DecisionMakingScenario;
 }>();
 
 watch(
@@ -78,7 +117,13 @@ watch(
 		isFetchingModelInformation.value = true;
 		const model = await getModel(modelId);
 		if (!model) return;
-		modelConfigurations.value = await getModelConfigurationsForModel(modelId);
+
+		await Promise.all([getModelConfigurationsForModel(modelId), getInterventionPoliciesForModel(modelId)]).then(
+			([mc, ip]) => {
+				modelConfigurations.value = mc;
+				interventionPolicies.value = ip;
+			}
+		);
 
 		// Set the first model configuration as the default
 		if (!isEmpty(modelConfigurations.value)) {

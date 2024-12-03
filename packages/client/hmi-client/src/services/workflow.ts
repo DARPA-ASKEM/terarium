@@ -1045,3 +1045,13 @@ export function setLocalStorageTransform(id: string, canvasTransform: { x: numbe
 	workflowTransformations.workflows[id] = canvasTransform;
 	localStorage.setItem('terariumWorkflowTransforms', JSON.stringify(workflowTransformations));
 }
+
+export function appendInputPort(node: WorkflowNode<any>, port: { type: string; label?: string }) {
+	node.inputs.push({
+		id: uuidv4(),
+		type: port.type,
+		label: port.label,
+		isOptional: false,
+		status: WorkflowPortStatus.NOT_CONNECTED
+	});
+}

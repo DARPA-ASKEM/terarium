@@ -3,7 +3,7 @@
 Please go through __every__ step of the test scenario.\
 Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/terarium/issues/new?assignees=&labels=bug%2C+Q%26A&template=qa-issue.md&title=%5BBUG%5D%3A+).
 
-This manual test requires at least two testers.
+This manual test requires at least two testers or one tester with two tabs or accounts.
 
 ### 1. Begin test
 
@@ -40,39 +40,36 @@ This manual test requires at least two testers.
 
 Have each tester complete the following steps at more or less the same time.
 
-
 1. Click on `+ New` in **Workflowss** to a create a workflow with a _Blank Canvas_ template and some unique name
 2. Create a simple workflow graph
-    a. Drag and drop the paper document onto the workflow canvas
-    b. Connect it to a `Create model from equations` operator
-    c. Select the **Page 3** equations and Click `Run`
-    d. Click `Save for re-use` to save the output model with some unique name
-    e. Connect the output port to a `Configure model` operator
-    f. Type in these values for the different quantities
+    1. Drag and drop the paper document onto the workflow canvas
+    2. Connect it to a `Create model from equations` operator
+    3. Select the **Page 3** equations and Click `Run`
+    4. Click `Save for re-use` to save the output model with some unique name
+    5. Connect the output port to a `Configure model` operator
+    6. Type in these values for the different quantities
         | `s_{e}` | 0.999 |
         | --- | --- |
         | `i_e{}` | 0.001 |
-        | --- | --- |
         | `β_{e}` | 1.049 |
-        | --- | --- |
         | `γ` | 0.855 |
-    g. Click `Save as` to save this as a new configuration with some unique name
-    h. Connect the output to a `Simulate model` operator
-    i. Select `Fast` in the _Preset_ dropdown (with _Number of samples_ `1`) and click `Run`
-    j. Open the **Output Settings** side panel on the right
-    k. Select `s_{e}` and click `+ Add comparison chart`
-    l. Click `Save for re-use` to save the simulation result as a dataset with some unique name
+    8. Click `Save as` to save this as a new configuration with some unique name
+    9. Connect the output to a `Simulate model` operator
+    10. Select `Fast` in the _Preset_ dropdown (with _Number of samples_ `1`) and click `Run`
+    11. Open the **Output Settings** side panel on the right
+    12. Select `s_{e}` and click `+ Add comparison chart`
+    13. Click `Save for re-use` to save the simulation result as a dataset with some unique name
 3. Return to the workflow canvas and refresh the webpage
-    a. Ensure that the other tester's assets appear in the **Resources** panel (their workflow, model, and dataset)
-    b. Visit the page of their model and dataset
-    c. Ensure that the model diagram and tables load as expected
+    1. Ensure that the other tester's assets appear in the **Resources** panel (their workflow, model, and dataset)
+    2. Visit the page of their model and dataset
+    3. Ensure that the model diagram and tables load as expected
 4. Visit the other tester's workflow and make some edits
-    a. Move all the operators around in the canvas
-    b. Drag your previously saved model from Step 3.2.d onto this canvas
-    b. Connect its output port to a new `Configure model` operator
-    c. Select your previously saved configuration from Step 3.2.g
-    d. Repeat Steps 3.2.h-l
-    e. Remove the other tester's `Configure model` and `Simulatemo model` operators using `...`
+    1. Move all the operators around in the canvas
+    2. Drag your previously saved model from Step 3.2.4 onto this canvas
+    3. Connect its output port to a new `Configure model` operator
+    4. Select your previously saved configuration from Step 3.2.8
+    5. Repeat Steps 3.2.9-13
+    6. Remove the other tester's `Configure model` and `Simulatemo model` operators using `...`
 5. Refresh the webpage
 6. Ensure that there is no _weirdness_ such as removed operators reappearing, operators becoming "yellow", operator ports becoming blank even though there is a connected link, links going nowhere
 7. Ensure that the operators have not lost their state by opening them

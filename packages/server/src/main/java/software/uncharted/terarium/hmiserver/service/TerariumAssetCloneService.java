@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.service;
 
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -236,6 +237,8 @@ public class TerariumAssetCloneService {
 		// set the current user id
 		projectExport.getProject().setUserId(userId);
 		projectExport.getProject().setUserName(userName);
+		projectExport.getProject().setCreatedOn(new Timestamp(System.currentTimeMillis()));
+		projectExport.getProject().setUpdatedOn(new Timestamp(System.currentTimeMillis()));
 
 		// create the project
 		final Project project = projectService.createProject(projectExport.getProject());
