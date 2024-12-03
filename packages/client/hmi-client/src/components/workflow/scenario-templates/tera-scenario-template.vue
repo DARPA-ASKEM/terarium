@@ -21,6 +21,7 @@
 		:model-value="scenarioInstance.workflowName"
 		@update:model-value="scenarioInstance.setWorkflowName($event)"
 		auto-focus
+		@keydown.enter.stop.prevent="emit('save-workflow')"
 	/>
 
 	<section class="grid" v-if="slots.inputs || slots.outputs">
@@ -48,6 +49,8 @@ defineProps<{
 	header: ScenarioHeader;
 	scenarioInstance: BaseScenario;
 }>();
+
+const emit = defineEmits(['save-workflow']);
 </script>
 
 <style scoped>
@@ -63,8 +66,8 @@ ul {
 	}
 }
 
-h4 {
-	color: var(--text-color-subdued);
+h5 {
+	color: var(--primary-color);
 }
 
 :deep(article) {

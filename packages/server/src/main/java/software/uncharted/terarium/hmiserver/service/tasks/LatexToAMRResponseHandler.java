@@ -9,9 +9,9 @@ import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class LatexToSymPyResponseHandler extends TaskResponseHandler {
+public class LatexToAMRResponseHandler extends TaskResponseHandler {
 
-	public static final String NAME = "mira_task:latex_to_sympy";
+	public static final String NAME = "mira_task:latex_to_amr";
 
 	@Override
 	public String getName() {
