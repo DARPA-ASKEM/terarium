@@ -284,7 +284,7 @@ public class KnowledgeController {
 				final JsonNode testNode = mapper.readValue(amrString, JsonNode.class);
 				responseAMR = mapper.convertValue(testNode, Model.class);
 			} catch (Exception e) {
-				e.printStackTrace();
+				log.error("failed to convert latex equations to AMR", e);
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "failed to convert latex equations to AMR");
 			}
 		} else {
