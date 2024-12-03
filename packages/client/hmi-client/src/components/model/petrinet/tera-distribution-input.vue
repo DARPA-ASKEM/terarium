@@ -23,33 +23,7 @@
 				</template>
 			</Dropdown>
 			<section class="popup" :style="{ top: `${popupPosition.top}px`, left: `${popupPosition.left}px` }">
-				<Card v-if="hoveredOption" ref="cardRef" class="inside p-2">
-					<template #title>
-						{{ hoveredOption?.name }}
-						<a
-							v-if="distributions[hoveredOption.value].url"
-							v-tooltip="hoveredOption.name + ' pytorch.org docs'"
-							:href="distributions[hoveredOption.value].url"
-							:aria-label="hoveredOption.name + ' docs'"
-							rel="noopener noreferrer"
-							target="_blank"
-						>
-							<span class="pi pi-external-link"></span>
-						</a>
-					</template>
-					<template #content>
-						{{ distributions[hoveredOption?.value].description }}
-						<h5 class="pt-3 pb-2">Required parameters:</h5>
-						<ul class="ml-5">
-							<li class="pb-2" v-for="param in distributions[hoveredOption.value].parameters" :key="param">
-								<h6>{{ param.label }}</h6>
-								<p class="parameter-description">
-									{{ param.description }}
-								</p>
-							</li>
-						</ul>
-					</template>
-				</Card>
+				<TeraDistributionInput ref="cardRef" class="p-2" :distribution-type="hoveredOption?.value ?? null" />
 			</section>
 		</section>
 		<template v-for="option in options" :key="option.name">
@@ -70,7 +44,7 @@ import { Model, ModelConfiguration, ModelDistribution } from '@/types/Types';
 import Dropdown from 'primevue/dropdown';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { DistributionType, distributionTypeOptions, distributions } from '@/services/distribution';
-import Card from 'primevue/card';
+import TeraDistributionInput from './tera-distribution-tooltips.vue';
 
 const props = defineProps<{
 	model: Model;
@@ -94,8 +68,6 @@ function hidePopup() {
 	hoveredOption.value = null;
 }
 
-const cardElement = computed(() => cardRef.value.$el.getBoundingClientRect());
-
 async function showPopup(item: HTMLElement | null, index: number) {
 	hidePopup();
 	if (!item) return;
@@ -105,7 +77,9 @@ async function showPopup(item: HTMLElement | null, index: number) {
 	await nextTick();
 	const rect = item.getBoundingClientRect();
 	const viewport = window.innerHeight;
-	const cardBottom = cardElement.value.height + rect.bottom;
+
+	const element = cardRef.value.tooltipRef.getBoundingClientRect();
+	const cardBottom = element.height + rect.bottom;
 
 	let top = rect.y / rect.top + window.scrollY - 35;
 	if (cardBottom > viewport) {
@@ -166,18 +140,7 @@ onMounted(async () => {
 <style scoped>
 .popup {
 	position: relative;
-	box-shadow: 0 var(--gap-0-5) var(--gap-1) rgba(0, 0, 0, 0.2);
+	border: 0;
 	z-index: 3;
-}
-.inside {
-	position: absolute;
-	border: 1px solid #ccc;
-	min-height: 100px;
-	min-width: 300px;
-}
-
-.parameter-description {
-	color: var(--text-color-subdued);
-	font-style: italic;
 }
 </style>

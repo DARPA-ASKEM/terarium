@@ -67,12 +67,10 @@ export enum DistributionType {
 // [DistributionType.Weibull1]: ['scale', 'shape'],
 // [DistributionType.Weibull2]: ['scale', 'shape']
 
-const externaDoclLink = 'https://pytorch.org/docs/stable/distributions.html';
+export const externaDoclLink = 'https://pytorch.org/docs/stable/distributions.html';
 
 export interface ProbOntoDistribution {
-	description: string;
 	label: string;
-	url: string | null;
 	parameters: {
 		label: string;
 		name: string;
@@ -82,9 +80,7 @@ export interface ProbOntoDistribution {
 
 export const distributions: { [key in DistributionType]: ProbOntoDistribution } = {
 	[DistributionType.Constant]: {
-		description: 'Constants description',
 		label: 'Constant',
-		url: null,
 		parameters: [
 			{
 				label: 'Value',
@@ -94,9 +90,7 @@ export const distributions: { [key in DistributionType]: ProbOntoDistribution } 
 		]
 	},
 	[DistributionType.Uniform]: {
-		description: 'Generates uniformly distributed random samples from the half-open interval.',
 		label: 'Uniform',
-		url: `${externaDoclLink}#uniform`,
 		parameters: [
 			{
 				label: 'Min',
