@@ -120,7 +120,8 @@ public class SimulationRequestStatusNotifier {
 			this.projectId,
 			new SimulationNotificationData(this.simulationId, sim.getType(), sim.getEngine(), this.metadata),
 			this.halfTimeSeconds,
-			sim.getId()
+			sim.getId(),
+			null
 		);
 		log.info("Starting polling for simulation {} every {} seconds", this.simulationId, this.interval);
 		this.sendStatusMessage(notificationInterface, sim);
