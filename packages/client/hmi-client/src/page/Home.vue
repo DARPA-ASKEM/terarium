@@ -221,13 +221,11 @@ const searchedAndFilterProjects = computed(() => {
 		tabProjects = tabProjects.filter(({ sampleProject }) => sampleProject === true);
 	}
 
-	// If they are no search we can return the filtered and sorted projects
+	// If there are no search we can return the filtered and sorted projects
 	if (isEmpty(searchProjectsResults.value)) {
 		return filterAndSortProjects(tabProjects);
 	}
 
-	// If there is a search query, we need to filter the projects based on the search results
-	// while keeping the order of the search results to the order of the projects
 	return searchProjectsResults.value
 		.map((result) => {
 			const project = tabProjects.find(({ id }) => id === result.projectId) as ProjectWithKnnData;

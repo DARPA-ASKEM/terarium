@@ -25,13 +25,12 @@
 						<tera-project-menu class="project-options" :project="data" />
 					</span>
 					<ul>
-						<li
-							v-for="asset in data.projectAssets.slice(0, data.showMore ? data.projectAssets.length : 3)"
-							class="flex align-center gap-2"
-							:key="asset.id"
-						>
-							<tera-asset-icon :asset-type="asset.assetType" />
-							<span v-html="highlight(asset.assetName, searchQuery)" />
+						<li v-for="hit in data.hits" class="flex align-center gap-2" :key="hit.id">
+							<tera-asset-icon :asset-type="hit.assetType" />
+							{{ hit }}
+							<!-- <span v-html="highlight(asset.name, searchQuery)" />
+							{{ asset.name }}
+							{{ asset.description }} -->
 						</li>
 					</ul>
 					<Button
@@ -91,18 +90,23 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import { formatDdMmmYyyy } from '@/utils/date';
-import { AssetType, type Project } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import type { ProjectWithKnnData } from '@/types/Project';
 import type { PageState } from 'primevue/paginator';
-import * as ProjectService from '@/services/project';
-import { highlight } from '@/utils/text';
+// import { highlight } from '@/utils/text';
 import Button from 'primevue/button';
 import { v4 as uuidv4 } from 'uuid';
 import TeraAssetIcon from '@/components/widgets/tera-asset-icon.vue';
 import TeraProjectMenu from './tera-project-menu.vue';
+// Gets (I think these are the asset types that we want/would typically show up)
+// import { getModel } from '@/services/model';
+// import { getDataset } from '@/services/dataset';
+// import { getDocumentAsset } from '@/services/document-assets';
+// import { getWorkflow } from '@/services/workflow';
+// import { getModelConfigurationById } from '@/services/model-configurations';
 
 const props = defineProps<{
-	projects: Project[];
+	projects: ProjectWithKnnData[];
 	selectedColumns: { field: string; header: string }[];
 	searchQuery: string;
 }>();
@@ -144,31 +148,35 @@ async function getProjectAssets(event: PageState = pageState) {
 	const searchQuery = props.searchQuery.toLowerCase().trim();
 
 	// Just fetch the asset data we are seeing in the current page
-	projectsWithKnnMatches.value.slice(first, first + rows).forEach(async (project) => {
+	projectsWithKnnMatches.value.slice(first, first + rows).map(async (project) => {
 		// If assets were fetched before from when we were on that page don't redo it
 		if (!isEmpty(project.projectAssets) && prevSearchQuery === searchQuery) return;
 
-		const projectWithAssets = (await ProjectService.get(project.id)) as ProjectWithKnnData | null;
-		if (!projectWithAssets) return;
+		// const hit = project?.hits?.[0];
 
-		// console.log(projectWithAssets);
+		// if (hit) {
+		// 	let relevantAsset: any = null;
+		// 	if (hit.assetType === AssetType.Model) {
+		// 		relevantAsset = await getModel(hit.assetId);
+		// 	} else if (hit.assetType === AssetType.Dataset) {
+		// 		relevantAsset = await getDataset(hit.assetId);
+		// 	} else if (hit.assetType === AssetType.Document) {
+		// 		relevantAsset = await getDocumentAsset(hit.assetId);
+		// 	} else if (hit.assetType === AssetType.Workflow) {
+		// 		relevantAsset = await getWorkflow(hit.assetId);
+		// 	} else if (hit.assetType === AssetType.ModelConfiguration) {
+		// 		relevantAsset = await getModelConfigurationById(hit.assetId);
+		// 	}
+		// 	project.projectAssets.push(relevantAsset);
+		// }
 
-		project.projectAssets = projectWithAssets.projectAssets.filter(
-			({ assetName, assetType }) =>
-				assetName.toLowerCase().includes(searchQuery) &&
-				// These assets dont have names
-				assetType !== AssetType.Simulation &&
-				assetType !== AssetType.NotebookSession
-		);
 		project.showMore = false;
-		project.snippet = project.description?.toLowerCase().includes(searchQuery)
-			? highlight(project.description, searchQuery)
-			: undefined;
+		// project.snippet = project.description?.toLowerCase().includes(searchQuery)
+		// 	? highlight(project.description, searchQuery)
+		// 	: undefined;
 	});
-
-	console.log(projectsWithKnnMatches.value);
-
 	prevSearchQuery = searchQuery;
+	console.log(projectsWithKnnMatches.value);
 }
 
 watch(
@@ -176,7 +184,7 @@ watch(
 	() => {
 		projectTableKey.value = uuidv4();
 		projectsWithKnnMatches.value = cloneDeep(props.projects);
-		// getProjectAssets();
+		getProjectAssets();
 	},
 	{ immediate: true }
 );
