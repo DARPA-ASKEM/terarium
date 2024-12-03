@@ -44,8 +44,8 @@ We want to stratified the model by several age groups to simulate how contact ra
    2. An expanded view of the `18 x 18` matrix of `c` is shown
    3. Select `subjectControllers` in the top-left dropdown
    4. Every entry of the matrix should have a value of type `c_*_*`
-11. Click on the **...** in the top-right corner to save this stratified model as `test 1`
-   1. Confirm that `test 1` does appear in the **Models** section of the **Resources** panel on the left of the interface
+11. Click on the **Save for reuse** button in the top-right corner to save this stratified model into your project
+   1. Confirm that it appears in the **Models** section of the **Resources** panel on the left of the interface
 12. Click **X** in the top-right corner to exit
 13. Right-click on the canvas to add a `Configure model` operator under **Config & Intervention**
 14. Connect the output port of the `Stratify model` operator to the **Model** input port of the `Configure model` operator

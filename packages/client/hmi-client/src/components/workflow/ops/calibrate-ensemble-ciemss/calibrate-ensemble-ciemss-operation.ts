@@ -40,8 +40,15 @@ export interface CalibrateEnsembleWeights {
 	[key: string]: number;
 }
 
-export interface CalibrateEnsembleCiemssOperationState extends BaseState {
+export interface CalibrateEnsembleCiemssOperationOutputSettingsState {
+	showLossChart: boolean;
 	chartSettings: ChartSetting[] | null;
+	showModelWeightsCharts: boolean;
+}
+
+export interface CalibrateEnsembleCiemssOperationState
+	extends BaseState,
+		CalibrateEnsembleCiemssOperationOutputSettingsState {
 	ensembleMapping: CalibrateEnsembleMappingRow[];
 	configurationWeights: CalibrateEnsembleWeights;
 	timestampColName: string;
@@ -73,6 +80,8 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 	initState: () => {
 		const init: CalibrateEnsembleCiemssOperationState = {
 			chartSettings: null,
+			showLossChart: true,
+			showModelWeightsCharts: true,
 			ensembleMapping: [],
 			configurationWeights: {},
 			timestampColName: '',

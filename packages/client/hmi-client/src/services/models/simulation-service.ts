@@ -385,6 +385,8 @@ export async function getEnsembleResultModelConfigMap(runId: string) {
 	return resultMap;
 }
 
+// ========== Ensemble pyciemss map operations ==========
+
 /**
  * Build pyCiemss map for the ensemble simulation results.
  *
@@ -452,5 +454,34 @@ export function extractModelConfigIds(ensemblePyciemssMap: Record<string, string
 			result[modelIndex] = key.split('/')[0];
 		}
 	});
+	return result;
+}
+
+/**
+ * Extracts model configuration IDs from a given ensemble pyciemss map and returns them in order of the model index.
+ * This function is similar to `extractModelConfigIds` but returns an array of configuration IDs instead of an object.
+ *
+ * @param ensemblePyciemssMap - A record where the key is a string representing the ensemble and the value is a string representing the Pyciemss variable name.
+ * @returns An array of configuration IDs ordered by the model index.
+ *
+ * @example
+ * ```typescript
+ * const ensemblePyciemssMap = {
+ *   "config_id_1/varA_display_name": "model_0/varA",
+ *   "config_id_2/varB_display_name": "model_1/varB",
+ * };
+ * const result = extractModelConfigIds(ensemblePyciemssMap);
+ * console.log(result); // ["config_id_1", "config_id_2"] instead of { model_0: "config_id_1", model_1: "config_id_2" }
+ * ```
+ */
+export function extractModelConfigIdsInOrder(ensemblePyciemssMap: Record<string, string>): string[] {
+	const result: string[] = [];
+	const modelNumConfigIdMap = extractModelConfigIds(ensemblePyciemssMap);
+	Object.keys(modelNumConfigIdMap)
+		// Sort by model index #, e.g. model_0, model_1, model_2
+		.sort((a, b) => Number(a.split('_')[1]) - Number(b.split('_')[1]))
+		.forEach((key) => {
+			result.push(modelNumConfigIdMap[key]);
+		});
 	return result;
 }
