@@ -5,8 +5,8 @@ export interface CompareDatasetsState extends BaseState {}
 
 export const CompareDatasetsOperation: Operation = {
 	name: WorkflowOperationTypes.COMPARE_DATASETS,
-	displayName: 'Compare simulations',
-	description: 'Compare simulations, or simulation results',
+	displayName: 'Compare datasets',
+	description: 'Compare datasets, or simulation results',
 	documentationUrl: '',
 	inputs: [
 		{ type: 'datasetId', label: 'Dataset or Simulation result' },
