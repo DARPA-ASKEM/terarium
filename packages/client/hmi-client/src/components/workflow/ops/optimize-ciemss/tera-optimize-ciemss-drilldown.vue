@@ -922,11 +922,7 @@ const setOutputValues = async () => {
 
 	const preResult = await getRunResultCSV(preForecastRunId, 'result.csv', renameFnGenerator('pre'));
 	const postResult = await getRunResultCSV(postForecastRunId, 'result.csv');
-	riskResults.value[knobs.value.postForecastRunId] = await setQoIData(
-		postResult,
-		props.node.state.constraintGroups[0].targetVariable,
-		props.node.state.constraintGroups[0].qoiMethod
-	);
+	riskResults.value[knobs.value.postForecastRunId] = setQoIData(postResult, props.node.state.constraintGroups[0]);
 
 	// FIXME: only show the post optimize data for now...
 	simulationRawContent.value[knobs.value.postForecastRunId] = convertToCsvAsset(
@@ -970,7 +966,6 @@ const preparedSuccessCriteriaCharts = computed(() => {
 		.map((constraint) =>
 			createSuccessCriteriaChart(
 				riskResults.value[postForecastRunId],
-				constraint.targetVariable,
 				constraint.threshold,
 				constraint.isMinimized,
 				constraint.riskTolerance,

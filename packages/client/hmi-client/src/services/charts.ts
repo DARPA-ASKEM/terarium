@@ -677,17 +677,16 @@ export function createForecastChartAnnotation(axis: 'x' | 'y', datum: number, la
 
 export function createSuccessCriteriaChart(
 	riskResults: any,
-	targetVariable: string,
 	threshold: number,
 	isMinimized: boolean,
 	alpha: number,
 	options: BaseChartOptions
 ): any {
+	console.log(riskResults);
 	// FIXME: risk results can be null/undefined sometimes
-	const data = riskResults?.[targetVariable]?.qoi || [];
-	// console.log(riskResults)
+	const data = riskResults.data;
 	// console.log(data);
-	const risk = riskResults?.[targetVariable]?.risk?.[0] || 0;
+	const risk = riskResults.risk;
 	const binCount = Math.floor(Math.sqrt(data.length)) ?? 1;
 	const alphaPercentile = percentile(data, alpha);
 
