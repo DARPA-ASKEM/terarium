@@ -175,6 +175,16 @@
 								</template>
 							</AccordionTab>
 						</Accordion>
+
+						<!-- Test sensitivity -->
+						<h5>Sensitivity</h5>
+						<vega-chart
+							v-if="testSensitivity"
+							expandable
+							:are-embed-actions-visible="true"
+							:visualization-spec="testSensitivity"
+						/>
+
 						<!-- Spacer at bottom of page -->
 						<div style="height: 2rem"></div>
 					</div>
@@ -502,7 +512,8 @@ const {
 	getChartAnnotationsByChartId,
 	useInterventionCharts,
 	useVariableCharts,
-	useComparisonCharts
+	useComparisonCharts,
+	useSimulateSensitivityCharts
 } = useCharts(
 	props.node.id,
 	model,
@@ -515,6 +526,7 @@ const {
 const interventionCharts = useInterventionCharts(selectedInterventionSettings, true);
 const variableCharts = useVariableCharts(selectedVariableSettings, null);
 const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
+const testSensitivity = useSimulateSensitivityCharts(50);
 
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);

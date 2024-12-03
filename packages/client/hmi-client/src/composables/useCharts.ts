@@ -10,6 +10,7 @@ import {
 	createForecastChart,
 	createHistogramChart,
 	createInterventionChartMarkers,
+	createSimulateSensitivityScatter,
 	ForecastChartOptions
 } from '@/services/charts';
 import { flattenInterventionData } from '@/services/intervention-policy';
@@ -585,6 +586,28 @@ export function useCharts(
 		return weightsCharts;
 	};
 
+	const useSimulateSensitivityCharts = (timestep: number) => {
+		const sensitivity = computed(() => {
+			const sliceData = chartData.value?.result.filter((d: any) => d.timepoint_id === timestep) as any[];
+			const spec = createSimulateSensitivityScatter(
+				{
+					data: sliceData,
+					inputVariables: ['persistent_beta_param', 'persistent_gamma_param'],
+					outputVariable: 'S_state'
+				},
+				{
+					width: 200,
+					height: 200,
+					xAxisTitle: '',
+					yAxisTitle: '',
+					translationMap: chartData.value?.translationMap || {}
+				}
+			);
+			return spec;
+		});
+		return sensitivity;
+	};
+
 	return {
 		generateAnnotation,
 		getChartAnnotationsByChartId,
@@ -594,6 +617,7 @@ export function useCharts(
 		useEnsembleVariableCharts,
 		useErrorChart,
 		useParameterDistributionCharts,
-		useWeightsDistributionCharts
+		useWeightsDistributionCharts,
+		useSimulateSensitivityCharts
 	};
 }
