@@ -17,6 +17,7 @@ export interface EquationsToAMRRequest {
 	framework?: string;
 	modelId?: Model['id'];
 	documentId?: DocumentAsset['id'];
+	extractionService?: string;
 }
 
 /**
@@ -45,13 +46,14 @@ export const getCleanedEquations = async (
  * @return {Promise<any>}
  */
 export const equationsToAMR = async (request: EquationsToAMRRequest): Promise<string | null> => {
-	const { equations, framework: model = 'petrinet', modelId, documentId } = request;
+	const { equations, framework: model = 'petrinet', modelId, documentId, extractionService } = request;
 	try {
 		const response: AxiosResponse<string> = await API.post(`/knowledge/equations-to-model`, {
 			model,
 			modelId,
 			documentId,
-			equations
+			equations,
+			extractionService
 		});
 		return response.data;
 	} catch (error: unknown) {

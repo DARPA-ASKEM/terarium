@@ -220,10 +220,9 @@ public class KnowledgeController {
 			extractionService = req.get("extractionService").asText();
 		}
 
-		if (extractionService == "mira") {
+		if (extractionService.equals("mira")) {
 			final TaskRequest taskReq = new TaskRequest();
 			final String latex = req.get("equations").toString();
-
 			taskReq.setType(TaskType.MIRA);
 			try {
 				taskReq.setInput(latex.getBytes());
