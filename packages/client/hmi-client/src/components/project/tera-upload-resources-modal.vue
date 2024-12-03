@@ -83,6 +83,7 @@ import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { uploadArtifactToProject } from '@/services/artifact';
 import { createModel, createModelAndModelConfig, processAndAddModelToProject, validateAMRFile } from '@/services/model';
 import { createProvenance, RelationshipType } from '@/services/provenance';
+import { isTextFile } from '@/utils/file';
 
 defineProps<{
 	visible: boolean;
@@ -216,9 +217,7 @@ async function upload() {
 		const createdAssets = await Promise.all(createAssetsPromises);
 		createdAssets.forEach((_, index) => {
 			const { name, id } = (results.value ?? [])[index];
-			if (name && name.toLowerCase().endsWith('.pdf')) {
-				extractPDF(id);
-			}
+			if (name && isTextFile(name)) extractPDF(id);
 		});
 		emit('close');
 		const resourceMsg = createdAssets.length > 1 ? 'resources were' : 'resource was';
