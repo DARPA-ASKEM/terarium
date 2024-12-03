@@ -3,7 +3,7 @@ import { computed, Ref } from 'vue';
 import { WorkflowNode } from '@/types/workflow';
 import { DataArray, parsePyCiemssMap } from '@/services/models/simulation-service';
 import { mergeResults } from '../calibrate-ciemss/calibrate-utils';
-import { OptimizeCiemssOperationState } from './optimize-ciemss-operation';
+import { ContextMethods, OptimizeCiemssOperationState } from './optimize-ciemss-operation';
 
 export function usePreparedChartInputs(
 	props: {
@@ -40,4 +40,28 @@ export function usePreparedChartInputs(
 			pyciemssMap
 		};
 	});
+}
+
+export function setQoIData(resultData: DataArray, targetVariable: string, contextMethod: ContextMethods) {
+	console.log('Setting qoi data');
+	let data;
+	if (contextMethod === ContextMethods.day_average) {
+		// last timepoints
+		console.log('last timepoint:');
+		// Filter for all values with timepoint = last timepoint
+		const time = resultData.timepoint_id[-1];
+		console.log(time);
+		data = resultData.filter((ele) => ele.timepoint_id === time)[targetVariable];
+	} else if (contextMethod === ContextMethods.max) {
+		// all timepoints
+		console.log('All timepoints:');
+		// result_postoptimize['data'].groupby(['sample_id']).max()['I_state']
+		// console.log(Object.entries(groupBy(resultData, 'sample_id')));
+		// data = Object.entries(groupBy(resultData, 'sample_id')).map((list) => list[1]);
+	} else {
+		// should not be hit unless we add more available ContextMethods that we have yet to handle.
+		console.error(`The following context method is not handled: ${contextMethod}`);
+	}
+	console.log(data);
+	return data;
 }

@@ -25,6 +25,7 @@
 								severity="secondary"
 								:disabled="_.isEmpty(node.outputs[0].value)"
 							/>
+							<Button label="Tom Test" @click="setOutputValues()" />
 							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 							<div v-tooltip="runButtonMessage">
 								<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runOptimize" />
@@ -491,7 +492,7 @@ import {
 	OptimizeCiemssOperationState,
 	OptimizationInterventionObjective
 } from './optimize-ciemss-operation';
-import { usePreparedChartInputs } from './optimize-utils';
+import { setQoIData, usePreparedChartInputs } from './optimize-utils';
 
 const confirm = useConfirm();
 
@@ -919,10 +920,13 @@ const setOutputValues = async () => {
 	const preForecastRunId = knobs.value.preForecastRunId;
 	const postForecastRunId = knobs.value.postForecastRunId;
 
-	riskResults.value[knobs.value.postForecastRunId] = await getRunResult(knobs.value.postForecastRunId, 'risk.json');
-
 	const preResult = await getRunResultCSV(preForecastRunId, 'result.csv', renameFnGenerator('pre'));
 	const postResult = await getRunResultCSV(postForecastRunId, 'result.csv');
+	riskResults.value[knobs.value.postForecastRunId] = await setQoIData(
+		postResult,
+		props.node.state.constraintGroups[0].targetVariable,
+		props.node.state.constraintGroups[0].qoiMethod
+	);
 
 	// FIXME: only show the post optimize data for now...
 	simulationRawContent.value[knobs.value.postForecastRunId] = convertToCsvAsset(

@@ -685,6 +685,8 @@ export function createSuccessCriteriaChart(
 ): any {
 	// FIXME: risk results can be null/undefined sometimes
 	const data = riskResults?.[targetVariable]?.qoi || [];
+	// console.log(riskResults)
+	// console.log(data);
 	const risk = riskResults?.[targetVariable]?.risk?.[0] || 0;
 	const binCount = Math.floor(Math.sqrt(data.length)) ?? 1;
 	const alphaPercentile = percentile(data, alpha);
