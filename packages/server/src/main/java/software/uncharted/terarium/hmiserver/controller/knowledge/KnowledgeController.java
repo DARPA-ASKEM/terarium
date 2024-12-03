@@ -76,6 +76,7 @@ import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 import software.uncharted.terarium.hmiserver.service.tasks.EquationsCleanupResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.LatexToAMRResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
@@ -213,25 +214,52 @@ public class KnowledgeController {
 			}
 		}
 
-		// Get an AMR from Skema Unified Service
-		try {
-			responseAMR = skemaUnifiedProxy.consolidatedEquationsToAMR(req).getBody();
-			if (responseAMR == null) {
-				log.warn("Skema Unified Service did not return a valid AMR based on the provided equations");
-				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("skema.bad-equations"));
+		// Get an AMR from Skema Unified Service or MIRA
+		String extractionService = "mira";
+		if (req.get("extractionService") != null) {
+			extractionService = req.get("extractionService").asText();
+		}
+
+		if (extractionService == "mira") {
+			final TaskRequest taskReq = new TaskRequest();
+			final String latex = req.get("equations").toString();
+
+			taskReq.setType(TaskType.MIRA);
+			try {
+				taskReq.setInput(latex.getBytes());
+				taskReq.setScript(LatexToAMRResponseHandler.NAME);
+				taskReq.setUserId(currentUserService.get().getId());
+				final TaskResponse taskResp = taskService.runTaskSync(taskReq);
+				final JsonNode taskResponseJSON = mapper.readValue(taskResp.getOutput(), JsonNode.class);
+				final String amrString = taskResponseJSON.get("response").asText();
+				ObjectNode objNode = (ObjectNode) mapper.readTree(amrString);
+
+				final JsonNode testNode = mapper.readValue(amrString, JsonNode.class);
+				responseAMR = mapper.convertValue(testNode, Model.class);
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "failed to convert latex equations to AMR");
 			}
-		} catch (final FeignException e) {
-			log.error(
-				"An exception occurred while Skema Unified Service was trying to produce an AMR based on the provided equations",
-				e
-			);
-			throw handleSkemaFeignException(e);
-		} catch (final Exception e) {
-			log.error(
-				"An unhandled error occurred while Skema Unified Service was trying to produce an AMR based on the provided equations",
-				e
-			);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("skema.internal-error"));
+		} else {
+			try {
+				responseAMR = skemaUnifiedProxy.consolidatedEquationsToAMR(req).getBody();
+				if (responseAMR == null) {
+					log.warn("Skema Unified Service did not return a valid AMR based on the provided equations");
+					throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("skema.bad-equations"));
+				}
+			} catch (final FeignException e) {
+				log.error(
+					"An exception occurred while Skema Unified Service was trying to produce an AMR based on the provided equations",
+					e
+				);
+				throw handleSkemaFeignException(e);
+			} catch (final Exception e) {
+				log.error(
+					"An unhandled error occurred while Skema Unified Service was trying to produce an AMR based on the provided equations",
+					e
+				);
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("skema.internal-error"));
+			}
 		}
 
 		if (!responseAMR.isPetrinet()) {
