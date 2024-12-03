@@ -5,83 +5,97 @@
     "card": {
       "type": "object",
       "properties": {
-        "description": {
+        "datasetDescription": {
           "type": "string",
-          "description": "Short description of the dataset (1-3 sentences)."
+          "description": "A brief summary of the dataset, including its intended use, supported tasks, an overview of how and why the dataset was created, etc."
         },
-        "author_name": {
-          "type": "string",
-          "description": "Name of publishing institution or author."
+        "datasetStructure": {
+          "type": "array",
+          "description": "List and describe the fields present in the dataset.",
+          "items": {
+            "type": "string",
+            "description": "A short paragraph describing and summarizing the dataset field. The paragraph should start with the name, then a colon, then a description of the field including units and datatypes."
+          }
         },
-        "author_email": {
+        "sourceData": {
           "type": "string",
-          "description": "Email address for the author of this dataset."
+          "description": "The source data (e.g. news text and headlines, social media posts, translated sentences, etc.), including the data collection process, and data producer."
         },
-        "date": {
-          "type": "string",
-          "description": "Date of publication of this dataset."
+        "considerationsForUsingTheData": {
+          "type": "object",
+          "properties": {
+            "personalAndSensitiveInformation": {
+              "type": "string",
+              "description": "Statement of whether the dataset contains other data that might be considered sensitive (e.g., data that reveals racial or ethnic origins, financial or health data, etc.)."
+            },
+            "discussionOfBiases": {
+              "type": "string",
+              "description": "Discussion of any biases present in the data (e.g., missing data, imbalanced classes, label noise, etc.)."
+            },
+            "otherKnownLimitations": {
+              "type": "string",
+              "description": "Any other limitations in the data."
+            }
+          },
+          "required": [
+            "personalAndSensitiveInformation",
+            "discussionOfBiases",
+            "otherKnownLimitations"
+          ],
+          "additionalProperties": false
         },
-        "provenance": {
-          "type": "string",
-          "description": "Short (1 sentence) description of how the data was collected."
-        },
-        "sensitivity": {
-          "type": "string",
-          "description": "Is there any human-identifying information in the dataset?"
-        },
-        "license": {
-          "type": "string",
-          "description": "License for this dataset."
+        "additionalInformation": {
+          "type": "object",
+          "properties": {
+            "datasetCurators": {
+              "type": "array",
+              "description": "The people involved in collecting the dataset and their affiliation(s).",
+              "items": {
+                "type": "string"
+              }
+            },
+            "licensingInformation": {
+              "type": "string",
+              "description": "The license and link to the license webpage if available."
+            },
+            "citationInformation": {
+              "type": "string",
+              "description": "The BibTex-formatted reference for the dataset."
+            },
+            "datasetHomepage": {
+              "type": "string",
+              "description": "The homepage of the dataset."
+            },
+            "additionalLinks": {
+              "type": "array",
+              "description": "Additional links related to the dataset.",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "datasetCurators",
+            "licensingInformation",
+            "citationInformation",
+            "datasetHomepage",
+            "additionalLinks"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
-        "description",
-        "author_name",
-        "author_email",
-        "date",
-        "provenance",
-        "sensitivity",
-        "license"
+        "datasetDescription",
+        "datasetStructure",
+        "sourceData",
+        "considerationsForUsingTheData",
+        "additionalInformation"
       ],
       "additionalProperties": false
-    },
-    "columns": {
-      "type": "array",
-      "description": "A list of descriptions and units for dataset columns.",
-      "items": {
-        "type": "object",
-        "description": "The description and units for a dataset column.",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "Name of the column used in the document."
-          },
-          "description": {
-            "type": "string",
-            "description": "A brief description of the state."
-          },
-          "unit": {
-            "type": "string",
-            "description": "A string representation of the units."
-          },
-          "concept": {
-            "type": "string",
-            "description": "A string representation of the concept."
-          }
-        },
-        "required": [
-          "name",
-          "description",
-          "unit",
-          "concept"
-        ],
-        "additionalProperties": false
-      }
     }
   },
   "required": [
-    "card",
-    "columns"
+    "card"
   ],
   "additionalProperties": false
 }
