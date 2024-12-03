@@ -28,11 +28,11 @@
 								<span class="flex align-items-center">Specify which equations to use for this model.</span>
 								<section class="white-space-nowrap min-w-min">
 									<Button class="mr-1" label="Reset" severity="secondary" outlined />
-									<Button
+
+									<SplitButton
 										label="Run"
-										@click="onRun"
-										:disabled="isDocumentLoading || isEmpty(includedEquations)"
-										:loading="isModelLoading"
+										:model="runItems"
+										:disabled="isDocumentLoading || isEmpty(includedEquations) || isModelLoading"
 									/>
 								</section>
 							</nav>
@@ -198,6 +198,7 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import { logger } from '@/utils/logger';
+import SplitButton from 'primevue/splitbutton';
 import { ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
 
 const emit = defineEmits(['close', 'update-state', 'append-output', 'update-output', 'select-output']);
@@ -206,6 +207,17 @@ const props = defineProps<{
 }>();
 
 const selectedOutputId = ref<string>('');
+
+const runItems = [
+	{
+		label: 'SKEMA',
+		command: () => onRun('skema')
+	},
+	{
+		label: 'Mira',
+		command: () => onRun('mira')
+	}
+];
 
 const clonedState = ref<ModelFromEquationsState>({
 	equations: [],
@@ -365,7 +377,7 @@ function onCheckBoxChange(equation) {
 	emit('update-state', state);
 }
 
-async function onRun() {
+async function onRun(extractionService: 'mira' | 'skema' = 'skema') {
 	isOutputOpen.value = true;
 	isModelLoading.value = true;
 	const equationsText = clonedState.value.equations
@@ -382,7 +394,8 @@ async function onRun() {
 		equations: cleanedEquations,
 		documentId: document.value?.id,
 		workflowId: props.node.workflowId,
-		nodeId: props.node.id
+		nodeId: props.node.id,
+		extractionService
 	};
 	const modelId = await equationsToAMR(request);
 	// If there isn't a modelId returned at least show the cleaned equations
@@ -579,5 +592,18 @@ watch(
 
 .p-panel:deep(.p-panel-footer) {
 	display: none;
+}
+
+:deep(.p-splitbutton .p-button:first-of-type) {
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+	border-right: 0 none;
+	pointer-events: none;
+}
+
+:deep(.p-splitbutton .p-button:last-of-type) {
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
+	color: #fff;
 }
 </style>
