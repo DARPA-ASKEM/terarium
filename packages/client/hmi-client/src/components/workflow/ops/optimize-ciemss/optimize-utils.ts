@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import _, { groupBy, max, maxBy } from 'lodash';
 import { computed, Ref } from 'vue';
 import { WorkflowNode } from '@/types/workflow';
 import { DataArray, parsePyCiemssMap } from '@/services/models/simulation-service';
@@ -48,16 +48,14 @@ export function setQoIData(resultData: DataArray, targetVariable: string, contex
 	if (contextMethod === ContextMethods.day_average) {
 		// last timepoints
 		console.log('last timepoint:');
+		const lastTime = max(resultData.map((ele) => ele.timepoint_id));
 		// Filter for all values with timepoint = last timepoint
-		const time = resultData.timepoint_id[-1];
-		console.log(time);
-		data = resultData.filter((ele) => ele.timepoint_id === time)[targetVariable];
+		data = resultData.filter((ele) => ele.timepoint_id === lastTime).map((ele) => ele[targetVariable]);
 	} else if (contextMethod === ContextMethods.max) {
 		// all timepoints
 		console.log('All timepoints:');
-		// result_postoptimize['data'].groupby(['sample_id']).max()['I_state']
-		// console.log(Object.entries(groupBy(resultData, 'sample_id')));
-		// data = Object.entries(groupBy(resultData, 'sample_id')).map((list) => list[1]);
+		// For each sample grab the max value for the given state:
+		data = Object.entries(groupBy(resultData, 'sample_id')).map((ele) => maxBy(ele[1], targetVariable));
 	} else {
 		// should not be hit unless we add more available ContextMethods that we have yet to handle.
 		console.error(`The following context method is not handled: ${contextMethod}`);
