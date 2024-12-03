@@ -139,6 +139,7 @@ import MultiSelect from 'primevue/multiselect';
 import SelectButton from 'primevue/selectbutton';
 import { useProjectMenu } from '@/composables/project-menu';
 import { ClientEventType, ProgressState, Project, ProjectSearchResponse } from '@/types/Types';
+import { ProjectWithKnnData } from '@/types/Project';
 import { Vue3Lottie } from 'vue3-lottie';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
@@ -229,19 +230,14 @@ const searchedAndFilterProjects = computed(() => {
 	// while keeping the order of the search results to the order of the projects
 	return searchProjectsResults.value
 		.map((result) => {
-			const project = tabProjects.find(({ id }) => id === result.projectId);
+			const project = tabProjects.find(({ id }) => id === result.projectId) as ProjectWithKnnData;
 			if (!project) return null;
 			if (!project.metadata) project.metadata = {};
 
-			// Add the scoring to the search
-			project.metadata.score = result.score.toString();
+			project.metadata.score = result.score.toString(); // Add the scoring to the search
+			project.hits = result?.hits; // Add the search scoring to the projectAsset
 
-			// Add the search scoring to the projectAsset
-			result.hits.forEach((hit) => {
-				project.metadata![hit.assetId] = hit.score.toString();
-			});
-
-			return project as Project;
+			return project;
 		})
 		.filter((project) => !!project); // Remove null values
 });

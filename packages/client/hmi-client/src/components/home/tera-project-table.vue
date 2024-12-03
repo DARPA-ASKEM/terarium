@@ -85,13 +85,14 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty } from 'lodash';
+import { isEmpty, cloneDeep } from 'lodash';
 import { ref, watch } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import { formatDdMmmYyyy } from '@/utils/date';
-import { AssetType, Project } from '@/types/Types';
+import { AssetType, type Project } from '@/types/Types';
+import type { ProjectWithKnnData } from '@/types/Project';
 import type { PageState } from 'primevue/paginator';
 import * as ProjectService from '@/services/project';
 import { highlight } from '@/utils/text';
@@ -99,11 +100,6 @@ import Button from 'primevue/button';
 import { v4 as uuidv4 } from 'uuid';
 import TeraAssetIcon from '@/components/widgets/tera-asset-icon.vue';
 import TeraProjectMenu from './tera-project-menu.vue';
-
-interface ProjectWithKnnSnippet extends Project {
-	snippet?: string;
-	showMore?: boolean;
-}
 
 const props = defineProps<{
 	projects: Project[];
@@ -113,7 +109,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['open-project']);
 
-const projectsWithKnnMatches = ref<ProjectWithKnnSnippet[]>([]);
+const projectsWithKnnMatches = ref<ProjectWithKnnData[]>([]);
 const numberOfRows = ref(20);
 const projectTableKey = ref(uuidv4());
 
@@ -152,8 +148,10 @@ async function getProjectAssets(event: PageState = pageState) {
 		// If assets were fetched before from when we were on that page don't redo it
 		if (!isEmpty(project.projectAssets) && prevSearchQuery === searchQuery) return;
 
-		const projectWithAssets = (await ProjectService.get(project.id)) as ProjectWithKnnSnippet | null;
+		const projectWithAssets = (await ProjectService.get(project.id)) as ProjectWithKnnData | null;
 		if (!projectWithAssets) return;
+
+		// console.log(projectWithAssets);
 
 		project.projectAssets = projectWithAssets.projectAssets.filter(
 			({ assetName, assetType }) =>
@@ -168,6 +166,8 @@ async function getProjectAssets(event: PageState = pageState) {
 			: undefined;
 	});
 
+	console.log(projectsWithKnnMatches.value);
+
 	prevSearchQuery = searchQuery;
 }
 
@@ -175,8 +175,8 @@ watch(
 	() => props.projects,
 	() => {
 		projectTableKey.value = uuidv4();
-		projectsWithKnnMatches.value = props.projects;
-		getProjectAssets();
+		projectsWithKnnMatches.value = cloneDeep(props.projects);
+		// getProjectAssets();
 	},
 	{ immediate: true }
 );
