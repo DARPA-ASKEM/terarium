@@ -101,6 +101,7 @@ async function showPopup(item: HTMLElement | null, index: number) {
 	if (!item) return;
 
 	hoveredOption.value = distributionOptions.value[index];
+	// nextTick() waiting for dropdown to render before getting position and height
 	await nextTick();
 	const rect = item.getBoundingClientRect();
 	const viewport = window.innerHeight;
@@ -118,12 +119,12 @@ async function showPopup(item: HTMLElement | null, index: number) {
 }
 
 function onChange(event: { value: DistributionType }) {
+	const distribution = getParameterDistribution(props.modelConfiguration, props.parameterId, true);
+	distribution.type = event.value;
+	distribution.parameters = {};
 	emit('update-parameter', {
 		id: props.parameterId,
-		distribution: {
-			type: event.value,
-			parameters: {}
-		}
+		distribution
 	});
 	hidePopup();
 }
