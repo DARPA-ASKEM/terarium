@@ -4,8 +4,7 @@ public enum TerariumAssetEmbeddingType {
 	OVERVIEW("overview"),
 	NAME("name"),
 	DESCRIPTION("description"),
-	METADATA("metadata"),
-	CARD("card");
+	METADATA("metadata");
 
 	private final String text;
 
