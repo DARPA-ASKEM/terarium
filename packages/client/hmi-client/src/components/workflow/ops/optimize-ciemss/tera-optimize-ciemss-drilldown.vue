@@ -25,7 +25,6 @@
 								severity="secondary"
 								:disabled="_.isEmpty(node.outputs[0].value)"
 							/>
-							<Button label="Tom Test" @click="setOutputValues()" />
 							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 							<div v-tooltip="runButtonMessage">
 								<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runOptimize" />
