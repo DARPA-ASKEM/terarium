@@ -851,8 +851,7 @@ public class GoLLMController {
 				currentUserService.get().getId(),
 				document.get(),
 				model.get(),
-				projectId,
-				overwrite
+				projectId
 			);
 		} catch (final IOException e) {
 			log.error("Unable to create Enrich AMR task", e);
