@@ -38,6 +38,7 @@ export interface EquationsToAMRRequest {
 	documentId?: DocumentAsset['id'];
 	workflowId?: Workflow['id'];
 	nodeId?: WorkflowNode<any>['id'];
+	extractionService?: 'mira' | 'skema';
 }
 
 /**
