@@ -187,7 +187,7 @@ import type { Card, DocumentAsset, Model } from '@/types/Types';
 import { cloneDeep, isEmpty } from 'lodash';
 import { equationsToAMR, getCleanedEquations, type EquationsToAMRRequest } from '@/services/knowledge';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
-import { enrichModelMetadata, equationsFromImage } from '@/services/goLLM';
+import { equationsFromImage } from '@/services/goLLM';
 import { getModel, updateModel } from '@/services/model';
 import { useProjects } from '@/composables/project';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
@@ -246,7 +246,6 @@ const selectedModel = ref<Model | null>(null);
 const card = ref<Card | null>(null);
 const goLLMCard = computed<any>(() => document.value?.metadata?.gollmCard);
 
-const isGeneratingCard = ref(false);
 const multipleEquations = ref<string>('');
 const multipleEquationsDisabled = ref(false);
 
@@ -381,13 +380,13 @@ async function onRun() {
 
 	const request: EquationsToAMRRequest = {
 		equations: cleanedEquations,
-		framework: clonedState.value.modelFramework,
-		documentId: document.value?.id
+		documentId: document.value?.id,
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id
 	};
 	const modelId = await equationsToAMR(request);
 	// If there isn't a modelId returned at least show the cleaned equations
 	if (modelId) {
-		if (document.value?.id) await generateCard(modelId, document.value.id);
 		clonedState.value.modelId = modelId;
 	}
 
@@ -475,14 +474,6 @@ function onModelSaveEvent(model: Model) {
 	if (!outputPort) return;
 	outputPort.label = model.header.name;
 	emit('update-output', outputPort);
-}
-
-// generates the model card and fetches the model when finished
-async function generateCard(modelId: string, docId: string) {
-	isGeneratingCard.value = true;
-	await enrichModelMetadata(modelId, docId, true);
-	isGeneratingCard.value = false;
-	await fetchModel();
 }
 
 watch(

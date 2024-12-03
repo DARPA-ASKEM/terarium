@@ -6,10 +6,12 @@ import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.StatusUpdate;
+import software.uncharted.terarium.hmiserver.models.User;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationEvent;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationGroup;
 import software.uncharted.terarium.hmiserver.service.ClientEventService;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 
 @Slf4j
 public class NotificationGroupInstance<T> {
@@ -27,6 +29,7 @@ public class NotificationGroupInstance<T> {
 	private final T data;
 
 	public static final Double DEFAULT_HALF_TIME_SECONDS = 2.0;
+	public static final String DEFAULT_USER_ID = null;
 
 	public NotificationGroupInstance(
 		final ClientEventService clientEventService,
@@ -35,7 +38,8 @@ public class NotificationGroupInstance<T> {
 		final UUID projectId,
 		final T data,
 		final Double halfTimeSeconds,
-		final UUID notificationGroupId
+		final UUID notificationGroupId,
+		final String userId
 	) {
 		this.clientEventService = clientEventService;
 		this.notificationService = notificationService;
@@ -45,22 +49,39 @@ public class NotificationGroupInstance<T> {
 		this.type = type;
 		this.data = data;
 
-		this.notificationGroup = notificationService.createNotificationGroup(
-			((NotificationGroup) new NotificationGroup().setId(notificationGroupId)).setType(type.name()).setProjectId(
-					projectId
-				)
-		);
+		// Create a new notification group
+		final NotificationGroup newNotificationGroup =
+			((NotificationGroup) new NotificationGroup().setId(notificationGroupId));
+		newNotificationGroup.setType(type.name()).setProjectId(projectId);
+
+		if (userId == null || userId.isEmpty()) {
+			newNotificationGroup.setUserId("anonymous");
+		} else {
+			newNotificationGroup.setUserId(userId);
+		}
+
+		this.notificationGroup = notificationService.createNotificationGroup(newNotificationGroup);
 	}
 
+	// Version of the constructor that generates a random notification group ID
 	public NotificationGroupInstance(
 		final ClientEventService clientEventService,
 		final NotificationService notificationService,
 		final ClientEventType type,
 		final UUID projectId,
 		final T data,
-		final Double halfTimeSeconds
+		final String userId
 	) {
-		this(clientEventService, notificationService, type, projectId, data, DEFAULT_HALF_TIME_SECONDS, UUID.randomUUID());
+		this(
+			clientEventService,
+			notificationService,
+			type,
+			projectId,
+			data,
+			DEFAULT_HALF_TIME_SECONDS,
+			UUID.randomUUID(),
+			userId
+		);
 	}
 
 	private Double estimateT() {

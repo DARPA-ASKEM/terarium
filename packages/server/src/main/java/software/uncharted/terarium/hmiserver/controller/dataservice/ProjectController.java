@@ -612,8 +612,6 @@ public class ProjectController {
 	@Secured(Roles.USER)
 	public ResponseEntity<Project> copyProject(@PathVariable("id") final UUID id) {
 		projectService.checkPermissionCanRead(currentUserService.get().getId(), id);
-		// time the progress takes to reach each subsequent half.
-		final Double HALFTIME_SECONDS = 1.0;
 
 		final Future<Project> project;
 		final Project clonedProject;
@@ -627,7 +625,7 @@ public class ProjectController {
 			ClientEventType.CLONE_PROJECT,
 			null,
 			new Properties(id),
-			HALFTIME_SECONDS
+			currentUserService.get().getId()
 		);
 
 		try {
