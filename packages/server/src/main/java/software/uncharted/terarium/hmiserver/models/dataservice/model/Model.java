@@ -402,17 +402,7 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	public Map<TerariumAssetEmbeddingType, String> getEmbeddingsSourceByType() {
 		final Map<TerariumAssetEmbeddingType, String> sources = super.getEmbeddingsSourceByType();
 
-		try {
-			if (getMetadata() != null && getMetadata().getGollmCard() != null) {
-				// update embeddings
-				final JsonNode card = getMetadata().getGollmCard();
-				final ObjectMapper objectMapper = new ObjectMapper();
-				sources.put(TerariumAssetEmbeddingType.CARD, objectMapper.writeValueAsString(card));
-			}
-		} catch (final Exception e) {
-			log.warn("Failed to serialize card embedding text into JSON", e);
-		}
-
+		// Description are saved as base64 encoded strings, this returns a pure string.
 		if (getDescription() != null) {
 			sources.put(TerariumAssetEmbeddingType.DESCRIPTION, getDescriptionAsReadableString());
 		}
