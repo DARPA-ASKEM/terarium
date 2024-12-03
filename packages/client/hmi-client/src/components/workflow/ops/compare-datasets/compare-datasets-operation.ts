@@ -9,8 +9,8 @@ export const CompareDatasetsOperation: Operation = {
 	description: 'Compare simulations',
 	documentationUrl: '',
 	inputs: [
-		{ type: 'datasetId', label: 'Dataset' },
-		{ type: 'datasetId', label: 'Dataset' }
+		{ type: 'datasetId', label: 'Dataset or Simulation result' },
+		{ type: 'datasetId', label: 'Dataset or Simulation result' }
 	],
 	outputs: [{ type: 'datasetId', label: 'Dataset' }],
 	isRunnable: true,
