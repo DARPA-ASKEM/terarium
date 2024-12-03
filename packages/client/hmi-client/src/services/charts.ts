@@ -665,6 +665,10 @@ export function createSimulateSensitivityScatter(samplingLayer: SensitivityChart
 					axis: {
 						gridColor: '#EEE',
 						labelExpr
+					},
+					scale: {
+						zero: false,
+						nice: false
 					}
 				},
 				y: {
@@ -673,6 +677,10 @@ export function createSimulateSensitivityScatter(samplingLayer: SensitivityChart
 					axis: {
 						gridColor: '#EEE',
 						labelExpr
+					},
+					scale: {
+						zero: false,
+						nice: false
 					}
 				},
 				color: {
