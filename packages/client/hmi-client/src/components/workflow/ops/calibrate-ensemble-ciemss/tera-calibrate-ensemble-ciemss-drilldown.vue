@@ -232,6 +232,7 @@
 					<tera-progress-spinner v-if="isRunInProgress" :font-size="2" is-centered style="height: 100%">
 						{{ node.state.currentProgress }}%
 					</tera-progress-spinner>
+					<tera-notebook-error v-bind="node.state.errorMessage" />
 				</section>
 			</tera-drilldown-section>
 		</template>
@@ -325,7 +326,7 @@ import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraSignalBars from '@/components/widgets/tera-signal-bars.vue';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
-
+import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import { getTimespan, nodeMetadata } from '@/components/workflow/util';
 import type {
 	CsvAsset,
