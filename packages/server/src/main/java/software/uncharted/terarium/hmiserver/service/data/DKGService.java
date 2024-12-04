@@ -175,7 +175,13 @@ public class DKGService {
 
 		final List<KnnQuery> queries = new ArrayList<>();
 		if (texts != null && !texts.isEmpty()) {
-			final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(texts);
+			// remove null or empty strings from the list
+			final List<String> embeddingTexts = texts
+				.stream()
+				.filter(text -> text != null && !text.isEmpty())
+				.collect(Collectors.toList());
+
+			final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(embeddingTexts);
 
 			for (Embedding embedding : embeddings.getEmbeddings()) {
 				final List<Float> vectors = Arrays.stream(embedding.getVector())
