@@ -5,9 +5,9 @@ export enum ProjectPages {
 	OVERVIEW = 'overview'
 }
 
-export interface ProjectWithKnnData extends ProjectSearchResult, Project {
-	showMore?: boolean;
-}
+/* Amalgamation of the ProjectSearchResult and Project types,
+this allows us to display in the same table normal project and search results */
+export interface ProjectWithKnnData extends ProjectSearchResult, Project {}
 
 /**
  * Return the list of AssetTypes that are visible in the project
