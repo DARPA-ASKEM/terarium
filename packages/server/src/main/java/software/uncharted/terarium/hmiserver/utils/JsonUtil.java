@@ -5,8 +5,11 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Predicate;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class JsonUtil {
 
 	public static void setAll(final ObjectNode dest, final JsonNode src) {
@@ -44,5 +47,19 @@ public class JsonUtil {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Parse a UUID from a JSON request
+	 * @param jsonNode - The JSON request
+	 * @param fieldName - The field name to parse the UUID from
+	 * @return - The UUID parsed from the request
+	 */
+	public static UUID parseUuidFromRequest(JsonNode jsonNode, String fieldName) {
+		final String idString = jsonNode.get(fieldName) != null ? jsonNode.get(fieldName).asText() : null;
+		if (idString != null) {
+			return UUID.fromString(idString);
+		}
+		return null;
 	}
 }

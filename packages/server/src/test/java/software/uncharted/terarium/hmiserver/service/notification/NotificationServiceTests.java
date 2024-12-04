@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.service.notification;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -22,9 +21,6 @@ import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 
 @Slf4j
 public class NotificationServiceTests extends TerariumApplicationTests {
-
-	@Autowired
-	private ObjectMapper mapper;
 
 	@Autowired
 	private NotificationService notificationService;
@@ -80,7 +76,7 @@ public class NotificationServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanAckNotificationGroup() throws Exception {
 		final NotificationGroup group = notificationService.createNotificationGroup(
-			new NotificationGroup().setType("test")
+			new NotificationGroup().setType("test").setUserId(currentUserService.get().getId())
 		);
 
 		notificationService.createNotificationEvent(
