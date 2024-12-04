@@ -102,12 +102,6 @@ public class ExtractionService {
 
 	private RMapCache<String, ExtractPDFResponse> responseCache;
 
-	// Used to get the Abstract text from PDF
-	private static final String NODE_CONTENT = "content";
-
-	// time the progress takes to reach each subsequent half.
-	final Double HALFTIME_SECONDS = 2.0;
-
 	@Value("${terarium.extractionService.poolSize:10}")
 	private int POOL_SIZE;
 
@@ -390,7 +384,7 @@ public class ExtractionService {
 			ClientEventType.EXTRACTION_PDF,
 			projectId,
 			new Properties(documentId),
-			HALFTIME_SECONDS
+			currentUserService.get().getId()
 		);
 
 		return executor.submit(() -> {
@@ -463,7 +457,7 @@ public class ExtractionService {
 				notificationInterface.sendMessage("Extractions applied to document. Finalizing response.");
 
 				if (!extractionResponse.failures.isEmpty()) {
-					// create a comma separated list of failures in human readable form
+					// create a comma separated list of failures in human-readable form
 					final String failures = String.join(
 						", ",
 						extractionResponse.failures.stream().map(FailureType::getHumanReadable).toArray(String[]::new)
@@ -588,7 +582,7 @@ public class ExtractionService {
 			ClientEventType.EXTRACTION,
 			null,
 			new Properties(documentId),
-			HALFTIME_SECONDS
+			currentUserService.get().getId()
 		);
 		notificationInterface.sendMessage("Variable extraction task submitted...");
 
@@ -617,7 +611,7 @@ public class ExtractionService {
 			ClientEventType.EXTRACTION,
 			null,
 			new Properties(documentId),
-			HALFTIME_SECONDS
+			currentUserService.get().getId()
 		);
 
 		notificationInterface.sendMessage("Model alignment task submitted...");
@@ -714,13 +708,15 @@ public class ExtractionService {
 			// update model embeddings
 			if (card != null && model.getPublicAsset() && !model.getTemporary()) {
 				final String cardText = objectMapper.writeValueAsString(card);
-				try {
-					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(cardText);
+				if (cardText != null) {
+					try {
+						final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(cardText);
 
-					modelService.uploadEmbeddings(modelId, embeddings, hasWritePermission);
-					notificationInterface.sendMessage("Embeddings created");
-				} catch (final Exception e) {
-					log.warn("Unable to generate embedding vectors for model");
+						modelService.uploadEmbeddings(modelId, embeddings, hasWritePermission);
+						notificationInterface.sendMessage("Embeddings created");
+					} catch (final Exception e) {
+						log.warn("Unable to generate embedding vectors for model");
+					}
 				}
 			}
 

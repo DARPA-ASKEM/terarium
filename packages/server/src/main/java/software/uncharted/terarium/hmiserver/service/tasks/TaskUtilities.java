@@ -21,13 +21,8 @@ import software.uncharted.terarium.hmiserver.service.data.DKGService;
 @Slf4j
 public class TaskUtilities {
 
-	public static TaskRequest getEnrichAMRTaskRequest(
-		String userId,
-		DocumentAsset document,
-		Model model,
-		UUID projectId,
-		Boolean overwrite
-	) throws IOException {
+	public static TaskRequest getEnrichAMRTaskRequest(String userId, DocumentAsset document, Model model, UUID projectId)
+		throws IOException {
 		final ObjectMapper objectMapper = new ObjectMapper();
 
 		final EnrichAmrResponseHandler.Input input = new EnrichAmrResponseHandler.Input();
@@ -59,7 +54,6 @@ public class TaskUtilities {
 		props.setProjectId(projectId);
 		if (document != null) props.setDocumentId(document.getId());
 		props.setModelId(model.getId());
-		props.setOverwrite(overwrite);
 		req.setAdditionalProperties(props);
 
 		return req;

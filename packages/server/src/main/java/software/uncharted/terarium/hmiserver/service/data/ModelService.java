@@ -246,8 +246,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 				currentUserService.get().getId(),
 				document.get(),
 				model.get(),
-				projectId,
-				overwrite
+				projectId
 			);
 
 			final TaskRequest modelCardRequest = TaskUtilities.getModelCardTask(

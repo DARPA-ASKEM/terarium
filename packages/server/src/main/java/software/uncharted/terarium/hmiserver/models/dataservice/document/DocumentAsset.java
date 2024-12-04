@@ -158,23 +158,4 @@ public class DocumentAsset extends TerariumAsset {
 			throw new RuntimeException("Failed to serialize model embedding text into JSON", e);
 		}
 	}
-
-	@JsonIgnore
-	@TSIgnore
-	public Map<TerariumAssetEmbeddingType, String> getEmbeddingsSourceByType() {
-		final Map<TerariumAssetEmbeddingType, String> sources = super.getEmbeddingsSourceByType();
-
-		try {
-			if (getMetadata() != null && getMetadata().containsKey("gollmCard")) {
-				// update embeddings
-				final JsonNode card = getMetadata().get("gollmCard");
-				final ObjectMapper objectMapper = new ObjectMapper();
-				sources.put(TerariumAssetEmbeddingType.CARD, objectMapper.writeValueAsString(card));
-			}
-		} catch (final Exception e) {
-			log.warn("Failed to serialize card embedding text into JSON", e);
-		}
-
-		return sources;
-	}
 }
