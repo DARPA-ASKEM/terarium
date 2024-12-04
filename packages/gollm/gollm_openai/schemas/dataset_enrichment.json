@@ -92,10 +92,57 @@
         "additionalInformation"
       ],
       "additionalProperties": false
+    },
+    "columns": {
+      "type": "array",
+      "description": "List and describe the columns present in the dataset.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the column."
+          },
+          "description": {
+            "type": "string",
+            "description": "A short description of the column."
+          },
+          "unit": {
+            "type": "string",
+            "description": "The unit of the column."
+          },
+          "dataType": {
+            "type": "string",
+            "description": "The data type of the column.",
+            "enum": [
+              "UNKNOWN",
+              "BOOLEAN",
+              "STRING",
+              "CHAR",
+              "INTEGER",
+              "INT",
+              "FLOAT",
+              "DOUBLE",
+              "TIMESTAMP",
+              "DATETIME",
+              "DATE",
+              "TIME"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "unit",
+          "dataType"
+        ],
+        "additionalProperties": false
+      }
     }
   },
   "required": [
-    "card"
+    "card",
+    "columns"
   ],
   "additionalProperties": false
 }

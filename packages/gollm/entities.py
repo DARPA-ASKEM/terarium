@@ -20,7 +20,7 @@ class ConfigureModelDataset(BaseModel):
     matrix: str = None
 
 class DatasetCardModel(BaseModel):
-    dataset: List[str]
+    dataset: str  # expects a stringified JSON object
     research_paper: str = None
 
 class ModelCardModel(BaseModel):

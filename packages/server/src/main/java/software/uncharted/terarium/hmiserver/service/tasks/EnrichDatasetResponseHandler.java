@@ -1,18 +1,17 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
+import static software.uncharted.terarium.hmiserver.utils.JsonToHTML.renderJsonToHTML;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.io.IOException;
-import java.util.List;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
-import java.util.stream.StreamSupport;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
@@ -84,17 +83,22 @@ public class EnrichDatasetResponseHandler extends TaskResponseHandler {
 
 			// Update the dataset with the new card
 			((ObjectNode) dataset.getMetadata()).set("dataCard", response.response.card);
+			((ObjectNode) dataset.getMetadata()).put(
+					"description",
+					renderJsonToHTML(response.response.card).getBytes(StandardCharsets.UTF_8)
+				);
 
 			// Update the dataset columns with the new descriptions
 			for (final JsonNode enrichedColumn : response.response.columns) {
 				final String name = enrichedColumn.get("name").asText();
 				final String description = enrichedColumn.get("description").asText();
 				final String unit = enrichedColumn.get("unit").asText();
-				final String concept = enrichedColumn.get("concept").asText();
+				final String dataType = enrichedColumn.get("dataType").asText();
 
 				// Create a JsonNode for the metadata (name, unit) if it doesn't exist
 				final ObjectNode metadata = objectMapper.createObjectNode();
 				metadata.put("name", name);
+				metadata.put("description", description);
 				metadata.put("unit", unit);
 
 				// Based on the name, description, fetch the best grounding available and add it to the metadata
@@ -109,6 +113,7 @@ public class EnrichDatasetResponseHandler extends TaskResponseHandler {
 					.ifPresent(column -> {
 						column.setDescription(description);
 						column.setMetadata(metadata);
+						column.setDataType(DatasetColumn.ColumnType.valueOf(dataType));
 					});
 			}
 

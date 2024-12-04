@@ -3,7 +3,6 @@ package software.uncharted.terarium.hmiserver.service.tasks;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -85,7 +84,7 @@ public class TaskUtilities {
 		final List<DatasetColumn> columns = dataset.getColumns();
 		final ObjectMapper mapper = new ObjectMapper();
 		mapper.setConfig(mapper.getSerializationConfig().with(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY));
-		final String serializedColumns = mapper.convertValue(columns, ObjectNode.class).toString();
+		final String serializedColumns = mapper.writeValueAsString(columns);
 
 		input.setDataset(serializedColumns);
 

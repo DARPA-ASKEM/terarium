@@ -3,7 +3,6 @@ import imghdr
 import json
 import os
 from gollm_openai.prompts.amr_enrichment import ENRICH_PROMPT
-from gollm_openai.prompts.dataset_enrichment import DATASET_ENRICH_PROMPT
 from gollm_openai.prompts.condense import CONDENSE_PROMPT, format_chunks
 from gollm_openai.prompts.config_from_dataset import (
     CONFIGURE_FROM_DATASET_PROMPT,
@@ -14,6 +13,7 @@ from gollm_openai.prompts.config_from_dataset import (
     CONFIGURE_FROM_DATASET_MATRIX_PROMPT
 )
 from gollm_openai.prompts.config_from_document import CONFIGURE_FROM_DOCUMENT_PROMPT
+from gollm_openai.prompts.dataset_enrichment import DATASET_ENRICH_PROMPT
 from gollm_openai.prompts.equations_cleanup import EQUATIONS_CLEANUP_PROMPT
 from gollm_openai.prompts.equations_from_image import EQUATIONS_FROM_IMAGE_PROMPT
 from gollm_openai.prompts.general_instruction import GENERAL_INSTRUCTION_PROMPT
@@ -303,7 +303,7 @@ def amr_enrichment_chain(amr: str, research_paper: str) -> dict:
     return unescape_curly_braces(output_json)
 
 
-def dataset_enrichment_chain(research_paper: str, dataset: List[str]) -> dict:
+def dataset_enrichment_chain(research_paper: str, dataset: str) -> dict:
     print("Extracting and formatting research paper...")
     research_paper = normalize_greek_alphabet(research_paper)
 
@@ -316,7 +316,7 @@ def dataset_enrichment_chain(research_paper: str, dataset: List[str]) -> dict:
     print("Building prompt to extract dataset enrichments from a research paper...")
     prompt = DATASET_ENRICH_PROMPT.format(
         research_paper=escape_curly_braces(research_paper),
-        dataset="\n".join(dataset)
+        dataset=dataset
     )
 
     client = OpenAI()
