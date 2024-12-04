@@ -223,19 +223,14 @@ const searchedAndFilterProjects = computed(() => {
 
 	// If there are no search we can return the filtered and sorted projects
 	if (isEmpty(searchProjectsResults.value)) {
-		return filterAndSortProjects(tabProjects);
+		return filterAndSortProjects(tabProjects) as ProjectWithKnnData[];
 	}
 
 	return searchProjectsResults.value
 		.map((result) => {
-			const project = tabProjects.find(({ id }) => id === result.projectId) as ProjectWithKnnData;
+			const project = tabProjects.find(({ id }) => id === result.projectId);
 			if (!project) return null;
-			if (!project.metadata) project.metadata = {};
-
-			project.metadata.score = result.score.toString(); // Add the scoring to the search
-			project.hits = result?.hits; // Add the search scoring to the projectAsset
-
-			return project;
+			return { ...project, ...result } as ProjectWithKnnData;
 		})
 		.filter((project) => !!project); // Remove null values
 });

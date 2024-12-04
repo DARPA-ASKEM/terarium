@@ -10,9 +10,9 @@ export interface ClientConfig {
 }
 
 export interface ProjectSearchResult {
-    projectId: string;
-    score: number;
-    assets: ProjectSearchResultAsset[];
+    projectId?: string;
+    score?: number;
+    assets?: ProjectSearchResultAsset[];
 }
 
 export interface ProjectSearchResultAsset {

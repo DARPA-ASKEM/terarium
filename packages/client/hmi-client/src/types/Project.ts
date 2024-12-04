@@ -1,13 +1,11 @@
-import { AssetType } from '@/types/Types';
-import type { Project, ProjectSearchAsset } from '@/types/Types';
+import { AssetType, ProjectSearchResult } from '@/types/Types';
+import type { Project } from '@/types/Types';
 
 export enum ProjectPages {
 	OVERVIEW = 'overview'
 }
 
-export interface ProjectWithKnnData extends Project {
-	hits?: ProjectSearchAsset[];
-	snippet?: string;
+export interface ProjectWithKnnData extends ProjectSearchResult, Project {
 	showMore?: boolean;
 }
 

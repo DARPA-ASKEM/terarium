@@ -43,6 +43,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddingType;
@@ -1022,8 +1023,13 @@ public class ProjectController {
 	@TSModel
 	public static class ProjectSearchResult {
 
+		@TSOptional
 		final UUID projectId;
+
+		@TSOptional
 		final Float score;
+
+		@TSOptional
 		final List<ProjectSearchResultAsset> assets;
 	}
 
