@@ -65,12 +65,16 @@ import software.uncharted.terarium.hmiserver.service.data.CodeService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ITerariumAssetService;
+import software.uncharted.terarium.hmiserver.service.data.InterventionService;
+import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
+import software.uncharted.terarium.hmiserver.service.data.NotebookSessionService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectPermissionsService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService.ProjectSearchResponse;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.service.data.SimulationService;
 import software.uncharted.terarium.hmiserver.service.data.TerariumAssetServices;
 import software.uncharted.terarium.hmiserver.service.data.WorkflowService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationGroupInstance;
@@ -93,19 +97,13 @@ public class ProjectController {
 
 	static final String WELCOME_MESSAGE = "";
 	final Messages messages;
-	final ArtifactService artifactService;
-	final ModelService modelService;
-	final CodeService codeService;
 	final CurrentUserService currentUserService;
-	final DatasetService datasetService;
-	final DocumentAssetService documentAssetService;
 	final ProjectAssetService projectAssetService;
 	final ProjectService projectService;
 	final ReBACService reBACService;
 	final TerariumAssetServices terariumAssetServices;
 	final TerariumAssetCloneService cloneService;
 	final UserService userService;
-	final WorkflowService workflowService;
 	final ObjectMapper objectMapper;
 	final ProjectPermissionsService projectPermissionsService;
 	final ProjectSearchService projectSearchService;
@@ -1021,10 +1019,14 @@ public class ProjectController {
 
 	@Data
 	@TSModel
-	private static class ProjectSearchResultAsset extends ProjectAsset {
+	private static class ProjectSearchResultAsset {
 
+		final UUID assetId;
+		final AssetType assetType;
+		final String assetName;
 		final String embeddingContent;
 		final TerariumAssetEmbeddingType embeddingType;
+		final Float score;
 	}
 
 	@Data
@@ -1086,16 +1088,16 @@ public class ProjectController {
 
 			// Fluffing up the response with the project assets information
 			for (final ProjectSearchResponse searchResponse : searchResponseList) {
-				// Get the project
-				final Project project = projectService.getProject(searchResponse.getProjectId()).orElseThrow();
-
-				final List<ProjectSearchResultAsset> assets = searchResponse
-					.getHits()
-					.stream()
-					.map(ProjectController::createProjectSearchResultAsset)
-					.collect(Collectors.toList());
+				final List<ProjectSearchResultAsset> assets = new ArrayList<>();
+				for (ProjectSearchService.ProjectSearchAsset hit : searchResponse.getHits()) {
+					ProjectSearchResultAsset asset = this.createProjectSearchResultAsset(hit);
+					if (asset != null) {
+						assets.add(asset);
+					}
+				}
 
 				// Add the project information to the response
+				final Project project = projectService.getProject(searchResponse.getProjectId()).orElseThrow();
 				final ProjectSearchResult searchResult = new ProjectSearchResult(project, searchResponse.getScore(), assets);
 
 				searchResults.add(searchResult);
@@ -1105,29 +1107,37 @@ public class ProjectController {
 		} catch (final Exception e) {
 			final String error = "Unable to get execute knn search";
 			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
 	/* Create a ProjectSearchResultAsset from a ProjectSearchHit */
-	private ProjectSearchResultAsset createProjectSearchResultAsset(final ProjectSearchAsset hit) {
-		TerariumAsset asset;
+	private ProjectSearchResultAsset createProjectSearchResultAsset(final ProjectSearchService.ProjectSearchAsset hit) {
 		if (hit.getAssetType() == null || hit.getAssetId() == null) {
 			return null;
 		}
 
-		// If Datase
+		final TerariumAsset asset = terariumAssetServices.getAsset(hit.getAssetId(), hit.getAssetType());
 
-		// If Model
+		if (asset == null) {
+			return null;
+		}
 
-		// If Terarium Asset
+		// Get the content that trigger the hit
+		final String embeddingContent =
+			switch (hit.getEmbeddingType()) {
+				case DESCRIPTION -> asset.getDescription();
+				case OVERVIEW -> ((Project) asset).getEmbeddingSourceText();
+				default -> asset.getName();
+			};
 
 		return new ProjectSearchResultAsset(
 			hit.getAssetId(),
 			hit.getAssetType(),
 			asset.getName(),
-			hit.getEmbedding().getContent(),
-			hit.getEmbedding().getType()
+			embeddingContent,
+			hit.getEmbeddingType(),
+			hit.getScore()
 		);
 	}
 
