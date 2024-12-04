@@ -21,7 +21,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,23 +59,13 @@ import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.TerariumAssetCloneService;
 import software.uncharted.terarium.hmiserver.service.UserService;
-import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
-import software.uncharted.terarium.hmiserver.service.data.CodeService;
-import software.uncharted.terarium.hmiserver.service.data.DatasetService;
-import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ITerariumAssetService;
-import software.uncharted.terarium.hmiserver.service.data.InterventionService;
-import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
-import software.uncharted.terarium.hmiserver.service.data.ModelService;
-import software.uncharted.terarium.hmiserver.service.data.NotebookSessionService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectPermissionsService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService.ProjectSearchResponse;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
-import software.uncharted.terarium.hmiserver.service.data.SimulationService;
 import software.uncharted.terarium.hmiserver.service.data.TerariumAssetServices;
-import software.uncharted.terarium.hmiserver.service.data.WorkflowService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationGroupInstance;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
@@ -169,7 +158,7 @@ public class ProjectController {
 			try {
 				projectIds = rebacUser.lookupProjects();
 			} catch (final Exception e) {
-				log.error("Error retrieving projects from spicedb", e);
+				log.error("Error retrieving projects from SpiceDB", e);
 				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 			}
 
@@ -203,7 +192,7 @@ public class ProjectController {
 				project.setUserPermission(rebacUser.getPermissionFor(rebacProject));
 			} catch (final Exception e) {
 				log.error(
-					"Failed to get user permissions from spicedb for project {}... Removing Project from list.",
+					"Failed to get user permissions from SpiceDB for project {}... Removing Project from list.",
 					project.getId(),
 					e
 				);
@@ -216,7 +205,7 @@ public class ProjectController {
 			try {
 				project.setPublicProject(rebacProject.isPublic());
 			} catch (final Exception e) {
-				log.error("Failed to get project {} public status from spicedb... Defaulting to private.", project.getId(), e);
+				log.error("Failed to get project {} public status from SpiceDB... Defaulting to private.", project.getId(), e);
 				project.setPublicProject(false);
 			}
 
@@ -233,7 +222,7 @@ public class ProjectController {
 					.getMetadata()
 					.put("contributor-count", Integer.toString(contributors == null ? 0 : contributors.size()));
 			} catch (final Exception e) {
-				log.error("Failed to get project contributors from spicedb for project {}", project.getId(), e);
+				log.error("Failed to get project contributors from SpiceDB for project {}", project.getId(), e);
 			}
 
 			// Set the author name for the project. If we are unable to get the author name,
@@ -308,7 +297,7 @@ public class ProjectController {
 			project.get().setUserPermission(rebacUser.getPermissionFor(rebacProject));
 			project.get().setAuthors(authors);
 		} catch (final Exception e) {
-			log.error("Failed to get project permissions from spicedb", e);
+			log.error("Failed to get project permissions from SpiceDB", e);
 			throw new ResponseStatusException(
 				HttpStatus.INTERNAL_SERVER_ERROR,
 				messages.get("projects.unable-to-get-permissions")
@@ -468,7 +457,7 @@ public class ProjectController {
 			@ApiResponse(responseCode = "404", description = "Project could not be found", content = @Content),
 			@ApiResponse(
 				responseCode = "503",
-				description = "An error occurred when trying to communicate with either the postgres or spicedb" + " databases",
+				description = "An error occurred when trying to communicate with either the postgres or SpiceDB" + " databases",
 				content = @Content
 			)
 		}
@@ -514,7 +503,7 @@ public class ProjectController {
 		return ResponseEntity.ok(updatedProject.get());
 	}
 
-	@Operation(summary = "Resync Project in the Search Index")
+	@Operation(summary = "Resynchronize Project in the Search Index")
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -535,7 +524,7 @@ public class ProjectController {
 			@ApiResponse(responseCode = "404", description = "Project could not be found", content = @Content),
 			@ApiResponse(
 				responseCode = "503",
-				description = "An error occurred when trying to communicate with either the postgres or spicedb" + " databases",
+				description = "An error occurred when trying to communicate with either the postgres or SpiceDB" + " databases",
 				content = @Content
 			)
 		}
@@ -604,7 +593,7 @@ public class ProjectController {
 			@ApiResponse(responseCode = "404", description = "Project could not be found", content = @Content),
 			@ApiResponse(
 				responseCode = "503",
-				description = "An error occurred when trying to communicate with either the postgres or spicedb" + " databases",
+				description = "An error occurred when trying to communicate with either the postgres or SpiceDB" + " databases",
 				content = @Content
 			)
 		}
@@ -698,7 +687,7 @@ public class ProjectController {
 			@ApiResponse(responseCode = "404", description = "Project could not be found", content = @Content),
 			@ApiResponse(
 				responseCode = "503",
-				description = "An error occurred when trying to communicate with either the postgres or spicedb" + " databases",
+				description = "An error occurred when trying to communicate with either the postgres or SpiceDB" + " databases",
 				content = @Content
 			)
 		}
@@ -748,7 +737,7 @@ public class ProjectController {
 			),
 			@ApiResponse(
 				responseCode = "503",
-				description = "An error occurred when trying to communicate with either the postgres or spicedb" + " databases",
+				description = "An error occurred when trying to communicate with either the postgres or SpiceDB" + " databases",
 				content = @Content
 			)
 		}
@@ -831,7 +820,7 @@ public class ProjectController {
 			@ApiResponse(responseCode = "500", description = "Error finding project", content = @Content),
 			@ApiResponse(
 				responseCode = "503",
-				description = "An error occurred when trying to communicate with either the postgres or spicedb" + " databases",
+				description = "An error occurred when trying to communicate with either the postgres or SpiceDB" + " databases",
 				content = @Content
 			)
 		}
@@ -937,7 +926,7 @@ public class ProjectController {
 			@ApiResponse(responseCode = "500", description = "Error deleting asset", content = @Content),
 			@ApiResponse(
 				responseCode = "503",
-				description = "An error occurred when trying to communicate with either the postgres or spicedb" + " databases",
+				description = "An error occurred when trying to communicate with either the postgres or SpiceDB" + " databases",
 				content = @Content
 			)
 		}
@@ -984,7 +973,7 @@ public class ProjectController {
 			),
 			@ApiResponse(
 				responseCode = "503",
-				description = "An error occurred when trying to communicate with spicedb database",
+				description = "An error occurred when trying to communicate with SpiceDB database",
 				content = @Content
 			)
 		}
@@ -1019,7 +1008,7 @@ public class ProjectController {
 
 	@Data
 	@TSModel
-	private static class ProjectSearchResultAsset {
+	public static class ProjectSearchResultAsset {
 
 		final UUID assetId;
 		final AssetType assetType;
@@ -1031,7 +1020,7 @@ public class ProjectController {
 
 	@Data
 	@TSModel
-	private static class ProjectSearchResult extends Project {
+	public static class ProjectSearchResult extends Project {
 
 		final Float score;
 		final List<ProjectSearchResultAsset> assets;
@@ -1285,8 +1274,6 @@ public class ProjectController {
 
 			// Getting the project permissions
 			final RebacProject project = new RebacProject(id, reBACService);
-			// Getting the user permissions
-			final RebacUser user = new RebacUser(currentUserService.get().getId(), reBACService);
 			// Getting the Public group permissions
 			final RebacGroup who = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
 			// Setting the relationship to be of a reader
