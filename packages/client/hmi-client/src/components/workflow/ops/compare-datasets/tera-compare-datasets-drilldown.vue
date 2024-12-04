@@ -16,7 +16,7 @@
 						<Button class="ml-auto" size="small" label="Run" @click="onRun" />
 						<label>What do you want to compare?</label>
 						<Dropdown
-							v-model="selectedCompareOption"
+							v-model="knobs.selectedCompareOption"
 							:options="compareOptions"
 							option-label="label"
 							option-value="value"
@@ -27,10 +27,10 @@
 							label="All simulations are from the same model"
 						/>
 
-						<template v-if="selectedCompareOption === CompareValue.IMPACT">
+						<template v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
 							<label> Select simulation to use as a baseline (optional) </label>
 							<Dropdown
-								v-model="selectedDataset"
+								v-model="knobs.selectedDataset"
 								:options="datasets"
 								option-label="name"
 								option-value="id"
@@ -46,7 +46,7 @@
 							/>
 						</template>
 
-						<template v-if="selectedCompareOption === CompareValue.RANK">
+						<template v-if="knobs.selectedCompareOption === CompareValue.RANK">
 							<label>Specifiy criteria of interest</label>
 							<tera-criteria-of-interest-card
 								v-for="(card, i) in node.state.criteriaOfInterestCards"
@@ -86,7 +86,7 @@
 					<tera-drilldown-section class="px-2">
 						<label>What values do you want to plot?</label>
 						<div v-for="option in plotOptions" class="flex align-items-center" :key="option.value">
-							<RadioButton v-model="selectedPlotValue" :value="option.value" name="plotValues" />
+							<RadioButton v-model="knobs.selectedPlotValue" :value="option.value" name="plotValues" />
 							<label class="pl-2 py-1" :for="option.value">{{ option.label }}</label>
 						</div>
 					</tera-drilldown-section>
@@ -110,32 +110,30 @@ import { getDataset } from '@/services/dataset';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import RadioButton from 'primevue/radiobutton';
 import _ from 'lodash';
-import { blankCriteriaOfInterest, CompareDatasetsState, CriteriaOfInterestCard } from './compare-datasets-operation';
+import {
+	blankCriteriaOfInterest,
+	CompareDatasetsState,
+	CompareValue,
+	CriteriaOfInterestCard,
+	PlotValue
+} from './compare-datasets-operation';
 import TeraCriteriaOfInterestCard from './tera-criteria-of-interest-card.vue';
 // const props =
 const props = defineProps<{
 	node: WorkflowNode<CompareDatasetsState>;
 }>();
 
-enum CompareValue {
-	IMPACT = 'impact',
-	RANK = 'rank'
-}
-
 const compareOptions: { label: string; value: CompareValue }[] = [
 	{ label: 'Compare the impact of interventions', value: CompareValue.IMPACT },
 	{ label: 'Rank interventions based on multiple charts', value: CompareValue.RANK }
 ];
-const selectedCompareOption = ref(compareOptions[0].value);
 
 const datasets = ref<Dataset[]>([]);
-const selectedDataset = ref<Dataset | null>(null);
 
 const plotOptions = [
 	{ label: 'Percent change', value: 'percentage' },
 	{ label: 'Absolute difference', value: 'value' }
 ];
-const selectedPlotValue = ref('percentage');
 
 const isInputSettingsOpen = ref(true);
 const isOutputSettingsOpen = ref(true);
@@ -151,6 +149,9 @@ const emit = defineEmits(['update-state', 'update-status', 'close']);
 
 interface BasicKnobs {
 	criteriaOfInterestCards: CriteriaOfInterestCard[];
+	selectedPlotValue: PlotValue;
+	selectedCompareOption: CompareValue;
+	selectedDataset: string | null;
 }
 
 const addCriteria = () => {
@@ -166,7 +167,10 @@ const updateCriteria = (card: Partial<CriteriaOfInterestCard>, index: number) =>
 };
 
 const knobs = ref<BasicKnobs>({
-	criteriaOfInterestCards: []
+	criteriaOfInterestCards: [],
+	selectedPlotValue: PlotValue.PERCENTAGE,
+	selectedCompareOption: CompareValue.IMPACT,
+	selectedDataset: null
 });
 
 const initialize = async () => {
