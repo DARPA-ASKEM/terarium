@@ -138,7 +138,7 @@ import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import SelectButton from 'primevue/selectbutton';
 import { useProjectMenu } from '@/composables/project-menu';
-import { ClientEventType, ProgressState, Project, ProjectSearchResponse } from '@/types/Types';
+import { ClientEventType, ProgressState, Project, ProjectSearchResult } from '@/types/Types';
 import { ProjectWithKnnData } from '@/types/Project';
 import { Vue3Lottie } from 'vue3-lottie';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
@@ -168,7 +168,7 @@ const activeTabIndex = ref(0);
 const showVideo = ref(false);
 const isUploadProjectModalVisible = ref(false);
 const searchProjectsQuery = ref('');
-const searchProjectsResults = ref<ProjectSearchResponse[]>([]);
+const searchProjectsResults = ref<ProjectSearchResult[]>([]);
 const isSearchLoading = ref(false);
 
 enum ProjectsView {
@@ -319,17 +319,20 @@ async function searchedProjects() {
 	}
 
 	isSearchLoading.value = true;
-	searchProjectsResults.value = await findProjects(searchProjectsQuery.value);
-
-	// If no projects found, display a toast message
-	if (isEmpty(searchProjectsResults.value)) {
-		useToastService().info('No projects found', 'Try searching for something else', 5000);
-	} else {
-		// Display search results using the table view
-		view.value = ProjectsView.Table;
-	}
-
-	isSearchLoading.value = false;
+	findProjects(searchProjectsQuery.value)
+		.then((response) => {
+			// If no projects found, display a toast message
+			if (isEmpty(response)) {
+				useToastService().info('No projects found', 'Try searching for something else', 5000);
+			} else {
+				// Display search results using the table view
+				searchProjectsResults.value = response;
+				view.value = ProjectsView.Table;
+			}
+		})
+		.finally(() => {
+			isSearchLoading.value = false;
+		});
 }
 </script>
 
