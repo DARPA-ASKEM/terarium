@@ -270,6 +270,7 @@ function prepareDescription() {
 	fallbackDescription = `
 	${dataset.value?.fileNames ? `<p>File name(s): ${dataset.value?.fileNames}</p>` : ''}
 	<p>${dataset.value?.description}</p>
+	<p>${card.value?.DESCRIPTION}</p>
 	${card.value?.DATASET_TYPE ? `<p>Dataset type: ${card.value.DATASET_TYPE}</p>` : ''}
 	${card.value?.AUTHOR_NAME ? `<p>Author: ${card.value.AUTHOR_NAME}</p>` : ''}
 	`;
@@ -277,8 +278,6 @@ function prepareDescription() {
 	editorContent.value = dataset.value?.metadata?.description
 		? b64DecodeUnicode(dataset.value.metadata.description)
 		: fallbackDescription;
-
-	console.log(editorContent.value);
 }
 
 watch(editorContent, () => {
