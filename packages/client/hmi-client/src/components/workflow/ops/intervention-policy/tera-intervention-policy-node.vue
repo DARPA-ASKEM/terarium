@@ -1,7 +1,7 @@
 <template>
 	<section>
 		<ul v-if="node.state.interventionPolicy.id">
-			<li v-for="(_interventions, appliedTo) in groupedOutputParameters" :key="appliedTo">
+			<li v-for="(_interventions, appliedTo) in selectedOutputParameters" :key="appliedTo">
 				<vega-chart
 					expandable
 					:are-embed-actions-visible="false"
@@ -59,11 +59,18 @@ const isModelInputConnected = computed(() => modelInput?.status === WorkflowPort
 
 const groupedOutputParameters = computed(() =>
 	Object.fromEntries(
-		Object.entries(
-			groupBy(flattenInterventionData(props.node.state.interventionPolicy.interventions), 'appliedTo')
-		).slice(0, 4) // Show a max of 4 charts
+		Object.entries(groupBy(flattenInterventionData(props.node.state.interventionPolicy.interventions), 'appliedTo'))
 	)
 );
+
+const selectedOutputParameters = computed(() => {
+	const charts = {};
+	props.node.state.selectedCharts?.forEach((chart) => {
+		const paramOutput = groupedOutputParameters.value[chart];
+		if (paramOutput) charts[chart] = paramOutput;
+	});
+	return charts;
+});
 
 const preparedCharts = computed(() =>
 	_.mapValues(groupedOutputParameters.value, (interventions, key) =>
