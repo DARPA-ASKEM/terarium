@@ -352,9 +352,10 @@ public class ProjectSearchService {
 	/**
 	 * Generate asset embeddings for a project
 	 *
-	 * @param projectId
-	 * @param asset
-	 * @return
+	 * @param projectId - the project id
+	 * @param asset - the asset to generate embeddings for
+	 * @param force - force the embedding to be generated even if the asset is temporary
+	 * @return - a future that will be completed when the embedding is generated
 	 */
 	public Future<Void> generateAndUpsertProjectAssetEmbeddings(
 		final UUID projectId,
@@ -363,6 +364,14 @@ public class ProjectSearchService {
 	) throws IOException {
 		if (force || (!isRunningTestProfile() && !asset.getTemporary())) {
 			final Map<TerariumAssetEmbeddingType, String> embeddingTexts = asset.getEmbeddingsSourceByType();
+			if (embeddingTexts == null) {
+				log.warn("unable to get embedding sources for asset {}", asset.getId());
+				return null;
+			}
+
+			// remove any null values
+			embeddingTexts.values().removeIf(text -> text == null || text.isEmpty());
+
 			if (embeddingTexts.isEmpty()) {
 				log.warn("No embedding sources for asset {}, not indexing anything", asset.getId());
 				return null;
@@ -512,7 +521,8 @@ public class ProjectSearchService {
 				throw new IllegalArgumentException("k must be less than or equal to numCandidates");
 			}
 
-			final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
+			final String searchText = (text == null) ? "" : text;
+			final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(searchText);
 
 			final List<Float> vector = Arrays.stream(embeddings.getEmbeddings().get(0).getVector())
 				.mapToObj(d -> (float) d)
@@ -539,7 +549,7 @@ public class ProjectSearchService {
 			final float NAME_BOOST = 0.9f;
 			final float KNN_BOOST = 0.1f;
 
-			final Query titleMatchQuery = QueryBuilders.match(m -> m.field("name").query(text).boost(NAME_BOOST));
+			final Query titleMatchQuery = QueryBuilders.match(m -> m.field("name").query(searchText).boost(NAME_BOOST));
 
 			final KnnQuery knn = new KnnQuery.Builder()
 				.field("asset_embeddings.vector")

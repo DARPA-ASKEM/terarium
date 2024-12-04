@@ -708,13 +708,15 @@ public class ExtractionService {
 			// update model embeddings
 			if (card != null && model.getPublicAsset() && !model.getTemporary()) {
 				final String cardText = objectMapper.writeValueAsString(card);
-				try {
-					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(cardText);
+				if (cardText != null) {
+					try {
+						final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(cardText);
 
-					modelService.uploadEmbeddings(modelId, embeddings, hasWritePermission);
-					notificationInterface.sendMessage("Embeddings created");
-				} catch (final Exception e) {
-					log.warn("Unable to generate embedding vectors for model");
+						modelService.uploadEmbeddings(modelId, embeddings, hasWritePermission);
+						notificationInterface.sendMessage("Embeddings created");
+					} catch (final Exception e) {
+						log.warn("Unable to generate embedding vectors for model");
+					}
 				}
 			}
 

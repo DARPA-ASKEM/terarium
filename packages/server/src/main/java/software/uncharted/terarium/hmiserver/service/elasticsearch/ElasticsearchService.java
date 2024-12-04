@@ -344,7 +344,7 @@ public class ElasticsearchService {
 	}
 
 	/**
-	 * Put an component template to the cluster
+	 * Put a component template to the cluster
 	 *
 	 * @param name         The name of the index template
 	 * @param templateJson The component template json string
