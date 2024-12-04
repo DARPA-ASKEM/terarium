@@ -3,9 +3,7 @@ package software.uncharted.terarium.hmiserver.models;
 public enum TerariumAssetEmbeddingType {
 	OVERVIEW("overview"),
 	NAME("name"),
-	DESCRIPTION("description"),
-	METADATA("metadata"),
-	CARD("card");
+	DESCRIPTION("description");
 
 	private final String text;
 

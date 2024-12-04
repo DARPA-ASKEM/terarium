@@ -121,6 +121,8 @@
 							showIcon
 							iconDisplay="input"
 							@date-select="knobs.transientModelConfig.temporalContext = $event"
+							show-button-bar
+							@clear-click="delete knobs.transientModelConfig.temporalContext"
 						/>
 					</div>
 				</AccordionTab>
