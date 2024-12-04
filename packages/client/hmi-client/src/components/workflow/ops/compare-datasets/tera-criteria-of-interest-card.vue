@@ -11,6 +11,7 @@
 				:options="card.configurations"
 				:model-value="card.selectedConfiguration"
 				@update:model-value="emit('update', { selectedConfiguration: $event })"
+				placeholder="Select..."
 			/>
 			rank interventions based on the
 			<Dropdown
@@ -25,6 +26,7 @@
 				:options="card.variables"
 				:model-value="card.selectedVariable"
 				@update:model-value="emit('update', { selectedVariable: $event })"
+				placeholder="Select..."
 			/>
 			at
 			<Dropdown
