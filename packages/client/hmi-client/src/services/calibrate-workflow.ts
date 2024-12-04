@@ -46,7 +46,7 @@ export const setupModelInput = async (modelConfigId: string | undefined) => {
 export const setupDatasetInput = async (dataset: Dataset) => {
 	const filename = getFileName(dataset);
 
-	const datasetOptions = dataset.columns?.filter((ele) => ele.fileName === filename);
+	const datasetOptions = dataset.columns;
 
 	return { filename, datasetOptions };
 };
