@@ -139,7 +139,6 @@ async function getProjectAssets() {
 	projectsWithKnnMatches.value.map(async (project) => {
 		// If assets were fetched before from when we were on that page don't redo it
 		if (!isEmpty(project.projectAssets) && prevSearchQuery === searchQuery) return;
-		// console.log(project);
 		project.showMore = false;
 	});
 	prevSearchQuery = searchQuery;
