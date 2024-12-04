@@ -27,10 +27,9 @@
 					<ul>
 						<li v-for="hit in data.hits" class="flex align-center gap-2" :key="hit.id">
 							<tera-asset-icon :asset-type="hit.assetType" />
-							{{ hit }}
-							<!-- <span v-html="highlight(asset.name, searchQuery)" />
-							{{ asset.name }}
-							{{ asset.description }} -->
+							{{ hit.assetName }}
+							<br />
+							{{ hit.embeddingContent }}
 						</li>
 					</ul>
 					<Button
