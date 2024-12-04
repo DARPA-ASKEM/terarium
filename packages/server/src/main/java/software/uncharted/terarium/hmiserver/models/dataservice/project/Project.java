@@ -140,11 +140,11 @@ public class Project extends TerariumAsset {
 			final ObjectMapper objectMapper = new ObjectMapper();
 			return objectMapper.writeValueAsString(this);
 		} catch (final Exception e) {
-			throw new RuntimeException("Failed to serialize model embedding text into JSON", e);
+			throw new RuntimeException("Failed to serialize project embedding text into JSON", e);
 		}
 	}
 
-	private String getOverviewAsReadableString() {
+	public String getOverviewAsReadableString() {
 		if (overviewContent == null) {
 			return null;
 		}

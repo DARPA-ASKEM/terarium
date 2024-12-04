@@ -1127,7 +1127,7 @@ public class ProjectController {
 		final String embeddingContent =
 			switch (hit.getEmbeddingType()) {
 				case DESCRIPTION -> asset.getDescription();
-				case OVERVIEW -> ((Project) asset).getEmbeddingSourceText();
+				case OVERVIEW -> ((Project) asset).getOverviewAsReadableString();
 				default -> asset.getName();
 			};
 
