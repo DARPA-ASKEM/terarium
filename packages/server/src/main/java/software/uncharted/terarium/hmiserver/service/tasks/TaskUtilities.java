@@ -1,8 +1,11 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -84,7 +87,19 @@ public class TaskUtilities {
 		final List<DatasetColumn> columns = dataset.getColumns();
 		final ObjectMapper mapper = new ObjectMapper();
 		mapper.setConfig(mapper.getSerializationConfig().with(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY));
-		final String serializedColumns = mapper.writeValueAsString(columns);
+		final ArrayNode columnsNode = mapper.convertValue(columns, ArrayNode.class);
+
+		// Remove the fields that are not needed
+		for (JsonNode column : columnsNode) {
+			((ObjectNode) column).remove("id");
+			((ObjectNode) column).remove("createdOn");
+			((ObjectNode) column).remove("updatedOn");
+			((ObjectNode) column).remove("grounding");
+			((ObjectNode) column).remove("metadata");
+			((ObjectNode) column).remove("dataType");
+			((ObjectNode) column).remove("description");
+		}
+		final String serializedColumns = mapper.writeValueAsString(columnsNode);
 
 		input.setDataset(serializedColumns);
 
