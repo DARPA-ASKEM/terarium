@@ -19,7 +19,13 @@
 			</tera-slider-panel>
 		</template>
 
-		<tera-drilldown-section :tabName="DrilldownTabs.Wizard"> </tera-drilldown-section>
+		<tera-drilldown-section :tabName="DrilldownTabs.Wizard">
+			<Accordion multiple :active-index="activeIndices">
+				<AccordionTab header="Summary"> </AccordionTab>
+				<AccordionTab header="Variables"> vega lite here </AccordionTab>
+				<AccordionTab header="Comparison table"> </AccordionTab>
+			</Accordion>
+		</tera-drilldown-section>
 
 		<tera-drilldown-section :tabName="DrilldownTabs.Notebook"> </tera-drilldown-section>
 
@@ -46,7 +52,10 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import { DrilldownTabs } from '@/types/common';
 import { ref } from 'vue';
 import Button from 'primevue/button';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
 import { CompareDatasetsState } from './compare-datasets-operation';
+
 // const props =
 defineProps<{
 	node: WorkflowNode<CompareDatasetsState>;
@@ -54,6 +63,7 @@ defineProps<{
 
 const isInputSettingsOpen = ref(true);
 const isOutputSettingsOpen = ref(true);
+const activeIndices = ref([0, 1, 2]);
 
 const onRun = () => {
 	console.log('run');
