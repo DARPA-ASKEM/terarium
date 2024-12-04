@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { createForecastChart, AUTOSIZE } from '@/services/charts';
 import {
 	DataArray,
+	extractModelConfigIdsInOrder,
 	getEnsembleResultModelConfigMap,
 	getRunResultCSV,
 	getSimulation,
@@ -163,7 +164,26 @@ export function getEnsembleErrorData(
 		);
 	const timestampColName = mapping.find((m) => m.newName === 'timepoint_id')?.datasetMapping ?? '';
 
-	const data = getErrorData(groundTruth, simulationData, calibrateMappings, timestampColName, pyciemssMap);
-	console.log(data);
-	return data;
+	const ensembleData = getErrorData(groundTruth, simulationData, calibrateMappings, timestampColName, pyciemssMap);
+	console.log(ensembleData);
+
+	// Error data for each model
+	const modelConfigIds = extractModelConfigIdsInOrder(pyciemssMap);
+	const modelData: DataArray[] = [];
+	modelConfigIds.forEach((configId) => {
+		const cMapping = mapping
+			.filter((m) => m.newName !== 'timepoint_id')
+			.map(
+				(m) =>
+					({
+						datasetVariable: m.datasetMapping,
+						modelVariable: m.modelConfigurationMappings[configId]
+					}) as CalibrateMap
+			);
+		const data = getErrorData(groundTruth, simulationData, cMapping, timestampColName, pyciemssMap);
+		modelData.push(data);
+	});
+	console.log(modelData);
+
+	return ensembleData;
 }
