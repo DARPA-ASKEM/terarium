@@ -27,10 +27,8 @@
 					<ul>
 						<li v-for="hit in data.hits" class="flex align-center gap-2" :key="hit.id">
 							<tera-asset-icon :asset-type="hit.assetType" />
-							{{ hit }}
-							<!-- <span v-html="highlight(asset.name, searchQuery)" />
-							{{ asset.name }}
-							{{ asset.description }} -->
+							{{ hit.assetName }}
+							{{ hit.embeddingContent }}
 						</li>
 					</ul>
 					<Button
@@ -140,6 +138,7 @@ async function getProjectAssets() {
 	projectsWithKnnMatches.value.map(async (project) => {
 		// If assets were fetched before from when we were on that page don't redo it
 		if (!isEmpty(project.projectAssets) && prevSearchQuery === searchQuery) return;
+		// console.log(project);
 		project.showMore = false;
 	});
 	prevSearchQuery = searchQuery;
