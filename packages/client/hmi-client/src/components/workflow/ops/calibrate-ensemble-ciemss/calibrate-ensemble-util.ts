@@ -146,44 +146,42 @@ export function buildChartData(
 	return { ...outputData, translationMap };
 }
 
+export interface EnsembleErrorData {
+	ensemble: DataArray;
+	[modelConfigId: string]: DataArray;
+}
+
 // Get the error data for the ensemble calibration
 export function getEnsembleErrorData(
 	groundTruth: DataArray,
 	simulationData: DataArray,
 	mapping: CalibrateEnsembleMappingRow[],
 	pyciemssMap: Record<string, string>
-) {
-	const calibrateMappings = mapping
-		.filter((m) => m.newName !== 'timepoint_id')
-		.map(
-			(m) =>
-				({
-					datasetVariable: m.datasetMapping,
-					modelVariable: m.datasetMapping
-				}) as CalibrateMap
-		);
+): EnsembleErrorData {
+	const errorData: EnsembleErrorData = { ensemble: [] };
 	const timestampColName = mapping.find((m) => m.newName === 'timepoint_id')?.datasetMapping ?? '';
-
-	const ensembleData = getErrorData(groundTruth, simulationData, calibrateMappings, timestampColName, pyciemssMap);
-	console.log(ensembleData);
+	const mappingWithoutTimeCol = mapping.filter((m) => m.newName !== 'timepoint_id');
+	// Error data for the ensemble
+	const calibrateMappings = mappingWithoutTimeCol.map(
+		(m) =>
+			({
+				datasetVariable: m.datasetMapping,
+				modelVariable: m.datasetMapping
+			}) as CalibrateMap
+	);
+	errorData.ensemble = getErrorData(groundTruth, simulationData, calibrateMappings, timestampColName, pyciemssMap);
 
 	// Error data for each model
 	const modelConfigIds = extractModelConfigIdsInOrder(pyciemssMap);
-	const modelData: DataArray[] = [];
 	modelConfigIds.forEach((configId) => {
-		const cMapping = mapping
-			.filter((m) => m.newName !== 'timepoint_id')
-			.map(
-				(m) =>
-					({
-						datasetVariable: m.datasetMapping,
-						modelVariable: m.modelConfigurationMappings[configId]
-					}) as CalibrateMap
-			);
-		const data = getErrorData(groundTruth, simulationData, cMapping, timestampColName, pyciemssMap);
-		modelData.push(data);
+		const cMapping = mappingWithoutTimeCol.map(
+			(m) =>
+				({
+					datasetVariable: m.datasetMapping,
+					modelVariable: `${configId}/${m.modelConfigurationMappings[configId]}`
+				}) as CalibrateMap
+		);
+		errorData[configId] = getErrorData(groundTruth, simulationData, cMapping, timestampColName, pyciemssMap);
 	});
-	console.log(modelData);
-
-	return ensembleData;
+	return errorData;
 }

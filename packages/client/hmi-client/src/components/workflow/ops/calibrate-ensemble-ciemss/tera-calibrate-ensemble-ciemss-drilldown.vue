@@ -221,7 +221,7 @@
 									<vega-chart
 										v-for="(spec, index) of errorCharts"
 										:key="index"
-										:expandable="onExpandErrorChart"
+										:expandable="() => onExpandErrorChart(index)"
 										:are-embed-actions-visible="true"
 										:visualization-spec="spec"
 									/>
@@ -380,7 +380,8 @@ import {
 	getSelectedOutputEnsembleMapping,
 	fetchOutputData,
 	buildChartData,
-	getEnsembleErrorData
+	getEnsembleErrorData,
+	EnsembleErrorData
 } from './calibrate-ensemble-util';
 
 const props = defineProps<{
@@ -618,7 +619,7 @@ const {
 	null,
 	selectedOutputMapping
 );
-const errorData = computed<DataArray>(() =>
+const errorData = computed<EnsembleErrorData>(() =>
 	getEnsembleErrorData(
 		groundTruthData.value,
 		outputData.value?.result ?? [],

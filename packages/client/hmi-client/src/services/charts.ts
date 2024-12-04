@@ -58,6 +58,7 @@ export interface ErrorChartOptions extends Omit<BaseChartOptions, 'height' | 'yA
 	height?: number;
 	areaChartHeight?: number;
 	boxPlotHeight?: number;
+	color?: string;
 	variables: { field: string; label?: string }[];
 }
 
@@ -92,8 +93,8 @@ export function createErrorChart(dataset: Record<string, any>[], options: ErrorC
 	const labelFontWeight = 'normal';
 	const globalFont = 'Figtree';
 
-	const areaChartColor = '#1B8073';
-	const dotColor = '#67B5AC';
+	const areaChartColor = options.color ?? '#1B8073';
+	const dotColor = options.color ?? '#1B8073';
 	const boxPlotColor = '#000';
 
 	const width = options.width;
@@ -144,6 +145,7 @@ export function createErrorChart(dataset: Record<string, any>[], options: ErrorC
 		},
 		point: {
 			color: dotColor,
+			opacity: 0.7,
 			filled: true
 		},
 		boxplot: {
@@ -217,7 +219,14 @@ export function createErrorChart(dataset: Record<string, any>[], options: ErrorC
 						y: {
 							field: 'Variable Label',
 							scale: { range: [boxPlotYPosition, boxPlotYPosition] },
-							axis: { grid: true, labels: true, orient: 'left', offset: 5, labelAngle: -90 }
+							axis: {
+								grid: true,
+								labels: true,
+								orient: 'left',
+								offset: 5,
+								labelAngle: -90,
+								labelLimit: areaChartHeight + boxPlotHeight + gap
+							}
 						}
 					}
 				},
