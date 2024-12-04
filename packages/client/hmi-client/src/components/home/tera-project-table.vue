@@ -92,18 +92,11 @@ import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import { formatDdMmmYyyy } from '@/utils/date';
 import { AssetType } from '@/types/Types';
 import type { ProjectWithKnnData } from '@/types/Project';
-import type { PageState } from 'primevue/paginator';
 // import { highlight } from '@/utils/text';
 import Button from 'primevue/button';
 import { v4 as uuidv4 } from 'uuid';
 import TeraAssetIcon from '@/components/widgets/tera-asset-icon.vue';
 import TeraProjectMenu from './tera-project-menu.vue';
-// Gets (I think these are the asset types that we want/would typically show up)
-// import { getModel } from '@/services/model';
-// import { getDataset } from '@/services/dataset';
-// import { getDocumentAsset } from '@/services/document-assets';
-// import { getWorkflow } from '@/services/workflow';
-// import { getModelConfigurationById } from '@/services/model-configurations';
 
 const props = defineProps<{
 	projects: ProjectWithKnnData[];
@@ -117,7 +110,6 @@ const projectsWithKnnMatches = ref<ProjectWithKnnData[]>([]);
 const numberOfRows = ref(20);
 const projectTableKey = ref(uuidv4());
 
-let pageState: PageState = { page: 0, rows: numberOfRows.value, first: 0 };
 let prevSearchQuery = '';
 
 const columnWidthMap = {
@@ -140,43 +132,17 @@ function formatStatTooltip(amount: number, itemName: string) {
 	return `${amount} ${itemName}${amount === 1 ? '' : 's'}`;
 }
 
-async function getProjectAssets(event: PageState = pageState) {
-	pageState = event; // Save the current page state so we still know it when the watch is triggered
+async function getProjectAssets() {
 	if (isEmpty(props.searchQuery)) return;
 
-	const { rows, first } = event;
 	const searchQuery = props.searchQuery.toLowerCase().trim();
 
-	// Just fetch the asset data we are seeing in the current page
-	projectsWithKnnMatches.value.slice(first, first + rows).map(async (project) => {
+	projectsWithKnnMatches.value.map(async (project) => {
 		// If assets were fetched before from when we were on that page don't redo it
 		if (!isEmpty(project.projectAssets) && prevSearchQuery === searchQuery) return;
-
-		// const hit = project?.hits?.[0];
-
-		// if (hit) {
-		// 	let relevantAsset: any = null;
-		// 	if (hit.assetType === AssetType.Model) {
-		// 		relevantAsset = await getModel(hit.assetId);
-		// 	} else if (hit.assetType === AssetType.Dataset) {
-		// 		relevantAsset = await getDataset(hit.assetId);
-		// 	} else if (hit.assetType === AssetType.Document) {
-		// 		relevantAsset = await getDocumentAsset(hit.assetId);
-		// 	} else if (hit.assetType === AssetType.Workflow) {
-		// 		relevantAsset = await getWorkflow(hit.assetId);
-		// 	} else if (hit.assetType === AssetType.ModelConfiguration) {
-		// 		relevantAsset = await getModelConfigurationById(hit.assetId);
-		// 	}
-		// 	project.projectAssets.push(relevantAsset);
-		// }
-
 		project.showMore = false;
-		// project.snippet = project.description?.toLowerCase().includes(searchQuery)
-		// 	? highlight(project.description, searchQuery)
-		// 	: undefined;
 	});
 	prevSearchQuery = searchQuery;
-	console.log(projectsWithKnnMatches.value);
 }
 
 watch(
@@ -207,7 +173,7 @@ watch(
 
 /* Now the table header sticks along with the project search bar */
 :deep(thead) {
-	top: 105px;
+	top: 104px;
 	z-index: 1;
 }
 
