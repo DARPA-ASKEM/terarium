@@ -352,9 +352,10 @@ public class ProjectSearchService {
 	/**
 	 * Generate asset embeddings for a project
 	 *
-	 * @param projectId
-	 * @param asset
-	 * @return
+	 * @param projectId - the project id
+	 * @param asset - the asset to generate embeddings for
+	 * @param force - force the embedding to be generated even if the asset is temporary
+	 * @return - a future that will be completed when the embedding is generated
 	 */
 	public Future<Void> generateAndUpsertProjectAssetEmbeddings(
 		final UUID projectId,
