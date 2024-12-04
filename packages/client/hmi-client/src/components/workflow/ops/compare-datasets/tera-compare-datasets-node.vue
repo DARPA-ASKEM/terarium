@@ -1,22 +1,22 @@
 <template>
 	<section>
-		<tera-operator-placeholder :node="node">Attach models to compare</tera-operator-placeholder>
+		<tera-operator-placeholder :node="node">Attach datasets/simulation outputs to compare</tera-operator-placeholder>
 		<Button v-if="hasAtLeastTwoValues" label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 	</section>
 </template>
 
 <script setup lang="ts">
-import { watch, computed } from 'vue';
-import Button from 'primevue/button';
-import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import { computed, watch } from 'vue';
 import { type WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
-import { ModelComparisonOperationState } from './model-comparison-operation';
-
-const emit = defineEmits(['append-input-port', 'open-drilldown']);
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import Button from 'primevue/button';
+import { CompareDatasetsState } from './compare-datasets-operation';
 
 const props = defineProps<{
-	node: WorkflowNode<ModelComparisonOperationState>;
+	node: WorkflowNode<CompareDatasetsState>;
 }>();
+
+const emit = defineEmits(['append-input-port', 'open-drilldown']);
 
 const hasAtLeastTwoValues = computed(() => props.node.inputs.filter((input) => input.value).length >= 2);
 
@@ -24,7 +24,7 @@ watch(
 	() => props.node.inputs,
 	() => {
 		if (props.node.inputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
-			emit('append-input-port', { type: 'modelId', label: 'Model' });
+			emit('append-input-port', { type: 'datasetId', label: 'Dataset or Simulation result' });
 		}
 	},
 	{ deep: true }
