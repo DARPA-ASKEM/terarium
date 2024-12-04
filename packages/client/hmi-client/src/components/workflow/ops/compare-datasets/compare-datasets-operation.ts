@@ -11,7 +11,7 @@ export enum RankOption {
 }
 
 export const blankCriteriaOfInterest = {
-	name: 'Criteria of Interest',
+	name: 'Criteria of interest',
 	configurations: [],
 	selectedConfiguration: null,
 	variables: [],
