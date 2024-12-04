@@ -13,9 +13,10 @@ import {
 import _ from 'lodash';
 import { ChartSetting, ChartSettingType } from '@/types/common';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
-import { ParameterSemantic } from '@/types/Types';
+import { AssetType, ParameterSemantic } from '@/types/Types';
 import { DistributionType } from '@/services/distribution';
 import { calculateUncertaintyRange } from '@/utils/math';
+import { useProjects } from '@/composables/project';
 
 export class SensitivityAnalysisScenario extends BaseScenario {
 	public static templateId = 'sensitivity-analysis';
@@ -121,6 +122,11 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 		setParameterDistributions(modelConfig, distributionParameterMappings);
 
 		const newModelConfig = await createModelConfiguration(modelConfig);
+		await useProjects().addAsset(
+			AssetType.ModelConfiguration,
+			newModelConfig.id,
+			useProjects().activeProject.value?.id
+		);
 		const modelConfigNode = wf.addNode(
 			ModelConfigOp,
 			{ x: 0, y: 0 },
