@@ -21,6 +21,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,8 +43,10 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddingType;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Contributor;
@@ -62,12 +65,16 @@ import software.uncharted.terarium.hmiserver.service.data.CodeService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ITerariumAssetService;
+import software.uncharted.terarium.hmiserver.service.data.InterventionService;
+import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
+import software.uncharted.terarium.hmiserver.service.data.NotebookSessionService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectPermissionsService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService.ProjectSearchResponse;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.service.data.SimulationService;
 import software.uncharted.terarium.hmiserver.service.data.TerariumAssetServices;
 import software.uncharted.terarium.hmiserver.service.data.WorkflowService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationGroupInstance;
@@ -90,19 +97,13 @@ public class ProjectController {
 
 	static final String WELCOME_MESSAGE = "";
 	final Messages messages;
-	final ArtifactService artifactService;
-	final ModelService modelService;
-	final CodeService codeService;
 	final CurrentUserService currentUserService;
-	final DatasetService datasetService;
-	final DocumentAssetService documentAssetService;
 	final ProjectAssetService projectAssetService;
 	final ProjectService projectService;
 	final ReBACService reBACService;
 	final TerariumAssetServices terariumAssetServices;
 	final TerariumAssetCloneService cloneService;
 	final UserService userService;
-	final WorkflowService workflowService;
 	final ObjectMapper objectMapper;
 	final ProjectPermissionsService projectPermissionsService;
 	final ProjectSearchService projectSearchService;
@@ -1016,6 +1017,32 @@ public class ProjectController {
 		return ResponseEntity.ok(permissions);
 	}
 
+	@Data
+	@TSModel
+	private static class ProjectSearchResultAsset {
+
+		final UUID assetId;
+		final AssetType assetType;
+		final String assetName;
+		final String embeddingContent;
+		final TerariumAssetEmbeddingType embeddingType;
+		final Float score;
+	}
+
+	@Data
+	@TSModel
+	private static class ProjectSearchResult extends Project {
+
+		final Float score;
+		final List<ProjectSearchResultAsset> assets;
+
+		public ProjectSearchResult(Project project, Float score, List<ProjectSearchResultAsset> assets) {
+			super(project); // Call the Project superclass constructor
+			this.score = score;
+			this.assets = assets;
+		}
+	}
+
 	@GetMapping("/knn")
 	@Secured(Roles.USER)
 	@Operation(summary = "Executes a knn search against the provided asset type")
@@ -1037,7 +1064,7 @@ public class ProjectController {
 			)
 		}
 	)
-	public ResponseEntity<List<ProjectSearchResponse>> projectKnnSearch(
+	public ResponseEntity<List<ProjectSearchResult>> projectKnnSearch(
 		@RequestParam(value = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 		@RequestParam(value = "page", defaultValue = "0", required = false) final Integer page,
 		@RequestParam(value = "text", defaultValue = "") final String text,
@@ -1047,7 +1074,7 @@ public class ProjectController {
 		try {
 			final String userId = currentUserService.get().getId();
 
-			final List<ProjectSearchResponse> res = projectSearchService.searchProjectsKNN(
+			final List<ProjectSearchResponse> searchResponseList = projectSearchService.searchProjectsKNN(
 				userId,
 				pageSize,
 				page,
@@ -1057,12 +1084,61 @@ public class ProjectController {
 				null
 			);
 
-			return ResponseEntity.ok(res);
+			final List<ProjectSearchResult> searchResults = new ArrayList<>();
+
+			// Fluffing up the response with the project assets information
+			for (final ProjectSearchResponse searchResponse : searchResponseList) {
+				final List<ProjectSearchResultAsset> assets = new ArrayList<>();
+				for (ProjectSearchService.ProjectSearchAsset hit : searchResponse.getHits()) {
+					ProjectSearchResultAsset asset = this.createProjectSearchResultAsset(hit);
+					if (asset != null) {
+						assets.add(asset);
+					}
+				}
+
+				// Add the project information to the response
+				final Project project = projectService.getProject(searchResponse.getProjectId()).orElseThrow();
+				final ProjectSearchResult searchResult = new ProjectSearchResult(project, searchResponse.getScore(), assets);
+
+				searchResults.add(searchResult);
+			}
+
+			return ResponseEntity.ok(searchResults);
 		} catch (final Exception e) {
 			final String error = "Unable to get execute knn search";
 			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
+	}
+
+	/* Create a ProjectSearchResultAsset from a ProjectSearchHit */
+	private ProjectSearchResultAsset createProjectSearchResultAsset(final ProjectSearchService.ProjectSearchAsset hit) {
+		if (hit.getAssetType() == null || hit.getAssetId() == null) {
+			return null;
+		}
+
+		final TerariumAsset asset = terariumAssetServices.getAsset(hit.getAssetId(), hit.getAssetType());
+
+		if (asset == null) {
+			return null;
+		}
+
+		// Get the content that trigger the hit
+		final String embeddingContent =
+			switch (hit.getEmbeddingType()) {
+				case DESCRIPTION -> asset.getDescription();
+				case OVERVIEW -> ((Project) asset).getEmbeddingSourceText();
+				default -> asset.getName();
+			};
+
+		return new ProjectSearchResultAsset(
+			hit.getAssetId(),
+			hit.getAssetType(),
+			asset.getName(),
+			embeddingContent,
+			hit.getEmbeddingType(),
+			hit.getScore()
+		);
 	}
 
 	// --------------------------------------------------------------------------
