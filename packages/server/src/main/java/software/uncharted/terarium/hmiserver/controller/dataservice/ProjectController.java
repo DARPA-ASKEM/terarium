@@ -21,6 +21,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,8 +43,10 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddingType;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Contributor;
@@ -1016,6 +1019,28 @@ public class ProjectController {
 		return ResponseEntity.ok(permissions);
 	}
 
+	@Data
+	@TSModel
+	private static class ProjectSearchResultAsset extends ProjectAsset {
+
+		final String embeddingContent;
+		final TerariumAssetEmbeddingType embeddingType;
+	}
+
+	@Data
+	@TSModel
+	private static class ProjectSearchResult extends Project {
+
+		final Float score;
+		final List<ProjectSearchResultAsset> assets;
+
+		public ProjectSearchResult(Project project, Float score, List<ProjectSearchResultAsset> assets) {
+			super(project); // Call the Project superclass constructor
+			this.score = score;
+			this.assets = assets;
+		}
+	}
+
 	@GetMapping("/knn")
 	@Secured(Roles.USER)
 	@Operation(summary = "Executes a knn search against the provided asset type")
@@ -1037,7 +1062,7 @@ public class ProjectController {
 			)
 		}
 	)
-	public ResponseEntity<List<ProjectSearchResponse>> projectKnnSearch(
+	public ResponseEntity<List<ProjectSearchResult>> projectKnnSearch(
 		@RequestParam(value = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 		@RequestParam(value = "page", defaultValue = "0", required = false) final Integer page,
 		@RequestParam(value = "text", defaultValue = "") final String text,
@@ -1047,7 +1072,7 @@ public class ProjectController {
 		try {
 			final String userId = currentUserService.get().getId();
 
-			final List<ProjectSearchResponse> res = projectSearchService.searchProjectsKNN(
+			final List<ProjectSearchResponse> searchResponseList = projectSearchService.searchProjectsKNN(
 				userId,
 				pageSize,
 				page,
@@ -1057,12 +1082,53 @@ public class ProjectController {
 				null
 			);
 
-			return ResponseEntity.ok(res);
+			final List<ProjectSearchResult> searchResults = new ArrayList<>();
+
+			// Fluffing up the response with the project assets information
+			for (final ProjectSearchResponse searchResponse : searchResponseList) {
+				// Get the project
+				final Project project = projectService.getProject(searchResponse.getProjectId()).orElseThrow();
+
+				final List<ProjectSearchResultAsset> assets = searchResponse
+					.getHits()
+					.stream()
+					.map(ProjectController::createProjectSearchResultAsset)
+					.collect(Collectors.toList());
+
+				// Add the project information to the response
+				final ProjectSearchResult searchResult = new ProjectSearchResult(project, searchResponse.getScore(), assets);
+
+				searchResults.add(searchResult);
+			}
+
+			return ResponseEntity.ok(searchResults);
 		} catch (final Exception e) {
 			final String error = "Unable to get execute knn search";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
+	}
+
+	/* Create a ProjectSearchResultAsset from a ProjectSearchHit */
+	private ProjectSearchResultAsset createProjectSearchResultAsset(final ProjectSearchAsset hit) {
+		TerariumAsset asset;
+		if (hit.getAssetType() == null || hit.getAssetId() == null) {
+			return null;
+		}
+
+		// If Datase
+
+		// If Model
+
+		// If Terarium Asset
+
+		return new ProjectSearchResultAsset(
+			hit.getAssetId(),
+			hit.getAssetType(),
+			asset.getName(),
+			hit.getEmbedding().getContent(),
+			hit.getEmbedding().getType()
+		);
 	}
 
 	// --------------------------------------------------------------------------
