@@ -2,6 +2,7 @@ import { useProjects } from '@/composables/project';
 import {
 	CloneProjectStatusUpdate,
 	ExtractionStatusUpdate,
+	ModelEnrichmentStatusUpdate,
 	NotificationItem,
 	NotificationItemStatus
 } from '@/types/common';
@@ -205,14 +206,13 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 			created.typeDisplayName = `${snakeToCapitalSentence(event.data.data.simulationType)} (${event.data.data.simulationEngine.toLowerCase()})`;
 		}
 	);
-	registerHandler<TaskResponse>(ClientEventType.KnowledgeEnrichmentModel, (event, created) => {
+	registerHandler<ModelEnrichmentStatusUpdate>(ClientEventType.KnowledgeEnrichmentModel, (event, created) => {
 		created.sourceName = 'Model Enrichment';
-
 		// Check if the event data contains a workflowId and nodeId
-		if (event.data.additionalProperties.workflowId && event.data.additionalProperties.nodeId) {
-			created.assetId = event.data.additionalProperties.workflowId as string;
+		if (event.data.data?.workflowId && event.data.data?.nodeId) {
+			created.assetId = event.data.data.workflowId as string;
 			created.pageType = AssetType.Workflow;
-			created.nodeId = event.data.additionalProperties.nodeId as string;
+			created.nodeId = event.data.data.nodeId as string;
 			getWorkflow(created.assetId, created.projectId).then((workflow) =>
 				Object.assign(created, { context: workflow?.name || '' })
 			);
@@ -220,7 +220,7 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 
 		// We display the model page from where the enrichment model was triggered
 		else {
-			created.assetId = event.data.additionalProperties.modelId as string;
+			created.assetId = event.data.data.modelId as string;
 			created.pageType = AssetType.Model;
 			created.typeDisplayName = 'Model Enrichment';
 			getModel(created.assetId, created.projectId).then((model) =>
