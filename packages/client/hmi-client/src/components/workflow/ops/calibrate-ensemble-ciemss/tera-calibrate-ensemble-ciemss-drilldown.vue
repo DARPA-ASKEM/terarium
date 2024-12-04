@@ -369,7 +369,7 @@ const emit = defineEmits(['update-state', 'close', 'select-output']);
 
 interface BasicKnobs {
 	ensembleMapping: CalibrateEnsembleMappingRow[];
-	configurationWeights: { [key: string]: number };
+	configurationWeights: { [key: string]: number }; // Note these are Dirichlet distributions not EXACTLY weights
 	extra: EnsembleCalibrateExtraCiemss;
 	timestampColName: string;
 }
@@ -385,7 +385,9 @@ const currentActiveIndicies = ref([0, 1, 2]);
 
 const isSidebarOpen = ref(true);
 const selectedOutputId = ref<string>();
-const isRunDisabled = computed(() => !knobs.value.ensembleMapping[0] || !datasetId.value);
+const isRunDisabled = computed(
+	() => !knobs.value.ensembleMapping[0] || !datasetId.value || allModelConfigurations.value.length < 2
+);
 const cancelRunId = computed(
 	() =>
 		props.node.state.inProgressForecastId ||
@@ -557,7 +559,7 @@ onMounted(async () => {
 	// initialze weights
 	if (isEmpty(knobs.value.configurationWeights)) {
 		allModelConfigurations.value.forEach((config) => {
-			knobs.value.configurationWeights[config.id as string] = 5;
+			knobs.value.configurationWeights[config.id as string] = 1;
 		});
 	}
 });

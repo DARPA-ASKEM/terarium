@@ -418,8 +418,10 @@ export function createPartsList(parts, model, partType) {
 					};
 		if (partType === PartType.TRANSITION) {
 			base.templateId = `${id}`;
-			base.input = basePart.input.join(', ');
-			base.output = basePart.output.join(', ');
+			if (basePart) {
+				base.input = basePart.input.join(', ');
+				base.output = basePart.output.join(', ');
+			}
 		}
 
 		return { base, children, isParent };

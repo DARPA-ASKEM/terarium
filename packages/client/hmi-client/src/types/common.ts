@@ -158,6 +158,8 @@ interface Comparison {
 	conclusion: string;
 }
 
+export type ModelEnrichmentStatusUpdate = StatusUpdate<{ modelId: string; workflowId: string; nodeId: string }>;
+
 export type ExtractionStatusUpdate = StatusUpdate<{ documentId: string }>;
 export type CloneProjectStatusUpdate = StatusUpdate<{ projectId: string }>;
 export interface NotificationItem extends NotificationItemStatus, AssetRoute {
