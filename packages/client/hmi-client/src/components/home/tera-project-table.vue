@@ -28,6 +28,7 @@
 						<li v-for="hit in data.hits" class="flex align-center gap-2" :key="hit.id">
 							<tera-asset-icon :asset-type="hit.assetType" />
 							{{ hit.assetName }}
+							<br />
 							{{ hit.embeddingContent }}
 						</li>
 					</ul>
