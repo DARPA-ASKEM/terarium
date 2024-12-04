@@ -11,6 +11,12 @@
 			</li>
 		</ul>
 		<tera-operator-placeholder :node="node" v-else />
+		<tera-intervention-summary-card
+			class="intervention-title"
+			v-for="(intervention, index) in node.state.interventionPolicy.interventions"
+			:intervention="intervention"
+			:key="index"
+		/>
 		<tera-progress-spinner is-centered :font-size="2" v-if="isLoading" />
 		<Button
 			:label="isModelInputConnected ? 'Open' : 'Attach a model'"
@@ -34,6 +40,7 @@ import VegaChart from '@/components/widgets/VegaChart.vue';
 import { useClientEvent } from '@/composables/useClientEvent';
 import { type ClientEvent, ClientEventType, type TaskResponse, TaskStatus } from '@/types/Types';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-intervention-summary-card.vue';
 import { InterventionPolicyState } from './intervention-policy-operation';
 
 const emit = defineEmits(['open-drilldown', 'update-state']);
@@ -125,5 +132,10 @@ watch(
 <style scoped>
 ul {
 	list-style-type: none;
+}
+.intervention-title {
+	& > :deep(h5) {
+		padding-top: 15px;
+	}
 }
 </style>
