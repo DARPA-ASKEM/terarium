@@ -85,17 +85,16 @@
 <script setup lang="ts">
 import { isEmpty, cloneDeep } from 'lodash';
 import { ref, watch } from 'vue';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
+import { v4 as uuidv4 } from 'uuid';
 import { formatDdMmmYyyy } from '@/utils/date';
+import Button from 'primevue/button';
+import Column from 'primevue/column';
+import DataTable from 'primevue/datatable';
+import TeraAssetIcon from '@/components/widgets/tera-asset-icon.vue';
+import TeraProjectMenu from '@/components/home/tera-project-menu.vue';
+import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import { AssetType } from '@/types/Types';
 import type { ProjectWithKnnData } from '@/types/Project';
-// import { highlight } from '@/utils/text';
-import Button from 'primevue/button';
-import { v4 as uuidv4 } from 'uuid';
-import TeraAssetIcon from '@/components/widgets/tera-asset-icon.vue';
-import TeraProjectMenu from './tera-project-menu.vue';
 
 const props = defineProps<{
 	projects: ProjectWithKnnData[];
@@ -145,7 +144,7 @@ async function getProjectAssets() {
 }
 
 watch(
-	() => props.projects,
+	props.projects,
 	() => {
 		projectTableKey.value = uuidv4();
 		projectsWithKnnMatches.value = cloneDeep(props.projects);
