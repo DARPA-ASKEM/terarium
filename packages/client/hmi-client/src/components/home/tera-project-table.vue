@@ -144,7 +144,7 @@ async function getProjectAssets() {
 }
 
 watch(
-	props.projects,
+	() => props.projects,
 	() => {
 		projectTableKey.value = uuidv4();
 		projectsWithKnnMatches.value = cloneDeep(props.projects);
