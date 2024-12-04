@@ -17,6 +17,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
@@ -27,6 +28,7 @@ import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DKGService {
 
 	private final ElasticsearchConfiguration elasticConfig;

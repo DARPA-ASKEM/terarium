@@ -37,7 +37,6 @@
 </template>
 
 <script setup lang="ts">
-import { enrichDataset } from '@/services/knowledge';
 import { getRelatedArtifacts, mapAssetTypeToProvenanceType } from '@/services/provenance';
 import type { DocumentAsset, ProjectAsset, TerariumAsset } from '@/types/Types';
 import { AssetType, ProvenanceType } from '@/types/Types';
@@ -45,7 +44,7 @@ import { isDocumentAsset } from '@/utils/asset';
 import Button from 'primevue/button';
 import RadioButton from 'primevue/radiobutton';
 import { computed, ref, watch } from 'vue';
-import { enrichModelMetadata } from '@/services/goLLM';
+import { datasetCard, enrichModelMetadata } from '@/services/goLLM';
 import { useProjects } from '@/composables/project';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 
@@ -90,8 +89,7 @@ async function sendForEnrichment(): Promise<void> {
 			// Build enrichment job ids list (profile asset, align model, etc...)
 			return enrichModelMetadata(props.assetId, selectedResourceId.value, true);
 		}
-
-		return enrichDataset(props.assetId, selectedResourceId.value);
+		return datasetCard(props.assetId, selectedResourceId.value);
 	}
 	return Promise.resolve();
 }
