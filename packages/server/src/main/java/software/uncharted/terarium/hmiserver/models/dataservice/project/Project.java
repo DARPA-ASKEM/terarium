@@ -149,17 +149,11 @@ public class Project extends TerariumAsset {
 			return null;
 		}
 
-		// decode from base64
-		final byte[] decodedBytes = Base64.getDecoder().decode(overviewContent);
-		final String decodedString = new String(decodedBytes);
-
 		// remove image tags
 		final String regex = "<img\\b[^>]*>(.*?)<\\/img>|<img\\b[^>]*\\/>";
 		final Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
-		final Matcher matcher = pattern.matcher(decodedString);
-		final String result = matcher.replaceAll("");
-
-		return result;
+		final Matcher matcher = pattern.matcher(new String(overviewContent));
+		return matcher.replaceAll("");
 	}
 
 	@JsonIgnore
