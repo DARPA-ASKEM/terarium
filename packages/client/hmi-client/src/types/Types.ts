@@ -311,7 +311,6 @@ export interface Project extends TerariumAsset {
     sampleProject?: boolean;
     publicProject?: boolean;
     userPermission?: string;
-    overviewAsReadableString: string;
 }
 
 export interface ProjectAsset extends TerariumAsset {
