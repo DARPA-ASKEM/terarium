@@ -15,6 +15,7 @@ import { ChartSetting, ChartSettingType } from '@/types/common';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { ParameterSemantic } from '@/types/Types';
 import { DistributionType } from '@/services/distribution';
+import { calculateUncertaintyRange } from '@/utils/math';
 
 export class SensitivityAnalysisScenario extends BaseScenario {
 	public static templateId = 'sensitivity-analysis';
@@ -55,11 +56,17 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 		this.parameters.push(null);
 	}
 
+	removeParameter(index: number) {
+		this.parameters.splice(index, 1);
+	}
+
 	setParameter(parameter: ParameterSemantic, index: number) {
 		// convert constants to distributions
 		if (parameter.distribution.type === DistributionType.Constant) {
 			parameter.distribution.type = DistributionType.Uniform;
-			parameter.distribution.parameters = { maximum: 0, minimum: 0 };
+			// +10% and -10% of the constant value
+			const { min, max } = calculateUncertaintyRange(parameter.distribution.parameters.value, 10);
+			parameter.distribution.parameters = { maximum: max, minimum: min };
 		}
 
 		this.parameters[index] = parameter;

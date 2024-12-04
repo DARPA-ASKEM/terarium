@@ -24,42 +24,45 @@
 			/>
 			<label>Select uncertain parameters of interest and adjust ranges to be explored if needed</label>
 			<template v-for="(parameter, i) in scenario.parameters" :key="i">
-				<Dropdown
-					:model-value="parameter?.referenceId"
-					:options="modelParameters"
-					option-label="referenceId"
-					option-value="referenceId"
-					placeholder="Select a parameter"
-					:disabled="!selectedModelConfiguration"
-					:loading="isFetchingModelConfiguration || isFetchingModelInformation"
-					@update:model-value="onParameterSelect($event, i)"
-				>
-					<template #option="slotProps">
-						<span>{{ displayParameter(slotProps.option.referenceId) }}</span>
-					</template>
+				<div class="flex">
+					<Dropdown
+						class="flex-1"
+						:model-value="parameter?.referenceId"
+						:options="modelParameters"
+						option-label="referenceId"
+						option-value="referenceId"
+						placeholder="Select a parameter"
+						:disabled="!selectedModelConfiguration"
+						:loading="isFetchingModelConfiguration || isFetchingModelInformation"
+						@update:model-value="onParameterSelect($event, i)"
+					>
+						<template #option="slotProps">
+							<span>{{ displayParameter(slotProps.option.referenceId) }}</span>
+						</template>
 
-					<template #value="slotProps">
-						<span v-if="displayParameter(slotProps.value)">{{ displayParameter(slotProps.value) }}</span>
-						<span v-else>{{ slotProps.placeholder }}</span>
-					</template>
-				</Dropdown>
-				<div v-if="parameter" class="flex align-items-center py-2">
+						<template #value="slotProps">
+							<span v-if="displayParameter(slotProps.value)">{{ displayParameter(slotProps.value) }}</span>
+							<span v-else>{{ slotProps.placeholder }}</span>
+						</template>
+					</Dropdown>
+					<Button v-if="scenario.parameters.length > 1" icon="pi pi-trash" text @click="scenario.removeParameter(i)" />
+				</div>
+				<div v-if="parameter" class="distribution-container">
 					<label class="p-0">Min:</label>
-					<tera-input-number
-						class="m-0"
-						:model-value="parameter.distribution.parameters.minimum"
-						@update:model-value="parameter.distribution.parameters.minimum = $event"
-					/>
+					<tera-input-number class="m-0" v-model="parameter.distribution.parameters.minimum" />
 					<label class="p-0 ml-2">Max:</label>
-					<tera-input-number
-						class="m-0"
-						:model-value="parameter.distribution.parameters.maximum"
-						@update:model-value="parameter.distribution.parameters.maximum = $event"
-					/>
+					<tera-input-number class="m-0" v-model="parameter.distribution.parameters.maximum" />
 				</div>
 			</template>
 			<div>
-				<Button label="Add parameter" icon="pi pi-plus" text @click="scenario.addParameter()" />
+				<Button
+					:disabled="!scenario.modelSpec.id"
+					class="mt-2"
+					label="Add parameter"
+					icon="pi pi-plus"
+					text
+					@click="scenario.addParameter()"
+				/>
 			</div>
 		</template>
 		<template #outputs>
@@ -139,7 +142,7 @@ const displayParameter = (parameterName: string) => {
 			value = `${parameter.distribution.parameters.minimum} - ${parameter.distribution.parameters.maximum}`;
 			break;
 		default:
-			break;
+			return '';
 	}
 
 	return `${parameterName}  [${value}]`;
@@ -185,3 +188,13 @@ watch(
 	}
 );
 </script>
+
+<style scoped>
+.distribution-container {
+	display: flex;
+	align-items: center;
+	padding: var(--gap-2) var(--gap-1);
+	margin: var(--gap-0-5) 0;
+	background-color: var(--surface-100);
+}
+</style>
