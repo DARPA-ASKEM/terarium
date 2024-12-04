@@ -1020,16 +1020,11 @@ public class ProjectController {
 
 	@Data
 	@TSModel
-	public static class ProjectSearchResult extends Project {
+	public static class ProjectSearchResult {
 
+		final UUID projectId;
 		final Float score;
 		final List<ProjectSearchResultAsset> assets;
-
-		public ProjectSearchResult(Project project, Float score, List<ProjectSearchResultAsset> assets) {
-			super(project); // Call the Project superclass constructor
-			this.score = score;
-			this.assets = assets;
-		}
 	}
 
 	@GetMapping("/knn")
@@ -1087,7 +1082,11 @@ public class ProjectController {
 
 				// Add the project information to the response
 				final Project project = projectService.getProject(searchResponse.getProjectId()).orElseThrow();
-				final ProjectSearchResult searchResult = new ProjectSearchResult(project, searchResponse.getScore(), assets);
+				final ProjectSearchResult searchResult = new ProjectSearchResult(
+					project.getId(),
+					searchResponse.getScore(),
+					assets
+				);
 
 				searchResults.add(searchResult);
 			}

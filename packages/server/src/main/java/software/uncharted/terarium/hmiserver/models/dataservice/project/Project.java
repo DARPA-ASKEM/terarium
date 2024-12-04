@@ -168,21 +168,4 @@ public class Project extends TerariumAsset {
 
 		return sources;
 	}
-
-	public Project() {
-		super();
-	}
-
-	/**
-	 * Add an extra constructor that takes a project
-	 */
-	public Project(final Project project) {
-		this.userId = project.userId;
-		this.thumbnail = project.thumbnail;
-		this.userName = project.userName;
-		this.authors = project.authors;
-		this.overviewContent = project.overviewContent;
-		this.projectAssets = project.projectAssets;
-		this.sampleProject = project.sampleProject;
-	}
 }

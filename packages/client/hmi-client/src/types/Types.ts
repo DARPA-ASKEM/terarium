@@ -9,7 +9,8 @@ export interface ClientConfig {
     sseHeartbeatIntervalMillis: number;
 }
 
-export interface ProjectSearchResult extends Project {
+export interface ProjectSearchResult {
+    projectId: string;
     score: number;
     assets: ProjectSearchResultAsset[];
 }
