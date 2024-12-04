@@ -174,16 +174,12 @@
 									/>
 								</template>
 							</AccordionTab>
+							<AccordionTab header="Sensitivity">
+								<template v-if="testSensitivity">
+									<vega-chart expandable :are-embed-actions-visible="true" :visualization-spec="testSensitivity" />
+								</template>
+							</AccordionTab>
 						</Accordion>
-
-						<!-- Test sensitivity -->
-						<h5>Sensitivity</h5>
-						<vega-chart
-							v-if="testSensitivity"
-							expandable
-							:are-embed-actions-visible="true"
-							:visualization-spec="testSensitivity"
-						/>
 
 						<!-- Spacer at bottom of page -->
 						<div style="height: 2rem"></div>

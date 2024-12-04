@@ -589,11 +589,28 @@ export function useCharts(
 	const useSimulateSensitivityCharts = (timestep: number) => {
 		const sensitivity = computed(() => {
 			const sliceData = chartData.value?.result.filter((d: any) => d.timepoint_id === timestep) as any[];
+
+			// Translate names ahead of time, because we can't seem to customize titles
+			// in vegalite with repeat
+			const translationMap = chartData.value?.translationMap;
+			const sliceDataTranslated = sliceData.map((obj: any) => {
+				const r: any = {};
+				Object.keys(obj).forEach((key) => {
+					if (translationMap && translationMap[key]) {
+						const newKey = translationMap[key];
+						r[newKey] = obj[key];
+					} else {
+						r[key] = obj[key];
+					}
+				});
+				return r;
+			});
+
 			const spec = createSimulateSensitivityScatter(
 				{
-					data: sliceData,
-					inputVariables: ['persistent_beta_param', 'persistent_gamma_param'],
-					outputVariable: 'S_state'
+					data: sliceDataTranslated,
+					inputVariables: ['beta', 'gamma'],
+					outputVariable: 'S'
 				},
 				{
 					width: 200,

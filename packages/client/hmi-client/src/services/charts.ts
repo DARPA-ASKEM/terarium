@@ -635,15 +635,6 @@ export function createForecastChart(
  * in the grid, which we don't know how to achieve currently with vegalite
  * */
 export function createSimulateSensitivityScatter(samplingLayer: SensitivityChartLayer, options: ForecastChartOptions) {
-	const translationMap = options.translationMap;
-	let labelExpr = '';
-	if (translationMap) {
-		Object.keys(translationMap).forEach((key) => {
-			labelExpr += `datum.value === '${key}' ? '${translationMap[key]}' : `;
-		});
-		labelExpr += " 'other'";
-	}
-
 	// Start building
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
@@ -663,8 +654,7 @@ export function createSimulateSensitivityScatter(samplingLayer: SensitivityChart
 					field: { repeat: 'row' },
 					type: 'quantitative',
 					axis: {
-						gridColor: '#EEE',
-						labelExpr
+						gridColor: '#EEE'
 					},
 					scale: {
 						zero: false,
@@ -675,8 +665,7 @@ export function createSimulateSensitivityScatter(samplingLayer: SensitivityChart
 					field: { repeat: 'column' },
 					type: 'quantitative',
 					axis: {
-						gridColor: '#EEE',
-						labelExpr
+						gridColor: '#EEE'
 					},
 					scale: {
 						zero: false,
