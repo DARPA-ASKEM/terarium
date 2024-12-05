@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -1014,6 +1015,7 @@ public class ProjectController {
 		final UUID assetId;
 		final AssetType assetType;
 		final String assetName;
+		final Timestamp createdOn;
 		final String embeddingContent;
 		final TerariumAssetEmbeddingType embeddingType;
 		final Float score;
@@ -1129,6 +1131,7 @@ public class ProjectController {
 			hit.getAssetId(),
 			hit.getAssetType(),
 			asset.getName(),
+			asset.getCreatedOn(),
 			embeddingContent,
 			hit.getEmbeddingType(),
 			hit.getScore()
