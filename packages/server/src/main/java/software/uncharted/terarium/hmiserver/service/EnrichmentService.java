@@ -53,7 +53,6 @@ public class EnrichmentService {
 		Schema.Permission permission,
 		NotificationGroupInstance<KnowledgeController.NotificationProperties> notificationInterface
 	) {
-		log.info("YOHANN 2/4 - start async enrichment");
 		try {
 			// Stripping the metadata before it's sent since it can cause GoLLM to fail with massive inputs
 			model.setMetadata(new ModelMetadata());
@@ -128,11 +127,6 @@ public class EnrichmentService {
 			}
 
 			notificationInterface.sendMessage("Model enriched using document extraction and grounded");
-			log.info(
-				"YOHANN 3/4 - Model {} enriched using document {} extraction and grounded.",
-				model.getId(),
-				document.getId()
-			);
 		} catch (final IOException e) {
 			log.error("Error enriching model {} with document {}", model.getId(), document.getId(), e);
 		}
