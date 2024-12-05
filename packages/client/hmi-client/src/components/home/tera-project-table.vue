@@ -8,7 +8,6 @@
 		:key="projectTableKey"
 		data-key="id"
 		paginator
-		@page="getProjectAssets"
 	>
 		<Column
 			v-for="(col, index) in selectedColumns"
@@ -24,26 +23,21 @@
 						<a @click.stop="emit('open-project', data.id)">{{ data.name }}</a>
 						<tera-project-menu class="project-options" :project="data" />
 					</span>
-					<ul>
-						<li v-for="hit in data.hits" class="flex align-center gap-2" :key="hit.id">
-							<tera-asset-icon :asset-type="hit.assetType" />
-							{{ hit.assetName }}
-							<br />
-							{{ hit.embeddingContent }}
-						</li>
-					</ul>
-					<Button
-						v-if="data.projectAssets.length > 3"
-						class="p-2 mt-2"
-						:label="data.showMore ? 'Show less' : 'Show more'"
-						text
-						size="small"
-						@click="data.showMore = !data.showMore"
+					<tera-asset-button
+						v-for="asset in data.assets"
+						:key="asset.assetId"
+						:asset="asset"
+						@click="emit('open-asset', data.id, asset.assetId, asset.assetType)"
 					/>
 				</template>
 				<template v-else-if="col.field === 'description'">
 					<tera-show-more-text :text="data.description" :lines="1" />
-					<p v-if="data.snippet" class="mt-2" v-html="data.snippet" />
+					<tera-show-more-text
+						v-for="asset in data.assets"
+						:key="asset.assetId"
+						:text="asset.embeddingContent"
+						:lines="3"
+					/>
 				</template>
 				<template v-if="col.field === 'userName'">
 					{{ data.userName ?? '--' }}
@@ -83,13 +77,13 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty, cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash';
 import { ref, watch } from 'vue';
 import { v4 as uuidv4 } from 'uuid';
 import { formatDdMmmYyyy } from '@/utils/date';
-import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
+import TeraAssetButton from '@/components/asset/tera-asset-button.vue';
 import TeraAssetIcon from '@/components/widgets/tera-asset-icon.vue';
 import TeraProjectMenu from '@/components/home/tera-project-menu.vue';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
@@ -102,19 +96,17 @@ const props = defineProps<{
 	searchQuery: string;
 }>();
 
-const emit = defineEmits(['open-project']);
+const emit = defineEmits(['open-project', 'open-asset']);
 
 const projectsWithKnnMatches = ref<ProjectWithKnnData[]>([]);
 const numberOfRows = ref(20);
 const projectTableKey = ref(uuidv4());
 
-let prevSearchQuery = '';
-
 const columnWidthMap = {
 	name: '25%',
-	description: '30%',
+	description: '25%',
 	userName: '15%',
-	stats: '10%',
+	stats: '15%',
 	createdOn: '10%',
 	updatedOn: '10%'
 };
@@ -130,25 +122,11 @@ function formatStatTooltip(amount: number, itemName: string) {
 	return `${amount} ${itemName}${amount === 1 ? '' : 's'}`;
 }
 
-async function getProjectAssets() {
-	if (isEmpty(props.searchQuery)) return;
-
-	const searchQuery = props.searchQuery.toLowerCase().trim();
-
-	projectsWithKnnMatches.value.map(async (project) => {
-		// If assets were fetched before from when we were on that page don't redo it
-		if (!isEmpty(project.projectAssets) && prevSearchQuery === searchQuery) return;
-		project.showMore = false;
-	});
-	prevSearchQuery = searchQuery;
-}
-
 watch(
 	() => props.projects,
 	() => {
 		projectTableKey.value = uuidv4();
 		projectsWithKnnMatches.value = cloneDeep(props.projects);
-		getProjectAssets();
 	},
 	{ immediate: true }
 );

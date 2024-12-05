@@ -108,6 +108,7 @@
 							:selected-columns="selectedColumns"
 							:search-query="searchProjectsQuery"
 							@open-project="openProject"
+							@open-asset="openAsset"
 						/>
 					</TabPanel>
 				</TabView>
@@ -138,7 +139,7 @@ import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import SelectButton from 'primevue/selectbutton';
 import { useProjectMenu } from '@/composables/project-menu';
-import { ClientEventType, ProgressState, Project, ProjectSearchResult } from '@/types/Types';
+import { ClientEventType, ProgressState, Project, ProjectAsset, ProjectSearchResult } from '@/types/Types';
 import { ProjectWithKnnData } from '@/types/Project';
 import { Vue3Lottie } from 'vue3-lottie';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
@@ -298,6 +299,17 @@ const isLoadingProjects = computed(() => !useProjects().allProjects.value);
 
 function openProject(projectId: string) {
 	router.push({ name: RouteName.Project, params: { projectId } });
+}
+
+function openAsset(projectId: Project['id'], assetId: ProjectAsset['id'], assetType: ProjectAsset['assetType']) {
+	router.push({
+		name: RouteName.Project,
+		params: {
+			projectId,
+			assetId,
+			pageType: assetType.toString()
+		}
+	});
 }
 
 watch(cloningProjects, () => {
