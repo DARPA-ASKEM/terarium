@@ -276,7 +276,7 @@ function resetNotebook() {
 function onUpdateGoalQuery(goal: string) {
 	const state = cloneDeep(props.node.state);
 	goalQuery.value = goal;
-	state.goal = goalQuery.value;
+	state.goal = goal;
 	emit('update-state', state);
 }
 
