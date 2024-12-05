@@ -69,6 +69,7 @@
 					:asset="asset"
 					@click="emit('open-asset', data.id, asset.assetId, asset.assetType)"
 				/>
+				<p class="font-semibold">{{ capitalize(asset.embeddingType) }}</p>
 				<tera-show-more-text :text="asset.embeddingContent" :lines="3" />
 			</div>
 		</template>
@@ -78,6 +79,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { v4 as uuidv4 } from 'uuid';
+import { capitalize } from '@/utils/text';
 import { formatDdMmmYyyy } from '@/utils/date';
 import Column from 'primevue/column';
 import DataTable, { DataTableExpandedRows } from 'primevue/datatable';
