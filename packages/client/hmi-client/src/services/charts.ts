@@ -1334,8 +1334,7 @@ export function createDatasetCompareChart(values: any[], headerName: string) {
 		layer: [
 			{
 				mark: {
-					type: 'line',
-					point: true
+					type: 'line'
 				},
 				encoding: {
 					x: { field: 'timepoint', type: 'quantitative' },
