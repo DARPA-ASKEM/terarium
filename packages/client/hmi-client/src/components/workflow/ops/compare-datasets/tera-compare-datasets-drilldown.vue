@@ -36,6 +36,7 @@
 								option-value="id"
 								:loading="isFetchingDatasets"
 								placeholder="Optional"
+								@change="createCharts"
 							/>
 
 							<label>Comparison tables</label>
@@ -45,7 +46,13 @@
 								subtext="Description for ATE."
 							/>
 						</template>
-
+						<label class="mt-2">Timepoint column</label>
+						<Dropdown
+							v-model="timepointHeaderName"
+							:options="commonHeaderNames"
+							placeholder="Select timepoint header"
+							@change="createCharts"
+						/>
 						<template v-if="knobs.selectedCompareOption === CompareValue.RANK">
 							<label>Specifiy criteria of interest</label>
 							<tera-criteria-of-interest-card
@@ -151,6 +158,9 @@ const compareOptions: { label: string; value: CompareValue }[] = [
 
 const datasets = ref<Dataset[]>([]);
 
+const commonHeaderNames = ref<string[]>([]);
+const timepointHeaderName = ref<string | null>(null);
+
 const plotOptions = [
 	{ label: 'Percent change', value: 'percentage' },
 	{ label: 'Absolute difference', value: 'value' }
@@ -245,29 +255,40 @@ function findDuplicates(strings: string[]): string[] {
 
 async function createCharts() {
 	if (datasets.value.length <= 1) return;
+	compareCharts.value = [];
 
 	const rawContents = await Promise.all(datasets.value.map((dataset) => getRawContent(dataset)));
 	const transposedRawContents = rawContents.map((content) => ({ ...content, csv: transposeArrays(content?.csv) }));
 
-	const allColumnNames: string[] = [];
-	datasets.value.forEach((dataset) => {
-		const columnNames = dataset?.columns?.map((column) => column.name) ?? [];
-		allColumnNames.push(...columnNames);
-	});
-	const commonHeaderNames = findDuplicates(allColumnNames);
+	if (isEmpty(commonHeaderNames.value)) {
+		const allColumnNames: string[] = [];
+		datasets.value.forEach((dataset) => {
+			const columnNames = dataset?.columns?.map((column) => column.name) ?? [];
+			allColumnNames.push(...columnNames);
+		});
+		commonHeaderNames.value = findDuplicates(allColumnNames);
 
-	const timepointIndex = transposedRawContents[0]?.headers?.indexOf('t');
+		// Convenient assumption that the timepoint header name contains 't'
+		timepointHeaderName.value =
+			commonHeaderNames.value?.find((name) => name.toLowerCase().includes('t')) ?? commonHeaderNames.value[0];
+	}
+
+	if (!timepointHeaderName.value) return;
+
+	const timepointIndex = transposedRawContents[0]?.headers?.indexOf(timepointHeaderName.value);
 	if (timepointIndex === undefined) return;
 
 	// Go through every column header
-	commonHeaderNames?.forEach((headerName) => {
-		if (headerName === 't') return;
+	commonHeaderNames.value?.forEach((headerName) => {
+		if (headerName === timepointHeaderName.value) return;
 
 		const headerIndex = transposedRawContents[0]?.headers?.indexOf(headerName);
 		if (!headerIndex) return;
 
 		const values: any = [];
-		const referenceColumn = transposedRawContents[0].csv[headerIndex];
+		// Find dataset index of the selected dataset
+		const selectedIndex = datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedDataset);
+		const referenceColumn = transposedRawContents[selectedIndex].csv[headerIndex]; // aka the baseline dataset
 
 		transposedRawContents.forEach((content, datasetIndex) => {
 			const timepoints = content.csv[timepointIndex];
@@ -279,7 +300,7 @@ async function createCharts() {
 				values.push({
 					timepoint,
 					value: absoluteDifference,
-					name: `${headerName}${datasetIndex}`
+					name: `${headerName}_${datasets.value[datasetIndex].name}`
 				});
 			});
 		});
