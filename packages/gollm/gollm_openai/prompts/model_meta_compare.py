@@ -7,11 +7,20 @@ Use the AMR models to perform structural comparisons. Make sure you compare all 
 
 Answer with accuracy, precision, and without repetition.
 
+Ensure that you compare EVERY supplied model. Do not leave any model out of the comparison.
+
 ---MODELS START---
 
 {amrs}
 
 ---MODELS END---
 
-Comparison:
+"""
+
+MODEL_METADATA_COMPARE_GOAL_PROMPT = """
+
+When creating your final conclusion, consider the following goal of the user when comparing the models:
+
+{goal}
+
 """
