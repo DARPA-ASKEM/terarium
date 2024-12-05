@@ -10,7 +10,23 @@
 				<section class="comparison-overview">
 					<Accordion :activeIndex="currentActiveIndicies">
 						<AccordionTab header="Overview">
-							<p v-if="isEmpty(overview)" class="subdued">
+							<template #header>
+								<tera-input-text
+									class="ml-auto w-4"
+									placeholder="What is your goal? (Optional)"
+									:model-value="goalQuery"
+									@blur="onUpdateGoalQuery"
+								/>
+								<Button
+									class="ml-4"
+									label="Compare"
+									@click.stop="processCompareModels"
+									size="small"
+									icon="pi pi-sparkles"
+									:loading="isProcessingComparison"
+								/>
+							</template>
+							<p v-if="isProcessingComparison" class="subdued">
 								<i class="pi pi-spin pi-spinner mr-1" />
 								Analyzing models metadata to generate a detailed comparison analysis...
 							</p>
@@ -152,7 +168,7 @@ import { ClientEvent, ClientEventType, type Model, TaskResponse, TaskStatus } fr
 import { OperatorStatus, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 
@@ -165,6 +181,7 @@ import { addImage, deleteImages, getImages } from '@/services/image';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import { b64DecodeUnicode } from '@/utils/binary';
 import { useClientEvent } from '@/composables/useClientEvent';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{
@@ -172,6 +189,13 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['update-state', 'update-status', 'close']);
+
+const goalQuery = ref(props.node.state.goal);
+const isProcessingComparison = ref(false);
+
+const modelIds = computed(() =>
+	props.node.inputs.filter((input) => input.status === WorkflowPortStatus.CONNECTED).map((input) => input.value?.[0])
+);
 
 enum Tabs {
 	Wizard = 'Wizard',
@@ -248,6 +272,12 @@ function resetNotebook() {
 	code.value = '';
 	emptyImages();
 	updateCodeState();
+}
+function onUpdateGoalQuery(goal: string) {
+	const state = cloneDeep(props.node.state);
+	goalQuery.value = goal;
+	state.goal = goal;
+	emit('update-state', state);
 }
 
 function runCode() {
@@ -461,25 +491,31 @@ function generateOverview(output: string) {
 }
 
 // Create a task to compare the models
-async function processCompareModels(modelIds: string[]) {
-	const taskRes = await compareModels(modelIds, props.node.workflowId, props.node.id);
+const processCompareModels = async () => {
+	isProcessingComparison.value = true;
+	const taskRes = await compareModels(modelIds.value, goalQuery.value, props.node.workflowId, props.node.id);
 	compareModelsTaskId = taskRes.id;
 	if (taskRes.status === TaskStatus.Success) {
 		generateOverview(taskRes.output);
 	}
-}
+	const state = cloneDeep(props.node.state);
+	state.hasRun = true;
+	emit('update-state', state);
+	isProcessingComparison.value = false;
+};
 
 // Listen for the task completion event
 useClientEvent(ClientEventType.TaskGollmCompareModel, (event: ClientEvent<TaskResponse>) => {
-	if (
-		!event.data ||
-		event.data.id !== compareModelsTaskId ||
-		!isEmpty(overview.value) ||
-		event.data.status !== TaskStatus.Success
-	) {
-		return;
+	if (!event.data || event.data.id !== compareModelsTaskId) return;
+
+	if ([TaskStatus.Queued, TaskStatus.Running, TaskStatus.Cancelling].includes(event.data.status)) {
+		isProcessingComparison.value = true;
+	} else if (event.data.status === TaskStatus.Success) {
+		generateOverview(event.data.output);
+		isProcessingComparison.value = false;
+	} else if ([TaskStatus.Failed, TaskStatus.Cancelled].includes(event.data.status)) {
+		isProcessingComparison.value = false;
 	}
-	generateOverview(event.data.output);
 });
 
 onMounted(async () => {
@@ -489,18 +525,16 @@ onMounted(async () => {
 		isLoadingStructuralComparisons.value = false;
 	}
 
-	const modelIds: string[] = props.node.inputs
-		.filter((input) => input.status === WorkflowPortStatus.CONNECTED)
-		.map((input) => input.value?.[0]);
-
-	modelsToCompare.value = (await Promise.all(modelIds.map(async (modelId) => getModel(modelId)))).filter(
+	modelsToCompare.value = (await Promise.all(modelIds.value.map(async (modelId) => getModel(modelId)))).filter(
 		Boolean
 	) as Model[];
 	modelCardsToCompare.value = modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard);
 	fields.value = [...new Set(modelCardsToCompare.value.flatMap((card) => (card ? Object.keys(card) : [])))];
 
 	await buildJupyterContext();
-	await processCompareModels(modelIds);
+	if (props.node.state.hasRun) {
+		processCompareModels();
+	}
 });
 
 onUnmounted(() => {
