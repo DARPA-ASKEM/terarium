@@ -1309,3 +1309,38 @@ export function createFunmanParameterCharts(
 		}
 	};
 }
+
+export function createDatasetCompareChart(values: any[], headerName: string) {
+	const globalFont = 'Figtree';
+
+	return {
+		$schema: VEGALITE_SCHEMA,
+		config: {
+			font: globalFont
+		},
+		title: {
+			text: headerName,
+			anchor: 'start',
+			frame: 'group',
+			offset: 10,
+			fontSize: 14
+		},
+		width: 600,
+		height: 300,
+		data: {
+			values
+		},
+		layer: [
+			{
+				mark: {
+					type: 'line'
+				},
+				encoding: {
+					x: { field: 'timepoint', type: 'quantitative' },
+					y: { field: 'value', type: 'quantitative' },
+					color: { field: 'name', type: 'nominal' }
+				}
+			}
+		]
+	};
+}
