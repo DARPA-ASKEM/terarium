@@ -1,15 +1,7 @@
 <template>
-	<Button
-		:title="`${asset.assetName} — ${getElapsedTimeText(asset.createdOn)}`"
-		class="asset-button"
-		plain
-		text
-		size="small"
-	>
-		<span>
-			<tera-asset-icon :asset-type="asset.assetType" />
-			<span class="p-button-label">{{ asset.assetName }}</span>
-		</span>
+	<Button :title="`${asset.assetName} — ${getElapsedTimeText(asset.createdOn)}`" plain text size="small">
+		<tera-asset-icon :asset-type="asset.assetType" />
+		<span class="p-button-label">{{ asset.assetName }}</span>
 	</Button>
 </template>
 

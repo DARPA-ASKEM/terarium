@@ -139,7 +139,7 @@ import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import SelectButton from 'primevue/selectbutton';
 import { useProjectMenu } from '@/composables/project-menu';
-import { ClientEventType, ProgressState, Project, ProjectAsset, ProjectSearchResult } from '@/types/Types';
+import { AssetType, ClientEventType, ProgressState, Project, ProjectAsset, ProjectSearchResult } from '@/types/Types';
 import { ProjectWithKnnData } from '@/types/Project';
 import { Vue3Lottie } from 'vue3-lottie';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
@@ -228,9 +228,14 @@ const searchedAndFilterProjects = computed(() => {
 	}
 
 	return searchProjectsResults.value
-		.map((result) => {
+		.map((result: ProjectSearchResult) => {
 			const project = tabProjects.find(({ id }) => id === result.projectId);
 			if (!project) return null;
+
+			// Do not display Project as search results and sort the assets by descending score
+			result.assets = result.assets
+				?.filter((asset) => asset.assetType !== AssetType.Project)
+				.sort((a, b) => b.score - a.score);
 			return { ...project, ...result } as ProjectWithKnnData;
 		})
 		.filter((project) => !!project); // Remove null values

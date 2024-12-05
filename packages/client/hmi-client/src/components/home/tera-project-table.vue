@@ -1,13 +1,14 @@
 <template>
 	<!--The pt wrapper styling enables the table header to stick with the project search bar-->
 	<DataTable
-		:value="projectsWithKnnMatches"
+		:value="projects"
 		:rows="numberOfRows"
 		:rows-per-page-options="[10, 20, 30, 40, 50]"
 		:pt="{ wrapper: { style: { overflow: 'none' } } }"
 		:key="projectTableKey"
 		data-key="id"
 		paginator
+		v-model:expandedRows="dataExpandedRows"
 	>
 		<Column
 			v-for="(col, index) in selectedColumns"
@@ -23,21 +24,9 @@
 						<a @click.stop="emit('open-project', data.id)">{{ data.name }}</a>
 						<tera-project-menu class="project-options" :project="data" />
 					</span>
-					<tera-asset-button
-						v-for="asset in data.assets"
-						:key="asset.assetId"
-						:asset="asset"
-						@click="emit('open-asset', data.id, asset.assetId, asset.assetType)"
-					/>
 				</template>
 				<template v-else-if="col.field === 'description'">
 					<tera-show-more-text :text="data.description" :lines="1" />
-					<tera-show-more-text
-						v-for="asset in data.assets"
-						:key="asset.assetId"
-						:text="asset.embeddingContent"
-						:lines="3"
-					/>
 				</template>
 				<template v-if="col.field === 'userName'">
 					{{ data.userName ?? '--' }}
@@ -73,22 +62,28 @@
 				</template>
 			</template>
 		</Column>
+		<template #expansion="{ data }">
+			<div v-for="asset in data.assets" :key="asset.assetId" class="flex align-items-center gap-4">
+				<tera-asset-button :asset="asset" @click="emit('open-asset', data.id, asset.assetId, asset.assetType)" />
+				<tera-show-more-text :text="asset.embeddingContent" :lines="3" />
+			</div>
+		</template>
 	</DataTable>
 </template>
 
 <script setup lang="ts">
-import { cloneDeep } from 'lodash';
 import { ref, watch } from 'vue';
 import { v4 as uuidv4 } from 'uuid';
 import { formatDdMmmYyyy } from '@/utils/date';
 import Column from 'primevue/column';
-import DataTable from 'primevue/datatable';
+import DataTable, { DataTableExpandedRows } from 'primevue/datatable';
 import TeraAssetButton from '@/components/asset/tera-asset-button.vue';
 import TeraAssetIcon from '@/components/widgets/tera-asset-icon.vue';
 import TeraProjectMenu from '@/components/home/tera-project-menu.vue';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import { AssetType } from '@/types/Types';
 import type { ProjectWithKnnData } from '@/types/Project';
+import { isEmpty } from 'lodash';
 
 const props = defineProps<{
 	projects: ProjectWithKnnData[];
@@ -98,9 +93,13 @@ const props = defineProps<{
 
 const emit = defineEmits(['open-project', 'open-asset']);
 
-const projectsWithKnnMatches = ref<ProjectWithKnnData[]>([]);
 const numberOfRows = ref(20);
 const projectTableKey = ref(uuidv4());
+
+const dataExpandedRows: DataTableExpandedRows = props.projects.reduce((acc, project) => {
+	acc[project.id!] = !isEmpty(project.assets);
+	return acc;
+}, {});
 
 const columnWidthMap = {
 	name: '25%',
@@ -126,7 +125,6 @@ watch(
 	() => props.projects,
 	() => {
 		projectTableKey.value = uuidv4();
-		projectsWithKnnMatches.value = cloneDeep(props.projects);
 	},
 	{ immediate: true }
 );
@@ -180,6 +178,17 @@ watch(
 .p-datatable:deep(.p-datatable-tbody > tr > td a:hover) {
 	color: var(--primary-color);
 	text-decoration: underline;
+}
+
+/* Adjust padding for non-empty expansion rows */
+:deep(.p-datatable-tbody > tr.p-datatable-row-expansion > :not(td:empty)) {
+	padding: var(--gap-2) var(--gap-1);
+}
+
+/* Remove padding for empty expansion rows */
+:deep(.p-datatable-tbody > tr.p-datatable-row-expansion > td:empty) {
+	border: none;
+	padding: 0;
 }
 
 /* Truncate long text for asset list, project name and highlighted description*/
