@@ -131,7 +131,7 @@ def compact_equations(equations: List[str]) -> dict:
     escaped_equations = escape_curly_braces(equations)
 
     print("Uploading and validating equations schema...")
-    config_path = os.path.join(SCRIPT_DIR, 'gollm/gollm_openai/schemas', 'equations.json')
+    config_path = os.path.join(SCRIPT_DIR, 'schemas', 'compact_equations.json')
     with open(config_path, 'r') as config_file:
         response_schema = json.load(config_file)
     validate_schema(response_schema)
