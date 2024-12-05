@@ -278,7 +278,7 @@ async function createCharts() {
 
 		// Convenient assumption that the timepoint header name contains 't'
 		timepointHeaderName.value =
-			commonHeaderNames.value?.find((name) => name.toLowerCase().includes('t')) ?? commonHeaderNames.value[0];
+			commonHeaderNames.value?.find((name) => name.toLowerCase().slice(0, 1) === 't') ?? commonHeaderNames.value[0];
 	}
 
 	if (!timepointHeaderName.value) return;
@@ -304,7 +304,7 @@ async function createCharts() {
 				const referencePoint = parseFloat(referenceColumn[rowIndex]);
 				const currentPoint = parseFloat(content.csv[headerIndex][rowIndex]);
 
-				const absoluteDifference = Math.abs(referencePoint - currentPoint);
+				const absoluteDifference = referencePoint - currentPoint;
 				const percentChange = (absoluteDifference / referencePoint) * 100;
 
 				values.push({
