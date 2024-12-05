@@ -13,7 +13,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import Button from 'primevue/button';
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { ModelEditOperationState } from '@/components/workflow/ops/model-edit/model-edit-operation';
 import { Model } from '@/types/Types';
 import { getActiveOutput } from '@/components/workflow/util';
@@ -21,7 +21,7 @@ import TeraOperatorModelPreview from '@/components/operator/tera-operator-model-
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { getModel } from '@/services/model';
 
-const emit = defineEmits(['open-drilldown']);
+const emit = defineEmits(['append-input-port', 'open-drilldown']);
 
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
@@ -44,5 +44,15 @@ watch(
 		fetchModel();
 	},
 	{ immediate: true }
+);
+watch(
+	() => props.node.inputs,
+	() => {
+		const inputs = props.node.inputs;
+		if (inputs.every((input) => input.status === WorkflowPortStatus.CONNECTED) && inputs[0].type === 'modelId') {
+			emit('append-input-port', { type: 'modelId', label: 'Model (optional)' });
+		}
+	},
+	{ deep: true }
 );
 </script>
