@@ -25,6 +25,7 @@
 							class="pt-2"
 							v-model="isSimulationsFromSameModel"
 							label="All simulations are from the same model"
+							disabled
 						/>
 
 						<template v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
