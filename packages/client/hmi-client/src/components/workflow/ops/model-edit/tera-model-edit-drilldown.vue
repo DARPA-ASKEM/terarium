@@ -130,7 +130,7 @@ const isUpdatingModel = ref(false);
 
 const kernelManager = new KernelSessionManager();
 const outputModel = ref<Model | null>(null);
-let inputModelId: string | null = null;
+let inputModelIds: string[] | null = null;
 let activeOutputModelId: string | null = null;
 
 let editor: VAceEditorInstance['_editor'] | null;
@@ -296,7 +296,7 @@ const createOutput = async (modelToSave: Model) => {
 };
 
 const buildJupyterContext = () => {
-	if (!inputModelId) {
+	if (!inputModelIds || inputModelIds.length === 0) {
 		logger.warn('Cannot build Jupyter context without a model');
 		return null;
 	}
@@ -304,7 +304,7 @@ const buildJupyterContext = () => {
 		context: 'mira_model_edit',
 		language: 'python3',
 		context_info: {
-			id: inputModelId
+			id: inputModelIds
 		}
 	};
 };
@@ -361,21 +361,30 @@ watch(
 
 onMounted(async () => {
 	// Save input model id to use throughout the component
-	const input = props.node.inputs[0];
-	if (!input) return;
+	const inputs = props.node.inputs;
+	if (!inputs || inputs.length === 0) return;
 
-	// Get input model id
-	if (input.type === 'modelId') {
-		inputModelId = input.value?.[0];
-	} else if (input.type === 'modelConfigId') {
-		inputModelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
-	}
-	if (!inputModelId) return;
+	// iterate through the inputs to get the model id, and add them to the inputModelId
+	inputs.forEach(async (input) => {
+		let inputModelId;
+		if (input.type === 'modelId') {
+			inputModelId = input.value?.[0];
+		} else if (input.type === 'modelConfigId') {
+			inputModelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
+		}
+		if (inputModelIds === null) {
+			inputModelIds = [];
+		}
+		// now add to inputModelIds
+		inputModelIds.push(inputModelId);
+	});
+
+	if (inputModelIds?.length === 0) return;
 
 	// By default, the first output option is the original model
 	if (isReadyToCreateDefaultOutput.value) {
 		// Get model
-		const originalModel = await getModel(inputModelId);
+		const originalModel = await getModel(inputModelIds[0]);
 		if (!originalModel) return;
 		// Set default output which is the input (original model)
 		createOutput(originalModel);
