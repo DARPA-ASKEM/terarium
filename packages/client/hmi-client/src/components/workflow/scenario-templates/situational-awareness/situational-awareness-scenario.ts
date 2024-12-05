@@ -29,7 +29,7 @@ export class SituationalAwarenessScenario extends BaseScenario {
 
 	constructor() {
 		super();
-		this.workflowName = 'Situational Awareness';
+		this.workflowName = '';
 		this.modelSpec = {
 			id: ''
 		};

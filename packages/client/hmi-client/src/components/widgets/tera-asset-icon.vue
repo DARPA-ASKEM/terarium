@@ -5,7 +5,7 @@
 		:type="getAssetIcon(assetType ?? null)"
 		size="1rem"
 	/>
-	<component v-else :is="getAssetIcon(assetType ?? null)" class="p-button-icon-left icon" />
+	<component v-else :is="getAssetIcon(assetType ?? null)" :fill="customFill" class="p-button-icon-left icon" />
 </template>
 
 <script setup lang="ts">
@@ -14,7 +14,6 @@ import { AssetType } from '@/types/Types';
 
 defineProps<{
 	assetType: AssetType;
+	customFill?: string;
 }>();
 </script>
-
-<style scoped></style>

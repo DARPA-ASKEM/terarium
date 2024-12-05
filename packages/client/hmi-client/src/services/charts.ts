@@ -38,6 +38,7 @@ export interface ForecastChartOptions extends BaseChartOptions {
 	translationMap?: Record<string, string>;
 	colorscheme?: string[];
 	fitYDomain?: boolean;
+	legendProperties?: Record<string, any>;
 }
 
 export interface ForecastChartLayer {
@@ -50,6 +51,7 @@ export interface ForecastChartLayer {
 export interface HistogramChartOptions extends BaseChartOptions {
 	maxBins?: number;
 	variables: { field: string; label?: string; width: number; color: string }[];
+	legendProperties?: Record<string, any>;
 }
 
 export interface ErrorChartOptions extends Omit<BaseChartOptions, 'height' | 'yAxisTitle' | 'legend'> {
@@ -290,7 +292,8 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 		symbolStrokeWidth: 4,
 		symbolSize: 200,
 		labelFontSize: 12,
-		labelOffset: 4
+		labelOffset: 4,
+		...options.legendProperties
 	};
 
 	const spec: VisualizationSpec = {
@@ -425,12 +428,12 @@ export function createForecastChart(
 		strokeColor: null,
 		orient: 'top',
 		direction: isCompact ? 'vertical' : 'horizontal',
-		columns: Math.floor(options.width / 100),
 		symbolStrokeWidth: isCompact ? 2 : 4,
 		symbolSize: 200,
 		labelFontSize: isCompact ? 8 : 12,
 		labelOffset: isCompact ? 2 : 4,
-		labelLimit: isCompact ? 50 : 150
+		labelLimit: isCompact ? 50 : 150,
+		...options.legendProperties
 	};
 
 	// Start building
@@ -444,7 +447,13 @@ export function createForecastChart(
 			type: options.autosize || AUTOSIZE.FIT_X
 		},
 		config: {
-			font: globalFont
+			font: globalFont,
+			legend: {
+				layout: {
+					direction: legendProperties.direction,
+					anchor: 'start'
+				}
+			}
 		},
 
 		// layers
@@ -597,9 +606,9 @@ export function createForecastChart(
 		const layerSpec = newLayer(groundTruthLayer, 'point');
 		const encoding = layerSpec.layer[0].encoding;
 
-		// FIXME: variables not aligned, set unique color for now
-		encoding.color.scale.range = ['#1B8073'];
-		// encoding.color.scale.range = options.colorscheme || CATEGORICAL_SCHEME;
+		encoding.color.scale.range = options.colorscheme
+			? structuredClone(options.colorscheme).reverse()
+			: CATEGORICAL_SCHEME;
 
 		if (options.legend === true) {
 			encoding.color.legend = {

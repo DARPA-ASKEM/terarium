@@ -14,9 +14,11 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.notebooksession.NotebookSession;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.models.simulationservice.interventions.InterventionPolicy;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission;
 
 @Service
@@ -32,6 +34,8 @@ public class TerariumAssetServices {
 	private final WorkflowService workflowService;
 	private final InterventionService interventionService;
 	private final SimulationService simulationService;
+	private final NotebookSessionService notebookSessionService;
+	private final ProjectService projectService;
 
 	/**
 	 * Get the service for a given asset type
@@ -51,6 +55,7 @@ public class TerariumAssetServices {
 			case WORKFLOW -> workflowService;
 			case INTERVENTION_POLICY -> interventionService;
 			case SIMULATION -> simulationService;
+			case NOTEBOOK_SESSION -> notebookSessionService;
 			default -> throw new IllegalArgumentException("Invalid asset type: " + type);
 		};
 	}
@@ -80,8 +85,27 @@ public class TerariumAssetServices {
 				return interventionService.updateAsset((InterventionPolicy) asset, projectId, permission);
 			case SIMULATION:
 				return simulationService.updateAsset((Simulation) asset, projectId, permission);
+			case NOTEBOOK_SESSION:
+				return notebookSessionService.updateAsset((NotebookSession) asset, projectId, permission);
 			default:
 				throw new IllegalArgumentException("Invalid asset type: " + type);
 		}
+	}
+
+	public TerariumAsset getAsset(final UUID assetId, final AssetType type) {
+		return switch (type) {
+			case ARTIFACT -> artifactService.getAsset(assetId, Schema.Permission.READ).orElse(null);
+			case CODE -> codeService.getAsset(assetId, Schema.Permission.READ).orElse(null);
+			case DATASET -> datasetService.getAsset(assetId, Schema.Permission.READ).orElse(null);
+			case DOCUMENT -> documentAssetService.getAsset(assetId, Schema.Permission.READ).orElse(null);
+			case INTERVENTION_POLICY -> interventionService.getAsset(assetId, Schema.Permission.READ).orElse(null);
+			case MODEL -> modelService.getAsset(assetId, Schema.Permission.READ).orElse(null);
+			case MODEL_CONFIGURATION -> modelConfigurationService.getAsset(assetId, Schema.Permission.READ).orElse(null);
+			case NOTEBOOK_SESSION -> notebookSessionService.getAsset(assetId, Schema.Permission.READ).orElse(null);
+			case SIMULATION -> simulationService.getAsset(assetId, Schema.Permission.READ).orElse(null);
+			case WORKFLOW -> workflowService.getAsset(assetId, Schema.Permission.READ).orElse(null);
+			case PROJECT -> projectService.getProject(assetId).orElse(null);
+			default -> null;
+		};
 	}
 }

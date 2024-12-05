@@ -121,6 +121,8 @@
 							showIcon
 							iconDisplay="input"
 							@date-select="knobs.transientModelConfig.temporalContext = $event"
+							show-button-bar
+							@clear-click="delete knobs.transientModelConfig.temporalContext"
 						/>
 					</div>
 				</AccordionTab>
@@ -155,11 +157,9 @@
 					/>
 					<Accordion :active-index="observableActiveIndicies" v-if="!isEmpty(calibratedConfigObservables)">
 						<AccordionTab header="Observables">
-							<tera-observables
+							<tera-model-part
 								class="pl-4"
-								:model="model"
-								:mmt="configuredMmt"
-								:observables="calibratedConfigObservables"
+								:items="calibratedConfigObservables"
 								:feature-config="{ isPreview: true }"
 							/>
 						</AccordionTab>
@@ -184,7 +184,7 @@
 						>
 							<template #toolbar-right-side>
 								<tera-input-text v-model="knobs.transientModelConfig.name" placeholder="Configuration Name" />
-								<Button icon="pi pi-play" label="Run" @click="runFromCode" />
+								<Button icon="pi pi-play" label="Run" @click="runFromCode" :disabled="isEmpty(codeText)" />
 							</template>
 						</tera-notebook-jupyter-input>
 					</Suspense>
@@ -241,7 +241,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
-import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
+import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
@@ -537,8 +537,9 @@ const missingInputCount = (modelConfiguration: ModelConfiguration) => {
 	if (selectedConfigId.value === modelConfiguration.id) {
 		return selectedConfigMissingInputCount.value;
 	}
+	const inferredParameterList = modelConfiguration.inferredParameterList?.length ?? 0;
 	const total = amrInitials.value.length + amrParameters.value.length;
-	const amount = total - getTotalInput(modelConfiguration);
+	const amount = total - getTotalInput(modelConfiguration) - inferredParameterList;
 	return getMissingInputsMessage(amount, total);
 };
 
@@ -546,7 +547,8 @@ const selectedConfigMissingInputCount = computed(() => {
 	if (initializing.value) {
 		return '';
 	}
-	const amount = getMissingInputAmount(knobs.value.transientModelConfig);
+	const inferredParameterAmount = knobs.value.transientModelConfig.inferredParameterList?.length ?? 0;
+	const amount = getMissingInputAmount(knobs.value.transientModelConfig) - inferredParameterAmount;
 	const total = getTotalInput(knobs.value.transientModelConfig);
 	return getMissingInputsMessage(amount, total);
 });

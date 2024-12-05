@@ -1,0 +1,100 @@
+<template>
+	<tera-scenario-template :header="header" :scenario-instance="scenario" @save-workflow="emit('save-workflow')">
+		<template #inputs>
+			<label>Select a model</label>
+			<Dropdown
+				:model-value="scenario.modelSpec.id"
+				:options="models"
+				option-label="assetName"
+				option-value="assetId"
+				placeholder="Select a model"
+				@update:model-value="scenario.setModelSpec($event)"
+			/>
+
+			<label>Select configuration representing best and generous estimates of the initial conditions</label>
+			<Dropdown
+				:model-value="scenario.modelConfigSpec.id"
+				placeholder="Select a configuration"
+				:options="modelConfigurations"
+				option-label="name"
+				option-value="id"
+				@update:model-value="scenario.setModelConfigSpec($event)"
+				:disabled="isEmpty(modelConfigurations) || isFetchingModelInformation"
+				:loading="isFetchingModelInformation"
+			/>
+		</template>
+		<template #outputs>
+			<label>Select an output metric</label>
+			<MultiSelect
+				:disabled="isEmpty(modelStateOptions) || isFetchingModelInformation"
+				:model-value="scenario.simulateSpec.ids"
+				placeholder="Select output metrics"
+				option-label="name"
+				option-value="id"
+				:options="modelStateOptions"
+				@update:model-value="scenario.setCalibrateSpec($event)"
+				:loading="isFetchingModelInformation"
+				filter
+			/>
+			<!-- <img :src="simulate" alt="Simulate chart" /> -->
+		</template>
+	</tera-scenario-template>
+</template>
+
+<script setup lang="ts">
+import { SensitivityAnalysisScenario } from '@/components/workflow/scenario-templates/sensitivity-analysis/sensitivity-analysis-scenario';
+import { useProjects } from '@/composables/project';
+import { getModel, getModelConfigurationsForModel } from '@/services/model';
+import { AssetType, ModelConfiguration } from '@/types/Types';
+import { isEmpty } from 'lodash';
+import { computed, ref, watch } from 'vue';
+import Dropdown from 'primevue/dropdown';
+import MultiSelect from 'primevue/multiselect';
+import TeraScenarioTemplate from '../tera-scenario-template.vue';
+import { ScenarioHeader } from '../base-scenario';
+
+const header: ScenarioHeader = Object.freeze({
+	title: 'Sensitivity analysis template',
+	question: 'Which parameters introduces the most uncertainty in the outcomes of interest?',
+	description:
+		'Configure the model with parameter distributions that reflect all the sources of uncertainty, then simulate into the near future.',
+	examples: ['Unknown severity of new variant.', 'Unknown speed of waning immunity.']
+});
+
+const isFetchingModelInformation = ref(false);
+const models = computed(() => useProjects().getActiveProjectAssets(AssetType.Model));
+
+const modelConfigurations = ref<ModelConfiguration[]>([]);
+const modelStateOptions = ref<any[]>([]);
+
+const props = defineProps<{
+	scenario: SensitivityAnalysisScenario;
+}>();
+
+const emit = defineEmits(['save-workflow']);
+
+watch(
+	() => props.scenario.modelSpec.id,
+	async (modelId) => {
+		if (!modelId) return;
+		isFetchingModelInformation.value = true;
+		const model = await getModel(modelId);
+		if (!model) return;
+		modelConfigurations.value = await getModelConfigurationsForModel(modelId);
+
+		// Set the first model configuration as the default
+		if (!isEmpty(modelConfigurations.value)) {
+			props.scenario.setModelConfigSpec(modelConfigurations.value[0].id!);
+		}
+
+		const modelOptions: any[] = model.model.states;
+
+		model.semantics?.ode.observables?.forEach((o) => {
+			modelOptions.push(o);
+		});
+		modelStateOptions.value = modelOptions;
+		isFetchingModelInformation.value = false;
+	},
+	{ immediate: true }
+);
+</script>

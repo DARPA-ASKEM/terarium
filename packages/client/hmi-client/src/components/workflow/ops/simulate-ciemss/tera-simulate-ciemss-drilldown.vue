@@ -104,7 +104,7 @@
 					@question-asked="updateLlmQuery"
 				>
 					<template #toolbar-right-side>
-						<Button label="Run" size="small" icon="pi pi-play" @click="runCode" />
+						<Button label="Run" size="small" icon="pi pi-play" @click="runCode" :disabled="isEmpty(codeText)" />
 					</template>
 				</tera-notebook-jupyter-input>
 			</div>
@@ -279,7 +279,7 @@
 </template>
 
 <script setup lang="ts">
-import _ from 'lodash';
+import _, { isEmpty } from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';

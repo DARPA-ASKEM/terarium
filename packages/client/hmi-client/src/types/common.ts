@@ -158,6 +158,8 @@ interface Comparison {
 	conclusion: string;
 }
 
+export type ModelEnrichmentStatusUpdate = StatusUpdate<{ modelId: string; workflowId: string; nodeId: string }>;
+
 export type ExtractionStatusUpdate = StatusUpdate<{ documentId: string }>;
 export type CloneProjectStatusUpdate = StatusUpdate<{ projectId: string }>;
 export interface NotificationItem extends NotificationItemStatus, AssetRoute {
@@ -190,8 +192,11 @@ export enum ChartSettingType {
 
 export type ChartSetting = ChartSettingBase | ChartSettingEnsembleVariable;
 
-export interface ChartSettingEnsembleVariable extends ChartSettingBase {
+export interface ChartSettingEnsembleVariable extends ChartSettingBase, ChartSettingEnsembleVariableOptions {
 	type: ChartSettingType.VARIABLE_ENSEMBLE;
+}
+
+export interface ChartSettingEnsembleVariableOptions {
 	showIndividualModels: boolean;
 	relativeToEnsemble: boolean;
 	showIndividualModelsWithWeight?: boolean;

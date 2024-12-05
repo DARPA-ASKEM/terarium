@@ -12,6 +12,7 @@
 					expandable
 					are-embed-actions-visible
 					:visualization-spec="interventionCharts[setting.id]"
+					:interactive="false"
 				/>
 				<vega-chart
 					v-for="setting of selectedVariableSettings"
@@ -19,6 +20,7 @@
 					expandable
 					are-embed-actions-visible
 					:visualization-spec="variableCharts[setting.id]"
+					:interactive="false"
 				/>
 				<vega-chart
 					v-for="setting of selectedComparisonChartSettings"
@@ -26,6 +28,7 @@
 					expandable
 					are-embed-actions-visible
 					:visualization-spec="comparisonCharts[setting.id]"
+					:interactive="false"
 				/>
 			</section>
 		</template>
@@ -305,8 +308,8 @@ watch(
 		if (baseForecastId) {
 			// If forecast run before intervention (base run) is available, merge the results
 			const [baseResult, baseResultSummary] = await Promise.all([
-				getRunResultCSV(baseForecastId, 'result.csv', renameFnGenerator('base')),
-				getRunResultCSV(baseForecastId, 'result_summary.csv', renameFnGenerator('base'))
+				getRunResultCSV(baseForecastId, 'result.csv', renameFnGenerator('pre')),
+				getRunResultCSV(baseForecastId, 'result_summary.csv', renameFnGenerator('pre'))
 			]);
 			const merged = mergeResults(baseResult, result, baseResultSummary, resultSummary);
 			result = merged.result;

@@ -9,7 +9,7 @@
 import { watch, computed } from 'vue';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
+import { type WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const emit = defineEmits(['append-input-port', 'open-drilldown']);

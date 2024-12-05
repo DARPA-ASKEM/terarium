@@ -1,8 +1,11 @@
 import _ from 'lodash';
 import { mean, variance } from 'd3';
 import { computed, ComputedRef, Ref } from 'vue';
+import { VisualizationSpec } from 'vega-embed';
 import {
 	applyForecastChartAnnotations,
+	AUTOSIZE,
+	CATEGORICAL_SCHEME,
 	createErrorChart,
 	createForecastChart,
 	createHistogramChart,
@@ -10,7 +13,7 @@ import {
 	ForecastChartOptions
 } from '@/services/charts';
 import { flattenInterventionData } from '@/services/intervention-policy';
-import { DataArray } from '@/services/models/simulation-service';
+import { DataArray, extractModelConfigIdsInOrder, extractModelConfigIds } from '@/services/models/simulation-service';
 import { ChartSetting, ChartSettingEnsembleVariable, ChartSettingType } from '@/types/common';
 import { Intervention, Model, ModelConfiguration } from '@/types/Types';
 import { displayNumber } from '@/utils/number';
@@ -22,6 +25,7 @@ import {
 	isCalibrateEnsembleMappingRow
 } from '@/components/workflow/ops/calibrate-ensemble-ciemss/calibrate-ensemble-ciemss-operation';
 import { SimulateEnsembleMappingRow } from '@/components/workflow/ops/simulate-ensemble-ciemss/simulate-ensemble-ciemss-operation';
+import { getModelConfigName } from '@/services/model-configurations';
 import { useChartAnnotations } from './useChartAnnotations';
 
 export interface ChartData {
@@ -31,7 +35,20 @@ export interface ChartData {
 	translationMap: Record<string, string>;
 }
 
-export type VariableMappings = CalibrateMap[] | CalibrateEnsembleMappingRow[] | SimulateEnsembleMappingRow[];
+type EnsembleVariableMappings = CalibrateEnsembleMappingRow[] | SimulateEnsembleMappingRow[];
+type VariableMappings = CalibrateMap[] | EnsembleVariableMappings;
+
+const BASE_GREY = '#AAB3C6';
+const PRIMARY_COLOR = CATEGORICAL_SCHEME[0];
+
+// Get the model variable name for the corresponding model configuration and the ensemble variable name from the mapping
+const getModelConfigVariable = (
+	mapping: EnsembleVariableMappings,
+	ensembleVariableName: string,
+	modelConfigId: string
+) => mapping.find((d) => d.newName === ensembleVariableName)?.modelConfigurationMappings[modelConfigId] ?? '';
+
+const getModelConfigIdPrefix = (configId: string) => (configId ? `${configId}/` : '');
 
 /**
  * Converts a model variable name to a dataset variable name based on the provided mapping.
@@ -40,7 +57,7 @@ export type VariableMappings = CalibrateMap[] | CalibrateEnsembleMappingRow[] | 
  * @param {string} modelVariable - The name of the model variable to be converted.
  * @returns {string} - The corresponding dataset variable name, or an empty string if the mapping is empty or not found.
  */
-export const modelVarToDatasetVar = (mapping: VariableMappings, modelVariable: string) => {
+const modelVarToDatasetVar = (mapping: VariableMappings, modelVariable: string) => {
 	if (_.isEmpty(mapping)) return '';
 	if (isCalibrateMap(mapping[0])) {
 		return (mapping as CalibrateMap[]).find((d) => d.modelVariable === modelVariable)?.datasetVariable ?? '';
@@ -51,12 +68,35 @@ export const modelVarToDatasetVar = (mapping: VariableMappings, modelVariable: s
 	return '';
 };
 
+// For ensemble charts, add model names to translation map to give more context for the usage in llm annotation generation
+// For example, if a variable name is 'model_0/infected', we want to give llm {model_0/infected: 'Model Antwerp Infected after calibration'}
+// instead of just { model_0/infected: 'Infected after calibration' } so that it is clear to LLM which model the variable belongs to.
+const addModelConfigNameToTranslationMap = (
+	translationMap: Record<string, string>,
+	pyciemssMap: Record<string, string>,
+	modelConfigs: ModelConfiguration[]
+) => {
+	const newMap = {};
+	const modelPrefixToModelconfigIdMap = extractModelConfigIds(pyciemssMap);
+	// Build model index (model_#) to model config name mapping with pyciemssMap
+	Object.entries(translationMap).forEach(([key, value]) => {
+		const modelPrefix = key.split('/')[0];
+		const modelConfigName = getModelConfigName(modelConfigs, modelPrefixToModelconfigIdMap[modelPrefix] ?? '');
+		const newValue = modelConfigName ? `${modelConfigName} ${value}` : value;
+		newMap[key] = newValue;
+	});
+	return newMap;
+};
+
+// Consider provided reference object is ready if it is set to null explicitly or if it's value is available
+const isRefReady = (ref: Ref | null) => ref === null || Boolean(ref.value);
+
 /**
  * Composable to manage the creation and configuration of various types of charts used in operator nodes and drilldown.
  *
  * @param nodeId - The ID of the node.
  * @param model - The model reference.
- * @param modelConfig - The model configuration reference.
+ * @param modelConfig - The model configurations reference. For ensemble operators, this can be an array of model configurations.
  * @param chartData - The chart data reference.
  * @param chartSize - The chart size reference.
  * @param interventions - Optional reference to interventions.
@@ -66,12 +106,16 @@ export const modelVarToDatasetVar = (mapping: VariableMappings, modelVariable: s
 export function useCharts(
 	nodeId: string,
 	model: Ref<Model | null> | null,
-	modelConfig: Ref<ModelConfiguration | null> | null,
+	modelConfig: Ref<ModelConfiguration | ModelConfiguration[] | null> | null,
 	chartData: Ref<ChartData | null>,
 	chartSize: Ref<{ width: number; height: number }>,
 	interventions: Ref<Intervention[]> | null,
 	mapping: Ref<VariableMappings> | null
 ) {
+	// Check if references of the core dependencies are ready to build the chart to prevent multiple re-renders especially
+	// on initial page load where data are fetched asynchronously and assigned to the references in different times.
+	const isChartReadyToBuild = computed(() => [model, modelConfig, chartData].every(isRefReady));
+
 	// Setup annotations
 	const { getChartAnnotationsByChartId, generateAndSaveForecastChartAnnotation } = useChartAnnotations(nodeId);
 
@@ -80,40 +124,71 @@ export function useCharts(
 		return getUnitsFromModelParts(model.value)[paramId] || '';
 	};
 
-	const createEnsembleVariableChartOptions = (setting: ChartSettingEnsembleVariable) => {
-		const ensembleVariableName = setting.selectedVariables[0];
-		const variable = modelVarToDatasetVar(mapping?.value ?? [], ensembleVariableName) as string;
+	const createEnsembleVariableChartOptions = (
+		setting: ChartSettingEnsembleVariable,
+		modelConfigId = '',
+		multiVariable = false,
+		showBaseLines = false
+	) => {
+		const ensembleVarName = setting.selectedVariables[0];
+
 		const options: ForecastChartOptions = {
-			title: ensembleVariableName,
+			title: getModelConfigName(<ModelConfiguration[]>modelConfig?.value ?? [], modelConfigId) || ensembleVarName,
 			legend: true,
 			width: chartSize.value.width,
 			height: chartSize.value.height,
-			translationMap: {},
+			translationMap: chartData.value?.translationMap || {},
 			xAxisTitle: '',
 			yAxisTitle: '',
-			colorscheme: ['#AAB3C6', '#1B8073']
+			autosize: AUTOSIZE.FIT,
+			colorscheme: multiVariable ? CATEGORICAL_SCHEME : [BASE_GREY, PRIMARY_COLOR]
 		};
-		const sampleLayerVariables = [
-			`${chartData.value?.pyciemssMap[variable]}:pre`,
-			`${chartData.value?.pyciemssMap[variable]}`
-		];
-		const statLayerVariables = [
-			`${chartData.value?.pyciemssMap[variable]}_mean:pre`,
-			`${chartData.value?.pyciemssMap[variable]}_mean`
-		];
-		// TODO: Since translationMap differes based on the chart configs. Build translationMap outside when building chartData and pass along with the chartData.
-		options.translationMap = {
-			[statLayerVariables[0]]: `Ensemble before calibration`,
-			[statLayerVariables[1]]: `Ensemble after calibration`,
-			[variable]: 'Observations'
-		};
+
+		const variables: string[] = [];
+		if (multiVariable) {
+			// If multiVariable flag is true, include the ensemble variable and all model variables all together in one chart. modelConfigId is not used in this case.
+			variables.push(modelVarToDatasetVar(mapping?.value ?? [], ensembleVarName) as string);
+			(<ModelConfiguration[]>modelConfig?.value ?? []).forEach((config) => {
+				const modelVar = getModelConfigVariable(
+					<EnsembleVariableMappings>mapping?.value ?? [],
+					ensembleVarName,
+					config.id ?? ''
+				);
+				variables.push(getModelConfigIdPrefix(config.id ?? '') + modelVar);
+			});
+		} else {
+			// If model modelConfigId is provided, include a model variable, otherwise include an ensemble variable
+			variables.push(
+				modelConfigId
+					? // model variable
+						getModelConfigIdPrefix(modelConfigId) +
+							getModelConfigVariable(<EnsembleVariableMappings>mapping?.value ?? [], ensembleVarName, modelConfigId)
+					: // ensemble variable
+						(modelVarToDatasetVar(mapping?.value ?? [], ensembleVarName) as string)
+			);
+		}
+
+		const sampleLayerVariables: string[] = [];
+		const statLayerVariables: string[] = [];
+		variables.forEach((varNameKeys) => {
+			const varName = chartData.value?.pyciemssMap[varNameKeys];
+			// Add base lines data
+			if (showBaseLines) {
+				sampleLayerVariables.push(`${varName}:pre`);
+				statLayerVariables.push(`${varName}_mean:pre`);
+			}
+			// Add primary lines data
+			sampleLayerVariables.push(`${varName}`);
+			statLayerVariables.push(`${varName}_mean`);
+		});
 		return { statLayerVariables, sampleLayerVariables, options };
 	};
+
 	// Create options for forecast charts based on chart settings and model configuration
 	const createForecastChartOptions = (setting: ChartSetting) => {
-		if (isChartSettingEnsembleVariable(setting)) return createEnsembleVariableChartOptions(setting);
+		if (isChartSettingEnsembleVariable(setting)) return createEnsembleVariableChartOptions(setting, '', true, true);
 		const variables = setting.selectedVariables;
-		const dateOptions = getVegaDateOptions(model?.value ?? null, modelConfig?.value || null);
+		const dateOptions = getVegaDateOptions(model?.value ?? null, <ModelConfiguration>modelConfig?.value || null);
 		const options: ForecastChartOptions = {
 			title: '',
 			legend: true,
@@ -123,7 +198,7 @@ export function useCharts(
 			xAxisTitle: getUnit('_time') || 'Time',
 			yAxisTitle: _.uniq(variables.map(getUnit).filter((v) => !!v)).join(',') || '',
 			dateOptions,
-			colorscheme: ['#AAB3C6', '#1B8073']
+			colorscheme: [BASE_GREY, PRIMARY_COLOR]
 		};
 
 		let sampleLayerVariables = [
@@ -147,6 +222,13 @@ export function useCharts(
 	const generateAnnotation = async (setting: ChartSetting, query: string) => {
 		if (!chartData.value) return null;
 		const { statLayerVariables, options } = createForecastChartOptions(setting);
+		if (setting.type === ChartSettingType.VARIABLE_ENSEMBLE) {
+			options.translationMap = addModelConfigNameToTranslationMap(
+				options.translationMap ?? {},
+				chartData.value.pyciemssMap,
+				<ModelConfiguration[]>modelConfig?.value ?? []
+			);
+		}
 		return generateAndSaveForecastChartAnnotation(setting, query, 'timepoint_id', statLayerVariables, options);
 	};
 
@@ -157,9 +239,9 @@ export function useCharts(
 	// Create intervention charts based on chart settings
 	const useInterventionCharts = (chartSettings: ComputedRef<ChartSetting[]>, showSamples = false) => {
 		const interventionCharts = computed(() => {
-			const charts: Record<string, any> = {};
-			if (!chartData.value) return charts;
-			const { resultSummary, result } = chartData.value;
+			const charts: Record<string, VisualizationSpec> = {};
+			if (!isChartReadyToBuild.value) return charts;
+			const { resultSummary, result } = chartData.value as ChartData;
 			// intervention chart spec
 			chartSettings.value.forEach((setting) => {
 				const variable = setting.selectedVariables[0];
@@ -179,7 +261,6 @@ export function useCharts(
 					null,
 					options
 				);
-
 				if (groupedInterventionOutputs.value[variable]) {
 					// add intervention annotations (rules and text)
 					forecastChart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[variable]));
@@ -198,9 +279,9 @@ export function useCharts(
 		groundTruthData: ComputedRef<DataArray> | null
 	) => {
 		const variableCharts = computed(() => {
-			const charts: Record<string, any> = {};
-			if (!chartData.value) return charts;
-			const { result, resultSummary } = chartData.value;
+			const charts: Record<string, VisualizationSpec> = {};
+			if (!isChartReadyToBuild.value || !isRefReady(groundTruthData)) return charts;
+			const { result, resultSummary } = chartData.value as ChartData;
 
 			chartSettings.value.forEach((settings) => {
 				const variable = settings.selectedVariables[0];
@@ -244,9 +325,9 @@ export function useCharts(
 	// Create comparison charts based on chart settings
 	const useComparisonCharts = (chartSettings: ComputedRef<ChartSetting[]>) => {
 		const comparisonCharts = computed(() => {
-			const charts: Record<string, any> = {};
-			if (!chartData.value) return charts;
-			const { result, resultSummary } = chartData.value;
+			const charts: Record<string, VisualizationSpec> = {};
+			if (!isChartReadyToBuild.value) return charts;
+			const { result, resultSummary } = chartData.value as ChartData;
 			chartSettings.value.forEach((setting) => {
 				const selectedVars = setting.selectedVariables;
 				const { statLayerVariables, sampleLayerVariables, options } = createForecastChartOptions(setting);
@@ -288,41 +369,86 @@ export function useCharts(
 		chartSettings: ComputedRef<ChartSettingEnsembleVariable[]>,
 		groundTruthData: ComputedRef<DataArray> | null
 	) => {
-		const calibrateEnsembleVariableCharts = computed(() => {
-			const charts: Record<string, any> = {};
-			if (!chartData.value) return charts;
-			const { result, resultSummary } = chartData.value;
+		const ensembleVariableCharts = computed(() => {
+			const charts: Record<string, VisualizationSpec[]> = {};
+			if (!isChartReadyToBuild.value || !isRefReady(groundTruthData)) return chartData;
+			const { result, resultSummary } = chartData.value as ChartData;
+			const modelConfigIds = extractModelConfigIdsInOrder(chartData.value?.pyciemssMap ?? {});
 			chartSettings.value.forEach((setting) => {
-				const { sampleLayerVariables, statLayerVariables, options } = createForecastChartOptions(setting);
 				const annotations = getChartAnnotationsByChartId(setting.id);
 				const datasetVar = modelVarToDatasetVar(mapping?.value || [], setting.selectedVariables[0]);
-				const chart = applyForecastChartAnnotations(
-					createForecastChart(
-						{
-							data: result,
-							variables: sampleLayerVariables,
-							timeField: 'timepoint_id',
-							groupField: 'sample_id'
-						},
-						{
-							data: resultSummary,
-							variables: statLayerVariables,
-							timeField: 'timepoint_id'
-						},
-						groundTruthData && {
-							data: groundTruthData.value,
-							variables: datasetVar ? [datasetVar] : [],
-							timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
-						},
-						options
-					),
-					annotations
-				);
-				charts[setting.id] = chart;
+				if (setting.showIndividualModels) {
+					const smallMultiplesCharts = ['', ...modelConfigIds].map((modelConfigId, index) => {
+						const { sampleLayerVariables, statLayerVariables, options } = createEnsembleVariableChartOptions(
+							setting,
+							modelConfigId,
+							false,
+							true
+						);
+						options.width = chartSize.value.width / (modelConfigIds.length + 1);
+						options.legendProperties = { direction: 'vertical', columns: 1, labelLimit: options.width };
+						options.colorscheme = [BASE_GREY, CATEGORICAL_SCHEME[index % CATEGORICAL_SCHEME.length]];
+						const smallChart = applyForecastChartAnnotations(
+							createForecastChart(
+								{
+									data: result,
+									variables: sampleLayerVariables,
+									timeField: 'timepoint_id',
+									groupField: 'sample_id'
+								},
+								{
+									data: resultSummary,
+									variables: statLayerVariables,
+									timeField: 'timepoint_id'
+								},
+								groundTruthData && {
+									data: groundTruthData.value,
+									variables: datasetVar ? [datasetVar] : [],
+									timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
+								},
+								options
+							),
+							annotations
+						);
+						return smallChart;
+					});
+					charts[setting.id] = smallMultiplesCharts;
+				} else {
+					// Build a single ensemble chart
+					const { sampleLayerVariables, statLayerVariables, options } = createEnsembleVariableChartOptions(
+						setting,
+						'',
+						false,
+						true
+					);
+					const chart = applyForecastChartAnnotations(
+						createForecastChart(
+							{
+								data: result,
+								variables: sampleLayerVariables,
+								timeField: 'timepoint_id',
+								groupField: 'sample_id'
+							},
+							{
+								data: resultSummary,
+								variables: statLayerVariables,
+								timeField: 'timepoint_id'
+							},
+							groundTruthData && {
+								data: groundTruthData.value,
+								variables: datasetVar ? [datasetVar] : [],
+								timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
+							},
+							options
+						),
+						annotations
+					);
+					charts[setting.id] = [chart];
+				}
 			});
 			return charts;
 		});
-		return calibrateEnsembleVariableCharts;
+		return ensembleVariableCharts;
 	};
 
 	// Create error charts based on chart settings
@@ -375,13 +501,13 @@ export function useCharts(
 	// Create parameter distribution charts based on chart settings
 	const useParameterDistributionCharts = (chartSettings: ComputedRef<ChartSetting[]>) => {
 		const parameterDistributionCharts = computed(() => {
-			if (!chartData.value) return {};
-			const { result, pyciemssMap } = chartData.value;
+			const charts = {};
+			if (!isChartReadyToBuild.value) return charts;
+			const { result, pyciemssMap } = chartData.value as ChartData;
 			// Note that we want to show the parameter distribution at the first timepoint only
 			const data = result.filter((d) => d.timepoint_id === 0);
 			const labelBefore = 'Before calibration';
 			const labelAfter = 'After calibration';
-			const charts = {};
 			chartSettings.value.forEach((setting) => {
 				const param = setting.selectedVariables[0];
 				const fieldName = pyciemssMap[param];
@@ -394,8 +520,8 @@ export function useCharts(
 					yAxisTitle: 'Count',
 					maxBins: 10,
 					variables: [
-						{ field: beforeFieldName, label: labelBefore, width: 54, color: '#AAB3C6' },
-						{ field: fieldName, label: labelAfter, width: 24, color: '#1B8073' }
+						{ field: beforeFieldName, label: labelBefore, width: 54, color: BASE_GREY },
+						{ field: fieldName, label: labelAfter, width: 24, color: PRIMARY_COLOR }
 					]
 				});
 				const toDisplayNumber = (num?: number) => (num ? displayNumber(num.toString()) : '');
@@ -413,6 +539,52 @@ export function useCharts(
 		return parameterDistributionCharts;
 	};
 
+	const useWeightsDistributionCharts = () => {
+		const WEIGHT_PARAM_NAME = 'weight_param';
+		const weightsCharts = computed(() => {
+			const charts: VisualizationSpec[] = [];
+			if (!isChartReadyToBuild.value) return charts;
+
+			// Model configs are used to get the model config metadata. This order of model configs in arrays are not guaranteed to be the same as the order of model configs in the pyciemss results
+			const modelConfigs = <ModelConfiguration[]>modelConfig?.value ?? [];
+			// extractModelConfigIdsInOrder ensures that the order of model config IDs are matched with the order of corresponding model index in the pyciemss results
+			const modelConfigIds = extractModelConfigIdsInOrder(chartData.value?.pyciemssMap ?? {});
+
+			const data = chartData.value?.result.filter((d) => d.timepoint_id === 0) ?? [];
+			const labelBefore = 'Before calibration';
+			const labelAfter = 'After calibration';
+
+			const colors = CATEGORICAL_SCHEME.slice(1); // exclude the first color which is for ensemble variable
+
+			modelConfigIds.forEach((configId, index) => {
+				const modelConfigName = getModelConfigName(modelConfigs, configId);
+				const chartWidth = chartSize.value.width / modelConfigs.length;
+
+				const fieldName = chartData.value?.pyciemssMap[`${getModelConfigIdPrefix(configId)}${WEIGHT_PARAM_NAME}`] ?? '';
+				const beforeFieldName = `${fieldName}:pre`;
+
+				const maxBins = 10;
+				const barWidth = Math.min((chartWidth - 40) / maxBins, 54);
+				const spec = createHistogramChart(data, {
+					title: modelConfigName,
+					width: chartWidth,
+					height: chartSize.value.height,
+					xAxisTitle: `Weights`,
+					yAxisTitle: 'Count',
+					maxBins,
+					variables: [
+						{ field: beforeFieldName, label: labelBefore, width: barWidth, color: BASE_GREY },
+						{ field: fieldName, label: labelAfter, width: barWidth / 2, color: colors[index % colors.length] }
+					],
+					legendProperties: { direction: 'vertical', columns: 1, labelLimit: chartWidth }
+				});
+				charts.push(spec);
+			});
+			return charts;
+		});
+		return weightsCharts;
+	};
+
 	return {
 		generateAnnotation,
 		getChartAnnotationsByChartId,
@@ -421,6 +593,7 @@ export function useCharts(
 		useComparisonCharts,
 		useEnsembleVariableCharts,
 		useErrorChart,
-		useParameterDistributionCharts
+		useParameterDistributionCharts,
+		useWeightsDistributionCharts
 	};
 }

@@ -15,7 +15,9 @@ export const listOfVisibleAssetTypes: AssetType[] = Object.values(AssetType).fil
 			AssetType.Code,
 			AssetType.Simulation,
 			AssetType.ModelConfiguration,
-			AssetType.InterventionPolicy
+			AssetType.InterventionPolicy,
+			AssetType.NotebookSession,
+			AssetType.Project
 		].includes(type)
 );
 

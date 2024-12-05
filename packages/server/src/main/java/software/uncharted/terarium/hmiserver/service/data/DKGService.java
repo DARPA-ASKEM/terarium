@@ -3,28 +3,32 @@ package software.uncharted.terarium.hmiserver.service.data;
 import co.elastic.clients.elasticsearch._types.KnnQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
+import co.elastic.clients.elasticsearch.core.MsearchResponse;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
-import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.msearch.MultisearchBody;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.SourceConfig;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
+import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings.Embedding;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DKGService {
 
 	private final ElasticsearchConfiguration elasticConfig;
@@ -37,7 +41,7 @@ public class DKGService {
 	 * @param page page number
 	 * @param pageSize page size
 	 * @param k number of nearest neighbors
-	 * @param text text to search
+	 * @param texts text to search
 	 * @param source source config
 	 * @return list of DKG entities
 	 * @throws IOException
@@ -50,11 +54,20 @@ public class DKGService {
 		final Integer page,
 		final Integer pageSize,
 		final Integer k,
-		final String text,
+		final List<String> texts,
 		final SourceConfig source
 	) throws IOException, ExecutionException, InterruptedException, TimeoutException {
-		SearchResponse<DKG> results = knnSearchDKG(elasticConfig.getEpiDKGIndex(), page, pageSize, k, text, source);
-		return results != null ? results.hits().hits().stream().map(Hit::source).collect(Collectors.toList()) : null;
+		MsearchResponse<DKG> results = knnSearchDKG(elasticConfig.getEpiDKGIndex(), page, pageSize, k, texts, source);
+
+		// return the result with the highest score
+		return results != null
+			? results
+				.responses()
+				.stream()
+				.flatMap(item -> item.result().hits().hits().stream())
+				.map(Hit::source)
+				.collect(Collectors.toList())
+			: null;
 	}
 
 	/**
@@ -62,7 +75,7 @@ public class DKGService {
 	 * @param page page number
 	 * @param pageSize page size
 	 * @param k number of nearest neighbors
-	 * @param text text to search
+	 * @param texts text to search
 	 * @param source source config
 	 * @return list of DKG entities
 	 * @throws IOException
@@ -75,11 +88,20 @@ public class DKGService {
 		final Integer page,
 		final Integer pageSize,
 		final Integer k,
-		final String text,
+		final List<String> texts,
 		final SourceConfig source
 	) throws IOException, ExecutionException, InterruptedException, TimeoutException {
-		SearchResponse<DKG> results = knnSearchDKG(elasticConfig.getClimateDKGIndex(), page, pageSize, k, text, source);
-		return results != null ? results.hits().hits().stream().map(Hit::source).collect(Collectors.toList()) : null;
+		MsearchResponse<DKG> results = knnSearchDKG(elasticConfig.getClimateDKGIndex(), page, pageSize, k, texts, source);
+
+		// transform the results into a list of DKG entities
+		return results != null
+			? results
+				.responses()
+				.stream()
+				.flatMap(item -> item.result().hits().hits().stream())
+				.map(Hit::source)
+				.collect(Collectors.toList())
+			: null;
 	}
 
 	/**
@@ -138,31 +160,46 @@ public class DKGService {
 		return getEntity(elasticConfig.getClimateDKGIndex(), curie);
 	}
 
-	private SearchResponse<DKG> knnSearchDKG(
+	@Observed(name = "function_profile")
+	private MsearchResponse<DKG> knnSearchDKG(
 		final String index,
 		final Integer page,
 		final Integer pageSize,
 		final Integer k,
-		final String text,
+		final List<String> texts,
 		final SourceConfig source
 	) throws IOException, ExecutionException, InterruptedException, TimeoutException {
 		if (k > pageSize) {
 			return null; //error case
 		}
-		KnnQuery knn = null;
-		if (text != null && !text.isEmpty()) {
-			final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
 
-			final List<Float> vector = Arrays.stream(embeddings.getEmbeddings().get(0).getVector())
-				.mapToObj(d -> (float) d)
+		final MultisearchBody.Builder msBuilder = new MultisearchBody.Builder();
+
+		final List<KnnQuery> queries = new ArrayList<>();
+		if (texts != null && !texts.isEmpty()) {
+			// remove null or empty strings from the list
+			final List<String> embeddingTexts = texts
+				.stream()
+				.filter(text -> text != null && !text.isEmpty())
 				.collect(Collectors.toList());
 
-			knn = new KnnQuery.Builder().field(DKG.EMBEDDINGS).queryVector(vector).k(k).numCandidates(pageSize).build();
+			final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(embeddingTexts);
+
+			for (Embedding embedding : embeddings.getEmbeddings()) {
+				final List<Float> vectors = Arrays.stream(embedding.getVector())
+					.mapToObj(d -> (float) d)
+					.collect(Collectors.toList());
+
+				queries.add(
+					new KnnQuery.Builder().field(DKG.EMBEDDINGS).queryVector(vectors).k(k).numCandidates(pageSize).build()
+				);
+			}
 		}
 
-		return elasticService.knnSearch(index, knn, null, page, pageSize, Collections.<String>emptyList(), DKG.class);
+		return elasticService.bulkKnnSearch(index, queries, DKG.class);
 	}
 
+	@Observed(name = "function_profile")
 	private List<DKG> searchDKG(
 		final String index,
 		final Integer page,
